@@ -8,6 +8,7 @@ using System.Text;
 using System.Web;
 using System.Web.Mvc;
 using bufinscustomers.Models;
+using System.Diagnostics;
 
 namespace bufinscustomers.Controllers
 {
@@ -30,9 +31,14 @@ namespace bufinscustomers.Controllers
         {
             bool registrado;
             string mensaje;
+
+            // ⚡ Elimina espacios de correo y clave
+            oUsuario.Correo = oUsuario.Correo.Trim();
+            oUsuario.Clave = oUsuario.Clave.Trim();
+            oUsuario.ConfirmarClave = oUsuario.ConfirmarClave.Trim();
+
             if (oUsuario.Clave == oUsuario.ConfirmarClave)
             {
-
                 oUsuario.Clave = ConvertirSha256(oUsuario.Clave);
             }
             else
@@ -40,6 +46,7 @@ namespace bufinscustomers.Controllers
                 ViewData["Mensaje"] = "Las contraseñas no coinciden";
                 return View();
             }
+
             using (SqlConnection cn = new SqlConnection(cadena))
             {
                 SqlCommand cmd = new SqlCommand("sp_RegistrarUsuario", cn);
@@ -53,6 +60,7 @@ namespace bufinscustomers.Controllers
                 registrado = Convert.ToBoolean(cmd.Parameters["Registrado"].Value);
                 mensaje = cmd.Parameters["Mensaje"].Value.ToString();
             }
+
             ViewData["Mensaje"] = mensaje;
             if (registrado)
             {
@@ -63,10 +71,17 @@ namespace bufinscustomers.Controllers
                 return View();
             }
         }
+
         [HttpPost]
         public ActionResult Login(Usuarios oUsuario)
         {
+            // ⚡ Elimina espacios
+            oUsuario.Correo = oUsuario.Correo.Trim();
+            oUsuario.Clave = oUsuario.Clave.Trim();
+
+            // Luego convierte
             oUsuario.Clave = ConvertirSha256(oUsuario.Clave);
+
             using (SqlConnection cn = new SqlConnection(cadena))
             {
                 SqlCommand cmd = new SqlCommand("sp_ValidarUsuario", cn);
@@ -76,10 +91,11 @@ namespace bufinscustomers.Controllers
                 cn.Open();
                 oUsuario.Id = Convert.ToInt32(cmd.ExecuteScalar().ToString());
             }
+
             if (oUsuario.Id != 0)
             {
                 Session["usuario"] = oUsuario;
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("index", "Home");
             }
             else
             {
@@ -87,22 +103,21 @@ namespace bufinscustomers.Controllers
                 return View();
             }
         }
+
         public static string ConvertirSha256(string texto)
         {
-            //using System.Text;
-            //USAR LA REFERENCIA DE "System.Security.Cryptography"
-
-            StringBuilder Sb = new StringBuilder();
-            using (SHA256 hash = SHA256Managed.Create())
+            using (SHA256 sha256 = SHA256.Create())
             {
-                Encoding enc = Encoding.UTF8;
-                byte[] result = hash.ComputeHash(enc.GetBytes(texto));
-
-                foreach (byte b in result)
-                    Sb.Append(b.ToString("x2"));
+                byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(texto));
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < bytes.Length; i++)
+                {
+                    builder.Append(bytes[i].ToString("x2")); // Hexadecimal minúscula
+                }
+                return builder.ToString();
             }
-
-            return Sb.ToString();
         }
+
+
     }
 }
