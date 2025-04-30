@@ -3,13 +3,6 @@
     Layout = null;
 }
 
-@if (ViewData["Mensaje"] != null)
-{
-    <div style="color: red; margin-top: 10px;">
-        @ViewData["Mensaje"]
-    </div>
-}
-
 <!DOCTYPE html>
 
 <html>
@@ -19,39 +12,112 @@
     <link rel="stylesheet" type="text/css" href="~/css/style.css">
     <link href="https://fonts.googleapis.com/css?family=Poppins:600&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/a81368914c.js"></script>
+    <script src="~/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
 </head>
 <body>
-    <img class="wave" src="~/img/wave.png">
+    <img class="wave" src="~/img/wave2.png">
     <div class="container">
         <div class="img">
-            <img src="~/img/bg.png">
+            <img src="~/img/bg3.png">
         </div>
         <div class="login-content">
-            <form action="@Url.Action("Login","Acceso")" method="post">
-                <img class="avatar" src="~/img/avatar.png">
-                <h2 class="title">Bienvenido</h2>
+            <form id="loginForm" action="@Url.Action("Login", "Acceso")" method="post">
+                <img class="avatar" src="~/img/avatar2.jpg">
+                <br />
+                <img class="logoEmp" src="~/img/logo.png">
                 <div class="input-div one">
                     <div class="i">
                         <i class="fas fa-user"></i>
                     </div>
                     <div class="div">
                         <h5>Correo</h5>
-                        <input type="text" name="Correo" class="input">
+                        <input type="text" name="Correo" class="input" id="Correo"/>
                     </div>
                 </div>
+
                 <div class="input-div pass">
                     <div class="i">
                         <i class="fas fa-lock"></i>
                     </div>
                     <div class="div">
                         <h5>Contraseña</h5>
-                        <input type="password" name="Clave" class="input">
+                        <input type="password" name="Clave" class="input" id="Clave">
                     </div>
                 </div>
                 <a href="@Url.Action("Registrar","Acceso")">Registrarse</a>
-                <input type="submit" class="btn" value="Ingresar">
+                <button type="button" class="btn" onclick="validarFormulario()">Ingresar</button>
+
+                <script>
+                    function validarFormulario() {
+                        // Obtener los valores de los campos
+                        const correo = document.getElementById("Correo").value;
+                        const clave = document.getElementById("Clave").value;
+
+                        if (!correo) {
+                            const isMobile = window.innerWidth <= 768;
+                            Swal.fire({
+                                toast: true,
+                                position: isMobile ? 'top' : 'top-end',
+                                icon: 'info',
+                                title: 'Debe ingresar un correo.',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true,
+                                didOpen: (toast) => {
+                                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                                }
+                            });
+                            return;
+                        }
+
+                        if(!clave) {
+                            const isMobile = window.innerWidth <= 768;
+                            Swal.fire({
+                                toast: true,
+                                position: isMobile ? 'top' : 'top-end',
+                                icon: 'info',
+                                title: 'Debe ingresar una contraseña.',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true,
+                                didOpen: (toast) => {
+                                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                                }
+                            });
+                            return;
+                        }
+
+
+                        document.getElementById("loginForm").submit();
+                    }
+                </script>
+
+                @if (ViewData["Mensaje"] != null)
+                {
+                    <script>
+                        const isMobile = window.innerWidth <= 768;
+
+                        Swal.fire({
+                            toast: true,
+                            position: isMobile ? 'top' : 'top-end',
+                            icon: 'info',
+                            title: '@ViewData["Mensaje"]',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                            didOpen: (toast) => {
+                                toast.addEventListener('mouseenter', Swal.stopTimer);
+                                toast.addEventListener('mouseleave', Swal.resumeTimer);
+                            }
+                        });
+
+                    </script>
+                }
+
             </form>
         </div>
     </div>

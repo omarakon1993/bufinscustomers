@@ -9,6 +9,7 @@ using System.Web;
 using System.Web.Mvc;
 using bufinscustomers.Models;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace bufinscustomers.Controllers
 {
@@ -79,6 +80,12 @@ namespace bufinscustomers.Controllers
             oUsuario.Correo = oUsuario.Correo.Trim();
             oUsuario.Clave = oUsuario.Clave.Trim();
 
+            if (!EsCorreoValido(oUsuario.Correo))
+            {
+                ViewData["Mensaje"] = "El correo ingresado no tiene un formato válido.";
+                return View();
+            }
+
             // Luego convierte
             oUsuario.Clave = ConvertirSha256(oUsuario.Clave);
 
@@ -102,6 +109,14 @@ namespace bufinscustomers.Controllers
                 ViewData["Mensaje"] = "usuario no encontrado";
                 return View();
             }
+        }
+
+        private bool EsCorreoValido(string correo)
+        {
+            // Expresión regular para validar correo
+            string pattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+            Regex regex = new Regex(pattern);
+            return regex.IsMatch(correo);
         }
 
         public static string ConvertirSha256(string texto)
