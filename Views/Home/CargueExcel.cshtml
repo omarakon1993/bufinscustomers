@@ -1,0 +1,83 @@
+﻿
+@{
+    ViewBag.Title = "CargueExcel";
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Importar excel</title>
+
+    <script src="~/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+</head>
+<body>
+
+    <h2>Importación excel bufins</h2>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Ingrese el archivo excel a cargar</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <div class="ui segment">
+                    <div class="field">
+                        <input type="hidden" name="MAX_FILE_SIZE" value="100000" />
+                        <ul>
+                            <li>El archivo a cargar debe ser de tipo .xlsx</li>
+                            <li>No se pueden tener espacios entre columnas o columnas vacias.</li>
+                            <li>El archivo no debe tener contraseña.</li>
+                        </ul>
+                        @using (Html.BeginForm("CargarExcel", "Acceso", FormMethod.Post, new { enctype = "multipart/form-data", @id = "formCarga" }))
+                        {
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <input type="file" name="archivoExcel" id="archivoExcel" class="form-control form-control-sm w-auto" />
+                                <input type="submit" value="Subir archivo" class="btn btn-primary btn-sm" />
+                            </div>
+
+                            <!-- Barra de progreso oculta inicialmente -->
+                            <div id="progresoWrapper" class="w-100 d-none">
+                                <div class="mb-1 small">Cargando archivo...</div>
+                                <div class="progress-bar progress-bar-striped progress-bar-animated progress-sm mb-2">
+                                    <div id="barraProgreso" class="progress-bar" role="progressbar" style="width: 0%"
+                                         aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        }
+
+                        <script>
+                            document.getElementById('formCarga').addEventListener('submit', function () {
+                                document.getElementById('progresoWrapper').classList.remove('d-none');
+                            });
+                        </script>
+
+
+                        @if (TempData["Mensaje"] != null && TempData["MensajeTipo"] != null)
+                        {
+                            <script>
+                                Swal.fire({
+                                    toast: true,
+                                    position: window.innerWidth <= 768 ? 'top' : 'top-end',
+                                    icon: '@TempData["MensajeTipo"]',
+                                    title: '@TempData["Mensaje"]',
+                                    showConfirmButton: false,
+                                    timer: 3000,
+                                    timerProgressBar: true,
+                                    didOpen: (toast) => {
+                                        toast.addEventListener('mouseenter', Swal.stopTimer);
+                                        toast.addEventListener('mouseleave', Swal.resumeTimer);
+                                    }
+                                });
+                            </script>
+                        }
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

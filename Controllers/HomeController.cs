@@ -31,5 +31,12 @@ namespace bufinscustomers.Controllers
             Session["usuario"] = null;
             return RedirectToAction("Login", "Acceso");
         }
+        public ActionResult CargueExcel()
+        {
+            TempData.Keep("Mensaje");
+            TempData.Keep("MensajeTipo");
+
+            return View();
+        }
     }
 }

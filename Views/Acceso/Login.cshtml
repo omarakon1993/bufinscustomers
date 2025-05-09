@@ -17,6 +17,14 @@
 
 </head>
 <body>
+    <style type="text/css">
+        input:-webkit-autofill {
+            background-color: #160933 !important;
+            color: #160933 !important;
+            -webkit-box-shadow: 0 0 0px 1000px #160933 inset !important;
+            -webkit-text-fill-color: white !important;
+        }
+    </style>
     <img class="wave" src="~/img/wave2.png">
     <div class="container">
         <div class="img">
@@ -33,7 +41,7 @@
                     </div>
                     <div class="div">
                         <h5>Correo</h5>
-                        <input type="text" name="Correo" class="input" id="Correo"/>
+                        <input type="text" name="Correo" class="input" id="Correo" />
                     </div>
                 </div>
 
@@ -73,7 +81,7 @@
                             return;
                         }
 
-                        if(!clave) {
+                        if (!clave) {
                             const isMobile = window.innerWidth <= 768;
                             Swal.fire({
                                 toast: true,
