@@ -54,9 +54,10 @@
                         <input type="password" name="Clave" class="input" id="Clave">
                     </div>
                 </div>
-                <a href="@Url.Action("Registrar","Acceso")">Registrarse</a>
+                @*<a href="@Url.Action("Registrar","Acceso")">Registrarse</a>*@
+                <br />
                 <button type="button" class="btn" onclick="validarFormulario()">Ingresar</button>
-
+                <button type="button" class="btn" onclick="window.location.href='https://oglearning.co/'">BUFINS Web</button>
                 <script>
                     function validarFormulario() {
                         // Obtener los valores de los campos
