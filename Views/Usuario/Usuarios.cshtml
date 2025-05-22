@@ -1,0 +1,175 @@
+﻿
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Maestro de usuarios</title>
+
+    <script src="~/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+</head>
+<body>
+
+    <style>
+        .table-wrapper {
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .readonly-checkbox {
+            pointer-events: none; /* Evita la interacción del usuario */
+            opacity: 1; /* Asegura que no se vea deshabilitado */
+        }
+      
+    </style>
+
+    <h2>Maestro de usuarios</h2>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Usuarios</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive table-wrapper">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Nombre</th>
+                            <th>Apellidos</th>
+                            <th>Teléfono</th>
+                            <th>Correo</th>
+                            <th>Admin</th>
+                            <th>IdEmpresa</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var usuario in Model)
+                        {
+                            <tr>
+                                <td>@usuario.Id</td>
+                                <td>@usuario.Nombre</td>
+                                <td>@usuario.Apellidos</td>
+                                <td>@usuario.Telefono</td>
+                                <td>@usuario.Correo</td>
+                                <td align="center">
+                                    <input type="checkbox" id="chckAdmin" name="name" checked="@(usuario.Admin == 1 ? "checked" : null)" class="readonly-checkbox"  />
+                                </td>
+                                <td>@usuario.IdEmpresa</td>
+
+                                <td>
+                                    <!-- Aquí puedes agregar botones para editar o eliminar -->
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editUserModal"
+                                            onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa')">
+                                        Editar
+                                    </button>
+                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" onclick="setIdUsuario(@usuario.Id)">
+                                        Eliminar
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal de confirmación -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Estás seguro de que deseas eliminar este usuario?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form id="deleteForm" method="post" action="/Usuario/EliminarUsuario">
+                        <input type="hidden" id="idUsuario" name="idUsuario" />
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de edición -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUserModalLabel">Editar Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm" method="post" action="/Usuario/EditarUsuario">
+                        <input type="hidden" id="editIdUsuario" name="Id" />
+                        <div class="mb-3">
+                            <label for="editNombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="editNombre" name="Nombre" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="editApellidos" class="form-label">Apellidos</label>
+                            <input type="text" class="form-control" id="editApellidos" name="Apellidos" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="editCorreo" class="form-label">Correo</label>
+                            <input type="Email" class="form-control" id="editCorreo" name="Correo" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="editTelefono" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="editTelefono" name="Telefono" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="editAdmin" class="form-label">Admin</label>
+                            <input type="checkbox" id="editAdmin" name="Admin" value="1" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="editIdEmpresa" class="form-label">IdEmpresa</label>
+                            <input type="text" class="form-control" id="editIdEmpresa" name="IdEmpresa" />
+                         </div>
+                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <script>
+        function setIdUsuario(id) {
+            document.getElementById("idUsuario").value = id;          
+        }
+
+        function setEditUser(id, nombre, apellidos, telefono, Correo, admin, idEmpresa) {
+            console.log(admin);
+            document.getElementById("editIdUsuario").value = id;
+            document.getElementById("editNombre").value = nombre;
+            document.getElementById("editApellidos").value = apellidos;
+            document.getElementById("editCorreo").value = Correo;
+            document.getElementById("editTelefono").value = telefono;
+            document.getElementById("editAdmin").checked = (admin == 1 || admin === '1');
+            document.getElementById("editIdEmpresa").value = idEmpresa;
+        }
+
+        document.getElementById("chckAdmin").addEventListener("click", function (e) {
+            e.preventDefault(); // Evita que el checkbox cambie de estado
+        });
+
+        
+    </script>
+
+
+</body>
+</html>
