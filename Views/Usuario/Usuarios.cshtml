@@ -23,7 +23,6 @@
             pointer-events: none; /* Evita la interacción del usuario */
             opacity: 1; /* Asegura que no se vea deshabilitado */
         }
-      
     </style>
 
     <h2>Maestro de usuarios</h2>
@@ -57,7 +56,7 @@
                                 <td>@usuario.Telefono</td>
                                 <td>@usuario.Correo</td>
                                 <td align="center">
-                                    <input type="checkbox" id="chckAdmin" name="name" checked="@(usuario.Admin == 1 ? "checked" : null)" class="readonly-checkbox"  />
+                                    <input type="checkbox" id="chckAdmin" name="name" checked="@(usuario.Admin == 1 ? "checked" : null)" class="readonly-checkbox" />
                                 </td>
                                 <td>@usuario.IdEmpresa</td>
 
@@ -75,9 +74,14 @@
                         }
                     </tbody>
                 </table>
+
             </div>
         </div>
-
+        <div class="card-footer">
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearUsuarioModal">
+                Crear Usuario
+            </button>
+        </div>
     </div>
 
     <!-- Modal de confirmación -->
@@ -136,7 +140,7 @@
                         <div class="mb-3">
                             <label for="editIdEmpresa" class="form-label">IdEmpresa</label>
                             <input type="text" class="form-control" id="editIdEmpresa" name="IdEmpresa" />
-                         </div>
+                        </div>
                         <button type="submit" class="btn btn-primary">Guardar cambios</button>
                     </form>
                 </div>
@@ -144,12 +148,61 @@
         </div>
     </div>
 
+    <!-- Modal de Creación -->
+    <div class="modal fade" id="crearUsuarioModal" tabindex="-1" aria-labelledby="crearUsuarioModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="crearUsuarioModalLabel">Crear Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="crearUsuarioForm" method="post" action="/Usuarios/CrearUsuario">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="crearNombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="crearNombre" name="Nombre" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="crearApellidos" class="form-label">Apellidos</label>
+                            <input type="text" class="form-control" id="crearApellidos" name="Apellidos" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="crearCorreo" class="form-label">Correo</label>
+                            <input type="email" class="form-control" id="crearCorreo" name="Correo" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="crearTelefono" class="form-label">Teléfono</label>
+                            <input type="number" class="form-control" id="crearTelefono" name="Telefono" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="crearAdmin" class="form-label">Admin</label>
+                            <input type="hidden" name="Admin" value="0" />
+                            <input type="checkbox" id="crearAdmin" name="Admin" value="1" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="crearIdEmpresa" class="form-label">Empresa</label>
+                            <select class="form-select" id="crearIdEmpresa" name="IdEmpresa" required>
+                                <option value="" selected disabled>Seleccione una empresa</option>
+                                <option value="1">Empresa 1</option>
+                                <option value="2">Empresa 2</option>
+                                <!-- Agrega más opciones según sea necesario -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Crear</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 
 
     <script>
         function setIdUsuario(id) {
-            document.getElementById("idUsuario").value = id;          
+            document.getElementById("idUsuario").value = id;
         }
 
         function setEditUser(id, nombre, apellidos, telefono, Correo, admin, idEmpresa) {
@@ -167,7 +220,7 @@
             e.preventDefault(); // Evita que el checkbox cambie de estado
         });
 
-        
+
     </script>
 
 
