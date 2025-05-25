@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using OfficeOpenXml;
 using System.IO;
 using System.ComponentModel;
+using System.Web.Script.Serialization;
 
 namespace bufinscustomers.Controllers
 {
@@ -150,17 +151,23 @@ namespace bufinscustomers.Controllers
 
             try
             {
-           
+                var tablasExcel = new List<(string nombre, DataTable tabla)>(); // lista de todas las tablas
+
                 using (var package = new ExcelPackage(archivoExcel.InputStream))
                 {
-                    // Proceso de lectura y carga de datos desde el archivo Excel
+                    var totalHojas = package.Workbook.Worksheets.Count;
+                    string prefijoTabla = (totalHojas == 21) ? "Z_" : "X_";
+
                     foreach (var hoja in package.Workbook.Worksheets)
                     {
-                        var dt = new DataTable(hoja.Name);
-                        int totalCols = hoja.Dimension.End.Column;
-                        int totalRows = hoja.Dimension.End.Row;
+                        var dt = new DataTable(prefijoTabla + hoja.Name);
+                        int totalCols = hoja.Dimension?.End.Column ?? 0;
+                        int totalRows = hoja.Dimension?.End.Row ?? 0;
 
-                        // Crear las columnas de la DataTable
+                        if (totalCols == 0 || totalRows == 0)
+                            continue;
+
+                        // Columnas
                         for (int col = 1; col <= totalCols; col++)
                         {
                             var colName = hoja.Cells[1, col].Text.Trim();
@@ -168,7 +175,7 @@ namespace bufinscustomers.Controllers
                                 dt.Columns.Add(colName);
                         }
 
-                        // Llenar las filas con los datos del archivo Excel
+                        // Filas
                         for (int row = 2; row <= totalRows; row++)
                         {
                             var dr = dt.NewRow();
@@ -179,35 +186,61 @@ namespace bufinscustomers.Controllers
                             dt.Rows.Add(dr);
                         }
 
-                        // Guardar los datos procesados en SQL Server
-                        GuardarEnSQLServer(dt);
+                        GuardarEnSQLServer(dt); // guardar en SQL Server
+                        tablasExcel.Add((dt.TableName, dt)); // guardar para mostrar
                     }
 
-                    TempData["Mensaje"] = "Archivo procesado correctamente.";  
-                    TempData["MensajeTipo"] = "success";
+                    var resultadoValidacion = ValidarPlantilla();
+
+                    if (resultadoValidacion.CodMessage == 0)
+                    {
+                        TempData["Mensaje"] = resultadoValidacion.Message;
+                        TempData["MensajeTipo"] = "error";
+
+                        // Guardamos las tablas para mostrarlas en la siguiente vista
+                        TempData["TablasExcel"] = null;
+                    }
+                    else
+                    {
+                        TempData["Mensaje"] = resultadoValidacion.Message;
+                        TempData["MensajeTipo"] = "success";
+
+                        TempData["TablasExcel"] = tablasExcel;
+                    }
                 }
             }
-
             catch (Exception ex)
             {
-                string mensaje = "Hubo un error al procesar el archivo.";
-
-                if (ex.Message.Contains("not an valid Package file"))
-                {
-                    mensaje = "El archivo cargado debe ser de tipo .xlsx.";
-                }
-                else if (ex.Message.Contains("password"))
-                {
-                    mensaje = "El archivo está protegido con contraseña y no puede ser procesado.";
-                }
-
-                TempData["Mensaje"] = mensaje;
+                TempData["Mensaje"] = $"Error al procesar el archivo: {ex.Message}";
                 TempData["MensajeTipo"] = "error";
             }
 
             return RedirectToAction("CargueExcel", "Home");
         }
 
+        private (int CodMessage, string Message) ValidarPlantilla()
+        {
+            using (SqlConnection conn = new SqlConnection(cadena))
+            {
+                conn.Open();
+                using (SqlCommand cmd = new SqlCommand("dbo.SP_ValidarPlantillaInicial", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            int cod = Convert.ToInt32(reader["CodMessage"]);
+                            string msg = reader["Message"].ToString();
+                            return (cod, msg);
+                        }
+                    }
+                }
+            }
+
+            return (0, "Error desconocido en validación.");
+        }
 
         private void GuardarEnSQLServer(DataTable tabla)
         {
@@ -218,7 +251,8 @@ namespace bufinscustomers.Controllers
 
                 using (SqlBulkCopy bulk = new SqlBulkCopy(conn))
                 {
-                    bulk.DestinationTableName = $"[{tabla.TableName}]";
+                    // Forzar esquema dbo
+                    bulk.DestinationTableName = $"[dbo].[{tabla.TableName}]";
                     bulk.WriteToServer(tabla);
                 }
             }
@@ -228,15 +262,19 @@ namespace bufinscustomers.Controllers
         {
             var columnas = tabla.Columns.Cast<DataColumn>()
                               .Select(c => $"[{c.ColumnName}] NVARCHAR(MAX)");
+
+            string nombreTabla = $"[dbo].[{tabla.TableName}]"; // Forzar uso del esquema dbo
             string sql = $@"
-            IF OBJECT_ID('{tabla.TableName}', 'U') IS NOT NULL DROP TABLE [{tabla.TableName}];
-            CREATE TABLE [{tabla.TableName}] ({string.Join(", ", columnas)});
-        ";
+                            IF OBJECT_ID('{nombreTabla}', 'U') IS NOT NULL 
+                                DROP TABLE {nombreTabla};
+                            CREATE TABLE {nombreTabla} ({string.Join(", ", columnas)});";
 
             using (SqlCommand cmd = new SqlCommand(sql, conn))
             {
                 cmd.ExecuteNonQuery();
             }
         }
+
+
     }
 }
