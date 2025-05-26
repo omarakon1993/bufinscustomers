@@ -5,26 +5,30 @@ namespace bufinscustomers
 {
     public class BundleConfig
     {
-        // Para obtener más información sobre las uniones, visite https://go.microsoft.com/fwlink/?LinkId=301862
         public static void RegisterBundles(BundleCollection bundles)
         {
+            // jQuery
             bundles.Add(new ScriptBundle("~/bundles/jquery").Include(
-                        "~/Scripts/jquery-{version}.js"));
+                        "~/Assets/Bootstrap/jquery/jquery-{version}.js"));  // <-- ajustado
 
+            // jQuery Validate
             bundles.Add(new ScriptBundle("~/bundles/jqueryval").Include(
-                        "~/Scripts/jquery.validate*"));
+                        "~/Assets/Scripts/jquery.validate*"));  // <-- si está en Scripts, está bien
 
-            // Utilice la versión de desarrollo de Modernizr para desarrollar y obtener información sobre los formularios.  De esta manera estará
-            // para la producción, use la herramienta de compilación disponible en https://modernizr.com para seleccionar solo las pruebas que necesite.
+            // Modernizr
             bundles.Add(new ScriptBundle("~/bundles/modernizr").Include(
-                        "~/Scripts/modernizr-*"));
+                        "~/Assets/Scripts/modernizr-*"));  // <-- si está en Scripts, está bien
 
-            bundles.Add(new Bundle("~/bundles/bootstrap").Include(
-                      "~/Scripts/bootstrap.js"));
+            // Bootstrap JS
+            bundles.Add(new ScriptBundle("~/bundles/bootstrap").Include(
+                        "~/Assets/Bootstrap/bootstrap/bootstrap.js"));  // <-- ajustado
 
-            bundles.Add(new StyleBundle("~/Content/css").Include(
-                      "~/Content/bootstrap.css",
-                      "~/Content/site.css"));
+            // Estilos CSS
+            bundles.Add(new StyleBundle("~/Assets/Content/css").Include(
+                        "~/Assets/css/bootstrap.css",
+                        "~/Assets/css/site.css"));  // <-- esta es válida si los CSS están en /Assets/css
         }
+
+
     }
 }
