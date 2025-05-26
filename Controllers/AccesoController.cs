@@ -82,13 +82,21 @@ namespace bufinscustomers.Controllers
         public ActionResult Login(Usuarios oUsuario)
         {
             // ⚡ Elimina espacios
-            oUsuario.Correo = oUsuario.Correo.Trim();
+            
             oUsuario.Clave = oUsuario.Clave.Trim();
+
+            var Usuario = "";   
+            var Correo = "";   
 
             if (!EsCorreoValido(oUsuario.Correo))
             {
-                ViewData["Mensaje"] = "El correo ingresado no tiene un formato válido.";
-                return View();
+                Usuario = oUsuario.Correo.Trim();
+                //ViewData["Mensaje"] = "El correo ingresado no tiene un formato válido.";
+                //return View();
+            }
+            else
+            {
+                Correo = oUsuario.Correo.Trim();
             }
 
             // Luego convierte
@@ -97,7 +105,8 @@ namespace bufinscustomers.Controllers
             using (SqlConnection cn = new SqlConnection(cadena))
             {
                 SqlCommand cmd = new SqlCommand("sp_ValidarUsuario", cn);
-                cmd.Parameters.AddWithValue("Correo", oUsuario.Correo);
+                cmd.Parameters.AddWithValue("Usuario", Usuario);
+                cmd.Parameters.AddWithValue("Correo", Correo);
                 cmd.Parameters.AddWithValue("Clave", oUsuario.Clave);
                 cmd.CommandType = CommandType.StoredProcedure;
                 cn.Open();
@@ -137,6 +146,7 @@ namespace bufinscustomers.Controllers
                 return builder.ToString();
             }
         }
+
 
         [HttpPost]
         public ActionResult CargarExcel(HttpPostedFileBase archivoExcel)

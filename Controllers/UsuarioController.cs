@@ -6,6 +6,8 @@ using System.Data;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace bufinscustomers.Controllers
 {
@@ -44,6 +46,8 @@ namespace bufinscustomers.Controllers
                         {
                             Usuarios usuario = new Usuarios();
                             usuario.Id = (int)reader["Id"];
+                            usuario.Usuario = (string)reader["Usuario"];
+                            usuario.Clave = (string)reader["Clave"];
                             usuario.Nombre = (string)reader["Nombre"];
                             usuario.Apellidos = (string)reader["Apellidos"];
                             usuario.Correo = (string)reader["Correo"];
@@ -87,26 +91,34 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
-        public ActionResult EditarUsuario(Usuarios usuario)
+        public ActionResult EditarUsuario(Usuarios oUsuario)
         {
+
+            //if (!ModelState.IsValid)
+            //{
+            //    foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+            //    {
+            //        Console.WriteLine(error.ErrorMessage);
+            //    }
+            //}
             try
             {
                 using (SqlConnection connection = new SqlConnection(cadena))
                 {
                     using (SqlCommand command = new SqlCommand("sp_EditarUsuario", connection))
                     {
-                        if (usuario.Admin == null)
+                        if (oUsuario.Admin == null)
                         {
-                            usuario.Admin = 0;
+                            oUsuario.Admin = 0;
                         }
                         command.CommandType = CommandType.StoredProcedure;
-                        command.Parameters.AddWithValue("@Id", usuario.Id);
-                        command.Parameters.AddWithValue("@Nombre", usuario.Nombre);
-                        command.Parameters.AddWithValue("@Apellidos", usuario.Apellidos);
-                        command.Parameters.AddWithValue("@Correo", usuario.Correo);
-                        command.Parameters.AddWithValue("@Telefono", usuario.Telefono);              
-                        command.Parameters.AddWithValue("@Admin", usuario.Admin);
-                        command.Parameters.AddWithValue("@IdEmpresa", usuario.IdEmpresa);
+                        command.Parameters.AddWithValue("@Id", oUsuario.Id);
+                        command.Parameters.AddWithValue("@Nombre", oUsuario.Nombre);
+                        command.Parameters.AddWithValue("@Apellidos", oUsuario.Apellidos);
+                        command.Parameters.AddWithValue("@Correo", oUsuario.Correo);
+                        command.Parameters.AddWithValue("@Telefono", oUsuario.Telefono);              
+                        command.Parameters.AddWithValue("@Admin", oUsuario.Admin);
+                        command.Parameters.AddWithValue("@IdEmpresa", oUsuario.IdEmpresa);
 
                         connection.Open();
                         command.ExecuteNonQuery();
@@ -123,6 +135,86 @@ namespace bufinscustomers.Controllers
             return RedirectToAction("Usuarios");
         }
 
+        [HttpPost]
+        public ActionResult Registrar(Usuarios oUsuario)
+        {
+            bool registrado;
+            string mensaje;
+
+            // ⚡ Elimina espacios de correo y clave
+
+            oUsuario.Nombre = oUsuario.Nombre == null ? "" : oUsuario.Nombre.Trim();
+            oUsuario.Apellidos = oUsuario.Apellidos == null ? "" : oUsuario.Apellidos.Trim();
+            oUsuario.Correo = oUsuario.Correo == null ? "" : oUsuario.Correo.Trim();
+            oUsuario.Telefono = oUsuario.Telefono == null ? 0 : oUsuario.Telefono;
+            oUsuario.IdEmpresa = oUsuario.IdEmpresa == null ? 0 : oUsuario.IdEmpresa;
+
+
+            oUsuario.Usuario = oUsuario.Usuario.Trim();
+            oUsuario.Clave = oUsuario.Clave.Trim();
+            oUsuario.ConfirmarClave = oUsuario.ConfirmarClave.Trim();
+
+
+            if (oUsuario.Clave == oUsuario.ConfirmarClave)
+            {
+                oUsuario.Clave = ConvertirSha256(oUsuario.Clave);
+            }
+            else
+            {
+                TempData["InfoMessage"] = "Las contraseñas no coinciden";
+                return RedirectToAction("Usuarios");
+            }
+
+            if (oUsuario.Admin == null)
+            {
+                oUsuario.Admin = 0;
+            }
+
+            using (SqlConnection cn = new SqlConnection(cadena))
+            {
+                SqlCommand cmd = new SqlCommand("sp_RegistrarUsuario", cn);
+                cmd.Parameters.AddWithValue("Usuario", oUsuario.Usuario);
+                cmd.Parameters.AddWithValue("Clave", oUsuario.Clave);
+                cmd.Parameters.AddWithValue("Nombre", oUsuario.Nombre);
+                cmd.Parameters.AddWithValue("Apellidos", oUsuario.Apellidos);
+                cmd.Parameters.AddWithValue("Correo", oUsuario.Correo);
+                cmd.Parameters.AddWithValue("Telefono", oUsuario.Telefono);
+                cmd.Parameters.AddWithValue("Admin", oUsuario.Admin);
+                cmd.Parameters.AddWithValue("IdEmpresa", oUsuario.IdEmpresa);
+                cmd.Parameters.Add("Registrado", SqlDbType.Bit).Direction = ParameterDirection.Output;
+                cmd.Parameters.Add("Mensaje", SqlDbType.VarChar, 100).Direction = ParameterDirection.Output;
+                cmd.CommandType = CommandType.StoredProcedure;
+                cn.Open();
+                cmd.ExecuteNonQuery();
+                registrado = Convert.ToBoolean(cmd.Parameters["Registrado"].Value);
+                mensaje = cmd.Parameters["Mensaje"].Value.ToString();
+            }
+
+            if (registrado)
+            {
+                TempData["SuccessMessage"] = mensaje;
+            }
+            else
+            {
+                TempData["ErrorMessage"] = mensaje;
+            }
+
+            return RedirectToAction("Usuarios");         
+        }
+
+        public static string ConvertirSha256(string texto)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(texto));
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < bytes.Length; i++)
+                {
+                    builder.Append(bytes[i].ToString("x2")); // Hexadecimal minúscula
+                }
+                return builder.ToString();
+            }
+        }
 
     }
 }
