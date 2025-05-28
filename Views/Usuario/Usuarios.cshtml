@@ -10,6 +10,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
+    <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>  
+    <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script> <!-- estos scripts funcionan-->
+
+    @*<link href="~/Assets/Content/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Assets/Content/Site.css" rel="stylesheet" />*@
+
+
+
+    <!--<script src="~/Assets/Bootstrap/jquery/jquery.min.js"></script>--> <!-- Incluye jQuery aquí -->
+    <!--<script src="~/Assets/Bootstrap/bootstrap/js/bootstrap.bundle.min.js"></script>--> <!-- Luego carga Bootstrap -->
+
+
 </head>
 <body>
 
@@ -63,7 +75,7 @@
                                 <td>
                                     <!-- Aquí puedes agregar botones para editar o eliminar -->
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editUserModal"
-                                            onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa')">
+                                            onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa', '@usuario.Usuario', '@usuario.Clave')">
                                         Editar
                                     </button>
                                     <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" onclick="setIdUsuario(@usuario.Id)">
@@ -114,36 +126,76 @@
                     <h5 class="modal-title" id="editUserModalLabel">Editar Usuario</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <form id="editUserForm" method="post" action="/Usuario/EditarUsuario">
-                        <input type="hidden" id="editIdUsuario" name="Id" />
-                        <div class="mb-3">
-                            <label for="editNombre" class="form-label">Nombre</label>
-                            <input type="text" class="form-control" id="editNombre" name="Nombre" required />
+                <form id="editUserForm" method="post" action="/Usuario/EditarUsuario">
+                    <input type="hidden" id="editIdUsuario" name="Id" />
+                    <div class="modal-body">
+                        <!-- Pestañas de navegación -->
+                        <ul class="nav nav-tabs" id="editUserTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="edit-auth-tab" data-bs-toggle="tab" data-bs-target="#edit-auth" type="button" role="tab" aria-controls="edit-auth" aria-selected="true">
+                                    Autenticación
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="edit-user-data-tab" data-bs-toggle="tab" data-bs-target="#edit-user-data" type="button" role="tab" aria-controls="edit-user-data" aria-selected="false">
+                                    Datos del Usuario
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- Contenido de las pestañas -->
+                        <div class="tab-content" id="editUserTabsContent">
+                            <!-- Pestaña de Autenticación  -->
+                            <div class="tab-pane fade show active" id="edit-auth" role="tabpanel" aria-labelledby="edit-auth-tab">
+                                <div class="mb-3 mt-3">
+                                    <label for="editUsuario" class="form-label">Usuario</label>
+                                    <input type="text" class="form-control" id="editUsuario" name="Usuario" required />
+                                </div>
+                                <div class="mb-3 mt-3">
+                                    <label for="editClave" class="form-label">Clave</label>
+                                    <input type="text" class="form-control" id="editClave" name="Clave" />
+                                </div>                              
+                                <div class="mb-3">
+                                    <label for="editAdmin" class="form-label">Admin</label>
+                                    <input type="checkbox" id="editAdmin" name="Admin" value="1" />
+                                </div>
+                            </div>
+
+                            <!-- Pestaña de Datos del Usuario -->
+                            <div class="tab-pane fade" id="edit-user-data" role="tabpanel" aria-labelledby="edit-user-data-tab">
+                                <div class="mb-3 mt-3">
+                                    <label for="editNombre" class="form-label">Nombre</label>
+                                    <input type="text" class="form-control" id="editNombre" name="Nombre" required />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editApellidos" class="form-label">Apellidos</label>
+                                    <input type="text" class="form-control" id="editApellidos" name="Apellidos" required />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editTelefono" class="form-label">Teléfono</label>
+                                    <input type="number" class="form-control" id="editTelefono" name="Telefono" />
+                                </div>
+                                <div class="mb-3 mt-3">
+                                    <label for="editCorreo" class="form-label">Correo</label>
+                                    <input type="email" class="form-control" id="editCorreo" name="Correo" required />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editIdEmpresa" class="form-label">Empresa</label>
+                                    <select class="form-select" id="editIdEmpresa" name="IdEmpresa" required>
+                                        <option value="" selected disabled>Seleccione una empresa</option>
+                                        <option value="1">Empresa 1</option>
+                                        <option value="2">Empresa 2</option>
+                                        <!-- Agrega más opciones según sea necesario -->
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="editApellidos" class="form-label">Apellidos</label>
-                            <input type="text" class="form-control" id="editApellidos" name="Apellidos" required />
-                        </div>
-                        <div class="mb-3">
-                            <label for="editCorreo" class="form-label">Correo</label>
-                            <input type="Email" class="form-control" id="editCorreo" name="Correo" required />
-                        </div>
-                        <div class="mb-3">
-                            <label for="editTelefono" class="form-label">Teléfono</label>
-                            <input type="text" class="form-control" id="editTelefono" name="Telefono" />
-                        </div>
-                        <div class="mb-3">
-                            <label for="editAdmin" class="form-label">Admin</label>
-                            <input type="checkbox" id="editAdmin" name="Admin" value="1" />
-                        </div>
-                        <div class="mb-3">
-                            <label for="editIdEmpresa" class="form-label">IdEmpresa</label>
-                            <input type="text" class="form-control" id="editIdEmpresa" name="IdEmpresa" />
-                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-primary">Guardar cambios</button>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -153,40 +205,75 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="crearUsuarioModalLabel">Crear Usuario</h5>
+                    <h5 class="modal-title" id="crearUsuarioModalLabel">Crear usuario</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form id="crearUsuarioForm" method="post" action="/Usuarios/CrearUsuario">
+                <form id="crearUsuarioForm" method="post" action="/Usuario/Registrar">
                     <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="crearNombre" class="form-label">Nombre</label>
-                            <input type="text" class="form-control" id="crearNombre" name="Nombre" required />
-                        </div>
-                        <div class="mb-3">
-                            <label for="crearApellidos" class="form-label">Apellidos</label>
-                            <input type="text" class="form-control" id="crearApellidos" name="Apellidos" required />
-                        </div>
-                        <div class="mb-3">
-                            <label for="crearCorreo" class="form-label">Correo</label>
-                            <input type="email" class="form-control" id="crearCorreo" name="Correo" required />
-                        </div>
-                        <div class="mb-3">
-                            <label for="crearTelefono" class="form-label">Teléfono</label>
-                            <input type="number" class="form-control" id="crearTelefono" name="Telefono" />
-                        </div>
-                        <div class="mb-3">
-                            <label for="crearAdmin" class="form-label">Admin</label>
-                            <input type="hidden" name="Admin" value="0" />
-                            <input type="checkbox" id="crearAdmin" name="Admin" value="1" />
-                        </div>
-                        <div class="mb-3">
-                            <label for="crearIdEmpresa" class="form-label">Empresa</label>
-                            <select class="form-select" id="crearIdEmpresa" name="IdEmpresa" required>
-                                <option value="" selected disabled>Seleccione una empresa</option>
-                                <option value="1">Empresa 1</option>
-                                <option value="2">Empresa 2</option>
-                                <!-- Agrega más opciones según sea necesario -->
-                            </select>
+                        <!-- Pestañas de navegación -->
+                        <ul class="nav nav-tabs" id="crearUsuarioTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="auth-tab" data-bs-toggle="tab" data-bs-target="#auth" type="button" role="tab" aria-controls="auth" aria-selected="true">
+                                    Autenticación
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="user-data-tab" data-bs-toggle="tab" data-bs-target="#user-data" type="button" role="tab" aria-controls="user-data" aria-selected="false">
+                                    Datos del Usuario
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- Contenido de las pestañas -->
+                        <div class="tab-content" id="crearUsuarioTabsContent">
+                            <!-- Pestaña de Autenticación -->
+                            <div class="tab-pane fade show active" id="auth" role="tabpanel" aria-labelledby="auth-tab">
+                                <div class="mb-3 mt-3">
+                                    <label for="crearUsuario" class="form-label">Usuario</label>
+                                    <input type="text" class="form-control" id="crearUsuario" name="Usuario" required />
+                                </div>
+                                <div class="mb-3 mt-3">
+                                    <label for="crearClave" class="form-label">Clave</label>
+                                    <input type="text" class="form-control" id="crearClave" name="Clave" required />
+                                </div>
+                                <div class="mb-3 mt-3">
+                                    <label for="crearConfirmarClave" class="form-label">Confirmar Clave</label>
+                                    <input type="text" class="form-control" id="crearConfirmarClave" name="ConfirmarClave" required />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="crearAdmin" class="form-label">Admin</label>
+                                    <input type="checkbox" id="crearAdmin" name="Admin" value="1" />
+                                </div>
+                            </div>
+
+                            <!-- Pestaña de Datos del Usuario -->
+                            <div class="tab-pane fade" id="user-data" role="tabpanel" aria-labelledby="user-data-tab">
+                                <div class="mb-3 mt-3">
+                                    <label for="crearNombre" class="form-label">Nombre</label>
+                                    <input type="text" class="form-control" id="crearNombre" name="Nombre" required />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="crearApellidos" class="form-label">Apellidos</label>
+                                    <input type="text" class="form-control" id="crearApellidos" name="Apellidos" required />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="crearTelefono" class="form-label">Teléfono</label>
+                                    <input type="number" class="form-control" id="crearTelefono" name="Telefono" />
+                                </div>
+                                <div class="mb-3 mt-3">
+                                    <label for="crearCorreo" class="form-label">Correo</label>
+                                    <input type="email" class="form-control" id="crearCorreo" name="Correo" required />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="crearIdEmpresa" class="form-label">Empresa</label>
+                                    <select class="form-select" id="crearIdEmpresa" name="IdEmpresa" required>
+                                        <option value="" selected disabled>Seleccione una empresa</option>
+                                        <option value="1">Empresa 1</option>
+                                        <option value="2">Empresa 2</option>
+                                        <!-- Agrega más opciones según sea necesario -->
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -198,6 +285,68 @@
         </div>
     </div>
 
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <script>
+           const isMobile = window.innerWidth <= 768;
+
+           Swal.fire({
+               toast: true,
+               position: isMobile ? 'top' : 'top-end',
+               icon: 'error',
+               title: '@TempData["ErrorMessage"]',
+               showConfirmButton: false,
+               timer: 3000,
+               timerProgressBar: true,
+               didOpen: (toast) => {
+                   toast.addEventListener('mouseenter', Swal.stopTimer);
+                   toast.addEventListener('mouseleave', Swal.resumeTimer);
+               }
+           });
+        </script>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <script>
+            const isMobile = window.innerWidth <= 768;
+
+            Swal.fire({
+                toast: true,
+                position: isMobile ? 'top' : 'top-end',
+                icon: 'success',
+                title: '@TempData["SuccessMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        </script>
+    }
+
+    @if (TempData["InfoMessage"] != null)
+    {
+        <script>
+        const isMobile = window.innerWidth <= 768;
+
+        Swal.fire({
+            toast: true,
+            position: isMobile ? 'top' : 'top-end',
+            icon: 'info',
+            title: '@TempData["InfoMessage"]',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            }
+        });
+        </script>
+    }
 
 
     <script>
@@ -205,8 +354,8 @@
             document.getElementById("idUsuario").value = id;
         }
 
-        function setEditUser(id, nombre, apellidos, telefono, Correo, admin, idEmpresa) {
-            console.log(admin);
+        function setEditUser(id, nombre, apellidos, telefono, Correo, admin, idEmpresa, usuario, clave) {
+
             document.getElementById("editIdUsuario").value = id;
             document.getElementById("editNombre").value = nombre;
             document.getElementById("editApellidos").value = apellidos;
@@ -214,6 +363,10 @@
             document.getElementById("editTelefono").value = telefono;
             document.getElementById("editAdmin").checked = (admin == 1 || admin === '1');
             document.getElementById("editIdEmpresa").value = idEmpresa;
+
+            // Si tienes un campo de usuario o claves, puedes inicializarlos aquí si es necesario
+            document.getElementById("editUsuario").value = usuario; // Ejemplo: usa el nombre como usuario
+            document.getElementById("editClave").value = clave; // Limpia el campo de clave
         }
 
         document.getElementById("chckAdmin").addEventListener("click", function (e) {
