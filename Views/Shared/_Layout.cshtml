@@ -53,7 +53,7 @@
 
             <hr class="sidebar-divider d-none d-md-block">
 
-            @if ( UsuarioSesionHelper.UsuarioActual.Admin == 1)
+            @if (UsuarioSesionHelper.UsuarioActual != null && UsuarioSesionHelper.UsuarioActual.Admin == 1)
             {
                 <div class="sidebar-heading">
                     <i class="fas fa-fw fa-cog"></i>
@@ -66,9 +66,19 @@
                         <i class="fas fa-user-plus"></i>
                         <span>Usuarios</span>
                     </a>
-                    <div id="collapseThree" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                    <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
                             <a class="collapse-item" href="@Url.Action("Usuarios", "Usuario")">Maestro de usuarios</a>
+                        </div>
+                    </div>
+                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseEmpresas"
+                       aria-expanded="true" aria-controls="collapseEmpresas">
+                        <i class="fas fa-building"></i>
+                        <span>Empresas</span>
+                    </a>
+                    <div id="collapseEmpresas" class="collapse" aria-labelledby="headingEmpresas" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item" href="@Url.Action("Empresas", "Empresa")">Maestro de empresas</a>
                         </div>
                     </div>
                 </li>

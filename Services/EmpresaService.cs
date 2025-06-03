@@ -1,4 +1,5 @@
 using bufinscustomers.Models;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -37,6 +38,71 @@ namespace bufinscustomers.Services
             }
 
             return empresas;
+        }
+
+        // Crear empresa
+        public bool CrearEmpresa(Empresas empresa, out string mensaje)
+        {
+            bool registrado = false;
+            mensaje = "";
+
+            using (SqlConnection cn = new SqlConnection(cadena))
+            {
+                SqlCommand cmd = new SqlCommand("sp_RegistrarEmpresa", cn);
+                cmd.Parameters.AddWithValue("@EmpNombre", empresa.Nombre);
+                cmd.Parameters.AddWithValue("@EmpNit", empresa.Nit);
+                cmd.Parameters.AddWithValue("@EmpDireccion", empresa.Direccion);
+                cmd.Parameters.AddWithValue("@EmpTelefono", empresa.Telefono);
+                cmd.Parameters.Add("@Registrado", SqlDbType.Bit).Direction = ParameterDirection.Output;
+                cmd.Parameters.Add("@Mensaje", SqlDbType.VarChar, 100).Direction = ParameterDirection.Output;
+                cmd.CommandType = CommandType.StoredProcedure;
+                cn.Open();
+                cmd.ExecuteNonQuery();
+                registrado = Convert.ToBoolean(cmd.Parameters["@Registrado"].Value);
+                mensaje = cmd.Parameters["@Mensaje"].Value.ToString();
+            }
+
+            return registrado;
+        }
+
+        // Editar empresa
+        public bool EditarEmpresa(Empresas empresa)
+        {
+            bool actualizado = false;
+
+            using (SqlConnection cn = new SqlConnection(cadena))
+            {
+                SqlCommand cmd = new SqlCommand("sp_EditarEmpresa", cn);
+                cmd.Parameters.AddWithValue("@EmpId", empresa.Id);
+                cmd.Parameters.AddWithValue("@EmpNombre", empresa.Nombre);
+                cmd.Parameters.AddWithValue("@EmpNit", empresa.Nit);
+                cmd.Parameters.AddWithValue("@EmpDireccion", empresa.Direccion);
+                cmd.Parameters.AddWithValue("@EmpTelefono", empresa.Telefono);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cn.Open();
+                int filas = cmd.ExecuteNonQuery();
+                actualizado = filas > 0;
+            }
+
+            return actualizado;
+        }
+
+        // Eliminar empresa
+        public bool EliminarEmpresa(int idEmpresa)
+        {
+            bool eliminado = false;
+
+            using (SqlConnection cn = new SqlConnection(cadena))
+            {
+                SqlCommand cmd = new SqlCommand("sp_EliminarEmpresa", cn);
+                cmd.Parameters.AddWithValue("@EmpId", idEmpresa);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cn.Open();
+                int filas = cmd.ExecuteNonQuery();
+                eliminado = filas > 0;
+            }
+
+            return eliminado;
         }
     }
 }

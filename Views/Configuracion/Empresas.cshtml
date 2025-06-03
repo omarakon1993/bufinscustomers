@@ -1,14 +1,237 @@
-﻿<!DOCTYPE html>
+﻿@model IEnumerable<bufinscustomers.Models.Empresas>
+
+<!DOCTYPE html>
 <html>
 <head>
-    <title>Página de Empresas</title>
+    <title>Maestro de empresas</title>
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
+    <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script>
 </head>
 <body>
-    <h1>Listado de Empresas</h1>
-    <ul>
-        <li>Empresa 1</li>
-        <li>Empresa 2</li>
-        <li>Empresa 3</li>
-    </ul>
+    <style>
+        .table-wrapper {
+            max-height: 280px;
+            overflow-y: auto;
+        }
+    </style>
+
+    <h2>Maestro de empresas</h2>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Empresas</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive table-wrapper">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Nombre</th>
+                            <th>Nit</th>
+                            <th>Dirección</th>
+                            <th>Teléfono</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var empresa in Model)
+                        {
+                            <tr>
+                                <td>@empresa.Id</td>
+                                <td>@empresa.Nombre</td>
+                                <td>@empresa.Nit</td>
+                                <td>@empresa.Direccion</td>
+                                <td>@empresa.Telefono</td>
+                                <td>
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editEmpresaModal"
+                                            onclick="setEditEmpresa(@empresa.Id, '@empresa.Nombre', '@empresa.Nit', '@empresa.Direccion', '@empresa.Telefono')">
+                                        Editar
+                                    </button>
+                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" onclick="setIdEmpresa(@empresa.Id)">
+                                        Eliminar
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearEmpresaModal">
+                Crear Empresa
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Estás seguro de que deseas eliminar esta empresa?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form id="deleteForm" method="post" action="/Empresa/EliminarEmpresa">
+                        <input type="hidden" id="idEmpresa" name="idEmpresa" />
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de edición -->
+    <div class="modal fade" id="editEmpresaModal" tabindex="-1" aria-labelledby="editEmpresaModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editEmpresaModalLabel">Editar Empresa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editEmpresaForm" method="post" action="/Empresa/EditarEmpresa">
+                    <input type="hidden" id="editIdEmpresa" name="Id" />
+                    <div class="modal-body">
+                        <div class="mb-3 mt-3">
+                            <label for="editNombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="editNombre" name="Nombre" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="editNit" class="form-label">Nit</label>
+                            <input type="text" class="form-control" id="editNit" name="Nit" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="editDireccion" class="form-label">Dirección</label>
+                            <input type="text" class="form-control" id="editDireccion" name="Direccion" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="editTelefono" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="editTelefono" name="Telefono" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Creación -->
+    <div class="modal fade" id="crearEmpresaModal" tabindex="-1" aria-labelledby="crearEmpresaModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="crearEmpresaModalLabel">Crear empresa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="crearEmpresaForm" method="post" action="/Empresa/CrearEmpresa">
+                    <div class="modal-body">
+                        <div class="mb-3 mt-3">
+                            <label for="crearNombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="crearNombre" name="Nombre" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="crearNit" class="form-label">Nit</label>
+                            <input type="text" class="form-control" id="crearNit" name="Nit" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="crearDireccion" class="form-label">Dirección</label>
+                            <input type="text" class="form-control" id="crearDireccion" name="Direccion" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="crearTelefono" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="crearTelefono" name="Telefono" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Crear</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <script>
+           const isMobile = window.innerWidth <= 768;
+           Swal.fire({
+               toast: true,
+               position: isMobile ? 'top' : 'top-end',
+               icon: 'error',
+               title: '@TempData["ErrorMessage"]',
+               showConfirmButton: false,
+               timer: 3000,
+               timerProgressBar: true,
+               didOpen: (toast) => {
+                   toast.addEventListener('mouseenter', Swal.stopTimer);
+                   toast.addEventListener('mouseleave', Swal.resumeTimer);
+               }
+           });
+        </script>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <script>
+            const isMobile = window.innerWidth <= 768;
+            Swal.fire({
+                toast: true,
+                position: isMobile ? 'top' : 'top-end',
+                icon: 'success',
+                title: '@TempData["SuccessMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        </script>
+    }
+
+    @if (TempData["InfoMessage"] != null)
+    {
+        <script>
+        const isMobile = window.innerWidth <= 768;
+        Swal.fire({
+            toast: true,
+            position: isMobile ? 'top' : 'top-end',
+            icon: 'info',
+            title: '@TempData["InfoMessage"]',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            }
+        });
+        </script>
+    }
+
+    <script>function setIdEmpresa(id) {
+            document.getElementById("idEmpresa").value = id;
+        }
+
+        function setEditEmpresa(id, nombre, nit, direccion, telefono) {
+            document.getElementById("editIdEmpresa").value = id;
+            document.getElementById("editNombre").value = nombre;
+            document.getElementById("editNit").value = nit;
+            document.getElementById("editDireccion").value = direccion;
+            document.getElementById("editTelefono").value = telefono;
+        }</script>
 </body>
 </html>

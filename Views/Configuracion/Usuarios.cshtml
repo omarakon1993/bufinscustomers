@@ -40,7 +40,7 @@
 
     <div class="card shadow mb-4">
         <div class="card-header py-3">
-            @*<h6 class="m-0 font-weight-bold text-primary">Usuarios</h6>*@
+            <h6 class="m-0 font-weight-bold text-primary">Usuarios</h6>
         </div>
         <div class="card-body">
             <div class="table-responsive table-wrapper">
@@ -411,9 +411,6 @@
             document.getElementById("editUsuario").value = usuario;  
         }
 
-        document.getElementById("chckAdmin").addEventListener("click", function (e) {
-            e.preventDefault(); // Evita que el checkbox cambie de estado
-        });
 
         function setCambioClaveData() {
             const idUsuario = document.getElementById("editIdUsuario").value;
