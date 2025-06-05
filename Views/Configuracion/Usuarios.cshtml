@@ -1,4 +1,4 @@
-﻿
+﻿@using bufinscustomers.Models
 
 <!DOCTYPE html>
 
@@ -10,11 +10,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
-    <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>  
+    <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
     <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script> <!-- estos scripts funcionan-->
-
     @*<link href="~/Assets/Content/bootstrap.min.css" rel="stylesheet" />
-    <link href="~/Assets/Content/Site.css" rel="stylesheet" />*@
+        <link href="~/Assets/Content/Site.css" rel="stylesheet" />*@
 
 
 
@@ -54,13 +53,18 @@
                             <th>Teléfono</th>
                             <th>Correo</th>
                             <th>Admin</th>
-                            <th>IdEmpresa</th>
+                            <th>Empresa</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var usuario in Model)
                         {
+
+                            Func<Empresas, bool> empresaPredicate = e => e.Id == usuario.IdEmpresa;
+                            var empresasList = ViewBag.Empresas as List<bufinscustomers.Models.Empresas>;
+                            var empresa = empresasList?.FirstOrDefault(empresaPredicate);
+
                             <tr>
                                 <td>@usuario.Id</td>
                                 <td>@usuario.Nombre</td>
@@ -68,10 +72,16 @@
                                 <td>@usuario.Telefono</td>
                                 <td>@usuario.Correo</td>
                                 <td align="center">
-                                    <input type="checkbox" id="chckAdmin" name="name" checked="@(usuario.Admin == 1 ? "checked" : null)" class="readonly-checkbox" />
+                                    @if (usuario.Admin == 1)
+                                    {
+                                        <i class="fas fa-fw fa-check text-success"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-fw fa-times text-danger"></i>
+                                    }
                                 </td>
-                                <td>@usuario.IdEmpresa</td>
-
+                                <td>@(empresa != null ? empresa.Nombre : string.Empty)</td>
                                 <td>
                                     <!-- Aquí puedes agregar botones para editar o eliminar -->
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editUserModal"
@@ -84,6 +94,7 @@
                                 </td>
                             </tr>
                         }
+
                     </tbody>
                 </table>
 
@@ -151,14 +162,12 @@
                                     <label for="editUsuario" class="form-label">Usuario</label>
                                     <input type="text" class="form-control" id="editUsuario" name="Usuario" required />
                                 </div>
-                                <div class="mb-3 mt-3">
-                                    <label for="editClave" class="form-label">Clave</label>
-                                    <input type="text" class="form-control" id="editClave" name="Clave" />
-                                </div>                              
-                                <div class="mb-3">
-                                    <label for="editAdmin" class="form-label">Admin</label>
-                                    <input type="checkbox" id="editAdmin" name="Admin" value="1" />
-                                </div>
+
+                                <!-- Botón para cambio de clave -->
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cambiarClaveModal"
+                                        onclick="setCambioClaveData()">
+                                    Cambiar Clave
+                                </button>
                             </div>
 
                             <!-- Pestaña de Datos del Usuario -->
@@ -183,10 +192,15 @@
                                     <label for="editIdEmpresa" class="form-label">Empresa</label>
                                     <select class="form-select" id="editIdEmpresa" name="IdEmpresa" required>
                                         <option value="" selected disabled>Seleccione una empresa</option>
-                                        <option value="1">Empresa 1</option>
-                                        <option value="2">Empresa 2</option>
-                                        <!-- Agrega más opciones según sea necesario -->
+                                        @foreach (var empresa in ViewBag.Empresas)
+                                        {
+                                            <option value="@empresa.Id">@empresa.Nombre</option>
+                                        }
                                     </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editAdmin" class="form-label">Admin</label>
+                                    <input type="checkbox" id="editAdmin" name="Admin" value="1" />
                                 </div>
                             </div>
                         </div>
@@ -240,10 +254,6 @@
                                     <label for="crearConfirmarClave" class="form-label">Confirmar Clave</label>
                                     <input type="text" class="form-control" id="crearConfirmarClave" name="ConfirmarClave" required />
                                 </div>
-                                <div class="mb-3">
-                                    <label for="crearAdmin" class="form-label">Admin</label>
-                                    <input type="checkbox" id="crearAdmin" name="Admin" value="1" />
-                                </div>
                             </div>
 
                             <!-- Pestaña de Datos del Usuario -->
@@ -268,10 +278,16 @@
                                     <label for="crearIdEmpresa" class="form-label">Empresa</label>
                                     <select class="form-select" id="crearIdEmpresa" name="IdEmpresa" required>
                                         <option value="" selected disabled>Seleccione una empresa</option>
-                                        <option value="1">Empresa 1</option>
-                                        <option value="2">Empresa 2</option>
+                                        @foreach (var empresa in ViewBag.Empresas)
+                                        {
+                                            <option value="@empresa.Id">@empresa.Nombre</option>
+                                        }
                                         <!-- Agrega más opciones según sea necesario -->
                                     </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="crearAdmin" class="form-label">Admin</label>
+                                    <input type="checkbox" id="crearAdmin" name="Admin" value="1" />
                                 </div>
                             </div>
                         </div>
@@ -279,6 +295,35 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-primary">Crear</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para cambio de clave -->
+    <div class="modal fade" id="cambiarClaveModal" tabindex="-1" aria-labelledby="cambiarClaveModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cambiarClaveModalLabel">Cambiar Clave</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="cambiarClaveForm" method="post" action="/Usuario/CambiarClave">
+                    <input type="hidden" id="cambioClaveIdUsuario" name="idUsuario" />
+                    <div class="modal-body">
+                        <div class="mb-3 mt-3">
+                            <label for="nuevaClave" class="form-label">Nueva Clave</label>
+                            <input type="password" class="form-control" id="nuevaClave" name="nuevaClave" required />
+                        </div>
+                        <div class="mb-3 mt-3">
+                            <label for="confirmarNuevaClave" class="form-label">Confirmar Nueva Clave</label>
+                            <input type="password" class="form-control" id="confirmarNuevaClave" name="confirmarNuevaClave" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
                     </div>
                 </form>
             </div>
@@ -363,15 +408,17 @@
             document.getElementById("editTelefono").value = telefono;
             document.getElementById("editAdmin").checked = (admin == 1 || admin === '1');
             document.getElementById("editIdEmpresa").value = idEmpresa;
-
-            // Si tienes un campo de usuario o claves, puedes inicializarlos aquí si es necesario
-            document.getElementById("editUsuario").value = usuario; // Ejemplo: usa el nombre como usuario
-            document.getElementById("editClave").value = clave; // Limpia el campo de clave
+            document.getElementById("editUsuario").value = usuario;  
         }
 
-        document.getElementById("chckAdmin").addEventListener("click", function (e) {
-            e.preventDefault(); // Evita que el checkbox cambie de estado
-        });
+
+        function setCambioClaveData() {
+            const idUsuario = document.getElementById("editIdUsuario").value;
+            const usuario = document.getElementById("editUsuario").value;
+
+            document.getElementById("cambioClaveIdUsuario").value = idUsuario;  
+            document.getElementById("cambiarClaveModalLabel").textContent = `Cambiar clave para: ${usuario}`;  
+        }
 
 
     </script>

@@ -117,6 +117,7 @@ namespace bufinscustomers.Controllers
             if (oUsuario.Id != 0)
             {
                 Session["usuario"] = oUsuario;
+                Session["IdUsuario"] = oUsuario.Id;
                 return RedirectToAction("index", "Home");
             }
             else

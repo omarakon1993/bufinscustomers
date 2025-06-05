@@ -13,8 +13,6 @@ namespace bufinscustomers.Controllers
     [ValidarSesion]
     public class HomeController : Controller
     {
-        static string cadena = "Data Source=190.90.160.168,1433;Initial Catalog=bufinscustomers;Persist Security Info=True;User ID=oglearni_bufins;Password=Bufins2025**;Encrypt=false";
-
         public ActionResult Index()
         {
             return View();
@@ -49,7 +47,5 @@ namespace bufinscustomers.Controllers
 
             return View(tablas ?? new List<(string, DataTable)>());
         }
-
-
     }
 }

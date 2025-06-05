@@ -8,6 +8,7 @@ using System.Web;
 using System.Web.Mvc;
 using System.Security.Cryptography;
 using System.Text;
+using bufinscustomers.Services;
 
 namespace bufinscustomers.Controllers
 {
@@ -15,14 +16,17 @@ namespace bufinscustomers.Controllers
     {
         static string cadena = "Data Source=190.90.160.168,1433;Initial Catalog=bufinscustomers;Persist Security Info=True;User ID=oglearni_bufins;Password=Bufins2025**;Encrypt=false";
 
+        private EmpresaService _empresaService = new EmpresaService();
+
         // GET: Usuario
         public ActionResult Usuarios()
         {
-            List<Usuarios> usuarios = GetUsuariosFromStoredProcedure();
-            return View(usuarios);
+            var empresas = _empresaService.ObtenerEmpresas();
+            ViewBag.Empresas = empresas;
+            List<Usuarios> usuarios = GetUsuariosFromStoredProcedure();           
+            return View("~/Views/Configuracion/Usuarios.cshtml", usuarios);
         }
 
-        // ...
 
         private List<Usuarios> GetUsuariosFromStoredProcedure()
         {
@@ -33,10 +37,6 @@ namespace bufinscustomers.Controllers
                 using (SqlCommand command = new SqlCommand("sp_ObtenerUsuarios", connection))
                 {
                     command.CommandType = CommandType.StoredProcedure;
-
-                    //// Agrega los parámetros necesarios si el procedimiento almacenado los requiere
-                    //command.Parameters.AddWithValue("@parametro1", valor1);
-                    //command.Parameters.AddWithValue("@parametro2", valor2);
 
                     connection.Open();
 
@@ -119,6 +119,7 @@ namespace bufinscustomers.Controllers
                         command.Parameters.AddWithValue("@Telefono", oUsuario.Telefono);              
                         command.Parameters.AddWithValue("@Admin", oUsuario.Admin);
                         command.Parameters.AddWithValue("@IdEmpresa", oUsuario.IdEmpresa);
+                        command.Parameters.AddWithValue("@Usuario", oUsuario.Usuario);
 
                         connection.Open();
                         command.ExecuteNonQuery();
@@ -132,7 +133,14 @@ namespace bufinscustomers.Controllers
                 TempData["ErrorMessage"] = "Error al actualizar el usuario: " + ex.Message;
             }
 
-            return RedirectToAction("Usuarios");
+            if(oUsuario.Admin == 0)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+            else
+            {
+                return RedirectToAction("Usuarios");
+            }
         }
 
         [HttpPost]
@@ -202,6 +210,48 @@ namespace bufinscustomers.Controllers
             return RedirectToAction("Usuarios");         
         }
 
+
+
+        [HttpPost]
+        public ActionResult CambiarClave(int idUsuario, string nuevaClave, string confirmarNuevaClave)
+        {
+            // Validar que las claves coincidan
+            if (nuevaClave.Trim() != confirmarNuevaClave.Trim())
+            {
+                TempData["InfoMessage"] = "Las contraseñas no coinciden.";
+                return RedirectToAction("Usuarios");
+            }
+
+            try
+            {
+                // Encriptar la nueva clave
+                string claveEncriptada = ConvertirSha256(nuevaClave.Trim());
+
+                using (SqlConnection connection = new SqlConnection(cadena))
+                {
+                    using (SqlCommand command = new SqlCommand("sp_CambiarClaveUsuario", connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+
+                        // Agregar parámetros al procedimiento almacenado
+                        command.Parameters.AddWithValue("@IdUsuario", idUsuario);
+                        command.Parameters.AddWithValue("@NuevaClave", claveEncriptada);
+
+                        connection.Open();
+                        command.ExecuteNonQuery();
+                    }
+                }
+
+                TempData["SuccessMessage"] = "Clave actualizada correctamente.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Error al cambiar la clave: " + ex.Message;
+            }
+
+            return RedirectToAction("Usuarios");
+        }
+
         public static string ConvertirSha256(string texto)
         {
             using (SHA256 sha256 = SHA256.Create())
@@ -215,6 +265,5 @@ namespace bufinscustomers.Controllers
                 return builder.ToString();
             }
         }
-
     }
 }
