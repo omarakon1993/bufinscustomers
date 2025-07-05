@@ -110,7 +110,7 @@
 
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">                                                           
+                               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="mr-2 d-none d-lg-inline text-gray-600 small" style="color: white !important;">
                                     @(UsuarioSesionHelper.UsuarioActual != null ? UsuarioSesionHelper.UsuarioActual.Nombre + " " + UsuarioSesionHelper.UsuarioActual.Apellidos : "Invitado")
                                 </span>
@@ -120,7 +120,7 @@
 
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                  aria-labelledby="userDropdown">
-                                <a class="dropdown-item" href="#">
+                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modalPerfilUsuario">
                                     <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Profile
                                 </a>
@@ -152,6 +152,31 @@
 
                 </div>
 
+            </div>
+
+            <!-- Modal de información de usuario -->
+            <div class="modal fade" id="modalPerfilUsuario" tabindex="-1" role="dialog" aria-labelledby="modalPerfilUsuarioLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalPerfilUsuarioLabel">Perfil de usuario</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p><strong>Nombre:</strong> @(UsuarioSesionHelper.UsuarioActual?.Nombre ?? "Invitado")</p>
+                            <p><strong>Apellidos:</strong> @(UsuarioSesionHelper.UsuarioActual?.Apellidos ?? "-")</p>
+                            <p><strong>Email:</strong> @(UsuarioSesionHelper.UsuarioActual?.Correo ?? "-")</p>
+                            <p><strong>Teléfono:</strong> @(UsuarioSesionHelper.UsuarioActual?.Telefono.HasValue == true ? UsuarioSesionHelper.UsuarioActual.Telefono.Value.ToString() : "-")</p>
+                            <p><strong>Usuario:</strong> @(UsuarioSesionHelper.UsuarioActual?.Usuario ?? "-")</p>
+                            <p><strong>Rol:</strong> @(UsuarioSesionHelper.UsuarioActual?.Admin == 1 ? "Administrador" : "Usuario")</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <footer class="sticky-footer bg-white">

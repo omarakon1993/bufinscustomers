@@ -1,4 +1,7 @@
 ﻿@using bufinscustomers.Models
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
 
 <!DOCTYPE html>
 
@@ -83,14 +86,15 @@
                                 </td>
                                 <td>@(empresa != null ? empresa.Nombre : string.Empty)</td>
                                 <td>
-                                    <!-- Aquí puedes agregar botones para editar o eliminar -->
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editUserModal"
-                                            onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa', '@usuario.Usuario', '@usuario.Clave')">
-                                        Editar
-                                    </button>
-                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" onclick="setIdUsuario(@usuario.Id)">
-                                        Eliminar
-                                    </button>
+                                    <div class="btn-group" role="group" aria-label="User Actions">
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editUserModal"
+                                                onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa', '@usuario.Usuario', '@usuario.Clave')">
+                                            Editar
+                                        </button>
+                                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" onclick="setIdUsuario(@usuario.Id)">
+                                            Eliminar
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         }
@@ -394,34 +398,36 @@
     }
 
 
-    <script>
-        function setIdUsuario(id) {
-            document.getElementById("idUsuario").value = id;
-        }
+    @section scripts {
+        <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
+        <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script>
+        <script>
+            function setIdUsuario(id) {
+                document.getElementById("idUsuario").value = id;
+            }
 
-        function setEditUser(id, nombre, apellidos, telefono, Correo, admin, idEmpresa, usuario, clave) {
+            function setEditUser(id, nombre, apellidos, telefono, Correo, admin, idEmpresa, usuario, clave) {
 
-            document.getElementById("editIdUsuario").value = id;
-            document.getElementById("editNombre").value = nombre;
-            document.getElementById("editApellidos").value = apellidos;
-            document.getElementById("editCorreo").value = Correo;
-            document.getElementById("editTelefono").value = telefono;
-            document.getElementById("editAdmin").checked = (admin == 1 || admin === '1');
-            document.getElementById("editIdEmpresa").value = idEmpresa;
-            document.getElementById("editUsuario").value = usuario;  
-        }
-
-
-        function setCambioClaveData() {
-            const idUsuario = document.getElementById("editIdUsuario").value;
-            const usuario = document.getElementById("editUsuario").value;
-
-            document.getElementById("cambioClaveIdUsuario").value = idUsuario;  
-            document.getElementById("cambiarClaveModalLabel").textContent = `Cambiar clave para: ${usuario}`;  
-        }
+                document.getElementById("editIdUsuario").value = id;
+                document.getElementById("editNombre").value = nombre;
+                document.getElementById("editApellidos").value = apellidos;
+                document.getElementById("editCorreo").value = Correo;
+                document.getElementById("editTelefono").value = telefono;
+                document.getElementById("editAdmin").checked = (admin == 1 || admin === '1');
+                document.getElementById("editIdEmpresa").value = idEmpresa;
+                document.getElementById("editUsuario").value = usuario;
+            }
 
 
-    </script>
+            function setCambioClaveData() {
+                const idUsuario = document.getElementById("editIdUsuario").value;
+                const usuario = document.getElementById("editUsuario").value;
+
+                document.getElementById("cambioClaveIdUsuario").value = idUsuario;
+                document.getElementById("cambiarClaveModalLabel").textContent = `Cambiar clave para: ${usuario}`;
+            }
+        </script>
+    }
 
 
 </body>

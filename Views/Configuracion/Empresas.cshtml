@@ -46,13 +46,15 @@
                                 <td>@empresa.Direccion</td>
                                 <td>@empresa.Telefono</td>
                                 <td>
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editEmpresaModal"
-                                            onclick="setEditEmpresa(@empresa.Id, '@empresa.Nombre', '@empresa.Nit', '@empresa.Direccion', '@empresa.Telefono')">
-                                        Editar
-                                    </button>
-                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" onclick="setIdEmpresa(@empresa.Id)">
-                                        Eliminar
-                                    </button>
+                                    <div class="btn-group" role="group" aria-label="User Actions">
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editEmpresaModal"
+                                                onclick="setEditEmpresa(@empresa.Id, '@empresa.Nombre', '@empresa.Nit', '@empresa.Direccion', '@empresa.Telefono')">
+                                            Editar
+                                        </button>
+                                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" onclick="setIdEmpresa(@empresa.Id)">
+                                            Eliminar
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         }

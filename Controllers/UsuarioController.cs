@@ -133,14 +133,14 @@ namespace bufinscustomers.Controllers
                 TempData["ErrorMessage"] = "Error al actualizar el usuario: " + ex.Message;
             }
 
-            if(oUsuario.Admin == 0)
-            {
-                return RedirectToAction("Index", "Home");
-            }
-            else
-            {
+            //if(oUsuario.Admin == 0)
+            //{
+            //    return RedirectToAction("Index", "Home");
+            //}
+            //else
+            //{
                 return RedirectToAction("Usuarios");
-            }
+            //}
         }
 
         [HttpPost]
@@ -148,6 +148,13 @@ namespace bufinscustomers.Controllers
         {
             bool registrado;
             string mensaje;
+
+            if (!EsUsuarioValido(oUsuario.Usuario))
+            {
+                TempData["ErrorMessage"] = "El nombre de usuario debe ser en minúsculas, sin espacios, puede contener números y puntos, y debe tener entre 4 y 20 caracteres.";
+                return RedirectToAction("Usuarios");
+            }
+
 
             // ⚡ Elimina espacios de correo y clave
 
@@ -169,7 +176,7 @@ namespace bufinscustomers.Controllers
             }
             else
             {
-                TempData["InfoMessage"] = "Las contraseñas no coinciden";
+                TempData["ErrorMessage"] = "Las contraseñas no coinciden";
                 return RedirectToAction("Usuarios");
             }
 
@@ -218,7 +225,7 @@ namespace bufinscustomers.Controllers
             // Validar que las claves coincidan
             if (nuevaClave.Trim() != confirmarNuevaClave.Trim())
             {
-                TempData["InfoMessage"] = "Las contraseñas no coinciden.";
+                TempData["ErrorMessage"] = "Las contraseñas no coinciden.";
                 return RedirectToAction("Usuarios");
             }
 
@@ -264,6 +271,12 @@ namespace bufinscustomers.Controllers
                 }
                 return builder.ToString();
             }
+        }
+
+        private bool EsUsuarioValido(string usuario)
+        {
+            // Solo letras minúsculas, números y puntos, sin espacios, empieza con letra, 4-20 caracteres
+            return System.Text.RegularExpressions.Regex.IsMatch(usuario, @"^[a-z][a-z0-9.]{3,19}$");
         }
     }
 }
