@@ -25,7 +25,7 @@ namespace bufinscustomers.Controllers
             {
                 TempData["Mensaje"] = "No se seleccionó ningún archivo.";
                 TempData["MensajeTipo"] = "error";
-                return RedirectToAction("CargueExcel", "Home");
+                return RedirectToAction("CargueExcel", "Excel");
             }
 
             // Guardar archivo en sesión si viene en la petición
@@ -153,9 +153,14 @@ namespace bufinscustomers.Controllers
 
                         else if (accion == "RetornoTablaDeDatos")
                         {
+                            //tablasExcel.Add((dt.TableName, dt));
+                            //TempData["TablasExcel"] = tablasExcel;
+                            //TempData["MostrarBotonImportar"] = true;
+
                             tablasExcel.Add((dt.TableName, dt));
-                            TempData["TablasExcel"] = tablasExcel;
+                            Session["TablasExcel"] = tablasExcel;
                             TempData["MostrarBotonImportar"] = true;
+
                         }
                     }
                 }
@@ -166,7 +171,7 @@ namespace bufinscustomers.Controllers
                 TempData["MensajeTipo"] = "error";
             }
 
-            return RedirectToAction("CargueExcel", "Home");
+            return RedirectToAction("CargueExcel", "Excel");
         }
 
         //Esto lo uso para retorna la respuesta del sql que es la tabla de errores
@@ -205,11 +210,14 @@ namespace bufinscustomers.Controllers
         {
             var tablasExcel = new List<(string nombre, DataTable tabla)>();
 
+            int idUsuario = UsuarioSesionHelper.UsuarioActual?.Id ?? 0;
+
             using (var conn = new SqlConnection(cadena))
             using (var cmd = new SqlCommand("dbo.SP_ValidarPlantillaInicial", conn))
             using (var adapter = new SqlDataAdapter(cmd))
             {
                 cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
                 var dt = new DataTable();
                 adapter.Fill(dt);
 
