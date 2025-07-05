@@ -14,6 +14,9 @@ using OfficeOpenXml;
 using System.IO;
 using System.ComponentModel;
 using System.Web.Script.Serialization;
+using Antlr.Runtime.Misc;
+using bufinscustomers.Helpers;
+using Newtonsoft.Json;
 
 namespace bufinscustomers.Controllers
 {
@@ -149,142 +152,6 @@ namespace bufinscustomers.Controllers
             }
         }
 
-
-        [HttpPost]
-        public ActionResult CargarExcel(HttpPostedFileBase archivoExcel)
-        {
-            if (archivoExcel == null || archivoExcel.ContentLength == 0)
-            {
-                TempData["Mensaje"] = "No se seleccionó ningún archivo.";
-                TempData["MensajeTipo"] = "error";
-                return RedirectToAction("CargueExcel", "Home");
-            }
-
-            try
-            {
-                var tablasExcel = new List<(string nombre, DataTable tabla)>(); // lista de todas las tablas
-
-                using (var package = new ExcelPackage(archivoExcel.InputStream))
-                {
-                    var totalHojas = package.Workbook.Worksheets.Count;
-                    string prefijoTabla = (totalHojas == 21) ? "Z_" : "X_";
-
-                    foreach (var hoja in package.Workbook.Worksheets)
-                    {
-                        var dt = new DataTable(prefijoTabla + hoja.Name);
-                        int totalCols = hoja.Dimension?.End.Column ?? 0;
-                        int totalRows = hoja.Dimension?.End.Row ?? 0;
-
-                        if (totalCols == 0 || totalRows == 0)
-                            continue;
-
-                        // Columnas
-                        for (int col = 1; col <= totalCols; col++)
-                        {
-                            var colName = hoja.Cells[1, col].Text.Trim();
-                            if (!dt.Columns.Contains(colName) && !string.IsNullOrWhiteSpace(colName))
-                                dt.Columns.Add(colName);
-                        }
-
-                        // Filas
-                        for (int row = 2; row <= totalRows; row++)
-                        {
-                            var dr = dt.NewRow();
-                            for (int col = 1; col <= totalCols; col++)
-                            {
-                                dr[col - 1] = hoja.Cells[row, col].Text;
-                            }
-                            dt.Rows.Add(dr);
-                        }
-
-                        GuardarEnSQLServer(dt); // guardar en SQL Server
-                        tablasExcel.Add((dt.TableName, dt)); // guardar para mostrar
-                    }
-
-                    var resultadoValidacion = ValidarPlantilla();
-
-                    if (resultadoValidacion.CodMessage == 0)
-                    {
-                        TempData["Mensaje"] = resultadoValidacion.Message;
-                        TempData["MensajeTipo"] = "error";
-
-                        // Guardamos las tablas para mostrarlas en la siguiente vista
-                        TempData["TablasExcel"] = null;
-                    }
-                    else
-                    {
-                        TempData["Mensaje"] = resultadoValidacion.Message;
-                        TempData["MensajeTipo"] = "success";
-
-                        TempData["TablasExcel"] = tablasExcel;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                TempData["Mensaje"] = $"Error al procesar el archivo: {ex.Message}";
-                TempData["MensajeTipo"] = "error";
-            }
-
-            return RedirectToAction("CargueExcel", "Home");
-        }
-
-        private (int CodMessage, string Message) ValidarPlantilla()
-        {
-            using (SqlConnection conn = new SqlConnection(cadena))
-            {
-                conn.Open();
-                using (SqlCommand cmd = new SqlCommand("dbo.SP_ValidarPlantillaInicial", conn))
-                {
-                    cmd.CommandType = CommandType.StoredProcedure;
-
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            int cod = Convert.ToInt32(reader["CodMessage"]);
-                            string msg = reader["Message"].ToString();
-                            return (cod, msg);
-                        }
-                    }
-                }
-            }
-
-            return (0, "Error desconocido en validación.");
-        }
-
-        private void GuardarEnSQLServer(DataTable tabla)
-        {
-            using (SqlConnection conn = new SqlConnection(cadena))
-            {
-                conn.Open();
-                CrearTablaSiNoExiste(conn, tabla);
-
-                using (SqlBulkCopy bulk = new SqlBulkCopy(conn))
-                {
-                    // Forzar esquema dbo
-                    bulk.DestinationTableName = $"[dbo].[{tabla.TableName}]";
-                    bulk.WriteToServer(tabla);
-                }
-            }
-        }
-
-        private void CrearTablaSiNoExiste(SqlConnection conn, DataTable tabla)
-        {
-            var columnas = tabla.Columns.Cast<DataColumn>()
-                              .Select(c => $"[{c.ColumnName}] NVARCHAR(MAX)");
-
-            string nombreTabla = $"[dbo].[{tabla.TableName}]"; // Forzar uso del esquema dbo
-            string sql = $@"
-                            IF OBJECT_ID('{nombreTabla}', 'U') IS NOT NULL 
-                                DROP TABLE {nombreTabla};
-                            CREATE TABLE {nombreTabla} ({string.Join(", ", columnas)});";
-
-            using (SqlCommand cmd = new SqlCommand(sql, conn))
-            {
-                cmd.ExecuteNonQuery();
-            }
-        }
 
 
     }
