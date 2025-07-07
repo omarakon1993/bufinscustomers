@@ -15,14 +15,6 @@
 
     <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
     <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script> <!-- estos scripts funcionan-->
-    @*<link href="~/Assets/Content/bootstrap.min.css" rel="stylesheet" />
-        <link href="~/Assets/Content/Site.css" rel="stylesheet" />*@
-
-
-
-    <!--<script src="~/Assets/Bootstrap/jquery/jquery.min.js"></script>--> <!-- Incluye jQuery aquí -->
-    <!--<script src="~/Assets/Bootstrap/bootstrap/js/bootstrap.bundle.min.js"></script>--> <!-- Luego carga Bootstrap -->
-
 
 </head>
 <body>
@@ -115,9 +107,11 @@
     <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar eliminación</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <div class="modal-body">
                     ¿Estás seguro de que deseas eliminar este usuario?
@@ -137,9 +131,9 @@
     <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="editUserModalLabel">Editar Usuario</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="editUserForm" method="post" action="/Usuario/EditarUsuario">
                     <input type="hidden" id="editIdUsuario" name="Id" />
@@ -194,7 +188,7 @@
                                 </div>
                                 <div class="mb-3">
                                     <label for="editIdEmpresa" class="form-label">Empresa</label>
-                                    <select class="form-select" id="editIdEmpresa" name="IdEmpresa" required>
+                                    <select class="custom-select" id="editIdEmpresa" name="IdEmpresa" required>
                                         <option value="" selected disabled>Seleccione una empresa</option>
                                         @foreach (var empresa in ViewBag.Empresas)
                                         {
@@ -222,9 +216,9 @@
     <div class="modal fade" id="crearUsuarioModal" tabindex="-1" aria-labelledby="crearUsuarioModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="crearUsuarioModalLabel">Crear usuario</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="crearUsuarioForm" method="post" action="/Usuario/Registrar">
                     <div class="modal-body">
@@ -309,9 +303,9 @@
     <div class="modal fade" id="cambiarClaveModal" tabindex="-1" aria-labelledby="cambiarClaveModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="cambiarClaveModalLabel">Cambiar Clave</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="cambiarClaveForm" method="post" action="/Usuario/CambiarClave">
                     <input type="hidden" id="cambioClaveIdUsuario" name="idUsuario" />
