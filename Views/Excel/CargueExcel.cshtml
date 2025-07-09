@@ -119,12 +119,6 @@
                 <div class="ui segment">
                     <div class="field">
                         <input type="hidden" name="MAX_FILE_SIZE" value="100000" />
-                        @*<ul>
-                            <li>El archivo a cargar debe ser de tipo .xlsx</li>
-                            <li>No se pueden tener espacios entre columnas o columnas vacias.</li>
-                            <li>El archivo no debe tener contraseña.</li>
-                            <li>Se deben cargar siempre las 21 tablas correspondientes.</li>
-                        </ul>*@
                         @using (Html.BeginForm("CargarExcel", "Excel", FormMethod.Post, new { enctype = "multipart/form-data", @id = "formCarga" }))
                         {
                             <div class="ps-4 mb-3">
@@ -138,9 +132,17 @@
                                     @if (TempData["MostrarBotonImportar"] != null && (bool)TempData["MostrarBotonImportar"])
                                     {
                                         <input type="button" name="accion" value="Importar" id="btnImportar" style="margin-left: 20px;" class="btn btn-success btn-sm" />
+
+                                        <form method="get" action="@Url.Action("CargueExcel", "Excel")" class="mb-0">
+                                            <input type="hidden" name="limpiar" value="true" />
+                                            <button type="submit" class="btn btn-outline-secondary btn-sm" title="Limpiar validación" style="margin-left: 20px;">
+                                                Limpiar validación
+                                            </button>
+                                        </form>
                                     }
 
                                     <button type="submit" id="btnSubmitOculto" style="display: none;" name="accion" value="RetornoTablaDeDatos"></button>
+
                                 </div>
                             </div>
                         }
@@ -168,12 +170,19 @@
                                                 form.submit();
                                             }, 300);
                                         } else {
-                                            location.reload();
+                                            fetch('/Excel/LimpiarDatosImportacion', {
+                                                method: 'POST'
+                                            }).then(response => {
+                                                if (response.redirected) {
+                                                    window.location.href = response.url;
+                                                }
+                                            });
                                         }
                                     });
                                 }
                             });
                         </script>
+
                         <script src="~/Assets/js/xlsx.full.min.js"></script>
                         <script>
 
@@ -255,7 +264,6 @@
                                 document.getElementById('progresoWrapper').classList.remove('d-none');
                             });
                         </script>
-
 
                         @if (TempData["Mensaje"] != null && TempData["MensajeTipo"] != null)
                         {
@@ -411,10 +419,10 @@
             </div>
         </div>
     </div>
-    <script>
+    @*<script>
         if (window.history.replaceState) {
             window.history.replaceState(null, null, window.location.href);
         }
-    </script>
+    </script>*@
 </body>
 </html>
