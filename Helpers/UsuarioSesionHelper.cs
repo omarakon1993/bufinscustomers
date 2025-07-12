@@ -70,7 +70,7 @@ namespace bufinscustomers.Helpers
                                 Nombre = Convert.ToString(reader["Nombre"]),
                                 Apellidos = Convert.ToString(reader["Apellidos"]),
                                 Correo = Convert.ToString(reader["Correo"]),
-                                Telefono = reader["Telefono"] != DBNull.Value ? Convert.ToInt32(reader["Telefono"]) : (int?)null,
+                                Telefono = Convert.ToString(reader["Telefono"]),
                                 Admin = reader["Admin"] != DBNull.Value ? Convert.ToByte(reader["Admin"]) : (byte?)null,
                                 IdEmpresa = reader["IdEmpresa"] != DBNull.Value ? Convert.ToInt32(reader["IdEmpresa"]) : (int?)null
                             };
