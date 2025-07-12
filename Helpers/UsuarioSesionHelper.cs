@@ -70,7 +70,7 @@ namespace bufinscustomers.Helpers
                                 Nombre = (string)reader["Nombre"],
                                 Apellidos = (string)reader["Apellidos"],
                                 Correo = (string)reader["Correo"],
-                                Telefono = reader["Telefono"] != DBNull.Value ? (int?)reader["Telefono"] : null,
+                                Telefono = (string)reader["Telefono"],
                                 Admin = reader["Admin"] != DBNull.Value ? (byte?)reader["Admin"] : null,
                                 IdEmpresa = reader["IdEmpresa"] != DBNull.Value ? (int?)reader["IdEmpresa"] : null
                             };

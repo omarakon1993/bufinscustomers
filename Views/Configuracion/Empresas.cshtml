@@ -15,6 +15,10 @@
             max-height: 280px;
             overflow-y: auto;
         }
+
+        .bg-primary {
+            background-color: #583AFF !important; /* Cambia el color de fondo del encabezado del modal */
+        }
     </style>
 
     <h2>Maestro de empresas</h2>
@@ -116,7 +120,8 @@
                         </div>
                         <div class="mb-3">
                             <label for="editTelefono" class="form-label">Teléfono</label>
-                            <input type="text" class="form-control" id="editTelefono" name="Telefono" />
+                            <input type="text" class="form-control" id="editTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo números, sin espacios ni guiones" oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
+
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -152,7 +157,8 @@
                         </div>
                         <div class="mb-3">
                             <label for="crearTelefono" class="form-label">Teléfono</label>
-                            <input type="text" class="form-control" id="crearTelefono" name="Telefono" />
+                            <input type="text" class="form-control" id="crearTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo números, sin espacios ni guiones" oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
+
                         </div>
                     </div>
                     <div class="modal-footer">

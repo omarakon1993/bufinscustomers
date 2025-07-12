@@ -168,9 +168,16 @@
                             <p><strong>Nombre:</strong> @(UsuarioSesionHelper.UsuarioActual?.Nombre ?? "Invitado")</p>
                             <p><strong>Apellidos:</strong> @(UsuarioSesionHelper.UsuarioActual?.Apellidos ?? "-")</p>
                             <p><strong>Email:</strong> @(UsuarioSesionHelper.UsuarioActual?.Correo ?? "-")</p>
-                            <p><strong>Teléfono:</strong> @(UsuarioSesionHelper.UsuarioActual?.Telefono.HasValue == true ? UsuarioSesionHelper.UsuarioActual.Telefono.Value.ToString() : "-")</p>
+                            <p><strong>Teléfono:</strong> @(UsuarioSesionHelper.UsuarioActual?.Telefono ?? "-" )</p>
                             <p><strong>Usuario:</strong> @(UsuarioSesionHelper.UsuarioActual?.Usuario ?? "-")</p>
                             <p><strong>Rol:</strong> @(UsuarioSesionHelper.UsuarioActual?.Admin == 1 ? "Administrador" : "Usuario")</p>
+                            @{
+                                var empresas = ViewBag.Empresas as List<bufinscustomers.Models.Empresas>;
+                                var idEmpresa = UsuarioSesionHelper.UsuarioActual?.IdEmpresa;
+                                var empresaActual = empresas?.FirstOrDefault(e => e.Id == idEmpresa);
+                            }
+                            <p><strong>Empresa:</strong> @(empresaActual != null ? empresaActual.Nombre : "Sin empresa")</p>
+                            <p></p>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>

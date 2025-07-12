@@ -29,6 +29,10 @@
             pointer-events: none; /* Evita la interacción del usuario */
             opacity: 1; /* Asegura que no se vea deshabilitado */
         }
+
+        .bg-primary {
+            background-color: #583AFF !important; /* Cambia el color de fondo del encabezado del modal */
+        }
     </style>
 
     <h2>Maestro de usuarios</h2>
@@ -180,7 +184,7 @@
                                 </div>
                                 <div class="mb-3">
                                     <label for="editTelefono" class="form-label">Teléfono</label>
-                                    <input type="number" class="form-control" id="editTelefono" name="Telefono" />
+                                    <input type="text" class="form-control" id="editTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo números, sin espacios ni guiones" oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
                                 </div>
                                 <div class="mb-3 mt-3">
                                     <label for="editCorreo" class="form-label">Correo</label>
@@ -205,7 +209,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                        <button type="submit" class="btn btn-primary" id="btnEditarUsuario">Guardar cambios</button>
                     </div>
                 </form>
             </div>
@@ -266,7 +270,8 @@
                                 </div>
                                 <div class="mb-3">
                                     <label for="crearTelefono" class="form-label">Teléfono</label>
-                                    <input type="number" class="form-control" id="crearTelefono" name="Telefono" />
+                                    <input type="text" class="form-control" id="crearTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo números, sin espacios ni guiones" oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
+
                                 </div>
                                 <div class="mb-3 mt-3">
                                     <label for="crearCorreo" class="form-label">Correo</label>
@@ -274,7 +279,8 @@
                                 </div>
                                 <div class="mb-3">
                                     <label for="crearIdEmpresa" class="form-label">Empresa</label>
-                                    <select class="form-select" id="crearIdEmpresa" name="IdEmpresa" required>
+                                    
+                                    <select class="custom-select" id="crearIdEmpresa" name="IdEmpresa" required>
                                         <option value="" selected disabled>Seleccione una empresa</option>
                                         @foreach (var empresa in ViewBag.Empresas)
                                         {
@@ -292,7 +298,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Crear</button>
+                        <button type="button" class="btn btn-primary" id="btnCrearUsuario">Crear</button>
                     </div>
                 </form>
             </div>
@@ -396,6 +402,7 @@
         <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
         <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script>
         <script>
+
             function setIdUsuario(id) {
                 document.getElementById("idUsuario").value = id;
             }
@@ -420,6 +427,50 @@
                 document.getElementById("cambioClaveIdUsuario").value = idUsuario;
                 document.getElementById("cambiarClaveModalLabel").textContent = `Cambiar clave para: ${usuario}`;
             }
+
+            function validarFormularioConAlerta(formId, buttonId) {
+                document.getElementById(buttonId).addEventListener('click', function () {
+                    var form = document.getElementById(formId);
+                    if (!form.checkValidity()) {
+                        var firstInvalid = form.querySelector(':invalid');
+                        if (firstInvalid) {
+                            var tabPane = firstInvalid.closest('.tab-pane');
+                            if (tabPane && !tabPane.classList.contains('active')) {
+                                var tabId = tabPane.id;
+                                var tabTrigger = document.querySelector('[data-bs-target="#' + tabId + '"]');
+                                if (tabTrigger) {
+                                    var tab = new bootstrap.Tab(tabTrigger);
+                                    tab.show();
+                                }
+                            }
+                            firstInvalid.focus();
+                        }
+                        const isMobile = window.innerWidth <= 768;
+                        form.classList.add('was-validated');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Por favor, completa todos los campos requeridos.',
+                            toast: true,
+                            position: isMobile ? 'top' : 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                            didOpen: (toast) => {
+                                toast.addEventListener('mouseenter', Swal.stopTimer);
+                                toast.addEventListener('mouseleave', Swal.resumeTimer);
+                            }
+                        });
+                        return;
+                    }
+                    form.submit();
+                });
+            }
+
+
+            // Llama la función para cada formulario/modal
+            validarFormularioConAlerta('crearUsuarioForm', 'btnCrearUsuario');
+            validarFormularioConAlerta('editUserForm', 'btnEditarUsuario');
+      
         </script>
     }
 

@@ -51,7 +51,7 @@ namespace bufinscustomers.Controllers
                             usuario.Nombre = (string)reader["Nombre"];
                             usuario.Apellidos = (string)reader["Apellidos"];
                             usuario.Correo = (string)reader["Correo"];
-                            usuario.Telefono = reader["Telefono"] != DBNull.Value ? (int?)reader["Telefono"] : null;
+                            usuario.Telefono = (string)reader["Telefono"];
                             usuario.Admin = reader["Admin"] != DBNull.Value ? (byte?)reader["Admin"] : null;
                             usuario.IdEmpresa = reader["IdEmpresa"] != DBNull.Value ? (int?)reader["IdEmpresa"] : null;
                             usuarios.Add(usuario);
@@ -93,14 +93,7 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         public ActionResult EditarUsuario(Usuarios oUsuario)
         {
-
-            //if (!ModelState.IsValid)
-            //{
-            //    foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
-            //    {
-            //        Console.WriteLine(error.ErrorMessage);
-            //    }
-            //}
+            oUsuario.Telefono = oUsuario.Telefono == null ? "" : oUsuario.Telefono;
             try
             {
                 using (SqlConnection connection = new SqlConnection(cadena))
@@ -133,14 +126,7 @@ namespace bufinscustomers.Controllers
                 TempData["ErrorMessage"] = "Error al actualizar el usuario: " + ex.Message;
             }
 
-            //if(oUsuario.Admin == 0)
-            //{
-            //    return RedirectToAction("Index", "Home");
-            //}
-            //else
-            //{
                 return RedirectToAction("Usuarios");
-            //}
         }
 
         [HttpPost]
@@ -161,7 +147,7 @@ namespace bufinscustomers.Controllers
             oUsuario.Nombre = oUsuario.Nombre == null ? "" : oUsuario.Nombre.Trim();
             oUsuario.Apellidos = oUsuario.Apellidos == null ? "" : oUsuario.Apellidos.Trim();
             oUsuario.Correo = oUsuario.Correo == null ? "" : oUsuario.Correo.Trim();
-            oUsuario.Telefono = oUsuario.Telefono == null ? 0 : oUsuario.Telefono;
+            oUsuario.Telefono = oUsuario.Telefono == null ? "" : oUsuario.Telefono;
             oUsuario.IdEmpresa = oUsuario.IdEmpresa == null ? 0 : oUsuario.IdEmpresa;
 
 
