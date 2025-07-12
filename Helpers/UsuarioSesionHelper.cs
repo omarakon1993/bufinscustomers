@@ -39,18 +39,18 @@ namespace bufinscustomers.Helpers
             using (SqlConnection connection = new SqlConnection(cadena))
             {
                 string query = @"
-            SELECT 
-                Id,
-                Usuario,
-                Clave,
-                Nombre,
-                Apellidos,
-                Correo,
-                Telefono,
-                Admin,
-                IdEmpresa
-            FROM Usuarios
-            WHERE Id = @IdUsuario";
+        SELECT 
+            Id,
+            Usuario,
+            Clave,
+            Nombre,
+            Apellidos,
+            Correo,
+            Telefono,
+            Admin,
+            IdEmpresa
+        FROM Usuarios
+        WHERE Id = @IdUsuario";
 
                 using (SqlCommand command = new SqlCommand(query, connection))
                 {
@@ -64,15 +64,15 @@ namespace bufinscustomers.Helpers
                         {
                             usuario = new Usuarios
                             {
-                                Id = (int)reader["Id"],
-                                Usuario = (string)reader["Usuario"],
-                                Clave = (string)reader["Clave"],
-                                Nombre = (string)reader["Nombre"],
-                                Apellidos = (string)reader["Apellidos"],
-                                Correo = (string)reader["Correo"],
-                                Telefono = (string)reader["Telefono"],
-                                Admin = reader["Admin"] != DBNull.Value ? (byte?)reader["Admin"] : null,
-                                IdEmpresa = reader["IdEmpresa"] != DBNull.Value ? (int?)reader["IdEmpresa"] : null
+                                Id = Convert.ToInt32(reader["Id"]),
+                                Usuario = Convert.ToString(reader["Usuario"]),
+                                Clave = Convert.ToString(reader["Clave"]),
+                                Nombre = Convert.ToString(reader["Nombre"]),
+                                Apellidos = Convert.ToString(reader["Apellidos"]),
+                                Correo = Convert.ToString(reader["Correo"]),
+                                Telefono = reader["Telefono"] != DBNull.Value ? Convert.ToInt32(reader["Telefono"]) : (int?)null,
+                                Admin = reader["Admin"] != DBNull.Value ? Convert.ToByte(reader["Admin"]) : (byte?)null,
+                                IdEmpresa = reader["IdEmpresa"] != DBNull.Value ? Convert.ToInt32(reader["IdEmpresa"]) : (int?)null
                             };
                         }
                     }
@@ -81,5 +81,6 @@ namespace bufinscustomers.Helpers
 
             return usuario;
         }
+
     }
 }

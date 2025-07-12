@@ -18,6 +18,14 @@ namespace bufinscustomers.Controllers
         static string cadena = "Data Source=190.90.160.168,1433;Initial Catalog=bufinscustomers;Persist Security Info=True;User ID=oglearni_bufins;Password=Bufins2025**;Encrypt=false";
 
         [HttpPost]
+        public ActionResult LimpiarDatosImportacion()
+        {
+            Session["TablasExcel"] = null;
+            TempData["MostrarBotonImportar"] = null;
+            return RedirectToAction("CargueExcel");
+        }
+
+        [HttpPost]
         public ActionResult CargarExcel(HttpPostedFileBase archivoExcel, string accion)
         {
             // Validar si hay archivo o si está en sesión
@@ -138,25 +146,16 @@ namespace bufinscustomers.Controllers
                             if (exito)
                             {
                                 var resultado = resultadoValidaciondeDatos();
-
-                                if (resultado.Count > 0)
-                                {
-                                    Session["TablasExcel"] = resultado;
-                                }
                             }
                             else
                             {
-                                Session["Mensaje"] = "❌ Error al importar los datos. No se pudo crear la tabla.";
+                                Session["Mensaje"] = "  |Error al importar los datos. No se pudo crear la tabla.";
                                 Session["MensajeTipo"] = "error";
                             }
                         }
 
                         else if (accion == "RetornoTablaDeDatos")
                         {
-                            //tablasExcel.Add((dt.TableName, dt));
-                            //TempData["TablasExcel"] = tablasExcel;
-                            //TempData["MostrarBotonImportar"] = true;
-
                             tablasExcel.Add((dt.TableName, dt));
                             Session["TablasExcel"] = tablasExcel;
                             TempData["MostrarBotonImportar"] = true;
@@ -171,15 +170,27 @@ namespace bufinscustomers.Controllers
                 TempData["MensajeTipo"] = "error";
             }
 
-            return RedirectToAction("CargueExcel", "Excel");
+            return RedirectToAction("CargueExcel", "Excel", new { limpiar = false });
         }
 
-        //Esto lo uso para retorna la respuesta del sql que es la tabla de errores
-        public ActionResult CargueExcel()
+        public ActionResult CargueExcel(bool limpiar = true)
         {
+            if (limpiar)
+            {
+                Session.Remove("TablasExcel");
+                TempData.Remove("Mensaje");
+                TempData.Remove("MensajeTipo");
+                TempData.Remove("MostrarBotonImportar");
+            }
+
             var modelo = Session["TablasExcel"] as List<(string nombre, DataTable tabla)> ?? new List<(string nombre, DataTable tabla)>();
+
+            Session.Remove("TablasExcel");
+            //TempData.Remove("MostrarBotonImportar");
+
             return View(modelo);
         }
+
 
         private bool GuardarEnSQLServer(DataTable tabla)
         {
@@ -209,7 +220,6 @@ namespace bufinscustomers.Controllers
         public List<(string nombre, DataTable tabla)> resultadoValidaciondeDatos()
         {
             var tablasExcel = new List<(string nombre, DataTable tabla)>();
-
             int idUsuario = UsuarioSesionHelper.UsuarioActual?.Id ?? 0;
 
             using (var conn = new SqlConnection(cadena))
@@ -218,23 +228,29 @@ namespace bufinscustomers.Controllers
             {
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
+
                 var dt = new DataTable();
                 adapter.Fill(dt);
 
-                //if (dt.Columns.Contains("CodMessage"))
-                if (dt.Rows[0]["CodMessage"].ToString() == "1")
+                // Validar si se retornó al menos una fila y CodMessage == 1
+                if (dt.Rows.Count == 1 &&
+                    int.TryParse(dt.Rows[0]["CodMessage"]?.ToString(), out int codMessage) &&
+                    codMessage == 1)
                 {
-                    TempData["Mensaje"] = dt.Rows[0]["ErrorMessage"].ToString();
-                    TempData["MensajeTipo"] = dt.Rows[0]["TypeMessage"].ToString().ToLower();
+                    // Éxito real
+                    TempData["Mensaje"] = dt.Rows[0]["ErrorMessage"]?.ToString() ?? "Proceso exitoso.";
+                    TempData["MensajeTipo"] = "success";
+                    Session.Remove("TablasExcel");
                 }
                 else
                 {
-                    // Si no hay mensaje, agregamos la tabla como "Errores encontrados"
+                    // Errores u observaciones
                     tablasExcel.Add(("Errores encontrados", dt));
-
                     TempData["TablasExcel"] = tablasExcel;
-                    //TempData["Mensaje"] = "Se encontraron errores de validación.";
-                    //TempData["MensajeTipo"] = "error";
+                    Session["TablasExcel"] = tablasExcel;
+
+                    TempData["Mensaje"] = "Se detectaron errores al importar la información por favor validar.";
+                    TempData["MensajeTipo"] = "error";
                 }
             }
 
