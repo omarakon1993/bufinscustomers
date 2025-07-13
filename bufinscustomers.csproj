@@ -142,12 +142,14 @@
     <Compile Include="Controllers\EmpresaController.cs" />
     <Compile Include="Controllers\ExcelController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\ReportesController.cs" />
     <Compile Include="Controllers\UsuarioController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Helpers\UsuarioSesionHelper.cs" />
     <Compile Include="Models\Empresas.cs" />
+    <Compile Include="Models\Reportes.cs" />
     <Compile Include="Models\Usuarios.cs" />
     <Compile Include="Permisos\ValidarSesionAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -2066,6 +2068,7 @@
     <Content Include="Assets\Scripts\jquery-3.7.1.min.map" />
     <Content Include="Views\Configuracion\Usuarios.cshtml" />
     <Content Include="Views\Configuracion\Empresas.cshtml" />
+    <Content Include="Views\Reportes\Reportes.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
