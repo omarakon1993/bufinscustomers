@@ -9,6 +9,8 @@ using System.Web.Mvc;
 using System.Security.Cryptography;
 using System.Text;
 using bufinscustomers.Services;
+using bufinscustomers.Helpers;
+using System.IO;
 
 namespace bufinscustomers.Controllers
 {
@@ -263,6 +265,48 @@ namespace bufinscustomers.Controllers
         {
             // Solo letras minúsculas, números y puntos, sin espacios, empieza con letra, 4-20 caracteres
             return System.Text.RegularExpressions.Regex.IsMatch(usuario, @"^[a-z][a-z0-9.]{3,19}$");
+        }
+
+
+        [HttpPost]
+        public ActionResult CargarImagenUsuario(HttpPostedFileBase ImagenUsuario)
+        {
+            if (ImagenUsuario != null && ImagenUsuario.ContentLength > 0)
+            {
+                // Convertir la imagen a base64
+                using (var ms = new MemoryStream())
+                {
+                    ImagenUsuario.InputStream.CopyTo(ms);
+                    var bytes = ms.ToArray();
+                    var base64 = Convert.ToBase64String(bytes);
+                    var tipoImagen = ImagenUsuario.ContentType;
+                    var nombreImagen = Path.GetFileName(ImagenUsuario.FileName);
+                    var usuarioId = UsuarioSesionHelper.UsuarioActual.Id;
+
+                    using (SqlConnection connection = new SqlConnection(cadena))
+                    {
+                        using (SqlCommand command = new SqlCommand("sp_GuardarImagenUsuario", connection))
+                        {
+                            command.CommandType = CommandType.StoredProcedure;
+                            command.Parameters.AddWithValue("@UsuarioId", usuarioId);
+                            command.Parameters.AddWithValue("@NombreImagen", nombreImagen);
+                            command.Parameters.AddWithValue("@TipoImagen", tipoImagen);
+                            command.Parameters.AddWithValue("@ImagenBase64", base64);
+
+                            connection.Open();
+                            command.ExecuteNonQuery();
+                        }
+                    }
+                }
+                // TempData["SuccessMessage"] = "Imagen de usuario actualizada correctamente.";
+                return Json(new { success = true, message = "Imagen de usuario actualizada correctamente." });
+            }
+            else
+            {
+                // TempData["ErrorMessage"] = "Por favor, selecciona una imagen válida.";
+                return Json(new { success = false, message = "Por favor, selecciona una imagen válida." });
+
+            }
         }
     }
 }

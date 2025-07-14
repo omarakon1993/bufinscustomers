@@ -180,11 +180,39 @@
                             <p></p>
                         </div>
                         <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalCargarImagen" data-dismiss="modal">
+                                Cambiar imagen
+                            </button>
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <div class="modal fade" id="modalCargarImagen" tabindex="-1" role="dialog" aria-labelledby="modalCargarImagenLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <form id="formCargarImagen" enctype="multipart/form-data" method="post" action="@Url.Action("CargarImagenUsuario", "Usuario")">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title" id="modalCargarImagenLabel">Cargar imagen de usuario</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="file" name="ImagenUsuario" accept="image/png, image/jpeg" class="form-control" required />
+                                <img id="previewImagen" src="#" alt="Vista previa" style="display:none; max-width:150px; max-height:150px; margin-top:10px;" />
+                                <div id="mensajeImagen" class="mt-2"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-success">Guardar</button>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
 
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
@@ -212,6 +240,116 @@
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
     @RenderSection("scripts", required: false)
+
+    <script>
+
+        $('input[name="ImagenUsuario"]').on('change', function () {
+            var input = this;
+            var preview = document.getElementById('previewImagen');
+            var mensajeDiv = $('#mensajeImagen');
+            mensajeDiv.html('');
+            preview.style.display = 'none';
+
+            if (input.files && input.files[0]) {
+                var file = input.files[0];
+
+                if (file.size > 204800) {
+                    mensajeDiv.html('<div class="alert alert-danger">La imagen debe pesar menos de 200 KB.</div>');
+                    return;
+                }
+
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var img = new Image();
+                    img.onload = function () {
+                        if (img.width > 400 || img.height > 400) {
+                            mensajeDiv.html('<div class="alert alert-danger">La imagen debe tener máximo 400x400 píxeles.</div>');
+                            preview.style.display = 'none';
+                        } else {
+                            preview.src = e.target.result;
+                            preview.style.display = 'block';
+                        }
+                    };
+                    img.onerror = function () {
+                        mensajeDiv.html('<div class="alert alert-danger">Archivo de imagen no válido.</div>');
+                        preview.style.display = 'none';
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Envío por AJAX solo si la imagen es válida
+        $('#formCargarImagen').on('submit', function (e) {
+            e.preventDefault();
+            var input = document.querySelector('input[name="ImagenUsuario"]');
+            var mensajeDiv = $('#mensajeImagen');
+            var preview = document.getElementById('previewImagen');
+
+            if (input.files.length === 0) {
+                mensajeDiv.html('<div class="alert alert-danger">Selecciona una imagen.</div>');
+                return;
+            }
+
+            // Solo enviar si la vista previa está visible (imagen válida)
+            if (preview.style.display !== 'block') {
+                mensajeDiv.html('<div class="alert alert-danger">La imagen seleccionada no es válida.</div>');
+                return;
+            }
+
+            var formData = new FormData($('#formCargarImagen')[0]);
+            $.ajax({
+                url: $('#formCargarImagen').attr('action'),
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                    if (response.success) {
+                        mensajeDiv.html('<div class="alert alert-success">' + response.message + '</div>');
+                    } else {
+                        mensajeDiv.html('<div class="alert alert-danger">' + response.message + '</div>');
+                    }
+                },
+                error: function () {
+                    mensajeDiv.html('<div class="alert alert-danger">Error al subir la imagen.</div>');
+                }
+            });
+        });
+
+
+        //$('#modalCargarImagen').on('show.bs.modal', function () {
+        //    debugger
+        //    $('#mensajeImagen').html('');
+        //    $('#previewImagen').attr('src', '#').hide();
+        //    $('input[name="ImagenUsuario"]').val('');
+        //});
+
+        //$('#modalCargarImagen').on('hidden.bs.modal', function () {
+        //    debugger
+        //    $('#mensajeImagen').html('');
+        //    $('#previewImagen').attr('src', '#').hide();
+        //    $('input[name="ImagenUsuario"]').val('');
+        //});
+
+        $(document).on('shown.bs.modal', '#modalCargarImagen', function () {
+          /*  debugger*/
+            $('#mensajeImagen').html('');
+            $('#previewImagen').attr('src', '#').hide();
+            $('input[name="ImagenUsuario"]').val('');
+        });
+
+        $(document).on('hidden.bs.modal', '#modalCargarImagen', function () {
+           /* debugger*/
+            $('#mensajeImagen').html('');
+            $('#previewImagen').attr('src', '#').hide();
+            $('input[name="ImagenUsuario"]').val('');
+        });
+
+       
+
+    </script>
 
 </body>
 </html>

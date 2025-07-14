@@ -426,6 +426,9 @@
 
                 document.getElementById("cambioClaveIdUsuario").value = idUsuario;
                 document.getElementById("cambiarClaveModalLabel").textContent = `Cambiar clave para: ${usuario}`;
+
+                var modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('editUserModal'));
+                modal.hide();
             }
 
             function validarFormularioConAlerta(formId, buttonId) {

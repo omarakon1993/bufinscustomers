@@ -125,7 +125,7 @@ namespace bufinscustomers.Controllers
             }
             else
             {
-                ViewData["Mensaje"] = "usuario no encontrado";
+                ViewData["Mensaje"] = "usuario o clave incorrecta";
                 return View();
             }
         }
