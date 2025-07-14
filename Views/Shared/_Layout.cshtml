@@ -335,7 +335,6 @@
                             <p><strong>Rol:</strong> @(UsuarioSesionHelper.UsuarioActual?.Admin == 1 ? "Administrador" : "Usuario")</p>
                             @{
                                 var empresas = ViewBag.Empresas as List<bufinscustomers.Models.Empresas>;
-                                var idEmpresa = UsuarioSesionHelper.UsuarioActual?.IdEmpresa;
                                 var empresaActual = empresas?.FirstOrDefault(e => e.Id == idEmpresa);
                             }
                             <p><strong>Empresa:</strong> @(empresaActual != null ? empresaActual.Nombre : "Sin empresa")</p>
