@@ -1,0 +1,13 @@
+﻿@{
+    ViewBag.Title = ViewBag.Titulo ?? "Reportes";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <h4 class="mb-3">@ViewBag.Titulo</h4>
+
+    <iframe id="iframeReporte"
+            src="@ViewBag.UrlReporte"
+            style="width: 100%; height: 80vh; border: 1px solid #ccc;">
+    </iframe>
+</div>
