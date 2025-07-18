@@ -271,6 +271,9 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         public ActionResult CargarImagenUsuario(HttpPostedFileBase ImagenUsuario)
         {
+            var base64Copia = "";
+            var tipoImagenCopia = "";
+
             if (ImagenUsuario != null && ImagenUsuario.ContentLength > 0)
             {
                 // Convertir la imagen a base64
@@ -282,6 +285,9 @@ namespace bufinscustomers.Controllers
                     var tipoImagen = ImagenUsuario.ContentType;
                     var nombreImagen = Path.GetFileName(ImagenUsuario.FileName);
                     var usuarioId = UsuarioSesionHelper.UsuarioActual.Id;
+
+                    base64Copia = base64;
+                    tipoImagenCopia = tipoImagen;
 
                     using (SqlConnection connection = new SqlConnection(cadena))
                     {
@@ -299,7 +305,7 @@ namespace bufinscustomers.Controllers
                     }
                 }
                 // TempData["SuccessMessage"] = "Imagen de usuario actualizada correctamente.";
-                return Json(new { success = true, message = "Imagen de usuario actualizada correctamente." });
+                return Json(new { success = true, message = "Imagen de usuario actualizada correctamente.", tipoImagen = tipoImagenCopia, imagenBase64 = base64Copia });
             }
             else
             {

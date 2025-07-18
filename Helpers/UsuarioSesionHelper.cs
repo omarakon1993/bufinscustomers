@@ -39,18 +39,26 @@ namespace bufinscustomers.Helpers
             using (SqlConnection connection = new SqlConnection(cadena))
             {
                 string query = @"
-        SELECT 
-            Id,
-            Usuario,
-            Clave,
-            Nombre,
-            Apellidos,
-            Correo,
-            Telefono,
-            Admin,
-            IdEmpresa
-        FROM Usuarios
-        WHERE Id = @IdUsuario";
+            SELECT 
+                u.Id,
+                u.Usuario,
+                u.Clave,
+                u.Nombre,
+                u.Apellidos,
+                u.Correo,
+                u.Telefono,
+                u.Admin,
+                u.IdEmpresa,
+                ui.Id AS ImagenId,
+                ui.UsuarioId,
+                ui.ImagenBase64,
+                ui.TipoImagen
+            FROM Usuarios u
+            LEFT JOIN UsuarioImagenes ui ON u.Id = ui.UsuarioId
+            WHERE u.Id = @IdUsuario
+            -- Si hay varias imágenes, puedes traer solo la más reciente:
+            -- AND ui.Id = (SELECT TOP 1 Id FROM UsuarioImagenes WHERE UsuarioId = u.Id ORDER BY Id DESC)
+        ";
 
                 using (SqlCommand command = new SqlCommand(query, connection))
                 {
@@ -72,7 +80,14 @@ namespace bufinscustomers.Helpers
                                 Correo = Convert.ToString(reader["Correo"]),
                                 Telefono = Convert.ToString(reader["Telefono"]),
                                 Admin = reader["Admin"] != DBNull.Value ? Convert.ToByte(reader["Admin"]) : (byte?)null,
-                                IdEmpresa = reader["IdEmpresa"] != DBNull.Value ? Convert.ToInt32(reader["IdEmpresa"]) : (int?)null
+                                IdEmpresa = reader["IdEmpresa"] != DBNull.Value ? Convert.ToInt32(reader["IdEmpresa"]) : (int?)null,
+                                Imagen = reader["ImagenId"] != DBNull.Value ? new ImagenUsuario
+                                {
+                                    Id = Convert.ToInt32(reader["ImagenId"]),
+                                    UsuarioId = Convert.ToInt32(reader["UsuarioId"]),
+                                    ImagenBase64 = reader["ImagenBase64"] != DBNull.Value ? Convert.ToString(reader["ImagenBase64"]) : null,
+                                    TipoImagen = reader["TipoImagen"] != DBNull.Value ? Convert.ToString(reader["TipoImagen"]) : null
+                                } : null
                             };
                         }
                     }
@@ -81,6 +96,5 @@ namespace bufinscustomers.Helpers
 
             return usuario;
         }
-
     }
 }
