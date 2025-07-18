@@ -17,5 +17,7 @@ namespace bufinscustomers.Models
         public string Telefono   {get; set;}
         public byte? Admin { get; set; }
         public int?   IdEmpresa  {get; set;}
+        public ImagenUsuario Imagen { get; set; }
+
     }
 }
