@@ -1,5 +1,4 @@
-﻿
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     @Styles.Render("~/Assets/Content/css")
@@ -13,13 +12,9 @@
     <meta name="author" content="">
 
     <title>Principal</title>
-
     <link href="~/Assets/Bootstrap/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="~/Assets/GoogleApis/Family.css"
-          rel="stylesheet">
+    <link href="~/Assets/GoogleApis/Family.css" rel="stylesheet">
     <link href="~/Assets/css/sb-admin-2.min.css" rel="stylesheet">
-
-
 </head>
 
 <style>
@@ -30,6 +25,7 @@
     .collapse-item:not(.collapsed) .fa-chevron-right {
         transform: rotate(90deg);
     }
+
     .nav-link .fa-chevron-right {
         transition: transform 0.3s ease;
     }
@@ -38,95 +34,59 @@
         transform: rotate(90deg);
     }
 </style>
-
-
 <body id="page-top">
-
     <div id="wrapper">
-
         <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
-
             <a class="sidebar-brand d-flex align-items-center justify-content-center" href="@Url.Action("Index", "Home")">
                 <div class="sidebar-heading" style="font-size: x-large;">Bufins</div>
             </a>
-
             <hr class="sidebar-divider">
-
+            <!-- ========== MÓDULO DE DATOS ========== -->
             <div class="sidebar-heading">
-                <i class="fas fa-database"></i>
-                Zona de datos
+                <i class="fas fa-arrow-alt-circle-down"></i>
+                Datos
             </div>
-
             <li class="nav-item">
+                <!-- === PLANTILLA === -->
                 <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseDatos"
                    aria-expanded="true" aria-controls="collapseDatos">
-                    <i class="fas fa-file-upload"></i> <!-- Cambiado de fa-cog a fa-file-upload -->
-                    <span>Datos</span>
+                    <i class="fas fa-file-excel"></i>
+                    <span>Plantilla</span>
                 </a>
                 <div id="collapseDatos" class="collapse" aria-labelledby="headingDatos" data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
-                        <a class="collapse-item" href="@Url.Action("CargueExcel", "Excel")">
-                            <i class="fas fa-file-excel mr-2 text-success"></i> Cargue de Excel
-                        </a>
+                        <a class="collapse-item" href="@Url.Action("CargueExcel", "Excel")">Cargue excel</a>
+                    </div>
+                </div>
+                <!-- === MODELO === -->
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseModelo"
+                   aria-expanded="true" aria-controls="collapseModelo">
+                    <i class="fas fa-database"></i>
+                    <span>Modelo</span>
+                </a>
+                <div id="collapseModelo" class="collapse" aria-labelledby="headingModelo" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <a class="collapse-item" href="@Url.Action("", "")">Ejecución modelo</a>
                     </div>
                 </div>
             </li>
-
-            <hr class="sidebar-divider d-none d-md-block">
-
-            @if (UsuarioSesionHelper.UsuarioActual != null && UsuarioSesionHelper.UsuarioActual.Admin == 1)
-            {
-                <div class="sidebar-heading">
-                    <i class="fas fa-fw fa-cog"></i>
-                    Administración
-                </div>
-
-                <li class="nav-item">
-                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseThree"
-                       aria-expanded="true" aria-controls="collapseThree">
-                        <i class="fas fa-user-plus"></i>
-                        <span>Usuarios</span>
-                    </a>
-                    <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordionSidebar">
-                        <div class="bg-white py-2 collapse-inner rounded">
-                            <a class="collapse-item" href="@Url.Action("Usuarios", "Usuario")">Maestro de usuarios</a>
-                        </div>
-                    </div>
-                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseEmpresas"
-                       aria-expanded="true" aria-controls="collapseEmpresas">
-                        <i class="fas fa-building"></i>
-                        <span>Empresas</span>
-                    </a>
-                    <div id="collapseEmpresas" class="collapse" aria-labelledby="headingEmpresas" data-parent="#accordionSidebar">
-                        <div class="bg-white py-2 collapse-inner rounded">
-                            <a class="collapse-item" href="@Url.Action("Empresas", "Empresa")">Maestro de empresas</a>
-                        </div>
-                    </div>
-                </li>
-                <hr class="sidebar-divider d-none d-md-block">
-            }
-
             <hr class="sidebar-divider">
-
             <div class="sidebar-heading">
-                <i class="fas fa-database"></i>
+                <i class="fas fa-arrow-alt-circle-down"></i>
                 Reportes
             </div>
-
             @{
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 var esAdmin = usuario?.Admin == 1;
                 var idEmpresa = usuario?.IdEmpresa ?? 0;
                 var nombreEmpresa = bufinscustomers.Controllers.ReportesController.ObtenerNombreEmpresaPorId(idEmpresa);
             }
-
             @if (esAdmin)
             {
                 var reportes = bufinscustomers.Controllers.ReportesController.ObtenerReportesParaLayout();
                 var reportesPorEmpresa = reportes?
                     .GroupBy(r => r.NombreEmpresa)
                     .ToList();
-
                 if (reportesPorEmpresa != null && reportesPorEmpresa.Any())
                 {
                     <li class="nav-item">
@@ -135,28 +95,22 @@
                             <i class="fas fa-chart-pie"></i>
                             <span>Reportes generales</span>
                         </a>
-
                         <div id="collapseReportesGeneral" class="collapse" aria-labelledby="headingReportesGeneral" data-parent="#accordionSidebar">
                             <div class="bg-white py-2 collapse-inner rounded">
-
                                 @foreach (var grupo in reportesPorEmpresa)
                                 {
                                     var nombreEmpresaGrupo = grupo.Key;
                                     var idCollapseEmpresa = "collapseEmpresa_" + nombreEmpresaGrupo.Replace(" ", "").Replace(".", "").Replace(",", "");
-
                                     <!-- Empresa con flechita -->
                                     <a class="collapse-item collapsed d-flex justify-content-between align-items-center"
                                        href="#" data-toggle="collapse" data-target="#@idCollapseEmpresa"
                                        aria-expanded="false" aria-controls="@idCollapseEmpresa">
-
                                         <div class="d-flex align-items-center">
                                             <i class="fas fa-building mr-2 text-info"></i>
                                             <span>@nombreEmpresaGrupo</span>
                                         </div>
-
                                         <i class="fas fa-chevron-right text-secondary"></i>
                                     </a>
-
                                     <!-- Reportes o mensaje de vacío -->
                                     <div id="@idCollapseEmpresa" class="collapse ml-3">
                                         @if (grupo.Any())
@@ -183,7 +137,6 @@
                                         }
                                     </div>
                                 }
-
                             </div>
                         </div>
                     </li>
@@ -192,36 +145,26 @@
             else
             {
                 <li class="nav-item">
-                    <!-- Título principal: Reportes de empresa con flecha automática -->
                     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseEmpresa"
                        aria-expanded="false" aria-controls="collapseEmpresa">
                         <i class="fas fa-chart-pie"></i>
                         <span>Reportes de empresa</span>
                     </a>
-
-                    <!-- Contenido colapsable -->
                     <div id="collapseEmpresa" class="collapse" aria-labelledby="headingEmpresa" data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
-
-                            <!-- Empresa como subtítulo desplegable -->
                             <a class="collapse-item collapsed d-flex justify-content-between align-items-center"
                                href="#" data-toggle="collapse" data-target="#collapseEmpresaItems"
                                aria-expanded="false" aria-controls="collapseEmpresaItems">
-
                                 <div class="d-flex align-items-center">
                                     <i class="fas fa-building mr-2 text-info"></i>
                                     <span>@nombreEmpresa</span>
                                 </div>
-
                                 <i class="fas fa-chevron-right text-secondary"></i>
                             </a>
-
-                            <!-- Reportes -->
                             <div id="collapseEmpresaItems" class="collapse ml-3">
                                 @{
                                     var reportesEmpresa = bufinscustomers.Controllers.ReportesController.ObtenerReportesPorEmpresaParaLayout(idEmpresa);
                                 }
-
                                 @if (reportesEmpresa != null && reportesEmpresa.Any())
                                 {
                                     foreach (var r in reportesEmpresa)
@@ -249,35 +192,55 @@
                     </div>
                 </li>
             }
+            <hr class="sidebar-divider">
+
+            @if (UsuarioSesionHelper.UsuarioActual != null && UsuarioSesionHelper.UsuarioActual.Admin == 1)
+            {
+                <div class="sidebar-heading">
+                    <i class="fas fa-fw fa-cog"></i>
+                    Administración
+                </div>
+                <li class="nav-item">
+                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseThree"
+                       aria-expanded="true" aria-controls="collapseThree">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Usuarios</span>
+                    </a>
+                    <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item" href="@Url.Action("Usuarios", "Usuario")">Maestro usuarios</a>
+                        </div>
+                    </div>
+                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseEmpresas"
+                       aria-expanded="true" aria-controls="collapseEmpresas">
+                        <i class="fas fa-building"></i>
+                        <span>Empresas</span>
+                    </a>
+                    <div id="collapseEmpresas" class="collapse" aria-labelledby="headingEmpresas" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item" href="@Url.Action("Empresas", "Empresa")">Maestro empresas</a>
+                        </div>
+                    </div>
+                </li>
+            }
             <div class="text-center d-none d-md-inline">
                 <button class="rounded-circle border-0" id="sidebarToggle"></button>
             </div>
-
         </ul>
-
         <div id="content-wrapper" class="d-flex flex-column">
-
             <div id="content">
-
                 <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-
                     <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
                         <i class="fa fa-bars"></i>
                     </button>
-
-
                     <ul class="navbar-nav ml-auto">
-
                         <div class="topbar-divider d-none d-sm-block"></div>
-
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="mr-2 d-none d-lg-inline text-gray-600 small" style="color: white !important;">
                                     @(UsuarioSesionHelper.UsuarioActual != null ? UsuarioSesionHelper.UsuarioActual.Nombre + " " + UsuarioSesionHelper.UsuarioActual.Apellidos : "Invitado")
                                 </span>
-                               
-
                                 @if (usuario?.Imagen != null && !string.IsNullOrEmpty(usuario.Imagen.ImagenBase64))
                                 {
                                     <img src="data:@usuario.Imagen.TipoImagen;base64,@usuario.Imagen.ImagenBase64"
@@ -292,45 +255,37 @@
                                          class="imgPerfil img-profile rounded-circle"
                                          style="max-width:150px; max-height:150px;" />
                                 }
-
                             </a>
-
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                  aria-labelledby="userDropdown">
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modalPerfilUsuario">
-                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    <i class="fas fa-user fa-sm fa-fw mr-2" style="color: #160933!important;"></i>
                                     Perfil
                                 </a>
-                                <a class="dropdown-item" href="#">
+                                @*<a class="dropdown-item" href="#">
                                     <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Settings
                                 </a>
                                 <a class="dropdown-item" href="#">
                                     <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Activity Log
-                                </a>
+                                </a>*@
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="@Url.Action("Login", "Acceso")">
-                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Cerrar sesion
+                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2" style="color:#160933 !important;"></i>
+                                    Cerrar sesión
                                 </a>
                             </div>
                         </li>
                     </ul>
-
                 </nav>
-
                 <div class="container-fluid">
-
                     <div class="container body-content">
                         @RenderBody()
                         <hr />
                     </div>
-
                 </div>
-
             </div>
-
             <!-- Modal de información de usuario -->
             <div class="modal fade" id="modalPerfilUsuario" tabindex="-1" role="dialog" aria-labelledby="modalPerfilUsuarioLabel" aria-hidden="true">
                 <div class="modal-dialog" role="document">
@@ -344,7 +299,6 @@
                         <div class="modal-body">
                             <div class="container">
                                 <div class="row align-items-center">
-
                                     <div class="col-md-8">
                                         <p><strong>Nombre:</strong> @(UsuarioSesionHelper.UsuarioActual?.Nombre ?? "Invitado")</p>
                                         <p><strong>Apellidos:</strong> @(UsuarioSesionHelper.UsuarioActual?.Apellidos ?? "-")</p>
@@ -374,7 +328,7 @@
                                                  style="max-width:150px; max-height:150px;" />
                                         }
                                     </div>
-                                </div>                                
+                                </div>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -386,7 +340,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="modal fade" id="modalCargarImagen" tabindex="-1" role="dialog" aria-labelledby="modalCargarImagenLabel" aria-hidden="true">
                 <div class="modal-dialog" role="document">
                     <form id="formCargarImagen" enctype="multipart/form-data" method="post" action="@Url.Action("CargarImagenUsuario", "Usuario")">
@@ -410,8 +363,6 @@
                     </form>
                 </div>
             </div>
-
-
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
@@ -419,28 +370,23 @@
                     </div>
                 </div>
             </footer>
-
         </div>
-
     </div>
 
     <a class="scroll-to-top rounded" href="#">
         <i class="fas fa-angle-up"></i>
     </a>
 
-
     <script src="~/Assets/Bootstrap/jquery/jquery.min.js"></script>
     <script src="~/Assets/Bootstrap/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="~/Assets/Bootstrap/jquery-easing/jquery.easing.min.js"></script>
     <script src="~/Assets/js/sb-admin-2.min.js"></script>
-
 
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
     @RenderSection("scripts", required: false)
 
     <script>
-
         $('input[name="ImagenUsuario"]').on('change', function () {
             var input = this;
             var preview = document.getElementById('previewImagen');
@@ -478,7 +424,6 @@
             }
         });
 
-        // Envío por AJAX solo si la imagen es válida
         $('#formCargarImagen').on('submit', function (e) {
             e.preventDefault();
             var input = document.querySelector('input[name="ImagenUsuario"]');
@@ -490,7 +435,6 @@
                 return;
             }
 
-            // Solo enviar si la vista previa está visible (imagen válida)
             if (preview.style.display !== 'block') {
                 mensajeDiv.html('<div class="alert alert-danger">La imagen seleccionada no es válida.</div>');
                 return;
@@ -505,7 +449,6 @@
                 processData: false,
                 success: function (response) {
                     if (response.success) {
-                        debugger
                         $('.imgPerfil').attr('src', 'data:' + response.tipoImagen + ';base64,' + response.imagenBase64);
                         mensajeDiv.html('<div class="alert alert-success">' + response.message + '</div>');
                     } else {
@@ -518,38 +461,17 @@
             });
         });
 
-
-        //$('#modalCargarImagen').on('show.bs.modal', function () {
-        //    debugger
-        //    $('#mensajeImagen').html('');
-        //    $('#previewImagen').attr('src', '#').hide();
-        //    $('input[name="ImagenUsuario"]').val('');
-        //});
-
-        //$('#modalCargarImagen').on('hidden.bs.modal', function () {
-        //    debugger
-        //    $('#mensajeImagen').html('');
-        //    $('#previewImagen').attr('src', '#').hide();
-        //    $('input[name="ImagenUsuario"]').val('');
-        //});
-
         $(document).on('shown.bs.modal', '#modalCargarImagen', function () {
-          /*  debugger*/
             $('#mensajeImagen').html('');
             $('#previewImagen').attr('src', '#').hide();
             $('input[name="ImagenUsuario"]').val('');
         });
 
         $(document).on('hidden.bs.modal', '#modalCargarImagen', function () {
-           /* debugger*/
             $('#mensajeImagen').html('');
             $('#previewImagen').attr('src', '#').hide();
             $('input[name="ImagenUsuario"]').val('');
         });
-
-       
-
     </script>
-
 </body>
 </html>
