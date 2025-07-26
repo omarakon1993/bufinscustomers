@@ -1,0 +1,428 @@
+﻿@model List<(string nombre, System.Data.DataTable tabla)>
+
+@{
+    ViewBag.Title = "CargueExcel";
+    Layout = "~/Views/Shared/_Layout.cshtml"; 
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Importar excel</title>
+
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
+    <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script>
+
+
+    <style>
+        .tabla-scroll {
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            background-color: #fff;
+            border-radius: 0.5rem;
+        }
+
+        .table-container {
+            margin-bottom: 40px;
+        }
+
+        .pagination {
+            justify-content: center;
+        }
+
+            .pagination .page-link {
+                padding: 0.375rem 0.65rem;
+                min-width: 36px;
+                text-align: center;
+            }
+
+        #loaderOverlay {
+            transition: opacity 0.3s ease;
+        }
+    </style>
+
+</head>
+<body>
+
+    <h2>Importación excel</h2>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Ingrese el archivo excel a cargar</h6>
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#instructivoModal">
+                Instructivo
+            </button>
+            <div class="modal fade" id="instructivoModal" tabindex="-1" aria-labelledby="instructivoModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="instructivoModalLabel">Instructivo de uso</h5>
+                        </div>
+                        <div class="modal-body">
+                            <p><strong>Bufins</strong> usa las bases de datos contables como fuentes de información para preparar la información financiera.</p>
+                            <p>En este instructivo encontrará los parámetros para el diligenciamiento de la información, y así aprovechar las ventajas de este sistema de bases de datos.</p>
+
+                            <h6>Para tener en cuenta:</h6>
+                            <ol>
+                                <li>Las hojas de este libro tienen nombres que no pueden ser cambiados</li>
+                                <li>Ninguna de las hojas de este libro se puede eliminar, ni ocultar</li>
+                                <li>Conserve el orden de las hojas</li>
+                                <li>Dentro de cada hoja diligencie la información solicitada</li>
+                                <li>No inserte filas y/o columnas dentro de las hojas...</li>
+                                <li>No cambie títulos en las tablas de datos...</li>
+                                <li>No cambie formatos en ninguna celda de este libro</li>
+                                <li>Use punto (.) para miles y coma (,) para decimales</li>
+                                <li>Las celdas no pueden contener espacios al inicio o al final</li>
+                                <li>No modifique ni reemplace el diseño de tablas de datos</li>
+                            </ol>
+
+                            <h6>Uso de cada pestaña:</h6>
+                            <ul>
+                                <li><strong>Z_AñoEjecución:</strong> Coloque el año actual sin puntos</li>
+                                <li><strong>Z_Empresas:</strong> Coloque el nombre exacto de las empresas...</li>
+                                <li><strong>Z_Países:</strong> Nombres exactos, primera letra en mayúscula y con acento si aplica (Ej. Perú, México)</li>
+                                <li><strong>Z_SignoCréditos:</strong> Si aplica, coloque el signo menos</li>
+                                <li><strong>Z_Categorías:</strong> Descripciones válidas: ACTIVO CORRIENTE, ACTIVO NO CORRIENTE, etc.</li>
+                                <li><strong>Z_Moneda:</strong> Seleccione la moneda desde la lista desplegable</li>
+                                <li><strong>Z_Unidades:</strong> UNIDADES / MILES / MILLONES</li>
+                                <li><strong>Z_Tipo:</strong> Nombre de líneas de venta definidas</li>
+                                <li><strong>Z_Línea de negocio:</strong> Igual que líneas de venta, nombre exacto</li>
+                                <li><strong>Z_Ajuste1:</strong> Ebitda / No Ebitda</li>
+                                <li><strong>Z_Ajuste2:</strong> GASTOS FIJOS / VARIABLES / OTROS GASTOS</li>
+                                <li><strong>Z_BalancePrueba:</strong> Información de balance de prueba por tres años, coincidir con Z_Moneda y otras hojas</li>
+                                <li><strong>Z_CteYnoCte:</strong> Aplican instrucciones de Z_BalancePrueba a 4 dígitos, con clasificación en columna K</li>
+                                <li><strong>Z_PYGDetallado:</strong> Datos del estado de resultados a 6 dígitos del PUC, incluye campos Tipo, Línea de negocio, Ajuste1, Ajuste2</li>
+                                <li><strong>Z_PYGDetalladoConAjuste:</strong> Igual a Z_PYGDetallado, pero permite reclasificar para EBITDA Ajustado</li>
+                                <li><strong>Z_PresupuestoBalance:</strong> Reporte presupuestal por cuentas de balance</li>
+                                <li><strong>Z_PptoPYGDetallado:</strong> Presupuesto detallado por tipo y línea de negocio</li>
+                                <li><strong>Z_PptoPYGDetalladoConAjuste:</strong> Igual al anterior con ajuste para EBITDA</li>
+                                <li><strong>Z_PCH:</strong> Ahorros estimados como objetivos</li>
+                                <li><strong>Z_EjecPCH:</strong> Ahorros ejecutados</li>
+                                <li><strong>Z_TablaPUC:</strong> Este es el PUC de Colombia</li>
+                            </ul>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <div class="ui segment">
+                    <div class="field">
+                        <input type="hidden" name="MAX_FILE_SIZE" value="100000" />
+                        @using (Html.BeginForm("CargarExcel", "Datos", FormMethod.Post, new { enctype = "multipart/form-data", @id = "formCarga" }))
+                        {
+                            <div class="ps-4 mb-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="form-group mb-0">
+                                        <input type="file" class="form-control-file form-control-sm" id="archivoExcel" name="archivoExcel">
+                                    </div>
+
+                                    <input type="button" name="accion" value="Validar" class="btn btn-primary btn-sm" onclick="validarArchivo();" />
+
+                                    @if (TempData["MostrarBotonImportar"] != null && (bool)TempData["MostrarBotonImportar"])
+                                    {
+                                        <input type="button" name="accion" value="Importar" id="btnImportar" style="margin-left: 20px;" class="btn btn-success btn-sm" />
+
+                                        <form method="get" action="@Url.Action("CargueExcel", "Datos")" class="mb-0">
+                                            <input type="hidden" name="limpiar" value="true" />
+                                            <button type="submit" class="btn btn-outline-secondary btn-sm" title="Limpiar validación" style="margin-left: 20px;">
+                                                Limpiar validación
+                                            </button>
+                                        </form>
+                                    }
+
+                                    <button type="submit" id="btnSubmitOculto" style="display: none;" name="accion" value="RetornoTablaDeDatos"></button>
+
+                                </div>
+                            </div>
+                        }
+
+                        <div id="loaderOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; align-items: center; justify-content: center;">
+                            <div class="spinner-border text-light" role="status" style="width: 4rem; height: 4rem;">
+                            </div>
+                        </div>
+
+                        <script>
+                            document.addEventListener("DOMContentLoaded", function () {
+                                const btn = document.getElementById("btnImportar");
+                                if (btn) {
+                                    btn.addEventListener("click", function () {
+                                        if (confirm("¿Estás seguro de que deseas importar los datos?")) {
+                                            const form = document.getElementById("formCarga");
+                                            let inputAccion = document.createElement("input");
+                                            inputAccion.type = "hidden";
+                                            inputAccion.name = "accion";
+                                            inputAccion.value = "Importar";
+                                            form.appendChild(inputAccion);
+
+                                            document.getElementById('loaderOverlay').style.display = 'flex';
+                                            setTimeout(() => {
+                                                form.submit();
+                                            }, 300);
+                                        } else {
+                                            fetch('/Datos/LimpiarDatosImportacion', {
+                                                method: 'POST'
+                                            }).then(response => {
+                                                if (response.redirected) {
+                                                    window.location.href = response.url;
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        </script>
+
+                        <script src="~/Assets/js/xlsx.full.min.js"></script>
+                        <script>
+
+                            function mostrarErrorValidacion(mensaje) {
+                                // Mostrar el mensaje de error
+                                const div = document.getElementById('mensajeErrorTabla');
+                                div.innerHTML = `<div class="alert alert-danger" role="alert">${mensaje}</div>`;
+
+                                // Ocultar el mensaje "No hay datos para mostrar"
+                                const mensajeVacio = document.getElementById('mensajeSinDatos');
+                                if (mensajeVacio) {
+                                    mensajeVacio.style.display = 'none';
+                                }
+
+                                // Ocultar o eliminar datos actuales si existen
+                                const contenedorTablas = document.getElementById('contenedorTablas');
+                                if (contenedorTablas) contenedorTablas.remove();
+
+                            }
+
+                            async function validarArchivo() {
+                                //const btnImportar = document.getElementById('btnImportar');
+                                const btnSubmitOculto = document.getElementById('btnSubmitOculto');
+                                //btnImportar.style.display = 'none'; // ocultar siempre al inicio
+
+
+                                const archivo = document.getElementById('archivoExcel').files[0];
+                                if (!archivo) {
+                                    alert("Debe seleccionar un archivo.");
+                                    return;
+                                }
+
+                                if (!archivo.name.endsWith('.xlsx')) {
+                                    alert("El archivo debe ser .xlsx");
+                                    return;
+                                }
+
+                                const data = await archivo.arrayBuffer();
+                                try {
+                                    const workbook = XLSX.read(data, { type: 'array' });
+
+                                    if (workbook.SheetNames.length !== 21) {
+                                        //alert("La cantidad de tablas no coincide con las especificadas en la plantilla - BUFINS");
+                                        mostrarErrorValidacion("La cantidad de tablas no coincide con las especificadas en la plantilla - BUFINS");
+                                        return;
+                                    }
+
+                                    for (let nombreHoja of workbook.SheetNames) {
+                                        const sheet = workbook.Sheets[nombreHoja];
+                                        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+                                        const encabezados = json[0];
+                                        if (encabezados.some(h => !h || String(h).trim() === "")) {
+                                            alert(`La hoja "${nombreHoja}" tiene columnas vacías.`);
+                                            return;
+                                        }
+                                    }
+
+                                    //alert("¡Validación exitosa!");
+                                    //btnImportar.style.display = 'inline-block';
+
+                                    document.getElementById('loaderOverlay').style.display = 'flex';
+                                    setTimeout(() => {
+                                        btnSubmitOculto.click();
+                                    }, 300);
+
+                                    // ✅ Enviar formulario automáticamente
+                                    btnSubmitOculto.click();
+
+                                } catch (e) {
+                                    alert("El archivo no se pudo leer. ¿Tiene contraseña?");
+                                    //btnImportar.style.display = 'none';
+                                }
+                            }
+                        </script>
+
+                        <script>
+                            document.getElementById('formCarga').addEventListener('submit', function () {
+                                document.getElementById('progresoWrapper').classList.remove('d-none');
+                            });
+                        </script>
+
+                        @if (TempData["Mensaje"] != null && TempData["MensajeTipo"] != null)
+                        {
+                            <script>
+                                Swal.fire({
+                                    toast: true,
+                                    position: window.innerWidth <= 768 ? 'top' : 'top-end',
+                                    icon: '@TempData["MensajeTipo"]',
+                                    title: '@TempData["Mensaje"]',
+                                    showConfirmButton: false,
+                                    timer: 3000,
+                                    timerProgressBar: true,
+                                    didOpen: (toast) => {
+                                        toast.addEventListener('mouseenter', Swal.stopTimer);
+                                        toast.addEventListener('mouseleave', Swal.resumeTimer);
+                                    }
+                                });
+                            </script>
+
+                            TempData.Remove("Mensaje");
+                            TempData.Remove("MensajeTipo");
+
+                        }
+
+                    </div>
+
+                    <div class="tabla-scroll">
+                        <div id="contenedorTablas">
+                            @if (Model != null && Model.Count > 0)
+                            {
+                                int tablaIndex = 0;
+
+                                foreach (var tabla in Model)
+                                {
+                                    <div class="table-container">
+                                        <h5 class="mt-4">@tabla.nombre</h5>
+
+                                        <div class="table-responsive">
+                                            <table class="table table-striped table-bordered table-sm" id="tabla_@tablaIndex">
+                                                <thead class="table-dark">
+                                                    <tr>
+                                                        @foreach (System.Data.DataColumn col in tabla.tabla.Columns)
+                                                        {
+                                                            <th>@col.ColumnName</th>
+                                                        }
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @{
+                                                        int filaIndex = 0;
+                                                        foreach (System.Data.DataRow row in tabla.tabla.Rows)
+                                                        {
+                                                            var clase = (filaIndex >= 100) ? "d-none" : "";
+                                                            <tr class="@clase">
+                                                                @foreach (var item in row.ItemArray)
+                                                                {
+                                                                    <td>@item</td>
+                                                                }
+                                                            </tr>
+                                                            filaIndex++;
+                                                        }
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <nav>
+                                            <ul class="pagination" data-tabla="@tablaIndex"></ul>
+                                        </nav>
+                                    </div>
+
+                                    tablaIndex++;
+                                }
+                            }
+                            else
+                            {
+                                <p id="mensajeSinDatos" class="text-muted">No hay datos para mostrar.</p>
+                            }
+                        </div>
+
+                        <div id="mensajeErrorTabla" class="mt-3"></div>
+
+                    </div>
+
+                    @section scripts {
+                        <script src="~/Assets/js/jquery-3.6.0.min.js"></script>
+                        <script>
+                            $(function () {
+                                const filasPorPagina = 100;
+
+                                $('table').each(function (i, tabla) {
+                                    const $tabla = $(tabla);
+                                    const $filas = $tabla.find('tbody tr');
+                                    //const $filas = $tabla.find('tbody tr').not('.fila-mensaje');
+                                    const totalFilas = $filas.length;
+                                    const totalPaginas = Math.ceil(totalFilas / filasPorPagina);
+
+                                    const $paginador = $(`<ul class="pagination justify-content-center mt-2 flex-wrap" data-tabla="${i}"></ul>`);
+                                    $tabla.after($paginador);
+
+                                    // Scroll para tabla
+                                    $tabla.wrap('<div style="max-height: 400px; overflow-y: auto; margin-bottom: 15px;"></div>');
+
+                                    function mostrarPagina(pagina) {
+                                        $filas.addClass('d-none');
+                                        $filas.slice(pagina * filasPorPagina, (pagina + 1) * filasPorPagina).removeClass('d-none');
+                                        renderPaginador(pagina);
+                                    }
+
+                                    function crearBoton(pagina, label = null, isActive = false, isDisabled = false) {
+                                        const li = $('<li class="page-item ' + (isActive ? 'active' : '') + (isDisabled ? ' disabled' : '') + '"></li>');
+                                        const a = $('<a class="page-link" href="#"></a>').text(label || (pagina + 1));
+                                        a.on('click', function (e) {
+                                            e.preventDefault();
+                                            if (!isDisabled) mostrarPagina(pagina);
+                                        });
+                                        li.append(a);
+                                        $paginador.append(li);
+                                    }
+
+                                    function crearSeparador() {
+                                        const li = $('<li class="page-item disabled"><span class="page-link">...</span></li>');
+                                        $paginador.append(li);
+                                    }
+
+                                    function renderPaginador(paginaActual) {
+                                        $paginador.empty();
+                                        let inicio = Math.max(1, paginaActual - 2);
+                                        let fin = Math.min(totalPaginas - 2, paginaActual + 2);
+
+                                        // Primera
+                                        crearBoton(0, '1', paginaActual === 0);
+                                        if (inicio > 1) crearSeparador();
+
+                                        for (let i = inicio; i <= fin; i++) {
+                                            crearBoton(i, null, paginaActual === i);
+                                        }
+
+                                        if (fin < totalPaginas - 2) crearSeparador();
+
+                                        if (totalPaginas > 1) {
+                                            crearBoton(totalPaginas - 1, totalPaginas.toString(), paginaActual === totalPaginas - 1);
+                                        }
+                                    }
+
+                                    mostrarPagina(0);
+                                });
+                            });
+                        </script>
+                    }
+
+                </div>
+            </div>
+        </div>
+    </div>
+    @*<script>
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+    </script>*@
+</body>
+</html>
