@@ -1,0 +1,135 @@
+@model IEnumerable<bufinscustomers.Models.Empresas>
+@using bufinscustomers.Helpers
+@{
+    var usuario = UsuarioSesionHelper.UsuarioActual;
+    var esAdmin = usuario?.Admin == 1;
+    var idEmpresaUsuario = usuario?.IdEmpresa ?? 0;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Modelo</title>
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
+    <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <style>
+        .bg-primary {
+            background-color: #583AFF !important;
+        }
+    </style>
+
+    <h2>Ejecución modelos</h2>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Modelos BUFINS</h6>
+        </div>
+        <div class="card-body">
+            <form id="modeloForm" method="post" action="/Datos/EjecutarModelo">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="idEmpresa" class="form-label">Empresa</label>
+                            <select class="form-control" id="idEmpresa" name="idEmpresa" required>
+                                <option value="" selected disabled>Seleccione una empresa</option>
+                                @if (esAdmin)
+                                {
+                                    foreach (var empresa in Model)
+                                    {
+                                        <option value="@empresa.Id">@empresa.Nombre</option>
+                                    }
+                                }
+                                else
+                                {
+                                    var empresaUsuario = Model.FirstOrDefault(e => e.Id == idEmpresaUsuario);
+                                    if (empresaUsuario != null)
+                                    {
+                                        <option value="@empresaUsuario.Id">@empresaUsuario.Nombre</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary" id="btnEjecutar">
+                        <i class="fas fa-chart-line"></i> PYG
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="btnEjecutar">
+                        <i class="fas fa-scale-balanced"></i> Balance
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="btnEjecutar">
+                        <i class="fas fa-arrow-right-arrow-left"></i> Flujo de caja
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="btnEjecutar">
+                        <i class="fas fa-chart-column"></i> Ebitda
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <script>
+            const isMobile = window.innerWidth <= 768;
+            Swal.fire({
+                toast: true,
+                position: isMobile ? 'top' : 'top-end',
+                icon: 'error',
+                title: '@TempData["ErrorMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        </script>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <script>
+            const isMobile = window.innerWidth <= 768;
+            Swal.fire({
+                toast: true,
+                position: isMobile ? 'top' : 'top-end',
+                icon: 'success',
+                title: '@TempData["SuccessMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        </script>
+    }
+
+    @if (TempData["InfoMessage"] != null)
+    {
+        <script>
+            const isMobile = window.innerWidth <= 768;
+            Swal.fire({
+                toast: true,
+                position: isMobile ? 'top' : 'top-end',
+                icon: 'info',
+                title: '@TempData["InfoMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        </script>
+    }
+</body>
+</html>

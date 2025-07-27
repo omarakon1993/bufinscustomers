@@ -1,4 +1,7 @@
 ﻿using bufinscustomers.Helpers;
+using bufinscustomers.Models;
+using bufinscustomers.Permisos;
+using bufinscustomers.Services;
 using Microsoft.Ajax.Utilities;
 using OfficeOpenXml;
 using System;
@@ -13,9 +16,53 @@ using System.Windows.Media.Media3D;
 
 namespace bufinscustomers.Controllers
 {
+    [ValidarSesion]
     public class DatosController : Controller
     {
+        private readonly EmpresaService _empresaService = new EmpresaService();
         static string cadena = "Data Source=190.90.160.168,1433;Initial Catalog=bufinscustomers;Persist Security Info=True;User ID=oglearni_bufins;Password=Bufins2025**;Encrypt=false";
+
+        // Modelo actions
+        public ActionResult Modelo()
+        {
+            var empresas = _empresaService.ObtenerEmpresas();
+            return View("~/Views/Datos/Modelo.cshtml", empresas);
+        }
+
+        [HttpPost]
+        public ActionResult EjecutarModelo(int idEmpresa)
+        {
+            try
+            {
+                var usuarioSession = (Usuarios)Session["usuario"];
+                if (usuarioSession == null)
+                {
+                    TempData["ErrorMessage"] = "Sesión no válida. Por favor, inicie sesión nuevamente.";
+                    return RedirectToAction("Login", "Acceso");
+                }
+
+                using (SqlConnection connection = new SqlConnection(cadena))
+                {
+                    using (SqlCommand command = new SqlCommand("sp_EjecutarModelo_Balance", connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                        command.Parameters.AddWithValue("@IdUsuario", usuarioSession.Id);
+
+                        connection.Open();
+                        command.ExecuteNonQuery();
+                    }
+                }
+
+                TempData["SuccessMessage"] = "Modelo ejecutado correctamente.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Error al ejecutar el modelo: " + ex.Message;
+            }
+
+            return RedirectToAction("Modelo");
+        }
 
         [HttpPost]
         public ActionResult LimpiarDatosImportacion()
@@ -159,7 +206,6 @@ namespace bufinscustomers.Controllers
                             tablasExcel.Add((dt.TableName, dt));
                             Session["TablasExcel"] = tablasExcel;
                             TempData["MostrarBotonImportar"] = true;
-
                         }
                     }
                 }
@@ -186,11 +232,9 @@ namespace bufinscustomers.Controllers
             var modelo = Session["TablasExcel"] as List<(string nombre, DataTable tabla)> ?? new List<(string nombre, DataTable tabla)>();
 
             Session.Remove("TablasExcel");
-            //TempData.Remove("MostrarBotonImportar");
 
             return View(modelo);
         }
-
 
         private bool GuardarEnSQLServer(DataTable tabla)
         {
