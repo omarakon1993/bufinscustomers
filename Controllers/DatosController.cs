@@ -13,7 +13,7 @@ using System.Windows.Media.Media3D;
 
 namespace bufinscustomers.Controllers
 {
-    public class ExcelController : Controller
+    public class DatosController : Controller
     {
         static string cadena = "Data Source=190.90.160.168,1433;Initial Catalog=bufinscustomers;Persist Security Info=True;User ID=oglearni_bufins;Password=Bufins2025**;Encrypt=false";
 
@@ -33,7 +33,7 @@ namespace bufinscustomers.Controllers
             {
                 TempData["Mensaje"] = "No se seleccionó ningún archivo.";
                 TempData["MensajeTipo"] = "error";
-                return RedirectToAction("CargueExcel", "Excel");
+                return RedirectToAction("CargueExcel", "Datos");
             }
 
             // Guardar archivo en sesión si viene en la petición
@@ -170,7 +170,7 @@ namespace bufinscustomers.Controllers
                 TempData["MensajeTipo"] = "error";
             }
 
-            return RedirectToAction("CargueExcel", "Excel", new { limpiar = false });
+            return RedirectToAction("CargueExcel", "Datos", new { limpiar = false });
         }
 
         public ActionResult CargueExcel(bool limpiar = true)

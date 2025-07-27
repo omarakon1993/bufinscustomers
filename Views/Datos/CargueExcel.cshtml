@@ -50,7 +50,7 @@
 </head>
 <body>
 
-    <h2>Importación excel bufins</h2>
+    <h2>Importación excel</h2>
 
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
@@ -119,7 +119,7 @@
                 <div class="ui segment">
                     <div class="field">
                         <input type="hidden" name="MAX_FILE_SIZE" value="100000" />
-                        @using (Html.BeginForm("CargarExcel", "Excel", FormMethod.Post, new { enctype = "multipart/form-data", @id = "formCarga" }))
+                        @using (Html.BeginForm("CargarExcel", "Datos", FormMethod.Post, new { enctype = "multipart/form-data", @id = "formCarga" }))
                         {
                             <div class="ps-4 mb-3">
                                 <div class="d-flex align-items-center gap-3">
@@ -133,7 +133,7 @@
                                     {
                                         <input type="button" name="accion" value="Importar" id="btnImportar" style="margin-left: 20px;" class="btn btn-success btn-sm" />
 
-                                        <form method="get" action="@Url.Action("CargueExcel", "Excel")" class="mb-0">
+                                        <form method="get" action="@Url.Action("CargueExcel", "Datos")" class="mb-0">
                                             <input type="hidden" name="limpiar" value="true" />
                                             <button type="submit" class="btn btn-outline-secondary btn-sm" title="Limpiar validación" style="margin-left: 20px;">
                                                 Limpiar validación
@@ -170,7 +170,7 @@
                                                 form.submit();
                                             }, 300);
                                         } else {
-                                            fetch('/Excel/LimpiarDatosImportacion', {
+                                            fetch('/Datos/LimpiarDatosImportacion', {
                                                 method: 'POST'
                                             }).then(response => {
                                                 if (response.redirected) {
