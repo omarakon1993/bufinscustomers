@@ -1,0 +1,300 @@
+@model IEnumerable<bufinscustomers.Models.Reportes>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Maestro de reportes</title>
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
+    <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <style>
+        .table-wrapper {
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .bg-primary {
+            background-color: #583AFF !important; /* Cambia el color de fondo del encabezado del modal */
+        }
+    </style>
+
+    <h2>Maestro reportes</h2>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Reportes</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive table-wrapper">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Empresa</th>
+                            <th>Nombre</th>
+                            <th>Año Inicial</th>
+                            <th>Año Final</th>
+                            <th>Descripción</th>
+                            <th>Enlace HTML</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var reporte in Model)
+                        {
+                            <tr>
+                                <td>@reporte.Id</td>
+                                <td>@reporte.NombreEmpresa</td>
+                                <td>@reporte.Nombre</td>
+                                <td>@reporte.AñoInicial</td>
+                                <td>@reporte.AñoFinal</td>
+                                <td>@reporte.Descripcion</td>
+                                <td>@reporte.EnlaceHTML</td>
+                                <td>
+                                    <div class="btn-group" role="group" aria-label="Reporte Actions">
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editReporteModal"
+                                                onclick="setEditReporte(@reporte.Id, @reporte.IdEmpresa, '@Html.Raw(Html.JavaScriptStringEncode(reporte.Nombre))', '@Html.Raw(Html.JavaScriptStringEncode(reporte.AñoInicial))', '@Html.Raw(Html.JavaScriptStringEncode(reporte.AñoFinal))', '@Html.Raw(Html.JavaScriptStringEncode(reporte.Descripcion))', '@Html.Raw(Html.JavaScriptStringEncode(reporte.EnlaceHTML))')">
+                                            Editar
+                                        </button>
+                                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" onclick="setIdReporte(@reporte.Id)">
+                                            Eliminar
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearReporteModal">
+                Crear Reporte
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación para eliminar -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar eliminación</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    ¿Estás seguro de que deseas eliminar este reporte?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form id="deleteForm" method="post" action="/Reportes/EliminarReporte">
+                        <input type="hidden" id="idReporte" name="idReporte" />
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de edición -->
+    <div class="modal fade" id="editReporteModal" tabindex="-1" aria-labelledby="editReporteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="editReporteModalLabel">Editar Reporte</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <form method="post" action="/Reportes/EditarReporte">
+                    <div class="modal-body">
+                        <input type="hidden" id="editIdReporte" name="Id" />
+                        
+                        <div class="form-group">
+                            <label for="editIdEmpresa">Empresa:</label>
+                            <select class="form-control" id="editIdEmpresa" name="IdEmpresa" required>
+                                <option value="">Seleccione una empresa</option>
+                                @foreach (var empresa in ViewBag.Empresas as List<bufinscustomers.Models.Empresas>)
+                                {
+                                    <option value="@empresa.Id">@empresa.Nombre</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editNombre">Nombre:</label>
+                            <input type="text" class="form-control" id="editNombre" name="Nombre" required />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="editAñoInicial">Año Inicial:</label>
+                                    <input type="text" class="form-control" id="editAñoInicial" name="AñoInicial" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="editAñoFinal">Año Final:</label>
+                                    <input type="text" class="form-control" id="editAñoFinal" name="AñoFinal" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editDescripcion">Descripción:</label>
+                            <textarea class="form-control" id="editDescripcion" name="Descripcion" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editEnlaceHTML">Enlace HTML:</label>
+                            <input type="text" class="form-control" id="editEnlaceHTML" name="EnlaceHTML" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Actualizar Reporte</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de creación -->
+    <div class="modal fade" id="crearReporteModal" tabindex="-1" aria-labelledby="crearReporteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="crearReporteModalLabel">Crear Nuevo Reporte</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <form method="post" action="/Reportes/CrearReporte">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="IdEmpresa">Empresa:</label>
+                            <select class="form-control" id="IdEmpresa" name="IdEmpresa" required>
+                                <option value="">Seleccione una empresa</option>
+                                @foreach (var empresa in ViewBag.Empresas as List<bufinscustomers.Models.Empresas>)
+                                {
+                                    <option value="@empresa.Id">@empresa.Nombre</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="Nombre">Nombre:</label>
+                            <input type="text" class="form-control" id="Nombre" name="Nombre" required />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="AñoInicial">Año Inicial:</label>
+                                    <input type="text" class="form-control" id="AñoInicial" name="AñoInicial" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="AñoFinal">Año Final:</label>
+                                    <input type="text" class="form-control" id="AñoFinal" name="AñoFinal" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="Descripcion">Descripción:</label>
+                            <textarea class="form-control" id="Descripcion" name="Descripcion" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="EnlaceHTML">Enlace HTML:</label>
+                            <input type="text" class="form-control" id="EnlaceHTML" name="EnlaceHTML" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Crear Reporte</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <script>
+            const isMobile = window.innerWidth <= 768;
+            Swal.fire({
+                toast: true,
+                position: isMobile ? 'top' : 'top-end',
+                icon: 'error',
+                title: '@TempData["ErrorMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        </script>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <script>
+            const isMobile = window.innerWidth <= 768;
+            Swal.fire({
+                toast: true,
+                position: isMobile ? 'top' : 'top-end',
+                icon: 'success',
+                title: '@TempData["SuccessMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        </script>
+    }
+
+    @if (TempData["InfoMessage"] != null)
+    {
+        <script>
+        const isMobile = window.innerWidth <= 768;
+        Swal.fire({
+            toast: true,
+            position: isMobile ? 'top' : 'top-end',
+            icon: 'info',
+            title: '@TempData["InfoMessage"]',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            }
+        });
+        </script>
+    }
+
+    <script>
+        function setIdReporte(id) {
+            document.getElementById("idReporte").value = id;
+        }
+
+        function setEditReporte(id, idEmpresa, nombre, añoInicial, añoFinal, descripcion, enlaceHTML) {
+            document.getElementById("editIdReporte").value = id;
+            document.getElementById("editIdEmpresa").value = idEmpresa;
+            document.getElementById("editNombre").value = nombre;
+            document.getElementById("editAñoInicial").value = añoInicial;
+            document.getElementById("editAñoFinal").value = añoFinal;
+            document.getElementById("editDescripcion").value = descripcion;
+            document.getElementById("editEnlaceHTML").value = enlaceHTML;
+        }
+    </script>
+</body>
+</html>
