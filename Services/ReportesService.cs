@@ -29,8 +29,8 @@ namespace bufinscustomers.Services
                             reporte.Id = (int)reader["Id"];
                             reporte.IdEmpresa = (int)reader["IdEmpresa"];
                             reporte.Nombre = reader["Nombre"].ToString();
-                            reporte.AñoInicial = reader["AñoInicial"]?.ToString();
-                            reporte.AñoFinal = reader["AñoFinal"]?.ToString();
+                            reporte.AnioInicial = reader["AñoInicial"]?.ToString();
+                            reporte.AnioFinal = reader["AñoFinal"]?.ToString();
                             reporte.Descripcion = reader["Descripcion"]?.ToString();
                             reporte.EnlaceHTML = reader["EnlaceHTML"].ToString();
                             reporte.NombreEmpresa = reader["NombreEmpresa"]?.ToString();
@@ -54,8 +54,8 @@ namespace bufinscustomers.Services
                 SqlCommand cmd = new SqlCommand("sp_RegistrarReporte", cn);
                 cmd.Parameters.AddWithValue("@IdEmpresa", reporte.IdEmpresa);
                 cmd.Parameters.AddWithValue("@Nombre", reporte.Nombre);
-                cmd.Parameters.AddWithValue("@AñoInicial", reporte.AñoInicial ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@AñoFinal", reporte.AñoFinal ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@AñoInicial", reporte.AnioInicial ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@AñoFinal", reporte.AnioFinal ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@Descripcion", reporte.Descripcion ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@EnlaceHTML", reporte.EnlaceHTML);
                 cmd.Parameters.Add("@Registrado", SqlDbType.Bit).Direction = ParameterDirection.Output;
@@ -81,8 +81,8 @@ namespace bufinscustomers.Services
                 cmd.Parameters.AddWithValue("@Id", reporte.Id);
                 cmd.Parameters.AddWithValue("@IdEmpresa", reporte.IdEmpresa);
                 cmd.Parameters.AddWithValue("@Nombre", reporte.Nombre);
-                cmd.Parameters.AddWithValue("@AñoInicial", reporte.AñoInicial ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@AñoFinal", reporte.AñoFinal ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@AñoInicial", reporte.AnioInicial ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@AñoFinal", reporte.AnioFinal ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@Descripcion", reporte.Descripcion ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@EnlaceHTML", reporte.EnlaceHTML);
                 cmd.CommandType = CommandType.StoredProcedure;

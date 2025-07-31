@@ -3,6 +3,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
     <title>Maestro de reportes</title>
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -35,9 +36,9 @@
                             <th>Id</th>
                             <th>Empresa</th>
                             <th>Nombre</th>
-                            <th>Año Inicial</th>
-                            <th>Año Final</th>
-                            <th>Descripción</th>
+                            <th>A&ntildeo Inicial</th>
+                            <th>A&ntildeo Final</th>
+                            <th>Descripci&oacuten</th>
                             <th>Enlace HTML</th>
                             <th>Acciones</th>
                         </tr>
@@ -49,14 +50,21 @@
                                 <td>@reporte.Id</td>
                                 <td>@reporte.NombreEmpresa</td>
                                 <td>@reporte.Nombre</td>
-                                <td>@reporte.AñoInicial</td>
-                                <td>@reporte.AñoFinal</td>
-                                <td>@reporte.Descripcion</td>
+                                <td>@(reporte.AnioInicial ?? "")</td>
+                                <td>@(reporte.AnioFinal ?? "")</td>
+                                <td>@(reporte.Descripcion ?? "")</td>
                                 <td>@reporte.EnlaceHTML</td>
                                 <td>
                                     <div class="btn-group" role="group" aria-label="Reporte Actions">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editReporteModal"
-                                                onclick="setEditReporte(@reporte.Id, @reporte.IdEmpresa, '@Html.Raw(Html.JavaScriptStringEncode(reporte.Nombre))', '@Html.Raw(Html.JavaScriptStringEncode(reporte.AñoInicial))', '@Html.Raw(Html.JavaScriptStringEncode(reporte.AñoFinal))', '@Html.Raw(Html.JavaScriptStringEncode(reporte.Descripcion))', '@Html.Raw(Html.JavaScriptStringEncode(reporte.EnlaceHTML))')">
+                                                data-id="@reporte.Id" 
+                                                data-idempresa="@reporte.IdEmpresa" 
+                                                data-nombre="@Html.AttributeEncode(reporte.Nombre ?? "")" 
+                                                data-anioinicial="@Html.AttributeEncode(reporte.AnioInicial ?? "")" 
+                                                data-aniofinal="@Html.AttributeEncode(reporte.AnioFinal ?? "")" 
+                                                data-descripcion="@Html.AttributeEncode(reporte.Descripcion ?? "")" 
+                                                data-enlacehtml="@Html.AttributeEncode(reporte.EnlaceHTML ?? "")"
+                                                onclick="setEditReporteFromData(this)">
                                             Editar
                                         </button>
                                         <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" onclick="setIdReporte(@reporte.Id)">
@@ -77,16 +85,16 @@
         </div>
     </div>
 
-    <!-- Modal de confirmación para eliminar -->
+    <!-- Modal de confirmacin para eliminar -->
     <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar eliminación</h5>
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar eliminacion</h5>
                     <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
-                    ¿Estás seguro de que deseas eliminar este reporte?
+                   Estas seguro de que deseas eliminar este reporte?
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -99,7 +107,7 @@
         </div>
     </div>
 
-    <!-- Modal de edición -->
+    <!-- Modal de edicion -->
     <div class="modal fade" id="editReporteModal" tabindex="-1" aria-labelledby="editReporteModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -130,20 +138,20 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="editAñoInicial">Año Inicial:</label>
-                                    <input type="text" class="form-control" id="editAñoInicial" name="AñoInicial" />
+                                    <label for="editAnioInicial">A&ntildeo Inicial:</label>
+                                    <input type="text" class="form-control" id="editAnioInicial" name="AñoInicial" />
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="editAñoFinal">Año Final:</label>
-                                    <input type="text" class="form-control" id="editAñoFinal" name="AñoFinal" />
+                                    <label for="editAnioFinal">A&ntildeo Final:</label>
+                                    <input type="text" class="form-control" id="editAnioFinal" name="AñoFinal" />
                                 </div>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label for="editDescripcion">Descripción:</label>
+                            <label for="editDescripcion">Descripci&oacuten:</label>
                             <textarea class="form-control" id="editDescripcion" name="Descripcion" rows="3"></textarea>
                         </div>
 
@@ -161,11 +169,11 @@
         </div>
     </div>
 
-    <!-- Modal de creación -->
+    <!-- Modal de creacion -->
     <div class="modal fade" id="crearReporteModal" tabindex="-1" aria-labelledby="crearReporteModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header bg-success text-white">
+                <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="crearReporteModalLabel">Crear Nuevo Reporte</h5>
                     <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
@@ -190,20 +198,20 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="AñoInicial">Año Inicial:</label>
-                                    <input type="text" class="form-control" id="AñoInicial" name="AñoInicial" />
+                                    <label for="AnioInicial">A&ntildeo Inicial:</label>
+                                    <input type="text" class="form-control" id="AnioInicial" name="AñoInicial" />
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="AñoFinal">Año Final:</label>
-                                    <input type="text" class="form-control" id="AñoFinal" name="AñoFinal" />
+                                    <label for="AnioFinal">A&ntildeo Final:</label>
+                                    <input type="text" class="form-control" id="AnioFinal" name="AñoFinal" />
                                 </div>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label for="Descripcion">Descripción:</label>
+                            <label for="Descripcion">Descripci&oacuten:</label>
                             <textarea class="form-control" id="Descripcion" name="Descripcion" rows="3"></textarea>
                         </div>
 
@@ -214,7 +222,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-success">Crear Reporte</button>
+                        <button type="submit" class="btn btn-primary">Crear Reporte</button>
                     </div>
                 </form>
             </div>
@@ -286,12 +294,30 @@
             document.getElementById("idReporte").value = id;
         }
 
-        function setEditReporte(id, idEmpresa, nombre, añoInicial, añoFinal, descripcion, enlaceHTML) {
+        function setEditReporte(id, idEmpresa, nombre, anioInicial, anioFinal, descripcion, enlaceHTML) {
             document.getElementById("editIdReporte").value = id;
             document.getElementById("editIdEmpresa").value = idEmpresa;
             document.getElementById("editNombre").value = nombre;
-            document.getElementById("editAñoInicial").value = añoInicial;
-            document.getElementById("editAñoFinal").value = añoFinal;
+            document.getElementById("editAnioInicial").value = anioInicial;
+            document.getElementById("editAnioFinal").value = anioFinal;
+            document.getElementById("editDescripcion").value = descripcion;
+            document.getElementById("editEnlaceHTML").value = enlaceHTML;
+        }
+
+        function setEditReporteFromData(button) {
+            var id = button.getAttribute('data-id');
+            var idEmpresa = button.getAttribute('data-idempresa');
+            var nombre = button.getAttribute('data-nombre');
+            var anioInicial = button.getAttribute('data-anioinicial');
+            var anioFinal = button.getAttribute('data-aniofinal');
+            var descripcion = button.getAttribute('data-descripcion');
+            var enlaceHTML = button.getAttribute('data-enlacehtml');
+            
+            document.getElementById("editIdReporte").value = id;
+            document.getElementById("editIdEmpresa").value = idEmpresa;
+            document.getElementById("editNombre").value = nombre;
+            document.getElementById("editAnioInicial").value = anioInicial;
+            document.getElementById("editAnioFinal").value = anioFinal;
             document.getElementById("editDescripcion").value = descripcion;
             document.getElementById("editEnlaceHTML").value = enlaceHTML;
         }
