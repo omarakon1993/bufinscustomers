@@ -1,41 +1,41 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-    @Styles.Render("~/Assets/Content/css")
-    @Scripts.Render("~/bundles/modernizr")
-    @using bufinscustomers.Helpers
+	@Styles.Render("~/Assets/Content/css")
+	@Scripts.Render("~/bundles/modernizr")
+	@using bufinscustomers.Helpers
 
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta name="description" content="">
+	<meta name="author" content="">
 
-    <title>BUFINS - Principal</title>
-    <link href="~/Assets/Bootstrap/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="~/Assets/GoogleApis/Family.css" rel="stylesheet">
-    <link href="~/Assets/css/sb-admin-2.min.css" rel="stylesheet">
+	<title>BUFINS - Principal</title>
+	<link href="~/Assets/Bootstrap/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+	<link href="~/Assets/GoogleApis/Family.css" rel="stylesheet">
+	<link href="~/Assets/css/sb-admin-2.min.css" rel="stylesheet">
 </head>
 
 <style>
-    .collapse-item .fa-chevron-right {
-        transition: transform 0.3s ease;
-    }
+	.collapse-item .fa-chevron-right {
+		transition: transform 0.3s ease;
+	}
 
-    .collapse-item:not(.collapsed) .fa-chevron-right {
-        transform: rotate(90deg);
-    }
+	.collapse-item:not(.collapsed) .fa-chevron-right {
+		transform: rotate(90deg);
+	}
 
-    .nav-link .fa-chevron-right {
-        transition: transform 0.3s ease;
-    }
+	.nav-link .fa-chevron-right {
+		transition: transform 0.3s ease;
+	}
 
-    .nav-link:not(.collapsed) .fa-chevron-right {
-        transform: rotate(90deg);
-    }
+	.nav-link:not(.collapsed) .fa-chevron-right {
+		transform: rotate(90deg);
+	}
 </style>
 <body id="page-top">
-    <div id="wrapper">
+	<div id="wrapper">
         <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
             <a class="sidebar-brand d-flex align-items-center justify-content-center" href="@Url.Action("Index", "Home")">
                 <div class="sidebar-heading" style="font-size: x-large;">Bufins</div>
@@ -71,6 +71,7 @@
                 </div>
             </li>
             <hr class="sidebar-divider">
+            <!-- ========== MÓDULO DE REPORTES ========== -->
             @{
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 var esAdmin = usuario?.Admin == 1;
@@ -80,14 +81,14 @@
             @if (esAdmin)
             {
                 <div class="sidebar-heading">
-                    <i class="fas fa-fw fa-chart-line"></i>
+                    <i class="fas fa-square-caret-down"></i>
                     Reportes
                 </div>
 
                 <li class="nav-item">
                     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseReportes"
                        aria-expanded="false" aria-controls="collapseReportes">
-                        <i class="fas fa-chart-bar"></i>
+                        <i class="fas fa-chart-column"></i>
                         <span>Reportes</span>
                     </a>
                     <div id="collapseReportes" class="collapse" aria-labelledby="headingReportes" data-parent="#accordionSidebar">
@@ -123,9 +124,9 @@
                 </li>
             }
             <hr class="sidebar-divider">
-
             @if (UsuarioSesionHelper.UsuarioActual != null && UsuarioSesionHelper.UsuarioActual.Admin == 1)
             {
+                <!-- ========== MÓDULO DE ADMINISTRACION ========== -->
                 <div class="sidebar-heading">
                     <i class="fas fa-fw fa-cog"></i>
                     Administración
@@ -153,7 +154,7 @@
                     </div>
                     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseReportesConfig"
                        aria-expanded="true" aria-controls="collapseReportesConfig">
-                        <i class="fas fa-chart-bar"></i>
+                        <i class="fas fa-file-circle-plus"></i>
                         <span>Reportes</span>
                     </a>
                     <div id="collapseReportesConfig" class="collapse" aria-labelledby="headingReportes" data-parent="#accordionSidebar">
@@ -167,251 +168,251 @@
                 <button class="rounded-circle border-0" id="sidebarToggle"></button>
             </div>
         </ul>
-        <div id="content-wrapper" class="d-flex flex-column">
-            <div id="content">
-                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
-                        <i class="fa fa-bars"></i>
-                    </button>
-                    <ul class="navbar-nav ml-auto">
-                        <div class="topbar-divider d-none d-sm-block"></div>
-                        <li class="nav-item dropdown no-arrow">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small" style="color: white !important;">
-                                    @(UsuarioSesionHelper.UsuarioActual != null ? UsuarioSesionHelper.UsuarioActual.Nombre + " " + UsuarioSesionHelper.UsuarioActual.Apellidos : "Invitado")
-                                </span>
-                                @if (usuario?.Imagen != null && !string.IsNullOrEmpty(usuario.Imagen.ImagenBase64))
-                                {
-                                    <img src="data:@usuario.Imagen.TipoImagen;base64,@usuario.Imagen.ImagenBase64"
-                                         alt="Imagen de usuario"
-                                         class="imgPerfil img-profile rounded-circle"
-                                         style="max-width:150px; max-height:150px;" />
-                                }
-                                else
-                                {
-                                    <img src="~/Assets/img/avatar.png"
-                                         alt="Imagen por defecto"
-                                         class="imgPerfil img-profile rounded-circle"
-                                         style="max-width:150px; max-height:150px;" />
-                                }
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                                 aria-labelledby="userDropdown">
-                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modalPerfilUsuario">
-                                    <i class="fas fa-user fa-sm fa-fw mr-2" style="color: #160933!important;"></i>
-                                    Perfil
-                                </a>
-                                @*<a class="dropdown-item" href="#">
-                                    <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Settings
-                                </a>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Activity Log
-                                </a>*@
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="@Url.Action("Login", "Acceso")">
-                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2" style="color:#160933 !important;"></i>
-                                    Cerrar sesión
-                                </a>
-                            </div>
-                        </li>
-                    </ul>
-                </nav>
-                <div class="container-fluid">
-                    <div class="container body-content">
-                        @RenderBody()
-                        <hr />
-                    </div>
-                </div>
-            </div>
-            <!-- Modal de información de usuario -->
-            <div class="modal fade" id="modalPerfilUsuario" tabindex="-1" role="dialog" aria-labelledby="modalPerfilUsuarioLabel" aria-hidden="true">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title" id="modalPerfilUsuarioLabel">Perfil de usuario</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="container">
-                                <div class="row align-items-center">
-                                    <div class="col-md-8">
-                                        <p><strong>Nombre:</strong> @(UsuarioSesionHelper.UsuarioActual?.Nombre ?? "Invitado")</p>
-                                        <p><strong>Apellidos:</strong> @(UsuarioSesionHelper.UsuarioActual?.Apellidos ?? "-")</p>
-                                        <p><strong>Email:</strong> @(UsuarioSesionHelper.UsuarioActual?.Correo ?? "-")</p>
-                                        <p><strong>Teléfono:</strong> @(UsuarioSesionHelper.UsuarioActual?.Telefono ?? "-")</p>
-                                        <p><strong>Usuario:</strong> @(UsuarioSesionHelper.UsuarioActual?.Usuario ?? "-")</p>
-                                        <p><strong>Rol:</strong> @(UsuarioSesionHelper.UsuarioActual?.Admin == 1 ? "Administrador" : "Usuario")</p>
-                                        @{
-                                            var empresas = ViewBag.Empresas as List<bufinscustomers.Models.Empresas>;
-                                            var empresaActual = empresas?.FirstOrDefault(e => e.Id == idEmpresa);
-                                        }
-                                        <p><strong>Empresa:</strong> @(empresaActual != null ? empresaActual.Nombre : "Sin empresa")</p>
-                                    </div>
-                                    <div class="col-md-4 text-center mb-3 mb-md-0">
-                                        @if (usuario?.Imagen != null && !string.IsNullOrEmpty(usuario.Imagen.ImagenBase64))
-                                        {
-                                            <img src="data:@usuario.Imagen.TipoImagen;base64,@usuario.Imagen.ImagenBase64"
-                                                 alt="Imagen de usuario"
-                                                 class="imgPerfil img-profile rounded-circle"
-                                                 style="max-width:150px; max-height:150px; min-width:150px; min-height:150px" />
-                                        }
-                                        else
-                                        {
-                                            <img src="~/Assets/img/avatar.png"
-                                                 alt="Imagen por defecto"
-                                                 class="imgPerfil img-profile rounded-circle"
-                                                 style="max-width:150px; max-height:150px;" />
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalCargarImagen" data-dismiss="modal">
-                                Cambiar imagen
-                            </button>
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal fade" id="modalCargarImagen" tabindex="-1" role="dialog" aria-labelledby="modalCargarImagenLabel" aria-hidden="true">
-                <div class="modal-dialog" role="document">
-                    <form id="formCargarImagen" enctype="multipart/form-data" method="post" action="@Url.Action("CargarImagenUsuario", "Usuario")">
-                        <div class="modal-content">
-                            <div class="modal-header bg-primary text-white">
-                                <h5 class="modal-title" id="modalCargarImagenLabel">Cargar imagen de usuario</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                <input type="file" name="ImagenUsuario" accept="image/png, image/jpeg" class="form-control" required />
-                                <img id="previewImagen" src="#" alt="Vista previa" style="display:none; max-width:150px; max-height:150px; margin-top:10px;" />
-                                <div id="mensajeImagen" class="mt-2"></div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="submit" class="btn btn-success">Guardar</button>
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <footer class="sticky-footer bg-white">
-                <div class="container my-auto">
-                    <div class="copyright text-center my-auto">
-                        <span style="color:white;">Copyright &copy; Bufins 2025</span>
-                    </div>
-                </div>
-            </footer>
-        </div>
-    </div>
+		<div id="content-wrapper" class="d-flex flex-column">
+			<div id="content">
+				<nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+					<button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+						<i class="fa fa-bars"></i>
+					</button>
+					<ul class="navbar-nav ml-auto">
+						<div class="topbar-divider d-none d-sm-block"></div>
+						<li class="nav-item dropdown no-arrow">
+							<a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+							   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+								<span class="mr-2 d-none d-lg-inline text-gray-600 small" style="color: white !important;">
+									@(UsuarioSesionHelper.UsuarioActual != null ? UsuarioSesionHelper.UsuarioActual.Nombre + " " + UsuarioSesionHelper.UsuarioActual.Apellidos : "Invitado")
+								</span>
+								@if (usuario?.Imagen != null && !string.IsNullOrEmpty(usuario.Imagen.ImagenBase64))
+								{
+									<img src="data:@usuario.Imagen.TipoImagen;base64,@usuario.Imagen.ImagenBase64"
+										 alt="Imagen de usuario"
+										 class="imgPerfil img-profile rounded-circle"
+										 style="max-width:150px; max-height:150px;" />
+								}
+								else
+								{
+									<img src="~/Assets/img/avatar.png"
+										 alt="Imagen por defecto"
+										 class="imgPerfil img-profile rounded-circle"
+										 style="max-width:150px; max-height:150px;" />
+								}
+							</a>
+							<div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+								 aria-labelledby="userDropdown">
+								<a class="dropdown-item" href="#" data-toggle="modal" data-target="#modalPerfilUsuario">
+									<i class="fas fa-user fa-sm fa-fw mr-2" style="color: #160933!important;"></i>
+									Perfil
+								</a>
+								@*<a class="dropdown-item" href="#">
+										<i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
+										Settings
+									</a>
+									<a class="dropdown-item" href="#">
+										<i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
+										Activity Log
+									</a>*@
+								<div class="dropdown-divider"></div>
+								<a class="dropdown-item" href="@Url.Action("Login", "Acceso")">
+									<i class="fas fa-sign-out-alt fa-sm fa-fw mr-2" style="color:#160933 !important;"></i>
+									Cerrar sesión
+								</a>
+							</div>
+						</li>
+					</ul>
+				</nav>
+				<div class="container-fluid">
+					<div class="container body-content">
+						@RenderBody()
+						<hr />
+					</div>
+				</div>
+			</div>
+			<!-- Modal de información de usuario -->
+			<div class="modal fade" id="modalPerfilUsuario" tabindex="-1" role="dialog" aria-labelledby="modalPerfilUsuarioLabel" aria-hidden="true">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header bg-primary text-white">
+							<h5 class="modal-title" id="modalPerfilUsuarioLabel">Perfil de usuario</h5>
+							<button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+								<span aria-hidden="true">&times;</span>
+							</button>
+						</div>
+						<div class="modal-body">
+							<div class="container">
+								<div class="row align-items-center">
+									<div class="col-md-8">
+										<p><strong>Nombre:</strong> @(UsuarioSesionHelper.UsuarioActual?.Nombre ?? "Invitado")</p>
+										<p><strong>Apellidos:</strong> @(UsuarioSesionHelper.UsuarioActual?.Apellidos ?? "-")</p>
+										<p><strong>Email:</strong> @(UsuarioSesionHelper.UsuarioActual?.Correo ?? "-")</p>
+										<p><strong>Teléfono:</strong> @(UsuarioSesionHelper.UsuarioActual?.Telefono ?? "-")</p>
+										<p><strong>Usuario:</strong> @(UsuarioSesionHelper.UsuarioActual?.Usuario ?? "-")</p>
+										<p><strong>Rol:</strong> @(UsuarioSesionHelper.UsuarioActual?.Admin == 1 ? "Administrador" : "Usuario")</p>
+										@{
+											var empresas = ViewBag.Empresas as List<bufinscustomers.Models.Empresas>;
+											var empresaActual = empresas?.FirstOrDefault(e => e.Id == idEmpresa);
+										}
+										<p><strong>Empresa:</strong> @(empresaActual != null ? empresaActual.Nombre : "Sin empresa")</p>
+									</div>
+									<div class="col-md-4 text-center mb-3 mb-md-0">
+										@if (usuario?.Imagen != null && !string.IsNullOrEmpty(usuario.Imagen.ImagenBase64))
+										{
+											<img src="data:@usuario.Imagen.TipoImagen;base64,@usuario.Imagen.ImagenBase64"
+												 alt="Imagen de usuario"
+												 class="imgPerfil img-profile rounded-circle"
+												 style="max-width:150px; max-height:150px; min-width:150px; min-height:150px" />
+										}
+										else
+										{
+											<img src="~/Assets/img/avatar.png"
+												 alt="Imagen por defecto"
+												 class="imgPerfil img-profile rounded-circle"
+												 style="max-width:150px; max-height:150px;" />
+										}
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalCargarImagen" data-dismiss="modal">
+								Cambiar imagen
+							</button>
+							<button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="modal fade" id="modalCargarImagen" tabindex="-1" role="dialog" aria-labelledby="modalCargarImagenLabel" aria-hidden="true">
+				<div class="modal-dialog" role="document">
+					<form id="formCargarImagen" enctype="multipart/form-data" method="post" action="@Url.Action("CargarImagenUsuario", "Usuario")">
+						<div class="modal-content">
+							<div class="modal-header bg-primary text-white">
+								<h5 class="modal-title" id="modalCargarImagenLabel">Cargar imagen de usuario</h5>
+								<button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+									<span aria-hidden="true">&times;</span>
+								</button>
+							</div>
+							<div class="modal-body">
+								<input type="file" name="ImagenUsuario" accept="image/png, image/jpeg" class="form-control" required />
+								<img id="previewImagen" src="#" alt="Vista previa" style="display:none; max-width:150px; max-height:150px; margin-top:10px;" />
+								<div id="mensajeImagen" class="mt-2"></div>
+							</div>
+							<div class="modal-footer">
+								<button type="submit" class="btn btn-success">Guardar</button>
+								<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+			<footer class="sticky-footer bg-white">
+				<div class="container my-auto">
+					<div class="copyright text-center my-auto">
+						<span style="color:white;">Copyright &copy; Bufins 2025</span>
+					</div>
+				</div>
+			</footer>
+		</div>
+	</div>
 
-    <a class="scroll-to-top rounded" href="#">
-        <i class="fas fa-angle-up"></i>
-    </a>
+	<a class="scroll-to-top rounded" href="#">
+		<i class="fas fa-angle-up"></i>
+	</a>
 
-    <script src="~/Assets/Bootstrap/jquery/jquery.min.js"></script>
-    <script src="~/Assets/Bootstrap/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="~/Assets/Bootstrap/jquery-easing/jquery.easing.min.js"></script>
-    <script src="~/Assets/js/sb-admin-2.min.js"></script>
+	<script src="~/Assets/Bootstrap/jquery/jquery.min.js"></script>
+	<script src="~/Assets/Bootstrap/bootstrap/js/bootstrap.bundle.min.js"></script>
+	<script src="~/Assets/Bootstrap/jquery-easing/jquery.easing.min.js"></script>
+	<script src="~/Assets/js/sb-admin-2.min.js"></script>
 
-    @Scripts.Render("~/bundles/jquery")
-    @Scripts.Render("~/bundles/bootstrap")
-    @RenderSection("scripts", required: false)
+	@Scripts.Render("~/bundles/jquery")
+	@Scripts.Render("~/bundles/bootstrap")
+	@RenderSection("scripts", required: false)
 
-    <script>
-        $('input[name="ImagenUsuario"]').on('change', function () {
-            var input = this;
-            var preview = document.getElementById('previewImagen');
-            var mensajeDiv = $('#mensajeImagen');
-            mensajeDiv.html('');
-            preview.style.display = 'none';
+	<script>
+		$('input[name="ImagenUsuario"]').on('change', function () {
+			var input = this;
+			var preview = document.getElementById('previewImagen');
+			var mensajeDiv = $('#mensajeImagen');
+			mensajeDiv.html('');
+			preview.style.display = 'none';
 
-            if (input.files && input.files[0]) {
-                var file = input.files[0];
+			if (input.files && input.files[0]) {
+				var file = input.files[0];
 
-                if (file.size > 204800) {
-                    mensajeDiv.html('<div class="alert alert-danger">La imagen debe pesar menos de 200 KB.</div>');
-                    return;
-                }
+				if (file.size > 204800) {
+					mensajeDiv.html('<div class="alert alert-danger">La imagen debe pesar menos de 200 KB.</div>');
+					return;
+				}
 
-                var reader = new FileReader();
-                reader.onload = function (e) {
-                    var img = new Image();
-                    img.onload = function () {
-                        if (img.width > 400 || img.height > 400) {
-                            mensajeDiv.html('<div class="alert alert-danger">La imagen debe tener máximo 400x400 píxeles.</div>');
-                            preview.style.display = 'none';
-                        } else {
-                            preview.src = e.target.result;
-                            preview.style.display = 'block';
-                        }
-                    };
-                    img.onerror = function () {
-                        mensajeDiv.html('<div class="alert alert-danger">Archivo de imagen no válido.</div>');
-                        preview.style.display = 'none';
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+				var reader = new FileReader();
+				reader.onload = function (e) {
+					var img = new Image();
+					img.onload = function () {
+						if (img.width > 400 || img.height > 400) {
+							mensajeDiv.html('<div class="alert alert-danger">La imagen debe tener máximo 400x400 píxeles.</div>');
+							preview.style.display = 'none';
+						} else {
+							preview.src = e.target.result;
+							preview.style.display = 'block';
+						}
+					};
+					img.onerror = function () {
+						mensajeDiv.html('<div class="alert alert-danger">Archivo de imagen no válido.</div>');
+						preview.style.display = 'none';
+					};
+					img.src = e.target.result;
+				};
+				reader.readAsDataURL(file);
+			}
+		});
 
-        $('#formCargarImagen').on('submit', function (e) {
-            e.preventDefault();
-            var input = document.querySelector('input[name="ImagenUsuario"]');
-            var mensajeDiv = $('#mensajeImagen');
-            var preview = document.getElementById('previewImagen');
+		$('#formCargarImagen').on('submit', function (e) {
+			e.preventDefault();
+			var input = document.querySelector('input[name="ImagenUsuario"]');
+			var mensajeDiv = $('#mensajeImagen');
+			var preview = document.getElementById('previewImagen');
 
-            if (input.files.length === 0) {
-                mensajeDiv.html('<div class="alert alert-danger">Selecciona una imagen.</div>');
-                return;
-            }
+			if (input.files.length === 0) {
+				mensajeDiv.html('<div class="alert alert-danger">Selecciona una imagen.</div>');
+				return;
+			}
 
-            if (preview.style.display !== 'block') {
-                mensajeDiv.html('<div class="alert alert-danger">La imagen seleccionada no es válida.</div>');
-                return;
-            }
+			if (preview.style.display !== 'block') {
+				mensajeDiv.html('<div class="alert alert-danger">La imagen seleccionada no es válida.</div>');
+				return;
+			}
 
-            var formData = new FormData($('#formCargarImagen')[0]);
-            $.ajax({
-                url: $('#formCargarImagen').attr('action'),
-                type: 'POST',
-                data: formData,
-                contentType: false,
-                processData: false,
-                success: function (response) {
-                    if (response.success) {
-                        $('.imgPerfil').attr('src', 'data:' + response.tipoImagen + ';base64,' + response.imagenBase64);
-                        mensajeDiv.html('<div class="alert alert-success">' + response.message + '</div>');
-                    } else {
-                        mensajeDiv.html('<div class="alert alert-danger">' + response.message + '</div>');
-                    }
-                },
-                error: function () {
-                    mensajeDiv.html('<div class="alert alert-danger">Error al subir la imagen.</div>');
-                }
-            });
-        });
+			var formData = new FormData($('#formCargarImagen')[0]);
+			$.ajax({
+				url: $('#formCargarImagen').attr('action'),
+				type: 'POST',
+				data: formData,
+				contentType: false,
+				processData: false,
+				success: function (response) {
+					if (response.success) {
+						$('.imgPerfil').attr('src', 'data:' + response.tipoImagen + ';base64,' + response.imagenBase64);
+						mensajeDiv.html('<div class="alert alert-success">' + response.message + '</div>');
+					} else {
+						mensajeDiv.html('<div class="alert alert-danger">' + response.message + '</div>');
+					}
+				},
+				error: function () {
+					mensajeDiv.html('<div class="alert alert-danger">Error al subir la imagen.</div>');
+				}
+			});
+		});
 
-        $(document).on('shown.bs.modal', '#modalCargarImagen', function () {
-            $('#mensajeImagen').html('');
-            $('#previewImagen').attr('src', '#').hide();
-            $('input[name="ImagenUsuario"]').val('');
-        });
+		$(document).on('shown.bs.modal', '#modalCargarImagen', function () {
+			$('#mensajeImagen').html('');
+			$('#previewImagen').attr('src', '#').hide();
+			$('input[name="ImagenUsuario"]').val('');
+		});
 
-        $(document).on('hidden.bs.modal', '#modalCargarImagen', function () {
-            $('#mensajeImagen').html('');
-            $('#previewImagen').attr('src', '#').hide();
-            $('input[name="ImagenUsuario"]').val('');
-        });
-    </script>
+		$(document).on('hidden.bs.modal', '#modalCargarImagen', function () {
+			$('#mensajeImagen').html('');
+			$('#previewImagen').attr('src', '#').hide();
+			$('input[name="ImagenUsuario"]').val('');
+		});
+	</script>
 </body>
 </html>
