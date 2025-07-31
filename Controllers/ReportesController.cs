@@ -4,18 +4,84 @@ using System.Data.SqlClient;
 using System.Web.Mvc;
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
+using bufinscustomers.Services;
 
 namespace bufinscustomers.Controllers
 {
     public class ReportesController : Controller
     {
         private static string cadena = "Data Source=190.90.160.168,1433;Initial Catalog=bufinscustomers;Persist Security Info=True;User ID=oglearni_bufins;Password=Bufins2025**;Encrypt=false";
+        private ReportesService _reportesService = new ReportesService();
 
+        // Vista para mostrar reportes (existing functionality)
         public ActionResult VerReporte(string url, string titulo = "")
         {
             ViewBag.UrlReporte = url;
             ViewBag.Titulo = titulo;
             return View("Reportes");
+        }
+
+        // Maestro de reportes - Listar reportes
+        public ActionResult MaestroReportes()
+        {
+            var reportes = _reportesService.ObtenerReportes();
+            ViewBag.Empresas = _reportesService.ObtenerEmpresas();
+            return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
+        }
+
+        // POST: Crear reporte
+        [HttpPost]
+        public ActionResult CrearReporte(Reportes reporte)
+        {
+            string mensaje;
+            bool registrado = _reportesService.CrearReporte(reporte, out mensaje);
+
+            if (registrado)
+            {
+                TempData["SuccessMessage"] = "Reporte creado correctamente.";
+                return RedirectToAction("MaestroReportes");
+            }
+            else
+            {
+                ViewBag.ErrorMessage = mensaje;
+                ViewBag.Empresas = _reportesService.ObtenerEmpresas();
+                var reportes = _reportesService.ObtenerReportes();
+                return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
+            }
+        }
+
+        // POST: Editar reporte
+        [HttpPost]
+        public ActionResult EditarReporte(Reportes reporte)
+        {
+            bool actualizado = _reportesService.EditarReporte(reporte);
+
+            if (actualizado)
+            {
+                TempData["SuccessMessage"] = "Reporte actualizado correctamente.";
+                return RedirectToAction("MaestroReportes");
+            }
+            else
+            {
+                ViewBag.ErrorMessage = "Error al actualizar el reporte.";
+                ViewBag.Empresas = _reportesService.ObtenerEmpresas();
+                var reportes = _reportesService.ObtenerReportes();
+                return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
+            }
+        }
+
+        // POST: Eliminar reporte
+        [HttpPost]
+        public ActionResult EliminarReporte(int idReporte)
+        {
+            bool eliminado = _reportesService.EliminarReporte(idReporte);
+
+            if (eliminado)
+                TempData["SuccessMessage"] = "Reporte eliminado correctamente.";
+            else
+                TempData["ErrorMessage"] = "Error al eliminar el reporte.";
+
+            return RedirectToAction("MaestroReportes");
         }
 
         public static string ObtenerNombreEmpresaPorId(int idEmpresa)
