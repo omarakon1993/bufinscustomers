@@ -71,11 +71,6 @@
                 </div>
             </li>
             <hr class="sidebar-divider">
-            <!-- ========== MÓDULO DE REPORTES ========== -->
-            <div class="sidebar-heading">
-                <i class="fas fa-square-caret-down"></i>
-                Reportes
-            </div>
             @{
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 var esAdmin = usuario?.Admin == 1;
@@ -84,111 +79,45 @@
             }
             @if (esAdmin)
             {
-                var reportes = bufinscustomers.Controllers.ReportesController.ObtenerReportesParaLayout();
-                var reportesPorEmpresa = reportes?
-                    .GroupBy(r => r.NombreEmpresa)
-                    .ToList();
-                if (reportesPorEmpresa != null && reportesPorEmpresa.Any())
-                {
-                    <li class="nav-item">
-                        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseReportesGeneral"
-                           aria-expanded="false" aria-controls="collapseReportesGeneral">
-                            <i class="fas fa-chart-pie"></i>
-                            <span>Reportes generales</span>
-                        </a>
-                        <div id="collapseReportesGeneral" class="collapse" aria-labelledby="headingReportesGeneral" data-parent="#accordionSidebar">
-                            <div class="bg-white py-2 collapse-inner rounded">
-                                @foreach (var grupo in reportesPorEmpresa)
-                                {
-                                    var nombreEmpresaGrupo = grupo.Key;
-                                    var idCollapseEmpresa = "collapseEmpresa_" + nombreEmpresaGrupo.Replace(" ", "").Replace(".", "").Replace(",", "");
-                                    <!-- Empresa con flechita -->
-                                    <a class="collapse-item collapsed d-flex justify-content-between align-items-center"
-                                       href="#" data-toggle="collapse" data-target="#@idCollapseEmpresa"
-                                       aria-expanded="false" aria-controls="@idCollapseEmpresa">
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-building mr-2 text-info"></i>
-                                            <span>@nombreEmpresaGrupo</span>
-                                        </div>
-                                        <i class="fas fa-chevron-right text-secondary"></i>
-                                    </a>
-                                    <!-- Reportes o mensaje de vacío -->
-                                    <div id="@idCollapseEmpresa" class="collapse ml-3">
-                                        @if (grupo.Any())
-                                        {
-                                            foreach (var reporte in grupo)
-                                            {
-                                                var enlaceVista = Url.Action("VerReporte", "Reportes", new
-                                                {
-                                                    url = reporte.EnlaceHTML,
-                                                    titulo = reporte.Descripcion
-                                                });
+                <div class="sidebar-heading">
+                    <i class="fas fa-fw fa-chart-line"></i>
+                    Reportes
+                </div>
 
-                                                <a class="collapse-item d-flex align-items-start small ml-4 my-1"
-                                                   href="@enlaceVista" title="@reporte.Descripcion"
-                                                   style="white-space: normal; word-break: break-word; line-height: 1.3;">
-                                                    <i class="fas fa-chart-bar mr-2 text-secondary mt-1"></i>
-                                                    <span>@reporte.Descripcion</span>
-                                                </a>
-                                            }
-                                        }
-                                        else
-                                        {
-                                            <span class="collapse-item text-muted small ml-4">Sin reportes para tu empresa</span>
-                                        }
-                                    </div>
-                                }
-                            </div>
+                <li class="nav-item">
+                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseReportes"
+                       aria-expanded="false" aria-controls="collapseReportes">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Reportes</span>
+                    </a>
+                    <div id="collapseReportes" class="collapse" aria-labelledby="headingReportes" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item" href="@Url.Action("VerReporte", "Reportes")">Reportes generales</a>
                         </div>
-                    </li>
-                }
+                    </div>
+                </li>
             }
             else
             {
-                <li class="nav-item">
-                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseEmpresa"
-                       aria-expanded="false" aria-controls="collapseEmpresa">
-                        <i class="fas fa-chart-pie"></i>
-                        <span>Reportes de empresa</span>
-                    </a>
-                    <div id="collapseEmpresa" class="collapse" aria-labelledby="headingEmpresa" data-parent="#accordionSidebar">
-                        <div class="bg-white py-2 collapse-inner rounded">
-                            <a class="collapse-item collapsed d-flex justify-content-between align-items-center"
-                               href="#" data-toggle="collapse" data-target="#collapseEmpresaItems"
-                               aria-expanded="false" aria-controls="collapseEmpresaItems">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-building mr-2 text-info"></i>
-                                    <span>@nombreEmpresa</span>
-                                </div>
-                                <i class="fas fa-chevron-right text-secondary"></i>
-                            </a>
-                            <div id="collapseEmpresaItems" class="collapse ml-3">
-                                @{
-                                    var reportesEmpresa = bufinscustomers.Controllers.ReportesController.ObtenerReportesPorEmpresaParaLayout(idEmpresa);
-                                }
-                                @if (reportesEmpresa != null && reportesEmpresa.Any())
-                                {
-                                    foreach (var r in reportesEmpresa)
-                                    {
-                                        var enlaceVista = Url.Action("VerReporte", "Reportes", new
-                                        {
-                                            url = r.EnlaceHTML,
-                                            titulo = r.Descripcion
-                                        });
+                <div class="sidebar-heading">
+                    <i class="fas fa-fw fa-chart-line"></i>
+                    Reportes
+                </div>
 
-                                        <a class="collapse-item d-flex align-items-start small ml-2 my-1"
-                                           href="@enlaceVista" title="@r.Descripcion"
-                                           style="white-space: normal; word-break: break-word; line-height: 1.3;">
-                                            <i class="fas fa-chart-bar mr-2 text-secondary mt-1"></i>
-                                            <span>@r.Descripcion</span>
-                                        </a>
-                                    }
-                                }
-                                else
-                                {
-                                    <span class="collapse-item text-muted small ml-2">Sin reportes para tu empresa</span>
-                                }
-                            </div>
+                <li class="nav-item">
+                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseReportes"
+                       aria-expanded="false" aria-controls="collapseReportes">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Reportes</span>
+                    </a>
+                    <div id="collapseReportes" class="collapse" aria-labelledby="headingReportes" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item d-flex align-items-start"
+                               href="@Url.Action("VerReporte", "Reportes")"
+                               title="Reportes @nombreEmpresa"
+                               style="white-space: normal; word-break: break-word; line-height: 1.2;">
+                                Reportes de @nombreEmpresa
+                            </a>
                         </div>
                     </div>
                 </li>
