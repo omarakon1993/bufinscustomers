@@ -5,6 +5,7 @@ using System.Web.Mvc;
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Services;
+using System.Text.RegularExpressions;
 
 namespace bufinscustomers.Controllers
 {
@@ -13,7 +14,44 @@ namespace bufinscustomers.Controllers
         private static string cadena = "Data Source=190.90.160.168,1433;Initial Catalog=bufinscustomers;Persist Security Info=True;User ID=oglearni_bufins;Password=Bufins2025**;Encrypt=false";
         private ReportesService _reportesService = new ReportesService();
 
-        // Vista para mostrar reportes (existing functionality)
+        
+        private bool EsURLValida(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return true; 
+
+            try
+            {
+                url = url.Trim();        
+                string pattern = @"^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?$";
+                Regex regex = new Regex(pattern, RegexOptions.IgnoreCase);
+                          
+                try
+                {            
+                    string urlParaValidar = url;
+                    if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && 
+                        !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                    {
+                        urlParaValidar = "https://" + url;
+                    }
+                    
+                    Uri uriResult;
+                    bool esUriValida = Uri.TryCreate(urlParaValidar, UriKind.Absolute, out uriResult) 
+                                      && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+                    
+                    return esUriValida && regex.IsMatch(url);
+                }
+                catch (Exception)
+                {
+                    return regex.IsMatch(url);
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         public ActionResult VerReporte(string url, string titulo = "")
         {
             ViewBag.UrlReporte = url;
@@ -21,7 +59,6 @@ namespace bufinscustomers.Controllers
             return View("Reportes");
         }
 
-        // Maestro de reportes - Listar reportes
         public ActionResult MaestroReportes()
         {
             var reportes = _reportesService.ObtenerReportes();
@@ -29,10 +66,18 @@ namespace bufinscustomers.Controllers
             return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
         }
 
-        // POST: Crear reporte
         [HttpPost]
         public ActionResult CrearReporte(Reportes reporte)
         {
+
+            if (!string.IsNullOrWhiteSpace(reporte.EnlaceHTML) && !EsURLValida(reporte.EnlaceHTML))
+            {
+                TempData["ErrorMessage"] = "El enlace HTML no tiene un formato válido. Formato esperado: https://ejemplo.com";
+                ViewBag.Empresas = _reportesService.ObtenerEmpresas();
+                var reportes = _reportesService.ObtenerReportes();
+                return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
+            }
+
             string mensaje;
             bool registrado = _reportesService.CrearReporte(reporte, out mensaje);
 
@@ -43,17 +88,26 @@ namespace bufinscustomers.Controllers
             }
             else
             {
-                ViewBag.ErrorMessage = mensaje;
+                TempData["ErrorMessage"] = mensaje;
                 ViewBag.Empresas = _reportesService.ObtenerEmpresas();
                 var reportes = _reportesService.ObtenerReportes();
                 return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
             }
         }
 
-        // POST: Editar reporte
+    
         [HttpPost]
         public ActionResult EditarReporte(Reportes reporte)
         {
+        
+            if (!string.IsNullOrWhiteSpace(reporte.EnlaceHTML) && !EsURLValida(reporte.EnlaceHTML))
+            {
+                TempData["ErrorMessage"] = "El enlace HTML no tiene un formato válido. Formato esperado: https://ejemplo.com";
+                ViewBag.Empresas = _reportesService.ObtenerEmpresas();
+                var reportes = _reportesService.ObtenerReportes();
+                return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
+            }
+
             bool actualizado = _reportesService.EditarReporte(reporte);
 
             if (actualizado)
@@ -63,14 +117,14 @@ namespace bufinscustomers.Controllers
             }
             else
             {
-                ViewBag.ErrorMessage = "Error al actualizar el reporte.";
+                TempData["ErrorMessage"] = "Error al actualizar el reporte.";
                 ViewBag.Empresas = _reportesService.ObtenerEmpresas();
                 var reportes = _reportesService.ObtenerReportes();
                 return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
             }
         }
 
-        // POST: Eliminar reporte
+      
         [HttpPost]
         public ActionResult EliminarReporte(int idReporte)
         {
@@ -82,6 +136,14 @@ namespace bufinscustomers.Controllers
                 TempData["ErrorMessage"] = "Error al eliminar el reporte.";
 
             return RedirectToAction("MaestroReportes");
+        }
+
+ 
+        [HttpPost]
+        public JsonResult ValidarURL(string url)
+        {
+            bool esValida = EsURLValida(url);
+            return Json(new { valida = esValida }, JsonRequestBehavior.AllowGet);
         }
 
         public static string ObtenerNombreEmpresaPorId(int idEmpresa)
@@ -187,12 +249,10 @@ namespace bufinscustomers.Controllers
 
                 if (esAdmin)
                 {
-                    // Trae todos los reportes para administrador
                     cmd = new SqlCommand("SELECT Id, Nombre FROM dbo.Reportes ORDER BY Nombre", conn);
                 }
                 else
                 {
-                    // Trae solo los reportes de la empresa del usuario
                     cmd = new SqlCommand("SELECT Id, Nombre FROM dbo.Reportes WHERE IdEmpresa = @IdEmpresa ORDER BY Nombre", conn);
                     cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
                 }
@@ -304,6 +364,12 @@ namespace bufinscustomers.Controllers
                 {
                     enlace = result.ToString();
                 }
+            }
+
+            // Validar que el enlace sea válido antes de retornarlo
+            if (!string.IsNullOrWhiteSpace(enlace) && !EsURLValida(enlace))
+            {
+                return Json(new { enlace = "", error = "El enlace almacenado no tiene un formato válido" }, JsonRequestBehavior.AllowGet);
             }
 
             return Json(new { enlace }, JsonRequestBehavior.AllowGet);

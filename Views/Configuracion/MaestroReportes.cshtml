@@ -3,6 +3,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
     <title>Maestro de reportes</title>
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -18,6 +19,46 @@
 
         .bg-primary {
             background-color: #583AFF !important; /* Cambia el color de fondo del encabezado del modal */
+        }
+
+        .enlace-reporte {
+            color: #007bff;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: color 0.3s ease;
+        }
+
+        .enlace-reporte:hover {
+            color: #0056b3;
+            text-decoration: none;
+        }
+
+        .enlace-reporte.disabled {
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .enlace-reporte.invalid {
+            color: #dc3545;
+            cursor: not-allowed;
+        }
+
+        .url-input {
+            position: relative;
+        }
+
+        .url-feedback {
+            font-size: 0.875em;
+            margin-top: 0.25rem;
+        }
+
+        .url-feedback.valid {
+            color: #28a745;
+        }
+
+        .url-feedback.invalid {
+            color: #dc3545;
         }
     </style>
 
@@ -38,7 +79,7 @@
                             <th>A&ntildeo Inicial</th>
                             <th>A&ntildeo Final</th>
                             <th>Descripci&oacuten</th>
-                            <th>Enlace HTML</th>
+                            <th style="text-align: center;">Ver Reporte</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -52,7 +93,18 @@
                                 <td>@(reporte.AnioInicial ?? "")</td>
                                 <td>@(reporte.AnioFinal ?? "")</td>
                                 <td>@(reporte.Descripcion ?? "")</td>
-                                <td>@reporte.EnlaceHTML</td>
+                                <td style="text-align: center;">
+                                    @if (!string.IsNullOrEmpty(reporte.EnlaceHTML))
+                                    {
+                                        <a href="#" onclick="abrirEnlaceValidado('@(Html.AttributeEncode(reporte.EnlaceHTML))', this)" class="enlace-reporte" title="Verificar y abrir reporte">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-ban enlace-reporte disabled" title="Sin enlace disponible"></i>
+                                    }
+                                </td>
                                 <td>
                                     <div class="btn-group" role="group" aria-label="Reporte Actions">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editReporteModal"
@@ -84,16 +136,16 @@
         </div>
     </div>
 
-    <!-- Modal de confirmacin para eliminar -->
+    <!-- Modal de confirmacion para eliminar -->
     <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar eliminaci&oacuten</h5>
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar eliminaci&oacute;n</h5>
                     <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
-                    &iquestEst&aacutes seguro de que deseas eliminar este reporte?
+                    &iquestEst&aacute;s seguro de que deseas eliminar este reporte?
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -106,7 +158,7 @@
         </div>
     </div>
 
-    <!-- Modal de edicion -->
+    <!-- Modal de edición -->
     <div class="modal fade" id="editReporteModal" tabindex="-1" aria-labelledby="editReporteModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -114,7 +166,7 @@
                     <h5 class="modal-title" id="editReporteModalLabel">Editar Reporte</h5>
                     <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
-                <form method="post" action="/Reportes/EditarReporte">
+                <form method="post" action="/Reportes/EditarReporte" onsubmit="return validarFormularioEditar()">
                     <div class="modal-body">
                         <input type="hidden" id="editIdReporte" name="Id" />
                         
@@ -138,13 +190,13 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="editAnioInicial">A&ntildeo Inicial:</label>
-                                    <input type="text" class="form-control" id="editAnioInicial" name="AñoInicial" />
+                                    <input type="text" class="form-control" id="editAnioInicial" name="AnioInicial" />
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="editAnioFinal">A&ntildeo Final:</label>
-                                    <input type="text" class="form-control" id="editAnioFinal" name="AñoFinal" />
+                                    <input type="text" class="form-control" id="editAnioFinal" name="AnioFinal" />
                                 </div>
                             </div>
                         </div>
@@ -154,9 +206,10 @@
                             <textarea class="form-control" id="editDescripcion" name="Descripcion" rows="3"></textarea>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group url-input">
                             <label for="editEnlaceHTML">Enlace HTML:</label>
-                            <input type="text" class="form-control" id="editEnlaceHTML" name="EnlaceHTML" required />
+                            <input type="text" class="form-control" id="editEnlaceHTML" name="EnlaceHTML" required oninput="validarURL('editEnlaceHTML', 'editUrlFeedback')" />
+                            <div id="editUrlFeedback" class="url-feedback"></div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -168,7 +221,7 @@
         </div>
     </div>
 
-    <!-- Modal de creacion -->
+    <!-- Modal de creación -->
     <div class="modal fade" id="crearReporteModal" tabindex="-1" aria-labelledby="crearReporteModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -176,7 +229,7 @@
                     <h5 class="modal-title" id="crearReporteModalLabel">Crear Nuevo Reporte</h5>
                     <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
-                <form method="post" action="/Reportes/CrearReporte">
+                <form method="post" action="/Reportes/CrearReporte" onsubmit="return validarFormularioCrear()">
                     <div class="modal-body">
                         <div class="form-group">
                             <label for="IdEmpresa">Empresa:</label>
@@ -198,13 +251,13 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="AnioInicial">A&ntildeo Inicial:</label>
-                                    <input type="text" class="form-control" id="AnioInicial" name="AñoInicial" />
+                                    <input type="text" class="form-control" id="AnioInicial" name="AnioInicial" />
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="AnioFinal">A&ntildeo Final:</label>
-                                    <input type="text" class="form-control" id="AnioFinal" name="AñoFinal" />
+                                    <input type="text" class="form-control" id="AnioFinal" name="AnioFinal" />
                                 </div>
                             </div>
                         </div>
@@ -214,9 +267,10 @@
                             <textarea class="form-control" id="Descripcion" name="Descripcion" rows="3"></textarea>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group url-input">
                             <label for="EnlaceHTML">Enlace HTML:</label>
-                            <input type="text" class="form-control" id="EnlaceHTML" name="EnlaceHTML" required />
+                            <input type="text" class="form-control" id="EnlaceHTML" name="EnlaceHTML" required oninput="validarURL('EnlaceHTML', 'createUrlFeedback')" />
+                            <div id="createUrlFeedback" class="url-feedback"></div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -289,6 +343,154 @@
     }
 
     <script>
+
+        function esURLValida(url) {
+            try {
+
+                if (!url || url.trim() === '') {
+                    return true;
+                }
+
+                url = url.trim();
+
+                const urlPattern = /^(https?:\/\/)?([\w\-]+\.)+[\w\-]+(\/.*)?$/i;
+                
+
+                try {
+
+                    let urlParaValidar = url;
+                    if (!url.match(/^https?:\/\//i)) {
+                        urlParaValidar = 'https://' + url;
+                    }
+                    
+                    const urlObj = new URL(urlParaValidar);
+                    
+
+                    const dominioValido = /^[\w\-]+(\.[\w\-]+)+$/.test(urlObj.hostname);
+                    
+                    return dominioValido || urlPattern.test(url);
+                } catch (e) {
+
+                    return urlPattern.test(url);
+                }
+            } catch (e) {
+                return false;
+            }
+        }
+
+ 
+        function validarURL(inputId, feedbackId) {
+            const input = document.getElementById(inputId);
+            const feedback = document.getElementById(feedbackId);
+            const url = input.value.trim();
+
+            if (url === '') {
+                feedback.textContent = '';
+                feedback.className = 'url-feedback';
+                return true;
+            }
+
+            if (esURLValida(url)) {
+                feedback.textContent = 'URL valida';
+                feedback.className = 'url-feedback valid';
+                return true;
+            } else {
+                feedback.textContent = 'URL no valida. Ejemplos validos: https://ejemplo.com, app.powerbi.com/view';
+                feedback.className = 'url-feedback invalid';
+                return false;
+            }
+        }
+
+ 
+        function abrirEnlaceValidado(url, elemento) {
+            if (!url || url.trim() === '') {
+                Swal.fire({
+                    toast: true,
+                    position: window.innerWidth <= 768 ? 'top' : 'top-end',
+                    icon: 'warning',
+                    title: 'No hay enlace disponible',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                return false;
+            }
+
+
+            if (url.trim().length < 3) {
+                Swal.fire({
+                    toast: true,
+                    position: window.innerWidth <= 768 ? 'top' : 'top-end',
+                    icon: 'error',
+                    title: 'El enlace es muy corto o no valido',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                return false;
+            }
+
+  
+            let enlaceFinal = url.trim();
+            if (!enlaceFinal.startsWith('http://') && !enlaceFinal.startsWith('https://')) {
+                enlaceFinal = 'https://' + enlaceFinal;
+            }
+
+            try {
+                window.open(enlaceFinal, '_blank');
+                return true;
+            } catch (e) {
+                Swal.fire({
+                    toast: true,
+                    position: window.innerWidth <= 768 ? 'top' : 'top-end',
+                    icon: 'error',
+                    title: 'Error al abrir el enlace',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                return false;
+            }
+        }
+
+
+        function validarFormularioCrear() {
+            const url = document.getElementById('EnlaceHTML').value.trim();
+            if (url !== '' && !esURLValida(url)) {
+                Swal.fire({
+                    toast: true,
+                    position: window.innerWidth <= 768 ? 'top' : 'top-end',
+                    icon: 'error',
+                    title: 'Por favor, ingresa una URL valida',
+                    text: 'Ejemplos: https://ejemplo.com, app.powerbi.com/view',
+                    showConfirmButton: false,
+                    timer: 4000,
+                    timerProgressBar: true
+                });
+                return false;
+            }
+            return true;
+        }
+
+
+        function validarFormularioEditar() {
+            const url = document.getElementById('editEnlaceHTML').value.trim();
+            if (url !== '' && !esURLValida(url)) {
+                Swal.fire({
+                    toast: true,
+                    position: window.innerWidth <= 768 ? 'top' : 'top-end',
+                    icon: 'error',
+                    title: 'Por favor, ingresa una URL valida',
+                    text: 'Ejemplos: https://ejemplo.com, app.powerbi.com/view',
+                    showConfirmButton: false,
+                    timer: 4000,
+                    timerProgressBar: true
+                });
+                return false;
+            }
+            return true;
+        }
+
         function setIdReporte(id) {
             document.getElementById("idReporte").value = id;
         }
@@ -301,6 +503,8 @@
             document.getElementById("editAnioFinal").value = anioFinal;
             document.getElementById("editDescripcion").value = descripcion;
             document.getElementById("editEnlaceHTML").value = enlaceHTML;
+            // Validar URL al cargar
+            validarURL('editEnlaceHTML', 'editUrlFeedback');
         }
 
         function setEditReporteFromData(button) {
@@ -319,6 +523,8 @@
             document.getElementById("editAnioFinal").value = anioFinal;
             document.getElementById("editDescripcion").value = descripcion;
             document.getElementById("editEnlaceHTML").value = enlaceHTML;
+            // Validar URL al cargar
+            validarURL('editEnlaceHTML', 'editUrlFeedback');
         }
     </script>
 </body>
