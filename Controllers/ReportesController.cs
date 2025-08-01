@@ -22,12 +22,16 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                url = url.Trim();        
-                string pattern = @"^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?$";
+                if (string.IsNullOrWhiteSpace(url) || url.Trim() == "")
+                    return true;
+
+                url = url.Trim();
+
+                string pattern = @"^(https?:\/\/)?([\w\-]+\.)+[\w\-]+(\/.*)?$";
                 Regex regex = new Regex(pattern, RegexOptions.IgnoreCase);
-                          
+
                 try
-                {            
+                {
                     string urlParaValidar = url;
                     if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && 
                         !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -39,7 +43,18 @@ namespace bufinscustomers.Controllers
                     bool esUriValida = Uri.TryCreate(urlParaValidar, UriKind.Absolute, out uriResult) 
                                       && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
                     
-                    return esUriValida && regex.IsMatch(url);
+                    if (esUriValida)
+                    {
+                        string dominioPattern = @"^[\w\-]+(\.[\w\-]+)+$";
+                        Regex dominioRegex = new Regex(dominioPattern);
+                        bool dominioValido = dominioRegex.IsMatch(uriResult.Host);
+                        
+                        return dominioValido || regex.IsMatch(url);
+                    }
+                    else
+                    {
+                        return regex.IsMatch(url);
+                    }
                 }
                 catch (Exception)
                 {
