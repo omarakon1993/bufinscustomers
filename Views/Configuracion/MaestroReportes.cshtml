@@ -19,6 +19,24 @@
         .bg-primary {
             background-color: #583AFF !important; /* Cambia el color de fondo del encabezado del modal */
         }
+
+        .enlace-reporte {
+            color: #007bff;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: color 0.3s ease;
+        }
+
+        .enlace-reporte:hover {
+            color: #0056b3;
+            text-decoration: none;
+        }
+
+        .enlace-reporte.disabled {
+            color: #6c757d;
+            cursor: not-allowed;
+        }
     </style>
 
     <h2>Maestro reportes</h2>
@@ -38,7 +56,7 @@
                             <th>A&ntildeo Inicial</th>
                             <th>A&ntildeo Final</th>
                             <th>Descripci&oacuten</th>
-                            <th>Enlace HTML</th>
+                            <th style="text-align: center;">Ver Reporte</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -52,7 +70,18 @@
                                 <td>@(reporte.AnioInicial ?? "")</td>
                                 <td>@(reporte.AnioFinal ?? "")</td>
                                 <td>@(reporte.Descripcion ?? "")</td>
-                                <td>@reporte.EnlaceHTML</td>
+                                <td style="text-align: center;">
+                                    @if (!string.IsNullOrEmpty(reporte.EnlaceHTML))
+                                    {
+                                        <a href="@reporte.EnlaceHTML" target="_blank" class="enlace-reporte" title="Abrir reporte en nueva pestaña">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-ban enlace-reporte disabled" title="Sin enlace disponible"></i>
+                                    }
+                                </td>
                                 <td>
                                     <div class="btn-group" role="group" aria-label="Reporte Actions">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editReporteModal"
