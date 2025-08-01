@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <title>Maestro de reportes</title>
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -131,7 +131,7 @@
         </div>
         <div class="card-footer">
             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearReporteModal">
-                Crear Reporte
+                Crear
             </button>
         </div>
     </div>
@@ -214,7 +214,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Actualizar Reporte</button>
+                        <button type="submit" class="btn btn-primary">Actualizar</button>
                     </div>
                 </form>
             </div>
@@ -275,7 +275,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Crear Reporte</button>
+                        <button type="submit" class="btn btn-primary">Crear</button>
                     </div>
                 </form>
             </div>
@@ -391,11 +391,11 @@
             }
 
             if (esURLValida(url)) {
-                feedback.textContent = 'URL valida';
+                feedback.textContent = 'URL correcta';
                 feedback.className = 'url-feedback valid';
                 return true;
             } else {
-                feedback.textContent = 'URL no valida. Ejemplos validos: https://ejemplo.com, app.powerbi.com/view';
+                feedback.textContent = 'URL incorrecta. Ejemplos validos: https://ejemplo.com, app.powerbi.com/view';
                 feedback.className = 'url-feedback invalid';
                 return false;
             }
@@ -461,7 +461,7 @@
                     toast: true,
                     position: window.innerWidth <= 768 ? 'top' : 'top-end',
                     icon: 'error',
-                    title: 'Por favor, ingresa una URL valida',
+                    title: 'Por favor, ingresa una URL correcta',
                     text: 'Ejemplos: https://ejemplo.com, app.powerbi.com/view',
                     showConfirmButton: false,
                     timer: 4000,
@@ -480,7 +480,7 @@
                     toast: true,
                     position: window.innerWidth <= 768 ? 'top' : 'top-end',
                     icon: 'error',
-                    title: 'Por favor, ingresa una URL valida',
+                    title: 'Por favor, ingresa una URL correcta',
                     text: 'Ejemplos: https://ejemplo.com, app.powerbi.com/view',
                     showConfirmButton: false,
                     timer: 4000,
