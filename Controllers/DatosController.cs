@@ -75,7 +75,6 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         public ActionResult CargarExcel(HttpPostedFileBase archivoExcel, string accion)
         {
-            // Validar si hay archivo o si está en sesión
             if ((archivoExcel == null || archivoExcel.ContentLength == 0) && Session["ArchivoExcelBytes"] == null)
             {
                 TempData["Mensaje"] = "No se seleccionó ningún archivo.";
@@ -83,7 +82,6 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("CargueExcel", "Datos");
             }
 
-            // Guardar archivo en sesión si viene en la petición
             if (archivoExcel != null && archivoExcel.ContentLength > 0)
             {
                 using (var ms = new MemoryStream())
@@ -94,120 +92,112 @@ namespace bufinscustomers.Controllers
                 }
             }
 
+            var tablasExcel = new List<(string nombre, DataTable tabla)>();
+            Stream archivoStream = archivoExcel != null && archivoExcel.ContentLength > 0
+                ? archivoExcel.InputStream
+                : new MemoryStream((byte[])Session["ArchivoExcelBytes"]);
+
+            var usuarioActual = UsuarioSesionHelper.UsuarioActual;
+            int idEmpresa = usuarioActual?.IdEmpresa ?? 0;
+            int idUsuario = usuarioActual?.Id ?? 0;
+
             try
             {
-                var tablasExcel = new List<(string nombre, DataTable tabla)>();
-
-                // Definir el stream para ExcelPackage
-                Stream archivoStream;
-
-                if (archivoExcel != null && archivoExcel.ContentLength > 0)
+                using (var conn = new SqlConnection(cadena))
                 {
-                    // Si está el archivo en la petición
-                    archivoStream = archivoExcel.InputStream;
+                    conn.Open();
+
+                    // 1. BORRAR TABLAS ANTIGUAS SOLO SI SON DE OTRA EMPRESA
+                    string dropSql = $@"
+                        DECLARE @sql NVARCHAR(MAX) = '';
+                        SELECT @sql += 'DROP TABLE [dbo].[' + name + '];'
+                        FROM sys.tables
+                        WHERE name LIKE 'Z_%_IdUsuario_{idUsuario}_%'
+                          AND name NOT LIKE 'Z_%_IdEmpresa_{idEmpresa}_IdUsuario_{idUsuario}_%';
+                        EXEC(@sql);
+                    ";
+                    using (SqlCommand cmdDrop = new SqlCommand(dropSql, conn))
+                    {
+                        cmdDrop.ExecuteNonQuery();
+                    }
+
+                    // 2. PROCESAR TODAS LAS HOJAS
+                    using (var package = new ExcelPackage(archivoStream))
+                    {
+                        var fechaFormateada = DateTime.Now.ToString("yyyyMMdd");
+
+                        foreach (var hoja in package.Workbook.Worksheets)
+                        {
+                            int totalCols = hoja.Dimension?.End.Column ?? 0;
+                            int totalRows = hoja.Dimension?.End.Row ?? 0;
+                            if (totalCols == 0 || totalRows == 0) continue;
+
+                            // Validar cabecera
+                            bool filaCabeceraValida = false;
+                            for (int col = 1; col <= totalCols; col++)
+                            {
+                                if (!string.IsNullOrWhiteSpace(hoja.Cells[1, col].Text))
+                                {
+                                    filaCabeceraValida = true;
+                                    break;
+                                }
+                            }
+                            if (!filaCabeceraValida) continue;
+
+                            int columnasValidas = 0;
+                            for (int col = 1; col <= totalCols; col++)
+                            {
+                                if (!string.IsNullOrWhiteSpace(hoja.Cells[1, col].Text.Trim()))
+                                    columnasValidas++;
+                                else
+                                    break;
+                            }
+                            if (columnasValidas == 0) continue;
+
+                            // Crear DataTable
+                            //var nombreTabla = $"Z_{hoja.Name}_IdEmpresa_{idEmpresa}_IdUsuario_{idUsuario}_FechaCargue_{fechaFormateada}";
+                            var nombreTabla = $"{NormalizarNombre(hoja.Name)}";
+                            var dt = new DataTable(nombreTabla);
+                            for (int col = 1; col <= columnasValidas; col++)
+                                dt.Columns.Add(hoja.Cells[1, col].Text.Trim());
+
+                            for (int row = 2; row <= totalRows; row++)
+                            {
+                                bool filaVacia = true;
+                                var dr = dt.NewRow();
+                                for (int col = 1; col <= columnasValidas; col++)
+                                {
+                                    var valor = hoja.Cells[row, col].Text;
+                                    if (!string.IsNullOrWhiteSpace(valor)) filaVacia = false;
+                                    dr[col - 1] = valor;
+                                }
+                                if (filaVacia) break;
+                                dt.Rows.Add(dr);
+                            }
+
+                            // Guardar tabla
+                            if (accion == "Importar")
+                                GuardarEnSQLServer(dt);
+                            else if (accion == "RetornoTablaDeDatos")
+                                tablasExcel.Add((dt.TableName, dt));
+                        }
+
+                        // 3. REGISTRAR AUDITORÍA UNA VEZ
+                        if (accion == "Importar")
+                        {
+                            RegistrarAuditoria(conn, Session["ArchivoExcelNombre"]?.ToString() ?? "Archivo desconocido");
+                        }
+                    }
+                }
+
+                if (accion == "RetornoTablaDeDatos")
+                {
+                    Session["TablasExcel"] = tablasExcel;
+                    TempData["MostrarBotonImportar"] = true;
                 }
                 else
                 {
-                    // Si no, cargar desde la sesión
-                    var bytes = (byte[])Session["ArchivoExcelBytes"];
-                    archivoStream = new MemoryStream(bytes);
-                }
-
-                using (var package = new ExcelPackage(archivoStream))
-                {
-                    var totalHojas = package.Workbook.Worksheets.Count;
-                    var idEmpresa = UsuarioSesionHelper.UsuarioActual?.IdEmpresa ?? 0;
-                    string prefijoTabla = $"_IdEmpresa_{idEmpresa}";
-                    //string prefijoTabla = (totalHojas == 21) ? "Z_" : "X_";
-
-                    foreach (var hoja in package.Workbook.Worksheets)
-                    {
-                        int totalCols = hoja.Dimension?.End.Column ?? 0;
-                        int totalRows = hoja.Dimension?.End.Row ?? 0;
-
-                        // Detectar la primera fila con datos (cabecera)
-                        int filaCabecera = 1;
-
-                        // Validar que hay al menos una celda con texto en la fila cabecera
-                        bool filaCabeceraValida = false;
-                        for (int col = 1; col <= totalCols; col++)
-                        {
-                            if (!string.IsNullOrWhiteSpace(hoja.Cells[filaCabecera, col].Text))
-                            {
-                                filaCabeceraValida = true;
-                                break;
-                            }
-                        }
-
-                        if (!filaCabeceraValida)
-                            continue;
-
-                        // Contar columnas válidas desde la fila cabecera
-                        int columnasValidas = 0;
-                        for (int col = 1; col <= totalCols; col++)
-                        {
-                            var nombreColumna = hoja.Cells[filaCabecera, col].Text.Trim();
-                            if (!string.IsNullOrWhiteSpace(nombreColumna))
-                                columnasValidas++;
-                            else
-                                break; // dejamos de contar cuando hay una vacía (lógica típica de tabla)
-                        }
-
-                        if (columnasValidas == 0)
-                            continue;
-
-                        // Crear DataTable con las columnas válidas
-                        var dt = new DataTable(hoja.Name + $"_IdEmpresa_{idEmpresa}");
-                        for (int col = 1; col <= columnasValidas; col++)
-                        {
-                            string colName = hoja.Cells[filaCabecera, col].Text.Trim();
-                            dt.Columns.Add(colName);
-                        }
-
-                        // Cargar filas debajo de la cabecera (hasta que detecte fila vacía)
-                        for (int row = filaCabecera + 1; row <= totalRows; row++)
-                        {
-                            bool filaVacia = true;
-                            var dr = dt.NewRow();
-                            for (int col = 1; col <= columnasValidas; col++)
-                            {
-                                var valor = hoja.Cells[row, col].Text;
-                                if (!string.IsNullOrWhiteSpace(valor))
-                                    filaVacia = false;
-
-                                dr[col - 1] = valor;
-                            }
-
-                            if (filaVacia)
-                                break; // detenemos al encontrar fila vacía (típico en tablas)
-
-                            dt.Rows.Add(dr);
-                        }
-
-                        var modelo = new List<(string nombre, DataTable tabla)>();
-
-                        if (accion == "Importar")
-                        {
-                            bool exito = GuardarEnSQLServer(dt);
-
-                            if (exito)
-                            {
-                                var resultado = resultadoValidaciondeDatos();
-                            }
-                            else
-                            {
-                                Session["Mensaje"] = "  |Error al importar los datos. No se pudo crear la tabla.";
-                                Session["MensajeTipo"] = "error";
-                            }
-                        }
-
-                        else if (accion == "RetornoTablaDeDatos")
-                        {
-                            tablasExcel.Add((dt.TableName, dt));
-                            Session["TablasExcel"] = tablasExcel;
-                            TempData["MostrarBotonImportar"] = true;
-                        }
-                    }
+                    resultadoValidaciondeDatos();
                 }
             }
             catch (Exception ex)
@@ -218,7 +208,6 @@ namespace bufinscustomers.Controllers
 
             return RedirectToAction("CargueExcel", "Datos", new { limpiar = false });
         }
-
         public ActionResult CargueExcel(bool limpiar = true)
         {
             if (limpiar)
@@ -231,6 +220,9 @@ namespace bufinscustomers.Controllers
 
             var modelo = Session["TablasExcel"] as List<(string nombre, DataTable tabla)> ?? new List<(string nombre, DataTable tabla)>();
 
+            // Traer último usuario que cargó
+            ViewBag.UltimoUsuarioCargue = ObtenerUltimoUsuarioCargue();
+
             Session.Remove("TablasExcel");
 
             return View(modelo);
@@ -240,26 +232,62 @@ namespace bufinscustomers.Controllers
         {
             try
             {
+                int idEmpresa = UsuarioSesionHelper.UsuarioActual?.IdEmpresa ?? 0;
+                int idUsuario = UsuarioSesionHelper.UsuarioActual?.Id ?? 0;
+                DateTime fechaCargue = DateTime.Now;
+
                 using (SqlConnection conn = new SqlConnection(cadena))
                 {
                     conn.Open();
 
+                    // 🔹 Normalizar nombre de la tabla
+                    tabla.TableName = NormalizarNombre(tabla.TableName);
+
+                    // 🔹 Crear tabla si no existe
                     CrearTablaSiNoExiste(conn, tabla);
 
+                    // 🔹 Agregar columnas extra si no existen
+                    if (!tabla.Columns.Contains("IdEmpresa"))
+                        tabla.Columns.Add("IdEmpresa", typeof(int));
+                    if (!tabla.Columns.Contains("IdUsuario"))
+                        tabla.Columns.Add("IdUsuario", typeof(int));
+                    if (!tabla.Columns.Contains("FechaCargue"))
+                        tabla.Columns.Add("FechaCargue", typeof(DateTime));
+
+                    foreach (DataRow row in tabla.Rows)
+                    {
+                        row["IdEmpresa"] = idEmpresa;
+                        row["IdUsuario"] = idUsuario;
+                        row["FechaCargue"] = fechaCargue;
+                    }
+
+                    // 🔹 1. Eliminar TODO lo anterior de esa empresa
+                    using (SqlCommand deleteCmd = new SqlCommand($@"
+                DELETE FROM [dbo].[{tabla.TableName}]
+                WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL", conn))
+                    {
+                        deleteCmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                        deleteCmd.ExecuteNonQuery();
+                    }
+
+                    // 🔹 2. Insertar lo nuevo con SqlBulkCopy
                     using (SqlBulkCopy bulk = new SqlBulkCopy(conn))
                     {
                         bulk.DestinationTableName = $"[dbo].[{tabla.TableName}]";
-                        bulk.WriteToServer(tabla); 
+                        bulk.WriteToServer(tabla);
                     }
                 }
 
-                return true; 
+                return true;
             }
             catch (Exception ex)
             {
-                return false; 
+                // Aquí puedes loggear el error
+                return false;
             }
         }
+
+
 
         public List<(string nombre, DataTable tabla)> resultadoValidaciondeDatos()
         {
@@ -303,19 +331,109 @@ namespace bufinscustomers.Controllers
 
         private void CrearTablaSiNoExiste(SqlConnection conn, DataTable tabla)
         {
-            var columnas = tabla.Columns.Cast<DataColumn>()
-                              .Select(c => $"[{c.ColumnName}] NVARCHAR(MAX)");
+            int idEmpresa = UsuarioSesionHelper.UsuarioActual?.IdEmpresa ?? 0;
+            int idUsuario = UsuarioSesionHelper.UsuarioActual?.Id ?? 0;
 
-            string nombreTabla = $"[dbo].[{tabla.TableName}]"; // Forzar uso del esquema dbo
+            // Construir columnas dinámicas del Excel
+            var columnasExcel = tabla.Columns.Cast<DataColumn>()
+                                  .Select(c => $"[{c.ColumnName}] NVARCHAR(MAX)");
+
+            // Agregar columnas fijas de auditoría
+            var columnasExtras = new List<string>
+            {
+                "[IdEmpresa] INT",
+                "[IdUsuario] INT",
+                "[FechaCargue] DATETIME"
+            };
+
+            string nombreTabla = $"[dbo].[{tabla.TableName}]";
             string sql = $@"
-                            IF OBJECT_ID('{nombreTabla}', 'U') IS NOT NULL 
-                                DROP TABLE {nombreTabla};
-                            CREATE TABLE {nombreTabla} ({string.Join(", ", columnas)});";
+                IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = '{tabla.TableName}')
+                BEGIN
+                    CREATE TABLE {nombreTabla} (
+                        {string.Join(", ", columnasExcel.Concat(columnasExtras))}
+                    );
+                END
+            ";
 
             using (SqlCommand cmd = new SqlCommand(sql, conn))
             {
                 cmd.ExecuteNonQuery();
             }
         }
+
+        private void RegistrarAuditoria(SqlConnection conn, string nombreArchivo)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (usuario == null) return;
+
+            string nombreEmpresa = _empresaService.ObtenerEmpresas()
+                                                   .FirstOrDefault(e => e.Id == usuario.IdEmpresa)?.Nombre ?? "Desconocida";
+
+            string sql = @"
+                INSERT INTO dbo.AuditoriaCargues (FechaCargue, IdUsuario, Usuario, IdEmpresa, NombreEmpresa, NombreArchivo)
+                VALUES (@Fecha, @IdUsuario, @Usuario, @IdEmpresa, @NombreEmpresa, @NombreArchivo)
+            ";
+
+            using (var cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@Fecha", DateTime.Now);
+                cmd.Parameters.AddWithValue("@IdUsuario", usuario.Id);
+                cmd.Parameters.AddWithValue("@Usuario", usuario.Nombre ?? "");
+                cmd.Parameters.AddWithValue("@IdEmpresa", usuario.IdEmpresa);
+                cmd.Parameters.AddWithValue("@NombreEmpresa", nombreEmpresa);
+                cmd.Parameters.AddWithValue("@NombreArchivo", nombreArchivo);
+
+                cmd.ExecuteNonQuery();
+            }
+        }
+        private string ObtenerUltimoUsuarioCargue()
+        {
+            string ultimoUsuario = "N/A";
+
+            using (var conn = new SqlConnection(cadena))
+            using (var cmd = new SqlCommand(@"
+                SELECT TOP 1 Usuario
+                FROM AuditoriaCargues
+                ORDER BY FechaCargue DESC
+            ", conn))
+            {
+                conn.Open();
+                var result = cmd.ExecuteScalar();
+                if (result != null && !string.IsNullOrEmpty(result.ToString()))
+                    ultimoUsuario = result.ToString();
+            }
+
+            return ultimoUsuario;
+        }
+
+        private string NormalizarNombre(string texto)
+        {
+            if (string.IsNullOrWhiteSpace(texto)) return texto;
+
+            // Pasar a FormD para separar letras y diacríticos (tildes)
+            var normalized = texto.Normalize(System.Text.NormalizationForm.FormD);
+
+            // Quitar diacríticos (acentos, tildes, etc.)
+            var chars = normalized
+                .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) !=
+                            System.Globalization.UnicodeCategory.NonSpacingMark)
+                .ToArray();
+
+            var sinTildes = new string(chars);
+
+            // Reemplazar ñ/Ñ por n/N
+            sinTildes = sinTildes.Replace("ñ", "n").Replace("Ñ", "N");
+
+            // Quitar espacios y caracteres raros
+            return sinTildes
+                .Replace(" ", "")
+                .Replace("-", "")
+                .Replace(".", "")
+                .Replace("/", "")
+                .Trim();
+        }
+
+
     }
 }
