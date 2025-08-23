@@ -379,7 +379,7 @@ namespace bufinscustomers.Controllers
             {
                 cmd.Parameters.AddWithValue("@Fecha", DateTime.Now);
                 cmd.Parameters.AddWithValue("@IdUsuario", usuario.Id);
-                cmd.Parameters.AddWithValue("@Usuario", usuario.Nombre ?? "");
+                cmd.Parameters.AddWithValue("@Usuario", usuario.Nombre+" "+usuario.Apellidos ?? "");
                 cmd.Parameters.AddWithValue("@IdEmpresa", usuario.IdEmpresa);
                 cmd.Parameters.AddWithValue("@NombreEmpresa", nombreEmpresa);
                 cmd.Parameters.AddWithValue("@NombreArchivo", nombreArchivo);
@@ -389,7 +389,7 @@ namespace bufinscustomers.Controllers
         }
         private string ObtenerUltimoUsuarioCargue()
         {
-            string ultimoUsuario = "N/A";
+            string ultimoUsuario = "";
 
             using (var conn = new SqlConnection(cadena))
             using (var cmd = new SqlCommand(@"

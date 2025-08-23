@@ -2,21 +2,18 @@
 
 @{
     ViewBag.Title = "CargueExcel";
-    Layout = "~/Views/Shared/_Layout.cshtml"; 
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <!DOCTYPE html>
-
 <html>
 <head>
     <title>Importar excel</title>
-
-    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
+    
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
     <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script>
-
 
     <style>
         .tabla-scroll {
@@ -27,21 +24,17 @@
             background-color: #fff;
             border-radius: 0.5rem;
         }
-
         .table-container {
             margin-bottom: 40px;
         }
-
         .pagination {
             justify-content: center;
         }
-
-            .pagination .page-link {
-                padding: 0.375rem 0.65rem;
-                min-width: 36px;
-                text-align: center;
-            }
-
+        .pagination .page-link {
+            padding: 0.375rem 0.65rem;
+            min-width: 36px;
+            text-align: center;
+        }
         #loaderOverlay {
             transition: opacity 0.3s ease;
         }
@@ -49,15 +42,19 @@
 
 </head>
 <body>
-
     <h2>Importación excel</h2>
-
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
             <h6 class="m-0 font-weight-bold text-primary">Ingrese el archivo excel a cargar</h6>
-            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#instructivoModal">
-                Instructivo
-            </button>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#instructivoModal">
+                    Instructivo
+                </button>
+                &nbsp;&nbsp;
+                <a href="~/Assets/Plantillas/PlantillaBufins.xlsx" download class="btn btn-outline-success btn-sm">
+                    Plantilla
+                </a>
+            </div>
             <div class="modal fade" id="instructivoModal" tabindex="-1" aria-labelledby="instructivoModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-xl modal-dialog-scrollable">
                     <div class="modal-content">
@@ -74,8 +71,8 @@
                                 <li>Ninguna de las hojas de este libro se puede eliminar, ni ocultar</li>
                                 <li>Conserve el orden de las hojas</li>
                                 <li>Dentro de cada hoja diligencie la información solicitada</li>
-                                <li>No inserte filas y/o columnas dentro de las hojas...</li>
-                                <li>No cambie títulos en las tablas de datos...</li>
+                                <li>No inserte filas y/o columnas dentro de las hojas</li>
+                                <li>No cambie títulos en las tablas de datos.</li>
                                 <li>No cambie formatos en ninguna celda de este libro</li>
                                 <li>Use punto (.) para miles y coma (,) para decimales</li>
                                 <li>Las celdas no pueden contener espacios al inicio o al final</li>
@@ -85,7 +82,7 @@
                             <h6>Uso de cada pestaña:</h6>
                             <ul>
                                 <li><strong>Z_AñoEjecución:</strong> Coloque el año actual sin puntos</li>
-                                <li><strong>Z_Empresas:</strong> Coloque el nombre exacto de las empresas...</li>
+                                <li><strong>Z_Empresas:</strong> Coloque el nombre exacto de las empresas</li>
                                 <li><strong>Z_Países:</strong> Nombres exactos, primera letra en mayúscula y con acento si aplica (Ej. Perú, México)</li>
                                 <li><strong>Z_SignoCréditos:</strong> Si aplica, coloque el signo menos</li>
                                 <li><strong>Z_Categorías:</strong> Descripciones válidas: ACTIVO CORRIENTE, ACTIVO NO CORRIENTE, etc.</li>
@@ -426,15 +423,14 @@
                             });
                         </script>
                     }
-
                 </div>
             </div>
         </div>
     </div>
     @*<script>
-        if (window.history.replaceState) {
-            window.history.replaceState(null, null, window.location.href);
-        }
-    </script>*@
+            if (window.history.replaceState) {
+                window.history.replaceState(null, null, window.location.href);
+            }
+        </script>*@
 </body>
 </html>
