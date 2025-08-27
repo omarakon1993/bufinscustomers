@@ -9,13 +9,13 @@ namespace bufinscustomers.Controllers
     public abstract class BaseController : Controller
     {
         /// <summary>
-        /// Cadena de conexión centralizada obtenida del Web.config
+        /// Cadena de conexiÃ³n centralizada obtenida del Web.config
         /// </summary>
         protected static readonly string CadenaConexion = 
             ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
 
         /// <summary>
-        /// Método para convertir texto a SHA256 (reutilizable en todos los controladores)
+        /// MÃ©todo para convertir texto a SHA256 (reutilizable en todos los controladores)
         /// </summary>
         protected static string ConvertirSha256(string texto)
         {
@@ -25,7 +25,7 @@ namespace bufinscustomers.Controllers
                 StringBuilder builder = new StringBuilder();
                 for (int i = 0; i < bytes.Length; i++)
                 {
-                    builder.Append(bytes[i].ToString("x2")); // Hexadecimal minúscula
+                    builder.Append(bytes[i].ToString("x2")); // Hexadecimal minÃºscula
                 }
                 return builder.ToString();
             }
@@ -40,7 +40,7 @@ namespace bufinscustomers.Controllers
         }
 
         /// <summary>
-        /// Manejo centralizado de mensajes de éxito
+        /// Manejo centralizado de mensajes de Ã©xito
         /// </summary>
         protected void SetSuccessMessage(string mensaje)
         {
