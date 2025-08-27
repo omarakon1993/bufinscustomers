@@ -349,7 +349,7 @@ namespace bufinscustomers.Controllers
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Aquí podrías loguear ex.Message
                 return false;
@@ -446,14 +446,8 @@ namespace bufinscustomers.Controllers
             {
                 cmd.Parameters.AddWithValue("@Fecha", DateTime.Now);
                 cmd.Parameters.AddWithValue("@IdUsuario", usuario.Id);
-<<<<<<< HEAD
                 cmd.Parameters.AddWithValue("@Usuario", usuario.Nombre ?? "");
                 cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresaArchivo);
-=======
-                cmd.Parameters.AddWithValue("@Usuario", usuario.Nombre+" "+usuario.Apellidos ?? "");
-                cmd.Parameters.AddWithValue("@Usuario", usuario.Nombre+" "+usuario.Apellidos ?? "");
-                cmd.Parameters.AddWithValue("@IdEmpresa", usuario.IdEmpresa);
->>>>>>> master
                 cmd.Parameters.AddWithValue("@NombreEmpresa", nombreEmpresa);
                 cmd.Parameters.AddWithValue("@NombreArchivo", nombreArchivo);
 
@@ -464,12 +458,7 @@ namespace bufinscustomers.Controllers
 
         private string ObtenerUltimoUsuarioCargue()
         {
-<<<<<<< HEAD
             string ultimoCargue = "N/A";
-=======
-            string ultimoUsuario = "";
->>>>>>> master
-            string ultimoUsuario = "";
 
             using (var conn = new SqlConnection(CadenaConexion))
             using (var cmd = new SqlCommand(@"
