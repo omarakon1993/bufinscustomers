@@ -6,15 +6,14 @@ using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Services;
 using System.Text.RegularExpressions;
+using System.Configuration;
 
 namespace bufinscustomers.Controllers
 {
-    public class ReportesController : Controller
+    public class ReportesController : BaseController
     {
-        private static string cadena = "Data Source=190.90.160.168,1433;Initial Catalog=bufinscustomers;Persist Security Info=True;User ID=oglearni_bufins;Password=Bufins2025**;Encrypt=false";
         private ReportesService _reportesService = new ReportesService();
 
-        
         private bool EsURLValida(string url)
         {
             if (string.IsNullOrWhiteSpace(url))
@@ -164,8 +163,9 @@ namespace bufinscustomers.Controllers
         public static string ObtenerNombreEmpresaPorId(int idEmpresa)
         {
             string nombreEmpresa = "";
+            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
 
-            using (var conn = new SqlConnection(cadena))
+            using (var conn = new SqlConnection(connectionString))
             using (var cmd = new SqlCommand("SELECT EmpNombre FROM Empresas WHERE EmpId = @Id", conn))
             {
                 cmd.Parameters.AddWithValue("@Id", idEmpresa);
@@ -192,7 +192,7 @@ namespace bufinscustomers.Controllers
 
             var empresas = new List<object>();
 
-            using (var conn = new SqlConnection(cadena))
+            using (var conn = new SqlConnection(CadenaConexion))
             using (var cmd = new SqlCommand("SELECT EmpId, EmpNombre FROM dbo.Empresas", conn))
             {
                 conn.Open();
@@ -218,7 +218,7 @@ namespace bufinscustomers.Controllers
             var iniciales = new HashSet<int>();
             var finales = new HashSet<int>();
 
-            using (var conn = new SqlConnection(cadena))
+            using (var conn = new SqlConnection(CadenaConexion))
             using (var cmd = new SqlCommand("SELECT añoinicial, añofinal FROM dbo.Reportes", conn))
             {
                 conn.Open();
@@ -256,7 +256,7 @@ namespace bufinscustomers.Controllers
 
             var reportes = new List<object>();
 
-            using (var conn = new SqlConnection(cadena))
+            using (var conn = new SqlConnection(CadenaConexion))
             {
                 conn.Open();
 
@@ -297,7 +297,7 @@ namespace bufinscustomers.Controllers
 
             var reportes = new List<object>();
 
-            using (var conn = new SqlConnection(cadena))
+            using (var conn = new SqlConnection(CadenaConexion))
             {
                 var query = "SELECT Id, Nombre FROM dbo.Reportes INNER JOIN [dbo].[Empresas] ON EmpId = IdEmpresa WHERE 1=1";
                 var parametros = new List<SqlParameter>();
@@ -368,7 +368,7 @@ namespace bufinscustomers.Controllers
         {
             string enlace = "";
 
-            using (var conn = new SqlConnection(cadena))
+            using (var conn = new SqlConnection(CadenaConexion))
             using (var cmd = new SqlCommand("SELECT EnlaceHTML FROM dbo.Reportes WHERE Id = @Id", conn))
             {
                 cmd.Parameters.AddWithValue("@Id", id);

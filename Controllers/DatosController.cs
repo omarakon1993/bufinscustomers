@@ -17,10 +17,9 @@ using System.Windows.Media.Media3D;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class DatosController : Controller
+    public class DatosController : BaseController
     {
         private readonly EmpresaService _empresaService = new EmpresaService();
-        static string cadena = "Data Source=190.90.160.168,1433;Initial Catalog=bufinscustomers;Persist Security Info=True;User ID=oglearni_bufins;Password=Bufins2025**;Encrypt=false";
 
         // Modelo actions
         public ActionResult Modelo()
@@ -37,11 +36,11 @@ namespace bufinscustomers.Controllers
                 var usuarioSession = (Usuarios)Session["usuario"];
                 if (usuarioSession == null)
                 {
-                    TempData["ErrorMessage"] = "Sesión no válida. Por favor, inicie sesión nuevamente.";
+                    SetErrorMessage("Sesión no válida. Por favor, inicie sesión nuevamente.");
                     return RedirectToAction("Login", "Acceso");
                 }
 
-                using (SqlConnection connection = new SqlConnection(cadena))
+                using (SqlConnection connection = new SqlConnection(CadenaConexion))
                 {
                     using (SqlCommand command = new SqlCommand("sp_EjecutarModelo_Balance", connection))
                     {
@@ -54,11 +53,11 @@ namespace bufinscustomers.Controllers
                     }
                 }
 
-                TempData["SuccessMessage"] = "Modelo ejecutado correctamente.";
+                SetSuccessMessage("Modelo ejecutado correctamente.");
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Error al ejecutar el modelo: " + ex.Message;
+                SetErrorMessage("Error al ejecutar el modelo: " + ex.Message);
             }
 
             return RedirectToAction("Modelo");
@@ -102,7 +101,7 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                using (var conn = new SqlConnection(cadena))
+                using (var conn = new SqlConnection(CadenaConexion))
                 {
                     conn.Open();
 
@@ -305,7 +304,7 @@ namespace bufinscustomers.Controllers
             {
                 DateTime fechaCargue = DateTime.Now;
 
-                using (SqlConnection conn = new SqlConnection(cadena))
+                using (SqlConnection conn = new SqlConnection(CadenaConexion))
                 {
                     conn.Open();
 
@@ -363,7 +362,7 @@ namespace bufinscustomers.Controllers
             var tablasExcel = new List<(string nombre, DataTable tabla)>();
             int idUsuario = UsuarioSesionHelper.UsuarioActual?.Id ?? 0;
 
-            using (var conn = new SqlConnection(cadena))
+            using (var conn = new SqlConnection(CadenaConexion))
             using (var cmd = new SqlCommand("dbo.SP_ValidarPlantillaInicial", conn))
             using (var adapter = new SqlDataAdapter(cmd))
             {
@@ -447,8 +446,13 @@ namespace bufinscustomers.Controllers
             {
                 cmd.Parameters.AddWithValue("@Fecha", DateTime.Now);
                 cmd.Parameters.AddWithValue("@IdUsuario", usuario.Id);
+<<<<<<< HEAD
                 cmd.Parameters.AddWithValue("@Usuario", usuario.Nombre ?? "");
                 cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresaArchivo);
+=======
+                cmd.Parameters.AddWithValue("@Usuario", usuario.Nombre+" "+usuario.Apellidos ?? "");
+                cmd.Parameters.AddWithValue("@IdEmpresa", usuario.IdEmpresa);
+>>>>>>> master
                 cmd.Parameters.AddWithValue("@NombreEmpresa", nombreEmpresa);
                 cmd.Parameters.AddWithValue("@NombreArchivo", nombreArchivo);
 
@@ -459,9 +463,13 @@ namespace bufinscustomers.Controllers
 
         private string ObtenerUltimoUsuarioCargue()
         {
+<<<<<<< HEAD
             string ultimoCargue = "N/A";
+=======
+            string ultimoUsuario = "";
+>>>>>>> master
 
-            using (var conn = new SqlConnection(cadena))
+            using (var conn = new SqlConnection(CadenaConexion))
             using (var cmd = new SqlCommand(@"
                     SELECT TOP 1 Usuario, FechaCargue
                     FROM AuditoriaCargues

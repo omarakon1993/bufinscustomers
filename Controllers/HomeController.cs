@@ -11,7 +11,7 @@ using bufinscustomers.Permisos;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class HomeController : Controller
+    public class HomeController : BaseController
     {
         public ActionResult Index()
         {

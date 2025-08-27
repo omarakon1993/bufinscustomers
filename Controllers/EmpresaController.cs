@@ -5,7 +5,7 @@ using bufinscustomers.Services;
 
 namespace bufinscustomers.Controllers
 {
-    public class EmpresaController : Controller
+    public class EmpresaController : BaseController
     {
         private EmpresaService _empresaService = new EmpresaService();
 
@@ -21,16 +21,12 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         public ActionResult CrearEmpresa(Empresas empresa)
         {
-            //if (!ModelState.IsValid)
-            //    return View(empresa);
-                
-
             string mensaje;
             bool registrado = _empresaService.CrearEmpresa(empresa, out mensaje);
 
             if (registrado)
             {
-                TempData["SuccessMessage"] = "Empresa creada correctamente.";
+                SetSuccessMessage("Empresa creada correctamente.");
                 return RedirectToAction("Empresas");
             }
             else
@@ -52,7 +48,7 @@ namespace bufinscustomers.Controllers
 
             if (actualizado)
             {
-                TempData["SuccessMessage"] = "Empresa actualizada correctamente.";
+                SetSuccessMessage("Empresa actualizada correctamente.");
                 return RedirectToAction("Empresas");
             }
             else
@@ -69,9 +65,9 @@ namespace bufinscustomers.Controllers
             bool eliminado = _empresaService.EliminarEmpresa(idEmpresa);
 
             if (eliminado)
-                TempData["SuccessMessage"] = "Empresa eliminada correctamente.";
+                SetSuccessMessage("Empresa eliminada correctamente.");
             else
-                TempData["ErrorMessage"] = "Error al eliminar la empresa.";
+                SetErrorMessage("Error al eliminar la empresa.");
 
             return RedirectToAction("Empresas");
         }
