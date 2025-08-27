@@ -451,6 +451,7 @@ namespace bufinscustomers.Controllers
                 cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresaArchivo);
 =======
                 cmd.Parameters.AddWithValue("@Usuario", usuario.Nombre+" "+usuario.Apellidos ?? "");
+                cmd.Parameters.AddWithValue("@Usuario", usuario.Nombre+" "+usuario.Apellidos ?? "");
                 cmd.Parameters.AddWithValue("@IdEmpresa", usuario.IdEmpresa);
 >>>>>>> master
                 cmd.Parameters.AddWithValue("@NombreEmpresa", nombreEmpresa);
@@ -468,6 +469,7 @@ namespace bufinscustomers.Controllers
 =======
             string ultimoUsuario = "";
 >>>>>>> master
+            string ultimoUsuario = "";
 
             using (var conn = new SqlConnection(CadenaConexion))
             using (var cmd = new SqlCommand(@"
