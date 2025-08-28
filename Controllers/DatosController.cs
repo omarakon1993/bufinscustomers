@@ -446,7 +446,7 @@ namespace bufinscustomers.Controllers
             {
                 cmd.Parameters.AddWithValue("@Fecha", DateTime.Now);
                 cmd.Parameters.AddWithValue("@IdUsuario", usuario.Id);
-                cmd.Parameters.AddWithValue("@Usuario", usuario.Nombre ?? "");
+                cmd.Parameters.AddWithValue("@Usuario", usuario.Nombre+" "+usuario.Apellidos ?? "");
                 cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresaArchivo);
                 cmd.Parameters.AddWithValue("@NombreEmpresa", nombreEmpresa);
                 cmd.Parameters.AddWithValue("@NombreArchivo", nombreArchivo);
