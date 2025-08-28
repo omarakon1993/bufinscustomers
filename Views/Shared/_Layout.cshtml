@@ -18,6 +18,66 @@
 </head>
 
 <style>
+    /* ========== SIDEBAR FIJO - SIN CAMBIAR COLORES ========== */
+    
+    /* Sidebar completamente fijo */
+    #accordionSidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 224px;
+        overflow-y: auto;
+        z-index: 1030;
+        transition: transform 0.15s ease-in-out;
+    }
+
+    /* Content wrapper ajustado para sidebar fijo */
+    #content-wrapper {
+        margin-left: 224px;
+        transition: margin-left 0.15s ease-in-out;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Contenido principal que empuja el footer */
+    #content {
+        flex: 1;
+    }
+
+    /* Footer fijo en la parte inferior */
+    .sticky-footer {
+        position: sticky;
+        bottom: 0;
+        z-index: 1020;
+        margin-top: auto;
+    }
+
+    /* Sidebar colapsado */
+    body.sidebar-toggled #accordionSidebar {
+        width: 6.5rem;
+    }
+
+    body.sidebar-toggled #content-wrapper {
+        margin-left: 6.5rem;
+    }
+
+    /* Scroll personalizado para sidebar */
+    #accordionSidebar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #accordionSidebar::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    #accordionSidebar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+    }
+
+    /* Animaciones para chevrons - conservadas del original */
     .collapse-item .fa-chevron-right {
         transition: transform 0.3s ease;
     }
