@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Data;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using System.Web;
 using System.Web.Mvc;
 using bufinscustomers.Models;
@@ -20,11 +18,8 @@ using Newtonsoft.Json;
 
 namespace bufinscustomers.Controllers
 {
-    public class AccesoController : Controller
+    public class AccesoController : BaseController
     {
-        //static string cadena = "Data Source=190.90.160.168\\MSSQLSERVER2016;Initial Catalog=bufinscustomers;Persist Security Info=True;User ID=oglearni_bufins;Password=Bufins2025**;Encrypt=false";
-        static string cadena = "Data Source=190.90.160.168,1433;Initial Catalog=bufinscustomers;Persist Security Info=True;User ID=oglearni_bufins;Password=Bufins2025**;Encrypt=false";
-
         // GET: Acceso
         public ActionResult Login()
         {
@@ -57,7 +52,7 @@ namespace bufinscustomers.Controllers
                 return View();
             }
 
-            using (SqlConnection cn = new SqlConnection(cadena))
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
                 SqlCommand cmd = new SqlCommand("sp_RegistrarUsuario", cn);
                 cmd.Parameters.AddWithValue("Correo", oUsuario.Correo);
@@ -86,7 +81,6 @@ namespace bufinscustomers.Controllers
         public ActionResult Login(Usuarios oUsuario)
         {
             // ⚡ Elimina espacios
-            
             oUsuario.Clave = oUsuario.Clave.Trim();
 
             var Usuario = "";   
@@ -95,8 +89,6 @@ namespace bufinscustomers.Controllers
             if (!EsCorreoValido(oUsuario.Correo))
             {
                 Usuario = oUsuario.Correo.Trim();
-                //ViewData["Mensaje"] = "El correo ingresado no tiene un formato válido.";
-                //return View();
             }
             else
             {
@@ -106,7 +98,7 @@ namespace bufinscustomers.Controllers
             // Luego convierte
             oUsuario.Clave = ConvertirSha256(oUsuario.Clave);
 
-            using (SqlConnection cn = new SqlConnection(cadena))
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
                 SqlCommand cmd = new SqlCommand("sp_ValidarUsuario", cn);
                 cmd.Parameters.AddWithValue("Usuario", Usuario);
@@ -137,22 +129,5 @@ namespace bufinscustomers.Controllers
             Regex regex = new Regex(pattern);
             return regex.IsMatch(correo);
         }
-
-        public static string ConvertirSha256(string texto)
-        {
-            using (SHA256 sha256 = SHA256.Create())
-            {
-                byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(texto));
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < bytes.Length; i++)
-                {
-                    builder.Append(bytes[i].ToString("x2")); // Hexadecimal minúscula
-                }
-                return builder.ToString();
-            }
-        }
-
-
-
     }
 }

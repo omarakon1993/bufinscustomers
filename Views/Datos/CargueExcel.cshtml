@@ -120,11 +120,10 @@
                         {
                             <div class="ps-4 mb-3">
 
-                                @* Mostrar último usuario que cargó primero *@
                                 @if (!string.IsNullOrEmpty(ViewBag.UltimoUsuarioCargue))
                                 {
                                     <div class="alert alert-info mb-3">
-                                        Última carga realizada por: <strong>@ViewBag.UltimoUsuarioCargue</strong>
+                                        @ViewBag.UltimoUsuarioCargue
                                     </div>
                                 }
 

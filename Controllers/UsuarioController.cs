@@ -6,18 +6,14 @@ using System.Data;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
-using System.Security.Cryptography;
-using System.Text;
 using bufinscustomers.Services;
 using bufinscustomers.Helpers;
 using System.IO;
 
 namespace bufinscustomers.Controllers
 {
-    public class UsuarioController : Controller
+    public class UsuarioController : BaseController
     {
-        static string cadena = "Data Source=190.90.160.168,1433;Initial Catalog=bufinscustomers;Persist Security Info=True;User ID=oglearni_bufins;Password=Bufins2025**;Encrypt=false";
-
         private EmpresaService _empresaService = new EmpresaService();
 
         // GET: Usuario
@@ -29,17 +25,15 @@ namespace bufinscustomers.Controllers
             return View("~/Views/Configuracion/Usuarios.cshtml", usuarios);
         }
 
-
         private List<Usuarios> GetUsuariosFromStoredProcedure()
         {
             List<Usuarios> usuarios = new List<Usuarios>();
 
-            using (SqlConnection connection = new SqlConnection(cadena))
+            using (SqlConnection connection = new SqlConnection(CadenaConexion))
             {
                 using (SqlCommand command = new SqlCommand("sp_ObtenerUsuarios", connection))
                 {
                     command.CommandType = CommandType.StoredProcedure;
-
                     connection.Open();
 
                     using (SqlDataReader reader = command.ExecuteReader())
@@ -70,7 +64,7 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection(cadena))
+                using (SqlConnection connection = new SqlConnection(CadenaConexion))
                 {
                     using (SqlCommand command = new SqlCommand("sp_EliminarUsuario", connection))
                     {
@@ -82,11 +76,11 @@ namespace bufinscustomers.Controllers
                     }
                 }
 
-                TempData["SuccessMessage"] = "Usuario eliminado correctamente.";
+                SetSuccessMessage("Usuario eliminado correctamente.");
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Error al eliminar el usuario: " + ex.Message;
+                SetErrorMessage("Error al eliminar el usuario: " + ex.Message);
             }
 
             return RedirectToAction("Usuarios");
@@ -98,7 +92,7 @@ namespace bufinscustomers.Controllers
             oUsuario.Telefono = oUsuario.Telefono == null ? "" : oUsuario.Telefono;
             try
             {
-                using (SqlConnection connection = new SqlConnection(cadena))
+                using (SqlConnection connection = new SqlConnection(CadenaConexion))
                 {
                     using (SqlCommand command = new SqlCommand("sp_EditarUsuario", connection))
                     {
@@ -121,14 +115,14 @@ namespace bufinscustomers.Controllers
                     }
                 }
 
-                TempData["SuccessMessage"] = "Usuario actualizado correctamente.";
+                SetSuccessMessage("Usuario actualizado correctamente.");
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Error al actualizar el usuario: " + ex.Message;
+                SetErrorMessage("Error al actualizar el usuario: " + ex.Message);
             }
 
-                return RedirectToAction("Usuarios");
+            return RedirectToAction("Usuarios");
         }
 
         [HttpPost]
@@ -139,13 +133,12 @@ namespace bufinscustomers.Controllers
 
             if (!EsUsuarioValido(oUsuario.Usuario))
             {
-                TempData["ErrorMessage"] = "El nombre de usuario debe ser en minúsculas, sin espacios, puede contener números y puntos, y debe tener entre 4 y 20 caracteres.";
+                SetErrorMessage("El nombre de usuario debe ser en minúsculas, sin espacios, puede contener números y puntos, y debe tener entre 4 y 20 caracteres.");
                 return RedirectToAction("Usuarios");
             }
 
 
-            // ⚡ Elimina espacios de correo y clave
-
+            // Elimina espacios de campos
             oUsuario.Nombre = oUsuario.Nombre == null ? "" : oUsuario.Nombre.Trim();
             oUsuario.Apellidos = oUsuario.Apellidos == null ? "" : oUsuario.Apellidos.Trim();
             oUsuario.Correo = oUsuario.Correo == null ? "" : oUsuario.Correo.Trim();
@@ -164,7 +157,7 @@ namespace bufinscustomers.Controllers
             }
             else
             {
-                TempData["ErrorMessage"] = "Las contraseñas no coinciden";
+                SetErrorMessage("Las contraseñas no coinciden");
                 return RedirectToAction("Usuarios");
             }
 
@@ -173,7 +166,7 @@ namespace bufinscustomers.Controllers
                 oUsuario.Admin = 0;
             }
 
-            using (SqlConnection cn = new SqlConnection(cadena))
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
                 SqlCommand cmd = new SqlCommand("sp_RegistrarUsuario", cn);
                 cmd.Parameters.AddWithValue("Usuario", oUsuario.Usuario);
@@ -195,17 +188,15 @@ namespace bufinscustomers.Controllers
 
             if (registrado)
             {
-                TempData["SuccessMessage"] = mensaje;
+                SetSuccessMessage(mensaje);
             }
             else
             {
-                TempData["ErrorMessage"] = mensaje;
+                SetErrorMessage(mensaje);
             }
 
             return RedirectToAction("Usuarios");         
         }
-
-
 
         [HttpPost]
         public ActionResult CambiarClave(int idUsuario, string nuevaClave, string confirmarNuevaClave)
@@ -213,7 +204,7 @@ namespace bufinscustomers.Controllers
             // Validar que las claves coincidan
             if (nuevaClave.Trim() != confirmarNuevaClave.Trim())
             {
-                TempData["ErrorMessage"] = "Las contraseñas no coinciden.";
+                SetErrorMessage("Las contraseñas no coinciden.");
                 return RedirectToAction("Usuarios");
             }
 
@@ -222,13 +213,11 @@ namespace bufinscustomers.Controllers
                 // Encriptar la nueva clave
                 string claveEncriptada = ConvertirSha256(nuevaClave.Trim());
 
-                using (SqlConnection connection = new SqlConnection(cadena))
+                using (SqlConnection connection = new SqlConnection(CadenaConexion))
                 {
                     using (SqlCommand command = new SqlCommand("sp_CambiarClaveUsuario", connection))
                     {
                         command.CommandType = CommandType.StoredProcedure;
-
-                        // Agregar parámetros al procedimiento almacenado
                         command.Parameters.AddWithValue("@IdUsuario", idUsuario);
                         command.Parameters.AddWithValue("@NuevaClave", claveEncriptada);
 
@@ -237,28 +226,14 @@ namespace bufinscustomers.Controllers
                     }
                 }
 
-                TempData["SuccessMessage"] = "Clave actualizada correctamente.";
+                SetSuccessMessage("Clave actualizada correctamente.");
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Error al cambiar la clave: " + ex.Message;
+                SetErrorMessage("Error al cambiar la clave: " + ex.Message);
             }
 
             return RedirectToAction("Usuarios");
-        }
-
-        public static string ConvertirSha256(string texto)
-        {
-            using (SHA256 sha256 = SHA256.Create())
-            {
-                byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(texto));
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < bytes.Length; i++)
-                {
-                    builder.Append(bytes[i].ToString("x2")); // Hexadecimal minúscula
-                }
-                return builder.ToString();
-            }
         }
 
         private bool EsUsuarioValido(string usuario)
@@ -266,7 +241,6 @@ namespace bufinscustomers.Controllers
             // Solo letras minúsculas, números y puntos, sin espacios, empieza con letra, 4-20 caracteres
             return System.Text.RegularExpressions.Regex.IsMatch(usuario, @"^[a-z][a-z0-9.]{3,19}$");
         }
-
 
         [HttpPost]
         public ActionResult CargarImagenUsuario(HttpPostedFileBase ImagenUsuario)
@@ -289,7 +263,7 @@ namespace bufinscustomers.Controllers
                     base64Copia = base64;
                     tipoImagenCopia = tipoImagen;
 
-                    using (SqlConnection connection = new SqlConnection(cadena))
+                    using (SqlConnection connection = new SqlConnection(CadenaConexion))
                     {
                         using (SqlCommand command = new SqlCommand("sp_GuardarImagenUsuario", connection))
                         {
@@ -304,14 +278,12 @@ namespace bufinscustomers.Controllers
                         }
                     }
                 }
-                // TempData["SuccessMessage"] = "Imagen de usuario actualizada correctamente.";
+
                 return Json(new { success = true, message = "Imagen de usuario actualizada correctamente.", tipoImagen = tipoImagenCopia, imagenBase64 = base64Copia });
             }
             else
             {
-                // TempData["ErrorMessage"] = "Por favor, selecciona una imagen válida.";
                 return Json(new { success = false, message = "Por favor, selecciona una imagen válida." });
-
             }
         }
     }
