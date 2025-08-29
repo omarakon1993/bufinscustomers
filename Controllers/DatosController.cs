@@ -288,15 +288,21 @@ namespace bufinscustomers.Controllers
                 TempData.Remove("MostrarBotonImportar");
             }
 
-            var modelo = Session["TablasExcel"] as List<(string nombre, DataTable tabla)> ?? new List<(string nombre, DataTable tabla)>();
+            var modelo = Session["TablasExcel"] as List<(string nombre, DataTable tabla)>
+                         ?? new List<(string nombre, DataTable tabla)>();
 
-            // Traer último usuario que cargó
-            ViewBag.UltimoUsuarioCargue = ObtenerUltimoUsuarioCargue();
+            // 🔹 Obtener empresa real del usuario en sesión
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            int idEmpresa = usuario?.IdEmpresa ?? 0;
+
+            // 🔹 Traer último usuario que cargó SOLO para esa empresa
+            ViewBag.UltimoUsuarioCargue = ObtenerUltimoUsuarioCargue(idEmpresa);
 
             Session.Remove("TablasExcel");
 
             return View(modelo);
         }
+
 
         private bool GuardarEnSQLServer(DataTable tabla, int idEmpresa, int idUsuario)
         {
@@ -456,17 +462,22 @@ namespace bufinscustomers.Controllers
         }
 
 
-        private string ObtenerUltimoUsuarioCargue()
+        private string ObtenerUltimoUsuarioCargue(int idEmpresa)
         {
             string ultimoCargue = "N/A";
 
             using (var conn = new SqlConnection(CadenaConexion))
             using (var cmd = new SqlCommand(@"
-                    SELECT TOP 1 Usuario, FechaCargue
-                    FROM AuditoriaCargues
-                    ORDER BY FechaCargue DESC
-                ", conn))
+            SELECT  TOP 1 AuditoriaCargues.Usuario, FechaCargue, EmpNombre
+            FROM  AuditoriaCargues
+            INNER JOIN Usuarios  ON AuditoriaCargues.IdUsuario = Usuarios.Id
+            INNER JOIN Empresas  ON Empresas.EmpId = Usuarios.IdEmpresa
+            WHERE Usuarios.IdEmpresa = @IdEmpresa
+            ORDER BY FechaCargue DESC
+        ", conn))
             {
+                cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+
                 conn.Open();
                 using (var reader = cmd.ExecuteReader())
                 {
@@ -474,14 +485,16 @@ namespace bufinscustomers.Controllers
                     {
                         string usuario = reader["Usuario"].ToString();
                         DateTime fecha = Convert.ToDateTime(reader["FechaCargue"]);
+                        string empresa = reader["EmpNombre"].ToString();
 
-                        ultimoCargue = $"Última carga realizada: {fecha:dd/MM/yyyy HH:mm:ss} por {usuario}";
+                        ultimoCargue = $"Última carga de {empresa}: {fecha:dd/MM/yyyy HH:mm:ss} por {usuario}";
                     }
                 }
             }
 
             return ultimoCargue;
         }
+
 
 
         private string NormalizarNombre(string texto)
