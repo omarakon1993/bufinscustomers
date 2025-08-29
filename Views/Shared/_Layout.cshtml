@@ -18,6 +18,108 @@
 </head>
 
 <style>
+    /* ========== SIDEBAR Y HEADER FIJOS, FOOTER CON SCROLL ========== */
+    
+    /* Sidebar completamente fijo */
+    #accordionSidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 224px;
+        overflow-y: auto;
+        z-index: 1030;
+        transition: transform 0.15s ease-in-out;
+    }
+
+    /* Content wrapper ajustado para sidebar fijo con layout flexbox */
+    #content-wrapper {
+        margin-left: 224px;
+        transition: margin-left 0.15s ease-in-out;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    /* Contenedor principal ajustado para header fijo */
+    #content {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    /* Header/topbar fijo */
+    .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 1025;
+        flex-shrink: 0;
+    }
+
+    /* Área de contenido scrolleable que incluye el footer */
+    .content-scroll-area {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        min-height: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Footer que se mueve con el scroll - CAMBIADO */
+    .sticky-footer {
+        position: static; /* Cambiado de sticky a static */
+        z-index: 1020;
+        margin-top: auto;
+        flex-shrink: 0;
+    }
+
+    /* Sidebar colapsado */
+    body.sidebar-toggled #accordionSidebar {
+        width: 6.5rem;
+    }
+
+    body.sidebar-toggled #content-wrapper {
+        margin-left: 6.5rem;
+    }
+
+    /* Scroll personalizado para sidebar */
+    #accordionSidebar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #accordionSidebar::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    #accordionSidebar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+    }
+
+    /* Scroll personalizado para contenido */
+    .content-scroll-area::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .content-scroll-area::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .content-scroll-area::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+    }
+
+    .content-scroll-area::-webkit-scrollbar-thumb:hover {
+        background: #a1a1a1;
+    }
+
+    /* Animaciones para chevrons - conservadas del original */
     .collapse-item .fa-chevron-right {
         transition: transform 0.3s ease;
     }
@@ -234,11 +336,23 @@
                         </li>
                     </ul>
                 </nav>
-                <div class="container-fluid">
-                    <div class="container body-content">
-                        @RenderBody()
-                        <hr />
+                <!-- ========== ÁREA DE CONTENIDO SCROLLEABLE ========== -->
+                <div class="content-scroll-area">
+                    <div class="container-fluid">
+                        <div class="container body-content">
+                            @RenderBody()
+                            <hr />
+                        </div>
                     </div>
+                    
+                    <!-- ========== FOOTER QUE SE MUEVE CON SCROLL ========== -->
+                    <footer class="sticky-footer bg-white">
+                        <div class="container my-auto">
+                            <div class="copyright text-center my-auto">
+                                <span style="color:white;">Copyright &copy; Bufins 2025</span>
+                            </div>
+                        </div>
+                    </footer>
                 </div>
             </div>
             <!-- Modal de información de usuario -->
@@ -318,13 +432,6 @@
                     </form>
                 </div>
             </div>
-            <footer class="sticky-footer bg-white">
-                <div class="container my-auto">
-                    <div class="copyright text-center my-auto">
-                        <span style="color:white;">Copyright &copy; Bufins 2025</span>
-                    </div>
-                </div>
-            </footer>
         </div>
     </div>
 
