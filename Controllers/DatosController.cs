@@ -464,15 +464,13 @@ namespace bufinscustomers.Controllers
 
         private string ObtenerUltimoUsuarioCargue(int idEmpresa)
         {
-            string ultimoCargue = "N/A";
+            string ultimoCargue = "";
 
             using (var conn = new SqlConnection(CadenaConexion))
             using (var cmd = new SqlCommand(@"
-            SELECT  TOP 1 AuditoriaCargues.Usuario, FechaCargue, EmpNombre
+            SELECT  TOP 1 AuditoriaCargues.Usuario, FechaCargue, NombreEmpresa AS EmpNombre
             FROM  AuditoriaCargues
-            INNER JOIN Usuarios  ON AuditoriaCargues.IdUsuario = Usuarios.Id
-            INNER JOIN Empresas  ON Empresas.EmpId = Usuarios.IdEmpresa
-            WHERE Usuarios.IdEmpresa = @IdEmpresa
+            WHERE AuditoriaCargues.IdEmpresa = @IdEmpresa
             ORDER BY FechaCargue DESC
         ", conn))
             {
