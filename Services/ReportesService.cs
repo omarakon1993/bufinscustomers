@@ -6,15 +6,15 @@ using System.Data.SqlClient;
 
 namespace bufinscustomers.Services
 {
-    public class ReportesService
+    public class ReportesService : BaseService
     {
-        private readonly string cadena = "Data Source=190.90.160.168,1433;Initial Catalog=bufinscustomers;Persist Security Info=True;User ID=oglearni_bufins;Password=Bufins2025**;Encrypt=false";
+        //private readonly string cadena = "Data Source=190.90.160.168,1433;Initial Catalog=bufinscustomers;Persist Security Info=True;User ID=oglearni_bufins;Password=Bufins2025**;Encrypt=false";
 
         public List<Reportes> ObtenerReportes()
         {
             List<Reportes> reportes = new List<Reportes>();
 
-            using (SqlConnection connection = new SqlConnection(cadena))
+            using (SqlConnection connection = new SqlConnection(CadenaConexion))
             {
                 using (SqlCommand command = new SqlCommand("sp_ObtenerReportes", connection))
                 {
@@ -49,7 +49,7 @@ namespace bufinscustomers.Services
             bool registrado = false;
             mensaje = "";
 
-            using (SqlConnection cn = new SqlConnection(cadena))
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
                 SqlCommand cmd = new SqlCommand("sp_RegistrarReporte", cn);
                 cmd.Parameters.AddWithValue("@IdEmpresa", reporte.IdEmpresa);
@@ -75,7 +75,7 @@ namespace bufinscustomers.Services
         {
             bool actualizado = false;
 
-            using (SqlConnection cn = new SqlConnection(cadena))
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
                 SqlCommand cmd = new SqlCommand("sp_EditarReporte", cn);
                 cmd.Parameters.AddWithValue("@Id", reporte.Id);
@@ -99,7 +99,7 @@ namespace bufinscustomers.Services
         {
             bool eliminado = false;
 
-            using (SqlConnection cn = new SqlConnection(cadena))
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
                 SqlCommand cmd = new SqlCommand("sp_EliminarReporte", cn);
                 cmd.Parameters.AddWithValue("@Id", idReporte);
@@ -117,7 +117,7 @@ namespace bufinscustomers.Services
         {
             List<Empresas> empresas = new List<Empresas>();
 
-            using (SqlConnection connection = new SqlConnection(cadena))
+            using (SqlConnection connection = new SqlConnection(CadenaConexion))
             {
                 using (SqlCommand command = new SqlCommand("sp_ObtenerEmpresas", connection))
                 {
