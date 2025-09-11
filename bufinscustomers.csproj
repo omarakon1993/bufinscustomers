@@ -148,6 +148,7 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\AccesoController.cs" />
+    <Compile Include="Controllers\AuditoriaCarguesController.cs" />
     <Compile Include="Controllers\BaseController.cs" />
     <Compile Include="Controllers\EmpresaController.cs" />
     <Compile Include="Controllers\DatosController.cs" />
@@ -160,6 +161,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Helpers\UsuarioSesionHelper.cs" />
+    <Compile Include="Models\AuditoriaCargues.cs" />
     <Compile Include="Models\Empresas.cs" />
     <Compile Include="Models\ImagenUsuario.cs" />
     <Compile Include="Models\Reportes.cs" />
@@ -173,6 +175,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="Services\AuditoriaCarguesService.cs" />
     <Compile Include="Services\EmpresaService.cs" />
     <Compile Include="Services\ReportesService.cs" />
   </ItemGroup>
@@ -6102,6 +6105,7 @@
     <Content Include="Scripts\bootstrap.esm.min.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
+    <Content Include="Scripts\sp_ObtenerAuditoriaCargues.sql" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
@@ -6130,6 +6134,8 @@
     <Content Include="Scripts\bootstrap.bundle.js.map" />
     <Content Include="Views\Datos\Modelo.cshtml" />
     <Content Include="Views\Configuracion\MaestroReportes.cshtml" />
+    <Content Include="Views\Configuracion\AuditoriaCargues.cshtml" />
+    <Content Include="Views\Informes\AuditoriaCargues.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
