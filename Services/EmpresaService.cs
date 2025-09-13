@@ -6,15 +6,13 @@ using System.Data.SqlClient;
 
 namespace bufinscustomers.Services
 {
-    public class EmpresaService
+    public class EmpresaService : BaseService
     {
-        private readonly string cadena = "Data Source=190.90.160.168,1433;Initial Catalog=bufinscustomers;Persist Security Info=True;User ID=oglearni_bufins;Password=Bufins2025**;Encrypt=false";
-
         public List<Empresas> ObtenerEmpresas()
         {
             List<Empresas> empresas = new List<Empresas>();
 
-            using (SqlConnection connection = new SqlConnection(cadena))
+            using (SqlConnection connection = new SqlConnection(CadenaConexion))
             {
                 using (SqlCommand command = new SqlCommand("sp_ObtenerEmpresas", connection))
                 {
@@ -46,7 +44,7 @@ namespace bufinscustomers.Services
             bool registrado = false;
             mensaje = "";
 
-            using (SqlConnection cn = new SqlConnection(cadena))
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
                 SqlCommand cmd = new SqlCommand("sp_RegistrarEmpresa", cn);
                 cmd.Parameters.AddWithValue("@EmpNombre", empresa.Nombre);
@@ -70,7 +68,7 @@ namespace bufinscustomers.Services
         {
             bool actualizado = false;
 
-            using (SqlConnection cn = new SqlConnection(cadena))
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
                 SqlCommand cmd = new SqlCommand("sp_EditarEmpresa", cn);
                 cmd.Parameters.AddWithValue("@EmpId", empresa.Id);
@@ -92,7 +90,7 @@ namespace bufinscustomers.Services
         {
             bool eliminado = false;
 
-            using (SqlConnection cn = new SqlConnection(cadena))
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
                 SqlCommand cmd = new SqlCommand("sp_EliminarEmpresa", cn);
                 cmd.Parameters.AddWithValue("@EmpId", idEmpresa);

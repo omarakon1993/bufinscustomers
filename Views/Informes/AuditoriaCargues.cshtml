@@ -1,0 +1,279 @@
+@model IEnumerable<bufinscustomers.Models.AuditoriaCargues>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auditoría de Cargues</title>
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
+    <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <style>
+        .table-wrapper {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .bg-primary {
+            background-color: #583AFF !important;
+        }
+
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #583AFF 0%, #7c4dff 100%);
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .table td {
+            vertical-align: middle;
+        }
+
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(88, 58, 255, 0.05);
+        }
+
+        .badge {
+            font-size: 0.875rem;
+            padding: 0.375rem 0.75rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+
+        .report-header {
+            background: linear-gradient(135deg, #583AFF 0%, #7c4dff 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .report-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #583AFF;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #583AFF;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        .search-box {
+            margin-bottom: 1rem;
+        }
+
+        .search-box input {
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            padding: 0.5rem 1rem;
+        }
+    </style>
+
+    <div class="report-header">
+        <h2 class="mb-0">
+            <i class="fas fa-clipboard-list me-2"></i>
+            Informe de Auditoría de Cargues
+        </h2>
+        <p class="mb-0 mt-2">Historial completo de cargas de información al sistema</p>
+    </div>
+
+    @{
+        var totalCargues = Model.Count();
+        var empresasUnicas = Model.Select(x => x.IdEmpresa).Distinct().Count();
+        var usuariosUnicos = Model.Select(x => x.IdUsuario).Distinct().Count();
+        var ultimoCargue = Model.Any() ? Model.Max(x => x.FechaCargue) : DateTime.MinValue;
+    }
+
+    <div class="report-stats">
+        <div class="stat-card">
+            <div class="stat-value">@totalCargues</div>
+            <div class="stat-label">Total Cargues</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@empresasUnicas</div>
+            <div class="stat-label">Empresas</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@usuariosUnicos</div>
+            <div class="stat-label">Usuarios Activos</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">
+                @(ultimoCargue != DateTime.MinValue ? ultimoCargue.ToString("dd/MM/yyyy") : "N/A")
+            </div>
+            <div class="stat-label">Último Cargue</div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-table me-2"></i>
+                Detalle de Cargues de Información
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="search-box">
+                <input type="text" id="searchInput" class="form-control" placeholder="Buscar por empresa, usuario o archivo...">
+            </div>
+            
+            @if (totalCargues > 0)
+            {
+                <div class="table-responsive table-wrapper">
+                    <table class="table table-striped table-hover" id="auditoriaTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th><i class="fas fa-calendar-alt"></i> Fecha y Hora</th>
+                                <th><i class="fas fa-building"></i> Empresa</th>
+                                <th><i class="fas fa-user"></i> Usuario</th>
+                                <th><i class="fas fa-file-excel"></i> Archivo</th>
+                                <th><i class="fas fa-clock"></i> Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var auditoria in Model.OrderByDescending(x => x.FechaCargue))
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@auditoria.FechaCargue.ToString("dd/MM/yyyy")</strong><br>
+                                        <small class="text-muted">@auditoria.FechaCargue.ToString("HH:mm:ss")</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">@auditoria.NombreEmpresa</span>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-user-circle text-muted me-1"></i>
+                                        @auditoria.Usuario
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-file-excel text-success me-1"></i>
+                                        @auditoria.NombreArchivo
+                                    </td>
+                                    <td>
+                                        @{
+                                            var diasTranscurridos = (DateTime.Now - auditoria.FechaCargue).Days;
+                                        }
+                                        @if (diasTranscurridos <= 1)
+                                        {
+                                            <span class="badge bg-success">Reciente</span>
+                                        }
+                                        else if (diasTranscurridos <= 7)
+                                        {
+                                            <span class="badge bg-warning">Esta semana</span>
+                                        }
+                                        else if (diasTranscurridos <= 30)
+                                        {
+                                            <span class="badge bg-info">Este mes</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Antiguo</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="no-data">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No hay registros de cargues disponibles</h5>
+                    <p class="text-muted">Los registros de auditoría aparecerán aquí cuando se realicen cargues de información.</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <script>
+           const isMobile = window.innerWidth <= 768;
+           Swal.fire({
+               toast: true,
+               position: isMobile ? 'top' : 'top-end',
+               icon: 'error',
+               title: '@TempData["ErrorMessage"]',
+               showConfirmButton: false,
+               timer: 3000,
+               timerProgressBar: true,
+               didOpen: (toast) => {
+                   toast.addEventListener('mouseenter', Swal.stopTimer);
+                   toast.addEventListener('mouseleave', Swal.resumeTimer);
+               }
+           });
+        </script>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <script>
+            const isMobile = window.innerWidth <= 768;
+            Swal.fire({
+                toast: true,
+                position: isMobile ? 'top' : 'top-end',
+                icon: 'success',
+                title: '@TempData["SuccessMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        </script>
+    }
+
+    <script>
+        // Función de búsqueda en la tabla
+        $(document).ready(function() {
+            $("#searchInput").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("#auditoriaTable tbody tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+        });
+    </script>
+</body>
+</html>
