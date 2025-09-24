@@ -18,9 +18,16 @@
 </head>
 
 <style>
-    /* ========== SIDEBAR Y HEADER FIJOS, FOOTER CON SCROLL ========== */
+    /* ========== LAYOUT RESPONSIVE MEJORADO ========== */
     
-    /* Sidebar completamente fijo */
+    /* Base: Reset y estructura principal */
+    #wrapper {
+        display: flex;
+        flex-direction: row;
+        min-height: 100vh;
+    }
+
+    /* Sidebar responsivo */
     #accordionSidebar {
         position: fixed;
         top: 0;
@@ -29,11 +36,12 @@
         width: 224px;
         overflow-y: auto;
         z-index: 1030;
-        transition: transform 0.15s ease-in-out;
+        transition: all 0.15s ease-in-out;
     }
 
-    /* Content wrapper ajustado para sidebar fijo con layout flexbox */
+    /* Content wrapper responsivo */
     #content-wrapper {
+        flex: 1;
         margin-left: 224px;
         transition: margin-left 0.15s ease-in-out;
         height: 100vh;
@@ -42,7 +50,7 @@
         overflow: hidden;
     }
 
-    /* Contenedor principal ajustado para header fijo */
+    /* Contenedor principal */
     #content {
         display: flex;
         flex-direction: column;
@@ -69,21 +77,106 @@
         flex-direction: column;
     }
 
-    /* Footer que se mueve con el scroll - CAMBIADO */
+    /* Footer que se mueve con el scroll */
     .sticky-footer {
-        position: static; /* Cambiado de sticky a static */
+        position: static;
         z-index: 1020;
         margin-top: auto;
         flex-shrink: 0;
     }
 
-    /* Sidebar colapsado */
+    /* Sidebar colapsado en desktop */
     body.sidebar-toggled #accordionSidebar {
         width: 6.5rem;
     }
 
     body.sidebar-toggled #content-wrapper {
         margin-left: 6.5rem;
+    }
+
+    /* ========== MEDIA QUERIES RESPONSIVE ========== */
+    
+    /* Mobile First: Por defecto (móviles) */
+    @@media (max-width: 767.98px) {
+        #accordionSidebar {
+            transform: translateX(-100%);
+            box-shadow: none;
+        }
+        
+        /* Sidebar visible en móvil cuando está activo */
+        #accordionSidebar.show {
+            transform: translateX(0);
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
+        }
+        
+        #content-wrapper {
+            margin-left: 0 !important;
+            width: 100%;
+        }
+        
+        /* Overlay para móvil cuando sidebar está abierto */
+        body.sidebar-open::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1029;
+            pointer-events: auto;
+        }
+
+        /* Botón toggle móvil siempre visible */
+        #sidebarToggleTop {
+            display: block !important;
+        }
+
+        /* Asegurar que el contenido no se superponga */
+        .container-fluid {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        /* Mejorar visibilidad de submenús en móvil */
+        .collapse-inner {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(5px);
+        }
+
+        .collapse-item {
+            color: #3a3b45 !important;
+            padding: 0.75rem 1.5rem !important;
+        }
+
+        .collapse-item:hover {
+            background-color: rgba(88, 58, 255, 0.1) !important;
+        }
+    }
+
+    /* Tablets y Desktop */
+    @@media (min-width: 768px) {
+        #accordionSidebar {
+            transform: translateX(0);
+        }
+        
+        #content-wrapper {
+            margin-left: 224px;
+        }
+        
+        /* Ocultar botón toggle móvil en desktop */
+        #sidebarToggleTop {
+            display: none !important;
+        }
+
+        /* Comportamiento normal del sidebar toggle en desktop */
+        body.sidebar-toggled #accordionSidebar {
+            width: 6.5rem;
+        }
+        
+        body.sidebar-toggled #content-wrapper {
+            margin-left: 6.5rem;
+        }
     }
 
     /* Scroll personalizado para sidebar */
@@ -135,7 +228,42 @@
     .nav-link:not(.collapsed) .fa-chevron-right {
         transform: rotate(90deg);
     }
+
+    /* Mejoras adicionales para responsive */
+    @@media (max-width: 575.98px) {
+        .container-fluid {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
+
+        /* Ajustar tamaño de fuente en móviles muy pequeños */
+        .sidebar-brand {
+            font-size: 1.2rem !important;
+        }
+
+        .sidebar-heading {
+            font-size: 0.8rem;
+        }
+
+        .nav-link {
+            padding: 0.75rem 1rem;
+        }
+
+        .nav-link span {
+            font-size: 0.9rem;
+        }
+    }
+
+    /* Asegurar que modals funcionen correctamente con el layout */
+    .modal {
+        z-index: 1050;
+    }
+
+    .modal-backdrop {
+        z-index: 1040;
+    }
 </style>
+
 <body id="page-top">
     <div id="wrapper">
         <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
@@ -449,6 +577,72 @@
     @RenderSection("scripts", required: false)
 
     <script>
+        // ========== COMPORTAMIENTO RESPONSIVE CORREGIDO ========== 
+        $(document).ready(function() {
+            // Función para verificar si estamos en móvil
+            function isMobile() {
+                return $(window).width() < 768;
+            }
+
+            // Toggle para móvil - corregido
+            $('#sidebarToggleTop').on('click', function(e) {
+                e.preventDefault();
+                if (isMobile()) {
+                    $('#accordionSidebar').toggleClass('show');
+                    $('body').toggleClass('sidebar-open');
+                }
+            });
+            
+            // Cerrar sidebar al hacer click en overlay (móvil) - corregido
+            $(document).on('click', function(e) {
+                if (isMobile() && 
+                    !$(e.target).closest('#accordionSidebar').length && 
+                    !$(e.target).closest('#sidebarToggleTop').length &&
+                    $('#accordionSidebar').hasClass('show')) {
+                    $('#accordionSidebar').removeClass('show');
+                    $('body').removeClass('sidebar-open');
+                }
+            });
+
+            // CORREGIDO: Solo cerrar sidebar en enlaces finales (.collapse-item), NO en nav-links
+            $('#accordionSidebar .collapse-item').on('click', function(e) {
+                if (isMobile() && $(this).attr('href') && $(this).attr('href') !== '#') {
+                    setTimeout(function() {
+                        $('#accordionSidebar').removeClass('show');
+                        $('body').removeClass('sidebar-open');
+                    }, 100);
+                }
+            });
+
+            // NO cerrar el sidebar al hacer click en nav-links (elementos de menú principal)
+            // Esto permite que se abran los submenús
+            
+            // Responsive behavior en resize
+            $(window).on('resize', function() {
+                if (!isMobile()) {
+                    $('#accordionSidebar').removeClass('show');
+                    $('body').removeClass('sidebar-open');
+                }
+            });
+
+            // Mejorar el comportamiento del sidebar toggle en desktop
+            $('#sidebarToggle').on('click', function() {
+                if (!isMobile()) {
+                    $('body').toggleClass('sidebar-toggled');
+                }
+            });
+
+            // Asegurar que Bootstrap collapse funcione correctamente
+            if (isMobile()) {
+                // En móvil, asegurar que los collapses funcionen con eventos touch
+                $('#accordionSidebar .nav-link[data-toggle="collapse"]').on('touchstart', function(e) {
+                    // Prevenir comportamientos extraños en dispositivos táctiles
+                    e.stopPropagation();
+                });
+            }
+        });
+
+        // Funcionalidad de imagen de usuario (conservada del original con Bootstrap 4)
         $('input[name="ImagenUsuario"]').on('change', function () {
             var input = this;
             var preview = document.getElementById('previewImagen');
