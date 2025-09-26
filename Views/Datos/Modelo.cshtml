@@ -28,7 +28,7 @@
             <h6 class="m-0 font-weight-bold text-primary">Modelos BUFINS</h6>
         </div>
         <div class="card-body">
-            <form id="modeloForm" method="post" action="/Datos/EjecutarModelo">
+            <form id="modeloForm" method="post">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
@@ -53,18 +53,37 @@
                             </select>
                         </div>
                     </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="anio" class="form-label">Año</label>
+                            <select class="form-control" id="anio" name="anio" required>
+                                <option value="" selected disabled>Seleccione un año</option>
+                                @{
+                                    int currentYear = DateTime.Now.Year;
+                                }
+                                <option value="@currentYear">@currentYear</option>
+                                @*@{
+                                        int NextYear = DateTime.Now.Year+1;
+                                        for (int year = NextYear; year >= NextYear - 8; year--)
+                                        {
+                                            <option value="@year">@year</option>
+                                        }
+                                    }*@
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 <div class="mt-3">
-                    <button type="submit" class="btn btn-primary" id="btnEjecutar">
-                        <i class="fas fa-chart-line"></i> PYG
-                    </button>
-                    <button type="submit" class="btn btn-primary" id="btnEjecutar">
+                    <button type="submit" class="btn btn-primary" id="btnEjecutarBalance" formaction="/Datos/EjecutarModeloBalance">
                         <i class="fas fa-scale-balanced"></i> Balance
                     </button>
-                    <button type="submit" class="btn btn-primary" id="btnEjecutar">
+                    <button type="submit" class="btn btn-primary" id="btnEjecutarPYG">
+                        <i class="fas fa-chart-line"></i> PYG
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="btnEjecutarFlujoCaja">
                         <i class="fas fa-arrow-right-arrow-left"></i> Flujo de caja
                     </button>
-                    <button type="submit" class="btn btn-primary" id="btnEjecutar">
+                    <button type="submit" class="btn btn-primary" id="btnEjecutarEbitda">
                         <i class="fas fa-chart-column"></i> Ebitda
                     </button>
                 </div>
