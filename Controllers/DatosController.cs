@@ -29,7 +29,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
-        public ActionResult EjecutarModelo(int idEmpresa)
+        public ActionResult EjecutarModeloBalance(int idEmpresa, string anio)
         {
             try
             {
@@ -41,19 +41,32 @@ namespace bufinscustomers.Controllers
                 }
 
                 using (SqlConnection connection = new SqlConnection(CadenaConexion))
+                using (SqlCommand command = new SqlCommand("sp_ModeloBalance", connection))
                 {
-                    using (SqlCommand command = new SqlCommand("sp_EjecutarModelo_Balance", connection))
-                    {
-                        command.CommandType = CommandType.StoredProcedure;
-                        command.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                        command.Parameters.AddWithValue("@IdUsuario", usuarioSession.Id);
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                    command.Parameters.AddWithValue("@IdUsuario", usuarioSession.Id);
+                    command.Parameters.AddWithValue("@Año", anio);
 
-                        connection.Open();
-                        command.ExecuteNonQuery();
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            int codMessage = Convert.ToInt32(reader["CodMessage"]);
+                            string mensaje = reader["ErrorMessage"].ToString();
+
+                            if (codMessage == 1)
+                                SetSuccessMessage(mensaje);
+                            else
+                                SetErrorMessage(mensaje);
+                        }
+                        else
+                        {
+                            SetErrorMessage("No se recibió respuesta del procedimiento.");
+                        }
                     }
                 }
-
-                SetSuccessMessage("Modelo ejecutado correctamente.");
             }
             catch (Exception ex)
             {
