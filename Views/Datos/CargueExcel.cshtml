@@ -10,10 +10,11 @@
 <head>
     <title>Importar excel</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    
+
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
     <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="~/Assets/css/bootstrap-icons.min.css">
 
     <style>
         .tabla-scroll {
@@ -24,20 +25,44 @@
             background-color: #fff;
             border-radius: 0.5rem;
         }
+
         .table-container {
             margin-bottom: 40px;
         }
+
         .pagination {
             justify-content: center;
         }
-        .pagination .page-link {
-            padding: 0.375rem 0.65rem;
-            min-width: 36px;
-            text-align: center;
-        }
+
+            .pagination .page-link {
+                padding: 0.375rem 0.65rem;
+                min-width: 36px;
+                text-align: center;
+            }
+
         #loaderOverlay {
             transition: opacity 0.3s ease;
         }
+
+        .custom-header {
+            display: flex;
+            align-items: center; /* centra verticalmente */
+            justify-content: flex-start; /* deja logo y texto al inicio */
+            gap: 340px; /* espacio entre logo y texto */
+        }
+
+        .logo-bufins {
+            height: 35px;
+            width: auto;
+        }
+
+        .instructivo-title {
+            color: #65efd1;
+            font-weight: bold;
+            font-size: 1.4rem;
+            margin: 0;
+        }
+
     </style>
 
 </head>
@@ -58,51 +83,630 @@
             <div class="modal fade" id="instructivoModal" tabindex="-1" aria-labelledby="instructivoModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-xl modal-dialog-scrollable">
                     <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="instructivoModalLabel">Instructivo de uso</h5>
+                        <div class="modal-header custom-header">
+                            <img src="~/Assets/img/logoBufinsInst.png" alt="Bufins" class="logo-bufins">
+                            <h5 class="modal-title instructivo-title" id="instructivoModalLabel">Instructivo de uso</h5>
                         </div>
                         <div class="modal-body">
-                            <p><strong>Bufins</strong> usa las bases de datos contables como fuentes de información para preparar la información financiera.</p>
-                            <p>En este instructivo encontrará los parámetros para el diligenciamiento de la información, y así aprovechar las ventajas de este sistema de bases de datos.</p>
+                            <p>
+                                <i class="bi bi-database-fill text-primary me-2"></i>
+                                <strong>Bufins</strong> usa las bases de datos contables como fuentes de información para preparar la información financiera.
+                            </p>
+                            <p>
+                                <i class="bi bi-info-circle-fill text-info me-2"></i>
+                                En este instructivo encontrará los parámetros para el diligenciamiento de la información, y así aprovechar las ventajas de este sistema de bases de datos.
+                            </p>
 
-                            <h6>Para tener en cuenta:</h6>
-                            <ol>
-                                <li>Las hojas de este libro tienen nombres que no pueden ser cambiados</li>
-                                <li>Ninguna de las hojas de este libro se puede eliminar, ni ocultar</li>
-                                <li>Conserve el orden de las hojas</li>
-                                <li>Dentro de cada hoja diligencie la información solicitada</li>
-                                <li>No inserte filas y/o columnas dentro de las hojas</li>
-                                <li>No cambie títulos en las tablas de datos.</li>
-                                <li>No cambie formatos en ninguna celda de este libro</li>
-                                <li>Use punto (.) para miles y coma (,) para decimales</li>
-                                <li>Las celdas no pueden contener espacios al inicio o al final</li>
-                                <li>No modifique ni reemplace el diseño de tablas de datos</li>
-                            </ol>
+                            <p>
+                                <button class="btn w-100 text-white fw-bold" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#collapseInstructivo"
+                                        aria-expanded="false" aria-controls="collapseInstructivo"
+                                        style="background-color: #583AFF !important;">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i> Para tener en cuenta
+                                </button>
+                            </p>
+                            <div class="collapse" id="collapseInstructivo">
+                                <div class="card card-body">
+                                    <ol>
+                                        <li><i></i> Las hojas de este libro tiene nombres que no pueden ser cambiados</li>
+                                        <li><i></i> Ninguna de las hojas de este libro se puede eliminar, ni ocultar</li>
+                                        <li><i></i> Conserve el orden de las hojas</li>
+                                        <li><i></i> Dentro de cada hoja diligencie la infomación solicitada</li>
+                                        <li><i></i> No inserte filas y/o columnas dentro de las hojas porque las bases de datos están prediseñadas para darle a los datos una estructura predeterminada constante para el uso de SQLS y PowerBI</li>
+                                        <li><i></i> No cambie títulos en las tablas de datos. Estos están parametrizados de acuerdo con el lenguaje contable y financiero</li>
+                                        <li><i></i> No cambie formatos en ninguna celda de este libro</li>
+                                        <li><i></i> Los símbolos para los datos son (.) punto  para miles y (,) coma para decimales</li>
+                                        <li><i></i> Las celdas no pueden contener espacios ni antes ni al final de su contenido</li>
+                                        <li><i></i> No modifique ni reemplace el diseño de tablas de datos. Solo debe agregar los datos sin ningún formato</li>
+                                    </ol>
+                                </div>
+                            </div>
 
-                            <h6>Uso de cada pestaña:</h6>
-                            <ul>
-                                <li><strong>Z_AñoEjecución:</strong> Coloque el año actual sin puntos</li>
-                                <li><strong>Z_Empresas:</strong> Coloque el nombre exacto de las empresas</li>
-                                <li><strong>Z_Países:</strong> Nombres exactos, primera letra en mayúscula y con acento si aplica (Ej. Perú, México)</li>
-                                <li><strong>Z_SignoCréditos:</strong> Si aplica, coloque el signo menos</li>
-                                <li><strong>Z_Categorías:</strong> Descripciones válidas: ACTIVO CORRIENTE, ACTIVO NO CORRIENTE, etc.</li>
-                                <li><strong>Z_Moneda:</strong> Seleccione la moneda desde la lista desplegable</li>
-                                <li><strong>Z_Unidades:</strong> UNIDADES / MILES / MILLONES</li>
-                                <li><strong>Z_Tipo:</strong> Nombre de líneas de venta definidas</li>
-                                <li><strong>Z_Línea de negocio:</strong> Igual que líneas de venta, nombre exacto</li>
-                                <li><strong>Z_Ajuste1:</strong> Ebitda / No Ebitda</li>
-                                <li><strong>Z_Ajuste2:</strong> GASTOS FIJOS / VARIABLES / OTROS GASTOS</li>
-                                <li><strong>Z_BalancePrueba:</strong> Información de balance de prueba por tres años, coincidir con Z_Moneda y otras hojas</li>
-                                <li><strong>Z_CteYnoCte:</strong> Aplican instrucciones de Z_BalancePrueba a 4 dígitos, con clasificación en columna K</li>
-                                <li><strong>Z_PYGDetallado:</strong> Datos del estado de resultados a 6 dígitos del PUC, incluye campos Tipo, Línea de negocio, Ajuste1, Ajuste2</li>
-                                <li><strong>Z_PYGDetalladoConAjuste:</strong> Igual a Z_PYGDetallado, pero permite reclasificar para EBITDA Ajustado</li>
-                                <li><strong>Z_PresupuestoBalance:</strong> Reporte presupuestal por cuentas de balance</li>
-                                <li><strong>Z_PptoPYGDetallado:</strong> Presupuesto detallado por tipo y línea de negocio</li>
-                                <li><strong>Z_PptoPYGDetalladoConAjuste:</strong> Igual al anterior con ajuste para EBITDA</li>
-                                <li><strong>Z_PCH:</strong> Ahorros estimados como objetivos</li>
-                                <li><strong>Z_EjecPCH:</strong> Ahorros ejecutados</li>
-                                <li><strong>Z_TablaPUC:</strong> Este es el PUC de Colombia</li>
-                            </ul>
+                            <p>
+                                <button class="btn w-100 fw-bold" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#collapsePestanas"
+                                        aria-expanded="false" aria-controls="collapsePestanas"
+                                        style="background-color: #65efd1 !important; color: #fff !important; ">
+                                    <i class="bi bi-folder-fill me-2"></i> Así se usan cada una de las pestañas
+                                </button>
+                            </p>
+                            <div class="collapse" id="collapsePestanas">
+                                <div class="card card-body">
+
+                                    <style>
+                                        .oculto {
+                                            display: none !important;
+                                            margin: 0 !important; /* Quita espacio cuando está oculta */
+                                        }
+
+                                        .visible-con-margen {
+                                            display: block !important;
+                                            margin-bottom: 0.5rem !important; /* Solo margen a visibles */
+                                        }
+                                    </style>
+
+                                    <script>
+                                        function filtrarPestanas() {
+                                            const input = document.getElementById('busquedaPestanas').value.toUpperCase();
+                                            const cards = document.querySelectorAll('#accordionPestanas .card');
+
+                                            cards.forEach(card => {
+                                                const boton = card.querySelector('button');
+                                                if (!boton) return;
+
+                                                const textoBoton = boton.textContent || boton.innerText;
+                                                const collapse = card.querySelector('.collapse');
+
+                                                if (textoBoton.toUpperCase().includes(input)) {
+                                                    card.classList.remove('oculto');
+                                                    card.classList.add('visible-con-margen');
+                                                } else {
+                                                    // cerrar collapse si estaba abierto
+                                                    if (collapse && collapse.classList.contains('show')) {
+                                                        const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+                                                        if (bsCollapse) bsCollapse.hide();
+                                                    }
+                                                    card.classList.add('oculto');
+                                                    card.classList.remove('visible-con-margen');
+                                                }
+                                            });
+                                        }
+                                        const miModal = document.getElementById('instructivoModal');
+
+                                        if (miModal) {
+                                            miModal.addEventListener('hidden.bs.modal', () => {
+                                                const input = document.getElementById('busquedaPestanas');
+                                                if (input) {
+                                                    input.value = '';     // Limpia el filtro
+                                                    filtrarPestanas();    // Muestra todas las cards
+                                                }
+                                            });
+                                        }
+                                    </script>
+
+
+                                    <div class="mb-3">
+                                        <input type="text" class="form-control" id="busquedaPestanas" placeholder="Buscar" onkeyup="filtrarPestanas()">
+                                    </div>
+
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingAnio">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapseAnio"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapseAnio">
+                                                        <i class="bi bi-calendar-event text-light me-2"></i>
+                                                        Z_AñoEjecucion
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapseAnio" class="collapse" aria-labelledby="headingAnio" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    Coloque el año actual sin puntos.<br>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingEmpresas1">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapseEmpresas1"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapseEmpresas1">
+                                                        <i class="bi bi-building text-light me-2"></i>
+                                                        Z_Empresas
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapseEmpresas1" class="collapse" aria-labelledby="headingEmpresas1" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    Coloque el nombre de las empresas a consolidar. Estos nombres deberán ser siempre idénticos a la forma en que se reportarán en las bases de datos.<br>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingPaises">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapsePaises"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapsePaises">
+                                                        <i class="bi bi-geo-alt-fill me-2"></i>
+                                                        Z_Paises
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapsePaises" class="collapse" aria-labelledby="headingPaises" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    Coloque el nombre de los países a consolidar. Estos nombres deberán ser siempre idénticos a la forma en que se reportarán en las bases de datos. Coloque el nombre con maýuscula solo en la primera letra y si tiene acento lo debes incluir. Ejem: Perú, México.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingCreditos">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #fff; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapseCreditos"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapseCreditos">
+                                                        <i class="bi bi-globe2 me-2"></i>
+                                                        Z_SignoCreditos
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapseCreditos" class="collapse" aria-labelledby="headingCreditos" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    Si las cuentas de pasivo, patrimonio e ingresos se reportan con signo negativo coloque acá el signo menos
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingCategorias">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapseCategorias"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapseCategorias">
+                                                        <i class="bi bi-sign-turn-right-fill me-2"></i>
+                                                        Z_Categorias
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapseCategorias" class="collapse" aria-labelledby="headingCategorias" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    <ul>
+                                                        <li>
+                                                            En la columna <strong>K</strong> de la hoja de <strong>Z_CteYnoCte</strong> se discriminan los activos y pasivos por corrientes y no corrientes. Tenga en cuenta que la descripción correcta para cada rubro es la que se indica en esta lista:
+                                                            <ul>
+                                                                <li>ACTIVO CORRIENTE</li>
+                                                                <li>ACTIVO NO CORRIENTE</li>
+                                                                <li>PASIVO CORRIENTE</li>
+                                                                <li>PASIVO NO CORRIENTE</li>
+                                                            </ul>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingMoneda">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapseMoneda"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapseMoneda">
+                                                        <i class="bi bi-diagram-2-fill me-2"></i>
+                                                        Z_Moneda
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapseMoneda" class="collapse" aria-labelledby="headingMoneda" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    Coloque la nomenclatura de la moneda en la cual se reportarán los datos eligiéndola de la lista desplegable
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingUnidades">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapseUnidades"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapseUnidades">
+                                                        <i class="bi bi-currency-exchange me-2"></i>
+                                                        Z_Unidades
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapseUnidades" class="collapse" aria-labelledby="headingUnidades" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    Indique el fomato de los datos. Estos deben ser:
+                                                    UNIDADES
+                                                    MILES
+                                                    MILLONES
+                                                    Elija de la lista desplegable
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingTipo">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapseTipo"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapseTipo">
+                                                        <i class="bi bi-123 me-2"></i>
+                                                        Z_Tipo
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapseTipo" class="collapse" aria-labelledby="headingTipo" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    Coloque el nombre de las líneas de venta que se hayan definido previamente. Estos nombres deberán ser siempre idénticos a la forma en que se reportarán en las bases de datos.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingnegocio">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapsenegocio"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapsenegocio">
+                                                        <i class="bi bi-diagram-3-fill me-2"></i>
+                                                        Z_Línea de negocio
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapsenegocio" class="collapse" aria-labelledby="headingnegocio" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    Coloque el nombre de las líneas de negocio que se hayan definido previamente. Estos nombres deberán ser siempre idénticos a la forma en que se reportarán en las bases de datos.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingAjuste1">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapseAjuste1"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapseAjuste1">
+                                                        <i class="bi bi-diagram-3-fill me-2"></i>
+                                                        Z_Ajuste1
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapseAjuste1" class="collapse" aria-labelledby="headingAjuste1" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    Coloque si el ingreso o el gasto se considera parte del Ebitda o no hace parte de él. Debe indicar siempre:
+                                                    Ebitda
+                                                    No Ebitda
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingAjuste2">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapseAjuste2"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapseAjuste2">
+                                                        <i class="bi bi-cash-coin me-2"></i>
+                                                        Z_Ajuste2
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapseAjuste2" class="collapse" aria-labelledby="headingAjuste2" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    Coloque la clasificación de los costos y los gastos según su naturaleza así:
+                                                    GASTOS FIJOS
+                                                    GASTOS VARIABLES
+                                                    OTROS GASTOS
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingBalancePrueba">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapseBalancePrueba"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapseBalancePrueba">
+                                                        <i class="bi bi-cash-stack me-2"></i>
+                                                        Z_BalancePrueba
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapseBalancePrueba" class="collapse" aria-labelledby="headingBalancePrueba" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    <ul>
+                                                        <li>Los datos de <strong>Z_BalancePrueba</strong> deben estar en la misma unidad de medida reportada en <strong>Z_Moneda</strong>.</li>
+                                                        <li>La celda <strong>F1</strong> debe ser idéntica a la reportada en <strong>Z_Moneda</strong>.</li>
+                                                        <li>El nombre de las empresas deberá estar escrito en forma idéntica a como se reportó en la hoja de <strong>Z_Empresa</strong>.</li>
+                                                        <li>El nombre de los países deberá estar escrito en forma idéntica a como se reportó en la hoja de <strong>Z_Paises</strong>.</li>
+                                                        <li>En la celda <strong>A1</strong> coloque los datos del balance de prueba (balance de comprobación) respetando el orden de las columnas. Esta información deberá estar por tres años y por meses, comenzando por el año actual y los dos años anteriores para las empresas y países que se vayan a consolidar.</li>
+                                                        <li>El <strong>Z_BalancePrueba</strong> debe estar a 1, 2, 4 y 6 dígitos del PUC.</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingCteYnoCte">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapseCteYnoCte"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapseCteYnoCte">
+                                                        <i class="bi bi-journal-text me-2"></i>
+                                                        Z_CteYnoCte
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapseCteYnoCte" class="collapse" aria-labelledby="headingCteYnoCte" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    <ul>
+                                                        <li>Aplican las mismas instrucciones de la hoja <strong>Z_BalancePrueba</strong> a 4 dígitos del PUC, para las cuentas de activos y pasivos que deben clasificarse como de carácter corriente y no corriente.</li>
+                                                        <li>En la columna <strong>K</strong> deberá indicar si el activo o el pasivo es corriente o no corriente, para lo cual deberá usar la descripción de <strong>Z_Categorias</strong> usando la lista desplegable.</li>
+                                                        <li>Las cuentas <strong>Z_CteYnoCte</strong> deben estar a 4 dígitos del PUC.</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingPYGDetallado">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapsePYGDetallado"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapsePYGDetallado">
+                                                        <i class="bi bi-journal-code me-2"></i>
+                                                        Z_PYGDetallado
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapsePYGDetallado" class="collapse" aria-labelledby="headingPYGDetallado" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    <ul>
+                                                        <li>Los datos de <strong>Z_PYGDetallado</strong> deben estar en la misma unidad de medida reportada en <strong>Z_Moneda</strong>.</li>
+                                                        <li>La celda <strong>E (Nuevo saldo)</strong> debe ser idéntica a la reportada en <strong>Z_Moneda</strong>.</li>
+                                                        <li>El nombre de las empresas deberá estar escrito en forma idéntica a como se reportó en la hoja de <strong>Z_Empresa</strong>.</li>
+                                                        <li>El nombre de los países deberá estar escrito en forma idéntica a como se reportó en la hoja de <strong>Z_Paises</strong>.</li>
+                                                        <li>En la celda <strong>A1</strong> coloque los datos del estado de resultados a 6 dígitos del PUC, respetando el orden de las columnas. Esta información deberá estar por tres años y por meses, comenzando por el año actual y los dos años anteriores para las empresas y países que se vayan a consolidar.</li>
+                                                        <li>En la columna <strong>C (Tipo)</strong> coloque el nombre de las líneas de venta que se hayan definido previamente. Estos nombres deberán ser siempre idénticos a la forma en que se reportarán en las bases de datos.</li>
+                                                        <li>En la columna <strong>D (Línea de negocio)</strong> coloque el nombre de las líneas de negocio que se hayan definido previamente. Estos nombres deberán ser siempre idénticos a la forma en que se reportarán en las bases de datos.</li>
+                                                        <li>En la columna <strong>J (Ajuste1)</strong> indique si el ingreso o el gasto se considera parte del Ebitda o no hace parte de él. Debe indicar siempre: <strong>Ebitda</strong> o <strong>No Ebitda</strong> usando la lista desplegable.</li>
+                                                        <li>
+                                                            En la columna <strong>K (Ajuste2)</strong> coloque la clasificación de los costos y los gastos según su naturaleza usando la lista desplegable:
+                                                            <ul>
+                                                                <li>GASTOS FIJOS</li>
+                                                                <li>GASTOS VARIABLES</li>
+                                                                <li>OTROS GASTOS</li>
+                                                            </ul>
+                                                        </li>
+                                                        <li>Las cuentas de <strong>Z_PYGDetallado</strong> deben estar a 6 dígitos del PUC.</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingPYGDetalladoConAjuste">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapsePYGDetalladoConAjuste"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapsePYGDetalladoConAjuste">
+                                                        <i class="bi bi-graph-up me-2"></i>
+                                                        Z_PYGDetalladoConAjuste
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapsePYGDetalladoConAjuste" class="collapse" aria-labelledby="headingPYGDetalladoConAjuste" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    Esta hoja es idéntica a la de Z_PYGDetallado. La única diferencia es que podrá reclasificar ingresos, costos y gastos para ottener el Ebitda Ajustado
+                                                    Las cuentas Z_PYGDetalladoConAjuste deben estar a 6 dígitos del PUC
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingPresupuestoBalance">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapsePresupuestoBalance"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapsePresupuestoBalance">
+                                                        <i class="bi bi-graph-up-arrow me-2"></i>
+                                                        Z_PresupuestoBalance
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapsePresupuestoBalance" class="collapse" aria-labelledby="headingPresupuestoBalance" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    En esta hoja se debe reportar el presupuesto de la compañía por cuentas de balance a 1. 2, 4 y 6 dígitos del PUC. En caso de no tener presupuesto de balance se debe dejar en blanco
+                                                    Las cuentas de Z_Presupuesto deben estar a 6 dígitos del PUC
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingPptoPYGDetallado">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapsePptoPYGDetallado"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapsePptoPYGDetallado">
+                                                        <i class="bi bi-piggy-bank-fill me-2"></i>
+                                                        Z_PptoPYGDetallado
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapsePptoPYGDetallado" class="collapse" aria-labelledby="headingPptoPYGDetallado" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    Este es el presupuesto detallado discriminado por tipo y Líneas de negocio. La estructura de esta hoja es igual a la Z_PYGDetallado
+                                                    Las cuentas de Z_PresupuestoDetallado deben estar a 6 dígitos del PUC
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingPptoPYGDetalladoConAjuste">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapsePptoPYGDetalladoConAjuste"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapsePptoPYGDetalladoConAjuste">
+                                                        <i class="bi bi-cash-coin me-2"></i>
+                                                        Z_PptoPYGDetalladoConAjuste
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapsePptoPYGDetalladoConAjuste" class="collapse" aria-labelledby="headingPptoPYGDetalladoConAjuste" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    Este es el presupuesto detallado discriminado por tipo y Líneas de negocio. La estructura de esta hoja es igual a la Z_PYGDetalladoConAjuste
+                                                    Las cuentas de Z_PresupuestoDetalladoConAjuste deben estar a 6 dígitos del PUC
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingPCH">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapsePCH"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapsePCH">
+                                                        <i class="bi bi-cash-coin me-2"></i>
+                                                        Z_PCH
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapsePCH" class="collapse" aria-labelledby="headingPCH" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    Las cuentas de Z_PCH deben estar a de 4 a 6 dígitos del PUC y corresponden a las indicadas en la hoja
+                                                    Los valores de Z_PCH equivalen a los ahorros que se estiman como objetivos
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingEjecPCH">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapseEjecPCH"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapseEjecPCH">
+                                                        <i class="bi bi-flag-fill me-2"></i>
+                                                        Z_EjecPCH
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapseEjecPCH" class="collapse" aria-labelledby="headingEjecPCH" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    Las cuentas de Z_EjecPCH deben estar a de 4 a 6 dígitos del PUC
+                                                    Las cuentas de Z_EjecPCH deben estar a de 4 a 6 dígitos del PUC y equivalen a los ahorros que ejecutados
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion " id="accordionPestanas">
+                                        <div class="card shadow-sm mb-2">
+                                            <div class="card-header p-0" id="headingTablaPUC">
+                                                <h5 class="mb-0">
+                                                    <button class="btn w-100 text-white text-start"
+                                                            style="background-color: #583AFF; border:none; padding: 10px 18px; border-radius: 6px;"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#collapseTablaPUC"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapseTablaPUC">
+                                                        <i class="bi bi-journal-bookmark-fill me-2"></i>
+                                                        Z_TablaPUC
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapseTablaPUC" class="collapse" aria-labelledby="headingTablaPUC" data-bs-parent="#accordionPestanas">
+                                                <div class="card-body" style="padding: 12px 18px;">
+                                                    Este es el PUC de Colombia
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Cerrar</button>
