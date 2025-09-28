@@ -231,16 +231,30 @@ namespace bufinscustomers.Controllers
 
                             if (accion == "Importar")
                             {
+                                bool huboError = false;
                                 if (empresasArchivo != null && empresasArchivo.Any())
                                 {
                                     foreach (var empId in empresasArchivo.Distinct())
                                     {
-                                        GuardarEnSQLServer(dt.Copy(), empId, idUsuario);
+                                        if (!GuardarEnSQLServer(dt.Copy(), empId, idUsuario))
+                                        {
+                                            huboError = true;
+                                            break;
+                                        }
                                     }
                                 }
                                 else
                                 {
-                                    GuardarEnSQLServer(dt.Copy(), usuarioActual?.IdEmpresa ?? 0, idUsuario);
+                                    if (!GuardarEnSQLServer(dt.Copy(), usuarioActual?.IdEmpresa ?? 0, idUsuario))
+                                    {
+                                        huboError = true;
+                                    }
+                                }
+
+                                if (huboError)
+                                {
+                                    // Ya se guardó el mensaje en TempData en el catch, solo redirige
+                                    return RedirectToAction("CargueExcel", "Datos", new { limpiar = false });
                                 }
                             }
                             else if (accion == "RetornoTablaDeDatos")
@@ -319,59 +333,98 @@ namespace bufinscustomers.Controllers
 
         private bool GuardarEnSQLServer(DataTable tabla, int idEmpresa, int idUsuario)
         {
+            SqlConnection conn = null;
             try
             {
                 DateTime fechaCargue = DateTime.Now;
 
-                using (SqlConnection conn = new SqlConnection(CadenaConexion))
+                conn = new SqlConnection(CadenaConexion);
+                conn.Open();
+
+                // Normalizar nombre
+                tabla.TableName = NormalizarNombre(tabla.TableName);
+
+                // Crear tabla si no existe
+                CrearTablaSiNoExiste(conn, tabla);
+
+                // Asegurar columnas extra
+                if (!tabla.Columns.Contains("IdEmpresa"))
+                    tabla.Columns.Add("IdEmpresa", typeof(int));
+                if (!tabla.Columns.Contains("IdUsuario"))
+                    tabla.Columns.Add("IdUsuario", typeof(int));
+                if (!tabla.Columns.Contains("FechaCargue"))
+                    tabla.Columns.Add("FechaCargue", typeof(DateTime));
+
+                // Setear columnas para todas las filas
+                foreach (DataRow row in tabla.Rows)
                 {
-                    conn.Open();
+                    row["IdEmpresa"] = idEmpresa;
+                    row["IdUsuario"] = idUsuario;
+                    row["FechaCargue"] = fechaCargue;
+                }
 
-                    // Normalizar nombre
-                    tabla.TableName = NormalizarNombre(tabla.TableName);
+                // 🔹 Limpiar registros anteriores solo de esa empresa
+                using (SqlCommand deleteCmd = new SqlCommand($@"
+                    DELETE FROM [dbo].[{tabla.TableName}]
+                    WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL", conn))
+                {
+                    deleteCmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                    deleteCmd.ExecuteNonQuery();
+                }
 
-                    // Crear tabla si no existe
-                    CrearTablaSiNoExiste(conn, tabla);
-
-                    // Asegurar columnas extra
-                    if (!tabla.Columns.Contains("IdEmpresa"))
-                        tabla.Columns.Add("IdEmpresa", typeof(int));
-                    if (!tabla.Columns.Contains("IdUsuario"))
-                        tabla.Columns.Add("IdUsuario", typeof(int));
-                    if (!tabla.Columns.Contains("FechaCargue"))
-                        tabla.Columns.Add("FechaCargue", typeof(DateTime));
-
-                    // Setear columnas para todas las filas
-                    foreach (DataRow row in tabla.Rows)
-                    {
-                        row["IdEmpresa"] = idEmpresa;
-                        row["IdUsuario"] = idUsuario;
-                        row["FechaCargue"] = fechaCargue;
-                    }
-
-                    // 🔹 Limpiar registros anteriores solo de esa empresa
-                    using (SqlCommand deleteCmd = new SqlCommand($@"
-                DELETE FROM [dbo].[{tabla.TableName}]
-                WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL", conn))
-                    {
-                        deleteCmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                        deleteCmd.ExecuteNonQuery();
-                    }
-
-                    // 🔹 Insertar lo nuevo
-                    using (SqlBulkCopy bulk = new SqlBulkCopy(conn))
-                    {
-                        bulk.DestinationTableName = $"[dbo].[{tabla.TableName}]";
-                        bulk.WriteToServer(tabla);
-                    }
+                // 🔹 Insertar lo nuevo
+                using (SqlBulkCopy bulk = new SqlBulkCopy(conn))
+                {
+                    bulk.DestinationTableName = $"[dbo].[{tabla.TableName}]";
+                    bulk.WriteToServer(tabla);
                 }
 
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Aquí podrías loguear ex.Message
+                TempData["Mensaje"] = $"Error al guardar en la tabla '{tabla.TableName}': {ex.Message}";
+                TempData["MensajeTipo"] = "error";
+
+                if (conn != null && conn.State == ConnectionState.Open)
+                {
+                    using (SqlCommand deleteCmd = new SqlCommand($@"
+                        DELETE Z_Ajuste1 WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
+                        DELETE Z_Ajuste2 WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
+                        DELETE Z_AnoEjecucion WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
+                        DELETE Z_BalancePrueba WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
+                        DELETE Z_Categorias WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
+                        DELETE Z_CteYnoCte WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
+                        DELETE Z_EjecPCH WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
+                        DELETE Z_Empresas WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
+                        DELETE Z_LineaNegocio WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
+                        DELETE Z_Moneda WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
+                        DELETE Z_Paises WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
+                        DELETE Z_PCH WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
+                        DELETE Z_PptoPYGDetallado WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
+                        DELETE Z_PptoPYGDetalladoConAjuste WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
+                        DELETE Z_PresupuestoBalance WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
+                        DELETE Z_PYGDetallado WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
+                        DELETE Z_PYGDetalladoConAjuste WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
+                        DELETE Z_SignoCreditos WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
+                        DELETE Z_TablaPUC WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
+                        DELETE Z_Tipo WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
+                        DELETE Z_Unidades WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL", conn))
+                    {
+                        deleteCmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                        deleteCmd.ExecuteNonQuery();
+                    }
+                }
+
                 return false;
+            }
+            finally
+            {
+                if (conn != null)
+                {
+                    conn.Close();
+                    conn.Dispose();
+                }
             }
         }
 
@@ -423,7 +476,7 @@ namespace bufinscustomers.Controllers
 
             // Construir columnas dinámicas del Excel
             var columnasExcel = tabla.Columns.Cast<DataColumn>()
-                                  .Select(c => $"[{c.ColumnName}] NVARCHAR(MAX)");
+                                  .Select(c => $"[{c.ColumnName}] VARCHAR(MAX)");
 
             // Agregar columnas fijas de auditoría
             var columnasExtras = new List<string>
