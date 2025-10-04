@@ -15,204 +15,11 @@
     <link href="~/Assets/Bootstrap/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="~/Assets/GoogleApis/Family.css" rel="stylesheet">
     <link href="~/Assets/css/sb-admin-2.min.css" rel="stylesheet">
+    <!-- SweetAlert2 para notificaciones de sesión -->
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
 </head>
 
 <style>
-    /* ========== LAYOUT RESPONSIVE MEJORADO ========== */
-    
-    /* Base: Reset y estructura principal */
-    #wrapper {
-        display: flex;
-        flex-direction: row;
-        min-height: 100vh;
-    }
-
-    /* Sidebar responsivo */
-    #accordionSidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 100vh;
-        width: 224px;
-        overflow-y: auto;
-        z-index: 1030;
-        transition: all 0.15s ease-in-out;
-    }
-
-    /* Content wrapper responsivo */
-    #content-wrapper {
-        flex: 1;
-        margin-left: 224px;
-        transition: margin-left 0.15s ease-in-out;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-    }
-
-    /* Contenedor principal */
-    #content {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        overflow: hidden;
-    }
-
-    /* Header/topbar fijo */
-    .topbar {
-        position: sticky;
-        top: 0;
-        z-index: 1025;
-        flex-shrink: 0;
-    }
-
-    /* Área de contenido scrolleable que incluye el footer */
-    .content-scroll-area {
-        flex: 1;
-        overflow-y: auto;
-        overflow-x: hidden;
-        min-height: 0;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-    }
-
-    /* Footer que se mueve con el scroll */
-    .sticky-footer {
-        position: static;
-        z-index: 1020;
-        margin-top: auto;
-        flex-shrink: 0;
-    }
-
-    /* Sidebar colapsado en desktop */
-    body.sidebar-toggled #accordionSidebar {
-        width: 6.5rem;
-    }
-
-    body.sidebar-toggled #content-wrapper {
-        margin-left: 6.5rem;
-    }
-
-    /* ========== MEDIA QUERIES RESPONSIVE ========== */
-    
-    /* Mobile First: Por defecto (móviles) */
-    @@media (max-width: 767.98px) {
-        #accordionSidebar {
-            transform: translateX(-100%);
-            box-shadow: none;
-        }
-        
-        /* Sidebar visible en móvil cuando está activo */
-        #accordionSidebar.show {
-            transform: translateX(0);
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
-        }
-        
-        #content-wrapper {
-            margin-left: 0 !important;
-            width: 100%;
-        }
-        
-        /* Overlay para móvil cuando sidebar está abierto */
-        body.sidebar-open::after {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1029;
-            pointer-events: auto;
-        }
-
-        /* Botón toggle móvil siempre visible */
-        #sidebarToggleTop {
-            display: block !important;
-        }
-
-        /* Asegurar que el contenido no se superponga */
-        .container-fluid {
-            padding-left: 1rem;
-            padding-right: 1rem;
-        }
-
-        /* Mejorar visibilidad de submenús en móvil */
-        .collapse-inner {
-            background: rgba(255, 255, 255, 0.95) !important;
-            backdrop-filter: blur(5px);
-        }
-
-        .collapse-item {
-            color: #3a3b45 !important;
-            padding: 0.75rem 1.5rem !important;
-        }
-
-        .collapse-item:hover {
-            background-color: rgba(88, 58, 255, 0.1) !important;
-        }
-    }
-
-    /* Tablets y Desktop */
-    @@media (min-width: 768px) {
-        #accordionSidebar {
-            transform: translateX(0);
-        }
-        
-        #content-wrapper {
-            margin-left: 224px;
-        }
-        
-        /* Ocultar botón toggle móvil en desktop */
-        #sidebarToggleTop {
-            display: none !important;
-        }
-
-        /* Comportamiento normal del sidebar toggle en desktop */
-        body.sidebar-toggled #accordionSidebar {
-            width: 6.5rem;
-        }
-        
-        body.sidebar-toggled #content-wrapper {
-            margin-left: 6.5rem;
-        }
-    }
-
-    /* Scroll personalizado para sidebar */
-    #accordionSidebar::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    #accordionSidebar::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.1);
-    }
-
-    #accordionSidebar::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.3);
-        border-radius: 3px;
-    }
-
-    /* Scroll personalizado para contenido */
-    .content-scroll-area::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .content-scroll-area::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
-    }
-
-    .content-scroll-area::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
-        border-radius: 4px;
-    }
-
-    .content-scroll-area::-webkit-scrollbar-thumb:hover {
-        background: #a1a1a1;
-    }
-
-    /* Animaciones para chevrons - conservadas del original */
     .collapse-item .fa-chevron-right {
         transition: transform 0.3s ease;
     }
@@ -464,23 +271,11 @@
                         </li>
                     </ul>
                 </nav>
-                <!-- ========== ÁREA DE CONTENIDO SCROLLEABLE ========== -->
-                <div class="content-scroll-area">
-                    <div class="container-fluid">
-                        <div class="container body-content">
-                            @RenderBody()
-                            <hr />
-                        </div>
+                <div class="container-fluid">
+                    <div class="container body-content">
+                        @RenderBody()
+                        <hr />
                     </div>
-                    
-                    <!-- ========== FOOTER QUE SE MUEVE CON SCROLL ========== -->
-                    <footer class="sticky-footer bg-white">
-                        <div class="container my-auto">
-                            <div class="copyright text-center my-auto">
-                                <span style="color:white;">Copyright &copy; Bufins 2025</span>
-                            </div>
-                        </div>
-                    </footer>
                 </div>
             </div>
             <!-- Modal de información de usuario -->
@@ -560,6 +355,13 @@
                     </form>
                 </div>
             </div>
+            <footer class="sticky-footer bg-white">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span style="color:white;">Copyright &copy; Bufins 2025</span>
+                    </div>
+                </div>
+            </footer>
         </div>
     </div>
 
@@ -642,6 +444,7 @@
             }
         });
 
+        // ========== FUNCIONALIDADES DE IMAGEN DE USUARIO ==========
         // Funcionalidad de imagen de usuario (conservada del original con Bootstrap 4)
         $('input[name="ImagenUsuario"]').on('change', function () {
             var input = this;
@@ -728,6 +531,340 @@
             $('#previewImagen').attr('src', '#').hide();
             $('input[name="ImagenUsuario"]').val('');
         });
+
+        // ========== GESTIÓN AVANZADA DE SESIONES ==========
+        
+        // Variables de configuración de sesión
+        var sessionTimeoutMinutes = 20; // Configurado en Web.config
+        var sessionWarningMinutes = 5;  // Advertir 5 minutos antes
+        var sessionCheckInterval = 60000; // Verificar cada minuto
+        
+        var sessionTimeoutMs = sessionTimeoutMinutes * 60 * 1000;
+        var warningTimeMs = sessionTimeoutMs - (sessionWarningMinutes * 60 * 1000);
+        
+        var warningShown = false;
+        var sessionWarningTimer = null;
+        var sessionTimeoutTimer = null;
+        var activityCheckTimer = null;
+
+        // Inicializar manejo de sesión
+        function inicializarManejoSesion() {
+            // Timer para mostrar advertencia
+            sessionWarningTimer = setTimeout(function() {
+                mostrarAdvertenciaSesion();
+            }, warningTimeMs);
+            
+            // Timer para logout automático
+            sessionTimeoutTimer = setTimeout(function() {
+                cerrarSesionAutomatica();
+            }, sessionTimeoutMs);
+            
+            // Verificar estado de sesión periódicamente
+            activityCheckTimer = setInterval(function() {
+                verificarEstadoSesion();
+            }, sessionCheckInterval);
+        }
+
+        // Mostrar advertencia de sesión próxima a expirar
+        function mostrarAdvertenciaSesion() {
+            if (warningShown) return;
+            warningShown = true;
+            
+            Swal.fire({
+                title: '⏰ Sesión por expirar',
+                html: `
+                    <div style="text-align: center;">
+                        <p>Su sesión expirará en <strong>${sessionWarningMinutes} minutos</strong>.</p>
+                        <p>¿Desea extender su sesión?</p>
+                        <div style="margin-top: 15px;">
+                            <i class="fas fa-clock" style="font-size: 2em; color: #f39c12;"></i>
+                        </div>
+                    </div>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-clock"></i> Extender sesión',
+                cancelButtonText: '<i class="fas fa-sign-out-alt"></i> Cerrar sesión',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                customClass: {
+                    confirmButton: 'btn btn-success',
+                    cancelButton: 'btn btn-secondary'
+                },
+                timer: sessionWarningMinutes * 60 * 1000, // Auto-close al expirar
+                timerProgressBar: true,
+                didOpen: () => {
+                    const confirmButton = Swal.getConfirmButton();
+                    const cancelButton = Swal.getCancelButton();
+                    confirmButton.style.marginRight = '10px';
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    extenderSesion();
+                } else if (result.isDismissed && result.dismiss === Swal.DismissReason.timer) {
+                    // Timer expiró - cerrar sesión automáticamente
+                    cerrarSesionAutomatica();
+                } else {
+                    // Usuario eligió cerrar sesión
+                    cerrarSesionManual();
+                }
+            });
+        }
+
+        // Extender sesión vía AJAX
+        function extenderSesion() {
+            // Mostrar loading
+            Swal.fire({
+                title: 'Extendiendo sesión...',
+                text: 'Por favor espere',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            $.ajax({
+                url: '@Url.Action("ExtenderSesion", "Acceso")',
+                type: 'POST',
+                timeout: 10000,
+                success: function(response) {
+                    if (response.success) {
+                        // Mostrar mensaje de éxito
+                        const isMobile = window.innerWidth <= 768;
+                        Swal.fire({
+                            icon: 'success',
+                            title: '✅ Sesión extendida',
+                            text: 'Su sesión ha sido extendida por ' + sessionTimeoutMinutes + ' minutos más.',
+                            timer: 3000,
+                            showConfirmButton: false,
+                            toast: true,
+                            position: isMobile ? 'top' : 'top-end',
+                            timerProgressBar: true
+                        });
+                        
+                        // Reiniciar timers
+                        reiniciarTimersSesion();
+                    } else {
+                        // Error al extender sesión
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error al extender sesión',
+                            text: response.message || 'No se pudo extender la sesión. Será redirigido al login.',
+                            showConfirmButton: true,
+                            confirmButtonText: 'Ir al Login'
+                        }).then(() => {
+                            window.location.href = response.redirectUrl || '@Url.Action("Login", "Acceso")';
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    let errorMessage = 'Error de conexión con el servidor.';
+                    
+                    if (status === 'timeout') {
+                        errorMessage = 'Tiempo de espera agotado. Verifique su conexión.';
+                    } else if (xhr.status === 401) {
+                        errorMessage = 'Su sesión ha expirado.';
+                    }
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de conexión',
+                        text: errorMessage,
+                        showConfirmButton: true,
+                        confirmButtonText: 'Ir al Login'
+                    }).then(() => {
+                        window.location.href = '@Url.Action("Login", "Acceso")?expired=true';
+                    });
+                }
+            });
+        }
+
+        // Cerrar sesión automática por timeout
+        function cerrarSesionAutomatica() {
+            Swal.fire({
+                icon: 'info',
+                title: '⏰ Sesión expirada',
+                html: `
+                    <div style="text-align: center;">
+                        <p>Su sesión ha expirado por inactividad.</p>
+                        <p>Será redirigido al login en <span id="countdown">5</span> segundos...</p>
+                        <div style="margin-top: 15px;">
+                            <i class="fas fa-hourglass-end" style="font-size: 2em; color: #e74c3c;"></i>
+                        </div>
+                    </div>
+                `,
+                timer: 5000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => {
+                    const countdownElement = document.getElementById('countdown');
+                    let countdown = 5;
+                    
+                    const countdownTimer = setInterval(() => {
+                        countdown--;
+                        if (countdownElement) {
+                            countdownElement.textContent = countdown;
+                        }
+                        
+                        if (countdown <= 0) {
+                            clearInterval(countdownTimer);
+                        }
+                    }, 1000);
+                }
+            }).then(() => {
+                window.location.href = '@Url.Action("Login", "Acceso")?expired=true';
+            });
+        }
+
+        // Cerrar sesión manual
+        function cerrarSesionManual() {
+            Swal.fire({
+                title: 'Cerrando sesión...',
+                text: 'Por favor espere',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            setTimeout(() => {
+                window.location.href = '@Url.Action("CerrarSesion", "Acceso")';
+            }, 1000);
+        }
+
+        // Verificar estado de sesión con el servidor
+        function verificarEstadoSesion() {
+            $.ajax({
+                url: '@Url.Action("InfoSesion", "Acceso")',
+                type: 'GET',
+                timeout: 5000,
+                success: function(response) {
+                    if (!response.success || !response.estaAutenticado) {
+                        // Sesión no válida en servidor
+                        limpiarTimersSesion();
+                        cerrarSesionAutomatica();
+                    } else if (response.sessionInfo && response.sessionInfo.EstaPorExpirar && !warningShown) {
+                        // Sesión próxima a expirar
+                        limpiarTimersSesion();
+                        mostrarAdvertenciaSesion();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    // Solo actuar si es un error 401 (no autorizado)
+                    if (xhr.status === 401) {
+                        limpiarTimersSesion();
+                        cerrarSesionAutomatica();
+                    }
+                    // Otros errores los ignoramos (podrían ser problemas de red temporales)
+                }
+            });
+        }
+
+        // Reiniciar todos los timers de sesión
+        function reiniciarTimersSesion() {
+            limpiarTimersSesion();
+            warningShown = false;
+            inicializarManejoSesion();
+        }
+
+        // Limpiar todos los timers de sesión
+        function limpiarTimersSesion() {
+            if (sessionWarningTimer) {
+                clearTimeout(sessionWarningTimer);
+                sessionWarningTimer = null;
+            }
+            if (sessionTimeoutTimer) {
+                clearTimeout(sessionTimeoutTimer);
+                sessionTimeoutTimer = null;
+            }
+            if (activityCheckTimer) {
+                clearInterval(activityCheckTimer);
+                activityCheckTimer = null;
+            }
+        }
+
+        // Detectar actividad del usuario para reiniciar timers
+        var activityEvents = ['click', 'keypress', 'scroll', 'mousemove', 'touchstart'];
+        var lastActivityTime = Date.now();
+        var activityThreshold = 30000; // 30 segundos
+
+        // Agregar listeners de actividad
+        activityEvents.forEach(function(event) {
+            document.addEventListener(event, function() {
+                var now = Date.now();
+                if (now - lastActivityTime > activityThreshold) {
+                    lastActivityTime = now;
+                    // Solo reiniciar si no se ha mostrado la advertencia
+                    if (!warningShown) {
+                        reiniciarTimersSesion();
+                    }
+                }
+            }, true);
+        });
+
+        // Manejar respuestas AJAX que indican sesión expirada
+        $(document).ajaxSuccess(function(event, xhr, settings) {
+            var sessionExpired = xhr.getResponseHeader('X-Session-Expired');
+            if (sessionExpired === 'true') {
+                limpiarTimersSesion();
+                cerrarSesionAutomatica();
+            }
+        });
+
+        // Manejar errores de sesión en peticiones AJAX globalmente
+        $(document).ajaxError(function(event, xhr, settings) {
+            if (xhr.status === 401) {
+                limpiarTimersSesion();
+                cerrarSesionAutomatica();
+            }
+        });
+
+        // Agregar funcionalidad al enlace "Cerrar sesión" del dropdown
+        $('a[href*="Login"][href*="Acceso"]:contains("Cerrar sesión")').on('click', function(e) {
+            e.preventDefault();
+            
+            Swal.fire({
+                title: '¿Cerrar sesión?',
+                text: '¿Está seguro que desea cerrar su sesión?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Sí, cerrar sesión',
+                cancelButtonText: '<i class="fas fa-times"></i> Cancelar',
+                customClass: {
+                    confirmButton: 'btn btn-danger',
+                    cancelButton: 'btn btn-secondary'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    limpiarTimersSesion();
+                    cerrarSesionManual();
+                }
+            });
+        });
+
+        // Inicializar cuando el documento esté listo
+        $(document).ready(function() {
+            // Solo inicializar si no estamos en la página de login
+            if (!window.location.pathname.toLowerCase().includes('/acceso/login')) {
+                inicializarManejoSesion();
+            }
+        });
+
+        // Limpiar timers al salir de la página
+        $(window).on('beforeunload', function() {
+            limpiarTimersSesion();
+        });
+
+        // Debug: Función global para obtener info de sesión (solo en desarrollo)
+        window.obtenerInfoSesion = function() {
+            $.get('@Url.Action("InfoSesion", "Acceso")', function(data) {
+                console.log('Estado de sesión:', data);
+            });
+        };
     </script>
 </body>
 </html>
