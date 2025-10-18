@@ -213,6 +213,16 @@
                             <a class="collapse-item" href="@Url.Action("MaestroReportes", "Reportes")">Maestro reportes</a>
                         </div>
                     </div>
+                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseConfigEmpresas"
+                       aria-expanded="true" aria-controls="collapseConfigEmpresas">
+                        <i class="fas fa-cogs"></i>
+                        <span>Configuraciones</span>
+                    </a>
+                    <div id="collapseConfigEmpresas" class="collapse" aria-labelledby="headingConfigEmpresas" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item" href="@Url.Action("Index", "ConfiguracionEmpresa")">Configuración empresas</a>
+                        </div>
+                    </div>
                 </li>
             }
             <div class="text-center d-none d-md-inline">

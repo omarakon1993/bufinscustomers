@@ -1,0 +1,335 @@
+using bufinscustomers.Helpers;
+using bufinscustomers.Models;
+using bufinscustomers.Permisos;
+using bufinscustomers.Services;
+using System;
+using System.Linq;
+using System.Web.Mvc;
+
+namespace bufinscustomers.Controllers
+{
+    [ValidarSesion]
+    public class ConfiguracionEmpresaController : BaseController
+    {
+        private readonly ConfiguracionEmpresaService _configuracionService;
+
+        public ConfiguracionEmpresaController()
+        {
+            _configuracionService = new ConfiguracionEmpresaService();
+        }
+
+        #region Vista Principal
+
+        public ActionResult Index()
+        {
+            try
+            {
+                var usuario = UsuarioSesionHelper.UsuarioActual;
+                
+                if (usuario == null)
+                {
+                    SetErrorMessage("Sesión no válida. Por favor, inicie sesión nuevamente.");
+                    return RedirectToAction("Login", "Acceso");
+                }
+
+                var empresas = _configuracionService.ObtenerEmpresas();
+                
+                if (usuario.Admin != 1)
+                {
+                    empresas = empresas.Where(e => e.Id == usuario.IdEmpresa).ToList();
+                }
+
+                ViewBag.Empresas = empresas;
+                ViewBag.EsAdmin = usuario.Admin == 1;
+                
+                return View("~/Views/Configuracion/ConfiguracionesEmpresas.cshtml");
+            }
+            catch (Exception ex)
+            {
+                SetErrorMessage($"Error al cargar la vista: {ex.Message}");
+                return RedirectToAction("Index", "Home");
+            }
+        }
+
+        #endregion
+
+        #region Obtener Configuración
+
+        [HttpGet]
+        public JsonResult ObtenerConfiguracion(int idEmpresa)
+        {
+            try
+            {
+                var usuario = UsuarioSesionHelper.UsuarioActual;
+                
+                if (usuario == null)
+                {
+                    return Json(new { success = false, message = "Sesión no válida" }, JsonRequestBehavior.AllowGet);
+                }
+
+                if (usuario.Admin != 1 && usuario.IdEmpresa != idEmpresa)
+                {
+                    return Json(new { success = false, message = "No tiene permisos para ver esta configuración" }, JsonRequestBehavior.AllowGet);
+                }
+
+                var configuracion = _configuracionService.ObtenerConfiguracionPorEmpresa(idEmpresa);
+                
+                if (configuracion == null)
+                {
+                    configuracion = new ConfiguracionEmpresa
+                    {
+                        IdEmpresa = idEmpresa,
+                        AnioEjecucion = DateTime.Now.Year,
+                        Moneda = "CO$",
+                        Unidad = "MILES",
+                        SignoCreditos = string.Empty
+                    };
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    configuracion = new
+                    {
+                        configuracion.Id,
+                        configuracion.IdEmpresa,
+                        configuracion.AnioEjecucion,
+                        configuracion.SignoCreditos,
+                        configuracion.Moneda,
+                        configuracion.Unidad,
+                        configuracion.NombreEmpresa,
+                        EmpresasConsolidar = configuracion.EmpresasConsolidar.Select(e => new { e.Id, e.NombreEmpresa, e.Orden }),
+                        Paises = configuracion.Paises.Select(p => new { p.Id, p.NombrePais, p.Orden }),
+                        Categorias = configuracion.Categorias.Select(c => new { c.Id, c.NombreCategoria, c.Orden }),
+                        Tipos = configuracion.Tipos.Select(t => new { t.Id, t.NombreTipo, t.Orden }),
+                        LineasNegocio = configuracion.LineasNegocio.Select(l => new { l.Id, l.NombreLinea, l.Orden })
+                    }
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        #endregion
+
+        #region Guardar Configuración Básica
+
+        [HttpPost]
+        public JsonResult GuardarConfiguracionBasica(ConfiguracionEmpresa configuracion)
+        {
+            try
+            {
+                var usuario = UsuarioSesionHelper.UsuarioActual;
+                
+                if (usuario == null)
+                {
+                    return Json(new { success = false, message = "Sesión no válida" });
+                }
+
+                if (usuario.Admin != 1 && usuario.IdEmpresa != configuracion.IdEmpresa)
+                {
+                    return Json(new { success = false, message = "No tiene permisos para modificar esta configuración" });
+                }
+
+                if (configuracion.AnioEjecucion < 2000 || configuracion.AnioEjecucion > 2100)
+                {
+                    return Json(new { success = false, message = "El año de ejecución debe estar entre 2000 y 2100" });
+                }
+
+                if (string.IsNullOrWhiteSpace(configuracion.Moneda))
+                {
+                    return Json(new { success = false, message = "Debe seleccionar una moneda" });
+                }
+
+                if (string.IsNullOrWhiteSpace(configuracion.Unidad))
+                {
+                    return Json(new { success = false, message = "Debe seleccionar una unidad" });
+                }
+
+                string mensaje;
+                bool resultado = _configuracionService.GuardarConfiguracionBasica(
+                    configuracion, 
+                    usuario.Id, 
+                    out mensaje
+                );
+
+                if (resultado)
+                {
+                    return Json(new { success = true, message = mensaje });
+                }
+                else
+                {
+                    return Json(new { success = false, message = mensaje });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        #endregion
+
+        #region Agregar Ítem
+
+        [HttpPost]
+        public JsonResult AgregarItem(string tipo, int idConfiguracion, string valor)
+        {
+            try
+            {
+                var usuario = UsuarioSesionHelper.UsuarioActual;
+                
+                if (usuario == null)
+                {
+                    return Json(new { success = false, message = "Sesión no válida" });
+                }
+
+                if (string.IsNullOrWhiteSpace(valor))
+                {
+                    return Json(new { success = false, message = "El valor no puede estar vacío" });
+                }
+
+                var tiposValidos = new[] { "Empresa", "Pais", "Categoria", "Tipo", "LineaNegocio" };
+                if (!tiposValidos.Contains(tipo))
+                {
+                    return Json(new { success = false, message = "Tipo de configuración no válido" });
+                }
+
+                string mensaje;
+                int idInsertado;
+                bool resultado = _configuracionService.AgregarItemConfiguracion(
+                    tipo, 
+                    idConfiguracion, 
+                    valor.Trim(), 
+                    out mensaje, 
+                    out idInsertado
+                );
+
+                if (resultado)
+                {
+                    return Json(new { success = true, message = mensaje, id = idInsertado });
+                }
+                else
+                {
+                    return Json(new { success = false, message = mensaje });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        #endregion
+
+        #region Eliminar Ítem
+
+        [HttpPost]
+        public JsonResult EliminarItem(string tipo, int id)
+        {
+            try
+            {
+                var usuario = UsuarioSesionHelper.UsuarioActual;
+                
+                if (usuario == null)
+                {
+                    return Json(new { success = false, message = "Sesión no válida" });
+                }
+
+                string mensaje;
+                bool resultado = _configuracionService.EliminarItemConfiguracion(tipo, id, out mensaje);
+
+                if (resultado)
+                {
+                    return Json(new { success = true, message = mensaje });
+                }
+                else
+                {
+                    return Json(new { success = false, message = mensaje });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        #endregion
+
+        #region Actualizar Orden
+
+        [HttpPost]
+        public JsonResult ActualizarOrden(string tipo, string ids)
+        {
+            try
+            {
+                var usuario = UsuarioSesionHelper.UsuarioActual;
+                
+                if (usuario == null)
+                {
+                    return Json(new { success = false, message = "Sesión no válida" });
+                }
+
+                if (string.IsNullOrWhiteSpace(ids))
+                {
+                    return Json(new { success = false, message = "No se proporcionaron IDs" });
+                }
+
+                string mensaje;
+                bool resultado = _configuracionService.ActualizarOrdenConfiguracion(tipo, ids, out mensaje);
+
+                if (resultado)
+                {
+                    return Json(new { success = true, message = mensaje });
+                }
+                else
+                {
+                    return Json(new { success = false, message = mensaje });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        #endregion
+
+        #region Métodos de Utilidad
+
+        [HttpGet]
+        public JsonResult ObtenerEmpresas()
+        {
+            try
+            {
+                var usuario = UsuarioSesionHelper.UsuarioActual;
+                
+                if (usuario == null)
+                {
+                    return Json(new { success = false, message = "Sesión no válida" }, JsonRequestBehavior.AllowGet);
+                }
+
+                var empresas = _configuracionService.ObtenerEmpresas();
+                
+                if (usuario.Admin != 1)
+                {
+                    empresas = empresas.Where(e => e.Id == usuario.IdEmpresa).ToList();
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    empresas = empresas.Select(e => new { e.Id, e.Nombre })
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        #endregion
+    }
+}
