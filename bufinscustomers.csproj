@@ -162,6 +162,13 @@
     </Compile>
     <Compile Include="Helpers\UsuarioSesionHelper.cs" />
     <Compile Include="Models\AuditoriaCargues.cs" />
+    <Compile Include="Models\ConfigCategoria.cs" />
+    <Compile Include="Models\ConfigEmpresaConsolidar.cs" />
+    <Compile Include="Models\ConfigLineaNegocio.cs" />
+    <Compile Include="Models\ConfigPais.cs" />
+    <Compile Include="Models\ConfigTipo.cs" />
+    <Compile Include="Models\ConfiguracionEmpresa.cs" />
+    <Compile Include="Controllers\ConfiguracionEmpresaController.cs" />
     <Compile Include="Models\Empresas.cs" />
     <Compile Include="Models\ImagenUsuario.cs" />
     <Compile Include="Models\Reportes.cs" />
@@ -175,6 +182,7 @@
     </Compile>
     <Compile Include="Services\AuditoriaCarguesService.cs" />
     <Compile Include="Services\BaseService.cs" />
+    <Compile Include="Services\ConfiguracionEmpresaService.cs" />
     <Compile Include="Services\EmpresaService.cs" />
     <Compile Include="Services\ReportesService.cs" />
   </ItemGroup>
@@ -6134,6 +6142,7 @@
     <Content Include="Views\Datos\Modelo.cshtml" />
     <Content Include="Views\Configuracion\MaestroReportes.cshtml" />
     <Content Include="Views\Informes\AuditoriaCargues.cshtml" />
+    <Content Include="Views\Configuracion\ConfiguracionesEmpresas.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
