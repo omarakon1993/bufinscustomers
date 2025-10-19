@@ -105,7 +105,7 @@ namespace bufinscustomers.Controllers
             // Validar que la empresa tenga configuración creada
             if (!_configuracionService.ExisteConfiguracion(idEmpresaSeleccionada))
             {
-                TempData["Mensaje"] = "La empresa seleccionada no tiene configuración creada.Qui";
+                TempData["Mensaje"] = "La empresa seleccionada no tiene configuración creada.";
                 TempData["MensajeTipo"] = "error";
                 return RedirectToAction("CargueExcel", "Datos", new { limpiar = false });
             }
