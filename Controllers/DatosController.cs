@@ -20,6 +20,7 @@ namespace bufinscustomers.Controllers
     public class DatosController : BaseController
     {
         private readonly EmpresaService _empresaService = new EmpresaService();
+        private readonly ConfiguracionEmpresaService _configuracionService = new ConfiguracionEmpresaService();
 
         // Modelo actions
         public ActionResult Modelo()
@@ -85,8 +86,30 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
-        public ActionResult CargarExcel(HttpPostedFileBase archivoExcel, string accion)
+        public ActionResult CargarExcel(HttpPostedFileBase archivoExcel, string accion, int idEmpresaSeleccionada)
         {
+            // Si viene 0, intentar recuperar de Session (caso de Importar después de Validar)
+            if (idEmpresaSeleccionada == 0 && Session["idEmpresaSeleccionada"] != null)
+            {
+                idEmpresaSeleccionada = (int)Session["idEmpresaSeleccionada"];
+            }
+
+            // Validar que se haya seleccionado una empresa
+            if (idEmpresaSeleccionada == 0)
+            {
+                TempData["Mensaje"] = "Debe seleccionar una empresa antes de cargar el archivo.";
+                TempData["MensajeTipo"] = "error";
+                return RedirectToAction("CargueExcel", "Datos");
+            }
+
+            // Validar que la empresa tenga configuración creada
+            if (!_configuracionService.ExisteConfiguracion(idEmpresaSeleccionada))
+            {
+                TempData["Mensaje"] = "La empresa seleccionada no tiene configuración creada.Qui";
+                TempData["MensajeTipo"] = "error";
+                return RedirectToAction("CargueExcel", "Datos", new { limpiar = false });
+            }
+
             if ((archivoExcel == null || archivoExcel.ContentLength == 0) && Session["ArchivoExcelBytes"] == null)
             {
                 TempData["Mensaje"] = "No se seleccionó ningún archivo.";
@@ -120,67 +143,8 @@ namespace bufinscustomers.Controllers
 
                     using (var package = new ExcelPackage(archivoStream))
                     {
-                        var empresasArchivo = new List<int>();
-
                         // =========================
-                        // 🔹 1. VALIDAR EMPRESAS EN EL ARCHIVO
-                        // =========================
-                        var hojaEmpresas = package.Workbook.Worksheets
-                            .FirstOrDefault(h => h.Name.Equals("Z_Empresas", StringComparison.OrdinalIgnoreCase));
-
-                        if (hojaEmpresas != null)
-                        {
-                            int totalCols = hojaEmpresas.Dimension?.End.Column ?? 0;
-                            int totalRows = hojaEmpresas.Dimension?.End.Row ?? 0;
-
-                            if (totalCols > 0 && totalRows > 1)
-                            {
-                                int colEmpresa = -1;
-                                for (int c = 1; c <= totalCols; c++)
-                                {
-                                    if (hojaEmpresas.Cells[1, c].Text.Trim()
-                                        .Equals("EMPRESA", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        colEmpresa = c;
-                                        break;
-                                    }
-                                }
-
-                                if (colEmpresa > 0)
-                                {
-                                    for (int r = 2; r <= totalRows; r++)
-                                    {
-                                        string nombreEmpresa = hojaEmpresas.Cells[r, colEmpresa].Text?.Trim();
-
-                                        if (string.IsNullOrWhiteSpace(nombreEmpresa) ||
-                                            nombreEmpresa.Equals("EMPRESA", StringComparison.OrdinalIgnoreCase))
-                                            continue; // ✅ Evitar encabezado o filas vacías
-
-                                        var empresaObj = _empresaService.ObtenerEmpresas()
-                                            .FirstOrDefault(e => e.Nombre.Equals(nombreEmpresa, StringComparison.OrdinalIgnoreCase));
-
-                                        if (empresaObj == null)
-                                            continue; // Empresa no existe → la ignoramos
-
-                                        // Validar que usuario no admin cargue solo su empresa
-                                        if ((usuarioActual?.Admin ?? 0) != 1 && empresaObj.Id != usuarioActual?.IdEmpresa)
-                                        {
-                                            TempData["Mensaje"] = $"Estás intentando cargar información de la empresa '{nombreEmpresa}', " +
-                                                                  $"pero solo puedes cargar datos de tu empresa asignada.";
-                                            TempData["MensajeTipo"] = "error";
-                                            return RedirectToAction("CargueExcel", "Datos", new { limpiar = false });
-                                        }
-
-                                        empresasArchivo.Add(empresaObj.Id);
-                                    }
-                                }
-                            }
-                        }
-
-                        Session["EmpresasArchivo"] = empresasArchivo;
-
-                        // =========================
-                        // 🔹 2. PROCESAR TODAS LAS HOJAS
+                        // 🔹 PROCESAR TODAS LAS HOJAS
                         // =========================
                         foreach (var hoja in package.Workbook.Worksheets)
                         {
@@ -231,27 +195,7 @@ namespace bufinscustomers.Controllers
 
                             if (accion == "Importar")
                             {
-                                bool huboError = false;
-                                if (empresasArchivo != null && empresasArchivo.Any())
-                                {
-                                    foreach (var empId in empresasArchivo.Distinct())
-                                    {
-                                        if (!GuardarEnSQLServer(dt.Copy(), empId, idUsuario))
-                                        {
-                                            huboError = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (!GuardarEnSQLServer(dt.Copy(), usuarioActual?.IdEmpresa ?? 0, idUsuario))
-                                    {
-                                        huboError = true;
-                                    }
-                                }
-
-                                if (huboError)
+                                if (!GuardarEnSQLServer(dt.Copy(), idEmpresaSeleccionada, idUsuario))
                                 {
                                     // Ya se guardó el mensaje en TempData en el catch, solo redirige
                                     return RedirectToAction("CargueExcel", "Datos", new { limpiar = false });
@@ -270,18 +214,7 @@ namespace bufinscustomers.Controllers
                         if (accion == "Importar")
                         {
                             string nombreArchivo = Session["ArchivoExcelNombre"]?.ToString() ?? "Archivo desconocido";
-
-                            if (empresasArchivo != null && empresasArchivo.Any())
-                            {
-                                foreach (var empId in empresasArchivo.Distinct())
-                                {
-                                    RegistrarAuditoria(conn, nombreArchivo, empId);
-                                }
-                            }
-                            else
-                            {
-                                RegistrarAuditoria(conn, nombreArchivo, usuarioActual?.IdEmpresa ?? 0);
-                            }
+                            RegistrarAuditoria(conn, nombreArchivo, idEmpresaSeleccionada);
                         }
                     }
                 }
@@ -289,6 +222,7 @@ namespace bufinscustomers.Controllers
                 if (accion == "RetornoTablaDeDatos")
                 {
                     Session["TablasExcel"] = tablasExcel;
+                    Session["idEmpresaSeleccionada"] = idEmpresaSeleccionada;
                     TempData["MostrarBotonImportar"] = true;
                 }
                 else
@@ -310,6 +244,7 @@ namespace bufinscustomers.Controllers
             if (limpiar)
             {
                 Session.Remove("TablasExcel");
+                Session.Remove("idEmpresaSeleccionada");
                 TempData.Remove("Mensaje");
                 TempData.Remove("MensajeTipo");
                 TempData.Remove("MostrarBotonImportar");
@@ -318,9 +253,27 @@ namespace bufinscustomers.Controllers
             var modelo = Session["TablasExcel"] as List<(string nombre, DataTable tabla)>
                          ?? new List<(string nombre, DataTable tabla)>();
 
-            // 🔹 Obtener empresa real del usuario en sesión
+            // 🔹 Obtener usuario actual
             var usuario = UsuarioSesionHelper.UsuarioActual;
             int idEmpresa = usuario?.IdEmpresa ?? 0;
+
+            // 🔹 Cargar empresas según rol del usuario
+            List<Empresas> empresasDisponibles;
+            if (usuario?.Admin == 1)
+            {
+                // Admin: mostrar todas las empresas
+                empresasDisponibles = _empresaService.ObtenerEmpresas();
+            }
+            else
+            {
+                // No admin: mostrar solo su empresa
+                var empresaUsuario = _empresaService.ObtenerEmpresas()
+                    .FirstOrDefault(e => e.Id == idEmpresa);
+                empresasDisponibles = empresaUsuario != null
+                    ? new List<Empresas> { empresaUsuario }
+                    : new List<Empresas>();
+            }
+            ViewBag.Empresas = empresasDisponibles;
 
             // 🔹 Traer último usuario que cargó SOLO para esa empresa
             ViewBag.UltimoUsuarioCargue = ObtenerUltimoUsuarioCargue(idEmpresa);

@@ -33,13 +33,30 @@
         .bg-primary {
             background-color: #583AFF !important; /* Cambia el color de fondo del encabezado del modal */
         }
+
+        /* === COLORES === */
+        :root {
+            --color-primario: #583AFF;
+            --color-secundario: #01E1D7;
+        }
+
+        /* === ENCABEZADO CARD === */
+        .card-header {
+            background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
+            color: white;
+            padding: 1.2rem 1.5rem;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .card-header i {
+            margin-right: 8px;
+        }
     </style>
 
-    <h2>Maestro usuarios</h2>
-
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Usuarios</h6>
+    <div class="card shadow mb-4 mt-4">
+        <div class="card-header">
+            <i class="bi bi-people-fill"></i> Maestro usuarios
         </div>
         <div class="card-body">
             <div class="table-responsive table-wrapper">

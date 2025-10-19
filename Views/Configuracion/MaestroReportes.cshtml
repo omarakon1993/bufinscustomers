@@ -60,13 +60,30 @@
         .url-feedback.invalid {
             color: #dc3545;
         }
+
+        /* === COLORES === */
+        :root {
+            --color-primario: #583AFF;
+            --color-secundario: #01E1D7;
+        }
+
+        /* === ENCABEZADO CARD === */
+        .card-header {
+            background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
+            color: white;
+            padding: 1.2rem 1.5rem;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .card-header i {
+            margin-right: 8px;
+        }
     </style>
 
-    <h2>Maestro reportes</h2>
-
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Reportes</h6>
+    <div class="card shadow mb-4 mt-4">
+        <div class="card-header">
+            <i class="bi bi-file-earmark-bar-graph-fill"></i> Maestro reportes
         </div>
         <div class="card-body">
             <div class="table-responsive table-wrapper">

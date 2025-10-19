@@ -8,6 +8,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Modelo</title>
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,13 +20,30 @@
         .bg-primary {
             background-color: #583AFF !important;
         }
+
+        /* === COLORES === */
+        :root {
+            --color-primario: #583AFF;
+            --color-secundario: #01E1D7;
+        }
+
+        /* === ENCABEZADO CARD === */
+        .card-header {
+            background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
+            color: white;
+            padding: 1.2rem 1.5rem;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .card-header i {
+            margin-right: 8px;
+        }
     </style>
 
-    <h2>Ejecución modelos</h2>
-
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Modelos BUFINS</h6>
+    <div class="card shadow mb-4 mt-4">
+        <div class="card-header">
+            <i class="bi bi-gear-fill"></i> Ejecuci&oacute;n de modelos
         </div>
         <div class="card-body">
             <form id="modeloForm" method="post">
@@ -55,9 +73,9 @@
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="anio" class="form-label">Año</label>
+                            <label for="anio" class="form-label">A&ntilde;o</label>
                             <select class="form-control" id="anio" name="anio" required>
-                                <option value="" selected disabled>Seleccione un año</option>
+                                <option value="" selected disabled>Seleccione un a&ntilde;o</option>
                                 @{
                                     int currentYear = DateTime.Now.Year;
                                 }

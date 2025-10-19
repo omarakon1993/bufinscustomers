@@ -63,24 +63,42 @@
             margin: 0;
         }
 
+        /* === COLORES === */
+        :root {
+            --color-primario: #583AFF;
+            --color-secundario: #01E1D7;
+        }
+
+        /* === ENCABEZADO CARD === */
+        .card-header {
+            background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
+            color: white;
+            padding: 1.2rem 1.5rem;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .card-header i {
+            margin-right: 8px;
+        }
+
     </style>
 
 </head>
 <body>
-    <h2>Importación excel</h2>
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <h6 class="m-0 font-weight-bold text-primary">Ingrese el archivo excel a cargar</h6>
+    <div class="card shadow mb-4 mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-file-earmark-arrow-up"></i> Importación de excel</span>
             <div class="d-flex gap-2">
                 <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#instructivoModal">
                     Instructivo dinámico
                 </button>
                 &nbsp;&nbsp;
-                <a href="~/Assets/Plantillas/InstructivoPlantillaCargue.xlsx" download class="btn btn-outline-success btn-sm">
+                <a href="~/Assets/Plantillas/InstructivoPlantillaCargue.xlsx" download class="btn btn-success btn-sm">
                     Instructivo excel
                 </a>
                 &nbsp;&nbsp;
-                <a href="~/Assets/Plantillas/PlantillaBufins.xlsx" download class="btn btn-outline-success btn-sm">
+                <a href="~/Assets/Plantillas/PlantillaBufins.xlsx" download class="btn btn-success btn-sm">
                     Plantilla
                 </a>
             </div>
@@ -471,6 +489,21 @@
                                     </div>
                                 }
 
+                                <!-- Selector de Empresa -->
+                                <div class="form-group mb-3">
+                                    <label for="idEmpresaSeleccionada" class="form-label"><strong>Empresa a cargar:</strong></label>
+                                    <select class="form-control form-control-sm" id="idEmpresaSeleccionada" name="idEmpresaSeleccionada" required>
+                                        <option value="0">Seleccione una empresa...</option>
+                                        @if (ViewBag.Empresas != null)
+                                        {
+                                            foreach (var empresa in ViewBag.Empresas)
+                                            {
+                                                <option value="@empresa.Id">@empresa.Nombre</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+
                                 <div class="d-flex align-items-center gap-3">
 
                                     <div class="form-group mb-0">
@@ -555,6 +588,17 @@
                             }
 
                             async function validarArchivo() {
+                                // Validar que se haya seleccionado una empresa
+                                const empresaSelect = document.getElementById('idEmpresaSeleccionada');
+                                if (!empresaSelect || empresaSelect.value === '0') {
+                                    Swal.fire({
+                                        icon: 'warning',
+                                        title: 'Empresa no seleccionada',
+                                        text: 'Debe seleccionar una empresa antes de validar el archivo.'
+                                    });
+                                    return;
+                                }
+
                                 //const btnImportar = document.getElementById('btnImportar');
                                 const btnSubmitOculto = document.getElementById('btnSubmitOculto');
                                 //btnImportar.style.display = 'none'; // ocultar siempre al inicio
@@ -577,7 +621,7 @@
 
                                     if (workbook.SheetNames.length !== 10) {
                                         //alert("La cantidad de tablas no coincide con las especificadas en la plantilla - BUFINS");
-                                        mostrarErrorValidacion("La cantidad de tablas no coincide con las especificadas en la plantilla - BUFINS");
+                                        mostrarErrorValidacion("La cantidad de tablas no coincide con las especificadas en la plantilla - BUFINS.");
                                         return;
                                     }
 
