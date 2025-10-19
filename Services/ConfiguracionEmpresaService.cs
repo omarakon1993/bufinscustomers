@@ -12,11 +12,11 @@ namespace bufinscustomers.Services
     /// </summary>
     public class ConfiguracionEmpresaService : BaseService
     {
-        #region Métodos Principales
+        #region Mï¿½todos Principales
 
         /// <summary>
-        /// Obtiene la configuración completa de una empresa por su IdEmpresa
-        /// Incluye todas las listas de detalle (empresas, países, categorías, etc.)
+        /// Obtiene la configuraciï¿½n completa de una empresa por su IdEmpresa
+        /// Incluye todas las listas de detalle (empresas, paï¿½ses, categorï¿½as, etc.)
         /// </summary>
         public ConfiguracionEmpresa ObtenerConfiguracionPorEmpresa(int idEmpresa)
         {
@@ -32,7 +32,7 @@ namespace bufinscustomers.Services
 
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
-                        // Resultado 1: Configuración principal
+                        // Resultado 1: Configuraciï¿½n principal
                         if (reader.Read())
                         {
                             configuracion = new ConfiguracionEmpresa
@@ -73,7 +73,7 @@ namespace bufinscustomers.Services
                             }
                         }
 
-                        // Resultado 3: Países
+                        // Resultado 3: Paï¿½ses
                         if (reader.NextResult())
                         {
                             configuracion.Paises = new List<ConfigPais>();
@@ -89,7 +89,7 @@ namespace bufinscustomers.Services
                             }
                         }
 
-                        // Resultado 4: Categorías
+                        // Resultado 4: Categorï¿½as
                         if (reader.NextResult())
                         {
                             configuracion.Categorias = new List<ConfigCategoria>();
@@ -121,7 +121,7 @@ namespace bufinscustomers.Services
                             }
                         }
 
-                        // Resultado 6: Líneas de negocio
+                        // Resultado 6: Lï¿½neas de negocio
                         if (reader.NextResult())
                         {
                             configuracion.LineasNegocio = new List<ConfigLineaNegocio>();
@@ -136,6 +136,38 @@ namespace bufinscustomers.Services
                                 });
                             }
                         }
+
+                        // Resultado 7: Ajuste 1
+                        if (reader.NextResult())
+                        {
+                            configuracion.Ajuste1 = new List<ConfigAjuste1>();
+                            while (reader.Read())
+                            {
+                                configuracion.Ajuste1.Add(new ConfigAjuste1
+                                {
+                                    Id = Convert.ToInt32(reader["Id"]),
+                                    IdConfiguracion = Convert.ToInt32(reader["IdConfiguracion"]),
+                                    NombreAjuste = reader["NombreAjuste"]?.ToString(),
+                                    Orden = Convert.ToInt32(reader["Orden"])
+                                });
+                            }
+                        }
+
+                        // Resultado 8: Ajuste 2
+                        if (reader.NextResult())
+                        {
+                            configuracion.Ajuste2 = new List<ConfigAjuste2>();
+                            while (reader.Read())
+                            {
+                                configuracion.Ajuste2.Add(new ConfigAjuste2
+                                {
+                                    Id = Convert.ToInt32(reader["Id"]),
+                                    IdConfiguracion = Convert.ToInt32(reader["IdConfiguracion"]),
+                                    NombreAjuste = reader["NombreAjuste"]?.ToString(),
+                                    Orden = Convert.ToInt32(reader["Orden"])
+                                });
+                            }
+                        }
                     }
                 }
             }
@@ -144,7 +176,7 @@ namespace bufinscustomers.Services
         }
 
         /// <summary>
-        /// Guarda o actualiza la configuración básica de una empresa
+        /// Guarda o actualiza la configuraciï¿½n bï¿½sica de una empresa
         /// </summary>
         public bool GuardarConfiguracionBasica(ConfiguracionEmpresa config, int idUsuario, out string mensaje)
         {
@@ -178,10 +210,10 @@ namespace bufinscustomers.Services
 
         #endregion
 
-        #region Métodos para Items de Configuración
+        #region Mï¿½todos para Items de Configuraciï¿½n
 
         /// <summary>
-        /// Agrega un ítem a una lista de configuración
+        /// Agrega un ï¿½tem a una lista de configuraciï¿½n
         /// </summary>
         public bool AgregarItemConfiguracion(string tipo, int idConfiguracion, string valor, out string mensaje, out int idInsertado)
         {
@@ -216,7 +248,7 @@ namespace bufinscustomers.Services
         }
 
         /// <summary>
-        /// Elimina un ítem de una lista de configuración
+        /// Elimina un ï¿½tem de una lista de configuraciï¿½n
         /// </summary>
         public bool EliminarItemConfiguracion(string tipo, int id, out string mensaje)
         {
@@ -245,7 +277,7 @@ namespace bufinscustomers.Services
         }
 
         /// <summary>
-        /// Actualiza el orden de los ítems en una lista
+        /// Actualiza el orden de los ï¿½tems en una lista
         /// </summary>
         public bool ActualizarOrdenConfiguracion(string tipo, string idsOrdenados, out string mensaje)
         {
@@ -275,7 +307,7 @@ namespace bufinscustomers.Services
 
         #endregion
 
-        #region Métodos de Utilidad
+        #region Mï¿½todos de Utilidad
 
         /// <summary>
         /// Obtiene lista de empresas disponibles para el dropdown
@@ -309,7 +341,7 @@ namespace bufinscustomers.Services
         }
 
         /// <summary>
-        /// Verifica si una empresa ya tiene configuración creada
+        /// Verifica si una empresa ya tiene configuraciï¿½n creada
         /// </summary>
         public bool ExisteConfiguracion(int idEmpresa)
         {

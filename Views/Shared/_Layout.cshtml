@@ -175,14 +175,14 @@
                 </div>
             </li>
             <hr class="sidebar-divider">
-            @if (UsuarioSesionHelper.UsuarioActual != null && UsuarioSesionHelper.UsuarioActual.Admin == 1)
-            {
-                <!-- ========== MÓDULO DE ADMINISTRACION ========== -->
-                <div class="sidebar-heading">
-                    <i class="fas fa-fw fa-cog"></i>
-                    Administración
-                </div>
-                <li class="nav-item">
+            <!-- ========== MÓDULO DE ADMINISTRACION ========== -->
+            <div class="sidebar-heading">
+                <i class="fas fa-fw fa-cog"></i>
+                Administración
+            </div>
+            <li class="nav-item">
+                @if (UsuarioSesionHelper.UsuarioActual != null && UsuarioSesionHelper.UsuarioActual.Admin == 1)
+                {
                     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseThree"
                        aria-expanded="true" aria-controls="collapseThree">
                         <i class="fas fa-user-plus"></i>
@@ -213,18 +213,18 @@
                             <a class="collapse-item" href="@Url.Action("MaestroReportes", "Reportes")">Maestro reportes</a>
                         </div>
                     </div>
-                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseConfigEmpresas"
-                       aria-expanded="true" aria-controls="collapseConfigEmpresas">
-                        <i class="fas fa-cogs"></i>
-                        <span>Configuraciones</span>
-                    </a>
-                    <div id="collapseConfigEmpresas" class="collapse" aria-labelledby="headingConfigEmpresas" data-parent="#accordionSidebar">
-                        <div class="bg-white py-2 collapse-inner rounded">
-                            <a class="collapse-item" href="@Url.Action("Index", "ConfiguracionEmpresa")">Configuración empresas</a>
-                        </div>
+                }
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseConfigEmpresas"
+                   aria-expanded="true" aria-controls="collapseConfigEmpresas">
+                    <i class="fas fa-cogs"></i>
+                    <span>Configuración</span>
+                </a>
+                <div id="collapseConfigEmpresas" class="collapse" aria-labelledby="headingConfigEmpresas" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <a class="collapse-item" href="@Url.Action("Index", "ConfiguracionEmpresa")">Configuración empresas</a>
                     </div>
-                </li>
-            }
+                </div>
+            </li>
             <div class="text-center d-none d-md-inline">
                 <button class="rounded-circle border-0" id="sidebarToggle"></button>
             </div>

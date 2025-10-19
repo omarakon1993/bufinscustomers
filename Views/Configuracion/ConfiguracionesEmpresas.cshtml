@@ -7,10 +7,9 @@
 <head>
     <title>Configuración de Empresas</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    
+
     <!-- ✅ jQuery UI CSS - Cargar primero -->
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
     <style>
         .card-tab {
@@ -249,6 +248,24 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-md-2 col-sm-6 mb-2">
+                        <div class="card card-tab" data-section="ajuste1">
+                            <div class="card-body text-center">
+                                <i class="fas fa-sliders fa-2x mb-2 text-secondary"></i>
+                                <h6>Ajuste 1</h6>
+                                <span class="badge badge-secondary badge-custom" id="countAjuste1">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-sm-6 mb-2">
+                        <div class="card card-tab" data-section="ajuste2">
+                            <div class="card-body text-center">
+                                <i class="fas fa-sliders fa-2x mb-2 text-dark"></i>
+                                <h6>Ajuste 2</h6>
+                                <span class="badge badge-dark badge-custom" id="countAjuste2">0</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Sección de Empresas -->
@@ -330,6 +347,38 @@
                     </div>
                     <div id="listaLineas" class="sortable-list"></div>
                 </div>
+
+                <!-- Sección de Ajuste 1 -->
+                <div id="section-ajuste1" class="config-section">
+                    <h5><i class="fas fa-sliders"></i> Ajuste 1</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" id="inputAjuste1" placeholder="Nombre del ajuste 1" />
+                        </div>
+                        <div class="col-md-4">
+                            <button type="button" class="btn btn-primary btn-block" onclick="agregarItem('Ajuste1')">
+                                <i class="fas fa-plus"></i> Agregar Ajuste 1
+                            </button>
+                        </div>
+                    </div>
+                    <div id="listaAjuste1" class="sortable-list"></div>
+                </div>
+
+                <!-- Sección de Ajuste 2 -->
+                <div id="section-ajuste2" class="config-section">
+                    <h5><i class="fas fa-sliders"></i> Ajuste 2</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" id="inputAjuste2" placeholder="Nombre del ajuste 2" />
+                        </div>
+                        <div class="col-md-4">
+                            <button type="button" class="btn btn-primary btn-block" onclick="agregarItem('Ajuste2')">
+                                <i class="fas fa-plus"></i> Agregar Ajuste 2
+                            </button>
+                        </div>
+                    </div>
+                    <div id="listaAjuste2" class="sortable-list"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -380,11 +429,25 @@
     <script>
         let configuracionActual = null;
 
+        // Mapeo de nombres de lista a tipos de servidor
+        function mapearTipoParaServidor(tipoLista) {
+            const mapeo = {
+                'Empresas': 'Empresa',
+                'Paises': 'Pais',
+                'Categorias': 'Categoria',
+                'Tipos': 'Tipo',
+                'Lineas': 'LineaNegocio',
+                'Ajuste1': 'Ajuste1',
+                'Ajuste2': 'Ajuste2'
+            };
+            return mapeo[tipoLista] || tipoLista;
+        }
+
         $(document).ready(function () {
             // ✅ Verificar que jQuery UI está disponible
             console.log('jQuery version:', $.fn.jquery);
             console.log('jQuery UI Sortable disponible:', typeof $.fn.sortable !== 'undefined');
-            
+
             // Event handler para cargar configuración
             $('#btnCargarConfig').click(cargarConfiguracion);
 
@@ -422,6 +485,12 @@
             });
             $('#inputLinea').keypress(function (e) {
                 if (e.which == 13) { e.preventDefault(); agregarItem('LineaNegocio'); return false; }
+            });
+            $('#inputAjuste1').keypress(function (e) {
+                if (e.which == 13) { e.preventDefault(); agregarItem('Ajuste1'); return false; }
+            });
+            $('#inputAjuste2').keypress(function (e) {
+                if (e.which == 13) { e.preventDefault(); agregarItem('Ajuste2'); return false; }
             });
         });
 
@@ -468,6 +537,8 @@
             cargarLista('Categorias', config.Categorias || [], 'NombreCategoria');
             cargarLista('Tipos', config.Tipos || [], 'NombreTipo');
             cargarLista('Lineas', config.LineasNegocio || [], 'NombreLinea');
+            cargarLista('Ajuste1', config.Ajuste1 || [], 'NombreAjuste');
+            cargarLista('Ajuste2', config.Ajuste2 || [], 'NombreAjuste');
 
             actualizarContadores();
         }
@@ -478,26 +549,26 @@
 
             if (!items || items.length === 0) {
                 contenedor.html(`
-                        <div class="empty-state">
-                            <i class="fas fa-inbox"></i>
-                            <p>No hay elementos agregados</p>
-                        </div>
-                    `);
+                            <div class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p>No hay elementos agregados</p>
+                            </div>
+                        `);
                 return;
             }
 
             items.forEach(item => {
                 const html = `
-                        <div class="list-item" data-id="${item.Id}">
-                            <div>
-                                <i class="fas fa-grip-vertical drag-handle"></i>
-                                <span class="ml-2">${item[propiedad]}</span>
+                            <div class="list-item" data-id="${item.Id}">
+                                <div>
+                                    <i class="fas fa-grip-vertical drag-handle"></i>
+                                    <span class="ml-2">${item[propiedad]}</span>
+                                </div>
+                                <button class="btn btn-danger btn-sm" onclick="eliminarItem('${tipo}', ${item.Id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
-                            <button class="btn btn-danger btn-sm" onclick="eliminarItem('${tipo}', ${item.Id})">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    `;
+                        `;
                 contenedor.append(html);
             });
 
@@ -516,7 +587,7 @@
             if (contenedor.hasClass('ui-sortable')) {
                 try {
                     contenedor.sortable('destroy');
-                } catch(e) {
+                } catch (e) {
                     console.warn('Error al destruir sortable:', e);
                 }
             }
@@ -536,7 +607,7 @@
                     }
                 });
                 console.log('✅ Sortable habilitado para:', tipo);
-            } catch(error) {
+            } catch (error) {
                 console.error('Error al habilitar sortable:', error);
             }
         }
@@ -574,7 +645,9 @@
                 'Pais': '#inputPais',
                 'Categoria': '#inputCategoria',
                 'Tipo': '#inputTipo',
-                'LineaNegocio': '#inputLinea'
+                'LineaNegocio': '#inputLinea',
+                'Ajuste1': '#inputAjuste1',
+                'Ajuste2': '#inputAjuste2'
             };
 
             const input = $(inputMap[tipo]);
@@ -629,7 +702,7 @@
                     $.ajax({
                         url: '/ConfiguracionEmpresa/EliminarItem',
                         type: 'POST',
-                        data: { tipo: tipo, id: id },
+                        data: { tipo: mapearTipoParaServidor(tipo), id: id },
                         success: function (response) {
                             if (response.success) {
                                 mostrarAlerta('success', response.message);
@@ -650,7 +723,7 @@
             $.ajax({
                 url: '/ConfiguracionEmpresa/ActualizarOrden',
                 type: 'POST',
-                data: { tipo: tipo, ids: ids },
+                data: { tipo: mapearTipoParaServidor(tipo), ids: ids },
                 success: function (response) {
                     if (response.success) {
                         mostrarAlerta('success', 'Orden actualizado', 2000);
@@ -664,12 +737,14 @@
 
         function actualizarContadores() {
             if (!configuracionActual) return;
-            
+
             $('#countEmpresas').text((configuracionActual.EmpresasConsolidar || []).length);
             $('#countPaises').text((configuracionActual.Paises || []).length);
             $('#countCategorias').text((configuracionActual.Categorias || []).length);
             $('#countTipos').text((configuracionActual.Tipos || []).length);
             $('#countLineas').text((configuracionActual.LineasNegocio || []).length);
+            $('#countAjuste1').text((configuracionActual.Ajuste1 || []).length);
+            $('#countAjuste2').text((configuracionActual.Ajuste2 || []).length);
         }
 
         function mostrarAlerta(tipo, mensaje, timer) {

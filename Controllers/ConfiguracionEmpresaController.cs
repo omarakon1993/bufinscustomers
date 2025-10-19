@@ -28,7 +28,7 @@ namespace bufinscustomers.Controllers
                 
                 if (usuario == null)
                 {
-                    SetErrorMessage("Sesión no válida. Por favor, inicie sesión nuevamente.");
+                    SetErrorMessage("Sesiï¿½n no vï¿½lida. Por favor, inicie sesiï¿½n nuevamente.");
                     return RedirectToAction("Login", "Acceso");
                 }
 
@@ -53,7 +53,7 @@ namespace bufinscustomers.Controllers
 
         #endregion
 
-        #region Obtener Configuración
+        #region Obtener Configuraciï¿½n
 
         [HttpGet]
         public JsonResult ObtenerConfiguracion(int idEmpresa)
@@ -64,12 +64,12 @@ namespace bufinscustomers.Controllers
                 
                 if (usuario == null)
                 {
-                    return Json(new { success = false, message = "Sesión no válida" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Sesiï¿½n no vï¿½lida" }, JsonRequestBehavior.AllowGet);
                 }
 
                 if (usuario.Admin != 1 && usuario.IdEmpresa != idEmpresa)
                 {
-                    return Json(new { success = false, message = "No tiene permisos para ver esta configuración" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "No tiene permisos para ver esta configuraciï¿½n" }, JsonRequestBehavior.AllowGet);
                 }
 
                 var configuracion = _configuracionService.ObtenerConfiguracionPorEmpresa(idEmpresa);
@@ -102,7 +102,9 @@ namespace bufinscustomers.Controllers
                         Paises = configuracion.Paises.Select(p => new { p.Id, p.NombrePais, p.Orden }),
                         Categorias = configuracion.Categorias.Select(c => new { c.Id, c.NombreCategoria, c.Orden }),
                         Tipos = configuracion.Tipos.Select(t => new { t.Id, t.NombreTipo, t.Orden }),
-                        LineasNegocio = configuracion.LineasNegocio.Select(l => new { l.Id, l.NombreLinea, l.Orden })
+                        LineasNegocio = configuracion.LineasNegocio.Select(l => new { l.Id, l.NombreLinea, l.Orden }),
+                        Ajuste1 = configuracion.Ajuste1.Select(a => new { a.Id, a.NombreAjuste, a.Orden }),
+                        Ajuste2 = configuracion.Ajuste2.Select(a => new { a.Id, a.NombreAjuste, a.Orden })
                     }
                 }, JsonRequestBehavior.AllowGet);
             }
@@ -114,7 +116,7 @@ namespace bufinscustomers.Controllers
 
         #endregion
 
-        #region Guardar Configuración Básica
+        #region Guardar Configuraciï¿½n Bï¿½sica
 
         [HttpPost]
         public JsonResult GuardarConfiguracionBasica(ConfiguracionEmpresa configuracion)
@@ -125,17 +127,17 @@ namespace bufinscustomers.Controllers
                 
                 if (usuario == null)
                 {
-                    return Json(new { success = false, message = "Sesión no válida" });
+                    return Json(new { success = false, message = "Sesiï¿½n no vï¿½lida" });
                 }
 
                 if (usuario.Admin != 1 && usuario.IdEmpresa != configuracion.IdEmpresa)
                 {
-                    return Json(new { success = false, message = "No tiene permisos para modificar esta configuración" });
+                    return Json(new { success = false, message = "No tiene permisos para modificar esta configuraciï¿½n" });
                 }
 
                 if (configuracion.AnioEjecucion < 2000 || configuracion.AnioEjecucion > 2100)
                 {
-                    return Json(new { success = false, message = "El año de ejecución debe estar entre 2000 y 2100" });
+                    return Json(new { success = false, message = "El aï¿½o de ejecuciï¿½n debe estar entre 2000 y 2100" });
                 }
 
                 if (string.IsNullOrWhiteSpace(configuracion.Moneda))
@@ -172,7 +174,7 @@ namespace bufinscustomers.Controllers
 
         #endregion
 
-        #region Agregar Ítem
+        #region Agregar ï¿½tem
 
         [HttpPost]
         public JsonResult AgregarItem(string tipo, int idConfiguracion, string valor)
@@ -183,18 +185,18 @@ namespace bufinscustomers.Controllers
                 
                 if (usuario == null)
                 {
-                    return Json(new { success = false, message = "Sesión no válida" });
+                    return Json(new { success = false, message = "Sesiï¿½n no vï¿½lida" });
                 }
 
                 if (string.IsNullOrWhiteSpace(valor))
                 {
-                    return Json(new { success = false, message = "El valor no puede estar vacío" });
+                    return Json(new { success = false, message = "El valor no puede estar vacï¿½o" });
                 }
 
-                var tiposValidos = new[] { "Empresa", "Pais", "Categoria", "Tipo", "LineaNegocio" };
+                var tiposValidos = new[] { "Empresa", "Pais", "Categoria", "Tipo", "LineaNegocio", "Ajuste1", "Ajuste2" };
                 if (!tiposValidos.Contains(tipo))
                 {
-                    return Json(new { success = false, message = "Tipo de configuración no válido" });
+                    return Json(new { success = false, message = "Tipo de configuraciï¿½n no vï¿½lido" });
                 }
 
                 string mensaje;
@@ -224,7 +226,7 @@ namespace bufinscustomers.Controllers
 
         #endregion
 
-        #region Eliminar Ítem
+        #region Eliminar ï¿½tem
 
         [HttpPost]
         public JsonResult EliminarItem(string tipo, int id)
@@ -235,7 +237,7 @@ namespace bufinscustomers.Controllers
                 
                 if (usuario == null)
                 {
-                    return Json(new { success = false, message = "Sesión no válida" });
+                    return Json(new { success = false, message = "Sesiï¿½n no vï¿½lida" });
                 }
 
                 string mensaje;
@@ -269,7 +271,7 @@ namespace bufinscustomers.Controllers
                 
                 if (usuario == null)
                 {
-                    return Json(new { success = false, message = "Sesión no válida" });
+                    return Json(new { success = false, message = "Sesiï¿½n no vï¿½lida" });
                 }
 
                 if (string.IsNullOrWhiteSpace(ids))
@@ -297,7 +299,7 @@ namespace bufinscustomers.Controllers
 
         #endregion
 
-        #region Métodos de Utilidad
+        #region Mï¿½todos de Utilidad
 
         [HttpGet]
         public JsonResult ObtenerEmpresas()
@@ -308,7 +310,7 @@ namespace bufinscustomers.Controllers
                 
                 if (usuario == null)
                 {
-                    return Json(new { success = false, message = "Sesión no válida" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Sesiï¿½n no vï¿½lida" }, JsonRequestBehavior.AllowGet);
                 }
 
                 var empresas = _configuracionService.ObtenerEmpresas();
