@@ -94,6 +94,29 @@
             border-radius: 5px;
             opacity: 0.7;
         }
+
+        /* Estilos para modal de instructivo */
+        .custom-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 0.3rem 0.3rem 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-bufins {
+            width: 60px;
+            height: auto;
+            margin-right: 15px;
+        }
+
+        .instructivo-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
@@ -101,10 +124,13 @@
 
     <!-- Selector de Empresa -->
     <div class="card shadow mb-4">
-        <div class="card-header py-3">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
             <h6 class="m-0 font-weight-bold text-primary">
                 <i class="fas fa-building"></i> Seleccionar empresa
             </h6>
+            <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#modalInstructivo">
+                <i class="fas fa-book"></i> Instructivo
+            </button>
         </div>
         <div class="card-body">
             <div class="row">
@@ -378,6 +404,42 @@
                         </div>
                     </div>
                     <div id="listaAjuste2" class="sortable-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Instructivo -->
+    <div class="modal fade" id="modalInstructivo" tabindex="-1" role="dialog" aria-labelledby="modalInstructivoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="custom-header">
+                    <img src="~/Assets/img/logoBufinsInst.png" alt="Bufins" class="logo-bufins">
+                    <h5 class="instructivo-title" id="modalInstructivoLabel">Instructivo configuración de empresas</h5>
+                </div>
+                <div class="modal-body" style="max-height: 600px; overflow-y: auto;">
+                    <p><strong>Configuraciones empresa BUFINS WEB:</strong></p>
+
+                    <p><strong>Empresas:</strong> Coloque el nombre de las empresas a consolidar. Estos nombres deberán ser siempre idénticos a la forma en que se reportarán en las bases de datos.</p>
+
+                    <p><strong>Países:</strong> Coloque el nombre de los países a consolidar. Estos nombres deberán ser siempre idénticos a la forma en que se reportarán en las bases de datos. Coloque el nombre con mayúscula solo en la primera letra y si tiene acento lo debes incluir. Ejem: Perú, México.</p>
+
+                    <p><strong>SignoCreditos:</strong> Si las cuentas de pasivo, patrimonio e ingresos se reportan con signo negativo coloque acá el signo menos</p>
+
+                    <p><strong>Categorías:</strong> Tenga en cuenta que la descripción correcta para cada rubro es la que se indica en esta lista:</p>
+                    <ul>
+                        <li>ACTIVO CORRIENTE</li>
+                        <li>ACTIVO NO CORRIENTE</li>
+                        <li>PASIVO NO CORRIENTE</li>
+                        <li>PASIVO CORRIENTE</li>
+                    </ul>
+
+                    <p><strong>Tipo:</strong> Coloque el nombre de las líneas de venta que se hayan definido previamente. Estos nombres deberán ser siempre idénticos a la forma en que se reportarán en las bases de datos.</p>
+
+                    <p><strong>Línea de negocio:</strong> Coloque el nombre de las líneas de negocio que se hayan definido. Estos nombres deberán ser siempre idénticos a la forma en que se reportarán en las bases de datos.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
