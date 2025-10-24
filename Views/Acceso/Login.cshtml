@@ -7,7 +7,7 @@
 
 <html>
 <head>
-    <title>Login</title>
+    <title>BUFINS - Login</title>
 
     <link rel="stylesheet" type="text/css" href="~/Assets/css/style.css">
     <link href="~/Assets/GoogleApis/Poppins.css" rel="stylesheet">
@@ -19,45 +19,53 @@
 <body>
     <style type="text/css">
         input:-webkit-autofill {
-            background-color: #160933 !important;
-            color: #160933 !important;
-            -webkit-box-shadow: 0 0 0px 1000px #160933 inset !important;
-            -webkit-text-fill-color: white !important;
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            -webkit-box-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.1) inset !important;
+            -webkit-text-fill-color: #333 !important;
         }
     </style>
-    <img class="wave" src="~/Assets/img/wave2.png">
+
+    <div class="background-overlay"></div>
+
     <div class="container">
-        <div class="img">
-            <img src="~/Assets/img/bg3.png">
-        </div>
-        <div class="login-content">
+        <div class="login-card">
+            <div class="card-glow"></div>
+            <div class="login-header">
+                <h1 class="login-title">LOGIN</h1>
+                <img class="logo-bufins" src="~/Assets/img/Bufins_LogoLogin.png" alt="Bufins Logo">
+                <p class="login-subtitle">BUSINESS FINANCE ALWAYS EVERYWHERE</p>
+            </div>
+
             <form id="loginForm" action="@Url.Action("Login", "Acceso")" method="post">
-                <img class="avatar" src="~/Assets/img/avatar2.jpg">
-                <br />
-                <img class="logoEmp" src="~/Assets/img/logobufins1.png">
-                <div class="input-div one">
-                    <div class="i">
-                        <i class="fas fa-user"></i>
+
+                <div class="input-group">
+                    <div class="input-icon">
+                        <i class="fas fa-envelope"></i>
                     </div>
-                    <div class="div">
-                        <h5>Usuario o correo</h5>
-                        <input type="text" name="Correo" class="input" id="Correo" />
+                    <div class="input-wrapper">
+                        <label for="Correo">Correo Electrónico</label>
+                        <input type="text" name="Correo" class="input-field" id="Correo" placeholder="Ingrese su correo" />
                     </div>
                 </div>
 
-                <div class="input-div pass">
-                    <div class="i">
+                <div class="input-group">
+                    <div class="input-icon">
                         <i class="fas fa-lock"></i>
                     </div>
-                    <div class="div">
-                        <h5>Contraseña</h5>
-                        <input type="password" name="Clave" class="input" id="Clave">
+                    <div class="input-wrapper">
+                        <label for="Clave">Contraseña</label>
+                        <input type="password" name="Clave" class="input-field" id="Clave" placeholder="Ingrese su contraseña">
                     </div>
                 </div>
-                @*<a href="@Url.Action("Registrar","Acceso")">Registrarse</a>*@
-                <br />
-                <button type="button" class="btn" onclick="validarFormulario()">Ingresar</button>
-                <button type="button" class="btn" onclick="window.location.href='https://bufins.com/'">BUFINS Web</button>
+
+                <button type="button" class="btn btn-primary" onclick="validarFormulario()">
+                    <span>INICIAR SESION</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+
+                <div class="footer-text">
+                    ORION WEB - 2025
+                </div>
                 <script>
                     function validarFormulario() {
                         // Obtener los valores de los campos

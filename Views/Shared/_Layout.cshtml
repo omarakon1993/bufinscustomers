@@ -69,13 +69,38 @@
     .modal-backdrop {
         z-index: 1040;
     }
+
+    /* ===== Gradient Background for Header and Footer ===== */
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #160933 0%, #1a0d3a 25%, #583AFF 50%, #1a0d3a 75%, #160933 100%) !important;
+        background-size: 400% 400% !important;
+        animation: gradientAnimation 15s ease infinite !important;
+    }
+
+    @@keyframes gradientAnimation {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .sticky-footer {
+        background: linear-gradient(135deg, #160933 0%, #1a0d3a 25%, #583AFF 50%, #1a0d3a 75%, #160933 100%) !important;
+        background-size: 400% 400% !important;
+        animation: gradientAnimation 15s ease infinite !important;
+    }
+
+    .navbar.topbar {
+        background: linear-gradient(135deg, #160933 0%, #1a0d3a 25%, #583AFF 50%, #1a0d3a 75%, #160933 100%) !important;
+        background-size: 400% 400% !important;
+        animation: gradientAnimation 15s ease infinite !important;
+    }
 </style>
 
 <body id="page-top">
     <div id="wrapper">
         <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
             <a class="sidebar-brand d-flex align-items-center justify-content-center" href="@Url.Action("Index", "Home")">
-                <div class="sidebar-heading" style="font-size: x-large;">Bufins</div>
+                <img src="~/Assets/img/Bufins_LogoIndex.png" alt="Bufins Logo" style="height: 60px; width: auto;">
             </a>
             <hr class="sidebar-divider">
             <!-- ========== MÓDULO DE DATOS ========== -->
