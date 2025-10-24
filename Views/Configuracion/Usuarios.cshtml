@@ -182,37 +182,49 @@
                             <!-- Pestaña de Autenticación  -->
                             <div class="tab-pane fade show active" id="edit-auth" role="tabpanel" aria-labelledby="edit-auth-tab">
                                 <div class="mb-3 mt-3">
-                                    <label for="editUsuario" class="form-label">Usuario</label>
+                                    <label for="editUsuario" class="form-label">
+                                        <i class="fas fa-user-tag mr-2" style="color: #583AFF;"></i>Usuario
+                                    </label>
                                     <input type="text" class="form-control" id="editUsuario" name="Usuario" required />
                                 </div>
 
                                 <!-- Botón para cambio de clave -->
                                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cambiarClaveModal"
                                         onclick="setCambioClaveData()">
-                                    Cambiar Clave
+                                    <i class="fas fa-key mr-2"></i>Cambiar Clave
                                 </button>
                             </div>
 
                             <!-- Pestaña de Datos del Usuario -->
                             <div class="tab-pane fade" id="edit-user-data" role="tabpanel" aria-labelledby="edit-user-data-tab">
                                 <div class="mb-3 mt-3">
-                                    <label for="editNombre" class="form-label">Nombre</label>
+                                    <label for="editNombre" class="form-label">
+                                        <i class="fas fa-user mr-2" style="color: #583AFF;"></i>Nombre
+                                    </label>
                                     <input type="text" class="form-control" id="editNombre" name="Nombre" required />
                                 </div>
                                 <div class="mb-3">
-                                    <label for="editApellidos" class="form-label">Apellidos</label>
+                                    <label for="editApellidos" class="form-label">
+                                        <i class="fas fa-id-card mr-2" style="color: #583AFF;"></i>Apellidos
+                                    </label>
                                     <input type="text" class="form-control" id="editApellidos" name="Apellidos" required />
                                 </div>
                                 <div class="mb-3">
-                                    <label for="editTelefono" class="form-label">Teléfono</label>
+                                    <label for="editTelefono" class="form-label">
+                                        <i class="fas fa-phone mr-2" style="color: #583AFF;"></i>Teléfono
+                                    </label>
                                     <input type="text" class="form-control" id="editTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo números, sin espacios ni guiones" oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
                                 </div>
                                 <div class="mb-3 mt-3">
-                                    <label for="editCorreo" class="form-label">Correo</label>
+                                    <label for="editCorreo" class="form-label">
+                                        <i class="fas fa-envelope mr-2" style="color: #583AFF;"></i>Correo
+                                    </label>
                                     <input type="email" class="form-control" id="editCorreo" name="Correo" required />
                                 </div>
                                 <div class="mb-3">
-                                    <label for="editIdEmpresa" class="form-label">Empresa</label>
+                                    <label for="editIdEmpresa" class="form-label">
+                                        <i class="fas fa-building mr-2" style="color: #583AFF;"></i>Empresa
+                                    </label>
                                     <select class="custom-select" id="editIdEmpresa" name="IdEmpresa" required>
                                         <option value="" selected disabled>Seleccione una empresa</option>
                                         @foreach (var empresa in ViewBag.Empresas)
@@ -222,7 +234,9 @@
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="editAdmin" class="form-label">Admin</label>
+                                    <label for="editAdmin" class="form-label">
+                                        <i class="fas fa-shield-alt mr-2" style="color: #583AFF;"></i>Admin
+                                    </label>
                                     <input type="checkbox" id="editAdmin" name="Admin" value="1" />
                                 </div>
                             </div>
@@ -272,41 +286,57 @@
                             <!-- Pestaña de Autenticación -->
                             <div class="tab-pane fade show active" id="auth" role="tabpanel" aria-labelledby="auth-tab">
                                 <div class="mb-3 mt-3">
-                                    <label for="crearUsuario" class="form-label">Usuario</label>
+                                    <label for="crearUsuario" class="form-label">
+                                        <i class="fas fa-user-tag mr-2" style="color: #583AFF;"></i>Usuario
+                                    </label>
                                     <input type="text" class="form-control" id="crearUsuario" name="Usuario" required />
                                 </div>
                                 <div class="mb-3 mt-3">
-                                    <label for="crearClave" class="form-label">Clave</label>
-                                    <input type="text" class="form-control" id="crearClave" name="Clave" required />
+                                    <label for="crearClave" class="form-label">
+                                        <i class="fas fa-lock mr-2" style="color: #583AFF;"></i>Clave
+                                    </label>
+                                    <input type="password" class="form-control" id="crearClave" name="Clave" required />
                                 </div>
                                 <div class="mb-3 mt-3">
-                                    <label for="crearConfirmarClave" class="form-label">Confirmar Clave</label>
-                                    <input type="text" class="form-control" id="crearConfirmarClave" name="ConfirmarClave" required />
+                                    <label for="crearConfirmarClave" class="form-label">
+                                        <i class="fas fa-lock-open mr-2" style="color: #583AFF;"></i>Confirmar Clave
+                                    </label>
+                                    <input type="password" class="form-control" id="crearConfirmarClave" name="ConfirmarClave" required />
                                 </div>
                             </div>
 
                             <!-- Pestaña de Datos del Usuario -->
                             <div class="tab-pane fade" id="user-data" role="tabpanel" aria-labelledby="user-data-tab">
                                 <div class="mb-3 mt-3">
-                                    <label for="crearNombre" class="form-label">Nombre</label>
+                                    <label for="crearNombre" class="form-label">
+                                        <i class="fas fa-user mr-2" style="color: #583AFF;"></i>Nombre
+                                    </label>
                                     <input type="text" class="form-control" id="crearNombre" name="Nombre" required />
                                 </div>
                                 <div class="mb-3">
-                                    <label for="crearApellidos" class="form-label">Apellidos</label>
+                                    <label for="crearApellidos" class="form-label">
+                                        <i class="fas fa-id-card mr-2" style="color: #583AFF;"></i>Apellidos
+                                    </label>
                                     <input type="text" class="form-control" id="crearApellidos" name="Apellidos" required />
                                 </div>
                                 <div class="mb-3">
-                                    <label for="crearTelefono" class="form-label">Teléfono</label>
+                                    <label for="crearTelefono" class="form-label">
+                                        <i class="fas fa-phone mr-2" style="color: #583AFF;"></i>Teléfono
+                                    </label>
                                     <input type="text" class="form-control" id="crearTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo números, sin espacios ni guiones" oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
 
                                 </div>
                                 <div class="mb-3 mt-3">
-                                    <label for="crearCorreo" class="form-label">Correo</label>
+                                    <label for="crearCorreo" class="form-label">
+                                        <i class="fas fa-envelope mr-2" style="color: #583AFF;"></i>Correo
+                                    </label>
                                     <input type="email" class="form-control" id="crearCorreo" name="Correo" required />
                                 </div>
                                 <div class="mb-3">
-                                    <label for="crearIdEmpresa" class="form-label">Empresa</label>
-                                    
+                                    <label for="crearIdEmpresa" class="form-label">
+                                        <i class="fas fa-building mr-2" style="color: #583AFF;"></i>Empresa
+                                    </label>
+
                                     <select class="custom-select" id="crearIdEmpresa" name="IdEmpresa" required>
                                         <option value="" selected disabled>Seleccione una empresa</option>
                                         @foreach (var empresa in ViewBag.Empresas)
@@ -317,7 +347,9 @@
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="crearAdmin" class="form-label">Admin</label>
+                                    <label for="crearAdmin" class="form-label">
+                                        <i class="fas fa-shield-alt mr-2" style="color: #583AFF;"></i>Admin
+                                    </label>
                                     <input type="checkbox" id="crearAdmin" name="Admin" value="1" />
                                 </div>
                             </div>
