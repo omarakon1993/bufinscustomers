@@ -30,10 +30,6 @@
             opacity: 1; /* Asegura que no se vea deshabilitado */
         }
 
-        .bg-primary {
-            background-color: #583AFF !important; /* Cambia el color de fondo del encabezado del modal */
-        }
-
         /* === COLORES === */
         :root {
             --color-primario: #583AFF;
@@ -126,22 +122,28 @@
 
     <!-- Modal de confirmación -->
     <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar eliminación</h5>
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">
+                        <i class="fas fa-exclamation-triangle"></i>Confirmar eliminación
+                    </h5>
                     <button type="button" class="close" data-bs-dismiss="modal" aria-label="Cerrar">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    ¿Estás seguro de que deseas eliminar este usuario?
+                    <p class="mb-0"><i class="fas fa-question-circle text-warning mr-2"></i>¿Estás seguro de que deseas eliminar este usuario?</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <form id="deleteForm" method="post" action="/Usuario/EliminarUsuario">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times mr-2"></i>Cancelar
+                    </button>
+                    <form id="deleteForm" method="post" action="/Usuario/EliminarUsuario" style="display: inline;">
                         <input type="hidden" id="idUsuario" name="idUsuario" />
-                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt mr-2"></i>Eliminar
+                        </button>
                     </form>
                 </div>
             </div>
@@ -150,10 +152,12 @@
 
     <!-- Modal de edición -->
     <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="editUserModalLabel">Editar Usuario</h5>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUserModalLabel">
+                        <i class="fas fa-user-edit"></i>Editar Usuario
+                    </h5>
                     <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="editUserForm" method="post" action="/Usuario/EditarUsuario">
@@ -225,8 +229,12 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary" id="btnEditarUsuario">Guardar cambios</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times mr-2"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="btnEditarUsuario">
+                            <i class="fas fa-save mr-2"></i>Guardar cambios
+                        </button>
                     </div>
                 </form>
             </div>
@@ -235,10 +243,12 @@
 
     <!-- Modal de Creación -->
     <div class="modal fade" id="crearUsuarioModal" tabindex="-1" aria-labelledby="crearUsuarioModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="crearUsuarioModalLabel">Crear usuario</h5>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="crearUsuarioModalLabel">
+                        <i class="fas fa-user-plus"></i>Crear usuario
+                    </h5>
                     <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="crearUsuarioForm" method="post" action="/Usuario/Registrar">
@@ -314,8 +324,12 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-primary" id="btnCrearUsuario">Crear</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times mr-2"></i>Cancelar
+                        </button>
+                        <button type="button" class="btn btn-primary" id="btnCrearUsuario">
+                            <i class="fas fa-plus-circle mr-2"></i>Crear
+                        </button>
                     </div>
                 </form>
             </div>
@@ -324,27 +338,33 @@
 
     <!-- Modal para cambio de clave -->
     <div class="modal fade" id="cambiarClaveModal" tabindex="-1" aria-labelledby="cambiarClaveModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="cambiarClaveModalLabel">Cambiar Clave</h5>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cambiarClaveModalLabel">
+                        <i class="fas fa-key"></i>Cambiar Clave
+                    </h5>
                     <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="cambiarClaveForm" method="post" action="/Usuario/CambiarClave">
                     <input type="hidden" id="cambioClaveIdUsuario" name="idUsuario" />
                     <div class="modal-body">
                         <div class="mb-3 mt-3">
-                            <label for="nuevaClave" class="form-label">Nueva Clave</label>
+                            <label for="nuevaClave" class="form-label"><i class="fas fa-lock mr-2"></i>Nueva Clave</label>
                             <input type="password" class="form-control" id="nuevaClave" name="nuevaClave" required />
                         </div>
                         <div class="mb-3 mt-3">
-                            <label for="confirmarNuevaClave" class="form-label">Confirmar Nueva Clave</label>
+                            <label for="confirmarNuevaClave" class="form-label"><i class="fas fa-lock-open mr-2"></i>Confirmar Nueva Clave</label>
                             <input type="password" class="form-control" id="confirmarNuevaClave" name="confirmarNuevaClave" required />
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times mr-2"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save mr-2"></i>Guardar Cambios
+                        </button>
                     </div>
                 </form>
             </div>
