@@ -70,29 +70,17 @@
         z-index: 1040;
     }
 
-    /* ===== Gradient Background for Header and Footer ===== */
+    /* ===== Static Background for Header and Footer ===== */
     .bg-gradient-primary {
-        background: linear-gradient(135deg, #160933 0%, #1a0d3a 25%, #583AFF 50%, #1a0d3a 75%, #160933 100%) !important;
-        background-size: 400% 400% !important;
-        animation: gradientAnimation 15s ease infinite !important;
-    }
-
-    @@keyframes gradientAnimation {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
+        background: #160933 !important;
     }
 
     .sticky-footer {
-        background: linear-gradient(135deg, #160933 0%, #1a0d3a 25%, #583AFF 50%, #1a0d3a 75%, #160933 100%) !important;
-        background-size: 400% 400% !important;
-        animation: gradientAnimation 15s ease infinite !important;
+        background: #160933 !important;
     }
 
     .navbar.topbar {
-        background: linear-gradient(135deg, #160933 0%, #1a0d3a 25%, #583AFF 50%, #1a0d3a 75%, #160933 100%) !important;
-        background-size: 400% 400% !important;
-        animation: gradientAnimation 15s ease infinite !important;
+        background: #160933 !important;
     }
 </style>
 
@@ -256,7 +244,7 @@
         </ul>
         <div id="content-wrapper" class="d-flex flex-column">
             <div id="content">
-                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                <nav class="navbar navbar-expand navbar-light topbar mb-4 static-top shadow">
                     <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
                         <i class="fa fa-bars"></i>
                     </button>
@@ -390,7 +378,7 @@
                     </form>
                 </div>
             </div>
-            <footer class="sticky-footer bg-white">
+            <footer class="sticky-footer">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
                         <span style="color:white;">Copyright &copy; Bufins 2025</span>
