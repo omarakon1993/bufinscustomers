@@ -82,6 +82,429 @@
     .navbar.topbar {
         background: #160933 !important;
     }
+
+    /* ===== DEGRADADO AZUL-CIAN PARA ITEMS DEL MENÚ ===== */
+
+    /* Eliminar fondo blanco del contenedor de sub-menú */
+    .sidebar .collapse-inner.bg-white {
+        background: transparent !important;
+    }
+
+    /* Aplicar degradado azul-cian a los collapse-items (como en el encabezado) */
+    .sidebar .collapse-item {
+        background: linear-gradient(90deg, #6366F1 0%, #3B82F6 35%, #06B6D4 70%, #01E1D7 100%) !important;
+        color: #ffffff !important;
+        font-weight: 500;
+        box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+        border: none !important;
+        transition: all 0.3s ease;
+    }
+
+    /* Hover en collapse-items con degradado más oscuro */
+    .sidebar .collapse-item:hover {
+        background: linear-gradient(90deg, #5558E3 0%, #2563EB 35%, #0891B2 70%, #00CFC5 100%) !important;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        transform: translateY(-1px);
+        color: #ffffff !important;
+    }
+
+    /* Estado activo para collapse-items */
+    .sidebar .collapse-item.active {
+        background: linear-gradient(90deg, #4F46E5 0%, #1D4ED8 35%, #0E7490 70%, #00B8A9 100%) !important;
+        box-shadow: 0 6px 16px rgba(99, 102, 241, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.2);
+        font-weight: 600;
+        color: #ffffff !important;
+    }
+
+    /* ===== ESTILOS MODERNOS PARA MODAL DE PERFIL ===== */
+
+    /* Modal moderno con bordes redondeados */
+    .modal-perfil-moderno {
+        border-radius: 1rem;
+        overflow: hidden;
+        border: none;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Header con degradado azul-cian igual al encabezado */
+    .modal-header-gradient {
+        background: linear-gradient(90deg, #6366F1 0%, #3B82F6 35%, #06B6D4 70%, #01E1D7 100%) !important;
+        color: #ffffff !important;
+        border: none;
+        padding: 1.5rem 1.5rem;
+    }
+
+    .modal-header-gradient .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+
+    .modal-header-gradient .modal-title i {
+        font-size: 1.3rem;
+        vertical-align: middle;
+    }
+
+    .modal-header-gradient .close {
+        color: #ffffff !important;
+        opacity: 0.9;
+        text-shadow: none;
+        font-size: 2rem;
+        font-weight: 300;
+        transition: all 0.3s ease;
+    }
+
+    .modal-header-gradient .close:hover {
+        opacity: 1;
+        transform: rotate(90deg);
+    }
+
+    /* Body del modal */
+    .modal-body-perfil {
+        padding: 2rem 1.5rem;
+        background: #f8f9fc;
+    }
+
+    /* Imagen de perfil moderna */
+    .imgPerfil-moderno {
+        width: 140px;
+        height: 140px;
+        object-fit: cover;
+        border: 5px solid #ffffff;
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .imgPerfil-moderno:hover {
+        transform: scale(1.05);
+        box-shadow: 0 12px 32px rgba(99, 102, 241, 0.4);
+    }
+
+    /* Items de información con iconos */
+    .info-item {
+        display: flex;
+        align-items: center;
+        padding: 0.85rem 1rem;
+        margin-bottom: 0.75rem;
+        background: #ffffff;
+        border-radius: 0.5rem;
+        border-left: 3px solid transparent;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .info-item:hover {
+        border-left: 3px solid #3B82F6;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        transform: translateX(5px);
+    }
+
+    .info-icon {
+        font-size: 1.2rem;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #6366F1 0%, #3B82F6 100%);
+        color: #ffffff;
+        border-radius: 0.5rem;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .info-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.2rem;
+    }
+
+    .info-value {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #2d3748;
+    }
+
+    /* Footer del modal */
+    .modal-footer-perfil {
+        background: #f8f9fc;
+        border-top: 1px solid #e3e6f0;
+        padding: 1.25rem 1.5rem;
+    }
+
+    /* Botón con degradado */
+    .btn-gradient-modern {
+        background: linear-gradient(90deg, #6366F1 0%, #3B82F6 35%, #06B6D4 70%, #01E1D7 100%) !important;
+        color: #ffffff !important;
+        border: none;
+        font-weight: 500;
+        padding: 0.65rem 1.5rem;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-gradient-modern:hover {
+        background: linear-gradient(90deg, #5558E3 0%, #2563EB 35%, #0891B2 70%, #00CFC5 100%) !important;
+        box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+        transform: translateY(-2px);
+        color: #ffffff !important;
+    }
+
+    .btn-gradient-modern i {
+        font-size: 0.9rem;
+    }
+
+    /* Botón outline */
+    .btn-outline-secondary {
+        border: 2px solid #6c757d;
+        color: #6c757d;
+        font-weight: 500;
+        padding: 0.65rem 1.5rem;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-secondary:hover {
+        background: #6c757d;
+        color: #ffffff;
+        border-color: #6c757d;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(108, 117, 125, 0.3);
+    }
+
+    /* Ajuste para columnas de 3 */
+    .modal-body-perfil .col-lg-4,
+    .modal-body-perfil .col-md-6,
+    .modal-body-perfil .col-md-12 {
+        padding: 0 0.5rem;
+    }
+
+    /* Responsive para el modal - 3 columnas */
+    @@media (min-width: 992px) {
+        /* En pantallas grandes: 3 columnas */
+        .modal-body-perfil .row {
+            display: flex;
+            align-items: flex-start;
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 991px) {
+        /* En tablets: 2 columnas, la tercera abajo */
+        .modal-body-perfil .col-lg-4 {
+            margin-bottom: 0;
+        }
+    }
+
+    @@media (max-width: 767px) {
+        /* En móviles: 1 columna */
+        .modal-body-perfil .col-lg-4,
+        .modal-body-perfil .col-md-6,
+        .modal-body-perfil .col-md-12 {
+            padding: 0;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .modal-body-perfil {
+            padding: 1.5rem 1rem;
+        }
+
+        .imgPerfil-moderno {
+            width: 120px;
+            height: 120px;
+        }
+
+        .info-item {
+            padding: 0.7rem 0.8rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .info-icon {
+            width: 35px;
+            height: 35px;
+            font-size: 1rem;
+            margin-right: 0.75rem;
+        }
+
+        .info-label {
+            font-size: 0.7rem;
+        }
+
+        .info-value {
+            font-size: 0.88rem;
+        }
+
+        .modal-header-gradient .modal-title {
+            font-size: 1.1rem;
+        }
+    }
+
+    /* ===== ESTILOS PARA MODAL DE CARGAR IMAGEN ===== */
+
+    /* Modal de cargar imagen moderno */
+    .modal-cargar-imagen-moderno {
+        border-radius: 1rem;
+        overflow: hidden;
+        border: none;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Body del modal de cargar imagen - más compacto */
+    .modal-body-cargar-imagen {
+        padding: 1.25rem 1.5rem;
+        background: #f8f9fc;
+    }
+
+    /* Área de carga - más compacta */
+    .upload-area {
+        text-align: center;
+        padding: 1.25rem 1rem;
+        background: #ffffff;
+        border: 2px dashed #d1d3e2;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .upload-area:hover {
+        border-color: #6366F1;
+        background: #f8f9ff;
+    }
+
+    .upload-icon {
+        font-size: 2.5rem;
+        color: #6366F1;
+        margin-bottom: 0.5rem;
+    }
+
+    .upload-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.35rem;
+    }
+
+    .upload-info {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+
+    .upload-info i {
+        color: #3B82F6;
+    }
+
+    /* Ocultar input file por defecto */
+    .file-input-hidden {
+        display: none;
+    }
+
+    /* Botón de seleccionar archivo */
+    .btn-select-file {
+        cursor: pointer;
+        display: inline-block;
+    }
+
+    /* Nombre del archivo seleccionado */
+    .file-name {
+        font-size: 0.9rem;
+        color: #6c757d;
+        font-style: italic;
+        margin-bottom: 0;
+    }
+
+    .file-name.selected {
+        color: #3B82F6;
+        font-weight: 500;
+        font-style: normal;
+    }
+
+    /* Área de vista previa - más compacta */
+    .preview-area {
+        min-height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 0.75rem !important;
+    }
+
+    .preview-image {
+        display: none;
+        max-width: 140px;
+        max-height: 140px;
+        border-radius: 0.5rem;
+        border: 3px solid #ffffff;
+        box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
+        object-fit: cover;
+    }
+
+    .preview-image.show {
+        display: block;
+    }
+
+    /* Mensajes de validación */
+    #mensajeImagen .alert {
+        border-radius: 0.5rem;
+        border: none;
+        font-size: 0.9rem;
+    }
+
+    #mensajeImagen .alert-danger {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #991b1b;
+    }
+
+    #mensajeImagen .alert-success {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+    }
+
+    #mensajeImagen .alert i {
+        margin-right: 0.5rem;
+    }
+
+    /* Footer más compacto para modal de cargar imagen */
+    #modalCargarImagen .modal-footer-perfil {
+        padding: 1rem 1.5rem;
+    }
+
+    /* Responsive para modal de cargar imagen */
+    @@media (max-width: 576px) {
+        .modal-body-cargar-imagen {
+            padding: 1rem 1rem;
+        }
+
+        .upload-area {
+            padding: 1rem 0.75rem;
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+        }
+
+        .upload-title {
+            font-size: 0.95rem;
+        }
+
+        .preview-image {
+            max-width: 120px;
+            max-height: 120px;
+        }
+
+        #modalCargarImagen .modal-footer-perfil {
+            padding: 0.75rem 1rem;
+        }
+    }
+
 </style>
 
 <body id="page-top">
@@ -301,78 +724,155 @@
                     </div>
                 </div>
             </div>
-            <!-- Modal de información de usuario -->
+            <!-- Modal de información de usuario - Mejorado -->
             <div class="modal fade" id="modalPerfilUsuario" tabindex="-1" role="dialog" aria-labelledby="modalPerfilUsuarioLabel" aria-hidden="true">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title" id="modalPerfilUsuarioLabel">Perfil de usuario</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                    <div class="modal-content modal-perfil-moderno">
+                        <div class="modal-header modal-header-gradient">
+                            <h5 class="modal-title" id="modalPerfilUsuarioLabel">
+                                <i class="fas fa-user-circle mr-2"></i>Perfil de usuario
+                            </h5>
+                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
-                        <div class="modal-body">
-                            <div class="container">
-                                <div class="row align-items-center">
-                                    <div class="col-md-8">
-                                        <p><strong>Nombre:</strong> @(UsuarioSesionHelper.UsuarioActual?.Nombre ?? "Invitado")</p>
-                                        <p><strong>Apellidos:</strong> @(UsuarioSesionHelper.UsuarioActual?.Apellidos ?? "-")</p>
-                                        <p><strong>Email:</strong> @(UsuarioSesionHelper.UsuarioActual?.Correo ?? "-")</p>
-                                        <p><strong>Teléfono:</strong> @(UsuarioSesionHelper.UsuarioActual?.Telefono ?? "-")</p>
-                                        <p><strong>Usuario:</strong> @(UsuarioSesionHelper.UsuarioActual?.Usuario ?? "-")</p>
-                                        <p><strong>Rol:</strong> @(UsuarioSesionHelper.UsuarioActual?.Admin == 1 ? "Administrador" : "Usuario")</p>
-                                        @{
-                                            var empresas = ViewBag.Empresas as List<bufinscustomers.Models.Empresas>;
-                                            var empresaActual = empresas?.FirstOrDefault(e => e.Id == idEmpresa);
-                                        }
-                                        <p><strong>Empresa:</strong> @(empresaActual != null ? empresaActual.Nombre : "Sin empresa")</p>
-                                    </div>
-                                    <div class="col-md-4 text-center mb-3 mb-md-0">
+                        <div class="modal-body modal-body-perfil">
+                            <div class="container-fluid">
+                                <!-- Foto de perfil centrada arriba -->
+                                <div class="row mb-4">
+                                    <div class="col-12 text-center">
                                         @if (usuario?.Imagen != null && !string.IsNullOrEmpty(usuario.Imagen.ImagenBase64))
                                         {
                                             <img src="data:@usuario.Imagen.TipoImagen;base64,@usuario.Imagen.ImagenBase64"
                                                  alt="Imagen de usuario"
-                                                 class="imgPerfil img-profile rounded-circle"
-                                                 style="max-width:150px; max-height:150px; min-width:150px; min-height:150px" />
+                                                 class="imgPerfil-moderno img-profile rounded-circle shadow-lg" />
                                         }
                                         else
                                         {
                                             <img src="~/Assets/img/avatar.png"
                                                  alt="Imagen por defecto"
-                                                 class="imgPerfil img-profile rounded-circle"
-                                                 style="max-width:150px; max-height:150px;" />
+                                                 class="imgPerfil-moderno img-profile rounded-circle shadow-lg" />
                                         }
+                                    </div>
+                                </div>
+                                <!-- Información del usuario con iconos en 3 columnas -->
+                                <div class="row">
+                                    <!-- Columna 1 -->
+                                    <div class="col-lg-4 col-md-6">
+                                        <div class="info-item">
+                                            <i class="fas fa-user info-icon"></i>
+                                            <div class="info-content">
+                                                <span class="info-label">Nombre:</span>
+                                                <span class="info-value">@(UsuarioSesionHelper.UsuarioActual?.Nombre ?? "Invitado")</span>
+                                            </div>
+                                        </div>
+                                        <div class="info-item">
+                                            <i class="fas fa-id-card info-icon"></i>
+                                            <div class="info-content">
+                                                <span class="info-label">Apellidos:</span>
+                                                <span class="info-value">@(UsuarioSesionHelper.UsuarioActual?.Apellidos ?? "-")</span>
+                                            </div>
+                                        </div>
+                                        <div class="info-item">
+                                            <i class="fas fa-envelope info-icon"></i>
+                                            <div class="info-content">
+                                                <span class="info-label">Email:</span>
+                                                <span class="info-value">@(UsuarioSesionHelper.UsuarioActual?.Correo ?? "-")</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Columna 2 -->
+                                    <div class="col-lg-4 col-md-6">
+                                        <div class="info-item">
+                                            <i class="fas fa-phone info-icon"></i>
+                                            <div class="info-content">
+                                                <span class="info-label">Teléfono:</span>
+                                                <span class="info-value">@(UsuarioSesionHelper.UsuarioActual?.Telefono ?? "-")</span>
+                                            </div>
+                                        </div>
+                                        <div class="info-item">
+                                            <i class="fas fa-user-tag info-icon"></i>
+                                            <div class="info-content">
+                                                <span class="info-label">Usuario:</span>
+                                                <span class="info-value">@(UsuarioSesionHelper.UsuarioActual?.Usuario ?? "-")</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Columna 3 -->
+                                    <div class="col-lg-4 col-md-12">
+                                        <div class="info-item">
+                                            <i class="fas fa-shield-alt info-icon"></i>
+                                            <div class="info-content">
+                                                <span class="info-label">Rol:</span>
+                                                <span class="info-value">@(UsuarioSesionHelper.UsuarioActual?.Admin == 1 ? "Administrador" : "Usuario")</span>
+                                            </div>
+                                        </div>
+                                        @{
+                                            var empresas = ViewBag.Empresas as List<bufinscustomers.Models.Empresas>;
+                                            var empresaActual = empresas?.FirstOrDefault(e => e.Id == idEmpresa);
+                                        }
+                                        <div class="info-item">
+                                            <i class="fas fa-building info-icon"></i>
+                                            <div class="info-content">
+                                                <span class="info-label">Empresa:</span>
+                                                <span class="info-value">@(empresaActual != null ? empresaActual.Nombre : "Sin empresa")</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalCargarImagen" data-dismiss="modal">
-                                Cambiar imagen
+                        <div class="modal-footer modal-footer-perfil">
+                            <button type="button" class="btn btn-gradient-modern" data-toggle="modal" data-target="#modalCargarImagen" data-dismiss="modal">
+                                <i class="fas fa-camera mr-2"></i>Cambiar imagen
                             </button>
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                            <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+                                <i class="fas fa-times mr-2"></i>Cerrar
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="modal fade" id="modalCargarImagen" tabindex="-1" role="dialog" aria-labelledby="modalCargarImagenLabel" aria-hidden="true">
-                <div class="modal-dialog" role="document">
+                <div class="modal-dialog modal-dialog-centered" role="document">
                     <form id="formCargarImagen" enctype="multipart/form-data" method="post" action="@Url.Action("CargarImagenUsuario", "Usuario")">
-                        <div class="modal-content">
-                            <div class="modal-header bg-primary text-white">
-                                <h5 class="modal-title" id="modalCargarImagenLabel">Cargar imagen de usuario</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <div class="modal-content modal-cargar-imagen-moderno">
+                            <div class="modal-header modal-header-gradient">
+                                <h5 class="modal-title" id="modalCargarImagenLabel">
+                                    <i class="fas fa-camera mr-2"></i>Cargar imagen de usuario
+                                </h5>
+                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
                                     <span aria-hidden="true">&times;</span>
                                 </button>
                             </div>
-                            <div class="modal-body">
-                                <input type="file" name="ImagenUsuario" accept="image/png, image/jpeg" class="form-control" required />
-                                <img id="previewImagen" src="#" alt="Vista previa" style="display:none; max-width:150px; max-height:150px; margin-top:10px;" />
+                            <div class="modal-body modal-body-cargar-imagen">
+                                <div class="upload-area">
+                                    <div class="upload-icon">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                    </div>
+                                    <h6 class="upload-title mb-1">Selecciona una imagen</h6>
+                                    <p class="upload-info mb-2">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        PNG o JPEG - Máx. 200 KB - Máx. 400x400 px
+                                    </p>
+                                    <label for="ImagenUsuario" class="btn btn-gradient-modern btn-select-file mb-2">
+                                        <i class="fas fa-folder-open mr-2"></i>Seleccionar archivo
+                                    </label>
+                                    <input type="file" id="ImagenUsuario" name="ImagenUsuario" accept="image/png, image/jpeg" class="file-input-hidden" required />
+                                    <p class="file-name mb-0" id="fileName">Ningún archivo seleccionado</p>
+                                </div>
+                                <div class="preview-area text-center">
+                                    <img id="previewImagen" src="#" alt="Vista previa" class="preview-image" />
+                                </div>
                                 <div id="mensajeImagen" class="mt-2"></div>
                             </div>
-                            <div class="modal-footer">
-                                <button type="submit" class="btn btn-success">Guardar</button>
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                            <div class="modal-footer modal-footer-perfil">
+                                <button type="submit" class="btn btn-gradient-modern">
+                                    <i class="fas fa-save mr-2"></i>Guardar
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+                                    <i class="fas fa-times mr-2"></i>Cancelar
+                                </button>
                             </div>
                         </div>
                     </form>
@@ -468,19 +968,27 @@
         });
 
         // ========== FUNCIONALIDADES DE IMAGEN DE USUARIO ==========
-        // Funcionalidad de imagen de usuario (conservada del original con Bootstrap 4)
-        $('input[name="ImagenUsuario"]').on('change', function () {
+        // Funcionalidad de imagen de usuario mejorada
+        $('#ImagenUsuario').on('change', function () {
             var input = this;
             var preview = document.getElementById('previewImagen');
+            var fileName = document.getElementById('fileName');
             var mensajeDiv = $('#mensajeImagen');
+
             mensajeDiv.html('');
-            preview.style.display = 'none';
+            preview.classList.remove('show');
 
             if (input.files && input.files[0]) {
                 var file = input.files[0];
 
+                // Mostrar nombre del archivo
+                fileName.textContent = file.name;
+                fileName.classList.add('selected');
+
                 if (file.size > 204800) {
-                    mensajeDiv.html('<div class="alert alert-danger">La imagen debe pesar menos de 200 KB.</div>');
+                    mensajeDiv.html('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i>La imagen debe pesar menos de 200 KB.</div>');
+                    fileName.textContent = 'Ningún archivo seleccionado';
+                    fileName.classList.remove('selected');
                     return;
                 }
 
@@ -489,36 +997,43 @@
                     var img = new Image();
                     img.onload = function () {
                         if (img.width > 400 || img.height > 400) {
-                            mensajeDiv.html('<div class="alert alert-danger">La imagen debe tener máximo 400x400 píxeles.</div>');
-                            preview.style.display = 'none';
+                            mensajeDiv.html('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i>La imagen debe tener máximo 400x400 píxeles.</div>');
+                            preview.classList.remove('show');
+                            fileName.textContent = 'Ningún archivo seleccionado';
+                            fileName.classList.remove('selected');
                         } else {
                             preview.src = e.target.result;
-                            preview.style.display = 'block';
+                            preview.classList.add('show');
                         }
                     };
                     img.onerror = function () {
-                        mensajeDiv.html('<div class="alert alert-danger">Archivo de imagen no válido.</div>');
-                        preview.style.display = 'none';
+                        mensajeDiv.html('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i>Archivo de imagen no válido.</div>');
+                        preview.classList.remove('show');
+                        fileName.textContent = 'Ningún archivo seleccionado';
+                        fileName.classList.remove('selected');
                     };
                     img.src = e.target.result;
                 };
                 reader.readAsDataURL(file);
+            } else {
+                fileName.textContent = 'Ningún archivo seleccionado';
+                fileName.classList.remove('selected');
             }
         });
 
         $('#formCargarImagen').on('submit', function (e) {
             e.preventDefault();
-            var input = document.querySelector('input[name="ImagenUsuario"]');
+            var input = document.getElementById('ImagenUsuario');
             var mensajeDiv = $('#mensajeImagen');
             var preview = document.getElementById('previewImagen');
 
             if (input.files.length === 0) {
-                mensajeDiv.html('<div class="alert alert-danger">Selecciona una imagen.</div>');
+                mensajeDiv.html('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i>Selecciona una imagen.</div>');
                 return;
             }
 
-            if (preview.style.display !== 'block') {
-                mensajeDiv.html('<div class="alert alert-danger">La imagen seleccionada no es válida.</div>');
+            if (!preview.classList.contains('show')) {
+                mensajeDiv.html('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i>La imagen seleccionada no es válida.</div>');
                 return;
             }
 
@@ -531,28 +1046,35 @@
                 processData: false,
                 success: function (response) {
                     if (response.success) {
-                        $('.imgPerfil').attr('src', 'data:' + response.tipoImagen + ';base64,' + response.imagenBase64);
-                        mensajeDiv.html('<div class="alert alert-success">' + response.message + '</div>');
+                        $('.imgPerfil, .imgPerfil-moderno').attr('src', 'data:' + response.tipoImagen + ';base64,' + response.imagenBase64);
+                        mensajeDiv.html('<div class="alert alert-success"><i class="fas fa-check-circle"></i>' + response.message + '</div>');
+
+                        // Cerrar modal después de 1.5 segundos
+                        setTimeout(function() {
+                            $('#modalCargarImagen').modal('hide');
+                        }, 1500);
                     } else {
-                        mensajeDiv.html('<div class="alert alert-danger">' + response.message + '</div>');
+                        mensajeDiv.html('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i>' + response.message + '</div>');
                     }
                 },
                 error: function () {
-                    mensajeDiv.html('<div class="alert alert-danger">Error al subir la imagen.</div>');
+                    mensajeDiv.html('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i>Error al subir la imagen.</div>');
                 }
             });
         });
 
         $(document).on('shown.bs.modal', '#modalCargarImagen', function () {
             $('#mensajeImagen').html('');
-            $('#previewImagen').attr('src', '#').hide();
-            $('input[name="ImagenUsuario"]').val('');
+            $('#previewImagen').attr('src', '#').removeClass('show');
+            $('#ImagenUsuario').val('');
+            $('#fileName').text('Ningún archivo seleccionado').removeClass('selected');
         });
 
         $(document).on('hidden.bs.modal', '#modalCargarImagen', function () {
             $('#mensajeImagen').html('');
-            $('#previewImagen').attr('src', '#').hide();
-            $('input[name="ImagenUsuario"]').val('');
+            $('#previewImagen').attr('src', '#').removeClass('show');
+            $('#ImagenUsuario').val('');
+            $('#fileName').text('Ningún archivo seleccionado').removeClass('selected');
         });
 
         // ========== GESTIÓN AVANZADA DE SESIONES ==========
