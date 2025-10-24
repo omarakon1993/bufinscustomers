@@ -23,6 +23,7 @@
         .table-wrapper {
             max-height: 280px;
             overflow-y: auto;
+            overflow-x: auto;
         }
 
         .readonly-checkbox {
@@ -47,6 +48,143 @@
 
         .card-header i {
             margin-right: 8px;
+        }
+
+        /* === MEJORAS RESPONSIVE PARA TABLAS === */
+
+        /* Para laptops de 14 pulgadas y tablets */
+        @@media (min-width: 768px) and (max-width: 1600px) {
+            .table-wrapper {
+                max-height: 400px; /* Más espacio vertical */
+            }
+
+            .table {
+                font-size: 0.85rem;
+            }
+
+            .table th,
+            .table td {
+                padding: 0.5rem;
+                white-space: nowrap;
+            }
+
+            .btn-group .btn {
+                padding: 0.375rem 0.75rem;
+                font-size: 0.85rem;
+            }
+
+            .card-header {
+                padding: 1rem 1.25rem;
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Para tablets */
+        @@media (min-width: 768px) and (max-width: 991px) {
+            .table {
+                font-size: 0.8rem;
+            }
+
+            .table th,
+            .table td {
+                padding: 0.4rem;
+            }
+
+            .btn-group {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .btn-group .btn {
+                margin-bottom: 0.25rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Para móviles */
+        @@media (max-width: 767px) {
+            .table-wrapper {
+                max-height: none;
+            }
+
+            .table {
+                font-size: 0.75rem;
+                display: block;
+                overflow-x: auto;
+            }
+
+            .table thead {
+                display: none;
+            }
+
+            .table tbody {
+                display: block;
+            }
+
+            .table tr {
+                display: block;
+                margin-bottom: 1rem;
+                border: 1px solid #ddd;
+                border-radius: 0.5rem;
+                padding: 0.75rem;
+                background: #fff;
+            }
+
+            .table td {
+                display: flex;
+                justify-content: space-between;
+                padding: 0.5rem 0;
+                border: none;
+                border-bottom: 1px solid #f0f0f0;
+            }
+
+            .table td:last-child {
+                border-bottom: none;
+            }
+
+            .table td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                margin-right: 1rem;
+                color: #583AFF;
+            }
+
+            .btn-group {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .btn-group .btn {
+                width: 100%;
+                margin-bottom: 0.25rem;
+                font-size: 0.85rem;
+            }
+
+            .card-header {
+                padding: 0.875rem 1rem;
+                font-size: 1rem;
+            }
+        }
+
+        /* Scrollbar personalizada para la tabla */
+        .table-wrapper::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
     </style>
 

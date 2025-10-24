@@ -1,0 +1,564 @@
+/* ===================================
+   BUFINS CUSTOMERS - RESPONSIVE CUSTOM CSS
+   Mejoras de responsividad para todos los dispositivos
+   =================================== */
+
+/* ===== VARIABLES DE BREAKPOINTS ===== */
+/*
+   - xs: 0-575px (Móviles pequeños)
+   - sm: 576-767px (Móviles grandes)
+   - md: 768-991px (Tablets)
+   - lg: 992-1199px (Laptops pequeñas)
+   - xl: 1200-1399px (Laptops)
+   - xxl: 1400px+ (Pantallas grandes)
+*/
+
+/* ===== AJUSTES PARA PANTALLAS MEDIANAS (LAPTOPS 14") ===== */
+/* Optimizado para laptops de 14 pulgadas (1366x768, 1920x1080) */
+/* SOLO AJUSTES DE CONTENIDO Y TABLAS - EL SIDEBAR SE MANTIENE ORIGINAL */
+
+@media (min-width: 768px) and (max-width: 1600px) {
+    /* Ajustar wrapper principal para evitar scroll horizontal */
+    #wrapper {
+        overflow-x: hidden;
+    }
+
+    /* Ajustar contenido para que ocupe bien el espacio */
+    #content-wrapper {
+        overflow-x: hidden;
+    }
+
+    /* Reducir padding del contenido principal */
+    .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    /* Ajustar márgenes de las tarjetas */
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    /* Reducir padding del navbar superior */
+    .topbar {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+/* ===== MEJORAS PARA TABLAS RESPONSIVE ===== */
+@media (max-width: 1600px) {
+    /* Hacer tablas scrollables horizontalmente sin afectar el layout */
+    .table-responsive {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Ajustar padding de celdas de tabla */
+    .table td,
+    .table th {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    /* Reducir tamaño de botones en tablas */
+    .table .btn {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* ===== MEJORAS PARA FORMULARIOS ===== */
+@media (max-width: 1600px) {
+    /* Reducir padding de modales */
+    .modal-body {
+        padding: 1.25rem;
+    }
+
+    .modal-header {
+        padding: 1rem 1.25rem;
+    }
+
+    .modal-footer {
+        padding: 0.875rem 1.25rem;
+    }
+
+    /* Ajustar form-groups */
+    .form-group {
+        margin-bottom: 0.875rem;
+    }
+
+    /* Reducir padding de form controls */
+    .form-control {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    /* Ajustar labels */
+    label {
+        font-size: 0.9rem;
+        margin-bottom: 0.375rem;
+    }
+}
+
+/* ===== AJUSTES PARA TABLETS (768px - 991px) ===== */
+@media (min-width: 768px) and (max-width: 991px) {
+    /* Sidebar más compacto */
+    .sidebar {
+        width: 200px !important;
+    }
+
+    .sidebar.toggled {
+        width: 0 !important;
+    }
+
+    /* Reducir más el contenido */
+    .container-fluid {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    /* Ajustar tamaños de fuente globales */
+    body {
+        font-size: 0.9rem;
+    }
+
+    h1 {
+        font-size: 1.75rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    h3 {
+        font-size: 1.25rem;
+    }
+
+    h4 {
+        font-size: 1.1rem;
+    }
+
+    h5 {
+        font-size: 1rem;
+    }
+
+    /* Botones más compactos */
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    /* Cards más compactas */
+    .card-body {
+        padding: 1rem;
+    }
+
+    .card-header {
+        padding: 0.75rem 1rem;
+    }
+}
+
+/* ===== AJUSTES PARA MÓVILES GRANDES (576px - 767px) ===== */
+@media (min-width: 576px) and (max-width: 767px) {
+    /* Ocultar sidebar por defecto */
+    .sidebar {
+        position: fixed;
+        left: -250px;
+        width: 250px !important;
+        height: 100vh;
+        transition: left 0.3s ease;
+        z-index: 1050;
+    }
+
+    .sidebar.show {
+        left: 0;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Overlay cuando el sidebar está abierto */
+    body.sidebar-open::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1040;
+    }
+
+    /* Ajustar content-wrapper para ocupar todo el ancho */
+    #content-wrapper {
+        width: 100% !important;
+        margin-left: 0 !important;
+    }
+
+    /* Mostrar botón de menú móvil */
+    #sidebarToggleTop {
+        display: inline-block !important;
+    }
+
+    /* Reducir padding general */
+    .container-fluid {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    /* Tablas en una sola columna si es necesario */
+    .table-responsive {
+        font-size: 0.8rem;
+    }
+
+    /* Formularios en una columna */
+    .col-sm-6,
+    .col-md-6,
+    .col-lg-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* Reducir tamaños de fuente */
+    body {
+        font-size: 0.875rem;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    h2 {
+        font-size: 1.25rem;
+    }
+
+    h3 {
+        font-size: 1.1rem;
+    }
+
+    /* Ajustar topbar */
+    .topbar {
+        height: auto;
+        min-height: 4.375rem;
+    }
+
+    /* Modales ocupan más pantalla */
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+}
+
+/* ===== AJUSTES PARA MÓVILES PEQUEÑOS (0 - 575px) ===== */
+@media (max-width: 575px) {
+    /* Sidebar full screen en móviles */
+    .sidebar {
+        position: fixed;
+        left: -100%;
+        width: 100% !important;
+        height: 100vh;
+        transition: left 0.3s ease;
+        z-index: 1050;
+        overflow-y: auto;
+    }
+
+    .sidebar.show {
+        left: 0;
+    }
+
+    /* Overlay móvil */
+    body.sidebar-open::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1040;
+    }
+
+    /* Content-wrapper */
+    #content-wrapper {
+        width: 100% !important;
+        margin-left: 0 !important;
+    }
+
+    /* Padding mínimo */
+    .container-fluid {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    /* Topbar responsive */
+    .topbar {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    .topbar .nav-link {
+        padding: 0.5rem;
+    }
+
+    /* Usuario en topbar */
+    .topbar .mr-2.d-none.d-lg-inline {
+        display: none !important;
+    }
+
+    /* Cards sin padding excesivo */
+    .card {
+        margin-bottom: 0.75rem;
+    }
+
+    .card-body {
+        padding: 0.75rem;
+    }
+
+    .card-header {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    /* Tablas muy compactas */
+    .table {
+        font-size: 0.75rem;
+    }
+
+    .table td,
+    .table th {
+        padding: 0.375rem;
+    }
+
+    /* Botones apilados verticalmente */
+    .btn-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .btn-group .btn {
+        margin-bottom: 0.25rem;
+        width: 100%;
+    }
+
+    /* Formularios */
+    .form-control {
+        font-size: 0.875rem;
+        padding: 0.5rem;
+    }
+
+    label {
+        font-size: 0.875rem;
+    }
+
+    /* Modales full screen */
+    .modal-dialog {
+        margin: 0;
+        max-width: 100%;
+        height: 100%;
+    }
+
+    .modal-content {
+        height: 100%;
+        border: 0;
+        border-radius: 0;
+    }
+
+    /* Headers de página */
+    .page-header,
+    h1.h3 {
+        font-size: 1.25rem;
+        margin-bottom: 0.75rem;
+    }
+
+    /* Reducir espaciado de headings del sidebar */
+    .sidebar-heading {
+        font-size: 0.65rem;
+        padding: 0.375rem 0.75rem;
+    }
+
+    .sidebar .nav-link {
+        padding: 0.625rem 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .sidebar .collapse-item {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    /* Footer compacto */
+    .sticky-footer {
+        padding: 1rem 0;
+    }
+
+    .footer-text,
+    .copyright {
+        font-size: 0.7rem;
+    }
+}
+
+/* ===== MEJORAS GENERALES DE SCROLL ===== */
+
+/* Scrollbar personalizada para navegadores webkit */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Sidebar scrollbar más delgado */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* ===== MEJORAS DE ACCESIBILIDAD Y UX ===== */
+
+/* Asegurar que los elementos táctiles tengan tamaño mínimo */
+@media (max-width: 991px) {
+    a,
+    button,
+    .btn,
+    .nav-link,
+    .collapse-item {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+}
+
+/* Prevenir zoom en inputs en iOS */
+@media (max-width: 767px) {
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="number"],
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}
+
+/* ===== AJUSTES PARA IMPRESIÓN ===== */
+@media print {
+    .sidebar,
+    .topbar,
+    .sticky-footer,
+    .btn,
+    .scroll-to-top {
+        display: none !important;
+    }
+
+    #content-wrapper {
+        margin-left: 0 !important;
+    }
+
+    .container-fluid {
+        max-width: 100%;
+    }
+
+    .card {
+        border: 1px solid #ddd;
+        box-shadow: none;
+    }
+}
+
+/* ===== CORRECCIONES ESPECÍFICAS PARA OVERFLOW ===== */
+
+/* Prevenir overflow horizontal en todo el sitio */
+html,
+body {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+#wrapper {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+/* Asegurar que las imágenes no causen overflow */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Prevenir que el contenido de las tablas cause overflow del contenedor */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    display: block;
+}
+
+/* Asegurar que los pre y code no causen overflow */
+pre,
+code {
+    overflow-x: auto;
+    word-wrap: break-word;
+}
+
+/* ===== MEJORAS PARA ELEMENTOS ESPECÍFICOS DE BUFINS ===== */
+
+/* Ajustar encabezados con degradado */
+@media (max-width: 991px) {
+    .bg-gradient-primary,
+    .modal-header-gradient {
+        background: linear-gradient(90deg, #6366F1 0%, #3B82F6 50%, #06B6D4 100%) !important;
+    }
+}
+
+/* Ajustar info-items en modales para móviles */
+@media (max-width: 767px) {
+    .info-item {
+        padding: 0.625rem 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .info-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 0.95rem;
+        margin-right: 0.625rem;
+    }
+
+    .info-label {
+        font-size: 0.65rem;
+    }
+
+    .info-value {
+        font-size: 0.8rem;
+    }
+}
+
+/* Ajustar botones con degradado */
+@media (max-width: 767px) {
+    .btn-gradient-modern,
+    .btn-modern-gradient {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* ===== FIN DE RESPONSIVE CUSTOM CSS ===== */
