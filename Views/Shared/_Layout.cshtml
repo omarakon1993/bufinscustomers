@@ -16,6 +16,7 @@
     <link href="~/Assets/GoogleApis/Family.css" rel="stylesheet">
     <link href="~/Assets/css/sb-admin-2.min.css" rel="stylesheet">
     <link href="~/Assets/css/responsive-custom.css" rel="stylesheet">
+    <link href="~/Assets/css/modern-sidebar.css" rel="stylesheet">
     <!-- SweetAlert2 para notificaciones de sesión -->
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
 </head>
@@ -731,164 +732,228 @@
 </style>
 
 <body id="page-top">
-    <div id="wrapper">
-        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
-            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="@Url.Action("Index", "Home")">
-                <img src="~/Assets/img/Bufins_LogoIndex.png" alt="Bufins Logo" class="sidebar-logo">
-            </a>
-            <hr class="sidebar-divider">
-            <!-- ========== MÓDULO DE DATOS ========== -->
-            <div class="sidebar-heading">
-                <i class="fas fa-square-caret-down" style="color:#01E1D7"></i>
-                Datos
+    <!-- Bot\u00f3n Hamburguesa M\u00f3vil -->
+    <button class="sidebar-hamburger" aria-label="Abrir men\u00fa">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Backdrop para M\u00f3vil/Tablet -->
+    <div class="sidebar-backdrop"></div>
+
+    <!-- Sidebar Moderno -->
+    <aside class="modern-sidebar">
+        <!-- Header del Sidebar -->
+        <div class="sidebar-header">
+            <div class="sidebar-logo-wrapper">
+                <a href="@Url.Action("Index", "Home")">
+                    <img src="~/Assets/img/Bufins_LogoIndex.png" alt="Bufins Logo" class="sidebar-logo-img">
+                </a>
+                <span class="sidebar-logo-text"></span>
             </div>
-            <li class="nav-item">
-                <!-- === PLANTILLA === -->
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseDatos"
-                   aria-expanded="true" aria-controls="collapseDatos">
-                    <i class="fas fa-file-excel"></i>
-                    <span>Plantilla</span>
-                </a>
-                <div id="collapseDatos" class="collapse" aria-labelledby="headingDatos" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <a class="collapse-item" href="@Url.Action("CargueExcel", "Datos")">Cargue excel</a>
+            <button class="sidebar-toggle-btn" aria-label="Colapsar">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        </div>
+
+        <!-- Búsqueda en el Menú -->
+        <div class="sidebar-search">
+            <div class="sidebar-search-wrapper">
+                <i class="fas fa-search sidebar-search-icon"></i>
+                <input type="text" class="sidebar-search-input" placeholder="Buscar..." autocomplete="off">
+            </div>
+        </div>
+
+        <!-- Menú Principal -->
+        <nav class="sidebar-menu">
+            <!-- ========== CATEGORÍA: DATOS ========== -->
+            <div class="sidebar-category">
+                <div class="sidebar-category-header">
+                    <i class="fas fa-database sidebar-category-icon"></i>
+                    <span class="sidebar-category-title">DATOS</span>
+                </div>
+
+                <!-- Plantilla -->
+                <div class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" href="#" data-has-submenu="true">
+                        <i class="fas fa-file-excel sidebar-nav-icon"></i>
+                        <span class="sidebar-nav-text">Plantilla</span>
+                        <i class="fas fa-chevron-right sidebar-nav-arrow"></i>
+                        <span class="sidebar-tooltip">Plantilla</span>
+                    </a>
+                    <div class="sidebar-submenu">
+                        <div class="sidebar-submenu-item">
+                            <a class="sidebar-submenu-link" href="@Url.Action("CargueExcel", "Datos")">
+                                Cargue excel
+                            </a>
+                        </div>
                     </div>
                 </div>
-                <!-- === MODELO === -->
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseModelo"
-                   aria-expanded="true" aria-controls="collapseModelo">
-                    <i class="fas fa-database"></i>
-                    <span>Modelo</span>
-                </a>
-                <div id="collapseModelo" class="collapse" aria-labelledby="headingModelo" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <a class="collapse-item" href="@Url.Action("Modelo","Datos")">Ejecución modelo</a>
+
+                <!-- Modelo -->
+                <div class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" href="#" data-has-submenu="true">
+                        <i class="fas fa-cogs sidebar-nav-icon"></i>
+                        <span class="sidebar-nav-text">Modelo</span>
+                        <i class="fas fa-chevron-right sidebar-nav-arrow"></i>
+                        <span class="sidebar-tooltip">Modelo</span>
+                    </a>
+                    <div class="sidebar-submenu">
+                        <div class="sidebar-submenu-item">
+                            <a class="sidebar-submenu-link" href="@Url.Action("Modelo","Datos")">
+                                Ejecución modelo
+                            </a>
+                        </div>
                     </div>
                 </div>
-            </li>
-            <hr class="sidebar-divider">
-            <!-- ========== MÓDULO DE REPORTES ========== -->
+            </div>
+            <!-- ========== CATEGORÍA: INFORMES ========== -->
             @{
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 var esAdmin = usuario?.Admin == 1;
                 var idEmpresa = usuario?.IdEmpresa ?? 0;
                 var nombreEmpresa = bufinscustomers.Controllers.ReportesController.ObtenerNombreEmpresaPorId(idEmpresa);
             }
-            @if (esAdmin)
-            {
-                <div class="sidebar-heading">
-                    <i class="fas fa-square-caret-down" style="color:#01E1D7"></i>
-                    Informes
+            <div class="sidebar-category">
+                <div class="sidebar-category-header">
+                    <i class="fas fa-chart-line sidebar-category-icon"></i>
+                    <span class="sidebar-category-title">INFORMES</span>
                 </div>
 
-                <!-- ========== SECCION REPORTES IF ========== -->
-                <li class="nav-item">
-                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseReportes"
-                       aria-expanded="false" aria-controls="collapseReportes">
-                        <i class="fas fa-chart-column"></i>
-                        <span>Reportes</span>
+                <!-- Reportes -->
+                <div class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" href="#" data-has-submenu="true">
+                        <i class="fas fa-chart-column sidebar-nav-icon"></i>
+                        <span class="sidebar-nav-text">Reportes</span>
+                        @if (!esAdmin)
+                        {
+                            <span class="sidebar-badge badge-success">1</span>
+                        }
+                        <i class="fas fa-chevron-right sidebar-nav-arrow"></i>
+                        <span class="sidebar-tooltip">Reportes</span>
                     </a>
-                    <div id="collapseReportes" class="collapse" aria-labelledby="headingReportes" data-parent="#accordionSidebar">
-                        <div class="bg-white py-2 collapse-inner rounded">
-                            <a class="collapse-item" href="@Url.Action("VerReporte", "Reportes")">Dashboards PBI</a>
+                    <div class="sidebar-submenu">
+                        <div class="sidebar-submenu-item">
+                            @if (esAdmin)
+                            {
+                                <a class="sidebar-submenu-link" href="@Url.Action("VerReporte", "Reportes")">
+                                    Dashboards PBI
+                                </a>
+                            }
+                            else
+                            {
+                                <a class="sidebar-submenu-link" href="@Url.Action("VerReporte", "Reportes")" title="Reportes @nombreEmpresa">
+                                    Dashboards PBI @nombreEmpresa
+                                </a>
+                            }
                         </div>
                     </div>
-                </li>
-            }
-            else
-            {
-                <div class="sidebar-heading">
-                    <i class="fas fa-fw fa-chart-line"></i>
-                    Informes
                 </div>
-                <!-- ========== SECCION REPORTES ELSE ========== -->
-                <li class="nav-item">
-                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseReportes"
-                       aria-expanded="false" aria-controls="collapseReportes">
-                        <i class="fas fa-chart-bar"></i>
-                        <span>Reportes</span>
+
+                <!-- Informes -->
+                <div class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" href="#" data-has-submenu="true">
+                        <i class="fas fa-table sidebar-nav-icon"></i>
+                        <span class="sidebar-nav-text">Informes</span>
+                        <i class="fas fa-chevron-right sidebar-nav-arrow"></i>
+                        <span class="sidebar-tooltip">Informes</span>
                     </a>
-                    <div id="collapseReportes" class="collapse" aria-labelledby="headingReportes" data-parent="#accordionSidebar">
-                        <div class="bg-white py-2 collapse-inner rounded">
-                            <a class="collapse-item d-flex align-items-start"
-                               href="@Url.Action("VerReporte", "Reportes")"
-                               title="Reportes @nombreEmpresa"
-                               style="white-space: normal; word-break: break-word; line-height: 1.2;">
-                                Dashboards PBI @nombreEmpresa
+                    <div class="sidebar-submenu">
+                        <div class="sidebar-submenu-item">
+                            <a class="sidebar-submenu-link" href="@Url.Action("AuditoriaCargues", "AuditoriaCargues")">
+                                Cargues de información
                             </a>
                         </div>
                     </div>
-                </li>
-            }
-            <!-- ========== SECCION INFORMES ========== -->
-            <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseInformes"
-                   aria-expanded="false" aria-controls="collapseInformes">
-                    <i class="fas fa-table"></i>
-                    <span>Informes</span>
-                </a>
-                <div id="collapseInformes" class="collapse" aria-labelledby="headingInformes" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <a class="collapse-item" href="@Url.Action("AuditoriaCargues", "AuditoriaCargues")">Cargues de información</a>
-                    </div>
                 </div>
-            </li>
-            <hr class="sidebar-divider">
-            <!-- ========== MÓDULO DE ADMINISTRACION ========== -->
-            <div class="sidebar-heading">
-                <i class="fas fa-fw fa-cog" style="color:#01E1D7"></i>
-                Administración
             </div>
-            <li class="nav-item">
+            <!-- ========== CATEGORÍA: ADMINISTRACIÓN ========== -->
+            <div class="sidebar-category">
+                <div class="sidebar-category-header">
+                    <i class="fas fa-cog sidebar-category-icon"></i>
+                    <span class="sidebar-category-title">ADMINISTRACIÓN</span>
+                </div>
+
                 @if (UsuarioSesionHelper.UsuarioActual != null && UsuarioSesionHelper.UsuarioActual.Admin == 1)
                 {
-                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseThree"
-                       aria-expanded="true" aria-controls="collapseThree">
-                        <i class="fas fa-user-plus"></i>
-                        <span>Usuarios</span>
-                    </a>
-                    <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordionSidebar">
-                        <div class="bg-white py-2 collapse-inner rounded">
-                            <a class="collapse-item" href="@Url.Action("Usuarios", "Usuario")">Maestro usuarios</a>
+                    <!-- Usuarios -->
+                    <div class="sidebar-nav-item">
+                        <a class="sidebar-nav-link" href="#" data-has-submenu="true">
+                            <i class="fas fa-user-plus sidebar-nav-icon"></i>
+                            <span class="sidebar-nav-text">Usuarios</span>
+                            <i class="fas fa-chevron-right sidebar-nav-arrow"></i>
+                            <span class="sidebar-tooltip">Usuarios</span>
+                        </a>
+                        <div class="sidebar-submenu">
+                            <div class="sidebar-submenu-item">
+                                <a class="sidebar-submenu-link" href="@Url.Action("Usuarios", "Usuario")">
+                                    Maestro usuarios
+                                </a>
+                            </div>
                         </div>
                     </div>
-                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseEmpresas"
-                       aria-expanded="true" aria-controls="collapseEmpresas">
-                        <i class="fas fa-building"></i>
-                        <span>Empresas</span>
-                    </a>
-                    <div id="collapseEmpresas" class="collapse" aria-labelledby="headingEmpresas" data-parent="#accordionSidebar">
-                        <div class="bg-white py-2 collapse-inner rounded">
-                            <a class="collapse-item" href="@Url.Action("Empresas", "Empresa")">Maestro empresas</a>
+
+                    <!-- Empresas -->
+                    <div class="sidebar-nav-item">
+                        <a class="sidebar-nav-link" href="#" data-has-submenu="true">
+                            <i class="fas fa-building sidebar-nav-icon"></i>
+                            <span class="sidebar-nav-text">Empresas</span>
+                            <i class="fas fa-chevron-right sidebar-nav-arrow"></i>
+                            <span class="sidebar-tooltip">Empresas</span>
+                        </a>
+                        <div class="sidebar-submenu">
+                            <div class="sidebar-submenu-item">
+                                <a class="sidebar-submenu-link" href="@Url.Action("Empresas", "Empresa")">
+                                    Maestro empresas
+                                </a>
+                            </div>
                         </div>
                     </div>
-                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseReportesConfig"
-                       aria-expanded="true" aria-controls="collapseReportesConfig">
-                        <i class="fas fa-file-circle-plus"></i>
-                        <span>Reportes</span>
-                    </a>
-                    <div id="collapseReportesConfig" class="collapse" aria-labelledby="headingReportes" data-parent="#accordionSidebar">
-                        <div class="bg-white py-2 collapse-inner rounded">
-                            <a class="collapse-item" href="@Url.Action("MaestroReportes", "Reportes")">Maestro reportes</a>
+
+                    <!-- Reportes Config -->
+                    <div class="sidebar-nav-item">
+                        <a class="sidebar-nav-link" href="#" data-has-submenu="true">
+                            <i class="fas fa-file-circle-plus sidebar-nav-icon"></i>
+                            <span class="sidebar-nav-text">Reportes</span>
+                            <i class="fas fa-chevron-right sidebar-nav-arrow"></i>
+                            <span class="sidebar-tooltip">Reportes</span>
+                        </a>
+                        <div class="sidebar-submenu">
+                            <div class="sidebar-submenu-item">
+                                <a class="sidebar-submenu-link" href="@Url.Action("MaestroReportes", "Reportes")">
+                                    Maestro reportes
+                                </a>
+                            </div>
                         </div>
                     </div>
                 }
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseConfigEmpresas"
-                   aria-expanded="true" aria-controls="collapseConfigEmpresas">
-                    <i class="fas fa-cogs"></i>
-                    <span>Configuración</span>
-                </a>
-                <div id="collapseConfigEmpresas" class="collapse" aria-labelledby="headingConfigEmpresas" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <a class="collapse-item" href="@Url.Action("Index", "ConfiguracionEmpresa")">Configuración empresas</a>
+
+                <!-- Configuración -->
+                <div class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" href="#" data-has-submenu="true">
+                        <i class="fas fa-cogs sidebar-nav-icon"></i>
+                        <span class="sidebar-nav-text">Configuración</span>
+                        <i class="fas fa-chevron-right sidebar-nav-arrow"></i>
+                        <span class="sidebar-tooltip">Configuración</span>
+                    </a>
+                    <div class="sidebar-submenu">
+                        <div class="sidebar-submenu-item">
+                            <a class="sidebar-submenu-link" href="@Url.Action("Index", "ConfiguracionEmpresa")">
+                                Configuración empresas
+                            </a>
+                        </div>
                     </div>
                 </div>
-            </li>
-            <div class="text-center d-none d-md-inline">
-                <button class="rounded-circle border-0" id="sidebarToggle"></button>
             </div>
-        </ul>
-        <div id="content-wrapper" class="d-flex flex-column">
+        </nav>
+
+        <!-- Footer del Sidebar -->
+        <div class="sidebar-footer">
+            <span class="sidebar-footer-text">© Bufins 2025</span>
+        </div>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <div id="content-wrapper" class="d-flex flex-column main-content">
             <div id="content">
                 <nav class="navbar navbar-expand navbar-light topbar mb-4 static-top shadow">
                     <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
@@ -1101,13 +1166,6 @@
                     </form>
                 </div>
             </div>
-            <footer class="sticky-footer">
-                <div class="container my-auto">
-                    <div class="copyright text-center my-auto">
-                        <span style="color:white;">Copyright &copy; Bufins 2025</span>
-                    </div>
-                </div>
-            </footer>
         </div>
     </div>
 
@@ -1119,6 +1177,7 @@
     <script src="~/Assets/Bootstrap/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="~/Assets/Bootstrap/jquery-easing/jquery.easing.min.js"></script>
     <script src="~/Assets/js/sb-admin-2.min.js"></script>
+    <script src="~/Assets/js/modern-sidebar.js"></script>
 
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
