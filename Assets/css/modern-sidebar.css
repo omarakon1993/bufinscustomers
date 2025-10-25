@@ -14,7 +14,7 @@
     --sidebar-text-secondary: #a8a8b8;
     --sidebar-hover-bg: rgba(88, 58, 255, 0.15);
     --sidebar-active-bg: rgba(88, 58, 255, 0.25);
-    --sidebar-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --sidebar-transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     --sidebar-shadow: 0 10px 40px rgba(22, 9, 51, 0.4);
     --sidebar-z-index: 1000;
 }
@@ -344,7 +344,7 @@
 /* Flecha para items con submenú */
 .sidebar-nav-arrow {
     font-size: 0.75rem;
-    transition: var(--sidebar-transition);
+    transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s ease;
     opacity: 1;
 }
 
@@ -362,7 +362,7 @@
 .sidebar-submenu {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease-in-out;
+    transition: max-height 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     background: rgba(0, 0, 0, 0.2);
 }
 
@@ -479,7 +479,7 @@
     white-space: nowrap;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s ease-in-out;
+    transition: opacity 0.15s ease;
     z-index: 9999;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(88, 58, 255, 0.3);
@@ -652,7 +652,7 @@
     z-index: calc(var(--sidebar-z-index) - 1);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease-in-out;
+    transition: opacity 0.2s ease;
 }
 
 .sidebar-backdrop.active {
@@ -685,7 +685,7 @@
     cursor: pointer;
     z-index: 999;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    transition: var(--sidebar-transition);
+    transition: background 0.2s ease, transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .sidebar-hamburger:hover {
@@ -772,7 +772,7 @@
 }
 
 .modern-sidebar.animate-in {
-    animation: slideIn 0.3s ease-out;
+    animation: slideIn 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* ===== FIN MODERN SIDEBAR CSS ===== */

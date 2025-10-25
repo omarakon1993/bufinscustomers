@@ -10,8 +10,8 @@
     // ===== CONFIGURACIÓN =====
     const CONFIG = {
         STORAGE_KEY: 'bufins_sidebar_state',
-        DEBOUNCE_DELAY: 300,
-        ANIMATION_DURATION: 300,
+        DEBOUNCE_DELAY: 250,
+        ANIMATION_DURATION: 200,
         MOBILE_BREAKPOINT: 992,
         TABLET_BREAKPOINT: 768
     };
@@ -349,7 +349,7 @@
                 // Móvil/Tablet: quitar estado colapsado
                 sidebar.classList.remove('collapsed');
             }
-        }, 100);
+        }, 50);
     }
 
     // ===== PERSISTENCIA DE ESTADO =====
