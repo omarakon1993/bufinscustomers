@@ -504,6 +504,35 @@
     display: none;
 }
 
+/* ===== SLOGAN SEMITRANSPARENTE ===== */
+
+.sidebar-slogan {
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.sidebar-slogan-text {
+    font-size: 0.55rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.15);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 1;
+    transition: var(--sidebar-transition);
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.modern-sidebar.collapsed .sidebar-slogan-text {
+    opacity: 0;
+    width: 0;
+}
+
 /* ===== FOOTER DEL SIDEBAR ===== */
 
 .sidebar-footer {
@@ -569,7 +598,8 @@
     .modern-sidebar .sidebar-logo-text,
     .modern-sidebar .sidebar-category-title,
     .modern-sidebar .sidebar-nav-text,
-    .modern-sidebar .sidebar-footer-text {
+    .modern-sidebar .sidebar-footer-text,
+    .modern-sidebar .sidebar-slogan-text {
         opacity: 1;
         width: auto;
     }
@@ -604,6 +634,7 @@
     .modern-sidebar .sidebar-category-title,
     .modern-sidebar .sidebar-nav-text,
     .modern-sidebar .sidebar-footer-text,
+    .modern-sidebar .sidebar-slogan-text,
     .modern-sidebar .sidebar-nav-arrow {
         opacity: 1 !important;
         width: auto !important;
