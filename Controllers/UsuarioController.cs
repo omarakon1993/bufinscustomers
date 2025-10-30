@@ -50,6 +50,30 @@ namespace bufinscustomers.Controllers
                             usuario.Telefono = (string)reader["Telefono"];
                             usuario.Admin = reader["Admin"] != DBNull.Value ? (byte?)reader["Admin"] : null;
                             usuario.IdEmpresa = reader["IdEmpresa"] != DBNull.Value ? (int?)reader["IdEmpresa"] : null;
+
+                            // Cargar imagen si existe (verificar que las columnas existan en el resultado)
+                            try
+                            {
+                                // Verificar si las columnas de imagen existen en el resultado
+                                int imagenBase64Index = reader.GetOrdinal("ImagenBase64");
+                                int tipoImagenIndex = reader.GetOrdinal("TipoImagen");
+
+                                if (reader["ImagenBase64"] != DBNull.Value && reader["TipoImagen"] != DBNull.Value)
+                                {
+                                    usuario.Imagen = new ImagenUsuario
+                                    {
+                                        ImagenBase64 = reader["ImagenBase64"].ToString(),
+                                        TipoImagen = reader["TipoImagen"].ToString(),
+                                        UsuarioId = usuario.Id
+                                    };
+                                }
+                            }
+                            catch (IndexOutOfRangeException)
+                            {
+                                // Las columnas de imagen no existen en el SP, continuar sin imagen
+                                usuario.Imagen = null;
+                            }
+
                             usuarios.Add(usuario);
                         }
                     }
@@ -87,7 +111,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
-        public ActionResult EditarUsuario(Usuarios oUsuario)
+        public ActionResult EditarUsuario(Usuarios oUsuario, HttpPostedFileBase ImagenUsuario)
         {
             oUsuario.Telefono = oUsuario.Telefono == null ? "" : oUsuario.Telefono;
             try
@@ -105,13 +129,19 @@ namespace bufinscustomers.Controllers
                         command.Parameters.AddWithValue("@Nombre", oUsuario.Nombre);
                         command.Parameters.AddWithValue("@Apellidos", oUsuario.Apellidos);
                         command.Parameters.AddWithValue("@Correo", oUsuario.Correo);
-                        command.Parameters.AddWithValue("@Telefono", oUsuario.Telefono);              
+                        command.Parameters.AddWithValue("@Telefono", oUsuario.Telefono);
                         command.Parameters.AddWithValue("@Admin", oUsuario.Admin);
                         command.Parameters.AddWithValue("@IdEmpresa", oUsuario.IdEmpresa);
                         command.Parameters.AddWithValue("@Usuario", oUsuario.Usuario);
 
                         connection.Open();
                         command.ExecuteNonQuery();
+                    }
+
+                    // Procesar imagen si se cargó una
+                    if (ImagenUsuario != null && ImagenUsuario.ContentLength > 0)
+                    {
+                        GuardarImagenUsuario(oUsuario.Id, ImagenUsuario);
                     }
                 }
 
@@ -126,10 +156,11 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
-        public ActionResult Registrar(Usuarios oUsuario)
+        public ActionResult Registrar(Usuarios oUsuario, HttpPostedFileBase ImagenUsuario)
         {
             bool registrado;
             string mensaje;
+            int usuarioId = 0;
 
             if (!EsUsuarioValido(oUsuario.Usuario))
             {
@@ -179,15 +210,33 @@ namespace bufinscustomers.Controllers
                 cmd.Parameters.AddWithValue("IdEmpresa", oUsuario.IdEmpresa);
                 cmd.Parameters.Add("Registrado", SqlDbType.Bit).Direction = ParameterDirection.Output;
                 cmd.Parameters.Add("Mensaje", SqlDbType.VarChar, 100).Direction = ParameterDirection.Output;
+                cmd.Parameters.Add("IdUsuario", SqlDbType.Int).Direction = ParameterDirection.Output;
                 cmd.CommandType = CommandType.StoredProcedure;
                 cn.Open();
                 cmd.ExecuteNonQuery();
                 registrado = Convert.ToBoolean(cmd.Parameters["Registrado"].Value);
                 mensaje = cmd.Parameters["Mensaje"].Value.ToString();
+                if (registrado && cmd.Parameters["IdUsuario"].Value != DBNull.Value)
+                {
+                    usuarioId = Convert.ToInt32(cmd.Parameters["IdUsuario"].Value);
+                }
             }
 
             if (registrado)
             {
+                // Procesar imagen si se cargó una y el usuario se registró correctamente
+                if (ImagenUsuario != null && ImagenUsuario.ContentLength > 0 && usuarioId > 0)
+                {
+                    try
+                    {
+                        GuardarImagenUsuario(usuarioId, ImagenUsuario);
+                    }
+                    catch (Exception ex)
+                    {
+                        SetErrorMessage("Usuario creado pero error al guardar imagen: " + ex.Message);
+                        return RedirectToAction("Usuarios");
+                    }
+                }
                 SetSuccessMessage(mensaje);
             }
             else
@@ -195,7 +244,7 @@ namespace bufinscustomers.Controllers
                 SetErrorMessage(mensaje);
             }
 
-            return RedirectToAction("Usuarios");         
+            return RedirectToAction("Usuarios");
         }
 
         [HttpPost]
@@ -242,26 +291,18 @@ namespace bufinscustomers.Controllers
             return System.Text.RegularExpressions.Regex.IsMatch(usuario, @"^[a-z][a-z0-9.]{3,19}$");
         }
 
-        [HttpPost]
-        public ActionResult CargarImagenUsuario(HttpPostedFileBase ImagenUsuario)
+        private void GuardarImagenUsuario(int usuarioId, HttpPostedFileBase imagenArchivo)
         {
-            var base64Copia = "";
-            var tipoImagenCopia = "";
-
-            if (ImagenUsuario != null && ImagenUsuario.ContentLength > 0)
+            if (imagenArchivo != null && imagenArchivo.ContentLength > 0)
             {
                 // Convertir la imagen a base64
                 using (var ms = new MemoryStream())
                 {
-                    ImagenUsuario.InputStream.CopyTo(ms);
+                    imagenArchivo.InputStream.CopyTo(ms);
                     var bytes = ms.ToArray();
                     var base64 = Convert.ToBase64String(bytes);
-                    var tipoImagen = ImagenUsuario.ContentType;
-                    var nombreImagen = Path.GetFileName(ImagenUsuario.FileName);
-                    var usuarioId = UsuarioSesionHelper.UsuarioActual.Id;
-
-                    base64Copia = base64;
-                    tipoImagenCopia = tipoImagen;
+                    var tipoImagen = imagenArchivo.ContentType;
+                    var nombreImagen = Path.GetFileName(imagenArchivo.FileName);
 
                     using (SqlConnection connection = new SqlConnection(CadenaConexion))
                     {
@@ -278,6 +319,29 @@ namespace bufinscustomers.Controllers
                         }
                     }
                 }
+            }
+        }
+
+        [HttpPost]
+        public ActionResult CargarImagenUsuario(HttpPostedFileBase ImagenUsuario)
+        {
+            var base64Copia = "";
+            var tipoImagenCopia = "";
+
+            if (ImagenUsuario != null && ImagenUsuario.ContentLength > 0)
+            {
+                var usuarioId = UsuarioSesionHelper.UsuarioActual.Id;
+
+                // Convertir la imagen a base64
+                using (var ms = new MemoryStream())
+                {
+                    ImagenUsuario.InputStream.CopyTo(ms);
+                    var bytes = ms.ToArray();
+                    base64Copia = Convert.ToBase64String(bytes);
+                    tipoImagenCopia = ImagenUsuario.ContentType;
+                }
+
+                GuardarImagenUsuario(usuarioId, ImagenUsuario);
 
                 return Json(new { success = true, message = "Imagen de usuario actualizada correctamente.", tipoImagen = tipoImagenCopia, imagenBase64 = base64Copia });
             }

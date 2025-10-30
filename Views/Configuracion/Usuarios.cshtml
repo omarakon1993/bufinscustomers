@@ -197,6 +197,7 @@
                 <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                     <thead>
                         <tr>
+                            <th>Imagen</th>
                             <th>Id</th>
                             <th>Nombre</th>
                             <th>Apellidos</th>
@@ -214,14 +215,29 @@
                             Func<Empresas, bool> empresaPredicate = e => e.Id == usuario.IdEmpresa;
                             var empresasList = ViewBag.Empresas as List<bufinscustomers.Models.Empresas>;
                             var empresa = empresasList?.FirstOrDefault(empresaPredicate);
+                            var imagenUsuario = usuario.Imagen;
 
                             <tr>
-                                <td>@usuario.Id</td>
-                                <td>@usuario.Nombre</td>
-                                <td>@usuario.Apellidos</td>
-                                <td>@usuario.Telefono</td>
-                                <td>@usuario.Correo</td>
-                                <td align="center">
+                                <td align="center" data-label="Imagen">
+                                    @if (imagenUsuario != null && !string.IsNullOrEmpty(imagenUsuario.ImagenBase64))
+                                    {
+                                        <img src="data:@imagenUsuario.TipoImagen;base64,@imagenUsuario.ImagenBase64"
+                                             alt="Imagen usuario"
+                                             class="user-thumbnail"
+                                             style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; cursor: pointer; border: 2px solid #583AFF;"
+                                             onclick="showImageModal('data:@imagenUsuario.TipoImagen;base64,@imagenUsuario.ImagenBase64', '@usuario.Nombre @usuario.Apellidos')" />
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-user-circle fa-2x" style="color: #ccc;"></i>
+                                    }
+                                </td>
+                                <td data-label="Id">@usuario.Id</td>
+                                <td data-label="Nombre">@usuario.Nombre</td>
+                                <td data-label="Apellidos">@usuario.Apellidos</td>
+                                <td data-label="Teléfono">@usuario.Telefono</td>
+                                <td data-label="Correo">@usuario.Correo</td>
+                                <td align="center" data-label="Admin">
                                     @if (usuario.Admin == 1)
                                     {
                                         <i class="fas fa-fw fa-check text-success"></i>
@@ -231,11 +247,11 @@
                                         <i class="fas fa-fw fa-times text-danger"></i>
                                     }
                                 </td>
-                                <td>@(empresa != null ? empresa.Nombre : string.Empty)</td>
-                                <td>
+                                <td data-label="Empresa">@(empresa != null ? empresa.Nombre : string.Empty)</td>
+                                <td data-label="Acciones">
                                     <div class="btn-group" role="group" aria-label="User Actions">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editUserModal"
-                                                onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa', '@usuario.Usuario', '@usuario.Clave')">
+                                                onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa', '@usuario.Usuario', '@usuario.Clave', '@(imagenUsuario != null && !string.IsNullOrEmpty(imagenUsuario.ImagenBase64) ? "data:" + imagenUsuario.TipoImagen + ";base64," + imagenUsuario.ImagenBase64 : "")')">
                                             Editar
                                         </button>
                                         <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" onclick="setIdUsuario(@usuario.Id)">
@@ -298,7 +314,7 @@
                     </h5>
                     <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
-                <form id="editUserForm" method="post" action="/Usuario/EditarUsuario">
+                <form id="editUserForm" method="post" action="/Usuario/EditarUsuario" enctype="multipart/form-data">
                     <input type="hidden" id="editIdUsuario" name="Id" />
                     <div class="modal-body">
                         <!-- Pestañas de navegación -->
@@ -311,6 +327,11 @@
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="edit-user-data-tab" data-bs-toggle="tab" data-bs-target="#edit-user-data" type="button" role="tab" aria-controls="edit-user-data" aria-selected="false">
                                     Datos del Usuario
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="edit-user-image-tab" data-bs-toggle="tab" data-bs-target="#edit-user-image" type="button" role="tab" aria-controls="edit-user-image" aria-selected="false">
+                                    Imagen
                                 </button>
                             </li>
                         </ul>
@@ -378,6 +399,29 @@
                                     <input type="checkbox" id="editAdmin" name="Admin" value="1" />
                                 </div>
                             </div>
+
+                            <!-- Pestaña de Imagen -->
+                            <div class="tab-pane fade" id="edit-user-image" role="tabpanel" aria-labelledby="edit-user-image-tab">
+                                <div class="mb-3 mt-3">
+                                    <label for="editImagenUsuario" class="form-label">
+                                        <i class="fas fa-image mr-2" style="color: #583AFF;"></i>Imagen de perfil
+                                    </label>
+                                    <input type="file" class="form-control" id="editImagenUsuario" name="ImagenUsuario" accept="image/*" onchange="previewImageEdit(this)" />
+                                    <small class="form-text text-muted">Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 10MB (se comprimirá automáticamente)</small>
+                                </div>
+                                <div class="text-center mt-3" id="editImagenPreview">
+                                    <img id="editPreviewImg" src="" alt="Vista previa" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid #583AFF; display: none;" />
+                                    <div class="mt-2" id="editImagenActions" style="display: none;">
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="removeImageEdit()">
+                                            <i class="fas fa-times"></i> Eliminar imagen
+                                        </button>
+                                    </div>
+                                    <div id="editNoImagenText" class="text-muted">
+                                        <i class="fas fa-user-circle fa-5x mb-2" style="color: #ccc;"></i>
+                                        <p>Sin imagen cargada</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -403,7 +447,7 @@
                     </h5>
                     <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
-                <form id="crearUsuarioForm" method="post" action="/Usuario/Registrar">
+                <form id="crearUsuarioForm" method="post" action="/Usuario/Registrar" enctype="multipart/form-data">
                     <div class="modal-body">
                         <!-- Pestañas de navegación -->
                         <ul class="nav nav-tabs" id="crearUsuarioTabs" role="tablist">
@@ -415,6 +459,11 @@
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="user-data-tab" data-bs-toggle="tab" data-bs-target="#user-data" type="button" role="tab" aria-controls="user-data" aria-selected="false">
                                     Datos del Usuario
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="user-image-tab" data-bs-toggle="tab" data-bs-target="#user-image" type="button" role="tab" aria-controls="user-image" aria-selected="false">
+                                    Imagen
                                 </button>
                             </li>
                         </ul>
@@ -491,6 +540,25 @@
                                     <input type="checkbox" id="crearAdmin" name="Admin" value="1" />
                                 </div>
                             </div>
+
+                            <!-- Pestaña de Imagen -->
+                            <div class="tab-pane fade" id="user-image" role="tabpanel" aria-labelledby="user-image-tab">
+                                <div class="mb-3 mt-3">
+                                    <label for="crearImagenUsuario" class="form-label">
+                                        <i class="fas fa-image mr-2" style="color: #583AFF;"></i>Imagen de perfil
+                                    </label>
+                                    <input type="file" class="form-control" id="crearImagenUsuario" name="ImagenUsuario" accept="image/*" onchange="previewImageCreate(this)" />
+                                    <small class="form-text text-muted">Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 10MB (se comprimirá automáticamente)</small>
+                                </div>
+                                <div class="text-center mt-3" id="crearImagenPreview" style="display: none;">
+                                    <img id="crearPreviewImg" src="" alt="Vista previa" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid #583AFF;" />
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="removeImageCreate()">
+                                            <i class="fas fa-times"></i> Eliminar imagen
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -537,6 +605,30 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para visualizar imagen completa -->
+    <div class="modal fade" id="imageViewModal" tabindex="-1" aria-labelledby="imageViewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imageViewModalLabel">
+                        <i class="fas fa-image"></i> Imagen de Usuario
+                    </h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modalImageView" src="" alt="Imagen usuario" style="max-width: 100%; max-height: 70vh; border-radius: 8px;" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times mr-2"></i>Cerrar
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -614,7 +706,7 @@
                 document.getElementById("idUsuario").value = id;
             }
 
-            function setEditUser(id, nombre, apellidos, telefono, Correo, admin, idEmpresa, usuario, clave) {
+            function setEditUser(id, nombre, apellidos, telefono, Correo, admin, idEmpresa, usuario, clave, imagenUrl) {
 
                 document.getElementById("editIdUsuario").value = id;
                 document.getElementById("editNombre").value = nombre;
@@ -624,6 +716,25 @@
                 document.getElementById("editAdmin").checked = (admin == 1 || admin === '1');
                 document.getElementById("editIdEmpresa").value = idEmpresa;
                 document.getElementById("editUsuario").value = usuario;
+
+                // Manejar imagen existente
+                var editPreviewImg = document.getElementById("editPreviewImg");
+                var editNoImagenText = document.getElementById("editNoImagenText");
+                var editImagenActions = document.getElementById("editImagenActions");
+
+                if (imagenUrl && imagenUrl !== '') {
+                    editPreviewImg.src = imagenUrl;
+                    editPreviewImg.style.display = 'block';
+                    editImagenActions.style.display = 'block';
+                    editNoImagenText.style.display = 'none';
+                } else {
+                    editPreviewImg.style.display = 'none';
+                    editImagenActions.style.display = 'none';
+                    editNoImagenText.style.display = 'block';
+                }
+
+                // Limpiar input de archivo
+                document.getElementById("editImagenUsuario").value = '';
             }
 
 
@@ -680,7 +791,213 @@
             // Llama la función para cada formulario/modal
             validarFormularioConAlerta('crearUsuarioForm', 'btnCrearUsuario');
             validarFormularioConAlerta('editUserForm', 'btnEditarUsuario');
-      
+
+            // Función para comprimir imagen usando canvas
+            function compressImage(file, maxWidth, maxHeight, quality) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = function (e) {
+                        const img = new Image();
+                        img.src = e.target.result;
+                        img.onload = function () {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+
+                            // Calcular nuevas dimensiones manteniendo aspecto
+                            if (width > height) {
+                                if (width > maxWidth) {
+                                    height *= maxWidth / width;
+                                    width = maxWidth;
+                                }
+                            } else {
+                                if (height > maxHeight) {
+                                    width *= maxHeight / height;
+                                    height = maxHeight;
+                                }
+                            }
+
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+
+                            // Convertir a blob con calidad especificada
+                            canvas.toBlob(
+                                (blob) => {
+                                    if (blob) {
+                                        resolve(blob);
+                                    } else {
+                                        reject(new Error('Error al comprimir imagen'));
+                                    }
+                                },
+                                file.type || 'image/jpeg',
+                                quality
+                            );
+                        };
+                        img.onerror = reject;
+                    };
+                    reader.onerror = reject;
+                });
+            }
+
+            // Funciones para preview de imagen en crear usuario
+            function previewImageCreate(input) {
+                if (input.files && input.files[0]) {
+                    const file = input.files[0];
+
+                    // Validar tamaño inicial (10MB máximo antes de comprimir)
+                    if (file.size > 10485760) {
+                        const isMobile = window.innerWidth <= 768;
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'El archivo es demasiado grande. Máximo 10MB.',
+                            toast: true,
+                            position: isMobile ? 'top' : 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                        input.value = '';
+                        return;
+                    }
+
+                    // Comprimir imagen
+                    compressImage(file, 1024, 1024, 0.8).then(compressedBlob => {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            document.getElementById('crearPreviewImg').src = e.target.result;
+                            document.getElementById('crearImagenPreview').style.display = 'block';
+
+                            // Crear un nuevo File del blob comprimido
+                            const compressedFile = new File([compressedBlob], file.name, { type: file.type });
+
+                            // Reemplazar el archivo en el input con el comprimido
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(compressedFile);
+                            input.files = dataTransfer.files;
+
+                            // Mostrar info de compresión
+                            const originalSize = (file.size / 1024).toFixed(2);
+                            const compressedSize = (compressedBlob.size / 1024).toFixed(2);
+                            const reduction = ((1 - compressedBlob.size / file.size) * 100).toFixed(0);
+                            console.log(`Imagen comprimida: ${originalSize}KB -> ${compressedSize}KB (${reduction}% reducción)`);
+                        };
+                        reader.readAsDataURL(compressedBlob);
+                    }).catch(error => {
+                        console.error('Error al comprimir imagen:', error);
+                        // Si falla la compresión, mostrar imagen original
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            document.getElementById('crearPreviewImg').src = e.target.result;
+                            document.getElementById('crearImagenPreview').style.display = 'block';
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                }
+            }
+
+            function removeImageCreate() {
+                document.getElementById('crearImagenUsuario').value = '';
+                document.getElementById('crearImagenPreview').style.display = 'none';
+                document.getElementById('crearPreviewImg').src = '';
+            }
+
+            // Funciones para preview de imagen en editar usuario
+            function previewImageEdit(input) {
+                if (input.files && input.files[0]) {
+                    const file = input.files[0];
+
+                    // Validar tamaño inicial (10MB máximo antes de comprimir)
+                    if (file.size > 10485760) {
+                        const isMobile = window.innerWidth <= 768;
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'El archivo es demasiado grande. Máximo 10MB.',
+                            toast: true,
+                            position: isMobile ? 'top' : 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                        input.value = '';
+                        return;
+                    }
+
+                    // Comprimir imagen
+                    compressImage(file, 1024, 1024, 0.8).then(compressedBlob => {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            var editPreviewImg = document.getElementById('editPreviewImg');
+                            var editNoImagenText = document.getElementById('editNoImagenText');
+                            var editImagenActions = document.getElementById('editImagenActions');
+
+                            editPreviewImg.src = e.target.result;
+                            editPreviewImg.style.display = 'block';
+                            editImagenActions.style.display = 'block';
+                            editNoImagenText.style.display = 'none';
+
+                            // Crear un nuevo File del blob comprimido
+                            const compressedFile = new File([compressedBlob], file.name, { type: file.type });
+
+                            // Reemplazar el archivo en el input con el comprimido
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(compressedFile);
+                            input.files = dataTransfer.files;
+
+                            // Mostrar info de compresión
+                            const originalSize = (file.size / 1024).toFixed(2);
+                            const compressedSize = (compressedBlob.size / 1024).toFixed(2);
+                            const reduction = ((1 - compressedBlob.size / file.size) * 100).toFixed(0);
+                            console.log(`Imagen comprimida: ${originalSize}KB -> ${compressedSize}KB (${reduction}% reducción)`);
+                        };
+                        reader.readAsDataURL(compressedBlob);
+                    }).catch(error => {
+                        console.error('Error al comprimir imagen:', error);
+                        // Si falla la compresión, mostrar imagen original
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            var editPreviewImg = document.getElementById('editPreviewImg');
+                            var editNoImagenText = document.getElementById('editNoImagenText');
+                            var editImagenActions = document.getElementById('editImagenActions');
+
+                            editPreviewImg.src = e.target.result;
+                            editPreviewImg.style.display = 'block';
+                            editImagenActions.style.display = 'block';
+                            editNoImagenText.style.display = 'none';
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                }
+            }
+
+            function removeImageEdit() {
+                document.getElementById('editImagenUsuario').value = '';
+                document.getElementById('editPreviewImg').style.display = 'none';
+                document.getElementById('editImagenActions').style.display = 'none';
+                document.getElementById('editNoImagenText').style.display = 'block';
+            }
+
+            // Función para mostrar modal de imagen completa
+            function showImageModal(imageSrc, userName) {
+                document.getElementById('modalImageView').src = imageSrc;
+                document.getElementById('imageViewModalLabel').innerHTML = '<i class="fas fa-image"></i> Imagen de ' + userName;
+                var modal = new bootstrap.Modal(document.getElementById('imageViewModal'));
+                modal.show();
+            }
+
+            // Limpiar formularios al cerrar modales
+            $('#crearUsuarioModal').on('hidden.bs.modal', function () {
+                document.getElementById('crearUsuarioForm').reset();
+                removeImageCreate();
+            });
+
+            $('#editUserModal').on('hidden.bs.modal', function () {
+                // No resetear completamente, solo limpiar la imagen nueva si no se guardó
+                // El formulario se llena con setEditUser
+            });
+
         </script>
     }
 
