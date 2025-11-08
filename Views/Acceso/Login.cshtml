@@ -8,7 +8,7 @@
 <html>
 <head>
     <title>BUFINS - Login</title>
-
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico">
     <link rel="stylesheet" type="text/css" href="~/Assets/css/style.css">
     <link href="~/Assets/GoogleApis/Poppins.css" rel="stylesheet">
     <link rel="stylesheet" href="~/Assets/fontawesome-free-6.7.2-web/css/all.css">
@@ -23,6 +23,19 @@
             -webkit-box-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.1) inset !important;
             -webkit-text-fill-color: #333 !important;
         }
+
+        .back-link {
+            text-decoration: none;
+            color: #888;
+            font-size: 0.75rem;
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: #583AFF;
+        }
     </style>
 
     <div class="background-overlay"></div>
@@ -31,8 +44,11 @@
         <div class="login-card">
             <div class="card-glow"></div>
             <div class="login-header">
-                <h1 class="login-title">LOGIN</h1>
+                <a href="https://bufins.com/" target="_self" class="back-link">
+                    ← Volver a bufins.com
+                </a>
                 <img class="logo-bufins" src="~/Assets/img/Bufins_LogoLogin.png" alt="Bufins Logo">
+                <h1 class="login-title">LOGIN</h1>
                 <p class="login-subtitle">BUSINESS FINANCE ALWAYS EVERYWHERE</p>
             </div>
 
