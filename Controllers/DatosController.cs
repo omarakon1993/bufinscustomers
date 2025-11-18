@@ -10,6 +10,7 @@ using System.Data.SqlClient;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Web;
 using System.Web.Mvc;
 using System.Windows.Media.Media3D;
@@ -21,6 +22,39 @@ namespace bufinscustomers.Controllers
     {
         private readonly EmpresaService _empresaService = new EmpresaService();
         private readonly ConfiguracionEmpresaService _configuracionService = new ConfiguracionEmpresaService();
+        private StringBuilder _logBuilder = new StringBuilder();
+
+        private void LogToFile(string mensaje)
+        {
+            try
+            {
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                string logMessage = $"[{timestamp}] {mensaje}";
+                _logBuilder.AppendLine(logMessage);
+            }
+            catch { /* Ignorar errores de logging */ }
+        }
+
+        private void GuardarLogEnSession()
+        {
+            if (_logBuilder.Length > 0)
+            {
+                Session["LogImportacion"] = _logBuilder.ToString();
+            }
+        }
+
+        public ActionResult DescargarLog()
+        {
+            var log = Session["LogImportacion"] as string;
+            if (string.IsNullOrEmpty(log))
+            {
+                return Content("No hay log disponible para descargar.");
+            }
+
+            byte[] bytes = Encoding.UTF8.GetBytes(log);
+            string fileName = $"LogImportacion_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+            return File(bytes, "text/plain", fileName);
+        }
 
         // Modelo actions
         public ActionResult Modelo()
@@ -290,9 +324,12 @@ namespace bufinscustomers.Controllers
             try
             {
                 DateTime fechaCargue = DateTime.Now;
+                LogToFile($"========== INICIO GUARDADO TABLA: {tabla.TableName} ==========");
+                LogToFile($"Filas en DataTable: {tabla.Rows.Count}");
 
                 conn = new SqlConnection(CadenaConexion);
                 conn.Open();
+                LogToFile("Conexión a SQL Server abierta exitosamente");
 
                 // Normalizar nombre
                 tabla.TableName = NormalizarNombre(tabla.TableName);
@@ -325,49 +362,77 @@ namespace bufinscustomers.Controllers
                     deleteCmd.ExecuteNonQuery();
                 }
 
-                // 🔹 Insertar lo nuevo
-                using (SqlBulkCopy bulk = new SqlBulkCopy(conn))
+                // 🔹 LOGGING: Información de la tabla
+                LogToFile($"Columnas del DataTable ({tabla.Columns.Count}): {string.Join(", ", tabla.Columns.Cast<DataColumn>().Select(c => c.ColumnName))}");
+
+                // Mostrar primeras 3 filas como muestra
+                for (int i = 0; i < Math.Min(3, tabla.Rows.Count); i++)
                 {
-                    bulk.DestinationTableName = $"[dbo].[{tabla.TableName}]";
-                    bulk.WriteToServer(tabla);
+                    var valores = tabla.Rows[i].ItemArray.Select(v => v?.ToString() ?? "NULL").ToList();
+                    LogToFile($"Fila {i + 1} (muestra): {string.Join(" | ", valores)}");
+                }
+
+                // 🔹 Validar datos antes de insertar
+                LogToFile("Iniciando validación de datos...");
+                string errorValidacion = ValidarDatosParaBulkCopy(conn, tabla);
+                if (!string.IsNullOrEmpty(errorValidacion))
+                {
+                    LogToFile($"❌ ERROR EN VALIDACIÓN: {errorValidacion}");
+                    GuardarLogEnSession();
+                    TempData["Mensaje"] = $"❌ ERROR DE VALIDACIÓN en '{tabla.TableName}':\n\n{errorValidacion}";
+                    TempData["MensajeTipo"] = "error";
+                    TempData["MostrarDescargaLog"] = true;
+
+                    // Limpiar tablas en caso de error
+                    LimpiarTablasEnError(conn, idEmpresa);
+                    return false;
+                }
+
+                LogToFile("✅ Validación previa completada sin errores");
+
+                // 🔹 Insertar lo nuevo
+                try
+                {
+                    LogToFile($"Iniciando SqlBulkCopy hacia tabla: {tabla.TableName}");
+                    using (SqlBulkCopy bulk = new SqlBulkCopy(conn))
+                    {
+                        bulk.DestinationTableName = $"[dbo].[{tabla.TableName}]";
+                        bulk.WriteToServer(tabla);
+                    }
+                    LogToFile($"✅ SqlBulkCopy completado exitosamente para {tabla.TableName}");
+                }
+                catch (Exception bulkEx)
+                {
+                    // Error en BulkCopy - intentar dar más detalles
+                    LogToFile($"❌ ERROR en SqlBulkCopy: {bulkEx.Message}");
+                    LogToFile($"StackTrace: {bulkEx.StackTrace}");
+
+                    string detalleError = AnalizarErrorBulkCopy(conn, tabla, bulkEx);
+                    LogToFile($"Análisis de error: {detalleError}");
+                    GuardarLogEnSession();
+
+                    TempData["Mensaje"] = $"❌ ERROR AL INSERTAR en '{tabla.TableName}':\n\n{detalleError}";
+                    TempData["MensajeTipo"] = "error";
+                    TempData["MostrarDescargaLog"] = true;
+
+                    // Limpiar tablas en caso de error
+                    LimpiarTablasEnError(conn, idEmpresa);
+                    return false;
                 }
 
                 return true;
             }
             catch (Exception ex)
             {
-                TempData["Mensaje"] = $"Error al guardar en la tabla '{tabla.TableName}': {ex.Message}";
-                TempData["MensajeTipo"] = "error";
+                LogToFile($"❌ ERROR GENERAL: {ex.Message}");
+                LogToFile($"StackTrace: {ex.StackTrace}");
+                GuardarLogEnSession();
 
-                if (conn != null && conn.State == ConnectionState.Open)
-                {
-                    using (SqlCommand deleteCmd = new SqlCommand($@"
-                        DELETE Z_Ajuste1 WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
-                        DELETE Z_Ajuste2 WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
-                        DELETE Z_AnoEjecucion WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
-                        DELETE Z_BalancePrueba WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
-                        DELETE Z_Categorias WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
-                        DELETE Z_CteYnoCte WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
-                        DELETE Z_EjecPCH WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
-                        DELETE Z_Empresas WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
-                        DELETE Z_LineaNegocio WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
-                        DELETE Z_Moneda WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
-                        DELETE Z_Paises WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
-                        DELETE Z_PCH WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
-                        DELETE Z_PptoPYGDetallado WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
-                        DELETE Z_PptoPYGDetalladoConAjuste WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
-                        DELETE Z_PresupuestoBalance WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
-                        DELETE Z_PYGDetallado WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
-                        DELETE Z_PYGDetalladoConAjuste WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
-                        DELETE Z_SignoCreditos WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
-                        DELETE Z_TablaPUC WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
-                        DELETE Z_Tipo WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL 
-                        DELETE Z_Unidades WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL", conn))
-                    {
-                        deleteCmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                        deleteCmd.ExecuteNonQuery();
-                    }
-                }
+                TempData["Mensaje"] = $"❌ ERROR GENERAL al guardar en '{tabla.TableName}':\n{ex.Message}";
+                TempData["MensajeTipo"] = "error";
+                TempData["MostrarDescargaLog"] = true;
+
+                LimpiarTablasEnError(conn, idEmpresa);
 
                 return false;
             }
@@ -420,6 +485,225 @@ namespace bufinscustomers.Controllers
             }
 
             return tablasExcel;
+        }
+
+        private void LimpiarTablasEnError(SqlConnection conn, int idEmpresa)
+        {
+            try
+            {
+                if (conn != null && conn.State == ConnectionState.Open)
+                {
+                    using (SqlCommand deleteCmd = new SqlCommand($@"
+                        DELETE Z_BalancePrueba WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
+                        DELETE Z_CteYnoCte WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
+                        DELETE Z_EjecPCH WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
+                        DELETE Z_PCH WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
+                        DELETE Z_PptoPYGDetallado WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
+                        DELETE Z_PptoPYGDetalladoConAjuste WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
+                        DELETE Z_PresupuestoBalance WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
+                        DELETE Z_PYGDetallado WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
+                        DELETE Z_PYGDetalladoConAjuste WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
+                        DELETE Z_TablaPUC WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL", conn))
+                    {
+                        deleteCmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                        deleteCmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch { /* Ignore errors in cleanup */ }
+        }
+
+        private string AnalizarErrorBulkCopy(SqlConnection conn, DataTable tabla, Exception bulkEx)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine($"Error original: {bulkEx.Message}");
+            sb.AppendLine();
+
+            try
+            {
+                // Obtener información del esquema
+                string sql = $@"
+                    SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME = '{tabla.TableName}'
+                    ORDER BY ORDINAL_POSITION";
+
+                var columnasSQL = new Dictionary<string, string>();
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string colName = reader["COLUMN_NAME"].ToString();
+                        string dataType = reader["DATA_TYPE"].ToString();
+                        string nullable = reader["IS_NULLABLE"].ToString();
+                        columnasSQL[colName] = $"{dataType} (NULL: {nullable})";
+                    }
+                }
+
+                // Buscar problemas específicos con columnas money
+                sb.AppendLine("🔍 ANÁLISIS DETALLADO:");
+                sb.AppendLine();
+
+                for (int colIndex = 0; colIndex < tabla.Columns.Count; colIndex++)
+                {
+                    string nombreColumna = tabla.Columns[colIndex].ColumnName;
+
+                    if (!columnasSQL.ContainsKey(nombreColumna)) continue;
+
+                    string tipoSQL = columnasSQL[nombreColumna];
+
+                    // Si es una columna money, buscar el primer valor problemático
+                    if (tipoSQL.ToLower().Contains("money") || tipoSQL.ToLower().Contains("decimal"))
+                    {
+                        sb.AppendLine($"📊 Columna '{nombreColumna}': Tipo SQL = {tipoSQL}");
+
+                        for (int rowIndex = 0; rowIndex < Math.Min(tabla.Rows.Count, 100); rowIndex++)
+                        {
+                            object valor = tabla.Rows[rowIndex][colIndex];
+                            string valorStr = valor?.ToString()?.Trim() ?? "";
+
+                            // Verificar si el valor es problemático
+                            if (!string.IsNullOrWhiteSpace(valorStr))
+                            {
+                                decimal test;
+                                string valorLimpio = valorStr.Replace("$", "").Replace(",", "").Trim();
+
+                                if (!decimal.TryParse(valorLimpio, System.Globalization.NumberStyles.Any,
+                                    System.Globalization.CultureInfo.InvariantCulture, out test))
+                                {
+                                    sb.AppendLine($"   ❌ FILA {rowIndex + 2} (Excel): Valor = '{valorStr}' | Tipo = {valor?.GetType().Name ?? "null"}");
+                                    sb.AppendLine($"      Este valor NO se puede convertir a decimal/money");
+
+                                    // Solo mostrar el primer error
+                                    return sb.ToString();
+                                }
+                            }
+                        }
+
+                        sb.AppendLine($"   ✅ Primeras 100 filas validadas OK");
+                        sb.AppendLine();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                sb.AppendLine($"Error al analizar: {ex.Message}");
+            }
+
+            return sb.ToString();
+        }
+
+        private string ValidarDatosParaBulkCopy(SqlConnection conn, DataTable tabla)
+        {
+            try
+            {
+                // Obtener esquema de columnas de la tabla en SQL Server
+                string sql = $@"
+                    SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME = '{tabla.TableName}'
+                    ORDER BY ORDINAL_POSITION";
+
+                var columnasSQL = new Dictionary<string, (string tipo, bool nullable)>();
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string columnName = reader["COLUMN_NAME"].ToString();
+                        string dataType = reader["DATA_TYPE"].ToString();
+                        bool isNullable = reader["IS_NULLABLE"].ToString() == "YES";
+                        columnasSQL[columnName] = (dataType, isNullable);
+                    }
+                }
+
+                LogToFile($"📋 Esquema SQL encontrado para {tabla.TableName}: {columnasSQL.Count} columnas");
+                foreach (var col in columnasSQL)
+                {
+                    LogToFile($"   - {col.Key}: {col.Value.tipo} (Nullable: {col.Value.nullable})");
+                }
+
+                if (columnasSQL.Count == 0)
+                {
+                    LogToFile($"⚠️ Tabla {tabla.TableName} no existe en SQL Server, se creará dinámicamente");
+                    return null; // Tabla no existe aún
+                }
+
+                // Validar cada fila del DataTable
+                for (int rowIndex = 0; rowIndex < tabla.Rows.Count; rowIndex++)
+                {
+                    DataRow fila = tabla.Rows[rowIndex];
+
+                    for (int colIndex = 0; colIndex < tabla.Columns.Count; colIndex++)
+                    {
+                        string nombreColumna = tabla.Columns[colIndex].ColumnName;
+
+                        // Si la columna no existe en SQL, skip
+                        if (!columnasSQL.ContainsKey(nombreColumna)) continue;
+
+                        var (tipoSQL, nullable) = columnasSQL[nombreColumna];
+                        object valor = fila[colIndex];
+                        string valorStr = valor?.ToString()?.Trim() ?? "";
+
+                        // Validar columnas de tipo money/decimal
+                        if (tipoSQL.ToLower() == "money" || tipoSQL.ToLower() == "decimal" ||
+                            tipoSQL.ToLower() == "numeric" || tipoSQL.ToLower() == "smallmoney")
+                        {
+                            // Si está vacío y la columna no acepta NULL
+                            if (string.IsNullOrWhiteSpace(valorStr))
+                            {
+                                if (!nullable)
+                                {
+                                    return $"Fila {rowIndex + 2} (Excel), Columna '{nombreColumna}': Valor vacío pero la columna no acepta NULL. Tipo SQL: {tipoSQL}";
+                                }
+                                continue; // Si acepta NULL, está OK
+                            }
+
+                            // Intentar parsear como decimal
+                            decimal valorDecimal;
+                            // Limpiar caracteres comunes
+                            string valorLimpio = valorStr.Replace("$", "").Replace(",", "").Replace(" ", "").Trim();
+
+                            if (!decimal.TryParse(valorLimpio, System.Globalization.NumberStyles.Any,
+                                System.Globalization.CultureInfo.InvariantCulture, out valorDecimal))
+                            {
+                                string mensajeError = $"Fila {rowIndex + 2} (Excel), Columna '{nombreColumna}': El valor '{valorStr}' no se puede convertir a {tipoSQL}. " +
+                                       $"Valor en DataTable: '{valor}' (Tipo: {valor?.GetType().Name ?? "null"})";
+                                LogToFile($"❌ ERROR DETECTADO EN VALIDACIÓN: {mensajeError}");
+                                return mensajeError;
+                            }
+                        }
+                        // Validar columnas de tipo int
+                        else if (tipoSQL.ToLower() == "int" || tipoSQL.ToLower() == "bigint" ||
+                                 tipoSQL.ToLower() == "smallint" || tipoSQL.ToLower() == "tinyint")
+                        {
+                            if (string.IsNullOrWhiteSpace(valorStr))
+                            {
+                                if (!nullable)
+                                {
+                                    return $"Fila {rowIndex + 2} (Excel), Columna '{nombreColumna}': Valor vacío pero la columna no acepta NULL. Tipo SQL: {tipoSQL}";
+                                }
+                                continue;
+                            }
+
+                            string valorLimpio = valorStr.Replace(",", "").Replace(" ", "").Trim();
+                            int valorInt;
+                            if (!int.TryParse(valorLimpio, out valorInt))
+                            {
+                                return $"Fila {rowIndex + 2} (Excel), Columna '{nombreColumna}': El valor '{valorStr}' no se puede convertir a {tipoSQL}. " +
+                                       $"Valor en DataTable: '{valor}' (Tipo: {valor?.GetType().Name ?? "null"})";
+                            }
+                        }
+                    }
+                }
+
+                return null; // Todo OK
+            }
+            catch (Exception ex)
+            {
+                return $"Error en validación: {ex.Message}";
+            }
         }
 
         private void CrearTablaSiNoExiste(SqlConnection conn, DataTable tabla)

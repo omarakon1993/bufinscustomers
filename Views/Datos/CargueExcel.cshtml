@@ -663,24 +663,38 @@
 
                         @if (TempData["Mensaje"] != null && TempData["MensajeTipo"] != null)
                         {
+                            var mensaje = TempData["Mensaje"].ToString();
+                            var mensajeTipo = TempData["MensajeTipo"].ToString();
+                            var mensajeEscapado = System.Web.HttpUtility.JavaScriptStringEncode(mensaje);
+                            var mostrarDescarga = TempData["MostrarDescargaLog"] != null && (bool)TempData["MostrarDescargaLog"];
+
                             <script>
                                 Swal.fire({
-                                    toast: true,
-                                    position: window.innerWidth <= 768 ? 'top' : 'top-end',
-                                    icon: '@TempData["MensajeTipo"]',
-                                    title: '@TempData["Mensaje"]',
-                                    showConfirmButton: false,
-                                    timer: 3000,
-                                    timerProgressBar: true,
-                                    didOpen: (toast) => {
-                                        toast.addEventListener('mouseenter', Swal.stopTimer);
-                                        toast.addEventListener('mouseleave', Swal.resumeTimer);
+                                    toast: false,
+                                    position: 'center',
+                                    icon: '@mensajeTipo',
+                                    title: '@(mensajeTipo == "error" ? "Error" : "Éxito")',
+                                    html: '<pre style="text-align: left; white-space: pre-wrap; font-size: 12px; max-height: 400px; overflow-y: auto;">@Html.Raw(mensajeEscapado)</pre>',
+                                    showConfirmButton: true,
+                                    confirmButtonText: 'Cerrar',
+                                    @if (mostrarDescarga)
+                                    {
+                                        <text>
+                                        showDenyButton: true,
+                                        denyButtonText: '📥 Descargar Log',
+                                        denyButtonColor: '#3085d6',
+                                        </text>
+                                    }
+                                }).then((result) => {
+                                    if (result.isDenied) {
+                                        window.location.href = '@Url.Action("DescargarLog", "Datos")';
                                     }
                                 });
                             </script>
 
                             TempData.Remove("Mensaje");
                             TempData.Remove("MensajeTipo");
+                            TempData.Remove("MostrarDescargaLog");
 
                         }
 
