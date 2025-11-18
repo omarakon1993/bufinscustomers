@@ -372,6 +372,10 @@ namespace bufinscustomers.Controllers
                     LogToFile($"Fila {i + 1} (muestra): {string.Join(" | ", valores)}");
                 }
 
+                // 🔹 Convertir valores vacíos a 0 en columnas money/decimal
+                LogToFile("Convirtiendo valores vacíos a 0 en columnas de dinero...");
+                ConvertirValoresVaciosAZero(conn, tabla);
+
                 // 🔹 Validar datos antes de insertar
                 LogToFile("Iniciando validación de datos...");
                 string errorValidacion = ValidarDatosParaBulkCopy(conn, tabla);
@@ -485,6 +489,83 @@ namespace bufinscustomers.Controllers
             }
 
             return tablasExcel;
+        }
+
+        private void ConvertirValoresVaciosAZero(SqlConnection conn, DataTable tabla)
+        {
+            try
+            {
+                // Obtener esquema de columnas de la tabla en SQL Server
+                string sql = $@"
+                    SELECT COLUMN_NAME, DATA_TYPE
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME = '{tabla.TableName}'";
+
+                var columnasMoneyDecimal = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string columnName = reader["COLUMN_NAME"].ToString();
+                        string dataType = reader["DATA_TYPE"].ToString().ToLower();
+
+                        // Solo columnas de tipo money/decimal
+                        if (dataType == "money" || dataType == "smallmoney" ||
+                            dataType == "decimal" || dataType == "numeric")
+                        {
+                            // Excluir columnas de año y mes
+                            string colLower = columnName.ToLower();
+                            if (!colLower.Contains("año") && !colLower.Contains("anio") &&
+                                !colLower.Contains("year") && !colLower.Contains("mes") &&
+                                !colLower.Contains("month") && !colLower.Contains("periodo") &&
+                                !colLower.Contains("id"))
+                            {
+                                columnasMoneyDecimal.Add(columnName);
+                            }
+                        }
+                    }
+                }
+
+                if (columnasMoneyDecimal.Count == 0)
+                {
+                    LogToFile("No se encontraron columnas de dinero para convertir");
+                    return;
+                }
+
+                LogToFile($"Columnas de dinero encontradas: {string.Join(", ", columnasMoneyDecimal)}");
+
+                int valoresConvertidos = 0;
+
+                // Recorrer todas las filas y convertir valores vacíos a 0
+                foreach (DataRow fila in tabla.Rows)
+                {
+                    for (int colIndex = 0; colIndex < tabla.Columns.Count; colIndex++)
+                    {
+                        string nombreColumna = tabla.Columns[colIndex].ColumnName;
+
+                        // Si es una columna de dinero
+                        if (columnasMoneyDecimal.Contains(nombreColumna))
+                        {
+                            object valor = fila[colIndex];
+                            string valorStr = valor?.ToString()?.Trim() ?? "";
+
+                            // Si está vacío o es nulo, convertir a "0"
+                            if (string.IsNullOrWhiteSpace(valorStr))
+                            {
+                                fila[colIndex] = "0";
+                                valoresConvertidos++;
+                            }
+                        }
+                    }
+                }
+
+                LogToFile($"✅ Se convirtieron {valoresConvertidos} valores vacíos a 0");
+            }
+            catch (Exception ex)
+            {
+                LogToFile($"⚠️ Error al convertir valores vacíos: {ex.Message}");
+            }
         }
 
         private void LimpiarTablasEnError(SqlConnection conn, int idEmpresa)
