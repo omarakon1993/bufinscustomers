@@ -153,6 +153,7 @@
     <Compile Include="Controllers\EmpresaController.cs" />
     <Compile Include="Controllers\DatosController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\InformeTablasDatosController.cs" />
     <Compile Include="Controllers\ModeloController.cs" />
     <Compile Include="Controllers\ReportesController.cs" />
     <Compile Include="Controllers\UsuarioController.cs" />
@@ -173,6 +174,7 @@
     <Compile Include="Controllers\ConfiguracionEmpresaController.cs" />
     <Compile Include="Models\Empresas.cs" />
     <Compile Include="Models\ImagenUsuario.cs" />
+    <Compile Include="Models\InformeTablasDatos.cs" />
     <Compile Include="Models\Reportes.cs" />
     <Compile Include="Models\Usuarios.cs" />
     <Compile Include="Permisos\ValidarSesionAttribute.cs" />
@@ -186,6 +188,7 @@
     <Compile Include="Services\BaseService.cs" />
     <Compile Include="Services\ConfiguracionEmpresaService.cs" />
     <Compile Include="Services\EmpresaService.cs" />
+    <Compile Include="Services\InformeTablasDatosService.cs" />
     <Compile Include="Services\ReportesService.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -5993,6 +5996,7 @@
     <Content Include="Assets\Content\bootstrap.rtl.min.css.map" />
     <Content Include="Assets\Content\Site.css" />
     <Content Include="Assets\css\bootstrap-icons.min.css" />
+    <Content Include="Assets\css\informe-tablas-datos.css" />
     <Content Include="Assets\css\jquery-ui.min.css" />
     <Content Include="Assets\css\Login.css" />
     <Content Include="Assets\css\modern-sidebar.css" />
@@ -6155,6 +6159,7 @@
     <Content Include="Views\Datos\Modelo.cshtml" />
     <Content Include="Views\Configuracion\MaestroReportes.cshtml" />
     <Content Include="Views\Informes\AuditoriaCargues.cshtml" />
+    <Content Include="Views\Informes\InformeTablasDatos.cshtml" />
     <Content Include="Views\Configuracion\ConfiguracionesEmpresas.cshtml" />
   </ItemGroup>
   <ItemGroup>

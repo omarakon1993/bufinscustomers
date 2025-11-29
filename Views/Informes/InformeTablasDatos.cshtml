@@ -1,0 +1,574 @@
+@model dynamic
+@using bufinscustomers.Models
+
+@{
+    ViewBag.Title = "Informe de Tablas de Datos";
+    var tablas = ViewBag.Tablas as List<TablaDatos>;
+    var empresas = ViewBag.Empresas as List<Empresas>;
+    var esAdmin = (bool)ViewBag.EsAdmin;
+}
+
+<link href="~/Assets/css/informe-tablas-datos.css" rel="stylesheet" />
+
+<div class="container-fluid px-4">
+    <!-- Encabezado -->
+    <div class="gradient-header">
+        <h2>
+            <i class="fas fa-table"></i>
+            Informe de Tablas de Datos
+        </h2>
+        <p>
+            Consulte y exporte datos de las diferentes tablas del sistema con filtros personalizados
+        </p>
+    </div>
+
+    <!-- Mensajes de exito/error -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle mr-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    @if (TempData["InfoMessage"] != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle mr-2"></i>
+            @TempData["InfoMessage"]
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    <!-- Card de filtros -->
+    <div class="filter-card">
+        <h3 class="filter-card-title">
+            <i class="fas fa-filter"></i>
+            Filtros de Consulta
+        </h3>
+
+        <form id="formFiltros">
+            <!-- Filtros Principales -->
+            <div class="filter-section">
+                <div class="row">
+                    <!-- Selector de Tabla -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="selectTabla">
+                                <i class="fas fa-table"></i>
+                                Tabla <span class="required">*</span>
+                            </label>
+                            <select id="selectTabla" name="NombreTabla" class="form-control" required>
+                                <option value="">-- Seleccione --</option>
+                                @if (tablas != null)
+                                {
+                                    foreach (var tabla in tablas)
+                                    {
+                                        <option value="@tabla.NombreTabla" title="@tabla.Descripcion">
+                                            @tabla.NombreAmigable
+                                        </option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Selector de Empresa -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="selectEmpresa">
+                                <i class="fas fa-building"></i>
+                                Empresa @if (esAdmin) { <span class="required">*</span> }
+                            </label>
+                            <select id="selectEmpresa" name="IdEmpresa" class="form-control" @(esAdmin ? "required" : "")>
+                                @if (esAdmin)
+                                {
+                                    <option value="">-- Seleccione --</option>
+                                }
+                                @if (empresas != null)
+                                {
+                                    foreach (var empresa in empresas)
+                                    {
+                                        <option value="@empresa.Id">@empresa.Nombre</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Selector de Año -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="selectAnio">
+                                <i class="fas fa-calendar-alt"></i>
+                                Año
+                            </label>
+                            <select id="selectAnio" name="Anio" class="form-control">
+                                <option value="">-- Todos --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Selector de Mes -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="selectMes">
+                                <i class="fas fa-calendar-day"></i>
+                                Mes
+                            </label>
+                            <select id="selectMes" name="Mes" class="form-control">
+                                <option value="">-- Todos --</option>
+                                <option value="1">Enero</option>
+                                <option value="2">Febrero</option>
+                                <option value="3">Marzo</option>
+                                <option value="4">Abril</option>
+                                <option value="5">Mayo</option>
+                                <option value="6">Junio</option>
+                                <option value="7">Julio</option>
+                                <option value="8">Agosto</option>
+                                <option value="9">Septiembre</option>
+                                <option value="10">Octubre</option>
+                                <option value="11">Noviembre</option>
+                                <option value="12">Diciembre</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Selector de Variable -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="selectVariable">
+                                <i class="fas fa-tag"></i>
+                                Variable
+                            </label>
+                            <select id="selectVariable" name="Variable" class="form-control">
+                                <option value="">-- Todas --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de accion -->
+            <div class="btn-group-actions">
+                <button type="button" id="btnConsultar" class="btn btn-modern-gradient">
+                    <i class="fas fa-search mr-2"></i>Consultar
+                </button>
+                <button type="button" id="btnLimpiar" class="btn btn-modern-secondary">
+                    <i class="fas fa-eraser mr-2"></i>Limpiar
+                </button>
+                <button type="button" id="btnExportar" class="btn btn-modern-success" style="display: none;">
+                    <i class="fas fa-file-excel mr-2"></i>Exportar Excel
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner">
+        <i class="fas fa-spinner"></i>
+        <p>Consultando datos...</p>
+    </div>
+
+    <!-- Tabla de resultados -->
+    <div id="resultadosContainer" style="display: none;">
+        <div class="table-container">
+            <div class="table-header">
+                <h5>
+                    <i class="fas fa-list mr-2"></i>Resultados
+                </h5>
+                <span id="totalRegistros" class="info-badge"></span>
+            </div>
+            <div class="table-wrapper">
+                <table id="tablaResultados" class="data-table">
+                    <thead id="tablaHeader"></thead>
+                    <tbody id="tablaBody"></tbody>
+                </table>
+            </div>
+            <div id="paginacion" class="pagination-controls"></div>
+        </div>
+    </div>
+
+    <!-- Mensaje cuando no hay datos -->
+    <div id="noDataMessage" class="no-data-message" style="display: none;">
+        <i class="fas fa-inbox"></i>
+        <h4>No se encontraron datos</h4>
+        <p>No hay registros que coincidan con los filtros seleccionados.</p>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            var datosActuales = null;
+            var filtrosActuales = null;
+            var paginaActual = 1;
+            var registrosPorPagina = 50;
+
+            // Evento: cambio de tabla
+            $('#selectTabla').on('change', function () {
+                var nombreTabla = $(this).val();
+                var idEmpresa = $('#selectEmpresa').val();
+
+                if (nombreTabla) {
+                    cargarAnios(nombreTabla, idEmpresa);
+                    cargarVariables(nombreTabla, idEmpresa);
+                } else {
+                    $('#selectAnio').html('<option value="">-- Todos --</option>');
+                    $('#selectVariable').html('<option value="">-- Todas --</option>');
+                }
+
+                ocultarResultados();
+            });
+
+            // Evento: cambio de empresa
+            $('#selectEmpresa').on('change', function () {
+                var nombreTabla = $('#selectTabla').val();
+                var idEmpresa = $(this).val();
+
+                if (nombreTabla) {
+                    cargarAnios(nombreTabla, idEmpresa);
+                    cargarVariables(nombreTabla, idEmpresa);
+                }
+
+                ocultarResultados();
+            });
+
+            // Funcion: cargar anos disponibles
+            function cargarAnios(nombreTabla, idEmpresa) {
+                $.ajax({
+                    url: '@Url.Action("ObtenerAnios", "InformeTablasDatos")',
+                    type: 'GET',
+                    data: {
+                        nombreTabla: nombreTabla,
+                        idEmpresa: idEmpresa || null
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            var select = $('#selectAnio');
+                            select.html('<option value="">-- Todos --</option>');
+
+                            if (response.anios && response.anios.length > 0) {
+                                $.each(response.anios, function (i, anio) {
+                                    select.append($('<option>').val(anio).text(anio));
+                                });
+                            }
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: response.message || 'Error al cargar anos'
+                            });
+                        }
+                    },
+                    error: function () {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Error al cargar anos'
+                        });
+                    }
+                });
+            }
+
+            // Funcion: cargar variables disponibles
+            function cargarVariables(nombreTabla, idEmpresa) {
+                $.ajax({
+                    url: '@Url.Action("ObtenerVariables", "InformeTablasDatos")',
+                    type: 'GET',
+                    data: {
+                        nombreTabla: nombreTabla,
+                        idEmpresa: idEmpresa || null
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            var select = $('#selectVariable');
+                            select.html('<option value="">-- Todas --</option>');
+
+                            if (response.variables && response.variables.length > 0) {
+                                $.each(response.variables, function (i, variable) {
+                                    select.append($('<option>').val(variable).text(variable));
+                                });
+                            }
+                        }
+                    },
+                    error: function () {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Error al cargar variables'
+                        });
+                    }
+                });
+            }
+
+            // Evento: boton consultar
+            $('#btnConsultar').on('click', function () {
+                var nombreTabla = $('#selectTabla').val();
+
+                if (!nombreTabla) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Tabla requerida',
+                        text: 'Por favor seleccione una tabla'
+                    });
+                    return;
+                }
+
+                @if (esAdmin)
+                {
+                    <text>
+                    var idEmpresa = $('#selectEmpresa').val();
+                    if (!idEmpresa) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Empresa requerida',
+                            text: 'Por favor seleccione una empresa'
+                        });
+                        return;
+                    }
+                    </text>
+                }
+
+                consultarDatos();
+            });
+
+            // Funcion: consultar datos
+            function consultarDatos() {
+                var formData = {
+                    NombreTabla: $('#selectTabla').val(),
+                    IdEmpresa: $('#selectEmpresa').val() || null,
+                    Anio: $('#selectAnio').val() || null,
+                    Mes: $('#selectMes').val() || null,
+                    Variable: $('#selectVariable').val() || null
+                };
+
+                filtrosActuales = formData;
+                $('#loadingSpinner').show();
+                ocultarResultados();
+
+                $.ajax({
+                    url: '@Url.Action("ConsultarDatos", "InformeTablasDatos")',
+                    type: 'POST',
+                    data: formData,
+                    success: function (response) {
+                        $('#loadingSpinner').hide();
+
+                        if (response.success) {
+                            datosActuales = response;
+                            paginaActual = 1;
+
+                            if (response.totalRegistros > 0) {
+                                mostrarResultados(response);
+                            } else {
+                                $('#noDataMessage').show();
+                            }
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: response.message || 'Error al consultar datos'
+                            });
+                        }
+                    },
+                    error: function () {
+                        $('#loadingSpinner').hide();
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Error de conexion al consultar los datos'
+                        });
+                    }
+                });
+            }
+
+            // Funcion: mostrar resultados con paginacion
+            function mostrarResultados(response) {
+                $('#tablaHeader').empty();
+                $('#tablaBody').empty();
+
+                // Crear encabezados
+                var headerRow = $('<tr>');
+                $.each(response.columnas, function (i, col) {
+                    headerRow.append($('<th>').text(col.nombreAmigable));
+                });
+                $('#tablaHeader').append(headerRow);
+
+                // Calcular paginacion
+                var totalPaginas = Math.ceil(response.datos.length / registrosPorPagina);
+                var inicio = (paginaActual - 1) * registrosPorPagina;
+                var fin = Math.min(inicio + registrosPorPagina, response.datos.length);
+
+                // Crear filas de datos para la pagina actual
+                for (var i = inicio; i < fin; i++) {
+                    var fila = response.datos[i];
+                    var row = $('<tr>');
+                    $.each(response.columnas, function (j, col) {
+                        var valor = fila[col.nombreTecnico];
+                        row.append($('<td>').text(valor || ''));
+                    });
+                    $('#tablaBody').append(row);
+                }
+
+                // Actualizar informacion de registros
+                $('#totalRegistros').text(response.totalRegistros + ' registros | Pag. ' + paginaActual + '/' + totalPaginas);
+
+                // Crear controles de paginacion
+                crearPaginacion(totalPaginas);
+
+                // Mostrar contenedor de resultados
+                $('#resultadosContainer').show();
+                $('#btnExportar').show();
+            }
+
+            // Funcion: crear controles de paginacion
+            function crearPaginacion(totalPaginas) {
+                var paginacion = $('#paginacion');
+                paginacion.empty();
+
+                if (totalPaginas <= 1) return;
+
+                // Boton anterior
+                var btnAnterior = $('<button>')
+                    .addClass('btn-pagination')
+                    .html('<i class="fas fa-chevron-left"></i>')
+                    .prop('disabled', paginaActual === 1)
+                    .on('click', function () {
+                        if (paginaActual > 1) {
+                            paginaActual--;
+                            mostrarResultados(datosActuales);
+                        }
+                    });
+                paginacion.append(btnAnterior);
+
+                // Botones de paginas
+                var inicio = Math.max(1, paginaActual - 2);
+                var fin = Math.min(totalPaginas, paginaActual + 2);
+
+                if (inicio > 1) {
+                    paginacion.append($('<button>').addClass('btn-pagination').text('1').on('click', function () {
+                        paginaActual = 1;
+                        mostrarResultados(datosActuales);
+                    }));
+                    if (inicio > 2) {
+                        paginacion.append($('<span>').addClass('pagination-dots').text('...'));
+                    }
+                }
+
+                for (var i = inicio; i <= fin; i++) {
+                    var btnPagina = $('<button>')
+                        .addClass('btn-pagination')
+                        .text(i)
+                        .data('pagina', i);
+
+                    if (i === paginaActual) {
+                        btnPagina.addClass('active');
+                    }
+
+                    btnPagina.on('click', function () {
+                        paginaActual = $(this).data('pagina');
+                        mostrarResultados(datosActuales);
+                    });
+
+                    paginacion.append(btnPagina);
+                }
+
+                if (fin < totalPaginas) {
+                    if (fin < totalPaginas - 1) {
+                        paginacion.append($('<span>').addClass('pagination-dots').text('...'));
+                    }
+                    paginacion.append($('<button>').addClass('btn-pagination').text(totalPaginas).on('click', function () {
+                        paginaActual = totalPaginas;
+                        mostrarResultados(datosActuales);
+                    }));
+                }
+
+                // Boton siguiente
+                var btnSiguiente = $('<button>')
+                    .addClass('btn-pagination')
+                    .html('<i class="fas fa-chevron-right"></i>')
+                    .prop('disabled', paginaActual === totalPaginas)
+                    .on('click', function () {
+                        if (paginaActual < totalPaginas) {
+                            paginaActual++;
+                            mostrarResultados(datosActuales);
+                        }
+                    });
+                paginacion.append(btnSiguiente);
+            }
+
+            // Funcion: ocultar resultados
+            function ocultarResultados() {
+                $('#resultadosContainer').hide();
+                $('#noDataMessage').hide();
+                $('#btnExportar').hide();
+                datosActuales = null;
+            }
+
+            // Evento: boton limpiar
+            $('#btnLimpiar').on('click', function () {
+                $('#formFiltros')[0].reset();
+                $('#selectAnio').html('<option value="">-- Todos --</option>');
+                $('#selectVariable').html('<option value="">-- Todas --</option>');
+                ocultarResultados();
+            });
+
+            // Evento: boton exportar
+            $('#btnExportar').on('click', function () {
+                if (!filtrosActuales) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Sin datos',
+                        text: 'No hay datos para exportar'
+                    });
+                    return;
+                }
+
+                var form = $('<form>', {
+                    'method': 'POST',
+                    'action': '@Url.Action("ExportarExcel", "InformeTablasDatos")'
+                });
+
+                $.each(filtrosActuales, function (key, value) {
+                    if (value) {
+                        form.append($('<input>', {
+                            'type': 'hidden',
+                            'name': key,
+                            'value': value
+                        }));
+                    }
+                });
+
+                $('body').append(form);
+                form.submit();
+                form.remove();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Exportando...',
+                    text: 'Generando archivo Excel',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            });
+        });
+    </script>
+}
