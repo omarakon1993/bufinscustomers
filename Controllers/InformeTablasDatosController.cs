@@ -151,7 +151,15 @@ namespace bufinscustomers.Controllers
                             }
                             else if (kvp.Value is DateTime)
                             {
-                                valorFormateado = ((DateTime)kvp.Value).ToString("dd/MM/yyyy");
+                                // Formatear fechas de ejecución con hora
+                                if (kvp.Key.Contains("Ejecucion") || kvp.Key.Contains("FechaEjecucion"))
+                                {
+                                    valorFormateado = ((DateTime)kvp.Value).ToString("dd/MM/yyyy HH:mm:ss");
+                                }
+                                else
+                                {
+                                    valorFormateado = ((DateTime)kvp.Value).ToString("dd/MM/yyyy");
+                                }
                             }
                         }
                         else
@@ -164,13 +172,16 @@ namespace bufinscustomers.Controllers
                     return filaFormateada;
                 }).ToList();
 
-                return Json(new
+                var jsonResult = Json(new
                 {
                     success = true,
                     datos = datosFormateados,
                     columnas = columnasAmigables,
                     totalRegistros = resultado.TotalRegistros
-                });
+                }, JsonRequestBehavior.AllowGet);
+
+                jsonResult.MaxJsonLength = int.MaxValue;
+                return jsonResult;
             }
             catch (Exception ex)
             {

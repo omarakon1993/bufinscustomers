@@ -1,10 +1,10 @@
-@model IEnumerable<bufinscustomers.Models.AuditoriaCargues>
+ï»¿@model IEnumerable<bufinscustomers.Models.AuditoriaCargues>
 @using bufinscustomers.Helpers
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Auditoría de Cargues</title>
+    <title>AuditorÃ­a de Cargues</title>
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
@@ -62,12 +62,41 @@
             color: #6c757d;
         }
 
-        .report-header {
-            background: linear-gradient(135deg, #583AFF 0%, #7c4dff 100%);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
+        /* ========================================
+           POWER BI HEADER STYLE - COMPACTO
+           ======================================== */
+        .powerbi-header {
+            background: linear-gradient(90deg, #6366F1 0%, #3B82F6 35%, #06B6D4 70%, #01E1D7 100%) !important;
+            padding: 16px 28px !important;
+            margin-bottom: 20px !important;
+            border-radius: 8px !important;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25) !important;
+        }
+
+        .powerbi-header-content {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+        }
+
+        .powerbi-header-left {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+        }
+
+        .powerbi-header-icon {
+            font-size: 20px !important;
+            color: white !important;
+            opacity: 0.95 !important;
+        }
+
+        .powerbi-header-title {
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            color: white !important;
+            margin: 0 !important;
+            letter-spacing: -0.2px !important;
         }
 
         .report-stats {
@@ -115,7 +144,7 @@
             margin-left: 1rem;
         }
 
-        /* Estilos para botón de exportar */
+        /* Estilos para botÃ³n de exportar */
         .btn-export {
             background-color: rgba(255, 255, 255, 0.15);
             border: 1px solid rgba(255, 255, 255, 0.3);
@@ -140,12 +169,13 @@
         var nombreEmpresa = Model.Any() ? Model.First().NombreEmpresa : "";
     }
 
-    <div class="report-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h2 class="mb-0">
-                    <i class="fas fa-clipboard-list me-2"></i>
-                    Informe de Auditoría de Cargues
+    <!-- Header Power BI -->
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <div class="powerbi-header-left">
+                <i class="fas fa-clipboard-list powerbi-header-icon"></i>
+                <h1 class="powerbi-header-title">
+                    Informe de AuditorÃ­a de Cargues
                     @if (!esAdmin && !string.IsNullOrEmpty(nombreEmpresa))
                     {
                         <span class="filter-badge">
@@ -158,17 +188,7 @@
                             <i class="fas fa-globe me-1"></i>Vista Global
                         </span>
                     }
-                </h2>
-                <p class="mb-0 mt-2">
-                    @if (esAdmin)
-                    {
-                        <text>Historial completo de cargas de información de todas las empresas</text>
-                    }
-                    else
-                    {
-                        <text>Historial de cargas de información de tu empresa</text>
-                    }
-                </p>
+                </h1>
             </div>
             <div>
                 <button id="btnExportarExcel" class="btn btn-export btn-sm">
@@ -209,7 +229,7 @@
             <div class="stat-value">
                 @(ultimoCargue != DateTime.MinValue ? ultimoCargue.ToString("dd/MM/yyyy") : "N/A")
             </div>
-            <div class="stat-label">Último Cargue</div>
+            <div class="stat-label">Ãšltimo Cargue</div>
         </div>
     </div>
 
@@ -217,7 +237,7 @@
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
             <h6 class="m-0 font-weight-bold">
                 <i class="fas fa-table me-2"></i>
-                Detalle de Cargues de Información
+                Detalle de Cargues de InformaciÃ³n
             </h6>
             <small class="text-light">
                 <i class="fas fa-info-circle me-1"></i>
@@ -302,11 +322,11 @@
                     <p class="text-muted">
                         @if (esAdmin)
                         {
-                            <text>Los registros de auditoría aparecerán aquí cuando se realicen cargues de información.</text>
+                            <text>Los registros de auditorÃ­a aparecerÃ¡n aquÃ­ cuando se realicen cargues de informaciÃ³n.</text>
                         }
                         else
                         {
-                            <text>Los registros de auditoría de tu empresa aparecerán aquí cuando se realicen cargues de información.</text>
+                            <text>Los registros de auditorÃ­a de tu empresa aparecerÃ¡n aquÃ­ cuando se realicen cargues de informaciÃ³n.</text>
                         }
                     </p>
                 </div>
@@ -356,7 +376,7 @@
 
     <script>
         $(document).ready(function() {
-            // Función de búsqueda en la tabla
+            // FunciÃ³n de bÃºsqueda en la tabla
             $("#searchInput").on("keyup", function() {
                 var value = $(this).val().toLowerCase();
                 $("#auditoriaTable tbody tr").filter(function() {
@@ -364,13 +384,13 @@
                 });
             });
 
-            // Función de exportación a Excel
+            // FunciÃ³n de exportaciÃ³n a Excel
             $("#btnExportarExcel").on("click", function() {
                 var $btn = $(this);
                 var $exportText = $btn.find('.export-text');
                 var $exportLoading = $btn.find('.export-loading');
                 
-                // Obtener filtro de búsqueda actual
+                // Obtener filtro de bÃºsqueda actual
                 var filtro = $("#searchInput").val().trim();
                 
                 // Mostrar loading
@@ -385,7 +405,7 @@
                     'style': 'display: none;'
                 });
                 
-                // Agregar filtro como parámetro
+                // Agregar filtro como parÃ¡metro
                 form.append($('<input>', {
                     'type': 'hidden',
                     'name': 'filtro',
@@ -406,13 +426,13 @@
                 form.submit();
                 form.remove();
                 
-                // Mostrar notificación de éxito
+                // Mostrar notificaciÃ³n de Ã©xito
                 setTimeout(function() {
                     Swal.fire({
                         toast: true,
                         position: window.innerWidth <= 768 ? 'top' : 'top-end',
                         icon: 'success',
-                        title: 'Exportación iniciada. El archivo se descargará automáticamente.',
+                        title: 'ExportaciÃ³n iniciada. El archivo se descargarÃ¡ automÃ¡ticamente.',
                         showConfirmButton: false,
                         timer: 3000,
                         timerProgressBar: true,
@@ -422,7 +442,7 @@
                         }
                     });
                     
-                    // Restaurar botón
+                    // Restaurar botÃ³n
                     $exportLoading.hide();
                     $exportText.show();
                     $btn.prop('disabled', false);

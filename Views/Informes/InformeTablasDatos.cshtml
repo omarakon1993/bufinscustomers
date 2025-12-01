@@ -1,4 +1,4 @@
-@model dynamic
+﻿@model dynamic
 @using bufinscustomers.Models
 
 @{
@@ -9,17 +9,16 @@
 }
 
 <link href="~/Assets/css/informe-tablas-datos.css" rel="stylesheet" />
+<!-- Select2 CSS Local -->
+<link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
 
 <div class="container-fluid px-4">
-    <!-- Encabezado -->
-    <div class="gradient-header">
-        <h2>
-            <i class="fas fa-table"></i>
-            Informe de Tablas de Datos
-        </h2>
-        <p>
-            Consulte y exporte datos de las diferentes tablas del sistema con filtros personalizados
-        </p>
+    <!-- Header Power BI -->
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-chart-line powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">Informe de Tablas de Datos</h1>
+        </div>
     </div>
 
     <!-- Mensajes de exito/error -->
@@ -114,7 +113,7 @@
                 </div>
 
                 <div class="row">
-                    <!-- Selector de Año -->
+                    <!-- Selector de Anio -->
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="selectAnio">
@@ -271,6 +270,9 @@
                                     select.append($('<option>').val(anio).text(anio));
                                 });
                             }
+
+                            // Re-inicializar Select2 después de actualizar opciones
+                            select.trigger('change');
                         } else {
                             Swal.fire({
                                 icon: 'error',
@@ -308,6 +310,9 @@
                                     select.append($('<option>').val(variable).text(variable));
                                 });
                             }
+
+                            // Re-inicializar Select2 después de actualizar opciones
+                            select.trigger('change');
                         }
                     },
                     error: function () {
@@ -525,9 +530,15 @@
 
             // Evento: boton limpiar
             $('#btnLimpiar').on('click', function () {
-                $('#formFiltros')[0].reset();
-                $('#selectAnio').html('<option value="">-- Todos --</option>');
-                $('#selectVariable').html('<option value="">-- Todas --</option>');
+                // Resetear selects con Select2
+                $('#selectTabla').val('').trigger('change');
+                $('#selectEmpresa').val($('#selectEmpresa option:first').val()).trigger('change');
+                $('#selectMes').val('').trigger('change');
+
+                // Limpiar y actualizar Año y Variable
+                $('#selectAnio').html('<option value="">-- Todos --</option>').trigger('change');
+                $('#selectVariable').html('<option value="">-- Todas --</option>').trigger('change');
+
                 ocultarResultados();
             });
 
@@ -569,6 +580,77 @@
                     showConfirmButton: false
                 });
             });
+
+            // Inicializar Select2 para todos los filtros principales
+            $('#selectTabla').select2({
+                placeholder: '-- Seleccione --',
+                allowClear: false,
+                width: '100%',
+                language: {
+                    noResults: function() {
+                        return "No se encontraron resultados";
+                    },
+                    searching: function() {
+                        return "Buscando...";
+                    }
+                }
+            });
+
+            $('#selectEmpresa').select2({
+                placeholder: '-- Seleccione --',
+                allowClear: false,
+                width: '100%',
+                language: {
+                    noResults: function() {
+                        return "No se encontraron resultados";
+                    },
+                    searching: function() {
+                        return "Buscando...";
+                    }
+                }
+            });
+
+            $('#selectAnio').select2({
+                placeholder: '-- Todos --',
+                allowClear: true,
+                width: '100%',
+                language: {
+                    noResults: function() {
+                        return "No se encontraron resultados";
+                    },
+                    searching: function() {
+                        return "Buscando...";
+                    }
+                }
+            });
+
+            $('#selectMes').select2({
+                placeholder: '-- Todos --',
+                allowClear: true,
+                width: '100%',
+                minimumResultsForSearch: -1,
+                language: {
+                    noResults: function() {
+                        return "No se encontraron resultados";
+                    }
+                }
+            });
+
+            $('#selectVariable').select2({
+                placeholder: '-- Todas --',
+                allowClear: true,
+                width: '100%',
+                language: {
+                    noResults: function() {
+                        return "No se encontraron resultados";
+                    },
+                    searching: function() {
+                        return "Buscando...";
+                    }
+                }
+            });
         });
     </script>
+    <!-- Select2 JS Local -->
+    <script src="~/Assets/js/select2/select2.min.js"></script>
 }
