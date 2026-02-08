@@ -1,0 +1,621 @@
+@model dynamic
+@using bufinscustomers.Models
+
+@{
+    ViewBag.Title = "Informe Relacionamientos BUFINS";
+    var tablas = ViewBag.Tablas as List<TablaRelacionamiento>;
+}
+
+<link href="~/Assets/css/informe-relacionamientos.css" rel="stylesheet" />
+<!-- Select2 CSS Local -->
+<link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
+
+<div class="container-fluid px-4">
+    <!-- Header Power BI -->
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-project-diagram powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">Informe Relacionamientos BUFINS</h1>
+        </div>
+    </div>
+
+    <!-- Mensajes de exito/error -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle mr-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    @if (TempData["InfoMessage"] != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle mr-2"></i>
+            @TempData["InfoMessage"]
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    <!-- Card de filtros -->
+    <div class="filter-card">
+        <h3 class="filter-card-title">
+            <i class="fas fa-filter"></i>
+            Filtros de Consulta
+        </h3>
+
+        <form id="formFiltros">
+            <div class="filter-section">
+                <div class="row">
+                    <!-- Selector de Tabla -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="selectTabla">
+                                <i class="fas fa-table"></i>
+                                Tabla <span class="required">*</span>
+                            </label>
+                            <select id="selectTabla" name="NombreTabla" class="form-control" required>
+                                <option value="">-- Seleccione --</option>
+                                @if (tablas != null)
+                                {
+                                    foreach (var tabla in tablas)
+                                    {
+                                        <option value="@tabla.NombreTabla" title="@tabla.Descripcion">
+                                            @tabla.NombreAmigable
+                                        </option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Selector de Tipo -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="selectTipo">
+                                <i class="fas fa-layer-group"></i>
+                                Tipo
+                            </label>
+                            <select id="selectTipo" name="Tipo" class="form-control">
+                                <option value="">-- Todos --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Selector de Descripcion -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="selectDescripcion">
+                                <i class="fas fa-align-left"></i>
+                                Variable/Descripci&oacute;n
+                            </label>
+                            <select id="selectDescripcion" name="Descripcion" class="form-control">
+                                <option value="">-- Todas --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Campo de texto Cuenta PUC Calc -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="txtCuentaPucCalc">
+                                <i class="fas fa-calculator"></i>
+                                Cuenta PUC Calc
+                            </label>
+                            <input type="text" id="txtCuentaPucCalc" name="CuentaPucCalc" class="form-control"
+                                   placeholder="Escriba para buscar..." autocomplete="off" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de accion -->
+            <div class="btn-group-actions">
+                <button type="button" id="btnConsultar" class="btn btn-modern-gradient">
+                    <i class="fas fa-search mr-2"></i>Consultar
+                </button>
+                <button type="button" id="btnLimpiar" class="btn btn-modern-secondary">
+                    <i class="fas fa-eraser mr-2"></i>Limpiar
+                </button>
+                <button type="button" id="btnExportar" class="btn btn-modern-success" style="display: none;">
+                    <i class="fas fa-file-excel mr-2"></i>Exportar Excel
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner">
+        <i class="fas fa-spinner"></i>
+        <p>Consultando datos...</p>
+    </div>
+
+    <!-- Tabla de resultados -->
+    <div id="resultadosContainer" style="display: none;">
+        <div class="table-container">
+            <div class="table-header">
+                <h5>
+                    <i class="fas fa-list mr-2"></i>Resultados
+                </h5>
+                <span id="totalRegistros" class="info-badge"></span>
+            </div>
+            <div class="table-wrapper">
+                <table id="tablaResultados" class="data-table">
+                    <thead id="tablaHeader"></thead>
+                    <tbody id="tablaBody"></tbody>
+                </table>
+            </div>
+            <div id="paginacion" class="pagination-controls"></div>
+        </div>
+    </div>
+
+    <!-- Mensaje cuando no hay datos -->
+    <div id="noDataMessage" class="no-data-message" style="display: none;">
+        <i class="fas fa-inbox"></i>
+        <h4>No se encontraron datos</h4>
+        <p>No hay registros que coincidan con los filtros seleccionados.</p>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            var datosActuales = null;
+            var filtrosActuales = null;
+            var paginaActual = 1;
+            var registrosPorPagina = 50;
+
+            // Evento: cambio de tabla
+            $('#selectTabla').on('change', function () {
+                var nombreTabla = $(this).val();
+
+                if (nombreTabla) {
+                    cargarTipos(nombreTabla);
+                    cargarDescripciones(nombreTabla, null);
+                } else {
+                    resetFiltrosCascada();
+                }
+
+                ocultarResultados();
+            });
+
+            // Evento: cambio de tipo
+            $('#selectTipo').on('change', function () {
+                var nombreTabla = $('#selectTabla').val();
+                var tipo = $(this).val();
+
+                if (nombreTabla) {
+                    cargarDescripciones(nombreTabla, tipo);
+                }
+
+                ocultarResultados();
+            });
+
+            // Funcion: resetear filtros en cascada
+            function resetFiltrosCascada() {
+                $('#selectTipo').html('<option value="">-- Todos --</option>').trigger('change');
+                $('#selectDescripcion').html('<option value="">-- Todas --</option>').trigger('change');
+                $('#txtCuentaPucCalc').val('');
+            }
+
+            // Funcion: cargar tipos disponibles
+            function cargarTipos(nombreTabla) {
+                $.ajax({
+                    url: '@Url.Action("ObtenerTipos", "InformeRelacionamientos")',
+                    type: 'GET',
+                    data: { nombreTabla: nombreTabla },
+                    success: function (response) {
+                        if (response.success) {
+                            var select = $('#selectTipo');
+                            select.html('<option value="">-- Todos --</option>');
+
+                            if (response.tipos && response.tipos.length > 0) {
+                                $.each(response.tipos, function (i, tipo) {
+                                    select.append($('<option>').val(tipo).text(tipo));
+                                });
+                            }
+                            select.trigger('change');
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: response.message || 'Error al cargar tipos'
+                            });
+                        }
+                    },
+                    error: function () {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Error al cargar tipos'
+                        });
+                    }
+                });
+            }
+
+            // Funcion: cargar descripciones disponibles
+            function cargarDescripciones(nombreTabla, tipo) {
+                $.ajax({
+                    url: '@Url.Action("ObtenerDescripciones", "InformeRelacionamientos")',
+                    type: 'GET',
+                    data: {
+                        nombreTabla: nombreTabla,
+                        tipo: tipo || null
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            var select = $('#selectDescripcion');
+                            select.html('<option value="">-- Todas --</option>');
+
+                            if (response.descripciones && response.descripciones.length > 0) {
+                                $.each(response.descripciones, function (i, desc) {
+                                    select.append($('<option>').val(desc).text(desc));
+                                });
+                            }
+                            select.trigger('change');
+                        }
+                    },
+                    error: function () {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Error al cargar descripciones'
+                        });
+                    }
+                });
+            }
+
+            // Evento: boton consultar
+            $('#btnConsultar').on('click', function () {
+                var nombreTabla = $('#selectTabla').val();
+
+                if (!nombreTabla) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Tabla requerida',
+                        text: 'Por favor seleccione una tabla'
+                    });
+                    return;
+                }
+
+                consultarDatos();
+            });
+
+            // Funcion: consultar datos
+            function consultarDatos() {
+                var formData = {
+                    NombreTabla: $('#selectTabla').val(),
+                    Tipo: $('#selectTipo').val() || null,
+                    Descripcion: $('#selectDescripcion').val() || null,
+                    CuentaPucCalc: $('#txtCuentaPucCalc').val().trim() || null
+                };
+
+                filtrosActuales = formData;
+                $('#loadingSpinner').show();
+                ocultarResultados();
+
+                $.ajax({
+                    url: '@Url.Action("ConsultarDatos", "InformeRelacionamientos")',
+                    type: 'POST',
+                    data: formData,
+                    success: function (response) {
+                        $('#loadingSpinner').hide();
+
+                        if (response.success) {
+                            datosActuales = response;
+                            paginaActual = 1;
+
+                            if (response.totalRegistros > 0) {
+                                mostrarResultados(response);
+                            } else {
+                                $('#noDataMessage').show();
+                            }
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: response.message || 'Error al consultar datos'
+                            });
+                        }
+                    },
+                    error: function () {
+                        $('#loadingSpinner').hide();
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Error de conexion al consultar los datos'
+                        });
+                    }
+                });
+            }
+
+            // Funcion: encontrar indice de columna Descripcion
+            function getDescripcionIndex(columnas) {
+                for (var i = 0; i < columnas.length; i++) {
+                    if (columnas[i].nombreTecnico === 'Descripcion' ||
+                        columnas[i].nombreTecnico === 'descripcion') {
+                        return i;
+                    }
+                }
+                return -1;
+            }
+
+            // Funcion: mostrar resultados con paginacion y agrupacion visual
+            function mostrarResultados(response) {
+                $('#tablaHeader').empty();
+                $('#tablaBody').empty();
+
+                // Crear encabezados
+                var headerRow = $('<tr>');
+                $.each(response.columnas, function (i, col) {
+                    headerRow.append($('<th>').text(col.nombreAmigable));
+                });
+                $('#tablaHeader').append(headerRow);
+
+                // Calcular paginacion
+                var totalPaginas = Math.ceil(response.datos.length / registrosPorPagina);
+                var inicio = (paginaActual - 1) * registrosPorPagina;
+                var fin = Math.min(inicio + registrosPorPagina, response.datos.length);
+
+                // Encontrar columna Descripcion para agrupacion
+                var descIdx = getDescripcionIndex(response.columnas);
+                var descTecnico = descIdx >= 0 ? response.columnas[descIdx].nombreTecnico : null;
+
+                // Crear filas con agrupacion visual
+                var grupoActual = -1;
+                var descripcionAnterior = null;
+
+                for (var i = inicio; i < fin; i++) {
+                    var fila = response.datos[i];
+                    var descripcionActual = descTecnico ? (fila[descTecnico] || '') : '';
+
+                    // Detectar cambio de grupo
+                    var esNuevoGrupo = false;
+                    if (descripcionActual !== descripcionAnterior) {
+                        grupoActual++;
+                        descripcionAnterior = descripcionActual;
+                        esNuevoGrupo = true;
+                    }
+
+                    var grupoClase = 'grupo-' + (grupoActual % 4);
+                    var row = $('<tr>').addClass(grupoClase);
+
+                    if (esNuevoGrupo && i > inicio) {
+                        row.addClass('grupo-inicio');
+                    } else if (esNuevoGrupo && i === inicio && paginaActual > 1) {
+                        // En paginas siguientes, marcar el primer grupo tambien
+                        row.addClass('grupo-inicio');
+                    }
+
+                    $.each(response.columnas, function (j, col) {
+                        var valor = fila[col.nombreTecnico];
+                        var td = $('<td>');
+
+                        // Agregar badge de grupo en la primera celda de un nuevo grupo
+                        if (esNuevoGrupo && j === 0 && descTecnico && descripcionActual) {
+                            td.html('<span class="grupo-badge">' + escapeHtml(descripcionActual) + '</span> ' + escapeHtml(valor || ''));
+                        } else {
+                            td.text(valor || '');
+                        }
+
+                        row.append(td);
+                    });
+
+                    $('#tablaBody').append(row);
+                }
+
+                // Actualizar informacion de registros
+                $('#totalRegistros').text(response.totalRegistros + ' registros | Pag. ' + paginaActual + '/' + totalPaginas);
+
+                // Crear controles de paginacion
+                crearPaginacion(totalPaginas);
+
+                // Mostrar contenedor de resultados
+                $('#resultadosContainer').show();
+                $('#btnExportar').show();
+            }
+
+            // Funcion: escapar HTML
+            function escapeHtml(text) {
+                if (!text) return '';
+                var div = document.createElement('div');
+                div.appendChild(document.createTextNode(text));
+                return div.innerHTML;
+            }
+
+            // Funcion: crear controles de paginacion
+            function crearPaginacion(totalPaginas) {
+                var paginacion = $('#paginacion');
+                paginacion.empty();
+
+                if (totalPaginas <= 1) return;
+
+                // Boton anterior
+                var btnAnterior = $('<button>')
+                    .addClass('btn-pagination')
+                    .html('<i class="fas fa-chevron-left"></i>')
+                    .prop('disabled', paginaActual === 1)
+                    .on('click', function () {
+                        if (paginaActual > 1) {
+                            paginaActual--;
+                            mostrarResultados(datosActuales);
+                        }
+                    });
+                paginacion.append(btnAnterior);
+
+                // Botones de paginas
+                var inicioPag = Math.max(1, paginaActual - 2);
+                var finPag = Math.min(totalPaginas, paginaActual + 2);
+
+                if (inicioPag > 1) {
+                    paginacion.append($('<button>').addClass('btn-pagination').text('1').on('click', function () {
+                        paginaActual = 1;
+                        mostrarResultados(datosActuales);
+                    }));
+                    if (inicioPag > 2) {
+                        paginacion.append($('<span>').addClass('pagination-dots').text('...'));
+                    }
+                }
+
+                for (var i = inicioPag; i <= finPag; i++) {
+                    var btnPagina = $('<button>')
+                        .addClass('btn-pagination')
+                        .text(i)
+                        .data('pagina', i);
+
+                    if (i === paginaActual) {
+                        btnPagina.addClass('active');
+                    }
+
+                    btnPagina.on('click', function () {
+                        paginaActual = $(this).data('pagina');
+                        mostrarResultados(datosActuales);
+                    });
+
+                    paginacion.append(btnPagina);
+                }
+
+                if (finPag < totalPaginas) {
+                    if (finPag < totalPaginas - 1) {
+                        paginacion.append($('<span>').addClass('pagination-dots').text('...'));
+                    }
+                    paginacion.append($('<button>').addClass('btn-pagination').text(totalPaginas).on('click', function () {
+                        paginaActual = totalPaginas;
+                        mostrarResultados(datosActuales);
+                    }));
+                }
+
+                // Boton siguiente
+                var btnSiguiente = $('<button>')
+                    .addClass('btn-pagination')
+                    .html('<i class="fas fa-chevron-right"></i>')
+                    .prop('disabled', paginaActual === totalPaginas)
+                    .on('click', function () {
+                        if (paginaActual < totalPaginas) {
+                            paginaActual++;
+                            mostrarResultados(datosActuales);
+                        }
+                    });
+                paginacion.append(btnSiguiente);
+            }
+
+            // Funcion: ocultar resultados
+            function ocultarResultados() {
+                $('#resultadosContainer').hide();
+                $('#noDataMessage').hide();
+                $('#btnExportar').hide();
+                datosActuales = null;
+            }
+
+            // Evento: boton limpiar
+            $('#btnLimpiar').on('click', function () {
+                $('#selectTabla').val('').trigger('change');
+                resetFiltrosCascada();
+                ocultarResultados();
+            });
+
+            // Evento: boton exportar
+            $('#btnExportar').on('click', function () {
+                if (!filtrosActuales) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Sin datos',
+                        text: 'No hay datos para exportar'
+                    });
+                    return;
+                }
+
+                var form = $('<form>', {
+                    'method': 'POST',
+                    'action': '@Url.Action("ExportarExcel", "InformeRelacionamientos")'
+                });
+
+                $.each(filtrosActuales, function (key, value) {
+                    if (value) {
+                        form.append($('<input>', {
+                            'type': 'hidden',
+                            'name': key,
+                            'value': value
+                        }));
+                    }
+                });
+
+                $('body').append(form);
+                form.submit();
+                form.remove();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Exportando...',
+                    text: 'Generando archivo Excel',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            });
+
+            // Inicializar Select2 para todos los filtros
+            $('#selectTabla').select2({
+                placeholder: '-- Seleccione --',
+                allowClear: false,
+                width: '100%',
+                language: {
+                    noResults: function () {
+                        return "No se encontraron resultados";
+                    },
+                    searching: function () {
+                        return "Buscando...";
+                    }
+                }
+            });
+
+            $('#selectTipo').select2({
+                placeholder: '-- Todos --',
+                allowClear: true,
+                width: '100%',
+                language: {
+                    noResults: function () {
+                        return "No se encontraron resultados";
+                    },
+                    searching: function () {
+                        return "Buscando...";
+                    }
+                }
+            });
+
+            $('#selectDescripcion').select2({
+                placeholder: '-- Todas --',
+                allowClear: true,
+                width: '100%',
+                language: {
+                    noResults: function () {
+                        return "No se encontraron resultados";
+                    },
+                    searching: function () {
+                        return "Buscando...";
+                    }
+                }
+            });
+
+        });
+    </script>
+    <!-- Select2 JS Local -->
+    <script src="~/Assets/js/select2/select2.min.js"></script>
+}
