@@ -1,0 +1,326 @@
+@model dynamic
+@using bufinscustomers.Models
+
+@{
+    ViewBag.Title = "Configuraci\u00f3n relacionamientos BUFINS";
+    var tablasRel = ViewBag.TablasRel as List<TablaRelInfo>;
+    var resultado = TempData["ResultadoCarga"] as ResultadoCargaRelacionamiento;
+    var nombreArchivo = TempData["NombreArchivo"] as string;
+}
+
+<link href="~/Assets/css/informe-relacionamientos.css" rel="stylesheet" />
+
+<div class="container-fluid px-4">
+    <!-- Header Power BI -->
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-upload powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">Configuraci&oacute;n relacionamientos BUFINS</h1>
+        </div>
+    </div>
+
+    <!-- Mensajes -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle mr-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    <!-- Card de tablas disponibles -->
+    <div class="filter-card" style="margin-bottom: 1.25rem;">
+        <h3 class="filter-card-title">
+            <i class="fas fa-database"></i>
+            Tablas de Relacionamiento Disponibles
+        </h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+            @if (tablasRel != null && tablasRel.Count > 0)
+            {
+                foreach (var tabla in tablasRel)
+                {
+                    <div style="background: linear-gradient(135deg, #6366F1, #3B82F6); color: white; padding: 0.625rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);">
+                        <i class="fas fa-table" style="margin-right: 6px;"></i>
+                        <strong>@tabla.NombreTabla</strong>
+                        <span style="opacity: 0.85; margin-left: 8px; font-size: 0.75rem;">
+                            @tabla.TotalRegistros registros &middot; @tabla.TotalColumnas columnas
+                        </span>
+                    </div>
+                }
+            }
+            else
+            {
+                <p style="color: #6c757d; margin: 0;">No se encontraron tablas Rel_ en la base de datos.</p>
+            }
+        </div>
+    </div>
+
+    <!-- Card de carga -->
+    <div class="filter-card">
+        <h3 class="filter-card-title">
+            <i class="fas fa-file-excel"></i>
+            Cargar Archivo Excel
+        </h3>
+
+        <form id="formCarga" action="@Url.Action("CargarExcel", "ConfiguracionRelacionamiento")" method="post" enctype="multipart/form-data">
+            <div class="filter-section">
+                <p style="font-size: 0.85rem; color: #6c757d; margin-bottom: 1rem;">
+                    <i class="fas fa-info-circle" style="color: #6366F1;"></i>
+                    Seleccione un archivo Excel (.xlsx) cuyas hojas tengan el mismo nombre que las tablas Rel_ de la base de datos.
+                    <strong>Solo se reemplazar&aacute;n los datos de las tablas cuyas hojas est&eacute;n presentes en el archivo.</strong>
+                    Las tablas que no tengan hoja en el Excel conservar&aacute;n sus datos actuales.
+                    Si ocurre un error, todos los cambios se revierten autom&aacute;ticamente.
+                </p>
+
+                <!-- Zona de Drop -->
+                <div id="dropZone" style="border: 2px dashed #d1d5db; border-radius: 0.5rem; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s ease; background: white;">
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: #c7d2fe; margin-bottom: 0.75rem;"></i>
+                    <p style="font-size: 0.95rem; font-weight: 600; color: #2d3748; margin-bottom: 0.25rem;" id="dropText">
+                        Arrastre su archivo aqu&iacute; o haga clic para seleccionar
+                    </p>
+                    <p style="font-size: 0.8rem; color: #9ca3af; margin: 0;" id="dropSubtext">
+                        Formatos permitidos: .xlsx, .xlsm
+                    </p>
+                </div>
+                <input type="file" id="archivoExcel" name="archivoExcel" accept=".xlsx,.xlsm"
+                       style="display: none;" />
+            </div>
+
+            <!-- Botones -->
+            <div class="btn-group-actions">
+                <button type="submit" id="btnCargar" class="btn btn-modern-gradient" disabled>
+                    <i class="fas fa-upload mr-2"></i>Cargar Datos
+                </button>
+                <a href="@Url.Action("DescargarPlantilla", "ConfiguracionRelacionamiento")" class="btn btn-modern-success">
+                    <i class="fas fa-download mr-2"></i>Descargar Plantilla
+                </a>
+                <button type="button" id="btnLimpiar" class="btn btn-modern-secondary" style="display: none;">
+                    <i class="fas fa-times mr-2"></i>Quitar archivo
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Resultados de la carga -->
+    @if (resultado != null && resultado.DetalleHojas.Count > 0)
+    {
+        <div class="filter-card">
+            <h3 class="filter-card-title">
+                <i class="fas fa-clipboard-check"></i>
+                Resultado de la Carga
+                @if (!string.IsNullOrEmpty(nombreArchivo))
+                {
+                    <span style="font-size: 0.8rem; font-weight: 400; color: #6c757d; margin-left: 0.5rem;">
+                        &mdash; @nombreArchivo
+                    </span>
+                }
+            </h3>
+
+            <!-- Resumen -->
+            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
+                <div style="background: @(resultado.Exito ? "linear-gradient(135deg, #10b981, #059669)" : "linear-gradient(135deg, #ef4444, #dc2626)"); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
+                    <i class="fas @(resultado.Exito ? "fa-check-circle" : "fa-times-circle")" style="margin-right: 4px;"></i>
+                    @(resultado.Exito ? "Exitoso" : "Fallido")
+                </div>
+                @if (resultado.TotalHojasProcesadas > 0)
+                {
+                    <div style="background: linear-gradient(135deg, #3B82F6, #06B6D4); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
+                        <i class="fas fa-table" style="margin-right: 4px;"></i>
+                        @resultado.TotalHojasProcesadas tabla(s)
+                    </div>
+                    <div style="background: linear-gradient(135deg, #6366F1, #3B82F6); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
+                        <i class="fas fa-database" style="margin-right: 4px;"></i>
+                        @resultado.TotalFilasInsertadas registros
+                    </div>
+                }
+                @if (resultado.TotalHojasIgnoradas > 0)
+                {
+                    <div style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
+                        <i class="fas fa-forward" style="margin-right: 4px;"></i>
+                        @resultado.TotalHojasIgnoradas ignorada(s)
+                    </div>
+                }
+            </div>
+
+            <!-- Detalle por hoja -->
+            <div class="table-wrapper" style="max-height: 400px;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Hoja Excel</th>
+                            <th>Tabla BD</th>
+                            <th>Estado</th>
+                            <th>Filas</th>
+                            <th>Columnas</th>
+                            <th>Detalle</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var detalle in resultado.DetalleHojas)
+                        {
+                            string rowColor;
+                            string iconClass;
+                            switch (detalle.Estado)
+                            {
+                                case "Exitoso":
+                                    rowColor = "#f0fdf4";
+                                    iconClass = "fa-check-circle";
+                                    break;
+                                case "Error":
+                                case "Revertido":
+                                    rowColor = "#fef2f2";
+                                    iconClass = "fa-times-circle";
+                                    break;
+                                default:
+                                    rowColor = "#fefce8";
+                                    iconClass = "fa-forward";
+                                    break;
+                            }
+                            <tr style="background-color: @rowColor;">
+                                <td><strong>@detalle.NombreHoja</strong></td>
+                                <td>@detalle.NombreTabla</td>
+                                <td>
+                                    <i class="fas @iconClass" style="margin-right: 4px;
+                                       color: @(detalle.Estado == "Exitoso" ? "#10b981" : detalle.Estado == "Ignorada" ? "#f59e0b" : "#ef4444");"></i>
+                                    @detalle.Estado
+                                </td>
+                                <td>@(detalle.FilasInsertadas > 0 ? detalle.FilasInsertadas.ToString("N0") : "-")</td>
+                                <td>@(detalle.TotalColumnas > 0 ? detalle.TotalColumnas.ToString() : "-")</td>
+                                <td style="font-size: 0.8rem; color: #6c757d;">@(detalle.MensajeError ?? "")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            var dropZone = $('#dropZone');
+            var fileInput = $('#archivoExcel');
+            var btnCargar = $('#btnCargar');
+            var btnLimpiar = $('#btnLimpiar');
+
+            // Click en zona de drop abre selector de archivos
+            dropZone.on('click', function () {
+                fileInput[0].click();
+            });
+
+            // Drag & Drop
+            dropZone.on('dragover', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).css({
+                    'border-color': '#6366F1',
+                    'background': '#eef2ff'
+                });
+            });
+
+            dropZone.on('dragleave', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).css({
+                    'border-color': '#d1d5db',
+                    'background': 'white'
+                });
+            });
+
+            dropZone.on('drop', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).css({
+                    'border-color': '#d1d5db',
+                    'background': 'white'
+                });
+
+                var files = e.originalEvent.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput[0].files = files;
+                    actualizarArchivo(files[0]);
+                }
+            });
+
+            // Cambio de archivo via input
+            fileInput.on('change', function () {
+                if (this.files.length > 0) {
+                    actualizarArchivo(this.files[0]);
+                }
+            });
+
+            function actualizarArchivo(file) {
+                var ext = file.name.split('.').pop().toLowerCase();
+                if (ext !== 'xlsx' && ext !== 'xlsm') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Formato no v\u00e1lido',
+                        text: 'Solo se permiten archivos .xlsx o .xlsm'
+                    });
+                    return;
+                }
+
+                var sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                $('#dropText').html('<i class="fas fa-file-excel" style="color: #10b981; margin-right: 6px;"></i>' + file.name);
+                $('#dropSubtext').text(sizeMB + ' MB');
+                dropZone.css({
+                    'border-color': '#10b981',
+                    'background': '#f0fdf4'
+                });
+                btnCargar.prop('disabled', false);
+                btnLimpiar.show();
+            }
+
+            // Quitar archivo
+            btnLimpiar.on('click', function (e) {
+                e.stopPropagation();
+                fileInput.val('');
+                $('#dropText').text('Arrastre su archivo aqu\u00ed o haga clic para seleccionar');
+                $('#dropSubtext').text('Formatos permitidos: .xlsx, .xlsm');
+                dropZone.css({
+                    'border-color': '#d1d5db',
+                    'background': 'white'
+                });
+                btnCargar.prop('disabled', true);
+                btnLimpiar.hide();
+            });
+
+            // Confirmacion antes de cargar
+            $('#formCarga').on('submit', function (e) {
+                e.preventDefault();
+                var form = this;
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Confirmar carga',
+                    html: '<strong>Esta acci\u00f3n eliminar\u00e1 todos los datos existentes</strong> de las tablas Rel_ que coincidan con las hojas del Excel y los reemplazar\u00e1 con los nuevos datos.<br><br>\u00bfDesea continuar?',
+                    showCancelButton: true,
+                    confirmButtonText: 'S\u00ed, cargar datos',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#6366F1',
+                    cancelButtonColor: '#6c757d'
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        // Mostrar loading
+                        btnCargar.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Procesando...');
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
+}

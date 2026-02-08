@@ -14,8 +14,8 @@ namespace bufinscustomers.Services
         /// </summary>
         private static readonly Dictionary<string, TablaRelacionamiento> TablasDisponibles = new Dictionary<string, TablaRelacionamiento>
         {
-            { "REL_Balance", new TablaRelacionamiento { NombreTabla = "REL_Balance", NombreAmigable = "Balance", Descripcion = "Relacionamientos de Balance" } },
-            { "REL_PYG", new TablaRelacionamiento { NombreTabla = "REL_PYG", NombreAmigable = "P&G", Descripcion = "Relacionamientos de PYG" } }
+            { "Rel_Balance", new TablaRelacionamiento { NombreTabla = "Rel_Balance", NombreAmigable = "Balance", Descripcion = "Relacionamientos de Balance" } },
+            { "Rel_PYG", new TablaRelacionamiento { NombreTabla = "Rel_PYG", NombreAmigable = "P&G", Descripcion = "Relacionamientos de PYG" } }
         };
 
         /// <summary>

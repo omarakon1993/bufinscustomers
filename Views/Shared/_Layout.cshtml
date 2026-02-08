@@ -955,6 +955,14 @@
                                 Configuración empresas
                             </a>
                         </div>
+                        @if (UsuarioSesionHelper.UsuarioActual != null && UsuarioSesionHelper.UsuarioActual.Admin == 1)
+                        {
+                            <div class="sidebar-submenu-item">
+                                <a class="sidebar-submenu-link" href="@Url.Action("ConfiguracionRelacionamiento", "ConfiguracionRelacionamiento")">
+                                    Configuración relacionamientos
+                                </a>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
