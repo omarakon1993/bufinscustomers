@@ -175,6 +175,34 @@
     </div>
 </div>
 
+<!-- Modal detalle de grupo -->
+<div class="modal fade" id="modalDetalleGrupo" tabindex="-1" role="dialog" aria-labelledby="modalDetalleGrupoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+        <div class="modal-content modal-grupo-content">
+            <div class="modal-header modal-grupo-header">
+                <div class="modal-grupo-title-wrapper">
+                    <i class="fas fa-layer-group"></i>
+                    <h5 class="modal-title" id="modalDetalleGrupoLabel">Detalle del grupo</h5>
+                </div>
+                <button type="button" class="close modal-grupo-close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body modal-grupo-body">
+                <div class="modal-grupo-info">
+                    <span id="modalGrupoCount" class="info-badge"></span>
+                </div>
+                <div class="modal-grupo-table-wrapper">
+                    <table class="data-table" id="tablaModalGrupo">
+                        <thead id="tablaModalGrupoHeader"></thead>
+                        <tbody id="tablaModalGrupoBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section scripts {
     <script>
         $(document).ready(function () {
@@ -409,9 +437,16 @@
                         var valor = fila[col.nombreTecnico];
                         var td = $('<td>');
 
-                        // Agregar badge de grupo en la primera celda de un nuevo grupo
+                        // Agregar badge de grupo clickeable en la primera celda de un nuevo grupo
                         if (esNuevoGrupo && j === 0 && descTecnico && descripcionActual) {
-                            td.html('<span class="grupo-badge">' + escapeHtml(descripcionActual) + '</span> ' + escapeHtml(valor || ''));
+                            var badge = $('<span class="grupo-badge grupo-badge-clickable"></span>')
+                                .text(descripcionActual)
+                                .attr('data-descripcion', descripcionActual)
+                                .on('click', function (e) {
+                                    e.stopPropagation();
+                                    abrirModalGrupo($(this).attr('data-descripcion'));
+                                });
+                            td.append(badge).append(' ' + escapeHtml(valor || ''));
                         } else {
                             td.text(valor || '');
                         }
@@ -439,6 +474,50 @@
                 var div = document.createElement('div');
                 div.appendChild(document.createTextNode(text));
                 return div.innerHTML;
+            }
+
+            // Funcion: abrir modal con detalle del grupo
+            function abrirModalGrupo(descripcion) {
+                if (!datosActuales || !datosActuales.columnas) return;
+
+                var descIdx = getDescripcionIndex(datosActuales.columnas);
+                var descTecnico = descIdx >= 0 ? datosActuales.columnas[descIdx].nombreTecnico : null;
+
+                if (!descTecnico) return;
+
+                // Filtrar filas que pertenecen a este grupo
+                var filasGrupo = datosActuales.datos.filter(function (fila) {
+                    return (fila[descTecnico] || '') === descripcion;
+                });
+
+                // Titulo del modal
+                $('#modalDetalleGrupoLabel').text(descripcion);
+                $('#modalGrupoCount').text(filasGrupo.length + ' registro' + (filasGrupo.length !== 1 ? 's' : ''));
+
+                // Construir encabezados
+                var header = $('#tablaModalGrupoHeader');
+                var body = $('#tablaModalGrupoBody');
+                header.empty();
+                body.empty();
+
+                var headerRow = $('<tr>');
+                $.each(datosActuales.columnas, function (i, col) {
+                    headerRow.append($('<th>').text(col.nombreAmigable));
+                });
+                header.append(headerRow);
+
+                // Construir filas
+                $.each(filasGrupo, function (i, fila) {
+                    var row = $('<tr>');
+                    $.each(datosActuales.columnas, function (j, col) {
+                        var valor = fila[col.nombreTecnico];
+                        row.append($('<td>').text(valor || ''));
+                    });
+                    body.append(row);
+                });
+
+                // Abrir modal
+                $('#modalDetalleGrupo').modal('show');
             }
 
             // Funcion: crear controles de paginacion
