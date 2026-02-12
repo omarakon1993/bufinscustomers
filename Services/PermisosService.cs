@@ -68,7 +68,7 @@ namespace bufinscustomers.Services
         /// </summary>
         private MenuOpciones LeerMenuOpcion(SqlDataReader reader)
         {
-            var opcion = new MenuOpciones
+            return new MenuOpciones
             {
                 Id = Convert.ToInt32(reader["Id"]),
                 Codigo = reader["Codigo"].ToString(),
@@ -79,28 +79,11 @@ namespace bufinscustomers.Services
                 Orden = Convert.ToInt32(reader["Orden"]),
                 Controller = reader["Controller"] != DBNull.Value ? reader["Controller"].ToString() : null,
                 Action = reader["Action"] != DBNull.Value ? reader["Action"].ToString() : null,
-                URL = reader["URL"] != DBNull.Value ? reader["URL"].ToString() : null,
-                TienePadre = Convert.ToBoolean(reader["TienePadre"]),
-                IdPadre = reader["IdPadre"] != DBNull.Value ? (int?)Convert.ToInt32(reader["IdPadre"]) : null,
-                NivelMinimo = Convert.ToByte(reader["NivelMinimo"]),
-                SoloSuperAdmin = Convert.ToBoolean(reader["SoloSuperAdmin"]),
-                Activo = Convert.ToBoolean(reader["Activo"])
+                NombreGrupo = reader["NombreGrupo"] != DBNull.Value ? reader["NombreGrupo"].ToString() : null,
+                IconoGrupo = reader["IconoGrupo"] != DBNull.Value ? reader["IconoGrupo"].ToString() : null,
+                IconoCategoria = reader["IconoCategoria"] != DBNull.Value ? reader["IconoCategoria"].ToString() : null,
+                OrdenCategoria = reader["OrdenCategoria"] != DBNull.Value ? Convert.ToInt32(reader["OrdenCategoria"]) : 0
             };
-
-            // Leer columnas del sidebar dinámico si existen
-            try
-            {
-                opcion.NombreGrupo = reader["NombreGrupo"] != DBNull.Value ? reader["NombreGrupo"].ToString() : null;
-                opcion.IconoGrupo = reader["IconoGrupo"] != DBNull.Value ? reader["IconoGrupo"].ToString() : null;
-                opcion.IconoCategoria = reader["IconoCategoria"] != DBNull.Value ? reader["IconoCategoria"].ToString() : null;
-                opcion.OrdenCategoria = reader["OrdenCategoria"] != DBNull.Value ? Convert.ToInt32(reader["OrdenCategoria"]) : 0;
-            }
-            catch (IndexOutOfRangeException)
-            {
-                // Las columnas del sidebar aún no existen en la BD
-            }
-
-            return opcion;
         }
 
         /// <summary>
@@ -204,7 +187,6 @@ namespace bufinscustomers.Services
                             Nombre = opcion.Nombre,
                             Controller = opcion.Controller,
                             Action = opcion.Action,
-                            URL = opcion.URL,
                             Icono = opcion.Icono
                         });
                     }

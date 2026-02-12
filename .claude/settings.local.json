@@ -33,7 +33,9 @@
       "Bash(\"/c/Windows/Microsoft.NET/Framework/v4.0.30319/MSBuild.exe\" bufinscustomers.csproj /p:Configuration=Debug /v:minimal)",
       "Bash(\"/c/Windows/Microsoft.NET/Framework/v4.0.30319/MSBuild.exe\" bufinscustomers.csproj //p:Configuration=Debug //v:minimal)",
       "Bash(\"/c/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe\" bufinscustomers.csproj //p:Configuration=Debug //v:minimal)",
-      "Bash(xxd:*)"
+      "Bash(xxd:*)",
+      "Bash(cmd /c \"where /r C:\\\\ MSBuild.exe 2>nul | findstr /i Current\")",
+      "Bash(powershell -File:*)"
     ],
     "deny": [],
     "ask": []

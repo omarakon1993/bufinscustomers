@@ -24,7 +24,6 @@ namespace bufinscustomers.Models
         public string Nombre { get; set; }
         public string Controller { get; set; }
         public string Action { get; set; }
-        public string URL { get; set; }
         public string Icono { get; set; }
     }
 }
