@@ -68,9 +68,11 @@ The `Usuarios.Admin` field (byte?) defines access levels:
 
 | Value | Role | Description |
 |-------|------|-------------|
-| 0 | Usuario Normal | Access only to assigned menu options |
-| 1 | Admin de Empresa | Company-level admin, access to assigned menu options |
-| 2 | Super Admin | Full access to everything, bypasses all permission checks |
+| 0 | Usuario Normal | Access only to assigned menu options, data isolated to own company (`IdEmpresa`) |
+| 1 | Admin de Empresa | Company-level admin, access to assigned menu options, data isolated to own company (`IdEmpresa`) |
+| 2 | Super Admin | Full access to everything, bypasses all permission checks, sees all companies |
+
+**Data isolation rule:** Admin 0 and Admin 1 can only see/modify data belonging to their own company (`usuario.IdEmpresa`). This is enforced at the controller level and in `EmpresasViewBagFilter`. Only Super Admin (Admin=2) has cross-company access. Admin 0/1 cannot create or delete companies.
 
 Check with: `EsUsuarioNormal()`, `EsAdminEmpresa()`, `EsSuperAdmin()`, `EsAdministrador()` (returns true for Admin=1)
 

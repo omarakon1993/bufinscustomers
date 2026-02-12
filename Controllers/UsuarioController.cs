@@ -38,10 +38,10 @@ namespace bufinscustomers.Controllers
             }
             else
             {
-                // Admin 0 o 1 con permiso solo ven usuarios de su empresa
+                // Admin 0 o 1 con permiso solo ven usuarios de su empresa y excluyen Super Admins
                 var idEmpresa = UsuarioSesionHelper.UsuarioActual.IdEmpresa;
                 usuarios = GetUsuariosFromStoredProcedure()
-                    .Where(u => u.IdEmpresa == idEmpresa)
+                    .Where(u => u.IdEmpresa == idEmpresa && u.Admin != 2)
                     .ToList();
             }
 

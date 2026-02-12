@@ -20,7 +20,7 @@ namespace bufinscustomers.Controllers
         public ActionResult AuditoriaCargues()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            var esAdmin = usuario?.Admin == 1;
+            var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
             
             List<AuditoriaCargues> auditorias;
             
@@ -39,16 +39,16 @@ namespace bufinscustomers.Controllers
             return View("~/Views/Informes/AuditoriaCargues.cshtml", auditorias);
         }
 
-        // Exportar auditoría a Excel
+        // Exportar auditorï¿½a a Excel
         [HttpPost]
         public ActionResult ExportarAuditoriaExcel(string filtro = "")
         {
             try
             {
                 var usuario = UsuarioSesionHelper.UsuarioActual;
-                var esAdmin = usuario?.Admin == 1;
+                var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
                 
-                // Obtener datos según permisos
+                // Obtener datos segï¿½n permisos
                 List<AuditoriaCargues> auditorias;
                 
                 if (esAdmin)
@@ -61,7 +61,7 @@ namespace bufinscustomers.Controllers
                     auditorias = _auditoriaCarguesService.ObtenerAuditoriaCargues(idEmpresa);
                 }
 
-                // Aplicar filtro de búsqueda si existe
+                // Aplicar filtro de bï¿½squeda si existe
                 if (!string.IsNullOrEmpty(filtro))
                 {
                     filtro = filtro.ToLower();
@@ -76,7 +76,7 @@ namespace bufinscustomers.Controllers
                 // Generar archivo Excel
                 using (var package = new ExcelPackage())
                 {
-                    var worksheet = package.Workbook.Worksheets.Add("Auditoría Cargues");
+                    var worksheet = package.Workbook.Worksheets.Add("Auditorï¿½a Cargues");
                     
                     // Configurar encabezados
                     var headers = new List<string> { "Fecha", "Hora" };

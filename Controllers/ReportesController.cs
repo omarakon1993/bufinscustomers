@@ -75,14 +75,30 @@ namespace bufinscustomers.Controllers
 
         public ActionResult MaestroReportes()
         {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
             var reportes = _reportesService.ObtenerReportes();
-            ViewBag.Empresas = _reportesService.ObtenerEmpresas();
+
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+            {
+                reportes = reportes.FindAll(r => r.IdEmpresa == usuario.IdEmpresa);
+            }
+
+            ViewBag.Empresas = UsuarioSesionHelper.EsSuperAdmin()
+                ? _reportesService.ObtenerEmpresas()
+                : _reportesService.ObtenerEmpresas().FindAll(e => e.Id == usuario.IdEmpresa);
+
             return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
         }
 
         [HttpPost]
         public ActionResult CrearReporte(Reportes reporte)
         {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (!UsuarioSesionHelper.EsSuperAdmin() && reporte.IdEmpresa != usuario.IdEmpresa)
+            {
+                TempData["ErrorMessage"] = "No tiene permisos para crear reportes en otra empresa.";
+                return RedirectToAction("MaestroReportes");
+            }
 
             if (!string.IsNullOrWhiteSpace(reporte.EnlaceHTML) && !EsURLValida(reporte.EnlaceHTML))
             {
@@ -113,7 +129,13 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         public ActionResult EditarReporte(Reportes reporte)
         {
-        
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (!UsuarioSesionHelper.EsSuperAdmin() && reporte.IdEmpresa != usuario.IdEmpresa)
+            {
+                TempData["ErrorMessage"] = "No tiene permisos para editar reportes de otra empresa.";
+                return RedirectToAction("MaestroReportes");
+            }
+
             if (!string.IsNullOrWhiteSpace(reporte.EnlaceHTML) && !EsURLValida(reporte.EnlaceHTML))
             {
                 TempData["ErrorMessage"] = "El enlace HTML no tiene un formato válido. Formato esperado: https://ejemplo.com";
@@ -142,6 +164,17 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         public ActionResult EliminarReporte(int idReporte)
         {
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+            {
+                var usuario = UsuarioSesionHelper.UsuarioActual;
+                var reporte = _reportesService.ObtenerReportes().Find(r => r.Id == idReporte);
+                if (reporte != null && reporte.IdEmpresa != usuario.IdEmpresa)
+                {
+                    TempData["ErrorMessage"] = "No tiene permisos para eliminar reportes de otra empresa.";
+                    return RedirectToAction("MaestroReportes");
+                }
+            }
+
             bool eliminado = _reportesService.EliminarReporte(idReporte);
 
             if (eliminado)
@@ -185,16 +218,23 @@ namespace bufinscustomers.Controllers
         public JsonResult ObtenerEmpresas()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            var esAdmin = usuario?.Admin == 1;
-
-            if (!esAdmin)
-                return Json(new { success = false, message = "No autorizado" }, JsonRequestBehavior.AllowGet);
 
             var empresas = new List<object>();
 
             using (var conn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand("SELECT EmpId, EmpNombre FROM dbo.Empresas", conn))
             {
+                SqlCommand cmd;
+
+                if (UsuarioSesionHelper.EsSuperAdmin())
+                {
+                    cmd = new SqlCommand("SELECT EmpId, EmpNombre FROM dbo.Empresas", conn);
+                }
+                else
+                {
+                    cmd = new SqlCommand("SELECT EmpId, EmpNombre FROM dbo.Empresas WHERE EmpId = @IdEmpresa", conn);
+                    cmd.Parameters.AddWithValue("@IdEmpresa", usuario.IdEmpresa);
+                }
+
                 conn.Open();
                 using (var reader = cmd.ExecuteReader())
                 {
@@ -251,7 +291,7 @@ namespace bufinscustomers.Controllers
         public JsonResult ObtenerReportes()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            var esAdmin = usuario?.Admin == 1;
+            var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
             var idEmpresa = usuario?.IdEmpresa ?? 0;
 
             var reportes = new List<object>();
@@ -292,7 +332,7 @@ namespace bufinscustomers.Controllers
         public JsonResult ObtenerReportesFiltrados(string nombre = "", int? anioInicial = null, int? anioFinal = null, string empresa = "")
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            var esAdmin = usuario?.Admin == 1;
+            var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
             var idEmpresa = usuario?.IdEmpresa ?? 0;
 
             var reportes = new List<object>();
@@ -367,17 +407,30 @@ namespace bufinscustomers.Controllers
         public JsonResult ObtenerEnlaceReporte(int id)
         {
             string enlace = "";
+            int idEmpresaReporte = 0;
 
             using (var conn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand("SELECT EnlaceHTML FROM dbo.Reportes WHERE Id = @Id", conn))
+            using (var cmd = new SqlCommand("SELECT EnlaceHTML, IdEmpresa FROM dbo.Reportes WHERE Id = @Id", conn))
             {
                 cmd.Parameters.AddWithValue("@Id", id);
                 conn.Open();
 
-                var result = cmd.ExecuteScalar();
-                if (result != null)
+                using (var reader = cmd.ExecuteReader())
                 {
-                    enlace = result.ToString();
+                    if (reader.Read())
+                    {
+                        enlace = reader["EnlaceHTML"]?.ToString() ?? "";
+                        idEmpresaReporte = Convert.ToInt32(reader["IdEmpresa"]);
+                    }
+                }
+            }
+
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+            {
+                var usuario = UsuarioSesionHelper.UsuarioActual;
+                if (idEmpresaReporte != usuario.IdEmpresa)
+                {
+                    return Json(new { enlace = "", error = "No tiene permisos para ver este reporte" }, JsonRequestBehavior.AllowGet);
                 }
             }
 

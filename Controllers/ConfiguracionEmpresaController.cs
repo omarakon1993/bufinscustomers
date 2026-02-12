@@ -34,13 +34,13 @@ namespace bufinscustomers.Controllers
 
                 var empresas = _configuracionService.ObtenerEmpresas();
                 
-                if (usuario.Admin != 1)
+                if (!UsuarioSesionHelper.EsSuperAdmin())
                 {
                     empresas = empresas.Where(e => e.Id == usuario.IdEmpresa).ToList();
                 }
 
                 ViewBag.Empresas = empresas;
-                ViewBag.EsAdmin = usuario.Admin == 1;
+                ViewBag.EsAdmin = UsuarioSesionHelper.EsSuperAdmin();
                 
                 return View("~/Views/Configuracion/ConfiguracionesEmpresas.cshtml");
             }
@@ -67,7 +67,7 @@ namespace bufinscustomers.Controllers
                     return Json(new { success = false, message = "Sesi�n no v�lida" }, JsonRequestBehavior.AllowGet);
                 }
 
-                if (usuario.Admin != 1 && usuario.IdEmpresa != idEmpresa)
+                if (!UsuarioSesionHelper.EsSuperAdmin() && usuario.IdEmpresa != idEmpresa)
                 {
                     return Json(new { success = false, message = "No tiene permisos para ver esta configuraci�n" }, JsonRequestBehavior.AllowGet);
                 }
@@ -130,7 +130,7 @@ namespace bufinscustomers.Controllers
                     return Json(new { success = false, message = "Sesi�n no v�lida" });
                 }
 
-                if (usuario.Admin != 1 && usuario.IdEmpresa != configuracion.IdEmpresa)
+                if (!UsuarioSesionHelper.EsSuperAdmin() && usuario.IdEmpresa != configuracion.IdEmpresa)
                 {
                     return Json(new { success = false, message = "No tiene permisos para modificar esta configuraci�n" });
                 }
@@ -315,7 +315,7 @@ namespace bufinscustomers.Controllers
 
                 var empresas = _configuracionService.ObtenerEmpresas();
                 
-                if (usuario.Admin != 1)
+                if (!UsuarioSesionHelper.EsSuperAdmin())
                 {
                     empresas = empresas.Where(e => e.Id == usuario.IdEmpresa).ToList();
                 }

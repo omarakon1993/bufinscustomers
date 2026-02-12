@@ -800,9 +800,31 @@
                                     @{
                                         var empresasTopbar = ViewBag.Empresas as List<bufinscustomers.Models.Empresas>;
                                         var empresaUsuarioTopbar = empresasTopbar?.FirstOrDefault(e => e.Id == idEmpresa);
+                                        var adminLevel = UsuarioSesionHelper.UsuarioActual?.Admin;
+                                        string rolTexto;
+                                        string rolIcono;
+                                        string rolColor;
+                                        if (adminLevel == 2)
+                                        {
+                                            rolTexto = "Super Administrador";
+                                            rolIcono = "fas fa-crown";
+                                            rolColor = "#FFD700";
+                                        }
+                                        else if (adminLevel == 1)
+                                        {
+                                            rolTexto = "Administrador" + (empresaUsuarioTopbar != null ? " - " + empresaUsuarioTopbar.Nombre : "");
+                                            rolIcono = "fas fa-user-shield";
+                                            rolColor = "#01E1D7";
+                                        }
+                                        else
+                                        {
+                                            rolTexto = "Usuario" + (empresaUsuarioTopbar != null ? " - " + empresaUsuarioTopbar.Nombre : "");
+                                            rolIcono = "fas fa-user";
+                                            rolColor = "rgba(255, 255, 255, 0.7)";
+                                        }
                                     }
                                     <div class="text-gray-400" style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.7) !important;">
-                                        <i class="fas fa-building" style="font-size: 0.7rem; margin-right: 4px; color: #01E1D7 !important;"></i>@(empresaUsuarioTopbar != null ? empresaUsuarioTopbar.Nombre : "Sin empresa")
+                                        <i class="@rolIcono" style="font-size: 0.7rem; margin-right: 4px; color: @rolColor !important;"></i>@rolTexto
                                     </div>
                                 </div>
                                 @if (usuario?.Imagen != null && !string.IsNullOrEmpty(usuario.Imagen.ImagenBase64))

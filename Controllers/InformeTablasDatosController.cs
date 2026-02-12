@@ -24,7 +24,7 @@ namespace bufinscustomers.Controllers
         {
             // Obtener información del usuario actual
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            var esAdmin = usuario?.Admin == 1;
+            var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
             var idEmpresa = usuario?.IdEmpresa ?? 0;
 
             // Cargar tablas disponibles
@@ -57,7 +57,7 @@ namespace bufinscustomers.Controllers
             try
             {
                 var usuario = UsuarioSesionHelper.UsuarioActual;
-                var esAdmin = usuario?.Admin == 1;
+                var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
                 // Si no es admin, usar su empresa
                 if (!esAdmin)
@@ -84,7 +84,7 @@ namespace bufinscustomers.Controllers
             try
             {
                 var usuario = UsuarioSesionHelper.UsuarioActual;
-                var esAdmin = usuario?.Admin == 1;
+                var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
                 // Si no es admin, usar su empresa
                 if (!esAdmin)
@@ -111,7 +111,7 @@ namespace bufinscustomers.Controllers
             try
             {
                 var usuario = UsuarioSesionHelper.UsuarioActual;
-                var esAdmin = usuario?.Admin == 1;
+                var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
                 var idEmpresaUsuario = usuario?.IdEmpresa;
 
                 // Validar que el usuario tenga permiso para ver la empresa solicitada
@@ -198,7 +198,7 @@ namespace bufinscustomers.Controllers
             try
             {
                 var usuario = UsuarioSesionHelper.UsuarioActual;
-                var esAdmin = usuario?.Admin == 1;
+                var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
                 var idEmpresaUsuario = usuario?.IdEmpresa;
 
                 // Validar permisos

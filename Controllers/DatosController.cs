@@ -59,7 +59,12 @@ namespace bufinscustomers.Controllers
         // Modelo actions
         public ActionResult Modelo()
         {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
             var empresas = _empresaService.ObtenerEmpresas();
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+            {
+                empresas = empresas.Where(e => e.Id == usuario.IdEmpresa).ToList();
+            }
             return View("~/Views/Datos/Modelo.cshtml", empresas);
         }
 
@@ -73,6 +78,12 @@ namespace bufinscustomers.Controllers
                 {
                     SetErrorMessage("Sesión no válida. Por favor, inicie sesión nuevamente.");
                     return RedirectToAction("Login", "Acceso");
+                }
+
+                if (!UsuarioSesionHelper.EsSuperAdmin() && usuarioSession.IdEmpresa != idEmpresa)
+                {
+                    SetErrorMessage("No tiene permisos para ejecutar el modelo en esta empresa.");
+                    return RedirectToAction("Modelo");
                 }
 
                 using (SqlConnection connection = new SqlConnection(CadenaConexion))
@@ -293,14 +304,14 @@ namespace bufinscustomers.Controllers
 
             // 🔹 Cargar empresas según rol del usuario
             List<Empresas> empresasDisponibles;
-            if (usuario?.Admin == 1)
+            if (UsuarioSesionHelper.EsSuperAdmin())
             {
-                // Admin: mostrar todas las empresas
+                // Super Admin: mostrar todas las empresas
                 empresasDisponibles = _empresaService.ObtenerEmpresas();
             }
             else
             {
-                // No admin: mostrar solo su empresa
+                // Admin de empresa y usuario normal: mostrar solo su empresa
                 var empresaUsuario = _empresaService.ObtenerEmpresas()
                     .FirstOrDefault(e => e.Id == idEmpresa);
                 empresasDisponibles = empresaUsuario != null
