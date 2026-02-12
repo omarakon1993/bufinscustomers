@@ -19,7 +19,7 @@ namespace bufinscustomers.Services
                     command.CommandType = CommandType.StoredProcedure;
                     connection.Open();
 
-                    using (SqlDataReader reader = command.ExecuteReader())
+                    using ( SqlDataReader reader = command.ExecuteReader())
                     {
                         while (reader.Read())
                         {

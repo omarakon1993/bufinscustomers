@@ -34,7 +34,7 @@ namespace bufinscustomers.Controllers
         /// <summary>
         /// Manejo centralizado de errores
         /// </summary>
-        protected void SetErrorMessage(string mensaje)
+        public void SetErrorMessage(string mensaje)
         {
             TempData["ErrorMessage"] = mensaje;
         }
@@ -42,7 +42,7 @@ namespace bufinscustomers.Controllers
         /// <summary>
         /// Manejo centralizado de mensajes de éxito
         /// </summary>
-        protected void SetSuccessMessage(string mensaje)
+        public void SetSuccessMessage(string mensaje)
         {
             TempData["SuccessMessage"] = mensaje;
         }
@@ -50,7 +50,7 @@ namespace bufinscustomers.Controllers
         /// <summary>
         /// Manejo centralizado de mensajes informativos
         /// </summary>
-        protected void SetInfoMessage(string mensaje)
+        public void SetInfoMessage(string mensaje)
         {
             TempData["InfoMessage"] = mensaje;
         }

@@ -1,0 +1,438 @@
+﻿@model bufinscustomers.Models.GestionOpcionesMenuViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Gestionar Permisos";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Gestionar Permisos</title>
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <style>
+        :root {
+            --color-primario: #583AFF;
+            --color-secundario: #01E1D7;
+        }
+
+        .card-header-permisos {
+            background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
+            color: white;
+            padding: 1.2rem 1.5rem;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .card-header-permisos i {
+            margin-right: 8px;
+        }
+
+        .badge-role {
+            font-size: 0.85rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.25rem;
+        }
+
+        .categoria-permisos {
+            margin-bottom: 2rem;
+        }
+
+        .categoria-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #583AFF;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .categoria-titulo {
+            color: #583AFF;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .categoria-contador {
+            font-size: 0.85rem;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .categoria-acciones {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .categoria-acciones .btn {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+        }
+
+        .permiso-item {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .permiso-item:hover {
+            background: #e9ecef;
+            box-shadow: 0 2px 8px rgba(88, 58, 255, 0.15);
+        }
+
+        .permiso-info {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            flex: 1;
+        }
+
+        .permiso-icon {
+            color: #01E1D7;
+            font-size: 1.2rem;
+            min-width: 24px;
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .permiso-texto h6 {
+            margin: 0;
+            color: #2d3748;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .permiso-texto small {
+            color: #6c757d;
+            font-size: 0.82rem;
+        }
+
+        /* Toggle switch personalizado */
+        .custom-switch .custom-control-input:checked ~ .custom-control-label::before {
+            background-color: #583AFF;
+            border-color: #583AFF;
+        }
+
+        .custom-switch .custom-control-input:checked ~ .custom-control-label::after {
+            background-color: white;
+        }
+
+        .custom-switch .custom-control-label {
+            cursor: pointer;
+            padding-top: 2px;
+        }
+
+        .custom-switch .custom-control-label::before {
+            width: 2.5rem;
+            height: 1.4rem;
+            border-radius: 0.7rem;
+        }
+
+        .custom-switch .custom-control-label::after {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            top: calc(0.25rem + 3px);
+        }
+
+        .custom-switch .custom-control-input:checked ~ .custom-control-label::after {
+            transform: translateX(1.1rem);
+        }
+
+        .btn-guardar {
+            background: linear-gradient(90deg, #583AFF, #01E1D7);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-guardar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(88, 58, 255, 0.4);
+            color: white;
+        }
+
+        .acciones-globales {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @@media (max-width: 767px) {
+            .card-header-permisos {
+                font-size: 1rem;
+                padding: 1rem;
+            }
+
+            .categoria-titulo {
+                font-size: 1rem;
+            }
+
+            .permiso-item {
+                padding: 0.75rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .acciones-globales {
+                flex-direction: column;
+            }
+
+            .categoria-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+
+    <div class="card shadow mb-4 mt-4">
+        <div class="card-header-permisos">
+            <i class="fas fa-shield-alt"></i> Gestionar Opciones de Menú
+            <span class="d-block d-md-inline mt-1 mt-md-0 ml-md-2" style="font-weight: 400; font-size: 1rem;">
+                @Model.Usuario.Nombre @Model.Usuario.Apellidos
+            </span>
+            <span class="badge badge-info badge-role ml-2">
+                @(Model.Usuario.Admin == 0 ? "Usuario Normal" : "Administrador de Empresa")
+            </span>
+        </div>
+        <div class="card-body">
+            <form id="formPermisos">
+                <input type="hidden" id="idUsuario" value="@Model.Usuario.Id" />
+
+                @if (Model.OpcionesPorCategoria == null || !Model.OpcionesPorCategoria.Any())
+                {
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        No hay opciones de menú disponibles en el sistema.
+                    </div>
+                }
+                else
+                {
+                    <!-- Acciones globales -->
+                    <div class="acciones-globales">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="seleccionarTodo()">
+                            <i class="fas fa-check-double mr-1"></i>Seleccionar Todo
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="deseleccionarTodo()">
+                            <i class="fas fa-times mr-1"></i>Deseleccionar Todo
+                        </button>
+                    </div>
+
+                    foreach (var categoria in Model.OpcionesPorCategoria)
+                    {
+                        var totalCategoria = categoria.Count();
+                        var asignadosCategoria = categoria.Count(o => o.Asignado);
+                        var categoriaId = categoria.Key.Replace(" ", "_");
+
+                        <div class="categoria-permisos" data-categoria="@categoriaId">
+                            <div class="categoria-header">
+                                <div>
+                                    <h5 class="categoria-titulo">
+                                        @{
+                                            var iconoCategoria = categoria.FirstOrDefault()?.IconoCategoria ?? "fas fa-folder-open";
+                                        }
+                                        <i class="@iconoCategoria mr-2"></i>
+                                        @categoria.Key
+                                        <span class="categoria-contador ml-2">(<span class="conteo-asignados">@asignadosCategoria</span>/@totalCategoria)</span>
+                                    </h5>
+                                </div>
+                                <div class="categoria-acciones">
+                                    <button type="button" class="btn btn-outline-primary" onclick="seleccionarCategoria('@categoriaId')">
+                                        Todas
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="deseleccionarCategoria('@categoriaId')">
+                                        Ninguna
+                                    </button>
+                                </div>
+                            </div>
+
+                            @foreach (var opcion in categoria)
+                            {
+                                <div class="permiso-item">
+                                    <div class="permiso-info">
+                                        @if (!string.IsNullOrEmpty(opcion.Icono))
+                                        {
+                                            <i class="@opcion.Icono permiso-icon"></i>
+                                        }
+                                        <div class="permiso-texto">
+                                            <h6>@opcion.Nombre</h6>
+                                            @if (!string.IsNullOrEmpty(opcion.Descripcion))
+                                            {
+                                                <small>@opcion.Descripcion</small>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox"
+                                               class="custom-control-input permiso-checkbox"
+                                               id="opcion_@opcion.IdMenuOpcion"
+                                               value="@opcion.IdMenuOpcion"
+                                               data-categoria="@categoriaId"
+                                               @(opcion.Asignado ? "checked" : "")>
+                                        <label class="custom-control-label" for="opcion_@opcion.IdMenuOpcion"></label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+            </form>
+        </div>
+        <div class="card-footer text-center">
+            <button type="button" class="btn btn-guardar" onclick="guardarPermisos()">
+                <i class="fas fa-save mr-2"></i>Guardar Opciones de Menú
+            </button>
+            <a href="@Url.Action("Usuarios", "Usuario")" class="btn btn-secondary ml-2">
+                <i class="fas fa-arrow-left mr-2"></i>Volver
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <script>
+            const isMobileErr = window.innerWidth <= 768;
+
+            Swal.fire({
+                toast: true,
+                position: isMobileErr ? 'top' : 'top-end',
+                icon: 'error',
+                title: '@TempData["ErrorMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        </script>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <script>
+            const isMobileSucc = window.innerWidth <= 768;
+
+            Swal.fire({
+                toast: true,
+                position: isMobileSucc ? 'top' : 'top-end',
+                icon: 'success',
+                title: '@TempData["SuccessMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        </script>
+    }
+
+    @section scripts {
+        <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
+        <script>
+            // Actualizar contadores al cambiar un checkbox
+            $(document).on('change', '.permiso-checkbox', function () {
+                actualizarContador($(this).data('categoria'));
+            });
+
+            function actualizarContador(categoriaId) {
+                var container = $('[data-categoria="' + categoriaId + '"]');
+                var total = container.find('.permiso-checkbox').length;
+                var asignados = container.find('.permiso-checkbox:checked').length;
+                container.find('.conteo-asignados').text(asignados);
+            }
+
+            function seleccionarTodo() {
+                $('.permiso-checkbox').prop('checked', true);
+                actualizarTodosContadores();
+            }
+
+            function deseleccionarTodo() {
+                $('.permiso-checkbox').prop('checked', false);
+                actualizarTodosContadores();
+            }
+
+            function seleccionarCategoria(categoriaId) {
+                $('[data-categoria="' + categoriaId + '"] .permiso-checkbox').prop('checked', true);
+                actualizarContador(categoriaId);
+            }
+
+            function deseleccionarCategoria(categoriaId) {
+                $('[data-categoria="' + categoriaId + '"] .permiso-checkbox').prop('checked', false);
+                actualizarContador(categoriaId);
+            }
+
+            function actualizarTodosContadores() {
+                $('.categoria-permisos').each(function () {
+                    var categoriaId = $(this).data('categoria');
+                    actualizarContador(categoriaId);
+                });
+            }
+
+            function guardarPermisos() {
+                var idUsuario = $('#idUsuario').val();
+                var permisos = [];
+
+                $('.permiso-checkbox:checked').each(function () {
+                    permisos.push(parseInt($(this).val()));
+                });
+
+                Swal.fire({
+                    title: 'Guardando opciones de menú...',
+                    text: 'Por favor espere',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                $.ajax({
+                    url: '@Url.Action("Guardar", "Permisos")',
+                    type: 'POST',
+                    data: {
+                        idUsuario: idUsuario,
+                        permisos: permisos
+                    },
+                    traditional: true,
+                    success: function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Opciones actualizadas',
+                                text: response.message,
+                                showConfirmButton: true,
+                                confirmButtonText: 'Aceptar',
+                                confirmButtonColor: '#583AFF'
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: response.message,
+                                showConfirmButton: true
+                            });
+                        }
+                    },
+                    error: function () {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Error al guardar las opciones de menú. Por favor, intente nuevamente.',
+                            showConfirmButton: true
+                        });
+                    }
+                });
+            }
+        </script>
+    }
+</body>
+</html>

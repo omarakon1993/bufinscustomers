@@ -1,6 +1,8 @@
 using bufinscustomers.Models;
+using bufinscustomers.Services;
 using System.Data.SqlClient;
 using System;
+using System.Collections.Generic;
 using System.Web;
 using System.Configuration;
 
@@ -8,16 +10,21 @@ namespace bufinscustomers.Helpers
 {
     public static class UsuarioSesionHelper
     {
-        // ========== CONSTANTES PARA KEYS DE SESIÓN ==========
+        // ========== CONSTANTES PARA KEYS DE SESIÃ“N ==========
         private const string USUARIO_SESSION_KEY = "UsuarioCompleto";
         private const string LAST_ACTIVITY_KEY = "LastActivity";
         private const string LOGIN_TIME_KEY = "LoginTime";
-        
-        // Obtener cadena de conexión desde Web.config (más seguro)
+        private const string PERMISOS_CACHE_KEY = "UsuarioPermisosCodigos";
+        private const string MENU_SIDEBAR_KEY = "UsuarioMenuSidebar";
+
+        // Obtener cadena de conexiï¿½n desde Web.config (mï¿½s seguro)
         private static readonly string cadena = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
 
+        // Servicio de opciones de menÃº para verificaciones
+        private static readonly MenuOpcionesService _menuOpcionesService = new MenuOpcionesService();
+
         /// <summary>
-        /// Obtiene el usuario actual de la sesión con validación de expiración mejorada
+        /// Obtiene el usuario actual de la sesiï¿½n con validaciï¿½n de expiraciï¿½n mejorada
         /// </summary>
         public static Usuarios UsuarioActual
         {
@@ -26,18 +33,18 @@ namespace bufinscustomers.Helpers
                 var context = HttpContext.Current;
                 if (context?.Session == null) return null;
 
-                // ========== VERIFICAR EXPIRACIÓN DE SESIÓN ==========
+                // ========== VERIFICAR EXPIRACIï¿½N DE SESIï¿½N ==========
                 if (EsSesionExpirada())
                 {
                     LimpiarSesion();
                     return null;
                 }
 
-                // ========== OBTENER USUARIO DE SESIÓN (SIN CONSULTA BD) ==========
+                // ========== OBTENER USUARIO DE SESIï¿½N (SIN CONSULTA BD) ==========
                 var usuario = context.Session[USUARIO_SESSION_KEY] as Usuarios;
                 if (usuario != null)
                 {
-                    // Actualizar última actividad
+                    // Actualizar ï¿½ltima actividad
                     ActualizarUltimaActividad();
                     return usuario;
                 }
@@ -60,7 +67,7 @@ namespace bufinscustomers.Helpers
         }
 
         /// <summary>
-        /// Establece el usuario en la sesión con toda la información necesaria
+        /// Establece el usuario en la sesiï¿½n con toda la informaciï¿½n necesaria
         /// </summary>
         public static void EstablecerUsuarioEnSesion(Usuarios usuario)
         {
@@ -69,16 +76,20 @@ namespace bufinscustomers.Helpers
 
             var now = DateTime.Now;
             
-            // Almacenar usuario completo en sesión
+            // Almacenar usuario completo en sesiÃ³n
             context.Session[USUARIO_SESSION_KEY] = usuario;
             context.Session["IdUsuario"] = usuario.Id; // Mantener por compatibilidad
             context.Session["usuario"] = usuario; // Mantener por compatibilidad
             context.Session[LAST_ACTIVITY_KEY] = now;
             context.Session[LOGIN_TIME_KEY] = now;
+
+            // Limpiar cachÃ© de permisos para que se recargue con el nuevo usuario
+            context.Session.Remove(PERMISOS_CACHE_KEY);
+            context.Session.Remove(MENU_SIDEBAR_KEY);
         }
 
         /// <summary>
-        /// Verifica si la sesión ha expirado por inactividad
+        /// Verifica si la sesiï¿½n ha expirado por inactividad
         /// </summary>
         private static bool EsSesionExpirada()
         {
@@ -86,7 +97,7 @@ namespace bufinscustomers.Helpers
             if (context?.Session == null) return true;
 
             var lastActivity = context.Session[LAST_ACTIVITY_KEY] as DateTime?;
-            if (!lastActivity.HasValue) return false; // Si no hay marca, no ha expirado aún
+            if (!lastActivity.HasValue) return false; // Si no hay marca, no ha expirado aï¿½n
 
             var timeoutMinutos = context.Session.Timeout;
             var minutosInactivo = DateTime.Now.Subtract(lastActivity.Value).TotalMinutes;
@@ -95,7 +106,7 @@ namespace bufinscustomers.Helpers
         }
 
         /// <summary>
-        /// Actualiza la marca de tiempo de última actividad
+        /// Actualiza la marca de tiempo de ï¿½ltima actividad
         /// </summary>
         private static void ActualizarUltimaActividad()
         {
@@ -107,7 +118,7 @@ namespace bufinscustomers.Helpers
         }
 
         /// <summary>
-        /// Obtiene información de actividad de la sesión
+        /// Obtiene informaciï¿½n de actividad de la sesiï¿½n
         /// </summary>
         public static SessionInfo ObtenerInfoSesion()
         {
@@ -127,7 +138,7 @@ namespace bufinscustomers.Helpers
         }
 
         /// <summary>
-        /// Extiende la sesión actualizando la última actividad
+        /// Extiende la sesiï¿½n actualizando la ï¿½ltima actividad
         /// </summary>
         public static bool ExtenderSesion()
         {
@@ -142,7 +153,7 @@ namespace bufinscustomers.Helpers
         }
 
         /// <summary>
-        /// Limpia completamente la sesión
+        /// Limpia completamente la sesiï¿½n
         /// </summary>
         public static void LimpiarSesion()
         {
@@ -172,12 +183,12 @@ namespace bufinscustomers.Helpers
         }
 
         /// <summary>
-        /// Método de debugging para verificar los datos del usuario en sesión
+        /// Mï¿½todo de debugging para verificar los datos del usuario en sesiï¿½n
         /// </summary>
         public static string ObtenerInfoDebugUsuario()
         {
             var context = HttpContext.Current;
-            if (context?.Session == null) return "Sin contexto de sesión";
+            if (context?.Session == null) return "Sin contexto de sesiï¿½n";
 
             var usuario = context.Session[USUARIO_SESSION_KEY] as Usuarios;
             var usuarioCompatible = context.Session["usuario"] as Usuarios;
@@ -212,7 +223,7 @@ namespace bufinscustomers.Helpers
                 FROM Usuarios u
                 LEFT JOIN UsuarioImagenes ui ON u.Id = ui.UsuarioId
                 WHERE u.Id = @IdUsuario
-                -- Si hay varias imágenes, puedes traer solo la más reciente:
+                -- Si hay varias imï¿½genes, puedes traer solo la mï¿½s reciente:
                 -- AND ui.Id = (SELECT TOP 1 Id FROM UsuarioImagenes WHERE UsuarioId = u.Id ORDER BY Id DESC)
             ";
 
@@ -252,10 +263,114 @@ namespace bufinscustomers.Helpers
 
             return usuario;
         }
+
+        // ========== Mï¿½TODOS DE VERIFICACIï¿½N DE ROLES Y PERMISOS ==========
+
+        /// <summary>
+        /// Verifica si el usuario actual es Usuario Normal (Admin = 0)
+        /// </summary>
+        public static bool EsUsuarioNormal()
+        {
+            return UsuarioActual?.Admin == 0;
+        }
+
+        /// <summary>
+        /// Verifica si el usuario actual es Admin de Empresa (Admin = 1)
+        /// </summary>
+        public static bool EsAdminEmpresa()
+        {
+            return UsuarioActual?.Admin == 1;
+        }
+
+        /// <summary>
+        /// Verifica si el usuario actual es Super Administrador (Admin = 2)
+        /// </summary>
+        public static bool EsSuperAdmin()
+        {
+            return UsuarioActual?.Admin == 2;
+        }
+
+        /// <summary>
+        /// Verifica si el usuario tiene un permiso especï¿½fico
+        /// Admin 2 siempre retorna true (tiene todos los permisos)
+        /// Admin 0 y 1 verifican en la tabla de permisos
+        /// </summary>
+        public static bool TienePermiso(string codigoPermiso)
+        {
+            var usuario = UsuarioActual;
+            if (usuario == null) return false;
+
+            // Super Admin tiene todos los permisos automÃ¡ticamente
+            if (usuario.Admin == 2) return true;
+
+            // Usar cachÃ© de permisos en sesiÃ³n (una sola consulta, no 11)
+            var codigos = HttpContext.Current?.Session[PERMISOS_CACHE_KEY] as HashSet<string>;
+            if (codigos == null)
+            {
+                codigos = _menuOpcionesService.ObtenerCodigosPermisos(usuario.Id);
+                HttpContext.Current.Session[PERMISOS_CACHE_KEY] = codigos;
+            }
+            return codigos.Contains(codigoPermiso);
+        }
+
+        /// <summary>
+        /// Obtiene el menÃº del sidebar para el usuario actual, cacheado en sesiÃ³n
+        /// </summary>
+        public static List<SidebarCategoriaViewModel> ObtenerMenuSidebar()
+        {
+            var context = HttpContext.Current;
+            if (context?.Session == null) return new List<SidebarCategoriaViewModel>();
+
+            var usuario = UsuarioActual;
+            if (usuario == null) return new List<SidebarCategoriaViewModel>();
+
+            // Intentar obtener de cachÃ©
+            var menuCache = context.Session[MENU_SIDEBAR_KEY] as List<SidebarCategoriaViewModel>;
+            if (menuCache != null) return menuCache;
+
+            // Construir menÃº desde BD
+            byte nivelAdmin = usuario.Admin ?? 0;
+            var opciones = _menuOpcionesService.ObtenerMenuParaUsuario(usuario.Id, nivelAdmin);
+            var menu = _menuOpcionesService.ConstruirMenuJerarquico(opciones);
+
+            // Cachear en sesiÃ³n
+            context.Session[MENU_SIDEBAR_KEY] = menu;
+            return menu;
+        }
+
+        /// <summary>
+        /// Invalida la cachÃ© de permisos y menÃº del sidebar (llamar al guardar permisos)
+        /// </summary>
+        public static void InvalidarCachePermisos()
+        {
+            var context = HttpContext.Current;
+            if (context?.Session == null) return;
+
+            context.Session.Remove(PERMISOS_CACHE_KEY);
+            context.Session.Remove(MENU_SIDEBAR_KEY);
+        }
+
+        /// <summary>
+        /// Obtiene la etiqueta legible del rol del usuario actual
+        /// </summary>
+        public static string ObtenerNombreRol()
+        {
+            var usuario = UsuarioActual;
+            if (usuario == null) return "Sin sesiï¿½n";
+
+            if (usuario.Admin == 0)
+                return "Usuario";
+            else if (usuario.Admin == 1)
+                return "Administrador de Empresa";
+            else if (usuario.Admin == 2)
+                return "Super Administrador";
+            else
+                return "Desconocido";
+        }
     }
 
     /// <summary>
-    /// Información de la sesión actual
+    /// Informaciï¿½n de la sesiï¿½n actual
     /// </summary>
     public class SessionInfo
     {

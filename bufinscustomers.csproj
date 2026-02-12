@@ -157,6 +157,7 @@
     <Compile Include="Controllers\InformeRelacionamientosController.cs" />
     <Compile Include="Controllers\InformeTablasDatosController.cs" />
     <Compile Include="Controllers\ModeloController.cs" />
+    <Compile Include="Controllers\PermisosController.cs" />
     <Compile Include="Controllers\ReportesController.cs" />
     <Compile Include="Controllers\UsuarioController.cs" />
     <Compile Include="Filters\EmpresasViewBagFilter.cs" />
@@ -179,8 +180,13 @@
     <Compile Include="Models\ConfiguracionRelacionamiento.cs" />
     <Compile Include="Models\InformeRelacionamientos.cs" />
     <Compile Include="Models\InformeTablasDatos.cs" />
+    <Compile Include="Models\PermisosModulos.cs" />
+    <Compile Include="Models\SidebarMenuViewModel.cs" />
+    <Compile Include="Models\PermisoUsuarioViewModel.cs" />
     <Compile Include="Models\Reportes.cs" />
+    <Compile Include="Models\UsuarioPermisos.cs" />
     <Compile Include="Models\Usuarios.cs" />
+    <Compile Include="Permisos\RequierePermisoAttribute.cs" />
     <Compile Include="Permisos\ValidarSesionAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
@@ -195,7 +201,9 @@
     <Compile Include="Services\ConfiguracionRelacionamientoService.cs" />
     <Compile Include="Services\InformeRelacionamientosService.cs" />
     <Compile Include="Services\InformeTablasDatosService.cs" />
+    <Compile Include="Services\PermisosService.cs" />
     <Compile Include="Services\ReportesService.cs" />
+    <Compile Include="Services\UsuarioService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include=".gitattributes" />
@@ -6150,6 +6158,7 @@
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
+    <Content Include="Views\Shared\_SidebarMenu.cshtml" />
     <Content Include="Views\Home\About.cshtml" />
     <Content Include="Views\Home\Contact.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
@@ -6176,6 +6185,7 @@
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="Assets\img\usuarios\" />
+    <Content Include="Views\Permisos\Gestionar.cshtml" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

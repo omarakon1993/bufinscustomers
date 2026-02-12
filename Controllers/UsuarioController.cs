@@ -19,9 +19,38 @@ namespace bufinscustomers.Controllers
         // GET: Usuario
         public ActionResult Usuarios()
         {
+            // Verificar permisos: Admin 2 o tener permiso USUARIOS_VER
+            if (!UsuarioSesionHelper.EsSuperAdmin() && !UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR"))
+            {
+                SetErrorMessage("No tienes permisos para ver usuarios.");
+                return RedirectToAction("Index", "Home");
+            }
+
             var empresas = _empresaService.ObtenerEmpresas();
             ViewBag.Empresas = empresas;
-            List<Usuarios> usuarios = GetUsuariosFromStoredProcedure();           
+
+            List<Usuarios> usuarios;
+
+            if (UsuarioSesionHelper.EsSuperAdmin())
+            {
+                // Admin 2 ve todos los usuarios
+                usuarios = GetUsuariosFromStoredProcedure();
+            }
+            else
+            {
+                // Admin 0 o 1 con permiso solo ven usuarios de su empresa
+                var idEmpresa = UsuarioSesionHelper.UsuarioActual.IdEmpresa;
+                usuarios = GetUsuariosFromStoredProcedure()
+                    .Where(u => u.IdEmpresa == idEmpresa)
+                    .ToList();
+            }
+
+            // Pasar información de permisos al ViewBag para la vista
+            ViewBag.EsSuperAdmin = UsuarioSesionHelper.EsSuperAdmin();
+            ViewBag.PuedeCrear = UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR");
+            ViewBag.PuedeEditar = UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR");
+            ViewBag.PuedeEliminar = UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR");
+
             return View("~/Views/Configuracion/Usuarios.cshtml", usuarios);
         }
 
@@ -86,8 +115,39 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         public ActionResult EliminarUsuario(int idUsuario)
         {
+            // Verificar permisos de eliminación
+            if (!UsuarioSesionHelper.EsSuperAdmin() && !UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR"))
+            {
+                SetErrorMessage("No tienes permisos para eliminar usuarios.");
+                return RedirectToAction("Usuarios");
+            }
+
             try
             {
+                // Si no es Admin 2, verificar que el usuario a eliminar sea de su empresa
+                if (!UsuarioSesionHelper.EsSuperAdmin())
+                {
+                    var usuarioService = new UsuarioService();
+                    var usuarioAEliminar = usuarioService.ObtenerUsuarioPorId(idUsuario);
+
+                    if (usuarioAEliminar != null)
+                    {
+                        var idEmpresaActual = UsuarioSesionHelper.UsuarioActual.IdEmpresa;
+                        if (usuarioAEliminar.IdEmpresa != idEmpresaActual)
+                        {
+                            SetErrorMessage("No tienes permisos para eliminar usuarios de otras empresas.");
+                            return RedirectToAction("Usuarios");
+                        }
+
+                        // No permitir eliminar Admin 2
+                        if (usuarioAEliminar.Admin == 2)
+                        {
+                            SetErrorMessage("No puedes eliminar un Super Administrador.");
+                            return RedirectToAction("Usuarios");
+                        }
+                    }
+                }
+
                 using (SqlConnection connection = new SqlConnection(CadenaConexion))
                 {
                     using (SqlCommand command = new SqlCommand("sp_EliminarUsuario", connection))
@@ -113,6 +173,31 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         public ActionResult EditarUsuario(Usuarios oUsuario, HttpPostedFileBase ImagenUsuario)
         {
+            // Verificar permisos de edición
+            if (!UsuarioSesionHelper.EsSuperAdmin() && !UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR"))
+            {
+                SetErrorMessage("No tienes permisos para editar usuarios.");
+                return RedirectToAction("Usuarios");
+            }
+
+            // Solo Admin 2 puede asignar Admin 2
+            if (oUsuario.Admin == 2 && !UsuarioSesionHelper.EsSuperAdmin())
+            {
+                SetErrorMessage("Solo los Super Administradores pueden asignar el rol de Super Administrador.");
+                return RedirectToAction("Usuarios");
+            }
+
+            // Si no es Admin 2, solo puede editar usuarios de su empresa
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+            {
+                var idEmpresaActual = UsuarioSesionHelper.UsuarioActual.IdEmpresa;
+                if (oUsuario.IdEmpresa != idEmpresaActual)
+                {
+                    SetErrorMessage("No tienes permisos para editar usuarios de otras empresas.");
+                    return RedirectToAction("Usuarios");
+                }
+            }
+
             oUsuario.Telefono = oUsuario.Telefono == null ? "" : oUsuario.Telefono;
             try
             {
@@ -124,6 +209,13 @@ namespace bufinscustomers.Controllers
                         {
                             oUsuario.Admin = 0;
                         }
+
+                        // Validar que Admin esté en rango válido (0, 1, 2)
+                        if (oUsuario.Admin < 0 || oUsuario.Admin > 2)
+                        {
+                            oUsuario.Admin = 0;
+                        }
+
                         command.CommandType = CommandType.StoredProcedure;
                         command.Parameters.AddWithValue("@Id", oUsuario.Id);
                         command.Parameters.AddWithValue("@Nombre", oUsuario.Nombre);
@@ -158,6 +250,13 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         public ActionResult Registrar(Usuarios oUsuario, HttpPostedFileBase ImagenUsuario)
         {
+            // Verificar permisos de creación
+            if (!UsuarioSesionHelper.EsSuperAdmin() && !UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR"))
+            {
+                SetErrorMessage("No tienes permisos para crear usuarios.");
+                return RedirectToAction("Usuarios");
+            }
+
             bool registrado;
             string mensaje;
             int usuarioId = 0;
@@ -168,6 +267,19 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Usuarios");
             }
 
+            // Solo Admin 2 puede crear Admin 2
+            if (oUsuario.Admin == 2 && !UsuarioSesionHelper.EsSuperAdmin())
+            {
+                SetErrorMessage("Solo los Super Administradores pueden crear Super Administradores.");
+                return RedirectToAction("Usuarios");
+            }
+
+            // Si no es Admin 2, solo puede crear usuarios de su empresa
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+            {
+                var idEmpresaActual = UsuarioSesionHelper.UsuarioActual.IdEmpresa;
+                oUsuario.IdEmpresa = idEmpresaActual; // Forzar la empresa del usuario actual
+            }
 
             // Elimina espacios de campos
             oUsuario.Nombre = oUsuario.Nombre == null ? "" : oUsuario.Nombre.Trim();
@@ -176,11 +288,9 @@ namespace bufinscustomers.Controllers
             oUsuario.Telefono = oUsuario.Telefono == null ? "" : oUsuario.Telefono;
             oUsuario.IdEmpresa = oUsuario.IdEmpresa == null ? 0 : oUsuario.IdEmpresa;
 
-
             oUsuario.Usuario = oUsuario.Usuario.Trim();
             oUsuario.Clave = oUsuario.Clave.Trim();
             oUsuario.ConfirmarClave = oUsuario.ConfirmarClave.Trim();
-
 
             if (oUsuario.Clave == oUsuario.ConfirmarClave)
             {
@@ -193,6 +303,12 @@ namespace bufinscustomers.Controllers
             }
 
             if (oUsuario.Admin == null)
+            {
+                oUsuario.Admin = 0;
+            }
+
+            // Validar que Admin esté en rango válido (0, 1, 2)
+            if (oUsuario.Admin < 0 || oUsuario.Admin > 2)
             {
                 oUsuario.Admin = 0;
             }

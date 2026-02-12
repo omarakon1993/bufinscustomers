@@ -4,204 +4,139 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Bufins Customers is an ASP.NET MVC 5 web application built on .NET Framework 4.8 for financial data management and reporting. The application manages multiple companies (empresas), users, and their financial configurations with Excel-based data import/export capabilities.
+Bufins Customers is an ASP.NET MVC 5 web application built on .NET Framework 4.8 for financial data management and reporting. The application manages multiple companies (empresas), users, and their financial configurations with Excel-based data import/export capabilities. Configured for Colombian Spanish (`es-CO`).
 
 ## Build and Development Commands
 
-### Build
 ```bash
-# Build the solution (requires Visual Studio or MSBuild)
+# Build
 msbuild bufinscustomers.sln /p:Configuration=Debug
 
-# Build for release
-msbuild bufinscustomers.sln /p:Configuration=Release
-```
-
-### Run
-```bash
-# Run with IIS Express (default port 44339 for HTTPS)
-# The application can be launched through Visual Studio or IIS Express directly
-```
-
-### Restore Packages
-```bash
 # Restore NuGet packages
 nuget restore bufinscustomers.sln
+
+# Run: IIS Express on port 44339 (HTTPS), launched via Visual Studio
 ```
 
 ## Architecture
 
-### Core Pattern: MVC with Service Layer
+### Layered MVC with Service Layer
 
-The application follows a layered architecture:
-
-1. **Controllers** (`Controllers/`) - Handle HTTP requests, inherit from `BaseController`
-2. **Services** (`Services/`) - Business logic layer, inherit from `BaseService`
-3. **Models** (`Models/`) - Data models and POCOs
+1. **Controllers** (`Controllers/`) - Inherit from `BaseController`
+2. **Services** (`Services/`) - Inherit from `BaseService`
+3. **Models** (`Models/`) - Data models and ViewModels
 4. **Views** (`Views/`) - Razor views organized by controller
-5. **Helpers** (`Helpers/`) - Utility classes
-6. **Filters** (`Filters/`) - Custom action filters
-7. **Permisos** (`Permisos/`) - Authorization attributes
-
-### Authentication & Session Management
-
-The application uses a custom session-based authentication system centered around `UsuarioSesionHelper` (Helpers/UsuarioSesionHelper.cs):
-
-- **Session Storage**: User data stored in `HttpContext.Session` with key `"UsuarioCompleto"`
-- **Session Timeout**: 20 minutes of inactivity (configurable in Web.config)
-- **Validation**: Use `[ValidarSesion]` attribute from `Permisos/ValidarSesionAttribute.cs` on controllers/actions requiring authentication
-- **Session Helper Methods**:
-  - `UsuarioSesionHelper.UsuarioActual` - Gets current logged-in user
-  - `UsuarioSesionHelper.EstablecerUsuarioEnSesion(usuario)` - Sets user in session
-  - `UsuarioSesionHelper.LimpiarSesion()` - Clears session
-  - `UsuarioSesionHelper.EsAdministrador()` - Checks if current user is admin
-  - `UsuarioSesionHelper.ObtenerInfoSesion()` - Gets session activity info
+5. **Helpers** (`Helpers/`) - `UsuarioSesionHelper` (session/auth management)
+6. **Filters** (`Filters/`) - `EmpresasViewBagFilter` (registered globally in `FilterConfig`)
+7. **Permisos** (`Permisos/`) - `ValidarSesionAttribute`, `RequierePermisoAttribute`
 
 ### Base Classes
 
-**BaseController** (`Controllers/BaseController.cs`):
-- Provides centralized connection string: `CadenaConexion`
-- SHA256 hashing utility: `ConvertirSha256(texto)`
-- Message helpers: `SetErrorMessage()`, `SetSuccessMessage()`, `SetInfoMessage()`
-- All controllers should inherit from this
+**`BaseController`** (`Controllers/BaseController.cs`):
+- `CadenaConexion` - Centralized connection string from Web.config
+- `ConvertirSha256(texto)` - SHA256 hashing (lowercase hex)
+- `SetErrorMessage()`, `SetSuccessMessage()`, `SetInfoMessage()` - TempData-based messaging
 
-**BaseService** (`Services/BaseService.cs`):
-- Provides centralized connection string: `CadenaConexion`
-- All service classes inherit from this
+**`BaseService`** (`Services/BaseService.cs`):
+- `CadenaConexion` - Same connection string for service layer
 
 ### Database Access Pattern
 
-The application uses **ADO.NET with stored procedures**:
-- Connection string stored in Web.config under `DefaultConnection`
-- Database: SQL Server at 190.90.160.168,1433 (bufinscustomers database)
-- All database operations use stored procedures (e.g., `sp_RegistrarUsuario`, `sp_ObtenerEmpresas`)
-- Standard pattern:
-  ```csharp
-  using (SqlConnection cn = new SqlConnection(CadenaConexion))
-  {
-      SqlCommand cmd = new SqlCommand("sp_StoredProcName", cn);
-      cmd.Parameters.AddWithValue("@ParamName", value);
-      cmd.CommandType = CommandType.StoredProcedure;
-      cn.Open();
-      // Execute command
-  }
-  ```
+ADO.NET with stored procedures against SQL Server (`bufinscustomers` database). Standard pattern:
+```csharp
+using (SqlConnection cn = new SqlConnection(CadenaConexion))
+{
+    SqlCommand cmd = new SqlCommand("sp_StoredProcName", cn);
+    cmd.Parameters.AddWithValue("@ParamName", value);
+    cmd.CommandType = CommandType.StoredProcedure;
+    cn.Open();
+    // Execute command
+}
+```
 
-### Configuration System
+### Authentication & Session Management
 
-The application has a complex configuration system for financial data (`ConfiguracionEmpresa`):
+Custom session-based auth via `UsuarioSesionHelper` (`Helpers/UsuarioSesionHelper.cs`):
+- Session key: `"UsuarioCompleto"`, timeout: 20 minutes
+- `[ValidarSesion]` attribute on controllers/actions requiring auth (handles AJAX vs regular requests)
+- Client-side session management with SweetAlert2 warnings at 5 minutes remaining (in `_Layout.cshtml`)
+- Key methods: `UsuarioActual`, `EstablecerUsuarioEnSesion()`, `LimpiarSesion()`, `ObtenerInfoSesion()`, `ExtenderSesion()`
 
-- **Main Configuration** (`ConfiguracionEmpresa` model):
-  - Year of execution, currency signs, monetary units
-  - Contains multiple sub-configurations:
-    - `EmpresasConsolidar` - Companies to consolidate
-    - `Paises` - Countries
-    - `Categorias` - Categories
-    - `Tipos` - Types
-    - `LineasNegocio` - Business lines
-    - `Ajuste1`, `Ajuste2` - Adjustments
+### Role Hierarchy (3 levels)
 
-- **Configuration Service**: `ConfiguracionEmpresaService` handles all configuration CRUD operations
+The `Usuarios.Admin` field (byte?) defines access levels:
+
+| Value | Role | Description |
+|-------|------|-------------|
+| 0 | Usuario Normal | Access only to assigned menu options |
+| 1 | Admin de Empresa | Company-level admin, access to assigned menu options |
+| 2 | Super Admin | Full access to everything, bypasses all permission checks |
+
+Check with: `EsUsuarioNormal()`, `EsAdminEmpresa()`, `EsSuperAdmin()`, `EsAdministrador()` (returns true for Admin=1)
+
+### Menu-Based Permissions System
+
+Permissions are managed through the `MenuOpciones` table and `MenuOpcionesService` (`Services/PermisosService.cs`):
+
+- **`MenuOpciones`** model (`Models/PermisosModulos.cs`) - Menu items with hierarchical structure (parent/child), codes, categories
+- **`UsuarioMenuPermisos`** model (`Models/UsuarioPermisos.cs`) - Junction table linking users to menu options
+- **`MenuOpcionesService`** - CRUD for menu option assignments, uses stored procedures (`sp_ObtenerTodasLasOpcionesMenu`, `sp_VerificarAccesoMenuUsuario`, etc.)
+- **`RequierePermisoAttribute`** (`Permisos/RequierePermisoAttribute.cs`) - Controller-level permission enforcement via `[RequierePermiso("CODE")]`
+- **`UsuarioSesionHelper.TienePermiso("CODE")`** - Checks permissions using a cached HashSet in session (one DB query per session, not per page load). Super Admin (Admin=2) always returns true.
+- **`UsuarioSesionHelper.ObtenerMenuSidebar()`** - Returns cached `List<SidebarCategoriaViewModel>` for dynamic sidebar rendering via `_SidebarMenu.cshtml` partial.
+- **`UsuarioSesionHelper.InvalidarCachePermisos()`** - Clears permission/menu cache. Called after saving permissions or on login.
+
+Known permission codes (BD codes, used in sidebar and controllers):
+- `DATOS_PLANTILLA_CARGUE`, `DATOS_MODELO_EJECUCION` (Datos)
+- `INFORMES_REPORTES_PBI`, `INFORMES_AUDITORIA_CARGUES`, `INFORMES_TABLAS_DATOS`, `INFORMES_RELACIONAMIENTOS` (Informes)
+- `ADMIN_USUARIOS_GESTOR`, `ADMIN_EMPRESAS_GESTOR`, `ADMIN_REPORTES_GESTOR` (Administración)
+- `ADMIN_CONFIG_EMPRESAS`, `ADMIN_CONFIG_RELACIONAMIENTOS` (Configuración)
+
+**Dynamic Sidebar**: The sidebar in `_Layout.cshtml` uses `Html.RenderPartial("_SidebarMenu", UsuarioSesionHelper.ObtenerMenuSidebar())`. Menu options are read from `MenuOpciones` table with columns `NombreGrupo`, `IconoGrupo`, `IconoCategoria`, `OrdenCategoria` for hierarchical rendering. New menu items added to the table auto-appear in the sidebar and permission manager.
+
+**Note:** `PermisosService`, `PermisosModulos`, `UsuarioPermisos`, `PermisoUsuarioViewModel` are deprecated aliases kept for backward compatibility. Use `MenuOpcionesService`, `MenuOpciones`, `UsuarioMenuPermisos`, `OpcionMenuUsuarioViewModel` instead.
 
 ### Key Controllers
 
-- **AccesoController**: Login, registration, authentication (no `[ValidarSesion]`)
-- **HomeController**: Dashboard and main views (requires `[ValidarSesion]`)
-- **UsuarioController**: User management
-- **EmpresaController**: Company (empresa) management
-- **ConfiguracionEmpresaController**: Financial configuration management
-- **ReportesController**: Report generation and Excel exports
-- **DatosController**: Data import/export operations
-- **ModeloController**: Model/template management
-- **AuditoriaCarguesController**: Upload audit trail
+- **AccesoController** - Login, registration, session management (no `[ValidarSesion]`)
+- **HomeController** - Dashboard (requires `[ValidarSesion]`)
+- **UsuarioController** - User CRUD, profile image upload
+- **EmpresaController** - Company management
+- **PermisosController** - Menu option assignment UI for users
+- **ConfiguracionEmpresaController** - Financial configuration per company
+- **ConfiguracionRelacionamientoController** - Relationship configuration with Excel upload
+- **ReportesController** - Power BI report embedding and report management
+- **DatosController** - Excel data import/export
+- **ModeloController** - Model/template execution
+- **InformeTablasDatosController** - Data tables report
+- **InformeRelacionamientosController** - Relationships report
+- **AuditoriaCarguesController** - Upload audit trail
 
-### Global Filters
+### Configuration System
 
-**EmpresasViewBagFilter** (`Filters/EmpresasViewBagFilter.cs`):
-- Automatically loads all companies into `ViewBag.Empresas`
-- Used across views for company selection dropdowns
-- Applied globally or per-controller
+`ConfiguracionEmpresa` model with sub-configurations: `EmpresasConsolidar`, `Paises`, `Categorias`, `Tipos`, `LineasNegocio`, `Ajuste1`, `Ajuste2`. Managed by `ConfiguracionEmpresaService`.
 
-### Excel Integration
+### Global Filter
 
-The application uses **EPPlus 8.0.7** for Excel operations:
-- License configured in `Global.asax.cs`: `ExcelPackage.License.SetNonCommercialOrganization("bufinscustomers")`
-- Used for importing/exporting financial data
-- Excel templates stored in `Assets/Plantillas/`
+`EmpresasViewBagFilter` (`Filters/EmpresasViewBagFilter.cs`) is registered globally in `FilterConfig` and loads all companies into `ViewBag.Empresas` for every request.
 
-### Culture & Localization
+### Frontend Stack
 
-- Application is configured for Colombian Spanish: `culture="es-CO"` and `uiCulture="es-CO"`
-- Currency default: Colombian Peso (CO$)
-- Date/time formats follow Colombian conventions
-
-## Important Patterns & Conventions
-
-### Password Handling
-- Passwords are hashed using SHA256 via `BaseController.ConvertirSha256()`
-- Hash format: lowercase hexadecimal
-- Always trim passwords before hashing
-
-### User Authentication Flow
-1. User submits credentials to `AccesoController.Login()`
-2. Password is hashed with SHA256
-3. Stored procedure validates credentials
-4. On success, user object is stored in session via `UsuarioSesionHelper.EstablecerUsuarioEnSesion()`
-5. Subsequent requests check session with `[ValidarSesion]` attribute
-
-### Message Passing
-- Use `TempData` for messages between redirects
-- Keys: `"ErrorMessage"`, `"SuccessMessage"`, `"InfoMessage"`
-- Set via `BaseController` helper methods
-
-### Admin vs Regular Users
-- Admin flag stored in `Usuarios.Admin` (byte?, 1 = admin)
-- Check with `UsuarioSesionHelper.EsAdministrador()`
-- Admin users can manage other users and system configurations
-
-## File Structure Notes
-
-- `Assets/` - Frontend assets (CSS, JS, images, Excel templates)
-- `SQL/` - Empty directory (SQL scripts may be stored here if needed)
-- `Content/` - Legacy Bootstrap/CSS files
-- `Scripts/` - Legacy JavaScript libraries
-- `Views/Shared/` - Shared layouts and partial views
-- `App_Start/` - MVC configuration (routes, bundles, filters)
-
-## Dependencies
-
-Key NuGet packages:
-- ASP.NET MVC 5.3.0
-- EPPlus 8.0.7 (Excel manipulation)
-- Newtonsoft.Json 13.0.3 (JSON serialization)
-- Bootstrap 5.3.7
+- Bootstrap 5.3.7 + SB Admin 2 theme with custom modern sidebar (`Assets/css/modern-sidebar.css`, `Assets/js/modern-sidebar.js`)
 - jQuery 3.7.1
-- Microsoft.Bcl.Cryptography 9.0.7
+- SweetAlert2 for session notifications and confirmations
+- FontAwesome icons
+- EPPlus 8.0.7 for Excel operations (license set in `Global.asax.cs`)
 
-## Connection String Location
+### Layout Structure
 
-The database connection string is in `Web.config`:
-```xml
-<connectionStrings>
-  <add name="DefaultConnection"
-       connectionString="Data Source=190.90.160.168,1433;Initial Catalog=bufinscustomers;..."
-       providerName="System.Data.SqlClient" />
-</connectionStrings>
-```
+`Views/Shared/_Layout.cshtml` contains the full sidebar navigation with permission-based visibility using `@if (UsuarioSesionHelper.TienePermiso("CODE"))` checks, user profile modal, image upload modal, and client-side session timeout management.
 
-## Session Configuration
+## Important Conventions
 
-In `Web.config`:
-- Mode: InProc
-- Timeout: 20 minutes
-- Cookie name: BUFINS_SessionId
-- httpOnlyCookies: true
-- Session expiration is tracked in `UsuarioSesionHelper` with warning at 5 minutes remaining
-
-## Security Notes
-
-- Custom session validation via `ValidarSesionAttribute`
-- Supports both regular and AJAX requests (returns JSON for AJAX)
-- Session expiration warnings sent via response headers (`X-Session-Warning`, `X-Minutes-Remaining`)
-- Passwords hashed with SHA256 (consider migration to more secure hashing like bcrypt/PBKDF2)
-- SQL injection protected via parameterized stored procedures
+- Passwords: Always `.Trim()` before hashing with `ConvertirSha256()`
+- Messages between redirects: Use `SetErrorMessage/SetSuccessMessage/SetInfoMessage` (TempData keys: `"ErrorMessage"`, `"SuccessMessage"`, `"InfoMessage"`)
+- New controllers must inherit from `BaseController`; new services from `BaseService`
+- Use `[ValidarSesion]` on all authenticated controllers; use `[RequierePermiso("CODE")]` for granular permission checks
+- Excel templates stored in `Assets/Plantillas/`
+- SQL migration scripts stored in `SQL/`
