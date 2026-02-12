@@ -23,7 +23,7 @@ namespace bufinscustomers.Controllers
         private bool VerificarAdmin()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            return usuario?.Admin == 1;
+            return usuario?.Admin >= 1;
         }
 
         /// <summary>
@@ -33,7 +33,6 @@ namespace bufinscustomers.Controllers
         {
             if (!VerificarAdmin())
             {
-                TempData["ErrorMessage"] = "No tiene permisos para acceder a esta sección";
                 return RedirectToAction("Index", "Home");
             }
 
@@ -51,7 +50,7 @@ namespace bufinscustomers.Controllers
             {
                 if (!VerificarAdmin())
                 {
-                    return Json(new { success = false, message = "No tiene permisos" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
                 }
 
                 var tipos = _service.ObtenerTiposDisponibles(nombreTabla);
@@ -73,7 +72,7 @@ namespace bufinscustomers.Controllers
             {
                 if (!VerificarAdmin())
                 {
-                    return Json(new { success = false, message = "No tiene permisos" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
                 }
 
                 var descripciones = _service.ObtenerDescripcionesDisponibles(nombreTabla, tipo);
@@ -96,7 +95,7 @@ namespace bufinscustomers.Controllers
             {
                 if (!VerificarAdmin())
                 {
-                    return Json(new { success = false, message = "No tiene permisos" });
+                    return Json(new { success = false, message = "Acceso denegado" });
                 }
 
                 var resultado = _service.ConsultarDatos(filtros);
@@ -168,7 +167,6 @@ namespace bufinscustomers.Controllers
             {
                 if (!VerificarAdmin())
                 {
-                    TempData["ErrorMessage"] = "No tiene permisos para exportar";
                     return RedirectToAction("InformeRelacionamientos");
                 }
 

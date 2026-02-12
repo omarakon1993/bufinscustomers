@@ -18,7 +18,7 @@ namespace bufinscustomers.Controllers
         private bool VerificarAdmin()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            return usuario?.Admin == 1;
+            return usuario?.Admin >= 1;
         }
 
         /// <summary>
@@ -28,7 +28,6 @@ namespace bufinscustomers.Controllers
         {
             if (!VerificarAdmin())
             {
-                TempData["ErrorMessage"] = "No tiene permisos para acceder a esta sección";
                 return RedirectToAction("Index", "Home");
             }
 
@@ -44,7 +43,6 @@ namespace bufinscustomers.Controllers
         {
             if (!VerificarAdmin())
             {
-                TempData["ErrorMessage"] = "No tiene permisos";
                 return RedirectToAction("ConfiguracionRelacionamiento");
             }
 
@@ -101,7 +99,6 @@ namespace bufinscustomers.Controllers
         {
             if (!VerificarAdmin())
             {
-                TempData["ErrorMessage"] = "No tiene permisos";
                 return RedirectToAction("ConfiguracionRelacionamiento");
             }
 

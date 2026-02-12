@@ -16,7 +16,6 @@ namespace bufinscustomers.Controllers
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
-                SetErrorMessage("No tienes permisos para acceder a esta función.");
                 return RedirectToAction("Index", "Home");
             }
 
@@ -29,7 +28,6 @@ namespace bufinscustomers.Controllers
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
-                SetErrorMessage("No tienes permisos para esta acción.");
                 return RedirectToAction("Index", "Home");
             }
 
@@ -60,7 +58,6 @@ namespace bufinscustomers.Controllers
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
-                SetErrorMessage("No tienes permisos para esta acción.");
                 return RedirectToAction("Index", "Home");
             }
 
@@ -91,7 +88,6 @@ namespace bufinscustomers.Controllers
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
-                SetErrorMessage("No tienes permisos para esta acción.");
                 return RedirectToAction("Index", "Home");
             }
 

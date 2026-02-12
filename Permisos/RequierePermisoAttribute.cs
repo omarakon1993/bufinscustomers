@@ -30,11 +30,7 @@ namespace bufinscustomers.Permisos
             // Verificar si el usuario tiene el permiso
             if (!UsuarioSesionHelper.TienePermiso(CodigoPermiso))
             {
-                // Obtener referencia al controlador base para usar sus métodos
-                var controller = filterContext.Controller as Controllers.BaseController;
-                controller?.SetErrorMessage("No tienes permisos para acceder a esta función.");
-
-                // Redirigir al inicio
+                // Redirigir al inicio silenciosamente
                 filterContext.Result = new RedirectToRouteResult(
                     new RouteValueDictionary
                     {

@@ -28,7 +28,6 @@ namespace bufinscustomers.Controllers
             // Solo Admin 2 puede gestionar permisos
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
-                SetErrorMessage("No tienes permisos para acceder a esta función.");
                 return RedirectToAction("Index", "Home");
             }
 
