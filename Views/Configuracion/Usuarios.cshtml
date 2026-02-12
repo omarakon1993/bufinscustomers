@@ -20,10 +20,110 @@
 <body>
 
     <style>
+        :root {
+            --color-primario: #583AFF;
+            --color-secundario: #01E1D7;
+        }
+
+        .bg-primary {
+            background-color: #583AFF !important;
+        }
+
+        .card-header {
+            background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
+            color: white;
+            padding: 1rem 1.2rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .card-header i {
+            margin-right: 8px;
+        }
+
+        /* === TABLA COMPACTA === */
         .table-wrapper {
-            max-height: 65vh;
+            max-height: 500px;
             overflow-y: auto;
-            overflow-x: auto;
+            overflow-x: hidden;
+        }
+
+        .table-compact {
+            table-layout: fixed;
+            width: 100%;
+            margin-bottom: 0;
+        }
+
+        .table-compact thead th {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: #555;
+            padding: 0.5rem 0.4rem;
+            white-space: nowrap;
+            border-bottom: 2px solid #dee2e6;
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .table-compact tbody td {
+            font-size: 0.8rem;
+            padding: 0.35rem 0.4rem;
+            vertical-align: middle;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .table-compact tbody tr:hover {
+            background-color: #f0edff;
+        }
+
+        /* Anchos de columna */
+        .table-compact .col-img { width: 5%; text-align: center; }
+        .table-compact .col-id { width: 5%; text-align: center; }
+        .table-compact .col-nombre { width: 13%; }
+        .table-compact .col-apellidos { width: 13%; }
+        .table-compact .col-telefono { width: 10%; }
+        .table-compact .col-correo { width: 16%; }
+        .table-compact .col-rol { width: 10%; text-align: center; }
+        .table-compact .col-empresa { width: 13%; }
+        .table-compact .col-acciones { width: 15%; text-align: center; white-space: nowrap; }
+
+        /* === BADGES DE ROL === */
+        .badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            font-weight: 500;
+            border-radius: 4px;
+        }
+
+        /* === BOTONES DE ACCIONES === */
+        .btn-group {
+            gap: 0.25rem;
+        }
+
+        .btn-group .btn {
+            padding: 0.2rem 0.45rem;
+            font-size: 0.75rem;
+            border-radius: 0.25rem;
+        }
+
+        .btn-group .btn i {
+            margin-right: 0;
+        }
+
+        /* === THUMBNAIL COMPACTO === */
+        .user-thumbnail {
+            width: 32px !important;
+            height: 32px !important;
+            object-fit: cover;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #583AFF;
         }
 
         .readonly-checkbox {
@@ -31,129 +131,15 @@
             opacity: 1;
         }
 
-        /* === COLORES === */
-        :root {
-            --color-primario: #583AFF;
-            --color-secundario: #01E1D7;
-        }
-
-        /* === ENCABEZADO CARD === */
-        .card-header {
-            background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
-            color: white;
-            padding: 1.2rem 1.5rem;
-            font-weight: 600;
-            font-size: 1.2rem;
-        }
-
-        .card-header i {
-            margin-right: 8px;
-        }
-
-        /* === TABLA === */
-        .table {
-            margin-bottom: 0;
-        }
-
-        .table thead th {
-            background: #f8f9fa;
-            color: #495057;
-            font-weight: 600;
-            font-size: 0.82rem;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-            border-bottom: 2px solid #dee2e6;
-            padding: 0.65rem 0.75rem;
-            white-space: nowrap;
-            position: sticky;
-            top: 0;
-            z-index: 1;
-        }
-
-        .table tbody td {
-            padding: 0.5rem 0.75rem;
-            vertical-align: middle;
-            font-size: 0.88rem;
-            color: #495057;
-        }
-
-        .table tbody tr:hover {
-            background-color: #f0edff;
-        }
-
-        /* === BOTONES DE ACCIONES === */
-        .btn-group .btn {
-            padding: 0.25rem 0.6rem;
-            font-size: 0.78rem;
-            border-radius: 0.25rem;
-        }
-
-        .btn-group .btn i {
-            margin-right: 3px;
-        }
-
-        .btn-group {
-            gap: 0.3rem;
-        }
-
-        /* === BADGES DE ROL === */
-        .badge {
-            font-size: 0.75rem;
-            padding: 0.3rem 0.6rem;
-            font-weight: 500;
-        }
-
-        /* === CARD FOOTER === */
-        .card-footer {
-            background: #f8f9fa;
-            border-top: 1px solid #e9ecef;
-            padding: 0.75rem 1.5rem;
-        }
-
-        .card-footer .btn {
-            font-size: 0.88rem;
-            padding: 0.5rem 1.25rem;
-        }
-
         /* === RESPONSIVE === */
-
-        @@media (min-width: 768px) and (max-width: 1600px) {
-            .table tbody td {
-                padding: 0.45rem 0.6rem;
-                font-size: 0.82rem;
-            }
-
-            .table thead th {
-                font-size: 0.78rem;
-                padding: 0.55rem 0.6rem;
-            }
-
-            .btn-group .btn {
-                padding: 0.2rem 0.5rem;
-                font-size: 0.75rem;
-            }
-
-            .card-header {
-                padding: 1rem 1.25rem;
-                font-size: 1.1rem;
-            }
-        }
-
-        @@media (min-width: 768px) and (max-width: 991px) {
-            .btn-group {
-                display: flex;
-                flex-direction: column;
-            }
-
-            .btn-group .btn {
-                margin-bottom: 0.2rem;
-                font-size: 0.75rem;
-            }
-        }
-
         @@media (max-width: 767px) {
             .table-wrapper {
                 max-height: none;
+                overflow-x: auto;
+            }
+
+            .table-compact {
+                table-layout: auto;
             }
 
             .table {
@@ -187,6 +173,8 @@
                 padding: 0.4rem 0;
                 border: none;
                 border-bottom: 1px solid #f0f0f0;
+                overflow: visible;
+                white-space: normal;
             }
 
             .table td:last-child {
@@ -245,20 +233,20 @@
         <div class="card-header">
             <i class="bi bi-people-fill"></i> Gestor de usuarios
         </div>
-        <div class="card-body">
+        <div class="card-body p-0">
             <div class="table-responsive table-wrapper">
-                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <table class="table table-bordered table-hover table-compact">
                     <thead>
                         <tr>
-                            <th>Imagen</th>
-                            <th>Id</th>
-                            <th>Nombre</th>
-                            <th>Apellidos</th>
-                            <th>Teléfono</th>
-                            <th>Correo</th>
-                            <th>Rol</th>
-                            <th>Empresa</th>
-                            <th>Acciones</th>
+                            <th class="col-img"></th>
+                            <th class="col-id">Id</th>
+                            <th class="col-nombre">Nombre</th>
+                            <th class="col-apellidos">Apellidos</th>
+                            <th class="col-telefono">Telefono</th>
+                            <th class="col-correo">Correo</th>
+                            <th class="col-rol">Rol</th>
+                            <th class="col-empresa">Empresa</th>
+                            <th class="col-acciones">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -271,60 +259,58 @@
                             var imagenUsuario = usuario.Imagen;
 
                             <tr>
-                                <td align="center" data-label="Imagen">
+                                <td class="col-img" data-label="Imagen">
                                     @if (imagenUsuario != null && !string.IsNullOrEmpty(imagenUsuario.ImagenBase64))
                                     {
                                         <img src="data:@imagenUsuario.TipoImagen;base64,@imagenUsuario.ImagenBase64"
                                              alt="Imagen usuario"
                                              class="user-thumbnail"
-                                             style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; cursor: pointer; border: 2px solid #583AFF;"
                                              onclick="showImageModal('data:@imagenUsuario.TipoImagen;base64,@imagenUsuario.ImagenBase64', '@usuario.Nombre @usuario.Apellidos')" />
                                     }
                                     else
                                     {
-                                        <i class="fas fa-user-circle fa-2x" style="color: #ccc;"></i>
+                                        <i class="fas fa-user-circle" style="color: #ccc; font-size: 1.4rem;"></i>
                                     }
                                 </td>
-                                <td data-label="Id">@usuario.Id</td>
-                                <td data-label="Nombre">@usuario.Nombre</td>
-                                <td data-label="Apellidos">@usuario.Apellidos</td>
-                                <td data-label="Teléfono">@usuario.Telefono</td>
-                                <td data-label="Correo">@usuario.Correo</td>
-                                <td align="center" data-label="Rol">
+                                <td class="col-id" data-label="Id">@usuario.Id</td>
+                                <td class="col-nombre" data-label="Nombre" title="@usuario.Nombre">@usuario.Nombre</td>
+                                <td class="col-apellidos" data-label="Apellidos" title="@usuario.Apellidos">@usuario.Apellidos</td>
+                                <td class="col-telefono" data-label="Telefono">@usuario.Telefono</td>
+                                <td class="col-correo" data-label="Correo" title="@usuario.Correo">@usuario.Correo</td>
+                                <td class="col-rol" data-label="Rol">
                                     @if (usuario.Admin == 2)
                                     {
                                         <span class="badge badge-danger">Super Admin</span>
                                     }
                                     else if (usuario.Admin == 1)
                                     {
-                                        <span class="badge badge-warning">Admin Empresa</span>
+                                        <span class="badge badge-warning">Admin Emp.</span>
                                     }
                                     else
                                     {
                                         <span class="badge badge-secondary">Usuario</span>
                                     }
                                 </td>
-                                <td data-label="Empresa">@(empresa != null ? empresa.Nombre : string.Empty)</td>
-                                <td data-label="Acciones">
-                                    <div class="btn-group" role="group" aria-label="User Actions">
+                                <td class="col-empresa" data-label="Empresa" title="@(empresa != null ? empresa.Nombre : "")">@(empresa != null ? empresa.Nombre : string.Empty)</td>
+                                <td class="col-acciones" data-label="Acciones">
+                                    <div class="btn-group" role="group" aria-label="Acciones">
                                         @if (ViewBag.PuedeEditar == true)
                                         {
                                             <button type="button" class="btn btn-primary" title="Editar usuario" data-bs-toggle="modal" data-bs-target="#editUserModal"
                                                     onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa', '@usuario.Usuario', '@usuario.Clave', '@(imagenUsuario != null && !string.IsNullOrEmpty(imagenUsuario.ImagenBase64) ? "data:" + imagenUsuario.TipoImagen + ";base64," + imagenUsuario.ImagenBase64 : "")')">
-                                                <i class="fas fa-edit"></i> Editar
+                                                <i class="fas fa-edit"></i>
                                             </button>
                                         }
                                         @if (ViewBag.PuedeEliminar == true)
                                         {
                                             <button type="button" class="btn btn-outline-danger" title="Eliminar usuario" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" onclick="setIdUsuario(@usuario.Id)">
-                                                <i class="fas fa-trash-alt"></i> Eliminar
+                                                <i class="fas fa-trash-alt"></i>
                                             </button>
                                         }
-                                        @* Botón Gestionar Permisos solo visible para Admin 2 y solo para usuarios Admin 0 y 1 *@
                                         @if (ViewBag.EsSuperAdmin == true && usuario.Admin != 2)
                                         {
                                             <a href="@Url.Action("Gestionar", "Permisos", new { id = usuario.Id })" class="btn btn-outline-success" title="Gestionar permisos">
-                                                <i class="fas fa-shield-alt"></i> Permisos
+                                                <i class="fas fa-shield-alt"></i>
                                             </a>
                                         }
                                     </div>
@@ -340,8 +326,8 @@
         <div class="card-footer">
             @if (ViewBag.PuedeCrear == true)
             {
-                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearUsuarioModal">
-                    Crear Usuario
+                <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#crearUsuarioModal">
+                    <i class="fas fa-plus-circle mr-1"></i> Crear Usuario
                 </button>
             }
         </div>

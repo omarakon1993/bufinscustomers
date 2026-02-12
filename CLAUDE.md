@@ -78,9 +78,9 @@ Check with: `EsUsuarioNormal()`, `EsAdminEmpresa()`, `EsSuperAdmin()`, `EsAdmini
 
 Permissions are managed through the `MenuOpciones` table and `MenuOpcionesService` (`Services/PermisosService.cs`):
 
-- **`MenuOpciones`** model (`Models/PermisosModulos.cs`) - Menu items with hierarchical structure (parent/child), codes, categories
+- **`MenuOpciones`** model (`Models/PermisosModulos.cs`) - Menu items with hierarchical structure (parent/child), codes, categories. Includes `SoloSuperAdmin` (bool/bit) column: when true, the option is only visible to Admin=2 and excluded from permission assignment for Admin 0/1.
 - **`UsuarioMenuPermisos`** model (`Models/UsuarioPermisos.cs`) - Junction table linking users to menu options
-- **`MenuOpcionesService`** - CRUD for menu option assignments, uses stored procedures (`sp_ObtenerTodasLasOpcionesMenu`, `sp_VerificarAccesoMenuUsuario`, etc.)
+- **`MenuOpcionesService`** - CRUD for menu options and permission assignments. Key methods: `ObtenerTodas()`, `CrearMenuOpcion()`, `EditarMenuOpcion()`, `EliminarMenuOpcion()`, `ObtenerMenuParaUsuario()`, `ObtenerCodigosPermisos()`, `GuardarOpcionesUsuario()`
 - **`RequierePermisoAttribute`** (`Permisos/RequierePermisoAttribute.cs`) - Controller-level permission enforcement via `[RequierePermiso("CODE")]`
 - **`UsuarioSesionHelper.TienePermiso("CODE")`** - Checks permissions using a cached HashSet in session (one DB query per session, not per page load). Super Admin (Admin=2) always returns true.
 - **`UsuarioSesionHelper.ObtenerMenuSidebar()`** - Returns cached `List<SidebarCategoriaViewModel>` for dynamic sidebar rendering via `_SidebarMenu.cshtml` partial.
@@ -90,7 +90,7 @@ Known permission codes (BD codes, used in sidebar and controllers):
 - `DATOS_PLANTILLA_CARGUE`, `DATOS_MODELO_EJECUCION` (Datos)
 - `INFORMES_REPORTES_PBI`, `INFORMES_AUDITORIA_CARGUES`, `INFORMES_TABLAS_DATOS`, `INFORMES_RELACIONAMIENTOS` (Informes)
 - `ADMIN_USUARIOS_GESTOR`, `ADMIN_EMPRESAS_GESTOR`, `ADMIN_REPORTES_GESTOR` (Administración)
-- `ADMIN_CONFIG_EMPRESAS`, `ADMIN_CONFIG_RELACIONAMIENTOS` (Configuración)
+- `ADMIN_CONFIG_EMPRESAS`, `ADMIN_CONFIG_RELACIONAMIENTOS`, `ADMIN_CONFIG_MENU` (Configuración - `ADMIN_CONFIG_MENU` is SoloSuperAdmin)
 
 **Dynamic Sidebar**: The sidebar in `_Layout.cshtml` uses `Html.RenderPartial("_SidebarMenu", UsuarioSesionHelper.ObtenerMenuSidebar())`. Menu options are read from `MenuOpciones` table with columns `NombreGrupo`, `IconoGrupo`, `IconoCategoria`, `OrdenCategoria` for hierarchical rendering. New menu items added to the table auto-appear in the sidebar and permission manager.
 
@@ -103,6 +103,7 @@ Known permission codes (BD codes, used in sidebar and controllers):
 - **UsuarioController** - User CRUD, profile image upload
 - **EmpresaController** - Company management
 - **PermisosController** - Menu option assignment UI for users
+- **MenuOpcionesController** - CRUD for menu options (Super Admin only)
 - **ConfiguracionEmpresaController** - Financial configuration per company
 - **ConfiguracionRelacionamientoController** - Relationship configuration with Excel upload
 - **ReportesController** - Power BI report embedding and report management

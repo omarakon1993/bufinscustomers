@@ -1,0 +1,565 @@
+@model IEnumerable<bufinscustomers.Models.MenuOpciones>
+@{
+    var gruposExistentes = Model
+        .Where(m => !string.IsNullOrEmpty(m.NombreGrupo))
+        .GroupBy(m => new { m.NombreGrupo, m.IconoGrupo, m.Categoria, m.IconoCategoria, m.OrdenCategoria })
+        .Select(g => g.Key)
+        .OrderBy(g => g.OrdenCategoria).ThenBy(g => g.NombreGrupo)
+        .ToList();
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gestor de opciones de menu</title>
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
+    <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <style>
+        :root {
+            --color-primario: #583AFF;
+            --color-secundario: #01E1D7;
+        }
+
+        .bg-primary {
+            background-color: #583AFF !important;
+        }
+
+        .card-header {
+            background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
+            color: white;
+            padding: 1rem 1.2rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .card-header i {
+            margin-right: 8px;
+        }
+
+        /* === TABLA COMPACTA === */
+        .table-wrapper {
+            max-height: 500px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .table-compact {
+            table-layout: fixed;
+            width: 100%;
+            margin-bottom: 0;
+        }
+
+        .table-compact thead th {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: #555;
+            padding: 0.5rem 0.4rem;
+            white-space: nowrap;
+            border-bottom: 2px solid #dee2e6;
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .table-compact tbody td {
+            font-size: 0.8rem;
+            padding: 0.35rem 0.4rem;
+            vertical-align: middle;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .table-compact tbody tr:hover {
+            background-color: #f0edff;
+        }
+
+        /* Anchos de columna */
+        .table-compact .col-codigo { width: 18%; }
+        .table-compact .col-nombre { width: 15%; }
+        .table-compact .col-categoria { width: 12%; }
+        .table-compact .col-grupo { width: 13%; }
+        .table-compact .col-ruta { width: 14%; }
+        .table-compact .col-orden { width: 6%; text-align: center; }
+        .table-compact .col-acceso { width: 10%; text-align: center; }
+        .table-compact .col-acciones { width: 12%; text-align: center; white-space: nowrap; }
+
+        /* === BADGES === */
+        .badge-super {
+            background-color: #dc3545;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        .badge-normal {
+            background-color: #28a745;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        /* === BOTONES DE ACCIONES === */
+        .btn-group {
+            gap: 0.25rem;
+        }
+
+        .btn-group .btn {
+            padding: 0.2rem 0.45rem;
+            font-size: 0.75rem;
+            border-radius: 0.25rem;
+        }
+
+        .btn-group .btn i {
+            margin-right: 0;
+        }
+    </style>
+
+    <div class="card shadow mb-4 mt-4">
+        <div class="card-header">
+            <i class="fas fa-bars"></i> Gestor de opciones de menu
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive table-wrapper">
+                <table class="table table-bordered table-hover table-compact">
+                    <thead>
+                        <tr>
+                            <th class="col-codigo">Codigo</th>
+                            <th class="col-nombre">Nombre</th>
+                            <th class="col-categoria">Categoria</th>
+                            <th class="col-grupo">Grupo</th>
+                            <th class="col-ruta">Controller / Action</th>
+                            <th class="col-orden">Ord.</th>
+                            <th class="col-acceso">Acceso</th>
+                            <th class="col-acciones">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var opcion in Model)
+                        {
+                            <tr>
+                                <td class="col-codigo" title="@opcion.Codigo"><code style="font-size:0.75rem;">@opcion.Codigo</code></td>
+                                <td class="col-nombre" title="@opcion.Nombre">@opcion.Nombre</td>
+                                <td class="col-categoria">@opcion.Categoria</td>
+                                <td class="col-grupo" title="@opcion.NombreGrupo">@opcion.NombreGrupo</td>
+                                <td class="col-ruta" title="@opcion.Controller / @opcion.Action">@opcion.Controller / @opcion.Action</td>
+                                <td class="col-orden">@opcion.Orden</td>
+                                <td class="col-acceso">
+                                    @if (opcion.SoloSuperAdmin)
+                                    {
+                                        <span class="badge-super">Super Admin</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-normal">Todos</span>
+                                    }
+                                </td>
+                                <td class="col-acciones">
+                                    <div class="btn-group" role="group" aria-label="Acciones">
+                                        <button type="button" class="btn btn-primary" title="Editar opcion" data-bs-toggle="modal" data-bs-target="#editModal"
+                                                onclick="setEditOpcion(@opcion.Id, '@Html.Raw(opcion.Codigo)', '@Html.Raw(opcion.Nombre)', '@Html.Raw(opcion.Descripcion)', '@Html.Raw(opcion.Categoria)', '@Html.Raw(opcion.Icono)', @opcion.Orden, '@Html.Raw(opcion.Controller)', '@Html.Raw(opcion.Action)', '@Html.Raw(opcion.NombreGrupo)', '@Html.Raw(opcion.IconoGrupo)', '@Html.Raw(opcion.IconoCategoria)', @opcion.OrdenCategoria, @(opcion.SoloSuperAdmin ? "true" : "false"))">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger" title="Eliminar opcion" data-bs-toggle="modal" data-bs-target="#deleteModal" onclick="setDeleteId(@opcion.Id, '@Html.Raw(opcion.Nombre)')">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#crearModal">
+                <i class="fas fa-plus-circle mr-1"></i> Crear opcion
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Crear -->
+    <div class="modal fade" id="crearModal" tabindex="-1" aria-labelledby="crearModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="crearModalLabel">
+                        <i class="fas fa-plus-circle"></i> Crear opcion de menu
+                    </h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <form method="post" action="/MenuOpciones/Crear">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label"><i class="fas fa-code mr-1" style="color: #583AFF;"></i>Codigo</label>
+                                <input type="text" class="form-control form-control-sm" name="Codigo" required placeholder="Ej: DATOS_NUEVA_OPCION" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label"><i class="fas fa-tag mr-1" style="color: #583AFF;"></i>Nombre</label>
+                                <input type="text" class="form-control form-control-sm" name="Nombre" required placeholder="Nombre visible en el menu" />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"><i class="fas fa-align-left mr-1" style="color: #583AFF;"></i>Descripcion</label>
+                            <input type="text" class="form-control form-control-sm" name="Descripcion" placeholder="Descripcion opcional" />
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label"><i class="fas fa-layer-group mr-1" style="color: #583AFF;"></i>Categoria</label>
+                                <select class="form-select form-select-sm" id="crearCategoria" name="Categoria" required onchange="filtrarGrupos('crear')">
+                                    <option value="DATOS">DATOS</option>
+                                    <option value="INFORMES">INFORMES</option>
+                                    <option value="ADMINISTRACION">ADMINISTRACION</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label"><i class="fas fa-icons mr-1" style="color: #583AFF;"></i>Icono</label>
+                                <input type="text" class="form-control form-control-sm" name="Icono" placeholder="fas fa-icon" />
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label"><i class="fas fa-sort-numeric-up mr-1" style="color: #583AFF;"></i>Orden</label>
+                                <input type="number" class="form-control form-control-sm" name="Orden" value="0" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label"><i class="fas fa-sitemap mr-1" style="color: #583AFF;"></i>Controller</label>
+                                <input type="text" class="form-control form-control-sm" name="Controller" required placeholder="Nombre del controlador" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label"><i class="fas fa-play mr-1" style="color: #583AFF;"></i>Action</label>
+                                <input type="text" class="form-control form-control-sm" name="Action" required placeholder="Nombre de la accion" />
+                            </div>
+                        </div>
+                        <hr />
+                        <p class="text-muted mb-2"><small><i class="fas fa-columns mr-1"></i>Configuracion del sidebar</small></p>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Grupo del sidebar</label>
+                                <select class="form-select form-select-sm" id="crearGrupoSelect" onchange="seleccionarGrupo(this, 'crear')">
+                                    <option value="">-- Seleccionar grupo existente --</option>
+                                </select>
+                                <input type="hidden" id="crearNombreGrupo" name="NombreGrupo" />
+                                <input type="hidden" id="crearIconoGrupo" name="IconoGrupo" />
+                                <input type="hidden" id="crearIconoCategoria" name="IconoCategoria" />
+                                <input type="hidden" id="crearOrdenCategoria" name="OrdenCategoria" value="0" />
+                            </div>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="SoloSuperAdmin" value="true" id="crearSoloSuperAdmin" />
+                            <input type="hidden" name="SoloSuperAdmin" value="false" />
+                            <label class="form-check-label" for="crearSoloSuperAdmin">
+                                <i class="fas fa-shield-alt text-danger mr-1"></i> Solo Super Admin (no asignable a usuarios normales)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                            <i class="fas fa-times mr-1"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus-circle mr-1"></i>Crear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">
+                        <i class="fas fa-edit"></i> Editar opcion de menu
+                    </h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <form method="post" action="/MenuOpciones/Editar">
+                    <input type="hidden" id="editId" name="Id" />
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label"><i class="fas fa-code mr-1" style="color: #583AFF;"></i>Codigo</label>
+                                <input type="text" class="form-control form-control-sm" id="editCodigo" name="Codigo" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label"><i class="fas fa-tag mr-1" style="color: #583AFF;"></i>Nombre</label>
+                                <input type="text" class="form-control form-control-sm" id="editNombre" name="Nombre" required />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"><i class="fas fa-align-left mr-1" style="color: #583AFF;"></i>Descripcion</label>
+                            <input type="text" class="form-control form-control-sm" id="editDescripcion" name="Descripcion" />
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label"><i class="fas fa-layer-group mr-1" style="color: #583AFF;"></i>Categoria</label>
+                                <select class="form-select form-select-sm" id="editCategoria" name="Categoria" required onchange="filtrarGrupos('edit')">
+                                    <option value="DATOS">DATOS</option>
+                                    <option value="INFORMES">INFORMES</option>
+                                    <option value="ADMINISTRACION">ADMINISTRACION</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label"><i class="fas fa-icons mr-1" style="color: #583AFF;"></i>Icono</label>
+                                <input type="text" class="form-control form-control-sm" id="editIcono" name="Icono" />
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label"><i class="fas fa-sort-numeric-up mr-1" style="color: #583AFF;"></i>Orden</label>
+                                <input type="number" class="form-control form-control-sm" id="editOrden" name="Orden" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label"><i class="fas fa-sitemap mr-1" style="color: #583AFF;"></i>Controller</label>
+                                <input type="text" class="form-control form-control-sm" id="editController" name="Controller" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label"><i class="fas fa-play mr-1" style="color: #583AFF;"></i>Action</label>
+                                <input type="text" class="form-control form-control-sm" id="editAction" name="Action" required />
+                            </div>
+                        </div>
+                        <hr />
+                        <p class="text-muted mb-2"><small><i class="fas fa-columns mr-1"></i>Configuracion del sidebar</small></p>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Grupo del sidebar</label>
+                                <select class="form-select form-select-sm" id="editGrupoSelect" onchange="seleccionarGrupo(this, 'edit')">
+                                    <option value="">-- Seleccionar grupo existente --</option>
+                                </select>
+                                <input type="hidden" id="editNombreGrupo" name="NombreGrupo" />
+                                <input type="hidden" id="editIconoGrupo" name="IconoGrupo" />
+                                <input type="hidden" id="editIconoCategoria" name="IconoCategoria" />
+                                <input type="hidden" id="editOrdenCategoria" name="OrdenCategoria" value="0" />
+                            </div>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="SoloSuperAdmin" value="true" id="editSoloSuperAdmin" />
+                            <input type="hidden" name="SoloSuperAdmin" value="false" />
+                            <label class="form-check-label" for="editSoloSuperAdmin">
+                                <i class="fas fa-shield-alt text-danger mr-1"></i> Solo Super Admin (no asignable a usuarios normales)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                            <i class="fas fa-times mr-1"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-save mr-1"></i>Guardar cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Eliminar -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteModalLabel">
+                        <i class="fas fa-exclamation-triangle"></i> Confirmar eliminacion
+                    </h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">
+                        <i class="fas fa-question-circle text-warning mr-2"></i>
+                        ¿Estas seguro de que deseas eliminar la opcion "<strong id="deleteNombre"></strong>"?
+                    </p>
+                    <p class="text-muted mt-2 mb-0"><small>La opcion se desactivara y dejara de aparecer en el menu.</small></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>Cancelar
+                    </button>
+                    <form id="deleteForm" method="post" action="/MenuOpciones/Eliminar" style="display: inline;">
+                        <input type="hidden" id="deleteId" name="id" />
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash-alt mr-1"></i>Eliminar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <script>
+            const isMobile1 = window.innerWidth <= 768;
+            Swal.fire({
+                toast: true,
+                position: isMobile1 ? 'top' : 'top-end',
+                icon: 'error',
+                title: '@TempData["ErrorMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        </script>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <script>
+            const isMobile2 = window.innerWidth <= 768;
+            Swal.fire({
+                toast: true,
+                position: isMobile2 ? 'top' : 'top-end',
+                icon: 'success',
+                title: '@TempData["SuccessMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        </script>
+    }
+
+    @if (TempData["InfoMessage"] != null)
+    {
+        <script>
+            const isMobile3 = window.innerWidth <= 768;
+            Swal.fire({
+                toast: true,
+                position: isMobile3 ? 'top' : 'top-end',
+                icon: 'info',
+                title: '@TempData["InfoMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        </script>
+    }
+
+    <script>
+        // Datos de grupos existentes desde el servidor
+        var gruposData = [
+            @foreach (var g in gruposExistentes)
+            {
+                <text>{ categoria: '@Html.Raw(g.Categoria)', nombre: '@Html.Raw(g.NombreGrupo)', iconoGrupo: '@Html.Raw(g.IconoGrupo)', iconoCategoria: '@Html.Raw(g.IconoCategoria)', ordenCategoria: @g.OrdenCategoria },</text>
+            }
+        ];
+
+        // Filtra las opciones del select de grupo segun la categoria seleccionada
+        function filtrarGrupos(prefijo) {
+            var catSelect = document.getElementById(prefijo + 'Categoria');
+            var grupoSelect = document.getElementById(prefijo + 'GrupoSelect');
+            var categoriaSeleccionada = catSelect.value;
+
+            // Limpiar opciones
+            grupoSelect.innerHTML = '<option value="">-- Seleccionar grupo existente --</option>';
+
+            // Agregar grupos que coincidan con la categoria
+            var agregados = {};
+            gruposData.forEach(function (g) {
+                if (g.categoria === categoriaSeleccionada && !agregados[g.nombre]) {
+                    agregados[g.nombre] = true;
+                    var opt = document.createElement('option');
+                    opt.value = g.nombre;
+                    opt.textContent = g.nombre;
+                    opt.setAttribute('data-icono-grupo', g.iconoGrupo);
+                    opt.setAttribute('data-icono-categoria', g.iconoCategoria);
+                    opt.setAttribute('data-orden-categoria', g.ordenCategoria);
+                    grupoSelect.appendChild(opt);
+                }
+            });
+
+            // Limpiar campos ocultos
+            document.getElementById(prefijo + 'NombreGrupo').value = '';
+            document.getElementById(prefijo + 'IconoGrupo').value = '';
+            document.getElementById(prefijo + 'IconoCategoria').value = '';
+            document.getElementById(prefijo + 'OrdenCategoria').value = '0';
+        }
+
+        // Al seleccionar un grupo, rellena los campos ocultos
+        function seleccionarGrupo(selectElem, prefijo) {
+            var opt = selectElem.options[selectElem.selectedIndex];
+            if (opt.value) {
+                document.getElementById(prefijo + 'NombreGrupo').value = opt.value;
+                document.getElementById(prefijo + 'IconoGrupo').value = opt.getAttribute('data-icono-grupo') || '';
+                document.getElementById(prefijo + 'IconoCategoria').value = opt.getAttribute('data-icono-categoria') || '';
+                document.getElementById(prefijo + 'OrdenCategoria').value = opt.getAttribute('data-orden-categoria') || '0';
+            } else {
+                document.getElementById(prefijo + 'NombreGrupo').value = '';
+                document.getElementById(prefijo + 'IconoGrupo').value = '';
+                document.getElementById(prefijo + 'IconoCategoria').value = '';
+                document.getElementById(prefijo + 'OrdenCategoria').value = '0';
+            }
+        }
+
+        function setEditOpcion(id, codigo, nombre, descripcion, categoria, icono, orden, controller, action, nombreGrupo, iconoGrupo, iconoCategoria, ordenCategoria, soloSuperAdmin) {
+            document.getElementById("editId").value = id;
+            document.getElementById("editCodigo").value = codigo || '';
+            document.getElementById("editNombre").value = nombre || '';
+            document.getElementById("editDescripcion").value = descripcion || '';
+            document.getElementById("editCategoria").value = categoria || 'DATOS';
+            document.getElementById("editIcono").value = icono || '';
+            document.getElementById("editOrden").value = orden || 0;
+            document.getElementById("editController").value = controller || '';
+            document.getElementById("editAction").value = action || '';
+            document.getElementById("editSoloSuperAdmin").checked = soloSuperAdmin;
+
+            // Primero filtrar grupos para la categoria (esto limpia los campos ocultos)
+            filtrarGrupos('edit');
+
+            // Pre-seleccionar el grupo en el dropdown
+            var grupoSelect = document.getElementById("editGrupoSelect");
+            for (var i = 0; i < grupoSelect.options.length; i++) {
+                if (grupoSelect.options[i].value === (nombreGrupo || '')) {
+                    grupoSelect.selectedIndex = i;
+                    // Llamar seleccionarGrupo para rellenar los campos ocultos desde el option seleccionado
+                    seleccionarGrupo(grupoSelect, 'edit');
+                    break;
+                }
+            }
+
+            // Si el grupo no se encontro en el dropdown, rellenar manualmente los campos ocultos
+            if (grupoSelect.value !== (nombreGrupo || '')) {
+                document.getElementById("editNombreGrupo").value = nombreGrupo || '';
+                document.getElementById("editIconoGrupo").value = iconoGrupo || '';
+                document.getElementById("editIconoCategoria").value = iconoCategoria || '';
+                document.getElementById("editOrdenCategoria").value = ordenCategoria || 0;
+            }
+        }
+
+        function setDeleteId(id, nombre) {
+            document.getElementById("deleteId").value = id;
+            document.getElementById("deleteNombre").textContent = nombre;
+        }
+
+        // Inicializar grupos del modal crear al abrir
+        document.addEventListener('DOMContentLoaded', function () {
+            filtrarGrupos('crear');
+        });
+    </script>
+</body>
+</html>

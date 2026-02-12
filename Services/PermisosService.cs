@@ -82,7 +82,8 @@ namespace bufinscustomers.Services
                 NombreGrupo = reader["NombreGrupo"] != DBNull.Value ? reader["NombreGrupo"].ToString() : null,
                 IconoGrupo = reader["IconoGrupo"] != DBNull.Value ? reader["IconoGrupo"].ToString() : null,
                 IconoCategoria = reader["IconoCategoria"] != DBNull.Value ? reader["IconoCategoria"].ToString() : null,
-                OrdenCategoria = reader["OrdenCategoria"] != DBNull.Value ? Convert.ToInt32(reader["OrdenCategoria"]) : 0
+                OrdenCategoria = reader["OrdenCategoria"] != DBNull.Value ? Convert.ToInt32(reader["OrdenCategoria"]) : 0,
+                SoloSuperAdmin = reader["SoloSuperAdmin"] != DBNull.Value && Convert.ToBoolean(reader["SoloSuperAdmin"])
             };
         }
 
@@ -198,6 +199,118 @@ namespace bufinscustomers.Services
             }
 
             return categorias;
+        }
+
+        /// <summary>
+        /// Obtiene todas las opciones de menú activas (para la página CRUD del gestor)
+        /// </summary>
+        public List<MenuOpciones> ObtenerTodas()
+        {
+            var opciones = new List<MenuOpciones>();
+
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
+            {
+                using (SqlCommand cmd = new SqlCommand(
+                    "SELECT Id, Codigo, Nombre, Descripcion, Categoria, Icono, Orden, Controller, [Action], NombreGrupo, IconoGrupo, IconoCategoria, OrdenCategoria, SoloSuperAdmin FROM MenuOpciones WHERE Activo = 1 ORDER BY OrdenCategoria, Orden", cn))
+                {
+                    cn.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            opciones.Add(LeerMenuOpcion(reader));
+                        }
+                    }
+                }
+            }
+
+            return opciones;
+        }
+
+        /// <summary>
+        /// Crea una nueva opción de menú
+        /// </summary>
+        public bool CrearMenuOpcion(MenuOpciones opcion)
+        {
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
+            {
+                using (SqlCommand cmd = new SqlCommand(
+                    @"INSERT INTO MenuOpciones (Codigo, Nombre, Descripcion, Categoria, Icono, Orden, Controller, [Action], Activo, NombreGrupo, IconoGrupo, IconoCategoria, OrdenCategoria, SoloSuperAdmin)
+                      VALUES (@Codigo, @Nombre, @Descripcion, @Categoria, @Icono, @Orden, @Controller, @Action, 1, @NombreGrupo, @IconoGrupo, @IconoCategoria, @OrdenCategoria, @SoloSuperAdmin)", cn))
+                {
+                    cmd.Parameters.AddWithValue("@Codigo", opcion.Codigo ?? "");
+                    cmd.Parameters.AddWithValue("@Nombre", opcion.Nombre ?? "");
+                    cmd.Parameters.AddWithValue("@Descripcion", (object)opcion.Descripcion ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Categoria", opcion.Categoria ?? "");
+                    cmd.Parameters.AddWithValue("@Icono", (object)opcion.Icono ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Orden", opcion.Orden);
+                    cmd.Parameters.AddWithValue("@Controller", (object)opcion.Controller ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Action", (object)opcion.Action ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@NombreGrupo", (object)opcion.NombreGrupo ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@IconoGrupo", (object)opcion.IconoGrupo ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@IconoCategoria", (object)opcion.IconoCategoria ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@OrdenCategoria", opcion.OrdenCategoria);
+                    cmd.Parameters.AddWithValue("@SoloSuperAdmin", opcion.SoloSuperAdmin);
+
+                    cn.Open();
+                    return cmd.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Edita una opción de menú existente
+        /// </summary>
+        public bool EditarMenuOpcion(MenuOpciones opcion)
+        {
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
+            {
+                using (SqlCommand cmd = new SqlCommand(
+                    @"UPDATE MenuOpciones SET
+                        Codigo = @Codigo, Nombre = @Nombre, Descripcion = @Descripcion,
+                        Categoria = @Categoria, Icono = @Icono, Orden = @Orden,
+                        Controller = @Controller, [Action] = @Action,
+                        NombreGrupo = @NombreGrupo, IconoGrupo = @IconoGrupo,
+                        IconoCategoria = @IconoCategoria, OrdenCategoria = @OrdenCategoria,
+                        SoloSuperAdmin = @SoloSuperAdmin
+                      WHERE Id = @Id", cn))
+                {
+                    cmd.Parameters.AddWithValue("@Id", opcion.Id);
+                    cmd.Parameters.AddWithValue("@Codigo", opcion.Codigo ?? "");
+                    cmd.Parameters.AddWithValue("@Nombre", opcion.Nombre ?? "");
+                    cmd.Parameters.AddWithValue("@Descripcion", (object)opcion.Descripcion ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Categoria", opcion.Categoria ?? "");
+                    cmd.Parameters.AddWithValue("@Icono", (object)opcion.Icono ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Orden", opcion.Orden);
+                    cmd.Parameters.AddWithValue("@Controller", (object)opcion.Controller ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Action", (object)opcion.Action ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@NombreGrupo", (object)opcion.NombreGrupo ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@IconoGrupo", (object)opcion.IconoGrupo ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@IconoCategoria", (object)opcion.IconoCategoria ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@OrdenCategoria", opcion.OrdenCategoria);
+                    cmd.Parameters.AddWithValue("@SoloSuperAdmin", opcion.SoloSuperAdmin);
+
+                    cn.Open();
+                    return cmd.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Elimina una opción de menú (desactiva con Activo = 0)
+        /// </summary>
+        public bool EliminarMenuOpcion(int id)
+        {
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
+            {
+                using (SqlCommand cmd = new SqlCommand(
+                    "UPDATE MenuOpciones SET Activo = 0 WHERE Id = @Id", cn))
+                {
+                    cmd.Parameters.AddWithValue("@Id", id);
+                    cn.Open();
+                    return cmd.ExecuteNonQuery() > 0;
+                }
+            }
         }
 
         /// <summary>
