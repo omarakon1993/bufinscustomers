@@ -307,7 +307,7 @@
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         }
-                                        @if (ViewBag.EsSuperAdmin == true && usuario.Admin != 2)
+                                        @if ((ViewBag.EsSuperAdmin == true || ViewBag.EsAdminEmpresa == true) && usuario.Admin != 2)
                                         {
                                             <a href="@Url.Action("Gestionar", "Permisos", new { id = usuario.Id })" class="btn btn-outline-success" title="Gestionar permisos">
                                                 <i class="fas fa-shield-alt"></i>

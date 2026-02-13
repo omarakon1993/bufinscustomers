@@ -11,7 +11,7 @@ namespace bufinscustomers.Controllers
 {
     /// <summary>
     /// Controlador para gestionar permisos de usuarios
-    /// Solo accesible por Super Administradores (Admin = 2)
+    /// Accesible por Super Administradores (Admin = 2) y Admin de Empresa (Admin = 1) para usuarios de su empresa
     /// </summary>
     [ValidarSesion]
     public class PermisosController : BaseController
@@ -25,13 +25,15 @@ namespace bufinscustomers.Controllers
         /// <param name="id">ID del usuario</param>
         public ActionResult Gestionar(int id)
         {
-            // Solo Admin 2 puede gestionar permisos
-            if (!UsuarioSesionHelper.EsSuperAdmin())
+            var usuarioActual = UsuarioSesionHelper.UsuarioActual;
+
+            // Solo Admin 2 o Admin 1 pueden gestionar permisos
+            if (!UsuarioSesionHelper.EsSuperAdmin() && !UsuarioSesionHelper.EsAdminEmpresa())
             {
                 return RedirectToAction("Index", "Home");
             }
 
-            // Obtener usuario
+            // Obtener usuario target
             var usuario = _usuarioService.ObtenerUsuarioPorId(id);
             if (usuario == null)
             {
@@ -46,8 +48,25 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Usuarios", "Usuario");
             }
 
+            // Admin 1 solo puede gestionar usuarios de su misma empresa
+            if (UsuarioSesionHelper.EsAdminEmpresa())
+            {
+                if (usuario.IdEmpresa != usuarioActual.IdEmpresa)
+                {
+                    SetErrorMessage("No tienes permisos para gestionar opciones de usuarios de otras empresas.");
+                    return RedirectToAction("Usuarios", "Usuario");
+                }
+            }
+
             // Obtener opciones de menú con estado (asignado/no asignado)
             var opciones = _menuOpcionesService.ObtenerOpcionesConEstado(id);
+
+            // Filtrar opciones según quién gestiona y a quién se le asignan
+            byte nivelAdmin = usuarioActual.Admin ?? 0;
+            byte nivelTarget = usuario.Admin ?? 0;
+
+            opciones = FiltrarOpcionesParaAsignacion(opciones, nivelAdmin, nivelTarget);
+
             var opcionesPorCategoria = opciones.GroupBy(o => o.Categoria).ToList();
 
             var viewModel = new GestionOpcionesMenuViewModel
@@ -60,6 +79,27 @@ namespace bufinscustomers.Controllers
         }
 
         /// <summary>
+        /// Filtra las opciones según el nivel del usuario al que se le asignan permisos.
+        /// Admin 2 nunca se edita (tiene todo), así que SoloSuperAdmin nunca aparece.
+        /// </summary>
+        private List<OpcionMenuUsuarioViewModel> FiltrarOpcionesParaAsignacion(
+            List<OpcionMenuUsuarioViewModel> opciones, byte nivelAdmin, byte nivelTarget)
+        {
+            return opciones.Where(o =>
+            {
+                // SoloSuperAdmin: solo para Admin 2, nunca asignable a Admin 0 ni Admin 1
+                if (o.SoloSuperAdmin)
+                    return false;
+
+                // SoloAdminEmpresa: solo para Admin 1+, no asignable a Admin 0
+                if (o.SoloAdminEmpresa && nivelTarget == 0)
+                    return false;
+
+                return true;
+            }).ToList();
+        }
+
+        /// <summary>
         /// Guarda los permisos asignados a un usuario
         /// </summary>
         /// <param name="idUsuario">ID del usuario</param>
@@ -67,15 +107,39 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         public ActionResult Guardar(int idUsuario, List<int> permisos)
         {
-            // Solo Admin 2 puede gestionar permisos
-            if (!UsuarioSesionHelper.EsSuperAdmin())
+            var usuarioActual = UsuarioSesionHelper.UsuarioActual;
+
+            // Solo Admin 2 o Admin 1 pueden guardar permisos
+            if (!UsuarioSesionHelper.EsSuperAdmin() && !UsuarioSesionHelper.EsAdminEmpresa())
             {
                 return Json(new { success = false, message = "No tienes permisos para esta acción." });
             }
 
             try
             {
-                var usuarioAsigno = UsuarioSesionHelper.UsuarioActual.Id;
+                // Verificar que el usuario target existe
+                var usuarioTarget = _usuarioService.ObtenerUsuarioPorId(idUsuario);
+                if (usuarioTarget == null)
+                {
+                    return Json(new { success = false, message = "Usuario no encontrado." });
+                }
+
+                // No permitir gestionar permisos de Admin 2
+                if (usuarioTarget.Admin == 2)
+                {
+                    return Json(new { success = false, message = "No se pueden modificar permisos de Super Administradores." });
+                }
+
+                // Admin 1 solo puede gestionar usuarios de su empresa
+                if (UsuarioSesionHelper.EsAdminEmpresa())
+                {
+                    if (usuarioTarget.IdEmpresa != usuarioActual.IdEmpresa)
+                    {
+                        return Json(new { success = false, message = "No tienes permisos para gestionar usuarios de otras empresas." });
+                    }
+                }
+
+                var usuarioAsigno = usuarioActual.Id;
 
                 // Si permisos es null, crear lista vacía (significa que se quitaron todos)
                 if (permisos == null)
@@ -86,7 +150,6 @@ namespace bufinscustomers.Controllers
                 _menuOpcionesService.GuardarOpcionesUsuario(idUsuario, permisos, usuarioAsigno);
 
                 // Invalidar caché de permisos del admin que está guardando
-                // (la caché del usuario target se refrescará cuando recargue su sesión)
                 UsuarioSesionHelper.InvalidarCachePermisos();
 
                 SetSuccessMessage("Opciones de menú actualizadas correctamente.");

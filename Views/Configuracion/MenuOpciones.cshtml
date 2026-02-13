@@ -110,6 +110,15 @@
             font-weight: 500;
         }
 
+        .badge-admin-emp {
+            background-color: #ffc107;
+            color: #212529;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
         /* === BOTONES DE ACCIONES === */
         .btn-group {
             gap: 0.25rem;
@@ -160,6 +169,10 @@
                                     {
                                         <span class="badge-super">Super Admin</span>
                                     }
+                                    else if (opcion.SoloAdminEmpresa)
+                                    {
+                                        <span class="badge-admin-emp">Admin Emp.</span>
+                                    }
                                     else
                                     {
                                         <span class="badge-normal">Todos</span>
@@ -168,7 +181,7 @@
                                 <td class="col-acciones">
                                     <div class="btn-group" role="group" aria-label="Acciones">
                                         <button type="button" class="btn btn-primary" title="Editar opcion" data-bs-toggle="modal" data-bs-target="#editModal"
-                                                onclick="setEditOpcion(@opcion.Id, '@Html.Raw(opcion.Codigo)', '@Html.Raw(opcion.Nombre)', '@Html.Raw(opcion.Descripcion)', '@Html.Raw(opcion.Categoria)', '@Html.Raw(opcion.Icono)', @opcion.Orden, '@Html.Raw(opcion.Controller)', '@Html.Raw(opcion.Action)', '@Html.Raw(opcion.NombreGrupo)', '@Html.Raw(opcion.IconoGrupo)', '@Html.Raw(opcion.IconoCategoria)', @opcion.OrdenCategoria, @(opcion.SoloSuperAdmin ? "true" : "false"))">
+                                                onclick="setEditOpcion(@opcion.Id, '@Html.Raw(opcion.Codigo)', '@Html.Raw(opcion.Nombre)', '@Html.Raw(opcion.Descripcion)', '@Html.Raw(opcion.Categoria)', '@Html.Raw(opcion.Icono)', @opcion.Orden, '@Html.Raw(opcion.Controller)', '@Html.Raw(opcion.Action)', '@Html.Raw(opcion.NombreGrupo)', '@Html.Raw(opcion.IconoGrupo)', '@Html.Raw(opcion.IconoCategoria)', @opcion.OrdenCategoria, @(opcion.SoloSuperAdmin ? "true" : "false"), @(opcion.SoloAdminEmpresa ? "true" : "false"))">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         <button type="button" class="btn btn-outline-danger" title="Eliminar opcion" data-bs-toggle="modal" data-bs-target="#deleteModal" onclick="setDeleteId(@opcion.Id, '@Html.Raw(opcion.Nombre)')">
@@ -261,7 +274,14 @@
                             <input class="form-check-input" type="checkbox" name="SoloSuperAdmin" value="true" id="crearSoloSuperAdmin" />
                             <input type="hidden" name="SoloSuperAdmin" value="false" />
                             <label class="form-check-label" for="crearSoloSuperAdmin">
-                                <i class="fas fa-shield-alt text-danger mr-1"></i> Solo Super Admin (no asignable a usuarios normales)
+                                <i class="fas fa-shield-alt text-danger mr-1"></i> Solo Super Admin (no asignable a otros usuarios)
+                            </label>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="SoloAdminEmpresa" value="true" id="crearSoloAdminEmpresa" />
+                            <input type="hidden" name="SoloAdminEmpresa" value="false" />
+                            <label class="form-check-label" for="crearSoloAdminEmpresa">
+                                <i class="fas fa-building text-warning mr-1"></i> Solo Admin Empresa (no asignable a usuarios normales)
                             </label>
                         </div>
                     </div>
@@ -351,7 +371,14 @@
                             <input class="form-check-input" type="checkbox" name="SoloSuperAdmin" value="true" id="editSoloSuperAdmin" />
                             <input type="hidden" name="SoloSuperAdmin" value="false" />
                             <label class="form-check-label" for="editSoloSuperAdmin">
-                                <i class="fas fa-shield-alt text-danger mr-1"></i> Solo Super Admin (no asignable a usuarios normales)
+                                <i class="fas fa-shield-alt text-danger mr-1"></i> Solo Super Admin (no asignable a otros usuarios)
+                            </label>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="SoloAdminEmpresa" value="true" id="editSoloAdminEmpresa" />
+                            <input type="hidden" name="SoloAdminEmpresa" value="false" />
+                            <label class="form-check-label" for="editSoloAdminEmpresa">
+                                <i class="fas fa-building text-warning mr-1"></i> Solo Admin Empresa (no asignable a usuarios normales)
                             </label>
                         </div>
                     </div>
@@ -516,7 +543,7 @@
             }
         }
 
-        function setEditOpcion(id, codigo, nombre, descripcion, categoria, icono, orden, controller, action, nombreGrupo, iconoGrupo, iconoCategoria, ordenCategoria, soloSuperAdmin) {
+        function setEditOpcion(id, codigo, nombre, descripcion, categoria, icono, orden, controller, action, nombreGrupo, iconoGrupo, iconoCategoria, ordenCategoria, soloSuperAdmin, soloAdminEmpresa) {
             document.getElementById("editId").value = id;
             document.getElementById("editCodigo").value = codigo || '';
             document.getElementById("editNombre").value = nombre || '';
@@ -527,6 +554,7 @@
             document.getElementById("editController").value = controller || '';
             document.getElementById("editAction").value = action || '';
             document.getElementById("editSoloSuperAdmin").checked = soloSuperAdmin;
+            document.getElementById("editSoloAdminEmpresa").checked = soloAdminEmpresa;
 
             // Primero filtrar grupos para la categoria (esto limpia los campos ocultos)
             filtrarGrupos('edit');

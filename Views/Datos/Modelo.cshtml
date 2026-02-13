@@ -2,7 +2,7 @@
 @using bufinscustomers.Helpers
 @{
     var usuario = UsuarioSesionHelper.UsuarioActual;
-    var esAdmin = usuario?.Admin == 1;
+    var esAdmin = usuario?.Admin == 1 || usuario?.Admin == 2;
     var idEmpresaUsuario = usuario?.IdEmpresa ?? 0;
 }
 <!DOCTYPE html>
@@ -74,19 +74,8 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="anio" class="form-label">A&ntilde;o</label>
-                            <select class="form-control" id="anio" name="anio" required>
-                                <option value="" selected disabled>Seleccione un a&ntilde;o</option>
-                                @{
-                                    int currentYear = DateTime.Now.Year;
-                                }
-                                <option value="@currentYear">@currentYear</option>
-                                @*@{
-                                        int NextYear = DateTime.Now.Year+1;
-                                        for (int year = NextYear; year >= NextYear - 8; year--)
-                                        {
-                                            <option value="@year">@year</option>
-                                        }
-                                    }*@
+                            <select class="form-control" id="anio" name="anio" required disabled>
+                                <option value="" selected disabled>Seleccione una empresa primero</option>
                             </select>
                         </div>
                     </div>
@@ -95,7 +84,7 @@
                     <button type="submit" class="btn btn-primary" id="btnEjecutarBalance" formaction="/Datos/EjecutarModeloBalance">
                         <i class="fas fa-scale-balanced"></i> Balance
                     </button>
-                    <button type="submit" class="btn btn-primary" id="btnEjecutarPYG">
+                    <button type="submit" class="btn btn-primary" id="btnEjecutarPYG" formaction="/Datos/EjecutarModeloPYG">
                         <i class="fas fa-chart-line"></i> PYG
                     </button>
                     <button type="submit" class="btn btn-primary" id="btnEjecutarFlujoCaja">
@@ -168,5 +157,42 @@
             });
         </script>
     }
+
+    <script>
+        $(document).ready(function () {
+            $('#idEmpresa').on('change', function () {
+                var idEmpresa = $(this).val();
+                var $anio = $('#anio');
+
+                if (!idEmpresa) {
+                    $anio.html('<option value="" selected disabled>Seleccione una empresa primero</option>');
+                    $anio.prop('disabled', true);
+                    return;
+                }
+
+                $anio.html('<option value="" selected disabled>Cargando...</option>');
+                $anio.prop('disabled', true);
+
+                $.ajax({
+                    url: '/Datos/ObtenerAnioEjecucion',
+                    type: 'GET',
+                    data: { idEmpresa: idEmpresa },
+                    success: function (response) {
+                        if (response.success) {
+                            $anio.html('<option value="' + response.anioEjecucion + '" selected>' + response.anioEjecucion + '</option>');
+                            $anio.prop('disabled', false);
+                        } else {
+                            $anio.html('<option value="" selected disabled>' + response.message + '</option>');
+                            $anio.prop('disabled', true);
+                        }
+                    },
+                    error: function () {
+                        $anio.html('<option value="" selected disabled>Error al cargar el a&ntilde;o</option>');
+                        $anio.prop('disabled', true);
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

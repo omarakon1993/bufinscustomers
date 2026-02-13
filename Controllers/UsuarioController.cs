@@ -27,6 +27,14 @@ namespace bufinscustomers.Controllers
             }
 
             var empresas = _empresaService.ObtenerEmpresas();
+
+            // Admin 0/1 solo ve su propia empresa en los dropdowns
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+            {
+                var idEmpresaUsuario = UsuarioSesionHelper.UsuarioActual.IdEmpresa;
+                empresas = empresas.Where(e => e.Id == idEmpresaUsuario).ToList();
+            }
+
             ViewBag.Empresas = empresas;
 
             List<Usuarios> usuarios;
@@ -47,6 +55,7 @@ namespace bufinscustomers.Controllers
 
             // Pasar información de permisos al ViewBag para la vista
             ViewBag.EsSuperAdmin = UsuarioSesionHelper.EsSuperAdmin();
+            ViewBag.EsAdminEmpresa = UsuarioSesionHelper.EsAdminEmpresa();
             ViewBag.PuedeCrear = UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR");
             ViewBag.PuedeEditar = UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR");
             ViewBag.PuedeEliminar = UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR");

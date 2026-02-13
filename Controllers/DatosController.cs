@@ -68,6 +68,83 @@ namespace bufinscustomers.Controllers
             return View("~/Views/Datos/Modelo.cshtml", empresas);
         }
 
+        [HttpGet]
+        public ActionResult ObtenerAnioEjecucion(int idEmpresa)
+        {
+            try
+            {
+                var usuario = UsuarioSesionHelper.UsuarioActual;
+                if (usuario == null)
+                    return Json(new { success = false, message = "Sesión no válida." }, JsonRequestBehavior.AllowGet);
+
+                if (!UsuarioSesionHelper.EsSuperAdmin() && usuario.IdEmpresa != idEmpresa)
+                    return Json(new { success = false, message = "No tiene permisos para consultar esta empresa." }, JsonRequestBehavior.AllowGet);
+
+                var config = _configuracionService.ObtenerConfiguracionPorEmpresa(idEmpresa);
+                int anio = config != null ? config.AnioEjecucion : DateTime.Now.Year;
+
+                return Json(new { success = true, anioEjecucion = anio }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error al obtener el año: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public ActionResult EjecutarModeloPYG(int idEmpresa, string anio)
+        {
+            try
+            {
+                var usuarioSession = (Usuarios)Session["usuario"];
+                if (usuarioSession == null)
+                {
+                    SetErrorMessage("Sesión no válida. Por favor, inicie sesión nuevamente.");
+                    return RedirectToAction("Login", "Acceso");
+                }
+
+                if (!UsuarioSesionHelper.EsSuperAdmin() && usuarioSession.IdEmpresa != idEmpresa)
+                {
+                    SetErrorMessage("No tiene permisos para ejecutar el modelo en esta empresa.");
+                    return RedirectToAction("Modelo");
+                }
+
+                using (SqlConnection connection = new SqlConnection(CadenaConexion))
+                using (SqlCommand command = new SqlCommand("sp_ModeloPYG", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                    command.Parameters.AddWithValue("@IdUsuario", usuarioSession.Id);
+                    command.Parameters.AddWithValue("@Año", anio);
+
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            int codMessage = Convert.ToInt32(reader["CodMessage"]);
+                            string mensaje = reader["ErrorMessage"].ToString();
+
+                            if (codMessage == 1)
+                                SetSuccessMessage(mensaje);
+                            else
+                                SetErrorMessage(mensaje);
+                        }
+                        else
+                        {
+                            SetErrorMessage("No se recibió respuesta del procedimiento.");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                SetErrorMessage("Error al ejecutar el modelo: " + ex.Message);
+            }
+
+            return RedirectToAction("Modelo");
+        }
+
         [HttpPost]
         public ActionResult EjecutarModeloBalance(int idEmpresa, string anio)
         {

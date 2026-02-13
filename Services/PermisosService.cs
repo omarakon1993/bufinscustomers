@@ -51,6 +51,8 @@ namespace bufinscustomers.Services
                                 vm.IconoGrupo = reader["IconoGrupo"] != DBNull.Value ? reader["IconoGrupo"].ToString() : null;
                                 vm.IconoCategoria = reader["IconoCategoria"] != DBNull.Value ? reader["IconoCategoria"].ToString() : null;
                                 vm.OrdenCategoria = reader["OrdenCategoria"] != DBNull.Value ? Convert.ToInt32(reader["OrdenCategoria"]) : 0;
+                                vm.SoloSuperAdmin = reader["SoloSuperAdmin"] != DBNull.Value && Convert.ToBoolean(reader["SoloSuperAdmin"]);
+                                vm.SoloAdminEmpresa = reader["SoloAdminEmpresa"] != DBNull.Value && Convert.ToBoolean(reader["SoloAdminEmpresa"]);
                             }
                             catch (IndexOutOfRangeException) { }
 
@@ -68,7 +70,7 @@ namespace bufinscustomers.Services
         /// </summary>
         private MenuOpciones LeerMenuOpcion(SqlDataReader reader)
         {
-            return new MenuOpciones
+            var opcion = new MenuOpciones
             {
                 Id = Convert.ToInt32(reader["Id"]),
                 Codigo = reader["Codigo"].ToString(),
@@ -85,6 +87,11 @@ namespace bufinscustomers.Services
                 OrdenCategoria = reader["OrdenCategoria"] != DBNull.Value ? Convert.ToInt32(reader["OrdenCategoria"]) : 0,
                 SoloSuperAdmin = reader["SoloSuperAdmin"] != DBNull.Value && Convert.ToBoolean(reader["SoloSuperAdmin"])
             };
+
+            try { opcion.SoloAdminEmpresa = reader["SoloAdminEmpresa"] != DBNull.Value && Convert.ToBoolean(reader["SoloAdminEmpresa"]); }
+            catch (IndexOutOfRangeException) { }
+
+            return opcion;
         }
 
         /// <summary>
@@ -211,7 +218,7 @@ namespace bufinscustomers.Services
             using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
                 using (SqlCommand cmd = new SqlCommand(
-                    "SELECT Id, Codigo, Nombre, Descripcion, Categoria, Icono, Orden, Controller, [Action], NombreGrupo, IconoGrupo, IconoCategoria, OrdenCategoria, SoloSuperAdmin FROM MenuOpciones WHERE Activo = 1 ORDER BY OrdenCategoria, Orden", cn))
+                    "SELECT Id, Codigo, Nombre, Descripcion, Categoria, Icono, Orden, Controller, [Action], NombreGrupo, IconoGrupo, IconoCategoria, OrdenCategoria, SoloSuperAdmin, SoloAdminEmpresa FROM MenuOpciones WHERE Activo = 1 ORDER BY OrdenCategoria, Orden", cn))
                 {
                     cn.Open();
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -235,8 +242,8 @@ namespace bufinscustomers.Services
             using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
                 using (SqlCommand cmd = new SqlCommand(
-                    @"INSERT INTO MenuOpciones (Codigo, Nombre, Descripcion, Categoria, Icono, Orden, Controller, [Action], Activo, NombreGrupo, IconoGrupo, IconoCategoria, OrdenCategoria, SoloSuperAdmin)
-                      VALUES (@Codigo, @Nombre, @Descripcion, @Categoria, @Icono, @Orden, @Controller, @Action, 1, @NombreGrupo, @IconoGrupo, @IconoCategoria, @OrdenCategoria, @SoloSuperAdmin)", cn))
+                    @"INSERT INTO MenuOpciones (Codigo, Nombre, Descripcion, Categoria, Icono, Orden, Controller, [Action], Activo, NombreGrupo, IconoGrupo, IconoCategoria, OrdenCategoria, SoloSuperAdmin, SoloAdminEmpresa)
+                      VALUES (@Codigo, @Nombre, @Descripcion, @Categoria, @Icono, @Orden, @Controller, @Action, 1, @NombreGrupo, @IconoGrupo, @IconoCategoria, @OrdenCategoria, @SoloSuperAdmin, @SoloAdminEmpresa)", cn))
                 {
                     cmd.Parameters.AddWithValue("@Codigo", opcion.Codigo ?? "");
                     cmd.Parameters.AddWithValue("@Nombre", opcion.Nombre ?? "");
@@ -251,6 +258,7 @@ namespace bufinscustomers.Services
                     cmd.Parameters.AddWithValue("@IconoCategoria", (object)opcion.IconoCategoria ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@OrdenCategoria", opcion.OrdenCategoria);
                     cmd.Parameters.AddWithValue("@SoloSuperAdmin", opcion.SoloSuperAdmin);
+                    cmd.Parameters.AddWithValue("@SoloAdminEmpresa", opcion.SoloAdminEmpresa);
 
                     cn.Open();
                     return cmd.ExecuteNonQuery() > 0;
@@ -272,7 +280,7 @@ namespace bufinscustomers.Services
                         Controller = @Controller, [Action] = @Action,
                         NombreGrupo = @NombreGrupo, IconoGrupo = @IconoGrupo,
                         IconoCategoria = @IconoCategoria, OrdenCategoria = @OrdenCategoria,
-                        SoloSuperAdmin = @SoloSuperAdmin
+                        SoloSuperAdmin = @SoloSuperAdmin, SoloAdminEmpresa = @SoloAdminEmpresa
                       WHERE Id = @Id", cn))
                 {
                     cmd.Parameters.AddWithValue("@Id", opcion.Id);
@@ -289,6 +297,7 @@ namespace bufinscustomers.Services
                     cmd.Parameters.AddWithValue("@IconoCategoria", (object)opcion.IconoCategoria ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@OrdenCategoria", opcion.OrdenCategoria);
                     cmd.Parameters.AddWithValue("@SoloSuperAdmin", opcion.SoloSuperAdmin);
+                    cmd.Parameters.AddWithValue("@SoloAdminEmpresa", opcion.SoloAdminEmpresa);
 
                     cn.Open();
                     return cmd.ExecuteNonQuery() > 0;

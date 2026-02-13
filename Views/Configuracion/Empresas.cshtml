@@ -1,4 +1,5 @@
 @model IEnumerable<bufinscustomers.Models.Empresas>
+@using bufinscustomers.Helpers
 
 <!DOCTYPE html>
 <html>
@@ -129,9 +130,12 @@
                                                 onclick="setEditEmpresa(@empresa.Id, '@empresa.Nombre', '@empresa.Nit', '@empresa.Direccion', '@empresa.Telefono')">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-danger" title="Eliminar empresa" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" onclick="setIdEmpresa(@empresa.Id)">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
+                                        @if (UsuarioSesionHelper.EsSuperAdmin())
+                                        {
+                                            <button type="button" class="btn btn-outline-danger" title="Eliminar empresa" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" onclick="setIdEmpresa(@empresa.Id)">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -140,10 +144,14 @@
                 </table>
             </div>
         </div>
+        @if (UsuarioSesionHelper.EsSuperAdmin())
+        {
         <div class="card-footer">
             <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#crearEmpresaModal">
                 <i class="fas fa-plus-circle mr-1"></i> Crear Empresa
             </button>
+        </div>
+        }
         </div>
     </div>
 

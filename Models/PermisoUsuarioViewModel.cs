@@ -21,6 +21,8 @@ namespace bufinscustomers.Models
         public string IconoGrupo { get; set; }
         public string IconoCategoria { get; set; }
         public int OrdenCategoria { get; set; }
+        public bool SoloSuperAdmin { get; set; }
+        public bool SoloAdminEmpresa { get; set; }
     }
 
     /// <summary>
