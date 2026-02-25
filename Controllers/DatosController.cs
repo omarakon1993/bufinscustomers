@@ -1,4 +1,4 @@
-﻿using bufinscustomers.Helpers;
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
@@ -199,196 +199,18 @@ namespace bufinscustomers.Controllers
             return RedirectToAction("Modelo");
         }
 
-        [HttpPost]
-        public ActionResult LimpiarDatosImportacion()
+        public ActionResult CargueExcel()
         {
-            Session["TablasExcel"] = null;
-            TempData["MostrarBotonImportar"] = null;
-            return RedirectToAction("CargueExcel");
-        }
-
-        [HttpPost]
-        public ActionResult CargarExcel(HttpPostedFileBase archivoExcel, string accion, int idEmpresaSeleccionada)
-        {
-            // Si viene 0, intentar recuperar de Session (caso de Importar después de Validar)
-            if (idEmpresaSeleccionada == 0 && Session["idEmpresaSeleccionada"] != null)
-            {
-                idEmpresaSeleccionada = (int)Session["idEmpresaSeleccionada"];
-            }
-
-            // Validar que se haya seleccionado una empresa
-            if (idEmpresaSeleccionada == 0)
-            {
-                TempData["Mensaje"] = "Debe seleccionar una empresa antes de cargar el archivo.";
-                TempData["MensajeTipo"] = "error";
-                return RedirectToAction("CargueExcel", "Datos");
-            }
-
-            // Validar que la empresa tenga configuración creada
-            if (!_configuracionService.ExisteConfiguracion(idEmpresaSeleccionada))
-            {
-                TempData["Mensaje"] = "La empresa seleccionada no tiene configuración creada.";
-                TempData["MensajeTipo"] = "error";
-                return RedirectToAction("CargueExcel", "Datos", new { limpiar = false });
-            }
-
-            if ((archivoExcel == null || archivoExcel.ContentLength == 0) && Session["ArchivoExcelBytes"] == null)
-            {
-                TempData["Mensaje"] = "No se seleccionó ningún archivo.";
-                TempData["MensajeTipo"] = "error";
-                return RedirectToAction("CargueExcel", "Datos");
-            }
-
-            if (archivoExcel != null && archivoExcel.ContentLength > 0)
-            {
-                using (var ms = new MemoryStream())
-                {
-                    archivoExcel.InputStream.CopyTo(ms);
-                    Session["ArchivoExcelBytes"] = ms.ToArray();
-                    Session["ArchivoExcelNombre"] = Path.GetFileName(archivoExcel.FileName);
-                }
-            }
-
-            var tablasExcel = new List<(string nombre, DataTable tabla)>();
-            Stream archivoStream = archivoExcel != null && archivoExcel.ContentLength > 0
-                ? archivoExcel.InputStream
-                : new MemoryStream((byte[])Session["ArchivoExcelBytes"]);
-
-            var usuarioActual = UsuarioSesionHelper.UsuarioActual;
-            int idUsuario = usuarioActual?.Id ?? 0;
-
-            try
-            {
-                using (var conn = new SqlConnection(CadenaConexion))
-                {
-                    conn.Open();
-
-                    using (var package = new ExcelPackage(archivoStream))
-                    {
-                        // =========================
-                        // 🔹 PROCESAR TODAS LAS HOJAS
-                        // =========================
-                        foreach (var hoja in package.Workbook.Worksheets)
-                        {
-                            int totalCols = hoja.Dimension?.End.Column ?? 0;
-                            int totalRows = hoja.Dimension?.End.Row ?? 0;
-                            if (totalCols == 0 || totalRows == 0) continue;
-
-                            bool filaCabeceraValida = false;
-                            for (int col = 1; col <= totalCols; col++)
-                            {
-                                if (!string.IsNullOrWhiteSpace(hoja.Cells[1, col].Text))
-                                {
-                                    filaCabeceraValida = true;
-                                    break;
-                                }
-                            }
-                            if (!filaCabeceraValida) continue;
-
-                            int columnasValidas = 0;
-                            for (int col = 1; col <= totalCols; col++)
-                            {
-                                if (!string.IsNullOrWhiteSpace(hoja.Cells[1, col].Text.Trim()))
-                                    columnasValidas++;
-                                else
-                                    break;
-                            }
-                            if (columnasValidas == 0) continue;
-
-                            var nombreTabla = $"{NormalizarNombre(hoja.Name)}";
-                            var dt = new DataTable(nombreTabla);
-                            for (int col = 1; col <= columnasValidas; col++)
-                                dt.Columns.Add(hoja.Cells[1, col].Text.Trim());
-
-                            for (int row = 2; row <= totalRows; row++)
-                            {
-                                bool filaVacia = true;
-                                var dr = dt.NewRow();
-                                for (int col = 1; col <= columnasValidas; col++)
-                                {
-                                    var valor = hoja.Cells[row, col].Text?.Trim();
-                                    if (!string.IsNullOrWhiteSpace(valor)) filaVacia = false;
-                                    dr[col - 1] = valor;
-                                }
-
-                                if (filaVacia) continue;  // ✅ ya no se corta en seco
-                                dt.Rows.Add(dr);
-                            }
-
-                            if (accion == "Importar")
-                            {
-                                if (!GuardarEnSQLServer(dt.Copy(), idEmpresaSeleccionada, idUsuario))
-                                {
-                                    // Ya se guardó el mensaje en TempData en el catch, solo redirige
-                                    return RedirectToAction("CargueExcel", "Datos", new { limpiar = false });
-                                }
-                            }
-                            else if (accion == "RetornoTablaDeDatos")
-                            {
-                                tablasExcel.Add((dt.TableName, dt));
-                            }
-
-                        }
-
-                        // =========================
-                        // 🔹 3. REGISTRAR AUDITORÍA
-                        // =========================
-                        if (accion == "Importar")
-                        {
-                            string nombreArchivo = Session["ArchivoExcelNombre"]?.ToString() ?? "Archivo desconocido";
-                            RegistrarAuditoria(conn, nombreArchivo, idEmpresaSeleccionada);
-                        }
-                    }
-                }
-
-                if (accion == "RetornoTablaDeDatos")
-                {
-                    Session["TablasExcel"] = tablasExcel;
-                    Session["idEmpresaSeleccionada"] = idEmpresaSeleccionada;
-                    TempData["MostrarBotonImportar"] = true;
-                }
-                else
-                {
-                    resultadoValidaciondeDatos();
-                }
-            }
-            catch (Exception ex)
-            {
-                TempData["Mensaje"] = $"Error al procesar el archivo: {ex.Message}";
-                TempData["MensajeTipo"] = "error";
-            }
-
-            return RedirectToAction("CargueExcel", "Datos", new { limpiar = false });
-        }
-
-        public ActionResult CargueExcel(bool limpiar = true)
-        {
-            if (limpiar)
-            {
-                Session.Remove("TablasExcel");
-                Session.Remove("idEmpresaSeleccionada");
-                TempData.Remove("Mensaje");
-                TempData.Remove("MensajeTipo");
-                TempData.Remove("MostrarBotonImportar");
-            }
-
-            var modelo = Session["TablasExcel"] as List<(string nombre, DataTable tabla)>
-                         ?? new List<(string nombre, DataTable tabla)>();
-
-            // 🔹 Obtener usuario actual
             var usuario = UsuarioSesionHelper.UsuarioActual;
             int idEmpresa = usuario?.IdEmpresa ?? 0;
 
-            // 🔹 Cargar empresas según rol del usuario
             List<Empresas> empresasDisponibles;
             if (UsuarioSesionHelper.EsSuperAdmin())
             {
-                // Super Admin: mostrar todas las empresas
                 empresasDisponibles = _empresaService.ObtenerEmpresas();
             }
             else
             {
-                // Admin de empresa y usuario normal: mostrar solo su empresa
                 var empresaUsuario = _empresaService.ObtenerEmpresas()
                     .FirstOrDefault(e => e.Id == idEmpresa);
                 empresasDisponibles = empresaUsuario != null
@@ -396,15 +218,292 @@ namespace bufinscustomers.Controllers
                     : new List<Empresas>();
             }
             ViewBag.Empresas = empresasDisponibles;
-
-            // 🔹 Traer último usuario que cargó SOLO para esa empresa
             ViewBag.UltimoUsuarioCargue = ObtenerUltimoUsuarioCargue(idEmpresa);
 
-            Session.Remove("TablasExcel");
-
-            return View(modelo);
+            return View("~/Views/Datos/CargueExcel.cshtml");
         }
 
+        [HttpPost]
+        public ActionResult CargarExcel(HttpPostedFileBase archivoExcel, int idEmpresaSeleccionada)
+        {
+            var resultado = new ResultadoCargaExcel();
+            string nombreArchivoOriginal = "";
+
+            // Validar empresa seleccionada
+            if (idEmpresaSeleccionada == 0)
+            {
+                SetErrorMessage("Debe seleccionar una empresa antes de cargar el archivo.");
+                return RedirectToAction("CargueExcel");
+            }
+
+            // Validar configuración de empresa
+            if (!_configuracionService.ExisteConfiguracion(idEmpresaSeleccionada))
+            {
+                SetErrorMessage("La empresa seleccionada no tiene configuración creada.");
+                return RedirectToAction("CargueExcel");
+            }
+
+            // Validar archivo
+            if (archivoExcel == null || archivoExcel.ContentLength == 0)
+            {
+                SetErrorMessage("No se seleccionó ningún archivo.");
+                return RedirectToAction("CargueExcel");
+            }
+
+            string extension = Path.GetExtension(archivoExcel.FileName)?.ToLower();
+            if (extension != ".xlsx" && extension != ".xlsm")
+            {
+                SetErrorMessage("Solo se permiten archivos Excel (.xlsx, .xlsm).");
+                return RedirectToAction("CargueExcel");
+            }
+
+            nombreArchivoOriginal = Path.GetFileName(archivoExcel.FileName);
+            var usuarioActual = UsuarioSesionHelper.UsuarioActual;
+            int idUsuario = usuarioActual?.Id ?? 0;
+
+            try
+            {
+                using (var memStream = new MemoryStream())
+                {
+                    archivoExcel.InputStream.CopyTo(memStream);
+                    memStream.Position = 0;
+
+                    using (var package = new ExcelPackage(memStream))
+                    {
+                        // Validar cantidad de hojas
+                        if (package.Workbook.Worksheets.Count != 10)
+                        {
+                            resultado.Exito = false;
+                            resultado.Mensaje = $"La plantilla debe contener exactamente 10 hojas. El archivo tiene {package.Workbook.Worksheets.Count} hojas.";
+                            TempData["ResultadoCarga"] = resultado;
+                            TempData["NombreArchivo"] = nombreArchivoOriginal;
+                            SetErrorMessage(resultado.Mensaje);
+                            return RedirectToAction("CargueExcel");
+                        }
+
+                        using (var conn = new SqlConnection(CadenaConexion))
+                        {
+                            conn.Open();
+
+                            foreach (var hoja in package.Workbook.Worksheets)
+                            {
+                                var detalle = new DetalleCargaHojaExcel
+                                {
+                                    NombreHoja = hoja.Name
+                                };
+
+                                int totalCols = hoja.Dimension?.End.Column ?? 0;
+                                int totalRows = hoja.Dimension?.End.Row ?? 0;
+
+                                if (totalCols == 0 || totalRows == 0)
+                                {
+                                    detalle.NombreTabla = "-";
+                                    detalle.Estado = "Ignorada";
+                                    detalle.MensajeError = "La hoja está vacía";
+                                    resultado.DetalleHojas.Add(detalle);
+                                    resultado.TotalHojasIgnoradas++;
+                                    continue;
+                                }
+
+                                // Validar cabecera
+                                bool filaCabeceraValida = false;
+                                for (int col = 1; col <= totalCols; col++)
+                                {
+                                    if (!string.IsNullOrWhiteSpace(hoja.Cells[1, col].Text))
+                                    {
+                                        filaCabeceraValida = true;
+                                        break;
+                                    }
+                                }
+                                if (!filaCabeceraValida)
+                                {
+                                    detalle.NombreTabla = "-";
+                                    detalle.Estado = "Ignorada";
+                                    detalle.MensajeError = "La hoja no tiene encabezados válidos";
+                                    resultado.DetalleHojas.Add(detalle);
+                                    resultado.TotalHojasIgnoradas++;
+                                    continue;
+                                }
+
+                                // Contar columnas válidas (hasta la primera vacía)
+                                int columnasValidas = 0;
+                                for (int col = 1; col <= totalCols; col++)
+                                {
+                                    if (!string.IsNullOrWhiteSpace(hoja.Cells[1, col].Text.Trim()))
+                                        columnasValidas++;
+                                    else
+                                        break;
+                                }
+                                if (columnasValidas == 0)
+                                {
+                                    detalle.NombreTabla = "-";
+                                    detalle.Estado = "Ignorada";
+                                    detalle.MensajeError = "No se encontraron columnas con encabezado";
+                                    resultado.DetalleHojas.Add(detalle);
+                                    resultado.TotalHojasIgnoradas++;
+                                    continue;
+                                }
+
+                                var nombreTabla = NormalizarNombre(hoja.Name);
+                                detalle.NombreTabla = nombreTabla;
+                                detalle.TotalColumnas = columnasValidas;
+
+                                var dt = new DataTable(nombreTabla);
+                                for (int col = 1; col <= columnasValidas; col++)
+                                    dt.Columns.Add(hoja.Cells[1, col].Text.Trim());
+
+                                // Leer filas con detección de fin real de datos
+                                // Si hay 5+ filas vacías consecutivas, se considera fin de datos
+                                int filasVaciasConsecutivas = 0;
+                                for (int row = 2; row <= totalRows; row++)
+                                {
+                                    bool filaVacia = true;
+                                    var dr = dt.NewRow();
+                                    for (int col = 1; col <= columnasValidas; col++)
+                                    {
+                                        var valor = hoja.Cells[row, col].Text?.Trim();
+                                        if (!string.IsNullOrWhiteSpace(valor)) filaVacia = false;
+                                        dr[col - 1] = valor;
+                                    }
+
+                                    if (filaVacia)
+                                    {
+                                        filasVaciasConsecutivas++;
+                                        if (filasVaciasConsecutivas >= 5) break;
+                                        continue;
+                                    }
+
+                                    filasVaciasConsecutivas = 0;
+                                    dt.Rows.Add(dr);
+                                }
+
+                                if (dt.Rows.Count == 0)
+                                {
+                                    detalle.Estado = "Ignorada";
+                                    detalle.MensajeError = "La hoja no contiene filas de datos";
+                                    resultado.DetalleHojas.Add(detalle);
+                                    resultado.TotalHojasIgnoradas++;
+                                    continue;
+                                }
+
+                                // Guardar en SQL Server
+                                LogToFile($"========== INICIO GUARDADO TABLA: {nombreTabla} ==========");
+                                LogToFile($"Filas en DataTable: {dt.Rows.Count} (Dimension.End.Row era: {totalRows})");
+
+                                if (!GuardarEnSQLServer(dt.Copy(), idEmpresaSeleccionada, idUsuario))
+                                {
+                                    // Error al guardar - detener todo y limpiar
+                                    detalle.Estado = "Error";
+                                    detalle.MensajeError = TempData["Mensaje"]?.ToString() ?? "Error al guardar";
+                                    resultado.DetalleHojas.Add(detalle);
+
+                                    // Marcar hojas ya exitosas como revertidas
+                                    foreach (var d in resultado.DetalleHojas.Where(x => x.Estado == "Exitoso"))
+                                    {
+                                        d.Estado = "Revertido";
+                                        d.MensajeError = "Revertido por error en otra tabla";
+                                    }
+
+                                    resultado.Exito = false;
+                                    resultado.Mensaje = $"Error al procesar '{hoja.Name}'. Se limpiaron todos los datos.";
+                                    resultado.MostrarDescargaLog = TempData["MostrarDescargaLog"] != null && (bool)TempData["MostrarDescargaLog"];
+
+                                    TempData["ResultadoCarga"] = resultado;
+                                    TempData["NombreArchivo"] = nombreArchivoOriginal;
+                                    SetErrorMessage(resultado.Mensaje);
+                                    return RedirectToAction("CargueExcel");
+                                }
+
+                                detalle.FilasInsertadas = dt.Rows.Count;
+                                detalle.Estado = "Exitoso";
+                                resultado.DetalleHojas.Add(detalle);
+                                resultado.TotalHojasProcesadas++;
+                                resultado.TotalFilasInsertadas += dt.Rows.Count;
+                            }
+
+                            // Registrar auditoría
+                            RegistrarAuditoria(conn, nombreArchivoOriginal, idEmpresaSeleccionada);
+                        }
+                    }
+                }
+
+                // Ejecutar validación SP
+                var resultadoValidacion = EjecutarValidacionDatos(idUsuario);
+
+                if (resultadoValidacion.esExitoso)
+                {
+                    resultado.Exito = true;
+                    resultado.Mensaje = $"Carga exitosa: {resultado.TotalHojasProcesadas} tabla(s) con {resultado.TotalFilasInsertadas:N0} registros. {resultadoValidacion.mensaje}";
+                }
+                else
+                {
+                    resultado.Exito = false;
+                    resultado.Mensaje = resultadoValidacion.mensaje;
+                    resultado.MostrarDescargaLog = true;
+                }
+
+                GuardarLogEnSession();
+                TempData["ResultadoCarga"] = resultado;
+                TempData["NombreArchivo"] = nombreArchivoOriginal;
+
+                if (resultado.Exito)
+                    SetSuccessMessage(resultado.Mensaje);
+                else
+                    SetErrorMessage(resultado.Mensaje);
+            }
+            catch (Exception ex)
+            {
+                resultado.Exito = false;
+                resultado.Mensaje = $"Error al procesar el archivo: {ex.Message}";
+                GuardarLogEnSession();
+                TempData["ResultadoCarga"] = resultado;
+                TempData["NombreArchivo"] = nombreArchivoOriginal;
+                SetErrorMessage(resultado.Mensaje);
+            }
+
+            return RedirectToAction("CargueExcel");
+        }
+
+        private (bool esExitoso, string mensaje) EjecutarValidacionDatos(int idUsuario)
+        {
+            try
+            {
+                using (var conn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand("dbo.SP_ValidarPlantillaInicial", conn))
+                using (var adapter = new SqlDataAdapter(cmd))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
+
+                    var dt = new DataTable();
+                    adapter.Fill(dt);
+
+                    if (dt.Rows.Count == 1 &&
+                        int.TryParse(dt.Rows[0]["CodMessage"]?.ToString(), out int codMessage) &&
+                        codMessage == 1)
+                    {
+                        return (true, dt.Rows[0]["ErrorMessage"]?.ToString() ?? "Validación exitosa.");
+                    }
+                    else
+                    {
+                        // Construir detalle de errores
+                        var errores = new StringBuilder();
+                        errores.AppendLine("Se detectaron errores en la validación:");
+                        foreach (DataRow row in dt.Rows)
+                        {
+                            var valores = row.ItemArray.Select(v => v?.ToString()).Where(v => !string.IsNullOrWhiteSpace(v));
+                            errores.AppendLine(string.Join(" | ", valores));
+                        }
+                        return (false, errores.ToString());
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogToFile($"Error en SP_ValidarPlantillaInicial: {ex.Message}");
+                return (true, "Datos cargados (no se pudo ejecutar validación adicional).");
+            }
+        }
 
         private bool GuardarEnSQLServer(DataTable tabla, int idEmpresa, int idUsuario)
         {
@@ -441,7 +540,7 @@ namespace bufinscustomers.Controllers
                     row["FechaCargue"] = fechaCargue;
                 }
 
-                // 🔹 Limpiar registros anteriores solo de esa empresa
+                // Limpiar registros anteriores solo de esa empresa
                 using (SqlCommand deleteCmd = new SqlCommand($@"
                     DELETE FROM [dbo].[{tabla.TableName}]
                     WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL", conn))
@@ -450,7 +549,7 @@ namespace bufinscustomers.Controllers
                     deleteCmd.ExecuteNonQuery();
                 }
 
-                // 🔹 LOGGING: Información de la tabla
+                // LOGGING: Información de la tabla
                 LogToFile($"Columnas del DataTable ({tabla.Columns.Count}): {string.Join(", ", tabla.Columns.Cast<DataColumn>().Select(c => c.ColumnName))}");
 
                 // Mostrar primeras 3 filas como muestra
@@ -460,18 +559,18 @@ namespace bufinscustomers.Controllers
                     LogToFile($"Fila {i + 1} (muestra): {string.Join(" | ", valores)}");
                 }
 
-                // 🔹 Convertir valores vacíos a 0 en columnas money/decimal
+                // Convertir valores vacíos a 0 en columnas money/decimal
                 LogToFile("Convirtiendo valores vacíos a 0 en columnas de dinero...");
                 ConvertirValoresVaciosAZero(conn, tabla);
 
-                // 🔹 Validar datos antes de insertar
+                // Validar datos antes de insertar
                 LogToFile("Iniciando validación de datos...");
                 string errorValidacion = ValidarDatosParaBulkCopy(conn, tabla);
                 if (!string.IsNullOrEmpty(errorValidacion))
                 {
-                    LogToFile($"❌ ERROR EN VALIDACIÓN: {errorValidacion}");
+                    LogToFile($"ERROR EN VALIDACIÓN: {errorValidacion}");
                     GuardarLogEnSession();
-                    TempData["Mensaje"] = $"❌ ERROR DE VALIDACIÓN en '{tabla.TableName}':\n\n{errorValidacion}";
+                    TempData["Mensaje"] = $"ERROR DE VALIDACIÓN en '{tabla.TableName}':\n\n{errorValidacion}";
                     TempData["MensajeTipo"] = "error";
                     TempData["MostrarDescargaLog"] = true;
 
@@ -480,30 +579,30 @@ namespace bufinscustomers.Controllers
                     return false;
                 }
 
-                LogToFile("✅ Validación previa completada sin errores");
+                LogToFile("Validación previa completada sin errores");
 
-                // 🔹 Insertar lo nuevo
+                // Insertar lo nuevo
                 try
                 {
                     LogToFile($"Iniciando SqlBulkCopy hacia tabla: {tabla.TableName}");
                     using (SqlBulkCopy bulk = new SqlBulkCopy(conn))
                     {
                         bulk.DestinationTableName = $"[dbo].[{tabla.TableName}]";
+                        bulk.BulkCopyTimeout = 120;
                         bulk.WriteToServer(tabla);
                     }
-                    LogToFile($"✅ SqlBulkCopy completado exitosamente para {tabla.TableName}");
+                    LogToFile($"SqlBulkCopy completado exitosamente para {tabla.TableName}");
                 }
                 catch (Exception bulkEx)
                 {
-                    // Error en BulkCopy - intentar dar más detalles
-                    LogToFile($"❌ ERROR en SqlBulkCopy: {bulkEx.Message}");
+                    LogToFile($"ERROR en SqlBulkCopy: {bulkEx.Message}");
                     LogToFile($"StackTrace: {bulkEx.StackTrace}");
 
                     string detalleError = AnalizarErrorBulkCopy(conn, tabla, bulkEx);
                     LogToFile($"Análisis de error: {detalleError}");
                     GuardarLogEnSession();
 
-                    TempData["Mensaje"] = $"❌ ERROR AL INSERTAR en '{tabla.TableName}':\n\n{detalleError}";
+                    TempData["Mensaje"] = $"ERROR AL INSERTAR en '{tabla.TableName}':\n\n{detalleError}";
                     TempData["MensajeTipo"] = "error";
                     TempData["MostrarDescargaLog"] = true;
 
@@ -516,11 +615,11 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                LogToFile($"❌ ERROR GENERAL: {ex.Message}");
+                LogToFile($"ERROR GENERAL: {ex.Message}");
                 LogToFile($"StackTrace: {ex.StackTrace}");
                 GuardarLogEnSession();
 
-                TempData["Mensaje"] = $"❌ ERROR GENERAL al guardar en '{tabla.TableName}':\n{ex.Message}";
+                TempData["Mensaje"] = $"ERROR GENERAL al guardar en '{tabla.TableName}':\n{ex.Message}";
                 TempData["MensajeTipo"] = "error";
                 TempData["MostrarDescargaLog"] = true;
 
@@ -538,52 +637,10 @@ namespace bufinscustomers.Controllers
             }
         }
 
-
-        public List<(string nombre, DataTable tabla)> resultadoValidaciondeDatos()
-        {
-            var tablasExcel = new List<(string nombre, DataTable tabla)>();
-            int idUsuario = UsuarioSesionHelper.UsuarioActual?.Id ?? 0;
-
-            using (var conn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand("dbo.SP_ValidarPlantillaInicial", conn))
-            using (var adapter = new SqlDataAdapter(cmd))
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
-
-                var dt = new DataTable();
-                adapter.Fill(dt);
-
-                // Validar si se retornó al menos una fila y CodMessage == 1
-                if (dt.Rows.Count == 1 &&
-                    int.TryParse(dt.Rows[0]["CodMessage"]?.ToString(), out int codMessage) &&
-                    codMessage == 1)
-                {
-                    // Éxito real
-                    TempData["Mensaje"] = dt.Rows[0]["ErrorMessage"]?.ToString() ?? "Proceso exitoso.";
-                    TempData["MensajeTipo"] = "success";
-                    Session.Remove("TablasExcel");
-                }
-                else
-                {
-                    // Errores u observaciones
-                    tablasExcel.Add(("Errores encontrados", dt));
-                    TempData["TablasExcel"] = tablasExcel;
-                    Session["TablasExcel"] = tablasExcel;
-
-                    TempData["Mensaje"] = "Se detectaron errores al importar la información por favor validar.";
-                    TempData["MensajeTipo"] = "error";
-                }
-            }
-
-            return tablasExcel;
-        }
-
         private void ConvertirValoresVaciosAZero(SqlConnection conn, DataTable tabla)
         {
             try
             {
-                // Obtener esquema de columnas de la tabla en SQL Server
                 string sql = $@"
                     SELECT COLUMN_NAME, DATA_TYPE
                     FROM INFORMATION_SCHEMA.COLUMNS
@@ -598,11 +655,9 @@ namespace bufinscustomers.Controllers
                         string columnName = reader["COLUMN_NAME"].ToString();
                         string dataType = reader["DATA_TYPE"].ToString().ToLower();
 
-                        // Solo columnas de tipo money/decimal
                         if (dataType == "money" || dataType == "smallmoney" ||
                             dataType == "decimal" || dataType == "numeric")
                         {
-                            // Excluir columnas de año y mes
                             string colLower = columnName.ToLower();
                             if (!colLower.Contains("año") && !colLower.Contains("anio") &&
                                 !colLower.Contains("year") && !colLower.Contains("mes") &&
@@ -625,20 +680,17 @@ namespace bufinscustomers.Controllers
 
                 int valoresConvertidos = 0;
 
-                // Recorrer todas las filas y convertir valores vacíos a 0
                 foreach (DataRow fila in tabla.Rows)
                 {
                     for (int colIndex = 0; colIndex < tabla.Columns.Count; colIndex++)
                     {
                         string nombreColumna = tabla.Columns[colIndex].ColumnName;
 
-                        // Si es una columna de dinero
                         if (columnasMoneyDecimal.Contains(nombreColumna))
                         {
                             object valor = fila[colIndex];
                             string valorStr = valor?.ToString()?.Trim() ?? "";
 
-                            // Si está vacío o es nulo, convertir a "0"
                             if (string.IsNullOrWhiteSpace(valorStr))
                             {
                                 fila[colIndex] = "0";
@@ -648,11 +700,11 @@ namespace bufinscustomers.Controllers
                     }
                 }
 
-                LogToFile($"✅ Se convirtieron {valoresConvertidos} valores vacíos a 0");
+                LogToFile($"Se convirtieron {valoresConvertidos} valores vacíos a 0");
             }
             catch (Exception ex)
             {
-                LogToFile($"⚠️ Error al convertir valores vacíos: {ex.Message}");
+                LogToFile($"Error al convertir valores vacíos: {ex.Message}");
             }
         }
 
@@ -690,7 +742,6 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                // Obtener información del esquema
                 string sql = $@"
                     SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH
                     FROM INFORMATION_SCHEMA.COLUMNS
@@ -710,8 +761,7 @@ namespace bufinscustomers.Controllers
                     }
                 }
 
-                // Buscar problemas específicos con columnas money
-                sb.AppendLine("🔍 ANÁLISIS DETALLADO:");
+                sb.AppendLine("ANÁLISIS DETALLADO:");
                 sb.AppendLine();
 
                 for (int colIndex = 0; colIndex < tabla.Columns.Count; colIndex++)
@@ -722,17 +772,15 @@ namespace bufinscustomers.Controllers
 
                     string tipoSQL = columnasSQL[nombreColumna];
 
-                    // Si es una columna money, buscar el primer valor problemático
                     if (tipoSQL.ToLower().Contains("money") || tipoSQL.ToLower().Contains("decimal"))
                     {
-                        sb.AppendLine($"📊 Columna '{nombreColumna}': Tipo SQL = {tipoSQL}");
+                        sb.AppendLine($"Columna '{nombreColumna}': Tipo SQL = {tipoSQL}");
 
                         for (int rowIndex = 0; rowIndex < Math.Min(tabla.Rows.Count, 100); rowIndex++)
                         {
                             object valor = tabla.Rows[rowIndex][colIndex];
                             string valorStr = valor?.ToString()?.Trim() ?? "";
 
-                            // Verificar si el valor es problemático
                             if (!string.IsNullOrWhiteSpace(valorStr))
                             {
                                 decimal test;
@@ -741,16 +789,14 @@ namespace bufinscustomers.Controllers
                                 if (!decimal.TryParse(valorLimpio, System.Globalization.NumberStyles.Any,
                                     System.Globalization.CultureInfo.InvariantCulture, out test))
                                 {
-                                    sb.AppendLine($"   ❌ FILA {rowIndex + 2} (Excel): Valor = '{valorStr}' | Tipo = {valor?.GetType().Name ?? "null"}");
+                                    sb.AppendLine($"   FILA {rowIndex + 2} (Excel): Valor = '{valorStr}' | Tipo = {valor?.GetType().Name ?? "null"}");
                                     sb.AppendLine($"      Este valor NO se puede convertir a decimal/money");
-
-                                    // Solo mostrar el primer error
                                     return sb.ToString();
                                 }
                             }
                         }
 
-                        sb.AppendLine($"   ✅ Primeras 100 filas validadas OK");
+                        sb.AppendLine($"   Primeras 100 filas validadas OK");
                         sb.AppendLine();
                     }
                 }
@@ -767,7 +813,6 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                // Obtener esquema de columnas de la tabla en SQL Server
                 string sql = $@"
                     SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE
                     FROM INFORMATION_SCHEMA.COLUMNS
@@ -787,7 +832,7 @@ namespace bufinscustomers.Controllers
                     }
                 }
 
-                LogToFile($"📋 Esquema SQL encontrado para {tabla.TableName}: {columnasSQL.Count} columnas");
+                LogToFile($"Esquema SQL encontrado para {tabla.TableName}: {columnasSQL.Count} columnas");
                 foreach (var col in columnasSQL)
                 {
                     LogToFile($"   - {col.Key}: {col.Value.tipo} (Nullable: {col.Value.nullable})");
@@ -795,11 +840,10 @@ namespace bufinscustomers.Controllers
 
                 if (columnasSQL.Count == 0)
                 {
-                    LogToFile($"⚠️ Tabla {tabla.TableName} no existe en SQL Server, se creará dinámicamente");
-                    return null; // Tabla no existe aún
+                    LogToFile($"Tabla {tabla.TableName} no existe en SQL Server, se creará dinámicamente");
+                    return null;
                 }
 
-                // Validar cada fila del DataTable
                 for (int rowIndex = 0; rowIndex < tabla.Rows.Count; rowIndex++)
                 {
                     DataRow fila = tabla.Rows[rowIndex];
@@ -808,30 +852,25 @@ namespace bufinscustomers.Controllers
                     {
                         string nombreColumna = tabla.Columns[colIndex].ColumnName;
 
-                        // Si la columna no existe en SQL, skip
                         if (!columnasSQL.ContainsKey(nombreColumna)) continue;
 
                         var (tipoSQL, nullable) = columnasSQL[nombreColumna];
                         object valor = fila[colIndex];
                         string valorStr = valor?.ToString()?.Trim() ?? "";
 
-                        // Validar columnas de tipo money/decimal
                         if (tipoSQL.ToLower() == "money" || tipoSQL.ToLower() == "decimal" ||
                             tipoSQL.ToLower() == "numeric" || tipoSQL.ToLower() == "smallmoney")
                         {
-                            // Si está vacío y la columna no acepta NULL
                             if (string.IsNullOrWhiteSpace(valorStr))
                             {
                                 if (!nullable)
                                 {
                                     return $"Fila {rowIndex + 2} (Excel), Columna '{nombreColumna}': Valor vacío pero la columna no acepta NULL. Tipo SQL: {tipoSQL}";
                                 }
-                                continue; // Si acepta NULL, está OK
+                                continue;
                             }
 
-                            // Intentar parsear como decimal
                             decimal valorDecimal;
-                            // Limpiar caracteres comunes
                             string valorLimpio = valorStr.Replace("$", "").Replace(",", "").Replace(" ", "").Trim();
 
                             if (!decimal.TryParse(valorLimpio, System.Globalization.NumberStyles.Any,
@@ -839,11 +878,10 @@ namespace bufinscustomers.Controllers
                             {
                                 string mensajeError = $"Fila {rowIndex + 2} (Excel), Columna '{nombreColumna}': El valor '{valorStr}' no se puede convertir a {tipoSQL}. " +
                                        $"Valor en DataTable: '{valor}' (Tipo: {valor?.GetType().Name ?? "null"})";
-                                LogToFile($"❌ ERROR DETECTADO EN VALIDACIÓN: {mensajeError}");
+                                LogToFile($"ERROR DETECTADO EN VALIDACIÓN: {mensajeError}");
                                 return mensajeError;
                             }
                         }
-                        // Validar columnas de tipo int
                         else if (tipoSQL.ToLower() == "int" || tipoSQL.ToLower() == "bigint" ||
                                  tipoSQL.ToLower() == "smallint" || tipoSQL.ToLower() == "tinyint")
                         {
@@ -867,7 +905,7 @@ namespace bufinscustomers.Controllers
                     }
                 }
 
-                return null; // Todo OK
+                return null;
             }
             catch (Exception ex)
             {
@@ -880,11 +918,9 @@ namespace bufinscustomers.Controllers
             int idEmpresa = UsuarioSesionHelper.UsuarioActual?.IdEmpresa ?? 0;
             int idUsuario = UsuarioSesionHelper.UsuarioActual?.Id ?? 0;
 
-            // Construir columnas dinámicas del Excel
             var columnasExcel = tabla.Columns.Cast<DataColumn>()
                                   .Select(c => $"[{c.ColumnName}] VARCHAR(MAX)");
 
-            // Agregar columnas fijas de auditoría
             var columnasExtras = new List<string>
             {
                 "[IdEmpresa] INT",
@@ -907,6 +943,7 @@ namespace bufinscustomers.Controllers
                 cmd.ExecuteNonQuery();
             }
         }
+
         private void RegistrarAuditoria(SqlConnection conn, string nombreArchivo, int idEmpresaArchivo)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
@@ -971,10 +1008,8 @@ namespace bufinscustomers.Controllers
         {
             if (string.IsNullOrWhiteSpace(texto)) return texto;
 
-            // Pasar a FormD para separar letras y diacríticos (tildes)
             var normalized = texto.Normalize(System.Text.NormalizationForm.FormD);
 
-            // Quitar diacríticos (acentos, tildes, etc.)
             var chars = normalized
                 .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) !=
                             System.Globalization.UnicodeCategory.NonSpacingMark)
@@ -982,10 +1017,8 @@ namespace bufinscustomers.Controllers
 
             var sinTildes = new string(chars);
 
-            // Reemplazar ñ/Ñ por n/N
             sinTildes = sinTildes.Replace("ñ", "n").Replace("Ñ", "N");
 
-            // Quitar espacios y caracteres raros
             return sinTildes
                 .Replace(" ", "")
                 .Replace("-", "")
