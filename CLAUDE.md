@@ -54,6 +54,8 @@ using (SqlConnection cn = new SqlConnection(CadenaConexion))
 }
 ```
 
+**Stored Procedure Naming:** `sp_` prefix + PascalCase verb + entity name. Verbs used: `Obtener` (read), `Registrar` (create), `Editar` (update), `Eliminar` (delete), `Guardar` (save/upsert), `Agregar` (add item), `Actualizar` (update/reorder), `Validar` (validate). Examples: `sp_ObtenerUsuarios`, `sp_RegistrarEmpresa`, `sp_GuardarConfiguracionBasica`. Many procedures use `OUTPUT` parameters for success/error messages.
+
 ### Authentication & Session Management
 
 Custom session-based auth via `UsuarioSesionHelper` (`Helpers/UsuarioSesionHelper.cs`):
@@ -96,6 +98,11 @@ Known permission codes (BD codes, used in sidebar and controllers):
 
 **Dynamic Sidebar**: The sidebar in `_Layout.cshtml` uses `Html.RenderPartial("_SidebarMenu", UsuarioSesionHelper.ObtenerMenuSidebar())`. Menu options are read from `MenuOpciones` table with columns `NombreGrupo`, `IconoGrupo`, `IconoCategoria`, `OrdenCategoria` for hierarchical rendering. New menu items added to the table auto-appear in the sidebar and permission manager.
 
+**Sidebar view model hierarchy** (built by `MenuOpcionesService.ConstruirMenuJerarquico()`):
+- `SidebarCategoriaViewModel` → has `List<SidebarGrupoViewModel>` (grouped by `NombreGrupo`)
+- `SidebarGrupoViewModel` → has `List<SidebarItemViewModel>` (individual menu items)
+- `SidebarItemViewModel` → `Id`, `Codigo`, `Nombre`, `Controller`, `Action`, `Icono`
+
 **Note:** `PermisosService`, `PermisosModulos`, `UsuarioPermisos`, `PermisoUsuarioViewModel` are deprecated aliases kept for backward compatibility. Use `MenuOpcionesService`, `MenuOpciones`, `UsuarioMenuPermisos`, `OpcionMenuUsuarioViewModel` instead.
 
 ### View Routing Convention
@@ -133,6 +140,7 @@ When creating new controllers, use explicit view paths with `~/Views/{area}/{vie
 - **DatosController** - Excel data import/export (`[ValidarSesion]`)
 - **InformeTablasDatosController** - Data tables report (`[ValidarSesion]`)
 - **InformeRelacionamientosController** - Relationships report (`[ValidarSesion]`)
+- **ModeloController** - Financial model execution (Datos area, `[ValidarSesion]`)
 - **AuditoriaCarguesController** - Upload audit trail (no `[ValidarSesion]`, manual checks)
 
 ### Configuration System
@@ -164,3 +172,5 @@ When creating new controllers, use explicit view paths with `~/Views/{area}/{vie
 - For permission checks, use `UsuarioSesionHelper.TienePermiso("CODE")` inline (the `[RequierePermiso]` attribute exists but is not currently used by any controller)
 - Excel templates stored in `Assets/Plantillas/`
 - Connection string key is `"DefaultConnection"` in Web.config
+- File upload limit: `maxRequestLength="1048576"` (1 GB) and `executionTimeout="3600"` (1 hour) — configured for large Excel imports
+- EPPlus 8 requires license call at startup: `ExcelPackage.License.SetNonCommercialOrganization("bufinscustomers")` in `Global.asax.cs`

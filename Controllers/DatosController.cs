@@ -22,6 +22,7 @@ namespace bufinscustomers.Controllers
     {
         private readonly EmpresaService _empresaService = new EmpresaService();
         private readonly ConfiguracionEmpresaService _configuracionService = new ConfiguracionEmpresaService();
+        private readonly ModeloService _modeloService = new ModeloService();
         private StringBuilder _logBuilder = new StringBuilder();
 
         private void LogToFile(string mensaje)
@@ -62,10 +63,14 @@ namespace bufinscustomers.Controllers
             var usuario = UsuarioSesionHelper.UsuarioActual;
             var empresas = _empresaService.ObtenerEmpresas();
             if (!UsuarioSesionHelper.EsSuperAdmin())
-            {
                 empresas = empresas.Where(e => e.Id == usuario.IdEmpresa).ToList();
-            }
-            return View("~/Views/Datos/Modelo.cshtml", empresas);
+
+            var vm = new Models.ModeloPageViewModel
+            {
+                Empresas = empresas,
+                Modelos = _modeloService.ObtenerModelosActivos()
+            };
+            return View("~/Views/Datos/Modelo.cshtml", vm);
         }
 
         [HttpGet]
@@ -92,93 +97,65 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
-        public ActionResult EjecutarModeloPYG(int idEmpresa, string anio)
+        public ActionResult EjecutarModelo(int idEmpresa, string anio, int idModelo)
         {
             try
             {
-                var usuarioSession = (Usuarios)Session["usuario"];
-                if (usuarioSession == null)
+                var usuario = UsuarioSesionHelper.UsuarioActual;
+                if (usuario == null)
                 {
                     SetErrorMessage("Sesión no válida. Por favor, inicie sesión nuevamente.");
                     return RedirectToAction("Login", "Acceso");
                 }
 
-                if (!UsuarioSesionHelper.EsSuperAdmin() && usuarioSession.IdEmpresa != idEmpresa)
+                if (!UsuarioSesionHelper.EsSuperAdmin() && usuario.IdEmpresa != idEmpresa)
                 {
                     SetErrorMessage("No tiene permisos para ejecutar el modelo en esta empresa.");
                     return RedirectToAction("Modelo");
                 }
 
-                using (SqlConnection connection = new SqlConnection(CadenaConexion))
-                using (SqlCommand command = new SqlCommand("sp_ModeloPYG", connection))
+                // El nombre del SP viene SIEMPRE de la BD, nunca del form input
+                var modelo = _modeloService.ObtenerModeloPorId(idModelo);
+                if (modelo == null)
                 {
-                    command.CommandType = CommandType.StoredProcedure;
-                    command.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                    command.Parameters.AddWithValue("@IdUsuario", usuarioSession.Id);
-                    command.Parameters.AddWithValue("@Año", anio);
-
-                    connection.Open();
-                    using (var reader = command.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            int codMessage = Convert.ToInt32(reader["CodMessage"]);
-                            string mensaje = reader["ErrorMessage"].ToString();
-
-                            if (codMessage == 1)
-                                SetSuccessMessage(mensaje);
-                            else
-                                SetErrorMessage(mensaje);
-                        }
-                        else
-                        {
-                            SetErrorMessage("No se recibió respuesta del procedimiento.");
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                SetErrorMessage("Error al ejecutar el modelo: " + ex.Message);
-            }
-
-            return RedirectToAction("Modelo");
-        }
-
-        [HttpPost]
-        public ActionResult EjecutarModeloBalance(int idEmpresa, string anio)
-        {
-            try
-            {
-                var usuarioSession = (Usuarios)Session["usuario"];
-                if (usuarioSession == null)
-                {
-                    SetErrorMessage("Sesión no válida. Por favor, inicie sesión nuevamente.");
-                    return RedirectToAction("Login", "Acceso");
-                }
-
-                if (!UsuarioSesionHelper.EsSuperAdmin() && usuarioSession.IdEmpresa != idEmpresa)
-                {
-                    SetErrorMessage("No tiene permisos para ejecutar el modelo en esta empresa.");
+                    SetErrorMessage("El modelo seleccionado no existe o no está activo.");
                     return RedirectToAction("Modelo");
                 }
 
                 using (SqlConnection connection = new SqlConnection(CadenaConexion))
-                using (SqlCommand command = new SqlCommand("sp_ModeloBalance", connection))
+                using (SqlCommand command = new SqlCommand(modelo.NombreSP, connection))
                 {
                     command.CommandType = CommandType.StoredProcedure;
                     command.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                    command.Parameters.AddWithValue("@IdUsuario", usuarioSession.Id);
+                    command.Parameters.AddWithValue("@IdUsuario", usuario.Id);
                     command.Parameters.AddWithValue("@Año", anio);
+                    command.CommandTimeout = 300;
 
                     connection.Open();
                     using (var reader = command.ExecuteReader())
                     {
-                        if (reader.Read())
-                        {
-                            int codMessage = Convert.ToInt32(reader["CodMessage"]);
-                            string mensaje = reader["ErrorMessage"].ToString();
+                        // El SP puede retornar múltiples result sets intermedios.
+                        // Iteramos todos y nos quedamos con los valores del último.
+                        int codMessage = 0;
+                        string mensaje = "No se recibió respuesta del procedimiento.";
+                        bool leido = false;
 
+                        do
+                        {
+                            while (reader.Read())
+                            {
+                                try
+                                {
+                                    codMessage = Convert.ToInt32(reader["CodMessage"]);
+                                    mensaje = reader["ErrorMessage"].ToString();
+                                    leido = true;
+                                }
+                                catch { /* result set intermedio sin columnas de estado */ }
+                            }
+                        } while (reader.NextResult());
+
+                        if (leido)
+                        {
                             if (codMessage == 1)
                                 SetSuccessMessage(mensaje);
                             else

@@ -12,25 +12,100 @@
 </head>
 <body>
     <style>
-        .table-wrapper {
-            max-height: 280px;
-            overflow-y: auto;
+        :root {
+            --color-primario: #583AFF;
+            --color-secundario: #01E1D7;
         }
 
         .bg-primary {
             background-color: #583AFF !important;
         }
 
+        .card-header {
+            background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
+            color: white;
+            padding: 1rem 1.2rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .card-header i {
+            margin-right: 8px;
+        }
+
+        /* === TABLA COMPACTA === */
+        .table-wrapper {
+            max-height: 450px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .table-compact {
+            table-layout: fixed;
+            width: 100%;
+            margin-bottom: 0;
+        }
+
+        .table-compact thead th {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: #555;
+            padding: 0.5rem 0.4rem;
+            white-space: nowrap;
+            border-bottom: 2px solid #dee2e6;
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .table-compact tbody td {
+            font-size: 0.8rem;
+            padding: 0.35rem 0.4rem;
+            vertical-align: middle;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .table-compact tbody tr:hover {
+            background-color: #f0edff;
+        }
+
+        /* Anchos de columna */
+        .col-id          { width: 4%;  text-align: center; }
+        .col-empresa     { width: 14%; }
+        .col-nombre      { width: 16%; }
+        .col-anio-ini    { width: 8%;  text-align: center; }
+        .col-anio-fin    { width: 8%;  text-align: center; }
+        .col-desc        { width: 22%; }
+        .col-ver         { width: 7%;  text-align: center; }
+        .col-acciones    { width: 21%; text-align: center; white-space: nowrap; }
+
+        /* === BOTONES DE ACCIONES === */
+        .btn-group { gap: 0.25rem; }
+
+        .btn-group .btn {
+            padding: 0.2rem 0.45rem;
+            font-size: 0.75rem;
+            border-radius: 0.25rem;
+        }
+
+        .btn-group .btn i { margin-right: 0; }
+
+        /* Enlace de reporte */
         .enlace-reporte {
-            color: #007bff;
+            color: var(--color-primario);
             text-decoration: none;
             cursor: pointer;
-            font-size: 1.2em;
+            font-size: 1.1em;
             transition: color 0.3s ease;
         }
 
         .enlace-reporte:hover {
-            color: #0056b3;
+            color: #3a22d4;
             text-decoration: none;
         }
 
@@ -44,74 +119,60 @@
             cursor: not-allowed;
         }
 
-        .url-input {
-            position: relative;
-        }
+        /* Feedback URL */
+        .url-input { position: relative; }
 
         .url-feedback {
             font-size: 0.875em;
             margin-top: 0.25rem;
         }
 
-        .url-feedback.valid {
-            color: #28a745;
-        }
-
-        .url-feedback.invalid {
-            color: #dc3545;
-        }
-
-        :root {
-            --color-primario: #583AFF;
-            --color-secundario: #01E1D7;
-        }
-
-        .card-header {
-            background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
-            color: white;
-            padding: 1.2rem 1.5rem;
-            font-weight: 600;
-            font-size: 1.2rem;
-        }
-
-        .card-header i {
-            margin-right: 8px;
-        }
+        .url-feedback.valid  { color: #28a745; }
+        .url-feedback.invalid { color: #dc3545; }
     </style>
 
     <div class="card shadow mb-4 mt-4">
         <div class="card-header">
-            <i class="bi bi-file-earmark-bar-graph-fill"></i> Gestor de reportes
+            <i class="fas fa-file-powerpoint"></i> Gestor de reportes
         </div>
-        <div class="card-body">
+        <div class="card-body p-0">
             <div class="table-responsive table-wrapper">
-                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <table class="table table-bordered table-hover table-compact" id="dataTable">
                     <thead>
                         <tr>
-                            <th>Id</th>
-                            <th>Empresa</th>
-                            <th>Nombre</th>
-                            <th>A&ntilde;o Inicial</th>
-                            <th>A&ntilde;o Final</th>
-                            <th>Descripci&oacute;n</th>
-                            <th style="text-align: center;">Ver Reporte</th>
-                            <th>Acciones</th>
+                            <th class="col-id">Id</th>
+                            <th class="col-empresa">Empresa</th>
+                            <th class="col-nombre">Nombre</th>
+                            <th class="col-anio-ini">A&ntilde;o Ini.</th>
+                            <th class="col-anio-fin">A&ntilde;o Fin.</th>
+                            <th class="col-desc">Descripci&oacute;n</th>
+                            <th class="col-ver">Ver</th>
+                            <th class="col-acciones">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-3">
+                                    No hay reportes registrados.
+                                </td>
+                            </tr>
+                        }
                         @foreach (var reporte in Model)
                         {
                             <tr>
-                                <td>@reporte.Id</td>
-                                <td>@reporte.NombreEmpresa</td>
-                                <td>@reporte.Nombre</td>
-                                <td>@(reporte.AnioInicial ?? "")</td>
-                                <td>@(reporte.AnioFinal ?? "")</td>
-                                <td>@(reporte.Descripcion ?? "")</td>
-                                <td style="text-align: center;">
+                                <td class="col-id">@reporte.Id</td>
+                                <td class="col-empresa" title="@reporte.NombreEmpresa"><strong>@reporte.NombreEmpresa</strong></td>
+                                <td class="col-nombre" title="@reporte.Nombre">@reporte.Nombre</td>
+                                <td class="col-anio-ini">@(reporte.AnioInicial ?? "")</td>
+                                <td class="col-anio-fin">@(reporte.AnioFinal ?? "")</td>
+                                <td class="col-desc" title="@(reporte.Descripcion ?? "")">@(reporte.Descripcion ?? "")</td>
+                                <td class="col-ver">
                                     @if (!string.IsNullOrEmpty(reporte.EnlaceHTML))
                                     {
-                                        <a href="#" onclick="abrirEnlaceValidado('@(Html.Raw(reporte.EnlaceHTML))', this)" class="enlace-reporte" title="Verificar y abrir reporte">
+                                        <a href="#" onclick="abrirEnlaceValidado('@(Html.Raw(reporte.EnlaceHTML))', this); return false;"
+                                           class="enlace-reporte" title="Abrir reporte">
                                             <i class="fas fa-external-link-alt"></i>
                                         </a>
                                     }
@@ -120,9 +181,10 @@
                                         <i class="fas fa-ban enlace-reporte disabled" title="Sin enlace disponible"></i>
                                     }
                                 </td>
-                                <td>
-                                    <div class="btn-group" role="group" aria-label="Reporte Actions">
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editReporteModal"
+                                <td class="col-acciones">
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-primary btn-sm"
+                                                data-bs-toggle="modal" data-bs-target="#editReporteModal"
                                                 data-id="@reporte.Id"
                                                 data-idempresa="@reporte.IdEmpresa"
                                                 data-nombre="@Html.Raw(reporte.Nombre ?? "")"
@@ -131,10 +193,12 @@
                                                 data-descripcion="@Html.Raw(reporte.Descripcion ?? "")"
                                                 data-enlacehtml="@Html.Raw(reporte.EnlaceHTML ?? "")"
                                                 onclick="setEditReporteFromData(this)">
-                                            Editar
+                                            <i class="fas fa-edit mr-1"></i>Editar
                                         </button>
-                                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" onclick="setIdReporte(@reporte.Id)">
-                                            Eliminar
+                                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                                data-bs-toggle="modal" data-bs-target="#confirmDeleteModal"
+                                                onclick="setIdReporte(@reporte.Id)">
+                                            <i class="fas fa-trash-alt mr-1"></i>Eliminar
                                         </button>
                                     </div>
                                 </td>
@@ -145,33 +209,38 @@
             </div>
         </div>
         <div class="card-footer">
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearReporteModal">
-                Crear
+            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#crearReporteModal">
+                <i class="fas fa-plus-circle mr-1"></i> Crear reporte
             </button>
         </div>
     </div>
 
-    <!-- Modal de confirmacion para eliminar -->
+    <!-- ═══════════════════ MODAL ELIMINAR ═══════════════════ -->
     <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title" id="confirmDeleteModalLabel">
-                        <i class="fas fa-exclamation-triangle"></i>Confirmar eliminaci&oacute;n
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Confirmar eliminaci&oacute;n
                     </h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-0"><i class="fas fa-question-circle text-warning mr-2"></i>&iquest;Est&aacute;s seguro de que deseas eliminar este reporte?</p>
+                    <p class="mb-0">
+                        <i class="fas fa-question-circle text-warning mr-2"></i>
+                        &iquest;Est&aacute;s seguro de que deseas eliminar este reporte?
+                    </p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times mr-2"></i>Cancelar
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>Cancelar
                     </button>
                     <form id="deleteForm" method="post" action="/Reportes/EliminarReporte" style="display: inline;">
                         <input type="hidden" id="idReporte" name="idReporte" />
-                        <button type="submit" class="btn btn-danger">
-                            <i class="fas fa-trash-alt mr-2"></i>Eliminar
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash-alt mr-1"></i>Eliminar
                         </button>
                     </form>
                 </div>
@@ -179,80 +248,80 @@
         </div>
     </div>
 
-    <!-- Modal de edici&oacute;n -->
+    <!-- ═══════════════════ MODAL EDITAR ═══════════════════ -->
     <div class="modal fade" id="editReporteModal" tabindex="-1" aria-labelledby="editReporteModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editReporteModalLabel">
-                        <i class="fas fa-edit"></i>Editar Reporte
+                        <i class="fas fa-edit mr-2" style="color: #583AFF;"></i>Editar reporte
                     </h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <form method="post" action="/Reportes/EditarReporte" onsubmit="return validarFormularioEditar()">
                     <div class="modal-body">
                         <input type="hidden" id="editIdReporte" name="Id" />
 
-                        <div class="form-group">
-                            <label for="editIdEmpresa">
-                                <i class="fas fa-building mr-2" style="color: #583AFF;"></i>Empresa:
-                            </label>
-                            <select class="form-control" id="editIdEmpresa" name="IdEmpresa" required>
-                                <option value="">Seleccione una empresa</option>
-                                @foreach (var empresa in ViewBag.Empresas as List<bufinscustomers.Models.Empresas>)
-                                {
-                                    <option value="@empresa.Id">@empresa.Nombre</option>
-                                }
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="editNombre">
-                                <i class="fas fa-file-alt mr-2" style="color: #583AFF;"></i>Nombre:
-                            </label>
-                            <input type="text" class="form-control" id="editNombre" name="Nombre" required />
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editIdEmpresa" class="form-label">
+                                    <i class="fas fa-building mr-2" style="color: #583AFF;"></i>Empresa <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-control form-control-sm" id="editIdEmpresa" name="IdEmpresa" required>
+                                    <option value="">Seleccione una empresa</option>
+                                    @foreach (var empresa in ViewBag.Empresas as List<bufinscustomers.Models.Empresas>)
+                                    {
+                                        <option value="@empresa.Id">@empresa.Nombre</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editNombre" class="form-label">
+                                    <i class="fas fa-file-alt mr-2" style="color: #583AFF;"></i>Nombre <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="editNombre" name="Nombre" required />
+                            </div>
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="editAnioInicial">
-                                        <i class="fas fa-calendar-alt mr-2" style="color: #583AFF;"></i>A&ntilde;o Inicial:
-                                    </label>
-                                    <input type="text" class="form-control" id="editAnioInicial" name="AnioInicial" />
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editAnioInicial" class="form-label">
+                                    <i class="fas fa-calendar-alt mr-2" style="color: #583AFF;"></i>A&ntilde;o Inicial
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="editAnioInicial" name="AnioInicial" placeholder="Ej: 2023" />
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="editAnioFinal">
-                                        <i class="fas fa-calendar-check mr-2" style="color: #583AFF;"></i>A&ntilde;o Final:
-                                    </label>
-                                    <input type="text" class="form-control" id="editAnioFinal" name="AnioFinal" />
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editAnioFinal" class="form-label">
+                                    <i class="fas fa-calendar-check mr-2" style="color: #583AFF;"></i>A&ntilde;o Final
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="editAnioFinal" name="AnioFinal" placeholder="Ej: 2025" />
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="editDescripcion">
-                                <i class="fas fa-align-left mr-2" style="color: #583AFF;"></i>Descripci&oacute;n:
+                        <div class="mb-3">
+                            <label for="editDescripcion" class="form-label">
+                                <i class="fas fa-align-left mr-2" style="color: #583AFF;"></i>Descripci&oacute;n
                             </label>
-                            <textarea class="form-control" id="editDescripcion" name="Descripcion" rows="3"></textarea>
+                            <textarea class="form-control form-control-sm" id="editDescripcion" name="Descripcion" rows="2"></textarea>
                         </div>
 
-                        <div class="form-group url-input">
-                            <label for="editEnlaceHTML">
-                                <i class="fas fa-link mr-2" style="color: #583AFF;"></i>Enlace HTML:
+                        <div class="mb-3 url-input">
+                            <label for="editEnlaceHTML" class="form-label">
+                                <i class="fas fa-link mr-2" style="color: #583AFF;"></i>Enlace HTML <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control" id="editEnlaceHTML" name="EnlaceHTML" required oninput="validarURL('editEnlaceHTML', 'editUrlFeedback')" />
+                            <input type="text" class="form-control form-control-sm" id="editEnlaceHTML" name="EnlaceHTML" required
+                                   oninput="validarURL('editEnlaceHTML', 'editUrlFeedback')" />
                             <div id="editUrlFeedback" class="url-feedback"></div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times mr-2"></i>Cancelar
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                            <i class="fas fa-times mr-1"></i>Cancelar
                         </button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save mr-2"></i>Actualizar
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-save mr-1"></i>Actualizar
                         </button>
                     </div>
                 </form>
@@ -260,78 +329,78 @@
         </div>
     </div>
 
-    <!-- Modal de creaci&oacute;n -->
+    <!-- ═══════════════════ MODAL CREAR ═══════════════════ -->
     <div class="modal fade" id="crearReporteModal" tabindex="-1" aria-labelledby="crearReporteModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="crearReporteModalLabel">
-                        <i class="fas fa-plus-circle"></i>Crear Nuevo Reporte
+                        <i class="fas fa-plus-circle mr-2" style="color: #583AFF;"></i>Crear nuevo reporte
                     </h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <form method="post" action="/Reportes/CrearReporte" onsubmit="return validarFormularioCrear()">
                     <div class="modal-body">
-                        <div class="form-group">
-                            <label for="IdEmpresa">
-                                <i class="fas fa-building mr-2" style="color: #583AFF;"></i>Empresa:
-                            </label>
-                            <select class="form-control" id="IdEmpresa" name="IdEmpresa" required>
-                                <option value="">Seleccione una empresa</option>
-                                @foreach (var empresa in ViewBag.Empresas as List<bufinscustomers.Models.Empresas>)
-                                {
-                                    <option value="@empresa.Id">@empresa.Nombre</option>
-                                }
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="Nombre">
-                                <i class="fas fa-file-alt mr-2" style="color: #583AFF;"></i>Nombre:
-                            </label>
-                            <input type="text" class="form-control" id="Nombre" name="Nombre" required />
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="IdEmpresa" class="form-label">
+                                    <i class="fas fa-building mr-2" style="color: #583AFF;"></i>Empresa <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-control form-control-sm" id="IdEmpresa" name="IdEmpresa" required>
+                                    <option value="">Seleccione una empresa</option>
+                                    @foreach (var empresa in ViewBag.Empresas as List<bufinscustomers.Models.Empresas>)
+                                    {
+                                        <option value="@empresa.Id">@empresa.Nombre</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="Nombre" class="form-label">
+                                    <i class="fas fa-file-alt mr-2" style="color: #583AFF;"></i>Nombre <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="Nombre" name="Nombre" required />
+                            </div>
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="AnioInicial">
-                                        <i class="fas fa-calendar-alt mr-2" style="color: #583AFF;"></i>A&ntilde;o Inicial:
-                                    </label>
-                                    <input type="text" class="form-control" id="AnioInicial" name="AnioInicial" />
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="AnioInicial" class="form-label">
+                                    <i class="fas fa-calendar-alt mr-2" style="color: #583AFF;"></i>A&ntilde;o Inicial
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="AnioInicial" name="AnioInicial" placeholder="Ej: 2023" />
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="AnioFinal">
-                                        <i class="fas fa-calendar-check mr-2" style="color: #583AFF;"></i>A&ntilde;o Final:
-                                    </label>
-                                    <input type="text" class="form-control" id="AnioFinal" name="AnioFinal" />
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="AnioFinal" class="form-label">
+                                    <i class="fas fa-calendar-check mr-2" style="color: #583AFF;"></i>A&ntilde;o Final
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="AnioFinal" name="AnioFinal" placeholder="Ej: 2025" />
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="Descripcion">
-                                <i class="fas fa-align-left mr-2" style="color: #583AFF;"></i>Descripci&oacute;n:
+                        <div class="mb-3">
+                            <label for="Descripcion" class="form-label">
+                                <i class="fas fa-align-left mr-2" style="color: #583AFF;"></i>Descripci&oacute;n
                             </label>
-                            <textarea class="form-control" id="Descripcion" name="Descripcion" rows="3"></textarea>
+                            <textarea class="form-control form-control-sm" id="Descripcion" name="Descripcion" rows="2"></textarea>
                         </div>
 
-                        <div class="form-group url-input">
-                            <label for="EnlaceHTML">
-                                <i class="fas fa-link mr-2" style="color: #583AFF;"></i>Enlace HTML:
+                        <div class="mb-3 url-input">
+                            <label for="EnlaceHTML" class="form-label">
+                                <i class="fas fa-link mr-2" style="color: #583AFF;"></i>Enlace HTML <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control" id="EnlaceHTML" name="EnlaceHTML" required oninput="validarURL('EnlaceHTML', 'createUrlFeedback')" />
+                            <input type="text" class="form-control form-control-sm" id="EnlaceHTML" name="EnlaceHTML" required
+                                   oninput="validarURL('EnlaceHTML', 'createUrlFeedback')" />
                             <div id="createUrlFeedback" class="url-feedback"></div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times mr-2"></i>Cancelar
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                            <i class="fas fa-times mr-1"></i>Cancelar
                         </button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-plus-circle mr-2"></i>Crear
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus-circle mr-1"></i>Crear
                         </button>
                     </div>
                 </form>
@@ -342,10 +411,10 @@
     @if (TempData["ErrorMessage"] != null)
     {
         <script>
-            const isMobile = window.innerWidth <= 768;
+            var isMobile1 = window.innerWidth <= 768;
             Swal.fire({
                 toast: true,
-                position: isMobile ? 'top' : 'top-end',
+                position: isMobile1 ? 'top' : 'top-end',
                 icon: 'error',
                 title: '@TempData["ErrorMessage"]',
                 showConfirmButton: false,
@@ -362,10 +431,10 @@
     @if (TempData["SuccessMessage"] != null)
     {
         <script>
-            const isMobile = window.innerWidth <= 768;
+            var isMobile2 = window.innerWidth <= 768;
             Swal.fire({
                 toast: true,
-                position: isMobile ? 'top' : 'top-end',
+                position: isMobile2 ? 'top' : 'top-end',
                 icon: 'success',
                 title: '@TempData["SuccessMessage"]',
                 showConfirmButton: false,
@@ -382,20 +451,20 @@
     @if (TempData["InfoMessage"] != null)
     {
         <script>
-        const isMobile = window.innerWidth <= 768;
-        Swal.fire({
-            toast: true,
-            position: isMobile ? 'top' : 'top-end',
-            icon: 'info',
-            title: '@TempData["InfoMessage"]',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-            didOpen: (toast) => {
-                toast.addEventListener('mouseenter', Swal.stopTimer);
-                toast.addEventListener('mouseleave', Swal.resumeTimer);
-            }
-        });
+            var isMobile3 = window.innerWidth <= 768;
+            Swal.fire({
+                toast: true,
+                position: isMobile3 ? 'top' : 'top-end',
+                icon: 'info',
+                title: '@TempData["InfoMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
         </script>
     }
 
@@ -407,16 +476,16 @@
                 }
 
                 url = url.trim();
-                const urlPattern = /^(https?:\/\/)?([\w\-]+\.)+[\w\-]+(\/.*)?$/i;
+                var urlPattern = /^(https?:\/\/)?([\w\-]+\.)+[\w\-]+(\/.*)?$/i;
 
                 try {
-                    let urlParaValidar = url;
+                    var urlParaValidar = url;
                     if (!url.match(/^https?:\/\//i)) {
                         urlParaValidar = 'https://' + url;
                     }
 
-                    const urlObj = new URL(urlParaValidar);
-                    const dominioValido = /^[\w\-]+(\.[\w\-]+)+$/.test(urlObj.hostname);
+                    var urlObj = new URL(urlParaValidar);
+                    var dominioValido = /^[\w\-]+(\.[\w\-]+)+$/.test(urlObj.hostname);
 
                     return dominioValido || urlPattern.test(url);
                 } catch (e) {
@@ -428,9 +497,9 @@
         }
 
         function validarURL(inputId, feedbackId) {
-            const input = document.getElementById(inputId);
-            const feedback = document.getElementById(feedbackId);
-            const url = input.value.trim();
+            var input = document.getElementById(inputId);
+            var feedback = document.getElementById(feedbackId);
+            var url = input.value.trim();
 
             if (url === '') {
                 feedback.textContent = '';
@@ -476,7 +545,7 @@
                 return false;
             }
 
-            let enlaceFinal = url.trim();
+            var enlaceFinal = url.trim();
             if (!enlaceFinal.startsWith('http://') && !enlaceFinal.startsWith('https://')) {
                 enlaceFinal = 'https://' + enlaceFinal;
             }
@@ -499,7 +568,7 @@
         }
 
         function validarFormularioCrear() {
-            const url = document.getElementById('EnlaceHTML').value.trim();
+            var url = document.getElementById('EnlaceHTML').value.trim();
             if (url !== '' && !esURLValida(url)) {
                 Swal.fire({
                     toast: true,
@@ -517,7 +586,7 @@
         }
 
         function validarFormularioEditar() {
-            const url = document.getElementById('editEnlaceHTML').value.trim();
+            var url = document.getElementById('editEnlaceHTML').value.trim();
             if (url !== '' && !esURLValida(url)) {
                 Swal.fire({
                     toast: true,

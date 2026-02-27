@@ -1,198 +1,290 @@
-@model IEnumerable<bufinscustomers.Models.Empresas>
+@model bufinscustomers.Models.ModeloPageViewModel
 @using bufinscustomers.Helpers
 @{
+    ViewBag.Title = "Ejecución de Modelos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
     var usuario = UsuarioSesionHelper.UsuarioActual;
     var esAdmin = usuario?.Admin == 1 || usuario?.Admin == 2;
     var idEmpresaUsuario = usuario?.IdEmpresa ?? 0;
 }
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Modelo</title>
-    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
-    <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script>
-</head>
-<body>
-    <style>
-        .bg-primary {
-            background-color: #583AFF !important;
-        }
 
-        /* === COLORES === */
-        :root {
-            --color-primario: #583AFF;
-            --color-secundario: #01E1D7;
-        }
+<link href="~/Assets/css/informe-relacionamientos.css" rel="stylesheet" />
 
-        /* === ENCABEZADO CARD === */
-        .card-header {
-            background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
-            color: white;
-            padding: 1.2rem 1.5rem;
-            font-weight: 600;
-            font-size: 1.2rem;
-        }
+<style>
+    /* Panel de descripción del modelo seleccionado */
+    .modelo-info-panel {
+        display: none;
+        background: #f0f4ff;
+        border: 1px solid #c7d2fe;
+        border-left: 4px solid #6366F1;
+        border-radius: 0.375rem;
+        padding: 0.75rem 1rem;
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: #374151;
+        align-items: center;
+        gap: 0.6rem;
+    }
 
-        .card-header i {
-            margin-right: 8px;
-        }
-    </style>
+    .modelo-info-panel.visible {
+        display: flex;
+    }
 
-    <div class="card shadow mb-4 mt-4">
-        <div class="card-header">
-            <i class="bi bi-gear-fill"></i> Ejecuci&oacute;n de modelos
+    .modelo-info-panel i {
+        color: #6366F1;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    /* Botón ejecutar deshabilitado */
+    .btn-modern-gradient:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+</style>
+
+<div class="container-fluid px-4">
+
+    <!-- Header -->
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-cogs powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">Ejecuci&oacute;n de Modelos</h1>
         </div>
-        <div class="card-body">
-            <form id="modeloForm" method="post">
-                <div class="row">
+    </div>
+
+
+    <!-- Card principal -->
+    <div class="filter-card">
+        <h3 class="filter-card-title">
+            <i class="fas fa-play-circle"></i>
+            Seleccione empresa, a&ntilde;o y modelo
+        </h3>
+
+        <form id="modeloForm" method="post" action="@Url.Action("EjecutarModelo", "Datos")">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="idModelo" id="idModelo" value="" />
+
+            <div class="filter-section">
+                <div class="row g-3">
+
+                    <!-- Empresa -->
                     <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="idEmpresa" class="form-label">Empresa</label>
+                        <div class="form-group">
+                            <label for="idEmpresa">
+                                <i class="fas fa-building"></i>
+                                Empresa <span class="required">*</span>
+                            </label>
                             <select class="form-control" id="idEmpresa" name="idEmpresa" required>
-                                <option value="" selected disabled>Seleccione una empresa</option>
+                                <option value="">-- Seleccione una empresa --</option>
                                 @if (esAdmin)
                                 {
-                                    foreach (var empresa in Model)
+                                    foreach (var empresa in Model.Empresas)
                                     {
                                         <option value="@empresa.Id">@empresa.Nombre</option>
                                     }
                                 }
                                 else
                                 {
-                                    var empresaUsuario = Model.FirstOrDefault(e => e.Id == idEmpresaUsuario);
-                                    if (empresaUsuario != null)
+                                    var emp = Model.Empresas.FirstOrDefault(e => e.Id == idEmpresaUsuario);
+                                    if (emp != null)
                                     {
-                                        <option value="@empresaUsuario.Id">@empresaUsuario.Nombre</option>
+                                        <option value="@emp.Id">@emp.Nombre</option>
                                     }
                                 }
                             </select>
                         </div>
                     </div>
+
+                    <!-- Año -->
                     <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="anio" class="form-label">A&ntilde;o</label>
+                        <div class="form-group">
+                            <label for="anio">
+                                <i class="fas fa-calendar-alt"></i>
+                                A&ntilde;o de ejecuci&oacute;n <span class="required">*</span>
+                            </label>
                             <select class="form-control" id="anio" name="anio" required disabled>
-                                <option value="" selected disabled>Seleccione una empresa primero</option>
+                                <option value="">-- Seleccione una empresa primero --</option>
                             </select>
                         </div>
                     </div>
+
+                    <!-- Modelo -->
+                    <div class="col-md-8">
+                        <div class="form-group">
+                            <label for="selectModelo">
+                                <i class="fas fa-cog"></i>
+                                Modelo <span class="required">*</span>
+                            </label>
+                            <select class="form-control" id="selectModelo" required>
+                                <option value="">-- Seleccione un modelo --</option>
+                                @foreach (var m in Model.Modelos)
+                                {
+                                    <option value="@m.Id"
+                                            data-descripcion="@(m.Descripcion ?? "")"
+                                            data-icono="@(m.Icono ?? "fas fa-cog")">
+                                        @m.Nombre
+                                    </option>
+                                }
+                            </select>
+                            <!-- Panel informativo dinámico -->
+                            <div id="modeloInfoPanel" class="modelo-info-panel">
+                                <i id="modeloIcono" class="fas fa-cog"></i>
+                                <span id="modeloDescripcion"></span>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
-                <div class="mt-3">
-                    <button type="submit" class="btn btn-primary" id="btnEjecutarBalance" formaction="/Datos/EjecutarModeloBalance">
-                        <i class="fas fa-scale-balanced"></i> Balance
-                    </button>
-                    <button type="submit" class="btn btn-primary" id="btnEjecutarPYG" formaction="/Datos/EjecutarModeloPYG">
-                        <i class="fas fa-chart-line"></i> PYG
-                    </button>
-                    <button type="submit" class="btn btn-primary" id="btnEjecutarFlujoCaja">
-                        <i class="fas fa-arrow-right-arrow-left"></i> Flujo de caja
-                    </button>
-                    <button type="submit" class="btn btn-primary" id="btnEjecutarEbitda">
-                        <i class="fas fa-chart-column"></i> Ebitda
-                    </button>
-                </div>
-            </form>
-        </div>
+            </div>
+
+            <!-- Botón -->
+            <div class="d-flex align-items-center gap-3 mt-2">
+                <button type="submit" id="btnEjecutar" class="btn-modern-gradient" disabled>
+                    <i class="fas fa-play me-2"></i>
+                    <span id="btnTexto">Ejecutar modelo</span>
+                </button>
+                <small class="text-muted" id="textoAyuda">
+                    <i class="fas fa-info-circle" style="color:#6366F1;"></i>
+                    Complete los tres campos para habilitar la ejecuci&oacute;n.
+                </small>
+            </div>
+        </form>
     </div>
 
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <script>
-            const isMobile = window.innerWidth <= 768;
-            Swal.fire({
-                toast: true,
-                position: isMobile ? 'top' : 'top-end',
-                icon: 'error',
-                title: '@TempData["ErrorMessage"]',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer);
-                    toast.addEventListener('mouseleave', Swal.resumeTimer);
-                }
-            });
-        </script>
-    }
+</div>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <script>
-            const isMobile = window.innerWidth <= 768;
-            Swal.fire({
-                toast: true,
-                position: isMobile ? 'top' : 'top-end',
-                icon: 'success',
-                title: '@TempData["SuccessMessage"]',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer);
-                    toast.addEventListener('mouseleave', Swal.resumeTimer);
-                }
-            });
-        </script>
-    }
+@section scripts {
 
-    @if (TempData["InfoMessage"] != null)
-    {
-        <script>
-            const isMobile = window.innerWidth <= 768;
-            Swal.fire({
-                toast: true,
-                position: isMobile ? 'top' : 'top-end',
-                icon: 'info',
-                title: '@TempData["InfoMessage"]',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer);
-                    toast.addEventListener('mouseleave', Swal.resumeTimer);
-                }
-            });
-        </script>
-    }
-
+@if (TempData["SuccessMessage"] != null)
+{
     <script>
-        $(document).ready(function () {
-            $('#idEmpresa').on('change', function () {
-                var idEmpresa = $(this).val();
-                var $anio = $('#anio');
-
-                if (!idEmpresa) {
-                    $anio.html('<option value="" selected disabled>Seleccione una empresa primero</option>');
-                    $anio.prop('disabled', true);
-                    return;
-                }
-
-                $anio.html('<option value="" selected disabled>Cargando...</option>');
-                $anio.prop('disabled', true);
-
-                $.ajax({
-                    url: '/Datos/ObtenerAnioEjecucion',
-                    type: 'GET',
-                    data: { idEmpresa: idEmpresa },
-                    success: function (response) {
-                        if (response.success) {
-                            $anio.html('<option value="' + response.anioEjecucion + '" selected>' + response.anioEjecucion + '</option>');
-                            $anio.prop('disabled', false);
-                        } else {
-                            $anio.html('<option value="" selected disabled>' + response.message + '</option>');
-                            $anio.prop('disabled', true);
-                        }
-                    },
-                    error: function () {
-                        $anio.html('<option value="" selected disabled>Error al cargar el a&ntilde;o</option>');
-                        $anio.prop('disabled', true);
-                    }
-                });
-            });
+        Swal.fire({
+            icon: 'success',
+            title: '\u00a1\u00c9xito!',
+            text: '@Html.Raw(TempData["SuccessMessage"].ToString().Replace("'", "\\'"))',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#6366F1',
+            allowOutsideClick: false
+        }).then(function () {
+            location.reload();
         });
     </script>
-</body>
-</html>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: '@Html.Raw(TempData["ErrorMessage"].ToString().Replace("'", "\\'"))',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#6366F1',
+            allowOutsideClick: false
+        }).then(function () {
+            location.reload();
+        });
+    </script>
+}
+@if (TempData["InfoMessage"] != null)
+{
+    <script>
+        Swal.fire({
+            icon: 'info',
+            title: 'Informaci\u00f3n',
+            text: '@Html.Raw(TempData["InfoMessage"].ToString().Replace("'", "\\'"))',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#6366F1',
+            allowOutsideClick: false
+        }).then(function () {
+            location.reload();
+        });
+    </script>
+}
+
+<script>
+    $(function () {
+
+        // ── Cargar año al cambiar empresa ───────────────────────────────
+        $('#idEmpresa').on('change', function () {
+            var idEmpresa = $(this).val();
+            var $anio = $('#anio');
+
+            if (!idEmpresa) {
+                $anio.html('<option value="">-- Seleccione una empresa primero --</option>');
+                $anio.prop('disabled', true);
+                actualizarBoton();
+                return;
+            }
+
+            $anio.html('<option value="">Cargando...</option>');
+            $anio.prop('disabled', true);
+
+            $.ajax({
+                url: '/Datos/ObtenerAnioEjecucion',
+                type: 'GET',
+                data: { idEmpresa: idEmpresa },
+                success: function (response) {
+                    if (response.success) {
+                        $anio.html('<option value="' + response.anioEjecucion + '" selected>' + response.anioEjecucion + '</option>');
+                        $anio.prop('disabled', false);
+                    } else {
+                        $anio.html('<option value="">' + (response.message || 'Sin configuración de año') + '</option>');
+                        $anio.prop('disabled', true);
+                    }
+                    actualizarBoton();
+                },
+                error: function () {
+                    $anio.html('<option value="">Error al cargar el a&ntilde;o</option>');
+                    $anio.prop('disabled', true);
+                    actualizarBoton();
+                }
+            });
+        });
+
+        $('#anio').on('change', actualizarBoton);
+
+        // ── Actualizar panel descripción al cambiar modelo ───────────────
+        $('#selectModelo').on('change', function () {
+            var $opt = $(this).find(':selected');
+            var val = $(this).val();
+            var desc = $opt.data('descripcion');
+            var icono = $opt.data('icono') || 'fas fa-cog';
+
+            $('#idModelo').val(val);
+
+            var $panel = $('#modeloInfoPanel');
+            if (val && desc) {
+                $('#modeloIcono').attr('class', icono);
+                $('#modeloDescripcion').text(desc);
+                $panel.addClass('visible');
+            } else {
+                $panel.removeClass('visible');
+            }
+
+            actualizarBoton();
+        });
+
+        // ── Habilitar/deshabilitar botón ─────────────────────────────────
+        function actualizarBoton() {
+            var ok = $('#idEmpresa').val() && $('#anio').val() && $('#selectModelo').val();
+            var $btn = $('#btnEjecutar');
+            var $ayuda = $('#textoAyuda');
+            $btn.prop('disabled', !ok);
+            $ayuda.toggle(!ok);
+        }
+
+        // ── Loading state al hacer submit ────────────────────────────────
+        $('#modeloForm').on('submit', function () {
+            if (!$('#idModelo').val()) return false;
+
+            var $btn = $('#btnEjecutar');
+            $btn.prop('disabled', true);
+            $('#btnTexto').text('Ejecutando...');
+            $btn.find('i').attr('class', 'spinner-border spinner-border-sm me-2');
+        });
+    });
+</script>
+}

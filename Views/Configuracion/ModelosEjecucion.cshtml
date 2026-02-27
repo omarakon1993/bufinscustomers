@@ -1,0 +1,533 @@
+@model IEnumerable<bufinscustomers.Models.ModeloEjecucion>
+@using bufinscustomers.Helpers
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gestor de modelos</title>
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
+    <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <style>
+        :root {
+            --color-primario: #583AFF;
+            --color-secundario: #01E1D7;
+        }
+
+        .bg-primary {
+            background-color: #583AFF !important;
+        }
+
+        .card-header {
+            background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
+            color: white;
+            padding: 1rem 1.2rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .card-header i {
+            margin-right: 8px;
+        }
+
+        /* === TABLA COMPACTA === */
+        .table-wrapper {
+            max-height: 450px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .table-compact {
+            table-layout: fixed;
+            width: 100%;
+            margin-bottom: 0;
+        }
+
+        .table-compact thead th {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: #555;
+            padding: 0.5rem 0.4rem;
+            white-space: nowrap;
+            border-bottom: 2px solid #dee2e6;
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .table-compact tbody td {
+            font-size: 0.8rem;
+            padding: 0.35rem 0.4rem;
+            vertical-align: middle;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .table-compact tbody tr:hover {
+            background-color: #f0edff;
+        }
+
+        /* Anchos de columna */
+        .col-id         { width: 5%;  text-align: center; }
+        .col-nombre     { width: 12%; }
+        .col-sp         { width: 20%; }
+        .col-desc       { width: 25%; }
+        .col-icono      { width: 18%; }
+        .col-estado     { width: 9%;  text-align: center; }
+        .col-acciones   { width: 11%; text-align: center; white-space: nowrap; }
+
+        /* === BOTONES DE ACCIONES === */
+        .btn-group { gap: 0.25rem; }
+
+        .btn-group .btn {
+            padding: 0.2rem 0.45rem;
+            font-size: 0.75rem;
+            border-radius: 0.25rem;
+        }
+
+        .btn-group .btn i { margin-right: 0; }
+
+        /* SP en monospace */
+        .sp-tag {
+            font-family: 'Courier New', monospace;
+            font-size: 0.77rem;
+            background: #f1f5f9;
+            color: #334155;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            border: 1px solid #e2e8f0;
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Badges estado */
+        .badge-activo {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.55rem;
+            border-radius: 999px;
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+            font-weight: 600;
+        }
+
+        .badge-inactivo {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.55rem;
+            border-radius: 999px;
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+            font-weight: 600;
+        }
+
+        /* Preview icono en tabla */
+        .icono-col {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.78rem;
+            color: #583AFF;
+        }
+
+        .icono-col span {
+            color: #555;
+            font-size: 0.73rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 110px;
+            display: inline-block;
+        }
+
+        /* Live preview icono en modal */
+        .icono-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #ede9fe;
+            border-radius: 6px;
+            color: #583AFF;
+            font-size: 1rem;
+        }
+    </style>
+
+    <div class="card shadow mb-4 mt-4">
+        <div class="card-header">
+            <i class="fas fa-sliders"></i> Gestor de modelos de ejecuci&oacute;n
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive table-wrapper">
+                <table class="table table-bordered table-hover table-compact">
+                    <thead>
+                        <tr>
+                            <th class="col-id">Id</th>
+                            <th class="col-nombre">Nombre</th>
+                            <th class="col-sp">SP Almacenado</th>
+                            <th class="col-desc">Descripci&oacute;n</th>
+                            <th class="col-icono">Icono</th>
+                            <th class="col-estado">Estado</th>
+                            <th class="col-acciones">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-3">
+                                    No hay modelos registrados.
+                                </td>
+                            </tr>
+                        }
+                        @foreach (var m in Model)
+                        {
+                            <tr>
+                                <td class="col-id">@m.Id</td>
+                                <td class="col-nombre" title="@m.Nombre"><strong>@m.Nombre</strong></td>
+                                <td class="col-sp" title="@m.NombreSP">
+                                    <span class="sp-tag">@m.NombreSP</span>
+                                </td>
+                                <td class="col-desc" title="@m.Descripcion">@(string.IsNullOrEmpty(m.Descripcion) ? "—" : m.Descripcion)</td>
+                                <td class="col-icono">
+                                    @if (!string.IsNullOrEmpty(m.Icono))
+                                    {
+                                        <span class="icono-col">
+                                            <i class="@m.Icono"></i>
+                                            <span title="@m.Icono">@m.Icono</span>
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td class="col-estado">
+                                    @if (m.Activo)
+                                    {
+                                        <span class="badge-activo">Activo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-inactivo">Inactivo</span>
+                                    }
+                                </td>
+                                <td class="col-acciones">
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-primary" title="Editar modelo"
+                                                data-bs-toggle="modal" data-bs-target="#editarModal"
+                                                onclick="setEditarModelo(@m.Id, '@Html.Raw(m.Nombre.Replace("'","\\'" ))', '@Html.Raw(m.NombreSP.Replace("'","\\'" ))', '@Html.Raw((m.Descripcion ?? "").Replace("'","\\'" ))', '@Html.Raw((m.Icono ?? "").Replace("'","\\'" ))', @m.Orden, @(m.Activo ? "true" : "false"))">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger" title="Eliminar modelo"
+                                                data-bs-toggle="modal" data-bs-target="#eliminarModal"
+                                                onclick="setEliminarModelo(@m.Id, '@Html.Raw(m.Nombre.Replace("'","\\'" ))')">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#crearModal">
+                <i class="fas fa-plus-circle mr-1"></i> Crear modelo
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ MODAL CREAR ═══════════════════ -->
+    <div class="modal fade" id="crearModal" tabindex="-1" aria-labelledby="crearModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="crearModalLabel">
+                        <i class="fas fa-plus-circle" style="color:#583AFF;"></i> Crear modelo
+                    </h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" action="@Url.Action("Crear", "ModelosEjecucion")">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3 mt-2">
+                                <label for="crearNombre" class="form-label">
+                                    <i class="fas fa-tag mr-2" style="color:#583AFF;"></i>Nombre <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="crearNombre" name="Nombre"
+                                       placeholder="Ej: EBITDA" maxlength="100" required />
+                            </div>
+                            <div class="col-md-6 mb-3 mt-2">
+                                <label for="crearNombreSP" class="form-label">
+                                    <i class="fas fa-database mr-2" style="color:#583AFF;"></i>SP Almacenado <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="crearNombreSP" name="NombreSP"
+                                       placeholder="Ej: sp_ModeloEbitda" maxlength="150" required
+                                       style="font-family: monospace;" />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="crearDescripcion" class="form-label">
+                                <i class="fas fa-align-left mr-2" style="color:#583AFF;"></i>Descripci&oacute;n
+                            </label>
+                            <input type="text" class="form-control form-control-sm" id="crearDescripcion" name="Descripcion"
+                                   placeholder="Ej: Ganancias antes de intereses e impuestos" maxlength="255" />
+                        </div>
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="crearIcono" class="form-label">
+                                    <i class="fas fa-icons mr-2" style="color:#583AFF;"></i>Icono <small class="text-muted">(clase FontAwesome)</small>
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">
+                                        <span class="icono-badge" id="crearIconoBadge">
+                                            <i id="crearIconoI" class="fas fa-cog"></i>
+                                        </span>
+                                    </span>
+                                    <input type="text" class="form-control" id="crearIcono" name="Icono"
+                                           placeholder="fas fa-chart-bar" maxlength="50"
+                                           oninput="actualizarIcono('crear')" />
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="crearOrden" class="form-label">
+                                    <i class="fas fa-sort-numeric-up mr-2" style="color:#583AFF;"></i>Orden
+                                </label>
+                                <input type="number" class="form-control form-control-sm" id="crearOrden" name="Orden"
+                                       value="0" min="0" max="999" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                            <i class="fas fa-times mr-1"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus-circle mr-1"></i>Crear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ MODAL EDITAR ═══════════════════ -->
+    <div class="modal fade" id="editarModal" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editarModalLabel">
+                        <i class="fas fa-edit" style="color:#583AFF;"></i> Editar modelo
+                    </h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" action="@Url.Action("Editar", "ModelosEjecucion")">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="editId" name="Id" />
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3 mt-2">
+                                <label for="editNombre" class="form-label">
+                                    <i class="fas fa-tag mr-2" style="color:#583AFF;"></i>Nombre <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="editNombre" name="Nombre"
+                                       maxlength="100" required />
+                            </div>
+                            <div class="col-md-6 mb-3 mt-2">
+                                <label for="editNombreSP" class="form-label">
+                                    <i class="fas fa-database mr-2" style="color:#583AFF;"></i>SP Almacenado <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="editNombreSP" name="NombreSP"
+                                       maxlength="150" required style="font-family: monospace;" />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editDescripcion" class="form-label">
+                                <i class="fas fa-align-left mr-2" style="color:#583AFF;"></i>Descripci&oacute;n
+                            </label>
+                            <input type="text" class="form-control form-control-sm" id="editDescripcion" name="Descripcion"
+                                   maxlength="255" />
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editIcono" class="form-label">
+                                    <i class="fas fa-icons mr-2" style="color:#583AFF;"></i>Icono <small class="text-muted">(clase FontAwesome)</small>
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">
+                                        <span class="icono-badge" id="editIconoBadge">
+                                            <i id="editIconoI" class="fas fa-cog"></i>
+                                        </span>
+                                    </span>
+                                    <input type="text" class="form-control" id="editIcono" name="Icono"
+                                           maxlength="50" oninput="actualizarIcono('edit')" />
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="editOrden" class="form-label">
+                                    <i class="fas fa-sort-numeric-up mr-2" style="color:#583AFF;"></i>Orden
+                                </label>
+                                <input type="number" class="form-control form-control-sm" id="editOrden" name="Orden"
+                                       min="0" max="999" />
+                            </div>
+                            <div class="col-md-3 mb-3 d-flex align-items-end pb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="editActivo" name="Activo" value="true" />
+                                    <input type="hidden" name="Activo" value="false" />
+                                    <label class="form-check-label" for="editActivo">Activo</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                            <i class="fas fa-times mr-1"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-save mr-1"></i>Guardar cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ MODAL ELIMINAR ═══════════════════ -->
+    <div class="modal fade" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="eliminarModalLabel">
+                        <i class="fas fa-exclamation-triangle"></i> Confirmar eliminaci&oacute;n
+                    </h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">
+                        <i class="fas fa-question-circle text-warning mr-2"></i>
+                        &iquest;Est&aacute;s seguro de que deseas eliminar el modelo <strong id="eliminarNombre"></strong>?
+                    </p>
+                    <p class="text-muted small mt-2 mb-0">El modelo quedar&aacute; inactivo y no aparecer&aacute; en la pantalla de ejecuci&oacute;n.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>Cancelar
+                    </button>
+                    <form method="post" action="@Url.Action("Eliminar", "ModelosEjecucion")" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" id="eliminarId" name="id" />
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash-alt mr-1"></i>Eliminar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <script>
+            const isMobile1 = window.innerWidth <= 768;
+            Swal.fire({
+                toast: true,
+                position: isMobile1 ? 'top' : 'top-end',
+                icon: 'error',
+                title: '@TempData["ErrorMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        </script>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <script>
+            const isMobile2 = window.innerWidth <= 768;
+            Swal.fire({
+                toast: true,
+                position: isMobile2 ? 'top' : 'top-end',
+                icon: 'success',
+                title: '@TempData["SuccessMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        </script>
+    }
+
+    @if (TempData["InfoMessage"] != null)
+    {
+        <script>
+            const isMobile3 = window.innerWidth <= 768;
+            Swal.fire({
+                toast: true,
+                position: isMobile3 ? 'top' : 'top-end',
+                icon: 'info',
+                title: '@TempData["InfoMessage"]',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        </script>
+    }
+
+    <script>
+        // Live preview del icono en modales
+        function actualizarIcono(prefijo) {
+            var val = document.getElementById(prefijo + 'Icono').value.trim();
+            document.getElementById(prefijo + 'IconoI').className = val || 'fas fa-cog';
+        }
+
+        // Poblar modal editar
+        function setEditarModelo(id, nombre, nombreSP, descripcion, icono, orden, activo) {
+            document.getElementById('editId').value          = id;
+            document.getElementById('editNombre').value      = nombre;
+            document.getElementById('editNombreSP').value    = nombreSP;
+            document.getElementById('editDescripcion').value = descripcion;
+            document.getElementById('editIcono').value       = icono;
+            document.getElementById('editOrden').value       = orden;
+            document.getElementById('editActivo').checked    = (activo === true || activo === 'true');
+            actualizarIcono('edit');
+        }
+
+        // Poblar modal eliminar
+        function setEliminarModelo(id, nombre) {
+            document.getElementById('eliminarId').value             = id;
+            document.getElementById('eliminarNombre').textContent   = '"' + nombre + '"';
+        }
+    </script>
+</body>
+</html>

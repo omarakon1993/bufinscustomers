@@ -1,377 +1,449 @@
-﻿@{
-    ViewBag.Title = "Reportes";
+@{
+    ViewBag.Title = "Dashboards Power BI";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var usuario = bufinscustomers.Helpers.UsuarioSesionHelper.UsuarioActual;
+    var esSuperAdmin = bufinscustomers.Helpers.UsuarioSesionHelper.EsSuperAdmin();
 }
 
-<!DOCTYPE html>
+<link href="~/Assets/css/informe-relacionamientos.css" rel="stylesheet" />
 
-<html>
-<head>
-    <title>Dashboards PowerBI</title>
+<style>
+    /* ── Iframe ──────────────────────────────────────────────────── */
+    .reporte-iframe-wrapper {
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(99,102,241,0.10);
+        background: #f8f9fc;
+        border: 1px solid #e3e6f0;
+        line-height: 0;
+    }
 
-    <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
-    <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script>
-    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    #iframeReporte {
+        width: 100%;
+        height: 80vh;
+        border: none;
+        display: block;
+    }
 
-    <style>
-        /* === COLORES === */
-        :root {
-            --color-primario: #583AFF;
-            --color-secundario: #01E1D7;
-            --fondo-claro: #f9f9fb;
-            --borde: #e0e0e0;
-        }
+    #iframeContainer:fullscreen          { background: #000; }
+    #iframeContainer:-webkit-full-screen { background: #000; }
+    #iframeContainer:-moz-full-screen    { background: #000; }
+    #iframeContainer:fullscreen #iframeReporte {
+        width: 100vw;
+        height: 100vh;
+    }
 
-        /* === TARJETA PRINCIPAL === */
-        .card {
-            border-radius: 12px;
-            border: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            overflow: hidden;
-        }
+    /* ── Estado vacío ────────────────────────────────────────────── */
+    .reporte-empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 300px;
+        gap: 0.75rem;
+        color: #9ca3af;
+    }
 
-        .card-header {
-            background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
-            color: white;
-            padding: 1.2rem 1.5rem;
-            font-weight: 600;
-            font-size: 1.2rem;
-        }
+    .reporte-empty-state i      { font-size: 3rem; color: #c4b5fd; }
+    .reporte-empty-state p      { font-size: 0.95rem; margin: 0; }
 
-            .card-header i {
-                margin-right: 8px;
-            }
+    /* ── Botón pantalla completa ─────────────────────────────────── */
+    .btn-fullscreen {
+        background: white;
+        color: #6366F1;
+        border: 1.5px solid #c4b5fd;
+        padding: 0.625rem 1.2rem;
+        border-radius: 0.375rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        white-space: nowrap;
+    }
 
-        h4 {
-            font-weight: 600;
-            color: var(--color-primario);
-        }
+    .btn-fullscreen:hover {
+        background: #ede9fe;
+        border-color: #6366F1;
+        color: #4338ca;
+    }
 
-        label {
-            font-weight: 500;
-            color: #333;
-        }
+    /* ── Empresa badge (usuario no super admin) ──────────────────── */
+    .empresa-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #ede9fe;
+        color: #4338ca;
+        border: 1px solid #c4b5fd;
+        border-radius: 0.375rem;
+        padding: 0.45rem 0.85rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        width: 100%;
+    }
 
-        .form-control {
-            border-radius: 8px;
-            border: 1px solid var(--borde);
-            transition: all 0.2s ease;
-        }
+    .empresa-badge i { color: #6366F1; }
 
-            .form-control:focus {
-                border-color: var(--color-primario);
-                box-shadow: 0 0 0 0.2rem rgba(88, 58, 255, 0.25);
-            }
+    /* ── Contador de reportes ────────────────────────────────────── */
+    .reporte-count {
+        font-size: 0.78rem;
+        color: #9ca3af;
+        margin-top: 0.3rem;
+        min-height: 1rem;
+    }
 
-        /* === BOTONES === */
-        .btn-primary {
-            background-color: var(--color-primario);
-            border-color: var(--color-primario);
-            border-radius: 8px;
-            font-weight: 500;
-        }
+    /* ── Separador visual entre grupos de filtros ────────────────── */
+    .filtros-separador {
+        border: none;
+        border-top: 1px dashed #e2e8f0;
+        margin: 0.75rem 0;
+    }
+</style>
 
-            .btn-primary:hover {
-                background-color: #6b50ff;
-                border-color: #6b50ff;
-            }
+<div class="container-fluid px-4">
 
-        .btn-secondary {
-            background-color: var(--color-secundario);
-            border-color: var(--color-secundario);
-            color: #000;
-            border-radius: 8px;
-            font-weight: 500;
-        }
-
-            .btn-secondary:hover {
-                background-color: #02c7be;
-                border-color: #02c7be;
-            }
-
-        /* === IFRAME === */
-        iframe {
-            border-radius: 10px;
-            border: 1px solid var(--borde);
-            width: 100%;
-            height: 80vh;
-        }
-
-        .iframe-expandido {
-            width: 100vw !important;
-            height: 100vh !important;
-            border: none !important;
-        }
-
-        /* === BARRAS Y DIVISORES === */
-        .divider {
-            height: 2px;
-            width: 100%;
-            background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
-            margin: 1.5rem 0;
-            border-radius: 2px;
-        }
-    </style>
-</head>
-
-
-<body>
-    <div class="card shadow mb-4 mt-4">
-        <div class="card-header">
-            <i class="bi bi-graph-up"></i> Dashboards Power BI
+    <!-- Header -->
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-chart-pie powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">Dashboards Power BI</h1>
         </div>
+    </div>
 
-        <div class="card-body">
-            <div class="row">
+    <!-- Card de filtros y selección -->
+    <div class="filter-card">
+        <h3 class="filter-card-title">
+            <i class="fas fa-filter"></i>
+            Selecci&oacute;n de reporte
+        </h3>
 
-                @{
-                    var usuario = bufinscustomers.Helpers.UsuarioSesionHelper.UsuarioActual;
-                    var esAdmin = usuario?.Admin == 1;
-                    ViewBag.EsAdmin = esAdmin;
-                    var idEmpresa = usuario?.IdEmpresa ?? 0;
-                }
+        <div class="filter-section">
 
-                <div class="col-md-3 mb-3">
-                    <label for="buscarReporte"><i class="bi bi-search"></i> Buscar por nombre:</label>
-                    <input type="text" id="buscarReporte" class="form-control" placeholder="Escribe parte del nombre...">
+            <!-- ── Fila 1: Empresa + Búsqueda ─────────────────────── -->
+            <div class="row g-3 mb-3">
+
+                <!-- Empresa -->
+                <div class="col-md-4">
+                    <div class="form-group mb-0">
+                        <label for="filtroEmpresa">
+                            <i class="fas fa-building"></i>
+                            Empresa <span class="required">*</span>
+                        </label>
+                        @if (esSuperAdmin)
+                        {
+                            <select id="filtroEmpresa" class="form-control">
+                                <option value="">-- Todas las empresas --</option>
+                            </select>
+                        }
+                        else
+                        {
+                            <!-- Usuario normal: muestra su empresa como badge no editable -->
+                            <div class="empresa-badge" id="empresaBadge">
+                                <i class="fas fa-lock"></i>
+                                <span id="empresaNombreDisplay">Cargando...</span>
+                            </div>
+                            <input type="hidden" id="filtroEmpresa" value="" />
+                        }
+                    </div>
                 </div>
 
-                <div class="col-md-3 mb-3">
-                    <label for="filtroAnioInicial"><i class="bi bi-calendar-event"></i> Año Inicial:</label>
-                    <select id="filtroAnioInicial" class="form-control">
-                        <option value="">-- Seleccionar --</option>
-                    </select>
+                <!-- Buscar por nombre -->
+                <div class="col-md-4">
+                    <div class="form-group mb-0">
+                        <label for="buscarReporte">
+                            <i class="fas fa-search"></i> Buscar por nombre
+                        </label>
+                        <input type="text" id="buscarReporte" class="form-control"
+                               placeholder="Escribe parte del nombre..." />
+                    </div>
                 </div>
 
-                <div class="col-md-3 mb-3">
-                    <label for="filtroAnioFinal"><i class="bi bi-calendar-check"></i> Año Final:</label>
-                    <select id="filtroAnioFinal" class="form-control">
-                        <option value="">-- Seleccionar --</option>
-                    </select>
-                </div>
+            </div>
 
-                @if (esAdmin)
-                {
-                    <div class="col-md-3 mb-3">
-                        <label for="filtroEmpresa"><i class="bi bi-building"></i> Empresa:</label>
-                        <select id="filtroEmpresa" class="form-control">
-                            <option value="">-- Todas las empresas --</option>
+            <!-- ── Fila 2: Años ───────────────────────────────────── -->
+            <div class="row g-3 mb-3">
+
+                <div class="col-md-2">
+                    <div class="form-group mb-0">
+                        <label for="filtroAnioInicial">
+                            <i class="fas fa-calendar-alt"></i> A&ntilde;o inicial
+                        </label>
+                        <select id="filtroAnioInicial" class="form-control">
+                            <option value="">-- Todos --</option>
                         </select>
                     </div>
-                }
+                </div>
+
+                <div class="col-md-2">
+                    <div class="form-group mb-0">
+                        <label for="filtroAnioFinal">
+                            <i class="fas fa-calendar-check"></i> A&ntilde;o final
+                        </label>
+                        <select id="filtroAnioFinal" class="form-control">
+                            <option value="">-- Todos --</option>
+                        </select>
+                    </div>
+                </div>
+
             </div>
 
-            <div class="divider"></div>
+            <hr class="filtros-separador" />
 
-            <div class="row align-items-end mb-3">
+            <!-- ── Fila 3: Reporte + Acciones ────────────────────── -->
+            <div class="row g-3 align-items-end">
+
                 <div class="col-md-6">
-                    <label for="selectReporte"><i class="bi bi-file-earmark-bar-graph"></i> Reporte:</label>
-                    <select id="selectReporte" class="form-control">
-                        <option value="">-- Seleccione un reporte --</option>
-                    </select>
+                    <div class="form-group mb-0">
+                        <label for="selectReporte">
+                            <i class="fas fa-file-powerpoint"></i>
+                            Reporte <span class="required">*</span>
+                        </label>
+                        <select id="selectReporte" class="form-control">
+                            <option value="">-- Seleccione una empresa primero --</option>
+                        </select>
+                        <div class="reporte-count" id="reporteCount"></div>
+                    </div>
                 </div>
+
                 <div class="col-md-3">
-                    <button id="btnConsultar" class="btn btn-primary w-100">
-                        Consultar
+                    <button id="btnConsultar" class="btn-modern-gradient w-100" disabled>
+                        <i class="fas fa-eye me-1"></i>
+                        <span id="btnConsultarTexto">Ver reporte</span>
                     </button>
                 </div>
+
                 <div class="col-md-3">
-                    <button id="btnPantallaCompleta" class="btn btn-secondary w-100" style="display: none;">
-                        Pantalla completa
+                    <button id="btnPantallaCompleta" class="btn-fullscreen w-100" style="display:none;">
+                        <i class="fas fa-expand me-1" id="iconoFullscreen"></i>
+                        <span id="textoFullscreen">Pantalla completa</span>
                     </button>
                 </div>
+
             </div>
 
-            <div id="iframeContainer" style="position: relative;">
-                <iframe id="iframeReporte" src=""></iframe>
+        </div>
+    </div>
+
+    <!-- Área del reporte -->
+    <div class="filter-card" style="padding: 0; overflow: hidden;">
+        <div id="iframeContainer">
+            <div class="reporte-empty-state" id="emptyState">
+                <i class="fas fa-chart-bar"></i>
+                <p>Seleccione una empresa y un reporte, luego presione <strong>Ver reporte</strong></p>
+            </div>
+            <div class="reporte-iframe-wrapper" id="iframeWrapper" style="display:none;">
+                <iframe id="iframeReporte" src="" allowfullscreen></iframe>
             </div>
         </div>
     </div>
-    @section scripts {
-        <script>
-        const esAdmin = @Html.Raw((ViewBag.EsAdmin ?? false).ToString().ToLower());
 
-        if (esAdmin) {
-            fetch('@Url.Action("ObtenerEmpresas", "Reportes")')
-                .then(res => res.json())
-                .then(data => {
-                    if (!Array.isArray(data)) return;
-                    const filtroEmpresa = document.getElementById("filtroEmpresa");
-                    data.forEach(emp => {
-                        const opt = document.createElement("option");
-                        opt.value = emp.nombre;
-                        opt.textContent = emp.nombre;
-                        filtroEmpresa.appendChild(opt);
-                    });
-                });
+</div>
+
+@section scripts {
+<script>
+    const esSuperAdmin = @Html.Raw(esSuperAdmin.ToString().ToLower());
+
+    // ─────────────────────────────────────────────────────────────────
+    // Utilidades
+    // ─────────────────────────────────────────────────────────────────
+
+    function poblarSelectReportes(data) {
+        const $sel = $('#selectReporte');
+        $sel.empty();
+
+        if (Array.isArray(data) && data.length > 0) {
+            $sel.append('<option value="">-- Seleccione un reporte --</option>');
+            data.forEach(r => $sel.append(`<option value="${r.Id}">${r.Nombre}</option>`));
+            $('#reporteCount').text(data.length + ' reporte' + (data.length !== 1 ? 's' : '') + ' disponible' + (data.length !== 1 ? 's' : ''));
+            $('#btnConsultar').prop('disabled', false);
+        } else {
+            $sel.append('<option value="">No hay reportes para esta empresa</option>');
+            $('#reporteCount').text('');
+            $('#btnConsultar').prop('disabled', true);
         }
 
-        fetch('@Url.Action("ObtenerAniosReporte", "Reportes")')
-        .then(res => res.json())
+        // Al cambiar empresa limpiar el iframe
+        limpiarIframe();
+    }
+
+    function limpiarIframe() {
+        $('#iframeReporte').attr('src', '');
+        $('#iframeWrapper').hide();
+        $('#emptyState').show();
+        $('#btnPantallaCompleta').hide();
+    }
+
+    function getEmpresaSeleccionada() {
+        return esSuperAdmin ? $('#filtroEmpresa').val() : $('#filtroEmpresa').val();
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Cargar años disponibles (solo los que tienen reportes)
+    // ─────────────────────────────────────────────────────────────────
+
+    fetch('@Url.Action("ObtenerAniosReporte", "Reportes")')
+        .then(r => r.json())
         .then(data => {
             const { iniciales, finales } = data;
-
-            const selInicial = document.getElementById("filtroAnioInicial");
-            const selFinal = document.getElementById("filtroAnioFinal");
-
-            iniciales.forEach(anio => {
-                const opt = document.createElement("option");
-                opt.value = anio;
-                opt.textContent = anio;
-                selInicial.appendChild(opt);
-            });
-
-            finales.forEach(anio => {
-                const opt = document.createElement("option");
-                opt.value = anio;
-                opt.textContent = anio;
-                selFinal.appendChild(opt);
-            });
+            const sI = document.getElementById('filtroAnioInicial');
+            const sF = document.getElementById('filtroAnioFinal');
+            iniciales.forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; sI.appendChild(o); });
+            finales.forEach(a  => { const o = document.createElement('option'); o.value = a; o.textContent = a; sF.appendChild(o); });
         });
 
-        $.getJSON('@Url.Action("ObtenerReportes", "Reportes")', function (data) {
-            var select = $('#selectReporte');
-            select.empty();
-            select.append('<option value="">-- Seleccione un reporte --</option>');
-            data.forEach(function (r) {
-                select.append('<option value="' + r.Id + '">' + r.Nombre + '</option>');
-            });
-        });
+    // ─────────────────────────────────────────────────────────────────
+    // Cargar empresas y configurar flujo inicial
+    // ─────────────────────────────────────────────────────────────────
 
-         function cargarReportesFiltrados() {
-            const nombre = $('#buscarReporte').val();
-            const anioInicial = $('#filtroAnioInicial').val();
-            const anioFinal = $('#filtroAnioFinal').val();
-            const empresa = esAdmin ? $('#filtroEmpresa').val() : '';
+    fetch('@Url.Action("ObtenerEmpresas", "Reportes")')
+        .then(r => r.json())
+        .then(data => {
+            if (!Array.isArray(data)) return;
 
-            $.ajax({
-                url: '@Url.Action("ObtenerReportesFiltrados", "Reportes")',
-                method: 'GET',
-                data: {
-                    nombre,
-                    anioInicial,
-                    anioFinal,
-                    empresa
-                },
-                success: function (data) {
-                    const $select = $('#selectReporte');
-                    $select.empty();
-                    $select.append('<option value="">-- Seleccione un reporte --</option>');
+            if (esSuperAdmin) {
+                // Super Admin: poblar dropdown con todas las empresas
+                const sel = document.getElementById('filtroEmpresa');
+                data.forEach(emp => {
+                    const o = document.createElement('option');
+                    o.value    = emp.nombre;
+                    o.textContent = emp.nombre;
+                    sel.appendChild(o);
+                });
+                // Cargar todos los reportes por defecto (sin filtro de empresa)
+                cargarReportesFiltrados();
 
-                    if (Array.isArray(data) && data.length > 0) {
-                        data.forEach(r => {
-                            $select.append(`<option value="${r.Id}">${r.Nombre}</option>`);
-                        });
-                    } else {
-                        $select.append('<option value="">No se encontraron reportes</option>');
-                    }
-                },
-                error: function () {
-                    alert("Error al obtener los reportes filtrados");
+            } else {
+                // Usuario normal: solo tiene su empresa → mostrarla y cargar sus reportes
+                if (data.length > 0) {
+                    const empresa = data[0];
+                    document.getElementById('empresaNombreDisplay').textContent = empresa.nombre;
+                    document.getElementById('filtroEmpresa').value = empresa.nombre;
                 }
-            });
-        }
-
-        $(document).ready(function () {
-            $('#buscarReporte').on('input', cargarReportesFiltrados);
-            $('#filtroAnioInicial, #filtroAnioFinal').on('change', cargarReportesFiltrados);
-            if (esAdmin) {
-                $('#filtroEmpresa').on('change', cargarReportesFiltrados);
+                cargarReportesFiltrados();
             }
         });
 
-        $('#btnConsultar').on('click', function () {
+    // ─────────────────────────────────────────────────────────────────
+    // Filtrado dinámico de reportes
+    // ─────────────────────────────────────────────────────────────────
+
+    function cargarReportesFiltrados() {
+        $('#selectReporte').empty().append('<option value="">Cargando...</option>');
+        $('#btnConsultar').prop('disabled', true);
+
+        $.ajax({
+            url:    '@Url.Action("ObtenerReportesFiltrados", "Reportes")',
+            method: 'GET',
+            data: {
+                nombre:      $('#buscarReporte').val(),
+                anioInicial: $('#filtroAnioInicial').val(),
+                anioFinal:   $('#filtroAnioFinal').val(),
+                empresa:     getEmpresaSeleccionada()
+            },
+            success: function (data) { poblarSelectReportes(data); },
+            error:   function () {
+                $('#selectReporte').empty().append('<option value="">Error al cargar reportes</option>');
+                Swal.fire({
+                    toast: true, position: 'top-end', icon: 'error',
+                    title: 'Error al filtrar reportes.',
+                    showConfirmButton: false, timer: 3000
+                });
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        // Cambio de empresa → recargar reportes y limpiar iframe
+        $('#filtroEmpresa').on('change', function () {
+            limpiarIframe();
+            cargarReportesFiltrados();
+        });
+
+        // Otros filtros → solo refiltrar reportes (sin limpiar iframe)
+        $('#buscarReporte').on('input', cargarReportesFiltrados);
+        $('#filtroAnioInicial, #filtroAnioFinal').on('change', cargarReportesFiltrados);
+
+        // Habilitar botón solo cuando hay reporte seleccionado
+        $('#selectReporte').on('change', function () {
+            $('#btnConsultar').prop('disabled', !$(this).val());
+        });
+    });
+
+    // ─────────────────────────────────────────────────────────────────
+    // Ver reporte
+    // ─────────────────────────────────────────────────────────────────
+
+    $('#btnConsultar').on('click', function () {
         const idReporte = $('#selectReporte').val();
 
         if (!idReporte) {
             Swal.fire({
-                toast: true,
-                position: window.innerWidth <= 768 ? 'top' : 'top-end',
-                icon: 'warning',
-                title: 'Por favor, selecciona un reporte.',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer);
-                    toast.addEventListener('mouseleave', Swal.resumeTimer);
-                }
+                toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end',
+                icon: 'warning', title: 'Por favor selecciona un reporte.',
+                showConfirmButton: false, timer: 3000, timerProgressBar: true,
+                didOpen: (t) => { t.addEventListener('mouseenter', Swal.stopTimer); t.addEventListener('mouseleave', Swal.resumeTimer); }
             });
-            $('#iframeReporte').attr('src', '');
-            $('#btnPantallaCompleta').hide();
             return;
         }
 
+        const $btn = $('#btnConsultar');
+        $btn.prop('disabled', true);
+        $('#btnConsultarTexto').text('Cargando...');
+        $btn.prepend('<span class="spinner-border spinner-border-sm me-1" id="spinnerConsultar"></span>');
+
         $.ajax({
-            url: '@Url.Action("ObtenerEnlaceReporte", "Reportes")',
+            url:    '@Url.Action("ObtenerEnlaceReporte", "Reportes")',
             method: 'GET',
-            data: { id: idReporte },
+            data:   { id: idReporte },
             success: function (data) {
                 if (data.enlace) {
                     $('#iframeReporte').attr('src', data.enlace);
+                    $('#emptyState').hide();
+                    $('#iframeWrapper').show();
                     $('#btnPantallaCompleta').show();
                 } else {
                     Swal.fire({
-                        toast: true,
-                        position: window.innerWidth <= 768 ? 'top' : 'top-end',
-                        icon: 'info',
-                        title: 'No se encontró el enlace para este reporte.',
-                        showConfirmButton: false,
-                        timer: 3000,
-                        timerProgressBar: true,
-                        didOpen: (toast) => {
-                            toast.addEventListener('mouseenter', Swal.stopTimer);
-                            toast.addEventListener('mouseleave', Swal.resumeTimer);
-                        }
+                        toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end',
+                        icon: 'info', title: 'No se encontr\u00f3 el enlace para este reporte.',
+                        showConfirmButton: false, timer: 3500, timerProgressBar: true
                     });
                     $('#btnPantallaCompleta').hide();
                 }
             },
             error: function () {
-                    Swal.fire({
-                        toast: true,
-                        position: window.innerWidth <= 768 ? 'top' : 'top-end',
-                        icon: 'error',
-                        title: 'Error al obtener el enlace del reporte.',
-                        showConfirmButton: false,
-                        timer: 3000,
-                        timerProgressBar: true,
-                        didOpen: (toast) => {
-                            toast.addEventListener('mouseenter', Swal.stopTimer);
-                            toast.addEventListener('mouseleave', Swal.resumeTimer);
-                        }
-                    });
-                }
-            });
-        });
-
-        document.getElementById('btnPantallaCompleta').addEventListener('click', function () {
-            const container = document.getElementById('iframeContainer');
-
-            if (!document.fullscreenElement) {
-                container.requestFullscreen().catch(err => {
-                    alert(`Error al activar pantalla completa: ${err.message}`);
+                Swal.fire({
+                    toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end',
+                    icon: 'error', title: 'Error al obtener el enlace del reporte.',
+                    showConfirmButton: false, timer: 3500, timerProgressBar: true
                 });
-            } else {
-                document.exitFullscreen();
+            },
+            complete: function () {
+                $('#spinnerConsultar').remove();
+                $('#btnConsultarTexto').text('Ver reporte');
+                $('#btnConsultar').prop('disabled', !$('#selectReporte').val());
             }
         });
+    });
 
-        document.addEventListener('fullscreenchange', function () {
-            const btn = document.getElementById('btnPantallaCompleta');
-            const iframe = document.getElementById('iframeReporte');
+    // ─────────────────────────────────────────────────────────────────
+    // Pantalla completa
+    // ─────────────────────────────────────────────────────────────────
 
-            if (document.fullscreenElement) {
-                btn.textContent = 'Salir de pantalla completa';
-                iframe.classList.add('iframe-expandido');
-            } else {
-                btn.textContent = 'Pantalla completa';
-                iframe.classList.remove('iframe-expandido');
-            }
-        });
+    document.getElementById('btnPantallaCompleta').addEventListener('click', function () {
+        const container = document.getElementById('iframeContainer');
+        if (!document.fullscreenElement) {
+            container.requestFullscreen().catch(() => {
+                Swal.fire({ toast:true, position:'top-end', icon:'error', title:'No se pudo activar pantalla completa.', showConfirmButton:false, timer:3000 });
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    });
 
-        </script>
-    }
-    </head>
-</html>
+    document.addEventListener('fullscreenchange', function () {
+        const enFS = !!document.fullscreenElement;
+        document.getElementById('textoFullscreen').textContent = enFS ? 'Salir de pantalla' : 'Pantalla completa';
+        document.getElementById('iconoFullscreen').className   = enFS ? 'fas fa-compress me-1' : 'fas fa-expand me-1';
+    });
+</script>
+}
