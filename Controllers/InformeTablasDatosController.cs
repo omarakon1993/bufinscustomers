@@ -222,7 +222,8 @@ namespace bufinscustomers.Controllers
                     return Json(new IAConsultaResponse { Exitoso = false, Error = "No hay datos para analizar con los filtros seleccionados." });
                 }
 
-                string apiKey = (System.Configuration.ConfigurationManager.AppSettings["OpenAIApiKey"] ?? "").Trim();
+                string apiKey = new ConfiguracionSistemaService().ObtenerValor("OpenAIApiKey")
+                    ?? (System.Configuration.ConfigurationManager.AppSettings["OpenAIApiKey"] ?? "").Trim();
                 var iaService = new IAService(apiKey);
 
                 var tablaAmigable = _service.ObtenerTablasDisponibles()
