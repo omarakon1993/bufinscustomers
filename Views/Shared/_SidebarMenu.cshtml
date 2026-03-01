@@ -52,6 +52,13 @@
                                         @item.Nombre
                                     </a>
                                 }
+                                else if (item.Codigo == "INFORMES_ANALISIS_IA")
+                                {
+                                    <a class="sidebar-submenu-link" href="@Url.Action(item.Action, item.Controller)">
+                                        <i class="fas fa-robot" style="margin-right: 4px; font-size: 0.8rem;"></i>
+                                        @item.Nombre
+                                    </a>
+                                }
                                 else
                                 {
                                     <a class="sidebar-submenu-link" href="@Url.Action(item.Action, item.Controller)">

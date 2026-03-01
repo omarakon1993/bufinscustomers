@@ -153,6 +153,8 @@
     <Compile Include="Controllers\EmpresaController.cs" />
     <Compile Include="Controllers\MenuOpcionesController.cs" />
     <Compile Include="Controllers\ModelosEjecucionController.cs" />
+    <Compile Include="Controllers\GestorPromptsController.cs" />
+    <Compile Include="Controllers\AnalisisIAController.cs" />
     <Compile Include="Controllers\DatosController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ConfiguracionRelacionamientoController.cs" />
@@ -181,6 +183,8 @@
     <Compile Include="Models\ModeloEjecucion.cs" />
     <Compile Include="Models\ImagenUsuario.cs" />
     <Compile Include="Models\CargueExcelModels.cs" />
+    <Compile Include="Models\IAModels.cs" />
+    <Compile Include="Models\GestorPromptModels.cs" />
     <Compile Include="Models\ConfiguracionRelacionamiento.cs" />
     <Compile Include="Models\InformeRelacionamientos.cs" />
     <Compile Include="Models\InformeTablasDatos.cs" />
@@ -205,6 +209,8 @@
     <Compile Include="Services\ModeloService.cs" />
     <Compile Include="Services\ConfiguracionRelacionamientoService.cs" />
     <Compile Include="Services\InformeRelacionamientosService.cs" />
+    <Compile Include="Services\IAService.cs" />
+    <Compile Include="Services\GestorPromptsService.cs" />
     <Compile Include="Services\InformeTablasDatosService.cs" />
     <Compile Include="Services\PermisosService.cs" />
     <Compile Include="Services\ReportesService.cs" />
@@ -6184,10 +6190,12 @@
     <Content Include="Views\Informes\AuditoriaCargues.cshtml" />
     <Content Include="Views\Informes\InformeRelacionamientos.cshtml" />
     <Content Include="Views\Informes\InformeTablasDatos.cshtml" />
+    <Content Include="Views\Informes\AnalisisIA.cshtml" />
     <Content Include="Views\Configuracion\ConfiguracionesEmpresas.cshtml" />
     <Content Include="Views\Configuracion\ConfiguracionRelacionamiento.cshtml" />
     <Content Include="Views\Configuracion\MenuOpciones.cshtml" />
     <Content Include="Views\Configuracion\ModelosEjecucion.cshtml" />
+    <Content Include="Views\Configuracion\GestorPrompts.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

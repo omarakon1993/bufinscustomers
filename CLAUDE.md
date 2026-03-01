@@ -30,6 +30,14 @@ nuget restore bufinscustomers.sln
 6. **Filters** (`Filters/`) - `EmpresasViewBagFilter` (registered globally in `FilterConfig`)
 7. **Permisos** (`Permisos/`) - `ValidarSesionAttribute`, `RequierePermisoAttribute`
 
+### User Profile Images
+
+`ImagenUsuario` (`Models/ImagenUsuario.cs`) stores user profile images in the `UsuarioImagenes` DB table:
+- Fields: `Id`, `UsuarioId`, `ImagenBase64` (Base64-encoded image data), `TipoImagen` (MIME type, e.g. `"image/png"`)
+- The `Usuarios` model has an `ImagenUsuario Imagen` navigation property
+- Loaded eagerly alongside the user via `LEFT JOIN UsuarioImagenes` in `UsuarioSesionHelper.ObtenerUsuarioPorId()` — available in session without extra DB queries
+- Upload handled by `UsuarioController`; upload modal lives in `_Layout.cshtml`
+
 ### Base Classes
 
 **`BaseController`** (`Controllers/BaseController.cs`):
@@ -56,6 +64,13 @@ using (SqlConnection cn = new SqlConnection(CadenaConexion))
 
 **Stored Procedure Naming:** `sp_` prefix + PascalCase verb + entity name. Verbs used: `Obtener` (read), `Registrar` (create), `Editar` (update), `Eliminar` (delete), `Guardar` (save/upsert), `Agregar` (add item), `Actualizar` (update/reorder), `Validar` (validate). Examples: `sp_ObtenerUsuarios`, `sp_RegistrarEmpresa`, `sp_GuardarConfiguracionBasica`. Many procedures use `OUTPUT` parameters for success/error messages.
 
+**Backward-compatible column reading:** When adding a new column incrementally, wrap the reader access in a try-catch on `IndexOutOfRangeException`. This lets code run against DB schemas that may not yet have the column:
+```csharp
+try { opcion.SoloAdminEmpresa = reader["SoloAdminEmpresa"] != DBNull.Value && Convert.ToBoolean(reader["SoloAdminEmpresa"]); }
+catch (IndexOutOfRangeException) { }
+```
+This pattern is used in `PermisosService` for optional columns.
+
 ### Authentication & Session Management
 
 Custom session-based auth via `UsuarioSesionHelper` (`Helpers/UsuarioSesionHelper.cs`):
@@ -63,6 +78,17 @@ Custom session-based auth via `UsuarioSesionHelper` (`Helpers/UsuarioSesionHelpe
 - `[ValidarSesion]` attribute on controllers/actions requiring auth (handles AJAX vs regular requests)
 - Client-side session management with SweetAlert2 warnings at 5 minutes remaining (in `_Layout.cshtml`)
 - Key methods: `UsuarioActual`, `EstablecerUsuarioEnSesion()`, `LimpiarSesion()`, `ObtenerInfoSesion()`, `ExtenderSesion()`
+
+**Session keys** (constants in `UsuarioSesionHelper`):
+| Key | Type | Purpose |
+|-----|------|---------|
+| `"UsuarioCompleto"` | `Usuarios` | Full authenticated user object |
+| `"LastActivity"` | `DateTime` | Timestamp for inactivity timeout tracking |
+| `"LoginTime"` | `DateTime` | Login timestamp |
+| `"UsuarioPermisosCodigos"` | `HashSet<string>` | Cached permission codes (lazy-loaded on first `TienePermiso()` call) |
+| `"UsuarioMenuSidebar"` | `List<SidebarCategoriaViewModel>` | Cached sidebar menu (lazy-loaded on first `ObtenerMenuSidebar()` call) |
+| `"IdUsuario"`, `"usuario"` | backward-compat aliases | Set alongside `"UsuarioCompleto"` for legacy code |
+| `"LogImportacion"` | `string` | Excel import log text (set by `DatosController`) |
 
 ### Role Hierarchy (3 levels)
 
@@ -94,7 +120,7 @@ Known permission codes (BD codes, used in sidebar and controllers):
 - `DATOS_PLANTILLA_CARGUE`, `DATOS_MODELO_EJECUCION` (Datos)
 - `INFORMES_REPORTES_PBI`, `INFORMES_AUDITORIA_CARGUES`, `INFORMES_TABLAS_DATOS`, `INFORMES_RELACIONAMIENTOS` (Informes)
 - `ADMIN_USUARIOS_GESTOR`, `ADMIN_EMPRESAS_GESTOR`, `ADMIN_REPORTES_GESTOR` (Administración)
-- `ADMIN_CONFIG_EMPRESAS`, `ADMIN_CONFIG_RELACIONAMIENTOS`, `ADMIN_CONFIG_MENU` (Configuración - `ADMIN_CONFIG_MENU` is SoloSuperAdmin)
+- `ADMIN_CONFIG_EMPRESAS`, `ADMIN_CONFIG_RELACIONAMIENTOS`, `ADMIN_CONFIG_MENU`, `ADMIN_CONFIG_PROMPTS` (Configuración - both `ADMIN_CONFIG_MENU` and `ADMIN_CONFIG_PROMPTS` are SoloSuperAdmin)
 
 **Dynamic Sidebar**: The sidebar in `_Layout.cshtml` uses `Html.RenderPartial("_SidebarMenu", UsuarioSesionHelper.ObtenerMenuSidebar())`. Menu options are read from `MenuOpciones` table with columns `NombreGrupo`, `IconoGrupo`, `IconoCategoria`, `OrdenCategoria` for hierarchical rendering. New menu items added to the table auto-appear in the sidebar and permission manager.
 
@@ -116,10 +142,13 @@ Views are organized by **functional area**, not by controller name. Controllers 
 | ConfiguracionEmpresaController | `~/Views/Configuracion/ConfiguracionesEmpresas.cshtml` |
 | ConfiguracionRelacionamientoController | `~/Views/Configuracion/ConfiguracionRelacionamiento.cshtml` |
 | MenuOpcionesController | `~/Views/Configuracion/MenuOpciones.cshtml` |
+| ModelosEjecucionController | `~/Views/Configuracion/ModelosEjecucion.cshtml` |
+| GestorPromptsController | `~/Views/Configuracion/GestorPrompts.cshtml` |
 | ReportesController (CRUD) | `~/Views/Configuracion/MaestroReportes.cshtml` |
 | ReportesController (embed) | `~/Views/Reportes/Reportes.cshtml` |
 | DatosController | `~/Views/Datos/CargueExcel.cshtml`, `~/Views/Datos/Modelo.cshtml` |
 | InformeTablasDatosController | `~/Views/Informes/InformeTablasDatos.cshtml` |
+| AnalisisIAController | `~/Views/Informes/AnalisisIA.cshtml` |
 | InformeRelacionamientosController | `~/Views/Informes/InformeRelacionamientos.cshtml` |
 | AuditoriaCarguesController | `~/Views/Informes/AuditoriaCargues.cshtml` |
 | PermisosController | `~/Views/Permisos/Gestionar.cshtml` |
@@ -138,14 +167,63 @@ When creating new controllers, use explicit view paths with `~/Views/{area}/{vie
 - **ConfiguracionRelacionamientoController** - Relationship configuration with Excel upload (`[ValidarSesion]`)
 - **ReportesController** - Power BI report embedding and report CRUD (no `[ValidarSesion]`, manual checks)
 - **DatosController** - Excel data import/export (`[ValidarSesion]`)
-- **InformeTablasDatosController** - Data tables report (`[ValidarSesion]`)
+- **InformeTablasDatosController** - Data tables report with AI analysis via OpenAI (`[ValidarSesion]`). Endpoints: `InformeTablasDatos` (view), `ObtenerAnios`, `ObtenerVariables`, `ConsultarDatos`, `ConsultarConIA` (async), `ExportarExcel`
 - **InformeRelacionamientosController** - Relationships report (`[ValidarSesion]`)
 - **ModeloController** - Financial model execution (Datos area, `[ValidarSesion]`)
+- **ModelosEjecucionController** - Model execution management/configuration (`[ValidarSesion]`)
+- **GestorPromptsController** - IA prompt CRUD, Super Admin only (`[ValidarSesion]`). Actions: `Index`, `Crear`, `Editar`, `Eliminar` (soft-delete)
 - **AuditoriaCarguesController** - Upload audit trail (no `[ValidarSesion]`, manual checks)
+
+### Excel Import Logging
+
+`DatosController` accumulates timestamped import log messages during an Excel upload using a private `StringBuilder _logBuilder` field. Log entries are formatted as `[yyyy-MM-dd HH:mm:ss.fff] message` via private `LogToFile(mensaje)`. The completed log is stored in `Session["LogImportacion"]` via `GuardarLogEnSession()`. Users can download it as `LogImportacion_{yyyyMMdd_HHmmss}.txt` via `GET /Datos/DescargarLog`.
+
+Per-sheet results use `DetalleCargaHojaExcel` (`Models/CargueExcelModels.cs`):
+- `Estado` values: `"Exitoso"`, `"Error"`, `"Ignorada"` (empty/no headers/no data rows)
+- `ResultadoCargaExcel.MostrarDescargaLog` (bool) — set to `true` on error to show the download button
+
+Import rules: the workbook must have exactly 10 sheets; 5 consecutive empty rows terminate data reading.
 
 ### Configuration System
 
 `ConfiguracionEmpresa` model with sub-configurations: `EmpresasConsolidar`, `Paises`, `Categorias`, `Tipos`, `LineasNegocio`, `Ajuste1`, `Ajuste2`. Managed by `ConfiguracionEmpresaService`.
+
+### ModelosEjecucion Framework
+
+A configurable financial model execution system. Models are records in the `ModelosEjecucion` DB table; each points to a stored procedure that performs the actual computation.
+
+**`ModeloEjecucion`** (`Models/ModeloEjecucion.cs`): `Id`, `Nombre`, `NombreSP` (stored procedure name), `Descripcion`, `Icono`, `Orden`, `Activo` (bool, soft-delete flag). `ModeloPageViewModel` combines `List<Empresas>` and `List<ModeloEjecucion>` for the execution view.
+
+**`ModeloService`** (`Services/ModeloService.cs`):
+- `ObtenerModelosActivos()` — calls `sp_ObtenerModelosEjecucion`, returns only active models (for user-facing dropdown)
+- `ObtenerModeloPorId(id)` — inline SELECT with `Activo = 1` filter
+- `ObtenerTodos()` — includes inactive models (for admin CRUD)
+- `Crear()`, `Editar()`, `Eliminar()` — `Eliminar` is a soft-delete (`UPDATE ModelosEjecucion SET Activo = 0`)
+
+**`ModelosEjecucionController`** — CRUD UI for model management. Super Admin only (every action guards with `EsSuperAdmin()`). Uses `[ValidarSesion]` at class level. View: `~/Views/Configuracion/ModelosEjecucion.cshtml`.
+
+**`DatosController.EjecutarModelo(idEmpresa, anio, idModelo)`** — fetches `NombreSP` from DB (never from user input), then calls the SP with `@IdEmpresa`, `@IdUsuario`, `@Año`. The SP may return multiple intermediate result sets; the **final** result set must have `CodMessage` (1 = success) and `ErrorMessage` columns. `CommandTimeout` is 300 seconds.
+
+> **Note:** `Controllers/ModeloController.cs` is an **empty placeholder** — do not confuse it with `ModelosEjecucionController`.
+
+### IA (AI) Integration
+
+`IAService` (`Services/IAService.cs`) calls the **OpenAI API** using model `gpt-4o-mini`.
+
+- **Config key:** `appSettings["OpenAIApiKey"]` in Web.config
+- **Endpoint:** `https://api.openai.com/v1/chat/completions`
+- **Timeout:** 60 seconds, max 1024 output tokens, temperature 0.4
+- **Max rows sent to AI:** 50 (hardcoded `MaxFilas = 50`)
+- **Models:** `IAConsultaRequest` (pregunta, datosJson, nombreTabla, filtrosDescripcion) / `IAConsultaResponse` (exitoso, respuesta, error) in `Models/IAModels.cs`
+
+Currently integrated in `InformeTablasDatosController.ConsultarConIA()` — re-queries the DB, serializes up to 50 rows as JSON, and sends them with the user's optional question to OpenAI. The prompt instructs the model to act as a Colombian corporate finance analyst and respond in Spanish with markdown.
+
+**Prompt customization**: The instruction block for the automatic summary (when no question is asked) is stored in the `GestorPrompts` DB table with `Codigo = 'RESUMEN_GERENCIAL'`. `GestorPromptsService.ObtenerPorCodigo("RESUMEN_GERENCIAL")` fetches it; if inactive/missing, `IAService` falls back to the hardcoded text. Managed via `GestorPromptsController` (Super Admin only). `IAService.ConsultarAsync()` accepts an optional `instruccionesPersonalizadas` parameter.
+
+**Available financial tables** (static dictionary in `InformeTablasDatosService`):
+`TableBalance_Datos_VT`, `TablePYG_Datos_VT`, `TableEbitda_Datos_VT`, `TableFlujoCaja_Datos_VT`, `TableFlujoTesoreria_Datos_VT`, `TableGasFijosYVar_Datos_VT`, `TableTakeRate_Datos_VT`, `TableIngCosGas_Datos_VT`, `TableIngLineasVenta_Datos_VT`, `TablePYGAjustado_Datos_VT`. Table names are whitelist-validated before use in SQL to prevent injection.
+
+> To switch AI provider, only `IAService.cs` needs to change — update `OpenAIEndpoint`, `OpenAIModel`, and the Authorization header format. The config key is `OpenAIApiKey` in Web.config.
 
 ### Global Filter
 
@@ -157,6 +235,7 @@ When creating new controllers, use explicit view paths with `~/Views/{area}/{vie
 - jQuery 3.7.1
 - SweetAlert2 for session notifications and confirmations
 - FontAwesome icons
+- Select2 (`Assets/js/select2/`, `Assets/css/select2/`) for enhanced dropdowns
 - EPPlus 8.0.7 for Excel operations (license set in `Global.asax.cs`)
 
 ### Layout Structure

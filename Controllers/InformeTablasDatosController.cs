@@ -2,12 +2,14 @@ using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
+using Newtonsoft.Json;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web.Mvc;
 
 namespace bufinscustomers.Controllers
@@ -187,6 +189,89 @@ namespace bufinscustomers.Controllers
             {
                 return Json(new { success = false, message = $"Error al consultar datos: {ex.Message}" });
             }
+        }
+
+        /// <summary>
+        /// Consulta la IA con los datos actuales y una pregunta opcional
+        /// </summary>
+        [HttpPost]
+        public async Task<JsonResult> ConsultarConIA(FiltrosInformeTablasDatos filtros, string pregunta)
+        {
+            try
+            {
+                var usuario = UsuarioSesionHelper.UsuarioActual;
+                var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
+                var idEmpresaUsuario = usuario?.IdEmpresa;
+
+                // Misma validación de permisos que ConsultarDatos
+                if (!esAdmin && filtros.IdEmpresa.HasValue && filtros.IdEmpresa != idEmpresaUsuario)
+                {
+                    return Json(new IAConsultaResponse { Exitoso = false, Error = "No tiene permisos para consultar datos de otra empresa." });
+                }
+
+                // Año obligatorio para el análisis IA (reduce el volumen de datos)
+                if (!filtros.Anio.HasValue)
+                {
+                    return Json(new IAConsultaResponse { Exitoso = false, Error = "Debe seleccionar un Año para el análisis IA." });
+                }
+
+                var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaUsuario);
+
+                if (resultado.TotalRegistros == 0)
+                {
+                    return Json(new IAConsultaResponse { Exitoso = false, Error = "No hay datos para analizar con los filtros seleccionados." });
+                }
+
+                string apiKey = (System.Configuration.ConfigurationManager.AppSettings["OpenAIApiKey"] ?? "").Trim();
+                var iaService = new IAService(apiKey);
+
+                var tablaAmigable = _service.ObtenerTablasDisponibles()
+                    .FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla)?.NombreAmigable ?? filtros.NombreTabla;
+
+                var promptConfig = new GestorPromptsService().ObtenerPorCodigo("RESUMEN_GERENCIAL");
+                string instrucciones = promptConfig?.TextoPrompt;
+
+                var request = new IAConsultaRequest
+                {
+                    Pregunta = string.IsNullOrWhiteSpace(pregunta) ? null : pregunta.Trim(),
+                    DatosJson = JsonConvert.SerializeObject(resultado.Filas),
+                    NombreTabla = tablaAmigable,
+                    FiltrosDescripcion = ConstruirDescripcionFiltros(filtros)
+                };
+
+                var response = await iaService.ConsultarAsync(request, instrucciones);
+                response.FilasEnviadas = resultado.TotalRegistros;
+                response.TotalFilas = resultado.TotalRegistros;
+                return Json(response);
+            }
+            catch (Exception ex)
+            {
+                return Json(new IAConsultaResponse { Exitoso = false, Error = $"Error al procesar la consulta: {ex.Message}" });
+            }
+        }
+
+        private string ConstruirDescripcionFiltros(FiltrosInformeTablasDatos filtros)
+        {
+            var partes = new List<string>();
+
+            if (filtros.IdEmpresa.HasValue)
+                partes.Add($"Empresa ID {filtros.IdEmpresa}");
+
+            if (filtros.Anio.HasValue)
+                partes.Add($"Año {filtros.Anio}");
+
+            if (filtros.Mes.HasValue)
+            {
+                string[] meses = { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                                   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
+                int mes = filtros.Mes.Value;
+                partes.Add($"Mes {(mes >= 1 && mes <= 12 ? meses[mes] : mes.ToString())}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtros.Variable))
+                partes.Add($"Variable '{filtros.Variable}'");
+
+            return partes.Count > 0 ? string.Join(", ", partes) : "Sin filtros adicionales";
         }
 
         /// <summary>

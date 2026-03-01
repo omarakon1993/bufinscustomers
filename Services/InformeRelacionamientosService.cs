@@ -10,28 +10,64 @@ namespace bufinscustomers.Services
     public class InformeRelacionamientosService : BaseService
     {
         /// <summary>
-        /// Diccionario de tablas de relacionamiento disponibles
-        /// </summary>
-        private static readonly Dictionary<string, TablaRelacionamiento> TablasDisponibles = new Dictionary<string, TablaRelacionamiento>
-        {
-            { "Rel_Balance", new TablaRelacionamiento { NombreTabla = "Rel_Balance", NombreAmigable = "Balance", Descripcion = "Relacionamientos de Balance" } },
-            { "Rel_PYG", new TablaRelacionamiento { NombreTabla = "Rel_PYG", NombreAmigable = "P&G", Descripcion = "Relacionamientos de PYG" } }
-        };
-
-        /// <summary>
-        /// Obtiene la lista de tablas disponibles
+        /// Obtiene dinámicamente las tablas con prefijo Rel_ desde la base de datos
         /// </summary>
         public List<TablaRelacionamiento> ObtenerTablasDisponibles()
         {
-            return TablasDisponibles.Values.OrderBy(t => t.NombreAmigable).ToList();
+            var tablas = new List<TablaRelacionamiento>();
+            try
+            {
+                using (SqlConnection cn = new SqlConnection(CadenaConexion))
+                {
+                    // LIKE 'Rel[_]%' escapa el underscore para que no actúe como comodín
+                    string query = @"SELECT TABLE_NAME
+                                     FROM INFORMATION_SCHEMA.TABLES
+                                     WHERE TABLE_TYPE = 'BASE TABLE'
+                                       AND TABLE_NAME LIKE 'Rel[_]%'
+                                     ORDER BY TABLE_NAME";
+
+                    SqlCommand cmd = new SqlCommand(query, cn);
+                    cn.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string nombreTabla = reader.GetString(0);
+                            string nombreAmigable = nombreTabla.Length > 4
+                                ? nombreTabla.Substring(4)   // quita el prefijo "Rel_"
+                                : nombreTabla;
+
+                            tablas.Add(new TablaRelacionamiento
+                            {
+                                NombreTabla    = nombreTabla,
+                                NombreAmigable = nombreAmigable,
+                                Descripcion    = $"Relacionamientos de {nombreAmigable}"
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error al obtener tablas de relacionamiento: {ex.Message}");
+            }
+            return tablas;
         }
 
         /// <summary>
-        /// Valida que el nombre de tabla sea valido (prevencion de SQL injection)
+        /// Valida que el nombre de tabla sea válido (prevención de SQL injection).
+        /// Solo permite tablas que comiencen con Rel_ y contengan únicamente
+        /// letras, números y guiones bajos en el resto del nombre.
         /// </summary>
         private bool ValidarNombreTabla(string nombreTabla)
         {
-            return !string.IsNullOrWhiteSpace(nombreTabla) && TablasDisponibles.ContainsKey(nombreTabla);
+            if (string.IsNullOrWhiteSpace(nombreTabla))
+                return false;
+
+            return System.Text.RegularExpressions.Regex.IsMatch(
+                nombreTabla,
+                @"^Rel_[A-Za-z0-9_]+$");
         }
 
         /// <summary>
