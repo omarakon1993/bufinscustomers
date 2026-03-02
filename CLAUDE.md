@@ -172,6 +172,7 @@ When creating new controllers, use explicit view paths with `~/Views/{area}/{vie
 - **ModeloController** - Financial model execution (Datos area, `[ValidarSesion]`)
 - **ModelosEjecucionController** - Model execution management/configuration (`[ValidarSesion]`)
 - **GestorPromptsController** - IA prompt CRUD, Super Admin only (`[ValidarSesion]`). Actions: `Index`, `Crear`, `Editar`, `Eliminar` (soft-delete)
+- **AnalisisIAController** - Standalone AI analysis page; reuses `InformeTablasDatosService` for table/empresa lists; company-scoped for non-Super Admin (`[ValidarSesion]`)
 - **AuditoriaCarguesController** - Upload audit trail (no `[ValidarSesion]`, manual checks)
 
 ### Excel Import Logging
@@ -224,6 +225,8 @@ Currently integrated in `InformeTablasDatosController.ConsultarConIA()` — re-q
 `TableBalance_Datos_VT`, `TablePYG_Datos_VT`, `TableEbitda_Datos_VT`, `TableFlujoCaja_Datos_VT`, `TableFlujoTesoreria_Datos_VT`, `TableGasFijosYVar_Datos_VT`, `TableTakeRate_Datos_VT`, `TableIngCosGas_Datos_VT`, `TableIngLineasVenta_Datos_VT`, `TablePYGAjustado_Datos_VT`. Table names are whitelist-validated before use in SQL to prevent injection.
 
 > To switch AI provider, only `IAService.cs` needs to change — update `OpenAIEndpoint`, `OpenAIModel`, and the Authorization header format. The config key is `OpenAIApiKey` in Web.config.
+
+**`ConfiguracionSistemaService`** (`Services/ConfiguracionSistemaService.cs`) — reads key/value pairs from the `ConfiguracionSistema` DB table (`SELECT Valor FROM ConfiguracionSistema WHERE Clave = @Clave`). Used by `InformeTablasDatosController.ConsultarConIA()` to fetch `OpenAIApiKey` at runtime (DB value takes precedence over Web.config). Use this service for any secret or runtime-configurable setting that should be stored in the DB rather than deployed config.
 
 ### Global Filter
 
