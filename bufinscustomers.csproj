@@ -158,7 +158,9 @@
     <Compile Include="Controllers\DatosController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ConfiguracionRelacionamientoController.cs" />
+    <Compile Include="Controllers\ConfiguracionVariablesPBIController.cs" />
     <Compile Include="Controllers\InformeRelacionamientosController.cs" />
+    <Compile Include="Controllers\VariablesPBIController.cs" />
     <Compile Include="Controllers\InformeTablasDatosController.cs" />
     <Compile Include="Controllers\ModeloController.cs" />
     <Compile Include="Controllers\PermisosController.cs" />
@@ -187,6 +189,7 @@
     <Compile Include="Models\GestorPromptModels.cs" />
     <Compile Include="Models\ConfiguracionRelacionamiento.cs" />
     <Compile Include="Models\InformeRelacionamientos.cs" />
+    <Compile Include="Models\VariablesPBI.cs" />
     <Compile Include="Models\InformeTablasDatos.cs" />
     <Compile Include="Models\PermisosModulos.cs" />
     <Compile Include="Models\SidebarMenuViewModel.cs" />
@@ -208,7 +211,9 @@
     <Compile Include="Services\EmpresaService.cs" />
     <Compile Include="Services\ModeloService.cs" />
     <Compile Include="Services\ConfiguracionRelacionamientoService.cs" />
+    <Compile Include="Services\ConfiguracionVariablesPBIService.cs" />
     <Compile Include="Services\InformeRelacionamientosService.cs" />
+    <Compile Include="Services\VariablesPBIService.cs" />
     <Compile Include="Services\IAService.cs" />
     <Compile Include="Services\GestorPromptsService.cs" />
     <Compile Include="Services\ConfiguracionSistemaService.cs" />
@@ -6192,8 +6197,10 @@
     <Content Include="Views\Informes\InformeRelacionamientos.cshtml" />
     <Content Include="Views\Informes\InformeTablasDatos.cshtml" />
     <Content Include="Views\Informes\AnalisisIA.cshtml" />
+    <Content Include="Views\Informes\VariablesPBI.cshtml" />
     <Content Include="Views\Configuracion\ConfiguracionesEmpresas.cshtml" />
     <Content Include="Views\Configuracion\ConfiguracionRelacionamiento.cshtml" />
+    <Content Include="Views\Configuracion\ConfiguracionVariablesPBI.cshtml" />
     <Content Include="Views\Configuracion\MenuOpciones.cshtml" />
     <Content Include="Views\Configuracion\ModelosEjecucion.cshtml" />
     <Content Include="Views\Configuracion\GestorPrompts.cshtml" />

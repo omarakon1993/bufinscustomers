@@ -1,0 +1,480 @@
+@model dynamic
+@using bufinscustomers.Models
+
+@{
+    ViewBag.Title = "Variables PBI";
+    var tablas = ViewBag.Tablas as List<string>;
+    var estado = ViewBag.EstadoActual as EstadoVariablesPBI;
+}
+
+<link href="~/Assets/css/informe-relacionamientos.css" rel="stylesheet" />
+<link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
+
+<style>
+    /* ── Badge subtotal ───────────────────────────────────────── */
+    .subtotal-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        background: linear-gradient(135deg, #10b981, #047857);
+        color: white;
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 2px 9px;
+        border-radius: 20px;
+        vertical-align: middle;
+        letter-spacing: 0.04em;
+        box-shadow: 0 1px 4px rgba(16,185,129,0.45);
+        white-space: nowrap;
+    }
+
+    /* ── Filas subtotal en la tabla ──────────────────────────── */
+    tr.fila-subtotal td {
+        background: linear-gradient(90deg, #f0fdf4, #f7fef8) !important;
+        font-weight: 600;
+        color: #065f46;
+    }
+    tr.fila-subtotal td:first-child {
+        border-left: 3px solid #10b981;
+    }
+    tr.fila-subtotal:hover td {
+        background: linear-gradient(90deg, #dcfce7, #ecfdf5) !important;
+    }
+
+    /* ── Icono check / dash en columna Subtotal ──────────────── */
+    .st-check {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px; height: 22px;
+        background: linear-gradient(135deg, #10b981, #047857);
+        border-radius: 50%;
+        color: white;
+        font-size: 0.65rem;
+        box-shadow: 0 1px 3px rgba(16,185,129,0.5);
+    }
+    .st-dash { color: #d1d5db; font-size: 0.9rem; }
+
+    /* ── Bot&oacute;n filtro Solo Subtotales ─────────────────────── */
+    #btnSoloSubtotales {
+        border: 2px solid #d1d5db;
+        background: white;
+        color: #6b7280;
+        font-weight: 600;
+        font-size: 0.82rem;
+        border-radius: 0.5rem;
+        transition: all 0.22s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 0.45rem 0.75rem;
+    }
+    #btnSoloSubtotales:hover {
+        border-color: #10b981;
+        color: #059669;
+        background: #f0fdf4;
+    }
+    #btnSoloSubtotales.subtotales-activo {
+        background: linear-gradient(135deg, #10b981, #047857) !important;
+        color: white !important;
+        border-color: transparent !important;
+        box-shadow: 0 3px 10px rgba(16,185,129,0.45);
+    }
+    #btnSoloSubtotales .st-toggle-icon { font-size: 0.8rem; transition: transform 0.2s; }
+    #btnSoloSubtotales.subtotales-activo .st-toggle-icon { transform: scale(1.15); }
+
+    /* ── Barra audit&oacute;ria ────────────────────────────────────── */
+    .audit-info-bar {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.6rem 1rem;
+        background: linear-gradient(135deg, #f8f9ff, #eef2ff);
+        border-radius: 0.5rem;
+        border-left: 4px solid #6366F1;
+        font-size: 0.83rem;
+        color: #4b5563;
+        margin-bottom: 1rem;
+    }
+    .audit-info-bar i { color: #6366F1; }
+
+    /* ── Cabecera de tabla ───────────────────────────────────── */
+    .tabla-nombre-header {
+        background: linear-gradient(135deg, #6366F1, #3B82F6);
+        color: white;
+        font-weight: 700;
+        font-size: 0.8rem;
+        letter-spacing: 0.03em;
+        padding: 0.4rem 0.75rem !important;
+        text-transform: uppercase;
+    }
+
+    .col-orden     { text-align: center; width: 56px; }
+    .col-subtotal  { text-align: center; width: 66px; }
+    .col-orden-num { text-align: center; width: 52px; }
+</style>
+
+<div class="container-fluid px-4">
+    <!-- Header -->
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-sort-numeric-down powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">Variables PBI</h1>
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle mr-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        </div>
+    }
+    @if (TempData["InfoMessage"] != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle mr-2"></i>@TempData["InfoMessage"]
+            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        </div>
+    }
+
+    <!-- Card de filtros -->
+    <div class="filter-card">
+        <h3 class="filter-card-title">
+            <i class="fas fa-filter"></i>
+            Filtros de Consulta
+        </h3>
+
+        <form id="formFiltros">
+            <div class="filter-section">
+                <div class="row">
+                    <div class="col-md-5">
+                        <div class="form-group">
+                            <label for="selectTabla">
+                                <i class="fas fa-table"></i> Tabla
+                            </label>
+                            <select id="selectTabla" name="NombreTabla" class="form-control">
+                                <option value="">-- Todas las tablas --</option>
+                                @if (tablas != null)
+                                {
+                                    foreach (var t in tablas)
+                                    {
+                                        <option value="@t">@t</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="form-group">
+                            <label for="txtVariable">
+                                <i class="fas fa-search"></i> Variable (b&uacute;squeda parcial)
+                            </label>
+                            <input type="text" id="txtVariable" name="Variable" class="form-control"
+                                   placeholder="Ej: Ingresos, EBITDA..." autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <div>
+                                <button type="button" id="btnSoloSubtotales" class="btn w-100"
+                                        title="Filtrar solo variables de subtotal">
+                                    <i class="fas fa-layer-group st-toggle-icon"></i>
+                                    <span>Solo Subtotales</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group-actions">
+                <button type="button" id="btnConsultar" class="btn btn-modern-gradient">
+                    <i class="fas fa-search mr-2"></i>Consultar
+                </button>
+                <button type="button" id="btnLimpiar" class="btn btn-modern-secondary">
+                    <i class="fas fa-eraser mr-2"></i>Limpiar
+                </button>
+                <button type="button" id="btnExportar" class="btn btn-modern-success" style="display:none;">
+                    <i class="fas fa-file-excel mr-2"></i>Exportar Excel
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Spinner -->
+    <div id="loadingSpinner" class="loading-spinner">
+        <i class="fas fa-spinner"></i>
+        <p>Consultando datos...</p>
+    </div>
+
+    <!-- Resultados -->
+    <div id="resultadosContainer" style="display:none;">
+        <div class="table-container">
+            <div class="table-header">
+                <h5><i class="fas fa-list mr-2"></i>Resultados</h5>
+                <span id="totalRegistros" class="info-badge"></span>
+            </div>
+
+            <!-- Info auditor&iacute;a -->
+            <div id="auditBar" class="audit-info-bar" style="display:none;">
+                <i class="fas fa-user-clock"></i>
+                <span>&Uacute;ltima carga: <strong id="auditUsuario"></strong> &mdash; <span id="auditFecha"></span></span>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="tablaResultados" class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="col-orden">Orden</th>
+                            <th>Tabla</th>
+                            <th>Variable</th>
+                            <th class="col-subtotal">Subtotal</th>
+                            <th>Variable Padre</th>
+                            <th>Variable Indicador</th>
+                            <th>Clase Variable</th>
+                            <th>Agrupaci&oacute;n KEY</th>
+                            <th>Agrupaci&oacute;n KEY ABR</th>
+                            <th class="col-orden-num">KEY Orden</th>
+                            <th>Var. Padre Real</th>
+                            <th>Var. Padre ABR</th>
+                            <th class="col-orden-num">Padre Real Orden</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaBody"></tbody>
+                </table>
+            </div>
+            <div id="paginacion" class="pagination-controls"></div>
+        </div>
+    </div>
+
+    <div id="noDataMessage" class="no-data-message" style="display:none;">
+        <i class="fas fa-inbox"></i>
+        <h4>No se encontraron datos</h4>
+        <p>No hay registros que coincidan con los filtros seleccionados.</p>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            var datosActuales = null;
+            var filtrosActuales = null;
+            var paginaActual = 1;
+            var registrosPorPagina = 50;
+            var soloSubtotales = false;
+
+            // ── Toggle solo subtotales ──────────────────────────────────────
+            $('#btnSoloSubtotales').on('click', function () {
+                soloSubtotales = !soloSubtotales;
+                $(this).toggleClass('subtotales-activo', soloSubtotales);
+                ocultarResultados();
+            });
+
+            // ── Consultar ──────────────────────────────────────────────────
+            $('#btnConsultar').on('click', function () {
+                consultarDatos();
+            });
+
+            // Enter en campo variable
+            $('#txtVariable').on('keypress', function (e) {
+                if (e.which === 13) consultarDatos();
+            });
+
+            function consultarDatos() {
+                filtrosActuales = {
+                    NombreTabla: $('#selectTabla').val() || null,
+                    Variable: $('#txtVariable').val().trim() || null,
+                    SoloSubtotales: soloSubtotales
+                };
+
+                $('#loadingSpinner').show();
+                ocultarResultados();
+
+                $.ajax({
+                    url: '@Url.Action("ConsultarDatos", "VariablesPBI")',
+                    type: 'POST',
+                    data: filtrosActuales,
+                    success: function (resp) {
+                        $('#loadingSpinner').hide();
+                        if (resp.success) {
+                            datosActuales = resp;
+                            paginaActual = 1;
+                            if (resp.totalRegistros > 0) {
+                                mostrarResultados(resp);
+                            } else {
+                                $('#noDataMessage').show();
+                            }
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Error', text: resp.message });
+                        }
+                    },
+                    error: function () {
+                        $('#loadingSpinner').hide();
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'Error de conexi\u00f3n al consultar los datos' });
+                    }
+                });
+            }
+
+            // ── Mostrar resultados ─────────────────────────────────────────
+            function mostrarResultados(resp) {
+                var datos = resp.datos;
+
+                // Auditor\u00eda
+                if (resp.usuarioCargo) {
+                    $('#auditUsuario').text(resp.usuarioCargo);
+                    $('#auditFecha').text(resp.fechaCarga || '');
+                    $('#auditBar').show();
+                } else {
+                    $('#auditBar').hide();
+                }
+
+                var totalPaginas = Math.ceil(datos.length / registrosPorPagina);
+                var inicio = (paginaActual - 1) * registrosPorPagina;
+                var fin = Math.min(inicio + registrosPorPagina, datos.length);
+
+                var tbody = $('#tablaBody').empty();
+                var tablaAnterior = null;
+                var grupoIdx = -1;
+                var coloresGrupo = ['grupo-0', 'grupo-1', 'grupo-2', 'grupo-3'];
+
+                for (var i = inicio; i < fin; i++) {
+                    var ov = datos[i];
+
+                    if (ov.NombreTabla !== tablaAnterior) {
+                        grupoIdx++;
+                        tablaAnterior = ov.NombreTabla;
+                        // Fila separadora de tabla
+                        var sepRow = $('<tr>').addClass('grupo-inicio');
+                        var sepCell = $('<td>').attr('colspan', 13)
+                            .addClass('tabla-nombre-header')
+                            .html('<i class="fas fa-table" style="margin-right:6px;"></i>' + escHtml(ov.NombreTabla || ''));
+                        sepRow.append(sepCell);
+                        tbody.append(sepRow);
+                    }
+
+                    var claseGrupo = coloresGrupo[grupoIdx % 4];
+                    var row = $('<tr>').addClass(claseGrupo);
+                    if (ov.SubtotalVariable) row.addClass('fila-subtotal');
+
+                    var subtotalColHtml = ov.SubtotalVariable
+                        ? '<span class="st-check"><i class="fas fa-check"></i></span>'
+                        : '<span class="st-dash">&mdash;</span>';
+
+                    var variableHtml = escHtml(ov.Variable || '');
+                    if (ov.SubtotalVariable) {
+                        variableHtml += ' <span class="subtotal-badge"><i class="fas fa-sigma" style="font-size:0.6rem;"></i> Subtotal</span>';
+                    }
+
+                    row.append($('<td>').addClass('col-orden').text(ov.OrdenVariable_ || ''));
+                    row.append($('<td>').text(ov.NombreTabla || ''));
+                    row.append($('<td>').html(variableHtml));
+                    row.append($('<td>').addClass('col-subtotal').html(subtotalColHtml));
+                    row.append($('<td>').text(ov.VariablePadre || ''));
+                    row.append($('<td>').text(ov.VariableIndicador || ''));
+                    row.append($('<td>').text(ov.ClaseVariable || ''));
+                    row.append($('<td>').text(ov.AgrupacionKEY || ''));
+                    row.append($('<td>').text(ov.AgrupacionKEYABR || ''));
+                    row.append($('<td>').addClass('col-orden-num').text(ov.AgrupacionKEYOrden !== null ? ov.AgrupacionKEYOrden : ''));
+                    row.append($('<td>').text(ov.VariablePadreReal || ''));
+                    row.append($('<td>').text(ov.VariablePadreAbr || ''));
+                    row.append($('<td>').addClass('col-orden-num').text(ov.VariablePadreRealOrden !== null ? ov.VariablePadreRealOrden : ''));
+
+                    tbody.append(row);
+                }
+
+                $('#totalRegistros').text(resp.totalRegistros + ' registros | P\u00e1g. ' + paginaActual + '/' + totalPaginas);
+                crearPaginacion(totalPaginas);
+                $('#resultadosContainer').show();
+                $('#btnExportar').show();
+            }
+
+            function escHtml(text) {
+                if (!text) return '';
+                var d = document.createElement('div');
+                d.appendChild(document.createTextNode(text));
+                return d.innerHTML;
+            }
+
+            // ── Paginaci\u00f3n ─────────────────────────────────────────────────
+            function crearPaginacion(totalPaginas) {
+                var p = $('#paginacion').empty();
+                if (totalPaginas <= 1) return;
+
+                p.append($('<button>').addClass('btn-pagination').html('<i class="fas fa-chevron-left"></i>')
+                    .prop('disabled', paginaActual === 1).on('click', function () {
+                        if (paginaActual > 1) { paginaActual--; mostrarResultados(datosActuales); }
+                    }));
+
+                var ini = Math.max(1, paginaActual - 2), fin2 = Math.min(totalPaginas, paginaActual + 2);
+                if (ini > 1) {
+                    p.append($('<button>').addClass('btn-pagination').text('1').on('click', function () { paginaActual = 1; mostrarResultados(datosActuales); }));
+                    if (ini > 2) p.append($('<span>').addClass('pagination-dots').text('...'));
+                }
+                for (var i = ini; i <= fin2; i++) {
+                    (function (pg) {
+                        var btn = $('<button>').addClass('btn-pagination').text(pg).data('pagina', pg);
+                        if (pg === paginaActual) btn.addClass('active');
+                        btn.on('click', function () { paginaActual = pg; mostrarResultados(datosActuales); });
+                        p.append(btn);
+                    })(i);
+                }
+                if (fin2 < totalPaginas) {
+                    if (fin2 < totalPaginas - 1) p.append($('<span>').addClass('pagination-dots').text('...'));
+                    p.append($('<button>').addClass('btn-pagination').text(totalPaginas).on('click', function () { paginaActual = totalPaginas; mostrarResultados(datosActuales); }));
+                }
+
+                p.append($('<button>').addClass('btn-pagination').html('<i class="fas fa-chevron-right"></i>')
+                    .prop('disabled', paginaActual === totalPaginas).on('click', function () {
+                        if (paginaActual < totalPaginas) { paginaActual++; mostrarResultados(datosActuales); }
+                    }));
+            }
+
+            // ── Limpiar ────────────────────────────────────────────────────
+            $('#btnLimpiar').on('click', function () {
+                $('#selectTabla').val('').trigger('change.select2');
+                $('#txtVariable').val('');
+                soloSubtotales = false;
+                $('#btnSoloSubtotales').removeClass('subtotales-activo');
+                ocultarResultados();
+            });
+
+            function ocultarResultados() {
+                $('#resultadosContainer').hide();
+                $('#noDataMessage').hide();
+                $('#btnExportar').hide();
+                datosActuales = null;
+            }
+
+            // ── Exportar ───────────────────────────────────────────────────
+            $('#btnExportar').on('click', function () {
+                if (!filtrosActuales) return;
+
+                var params = [];
+                if (filtrosActuales.NombreTabla)
+                    params.push('NombreTabla=' + encodeURIComponent(filtrosActuales.NombreTabla));
+                if (filtrosActuales.Variable)
+                    params.push('Variable=' + encodeURIComponent(filtrosActuales.Variable));
+                if (filtrosActuales.SoloSubtotales)
+                    params.push('SoloSubtotales=true');
+
+                var url = '@Url.Action("ExportarExcel", "VariablesPBI")';
+                if (params.length > 0) url += '?' + params.join('&');
+
+                window.location = url;
+                Swal.fire({ icon: 'success', title: 'Exportando...', text: 'Generando archivo Excel', timer: 2000, showConfirmButton: false });
+            });
+
+            // ── Select2 ────────────────────────────────────────────────────
+            $('#selectTabla').select2({
+                placeholder: '-- Todas las tablas --',
+                allowClear: true,
+                width: '100%',
+                language: { noResults: function () { return 'No se encontraron resultados'; }, searching: function () { return 'Buscando...'; } }
+            });
+        });
+    </script>
+    <script src="~/Assets/js/select2/select2.min.js"></script>
+}

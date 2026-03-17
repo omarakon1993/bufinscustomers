@@ -48,7 +48,6 @@
                                 else if (item.Codigo == "INFORMES_RELACIONAMIENTOS")
                                 {
                                     <a class="sidebar-submenu-link" href="@Url.Action(item.Action, item.Controller)">
-                                        <i class="fas fa-project-diagram" style="margin-right: 4px; font-size: 0.8rem;"></i>
                                         @item.Nombre
                                     </a>
                                 }
@@ -56,6 +55,18 @@
                                 {
                                     <a class="sidebar-submenu-link" href="@Url.Action(item.Action, item.Controller)">
                                         <i class="fas fa-robot" style="margin-right: 4px; font-size: 0.8rem;"></i>
+                                        @item.Nombre
+                                    </a>
+                                }
+                                else if (item.Codigo == "INFORMES_VARIABLES_PBI")
+                                {
+                                    <a class="sidebar-submenu-link" href="@Url.Action(item.Action, item.Controller)">
+                                        @item.Nombre
+                                    </a>
+                                }
+                                else if (item.Codigo == "ADMIN_CONFIG_VARIABLES_PBI")
+                                {
+                                    <a class="sidebar-submenu-link" href="@Url.Action(item.Action, item.Controller)">
                                         @item.Nombre
                                     </a>
                                 }

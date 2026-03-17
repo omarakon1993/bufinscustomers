@@ -1,0 +1,407 @@
+@model dynamic
+@using bufinscustomers.Models
+
+@{
+    ViewBag.Title = "Configuraci\u00f3n Variables PBI";
+    var estado    = ViewBag.EstadoActual as EstadoVariablesPBI;
+    var resultado = TempData["ResultadoCarga"] as ResultadoCargaVariablesPBI;
+
+    // Pre-calcular variables del diff para evitar declaraciones dentro de @if anidados
+    var comp        = resultado != null ? resultado.Comparacion : null;
+    var listaAgr    = comp != null ? comp.Agregados  : new System.Collections.Generic.List<RegistroOrdenVariableResumen>();
+    var listaEl     = comp != null ? comp.Eliminados  : new System.Collections.Generic.List<RegistroOrdenVariableResumen>();
+    var listaMod    = comp != null ? comp.Modificados : new System.Collections.Generic.List<ModificacionOrdenVariable>();
+    const int maxMostrar = 50;
+    // Flags para evitar @if anidados dentro de else{} (limita profundidad del parser Razor MVC5)
+    bool hayDiff       = comp != null;
+    bool hayCambios    = comp != null && comp.TieneCambios;
+    bool hayAgregados  = comp != null && comp.TotalAgregados  > 0;
+    bool hayEliminados = comp != null && comp.TotalEliminados > 0;
+    bool hayModificados= comp != null && comp.TotalModificados > 0;
+}
+
+<link href="~/Assets/css/informe-relacionamientos.css" rel="stylesheet" />
+
+<style>
+    .diff-section { margin-bottom: 1rem; }
+    .diff-header {
+        display: flex; align-items: center; gap: 0.5rem;
+        padding: 0.6rem 1rem; border-radius: 0.5rem 0.5rem 0 0;
+        cursor: pointer; font-weight: 600; font-size: 0.9rem; user-select: none;
+    }
+    .diff-header-agregado  { background: linear-gradient(135deg,#10b981,#059669); color:white; }
+    .diff-header-eliminado { background: linear-gradient(135deg,#ef4444,#dc2626); color:white; }
+    .diff-header-modificado{ background: linear-gradient(135deg,#f59e0b,#d97706); color:white; }
+    .diff-body { border:1px solid #e5e7eb; border-radius:0 0 0.5rem 0.5rem; overflow:hidden; }
+    .diff-table { width:100%; font-size:0.82rem; border-collapse:collapse; }
+    .diff-table th { background:#f8f9ff; padding:0.4rem 0.6rem; font-weight:600; border-bottom:1px solid #e5e7eb; text-align:left; }
+    .diff-table td { padding:0.35rem 0.6rem; border-bottom:1px solid #f3f4f6; vertical-align:top; }
+    .diff-table tr:last-child td { border-bottom:none; }
+    .diff-mas-label { padding:0.5rem 0.75rem; color:#6c757d; font-style:italic; font-size:0.8rem; background:#f9fafb; }
+    .no-cambios-badge {
+        display:inline-flex; align-items:center; gap:0.4rem;
+        background:linear-gradient(135deg,#10b981,#059669);
+        color:white; padding:0.5rem 1.25rem; border-radius:2rem; font-size:0.9rem; font-weight:600;
+    }
+    .estado-card { display:flex; flex-wrap:wrap; gap:0.75rem; padding:0.75rem 0; margin-bottom:0.5rem; }
+    .estado-item { background:linear-gradient(135deg,#6366F1,#3B82F6); color:white; padding:0.5rem 1rem; border-radius:0.5rem; font-size:0.85rem; font-weight:600; }
+    .estado-item-verde { background:linear-gradient(135deg,#10b981,#059669) !important; }
+    .estado-item-gris  { background:linear-gradient(135deg,#9ca3af,#6b7280) !important; }
+</style>
+
+<div class="container-fluid px-4">
+    <!-- Header -->
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-sliders-h powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">Configuraci&oacute;n Variables PBI</h1>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle mr-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle mr-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        </div>
+    }
+
+    <!-- Estado actual -->
+    <div class="filter-card" style="margin-bottom:1.25rem;">
+        <h3 class="filter-card-title">
+            <i class="fas fa-database"></i>
+            Estado Actual de OrdenVariables
+        </h3>
+        @if (estado != null)
+        {
+            <div class="estado-card">
+                <div class="estado-item @(estado.TotalRegistros > 0 ? "estado-item-verde" : "estado-item-gris")">
+                    <i class="fas fa-list" style="margin-right:5px;"></i>
+                    @estado.TotalRegistros.ToString("N0") registros
+                </div>
+                @if (estado.TotalTablas > 0)
+                {
+                    <div class="estado-item">
+                        <i class="fas fa-table" style="margin-right:5px;"></i>
+                        @estado.TotalTablas tabla(s)
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(estado.UsuarioCargo))
+                {
+                    <div class="estado-item" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);">
+                        <i class="fas fa-user" style="margin-right:5px;"></i>
+                        Cargado por: <strong style="margin-left:4px;">@estado.UsuarioCargo</strong>
+                    </div>
+                }
+                @if (estado.FechaCarga.HasValue)
+                {
+                    <div class="estado-item" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">
+                        <i class="fas fa-clock" style="margin-right:5px;"></i>
+                        @estado.FechaCarga.Value.ToString("dd/MM/yyyy HH:mm")
+                    </div>
+                }
+                @if (estado.TotalRegistros == 0)
+                {
+                    <span style="color:#9ca3af;font-size:0.875rem;align-self:center;">
+                        <i class="fas fa-info-circle"></i> La tabla est&aacute; vac&iacute;a. Cargue un archivo Excel para poblarla.
+                    </span>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Card de carga -->
+    <div class="filter-card">
+        <h3 class="filter-card-title">
+            <i class="fas fa-file-excel"></i>
+            Cargar Archivo Excel
+        </h3>
+        <form id="formCarga" action="@Url.Action("CargarExcel","ConfiguracionVariablesPBI")" method="post" enctype="multipart/form-data">
+            <div class="filter-section">
+                <p style="font-size:0.85rem;color:#6c757d;margin-bottom:1rem;">
+                    <i class="fas fa-info-circle" style="color:#6366F1;"></i>
+                    Seleccione un archivo Excel (.xlsx) con la hoja <strong>OrdenVariables</strong>.
+                    Los encabezados requeridos son: <em>Nombre tabla, Variable, Orden variable, Subtotal variable&hellip;</em>
+                    <strong>Todos los datos actuales ser&aacute;n reemplazados</strong> y se mostrar&aacute; el detalle de cambios respecto a la carga anterior.
+                </p>
+                <div id="dropZone" style="border:2px dashed #d1d5db;border-radius:0.5rem;padding:2rem;text-align:center;cursor:pointer;transition:all 0.2s ease;background:white;">
+                    <i class="fas fa-cloud-upload-alt" style="font-size:2.5rem;color:#c7d2fe;margin-bottom:0.75rem;"></i>
+                    <p style="font-size:0.95rem;font-weight:600;color:#2d3748;margin-bottom:0.25rem;" id="dropText">
+                        Arrastre su archivo aqu&iacute; o haga clic para seleccionar
+                    </p>
+                    <p style="font-size:0.8rem;color:#9ca3af;margin:0;" id="dropSubtext">Formatos permitidos: .xlsx, .xlsm</p>
+                </div>
+                <input type="file" id="archivoExcel" name="archivoExcel" accept=".xlsx,.xlsm" style="display:none;" />
+            </div>
+            <div class="btn-group-actions">
+                <button type="submit" id="btnCargar" class="btn btn-modern-gradient" disabled>
+                    <i class="fas fa-upload mr-2"></i>Cargar Datos
+                </button>
+                <a href="@Url.Action("DescargarPlantilla","ConfiguracionVariablesPBI")" class="btn btn-modern-success">
+                    <i class="fas fa-download mr-2"></i>Descargar Plantilla
+                </a>
+                <button type="button" id="btnLimpiar" class="btn btn-modern-secondary" style="display:none;">
+                    <i class="fas fa-times mr-2"></i>Quitar archivo
+                </button>
+            </div>
+        </form>
+    </div>
+
+    @if (resultado != null)
+    {
+        <div class="filter-card">
+            <h3 class="filter-card-title">
+                <i class="fas fa-clipboard-check"></i>
+                Resultado de la Carga
+                @if (!string.IsNullOrEmpty(resultado.NombreArchivo))
+                {
+                    <span style="font-size:0.8rem;font-weight:400;color:#6c757d;margin-left:0.5rem;">&mdash; @resultado.NombreArchivo</span>
+                }
+            </h3>
+            <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:1.25rem;">
+                <div style="background:@(resultado.Exito ? "linear-gradient(135deg,#10b981,#059669)" : "linear-gradient(135deg,#ef4444,#dc2626)");color:white;padding:0.5rem 1rem;border-radius:0.5rem;font-size:0.85rem;font-weight:600;">
+                    <i class="fas @(resultado.Exito ? "fa-check-circle" : "fa-times-circle")" style="margin-right:4px;"></i>
+                    @(resultado.Exito ? "Exitoso" : "Fallido")
+                </div>
+                @if (resultado.Exito)
+                {
+                    <div style="background:linear-gradient(135deg,#6366F1,#3B82F6);color:white;padding:0.5rem 1rem;border-radius:0.5rem;font-size:0.85rem;font-weight:600;">
+                        <i class="fas fa-database" style="margin-right:4px;"></i>
+                        @resultado.FilasInsertadas.ToString("N0") registros insertados
+                    </div>
+                    <div style="background:linear-gradient(135deg,#9ca3af,#6b7280);color:white;padding:0.5rem 1rem;border-radius:0.5rem;font-size:0.85rem;font-weight:600;">
+                        <i class="fas fa-trash-alt" style="margin-right:4px;"></i>
+                        @resultado.FilasEliminadasPrevias.ToString("N0") registros previos eliminados
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (hayDiff)
+    {
+        <div class="filter-card">
+            <h3 class="filter-card-title">
+                <i class="fas fa-exchange-alt"></i>
+                Detalle de Cambios Respecto a la Carga Anterior
+            </h3>
+            @if (!hayCambios)
+            {
+                <div style="padding:0.75rem 0;">
+                    <span class="no-cambios-badge">
+                        <i class="fas fa-equals"></i>
+                        Sin cambios &mdash; los datos son id&eacute;nticos a la carga anterior
+                    </span>
+                </div>
+            }
+            @if (hayCambios)
+            {
+                <div style="display:flex;flex-wrap:wrap;gap:0.6rem;margin-bottom:0.5rem;">
+                    @if (hayAgregados)
+                    {
+                        <div style="background:linear-gradient(135deg,#10b981,#059669);color:white;padding:0.4rem 0.9rem;border-radius:0.5rem;font-size:0.85rem;font-weight:600;">
+                            <i class="fas fa-plus-circle" style="margin-right:4px;"></i>@comp.TotalAgregados agregado(s)
+                        </div>
+                    }
+                    @if (hayEliminados)
+                    {
+                        <div style="background:linear-gradient(135deg,#ef4444,#dc2626);color:white;padding:0.4rem 0.9rem;border-radius:0.5rem;font-size:0.85rem;font-weight:600;">
+                            <i class="fas fa-minus-circle" style="margin-right:4px;"></i>@comp.TotalEliminados eliminado(s)
+                        </div>
+                    }
+                    @if (hayModificados)
+                    {
+                        <div style="background:linear-gradient(135deg,#f59e0b,#d97706);color:white;padding:0.4rem 0.9rem;border-radius:0.5rem;font-size:0.85rem;font-weight:600;">
+                            <i class="fas fa-pencil-alt" style="margin-right:4px;"></i>@comp.TotalModificados modificado(s)
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    @if (hayAgregados)
+    {
+        <div class="filter-card" style="padding:0;">
+            <div class="diff-header diff-header-agregado" onclick="toggleDiff('difAgr')">
+                <i class="fas fa-plus-circle"></i>
+                Nuevas variables agregadas (@listaAgr.Count)
+                <i class="fas fa-chevron-down ml-auto" id="iconDifAgr"></i>
+            </div>
+            <div class="diff-body" id="difAgr">
+                <table class="diff-table">
+                    <thead>
+                        <tr><th>Tabla</th><th>Variable</th><th>Orden</th><th>Subtotal</th><th>Variable Padre</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r1 in listaAgr.Take(maxMostrar))
+                        {
+                            <tr style="background:#f0fdf4;">
+                                <td>@r1.NombreTabla</td><td>@r1.Variable</td><td>@r1.Orden</td>
+                                <td>@(r1.EsSubtotal ? "S\u00ed" : "No")</td><td>@(r1.VariablePadre ?? "")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                @if (listaAgr.Count > maxMostrar)
+                {
+                    <div class="diff-mas-label"><i class="fas fa-ellipsis-h"></i> y @(listaAgr.Count - maxMostrar) m&aacute;s&hellip;</div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (hayEliminados)
+    {
+        <div class="filter-card" style="padding:0;">
+            <div class="diff-header diff-header-eliminado" onclick="toggleDiff('difEl')">
+                <i class="fas fa-minus-circle"></i>
+                Variables eliminadas (no est&aacute;n en el nuevo archivo) (@listaEl.Count)
+                <i class="fas fa-chevron-down ml-auto" id="iconDifEl"></i>
+            </div>
+            <div class="diff-body" id="difEl">
+                <table class="diff-table">
+                    <thead>
+                        <tr><th>Tabla</th><th>Variable</th><th>Orden</th><th>Subtotal</th><th>Variable Padre</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r2 in listaEl.Take(maxMostrar))
+                        {
+                            <tr style="background:#fef2f2;">
+                                <td>@r2.NombreTabla</td><td>@r2.Variable</td><td>@r2.Orden</td>
+                                <td>@(r2.EsSubtotal ? "S\u00ed" : "No")</td><td>@(r2.VariablePadre ?? "")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                @if (listaEl.Count > maxMostrar)
+                {
+                    <div class="diff-mas-label"><i class="fas fa-ellipsis-h"></i> y @(listaEl.Count - maxMostrar) m&aacute;s&hellip;</div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (hayModificados)
+    {
+        <div class="filter-card" style="padding:0;">
+            <div class="diff-header diff-header-modificado" onclick="toggleDiff('difMod')">
+                <i class="fas fa-pencil-alt"></i>
+                Variables con cambios en sus campos (@listaMod.Count)
+                <i class="fas fa-chevron-down ml-auto" id="iconDifMod"></i>
+            </div>
+            <div class="diff-body" id="difMod">
+                <table class="diff-table">
+                    <thead>
+                        <tr><th>Tabla</th><th>Variable</th><th>Campos modificados</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r3 in listaMod.Take(maxMostrar))
+                        {
+                            <tr style="background:#fefce8;">
+                                <td>@r3.NombreTabla</td><td>@r3.Variable</td>
+                                <td style="font-size:0.8rem;color:#92400e;">@r3.CambioResumen</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                @if (listaMod.Count > maxMostrar)
+                {
+                    <div class="diff-mas-label"><i class="fas fa-ellipsis-h"></i> y @(listaMod.Count - maxMostrar) m&aacute;s&hellip;</div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            var dropZone  = $('#dropZone');
+            var fileInput = $('#archivoExcel');
+            var btnCargar = $('#btnCargar');
+            var btnLimpiar= $('#btnLimpiar');
+
+            dropZone.on('click', function () { fileInput[0].click(); });
+
+            dropZone.on('dragover', function (e) {
+                e.preventDefault(); e.stopPropagation();
+                $(this).css({ 'border-color': '#6366F1', 'background': '#eef2ff' });
+            });
+            dropZone.on('dragleave', function (e) {
+                e.preventDefault(); e.stopPropagation();
+                $(this).css({ 'border-color': '#d1d5db', 'background': 'white' });
+            });
+            dropZone.on('drop', function (e) {
+                e.preventDefault(); e.stopPropagation();
+                $(this).css({ 'border-color': '#d1d5db', 'background': 'white' });
+                var files = e.originalEvent.dataTransfer.files;
+                if (files.length > 0) { fileInput[0].files = files; actualizarArchivo(files[0]); }
+            });
+
+            fileInput.on('change', function () {
+                if (this.files.length > 0) actualizarArchivo(this.files[0]);
+            });
+
+            function actualizarArchivo(file) {
+                var ext = file.name.split('.').pop().toLowerCase();
+                if (ext !== 'xlsx' && ext !== 'xlsm') {
+                    Swal.fire({ icon: 'warning', title: 'Formato no v\u00e1lido', text: 'Solo se permiten archivos .xlsx o .xlsm' });
+                    return;
+                }
+                var sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                $('#dropText').html('<i class="fas fa-file-excel" style="color:#10b981;margin-right:6px;"></i>' + file.name);
+                $('#dropSubtext').text(sizeMB + ' MB');
+                dropZone.css({ 'border-color': '#10b981', 'background': '#f0fdf4' });
+                btnCargar.prop('disabled', false);
+                btnLimpiar.show();
+            }
+
+            btnLimpiar.on('click', function (e) {
+                e.stopPropagation();
+                fileInput.val('');
+                $('#dropText').text('Arrastre su archivo aqu\u00ed o haga clic para seleccionar');
+                $('#dropSubtext').text('Formatos permitidos: .xlsx, .xlsm');
+                dropZone.css({ 'border-color': '#d1d5db', 'background': 'white' });
+                btnCargar.prop('disabled', true);
+                btnLimpiar.hide();
+            });
+
+            $('#formCarga').on('submit', function (e) {
+                e.preventDefault();
+                var form = this;
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Confirmar carga',
+                    html: '<strong>Esta acci\u00f3n reemplazar\u00e1 todos los datos actuales</strong> de la tabla OrdenVariables con los del archivo Excel.<br><br>Se mostrar\u00e1 el detalle de cambios al finalizar.<br><br>\u00bfDesea continuar?',
+                    showCancelButton: true,
+                    confirmButtonText: 'S\u00ed, cargar datos',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#6366F1',
+                    cancelButtonColor: '#6c757d'
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        btnCargar.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Procesando...');
+                        form.submit();
+                    }
+                });
+            });
+        });
+
+        function toggleDiff(id) {
+            var el   = document.getElementById(id);
+            var icon = document.getElementById('iconDif' + id.charAt(3).toUpperCase() + id.slice(4));
+            if (!el) return;
+            var hidden = el.style.display === 'none';
+            el.style.display = hidden ? '' : 'none';
+            if (icon) icon.style.transform = hidden ? 'rotate(180deg)' : '';
+        }
+    </script>
+}
