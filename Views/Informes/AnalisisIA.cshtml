@@ -1,22 +1,137 @@
-@model dynamic
+﻿@model dynamic
 @using bufinscustomers.Models
 
 @{
     ViewBag.Title = "Análisis IA";
-    var tablas  = ViewBag.Tablas  as List<TablaDatos>;
-    var empresas = ViewBag.Empresas as List<Empresas>;
-    var esAdmin  = (bool)ViewBag.EsAdmin;
+    var tablas         = ViewBag.Tablas  as List<TablaDatos>;
+    var empresas       = ViewBag.Empresas as List<Empresas>;
+    var esAdmin        = (bool)ViewBag.EsAdmin;
+    var esAdminEmpresa = (bool)(ViewBag.EsAdminEmpresa ?? false);
 }
 
 <link href="~/Assets/css/informe-tablas-datos.css" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css"  rel="stylesheet" />
 <link href="~/Assets/css/analisis-ia.css"           rel="stylesheet" />
 
+<style>
+/* ── Bloque pregunta en respuesta ── */
+.ia-pregunta-block {
+    background: linear-gradient(135deg,#ede9fe 0%,#ddd6fe 100%);
+    border-left: 4px solid #7c3aed;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+.ia-pregunta-block .ia-pregunta-label {
+    font-size:.75rem; font-weight:700; letter-spacing:.07em;
+    text-transform:uppercase; color:#6d28d9; margin-bottom:4px;
+}
+.ia-pregunta-block .ia-pregunta-texto { color:#3b0764; font-weight:500; font-size:.97rem; }
+
+/* ── Boton historial ── */
+.audit-btn-header {
+    background:rgba(255,255,255,.18); border:1.5px solid rgba(255,255,255,.55);
+    color:#fff; border-radius:8px; padding:6px 16px; font-size:.87rem;
+    font-weight:600; cursor:pointer; transition:background .2s; white-space:nowrap;
+}
+.audit-btn-header:hover { background:rgba(255,255,255,.30); color:#fff; }
+
+/* ── Modal auditoria ── */
+#modalAuditoria .modal-header {
+    background: linear-gradient(135deg,#4f46e5,#7c3aed);
+    padding: 14px 20px;
+}
+#modalAuditoria .aud-header-icon {
+    width:40px; height:40px; background:rgba(255,255,255,.2);
+    border-radius:10px; display:flex; align-items:center; justify-content:center;
+    font-size:1.1rem; flex-shrink:0;
+}
+/* Panel de filtros */
+.aud-filter-panel {
+    background:#f8f9fc; border-bottom:1px solid #e5e7eb; padding:14px 20px;
+}
+.aud-filter-panel .form-label {
+    font-size:.77rem; font-weight:700; color:#6b7280;
+    text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;
+}
+.aud-filter-panel .form-control,
+.aud-filter-panel .form-select { font-size:.84rem; border-radius:7px; }
+/* Barra de estadisticas */
+.aud-stats-bar {
+    background:#fff; border-bottom:1px solid #e5e7eb;
+    padding:10px 20px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+}
+.aud-stat-pill {
+    display:inline-flex; align-items:center; gap:6px;
+    border-radius:99px; padding:4px 12px; font-size:.78rem; font-weight:600;
+}
+.aud-stat-pill.total   { background:#eff6ff; color:#1d4ed8; }
+.aud-stat-pill.resumenes { background:#e0e7ff; color:#3730a3; }
+.aud-stat-pill.preguntas { background:#fce7f3; color:#9d174d; }
+/* Tabla */
+.audit-tabla-wrap { max-height:380px; overflow-y:auto; }
+.audit-tabla { font-size:.82rem; margin-bottom:0; }
+.audit-tabla thead th {
+    position:sticky; top:0; z-index:2;
+    background:#1e1b4b; color:#fff;
+    font-size:.74rem; font-weight:700; letter-spacing:.06em;
+    white-space:nowrap; padding:9px 12px;
+    border-bottom:0 !important;
+}
+.audit-tabla tbody td { vertical-align:middle; padding:8px 12px; }
+.audit-tabla tbody tr:hover { background:#f5f3ff; }
+/* Badges tipo */
+.aud-tipo-badge {
+    display:inline-flex; align-items:center; gap:5px;
+    font-size:.72rem; font-weight:700; padding:3px 10px;
+    border-radius:99px; white-space:nowrap;
+}
+.aud-tipo-resumen  { background:#e0e7ff; color:#3730a3; }
+.aud-tipo-pregunta { background:#fce7f3; color:#be185d; }
+/* Celda pregunta truncada */
+.aud-pregunta-cell {
+    max-width:220px; white-space:nowrap; overflow:hidden;
+    text-overflow:ellipsis; cursor:default; color:#4b5563;
+}
+/* Paginacion */
+.aud-paginacion {
+    display:flex; align-items:center; gap:4px;
+}
+.aud-paginacion .page-btn {
+    min-width:32px; height:30px; border:1px solid #d1d5db;
+    border-radius:6px; background:#fff; font-size:.78rem;
+    font-weight:600; color:#374151; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:0 8px; transition:background .15s,color .15s;
+}
+.aud-paginacion .page-btn:hover:not(:disabled) { background:#ede9fe; border-color:#7c3aed; color:#6d28d9; }
+.aud-paginacion .page-btn.active { background:#4f46e5; border-color:#4f46e5; color:#fff; }
+.aud-paginacion .page-btn:disabled { opacity:.4; cursor:default; }
+/* Estado vacio */
+.aud-empty-state { padding:40px 20px; text-align:center; color:#9ca3af; }
+.aud-empty-state i { font-size:2.5rem; margin-bottom:12px; display:block; }
+.aud-empty-state p { font-size:.9rem; margin:0; }
+/* Btn ver respuesta */
+.aud-btn-ver {
+    background:#ede9fe; border:1px solid #c4b5fd; color:#6d28d9;
+    border-radius:6px; padding:3px 10px; font-size:.76rem; font-weight:600;
+    cursor:pointer; transition:background .15s; white-space:nowrap;
+}
+.aud-btn-ver:hover { background:#ddd6fe; }
+/* Chips de fecha rapida */
+.aud-date-chip {
+    background:#fff; border:1px solid #d1d5db; color:#6b7280;
+    border-radius:99px; padding:2px 10px; font-size:.73rem; font-weight:600;
+    cursor:pointer; transition:all .15s; white-space:nowrap;
+}
+.aud-date-chip:hover  { border-color:#7c3aed; color:#6d28d9; background:#f5f3ff; }
+.aud-date-chip.active { background:#4f46e5; border-color:#4f46e5; color:#fff; }
+</style>
 
 <div class="container-fluid px-4">
 
     <!-- Header -->
-    <div class="powerbi-header ia-page-header">
+    <div class="powerbi-header ia-page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
         <div class="powerbi-header-content">
             <i class="fas fa-robot powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">
@@ -26,6 +141,9 @@
                 </span>
             </h1>
         </div>
+        <button type="button" class="audit-btn-header" id="btnAbrirAuditoria">
+            <i class="fas fa-history"></i> Historial de Consultas
+        </button>
     </div>
 
     <!-- Filtros -->
@@ -33,14 +151,11 @@
         <h3 class="filter-card-title">
             <i class="fas fa-filter"></i> Selecciona los datos a analizar
         </h3>
-
         <div class="filter-section">
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="selectTabla">
-                            <i class="fas fa-table"></i> Tabla <span class="required">*</span>
-                        </label>
+                        <label for="selectTabla"><i class="fas fa-table"></i> Tabla <span class="required">*</span></label>
                         <select id="selectTabla" class="form-control" required>
                             <option value="">-- Seleccione --</option>
                             @if (tablas != null)
@@ -72,7 +187,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="row">
                 <div class="col-md-4">
                     <div class="form-group">
@@ -87,18 +201,12 @@
                         <label for="selectMes"><i class="fas fa-calendar-day"></i> Mes</label>
                         <select id="selectMes" class="form-control">
                             <option value="">-- Todos --</option>
-                            <option value="1">Enero</option>
-                            <option value="2">Febrero</option>
-                            <option value="3">Marzo</option>
-                            <option value="4">Abril</option>
-                            <option value="5">Mayo</option>
-                            <option value="6">Junio</option>
-                            <option value="7">Julio</option>
-                            <option value="8">Agosto</option>
-                            <option value="9">Septiembre</option>
-                            <option value="10">Octubre</option>
-                            <option value="11">Noviembre</option>
-                            <option value="12">Diciembre</option>
+                            <option value="1">Enero</option>  <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>  <option value="4">Abril</option>
+                            <option value="5">Mayo</option>   <option value="6">Junio</option>
+                            <option value="7">Julio</option>  <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option><option value="10">Octubre</option>
+                            <option value="11">Noviembre</option><option value="12">Diciembre</option>
                         </select>
                     </div>
                 </div>
@@ -112,7 +220,6 @@
                 </div>
             </div>
         </div>
-
         <div class="btn-group-actions">
             <button type="button" id="btnAnalizar" class="btn-ia-analizar">
                 <i class="fas fa-robot"></i> Analizar
@@ -123,31 +230,25 @@
         </div>
     </div>
 
-    <!-- Placeholder inicial -->
+    <!-- Placeholder -->
     <div id="placeholderIA" class="ia-placeholder">
-        <div class="ia-placeholder-icon">
-            <i class="fas fa-robot"></i>
-        </div>
+        <div class="ia-placeholder-icon"><i class="fas fa-robot"></i></div>
         <h4>Selecciona los filtros y haz clic en Analizar</h4>
         <p>La IA generar&aacute; autom&aacute;ticamente un resumen gerencial de los datos seleccionados.</p>
     </div>
 
-    <!-- Loading inicial (mientras llama a la IA) -->
+    <!-- Loading inicial -->
     <div id="loadingAnalisis" style="display:none;" class="ia-placeholder">
         <div class="ia-loading-wrap" style="padding:20px 0;">
             <div class="ia-loading-inner">
-                <div class="ia-dots">
-                    <span></span><span></span><span></span>
-                </div>
+                <div class="ia-dots"><span></span><span></span><span></span></div>
                 <p>Consultando datos y analizando con IA&hellip;</p>
             </div>
         </div>
     </div>
 
-    <!-- Panel IA (visible tras consultar) -->
+    <!-- Panel IA -->
     <div id="panelIA" style="display:none;" class="ia-panel">
-
-        <!-- Cabecera del panel -->
         <div class="ia-panel-header">
             <div class="ia-panel-header-left">
                 <div class="ia-panel-icon"><i class="fas fa-robot"></i></div>
@@ -160,37 +261,25 @@
                 <i class="fas fa-redo-alt"></i> Nueva consulta
             </button>
         </div>
-
-        <!-- Botón resumen + hint -->
         <div class="ia-actions-bar">
             <button type="button" id="btnResumenIA" class="btn-generar-resumen">
                 <i class="fas fa-magic"></i> Generar Resumen Gerencial
             </button>
-            <button type="button" id="btnExportarPDF" class="btn-exportar-pdf" onclick="exportarAnalisisPDF()" style="display:none;" title="Exportar análisis a PDF">
+            <button type="button" id="btnExportarPDF" class="btn-exportar-pdf" onclick="exportarAnalisisPDF()" style="display:none;">
                 <i class="fas fa-file-pdf"></i> Exportar PDF
             </button>
             <span class="ia-hint">o escribe una pregunta espec&iacute;fica abajo</span>
         </div>
-
-        <!-- Spinner respuesta -->
         <div id="loadingIA" style="display:none;" class="ia-loading-wrap">
             <div class="ia-loading-inner">
-                <div class="ia-dots">
-                    <span></span><span></span><span></span>
-                </div>
+                <div class="ia-dots"><span></span><span></span><span></span></div>
                 <p>Analizando datos financieros&hellip;</p>
             </div>
         </div>
-
-        <!-- Respuesta -->
         <div id="respuestaIA" style="display:none;" class="ia-response-wrap">
-            <div class="ia-response-header">
-                <i class="fas fa-stars"></i> Respuesta del asistente
-            </div>
+            <div class="ia-response-header"><i class="fas fa-stars"></i> Respuesta del asistente</div>
             <div id="respuestaIATexto" class="ia-response-body"></div>
         </div>
-
-        <!-- Input para preguntas -->
         <div class="ia-input-section">
             <div class="ia-input-row">
                 <input type="text" id="txtPreguntaIA" class="ia-text-input"
@@ -208,7 +297,7 @@
 
 </div>
 
-<!-- ══ Panel oculto para captura PDF (fuera del viewport) ══ -->
+<!-- PDF preview oculto -->
 <div id="pdfPreview" class="pdf-preview-wrap">
     <div class="pdf-header">
         <img id="pdfLogo" src="@Url.Content("~/Assets/img/Bufins_LogoLogin.png")" class="pdf-logo" crossorigin="anonymous" />
@@ -229,301 +318,700 @@
     </div>
 </div>
 
+<!-- ══════════════════════════════════════════════════════════
+     MODAL HISTORIAL DE CONSULTAS IA
+══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalAuditoria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width:1200px;">
+        <div class="modal-content" style="border:0;border-radius:14px;overflow:hidden;">
+
+            <!-- ── Cabecera ── -->
+            <div class="modal-header text-white" style="border-radius:0;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="aud-header-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-0" style="font-weight:700;letter-spacing:.02em;">
+                            Historial de Consultas IA
+                        </h5>
+                        <small style="opacity:.8;font-size:.78rem;">
+                            Registro de consultas realizadas al asistente financiero
+                        </small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <!-- ── Panel de filtros ── -->
+            <div class="aud-filter-panel">
+
+                <!-- Fila 1: filtros de datos + botones -->
+                <div class="row g-2 align-items-end">
+
+                    @if (esAdmin)
+                    {
+                        <div class="col-xl-3 col-md-4 col-sm-6">
+                            <label class="form-label"><i class="fas fa-building me-1"></i>Empresa</label>
+                            <select id="audEmpresa" class="form-select form-select-sm">
+                                <option value="">Todas las empresas</option>
+                                @foreach (var e in empresas)
+                                {
+                                    <option value="@e.Id">@e.Nombre</option>
+                                }
+                            </select>
+                        </div>
+                    }
+
+                    @if (esAdmin || esAdminEmpresa)
+                    {
+                        <div class="col-xl-3 col-md-4 col-sm-6">
+                            <label class="form-label"><i class="fas fa-user me-1"></i>Usuario</label>
+                            <select id="audUsuario" class="form-select form-select-sm">
+                                <option value="">Todos los usuarios</option>
+                            </select>
+                        </div>
+                    }
+
+                    <div class="col-xl-2 col-md-4 col-sm-6">
+                        <label class="form-label"><i class="fas fa-tag me-1"></i>Tipo</label>
+                        <select id="audTipo" class="form-select form-select-sm">
+                            <option value="">Todos los tipos</option>
+                            <option value="resumen">&#x2728; Resumen Gerencial</option>
+                            <option value="pregunta">&#x2753; Pregunta</option>
+                        </select>
+                    </div>
+
+                    <!-- Busqueda de texto libre -->
+                    <div class="col-xl col-md-8 col-sm-12">
+                        <label class="form-label"><i class="fas fa-search me-1"></i>Buscar</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text" style="background:#fff;border-right:0;">
+                                <i class="fas fa-search" style="font-size:.75rem;color:#9ca3af;"></i>
+                            </span>
+                            <input type="text" id="audBusquedaTexto" class="form-control"
+                                   style="border-left:0;"
+                                   placeholder="Pregunta, tabla, usuario&hellip;" />
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="col-auto d-flex gap-2 align-items-end">
+                        <button type="button" id="btnFiltrarAuditoria"
+                                class="btn btn-primary btn-sm px-3" style="border-radius:7px;font-weight:600;white-space:nowrap;">
+                            <i class="fas fa-search me-1"></i>Buscar
+                        </button>
+                        <button type="button" id="btnLimpiarFiltrosAud"
+                                class="btn btn-outline-secondary btn-sm px-2" style="border-radius:7px;" title="Limpiar todos los filtros">
+                            <i class="fas fa-eraser"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Fila 2: rango de fechas + acceso rapido -->
+                <div class="row g-2 align-items-end mt-1">
+                    <div class="col-auto">
+                        <label class="form-label"><i class="fas fa-calendar-alt me-1"></i>Desde</label>
+                        <input type="date" id="audDesde" class="form-control form-control-sm" style="width:145px;" />
+                    </div>
+                    <div class="col-auto">
+                        <label class="form-label"><i class="fas fa-calendar-alt me-1"></i>Hasta</label>
+                        <input type="date" id="audHasta" class="form-control form-control-sm" style="width:145px;" />
+                    </div>
+                    <div class="col d-flex align-items-end gap-1 flex-wrap pb-1">
+                        <span style="font-size:.72rem;color:#9ca3af;margin-right:2px;white-space:nowrap;">Acceso r&aacute;pido:</span>
+                        <button class="aud-date-chip" data-days="0">Hoy</button>
+                        <button class="aud-date-chip" data-days="7">7 d&iacute;as</button>
+                        <button class="aud-date-chip" data-days="30">30 d&iacute;as</button>
+                        <button class="aud-date-chip" data-month="1">Este mes</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ── Barra de estadisticas ── -->
+            <div class="aud-stats-bar" id="audStatsBar" style="display:none;">
+                <span class="aud-stat-pill total" id="audStatTotal">
+                    <i class="fas fa-list-ul"></i> <span>0</span> total
+                </span>
+                <span class="aud-stat-pill resumenes" id="audStatResumenes">
+                    <i class="fas fa-magic"></i> <span>0</span> res&uacute;menes
+                </span>
+                <span class="aud-stat-pill preguntas" id="audStatPreguntas">
+                    <i class="fas fa-question-circle"></i> <span>0</span> preguntas
+                </span>
+                <span class="ms-auto text-muted" id="audPaginaInfo" style="font-size:.77rem;"></span>
+            </div>
+
+            <!-- ── Cuerpo ── -->
+            <div class="modal-body p-0" style="overflow:hidden; display:flex; flex-direction:column; min-height:340px;">
+
+                <!-- Loading (sin clases Bootstrap flex para que jQuery .hide() funcione) -->
+                <div id="audLoading" style="display:none; text-align:center; padding:52px 20px; flex-shrink:0;">
+                    <div style="width:48px;height:48px;border:4px solid #e0e7ff;border-top-color:#4f46e5;border-radius:50%;animation:audSpin .7s linear infinite;margin:0 auto 14px;"></div>
+                    <p style="color:#6b7280;font-size:.88rem;margin:0;">Cargando historial&hellip;</p>
+                </div>
+                <style>@@keyframes audSpin{to{transform:rotate(360deg)}}</style>
+
+                <!-- Tabla -->
+                <div id="audTablaWrap" class="audit-tabla-wrap flex-grow-1" style="display:none;">
+                    <table class="table table-hover audit-tabla">
+                        <thead>
+                            <tr>
+                                <th style="width:140px;">Fecha</th>
+                                <th>Usuario</th>
+                                @if (esAdmin) { <th>Empresa</th> }
+                                <th>Tabla</th>
+                                <th style="width:90px;">Tipo</th>
+                                <th>Pregunta</th>
+                                <th style="width:60px;" class="text-center">Filas</th>
+                                <th style="width:80px;" class="text-center">Ver</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audTbody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Sin resultados -->
+                <div id="audSinResultados" class="aud-empty-state flex-grow-1" style="display:none;">
+                    <i class="fas fa-robot" style="color:#c4b5fd;"></i>
+                    <p style="font-weight:600;color:#6d28d9;margin-bottom:4px;">Sin resultados</p>
+                    <p>No se encontraron consultas con los filtros aplicados.</p>
+                </div>
+
+            </div>
+
+            <!-- ── Pie con paginacion ── -->
+            <div class="modal-footer d-flex align-items-center justify-content-between gap-2 flex-wrap"
+                 style="background:#f8f9fc;border-top:1px solid #e5e7eb;padding:10px 20px;">
+                <div class="aud-paginacion" id="audPaginacion"></div>
+                <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal" style="border-radius:7px;">
+                    Cerrar
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 @section scripts {
-    <script src="~/Assets/js/select2/select2.min.js"></script>
-    <script src="~/Assets/js/html2canvas.min.js"></script>
-    <script src="~/Assets/js/jspdf.umd.min.js"></script>
-    <script>
-        $(document).ready(function () {
+<script src="~/Assets/js/select2/select2.min.js"></script>
+<script src="~/Assets/js/html2canvas.min.js"></script>
+<script src="~/Assets/js/jspdf.umd.min.js"></script>
 
-            var filtrosActuales = null;
+<script>
+    /* ── renderMarkdown global ── */
+    function renderMarkdown(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g,'<em>$1</em>')
+            .replace(/^### (.+)$/gm,'<h6 style="color:#4f46e5;font-weight:700;margin-top:12px;">$1</h6>')
+            .replace(/^## (.+)$/gm, '<h5 style="color:#4f46e5;font-weight:700;margin-top:14px;">$1</h5>')
+            .replace(/^# (.+)$/gm,  '<h4 style="color:#312e81;font-weight:700;margin-top:16px;">$1</h4>')
+            .replace(/^[-*] (.+)$/gm,'<li>$1</li>')
+            .replace(/(<li>[\s\S]+?<\/li>)/g,'<ul style="padding-left:18px;margin-bottom:8px;">$1</ul>')
+            .replace(/\n\n/g,'</p><p style="margin-bottom:8px;">')
+            .replace(/\n/g,'<br>');
+    }
+</script>
 
-            // ── Helpers de filtros ─────────────────────────────────
-            $('#selectTabla').on('change', function () {
-                var tabla    = $(this).val();
-                var empresa  = $('#selectEmpresa').val();
-                $('#selectAnio').html('<option value="">-- Seleccione --</option>').trigger('change');
-                $('#selectVariable').html('<option value="">-- Todas --</option>').trigger('change');
-                if (tabla) {
-                    cargarAnios(tabla, empresa);
-                    cargarVariables(tabla, empresa);
-                }
-            });
+<script>
+$(document).ready(function () {
 
-            $('#selectEmpresa').on('change', function () {
-                var tabla   = $('#selectTabla').val();
-                var empresa = $(this).val();
-                if (tabla) {
-                    cargarAnios(tabla, empresa);
-                    cargarVariables(tabla, empresa);
-                }
-            });
+    var filtrosActuales      = null;
+    window._preguntaActualIA = null;
 
-            function cargarAnios(tabla, empresa) {
-                $.get('@Url.Action("ObtenerAnios", "InformeTablasDatos")', { nombreTabla: tabla, idEmpresa: empresa || null },
-                    function (r) {
-                        if (r.success) {
-                            var s = $('#selectAnio').html('<option value="">-- Seleccione --</option>');
-                            $.each(r.anios, function (i, a) { s.append($('<option>').val(a).text(a)); });
-                            s.trigger('change');
-                        }
-                    });
+    // ── Filtros de datos ──────────────────────────────────
+    $('#selectTabla').on('change', function () {
+        var tabla   = $(this).val(), empresa = $('#selectEmpresa').val();
+        $('#selectAnio').html('<option value="">-- Seleccione --</option>').trigger('change');
+        $('#selectVariable').html('<option value="">-- Todas --</option>').trigger('change');
+        if (tabla) { cargarAnios(tabla, empresa); cargarVariables(tabla, empresa); }
+    });
+    $('#selectEmpresa').on('change', function () {
+        var tabla = $('#selectTabla').val(), empresa = $(this).val();
+        if (tabla) { cargarAnios(tabla, empresa); cargarVariables(tabla, empresa); }
+    });
+    function cargarAnios(tabla, empresa) {
+        $.get('@Url.Action("ObtenerAnios","InformeTablasDatos")', { nombreTabla:tabla, idEmpresa:empresa||null }, function(r) {
+            if (r.success) {
+                var s = $('#selectAnio').html('<option value="">-- Seleccione --</option>');
+                $.each(r.anios, function(i,a){ s.append($('<option>').val(a).text(a)); });
+                s.trigger('change');
             }
-
-            function cargarVariables(tabla, empresa) {
-                $.get('@Url.Action("ObtenerVariables", "InformeTablasDatos")', { nombreTabla: tabla, idEmpresa: empresa || null },
-                    function (r) {
-                        if (r.success) {
-                            var s = $('#selectVariable').html('<option value="">-- Todas --</option>');
-                            $.each(r.variables, function (i, v) { s.append($('<option>').val(v).text(v)); });
-                            s.trigger('change');
-                        }
-                    });
-            }
-
-            // ── Botón Analizar ─────────────────────────────────────
-            $('#btnAnalizar').on('click', function () {
-                var tabla   = $('#selectTabla').val();
-                var empresa = $('#selectEmpresa').val();
-
-                if (!tabla) {
-                    Swal.fire({ icon: 'warning', title: 'Tabla requerida', text: 'Por favor seleccione una tabla.' });
-                    return;
-                }
-                @if (esAdmin)
-                {
-                    <text>
-                    if (!empresa) {
-                        Swal.fire({ icon: 'warning', title: 'Empresa requerida', text: 'Por favor seleccione una empresa.' });
-                        return;
-                    }
-                    </text>
-                }
-
-                if (!$('#selectAnio').val()) {
-                    Swal.fire({ icon: 'warning', title: 'A\u00f1o requerido', text: 'Debe seleccionar un a\u00f1o para el an\u00e1lisis IA.' });
-                    return;
-                }
-
-                filtrosActuales = {
-                    NombreTabla : tabla,
-                    IdEmpresa   : empresa || null,
-                    Anio        : $('#selectAnio').val()    || null,
-                    Mes         : $('#selectMes').val()     || null,
-                    Variable    : $('#selectVariable').val() || null
-                };
-                window._filtrosActualesPDF = filtrosActuales;
-
-                // Construir texto de contexto
-                var nombreTabla = $('#selectTabla option:selected').data('nombre') || tabla;
-                var partes = [nombreTabla];
-                if ($('#selectEmpresa option:selected').text() && empresa)
-                    partes.push($('#selectEmpresa option:selected').text());
-                if ($('#selectAnio').val())    partes.push('A\u00f1o ' + $('#selectAnio').val());
-                if ($('#selectMes option:selected').text() && $('#selectMes').val())
-                    partes.push($('#selectMes option:selected').text());
-                if ($('#selectVariable').val()) partes.push($('#selectVariable').val());
-
-                $('#iaContexto').text(partes.join(' \u00b7 '));
-
-                // Mostrar panel sin llamar a la IA aún
-                $('#placeholderIA').hide();
-                $('#loadingAnalisis').hide();
-                $('#respuestaIA').hide();
-                $('#loadingIA').hide();
-                $('#panelIA').show();
-            });
-
-            // ── Nueva consulta ─────────────────────────────────────
-            $('#btnNuevaConsulta').on('click', function () {
-                $('#panelIA').hide();
-                $('#respuestaIA').hide();
-                $('#loadingIA').hide();
-                $('#txtPreguntaIA').val('');
-                $('#txtFilasInfo').text('An\u00e1lisis completo por a\u00f1o seleccionado');
-                document.getElementById('btnExportarPDF').style.display = 'none';
-                filtrosActuales = null;
-                $('#placeholderIA').show();
-            });
-
-            // ── Limpiar ────────────────────────────────────────────
-            $('#btnLimpiar').on('click', function () {
-                $('#selectTabla').val('').trigger('change');
-                $('#selectEmpresa').val($('#selectEmpresa option:first').val()).trigger('change');
-                $('#selectMes').val('').trigger('change');
-                $('#selectAnio').html('<option value="">-- Seleccione --</option>').trigger('change');
-                $('#selectVariable').html('<option value="">-- Todas --</option>').trigger('change');
-                $('#panelIA').hide();
-                $('#respuestaIA').hide();
-                $('#loadingIA').hide();
-                $('#txtPreguntaIA').val('');
-                $('#txtFilasInfo').text('An\u00e1lisis completo por a\u00f1o seleccionado');
-                document.getElementById('btnExportarPDF').style.display = 'none';
-                filtrosActuales = null;
-                $('#placeholderIA').show();
-            });
-
-            // ── Llamar IA ──────────────────────────────────────────
-            function consultarIA(pregunta) {
-                if (!filtrosActuales) return;
-
-                $('#btnResumenIA').prop('disabled', true);
-                $('#loadingIA').show();
-                $('#respuestaIA').hide();
-
-                var data = $.extend({}, filtrosActuales);
-                if (pregunta) data.pregunta = pregunta;
-
-                $.ajax({
-                    url  : '@Url.Action("ConsultarConIA", "InformeTablasDatos")',
-                    type : 'POST',
-                    data : data,
-                    success: function (resp) {
-                        $('#loadingIA').hide();
-                        $('#btnResumenIA').prop('disabled', false);
-                        if (resp.Exitoso) {
-                            // Actualizar info de filas en el branding
-                            if (resp.TotalFilas > 0) {
-                                var infoFilas = resp.FilasEnviadas < resp.TotalFilas
-                                    ? resp.FilasEnviadas + ' de ' + resp.TotalFilas + ' registros analizados'
-                                    : resp.TotalFilas + ' registros analizados';
-                                $('#txtFilasInfo').text(infoFilas);
-                            }
-                            $('#respuestaIATexto').html(renderMarkdown(resp.Respuesta));
-                            $('#respuestaIA').show();
-                            document.getElementById('btnExportarPDF').style.display = 'inline-flex';
-                        } else {
-                            Swal.fire({ icon: 'warning', title: 'Asistente IA', text: resp.Error || 'Error al obtener respuesta.' });
-                        }
-                    },
-                    error: function () {
-                        $('#loadingIA').hide();
-                        $('#btnResumenIA').prop('disabled', false);
-                        Swal.fire({ icon: 'error', title: 'Error de conexi\u00f3n', text: 'No se pudo contactar al servicio de IA.' });
-                    }
-                });
-            }
-
-            // ── Eventos botones IA ─────────────────────────────────
-            $('#btnResumenIA').on('click', function () { consultarIA(null); });
-
-            $('#btnPreguntarIA').on('click', function () {
-                var pregunta = $('#txtPreguntaIA').val().trim();
-                if (!pregunta) {
-                    Swal.fire({ icon: 'warning', title: 'Pregunta vac\u00eda', text: 'Escribe una pregunta antes de enviar.' });
-                    return;
-                }
-                consultarIA(pregunta);
-                $('#txtPreguntaIA').val('');
-            });
-
-            $('#txtPreguntaIA').on('keydown', function (e) {
-                if (e.key === 'Enter') $('#btnPreguntarIA').trigger('click');
-            });
-
-            // ── Render Markdown ────────────────────────────────────
-            function renderMarkdown(text) {
-                if (!text) return '';
-                return text
-                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-                    .replace(/^### (.+)$/gm, '<h6 style="color:#4f46e5;font-weight:700;margin-top:12px;">$1</h6>')
-                    .replace(/^## (.+)$/gm,  '<h5 style="color:#4f46e5;font-weight:700;margin-top:14px;">$1</h5>')
-                    .replace(/^# (.+)$/gm,   '<h4 style="color:#312e81;font-weight:700;margin-top:16px;">$1</h4>')
-                    .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
-                    .replace(/(<li>[\s\S]+?<\/li>)/g, '<ul style="padding-left:18px;margin-bottom:8px;">$1</ul>')
-                    .replace(/\n\n/g, '</p><p style="margin-bottom:8px;">')
-                    .replace(/\n/g, '<br>');
-            }
-
-            // ── Select2 ────────────────────────────────────────────
-            var s2opts = { width: '100%', language: { noResults: function(){ return "Sin resultados"; }, searching: function(){ return "Buscando..."; } } };
-
-            $('#selectTabla').select2($.extend({ placeholder: '-- Seleccione --', allowClear: false }, s2opts));
-            $('#selectEmpresa').select2($.extend({ placeholder: '-- Seleccione --', allowClear: false }, s2opts));
-            $('#selectAnio').select2($.extend({ placeholder: '-- Seleccione --', allowClear: false }, s2opts));
-            $('#selectMes').select2($.extend({ placeholder: '-- Todos --', allowClear: true, minimumResultsForSearch: -1 }, s2opts));
-            $('#selectVariable').select2($.extend({ placeholder: '-- Todas --', allowClear: true }, s2opts));
         });
-    </script>
-    <script>
-        async function exportarAnalisisPDF() {
-            var btn = document.getElementById('btnExportarPDF');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
-
-            try {
-                // 1. Fecha actual
-                var ahora = new Date();
-                document.getElementById('pdfFecha').textContent =
-                    ahora.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }) +
-                    ' ' + ahora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
-
-                // 2. Filtros
-                var filtros = window._filtrosActualesPDF || {};
-                var nombreEmpresa = $('#selectEmpresa option:selected').text().trim() || filtros.IdEmpresa || '—';
-                var mesTexto = $('#selectMes option:selected').text().trim();
-                if (!mesTexto || mesTexto === '-- Todos --') mesTexto = 'Todos';
-                var variableTexto = filtros.Variable || 'Todas';
-                var tablaTexto = $('#selectTabla option:selected').data('nombre') || filtros.NombreTabla || '—';
-
-                var filtrosData = [
-                    { label: 'Tabla',    valor: tablaTexto },
-                    { label: 'Empresa',  valor: nombreEmpresa },
-                    { label: 'A\u00f1o', valor: filtros.Anio || '—' },
-                    { label: 'Mes',      valor: mesTexto },
-                    { label: 'Variable', valor: variableTexto }
-                ];
-                var filtrosHtml = '';
-                filtrosData.forEach(function(f) {
-                    filtrosHtml += '<div class="pdf-filtro-item"><span class="pdf-filtro-label">' + f.label + '</span><span class="pdf-filtro-valor">' + f.valor + '</span></div>';
-                });
-                document.getElementById('pdfFiltros').innerHTML = filtrosHtml;
-
-                // 3. Contenido del análisis
-                document.getElementById('pdfContenido').innerHTML =
-                    document.getElementById('respuestaIATexto').innerHTML;
-
-                // 4. Mostrar el div fuera de pantalla para captura
-                var preview = document.getElementById('pdfPreview');
-                preview.style.left = '-9999px';
-                preview.style.display = 'block';
-
-                // 5. Capturar con html2canvas
-                var canvas = await html2canvas(preview, { scale: 2, useCORS: true, logging: false });
-                preview.style.display = 'none';
-                preview.style.left = '-9999px';
-
-                // 6. Generar PDF A4
-                var jsPDF = window.jspdf.jsPDF;
-                var pdf = new jsPDF('p', 'mm', 'a4');
-                var pageW = pdf.internal.pageSize.getWidth();
-                var pageH = pdf.internal.pageSize.getHeight();
-                var imgW = pageW;
-                var imgH = (canvas.height * pageW) / canvas.width;
-                var imgData = canvas.toDataURL('image/png');
-
-                var y = 0;
-                var remaining = imgH;
-                while (remaining > 0) {
-                    if (y > 0) pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 0, -y, imgW, imgH);
-                    y += pageH;
-                    remaining -= pageH;
-                }
-
-                // 7. Descargar
-                var ts = ahora.toISOString().slice(0, 10).replace(/-/g, '');
-                pdf.save('AnalisisIA_BUFINS_' + ts + '.pdf');
-
-            } catch (e) {
-                console.error('Error generando PDF:', e);
-                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo generar el PDF. Intenta de nuevo.' });
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-file-pdf"></i> Exportar PDF';
+    }
+    function cargarVariables(tabla, empresa) {
+        $.get('@Url.Action("ObtenerVariables","InformeTablasDatos")', { nombreTabla:tabla, idEmpresa:empresa||null }, function(r) {
+            if (r.success) {
+                var s = $('#selectVariable').html('<option value="">-- Todas --</option>');
+                $.each(r.variables, function(i,v){ s.append($('<option>').val(v).text(v)); });
+                s.trigger('change');
             }
+        });
+    }
+
+    // ── Botón Analizar ────────────────────────────────────
+    $('#btnAnalizar').on('click', function () {
+        var tabla = $('#selectTabla').val(), empresa = $('#selectEmpresa').val();
+        if (!tabla) { Swal.fire({icon:'warning',title:'Tabla requerida',text:'Por favor seleccione una tabla.'}); return; }
+        @if (esAdmin) {
+            <text>
+            if (!empresa) { Swal.fire({icon:'warning',title:'Empresa requerida',text:'Por favor seleccione una empresa.'}); return; }
+            </text>
         }
-    </script>
+        if (!$('#selectAnio').val()) { Swal.fire({icon:'warning',title:'A\u00f1o requerido',text:'Debe seleccionar un a\u00f1o para el an\u00e1lisis IA.'}); return; }
+
+        filtrosActuales = {
+            NombreTabla : tabla,
+            IdEmpresa   : empresa || null,
+            Anio        : $('#selectAnio').val()     || null,
+            Mes         : $('#selectMes').val()      || null,
+            Variable    : $('#selectVariable').val() || null
+        };
+        window._filtrosActualesPDF = filtrosActuales;
+        window._preguntaActualIA   = null;
+
+        var nombreTabla = $('#selectTabla option:selected').data('nombre') || tabla;
+        var partes = [nombreTabla];
+        if ($('#selectEmpresa option:selected').text() && empresa) partes.push($('#selectEmpresa option:selected').text());
+        if ($('#selectAnio').val()) partes.push('A\u00f1o ' + $('#selectAnio').val());
+        if ($('#selectMes option:selected').text() && $('#selectMes').val()) partes.push($('#selectMes option:selected').text());
+        if ($('#selectVariable').val()) partes.push($('#selectVariable').val());
+        $('#iaContexto').text(partes.join(' \u00b7 '));
+
+        $('#placeholderIA,#loadingAnalisis,#respuestaIA,#loadingIA').hide();
+        $('#panelIA').show();
+    });
+
+    $('#btnNuevaConsulta').on('click', resetPanel);
+    $('#btnLimpiar').on('click', function () {
+        $('#selectTabla').val('').trigger('change');
+        $('#selectEmpresa').val($('#selectEmpresa option:first').val()).trigger('change');
+        $('#selectMes,#selectAnio').val('').trigger('change');
+        $('#selectAnio').html('<option value="">-- Seleccione --</option>').trigger('change');
+        $('#selectVariable').html('<option value="">-- Todas --</option>').trigger('change');
+        resetPanel();
+    });
+
+    function resetPanel() {
+        $('#panelIA,#respuestaIA,#loadingIA').hide();
+        $('#txtPreguntaIA').val('');
+        $('#txtFilasInfo').text('An\u00e1lisis completo por a\u00f1o seleccionado');
+        document.getElementById('btnExportarPDF').style.display = 'none';
+        filtrosActuales = null;
+        window._preguntaActualIA = null;
+        $('#placeholderIA').show();
+    }
+
+    // ── Consultar IA ──────────────────────────────────────
+    function consultarIA(pregunta) {
+        if (!filtrosActuales) return;
+        window._preguntaActualIA = pregunta || null;
+        $('#btnResumenIA').prop('disabled', true);
+        $('#loadingIA').show();
+        $('#respuestaIA').hide();
+
+        var data = $.extend({}, filtrosActuales);
+        if (pregunta) data.pregunta = pregunta;
+
+        $.ajax({
+            url  : '@Url.Action("ConsultarConIA","InformeTablasDatos")',
+            type : 'POST',
+            data : data,
+            success: function (resp) {
+                $('#loadingIA').hide();
+                $('#btnResumenIA').prop('disabled', false);
+                if (resp.Exitoso) {
+                    if (resp.TotalFilas > 0) {
+                        $('#txtFilasInfo').text(
+                            resp.FilasEnviadas < resp.TotalFilas
+                                ? resp.FilasEnviadas + ' de ' + resp.TotalFilas + ' registros analizados'
+                                : resp.TotalFilas + ' registros analizados'
+                        );
+                    }
+                    var html = '';
+                    if (pregunta) {
+                        html += '<div class="ia-pregunta-block">'
+                              + '<div class="ia-pregunta-label"><i class="fas fa-question-circle"></i> Pregunta realizada</div>'
+                              + '<div class="ia-pregunta-texto">' + $('<div>').text(pregunta).html() + '</div>'
+                              + '</div>';
+                    }
+                    html += renderMarkdown(resp.Respuesta);
+                    $('#respuestaIATexto').html(html);
+                    $('#respuestaIA').show();
+                    document.getElementById('btnExportarPDF').style.display = 'inline-flex';
+                } else {
+                    Swal.fire({icon:'warning',title:'Asistente IA',text:resp.Error||'Error al obtener respuesta.'});
+                }
+            },
+            error: function () {
+                $('#loadingIA').hide();
+                $('#btnResumenIA').prop('disabled', false);
+                Swal.fire({icon:'error',title:'Error de conexi\u00f3n',text:'No se pudo contactar al servicio de IA.'});
+            }
+        });
+    }
+
+    $('#btnResumenIA').on('click', function () { consultarIA(null); });
+    $('#btnPreguntarIA').on('click', function () {
+        var p = $('#txtPreguntaIA').val().trim();
+        if (!p) { Swal.fire({icon:'warning',title:'Pregunta vac\u00eda',text:'Escribe una pregunta antes de enviar.'}); return; }
+        consultarIA(p);
+        $('#txtPreguntaIA').val('');
+    });
+    $('#txtPreguntaIA').on('keydown', function(e){ if(e.key==='Enter') $('#btnPreguntarIA').trigger('click'); });
+
+    // ── Select2 ───────────────────────────────────────────
+    var s2 = { width:'100%', language:{ noResults:function(){return'Sin resultados';}, searching:function(){return'Buscando...';} } };
+    $('#selectTabla').select2($.extend({placeholder:'-- Seleccione --',allowClear:false},s2));
+    $('#selectEmpresa').select2($.extend({placeholder:'-- Seleccione --',allowClear:false},s2));
+    $('#selectAnio').select2($.extend({placeholder:'-- Seleccione --',allowClear:false},s2));
+    $('#selectMes').select2($.extend({placeholder:'-- Todos --',allowClear:true,minimumResultsForSearch:-1},s2));
+    $('#selectVariable').select2($.extend({placeholder:'-- Todas --',allowClear:true},s2));
+
+    // ══════════════════════════════════════════════════════
+    //  HISTORIAL DE CONSULTAS IA
+    // ══════════════════════════════════════════════════════
+    var esAdminJS        = @(esAdmin ? "true" : "false");
+    var esAdminEmpresaJS = @(esAdminEmpresa ? "true" : "false");
+    var PAGE_SIZE        = 15;
+    var _todosRegistros  = [];   // todos los cargados del servidor
+    var _filtrados       = [];   // tras aplicar filtros locales (tipo + texto)
+    var _paginaActual    = 1;
+
+    // Abrir modal
+    $('#btnAbrirAuditoria').on('click', function () {
+        if (esAdminEmpresaJS && !esAdminJS) cargarUsuariosAuditoria(null);
+        consultarServidor();
+        new bootstrap.Modal(document.getElementById('modalAuditoria')).show();
+    });
+
+    // Buscar (servidor)
+    $('#btnFiltrarAuditoria').on('click', consultarServidor);
+
+    // Filtros locales en tiempo real (tipo y texto)
+    $('#audTipo').on('change', aplicarFiltrosLocales);
+    $('#audBusquedaTexto').on('input', aplicarFiltrosLocales);
+
+    // Empresa cambia → recargar usuarios (Super Admin)
+    $('#audEmpresa').on('change', function () { cargarUsuariosAuditoria($(this).val() || null); });
+
+    // Limpiar filtros
+    $('#btnLimpiarFiltrosAud').on('click', function () {
+        $('#audEmpresa').val('');
+        $('#audUsuario').html('<option value="">Todos los usuarios</option>');
+        $('#audTipo').val('');
+        $('#audDesde,#audHasta').val('');
+        $('#audBusquedaTexto').val('');
+        $('.aud-date-chip').removeClass('active');
+        consultarServidor();
+    });
+
+    // Chips de acceso rapido a fechas
+    $(document).on('click', '.aud-date-chip', function () {
+        var $chip = $(this);
+        var days  = $chip.data('days');
+        var month = $chip.data('month');
+
+        // Toggle off si ya estaba activo
+        if ($chip.hasClass('active')) {
+            $chip.removeClass('active');
+            $('#audDesde,#audHasta').val('');
+            return;
+        }
+
+        $('.aud-date-chip').removeClass('active');
+        $chip.addClass('active');
+
+        var today = new Date();
+        var pad   = function(n){ return n < 10 ? '0' + n : '' + n; };
+        var fmt   = function(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); };
+        var hasta = fmt(today);
+        var desde;
+
+        if (days !== undefined) {
+            var d = new Date(today);
+            d.setDate(d.getDate() - parseInt(days, 10));
+            desde = fmt(d);
+        } else if (month) {
+            var firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            desde = fmt(firstDay);
+        }
+
+        $('#audDesde').val(desde);
+        $('#audHasta').val(hasta);
+    });
+
+    function cargarUsuariosAuditoria(idEmpresa) {
+        var params = {};
+        if (idEmpresa) params.idEmpresa = idEmpresa;
+        $.get('@Url.Action("ObtenerUsuariosAuditoria","AnalisisIA")', params, function (lista) {
+            var sel = $('#audUsuario').html('<option value="">Todos los usuarios</option>');
+            $.each(lista, function (i, u) { sel.append($('<option>').val(u.Id).text(u.Nombre)); });
+        });
+    }
+
+    function consultarServidor() {
+        var params = {};
+        var empresa = $('#audEmpresa').val();
+        var usuario = $('#audUsuario').val();
+        var desde   = $('#audDesde').val();
+        var hasta   = $('#audHasta').val();
+        if (empresa) params.idEmpresa = empresa;
+        if (usuario) params.idUsuario = usuario;
+        if (desde)   params.desde    = desde;
+        if (hasta)   params.hasta    = hasta;
+
+        // Usar css() en vez de show() para evitar conflicto con clases Bootstrap flex
+        $('#audLoading').css('display', 'block');
+        $('#audTablaWrap,#audSinResultados,#audStatsBar').hide();
+        $('#audPaginacion').empty();
+
+        $.ajax({
+            url  : '@Url.Action("ObtenerAuditoria","AnalisisIA")',
+            type : 'GET',
+            data : params,
+            success: function (registros) {
+                $('#audLoading').hide();
+                _todosRegistros = registros || [];
+                aplicarFiltrosLocales();
+            },
+            error: function () {
+                $('#audLoading').hide();
+                Swal.fire({icon:'error',title:'Error',text:'No se pudo cargar el historial.'});
+            }
+        });
+    }
+
+    function aplicarFiltrosLocales() {
+        var tipo   = $('#audTipo').val();
+        var texto  = ($('#audBusquedaTexto').val() || '').toLowerCase().trim();
+
+        _filtrados = _todosRegistros.filter(function (r) {
+            var esResumen = r.Pregunta === '(Resumen Gerencial)';
+
+            // Filtro tipo
+            if (tipo === 'resumen'  && !esResumen) return false;
+            if (tipo === 'pregunta' &&  esResumen) return false;
+
+            // Filtro texto libre
+            if (texto) {
+                var hayMatch =
+                    (r.Pregunta      || '').toLowerCase().indexOf(texto) >= 0 ||
+                    (r.NombreTabla   || '').toLowerCase().indexOf(texto) >= 0 ||
+                    (r.NombreUsuario || '').toLowerCase().indexOf(texto) >= 0 ||
+                    (r.NombreEmpresa || '').toLowerCase().indexOf(texto) >= 0 ||
+                    (r.Filtros       || '').toLowerCase().indexOf(texto) >= 0;
+                if (!hayMatch) return false;
+            }
+            return true;
+        });
+
+        actualizarStats();
+        _paginaActual = 1;
+        renderPagina(_paginaActual);
+    }
+
+    function actualizarStats() {
+        var total     = _filtrados.length;
+        var resumenes = _filtrados.filter(function(r){ return r.Pregunta === '(Resumen Gerencial)'; }).length;
+        var preguntas = total - resumenes;
+
+        $('#audStatTotal    span').text(total);
+        $('#audStatResumenes span').text(resumenes);
+        $('#audStatPreguntas span').text(preguntas);
+
+        if (_todosRegistros.length > 0) $('#audStatsBar').show();
+        else                            $('#audStatsBar').hide();
+    }
+
+    function renderPagina(pagina) {
+        var totalPags = Math.max(1, Math.ceil(_filtrados.length / PAGE_SIZE));
+        pagina = Math.min(Math.max(1, pagina), totalPags);
+        _paginaActual = pagina;
+
+        var inicio = (pagina - 1) * PAGE_SIZE;
+        var slice  = _filtrados.slice(inicio, inicio + PAGE_SIZE);
+
+        $('#audPaginaInfo').text(
+            _filtrados.length === 0 ? '' :
+            'Mostrando ' + (inicio + 1) + '-' + Math.min(inicio + PAGE_SIZE, _filtrados.length) + ' de ' + _filtrados.length
+        );
+
+        var tbody = $('#audTbody').empty();
+
+        if (_filtrados.length === 0) {
+            $('#audTablaWrap').hide();
+            $('#audSinResultados').show();
+            renderPaginacion(0, 0);
+            return;
+        }
+
+        $('#audSinResultados').hide();
+        $('#audTablaWrap').show();
+
+        $.each(slice, function (i, r) {
+            var esResumen = r.Pregunta === '(Resumen Gerencial)';
+
+            var tipoBadge = esResumen
+                ? '<span class="aud-tipo-badge aud-tipo-resumen"><i class="fas fa-magic"></i> Resumen</span>'
+                : '<span class="aud-tipo-badge aud-tipo-pregunta"><i class="fas fa-question-circle"></i> Pregunta</span>';
+
+            var preguntaHtml = esResumen
+                ? '<em class="text-muted" style="font-size:.8rem;">Resumen autom&aacute;tico</em>'
+                : '<span class="aud-pregunta-cell" title="' + $('<div>').text(r.Pregunta).html() + '">'
+                    + $('<div>').text(r.Pregunta).html()
+                  + '</span>';
+
+            var btnVer = $('<button class="aud-btn-ver">')
+                .html('<i class="fas fa-eye me-1"></i>Ver')
+                .on('click', function () { verRespuestaAuditoria(r.Pregunta, r.Respuesta, r.Filtros); });
+
+            var tr = $('<tr>');
+            tr.append($('<td style="white-space:nowrap;font-size:.8rem;color:#6b7280;">').text(r.FechaPregunta));
+            tr.append($('<td style="font-weight:600;">').text(r.NombreUsuario));
+            if (esAdminJS) tr.append($('<td>').text(r.NombreEmpresa));
+            // Tabla + filtros como tooltip
+            tr.append($('<td>').html(
+                '<span title="' + $('<div>').text(r.Filtros).html() + '" style="cursor:default;">'
+                + $('<div>').text(r.NombreTabla).html()
+                + '<br><small style="color:#9ca3af;font-size:.74rem;">' + $('<div>').text(r.Filtros).html() + '</small>'
+                + '</span>'
+            ));
+            tr.append($('<td>').html(tipoBadge));
+            tr.append($('<td>').html(preguntaHtml));
+            tr.append($('<td class="text-center" style="font-weight:600;color:#4f46e5;">').text(r.FilasAnalizadas));
+            tr.append($('<td class="text-center">').append(btnVer));
+            tbody.append(tr);
+        });
+
+        renderPaginacion(totalPags, pagina);
+    }
+
+    function renderPaginacion(totalPags, actual) {
+        var $pag = $('#audPaginacion').empty();
+        if (totalPags <= 1) return;
+
+        function btn(label, pagDest, activo, disabled) {
+            return $('<button class="page-btn' + (activo ? ' active' : '') + '">')
+                .prop('disabled', disabled)
+                .html(label)
+                .on('click', function () { renderPagina(pagDest); });
+        }
+
+        $pag.append(btn('<i class="fas fa-chevron-left"></i>', actual - 1, false, actual === 1));
+
+        var desde = Math.max(1, actual - 2);
+        var hasta = Math.min(totalPags, actual + 2);
+        if (desde > 1) { $pag.append(btn('1', 1, false, false)); if (desde > 2) $pag.append($('<span style="padding:0 4px;align-self:center;color:#9ca3af;">…</span>')); }
+        for (var p = desde; p <= hasta; p++) { $pag.append(btn(p, p, p === actual, false)); }
+        if (hasta < totalPags) { if (hasta < totalPags - 1) $pag.append($('<span style="padding:0 4px;align-self:center;color:#9ca3af;">…</span>')); $pag.append(btn(totalPags, totalPags, false, false)); }
+
+        $pag.append(btn('<i class="fas fa-chevron-right"></i>', actual + 1, false, actual === totalPags));
+    }
+
+    function verRespuestaAuditoria(pregunta, respuesta, filtros) {
+        var esResumen = pregunta === '(Resumen Gerencial)';
+        var html = '';
+
+        // Cabecera del tipo
+        if (!esResumen) {
+            html += '<div class="ia-pregunta-block mb-3">'
+                  + '<div class="ia-pregunta-label"><i class="fas fa-question-circle"></i> Pregunta realizada</div>'
+                  + '<div class="ia-pregunta-texto">' + $('<div>').text(pregunta).html() + '</div>'
+                  + '</div>';
+        } else {
+            html += '<div class="ia-pregunta-block mb-3" style="background:#f3f4f6;border-left-color:#9ca3af;">'
+                  + '<div class="ia-pregunta-label" style="color:#6b7280;"><i class="fas fa-magic"></i> Tipo</div>'
+                  + '<div style="color:#374151;font-weight:600;">Resumen Gerencial Autom&aacute;tico</div>'
+                  + '</div>';
+        }
+
+        // Filtros usados
+        if (filtros) {
+            html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:8px 12px;margin-bottom:14px;font-size:.8rem;color:#166534;">'
+                  + '<i class="fas fa-filter me-1"></i><strong>Filtros:</strong> ' + $('<div>').text(filtros).html()
+                  + '</div>';
+        }
+
+        html += '<div class="ia-response-body" style="max-height:52vh;overflow-y:auto;text-align:left;">'
+              + renderMarkdown(respuesta)
+              + '</div>';
+
+        Swal.fire({
+            title            : 'Respuesta del Asistente IA',
+            html             : html,
+            width            : '800px',
+            showCloseButton  : true,
+            showConfirmButton: false,
+            customClass      : { popup: 'text-start' }
+        });
+    }
+
+}); // end document.ready
+</script>
+
+<script>
+async function exportarAnalisisPDF() {
+    var btn = document.getElementById('btnExportarPDF');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+    try {
+        var ahora = new Date();
+        document.getElementById('pdfFecha').textContent =
+            ahora.toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'}) +
+            ' ' + ahora.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+
+        var filtros       = window._filtrosActualesPDF || {};
+        var nombreEmpresa = $('#selectEmpresa option:selected').text().trim() || filtros.IdEmpresa || '—';
+        var mesTexto      = $('#selectMes option:selected').text().trim();
+        if (!mesTexto || mesTexto === '-- Todos --') mesTexto = 'Todos';
+        var tablaTexto    = $('#selectTabla option:selected').data('nombre') || filtros.NombreTabla || '—';
+
+        var filtrosData = [
+            {label:'Tabla',    valor:tablaTexto},
+            {label:'Empresa',  valor:nombreEmpresa},
+            {label:'A\u00f1o', valor:filtros.Anio||'\u2014'},
+            {label:'Mes',      valor:mesTexto},
+            {label:'Variable', valor:filtros.Variable||'Todas'}
+        ];
+        var fHtml = '';
+        filtrosData.forEach(function(f){
+            fHtml += '<div class="pdf-filtro-item"><span class="pdf-filtro-label">'+f.label+'</span>'
+                   + '<span class="pdf-filtro-valor">'+f.valor+'</span></div>';
+        });
+        document.getElementById('pdfFiltros').innerHTML = fHtml;
+        document.getElementById('pdfContenido').innerHTML = document.getElementById('respuestaIATexto').innerHTML;
+
+        var preview = document.getElementById('pdfPreview');
+        preview.style.left = '-9999px'; preview.style.display = 'block';
+        var canvas = await html2canvas(preview,{scale:2,useCORS:true,logging:false});
+        preview.style.display = 'none'; preview.style.left = '-9999px';
+
+        var jsPDF = window.jspdf.jsPDF;
+        var pdf   = new jsPDF('p','mm','a4');
+        var pageW = pdf.internal.pageSize.getWidth();
+        var pageH = pdf.internal.pageSize.getHeight();
+        var imgH  = (canvas.height * pageW) / canvas.width;
+        var imgData = canvas.toDataURL('image/png');
+
+        var y = 0, remaining = imgH;
+        while (remaining > 0) {
+            if (y > 0) pdf.addPage();
+            pdf.addImage(imgData,'PNG',0,-y,pageW,imgH);
+            y += pageH; remaining -= pageH;
+        }
+        pdf.save('AnalisisIA_BUFINS_' + ahora.toISOString().slice(0,10).replace(/-/g,'') + '.pdf');
+    } catch(e) {
+        console.error(e);
+        Swal.fire({icon:'error',title:'Error',text:'No se pudo generar el PDF.'});
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-file-pdf"></i> Exportar PDF';
+    }
+}
+</script>
 }

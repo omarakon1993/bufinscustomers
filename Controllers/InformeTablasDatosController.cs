@@ -243,6 +243,30 @@ namespace bufinscustomers.Controllers
                 var response = await iaService.ConsultarAsync(request, instrucciones);
                 response.FilasEnviadas = resultado.TotalRegistros;
                 response.TotalFilas = resultado.TotalRegistros;
+
+                if (response.Exitoso)
+                {
+                    try
+                    {
+                        var empresa = _service.ObtenerEmpresas()
+                            .FirstOrDefault(e => e.Id == filtros.IdEmpresa.GetValueOrDefault());
+                        new AuditoriaAnalisisIAService().Registrar(new AuditoriaAnalisisIA
+                        {
+                            IdUsuario       = usuario.Id,
+                            NombreUsuario   = $"{usuario.Nombre} {usuario.Apellidos}".Trim(),
+                            IdEmpresa       = filtros.IdEmpresa ?? 0,
+                            NombreEmpresa   = empresa?.Nombre ?? "—",
+                            NombreTabla     = tablaAmigable,
+                            Filtros         = ConstruirDescripcionFiltros(filtros),
+                            Pregunta        = request.Pregunta,
+                            Respuesta       = response.Respuesta,
+                            FechaPregunta   = DateTime.Now,
+                            FilasAnalizadas = response.FilasEnviadas
+                        });
+                    }
+                    catch { }
+                }
+
                 return Json(response);
             }
             catch (Exception ex)
