@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Informe de Optimización — Bufins Customers</title>
+<style>
+  body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #1a1a1a; margin: 2cm; line-height: 1.5; }
+  h1 { font-size: 20pt; color: #4f46e5; border-bottom: 3px solid #4f46e5; padding-bottom: 6px; margin-top: 0; }
+  h2 { font-size: 14pt; color: #2d3748; background: #eef2ff; padding: 6px 10px; border-left: 4px solid #6366F1; margin-top: 24px; }
+  h3 { font-size: 12pt; color: #4f46e5; margin-top: 16px; }
+  h4 { font-size: 11pt; color: #374151; margin-top: 12px; margin-bottom: 4px; }
+  p  { margin: 6px 0; }
+  code { font-family: Consolas, monospace; font-size: 9.5pt; background: #f3f4f6; padding: 1px 4px; border-radius: 3px; }
+  pre { font-family: Consolas, monospace; font-size: 9pt; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px; padding: 10px; margin: 8px 0; white-space: pre-wrap; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 10pt; }
+  th { background: #4f46e5; color: white; padding: 6px 10px; text-align: left; }
+  td { padding: 5px 10px; border: 1px solid #d1d5db; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8f9fc; }
+  .badge-critico   { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 10px; font-size: 9pt; font-weight: bold; }
+  .badge-alto      { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 10px; font-size: 9pt; font-weight: bold; }
+  .badge-medio     { background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 10px; font-size: 9pt; font-weight: bold; }
+  .badge-bajo      { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 10px; font-size: 9pt; font-weight: bold; }
+  .badge-hecho     { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 10px; font-size: 9pt; font-weight: bold; }
+  .section-num     { color: #6366F1; font-weight: bold; }
+  .cover { text-align: center; padding: 40px 0 30px 0; border-bottom: 2px solid #6366F1; margin-bottom: 30px; }
+  .cover h1 { border: none; font-size: 26pt; }
+  .cover .sub { font-size: 13pt; color: #6c757d; margin-top: 8px; }
+  .cover .date { font-size: 11pt; color: #9ca3af; margin-top: 20px; }
+  ul li { margin-bottom: 4px; }
+  .file { color: #4f46e5; font-family: Consolas, monospace; font-size: 9.5pt; }
+  .checkmark { color: #10b981; font-weight: bold; }
+  hr { border: none; border-top: 1px solid #e3e6f0; margin: 20px 0; }
+</style>
+</head>
+<body>
+
+<!-- PORTADA -->
+<div class="cover">
+  <h1>Informe de Optimización</h1>
+  <div class="sub">Bufins Customers — ASP.NET MVC 5 / .NET Framework 4.8</div>
+  <div class="date">Fecha: 26 de abril de 2026 &nbsp;|&nbsp; Autor: Claude Code (Anthropic)</div>
+</div>
+
+<!-- ÍNDICE -->
+<h2>Índice</h2>
+<ol>
+  <li>Correcciones de Compilación</li>
+  <li>Mejoras de UI/UX</li>
+  <li>Optimización de Assets — Prioridad Alta</li>
+  <li>Refactorización de CSS — Prioridad Media</li>
+  <li>Corrección de Layout Global</li>
+  <li>Corrección de BundleConfig y doble carga jQuery</li>
+  <li>Prioridad Baja</li>
+  <li>Análisis de Rendimiento</li>
+  <li>Quick Wins Implementados</li>
+  <li>Quick Win #3 — Acción Manual Requerida</li>
+</ol>
+
+<hr>
+
+<!-- SECCIÓN 1 -->
+<h2><span class="section-num">1.</span> Correcciones de Compilación</h2>
+
+<h3>Error: ValidarSesionAttribute no encontrado</h3>
+<p><strong>Archivo:</strong> <span class="file">Controllers/AnalisisIAController.cs</span></p>
+<p><strong>Problema:</strong> El controlador usaba <code>[ValidarSesion]</code> pero faltaba el <code>using</code> del namespace correspondiente.</p>
+<p><strong>Solución:</strong> Se agregó <code>using bufinscustomers.Permisos;</code> como segunda directiva.</p>
+<pre>using bufinscustomers.Helpers;
+using bufinscustomers.Permisos;   // ← agregado
+using bufinscustomers.Services;
+using System.Linq;
+using System.Web.Mvc;</pre>
+
+<hr>
+
+<!-- SECCIÓN 2 -->
+<h2><span class="section-num">2.</span> Mejoras de UI/UX</h2>
+
+<h3>2.1 Rediseño completo de AuditoriaConsultasIA.cshtml</h3>
+<p><strong>Archivo:</strong> <span class="file">Views/Informes/AuditoriaConsultasIA.cshtml</span></p>
+<p>La vista fue reescrita completamente para usar los mismos estilos y estructura que <em>Informe Relacionamientos</em>. Cambios aplicados:</p>
+<ul>
+  <li>Header con clase <code>powerbi-header</code> (degradado azul-cian)</li>
+  <li>Filtros con <code>filter-card</code> → <code>filter-section</code> → <code>form-group</code> + <code>form-control</code></li>
+  <li>Botones con <code>btn-modern-gradient</code> (Buscar) y <code>btn-modern-secondary</code> (Limpiar)</li>
+  <li>Tabla con <code>table-container</code> → <code>table-header</code> → <code>table-wrapper</code> → <code>data-table</code></li>
+  <li>Loading state con <code>loading-spinner</code>, empty state con <code>no-data-message</code></li>
+  <li>Paginación con <code>pagination-controls</code> + <code>btn-pagination</code></li>
+</ul>
+
+<h3>2.2 Botones de navegación cruzada</h3>
+<ul>
+  <li><strong>En AuditoriaConsultasIA:</strong> Se agregó botón en el header que redirige a <code>AnalisisIA/Index</code></li>
+  <li><strong>En AnalisisIA:</strong> Se cambió el texto del botón de <em>"Historial de Consultas"</em> a <em>"Auditoría Consultas"</em></li>
+</ul>
+
+<h3>2.3 Fix del header de AnalisisIA</h3>
+<p><strong>Archivo:</strong> <span class="file">Views/Informes/AnalisisIA.cshtml</span></p>
+<p><strong>Problema:</strong> La clase <code>ia-page-header</code> en <span class="file">Assets/css/analisis-ia.css</span> sobreescribía el degradado del header con un morado oscuro (<code>#312e81</code>).</p>
+<p><strong>Solución:</strong> Se eliminó <code>ia-page-header</code> del atributo <code>class</code> del div header. El header ahora usa solo <code>powerbi-header</code> igual que las demás vistas.</p>
+
+<h3>2.4 Script SQL — Nuevo menú "Auditoría IA"</h3>
+<p>Script para insertar la nueva opción en la sección Informes del menú:</p>
+<pre>INSERT INTO MenuOpciones
+  (Nombre, Codigo, Controller, Action, Icono, NombreGrupo, IconoGrupo,
+   NombreCategoria, IconoCategoria, OrdenCategoria, Orden,
+   SoloSuperAdmin, SoloAdminEmpresa, Activo)
+VALUES
+  ('Auditoría IA', 'INFORMES_AUDITORIA_IA', 'AuditoriaConsultasIA', 'Index',
+   'fa-history', 'Informes', 'fa-chart-bar',
+   'Inteligencia Artificial', 'fa-robot', 3, 5,
+   0, 1, 1);</pre>
+
+<hr>
+
+<!-- SECCIÓN 3 -->
+<h2><span class="section-num">3.</span> Optimización de Assets — Prioridad Alta</h2>
+
+<h3>3.1 Archivos JS eliminados</h3>
+<table>
+  <tr><th>Archivo</th><th>Peso</th><th>Motivo de eliminación</th></tr>
+  <tr><td class="file">Assets/js/xlsx.full.min.js</td><td>864 KB</td><td>La exportación Excel usa EPPlus (C# server-side). Nunca fue cargado en ninguna vista.</td></tr>
+  <tr><td class="file">Assets/js/jquery-3.6.0.min.js</td><td>88 KB</td><td>jQuery se carga desde Assets/Bootstrap/jquery/. Copia duplicada sin uso.</td></tr>
+</table>
+
+<h3>3.2 Carpeta Assets/Scripts/ eliminada (19 archivos)</h3>
+<p>La carpeta contenía versiones antiguas de jQuery, Bootstrap, Respond.js y Modernizr que habían sido reemplazadas por las versiones en <span class="file">Assets/Bootstrap/</span>. Ningún archivo de esta carpeta era cargado por ninguna vista activa.</p>
+
+<h3>3.3 Carpeta Assets/Content/ limpiada (29 variantes CSS)</h3>
+<p>La carpeta contenía 29 variantes temáticas del skin de SB Admin 2 (colores: blue, green, red, purple, etc.) que nunca fueron usadas. Se conservó únicamente la variante activa.</p>
+
+<h3>3.4 Imágenes eliminadas</h3>
+<table>
+  <tr><th>Archivo</th><th>Motivo</th></tr>
+  <tr><td class="file">Assets/img/avatar2.jpg</td><td>No referenciada en ningún archivo</td></tr>
+  <tr><td class="file">Assets/img/bg3.png</td><td>No referenciada en ningún archivo</td></tr>
+  <tr><td class="file">Assets/img/logobufins1.png</td><td>No referenciada en ningún archivo</td></tr>
+  <tr><td class="file">Assets/img/wave2.png</td><td>No referenciada en ningún archivo</td></tr>
+</table>
+
+<h3>3.5 Limpieza del .csproj</h3>
+<p>Se eliminaron 53 entradas <code>&lt;Content Include="..."/&gt;</code> del archivo <span class="file">bufinscustomers.csproj</span> correspondientes a los archivos eliminados, evitando advertencias de compilación.</p>
+
+<hr>
+
+<!-- SECCIÓN 4 -->
+<h2><span class="section-num">4.</span> Refactorización de CSS — Prioridad Media</h2>
+
+<h3>4.1 Creación de bufins-components.css</h3>
+<p><strong>Archivo nuevo:</strong> <span class="file">Assets/css/bufins-components.css</span></p>
+<p>Se identificaron 27 clases CSS idénticas duplicadas entre <span class="file">informe-relacionamientos.css</span> e <span class="file">informe-tablas-datos.css</span> (~500 líneas duplicadas). Estas clases se extrajeron a un archivo compartido cargado globalmente.</p>
+
+<p><strong>Clases incluidas en bufins-components.css:</strong></p>
+<ul>
+  <li><code>.powerbi-header</code> y variantes (header de todas las vistas de informes)</li>
+  <li><code>.filter-card</code>, <code>.filter-card-title</code>, <code>.filter-section</code></li>
+  <li><code>.form-group</code>, <code>label</code>, <code>.form-control</code>, <code>.form-select</code></li>
+  <li><code>.btn-modern-gradient</code>, <code>.btn-modern-success</code>, <code>.btn-modern-secondary</code>, <code>.btn-group-actions</code></li>
+  <li><code>.table-container</code>, <code>.table-header</code>, <code>.info-badge</code>, <code>.table-wrapper</code>, <code>.data-table</code></li>
+  <li><code>.pagination-controls</code>, <code>.btn-pagination</code>, <code>.pagination-dots</code></li>
+  <li><code>.no-data-message</code>, <code>.loading-spinner</code>, <code>@keyframes spin</code></li>
+  <li>Estilos completos de Select2 (aplicados a todos los dropdowns del sistema)</li>
+  <li>Media queries responsivos (992px, 768px, 576px)</li>
+</ul>
+
+<h3>4.2 Reducción de informe-relacionamientos.css</h3>
+<p>De <strong>744 líneas → 130 líneas</strong> (-82%). Se conservaron únicamente los estilos propios de esta vista:</p>
+<ul>
+  <li>Hover con <code>filter: brightness(0.96)</code> (preserva colores de grupo)</li>
+  <li>Clases de agrupación visual: <code>.grupo-0/1/2/3</code>, <code>.grupo-inicio</code>, <code>.grupo-badge</code></li>
+  <li>Modal de detalle de grupo: <code>.modal-grupo-*</code></li>
+  <li>Panel de descripción del modelo: <code>.modelo-info-panel</code></li>
+</ul>
+
+<h3>4.3 Reducción de informe-tablas-datos.css</h3>
+<p>De <strong>840 líneas → 215 líneas</strong> (-74%). Se conservaron únicamente los estilos propios:</p>
+<ul>
+  <li><code>.gradient-header</code> (header legacy)</li>
+  <li><code>.filter-section-title</code></li>
+  <li>Zebra striping: <code>tr:nth-child(even)</code></li>
+  <li>Hover con <code>background-color: #eef2ff</code></li>
+  <li>Todos los estilos del modal IA: <code>.ia-modal-*</code>, <code>.btn-ia-*</code>, <code>.ia-response-*</code></li>
+</ul>
+
+<hr>
+
+<!-- SECCIÓN 5 -->
+<h2><span class="section-num">5.</span> Corrección de Layout Global</h2>
+
+<h3>5.1 Extracción del bloque CSS inline a layout.css</h3>
+<p><strong>Archivo nuevo:</strong> <span class="file">Assets/css/layout.css</span></p>
+<p>El archivo <span class="file">Views/Shared/_Layout.cshtml</span> contenía un bloque <code>&lt;style&gt;</code> de <strong>708 líneas</strong> con estilos globales del sistema. Este bloque fue extraído a un archivo CSS externo y reemplazado con un <code>&lt;link&gt;</code>.</p>
+<p><strong>Contenido de layout.css:</strong></p>
+<ul>
+  <li>Sidebar chevron transitions y responsive extra-small</li>
+  <li>Header y footer oscuros (<code>#160933</code>)</li>
+  <li>Items del menú lateral (degradado azul-cian) y estados hover/activo</li>
+  <li>Modal de perfil de usuario completo (<code>.modal-perfil-moderno</code>, <code>.info-item</code>, etc.)</li>
+  <li>Modal de carga de imagen de perfil (<code>.upload-area</code>, <code>.preview-image</code>, etc.)</li>
+  <li>Estilos globales para todos los modales del sistema</li>
+  <li>Animación del logo del sidebar (<code>@keyframes logoFloat</code>)</li>
+</ul>
+
+<h3>5.2 Nuevos links en el &lt;head&gt; del Layout</h3>
+<pre>&lt;link href="~/Assets/css/bufins-components.css" rel="stylesheet"&gt;
+&lt;link href="~/Assets/css/layout.css" rel="stylesheet"&gt;</pre>
+
+<hr>
+
+<!-- SECCIÓN 6 -->
+<h2><span class="section-num">6.</span> Corrección de BundleConfig y Doble Carga jQuery</h2>
+
+<h3>Problema identificado</h3>
+<p>El <span class="file">_Layout.cshtml</span> cargaba jQuery y Bootstrap de dos formas simultáneas:</p>
+<ol>
+  <li>Directamente con etiquetas <code>&lt;script src="..."&gt;</code> al final del body</li>
+  <li>A través de <code>@Scripts.Render("~/bundles/jquery")</code> y <code>@Scripts.Render("~/bundles/bootstrap")</code></li>
+</ol>
+<p>Además, <code>@Styles.Render("~/Assets/Content/css")</code> y <code>@Scripts.Render("~/bundles/modernizr")</code> apuntaban a archivos inexistentes.</p>
+
+<h3>Solución aplicada</h3>
+<ul>
+  <li>Eliminados los dos <code>@Scripts.Render</code> duplicados del Layout</li>
+  <li>Eliminados <code>@Styles.Render</code> y <code>@Scripts.Render("~/bundles/modernizr")</code></li>
+  <li>Limpiado <span class="file">App_Start/BundleConfig.cs</span>: todos los assets se cargan directamente con <code>&lt;link&gt;</code> y <code>&lt;script&gt;</code></li>
+</ul>
+
+<hr>
+
+<!-- SECCIÓN 7 -->
+<h2><span class="section-num">7.</span> Prioridad Baja</h2>
+
+<h3>Bootstrap Icons en ConfiguracionesEmpresas</h3>
+<p><strong>Archivo:</strong> <span class="file">Views/Configuracion/ConfiguracionesEmpresas.cshtml</span></p>
+<p>Los íconos no se estaban renderizando porque faltaba el link al CSS de Bootstrap Icons. Se agregó:</p>
+<pre>&lt;link rel="stylesheet" href="~/Assets/css/bootstrap-icons.min.css"&gt;</pre>
+<p>El archivo <span class="file">bootstrap-icons.min.css</span> ya existía en <span class="file">Assets/css/</span> junto con sus fuentes <code>.woff</code> y <code>.woff2</code>.</p>
+
+<hr>
+
+<!-- SECCIÓN 8 -->
+<h2><span class="section-num">8.</span> Análisis de Rendimiento</h2>
+
+<h3>Resumen ejecutivo</h3>
+<p>Se realizó una auditoría completa de rendimiento del sitio. Se identificaron <strong>31 problemas</strong> distribuidos por severidad:</p>
+
+<table>
+  <tr><th>Severidad</th><th>Cantidad</th><th>Áreas principales</th></tr>
+  <tr><td><span class="badge-critico">CRÍTICO</span></td><td>6</td><td>debug=true, SELECT *, Sin paginación, Logo enorme, Sin cifrado DB, Bundling desactivado</td></tr>
+  <tr><td><span class="badge-alto">ALTO</span></td><td>8</td><td>CSS sin minificar, SweetAlert bloqueante, Sin gzip, Imágenes en sesión, Sobrecarga de icon libraries</td></tr>
+  <tr><td><span class="badge-medio">MEDIO</span></td><td>12</td><td>Polling de sesión, Sin caché IA, LIKE con wildcard inicial, Sin cache browser, CSS feature-specific global, ViewBag excesivo</td></tr>
+  <tr><td><span class="badge-bajo">BAJO</span></td><td>5</td><td>JS sin minificar duplicados, Schema caching, Fuente sin font-display:swap</td></tr>
+</table>
+
+<h3>Hallazgos por categoría</h3>
+
+<h4>Frontend / Assets</h4>
+<table>
+  <tr><th>Severidad</th><th>Problema</th><th>Recomendación</th></tr>
+  <tr><td><span class="badge-critico">CRÍTICO</span></td><td><code>debug="true"</code> en Web.config — reduce rendimiento 20-30%</td><td>Usar <code>debug="false"</code> en producción con Web.Release.config transform</td></tr>
+  <tr><td><span class="badge-critico">CRÍTICO</span></td><td>Bundling completamente desactivado — 13+ requests HTTP separados por página</td><td>Habilitar BundleConfig con bundles de CSS y JS globales</td></tr>
+  <tr><td><span class="badge-alto">ALTO</span></td><td>SweetAlert2 cargado síncronamente en &lt;head&gt; — bloquea renderizado</td><td>Mover al final del body con atributo <code>defer</code></td></tr>
+  <tr><td><span class="badge-alto">ALTO</span></td><td>10 archivos CSS sin minificar (~3,500 líneas)</td><td>Crear versiones <code>.min.css</code> para producción</td></tr>
+  <tr><td><span class="badge-alto">ALTO</span></td><td><code>modern-sidebar.js</code> sin minificar (417 líneas)</td><td>Crear <code>modern-sidebar.min.js</code></td></tr>
+  <tr><td><span class="badge-alto">ALTO</span></td><td>Sin compresión gzip — texto sin comprimir</td><td>Habilitar en IIS o Web.config</td></tr>
+  <tr><td><span class="badge-medio">MEDIO</span></td><td>Google Fonts cargado síncronamente sin font-display</td><td>Agregar <code>&amp;display=swap</code> a la URL de Google Fonts</td></tr>
+  <tr><td><span class="badge-medio">MEDIO</span></td><td>CSS específico de features siempre cargado globalmente</td><td>Cargar condicionalmente por sección/vista</td></tr>
+</table>
+
+<h4>Base de Datos</h4>
+<table>
+  <tr><th>Severidad</th><th>Problema</th><th>Archivo</th><th>Recomendación</th></tr>
+  <tr><td><span class="badge-critico">CRÍTICO</span></td><td>Sin paginación en consultas — carga toda la tabla en memoria</td><td class="file">InformeTablasDatosService.cs</td><td>Implementar TOP N OFFSET M (paginación server-side)</td></tr>
+  <tr><td><span class="badge-critico">CRÍTICO</span></td><td><code>SELECT *</code> en queries dinámicos — devuelve columnas innecesarias</td><td class="file">InformeTablasDatosService.cs, InformeRelacionamientosService.cs</td><td>Especificar solo columnas requeridas o usar allowlist</td></tr>
+  <tr><td><span class="badge-medio">MEDIO</span></td><td>LIKE con wildcard inicial (<code>LIKE '%valor%'</code>) — deshabilita índices</td><td class="file">InformeTablasDatosService.cs</td><td>Usar <code>LIKE 'valor%'</code> o full-text search</td></tr>
+  <tr><td><span class="badge-medio">MEDIO</span></td><td>Schema detection repetida por request con <code>SELECT TOP 0 *</code></td><td class="file">InformeTablasDatosService.cs</td><td>Cachear el esquema en memoria tras primera detección</td></tr>
+  <tr><td><span class="badge-bajo">BAJO</span></td><td>FieldCount y GetName() llamados en cada iteración del loop</td><td class="file">InformeTablasDatosService.cs</td><td>Cachear nombres de columnas antes del loop</td></tr>
+</table>
+
+<h4>Sesión y Caché</h4>
+<table>
+  <tr><th>Severidad</th><th>Problema</th><th>Recomendación</th></tr>
+  <tr><td><span class="badge-alto">ALTO</span></td><td>Imágenes Base64 almacenadas en sesión de servidor (hasta 200KB por usuario)</td><td>Guardar solo ID de imagen; servir con cache headers HTTP</td></tr>
+  <tr><td><span class="badge-medio">MEDIO</span></td><td>Polling AJAX de sesión cada 60 segundos — carga constante en servidor</td><td>Reemplazar con Server-Sent Events o WebSockets</td></tr>
+  <tr><td><span class="badge-medio">MEDIO</span></td><td>Sin output caching configurado — páginas re-renderizadas en cada request</td><td>Implementar <code>[OutputCache]</code> en acciones de solo lectura</td></tr>
+  <tr><td><span class="badge-medio">MEDIO</span></td><td>Sin headers de caché para assets estáticos</td><td>Configurar <code>Cache-Control: max-age=31536000</code> en IIS</td></tr>
+</table>
+
+<h4>Integración IA (OpenAI)</h4>
+<table>
+  <tr><th>Severidad</th><th>Problema</th><th>Recomendación</th></tr>
+  <tr><td><span class="badge-alto">ALTO</span></td><td>Sin caché de respuestas — consultas idénticas van siempre a la API</td><td>Cachear por hash de la consulta con TTL de 24 horas</td></tr>
+  <tr><td><span class="badge-medio">MEDIO</span></td><td>Sin validación del tamaño de input antes del API call</td><td>Validar que el payload no exceda el límite de tokens antes de llamar</td></tr>
+  <tr><td><span class="badge-medio">MEDIO</span></td><td>Errores de API no registrados en log persistente</td><td>Implementar logging de errores (NLog o log4net)</td></tr>
+</table>
+
+<h4>Imágenes</h4>
+<table>
+  <tr><th>Severidad</th><th>Problema</th><th>Recomendación</th></tr>
+  <tr><td><span class="badge-critico">CRÍTICO</span></td><td><code>Bufins_LogoIndex.png</code> — 10,151 × 4,688 px, probablemente &gt;1MB</td><td>Redimensionar al tamaño real de visualización (&lt;600px); convertir a WebP</td></tr>
+  <tr><td><span class="badge-medio">MEDIO</span></td><td>Logos en formato PNG — formato ineficiente para gráficos vectoriales</td><td>Usar SVG para logos; WebP para imágenes rasterizadas</td></tr>
+</table>
+
+<h4>Seguridad (impacto en rendimiento y datos)</h4>
+<table>
+  <tr><th>Severidad</th><th>Problema</th><th>Recomendación</th></tr>
+  <tr><td><span class="badge-critico">CRÍTICO</span></td><td><code>Encrypt=false</code> en la connection string — contraseña en texto plano</td><td>Cambiar a <code>Encrypt=true;TrustServerCertificate=true</code></td></tr>
+  <tr><td><span class="badge-medio">MEDIO</span></td><td>Hash de contraseña almacenado en objeto de sesión</td><td>Almacenar solo campos no sensibles en sesión</td></tr>
+</table>
+
+<hr>
+
+<!-- SECCIÓN 9 -->
+<h2><span class="section-num">9.</span> Quick Wins Implementados</h2>
+
+<table>
+  <tr><th>#</th><th>Acción</th><th>Estado</th><th>Ganancia estimada</th></tr>
+  <tr>
+    <td>1</td>
+    <td><code>debug="false"</code> en Web.config</td>
+    <td><span class="badge-hecho">✓ HECHO</span></td>
+    <td>+20-30% rendimiento general del servidor</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>SweetAlert2 movido al final del body con atributo <code>defer</code></td>
+    <td><span class="badge-hecho">✓ HECHO</span></td>
+    <td>Desbloquea renderizado inicial de la página</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>Redimensionar <code>Bufins_LogoIndex.png</code></td>
+    <td><span class="badge-alto">⚠ MANUAL</span></td>
+    <td>-90% peso del logo (ver instrucciones abajo)</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>Compresión gzip + caché de assets estáticos en Web.config</td>
+    <td><span class="badge-hecho">✓ HECHO</span></td>
+    <td>-60% transferencia de texto CSS/JS/HTML</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>Minificación de los 10 archivos CSS custom (versiones .min.css)</td>
+    <td><span class="badge-hecho">✓ HECHO</span></td>
+    <td>Ver tabla de resultados abajo</td>
+  </tr>
+</table>
+
+<h3>Resultados de minificación CSS</h3>
+<table>
+  <tr><th>Archivo</th><th>Original</th><th>Minificado</th><th>Reducción</th></tr>
+  <tr><td class="file">modern-sidebar.css</td><td>17.8 KB</td><td>12.1 KB</td><td>-32%</td></tr>
+  <tr><td class="file">responsive-custom.css</td><td>11.3 KB</td><td>4.8 KB</td><td>-58%</td></tr>
+  <tr><td class="file">bufins-components.css</td><td>11.7 KB</td><td>8.6 KB</td><td>-27%</td></tr>
+  <tr><td class="file">layout.css</td><td>13.2 KB</td><td>10.0 KB</td><td>-24%</td></tr>
+  <tr><td class="file">analisis-ia.css</td><td>9.9 KB</td><td>6.7 KB</td><td>-32%</td></tr>
+  <tr><td class="file">informe-tablas-datos.css</td><td>6.8 KB</td><td>4.6 KB</td><td>-33%</td></tr>
+  <tr><td class="file">informe-relacionamientos.css</td><td>4.2 KB</td><td>3.0 KB</td><td>-30%</td></tr>
+  <tr><td class="file">configuracion-admin.css</td><td>4.6 KB</td><td>2.5 KB</td><td>-47%</td></tr>
+  <tr><td class="file">Login.css</td><td>1.6 KB</td><td>1.2 KB</td><td>-24%</td></tr>
+  <tr><td class="file">style.css</td><td>7.3 KB</td><td>4.9 KB</td><td>-32%</td></tr>
+  <tr><td><strong>TOTAL</strong></td><td><strong>88.4 KB</strong></td><td><strong>58.4 KB</strong></td><td><strong>-34% promedio</strong></td></tr>
+</table>
+
+<p><strong>Convención de uso:</strong> Los archivos <code>.css</code> originales se mantienen para edición. Los archivos <code>.min.css</code> son los que se sirven al navegador. El Layout referencia las versiones <code>.min.css</code> para los 4 CSS globales:</p>
+<pre>&lt;link href="~/Assets/css/responsive-custom.min.css" rel="stylesheet"&gt;
+&lt;link href="~/Assets/css/modern-sidebar.min.css"    rel="stylesheet"&gt;
+&lt;link href="~/Assets/css/bufins-components.min.css" rel="stylesheet"&gt;
+&lt;link href="~/Assets/css/layout.min.css"            rel="stylesheet"&gt;</pre>
+
+<p><strong>Importante:</strong> Cada vez que se modifique un archivo <code>.css</code>, se debe re-ejecutar el script de minificación para actualizar su versión <code>.min.css</code>. Script PowerShell para regenerar:</p>
+<pre>$base = 'ruta\Assets\css'
+$files = @('modern-sidebar','responsive-custom','bufins-components','layout',
+           'analisis-ia','informe-tablas-datos','informe-relacionamientos',
+           'configuracion-admin','Login','style')
+foreach ($f in $files) {
+    $src  = "$base\$f.css"
+    $dest = "$base\$f.min.css"
+    $txt  = [IO.File]::ReadAllText($src)
+    $txt  = [regex]::Replace($txt, '/\*[\s\S]*?\*/', '')
+    $txt  = [regex]::Replace($txt, '\s+', ' ')
+    $txt  = [regex]::Replace($txt, '\s*([:{};,>])\s*', '$1')
+    $txt  = [regex]::Replace($txt, '\s*\{\s*', '{')
+    $txt  = [regex]::Replace($txt, ';\}', '}')
+    [IO.File]::WriteAllText($dest, $txt.Trim())
+    Write-Host "$f.min.css actualizado"
+}</pre>
+
+<hr>
+
+<!-- SECCIÓN 10 -->
+<h2><span class="section-num">10.</span> Quick Win #3 — Acción Manual Requerida</h2>
+
+<h3>Redimensionar Bufins_LogoIndex.png</h3>
+<p><strong>Archivo:</strong> <span class="file">Assets/img/Bufins_LogoIndex.png</span></p>
+<p><strong>Dimensiones actuales:</strong> 10,151 × 4,688 píxeles</p>
+<p><strong>Problema:</strong> La imagen se muestra en pantalla en un contenedor de aproximadamente 200-300px de ancho, pero se transfiere con resolución de impresión profesional. Esto representa un desperdicio de ancho de banda de más del 90%.</p>
+
+<h4>Instrucciones para corregir:</h4>
+<ol>
+  <li>Abrir <span class="file">Bufins_LogoIndex.png</span> en cualquier editor de imágenes (Photoshop, GIMP, Paint.net, o incluso Paint de Windows)</li>
+  <li>Redimensionar a <strong>600 × 277 px</strong> (misma proporción, dimensión máxima útil)</li>
+  <li>Guardar con compresión PNG optimizada (en Photoshop: Exportar para web → PNG-24)</li>
+  <li>Opcionalmente convertir a WebP para mayor compresión (herramienta online: squoosh.app)</li>
+</ol>
+<p><strong>Ganancia esperada:</strong> De ~1-3 MB a menos de 50 KB (-95% o más).</p>
+
+<hr>
+
+<p style="text-align:center; color:#9ca3af; font-size:9pt; margin-top:30px;">
+  Documento generado el 26 de abril de 2026 — Claude Code (Anthropic) &nbsp;|&nbsp; Bufins Customers v1.0
+</p>
+
+</body>
+</html>

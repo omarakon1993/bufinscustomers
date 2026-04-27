@@ -3,6 +3,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Net.Http;
+using System.Runtime.Caching;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,6 +15,8 @@ namespace bufinscustomers.Services
         private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
         private const string OpenAIEndpoint = "https://api.openai.com/v1/chat/completions";
         private const string OpenAIModel = "gpt-4o-mini";
+        private static readonly MemoryCache _cache = MemoryCache.Default;
+        private const int CacheTtlHoras = 4;
 
         private readonly string _apiKey;
 
@@ -32,6 +36,15 @@ namespace bufinscustomers.Services
                         Exitoso = false,
                         Error = "La clave de API de OpenAI no está configurada. Agregue 'OpenAIApiKey' en Web.config."
                     };
+                }
+
+                // Buscar en caché antes de llamar a la API
+                string cacheKey = GenerarCacheKey(request, instruccionesPersonalizadas);
+                if (_cache.Contains(cacheKey))
+                {
+                    var cached = (IAConsultaResponse)_cache.Get(cacheKey);
+                    cached.DesdeCache = true;
+                    return cached;
                 }
 
                 string prompt = ConstruirPrompt(request, instruccionesPersonalizadas);
@@ -67,11 +80,14 @@ namespace bufinscustomers.Services
 
                 string respuesta = ExtraerTextoRespuesta(responseText);
 
-                return new IAConsultaResponse
+                var response = new IAConsultaResponse
                 {
                     Exitoso = true,
                     Respuesta = respuesta
                 };
+
+                _cache.Set(cacheKey, response, DateTimeOffset.Now.AddHours(CacheTtlHoras));
+                return response;
             }
             catch (TaskCanceledException)
             {
@@ -80,6 +96,16 @@ namespace bufinscustomers.Services
             catch (Exception ex)
             {
                 return new IAConsultaResponse { Exitoso = false, Error = $"Error al consultar IA: {ex.Message}" };
+            }
+        }
+
+        private string GenerarCacheKey(IAConsultaRequest request, string instrucciones)
+        {
+            string raw = $"{request.NombreTabla}|{request.FiltrosDescripcion}|{request.Pregunta}|{instrucciones}";
+            using (var md5 = MD5.Create())
+            {
+                byte[] hash = md5.ComputeHash(Encoding.UTF8.GetBytes(raw));
+                return "ia_" + BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
             }
         }
 

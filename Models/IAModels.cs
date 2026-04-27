@@ -15,5 +15,6 @@ namespace bufinscustomers.Models
         public string Error { get; set; }
         public int FilasEnviadas { get; set; }
         public int TotalFilas { get; set; }
+        public bool DesdeCache { get; set; }
     }
 }

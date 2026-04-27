@@ -183,6 +183,10 @@ namespace bufinscustomers.Services
                 return resultado;
             }
 
+            int maxFilas = 5000;
+            if (int.TryParse(System.Configuration.ConfigurationManager.AppSettings["MaxFilasConsulta"], out int maxCfg) && maxCfg > 0)
+                maxFilas = maxCfg;
+
             try
             {
                 using (SqlConnection cn = new SqlConnection(CadenaConexion))
@@ -236,10 +240,11 @@ namespace bufinscustomers.Services
                         }
 
                         query = string.Format(@"
-                            SELECT {1}
+                            SELECT TOP ({2}) {1}
                             FROM dbo.{0} t",
                             SqlHelper.EscapeIdentifier(filtros.NombreTabla),
-                            seleccion);
+                            seleccion,
+                            maxFilas);
 
                         if (tieneIdEmpresa)
                         {
@@ -254,8 +259,9 @@ namespace bufinscustomers.Services
                     }
                     else
                     {
-                        query = string.Format("SELECT * FROM dbo.{0} WHERE 1=1",
-                            SqlHelper.EscapeIdentifier(filtros.NombreTabla));
+                        query = string.Format("SELECT TOP ({1}) * FROM dbo.{0} WHERE 1=1",
+                            SqlHelper.EscapeIdentifier(filtros.NombreTabla),
+                            maxFilas);
                     }
 
                     List<SqlParameter> parametros = new List<SqlParameter>();
@@ -369,6 +375,7 @@ namespace bufinscustomers.Services
                         }
 
                         resultado.TotalRegistros = resultado.Filas.Count;
+                        resultado.ResultadosTruncados = resultado.Filas.Count >= maxFilas;
                     }
                 }
             }

@@ -31,6 +31,7 @@ namespace bufinscustomers.Models
         public List<string> Columnas { get; set; }
         public Dictionary<string, Type> TiposColumnas { get; set; }
         public int TotalRegistros { get; set; }
+        public bool ResultadosTruncados { get; set; }
 
         public ResultadoInformeTablasDatos()
         {
@@ -38,6 +39,7 @@ namespace bufinscustomers.Models
             Columnas = new List<string>();
             TiposColumnas = new Dictionary<string, Type>();
             TotalRegistros = 0;
+            ResultadosTruncados = false;
         }
     }
 
