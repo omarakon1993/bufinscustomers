@@ -1,0 +1,553 @@
+@model dynamic
+@using bufinscustomers.Models
+
+@{
+    ViewBag.Title = "Auditoría Consultas IA";
+    var esAdmin        = (bool)ViewBag.EsAdmin;
+    var esAdminEmpresa = (bool)(ViewBag.EsAdminEmpresa ?? false);
+    var empresasFiltro = ViewBag.EmpresasFiltro as List<Empresas>;
+}
+
+<link href="~/Assets/css/informe-relacionamientos.css" rel="stylesheet" />
+
+<style>
+/* Chips de fecha rápida */
+.aud-date-chip {
+    background: #fff;
+    border: 1px solid #d1d5db;
+    color: #6b7280;
+    border-radius: 99px;
+    padding: 4px 14px;
+    font-size: .78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+}
+.aud-date-chip:hover  { border-color: #6366F1; color: #6366F1; background: #eef2ff; }
+.aud-date-chip.active { background: #6366F1; border-color: #6366F1; color: #fff; }
+
+/* Badges tipo */
+.aud-tipo-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: .72rem; font-weight: 700;
+    padding: 3px 10px; border-radius: 99px; white-space: nowrap;
+}
+.aud-tipo-resumen  { background: #e0e7ff; color: #3730a3; }
+.aud-tipo-pregunta { background: #fce7f3; color: #be185d; }
+
+/* Celda pregunta truncada */
+.aud-pregunta-cell {
+    max-width: 260px; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+    cursor: default; color: #4b5563; display: block;
+}
+
+/* Botón header */
+.audit-btn-header {
+    background:rgba(255,255,255,.18); border:1.5px solid rgba(255,255,255,.55);
+    color:#fff; border-radius:8px; padding:6px 16px; font-size:.87rem;
+    font-weight:600; cursor:pointer; transition:background .2s; white-space:nowrap;
+    text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+}
+.audit-btn-header:hover { background:rgba(255,255,255,.30); color:#fff; text-decoration:none; }
+
+/* Botón ver */
+.aud-btn-ver {
+    background: #eef2ff; border: 1px solid #c7d2fe;
+    color: #6366F1; border-radius: 6px;
+    padding: 4px 12px; font-size: .76rem; font-weight: 600;
+    cursor: pointer; transition: background .15s; white-space: nowrap;
+}
+.aud-btn-ver:hover { background: #e0e7ff; }
+
+/* Bloque pregunta en SweetAlert */
+.ia-pregunta-block {
+    background: #eef2ff; border-left: 4px solid #6366F1;
+    border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;
+}
+.ia-pregunta-block .ia-pregunta-label {
+    font-size: .75rem; font-weight: 700; letter-spacing: .07em;
+    text-transform: uppercase; color: #4f46e5; margin-bottom: 4px;
+}
+.ia-pregunta-block .ia-pregunta-texto { color: #1e1b4b; font-weight: 500; font-size: .97rem; }
+</style>
+
+<div class="container-fluid px-4">
+
+    <!-- Header -->
+    <div class="powerbi-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div class="powerbi-header-content">
+            <i class="fas fa-history powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">Auditor&iacute;a Consultas IA</h1>
+        </div>
+        <a href="@Url.Action("Index","AnalisisIA")" class="audit-btn-header">
+            <i class="fas fa-robot"></i> An&aacute;lisis IA
+        </a>
+    </div>
+
+    <!-- Card de filtros -->
+    <div class="filter-card">
+        <h3 class="filter-card-title">
+            <i class="fas fa-filter"></i>
+            Filtros de Consulta
+        </h3>
+
+        <div class="filter-section">
+            <div class="row">
+
+                @if (esAdmin)
+                {
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="audEmpresa">
+                                <i class="fas fa-building"></i>
+                                Empresa
+                            </label>
+                            <select id="audEmpresa" class="form-control">
+                                <option value="">Todas las empresas</option>
+                                @if (empresasFiltro != null)
+                                {
+                                    foreach (var e in empresasFiltro)
+                                    {
+                                        <option value="@e.Id">@e.Nombre</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                }
+
+                @if (esAdmin || esAdminEmpresa)
+                {
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="audUsuario">
+                                <i class="fas fa-user"></i>
+                                Usuario
+                            </label>
+                            <select id="audUsuario" class="form-control">
+                                <option value="">Todos los usuarios</option>
+                            </select>
+                        </div>
+                    </div>
+                }
+
+                <div class="@(esAdmin ? "col-md-4" : (esAdminEmpresa ? "col-md-4" : "col-md-6"))">
+                    <div class="form-group">
+                        <label for="audTipo">
+                            <i class="fas fa-tag"></i>
+                            Tipo
+                        </label>
+                        <select id="audTipo" class="form-control">
+                            <option value="">Todos los tipos</option>
+                            <option value="resumen">&#x2728; Resumen Gerencial</option>
+                            <option value="pregunta">&#x2753; Pregunta</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="@(esAdmin || esAdminEmpresa ? "col-md-12" : "col-md-6")">
+                    <div class="form-group">
+                        <label for="audBusquedaTexto">
+                            <i class="fas fa-search"></i>
+                            Buscar
+                        </label>
+                        <input type="text" id="audBusquedaTexto" class="form-control"
+                               placeholder="Pregunta, tabla, usuario&hellip;" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-auto">
+                    <div class="form-group">
+                        <label for="audDesde">
+                            <i class="fas fa-calendar-alt"></i>
+                            Desde
+                        </label>
+                        <input type="date" id="audDesde" class="form-control" style="width:170px;" />
+                    </div>
+                </div>
+                <div class="col-sm-auto">
+                    <div class="form-group">
+                        <label for="audHasta">
+                            <i class="fas fa-calendar-alt"></i>
+                            Hasta
+                        </label>
+                        <input type="date" id="audHasta" class="form-control" style="width:170px;" />
+                    </div>
+                </div>
+                <div class="col d-flex align-items-end pb-2">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span style="font-size:.75rem;color:#9ca3af;white-space:nowrap;">
+                            <i class="fas fa-bolt" style="font-size:.65rem;"></i> Acceso r&aacute;pido:
+                        </span>
+                        <button class="aud-date-chip" data-days="0">Hoy</button>
+                        <button class="aud-date-chip" data-days="7">7 d&iacute;as</button>
+                        <button class="aud-date-chip" data-days="30">30 d&iacute;as</button>
+                        <button class="aud-date-chip" data-month="1">Este mes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-group-actions">
+            <button type="button" id="btnFiltrarAuditoria" class="btn btn-modern-gradient">
+                <i class="fas fa-search mr-2"></i>Buscar
+            </button>
+            <button type="button" id="btnLimpiarFiltros" class="btn btn-modern-secondary">
+                <i class="fas fa-eraser mr-2"></i>Limpiar
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="audLoading" class="loading-spinner">
+        <i class="fas fa-spinner"></i>
+        <p>Cargando historial&hellip;</p>
+    </div>
+
+    <!-- Tabla de resultados -->
+    <div id="audResultadosContainer" style="display:none;">
+        <div class="table-container">
+            <div class="table-header">
+                <h5>
+                    <i class="fas fa-list mr-2"></i>Historial de Consultas
+                </h5>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span id="audStatTotal"   class="info-badge" style="background:linear-gradient(135deg,#6366F1,#3B82F6);display:none;">
+                        <i class="fas fa-list-ul mr-1"></i><span>0</span> total
+                    </span>
+                    <span id="audStatResumenes" class="info-badge" style="background:linear-gradient(135deg,#3730a3,#6366F1);display:none;">
+                        <i class="fas fa-magic mr-1"></i><span>0</span> res&uacute;menes
+                    </span>
+                    <span id="audStatPreguntas" class="info-badge" style="background:linear-gradient(135deg,#be185d,#e879a4);display:none;">
+                        <i class="fas fa-question-circle mr-1"></i><span>0</span> preguntas
+                    </span>
+                    <span id="audPaginaInfo" style="font-size:.77rem;color:#6c757d;"></span>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width:150px;">Fecha</th>
+                            <th style="min-width:130px;">Usuario</th>
+                            @if (esAdmin) { <th style="min-width:110px;">Empresa</th> }
+                            <th style="min-width:160px;">Tabla / Filtros</th>
+                            <th style="width:110px;">Tipo</th>
+                            <th>Pregunta</th>
+                            <th style="width:65px;" class="text-center">Filas</th>
+                            <th style="width:80px;" class="text-center">Ver</th>
+                        </tr>
+                    </thead>
+                    <tbody id="audTbody"></tbody>
+                </table>
+            </div>
+            <div id="audPaginacion" class="pagination-controls"></div>
+        </div>
+    </div>
+
+    <!-- Sin resultados -->
+    <div id="audSinResultados" class="no-data-message" style="display:none;">
+        <i class="fas fa-robot"></i>
+        <h4>Sin resultados</h4>
+        <p>No se encontraron consultas con los filtros aplicados.</p>
+    </div>
+
+</div>
+
+@section scripts {
+<script>
+$(document).ready(function () {
+
+    var esAdminJS        = @(esAdmin ? "true" : "false");
+    var esAdminEmpresaJS = @(esAdminEmpresa ? "true" : "false");
+    var PAGE_SIZE        = 20;
+    var _todosRegistros  = [];
+    var _filtrados       = [];
+    var _paginaActual    = 1;
+
+    /* ── Carga inicial ── */
+    consultarServidor();
+    if (esAdminEmpresaJS && !esAdminJS) cargarUsuarios(null);
+
+    /* ── Botones ── */
+    $('#btnFiltrarAuditoria').on('click', consultarServidor);
+    $('#btnLimpiarFiltros').on('click', function () {
+        $('#audEmpresa').val('');
+        $('#audUsuario').html('<option value="">Todos los usuarios</option>');
+        $('#audTipo').val('');
+        $('#audDesde,#audHasta').val('');
+        $('#audBusquedaTexto').val('');
+        $('.aud-date-chip').removeClass('active');
+        consultarServidor();
+    });
+
+    /* ── Filtros locales ── */
+    $('#audTipo').on('change', aplicarFiltrosLocales);
+    $('#audBusquedaTexto').on('input', aplicarFiltrosLocales);
+
+    /* ── Empresa cambia → recargar usuarios ── */
+    $('#audEmpresa').on('change', function () { cargarUsuarios($(this).val() || null); });
+
+    /* ── Chips de acceso rápido ── */
+    $(document).on('click', '.aud-date-chip', function () {
+        var $chip = $(this);
+        if ($chip.hasClass('active')) {
+            $chip.removeClass('active');
+            $('#audDesde,#audHasta').val('');
+            return;
+        }
+        $('.aud-date-chip').removeClass('active');
+        $chip.addClass('active');
+
+        var today = new Date();
+        var pad   = function (n) { return n < 10 ? '0' + n : '' + n; };
+        var fmt   = function (d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+        var hasta = fmt(today);
+        var days  = $chip.data('days');
+        var month = $chip.data('month');
+        var desde;
+
+        if (days !== undefined) {
+            var d = new Date(today);
+            d.setDate(d.getDate() - parseInt(days, 10));
+            desde = fmt(d);
+        } else if (month) {
+            desde = fmt(new Date(today.getFullYear(), today.getMonth(), 1));
+        }
+
+        $('#audDesde').val(desde);
+        $('#audHasta').val(hasta);
+    });
+
+    /* ── Cargar usuarios ── */
+    function cargarUsuarios(idEmpresa) {
+        var params = {};
+        if (idEmpresa) params.idEmpresa = idEmpresa;
+        $.get('@Url.Action("ObtenerUsuariosAuditoria","AuditoriaConsultasIA")', params, function (lista) {
+            var sel = $('#audUsuario').html('<option value="">Todos los usuarios</option>');
+            $.each(lista, function (i, u) { sel.append($('<option>').val(u.Id).text(u.Nombre)); });
+        });
+    }
+
+    /* ── Consulta al servidor ── */
+    function consultarServidor() {
+        var params  = {};
+        var empresa = $('#audEmpresa').val();
+        var usuario = $('#audUsuario').val();
+        var desde   = $('#audDesde').val();
+        var hasta   = $('#audHasta').val();
+        if (empresa) params.idEmpresa = empresa;
+        if (usuario) params.idUsuario = usuario;
+        if (desde)   params.desde    = desde;
+        if (hasta)   params.hasta    = hasta;
+
+        $('#audLoading').show();
+        $('#audResultadosContainer,#audSinResultados').hide();
+        $('#audStatTotal,#audStatResumenes,#audStatPreguntas').hide();
+
+        $.ajax({
+            url  : '@Url.Action("ObtenerAuditoria","AuditoriaConsultasIA")',
+            type : 'GET',
+            data : params,
+            success: function (registros) {
+                $('#audLoading').hide();
+                _todosRegistros = registros || [];
+                aplicarFiltrosLocales();
+            },
+            error: function () {
+                $('#audLoading').hide();
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cargar el historial.' });
+            }
+        });
+    }
+
+    /* ── Filtros locales: tipo + búsqueda ── */
+    function aplicarFiltrosLocales() {
+        var tipo  = $('#audTipo').val();
+        var texto = ($('#audBusquedaTexto').val() || '').toLowerCase().trim();
+
+        _filtrados = _todosRegistros.filter(function (r) {
+            var esResumen = r.Pregunta === '(Resumen Gerencial)';
+            if (tipo === 'resumen'  && !esResumen) return false;
+            if (tipo === 'pregunta' &&  esResumen) return false;
+            if (texto) {
+                var match =
+                    (r.Pregunta      || '').toLowerCase().indexOf(texto) >= 0 ||
+                    (r.NombreTabla   || '').toLowerCase().indexOf(texto) >= 0 ||
+                    (r.NombreUsuario || '').toLowerCase().indexOf(texto) >= 0 ||
+                    (r.NombreEmpresa || '').toLowerCase().indexOf(texto) >= 0 ||
+                    (r.Filtros       || '').toLowerCase().indexOf(texto) >= 0;
+                if (!match) return false;
+            }
+            return true;
+        });
+
+        actualizarStats();
+        _paginaActual = 1;
+        renderPagina(1);
+    }
+
+    /* ── Stats ── */
+    function actualizarStats() {
+        if (_todosRegistros.length === 0) return;
+        var total     = _filtrados.length;
+        var resumenes = _filtrados.filter(function (r) { return r.Pregunta === '(Resumen Gerencial)'; }).length;
+        var preguntas = total - resumenes;
+
+        $('#audStatTotal span').text(total);
+        $('#audStatResumenes span').text(resumenes);
+        $('#audStatPreguntas span').text(preguntas);
+        $('#audStatTotal,#audStatResumenes,#audStatPreguntas').show();
+    }
+
+    /* ── Render tabla paginada ── */
+    function renderPagina(pagina) {
+        var totalPags = Math.max(1, Math.ceil(_filtrados.length / PAGE_SIZE));
+        pagina = Math.min(Math.max(1, pagina), totalPags);
+        _paginaActual = pagina;
+
+        var inicio = (pagina - 1) * PAGE_SIZE;
+        var slice  = _filtrados.slice(inicio, inicio + PAGE_SIZE);
+
+        $('#audPaginaInfo').text(
+            _filtrados.length === 0 ? '' :
+            'Mostrando ' + (inicio + 1) + '-' + Math.min(inicio + PAGE_SIZE, _filtrados.length) + ' de ' + _filtrados.length
+        );
+
+        var tbody = $('#audTbody').empty();
+
+        if (_filtrados.length === 0) {
+            $('#audResultadosContainer').hide();
+            $('#audSinResultados').show();
+            $('#audPaginacion').empty();
+            return;
+        }
+
+        $('#audSinResultados').hide();
+        $('#audResultadosContainer').show();
+
+        $.each(slice, function (i, r) {
+            var esResumen = r.Pregunta === '(Resumen Gerencial)';
+
+            var tipoBadge = esResumen
+                ? '<span class="aud-tipo-badge aud-tipo-resumen"><i class="fas fa-magic"></i> Resumen</span>'
+                : '<span class="aud-tipo-badge aud-tipo-pregunta"><i class="fas fa-question-circle"></i> Pregunta</span>';
+
+            var preguntaHtml = esResumen
+                ? '<em style="color:#9ca3af;font-size:.8rem;">Resumen automático</em>'
+                : '<span class="aud-pregunta-cell" title="' + $('<div>').text(r.Pregunta).html() + '">'
+                    + $('<div>').text(r.Pregunta).html()
+                  + '</span>';
+
+            var btnVer = $('<button class="aud-btn-ver">')
+                .html('<i class="fas fa-eye mr-1"></i>Ver')
+                .on('click', function () { verRespuesta(r.Pregunta, r.Respuesta, r.Filtros); });
+
+            var tr = $('<tr>');
+            tr.append($('<td>').css({ whiteSpace: 'nowrap', fontSize: '.8rem', color: '#6b7280' }).text(r.FechaPregunta));
+            tr.append($('<td>').css('font-weight', '600').text(r.NombreUsuario));
+            if (esAdminJS) tr.append($('<td>').text(r.NombreEmpresa));
+            tr.append($('<td>').html(
+                '<span style="font-weight:600;">' + $('<div>').text(r.NombreTabla).html() + '</span>'
+                + (r.Filtros ? '<br><small style="color:#9ca3af;font-size:.74rem;">' + $('<div>').text(r.Filtros).html() + '</small>' : '')
+            ));
+            tr.append($('<td>').html(tipoBadge));
+            tr.append($('<td>').html(preguntaHtml));
+            tr.append($('<td class="text-center">').css({ fontWeight: '700', color: '#6366F1' }).text(r.FilasAnalizadas));
+            tr.append($('<td class="text-center">').append(btnVer));
+            tbody.append(tr);
+        });
+
+        renderPaginacion(totalPags, pagina);
+    }
+
+    /* ── Paginación ── */
+    function renderPaginacion(totalPags, actual) {
+        var $pag = $('#audPaginacion').empty();
+        if (totalPags <= 1) return;
+
+        function btn(label, dest, activo, disabled) {
+            return $('<button>')
+                .addClass('btn-pagination' + (activo ? ' active' : ''))
+                .prop('disabled', disabled)
+                .html(label)
+                .on('click', function () { renderPagina(dest); });
+        }
+
+        $pag.append(btn('<i class="fas fa-chevron-left"></i>', actual - 1, false, actual === 1));
+
+        var desde = Math.max(1, actual - 2);
+        var hasta = Math.min(totalPags, actual + 2);
+        if (desde > 1) {
+            $pag.append(btn('1', 1, false, false));
+            if (desde > 2) $pag.append($('<span class="pagination-dots">').text('...'));
+        }
+        for (var p = desde; p <= hasta; p++) { $pag.append(btn(p, p, p === actual, false)); }
+        if (hasta < totalPags) {
+            if (hasta < totalPags - 1) $pag.append($('<span class="pagination-dots">').text('...'));
+            $pag.append(btn(totalPags, totalPags, false, false));
+        }
+
+        $pag.append(btn('<i class="fas fa-chevron-right"></i>', actual + 1, false, actual === totalPags));
+    }
+
+    /* ── Ver respuesta completa ── */
+    function verRespuesta(pregunta, respuesta, filtros) {
+        var esResumen = pregunta === '(Resumen Gerencial)';
+        var html = '';
+
+        if (!esResumen) {
+            html += '<div class="ia-pregunta-block">'
+                  + '<div class="ia-pregunta-label"><i class="fas fa-question-circle mr-1"></i>Pregunta realizada</div>'
+                  + '<div class="ia-pregunta-texto">' + $('<div>').text(pregunta).html() + '</div>'
+                  + '</div>';
+        } else {
+            html += '<div class="ia-pregunta-block" style="background:#f8f9fc;border-left-color:#9ca3af;">'
+                  + '<div class="ia-pregunta-label" style="color:#6b7280;"><i class="fas fa-magic mr-1"></i>Tipo</div>'
+                  + '<div style="color:#2d3748;font-weight:600;">Resumen Gerencial Automático</div>'
+                  + '</div>';
+        }
+
+        if (filtros) {
+            html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:8px 12px;margin-bottom:14px;font-size:.8rem;color:#166534;">'
+                  + '<i class="fas fa-filter mr-1"></i><strong>Filtros:</strong> ' + $('<div>').text(filtros).html()
+                  + '</div>';
+        }
+
+        html += '<div class="ia-response-body" style="max-height:55vh;overflow-y:auto;text-align:left;">'
+              + renderMarkdown(respuesta)
+              + '</div>';
+
+        Swal.fire({
+            title            : 'Respuesta del Asistente IA',
+            html             : html,
+            width            : '820px',
+            showCloseButton  : true,
+            showConfirmButton: false,
+            customClass      : { popup: 'text-start' }
+        });
+    }
+
+    /* ── Markdown renderer ── */
+    function renderMarkdown(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g, '<em>$1</em>')
+            .replace(/^### (.+)$/gm, '<h6 style="color:#6366F1;font-weight:700;margin-top:12px;">$1</h6>')
+            .replace(/^## (.+)$/gm,  '<h5 style="color:#6366F1;font-weight:700;margin-top:14px;">$1</h5>')
+            .replace(/^# (.+)$/gm,   '<h4 style="color:#312e81;font-weight:700;margin-top:16px;">$1</h4>')
+            .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
+            .replace(/(<li>[\s\S]+?<\/li>)/g, '<ul style="padding-left:18px;margin-bottom:8px;">$1</ul>')
+            .replace(/\n\n/g, '</p><p style="margin-bottom:8px;">')
+            .replace(/\n/g, '<br>');
+    }
+
+});
+</script>
+}
