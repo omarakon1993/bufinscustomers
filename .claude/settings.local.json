@@ -69,7 +69,12 @@
       "Bash(cat EOF @echo off cd /d 'C:\\\\Users\\\\omara\\\\OneDrive\\\\Omar Akon Personal\\\\Proyectos OAG\\\\Bufins Web\\\\Bufins principal web\\\\bufinscustomers' 'C:\\\\Program Files\\\\Microsoft Visual Studio\\\\18\\\\Community\\\\MSBuild\\\\Current\\\\Bin\\\\MSBuild.exe' bufinscustomers.sln /p:Configuration=Debug /v:minimal 2)",
       "Bash(1 EOF cmd /c C:UsersomaraAppDataLocalTempbuild.bat)",
       "Bash(cmd //c \"C:\\\\Users\\\\omara\\\\build_bufins.bat\")",
-      "Bash(\"C:/Users/omara/build_bufins.bat\":*)"
+      "Bash(\"C:/Users/omara/build_bufins.bat\":*)",
+      "Bash(sort -rh echo \"\" du -sh \"Assets/Scripts/\"*.js)",
+      "Bash(grep -v \"^\\\\s*//\")",
+      "Bash(awk '/<style/,/<\\\\/style>/' Views/Shared/_Layout.cshtml)",
+      "Bash(sort grep *)",
+      "Bash(grep -n \"Assets\\\\\\\\\\\\\\\\Scripts\\\\\\\\\\\\\\\\\\\\|Assets\\\\\\\\\\\\\\\\Content\\\\\\\\\\\\\\\\\" bufinscustomers.csproj)"
     ],
     "deny": [],
     "ask": []
