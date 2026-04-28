@@ -213,6 +213,14 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("CargueExcel");
             }
 
+            // Validar que el usuario tenga permisos sobre la empresa seleccionada
+            var usuarioValidacion = UsuarioSesionHelper.UsuarioActual;
+            if (!UsuarioSesionHelper.EsSuperAdmin() && usuarioValidacion?.IdEmpresa != idEmpresaSeleccionada)
+            {
+                SetErrorMessage("No tiene permisos para cargar datos en esta empresa.");
+                return RedirectToAction("CargueExcel");
+            }
+
             // Validar configuración de empresa
             if (!_configuracionService.ExisteConfiguracion(idEmpresaSeleccionada))
             {

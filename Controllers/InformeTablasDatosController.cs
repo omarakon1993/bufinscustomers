@@ -116,10 +116,12 @@ namespace bufinscustomers.Controllers
                 var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
                 var idEmpresaUsuario = usuario?.IdEmpresa;
 
-                // Validar que el usuario tenga permiso para ver la empresa solicitada
-                if (!esAdmin && filtros.IdEmpresa.HasValue && filtros.IdEmpresa != idEmpresaUsuario)
+                // Usuarios no-SuperAdmin solo pueden ver su propia empresa
+                if (!esAdmin)
                 {
-                    return Json(new { success = false, message = "No tiene permisos para consultar datos de otra empresa" });
+                    if (filtros.IdEmpresa.HasValue && filtros.IdEmpresa != idEmpresaUsuario)
+                        return Json(new { success = false, message = "No tiene permisos para consultar datos de otra empresa" });
+                    filtros.IdEmpresa = idEmpresaUsuario;
                 }
 
                 // Realizar consulta
@@ -204,10 +206,12 @@ namespace bufinscustomers.Controllers
                 var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
                 var idEmpresaUsuario = usuario?.IdEmpresa;
 
-                // Misma validación de permisos que ConsultarDatos
-                if (!esAdmin && filtros.IdEmpresa.HasValue && filtros.IdEmpresa != idEmpresaUsuario)
+                // Usuarios no-SuperAdmin solo pueden ver su propia empresa
+                if (!esAdmin)
                 {
-                    return Json(new IAConsultaResponse { Exitoso = false, Error = "No tiene permisos para consultar datos de otra empresa." });
+                    if (filtros.IdEmpresa.HasValue && filtros.IdEmpresa != idEmpresaUsuario)
+                        return Json(new IAConsultaResponse { Exitoso = false, Error = "No tiene permisos para consultar datos de otra empresa." });
+                    filtros.IdEmpresa = idEmpresaUsuario;
                 }
 
                 // Año obligatorio para el análisis IA (reduce el volumen de datos)
@@ -312,11 +316,15 @@ namespace bufinscustomers.Controllers
                 var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
                 var idEmpresaUsuario = usuario?.IdEmpresa;
 
-                // Validar permisos
-                if (!esAdmin && filtros.IdEmpresa.HasValue && filtros.IdEmpresa != idEmpresaUsuario)
+                // Usuarios no-SuperAdmin solo pueden exportar su propia empresa
+                if (!esAdmin)
                 {
-                    TempData["ErrorMessage"] = "No tiene permisos para exportar datos de otra empresa";
-                    return RedirectToAction("InformeTablasDatos");
+                    if (filtros.IdEmpresa.HasValue && filtros.IdEmpresa != idEmpresaUsuario)
+                    {
+                        TempData["ErrorMessage"] = "No tiene permisos para exportar datos de otra empresa";
+                        return RedirectToAction("InformeTablasDatos");
+                    }
+                    filtros.IdEmpresa = idEmpresaUsuario;
                 }
 
                 // Obtener datos
