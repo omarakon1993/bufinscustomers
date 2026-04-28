@@ -10,13 +10,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="~/Assets/css/configuracion-admin.css" rel="stylesheet" />
     <style>
-        .dash-tipo-badge { font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:5px; display:inline-block; }
-        .dash-tipo-kpi   { background:#583AFF; color:#fff; }
-        .dash-tipo-info  { background:#01E1D7; color:#160933; }
-        .form-sec-title  { font-size:.72rem; font-weight:700; color:#6B6787; text-transform:uppercase; letter-spacing:.8px; margin:1rem 0 .5rem; padding-top:.75rem; border-top:1px solid #eee; }
-        .sql-hint        { font-size:.72rem; color:#6c757d; background:#f8f9fc; border-radius:6px; padding:.5rem .75rem; border-left:3px solid #583AFF; margin-top:.3rem; }
-        .sql-hint code   { color:#583AFF; font-size:.7rem; }
-        .sql-area        { font-family:'Courier New',monospace; font-size:.8rem; min-height:120px; resize:vertical; }
+        .dash-tipo-badge  { font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:5px; display:inline-block; }
+        .dash-tipo-kpi    { background:#583AFF; color:#fff; }
+        .dash-tipo-graf   { background:#01E1D7; color:#160933; }
+        .form-sec-title   { font-size:.72rem; font-weight:700; color:#6B6787; text-transform:uppercase; letter-spacing:.8px; margin:1rem 0 .5rem; padding-top:.75rem; border-top:1px solid #eee; }
+        .sql-hint         { font-size:.72rem; color:#6c757d; background:#f8f9fc; border-radius:6px; padding:.5rem .75rem; border-left:3px solid #583AFF; margin-top:.3rem; }
+        .sql-hint code    { color:#583AFF; font-size:.7rem; }
+        .sql-area         { font-family:'Courier New',monospace; font-size:.8rem; min-height:120px; resize:vertical; }
+        .fondo-switch     { display:flex; align-items:center; gap:.5rem; }
+        .fondo-switch .preview { width:28px; height:28px; border-radius:6px; border:1px solid #ddd; }
     </style>
 </head>
 <body>
@@ -27,8 +29,7 @@
     var jss        = new JavaScriptSerializer();
     var jsonData   = jss.Serialize(Model.Select(t => new {
         t.Id, t.Nombre, t.Tipo, t.Icono, t.ColorIcono, t.Orden, t.Activo,
-        t.ConsultaSQL, t.UnidadValor,
-        t.InfoTitulo, t.InfoSubtitulo, t.InfoCuerpo, t.InfoUrlAccion, t.InfoTextoAccion
+        t.ConsultaSQL, t.UnidadValor, t.TipoGrafico, t.FondoOscuro
     }));
 }
 
@@ -58,7 +59,7 @@
                 <thead>
                     <tr>
                         <th style="width:40px">#</th>
-                        <th style="width:65px">Tipo</th>
+                        <th style="width:80px">Tipo</th>
                         <th>Nombre</th>
                         <th style="width:70px;text-align:center">Icono</th>
                         <th style="width:55px;text-align:center">Orden</th>
@@ -77,7 +78,7 @@
                             <td>@t.Id</td>
                             <td>
                                 @if (t.Tipo == 1) { <span class="dash-tipo-badge dash-tipo-kpi">KPI</span> }
-                                else              { <span class="dash-tipo-badge dash-tipo-info">Info</span> }
+                                else              { <span class="dash-tipo-badge dash-tipo-graf">Gr&aacute;fico</span> }
                             </td>
                             <td><strong>@t.Nombre</strong></td>
                             <td style="text-align:center"><i class="@t.Icono" style="color:@t.ColorIcono;font-size:1.1rem"></i></td>
@@ -130,7 +131,7 @@
                             <label><i class="fas fa-layer-group mr-1" style="color:#583AFF"></i>Tipo</label>
                             <select class="form-control form-control-sm" name="Tipo" id="c_Tipo" onchange="toggleCampos('c',this.value)">
                                 <option value="1">KPI / Valor</option>
-                                <option value="2">Info</option>
+                                <option value="2">Gr&aacute;fico</option>
                             </select>
                         </div>
                         <div class="col-md-2 mb-3">
@@ -156,13 +157,20 @@
                                 <input type="text" class="form-control form-control-sm" id="c_ColorText" value="#583AFF" maxlength="7" />
                             </div>
                         </div>
+                        <div class="col-md-3 mb-3">
+                            <label><i class="fas fa-fill-drip mr-1" style="color:#583AFF"></i>Fondo tarjeta</label>
+                            <div class="form-check pt-1">
+                                <input class="form-check-input" type="checkbox" name="FondoOscuro" id="c_FondoOscuro" value="true" />
+                                <label class="form-check-label small" for="c_FondoOscuro">Oscuro corporativo</label>
+                            </div>
+                        </div>
                     </div>
                     <!-- KPI -->
                     <div id="c_sec_kpi">
                         <div class="form-sec-title"><i class="fas fa-chart-bar"></i> Configuraci&oacute;n KPI</div>
                         <div class="mb-3">
                             <label>Consulta SQL</label>
-                            <textarea class="form-control form-control-sm sql-area" name="ConsultaSQL" id="c_ConsultaSQL" rows="5"
+                            <textarea class="form-control form-control-sm sql-area" name="ConsultaSQL_KPI" id="c_ConsultaSQL_KPI" rows="5"
                                       placeholder="SELECT e.Id AS IdEmpresa, e.Nombre AS NombreEmpresa, FORMAT(COUNT(*),'N0') AS Valor, 'cargues' AS Etiqueta&#10;FROM Empresas e LEFT JOIN ... GROUP BY e.Id, e.Nombre"></textarea>
                             <div class="sql-hint">
                                 Columnas requeridas: <code>IdEmpresa</code>, <code>Valor</code> &nbsp;|&nbsp;
@@ -174,29 +182,28 @@
                             <input type="text" class="form-control form-control-sm" name="UnidadValor" id="c_UnidadValor" placeholder="COP M, %, ud" maxlength="30" />
                         </div>
                     </div>
-                    <!-- Info -->
-                    <div id="c_sec_info" style="display:none">
-                        <div class="form-sec-title"><i class="fas fa-info-circle"></i> Configuraci&oacute;n Info</div>
+                    <!-- Gráfico -->
+                    <div id="c_sec_graf" style="display:none">
+                        <div class="form-sec-title"><i class="fas fa-chart-pie"></i> Configuraci&oacute;n Gr&aacute;fico</div>
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label>T&iacute;tulo</label>
-                                <input type="text" class="form-control form-control-sm" name="InfoTitulo" id="c_InfoTitulo" maxlength="100" />
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label>Subt&iacute;tulo</label>
-                                <input type="text" class="form-control form-control-sm" name="InfoSubtitulo" id="c_InfoSubtitulo" maxlength="200" />
-                            </div>
-                            <div class="col-12 mb-3">
-                                <label>Cuerpo</label>
-                                <textarea class="form-control form-control-sm" name="InfoCuerpo" id="c_InfoCuerpo" rows="3"></textarea>
-                            </div>
-                            <div class="col-md-8 mb-3">
-                                <label>URL acci&oacute;n</label>
-                                <input type="text" class="form-control form-control-sm" name="InfoUrlAccion" id="c_InfoUrlAccion" placeholder="/Informes/AnalisisIA" maxlength="300" />
-                            </div>
                             <div class="col-md-4 mb-3">
-                                <label>Texto acci&oacute;n</label>
-                                <input type="text" class="form-control form-control-sm" name="InfoTextoAccion" id="c_InfoTextoAccion" placeholder="Ver más" maxlength="100" />
+                                <label><i class="fas fa-shapes mr-1" style="color:#01E1D7"></i>Tipo de gr&aacute;fico</label>
+                                <select class="form-control form-control-sm" name="TipoGrafico" id="c_TipoGrafico">
+                                    <option value="bar">Barras</option>
+                                    <option value="line">L&iacute;neas</option>
+                                    <option value="area">&Aacute;rea</option>
+                                    <option value="doughnut">Dona</option>
+                                    <option value="pie">Pastel</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label>Consulta SQL</label>
+                            <textarea class="form-control form-control-sm sql-area" name="ConsultaSQL_GRAF" id="c_ConsultaSQL_GRAF" rows="5"
+                                      placeholder="SELECT e.Id AS IdEmpresa, e.Nombre AS NombreEmpresa, MONTH(c.Fecha) AS Etiqueta, SUM(c.Total) AS Valor&#10;FROM Cargues c JOIN Empresas e ON e.Id=c.IdEmpresa&#10;GROUP BY e.Id, e.Nombre, MONTH(c.Fecha)"></textarea>
+                            <div class="sql-hint">
+                                Columnas requeridas: <code>IdEmpresa</code>, <code>Etiqueta</code>, <code>Valor</code> &nbsp;|&nbsp;
+                                Opcionales: <code>Serie</code> (m&uacute;ltiples series), <code>NombreEmpresa</code>
                             </div>
                         </div>
                     </div>
@@ -234,7 +241,7 @@
                             <label><i class="fas fa-layer-group mr-1" style="color:#583AFF"></i>Tipo</label>
                             <select class="form-control form-control-sm" name="Tipo" id="e_Tipo" onchange="toggleCampos('e',this.value)">
                                 <option value="1">KPI / Valor</option>
-                                <option value="2">Info</option>
+                                <option value="2">Gr&aacute;fico</option>
                             </select>
                         </div>
                         <div class="col-md-2 mb-3">
@@ -260,13 +267,20 @@
                                 <input type="text" class="form-control form-control-sm" id="e_ColorText" value="#583AFF" maxlength="7" />
                             </div>
                         </div>
+                        <div class="col-md-3 mb-3">
+                            <label><i class="fas fa-fill-drip mr-1" style="color:#583AFF"></i>Fondo tarjeta</label>
+                            <div class="form-check pt-1">
+                                <input class="form-check-input" type="checkbox" name="FondoOscuro" id="e_FondoOscuro" value="true" />
+                                <label class="form-check-label small" for="e_FondoOscuro">Oscuro corporativo</label>
+                            </div>
+                        </div>
                     </div>
                     <!-- KPI -->
                     <div id="e_sec_kpi">
                         <div class="form-sec-title"><i class="fas fa-chart-bar"></i> Configuraci&oacute;n KPI</div>
                         <div class="mb-3">
                             <label>Consulta SQL</label>
-                            <textarea class="form-control form-control-sm sql-area" name="ConsultaSQL" id="e_ConsultaSQL" rows="5"></textarea>
+                            <textarea class="form-control form-control-sm sql-area" name="ConsultaSQL_KPI" id="e_ConsultaSQL_KPI" rows="5"></textarea>
                             <div class="sql-hint">
                                 Columnas requeridas: <code>IdEmpresa</code>, <code>Valor</code> &nbsp;|&nbsp;
                                 Opcionales: <code>NombreEmpresa</code>, <code>Etiqueta</code>
@@ -277,29 +291,27 @@
                             <input type="text" class="form-control form-control-sm" name="UnidadValor" id="e_UnidadValor" maxlength="30" />
                         </div>
                     </div>
-                    <!-- Info -->
-                    <div id="e_sec_info" style="display:none">
-                        <div class="form-sec-title"><i class="fas fa-info-circle"></i> Configuraci&oacute;n Info</div>
+                    <!-- Gráfico -->
+                    <div id="e_sec_graf" style="display:none">
+                        <div class="form-sec-title"><i class="fas fa-chart-pie"></i> Configuraci&oacute;n Gr&aacute;fico</div>
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label>T&iacute;tulo</label>
-                                <input type="text" class="form-control form-control-sm" name="InfoTitulo" id="e_InfoTitulo" maxlength="100" />
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label>Subt&iacute;tulo</label>
-                                <input type="text" class="form-control form-control-sm" name="InfoSubtitulo" id="e_InfoSubtitulo" maxlength="200" />
-                            </div>
-                            <div class="col-12 mb-3">
-                                <label>Cuerpo</label>
-                                <textarea class="form-control form-control-sm" name="InfoCuerpo" id="e_InfoCuerpo" rows="3"></textarea>
-                            </div>
-                            <div class="col-md-8 mb-3">
-                                <label>URL acci&oacute;n</label>
-                                <input type="text" class="form-control form-control-sm" name="InfoUrlAccion" id="e_InfoUrlAccion" maxlength="300" />
-                            </div>
                             <div class="col-md-4 mb-3">
-                                <label>Texto acci&oacute;n</label>
-                                <input type="text" class="form-control form-control-sm" name="InfoTextoAccion" id="e_InfoTextoAccion" maxlength="100" />
+                                <label><i class="fas fa-shapes mr-1" style="color:#01E1D7"></i>Tipo de gr&aacute;fico</label>
+                                <select class="form-control form-control-sm" name="TipoGrafico" id="e_TipoGrafico">
+                                    <option value="bar">Barras</option>
+                                    <option value="line">L&iacute;neas</option>
+                                    <option value="area">&Aacute;rea</option>
+                                    <option value="doughnut">Dona</option>
+                                    <option value="pie">Pastel</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label>Consulta SQL</label>
+                            <textarea class="form-control form-control-sm sql-area" name="ConsultaSQL_GRAF" id="e_ConsultaSQL_GRAF" rows="5"></textarea>
+                            <div class="sql-hint">
+                                Columnas requeridas: <code>IdEmpresa</code>, <code>Etiqueta</code>, <code>Valor</code> &nbsp;|&nbsp;
+                                Opcionales: <code>Serie</code> (m&uacute;ltiples series), <code>NombreEmpresa</code>
                             </div>
                         </div>
                     </div>
@@ -326,8 +338,24 @@
     var _tarjetas = @Html.Raw(jsonData);
 
     function toggleCampos(pfx, tipo) {
-        document.getElementById(pfx + '_sec_kpi').style.display  = parseInt(tipo) === 1 ? '' : 'none';
-        document.getElementById(pfx + '_sec_info').style.display = parseInt(tipo) === 1 ? 'none' : '';
+        var t = parseInt(tipo);
+        document.getElementById(pfx + '_sec_kpi').style.display  = t === 1 ? '' : 'none';
+        document.getElementById(pfx + '_sec_graf').style.display = t === 2 ? '' : 'none';
+
+        // Solo el textarea visible debe llamarse "ConsultaSQL" para ser enviado
+        var kpi  = document.getElementById(pfx + '_ConsultaSQL_KPI');
+        var graf = document.getElementById(pfx + '_ConsultaSQL_GRAF');
+        if (t === 1) {
+            kpi.name  = 'ConsultaSQL';
+            graf.name = 'ConsultaSQL_GRAF_disabled';
+            graf.disabled = true;
+            kpi.disabled  = false;
+        } else {
+            kpi.name  = 'ConsultaSQL_KPI_disabled';
+            graf.name = 'ConsultaSQL';
+            kpi.disabled  = true;
+            graf.disabled = false;
+        }
     }
 
     ['c', 'e'].forEach(function(p) {
@@ -345,21 +373,26 @@
         var t = _tarjetas.find(function(x) { return x.Id === id; });
         if (!t) return;
 
-        document.getElementById('e_Id').value              = t.Id;
-        document.getElementById('e_Nombre').value          = t.Nombre || '';
-        document.getElementById('e_Tipo').value            = t.Tipo;
-        document.getElementById('e_Icono').value           = t.Icono || '';
-        document.getElementById('e_ColorIcono').value      = t.ColorIcono || '#583AFF';
-        document.getElementById('e_ColorText').value       = t.ColorIcono || '#583AFF';
-        document.getElementById('e_Orden').value           = t.Orden;
-        document.getElementById('e_Activo').checked        = t.Activo;
-        document.getElementById('e_ConsultaSQL').value     = t.ConsultaSQL || '';
-        document.getElementById('e_UnidadValor').value     = t.UnidadValor || '';
-        document.getElementById('e_InfoTitulo').value      = t.InfoTitulo || '';
-        document.getElementById('e_InfoSubtitulo').value   = t.InfoSubtitulo || '';
-        document.getElementById('e_InfoCuerpo').value      = t.InfoCuerpo || '';
-        document.getElementById('e_InfoUrlAccion').value   = t.InfoUrlAccion || '';
-        document.getElementById('e_InfoTextoAccion').value = t.InfoTextoAccion || '';
+        document.getElementById('e_Id').value          = t.Id;
+        document.getElementById('e_Nombre').value      = t.Nombre || '';
+        document.getElementById('e_Tipo').value        = t.Tipo;
+        document.getElementById('e_Icono').value       = t.Icono || '';
+        document.getElementById('e_ColorIcono').value  = t.ColorIcono || '#583AFF';
+        document.getElementById('e_ColorText').value   = t.ColorIcono || '#583AFF';
+        document.getElementById('e_Orden').value       = t.Orden;
+        document.getElementById('e_Activo').checked    = t.Activo;
+        document.getElementById('e_UnidadValor').value = t.UnidadValor || '';
+        document.getElementById('e_TipoGrafico').value = t.TipoGrafico || 'bar';
+        document.getElementById('e_FondoOscuro').checked = !!t.FondoOscuro;
+
+        // El SQL se asigna al textarea correspondiente al tipo
+        if (t.Tipo === 2) {
+            document.getElementById('e_ConsultaSQL_GRAF').value = t.ConsultaSQL || '';
+            document.getElementById('e_ConsultaSQL_KPI').value  = '';
+        } else {
+            document.getElementById('e_ConsultaSQL_KPI').value  = t.ConsultaSQL || '';
+            document.getElementById('e_ConsultaSQL_GRAF').value = '';
+        }
 
         toggleCampos('e', t.Tipo);
     }

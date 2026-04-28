@@ -27,10 +27,14 @@ namespace bufinscustomers.Controllers
             foreach (var t in tarjetasConfig)
             {
                 var item = new WidgetTarjetaViewModel { Config = t };
-                if (t.Tipo == 1 && !string.IsNullOrWhiteSpace(t.ConsultaSQL))
+                int? filtro = esAdmin ? (int?)null : usuario?.IdEmpresa;
+
+                if (!string.IsNullOrWhiteSpace(t.ConsultaSQL))
                 {
-                    int? filtro = esAdmin ? (int?)null : usuario?.IdEmpresa;
-                    item.KpiResultados = svc.EjecutarKpi(t.ConsultaSQL, filtro);
+                    if (t.Tipo == 1)
+                        item.KpiResultados = svc.EjecutarKpi(t.ConsultaSQL, filtro);
+                    else if (t.Tipo == 2)
+                        item.GraficoResultados = svc.EjecutarGrafico(t.ConsultaSQL, filtro);
                 }
                 vm.Add(item);
             }

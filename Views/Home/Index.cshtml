@@ -1,5 +1,6 @@
 @using bufinscustomers.Helpers
 @using System.Globalization
+@using System.Web.Script.Serialization
 @model List<bufinscustomers.Models.WidgetTarjetaViewModel>
 @{
     ViewBag.Title = "Inicio";
@@ -17,8 +18,8 @@
     }
 
     // Item1=Config  Item2=Valor  Item3=Etiqueta  Item4=EmpNombre  Item5=EsVacio
-    var kpiRows   = new List<Tuple<bufinscustomers.Models.WidgetTarjeta, string, string, string, bool>>();
-    var infoCards = new List<bufinscustomers.Models.WidgetTarjeta>();
+    var kpiRows      = new List<Tuple<bufinscustomers.Models.WidgetTarjeta, string, string, string, bool>>();
+    var graficoCards = new List<bufinscustomers.Models.WidgetTarjetaViewModel>();
 
     if (Model != null)
     {
@@ -45,18 +46,35 @@
             }
             else if (tv.Config.Tipo == 2)
             {
-                infoCards.Add(tv.Config);
+                graficoCards.Add(tv);
             }
         }
     }
 
-    bool hayTarjetas = kpiRows.Any() || infoCards.Any();
+    bool hayTarjetas = kpiRows.Any() || graficoCards.Any();
 
     int hora = DateTime.Now.Hour;
     string saludoHtml = hora >= 5 && hora < 12 ? "Buenos d&iacute;as"
                       : hora >= 12 && hora < 19 ? "Buenas tardes"
                       : "Buenas noches";
     string nombreUsuario = usuario != null ? usuario.Nombre : "usuario";
+
+    // Serialización de datos para Chart.js
+    var jss = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
+    var graficosJson = jss.Serialize(graficoCards.Select(g => new {
+        id          = g.Config.Id,
+        nombre      = g.Config.Nombre,
+        tipo        = string.IsNullOrWhiteSpace(g.Config.TipoGrafico) ? "bar" : g.Config.TipoGrafico.ToLower(),
+        fondoOscuro = g.Config.FondoOscuro,
+        color       = string.IsNullOrWhiteSpace(g.Config.ColorIcono) ? "#583AFF" : g.Config.ColorIcono,
+        datos       = g.GraficoResultados.Select(d => new {
+            idEmpresa     = d.IdEmpresa,
+            nombreEmpresa = string.IsNullOrEmpty(d.NombreEmpresa) && empMap.ContainsKey(d.IdEmpresa) ? empMap[d.IdEmpresa] : d.NombreEmpresa,
+            etiqueta      = d.Etiqueta,
+            serie         = d.Serie,
+            valor         = d.Valor
+        })
+    }));
 }
 
 <div class="dash-wrapper">
@@ -83,7 +101,7 @@
             <div class="dash-kpi-grid">
                 @foreach (var row in kpiRows)
                 {
-                    <div class="dash-kpi-card@(row.Item5 ? " dash-kpi-empty" : "")">
+                    <div class="dash-kpi-card@(row.Item1.FondoOscuro ? " dash-kpi-dark" : "")@(row.Item5 ? " dash-kpi-empty" : "")">
                         <div class="dash-kpi-icon" style="background:linear-gradient(135deg,@row.Item1.ColorIcono,#01E1D7)">
                             <i class="@row.Item1.Icono"></i>
                         </div>
@@ -111,37 +129,35 @@
         </div>
     }
 
-    @if (infoCards.Any())
+    @if (graficoCards.Any())
     {
         <div class="dash-section">
-            <div class="dash-section-label"><i class="fas fa-info-circle"></i> Informaci&oacute;n</div>
-            <div class="dash-info-grid">
-                @foreach (var cfg in infoCards)
+            <div class="dash-section-label"><i class="fas fa-chart-pie"></i> An&aacute;lisis</div>
+            <div class="dash-graf-grid">
+                @foreach (var g in graficoCards)
                 {
-                    <div class="dash-info-card">
-                        <div class="dash-info-header">
-                            <div class="dash-info-icon" style="background:linear-gradient(135deg,@cfg.ColorIcono,#01E1D7)">
+                    var cfg   = g.Config;
+                    var vacio = g.GraficoResultados == null || g.GraficoResultados.Count == 0;
+                    <div class="dash-graf-card@(cfg.FondoOscuro ? " dash-graf-dark" : "")@(vacio ? " dash-graf-empty" : "")">
+                        <div class="dash-graf-header">
+                            <div class="dash-graf-icon" style="background:linear-gradient(135deg,@cfg.ColorIcono,#01E1D7)">
                                 <i class="@cfg.Icono"></i>
                             </div>
-                            <div>
-                                <div class="dash-info-title">@(cfg.InfoTitulo ?? cfg.Nombre)</div>
-                                @if (!string.IsNullOrEmpty(cfg.InfoSubtitulo))
-                                {
-                                    <div class="dash-info-subtitle">@cfg.InfoSubtitulo</div>
-                                }
+                            <div class="dash-graf-titles">
+                                <div class="dash-graf-title">@cfg.Nombre</div>
+                                <div class="dash-graf-sub">@TipoGraficoLabel(cfg.TipoGrafico)</div>
                             </div>
                         </div>
-                        @if (!string.IsNullOrEmpty(cfg.InfoCuerpo))
-                        {
-                            <div class="dash-info-body">@cfg.InfoCuerpo</div>
-                        }
-                        @if (!string.IsNullOrEmpty(cfg.InfoUrlAccion))
-                        {
-                            <a href="@cfg.InfoUrlAccion" class="dash-info-action">
-                                @(string.IsNullOrEmpty(cfg.InfoTextoAccion) ? "Ver más" : cfg.InfoTextoAccion)
-                                <i class="fas fa-arrow-right" style="font-size:.65rem"></i>
-                            </a>
-                        }
+                        <div class="dash-graf-canvas-wrap">
+                            @if (vacio)
+                            {
+                                <div class="dash-graf-empty-msg"><i class="fas fa-chart-line"></i> Sin datos para mostrar</div>
+                            }
+                            else
+                            {
+                                <canvas id="dashGraf_@cfg.Id"></canvas>
+                            }
+                        </div>
                     </div>
                 }
             </div>
@@ -149,6 +165,20 @@
     }
 
 </div>
+
+@functions {
+    string TipoGraficoLabel(string t) {
+        if (string.IsNullOrEmpty(t)) return "Barras";
+        switch (t.ToLower()) {
+            case "bar":      return "Barras";
+            case "line":     return "Líneas";
+            case "area":     return "Área";
+            case "doughnut": return "Dona";
+            case "pie":      return "Pastel";
+            default:         return t;
+        }
+    }
+}
 
 <style>
     .dash-wrapper { position:relative; min-height:70vh; padding:0 0 2rem; }
@@ -177,7 +207,7 @@
     .dash-hello strong { color:#583AFF; }
     .dash-date { font-size:.75rem; color:#A0A0B8; text-transform:capitalize; }
 
-    .dash-section { position:relative; z-index:1; margin-bottom:1.5rem; }
+    .dash-section { position:relative; z-index:1; margin-bottom:1.75rem; }
     .dash-section-label {
         font-size:.68rem; font-weight:700; color:#A0A0B8;
         text-transform:uppercase; letter-spacing:1px;
@@ -185,8 +215,10 @@
         display:flex; align-items:center; gap:.4rem;
     }
 
+    /* ---------- KPI ---------- */
     .dash-kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; }
     .dash-kpi-card {
+        position:relative; overflow:hidden;
         background:#fff;
         border:1px solid rgba(88,58,255,.12);
         border-radius:12px; padding:18px 16px;
@@ -205,34 +237,290 @@
     .dash-kpi-empresa  { font-size:.7rem; color:#A0A0B8; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .dash-kpi-empresa i { font-size:.6rem; }
 
-    .dash-info-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:14px; }
-    .dash-info-card {
-        background:#fff;
-        border:1px solid rgba(88,58,255,.12);
-        border-radius:12px; padding:18px;
-        box-shadow:0 2px 8px rgba(22,9,51,.05);
-        display:flex; flex-direction:column; gap:10px;
-        transition:transform .15s ease,box-shadow .15s ease;
+    /* KPI - tema oscuro corporativo */
+    .dash-kpi-card.dash-kpi-dark {
+        background:#160933;
+        border-color:rgba(88,58,255,.45);
+        box-shadow:0 4px 14px rgba(22,9,51,.4);
     }
-    .dash-info-card:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(22,9,51,.1); }
-    .dash-info-header { display:flex; align-items:center; gap:12px; }
-    .dash-info-icon   { width:38px; height:38px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:.95rem; flex-shrink:0; }
-    .dash-info-title    { font-size:.9rem; font-weight:700; color:#160933; line-height:1.2; }
-    .dash-info-subtitle { font-size:.73rem; color:#A0A0B8; margin-top:2px; }
-    .dash-info-body     { font-size:.83rem; color:#4A4A6A; line-height:1.55; }
-    .dash-info-action {
-        font-size:.78rem; color:#583AFF; font-weight:600;
-        text-decoration:none !important;
-        display:inline-flex; align-items:center; gap:5px; align-self:flex-start;
-        padding:4px 10px; border-radius:6px;
-        background:rgba(88,58,255,.06); border:1px solid rgba(88,58,255,.15);
-        transition:background .14s;
+    .dash-kpi-card.dash-kpi-dark::before {
+        content:""; position:absolute; top:0; left:0; right:0; height:3px;
+        background:linear-gradient(90deg,#01E1D7,#9B5DE5);
     }
-    .dash-info-action:hover { background:rgba(88,58,255,.14); color:#583AFF; text-decoration:none !important; }
+    .dash-kpi-card.dash-kpi-dark:hover { box-shadow:0 8px 22px rgba(22,9,51,.55); }
+    .dash-kpi-card.dash-kpi-dark .dash-kpi-icon    { box-shadow:0 4px 10px rgba(88,58,255,.35); }
+    .dash-kpi-card.dash-kpi-dark .dash-kpi-value   { color:#FFFFFF; }
+    .dash-kpi-card.dash-kpi-dark .dash-kpi-unit    { color:#01E1D7; }
+    .dash-kpi-card.dash-kpi-dark .dash-kpi-label   { color:#A8A4C7; }
+    .dash-kpi-card.dash-kpi-dark .dash-kpi-etiqueta{ color:rgba(255,255,255,.6); }
+    .dash-kpi-card.dash-kpi-dark .dash-kpi-empresa { color:rgba(255,255,255,.55); }
 
+    /* ---------- Gráficos ---------- */
+    .dash-graf-grid {
+        display:grid;
+        grid-template-columns:repeat(auto-fill, minmax(460px, 1fr));
+        gap:16px;
+    }
+    .dash-graf-card {
+        position:relative;
+        background:#fff;
+        border:1px solid rgba(88,58,255,.14);
+        border-radius:14px;
+        padding:18px 18px 14px;
+        box-shadow:0 2px 10px rgba(22,9,51,.06);
+        display:flex; flex-direction:column;
+        min-height:320px;
+        transition:transform .15s ease, box-shadow .15s ease;
+        overflow:hidden;
+    }
+    .dash-graf-card::before {
+        content:""; position:absolute; top:0; left:0; right:0; height:3px;
+        background:linear-gradient(90deg,#583AFF,#01E1D7);
+        opacity:.85;
+    }
+    .dash-graf-card:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(22,9,51,.12); }
+
+    .dash-graf-card.dash-graf-dark {
+        background:#160933;
+        border-color:rgba(88,58,255,.45);
+        color:#E8E6F4;
+        box-shadow:0 4px 16px rgba(22,9,51,.45);
+    }
+    .dash-graf-card.dash-graf-dark::before {
+        background:linear-gradient(90deg,#01E1D7,#9B5DE5);
+        opacity:1;
+    }
+
+    .dash-graf-header { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+    .dash-graf-icon {
+        width:42px; height:42px; border-radius:10px;
+        display:flex; align-items:center; justify-content:center;
+        color:#fff; font-size:1rem; flex-shrink:0;
+        box-shadow:0 4px 10px rgba(88,58,255,.25);
+    }
+    .dash-graf-titles { min-width:0; }
+    .dash-graf-title  {
+        font-size:.95rem; font-weight:700; color:#160933;
+        line-height:1.2;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .dash-graf-sub {
+        font-size:.68rem; color:#A0A0B8;
+        text-transform:uppercase; letter-spacing:.6px;
+        margin-top:2px; font-weight:600;
+    }
+    .dash-graf-card.dash-graf-dark .dash-graf-title { color:#FFFFFF; }
+    .dash-graf-card.dash-graf-dark .dash-graf-sub   { color:#01E1D7; }
+
+    .dash-graf-canvas-wrap {
+        position:relative; flex:1;
+        min-height:230px;
+        display:flex; align-items:center; justify-content:center;
+    }
+    .dash-graf-canvas-wrap canvas { width:100% !important; height:100% !important; max-height:260px; }
+
+    .dash-graf-empty .dash-graf-canvas-wrap { opacity:.6; }
+    .dash-graf-empty-msg {
+        font-size:.78rem; color:#A0A0B8; font-weight:600;
+        display:flex; align-items:center; gap:.4rem;
+    }
+    .dash-graf-card.dash-graf-dark .dash-graf-empty-msg { color:rgba(255,255,255,.55); }
+
+    /* ---------- Responsive ---------- */
+    @@media (max-width:768px) {
+        .dash-graf-grid { grid-template-columns:1fr; }
+        .dash-graf-card { min-height:280px; }
+    }
     @@media (max-width:576px) {
-        .dash-kpi-grid, .dash-info-grid { grid-template-columns:1fr; }
+        .dash-kpi-grid { grid-template-columns:1fr; }
         .watermark img { max-width:280px; }
         .watermark-slogan { font-size:.65rem; }
+        .dash-graf-card { padding:14px; min-height:260px; }
+        .dash-graf-title { font-size:.88rem; }
     }
 </style>
+
+@if (graficoCards.Any())
+{
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+    (function () {
+        var GRAFICOS = @Html.Raw(graficosJson);
+        if (!GRAFICOS || !GRAFICOS.length || typeof Chart === 'undefined') return;
+
+        var PALETA = ['#583AFF', '#01E1D7', '#FF6B9D', '#FFD166', '#06D6A0', '#118AB2', '#9B5DE5', '#F15BB5'];
+
+        function hexToRgba(hex, alpha) {
+            var h = (hex || '#583AFF').replace('#', '');
+            if (h.length === 3) h = h.split('').map(function (c) { return c + c; }).join('');
+            var r = parseInt(h.substring(0, 2), 16);
+            var g = parseInt(h.substring(2, 4), 16);
+            var b = parseInt(h.substring(4, 6), 16);
+            return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+        }
+
+        function fmtMoneda(v) {
+            if (v === null || v === undefined || isNaN(v)) return v;
+            try { return new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(v); }
+            catch (e) { return v; }
+        }
+
+        // Agrupa filas por (Serie || NombreEmpresa || 'Total') y devuelve labels + datasets
+        function armarSeries(datos, colorBase, esCircular) {
+            var labelsSet = [];
+            var seriesMap = {};
+
+            datos.forEach(function (d) {
+                var et = (d.etiqueta == null ? '' : String(d.etiqueta));
+                if (labelsSet.indexOf(et) === -1) labelsSet.push(et);
+
+                var sk = d.serie && d.serie.length ? d.serie
+                       : (d.nombreEmpresa && d.nombreEmpresa.length ? d.nombreEmpresa : 'Total');
+                if (!seriesMap[sk]) seriesMap[sk] = {};
+                seriesMap[sk][et] = Number(d.valor) || 0;
+            });
+
+            var seriesKeys = Object.keys(seriesMap);
+
+            // Para gráficos circulares: una sola serie con todas las etiquetas
+            if (esCircular) {
+                var valores = labelsSet.map(function (et) {
+                    var total = 0;
+                    seriesKeys.forEach(function (sk) { total += (seriesMap[sk][et] || 0); });
+                    return total;
+                });
+                var colors = labelsSet.map(function (_, i) { return PALETA[i % PALETA.length]; });
+                return {
+                    labels: labelsSet,
+                    datasets: [{
+                        data: valores,
+                        backgroundColor: colors,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                };
+            }
+
+            var datasets = seriesKeys.map(function (sk, idx) {
+                var color = idx === 0 ? colorBase : PALETA[idx % PALETA.length];
+                return {
+                    label: sk,
+                    data: labelsSet.map(function (et) { return seriesMap[sk][et] || 0; }),
+                    borderColor: color,
+                    backgroundColor: color,
+                    _color: color
+                };
+            });
+
+            return { labels: labelsSet, datasets: datasets };
+        }
+
+        GRAFICOS.forEach(function (g) {
+            var canvas = document.getElementById('dashGraf_' + g.id);
+            if (!canvas || !g.datos || !g.datos.length) return;
+
+            var dark = !!g.fondoOscuro;
+            var textColor   = dark ? '#E8E6F4'   : '#160933';
+            var subColor    = dark ? '#A8A4C7'   : '#6B6787';
+            var gridColor   = dark ? 'rgba(255,255,255,.08)' : 'rgba(22,9,51,.07)';
+            var tooltipBg   = dark ? '#0E061F'   : '#FFFFFF';
+            var tooltipFg   = dark ? '#FFFFFF'   : '#160933';
+            var tooltipBd   = dark ? 'rgba(1,225,215,.4)' : 'rgba(88,58,255,.2)';
+
+            var tipo = (g.tipo || 'bar').toLowerCase();
+            var esArea = tipo === 'area';
+            var esCircular = tipo === 'doughnut' || tipo === 'pie';
+            var chartType = esArea ? 'line' : tipo;
+
+            var pack = armarSeries(g.datos, g.color || '#583AFF', esCircular);
+
+            // Estilizado por tipo
+            if (!esCircular) {
+                pack.datasets.forEach(function (ds) {
+                    if (chartType === 'bar') {
+                        ds.backgroundColor = hexToRgba(ds._color, .85);
+                        ds.borderColor     = ds._color;
+                        ds.borderWidth     = 0;
+                        ds.borderRadius    = 6;
+                        ds.maxBarThickness = 38;
+                    } else { // line / area
+                        ds.borderColor = ds._color;
+                        ds.backgroundColor = esArea ? hexToRgba(ds._color, dark ? .35 : .18) : hexToRgba(ds._color, .15);
+                        ds.borderWidth = 2.5;
+                        ds.tension     = 0.35;
+                        ds.fill        = esArea;
+                        ds.pointRadius = 3;
+                        ds.pointHoverRadius = 6;
+                        ds.pointBackgroundColor = ds._color;
+                        ds.pointBorderColor = dark ? '#160933' : '#fff';
+                        ds.pointBorderWidth = 2;
+                    }
+                });
+            }
+
+            var opciones = {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        display: pack.datasets.length > 1 || esCircular,
+                        position: esCircular ? 'right' : 'top',
+                        labels: {
+                            color: textColor,
+                            font: { size: 11, weight: '600', family: 'Nunito, sans-serif' },
+                            boxWidth: 12, boxHeight: 12, padding: 10, usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: tooltipBg,
+                        titleColor: tooltipFg,
+                        bodyColor: tooltipFg,
+                        borderColor: tooltipBd,
+                        borderWidth: 1,
+                        padding: 10,
+                        cornerRadius: 8,
+                        titleFont: { weight: '700', family: 'Nunito, sans-serif' },
+                        bodyFont:  { family: 'Nunito, sans-serif' },
+                        callbacks: {
+                            label: function (ctx) {
+                                var label = ctx.dataset.label ? (ctx.dataset.label + ': ') : '';
+                                return label + fmtMoneda(ctx.parsed.y !== undefined ? ctx.parsed.y : ctx.parsed);
+                            }
+                        }
+                    }
+                }
+            };
+
+            if (!esCircular) {
+                opciones.scales = {
+                    x: {
+                        ticks:  { color: subColor, font: { size: 10.5, family: 'Nunito, sans-serif' } },
+                        grid:   { display: false },
+                        border: { color: gridColor }
+                    },
+                    y: {
+                        ticks:  {
+                            color: subColor, font: { size: 10.5, family: 'Nunito, sans-serif' },
+                            callback: function (v) { return fmtMoneda(v); }
+                        },
+                        grid:   { color: gridColor, drawBorder: false },
+                        border: { display: false },
+                        beginAtZero: true
+                    }
+                };
+            }
+
+            try {
+                new Chart(canvas.getContext('2d'), {
+                    type: chartType,
+                    data: pack,
+                    options: opciones
+                });
+            } catch (err) {
+                console.error('Widget gráfico ' + g.id + ': ' + err.message);
+            }
+        });
+    })();
+    </script>
+}

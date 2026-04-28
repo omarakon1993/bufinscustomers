@@ -10,8 +10,7 @@ namespace bufinscustomers.Services
     {
         private const string SelectCols = @"
             SELECT Id, Nombre, Tipo, Icono, ColorIcono, Orden, Activo,
-                   ConsultaSQL, UnidadValor,
-                   InfoTitulo, InfoSubtitulo, InfoCuerpo, InfoUrlAccion, InfoTextoAccion
+                   ConsultaSQL, UnidadValor, TipoGrafico, FondoOscuro
             FROM DashboardTarjetas";
 
         public List<WidgetTarjeta> ObtenerTodas()
@@ -49,12 +48,10 @@ namespace bufinscustomers.Services
                     var cmd = new SqlCommand(@"
                         INSERT INTO DashboardTarjetas
                             (Nombre, Tipo, Icono, ColorIcono, Orden, Activo,
-                             ConsultaSQL, UnidadValor,
-                             InfoTitulo, InfoSubtitulo, InfoCuerpo, InfoUrlAccion, InfoTextoAccion)
+                             ConsultaSQL, UnidadValor, TipoGrafico, FondoOscuro)
                         VALUES
                             (@Nombre, @Tipo, @Icono, @ColorIcono, @Orden, @Activo,
-                             @ConsultaSQL, @UnidadValor,
-                             @InfoTitulo, @InfoSubtitulo, @InfoCuerpo, @InfoUrlAccion, @InfoTextoAccion)", cn);
+                             @ConsultaSQL, @UnidadValor, @TipoGrafico, @FondoOscuro)", cn);
                     AddParams(cmd, t);
                     cn.Open();
                     cmd.ExecuteNonQuery();
@@ -75,8 +72,7 @@ namespace bufinscustomers.Services
                             Nombre=@Nombre, Tipo=@Tipo, Icono=@Icono, ColorIcono=@ColorIcono,
                             Orden=@Orden, Activo=@Activo,
                             ConsultaSQL=@ConsultaSQL, UnidadValor=@UnidadValor,
-                            InfoTitulo=@InfoTitulo, InfoSubtitulo=@InfoSubtitulo,
-                            InfoCuerpo=@InfoCuerpo, InfoUrlAccion=@InfoUrlAccion, InfoTextoAccion=@InfoTextoAccion
+                            TipoGrafico=@TipoGrafico, FondoOscuro=@FondoOscuro
                         WHERE Id = @Id", cn);
                     cmd.Parameters.AddWithValue("@Id", t.Id);
                     AddParams(cmd, t);
@@ -107,12 +103,7 @@ namespace bufinscustomers.Services
         public List<WidgetKpiResultado> EjecutarKpi(string sql, int? idEmpresaFiltro)
         {
             var list = new List<WidgetKpiResultado>();
-            if (string.IsNullOrWhiteSpace(sql)) return list;
-
-            var trimmed = sql.Trim();
-            if (!trimmed.StartsWith("SELECT", StringComparison.OrdinalIgnoreCase) &&
-                !trimmed.StartsWith("WITH",   StringComparison.OrdinalIgnoreCase))
-                return list;
+            if (!EsSelectValido(sql)) return list;
 
             try
             {
@@ -145,39 +136,87 @@ namespace bufinscustomers.Services
             return list;
         }
 
+        public List<WidgetGraficoResultado> EjecutarGrafico(string sql, int? idEmpresaFiltro)
+        {
+            var list = new List<WidgetGraficoResultado>();
+            if (!EsSelectValido(sql)) return list;
+
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                {
+                    var cmd = new SqlCommand(sql, cn) { CommandTimeout = 15 };
+                    cn.Open();
+                    using (var r = cmd.ExecuteReader())
+                    {
+                        while (r.Read())
+                        {
+                            int idEmp = 0;
+                            try { idEmp = Convert.ToInt32(r["IdEmpresa"]); } catch { }
+
+                            if (idEmpresaFiltro.HasValue && idEmp != idEmpresaFiltro.Value) continue;
+
+                            decimal valor = 0m;
+                            try
+                            {
+                                var raw = r["Valor"];
+                                if (raw != null && raw != DBNull.Value)
+                                    valor = Convert.ToDecimal(raw);
+                            }
+                            catch { }
+
+                            var item = new WidgetGraficoResultado
+                            {
+                                IdEmpresa = idEmp,
+                                Etiqueta  = r["Etiqueta"]?.ToString() ?? "",
+                                Valor     = valor
+                            };
+                            try { item.NombreEmpresa = r["NombreEmpresa"]?.ToString(); } catch { }
+                            try { item.Serie         = r["Serie"]?.ToString(); }         catch { }
+                            list.Add(item);
+                        }
+                    }
+                }
+            }
+            catch { }
+            return list;
+        }
+
+        private static bool EsSelectValido(string sql)
+        {
+            if (string.IsNullOrWhiteSpace(sql)) return false;
+            var t = sql.Trim();
+            return t.StartsWith("SELECT", StringComparison.OrdinalIgnoreCase) ||
+                   t.StartsWith("WITH",   StringComparison.OrdinalIgnoreCase);
+        }
+
         private static WidgetTarjeta Map(SqlDataReader r) => new WidgetTarjeta
         {
-            Id            = Convert.ToInt32(r["Id"]),
-            Nombre        = r["Nombre"]?.ToString(),
-            Tipo          = Convert.ToByte(r["Tipo"]),
-            Icono         = r["Icono"]?.ToString(),
-            ColorIcono    = r["ColorIcono"]?.ToString(),
-            Orden         = Convert.ToInt32(r["Orden"]),
-            Activo        = Convert.ToBoolean(r["Activo"]),
-            ConsultaSQL   = r["ConsultaSQL"]   == DBNull.Value ? null : r["ConsultaSQL"].ToString(),
-            UnidadValor   = r["UnidadValor"]   == DBNull.Value ? null : r["UnidadValor"].ToString(),
-            InfoTitulo    = r["InfoTitulo"]    == DBNull.Value ? null : r["InfoTitulo"].ToString(),
-            InfoSubtitulo = r["InfoSubtitulo"] == DBNull.Value ? null : r["InfoSubtitulo"].ToString(),
-            InfoCuerpo    = r["InfoCuerpo"]    == DBNull.Value ? null : r["InfoCuerpo"].ToString(),
-            InfoUrlAccion = r["InfoUrlAccion"] == DBNull.Value ? null : r["InfoUrlAccion"].ToString(),
-            InfoTextoAccion = r["InfoTextoAccion"] == DBNull.Value ? null : r["InfoTextoAccion"].ToString()
+            Id          = Convert.ToInt32(r["Id"]),
+            Nombre      = r["Nombre"]?.ToString(),
+            Tipo        = Convert.ToByte(r["Tipo"]),
+            Icono       = r["Icono"]?.ToString(),
+            ColorIcono  = r["ColorIcono"]?.ToString(),
+            Orden       = Convert.ToInt32(r["Orden"]),
+            Activo      = Convert.ToBoolean(r["Activo"]),
+            ConsultaSQL = r["ConsultaSQL"] == DBNull.Value ? null : r["ConsultaSQL"].ToString(),
+            UnidadValor = r["UnidadValor"] == DBNull.Value ? null : r["UnidadValor"].ToString(),
+            TipoGrafico = r["TipoGrafico"] == DBNull.Value ? null : r["TipoGrafico"].ToString(),
+            FondoOscuro = r["FondoOscuro"] != DBNull.Value && Convert.ToBoolean(r["FondoOscuro"])
         };
 
         private static void AddParams(SqlCommand cmd, WidgetTarjeta t)
         {
-            cmd.Parameters.AddWithValue("@Nombre",        t.Nombre        ?? "");
-            cmd.Parameters.AddWithValue("@Tipo",          t.Tipo);
-            cmd.Parameters.AddWithValue("@Icono",         t.Icono         ?? "fas fa-chart-bar");
-            cmd.Parameters.AddWithValue("@ColorIcono",    t.ColorIcono    ?? "#583AFF");
-            cmd.Parameters.AddWithValue("@Orden",         t.Orden);
-            cmd.Parameters.AddWithValue("@Activo",        t.Activo);
-            cmd.Parameters.AddWithValue("@ConsultaSQL",   (object)t.ConsultaSQL    ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@UnidadValor",   (object)t.UnidadValor    ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@InfoTitulo",    (object)t.InfoTitulo     ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@InfoSubtitulo", (object)t.InfoSubtitulo  ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@InfoCuerpo",    (object)t.InfoCuerpo     ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@InfoUrlAccion", (object)t.InfoUrlAccion  ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@InfoTextoAccion",(object)t.InfoTextoAccion ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@Nombre",      t.Nombre     ?? "");
+            cmd.Parameters.AddWithValue("@Tipo",        t.Tipo);
+            cmd.Parameters.AddWithValue("@Icono",       t.Icono      ?? "fas fa-chart-bar");
+            cmd.Parameters.AddWithValue("@ColorIcono",  t.ColorIcono ?? "#583AFF");
+            cmd.Parameters.AddWithValue("@Orden",       t.Orden);
+            cmd.Parameters.AddWithValue("@Activo",      t.Activo);
+            cmd.Parameters.AddWithValue("@ConsultaSQL", (object)t.ConsultaSQL ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@UnidadValor", (object)t.UnidadValor ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@TipoGrafico", (object)t.TipoGrafico ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@FondoOscuro", t.FondoOscuro);
         }
     }
 }

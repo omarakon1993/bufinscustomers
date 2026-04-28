@@ -6,20 +6,17 @@ namespace bufinscustomers.Models
     {
         public int Id { get; set; }
         public string Nombre { get; set; }
-        public byte Tipo { get; set; }           // 1 = KPI/Valor, 2 = Info
+        public byte Tipo { get; set; }           // 1 = KPI/Valor, 2 = Gráfico
         public string Icono { get; set; }
         public string ColorIcono { get; set; }
         public int Orden { get; set; }
         public bool Activo { get; set; }
-        // Tipo 1
         public string ConsultaSQL { get; set; }
+        // Tipo 1
         public string UnidadValor { get; set; }
         // Tipo 2
-        public string InfoTitulo { get; set; }
-        public string InfoSubtitulo { get; set; }
-        public string InfoCuerpo { get; set; }
-        public string InfoUrlAccion { get; set; }
-        public string InfoTextoAccion { get; set; }
+        public string TipoGrafico { get; set; }  // bar, line, area, doughnut, pie
+        public bool FondoOscuro { get; set; }
     }
 
     public class WidgetKpiResultado
@@ -30,9 +27,19 @@ namespace bufinscustomers.Models
         public string Etiqueta { get; set; }
     }
 
+    public class WidgetGraficoResultado
+    {
+        public int IdEmpresa { get; set; }
+        public string NombreEmpresa { get; set; }
+        public string Etiqueta { get; set; }
+        public string Serie { get; set; }
+        public decimal Valor { get; set; }
+    }
+
     public class WidgetTarjetaViewModel
     {
         public WidgetTarjeta Config { get; set; }
         public List<WidgetKpiResultado> KpiResultados { get; set; } = new List<WidgetKpiResultado>();
+        public List<WidgetGraficoResultado> GraficoResultados { get; set; } = new List<WidgetGraficoResultado>();
     }
 }
