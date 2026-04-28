@@ -184,7 +184,7 @@
                                 <td class="col-acciones">
                                     <div class="btn-group" role="group">
                                         <button type="button" class="btn btn-primary btn-sm"
-                                                data-bs-toggle="modal" data-bs-target="#editReporteModal"
+                                                data-toggle="modal" data-target="#editReporteModal"
                                                 data-id="@reporte.Id"
                                                 data-idempresa="@reporte.IdEmpresa"
                                                 data-nombre="@Html.Raw(reporte.Nombre ?? "")"
@@ -196,7 +196,7 @@
                                             <i class="fas fa-edit mr-1"></i>Editar
                                         </button>
                                         <button type="button" class="btn btn-outline-danger btn-sm"
-                                                data-bs-toggle="modal" data-bs-target="#confirmDeleteModal"
+                                                data-toggle="modal" data-target="#confirmDeleteModal"
                                                 onclick="setIdReporte(@reporte.Id)">
                                             <i class="fas fa-trash-alt mr-1"></i>Eliminar
                                         </button>
@@ -209,7 +209,7 @@
             </div>
         </div>
         <div class="card-footer">
-            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#crearReporteModal">
+            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearReporteModal">
                 <i class="fas fa-plus-circle mr-1"></i> Crear reporte
             </button>
         </div>
@@ -223,7 +223,7 @@
                     <h5 class="modal-title" id="confirmDeleteModalLabel">
                         <i class="fas fa-exclamation-triangle mr-2"></i>Confirmar eliminaci&oacute;n
                     </h5>
-                    <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -234,7 +234,7 @@
                     </p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
                         <i class="fas fa-times mr-1"></i>Cancelar
                     </button>
                     <form id="deleteForm" method="post" action="/Reportes/EliminarReporte" style="display: inline;">
@@ -256,7 +256,7 @@
                     <h5 class="modal-title" id="editReporteModalLabel">
                         <i class="fas fa-edit mr-2" style="color: #583AFF;"></i>Editar reporte
                     </h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -317,7 +317,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
                             <i class="fas fa-times mr-1"></i>Cancelar
                         </button>
                         <button type="submit" class="btn btn-primary btn-sm">
@@ -337,7 +337,7 @@
                     <h5 class="modal-title" id="crearReporteModalLabel">
                         <i class="fas fa-plus-circle mr-2" style="color: #583AFF;"></i>Crear nuevo reporte
                     </h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -396,7 +396,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
                             <i class="fas fa-times mr-1"></i>Cancelar
                         </button>
                         <button type="submit" class="btn btn-primary btn-sm">

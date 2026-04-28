@@ -1,0 +1,199 @@
+@model IEnumerable<bufinscustomers.Models.CategoriaMenu>
+@using bufinscustomers.Helpers
+@using System.Web.Script.Serialization
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gestor de Categorías</title>
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="~/Assets/css/configuracion-admin.css" rel="stylesheet" />
+</head>
+<body>
+
+@{
+    var successMsg = TempData["SuccessMessage"] as string;
+    var errorMsg   = TempData["ErrorMessage"]   as string;
+    var jss        = new JavaScriptSerializer();
+    var jsonData   = jss.Serialize(Model.Select(c => new { c.Id, c.Nombre, c.Icono, c.Orden }));
+}
+
+@if (!string.IsNullOrEmpty(successMsg))
+{
+    <script>
+        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'success', title: '@Html.Raw(successMsg.Replace("'", "\\'"))', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+    </script>
+}
+@if (!string.IsNullOrEmpty(errorMsg))
+{
+    <script>
+        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'error', title: '@Html.Raw(errorMsg.Replace("'", "\\'"))', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+    </script>
+}
+
+<div class="card shadow mb-4 mt-4">
+    <div class="card-header">
+        <i class="fas fa-folder"></i> Gestor de Categor&iacute;as
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive table-wrapper">
+            <table class="table table-bordered table-hover table-compact">
+                <thead>
+                    <tr>
+                        <th style="width:50px">#</th>
+                        <th>Nombre</th>
+                        <th style="width:80px;text-align:center">Icono</th>
+                        <th style="width:70px;text-align:center">Orden</th>
+                        <th style="width:110px;text-align:center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="5" class="text-center text-muted py-3">No hay categorías registradas.</td></tr>
+                    }
+                    @foreach (var c in Model)
+                    {
+                        <tr>
+                            <td>@c.Id</td>
+                            <td><strong>@c.Nombre</strong></td>
+                            <td style="text-align:center">
+                                @if (!string.IsNullOrEmpty(c.Icono))
+                                {
+                                    <i class="@c.Icono" style="font-size:1.1rem;color:#583AFF"></i>
+                                    <br /><small class="text-muted" style="font-size:.65rem">@c.Icono</small>
+                                }
+                            </td>
+                            <td style="text-align:center">@c.Orden</td>
+                            <td style="text-align:center">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-primary" title="Editar"
+                                            data-toggle="modal" data-target="#editModal"
+                                            onclick="setEditar(@c.Id, '@Html.Raw(c.Nombre?.Replace("'","\\'")??"")', '@Html.Raw(c.Icono?.Replace("'","\\'")??"")', @c.Orden)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger" title="Eliminar"
+                                            onclick="confirmarEliminar(@c.Id, '@Html.Raw(c.Nombre?.Replace("'","\\'")??"")')">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer">
+        <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearModal">
+            <i class="fas fa-plus-circle mr-1"></i> Nueva categoría
+        </button>
+    </div>
+</div>
+
+<!-- Modal Crear -->
+<div class="modal fade" id="crearModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus-circle"></i> Nueva categor&iacute;a</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form method="post" action="/GestorCategorias/Crear">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" name="Nombre" required maxlength="100" placeholder="Ej: ADMINISTRACION" />
+                    </div>
+                    <div class="mb-3">
+                        <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>Icono <small class="text-muted">(FontAwesome)</small></label>
+                        <input type="text" class="form-control form-control-sm" name="Icono" placeholder="fas fa-folder" maxlength="100" />
+                    </div>
+                    <div class="mb-3">
+                        <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>Orden</label>
+                        <input type="number" class="form-control form-control-sm" name="Orden" value="0" min="0" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus-circle mr-1"></i>Crear
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit"></i> Editar categor&iacute;a</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form method="post" action="/GestorCategorias/Editar">
+                <input type="hidden" name="Id" id="editId" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" name="Nombre" id="editNombre" required maxlength="100" />
+                    </div>
+                    <div class="mb-3">
+                        <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>Icono <small class="text-muted">(FontAwesome)</small></label>
+                        <input type="text" class="form-control form-control-sm" name="Icono" id="editIcono" maxlength="100" />
+                    </div>
+                    <div class="mb-3">
+                        <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>Orden</label>
+                        <input type="number" class="form-control form-control-sm" name="Orden" id="editOrden" min="0" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-save mr-1"></i>Guardar cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Form eliminar oculto -->
+<form id="frmElim" method="post" action="/GestorCategorias/Eliminar" style="display:none">
+    <input type="hidden" name="id" id="elimId" />
+</form>
+
+<script>
+    function setEditar(id, nombre, icono, orden) {
+        document.getElementById('editId').value     = id;
+        document.getElementById('editNombre').value = nombre;
+        document.getElementById('editIcono').value  = icono;
+        document.getElementById('editOrden').value  = orden;
+    }
+
+    function confirmarEliminar(id, nombre) {
+        Swal.fire({
+            title: '¿Eliminar categoría?',
+            text: '"' + nombre + '" se eliminará permanentemente.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e74a3b',
+            cancelButtonText: 'Cancelar',
+            confirmButtonText: 'Sí, eliminar'
+        }).then(function(r) {
+            if (r.isConfirmed) {
+                document.getElementById('elimId').value = id;
+                document.getElementById('frmElim').submit();
+            }
+        });
+    }
+</script>
+</body>
+</html>

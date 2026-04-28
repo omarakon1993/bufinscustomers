@@ -8,22 +8,21 @@ using System.Web.Mvc;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class WorkflowController : BaseController
+    public class WidgetsController : BaseController
     {
-        private readonly WorkflowService _svc = new WorkflowService();
+        private readonly WidgetsService _svc = new WidgetsService();
 
         public ActionResult Index()
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
                 return RedirectToAction("Index", "Home");
 
-            return View("~/Views/Configuracion/Workflow.cshtml", _svc.ObtenerTodas());
+            return View("~/Views/Configuracion/Widgets.cshtml", _svc.ObtenerTodas());
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         [ValidateInput(false)]
-        public ActionResult Crear(WorkflowTarjeta model)
+        public ActionResult Crear(WidgetTarjeta model)
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
                 return RedirectToAction("Index", "Home");
@@ -49,9 +48,8 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         [ValidateInput(false)]
-        public ActionResult Editar(WorkflowTarjeta model)
+        public ActionResult Editar(WidgetTarjeta model)
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
                 return RedirectToAction("Index", "Home");
@@ -77,7 +75,6 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public ActionResult Eliminar(int id)
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())

@@ -296,14 +296,14 @@
                                     <div class="btn-group" role="group" aria-label="Acciones">
                                         @if (ViewBag.PuedeEditar == true)
                                         {
-                                            <button type="button" class="btn btn-primary" title="Editar usuario" data-bs-toggle="modal" data-bs-target="#editUserModal"
+                                            <button type="button" class="btn btn-primary" title="Editar usuario" data-toggle="modal" data-target="#editUserModal"
                                                     onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa', '@usuario.Usuario', '@usuario.Clave', '@(imagenUsuario != null && !string.IsNullOrEmpty(imagenUsuario.ImagenBase64) ? "data:" + imagenUsuario.TipoImagen + ";base64," + imagenUsuario.ImagenBase64 : "")')">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                         }
                                         @if (ViewBag.PuedeEliminar == true)
                                         {
-                                            <button type="button" class="btn btn-outline-danger" title="Eliminar usuario" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" onclick="setIdUsuario(@usuario.Id)">
+                                            <button type="button" class="btn btn-outline-danger" title="Eliminar usuario" data-toggle="modal" data-target="#confirmDeleteModal" onclick="setIdUsuario(@usuario.Id)">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         }
@@ -326,7 +326,7 @@
         <div class="card-footer">
             @if (ViewBag.PuedeCrear == true)
             {
-                <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#crearUsuarioModal">
+                <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearUsuarioModal">
                     <i class="fas fa-plus-circle mr-1"></i> Crear Usuario
                 </button>
             }
@@ -341,7 +341,7 @@
                     <h5 class="modal-title" id="confirmDeleteModalLabel">
                         <i class="fas fa-exclamation-triangle"></i>Confirmar eliminación
                     </h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Cerrar">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -349,7 +349,7 @@
                     <p class="mb-0"><i class="fas fa-question-circle text-warning mr-2"></i>¿Estás seguro de que deseas eliminar este usuario?</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
                         <i class="fas fa-times mr-2"></i>Cancelar
                     </button>
                     <form id="deleteForm" method="post" action="/Usuario/EliminarUsuario" style="display: inline;">
@@ -371,7 +371,7 @@
                     <h5 class="modal-title" id="editUserModalLabel">
                         <i class="fas fa-user-edit"></i>Editar Usuario
                     </h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="editUserForm" method="post" action="/Usuario/EditarUsuario" enctype="multipart/form-data">
                     <input type="hidden" id="editIdUsuario" name="Id" />
@@ -379,17 +379,17 @@
                         <!-- Pestañas de navegación -->
                         <ul class="nav nav-tabs" id="editUserTabs" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="edit-auth-tab" data-bs-toggle="tab" data-bs-target="#edit-auth" type="button" role="tab" aria-controls="edit-auth" aria-selected="true">
+                                <button class="nav-link active" id="edit-auth-tab" data-bs-toggle="tab" data-target="#edit-auth" type="button" role="tab" aria-controls="edit-auth" aria-selected="true">
                                     Autenticación
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="edit-user-data-tab" data-bs-toggle="tab" data-bs-target="#edit-user-data" type="button" role="tab" aria-controls="edit-user-data" aria-selected="false">
+                                <button class="nav-link" id="edit-user-data-tab" data-bs-toggle="tab" data-target="#edit-user-data" type="button" role="tab" aria-controls="edit-user-data" aria-selected="false">
                                     Datos del Usuario
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="edit-user-image-tab" data-bs-toggle="tab" data-bs-target="#edit-user-image" type="button" role="tab" aria-controls="edit-user-image" aria-selected="false">
+                                <button class="nav-link" id="edit-user-image-tab" data-bs-toggle="tab" data-target="#edit-user-image" type="button" role="tab" aria-controls="edit-user-image" aria-selected="false">
                                     Imagen
                                 </button>
                             </li>
@@ -407,7 +407,7 @@
                                 </div>
 
                                 <!-- Botón para cambio de clave -->
-                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cambiarClaveModal"
+                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#cambiarClaveModal"
                                         onclick="setCambioClaveData()">
                                     <i class="fas fa-key mr-2"></i>Cambiar Clave
                                 </button>
@@ -495,7 +495,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             <i class="fas fa-times mr-2"></i>Cancelar
                         </button>
                         <button type="submit" class="btn btn-primary" id="btnEditarUsuario">
@@ -515,24 +515,24 @@
                     <h5 class="modal-title" id="crearUsuarioModalLabel">
                         <i class="fas fa-user-plus"></i>Crear usuario
                     </h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="crearUsuarioForm" method="post" action="/Usuario/Registrar" enctype="multipart/form-data">
                     <div class="modal-body">
                         <!-- Pestañas de navegación -->
                         <ul class="nav nav-tabs" id="crearUsuarioTabs" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="auth-tab" data-bs-toggle="tab" data-bs-target="#auth" type="button" role="tab" aria-controls="auth" aria-selected="true">
+                                <button class="nav-link active" id="auth-tab" data-bs-toggle="tab" data-target="#auth" type="button" role="tab" aria-controls="auth" aria-selected="true">
                                     Autenticación
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="user-data-tab" data-bs-toggle="tab" data-bs-target="#user-data" type="button" role="tab" aria-controls="user-data" aria-selected="false">
+                                <button class="nav-link" id="user-data-tab" data-bs-toggle="tab" data-target="#user-data" type="button" role="tab" aria-controls="user-data" aria-selected="false">
                                     Datos del Usuario
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="user-image-tab" data-bs-toggle="tab" data-bs-target="#user-image" type="button" role="tab" aria-controls="user-image" aria-selected="false">
+                                <button class="nav-link" id="user-image-tab" data-bs-toggle="tab" data-target="#user-image" type="button" role="tab" aria-controls="user-image" aria-selected="false">
                                     Imagen
                                 </button>
                             </li>
@@ -643,7 +643,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             <i class="fas fa-times mr-2"></i>Cancelar
                         </button>
                         <button type="button" class="btn btn-primary" id="btnCrearUsuario">
@@ -663,7 +663,7 @@
                     <h5 class="modal-title" id="cambiarClaveModalLabel">
                         <i class="fas fa-key"></i>Cambiar Clave
                     </h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="cambiarClaveForm" method="post" action="/Usuario/CambiarClave">
                     <input type="hidden" id="cambioClaveIdUsuario" name="idUsuario" />
@@ -678,7 +678,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             <i class="fas fa-times mr-2"></i>Cancelar
                         </button>
                         <button type="submit" class="btn btn-primary">
@@ -698,7 +698,7 @@
                     <h5 class="modal-title" id="imageViewModalLabel">
                         <i class="fas fa-image"></i> Imagen de Usuario
                     </h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -706,7 +706,7 @@
                     <img id="modalImageView" src="" alt="Imagen usuario" style="max-width: 100%; max-height: 70vh; border-radius: 8px;" />
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
                         <i class="fas fa-times mr-2"></i>Cerrar
                     </button>
                 </div>
@@ -843,7 +843,7 @@
                             var tabPane = firstInvalid.closest('.tab-pane');
                             if (tabPane && !tabPane.classList.contains('active')) {
                                 var tabId = tabPane.id;
-                                var tabTrigger = document.querySelector('[data-bs-target="#' + tabId + '"]');
+                                var tabTrigger = document.querySelector('[data-target="#' + tabId + '"]');
                                 if (tabTrigger) {
                                     var tab = new bootstrap.Tab(tabTrigger);
                                     tab.show();

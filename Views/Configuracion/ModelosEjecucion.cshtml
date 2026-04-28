@@ -75,12 +75,12 @@
                                 <td class="col-acciones">
                                     <div class="btn-group" role="group">
                                         <button type="button" class="btn btn-primary" title="Editar modelo"
-                                                data-bs-toggle="modal" data-bs-target="#editarModal"
+                                                data-toggle="modal" data-target="#editarModal"
                                                 onclick="setEditarModelo(@m.Id, '@Html.Raw(m.Nombre.Replace("'","\\'" ))', '@Html.Raw(m.NombreSP.Replace("'","\\'" ))', '@Html.Raw((m.Descripcion ?? "").Replace("'","\\'" ))', '@Html.Raw((m.Icono ?? "").Replace("'","\\'" ))', @m.Orden, @(m.Activo ? "true" : "false"))">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         <button type="button" class="btn btn-outline-danger" title="Eliminar modelo"
-                                                data-bs-toggle="modal" data-bs-target="#eliminarModal"
+                                                data-toggle="modal" data-target="#eliminarModal"
                                                 onclick="setEliminarModelo(@m.Id, '@Html.Raw(m.Nombre.Replace("'","\\'" ))')">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
@@ -93,7 +93,7 @@
             </div>
         </div>
         <div class="card-footer">
-            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#crearModal">
+            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearModal">
                 <i class="fas fa-plus-circle mr-1"></i> Crear modelo
             </button>
         </div>
@@ -107,7 +107,7 @@
                     <h5 class="modal-title" id="crearModalLabel">
                         <i class="fas fa-plus-circle" style="color:#583AFF;"></i> Crear modelo
                     </h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -164,7 +164,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
                             <i class="fas fa-times mr-1"></i>Cancelar
                         </button>
                         <button type="submit" class="btn btn-primary btn-sm">
@@ -184,7 +184,7 @@
                     <h5 class="modal-title" id="editarModalLabel">
                         <i class="fas fa-edit" style="color:#583AFF;"></i> Editar modelo
                     </h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -247,7 +247,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
                             <i class="fas fa-times mr-1"></i>Cancelar
                         </button>
                         <button type="submit" class="btn btn-primary btn-sm">
@@ -267,7 +267,7 @@
                     <h5 class="modal-title" id="eliminarModalLabel">
                         <i class="fas fa-exclamation-triangle"></i> Confirmar eliminaci&oacute;n
                     </h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -279,7 +279,7 @@
                     <p class="text-muted small mt-2 mb-0">El modelo quedar&aacute; inactivo y no aparecer&aacute; en la pantalla de ejecuci&oacute;n.</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
                         <i class="fas fa-times mr-1"></i>Cancelar
                     </button>
                     <form method="post" action="@Url.Action("Eliminar", "ModelosEjecucion")" style="display:inline;">

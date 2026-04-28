@@ -17,16 +17,16 @@ namespace bufinscustomers.Controllers
     {
         public ActionResult Index()
         {
-            var svc      = new WorkflowService();
+            var svc      = new WidgetsService();
             var usuario  = UsuarioSesionHelper.UsuarioActual;
             bool esAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
             var tarjetasConfig = svc.ObtenerActivas();
-            var vm = new List<WorkflowTarjetaViewModel>();
+            var vm = new List<WidgetTarjetaViewModel>();
 
             foreach (var t in tarjetasConfig)
             {
-                var item = new WorkflowTarjetaViewModel { Config = t };
+                var item = new WidgetTarjetaViewModel { Config = t };
                 if (t.Tipo == 1 && !string.IsNullOrWhiteSpace(t.ConsultaSQL))
                 {
                     int? filtro = esAdmin ? (int?)null : usuario?.IdEmpresa;

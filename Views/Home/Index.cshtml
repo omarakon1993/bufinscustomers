@@ -1,6 +1,6 @@
 @using bufinscustomers.Helpers
 @using System.Globalization
-@model List<bufinscustomers.Models.WorkflowTarjetaViewModel>
+@model List<bufinscustomers.Models.WidgetTarjetaViewModel>
 @{
     ViewBag.Title = "Inicio";
 
@@ -17,8 +17,8 @@
     }
 
     // Item1=Config  Item2=Valor  Item3=Etiqueta  Item4=EmpNombre  Item5=EsVacio
-    var kpiRows   = new List<Tuple<bufinscustomers.Models.WorkflowTarjeta, string, string, string, bool>>();
-    var infoCards = new List<bufinscustomers.Models.WorkflowTarjeta>();
+    var kpiRows   = new List<Tuple<bufinscustomers.Models.WidgetTarjeta, string, string, string, bool>>();
+    var infoCards = new List<bufinscustomers.Models.WidgetTarjeta>();
 
     if (Model != null)
     {

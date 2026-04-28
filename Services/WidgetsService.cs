@@ -6,7 +6,7 @@ using bufinscustomers.Models;
 
 namespace bufinscustomers.Services
 {
-    public class WorkflowService : BaseService
+    public class WidgetsService : BaseService
     {
         private const string SelectCols = @"
             SELECT Id, Nombre, Tipo, Icono, ColorIcono, Orden, Activo,
@@ -14,9 +14,9 @@ namespace bufinscustomers.Services
                    InfoTitulo, InfoSubtitulo, InfoCuerpo, InfoUrlAccion, InfoTextoAccion
             FROM DashboardTarjetas";
 
-        public List<WorkflowTarjeta> ObtenerTodas()
+        public List<WidgetTarjeta> ObtenerTodas()
         {
-            var list = new List<WorkflowTarjeta>();
+            var list = new List<WidgetTarjeta>();
             using (var cn = new SqlConnection(CadenaConexion))
             {
                 var cmd = new SqlCommand(SelectCols + " ORDER BY Orden, Id", cn);
@@ -27,9 +27,9 @@ namespace bufinscustomers.Services
             return list;
         }
 
-        public List<WorkflowTarjeta> ObtenerActivas()
+        public List<WidgetTarjeta> ObtenerActivas()
         {
-            var list = new List<WorkflowTarjeta>();
+            var list = new List<WidgetTarjeta>();
             using (var cn = new SqlConnection(CadenaConexion))
             {
                 var cmd = new SqlCommand(SelectCols + " WHERE Activo = 1 ORDER BY Orden, Id", cn);
@@ -40,7 +40,7 @@ namespace bufinscustomers.Services
             return list;
         }
 
-        public bool Crear(WorkflowTarjeta t)
+        public bool Crear(WidgetTarjeta t)
         {
             try
             {
@@ -64,7 +64,7 @@ namespace bufinscustomers.Services
             catch { return false; }
         }
 
-        public bool Editar(WorkflowTarjeta t)
+        public bool Editar(WidgetTarjeta t)
         {
             try
             {
@@ -104,9 +104,9 @@ namespace bufinscustomers.Services
             catch { return false; }
         }
 
-        public List<WorkflowKpiResultado> EjecutarKpi(string sql, int? idEmpresaFiltro)
+        public List<WidgetKpiResultado> EjecutarKpi(string sql, int? idEmpresaFiltro)
         {
-            var list = new List<WorkflowKpiResultado>();
+            var list = new List<WidgetKpiResultado>();
             if (string.IsNullOrWhiteSpace(sql)) return list;
 
             var trimmed = sql.Trim();
@@ -129,7 +129,7 @@ namespace bufinscustomers.Services
 
                             if (idEmpresaFiltro.HasValue && idEmp != idEmpresaFiltro.Value) continue;
 
-                            var kpi = new WorkflowKpiResultado
+                            var kpi = new WidgetKpiResultado
                             {
                                 IdEmpresa = idEmp,
                                 Valor     = r["Valor"]?.ToString() ?? ""
@@ -145,7 +145,7 @@ namespace bufinscustomers.Services
             return list;
         }
 
-        private static WorkflowTarjeta Map(SqlDataReader r) => new WorkflowTarjeta
+        private static WidgetTarjeta Map(SqlDataReader r) => new WidgetTarjeta
         {
             Id            = Convert.ToInt32(r["Id"]),
             Nombre        = r["Nombre"]?.ToString(),
@@ -163,7 +163,7 @@ namespace bufinscustomers.Services
             InfoTextoAccion = r["InfoTextoAccion"] == DBNull.Value ? null : r["InfoTextoAccion"].ToString()
         };
 
-        private static void AddParams(SqlCommand cmd, WorkflowTarjeta t)
+        private static void AddParams(SqlCommand cmd, WidgetTarjeta t)
         {
             cmd.Parameters.AddWithValue("@Nombre",        t.Nombre        ?? "");
             cmd.Parameters.AddWithValue("@Tipo",          t.Tipo);

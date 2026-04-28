@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace bufinscustomers.Models
 {
-    public class WorkflowTarjeta
+    public class WidgetTarjeta
     {
         public int Id { get; set; }
         public string Nombre { get; set; }
@@ -22,7 +22,7 @@ namespace bufinscustomers.Models
         public string InfoTextoAccion { get; set; }
     }
 
-    public class WorkflowKpiResultado
+    public class WidgetKpiResultado
     {
         public int IdEmpresa { get; set; }
         public string NombreEmpresa { get; set; }
@@ -30,9 +30,9 @@ namespace bufinscustomers.Models
         public string Etiqueta { get; set; }
     }
 
-    public class WorkflowTarjetaViewModel
+    public class WidgetTarjetaViewModel
     {
-        public WorkflowTarjeta Config { get; set; }
-        public List<WorkflowKpiResultado> KpiResultados { get; set; } = new List<WorkflowKpiResultado>();
+        public WidgetTarjeta Config { get; set; }
+        public List<WidgetKpiResultado> KpiResultados { get; set; } = new List<WidgetKpiResultado>();
     }
 }
