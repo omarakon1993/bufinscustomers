@@ -5,81 +5,73 @@
 @{
     var usuario = UsuarioSesionHelper.UsuarioActual;
     var esAdmin2 = UsuarioSesionHelper.EsSuperAdmin();
-    var idEmpresa = usuario?.IdEmpresa ?? 0;
+    var idEmpresa = usuario != null ? usuario.IdEmpresa ?? 0 : 0;
     string nombreEmpresa = null;
     if (!esAdmin2)
     {
         nombreEmpresa = bufinscustomers.Controllers.ReportesController.ObtenerNombreEmpresaPorId(idEmpresa);
     }
+
+    // Estado activo resuelto en servidor → primer paint ya tiene las clases correctas
+    var curCtrl   = ViewContext.RouteData.Values["controller"] != null ? ViewContext.RouteData.Values["controller"].ToString() : "";
+    var curAction = ViewContext.RouteData.Values["action"]     != null ? ViewContext.RouteData.Values["action"].ToString()     : "";
 }
 
 @if (Model != null && Model.Count > 0)
 {
     foreach (var categoria in Model)
     {
-        // Verificar si la categoría tiene contenido
         if (categoria.Grupos == null || !categoria.Grupos.Any()) { continue; }
 
         <div class="sidebar-category">
             <div class="sidebar-category-header">
-                <i class="@categoria.Icono sidebar-category-icon"></i>
+                <i class="@categoria.Icono sidebar-category-icon sidebar-cat-dot"></i>
                 <span class="sidebar-category-title">@categoria.Nombre</span>
             </div>
 
             @foreach (var grupo in categoria.Grupos)
             {
-                <div class="sidebar-nav-item">
-                    <a class="sidebar-nav-link" href="#" data-has-submenu="true">
-                        <i class="@grupo.Icono sidebar-nav-icon"></i>
-                        <span class="sidebar-nav-text">@grupo.Nombre</span>
-                        <i class="fas fa-chevron-right sidebar-nav-arrow"></i>
-                        <span class="sidebar-tooltip">@grupo.Nombre</span>
-                    </a>
-                    <div class="sidebar-submenu">
-                        @foreach (var item in grupo.Items)
-                        {
-                            <div class="sidebar-submenu-item">
-                                @if (item.Codigo == "INFORMES_REPORTES_PBI" && !esAdmin2)
-                                {
-                                    <a class="sidebar-submenu-link" href="@Url.Action(item.Action, item.Controller)" title="Reportes @nombreEmpresa">
-                                        @item.Nombre @nombreEmpresa
-                                    </a>
-                                }
-                                else if (item.Codigo == "INFORMES_RELACIONAMIENTOS")
-                                {
-                                    <a class="sidebar-submenu-link" href="@Url.Action(item.Action, item.Controller)">
-                                        @item.Nombre
-                                    </a>
-                                }
-                                else if (item.Codigo == "INFORMES_ANALISIS_IA")
-                                {
-                                    <a class="sidebar-submenu-link" href="@Url.Action(item.Action, item.Controller)">
-                                        <i class="fas fa-robot" style="margin-right: 4px; font-size: 0.8rem;"></i>
-                                        @item.Nombre
-                                    </a>
-                                }
-                                else if (item.Codigo == "INFORMES_VARIABLES_PBI")
-                                {
-                                    <a class="sidebar-submenu-link" href="@Url.Action(item.Action, item.Controller)">
-                                        @item.Nombre
-                                    </a>
-                                }
-                                else if (item.Codigo == "ADMIN_CONFIG_VARIABLES_PBI")
-                                {
-                                    <a class="sidebar-submenu-link" href="@Url.Action(item.Action, item.Controller)">
-                                        @item.Nombre
-                                    </a>
-                                }
-                                else
-                                {
-                                    <a class="sidebar-submenu-link" href="@Url.Action(item.Action, item.Controller)">
-                                        @item.Nombre
-                                    </a>
-                                }
-                            </div>
-                        }
+                if (grupo.Items == null || !grupo.Items.Any()) { continue; }
+
+                if (grupo.Items.Count == 1)
+                {
+                    var soloItem = grupo.Items[0];
+                    string linkText = soloItem.Nombre;
+                    if (soloItem.Codigo == "INFORMES_REPORTES_PBI" && !esAdmin2 && nombreEmpresa != null)
+                    {
+                        linkText = soloItem.Nombre + " " + nombreEmpresa;
+                    }
+                    bool soloActivo = soloItem.Controller == curCtrl && soloItem.Action == curAction;
+                    <div class="sidebar-nav-item">
+                        <a class="sidebar-nav-link @(soloActivo ? "active" : "")" href="@Url.Action(soloItem.Action, soloItem.Controller)">
+                            <i class="@grupo.Icono sidebar-nav-icon"></i>
+                            <span class="sidebar-nav-text">@linkText</span>
+                        </a>
                     </div>
-                </div>
+                }
+                else
+                {
+                    bool grupoActivo = grupo.Items.Any(it => it.Controller == curCtrl && it.Action == curAction);
+                    <div class="sidebar-nav-item">
+                        <a class="sidebar-nav-link @(grupoActivo ? "expanded" : "")" href="#" data-has-submenu="true">
+                            <i class="@grupo.Icono sidebar-nav-icon"></i>
+                            <span class="sidebar-nav-text">@grupo.Nombre</span>
+                            <i class="fas fa-chevron-right sidebar-nav-arrow"></i>
+                            <span class="sidebar-tooltip">@grupo.Nombre</span>
+                        </a>
+                        <div class="sidebar-submenu @(grupoActivo ? "expanded" : "")">
+                            @foreach (var item in grupo.Items)
+                            {
+                                bool itemActivo = item.Controller == curCtrl && item.Action == curAction;
+                                <div class="sidebar-submenu-item">
+                                    <a class="sidebar-submenu-link @(itemActivo ? "active" : "")" href="@Url.Action(item.Action, item.Controller)">
+                                        @item.Nombre
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
             }
         </div>
     }

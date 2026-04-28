@@ -12,6 +12,17 @@
 
     <title>BUFINS - Principal</title>
     <link rel="icon" type="image/x-icon" href="~/favicon.ico">
+
+    <!-- FOUC prevention: inline style + script BEFORE any external CSS so rules fire on first paint without a network round-trip -->
+    <style>
+        html.sidebar-init-collapsed .modern-sidebar{width:70px!important;transition:none!important}
+        html.sidebar-init-collapsed .main-content{margin-left:70px!important;transition:none!important}
+        html.page-loading body{visibility:hidden!important}
+        @@keyframes _sbReveal{to{visibility:visible}}
+        html.page-loading body{animation:_sbReveal 0s 1.5s forwards}
+    </style>
+    <script>(function(){try{var s=JSON.parse(localStorage.getItem('bufins_sidebar_state')||'{}');if(s.collapsed&&window.innerWidth>=992)document.documentElement.classList.add('sidebar-init-collapsed');}catch(e){}document.documentElement.classList.add('page-loading');}());</script>
+
     <link href="~/Assets/Bootstrap/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="~/Assets/GoogleApis/Family.css" rel="stylesheet">
     <link href="~/Assets/css/sb-admin-2.min.css" rel="stylesheet">
@@ -31,14 +42,12 @@
     <aside class="modern-sidebar">
         <!-- Header del Sidebar -->
         <div class="sidebar-header">
-            <div class="sidebar-logo-wrapper">
-                <a href="@Url.Action("Index", "Home")">
-                    <img src="~/Assets/img/Bufins_LogoIndex.png" alt="Bufins Logo" class="sidebar-logo-img">
-                </a>
-                <span class="sidebar-logo-text"></span>
-            </div>
+            <a href="@Url.Action("Index", "Home")" class="sidebar-logo-wrapper">
+                <div class="sidebar-brand-icon">B</div>
+                <span class="sidebar-logo-text">bufins</span>
+            </a>
             <button class="sidebar-toggle-btn" aria-label="Colapsar">
-                <i class="fas fa-chevron-left"></i>
+                <i class="fas fa-angle-double-left"></i>
             </button>
         </div>
 
@@ -59,8 +68,29 @@
 
         <!-- Menú Principal (dinámico desde MenuOpciones) -->
         <nav class="sidebar-menu">
+            @{
+                var _ctrl = ViewContext.RouteData.Values["controller"] != null ? ViewContext.RouteData.Values["controller"].ToString() : "";
+                var _action = ViewContext.RouteData.Values["action"] != null ? ViewContext.RouteData.Values["action"].ToString() : "";
+                var _isHome = _ctrl == "Home" && _action == "Index";
+            }
+            <!-- Sección General (siempre visible) -->
+            <div class="sidebar-category">
+                <div class="sidebar-category-header">
+                    <i class="fas fa-circle sidebar-category-icon sidebar-cat-dot"></i>
+                    <span class="sidebar-category-title">General</span>
+                </div>
+                <div class="sidebar-nav-item">
+                    <a class="sidebar-nav-link @(_isHome ? "active" : "")" href="@Url.Action("Index", "Home")">
+                        <i class="fas fa-home sidebar-nav-icon"></i>
+                        <span class="sidebar-nav-text">Inicio</span>
+                    </a>
+                </div>
+            </div>
+
             @{ Html.RenderPartial("_SidebarMenu", UsuarioSesionHelper.ObtenerMenuSidebar()); }
         </nav>
+        <!-- Scroll restoration: runs synchronously during HTML parsing, before first paint -->
+        <script>(function(){try{var s=sessionStorage.getItem('bufins_sidebar_scroll');var m=document.querySelector('.sidebar-menu');if(s&&m)m.scrollTop=parseInt(s)||0;}catch(e){}}());</script>
 
         <!-- Footer del Sidebar -->
         <div class="sidebar-footer">
@@ -75,6 +105,51 @@
                     <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
                         <i class="fa fa-bars"></i>
                     </button>
+
+                    @{
+                        string _bcGroup = null;
+                        string _bcItem  = null;
+                        if (!_isHome)
+                        {
+                            var _menuBc = UsuarioSesionHelper.ObtenerMenuSidebar();
+                            if (_menuBc != null)
+                            {
+                                bool _bcFound = false;
+                                foreach (var _bcCat in _menuBc)
+                                {
+                                    if (_bcFound || _bcCat.Grupos == null) { break; }
+                                    foreach (var _bcGrp in _bcCat.Grupos)
+                                    {
+                                        if (_bcFound || _bcGrp.Items == null) { break; }
+                                        foreach (var _bcItm in _bcGrp.Items)
+                                        {
+                                            if (_bcItm.Controller == _ctrl && _bcItm.Action == _action)
+                                            {
+                                                _bcItem  = _bcItm.Nombre;
+                                                if (_bcGrp.Items.Count > 1) { _bcGroup = _bcGrp.Nombre; }
+                                                _bcFound = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    <div class="topbar-breadcrumb d-none d-sm-flex">
+                        <span class="bc-item"><a href="@Url.Action("Index", "Home")">Inicio</a></span>
+                        @if (_bcGroup != null)
+                        {
+                            <i class="fas fa-chevron-right bc-sep"></i>
+                            <span class="bc-item">@_bcGroup</span>
+                        }
+                        @if (_bcItem != null)
+                        {
+                            <i class="fas fa-chevron-right bc-sep"></i>
+                            <span class="bc-current">@_bcItem</span>
+                        }
+                    </div>
+
                     <ul class="navbar-nav ml-auto">
                         <div class="topbar-divider d-none d-sm-block"></div>
                         <li class="nav-item dropdown no-arrow">
