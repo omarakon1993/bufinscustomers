@@ -1,12 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Data;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
-using System.Windows.Media.Media3D;
+using bufinscustomers.Helpers;
+using bufinscustomers.Models;
 using bufinscustomers.Permisos;
+using bufinscustomers.Services;
 
 namespace bufinscustomers.Controllers
 {
@@ -15,7 +17,25 @@ namespace bufinscustomers.Controllers
     {
         public ActionResult Index()
         {
-            return View();
+            var svc      = new WorkflowService();
+            var usuario  = UsuarioSesionHelper.UsuarioActual;
+            bool esAdmin = UsuarioSesionHelper.EsSuperAdmin();
+
+            var tarjetasConfig = svc.ObtenerActivas();
+            var vm = new List<WorkflowTarjetaViewModel>();
+
+            foreach (var t in tarjetasConfig)
+            {
+                var item = new WorkflowTarjetaViewModel { Config = t };
+                if (t.Tipo == 1 && !string.IsNullOrWhiteSpace(t.ConsultaSQL))
+                {
+                    int? filtro = esAdmin ? (int?)null : usuario?.IdEmpresa;
+                    item.KpiResultados = svc.EjecutarKpi(t.ConsultaSQL, filtro);
+                }
+                vm.Add(item);
+            }
+
+            return View(vm);
         }
         public ActionResult About()
         {

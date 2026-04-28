@@ -1,81 +1,238 @@
-﻿@{
-    ViewBag.Title = "Home Page";
+@using bufinscustomers.Helpers
+@using System.Globalization
+@model List<bufinscustomers.Models.WorkflowTarjetaViewModel>
+@{
+    ViewBag.Title = "Inicio";
+
+    var usuario  = UsuarioSesionHelper.UsuarioActual;
+    var empresas = ViewBag.Empresas as List<bufinscustomers.Models.Empresas>;
+
+    var empMap = new Dictionary<int, string>();
+    if (empresas != null)
+    {
+        foreach (var e in empresas)
+        {
+            empMap[e.Id] = e.Nombre;
+        }
+    }
+
+    // Item1=Config  Item2=Valor  Item3=Etiqueta  Item4=EmpNombre  Item5=EsVacio
+    var kpiRows   = new List<Tuple<bufinscustomers.Models.WorkflowTarjeta, string, string, string, bool>>();
+    var infoCards = new List<bufinscustomers.Models.WorkflowTarjeta>();
+
+    if (Model != null)
+    {
+        foreach (var tv in Model)
+        {
+            if (tv.Config.Tipo == 1)
+            {
+                if (tv.KpiResultados == null || tv.KpiResultados.Count == 0)
+                {
+                    kpiRows.Add(Tuple.Create(tv.Config, "—", (string)null, (string)null, true));
+                }
+                else
+                {
+                    foreach (var kpi in tv.KpiResultados)
+                    {
+                        string empN = kpi.NombreEmpresa;
+                        if (string.IsNullOrEmpty(empN) && empMap.ContainsKey(kpi.IdEmpresa))
+                        {
+                            empN = empMap[kpi.IdEmpresa];
+                        }
+                        kpiRows.Add(Tuple.Create(tv.Config, kpi.Valor, kpi.Etiqueta, empN, false));
+                    }
+                }
+            }
+            else if (tv.Config.Tipo == 2)
+            {
+                infoCards.Add(tv.Config);
+            }
+        }
+    }
+
+    bool hayTarjetas = kpiRows.Any() || infoCards.Any();
+
+    int hora = DateTime.Now.Hour;
+    string saludoHtml = hora >= 5 && hora < 12 ? "Buenos d&iacute;as"
+                      : hora >= 12 && hora < 19 ? "Buenas tardes"
+                      : "Buenas noches";
+    string nombreUsuario = usuario != null ? usuario.Nombre : "usuario";
 }
 
-<div class="container-fluid position-relative" style="min-height: 70vh;">
+<div class="dash-wrapper">
+
     <div class="watermark">
         <img src="~/Assets/img/Bufins_LogoLogin.png" alt="Bufins Watermark">
         <div class="watermark-slogan">BUSINESS FINANCE ALWAYS EVERYWHERE</div>
     </div>
+
+    @if (hayTarjetas)
+    {
+        <div class="dash-greeting">
+            <div class="dash-greeting-text">
+                <span class="dash-hello">@Html.Raw(saludoHtml), <strong>@nombreUsuario</strong></span>
+                <span class="dash-date">@DateTime.Now.ToString("dddd d 'de' MMMM yyyy", new CultureInfo("es-CO"))</span>
+            </div>
+        </div>
+    }
+
+    @if (kpiRows.Any())
+    {
+        <div class="dash-section">
+            <div class="dash-section-label"><i class="fas fa-chart-bar"></i> Indicadores</div>
+            <div class="dash-kpi-grid">
+                @foreach (var row in kpiRows)
+                {
+                    <div class="dash-kpi-card@(row.Item5 ? " dash-kpi-empty" : "")">
+                        <div class="dash-kpi-icon" style="background:linear-gradient(135deg,@row.Item1.ColorIcono,#01E1D7)">
+                            <i class="@row.Item1.Icono"></i>
+                        </div>
+                        <div class="dash-kpi-body">
+                            <div class="dash-kpi-value">
+                                @row.Item2
+                                @if (!string.IsNullOrEmpty(row.Item1.UnidadValor))
+                                {
+                                    <span class="dash-kpi-unit">@row.Item1.UnidadValor</span>
+                                }
+                            </div>
+                            <div class="dash-kpi-label">@row.Item1.Nombre</div>
+                            @if (!string.IsNullOrEmpty(row.Item3))
+                            {
+                                <div class="dash-kpi-etiqueta">@row.Item3</div>
+                            }
+                            @if (!string.IsNullOrEmpty(row.Item4))
+                            {
+                                <div class="dash-kpi-empresa"><i class="fas fa-building"></i> @row.Item4</div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (infoCards.Any())
+    {
+        <div class="dash-section">
+            <div class="dash-section-label"><i class="fas fa-info-circle"></i> Informaci&oacute;n</div>
+            <div class="dash-info-grid">
+                @foreach (var cfg in infoCards)
+                {
+                    <div class="dash-info-card">
+                        <div class="dash-info-header">
+                            <div class="dash-info-icon" style="background:linear-gradient(135deg,@cfg.ColorIcono,#01E1D7)">
+                                <i class="@cfg.Icono"></i>
+                            </div>
+                            <div>
+                                <div class="dash-info-title">@(cfg.InfoTitulo ?? cfg.Nombre)</div>
+                                @if (!string.IsNullOrEmpty(cfg.InfoSubtitulo))
+                                {
+                                    <div class="dash-info-subtitle">@cfg.InfoSubtitulo</div>
+                                }
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(cfg.InfoCuerpo))
+                        {
+                            <div class="dash-info-body">@cfg.InfoCuerpo</div>
+                        }
+                        @if (!string.IsNullOrEmpty(cfg.InfoUrlAccion))
+                        {
+                            <a href="@cfg.InfoUrlAccion" class="dash-info-action">
+                                @(string.IsNullOrEmpty(cfg.InfoTextoAccion) ? "Ver más" : cfg.InfoTextoAccion)
+                                <i class="fas fa-arrow-right" style="font-size:.65rem"></i>
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
 </div>
 
 <style>
+    .dash-wrapper { position:relative; min-height:70vh; padding:0 0 2rem; }
+
     .watermark {
-        position: absolute;
-        top: 50%; /* Más abajo que 50% */
-        left: 50%;
-        transform: translate(-50%, -50%);
-        opacity: 0.15;
-        z-index: 1;
-        pointer-events: none;
-        user-select: none;
+        position:absolute; top:50%; left:50%;
+        transform:translate(-50%,-50%);
+        opacity:.08; z-index:0;
+        pointer-events:none; user-select:none; text-align:center;
     }
-
-    .watermark img {
-        max-width: 600px;
-        width: 100%;
-        height: auto;
-        display: block;
-    }
-
+    .watermark img { max-width:520px; width:100%; height:auto; display:block; }
     .watermark-slogan {
-        text-align: center;
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #393F45;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        margin-top: 1.5rem;
-        font-family: 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        text-align:center; font-size:1.2rem; font-weight:700;
+        color:#393F45; letter-spacing:1px; text-transform:uppercase;
+        margin-top:1rem; font-family:'Nunito',sans-serif;
     }
 
-    .watermark-divider {
-        margin: 1.5rem auto 0;
-        width: 80%;
-        border: 0;
-        border-top: 2px solid #6B7280;
-        opacity: 1;
+    .dash-greeting {
+        position:relative; z-index:1;
+        display:flex; align-items:center;
+        margin-bottom:1.5rem; padding-bottom:.75rem;
+        border-bottom:1px solid rgba(88,58,255,.1);
+    }
+    .dash-greeting-text { display:flex; flex-direction:column; gap:.15rem; }
+    .dash-hello { font-size:1.05rem; color:#160933; font-weight:500; }
+    .dash-hello strong { color:#583AFF; }
+    .dash-date { font-size:.75rem; color:#A0A0B8; text-transform:capitalize; }
+
+    .dash-section { position:relative; z-index:1; margin-bottom:1.5rem; }
+    .dash-section-label {
+        font-size:.68rem; font-weight:700; color:#A0A0B8;
+        text-transform:uppercase; letter-spacing:1px;
+        margin-bottom:.65rem;
+        display:flex; align-items:center; gap:.4rem;
     }
 
-    @@media (max-width: 768px) {
-        .watermark img {
-            max-width: 400px;
-        }
-
-        .watermark-slogan {
-            font-size: 0.7rem;
-            letter-spacing: 0.5px;
-        }
-
-        .watermark-divider {
-            width: 90%;
-        }
+    .dash-kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; }
+    .dash-kpi-card {
+        background:#fff;
+        border:1px solid rgba(88,58,255,.12);
+        border-radius:12px; padding:18px 16px;
+        display:flex; align-items:center; gap:14px;
+        box-shadow:0 2px 8px rgba(22,9,51,.05);
+        transition:transform .15s ease,box-shadow .15s ease;
     }
+    .dash-kpi-card:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(22,9,51,.1); }
+    .dash-kpi-empty { opacity:.55; }
+    .dash-kpi-icon { width:46px; height:46px; border-radius:11px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.1rem; flex-shrink:0; }
+    .dash-kpi-body { min-width:0; flex:1; }
+    .dash-kpi-value { font-size:1.45rem; font-weight:700; color:#160933; line-height:1.1; display:flex; align-items:baseline; gap:.3rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dash-kpi-unit  { font-size:.7rem; font-weight:600; color:#583AFF; }
+    .dash-kpi-label { font-size:.72rem; font-weight:600; color:#6B6787; text-transform:uppercase; letter-spacing:.5px; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dash-kpi-etiqueta { font-size:.72rem; color:#A0A0B8; margin-top:2px; }
+    .dash-kpi-empresa  { font-size:.7rem; color:#A0A0B8; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dash-kpi-empresa i { font-size:.6rem; }
 
-    @@media (max-width: 480px) {
-        .watermark img {
-            max-width: 250px;
-        }
+    .dash-info-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:14px; }
+    .dash-info-card {
+        background:#fff;
+        border:1px solid rgba(88,58,255,.12);
+        border-radius:12px; padding:18px;
+        box-shadow:0 2px 8px rgba(22,9,51,.05);
+        display:flex; flex-direction:column; gap:10px;
+        transition:transform .15s ease,box-shadow .15s ease;
+    }
+    .dash-info-card:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(22,9,51,.1); }
+    .dash-info-header { display:flex; align-items:center; gap:12px; }
+    .dash-info-icon   { width:38px; height:38px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:.95rem; flex-shrink:0; }
+    .dash-info-title    { font-size:.9rem; font-weight:700; color:#160933; line-height:1.2; }
+    .dash-info-subtitle { font-size:.73rem; color:#A0A0B8; margin-top:2px; }
+    .dash-info-body     { font-size:.83rem; color:#4A4A6A; line-height:1.55; }
+    .dash-info-action {
+        font-size:.78rem; color:#583AFF; font-weight:600;
+        text-decoration:none !important;
+        display:inline-flex; align-items:center; gap:5px; align-self:flex-start;
+        padding:4px 10px; border-radius:6px;
+        background:rgba(88,58,255,.06); border:1px solid rgba(88,58,255,.15);
+        transition:background .14s;
+    }
+    .dash-info-action:hover { background:rgba(88,58,255,.14); color:#583AFF; text-decoration:none !important; }
 
-        .watermark-slogan {
-            font-size: 0.55rem;
-            letter-spacing: 0.3px;
-            margin-top: 1rem;
-        }
-
-        .watermark-divider {
-            width: 95%;
-            margin-top: 1rem;
-        }
+    @@media (max-width:576px) {
+        .dash-kpi-grid, .dash-info-grid { grid-template-columns:1fr; }
+        .watermark img { max-width:280px; }
+        .watermark-slogan { font-size:.65rem; }
     }
 </style>
