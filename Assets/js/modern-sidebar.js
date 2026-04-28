@@ -1,7 +1,7 @@
 /**
  * BUFINS MODERN SIDEBAR
  * Sistema de menú lateral moderno, responsive e híbrido
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 (function() {
@@ -27,9 +27,16 @@
     let isMobileOpen = false;
     let searchDebounceTimer = null;
 
+    // Tooltip flotante
+    let activeTooltip = null;
+    let tooltipHideTimer = null;
+
+    // Flyout submenu (sidebar colapsado)
+    let activeFlyout = null;
+    let activeFlyoutNavItem = null;
+
     // ===== INICIALIZACIÓN =====
     function init() {
-        // Esperar a que el DOM esté listo
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', setupSidebar);
         } else {
@@ -38,7 +45,6 @@
     }
 
     function setupSidebar() {
-        // Obtener elementos del DOM
         sidebar = document.querySelector('.modern-sidebar');
         sidebarToggleBtn = document.querySelector('.sidebar-toggle-btn');
         sidebarHamburger = document.querySelector('.sidebar-hamburger');
@@ -51,73 +57,56 @@
             return;
         }
 
-        // Cargar estado guardado
         loadSidebarState();
-
-        // Configurar event listeners
         setupEventListeners();
-
-        // Configurar búsqueda
         setupSearch();
-
-        // Configurar tooltips
         setupTooltips();
-
-        // Configurar responsive
         setupResponsive();
-
-        // Marcar item activo basado en URL
         markActiveMenuItem();
-
-        console.log('Modern Sidebar inicializado correctamente');
     }
 
     // ===== EVENT LISTENERS =====
     function setupEventListeners() {
-        // Toggle sidebar (desktop)
         if (sidebarToggleBtn) {
             sidebarToggleBtn.addEventListener('click', toggleSidebar);
         }
 
-        // Hamburger menu (mobile/tablet)
         if (sidebarHamburger) {
             sidebarHamburger.addEventListener('click', toggleMobileSidebar);
         }
 
-        // Backdrop (cerrar sidebar al hacer click fuera)
         if (sidebarBackdrop) {
             sidebarBackdrop.addEventListener('click', closeMobileSidebar);
         }
 
-        // Items con submenú
         const navLinksWithSubmenu = document.querySelectorAll('.sidebar-nav-link[data-has-submenu="true"]');
         navLinksWithSubmenu.forEach(link => {
             link.addEventListener('click', handleSubmenuToggle);
         });
 
-        // Prevenir cierre al hacer click dentro del sidebar
         if (sidebar) {
             sidebar.addEventListener('click', function(e) {
                 e.stopPropagation();
             });
         }
 
-        // Responsive: detectar cambios de tamaño de ventana
         window.addEventListener('resize', handleResize);
 
-        // Cerrar sidebar con tecla ESC
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && isMobileOpen) {
-                closeMobileSidebar();
+            if (e.key === 'Escape') {
+                if (activeFlyout) closeFlyout();
+                if (isMobileOpen) closeMobileSidebar();
             }
         });
     }
 
     // ===== TOGGLE SIDEBAR (DESKTOP) =====
     function toggleSidebar() {
-        if (window.innerWidth < CONFIG.MOBILE_BREAKPOINT) {
-            return; // En móvil/tablet no usar este toggle
-        }
+        if (window.innerWidth < CONFIG.MOBILE_BREAKPOINT) return;
+
+        // Cerrar flyout y tooltip al colapsar/expandir
+        closeFlyout();
+        hideNavTooltip();
 
         isCollapsed = !isCollapsed;
 
@@ -127,10 +116,8 @@
             sidebar.classList.remove('collapsed');
         }
 
-        // Guardar estado
         saveSidebarState();
 
-        // Dispatch evento personalizado
         window.dispatchEvent(new CustomEvent('sidebarToggled', {
             detail: { collapsed: isCollapsed }
         }));
@@ -138,9 +125,7 @@
 
     // ===== TOGGLE MOBILE SIDEBAR =====
     function toggleMobileSidebar() {
-        if (window.innerWidth >= CONFIG.MOBILE_BREAKPOINT) {
-            return; // Solo funciona en móvil/tablet
-        }
+        if (window.innerWidth >= CONFIG.MOBILE_BREAKPOINT) return;
 
         isMobileOpen = !isMobileOpen;
 
@@ -155,7 +140,7 @@
         sidebar.classList.add('mobile-open');
         sidebar.classList.add('animate-in');
         sidebarBackdrop.classList.add('active');
-        document.body.style.overflow = 'hidden'; // Prevenir scroll del body
+        document.body.style.overflow = 'hidden';
 
         setTimeout(() => {
             sidebar.classList.remove('animate-in');
@@ -178,32 +163,182 @@
 
         if (!submenu) return;
 
-        const isExpanded = link.classList.contains('expanded');
-
-        // En modo colapsado desktop, no expandir submenús (se manejan con tooltips/segundo nivel)
+        // Modo colapsado desktop: mostrar panel flyout lateral
         if (isCollapsed && window.innerWidth >= CONFIG.MOBILE_BREAKPOINT) {
+            if (activeFlyoutNavItem === navItem) {
+                closeFlyout(); // toggle: ya estaba abierto → cerrar
+            } else {
+                showFlyout(navItem, link);
+            }
             return;
         }
 
+        // Modo expandido: accordion normal
+        const isExpanded = link.classList.contains('expanded');
+
         if (isExpanded) {
-            // Cerrar
             link.classList.remove('expanded');
             submenu.classList.remove('expanded');
         } else {
-            // Abrir (cerrar otros primero - accordion behavior)
-            const allLinks = document.querySelectorAll('.sidebar-nav-link.expanded');
-            allLinks.forEach(otherLink => {
+            // Cerrar otros (accordion)
+            document.querySelectorAll('.sidebar-nav-link.expanded').forEach(otherLink => {
                 if (otherLink !== link) {
                     otherLink.classList.remove('expanded');
                     const otherSubmenu = otherLink.closest('.sidebar-nav-item').querySelector('.sidebar-submenu');
-                    if (otherSubmenu) {
-                        otherSubmenu.classList.remove('expanded');
-                    }
+                    if (otherSubmenu) otherSubmenu.classList.remove('expanded');
                 }
             });
 
             link.classList.add('expanded');
             submenu.classList.add('expanded');
+        }
+    }
+
+    // ===== FLYOUT SUBMENU (sidebar colapsado) =====
+    function showFlyout(navItem, link) {
+        closeFlyout();
+        hideNavTooltip();
+
+        const submenu = navItem.querySelector('.sidebar-submenu');
+        if (!submenu) return;
+
+        var navTextEl = link.querySelector('.sidebar-nav-text');
+        const groupName = navTextEl ? navTextEl.textContent.trim() : '';
+        const sidebarRect = sidebar.getBoundingClientRect();
+        const navItemRect = navItem.getBoundingClientRect();
+
+        const flyout = document.createElement('div');
+        flyout.className = 'sidebar-flyout';
+
+        // Cabecera del grupo
+        const header = document.createElement('div');
+        header.className = 'sidebar-flyout-header';
+        header.textContent = groupName;
+        flyout.appendChild(header);
+
+        // Items del submenú (clonar los links existentes)
+        const itemsContainer = document.createElement('div');
+        itemsContainer.className = 'sidebar-flyout-items';
+
+        submenu.querySelectorAll('.sidebar-submenu-link').forEach(subLink => {
+            const clone = subLink.cloneNode(true);
+            itemsContainer.appendChild(clone);
+        });
+
+        flyout.appendChild(itemsContainer);
+
+        // Posición inicial: pegado al borde derecho del sidebar, alineado con el nav-item
+        flyout.style.left = sidebarRect.right + 'px';
+        flyout.style.top = navItemRect.top + 'px';
+
+        document.body.appendChild(flyout);
+        activeFlyout = flyout;
+        activeFlyoutNavItem = navItem;
+
+        // Ajustar si el flyout se sale del viewport por abajo
+        const flyoutRect = flyout.getBoundingClientRect();
+        if (flyoutRect.bottom > window.innerHeight - 8) {
+            flyout.style.top = Math.max(8, window.innerHeight - flyoutRect.height - 8) + 'px';
+        }
+
+        // Marcar el link como activo con el flyout
+        link.classList.add('flyout-open');
+
+        // Cerrar al hacer clic fuera (diferido para no capturar el clic que lo abrió)
+        setTimeout(() => {
+            document.addEventListener('click', onDocumentClickCloseFlyout);
+        }, 0);
+    }
+
+    function closeFlyout() {
+        if (activeFlyout) {
+            activeFlyout.remove();
+            activeFlyout = null;
+        }
+        if (activeFlyoutNavItem) {
+            const link = activeFlyoutNavItem.querySelector('.sidebar-nav-link');
+            if (link) link.classList.remove('flyout-open');
+            activeFlyoutNavItem = null;
+        }
+        document.removeEventListener('click', onDocumentClickCloseFlyout);
+    }
+
+    function onDocumentClickCloseFlyout(e) {
+        if (activeFlyout && !activeFlyout.contains(e.target)) {
+            closeFlyout();
+        }
+    }
+
+    // ===== TOOLTIPS FLOTANTES (sidebar colapsado, JS/position:fixed) =====
+    function setupTooltips() {
+        document.querySelectorAll('.sidebar-nav-link').forEach(link => {
+            link.addEventListener('mouseenter', onNavLinkEnter);
+            link.addEventListener('mouseleave', onNavLinkLeave);
+        });
+
+        // También en category headers
+        document.querySelectorAll('.sidebar-category-header').forEach(header => {
+            header.addEventListener('mouseenter', onCategoryHeaderEnter);
+            header.addEventListener('mouseleave', onNavLinkLeave);
+        });
+    }
+
+    function onNavLinkEnter(e) {
+        if (!isCollapsed || window.innerWidth < CONFIG.MOBILE_BREAKPOINT) return;
+        // No mostrar tooltip si ya hay un flyout abierto para este item
+        const navItem = e.currentTarget.closest('.sidebar-nav-item');
+        if (navItem && navItem === activeFlyoutNavItem) return;
+
+        clearTimeout(tooltipHideTimer);
+        showNavTooltip(e.currentTarget, 'link');
+    }
+
+    function onCategoryHeaderEnter(e) {
+        if (!isCollapsed || window.innerWidth < CONFIG.MOBILE_BREAKPOINT) return;
+        clearTimeout(tooltipHideTimer);
+        showNavTooltip(e.currentTarget, 'category');
+    }
+
+    function onNavLinkLeave() {
+        clearTimeout(tooltipHideTimer);
+        tooltipHideTimer = setTimeout(hideNavTooltip, 80);
+    }
+
+    function showNavTooltip(el, type) {
+        hideNavTooltip();
+
+        let text = '';
+        if (type === 'link') {
+            var elNavText = el.querySelector('.sidebar-nav-text');
+            text = elNavText ? elNavText.textContent.trim() : '';
+        } else if (type === 'category') {
+            var elCatTitle = el.querySelector('.sidebar-category-title');
+            text = elCatTitle ? elCatTitle.textContent.trim() : '';
+        }
+
+        if (!text) return;
+
+        const rect = el.getBoundingClientRect();
+        const sidebarRect = sidebar.getBoundingClientRect();
+
+        const tooltip = document.createElement('div');
+        tooltip.className = 'sidebar-tooltip-float';
+        tooltip.textContent = text;
+        document.body.appendChild(tooltip);
+
+        // Centrar verticalmente respecto al elemento
+        const tooltipH = tooltip.offsetHeight;
+        const top = rect.top + rect.height / 2 - tooltipH / 2;
+        tooltip.style.top = Math.max(8, top) + 'px';
+        tooltip.style.left = (sidebarRect.right + 10) + 'px';
+
+        activeTooltip = tooltip;
+    }
+
+    function hideNavTooltip() {
+        if (activeTooltip) {
+            activeTooltip.remove();
+            activeTooltip = null;
         }
     }
 
@@ -214,7 +349,6 @@
         sidebarSearchInput.addEventListener('input', function(e) {
             const query = e.target.value.toLowerCase().trim();
 
-            // Debounce
             clearTimeout(searchDebounceTimer);
             searchDebounceTimer = setTimeout(() => {
                 performSearch(query);
@@ -228,7 +362,6 @@
         const allCategories = document.querySelectorAll('.sidebar-category');
 
         if (query === '') {
-            // Mostrar todo
             allNavItems.forEach(item => item.style.display = '');
             allSubmenuItems.forEach(item => item.style.display = '');
             allCategories.forEach(cat => cat.style.display = '');
@@ -237,7 +370,6 @@
 
         let hasResults = false;
 
-        // Buscar en categorías
         allCategories.forEach(category => {
             const categoryTitle = category.querySelector('.sidebar-category-title');
             const categoryText = categoryTitle ? categoryTitle.textContent.toLowerCase() : '';
@@ -245,7 +377,6 @@
 
             let categoryHasMatch = false;
 
-            // Buscar en items de esta categoría
             navItems.forEach(item => {
                 const link = item.querySelector('.sidebar-nav-link');
                 const text = link ? link.textContent.toLowerCase() : '';
@@ -254,7 +385,6 @@
                 let itemMatches = text.includes(query);
                 let submenuMatches = false;
 
-                // Buscar en submenú
                 submenuLinks.forEach(subLink => {
                     const subText = subLink.textContent.toLowerCase();
                     if (subText.includes(query)) {
@@ -271,7 +401,6 @@
                     categoryHasMatch = true;
                     hasResults = true;
 
-                    // Si hay match, expandir submenú si existe
                     if (submenuMatches) {
                         const submenu = item.querySelector('.sidebar-submenu');
                         if (submenu) {
@@ -284,20 +413,8 @@
                 }
             });
 
-            // Mostrar/ocultar categoría
             category.style.display = categoryHasMatch ? '' : 'none';
         });
-
-        // Si no hay resultados, mostrar mensaje (opcional)
-        if (!hasResults) {
-            console.log('No se encontraron resultados para:', query);
-        }
-    }
-
-    // ===== TOOLTIPS =====
-    function setupTooltips() {
-        // Los tooltips se muestran automáticamente con CSS
-        // Aquí podríamos agregar lógica adicional si es necesario
     }
 
     // ===== MARCAR ITEM ACTIVO =====
@@ -310,15 +427,16 @@
             if (href && currentPath.includes(href) && href !== '#') {
                 link.classList.add('active');
 
-                // Si es un submenú, expandir el padre
                 if (link.classList.contains('sidebar-submenu-link')) {
                     const parentItem = link.closest('.sidebar-nav-item');
-                    const parentLink = parentItem.querySelector('.sidebar-nav-link');
-                    const parentSubmenu = parentItem.querySelector('.sidebar-submenu');
+                    if (parentItem) {
+                        const parentLink = parentItem.querySelector('.sidebar-nav-link');
+                        const parentSubmenu = parentItem.querySelector('.sidebar-submenu');
 
-                    if (parentLink && parentSubmenu) {
-                        parentLink.classList.add('expanded');
-                        parentSubmenu.classList.add('expanded');
+                        if (parentLink && parentSubmenu) {
+                            parentLink.classList.add('expanded');
+                            parentSubmenu.classList.add('expanded');
+                        }
                     }
                 }
             }
@@ -327,7 +445,7 @@
 
     // ===== RESPONSIVE =====
     function setupResponsive() {
-        handleResize(); // Ejecutar al inicio
+        handleResize();
     }
 
     let resizeTimer = null;
@@ -336,17 +454,18 @@
         resizeTimer = setTimeout(() => {
             const width = window.innerWidth;
 
-            // Desktop
+            // Cerrar flyout y tooltip al cambiar tamaño
+            closeFlyout();
+            hideNavTooltip();
+
             if (width >= CONFIG.MOBILE_BREAKPOINT) {
                 closeMobileSidebar();
                 sidebar.classList.remove('mobile-open');
 
-                // Restaurar estado colapsado si estaba guardado
                 if (isCollapsed) {
                     sidebar.classList.add('collapsed');
                 }
             } else {
-                // Móvil/Tablet: quitar estado colapsado
                 sidebar.classList.remove('collapsed');
             }
         }, 50);
@@ -370,7 +489,6 @@
             if (savedState) {
                 const state = JSON.parse(savedState);
 
-                // Solo aplicar en desktop
                 if (window.innerWidth >= CONFIG.MOBILE_BREAKPOINT) {
                     isCollapsed = state.collapsed || false;
                     if (isCollapsed) {
@@ -386,20 +504,13 @@
     // ===== API PÚBLICA =====
     window.ModernSidebar = {
         toggle: toggleSidebar,
-        collapse: function() {
-            if (!isCollapsed) toggleSidebar();
-        },
-        expand: function() {
-            if (isCollapsed) toggleSidebar();
-        },
-        isCollapsed: function() {
-            return isCollapsed;
-        },
+        collapse: function() { if (!isCollapsed) toggleSidebar(); },
+        expand: function() { if (isCollapsed) toggleSidebar(); },
+        isCollapsed: function() { return isCollapsed; },
         search: performSearch,
         refresh: markActiveMenuItem
     };
 
-    // ===== INICIAR =====
     init();
 
 })();
