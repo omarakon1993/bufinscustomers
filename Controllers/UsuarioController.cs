@@ -8,10 +8,12 @@ using System.Web;
 using System.Web.Mvc;
 using bufinscustomers.Services;
 using bufinscustomers.Helpers;
+using bufinscustomers.Permisos;
 using System.IO;
 
 namespace bufinscustomers.Controllers
 {
+    [ValidarSesion]
     public class UsuarioController : BaseController
     {
         private EmpresaService _empresaService = new EmpresaService();
@@ -375,6 +377,30 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         public ActionResult CambiarClave(int idUsuario, string nuevaClave, string confirmarNuevaClave)
         {
+            // Verificar permisos
+            if (!UsuarioSesionHelper.EsSuperAdmin() && !UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR"))
+            {
+                SetErrorMessage("No tienes permisos para cambiar la clave de usuarios.");
+                return RedirectToAction("Usuarios");
+            }
+
+            // Si no es SuperAdmin, solo puede cambiar claves de usuarios de su empresa
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+            {
+                var usuarioService = new UsuarioService();
+                var usuarioDestino = usuarioService.ObtenerUsuarioPorId(idUsuario);
+                if (usuarioDestino == null || usuarioDestino.IdEmpresa != UsuarioSesionHelper.UsuarioActual.IdEmpresa)
+                {
+                    SetErrorMessage("No tienes permisos para cambiar la clave de usuarios de otras empresas.");
+                    return RedirectToAction("Usuarios");
+                }
+                if (usuarioDestino.Admin == 2)
+                {
+                    SetErrorMessage("No puedes cambiar la clave de un Super Administrador.");
+                    return RedirectToAction("Usuarios");
+                }
+            }
+
             // Validar que las claves coincidan
             if (nuevaClave.Trim() != confirmarNuevaClave.Trim())
             {

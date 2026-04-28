@@ -2,6 +2,7 @@ using System.Web.Mvc;
 using bufinscustomers.Models;
 using bufinscustomers.Services;
 using bufinscustomers.Helpers;
+using bufinscustomers.Permisos;
 using System.Collections.Generic;
 using System.Linq;
 using OfficeOpenXml;
@@ -12,6 +13,7 @@ using System.Drawing;
 
 namespace bufinscustomers.Controllers
 {
+    [ValidarSesion]
     public class AuditoriaCarguesController : BaseController
     {
         private AuditoriaCarguesService _auditoriaCarguesService = new AuditoriaCarguesService();

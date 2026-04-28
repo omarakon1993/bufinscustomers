@@ -4,12 +4,14 @@ using System.Data.SqlClient;
 using System.Web.Mvc;
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
+using bufinscustomers.Permisos;
 using bufinscustomers.Services;
 using System.Text.RegularExpressions;
 using System.Configuration;
 
 namespace bufinscustomers.Controllers
 {
+    [ValidarSesion]
     public class ReportesController : BaseController
     {
         private ReportesService _reportesService = new ReportesService();

@@ -2,10 +2,12 @@ using System.Linq;
 using System.Web.Mvc;
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
+using bufinscustomers.Permisos;
 using bufinscustomers.Services;
 
 namespace bufinscustomers.Controllers
 {
+    [ValidarSesion]
     public class EmpresaController : BaseController
     {
         private EmpresaService _empresaService = new EmpresaService();
