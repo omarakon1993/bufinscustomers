@@ -13,8 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
-    <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
-    <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script> <!-- estos scripts funcionan-->
+
 
 </head>
 <body>
@@ -379,17 +378,17 @@
                         <!-- Pestañas de navegación -->
                         <ul class="nav nav-tabs" id="editUserTabs" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="edit-auth-tab" data-bs-toggle="tab" data-target="#edit-auth" type="button" role="tab" aria-controls="edit-auth" aria-selected="true">
+                                <button class="nav-link active" id="edit-auth-tab" data-toggle="tab" data-target="#edit-auth" type="button" role="tab" aria-controls="edit-auth" aria-selected="true">
                                     Autenticación
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="edit-user-data-tab" data-bs-toggle="tab" data-target="#edit-user-data" type="button" role="tab" aria-controls="edit-user-data" aria-selected="false">
+                                <button class="nav-link" id="edit-user-data-tab" data-toggle="tab" data-target="#edit-user-data" type="button" role="tab" aria-controls="edit-user-data" aria-selected="false">
                                     Datos del Usuario
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="edit-user-image-tab" data-bs-toggle="tab" data-target="#edit-user-image" type="button" role="tab" aria-controls="edit-user-image" aria-selected="false">
+                                <button class="nav-link" id="edit-user-image-tab" data-toggle="tab" data-target="#edit-user-image" type="button" role="tab" aria-controls="edit-user-image" aria-selected="false">
                                     Imagen
                                 </button>
                             </li>
@@ -522,17 +521,17 @@
                         <!-- Pestañas de navegación -->
                         <ul class="nav nav-tabs" id="crearUsuarioTabs" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="auth-tab" data-bs-toggle="tab" data-target="#auth" type="button" role="tab" aria-controls="auth" aria-selected="true">
+                                <button class="nav-link active" id="auth-tab" data-toggle="tab" data-target="#auth" type="button" role="tab" aria-controls="auth" aria-selected="true">
                                     Autenticación
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="user-data-tab" data-bs-toggle="tab" data-target="#user-data" type="button" role="tab" aria-controls="user-data" aria-selected="false">
+                                <button class="nav-link" id="user-data-tab" data-toggle="tab" data-target="#user-data" type="button" role="tab" aria-controls="user-data" aria-selected="false">
                                     Datos del Usuario
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="user-image-tab" data-bs-toggle="tab" data-target="#user-image" type="button" role="tab" aria-controls="user-image" aria-selected="false">
+                                <button class="nav-link" id="user-image-tab" data-toggle="tab" data-target="#user-image" type="button" role="tab" aria-controls="user-image" aria-selected="false">
                                     Imagen
                                 </button>
                             </li>
@@ -779,8 +778,6 @@
 
 
     @section scripts {
-        <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
-        <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script>
         <script>
 
             function setIdUsuario(id) {
@@ -830,8 +827,7 @@
                 document.getElementById("cambioClaveIdUsuario").value = idUsuario;
                 document.getElementById("cambiarClaveModalLabel").textContent = `Cambiar clave para: ${usuario}`;
 
-                var modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('editUserModal'));
-                modal.hide();
+                $('#editUserModal').modal('hide');
             }
 
             function validarFormularioConAlerta(formId, buttonId) {
@@ -845,8 +841,7 @@
                                 var tabId = tabPane.id;
                                 var tabTrigger = document.querySelector('[data-target="#' + tabId + '"]');
                                 if (tabTrigger) {
-                                    var tab = new bootstrap.Tab(tabTrigger);
-                                    tab.show();
+                                    $(tabTrigger).tab('show');
                                 }
                             }
                             firstInvalid.focus();
@@ -1068,8 +1063,7 @@
             function showImageModal(imageSrc, userName) {
                 document.getElementById('modalImageView').src = imageSrc;
                 document.getElementById('imageViewModalLabel').innerHTML = '<i class="fas fa-image"></i> Imagen de ' + userName;
-                var modal = new bootstrap.Modal(document.getElementById('imageViewModal'));
-                modal.show();
+                $('#imageViewModal').modal('show');
             }
 
             // Limpiar formularios al cerrar modales

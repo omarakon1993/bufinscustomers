@@ -1,4 +1,4 @@
-@model dynamic
+﻿@model dynamic
 @using bufinscustomers.Models
 
 @{
@@ -438,7 +438,7 @@ $(document).ready(function () {
                 : '<span class="aud-tipo-badge aud-tipo-pregunta"><i class="fas fa-question-circle"></i> Pregunta</span>';
 
             var preguntaHtml = esResumen
-                ? '<em style="color:#9ca3af;font-size:.8rem;">Resumen automático</em>'
+                ? '<em style="color:#9ca3af;font-size:.8rem;">Resumen autom\u00e1tico</em>'
                 : '<span class="aud-pregunta-cell" title="' + $('<div>').text(r.Pregunta).html() + '">'
                     + $('<div>').text(r.Pregunta).html()
                   + '</span>';
@@ -508,7 +508,7 @@ $(document).ready(function () {
         } else {
             html += '<div class="ia-pregunta-block" style="background:#f8f9fc;border-left-color:#9ca3af;">'
                   + '<div class="ia-pregunta-label" style="color:#6b7280;"><i class="fas fa-magic mr-1"></i>Tipo</div>'
-                  + '<div style="color:#2d3748;font-weight:600;">Resumen Gerencial Automático</div>'
+                  + '<div style="color:#2d3748;font-weight:600;">Resumen Gerencial Autom\u00e1tico</div>'
                   + '</div>';
         }
 
