@@ -216,26 +216,26 @@
     }
 
     /* ---------- KPI ---------- */
-    .dash-kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; }
+    .dash-kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:9px; }
     .dash-kpi-card {
         position:relative; overflow:hidden;
         background:#fff;
         border:1px solid rgba(88,58,255,.12);
-        border-radius:12px; padding:18px 16px;
-        display:flex; align-items:center; gap:14px;
+        border-radius:9px; padding:11px 11px;
+        display:flex; align-items:center; gap:9px;
         box-shadow:0 2px 8px rgba(22,9,51,.05);
         transition:transform .15s ease,box-shadow .15s ease;
     }
     .dash-kpi-card:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(22,9,51,.1); }
     .dash-kpi-empty { opacity:.55; }
-    .dash-kpi-icon { width:46px; height:46px; border-radius:11px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.1rem; flex-shrink:0; }
+    .dash-kpi-icon { width:35px; height:35px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:.85rem; flex-shrink:0; }
     .dash-kpi-body { min-width:0; flex:1; }
-    .dash-kpi-value { font-size:1.45rem; font-weight:700; color:#160933; line-height:1.1; display:flex; align-items:baseline; gap:.3rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .dash-kpi-unit  { font-size:.7rem; font-weight:600; color:#583AFF; }
-    .dash-kpi-label { font-size:.72rem; font-weight:600; color:#6B6787; text-transform:uppercase; letter-spacing:.5px; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .dash-kpi-etiqueta { font-size:.72rem; color:#A0A0B8; margin-top:2px; }
-    .dash-kpi-empresa  { font-size:.7rem; color:#A0A0B8; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .dash-kpi-empresa i { font-size:.6rem; }
+    .dash-kpi-value { font-size:1.1rem; font-weight:700; color:#160933; line-height:1.1; display:flex; align-items:baseline; gap:.3rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dash-kpi-unit  { font-size:.58rem; font-weight:600; color:#583AFF; }
+    .dash-kpi-label { font-size:.60rem; font-weight:600; color:#6B6787; text-transform:uppercase; letter-spacing:.5px; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dash-kpi-etiqueta { font-size:.60rem; color:#A0A0B8; margin-top:2px; }
+    .dash-kpi-empresa  { font-size:.58rem; color:#A0A0B8; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dash-kpi-empresa i { font-size:.50rem; }
 
     /* KPI - tema oscuro corporativo */
     .dash-kpi-card.dash-kpi-dark {
@@ -258,18 +258,18 @@
     /* ---------- Gráficos ---------- */
     .dash-graf-grid {
         display:grid;
-        grid-template-columns:repeat(auto-fill, minmax(460px, 1fr));
-        gap:16px;
+        grid-template-columns:repeat(auto-fill, minmax(360px, 1fr));
+        gap:10px;
     }
     .dash-graf-card {
         position:relative;
         background:#fff;
         border:1px solid rgba(88,58,255,.14);
-        border-radius:14px;
-        padding:18px 18px 14px;
+        border-radius:10px;
+        padding:11px 11px 9px;
         box-shadow:0 2px 10px rgba(22,9,51,.06);
         display:flex; flex-direction:column;
-        min-height:320px;
+        min-height:250px;
         transition:transform .15s ease, box-shadow .15s ease;
         overflow:hidden;
     }
@@ -291,21 +291,21 @@
         opacity:1;
     }
 
-    .dash-graf-header { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+    .dash-graf-header { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
     .dash-graf-icon {
-        width:42px; height:42px; border-radius:10px;
+        width:32px; height:32px; border-radius:7px;
         display:flex; align-items:center; justify-content:center;
-        color:#fff; font-size:1rem; flex-shrink:0;
+        color:#fff; font-size:.78rem; flex-shrink:0;
         box-shadow:0 4px 10px rgba(88,58,255,.25);
     }
     .dash-graf-titles { min-width:0; }
     .dash-graf-title  {
-        font-size:.95rem; font-weight:700; color:#160933;
+        font-size:.78rem; font-weight:700; color:#160933;
         line-height:1.2;
         white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
     .dash-graf-sub {
-        font-size:.68rem; color:#A0A0B8;
+        font-size:.56rem; color:#A0A0B8;
         text-transform:uppercase; letter-spacing:.6px;
         margin-top:2px; font-weight:600;
     }
@@ -314,10 +314,10 @@
 
     .dash-graf-canvas-wrap {
         position:relative; flex:1;
-        min-height:230px;
+        min-height:180px;
         display:flex; align-items:center; justify-content:center;
     }
-    .dash-graf-canvas-wrap canvas { width:100% !important; height:100% !important; max-height:260px; }
+    .dash-graf-canvas-wrap canvas { width:100% !important; height:100% !important; max-height:210px; }
 
     .dash-graf-empty .dash-graf-canvas-wrap { opacity:.6; }
     .dash-graf-empty-msg {
