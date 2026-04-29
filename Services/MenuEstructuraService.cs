@@ -92,7 +92,11 @@ namespace bufinscustomers.Services
             using (var cn = new SqlConnection(CadenaConexion))
             {
                 var cmd = new SqlCommand(
-                    "SELECT Id, Nombre, Icono, NombreCategoria, Orden FROM GruposMenu ORDER BY NombreCategoria, Orden, Nombre", cn);
+                    @"SELECT g.Id, g.Nombre, g.Icono, g.IdCategoria, g.Orden,
+                             c.Nombre AS NombreCategoria
+                      FROM GruposMenu g
+                      JOIN CategoriasMenu c ON g.IdCategoria = c.Id
+                      ORDER BY c.Orden, g.Orden, g.Nombre", cn);
                 cn.Open();
                 using (var r = cmd.ExecuteReader())
                     while (r.Read())
@@ -101,6 +105,7 @@ namespace bufinscustomers.Services
                             Id              = Convert.ToInt32(r["Id"]),
                             Nombre          = r["Nombre"]?.ToString(),
                             Icono           = r["Icono"] == DBNull.Value ? null : r["Icono"].ToString(),
+                            IdCategoria     = Convert.ToInt32(r["IdCategoria"]),
                             NombreCategoria = r["NombreCategoria"]?.ToString(),
                             Orden           = Convert.ToInt32(r["Orden"])
                         });
@@ -115,11 +120,11 @@ namespace bufinscustomers.Services
                 using (var cn = new SqlConnection(CadenaConexion))
                 {
                     var cmd = new SqlCommand(
-                        "INSERT INTO GruposMenu (Nombre, Icono, NombreCategoria, Orden) VALUES (@Nombre, @Icono, @NombreCategoria, @Orden)", cn);
-                    cmd.Parameters.AddWithValue("@Nombre",          g.Nombre ?? "");
-                    cmd.Parameters.AddWithValue("@Icono",           (object)g.Icono ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@NombreCategoria", g.NombreCategoria ?? "");
-                    cmd.Parameters.AddWithValue("@Orden",           g.Orden);
+                        "INSERT INTO GruposMenu (Nombre, Icono, IdCategoria, Orden) VALUES (@Nombre, @Icono, @IdCategoria, @Orden)", cn);
+                    cmd.Parameters.AddWithValue("@Nombre",      g.Nombre ?? "");
+                    cmd.Parameters.AddWithValue("@Icono",       (object)g.Icono ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@IdCategoria", g.IdCategoria);
+                    cmd.Parameters.AddWithValue("@Orden",       g.Orden);
                     cn.Open();
                     cmd.ExecuteNonQuery();
                 }
@@ -134,30 +139,15 @@ namespace bufinscustomers.Services
             {
                 using (var cn = new SqlConnection(CadenaConexion))
                 {
-                    cn.Open();
-
-                    // Obtener nombre anterior para sincronizar MenuOpciones
-                    var cmdOld = new SqlCommand("SELECT Nombre FROM GruposMenu WHERE Id=@Id", cn);
-                    cmdOld.Parameters.AddWithValue("@Id", g.Id);
-                    var nombreAnterior = cmdOld.ExecuteScalar()?.ToString() ?? g.Nombre;
-
-                    // Actualizar GruposMenu
                     var cmd = new SqlCommand(
-                        "UPDATE GruposMenu SET Nombre=@Nombre, Icono=@Icono, NombreCategoria=@NombreCategoria, Orden=@Orden WHERE Id=@Id", cn);
-                    cmd.Parameters.AddWithValue("@Id",              g.Id);
-                    cmd.Parameters.AddWithValue("@Nombre",          g.Nombre ?? "");
-                    cmd.Parameters.AddWithValue("@Icono",           (object)g.Icono ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@NombreCategoria", g.NombreCategoria ?? "");
-                    cmd.Parameters.AddWithValue("@Orden",           g.Orden);
+                        "UPDATE GruposMenu SET Nombre=@Nombre, Icono=@Icono, IdCategoria=@IdCategoria, Orden=@Orden WHERE Id=@Id", cn);
+                    cmd.Parameters.AddWithValue("@Id",          g.Id);
+                    cmd.Parameters.AddWithValue("@Nombre",      g.Nombre ?? "");
+                    cmd.Parameters.AddWithValue("@Icono",       (object)g.Icono ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@IdCategoria", g.IdCategoria);
+                    cmd.Parameters.AddWithValue("@Orden",       g.Orden);
+                    cn.Open();
                     cmd.ExecuteNonQuery();
-
-                    // Sincronizar icono (y nombre si cambió) en MenuOpciones
-                    var cmdSync = new SqlCommand(
-                        "UPDATE MenuOpciones SET NombreGrupo=@NuevoNombre, IconoGrupo=@Icono WHERE NombreGrupo=@NombreAnterior", cn);
-                    cmdSync.Parameters.AddWithValue("@NuevoNombre",    g.Nombre ?? "");
-                    cmdSync.Parameters.AddWithValue("@Icono",          (object)g.Icono ?? DBNull.Value);
-                    cmdSync.Parameters.AddWithValue("@NombreAnterior", nombreAnterior);
-                    cmdSync.ExecuteNonQuery();
                 }
                 return true;
             }

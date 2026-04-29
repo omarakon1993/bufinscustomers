@@ -11,6 +11,7 @@ namespace bufinscustomers.Controllers
     public class MenuOpcionesController : BaseController
     {
         private readonly MenuOpcionesService _menuOpcionesService = new MenuOpcionesService();
+        private readonly MenuEstructuraService _menuEstructuraService = new MenuEstructuraService();
 
         public ActionResult Index()
         {
@@ -20,6 +21,8 @@ namespace bufinscustomers.Controllers
             }
 
             var opciones = _menuOpcionesService.ObtenerTodas();
+            ViewBag.Grupos = _menuEstructuraService.ObtenerGrupos();
+            ViewBag.Categorias = _menuEstructuraService.ObtenerCategorias();
             return View("~/Views/Configuracion/MenuOpciones.cshtml", opciones);
         }
 

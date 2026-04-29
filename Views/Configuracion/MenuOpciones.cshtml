@@ -19,34 +19,16 @@
     var jss = new JavaScriptSerializer();
 
     var opcionesJson = jss.Serialize(Model.Select(o => new {
-        o.Id, o.Codigo, o.Nombre, o.Descripcion, o.Categoria, o.Icono, o.Orden,
-        o.Controller, o.Action, o.NombreGrupo, o.IconoGrupo, o.IconoCategoria,
-        o.OrdenCategoria, o.SoloSuperAdmin, o.SoloAdminEmpresa
+        o.Id, o.Codigo, o.Nombre, o.Descripcion, o.Icono, o.Orden,
+        o.Controller, o.Action, o.IdGrupo, o.NombreGrupo, o.Categoria,
+        o.SoloSuperAdmin, o.SoloAdminEmpresa
     }));
 
-    var gruposExistentes = Model
-        .Where(m => !string.IsNullOrEmpty(m.NombreGrupo))
-        .GroupBy(m => new { m.NombreGrupo, m.IconoGrupo, m.Categoria, m.IconoCategoria, m.OrdenCategoria })
-        .Select(g => g.Key)
-        .OrderBy(g => g.OrdenCategoria).ThenBy(g => g.NombreGrupo)
-        .ToList();
+    var grupos     = ViewBag.Grupos     as List<bufinscustomers.Models.GrupoMenu>     ?? new List<bufinscustomers.Models.GrupoMenu>();
+    var categorias = ViewBag.Categorias as List<bufinscustomers.Models.CategoriaMenu> ?? new List<bufinscustomers.Models.CategoriaMenu>();
 
-    var gruposJson = jss.Serialize(gruposExistentes.Select(g => new {
-        Categoria      = g.Categoria,
-        NombreGrupo    = g.NombreGrupo,
-        IconoGrupo     = g.IconoGrupo,
-        IconoCategoria = g.IconoCategoria,
-        OrdenCategoria = g.OrdenCategoria
-    }));
-
-    var categoriasDistintas = Model
-        .Select(m => m.Categoria)
-        .Where(c => !string.IsNullOrEmpty(c))
-        .Distinct()
-        .OrderBy(c => c)
-        .ToList();
-
-    var categoriasJson = jss.Serialize(categoriasDistintas);
+    var gruposJson     = jss.Serialize(grupos.Select(g     => new { g.Id, g.Nombre, g.Icono, g.IdCategoria, g.NombreCategoria }));
+    var categoriasJson = jss.Serialize(categorias.Select(c => new { c.Id, c.Nombre }));
 }
 
 @if (!string.IsNullOrEmpty(successMsg))
@@ -191,11 +173,6 @@
                     </div>
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label><i class="fas fa-layer-group mr-1" style="color:#583AFF"></i>Categoria <span class="text-danger">*</span></label>
-                            <select class="form-control form-control-sm" id="crearCategoria" name="Categoria" required onchange="filtrarGrupos('crear')">
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
                             <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>Icono</label>
                             <input type="text" class="form-control form-control-sm" name="Icono" placeholder="fas fa-icon" />
                         </div>
@@ -215,16 +192,21 @@
                         </div>
                     </div>
                     <hr />
-                    <p class="text-muted mb-2"><small><i class="fas fa-columns mr-1"></i>Configuracion del sidebar</small></p>
-                    <div class="mb-3">
-                        <label>Grupo del sidebar</label>
-                        <select class="form-control form-control-sm" id="crearGrupoSelect" onchange="seleccionarGrupo(this, 'crear')">
-                            <option value="">-- Seleccionar grupo existente --</option>
-                        </select>
-                        <input type="hidden" id="crearNombreGrupo"    name="NombreGrupo" />
-                        <input type="hidden" id="crearIconoGrupo"     name="IconoGrupo" />
-                        <input type="hidden" id="crearIconoCategoria" name="IconoCategoria" />
-                        <input type="hidden" id="crearOrdenCategoria" name="OrdenCategoria" value="0" />
+                    <p class="text-muted mb-2"><small><i class="fas fa-columns mr-1"></i>Ubicacion en el sidebar</small></p>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>Categoria</label>
+                            <select class="form-control form-control-sm" id="crearCategoria" onchange="filtrarGrupos('crear')">
+                                <option value="">-- Seleccionar categoria --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label><i class="fas fa-layer-group mr-1" style="color:#583AFF"></i>Grupo <span class="text-danger">*</span></label>
+                            <select class="form-control form-control-sm" id="crearGrupoSelect" onchange="seleccionarGrupo(this, 'crear')" required>
+                                <option value="">-- Seleccionar grupo --</option>
+                            </select>
+                            <input type="hidden" id="crearIdGrupo" name="IdGrupo" value="0" />
+                        </div>
                     </div>
                     <div class="form-check mb-2">
                         <input class="form-check-input" type="checkbox" name="SoloSuperAdmin" value="true" id="crearSoloSuperAdmin" />
@@ -281,11 +263,6 @@
                     </div>
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label><i class="fas fa-layer-group mr-1" style="color:#583AFF"></i>Categoria <span class="text-danger">*</span></label>
-                            <select class="form-control form-control-sm" id="editCategoria" name="Categoria" required onchange="filtrarGrupos('edit')">
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
                             <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>Icono</label>
                             <input type="text" class="form-control form-control-sm" id="editIcono" name="Icono" />
                         </div>
@@ -305,16 +282,21 @@
                         </div>
                     </div>
                     <hr />
-                    <p class="text-muted mb-2"><small><i class="fas fa-columns mr-1"></i>Configuracion del sidebar</small></p>
-                    <div class="mb-3">
-                        <label>Grupo del sidebar</label>
-                        <select class="form-control form-control-sm" id="editGrupoSelect" onchange="seleccionarGrupo(this, 'edit')">
-                            <option value="">-- Seleccionar grupo existente --</option>
-                        </select>
-                        <input type="hidden" id="editNombreGrupo"    name="NombreGrupo" />
-                        <input type="hidden" id="editIconoGrupo"     name="IconoGrupo" />
-                        <input type="hidden" id="editIconoCategoria" name="IconoCategoria" />
-                        <input type="hidden" id="editOrdenCategoria" name="OrdenCategoria" value="0" />
+                    <p class="text-muted mb-2"><small><i class="fas fa-columns mr-1"></i>Ubicacion en el sidebar</small></p>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>Categoria</label>
+                            <select class="form-control form-control-sm" id="editCategoria" onchange="filtrarGrupos('edit')">
+                                <option value="">-- Seleccionar categoria --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label><i class="fas fa-layer-group mr-1" style="color:#583AFF"></i>Grupo <span class="text-danger">*</span></label>
+                            <select class="form-control form-control-sm" id="editGrupoSelect" onchange="seleccionarGrupo(this, 'edit')" required>
+                                <option value="">-- Seleccionar grupo --</option>
+                            </select>
+                            <input type="hidden" id="editIdGrupo" name="IdGrupo" value="0" />
+                        </div>
                     </div>
                     <div class="form-check mb-2">
                         <input class="form-check-input" type="checkbox" name="SoloSuperAdmin" value="true" id="editSoloSuperAdmin" />
@@ -350,66 +332,40 @@
 </form>
 
 <script>
-    var _opciones  = @Html.Raw(opcionesJson);
-    var _grupos    = @Html.Raw(gruposJson);
+    var _opciones   = @Html.Raw(opcionesJson);
+    var _grupos     = @Html.Raw(gruposJson);
     var _categorias = @Html.Raw(categoriasJson);
 
-    function poblarCategorias(selectId, valorSeleccionado) {
+    function poblarCategorias(selectId, idCategoriaSeleccionada) {
         var sel = document.getElementById(selectId);
-        sel.innerHTML = '';
+        sel.innerHTML = '<option value="">-- Seleccionar categoria --</option>';
         _categorias.forEach(function (c) {
             var opt = document.createElement('option');
-            opt.value = c;
-            opt.textContent = c;
-            if (c === valorSeleccionado) { opt.selected = true; }
+            opt.value = c.Id;
+            opt.textContent = c.Nombre;
+            if (c.Id === idCategoriaSeleccionada) { opt.selected = true; }
             sel.appendChild(opt);
         });
-        // Si la categoria no estaba en la lista, agregarla
-        if (valorSeleccionado && _categorias.indexOf(valorSeleccionado) === -1) {
-            var opt = document.createElement('option');
-            opt.value = valorSeleccionado;
-            opt.textContent = valorSeleccionado;
-            opt.selected = true;
-            sel.appendChild(opt);
-        }
     }
 
     function filtrarGrupos(prefijo) {
-        var catVal    = document.getElementById(prefijo + 'Categoria').value;
-        var grupoSel  = document.getElementById(prefijo + 'GrupoSelect');
-        grupoSel.innerHTML = '<option value="">-- Seleccionar grupo existente --</option>';
-        var vistos = {};
+        var catId    = parseInt(document.getElementById(prefijo + 'Categoria').value) || 0;
+        var grupoSel = document.getElementById(prefijo + 'GrupoSelect');
+        grupoSel.innerHTML = '<option value="">-- Seleccionar grupo --</option>';
         _grupos.forEach(function (g) {
-            if (g.Categoria === catVal && !vistos[g.NombreGrupo]) {
-                vistos[g.NombreGrupo] = true;
+            if (g.IdCategoria === catId) {
                 var opt = document.createElement('option');
-                opt.value = g.NombreGrupo;
-                opt.textContent = g.NombreGrupo;
-                opt.setAttribute('data-icono-grupo',     g.IconoGrupo     || '');
-                opt.setAttribute('data-icono-categoria', g.IconoCategoria || '');
-                opt.setAttribute('data-orden-categoria', g.OrdenCategoria || 0);
+                opt.value       = g.Id;
+                opt.textContent = g.Nombre;
                 grupoSel.appendChild(opt);
             }
         });
-        document.getElementById(prefijo + 'NombreGrupo').value    = '';
-        document.getElementById(prefijo + 'IconoGrupo').value     = '';
-        document.getElementById(prefijo + 'IconoCategoria').value = '';
-        document.getElementById(prefijo + 'OrdenCategoria').value = '0';
+        document.getElementById(prefijo + 'IdGrupo').value = '';
     }
 
     function seleccionarGrupo(selectElem, prefijo) {
-        var opt = selectElem.options[selectElem.selectedIndex];
-        if (opt.value) {
-            document.getElementById(prefijo + 'NombreGrupo').value    = opt.value;
-            document.getElementById(prefijo + 'IconoGrupo').value     = opt.getAttribute('data-icono-grupo')     || '';
-            document.getElementById(prefijo + 'IconoCategoria').value = opt.getAttribute('data-icono-categoria') || '';
-            document.getElementById(prefijo + 'OrdenCategoria').value = opt.getAttribute('data-orden-categoria') || '0';
-        } else {
-            document.getElementById(prefijo + 'NombreGrupo').value    = '';
-            document.getElementById(prefijo + 'IconoGrupo').value     = '';
-            document.getElementById(prefijo + 'IconoCategoria').value = '';
-            document.getElementById(prefijo + 'OrdenCategoria').value = '0';
-        }
+        var val = selectElem.options[selectElem.selectedIndex].value;
+        document.getElementById(prefijo + 'IdGrupo').value = val || '';
     }
 
     function cargarEditar(id) {
@@ -430,26 +386,22 @@
         document.getElementById('editSoloSuperAdmin').checked   = o.SoloSuperAdmin;
         document.getElementById('editSoloAdminEmpresa').checked = o.SoloAdminEmpresa;
 
-        poblarCategorias('editCategoria', o.Categoria || '');
+        // Buscar la categoría del grupo actual para preseleccionarla
+        var idCat = 0;
+        for (var j = 0; j < _grupos.length; j++) {
+            if (_grupos[j].Id === o.IdGrupo) { idCat = _grupos[j].IdCategoria; break; }
+        }
+        poblarCategorias('editCategoria', idCat);
         filtrarGrupos('edit');
 
-        // Pre-seleccionar el grupo en el dropdown
-        var grupoSelect = document.getElementById('editGrupoSelect');
-        var grupoEncontrado = false;
-        for (var j = 0; j < grupoSelect.options.length; j++) {
-            if (grupoSelect.options[j].value === (o.NombreGrupo || '')) {
-                grupoSelect.selectedIndex = j;
-                seleccionarGrupo(grupoSelect, 'edit');
-                grupoEncontrado = true;
+        // Preseleccionar el grupo
+        var grupoSel = document.getElementById('editGrupoSelect');
+        for (var k = 0; k < grupoSel.options.length; k++) {
+            if (parseInt(grupoSel.options[k].value) === o.IdGrupo) {
+                grupoSel.selectedIndex = k;
+                seleccionarGrupo(grupoSel, 'edit');
                 break;
             }
-        }
-        // Si el grupo no esta en el dropdown, rellenar campos ocultos directamente
-        if (!grupoEncontrado) {
-            document.getElementById('editNombreGrupo').value    = o.NombreGrupo    || '';
-            document.getElementById('editIconoGrupo').value     = o.IconoGrupo     || '';
-            document.getElementById('editIconoCategoria').value = o.IconoCategoria || '';
-            document.getElementById('editOrdenCategoria').value = o.OrdenCategoria || 0;
         }
     }
 
@@ -460,13 +412,13 @@
         }
         var nombre = o ? o.Nombre : 'esta opcion';
         Swal.fire({
-            title: '\u00BFEliminar opci\u00F3n?',
-            text: '"' + nombre + '" se eliminar\u00E1 permanentemente.',
+            title: '¿Eliminar opción?',
+            text: '"' + nombre + '" se eliminará permanentemente.',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#e74a3b',
             cancelButtonText: 'Cancelar',
-            confirmButtonText: 'S\u00ED, eliminar'
+            confirmButtonText: 'Sí, eliminar'
         }).then(function (r) {
             if (r.isConfirmed) {
                 document.getElementById('elimId').value = id;
@@ -476,7 +428,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        poblarCategorias('crearCategoria', _categorias.length > 0 ? _categorias[0] : '');
+        poblarCategorias('crearCategoria', _categorias.length > 0 ? _categorias[0].Id : 0);
         filtrarGrupos('crear');
     });
 </script>

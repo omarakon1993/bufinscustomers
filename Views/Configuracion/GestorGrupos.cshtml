@@ -5,6 +5,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
     <title>Gestor de Grupos</title>
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,7 +18,7 @@
     var errorMsg   = TempData["ErrorMessage"]   as string;
     var categorias = ViewBag.Categorias as List<bufinscustomers.Models.CategoriaMenu> ?? new List<bufinscustomers.Models.CategoriaMenu>();
     var jss        = new JavaScriptSerializer();
-    var jsonData   = jss.Serialize(Model.Select(g => new { g.Id, g.Nombre, g.Icono, g.NombreCategoria, g.Orden }));
+    var jsonData   = jss.Serialize(Model.Select(g => new { g.Id, g.Nombre, g.Icono, g.IdCategoria, g.NombreCategoria, g.Orden }));
 }
 
 @if (!string.IsNullOrEmpty(successMsg))
@@ -75,7 +76,7 @@
                                 <div class="btn-group" role="group">
                                     <button type="button" class="btn btn-primary" title="Editar"
                                             data-toggle="modal" data-target="#editModal"
-                                            onclick="setEditar(@g.Id, '@Html.Raw(g.Nombre?.Replace("'","\\'")??"")', '@Html.Raw(g.Icono?.Replace("'","\\'")??"")', '@Html.Raw(g.NombreCategoria?.Replace("'","\\'")??"")', @g.Orden)">
+                                            onclick="setEditar(@g.Id, '@Html.Raw(g.Nombre?.Replace("'","\\'")??"")', '@Html.Raw(g.Icono?.Replace("'","\\'")??"")', @g.IdCategoria, @g.Orden)">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <button type="button" class="btn btn-outline-danger" title="Eliminar"
@@ -117,11 +118,11 @@
                     </div>
                     <div class="mb-3">
                         <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>Categor&iacute;a <span class="text-danger">*</span></label>
-                        <select class="form-control form-control-sm" name="NombreCategoria" required>
-                            <option value="">-- Seleccionar categoría --</option>
+                        <select class="form-control form-control-sm" name="IdCategoria" required>
+                            <option value="">-- Seleccionar categor&iacute;a --</option>
                             @foreach (var cat in categorias)
                             {
-                                <option value="@cat.Nombre">@cat.Nombre</option>
+                                <option value="@cat.Id">@cat.Nombre</option>
                             }
                         </select>
                     </div>
@@ -164,11 +165,11 @@
                     </div>
                     <div class="mb-3">
                         <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>Categor&iacute;a <span class="text-danger">*</span></label>
-                        <select class="form-control form-control-sm" name="NombreCategoria" id="editCategoria" required>
-                            <option value="">-- Seleccionar categoría --</option>
+                        <select class="form-control form-control-sm" name="IdCategoria" id="editIdCategoria" required>
+                            <option value="">-- Seleccionar categor&iacute;a --</option>
                             @foreach (var cat in categorias)
                             {
-                                <option value="@cat.Nombre">@cat.Nombre</option>
+                                <option value="@cat.Id">@cat.Nombre</option>
                             }
                         </select>
                     </div>
@@ -196,14 +197,14 @@
 </form>
 
 <script>
-    function setEditar(id, nombre, icono, categoria, orden) {
-        document.getElementById('editId').value       = id;
-        document.getElementById('editNombre').value   = nombre;
-        document.getElementById('editIcono').value    = icono;
-        document.getElementById('editOrden').value    = orden;
-        var sel = document.getElementById('editCategoria');
+    function setEditar(id, nombre, icono, idCategoria, orden) {
+        document.getElementById('editId').value     = id;
+        document.getElementById('editNombre').value = nombre;
+        document.getElementById('editIcono').value  = icono;
+        document.getElementById('editOrden').value  = orden;
+        var sel = document.getElementById('editIdCategoria');
         for (var i = 0; i < sel.options.length; i++) {
-            if (sel.options[i].value === categoria) { sel.selectedIndex = i; break; }
+            if (parseInt(sel.options[i].value) === idCategoria) { sel.selectedIndex = i; break; }
         }
     }
 

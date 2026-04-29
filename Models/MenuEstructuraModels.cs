@@ -13,7 +13,8 @@ namespace bufinscustomers.Models
         public int Id { get; set; }
         public string Nombre { get; set; }
         public string Icono { get; set; }
-        public string NombreCategoria { get; set; }
+        public int IdCategoria { get; set; }
+        public string NombreCategoria { get; set; } // solo lectura, cargado via JOIN
         public int Orden { get; set; }
     }
 }

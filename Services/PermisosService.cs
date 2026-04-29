@@ -72,20 +72,22 @@ namespace bufinscustomers.Services
         {
             var opcion = new MenuOpciones
             {
-                Id = Convert.ToInt32(reader["Id"]),
-                Codigo = reader["Codigo"].ToString(),
-                Nombre = reader["Nombre"].ToString(),
-                Descripcion = reader["Descripcion"] != DBNull.Value ? reader["Descripcion"].ToString() : null,
-                Categoria = reader["Categoria"].ToString(),
-                Icono = reader["Icono"] != DBNull.Value ? reader["Icono"].ToString() : null,
-                Orden = Convert.ToInt32(reader["Orden"]),
-                Controller = reader["Controller"] != DBNull.Value ? reader["Controller"].ToString() : null,
-                Action = reader["Action"] != DBNull.Value ? reader["Action"].ToString() : null,
-                NombreGrupo = reader["NombreGrupo"] != DBNull.Value ? reader["NombreGrupo"].ToString() : null,
-                IconoGrupo = reader["IconoGrupo"] != DBNull.Value ? reader["IconoGrupo"].ToString() : null,
+                Id             = Convert.ToInt32(reader["Id"]),
+                Codigo         = reader["Codigo"].ToString(),
+                Nombre         = reader["Nombre"].ToString(),
+                Descripcion    = reader["Descripcion"] != DBNull.Value ? reader["Descripcion"].ToString() : null,
+                Icono          = reader["Icono"] != DBNull.Value ? reader["Icono"].ToString() : null,
+                Orden          = Convert.ToInt32(reader["Orden"]),
+                Controller     = reader["Controller"] != DBNull.Value ? reader["Controller"].ToString() : null,
+                Action         = reader["Action"] != DBNull.Value ? reader["Action"].ToString() : null,
+                IdGrupo        = reader["IdGrupo"] != DBNull.Value ? Convert.ToInt32(reader["IdGrupo"]) : 0,
+                SoloSuperAdmin = reader["SoloSuperAdmin"] != DBNull.Value && Convert.ToBoolean(reader["SoloSuperAdmin"]),
+                // Campos derivados via JOIN
+                Categoria      = reader["Categoria"] != DBNull.Value ? reader["Categoria"].ToString() : null,
+                NombreGrupo    = reader["NombreGrupo"] != DBNull.Value ? reader["NombreGrupo"].ToString() : null,
+                IconoGrupo     = reader["IconoGrupo"] != DBNull.Value ? reader["IconoGrupo"].ToString() : null,
                 IconoCategoria = reader["IconoCategoria"] != DBNull.Value ? reader["IconoCategoria"].ToString() : null,
-                OrdenCategoria = reader["OrdenCategoria"] != DBNull.Value ? Convert.ToInt32(reader["OrdenCategoria"]) : 0,
-                SoloSuperAdmin = reader["SoloSuperAdmin"] != DBNull.Value && Convert.ToBoolean(reader["SoloSuperAdmin"])
+                OrdenCategoria = reader["OrdenCategoria"] != DBNull.Value ? Convert.ToInt32(reader["OrdenCategoria"]) : 0
             };
 
             try { opcion.SoloAdminEmpresa = reader["SoloAdminEmpresa"] != DBNull.Value && Convert.ToBoolean(reader["SoloAdminEmpresa"]); }
@@ -218,7 +220,18 @@ namespace bufinscustomers.Services
             using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
                 using (SqlCommand cmd = new SqlCommand(
-                    "SELECT Id, Codigo, Nombre, Descripcion, Categoria, Icono, Orden, Controller, [Action], NombreGrupo, IconoGrupo, IconoCategoria, OrdenCategoria, SoloSuperAdmin, SoloAdminEmpresa FROM MenuOpciones WHERE Activo = 1 ORDER BY OrdenCategoria, Orden", cn))
+                    @"SELECT m.Id, m.Codigo, m.Nombre, m.Descripcion, m.Icono, m.Orden,
+                             m.Controller, m.[Action], m.IdGrupo, m.SoloSuperAdmin, m.SoloAdminEmpresa,
+                             g.Nombre  AS NombreGrupo,
+                             g.Icono   AS IconoGrupo,
+                             c.Nombre  AS Categoria,
+                             c.Icono   AS IconoCategoria,
+                             c.Orden   AS OrdenCategoria
+                      FROM   MenuOpciones m
+                      JOIN   GruposMenu    g ON m.IdGrupo    = g.Id
+                      JOIN   CategoriasMenu c ON g.IdCategoria = c.Id
+                      WHERE  m.Activo = 1
+                      ORDER BY c.Orden, m.Orden", cn))
                 {
                     cn.Open();
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -242,21 +255,19 @@ namespace bufinscustomers.Services
             using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
                 using (SqlCommand cmd = new SqlCommand(
-                    @"INSERT INTO MenuOpciones (Codigo, Nombre, Descripcion, Categoria, Icono, Orden, Controller, [Action], Activo, NombreGrupo, IconoGrupo, IconoCategoria, OrdenCategoria, SoloSuperAdmin, SoloAdminEmpresa)
-                      VALUES (@Codigo, @Nombre, @Descripcion, @Categoria, @Icono, @Orden, @Controller, @Action, 1, @NombreGrupo, @IconoGrupo, @IconoCategoria, @OrdenCategoria, @SoloSuperAdmin, @SoloAdminEmpresa)", cn))
+                    @"INSERT INTO MenuOpciones
+                        (Codigo, Nombre, Descripcion, Icono, Orden, Controller, [Action], Activo, IdGrupo, SoloSuperAdmin, SoloAdminEmpresa)
+                      VALUES
+                        (@Codigo, @Nombre, @Descripcion, @Icono, @Orden, @Controller, @Action, 1, @IdGrupo, @SoloSuperAdmin, @SoloAdminEmpresa)", cn))
                 {
-                    cmd.Parameters.AddWithValue("@Codigo", opcion.Codigo ?? "");
-                    cmd.Parameters.AddWithValue("@Nombre", opcion.Nombre ?? "");
-                    cmd.Parameters.AddWithValue("@Descripcion", (object)opcion.Descripcion ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Categoria", opcion.Categoria ?? "");
-                    cmd.Parameters.AddWithValue("@Icono", (object)opcion.Icono ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Orden", opcion.Orden);
-                    cmd.Parameters.AddWithValue("@Controller", (object)opcion.Controller ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Action", (object)opcion.Action ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@NombreGrupo", (object)opcion.NombreGrupo ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@IconoGrupo", (object)opcion.IconoGrupo ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@IconoCategoria", (object)opcion.IconoCategoria ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@OrdenCategoria", opcion.OrdenCategoria);
+                    cmd.Parameters.AddWithValue("@Codigo",         opcion.Codigo ?? "");
+                    cmd.Parameters.AddWithValue("@Nombre",         opcion.Nombre ?? "");
+                    cmd.Parameters.AddWithValue("@Descripcion",    (object)opcion.Descripcion ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Icono",          (object)opcion.Icono ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Orden",          opcion.Orden);
+                    cmd.Parameters.AddWithValue("@Controller",     (object)opcion.Controller ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Action",         (object)opcion.Action ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@IdGrupo",        opcion.IdGrupo);
                     cmd.Parameters.AddWithValue("@SoloSuperAdmin", opcion.SoloSuperAdmin);
                     cmd.Parameters.AddWithValue("@SoloAdminEmpresa", opcion.SoloAdminEmpresa);
 
@@ -276,26 +287,21 @@ namespace bufinscustomers.Services
                 using (SqlCommand cmd = new SqlCommand(
                     @"UPDATE MenuOpciones SET
                         Codigo = @Codigo, Nombre = @Nombre, Descripcion = @Descripcion,
-                        Categoria = @Categoria, Icono = @Icono, Orden = @Orden,
+                        Icono = @Icono, Orden = @Orden,
                         Controller = @Controller, [Action] = @Action,
-                        NombreGrupo = @NombreGrupo, IconoGrupo = @IconoGrupo,
-                        IconoCategoria = @IconoCategoria, OrdenCategoria = @OrdenCategoria,
+                        IdGrupo = @IdGrupo,
                         SoloSuperAdmin = @SoloSuperAdmin, SoloAdminEmpresa = @SoloAdminEmpresa
                       WHERE Id = @Id", cn))
                 {
-                    cmd.Parameters.AddWithValue("@Id", opcion.Id);
-                    cmd.Parameters.AddWithValue("@Codigo", opcion.Codigo ?? "");
-                    cmd.Parameters.AddWithValue("@Nombre", opcion.Nombre ?? "");
-                    cmd.Parameters.AddWithValue("@Descripcion", (object)opcion.Descripcion ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Categoria", opcion.Categoria ?? "");
-                    cmd.Parameters.AddWithValue("@Icono", (object)opcion.Icono ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Orden", opcion.Orden);
-                    cmd.Parameters.AddWithValue("@Controller", (object)opcion.Controller ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Action", (object)opcion.Action ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@NombreGrupo", (object)opcion.NombreGrupo ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@IconoGrupo", (object)opcion.IconoGrupo ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@IconoCategoria", (object)opcion.IconoCategoria ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@OrdenCategoria", opcion.OrdenCategoria);
+                    cmd.Parameters.AddWithValue("@Id",             opcion.Id);
+                    cmd.Parameters.AddWithValue("@Codigo",         opcion.Codigo ?? "");
+                    cmd.Parameters.AddWithValue("@Nombre",         opcion.Nombre ?? "");
+                    cmd.Parameters.AddWithValue("@Descripcion",    (object)opcion.Descripcion ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Icono",          (object)opcion.Icono ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Orden",          opcion.Orden);
+                    cmd.Parameters.AddWithValue("@Controller",     (object)opcion.Controller ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Action",         (object)opcion.Action ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@IdGrupo",        opcion.IdGrupo);
                     cmd.Parameters.AddWithValue("@SoloSuperAdmin", opcion.SoloSuperAdmin);
                     cmd.Parameters.AddWithValue("@SoloAdminEmpresa", opcion.SoloAdminEmpresa);
 
