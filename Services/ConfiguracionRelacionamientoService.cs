@@ -207,14 +207,17 @@ namespace bufinscustomers.Services
                                 int columnasValidas = columnasExcel.Count;
                                 detalle.TotalColumnas = columnasValidas;
 
-                                // Crear DataTable con las columnas del Excel
+                                // Crear DataTable con las columnas del Excel usando el tipo correcto de SQL
                                 var dt = new DataTable(nombreTabla);
                                 foreach (var colName in columnasExcel)
                                 {
-                                    dt.Columns.Add(colName, typeof(string));
+                                    var matchSQL = columnasSQL.FirstOrDefault(c => c.Name.Equals(colName, StringComparison.OrdinalIgnoreCase));
+                                    Type colType = matchSQL.Name != null ? matchSQL.ClrType : typeof(string);
+                                    var dc = dt.Columns.Add(colName, colType);
+                                    dc.AllowDBNull = true;
                                 }
 
-                                // Leer filas
+                                // Leer filas convirtiendo al tipo correcto
                                 for (int row = 2; row <= totalRows; row++)
                                 {
                                     bool filaVacia = true;
@@ -224,7 +227,7 @@ namespace bufinscustomers.Services
                                     {
                                         var valor = hoja.Cells[row, col].Text?.Trim();
                                         if (!string.IsNullOrWhiteSpace(valor)) filaVacia = false;
-                                        dr[col - 1] = valor ?? "";
+                                        dr[col - 1] = ConvertirValorExcel(valor, dt.Columns[col - 1].DataType);
                                     }
 
                                     if (!filaVacia)
@@ -257,11 +260,9 @@ namespace bufinscustomers.Services
                                     foreach (var colExcel in columnasExcel)
                                     {
                                         // Solo mapear si la columna existe en SQL
-                                        if (columnasSQL.Any(c => c.Equals(colExcel, StringComparison.OrdinalIgnoreCase)))
-                                        {
-                                            string colSQL = columnasSQL.First(c => c.Equals(colExcel, StringComparison.OrdinalIgnoreCase));
-                                            bulk.ColumnMappings.Add(colExcel, colSQL);
-                                        }
+                                        var matchSQL = columnasSQL.FirstOrDefault(c => c.Name.Equals(colExcel, StringComparison.OrdinalIgnoreCase));
+                                        if (matchSQL.Name != null)
+                                            bulk.ColumnMappings.Add(colExcel, matchSQL.Name);
                                     }
 
                                     bulk.WriteToServer(dt);
@@ -307,11 +308,11 @@ namespace bufinscustomers.Services
         }
 
         /// <summary>
-        /// Obtiene columnas de una tabla dentro de una transaccion
+        /// Obtiene columnas de una tabla dentro de una transaccion (nombre + tipo CLR)
         /// </summary>
-        private List<string> ObtenerColumnasTablaTx(SqlConnection cn, SqlTransaction tx, string nombreTabla)
+        private List<(string Name, Type ClrType)> ObtenerColumnasTablaTx(SqlConnection cn, SqlTransaction tx, string nombreTabla)
         {
-            var columnas = new List<string>();
+            var columnas = new List<(string Name, Type ClrType)>();
             string query = $"SELECT TOP 0 * FROM dbo.[{nombreTabla}]";
 
             using (SqlCommand cmd = new SqlCommand(query, cn, tx))
@@ -319,11 +320,47 @@ namespace bufinscustomers.Services
             {
                 for (int i = 0; i < reader.FieldCount; i++)
                 {
-                    columnas.Add(reader.GetName(i));
+                    columnas.Add((reader.GetName(i), reader.GetFieldType(i)));
                 }
             }
 
             return columnas;
+        }
+
+        private object ConvertirValorExcel(string valor, Type tipo)
+        {
+            if (string.IsNullOrWhiteSpace(valor))
+                return DBNull.Value;
+
+            if (tipo == typeof(string))
+                return valor;
+
+            if (tipo == typeof(int) || tipo == typeof(short) || tipo == typeof(long))
+            {
+                // Quitar decimales si vienen del Excel (e.g. "5.0" → 5)
+                string limpio = valor.Split('.')[0].Split(',')[0].Trim();
+                return long.TryParse(limpio, out long v) ? (object)Convert.ChangeType(v, tipo) : DBNull.Value;
+            }
+
+            if (tipo == typeof(byte))
+                return byte.TryParse(valor, out byte b) ? (object)b : DBNull.Value;
+
+            if (tipo == typeof(decimal) || tipo == typeof(double) || tipo == typeof(float))
+            {
+                string normalizado = valor.Replace(',', '.');
+                return decimal.TryParse(normalizado, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out decimal d)
+                    ? (object)Convert.ChangeType(d, tipo) : DBNull.Value;
+            }
+
+            if (tipo == typeof(bool))
+                return valor == "1" || valor.Equals("true", StringComparison.OrdinalIgnoreCase)
+                    || valor.Equals("si", StringComparison.OrdinalIgnoreCase);
+
+            if (tipo == typeof(DateTime))
+                return DateTime.TryParse(valor, out DateTime dt) ? (object)dt : DBNull.Value;
+
+            return valor;
         }
 
         /// <summary>
