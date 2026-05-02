@@ -2,7 +2,7 @@
 @using bufinscustomers.Models
 
 @{
-    ViewBag.Title = "Configuraci\u00f3n Variables PBI";
+    ViewBag.Title = Resources.Strings.CfgVarPBI_PageTitle;
     var estado    = ViewBag.EstadoActual as EstadoVariablesPBI;
     var resultado = TempData["ResultadoCarga"] as ResultadoCargaVariablesPBI;
 
@@ -51,10 +51,10 @@
 
 <div class="container-fluid px-4">
     <!-- Header -->
-    <div class="powerbi-header">
+        <div class="powerbi-header">
         <div class="powerbi-header-content">
             <i class="fas fa-sliders-h powerbi-header-icon"></i>
-            <h1 class="powerbi-header-title">Configuraci&oacute;n Variables PBI</h1>
+            <h1 class="powerbi-header-title">@Resources.Strings.CfgVarPBI_PageTitle</h1>
         </div>
     </div>
 
@@ -77,27 +77,27 @@
     <div class="filter-card" style="margin-bottom:1.25rem;">
         <h3 class="filter-card-title">
             <i class="fas fa-database"></i>
-            Estado Actual de OrdenVariables
+            @Resources.Strings.CfgVarPBI_TitleEstado
         </h3>
         @if (estado != null)
         {
             <div class="estado-card">
                 <div class="estado-item @(estado.TotalRegistros > 0 ? "estado-item-verde" : "estado-item-gris")">
                     <i class="fas fa-list" style="margin-right:5px;"></i>
-                    @estado.TotalRegistros.ToString("N0") registros
+                    @estado.TotalRegistros.ToString("N0") @Resources.Strings.CfgVarPBI_Registros
                 </div>
                 @if (estado.TotalTablas > 0)
                 {
                     <div class="estado-item">
                         <i class="fas fa-table" style="margin-right:5px;"></i>
-                        @estado.TotalTablas tabla(s)
+                        @estado.TotalTablas @Resources.Strings.CfgVarPBI_Tablas
                     </div>
                 }
                 @if (!string.IsNullOrEmpty(estado.UsuarioCargo))
                 {
                     <div class="estado-item" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);">
                         <i class="fas fa-user" style="margin-right:5px;"></i>
-                        Cargado por: <strong style="margin-left:4px;">@estado.UsuarioCargo</strong>
+                        @Resources.Strings.CfgVarPBI_CargadoPor <strong style="margin-left:4px;">@estado.UsuarioCargo</strong>
                     </div>
                 }
                 @if (estado.FechaCarga.HasValue)
@@ -110,7 +110,7 @@
                 @if (estado.TotalRegistros == 0)
                 {
                     <span style="color:#9ca3af;font-size:0.875rem;align-self:center;">
-                        <i class="fas fa-info-circle"></i> La tabla est&aacute; vac&iacute;a. Cargue un archivo Excel para poblarla.
+                        <i class="fas fa-info-circle"></i> @Resources.Strings.CfgVarPBI_TablaVacia
                     </span>
                 }
             </div>
@@ -121,7 +121,7 @@
     <div class="filter-card">
         <h3 class="filter-card-title">
             <i class="fas fa-file-excel"></i>
-            Cargar Archivo Excel
+            @Resources.Strings.CfgVarPBI_TitleCarga
         </h3>
         <form id="formCarga" action="@Url.Action("CargarExcel","ConfiguracionVariablesPBI")" method="post" enctype="multipart/form-data">
             <div class="filter-section">
@@ -134,21 +134,21 @@
                 <div id="dropZone" style="border:2px dashed #d1d5db;border-radius:0.5rem;padding:2rem;text-align:center;cursor:pointer;transition:all 0.2s ease;background:white;">
                     <i class="fas fa-cloud-upload-alt" style="font-size:2.5rem;color:#c7d2fe;margin-bottom:0.75rem;"></i>
                     <p style="font-size:0.95rem;font-weight:600;color:#2d3748;margin-bottom:0.25rem;" id="dropText">
-                        Arrastre su archivo aqu&iacute; o haga clic para seleccionar
+                        @Resources.Strings.CfgVarPBI_DropText
                     </p>
-                    <p style="font-size:0.8rem;color:#9ca3af;margin:0;" id="dropSubtext">Formatos permitidos: .xlsx, .xlsm</p>
+                    <p style="font-size:0.8rem;color:#9ca3af;margin:0;" id="dropSubtext">@Resources.Strings.CfgVarPBI_DropSubtext</p>
                 </div>
                 <input type="file" id="archivoExcel" name="archivoExcel" accept=".xlsx,.xlsm" style="display:none;" />
             </div>
             <div class="btn-group-actions">
                 <button type="submit" id="btnCargar" class="btn btn-modern-gradient" disabled>
-                    <i class="fas fa-upload mr-2"></i>Cargar Datos
+                    <i class="fas fa-upload mr-2"></i>@Resources.Strings.CfgVarPBI_BtnCargar
                 </button>
                 <a href="@Url.Action("DescargarPlantilla","ConfiguracionVariablesPBI")" class="btn btn-modern-success">
-                    <i class="fas fa-download mr-2"></i>Descargar Plantilla
+                    <i class="fas fa-download mr-2"></i>@Resources.Strings.CfgVarPBI_BtnDescargarPlantilla
                 </a>
                 <button type="button" id="btnLimpiar" class="btn btn-modern-secondary" style="display:none;">
-                    <i class="fas fa-times mr-2"></i>Quitar archivo
+                    <i class="fas fa-times mr-2"></i>@Resources.Strings.CfgVarPBI_BtnQuitarArchivo
                 </button>
             </div>
         </form>
@@ -159,7 +159,7 @@
         <div class="filter-card">
             <h3 class="filter-card-title">
                 <i class="fas fa-clipboard-check"></i>
-                Resultado de la Carga
+                @Resources.Strings.CfgVarPBI_TitleResultado
                 @if (!string.IsNullOrEmpty(resultado.NombreArchivo))
                 {
                     <span style="font-size:0.8rem;font-weight:400;color:#6c757d;margin-left:0.5rem;">&mdash; @resultado.NombreArchivo</span>
@@ -168,17 +168,17 @@
             <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:1.25rem;">
                 <div style="background:@(resultado.Exito ? "linear-gradient(135deg,#10b981,#059669)" : "linear-gradient(135deg,#ef4444,#dc2626)");color:white;padding:0.5rem 1rem;border-radius:0.5rem;font-size:0.85rem;font-weight:600;">
                     <i class="fas @(resultado.Exito ? "fa-check-circle" : "fa-times-circle")" style="margin-right:4px;"></i>
-                    @(resultado.Exito ? "Exitoso" : "Fallido")
+                    @(resultado.Exito ? Resources.Strings.CfgVarPBI_Exitoso : Resources.Strings.CfgVarPBI_Fallido)
                 </div>
                 @if (resultado.Exito)
                 {
                     <div style="background:linear-gradient(135deg,#6366F1,#3B82F6);color:white;padding:0.5rem 1rem;border-radius:0.5rem;font-size:0.85rem;font-weight:600;">
                         <i class="fas fa-database" style="margin-right:4px;"></i>
-                        @resultado.FilasInsertadas.ToString("N0") registros insertados
+                        @resultado.FilasInsertadas.ToString("N0") @Resources.Strings.CfgVarPBI_RegistrosInsertados
                     </div>
                     <div style="background:linear-gradient(135deg,#9ca3af,#6b7280);color:white;padding:0.5rem 1rem;border-radius:0.5rem;font-size:0.85rem;font-weight:600;">
                         <i class="fas fa-trash-alt" style="margin-right:4px;"></i>
-                        @resultado.FilasEliminadasPrevias.ToString("N0") registros previos eliminados
+                        @resultado.FilasEliminadasPrevias.ToString("N0") @Resources.Strings.CfgVarPBI_RegistrosPrevElim
                     </div>
                 }
             </div>
@@ -190,14 +190,14 @@
         <div class="filter-card">
             <h3 class="filter-card-title">
                 <i class="fas fa-exchange-alt"></i>
-                Detalle de Cambios Respecto a la Carga Anterior
+                @Resources.Strings.CfgVarPBI_TitleCambios
             </h3>
             @if (!hayCambios)
             {
                 <div style="padding:0.75rem 0;">
                     <span class="no-cambios-badge">
                         <i class="fas fa-equals"></i>
-                        Sin cambios &mdash; los datos son id&eacute;nticos a la carga anterior
+                        @Resources.Strings.CfgVarPBI_SinCambios
                     </span>
                 </div>
             }
@@ -207,19 +207,19 @@
                     @if (hayAgregados)
                     {
                         <div style="background:linear-gradient(135deg,#10b981,#059669);color:white;padding:0.4rem 0.9rem;border-radius:0.5rem;font-size:0.85rem;font-weight:600;">
-                            <i class="fas fa-plus-circle" style="margin-right:4px;"></i>@comp.TotalAgregados agregado(s)
+                            <i class="fas fa-plus-circle" style="margin-right:4px;"></i>@comp.TotalAgregados @Resources.Strings.CfgVarPBI_Agregados
                         </div>
                     }
                     @if (hayEliminados)
                     {
                         <div style="background:linear-gradient(135deg,#ef4444,#dc2626);color:white;padding:0.4rem 0.9rem;border-radius:0.5rem;font-size:0.85rem;font-weight:600;">
-                            <i class="fas fa-minus-circle" style="margin-right:4px;"></i>@comp.TotalEliminados eliminado(s)
+                            <i class="fas fa-minus-circle" style="margin-right:4px;"></i>@comp.TotalEliminados @Resources.Strings.CfgVarPBI_Eliminados
                         </div>
                     }
                     @if (hayModificados)
                     {
                         <div style="background:linear-gradient(135deg,#f59e0b,#d97706);color:white;padding:0.4rem 0.9rem;border-radius:0.5rem;font-size:0.85rem;font-weight:600;">
-                            <i class="fas fa-pencil-alt" style="margin-right:4px;"></i>@comp.TotalModificados modificado(s)
+                            <i class="fas fa-pencil-alt" style="margin-right:4px;"></i>@comp.TotalModificados @Resources.Strings.CfgVarPBI_Modificados
                         </div>
                     }
                 </div>
@@ -232,20 +232,20 @@
         <div class="filter-card" style="padding:0;">
             <div class="diff-header diff-header-agregado" onclick="toggleDiff('difAgr')">
                 <i class="fas fa-plus-circle"></i>
-                Nuevas variables agregadas (@listaAgr.Count)
+                @Resources.Strings.CfgVarPBI_TitleAgregados (@listaAgr.Count)
                 <i class="fas fa-chevron-down ml-auto" id="iconDifAgr"></i>
             </div>
             <div class="diff-body" id="difAgr">
                 <table class="diff-table">
                     <thead>
-                        <tr><th>Tabla</th><th>Variable</th><th>Orden</th><th>Subtotal</th><th>Variable Padre</th></tr>
+                        <tr><th>@Resources.Strings.CfgVarPBI_ThTabla</th><th>@Resources.Strings.CfgVarPBI_ThVariable</th><th>@Resources.Strings.CfgVarPBI_ThOrden</th><th>@Resources.Strings.CfgVarPBI_ThSubtotal</th><th>@Resources.Strings.CfgVarPBI_ThVariablePadre</th></tr>
                     </thead>
                     <tbody>
                         @foreach (var r1 in listaAgr.Take(maxMostrar))
                         {
                             <tr style="background:#f0fdf4;">
                                 <td>@r1.NombreTabla</td><td>@r1.Variable</td><td>@r1.Orden</td>
-                                <td>@(r1.EsSubtotal ? "S\u00ed" : "No")</td><td>@(r1.VariablePadre ?? "")</td>
+                                <td>@(r1.EsSubtotal ? Resources.Strings.CfgVarPBI_Si : "No")</td><td>@(r1.VariablePadre ?? "")</td>
                             </tr>
                         }
                     </tbody>
@@ -263,20 +263,20 @@
         <div class="filter-card" style="padding:0;">
             <div class="diff-header diff-header-eliminado" onclick="toggleDiff('difEl')">
                 <i class="fas fa-minus-circle"></i>
-                Variables eliminadas (no est&aacute;n en el nuevo archivo) (@listaEl.Count)
+                @Resources.Strings.CfgVarPBI_TitleEliminados (@listaEl.Count)
                 <i class="fas fa-chevron-down ml-auto" id="iconDifEl"></i>
             </div>
             <div class="diff-body" id="difEl">
                 <table class="diff-table">
                     <thead>
-                        <tr><th>Tabla</th><th>Variable</th><th>Orden</th><th>Subtotal</th><th>Variable Padre</th></tr>
+                        <tr><th>@Resources.Strings.CfgVarPBI_ThTabla</th><th>@Resources.Strings.CfgVarPBI_ThVariable</th><th>@Resources.Strings.CfgVarPBI_ThOrden</th><th>@Resources.Strings.CfgVarPBI_ThSubtotal</th><th>@Resources.Strings.CfgVarPBI_ThVariablePadre</th></tr>
                     </thead>
                     <tbody>
                         @foreach (var r2 in listaEl.Take(maxMostrar))
                         {
                             <tr style="background:#fef2f2;">
                                 <td>@r2.NombreTabla</td><td>@r2.Variable</td><td>@r2.Orden</td>
-                                <td>@(r2.EsSubtotal ? "S\u00ed" : "No")</td><td>@(r2.VariablePadre ?? "")</td>
+                                <td>@(r2.EsSubtotal ? Resources.Strings.CfgVarPBI_Si : "No")</td><td>@(r2.VariablePadre ?? "")</td>
                             </tr>
                         }
                     </tbody>
@@ -294,13 +294,13 @@
         <div class="filter-card" style="padding:0;">
             <div class="diff-header diff-header-modificado" onclick="toggleDiff('difMod')">
                 <i class="fas fa-pencil-alt"></i>
-                Variables con cambios en sus campos (@listaMod.Count)
+                @Resources.Strings.CfgVarPBI_TitleModificados (@listaMod.Count)
                 <i class="fas fa-chevron-down ml-auto" id="iconDifMod"></i>
             </div>
             <div class="diff-body" id="difMod">
                 <table class="diff-table">
                     <thead>
-                        <tr><th>Tabla</th><th>Variable</th><th>Campos modificados</th></tr>
+                        <tr><th>@Resources.Strings.CfgVarPBI_ThTabla</th><th>@Resources.Strings.CfgVarPBI_ThVariable</th><th>@Resources.Strings.CfgVarPBI_ThCambios</th></tr>
                     </thead>
                     <tbody>
                         @foreach (var r3 in listaMod.Take(maxMostrar))
@@ -353,7 +353,7 @@
             function actualizarArchivo(file) {
                 var ext = file.name.split('.').pop().toLowerCase();
                 if (ext !== 'xlsx' && ext !== 'xlsm') {
-                    Swal.fire({ icon: 'warning', title: 'Formato no v\u00e1lido', text: 'Solo se permiten archivos .xlsx o .xlsm' });
+                    Swal.fire({ icon: 'warning', title: '@Resources.Strings.CfgVarPBI_JS_FormatoInvalido', text: '@Resources.Strings.CfgVarPBI_JS_SoloXlsx' });
                     return;
                 }
                 var sizeMB = (file.size / (1024 * 1024)).toFixed(2);
@@ -367,8 +367,8 @@
             btnLimpiar.on('click', function (e) {
                 e.stopPropagation();
                 fileInput.val('');
-                $('#dropText').text('Arrastre su archivo aqu\u00ed o haga clic para seleccionar');
-                $('#dropSubtext').text('Formatos permitidos: .xlsx, .xlsm');
+                $('#dropText').text('@Resources.Strings.CfgVarPBI_DropText');
+                $('#dropSubtext').text('@Resources.Strings.CfgVarPBI_DropSubtext');
                 dropZone.css({ 'border-color': '#d1d5db', 'background': 'white' });
                 btnCargar.prop('disabled', true);
                 btnLimpiar.hide();
@@ -379,16 +379,16 @@
                 var form = this;
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Confirmar carga',
+                    title: '@Resources.Strings.CfgVarPBI_JS_ConfTitle',
                     html: '<strong>Esta acci\u00f3n reemplazar\u00e1 todos los datos actuales</strong> de la tabla OrdenVariables con los del archivo Excel.<br><br>Se mostrar\u00e1 el detalle de cambios al finalizar.<br><br>\u00bfDesea continuar?',
                     showCancelButton: true,
-                    confirmButtonText: 'S\u00ed, cargar datos',
-                    cancelButtonText: 'Cancelar',
+                    confirmButtonText: '@Resources.Strings.CfgVarPBI_JS_SiCargar',
+                    cancelButtonText: '@Resources.Strings.Layout_Cancel',
                     confirmButtonColor: '#6366F1',
                     cancelButtonColor: '#6c757d'
                 }).then(function (result) {
                     if (result.isConfirmed) {
-                        btnCargar.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Procesando...');
+                        btnCargar.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>@Resources.Strings.CfgVarPBI_JS_Procesando');
                         form.submit();
                     }
                 });

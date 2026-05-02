@@ -2,7 +2,7 @@
 @using bufinscustomers.Models
 
 @{
-    ViewBag.Title = "Configuraci\u00f3n relacionamientos BUFINS";
+    ViewBag.Title = Resources.Strings.CfgRel_PageTitle;
     var tablasRel = ViewBag.TablasRel as List<TablaRelInfo>;
     var resultado = TempData["ResultadoCarga"] as ResultadoCargaRelacionamiento;
     var nombreArchivo = TempData["NombreArchivo"] as string;
@@ -15,7 +15,7 @@
     <div class="powerbi-header">
         <div class="powerbi-header-content">
             <i class="fas fa-upload powerbi-header-icon"></i>
-            <h1 class="powerbi-header-title">Configuraci&oacute;n relacionamientos BUFINS</h1>
+            <h1 class="powerbi-header-title">@Resources.Strings.CfgRel_PageTitle</h1>
         </div>
     </div>
 
@@ -45,7 +45,7 @@
     <div class="filter-card" style="margin-bottom: 1.25rem;">
         <h3 class="filter-card-title">
             <i class="fas fa-database"></i>
-            Tablas de Relacionamiento Disponibles
+            @Resources.Strings.CfgRel_TitleTablas
         </h3>
         <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
             @if (tablasRel != null && tablasRel.Count > 0)
@@ -56,14 +56,14 @@
                         <i class="fas fa-table" style="margin-right: 6px;"></i>
                         <strong>@tabla.NombreTabla</strong>
                         <span style="opacity: 0.85; margin-left: 8px; font-size: 0.75rem;">
-                            @tabla.TotalRegistros registros &middot; @tabla.TotalColumnas columnas
+                            @tabla.TotalRegistros @Resources.Strings.CfgRel_Registros &middot; @tabla.TotalColumnas @Resources.Strings.CfgRel_ColCount
                         </span>
                     </div>
                 }
             }
             else
             {
-                <p style="color: #6c757d; margin: 0;">No se encontraron tablas Rel_ en la base de datos.</p>
+                <p style="color: #6c757d; margin: 0;">@Resources.Strings.CfgRel_NoTablas</p>
             }
         </div>
     </div>
@@ -72,27 +72,24 @@
     <div class="filter-card">
         <h3 class="filter-card-title">
             <i class="fas fa-file-excel"></i>
-            Cargar Archivo Excel
+            @Resources.Strings.CfgRel_TitleCarga
         </h3>
 
         <form id="formCarga" action="@Url.Action("CargarExcel", "ConfiguracionRelacionamiento")" method="post" enctype="multipart/form-data">
             <div class="filter-section">
                 <p style="font-size: 0.85rem; color: #6c757d; margin-bottom: 1rem;">
                     <i class="fas fa-info-circle" style="color: #6366F1;"></i>
-                    Seleccione un archivo Excel (.xlsx) cuyas hojas tengan el mismo nombre que las tablas Rel_ de la base de datos.
-                    <strong>Solo se reemplazar&aacute;n los datos de las tablas cuyas hojas est&eacute;n presentes en el archivo.</strong>
-                    Las tablas que no tengan hoja en el Excel conservar&aacute;n sus datos actuales.
-                    Si ocurre un error, todos los cambios se revierten autom&aacute;ticamente.
+                    @Html.Raw(Resources.Strings.CfgRel_InfoText)
                 </p>
 
                 <!-- Zona de Drop -->
                 <div id="dropZone" style="border: 2px dashed #d1d5db; border-radius: 0.5rem; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s ease; background: white;">
                     <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: #c7d2fe; margin-bottom: 0.75rem;"></i>
                     <p style="font-size: 0.95rem; font-weight: 600; color: #2d3748; margin-bottom: 0.25rem;" id="dropText">
-                        Arrastre su archivo aqu&iacute; o haga clic para seleccionar
+                        @Resources.Strings.CfgRel_DropText
                     </p>
                     <p style="font-size: 0.8rem; color: #9ca3af; margin: 0;" id="dropSubtext">
-                        Formatos permitidos: .xlsx, .xlsm
+                        @Resources.Strings.CfgRel_DropSubtext
                     </p>
                 </div>
                 <input type="file" id="archivoExcel" name="archivoExcel" accept=".xlsx,.xlsm"
@@ -102,13 +99,13 @@
             <!-- Botones -->
             <div class="btn-group-actions">
                 <button type="submit" id="btnCargar" class="btn btn-modern-gradient" disabled>
-                    <i class="fas fa-upload mr-2"></i>Cargar Datos
+                    <i class="fas fa-upload mr-2"></i>@Resources.Strings.CfgRel_BtnCargar
                 </button>
                 <a href="@Url.Action("DescargarPlantilla", "ConfiguracionRelacionamiento")" class="btn btn-modern-success">
-                    <i class="fas fa-download mr-2"></i>Descargar Plantilla
+                    <i class="fas fa-download mr-2"></i>@Resources.Strings.CfgRel_BtnDescargarPlantilla
                 </a>
                 <button type="button" id="btnLimpiar" class="btn btn-modern-secondary" style="display: none;">
-                    <i class="fas fa-times mr-2"></i>Quitar archivo
+                    <i class="fas fa-times mr-2"></i>@Resources.Strings.CfgRel_BtnQuitarArchivo
                 </button>
             </div>
         </form>
@@ -120,7 +117,7 @@
         <div class="filter-card">
             <h3 class="filter-card-title">
                 <i class="fas fa-clipboard-check"></i>
-                Resultado de la Carga
+                @Resources.Strings.CfgRel_TitleResultado
                 @if (!string.IsNullOrEmpty(nombreArchivo))
                 {
                     <span style="font-size: 0.8rem; font-weight: 400; color: #6c757d; margin-left: 0.5rem;">
@@ -133,24 +130,24 @@
             <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
                 <div style="background: @(resultado.Exito ? "linear-gradient(135deg, #10b981, #059669)" : "linear-gradient(135deg, #ef4444, #dc2626)"); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
                     <i class="fas @(resultado.Exito ? "fa-check-circle" : "fa-times-circle")" style="margin-right: 4px;"></i>
-                    @(resultado.Exito ? "Exitoso" : "Fallido")
+                    @(resultado.Exito ? Resources.Strings.CfgRel_EstadoExitoso : Resources.Strings.CfgRel_EstadoFallido)
                 </div>
                 @if (resultado.TotalHojasProcesadas > 0)
                 {
                     <div style="background: linear-gradient(135deg, #3B82F6, #06B6D4); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
                         <i class="fas fa-table" style="margin-right: 4px;"></i>
-                        @resultado.TotalHojasProcesadas tabla(s)
+                        @resultado.TotalHojasProcesadas @Resources.Strings.CfgRel_Tablas
                     </div>
                     <div style="background: linear-gradient(135deg, #6366F1, #3B82F6); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
                         <i class="fas fa-database" style="margin-right: 4px;"></i>
-                        @resultado.TotalFilasInsertadas registros
+                        @resultado.TotalFilasInsertadas @Resources.Strings.CfgRel_Registros
                     </div>
                 }
                 @if (resultado.TotalHojasIgnoradas > 0)
                 {
                     <div style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
                         <i class="fas fa-forward" style="margin-right: 4px;"></i>
-                        @resultado.TotalHojasIgnoradas ignorada(s)
+                        @resultado.TotalHojasIgnoradas @Resources.Strings.CfgRel_Ignoradas
                     </div>
                 }
             </div>
@@ -160,12 +157,12 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Hoja Excel</th>
-                            <th>Tabla BD</th>
-                            <th>Estado</th>
-                            <th>Filas</th>
-                            <th>Columnas</th>
-                            <th>Detalle</th>
+                            <th>@Resources.Strings.CfgRel_ThHoja</th>
+                            <th>@Resources.Strings.CfgRel_ThTabla</th>
+                            <th>@Resources.Strings.Common_Estado</th>
+                            <th>@Resources.Strings.CfgRel_ThFilas</th>
+                            <th>@Resources.Strings.CfgRel_ThColumnas</th>
+                            <th>@Resources.Strings.CfgRel_ThDetalle</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -211,6 +208,9 @@
 
 @section scripts {
     <script>
+        var _dropText    = '@Html.Raw(Resources.Strings.CfgRel_DropText.Replace("'", "\\'"))';
+        var _dropSubtext = '@Html.Raw(Resources.Strings.CfgRel_DropSubtext.Replace("'", "\\'"))';
+
         $(document).ready(function () {
             var dropZone = $('#dropZone');
             var fileInput = $('#archivoExcel');
@@ -268,8 +268,8 @@
                 if (ext !== 'xlsx' && ext !== 'xlsm') {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'Formato no v\u00e1lido',
-                        text: 'Solo se permiten archivos .xlsx o .xlsm'
+                        title: '@Html.Raw(Resources.Strings.CfgRel_JS_FormatoInvalido.Replace("'", "\\'"))',
+                        text: '@Html.Raw(Resources.Strings.CfgRel_JS_FormatoText.Replace("'", "\\'"))'
                     });
                     return;
                 }
@@ -289,8 +289,8 @@
             btnLimpiar.on('click', function (e) {
                 e.stopPropagation();
                 fileInput.val('');
-                $('#dropText').text('Arrastre su archivo aqu\u00ed o haga clic para seleccionar');
-                $('#dropSubtext').text('Formatos permitidos: .xlsx, .xlsm');
+                $('#dropText').text(_dropText);
+                $('#dropSubtext').text(_dropSubtext);
                 dropZone.css({
                     'border-color': '#d1d5db',
                     'background': 'white'
@@ -306,17 +306,17 @@
 
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Confirmar carga',
-                    html: '<strong>Esta acci\u00f3n eliminar\u00e1 todos los datos existentes</strong> de las tablas Rel_ que coincidan con las hojas del Excel y los reemplazar\u00e1 con los nuevos datos.<br><br>\u00bfDesea continuar?',
+                    title: '@Html.Raw(Resources.Strings.CfgRel_TitleConfirmar.Replace("'", "\\'"))',
+                    html: '<strong>@Html.Raw(Resources.Strings.CfgRel_JS_ConfTexto1.Replace("'", "\\'"))</strong> @Html.Raw(Resources.Strings.CfgRel_JS_ConfTexto2.Replace("'", "\\'"))<br><br>@Html.Raw(Resources.Strings.CfgRel_JS_ConfPregunta.Replace("'", "\\'"))',
                     showCancelButton: true,
-                    confirmButtonText: 'S\u00ed, cargar datos',
-                    cancelButtonText: 'Cancelar',
+                    confirmButtonText: '@Html.Raw(Resources.Strings.CfgRel_JS_SiCargar.Replace("'", "\\'"))',
+                    cancelButtonText: '@Html.Raw(Resources.Strings.Layout_Cancel.Replace("'", "\\'"))',
                     confirmButtonColor: '#6366F1',
                     cancelButtonColor: '#6c757d'
                 }).then(function (result) {
                     if (result.isConfirmed) {
                         // Mostrar loading
-                        btnCargar.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Procesando...');
+                        btnCargar.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>@Html.Raw(Resources.Strings.CfgRel_JS_Procesando.Replace("'", "\\'"))');
                         form.submit();
                     }
                 });

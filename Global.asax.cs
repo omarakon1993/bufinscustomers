@@ -1,7 +1,9 @@
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Threading;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Optimization;
@@ -17,8 +19,20 @@ namespace bufinscustomers
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
-            // Solución al error CS1061: Usar el método correcto para establecer la licencia no comercial
+            // Soluciï¿½n al error CS1061: Usar el mï¿½todo correcto para establecer la licencia no comercial
             ExcelPackage.License.SetNonCommercialOrganization("bufinscustomers");
+        }
+
+        protected void Application_AcquireRequestState(object sender, EventArgs e)
+        {
+            string lang = "es-CO";
+            var cookie = Request.Cookies["lang"];
+            if (cookie != null && (cookie.Value == "es-CO" || cookie.Value == "en-US"))
+                lang = cookie.Value;
+
+            var culture = new CultureInfo(lang);
+            Thread.CurrentThread.CurrentCulture = culture;
+            Thread.CurrentThread.CurrentUICulture = culture;
         }
     }
 }

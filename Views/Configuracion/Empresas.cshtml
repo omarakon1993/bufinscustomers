@@ -4,7 +4,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Gestor de empresas</title>
+    <title>@Resources.Strings.Emp_PageTitle</title>
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
@@ -100,7 +100,7 @@
 
     <div class="card shadow mb-4 mt-4">
         <div class="card-header">
-            <i class="bi bi-building-fill"></i> Gestor de empresas
+            <i class="bi bi-building-fill"></i> @Resources.Strings.Emp_PageTitle
         </div>
         <div class="card-body p-0">
             <div class="table-responsive table-wrapper">
@@ -108,11 +108,11 @@
                     <thead>
                         <tr>
                             <th class="col-id">Id</th>
-                            <th class="col-nombre">Nombre</th>
-                            <th class="col-nit">Nit</th>
-                            <th class="col-direccion">Direccion</th>
-                            <th class="col-telefono">Telefono</th>
-                            <th class="col-acciones">Acciones</th>
+                            <th class="col-nombre">@Resources.Strings.Emp_ThNombre</th>
+                            <th class="col-nit">@Resources.Strings.Emp_ThNit</th>
+                            <th class="col-direccion">@Resources.Strings.Emp_ThDireccion</th>
+                            <th class="col-telefono">@Resources.Strings.Emp_ThTelefono</th>
+                            <th class="col-acciones">@Resources.Strings.Common_ThAcciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -125,14 +125,14 @@
                                 <td class="col-direccion" title="@empresa.Direccion">@empresa.Direccion</td>
                                 <td class="col-telefono">@empresa.Telefono</td>
                                 <td class="col-acciones">
-                                    <div class="btn-group" role="group" aria-label="Acciones">
-                                        <button type="button" class="btn btn-primary" title="Editar empresa" data-toggle="modal" data-target="#editEmpresaModal"
+                                    <div class="btn-group" role="group" aria-label="@Resources.Strings.Common_ThAcciones">
+                                        <button type="button" class="btn btn-primary" title="@Resources.Strings.Emp_TitleEditar" data-toggle="modal" data-target="#editEmpresaModal"
                                                 onclick="setEditEmpresa(@empresa.Id, '@empresa.Nombre', '@empresa.Nit', '@empresa.Direccion', '@empresa.Telefono')">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         @if (UsuarioSesionHelper.EsSuperAdmin())
                                         {
-                                            <button type="button" class="btn btn-outline-danger" title="Eliminar empresa" data-toggle="modal" data-target="#confirmDeleteModal" onclick="setIdEmpresa(@empresa.Id)">
+                                            <button type="button" class="btn btn-outline-danger" title="@Resources.Strings.Emp_TitleEliminar" data-toggle="modal" data-target="#confirmDeleteModal" onclick="setIdEmpresa(@empresa.Id)">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         }
@@ -148,7 +148,7 @@
         {
         <div class="card-footer">
             <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearEmpresaModal">
-                <i class="fas fa-plus-circle mr-1"></i> Crear Empresa
+                <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Emp_BtnCrear
             </button>
         </div>
         }
@@ -161,21 +161,21 @@
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title" id="confirmDeleteModalLabel">
-                        <i class="fas fa-exclamation-triangle"></i> Confirmar eliminacion
+                        <i class="fas fa-exclamation-triangle"></i> @Resources.Strings.Emp_ModalDeleteTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-0"><i class="fas fa-question-circle text-warning mr-2"></i>¿Estas seguro de que deseas eliminar esta empresa?</p>
+                    <p class="mb-0"><i class="fas fa-question-circle text-warning mr-2"></i>@Resources.Strings.Emp_ModalDeleteBody</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i>Cancelar
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                     </button>
                     <form id="deleteForm" method="post" action="/Empresa/EliminarEmpresa" style="display: inline;">
                         <input type="hidden" id="idEmpresa" name="idEmpresa" />
                         <button type="submit" class="btn btn-danger btn-sm">
-                            <i class="fas fa-trash-alt mr-1"></i>Eliminar
+                            <i class="fas fa-trash-alt mr-1"></i>@Resources.Strings.Common_BtnEliminar
                         </button>
                     </form>
                 </div>
@@ -189,7 +189,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editEmpresaModalLabel">
-                        <i class="fas fa-building"></i> Editar Empresa
+                        <i class="fas fa-building"></i> @Resources.Strings.Emp_ModalEditTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
@@ -198,35 +198,35 @@
                     <div class="modal-body">
                         <div class="mb-3 mt-3">
                             <label for="editNombre" class="form-label">
-                                <i class="fas fa-building mr-2" style="color: #583AFF;"></i>Nombre
+                                <i class="fas fa-building mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelNombre
                             </label>
                             <input type="text" class="form-control form-control-sm" id="editNombre" name="Nombre" required />
                         </div>
                         <div class="mb-3">
                             <label for="editNit" class="form-label">
-                                <i class="fas fa-id-card mr-2" style="color: #583AFF;"></i>Nit
+                                <i class="fas fa-id-card mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelNit
                             </label>
                             <input type="text" class="form-control form-control-sm" id="editNit" name="Nit" required />
                         </div>
                         <div class="mb-3">
                             <label for="editDireccion" class="form-label">
-                                <i class="fas fa-map-marker-alt mr-2" style="color: #583AFF;"></i>Direccion
+                                <i class="fas fa-map-marker-alt mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelDireccion
                             </label>
                             <input type="text" class="form-control form-control-sm" id="editDireccion" name="Direccion" required />
                         </div>
                         <div class="mb-3">
                             <label for="editTelefono" class="form-label">
-                                <i class="fas fa-phone mr-2" style="color: #583AFF;"></i>Telefono
+                                <i class="fas fa-phone mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelTelefono
                             </label>
                             <input type="text" class="form-control form-control-sm" id="editTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo numeros, sin espacios ni guiones" oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                            <i class="fas fa-times mr-1"></i>Cancelar
+                            <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                         </button>
                         <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="fas fa-save mr-1"></i>Guardar cambios
+                            <i class="fas fa-save mr-1"></i>@Resources.Strings.Common_GuardarCambios
                         </button>
                     </div>
                 </form>
@@ -240,7 +240,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="crearEmpresaModalLabel">
-                        <i class="fas fa-plus-circle"></i> Crear empresa
+                        <i class="fas fa-plus-circle"></i> @Resources.Strings.Emp_ModalCreateTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
@@ -248,35 +248,35 @@
                     <div class="modal-body">
                         <div class="mb-3 mt-3">
                             <label for="crearNombre" class="form-label">
-                                <i class="fas fa-building mr-2" style="color: #583AFF;"></i>Nombre
+                                <i class="fas fa-building mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelNombre
                             </label>
                             <input type="text" class="form-control form-control-sm" id="crearNombre" name="Nombre" required />
                         </div>
                         <div class="mb-3">
                             <label for="crearNit" class="form-label">
-                                <i class="fas fa-id-card mr-2" style="color: #583AFF;"></i>Nit
+                                <i class="fas fa-id-card mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelNit
                             </label>
                             <input type="text" class="form-control form-control-sm" id="crearNit" name="Nit" required />
                         </div>
                         <div class="mb-3">
                             <label for="crearDireccion" class="form-label">
-                                <i class="fas fa-map-marker-alt mr-2" style="color: #583AFF;"></i>Direccion
+                                <i class="fas fa-map-marker-alt mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelDireccion
                             </label>
                             <input type="text" class="form-control form-control-sm" id="crearDireccion" name="Direccion" required />
                         </div>
                         <div class="mb-3">
                             <label for="crearTelefono" class="form-label">
-                                <i class="fas fa-phone mr-2" style="color: #583AFF;"></i>Telefono
+                                <i class="fas fa-phone mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelTelefono
                             </label>
                             <input type="text" class="form-control form-control-sm" id="crearTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo numeros, sin espacios ni guiones" oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                            <i class="fas fa-times mr-1"></i>Cancelar
+                            <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                         </button>
                         <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus-circle mr-1"></i>Crear
+                            <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.Common_BtnCrear
                         </button>
                     </div>
                 </form>

@@ -1,5 +1,5 @@
 @{
-    ViewBag.Title = "Dashboards Power BI";
+    ViewBag.Title = Resources.Strings.Rprt_PageTitle;
     Layout = "~/Views/Shared/_Layout.cshtml";
     var usuario = bufinscustomers.Helpers.UsuarioSesionHelper.UsuarioActual;
     var esSuperAdmin = bufinscustomers.Helpers.UsuarioSesionHelper.EsSuperAdmin();
@@ -106,7 +106,7 @@
     <div class="powerbi-header">
         <div class="powerbi-header-content">
             <i class="fas fa-chart-pie powerbi-header-icon"></i>
-            <h1 class="powerbi-header-title">Dashboards Power BI</h1>
+            <h1 class="powerbi-header-title">@Resources.Strings.Rprt_PageTitle</h1>
         </div>
     </div>
 
@@ -114,7 +114,7 @@
     <div class="filter-card">
         <h3 class="filter-card-title">
             <i class="fas fa-filter"></i>
-            Selecci&oacute;n de reporte
+            @Resources.Strings.Rprt_FilterTitle
         </h3>
 
         <div class="filter-section">
@@ -127,12 +127,12 @@
                     <div class="form-group mb-0">
                         <label for="filtroEmpresa">
                             <i class="fas fa-building"></i>
-                            Empresa <span class="required">*</span>
+                            @Resources.Strings.Rprt_LabelEmpresa <span class="required">*</span>
                         </label>
                         @if (esSuperAdmin)
                         {
                             <select id="filtroEmpresa" class="form-control">
-                                <option value="">-- Todas las empresas --</option>
+                                <option value="">@Resources.Strings.Rprt_TodasEmpresas</option>
                             </select>
                         }
                         else
@@ -140,7 +140,7 @@
                             <!-- Usuario normal: muestra su empresa como badge no editable -->
                             <div class="empresa-badge" id="empresaBadge">
                                 <i class="fas fa-lock"></i>
-                                <span id="empresaNombreDisplay">Cargando...</span>
+                                <span id="empresaNombreDisplay">@Resources.Strings.Rprt_JS_Cargando</span>
                             </div>
                             <input type="hidden" id="filtroEmpresa" value="" />
                         }
@@ -151,10 +151,10 @@
                 <div class="col-md-4">
                     <div class="form-group mb-0">
                         <label for="buscarReporte">
-                            <i class="fas fa-search"></i> Buscar por nombre
+                            <i class="fas fa-search"></i> @Resources.Strings.Rprt_LabelBuscar
                         </label>
                         <input type="text" id="buscarReporte" class="form-control"
-                               placeholder="Escribe parte del nombre..." />
+                               placeholder="@Resources.Strings.Rprt_BuscarPlaceholder" />
                     </div>
                 </div>
 
@@ -166,10 +166,10 @@
                 <div class="col-md-2">
                     <div class="form-group mb-0">
                         <label for="filtroAnioInicial">
-                            <i class="fas fa-calendar-alt"></i> A&ntilde;o inicial
+                            <i class="fas fa-calendar-alt"></i> @Resources.Strings.Rprt_LabelAnioInicial
                         </label>
                         <select id="filtroAnioInicial" class="form-control">
-                            <option value="">-- Todos --</option>
+                            <option value="">@Resources.Strings.Common_Todos</option>
                         </select>
                     </div>
                 </div>
@@ -177,10 +177,10 @@
                 <div class="col-md-2">
                     <div class="form-group mb-0">
                         <label for="filtroAnioFinal">
-                            <i class="fas fa-calendar-check"></i> A&ntilde;o final
+                            <i class="fas fa-calendar-check"></i> @Resources.Strings.Rprt_LabelAnioFinal
                         </label>
                         <select id="filtroAnioFinal" class="form-control">
-                            <option value="">-- Todos --</option>
+                            <option value="">@Resources.Strings.Common_Todos</option>
                         </select>
                     </div>
                 </div>
@@ -196,10 +196,10 @@
                     <div class="form-group mb-0">
                         <label for="selectReporte">
                             <i class="fas fa-file-powerpoint"></i>
-                            Reporte <span class="required">*</span>
+                            @Resources.Strings.Rprt_LabelReporte <span class="required">*</span>
                         </label>
                         <select id="selectReporte" class="form-control">
-                            <option value="">-- Seleccione una empresa primero --</option>
+                            <option value="">@Resources.Strings.Rprt_SelEmpresaPrimero</option>
                         </select>
                         <div class="reporte-count" id="reporteCount"></div>
                     </div>
@@ -208,14 +208,14 @@
                 <div class="col-md-3">
                     <button id="btnConsultar" class="btn-modern-gradient w-100" disabled>
                         <i class="fas fa-eye me-1"></i>
-                        <span id="btnConsultarTexto">Ver reporte</span>
+                        <span id="btnConsultarTexto">@Resources.Strings.Rprt_BtnVer</span>
                     </button>
                 </div>
 
                 <div class="col-md-3">
                     <button id="btnPantallaCompleta" class="btn-fullscreen w-100" style="display:none;">
                         <i class="fas fa-expand me-1" id="iconoFullscreen"></i>
-                        <span id="textoFullscreen">Pantalla completa</span>
+                        <span id="textoFullscreen">@Resources.Strings.Rprt_BtnPantallaCompleta</span>
                     </button>
                 </div>
 
@@ -229,7 +229,7 @@
         <div id="iframeContainer">
             <div class="reporte-empty-state" id="emptyState">
                 <i class="fas fa-chart-bar"></i>
-                <p>Seleccione una empresa y un reporte, luego presione <strong>Ver reporte</strong></p>
+                <p>@Resources.Strings.Rprt_EmptyState <strong>@Resources.Strings.Rprt_BtnVer</strong></p>
             </div>
             <div class="reporte-iframe-wrapper" id="iframeWrapper" style="display:none;">
                 <iframe id="iframeReporte" src="" allowfullscreen></iframe>
@@ -242,6 +242,12 @@
 @section scripts {
 <script>
     const esSuperAdmin = @Html.Raw(esSuperAdmin.ToString().ToLower());
+    const _strSelReporte    = '@Html.Raw(Resources.Strings.Rprt_SelReporte.Replace("'", "\\'"))';
+    const _strNoReportes    = '@Html.Raw(Resources.Strings.Rprt_NoReportes.Replace("'", "\\'"))';
+    const _strCargando      = '@Html.Raw(Resources.Strings.Rprt_JS_Cargando.Replace("'", "\\'"))';
+    const _strVerReporte    = '@Html.Raw(Resources.Strings.Rprt_JS_Ver.Replace("'", "\\'"))';
+    const _strPantallaComp  = '@Html.Raw(Resources.Strings.Rprt_BtnPantallaCompleta.Replace("'", "\\'"))';
+    const _strSalirPantalla = '@Html.Raw(Resources.Strings.Rprt_BtnSalirPantalla.Replace("'", "\\'"))';
 
     // ─────────────────────────────────────────────────────────────────
     // Utilidades
@@ -252,12 +258,12 @@
         $sel.empty();
 
         if (Array.isArray(data) && data.length > 0) {
-            $sel.append('<option value="">-- Seleccione un reporte --</option>');
+            $sel.append('<option value="">' + _strSelReporte + '</option>');
             data.forEach(r => $sel.append(`<option value="${r.Id}">${r.Nombre}</option>`));
             $('#reporteCount').text(data.length + ' reporte' + (data.length !== 1 ? 's' : '') + ' disponible' + (data.length !== 1 ? 's' : ''));
             $('#btnConsultar').prop('disabled', false);
         } else {
-            $sel.append('<option value="">No hay reportes para esta empresa</option>');
+            $sel.append('<option value="">' + _strNoReportes + '</option>');
             $('#reporteCount').text('');
             $('#btnConsultar').prop('disabled', true);
         }
@@ -328,7 +334,7 @@
     // ─────────────────────────────────────────────────────────────────
 
     function cargarReportesFiltrados() {
-        $('#selectReporte').empty().append('<option value="">Cargando...</option>');
+        $('#selectReporte').empty().append('<option value="">' + _strCargando + '</option>');
         $('#btnConsultar').prop('disabled', true);
 
         $.ajax({
@@ -342,10 +348,10 @@
             },
             success: function (data) { poblarSelectReportes(data); },
             error:   function () {
-                $('#selectReporte').empty().append('<option value="">Error al cargar reportes</option>');
+                $('#selectReporte').empty().append('<option value="">' + _strNoReportes + '</option>');
                 Swal.fire({
                     toast: true, position: 'top-end', icon: 'error',
-                    title: 'Error al filtrar reportes.',
+                    title: '@Html.Raw(Resources.Strings.Rprt_JS_ErrorFiltrar.Replace("'", "\\'"))',
                     showConfirmButton: false, timer: 3000
                 });
             }
@@ -379,7 +385,7 @@
         if (!idReporte) {
             Swal.fire({
                 toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end',
-                icon: 'warning', title: 'Por favor selecciona un reporte.',
+                icon: 'warning', title: '@Html.Raw(Resources.Strings.Rprt_JS_SinReporte.Replace("'", "\\'"))',
                 showConfirmButton: false, timer: 3000, timerProgressBar: true,
                 didOpen: (t) => { t.addEventListener('mouseenter', Swal.stopTimer); t.addEventListener('mouseleave', Swal.resumeTimer); }
             });
@@ -388,7 +394,7 @@
 
         const $btn = $('#btnConsultar');
         $btn.prop('disabled', true);
-        $('#btnConsultarTexto').text('Cargando...');
+        $('#btnConsultarTexto').text(_strCargando);
         $btn.prepend('<span class="spinner-border spinner-border-sm me-1" id="spinnerConsultar"></span>');
 
         $.ajax({
@@ -404,7 +410,7 @@
                 } else {
                     Swal.fire({
                         toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end',
-                        icon: 'info', title: 'No se encontr\u00f3 el enlace para este reporte.',
+                        icon: 'info', title: '@Html.Raw(Resources.Strings.Rprt_JS_SinEnlace.Replace("'", "\\'"))',
                         showConfirmButton: false, timer: 3500, timerProgressBar: true
                     });
                     $('#btnPantallaCompleta').hide();
@@ -413,13 +419,13 @@
             error: function () {
                 Swal.fire({
                     toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end',
-                    icon: 'error', title: 'Error al obtener el enlace del reporte.',
+                    icon: 'error', title: '@Html.Raw(Resources.Strings.Rprt_JS_ErrorEnlace.Replace("'", "\\'"))',
                     showConfirmButton: false, timer: 3500, timerProgressBar: true
                 });
             },
             complete: function () {
                 $('#spinnerConsultar').remove();
-                $('#btnConsultarTexto').text('Ver reporte');
+                $('#btnConsultarTexto').text(_strVerReporte);
                 $('#btnConsultar').prop('disabled', !$('#selectReporte').val());
             }
         });
@@ -433,7 +439,7 @@
         const container = document.getElementById('iframeContainer');
         if (!document.fullscreenElement) {
             container.requestFullscreen().catch(() => {
-                Swal.fire({ toast:true, position:'top-end', icon:'error', title:'No se pudo activar pantalla completa.', showConfirmButton:false, timer:3000 });
+                Swal.fire({ toast:true, position:'top-end', icon:'error', title:'@Html.Raw(Resources.Strings.Rprt_JS_SinPantallaCompleta.Replace("'", "\\'"))', showConfirmButton:false, timer:3000 });
             });
         } else {
             document.exitFullscreen();
@@ -442,7 +448,7 @@
 
     document.addEventListener('fullscreenchange', function () {
         const enFS = !!document.fullscreenElement;
-        document.getElementById('textoFullscreen').textContent = enFS ? 'Salir de pantalla' : 'Pantalla completa';
+        document.getElementById('textoFullscreen').textContent = enFS ? _strSalirPantalla : _strPantallaComp;
         document.getElementById('iconoFullscreen').className   = enFS ? 'fas fa-compress me-1' : 'fas fa-expand me-1';
     });
 </script>

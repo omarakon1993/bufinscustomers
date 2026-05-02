@@ -4,7 +4,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Gestor de Prompts IA</title>
+    <title>@Resources.Strings.Prompt_PageTitle</title>
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="~/Assets/css/configuracion-admin.css" rel="stylesheet" />
@@ -13,7 +13,7 @@
 
     <div class="card shadow mb-4 mt-4">
         <div class="card-header">
-            <i class="fas fa-robot"></i> Gestor de Prompts IA
+            <i class="fas fa-robot"></i> @Resources.Strings.Prompt_PageTitle
         </div>
         <div class="card-body p-0">
             <div class="table-responsive table-wrapper">
@@ -21,11 +21,11 @@
                     <thead>
                         <tr>
                             <th class="col-id">Id</th>
-                            <th class="col-codigo">C&oacute;digo</th>
-                            <th class="col-nombre">Nombre</th>
-                            <th class="col-desc">Descripci&oacute;n</th>
-                            <th class="col-estado">Estado</th>
-                            <th class="col-acciones">Acciones</th>
+                            <th class="col-codigo">@Resources.Strings.Prompt_ThCodigo</th>
+                            <th class="col-nombre">@Resources.Strings.Emp_LabelNombre</th>
+                            <th class="col-desc">@Resources.Strings.Common_LabelDescripcion</th>
+                            <th class="col-estado">@Resources.Strings.Common_Estado</th>
+                            <th class="col-acciones">@Resources.Strings.Common_ThAcciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -33,7 +33,7 @@
                         {
                             <tr>
                                 <td colspan="6" class="text-center text-muted py-3">
-                                    No hay prompts registrados.
+                                    @Resources.Strings.Prompt_NoPrompts
                                 </td>
                             </tr>
                         }
@@ -49,25 +49,25 @@
                                 <td class="col-estado">
                                     @if (p.Activo)
                                     {
-                                        <span class="badge-activo">Activo</span>
+                                        <span class="badge-activo">@Resources.Strings.Common_Activo</span>
                                     }
                                     else
                                     {
-                                        <span class="badge-inactivo">Inactivo</span>
+                                        <span class="badge-inactivo">@Resources.Strings.Common_Inactivo</span>
                                     }
                                 </td>
                                 <td class="col-acciones">
                                     <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-info btn-sm" title="Ver texto del prompt"
+                                        <button type="button" class="btn btn-info btn-sm" title="@Resources.Strings.Prompt_TitleVer"
                                                 onclick="verTextoPrompt('@Html.Raw(p.Nombre.Replace("'", "\\'"))', '@Html.Raw((p.TextoPrompt ?? "").Replace("'", "\\'").Replace("\r\n", "\\n").Replace("\n", "\\n"))')">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <button type="button" class="btn btn-primary" title="Editar prompt"
+                                        <button type="button" class="btn btn-primary" title="@Resources.Strings.Prompt_TitleEditar"
                                                 data-toggle="modal" data-target="#editarModal"
                                                 onclick="setEditarPrompt(@p.Id, '@Html.Raw(p.Codigo.Replace("'","\\'" ))', '@Html.Raw(p.Nombre.Replace("'","\\'" ))', '@Html.Raw((p.Descripcion ?? "").Replace("'","\\'" ))', '@Html.Raw((p.TextoPrompt ?? "").Replace("'","\\'" ).Replace("\r\n","\\n").Replace("\n","\\n"))', @(p.Activo ? "true" : "false"))">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-danger" title="Eliminar prompt"
+                                        <button type="button" class="btn btn-outline-danger" title="@Resources.Strings.Prompt_TitleEliminar"
                                                 data-toggle="modal" data-target="#eliminarModal"
                                                 onclick="setEliminarPrompt(@p.Id, '@Html.Raw(p.Nombre.Replace("'","\\'" ))')">
                                             <i class="fas fa-trash-alt"></i>
@@ -82,7 +82,7 @@
         </div>
         <div class="card-footer">
             <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearModal">
-                <i class="fas fa-plus-circle mr-1"></i> Crear prompt
+                <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Prompt_BtnCrear
             </button>
         </div>
     </div>
@@ -102,7 +102,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i>Cerrar
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Close
                     </button>
                 </div>
             </div>
@@ -115,7 +115,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="fas fa-plus-circle" style="color:#583AFF;"></i> Crear prompt IA
+                        <i class="fas fa-plus-circle" style="color:#583AFF;"></i> @Resources.Strings.Prompt_ModalCreateTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
@@ -125,7 +125,7 @@
                         <div class="row">
                             <div class="col-md-5 mb-3 mt-2">
                                 <label for="crearCodigo" class="form-label">
-                                    <i class="fas fa-code mr-2" style="color:#583AFF;"></i>C&oacute;digo <span class="text-danger">*</span>
+                                    <i class="fas fa-code mr-2" style="color:#583AFF;"></i>@Resources.Strings.Prompt_LabelCodigo <span class="text-danger">*</span>
                                 </label>
                                 <input type="text" class="form-control form-control-sm" id="crearCodigo" name="Codigo"
                                        placeholder="Ej: RESUMEN_GERENCIAL" maxlength="50" required
@@ -133,7 +133,7 @@
                             </div>
                             <div class="col-md-7 mb-3 mt-2">
                                 <label for="crearNombre" class="form-label">
-                                    <i class="fas fa-tag mr-2" style="color:#583AFF;"></i>Nombre <span class="text-danger">*</span>
+                                    <i class="fas fa-tag mr-2" style="color:#583AFF;"></i>@Resources.Strings.Emp_LabelNombre <span class="text-danger">*</span>
                                 </label>
                                 <input type="text" class="form-control form-control-sm" id="crearNombre" name="Nombre"
                                        placeholder="Ej: Resumen Gerencial Ejecutivo" maxlength="100" required />
@@ -141,26 +141,26 @@
                         </div>
                         <div class="mb-3">
                             <label for="crearDescripcion" class="form-label">
-                                <i class="fas fa-align-left mr-2" style="color:#583AFF;"></i>Descripci&oacute;n
+                                <i class="fas fa-align-left mr-2" style="color:#583AFF;"></i>@Resources.Strings.Common_LabelDescripcion
                             </label>
                             <input type="text" class="form-control form-control-sm" id="crearDescripcion" name="Descripcion"
-                                   placeholder="Ej: Instrucciones para el an&aacute;lisis autom&aacute;tico" maxlength="255" />
+                                   placeholder="Ej: Instrucciones para el análisis automático" maxlength="255" />
                         </div>
                         <div class="mb-3">
                             <label for="crearTextoPrompt" class="form-label">
-                                <i class="fas fa-robot mr-2" style="color:#583AFF;"></i>Texto del prompt <span class="text-danger">*</span>
-                                <small class="text-muted">(instrucciones que se enviar&aacute;n a la IA)</small>
+                                <i class="fas fa-robot mr-2" style="color:#583AFF;"></i>@Resources.Strings.Prompt_LabelTextoPrompt <span class="text-danger">*</span>
+                                <small class="text-muted">@Resources.Strings.Prompt_LabelTextoHint</small>
                             </label>
                             <textarea class="form-control textarea-prompt" id="crearTextoPrompt" name="TextoPrompt"
-                                      rows="8" placeholder="Ej: Genera un resumen gerencial ejecutivo en 3 a 5 p&aacute;rrafos..." required></textarea>
+                                      rows="8" placeholder="Ej: Genera un resumen gerencial ejecutivo en 3 a 5 párrafos..." required></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                            <i class="fas fa-times mr-1"></i>Cancelar
+                            <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                         </button>
                         <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus-circle mr-1"></i>Crear
+                            <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.Common_BtnCrear
                         </button>
                     </div>
                 </form>
@@ -174,7 +174,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="fas fa-edit" style="color:#583AFF;"></i> Editar prompt IA
+                        <i class="fas fa-edit" style="color:#583AFF;"></i> @Resources.Strings.Prompt_ModalEditTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
@@ -185,14 +185,14 @@
                         <div class="row">
                             <div class="col-md-5 mb-3 mt-2">
                                 <label for="editCodigo" class="form-label">
-                                    <i class="fas fa-code mr-2" style="color:#583AFF;"></i>C&oacute;digo <span class="text-danger">*</span>
+                                    <i class="fas fa-code mr-2" style="color:#583AFF;"></i>@Resources.Strings.Prompt_LabelCodigo <span class="text-danger">*</span>
                                 </label>
                                 <input type="text" class="form-control form-control-sm" id="editCodigo" name="Codigo"
                                        maxlength="50" required style="font-family: monospace; text-transform: uppercase;" />
                             </div>
                             <div class="col-md-7 mb-3 mt-2">
                                 <label for="editNombre" class="form-label">
-                                    <i class="fas fa-tag mr-2" style="color:#583AFF;"></i>Nombre <span class="text-danger">*</span>
+                                    <i class="fas fa-tag mr-2" style="color:#583AFF;"></i>@Resources.Strings.Emp_LabelNombre <span class="text-danger">*</span>
                                 </label>
                                 <input type="text" class="form-control form-control-sm" id="editNombre" name="Nombre"
                                        maxlength="100" required />
@@ -200,15 +200,15 @@
                         </div>
                         <div class="mb-3">
                             <label for="editDescripcion" class="form-label">
-                                <i class="fas fa-align-left mr-2" style="color:#583AFF;"></i>Descripci&oacute;n
+                                <i class="fas fa-align-left mr-2" style="color:#583AFF;"></i>@Resources.Strings.Common_LabelDescripcion
                             </label>
                             <input type="text" class="form-control form-control-sm" id="editDescripcion" name="Descripcion"
                                    maxlength="255" />
                         </div>
                         <div class="mb-3">
                             <label for="editTextoPrompt" class="form-label">
-                                <i class="fas fa-robot mr-2" style="color:#583AFF;"></i>Texto del prompt <span class="text-danger">*</span>
-                                <small class="text-muted">(instrucciones que se enviar&aacute;n a la IA)</small>
+                                <i class="fas fa-robot mr-2" style="color:#583AFF;"></i>@Resources.Strings.Prompt_LabelTextoPrompt <span class="text-danger">*</span>
+                                <small class="text-muted">@Resources.Strings.Prompt_LabelTextoHint</small>
                             </label>
                             <textarea class="form-control textarea-prompt" id="editTextoPrompt" name="TextoPrompt"
                                       rows="8" required></textarea>
@@ -217,16 +217,16 @@
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="editActivo" name="Activo" value="true" />
                                 <input type="hidden" name="Activo" value="false" />
-                                <label class="form-check-label" for="editActivo">Activo</label>
+                                <label class="form-check-label" for="editActivo">@Resources.Strings.Common_Activo</label>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                            <i class="fas fa-times mr-1"></i>Cancelar
+                            <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                         </button>
                         <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="fas fa-save mr-1"></i>Guardar cambios
+                            <i class="fas fa-save mr-1"></i>@Resources.Strings.Common_GuardarCambios
                         </button>
                     </div>
                 </form>
@@ -240,26 +240,26 @@
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title">
-                        <i class="fas fa-exclamation-triangle"></i> Confirmar eliminaci&oacute;n
+                        <i class="fas fa-exclamation-triangle"></i> @Resources.Strings.Common_ModalDeleteTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <p class="mb-0">
                         <i class="fas fa-question-circle text-warning mr-2"></i>
-                        &iquest;Est&aacute;s seguro de que deseas eliminar el prompt <strong id="eliminarNombre"></strong>?
+                        @Resources.Strings.Prompt_ModalDeleteBody <strong id="eliminarNombre"></strong>?
                     </p>
-                    <p class="text-muted small mt-2 mb-0">El prompt quedar&aacute; inactivo y no ser&aacute; utilizado por la IA.</p>
+                    <p class="text-muted small mt-2 mb-0">@Resources.Strings.Prompt_ModalDeleteNote</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i>Cancelar
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                     </button>
                     <form method="post" action="@Url.Action("Eliminar", "GestorPrompts")" style="display:inline;">
                         @Html.AntiForgeryToken()
                         <input type="hidden" id="eliminarId" name="id" />
                         <button type="submit" class="btn btn-danger btn-sm">
-                            <i class="fas fa-trash-alt mr-1"></i>Eliminar
+                            <i class="fas fa-trash-alt mr-1"></i>@Resources.Strings.Common_BtnEliminar
                         </button>
                     </form>
                 </div>

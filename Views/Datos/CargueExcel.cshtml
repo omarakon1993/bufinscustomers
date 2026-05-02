@@ -1,6 +1,6 @@
 @using bufinscustomers.Models
 @{
-    ViewBag.Title = "Importación de Excel";
+    ViewBag.Title = Resources.Strings.Datos_PageTitle;
     Layout = "~/Views/Shared/_Layout.cshtml";
     var resultado = TempData["ResultadoCarga"] as ResultadoCargaExcel;
     var nombreArchivo = TempData["NombreArchivo"] as string;
@@ -13,7 +13,7 @@
     <div class="powerbi-header">
         <div class="powerbi-header-content">
             <i class="fas fa-file-excel powerbi-header-icon"></i>
-            <h1 class="powerbi-header-title">Importaci&oacute;n de Excel</h1>
+            <h1 class="powerbi-header-title">@Resources.Strings.Datos_PageTitle</h1>
         </div>
     </div>
 
@@ -54,23 +54,23 @@
     <div class="filter-card">
         <h3 class="filter-card-title">
             <i class="fas fa-file-excel"></i>
-            Cargar Archivo Excel
+            @Resources.Strings.Datos_CardTitle
         </h3>
 
         <form id="formCarga" action="@Url.Action("CargarExcel", "Datos")" method="post" enctype="multipart/form-data">
             <div class="filter-section">
                 <p style="font-size: 0.85rem; color: #6c757d; margin-bottom: 1rem;">
                     <i class="fas fa-info-circle" style="color: #6366F1;"></i>
-                    Seleccione un archivo Excel (.xlsx, .xlsm) con las 10 hojas de la plantilla BUFINS.
-                    <strong>Los datos existentes de la empresa seleccionada ser&aacute;n reemplazados.</strong>
-                    Si ocurre un error en cualquier hoja, se limpian todos los datos cargados.
+                    @Resources.Strings.Datos_UploadHint1
+                    <strong>@Resources.Strings.Datos_UploadHint2</strong>
+                    @Resources.Strings.Datos_UploadHint3
                 </p>
 
                 <!-- Selector de Empresa -->
                 <div class="form-group mb-3">
-                    <label for="idEmpresaSeleccionada" class="form-label" style="font-weight: 600; font-size: 0.9rem;">Empresa a cargar:</label>
+                    <label for="idEmpresaSeleccionada" class="form-label" style="font-weight: 600; font-size: 0.9rem;">@Resources.Strings.Datos_EmpresaLabel</label>
                     <select class="form-control form-control-sm" id="idEmpresaSeleccionada" name="idEmpresaSeleccionada" required style="max-width: 400px;">
-                        <option value="0">Seleccione una empresa...</option>
+                        <option value="0">@Resources.Strings.Datos_SelectEmpresa</option>
                         @if (ViewBag.Empresas != null)
                         {
                             foreach (var empresa in ViewBag.Empresas)
@@ -85,10 +85,10 @@
                 <div id="dropZone" style="border: 2px dashed #d1d5db; border-radius: 0.5rem; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s ease; background: white;">
                     <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: #c7d2fe; margin-bottom: 0.75rem;"></i>
                     <p style="font-size: 0.95rem; font-weight: 600; color: #2d3748; margin-bottom: 0.25rem;" id="dropText">
-                        Arrastre su archivo aqu&iacute; o haga clic para seleccionar
+                        @Resources.Strings.Datos_DropText
                     </p>
                     <p style="font-size: 0.8rem; color: #9ca3af; margin: 0;" id="dropSubtext">
-                        Formatos permitidos: .xlsx, .xlsm
+                        @Resources.Strings.Datos_DropSubtext
                     </p>
                 </div>
                 <input type="file" id="archivoExcel" name="archivoExcel" accept=".xlsx,.xlsm"
@@ -98,25 +98,25 @@
             <!-- Botones -->
             <div class="btn-group-actions">
                 <button type="submit" id="btnCargar" class="btn btn-modern-gradient" disabled>
-                    <i class="fas fa-upload mr-2"></i>Cargar Datos
+                    <i class="fas fa-upload mr-2"></i>@Resources.Strings.Datos_BtnCargar
                 </button>
                 <button type="button" id="btnInstructivo" class="btn btn-modern-gradient" style="background: linear-gradient(135deg, #6366F1, #3B82F6);">
-                    <i class="fas fa-book mr-2"></i>Instructivo din&aacute;mico
+                    <i class="fas fa-book mr-2"></i>@Resources.Strings.Datos_BtnInstructivo
                 </button>
                 <a href="~/Assets/Plantillas/InstructivoPlantillaCargue.xlsx" download class="btn btn-modern-success">
-                    <i class="fas fa-download mr-2"></i>Instructivo Excel
+                    <i class="fas fa-download mr-2"></i>@Resources.Strings.Datos_BtnInstructivoExcel
                 </a>
                 <a href="~/Assets/Plantillas/PlantillaBufins.xlsx" download class="btn btn-modern-success">
-                    <i class="fas fa-file-download mr-2"></i>Plantilla
+                    <i class="fas fa-file-download mr-2"></i>@Resources.Strings.Datos_BtnPlantilla
                 </a>
                 @if (resultado != null && resultado.MostrarDescargaLog)
                 {
                     <a href="@Url.Action("DescargarLog", "Datos")" class="btn btn-modern-secondary">
-                        <i class="fas fa-file-alt mr-2"></i>Descargar Log
+                        <i class="fas fa-file-alt mr-2"></i>@Resources.Strings.Datos_BtnDescargarLog
                     </a>
                 }
                 <button type="button" id="btnLimpiar" class="btn btn-modern-secondary" style="display: none;">
-                    <i class="fas fa-times mr-2"></i>Quitar archivo
+                    <i class="fas fa-times mr-2"></i>@Resources.Strings.Datos_BtnQuitarArchivo
                 </button>
             </div>
         </form>
@@ -128,7 +128,7 @@
         <div class="filter-card">
             <h3 class="filter-card-title">
                 <i class="fas fa-clipboard-check"></i>
-                Resultado de la Carga
+                @Resources.Strings.Datos_ResultTitle
                 @if (!string.IsNullOrEmpty(nombreArchivo))
                 {
                     <span style="font-size: 0.8rem; font-weight: 400; color: #6c757d; margin-left: 0.5rem;">
@@ -141,24 +141,24 @@
             <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
                 <div style="background: @(resultado.Exito ? "linear-gradient(135deg, #10b981, #059669)" : "linear-gradient(135deg, #ef4444, #dc2626)"); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
                     <i class="fas @(resultado.Exito ? "fa-check-circle" : "fa-times-circle")" style="margin-right: 4px;"></i>
-                    @(resultado.Exito ? "Exitoso" : "Fallido")
+                    @(resultado.Exito ? Resources.Strings.Datos_StatusExitoso : Resources.Strings.Datos_StatusFallido)
                 </div>
                 @if (resultado.TotalHojasProcesadas > 0)
                 {
                     <div style="background: linear-gradient(135deg, #3B82F6, #06B6D4); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
                         <i class="fas fa-table" style="margin-right: 4px;"></i>
-                        @resultado.TotalHojasProcesadas tabla(s)
+                        @resultado.TotalHojasProcesadas @Resources.Strings.Datos_Tablas
                     </div>
                     <div style="background: linear-gradient(135deg, #6366F1, #3B82F6); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
                         <i class="fas fa-database" style="margin-right: 4px;"></i>
-                        @resultado.TotalFilasInsertadas.ToString("N0") registros
+                        @resultado.TotalFilasInsertadas.ToString("N0") @Resources.Strings.Datos_Registros
                     </div>
                 }
                 @if (resultado.TotalHojasIgnoradas > 0)
                 {
                     <div style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
                         <i class="fas fa-forward" style="margin-right: 4px;"></i>
-                        @resultado.TotalHojasIgnoradas ignorada(s)
+                        @resultado.TotalHojasIgnoradas @Resources.Strings.Datos_Ignoradas
                     </div>
                 }
             </div>
@@ -168,12 +168,12 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Hoja Excel</th>
-                            <th>Tabla BD</th>
-                            <th>Estado</th>
-                            <th>Filas</th>
-                            <th>Columnas</th>
-                            <th>Detalle</th>
+                            <th>@Resources.Strings.Datos_ThHoja</th>
+                            <th>@Resources.Strings.Datos_ThTabla</th>
+                            <th>@Resources.Strings.Datos_ThEstado</th>
+                            <th>@Resources.Strings.Datos_ThFilas</th>
+                            <th>@Resources.Strings.Datos_ThColumnas</th>
+                            <th>@Resources.Strings.Datos_ThDetalle</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -203,7 +203,10 @@
                                 <td>
                                     <i class="fas @iconClass" style="margin-right: 4px;
                                        color: @(detalle.Estado == "Exitoso" ? "#10b981" : detalle.Estado == "Ignorada" ? "#f59e0b" : "#ef4444");"></i>
-                                    @detalle.Estado
+                                    @(detalle.Estado == "Exitoso" ? Resources.Strings.Datos_StatusExitoso :
+                                      detalle.Estado == "Ignorada" ? Resources.Strings.Datos_StatusIgnorada :
+                                      detalle.Estado == "Revertido" ? Resources.Strings.Datos_StatusRevertido :
+                                      Resources.Strings.Datos_StatusFallido)
                                 </td>
                                 <td>@(detalle.FilasInsertadas > 0 ? detalle.FilasInsertadas.ToString("N0") : "-")</td>
                                 <td>@(detalle.TotalColumnas > 0 ? detalle.TotalColumnas.ToString() : "-")</td>
@@ -342,8 +345,8 @@
                 <div style="display: flex; align-items: center; gap: 1rem;">
                     <img src="~/Assets/img/logoBufinsInst.png" alt="Bufins" style="height: 38px; width: auto; filter: brightness(1.1);">
                     <div>
-                        <h5 class="modal-title" id="instructivoModalLabel" style="color: #ffffff; font-weight: 700; font-size: 1.25rem; margin: 0; letter-spacing: -0.3px;">Instructivo de uso</h5>
-                        <span style="color: rgba(255,255,255,0.7); font-size: 0.78rem;">Plantilla de cargue BUFINS</span>
+                        <h5 class="modal-title" id="instructivoModalLabel" style="color: #ffffff; font-weight: 700; font-size: 1.25rem; margin: 0; letter-spacing: -0.3px;">@Resources.Strings.Datos_ModalTitle</h5>
+                        <span style="color: rgba(255,255,255,0.7); font-size: 0.78rem;">@Resources.Strings.Datos_ModalSubtitle</span>
                     </div>
                 </div>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white; opacity: 0.9; text-shadow: none; font-size: 1.5rem;">
@@ -354,11 +357,11 @@
                 <div class="instructivo-intro">
                     <p>
                         <i class="fas fa-database mr-2" style="color: #6366F1;"></i>
-                        <strong>Bufins</strong> usa las bases de datos contables como fuentes de informaci&oacute;n para preparar la informaci&oacute;n financiera.
+                        @Resources.Strings.Datos_InstructivoIntro1
                     </p>
                     <p>
                         <i class="fas fa-info-circle mr-2" style="color: #06B6D4;"></i>
-                        En este instructivo encontrar&aacute; los par&aacute;metros para el diligenciamiento de la informaci&oacute;n, y as&iacute; aprovechar las ventajas de este sistema de bases de datos.
+                        @Resources.Strings.Datos_InstructivoIntro2
                     </p>
                 </div>
 
@@ -367,24 +370,24 @@
                             data-toggle="collapse" data-target="#collapseInstructivo"
                             aria-expanded="false" aria-controls="collapseInstructivo"
                             style="background: linear-gradient(135deg, #583AFF, #6366F1);">
-                        <i class="fas fa-exclamation-triangle mr-2"></i> Para tener en cuenta
+                        <i class="fas fa-exclamation-triangle mr-2"></i> @Resources.Strings.Datos_BtnParaTenerEnCuenta
                     </button>
                 </div>
                 <div class="collapse" id="collapseInstructivo">
                     <div class="card card-body collapse-rules" style="border: 1px solid #e2e8f0; border-radius: 8px; background: #fafbfd;">
                         <ol>
-                            <li>Las hojas de este libro tiene nombres que no pueden ser cambiados</li>
-                            <li>Ninguna de las hojas de este libro se puede eliminar, ni ocultar</li>
-                            <li>Conserve el orden de las hojas</li>
-                            <li>Dentro de cada hoja diligencie la informaci&oacute;n solicitada</li>
-                            <li>No inserte filas y/o columnas dentro de las hojas porque las bases de datos est&aacute;n predise&ntilde;adas para darle a los datos una estructura predeterminada constante para el uso de SQLS y PowerBI</li>
-                            <li>No cambie t&iacute;tulos en las tablas de datos. Estos est&aacute;n parametrizados de acuerdo con el lenguaje contable y financiero</li>
-                            <li>No cambie formatos en ninguna celda de este libro</li>
-                            <li>Los s&iacute;mbolos para los datos son (.) punto para miles y (,) coma para decimales</li>
-                            <li>Las celdas no pueden contener espacios ni antes ni al final de su contenido</li>
-                            <li>No modifique ni reemplace el dise&ntilde;o de tablas de datos. Solo debe agregar los datos sin ning&uacute;n formato</li>
-                            <li>Es indispensable que los resultados del mes est&eacute;n registrados en la cuenta 36</li>
-                            <li>Es indispensable que en diciembre se cierren todas las cuentas temporales</li>
+                            <li>@Resources.Strings.Datos_Regla1</li>
+                            <li>@Resources.Strings.Datos_Regla2</li>
+                            <li>@Resources.Strings.Datos_Regla3</li>
+                            <li>@Resources.Strings.Datos_Regla4</li>
+                            <li>@Resources.Strings.Datos_Regla5</li>
+                            <li>@Resources.Strings.Datos_Regla6</li>
+                            <li>@Resources.Strings.Datos_Regla7</li>
+                            <li>@Resources.Strings.Datos_Regla8</li>
+                            <li>@Resources.Strings.Datos_Regla9</li>
+                            <li>@Resources.Strings.Datos_Regla10</li>
+                            <li>@Resources.Strings.Datos_Regla11</li>
+                            <li>@Resources.Strings.Datos_Regla12</li>
                         </ol>
                     </div>
                 </div>
@@ -394,7 +397,7 @@
                             data-toggle="collapse" data-target="#collapsePestanas"
                             aria-expanded="false" aria-controls="collapsePestanas"
                             style="background: linear-gradient(135deg, #01E1D7, #10b981);">
-                        <i class="fas fa-folder mr-2"></i> As&iacute; se usan cada una de las pesta&ntilde;as
+                        <i class="fas fa-folder mr-2"></i> @Resources.Strings.Datos_BtnPestanas
                     </button>
                 </div>
                 <div class="collapse" id="collapsePestanas">
@@ -405,7 +408,7 @@
                         </style>
 
                         <div class="mb-3">
-                            <input type="text" class="form-control search-input" id="busquedaPestanas" placeholder="Buscar hoja..." onkeyup="filtrarPestanas()">
+                            <input type="text" class="form-control search-input" id="busquedaPestanas" placeholder="@Resources.Strings.Datos_BuscarHoja" onkeyup="filtrarPestanas()">
                         </div>
                         <div class="accordion" id="accordionPestanas">
 
@@ -620,7 +623,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-modern-gradient" data-dismiss="modal" style="padding: 0.5rem 1.5rem;">
-                    <i class="fas fa-times mr-2"></i>Cerrar
+                    <i class="fas fa-times mr-2"></i>@Resources.Strings.Layout_Close
                 </button>
             </div>
         </div>
@@ -629,6 +632,22 @@
 
 @section scripts {
     <script>
+        var _datosMsg = {
+            formatoInvalido: '@Resources.Strings.Datos_JS_FormatoInvalido',
+            soloXlsx: '@Html.Raw(Resources.Strings.Datos_JS_SoloXlsx)',
+            empresaRequerida: '@Resources.Strings.Datos_JS_EmpresaRequerida',
+            seleccionarEmpresa: '@Html.Raw(Resources.Strings.Datos_JS_SeleccionarEmpresa)',
+            confirmarCarga: '@Resources.Strings.Datos_JS_ConfirmarCarga',
+            confirmarBold: '@Html.Raw(Resources.Strings.Datos_JS_ConfirmarBold)',
+            confirmarRest: '@Html.Raw(Resources.Strings.Datos_JS_ConfirmarRest)',
+            confirmarPregunta: '@Html.Raw(Resources.Strings.Datos_JS_ConfirmarPregunta)',
+            siCargar: '@Html.Raw(Resources.Strings.Datos_JS_SiCargar)',
+            cancelar: '@Resources.Strings.Layout_Cancel',
+            procesando: '@Resources.Strings.Datos_JS_Procesando',
+            dropText: '@Html.Raw(Resources.Strings.Datos_DropText)',
+            dropSubtext: '@Resources.Strings.Datos_DropSubtext'
+        };
+
         $(document).ready(function () {
             var dropZone = $('#dropZone');
             var fileInput = $('#archivoExcel');
@@ -686,8 +705,8 @@
                 if (ext !== 'xlsx' && ext !== 'xlsm') {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'Formato no v\u00e1lido',
-                        text: 'Solo se permiten archivos .xlsx o .xlsm'
+                        title: _datosMsg.formatoInvalido,
+                        text: _datosMsg.soloXlsx
                     });
                     return;
                 }
@@ -707,8 +726,8 @@
             btnLimpiar.on('click', function (e) {
                 e.stopPropagation();
                 fileInput.val('');
-                $('#dropText').text('Arrastre su archivo aqu\u00ed o haga clic para seleccionar');
-                $('#dropSubtext').text('Formatos permitidos: .xlsx, .xlsm');
+                $('#dropText').text(_datosMsg.dropText);
+                $('#dropSubtext').text(_datosMsg.dropSubtext);
                 dropZone.css({
                     'border-color': '#d1d5db',
                     'background': 'white'
@@ -734,24 +753,24 @@
                 if (!empresa || empresa === '0') {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'Empresa no seleccionada',
-                        text: 'Debe seleccionar una empresa antes de cargar el archivo.'
+                        title: _datosMsg.empresaRequerida,
+                        text: _datosMsg.seleccionarEmpresa
                     });
                     return;
                 }
 
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Confirmar carga',
-                    html: '<strong>Esta acci\u00f3n eliminar\u00e1 todos los datos existentes</strong> de las tablas Z_ para la empresa seleccionada y los reemplazar\u00e1 con los nuevos datos del Excel.<br><br>\u00bfDesea continuar?',
+                    title: _datosMsg.confirmarCarga,
+                    html: '<strong>' + _datosMsg.confirmarBold + '</strong> ' + _datosMsg.confirmarRest + '<br><br>' + _datosMsg.confirmarPregunta,
                     showCancelButton: true,
-                    confirmButtonText: 'S\u00ed, cargar datos',
-                    cancelButtonText: 'Cancelar',
+                    confirmButtonText: _datosMsg.siCargar,
+                    cancelButtonText: _datosMsg.cancelar,
                     confirmButtonColor: '#6366F1',
                     cancelButtonColor: '#6c757d'
                 }).then(function (result) {
                     if (result.isConfirmed) {
-                        btnCargar.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Procesando...');
+                        btnCargar.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>' + _datosMsg.procesando);
                         form.submit();
                     }
                 });

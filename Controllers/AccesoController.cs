@@ -337,5 +337,24 @@ namespace bufinscustomers.Controllers
 
             return usuario;
         }
+
+        [HttpGet]
+        public ActionResult SetLanguage(string lang, string returnUrl)
+        {
+            if (lang == "es-CO" || lang == "en-US")
+            {
+                var cookie = new HttpCookie("lang", lang)
+                {
+                    Expires = DateTime.Now.AddYears(1),
+                    HttpOnly = true
+                };
+                Response.SetCookie(cookie);
+            }
+
+            if (string.IsNullOrEmpty(returnUrl) || !Url.IsLocalUrl(returnUrl))
+                returnUrl = "/";
+
+            return Redirect(returnUrl);
+        }
     }
 }

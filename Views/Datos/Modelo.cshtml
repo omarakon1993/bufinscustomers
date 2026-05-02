@@ -1,7 +1,7 @@
 @model bufinscustomers.Models.ModeloPageViewModel
 @using bufinscustomers.Helpers
 @{
-    ViewBag.Title = "Ejecución de Modelos";
+    ViewBag.Title = Resources.Strings.Modelo_PageTitle;
     Layout = "~/Views/Shared/_Layout.cshtml";
     var usuario = UsuarioSesionHelper.UsuarioActual;
     var esAdmin = usuario?.Admin == 1 || usuario?.Admin == 2;
@@ -17,7 +17,7 @@
     <div class="powerbi-header">
         <div class="powerbi-header-content">
             <i class="fas fa-cogs powerbi-header-icon"></i>
-            <h1 class="powerbi-header-title">Ejecuci&oacute;n de Modelos</h1>
+            <h1 class="powerbi-header-title">@Resources.Strings.Modelo_PageTitle</h1>
         </div>
     </div>
 
@@ -26,7 +26,7 @@
     <div class="filter-card">
         <h3 class="filter-card-title">
             <i class="fas fa-play-circle"></i>
-            Seleccione empresa, a&ntilde;o y modelo
+            @Resources.Strings.Modelo_CardTitle
         </h3>
 
         <form id="modeloForm" method="post" action="@Url.Action("EjecutarModelo", "Datos")">
@@ -41,10 +41,10 @@
                         <div class="form-group">
                             <label for="idEmpresa">
                                 <i class="fas fa-building"></i>
-                                Empresa <span class="required">*</span>
+                                @Resources.Strings.Modelo_LabelEmpresa <span class="required">*</span>
                             </label>
                             <select class="form-control" id="idEmpresa" name="idEmpresa" required>
-                                <option value="">-- Seleccione una empresa --</option>
+                                <option value="">@Resources.Strings.Modelo_SelectEmpresa</option>
                                 @if (esAdmin)
                                 {
                                     foreach (var empresa in Model.Empresas)
@@ -69,10 +69,10 @@
                         <div class="form-group">
                             <label for="anio">
                                 <i class="fas fa-calendar-alt"></i>
-                                A&ntilde;o de ejecuci&oacute;n <span class="required">*</span>
+                                @Resources.Strings.Modelo_LabelAnio <span class="required">*</span>
                             </label>
                             <select class="form-control" id="anio" name="anio" required disabled>
-                                <option value="">-- Seleccione una empresa primero --</option>
+                                <option value="">@Resources.Strings.Modelo_SelectEmpresaPrimero</option>
                             </select>
                         </div>
                     </div>
@@ -82,10 +82,10 @@
                         <div class="form-group">
                             <label for="selectModelo">
                                 <i class="fas fa-cog"></i>
-                                Modelo <span class="required">*</span>
+                                @Resources.Strings.Modelo_LabelModelo <span class="required">*</span>
                             </label>
                             <select class="form-control" id="selectModelo" required>
-                                <option value="">-- Seleccione un modelo --</option>
+                                <option value="">@Resources.Strings.Modelo_SelectModelo</option>
                                 @foreach (var m in Model.Modelos)
                                 {
                                     <option value="@m.Id"
@@ -110,11 +110,11 @@
             <div class="d-flex align-items-center gap-3 mt-2">
                 <button type="submit" id="btnEjecutar" class="btn-modern-gradient" disabled>
                     <i class="fas fa-play me-2"></i>
-                    <span id="btnTexto">Ejecutar modelo</span>
+                    <span id="btnTexto">@Resources.Strings.Modelo_BtnEjecutar</span>
                 </button>
                 <small class="text-muted" id="textoAyuda">
                     <i class="fas fa-info-circle" style="color:#6366F1;"></i>
-                    Complete los tres campos para habilitar la ejecuci&oacute;n.
+                    @Resources.Strings.Modelo_HintCompletar
                 </small>
             </div>
         </form>
@@ -124,14 +124,30 @@
 
 @section scripts {
 
+<script>
+    var _modeloMsg = {
+        selectEmpresaPrimero: '@Html.Raw(Resources.Strings.Modelo_SelectEmpresaPrimero)',
+        cargando: '@Resources.Strings.Modelo_JS_Cargando',
+        sinAnio: '@Html.Raw(Resources.Strings.Modelo_JS_SinAnio)',
+        errorAnio: '@Html.Raw(Resources.Strings.Modelo_JS_ErrorAnio)',
+        ejecutando: '@Resources.Strings.Modelo_JS_Ejecutando'
+    };
+    var _commonMsg = {
+        exito: '@Resources.Strings.Common_Exito',
+        error: '@Resources.Strings.Common_Error',
+        informacion: '@Resources.Strings.Common_Informacion',
+        aceptar: '@Resources.Strings.Common_Aceptar'
+    };
+</script>
+
 @if (TempData["SuccessMessage"] != null)
 {
     <script>
         Swal.fire({
             icon: 'success',
-            title: '\u00a1\u00c9xito!',
+            title: _commonMsg.exito,
             text: '@Html.Raw(TempData["SuccessMessage"].ToString().Replace("'", "\\'"))',
-            confirmButtonText: 'Aceptar',
+            confirmButtonText: _commonMsg.aceptar,
             confirmButtonColor: '#6366F1',
             allowOutsideClick: false
         }).then(function () {
@@ -144,9 +160,9 @@
     <script>
         Swal.fire({
             icon: 'error',
-            title: 'Error',
+            title: _commonMsg.error,
             text: '@Html.Raw(TempData["ErrorMessage"].ToString().Replace("'", "\\'"))',
-            confirmButtonText: 'Aceptar',
+            confirmButtonText: _commonMsg.aceptar,
             confirmButtonColor: '#6366F1',
             allowOutsideClick: false
         }).then(function () {
@@ -159,9 +175,9 @@
     <script>
         Swal.fire({
             icon: 'info',
-            title: 'Informaci\u00f3n',
+            title: _commonMsg.informacion,
             text: '@Html.Raw(TempData["InfoMessage"].ToString().Replace("'", "\\'"))',
-            confirmButtonText: 'Aceptar',
+            confirmButtonText: _commonMsg.aceptar,
             confirmButtonColor: '#6366F1',
             allowOutsideClick: false
         }).then(function () {
@@ -179,13 +195,13 @@
             var $anio = $('#anio');
 
             if (!idEmpresa) {
-                $anio.html('<option value="">-- Seleccione una empresa primero --</option>');
+                $anio.html('<option value="">' + _modeloMsg.selectEmpresaPrimero + '</option>');
                 $anio.prop('disabled', true);
                 actualizarBoton();
                 return;
             }
 
-            $anio.html('<option value="">Cargando...</option>');
+            $anio.html('<option value="">' + _modeloMsg.cargando + '</option>');
             $anio.prop('disabled', true);
 
             $.ajax({
@@ -197,13 +213,13 @@
                         $anio.html('<option value="' + response.anioEjecucion + '" selected>' + response.anioEjecucion + '</option>');
                         $anio.prop('disabled', false);
                     } else {
-                        $anio.html('<option value="">' + (response.message || 'Sin configuración de año') + '</option>');
+                        $anio.html('<option value="">' + (response.message || _modeloMsg.sinAnio) + '</option>');
                         $anio.prop('disabled', true);
                     }
                     actualizarBoton();
                 },
                 error: function () {
-                    $anio.html('<option value="">Error al cargar el a&ntilde;o</option>');
+                    $anio.html('<option value="">' + _modeloMsg.errorAnio + '</option>');
                     $anio.prop('disabled', true);
                     actualizarBoton();
                 }
@@ -248,7 +264,7 @@
 
             var $btn = $('#btnEjecutar');
             $btn.prop('disabled', true);
-            $('#btnTexto').text('Ejecutando...');
+            $('#btnTexto').text(_modeloMsg.ejecutando);
             $btn.find('i').attr('class', 'spinner-border spinner-border-sm me-2');
         });
     });

@@ -1,8 +1,8 @@
-﻿@model dynamic
+@model dynamic
 @using bufinscustomers.Models
 
 @{
-    ViewBag.Title = "Informe de Tablas de Datos";
+    ViewBag.Title = Resources.Strings.Tablas_PageTitle;
     var tablas = ViewBag.Tablas as List<TablaDatos>;
     var empresas = ViewBag.Empresas as List<Empresas>;
     var esAdmin = (bool)ViewBag.EsAdmin;
@@ -17,7 +17,7 @@
     <div class="powerbi-header">
         <div class="powerbi-header-content">
             <i class="fas fa-chart-line powerbi-header-icon"></i>
-            <h1 class="powerbi-header-title">Informe de Tablas de Datos</h1>
+            <h1 class="powerbi-header-title">@Resources.Strings.Tablas_PageTitle</h1>
         </div>
     </div>
 
@@ -59,7 +59,7 @@
     <div class="filter-card">
         <h3 class="filter-card-title">
             <i class="fas fa-filter"></i>
-            Filtros de Consulta
+            @Resources.Strings.Common_FiltrosConsulta
         </h3>
 
         <form id="formFiltros">
@@ -71,10 +71,10 @@
                         <div class="form-group">
                             <label for="selectTabla">
                                 <i class="fas fa-table"></i>
-                                Tabla <span class="required">*</span>
+                                @Resources.Strings.Common_LabelTabla <span class="required">*</span>
                             </label>
                             <select id="selectTabla" name="NombreTabla" class="form-control" required>
-                                <option value="">-- Seleccione --</option>
+                                <option value="">@Resources.Strings.Common_Seleccione</option>
                                 @if (tablas != null)
                                 {
                                     foreach (var tabla in tablas)
@@ -93,12 +93,12 @@
                         <div class="form-group">
                             <label for="selectEmpresa">
                                 <i class="fas fa-building"></i>
-                                Empresa @if (esAdmin) { <span class="required">*</span> }
+                                @Resources.Strings.Common_LabelEmpresa @if (esAdmin) { <span class="required">*</span> }
                             </label>
                             <select id="selectEmpresa" name="IdEmpresa" class="form-control" @(esAdmin ? "required" : "")>
                                 @if (esAdmin)
                                 {
-                                    <option value="">-- Seleccione --</option>
+                                    <option value="">@Resources.Strings.Common_Seleccione</option>
                                 }
                                 @if (empresas != null)
                                 {
@@ -118,10 +118,10 @@
                         <div class="form-group">
                             <label for="selectAnio">
                                 <i class="fas fa-calendar-alt"></i>
-                                Año
+                                @Resources.Strings.Common_LabelAnio
                             </label>
                             <select id="selectAnio" name="Anio" class="form-control">
-                                <option value="">-- Todos --</option>
+                                <option value="">@Resources.Strings.Common_Todos</option>
                             </select>
                         </div>
                     </div>
@@ -131,22 +131,22 @@
                         <div class="form-group">
                             <label for="selectMes">
                                 <i class="fas fa-calendar-day"></i>
-                                Mes
+                                @Resources.Strings.Common_LabelMes
                             </label>
                             <select id="selectMes" name="Mes" class="form-control">
-                                <option value="">-- Todos --</option>
-                                <option value="1">Enero</option>
-                                <option value="2">Febrero</option>
-                                <option value="3">Marzo</option>
-                                <option value="4">Abril</option>
-                                <option value="5">Mayo</option>
-                                <option value="6">Junio</option>
-                                <option value="7">Julio</option>
-                                <option value="8">Agosto</option>
-                                <option value="9">Septiembre</option>
-                                <option value="10">Octubre</option>
-                                <option value="11">Noviembre</option>
-                                <option value="12">Diciembre</option>
+                                <option value="">@Resources.Strings.Common_Todos</option>
+                                <option value="1">@Resources.Strings.Common_Mes1</option>
+                                <option value="2">@Resources.Strings.Common_Mes2</option>
+                                <option value="3">@Resources.Strings.Common_Mes3</option>
+                                <option value="4">@Resources.Strings.Common_Mes4</option>
+                                <option value="5">@Resources.Strings.Common_Mes5</option>
+                                <option value="6">@Resources.Strings.Common_Mes6</option>
+                                <option value="7">@Resources.Strings.Common_Mes7</option>
+                                <option value="8">@Resources.Strings.Common_Mes8</option>
+                                <option value="9">@Resources.Strings.Common_Mes9</option>
+                                <option value="10">@Resources.Strings.Common_Mes10</option>
+                                <option value="11">@Resources.Strings.Common_Mes11</option>
+                                <option value="12">@Resources.Strings.Common_Mes12</option>
                             </select>
                         </div>
                     </div>
@@ -156,10 +156,10 @@
                         <div class="form-group">
                             <label for="selectVariable">
                                 <i class="fas fa-tag"></i>
-                                Variable
+                                @Resources.Strings.Common_LabelVariable
                             </label>
                             <select id="selectVariable" name="Variable" class="form-control">
-                                <option value="">-- Todas --</option>
+                                <option value="">@Resources.Strings.Common_Todas</option>
                             </select>
                         </div>
                     </div>
@@ -169,13 +169,13 @@
             <!-- Botones de accion -->
             <div class="btn-group-actions">
                 <button type="button" id="btnConsultar" class="btn btn-modern-gradient">
-                    <i class="fas fa-search mr-2"></i>Consultar
+                    <i class="fas fa-search mr-2"></i>@Resources.Strings.Common_Consultar
                 </button>
                 <button type="button" id="btnLimpiar" class="btn btn-modern-secondary">
-                    <i class="fas fa-eraser mr-2"></i>Limpiar
+                    <i class="fas fa-eraser mr-2"></i>@Resources.Strings.Common_Limpiar
                 </button>
                 <button type="button" id="btnExportar" class="btn btn-modern-success" style="display: none;">
-                    <i class="fas fa-file-excel mr-2"></i>Exportar Excel
+                    <i class="fas fa-file-excel mr-2"></i>@Resources.Strings.Common_ExportarExcel
                 </button>
             </div>
         </form>
@@ -184,7 +184,7 @@
     <!-- Loading Spinner -->
     <div id="loadingSpinner" class="loading-spinner">
         <i class="fas fa-spinner"></i>
-        <p>Consultando datos...</p>
+        <p>@Resources.Strings.Common_ConsultandoDatos</p>
     </div>
 
     <!-- Tabla de resultados -->
@@ -192,7 +192,7 @@
         <div class="table-container">
             <div class="table-header">
                 <h5>
-                    <i class="fas fa-list mr-2"></i>Resultados
+                    <i class="fas fa-list mr-2"></i>@Resources.Strings.Common_Resultados
                 </h5>
                 <span id="totalRegistros" class="info-badge"></span>
             </div>
@@ -209,13 +209,33 @@
     <!-- Mensaje cuando no hay datos -->
     <div id="noDataMessage" class="no-data-message" style="display: none;">
         <i class="fas fa-inbox"></i>
-        <h4>No se encontraron datos</h4>
-        <p>No hay registros que coincidan con los filtros seleccionados.</p>
+        <h4>@Resources.Strings.Common_NoData</h4>
+        <p>@Resources.Strings.Common_NoDataFiltros</p>
     </div>
 </div>
 
 @section scripts {
     <script>
+        var _tablasMsg = {
+            errorAnios:        '@Html.Raw(Resources.Strings.Tablas_JS_ErrorAnios)',
+            errorVariables:    '@Html.Raw(Resources.Strings.Tablas_JS_ErrorVariables)',
+            errorConexion:     '@Html.Raw(Resources.Strings.Tablas_JS_ErrorConexion)',
+            tablaRequerida:    '@Resources.Strings.Common_JS_TablaRequerida',
+            tablaSeleccionar:  '@Html.Raw(Resources.Strings.Common_JS_TablaSeleccionar)',
+            empresaRequerida:  '@Resources.Strings.Common_JS_EmpresaRequerida',
+            empresaSeleccionar:'@Html.Raw(Resources.Strings.Common_JS_EmpresaSeleccionar)',
+            sinDatos:          '@Resources.Strings.Common_JS_SinDatos',
+            sinDatosExportar:  '@Html.Raw(Resources.Strings.Common_JS_SinDatosExportar)',
+            exportando:        '@Resources.Strings.Common_JS_ExportandoExcel',
+            generandoExcel:    '@Html.Raw(Resources.Strings.Common_JS_GenerandoExcel)',
+            todos:             '@Resources.Strings.Common_Todos',
+            todas:             '@Resources.Strings.Common_Todas',
+            registrosPag:      '@Resources.Strings.Common_RegistrosPag',
+            noResultados:      '@Html.Raw(Resources.Strings.Common_Select2NoResults)',
+            buscando:          '@Html.Raw(Resources.Strings.Common_Select2Searching)',
+            error:             '@Resources.Strings.Common_Error'
+        };
+
         $(document).ready(function () {
             var datosActuales = null;
             var filtrosActuales = null;
@@ -231,8 +251,8 @@
                     cargarAnios(nombreTabla, idEmpresa);
                     cargarVariables(nombreTabla, idEmpresa);
                 } else {
-                    $('#selectAnio').html('<option value="">-- Todos --</option>');
-                    $('#selectVariable').html('<option value="">-- Todas --</option>');
+                    $('#selectAnio').html('<option value="">' + _tablasMsg.todos + '</option>');
+                    $('#selectVariable').html('<option value="">' + _tablasMsg.todas + '</option>');
                 }
 
                 ocultarResultados();
@@ -263,7 +283,7 @@
                     success: function (response) {
                         if (response.success) {
                             var select = $('#selectAnio');
-                            select.html('<option value="">-- Todos --</option>');
+                            select.html('<option value="">' + _tablasMsg.todos + '</option>');
 
                             if (response.anios && response.anios.length > 0) {
                                 $.each(response.anios, function (i, anio) {
@@ -271,21 +291,20 @@
                                 });
                             }
 
-                            // Re-inicializar Select2 después de actualizar opciones
                             select.trigger('change');
                         } else {
                             Swal.fire({
                                 icon: 'error',
-                                title: 'Error',
-                                text: response.message || 'Error al cargar anos'
+                                title: _tablasMsg.error,
+                                text: response.message || _tablasMsg.errorAnios
                             });
                         }
                     },
                     error: function () {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Error',
-                            text: 'Error al cargar anos'
+                            title: _tablasMsg.error,
+                            text: _tablasMsg.errorAnios
                         });
                     }
                 });
@@ -303,7 +322,7 @@
                     success: function (response) {
                         if (response.success) {
                             var select = $('#selectVariable');
-                            select.html('<option value="">-- Todas --</option>');
+                            select.html('<option value="">' + _tablasMsg.todas + '</option>');
 
                             if (response.variables && response.variables.length > 0) {
                                 $.each(response.variables, function (i, variable) {
@@ -311,15 +330,14 @@
                                 });
                             }
 
-                            // Re-inicializar Select2 después de actualizar opciones
                             select.trigger('change');
                         }
                     },
                     error: function () {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Error',
-                            text: 'Error al cargar variables'
+                            title: _tablasMsg.error,
+                            text: _tablasMsg.errorVariables
                         });
                     }
                 });
@@ -332,8 +350,8 @@
                 if (!nombreTabla) {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'Tabla requerida',
-                        text: 'Por favor seleccione una tabla'
+                        title: _tablasMsg.tablaRequerida,
+                        text: _tablasMsg.tablaSeleccionar
                     });
                     return;
                 }
@@ -345,8 +363,8 @@
                     if (!idEmpresa) {
                         Swal.fire({
                             icon: 'warning',
-                            title: 'Empresa requerida',
-                            text: 'Por favor seleccione una empresa'
+                            title: _tablasMsg.empresaRequerida,
+                            text: _tablasMsg.empresaSeleccionar
                         });
                         return;
                     }
@@ -389,8 +407,8 @@
                         } else {
                             Swal.fire({
                                 icon: 'error',
-                                title: 'Error',
-                                text: response.message || 'Error al consultar datos'
+                                title: _tablasMsg.error,
+                                text: response.message || _tablasMsg.errorConexion
                             });
                         }
                     },
@@ -398,8 +416,8 @@
                         $('#loadingSpinner').hide();
                         Swal.fire({
                             icon: 'error',
-                            title: 'Error',
-                            text: 'Error de conexion al consultar los datos'
+                            title: _tablasMsg.error,
+                            text: _tablasMsg.errorConexion
                         });
                     }
                 });
@@ -434,7 +452,7 @@
                 }
 
                 // Actualizar informacion de registros
-                $('#totalRegistros').text(response.totalRegistros + ' registros | Pag. ' + paginaActual + '/' + totalPaginas);
+                $('#totalRegistros').text(response.totalRegistros + ' ' + _tablasMsg.registrosPag + ' ' + paginaActual + '/' + totalPaginas);
 
                 // Crear controles de paginacion
                 crearPaginacion(totalPaginas);
@@ -530,14 +548,12 @@
 
             // Evento: boton limpiar
             $('#btnLimpiar').on('click', function () {
-                // Resetear selects con Select2
                 $('#selectTabla').val('').trigger('change');
                 $('#selectEmpresa').val($('#selectEmpresa option:first').val()).trigger('change');
                 $('#selectMes').val('').trigger('change');
 
-                // Limpiar y actualizar Año y Variable
-                $('#selectAnio').html('<option value="">-- Todos --</option>').trigger('change');
-                $('#selectVariable').html('<option value="">-- Todas --</option>').trigger('change');
+                $('#selectAnio').html('<option value="">' + _tablasMsg.todos + '</option>').trigger('change');
+                $('#selectVariable').html('<option value="">' + _tablasMsg.todas + '</option>').trigger('change');
 
                 ocultarResultados();
             });
@@ -547,8 +563,8 @@
                 if (!filtrosActuales) {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'Sin datos',
-                        text: 'No hay datos para exportar'
+                        title: _tablasMsg.sinDatos,
+                        text: _tablasMsg.sinDatosExportar
                     });
                     return;
                 }
@@ -574,81 +590,24 @@
 
                 Swal.fire({
                     icon: 'success',
-                    title: 'Exportando...',
-                    text: 'Generando archivo Excel',
+                    title: _tablasMsg.exportando,
+                    text: _tablasMsg.generandoExcel,
                     timer: 2000,
                     showConfirmButton: false
                 });
             });
 
-            // Inicializar Select2 para todos los filtros principales
-            $('#selectTabla').select2({
-                placeholder: '-- Seleccione --',
-                allowClear: false,
-                width: '100%',
-                language: {
-                    noResults: function() {
-                        return "No se encontraron resultados";
-                    },
-                    searching: function() {
-                        return "Buscando...";
-                    }
-                }
-            });
+            // Inicializar Select2
+            var s2lang = {
+                noResults: function() { return _tablasMsg.noResultados; },
+                searching: function() { return _tablasMsg.buscando; }
+            };
 
-            $('#selectEmpresa').select2({
-                placeholder: '-- Seleccione --',
-                allowClear: false,
-                width: '100%',
-                language: {
-                    noResults: function() {
-                        return "No se encontraron resultados";
-                    },
-                    searching: function() {
-                        return "Buscando...";
-                    }
-                }
-            });
-
-            $('#selectAnio').select2({
-                placeholder: '-- Todos --',
-                allowClear: true,
-                width: '100%',
-                language: {
-                    noResults: function() {
-                        return "No se encontraron resultados";
-                    },
-                    searching: function() {
-                        return "Buscando...";
-                    }
-                }
-            });
-
-            $('#selectMes').select2({
-                placeholder: '-- Todos --',
-                allowClear: true,
-                width: '100%',
-                minimumResultsForSearch: -1,
-                language: {
-                    noResults: function() {
-                        return "No se encontraron resultados";
-                    }
-                }
-            });
-
-            $('#selectVariable').select2({
-                placeholder: '-- Todas --',
-                allowClear: true,
-                width: '100%',
-                language: {
-                    noResults: function() {
-                        return "No se encontraron resultados";
-                    },
-                    searching: function() {
-                        return "Buscando...";
-                    }
-                }
-            });
+            $('#selectTabla').select2({ placeholder: _tablasMsg.todos, allowClear: false, width: '100%', language: s2lang });
+            $('#selectEmpresa').select2({ placeholder: _tablasMsg.todos, allowClear: false, width: '100%', language: s2lang });
+            $('#selectAnio').select2({ placeholder: _tablasMsg.todos, allowClear: true, width: '100%', language: s2lang });
+            $('#selectMes').select2({ placeholder: _tablasMsg.todos, allowClear: true, width: '100%', minimumResultsForSearch: -1, language: { noResults: function() { return _tablasMsg.noResultados; } } });
+            $('#selectVariable').select2({ placeholder: _tablasMsg.todas, allowClear: true, width: '100%', language: s2lang });
         });
     </script>
     <!-- Select2 JS Local -->

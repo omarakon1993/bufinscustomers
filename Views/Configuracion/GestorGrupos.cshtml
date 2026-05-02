@@ -6,7 +6,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Gestor de Grupos</title>
+    <title>@Resources.Strings.Grp_PageTitle</title>
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="~/Assets/css/configuracion-admin.css" rel="stylesheet" />
@@ -36,7 +36,7 @@
 
 <div class="card shadow mb-4 mt-4">
     <div class="card-header">
-        <i class="fas fa-layer-group"></i> Gestor de Grupos
+        <i class="fas fa-layer-group"></i> @Resources.Strings.Grp_PageTitle
     </div>
     <div class="card-body p-0">
         <div class="table-responsive table-wrapper">
@@ -44,17 +44,17 @@
                 <thead>
                     <tr>
                         <th style="width:50px">#</th>
-                        <th>Nombre</th>
-                        <th style="width:80px;text-align:center">Icono</th>
-                        <th style="width:150px">Categor&iacute;a</th>
-                        <th style="width:70px;text-align:center">Orden</th>
-                        <th style="width:110px;text-align:center">Acciones</th>
+                        <th>@Resources.Strings.Rep_LabelNombre</th>
+                        <th style="width:80px;text-align:center">@Resources.Strings.Menu_LabelIcono</th>
+                        <th style="width:150px">@Resources.Strings.Grp_ThCategoria</th>
+                        <th style="width:70px;text-align:center">@Resources.Strings.Menu_ThOrden</th>
+                        <th style="width:110px;text-align:center">@Resources.Strings.Common_ThAcciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (!Model.Any())
                     {
-                        <tr><td colspan="6" class="text-center text-muted py-3">No hay grupos registrados.</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted py-3">@Resources.Strings.Grp_NoGrupos</td></tr>
                     }
                     @foreach (var g in Model)
                     {
@@ -74,12 +74,12 @@
                             <td style="text-align:center">@g.Orden</td>
                             <td style="text-align:center">
                                 <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-primary" title="Editar"
+                                    <button type="button" class="btn btn-primary" title="@Resources.Strings.Rep_BtnEditar"
                                             data-toggle="modal" data-target="#editModal"
                                             onclick="setEditar(@g.Id, '@Html.Raw(g.Nombre?.Replace("'","\\'")??"")', '@Html.Raw(g.Icono?.Replace("'","\\'")??"")', @g.IdCategoria, @g.Orden)">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button type="button" class="btn btn-outline-danger" title="Eliminar"
+                                    <button type="button" class="btn btn-outline-danger" title="@Resources.Strings.Common_BtnEliminar"
                                             onclick="confirmarEliminar(@g.Id, '@Html.Raw(g.Nombre?.Replace("'","\\'")??"")')">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
@@ -93,7 +93,7 @@
     </div>
     <div class="card-footer">
         <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearModal">
-            <i class="fas fa-plus-circle mr-1"></i> Nuevo grupo
+            <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Grp_BtnNuevo
         </button>
     </div>
 </div>
@@ -103,23 +103,23 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-plus-circle"></i> Nuevo grupo</h5>
+                <h5 class="modal-title"><i class="fas fa-plus-circle"></i> @Resources.Strings.Grp_ModalCreateTitle</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form method="post" action="/GestorGrupos/Crear">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>Nombre <span class="text-danger">*</span></label>
+                        <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span></label>
                         <input type="text" class="form-control form-control-sm" name="Nombre" required maxlength="100" placeholder="Ej: Plantillas de cargue" />
                     </div>
                     <div class="mb-3">
-                        <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>Icono <small class="text-muted">(FontAwesome)</small></label>
+                        <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono <small class="text-muted">(FontAwesome)</small></label>
                         <input type="text" class="form-control form-control-sm" name="Icono" placeholder="fas fa-layer-group" maxlength="100" />
                     </div>
                     <div class="mb-3">
-                        <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>Categor&iacute;a <span class="text-danger">*</span></label>
+                        <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>@Resources.Strings.Grp_LabelCategoria <span class="text-danger">*</span></label>
                         <select class="form-control form-control-sm" name="IdCategoria" required>
-                            <option value="">-- Seleccionar categor&iacute;a --</option>
+                            <option value="">@Resources.Strings.Grp_SelCategoria</option>
                             @foreach (var cat in categorias)
                             {
                                 <option value="@cat.Id">@cat.Nombre</option>
@@ -127,16 +127,16 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>Orden</label>
+                        <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_ThOrden</label>
                         <input type="number" class="form-control form-control-sm" name="Orden" value="0" min="0" />
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i>Cancelar
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                     </button>
                     <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus-circle mr-1"></i>Crear
+                        <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.Common_BtnCrear
                     </button>
                 </div>
             </form>
@@ -149,24 +149,24 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-edit"></i> Editar grupo</h5>
+                <h5 class="modal-title"><i class="fas fa-edit"></i> @Resources.Strings.Grp_ModalEditTitle</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form method="post" action="/GestorGrupos/Editar">
                 <input type="hidden" name="Id" id="editId" />
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>Nombre <span class="text-danger">*</span></label>
+                        <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span></label>
                         <input type="text" class="form-control form-control-sm" name="Nombre" id="editNombre" required maxlength="100" />
                     </div>
                     <div class="mb-3">
-                        <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>Icono <small class="text-muted">(FontAwesome)</small></label>
+                        <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono <small class="text-muted">(FontAwesome)</small></label>
                         <input type="text" class="form-control form-control-sm" name="Icono" id="editIcono" maxlength="100" />
                     </div>
                     <div class="mb-3">
-                        <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>Categor&iacute;a <span class="text-danger">*</span></label>
+                        <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>@Resources.Strings.Grp_LabelCategoria <span class="text-danger">*</span></label>
                         <select class="form-control form-control-sm" name="IdCategoria" id="editIdCategoria" required>
-                            <option value="">-- Seleccionar categor&iacute;a --</option>
+                            <option value="">@Resources.Strings.Grp_SelCategoria</option>
                             @foreach (var cat in categorias)
                             {
                                 <option value="@cat.Id">@cat.Nombre</option>
@@ -174,16 +174,16 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>Orden</label>
+                        <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_ThOrden</label>
                         <input type="number" class="form-control form-control-sm" name="Orden" id="editOrden" min="0" />
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i>Cancelar
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                     </button>
                     <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="fas fa-save mr-1"></i>Guardar cambios
+                        <i class="fas fa-save mr-1"></i>@Resources.Strings.Common_GuardarCambios
                     </button>
                 </div>
             </form>
@@ -210,13 +210,13 @@
 
     function confirmarEliminar(id, nombre) {
         Swal.fire({
-            title: '¿Eliminar grupo?',
-            text: '"' + nombre + '" se eliminará permanentemente.',
+            title: '@Html.Raw(Resources.Strings.Grp_JS_ElimTitle.Replace("'", "\\'"))',
+            text: '"' + nombre + '" @Html.Raw(Resources.Strings.Grp_JS_ElimSuffix.Replace("'", "\\'"))',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#e74a3b',
-            cancelButtonText: 'Cancelar',
-            confirmButtonText: 'Sí, eliminar'
+            cancelButtonText: '@Html.Raw(Resources.Strings.Layout_Cancel.Replace("'", "\\'"))',
+            confirmButtonText: '@Html.Raw(Resources.Strings.Common_BtnEliminar.Replace("'", "\\'"))'
         }).then(function(r) {
             if (r.isConfirmed) {
                 document.getElementById('elimId').value = id;

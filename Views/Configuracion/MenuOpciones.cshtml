@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Gestor de opciones de menu</title>
+    <title>@Resources.Strings.Menu_PageTitle</title>
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
@@ -76,27 +76,27 @@
 
 <div class="card shadow mb-4 mt-4">
     <div class="card-header">
-        <i class="fas fa-bars"></i> Gestor de opciones de menu
+        <i class="fas fa-bars"></i> @Resources.Strings.Menu_PageTitle
     </div>
     <div class="card-body p-0">
         <div class="table-responsive table-wrapper">
             <table class="table table-bordered table-hover table-compact">
                 <thead>
                     <tr>
-                        <th class="col-codigo">Codigo</th>
-                        <th class="col-nombre">Nombre</th>
-                        <th class="col-categoria">Categoria</th>
-                        <th class="col-grupo">Grupo</th>
-                        <th class="col-ruta">Controller / Action</th>
-                        <th class="col-orden">Ord.</th>
-                        <th class="col-acceso">Acceso</th>
-                        <th class="col-acciones">Acciones</th>
+                        <th class="col-codigo">@Resources.Strings.Menu_ThCodigo</th>
+                        <th class="col-nombre">@Resources.Strings.Menu_ThNombre</th>
+                        <th class="col-categoria">@Resources.Strings.Menu_ThCategoria</th>
+                        <th class="col-grupo">@Resources.Strings.Menu_ThGrupo</th>
+                        <th class="col-ruta">@Resources.Strings.Menu_ThRuta</th>
+                        <th class="col-orden">@Resources.Strings.Menu_ThOrden</th>
+                        <th class="col-acceso">@Resources.Strings.Menu_ThAcceso</th>
+                        <th class="col-acciones">@Resources.Strings.Common_ThAcciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (!Model.Any())
                     {
-                        <tr><td colspan="8" class="text-center text-muted py-3">No hay opciones registradas.</td></tr>
+                        <tr><td colspan="8" class="text-center text-muted py-3">@Resources.Strings.Menu_NoOpciones</td></tr>
                     }
                     @foreach (var opcion in Model)
                     {
@@ -110,25 +110,25 @@
                             <td class="col-acceso">
                                 @if (opcion.SoloSuperAdmin)
                                 {
-                                    <span class="badge-super">Super Admin</span>
+                                    <span class="badge-super">@Resources.Strings.Menu_BadgeSuperAdmin</span>
                                 }
                                 else if (opcion.SoloAdminEmpresa)
                                 {
-                                    <span class="badge-admin-emp">Admin Emp.</span>
+                                    <span class="badge-admin-emp">@Resources.Strings.Menu_BadgeAdminEmp</span>
                                 }
                                 else
                                 {
-                                    <span class="badge-normal">Todos</span>
+                                    <span class="badge-normal">@Resources.Strings.Menu_BadgeTodos</span>
                                 }
                             </td>
                             <td class="col-acciones">
                                 <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-primary" title="Editar opcion"
+                                    <button type="button" class="btn btn-primary" title="@Resources.Strings.Menu_TitleEditar"
                                             data-toggle="modal" data-target="#editModal"
                                             onclick="cargarEditar(@opcion.Id)">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button type="button" class="btn btn-outline-danger" title="Eliminar opcion"
+                                    <button type="button" class="btn btn-outline-danger" title="@Resources.Strings.Menu_TitleEliminar"
                                             onclick="confirmarEliminar(@opcion.Id)">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
@@ -142,7 +142,7 @@
     </div>
     <div class="card-footer">
         <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearModal">
-            <i class="fas fa-plus-circle mr-1"></i> Crear opcion
+            <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Menu_BtnCrear
         </button>
     </div>
 </div>
@@ -152,58 +152,58 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-plus-circle"></i> Crear opcion de menu</h5>
+                <h5 class="modal-title"><i class="fas fa-plus-circle"></i> @Resources.Strings.Menu_ModalCreateTitle</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form method="post" action="/MenuOpciones/Crear">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-code mr-1" style="color:#583AFF"></i>Codigo <span class="text-danger">*</span></label>
+                            <label><i class="fas fa-code mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelCodigo <span class="text-danger">*</span></label>
                             <input type="text" class="form-control form-control-sm" name="Codigo" required placeholder="Ej: DATOS_NUEVA_OPCION" />
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>Nombre <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-sm" name="Nombre" required placeholder="Nombre visible en el menu" />
+                            <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelNombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" name="Nombre" required placeholder="@Resources.Strings.Menu_LabelNombre" />
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label><i class="fas fa-align-left mr-1" style="color:#583AFF"></i>Descripcion</label>
-                        <input type="text" class="form-control form-control-sm" name="Descripcion" placeholder="Descripcion opcional" />
+                        <label><i class="fas fa-align-left mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelDescripcion</label>
+                        <input type="text" class="form-control form-control-sm" name="Descripcion" placeholder="@Resources.Strings.Menu_LabelDescripcion" />
                     </div>
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>Icono</label>
+                            <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono</label>
                             <input type="text" class="form-control form-control-sm" name="Icono" placeholder="fas fa-icon" />
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>Orden</label>
+                            <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelOrden</label>
                             <input type="number" class="form-control form-control-sm" name="Orden" value="0" min="0" />
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-sitemap mr-1" style="color:#583AFF"></i>Controller <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-sm" name="Controller" required placeholder="Nombre del controlador" />
+                            <label><i class="fas fa-sitemap mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelController <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" name="Controller" required placeholder="@Resources.Strings.Menu_LabelController" />
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-play mr-1" style="color:#583AFF"></i>Action <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-sm" name="Action" required placeholder="Nombre de la accion" />
+                            <label><i class="fas fa-play mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelAction <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" name="Action" required placeholder="@Resources.Strings.Menu_LabelAction" />
                         </div>
                     </div>
                     <hr />
-                    <p class="text-muted mb-2"><small><i class="fas fa-columns mr-1"></i>Ubicacion en el sidebar</small></p>
+                    <p class="text-muted mb-2"><small><i class="fas fa-columns mr-1"></i>@Resources.Strings.Menu_SidebarLocation</small></p>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>Categoria</label>
+                            <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelCategoria</label>
                             <select class="form-control form-control-sm" id="crearCategoria" onchange="filtrarGrupos('crear')">
-                                <option value="">-- Seleccionar categoria --</option>
+                                <option value="">@Resources.Strings.Menu_SelCategoria</option>
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-layer-group mr-1" style="color:#583AFF"></i>Grupo <span class="text-danger">*</span></label>
+                            <label><i class="fas fa-layer-group mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelGrupo <span class="text-danger">*</span></label>
                             <select class="form-control form-control-sm" id="crearGrupoSelect" onchange="seleccionarGrupo(this, 'crear')" required>
-                                <option value="">-- Seleccionar grupo --</option>
+                                <option value="">@Resources.Strings.Menu_SelGrupo</option>
                             </select>
                             <input type="hidden" id="crearIdGrupo" name="IdGrupo" value="0" />
                         </div>
@@ -212,23 +212,23 @@
                         <input class="form-check-input" type="checkbox" name="SoloSuperAdmin" value="true" id="crearSoloSuperAdmin" />
                         <input type="hidden" name="SoloSuperAdmin" value="false" />
                         <label class="form-check-label" for="crearSoloSuperAdmin">
-                            <i class="fas fa-shield-alt text-danger mr-1"></i> Solo Super Admin
+                            <i class="fas fa-shield-alt text-danger mr-1"></i> @Resources.Strings.Menu_LabelSoloSuperAdmin
                         </label>
                     </div>
                     <div class="form-check mb-2">
                         <input class="form-check-input" type="checkbox" name="SoloAdminEmpresa" value="true" id="crearSoloAdminEmpresa" />
                         <input type="hidden" name="SoloAdminEmpresa" value="false" />
                         <label class="form-check-label" for="crearSoloAdminEmpresa">
-                            <i class="fas fa-building text-warning mr-1"></i> Solo Admin Empresa
+                            <i class="fas fa-building text-warning mr-1"></i> @Resources.Strings.Menu_LabelSoloAdminEmpresa
                         </label>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i>Cancelar
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                     </button>
                     <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus-circle mr-1"></i>Crear
+                        <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.Common_BtnCrear
                     </button>
                 </div>
             </form>
@@ -241,7 +241,7 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-edit"></i> Editar opcion de menu</h5>
+                <h5 class="modal-title"><i class="fas fa-edit"></i> @Resources.Strings.Menu_ModalEditTitle</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form method="post" action="/MenuOpciones/Editar">
@@ -249,51 +249,51 @@
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-code mr-1" style="color:#583AFF"></i>Codigo <span class="text-danger">*</span></label>
+                            <label><i class="fas fa-code mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelCodigo <span class="text-danger">*</span></label>
                             <input type="text" class="form-control form-control-sm" id="editCodigo" name="Codigo" required />
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>Nombre <span class="text-danger">*</span></label>
+                            <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelNombre <span class="text-danger">*</span></label>
                             <input type="text" class="form-control form-control-sm" id="editNombre" name="Nombre" required />
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label><i class="fas fa-align-left mr-1" style="color:#583AFF"></i>Descripcion</label>
+                        <label><i class="fas fa-align-left mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelDescripcion</label>
                         <input type="text" class="form-control form-control-sm" id="editDescripcion" name="Descripcion" />
                     </div>
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>Icono</label>
+                            <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono</label>
                             <input type="text" class="form-control form-control-sm" id="editIcono" name="Icono" />
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>Orden</label>
+                            <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelOrden</label>
                             <input type="number" class="form-control form-control-sm" id="editOrden" name="Orden" min="0" />
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-sitemap mr-1" style="color:#583AFF"></i>Controller <span class="text-danger">*</span></label>
+                            <label><i class="fas fa-sitemap mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelController <span class="text-danger">*</span></label>
                             <input type="text" class="form-control form-control-sm" id="editController" name="Controller" required />
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-play mr-1" style="color:#583AFF"></i>Action <span class="text-danger">*</span></label>
+                            <label><i class="fas fa-play mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelAction <span class="text-danger">*</span></label>
                             <input type="text" class="form-control form-control-sm" id="editAction" name="Action" required />
                         </div>
                     </div>
                     <hr />
-                    <p class="text-muted mb-2"><small><i class="fas fa-columns mr-1"></i>Ubicacion en el sidebar</small></p>
+                    <p class="text-muted mb-2"><small><i class="fas fa-columns mr-1"></i>@Resources.Strings.Menu_SidebarLocation</small></p>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>Categoria</label>
+                            <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelCategoria</label>
                             <select class="form-control form-control-sm" id="editCategoria" onchange="filtrarGrupos('edit')">
-                                <option value="">-- Seleccionar categoria --</option>
+                                <option value="">@Resources.Strings.Menu_SelCategoria</option>
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-layer-group mr-1" style="color:#583AFF"></i>Grupo <span class="text-danger">*</span></label>
+                            <label><i class="fas fa-layer-group mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelGrupo <span class="text-danger">*</span></label>
                             <select class="form-control form-control-sm" id="editGrupoSelect" onchange="seleccionarGrupo(this, 'edit')" required>
-                                <option value="">-- Seleccionar grupo --</option>
+                                <option value="">@Resources.Strings.Menu_SelGrupo</option>
                             </select>
                             <input type="hidden" id="editIdGrupo" name="IdGrupo" value="0" />
                         </div>
@@ -302,23 +302,23 @@
                         <input class="form-check-input" type="checkbox" name="SoloSuperAdmin" value="true" id="editSoloSuperAdmin" />
                         <input type="hidden" name="SoloSuperAdmin" value="false" />
                         <label class="form-check-label" for="editSoloSuperAdmin">
-                            <i class="fas fa-shield-alt text-danger mr-1"></i> Solo Super Admin
+                            <i class="fas fa-shield-alt text-danger mr-1"></i> @Resources.Strings.Menu_LabelSoloSuperAdmin
                         </label>
                     </div>
                     <div class="form-check mb-2">
                         <input class="form-check-input" type="checkbox" name="SoloAdminEmpresa" value="true" id="editSoloAdminEmpresa" />
                         <input type="hidden" name="SoloAdminEmpresa" value="false" />
                         <label class="form-check-label" for="editSoloAdminEmpresa">
-                            <i class="fas fa-building text-warning mr-1"></i> Solo Admin Empresa
+                            <i class="fas fa-building text-warning mr-1"></i> @Resources.Strings.Menu_LabelSoloAdminEmpresa
                         </label>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i>Cancelar
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                     </button>
                     <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="fas fa-save mr-1"></i>Guardar cambios
+                        <i class="fas fa-save mr-1"></i>@Resources.Strings.Common_GuardarCambios
                     </button>
                 </div>
             </form>
@@ -336,9 +336,18 @@
     var _grupos     = @Html.Raw(gruposJson);
     var _categorias = @Html.Raw(categoriasJson);
 
+    var _menuMsg = {
+        selCategoria: '@Html.Raw(Resources.Strings.Menu_SelCategoria)',
+        selGrupo: '@Html.Raw(Resources.Strings.Menu_SelGrupo)',
+        eliminarTitle: '@Html.Raw(Resources.Strings.Menu_JS_EliminarTitle)',
+        eliminarText: '@Html.Raw(Resources.Strings.Menu_JS_EliminarText)',
+        cancelar: '@Resources.Strings.Layout_Cancel',
+        confirmarEliminar: '@Html.Raw(Resources.Strings.Menu_JS_ConfirmarEliminar)'
+    };
+
     function poblarCategorias(selectId, idCategoriaSeleccionada) {
         var sel = document.getElementById(selectId);
-        sel.innerHTML = '<option value="">-- Seleccionar categoria --</option>';
+        sel.innerHTML = '<option value="">' + _menuMsg.selCategoria + '</option>';
         _categorias.forEach(function (c) {
             var opt = document.createElement('option');
             opt.value = c.Id;
@@ -351,7 +360,7 @@
     function filtrarGrupos(prefijo) {
         var catId    = parseInt(document.getElementById(prefijo + 'Categoria').value) || 0;
         var grupoSel = document.getElementById(prefijo + 'GrupoSelect');
-        grupoSel.innerHTML = '<option value="">-- Seleccionar grupo --</option>';
+        grupoSel.innerHTML = '<option value="">' + _menuMsg.selGrupo + '</option>';
         _grupos.forEach(function (g) {
             if (g.IdCategoria === catId) {
                 var opt = document.createElement('option');
@@ -386,7 +395,6 @@
         document.getElementById('editSoloSuperAdmin').checked   = o.SoloSuperAdmin;
         document.getElementById('editSoloAdminEmpresa').checked = o.SoloAdminEmpresa;
 
-        // Buscar la categoría del grupo actual para preseleccionarla
         var idCat = 0;
         for (var j = 0; j < _grupos.length; j++) {
             if (_grupos[j].Id === o.IdGrupo) { idCat = _grupos[j].IdCategoria; break; }
@@ -394,7 +402,6 @@
         poblarCategorias('editCategoria', idCat);
         filtrarGrupos('edit');
 
-        // Preseleccionar el grupo
         var grupoSel = document.getElementById('editGrupoSelect');
         for (var k = 0; k < grupoSel.options.length; k++) {
             if (parseInt(grupoSel.options[k].value) === o.IdGrupo) {
@@ -412,13 +419,13 @@
         }
         var nombre = o ? o.Nombre : 'esta opcion';
         Swal.fire({
-            title: '¿Eliminar opción?',
-            text: '"' + nombre + '" se eliminará permanentemente.',
+            title: _menuMsg.eliminarTitle,
+            text: '"' + nombre + '" ' + _menuMsg.eliminarText,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#e74a3b',
-            cancelButtonText: 'Cancelar',
-            confirmButtonText: 'Sí, eliminar'
+            cancelButtonText: _menuMsg.cancelar,
+            confirmButtonText: _menuMsg.confirmarEliminar
         }).then(function (r) {
             if (r.isConfirmed) {
                 document.getElementById('elimId').value = id;

@@ -1,5 +1,10 @@
-﻿<!DOCTYPE html>
-<html>
+﻿@{
+    var _isEnglish = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+    var _esActiveClass = !_isEnglish ? "active" : "";
+    var _enActiveClass = _isEnglish ? "active" : "";
+}
+<!DOCTYPE html>
+<html lang="@(_isEnglish ? "en" : "es")">
 <head>
     @using bufinscustomers.Helpers
     @using System.Web.Optimization
@@ -55,7 +60,7 @@
         <div class="sidebar-search">
             <div class="sidebar-search-wrapper">
                 <i class="fas fa-search sidebar-search-icon"></i>
-                <input type="text" class="sidebar-search-input" placeholder="Buscar..." autocomplete="off">
+                <input type="text" class="sidebar-search-input" placeholder="@Resources.Strings.Layout_SearchPlaceholder" autocomplete="off">
             </div>
         </div>
 
@@ -77,12 +82,12 @@
             <div class="sidebar-category">
                 <div class="sidebar-category-header">
                     <i class="fas fa-circle sidebar-category-icon sidebar-cat-dot"></i>
-                    <span class="sidebar-category-title">General</span>
+                    <span class="sidebar-category-title">@Resources.Strings.Layout_General</span>
                 </div>
                 <div class="sidebar-nav-item">
                     <a class="sidebar-nav-link @(_isHome ? "active" : "")" href="@Url.Action("Index", "Home")">
                         <i class="fas fa-home sidebar-nav-icon"></i>
-                        <span class="sidebar-nav-text">Inicio</span>
+                        <span class="sidebar-nav-text">@Resources.Strings.Layout_Home</span>
                     </a>
                 </div>
             </div>
@@ -137,7 +142,7 @@
                         }
                     }
                     <div class="topbar-breadcrumb d-none d-sm-flex">
-                        <span class="bc-item"><a href="@Url.Action("Index", "Home")">Inicio</a></span>
+                        <span class="bc-item"><a href="@Url.Action("Index", "Home")">@Resources.Strings.Layout_Home</a></span>
                         @if (_bcGroup != null)
                         {
                             <i class="fas fa-chevron-right bc-sep"></i>
@@ -152,12 +157,23 @@
 
                     <div class="topbar-divider d-none d-sm-block"></div>
                     <ul class="navbar-nav ml-auto">
+                        <!-- Language pill -->
+                        <li class="lang-pill-nav">
+                            <div class="lang-switcher-wrapper">
+                                <i class="fas fa-globe lang-switcher-icon"></i>
+                                <div class="lang-switcher">
+                                    <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "es-CO", returnUrl = Request.Url.PathAndQuery })" class="lang-btn @_esActiveClass">Español</a>
+                                    <span class="lang-sep"></span>
+                                    <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "en-US", returnUrl = Request.Url.PathAndQuery })" class="lang-btn @_enActiveClass">English</a>
+                                </div>
+                            </div>
+                        </li>
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <div class="d-none d-lg-inline mr-2 text-left">
                                     <div class="text-gray-600 small" style="color: white !important; font-weight: 600;">
-                                        @(UsuarioSesionHelper.UsuarioActual != null ? UsuarioSesionHelper.UsuarioActual.Nombre + " " + UsuarioSesionHelper.UsuarioActual.Apellidos : "Invitado")
+                                        @(UsuarioSesionHelper.UsuarioActual != null ? UsuarioSesionHelper.UsuarioActual.Nombre + " " + UsuarioSesionHelper.UsuarioActual.Apellidos : Resources.Strings.Layout_Guest)
                                     </div>
                                     @{
                                         var empresasTopbar = ViewBag.Empresas as List<bufinscustomers.Models.Empresas>;
@@ -168,19 +184,19 @@
                                         string rolColor;
                                         if (adminLevel == 2)
                                         {
-                                            rolTexto = "Super Administrador";
+                                            rolTexto = Resources.Strings.Layout_RoleSuperAdmin;
                                             rolIcono = "fas fa-crown";
                                             rolColor = "#FFD700";
                                         }
                                         else if (adminLevel == 1)
                                         {
-                                            rolTexto = "Administrador" + (empresaUsuarioTopbar != null ? " - " + empresaUsuarioTopbar.Nombre : "");
+                                            rolTexto = Resources.Strings.Layout_RoleAdmin + (empresaUsuarioTopbar != null ? " - " + empresaUsuarioTopbar.Nombre : "");
                                             rolIcono = "fas fa-user-shield";
                                             rolColor = "#01E1D7";
                                         }
                                         else
                                         {
-                                            rolTexto = "Usuario" + (empresaUsuarioTopbar != null ? " - " + empresaUsuarioTopbar.Nombre : "");
+                                            rolTexto = Resources.Strings.Layout_RoleUser + (empresaUsuarioTopbar != null ? " - " + empresaUsuarioTopbar.Nombre : "");
                                             rolIcono = "fas fa-user";
                                             rolColor = "rgba(255, 255, 255, 0.7)";
                                         }
@@ -204,24 +220,27 @@
                                          style="max-width:150px; max-height:150px;" />
                                 }
                             </a>
-                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                            <div class="dropdown-menu dropdown-menu-right animated--grow-in user-dropdown-menu"
                                  aria-labelledby="userDropdown">
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modalPerfilUsuario">
-                                    <i class="fas fa-user fa-sm fa-fw mr-2" style="color: #160933!important;"></i>
-                                    Perfil
+                                    <i class="fas fa-user fa-sm fa-fw"></i>
+                                    @Resources.Strings.Layout_Profile
                                 </a>
-                                @*<a class="dropdown-item" href="#">
-                                        <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Settings
-                                    </a>
-                                    <a class="dropdown-item" href="#">
-                                        <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Activity Log
-                                    </a>*@
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="@Url.Action("Login", "Acceso")">
-                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2" style="color:#160933 !important;"></i>
-                                    Cerrar sesión
+                                <div class="user-dd-lang-row">
+                                    <span class="user-dd-lang-label">
+                                        <i class="fas fa-globe"></i>@Resources.Strings.Layout_LangSwitcher
+                                    </span>
+                                    <div class="lang-switcher">
+                                        <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "es-CO", returnUrl = Request.Url.PathAndQuery })" class="lang-btn @_esActiveClass">Español</a>
+                                        <span class="lang-sep"></span>
+                                        <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "en-US", returnUrl = Request.Url.PathAndQuery })" class="lang-btn @_enActiveClass">English</a>
+                                    </div>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item user-dd-logout" href="@Url.Action("Login", "Acceso")">
+                                    <i class="fas fa-sign-out-alt fa-sm fa-fw"></i>
+                                    @Resources.Strings.Layout_Logout
                                 </a>
                             </div>
                         </li>
@@ -240,9 +259,9 @@
                     <div class="modal-content modal-perfil-moderno">
                         <div class="modal-header modal-header-gradient">
                             <h5 class="modal-title" id="modalPerfilUsuarioLabel">
-                                <i class="fas fa-user-circle mr-2"></i>Perfil de usuario
+                                <i class="fas fa-user-circle mr-2"></i>@Resources.Strings.Layout_ProfileModalTitle
                             </h5>
-                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="@Resources.Strings.Layout_Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
@@ -272,21 +291,21 @@
                                         <div class="info-item">
                                             <i class="fas fa-user info-icon"></i>
                                             <div class="info-content">
-                                                <span class="info-label">Nombre:</span>
-                                                <span class="info-value">@(UsuarioSesionHelper.UsuarioActual?.Nombre ?? "Invitado")</span>
+                                                <span class="info-label">@Resources.Strings.Layout_LabelName</span>
+                                                <span class="info-value">@(UsuarioSesionHelper.UsuarioActual?.Nombre ?? Resources.Strings.Layout_Guest)</span>
                                             </div>
                                         </div>
                                         <div class="info-item">
                                             <i class="fas fa-id-card info-icon"></i>
                                             <div class="info-content">
-                                                <span class="info-label">Apellidos:</span>
+                                                <span class="info-label">@Resources.Strings.Layout_LabelLastName</span>
                                                 <span class="info-value">@(UsuarioSesionHelper.UsuarioActual?.Apellidos ?? "-")</span>
                                             </div>
                                         </div>
                                         <div class="info-item">
                                             <i class="fas fa-envelope info-icon"></i>
                                             <div class="info-content">
-                                                <span class="info-label">Email:</span>
+                                                <span class="info-label">@Resources.Strings.Layout_LabelEmail</span>
                                                 <span class="info-value">@(UsuarioSesionHelper.UsuarioActual?.Correo ?? "-")</span>
                                             </div>
                                         </div>
@@ -296,14 +315,14 @@
                                         <div class="info-item">
                                             <i class="fas fa-phone info-icon"></i>
                                             <div class="info-content">
-                                                <span class="info-label">Teléfono:</span>
+                                                <span class="info-label">@Resources.Strings.Layout_LabelPhone</span>
                                                 <span class="info-value">@(UsuarioSesionHelper.UsuarioActual?.Telefono ?? "-")</span>
                                             </div>
                                         </div>
                                         <div class="info-item">
                                             <i class="fas fa-user-tag info-icon"></i>
                                             <div class="info-content">
-                                                <span class="info-label">Usuario:</span>
+                                                <span class="info-label">@Resources.Strings.Layout_LabelUsername</span>
                                                 <span class="info-value">@(UsuarioSesionHelper.UsuarioActual?.Usuario ?? "-")</span>
                                             </div>
                                         </div>
@@ -313,8 +332,8 @@
                                         <div class="info-item">
                                             <i class="fas fa-shield-alt info-icon"></i>
                                             <div class="info-content">
-                                                <span class="info-label">Rol:</span>
-                                                <span class="info-value">@(UsuarioSesionHelper.UsuarioActual?.Admin == 1 ? "Administrador" : "Usuario")</span>
+                                                <span class="info-label">@Resources.Strings.Layout_LabelRole</span>
+                                                <span class="info-value">@(UsuarioSesionHelper.UsuarioActual?.Admin == 1 ? Resources.Strings.Layout_RoleAdmin : Resources.Strings.Layout_RoleUser)</span>
                                             </div>
                                         </div>
                                         @{
@@ -324,8 +343,8 @@
                                         <div class="info-item">
                                             <i class="fas fa-building info-icon"></i>
                                             <div class="info-content">
-                                                <span class="info-label">Empresa:</span>
-                                                <span class="info-value">@(empresaActual != null ? empresaActual.Nombre : "Sin empresa")</span>
+                                                <span class="info-label">@Resources.Strings.Layout_LabelCompany</span>
+                                                <span class="info-value">@(empresaActual != null ? empresaActual.Nombre : Resources.Strings.Layout_NoCompany)</span>
                                             </div>
                                         </div>
                                     </div>
@@ -334,10 +353,10 @@
                         </div>
                         <div class="modal-footer modal-footer-perfil">
                             <button type="button" class="btn btn-gradient-modern" data-toggle="modal" data-target="#modalCargarImagen" data-dismiss="modal">
-                                <i class="fas fa-camera mr-2"></i>Cambiar imagen
+                                <i class="fas fa-camera mr-2"></i>@Resources.Strings.Layout_ChangeImage
                             </button>
                             <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
-                                <i class="fas fa-times mr-2"></i>Cerrar
+                                <i class="fas fa-times mr-2"></i>@Resources.Strings.Layout_Close
                             </button>
                         </div>
                     </div>
@@ -349,9 +368,9 @@
                         <div class="modal-content modal-cargar-imagen-moderno">
                             <div class="modal-header modal-header-gradient">
                                 <h5 class="modal-title" id="modalCargarImagenLabel">
-                                    <i class="fas fa-camera mr-2"></i>Cargar imagen de usuario
+                                    <i class="fas fa-camera mr-2"></i>@Resources.Strings.Layout_UploadImageTitle
                                 </h5>
-                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="@Resources.Strings.Layout_Close">
                                     <span aria-hidden="true">&times;</span>
                                 </button>
                             </div>
@@ -360,16 +379,16 @@
                                     <div class="upload-icon">
                                         <i class="fas fa-cloud-upload-alt"></i>
                                     </div>
-                                    <h6 class="upload-title mb-1">Selecciona una imagen</h6>
+                                    <h6 class="upload-title mb-1">@Resources.Strings.Layout_SelectImage</h6>
                                     <p class="upload-info mb-2">
                                         <i class="fas fa-info-circle mr-1"></i>
-                                        PNG o JPEG - Máx. 200 KB - Máx. 400x400 px
+                                        @Resources.Strings.Layout_ImageConstraints
                                     </p>
                                     <label for="ImagenUsuario" class="btn btn-gradient-modern btn-select-file mb-2">
-                                        <i class="fas fa-folder-open mr-2"></i>Seleccionar archivo
+                                        <i class="fas fa-folder-open mr-2"></i>@Resources.Strings.Layout_SelectFile
                                     </label>
                                     <input type="file" id="ImagenUsuario" name="ImagenUsuario" accept="image/png, image/jpeg" class="file-input-hidden" required />
-                                    <p class="file-name mb-0" id="fileName">Ningún archivo seleccionado</p>
+                                    <p class="file-name mb-0" id="fileName">@Resources.Strings.Layout_NoFileSelected</p>
                                 </div>
                                 <div class="preview-area text-center">
                                     <img id="previewImagen" src="#" alt="Vista previa" class="preview-image" />
@@ -378,10 +397,10 @@
                             </div>
                             <div class="modal-footer modal-footer-perfil">
                                 <button type="submit" class="btn btn-gradient-modern">
-                                    <i class="fas fa-save mr-2"></i>Guardar
+                                    <i class="fas fa-save mr-2"></i>@Resources.Strings.Layout_Save
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
-                                    <i class="fas fa-times mr-2"></i>Cancelar
+                                    <i class="fas fa-times mr-2"></i>@Resources.Strings.Layout_Cancel
                                 </button>
                             </div>
                         </div>
@@ -909,6 +928,26 @@
                 console.log('Estado de sesión:', data);
             });
         };
+    </script>
+
+    <!-- Floating language pill — shown dynamically when topbar lang switcher is off-screen -->
+    <div class="lang-float-pill">
+        <i class="fas fa-globe lang-switcher-icon"></i>
+        <div class="lang-switcher">
+            <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "es-CO", returnUrl = Request.Url.PathAndQuery })" class="lang-btn @_esActiveClass">Español</a>
+            <span class="lang-sep"></span>
+            <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "en-US", returnUrl = Request.Url.PathAndQuery })" class="lang-btn @_enActiveClass">English</a>
+        </div>
+    </div>
+    <script>
+    (function () {
+        var pill = document.querySelector('.lang-float-pill');
+        var ref  = document.querySelector('.lang-pill-nav');
+        if (!pill || !ref) return;
+        new IntersectionObserver(function (entries) {
+            pill.classList.toggle('lang-float-visible', !entries[0].isIntersecting);
+        }, { threshold: 0.5 }).observe(ref);
+    }());
     </script>
 </body>
 </html>

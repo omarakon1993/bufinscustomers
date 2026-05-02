@@ -1,8 +1,8 @@
-﻿@model dynamic
+@model dynamic
 @using bufinscustomers.Models
 
 @{
-    ViewBag.Title = "Análisis IA";
+    ViewBag.Title = Resources.Strings.IA_PageTitle;
     var tablas         = ViewBag.Tablas  as List<TablaDatos>;
     var empresas       = ViewBag.Empresas as List<Empresas>;
     var esAdmin        = (bool)ViewBag.EsAdmin;
@@ -45,29 +45,29 @@
         <div class="powerbi-header-content">
             <i class="fas fa-robot powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">
-                An&aacute;lisis IA
+                @Resources.Strings.IA_PageTitle
                 <span class="ia-header-badge">
                     <i class="fas fa-circle" style="font-size:6px;"></i> OpenAI GPT
                 </span>
             </h1>
         </div>
         <a href="@Url.Action("Index","AuditoriaConsultasIA")" class="audit-btn-header">
-            <i class="fas fa-history"></i> Auditor&iacute;a Consultas
+            <i class="fas fa-history"></i> @Resources.Strings.IA_AuditoriaLink
         </a>
     </div>
 
     <!-- Filtros -->
     <div class="filter-card">
         <h3 class="filter-card-title">
-            <i class="fas fa-filter"></i> Selecciona los datos a analizar
+            <i class="fas fa-filter"></i> @Resources.Strings.IA_FilterTitle
         </h3>
         <div class="filter-section">
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="selectTabla"><i class="fas fa-table"></i> Tabla <span class="required">*</span></label>
+                        <label for="selectTabla"><i class="fas fa-table"></i> @Resources.Strings.Common_LabelTabla <span class="required">*</span></label>
                         <select id="selectTabla" class="form-control" required>
-                            <option value="">-- Seleccione --</option>
+                            <option value="">@Resources.Strings.Common_Seleccione</option>
                             @if (tablas != null)
                             {
                                 foreach (var t in tablas)
@@ -82,10 +82,10 @@
                     <div class="form-group">
                         <label for="selectEmpresa">
                             <i class="fas fa-building"></i>
-                            Empresa @if (esAdmin) { <span class="required">*</span> }
+                            @Resources.Strings.Common_LabelEmpresa @if (esAdmin) { <span class="required">*</span> }
                         </label>
                         <select id="selectEmpresa" class="form-control" @(esAdmin ? "required" : "")>
-                            @if (esAdmin) { <option value="">-- Seleccione --</option> }
+                            @if (esAdmin) { <option value="">@Resources.Strings.Common_Seleccione</option> }
                             @if (empresas != null)
                             {
                                 foreach (var e in empresas)
@@ -100,31 +100,37 @@
             <div class="row">
                 <div class="col-md-4">
                     <div class="form-group">
-                        <label for="selectAnio"><i class="fas fa-calendar-alt"></i> A&ntilde;o <span class="required">*</span></label>
+                        <label for="selectAnio"><i class="fas fa-calendar-alt"></i> @Resources.Strings.Common_LabelAnio <span class="required">*</span></label>
                         <select id="selectAnio" class="form-control" required>
-                            <option value="">-- Seleccione --</option>
+                            <option value="">@Resources.Strings.Common_Seleccione</option>
                         </select>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="form-group">
-                        <label for="selectMes"><i class="fas fa-calendar-day"></i> Mes</label>
+                        <label for="selectMes"><i class="fas fa-calendar-day"></i> @Resources.Strings.Common_LabelMes</label>
                         <select id="selectMes" class="form-control">
-                            <option value="">-- Todos --</option>
-                            <option value="1">Enero</option>  <option value="2">Febrero</option>
-                            <option value="3">Marzo</option>  <option value="4">Abril</option>
-                            <option value="5">Mayo</option>   <option value="6">Junio</option>
-                            <option value="7">Julio</option>  <option value="8">Agosto</option>
-                            <option value="9">Septiembre</option><option value="10">Octubre</option>
-                            <option value="11">Noviembre</option><option value="12">Diciembre</option>
+                            <option value="">@Resources.Strings.Common_Todos</option>
+                            <option value="1">@Resources.Strings.Common_Mes1</option>
+                            <option value="2">@Resources.Strings.Common_Mes2</option>
+                            <option value="3">@Resources.Strings.Common_Mes3</option>
+                            <option value="4">@Resources.Strings.Common_Mes4</option>
+                            <option value="5">@Resources.Strings.Common_Mes5</option>
+                            <option value="6">@Resources.Strings.Common_Mes6</option>
+                            <option value="7">@Resources.Strings.Common_Mes7</option>
+                            <option value="8">@Resources.Strings.Common_Mes8</option>
+                            <option value="9">@Resources.Strings.Common_Mes9</option>
+                            <option value="10">@Resources.Strings.Common_Mes10</option>
+                            <option value="11">@Resources.Strings.Common_Mes11</option>
+                            <option value="12">@Resources.Strings.Common_Mes12</option>
                         </select>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="form-group">
-                        <label for="selectVariable"><i class="fas fa-tag"></i> Variable</label>
+                        <label for="selectVariable"><i class="fas fa-tag"></i> @Resources.Strings.Common_LabelVariable</label>
                         <select id="selectVariable" class="form-control">
-                            <option value="">-- Todas --</option>
+                            <option value="">@Resources.Strings.Common_Todas</option>
                         </select>
                     </div>
                 </div>
@@ -132,10 +138,10 @@
         </div>
         <div class="btn-group-actions">
             <button type="button" id="btnAnalizar" class="btn-ia-analizar">
-                <i class="fas fa-robot"></i> Analizar
+                <i class="fas fa-robot"></i> @Resources.Strings.IA_BtnAnalizar
             </button>
             <button type="button" id="btnLimpiar" class="btn btn-modern-secondary">
-                <i class="fas fa-eraser mr-2"></i> Limpiar
+                <i class="fas fa-eraser mr-2"></i> @Resources.Strings.Common_Limpiar
             </button>
         </div>
     </div>
@@ -143,8 +149,8 @@
     <!-- Placeholder -->
     <div id="placeholderIA" class="ia-placeholder">
         <div class="ia-placeholder-icon"><i class="fas fa-robot"></i></div>
-        <h4>Selecciona los filtros y haz clic en Analizar</h4>
-        <p>La IA generar&aacute; autom&aacute;ticamente un resumen gerencial de los datos seleccionados.</p>
+        <h4>@Resources.Strings.IA_PlaceholderTitle</h4>
+        <p>@Resources.Strings.IA_PlaceholderDesc</p>
     </div>
 
     <!-- Loading inicial -->
@@ -152,7 +158,7 @@
         <div class="ia-loading-wrap" style="padding:20px 0;">
             <div class="ia-loading-inner">
                 <div class="ia-dots"><span></span><span></span><span></span></div>
-                <p>Consultando datos y analizando con IA&hellip;</p>
+                <p>@Resources.Strings.IA_LoadingConsultando</p>
             </div>
         </div>
     </div>
@@ -163,44 +169,44 @@
             <div class="ia-panel-header-left">
                 <div class="ia-panel-icon"><i class="fas fa-robot"></i></div>
                 <div>
-                    <div class="ia-panel-title">Asistente IA &mdash; An&aacute;lisis Financiero</div>
+                    <div class="ia-panel-title">@Resources.Strings.IA_PanelTitle</div>
                     <div id="iaContexto" class="ia-panel-context"></div>
                 </div>
             </div>
             <button type="button" id="btnNuevaConsulta" class="btn-nueva-consulta">
-                <i class="fas fa-redo-alt"></i> Nueva consulta
+                <i class="fas fa-redo-alt"></i> @Resources.Strings.IA_BtnNuevaConsulta
             </button>
         </div>
         <div class="ia-actions-bar">
             <button type="button" id="btnResumenIA" class="btn-generar-resumen">
-                <i class="fas fa-magic"></i> Generar Resumen Gerencial
+                <i class="fas fa-magic"></i> @Resources.Strings.IA_BtnGenerarResumen
             </button>
             <button type="button" id="btnExportarPDF" class="btn-exportar-pdf" onclick="exportarAnalisisPDF()" style="display:none;">
-                <i class="fas fa-file-pdf"></i> Exportar PDF
+                <i class="fas fa-file-pdf"></i> @Resources.Strings.IA_BtnExportarPDF
             </button>
-            <span class="ia-hint">o escribe una pregunta espec&iacute;fica abajo</span>
+            <span class="ia-hint">@Resources.Strings.IA_PreguntaHint</span>
         </div>
         <div id="loadingIA" style="display:none;" class="ia-loading-wrap">
             <div class="ia-loading-inner">
                 <div class="ia-dots"><span></span><span></span><span></span></div>
-                <p>Analizando datos financieros&hellip;</p>
+                <p>@Resources.Strings.IA_LoadingAnalizando</p>
             </div>
         </div>
         <div id="respuestaIA" style="display:none;" class="ia-response-wrap">
-            <div class="ia-response-header"><i class="fas fa-stars"></i> Respuesta del asistente</div>
+            <div class="ia-response-header"><i class="fas fa-stars"></i> @Resources.Strings.IA_RespuestaHeader</div>
             <div id="respuestaIATexto" class="ia-response-body"></div>
         </div>
         <div class="ia-input-section">
             <div class="ia-input-row">
                 <input type="text" id="txtPreguntaIA" class="ia-text-input"
-                       placeholder="Ej: &iquest;Cu&aacute;les son los 3 valores m&aacute;s altos? &iquest;C&oacute;mo fue el mes de marzo?" />
-                <button type="button" id="btnPreguntarIA" class="btn-enviar" title="Enviar pregunta">
+                       placeholder="@Resources.Strings.IA_InputPlaceholder" />
+                <button type="button" id="btnPreguntarIA" class="btn-enviar">
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </div>
             <div class="ia-branding">
                 <i class="fas fa-lock"></i> Powered by OpenAI &nbsp;&middot;&nbsp;
-                <i class="fas fa-database"></i> <span id="txtFilasInfo">An&aacute;lisis completo por a&ntilde;o seleccionado</span>
+                <i class="fas fa-database"></i> <span id="txtFilasInfo">@Resources.Strings.IA_FilasInfo</span>
             </div>
         </div>
     </div>
@@ -212,18 +218,18 @@
     <div class="pdf-header">
         <img id="pdfLogo" src="@Url.Content("~/Assets/img/Bufins_LogoLogin.png")" class="pdf-logo" crossorigin="anonymous" />
         <div class="pdf-title-block">
-            <div class="pdf-title">An&aacute;lisis Gerencial IA</div>
-            <div class="pdf-subtitle">Generado por <strong>IA BUFINS</strong> &nbsp;&middot;&nbsp; <span id="pdfFecha"></span></div>
+            <div class="pdf-title">@Resources.Strings.IA_PDF_Title</div>
+            <div class="pdf-subtitle">@Resources.Strings.IA_PDF_Subtitle &nbsp;&middot;&nbsp; <span id="pdfFecha"></span></div>
         </div>
     </div>
     <div class="pdf-filtros-block">
-        <div class="pdf-filtros-title"><i class="fas fa-filter"></i> Filtros aplicados</div>
+        <div class="pdf-filtros-title"><i class="fas fa-filter"></i> @Resources.Strings.IA_PDF_Filtros</div>
         <div id="pdfFiltros" class="pdf-filtros-grid"></div>
     </div>
     <div class="pdf-divider"></div>
     <div id="pdfContenido" class="pdf-contenido"></div>
     <div class="pdf-footer">
-        <span>BUFINS &nbsp;&middot;&nbsp; Plataforma de An&aacute;lisis Financiero</span>
+        <span>@Resources.Strings.IA_PDF_Footer</span>
         <span id="pdfPage"></span>
     </div>
 </div>
@@ -232,6 +238,43 @@
 <script src="~/Assets/js/select2/select2.min.js"></script>
 <script src="~/Assets/js/html2canvas.min.js"></script>
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
+
+<script>
+    var _iaMsg = {
+        seleccione:         '@Html.Raw(Resources.Strings.Common_Seleccione)',
+        todos:              '@Resources.Strings.Common_Todos',
+        todas:              '@Resources.Strings.Common_Todas',
+        tablaRequerida:     '@Resources.Strings.Common_JS_TablaRequerida',
+        tablaSeleccionar:   '@Html.Raw(Resources.Strings.Common_JS_TablaSeleccionar)',
+        empresaRequerida:   '@Resources.Strings.Common_JS_EmpresaRequerida',
+        empresaSeleccionar: '@Html.Raw(Resources.Strings.Common_JS_EmpresaSeleccionar)',
+        anioRequerido:      '@Resources.Strings.IA_JS_AnioRequerido',
+        anioSeleccionar:    '@Html.Raw(Resources.Strings.IA_JS_AnioSeleccionar)',
+        preguntaVacia:      '@Resources.Strings.IA_JS_PreguntaVacia',
+        preguntaEscribir:   '@Html.Raw(Resources.Strings.IA_JS_PreguntaEscribir)',
+        asistenteError:     '@Resources.Strings.IA_JS_AsistenteError',
+        conexionError:      '@Resources.Strings.IA_JS_ConexionError',
+        servicioIA:         '@Html.Raw(Resources.Strings.IA_JS_ServicioIA)',
+        preguntaLabel:      '@Resources.Strings.IA_JS_PreguntaLabel',
+        generandoPDF:       '@Html.Raw(Resources.Strings.IA_JS_GenerandoPDF)',
+        errorPDF:           '@Html.Raw(Resources.Strings.IA_JS_ErrorPDF)',
+        filasInfo:          '@Html.Raw(Resources.Strings.IA_FilasInfo)',
+        noResultados:       '@Html.Raw(Resources.Strings.Common_Select2NoResults)',
+        buscando:           '@Html.Raw(Resources.Strings.Common_Select2Searching)',
+        error:              '@Resources.Strings.Common_Error',
+        pdfTitle:           '@Html.Raw(Resources.Strings.IA_PDF_Title)',
+        pdfSubtitle:        '@Html.Raw(Resources.Strings.IA_PDF_Subtitle)',
+        pdfFiltros:         '@Html.Raw(Resources.Strings.IA_PDF_Filtros)',
+        pdfFooter:          '@Html.Raw(Resources.Strings.IA_PDF_Footer)',
+        labelTabla:         '@Resources.Strings.Common_LabelTabla',
+        labelEmpresa:       '@Resources.Strings.Common_LabelEmpresa',
+        labelAnio:          '@Resources.Strings.Common_LabelAnio',
+        labelMes:           '@Resources.Strings.Common_LabelMes',
+        labelVariable:      '@Resources.Strings.Common_LabelVariable',
+        btnExportarPDF:     '@Html.Raw(Resources.Strings.IA_BtnExportarPDF)',
+        mesTextoTodos:      '@Resources.Strings.Common_Todos'
+    };
+</script>
 
 <script>
     /* ── renderMarkdown global ── */
@@ -257,11 +300,16 @@ $(document).ready(function () {
     var filtrosActuales      = null;
     window._preguntaActualIA = null;
 
+    var s2lang = {
+        noResults: function () { return _iaMsg.noResultados; },
+        searching: function () { return _iaMsg.buscando; }
+    };
+
     // ── Filtros de datos ──────────────────────────────────
     $('#selectTabla').on('change', function () {
         var tabla   = $(this).val(), empresa = $('#selectEmpresa').val();
-        $('#selectAnio').html('<option value="">-- Seleccione --</option>').trigger('change');
-        $('#selectVariable').html('<option value="">-- Todas --</option>').trigger('change');
+        $('#selectAnio').html('<option value="">' + _iaMsg.seleccione + '</option>').trigger('change');
+        $('#selectVariable').html('<option value="">' + _iaMsg.todas + '</option>').trigger('change');
         if (tabla) { cargarAnios(tabla, empresa); cargarVariables(tabla, empresa); }
     });
     $('#selectEmpresa').on('change', function () {
@@ -271,7 +319,7 @@ $(document).ready(function () {
     function cargarAnios(tabla, empresa) {
         $.get('@Url.Action("ObtenerAnios","InformeTablasDatos")', { nombreTabla:tabla, idEmpresa:empresa||null }, function(r) {
             if (r.success) {
-                var s = $('#selectAnio').html('<option value="">-- Seleccione --</option>');
+                var s = $('#selectAnio').html('<option value="">' + _iaMsg.seleccione + '</option>');
                 $.each(r.anios, function(i,a){ s.append($('<option>').val(a).text(a)); });
                 s.trigger('change');
             }
@@ -280,7 +328,7 @@ $(document).ready(function () {
     function cargarVariables(tabla, empresa) {
         $.get('@Url.Action("ObtenerVariables","InformeTablasDatos")', { nombreTabla:tabla, idEmpresa:empresa||null }, function(r) {
             if (r.success) {
-                var s = $('#selectVariable').html('<option value="">-- Todas --</option>');
+                var s = $('#selectVariable').html('<option value="">' + _iaMsg.todas + '</option>');
                 $.each(r.variables, function(i,v){ s.append($('<option>').val(v).text(v)); });
                 s.trigger('change');
             }
@@ -290,13 +338,13 @@ $(document).ready(function () {
     // ── Botón Analizar ────────────────────────────────────
     $('#btnAnalizar').on('click', function () {
         var tabla = $('#selectTabla').val(), empresa = $('#selectEmpresa').val();
-        if (!tabla) { Swal.fire({icon:'warning',title:'Tabla requerida',text:'Por favor seleccione una tabla.'}); return; }
+        if (!tabla) { Swal.fire({icon:'warning',title:_iaMsg.tablaRequerida,text:_iaMsg.tablaSeleccionar}); return; }
         @if (esAdmin) {
             <text>
-            if (!empresa) { Swal.fire({icon:'warning',title:'Empresa requerida',text:'Por favor seleccione una empresa.'}); return; }
+            if (!empresa) { Swal.fire({icon:'warning',title:_iaMsg.empresaRequerida,text:_iaMsg.empresaSeleccionar}); return; }
             </text>
         }
-        if (!$('#selectAnio').val()) { Swal.fire({icon:'warning',title:'A\u00f1o requerido',text:'Debe seleccionar un a\u00f1o para el an\u00e1lisis IA.'}); return; }
+        if (!$('#selectAnio').val()) { Swal.fire({icon:'warning',title:_iaMsg.anioRequerido,text:_iaMsg.anioSeleccionar}); return; }
 
         filtrosActuales = {
             NombreTabla : tabla,
@@ -311,10 +359,10 @@ $(document).ready(function () {
         var nombreTabla = $('#selectTabla option:selected').data('nombre') || tabla;
         var partes = [nombreTabla];
         if ($('#selectEmpresa option:selected').text() && empresa) partes.push($('#selectEmpresa option:selected').text());
-        if ($('#selectAnio').val()) partes.push('A\u00f1o ' + $('#selectAnio').val());
+        if ($('#selectAnio').val()) partes.push(_iaMsg.labelAnio + ' ' + $('#selectAnio').val());
         if ($('#selectMes option:selected').text() && $('#selectMes').val()) partes.push($('#selectMes option:selected').text());
         if ($('#selectVariable').val()) partes.push($('#selectVariable').val());
-        $('#iaContexto').text(partes.join(' \u00b7 '));
+        $('#iaContexto').text(partes.join(' · '));
 
         $('#placeholderIA,#loadingAnalisis,#respuestaIA,#loadingIA').hide();
         $('#panelIA').show();
@@ -325,15 +373,15 @@ $(document).ready(function () {
         $('#selectTabla').val('').trigger('change');
         $('#selectEmpresa').val($('#selectEmpresa option:first').val()).trigger('change');
         $('#selectMes,#selectAnio').val('').trigger('change');
-        $('#selectAnio').html('<option value="">-- Seleccione --</option>').trigger('change');
-        $('#selectVariable').html('<option value="">-- Todas --</option>').trigger('change');
+        $('#selectAnio').html('<option value="">' + _iaMsg.seleccione + '</option>').trigger('change');
+        $('#selectVariable').html('<option value="">' + _iaMsg.todas + '</option>').trigger('change');
         resetPanel();
     });
 
     function resetPanel() {
         $('#panelIA,#respuestaIA,#loadingIA').hide();
         $('#txtPreguntaIA').val('');
-        $('#txtFilasInfo').text('An\u00e1lisis completo por a\u00f1o seleccionado');
+        $('#txtFilasInfo').text(_iaMsg.filasInfo);
         document.getElementById('btnExportarPDF').style.display = 'none';
         filtrosActuales = null;
         window._preguntaActualIA = null;
@@ -369,7 +417,7 @@ $(document).ready(function () {
                     var html = '';
                     if (pregunta) {
                         html += '<div class="ia-pregunta-block">'
-                              + '<div class="ia-pregunta-label"><i class="fas fa-question-circle"></i> Pregunta realizada</div>'
+                              + '<div class="ia-pregunta-label"><i class="fas fa-question-circle"></i> ' + _iaMsg.preguntaLabel + '</div>'
                               + '<div class="ia-pregunta-texto">' + $('<div>').text(pregunta).html() + '</div>'
                               + '</div>';
                     }
@@ -378,13 +426,13 @@ $(document).ready(function () {
                     $('#respuestaIA').show();
                     document.getElementById('btnExportarPDF').style.display = 'inline-flex';
                 } else {
-                    Swal.fire({icon:'warning',title:'Asistente IA',text:resp.Error||'Error al obtener respuesta.'});
+                    Swal.fire({icon:'warning',title:_iaMsg.asistenteError,text:resp.Error||_iaMsg.servicioIA});
                 }
             },
             error: function () {
                 $('#loadingIA').hide();
                 $('#btnResumenIA').prop('disabled', false);
-                Swal.fire({icon:'error',title:'Error de conexi\u00f3n',text:'No se pudo contactar al servicio de IA.'});
+                Swal.fire({icon:'error',title:_iaMsg.conexionError,text:_iaMsg.servicioIA});
             }
         });
     }
@@ -392,21 +440,18 @@ $(document).ready(function () {
     $('#btnResumenIA').on('click', function () { consultarIA(null); });
     $('#btnPreguntarIA').on('click', function () {
         var p = $('#txtPreguntaIA').val().trim();
-        if (!p) { Swal.fire({icon:'warning',title:'Pregunta vac\u00eda',text:'Escribe una pregunta antes de enviar.'}); return; }
+        if (!p) { Swal.fire({icon:'warning',title:_iaMsg.preguntaVacia,text:_iaMsg.preguntaEscribir}); return; }
         consultarIA(p);
         $('#txtPreguntaIA').val('');
     });
     $('#txtPreguntaIA').on('keydown', function(e){ if(e.key==='Enter') $('#btnPreguntarIA').trigger('click'); });
 
     // ── Select2 ───────────────────────────────────────────
-    var s2 = { width:'100%', language:{ noResults:function(){return'Sin resultados';}, searching:function(){return'Buscando...';} } };
-    $('#selectTabla').select2($.extend({placeholder:'-- Seleccione --',allowClear:false},s2));
-    $('#selectEmpresa').select2($.extend({placeholder:'-- Seleccione --',allowClear:false},s2));
-    $('#selectAnio').select2($.extend({placeholder:'-- Seleccione --',allowClear:false},s2));
-    $('#selectMes').select2($.extend({placeholder:'-- Todos --',allowClear:true,minimumResultsForSearch:-1},s2));
-    $('#selectVariable').select2($.extend({placeholder:'-- Todas --',allowClear:true},s2));
-
-
+    $('#selectTabla').select2($.extend({placeholder:_iaMsg.seleccione,allowClear:false},{width:'100%',language:s2lang}));
+    $('#selectEmpresa').select2($.extend({placeholder:_iaMsg.seleccione,allowClear:false},{width:'100%',language:s2lang}));
+    $('#selectAnio').select2($.extend({placeholder:_iaMsg.seleccione,allowClear:false},{width:'100%',language:s2lang}));
+    $('#selectMes').select2($.extend({placeholder:_iaMsg.todos,allowClear:true,minimumResultsForSearch:-1},{width:'100%',language:s2lang}));
+    $('#selectVariable').select2($.extend({placeholder:_iaMsg.todas,allowClear:true},{width:'100%',language:s2lang}));
 
 }); // end document.ready
 </script>
@@ -415,7 +460,7 @@ $(document).ready(function () {
 async function exportarAnalisisPDF() {
     var btn = document.getElementById('btnExportarPDF');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + _iaMsg.generandoPDF;
     try {
         var ahora = new Date();
         document.getElementById('pdfFecha').textContent =
@@ -425,15 +470,15 @@ async function exportarAnalisisPDF() {
         var filtros       = window._filtrosActualesPDF || {};
         var nombreEmpresa = $('#selectEmpresa option:selected').text().trim() || filtros.IdEmpresa || '—';
         var mesTexto      = $('#selectMes option:selected').text().trim();
-        if (!mesTexto || mesTexto === '-- Todos --') mesTexto = 'Todos';
+        if (!mesTexto || mesTexto === _iaMsg.mesTextoTodos) mesTexto = _iaMsg.todos;
         var tablaTexto    = $('#selectTabla option:selected').data('nombre') || filtros.NombreTabla || '—';
 
         var filtrosData = [
-            {label:'Tabla',    valor:tablaTexto},
-            {label:'Empresa',  valor:nombreEmpresa},
-            {label:'A\u00f1o', valor:filtros.Anio||'\u2014'},
-            {label:'Mes',      valor:mesTexto},
-            {label:'Variable', valor:filtros.Variable||'Todas'}
+            {label:_iaMsg.labelTabla,    valor:tablaTexto},
+            {label:_iaMsg.labelEmpresa,  valor:nombreEmpresa},
+            {label:_iaMsg.labelAnio,     valor:filtros.Anio||'—'},
+            {label:_iaMsg.labelMes,      valor:mesTexto},
+            {label:_iaMsg.labelVariable, valor:filtros.Variable||_iaMsg.todas}
         ];
         var fHtml = '';
         filtrosData.forEach(function(f){
@@ -464,10 +509,10 @@ async function exportarAnalisisPDF() {
         pdf.save('AnalisisIA_BUFINS_' + ahora.toISOString().slice(0,10).replace(/-/g,'') + '.pdf');
     } catch(e) {
         console.error(e);
-        Swal.fire({icon:'error',title:'Error',text:'No se pudo generar el PDF.'});
+        Swal.fire({icon:'error',title:_iaMsg.error,text:_iaMsg.errorPDF});
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-file-pdf"></i> Exportar PDF';
+        btn.innerHTML = '<i class="fas fa-file-pdf"></i> ' + _iaMsg.btnExportarPDF;
     }
 }
 </script>

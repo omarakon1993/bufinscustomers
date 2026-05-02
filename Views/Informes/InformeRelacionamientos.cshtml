@@ -2,7 +2,7 @@
 @using bufinscustomers.Models
 
 @{
-    ViewBag.Title = "Informe Relacionamientos BUFINS";
+    ViewBag.Title = Resources.Strings.Rel_PageTitle;
     var tablas = ViewBag.Tablas as List<TablaRelacionamiento>;
 }
 
@@ -15,7 +15,7 @@
     <div class="powerbi-header">
         <div class="powerbi-header-content">
             <i class="fas fa-project-diagram powerbi-header-icon"></i>
-            <h1 class="powerbi-header-title">Informe Relacionamientos BUFINS</h1>
+            <h1 class="powerbi-header-title">@Resources.Strings.Rel_PageTitle</h1>
         </div>
     </div>
 
@@ -57,7 +57,7 @@
     <div class="filter-card">
         <h3 class="filter-card-title">
             <i class="fas fa-filter"></i>
-            Filtros de Consulta
+            @Resources.Strings.Common_FiltrosConsulta
         </h3>
 
         <form id="formFiltros">
@@ -68,10 +68,10 @@
                         <div class="form-group">
                             <label for="selectTabla">
                                 <i class="fas fa-table"></i>
-                                Tabla <span class="required">*</span>
+                                @Resources.Strings.Common_LabelTabla <span class="required">*</span>
                             </label>
                             <select id="selectTabla" name="NombreTabla" class="form-control" required>
-                                <option value="">-- Seleccione --</option>
+                                <option value="">@Resources.Strings.Common_Seleccione</option>
                                 @if (tablas != null)
                                 {
                                     foreach (var tabla in tablas)
@@ -90,10 +90,10 @@
                         <div class="form-group">
                             <label for="selectTipo">
                                 <i class="fas fa-layer-group"></i>
-                                Tipo
+                                @Resources.Strings.Rel_LabelTipo
                             </label>
                             <select id="selectTipo" name="Tipo" class="form-control">
-                                <option value="">-- Todos --</option>
+                                <option value="">@Resources.Strings.Common_Todos</option>
                             </select>
                         </div>
                     </div>
@@ -105,10 +105,10 @@
                         <div class="form-group">
                             <label for="selectDescripcion">
                                 <i class="fas fa-align-left"></i>
-                                Variable/Descripci&oacute;n
+                                @Resources.Strings.Rel_LabelDescripcion
                             </label>
                             <select id="selectDescripcion" name="Descripcion" class="form-control">
-                                <option value="">-- Todas --</option>
+                                <option value="">@Resources.Strings.Common_Todas</option>
                             </select>
                         </div>
                     </div>
@@ -118,10 +118,10 @@
                         <div class="form-group">
                             <label for="txtCuentaPucCalc">
                                 <i class="fas fa-calculator"></i>
-                                Cuenta PUC Calc
+                                @Resources.Strings.Rel_LabelCuentaPUC
                             </label>
                             <input type="text" id="txtCuentaPucCalc" name="CuentaPucCalc" class="form-control"
-                                   placeholder="Escriba para buscar..." autocomplete="off" />
+                                   placeholder="@Resources.Strings.Rel_PlaceholderPUC" autocomplete="off" />
                         </div>
                     </div>
                 </div>
@@ -130,13 +130,13 @@
             <!-- Botones de accion -->
             <div class="btn-group-actions">
                 <button type="button" id="btnConsultar" class="btn btn-modern-gradient">
-                    <i class="fas fa-search mr-2"></i>Consultar
+                    <i class="fas fa-search mr-2"></i>@Resources.Strings.Common_Consultar
                 </button>
                 <button type="button" id="btnLimpiar" class="btn btn-modern-secondary">
-                    <i class="fas fa-eraser mr-2"></i>Limpiar
+                    <i class="fas fa-eraser mr-2"></i>@Resources.Strings.Common_Limpiar
                 </button>
                 <button type="button" id="btnExportar" class="btn btn-modern-success" style="display: none;">
-                    <i class="fas fa-file-excel mr-2"></i>Exportar Excel
+                    <i class="fas fa-file-excel mr-2"></i>@Resources.Strings.Common_ExportarExcel
                 </button>
             </div>
         </form>
@@ -145,7 +145,7 @@
     <!-- Loading Spinner -->
     <div id="loadingSpinner" class="loading-spinner">
         <i class="fas fa-spinner"></i>
-        <p>Consultando datos...</p>
+        <p>@Resources.Strings.Common_ConsultandoDatos</p>
     </div>
 
     <!-- Tabla de resultados -->
@@ -153,7 +153,7 @@
         <div class="table-container">
             <div class="table-header">
                 <h5>
-                    <i class="fas fa-list mr-2"></i>Resultados
+                    <i class="fas fa-list mr-2"></i>@Resources.Strings.Common_Resultados
                 </h5>
                 <span id="totalRegistros" class="info-badge"></span>
             </div>
@@ -170,8 +170,8 @@
     <!-- Mensaje cuando no hay datos -->
     <div id="noDataMessage" class="no-data-message" style="display: none;">
         <i class="fas fa-inbox"></i>
-        <h4>No se encontraron datos</h4>
-        <p>No hay registros que coincidan con los filtros seleccionados.</p>
+        <h4>@Resources.Strings.Common_NoData</h4>
+        <p>@Resources.Strings.Common_NoDataFiltros</p>
     </div>
 </div>
 
@@ -182,9 +182,9 @@
             <div class="modal-header modal-grupo-header">
                 <div class="modal-grupo-title-wrapper">
                     <i class="fas fa-layer-group"></i>
-                    <h5 class="modal-title" id="modalDetalleGrupoLabel">Detalle del grupo</h5>
+                    <h5 class="modal-title" id="modalDetalleGrupoLabel">@Resources.Strings.Rel_ModalTitle</h5>
                 </div>
-                <button type="button" class="close modal-grupo-close" data-dismiss="modal" aria-label="Cerrar">
+                <button type="button" class="close modal-grupo-close" data-dismiss="modal" aria-label="@Resources.Strings.Layout_Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -204,12 +204,38 @@
 </div>
 
 @section scripts {
+
+<script>
+    var _relMsg = {
+        seleccione:         '@Html.Raw(Resources.Strings.Common_Seleccione)',
+        todos:              '@Resources.Strings.Common_Todos',
+        todas:              '@Resources.Strings.Common_Todas',
+        tablaRequerida:     '@Resources.Strings.Common_JS_TablaRequerida',
+        tablaSeleccionar:   '@Html.Raw(Resources.Strings.Common_JS_TablaSeleccionar)',
+        sinDatosExportar:   '@Html.Raw(Resources.Strings.Common_JS_SinDatosExportar)',
+        exportando:         '@Resources.Strings.Common_JS_ExportandoExcel',
+        generandoExcel:     '@Html.Raw(Resources.Strings.Common_JS_GenerandoExcel)',
+        registrosPag:       '@Resources.Strings.Common_RegistrosPag',
+        noResultados:       '@Html.Raw(Resources.Strings.Common_Select2NoResults)',
+        buscando:           '@Html.Raw(Resources.Strings.Common_Select2Searching)',
+        error:              '@Resources.Strings.Common_Error',
+        errorTipos:         '@Html.Raw(Resources.Strings.Rel_JS_ErrorTipos)',
+        errorDescripciones: '@Html.Raw(Resources.Strings.Rel_JS_ErrorDescripciones)',
+        errorConexion:      '@Html.Raw(Resources.Strings.Rel_JS_ErrorConexion)'
+    };
+</script>
+
     <script>
         $(document).ready(function () {
             var datosActuales = null;
             var filtrosActuales = null;
             var paginaActual = 1;
             var registrosPorPagina = 50;
+
+            var s2lang = {
+                noResults: function () { return _relMsg.noResultados; },
+                searching: function () { return _relMsg.buscando; }
+            };
 
             // Evento: cambio de tabla
             $('#selectTabla').on('change', function () {
@@ -239,8 +265,8 @@
 
             // Funcion: resetear filtros en cascada
             function resetFiltrosCascada() {
-                $('#selectTipo').html('<option value="">-- Todos --</option>').trigger('change');
-                $('#selectDescripcion').html('<option value="">-- Todas --</option>').trigger('change');
+                $('#selectTipo').html('<option value="">' + _relMsg.todos + '</option>').trigger('change');
+                $('#selectDescripcion').html('<option value="">' + _relMsg.todas + '</option>').trigger('change');
                 $('#txtCuentaPucCalc').val('');
             }
 
@@ -253,7 +279,7 @@
                     success: function (response) {
                         if (response.success) {
                             var select = $('#selectTipo');
-                            select.html('<option value="">-- Todos --</option>');
+                            select.html('<option value="">' + _relMsg.todos + '</option>');
 
                             if (response.tipos && response.tipos.length > 0) {
                                 $.each(response.tipos, function (i, tipo) {
@@ -264,16 +290,16 @@
                         } else {
                             Swal.fire({
                                 icon: 'error',
-                                title: 'Error',
-                                text: response.message || 'Error al cargar tipos'
+                                title: _relMsg.error,
+                                text: response.message || _relMsg.errorTipos
                             });
                         }
                     },
                     error: function () {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Error',
-                            text: 'Error al cargar tipos'
+                            title: _relMsg.error,
+                            text: _relMsg.errorTipos
                         });
                     }
                 });
@@ -291,7 +317,7 @@
                     success: function (response) {
                         if (response.success) {
                             var select = $('#selectDescripcion');
-                            select.html('<option value="">-- Todas --</option>');
+                            select.html('<option value="">' + _relMsg.todas + '</option>');
 
                             if (response.descripciones && response.descripciones.length > 0) {
                                 $.each(response.descripciones, function (i, desc) {
@@ -304,8 +330,8 @@
                     error: function () {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Error',
-                            text: 'Error al cargar descripciones'
+                            title: _relMsg.error,
+                            text: _relMsg.errorDescripciones
                         });
                     }
                 });
@@ -318,8 +344,8 @@
                 if (!nombreTabla) {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'Tabla requerida',
-                        text: 'Por favor seleccione una tabla'
+                        title: _relMsg.tablaRequerida,
+                        text: _relMsg.tablaSeleccionar
                     });
                     return;
                 }
@@ -359,8 +385,8 @@
                         } else {
                             Swal.fire({
                                 icon: 'error',
-                                title: 'Error',
-                                text: response.message || 'Error al consultar datos'
+                                title: _relMsg.error,
+                                text: response.message || _relMsg.errorConexion
                             });
                         }
                     },
@@ -368,8 +394,8 @@
                         $('#loadingSpinner').hide();
                         Swal.fire({
                             icon: 'error',
-                            title: 'Error',
-                            text: 'Error de conexion al consultar los datos'
+                            title: _relMsg.error,
+                            text: _relMsg.errorConexion
                         });
                     }
                 });
@@ -429,7 +455,6 @@
                     if (esNuevoGrupo && i > inicio) {
                         row.addClass('grupo-inicio');
                     } else if (esNuevoGrupo && i === inicio && paginaActual > 1) {
-                        // En paginas siguientes, marcar el primer grupo tambien
                         row.addClass('grupo-inicio');
                     }
 
@@ -458,7 +483,7 @@
                 }
 
                 // Actualizar informacion de registros
-                $('#totalRegistros').text(response.totalRegistros + ' registros | Pag. ' + paginaActual + '/' + totalPaginas);
+                $('#totalRegistros').text(response.totalRegistros + ' ' + _relMsg.registrosPag + ' ' + paginaActual + '/' + totalPaginas);
 
                 // Crear controles de paginacion
                 crearPaginacion(totalPaginas);
@@ -616,8 +641,8 @@
                 if (!filtrosActuales) {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'Sin datos',
-                        text: 'No hay datos para exportar'
+                        title: _relMsg.error,
+                        text: _relMsg.sinDatosExportar
                     });
                     return;
                 }
@@ -643,8 +668,8 @@
 
                 Swal.fire({
                     icon: 'success',
-                    title: 'Exportando...',
-                    text: 'Generando archivo Excel',
+                    title: _relMsg.exportando,
+                    text: _relMsg.generandoExcel,
                     timer: 2000,
                     showConfirmButton: false
                 });
@@ -652,45 +677,24 @@
 
             // Inicializar Select2 para todos los filtros
             $('#selectTabla').select2({
-                placeholder: '-- Seleccione --',
+                placeholder: _relMsg.seleccione,
                 allowClear: false,
                 width: '100%',
-                language: {
-                    noResults: function () {
-                        return "No se encontraron resultados";
-                    },
-                    searching: function () {
-                        return "Buscando...";
-                    }
-                }
+                language: s2lang
             });
 
             $('#selectTipo').select2({
-                placeholder: '-- Todos --',
+                placeholder: _relMsg.todos,
                 allowClear: true,
                 width: '100%',
-                language: {
-                    noResults: function () {
-                        return "No se encontraron resultados";
-                    },
-                    searching: function () {
-                        return "Buscando...";
-                    }
-                }
+                language: s2lang
             });
 
             $('#selectDescripcion').select2({
-                placeholder: '-- Todas --',
+                placeholder: _relMsg.todas,
                 allowClear: true,
                 width: '100%',
-                language: {
-                    noResults: function () {
-                        return "No se encontraron resultados";
-                    },
-                    searching: function () {
-                        return "Buscando...";
-                    }
-                }
+                language: s2lang
             });
 
         });

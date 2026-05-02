@@ -1,14 +1,14 @@
-﻿@model bufinscustomers.Models.GestionOpcionesMenuViewModel
+@model bufinscustomers.Models.GestionOpcionesMenuViewModel
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
-    ViewBag.Title = "Gestionar Permisos";
+    ViewBag.Title = Resources.Strings.Perm_PageTitle;
 }
 
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Gestionar Permisos</title>
+    <title>@Resources.Strings.Perm_PageTitle</title>
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
@@ -200,12 +200,12 @@
 
     <div class="card shadow mb-4 mt-4">
         <div class="card-header-permisos">
-            <i class="fas fa-shield-alt"></i> Gestionar Opciones de Menú
+            <i class="fas fa-shield-alt"></i> @Resources.Strings.Perm_PageTitle
             <span class="d-block d-md-inline mt-1 mt-md-0 ml-md-2" style="font-weight: 400; font-size: 1rem;">
                 @Model.Usuario.Nombre @Model.Usuario.Apellidos
             </span>
             <span class="badge badge-info badge-role ml-2">
-                @(Model.Usuario.Admin == 0 ? "Usuario Normal" : "Administrador de Empresa")
+                @(Model.Usuario.Admin == 0 ? Resources.Strings.Perm_RolNormal : Resources.Strings.Perm_RolAdminEmp)
             </span>
         </div>
         <div class="card-body">
@@ -216,7 +216,7 @@
                 {
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle mr-2"></i>
-                        No hay opciones de menú disponibles en el sistema.
+                        @Resources.Strings.Perm_NoOpciones
                     </div>
                 }
                 else
@@ -224,10 +224,10 @@
                     <!-- Acciones globales -->
                     <div class="acciones-globales">
                         <button type="button" class="btn btn-outline-primary btn-sm" onclick="seleccionarTodo()">
-                            <i class="fas fa-check-double mr-1"></i>Seleccionar Todo
+                            <i class="fas fa-check-double mr-1"></i>@Resources.Strings.Perm_BtnSelTodo
                         </button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" onclick="deseleccionarTodo()">
-                            <i class="fas fa-times mr-1"></i>Deseleccionar Todo
+                            <i class="fas fa-times mr-1"></i>@Resources.Strings.Perm_BtnDeselTodo
                         </button>
                     </div>
 
@@ -251,10 +251,10 @@
                                 </div>
                                 <div class="categoria-acciones">
                                     <button type="button" class="btn btn-outline-primary" onclick="seleccionarCategoria('@categoriaId')">
-                                        Todas
+                                        @Resources.Strings.Perm_BtnTodas
                                     </button>
                                     <button type="button" class="btn btn-outline-secondary" onclick="deseleccionarCategoria('@categoriaId')">
-                                        Ninguna
+                                        @Resources.Strings.Perm_BtnNinguna
                                     </button>
                                 </div>
                             </div>
@@ -293,10 +293,10 @@
         </div>
         <div class="card-footer text-center">
             <button type="button" class="btn btn-guardar" onclick="guardarPermisos()">
-                <i class="fas fa-save mr-2"></i>Guardar Opciones de Menú
+                <i class="fas fa-save mr-2"></i>@Resources.Strings.Perm_BtnGuardar
             </button>
             <a href="@Url.Action("Usuarios", "Usuario")" class="btn btn-secondary ml-2">
-                <i class="fas fa-arrow-left mr-2"></i>Volver
+                <i class="fas fa-arrow-left mr-2"></i>@Resources.Strings.Perm_BtnVolver
             </a>
         </div>
     </div>
@@ -386,8 +386,8 @@
                 });
 
                 Swal.fire({
-                    title: 'Guardando opciones de menú...',
-                    text: 'Por favor espere',
+                    title: '@Html.Raw(Resources.Strings.Perm_JS_Guardando.Replace("'", "\\'"))',
+                    text: '@Html.Raw(Resources.Strings.Perm_JS_Espere.Replace("'", "\\'"))',
                     allowOutsideClick: false,
                     allowEscapeKey: false,
                     didOpen: () => {
@@ -407,16 +407,16 @@
                         if (response.success) {
                             Swal.fire({
                                 icon: 'success',
-                                title: 'Opciones actualizadas',
+                                title: '@Html.Raw(Resources.Strings.Perm_JS_OpActualizadas.Replace("'", "\\'"))',
                                 text: response.message,
                                 showConfirmButton: true,
-                                confirmButtonText: 'Aceptar',
+                                confirmButtonText: '@Html.Raw(Resources.Strings.Common_Aceptar.Replace("'", "\\'"))',
                                 confirmButtonColor: '#583AFF'
                             });
                         } else {
                             Swal.fire({
                                 icon: 'error',
-                                title: 'Error',
+                                title: '@Html.Raw(Resources.Strings.Common_Error.Replace("'", "\\'"))',
                                 text: response.message,
                                 showConfirmButton: true
                             });
@@ -425,8 +425,8 @@
                     error: function () {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Error',
-                            text: 'Error al guardar las opciones de menú. Por favor, intente nuevamente.',
+                            title: '@Html.Raw(Resources.Strings.Common_Error.Replace("'", "\\'"))',
+                            text: '@Html.Raw(Resources.Strings.Perm_JS_ErrorGuardar.Replace("'", "\\'"))',
                             showConfirmButton: true
                         });
                     }

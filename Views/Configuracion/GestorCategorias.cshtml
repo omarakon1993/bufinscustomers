@@ -6,7 +6,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Gestor de Categorías</title>
+    <title>@Resources.Strings.Cat_PageTitle</title>
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="~/Assets/css/configuracion-admin.css" rel="stylesheet" />
@@ -35,7 +35,7 @@
 
 <div class="card shadow mb-4 mt-4">
     <div class="card-header">
-        <i class="fas fa-folder"></i> Gestor de Categor&iacute;as
+        <i class="fas fa-folder"></i> @Resources.Strings.Cat_PageTitle
     </div>
     <div class="card-body p-0">
         <div class="table-responsive table-wrapper">
@@ -43,16 +43,16 @@
                 <thead>
                     <tr>
                         <th style="width:50px">#</th>
-                        <th>Nombre</th>
-                        <th style="width:80px;text-align:center">Icono</th>
-                        <th style="width:70px;text-align:center">Orden</th>
-                        <th style="width:110px;text-align:center">Acciones</th>
+                        <th>@Resources.Strings.Rep_LabelNombre</th>
+                        <th style="width:80px;text-align:center">@Resources.Strings.Menu_LabelIcono</th>
+                        <th style="width:70px;text-align:center">@Resources.Strings.Menu_ThOrden</th>
+                        <th style="width:110px;text-align:center">@Resources.Strings.Common_ThAcciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (!Model.Any())
                     {
-                        <tr><td colspan="5" class="text-center text-muted py-3">No hay categor&iacute;as registradas.</td></tr>
+                        <tr><td colspan="5" class="text-center text-muted py-3">@Resources.Strings.Cat_NoCategs</td></tr>
                     }
                     @foreach (var c in Model)
                     {
@@ -69,12 +69,12 @@
                             <td style="text-align:center">@c.Orden</td>
                             <td style="text-align:center">
                                 <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-primary" title="Editar"
+                                    <button type="button" class="btn btn-primary" title="@Resources.Strings.Rep_BtnEditar"
                                             data-toggle="modal" data-target="#editModal"
                                             onclick="setEditar(@c.Id, '@Html.Raw(c.Nombre?.Replace("'","\\'")??"")', '@Html.Raw(c.Icono?.Replace("'","\\'")??"")', @c.Orden)">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button type="button" class="btn btn-outline-danger" title="Eliminar"
+                                    <button type="button" class="btn btn-outline-danger" title="@Resources.Strings.Common_BtnEliminar"
                                             onclick="confirmarEliminar(@c.Id, '@Html.Raw(c.Nombre?.Replace("'","\\'")??"")')">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
@@ -88,7 +88,7 @@
     </div>
     <div class="card-footer">
         <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearModal">
-            <i class="fas fa-plus-circle mr-1"></i> Nueva categor&iacute;a
+            <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Cat_BtnNuevo
         </button>
     </div>
 </div>
@@ -98,30 +98,30 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-plus-circle"></i> Nueva categor&iacute;a</h5>
+                <h5 class="modal-title"><i class="fas fa-plus-circle"></i> @Resources.Strings.Cat_ModalCreateTitle</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form method="post" action="/GestorCategorias/Crear">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>Nombre <span class="text-danger">*</span></label>
+                        <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span></label>
                         <input type="text" class="form-control form-control-sm" name="Nombre" required maxlength="100" placeholder="Ej: ADMINISTRACION" />
                     </div>
                     <div class="mb-3">
-                        <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>Icono <small class="text-muted">(FontAwesome)</small></label>
+                        <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono <small class="text-muted">(FontAwesome)</small></label>
                         <input type="text" class="form-control form-control-sm" name="Icono" placeholder="fas fa-folder" maxlength="100" />
                     </div>
                     <div class="mb-3">
-                        <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>Orden</label>
+                        <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_ThOrden</label>
                         <input type="number" class="form-control form-control-sm" name="Orden" value="0" min="0" />
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i>Cancelar
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                     </button>
                     <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus-circle mr-1"></i>Crear
+                        <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.Common_BtnCrear
                     </button>
                 </div>
             </form>
@@ -134,31 +134,31 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-edit"></i> Editar categor&iacute;a</h5>
+                <h5 class="modal-title"><i class="fas fa-edit"></i> @Resources.Strings.Cat_ModalEditTitle</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form method="post" action="/GestorCategorias/Editar">
                 <input type="hidden" name="Id" id="editId" />
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>Nombre <span class="text-danger">*</span></label>
+                        <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span></label>
                         <input type="text" class="form-control form-control-sm" name="Nombre" id="editNombre" required maxlength="100" />
                     </div>
                     <div class="mb-3">
-                        <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>Icono <small class="text-muted">(FontAwesome)</small></label>
+                        <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono <small class="text-muted">(FontAwesome)</small></label>
                         <input type="text" class="form-control form-control-sm" name="Icono" id="editIcono" maxlength="100" />
                     </div>
                     <div class="mb-3">
-                        <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>Orden</label>
+                        <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_ThOrden</label>
                         <input type="number" class="form-control form-control-sm" name="Orden" id="editOrden" min="0" />
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i>Cancelar
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                     </button>
                     <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="fas fa-save mr-1"></i>Guardar cambios
+                        <i class="fas fa-save mr-1"></i>@Resources.Strings.Common_GuardarCambios
                     </button>
                 </div>
             </form>
@@ -181,13 +181,13 @@
 
     function confirmarEliminar(id, nombre) {
         Swal.fire({
-            title: '¿Eliminar categoría?',
-            text: '"' + nombre + '" se eliminará permanentemente.',
+            title: '@Html.Raw(Resources.Strings.Cat_JS_ElimTitle.Replace("'", "\\'"))',
+            text: '"' + nombre + '" @Html.Raw(Resources.Strings.Cat_JS_ElimSuffix.Replace("'", "\\'"))',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#e74a3b',
-            cancelButtonText: 'Cancelar',
-            confirmButtonText: 'Sí, eliminar'
+            cancelButtonText: '@Html.Raw(Resources.Strings.Layout_Cancel.Replace("'", "\\'"))',
+            confirmButtonText: '@Html.Raw(Resources.Strings.Common_BtnEliminar.Replace("'", "\\'"))'
         }).then(function(r) {
             if (r.isConfirmed) {
                 document.getElementById('elimId').value = id;

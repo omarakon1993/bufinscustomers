@@ -54,9 +54,9 @@
     bool hayTarjetas = kpiRows.Any() || graficoCards.Any();
 
     int hora = DateTime.Now.Hour;
-    string saludoHtml = hora >= 5 && hora < 12 ? "Buenos d&iacute;as"
-                      : hora >= 12 && hora < 19 ? "Buenas tardes"
-                      : "Buenas noches";
+    string saludoHtml = hora >= 5 && hora < 12 ? Resources.Strings.Home_GreetingMorning
+                      : hora >= 12 && hora < 19 ? Resources.Strings.Home_GreetingAfternoon
+                      : Resources.Strings.Home_GreetingEvening;
     string nombreUsuario = usuario != null ? usuario.Nombre : "usuario";
 
     // Serialización de datos para Chart.js
@@ -89,7 +89,7 @@
         <div class="dash-greeting">
             <div class="dash-greeting-text">
                 <span class="dash-hello">@Html.Raw(saludoHtml), <strong>@nombreUsuario</strong></span>
-                <span class="dash-date">@DateTime.Now.ToString("dddd d 'de' MMMM yyyy", new CultureInfo("es-CO"))</span>
+                <span class="dash-date">@DateTime.Now.ToString(Resources.Strings.Home_DateFormat, System.Globalization.CultureInfo.CurrentCulture)</span>
             </div>
         </div>
     }
@@ -97,7 +97,7 @@
     @if (kpiRows.Any())
     {
         <div class="dash-section">
-            <div class="dash-section-label"><i class="fas fa-chart-bar"></i> Indicadores</div>
+            <div class="dash-section-label"><i class="fas fa-chart-bar"></i> @Resources.Strings.Home_SectionKPI</div>
             <div class="dash-kpi-grid">
                 @foreach (var row in kpiRows)
                 {
@@ -132,7 +132,7 @@
     @if (graficoCards.Any())
     {
         <div class="dash-section">
-            <div class="dash-section-label"><i class="fas fa-chart-pie"></i> An&aacute;lisis</div>
+            <div class="dash-section-label"><i class="fas fa-chart-pie"></i> @Resources.Strings.Home_SectionCharts</div>
             <div class="dash-graf-grid">
                 @foreach (var g in graficoCards)
                 {
@@ -151,7 +151,7 @@
                         <div class="dash-graf-canvas-wrap">
                             @if (vacio)
                             {
-                                <div class="dash-graf-empty-msg"><i class="fas fa-chart-line"></i> Sin datos para mostrar</div>
+                                <div class="dash-graf-empty-msg"><i class="fas fa-chart-line"></i> @Resources.Strings.Home_EmptyChart</div>
                             }
                             else
                             {
@@ -168,13 +168,13 @@
 
 @functions {
     string TipoGraficoLabel(string t) {
-        if (string.IsNullOrEmpty(t)) return "Barras";
+        if (string.IsNullOrEmpty(t)) return Resources.Strings.Home_ChartBar;
         switch (t.ToLower()) {
-            case "bar":      return "Barras";
-            case "line":     return "Líneas";
-            case "area":     return "Área";
-            case "doughnut": return "Dona";
-            case "pie":      return "Pastel";
+            case "bar":      return Resources.Strings.Home_ChartBar;
+            case "line":     return Resources.Strings.Home_ChartLine;
+            case "area":     return Resources.Strings.Home_ChartArea;
+            case "doughnut": return Resources.Strings.Home_ChartDoughnut;
+            case "pie":      return Resources.Strings.Home_ChartPie;
             default:         return t;
         }
     }

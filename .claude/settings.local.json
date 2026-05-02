@@ -89,7 +89,12 @@
       "Bash(\"/c/Windows/Microsoft.NET/Framework64/v4.0.30319/MSBuild.exe\" bufinscustomers.csproj /t:Build /p:Configuration=Debug /verbosity:minimal /nologo)",
       "PowerShell($msb = \"C:\\\\Windows\\\\Microsoft.NET\\\\Framework64\\\\v4.0.30319\\\\MSBuild.exe\"; $proj = \"C:\\\\Users\\\\omara\\\\OneDrive\\\\Omar Akon Personal\\\\Proyectos OAG\\\\Bufins Web\\\\Bufins principal web\\\\bufinscustomers\\\\bufinscustomers.csproj\"; & $msb $proj /t:Build /p:Configuration=Debug /verbosity:minimal /nologo)",
       "Read(//c/Program Files \\(x86\\)/Microsoft Visual Studio/**)",
-      "PowerShell($msb = \"C:\\\\Program Files\\\\Microsoft Visual Studio\\\\18\\\\Community\\\\MSBuild\\\\Current\\\\Bin\\\\MSBuild.exe\"; $proj = \"C:\\\\Users\\\\omara\\\\OneDrive\\\\Omar Akon Personal\\\\Proyectos OAG\\\\Bufins Web\\\\Bufins principal web\\\\bufinscustomers\\\\bufinscustomers.csproj\"; & $msb $proj /t:Build /p:Configuration=Debug /verbosity:minimal /nologo)"
+      "PowerShell($msb = \"C:\\\\Program Files\\\\Microsoft Visual Studio\\\\18\\\\Community\\\\MSBuild\\\\Current\\\\Bin\\\\MSBuild.exe\"; $proj = \"C:\\\\Users\\\\omara\\\\OneDrive\\\\Omar Akon Personal\\\\Proyectos OAG\\\\Bufins Web\\\\Bufins principal web\\\\bufinscustomers\\\\bufinscustomers.csproj\"; & $msb $proj /t:Build /p:Configuration=Debug /verbosity:minimal /nologo)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\omara\\\\OneDrive\\\\Omar Akon Personal\\\\Proyectos OAG\\\\Bufins Web\\\\Bufins principal web\\\\bufinscustomers\\\\Views\" -Recurse -Filter \"*.cshtml\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "Bash(Select-String -Path \"C:\\\\Users\\\\omara\\\\OneDrive\\\\Omar Akon Personal\\\\Proyectos OAG\\\\Bufins Web\\\\Bufins principal web\\\\bufinscustomers\\\\App_GlobalResources\\\\Strings.resx\" -Pattern \"</root>\")",
+      "Bash(Select-Object -ExpandProperty LineNumber)"
     ],
     "deny": [],
     "ask": []

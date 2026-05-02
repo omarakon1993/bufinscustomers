@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Configuración de Empresas</title>
+    <title>@Resources.Strings.CfgEmp_PageTitle</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link rel="stylesheet" href="~/Assets/css/bootstrap-icons.min.css">
@@ -143,17 +143,17 @@
     <!-- Selector de Empresa -->
     <div class="card shadow mb-4 mt-4">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-building-gear"></i>Configuración empresas</span>
+            <span><i class="bi bi-building-gear"></i>@Resources.Strings.CfgEmp_PageTitle</span>
             <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#modalInstructivo">
-                <i class="fas fa-book"></i> Instructivo
+                <i class="fas fa-book"></i> @Resources.Strings.CfgEmp_BtnInstructivo
             </button>
         </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
-                    <label for="selectEmpresa" class="form-label">Empresa:</label>
+                    <label for="selectEmpresa" class="form-label">@Resources.Strings.CfgEmp_LabelEmpresa</label>
                     <select class="form-control" id="selectEmpresa">
-                        <option value="">Seleccione una empresa...</option>
+                        <option value="">@Resources.Strings.CfgEmp_SelEmpresa</option>
                         @if (ViewBag.Empresas != null)
                         {
                             foreach (var empresa in ViewBag.Empresas)
@@ -165,7 +165,7 @@
                 </div>
                 <div class="col-md-6 d-flex align-items-end">
                     <button type="button" class="btn btn-primary" id="btnCargarConfig">
-                        <i class="fas fa-search"></i> Cargar configuración
+                        <i class="fas fa-search"></i> @Resources.Strings.CfgEmp_BtnCargar
                     </button>
                 </div>
             </div>
@@ -178,7 +178,7 @@
         <!-- Configuración Básica -->
         <div class="card shadow mb-4 mt-4">
             <div class="card-header">
-                <i class="bi bi-gear-fill"></i> Configuración básica
+                <i class="bi bi-gear-fill"></i> @Resources.Strings.CfgEmp_TitleBasica
             </div>
             <div class="card-body">
                 <form id="formConfigBasica">
@@ -188,33 +188,33 @@
                     <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Año de Ejecución:</label>
+                                <label>@Resources.Strings.CfgEmp_LabelAnio</label>
                                 <input type="number" class="form-control" id="anioEjecucion" min="2000" max="2100" required />
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Signo Créditos:</label>
+                                <label>@Resources.Strings.CfgEmp_LabelSigno</label>
                                 <select class="form-control" id="signoCreditos">
-                                    <option value="">Sin signo</option>
-                                    <option value="+">+ (Positivo)</option>
-                                    <option value="-">- (Negativo)</option>
+                                    <option value="">@Resources.Strings.CfgEmp_SignoSinSigno</option>
+                                    <option value="+">@Resources.Strings.CfgEmp_SignoPositivo</option>
+                                    <option value="-">@Resources.Strings.CfgEmp_SignoNegativo</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Moneda:</label>
+                                <label>@Resources.Strings.CfgEmp_LabelMoneda</label>
                                 <select class="form-control" id="moneda" required>
-                                    <option value="CO$">CO$ (Pesos Colombianos)</option>
-                                    <option value="USD">USD (Dólares)</option>
-                                    <option value="EUR">EUR (Euros)</option>
+                                    <option value="CO$">@Resources.Strings.CfgEmp_MonedaCOP</option>
+                                    <option value="USD">@Resources.Strings.CfgEmp_MonedaUSD</option>
+                                    <option value="EUR">@Resources.Strings.CfgEmp_MonedaEUR</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Unidad:</label>
+                                <label>@Resources.Strings.CfgEmp_LabelUnidad</label>
                                 <select class="form-control" id="unidad" required>
                                     <option value="MILES">MILES</option>
                                     <option value="MILLONES">MILLONES</option>
@@ -226,7 +226,7 @@
                     <div class="row mt-3">
                         <div class="col-12">
                             <button type="submit" class="btn btn-success">
-                                <i class="fas fa-save"></i> Guardar configuración básica
+                                <i class="fas fa-save"></i> @Resources.Strings.CfgEmp_BtnGuardarBasica
                             </button>
                         </div>
                     </div>
@@ -237,7 +237,7 @@
         <!-- Pestañas de Configuración Detallada -->
         <div class="card shadow mb-4 mt-4">
             <div class="card-header">
-                <i class="bi bi-list-ul"></i> Listas de configuración
+                <i class="bi bi-list-ul"></i> @Resources.Strings.CfgEmp_TitleListas
             </div>
             <div class="card-body">
                 <div class="row mb-3">
@@ -245,7 +245,7 @@
                         <div class="card card-tab" data-section="empresas">
                             <div class="card-body text-center">
                                 <i class="fas fa-building fa-2x mb-2 text-primary"></i>
-                                <h6>Empresas a Consolidar</h6>
+                                <h6>@Resources.Strings.CfgEmp_TabEmpresas</h6>
                                 <span class="badge badge-primary badge-custom" id="countEmpresas">0</span>
                             </div>
                         </div>
@@ -254,7 +254,7 @@
                         <div class="card card-tab" data-section="paises">
                             <div class="card-body text-center">
                                 <i class="fas fa-globe fa-2x mb-2 text-info"></i>
-                                <h6>Países</h6>
+                                <h6>@Resources.Strings.CfgEmp_TabPaises</h6>
                                 <span class="badge badge-info badge-custom" id="countPaises">0</span>
                             </div>
                         </div>
@@ -263,7 +263,7 @@
                         <div class="card card-tab" data-section="categorias">
                             <div class="card-body text-center">
                                 <i class="fas fa-tags fa-2x mb-2 text-success"></i>
-                                <h6>Categorías</h6>
+                                <h6>@Resources.Strings.CfgEmp_TabCategorias</h6>
                                 <span class="badge badge-success badge-custom" id="countCategorias">0</span>
                             </div>
                         </div>
@@ -272,7 +272,7 @@
                         <div class="card card-tab" data-section="tipos">
                             <div class="card-body text-center">
                                 <i class="fas fa-cube fa-2x mb-2 text-warning"></i>
-                                <h6>Tipos</h6>
+                                <h6>@Resources.Strings.CfgEmp_TabTipos</h6>
                                 <span class="badge badge-warning badge-custom" id="countTipos">0</span>
                             </div>
                         </div>
@@ -281,7 +281,7 @@
                         <div class="card card-tab" data-section="lineas">
                             <div class="card-body text-center">
                                 <i class="fas fa-chart-line fa-2x mb-2 text-danger"></i>
-                                <h6>Líneas de Negocio</h6>
+                                <h6>@Resources.Strings.CfgEmp_TabLineas</h6>
                                 <span class="badge badge-danger badge-custom" id="countLineas">0</span>
                             </div>
                         </div>
@@ -290,7 +290,7 @@
                         <div class="card card-tab" data-section="ajuste1">
                             <div class="card-body text-center">
                                 <i class="fas fa-sliders fa-2x mb-2 text-secondary"></i>
-                                <h6>Ajuste 1</h6>
+                                <h6>@Resources.Strings.CfgEmp_TabAjuste1</h6>
                                 <span class="badge badge-secondary badge-custom" id="countAjuste1">0</span>
                             </div>
                         </div>
@@ -299,7 +299,7 @@
                         <div class="card card-tab" data-section="ajuste2">
                             <div class="card-body text-center">
                                 <i class="fas fa-sliders fa-2x mb-2 text-dark"></i>
-                                <h6>Ajuste 2</h6>
+                                <h6>@Resources.Strings.CfgEmp_TabAjuste2</h6>
                                 <span class="badge badge-dark badge-custom" id="countAjuste2">0</span>
                             </div>
                         </div>
@@ -308,14 +308,14 @@
 
                 <!-- Sección de Empresas -->
                 <div id="section-empresas" class="config-section">
-                    <h5><i class="fas fa-building"></i> Empresas a consolidar</h5>
+                    <h5><i class="fas fa-building"></i> @Resources.Strings.CfgEmp_SecEmpresas</h5>
                     <div class="row mb-3">
                         <div class="col-md-8">
-                            <input type="text" class="form-control" id="inputEmpresa" placeholder="Nombre de la empresa" />
+                            <input type="text" class="form-control" id="inputEmpresa" placeholder="@Resources.Strings.CfgEmp_PlaceholderEmpresa" />
                         </div>
                         <div class="col-md-4">
                             <button type="button" class="btn btn-primary btn-block" onclick="agregarItem('Empresa')">
-                                <i class="fas fa-plus"></i> Agregar empresa
+                                <i class="fas fa-plus"></i> @Resources.Strings.CfgEmp_BtnAgregarEmpresa
                             </button>
                         </div>
                     </div>
@@ -324,14 +324,14 @@
 
                 <!-- Sección de Países -->
                 <div id="section-paises" class="config-section">
-                    <h5><i class="fas fa-globe"></i> Países</h5>
+                    <h5><i class="fas fa-globe"></i> @Resources.Strings.CfgEmp_SecPaises</h5>
                     <div class="row mb-3">
                         <div class="col-md-8">
-                            <input type="text" class="form-control" id="inputPais" placeholder="Nombre del país" />
+                            <input type="text" class="form-control" id="inputPais" placeholder="@Resources.Strings.CfgEmp_PlaceholderPais" />
                         </div>
                         <div class="col-md-4">
                             <button type="button" class="btn btn-primary btn-block" onclick="agregarItem('Pais')">
-                                <i class="fas fa-plus"></i> Agregar país
+                                <i class="fas fa-plus"></i> @Resources.Strings.CfgEmp_BtnAgregarPais
                             </button>
                         </div>
                     </div>
@@ -340,14 +340,14 @@
 
                 <!-- Sección de Categorías -->
                 <div id="section-categorias" class="config-section">
-                    <h5><i class="fas fa-tags"></i> Categorías</h5>
+                    <h5><i class="fas fa-tags"></i> @Resources.Strings.CfgEmp_SecCategorias</h5>
                     <div class="row mb-3">
                         <div class="col-md-8">
-                            <input type="text" class="form-control" id="inputCategoria" placeholder="Nombre de la categoría" />
+                            <input type="text" class="form-control" id="inputCategoria" placeholder="@Resources.Strings.CfgEmp_PlaceholderCategoria" />
                         </div>
                         <div class="col-md-4">
                             <button type="button" class="btn btn-primary btn-block" onclick="agregarItem('Categoria')">
-                                <i class="fas fa-plus"></i> Agregar categoría
+                                <i class="fas fa-plus"></i> @Resources.Strings.CfgEmp_BtnAgregarCategoria
                             </button>
                         </div>
                     </div>
@@ -356,14 +356,14 @@
 
                 <!-- Sección de Tipos -->
                 <div id="section-tipos" class="config-section">
-                    <h5><i class="fas fa-cube"></i> Tipos</h5>
+                    <h5><i class="fas fa-cube"></i> @Resources.Strings.CfgEmp_SecTipos</h5>
                     <div class="row mb-3">
                         <div class="col-md-8">
-                            <input type="text" class="form-control" id="inputTipo" placeholder="Nombre del tipo" />
+                            <input type="text" class="form-control" id="inputTipo" placeholder="@Resources.Strings.CfgEmp_PlaceholderTipo" />
                         </div>
                         <div class="col-md-4">
                             <button type="button" class="btn btn-primary btn-block" onclick="agregarItem('Tipo')">
-                                <i class="fas fa-plus"></i> Agregar tipo
+                                <i class="fas fa-plus"></i> @Resources.Strings.CfgEmp_BtnAgregarTipo
                             </button>
                         </div>
                     </div>
@@ -372,14 +372,14 @@
 
                 <!-- Sección de Líneas de Negocio -->
                 <div id="section-lineas" class="config-section">
-                    <h5><i class="fas fa-chart-line"></i> Líneas de negocio</h5>
+                    <h5><i class="fas fa-chart-line"></i> @Resources.Strings.CfgEmp_SecLineas</h5>
                     <div class="row mb-3">
                         <div class="col-md-8">
-                            <input type="text" class="form-control" id="inputLinea" placeholder="Nombre de la línea de negocio" />
+                            <input type="text" class="form-control" id="inputLinea" placeholder="@Resources.Strings.CfgEmp_PlaceholderLinea" />
                         </div>
                         <div class="col-md-4">
                             <button type="button" class="btn btn-primary btn-block" onclick="agregarItem('LineaNegocio')">
-                                <i class="fas fa-plus"></i> Agregar línea
+                                <i class="fas fa-plus"></i> @Resources.Strings.CfgEmp_BtnAgregarLinea
                             </button>
                         </div>
                     </div>
@@ -388,14 +388,14 @@
 
                 <!-- Sección de Ajuste 1 -->
                 <div id="section-ajuste1" class="config-section">
-                    <h5><i class="fas fa-sliders"></i> Ajuste 1</h5>
+                    <h5><i class="fas fa-sliders"></i> @Resources.Strings.CfgEmp_TabAjuste1</h5>
                     <div class="row mb-3">
                         <div class="col-md-8">
-                            <input type="text" class="form-control" id="inputAjuste1" placeholder="Nombre del ajuste 1" />
+                            <input type="text" class="form-control" id="inputAjuste1" placeholder="@Resources.Strings.CfgEmp_PlaceholderAjuste1" />
                         </div>
                         <div class="col-md-4">
                             <button type="button" class="btn btn-primary btn-block" onclick="agregarItem('Ajuste1')">
-                                <i class="fas fa-plus"></i> Agregar ajuste 1
+                                <i class="fas fa-plus"></i> @Resources.Strings.CfgEmp_BtnAgregarAjuste1
                             </button>
                         </div>
                     </div>
@@ -404,14 +404,14 @@
 
                 <!-- Sección de Ajuste 2 -->
                 <div id="section-ajuste2" class="config-section">
-                    <h5><i class="fas fa-sliders"></i> Ajuste 2</h5>
+                    <h5><i class="fas fa-sliders"></i> @Resources.Strings.CfgEmp_TabAjuste2</h5>
                     <div class="row mb-3">
                         <div class="col-md-8">
-                            <input type="text" class="form-control" id="inputAjuste2" placeholder="Nombre del ajuste 2" />
+                            <input type="text" class="form-control" id="inputAjuste2" placeholder="@Resources.Strings.CfgEmp_PlaceholderAjuste2" />
                         </div>
                         <div class="col-md-4">
                             <button type="button" class="btn btn-primary btn-block" onclick="agregarItem('Ajuste2')">
-                                <i class="fas fa-plus"></i> Agregar ajuste 2
+                                <i class="fas fa-plus"></i> @Resources.Strings.CfgEmp_BtnAgregarAjuste2
                             </button>
                         </div>
                     </div>
@@ -427,31 +427,25 @@
             <div class="modal-content">
                 <div class="custom-header">
                     <img src="~/Assets/img/logoBufinsInst.png" alt="Bufins" class="logo-bufins">
-                    <h5 class="instructivo-title" id="modalInstructivoLabel">Instructivo configuración de empresas</h5>
+                    <h5 class="instructivo-title" id="modalInstructivoLabel">@Resources.Strings.CfgEmp_InstructivoTitle</h5>
                 </div>
                 <div class="modal-body" style="max-height: 600px; overflow-y: auto;">
-                    <p><strong>Configuraciones empresa BUFINS WEB:</strong></p>
-
-                    <p><strong>Empresas:</strong> Coloque el nombre de las empresas a consolidar. Estos nombres deberán ser siempre idénticos a la forma en que se reportarán en las bases de datos.</p>
-
-                    <p><strong>Países:</strong> Coloque el nombre de los países a consolidar. Estos nombres deberán ser siempre idénticos a la forma en que se reportarán en las bases de datos. Coloque el nombre con mayúscula solo en la primera letra y si tiene acento lo debes incluir. Ejem: Perú, México.</p>
-
-                    <p><strong>SignoCreditos:</strong> Si las cuentas de pasivo, patrimonio e ingresos se reportan con signo negativo coloque acá el signo menos</p>
-
-                    <p><strong>Categorías:</strong> Tenga en cuenta que la descripción correcta para cada rubro es la que se indica en esta lista:</p>
+                    <p><strong>@Resources.Strings.CfgEmp_InstrIntro</strong></p>
+                    <p>@Resources.Strings.CfgEmp_InstrEmpresas</p>
+                    <p>@Resources.Strings.CfgEmp_InstrPaises</p>
+                    <p>@Resources.Strings.CfgEmp_InstrSigno</p>
+                    <p>@Resources.Strings.CfgEmp_InstrCategorias</p>
                     <ul>
                         <li>ACTIVO CORRIENTE</li>
                         <li>ACTIVO NO CORRIENTE</li>
                         <li>PASIVO NO CORRIENTE</li>
                         <li>PASIVO CORRIENTE</li>
                     </ul>
-
-                    <p><strong>Tipo:</strong> Coloque el nombre de las líneas de venta que se hayan definido previamente. Estos nombres deberán ser siempre idénticos a la forma en que se reportarán en las bases de datos.</p>
-
-                    <p><strong>Línea de negocio:</strong> Coloque el nombre de las líneas de negocio que se hayan definido. Estos nombres deberán ser siempre idénticos a la forma en que se reportarán en las bases de datos.</p>
+                    <p>@Resources.Strings.CfgEmp_InstrTipo</p>
+                    <p>@Resources.Strings.CfgEmp_InstrLinea</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">@Resources.Strings.Layout_Cancel</button>
                 </div>
             </div>
         </div>
@@ -572,7 +566,7 @@
             const idEmpresa = $('#selectEmpresa').val();
 
             if (!idEmpresa) {
-                mostrarAlerta('warning', 'Por favor seleccione una empresa');
+                mostrarAlerta('warning', '@Html.Raw(Resources.Strings.CfgEmp_JS_SelEmpresa.Replace("'", "\\'"))');
                 return;
             }
 
@@ -625,7 +619,7 @@
                 contenedor.html(`
                             <div class="empty-state">
                                 <i class="fas fa-inbox"></i>
-                                <p>No hay elementos agregados</p>
+                                <p>@Html.Raw(Resources.Strings.CfgEmp_NoElementos.Replace("'", "\\'"))</p>
                             </div>
                         `);
                 return;
@@ -728,13 +722,13 @@
             const valor = input.val().trim();
 
             if (!valor) {
-                mostrarAlerta('warning', 'Por favor ingrese un valor');
+                mostrarAlerta('warning', '@Html.Raw(Resources.Strings.CfgEmp_JS_IngresarValor.Replace("'", "\\'"))');
                 return;
             }
 
             const idConfig = $('#idConfiguracion').val();
             if (!idConfig || idConfig == '0') {
-                mostrarAlerta('warning', 'Primero debe cargar una configuración basica');
+                mostrarAlerta('warning', '@Html.Raw(Resources.Strings.CfgEmp_JS_NecesitaConfig.Replace("'", "\\'"))');
                 return;
             }
 
@@ -763,14 +757,14 @@
 
         function eliminarItem(tipo, id) {
             Swal.fire({
-                title: '¿Está seguro?',
-                text: "Esta acción no se puede deshacer",
+                title: '@Html.Raw(Resources.Strings.CfgEmp_JS_EliminarTitle.Replace("'", "\\'"))',
+                text: '@Html.Raw(Resources.Strings.CfgEmp_JS_EliminarText.Replace("'", "\\'"))',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
+                confirmButtonText: '@Html.Raw(Resources.Strings.CfgEmp_JS_Eliminar.Replace("'", "\\'"))',
+                cancelButtonText: '@Html.Raw(Resources.Strings.Layout_Cancel.Replace("'", "\\'"))'
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
@@ -800,7 +794,7 @@
                 data: { tipo: mapearTipoParaServidor(tipo), ids: ids },
                 success: function (response) {
                     if (response.success) {
-                        mostrarAlerta('success', 'Orden actualizado', 2000);
+                        mostrarAlerta('success', '@Html.Raw(Resources.Strings.CfgEmp_JS_OrdenActualizado.Replace("'", "\\'"))', 2000);
                     }
                 },
                 error: function () {

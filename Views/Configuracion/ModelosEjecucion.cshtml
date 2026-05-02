@@ -4,7 +4,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Gestor de modelos</title>
+    <title>@Resources.Strings.Mod_PageTitle</title>
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
@@ -15,7 +15,7 @@
 
     <div class="card shadow mb-4 mt-4">
         <div class="card-header">
-            <i class="fas fa-sliders"></i> Gestor de modelos de ejecuci&oacute;n
+            <i class="fas fa-sliders"></i> @Resources.Strings.Mod_PageTitle
         </div>
         <div class="card-body p-0">
             <div class="table-responsive table-wrapper">
@@ -23,12 +23,12 @@
                     <thead>
                         <tr>
                             <th class="col-id">Id</th>
-                            <th class="col-nombre">Nombre</th>
-                            <th class="col-sp">SP Almacenado</th>
-                            <th class="col-desc">Descripci&oacute;n</th>
-                            <th class="col-icono">Icono</th>
-                            <th class="col-estado">Estado</th>
-                            <th class="col-acciones">Acciones</th>
+                            <th class="col-nombre">@Resources.Strings.Emp_LabelNombre</th>
+                            <th class="col-sp">@Resources.Strings.Mod_ThSP</th>
+                            <th class="col-desc">@Resources.Strings.Common_LabelDescripcion</th>
+                            <th class="col-icono">@Resources.Strings.Mod_ThIcono</th>
+                            <th class="col-estado">@Resources.Strings.Common_Estado</th>
+                            <th class="col-acciones">@Resources.Strings.Common_ThAcciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -36,7 +36,7 @@
                         {
                             <tr>
                                 <td colspan="7" class="text-center text-muted py-3">
-                                    No hay modelos registrados.
+                                    @Resources.Strings.Mod_NoModelos
                                 </td>
                             </tr>
                         }
@@ -65,21 +65,21 @@
                                 <td class="col-estado">
                                     @if (m.Activo)
                                     {
-                                        <span class="badge-activo">Activo</span>
+                                        <span class="badge-activo">@Resources.Strings.Common_Activo</span>
                                     }
                                     else
                                     {
-                                        <span class="badge-inactivo">Inactivo</span>
+                                        <span class="badge-inactivo">@Resources.Strings.Common_Inactivo</span>
                                     }
                                 </td>
                                 <td class="col-acciones">
                                     <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-primary" title="Editar modelo"
+                                        <button type="button" class="btn btn-primary" title="@Resources.Strings.Mod_TitleEditar"
                                                 data-toggle="modal" data-target="#editarModal"
                                                 onclick="setEditarModelo(@m.Id, '@Html.Raw(m.Nombre.Replace("'","\\'" ))', '@Html.Raw(m.NombreSP.Replace("'","\\'" ))', '@Html.Raw((m.Descripcion ?? "").Replace("'","\\'" ))', '@Html.Raw((m.Icono ?? "").Replace("'","\\'" ))', @m.Orden, @(m.Activo ? "true" : "false"))">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-danger" title="Eliminar modelo"
+                                        <button type="button" class="btn btn-outline-danger" title="@Resources.Strings.Mod_TitleEliminar"
                                                 data-toggle="modal" data-target="#eliminarModal"
                                                 onclick="setEliminarModelo(@m.Id, '@Html.Raw(m.Nombre.Replace("'","\\'" ))')">
                                             <i class="fas fa-trash-alt"></i>
@@ -94,7 +94,7 @@
         </div>
         <div class="card-footer">
             <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearModal">
-                <i class="fas fa-plus-circle mr-1"></i> Crear modelo
+                <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Mod_BtnCrear
             </button>
         </div>
     </div>
@@ -105,7 +105,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="crearModalLabel">
-                        <i class="fas fa-plus-circle" style="color:#583AFF;"></i> Crear modelo
+                        <i class="fas fa-plus-circle" style="color:#583AFF;"></i> @Resources.Strings.Mod_ModalCreateTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -117,14 +117,14 @@
                         <div class="row">
                             <div class="col-md-6 mb-3 mt-2">
                                 <label for="crearNombre" class="form-label">
-                                    <i class="fas fa-tag mr-2" style="color:#583AFF;"></i>Nombre <span class="text-danger">*</span>
+                                    <i class="fas fa-tag mr-2" style="color:#583AFF;"></i>@Resources.Strings.Emp_LabelNombre <span class="text-danger">*</span>
                                 </label>
                                 <input type="text" class="form-control form-control-sm" id="crearNombre" name="Nombre"
                                        placeholder="Ej: EBITDA" maxlength="100" required />
                             </div>
                             <div class="col-md-6 mb-3 mt-2">
                                 <label for="crearNombreSP" class="form-label">
-                                    <i class="fas fa-database mr-2" style="color:#583AFF;"></i>SP Almacenado <span class="text-danger">*</span>
+                                    <i class="fas fa-database mr-2" style="color:#583AFF;"></i>@Resources.Strings.Mod_LabelSP <span class="text-danger">*</span>
                                 </label>
                                 <input type="text" class="form-control form-control-sm" id="crearNombreSP" name="NombreSP"
                                        placeholder="Ej: sp_ModeloEbitda" maxlength="150" required
@@ -133,7 +133,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="crearDescripcion" class="form-label">
-                                <i class="fas fa-align-left mr-2" style="color:#583AFF;"></i>Descripci&oacute;n
+                                <i class="fas fa-align-left mr-2" style="color:#583AFF;"></i>@Resources.Strings.Common_LabelDescripcion
                             </label>
                             <input type="text" class="form-control form-control-sm" id="crearDescripcion" name="Descripcion"
                                    placeholder="Ej: Ganancias antes de intereses e impuestos" maxlength="255" />
@@ -141,7 +141,7 @@
                         <div class="row">
                             <div class="col-md-8 mb-3">
                                 <label for="crearIcono" class="form-label">
-                                    <i class="fas fa-icons mr-2" style="color:#583AFF;"></i>Icono <small class="text-muted">(clase FontAwesome)</small>
+                                    <i class="fas fa-icons mr-2" style="color:#583AFF;"></i>@Resources.Strings.Mod_ThIcono <small class="text-muted">@Resources.Strings.Mod_IconoHint</small>
                                 </label>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text">
@@ -156,7 +156,7 @@
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="crearOrden" class="form-label">
-                                    <i class="fas fa-sort-numeric-up mr-2" style="color:#583AFF;"></i>Orden
+                                    <i class="fas fa-sort-numeric-up mr-2" style="color:#583AFF;"></i>@Resources.Strings.Menu_LabelOrden
                                 </label>
                                 <input type="number" class="form-control form-control-sm" id="crearOrden" name="Orden"
                                        value="0" min="0" max="999" />
@@ -165,10 +165,10 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                            <i class="fas fa-times mr-1"></i>Cancelar
+                            <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                         </button>
                         <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus-circle mr-1"></i>Crear
+                            <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.Common_BtnCrear
                         </button>
                     </div>
                 </form>
@@ -182,7 +182,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editarModalLabel">
-                        <i class="fas fa-edit" style="color:#583AFF;"></i> Editar modelo
+                        <i class="fas fa-edit" style="color:#583AFF;"></i> @Resources.Strings.Mod_ModalEditTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -195,14 +195,14 @@
                         <div class="row">
                             <div class="col-md-6 mb-3 mt-2">
                                 <label for="editNombre" class="form-label">
-                                    <i class="fas fa-tag mr-2" style="color:#583AFF;"></i>Nombre <span class="text-danger">*</span>
+                                    <i class="fas fa-tag mr-2" style="color:#583AFF;"></i>@Resources.Strings.Emp_LabelNombre <span class="text-danger">*</span>
                                 </label>
                                 <input type="text" class="form-control form-control-sm" id="editNombre" name="Nombre"
                                        maxlength="100" required />
                             </div>
                             <div class="col-md-6 mb-3 mt-2">
                                 <label for="editNombreSP" class="form-label">
-                                    <i class="fas fa-database mr-2" style="color:#583AFF;"></i>SP Almacenado <span class="text-danger">*</span>
+                                    <i class="fas fa-database mr-2" style="color:#583AFF;"></i>@Resources.Strings.Mod_LabelSP <span class="text-danger">*</span>
                                 </label>
                                 <input type="text" class="form-control form-control-sm" id="editNombreSP" name="NombreSP"
                                        maxlength="150" required style="font-family: monospace;" />
@@ -210,7 +210,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="editDescripcion" class="form-label">
-                                <i class="fas fa-align-left mr-2" style="color:#583AFF;"></i>Descripci&oacute;n
+                                <i class="fas fa-align-left mr-2" style="color:#583AFF;"></i>@Resources.Strings.Common_LabelDescripcion
                             </label>
                             <input type="text" class="form-control form-control-sm" id="editDescripcion" name="Descripcion"
                                    maxlength="255" />
@@ -218,7 +218,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="editIcono" class="form-label">
-                                    <i class="fas fa-icons mr-2" style="color:#583AFF;"></i>Icono <small class="text-muted">(clase FontAwesome)</small>
+                                    <i class="fas fa-icons mr-2" style="color:#583AFF;"></i>@Resources.Strings.Mod_ThIcono <small class="text-muted">@Resources.Strings.Mod_IconoHint</small>
                                 </label>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text">
@@ -232,7 +232,7 @@
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label for="editOrden" class="form-label">
-                                    <i class="fas fa-sort-numeric-up mr-2" style="color:#583AFF;"></i>Orden
+                                    <i class="fas fa-sort-numeric-up mr-2" style="color:#583AFF;"></i>@Resources.Strings.Menu_LabelOrden
                                 </label>
                                 <input type="number" class="form-control form-control-sm" id="editOrden" name="Orden"
                                        min="0" max="999" />
@@ -241,17 +241,17 @@
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="editActivo" name="Activo" value="true" />
                                     <input type="hidden" name="Activo" value="false" />
-                                    <label class="form-check-label" for="editActivo">Activo</label>
+                                    <label class="form-check-label" for="editActivo">@Resources.Strings.Common_Activo</label>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                            <i class="fas fa-times mr-1"></i>Cancelar
+                            <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                         </button>
                         <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="fas fa-save mr-1"></i>Guardar cambios
+                            <i class="fas fa-save mr-1"></i>@Resources.Strings.Common_GuardarCambios
                         </button>
                     </div>
                 </form>
@@ -265,7 +265,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title" id="eliminarModalLabel">
-                        <i class="fas fa-exclamation-triangle"></i> Confirmar eliminaci&oacute;n
+                        <i class="fas fa-exclamation-triangle"></i> @Resources.Strings.Common_ModalDeleteTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -274,19 +274,19 @@
                 <div class="modal-body">
                     <p class="mb-0">
                         <i class="fas fa-question-circle text-warning mr-2"></i>
-                        &iquest;Est&aacute;s seguro de que deseas eliminar el modelo <strong id="eliminarNombre"></strong>?
+                        @Resources.Strings.Mod_ModalDeleteBody <strong id="eliminarNombre"></strong>?
                     </p>
-                    <p class="text-muted small mt-2 mb-0">El modelo quedar&aacute; inactivo y no aparecer&aacute; en la pantalla de ejecuci&oacute;n.</p>
+                    <p class="text-muted small mt-2 mb-0">@Resources.Strings.Mod_ModalDeleteNote</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i>Cancelar
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                     </button>
                     <form method="post" action="@Url.Action("Eliminar", "ModelosEjecucion")" style="display:inline;">
                         @Html.AntiForgeryToken()
                         <input type="hidden" id="eliminarId" name="id" />
                         <button type="submit" class="btn btn-danger btn-sm">
-                            <i class="fas fa-trash-alt mr-1"></i>Eliminar
+                            <i class="fas fa-trash-alt mr-1"></i>@Resources.Strings.Common_BtnEliminar
                         </button>
                     </form>
                 </div>
@@ -355,13 +355,11 @@
     }
 
     <script>
-        // Live preview del icono en modales
         function actualizarIcono(prefijo) {
             var val = document.getElementById(prefijo + 'Icono').value.trim();
             document.getElementById(prefijo + 'IconoI').className = val || 'fas fa-cog';
         }
 
-        // Poblar modal editar
         function setEditarModelo(id, nombre, nombreSP, descripcion, icono, orden, activo) {
             document.getElementById('editId').value          = id;
             document.getElementById('editNombre').value      = nombre;
@@ -373,10 +371,9 @@
             actualizarIcono('edit');
         }
 
-        // Poblar modal eliminar
         function setEliminarModelo(id, nombre) {
-            document.getElementById('eliminarId').value             = id;
-            document.getElementById('eliminarNombre').textContent   = '"' + nombre + '"';
+            document.getElementById('eliminarId').value           = id;
+            document.getElementById('eliminarNombre').textContent = '"' + nombre + '"';
         }
     </script>
 </body>

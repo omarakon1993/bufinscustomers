@@ -1,8 +1,8 @@
-﻿@model dynamic
+@model dynamic
 @using bufinscustomers.Models
 
 @{
-    ViewBag.Title = "Auditoría Consultas IA";
+    ViewBag.Title = Resources.Strings.AudIA_PageTitle;
     var esAdmin        = (bool)ViewBag.EsAdmin;
     var esAdminEmpresa = (bool)(ViewBag.EsAdminEmpresa ?? false);
     var empresasFiltro = ViewBag.EmpresasFiltro as List<Empresas>;
@@ -79,10 +79,10 @@
     <div class="powerbi-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
         <div class="powerbi-header-content">
             <i class="fas fa-history powerbi-header-icon"></i>
-            <h1 class="powerbi-header-title">Auditor&iacute;a Consultas IA</h1>
+            <h1 class="powerbi-header-title">@Resources.Strings.AudIA_PageTitle</h1>
         </div>
         <a href="@Url.Action("Index","AnalisisIA")" class="audit-btn-header">
-            <i class="fas fa-robot"></i> An&aacute;lisis IA
+            <i class="fas fa-robot"></i> @Resources.Strings.AudIA_LinkAnalisisIA
         </a>
     </div>
 
@@ -90,7 +90,7 @@
     <div class="filter-card">
         <h3 class="filter-card-title">
             <i class="fas fa-filter"></i>
-            Filtros de Consulta
+            @Resources.Strings.Common_FiltrosConsulta
         </h3>
 
         <div class="filter-section">
@@ -102,10 +102,10 @@
                         <div class="form-group">
                             <label for="audEmpresa">
                                 <i class="fas fa-building"></i>
-                                Empresa
+                                @Resources.Strings.AudIA_LabelEmpresa
                             </label>
                             <select id="audEmpresa" class="form-control">
-                                <option value="">Todas las empresas</option>
+                                <option value="">@Resources.Strings.AudIA_TodasEmpresas</option>
                                 @if (empresasFiltro != null)
                                 {
                                     foreach (var e in empresasFiltro)
@@ -124,10 +124,10 @@
                         <div class="form-group">
                             <label for="audUsuario">
                                 <i class="fas fa-user"></i>
-                                Usuario
+                                @Resources.Strings.AudIA_LabelUsuario
                             </label>
                             <select id="audUsuario" class="form-control">
-                                <option value="">Todos los usuarios</option>
+                                <option value="">@Resources.Strings.AudIA_TodosUsuarios</option>
                             </select>
                         </div>
                     </div>
@@ -137,12 +137,12 @@
                     <div class="form-group">
                         <label for="audTipo">
                             <i class="fas fa-tag"></i>
-                            Tipo
+                            @Resources.Strings.AudIA_LabelTipo
                         </label>
                         <select id="audTipo" class="form-control">
-                            <option value="">Todos los tipos</option>
-                            <option value="resumen">&#x2728; Resumen Gerencial</option>
-                            <option value="pregunta">&#x2753; Pregunta</option>
+                            <option value="">@Resources.Strings.AudIA_TodosTipos</option>
+                            <option value="resumen">&#x2728; @Resources.Strings.AudIA_TipoResumen</option>
+                            <option value="pregunta">&#x2753; @Resources.Strings.AudIA_TipoPregunta</option>
                         </select>
                     </div>
                 </div>
@@ -151,10 +151,10 @@
                     <div class="form-group">
                         <label for="audBusquedaTexto">
                             <i class="fas fa-search"></i>
-                            Buscar
+                            @Resources.Strings.AudIA_LabelBuscar
                         </label>
                         <input type="text" id="audBusquedaTexto" class="form-control"
-                               placeholder="Pregunta, tabla, usuario&hellip;" />
+                               placeholder="@Resources.Strings.AudIA_BuscarPlaceholder" />
                     </div>
                 </div>
             </div>
@@ -164,7 +164,7 @@
                     <div class="form-group">
                         <label for="audDesde">
                             <i class="fas fa-calendar-alt"></i>
-                            Desde
+                            @Resources.Strings.AudIA_LabelDesde
                         </label>
                         <input type="date" id="audDesde" class="form-control" style="width:170px;" />
                     </div>
@@ -173,7 +173,7 @@
                     <div class="form-group">
                         <label for="audHasta">
                             <i class="fas fa-calendar-alt"></i>
-                            Hasta
+                            @Resources.Strings.AudIA_LabelHasta
                         </label>
                         <input type="date" id="audHasta" class="form-control" style="width:170px;" />
                     </div>
@@ -181,12 +181,12 @@
                 <div class="col d-flex align-items-end pb-2">
                     <div class="d-flex align-items-center gap-2 flex-wrap">
                         <span style="font-size:.75rem;color:#9ca3af;white-space:nowrap;">
-                            <i class="fas fa-bolt" style="font-size:.65rem;"></i> Acceso r&aacute;pido:
+                            <i class="fas fa-bolt" style="font-size:.65rem;"></i> @Resources.Strings.AudIA_AccesoRapido
                         </span>
-                        <button class="aud-date-chip" data-days="0">Hoy</button>
-                        <button class="aud-date-chip" data-days="7">7 d&iacute;as</button>
-                        <button class="aud-date-chip" data-days="30">30 d&iacute;as</button>
-                        <button class="aud-date-chip" data-month="1">Este mes</button>
+                        <button class="aud-date-chip" data-days="0">@Resources.Strings.AudIA_ChipHoy</button>
+                        <button class="aud-date-chip" data-days="7">@Resources.Strings.AudIA_Chip7Dias</button>
+                        <button class="aud-date-chip" data-days="30">@Resources.Strings.AudIA_Chip30Dias</button>
+                        <button class="aud-date-chip" data-month="1">@Resources.Strings.AudIA_ChipEsteMes</button>
                     </div>
                 </div>
             </div>
@@ -194,10 +194,10 @@
 
         <div class="btn-group-actions">
             <button type="button" id="btnFiltrarAuditoria" class="btn btn-modern-gradient">
-                <i class="fas fa-search mr-2"></i>Buscar
+                <i class="fas fa-search mr-2"></i>@Resources.Strings.AudIA_BtnBuscar
             </button>
             <button type="button" id="btnLimpiarFiltros" class="btn btn-modern-secondary">
-                <i class="fas fa-eraser mr-2"></i>Limpiar
+                <i class="fas fa-eraser mr-2"></i>@Resources.Strings.AudIA_BtnLimpiar
             </button>
         </div>
     </div>
@@ -205,7 +205,7 @@
     <!-- Loading Spinner -->
     <div id="audLoading" class="loading-spinner">
         <i class="fas fa-spinner"></i>
-        <p>Cargando historial&hellip;</p>
+        <p>@Resources.Strings.AudIA_LoadingHistorial</p>
     </div>
 
     <!-- Tabla de resultados -->
@@ -213,7 +213,7 @@
         <div class="table-container">
             <div class="table-header">
                 <h5>
-                    <i class="fas fa-list mr-2"></i>Historial de Consultas
+                    <i class="fas fa-list mr-2"></i>@Resources.Strings.AudIA_TitleHistorial
                 </h5>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <span id="audStatTotal"   class="info-badge" style="background:linear-gradient(135deg,#6366F1,#3B82F6);display:none;">
@@ -232,14 +232,14 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th style="width:150px;">Fecha</th>
-                            <th style="min-width:130px;">Usuario</th>
-                            @if (esAdmin) { <th style="min-width:110px;">Empresa</th> }
-                            <th style="min-width:160px;">Tabla / Filtros</th>
-                            <th style="width:110px;">Tipo</th>
-                            <th>Pregunta</th>
-                            <th style="width:65px;" class="text-center">Filas</th>
-                            <th style="width:80px;" class="text-center">Ver</th>
+                            <th style="width:150px;">@Resources.Strings.AudIA_ThFecha</th>
+                            <th style="min-width:130px;">@Resources.Strings.AudIA_ThUsuario</th>
+                            @if (esAdmin) { <th style="min-width:110px;">@Resources.Strings.AudIA_ThEmpresa</th> }
+                            <th style="min-width:160px;">@Resources.Strings.AudIA_ThTablaFiltros</th>
+                            <th style="width:110px;">@Resources.Strings.AudIA_ThTipo</th>
+                            <th>@Resources.Strings.AudIA_ThPregunta</th>
+                            <th style="width:65px;" class="text-center">@Resources.Strings.AudIA_ThFilas</th>
+                            <th style="width:80px;" class="text-center">@Resources.Strings.AudIA_ThVer</th>
                         </tr>
                     </thead>
                     <tbody id="audTbody"></tbody>
@@ -252,8 +252,8 @@
     <!-- Sin resultados -->
     <div id="audSinResultados" class="no-data-message" style="display:none;">
         <i class="fas fa-robot"></i>
-        <h4>Sin resultados</h4>
-        <p>No se encontraron consultas con los filtros aplicados.</p>
+        <h4>@Resources.Strings.AudIA_SinResultados</h4>
+        <p>@Resources.Strings.AudIA_SinResultadosTxt</p>
     </div>
 
 </div>
@@ -269,6 +269,19 @@ $(document).ready(function () {
     var _filtrados       = [];
     var _paginaActual    = 1;
 
+    var _strTodosUsuarios  = '@Html.Raw(Resources.Strings.AudIA_TodosUsuarios.Replace("'", "\\'"))';
+    var _strErrorHistorial = '@Html.Raw(Resources.Strings.AudIA_JS_ErrorHistorial.Replace("'", "\\'"))';
+    var _strMostrando      = '@Html.Raw(Resources.Strings.AudIA_Mostrando.Replace("'", "\\'"))';
+    var _strDe             = '@Html.Raw(Resources.Strings.AudIA_De.Replace("'", "\\'"))';
+    var _strBadgeResumen   = '@Html.Raw(Resources.Strings.AudIA_BadgeResumen.Replace("'", "\\'"))';
+    var _strBadgePregunta  = '@Html.Raw(Resources.Strings.AudIA_BadgePregunta.Replace("'", "\\'"))';
+    var _strResumenAuto    = '@Html.Raw(Resources.Strings.AudIA_ResumenAuto.Replace("'", "\\'"))';
+    var _strPreguntaRealiz = '@Html.Raw(Resources.Strings.AudIA_LabelPreguntaRealiz.Replace("'", "\\'"))';
+    var _strTipoRG         = '@Html.Raw(Resources.Strings.AudIA_LabelTipoRG.Replace("'", "\\'"))';
+    var _strTitleRespuesta = '@Html.Raw(Resources.Strings.AudIA_TitleRespuesta.Replace("'", "\\'"))';
+    var _strVer            = '@Html.Raw(Resources.Strings.AudIA_ThVer.Replace("'", "\\'"))';
+    var _strError          = '@Html.Raw(Resources.Strings.Common_Error.Replace("'", "\\'"))';
+
     /* ── Carga inicial ── */
     consultarServidor();
     if (esAdminEmpresaJS && !esAdminJS) cargarUsuarios(null);
@@ -277,7 +290,7 @@ $(document).ready(function () {
     $('#btnFiltrarAuditoria').on('click', consultarServidor);
     $('#btnLimpiarFiltros').on('click', function () {
         $('#audEmpresa').val('');
-        $('#audUsuario').html('<option value="">Todos los usuarios</option>');
+        $('#audUsuario').html('<option value="">' + _strTodosUsuarios + '</option>');
         $('#audTipo').val('');
         $('#audDesde,#audHasta').val('');
         $('#audBusquedaTexto').val('');
@@ -328,7 +341,7 @@ $(document).ready(function () {
         var params = {};
         if (idEmpresa) params.idEmpresa = idEmpresa;
         $.get('@Url.Action("ObtenerUsuariosAuditoria","AuditoriaConsultasIA")', params, function (lista) {
-            var sel = $('#audUsuario').html('<option value="">Todos los usuarios</option>');
+            var sel = $('#audUsuario').html('<option value="">' + _strTodosUsuarios + '</option>');
             $.each(lista, function (i, u) { sel.append($('<option>').val(u.Id).text(u.Nombre)); });
         });
     }
@@ -360,7 +373,7 @@ $(document).ready(function () {
             },
             error: function () {
                 $('#audLoading').hide();
-                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cargar el historial.' });
+                Swal.fire({ icon: 'error', title: _strError, text: _strErrorHistorial });
             }
         });
     }
@@ -415,7 +428,7 @@ $(document).ready(function () {
 
         $('#audPaginaInfo').text(
             _filtrados.length === 0 ? '' :
-            'Mostrando ' + (inicio + 1) + '-' + Math.min(inicio + PAGE_SIZE, _filtrados.length) + ' de ' + _filtrados.length
+            _strMostrando + ' ' + (inicio + 1) + '-' + Math.min(inicio + PAGE_SIZE, _filtrados.length) + ' ' + _strDe + ' ' + _filtrados.length
         );
 
         var tbody = $('#audTbody').empty();
@@ -434,17 +447,17 @@ $(document).ready(function () {
             var esResumen = r.Pregunta === '(Resumen Gerencial)';
 
             var tipoBadge = esResumen
-                ? '<span class="aud-tipo-badge aud-tipo-resumen"><i class="fas fa-magic"></i> Resumen</span>'
-                : '<span class="aud-tipo-badge aud-tipo-pregunta"><i class="fas fa-question-circle"></i> Pregunta</span>';
+                ? '<span class="aud-tipo-badge aud-tipo-resumen"><i class="fas fa-magic"></i> ' + _strBadgeResumen + '</span>'
+                : '<span class="aud-tipo-badge aud-tipo-pregunta"><i class="fas fa-question-circle"></i> ' + _strBadgePregunta + '</span>';
 
             var preguntaHtml = esResumen
-                ? '<em style="color:#9ca3af;font-size:.8rem;">Resumen autom\u00e1tico</em>'
+                ? '<em style="color:#9ca3af;font-size:.8rem;">' + _strResumenAuto + '</em>'
                 : '<span class="aud-pregunta-cell" title="' + $('<div>').text(r.Pregunta).html() + '">'
                     + $('<div>').text(r.Pregunta).html()
                   + '</span>';
 
             var btnVer = $('<button class="aud-btn-ver">')
-                .html('<i class="fas fa-eye mr-1"></i>Ver')
+                .html('<i class="fas fa-eye mr-1"></i>' + _strVer)
                 .on('click', function () { verRespuesta(r.Pregunta, r.Respuesta, r.Filtros); });
 
             var tr = $('<tr>');
@@ -502,13 +515,13 @@ $(document).ready(function () {
 
         if (!esResumen) {
             html += '<div class="ia-pregunta-block">'
-                  + '<div class="ia-pregunta-label"><i class="fas fa-question-circle mr-1"></i>Pregunta realizada</div>'
+                  + '<div class="ia-pregunta-label"><i class="fas fa-question-circle mr-1"></i>' + _strPreguntaRealiz + '</div>'
                   + '<div class="ia-pregunta-texto">' + $('<div>').text(pregunta).html() + '</div>'
                   + '</div>';
         } else {
             html += '<div class="ia-pregunta-block" style="background:#f8f9fc;border-left-color:#9ca3af;">'
                   + '<div class="ia-pregunta-label" style="color:#6b7280;"><i class="fas fa-magic mr-1"></i>Tipo</div>'
-                  + '<div style="color:#2d3748;font-weight:600;">Resumen Gerencial Autom\u00e1tico</div>'
+                  + '<div style="color:#2d3748;font-weight:600;">' + _strTipoRG + '</div>'
                   + '</div>';
         }
 
@@ -523,7 +536,7 @@ $(document).ready(function () {
               + '</div>';
 
         Swal.fire({
-            title            : 'Respuesta del Asistente IA',
+            title            : _strTitleRespuesta,
             html             : html,
             width            : '820px',
             showCloseButton  : true,

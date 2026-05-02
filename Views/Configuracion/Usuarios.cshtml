@@ -1,4 +1,4 @@
-﻿@using bufinscustomers.Models
+@using bufinscustomers.Models
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -7,7 +7,7 @@
 
 <html>
 <head>
-    <title>Gestor de usuarios</title>
+    <title>@Resources.Strings.Usr_PageTitle</title>
 
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -230,7 +230,7 @@
 
     <div class="card shadow mb-4 mt-4">
         <div class="card-header">
-            <i class="bi bi-people-fill"></i> Gestor de usuarios
+            <i class="bi bi-people-fill"></i> @Resources.Strings.Usr_PageTitle
         </div>
         <div class="card-body p-0">
             <div class="table-responsive table-wrapper">
@@ -239,13 +239,13 @@
                         <tr>
                             <th class="col-img"></th>
                             <th class="col-id">Id</th>
-                            <th class="col-nombre">Nombre</th>
-                            <th class="col-apellidos">Apellidos</th>
-                            <th class="col-telefono">Telefono</th>
-                            <th class="col-correo">Correo</th>
-                            <th class="col-rol">Rol</th>
-                            <th class="col-empresa">Empresa</th>
-                            <th class="col-acciones">Acciones</th>
+                            <th class="col-nombre">@Resources.Strings.Usr_LabelNombre</th>
+                            <th class="col-apellidos">@Resources.Strings.Usr_ThApellidos</th>
+                            <th class="col-telefono">@Resources.Strings.Usr_ThTelefono</th>
+                            <th class="col-correo">@Resources.Strings.Usr_ThCorreo</th>
+                            <th class="col-rol">@Resources.Strings.Usr_ThRol</th>
+                            <th class="col-empresa">@Resources.Strings.Usr_ThEmpresa</th>
+                            <th class="col-acciones">@Resources.Strings.Common_ThAcciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -272,43 +272,43 @@
                                     }
                                 </td>
                                 <td class="col-id" data-label="Id">@usuario.Id</td>
-                                <td class="col-nombre" data-label="Nombre" title="@usuario.Nombre">@usuario.Nombre</td>
-                                <td class="col-apellidos" data-label="Apellidos" title="@usuario.Apellidos">@usuario.Apellidos</td>
-                                <td class="col-telefono" data-label="Telefono">@usuario.Telefono</td>
-                                <td class="col-correo" data-label="Correo" title="@usuario.Correo">@usuario.Correo</td>
-                                <td class="col-rol" data-label="Rol">
+                                <td class="col-nombre" data-label="@Resources.Strings.Usr_LabelNombre" title="@usuario.Nombre">@usuario.Nombre</td>
+                                <td class="col-apellidos" data-label="@Resources.Strings.Usr_ThApellidos" title="@usuario.Apellidos">@usuario.Apellidos</td>
+                                <td class="col-telefono" data-label="@Resources.Strings.Usr_ThTelefono">@usuario.Telefono</td>
+                                <td class="col-correo" data-label="@Resources.Strings.Usr_ThCorreo" title="@usuario.Correo">@usuario.Correo</td>
+                                <td class="col-rol" data-label="@Resources.Strings.Usr_ThRol">
                                     @if (usuario.Admin == 2)
                                     {
-                                        <span class="badge badge-danger">Super Admin</span>
+                                        <span class="badge badge-danger">@Resources.Strings.Usr_BadgeSuperAdmin</span>
                                     }
                                     else if (usuario.Admin == 1)
                                     {
-                                        <span class="badge badge-warning">Admin Emp.</span>
+                                        <span class="badge badge-warning">@Resources.Strings.Usr_BadgeAdmin</span>
                                     }
                                     else
                                     {
-                                        <span class="badge badge-secondary">Usuario</span>
+                                        <span class="badge badge-secondary">@Resources.Strings.Usr_BadgeUsuario</span>
                                     }
                                 </td>
-                                <td class="col-empresa" data-label="Empresa" title="@(empresa != null ? empresa.Nombre : "")">@(empresa != null ? empresa.Nombre : string.Empty)</td>
-                                <td class="col-acciones" data-label="Acciones">
-                                    <div class="btn-group" role="group" aria-label="Acciones">
+                                <td class="col-empresa" data-label="@Resources.Strings.Usr_ThEmpresa" title="@(empresa != null ? empresa.Nombre : "")">@(empresa != null ? empresa.Nombre : string.Empty)</td>
+                                <td class="col-acciones" data-label="@Resources.Strings.Common_ThAcciones">
+                                    <div class="btn-group" role="group" aria-label="@Resources.Strings.Common_ThAcciones">
                                         @if (ViewBag.PuedeEditar == true)
                                         {
-                                            <button type="button" class="btn btn-primary" title="Editar usuario" data-toggle="modal" data-target="#editUserModal"
+                                            <button type="button" class="btn btn-primary" title="@Resources.Strings.Usr_TitleEditar" data-toggle="modal" data-target="#editUserModal"
                                                     onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa', '@usuario.Usuario', '@usuario.Clave', '@(imagenUsuario != null && !string.IsNullOrEmpty(imagenUsuario.ImagenBase64) ? "data:" + imagenUsuario.TipoImagen + ";base64," + imagenUsuario.ImagenBase64 : "")')">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                         }
                                         @if (ViewBag.PuedeEliminar == true)
                                         {
-                                            <button type="button" class="btn btn-outline-danger" title="Eliminar usuario" data-toggle="modal" data-target="#confirmDeleteModal" onclick="setIdUsuario(@usuario.Id)">
+                                            <button type="button" class="btn btn-outline-danger" title="@Resources.Strings.Usr_TitleEliminar" data-toggle="modal" data-target="#confirmDeleteModal" onclick="setIdUsuario(@usuario.Id)">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         }
                                         @if ((ViewBag.EsSuperAdmin == true || ViewBag.EsAdminEmpresa == true) && usuario.Admin != 2)
                                         {
-                                            <a href="@Url.Action("Gestionar", "Permisos", new { id = usuario.Id })" class="btn btn-outline-success" title="Gestionar permisos">
+                                            <a href="@Url.Action("Gestionar", "Permisos", new { id = usuario.Id })" class="btn btn-outline-success" title="@Resources.Strings.Usr_TitlePermisos">
                                                 <i class="fas fa-shield-alt"></i>
                                             </a>
                                         }
@@ -326,7 +326,7 @@
             @if (ViewBag.PuedeCrear == true)
             {
                 <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearUsuarioModal">
-                    <i class="fas fa-plus-circle mr-1"></i> Crear Usuario
+                    <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Usr_BtnCrear
                 </button>
             }
         </div>
@@ -338,23 +338,23 @@
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title" id="confirmDeleteModalLabel">
-                        <i class="fas fa-exclamation-triangle"></i>Confirmar eliminación
+                        <i class="fas fa-exclamation-triangle"></i>@Resources.Strings.Usr_ModalDeleteTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-0"><i class="fas fa-question-circle text-warning mr-2"></i>¿Estás seguro de que deseas eliminar este usuario?</p>
+                    <p class="mb-0"><i class="fas fa-question-circle text-warning mr-2"></i>@Resources.Strings.Usr_ModalDeleteBody</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                        <i class="fas fa-times mr-2"></i>Cancelar
+                        <i class="fas fa-times mr-2"></i>@Resources.Strings.Layout_Cancel
                     </button>
                     <form id="deleteForm" method="post" action="/Usuario/EliminarUsuario" style="display: inline;">
                         <input type="hidden" id="idUsuario" name="idUsuario" />
                         <button type="submit" class="btn btn-danger">
-                            <i class="fas fa-trash-alt mr-2"></i>Eliminar
+                            <i class="fas fa-trash-alt mr-2"></i>@Resources.Strings.Common_BtnEliminar
                         </button>
                     </form>
                 </div>
@@ -368,7 +368,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editUserModalLabel">
-                        <i class="fas fa-user-edit"></i>Editar Usuario
+                        <i class="fas fa-user-edit"></i>@Resources.Strings.Usr_ModalEditTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
@@ -379,17 +379,17 @@
                         <ul class="nav nav-tabs" id="editUserTabs" role="tablist">
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active" id="edit-auth-tab" data-toggle="tab" data-target="#edit-auth" type="button" role="tab" aria-controls="edit-auth" aria-selected="true">
-                                    Autenticación
+                                    @Resources.Strings.Usr_TabAuth
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="edit-user-data-tab" data-toggle="tab" data-target="#edit-user-data" type="button" role="tab" aria-controls="edit-user-data" aria-selected="false">
-                                    Datos del Usuario
+                                    @Resources.Strings.Usr_TabDatos
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="edit-user-image-tab" data-toggle="tab" data-target="#edit-user-image" type="button" role="tab" aria-controls="edit-user-image" aria-selected="false">
-                                    Imagen
+                                    @Resources.Strings.Usr_TabImagen
                                 </button>
                             </li>
                         </ul>
@@ -400,7 +400,7 @@
                             <div class="tab-pane fade show active" id="edit-auth" role="tabpanel" aria-labelledby="edit-auth-tab">
                                 <div class="mb-3 mt-3">
                                     <label for="editUsuario" class="form-label">
-                                        <i class="fas fa-user-tag mr-2" style="color: #583AFF;"></i>Usuario
+                                        <i class="fas fa-user-tag mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelUsuario
                                     </label>
                                     <input type="text" class="form-control" id="editUsuario" name="Usuario" required />
                                 </div>
@@ -408,7 +408,7 @@
                                 <!-- Botón para cambio de clave -->
                                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#cambiarClaveModal"
                                         onclick="setCambioClaveData()">
-                                    <i class="fas fa-key mr-2"></i>Cambiar Clave
+                                    <i class="fas fa-key mr-2"></i>@Resources.Strings.Usr_BtnCambiarClave
                                 </button>
                             </div>
 
@@ -416,34 +416,34 @@
                             <div class="tab-pane fade" id="edit-user-data" role="tabpanel" aria-labelledby="edit-user-data-tab">
                                 <div class="mb-3 mt-3">
                                     <label for="editNombre" class="form-label">
-                                        <i class="fas fa-user mr-2" style="color: #583AFF;"></i>Nombre
+                                        <i class="fas fa-user mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelNombre
                                     </label>
                                     <input type="text" class="form-control" id="editNombre" name="Nombre" required />
                                 </div>
                                 <div class="mb-3">
                                     <label for="editApellidos" class="form-label">
-                                        <i class="fas fa-id-card mr-2" style="color: #583AFF;"></i>Apellidos
+                                        <i class="fas fa-id-card mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelApellidos
                                     </label>
                                     <input type="text" class="form-control" id="editApellidos" name="Apellidos" required />
                                 </div>
                                 <div class="mb-3">
                                     <label for="editTelefono" class="form-label">
-                                        <i class="fas fa-phone mr-2" style="color: #583AFF;"></i>Teléfono
+                                        <i class="fas fa-phone mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelTelefono
                                     </label>
                                     <input type="text" class="form-control" id="editTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo números, sin espacios ni guiones" oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
                                 </div>
                                 <div class="mb-3 mt-3">
                                     <label for="editCorreo" class="form-label">
-                                        <i class="fas fa-envelope mr-2" style="color: #583AFF;"></i>Correo
+                                        <i class="fas fa-envelope mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelCorreo
                                     </label>
                                     <input type="email" class="form-control" id="editCorreo" name="Correo" required />
                                 </div>
                                 <div class="mb-3">
                                     <label for="editIdEmpresa" class="form-label">
-                                        <i class="fas fa-building mr-2" style="color: #583AFF;"></i>Empresa
+                                        <i class="fas fa-building mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelEmpresa
                                     </label>
                                     <select class="custom-select" id="editIdEmpresa" name="IdEmpresa" required>
-                                        <option value="" selected disabled>Seleccione una empresa</option>
+                                        <option value="" selected disabled>@Resources.Strings.Usr_SelEmpresa</option>
                                         @foreach (var empresa in ViewBag.Empresas)
                                         {
                                             <option value="@empresa.Id">@empresa.Nombre</option>
@@ -452,19 +452,19 @@
                                 </div>
                                 <div class="mb-3">
                                     <label for="editAdmin" class="form-label">
-                                        <i class="fas fa-shield-alt mr-2" style="color: #583AFF;"></i>Rol de Usuario
+                                        <i class="fas fa-shield-alt mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelRol
                                     </label>
                                     <select class="custom-select" id="editAdmin" name="Admin" required>
-                                        <option value="0">Usuario Normal</option>
-                                        <option value="1">Administrador de Empresa</option>
+                                        <option value="0">@Resources.Strings.Usr_RolNormal</option>
+                                        <option value="1">@Resources.Strings.Usr_RolAdmin</option>
                                         @if (ViewBag.EsSuperAdmin == true)
                                         {
-                                            <option value="2">Super Administrador</option>
+                                            <option value="2">@Resources.Strings.Usr_RolSuperAdmin</option>
                                         }
                                     </select>
                                     @if (ViewBag.EsSuperAdmin != true)
                                     {
-                                        <small class="form-text text-muted">Solo los Super Administradores pueden asignar el rol de Super Administrador.</small>
+                                        <small class="form-text text-muted">@Resources.Strings.Usr_NotaSuperAdmin</small>
                                     }
                                 </div>
                             </div>
@@ -473,21 +473,21 @@
                             <div class="tab-pane fade" id="edit-user-image" role="tabpanel" aria-labelledby="edit-user-image-tab">
                                 <div class="mb-3 mt-3">
                                     <label for="editImagenUsuario" class="form-label">
-                                        <i class="fas fa-image mr-2" style="color: #583AFF;"></i>Imagen de perfil
+                                        <i class="fas fa-image mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelImagen
                                     </label>
                                     <input type="file" class="form-control" id="editImagenUsuario" name="ImagenUsuario" accept="image/*" onchange="previewImageEdit(this)" />
-                                    <small class="form-text text-muted">Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 10MB (se comprimirá automáticamente)</small>
+                                    <small class="form-text text-muted">@Resources.Strings.Usr_ImagenHint</small>
                                 </div>
                                 <div class="text-center mt-3" id="editImagenPreview">
                                     <img id="editPreviewImg" src="" alt="Vista previa" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid #583AFF; display: none;" />
                                     <div class="mt-2" id="editImagenActions" style="display: none;">
                                         <button type="button" class="btn btn-sm btn-danger" onclick="removeImageEdit()">
-                                            <i class="fas fa-times"></i> Eliminar imagen
+                                            <i class="fas fa-times"></i> @Resources.Strings.Usr_EliminarImagen
                                         </button>
                                     </div>
                                     <div id="editNoImagenText" class="text-muted">
                                         <i class="fas fa-user-circle fa-5x mb-2" style="color: #ccc;"></i>
-                                        <p>Sin imagen cargada</p>
+                                        <p>@Resources.Strings.Usr_SinImagen</p>
                                     </div>
                                 </div>
                             </div>
@@ -495,10 +495,10 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                            <i class="fas fa-times mr-2"></i>Cancelar
+                            <i class="fas fa-times mr-2"></i>@Resources.Strings.Layout_Cancel
                         </button>
                         <button type="submit" class="btn btn-primary" id="btnEditarUsuario">
-                            <i class="fas fa-save mr-2"></i>Guardar cambios
+                            <i class="fas fa-save mr-2"></i>@Resources.Strings.Common_GuardarCambios
                         </button>
                     </div>
                 </form>
@@ -512,7 +512,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="crearUsuarioModalLabel">
-                        <i class="fas fa-user-plus"></i>Crear usuario
+                        <i class="fas fa-user-plus"></i>@Resources.Strings.Usr_ModalCreateTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
@@ -522,17 +522,17 @@
                         <ul class="nav nav-tabs" id="crearUsuarioTabs" role="tablist">
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active" id="auth-tab" data-toggle="tab" data-target="#auth" type="button" role="tab" aria-controls="auth" aria-selected="true">
-                                    Autenticación
+                                    @Resources.Strings.Usr_TabAuth
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="user-data-tab" data-toggle="tab" data-target="#user-data" type="button" role="tab" aria-controls="user-data" aria-selected="false">
-                                    Datos del Usuario
+                                    @Resources.Strings.Usr_TabDatos
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="user-image-tab" data-toggle="tab" data-target="#user-image" type="button" role="tab" aria-controls="user-image" aria-selected="false">
-                                    Imagen
+                                    @Resources.Strings.Usr_TabImagen
                                 </button>
                             </li>
                         </ul>
@@ -543,19 +543,19 @@
                             <div class="tab-pane fade show active" id="auth" role="tabpanel" aria-labelledby="auth-tab">
                                 <div class="mb-3 mt-3">
                                     <label for="crearUsuario" class="form-label">
-                                        <i class="fas fa-user-tag mr-2" style="color: #583AFF;"></i>Usuario
+                                        <i class="fas fa-user-tag mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelUsuario
                                     </label>
                                     <input type="text" class="form-control" id="crearUsuario" name="Usuario" required />
                                 </div>
                                 <div class="mb-3 mt-3">
                                     <label for="crearClave" class="form-label">
-                                        <i class="fas fa-lock mr-2" style="color: #583AFF;"></i>Clave
+                                        <i class="fas fa-lock mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelClave
                                     </label>
                                     <input type="password" class="form-control" id="crearClave" name="Clave" required />
                                 </div>
                                 <div class="mb-3 mt-3">
                                     <label for="crearConfirmarClave" class="form-label">
-                                        <i class="fas fa-lock-open mr-2" style="color: #583AFF;"></i>Confirmar Clave
+                                        <i class="fas fa-lock-open mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelConfirmarClave
                                     </label>
                                     <input type="password" class="form-control" id="crearConfirmarClave" name="ConfirmarClave" required />
                                 </div>
@@ -565,58 +565,57 @@
                             <div class="tab-pane fade" id="user-data" role="tabpanel" aria-labelledby="user-data-tab">
                                 <div class="mb-3 mt-3">
                                     <label for="crearNombre" class="form-label">
-                                        <i class="fas fa-user mr-2" style="color: #583AFF;"></i>Nombre
+                                        <i class="fas fa-user mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelNombre
                                     </label>
                                     <input type="text" class="form-control" id="crearNombre" name="Nombre" required />
                                 </div>
                                 <div class="mb-3">
                                     <label for="crearApellidos" class="form-label">
-                                        <i class="fas fa-id-card mr-2" style="color: #583AFF;"></i>Apellidos
+                                        <i class="fas fa-id-card mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelApellidos
                                     </label>
                                     <input type="text" class="form-control" id="crearApellidos" name="Apellidos" required />
                                 </div>
                                 <div class="mb-3">
                                     <label for="crearTelefono" class="form-label">
-                                        <i class="fas fa-phone mr-2" style="color: #583AFF;"></i>Teléfono
+                                        <i class="fas fa-phone mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelTelefono
                                     </label>
                                     <input type="text" class="form-control" id="crearTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo números, sin espacios ni guiones" oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
 
                                 </div>
                                 <div class="mb-3 mt-3">
                                     <label for="crearCorreo" class="form-label">
-                                        <i class="fas fa-envelope mr-2" style="color: #583AFF;"></i>Correo
+                                        <i class="fas fa-envelope mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelCorreo
                                     </label>
                                     <input type="email" class="form-control" id="crearCorreo" name="Correo" required />
                                 </div>
                                 <div class="mb-3">
                                     <label for="crearIdEmpresa" class="form-label">
-                                        <i class="fas fa-building mr-2" style="color: #583AFF;"></i>Empresa
+                                        <i class="fas fa-building mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelEmpresa
                                     </label>
 
                                     <select class="custom-select" id="crearIdEmpresa" name="IdEmpresa" required>
-                                        <option value="" selected disabled>Seleccione una empresa</option>
+                                        <option value="" selected disabled>@Resources.Strings.Usr_SelEmpresa</option>
                                         @foreach (var empresa in ViewBag.Empresas)
                                         {
                                             <option value="@empresa.Id">@empresa.Nombre</option>
                                         }
-                                        <!-- Agrega más opciones según sea necesario -->
                                     </select>
                                 </div>
                                 <div class="mb-3">
                                     <label for="crearAdmin" class="form-label">
-                                        <i class="fas fa-shield-alt mr-2" style="color: #583AFF;"></i>Rol de Usuario
+                                        <i class="fas fa-shield-alt mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelRol
                                     </label>
                                     <select class="custom-select" id="crearAdmin" name="Admin" required>
-                                        <option value="0" selected>Usuario Normal</option>
-                                        <option value="1">Administrador de Empresa</option>
+                                        <option value="0" selected>@Resources.Strings.Usr_RolNormal</option>
+                                        <option value="1">@Resources.Strings.Usr_RolAdmin</option>
                                         @if (ViewBag.EsSuperAdmin == true)
                                         {
-                                            <option value="2">Super Administrador</option>
+                                            <option value="2">@Resources.Strings.Usr_RolSuperAdmin</option>
                                         }
                                     </select>
                                     @if (ViewBag.EsSuperAdmin != true)
                                     {
-                                        <small class="form-text text-muted">Solo los Super Administradores pueden asignar el rol de Super Administrador.</small>
+                                        <small class="form-text text-muted">@Resources.Strings.Usr_NotaSuperAdmin</small>
                                     }
                                 </div>
                             </div>
@@ -625,16 +624,16 @@
                             <div class="tab-pane fade" id="user-image" role="tabpanel" aria-labelledby="user-image-tab">
                                 <div class="mb-3 mt-3">
                                     <label for="crearImagenUsuario" class="form-label">
-                                        <i class="fas fa-image mr-2" style="color: #583AFF;"></i>Imagen de perfil
+                                        <i class="fas fa-image mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelImagen
                                     </label>
                                     <input type="file" class="form-control" id="crearImagenUsuario" name="ImagenUsuario" accept="image/*" onchange="previewImageCreate(this)" />
-                                    <small class="form-text text-muted">Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 10MB (se comprimirá automáticamente)</small>
+                                    <small class="form-text text-muted">@Resources.Strings.Usr_ImagenHint</small>
                                 </div>
                                 <div class="text-center mt-3" id="crearImagenPreview" style="display: none;">
                                     <img id="crearPreviewImg" src="" alt="Vista previa" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid #583AFF;" />
                                     <div class="mt-2">
                                         <button type="button" class="btn btn-sm btn-danger" onclick="removeImageCreate()">
-                                            <i class="fas fa-times"></i> Eliminar imagen
+                                            <i class="fas fa-times"></i> @Resources.Strings.Usr_EliminarImagen
                                         </button>
                                     </div>
                                 </div>
@@ -643,10 +642,10 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                            <i class="fas fa-times mr-2"></i>Cancelar
+                            <i class="fas fa-times mr-2"></i>@Resources.Strings.Layout_Cancel
                         </button>
                         <button type="button" class="btn btn-primary" id="btnCrearUsuario">
-                            <i class="fas fa-plus-circle mr-2"></i>Crear
+                            <i class="fas fa-plus-circle mr-2"></i>@Resources.Strings.Common_BtnCrear
                         </button>
                     </div>
                 </form>
@@ -660,7 +659,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="cambiarClaveModalLabel">
-                        <i class="fas fa-key"></i>Cambiar Clave
+                        <i class="fas fa-key"></i>@Resources.Strings.Usr_ModalClaveTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
@@ -668,20 +667,20 @@
                     <input type="hidden" id="cambioClaveIdUsuario" name="idUsuario" />
                     <div class="modal-body">
                         <div class="mb-3 mt-3">
-                            <label for="nuevaClave" class="form-label"><i class="fas fa-lock mr-2"></i>Nueva Clave</label>
+                            <label for="nuevaClave" class="form-label"><i class="fas fa-lock mr-2"></i>@Resources.Strings.Usr_LabelNuevaClave</label>
                             <input type="password" class="form-control" id="nuevaClave" name="nuevaClave" required />
                         </div>
                         <div class="mb-3 mt-3">
-                            <label for="confirmarNuevaClave" class="form-label"><i class="fas fa-lock-open mr-2"></i>Confirmar Nueva Clave</label>
+                            <label for="confirmarNuevaClave" class="form-label"><i class="fas fa-lock-open mr-2"></i>@Resources.Strings.Usr_LabelConfNuevaClave</label>
                             <input type="password" class="form-control" id="confirmarNuevaClave" name="confirmarNuevaClave" required />
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                            <i class="fas fa-times mr-2"></i>Cancelar
+                            <i class="fas fa-times mr-2"></i>@Resources.Strings.Layout_Cancel
                         </button>
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save mr-2"></i>Guardar Cambios
+                            <i class="fas fa-save mr-2"></i>@Resources.Strings.Common_GuardarCambios
                         </button>
                     </div>
                 </form>
@@ -695,7 +694,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="imageViewModalLabel">
-                        <i class="fas fa-image"></i> Imagen de Usuario
+                        <i class="fas fa-image"></i> @Resources.Strings.Usr_ModalImagenTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -706,7 +705,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                        <i class="fas fa-times mr-2"></i>Cerrar
+                        <i class="fas fa-times mr-2"></i>@Resources.Strings.Layout_Close
                     </button>
                 </div>
             </div>
@@ -779,6 +778,10 @@
 
     @section scripts {
         <script>
+            var _usrMsg = {
+                camposReq: '@Html.Raw(Resources.Strings.Usr_JS_CamposReq)',
+                archivoGrande: '@Html.Raw(Resources.Strings.Usr_JS_ArchivoGrande)'
+            };
 
             function setIdUsuario(id) {
                 document.getElementById("idUsuario").value = id;
@@ -850,7 +853,7 @@
                         form.classList.add('was-validated');
                         Swal.fire({
                             icon: 'error',
-                            title: 'Por favor, completa todos los campos requeridos.',
+                            title: _usrMsg.camposReq,
                             toast: true,
                             position: isMobile ? 'top' : 'top-end',
                             showConfirmButton: false,
@@ -932,7 +935,7 @@
                         const isMobile = window.innerWidth <= 768;
                         Swal.fire({
                             icon: 'error',
-                            title: 'El archivo es demasiado grande. Máximo 10MB.',
+                            title: _usrMsg.archivoGrande,
                             toast: true,
                             position: isMobile ? 'top' : 'top-end',
                             showConfirmButton: false,
@@ -994,7 +997,7 @@
                         const isMobile = window.innerWidth <= 768;
                         Swal.fire({
                             icon: 'error',
-                            title: 'El archivo es demasiado grande. Máximo 10MB.',
+                            title: _usrMsg.archivoGrande,
                             toast: true,
                             position: isMobile ? 'top' : 'top-end',
                             showConfirmButton: false,

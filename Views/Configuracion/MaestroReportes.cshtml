@@ -4,7 +4,7 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Gestor de reportes</title>
+    <title>@Resources.Strings.Rep_PageTitle</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
@@ -133,7 +133,7 @@
 
     <div class="card shadow mb-4 mt-4">
         <div class="card-header">
-            <i class="fas fa-file-powerpoint"></i> Gestor de reportes
+            <i class="fas fa-file-powerpoint"></i> @Resources.Strings.Rep_PageTitle
         </div>
         <div class="card-body p-0">
             <div class="table-responsive table-wrapper">
@@ -141,13 +141,13 @@
                     <thead>
                         <tr>
                             <th class="col-id">Id</th>
-                            <th class="col-empresa">Empresa</th>
-                            <th class="col-nombre">Nombre</th>
-                            <th class="col-anio-ini">A&ntilde;o Ini.</th>
-                            <th class="col-anio-fin">A&ntilde;o Fin.</th>
-                            <th class="col-desc">Descripci&oacute;n</th>
-                            <th class="col-ver">Ver</th>
-                            <th class="col-acciones">Acciones</th>
+                            <th class="col-empresa">@Resources.Strings.Rep_ThEmpresa</th>
+                            <th class="col-nombre">@Resources.Strings.Rep_LabelNombre</th>
+                            <th class="col-anio-ini">@Resources.Strings.Rep_ThAnioIni</th>
+                            <th class="col-anio-fin">@Resources.Strings.Rep_ThAnioFin</th>
+                            <th class="col-desc">@Resources.Strings.Common_LabelDescripcion</th>
+                            <th class="col-ver">@Resources.Strings.Rep_ThVer</th>
+                            <th class="col-acciones">@Resources.Strings.Common_ThAcciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -155,7 +155,7 @@
                         {
                             <tr>
                                 <td colspan="8" class="text-center text-muted py-3">
-                                    No hay reportes registrados.
+                                    @Resources.Strings.Rep_NoReportes
                                 </td>
                             </tr>
                         }
@@ -172,13 +172,13 @@
                                     @if (!string.IsNullOrEmpty(reporte.EnlaceHTML))
                                     {
                                         <a href="#" onclick="abrirEnlaceValidado('@(Html.Raw(reporte.EnlaceHTML))', this); return false;"
-                                           class="enlace-reporte" title="Abrir reporte">
+                                           class="enlace-reporte" title="@Resources.Strings.Rep_TitleAbrir">
                                             <i class="fas fa-external-link-alt"></i>
                                         </a>
                                     }
                                     else
                                     {
-                                        <i class="fas fa-ban enlace-reporte disabled" title="Sin enlace disponible"></i>
+                                        <i class="fas fa-ban enlace-reporte disabled" title="@Resources.Strings.Rep_TitleSinEnlace"></i>
                                     }
                                 </td>
                                 <td class="col-acciones">
@@ -193,12 +193,12 @@
                                                 data-descripcion="@Html.Raw(reporte.Descripcion ?? "")"
                                                 data-enlacehtml="@Html.Raw(reporte.EnlaceHTML ?? "")"
                                                 onclick="setEditReporteFromData(this)">
-                                            <i class="fas fa-edit mr-1"></i>Editar
+                                            <i class="fas fa-edit mr-1"></i>@Resources.Strings.Rep_BtnEditar
                                         </button>
                                         <button type="button" class="btn btn-outline-danger btn-sm"
                                                 data-toggle="modal" data-target="#confirmDeleteModal"
                                                 onclick="setIdReporte(@reporte.Id)">
-                                            <i class="fas fa-trash-alt mr-1"></i>Eliminar
+                                            <i class="fas fa-trash-alt mr-1"></i>@Resources.Strings.Common_BtnEliminar
                                         </button>
                                     </div>
                                 </td>
@@ -210,7 +210,7 @@
         </div>
         <div class="card-footer">
             <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearReporteModal">
-                <i class="fas fa-plus-circle mr-1"></i> Crear reporte
+                <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Rep_BtnCrear
             </button>
         </div>
     </div>
@@ -221,7 +221,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title" id="confirmDeleteModalLabel">
-                        <i class="fas fa-exclamation-triangle mr-2"></i>Confirmar eliminaci&oacute;n
+                        <i class="fas fa-exclamation-triangle mr-2"></i>@Resources.Strings.Common_ModalDeleteTitle
                     </h5>
                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -230,17 +230,17 @@
                 <div class="modal-body">
                     <p class="mb-0">
                         <i class="fas fa-question-circle text-warning mr-2"></i>
-                        &iquest;Est&aacute;s seguro de que deseas eliminar este reporte?
+                        @Resources.Strings.Rep_ModalDeleteBody
                     </p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i>Cancelar
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                     </button>
                     <form id="deleteForm" method="post" action="/Reportes/EliminarReporte" style="display: inline;">
                         <input type="hidden" id="idReporte" name="idReporte" />
                         <button type="submit" class="btn btn-danger btn-sm">
-                            <i class="fas fa-trash-alt mr-1"></i>Eliminar
+                            <i class="fas fa-trash-alt mr-1"></i>@Resources.Strings.Common_BtnEliminar
                         </button>
                     </form>
                 </div>
@@ -254,7 +254,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editReporteModalLabel">
-                        <i class="fas fa-edit mr-2" style="color: #583AFF;"></i>Editar reporte
+                        <i class="fas fa-edit mr-2" style="color: #583AFF;"></i>@Resources.Strings.Rep_ModalEditTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -267,10 +267,10 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="editIdEmpresa" class="form-label">
-                                    <i class="fas fa-building mr-2" style="color: #583AFF;"></i>Empresa <span class="text-danger">*</span>
+                                    <i class="fas fa-building mr-2" style="color: #583AFF;"></i>@Resources.Strings.Rep_LabelEmpresa <span class="text-danger">*</span>
                                 </label>
                                 <select class="form-control form-control-sm" id="editIdEmpresa" name="IdEmpresa" required>
-                                    <option value="">Seleccione una empresa</option>
+                                    <option value="">@Resources.Strings.Rep_SelEmpresa</option>
                                     @foreach (var empresa in ViewBag.Empresas as List<bufinscustomers.Models.Empresas>)
                                     {
                                         <option value="@empresa.Id">@empresa.Nombre</option>
@@ -279,7 +279,7 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="editNombre" class="form-label">
-                                    <i class="fas fa-file-alt mr-2" style="color: #583AFF;"></i>Nombre <span class="text-danger">*</span>
+                                    <i class="fas fa-file-alt mr-2" style="color: #583AFF;"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span>
                                 </label>
                                 <input type="text" class="form-control form-control-sm" id="editNombre" name="Nombre" required />
                             </div>
@@ -288,13 +288,13 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="editAnioInicial" class="form-label">
-                                    <i class="fas fa-calendar-alt mr-2" style="color: #583AFF;"></i>A&ntilde;o Inicial
+                                    <i class="fas fa-calendar-alt mr-2" style="color: #583AFF;"></i>@Resources.Strings.Rep_LabelAnioInicial
                                 </label>
                                 <input type="text" class="form-control form-control-sm" id="editAnioInicial" name="AnioInicial" placeholder="Ej: 2023" />
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="editAnioFinal" class="form-label">
-                                    <i class="fas fa-calendar-check mr-2" style="color: #583AFF;"></i>A&ntilde;o Final
+                                    <i class="fas fa-calendar-check mr-2" style="color: #583AFF;"></i>@Resources.Strings.Rep_LabelAnioFinal
                                 </label>
                                 <input type="text" class="form-control form-control-sm" id="editAnioFinal" name="AnioFinal" placeholder="Ej: 2025" />
                             </div>
@@ -302,14 +302,14 @@
 
                         <div class="mb-3">
                             <label for="editDescripcion" class="form-label">
-                                <i class="fas fa-align-left mr-2" style="color: #583AFF;"></i>Descripci&oacute;n
+                                <i class="fas fa-align-left mr-2" style="color: #583AFF;"></i>@Resources.Strings.Common_LabelDescripcion
                             </label>
                             <textarea class="form-control form-control-sm" id="editDescripcion" name="Descripcion" rows="2"></textarea>
                         </div>
 
                         <div class="mb-3 url-input">
                             <label for="editEnlaceHTML" class="form-label">
-                                <i class="fas fa-link mr-2" style="color: #583AFF;"></i>Enlace HTML <span class="text-danger">*</span>
+                                <i class="fas fa-link mr-2" style="color: #583AFF;"></i>@Resources.Strings.Rep_LabelEnlaceHTML <span class="text-danger">*</span>
                             </label>
                             <input type="text" class="form-control form-control-sm" id="editEnlaceHTML" name="EnlaceHTML" required
                                    oninput="validarURL('editEnlaceHTML', 'editUrlFeedback')" />
@@ -318,10 +318,10 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                            <i class="fas fa-times mr-1"></i>Cancelar
+                            <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                         </button>
                         <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="fas fa-save mr-1"></i>Actualizar
+                            <i class="fas fa-save mr-1"></i>@Resources.Strings.Rep_BtnActualizar
                         </button>
                     </div>
                 </form>
@@ -335,7 +335,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="crearReporteModalLabel">
-                        <i class="fas fa-plus-circle mr-2" style="color: #583AFF;"></i>Crear nuevo reporte
+                        <i class="fas fa-plus-circle mr-2" style="color: #583AFF;"></i>@Resources.Strings.Rep_ModalCreateTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -346,10 +346,10 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="IdEmpresa" class="form-label">
-                                    <i class="fas fa-building mr-2" style="color: #583AFF;"></i>Empresa <span class="text-danger">*</span>
+                                    <i class="fas fa-building mr-2" style="color: #583AFF;"></i>@Resources.Strings.Rep_LabelEmpresa <span class="text-danger">*</span>
                                 </label>
                                 <select class="form-control form-control-sm" id="IdEmpresa" name="IdEmpresa" required>
-                                    <option value="">Seleccione una empresa</option>
+                                    <option value="">@Resources.Strings.Rep_SelEmpresa</option>
                                     @foreach (var empresa in ViewBag.Empresas as List<bufinscustomers.Models.Empresas>)
                                     {
                                         <option value="@empresa.Id">@empresa.Nombre</option>
@@ -358,7 +358,7 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="Nombre" class="form-label">
-                                    <i class="fas fa-file-alt mr-2" style="color: #583AFF;"></i>Nombre <span class="text-danger">*</span>
+                                    <i class="fas fa-file-alt mr-2" style="color: #583AFF;"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span>
                                 </label>
                                 <input type="text" class="form-control form-control-sm" id="Nombre" name="Nombre" required />
                             </div>
@@ -367,13 +367,13 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="AnioInicial" class="form-label">
-                                    <i class="fas fa-calendar-alt mr-2" style="color: #583AFF;"></i>A&ntilde;o Inicial
+                                    <i class="fas fa-calendar-alt mr-2" style="color: #583AFF;"></i>@Resources.Strings.Rep_LabelAnioInicial
                                 </label>
                                 <input type="text" class="form-control form-control-sm" id="AnioInicial" name="AnioInicial" placeholder="Ej: 2023" />
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="AnioFinal" class="form-label">
-                                    <i class="fas fa-calendar-check mr-2" style="color: #583AFF;"></i>A&ntilde;o Final
+                                    <i class="fas fa-calendar-check mr-2" style="color: #583AFF;"></i>@Resources.Strings.Rep_LabelAnioFinal
                                 </label>
                                 <input type="text" class="form-control form-control-sm" id="AnioFinal" name="AnioFinal" placeholder="Ej: 2025" />
                             </div>
@@ -381,14 +381,14 @@
 
                         <div class="mb-3">
                             <label for="Descripcion" class="form-label">
-                                <i class="fas fa-align-left mr-2" style="color: #583AFF;"></i>Descripci&oacute;n
+                                <i class="fas fa-align-left mr-2" style="color: #583AFF;"></i>@Resources.Strings.Common_LabelDescripcion
                             </label>
                             <textarea class="form-control form-control-sm" id="Descripcion" name="Descripcion" rows="2"></textarea>
                         </div>
 
                         <div class="mb-3 url-input">
                             <label for="EnlaceHTML" class="form-label">
-                                <i class="fas fa-link mr-2" style="color: #583AFF;"></i>Enlace HTML <span class="text-danger">*</span>
+                                <i class="fas fa-link mr-2" style="color: #583AFF;"></i>@Resources.Strings.Rep_LabelEnlaceHTML <span class="text-danger">*</span>
                             </label>
                             <input type="text" class="form-control form-control-sm" id="EnlaceHTML" name="EnlaceHTML" required
                                    oninput="validarURL('EnlaceHTML', 'createUrlFeedback')" />
@@ -397,10 +397,10 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                            <i class="fas fa-times mr-1"></i>Cancelar
+                            <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                         </button>
                         <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus-circle mr-1"></i>Crear
+                            <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.Common_BtnCrear
                         </button>
                     </div>
                 </form>
@@ -469,6 +469,9 @@
     }
 
     <script>
+        var _urlCorrecta   = '@Html.Raw(Resources.Strings.Rep_JS_URLCorrecta.Replace("'", "\\'"))';
+        var _urlIncorrecta = '@Html.Raw(Resources.Strings.Rep_JS_URLIncorrecta.Replace("'", "\\'"))';
+
         function esURLValida(url) {
             try {
                 if (!url || url.trim() === '') {
@@ -508,11 +511,11 @@
             }
 
             if (esURLValida(url)) {
-                feedback.textContent = 'URL correcta';
+                feedback.textContent = _urlCorrecta;
                 feedback.className = 'url-feedback valid';
                 return true;
             } else {
-                feedback.textContent = 'URL incorrecta. Ejemplos validos: https://ejemplo.com, app.powerbi.com/view';
+                feedback.textContent = _urlIncorrecta;
                 feedback.className = 'url-feedback invalid';
                 return false;
             }
@@ -524,7 +527,7 @@
                     toast: true,
                     position: window.innerWidth <= 768 ? 'top' : 'top-end',
                     icon: 'warning',
-                    title: 'No hay enlace disponible',
+                    title: '@Html.Raw(Resources.Strings.Rep_JS_SinEnlace.Replace("'", "\\'"))',
                     showConfirmButton: false,
                     timer: 3000,
                     timerProgressBar: true
@@ -537,7 +540,7 @@
                     toast: true,
                     position: window.innerWidth <= 768 ? 'top' : 'top-end',
                     icon: 'error',
-                    title: 'El enlace es muy corto o no valido',
+                    title: '@Html.Raw(Resources.Strings.Rep_JS_EnlaceCorto.Replace("'", "\\'"))',
                     showConfirmButton: false,
                     timer: 3000,
                     timerProgressBar: true
@@ -558,7 +561,7 @@
                     toast: true,
                     position: window.innerWidth <= 768 ? 'top' : 'top-end',
                     icon: 'error',
-                    title: 'Error al abrir el enlace',
+                    title: '@Html.Raw(Resources.Strings.Rep_JS_ErrorAbrir.Replace("'", "\\'"))',
                     showConfirmButton: false,
                     timer: 3000,
                     timerProgressBar: true
@@ -574,8 +577,8 @@
                     toast: true,
                     position: window.innerWidth <= 768 ? 'top' : 'top-end',
                     icon: 'error',
-                    title: 'Por favor, ingresa una URL correcta',
-                    text: 'Ejemplos: https://ejemplo.com, app.powerbi.com/view',
+                    title: '@Html.Raw(Resources.Strings.Rep_JS_IngresaURL.Replace("'", "\\'"))',
+                    text: '@Html.Raw(Resources.Strings.Rep_JS_EjemplosURL.Replace("'", "\\'"))',
                     showConfirmButton: false,
                     timer: 4000,
                     timerProgressBar: true
@@ -592,8 +595,8 @@
                     toast: true,
                     position: window.innerWidth <= 768 ? 'top' : 'top-end',
                     icon: 'error',
-                    title: 'Por favor, ingresa una URL correcta',
-                    text: 'Ejemplos: https://ejemplo.com, app.powerbi.com/view',
+                    title: '@Html.Raw(Resources.Strings.Rep_JS_IngresaURL.Replace("'", "\\'"))',
+                    text: '@Html.Raw(Resources.Strings.Rep_JS_EjemplosURL.Replace("'", "\\'"))',
                     showConfirmButton: false,
                     timer: 4000,
                     timerProgressBar: true

@@ -2,7 +2,7 @@
 @using bufinscustomers.Models
 
 @{
-    ViewBag.Title = "Variables PBI";
+    ViewBag.Title = Resources.Strings.VarPBI_PageTitle;
     var tablas = ViewBag.Tablas as List<string>;
     var estado = ViewBag.EstadoActual as EstadoVariablesPBI;
 }
@@ -117,10 +117,10 @@
 
 <div class="container-fluid px-4">
     <!-- Header -->
-    <div class="powerbi-header">
+        <div class="powerbi-header">
         <div class="powerbi-header-content">
             <i class="fas fa-sort-numeric-down powerbi-header-icon"></i>
-            <h1 class="powerbi-header-title">Variables PBI</h1>
+            <h1 class="powerbi-header-title">@Resources.Strings.VarPBI_PageTitle</h1>
         </div>
     </div>
 
@@ -143,7 +143,7 @@
     <div class="filter-card">
         <h3 class="filter-card-title">
             <i class="fas fa-filter"></i>
-            Filtros de Consulta
+            @Resources.Strings.Common_FiltrosConsulta
         </h3>
 
         <form id="formFiltros">
@@ -152,10 +152,10 @@
                     <div class="col-md-5">
                         <div class="form-group">
                             <label for="selectTabla">
-                                <i class="fas fa-table"></i> Tabla
+                                <i class="fas fa-table"></i> @Resources.Strings.VarPBI_LabelTabla
                             </label>
                             <select id="selectTabla" name="NombreTabla" class="form-control">
-                                <option value="">-- Todas las tablas --</option>
+                                <option value="">@Resources.Strings.VarPBI_TodasTablas</option>
                                 @if (tablas != null)
                                 {
                                     foreach (var t in tablas)
@@ -169,10 +169,10 @@
                     <div class="col-md-5">
                         <div class="form-group">
                             <label for="txtVariable">
-                                <i class="fas fa-search"></i> Variable (b&uacute;squeda parcial)
+                                <i class="fas fa-search"></i> @Resources.Strings.VarPBI_LabelVariable
                             </label>
                             <input type="text" id="txtVariable" name="Variable" class="form-control"
-                                   placeholder="Ej: Ingresos, EBITDA..." autocomplete="off" />
+                                   placeholder="@Resources.Strings.VarPBI_VariablePlaceholder" autocomplete="off" />
                         </div>
                     </div>
                     <div class="col-md-2">
@@ -180,9 +180,9 @@
                             <label>&nbsp;</label>
                             <div>
                                 <button type="button" id="btnSoloSubtotales" class="btn w-100"
-                                        title="Filtrar solo variables de subtotal">
+                                        title="@Resources.Strings.VarPBI_BtnSoloSubtotales">
                                     <i class="fas fa-layer-group st-toggle-icon"></i>
-                                    <span>Solo Subtotales</span>
+                                    <span>@Resources.Strings.VarPBI_BtnSoloSubtotales</span>
                                 </button>
                             </div>
                         </div>
@@ -192,13 +192,13 @@
 
             <div class="btn-group-actions">
                 <button type="button" id="btnConsultar" class="btn btn-modern-gradient">
-                    <i class="fas fa-search mr-2"></i>Consultar
+                    <i class="fas fa-search mr-2"></i>@Resources.Strings.VarPBI_BtnConsultar
                 </button>
                 <button type="button" id="btnLimpiar" class="btn btn-modern-secondary">
-                    <i class="fas fa-eraser mr-2"></i>Limpiar
+                    <i class="fas fa-eraser mr-2"></i>@Resources.Strings.VarPBI_BtnLimpiar
                 </button>
                 <button type="button" id="btnExportar" class="btn btn-modern-success" style="display:none;">
-                    <i class="fas fa-file-excel mr-2"></i>Exportar Excel
+                    <i class="fas fa-file-excel mr-2"></i>@Resources.Strings.VarPBI_BtnExportar
                 </button>
             </div>
         </form>
@@ -207,40 +207,40 @@
     <!-- Spinner -->
     <div id="loadingSpinner" class="loading-spinner">
         <i class="fas fa-spinner"></i>
-        <p>Consultando datos...</p>
+        <p>@Resources.Strings.VarPBI_Consultando</p>
     </div>
 
     <!-- Resultados -->
     <div id="resultadosContainer" style="display:none;">
         <div class="table-container">
             <div class="table-header">
-                <h5><i class="fas fa-list mr-2"></i>Resultados</h5>
+                <h5><i class="fas fa-list mr-2"></i>@Resources.Strings.VarPBI_TitleResultados</h5>
                 <span id="totalRegistros" class="info-badge"></span>
             </div>
 
             <!-- Info auditor&iacute;a -->
             <div id="auditBar" class="audit-info-bar" style="display:none;">
                 <i class="fas fa-user-clock"></i>
-                <span>&Uacute;ltima carga: <strong id="auditUsuario"></strong> &mdash; <span id="auditFecha"></span></span>
+                <span>@Resources.Strings.VarPBI_UltimaCarga <strong id="auditUsuario"></strong> &mdash; <span id="auditFecha"></span></span>
             </div>
 
             <div class="table-wrapper">
                 <table id="tablaResultados" class="data-table">
                     <thead>
                         <tr>
-                            <th class="col-orden">Orden</th>
-                            <th>Tabla</th>
-                            <th>Variable</th>
-                            <th class="col-subtotal">Subtotal</th>
-                            <th>Variable Padre</th>
-                            <th>Variable Indicador</th>
-                            <th>Clase Variable</th>
-                            <th>Agrupaci&oacute;n KEY</th>
-                            <th>Agrupaci&oacute;n KEY ABR</th>
-                            <th class="col-orden-num">KEY Orden</th>
-                            <th>Var. Padre Real</th>
-                            <th>Var. Padre ABR</th>
-                            <th class="col-orden-num">Padre Real Orden</th>
+                            <th class="col-orden">@Resources.Strings.VarPBI_ThOrden</th>
+                            <th>@Resources.Strings.VarPBI_ThTabla</th>
+                            <th>@Resources.Strings.VarPBI_ThVariable</th>
+                            <th class="col-subtotal">@Resources.Strings.VarPBI_ThSubtotal</th>
+                            <th>@Resources.Strings.VarPBI_ThVariablePadre</th>
+                            <th>@Resources.Strings.VarPBI_ThVarIndicador</th>
+                            <th>@Resources.Strings.VarPBI_ThClaseVariable</th>
+                            <th>@Resources.Strings.VarPBI_ThAgrupKEY</th>
+                            <th>@Resources.Strings.VarPBI_ThAgrupKEYABR</th>
+                            <th class="col-orden-num">@Resources.Strings.VarPBI_ThKEYOrden</th>
+                            <th>@Resources.Strings.VarPBI_ThVarPadreReal</th>
+                            <th>@Resources.Strings.VarPBI_ThVarPadreABR</th>
+                            <th class="col-orden-num">@Resources.Strings.VarPBI_ThPadreRealOrden</th>
                         </tr>
                     </thead>
                     <tbody id="tablaBody"></tbody>
@@ -252,8 +252,8 @@
 
     <div id="noDataMessage" class="no-data-message" style="display:none;">
         <i class="fas fa-inbox"></i>
-        <h4>No se encontraron datos</h4>
-        <p>No hay registros que coincidan con los filtros seleccionados.</p>
+        <h4>@Resources.Strings.VarPBI_SinDatos</h4>
+        <p>@Resources.Strings.VarPBI_SinDatosFiltros</p>
     </div>
 </div>
 
@@ -308,12 +308,12 @@
                                 $('#noDataMessage').show();
                             }
                         } else {
-                            Swal.fire({ icon: 'error', title: 'Error', text: resp.message });
+                            Swal.fire({ icon: 'error', title: '@Resources.Strings.Common_Error', text: resp.message });
                         }
                     },
                     error: function () {
                         $('#loadingSpinner').hide();
-                        Swal.fire({ icon: 'error', title: 'Error', text: 'Error de conexi\u00f3n al consultar los datos' });
+                        Swal.fire({ icon: 'error', title: '@Resources.Strings.Common_Error', text: '@Resources.Strings.VarPBI_JS_ErrorConexion' });
                     }
                 });
             }
@@ -385,7 +385,7 @@
                     tbody.append(row);
                 }
 
-                $('#totalRegistros').text(resp.totalRegistros + ' registros | P\u00e1g. ' + paginaActual + '/' + totalPaginas);
+                $('#totalRegistros').text(resp.totalRegistros + ' @Resources.Strings.Common_RegistrosPag ' + paginaActual + '/' + totalPaginas);
                 crearPaginacion(totalPaginas);
                 $('#resultadosContainer').show();
                 $('#btnExportar').show();
@@ -464,15 +464,15 @@
                 if (params.length > 0) url += '?' + params.join('&');
 
                 window.location = url;
-                Swal.fire({ icon: 'success', title: 'Exportando...', text: 'Generando archivo Excel', timer: 2000, showConfirmButton: false });
+                Swal.fire({ icon: 'success', title: '@Resources.Strings.VarPBI_JS_Exportando', text: '@Resources.Strings.VarPBI_JS_GenerandoExcel', timer: 2000, showConfirmButton: false });
             });
 
             // ── Select2 ────────────────────────────────────────────────────
             $('#selectTabla').select2({
-                placeholder: '-- Todas las tablas --',
+                placeholder: '@Resources.Strings.VarPBI_TodasTablas',
                 allowClear: true,
                 width: '100%',
-                language: { noResults: function () { return 'No se encontraron resultados'; }, searching: function () { return 'Buscando...'; } }
+                language: { noResults: function () { return '@Resources.Strings.Common_Select2NoResults'; }, searching: function () { return '@Resources.Strings.Common_Select2Searching'; } }
             });
         });
     </script>

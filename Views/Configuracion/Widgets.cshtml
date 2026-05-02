@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Gestor de Widgets</title>
+    <title>@Resources.Strings.Wid_PageTitle</title>
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="~/Assets/css/configuracion-admin.css" rel="stylesheet" />
@@ -51,7 +51,7 @@
 <!-- ===== TABLA ===== -->
 <div class="card shadow mb-4 mt-4">
     <div class="card-header">
-        <i class="fas fa-th-large"></i> Gestor de Widgets
+        <i class="fas fa-th-large"></i> @Resources.Strings.Wid_PageTitle
     </div>
     <div class="card-body p-0">
         <div class="table-responsive table-wrapper">
@@ -59,18 +59,18 @@
                 <thead>
                     <tr>
                         <th style="width:40px">#</th>
-                        <th style="width:80px">Tipo</th>
-                        <th>Nombre</th>
+                        <th style="width:80px">@Resources.Strings.Wid_ThTipo</th>
+                        <th>@Resources.Strings.Common_LabelDescripcion</th>
                         <th style="width:70px;text-align:center">Icono</th>
                         <th style="width:55px;text-align:center">Orden</th>
-                        <th style="width:80px;text-align:center">Estado</th>
-                        <th style="width:100px;text-align:center">Acciones</th>
+                        <th style="width:80px;text-align:center">@Resources.Strings.Common_Estado</th>
+                        <th style="width:100px;text-align:center">@Resources.Strings.Common_ThAcciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (!Model.Any())
                     {
-                        <tr><td colspan="7" class="text-center text-muted py-3">No hay widgets registrados.</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-3">@Resources.Strings.Wid_NoWidgets</td></tr>
                     }
                     @foreach (var t in Model)
                     {
@@ -78,14 +78,14 @@
                             <td>@t.Id</td>
                             <td>
                                 @if (t.Tipo == 1) { <span class="dash-tipo-badge dash-tipo-kpi">KPI</span> }
-                                else              { <span class="dash-tipo-badge dash-tipo-graf">Gr&aacute;fico</span> }
+                                else              { <span class="dash-tipo-badge dash-tipo-graf">@Resources.Strings.Wid_TipoGrafico</span> }
                             </td>
                             <td><strong>@t.Nombre</strong></td>
                             <td style="text-align:center"><i class="@t.Icono" style="color:@t.ColorIcono;font-size:1.1rem"></i></td>
                             <td style="text-align:center">@t.Orden</td>
                             <td style="text-align:center">
-                                @if (t.Activo) { <span class="badge-activo">Activo</span> }
-                                else           { <span class="badge-inactivo">Inactivo</span> }
+                                @if (t.Activo) { <span class="badge-activo">@Resources.Strings.Common_Activo</span> }
+                                else           { <span class="badge-inactivo">@Resources.Strings.Common_Inactivo</span> }
                             </td>
                             <td style="text-align:center">
                                 <div class="btn-group" role="group">
@@ -107,7 +107,7 @@
     </div>
     <div class="card-footer">
         <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#modalCrear">
-            <i class="fas fa-plus-circle mr-1"></i> Nuevo widget
+            <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Wid_BtnNuevo
         </button>
     </div>
 </div>
@@ -117,7 +117,7 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-plus-circle"></i> Nuevo widget</h5>
+                <h5 class="modal-title"><i class="fas fa-plus-circle"></i> @Resources.Strings.Wid_ModalCreateTitle</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form method="post" action="/Widgets/Crear">
@@ -226,7 +226,7 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-edit"></i> Editar widget</h5>
+                <h5 class="modal-title"><i class="fas fa-edit"></i> @Resources.Strings.Wid_ModalEditTitle</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form method="post" action="/Widgets/Editar">
@@ -399,13 +399,13 @@
 
     function confirmarEliminar(id, nombre) {
         Swal.fire({
-            title: '¿Eliminar widget?',
-            text: '"' + nombre + '" se eliminará permanentemente.',
+            title: '@Resources.Strings.Wid_JS_ElimTitle',
+            text: '"' + nombre + '" @Resources.Strings.Wid_JS_ElimSuffix',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#e74a3b',
-            cancelButtonText: 'Cancelar',
-            confirmButtonText: 'Sí, eliminar'
+            cancelButtonText: '@Resources.Strings.Layout_Cancel',
+            confirmButtonText: '@Resources.Strings.Menu_JS_ConfirmarEliminar'
         }).then(function(r) {
             if (r.isConfirmed) {
                 document.getElementById('elimId').value = id;

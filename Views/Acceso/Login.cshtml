@@ -1,11 +1,13 @@
-﻿
-@{
+﻿@{
     Layout = null;
+    var _isEnglish = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+    var _esActiveClass = !_isEnglish ? "active" : "";
+    var _enActiveClass = _isEnglish ? "active" : "";
 }
 
 <!DOCTYPE html>
 
-<html>
+<html lang="@(_isEnglish ? "en" : "es")">
 <head>
     <title>BUFINS - Login</title>
     <link rel="icon" type="image/x-icon" href="~/favicon.ico">
@@ -36,6 +38,26 @@
         .back-link:hover {
             color: #583AFF;
         }
+
+        .lang-switcher-wrapper{display:inline-flex;align-items:center;gap:7px}
+        .lang-switcher-icon{font-size:.72rem;color:rgba(255,255,255,.28);flex-shrink:0}
+        .lang-switcher{display:inline-flex;align-items:center;background:rgba(255,255,255,.04);border:1px solid rgba(1,225,215,.18);border-radius:100px;padding:3px}
+        .lang-btn{display:flex;align-items:center;padding:5px 13px;border-radius:100px;text-decoration:none!important;color:rgba(255,255,255,.4);font-size:.74rem;font-weight:500;letter-spacing:.01em;transition:all .22s ease;white-space:nowrap;line-height:1}
+        .lang-btn:hover,.lang-btn:focus{color:rgba(255,255,255,.82);background:rgba(255,255,255,.06);text-decoration:none!important}
+        .lang-btn.active{background:rgba(1,225,215,.1);color:#01E1D7;font-weight:600;box-shadow:inset 0 0 0 1px rgba(1,225,215,.2)}
+        .lang-btn.active:hover,.lang-btn.active:focus{background:rgba(1,225,215,.15);color:#01E1D7;text-decoration:none!important}
+        .lang-sep{width:1px;height:14px;background:rgba(1,225,215,.13);flex-shrink:0;margin:0 1px;align-self:center}
+        .login-lang{display:flex;justify-content:center;margin-top:.85rem}
+        .login-lang .lang-switcher-wrapper{background:linear-gradient(135deg,#583AFF 0%,#4a2de0 100%);border:1px solid rgba(1,225,215,.22);border-radius:100px;padding:7px 5px 7px 14px;box-shadow:0 4px 15px rgba(88,58,255,.3);gap:8px;position:relative;overflow:hidden;transition:all .3s ease}
+        .login-lang .lang-switcher-wrapper::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(1,225,215,.3),transparent);transition:left .5s ease;pointer-events:none}
+        .login-lang .lang-switcher-wrapper:hover::before{left:100%}
+        .login-lang .lang-switcher-wrapper:hover{background:linear-gradient(135deg,#4a2de0 0%,#3d24bb 100%);box-shadow:0 8px 25px rgba(88,58,255,.5);transform:translateY(-2px)}
+        .login-lang .lang-switcher-icon{color:rgba(255,255,255,.7);position:relative}
+        .login-lang .lang-switcher{background:transparent;border:none;padding:0;position:relative}
+        .login-lang .lang-btn{color:rgba(255,255,255,.65)}
+        .login-lang .lang-btn.active{background:rgba(255,255,255,.18);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+        .login-lang .lang-btn.active:hover,.login-lang .lang-btn.active:focus{background:rgba(255,255,255,.25);color:#fff}
+        .login-lang .lang-sep{background:rgba(255,255,255,.2)}
     </style>
 
     <div class="background-overlay"></div>
@@ -45,11 +67,21 @@
             <div class="card-glow"></div>
             <div class="login-header">
                 <a href="https://bufins.com/" target="_self" class="back-link">
-                    ← Volver a bufins.com
+                    @Resources.Strings.Login_BackLink
                 </a>
                 <img class="logo-bufins" src="~/Assets/img/Bufins_LogoLogin.png" alt="Bufins Logo">
                 <h1 class="login-title">LOGIN</h1>
                 <p class="login-subtitle">BUSINESS FINANCE ALWAYS EVERYWHERE</p>
+                <div class="login-lang">
+                    <div class="lang-switcher-wrapper">
+                        <i class="fas fa-globe lang-switcher-icon"></i>
+                        <div class="lang-switcher">
+                            <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "es-CO", returnUrl = Request.Url.PathAndQuery })" class="lang-btn @_esActiveClass">Español</a>
+                            <span class="lang-sep"></span>
+                            <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "en-US", returnUrl = Request.Url.PathAndQuery })" class="lang-btn @_enActiveClass">English</a>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <form id="loginForm" action="@Url.Action("Login", "Acceso")" method="post">
@@ -59,8 +91,8 @@
                         <i class="fas fa-envelope"></i>
                     </div>
                     <div class="input-wrapper">
-                        <label for="Correo">Correo Electrónico</label>
-                        <input type="text" name="Correo" class="input-field" id="Correo" placeholder="Ingrese su correo" />
+                        <label for="Correo">@Resources.Strings.Login_EmailLabel</label>
+                        <input type="text" name="Correo" class="input-field" id="Correo" placeholder="@Resources.Strings.Login_EmailPlaceholder" />
                     </div>
                 </div>
 
@@ -69,13 +101,13 @@
                         <i class="fas fa-lock"></i>
                     </div>
                     <div class="input-wrapper">
-                        <label for="Clave">Contraseña</label>
-                        <input type="password" name="Clave" class="input-field" id="Clave" placeholder="Ingrese su contraseña">
+                        <label for="Clave">@Resources.Strings.Login_PasswordLabel</label>
+                        <input type="password" name="Clave" class="input-field" id="Clave" placeholder="@Resources.Strings.Login_PasswordPlaceholder">
                     </div>
                 </div>
 
                 <button type="button" class="btn btn-primary" onclick="validarFormulario()">
-                    <span>INICIAR SESION</span>
+                    <span>@Resources.Strings.Login_Button</span>
                     <i class="fas fa-arrow-right"></i>
                 </button>
 
@@ -83,18 +115,22 @@
                     ORION WEB - @DateTime.Now.Year
                 </div>
                 <script>
+                    var _loginMsg = {
+                        errorEmail: '@Html.Raw(Resources.Strings.Login_ErrorEmail)',
+                        errorPassword: '@Html.Raw(Resources.Strings.Login_ErrorPassword)'
+                    };
+
                     function validarFormulario() {
-                        // Obtener los valores de los campos
                         const correo = document.getElementById("Correo").value;
                         const clave = document.getElementById("Clave").value;
+                        const isMobile = window.innerWidth <= 768;
 
                         if (!correo) {
-                            const isMobile = window.innerWidth <= 768;
                             Swal.fire({
                                 toast: true,
                                 position: isMobile ? 'top' : 'top-end',
                                 icon: 'info',
-                                title: 'Debe ingresar un correo.',
+                                title: _loginMsg.errorEmail,
                                 showConfirmButton: false,
                                 timer: 3000,
                                 timerProgressBar: true,
@@ -107,12 +143,11 @@
                         }
 
                         if (!clave) {
-                            const isMobile = window.innerWidth <= 768;
                             Swal.fire({
                                 toast: true,
                                 position: isMobile ? 'top' : 'top-end',
                                 icon: 'info',
-                                title: 'Debe ingresar una contraseña.',
+                                title: _loginMsg.errorPassword,
                                 showConfirmButton: false,
                                 timer: 3000,
                                 timerProgressBar: true,
@@ -123,7 +158,6 @@
                             });
                             return;
                         }
-
 
                         document.getElementById("loginForm").submit();
                     }
@@ -155,5 +189,6 @@
         </div>
     </div>
     <script type="text/javascript" src="~/Assets/js/main.js"></script>
+
 </body>
 </html>
