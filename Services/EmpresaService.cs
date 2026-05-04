@@ -29,6 +29,7 @@ namespace bufinscustomers.Services
                             empresa.Nit = (string)reader["EmpNit"];
                             empresa.Direccion = (string)reader["EmpDireccion"];
                             empresa.Telefono = reader["EmpTelefono"] != DBNull.Value ? (string)reader["EmpTelefono"] : string.Empty;
+                            empresa.Correo = reader["EmpCorreo"] != DBNull.Value ? (string)reader["EmpCorreo"] : string.Empty;
                             empresas.Add(empresa);
                         }
                     }
@@ -51,6 +52,7 @@ namespace bufinscustomers.Services
                 cmd.Parameters.AddWithValue("@EmpNit", empresa.Nit);
                 cmd.Parameters.AddWithValue("@EmpDireccion", empresa.Direccion);
                 cmd.Parameters.AddWithValue("@EmpTelefono", string.IsNullOrWhiteSpace(empresa.Telefono) ? (object)DBNull.Value : empresa.Telefono);
+                cmd.Parameters.AddWithValue("@EmpCorreo", string.IsNullOrWhiteSpace(empresa.Correo) ? (object)DBNull.Value : empresa.Correo);
                 cmd.Parameters.Add("@Registrado", SqlDbType.Bit).Direction = ParameterDirection.Output;
                 cmd.Parameters.Add("@Mensaje", SqlDbType.VarChar, 100).Direction = ParameterDirection.Output;
                 cmd.CommandType = CommandType.StoredProcedure;
@@ -64,9 +66,10 @@ namespace bufinscustomers.Services
         }
 
         // Editar empresa
-        public bool EditarEmpresa(Empresas empresa)
+        public bool EditarEmpresa(Empresas empresa, out string mensaje)
         {
             bool actualizado = false;
+            mensaje = "";
 
             using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
@@ -76,10 +79,14 @@ namespace bufinscustomers.Services
                 cmd.Parameters.AddWithValue("@EmpNit", empresa.Nit);
                 cmd.Parameters.AddWithValue("@EmpDireccion", empresa.Direccion);
                 cmd.Parameters.AddWithValue("@EmpTelefono", string.IsNullOrWhiteSpace(empresa.Telefono) ? (object)DBNull.Value : empresa.Telefono);
+                cmd.Parameters.AddWithValue("@EmpCorreo", string.IsNullOrWhiteSpace(empresa.Correo) ? (object)DBNull.Value : empresa.Correo);
+                cmd.Parameters.Add("@Actualizado", SqlDbType.Bit).Direction = ParameterDirection.Output;
+                cmd.Parameters.Add("@Mensaje", SqlDbType.NVarChar, 200).Direction = ParameterDirection.Output;
                 cmd.CommandType = CommandType.StoredProcedure;
                 cn.Open();
-                int filas = cmd.ExecuteNonQuery();
-                actualizado = filas > 0;
+                cmd.ExecuteNonQuery();
+                actualizado = Convert.ToBoolean(cmd.Parameters["@Actualizado"].Value);
+                mensaje = cmd.Parameters["@Mensaje"].Value.ToString();
             }
 
             return actualizado;

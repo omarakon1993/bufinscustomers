@@ -41,15 +41,11 @@ namespace bufinscustomers.Controllers
             bool registrado = _empresaService.CrearEmpresa(empresa, out mensaje);
 
             if (registrado)
-            {
                 SetSuccessMessage("Empresa creada correctamente.");
-                return RedirectToAction("Empresas");
-            }
             else
-            {
-                ViewBag.ErrorMessage = mensaje;
-                return View(empresa);
-            }
+                SetErrorMessage(mensaje);
+
+            return RedirectToAction("Empresas");
         }
 
 
@@ -65,21 +61,15 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Empresas");
             }
 
-            if (!ModelState.IsValid)
-                return View(empresa);
-
-            bool actualizado = _empresaService.EditarEmpresa(empresa);
+            string mensaje;
+            bool actualizado = _empresaService.EditarEmpresa(empresa, out mensaje);
 
             if (actualizado)
-            {
-                SetSuccessMessage("Empresa actualizada correctamente.");
-                return RedirectToAction("Empresas");
-            }
+                SetSuccessMessage(mensaje);
             else
-            {
-                ViewBag.ErrorMessage = "Error al actualizar la empresa.";
-                return View(empresa);
-            }
+                SetErrorMessage(mensaje);
+
+            return RedirectToAction("Empresas");
         }
 
         // POST: Eliminar empresa (solo Super Admin)
