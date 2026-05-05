@@ -93,6 +93,13 @@ namespace bufinscustomers.Services
             try { opcion.SoloAdminEmpresa = reader["SoloAdminEmpresa"] != DBNull.Value && Convert.ToBoolean(reader["SoloAdminEmpresa"]); }
             catch (IndexOutOfRangeException) { }
 
+            try { opcion.NombreEN         = reader["NombreEN"]         != DBNull.Value ? reader["NombreEN"].ToString()         : null; }
+            catch (IndexOutOfRangeException) { }
+            try { opcion.NombreCategoriaEN = reader["NombreCategoriaEN"] != DBNull.Value ? reader["NombreCategoriaEN"].ToString() : null; }
+            catch (IndexOutOfRangeException) { }
+            try { opcion.NombreGrupoEN    = reader["NombreGrupoEN"]    != DBNull.Value ? reader["NombreGrupoEN"].ToString()    : null; }
+            catch (IndexOutOfRangeException) { }
+
             return opcion;
         }
 
@@ -154,6 +161,13 @@ namespace bufinscustomers.Services
             return codigos;
         }
 
+        private static string ResolverNombre(string nombreES, string nombreEN)
+        {
+            bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture
+                                  .TwoLetterISOLanguageName == "en";
+            return (esIngles && !string.IsNullOrEmpty(nombreEN)) ? nombreEN : nombreES;
+        }
+
         /// <summary>
         /// Construye la estructura jerárquica del sidebar: Categoría → Grupo → Items
         /// </summary>
@@ -161,30 +175,30 @@ namespace bufinscustomers.Services
         {
             var categorias = new List<SidebarCategoriaViewModel>();
 
-            // Agrupar por Categoria, mantener orden
+            // Agrupar por Categoria (ES), mantener orden
             var grupos = opciones
-                .GroupBy(o => new { o.Categoria, o.IconoCategoria, o.OrdenCategoria })
+                .GroupBy(o => new { o.Categoria, o.NombreCategoriaEN, o.IconoCategoria, o.OrdenCategoria })
                 .OrderBy(g => g.Key.OrdenCategoria);
 
             foreach (var catGroup in grupos)
             {
                 var categoria = new SidebarCategoriaViewModel
                 {
-                    Nombre = catGroup.Key.Categoria,
+                    Nombre = ResolverNombre(catGroup.Key.Categoria, catGroup.Key.NombreCategoriaEN),
                     Icono = catGroup.Key.IconoCategoria ?? "fas fa-folder",
                     OrdenCategoria = catGroup.Key.OrdenCategoria
                 };
 
-                // Agrupar por NombreGrupo dentro de la categoría
+                // Agrupar por NombreGrupo (ES) dentro de la categoría
                 var gruposPorNombre = catGroup
-                    .GroupBy(o => new { o.NombreGrupo, o.IconoGrupo })
+                    .GroupBy(o => new { o.NombreGrupo, o.NombreGrupoEN, o.IconoGrupo })
                     .OrderBy(g => g.Min(o => o.Orden));
 
                 foreach (var grupoGroup in gruposPorNombre)
                 {
                     var grupo = new SidebarGrupoViewModel
                     {
-                        Nombre = grupoGroup.Key.NombreGrupo ?? "General",
+                        Nombre = ResolverNombre(grupoGroup.Key.NombreGrupo ?? "General", grupoGroup.Key.NombreGrupoEN),
                         Icono = grupoGroup.Key.IconoGrupo ?? "fas fa-circle"
                     };
 
@@ -194,7 +208,7 @@ namespace bufinscustomers.Services
                         {
                             Id = opcion.Id,
                             Codigo = opcion.Codigo,
-                            Nombre = opcion.Nombre,
+                            Nombre = ResolverNombre(opcion.Nombre, opcion.NombreEN),
                             Controller = opcion.Controller,
                             Action = opcion.Action,
                             Icono = opcion.Icono
@@ -220,11 +234,13 @@ namespace bufinscustomers.Services
             using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
                 using (SqlCommand cmd = new SqlCommand(
-                    @"SELECT m.Id, m.Codigo, m.Nombre, m.Descripcion, m.Icono, m.Orden,
+                    @"SELECT m.Id, m.Codigo, m.Nombre, m.NombreEN, m.Descripcion, m.Icono, m.Orden,
                              m.Controller, m.[Action], m.IdGrupo, m.SoloSuperAdmin, m.SoloAdminEmpresa,
                              g.Nombre  AS NombreGrupo,
+                             g.NombreEN AS NombreGrupoEN,
                              g.Icono   AS IconoGrupo,
                              c.Nombre  AS Categoria,
+                             c.NombreEN AS NombreCategoriaEN,
                              c.Icono   AS IconoCategoria,
                              c.Orden   AS OrdenCategoria
                       FROM   MenuOpciones m
@@ -256,12 +272,13 @@ namespace bufinscustomers.Services
             {
                 using (SqlCommand cmd = new SqlCommand(
                     @"INSERT INTO MenuOpciones
-                        (Codigo, Nombre, Descripcion, Icono, Orden, Controller, [Action], Activo, IdGrupo, SoloSuperAdmin, SoloAdminEmpresa)
+                        (Codigo, Nombre, NombreEN, Descripcion, Icono, Orden, Controller, [Action], Activo, IdGrupo, SoloSuperAdmin, SoloAdminEmpresa)
                       VALUES
-                        (@Codigo, @Nombre, @Descripcion, @Icono, @Orden, @Controller, @Action, 1, @IdGrupo, @SoloSuperAdmin, @SoloAdminEmpresa)", cn))
+                        (@Codigo, @Nombre, @NombreEN, @Descripcion, @Icono, @Orden, @Controller, @Action, 1, @IdGrupo, @SoloSuperAdmin, @SoloAdminEmpresa)", cn))
                 {
                     cmd.Parameters.AddWithValue("@Codigo",         opcion.Codigo ?? "");
                     cmd.Parameters.AddWithValue("@Nombre",         opcion.Nombre ?? "");
+                    cmd.Parameters.AddWithValue("@NombreEN",       (object)opcion.NombreEN ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@Descripcion",    (object)opcion.Descripcion ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@Icono",          (object)opcion.Icono ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@Orden",          opcion.Orden);
@@ -286,7 +303,7 @@ namespace bufinscustomers.Services
             {
                 using (SqlCommand cmd = new SqlCommand(
                     @"UPDATE MenuOpciones SET
-                        Codigo = @Codigo, Nombre = @Nombre, Descripcion = @Descripcion,
+                        Codigo = @Codigo, Nombre = @Nombre, NombreEN = @NombreEN, Descripcion = @Descripcion,
                         Icono = @Icono, Orden = @Orden,
                         Controller = @Controller, [Action] = @Action,
                         IdGrupo = @IdGrupo,
@@ -296,6 +313,7 @@ namespace bufinscustomers.Services
                     cmd.Parameters.AddWithValue("@Id",             opcion.Id);
                     cmd.Parameters.AddWithValue("@Codigo",         opcion.Codigo ?? "");
                     cmd.Parameters.AddWithValue("@Nombre",         opcion.Nombre ?? "");
+                    cmd.Parameters.AddWithValue("@NombreEN",       (object)opcion.NombreEN ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@Descripcion",    (object)opcion.Descripcion ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@Icono",          (object)opcion.Icono ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@Orden",          opcion.Orden);

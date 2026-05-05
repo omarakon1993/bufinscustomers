@@ -17,7 +17,7 @@
     var successMsg = TempData["SuccessMessage"] as string;
     var errorMsg   = TempData["ErrorMessage"]   as string;
     var jss        = new JavaScriptSerializer();
-    var jsonData   = jss.Serialize(Model.Select(c => new { c.Id, c.Nombre, c.Icono, c.Orden }));
+    var jsonData   = jss.Serialize(Model.Select(c => new { c.Id, c.Nombre, c.NombreEN, c.Icono, c.Orden }));
 }
 
 @if (!string.IsNullOrEmpty(successMsg))
@@ -44,6 +44,7 @@
                     <tr>
                         <th style="width:50px">#</th>
                         <th>@Resources.Strings.Rep_LabelNombre</th>
+                        <th>@Resources.Strings.Menu_ThNombreEN</th>
                         <th style="width:80px;text-align:center">@Resources.Strings.Menu_LabelIcono</th>
                         <th style="width:70px;text-align:center">@Resources.Strings.Menu_ThOrden</th>
                         <th style="width:110px;text-align:center">@Resources.Strings.Common_ThAcciones</th>
@@ -52,13 +53,14 @@
                 <tbody>
                     @if (!Model.Any())
                     {
-                        <tr><td colspan="5" class="text-center text-muted py-3">@Resources.Strings.Cat_NoCategs</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted py-3">@Resources.Strings.Cat_NoCategs</td></tr>
                     }
                     @foreach (var c in Model)
                     {
                         <tr>
                             <td>@c.Id</td>
                             <td><strong>@c.Nombre</strong></td>
+                            <td><span class="text-muted">@c.NombreEN</span></td>
                             <td style="text-align:center">
                                 @if (!string.IsNullOrEmpty(c.Icono))
                                 {
@@ -71,7 +73,7 @@
                                 <div class="btn-group" role="group">
                                     <button type="button" class="btn btn-primary" title="@Resources.Strings.Rep_BtnEditar"
                                             data-toggle="modal" data-target="#editModal"
-                                            onclick="setEditar(@c.Id, '@Html.Raw(c.Nombre?.Replace("'","\\'")??"")', '@Html.Raw(c.Icono?.Replace("'","\\'")??"")', @c.Orden)">
+                                            onclick="setEditar(@c.Id, '@Html.Raw(c.Nombre?.Replace("'","\\'")??"")', '@Html.Raw(c.NombreEN?.Replace("'","\\'")??"")', '@Html.Raw(c.Icono?.Replace("'","\\'")??"")', @c.Orden)">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <button type="button" class="btn btn-outline-danger" title="@Resources.Strings.Common_BtnEliminar"
@@ -95,7 +97,7 @@
 
 <!-- Modal Crear -->
 <div class="modal fade" id="crearModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="fas fa-plus-circle"></i> @Resources.Strings.Cat_ModalCreateTitle</h5>
@@ -103,17 +105,27 @@
             </div>
             <form method="post" action="/GestorCategorias/Crear">
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-sm" name="Nombre" required maxlength="100" placeholder="Ej: ADMINISTRACION" />
+                    <!-- Fila 1: Nombre ES / Nombre EN -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" name="Nombre" required maxlength="100" placeholder="Ej: Administración" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label><i class="fas fa-globe mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelNombreEN</label>
+                            <input type="text" class="form-control form-control-sm" name="NombreEN" maxlength="100" placeholder="Ej: Administration" />
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono <small class="text-muted">(FontAwesome)</small></label>
-                        <input type="text" class="form-control form-control-sm" name="Icono" placeholder="fas fa-folder" maxlength="100" />
-                    </div>
-                    <div class="mb-3">
-                        <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_ThOrden</label>
-                        <input type="number" class="form-control form-control-sm" name="Orden" value="0" min="0" />
+                    <!-- Fila 2: Icono / Orden -->
+                    <div class="row">
+                        <div class="col-md-9 mb-3">
+                            <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono <small class="text-muted">(FontAwesome)</small></label>
+                            <input type="text" class="form-control form-control-sm" name="Icono" placeholder="fas fa-folder" maxlength="100" />
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_ThOrden</label>
+                            <input type="number" class="form-control form-control-sm" name="Orden" value="0" min="0" />
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -131,7 +143,7 @@
 
 <!-- Modal Editar -->
 <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="fas fa-edit"></i> @Resources.Strings.Cat_ModalEditTitle</h5>
@@ -140,17 +152,27 @@
             <form method="post" action="/GestorCategorias/Editar">
                 <input type="hidden" name="Id" id="editId" />
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-sm" name="Nombre" id="editNombre" required maxlength="100" />
+                    <!-- Fila 1: Nombre ES / Nombre EN -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" name="Nombre" id="editNombre" required maxlength="100" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label><i class="fas fa-globe mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelNombreEN</label>
+                            <input type="text" class="form-control form-control-sm" name="NombreEN" id="editNombreEN" maxlength="100" />
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono <small class="text-muted">(FontAwesome)</small></label>
-                        <input type="text" class="form-control form-control-sm" name="Icono" id="editIcono" maxlength="100" />
-                    </div>
-                    <div class="mb-3">
-                        <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_ThOrden</label>
-                        <input type="number" class="form-control form-control-sm" name="Orden" id="editOrden" min="0" />
+                    <!-- Fila 2: Icono / Orden -->
+                    <div class="row">
+                        <div class="col-md-9 mb-3">
+                            <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono <small class="text-muted">(FontAwesome)</small></label>
+                            <input type="text" class="form-control form-control-sm" name="Icono" id="editIcono" maxlength="100" />
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_ThOrden</label>
+                            <input type="number" class="form-control form-control-sm" name="Orden" id="editOrden" min="0" />
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -172,11 +194,12 @@
 </form>
 
 <script>
-    function setEditar(id, nombre, icono, orden) {
-        document.getElementById('editId').value     = id;
-        document.getElementById('editNombre').value = nombre;
-        document.getElementById('editIcono').value  = icono;
-        document.getElementById('editOrden').value  = orden;
+    function setEditar(id, nombre, nombreEN, icono, orden) {
+        document.getElementById('editId').value       = id;
+        document.getElementById('editNombre').value   = nombre;
+        document.getElementById('editNombreEN').value = nombreEN;
+        document.getElementById('editIcono').value    = icono;
+        document.getElementById('editOrden').value    = orden;
     }
 
     function confirmarEliminar(id, nombre) {

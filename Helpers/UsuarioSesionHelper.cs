@@ -15,7 +15,9 @@ namespace bufinscustomers.Helpers
         private const string LAST_ACTIVITY_KEY = "LastActivity";
         private const string LOGIN_TIME_KEY = "LoginTime";
         private const string PERMISOS_CACHE_KEY = "UsuarioPermisosCodigos";
-        private const string MENU_SIDEBAR_KEY = "UsuarioMenuSidebar";
+        // Clave de sesión por idioma: "UsuarioMenuSidebar_es-CO" o "UsuarioMenuSidebar_en-US"
+        private static string MENU_SIDEBAR_KEY =>
+            "UsuarioMenuSidebar_" + System.Threading.Thread.CurrentThread.CurrentUICulture.Name;
 
         // Obtener cadena de conexi�n desde Web.config (m�s seguro)
         private static readonly string cadena = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
@@ -85,7 +87,8 @@ namespace bufinscustomers.Helpers
 
             // Limpiar caché de permisos para que se recargue con el nuevo usuario
             context.Session.Remove(PERMISOS_CACHE_KEY);
-            context.Session.Remove(MENU_SIDEBAR_KEY);
+            context.Session.Remove("UsuarioMenuSidebar_es-CO");
+            context.Session.Remove("UsuarioMenuSidebar_en-US");
         }
 
         /// <summary>
@@ -347,7 +350,8 @@ namespace bufinscustomers.Helpers
             if (context?.Session == null) return;
 
             context.Session.Remove(PERMISOS_CACHE_KEY);
-            context.Session.Remove(MENU_SIDEBAR_KEY);
+            context.Session.Remove("UsuarioMenuSidebar_es-CO");
+            context.Session.Remove("UsuarioMenuSidebar_en-US");
         }
 
         /// <summary>

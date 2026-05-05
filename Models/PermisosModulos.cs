@@ -24,5 +24,10 @@ namespace bufinscustomers.Models
         public string IconoGrupo { get; set; }
         public string IconoCategoria { get; set; }
         public int OrdenCategoria { get; set; }
+
+        // Traducciones en inglés (pobladas via JOIN desde columnas NombreEN)
+        public string NombreEN { get; set; }
+        public string NombreCategoriaEN { get; set; }
+        public string NombreGrupoEN { get; set; }
     }
 }

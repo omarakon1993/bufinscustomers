@@ -18,7 +18,7 @@
     var errorMsg   = TempData["ErrorMessage"]   as string;
     var categorias = ViewBag.Categorias as List<bufinscustomers.Models.CategoriaMenu> ?? new List<bufinscustomers.Models.CategoriaMenu>();
     var jss        = new JavaScriptSerializer();
-    var jsonData   = jss.Serialize(Model.Select(g => new { g.Id, g.Nombre, g.Icono, g.IdCategoria, g.NombreCategoria, g.Orden }));
+    var jsonData   = jss.Serialize(Model.Select(g => new { g.Id, g.Nombre, g.NombreEN, g.Icono, g.IdCategoria, g.NombreCategoria, g.Orden }));
 }
 
 @if (!string.IsNullOrEmpty(successMsg))
@@ -45,6 +45,7 @@
                     <tr>
                         <th style="width:50px">#</th>
                         <th>@Resources.Strings.Rep_LabelNombre</th>
+                        <th>@Resources.Strings.Menu_ThNombreEN</th>
                         <th style="width:80px;text-align:center">@Resources.Strings.Menu_LabelIcono</th>
                         <th style="width:150px">@Resources.Strings.Grp_ThCategoria</th>
                         <th style="width:70px;text-align:center">@Resources.Strings.Menu_ThOrden</th>
@@ -54,13 +55,14 @@
                 <tbody>
                     @if (!Model.Any())
                     {
-                        <tr><td colspan="6" class="text-center text-muted py-3">@Resources.Strings.Grp_NoGrupos</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-3">@Resources.Strings.Grp_NoGrupos</td></tr>
                     }
                     @foreach (var g in Model)
                     {
                         <tr>
                             <td>@g.Id</td>
                             <td><strong>@g.Nombre</strong></td>
+                            <td><span class="text-muted">@g.NombreEN</span></td>
                             <td style="text-align:center">
                                 @if (!string.IsNullOrEmpty(g.Icono))
                                 {
@@ -76,7 +78,7 @@
                                 <div class="btn-group" role="group">
                                     <button type="button" class="btn btn-primary" title="@Resources.Strings.Rep_BtnEditar"
                                             data-toggle="modal" data-target="#editModal"
-                                            onclick="setEditar(@g.Id, '@Html.Raw(g.Nombre?.Replace("'","\\'")??"")', '@Html.Raw(g.Icono?.Replace("'","\\'")??"")', @g.IdCategoria, @g.Orden)">
+                                            onclick="setEditar(@g.Id, '@Html.Raw(g.Nombre?.Replace("'","\\'")??"")', '@Html.Raw(g.NombreEN?.Replace("'","\\'")??"")', '@Html.Raw(g.Icono?.Replace("'","\\'")??"")', @g.IdCategoria, @g.Orden)">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <button type="button" class="btn btn-outline-danger" title="@Resources.Strings.Common_BtnEliminar"
@@ -100,7 +102,7 @@
 
 <!-- Modal Crear -->
 <div class="modal fade" id="crearModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="fas fa-plus-circle"></i> @Resources.Strings.Grp_ModalCreateTitle</h5>
@@ -108,14 +110,29 @@
             </div>
             <form method="post" action="/GestorGrupos/Crear">
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-sm" name="Nombre" required maxlength="100" placeholder="Ej: Plantillas de cargue" />
+                    <!-- Fila 1: Nombre ES / Nombre EN -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" name="Nombre" required maxlength="100" placeholder="Ej: Plantillas de cargue" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label><i class="fas fa-globe mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelNombreEN</label>
+                            <input type="text" class="form-control form-control-sm" name="NombreEN" maxlength="100" placeholder="Ej: Upload Templates" />
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono <small class="text-muted">(FontAwesome)</small></label>
-                        <input type="text" class="form-control form-control-sm" name="Icono" placeholder="fas fa-layer-group" maxlength="100" />
+                    <!-- Fila 2: Icono / Orden -->
+                    <div class="row">
+                        <div class="col-md-9 mb-3">
+                            <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono <small class="text-muted">(FontAwesome)</small></label>
+                            <input type="text" class="form-control form-control-sm" name="Icono" placeholder="fas fa-layer-group" maxlength="100" />
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_ThOrden</label>
+                            <input type="number" class="form-control form-control-sm" name="Orden" value="0" min="0" />
+                        </div>
                     </div>
+                    <!-- Fila 3: Categoría -->
                     <div class="mb-3">
                         <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>@Resources.Strings.Grp_LabelCategoria <span class="text-danger">*</span></label>
                         <select class="form-control form-control-sm" name="IdCategoria" required>
@@ -125,10 +142,6 @@
                                 <option value="@cat.Id">@cat.Nombre</option>
                             }
                         </select>
-                    </div>
-                    <div class="mb-3">
-                        <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_ThOrden</label>
-                        <input type="number" class="form-control form-control-sm" name="Orden" value="0" min="0" />
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -146,7 +159,7 @@
 
 <!-- Modal Editar -->
 <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="fas fa-edit"></i> @Resources.Strings.Grp_ModalEditTitle</h5>
@@ -155,14 +168,29 @@
             <form method="post" action="/GestorGrupos/Editar">
                 <input type="hidden" name="Id" id="editId" />
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-sm" name="Nombre" id="editNombre" required maxlength="100" />
+                    <!-- Fila 1: Nombre ES / Nombre EN -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" name="Nombre" id="editNombre" required maxlength="100" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label><i class="fas fa-globe mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelNombreEN</label>
+                            <input type="text" class="form-control form-control-sm" name="NombreEN" id="editNombreEN" maxlength="100" />
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono <small class="text-muted">(FontAwesome)</small></label>
-                        <input type="text" class="form-control form-control-sm" name="Icono" id="editIcono" maxlength="100" />
+                    <!-- Fila 2: Icono / Orden -->
+                    <div class="row">
+                        <div class="col-md-9 mb-3">
+                            <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono <small class="text-muted">(FontAwesome)</small></label>
+                            <input type="text" class="form-control form-control-sm" name="Icono" id="editIcono" maxlength="100" />
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_ThOrden</label>
+                            <input type="number" class="form-control form-control-sm" name="Orden" id="editOrden" min="0" />
+                        </div>
                     </div>
+                    <!-- Fila 3: Categoría -->
                     <div class="mb-3">
                         <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>@Resources.Strings.Grp_LabelCategoria <span class="text-danger">*</span></label>
                         <select class="form-control form-control-sm" name="IdCategoria" id="editIdCategoria" required>
@@ -172,10 +200,6 @@
                                 <option value="@cat.Id">@cat.Nombre</option>
                             }
                         </select>
-                    </div>
-                    <div class="mb-3">
-                        <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_ThOrden</label>
-                        <input type="number" class="form-control form-control-sm" name="Orden" id="editOrden" min="0" />
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -197,11 +221,12 @@
 </form>
 
 <script>
-    function setEditar(id, nombre, icono, idCategoria, orden) {
-        document.getElementById('editId').value     = id;
-        document.getElementById('editNombre').value = nombre;
-        document.getElementById('editIcono').value  = icono;
-        document.getElementById('editOrden').value  = orden;
+    function setEditar(id, nombre, nombreEN, icono, idCategoria, orden) {
+        document.getElementById('editId').value       = id;
+        document.getElementById('editNombre').value   = nombre;
+        document.getElementById('editNombreEN').value = nombreEN;
+        document.getElementById('editIcono').value    = icono;
+        document.getElementById('editOrden').value    = orden;
         var sel = document.getElementById('editIdCategoria');
         for (var i = 0; i < sel.options.length; i++) {
             if (parseInt(sel.options[i].value) === idCategoria) { sel.selectedIndex = i; break; }
