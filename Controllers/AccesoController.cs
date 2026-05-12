@@ -42,7 +42,7 @@ namespace bufinscustomers.Controllers
 
             if (oUsuario.Clave == oUsuario.ConfirmarClave)
             {
-                oUsuario.Clave = ConvertirSha256(oUsuario.Clave);
+                oUsuario.Clave = HashearContrasena(oUsuario.Clave);
             }
             else
             {
@@ -78,51 +78,110 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         public ActionResult Login(Usuarios oUsuario)
         {
-            // ⚡ Elimina espacios
             oUsuario.Clave = oUsuario.Clave.Trim();
 
-            var Usuario = "";   
-            var Correo = "";   
+            string inputUsuario = "";
+            string inputCorreo = "";
 
             if (!EsCorreoValido(oUsuario.Correo))
-            {
-                Usuario = oUsuario.Correo.Trim();
-            }
+                inputUsuario = oUsuario.Correo.Trim();
             else
-            {
-                Correo = oUsuario.Correo.Trim();
-            }
+                inputCorreo = oUsuario.Correo.Trim();
 
-            // Luego convierte
-            oUsuario.Clave = ConvertirSha256(oUsuario.Clave);
+            int usuarioId = 0;
+            string hashAlmacenado = null;
+            int intentosFallidos = 0;
+            DateTime? bloqueadoHasta = null;
 
             using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
-                SqlCommand cmd = new SqlCommand("sp_ValidarUsuario", cn);
-                cmd.Parameters.AddWithValue("Usuario", Usuario);
-                cmd.Parameters.AddWithValue("Correo", Correo);
-                cmd.Parameters.AddWithValue("Clave", oUsuario.Clave);
-                cmd.CommandType = CommandType.StoredProcedure;
+                string sql = @"
+                    SELECT TOP 1 Id, Clave, IntentosFallidos, BloqueadoHasta FROM Usuarios
+                    WHERE (@Usuario <> '' AND Usuario = @Usuario)
+                       OR (@Correo  <> '' AND Correo  = @Correo)";
+                SqlCommand cmd = new SqlCommand(sql, cn);
+                cmd.Parameters.AddWithValue("@Usuario", inputUsuario);
+                cmd.Parameters.AddWithValue("@Correo", inputCorreo);
                 cn.Open();
-                oUsuario.Id = Convert.ToInt32(cmd.ExecuteScalar().ToString());
+                using (var reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        usuarioId = Convert.ToInt32(reader["Id"]);
+                        hashAlmacenado = reader["Clave"].ToString();
+                        try
+                        {
+                            intentosFallidos = reader["IntentosFallidos"] != DBNull.Value
+                                ? Convert.ToInt32(reader["IntentosFallidos"]) : 0;
+                            bloqueadoHasta = reader["BloqueadoHasta"] != DBNull.Value
+                                ? (DateTime?)Convert.ToDateTime(reader["BloqueadoHasta"]) : null;
+                        }
+                        catch (IndexOutOfRangeException) { }
+                    }
+                }
+            }
+
+            // Cuenta bloqueada — verificar antes de cualquier intento
+            if (usuarioId > 0 && bloqueadoHasta.HasValue && bloqueadoHasta.Value > DateTime.Now)
+            {
+                int minutosRestantes = (int)Math.Ceiling((bloqueadoHasta.Value - DateTime.Now).TotalMinutes);
+                ViewData["Mensaje"] = $"Cuenta bloqueada temporalmente. Intenta de nuevo en {minutosRestantes} minuto(s).";
+                return View();
+            }
+
+            bool credencialesValidas = usuarioId > 0
+                && hashAlmacenado != null
+                && VerificarContrasena(oUsuario.Clave, hashAlmacenado);
+
+            if (credencialesValidas)
+            {
+                ResetearIntentosFallidos(usuarioId);
+
+                // Migrate SHA256 → BCrypt on first successful login
+                if (!EsHashBCrypt(hashAlmacenado))
+                {
+                    string nuevoHash = HashearContrasena(oUsuario.Clave);
+                    using (SqlConnection cn = new SqlConnection(CadenaConexion))
+                    {
+                        SqlCommand cmd = new SqlCommand(
+                            "UPDATE Usuarios SET Clave = @Clave WHERE Id = @Id", cn);
+                        cmd.Parameters.AddWithValue("@Clave", nuevoHash);
+                        cmd.Parameters.AddWithValue("@Id", usuarioId);
+                        cn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                oUsuario.Id = usuarioId;
+            }
+            else if (usuarioId > 0)
+            {
+                RegistrarIntentoFallido(usuarioId, intentosFallidos,
+                    out int nuevosIntentos, out DateTime? nuevoBloqueadoHasta);
+
+                if (nuevoBloqueadoHasta.HasValue)
+                {
+                    int minutosBloqueo = nuevosIntentos >= 15 ? 1440 : nuevosIntentos >= 10 ? 60 : 15;
+                    ViewData["Mensaje"] = $"Cuenta bloqueada temporalmente. Intenta de nuevo en {minutosBloqueo} minuto(s).";
+                }
+                else
+                {
+                    ViewData["Mensaje"] = "Usuario o clave incorrecta.";
+                }
+                return View();
             }
 
             if (oUsuario.Id != 0)
             {
-                // ========== CARGAR DATOS COMPLETOS DEL USUARIO ==========
                 Usuarios usuarioCompleto = ObtenerUsuarioCompletoPorId(oUsuario.Id);
-                
+
                 if (usuarioCompleto != null)
                 {
-                    // ========== USAR NUEVO HELPER DE SESIÓN CON DATOS COMPLETOS ==========
                     UsuarioSesionHelper.EstablecerUsuarioEnSesion(usuarioCompleto);
-                    
-                    // Verificar si la sesión expiró por parámetro
+
                     if (Request.QueryString["expired"] == "true")
-                    {
                         ViewData["Mensaje"] = "Su sesión anterior expiró. Ha iniciado sesión correctamente.";
-                    }
-                    
+
                     return RedirectToAction("index", "Home");
                 }
                 else
@@ -133,8 +192,46 @@ namespace bufinscustomers.Controllers
             }
             else
             {
-                ViewData["Mensaje"] = "usuario o clave incorrecta";
+                ViewData["Mensaje"] = "Usuario o clave incorrecta.";
                 return View();
+            }
+        }
+
+
+        private void RegistrarIntentoFallido(int usuarioId, int intentosActuales,
+            out int nuevosIntentos, out DateTime? nuevoBloqueadoHasta)
+        {
+            nuevosIntentos = intentosActuales + 1;
+            nuevoBloqueadoHasta = null;
+
+            if (nuevosIntentos >= 15)
+                nuevoBloqueadoHasta = DateTime.Now.AddHours(24);
+            else if (nuevosIntentos >= 10)
+                nuevoBloqueadoHasta = DateTime.Now.AddHours(1);
+            else if (nuevosIntentos >= 5)
+                nuevoBloqueadoHasta = DateTime.Now.AddMinutes(15);
+
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
+            {
+                SqlCommand cmd = new SqlCommand(
+                    "UPDATE Usuarios SET IntentosFallidos = @Intentos, BloqueadoHasta = @BloqueadoHasta WHERE Id = @Id", cn);
+                cmd.Parameters.AddWithValue("@Intentos", nuevosIntentos);
+                cmd.Parameters.AddWithValue("@BloqueadoHasta", (object)nuevoBloqueadoHasta ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Id", usuarioId);
+                cn.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        private void ResetearIntentosFallidos(int usuarioId)
+        {
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
+            {
+                SqlCommand cmd = new SqlCommand(
+                    "UPDATE Usuarios SET IntentosFallidos = 0, BloqueadoHasta = NULL WHERE Id = @Id", cn);
+                cmd.Parameters.AddWithValue("@Id", usuarioId);
+                cn.Open();
+                cmd.ExecuteNonQuery();
             }
         }
 

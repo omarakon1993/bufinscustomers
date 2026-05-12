@@ -305,7 +305,7 @@ namespace bufinscustomers.Controllers
 
             if (oUsuario.Clave == oUsuario.ConfirmarClave)
             {
-                oUsuario.Clave = ConvertirSha256(oUsuario.Clave);
+                oUsuario.Clave = HashearContrasena(oUsuario.Clave);
             }
             else
             {
@@ -410,8 +410,7 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                // Encriptar la nueva clave
-                string claveEncriptada = ConvertirSha256(nuevaClave.Trim());
+                string claveEncriptada = HashearContrasena(nuevaClave.Trim());
 
                 using (SqlConnection connection = new SqlConnection(CadenaConexion))
                 {

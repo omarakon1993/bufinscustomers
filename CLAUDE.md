@@ -247,7 +247,7 @@ Currently integrated in `InformeTablasDatosController.ConsultarConIA()` — re-q
 
 ## Important Conventions
 
-- Passwords: Always `.Trim()` before hashing with `ConvertirSha256()`
+- Passwords: Always `.Trim()` before hashing. Use `HashearContrasena()` (BCrypt, work factor 12) for new passwords. `ConvertirSha256()` is kept only for the SHA256→BCrypt migration path in login — do NOT use it for new code. `VerificarContrasena()` handles both formats transparently.
 - Messages between redirects: Use `SetErrorMessage/SetSuccessMessage/SetInfoMessage` (TempData keys: `"ErrorMessage"`, `"SuccessMessage"`, `"InfoMessage"`)
 - New controllers must inherit from `BaseController`; new services from `BaseService`
 - Use `[ValidarSesion]` at class level on all new authenticated controllers (note: some existing controllers like EmpresaController, UsuarioController, ReportesController, AuditoriaCarguesController lack it and use manual session checks instead)

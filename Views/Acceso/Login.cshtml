@@ -223,10 +223,10 @@
                         Swal.fire({
                             toast: true,
                             position: isMobile ? 'top' : 'top-end',
-                            icon: 'info',
+                            icon: 'warning',
                             title: '@ViewData["Mensaje"]',
                             showConfirmButton: false,
-                            timer: 3000,
+                            timer: 7000,
                             timerProgressBar: true,
                             didOpen: (toast) => {
                                 toast.addEventListener('mouseenter', Swal.stopTimer);
