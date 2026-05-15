@@ -35,6 +35,7 @@ namespace bufinscustomers.Models
         public List<ConfigLineaNegocio> LineasNegocio { get; set; }
         public List<ConfigAjuste1> Ajuste1 { get; set; }
         public List<ConfigAjuste2> Ajuste2 { get; set; }
+        public List<ConfigAnoHistorico> AnosHistoricos { get; set; }
 
         public ConfiguracionEmpresa()
         {
@@ -46,6 +47,7 @@ namespace bufinscustomers.Models
             LineasNegocio = new List<ConfigLineaNegocio>();
             Ajuste1 = new List<ConfigAjuste1>();
             Ajuste2 = new List<ConfigAjuste2>();
+            AnosHistoricos = new List<ConfigAnoHistorico>();
 
             // Valores por defecto
             AnioEjecucion = DateTime.Now.Year;

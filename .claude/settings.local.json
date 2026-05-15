@@ -100,7 +100,11 @@
       "Bash(nuget install *)",
       "PowerShell(Get-Command *)",
       "PowerShell(Test-Path *)",
-      "PowerShell(Get-ChildItem *)"
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Select-String -Path \"C:\\\\Users\\\\omara\\\\Downloads\\\\SPSBufins.sql\" -Pattern \"CREATE\\\\s+\\(OR\\\\s+ALTER\\\\s+\\)?PROC\\(EDURE\\)?\\\\s+\\\\[?dbo\\\\]?\\\\.\\\\[?\\(\\\\w+\\)\\\\]?\" | ForEach-Object { if \\($_.Line -match \"CREATE\\\\s+\\(?:OR\\\\s+ALTER\\\\s+\\)?PROC\\(?:EDURE\\)?\\\\s+\\(?:\\\\[?dbo\\\\]?\\\\.\\)?\\\\[?\\(\\\\w+\\)\\\\]?\"\\) { $Matches[1] } })",
+      "Bash(Get-ChildItem -Recurse -Filter \"*ConfiguracionEmpresa*\")",
+      "Bash(Select-Object FullName)",
+      "PowerShell(Head *)"
     ],
     "deny": [],
     "ask": []

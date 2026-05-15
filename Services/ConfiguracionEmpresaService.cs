@@ -168,6 +168,22 @@ namespace bufinscustomers.Services
                                 });
                             }
                         }
+
+                        // Resultado 9: Años históricos
+                        if (reader.NextResult())
+                        {
+                            configuracion.AnosHistoricos = new List<ConfigAnoHistorico>();
+                            while (reader.Read())
+                            {
+                                configuracion.AnosHistoricos.Add(new ConfigAnoHistorico
+                                {
+                                    Id = Convert.ToInt32(reader["Id"]),
+                                    IdConfiguracion = Convert.ToInt32(reader["IdConfiguracion"]),
+                                    NombreAno = reader["NombreAno"]?.ToString(),
+                                    Orden = Convert.ToInt32(reader["Orden"])
+                                });
+                            }
+                        }
                     }
                 }
             }
@@ -306,6 +322,19 @@ namespace bufinscustomers.Services
         }
 
         #endregion
+
+        public int? ObtenerAnioEjecucion(int idConfiguracion)
+        {
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
+            using (SqlCommand cmd = new SqlCommand(
+                "SELECT AnioEjecucion FROM ConfiguracionesEmpresas WHERE Id = @Id", cn))
+            {
+                cmd.Parameters.AddWithValue("@Id", idConfiguracion);
+                cn.Open();
+                var result = cmd.ExecuteScalar();
+                return result != null && result != DBNull.Value ? (int?)Convert.ToInt32(result) : null;
+            }
+        }
 
         #region M�todos de Utilidad
 

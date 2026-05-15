@@ -104,7 +104,8 @@ namespace bufinscustomers.Controllers
                         Tipos = configuracion.Tipos.Select(t => new { t.Id, t.NombreTipo, t.Orden }),
                         LineasNegocio = configuracion.LineasNegocio.Select(l => new { l.Id, l.NombreLinea, l.Orden }),
                         Ajuste1 = configuracion.Ajuste1.Select(a => new { a.Id, a.NombreAjuste, a.Orden }),
-                        Ajuste2 = configuracion.Ajuste2.Select(a => new { a.Id, a.NombreAjuste, a.Orden })
+                        Ajuste2 = configuracion.Ajuste2.Select(a => new { a.Id, a.NombreAjuste, a.Orden }),
+                        AnosHistoricos = configuracion.AnosHistoricos.Select(a => new { a.Id, a.NombreAno, a.Orden })
                     }
                 }, JsonRequestBehavior.AllowGet);
             }
@@ -193,10 +194,19 @@ namespace bufinscustomers.Controllers
                     return Json(new { success = false, message = "El valor no puede estar vac�o" });
                 }
 
-                var tiposValidos = new[] { "Empresa", "Pais", "Categoria", "Tipo", "LineaNegocio", "Ajuste1", "Ajuste2" };
+                var tiposValidos = new[] { "Empresa", "Pais", "Categoria", "Tipo", "LineaNegocio", "Ajuste1", "Ajuste2", "AnoHistorico" };
                 if (!tiposValidos.Contains(tipo))
                 {
                     return Json(new { success = false, message = "Tipo de configuraci�n no v�lido" });
+                }
+
+                if (tipo == "AnoHistorico")
+                {
+                    var anioEjecucion = _configuracionService.ObtenerAnioEjecucion(idConfiguracion);
+                    if (anioEjecucion.HasValue && valor.Trim() == anioEjecucion.Value.ToString())
+                    {
+                        return Json(new { success = false, message = $"El año histórico no puede ser igual al año de ejecución ({anioEjecucion.Value})" });
+                    }
                 }
 
                 string mensaje;

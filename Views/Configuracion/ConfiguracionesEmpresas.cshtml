@@ -304,6 +304,15 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-md col-sm-6 mb-2">
+                        <div class="card card-tab" data-section="anoshistoricos">
+                            <div class="card-body text-center">
+                                <i class="fas fa-calendar-alt fa-2x mb-2 text-primary"></i>
+                                <h6>@Resources.Strings.CfgEmp_TabAnosHistoricos</h6>
+                                <span class="badge badge-primary badge-custom" id="countAnosHistoricos">0</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Sección de Empresas -->
@@ -417,6 +426,22 @@
                     </div>
                     <div id="listaAjuste2" class="sortable-list"></div>
                 </div>
+
+                <!-- Sección de Años Históricos -->
+                <div id="section-anoshistoricos" class="config-section">
+                    <h5><i class="fas fa-calendar-alt"></i> @Resources.Strings.CfgEmp_SecAnosHistoricos</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" id="inputAnoHistorico" placeholder="@Resources.Strings.CfgEmp_PlaceholderAnoHistorico" />
+                        </div>
+                        <div class="col-md-4">
+                            <button type="button" class="btn btn-primary btn-block" onclick="agregarItem('AnoHistorico')">
+                                <i class="fas fa-plus"></i> @Resources.Strings.CfgEmp_BtnAgregarAnoHistorico
+                            </button>
+                        </div>
+                    </div>
+                    <div id="listaAnosHistoricos" class="sortable-list"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -506,7 +531,8 @@
                 'Tipos': 'Tipo',
                 'Lineas': 'LineaNegocio',
                 'Ajuste1': 'Ajuste1',
-                'Ajuste2': 'Ajuste2'
+                'Ajuste2': 'Ajuste2',
+                'AnosHistoricos': 'AnoHistorico'
             };
             return mapeo[tipoLista] || tipoLista;
         }
@@ -560,6 +586,9 @@
             $('#inputAjuste2').keypress(function (e) {
                 if (e.which == 13) { e.preventDefault(); agregarItem('Ajuste2'); return false; }
             });
+            $('#inputAnoHistorico').keypress(function (e) {
+                if (e.which == 13) { e.preventDefault(); agregarItem('AnoHistorico'); return false; }
+            });
         });
 
         function cargarConfiguracion() {
@@ -607,6 +636,7 @@
             cargarLista('Lineas', config.LineasNegocio || [], 'NombreLinea');
             cargarLista('Ajuste1', config.Ajuste1 || [], 'NombreAjuste');
             cargarLista('Ajuste2', config.Ajuste2 || [], 'NombreAjuste');
+            cargarLista('AnosHistoricos', config.AnosHistoricos || [], 'NombreAno');
 
             actualizarContadores();
         }
@@ -715,7 +745,8 @@
                 'Tipo': '#inputTipo',
                 'LineaNegocio': '#inputLinea',
                 'Ajuste1': '#inputAjuste1',
-                'Ajuste2': '#inputAjuste2'
+                'Ajuste2': '#inputAjuste2',
+                'AnoHistorico': '#inputAnoHistorico'
             };
 
             const input = $(inputMap[tipo]);
@@ -724,6 +755,14 @@
             if (!valor) {
                 mostrarAlerta('warning', '@Html.Raw(Resources.Strings.CfgEmp_JS_IngresarValor.Replace("'", "\\'"))');
                 return;
+            }
+
+            if (tipo === 'AnoHistorico') {
+                const anioEjecucion = $('#anioEjecucion').val();
+                if (valor === anioEjecucion) {
+                    mostrarAlerta('warning', 'El año histórico no puede ser igual al año de ejecución (' + anioEjecucion + ')');
+                    return;
+                }
             }
 
             const idConfig = $('#idConfiguracion').val();
@@ -813,6 +852,7 @@
             $('#countLineas').text((configuracionActual.LineasNegocio || []).length);
             $('#countAjuste1').text((configuracionActual.Ajuste1 || []).length);
             $('#countAjuste2').text((configuracionActual.Ajuste2 || []).length);
+            $('#countAnosHistoricos').text((configuracionActual.AnosHistoricos || []).length);
         }
 
         function mostrarAlerta(tipo, mensaje, timer) {
