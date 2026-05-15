@@ -81,6 +81,21 @@
                     </select>
                 </div>
 
+                <!-- Selector de Año -->
+                <div class="form-group mb-3" id="divSelectAnio" style="display: none;">
+                    <label for="selectAnio" class="form-label" style="font-weight: 600; font-size: 0.9rem;">
+                        <i class="fas fa-calendar-alt mr-1" style="color: #6366F1;"></i>
+                        @Resources.Strings.Datos_AnioLabel
+                    </label>
+                    <select class="form-control form-control-sm" id="selectAnio" name="anioSeleccionado" style="max-width: 400px;">
+                        <option value="">@Resources.Strings.Datos_JS_SelectAnio</option>
+                    </select>
+                    <input type="hidden" name="modoSeleccionado" id="modoSeleccionado" value="" />
+                    <div id="loadingAnios" style="display: none; font-size: 0.82rem; color: #6366F1; margin-top: 0.35rem;">
+                        <i class="fas fa-spinner fa-spin mr-1"></i>@Resources.Strings.Datos_CargandoAnios
+                    </div>
+                </div>
+
                 <!-- Zona de Drop -->
                 <div id="dropZone" style="border: 2px dashed #d1d5db; border-radius: 0.5rem; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s ease; background: white;">
                     <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: #c7d2fe; margin-bottom: 0.75rem;"></i>
@@ -645,7 +660,17 @@
             cancelar: '@Resources.Strings.Layout_Cancel',
             procesando: '@Resources.Strings.Datos_JS_Procesando',
             dropText: '@Html.Raw(Resources.Strings.Datos_DropText)',
-            dropSubtext: '@Resources.Strings.Datos_DropSubtext'
+            dropSubtext: '@Resources.Strings.Datos_DropSubtext',
+            selectAnio: '@Resources.Strings.Datos_JS_SelectAnio',
+            anioEjecucion: '@Resources.Strings.Datos_JS_AnioEjecucion',
+            anosHistoricos: '@Resources.Strings.Datos_JS_AnosHistoricos',
+            historico: '@Resources.Strings.Datos_JS_Historico',
+            anioRequerido: '@Resources.Strings.Datos_JS_AnioRequerido',
+            seleccionarAnio: '@Resources.Strings.Datos_JS_SeleccionarAnio',
+            configIncompleta: '@Resources.Strings.Datos_JS_ConfigIncompleta',
+            errorCargarAnios: '@Resources.Strings.Datos_JS_ErrorCargarAnios',
+            modoEjecucion: '@Resources.Strings.Datos_JS_ModoEjecucion',
+            modoHistorico: '@Resources.Strings.Datos_JS_ModoHistorico'
         };
 
         $(document).ready(function () {
@@ -654,6 +679,55 @@
             var btnCargar = $('#btnCargar');
             var btnLimpiar = $('#btnLimpiar');
 
+            // ── Selector de año ──────────────────────────────────────────────────
+            $('#idEmpresaSeleccionada').on('change', function () {
+                var idEmpresa = $(this).val();
+                var divAnio = $('#divSelectAnio');
+                var selectAnio = $('#selectAnio');
+
+                // Reset
+                selectAnio.html('<option value="">' + _datosMsg.selectAnio + '</option>');
+                $('#modoSeleccionado').val('');
+                divAnio.hide();
+
+                if (!idEmpresa || idEmpresa === '0') return;
+
+                $('#loadingAnios').show();
+                divAnio.show();
+
+                $.get('@Url.Action("ObtenerAnosDisponibles", "Datos")', { idEmpresa: idEmpresa })
+                    .done(function (data) {
+                        $('#loadingAnios').hide();
+                        if (data.success) {
+                            var html = '<option value="">' + _datosMsg.selectAnio + '</option>';
+                            html += '<optgroup label="' + _datosMsg.anioEjecucion + '">';
+                            html += '<option value="' + data.anioEjecucion + '" data-modo="ejecucion">' + data.anioEjecucion + ' &mdash; ' + _datosMsg.anioEjecucion + '</option>';
+                            html += '</optgroup>';
+                            if (data.anosHistoricos && data.anosHistoricos.length > 0) {
+                                html += '<optgroup label="' + _datosMsg.anosHistoricos + '">';
+                                $.each(data.anosHistoricos, function (i, ano) {
+                                    html += '<option value="' + ano + '" data-modo="historico">' + ano + ' &mdash; ' + _datosMsg.historico + '</option>';
+                                });
+                                html += '</optgroup>';
+                            }
+                            selectAnio.html(html);
+                        } else {
+                            divAnio.hide();
+                            Swal.fire({ icon: 'warning', html: '<b>' + _datosMsg.configIncompleta + '</b><br>' + (data.message || _datosMsg.errorCargarAnios) });
+                        }
+                    })
+                    .fail(function () {
+                        $('#loadingAnios').hide();
+                        divAnio.hide();
+                    });
+            });
+
+            $('#selectAnio').on('change', function () {
+                var modo = $(this).find(':selected').data('modo') || '';
+                $('#modoSeleccionado').val(modo);
+            });
+
+            // ── Drop Zone ────────────────────────────────────────────────────────
             // Click en zona de drop abre selector de archivos
             dropZone.on('click', function () {
                 fileInput[0].click();
@@ -743,7 +817,7 @@
                 $('#instructivoModal').modal('show');
             });
 
-            // Confirmación antes de cargar
+            // ── Confirmación antes de cargar ─────────────────────────────────────
             $('#formCarga').on('submit', function (e) {
                 e.preventDefault();
                 var form = this;
@@ -759,10 +833,27 @@
                     return;
                 }
 
+                // Validar año
+                var anio = $('#selectAnio').val();
+                if (!anio) {
+                    Swal.fire({
+                        icon: 'warning',
+                        html: '<b>' + _datosMsg.anioRequerido + '</b><br>' + _datosMsg.seleccionarAnio
+                    });
+                    return;
+                }
+
+                var modo = $('#modoSeleccionado').val();
+                var modoLabel = modo === 'ejecucion'
+                    ? '<i class="fas fa-play-circle mr-1" style="color:#10b981;"></i>' + _datosMsg.modoEjecucion + ' <strong>' + anio + '</strong>'
+                    : '<i class="fas fa-history mr-1" style="color:#f59e0b;"></i>' + _datosMsg.modoHistorico + ' <strong>' + anio + '</strong>';
+
                 Swal.fire({
                     icon: 'warning',
                     title: _datosMsg.confirmarCarga,
-                    html: '<strong>' + _datosMsg.confirmarBold + '</strong> ' + _datosMsg.confirmarRest + '<br><br>' + _datosMsg.confirmarPregunta,
+                    html: '<strong>' + _datosMsg.confirmarBold + '</strong> ' + _datosMsg.confirmarRest +
+                          '<br><div style="margin: 0.75rem 0; padding: 0.5rem 0.75rem; background: #f0f4ff; border-radius: 6px; font-size: 0.92rem;">' + modoLabel + '</div>' +
+                          _datosMsg.confirmarPregunta,
                     showCancelButton: true,
                     confirmButtonText: _datosMsg.siCargar,
                     cancelButtonText: _datosMsg.cancelar,

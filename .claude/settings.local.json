@@ -104,7 +104,18 @@
       "PowerShell(Select-String -Path \"C:\\\\Users\\\\omara\\\\Downloads\\\\SPSBufins.sql\" -Pattern \"CREATE\\\\s+\\(OR\\\\s+ALTER\\\\s+\\)?PROC\\(EDURE\\)?\\\\s+\\\\[?dbo\\\\]?\\\\.\\\\[?\\(\\\\w+\\)\\\\]?\" | ForEach-Object { if \\($_.Line -match \"CREATE\\\\s+\\(?:OR\\\\s+ALTER\\\\s+\\)?PROC\\(?:EDURE\\)?\\\\s+\\(?:\\\\[?dbo\\\\]?\\\\.\\)?\\\\[?\\(\\\\w+\\)\\\\]?\"\\) { $Matches[1] } })",
       "Bash(Get-ChildItem -Recurse -Filter \"*ConfiguracionEmpresa*\")",
       "Bash(Select-Object FullName)",
-      "PowerShell(Head *)"
+      "PowerShell(Head *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\omara\\\\OneDrive\\\\Omar Akon Personal\\\\Proyectos OAG\\\\Bufins Web\\\\Bufins principal web\\\\bufinscustomers\" -Recurse -Include \"CargueExcel.cshtml\", \"DatosController.cs\", \"ConfiguracionEmpresaService.cs\")",
+      "Bash(Get-Content -Encoding UTF8 TablasIni.sql -TotalCount 200)",
+      "Bash(Select-Object -First 150)",
+      "PowerShell(\\(Get-Content -Path \"C:\\\\Users\\\\omara\\\\Downloads\\\\TablasIni.sql\" -Encoding UTF8 | Select-Object -First 200\\) -join \"`n\")",
+      "PowerShell(\\(Get-Content -Path \"C:\\\\Users\\\\omara\\\\Downloads\\\\TablasIni.sql\" -Encoding UTF8 | Select-Object -Skip 135 -First 50\\) -join \"`n\")",
+      "PowerShell(\\(Get-Content -Path \"C:\\\\Users\\\\omara\\\\Downloads\\\\TablasIni.sql\" -Encoding UTF8 | Select-Object -Skip 7 -First 20\\) -join \"`n\")",
+      "PowerShell(\\(Get-Content -Path \"C:\\\\Users\\\\omara\\\\Downloads\\\\TablasIni.sql\" -Encoding UTF8 | Select-Object -Skip 33 -First 22\\) -join \"`n\")",
+      "PowerShell(\\(Get-Content -Path \"C:\\\\Users\\\\omara\\\\Downloads\\\\TablasIni.sql\" -Encoding UTF8 | Select-Object -Skip 60 -First 21\\) -join \"`n\")",
+      "PowerShell(\\(Get-Content -Path \"C:\\\\Users\\\\omara\\\\Downloads\\\\TablasIni.sql\" -Encoding UTF8 | Select-Object -Skip 87 -First 21\\) -join \"`n\")",
+      "PowerShell(\\(Get-Content -Path \"C:\\\\Users\\\\omara\\\\Downloads\\\\TablasIni.sql\" -Encoding UTF8 | Select-Object -Skip 114 -First 21\\) -join \"`n\")",
+      "Bash(ó)"
     ],
     "deny": [],
     "ask": []
