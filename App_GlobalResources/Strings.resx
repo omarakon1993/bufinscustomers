@@ -133,8 +133,8 @@
   <data name="Datos_JS_EmpresaRequerida" xml:space="preserve"><value>Empresa no seleccionada</value></data>
   <data name="Datos_JS_SeleccionarEmpresa" xml:space="preserve"><value>Debe seleccionar una empresa antes de cargar el archivo.</value></data>
   <data name="Datos_JS_ConfirmarCarga" xml:space="preserve"><value>Confirmar carga</value></data>
-  <data name="Datos_JS_ConfirmarBold" xml:space="preserve"><value>Esta acción eliminará todos los datos existentes</value></data>
-  <data name="Datos_JS_ConfirmarRest" xml:space="preserve"><value>de las tablas Z_ para la empresa seleccionada y los reemplazará con los nuevos datos del Excel.</value></data>
+  <data name="Datos_JS_ConfirmarBold" xml:space="preserve"><value>Esta acción eliminará todos los datos del año seleccionado</value></data>
+  <data name="Datos_JS_ConfirmarRest" xml:space="preserve"><value>para la empresa indicada y los reemplazará con los nuevos datos del Excel.</value></data>
   <data name="Datos_JS_ConfirmarPregunta" xml:space="preserve"><value>¿Desea continuar?</value></data>
   <data name="Datos_JS_SiCargar" xml:space="preserve"><value>Sí, cargar datos</value></data>
   <data name="Datos_JS_Procesando" xml:space="preserve"><value>Procesando...</value></data>
@@ -277,11 +277,28 @@
   <data name="Audit_ThEmpresa" xml:space="preserve"><value>Empresa</value></data>
   <data name="Audit_ThUsuario" xml:space="preserve"><value>Usuario</value></data>
   <data name="Audit_ThArchivo" xml:space="preserve"><value>Archivo</value></data>
+  <data name="Audit_ExcelFecha" xml:space="preserve"><value>Fecha</value></data>
+  <data name="Audit_ExcelHora" xml:space="preserve"><value>Hora</value></data>
+  <data name="Audit_FilterDesde" xml:space="preserve"><value>Desde</value></data>
+  <data name="Audit_FilterHasta" xml:space="preserve"><value>Hasta</value></data>
   <data name="Audit_ThEstado" xml:space="preserve"><value>Estado</value></data>
   <data name="Audit_StatusReciente" xml:space="preserve"><value>Reciente</value></data>
   <data name="Audit_StatusSemana" xml:space="preserve"><value>Esta semana</value></data>
   <data name="Audit_StatusMes" xml:space="preserve"><value>Este mes</value></data>
   <data name="Audit_StatusAntiguo" xml:space="preserve"><value>Antiguo</value></data>
+  <!-- TablaPUC -->
+  <data name="PUC_PageTitle" xml:space="preserve"><value>Plan Único de Cuentas</value></data>
+  <data name="PUC_LabelTipo" xml:space="preserve"><value>Tipo</value></data>
+  <data name="PUC_LabelLargo" xml:space="preserve"><value>Largo</value></data>
+  <data name="PUC_LabelCuenta" xml:space="preserve"><value>Cuenta</value></data>
+  <data name="PUC_LabelNombre" xml:space="preserve"><value>Nombre</value></data>
+  <data name="PUC_PlaceholderCuenta" xml:space="preserve"><value>Ej: 1105...</value></data>
+  <data name="PUC_PlaceholderNombre" xml:space="preserve"><value>Buscar por nombre...</value></data>
+  <data name="PUC_ThCuenta" xml:space="preserve"><value>Cuenta</value></data>
+  <data name="PUC_ThNombre" xml:space="preserve"><value>Nombre</value></data>
+  <data name="PUC_ThLargo" xml:space="preserve"><value>Largo</value></data>
+  <data name="PUC_ThTipo" xml:space="preserve"><value>Tipo</value></data>
+  <data name="PUC_JS_ErrorConexion" xml:space="preserve"><value>Error al consultar el PUC. Intente de nuevo.</value></data>
   <data name="Audit_NoData" xml:space="preserve"><value>No hay registros de cargues disponibles</value></data>
   <data name="Audit_NoDataAdmin" xml:space="preserve"><value>Los registros de auditoría aparecerán aquí cuando se realicen cargues de información.</value></data>
   <data name="Audit_NoDataUser" xml:space="preserve"><value>Los registros de auditoría de tu empresa aparecerán aquí cuando se realicen cargues de información.</value></data>
@@ -535,6 +552,38 @@
   <data name="CfgEmp_InstrCategorias" xml:space="preserve"><value>Categorías: Tenga en cuenta que la descripción correcta para cada rubro es la que se indica en esta lista:</value></data>
   <data name="CfgEmp_InstrTipo" xml:space="preserve"><value>Tipo: Coloque el nombre de las líneas de venta que se hayan definido previamente. Estos nombres deberán ser siempre idénticos a la forma en que se reportarán en las bases de datos.</value></data>
   <data name="CfgEmp_InstrLinea" xml:space="preserve"><value>Línea de negocio: Coloque el nombre de las líneas de negocio que se hayan definido. Estos nombres deberán ser siempre idénticos a la forma en que se reportarán en las bases de datos.</value></data>
+
+  <!-- CIERRE AÑO EJECUCIÓN -->
+  <data name="CfgEmp_Cierre_Title" xml:space="preserve"><value>Transición de año de ejecución</value></data>
+  <data name="CfgEmp_Cierre_Desc" xml:space="preserve"><value>Use esta acción cuando sea momento de cerrar el año fiscal actual y abrir el siguiente. Los datos del año de ejecución actual quedarán archivados como históricos y el sistema quedará listo para recibir los datos del nuevo año. La acción se registra en el log de auditoría.</value></data>
+  <data name="CfgEmp_Cierre_Btn" xml:space="preserve"><value>Iniciar transición — cerrar año</value></data>
+  <data name="CfgEmp_AnioReadonlyNote" xml:space="preserve"><value>Para cambiar el año use el botón</value></data>
+  <data name="CfgEmp_Cierre_ModalTitle" xml:space="preserve"><value>Transición de Año de Ejecución</value></data>
+  <data name="CfgEmp_Cierre_ModalSubtitle" xml:space="preserve"><value>Esta acción es definitiva y no se puede deshacer</value></data>
+  <data name="CfgEmp_Cierre_QueHace" xml:space="preserve"><value>¿Qué hace esta acción?</value></data>
+  <data name="CfgEmp_Cierre_Li1" xml:space="preserve"><value>Los datos del año &lt;strong&gt;&lt;span class="lbl-anio-actual"&gt;&lt;/span&gt;&lt;/strong&gt; cargados en las tablas de ejecución pasan a ser &lt;strong&gt;datos históricos&lt;/strong&gt; y quedan disponibles para análisis histórico.</value></data>
+  <data name="CfgEmp_Cierre_Li2" xml:space="preserve"><value>El año &lt;strong&gt;&lt;span class="lbl-anio-actual"&gt;&lt;/span&gt;&lt;/strong&gt; se agrega automáticamente a la lista de &lt;strong&gt;años históricos configurados&lt;/strong&gt; de la empresa.</value></data>
+  <data name="CfgEmp_Cierre_Li3" xml:space="preserve"><value>La acción queda registrada en el &lt;strong&gt;log de auditoría&lt;/strong&gt; con fecha, usuario y empresa.</value></data>
+  <data name="CfgEmp_Cierre_AlertDanger" xml:space="preserve"><value>&lt;strong&gt;Antes de continuar:&lt;/strong&gt; asegúrese de haber cargado y verificado todos los datos del año &lt;strong&gt;&lt;span class="lbl-anio-actual"&gt;&lt;/span&gt;&lt;/strong&gt;. Una vez ejecutada la transición, ese año se tratará como histórico.</value></data>
+  <data name="CfgEmp_Cierre_NuevoAnioLabel" xml:space="preserve"><value>Nuevo año de ejecución:</value></data>
+  <data name="CfgEmp_Cierre_NuevoAnioHelp" xml:space="preserve"><value>Ingrese el año que se convertirá en el nuevo año de ejecución activo.</value></data>
+  <data name="CfgEmp_Cierre_PlaceholderAnio" xml:space="preserve"><value>Ej: 2026</value></data>
+  <data name="CfgEmp_Cierre_BtnConfirmar" xml:space="preserve"><value>Confirmar transición</value></data>
+  <data name="CfgEmp_Cierre_JS_NecesitaConfig" xml:space="preserve"><value>Primero cargue la configuración de una empresa.</value></data>
+  <data name="CfgEmp_Cierre_JS_AnioInvalido" xml:space="preserve"><value>Ingrese un año válido (entre 2000 y 2100).</value></data>
+  <data name="CfgEmp_Cierre_JS_AnioIgual" xml:space="preserve"><value>El nuevo año debe ser diferente al año actual de ejecución.</value></data>
+  <data name="CfgEmp_Cierre_JS_ConfirmTitle" xml:space="preserve"><value>¿Está completamente seguro?</value></data>
+  <data name="CfgEmp_Cierre_JS_ConfirmHtmlPart1" xml:space="preserve"><value>Se archivará el año</value></data>
+  <data name="CfgEmp_Cierre_JS_ConfirmHtmlPart2" xml:space="preserve"><value>como histórico y el nuevo año de ejecución pasará a ser</value></data>
+  <data name="CfgEmp_Cierre_JS_ConfirmHtmlPart3" xml:space="preserve"><value>Esta acción no se puede deshacer.</value></data>
+  <data name="CfgEmp_Cierre_JS_ConfirmBtn" xml:space="preserve"><value>Sí, realizar transición</value></data>
+  <data name="CfgEmp_Cierre_JS_ProcTitle" xml:space="preserve"><value>Procesando transición...</value></data>
+  <data name="CfgEmp_Cierre_JS_ProcText" xml:space="preserve"><value>Por favor espere, esto puede tomar unos segundos.</value></data>
+  <data name="CfgEmp_Cierre_JS_OkTitle" xml:space="preserve"><value>Transición completada</value></data>
+  <data name="CfgEmp_Cierre_JS_OkBtn" xml:space="preserve"><value>Aceptar</value></data>
+  <data name="CfgEmp_Cierre_JS_ErrTitle" xml:space="preserve"><value>Error en la transición</value></data>
+  <data name="CfgEmp_Cierre_JS_ConnErrTitle" xml:space="preserve"><value>Error de conexión</value></data>
+  <data name="CfgEmp_Cierre_JS_ConnErrText" xml:space="preserve"><value>No se pudo completar la transición. Intente nuevamente.</value></data>
 
   <!-- CONFIGURACIÓN RELACIONAMIENTO -->
   <data name="CfgRel_PageTitle" xml:space="preserve"><value>Configuración relacionamientos BUFINS</value></data>

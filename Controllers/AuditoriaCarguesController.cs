@@ -43,37 +43,38 @@ namespace bufinscustomers.Controllers
 
         // Exportar auditor�a a Excel
         [HttpPost]
-        public ActionResult ExportarAuditoriaExcel(string filtro = "")
+        public ActionResult ExportarAuditoriaExcel(string empresa = "", string usuario = "", string fechaDesde = "", string fechaHasta = "")
         {
             try
             {
-                var usuario = UsuarioSesionHelper.UsuarioActual;
+                var usuarioActual = UsuarioSesionHelper.UsuarioActual;
                 var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
-                
+
                 // Obtener datos seg�n permisos
                 List<AuditoriaCargues> auditorias;
-                
+
                 if (esAdmin)
                 {
                     auditorias = _auditoriaCarguesService.ObtenerAuditoriaCargues();
                 }
                 else
                 {
-                    var idEmpresa = usuario?.IdEmpresa;
+                    var idEmpresa = usuarioActual?.IdEmpresa;
                     auditorias = _auditoriaCarguesService.ObtenerAuditoriaCargues(idEmpresa);
                 }
 
-                // Aplicar filtro de b�squeda si existe
-                if (!string.IsNullOrEmpty(filtro))
-                {
-                    filtro = filtro.ToLower();
-                    auditorias = auditorias.Where(a => 
-                        a.NombreEmpresa.ToLower().Contains(filtro) ||
-                        a.Usuario.ToLower().Contains(filtro) ||
-                        a.NombreArchivo.ToLower().Contains(filtro) ||
-                        a.FechaCargue.ToString("dd/MM/yyyy").Contains(filtro)
-                    ).ToList();
-                }
+                // Aplicar filtros
+                if (!string.IsNullOrEmpty(empresa))
+                    auditorias = auditorias.Where(a => a.NombreEmpresa == empresa).ToList();
+
+                if (!string.IsNullOrEmpty(usuario))
+                    auditorias = auditorias.Where(a => a.Usuario.IndexOf(usuario, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+
+                if (DateTime.TryParse(fechaDesde, out var desde))
+                    auditorias = auditorias.Where(a => a.FechaCargue.Date >= desde.Date).ToList();
+
+                if (DateTime.TryParse(fechaHasta, out var hasta))
+                    auditorias = auditorias.Where(a => a.FechaCargue.Date <= hasta.Date).ToList();
 
                 // Generar archivo Excel
                 using (var package = new ExcelPackage())
@@ -81,9 +82,15 @@ namespace bufinscustomers.Controllers
                     var worksheet = package.Workbook.Worksheets.Add("Auditor�a Cargues");
                     
                     // Configurar encabezados
-                    var headers = new List<string> { "Fecha", "Hora" };
-                    if (esAdmin) headers.Add("Empresa");
-                    headers.AddRange(new[] { "Usuario", "Archivo", "Estado" });
+                    Func<string, string> R = key => HttpContext.GetGlobalResourceObject("Strings", key)?.ToString() ?? key;
+                    var headers = new List<string>
+                    {
+                        R("Audit_ExcelFecha"),
+                        R("Audit_ExcelHora"),
+                        R("Audit_ThEmpresa"),
+                        R("Audit_ThUsuario"),
+                        R("Audit_ThArchivo")
+                    };
                     
                     // Aplicar encabezados
                     for (int i = 0; i < headers.Count; i++)
@@ -104,24 +111,9 @@ namespace bufinscustomers.Controllers
                         
                         worksheet.Cells[row, col++].Value = auditoria.FechaCargue.ToString("dd/MM/yyyy");
                         worksheet.Cells[row, col++].Value = auditoria.FechaCargue.ToString("HH:mm:ss");
-                        
-                        if (esAdmin)
-                        {
-                            worksheet.Cells[row, col++].Value = auditoria.NombreEmpresa;
-                        }
-                        
+                        worksheet.Cells[row, col++].Value = auditoria.NombreEmpresa;
                         worksheet.Cells[row, col++].Value = auditoria.Usuario;
                         worksheet.Cells[row, col++].Value = auditoria.NombreArchivo;
-                        
-                        // Calcular estado
-                        var diasTranscurridos = (DateTime.Now - auditoria.FechaCargue).Days;
-                        string estado;
-                        if (diasTranscurridos <= 1) estado = "Reciente";
-                        else if (diasTranscurridos <= 7) estado = "Esta semana";
-                        else if (diasTranscurridos <= 30) estado = "Este mes";
-                        else estado = "Antiguo";
-                        
-                        worksheet.Cells[row, col++].Value = estado;
                         row++;
                     }
                     
@@ -146,12 +138,9 @@ namespace bufinscustomers.Controllers
                     dataRange.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
                     
                     // Generar nombre de archivo
-                    var nombreArchivo = $"Auditoria_Cargues_{DateTime.Now:yyyyMMdd_HHmmss}";
-                    if (!string.IsNullOrEmpty(filtro))
-                    {
-                        nombreArchivo += "_Filtrado";
-                    }
-                    nombreArchivo += ".xlsx";
+                    var hayFiltros = !string.IsNullOrEmpty(empresa) || !string.IsNullOrEmpty(usuario)
+                                  || !string.IsNullOrEmpty(fechaDesde) || !string.IsNullOrEmpty(fechaHasta);
+                    var nombreArchivo = $"Auditoria_Cargues_{DateTime.Now:yyyyMMdd_HHmmss}{(hayFiltros ? "_Filtrado" : "")}.xlsx";
                     
                     // Convertir a bytes
                     var fileBytes = package.GetAsByteArray();

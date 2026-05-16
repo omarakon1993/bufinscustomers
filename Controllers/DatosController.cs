@@ -2,7 +2,6 @@ using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
-using Microsoft.Ajax.Utilities;
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
@@ -13,8 +12,6 @@ using System.Linq;
 using System.Text;
 using System.Web;
 using System.Web.Mvc;
-using System.Windows.Media.Media3D;
-
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
@@ -30,9 +27,13 @@ namespace bufinscustomers.Controllers
             {
                 { "Z_BalancePrueba",             "Ini_BalancePrueba" },
                 { "Z_CteYnoCte",                 "Ini_CteYnoCte" },
-                { "Z_PYGDetallado",              "Ini_PYG" },
+                { "Z_EjecPCH",                   "Ini_EjecPCH" },
+                { "Z_PCH",                       "Ini_PCH" },
                 { "Z_PptoPYGDetallado",          "Ini_PptoPYG" },
                 { "Z_PptoPYGDetalladoConAjuste", "Ini_PptoPYGConAjuste" },
+                { "Z_PresupuestoBalance",        "Ini_PresupuestoBalance" },
+                { "Z_PYGDetallado",              "Ini_PYG" },
+                { "Z_PYGDetalladoConAjuste",     "Ini_PYGDetalladoConAjuste" },
             };
 
         private void LogToFile(string mensaje)
@@ -318,17 +319,13 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                using (var memStream = new MemoryStream())
-                {
-                    archivoExcel.InputStream.CopyTo(memStream);
-                    memStream.Position = 0;
-
-                    using (var package = new ExcelPackage(memStream))
+                using (var package = new ExcelPackage(archivoExcel.InputStream))
                     {
-                        if (package.Workbook.Worksheets.Count != 9)
+                        int hojasEsperadas = _mapeoHistorico.Count;
+                        if (package.Workbook.Worksheets.Count != hojasEsperadas)
                         {
                             resultado.Exito = false;
-                            resultado.Mensaje = $"La plantilla debe contener exactamente 9 hojas. El archivo tiene {package.Workbook.Worksheets.Count} hojas.";
+                            resultado.Mensaje = $"La plantilla debe contener exactamente {hojasEsperadas} hojas. El archivo tiene {package.Workbook.Worksheets.Count} hojas.";
                             TempData["ResultadoCarga"] = resultado;
                             TempData["NombreArchivo"] = nombreArchivoOriginal;
                             SetErrorMessage(resultado.Mensaje);
@@ -337,51 +334,91 @@ namespace bufinscustomers.Controllers
 
                         if (modoEjecucion)
                         {
+                            bool errorEnCargaEjecucion = false;
+
                             using (var conn = new SqlConnection(CadenaConexion))
                             {
                                 conn.Open();
-
-                                foreach (var hoja in package.Workbook.Worksheets)
+                                using (var tx = conn.BeginTransaction())
                                 {
-                                    var detalle = new DetalleCargaHojaExcel { NombreHoja = hoja.Name };
-                                    var dt = LeerHojaEnDataTable(hoja, detalle, anioSeleccionado.ToString());
-
-                                    if (dt == null)
+                                    try
                                     {
-                                        resultado.DetalleHojas.Add(detalle);
-                                        resultado.TotalHojasIgnoradas++;
-                                        continue;
-                                    }
+                                        EliminarEjecucionDeIni(conn, anioSeleccionado, idEmpresaSeleccionada, tx);
 
-                                    if (!GuardarEnSQLServer(dt.Copy(), idEmpresaSeleccionada, idUsuario))
-                                    {
-                                        detalle.Estado = "Error";
-                                        detalle.MensajeError = TempData["Mensaje"]?.ToString() ?? "Error al guardar";
-                                        resultado.DetalleHojas.Add(detalle);
-
-                                        foreach (var d in resultado.DetalleHojas.Where(x => x.Estado == "Exitoso"))
+                                        foreach (var hoja in package.Workbook.Worksheets)
                                         {
-                                            d.Estado = "Revertido";
-                                            d.MensajeError = "Revertido por error en otra tabla";
+                                            var detalle = new DetalleCargaHojaExcel { NombreHoja = hoja.Name };
+                                            var nombreNorm = NormalizarNombre(hoja.Name);
+                                            var dt = LeerHojaEnDataTable(hoja, detalle, anioSeleccionado.ToString());
+
+                                            if (dt == null)
+                                            {
+                                                resultado.DetalleHojas.Add(detalle);
+                                                resultado.TotalHojasIgnoradas++;
+                                                continue;
+                                            }
+
+                                            bool exitoHoja;
+                                            if (_mapeoHistorico.TryGetValue(nombreNorm, out string nombreTablaIni))
+                                            {
+                                                detalle.NombreTabla = nombreTablaIni;
+                                                exitoHoja = GuardarEnIni(conn, dt, nombreTablaIni, idEmpresaSeleccionada, idUsuario, historicoLog: 0, tx: tx);
+                                            }
+                                            else
+                                            {
+                                                exitoHoja = GuardarEnSQLServer(dt, idEmpresaSeleccionada, idUsuario);
+                                            }
+
+                                            if (!exitoHoja)
+                                            {
+                                                detalle.Estado = "Error";
+                                                detalle.MensajeError = TempData["Mensaje"]?.ToString() ?? "Error al guardar";
+                                                resultado.DetalleHojas.Add(detalle);
+
+                                                foreach (var d in resultado.DetalleHojas.Where(x => x.Estado == "Exitoso"))
+                                                {
+                                                    d.Estado = "Revertido";
+                                                    d.MensajeError = "Revertido por error en otra tabla";
+                                                }
+
+                                                resultado.Exito = false;
+                                                resultado.Mensaje = $"Error al procesar '{hoja.Name}'. Se revirtio toda la carga.";
+                                                resultado.MostrarDescargaLog = TempData["MostrarDescargaLog"] != null && (bool)TempData["MostrarDescargaLog"];
+
+                                                tx.Rollback();
+                                                LimpiarTablasEnError(conn, idEmpresaSeleccionada);
+                                                errorEnCargaEjecucion = true;
+                                                break;
+                                            }
+
+                                            detalle.FilasInsertadas = dt.Rows.Count;
+                                            detalle.Estado = "Exitoso";
+                                            resultado.DetalleHojas.Add(detalle);
+                                            resultado.TotalHojasProcesadas++;
+                                            resultado.TotalFilasInsertadas += dt.Rows.Count;
                                         }
 
-                                        resultado.Exito = false;
-                                        resultado.Mensaje = $"Error al procesar '{hoja.Name}'. Se limpiaron todos los datos.";
-                                        resultado.MostrarDescargaLog = TempData["MostrarDescargaLog"] != null && (bool)TempData["MostrarDescargaLog"];
-                                        TempData["ResultadoCarga"] = resultado;
-                                        TempData["NombreArchivo"] = nombreArchivoOriginal;
-                                        SetErrorMessage(resultado.Mensaje);
-                                        return RedirectToAction("CargueExcel");
+                                        if (!errorEnCargaEjecucion)
+                                        {
+                                            RegistrarAuditoria(conn, nombreArchivoOriginal, idEmpresaSeleccionada, tx);
+                                            tx.Commit();
+                                        }
                                     }
-
-                                    detalle.FilasInsertadas = dt.Rows.Count;
-                                    detalle.Estado = "Exitoso";
-                                    resultado.DetalleHojas.Add(detalle);
-                                    resultado.TotalHojasProcesadas++;
-                                    resultado.TotalFilasInsertadas += dt.Rows.Count;
+                                    catch (Exception txEx)
+                                    {
+                                        try { tx.Rollback(); } catch { }
+                                        LogToFile($"Error inesperado en transaccion de ejecucion: {txEx.Message}");
+                                        throw;
+                                    }
                                 }
+                            }
 
-                                RegistrarAuditoria(conn, nombreArchivoOriginal, idEmpresaSeleccionada);
+                            if (errorEnCargaEjecucion)
+                            {
+                                TempData["ResultadoCarga"] = resultado;
+                                TempData["NombreArchivo"] = nombreArchivoOriginal;
+                                SetErrorMessage(resultado.Mensaje);
+                                return RedirectToAction("CargueExcel");
                             }
 
                             var resultadoValidacion = EjecutarValidacionDatos(idUsuario);
@@ -399,71 +436,95 @@ namespace bufinscustomers.Controllers
                         }
                         else // modoHistorico
                         {
+                            bool errorEnCargaHistorico = false;
+
                             using (var conn = new SqlConnection(CadenaConexion))
                             {
                                 conn.Open();
-
-                                EliminarAnosHistoricosDeIni(conn, anioSeleccionado, idEmpresaSeleccionada);
-
-                                foreach (var hoja in package.Workbook.Worksheets)
+                                using (var tx = conn.BeginTransaction())
                                 {
-                                    var detalle = new DetalleCargaHojaExcel { NombreHoja = hoja.Name };
-                                    var nombreNormalizado = NormalizarNombre(hoja.Name);
-
-                                    if (!_mapeoHistorico.TryGetValue(nombreNormalizado, out string nombreTablaIni))
+                                    try
                                     {
-                                        detalle.NombreTabla = "-";
-                                        detalle.Estado = "Ignorada";
-                                        detalle.MensajeError = "Sin tabla histórica correspondiente";
-                                        resultado.DetalleHojas.Add(detalle);
-                                        resultado.TotalHojasIgnoradas++;
-                                        continue;
-                                    }
+                                        EliminarAnosHistoricosDeIni(conn, anioSeleccionado, idEmpresaSeleccionada, tx);
 
-                                    detalle.NombreTabla = nombreTablaIni;
-                                    var dt = LeerHojaEnDataTable(hoja, detalle, anioSeleccionado.ToString());
-
-                                    if (dt == null)
-                                    {
-                                        resultado.DetalleHojas.Add(detalle);
-                                        resultado.TotalHojasIgnoradas++;
-                                        continue;
-                                    }
-
-                                    if (!GuardarEnIni(conn, dt, nombreTablaIni, idEmpresaSeleccionada, idUsuario))
-                                    {
-                                        detalle.Estado = "Error";
-                                        detalle.MensajeError = TempData["Mensaje"]?.ToString() ?? "Error al guardar en tabla histórica";
-                                        resultado.DetalleHojas.Add(detalle);
-
-                                        foreach (var d in resultado.DetalleHojas.Where(x => x.Estado == "Exitoso"))
+                                        foreach (var hoja in package.Workbook.Worksheets)
                                         {
-                                            d.Estado = "Revertido";
-                                            d.MensajeError = "Revertido por error en otra tabla";
+                                            var detalle = new DetalleCargaHojaExcel { NombreHoja = hoja.Name };
+                                            var nombreNormalizado = NormalizarNombre(hoja.Name);
+
+                                            if (!_mapeoHistorico.TryGetValue(nombreNormalizado, out string nombreTablaIni))
+                                            {
+                                                detalle.NombreTabla = "-";
+                                                detalle.Estado = "Ignorada";
+                                                detalle.MensajeError = "Sin tabla historica correspondiente";
+                                                resultado.DetalleHojas.Add(detalle);
+                                                resultado.TotalHojasIgnoradas++;
+                                                continue;
+                                            }
+
+                                            detalle.NombreTabla = nombreTablaIni;
+                                            var dt = LeerHojaEnDataTable(hoja, detalle, anioSeleccionado.ToString());
+
+                                            if (dt == null)
+                                            {
+                                                resultado.DetalleHojas.Add(detalle);
+                                                resultado.TotalHojasIgnoradas++;
+                                                continue;
+                                            }
+
+                                            if (!GuardarEnIni(conn, dt, nombreTablaIni, idEmpresaSeleccionada, idUsuario, tx: tx))
+                                            {
+                                                detalle.Estado = "Error";
+                                                detalle.MensajeError = TempData["Mensaje"]?.ToString() ?? "Error al guardar en tabla historica";
+                                                resultado.DetalleHojas.Add(detalle);
+
+                                                foreach (var d in resultado.DetalleHojas.Where(x => x.Estado == "Exitoso"))
+                                                {
+                                                    d.Estado = "Revertido";
+                                                    d.MensajeError = "Revertido por error en otra tabla";
+                                                }
+
+                                                resultado.Exito = false;
+                                                resultado.Mensaje = $"Error al procesar '{hoja.Name}'. Se revirtio toda la carga historica.";
+                                                resultado.MostrarDescargaLog = true;
+
+                                                tx.Rollback();
+                                                errorEnCargaHistorico = true;
+                                                break;
+                                            }
+
+                                            detalle.FilasInsertadas = dt.Rows.Count;
+                                            detalle.Estado = "Exitoso";
+                                            resultado.DetalleHojas.Add(detalle);
+                                            resultado.TotalHojasProcesadas++;
+                                            resultado.TotalFilasInsertadas += dt.Rows.Count;
                                         }
 
-                                        resultado.Exito = false;
-                                        resultado.Mensaje = $"Error al procesar '{hoja.Name}'. Se limpiaron los datos históricos cargados.";
-                                        resultado.MostrarDescargaLog = true;
-                                        LimpiarIniEnError(conn, anioSeleccionado, idEmpresaSeleccionada);
-                                        TempData["ResultadoCarga"] = resultado;
-                                        TempData["NombreArchivo"] = nombreArchivoOriginal;
-                                        SetErrorMessage(resultado.Mensaje);
-                                        return RedirectToAction("CargueExcel");
+                                        if (!errorEnCargaHistorico)
+                                        {
+                                            RegistrarAuditoria(conn, nombreArchivoOriginal, idEmpresaSeleccionada, tx);
+                                            tx.Commit();
+                                        }
                                     }
-
-                                    detalle.FilasInsertadas = dt.Rows.Count;
-                                    detalle.Estado = "Exitoso";
-                                    resultado.DetalleHojas.Add(detalle);
-                                    resultado.TotalHojasProcesadas++;
-                                    resultado.TotalFilasInsertadas += dt.Rows.Count;
+                                    catch (Exception txEx)
+                                    {
+                                        try { tx.Rollback(); } catch { }
+                                        LogToFile($"Error inesperado en transaccion historica: {txEx.Message}");
+                                        throw;
+                                    }
                                 }
+                            }
 
-                                RegistrarAuditoria(conn, nombreArchivoOriginal, idEmpresaSeleccionada);
+                            if (errorEnCargaHistorico)
+                            {
+                                TempData["ResultadoCarga"] = resultado;
+                                TempData["NombreArchivo"] = nombreArchivoOriginal;
+                                SetErrorMessage(resultado.Mensaje);
+                                return RedirectToAction("CargueExcel");
                             }
 
                             resultado.Exito = true;
-                            resultado.Mensaje = $"Carga histórica exitosa: {resultado.TotalHojasProcesadas} tabla(s) con {resultado.TotalFilasInsertadas:N0} registros.";
+                            resultado.Mensaje = $"Carga historica exitosa: {resultado.TotalHojasProcesadas} tabla(s) con {resultado.TotalFilasInsertadas:N0} registros.";
                         }
 
                         GuardarLogEnSession();
@@ -475,7 +536,6 @@ namespace bufinscustomers.Controllers
                         else
                             SetErrorMessage(resultado.Mensaje);
                     }
-                }
             }
             catch (Exception ex)
             {
@@ -577,20 +637,24 @@ namespace bufinscustomers.Controllers
                 // LOGGING: Información de la tabla
                 LogToFile($"Columnas del DataTable ({tabla.Columns.Count}): {string.Join(", ", tabla.Columns.Cast<DataColumn>().Select(c => c.ColumnName))}");
 
-                // Mostrar primeras 3 filas como muestra
+#if DEBUG
                 for (int i = 0; i < Math.Min(3, tabla.Rows.Count); i++)
                 {
                     var valores = tabla.Rows[i].ItemArray.Select(v => v?.ToString() ?? "NULL").ToList();
                     LogToFile($"Fila {i + 1} (muestra): {string.Join(" | ", valores)}");
                 }
+#endif
+
+                // Leer esquema una sola vez y reutilizar en conversión y validación
+                var esquema = LeerEsquemaTabla(conn, tabla.TableName);
 
                 // Convertir valores vacíos a 0 en columnas money/decimal
                 LogToFile("Convirtiendo valores vacíos a 0 en columnas de dinero...");
-                ConvertirValoresVaciosAZero(conn, tabla);
+                ConvertirValoresVaciosAZero(tabla, esquema);
 
                 // Validar datos antes de insertar
                 LogToFile("Iniciando validación de datos...");
-                string errorValidacion = ValidarDatosParaBulkCopy(conn, tabla);
+                string errorValidacion = ValidarDatosParaBulkCopy(tabla, esquema);
                 if (!string.IsNullOrEmpty(errorValidacion))
                 {
                     LogToFile($"ERROR EN VALIDACIÓN: {errorValidacion}");
@@ -614,6 +678,7 @@ namespace bufinscustomers.Controllers
                     {
                         bulk.DestinationTableName = $"[dbo].[{tabla.TableName}]";
                         bulk.BulkCopyTimeout = 120;
+                        bulk.BatchSize = 5000;
                         bulk.WriteToServer(tabla);
                     }
                     LogToFile($"SqlBulkCopy completado exitosamente para {tabla.TableName}");
@@ -662,35 +727,46 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        private void ConvertirValoresVaciosAZero(SqlConnection conn, DataTable tabla)
+        private Dictionary<string, (string tipo, bool nullable)> LeerEsquemaTabla(SqlConnection conn, string tableName)
         {
-            try
+            var esquema = new Dictionary<string, (string tipo, bool nullable)>(StringComparer.OrdinalIgnoreCase);
+            using (var cmd = new SqlCommand(
+                "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @t ORDER BY ORDINAL_POSITION",
+                conn))
             {
-                string sql = $@"
-                    SELECT COLUMN_NAME, DATA_TYPE
-                    FROM INFORMATION_SCHEMA.COLUMNS
-                    WHERE TABLE_NAME = '{tabla.TableName}'";
-
-                var columnasMoneyDecimal = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                using (SqlCommand cmd = new SqlCommand(sql, conn))
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                cmd.Parameters.AddWithValue("@t", tableName);
+                using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        string columnName = reader["COLUMN_NAME"].ToString();
-                        string dataType = reader["DATA_TYPE"].ToString().ToLower();
+                        esquema[reader["COLUMN_NAME"].ToString()] = (
+                            reader["DATA_TYPE"].ToString(),
+                            reader["IS_NULLABLE"].ToString() == "YES"
+                        );
+                    }
+                }
+            }
+            return esquema;
+        }
 
-                        if (dataType == "money" || dataType == "smallmoney" ||
-                            dataType == "decimal" || dataType == "numeric")
+        private void ConvertirValoresVaciosAZero(DataTable tabla, Dictionary<string, (string tipo, bool nullable)> esquema)
+        {
+            try
+            {
+                var columnasMoneyDecimal = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var kv in esquema)
+                {
+                    string dataType = kv.Value.tipo.ToLower();
+                    if (dataType == "money" || dataType == "smallmoney" ||
+                        dataType == "decimal" || dataType == "numeric")
+                    {
+                        string colLower = kv.Key.ToLower();
+                        if (!colLower.Contains("año") && !colLower.Contains("anio") &&
+                            !colLower.Contains("year") && !colLower.Contains("mes") &&
+                            !colLower.Contains("month") && !colLower.Contains("periodo") &&
+                            !colLower.Contains("id"))
                         {
-                            string colLower = columnName.ToLower();
-                            if (!colLower.Contains("año") && !colLower.Contains("anio") &&
-                                !colLower.Contains("year") && !colLower.Contains("mes") &&
-                                !colLower.Contains("month") && !colLower.Contains("periodo") &&
-                                !colLower.Contains("id"))
-                            {
-                                columnasMoneyDecimal.Add(columnName);
-                            }
+                            columnasMoneyDecimal.Add(kv.Key);
                         }
                     }
                 }
@@ -733,30 +809,29 @@ namespace bufinscustomers.Controllers
             }
         }
 
+        // Tablas Z_ que se usan en GuardarEnSQLServer pero no tienen mapeo en _mapeoHistorico
+        private static readonly string[] _tablasZSinMapeo = { "Z_TablaPUC" };
+
         private void LimpiarTablasEnError(SqlConnection conn, int idEmpresa)
         {
-            try
+            if (conn == null || conn.State != ConnectionState.Open) return;
+
+            // Limpiar todas las tablas Z_: las del mapeo Ini_ + las que no tienen mapeo
+            var tablasALimpiar = _mapeoHistorico.Keys.Concat(_tablasZSinMapeo);
+
+            foreach (var tabla in tablasALimpiar)
             {
-                if (conn != null && conn.State == ConnectionState.Open)
+                try
                 {
-                    using (SqlCommand deleteCmd = new SqlCommand($@"
-                        DELETE Z_BalancePrueba WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
-                        DELETE Z_CteYnoCte WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
-                        DELETE Z_EjecPCH WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
-                        DELETE Z_PCH WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
-                        DELETE Z_PptoPYGDetallado WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
-                        DELETE Z_PptoPYGDetalladoConAjuste WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
-                        DELETE Z_PresupuestoBalance WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
-                        DELETE Z_PYGDetallado WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
-                        DELETE Z_PYGDetalladoConAjuste WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL
-                        DELETE Z_TablaPUC WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL", conn))
+                    using (var cmd = new SqlCommand(
+                        $"DELETE FROM [dbo].[{tabla}] WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL", conn))
                     {
-                        deleteCmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                        deleteCmd.ExecuteNonQuery();
+                        cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                        cmd.ExecuteNonQuery();
                     }
                 }
+                catch { /* tabla puede no existir, continuar con las demás */ }
             }
-            catch { /* Ignore errors in cleanup */ }
         }
 
         // ─── New helper methods ───────────────────────────────────────────────────
@@ -883,47 +958,37 @@ namespace bufinscustomers.Controllers
             return dt;
         }
 
-        private void EliminarAnosHistoricosDeIni(SqlConnection conn, int anio, int idEmpresa)
+        private void EliminarAnosHistoricosDeIni(SqlConnection conn, int anio, int idEmpresa, SqlTransaction tx = null)
         {
             foreach (var tablaIni in _mapeoHistorico.Values.Distinct())
             {
-                try
+                using (var cmd = new SqlCommand(
+                    $"DELETE FROM [dbo].[{tablaIni}] WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Ano", conn, tx))
                 {
-                    using (var cmd = new SqlCommand(
-                        $"DELETE FROM [dbo].[{tablaIni}] WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Ano", conn))
-                    {
-                        cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                        cmd.Parameters.AddWithValue("@Ano", anio.ToString());
-                        cmd.ExecuteNonQuery();
-                    }
-                    LogToFile($"Eliminados datos históricos de {tablaIni} año {anio} para empresa {idEmpresa}");
+                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                    cmd.Parameters.AddWithValue("@Ano", anio);
+                    cmd.ExecuteNonQuery();
                 }
-                catch (Exception ex)
-                {
-                    LogToFile($"Error al eliminar datos históricos de {tablaIni} año {anio}: {ex.Message}");
-                }
+                LogToFile($"Eliminados datos históricos de {tablaIni} año {anio} para empresa {idEmpresa}");
             }
         }
 
-        private void LimpiarIniEnError(SqlConnection conn, int anio, int idEmpresa)
+        private void EliminarEjecucionDeIni(SqlConnection conn, int anio, int idEmpresa, SqlTransaction tx = null)
         {
             foreach (var tablaIni in _mapeoHistorico.Values.Distinct())
             {
-                try
+                using (var cmd = new SqlCommand(
+                    $"DELETE FROM [dbo].[{tablaIni}] WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Ano AND Historico_Log = 0", conn, tx))
                 {
-                    using (var cmd = new SqlCommand(
-                        $"DELETE FROM [dbo].[{tablaIni}] WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Ano", conn))
-                    {
-                        cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                        cmd.Parameters.AddWithValue("@Ano", anio.ToString());
-                        cmd.ExecuteNonQuery();
-                    }
+                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                    cmd.Parameters.AddWithValue("@Ano", anio);
+                    cmd.ExecuteNonQuery();
                 }
-                catch { }
+                LogToFile($"Eliminados datos de ejecución de {tablaIni} año {anio} para empresa {idEmpresa}");
             }
         }
 
-        private bool GuardarEnIni(SqlConnection conn, DataTable dtExcel, string nombreTablaIni, int idEmpresa, int idUsuario)
+        private bool GuardarEnIni(SqlConnection conn, DataTable dtExcel, string nombreTablaIni, int idEmpresa, int idUsuario, byte historicoLog = 1, SqlTransaction tx = null)
         {
             try
             {
@@ -934,19 +999,22 @@ namespace bufinscustomers.Controllers
                 var columnasIni = new List<string>();
                 var columnasNumericas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 using (var cmd = new SqlCommand(
-                    $"SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{nombreTablaIni}' ORDER BY ORDINAL_POSITION",
-                    conn))
-                using (var reader = cmd.ExecuteReader())
+                    "SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @t ORDER BY ORDINAL_POSITION",
+                    conn, tx))
                 {
-                    while (reader.Read())
+                    cmd.Parameters.AddWithValue("@t", nombreTablaIni);
+                    using (var reader = cmd.ExecuteReader())
                     {
-                        string col = reader["COLUMN_NAME"].ToString();
-                        string tipo = reader["DATA_TYPE"].ToString().ToLower();
-                        columnasIni.Add(col);
-                        if (tipo == "money" || tipo == "smallmoney" || tipo == "decimal" ||
-                            tipo == "numeric" || tipo == "float" || tipo == "real" ||
-                            tipo == "int" || tipo == "bigint" || tipo == "smallint" || tipo == "tinyint")
-                            columnasNumericas.Add(col);
+                        while (reader.Read())
+                        {
+                            string col = reader["COLUMN_NAME"].ToString();
+                            string tipo = reader["DATA_TYPE"].ToString().ToLower();
+                            columnasIni.Add(col);
+                            if (tipo == "money" || tipo == "smallmoney" || tipo == "decimal" ||
+                                tipo == "numeric" || tipo == "float" || tipo == "real" ||
+                                tipo == "int" || tipo == "bigint" || tipo == "smallint" || tipo == "tinyint")
+                                columnasNumericas.Add(col);
+                        }
                     }
                 }
 
@@ -998,7 +1066,7 @@ namespace bufinscustomers.Controllers
                                 destRow[colIni] = fechaCargue;
                                 break;
                             case "Historico_Log":
-                                destRow[colIni] = (byte)1;
+                                destRow[colIni] = historicoLog;
                                 break;
                             case "IdUsuarioEjecucion_Log":
                             case "FechaEjecucion_Log":
@@ -1024,10 +1092,11 @@ namespace bufinscustomers.Controllers
                     dtDest.Rows.Add(destRow);
                 }
 
-                using (var bulk = new SqlBulkCopy(conn))
+                using (var bulk = new SqlBulkCopy(conn, SqlBulkCopyOptions.Default, tx))
                 {
                     bulk.DestinationTableName = $"[dbo].[{nombreTablaIni}]";
                     bulk.BulkCopyTimeout = 120;
+                    bulk.BatchSize = 5000;
                     foreach (DataColumn col in dtDest.Columns)
                         bulk.ColumnMappings.Add(col.ColumnName, col.ColumnName);
                     bulk.WriteToServer(dtDest);
@@ -1070,22 +1139,21 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                string sql = $@"
-                    SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH
-                    FROM INFORMATION_SCHEMA.COLUMNS
-                    WHERE TABLE_NAME = '{tabla.TableName}'
-                    ORDER BY ORDINAL_POSITION";
-
                 var columnasSQL = new Dictionary<string, string>();
-                using (SqlCommand cmd = new SqlCommand(sql, conn))
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (var cmd = new SqlCommand(
+                    "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @t ORDER BY ORDINAL_POSITION",
+                    conn))
                 {
-                    while (reader.Read())
+                    cmd.Parameters.AddWithValue("@t", tabla.TableName);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        string colName = reader["COLUMN_NAME"].ToString();
-                        string dataType = reader["DATA_TYPE"].ToString();
-                        string nullable = reader["IS_NULLABLE"].ToString();
-                        columnasSQL[colName] = $"{dataType} (NULL: {nullable})";
+                        while (reader.Read())
+                        {
+                            string colName = reader["COLUMN_NAME"].ToString();
+                            string dataType = reader["DATA_TYPE"].ToString();
+                            string nullable = reader["IS_NULLABLE"].ToString();
+                            columnasSQL[colName] = $"{dataType} (NULL: {nullable})";
+                        }
                     }
                 }
 
@@ -1137,36 +1205,17 @@ namespace bufinscustomers.Controllers
             return sb.ToString();
         }
 
-        private string ValidarDatosParaBulkCopy(SqlConnection conn, DataTable tabla)
+        private string ValidarDatosParaBulkCopy(DataTable tabla, Dictionary<string, (string tipo, bool nullable)> esquema)
         {
             try
             {
-                string sql = $@"
-                    SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE
-                    FROM INFORMATION_SCHEMA.COLUMNS
-                    WHERE TABLE_NAME = '{tabla.TableName}'
-                    ORDER BY ORDINAL_POSITION";
-
-                var columnasSQL = new Dictionary<string, (string tipo, bool nullable)>();
-                using (SqlCommand cmd = new SqlCommand(sql, conn))
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        string columnName = reader["COLUMN_NAME"].ToString();
-                        string dataType = reader["DATA_TYPE"].ToString();
-                        bool isNullable = reader["IS_NULLABLE"].ToString() == "YES";
-                        columnasSQL[columnName] = (dataType, isNullable);
-                    }
-                }
-
-                LogToFile($"Esquema SQL encontrado para {tabla.TableName}: {columnasSQL.Count} columnas");
-                foreach (var col in columnasSQL)
+                LogToFile($"Esquema SQL encontrado para {tabla.TableName}: {esquema.Count} columnas");
+                foreach (var col in esquema)
                 {
                     LogToFile($"   - {col.Key}: {col.Value.tipo} (Nullable: {col.Value.nullable})");
                 }
 
-                if (columnasSQL.Count == 0)
+                if (esquema.Count == 0)
                 {
                     LogToFile($"Tabla {tabla.TableName} no existe en SQL Server, se creará dinámicamente");
                     return null;
@@ -1180,9 +1229,9 @@ namespace bufinscustomers.Controllers
                     {
                         string nombreColumna = tabla.Columns[colIndex].ColumnName;
 
-                        if (!columnasSQL.ContainsKey(nombreColumna)) continue;
+                        if (!esquema.ContainsKey(nombreColumna)) continue;
 
-                        var (tipoSQL, nullable) = columnasSQL[nombreColumna];
+                        var (tipoSQL, nullable) = esquema[nombreColumna];
                         object valor = fila[colIndex];
                         string valorStr = valor?.ToString()?.Trim() ?? "";
 
@@ -1272,7 +1321,7 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        private void RegistrarAuditoria(SqlConnection conn, string nombreArchivo, int idEmpresaArchivo)
+        private void RegistrarAuditoria(SqlConnection conn, string nombreArchivo, int idEmpresaArchivo, SqlTransaction tx = null)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null) return;
@@ -1285,7 +1334,7 @@ namespace bufinscustomers.Controllers
         VALUES (@Fecha, @IdUsuario, @Usuario, @IdEmpresa, @NombreEmpresa, @NombreArchivo)
     ";
 
-            using (var cmd = new SqlCommand(sql, conn))
+            using (var cmd = new SqlCommand(sql, conn, tx))
             {
                 cmd.Parameters.AddWithValue("@Fecha", DateTime.Now);
                 cmd.Parameters.AddWithValue("@IdUsuario", usuario.Id);

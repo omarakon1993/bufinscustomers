@@ -115,7 +115,8 @@
       "PowerShell(\\(Get-Content -Path \"C:\\\\Users\\\\omara\\\\Downloads\\\\TablasIni.sql\" -Encoding UTF8 | Select-Object -Skip 60 -First 21\\) -join \"`n\")",
       "PowerShell(\\(Get-Content -Path \"C:\\\\Users\\\\omara\\\\Downloads\\\\TablasIni.sql\" -Encoding UTF8 | Select-Object -Skip 87 -First 21\\) -join \"`n\")",
       "PowerShell(\\(Get-Content -Path \"C:\\\\Users\\\\omara\\\\Downloads\\\\TablasIni.sql\" -Encoding UTF8 | Select-Object -Skip 114 -First 21\\) -join \"`n\")",
-      "Bash(ó)"
+      "Bash(ó)",
+      "PowerShell(Select-String -Path \"C:\\\\Users\\\\omara\\\\OneDrive\\\\Omar Akon Personal\\\\Proyectos OAG\\\\Bufins Web\\\\Bufins principal web\\\\bufinscustomers\\\\App_GlobalResources\\\\Strings.resx\" -Pattern \"<data name=\" | Select-Object -Last 6 | ForEach-Object { $_.Line.Trim\\(\\) })"
     ],
     "deny": [],
     "ask": []

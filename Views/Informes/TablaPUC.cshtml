@@ -1,0 +1,328 @@
+@{
+    ViewBag.Title = Resources.Strings.PUC_PageTitle;
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
+
+<div class="container-fluid px-4">
+    <!-- Header -->
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-book-open powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.PUC_PageTitle</h1>
+        </div>
+    </div>
+
+    <!-- Mensajes -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle mr-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle mr-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span></button>
+        </div>
+    }
+
+    <!-- Filtros -->
+    <div class="filter-card">
+        <h3 class="filter-card-title">
+            <i class="fas fa-filter"></i>
+            @Resources.Strings.Common_FiltrosConsulta
+        </h3>
+
+        <form id="formFiltros">
+            <div class="filter-section">
+                <div class="row">
+                    <!-- Tipo -->
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="selectTipo">
+                                <i class="fas fa-tag"></i>
+                                @Resources.Strings.PUC_LabelTipo
+                            </label>
+                            <select id="selectTipo" class="form-control">
+                                <option value="">@Resources.Strings.Common_Todos</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Largo -->
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="selectLargo">
+                                <i class="fas fa-ruler"></i>
+                                @Resources.Strings.PUC_LabelLargo
+                            </label>
+                            <select id="selectLargo" class="form-control">
+                                <option value="">@Resources.Strings.Common_Todos</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Cuenta -->
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="txtCuenta">
+                                <i class="fas fa-hashtag"></i>
+                                @Resources.Strings.PUC_LabelCuenta
+                            </label>
+                            <input type="text" id="txtCuenta" class="form-control"
+                                   placeholder="@Resources.Strings.PUC_PlaceholderCuenta" autocomplete="off" />
+                        </div>
+                    </div>
+
+                    <!-- Nombre -->
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="txtNombre">
+                                <i class="fas fa-search"></i>
+                                @Resources.Strings.PUC_LabelNombre
+                            </label>
+                            <input type="text" id="txtNombre" class="form-control"
+                                   placeholder="@Resources.Strings.PUC_PlaceholderNombre" autocomplete="off" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="btn-group-actions">
+                <button type="button" id="btnConsultar" class="btn btn-modern-gradient">
+                    <i class="fas fa-search mr-2"></i>@Resources.Strings.Common_Consultar
+                </button>
+                <button type="button" id="btnLimpiar" class="btn btn-modern-secondary">
+                    <i class="fas fa-eraser mr-2"></i>@Resources.Strings.Common_Limpiar
+                </button>
+                <button type="button" id="btnExportar" class="btn btn-modern-success" style="display:none;">
+                    <i class="fas fa-file-excel mr-2"></i>@Resources.Strings.Common_ExportarExcel
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Spinner -->
+    <div id="loadingSpinner" class="loading-spinner" style="display:none;">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>@Resources.Strings.Common_ConsultandoDatos</p>
+    </div>
+
+    <!-- Resultados -->
+    <div id="resultadosContainer" style="display:none;">
+        <div class="table-container">
+            <div class="table-header">
+                <h5><i class="fas fa-list mr-2"></i>@Resources.Strings.Common_Resultados</h5>
+                <span id="totalRegistros" class="info-badge"></span>
+            </div>
+            <div class="table-wrapper">
+                <table id="tablaPUC" class="data-table">
+                    <thead>
+                        <tr>
+                            <th>@Resources.Strings.PUC_ThCuenta</th>
+                            <th>@Resources.Strings.PUC_ThNombre</th>
+                            <th>@Resources.Strings.PUC_ThLargo</th>
+                            <th>@Resources.Strings.PUC_ThTipo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaBody"></tbody>
+                </table>
+            </div>
+            <div id="paginacion" class="pagination-controls"></div>
+        </div>
+    </div>
+
+    <!-- Sin datos -->
+    <div id="noDataMessage" class="no-data-message" style="display:none;">
+        <i class="fas fa-inbox"></i>
+        <h4>@Resources.Strings.Common_NoData</h4>
+        <p>@Resources.Strings.Common_NoDataFiltros</p>
+    </div>
+</div>
+
+@section scripts {
+<script>
+    var _pucMsg = {
+        todos:          '@Resources.Strings.Common_Todos',
+        registrosPag:   '@Html.Raw(Resources.Strings.Common_RegistrosPag)',
+        errorConexion:  '@Html.Raw(Resources.Strings.PUC_JS_ErrorConexion)',
+        exportando:     '@Resources.Strings.Common_JS_ExportandoExcel',
+        generandoExcel: '@Html.Raw(Resources.Strings.Common_JS_GenerandoExcel)',
+        noResultados:   '@Html.Raw(Resources.Strings.Common_Select2NoResults)',
+        buscando:       '@Html.Raw(Resources.Strings.Common_Select2Searching)'
+    };
+</script>
+<script>
+    $(document).ready(function () {
+        var datosActuales = null;
+        var filtrosActuales = null;
+        var paginaActual = 1;
+        var registrosPorPagina = 50;
+
+        var s2lang = {
+            noResults:  function () { return _pucMsg.noResultados; },
+            searching:  function () { return _pucMsg.buscando; }
+        };
+
+        // Cargar tipos y largos al inicio
+        $.get('@Url.Action("ObtenerTipos", "TablaPUC")', function (r) {
+            if (r.success && r.tipos) {
+                $.each(r.tipos, function (i, t) {
+                    $('#selectTipo').append($('<option>').val(t).text(t));
+                });
+            }
+        });
+
+        $.get('@Url.Action("ObtenerLargos", "TablaPUC")', function (r) {
+            if (r.success && r.largos) {
+                $.each(r.largos, function (i, l) {
+                    $('#selectLargo').append($('<option>').val(l).text(l));
+                });
+            }
+        });
+
+        // Consultar
+        $('#btnConsultar').on('click', consultar);
+
+        function consultar() {
+            filtrosActuales = {
+                Tipo:   $('#selectTipo').val()  || null,
+                Largo:  $('#selectLargo').val() || null,
+                Cuenta: $('#txtCuenta').val().trim() || null,
+                Nombre: $('#txtNombre').val().trim() || null
+            };
+
+            $('#loadingSpinner').show();
+            ocultarResultados();
+
+            $.ajax({
+                url:  '@Url.Action("ConsultarDatos", "TablaPUC")',
+                type: 'POST',
+                data: filtrosActuales,
+                success: function (r) {
+                    $('#loadingSpinner').hide();
+                    if (r.success) {
+                        datosActuales = r;
+                        paginaActual = 1;
+                        if (r.totalRegistros > 0) {
+                            renderTabla();
+                            $('#resultadosContainer').show();
+                            $('#btnExportar').show();
+                        } else {
+                            $('#noDataMessage').show();
+                        }
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Error', text: r.message || _pucMsg.errorConexion });
+                    }
+                },
+                error: function () {
+                    $('#loadingSpinner').hide();
+                    Swal.fire({ icon: 'error', title: 'Error', text: _pucMsg.errorConexion });
+                }
+            });
+        }
+
+        function renderTabla() {
+            var body = $('#tablaBody');
+            body.empty();
+
+            var total = datosActuales.datos.length;
+            var totalPaginas = Math.ceil(total / registrosPorPagina);
+            var inicio = (paginaActual - 1) * registrosPorPagina;
+            var fin    = Math.min(inicio + registrosPorPagina, total);
+
+            for (var i = inicio; i < fin; i++) {
+                var d = datosActuales.datos[i];
+                var row = $('<tr>');
+                row.append($('<td>').text(d.Cuenta || ''));
+                row.append($('<td>').text(d.Nombre || ''));
+                row.append($('<td style="text-align:center;">').text(d.Largo || ''));
+                row.append($('<td>').text(d.Tipo || ''));
+                body.append(row);
+            }
+
+            var pagLabel = _pucMsg.registrosPag + ' ' + paginaActual + '/' + totalPaginas;
+            $('#totalRegistros').text(total + ' | ' + pagLabel);
+            crearPaginacion(totalPaginas);
+        }
+
+        function crearPaginacion(totalPaginas) {
+            var paginacion = $('#paginacion');
+            paginacion.empty();
+            if (totalPaginas <= 1) return;
+
+            paginacion.append(
+                $('<button>').addClass('btn-pagination').html('<i class="fas fa-chevron-left"></i>')
+                    .prop('disabled', paginaActual === 1)
+                    .on('click', function () { if (paginaActual > 1) { paginaActual--; renderTabla(); } })
+            );
+
+            var ini = Math.max(1, paginaActual - 2);
+            var fin = Math.min(totalPaginas, paginaActual + 2);
+
+            if (ini > 1) {
+                paginacion.append($('<button>').addClass('btn-pagination').text('1').on('click', function () { paginaActual = 1; renderTabla(); }));
+                if (ini > 2) paginacion.append($('<span>').addClass('pagination-dots').text('...'));
+            }
+
+            for (var i = ini; i <= fin; i++) {
+                (function (p) {
+                    var btn = $('<button>').addClass('btn-pagination').text(p).on('click', function () { paginaActual = p; renderTabla(); });
+                    if (p === paginaActual) btn.addClass('active');
+                    paginacion.append(btn);
+                })(i);
+            }
+
+            if (fin < totalPaginas) {
+                if (fin < totalPaginas - 1) paginacion.append($('<span>').addClass('pagination-dots').text('...'));
+                paginacion.append($('<button>').addClass('btn-pagination').text(totalPaginas).on('click', function () { paginaActual = totalPaginas; renderTabla(); }));
+            }
+
+            paginacion.append(
+                $('<button>').addClass('btn-pagination').html('<i class="fas fa-chevron-right"></i>')
+                    .prop('disabled', paginaActual === totalPaginas)
+                    .on('click', function () { if (paginaActual < totalPaginas) { paginaActual++; renderTabla(); } })
+            );
+        }
+
+        function ocultarResultados() {
+            $('#resultadosContainer').hide();
+            $('#noDataMessage').hide();
+            $('#btnExportar').hide();
+            datosActuales = null;
+        }
+
+        // Limpiar
+        $('#btnLimpiar').on('click', function () {
+            $('#selectTipo').val('').trigger('change');
+            $('#selectLargo').val('').trigger('change');
+            $('#txtCuenta').val('');
+            $('#txtNombre').val('');
+            ocultarResultados();
+        });
+
+        // Exportar
+        $('#btnExportar').on('click', function () {
+            if (!filtrosActuales) return;
+            var form = $('<form>', { method: 'POST', action: '@Url.Action("ExportarExcel", "TablaPUC")' });
+            $.each(filtrosActuales, function (k, v) {
+                if (v) form.append($('<input>', { type: 'hidden', name: k, value: v }));
+            });
+            $('body').append(form);
+            form.submit();
+            form.remove();
+            Swal.fire({ icon: 'success', title: _pucMsg.exportando, text: _pucMsg.generandoExcel, timer: 2000, showConfirmButton: false });
+        });
+
+        // Select2
+        $('#selectTipo').select2({ placeholder: _pucMsg.todos, allowClear: true, width: '100%', language: s2lang });
+        $('#selectLargo').select2({ placeholder: _pucMsg.todos, allowClear: true, width: '100%', language: s2lang });
+    });
+</script>
+<script src="~/Assets/js/select2/select2.min.js"></script>
+}

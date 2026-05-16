@@ -141,6 +141,12 @@ namespace bufinscustomers.Controllers
                     return Json(new { success = false, message = "El a�o de ejecuci�n debe estar entre 2000 y 2100" });
                 }
 
+                var configActual = _configuracionService.ObtenerConfiguracionPorEmpresa(configuracion.IdEmpresa);
+                if (configActual != null && configActual.AnioEjecucion >= 2000 && configActual.AnioEjecucion != configuracion.AnioEjecucion)
+                {
+                    return Json(new { success = false, message = $"No puede cambiar el a�o de ejecuci�n directamente (actual: {configActual.AnioEjecucion}). Use el bot�n 'Cerrar a�o de ejecuci�n' para archivar los datos actuales y asignar el nuevo a�o." });
+                }
+
                 if (string.IsNullOrWhiteSpace(configuracion.Moneda))
                 {
                     return Json(new { success = false, message = "Debe seleccionar una moneda" });
@@ -304,6 +310,149 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        #endregion
+
+        #region Cerrar Año de Ejecución
+
+        [HttpPost]
+        public JsonResult CerrarAnioEjecucion(int idEmpresa, int nuevoAnio)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (usuario == null)
+                return Json(new { success = false, message = "Sesión no válida." });
+
+            if (!UsuarioSesionHelper.EsSuperAdmin() && usuario.IdEmpresa != idEmpresa)
+                return Json(new { success = false, message = "No tiene permisos para esta operación." });
+
+            var config = _configuracionService.ObtenerConfiguracionPorEmpresa(idEmpresa);
+            if (config == null)
+                return Json(new { success = false, message = "La empresa no tiene configuración creada." });
+
+            int anioActual = config.AnioEjecucion;
+
+            if (nuevoAnio < 2000 || nuevoAnio > 2100)
+                return Json(new { success = false, message = "El nuevo año debe estar entre 2000 y 2100." });
+
+            if (nuevoAnio == anioActual)
+                return Json(new { success = false, message = $"El nuevo año ({nuevoAnio}) es igual al año actual de ejecución." });
+
+            bool yaEsHistorico = config.AnosHistoricos?.Any(a => a.NombreAno?.Trim() == nuevoAnio.ToString()) ?? false;
+            if (yaEsHistorico)
+                return Json(new { success = false, message = $"El año {nuevoAnio} ya está registrado como año histórico." });
+
+            var tablasIni = new[]
+            {
+                "Ini_BalancePrueba", "Ini_CteYnoCte", "Ini_EjecPCH", "Ini_PCH",
+                "Ini_PptoPYG", "Ini_PptoPYGConAjuste", "Ini_PresupuestoBalance",
+                "Ini_PYG", "Ini_PYGDetalladoConAjuste"
+            };
+
+            var tablasZ = new[]
+            {
+                "Z_BalancePrueba", "Z_CteYnoCte", "Z_EjecPCH", "Z_PCH",
+                "Z_PptoPYGDetallado", "Z_PptoPYGDetalladoConAjuste", "Z_PresupuestoBalance",
+                "Z_PYGDetallado", "Z_PYGDetalladoConAjuste"
+            };
+
+            try
+            {
+                using (var conn = new System.Data.SqlClient.SqlConnection(CadenaConexion))
+                {
+                    conn.Open();
+                    using (var tx = conn.BeginTransaction())
+                    {
+                        try
+                        {
+                            // 1. Convertir datos de ejecución → histórico en todas las Ini_
+                            foreach (var tabla in tablasIni)
+                            {
+                                using (var cmd = new System.Data.SqlClient.SqlCommand(
+                                    $"IF OBJECT_ID('{tabla}') IS NOT NULL UPDATE [dbo].[{tabla}] SET Historico_Log = 1 WHERE IdEmpresa_Log = @IdEmpresa AND Historico_Log = 0",
+                                    conn, tx))
+                                {
+                                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+
+                            // 2. Limpiar tablas Z_ de esa empresa
+                            foreach (var tabla in tablasZ)
+                            {
+                                using (var cmd = new System.Data.SqlClient.SqlCommand(
+                                    $"IF OBJECT_ID('{tabla}') IS NOT NULL DELETE FROM [dbo].[{tabla}] WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL",
+                                    conn, tx))
+                                {
+                                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+
+                            // 3. Registrar año anterior como histórico
+                            using (var cmd = new System.Data.SqlClient.SqlCommand("sp_AgregarItemConfiguracion", conn, tx))
+                            {
+                                cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                                cmd.Parameters.AddWithValue("@Tipo", "AnoHistorico");
+                                cmd.Parameters.AddWithValue("@IdConfiguracion", config.Id);
+                                cmd.Parameters.AddWithValue("@Valor", anioActual.ToString());
+                                cmd.Parameters.Add("@Resultado", System.Data.SqlDbType.Bit).Direction = System.Data.ParameterDirection.Output;
+                                cmd.Parameters.Add("@Mensaje", System.Data.SqlDbType.VarChar, 255).Direction = System.Data.ParameterDirection.Output;
+                                cmd.Parameters.Add("@IdInsertado", System.Data.SqlDbType.Int).Direction = System.Data.ParameterDirection.Output;
+                                cmd.ExecuteNonQuery();
+                            }
+
+                            // 4. Actualizar AnioEjecucion al nuevo año
+                            using (var cmd = new System.Data.SqlClient.SqlCommand("sp_GuardarConfiguracionBasica", conn, tx))
+                            {
+                                cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                                cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                                cmd.Parameters.AddWithValue("@AnioEjecucion", nuevoAnio);
+                                cmd.Parameters.AddWithValue("@SignoCreditos", config.SignoCreditos ?? string.Empty);
+                                cmd.Parameters.AddWithValue("@Moneda", config.Moneda);
+                                cmd.Parameters.AddWithValue("@Unidad", config.Unidad);
+                                cmd.Parameters.AddWithValue("@UsuarioModificacion", usuario.Id);
+                                cmd.Parameters.Add("@Resultado", System.Data.SqlDbType.Bit).Direction = System.Data.ParameterDirection.Output;
+                                cmd.Parameters.Add("@Mensaje", System.Data.SqlDbType.VarChar, 255).Direction = System.Data.ParameterDirection.Output;
+                                cmd.ExecuteNonQuery();
+                            }
+
+                            // 5. Registrar en auditoría
+                            using (var cmd = new System.Data.SqlClient.SqlCommand(@"
+                                INSERT INTO dbo.AuditoriaCargues (FechaCargue, IdUsuario, Usuario, IdEmpresa, NombreEmpresa, NombreArchivo)
+                                VALUES (@Fecha, @IdUsuario, @Usuario, @IdEmpresa, @NombreEmpresa, @NombreArchivo)",
+                                conn, tx))
+                            {
+                                cmd.Parameters.AddWithValue("@Fecha", DateTime.Now);
+                                cmd.Parameters.AddWithValue("@IdUsuario", usuario.Id);
+                                cmd.Parameters.AddWithValue("@Usuario", $"{usuario.Nombre} {usuario.Apellidos}".Trim());
+                                cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                                cmd.Parameters.AddWithValue("@NombreEmpresa", config.NombreEmpresa ?? "");
+                                cmd.Parameters.AddWithValue("@NombreArchivo", $"Cierre año {anioActual} a {nuevoAnio}");
+                                cmd.ExecuteNonQuery();
+                            }
+
+                            tx.Commit();
+                        }
+                        catch
+                        {
+                            tx.Rollback();
+                            throw;
+                        }
+                    }
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    message = $"Transición completada. El año {anioActual} quedó archivado como histórico y el nuevo año de ejecución es {nuevoAnio}.",
+                    anioNuevo = nuevoAnio
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error durante la transición: {ex.Message}" });
             }
         }
 

@@ -63,8 +63,29 @@
             }
 
         .badge-custom {
-            font-size: 0.9rem;
-            padding: 5px 10px;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+        }
+
+        /* Tarjetas de pestaña compactas */
+        .card-tab .card-body {
+            padding: 0.55rem 0.3rem;
+        }
+
+        .card-tab .tab-icon {
+            font-size: 1.25rem;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .card-tab .tab-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            line-height: 1.2;
+            display: block;
+            margin-bottom: 0.2rem;
+            word-break: break-word;
+            hyphens: auto;
         }
 
         .btn-group-sm > .btn {
@@ -137,6 +158,37 @@
         .card-header i {
             margin-right: 8px;
         }
+
+        .panel-cierre-anio {
+            background: #fff8e1;
+            border: 1px solid #ffc107;
+            border-left: 5px solid #f59e0b;
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+        }
+
+        .panel-cierre-anio h6 {
+            color: #92400e;
+            font-size: 0.95rem;
+        }
+
+        .panel-cierre-anio p {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 0.75rem;
+        }
+
+        .modal-header-rojo {
+            background: linear-gradient(135deg, #c0392b 0%, #922b21 100%);
+            color: white;
+            padding: 1.1rem 1.5rem;
+            border-radius: 0.3rem 0.3rem 0 0;
+        }
+
+        .lista-efectos li {
+            padding: 3px 0;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -189,7 +241,8 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>@Resources.Strings.CfgEmp_LabelAnio</label>
-                                <input type="number" class="form-control" id="anioEjecucion" min="2000" max="2100" required />
+                                <input type="number" class="form-control" id="anioEjecucion" min="2000" max="2100" required readonly />
+                                <small class="text-muted">@Resources.Strings.CfgEmp_AnioReadonlyNote <em>@Resources.Strings.CfgEmp_Cierre_Btn</em>.</small>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -230,6 +283,25 @@
                             </button>
                         </div>
                     </div>
+
+                    <hr class="my-4">
+
+                    <div class="panel-cierre-anio">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-exclamation-triangle fa-2x text-warning mr-3 mt-1 flex-shrink-0"></i>
+                            <div class="w-100">
+                                <h6 class="font-weight-bold mb-1">
+                                    <i class="fas fa-calendar-times mr-1"></i> @Resources.Strings.CfgEmp_Cierre_Title
+                                </h6>
+                                <p>@Resources.Strings.CfgEmp_Cierre_Desc</p>
+                                <button type="button" class="btn btn-warning btn-sm" id="btnCerrarAnio"
+                                        onclick="abrirModalCerrarAnio()" disabled>
+                                    <i class="fas fa-exchange-alt mr-1"></i>
+                                    @Resources.Strings.CfgEmp_Cierre_Btn <strong id="labelAnioActualBtn">—</strong>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>
@@ -241,74 +313,74 @@
             </div>
             <div class="card-body">
                 <div class="row mb-3">
-                    <div class="col-md col-sm-6 mb-2">
+                    <div class="col-6 col-md-3 col-xl mb-2">
                         <div class="card card-tab" data-section="empresas">
                             <div class="card-body text-center">
-                                <i class="fas fa-building fa-2x mb-2 text-primary"></i>
-                                <h6>@Resources.Strings.CfgEmp_TabEmpresas</h6>
+                                <i class="fas fa-building tab-icon text-primary"></i>
+                                <span class="tab-label">@Resources.Strings.CfgEmp_TabEmpresas</span>
                                 <span class="badge badge-primary badge-custom" id="countEmpresas">0</span>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md col-sm-6 mb-2">
+                    <div class="col-6 col-md-3 col-xl mb-2">
                         <div class="card card-tab" data-section="paises">
                             <div class="card-body text-center">
-                                <i class="fas fa-globe fa-2x mb-2 text-info"></i>
-                                <h6>@Resources.Strings.CfgEmp_TabPaises</h6>
+                                <i class="fas fa-globe tab-icon text-info"></i>
+                                <span class="tab-label">@Resources.Strings.CfgEmp_TabPaises</span>
                                 <span class="badge badge-info badge-custom" id="countPaises">0</span>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md col-sm-6 mb-2">
+                    <div class="col-6 col-md-3 col-xl mb-2">
                         <div class="card card-tab" data-section="categorias">
                             <div class="card-body text-center">
-                                <i class="fas fa-tags fa-2x mb-2 text-success"></i>
-                                <h6>@Resources.Strings.CfgEmp_TabCategorias</h6>
+                                <i class="fas fa-tags tab-icon text-success"></i>
+                                <span class="tab-label">@Resources.Strings.CfgEmp_TabCategorias</span>
                                 <span class="badge badge-success badge-custom" id="countCategorias">0</span>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md col-sm-6 mb-2">
+                    <div class="col-6 col-md-3 col-xl mb-2">
                         <div class="card card-tab" data-section="tipos">
                             <div class="card-body text-center">
-                                <i class="fas fa-cube fa-2x mb-2 text-warning"></i>
-                                <h6>@Resources.Strings.CfgEmp_TabTipos</h6>
+                                <i class="fas fa-cube tab-icon text-warning"></i>
+                                <span class="tab-label">@Resources.Strings.CfgEmp_TabTipos</span>
                                 <span class="badge badge-warning badge-custom" id="countTipos">0</span>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md col-sm-6 mb-2">
+                    <div class="col-6 col-md-3 col-xl mb-2">
                         <div class="card card-tab" data-section="lineas">
                             <div class="card-body text-center">
-                                <i class="fas fa-chart-line fa-2x mb-2 text-danger"></i>
-                                <h6>@Resources.Strings.CfgEmp_TabLineas</h6>
+                                <i class="fas fa-chart-line tab-icon text-danger"></i>
+                                <span class="tab-label">@Resources.Strings.CfgEmp_TabLineas</span>
                                 <span class="badge badge-danger badge-custom" id="countLineas">0</span>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md col-sm-6 mb-2">
+                    <div class="col-6 col-md-3 col-xl mb-2">
                         <div class="card card-tab" data-section="ajuste1">
                             <div class="card-body text-center">
-                                <i class="fas fa-sliders fa-2x mb-2 text-secondary"></i>
-                                <h6>@Resources.Strings.CfgEmp_TabAjuste1</h6>
+                                <i class="fas fa-sliders tab-icon text-secondary"></i>
+                                <span class="tab-label">@Resources.Strings.CfgEmp_TabAjuste1</span>
                                 <span class="badge badge-secondary badge-custom" id="countAjuste1">0</span>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md col-sm-6 mb-2">
+                    <div class="col-6 col-md-3 col-xl mb-2">
                         <div class="card card-tab" data-section="ajuste2">
                             <div class="card-body text-center">
-                                <i class="fas fa-sliders fa-2x mb-2 text-dark"></i>
-                                <h6>@Resources.Strings.CfgEmp_TabAjuste2</h6>
+                                <i class="fas fa-sliders tab-icon text-dark"></i>
+                                <span class="tab-label">@Resources.Strings.CfgEmp_TabAjuste2</span>
                                 <span class="badge badge-dark badge-custom" id="countAjuste2">0</span>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md col-sm-6 mb-2">
+                    <div class="col-6 col-md-3 col-xl mb-2">
                         <div class="card card-tab" data-section="anoshistoricos">
                             <div class="card-body text-center">
-                                <i class="fas fa-calendar-alt fa-2x mb-2 text-primary"></i>
-                                <h6>@Resources.Strings.CfgEmp_TabAnosHistoricos</h6>
+                                <i class="fas fa-calendar-alt tab-icon text-primary"></i>
+                                <span class="tab-label">@Resources.Strings.CfgEmp_TabAnosHistoricos</span>
                                 <span class="badge badge-primary badge-custom" id="countAnosHistoricos">0</span>
                             </div>
                         </div>
@@ -442,6 +514,61 @@
                     </div>
                     <div id="listaAnosHistoricos" class="sortable-list"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Transición Año de Ejecución -->
+    <div class="modal fade" id="modalCierreAnio" tabindex="-1" role="dialog"
+         aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+
+                <div class="modal-header-rojo d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle fa-2x mr-3"></i>
+                    <div>
+                        <h5 class="mb-0 font-weight-bold">@Resources.Strings.CfgEmp_Cierre_ModalTitle</h5>
+                        <small style="opacity:.85;">@Resources.Strings.CfgEmp_Cierre_ModalSubtitle</small>
+                    </div>
+                </div>
+
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <strong><i class="fas fa-info-circle mr-1"></i> @Resources.Strings.CfgEmp_Cierre_QueHace</strong>
+                        <ul class="mt-2 mb-0 lista-efectos">
+                            <li>@Html.Raw(Resources.Strings.CfgEmp_Cierre_Li1)</li>
+                            <li>@Html.Raw(Resources.Strings.CfgEmp_Cierre_Li2)</li>
+                            <li>@Html.Raw(Resources.Strings.CfgEmp_Cierre_Li3)</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-danger py-2">
+                        <i class="fas fa-exclamation-circle mr-1"></i>
+                        @Html.Raw(Resources.Strings.CfgEmp_Cierre_AlertDanger)
+                    </div>
+
+                    <div class="form-group mt-3 mb-1">
+                        <label class="font-weight-bold">
+                            <i class="fas fa-calendar-plus mr-1 text-success"></i>
+                            @Resources.Strings.CfgEmp_Cierre_NuevoAnioLabel
+                        </label>
+                        <input type="number" class="form-control" id="inputNuevoAnio"
+                               min="2000" max="2100" placeholder="@Resources.Strings.CfgEmp_Cierre_PlaceholderAnio" style="max-width:200px;" />
+                        <small class="form-text text-muted">
+                            @Resources.Strings.CfgEmp_Cierre_NuevoAnioHelp
+                        </small>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i> @Resources.Strings.Layout_Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="confirmarCierreAnio()">
+                        <i class="fas fa-exchange-alt mr-1"></i> @Resources.Strings.CfgEmp_Cierre_BtnConfirmar
+                    </button>
+                </div>
+
             </div>
         </div>
     </div>
@@ -639,6 +766,12 @@
             cargarLista('AnosHistoricos', config.AnosHistoricos || [], 'NombreAno');
 
             actualizarContadores();
+
+            // Habilitar botón de transición y mostrar el año actual en el panel
+            const anio = config.AnioEjecucion;
+            $('#labelAnioActualBtn').text(anio);
+            $('.lbl-anio-actual').text(anio);
+            $('#btnCerrarAnio').prop('disabled', false);
         }
 
         function cargarLista(tipo, items, propiedad) {
@@ -872,6 +1005,94 @@
                 showConfirmButton: false,
                 timer: timer || 3000,
                 timerProgressBar: true
+            });
+        }
+
+        // ── Transición de año de ejecución ──────────────────────────────────────
+
+        function abrirModalCerrarAnio() {
+            const anioActual = $('#anioEjecucion').val();
+            if (!anioActual) {
+                mostrarAlerta('warning', '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_NecesitaConfig.Replace("'", "\\'"))');
+                return;
+            }
+            $('.lbl-anio-actual').text(anioActual);
+            $('#inputNuevoAnio').val(parseInt(anioActual) + 1);
+            $('#modalCierreAnio').modal('show');
+        }
+
+        function confirmarCierreAnio() {
+            const anioActual = parseInt($('#anioEjecucion').val());
+            const nuevoAnio  = parseInt($('#inputNuevoAnio').val());
+
+            if (!nuevoAnio || nuevoAnio < 2000 || nuevoAnio > 2100) {
+                mostrarAlerta('warning', '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_AnioInvalido.Replace("'", "\\'"))');
+                return;
+            }
+            if (nuevoAnio === anioActual) {
+                mostrarAlerta('warning', '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_AnioIgual.Replace("'", "\\'"))');
+                return;
+            }
+
+            $('#modalCierreAnio').modal('hide');
+
+            Swal.fire({
+                title: '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ConfirmTitle.Replace("'", "\\'"))',
+                html: `@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ConfirmHtmlPart1) <strong>${anioActual}</strong> @Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ConfirmHtmlPart2) <strong>${nuevoAnio}</strong>.<br><br>` +
+                      `<span class="text-danger"><strong>@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ConfirmHtmlPart3)</strong></span>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#c0392b',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fas fa-exchange-alt mr-1"></i> @Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ConfirmBtn.Replace("'", "\\'"))',
+                cancelButtonText: '@Html.Raw(Resources.Strings.Layout_Cancel.Replace("'", "\\'"))'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    ejecutarCierreAnio($('#idEmpresaConfig').val(), nuevoAnio);
+                }
+            });
+        }
+
+        function ejecutarCierreAnio(idEmpresa, nuevoAnio) {
+            Swal.fire({
+                title: '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ProcTitle.Replace("'", "\\'"))',
+                text: '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ProcText.Replace("'", "\\'"))',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: function () { Swal.showLoading(); }
+            });
+
+            $.ajax({
+                url: '/ConfiguracionEmpresa/CerrarAnioEjecucion',
+                type: 'POST',
+                data: { idEmpresa: idEmpresa, nuevoAnio: nuevoAnio },
+                success: function (response) {
+                    Swal.close();
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_OkTitle.Replace("'", "\\'"))',
+                            text: response.message,
+                            confirmButtonText: '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_OkBtn.Replace("'", "\\'"))'
+                        }).then(function () {
+                            cargarConfiguracion();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ErrTitle.Replace("'", "\\'"))',
+                            text: response.message
+                        });
+                    }
+                },
+                error: function () {
+                    Swal.close();
+                    Swal.fire({
+                        icon: 'error',
+                        title: '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ConnErrTitle.Replace("'", "\\'"))',
+                        text: '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ConnErrText.Replace("'", "\\'"))'
+                    });
+                }
             });
         }
     </script>

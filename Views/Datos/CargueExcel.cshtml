@@ -66,33 +66,35 @@
                     @Resources.Strings.Datos_UploadHint3
                 </p>
 
-                <!-- Selector de Empresa -->
-                <div class="form-group mb-3">
-                    <label for="idEmpresaSeleccionada" class="form-label" style="font-weight: 600; font-size: 0.9rem;">@Resources.Strings.Datos_EmpresaLabel</label>
-                    <select class="form-control form-control-sm" id="idEmpresaSeleccionada" name="idEmpresaSeleccionada" required style="max-width: 400px;">
-                        <option value="0">@Resources.Strings.Datos_SelectEmpresa</option>
-                        @if (ViewBag.Empresas != null)
-                        {
-                            foreach (var empresa in ViewBag.Empresas)
+                <div class="row">
+                    <!-- Selector de Empresa -->
+                    <div class="col-md-6 form-group mb-3">
+                        <label for="idEmpresaSeleccionada" class="form-label" style="font-weight: 600; font-size: 0.9rem;">@Resources.Strings.Datos_EmpresaLabel</label>
+                        <select class="form-control form-control-sm" id="idEmpresaSeleccionada" name="idEmpresaSeleccionada" required>
+                            <option value="0">@Resources.Strings.Datos_SelectEmpresa</option>
+                            @if (ViewBag.Empresas != null)
                             {
-                                <option value="@empresa.Id">@empresa.Nombre</option>
+                                foreach (var empresa in ViewBag.Empresas)
+                                {
+                                    <option value="@empresa.Id">@empresa.Nombre</option>
+                                }
                             }
-                        }
-                    </select>
-                </div>
+                        </select>
+                    </div>
 
-                <!-- Selector de Año -->
-                <div class="form-group mb-3" id="divSelectAnio" style="display: none;">
-                    <label for="selectAnio" class="form-label" style="font-weight: 600; font-size: 0.9rem;">
-                        <i class="fas fa-calendar-alt mr-1" style="color: #6366F1;"></i>
-                        @Resources.Strings.Datos_AnioLabel
-                    </label>
-                    <select class="form-control form-control-sm" id="selectAnio" name="anioSeleccionado" style="max-width: 400px;">
-                        <option value="">@Resources.Strings.Datos_JS_SelectAnio</option>
-                    </select>
-                    <input type="hidden" name="modoSeleccionado" id="modoSeleccionado" value="" />
-                    <div id="loadingAnios" style="display: none; font-size: 0.82rem; color: #6366F1; margin-top: 0.35rem;">
-                        <i class="fas fa-spinner fa-spin mr-1"></i>@Resources.Strings.Datos_CargandoAnios
+                    <!-- Selector de Año -->
+                    <div class="col-md-6 form-group mb-3" id="divSelectAnio" style="display: none;">
+                        <label for="selectAnio" class="form-label" style="font-weight: 600; font-size: 0.9rem;">
+                            <i class="fas fa-calendar-alt mr-1" style="color: #6366F1;"></i>
+                            @Resources.Strings.Datos_AnioLabel
+                        </label>
+                        <select class="form-control form-control-sm" id="selectAnio" name="anioSeleccionado">
+                            <option value="">@Resources.Strings.Datos_JS_SelectAnio</option>
+                        </select>
+                        <input type="hidden" name="modoSeleccionado" id="modoSeleccionado" value="" />
+                        <div id="loadingAnios" style="display: none; font-size: 0.82rem; color: #6366F1; margin-top: 0.35rem;">
+                            <i class="fas fa-spinner fa-spin mr-1"></i>@Resources.Strings.Datos_CargandoAnios
+                        </div>
                     </div>
                 </div>
 
@@ -611,23 +613,6 @@
                                     <div class="card-body" style="padding: 12px 18px;">
                                         Las cuentas de Z_EjecPCH deben estar a de 4 a 6 d&iacute;gitos del PUC.
                                         Las cuentas de Z_EjecPCH equivalen a los ahorros ejecutados.
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Z_TablaPUC -->
-                            <div class="card shadow-sm mb-2">
-                                <div class="card-header p-0" id="headingTablaPUC">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-accordion w-100 text-white text-left"
-                                                data-toggle="collapse" data-target="#collapseTablaPUC" aria-expanded="false" aria-controls="collapseTablaPUC">
-                                            <i class="fas fa-bookmark mr-2"></i> Z_TablaPUC
-                                        </button>
-                                    </h5>
-                                </div>
-                                <div id="collapseTablaPUC" class="collapse" aria-labelledby="headingTablaPUC" data-parent="#accordionPestanas">
-                                    <div class="card-body" style="padding: 12px 18px;">
-                                        Este es el PUC de Colombia.
                                     </div>
                                 </div>
                             </div>
