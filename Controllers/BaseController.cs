@@ -68,5 +68,9 @@ namespace bufinscustomers.Controllers
         {
             TempData["InfoMessage"] = mensaje;
         }
+
+        // Accede a App_GlobalResources respetando la cultura actual del hilo.
+        protected string R(string key) =>
+            System.Web.HttpContext.GetGlobalResourceObject("Strings", key)?.ToString() ?? key;
     }
 }

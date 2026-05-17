@@ -254,5 +254,85 @@ Currently integrated in `InformeTablasDatosController.ConsultarConIA()` — re-q
 - For permission checks, use `UsuarioSesionHelper.TienePermiso("CODE")` inline (the `[RequierePermiso]` attribute exists but is not currently used by any controller)
 - Excel templates stored in `Assets/Plantillas/`
 - Connection string key is `"DefaultConnection"` in Web.config
-- File upload limit: `maxRequestLength="1048576"` (1 GB) and `executionTimeout="3600"` (1 hour) — configured for large Excel imports
+- File upload limit: `maxRequestLength="102400"` (100 MB) and `executionTimeout="3600"` (1 hour). IIS-level limit `maxAllowedContentLength="104857600"` (100 MB) in `system.webServer`.
 - EPPlus 8 requires license call at startup: `ExcelPackage.License.SetNonCommercialOrganization("bufinscustomers")` in `Global.asax.cs`
+
+## Internationalization (i18n) — MANDATORY
+
+The app supports two languages: **es-CO** (default) and **en-US**. Every user-visible string added anywhere in the project MUST be added to both resource files.
+
+### Resource files
+- `App_GlobalResources/Strings.resx` — Spanish (es-CO, default)
+- `App_GlobalResources/Strings.en-US.resx` — English
+
+Both files must always stay in sync: every key present in one must exist in the other.
+
+### Where each layer reads resources
+
+| Layer | How to read |
+|-------|-------------|
+| Razor views (`.cshtml`) | `@Resources.Strings.KeyName` |
+| JS inside Razor views | Inject as a Razor variable: `var x = '@Resources.Strings.KeyName';` — never hardcode UI strings in JS |
+| C# controllers | `R("KeyName")` — protected helper in `BaseController` that calls `System.Web.HttpContext.GetGlobalResourceObject("Strings", key)` and respects the active thread culture |
+| C# services / helpers | Do NOT read resources from services. Pass already-translated strings from the controller layer, or keep service-level messages generic (error codes, not sentences). |
+
+### Rules
+1. **Never hardcode a user-visible string** in views, JS, or controllers. Always use a resource key.
+2. Key naming convention: `{Area}_{Element}` — e.g. `Notif_Titulo`, `Datos_JS_Procesando`, `Layout_Guest`.
+3. Group keys with an XML comment in both resx files: `<!-- NOTIFICACIONES -->` / `<!-- NOTIFICATIONS -->`.
+4. When adding a new feature, add all its strings to both files before implementing the UI.
+
+## Internal Notification System — MANDATORY
+
+The app has a persistent bell-icon notification center visible in the top navbar for every authenticated user.
+
+### Architecture
+- **DB table:** `Notificaciones` (`Id`, `IdUsuario`, `Titulo`, `Mensaje`, `Tipo`, `Leida`, `FechaCreacion`). Auto-cleanup: rows older than 30 days are deleted on insert.
+- **Service:** `NotificacionesService` (`Services/NotificacionesService.cs`) — `Crear(idUsuario, titulo, mensaje, tipo)`. Swallows all exceptions so it never breaks the main flow.
+- **Controller:** `NotificacionesController` (`Controllers/NotificacionesController.cs`) — endpoints `GET /Notificaciones/Recientes`, `POST /Notificaciones/MarcarLeida`, `POST /Notificaciones/MarcarTodasLeidas`, `POST /Notificaciones/Eliminar`.
+- **Frontend:** Bell icon with badge in `_Layout.cshtml`. Polls `GET /Notificaciones/Recientes` every 30 s. JS functions: `notifPushLocal(tipo, titulo, mensaje)` for transient client-side alerts (no DB).
+
+### Notification types
+| `Tipo` | Color | Icon | Use for |
+|--------|-------|------|---------|
+| `"success"` | green | `fa-check-circle` | Completed operations |
+| `"info"` | purple | `fa-info-circle` | Informational events |
+| `"warning"` | amber | `fa-exclamation-triangle` | Alerts requiring attention |
+| `"error"` | red | `fa-times-circle` | Failed operations |
+
+### Active notifications (complete list — keep updated)
+
+| Event | Type | Controller | Resource key |
+|-------|------|-----------|-------------|
+| Excel upload success | `success` | `DatosController` | `Notif_CargueCompletado` |
+| Excel upload error | `error` | `DatosController` | `Notif_ErrorCargue` |
+| Model executed (success) | `success` | `DatosController` | `Notif_ModeloEjecutado` |
+| Model error | `error` | `DatosController` | `Notif_ErrorModelo` |
+| Company created | `success` | `EmpresaController` | `Notif_EmpresaCreada` |
+| Company deleted | `warning` | `EmpresaController` | `Notif_EmpresaEliminada` |
+| User created | `success` | `UsuarioController` | `Notif_UsuarioCreado` |
+| User deleted | `warning` | `UsuarioController` | `Notif_UsuarioEliminado` |
+| Report (PBI) created | `success` | `ReportesController` | `Notif_ReporteCreado` |
+| Report (PBI) deleted | `warning` | `ReportesController` | `Notif_ReporteEliminado` |
+| Session expiring (client-side) | `warning` | `_Layout.cshtml` (JS only) | `Notif_SesionExpiraTitulo` |
+
+### When to create a notification (server-side)
+Call `new NotificacionesService().Crear(usuario.Id, R("KeyName"), mensaje, tipo)` from a controller after **any operation that takes noticeable time or has a meaningful outcome**:
+- Successful or failed Excel uploads
+- Model execution (success or error)
+- Long-running exports or imports
+- Any batch operation that completes asynchronously or takes > 2 s
+- Creation or deletion of significant entities (companies, users, reports)
+
+**Do NOT add notifications for:** edits to existing records (name changes, config updates), read-only operations, or any action where the flash message on the same page is already sufficient feedback.
+
+### When to push a client-side notification (no DB)
+Use `notifPushLocal('tipo', _notifStr.keyTitulo, _notifStr.keyMsg)` in JS for transient events that don't need persistence:
+- Session about to expire
+- Network errors on AJAX calls
+- Real-time warnings triggered from the browser
+
+### Titles and messages must be bilingual
+- Notification titles from controllers: use `R("Notif_KeyName")` so they respect the user's active language.
+- Notification titles from JS: use `_notifStr.keyName` variables injected via Razor.
+- Add both `es-CO` and `en-US` entries to the resx files for every new notification title.

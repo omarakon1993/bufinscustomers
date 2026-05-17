@@ -202,9 +202,15 @@ namespace bufinscustomers.Controllers
                         if (leido)
                         {
                             if (codMessage == 1)
+                            {
                                 SetSuccessMessage(mensaje);
+                                new NotificacionesService().Crear(usuario.Id, R("Notif_ModeloEjecutado"), mensaje, "success");
+                            }
                             else
+                            {
                                 SetErrorMessage(mensaje);
+                                new NotificacionesService().Crear(usuario.Id, R("Notif_ErrorModelo"), mensaje, "error");
+                            }
                         }
                         else
                         {
@@ -532,9 +538,17 @@ namespace bufinscustomers.Controllers
                         TempData["NombreArchivo"] = nombreArchivoOriginal;
 
                         if (resultado.Exito)
+                        {
                             SetSuccessMessage(resultado.Mensaje);
+                            if (usuarioValidacion != null)
+                                new NotificacionesService().Crear(usuarioValidacion.Id, R("Notif_CargueCompletado"), resultado.Mensaje, "success");
+                        }
                         else
+                        {
                             SetErrorMessage(resultado.Mensaje);
+                            if (usuarioValidacion != null)
+                                new NotificacionesService().Crear(usuarioValidacion.Id, R("Notif_ErrorCargue"), resultado.Mensaje, "error");
+                        }
                     }
             }
             catch (Exception ex)

@@ -116,6 +116,7 @@ namespace bufinscustomers.Controllers
             if (registrado)
             {
                 TempData["SuccessMessage"] = "Reporte creado correctamente.";
+                new NotificacionesService().Crear(usuario?.Id ?? 0, R("Notif_ReporteCreado"), reporte.Nombre, "success");
                 return RedirectToAction("MaestroReportes");
             }
             else
@@ -180,7 +181,10 @@ namespace bufinscustomers.Controllers
             bool eliminado = _reportesService.EliminarReporte(idReporte);
 
             if (eliminado)
+            {
                 TempData["SuccessMessage"] = "Reporte eliminado correctamente.";
+                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_ReporteEliminado"), null, "warning");
+            }
             else
                 TempData["ErrorMessage"] = "Error al eliminar el reporte.";
 

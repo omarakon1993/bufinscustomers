@@ -44,6 +44,7 @@ namespace bufinscustomers.Controllers
             {
                 EmpresasViewBagFilter.Invalidar();
                 SetSuccessMessage("Empresa creada correctamente.");
+                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_EmpresaCreada"), empresa.Nombre, "success");
             }
             else
                 SetErrorMessage(mensaje);
@@ -94,6 +95,7 @@ namespace bufinscustomers.Controllers
             {
                 EmpresasViewBagFilter.Invalidar();
                 SetSuccessMessage("Empresa eliminada correctamente.");
+                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_EmpresaEliminada"), null, "warning");
             }
             else
                 SetErrorMessage("Error al eliminar la empresa.");

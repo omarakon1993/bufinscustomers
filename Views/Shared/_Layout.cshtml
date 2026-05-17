@@ -168,6 +168,55 @@
                                 </div>
                             </div>
                         </li>
+                        <!-- Campanita de notificaciones -->
+                        <li class="nav-item dropdown no-arrow" id="notifBellItem" style="display:none;">
+                            <a class="nav-link position-relative" href="#" id="notifDropdown" role="button"
+                               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                               title="@Resources.Strings.Notif_Titulo"
+                               style="padding:0.45rem 0.8rem; border-radius:8px; transition:background .15s;"
+                               onmouseover="this.style.background='rgba(255,255,255,0.1)'"
+                               onmouseout="this.style.background='transparent'">
+                                <i class="fas fa-bell" style="color:rgba(255,255,255,0.9); font-size:1.05rem;"></i>
+                                <span id="notifBadge"
+                                      style="display:none; position:absolute; top:3px; right:3px; background:#ef4444; color:white; font-size:0.58rem; font-weight:700; min-width:17px; height:17px; border-radius:9px; line-height:17px; padding:0 4px; text-align:center; border:2px solid transparent; box-shadow:0 1px 4px rgba(239,68,68,0.5);">0</span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right animated--grow-in"
+                                 id="notifPanel"
+                                 style="width:380px; max-height:500px; overflow:hidden; padding:0; border:1px solid rgba(30,27,75,0.1); border-radius:14px; box-shadow:0 20px 60px rgba(30,27,75,0.18), 0 4px 16px rgba(0,0,0,0.07);">
+                                <!-- Cabecera morado oscuro corporativo -->
+                                <div style="background:#1E1B4B; padding:14px 18px; color:white; display:flex; justify-content:space-between; align-items:center; border-radius:14px 14px 0 0;">
+                                    <div style="display:flex; align-items:center; gap:9px;">
+                                        <div style="width:30px; height:30px; border-radius:8px; background:rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                            <i class="fas fa-bell" style="font-size:0.78rem;"></i>
+                                        </div>
+                                        <span style="font-weight:700; font-size:0.9rem; letter-spacing:0.01em;">@Resources.Strings.Notif_Titulo</span>
+                                    </div>
+                                    <div style="display:flex;gap:6px;">
+                                        <button onclick="notifMarcarTodas(event)" title="@Resources.Strings.Notif_MarcarLeidas"
+                                                style="color:rgba(255,255,255,0.78);background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);width:30px;height:30px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0;"
+                                                onmouseover="this.style.background='rgba(255,255,255,0.2)'"
+                                                onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                                            <i class="fas fa-check-double" style="font-size:0.72rem;"></i>
+                                        </button>
+                                        <button onclick="notifLimpiarTodas(event)" title="@Resources.Strings.Notif_Limpiar"
+                                                style="color:rgba(255,255,255,0.78);background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);width:30px;height:30px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0;"
+                                                onmouseover="this.style.background='rgba(239,68,68,0.35)';this.style.borderColor='rgba(239,68,68,0.5)'"
+                                                onmouseout="this.style.background='rgba(255,255,255,0.1)';this.style.borderColor='rgba(255,255,255,0.18)'">
+                                            <i class="fas fa-trash-alt" style="font-size:0.68rem;"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- Lista -->
+                                <div id="notifList" style="max-height:400px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#e0d9ff transparent;"></div>
+                                <!-- Estado vacío -->
+                                <div id="notifVacio" style="text-align:center; padding:44px 20px; display:none;">
+                                    <div style="width:54px; height:54px; border-radius:16px; background:#f0eeff; display:flex; align-items:center; justify-content:center; margin:0 auto 14px;">
+                                        <i class="fas fa-bell-slash" style="font-size:1.35rem; color:#a5b4fc;"></i>
+                                    </div>
+                                    <div style="font-size:0.84rem; font-weight:600; color:#4b5563; margin-bottom:4px;">@Resources.Strings.Notif_Vacio</div>
+                                </div>
+                            </div>
+                        </li>
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -633,6 +682,8 @@
         function mostrarAdvertenciaSesion() {
             if (warningShown) return;
             warningShown = true;
+            if (typeof notifPushLocal === 'function')
+                notifPushLocal('warning', _notifStr.sesionTitulo, _notifStr.sesionMsg);
             
             Swal.fire({
                 title: '⏰ Sesión por expirar',
@@ -921,6 +972,171 @@
         // Limpiar timers al salir de la página
         $(window).on('beforeunload', function() {
             limpiarTimersSesion();
+        });
+
+        // ═══════════════════════════════════════
+        // Centro de notificaciones
+        // ═══════════════════════════════════════
+        var _notifStr = {
+            ahoraMismo:       '@Resources.Strings.Notif_AhoraMismo',
+            min:              '@Resources.Strings.Notif_Minutos',
+            h:                '@Resources.Strings.Notif_Horas',
+            d:                '@Resources.Strings.Notif_Dias',
+            sesionTitulo:     '@Resources.Strings.Notif_SesionExpiraTitulo',
+            sesionMsg:        '@Resources.Strings.Notif_SesionExpiraMsg'
+        };
+        var _notifUrl         = '@Url.Action("Recientes",        "Notificaciones")';
+        var _notifLeidaUrl    = '@Url.Action("MarcarLeida",      "Notificaciones")';
+        var _notifTodasUrl    = '@Url.Action("MarcarTodasLeidas","Notificaciones")';
+        var _notifLimpiarUrl  = '@Url.Action("LimpiarTodas",    "Notificaciones")';
+        var _notifElimUrl     = '@Url.Action("Eliminar",         "Notificaciones")';
+        var _notifTimer      = null;
+
+        function notifTiempoRelativo(fechaStr) {
+            var ms;
+            var m = /\/Date\((\d+)/.exec(fechaStr);
+            if (m) { ms = parseInt(m[1]); }
+            else   { ms = new Date(fechaStr).getTime(); }
+            var diff = Date.now() - ms;
+            if (diff <     60000) return _notifStr.ahoraMismo;
+            if (diff <   3600000) return Math.floor(diff / 60000) + ' ' + _notifStr.min;
+            if (diff <  86400000) return Math.floor(diff / 3600000) + _notifStr.h;
+            return Math.floor(diff / 86400000) + _notifStr.d;
+        }
+
+        function notifRenderItem(n) {
+            var iconMap  = { success:'fa-check-circle', info:'fa-info-circle', warning:'fa-exclamation-triangle', error:'fa-times-circle' };
+            var colorMap = { success:'#16a34a', info:'#4F46E5', warning:'#d97706', error:'#dc2626' };
+            var bgMap    = { success:'#f0fdf4', info:'#ede9fe', warning:'#fffbeb', error:'#fef2f2' };
+            var icon  = iconMap[n.Tipo]  || 'fa-bell';
+            var color = colorMap[n.Tipo] || '#4F46E5';
+            var iconBg = bgMap[n.Tipo]   || '#ede9fe';
+            var unread = !n.Leida;
+            var bg     = unread ? '#faf9ff' : '#ffffff';
+            var border = unread ? 'border-left:3px solid #4F46E5;' : 'border-left:3px solid transparent;';
+            var fw     = unread ? '600' : '400';
+            var titleColor = unread ? '#1E1B4B' : '#374151';
+            var msg    = n.Mensaje
+                ? '<div style="font-size:0.76rem;color:#6b7280;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + n.Mensaje + '</div>'
+                : '';
+            var idAttr = n.Id;
+            return '<div class="notif-item" data-id="' + idAttr + '" onclick="notifMarcarLeida(this)"' +
+                   ' onmouseover="if(this.dataset.leida!==\'1\')this.style.background=\'#f3f0ff\';else this.style.background=\'#f9fafb\';"' +
+                   ' onmouseout="this.style.background=\'' + bg + '\';"' +
+                   ' style="display:flex;align-items:flex-start;padding:12px 16px 12px 13px;border-bottom:1px solid #f3f4f6;background:' + bg + ';cursor:pointer;gap:12px;transition:background .15s;' + border + '"' +
+                   ' data-leida="' + (n.Leida ? '1' : '0') + '">' +
+                   '<div style="flex-shrink:0;width:34px;height:34px;border-radius:10px;background:' + iconBg + ';display:flex;align-items:center;justify-content:center;margin-top:1px;">' +
+                   '<i class="fas ' + icon + '" style="color:' + color + ';font-size:0.82rem;"></i></div>' +
+                   '<div style="flex:1;min-width:0;">' +
+                   '<div style="font-weight:' + fw + ';font-size:0.83rem;color:' + titleColor + ';line-height:1.3;">' + n.Titulo + '</div>' +
+                   msg +
+                   '<div style="font-size:0.69rem;color:#9ca3af;margin-top:4px;display:flex;align-items:center;gap:5px;">' +
+                   (unread ? '<span style="width:5px;height:5px;border-radius:50%;background:#4F46E5;display:inline-block;flex-shrink:0;"></span>' : '') +
+                   notifTiempoRelativo(n.FechaCreacion) + '</div>' +
+                   '</div></div>';
+        }
+
+        function notifRefrescar(data) {
+            var badge  = document.getElementById('notifBadge');
+            var list   = document.getElementById('notifList');
+            var vacio  = document.getElementById('notifVacio');
+            var bell   = document.getElementById('notifBellItem');
+
+            if (!badge || !list || !vacio) return;
+            if (bell) bell.style.display = '';   // mostrar campanita tras primer fetch
+
+            if (data.noLeidas > 0) {
+                badge.textContent = data.noLeidas > 9 ? '9+' : data.noLeidas;
+                badge.style.display = '';
+            } else {
+                badge.style.display = 'none';
+            }
+
+            if (!data.items || data.items.length === 0) {
+                list.innerHTML = '';
+                vacio.style.display = '';
+            } else {
+                vacio.style.display = 'none';
+                list.innerHTML = data.items.map(notifRenderItem).join('');
+            }
+        }
+
+        function notifCargar() {
+            $.getJSON(_notifUrl, function(data) { notifRefrescar(data); });
+        }
+
+        function notifMarcarLeida(el) {
+            if ($(el).data('leida') === '1') return;
+            var id = $(el).data('id');
+            var actualizarUI = function() {
+                $(el).css({ 'background': '#ffffff', 'border-left': '3px solid transparent' });
+                $(el).attr('data-leida', '1');
+                $(el).find('[style*="font-weight:600"]').css('font-weight', '400');
+                $(el).find('[style*="font-weight:600"]').css('color', '#374151');
+                $(el).find('[style*="background:#4F46E5"]').remove(); // quita el punto
+                _notifActualizarBadge(-1);
+            };
+            if (typeof id === 'string' && id.indexOf('local_') === 0) {
+                actualizarUI(); return;
+            }
+            $.post(_notifLeidaUrl, { id: id }, function(r) { if (r.success) actualizarUI(); });
+        }
+
+        function notifMarcarTodas(ev) {
+            if (ev) ev.stopPropagation();
+            $.post(_notifTodasUrl, function(r) { if (r.success) notifCargar(); });
+        }
+
+        function notifLimpiarTodas(ev) {
+            if (ev) ev.stopPropagation();
+            Swal.fire({
+                title: '@Html.Raw(Resources.Strings.Notif_LimpiarConfirmTitulo)',
+                text:  '@Html.Raw(Resources.Strings.Notif_LimpiarConfirmMsg)',
+                icon:  'warning',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-trash-alt mr-1"></i> @Html.Raw(Resources.Strings.Notif_LimpiarConfirmBtn)',
+                cancelButtonText:  '<i class="fas fa-times mr-1"></i> @Html.Raw(Resources.Strings.Layout_Close)',
+                confirmButtonColor: '#dc2626',
+                customClass: { confirmButton: 'btn btn-danger btn-sm', cancelButton: 'btn btn-secondary btn-sm' },
+                buttonsStyling: false
+            }).then(function(result) {
+                if (!result.isConfirmed) return;
+                $.post(_notifLimpiarUrl, function(r) {
+                    if (r.success) {
+                        document.getElementById('notifList').innerHTML = '';
+                        document.getElementById('notifVacio').style.display = '';
+                        document.getElementById('notifBadge').style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        function _notifActualizarBadge(delta) {
+            var badge = document.getElementById('notifBadge');
+            if (!badge) return;
+            var cur = parseInt(badge.textContent) || 0;
+            var nuevo = Math.max(0, cur + delta);
+            if (nuevo > 0) { badge.textContent = nuevo > 9 ? '9+' : nuevo; }
+            else           { badge.style.display = 'none'; }
+        }
+
+        // Empujar notificación solo en cliente (sesión por expirar)
+        window.notifPushLocal = function(tipo, titulo, mensaje) {
+            var n = { Id: 'local_' + Date.now(), Tipo: tipo, Titulo: titulo,
+                      Mensaje: mensaje || null, Leida: false, FechaCreacion: '/Date(' + Date.now() + ')/' };
+            var list  = document.getElementById('notifList');
+            var vacio = document.getElementById('notifVacio');
+            if (!list || !vacio) return;
+            vacio.style.display = 'none';
+            list.insertAdjacentHTML('afterbegin', notifRenderItem(n));
+            _notifActualizarBadge(+1);
+        };
+
+        $(document).ready(function() {
+            if (!window.location.pathname.toLowerCase().includes('/acceso/login')) {
+                notifCargar();
+                _notifTimer = setInterval(notifCargar, 30000);
+            }
         });
 
         // Debug: Función global para obtener info de sesión (solo en desarrollo)

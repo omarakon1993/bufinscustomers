@@ -163,6 +163,7 @@ namespace bufinscustomers.Controllers
                 }
 
                 SetSuccessMessage("Usuario eliminado correctamente.");
+                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_UsuarioEliminado"), null, "warning");
             }
             catch (Exception ex)
             {
@@ -356,6 +357,7 @@ namespace bufinscustomers.Controllers
                     }
                 }
                 SetSuccessMessage(mensaje);
+                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_UsuarioCreado"), $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim(), "success");
             }
             else
             {
