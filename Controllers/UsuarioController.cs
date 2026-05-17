@@ -91,26 +91,17 @@ namespace bufinscustomers.Controllers
                             usuario.Admin = reader["Admin"] != DBNull.Value ? (byte?)reader["Admin"] : null;
                             usuario.IdEmpresa = reader["IdEmpresa"] != DBNull.Value ? (int?)reader["IdEmpresa"] : null;
 
-                            // Cargar imagen si existe (verificar que las columnas existan en el resultado)
+                            // Detectar si el usuario tiene imagen (sin cargar el Base64 en memoria)
                             try
                             {
-                                // Verificar si las columnas de imagen existen en el resultado
-                                int imagenBase64Index = reader.GetOrdinal("ImagenBase64");
-                                int tipoImagenIndex = reader.GetOrdinal("TipoImagen");
-
-                                if (reader["ImagenBase64"] != DBNull.Value && reader["TipoImagen"] != DBNull.Value)
+                                reader.GetOrdinal("ImagenBase64"); // valida que la columna existe
+                                if (reader["ImagenBase64"] != DBNull.Value)
                                 {
-                                    usuario.Imagen = new ImagenUsuario
-                                    {
-                                        ImagenBase64 = reader["ImagenBase64"].ToString(),
-                                        TipoImagen = reader["TipoImagen"].ToString(),
-                                        UsuarioId = usuario.Id
-                                    };
+                                    usuario.Imagen = new ImagenUsuario { UsuarioId = usuario.Id };
                                 }
                             }
                             catch (IndexOutOfRangeException)
                             {
-                                // Las columnas de imagen no existen en el SP, continuar sin imagen
                                 usuario.Imagen = null;
                             }
 
@@ -475,30 +466,48 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         public ActionResult CargarImagenUsuario(HttpPostedFileBase ImagenUsuario)
         {
-            var base64Copia = "";
-            var tipoImagenCopia = "";
-
             if (ImagenUsuario != null && ImagenUsuario.ContentLength > 0)
             {
                 var usuarioId = UsuarioSesionHelper.UsuarioActual.Id;
-
-                // Convertir la imagen a base64
-                using (var ms = new MemoryStream())
-                {
-                    ImagenUsuario.InputStream.CopyTo(ms);
-                    var bytes = ms.ToArray();
-                    base64Copia = Convert.ToBase64String(bytes);
-                    tipoImagenCopia = ImagenUsuario.ContentType;
-                }
-
                 GuardarImagenUsuario(usuarioId, ImagenUsuario);
+                return Json(new { success = true, message = "Imagen de usuario actualizada correctamente.", usuarioId });
+            }
+            return Json(new { success = false, message = "Por favor, selecciona una imagen válida." });
+        }
 
-                return Json(new { success = true, message = "Imagen de usuario actualizada correctamente.", tipoImagen = tipoImagenCopia, imagenBase64 = base64Copia });
-            }
-            else
+        [HttpGet]
+        public ActionResult Imagen(int id)
+        {
+            if (UsuarioSesionHelper.UsuarioActual == null)
+                return new HttpStatusCodeResult(System.Net.HttpStatusCode.Unauthorized);
+
+            string base64 = null;
+            string tipoImagen = null;
+
+            using (var cn = new SqlConnection(CadenaConexion))
             {
-                return Json(new { success = false, message = "Por favor, selecciona una imagen válida." });
+                var cmd = new SqlCommand(
+                    "SELECT TOP 1 ImagenBase64, TipoImagen FROM UsuarioImagenes WHERE UsuarioId = @Id ORDER BY Id DESC",
+                    cn);
+                cmd.Parameters.AddWithValue("@Id", id);
+                cn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        base64 = reader["ImagenBase64"] != DBNull.Value ? reader["ImagenBase64"].ToString() : null;
+                        tipoImagen = reader["TipoImagen"] != DBNull.Value ? reader["TipoImagen"].ToString() : null;
+                    }
+                }
             }
+
+            if (string.IsNullOrEmpty(base64) || string.IsNullOrEmpty(tipoImagen))
+                return HttpNotFound();
+
+            var bytes = Convert.FromBase64String(base64);
+            Response.Cache.SetCacheability(HttpCacheability.Private);
+            Response.Cache.SetMaxAge(TimeSpan.FromHours(1));
+            return File(bytes, tipoImagen);
         }
     }
 }

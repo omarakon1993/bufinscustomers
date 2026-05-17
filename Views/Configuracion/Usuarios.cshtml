@@ -259,12 +259,13 @@
 
                             <tr>
                                 <td class="col-img" data-label="Imagen">
-                                    @if (imagenUsuario != null && !string.IsNullOrEmpty(imagenUsuario.ImagenBase64))
+                                    @if (imagenUsuario != null)
                                     {
-                                        <img src="data:@imagenUsuario.TipoImagen;base64,@imagenUsuario.ImagenBase64"
+                                        var imgUrl = Url.Action("Imagen", "Usuario", new { id = usuario.Id });
+                                        <img src="@imgUrl"
                                              alt="Imagen usuario"
                                              class="user-thumbnail"
-                                             onclick="showImageModal('data:@imagenUsuario.TipoImagen;base64,@imagenUsuario.ImagenBase64', '@usuario.Nombre @usuario.Apellidos')" />
+                                             onclick="showImageModal('@imgUrl', '@usuario.Nombre @usuario.Apellidos')" />
                                     }
                                     else
                                     {
@@ -296,7 +297,7 @@
                                         @if (ViewBag.PuedeEditar == true)
                                         {
                                             <button type="button" class="btn btn-primary" title="@Resources.Strings.Usr_TitleEditar" data-toggle="modal" data-target="#editUserModal"
-                                                    onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa', '@usuario.Usuario', '@usuario.Clave', '@(imagenUsuario != null && !string.IsNullOrEmpty(imagenUsuario.ImagenBase64) ? "data:" + imagenUsuario.TipoImagen + ";base64," + imagenUsuario.ImagenBase64 : "")')">
+                                                    onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa', '@usuario.Usuario', '@usuario.Clave', '@(imagenUsuario != null ? Url.Action("Imagen", "Usuario", new { id = usuario.Id }) : "")')">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                         }

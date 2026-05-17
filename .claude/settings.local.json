@@ -116,7 +116,12 @@
       "PowerShell(\\(Get-Content -Path \"C:\\\\Users\\\\omara\\\\Downloads\\\\TablasIni.sql\" -Encoding UTF8 | Select-Object -Skip 87 -First 21\\) -join \"`n\")",
       "PowerShell(\\(Get-Content -Path \"C:\\\\Users\\\\omara\\\\Downloads\\\\TablasIni.sql\" -Encoding UTF8 | Select-Object -Skip 114 -First 21\\) -join \"`n\")",
       "Bash(ó)",
-      "PowerShell(Select-String -Path \"C:\\\\Users\\\\omara\\\\OneDrive\\\\Omar Akon Personal\\\\Proyectos OAG\\\\Bufins Web\\\\Bufins principal web\\\\bufinscustomers\\\\App_GlobalResources\\\\Strings.resx\" -Pattern \"<data name=\" | Select-Object -Last 6 | ForEach-Object { $_.Line.Trim\\(\\) })"
+      "PowerShell(Select-String -Path \"C:\\\\Users\\\\omara\\\\OneDrive\\\\Omar Akon Personal\\\\Proyectos OAG\\\\Bufins Web\\\\Bufins principal web\\\\bufinscustomers\\\\App_GlobalResources\\\\Strings.resx\" -Pattern \"<data name=\" | Select-Object -Last 6 | ForEach-Object { $_.Line.Trim\\(\\) })",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\omara\\\\OneDrive\\\\Omar Akon Personal\\\\Proyectos OAG\\\\Bufins Web\\\\Bufins principal web\\\\bufinscustomers\" -Directory)",
+      "Bash(Select-Object Name)",
+      "PowerShell(Remove-Item *)",
+      "PowerShell(& \"C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\MSBuild\\\\Current\\\\Bin\\\\MSBuild.exe\" \"C:\\\\Users\\\\omara\\\\OneDrive\\\\Omar Akon Personal\\\\Proyectos OAG\\\\Bufins Web\\\\Bufins principal web\\\\bufinscustomers\\\\bufinscustomers.sln\" /p:Configuration=Debug /nologo /verbosity:minimal 2>&1 | Select-Object -Last 15)",
+      "PowerShell(& \"C:\\\\Program Files\\\\Microsoft Visual Studio\\\\18\\\\Community\\\\MSBuild\\\\Current\\\\Bin\\\\MSBuild.exe\" \"C:\\\\Users\\\\omara\\\\OneDrive\\\\Omar Akon Personal\\\\Proyectos OAG\\\\Bufins Web\\\\Bufins principal web\\\\bufinscustomers\\\\bufinscustomers.sln\" /p:Configuration=Debug /nologo /verbosity:minimal 2>&1 | Select-Object -Last 15)"
     ],
     "deny": [],
     "ask": []

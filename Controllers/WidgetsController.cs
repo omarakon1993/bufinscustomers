@@ -3,6 +3,7 @@ using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
 using System;
+using System.Threading.Tasks;
 using System.Web.Mvc;
 
 namespace bufinscustomers.Controllers
@@ -12,17 +13,17 @@ namespace bufinscustomers.Controllers
     {
         private readonly WidgetsService _svc = new WidgetsService();
 
-        public ActionResult Index()
+        public async Task<ActionResult> Index()
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
                 return RedirectToAction("Index", "Home");
 
-            return View("~/Views/Configuracion/Widgets.cshtml", _svc.ObtenerTodas());
+            return View("~/Views/Configuracion/Widgets.cshtml", await _svc.ObtenerTodasAsync());
         }
 
         [HttpPost]
         [ValidateInput(false)]
-        public ActionResult Crear(WidgetTarjeta model)
+        public async Task<ActionResult> Crear(WidgetTarjeta model)
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
                 return RedirectToAction("Index", "Home");
@@ -35,7 +36,7 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                bool ok = _svc.Crear(model);
+                bool ok = await _svc.CrearAsync(model);
                 if (ok) SetSuccessMessage("Tarjeta '" + model.Nombre + "' creada correctamente.");
                 else    SetErrorMessage("No se pudo crear la tarjeta.");
             }
@@ -49,7 +50,7 @@ namespace bufinscustomers.Controllers
 
         [HttpPost]
         [ValidateInput(false)]
-        public ActionResult Editar(WidgetTarjeta model)
+        public async Task<ActionResult> Editar(WidgetTarjeta model)
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
                 return RedirectToAction("Index", "Home");
@@ -62,7 +63,7 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                bool ok = _svc.Editar(model);
+                bool ok = await _svc.EditarAsync(model);
                 if (ok) SetSuccessMessage("Tarjeta '" + model.Nombre + "' actualizada correctamente.");
                 else    SetErrorMessage("No se pudo actualizar la tarjeta.");
             }
@@ -75,14 +76,14 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
-        public ActionResult Eliminar(int id)
+        public async Task<ActionResult> Eliminar(int id)
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
                 return RedirectToAction("Index", "Home");
 
             try
             {
-                bool ok = _svc.Eliminar(id);
+                bool ok = await _svc.EliminarAsync(id);
                 if (ok) SetSuccessMessage("Tarjeta eliminada.");
                 else    SetErrorMessage("No se pudo eliminar la tarjeta.");
             }

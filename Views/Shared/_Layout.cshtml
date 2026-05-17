@@ -205,9 +205,9 @@
                                         <i class="@rolIcono" style="font-size: 0.7rem; margin-right: 4px; color: @rolColor !important;"></i>@rolTexto
                                     </div>
                                 </div>
-                                @if (usuario?.Imagen != null && !string.IsNullOrEmpty(usuario.Imagen.ImagenBase64))
+                                @if (usuario?.Imagen != null)
                                 {
-                                    <img src="data:@usuario.Imagen.TipoImagen;base64,@usuario.Imagen.ImagenBase64"
+                                    <img src="@Url.Action("Imagen", "Usuario", new { id = usuario.Id })"
                                          alt="Imagen de usuario"
                                          class="imgPerfil img-profile rounded-circle"
                                          style="max-width:150px; max-height:150px;" />
@@ -270,9 +270,9 @@
                                 <!-- Foto de perfil centrada arriba -->
                                 <div class="row mb-4">
                                     <div class="col-12 text-center">
-                                        @if (usuario?.Imagen != null && !string.IsNullOrEmpty(usuario.Imagen.ImagenBase64))
+                                        @if (usuario?.Imagen != null)
                                         {
-                                            <img src="data:@usuario.Imagen.TipoImagen;base64,@usuario.Imagen.ImagenBase64"
+                                            <img src="@Url.Action("Imagen", "Usuario", new { id = usuario.Id })"
                                                  alt="Imagen de usuario"
                                                  class="imgPerfil-moderno img-profile rounded-circle shadow-lg" />
                                         }
@@ -564,7 +564,8 @@
                 processData: false,
                 success: function (response) {
                     if (response.success) {
-                        $('.imgPerfil, .imgPerfil-moderno').attr('src', 'data:' + response.tipoImagen + ';base64,' + response.imagenBase64);
+                        var url = '@Url.Action("Imagen", "Usuario", new { id = 0 })'.replace('/0', '/' + response.usuarioId) + '?t=' + Date.now();
+                        $('.imgPerfil, .imgPerfil-moderno').attr('src', url);
                         mensajeDiv.html('<div class="alert alert-success"><i class="fas fa-check-circle"></i>' + response.message + '</div>');
 
                         // Cerrar modal después de 1.5 segundos

@@ -41,7 +41,10 @@ namespace bufinscustomers.Controllers
             bool registrado = _empresaService.CrearEmpresa(empresa, out mensaje);
 
             if (registrado)
+            {
+                EmpresasViewBagFilter.Invalidar();
                 SetSuccessMessage("Empresa creada correctamente.");
+            }
             else
                 SetErrorMessage(mensaje);
 
@@ -65,7 +68,10 @@ namespace bufinscustomers.Controllers
             bool actualizado = _empresaService.EditarEmpresa(empresa, out mensaje);
 
             if (actualizado)
+            {
+                EmpresasViewBagFilter.Invalidar();
                 SetSuccessMessage(mensaje);
+            }
             else
                 SetErrorMessage(mensaje);
 
@@ -85,7 +91,10 @@ namespace bufinscustomers.Controllers
             bool eliminado = _empresaService.EliminarEmpresa(idEmpresa);
 
             if (eliminado)
+            {
+                EmpresasViewBagFilter.Invalidar();
                 SetSuccessMessage("Empresa eliminada correctamente.");
+            }
             else
                 SetErrorMessage("Error al eliminar la empresa.");
 

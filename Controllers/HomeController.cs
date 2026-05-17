@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Data;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 using bufinscustomers.Helpers;
@@ -15,13 +16,13 @@ namespace bufinscustomers.Controllers
     [ValidarSesion]
     public class HomeController : BaseController
     {
-        public ActionResult Index()
+        public async Task<ActionResult> Index()
         {
             var svc      = new WidgetsService();
             var usuario  = UsuarioSesionHelper.UsuarioActual;
             bool esAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
-            var tarjetasConfig = svc.ObtenerActivas();
+            var tarjetasConfig = await svc.ObtenerActivasAsync();
             var vm = new List<WidgetTarjetaViewModel>();
 
             foreach (var t in tarjetasConfig)
@@ -32,9 +33,9 @@ namespace bufinscustomers.Controllers
                 if (!string.IsNullOrWhiteSpace(t.ConsultaSQL))
                 {
                     if (t.Tipo == 1)
-                        item.KpiResultados = svc.EjecutarKpi(t.ConsultaSQL, filtro);
+                        item.KpiResultados = await svc.EjecutarKpiAsync(t.ConsultaSQL, filtro);
                     else if (t.Tipo == 2)
-                        item.GraficoResultados = svc.EjecutarGrafico(t.ConsultaSQL, filtro);
+                        item.GraficoResultados = await svc.EjecutarGraficoAsync(t.ConsultaSQL, filtro);
                 }
                 vm.Add(item);
             }

@@ -2,44 +2,53 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using bufinscustomers.Models;
 
 namespace bufinscustomers.Services
 {
     public class WidgetsService : BaseService
     {
+        // Palabras clave que nunca deben aparecer en una consulta de solo lectura.
+        // Se buscan como palabras completas (word boundary) para evitar falsos positivos.
+        private static readonly Regex _patronPeligroso = new Regex(
+            @"(;|\bEXEC\b|\bEXECUTE\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b|" +
+            @"\bDROP\b|\bCREATE\b|\bALTER\b|\bTRUNCATE\b|\bBULK\b|\bxp_|\bsp_)" ,
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
         private const string SelectCols = @"
             SELECT Id, Nombre, Tipo, Icono, ColorIcono, Orden, Activo,
                    ConsultaSQL, UnidadValor, TipoGrafico, FondoOscuro
             FROM DashboardTarjetas";
 
-        public List<WidgetTarjeta> ObtenerTodas()
+        public async Task<List<WidgetTarjeta>> ObtenerTodasAsync()
         {
             var list = new List<WidgetTarjeta>();
             using (var cn = new SqlConnection(CadenaConexion))
             {
                 var cmd = new SqlCommand(SelectCols + " ORDER BY Orden, Id", cn);
-                cn.Open();
-                using (var r = cmd.ExecuteReader())
-                    while (r.Read()) list.Add(Map(r));
+                await cn.OpenAsync().ConfigureAwait(false);
+                using (var r = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
+                    while (await r.ReadAsync().ConfigureAwait(false)) list.Add(Map(r));
             }
             return list;
         }
 
-        public List<WidgetTarjeta> ObtenerActivas()
+        public async Task<List<WidgetTarjeta>> ObtenerActivasAsync()
         {
             var list = new List<WidgetTarjeta>();
             using (var cn = new SqlConnection(CadenaConexion))
             {
                 var cmd = new SqlCommand(SelectCols + " WHERE Activo = 1 ORDER BY Orden, Id", cn);
-                cn.Open();
-                using (var r = cmd.ExecuteReader())
-                    while (r.Read()) list.Add(Map(r));
+                await cn.OpenAsync().ConfigureAwait(false);
+                using (var r = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
+                    while (await r.ReadAsync().ConfigureAwait(false)) list.Add(Map(r));
             }
             return list;
         }
 
-        public bool Crear(WidgetTarjeta t)
+        public async Task<bool> CrearAsync(WidgetTarjeta t)
         {
             try
             {
@@ -53,15 +62,15 @@ namespace bufinscustomers.Services
                             (@Nombre, @Tipo, @Icono, @ColorIcono, @Orden, @Activo,
                              @ConsultaSQL, @UnidadValor, @TipoGrafico, @FondoOscuro)", cn);
                     AddParams(cmd, t);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
+                    await cn.OpenAsync().ConfigureAwait(false);
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
                 return true;
             }
             catch { return false; }
         }
 
-        public bool Editar(WidgetTarjeta t)
+        public async Task<bool> EditarAsync(WidgetTarjeta t)
         {
             try
             {
@@ -76,15 +85,15 @@ namespace bufinscustomers.Services
                         WHERE Id = @Id", cn);
                     cmd.Parameters.AddWithValue("@Id", t.Id);
                     AddParams(cmd, t);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
+                    await cn.OpenAsync().ConfigureAwait(false);
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
                 return true;
             }
             catch { return false; }
         }
 
-        public bool Eliminar(int id)
+        public async Task<bool> EliminarAsync(int id)
         {
             try
             {
@@ -92,15 +101,15 @@ namespace bufinscustomers.Services
                 {
                     var cmd = new SqlCommand("DELETE FROM DashboardTarjetas WHERE Id = @Id", cn);
                     cmd.Parameters.AddWithValue("@Id", id);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
+                    await cn.OpenAsync().ConfigureAwait(false);
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
                 return true;
             }
             catch { return false; }
         }
 
-        public List<WidgetKpiResultado> EjecutarKpi(string sql, int? idEmpresaFiltro)
+        public async Task<List<WidgetKpiResultado>> EjecutarKpiAsync(string sql, int? idEmpresaFiltro)
         {
             var list = new List<WidgetKpiResultado>();
             if (!EsSelectValido(sql)) return list;
@@ -110,10 +119,12 @@ namespace bufinscustomers.Services
                 using (var cn = new SqlConnection(CadenaConexion))
                 {
                     var cmd = new SqlCommand(sql, cn) { CommandTimeout = 15 };
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
+                    cmd.Parameters.AddWithValue("@IdEmpresa",
+                        idEmpresaFiltro.HasValue ? (object)idEmpresaFiltro.Value : DBNull.Value);
+                    await cn.OpenAsync().ConfigureAwait(false);
+                    using (var r = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
                     {
-                        while (r.Read())
+                        while (await r.ReadAsync().ConfigureAwait(false))
                         {
                             int idEmp = 0;
                             try { idEmp = Convert.ToInt32(r["IdEmpresa"]); } catch { }
@@ -136,7 +147,7 @@ namespace bufinscustomers.Services
             return list;
         }
 
-        public List<WidgetGraficoResultado> EjecutarGrafico(string sql, int? idEmpresaFiltro)
+        public async Task<List<WidgetGraficoResultado>> EjecutarGraficoAsync(string sql, int? idEmpresaFiltro)
         {
             var list = new List<WidgetGraficoResultado>();
             if (!EsSelectValido(sql)) return list;
@@ -146,10 +157,12 @@ namespace bufinscustomers.Services
                 using (var cn = new SqlConnection(CadenaConexion))
                 {
                     var cmd = new SqlCommand(sql, cn) { CommandTimeout = 15 };
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
+                    cmd.Parameters.AddWithValue("@IdEmpresa",
+                        idEmpresaFiltro.HasValue ? (object)idEmpresaFiltro.Value : DBNull.Value);
+                    await cn.OpenAsync().ConfigureAwait(false);
+                    using (var r = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
                     {
-                        while (r.Read())
+                        while (await r.ReadAsync().ConfigureAwait(false))
                         {
                             int idEmp = 0;
                             try { idEmp = Convert.ToInt32(r["IdEmpresa"]); } catch { }
@@ -186,8 +199,17 @@ namespace bufinscustomers.Services
         {
             if (string.IsNullOrWhiteSpace(sql)) return false;
             var t = sql.Trim();
-            return t.StartsWith("SELECT", StringComparison.OrdinalIgnoreCase) ||
-                   t.StartsWith("WITH",   StringComparison.OrdinalIgnoreCase);
+
+            // Solo se permiten consultas SELECT o CTEs (WITH ... SELECT)
+            if (!t.StartsWith("SELECT", StringComparison.OrdinalIgnoreCase) &&
+                !t.StartsWith("WITH",   StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            // Bloquear cualquier keyword peligroso aunque esté dentro de una cadena SELECT válida
+            if (_patronPeligroso.IsMatch(t))
+                return false;
+
+            return true;
         }
 
         private static WidgetTarjeta Map(SqlDataReader r) => new WidgetTarjeta

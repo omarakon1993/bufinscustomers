@@ -209,7 +209,7 @@ namespace bufinscustomers.Helpers
             using (SqlConnection connection = new SqlConnection(cadena))
             {
                 string query = @"
-                SELECT 
+                SELECT
                     u.Id,
                     u.Usuario,
                     u.Clave,
@@ -219,15 +219,9 @@ namespace bufinscustomers.Helpers
                     u.Telefono,
                     u.Admin,
                     u.IdEmpresa,
-                    ui.Id AS ImagenId,
-                    ui.UsuarioId,
-                    ui.ImagenBase64,
-                    ui.TipoImagen
+                    (SELECT TOP 1 Id FROM UsuarioImagenes WHERE UsuarioId = u.Id ORDER BY Id DESC) AS ImagenId
                 FROM Usuarios u
-                LEFT JOIN UsuarioImagenes ui ON u.Id = ui.UsuarioId
                 WHERE u.Id = @IdUsuario
-                -- Si hay varias im�genes, puedes traer solo la m�s reciente:
-                -- AND ui.Id = (SELECT TOP 1 Id FROM UsuarioImagenes WHERE UsuarioId = u.Id ORDER BY Id DESC)
             ";
 
                 using (SqlCommand command = new SqlCommand(query, connection))
@@ -254,9 +248,7 @@ namespace bufinscustomers.Helpers
                                 Imagen = reader["ImagenId"] != DBNull.Value ? new ImagenUsuario
                                 {
                                     Id = Convert.ToInt32(reader["ImagenId"]),
-                                    UsuarioId = Convert.ToInt32(reader["UsuarioId"]),
-                                    ImagenBase64 = reader["ImagenBase64"] != DBNull.Value ? Convert.ToString(reader["ImagenBase64"]) : null,
-                                    TipoImagen = reader["TipoImagen"] != DBNull.Value ? Convert.ToString(reader["TipoImagen"]) : null
+                                    UsuarioId = idUsuario
                                 } : null
                             };
                         }
