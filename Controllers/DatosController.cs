@@ -20,6 +20,7 @@ namespace bufinscustomers.Controllers
         private readonly EmpresaService _empresaService = new EmpresaService();
         private readonly ConfiguracionEmpresaService _configuracionService = new ConfiguracionEmpresaService();
         private readonly ModeloService _modeloService = new ModeloService();
+        private readonly HistorialVersionesCarguesService _historialService = new HistorialVersionesCarguesService();
         private StringBuilder _logBuilder = new StringBuilder();
 
         private static readonly Dictionary<string, string> _mapeoHistorico =
@@ -349,6 +350,17 @@ namespace bufinscustomers.Controllers
                                 {
                                     try
                                     {
+                                        try
+                                        {
+                                            string _snapEmpresa = _empresaService.ObtenerEmpresas()
+                                                .Find(e => e.Id == idEmpresaSeleccionada)?.Nombre ?? "Desconocida";
+                                            string _snapUsuario = ((usuarioActual?.Nombre ?? "") + " " + (usuarioActual?.Apellidos ?? "")).Trim();
+                                            _historialService.CrearSnapshotEnTransaccion(
+                                                conn, tx, idEmpresaSeleccionada, _snapEmpresa,
+                                                anioSeleccionado, 0, idUsuario, _snapUsuario, nombreArchivoOriginal);
+                                        }
+                                        catch (Exception snapEx) { LogToFile($"Advertencia snapshot ejecucion: {snapEx.Message}"); }
+
                                         EliminarEjecucionDeIni(conn, anioSeleccionado, idEmpresaSeleccionada, tx);
 
                                         foreach (var hoja in package.Workbook.Worksheets)
@@ -451,6 +463,17 @@ namespace bufinscustomers.Controllers
                                 {
                                     try
                                     {
+                                        try
+                                        {
+                                            string _snapEmpresa = _empresaService.ObtenerEmpresas()
+                                                .Find(e => e.Id == idEmpresaSeleccionada)?.Nombre ?? "Desconocida";
+                                            string _snapUsuario = ((usuarioActual?.Nombre ?? "") + " " + (usuarioActual?.Apellidos ?? "")).Trim();
+                                            _historialService.CrearSnapshotEnTransaccion(
+                                                conn, tx, idEmpresaSeleccionada, _snapEmpresa,
+                                                anioSeleccionado, 1, idUsuario, _snapUsuario, nombreArchivoOriginal);
+                                        }
+                                        catch (Exception snapEx) { LogToFile($"Advertencia snapshot historico: {snapEx.Message}"); }
+
                                         EliminarAnosHistoricosDeIni(conn, anioSeleccionado, idEmpresaSeleccionada, tx);
 
                                         foreach (var hoja in package.Workbook.Worksheets)

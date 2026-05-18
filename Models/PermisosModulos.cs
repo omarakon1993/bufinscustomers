@@ -14,7 +14,8 @@ namespace bufinscustomers.Models
         public string Controller { get; set; }
         public string Action { get; set; }
         public bool Activo { get; set; }
-        public int IdGrupo { get; set; }
+        public int? IdGrupo { get; set; }
+        public int? IdCategoria { get; set; }
         public bool SoloSuperAdmin { get; set; }
         public bool SoloAdminEmpresa { get; set; }
 

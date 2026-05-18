@@ -14,6 +14,7 @@ namespace bufinscustomers.Models
     {
         public string Nombre { get; set; }
         public string Icono { get; set; }
+        public bool EsGrupoImplicito { get; set; }
         public List<SidebarItemViewModel> Items { get; set; } = new List<SidebarItemViewModel>();
     }
 

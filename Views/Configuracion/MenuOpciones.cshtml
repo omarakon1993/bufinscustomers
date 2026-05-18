@@ -20,7 +20,7 @@
 
     var opcionesJson = jss.Serialize(Model.Select(o => new {
         o.Id, o.Codigo, o.Nombre, o.NombreEN, o.Descripcion, o.Icono, o.Orden,
-        o.Controller, o.Action, o.IdGrupo, o.NombreGrupo, o.Categoria,
+        o.Controller, o.Action, o.IdGrupo, o.IdCategoria, o.NombreGrupo, o.Categoria,
         o.SoloSuperAdmin, o.SoloAdminEmpresa
     }));
 
@@ -207,17 +207,18 @@
                     <!-- Fila 5: Categoría / Grupo -->
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelCategoria</label>
-                            <select class="form-control form-control-sm" id="crearCategoria" onchange="filtrarGrupos('crear')">
+                            <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelCategoria <span class="text-danger">*</span></label>
+                            <select class="form-control form-control-sm" id="crearCategoria" onchange="filtrarGrupos('crear')" required>
                                 <option value="">@Resources.Strings.Menu_SelCategoria</option>
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-layer-group mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelGrupo <span class="text-danger">*</span></label>
-                            <select class="form-control form-control-sm" id="crearGrupoSelect" onchange="seleccionarGrupo(this, 'crear')" required>
+                            <label><i class="fas fa-layer-group mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelGrupo</label>
+                            <select class="form-control form-control-sm" id="crearGrupoSelect" onchange="seleccionarGrupo(this, 'crear')">
                                 <option value="">@Resources.Strings.Menu_SelGrupo</option>
                             </select>
-                            <input type="hidden" id="crearIdGrupo" name="IdGrupo" value="0" />
+                            <input type="hidden" id="crearIdGrupo" name="IdGrupo" value="" />
+                            <input type="hidden" id="crearIdCategoria" name="IdCategoria" value="" />
                         </div>
                     </div>
                     <!-- Fila 6: Permisos lado a lado -->
@@ -313,17 +314,18 @@
                     <!-- Fila 5: Categoría / Grupo -->
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelCategoria</label>
-                            <select class="form-control form-control-sm" id="editCategoria" onchange="filtrarGrupos('edit')">
+                            <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelCategoria <span class="text-danger">*</span></label>
+                            <select class="form-control form-control-sm" id="editCategoria" onchange="filtrarGrupos('edit')" required>
                                 <option value="">@Resources.Strings.Menu_SelCategoria</option>
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-layer-group mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelGrupo <span class="text-danger">*</span></label>
-                            <select class="form-control form-control-sm" id="editGrupoSelect" onchange="seleccionarGrupo(this, 'edit')" required>
+                            <label><i class="fas fa-layer-group mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelGrupo</label>
+                            <select class="form-control form-control-sm" id="editGrupoSelect" onchange="seleccionarGrupo(this, 'edit')">
                                 <option value="">@Resources.Strings.Menu_SelGrupo</option>
                             </select>
-                            <input type="hidden" id="editIdGrupo" name="IdGrupo" value="0" />
+                            <input type="hidden" id="editIdGrupo" name="IdGrupo" value="" />
+                            <input type="hidden" id="editIdCategoria" name="IdCategoria" value="" />
                         </div>
                     </div>
                     <!-- Fila 6: Permisos lado a lado -->
@@ -394,6 +396,7 @@
 
     function filtrarGrupos(prefijo) {
         var catId    = parseInt(document.getElementById(prefijo + 'Categoria').value) || 0;
+        document.getElementById(prefijo + 'IdCategoria').value = catId || '';
         var grupoSel = document.getElementById(prefijo + 'GrupoSelect');
         grupoSel.innerHTML = '<option value="">' + _menuMsg.selGrupo + '</option>';
         _grupos.forEach(function (g) {
@@ -431,19 +434,23 @@
         document.getElementById('editSoloSuperAdmin').checked   = o.SoloSuperAdmin;
         document.getElementById('editSoloAdminEmpresa').checked = o.SoloAdminEmpresa;
 
-        var idCat = 0;
-        for (var j = 0; j < _grupos.length; j++) {
-            if (_grupos[j].Id === o.IdGrupo) { idCat = _grupos[j].IdCategoria; break; }
+        var idCat = o.IdCategoria || 0;
+        if (!idCat && o.IdGrupo) {
+            for (var j = 0; j < _grupos.length; j++) {
+                if (_grupos[j].Id === o.IdGrupo) { idCat = _grupos[j].IdCategoria; break; }
+            }
         }
         poblarCategorias('editCategoria', idCat);
-        filtrarGrupos('edit');
+        filtrarGrupos('edit'); // también actualiza editIdCategoria
 
-        var grupoSel = document.getElementById('editGrupoSelect');
-        for (var k = 0; k < grupoSel.options.length; k++) {
-            if (parseInt(grupoSel.options[k].value) === o.IdGrupo) {
-                grupoSel.selectedIndex = k;
-                seleccionarGrupo(grupoSel, 'edit');
-                break;
+        if (o.IdGrupo) {
+            var grupoSel = document.getElementById('editGrupoSelect');
+            for (var k = 0; k < grupoSel.options.length; k++) {
+                if (parseInt(grupoSel.options[k].value) === o.IdGrupo) {
+                    grupoSel.selectedIndex = k;
+                    seleccionarGrupo(grupoSel, 'edit');
+                    break;
+                }
             }
         }
     }

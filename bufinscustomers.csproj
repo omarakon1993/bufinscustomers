@@ -159,6 +159,7 @@
     <Compile Include="Controllers\MenuOpcionesController.cs" />
     <Compile Include="Controllers\ModelosEjecucionController.cs" />
     <Compile Include="Controllers\GestorPromptsController.cs" />
+    <Compile Include="Controllers\HistorialVersionesCarguesController.cs" />
     <Compile Include="Controllers\TablaPUCController.cs" />
     <Compile Include="Controllers\GestorCategoriasController.cs" />
     <Compile Include="Controllers\GestorGruposController.cs" />
@@ -184,6 +185,7 @@
     </Compile>
     <Compile Include="Helpers\UsuarioSesionHelper.cs" />
     <Compile Include="Models\AuditoriaCargues.cs" />
+    <Compile Include="Models\HistorialVersionesCarguesModels.cs" />
     <Compile Include="Models\ConfigAjuste1.cs" />
     <Compile Include="Models\ConfigAjuste2.cs" />
     <Compile Include="Models\ConfigAnoHistorico.cs" />
@@ -236,6 +238,7 @@
     <Compile Include="Services\AuditoriaAnalisisIAService.cs" />
     <Compile Include="Services\GestorPromptsService.cs" />
     <Compile Include="Services\NotificacionesService.cs" />
+    <Compile Include="Services\HistorialVersionesCarguesService.cs" />
     <Compile Include="Services\TablaPUCService.cs" />
     <Compile Include="Services\WidgetsService.cs" />
     <Compile Include="Services\MenuEstructuraService.cs" />
@@ -6183,6 +6186,7 @@
     <Content Include="Views\Datos\Modelo.cshtml" />
     <Content Include="Views\Configuracion\MaestroReportes.cshtml" />
     <Content Include="Views\Informes\AuditoriaCargues.cshtml" />
+    <Content Include="Views\Informes\HistorialVersionesCargues.cshtml" />
     <Content Include="Views\Informes\TablaPUC.cshtml" />
     <Content Include="Views\Informes\InformeRelacionamientos.cshtml" />
     <Content Include="Views\Informes\InformeTablasDatos.cshtml" />
@@ -6198,6 +6202,8 @@
     <Content Include="Views\Configuracion\Widgets.cshtml" />
     <Content Include="Views\Configuracion\GestorCategorias.cshtml" />
     <Content Include="Views\Configuracion\GestorGrupos.cshtml" />
+    <Content Include="secrets.config" />
+    <Content Include="secrets.config.example" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Permisos\Gestionar.cshtml" />

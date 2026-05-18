@@ -33,7 +33,20 @@
             {
                 if (grupo.Items == null || !grupo.Items.Any()) { continue; }
 
-                if (grupo.Items.Count == 1)
+                if (grupo.EsGrupoImplicito)
+                {
+                    foreach (var itemDir in grupo.Items)
+                    {
+                        bool dirActivo = itemDir.Controller == curCtrl && itemDir.Action == curAction;
+                        <div class="sidebar-nav-item">
+                            <a class="sidebar-nav-link @(dirActivo ? "active" : "")" href="@Url.Action(itemDir.Action, itemDir.Controller)">
+                                <i class="@itemDir.Icono sidebar-nav-icon"></i>
+                                <span class="sidebar-nav-text">@itemDir.Nombre</span>
+                            </a>
+                        </div>
+                    }
+                }
+                else if (grupo.Items.Count == 1)
                 {
                     var soloItem = grupo.Items[0];
                     string linkText = soloItem.Nombre;

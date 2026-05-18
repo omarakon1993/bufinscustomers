@@ -151,6 +151,14 @@ Views are organized by **functional area**, not by controller name. Controllers 
 | AnalisisIAController | `~/Views/Informes/AnalisisIA.cshtml` |
 | InformeRelacionamientosController | `~/Views/Informes/InformeRelacionamientos.cshtml` |
 | AuditoriaCarguesController | `~/Views/Informes/AuditoriaCargues.cshtml` |
+| AuditoriaConsultasIAController | `~/Views/Informes/AuditoriaConsultasIA.cshtml` |
+| HistorialVersionesCarguesController | `~/Views/Informes/HistorialVersionesCargues.cshtml` |
+| TablaPUCController | `~/Views/Informes/TablaPUC.cshtml` |
+| VariablesPBIController | `~/Views/Informes/VariablesPBI.cshtml` |
+| GestorCategoriasController | `~/Views/Configuracion/GestorCategorias.cshtml` |
+| GestorGruposController | `~/Views/Configuracion/GestorGrupos.cshtml` |
+| WidgetsController | `~/Views/Configuracion/Widgets.cshtml` |
+| ConfiguracionVariablesPBIController | `~/Views/Configuracion/ConfiguracionVariablesPBI.cshtml` |
 | PermisosController | `~/Views/Permisos/Gestionar.cshtml` |
 
 When creating new controllers, use explicit view paths with `~/Views/{area}/{view}.cshtml`.
@@ -256,6 +264,9 @@ Currently integrated in `InformeTablasDatosController.ConsultarConIA()` — re-q
 - Connection string key is `"DefaultConnection"` in Web.config
 - File upload limit: `maxRequestLength="102400"` (100 MB) and `executionTimeout="3600"` (1 hour). IIS-level limit `maxAllowedContentLength="104857600"` (100 MB) in `system.webServer`.
 - EPPlus 8 requires license call at startup: `ExcelPackage.License.SetNonCommercialOrganization("bufinscustomers")` in `Global.asax.cs`
+- **i18n OBLIGATORIO — SIEMPRE en ambos idiomas:** Cada string visible para el usuario (vistas, JS, controladores) debe agregarse a AMBOS archivos de recursos antes de implementar la UI: `App_GlobalResources/Strings.resx` (es-CO) y `App_GlobalResources/Strings.en-US.resx` (en-US). Nunca hardcodear texto en vistas ni JS. Ver sección "Internationalization (i18n)" para detalles completos.
+- **Estilos — SIEMPRE usar el sistema de diseño del sitio:** Toda vista nueva o modificada DEBE seguir los mismos estilos visuales del sitio. Ver sección "UI Style System — MANDATORY" para la referencia completa.
+- **Notificaciones internas — PREGUNTAR SIEMPRE:** Al implementar cualquier feature nuevo que tenga un resultado observable (cargue, exportación, ejecución, creación/eliminación de entidades, rollback, etc.), preguntar explícitamente al usuario si desea agregar notificaciones internas para esa acción antes de cerrar el task. Si el usuario dice sí, agregar las llamadas a `NotificacionesService.Crear(...)` en el controller correspondiente, las claves a ambos `.resx`, y actualizar la tabla "Active notifications" en esta sección de CLAUDE.md.
 
 ## Internationalization (i18n) — MANDATORY
 
@@ -315,8 +326,12 @@ The app has a persistent bell-icon notification center visible in the top navbar
 | Report (PBI) created | `success` | `ReportesController` | `Notif_ReporteCreado` |
 | Report (PBI) deleted | `warning` | `ReportesController` | `Notif_ReporteEliminado` |
 | Session expiring (client-side) | `warning` | `_Layout.cshtml` (JS only) | `Notif_SesionExpiraTitulo` |
+| Version rollback success | `success` | `HistorialVersionesCarguesController` | `Notif_RollbackEjecutado` |
+| Version rollback error | `error` | `HistorialVersionesCarguesController` | `Notif_ErrorRollback` |
 
 ### When to create a notification (server-side)
+> **MANDATORY:** When finishing any new feature, explicitly ask the user whether to add internal notifications before closing the task. If yes: add `NotificacionesService.Crear(...)` calls, add keys to both `.resx` files, and update the Active notifications table above.
+
 Call `new NotificacionesService().Crear(usuario.Id, R("KeyName"), mensaje, tipo)` from a controller after **any operation that takes noticeable time or has a meaningful outcome**:
 - Successful or failed Excel uploads
 - Model execution (success or error)
@@ -336,3 +351,110 @@ Use `notifPushLocal('tipo', _notifStr.keyTitulo, _notifStr.keyMsg)` in JS for tr
 - Notification titles from controllers: use `R("Notif_KeyName")` so they respect the user's active language.
 - Notification titles from JS: use `_notifStr.keyName` variables injected via Razor.
 - Add both `es-CO` and `en-US` entries to the resx files for every new notification title.
+
+## UI Style System — MANDATORY
+
+Every new view or UI modification MUST follow the site's existing visual design system. Do not use plain Bootstrap classes, custom inline styles, or new CSS files — always use the components defined in `Assets/css/bufins-components.css` plus Bootstrap's grid system.
+
+### Required stylesheet
+
+Every view that renders a content page must include:
+```html
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+```
+
+### Standard page structure
+
+All content pages follow this exact layout skeleton:
+```html
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+
+<div class="container-fluid px-4">
+
+    <!-- 1. Page header (gradient banner) -->
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-{icon} powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.Page_Title</h1>
+        </div>
+    </div>
+
+    <!-- 2. Optional alert/warning banners (Bootstrap alert + bufins border) -->
+
+    <!-- 3. TempData success/error flash messages (standard Bootstrap dismissible alerts) -->
+
+    <!-- 4. Filter panel -->
+    <div class="filter-card">
+        <h3 class="filter-card-title"><i class="fas fa-filter"></i> @Resources.Strings.Common_FiltrosConsulta</h3>
+        <div class="filter-section">
+            <div class="row"> ... form-group cols ... </div>
+            <div class="btn-group-actions">
+                <button class="btn btn-modern-gradient"><i class="fas fa-search mr-1"></i>@Resources.Strings.Common_Consultar</button>
+                <button class="btn btn-modern-secondary"><i class="fas fa-eraser mr-2"></i>@Resources.Strings.Common_Limpiar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Results table -->
+    <div class="table-container">
+        <div class="table-header">
+            <h5><i class="fas fa-list mr-2"></i>@Resources.Strings.Common_Resultados</h5>
+            <span class="info-badge">N @Resources.Strings.Page_TotalItems</span>
+        </div>
+        <div class="table-wrapper">
+            <table class="data-table"> ... </table>
+        </div>
+    </div>
+
+    <!-- 6. Empty state (shown when no results) -->
+    <div class="no-data-message">
+        <i class="fas fa-inbox"></i>
+        <h4>@Resources.Strings.Page_NoData</h4>
+        <p>@Resources.Strings.Page_NoDataDesc</p>
+    </div>
+
+</div>
+```
+
+### Component reference
+
+| Component | Class(es) | Purpose |
+|-----------|-----------|---------|
+| Page header | `.powerbi-header` → `.powerbi-header-content` → `.powerbi-header-icon` + `.powerbi-header-title` | Gradient top banner, every page |
+| Filter panel | `.filter-card` → `.filter-card-title` → `.filter-section` | White card wrapping filter controls |
+| Button group | `.btn-group-actions` | Row of action buttons at the bottom of a filter panel |
+| Primary button | `.btn-modern-gradient` | Main action (Consultar, Guardar, etc.) |
+| Success button | `.btn-modern-success` | Positive secondary action |
+| Secondary button | `.btn-modern-secondary` | Cancel, Limpiar, back |
+| Table wrapper | `.table-container` → `.table-header` → `.table-wrapper` → `.data-table` | Full table with sticky gradient header |
+| Count badge | `.info-badge` | Green pill showing record count in table header |
+| Empty state | `.no-data-message` | Centered icon + text when no results |
+| Loading spinner | `.loading-spinner` | Hidden by default; show/hide via JS during async calls |
+| Pagination | `.pagination-controls` → `.btn-pagination` / `.btn-pagination.active` | Page navigation below table |
+
+### Buttons inside tables
+
+Use standard Bootstrap button sizes with semantic colors — do not create new button styles:
+- `btn btn-sm btn-warning` — restore / revert actions
+- `btn btn-sm btn-danger` — delete actions
+- `btn btn-sm btn-primary` — view / edit actions
+- `btn btn-sm btn-success` — activate / confirm actions
+
+### Icons
+
+Always use FontAwesome 5 (`fas fa-*`). Match icons to the semantic meaning of the action. Common patterns already in use: `fa-filter` (filters), `fa-search` (search), `fa-eraser` (clear), `fa-list` (results), `fa-inbox` (empty state), `fa-history` (history), `fa-undo` (restore), `fa-building` (company), `fa-calendar` (year/date), `fa-user` (user), `fa-file-excel` (Excel file).
+
+### Forms inside views
+
+- Use `.form-group` + `<label>` (with icon) + `.form-control` for every input/select
+- Labels: `<label><i class="fas fa-{icon} mr-1"></i>@Resources.Strings.Key</label>`
+- Selects with enhanced UX: add `class="form-control select2"` and initialize Select2 in `@section scripts`
+- Required field marker: add `<span class="required">*</span>` inside `<label>`
+
+### What NOT to do
+
+- Do not use `style="..."` inline for layout or color — use the component classes above
+- Do not create new `.css` files for individual pages unless a feature genuinely requires isolated styles (e.g. `analisis-ia.css`)
+- Do not use DataTables — it is not in the project's frontend stack
+- Do not use raw `<table>` without the `.data-table` class and `.table-wrapper` container
+- Do not use plain `<button class="btn btn-primary">` for main page actions — use `.btn-modern-gradient`

@@ -1,0 +1,324 @@
+@model bufinscustomers.Models.HistorialVersionesPageViewModel
+@using bufinscustomers.Helpers
+@using System.Linq
+
+@{
+    ViewBag.Title = Resources.Strings.Hist_PageTitle;
+    var puedeRollback = UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.EsAdminEmpresa();
+    var totalVersiones = Model.Versiones.Count;
+    var anios = Model.Versiones.Select(v => v.Anio).Distinct().OrderByDescending(a => a).ToList();
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+
+<div class="container-fluid px-4">
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-history powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.Hist_HeaderTitle</h1>
+        </div>
+    </div>
+
+    <div class="alert alert-warning d-flex align-items-center" role="alert" style="border-left: 4px solid #f6c23e;">
+        <i class="fas fa-exclamation-triangle mr-3" style="font-size:1.2rem;"></i>
+        <div>
+            <strong>@Resources.Strings.Hist_BadgeLimite:</strong>
+            @Html.Raw(string.Format(Resources.Strings.Hist_BadgeTexto, $"<strong>{Model.MaxVersiones}</strong>"))
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle mr-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle mr-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        </div>
+    }
+
+    <!-- Filtros -->
+    <div class="filter-card">
+        <h3 class="filter-card-title">
+            <i class="fas fa-filter"></i> @Resources.Strings.Common_FiltrosConsulta
+        </h3>
+        <div class="filter-section">
+            <div class="row">
+                @if (UsuarioSesionHelper.EsSuperAdmin())
+                {
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label><i class="fas fa-building mr-1"></i>@Resources.Strings.Common_LabelEmpresa</label>
+                            <select id="filterEmpresa" class="form-control">
+                                <option value="">@Resources.Strings.Common_Todos</option>
+                                @foreach (var emp in Model.Empresas)
+                                {
+                                    <option value="@emp.Nombre" @(Model.IdEmpresaFiltro == emp.Id ? "selected" : "")>@emp.Nombre</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                }
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label><i class="fas fa-calendar mr-1"></i>@Resources.Strings.Common_LabelAnio</label>
+                        <select id="filterAnio" class="form-control">
+                            <option value="">@Resources.Strings.Common_Todos</option>
+                            @foreach (var a in anios)
+                            {
+                                <option value="@a" @(Model.AnioFiltro == a ? "selected" : "")>@a</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label><i class="fas fa-layer-group mr-1"></i>@Resources.Strings.Hist_LabelModo</label>
+                        <select id="filterModo" class="form-control">
+                            <option value="">@Resources.Strings.Common_Todos</option>
+                            <option value="@Resources.Strings.Hist_ModoEjecucion" @(Model.ModoFiltro == 0 ? "selected" : "")>@Resources.Strings.Hist_ModoEjecucion</option>
+                            <option value="@Resources.Strings.Hist_ModoHistorico" @(Model.ModoFiltro == 1 ? "selected" : "")>@Resources.Strings.Hist_ModoHistorico</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <div class="btn-group-actions mb-3 w-100">
+                        <button type="button" id="btnFiltrar" class="btn btn-modern-gradient w-100">
+                            <i class="fas fa-search mr-1"></i>@Resources.Strings.Common_Consultar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="btn-group-actions">
+                <button type="button" id="btnLimpiar" class="btn btn-modern-secondary">
+                    <i class="fas fa-eraser mr-2"></i>@Resources.Strings.Common_Limpiar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (totalVersiones > 0)
+    {
+        <div id="resultadosContainer">
+            <div class="table-container">
+                <div class="table-header">
+                    <h5><i class="fas fa-list mr-2"></i>@Resources.Strings.Common_Resultados</h5>
+                    <span id="totalRegistros" class="info-badge">@totalVersiones @Resources.Strings.Hist_TotalVersiones</span>
+                </div>
+                <div class="table-wrapper">
+                    <table id="historialTable" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>@Resources.Strings.Hist_ThVersion</th>
+                                @if (UsuarioSesionHelper.EsSuperAdmin())
+                                {
+                                    <th>@Resources.Strings.Hist_ThEmpresa</th>
+                                }
+                                <th>@Resources.Strings.Hist_ThAnio</th>
+                                <th>@Resources.Strings.Hist_ThModo</th>
+                                <th>@Resources.Strings.Hist_ThFecha</th>
+                                <th>@Resources.Strings.Hist_ThUsuario</th>
+                                <th>@Resources.Strings.Hist_ThArchivo</th>
+                                <th>@Resources.Strings.Hist_ThFilas</th>
+                                <th>@Resources.Strings.Hist_ThEstado</th>
+                                @if (puedeRollback)
+                                {
+                                    <th>@Resources.Strings.Common_ThAcciones</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var v in Model.Versiones)
+                            {
+                                <tr data-empresa="@v.NombreEmpresa"
+                                    data-anio="@v.Anio"
+                                    data-modo="@v.ModoTexto">
+                                    <td>
+                                        <strong class="text-primary">@v.VersionDisplay</strong>
+                                    </td>
+                                    @if (UsuarioSesionHelper.EsSuperAdmin())
+                                    {
+                                        <td>@v.NombreEmpresa</td>
+                                    }
+                                    <td>@v.Anio</td>
+                                    <td>
+                                        <span class="badge @(v.Modo == 0 ? "badge-info" : "badge-secondary")">
+                                            @v.ModoTexto
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <strong>@v.FechaCargue.ToString("dd/MM/yyyy")</strong><br />
+                                        <small class="text-muted">@v.FechaCargue.ToString("HH:mm:ss")</small>
+                                    </td>
+                                    <td>@v.NombreUsuario</td>
+                                    <td title="@v.NombreArchivo">
+                                        <i class="fas fa-file-excel text-success mr-1"></i>
+                                        @(v.NombreArchivo.Length > 35 ? v.NombreArchivo.Substring(0, 32) + "…" : v.NombreArchivo)
+                                    </td>
+                                    <td>@v.TotalFilas.ToString("N0")</td>
+                                    <td>
+                                        @{
+                                            string badgeClass = v.EstadoDisplay == "Actual"    ? "badge-success"
+                                                              : v.EstadoDisplay == "Revertido" ? "badge-warning"
+                                                              : "badge-secondary";
+                                        }
+                                        <span class="badge @badgeClass">@v.EstadoDisplay</span>
+                                        @if (v.FechaReversion.HasValue)
+                                        {
+                                            <br /><small class="text-muted">@v.FechaReversion.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                                        }
+                                    </td>
+                                    @if (puedeRollback)
+                                    {
+                                        <td>
+                                            @if (!v.EsVersionActual)
+                                            {
+                                                <button type="button" class="btn btn-sm btn-warning btn-restaurar"
+                                                        data-id="@v.Id"
+                                                        data-version="@v.VersionDisplay"
+                                                        data-empresa="@v.NombreEmpresa"
+                                                        data-anio="@v.Anio"
+                                                        data-fecha="@v.FechaCargue.ToString("dd/MM/yyyy HH:mm")">
+                                                    <i class="fas fa-undo mr-1"></i>@Resources.Strings.Hist_BtnRestaurar
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <small class="text-muted">@Resources.Strings.Hist_EsActual</small>
+                                            }
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="noDataMessage" class="no-data-message" style="display:none">
+            <i class="fas fa-inbox"></i>
+            <h4>@Resources.Strings.Hist_NoData</h4>
+            <p>@Resources.Strings.Hist_NoDataDesc</p>
+        </div>
+    }
+    else
+    {
+        <div id="resultadosContainer" style="display:none"></div>
+        <div id="noDataMessage" class="no-data-message">
+            <i class="fas fa-inbox"></i>
+            <h4>@Resources.Strings.Hist_NoData</h4>
+            <p>@Resources.Strings.Hist_NoDataDesc</p>
+        </div>
+    }
+</div>
+
+@using (Html.BeginForm("Restaurar", "HistorialVersionesCargues", FormMethod.Post,
+    new { id = "formRestaurar", style = "display:none" }))
+{
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="idHistorial"     id="inp_idHistorial" />
+    <input type="hidden" name="idEmpresaFiltro" value="@Model.IdEmpresaFiltro" />
+    <input type="hidden" name="anioFiltro"      value="@Model.AnioFiltro" />
+    <input type="hidden" name="modoFiltro"      value="@Model.ModoFiltro" />
+}
+
+@section scripts {
+<script>
+    var _histTotal = @totalVersiones;
+    var _histMsg = {
+        totalVersiones: '@Html.Raw(Resources.Strings.Hist_TotalVersiones.Replace("'", "\\'"))',
+        confirmTitle:   '@Html.Raw(Resources.Strings.Hist_JS_ConfirmTitle.Replace("'", "\\'"))',
+        confirmBtn:     '@Html.Raw(Resources.Strings.Hist_JS_ConfirmBtn.Replace("'", "\\'"))',
+        cancelBtn:      '@Html.Raw(Resources.Strings.Hist_JS_CancelBtn.Replace("'", "\\'"))',
+        confirmTextTpl: '@Html.Raw(Resources.Strings.Hist_JS_ConfirmText.Replace("'", "\\'"))'
+    };
+
+    $(document).ready(function () {
+
+        function aplicarFiltro() {
+            var empresa = $('#filterEmpresa').val();
+            var anio    = $('#filterAnio').val();
+            var modo    = $('#filterModo').val();
+            var visibles = 0;
+
+            $('#historialTable tbody tr').each(function () {
+                var $tr = $(this);
+                var matchEmpresa = !empresa || $tr.data('empresa') === empresa;
+                var matchAnio    = !anio    || String($tr.data('anio')) === anio;
+                var matchModo    = !modo    || $tr.data('modo') === modo;
+
+                if (matchEmpresa && matchAnio && matchModo) {
+                    $tr.show();
+                    visibles++;
+                } else {
+                    $tr.hide();
+                }
+            });
+
+            $('#totalRegistros').text(visibles + ' ' + _histMsg.totalVersiones);
+
+            if (visibles > 0) {
+                $('#resultadosContainer').show();
+                $('#noDataMessage').hide();
+            } else {
+                $('#resultadosContainer').hide();
+                $('#noDataMessage').show();
+            }
+        }
+
+        $('#filterEmpresa, #filterAnio, #filterModo').on('change', function () {
+            aplicarFiltro();
+        });
+
+        $('#btnFiltrar').on('click', function () {
+            aplicarFiltro();
+        });
+
+        $('#btnLimpiar').on('click', function () {
+            $('#filterEmpresa, #filterAnio, #filterModo').val('');
+            $('#historialTable tbody tr').show();
+            $('#totalRegistros').text(_histTotal + ' ' + _histMsg.totalVersiones);
+            if (_histTotal > 0) {
+                $('#resultadosContainer').show();
+                $('#noDataMessage').hide();
+            }
+        });
+
+        $(document).on('click', '.btn-restaurar', function () {
+            var id      = $(this).data('id');
+            var version = $(this).data('version');
+            var empresa = $(this).data('empresa');
+            var anio    = $(this).data('anio');
+            var fecha   = $(this).data('fecha');
+
+            var texto = _histMsg.confirmTextTpl
+                .replace('{empresa}', empresa)
+                .replace('{anio}', anio)
+                .replace('{version}', version)
+                .replace('{fecha}', fecha);
+
+            Swal.fire({
+                title:              _histMsg.confirmTitle,
+                html:               texto,
+                icon:               'warning',
+                showCancelButton:   true,
+                confirmButtonText:  _histMsg.confirmBtn,
+                cancelButtonText:   _histMsg.cancelBtn,
+                confirmButtonColor: '#e74c3c',
+                reverseButtons:     true
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    $('#inp_idHistorial').val(id);
+                    $('#formRestaurar').submit();
+                }
+            });
+        });
+    });
+</script>
+}

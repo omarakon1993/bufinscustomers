@@ -80,7 +80,7 @@ namespace bufinscustomers.Services
                 Orden          = Convert.ToInt32(reader["Orden"]),
                 Controller     = reader["Controller"] != DBNull.Value ? reader["Controller"].ToString() : null,
                 Action         = reader["Action"] != DBNull.Value ? reader["Action"].ToString() : null,
-                IdGrupo        = reader["IdGrupo"] != DBNull.Value ? Convert.ToInt32(reader["IdGrupo"]) : 0,
+                IdGrupo        = reader["IdGrupo"] != DBNull.Value ? (int?)Convert.ToInt32(reader["IdGrupo"]) : null,
                 SoloSuperAdmin = reader["SoloSuperAdmin"] != DBNull.Value && Convert.ToBoolean(reader["SoloSuperAdmin"]),
                 // Campos derivados via JOIN
                 Categoria      = reader["Categoria"] != DBNull.Value ? reader["Categoria"].ToString() : null,
@@ -91,6 +91,9 @@ namespace bufinscustomers.Services
             };
 
             try { opcion.SoloAdminEmpresa = reader["SoloAdminEmpresa"] != DBNull.Value && Convert.ToBoolean(reader["SoloAdminEmpresa"]); }
+            catch (IndexOutOfRangeException) { }
+
+            try { opcion.IdCategoria = reader["IdCategoria"] != DBNull.Value ? (int?)Convert.ToInt32(reader["IdCategoria"]) : null; }
             catch (IndexOutOfRangeException) { }
 
             try { opcion.NombreEN         = reader["NombreEN"]         != DBNull.Value ? reader["NombreEN"].ToString()         : null; }
@@ -196,10 +199,12 @@ namespace bufinscustomers.Services
 
                 foreach (var grupoGroup in gruposPorNombre)
                 {
+                    bool esImplicito = string.IsNullOrEmpty(grupoGroup.Key.NombreGrupo);
                     var grupo = new SidebarGrupoViewModel
                     {
-                        Nombre = ResolverNombre(grupoGroup.Key.NombreGrupo ?? "General", grupoGroup.Key.NombreGrupoEN),
-                        Icono = grupoGroup.Key.IconoGrupo ?? "fas fa-circle"
+                        Nombre = esImplicito ? "" : ResolverNombre(grupoGroup.Key.NombreGrupo, grupoGroup.Key.NombreGrupoEN),
+                        Icono = esImplicito ? "" : (grupoGroup.Key.IconoGrupo ?? "fas fa-circle"),
+                        EsGrupoImplicito = esImplicito
                     };
 
                     foreach (var opcion in grupoGroup.OrderBy(o => o.Orden))
@@ -235,7 +240,7 @@ namespace bufinscustomers.Services
             {
                 using (SqlCommand cmd = new SqlCommand(
                     @"SELECT m.Id, m.Codigo, m.Nombre, m.NombreEN, m.Descripcion, m.Icono, m.Orden,
-                             m.Controller, m.[Action], m.IdGrupo, m.SoloSuperAdmin, m.SoloAdminEmpresa,
+                             m.Controller, m.[Action], m.IdGrupo, m.IdCategoria, m.SoloSuperAdmin, m.SoloAdminEmpresa,
                              g.Nombre  AS NombreGrupo,
                              g.NombreEN AS NombreGrupoEN,
                              g.Icono   AS IconoGrupo,
@@ -244,8 +249,8 @@ namespace bufinscustomers.Services
                              c.Icono   AS IconoCategoria,
                              c.Orden   AS OrdenCategoria
                       FROM   MenuOpciones m
-                      JOIN   GruposMenu    g ON m.IdGrupo    = g.Id
-                      JOIN   CategoriasMenu c ON g.IdCategoria = c.Id
+                      LEFT JOIN GruposMenu    g ON m.IdGrupo    = g.Id
+                      LEFT JOIN CategoriasMenu c ON COALESCE(g.IdCategoria, m.IdCategoria) = c.Id
                       WHERE  m.Activo = 1
                       ORDER BY c.Orden, m.Orden", cn))
                 {
@@ -272,9 +277,9 @@ namespace bufinscustomers.Services
             {
                 using (SqlCommand cmd = new SqlCommand(
                     @"INSERT INTO MenuOpciones
-                        (Codigo, Nombre, NombreEN, Descripcion, Icono, Orden, Controller, [Action], Activo, IdGrupo, SoloSuperAdmin, SoloAdminEmpresa)
+                        (Codigo, Nombre, NombreEN, Descripcion, Icono, Orden, Controller, [Action], Activo, IdGrupo, IdCategoria, SoloSuperAdmin, SoloAdminEmpresa)
                       VALUES
-                        (@Codigo, @Nombre, @NombreEN, @Descripcion, @Icono, @Orden, @Controller, @Action, 1, @IdGrupo, @SoloSuperAdmin, @SoloAdminEmpresa)", cn))
+                        (@Codigo, @Nombre, @NombreEN, @Descripcion, @Icono, @Orden, @Controller, @Action, 1, @IdGrupo, @IdCategoria, @SoloSuperAdmin, @SoloAdminEmpresa)", cn))
                 {
                     cmd.Parameters.AddWithValue("@Codigo",         opcion.Codigo ?? "");
                     cmd.Parameters.AddWithValue("@Nombre",         opcion.Nombre ?? "");
@@ -284,7 +289,8 @@ namespace bufinscustomers.Services
                     cmd.Parameters.AddWithValue("@Orden",          opcion.Orden);
                     cmd.Parameters.AddWithValue("@Controller",     (object)opcion.Controller ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@Action",         (object)opcion.Action ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@IdGrupo",        opcion.IdGrupo);
+                    cmd.Parameters.AddWithValue("@IdGrupo",        opcion.IdGrupo.HasValue ? (object)opcion.IdGrupo.Value : DBNull.Value);
+                    cmd.Parameters.AddWithValue("@IdCategoria",    opcion.IdCategoria.HasValue ? (object)opcion.IdCategoria.Value : DBNull.Value);
                     cmd.Parameters.AddWithValue("@SoloSuperAdmin", opcion.SoloSuperAdmin);
                     cmd.Parameters.AddWithValue("@SoloAdminEmpresa", opcion.SoloAdminEmpresa);
 
@@ -306,7 +312,7 @@ namespace bufinscustomers.Services
                         Codigo = @Codigo, Nombre = @Nombre, NombreEN = @NombreEN, Descripcion = @Descripcion,
                         Icono = @Icono, Orden = @Orden,
                         Controller = @Controller, [Action] = @Action,
-                        IdGrupo = @IdGrupo,
+                        IdGrupo = @IdGrupo, IdCategoria = @IdCategoria,
                         SoloSuperAdmin = @SoloSuperAdmin, SoloAdminEmpresa = @SoloAdminEmpresa
                       WHERE Id = @Id", cn))
                 {
@@ -319,7 +325,8 @@ namespace bufinscustomers.Services
                     cmd.Parameters.AddWithValue("@Orden",          opcion.Orden);
                     cmd.Parameters.AddWithValue("@Controller",     (object)opcion.Controller ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@Action",         (object)opcion.Action ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@IdGrupo",        opcion.IdGrupo);
+                    cmd.Parameters.AddWithValue("@IdGrupo",        opcion.IdGrupo.HasValue ? (object)opcion.IdGrupo.Value : DBNull.Value);
+                    cmd.Parameters.AddWithValue("@IdCategoria",    opcion.IdCategoria.HasValue ? (object)opcion.IdCategoria.Value : DBNull.Value);
                     cmd.Parameters.AddWithValue("@SoloSuperAdmin", opcion.SoloSuperAdmin);
                     cmd.Parameters.AddWithValue("@SoloAdminEmpresa", opcion.SoloAdminEmpresa);
 
