@@ -689,6 +689,10 @@ namespace bufinscustomers.Controllers
                 LogToFile("Convirtiendo valores vacíos a 0 en columnas de dinero...");
                 ConvertirValoresVaciosAZero(tabla, esquema);
 
+                // Normalizar separadores decimales/miles antes de insertar
+                LogToFile("Sanitizando valores numéricos...");
+                SanitizarColumnasNumericas(tabla, esquema);
+
                 // Validar datos antes de insertar
                 LogToFile("Iniciando validación de datos...");
                 string errorValidacion = ValidarDatosParaBulkCopy(tabla, esquema);
@@ -953,9 +957,22 @@ namespace bufinscustomers.Controllers
                 var dr = dt.NewRow();
                 for (int col = 1; col <= columnasValidas; col++)
                 {
-                    var valor = hoja.Cells[row, col].Text?.Trim();
-                    if (!string.IsNullOrWhiteSpace(valor)) filaVacia = false;
-                    dr[col - 1] = valor;
+                    var cellObj = hoja.Cells[row, col].Value;
+                    object drVal;
+                    if (cellObj is double)
+                    {
+                        // Celda numérica: guardar como double nativo — sin conversión a texto
+                        // para evitar toda ambigüedad de separadores decimales/miles
+                        drVal = cellObj;
+                        filaVacia = false; // cualquier número (incluso cero) es dato real
+                    }
+                    else
+                    {
+                        string valorStr = cellObj?.ToString()?.Trim() ?? "";
+                        if (!string.IsNullOrWhiteSpace(valorStr)) filaVacia = false;
+                        drVal = (object)valorStr;
+                    }
+                    dr[col - 1] = drVal;
                 }
 
                 if (filaVacia)
@@ -1113,10 +1130,19 @@ namespace bufinscustomers.Controllers
                             default:
                                 if (colsExcel.ContainsKey(colIni))
                                 {
-                                    var rawVal = srcRow[colsExcel[colIni]]?.ToString()?.Trim() ?? "";
-                                    destRow[colIni] = columnasNumericas.Contains(colIni)
-                                        ? (object)SanitizarValorNumerico(rawVal)
-                                        : (rawVal.Length > 0 ? (object)rawVal : DBNull.Value);
+                                    var cellValue = srcRow[colsExcel[colIni]];
+                                    if (columnasNumericas.Contains(colIni))
+                                    {
+                                        // Guardar como decimal nativo: SqlBulkCopy lo mapea
+                                        // a money/decimal de forma directa, sin conversión de texto.
+                                        // Elimina riesgos de notación científica, comas o puntos mal interpretados.
+                                        destRow[colIni] = (object)ExtraerDecimal(cellValue);
+                                    }
+                                    else
+                                    {
+                                        var rawVal = cellValue?.ToString()?.Trim() ?? "";
+                                        destRow[colIni] = rawVal.Length > 0 ? (object)rawVal : DBNull.Value;
+                                    }
                                 }
                                 else
                                 {
@@ -1155,17 +1181,113 @@ namespace bufinscustomers.Controllers
 
         // ─── Existing helper methods ──────────────────────────────────────────────
 
+        /// <summary>
+        /// Convierte cualquier valor de celda EPPlus a decimal exacto para SqlBulkCopy.
+        /// Para double nativo usa round-trip via string; para texto usa SanitizarValorNumerico.
+        /// Nunca lanza excepción: retorna 0 ante cualquier caso inválido.
+        /// </summary>
+        private decimal ExtraerDecimal(object cellValue)
+        {
+            if (cellValue == null) return 0m;
+
+            if (cellValue is double d)
+            {
+                if (double.IsNaN(d) || double.IsInfinity(d)) return 0m;
+                // Round-trip via string para preservar los decimales del double sin ruido flotante
+                string s = d.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+                return decimal.TryParse(s, System.Globalization.NumberStyles.Any,
+                                        System.Globalization.CultureInfo.InvariantCulture, out decimal dec)
+                    ? dec : 0m;
+            }
+
+            if (cellValue is decimal dm) return dm;
+            if (cellValue is int iv)    return (decimal)iv;
+            if (cellValue is long lv)   return (decimal)lv;
+
+            // Texto: pasar por el sanitizador de separadores
+            string str = SanitizarValorNumerico(cellValue.ToString()?.Trim() ?? "");
+            return decimal.TryParse(str, System.Globalization.NumberStyles.Any,
+                                    System.Globalization.CultureInfo.InvariantCulture, out decimal r)
+                ? r : 0m;
+        }
+
         private string SanitizarValorNumerico(string valor)
         {
             if (string.IsNullOrWhiteSpace(valor)) return "0";
-            var v = valor.Trim();
-            // Guión simple o largo como representación de cero (formato colombiano Excel)
+            var v = valor.Trim().Replace(" ", "").Replace("$", "");
             if (v == "-" || v == "–" || v == "—") return "0";
-            // Formato colombiano: punto = separador de miles, coma = decimal
-            var s = v.Replace(" ", "").Replace(".", "").Replace(",", ".");
+            if (string.IsNullOrEmpty(v)) return "0";
+
+            int lastDot   = v.LastIndexOf('.');
+            int lastComma = v.LastIndexOf(',');
+
+            string s;
+            if (lastDot >= 0 && lastComma >= 0)
+            {
+                // Ambos separadores: el último es el decimal
+                s = lastDot > lastComma
+                    ? v.Replace(",", "")                    // US: 15,549.00 → 15549.00
+                    : v.Replace(".", "").Replace(",", "."); // Colombiano: 15.549,00 → 15549.00
+            }
+            else if (lastComma >= 0)
+            {
+                // Solo coma: miles si (1-2 dígitos numéricos antes Y exactamente 3 después)
+                // Ej: "15,549"→miles=15549  |  "150,534"→decimal=150.534  |  "15549,00"→decimal
+                string beforeComma = v.Substring(0, lastComma).TrimStart('-');
+                int afterCommaLen  = v.Length - lastComma - 1;
+                bool esMiles = afterCommaLen == 3
+                               && beforeComma.Length > 0 && beforeComma.Length <= 2
+                               && beforeComma != "0";
+                s = esMiles ? v.Replace(",", "") : v.Replace(",", ".");
+            }
+            else if (lastDot >= 0)
+            {
+                int dotCount = v.Count(c => c == '.');
+                if (dotCount > 1)
+                {
+                    s = v.Replace(".", ""); // varios puntos = miles: 1.554.900 → 1554900
+                }
+                else
+                {
+                    // Único punto: miles si (1-2 dígitos numéricos antes Y exactamente 3 después)
+                    // Ej: "15.549"→miles=15549  |  "150.534"→decimal  |  "15549.00"→decimal
+                    string beforeDot = v.Substring(0, lastDot).TrimStart('-');
+                    int afterDotLen  = v.Length - lastDot - 1;
+                    bool esMiles = afterDotLen == 3
+                                   && beforeDot.Length > 0 && beforeDot.Length <= 2
+                                   && beforeDot != "0";
+                    s = esMiles ? v.Replace(".", "") : v;
+                }
+            }
+            else
+            {
+                s = v;
+            }
+
             return decimal.TryParse(s, System.Globalization.NumberStyles.Any,
                                     System.Globalization.CultureInfo.InvariantCulture, out _)
                 ? s : "0";
+        }
+
+        private void SanitizarColumnasNumericas(DataTable tabla, Dictionary<string, (string tipo, bool nullable)> esquema)
+        {
+            foreach (DataRow fila in tabla.Rows)
+            {
+                for (int i = 0; i < tabla.Columns.Count; i++)
+                {
+                    string colName = tabla.Columns[i].ColumnName;
+                    if (!esquema.ContainsKey(colName)) continue;
+                    string tipo = esquema[colName].tipo.ToLower();
+                    if (tipo != "money" && tipo != "smallmoney" && tipo != "decimal" &&
+                        tipo != "numeric" && tipo != "float" && tipo != "real") continue;
+                    string colLower = colName.ToLower();
+                    if (colLower.Contains("año") || colLower.Contains("anio") || colLower.Contains("year") ||
+                        colLower.Contains("mes") || colLower.Contains("month") || colLower.Contains("id"))
+                        continue;
+                    // Guardar como decimal nativo: SqlBulkCopy lo mapea directamente
+                    fila[i] = (object)ExtraerDecimal(fila[i]);
+                }
+            }
         }
 
         private string AnalizarErrorBulkCopy(SqlConnection conn, DataTable tabla, Exception bulkEx)
@@ -1285,7 +1407,8 @@ namespace bufinscustomers.Controllers
                             }
 
                             decimal valorDecimal;
-                            string valorLimpio = valorStr.Replace("$", "").Replace(",", "").Replace(" ", "").Trim();
+                            // Usar SanitizarValorNumerico para aplicar el mismo criterio que en el insert
+                            string valorLimpio = SanitizarValorNumerico(valorStr);
 
                             if (!decimal.TryParse(valorLimpio, System.Globalization.NumberStyles.Any,
                                 System.Globalization.CultureInfo.InvariantCulture, out valorDecimal))
