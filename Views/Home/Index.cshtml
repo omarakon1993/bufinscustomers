@@ -79,11 +79,6 @@
 
 <div class="dash-wrapper">
 
-    <div class="watermark">
-        <img src="~/Assets/img/Bufins_LogoLogin.png" alt="Bufins Watermark">
-        <div class="watermark-slogan">BUSINESS FINANCE ALWAYS EVERYWHERE</div>
-    </div>
-
     @if (hayTarjetas)
     {
         <div class="dash-greeting">
@@ -91,13 +86,18 @@
                 <span class="dash-hello">@Html.Raw(saludoHtml), <strong>@nombreUsuario</strong></span>
                 <span class="dash-date">@DateTime.Now.ToString(Resources.Strings.Home_DateFormat, System.Globalization.CultureInfo.CurrentCulture)</span>
             </div>
+            <img src="~/Assets/img/Bufins_LogoLogin.png" alt="Bufins" class="dash-greeting-logo">
         </div>
     }
 
     @if (kpiRows.Any() || graficoCards.Any())
     {
         <div class="dash-section">
-            <div class="dash-section-label"><i class="fas fa-th-large"></i> @Resources.Strings.Home_SectionWidgets</div>
+            <div class="dash-section-label dash-section-toggle" data-target="sec-widgets-body" data-key="bufins_sec_widgets" title="@Resources.Strings.Home_TooltipColapsar">
+                <i class="fas fa-th-large"></i> @Resources.Strings.Home_SectionWidgets
+                <i class="fas fa-chevron-down dash-section-chevron" style="margin-left:auto;font-size:.62rem;"></i>
+            </div>
+            <div id="sec-widgets-body">
             <div class="dash-widgets-grid">
 
                 @foreach (var row in kpiRows)
@@ -155,17 +155,20 @@
                 }
 
             </div>
+            </div><!-- /sec-widgets-body -->
         </div>
     }
 
 
     <div class="dash-section" id="indic-section" style="position:relative;z-index:1;margin-bottom:1.75rem;">
-        <div class="dash-section-label">
+        <div class="dash-section-label dash-section-toggle" data-target="sec-indic-body" data-key="bufins_sec_indic" title="@Resources.Strings.Home_TooltipColapsar">
             <i class="fas fa-chart-line"></i> @Resources.Strings.Home_SectionIndicadores
             <button id="btn-indic-refresh" class="dash-indic-refreshbtn" title="@Resources.Strings.Home_IndicadoresActualizar">
                 <i class="fas fa-sync-alt"></i>
             </button>
+            <i class="fas fa-chevron-down dash-section-chevron" style="font-size:.62rem;margin-left:.3rem;"></i>
         </div>
+        <div id="sec-indic-body">
 
         <div id="indic-loading" style="font-size:.78rem;color:#A0A0B8;display:flex;align-items:center;gap:.5rem;padding:.5rem 0;">
             <i class="fas fa-spinner fa-spin"></i> @Resources.Strings.Home_IndicadoresCargando
@@ -202,6 +205,7 @@
 
             </div>
         </div>
+        </div><!-- /sec-indic-body -->
     </div>
 
 </div>
@@ -223,19 +227,6 @@
 <style>
     .dash-wrapper { position:relative; min-height:70vh; padding:0 0 2rem; }
 
-    .watermark {
-        position:absolute; top:50%; left:50%;
-        transform:translate(-50%,-50%);
-        opacity:.08; z-index:0;
-        pointer-events:none; user-select:none; text-align:center;
-    }
-    .watermark img { max-width:520px; width:100%; height:auto; display:block; }
-    .watermark-slogan {
-        text-align:center; font-size:1.2rem; font-weight:700;
-        color:#393F45; letter-spacing:1px; text-transform:uppercase;
-        margin-top:1rem; font-family:'Nunito',sans-serif;
-    }
-
     .dash-greeting {
         position:relative; z-index:1;
         display:flex; align-items:center;
@@ -246,14 +237,19 @@
     .dash-hello { font-size:1.05rem; color:#160933; font-weight:500; }
     .dash-hello strong { color:#583AFF; }
     .dash-date { font-size:.75rem; color:#A0A0B8; text-transform:capitalize; }
+    .dash-greeting-logo { height:30px; width:auto; margin-left:auto; opacity:.55; flex-shrink:0; }
 
     .dash-section { position:relative; z-index:1; margin-bottom:1.75rem; }
     .dash-section-label {
-        font-size:.68rem; font-weight:700; color:#A0A0B8;
+        font-size:.68rem; font-weight:700; color:#583AFF;
         text-transform:uppercase; letter-spacing:1px;
         margin-bottom:.65rem;
         display:flex; align-items:center; gap:.4rem;
     }
+    .dash-section-toggle { cursor:pointer; user-select:none; }
+    .dash-section-toggle:hover { opacity:.8; }
+    .dash-section-chevron { transition:transform .2s ease; opacity:.6; flex-shrink:0; }
+    .dash-section-chevron.rotado { transform:rotate(-90deg); }
 
     /* ---------- Widgets unificados (KPI + Gráficos en la misma fila) ---------- */
     .dash-widgets-grid {
@@ -285,7 +281,7 @@
     .dash-kpi-body { min-width:0; flex:1; }
     .dash-kpi-value { font-size:1.1rem; font-weight:700; color:#160933; line-height:1.1; display:flex; align-items:baseline; gap:.3rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .dash-kpi-unit  { font-size:.58rem; font-weight:600; color:#583AFF; }
-    .dash-kpi-label { font-size:.60rem; font-weight:600; color:#6B6787; text-transform:uppercase; letter-spacing:.5px; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dash-kpi-label { font-size:.60rem; font-weight:600; color:#393F45; text-transform:uppercase; letter-spacing:.5px; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .dash-kpi-etiqueta { font-size:.60rem; color:#A0A0B8; margin-top:2px; }
     .dash-kpi-empresa  { font-size:.58rem; color:#A0A0B8; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .dash-kpi-empresa i { font-size:.50rem; }
@@ -386,10 +382,9 @@
     }
     @@media (max-width:576px) {
         .dash-kpi-grid { grid-template-columns:1fr; }
-        .watermark img { max-width:280px; }
-        .watermark-slogan { font-size:.65rem; }
         .dash-graf-card { padding:10px; min-height:180px; }
         .dash-graf-title { font-size:.82rem; }
+        .dash-greeting-logo { height:22px; }
     }
 
     /* ---------- Indicadores de Mercado ---------- */
@@ -407,6 +402,9 @@
         align-items:start;
     }
     .dash-indic-trm-card { min-width:0; }
+    .dash-indic-trm-card .dash-kpi-label    { font-size:.68rem; color:#393F45; }
+    .dash-indic-trm-card .dash-kpi-etiqueta { font-size:.68rem; color:#6B6787; }
+    .dash-indic-trm-card .dash-kpi-empresa  { font-size:.63rem; color:#6B6787; }
 
     /* Noticias */
     .dash-noticias-card {
@@ -419,7 +417,7 @@
     .dash-noticias-hdr {
         display:flex; align-items:center; gap:.5rem;
         padding:9px 13px;
-        font-size:.68rem; font-weight:700; color:#6B6787;
+        font-size:.76rem; font-weight:700; color:#6B6787;
         text-transform:uppercase; letter-spacing:.6px;
         border-bottom:1px solid rgba(88,58,255,.08);
     }
@@ -434,7 +432,7 @@
     }
     .feed-leyenda-item {
         display:flex; align-items:center; gap:.35rem;
-        font-size:.60rem; font-weight:700;
+        font-size:.68rem; font-weight:700;
         color:#6B6787; text-transform:uppercase; letter-spacing:.5px;
     }
     .feed-leyenda-dot {
@@ -454,10 +452,10 @@
     .dash-feed-grupo-hdr {
         display:flex; align-items:center; gap:.4rem;
         padding:4px 9px;
-        font-size:.58rem; font-weight:800;
+        font-size:.66rem; font-weight:800;
         text-transform:uppercase; letter-spacing:.5px;
     }
-    .dash-feed-grupo-hdr i { font-size:.52rem; }
+    .dash-feed-grupo-hdr i { font-size:.58rem; }
 
     .dash-noticias-list { list-style:none; margin:0; padding:0; }
     .dash-noticia-item { border-bottom:1px solid rgba(88,58,255,.06); }
@@ -470,18 +468,18 @@
     }
     .dash-noticia-item a:hover { background:rgba(88,58,255,.04); }
     .dash-noticia-titulo {
-        font-size:.74rem; color:#160933; font-weight:500;
+        font-size:.82rem; color:#160933; font-weight:500;
         line-height:1.35; flex:1; min-width:0;
         overflow:hidden; display:-webkit-box;
         -webkit-line-clamp:2; -webkit-box-orient:vertical;
     }
     .dash-noticia-fecha {
-        font-size:.58rem; color:#A0A0B8;
+        font-size:.66rem; color:#6B6787;
         white-space:nowrap; flex-shrink:0; padding-top:2px;
     }
     .dash-noticias-hint {
         padding:12px 13px;
-        font-size:.72rem; color:#A0A0B8; line-height:1.4;
+        font-size:.80rem; color:#A0A0B8; line-height:1.4;
     }
     .dash-trm-nodisp {
         font-size:.80rem; color:#FCA311; font-weight:600;
@@ -681,11 +679,14 @@
 <script>
 (function () {
     var _s = {
-        vigente:  '@Html.Raw(Resources.Strings.Home_TRM_Vigente)',
-        noDisp:   '@Html.Raw(Resources.Strings.Home_TRM_NoDisponible)',
-        vacias:   '@Html.Raw(Resources.Strings.Home_Noticias_Vacias)',
-        noConfig: '@Html.Raw(Resources.Strings.Home_Noticias_NoConfig)',
-        error:    '@Html.Raw(Resources.Strings.Home_IndicadoresError)'
+        vigente:   '@Html.Raw(Resources.Strings.Home_TRM_Vigente)',
+        noDisp:    '@Html.Raw(Resources.Strings.Home_TRM_NoDisponible)',
+        vacias:    '@Html.Raw(Resources.Strings.Home_Noticias_Vacias)',
+        noConfig:  '@Html.Raw(Resources.Strings.Home_Noticias_NoConfig)',
+        error:     '@Html.Raw(Resources.Strings.Home_IndicadoresError)',
+        colapsar:  '@Html.Raw(Resources.Strings.Home_TooltipColapsar)',
+        expandir:  '@Html.Raw(Resources.Strings.Home_TooltipExpandir)',
+        irNoticia: '@Html.Raw(Resources.Strings.Home_TooltipNoticia)'
     };
 
     var _urlNoticias = '@Url.Action("ObtenerNoticias", "Home")';
@@ -702,9 +703,18 @@
         return d.innerHTML;
     }
 
-    // Paleta corporativa: púrpura principal, teal, violeta
-    var FEED_COLORS = ['#583AFF', '#00A89E', '#9B5DE5'];
-    var FEED_BGS    = ['rgba(88,58,255,.04)', 'rgba(0,168,158,.05)', 'rgba(155,93,229,.04)'];
+    // Paleta corporativa: púrpura, teal, violeta, azul
+    var FEED_COLORS = ['#583AFF', '#00A89E', '#9B5DE5', '#118AB2'];
+    var FEED_BGS    = ['rgba(88,58,255,.04)', 'rgba(0,168,158,.05)', 'rgba(155,93,229,.04)', 'rgba(17,138,178,.04)'];
+
+    // Cache TRM en sessionStorage — válido 2 horas, evita fetch extra al volver al dashboard
+    var TRM_KEY = 'bufins_trm';
+    var TRM_TTL = 7200000;
+
+    function mostrarTRM(cop, fecha) {
+        $('#trm-valor').html('$' + fmtCOP(cop));
+        $('#trm-fecha').text(_s.vigente + ' ' + fecha);
+    }
 
     function mostrarTRMNoDisp() {
         $('#trm-valor').html('<span class="dash-trm-nodisp">' + esc(_s.noDisp) + '</span>');
@@ -765,7 +775,7 @@
                     : '';
                 $ul.append(
                     $('<li class="dash-noticia-item"></li>').html(
-                        '<a href="' + esc(n.Enlace) + '" target="_blank" rel="noopener noreferrer">' +
+                        '<a href="' + esc(n.Enlace) + '" target="_blank" rel="noopener noreferrer" title="' + esc(_s.irNoticia) + '">' +
                         '<span class="dash-noticia-titulo">' + esc(n.Titulo) + '</span>' +
                         fec + '</a>'
                     )
@@ -795,31 +805,45 @@
             }
         }
 
-        // ── TRM: fetch directo del navegador a open.er-api.com (CORS habilitado, sin clave) ──
-        // Respuesta: {"result":"success","rates":{"COP":4162.89},"time_last_update_utc":"..."}
-        fetch('https://open.er-api.com/v6/latest/USD')
-            .then(function (r) { return r.json(); })
-            .then(function (d) {
-                var cop = d.rates && d.rates.COP ? parseFloat(d.rates.COP) : 0;
-                if (d.result === 'success' && cop > 0) {
-                    var utc = d.time_last_update_utc || '';
-                    var fechaFmt = '';
-                    if (utc) {
-                        var dt = new Date(utc);
-                        if (!isNaN(dt.getTime())) {
-                            fechaFmt = ('0' + dt.getUTCDate()).slice(-2) + '/' +
-                                       ('0' + (dt.getUTCMonth() + 1)).slice(-2) + '/' +
-                                       dt.getUTCFullYear();
+        // ── TRM: sessionStorage → fetch (open.er-api.com, CORS habilitado) ──
+        (function () {
+            if (!refresh) {
+                try {
+                    var raw = sessionStorage.getItem(TRM_KEY);
+                    if (raw) {
+                        var obj = JSON.parse(raw);
+                        if (Date.now() - obj.ts < TRM_TTL) {
+                            mostrarTRM(obj.cop, obj.fecha);
+                            fin();
+                            return; // usa cache, no hace fetch
                         }
                     }
-                    $('#trm-valor').html('$' + fmtCOP(cop));
-                    $('#trm-fecha').text(_s.vigente + ' ' + fechaFmt);
-                } else {
-                    mostrarTRMNoDisp();
-                }
-                fin();
-            })
-            .catch(function () { mostrarTRMNoDisp(); fin(); });
+                } catch (e) {}
+            }
+            fetch('https://open.er-api.com/v6/latest/USD')
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    var cop = d.rates && d.rates.COP ? parseFloat(d.rates.COP) : 0;
+                    if (d.result === 'success' && cop > 0) {
+                        var utc = d.time_last_update_utc || '';
+                        var fechaFmt = '';
+                        if (utc) {
+                            var dt = new Date(utc);
+                            if (!isNaN(dt.getTime())) {
+                                fechaFmt = ('0' + dt.getUTCDate()).slice(-2) + '/' +
+                                           ('0' + (dt.getUTCMonth() + 1)).slice(-2) + '/' +
+                                           dt.getUTCFullYear();
+                            }
+                        }
+                        try { sessionStorage.setItem(TRM_KEY, JSON.stringify({ cop: cop, fecha: fechaFmt, ts: Date.now() })); } catch (e) {}
+                        mostrarTRM(cop, fechaFmt);
+                    } else {
+                        mostrarTRMNoDisp();
+                    }
+                    fin();
+                })
+                .catch(function () { mostrarTRMNoDisp(); fin(); });
+        })();
 
         // ── Noticias: desde el servidor (parseo RSS server-side) ──
         $.getJSON(_urlNoticias + (refresh ? '?refresh=true' : ''))
@@ -831,7 +855,32 @@
             .always(function () { fin(); });
     }
 
+    function initSecciones() {
+        // Restaurar estado guardado en localStorage
+        $('.dash-section-toggle').each(function () {
+            if (localStorage.getItem($(this).data('key')) === '0') {
+                $('#' + $(this).data('target')).hide();
+                $(this).find('.dash-section-chevron').addClass('rotado');
+                $(this).attr('title', _s.expandir);
+            }
+        });
+
+        // Toggle al hacer clic en el label (excluye el botón de refresh)
+        $(document).on('click', '.dash-section-toggle', function (e) {
+            if ($(e.target).closest('#btn-indic-refresh').length) return;
+            var $lbl  = $(this);
+            var $body = $('#' + $lbl.data('target'));
+            var $chev = $lbl.find('.dash-section-chevron');
+            var abierto = $body.is(':visible');
+            $body[abierto ? 'slideUp' : 'slideDown'](180);
+            $chev.toggleClass('rotado', abierto);
+            $lbl.attr('title', abierto ? _s.expandir : _s.colapsar);
+            localStorage.setItem($lbl.data('key'), abierto ? '0' : '1');
+        });
+    }
+
     $(document).ready(function () {
+        initSecciones();
         cargar(false);
         $('#btn-indic-refresh').on('click', function () { cargar(true); });
     });

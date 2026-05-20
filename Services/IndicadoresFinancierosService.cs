@@ -5,10 +5,10 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.Caching;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using bufinscustomers.Models;
-using Newtonsoft.Json.Linq;
 
 namespace bufinscustomers.Services
 {
@@ -19,43 +19,41 @@ namespace bufinscustomers.Services
         static IndicadoresFinancierosService()
         {
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
-            _http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-            _http.DefaultRequestHeaders.Add("Accept", "application/json,application/xml,text/xml,*/*");
+            _http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+            _http.DefaultRequestHeaders.Add("Accept", "application/xml,text/xml,*/*");
             _http.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (compatible; BufinsApp/1.0)");
         }
 
-        private const string CacheTRM   = "IndicadoresTRM";
-        private const string CacheFeeds = "IndicadoresFeeds";
-
-        private const string TasaCambioUrl = "https://api.frankfurter.app/latest?from=USD&to=COP";
-        private const int    MaxPorFeed    = 4;
+        private const string CacheFeeds   = "IndicadoresFeeds";
+        private const int    MaxPorFeed   = 4;
+        private const int    TimeoutFeed  = 8; // segundos por feed
 
         // -------------------------------------------------------
-        // Solo noticias agrupadas por feed (TRM lo hace el browser)
+        // Punto de entrada público
         // -------------------------------------------------------
         public async Task<IndicadoresFinancierosViewModel> ObtenerSoloNoticiasAsync(bool forzarRefresh)
         {
             string feed1 = ConfigurationManager.AppSettings["IndicadoresRSSFeed1"] ?? "";
             string feed2 = ConfigurationManager.AppSettings["IndicadoresRSSFeed2"] ?? "";
             string feed3 = ConfigurationManager.AppSettings["IndicadoresRSSFeed3"] ?? "";
-            bool rssConf = !string.IsNullOrWhiteSpace(feed1)
-                        || !string.IsNullOrWhiteSpace(feed2)
-                        || !string.IsNullOrWhiteSpace(feed3);
+            string feed4 = ConfigurationManager.AppSettings["IndicadoresRSSFeed4"] ?? "";
 
-            var feeds = await ObtenerFeedsAsync(forzarRefresh, feed1.Trim(), feed2.Trim(), feed3.Trim())
-                            .ConfigureAwait(false);
+            bool rssConf = !string.IsNullOrWhiteSpace(feed1) || !string.IsNullOrWhiteSpace(feed2)
+                        || !string.IsNullOrWhiteSpace(feed3) || !string.IsNullOrWhiteSpace(feed4);
 
-            return new IndicadoresFinancierosViewModel
-            {
-                TRM            = null,
-                Noticias       = null,
-                Feeds          = feeds,
-                RSSConfigurado = rssConf
-            };
+            var feeds = await ObtenerFeedsAsync(
+                forzarRefresh,
+                feed1.Trim(), feed2.Trim(), feed3.Trim(), feed4.Trim()
+            ).ConfigureAwait(false);
+
+            return new IndicadoresFinancierosViewModel { Feeds = feeds, RSSConfigurado = rssConf };
         }
 
+        // -------------------------------------------------------
+        // Feeds agrupados — 4 por fuente, en paralelo con timeout individual
+        // -------------------------------------------------------
         private async Task<List<FeedNoticiaViewModel>> ObtenerFeedsAsync(
-            bool forzarRefresh, string feed1, string feed2, string feed3)
+            bool forzarRefresh, string feed1, string feed2, string feed3, string feed4)
         {
             var cache = MemoryCache.Default;
             if (!forzarRefresh && cache.Contains(CacheFeeds))
@@ -65,10 +63,12 @@ namespace bufinscustomers.Services
             if (!string.IsNullOrWhiteSpace(feed1)) urls.Add(feed1);
             if (!string.IsNullOrWhiteSpace(feed2)) urls.Add(feed2);
             if (!string.IsNullOrWhiteSpace(feed3)) urls.Add(feed3);
+            if (!string.IsNullOrWhiteSpace(feed4)) urls.Add(feed4);
 
             if (urls.Count == 0)
                 return Cache(CacheFeeds, new List<FeedNoticiaViewModel>(), 30);
 
+            // Cada feed tiene su propio timeout de 8 s — uno lento no bloquea a los otros
             var tareas = urls.Select(u => ParsarRSSAsync(u)).ToArray();
             var listas = await Task.WhenAll(tareas).ConfigureAwait(false);
 
@@ -94,49 +94,22 @@ namespace bufinscustomers.Services
         }
 
         // -------------------------------------------------------
-        // TRM / tasa de cambio USD-COP  (frankfurter.app)
+        // Parser RSS con timeout por feed (CancellationToken)
         // -------------------------------------------------------
-        private async Task<TRMViewModel> ObtenerTRMAsync(bool forzarRefresh)
-        {
-            var cache = MemoryCache.Default;
-
-            if (!forzarRefresh && cache.Contains(CacheTRM))
-                return (TRMViewModel)cache[CacheTRM];
-
-            try
-            {
-                string raw  = await _http.GetStringAsync(TasaCambioUrl).ConfigureAwait(false);
-                var    root = JObject.Parse(raw);
-
-                decimal cop     = root["rates"]?["COP"]?.Value<decimal>() ?? 0;
-                string  fecha   = root["date"]?.ToString() ?? "";
-
-                DateTime dt;
-                string fechaStr = DateTime.TryParse(fecha, System.Globalization.CultureInfo.InvariantCulture,
-                                      System.Globalization.DateTimeStyles.None, out dt)
-                    ? dt.ToString("dd/MM/yyyy")
-                    : DateTime.Now.ToString("dd/MM/yyyy");
-
-                return Cache(CacheTRM, new TRMViewModel
-                {
-                    Valor      = Math.Round(cop, 2),
-                    Fecha      = fechaStr,
-                    Disponible = cop > 0
-                }, 120);
-            }
-            catch
-            {
-                return Cache(CacheTRM, new TRMViewModel { Disponible = false }, 5);
-            }
-        }
-
         private async Task<List<(NoticiaViewModel VM, DateTime Fecha)>> ParsarRSSAsync(string url)
         {
             try
             {
-                string xml = await _http.GetStringAsync(url).ConfigureAwait(false);
-                var    doc = XDocument.Parse(xml);
-                var lista  = new List<(NoticiaViewModel, DateTime)>();
+                string xml;
+                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(TimeoutFeed)))
+                {
+                    var req  = new HttpRequestMessage(HttpMethod.Get, url);
+                    var resp = await _http.SendAsync(req, cts.Token).ConfigureAwait(false);
+                    xml = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                }
+
+                var doc   = XDocument.Parse(xml);
+                var lista = new List<(NoticiaViewModel, DateTime)>();
 
                 string fuente;
                 try { fuente = new Uri(url).Host.Replace("www.", ""); }
@@ -153,9 +126,7 @@ namespace bufinscustomers.Services
                                        ?? item.Elements()
                                               .FirstOrDefault(e => e.Name.LocalName == "link")
                                               ?.Value?.Trim() ?? "#";
-                        string pubDate = item.Element("pubDate")?.Value ?? "";
-                        var    dt      = ParseFecha(pubDate);
-
+                        var dt = ParseFecha(item.Element("pubDate")?.Value ?? "");
                         if (string.IsNullOrWhiteSpace(titulo)) continue;
 
                         lista.Add((new NoticiaViewModel
@@ -181,7 +152,6 @@ namespace bufinscustomers.Services
                     string pub = entry.Element(atom + "published")?.Value
                               ?? entry.Element(atom + "updated")?.Value ?? "";
                     var dt = ParseFecha(pub);
-
                     if (string.IsNullOrWhiteSpace(titulo)) continue;
 
                     lista.Add((new NoticiaViewModel
