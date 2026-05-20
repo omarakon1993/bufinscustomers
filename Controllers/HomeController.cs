@@ -54,6 +54,23 @@ namespace bufinscustomers.Controllers
 
             return View();
         }
+        [HttpGet]
+        public async Task<ActionResult> ObtenerNoticias(bool refresh = false)
+        {
+            try
+            {
+                var svc = new IndicadoresFinancierosService();
+                var vm  = await svc.ObtenerSoloNoticiasAsync(refresh).ConfigureAwait(false);
+                return Json(new { rssConfigurado = vm.RSSConfigurado, feeds = vm.Feeds },
+                            JsonRequestBehavior.AllowGet);
+            }
+            catch
+            {
+                return Json(new { rssConfigurado = false, noticias = new object[0] },
+                            JsonRequestBehavior.AllowGet);
+            }
+        }
+
         public ActionResult CerrarSesion()
         {
             Session["usuario"] = null;
