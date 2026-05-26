@@ -18,6 +18,7 @@ namespace bufinscustomers.Models
         public byte? Admin { get; set; }
         public int?   IdEmpresa  {get; set;}
         public ImagenUsuario Imagen { get; set; }
+        public int?  LimiteConsultasIA { get; set; }
 
     }
 }

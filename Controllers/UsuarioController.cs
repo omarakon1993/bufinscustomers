@@ -105,6 +105,17 @@ namespace bufinscustomers.Controllers
                                 usuario.Imagen = null;
                             }
 
+                            try
+                            {
+                                reader.GetOrdinal("LimiteConsultasIA");
+                                usuario.LimiteConsultasIA = reader["LimiteConsultasIA"] != DBNull.Value
+                                    ? (int?)Convert.ToInt32(reader["LimiteConsultasIA"]) : 0;
+                            }
+                            catch (IndexOutOfRangeException)
+                            {
+                                usuario.LimiteConsultasIA = 0;
+                            }
+
                             usuarios.Add(usuario);
                         }
                     }
@@ -233,6 +244,20 @@ namespace bufinscustomers.Controllers
                         command.ExecuteNonQuery();
                     }
 
+                    // Actualizar límite de consultas IA (solo admins pueden setearlo, max 10)
+                    if (oUsuario.LimiteConsultasIA.HasValue &&
+                        (UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.EsAdminEmpresa()))
+                    {
+                        int limite = Math.Min(10, Math.Max(0, oUsuario.LimiteConsultasIA.Value));
+                        using (SqlCommand cmdLimite = new SqlCommand(
+                            "UPDATE Usuarios SET LimiteConsultasIA = @Limite WHERE Id = @Id", connection))
+                        {
+                            cmdLimite.Parameters.AddWithValue("@Limite", limite);
+                            cmdLimite.Parameters.AddWithValue("@Id", oUsuario.Id);
+                            cmdLimite.ExecuteNonQuery();
+                        }
+                    }
+
                     // Procesar imagen si se cargó una
                     if (ImagenUsuario != null && ImagenUsuario.ContentLength > 0)
                     {
@@ -329,15 +354,36 @@ namespace bufinscustomers.Controllers
                 cmd.Parameters.AddWithValue("IdEmpresa", oUsuario.IdEmpresa);
                 cmd.Parameters.Add("Registrado", SqlDbType.Bit).Direction = ParameterDirection.Output;
                 cmd.Parameters.Add("Mensaje", SqlDbType.VarChar, 100).Direction = ParameterDirection.Output;
-                cmd.Parameters.Add("IdUsuario", SqlDbType.Int).Direction = ParameterDirection.Output;
                 cmd.CommandType = CommandType.StoredProcedure;
                 cn.Open();
                 cmd.ExecuteNonQuery();
                 registrado = Convert.ToBoolean(cmd.Parameters["Registrado"].Value);
                 mensaje = cmd.Parameters["Mensaje"].Value.ToString();
-                if (registrado && cmd.Parameters["IdUsuario"].Value != DBNull.Value)
+                if (registrado)
                 {
-                    usuarioId = Convert.ToInt32(cmd.Parameters["IdUsuario"].Value);
+                    // SP_RegistrarUsuario no devuelve el Id; lo obtenemos con una consulta directa
+                    using (SqlCommand cmdGetId = new SqlCommand(
+                        "SELECT Id FROM Usuarios WHERE Usuario = @Usuario", cn))
+                    {
+                        cmdGetId.Parameters.AddWithValue("@Usuario", oUsuario.Usuario);
+                        var idResult = cmdGetId.ExecuteScalar();
+                        if (idResult != null && idResult != DBNull.Value)
+                            usuarioId = Convert.ToInt32(idResult);
+                    }
+
+                    // Asignar límite de consultas IA al usuario recién creado
+                    if (usuarioId > 0 && oUsuario.LimiteConsultasIA.HasValue &&
+                        (UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.EsAdminEmpresa()))
+                    {
+                        int limite = Math.Min(10, Math.Max(0, oUsuario.LimiteConsultasIA.Value));
+                        using (SqlCommand cmdLimite = new SqlCommand(
+                            "UPDATE Usuarios SET LimiteConsultasIA = @Limite WHERE Id = @Id", cn))
+                        {
+                            cmdLimite.Parameters.AddWithValue("@Limite", limite);
+                            cmdLimite.Parameters.AddWithValue("@Id", usuarioId);
+                            cmdLimite.ExecuteNonQuery();
+                        }
+                    }
                 }
             }
 

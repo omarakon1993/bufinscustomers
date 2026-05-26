@@ -14,21 +14,7 @@
 <link href="~/Assets/css/analisis-ia.css"           rel="stylesheet" />
 
 <style>
-/* ── Bloque pregunta en respuesta ── */
-.ia-pregunta-block {
-    background: linear-gradient(135deg,#ede9fe 0%,#ddd6fe 100%);
-    border-left: 4px solid #7c3aed;
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 16px;
-}
-.ia-pregunta-block .ia-pregunta-label {
-    font-size:.75rem; font-weight:700; letter-spacing:.07em;
-    text-transform:uppercase; color:#6d28d9; margin-bottom:4px;
-}
-.ia-pregunta-block .ia-pregunta-texto { color:#3b0764; font-weight:500; font-size:.97rem; }
-
-/* ── Boton historial ── */
+/* ── Botón historial auditoría ── */
 .audit-btn-header {
     background:rgba(255,255,255,.18); border:1.5px solid rgba(255,255,255,.55);
     color:#fff; border-radius:8px; padding:6px 16px; font-size:.87rem;
@@ -47,7 +33,7 @@
             <h1 class="powerbi-header-title">
                 @Resources.Strings.IA_PageTitle
                 <span class="ia-header-badge">
-                    <i class="fas fa-circle" style="font-size:6px;"></i> OpenAI GPT
+                    <i class="fas fa-circle" style="font-size:6px;"></i> @(ViewBag.ModeloIA ?? "OpenAI")
                 </span>
             </h1>
         </div>
@@ -153,16 +139,6 @@
         <p>@Resources.Strings.IA_PlaceholderDesc</p>
     </div>
 
-    <!-- Loading inicial -->
-    <div id="loadingAnalisis" style="display:none;" class="ia-placeholder">
-        <div class="ia-loading-wrap" style="padding:20px 0;">
-            <div class="ia-loading-inner">
-                <div class="ia-dots"><span></span><span></span><span></span></div>
-                <p>@Resources.Strings.IA_LoadingConsultando</p>
-            </div>
-        </div>
-    </div>
-
     <!-- Panel IA -->
     <div id="panelIA" style="display:none;" class="ia-panel">
         <div class="ia-panel-header">
@@ -184,29 +160,37 @@
             <button type="button" id="btnExportarPDF" class="btn-exportar-pdf" onclick="exportarAnalisisPDF()" style="display:none;">
                 <i class="fas fa-file-pdf"></i> @Resources.Strings.IA_BtnExportarPDF
             </button>
+            <button type="button" id="btnExportarExcel" class="btn-exportar-excel" onclick="exportarExcelConIA()" style="display:none;">
+                <i class="fas fa-file-excel"></i> @Resources.Strings.IA_BtnExportarExcel
+            </button>
             <span class="ia-hint">@Resources.Strings.IA_PreguntaHint</span>
         </div>
-        <div id="loadingIA" style="display:none;" class="ia-loading-wrap">
-            <div class="ia-loading-inner">
-                <div class="ia-dots"><span></span><span></span><span></span></div>
-                <p>@Resources.Strings.IA_LoadingAnalizando</p>
+
+        <!-- Área de chat multi-turn -->
+        <div id="iaChatArea" class="ia-chat-area" style="display:none;">
+            <div id="iaChatMessages" class="ia-chat-messages"></div>
+            <div id="iaChatLoading" style="display:none;" class="ia-loading-wrap">
+                <div class="ia-loading-inner">
+                    <div class="ia-dots"><span></span><span></span><span></span></div>
+                    <p>@Resources.Strings.IA_LoadingAnalizando</p>
+                </div>
             </div>
         </div>
-        <div id="respuestaIA" style="display:none;" class="ia-response-wrap">
-            <div class="ia-response-header"><i class="fas fa-stars"></i> @Resources.Strings.IA_RespuestaHeader</div>
-            <div id="respuestaIATexto" class="ia-response-body"></div>
-        </div>
+
         <div class="ia-input-section">
             <div class="ia-input-row">
-                <input type="text" id="txtPreguntaIA" class="ia-text-input"
+                <input type="text" id="txtPreguntaIA" class="ia-text-input" maxlength="500"
                        placeholder="@Resources.Strings.IA_InputPlaceholder" />
                 <button type="button" id="btnPreguntarIA" class="btn-enviar">
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </div>
-            <div class="ia-branding">
-                <i class="fas fa-lock"></i> Powered by OpenAI &nbsp;&middot;&nbsp;
-                <i class="fas fa-database"></i> <span id="txtFilasInfo">@Resources.Strings.IA_FilasInfo</span>
+            <div class="ia-input-footer">
+                <div class="ia-branding">
+                    <i class="fas fa-lock"></i> Powered by OpenAI &nbsp;&middot;&nbsp;
+                    <i class="fas fa-database"></i> <span id="txtFilasInfo">@Resources.Strings.IA_FilasInfo</span>
+                </div>
+                <div class="ia-char-count"><span id="iaCharCount">500</span> <span class="ia-char-label">@Resources.Strings.IA_CharRestantes</span></div>
             </div>
         </div>
     </div>
@@ -268,12 +252,19 @@
         pdfFooter:          '@Html.Raw(Resources.Strings.IA_PDF_Footer)',
         labelTabla:         '@Resources.Strings.Common_LabelTabla',
         labelEmpresa:       '@Resources.Strings.Common_LabelEmpresa',
-        labelAnio:          '@Resources.Strings.Common_LabelAnio',
+        labelAnio:          '@Html.Raw(Resources.Strings.Common_LabelAnio)',
         labelMes:           '@Resources.Strings.Common_LabelMes',
         labelVariable:      '@Resources.Strings.Common_LabelVariable',
         btnExportarPDF:     '@Html.Raw(Resources.Strings.IA_BtnExportarPDF)',
-        mesTextoTodos:      '@Resources.Strings.Common_Todos'
+        mesTextoTodos:      '@Resources.Strings.Common_Todos',
+        respuestaHeader:    '@Html.Raw(Resources.Strings.IA_RespuestaHeader)',
+        preguntaLarga:      '@Resources.Strings.IA_JS_PreguntaLarga',
+        preguntaLargaTexto: '@Html.Raw(Resources.Strings.IA_JS_PreguntaLargaTexto)',
+        btnExcelConIA:      '@Html.Raw(Resources.Strings.IA_BtnExportarExcel)',
     };
+
+    // Global so exportarExcelConIA() (outside document.ready) can read it
+    var _chatHistorial = [];
 </script>
 
 <script>
@@ -297,8 +288,8 @@
 <script>
 $(document).ready(function () {
 
-    var filtrosActuales      = null;
-    window._preguntaActualIA = null;
+    var filtrosActuales = null;
+    // _chatHistorial is declared globally above document.ready for cross-script access
 
     var s2lang = {
         noResults: function () { return _iaMsg.noResultados; },
@@ -354,7 +345,6 @@ $(document).ready(function () {
             Variable    : $('#selectVariable').val() || null
         };
         window._filtrosActualesPDF = filtrosActuales;
-        window._preguntaActualIA   = null;
 
         var nombreTabla = $('#selectTabla option:selected').data('nombre') || tabla;
         var partes = [nombreTabla];
@@ -362,9 +352,9 @@ $(document).ready(function () {
         if ($('#selectAnio').val()) partes.push(_iaMsg.labelAnio + ' ' + $('#selectAnio').val());
         if ($('#selectMes option:selected').text() && $('#selectMes').val()) partes.push($('#selectMes option:selected').text());
         if ($('#selectVariable').val()) partes.push($('#selectVariable').val());
-        $('#iaContexto').text(partes.join(' · '));
+        $('#iaContexto').text(partes.join(' \u00B7 '));
 
-        $('#placeholderIA,#loadingAnalisis,#respuestaIA,#loadingIA').hide();
+        $('#placeholderIA').hide();
         $('#panelIA').show();
     });
 
@@ -379,33 +369,98 @@ $(document).ready(function () {
     });
 
     function resetPanel() {
-        $('#panelIA,#respuestaIA,#loadingIA').hide();
+        $('#panelIA').hide();
+        $('#iaChatArea').hide();
+        $('#iaChatMessages').empty();
+        $('#iaChatLoading').hide();
         $('#txtPreguntaIA').val('');
+        $('#iaCharCount').text('500').closest('.ia-char-count').removeClass('ia-char-warn');
         $('#txtFilasInfo').text(_iaMsg.filasInfo);
-        document.getElementById('btnExportarPDF').style.display = 'none';
+        document.getElementById('btnExportarPDF').style.display   = 'none';
+        document.getElementById('btnExportarExcel').style.display = 'none';
         filtrosActuales = null;
-        window._preguntaActualIA = null;
+        _chatHistorial  = [];
         $('#placeholderIA').show();
     }
 
+    // ── Chat helpers ──────────────────────────────────────
+    function appendUserBubble(pregunta) {
+        var html = '<div class="ia-chat-user-wrap">'
+                 +   '<div class="ia-chat-user-bubble">'
+                 +     '<div class="ia-chat-user-meta"><i class="fas fa-comment-alt"></i> ' + _iaMsg.preguntaLabel + '</div>'
+                 +     '<div class="ia-chat-user-texto">' + $('<div>').text(pregunta).html() + '</div>'
+                 +   '</div>'
+                 +   '<div class="ia-chat-avatar ia-chat-avatar-user"><i class="fas fa-user"></i></div>'
+                 + '</div>';
+        $('#iaChatMessages').append(html);
+        scrollChat();
+    }
+
+    // Versión con efecto reveal párrafo a párrafo (#6 streaming)
+    function appendAssistantBubble(respuesta) {
+        var $wrap = $('<div class="ia-chat-assistant-wrap">'
+            + '<div class="ia-chat-avatar ia-chat-avatar-bot"><i class="fas fa-robot"></i></div>'
+            + '<div class="ia-chat-assistant-inner">'
+            +   '<div class="ia-response-header"><i class="fas fa-stars"></i> ' + _iaMsg.respuestaHeader + '</div>'
+            +   '<div class="ia-response-body"></div>'
+            + '</div></div>');
+        $('#iaChatMessages').append($wrap);
+        scrollChat();
+
+        var bodyEl   = $wrap.find('.ia-response-body')[0];
+        var segments = respuesta.split('\n\n').filter(function(s){ return s.trim().length > 0; });
+        var idx      = 0;
+
+        function revealNext() {
+            if (idx < segments.length) {
+                var partial = segments.slice(0, idx + 1).join('\n\n');
+                bodyEl.innerHTML = renderMarkdown(partial)
+                    + (idx < segments.length - 1 ? '<span class="ia-cursor"> ▋</span>' : '');
+                idx++;
+                scrollChat();
+                setTimeout(revealNext, 190);
+            } else {
+                bodyEl.innerHTML = renderMarkdown(respuesta);
+                scrollChat();
+            }
+        }
+        revealNext();
+    }
+
+    function scrollChat() {
+        var el = document.getElementById('iaChatMessages');
+        if (el) el.scrollTop = el.scrollHeight;
+    }
+
     // ── Consultar IA ──────────────────────────────────────
-    function consultarIA(pregunta) {
+    // esFrescaConversacion=true → resetea historial y genera resumen desde cero
+    function consultarIA(pregunta, esFrescaConversacion) {
         if (!filtrosActuales) return;
-        window._preguntaActualIA = pregunta || null;
-        $('#btnResumenIA').prop('disabled', true);
-        $('#loadingIA').show();
-        $('#respuestaIA').hide();
+
+        if (esFrescaConversacion) {
+            _chatHistorial = [];
+            $('#iaChatMessages').empty();
+            document.getElementById('btnExportarPDF').style.display = 'none';
+        }
+
+        if (pregunta) appendUserBubble(pregunta);
+
+        $('#iaChatArea').show();
+        $('#iaChatLoading').show();
+        scrollChat();
+        $('#btnResumenIA,#btnPreguntarIA').prop('disabled', true);
 
         var data = $.extend({}, filtrosActuales);
         if (pregunta) data.pregunta = pregunta;
+        if (_chatHistorial.length > 0) data.historialJson = JSON.stringify(_chatHistorial);
 
         $.ajax({
             url  : '@Url.Action("ConsultarConIA","InformeTablasDatos")',
             type : 'POST',
             data : data,
             success: function (resp) {
-                $('#loadingIA').hide();
-                $('#btnResumenIA').prop('disabled', false);
+                $('#iaChatLoading').hide();
+                $('#btnResumenIA,#btnPreguntarIA').prop('disabled', false);
                 if (resp.Exitoso) {
                     if (resp.TotalFilas > 0) {
                         $('#txtFilasInfo').text(
@@ -414,37 +469,44 @@ $(document).ready(function () {
                                 : resp.TotalFilas + ' registros analizados'
                         );
                     }
-                    var html = '';
-                    if (pregunta) {
-                        html += '<div class="ia-pregunta-block">'
-                              + '<div class="ia-pregunta-label"><i class="fas fa-question-circle"></i> ' + _iaMsg.preguntaLabel + '</div>'
-                              + '<div class="ia-pregunta-texto">' + $('<div>').text(pregunta).html() + '</div>'
-                              + '</div>';
+                    appendAssistantBubble(resp.Respuesta);
+                    // Actualizar historial multi-turn
+                    if (_chatHistorial.length === 0 && resp.PromptContextoInicial) {
+                        _chatHistorial.push({ Rol: 'user', Contenido: resp.PromptContextoInicial });
+                    } else if (pregunta) {
+                        _chatHistorial.push({ Rol: 'user', Contenido: pregunta });
                     }
-                    html += renderMarkdown(resp.Respuesta);
-                    $('#respuestaIATexto').html(html);
-                    $('#respuestaIA').show();
-                    document.getElementById('btnExportarPDF').style.display = 'inline-flex';
+                    _chatHistorial.push({ Rol: 'assistant', Contenido: resp.Respuesta });
+                    document.getElementById('btnExportarPDF').style.display   = 'inline-flex';
+                    document.getElementById('btnExportarExcel').style.display = 'inline-flex';
                 } else {
                     Swal.fire({icon:'warning',title:_iaMsg.asistenteError,text:resp.Error||_iaMsg.servicioIA});
                 }
             },
             error: function () {
-                $('#loadingIA').hide();
-                $('#btnResumenIA').prop('disabled', false);
+                $('#iaChatLoading').hide();
+                $('#btnResumenIA,#btnPreguntarIA').prop('disabled', false);
                 Swal.fire({icon:'error',title:_iaMsg.conexionError,text:_iaMsg.servicioIA});
             }
         });
     }
 
-    $('#btnResumenIA').on('click', function () { consultarIA(null); });
+    // Generar Resumen = conversación fresca
+    $('#btnResumenIA').on('click', function () { consultarIA(null, true); });
     $('#btnPreguntarIA').on('click', function () {
         var p = $('#txtPreguntaIA').val().trim();
         if (!p) { Swal.fire({icon:'warning',title:_iaMsg.preguntaVacia,text:_iaMsg.preguntaEscribir}); return; }
-        consultarIA(p);
-        $('#txtPreguntaIA').val('');
+        if (p.length > 500) { Swal.fire({icon:'warning',title:_iaMsg.preguntaLarga,text:_iaMsg.preguntaLargaTexto}); return; }
+        consultarIA(p, false);
+        $('#txtPreguntaIA').val('').trigger('input');
     });
     $('#txtPreguntaIA').on('keydown', function(e){ if(e.key==='Enter') $('#btnPreguntarIA').trigger('click'); });
+    $('#txtPreguntaIA').on('input', function () {
+        var remaining = 500 - $(this).val().length;
+        var $c = $('#iaCharCount');
+        $c.text(remaining);
+        $c.closest('.ia-char-count').toggleClass('ia-char-warn', remaining < 50);
+    });
 
     // ── Select2 ───────────────────────────────────────────
     $('#selectTabla').select2($.extend({placeholder:_iaMsg.seleccione,allowClear:false},{width:'100%',language:s2lang}));
@@ -463,16 +525,18 @@ async function exportarAnalisisPDF() {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + _iaMsg.generandoPDF;
     try {
         var ahora = new Date();
-        document.getElementById('pdfFecha').textContent =
-            ahora.toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'}) +
-            ' ' + ahora.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+        var fechaTexto = ahora.toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'})
+                       + ' · ' + ahora.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+        document.getElementById('pdfFecha').textContent = fechaTexto;
 
         var filtros       = window._filtrosActualesPDF || {};
         var nombreEmpresa = $('#selectEmpresa option:selected').text().trim() || filtros.IdEmpresa || '—';
         var mesTexto      = $('#selectMes option:selected').text().trim();
         if (!mesTexto || mesTexto === _iaMsg.mesTextoTodos) mesTexto = _iaMsg.todos;
         var tablaTexto    = $('#selectTabla option:selected').data('nombre') || filtros.NombreTabla || '—';
+        var contextoLabel = ($('#iaContexto').text() || '').trim();
 
+        // Filtros
         var filtrosData = [
             {label:_iaMsg.labelTabla,    valor:tablaTexto},
             {label:_iaMsg.labelEmpresa,  valor:nombreEmpresa},
@@ -482,38 +546,144 @@ async function exportarAnalisisPDF() {
         ];
         var fHtml = '';
         filtrosData.forEach(function(f){
-            fHtml += '<div class="pdf-filtro-item"><span class="pdf-filtro-label">'+f.label+'</span>'
+            fHtml += '<div class="pdf-filtro-item">'
+                   + '<span class="pdf-filtro-label">'+f.label+'</span>'
                    + '<span class="pdf-filtro-valor">'+f.valor+'</span></div>';
         });
         document.getElementById('pdfFiltros').innerHTML = fHtml;
-        document.getElementById('pdfContenido').innerHTML = document.getElementById('respuestaIATexto').innerHTML;
 
+        // Contar secciones
+        var totalSecciones = _chatHistorial.filter(function(m){ return m.Rol === 'assistant'; }).length;
+
+        // Banner de resumen
+        var bannerHtml = '<div class="pdf-resumen-banner">'
+            + 'Este informe contiene <strong>' + totalSecciones
+            + ' an&aacute;lisis</strong> generado' + (totalSecciones !== 1 ? 's' : '')
+            + ' por inteligencia artificial a partir de los datos seleccionados.'
+            + '</div>';
+
+        // Construir secciones del informe
+        var contenidoHtml = '';
+        var seccionNum = 0;
+        for (var i = 0; i < _chatHistorial.length; i++) {
+            if (_chatHistorial[i].Rol !== 'assistant') continue;
+            seccionNum++;
+            var esInicial = (seccionNum === 1);
+
+            // Pregunta: para sección 1 usamos el contexto de filtros; para las demás el texto del usuario
+            var preguntaTexto = null;
+            if (esInicial) {
+                preguntaTexto = contextoLabel || tablaTexto;
+            } else if (i > 0 && _chatHistorial[i - 1].Rol === 'user') {
+                preguntaTexto = _chatHistorial[i - 1].Contenido;
+            }
+
+            var labelSeccion = esInicial ? 'An&aacute;lisis Ejecutivo' : 'Consulta Adicional';
+            var numBadge = '<span class="pdf-seccion-num">' + seccionNum + '</span>';
+
+            contenidoHtml += '<div class="pdf-seccion">';
+            contenidoHtml += '<div class="pdf-seccion-titulo">' + numBadge + ' ' + labelSeccion + '</div>';
+
+            if (preguntaTexto) {
+                var labelPregunta = esInicial ? 'Contexto analizado:' : 'Pregunta:';
+                contenidoHtml += '<div class="pdf-seccion-pregunta">'
+                               + '<span class="pdf-pregunta-label">' + labelPregunta + '</span>&nbsp;'
+                               + $('<div>').text(preguntaTexto).html()
+                               + '</div>';
+            }
+
+            contenidoHtml += '<div class="pdf-seccion-body">'
+                           + renderMarkdown(_chatHistorial[i].Contenido)
+                           + '</div>';
+            contenidoHtml += '</div>';
+        }
+
+        document.getElementById('pdfContenido').innerHTML = bannerHtml + contenidoHtml;
+
+        // Renderizar y exportar
         var preview = document.getElementById('pdfPreview');
         preview.style.left = '-9999px'; preview.style.display = 'block';
-        var canvas = await html2canvas(preview,{scale:2,useCORS:true,logging:false});
+        var canvas = await html2canvas(preview, {scale:2, useCORS:true, logging:false,
+            windowWidth: 794, windowHeight: preview.scrollHeight});
         preview.style.display = 'none'; preview.style.left = '-9999px';
 
-        var jsPDF = window.jspdf.jsPDF;
-        var pdf   = new jsPDF('p','mm','a4');
-        var pageW = pdf.internal.pageSize.getWidth();
-        var pageH = pdf.internal.pageSize.getHeight();
-        var imgH  = (canvas.height * pageW) / canvas.width;
-        var imgData = canvas.toDataURL('image/png');
+        var jsPDF   = window.jspdf.jsPDF;
+        var pdf     = new jsPDF('p','mm','a4');
+        var pageW   = pdf.internal.pageSize.getWidth();
+        var pageH   = pdf.internal.pageSize.getHeight();
+        var imgH    = (canvas.height * pageW) / canvas.width;
+        var imgData = canvas.toDataURL('image/jpeg', 0.95);
 
-        var y = 0, remaining = imgH;
-        while (remaining > 0) {
-            if (y > 0) pdf.addPage();
-            pdf.addImage(imgData,'PNG',0,-y,pageW,imgH);
-            y += pageH; remaining -= pageH;
+        var pageNum = 0, y = 0, rem = imgH;
+        while (rem > 0) {
+            if (pageNum > 0) pdf.addPage();
+            pdf.addImage(imgData, 'JPEG', 0, -y, pageW, imgH);
+            // Numero de pagina (solo ASCII: jsPDF/Helvetica no soporta Latin Extended)
+            pdf.setFontSize(7);
+            pdf.setTextColor(180, 180, 180);
+            pdf.text('- ' + (pageNum + 1) + ' -', pageW / 2, pageH - 4, {align:'center'});
+            pageNum++; y += pageH; rem -= pageH;
         }
         pdf.save('AnalisisIA_BUFINS_' + ahora.toISOString().slice(0,10).replace(/-/g,'') + '.pdf');
-    } catch(e) {
+    } catch (e) {
         console.error(e);
-        Swal.fire({icon:'error',title:_iaMsg.error,text:_iaMsg.errorPDF});
+        Swal.fire({icon:'error', title:_iaMsg.error, text:_iaMsg.errorPDF});
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-file-pdf"></i> ' + _iaMsg.btnExportarPDF;
     }
 }
+</script>
+
+<script>
+function exportarExcelConIA() {
+    var btn = document.getElementById('btnExportarExcel');
+    var textoAnalisis = _chatHistorial
+        .filter(function(m){ return m.Rol === 'assistant'; })
+        .map(function(m){ return m.Contenido; })
+        .join('\n\n---\n\n');
+
+    if (!textoAnalisis || !window._filtrosActualesPDF) {
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + _iaMsg.btnExcelConIA;
+
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '@Url.Action("ExportarExcelConIA","InformeTablasDatos")';
+
+    var campos = Object.assign({}, window._filtrosActualesPDF, { textoAnalisis: textoAnalisis });
+    Object.keys(campos).forEach(function(k) {
+        if (campos[k] !== null && campos[k] !== undefined) {
+            var input = document.createElement('input');
+            input.type  = 'hidden';
+            input.name  = k;
+            input.value = campos[k];
+            form.appendChild(input);
+        }
+    });
+
+    // Add CSRF token if present
+    var token = $('input[name="__RequestVerificationToken"]').val();
+    if (token) {
+        var csrf = document.createElement('input');
+        csrf.type  = 'hidden';
+        csrf.name  = '__RequestVerificationToken';
+        csrf.value = token;
+        form.appendChild(csrf);
+    }
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+
+    setTimeout(function() {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-file-excel"></i> ' + _iaMsg.btnExcelConIA;
+    }, 3000);
+}
+
 </script>
 }

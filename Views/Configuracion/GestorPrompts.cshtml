@@ -59,17 +59,25 @@
                                 <td class="col-acciones">
                                     <div class="btn-group" role="group">
                                         <button type="button" class="btn btn-info btn-sm" title="@Resources.Strings.Prompt_TitleVer"
-                                                onclick="verTextoPrompt('@Html.Raw(p.Nombre.Replace("'", "\\'"))', '@Html.Raw((p.TextoPrompt ?? "").Replace("'", "\\'").Replace("\r\n", "\\n").Replace("\n", "\\n"))')">
+                                                data-toggle="modal" data-target="#verTextoModal"
+                                                data-nombre="@Html.AttributeEncode(p.Nombre)"
+                                                data-texto="@Html.AttributeEncode(p.TextoPrompt ?? string.Empty)">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <button type="button" class="btn btn-primary" title="@Resources.Strings.Prompt_TitleEditar"
+                                        <button type="button" class="btn btn-primary btn-editar-prompt" title="@Resources.Strings.Prompt_TitleEditar"
                                                 data-toggle="modal" data-target="#editarModal"
-                                                onclick="setEditarPrompt(@p.Id, '@Html.Raw(p.Codigo.Replace("'","\\'" ))', '@Html.Raw(p.Nombre.Replace("'","\\'" ))', '@Html.Raw((p.Descripcion ?? "").Replace("'","\\'" ))', '@Html.Raw((p.TextoPrompt ?? "").Replace("'","\\'" ).Replace("\r\n","\\n").Replace("\n","\\n"))', @(p.Activo ? "true" : "false"))">
+                                                data-id="@p.Id"
+                                                data-codigo="@Html.AttributeEncode(p.Codigo)"
+                                                data-nombre="@Html.AttributeEncode(p.Nombre)"
+                                                data-desc="@Html.AttributeEncode(p.Descripcion ?? string.Empty)"
+                                                data-texto="@Html.AttributeEncode(p.TextoPrompt ?? string.Empty)"
+                                                data-activo="@(p.Activo ? "true" : "false")">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-danger" title="@Resources.Strings.Prompt_TitleEliminar"
+                                        <button type="button" class="btn btn-outline-danger btn-eliminar-prompt" title="@Resources.Strings.Prompt_TitleEliminar"
                                                 data-toggle="modal" data-target="#eliminarModal"
-                                                onclick="setEliminarPrompt(@p.Id, '@Html.Raw(p.Nombre.Replace("'","\\'" ))')">
+                                                data-id="@p.Id"
+                                                data-nombre="@Html.AttributeEncode(p.Nombre)">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </div>
@@ -286,26 +294,30 @@
         </script>
     }
 
+    @section scripts {
     <script>
-        function verTextoPrompt(nombre, texto) {
-            document.getElementById('verTextoNombre').textContent = nombre;
-            document.getElementById('verTextoContenido').textContent = texto.replace(/\\n/g, '\n');
-            $('#verTextoModal').modal('show');
-        }
+        $('#verTextoModal').on('show.bs.modal', function (event) {
+            var btn = event.relatedTarget;
+            document.getElementById('verTextoNombre').textContent    = btn.dataset.nombre;
+            document.getElementById('verTextoContenido').textContent = btn.dataset.texto;
+        });
 
-        function setEditarPrompt(id, codigo, nombre, desc, texto, activo) {
-            document.getElementById('editId').value          = id;
-            document.getElementById('editCodigo').value      = codigo;
-            document.getElementById('editNombre').value      = nombre;
-            document.getElementById('editDescripcion').value = desc;
-            document.getElementById('editTextoPrompt').value = texto.replace(/\\n/g, '\n');
-            document.getElementById('editActivo').checked    = (activo === true || activo === 'true');
-        }
+        $('#editarModal').on('show.bs.modal', function (event) {
+            var btn = event.relatedTarget;
+            document.getElementById('editId').value          = btn.dataset.id;
+            document.getElementById('editCodigo').value      = btn.dataset.codigo;
+            document.getElementById('editNombre').value      = btn.dataset.nombre;
+            document.getElementById('editDescripcion').value = btn.dataset.desc || '';
+            document.getElementById('editTextoPrompt').value = btn.dataset.texto || '';
+            document.getElementById('editActivo').checked    = btn.dataset.activo === 'true';
+        });
 
-        function setEliminarPrompt(id, nombre) {
-            document.getElementById('eliminarId').value           = id;
-            document.getElementById('eliminarNombre').textContent = '"' + nombre + '"';
-        }
+        $('#eliminarModal').on('show.bs.modal', function (event) {
+            var btn = event.relatedTarget;
+            document.getElementById('eliminarId').value           = btn.dataset.id;
+            document.getElementById('eliminarNombre').textContent = '"' + btn.dataset.nombre + '"';
+        });
     </script>
+    }
 </body>
 </html>

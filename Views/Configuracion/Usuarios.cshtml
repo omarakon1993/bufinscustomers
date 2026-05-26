@@ -290,6 +290,12 @@
                                     {
                                         <span class="badge badge-secondary">@Resources.Strings.Usr_BadgeUsuario</span>
                                     }
+                                    @if (usuario.Admin != 2 && (ViewBag.EsSuperAdmin == true || ViewBag.EsAdminEmpresa == true))
+                                    {
+                                        <br /><small class="text-muted" title="Consultas IA diarias asignadas">
+                                            <i class="fas fa-robot" style="font-size:.62rem;"></i>&nbsp;@(usuario.LimiteConsultasIA ?? 0)
+                                        </small>
+                                    }
                                 </td>
                                 <td class="col-empresa" data-label="@Resources.Strings.Usr_ThEmpresa" title="@(empresa != null ? empresa.Nombre : "")">@(empresa != null ? empresa.Nombre : string.Empty)</td>
                                 <td class="col-acciones" data-label="@Resources.Strings.Common_ThAcciones">
@@ -297,7 +303,7 @@
                                         @if (ViewBag.PuedeEditar == true)
                                         {
                                             <button type="button" class="btn btn-primary" title="@Resources.Strings.Usr_TitleEditar" data-toggle="modal" data-target="#editUserModal"
-                                                    onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa', '@usuario.Usuario', '@usuario.Clave', '@(imagenUsuario != null ? Url.Action("Imagen", "Usuario", new { id = usuario.Id }) : "")')">
+                                                    onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa', '@usuario.Usuario', '@usuario.Clave', '@(imagenUsuario != null ? Url.Action("Imagen", "Usuario", new { id = usuario.Id }) : "")', @(usuario.LimiteConsultasIA ?? 0))">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                         }
@@ -468,6 +474,17 @@
                                         <small class="form-text text-muted">@Resources.Strings.Usr_NotaSuperAdmin</small>
                                     }
                                 </div>
+                                @if (ViewBag.EsSuperAdmin == true || ViewBag.EsAdminEmpresa == true)
+                                {
+                                    <div class="mb-3">
+                                        <label for="editLimiteConsultasIA" class="form-label">
+                                            <i class="fas fa-robot mr-2" style="color: #583AFF;"></i>Consultas IA diarias
+                                        </label>
+                                        <input type="number" class="form-control" id="editLimiteConsultasIA"
+                                               name="LimiteConsultasIA" min="0" max="10" value="0" />
+                                        <small class="form-text text-muted">0 = sin acceso &middot; m&aacute;ximo 10</small>
+                                    </div>
+                                }
                             </div>
 
                             <!-- Pestaña de Imagen -->
@@ -619,6 +636,17 @@
                                         <small class="form-text text-muted">@Resources.Strings.Usr_NotaSuperAdmin</small>
                                     }
                                 </div>
+                                @if (ViewBag.EsSuperAdmin == true || ViewBag.EsAdminEmpresa == true)
+                                {
+                                    <div class="mb-3">
+                                        <label for="crearLimiteConsultasIA" class="form-label">
+                                            <i class="fas fa-robot mr-2" style="color: #583AFF;"></i>Consultas IA diarias
+                                        </label>
+                                        <input type="number" class="form-control" id="crearLimiteConsultasIA"
+                                               name="LimiteConsultasIA" min="0" max="10" value="0" />
+                                        <small class="form-text text-muted">0 = sin acceso &middot; m&aacute;ximo 10</small>
+                                    </div>
+                                }
                             </div>
 
                             <!-- Pestaña de Imagen -->
@@ -788,7 +816,7 @@
                 document.getElementById("idUsuario").value = id;
             }
 
-            function setEditUser(id, nombre, apellidos, telefono, Correo, admin, idEmpresa, usuario, clave, imagenUrl) {
+            function setEditUser(id, nombre, apellidos, telefono, Correo, admin, idEmpresa, usuario, clave, imagenUrl, limiteConsultasIA) {
 
                 document.getElementById("editIdUsuario").value = id;
                 document.getElementById("editNombre").value = nombre;
@@ -799,6 +827,9 @@
                 // Establecer el valor del selector de rol (Admin puede ser 0, 1 o 2)
                 var adminValue = admin || 0; // Si es null, establecer en 0
                 document.getElementById("editAdmin").value = adminValue.toString();
+
+                var limiteEl = document.getElementById("editLimiteConsultasIA");
+                if (limiteEl) limiteEl.value = limiteConsultasIA || 0;
 
                 document.getElementById("editIdEmpresa").value = idEmpresa;
                 document.getElementById("editUsuario").value = usuario;

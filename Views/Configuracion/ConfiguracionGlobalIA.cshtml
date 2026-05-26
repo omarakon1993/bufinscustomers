@@ -1,0 +1,658 @@
+@model IEnumerable<bufinscustomers.Models.ConfiguracionSistemaItem>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>@Resources.Strings.CfgIA_PageTitle</title>
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="~/Assets/css/configuracion-admin.css" rel="stylesheet" />
+    <style>
+        /* ── Panel de configuración ── */
+        .cfg-ia-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 18px;
+            padding: 20px;
+        }
+        .cfg-ia-card {
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid #ede9fe;
+            box-shadow: 0 2px 12px rgba(79,70,229,.08);
+            overflow: hidden;
+            transition: box-shadow .2s;
+        }
+        .cfg-ia-card:hover { box-shadow: 0 4px 20px rgba(79,70,229,.15); }
+        .cfg-ia-card-header {
+            background: linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .cfg-ia-card-icon {
+            width: 34px; height: 34px;
+            background: rgba(255,255,255,.18);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 1rem;
+        }
+        .cfg-ia-card-title {
+            font-size: .82rem; font-weight: 700; color: #fff;
+            font-family: 'Courier New', monospace; letter-spacing: .3px;
+        }
+        .cfg-ia-card-body { padding: 16px; }
+        .cfg-ia-desc {
+            font-size: .75rem; color: #6b7280; margin-bottom: 10px;
+            min-height: 18px;
+        }
+        .cfg-ia-valor-row {
+            display: flex; align-items: center; gap: 8px;
+            background: #f9f8ff; border: 1px solid #e0e7ff;
+            border-radius: 8px; padding: 8px 12px;
+        }
+        .cfg-ia-valor-text {
+            flex: 1; font-size: .82rem; color: #374151;
+            font-family: 'Courier New', monospace;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .cfg-ia-valor-text.masked { color: #9ca3af; font-style: italic; }
+        .cfg-ia-actions { display: flex; gap: 6px; margin-top: 12px; }
+        /* Botón "Cargar modelos" */
+        .btn-load-models {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 14px; font-size: .78rem; font-weight: 600;
+            border: 1.5px solid #6366f1; border-radius: 8px;
+            background: #fff; color: #4f46e5; cursor: pointer;
+            transition: all .2s; white-space: nowrap;
+        }
+        .btn-load-models:hover { background: #4f46e5; color: #fff; }
+        .btn-load-models:disabled { opacity: .6; cursor: not-allowed; }
+        /* Hint badge verde OK */
+        .modelos-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: .72rem; color: #065f46; background: #d1fae5;
+            border: 1px solid #6ee7b7; border-radius: 999px;
+            padding: 2px 10px; margin-top: 4px;
+        }
+        /* Custom modelo dropdown */
+        .modelo-select-wrap { position: relative; }
+        .modelos-dropdown {
+            position: absolute;
+            top: calc(100% + 2px); left: 0; right: 0;
+            background: #fff;
+            border: 1.5px solid #6366f1;
+            border-radius: 10px;
+            box-shadow: 0 8px 28px rgba(79,70,229,.18);
+            z-index: 1060;
+            overflow: hidden;
+        }
+        .modelos-search-wrap {
+            padding: 8px 10px 6px;
+            border-bottom: 1px solid #ede9fe;
+            background: #f9f8ff;
+        }
+        .modelos-search-wrap input {
+            width: 100%; border: 1px solid #c4b5fd; border-radius: 6px;
+            padding: 4px 10px; font-size: .78rem; outline: none;
+            background: #fff; color: #374151;
+        }
+        .modelos-search-wrap input:focus { border-color: #6366f1; }
+        .modelos-lista {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+        .modelos-lista::-webkit-scrollbar { width: 5px; }
+        .modelos-lista::-webkit-scrollbar-track { background: #f3f0ff; }
+        .modelos-lista::-webkit-scrollbar-thumb { background: #a5b4fc; border-radius: 4px; }
+        .modelo-item {
+            padding: 7px 14px; font-size: .82rem;
+            font-family: 'Courier New', monospace;
+            cursor: pointer; color: #374151;
+            border-bottom: 1px solid #f5f3ff;
+            transition: background .1s;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .modelo-item:last-child { border-bottom: none; }
+        .modelo-item:hover { background: #ede9fe; color: #4f46e5; }
+        .modelo-item.activo { background: #4f46e5; color: #fff; font-weight: 600; }
+        .modelo-item strong { color: inherit; text-decoration: underline; }
+        .modelo-item-empty {
+            padding: 12px 14px; font-size: .78rem; color: #9ca3af; text-align: center;
+        }
+        /* Input password toggle */
+        .input-pass-wrap { position: relative; }
+        .input-pass-wrap .btn-eye {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: #9ca3af; cursor: pointer; padding: 0;
+        }
+        .input-pass-wrap .btn-eye:hover { color: #4f46e5; }
+        /* Separador nueva cfg */
+        .cfg-nueva-section {
+            padding: 0 20px 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Header card ── -->
+    <div class="card shadow mb-2 mt-4">
+        <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <span><i class="fas fa-sliders-h"></i> @Resources.Strings.CfgIA_PageTitle</span>
+            <small style="font-weight:400;opacity:.85;">@Resources.Strings.CfgIA_HeaderDesc</small>
+        </div>
+    </div>
+
+    <!-- ── Grid de tarjetas ── -->
+    @if (!Model.Any())
+    {
+        <div class="card shadow mb-4">
+            <div class="card-body text-center text-muted py-4">
+                <i class="fas fa-cog fa-2x mb-2"></i>
+                <p>@Resources.Strings.CfgIA_NoItems</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="cfg-ia-grid">
+            @foreach (var item in Model)
+            {
+                bool esApiKey  = item.Clave == "OpenAIApiKey";
+                bool esModelo  = item.Clave == "OpenAIModel";
+                bool esTokens  = item.Clave == "OpenAIMaxTokens";
+
+                string iconoCls = esApiKey  ? "fas fa-key"
+                                : esModelo  ? "fas fa-robot"
+                                : esTokens  ? "fas fa-tachometer-alt"
+                                :             "fas fa-cog";
+
+                string valorVisible = esApiKey && item.Valor?.Length > 8
+                    ? item.Valor.Substring(0, 6) + "••••••••" + item.Valor.Substring(item.Valor.Length - 4)
+                    : (item.Valor ?? "—");
+
+                <div class="cfg-ia-card">
+                    <div class="cfg-ia-card-header">
+                        <div class="cfg-ia-card-icon"><i class="@iconoCls"></i></div>
+                        <div class="cfg-ia-card-title">@item.Clave</div>
+                    </div>
+                    <div class="cfg-ia-card-body">
+                        <div class="cfg-ia-desc">
+                            @(string.IsNullOrWhiteSpace(item.Descripcion) ? "—" : item.Descripcion)
+                        </div>
+                        <div class="cfg-ia-valor-row">
+                            <span class="cfg-ia-valor-text @(esApiKey ? "masked" : "")">@valorVisible</span>
+                            @if (esApiKey)
+                            {
+                                <small class="text-muted" style="font-size:.68rem;white-space:nowrap;">
+                                    <i class="fas fa-lock"></i> @Resources.Strings.CfgIA_LabelMasked
+                                </small>
+                            }
+                        </div>
+                        <div class="cfg-ia-actions">
+                            <button type="button" class="btn btn-primary btn-sm"
+                                    title="@Resources.Strings.CfgIA_TitleEditar"
+                                    onclick="abrirEditar('@Html.Raw(item.Clave)', '@Html.Raw((item.Valor ?? "").Replace("'", "\\'"))', '@Html.Raw((item.Descripcion ?? "").Replace("'", "\\'"))')">
+                                <i class="fas fa-edit mr-1"></i>@Resources.Strings.CfgIA_TitleEditar
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm"
+                                    title="@Resources.Strings.CfgIA_TitleEliminar"
+                                    onclick="abrirEliminar('@Html.Raw(item.Clave)')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- ── Botón Nueva configuración ── -->
+    <div class="cfg-nueva-section">
+        <button type="button" class="btn btn-success btn-sm"
+                onclick="abrirNuevo()">
+            <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.CfgIA_BtnCrear
+        </button>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         MODAL EDITAR / CREAR
+    ══════════════════════════════════════ -->
+    <div class="modal fade" id="editarModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:540px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editarModalTitle">
+                        <i class="fas fa-edit" style="color:#583AFF;"></i>
+                        <span id="editarModalTitleText">@Resources.Strings.CfgIA_ModalEditTitle</span>
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <form method="post" action="@Url.Action("Guardar","ConfiguracionGlobalIA")">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-body">
+
+                        <!-- Clave -->
+                        <div class="mb-3 mt-2">
+                            <label class="form-label" style="font-size:.82rem;font-weight:600;">
+                                <i class="fas fa-hashtag mr-1" style="color:#583AFF;"></i>@Resources.Strings.CfgIA_LabelClave
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control form-control-sm"
+                                   id="editClave" name="Clave" required
+                                   style="font-family:monospace;" />
+                            <small id="claveReadonlyNote" class="text-muted" style="display:none;">
+                                <i class="fas fa-lock mr-1"></i>La clave de un par&aacute;metro existente no se puede cambiar.
+                                Para cambiar la clave, elimina este y crea uno nuevo.
+                            </small>
+                        </div>
+
+                        <!-- Descripción -->
+                        <div class="mb-3">
+                            <label class="form-label" style="font-size:.82rem;font-weight:600;">
+                                <i class="fas fa-align-left mr-1" style="color:#583AFF;"></i>@Resources.Strings.CfgIA_LabelDescripcion
+                            </label>
+                            <input type="text" class="form-control form-control-sm"
+                                   id="editDescripcion" name="Descripcion" maxlength="300" />
+                        </div>
+
+                        <!-- Valor — cambia según la clave -->
+                        <div class="mb-3">
+                            <label class="form-label" style="font-size:.82rem;font-weight:600;">
+                                <i class="fas fa-pencil-alt mr-1" style="color:#583AFF;"></i>@Resources.Strings.CfgIA_LabelValor
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <!-- API Key: password con toggle -->
+                            <div id="wrapApiKey" style="display:none;">
+                                <div class="input-pass-wrap">
+                                    <input type="password" class="form-control form-control-sm"
+                                           id="editValorApiKey" autocomplete="off" />
+                                    <button type="button" class="btn-eye" onclick="toggleApiKey()">
+                                        <i class="fas fa-eye" id="eyeIcon"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted" style="font-size:.72rem;">
+                                    <i class="fas fa-shield-alt mr-1 text-success"></i>@Resources.Strings.CfgIA_ApiKeyHint
+                                </small>
+                            </div>
+
+                            <!-- Modelo: custom dropdown con búsqueda -->
+                            <div id="wrapModelo" style="display:none;">
+                                <div class="modelo-select-wrap mb-1" id="modeloSelectWrap">
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control form-control-sm"
+                                               id="editValorModelo"
+                                               placeholder="Ej: gpt-4o-mini" autocomplete="off"
+                                               oninput="filtrarModelosDesdeInput(this.value)"
+                                               onfocus="mostrarDropdownModelos()" />
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm px-2"
+                                                    onclick="toggleDropdownModelos()" tabindex="-1"
+                                                    title="Ver modelos disponibles">
+                                                <i class="fas fa-chevron-down" id="modeloChevron" style="font-size:.75rem;"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <!-- Panel dropdown -->
+                                    <div id="modelosDropdown" class="modelos-dropdown" style="display:none;">
+                                        <div class="modelos-search-wrap">
+                                            <input type="text" id="modelosBuscar"
+                                                   placeholder="Filtrar modelos..."
+                                                   oninput="filtrarModelosPanel(this.value)" />
+                                        </div>
+                                        <div id="modelosLista" class="modelos-lista"></div>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center flex-wrap mt-1" style="gap:8px;">
+                                    <button type="button" class="btn-load-models" id="btnCargarModelos"
+                                            onclick="cargarModelosOpenAI()">
+                                        <i class="fas fa-sync-alt"></i>
+                                        <span id="btnCargarModelosText">@Resources.Strings.CfgIA_BtnCargarModelos</span>
+                                    </button>
+                                    <span id="modelosBadge" style="display:none;" class="modelos-badge">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span id="modelosCount">0</span> @Resources.Strings.CfgIA_JS_ModelosCargados
+                                    </span>
+                                </div>
+                                <small class="text-muted d-block mt-1" style="font-size:.72rem;">
+                                    <i class="fas fa-info-circle mr-1"></i>@Resources.Strings.CfgIA_ModeloHint
+                                </small>
+                            </div>
+
+                            <!-- MaxTokens: número con rango -->
+                            <div id="wrapTokens" style="display:none;">
+                                <input type="number" class="form-control form-control-sm"
+                                       id="editValorTokens" min="100" max="32000" step="100" />
+                                <small class="text-muted" style="font-size:.72rem;">
+                                    <i class="fas fa-info-circle mr-1"></i>@Resources.Strings.CfgIA_MaxTokensHint
+                                </small>
+                            </div>
+
+                            <!-- Genérico: texto libre -->
+                            <div id="wrapGenerico" style="display:none;">
+                                <input type="text" class="form-control form-control-sm"
+                                       id="editValorGenerico" maxlength="500" />
+                            </div>
+
+                            <!-- Input oculto que siempre se envía -->
+                            <input type="hidden" id="editValor" name="Valor" />
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                            <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="submitGuardar()">
+                            <i class="fas fa-save mr-1"></i>@Resources.Strings.CfgIA_BtnGuardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         MODAL ELIMINAR
+    ══════════════════════════════════════ -->
+    <div class="modal fade" id="eliminarModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle"></i> @Resources.Strings.CfgIA_TitleEliminar
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">
+                        <i class="fas fa-question-circle text-warning mr-2"></i>
+                        @Resources.Strings.CfgIA_ModalDeleteBody
+                        <strong id="eliminarClaveNombre"></strong>?
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
+                    </button>
+                    <form method="post" action="@Url.Action("Eliminar","ConfiguracionGlobalIA")" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" id="eliminarClave" name="clave" />
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash-alt mr-1"></i>@Resources.Strings.Common_BtnEliminar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <script>Swal.fire({ toast:true, position: window.innerWidth<=768?'top':'top-end', icon:'error',   title:'@Html.Raw(TempData["ErrorMessage"])', showConfirmButton:false, timer:3500, timerProgressBar:true });</script>
+    }
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <script>Swal.fire({ toast:true, position: window.innerWidth<=768?'top':'top-end', icon:'success', title:'@Html.Raw(TempData["SuccessMessage"])', showConfirmButton:false, timer:3000, timerProgressBar:true });</script>
+    }
+
+    @section scripts {
+    <script>
+    var _cfgMsg = {
+        cargando:       '@Html.Raw(Resources.Strings.CfgIA_JS_CargandoModelos)',
+        cargados:       '@Html.Raw(Resources.Strings.CfgIA_JS_ModelosCargados)',
+        errorModelos:   '@Html.Raw(Resources.Strings.CfgIA_JS_ErrorModelos)',
+        apiKeyVacia:    '@Html.Raw(Resources.Strings.CfgIA_JS_ApiKeyVacia)',
+        tituloEditar:   '@Html.Raw(Resources.Strings.CfgIA_ModalEditTitle)',
+        tituloCrear:    '@Html.Raw(Resources.Strings.CfgIA_ModalCreateTitle)',
+        urlCargar:      '@Url.Action("ObtenerModelosOpenAI","ConfiguracionGlobalIA")'
+    };
+
+    // ── clave activa en el modal ──
+    var _claveActiva = '';
+    var _modoCrear   = false;
+
+    function abrirEditar(clave, valor, desc) {
+        _claveActiva = clave;
+        _modoCrear   = false;
+        document.getElementById('editarModalTitleText').textContent = _cfgMsg.tituloEditar;
+        document.getElementById('editClave').value       = clave;
+        document.getElementById('editClave').readOnly    = true;
+        document.getElementById('editDescripcion').value = desc;
+        document.getElementById('claveReadonlyNote').style.display = 'block';
+        configurarWrap(clave, valor);
+        $('#editarModal').modal('show');
+    }
+
+    function abrirNuevo() {
+        _claveActiva = '';
+        _modoCrear   = true;
+        document.getElementById('editarModalTitleText').textContent = _cfgMsg.tituloCrear;
+        document.getElementById('editClave').value       = '';
+        document.getElementById('editClave').readOnly    = false;
+        document.getElementById('editDescripcion').value = '';
+        document.getElementById('claveReadonlyNote').style.display = 'none';
+        configurarWrap('', '');
+        $('#editarModal').modal('show');
+    }
+
+    function abrirEliminar(clave) {
+        document.getElementById('eliminarClave').value         = clave;
+        document.getElementById('eliminarClaveNombre').textContent = '"' + clave + '"';
+        $('#eliminarModal').modal('show');
+    }
+
+    // ── selecciona el control correcto según la clave ──
+    function configurarWrap(clave, valor) {
+        ['wrapApiKey','wrapModelo','wrapTokens','wrapGenerico'].forEach(function(id) {
+            document.getElementById(id).style.display = 'none';
+        });
+        document.getElementById('modelosBadge').style.display = 'none';
+
+        if (clave === 'OpenAIApiKey') {
+            document.getElementById('wrapApiKey').style.display = '';
+            document.getElementById('editValorApiKey').value = valor;
+        } else if (clave === 'OpenAIModel') {
+            document.getElementById('wrapModelo').style.display = '';
+            document.getElementById('editValorModelo').value = valor;
+        } else if (clave === 'OpenAIMaxTokens') {
+            document.getElementById('wrapTokens').style.display = '';
+            document.getElementById('editValorTokens').value = valor;
+        } else {
+            document.getElementById('wrapGenerico').style.display = '';
+            document.getElementById('editValorGenerico').value = valor;
+        }
+    }
+
+    // ── toggle show/hide API Key ──
+    function toggleApiKey() {
+        var inp = document.getElementById('editValorApiKey');
+        var ico = document.getElementById('eyeIcon');
+        if (inp.type === 'password') {
+            inp.type = 'text';
+            ico.className = 'fas fa-eye-slash';
+        } else {
+            inp.type = 'password';
+            ico.className = 'fas fa-eye';
+        }
+    }
+
+    // ── recopila el valor del control activo y envía el form ──
+    function submitGuardar() {
+        var clave = document.getElementById('editClave').value.trim();
+        if (!clave) {
+            Swal.fire({ icon:'warning', title:'Clave requerida', text:'El campo Clave es requerido.', toast:true, position:'top-end', showConfirmButton:false, timer:2500 });
+            return;
+        }
+
+        var valor = '';
+        if (clave === 'OpenAIApiKey') {
+            valor = document.getElementById('editValorApiKey').value.trim();
+        } else if (clave === 'OpenAIModel') {
+            valor = document.getElementById('editValorModelo').value.trim();
+        } else if (clave === 'OpenAIMaxTokens') {
+            valor = document.getElementById('editValorTokens').value.trim();
+        } else {
+            valor = document.getElementById('editValorGenerico').value.trim();
+        }
+
+        if (!valor) {
+            Swal.fire({ icon:'warning', title:'Valor requerido', text:'El campo Valor es requerido.', toast:true, position:'top-end', showConfirmButton:false, timer:2500 });
+            return;
+        }
+
+        document.getElementById('editValor').value = valor;
+
+        // Re-habilitar clave para que la envíe el form
+        var claveInput = document.getElementById('editClave');
+        claveInput.readOnly = false;
+        claveInput.closest('form').submit();
+    }
+
+    // ── lista global de modelos cargados ──
+    var _modelos = [];
+
+    // ── renderiza la lista filtrada en el panel ──
+    function renderModelosLista(items, q) {
+        var lista = document.getElementById('modelosLista');
+        var valorActual = document.getElementById('editValorModelo').value;
+        if (!items.length) {
+            lista.innerHTML = '<div class="modelo-item-empty">Sin resultados</div>';
+            return;
+        }
+        var re = q ? new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi') : null;
+        lista.innerHTML = items.map(function(m) {
+            var label = re ? m.replace(re, '<strong>$1</strong>') : m;
+            var cls   = (m === valorActual) ? 'modelo-item activo' : 'modelo-item';
+            return '<div class="' + cls + '" data-val="' + m.replace(/"/g, '&quot;') + '">' + label + '</div>';
+        }).join('');
+
+        lista.querySelectorAll('.modelo-item').forEach(function(el) {
+            el.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                seleccionarModelo(this.getAttribute('data-val'));
+            });
+        });
+
+        // scroll al activo
+        var activo = lista.querySelector('.activo');
+        if (activo) activo.scrollIntoView({ block: 'nearest' });
+    }
+
+    // ── filtrar desde el input del buscador interno ──
+    function filtrarModelosPanel(q) {
+        var items = q ? _modelos.filter(function(m){ return m.toLowerCase().indexOf(q.toLowerCase()) >= 0; }) : _modelos;
+        renderModelosLista(items, q);
+    }
+
+    // ── filtrar mientras escribe en el input principal ──
+    function filtrarModelosDesdeInput(q) {
+        if (!_modelos.length) return;
+        document.getElementById('modelosBuscar').value = q;
+        filtrarModelosPanel(q);
+        mostrarDropdownModelos();
+    }
+
+    // ── seleccionar un modelo ──
+    function seleccionarModelo(val) {
+        document.getElementById('editValorModelo').value = val;
+        ocultarDropdownModelos();
+    }
+
+    // ── mostrar panel dropdown ──
+    function mostrarDropdownModelos() {
+        if (!_modelos.length) return;
+        var dd = document.getElementById('modelosDropdown');
+        dd.style.display = '';
+        document.getElementById('modeloChevron').className = 'fas fa-chevron-up';
+        var q = document.getElementById('modelosBuscar').value;
+        filtrarModelosPanel(q);
+    }
+
+    // ── ocultar panel dropdown ──
+    function ocultarDropdownModelos() {
+        document.getElementById('modelosDropdown').style.display = 'none';
+        document.getElementById('modeloChevron').className = 'fas fa-chevron-down';
+    }
+
+    // ── alternar dropdown ──
+    function toggleDropdownModelos() {
+        var dd = document.getElementById('modelosDropdown');
+        if (dd.style.display === 'none') mostrarDropdownModelos();
+        else ocultarDropdownModelos();
+    }
+
+    // ── cerrar al hacer clic fuera ──
+    document.addEventListener('mousedown', function(e) {
+        var wrap = document.getElementById('modeloSelectWrap');
+        if (wrap && !wrap.contains(e.target)) ocultarDropdownModelos();
+    });
+
+    // ── cargar modelos desde OpenAI ──
+    function cargarModelosOpenAI() {
+        var btn  = document.getElementById('btnCargarModelos');
+        var span = document.getElementById('btnCargarModelosText');
+        btn.disabled  = true;
+        span.textContent = _cfgMsg.cargando;
+
+        $.ajax({
+            url:  _cfgMsg.urlCargar,
+            type: 'GET',
+            success: function (resp) {
+                btn.disabled = false;
+                span.textContent = '@Html.Raw(Resources.Strings.CfgIA_BtnCargarModelos)';
+
+                if (!resp.ok) {
+                    Swal.fire({ icon:'error', title:'Error', text: resp.mensaje || _cfgMsg.errorModelos,
+                        toast:true, position:'top-end', showConfirmButton:false, timer:4000 });
+                    return;
+                }
+
+                _modelos = resp.modelos || [];
+
+                // Badge
+                document.getElementById('modelosCount').textContent = _modelos.length;
+                document.getElementById('modelosBadge').style.display = 'inline-flex';
+
+                // Si el campo está vacío, preseleccionar el primero
+                var inp = document.getElementById('editValorModelo');
+                if (!inp.value && _modelos.length > 0) inp.value = _modelos[0];
+
+                // Limpiar buscador y mostrar lista
+                document.getElementById('modelosBuscar').value = '';
+                renderModelosLista(_modelos, '');
+                mostrarDropdownModelos();
+            },
+            error: function () {
+                btn.disabled = false;
+                span.textContent = '@Html.Raw(Resources.Strings.CfgIA_BtnCargarModelos)';
+                Swal.fire({ icon:'error', title:'Error', text: _cfgMsg.errorModelos,
+                    toast:true, position:'top-end', showConfirmButton:false, timer:4000 });
+            }
+        });
+    }
+
+    // ── limpiar dropdown al cerrar modal ──
+    $('#editarModal').on('hidden.bs.modal', function() {
+        ocultarDropdownModelos();
+        _modelos = [];
+        document.getElementById('modelosBadge').style.display = 'none';
+        document.getElementById('modelosLista').innerHTML = '';
+        document.getElementById('modelosBuscar').value = '';
+    });
+
+    // Al cambiar la clave manualmente (modo crear), actualizar los wraps
+    document.getElementById('editClave').addEventListener('input', function() {
+        if (_modoCrear) configurarWrap(this.value.trim(), '');
+    });
+    </script>
+    }
+
+</body>
+</html>
