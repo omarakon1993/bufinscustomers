@@ -689,6 +689,19 @@ namespace bufinscustomers.Controllers
                 LogToFile("Convirtiendo valores vacíos a 0 en columnas de dinero...");
                 ConvertirValoresVaciosAZero(tabla, esquema);
 
+                // Rechazar cargue si alguna celda numérica contiene texto (ej: "ggg")
+                string errorNumerico = ValidarValoresNumericos(tabla, esquema);
+                if (!string.IsNullOrEmpty(errorNumerico))
+                {
+                    LogToFile($"ERROR NUMÉRICO: {errorNumerico}");
+                    GuardarLogEnSession();
+                    TempData["Mensaje"] = $"ERROR NUMÉRICO en '{tabla.TableName}':\n\n{errorNumerico}";
+                    TempData["MensajeTipo"] = "error";
+                    TempData["MostrarDescargaLog"] = true;
+                    LimpiarTablasEnError(conn, idEmpresa);
+                    return false;
+                }
+
                 // Normalizar separadores decimales/miles antes de insertar
                 LogToFile("Sanitizando valores numéricos...");
                 SanitizarColumnasNumericas(tabla, esquema);
@@ -947,7 +960,7 @@ namespace bufinscustomers.Controllers
 
             var dt = new DataTable(nombreTabla);
             for (int col = 1; col <= columnasValidas; col++)
-                dt.Columns.Add(hoja.Cells[1, col].Text.Trim());
+                dt.Columns.Add(hoja.Cells[1, col].Text.Trim(), typeof(object));
 
             int filasVaciasConsecutivas = 0;
             int filasIgnoradasPorAnio = 0;
@@ -1133,26 +1146,23 @@ namespace bufinscustomers.Controllers
                                     var cellValue = srcRow[colsExcel[colIni]];
                                     if (columnasNumericas.Contains(colIni))
                                     {
-                                        // Si la celda es texto no vacío, verificar que sea parseable como número
                                         if (cellValue is string sValIni && !string.IsNullOrWhiteSpace(sValIni))
                                         {
-                                            string limpio = SanitizarValorNumerico(sValIni);
-                                            if (!decimal.TryParse(limpio,
-                                                System.Globalization.NumberStyles.Any,
-                                                System.Globalization.CultureInfo.InvariantCulture, out _))
+                                            string razonIni = DetectarErrorNumerico(sValIni);
+                                            if (razonIni != null)
                                             {
+                                                int filaExcel = dtExcel.Rows.IndexOf(srcRow) + 2;
                                                 string errorFmt =
-                                                    $"Fila {dtExcel.Rows.IndexOf(srcRow) + 2} (Excel), " +
-                                                    $"Columna '{colIni}': el valor '{sValIni}' no es un número válido. " +
-                                                    $"Verifique el contenido de esa celda.";
-                                                LogToFile($"ERROR NUMÉRICO en {nombreTablaIni}: {errorFmt}");
+                                                    $"Fila {filaExcel}, Columna '{colIni}': {razonIni}. " +
+                                                    $"Revise la hoja completa por errores similares antes de reintentar.";
+                                                LogToFile($"ERROR NUMÉRICO en {nombreTablaIni}: Fila {filaExcel}, Columna '{colIni}', valor '{sValIni}'");
                                                 GuardarLogEnSession();
                                                 TempData["Mensaje"] = $"ERROR NUMÉRICO en '{nombreTablaIni}':\n\n{errorFmt}";
                                                 TempData["MostrarDescargaLog"] = true;
                                                 return false;
                                             }
                                             LogToFile($"Advertencia: Columna '{colIni}' fila {dtExcel.Rows.IndexOf(srcRow) + 2} " +
-                                                      $"tiene valor texto '{sValIni}' — se parseó como número. " +
+                                                      $"tiene valor texto '{sValIni}' — se parseará como número. " +
                                                       $"Considere usar formato Número en Excel.");
                                         }
                                         destRow[colIni] = (object)ExtraerDecimal(cellValue);
@@ -1282,6 +1292,56 @@ namespace bufinscustomers.Controllers
             return decimal.TryParse(s, System.Globalization.NumberStyles.Any,
                                     System.Globalization.CultureInfo.InvariantCulture, out _)
                 ? s : "0";
+        }
+
+        private static readonly System.Text.RegularExpressions.Regex _regexCientifica =
+            new System.Text.RegularExpressions.Regex(
+                @"^-?\d+[\.,]?\d*[Ee][+\-]?\d+$",
+                System.Text.RegularExpressions.RegexOptions.None);
+
+        private static string DetectarErrorNumerico(string valor)
+        {
+            string v = valor.Trim();
+            // Notación científica (ej: "1,489E-05"): rechazar, el usuario debe ajustar el formato en Excel
+            if (_regexCientifica.IsMatch(v))
+                return $"el valor '{valor}' está en notación científica. Amplíe el ancho de la columna en Excel y ajuste el formato a Número";
+            if (v.Any(c => char.IsLetter(c)))
+                return $"el valor '{valor}' contiene texto";
+            if (v.Count(c => c == ',') > 1)
+                return $"el valor '{valor}' tiene más de un separador decimal (coma)";
+            return null;
+        }
+
+        private string ValidarValoresNumericos(DataTable tabla, Dictionary<string, (string tipo, bool nullable)> esquema)
+        {
+            foreach (DataColumn col in tabla.Columns)
+            {
+                if (!esquema.TryGetValue(col.ColumnName, out var info)) continue;
+                string tipo = info.tipo.ToLower();
+                bool esNumerico = tipo == "money" || tipo == "smallmoney" || tipo == "decimal"
+                               || tipo == "numeric" || tipo == "float"   || tipo == "real"
+                               || tipo == "int"    || tipo == "bigint"   || tipo == "smallint"
+                               || tipo == "tinyint";
+                if (!esNumerico) continue;
+
+                string colLower = col.ColumnName.ToLower();
+                if (colLower.Contains("año") || colLower.Contains("anio") || colLower.Contains("year")
+                    || colLower.Contains("mes") || colLower.Contains("month") || colLower.Contains("id"))
+                    continue;
+
+                for (int r = 0; r < tabla.Rows.Count; r++)
+                {
+                    object val = tabla.Rows[r][col];
+                    if (val is string sVal && !string.IsNullOrWhiteSpace(sVal))
+                    {
+                        string razon = DetectarErrorNumerico(sVal);
+                        if (razon != null)
+                            return $"Fila {r + 2}, Columna '{col.ColumnName}': {razon}. " +
+                                   $"Revise la hoja completa por errores similares antes de reintentar.";
+                    }
+                }
+            }
+            return null;
         }
 
         private void SanitizarColumnasNumericas(DataTable tabla, Dictionary<string, (string tipo, bool nullable)> esquema)
