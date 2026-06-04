@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
@@ -96,6 +96,10 @@ namespace bufinscustomers.Services
         // -------------------------------------------------------
         // Parser RSS con timeout por feed (CancellationToken)
         // -------------------------------------------------------
+        private static readonly System.Text.RegularExpressions.Regex _xmlRootTag =
+            new System.Text.RegularExpressions.Regex(@"^\s*(<\?xml|<rss|<feed|<RDF)",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
         private async Task<List<(NoticiaViewModel VM, DateTime Fecha)>> ParsarRSSAsync(string url)
         {
             try
@@ -105,10 +109,27 @@ namespace bufinscustomers.Services
                 {
                     var req  = new HttpRequestMessage(HttpMethod.Get, url);
                     var resp = await _http.SendAsync(req, cts.Token).ConfigureAwait(false);
+
+                    // Rechazar respuestas que claramente no son XML (HTML de error, redirects, etc.)
+                    var ct = resp.Content.Headers.ContentType?.MediaType ?? "";
+                    bool esXml = ct.Contains("xml") || ct.Contains("rss") || ct.Contains("atom")
+                                 || ct == "text/plain" || ct == "";
+                    if (!esXml)
+                        return new List<(NoticiaViewModel, DateTime)>();
+
                     xml = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
                 }
 
-                var doc   = XDocument.Parse(xml);
+                // Quitar BOM (U+FEFF) que rompe XDocument.Parse
+                xml = xml.Replace("\uFEFF", "").TrimStart();
+
+                // Verificar que el contenido parece XML (RSS/Atom) y no HTML de error
+                if (!_xmlRootTag.IsMatch(xml))
+                    return new List<(NoticiaViewModel, DateTime)>();
+
+                XDocument doc;
+                try { doc = XDocument.Parse(xml); }
+                catch (System.Xml.XmlException) { return new List<(NoticiaViewModel, DateTime)>(); }
                 var lista = new List<(NoticiaViewModel, DateTime)>();
 
                 string fuente;

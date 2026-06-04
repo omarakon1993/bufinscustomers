@@ -1133,9 +1133,28 @@ namespace bufinscustomers.Controllers
                                     var cellValue = srcRow[colsExcel[colIni]];
                                     if (columnasNumericas.Contains(colIni))
                                     {
-                                        // Guardar como decimal nativo: SqlBulkCopy lo mapea
-                                        // a money/decimal de forma directa, sin conversión de texto.
-                                        // Elimina riesgos de notación científica, comas o puntos mal interpretados.
+                                        // Si la celda es texto no vacío, verificar que sea parseable como número
+                                        if (cellValue is string sValIni && !string.IsNullOrWhiteSpace(sValIni))
+                                        {
+                                            string limpio = SanitizarValorNumerico(sValIni);
+                                            if (!decimal.TryParse(limpio,
+                                                System.Globalization.NumberStyles.Any,
+                                                System.Globalization.CultureInfo.InvariantCulture, out _))
+                                            {
+                                                string errorFmt =
+                                                    $"Fila {dtExcel.Rows.IndexOf(srcRow) + 2} (Excel), " +
+                                                    $"Columna '{colIni}': el valor '{sValIni}' no es un número válido. " +
+                                                    $"Verifique el contenido de esa celda.";
+                                                LogToFile($"ERROR NUMÉRICO en {nombreTablaIni}: {errorFmt}");
+                                                GuardarLogEnSession();
+                                                TempData["Mensaje"] = $"ERROR NUMÉRICO en '{nombreTablaIni}':\n\n{errorFmt}";
+                                                TempData["MostrarDescargaLog"] = true;
+                                                return false;
+                                            }
+                                            LogToFile($"Advertencia: Columna '{colIni}' fila {dtExcel.Rows.IndexOf(srcRow) + 2} " +
+                                                      $"tiene valor texto '{sValIni}' — se parseó como número. " +
+                                                      $"Considere usar formato Número en Excel.");
+                                        }
                                         destRow[colIni] = (object)ExtraerDecimal(cellValue);
                                     }
                                     else
@@ -1204,7 +1223,7 @@ namespace bufinscustomers.Controllers
             if (cellValue is int iv)    return (decimal)iv;
             if (cellValue is long lv)   return (decimal)lv;
 
-            // Texto: pasar por el sanitizador de separadores
+            // Texto: pasar siempre por la heurística colombiana (coma=decimal, punto=miles)
             string str = SanitizarValorNumerico(cellValue.ToString()?.Trim() ?? "");
             return decimal.TryParse(str, System.Globalization.NumberStyles.Any,
                                     System.Globalization.CultureInfo.InvariantCulture, out decimal r)
@@ -1231,14 +1250,10 @@ namespace bufinscustomers.Controllers
             }
             else if (lastComma >= 0)
             {
-                // Solo coma: miles si (1-2 dígitos numéricos antes Y exactamente 3 después)
-                // Ej: "15,549"→miles=15549  |  "150,534"→decimal=150.534  |  "15549,00"→decimal
-                string beforeComma = v.Substring(0, lastComma).TrimStart('-');
-                int afterCommaLen  = v.Length - lastComma - 1;
-                bool esMiles = afterCommaLen == 3
-                               && beforeComma.Length > 0 && beforeComma.Length <= 2
-                               && beforeComma != "0";
-                s = esMiles ? v.Replace(",", "") : v.Replace(",", ".");
+                // En formato colombiano (es-CO) la coma es siempre separador decimal.
+                // El separador de miles colombiano es el punto (manejado en el bloque de lastDot).
+                // Ej: "86,751"→86.751  |  "15,549"→15.549  |  "15549,00"→15549.00
+                s = v.Replace(",", ".");
             }
             else if (lastDot >= 0)
             {
