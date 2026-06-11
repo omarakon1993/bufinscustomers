@@ -1,0 +1,67 @@
+@model bufinscustomers.Models.CuentaCorreo
+@{
+    bool esCrear = ViewData["esCrear"] as bool? ?? false;
+    string prefix = esCrear ? "crear" : "crear2"; // unused, fields use name= directly
+}
+<div class="row">
+    <div class="col-md-8 form-group">
+        <label><i class="fas fa-tag mr-1"></i>@Resources.Strings.Correo_FieldNombre <span class="required">*</span></label>
+        <input type="text" name="Nombre" class="form-control" value="@Model.Nombre"
+               placeholder="@Resources.Strings.Correo_FieldNombrePh" required/>
+    </div>
+    <div class="col-md-4 form-group">
+        <label><i class="fas fa-server mr-1"></i>@Resources.Strings.Correo_FieldHost <span class="required">*</span></label>
+        <input type="text" name="Host" class="form-control" value="@Model.Host"
+               placeholder="@Resources.Strings.Correo_FieldHostPh" required/>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-3 form-group">
+        <label><i class="fas fa-plug mr-1"></i>@Resources.Strings.Correo_FieldPuerto <span class="required">*</span></label>
+        <input type="number" name="Puerto" class="form-control" value="@Model.Puerto" min="1" max="65535" required/>
+    </div>
+    <div class="col-md-3 form-group d-flex align-items-end pb-2">
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" name="Ssl" id="crearSsl" value="true" @(Model.Ssl ? "checked" : "")/>
+            <label class="custom-control-label" for="crearSsl">@Resources.Strings.Correo_FieldSsl</label>
+        </div>
+    </div>
+    <div class="col-md-6 form-group d-flex align-items-end pb-2">
+        <div>
+            <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" name="IgnorarCertificado" id="crearIgnorarCert" value="true" @(Model.IgnorarCertificado ? "checked" : "")/>
+                <label class="custom-control-label" for="crearIgnorarCert">@Resources.Strings.Correo_FieldIgnorarCert</label>
+            </div>
+            <small class="text-muted">@Resources.Strings.Correo_FieldIgnorarCertHelp</small>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6 form-group">
+        <label><i class="fas fa-user mr-1"></i>@Resources.Strings.Correo_FieldUsuario <span class="required">*</span></label>
+        <input type="text" name="Usuario" class="form-control" value="@Model.Usuario"
+               autocomplete="off" required/>
+    </div>
+    <div class="col-md-6 form-group">
+        <label><i class="fas fa-key mr-1"></i>
+            @(esCrear ? Resources.Strings.Correo_FieldContrasena : Resources.Strings.Correo_FieldContrasenaEdit)
+            @if (esCrear) { <span class="required">*</span> }
+        </label>
+        <input type="password" name="Contrasena" class="form-control"
+               autocomplete="new-password" @(esCrear ? "required" : "")/>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6 form-group">
+        <label><i class="fas fa-at mr-1"></i>@Resources.Strings.Correo_FieldRemitente <span class="required">*</span></label>
+        <input type="email" name="Remitente" class="form-control" value="@Model.Remitente" required/>
+    </div>
+    <div class="col-md-6 form-group">
+        <label><i class="fas fa-signature mr-1"></i>@Resources.Strings.Correo_FieldNombreRemitente</label>
+        <input type="text" name="NombreRemitente" class="form-control" value="@Model.NombreRemitente"/>
+    </div>
+</div>
+<div class="custom-control custom-switch mt-1">
+    <input type="checkbox" class="custom-control-input" name="Predeterminada" id="crearPredeterminada" value="true" @(Model.Predeterminada ? "checked" : "")/>
+    <label class="custom-control-label" for="crearPredeterminada">@Resources.Strings.Correo_FieldPredeterminada</label>
+</div>

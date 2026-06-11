@@ -1,0 +1,177 @@
+@{
+    Layout = null;
+    var _isEnglish = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+    var _esActiveClass = !_isEnglish ? "active" : "";
+    var _enActiveClass =  _isEnglish ? "active" : "";
+    bool _enviado = ViewData["Enviado"] != null && (bool)ViewData["Enviado"];
+}
+
+<!DOCTYPE html>
+<html lang="@(_isEnglish ? "en" : "es")">
+<head>
+    <title>@Resources.Strings.Reset_PageTitle &mdash; BUFINS</title>
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico">
+    <link rel="stylesheet" type="text/css" href="~/Assets/css/style.css">
+    <link href="~/Assets/GoogleApis/Poppins.css" rel="stylesheet">
+    <link rel="stylesheet" href="~/Assets/Bootstrap/fontawesome-free/css/all.min.css">
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <style>
+        input:-webkit-autofill {
+            background-color: rgba(255,255,255,0.1) !important;
+            -webkit-box-shadow: 0 0 0px 1000px rgba(255,255,255,0.1) inset !important;
+            -webkit-text-fill-color: #333 !important;
+        }
+        .back-link { text-decoration:none; color:#888; font-size:0.75rem; display:block; margin-bottom:0.5rem; transition:color .3s; }
+        .back-link:hover { color:#583AFF; }
+        .lang-switcher-wrapper { display:inline-flex; align-items:center; gap:6px; background:#fff; border:1px solid #e3e6f0; border-radius:18px; padding:4px 10px 4px 11px; box-shadow:0 2px 8px rgba(88,58,255,.07); }
+        .lang-switcher-icon { font-size:1rem; color:#160933; flex-shrink:0; margin-right:3px; display:flex; align-items:center; justify-content:center; }
+        .lang-switcher { display:inline-flex; align-items:center; background:transparent; border:none; padding:0; }
+        .lang-btn { display:flex; align-items:center; padding:2px 10px; border-radius:14px; text-decoration:none!important; color:#583AFF; font-size:.85rem; font-weight:400; transition:background .18s,color .18s; background:transparent; border:none; }
+        .lang-btn:hover,.lang-btn:focus { color:#fff; background:#583AFF; text-decoration:none!important; }
+        .lang-btn.active { background:#01E1D7; color:#fff; font-weight:500; }
+        .lang-sep { width:1px; height:16px; background:#e3e6f0; flex-shrink:0; margin:0 3px; align-self:center; border-radius:1px; opacity:.7; }
+        .login-lang { display:flex; justify-content:center; margin-top:1rem; }
+
+        /* Estado enviado */
+        .success-state { text-align:center; padding:10px 0 20px; }
+        .success-icon-wrap { width:72px; height:72px; background:linear-gradient(135deg,#4338ca,#6d28d9); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; box-shadow:0 4px 20px rgba(99,102,241,.35); }
+        .success-icon-wrap i { font-size:32px; color:#fff; }
+        .success-title { font-size:1.3rem; font-weight:700; color:#1e1b4b; margin-bottom:10px; }
+        .success-msg { font-size:.9rem; color:#6b7280; line-height:1.6; margin-bottom:24px; }
+
+        /* Input loading state */
+        .btn-primary.loading { opacity:.75; pointer-events:none; }
+        .spinner { display:none; width:18px; height:18px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; margin-left:8px; vertical-align:middle; }
+        .btn-primary.loading .spinner { display:inline-block; }
+        .btn-primary.loading .btn-text { opacity:.7; }
+        @@keyframes spin { to { transform:rotate(360deg); } }
+    </style>
+
+    <div class="background-overlay"></div>
+
+    <div class="container">
+        <div class="login-card">
+            <div class="card-glow"></div>
+            <div class="login-header">
+                <a href="@Url.Action("Login", "Acceso")" class="back-link">
+                    @Resources.Strings.Login_BackLink
+                </a>
+                <img class="logo-bufins" src="~/Assets/img/Bufins_LogoLogin.png" alt="Bufins Logo">
+                <h1 class="login-title">@Resources.Strings.Reset_Heading</h1>
+                <p class="login-subtitle">BUSINESS FINANCE ALWAYS EVERYWHERE</p>
+                <div class="login-lang">
+                    <div class="lang-switcher-wrapper">
+                        <span class="lang-switcher-icon"><i class="fas fa-globe"></i></span>
+                        <div class="lang-switcher">
+                            <a href="@Url.Action("SetLanguage","Acceso", new { lang="es-CO", returnUrl=Request.Url.PathAndQuery })" class="lang-btn @_esActiveClass">Espa&ntilde;ol</a>
+                            <span class="lang-sep"></span>
+                            <a href="@Url.Action("SetLanguage","Acceso", new { lang="en-US", returnUrl=Request.Url.PathAndQuery })" class="lang-btn @_enActiveClass">English</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (_enviado)
+            {
+                <!-- Estado enviado -->
+                <div class="success-state">
+                    <div class="success-icon-wrap">
+                        <i class="fas fa-envelope-open-text"></i>
+                    </div>
+                    <div class="success-title">@Resources.Strings.Reset_Enviado_Titulo</div>
+                    <div class="success-msg">@Resources.Strings.Reset_Enviado_Msg</div>
+                    <a href="@Url.Action("Login","Acceso")" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:8px;">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>@Resources.Strings.Reset_BtnVolver</span>
+                    </a>
+                </div>
+            }
+            else
+            {
+                <form id="resetForm" action="@Url.Action("SolicitarReset","Acceso")" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <p style="font-size:.85rem; color:#6b7280; text-align:center; margin-bottom:1.5rem; line-height:1.6;">
+                        <i class="fas fa-info-circle" style="color:#6366f1; margin-right:5px;"></i>
+                        @Resources.Strings.Reset_Instrucciones
+                    </p>
+
+                    <div class="input-group">
+                        <div class="input-icon"><i class="fas fa-envelope"></i></div>
+                        <div class="input-wrapper">
+                            <label for="correo">@Resources.Strings.Reset_EmailLabel</label>
+                            <input type="email" name="correo" id="correo" class="input-field"
+                                   placeholder="@Resources.Strings.Reset_EmailPlaceholder"
+                                   value="@ViewData["CorreoIngresado"]"
+                                   autocomplete="email" />
+                        </div>
+                    </div>
+
+                    <button type="button" id="btnEnviar" class="btn btn-primary" onclick="enviarReset()">
+                        <span class="btn-text">@Resources.Strings.Reset_BtnEnviar</span>
+                        <span class="spinner"></span>
+                        <i class="fas fa-paper-plane" style="margin-left:8px;"></i>
+                    </button>
+
+                    <div style="text-align:center; margin-top:1.25rem;">
+                        <a href="@Url.Action("Login","Acceso")" style="color:#583AFF; font-size:.8rem; text-decoration:none;">
+                            <i class="fas fa-arrow-left" style="margin-right:4px;"></i>
+                            @Resources.Strings.Reset_BtnVolver
+                        </a>
+                    </div>
+
+                    <div class="footer-text">ORION WEB - @DateTime.Now.Year</div>
+
+                    <script>
+                        var _resetMsg = {
+                            errorEmail: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_ErrorEmail)'
+                        };
+
+                        function enviarReset() {
+                            var correo = document.getElementById('correo').value.trim();
+                            var isMobile = window.innerWidth <= 768;
+                            var emailRx = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+
+                            if (!correo || !emailRx.test(correo)) {
+                                Swal.fire({
+                                    toast: true,
+                                    position: isMobile ? 'top' : 'top-end',
+                                    icon: 'info',
+                                    title: _resetMsg.errorEmail,
+                                    showConfirmButton: false,
+                                    timer: 3500,
+                                    timerProgressBar: true
+                                });
+                                return;
+                            }
+
+                            var btn = document.getElementById('btnEnviar');
+                            btn.classList.add('loading');
+                            document.getElementById('resetForm').submit();
+                        }
+                    </script>
+
+                    @if (ViewData["Error"] != null)
+                    {
+                        <script>
+                            Swal.fire({
+                                toast: true,
+                                position: window.innerWidth <= 768 ? 'top' : 'top-end',
+                                icon: 'warning',
+                                title: '@HttpUtility.JavaScriptStringEncode(ViewData["Error"].ToString())',
+                                showConfirmButton: false,
+                                timer: 5000,
+                                timerProgressBar: true
+                            });
+                        </script>
+                    }
+                </form>
+            }
+        </div>
+    </div>
+    <script type="text/javascript" src="~/Assets/js/main.js"></script>
+</body>
+</html>

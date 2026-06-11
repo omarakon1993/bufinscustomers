@@ -164,6 +164,15 @@
                     <i class="fas fa-arrow-right"></i>
                 </button>
 
+                <div style="text-align:center; margin-top:1rem;">
+                    <a href="@Url.Action("SolicitarReset","Acceso")"
+                       style="color:#583AFF; font-size:.8rem; text-decoration:none; opacity:.8; transition:opacity .2s;"
+                       onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.8'">
+                        <i class="fas fa-key" style="margin-right:4px;"></i>
+                        @Resources.Strings.Login_ForgotPassword
+                    </a>
+                </div>
+
                 <div class="footer-text">
                     ORION WEB - @DateTime.Now.Year
                 </div>

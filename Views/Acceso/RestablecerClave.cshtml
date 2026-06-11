@@ -1,0 +1,261 @@
+﻿@{
+    Layout = null;
+    var _isEnglish = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+    var _esActiveClass = !_isEnglish ? "active" : "";
+    var _enActiveClass =  _isEnglish ? "active" : "";
+    bool _tokenInvalido = ViewData["TokenInvalido"] != null && (bool)ViewData["TokenInvalido"];
+    bool _exito         = ViewData["Exito"]         != null && (bool)ViewData["Exito"];
+    string _token       = ViewData["Token"] as string ?? "";
+}
+
+<!DOCTYPE html>
+<html lang="@(_isEnglish ? "en" : "es")">
+<head>
+    <title>@Resources.Strings.Reset_NewPwd_PageTitle &mdash; BUFINS</title>
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico">
+    <link rel="stylesheet" type="text/css" href="~/Assets/css/style.css">
+    <link href="~/Assets/GoogleApis/Poppins.css" rel="stylesheet">
+    <link rel="stylesheet" href="~/Assets/Bootstrap/fontawesome-free/css/all.min.css">
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <style>
+        input:-webkit-autofill {
+            background-color: rgba(255,255,255,0.1) !important;
+            -webkit-box-shadow: 0 0 0px 1000px rgba(255,255,255,0.1) inset !important;
+            -webkit-text-fill-color: #333 !important;
+        }
+        .back-link { text-decoration:none; color:#888; font-size:.75rem; display:block; margin-bottom:.5rem; transition:color .3s; }
+        .back-link:hover { color:#583AFF; }
+        .lang-switcher-wrapper { display:inline-flex; align-items:center; gap:6px; background:#fff; border:1px solid #e3e6f0; border-radius:18px; padding:4px 10px 4px 11px; box-shadow:0 2px 8px rgba(88,58,255,.07); }
+        .lang-switcher-icon { font-size:1rem; color:#160933; flex-shrink:0; margin-right:3px; display:flex; align-items:center; }
+        .lang-switcher { display:inline-flex; align-items:center; background:transparent; border:none; padding:0; }
+        .lang-btn { display:flex; align-items:center; padding:2px 10px; border-radius:14px; text-decoration:none!important; color:#583AFF; font-size:.85rem; font-weight:400; transition:background .18s,color .18s; background:transparent; border:none; }
+        .lang-btn:hover,.lang-btn:focus { color:#fff; background:#583AFF; text-decoration:none!important; }
+        .lang-btn.active { background:#01E1D7; color:#fff; font-weight:500; }
+        .lang-sep { width:1px; height:16px; background:#e3e6f0; flex-shrink:0; margin:0 3px; align-self:center; border-radius:1px; opacity:.7; }
+        .login-lang { display:flex; justify-content:center; margin-top:1rem; }
+
+        /* Estado resultado */
+        .result-state { text-align:center; padding:10px 0 20px; }
+        .result-icon-wrap { width:72px; height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; }
+        .result-icon-wrap.success { background:linear-gradient(135deg,#059669,#10b981); box-shadow:0 4px 20px rgba(16,185,129,.35); }
+        .result-icon-wrap.error   { background:linear-gradient(135deg,#dc2626,#ef4444); box-shadow:0 4px 20px rgba(220,38,38,.35); }
+        .result-icon-wrap i { font-size:32px; color:#fff; }
+        .result-title { font-size:1.2rem; font-weight:700; color:#1e1b4b; margin-bottom:10px; }
+        .result-msg   { font-size:.9rem; color:#6b7280; line-height:1.6; margin-bottom:24px; }
+
+        /* Indicador de fortaleza */
+        .strength-bar { height:4px; background:#e5e7eb; border-radius:4px; margin-top:6px; overflow:hidden; }
+        .strength-fill { height:100%; width:0%; border-radius:4px; transition:width .3s, background .3s; }
+        .strength-label { font-size:.73rem; color:#9ca3af; margin-top:3px; min-height:14px; }
+
+        /* Toggle password field */
+        .pwd-toggle { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; padding:0; cursor:pointer; color:#9ca3af; font-size:1rem; }
+        .pwd-toggle:hover { color:#583AFF; }
+        .input-group .input-wrapper { position:relative; }
+
+        .btn-primary.loading { opacity:.75; pointer-events:none; }
+        .spinner { display:none; width:18px; height:18px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; margin-left:8px; vertical-align:middle; }
+        .btn-primary.loading .spinner { display:inline-block; }
+        @@keyframes spin { to { transform:rotate(360deg); } }
+    </style>
+
+    <div class="background-overlay"></div>
+
+    <div class="container">
+        <div class="login-card">
+            <div class="card-glow"></div>
+            <div class="login-header">
+                <a href="@Url.Action("Login","Acceso")" class="back-link">
+                    @Resources.Strings.Login_BackLink
+                </a>
+                <img class="logo-bufins" src="~/Assets/img/Bufins_LogoLogin.png" alt="Bufins Logo">
+                <h1 class="login-title">@Resources.Strings.Reset_NewPwd_Heading</h1>
+                <p class="login-subtitle">BUSINESS FINANCE ALWAYS EVERYWHERE</p>
+                <div class="login-lang">
+                    <div class="lang-switcher-wrapper">
+                        <span class="lang-switcher-icon"><i class="fas fa-globe"></i></span>
+                        <div class="lang-switcher">
+                            <a href="@Url.Action("SetLanguage","Acceso", new { lang="es-CO", returnUrl=Request.Url.PathAndQuery })" class="lang-btn @_esActiveClass">Espa&ntilde;ol</a>
+                            <span class="lang-sep"></span>
+                            <a href="@Url.Action("SetLanguage","Acceso", new { lang="en-US", returnUrl=Request.Url.PathAndQuery })" class="lang-btn @_enActiveClass">English</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (_exito)
+            {
+                <div class="result-state">
+                    <div class="result-icon-wrap success">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="result-title">@Resources.Strings.Reset_NewPwd_Exito</div>
+                    <a href="@Url.Action("Login","Acceso")" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:8px;">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>@Resources.Strings.Login_Button</span>
+                    </a>
+                </div>
+            }
+            else if (_tokenInvalido)
+            {
+                <div class="result-state">
+                    <div class="result-icon-wrap error">
+                        <i class="fas fa-times"></i>
+                    </div>
+                    <div class="result-title">@Resources.Strings.Reset_NewPwd_TokenInvalido</div>
+                    <div class="result-msg">@Resources.Strings.Reset_NewPwd_TokenExpirado</div>
+                    <a href="@Url.Action("SolicitarReset","Acceso")" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:8px;">
+                        <i class="fas fa-redo"></i>
+                        <span>@Resources.Strings.Reset_NewPwd_BtnSolicitarNuevo</span>
+                    </a>
+                </div>
+            }
+            else
+            {
+                <form id="restablecerForm" action="@Url.Action("RestablecerClave","Acceso")" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="token" value="@_token" />
+
+                    <p style="font-size:.85rem; color:#6b7280; text-align:center; margin-bottom:1.5rem; line-height:1.6;">
+                        <i class="fas fa-shield-alt" style="color:#6366f1; margin-right:5px;"></i>
+                        @Resources.Strings.Reset_NewPwd_Instrucciones
+                    </p>
+
+                    <div class="input-group">
+                        <div class="input-icon"><i class="fas fa-lock"></i></div>
+                        <div class="input-wrapper">
+                            <label for="nuevaClave">@Resources.Strings.Reset_NewPwd_Label</label>
+                            <input type="password" name="nuevaClave" id="nuevaClave" class="input-field"
+                                   placeholder="@Resources.Strings.Reset_NewPwd_Placeholder"
+                                   autocomplete="new-password"
+                                   oninput="actualizarFortaleza(this.value)" />
+                            <button type="button" class="pwd-toggle" onclick="togglePwd('nuevaClave', this)" tabindex="-1">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+                            <div class="strength-label" id="strengthLabel"></div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-icon"><i class="fas fa-lock"></i></div>
+                        <div class="input-wrapper">
+                            <label for="confirmarClave">@Resources.Strings.Reset_NewPwd_ConfirmLabel</label>
+                            <input type="password" name="confirmarClave" id="confirmarClave" class="input-field"
+                                   placeholder="@Resources.Strings.Reset_NewPwd_ConfirmPlaceholder"
+                                   autocomplete="new-password" />
+                            <button type="button" class="pwd-toggle" onclick="togglePwd('confirmarClave', this)" tabindex="-1">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="button" id="btnCambiar" class="btn btn-primary" onclick="cambiarClave()">
+                        <span class="btn-text">@Resources.Strings.Reset_NewPwd_Btn</span>
+                        <span class="spinner"></span>
+                        <i class="fas fa-check" style="margin-left:8px;"></i>
+                    </button>
+
+                    <div style="text-align:center; margin-top:1.25rem;">
+                        <a href="@Url.Action("Login","Acceso")" style="color:#583AFF; font-size:.8rem; text-decoration:none;">
+                            <i class="fas fa-arrow-left" style="margin-right:4px;"></i>
+                            @Resources.Strings.Reset_BtnVolver
+                        </a>
+                    </div>
+
+                    <div class="footer-text">ORION WEB - @DateTime.Now.Year</div>
+
+                    <script>
+                        var _rMsg = {
+                            errorEmpty:  '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_NewPwd_ErrorEmpty)',
+                            errorLen:    '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_NewPwd_ErrorLen)',
+                            errorMatch:  '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_NewPwd_ErrorMatch)',
+                            strengthWeak:   '@HttpUtility.JavaScriptStringEncode(_isEnglish ? "Weak" : "D\u00E9bil")',
+                            strengthFair:   '@HttpUtility.JavaScriptStringEncode(_isEnglish ? "Fair" : "Regular")',
+                            strengthGood:   '@HttpUtility.JavaScriptStringEncode(_isEnglish ? "Good" : "Buena")',
+                            strengthStrong: '@HttpUtility.JavaScriptStringEncode(_isEnglish ? "Strong" : "Fuerte")'
+                        };
+
+                        function togglePwd(inputId, btn) {
+                            var inp = document.getElementById(inputId);
+                            var ic  = btn.querySelector('i');
+                            if (inp.type === 'password') {
+                                inp.type = 'text';
+                                ic.classList.replace('fa-eye', 'fa-eye-slash');
+                            } else {
+                                inp.type = 'password';
+                                ic.classList.replace('fa-eye-slash', 'fa-eye');
+                            }
+                        }
+
+                        function actualizarFortaleza(pwd) {
+                            var fill  = document.getElementById('strengthFill');
+                            var label = document.getElementById('strengthLabel');
+                            if (!pwd) { fill.style.width = '0%'; label.textContent = ''; return; }
+
+                            var score = 0;
+                            if (pwd.length >= 8)  score++;
+                            if (pwd.length >= 12) score++;
+                            if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
+                            if (/\d/.test(pwd))  score++;
+                            if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+                            var map = [
+                                { pct:'20%', color:'#ef4444', text: _rMsg.strengthWeak   },
+                                { pct:'40%', color:'#f97316', text: _rMsg.strengthWeak   },
+                                { pct:'60%', color:'#eab308', text: _rMsg.strengthFair   },
+                                { pct:'80%', color:'#22c55e', text: _rMsg.strengthGood   },
+                                { pct:'100%',color:'#059669', text: _rMsg.strengthStrong }
+                            ];
+                            var s = map[Math.min(score, map.length - 1)];
+                            fill.style.width     = s.pct;
+                            fill.style.background = s.color;
+                            label.textContent     = s.text;
+                            label.style.color     = s.color;
+                        }
+
+                        function cambiarClave() {
+                            var nueva     = document.getElementById('nuevaClave').value;
+                            var confirmar = document.getElementById('confirmarClave').value;
+                            var isMobile  = window.innerWidth <= 768;
+                            var msg = null;
+
+                            if (!nueva)           msg = _rMsg.errorEmpty;
+                            else if (nueva.length < 8) msg = _rMsg.errorLen;
+                            else if (nueva !== confirmar) msg = _rMsg.errorMatch;
+
+                            if (msg) {
+                                Swal.fire({ toast:true, position: isMobile ? 'top' : 'top-end', icon:'info', title: msg, showConfirmButton:false, timer:4000, timerProgressBar:true });
+                                return;
+                            }
+
+                            var btn = document.getElementById('btnCambiar');
+                            btn.classList.add('loading');
+                            document.getElementById('restablecerForm').submit();
+                        }
+                    </script>
+
+                    @if (ViewData["Error"] != null)
+                    {
+                        <script>
+                            Swal.fire({
+                                toast: true,
+                                position: window.innerWidth <= 768 ? 'top' : 'top-end',
+                                icon: 'warning',
+                                title: '@HttpUtility.JavaScriptStringEncode(ViewData["Error"].ToString())',
+                                showConfirmButton: false,
+                                timer: 5000,
+                                timerProgressBar: true
+                            });
+                        </script>
+                    }
+                </form>
+            }
+        </div>
+    </div>
+    <script type="text/javascript" src="~/Assets/js/main.js"></script>
+</body>
+</html>

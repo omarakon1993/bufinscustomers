@@ -52,6 +52,36 @@
   <data name="Login_Button" xml:space="preserve"><value>INICIAR SESION</value></data>
   <data name="Login_ErrorEmail" xml:space="preserve"><value>Debe ingresar un correo.</value></data>
   <data name="Login_ErrorPassword" xml:space="preserve"><value>Debe ingresar una contraseña.</value></data>
+  <data name="Login_ForgotPassword" xml:space="preserve"><value>¿Olvidaste tu contraseña?</value></data>
+
+  <!-- RECUPERAR CONTRASEÑA -->
+  <data name="Reset_PageTitle" xml:space="preserve"><value>Recuperar Contraseña</value></data>
+  <data name="Reset_Heading" xml:space="preserve"><value>RECUPERAR CONTRASEÑA</value></data>
+  <data name="Reset_Instrucciones" xml:space="preserve"><value>Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.</value></data>
+  <data name="Reset_EmailLabel" xml:space="preserve"><value>Correo Electrónico</value></data>
+  <data name="Reset_EmailPlaceholder" xml:space="preserve"><value>Ingrese su correo registrado</value></data>
+  <data name="Reset_BtnEnviar" xml:space="preserve"><value>ENVIAR ENLACE</value></data>
+  <data name="Reset_BtnVolver" xml:space="preserve"><value>Volver al inicio de sesión</value></data>
+  <data name="Reset_ErrorEmail" xml:space="preserve"><value>Debe ingresar un correo válido.</value></data>
+  <data name="Reset_Enviado_Titulo" xml:space="preserve"><value>¡Revisa tu correo!</value></data>
+  <data name="Reset_Enviado_Msg" xml:space="preserve"><value>Si el correo está registrado en el sistema, recibirás las instrucciones para restablecer tu contraseña en los próximos minutos.</value></data>
+  <data name="Reset_ErrorInterno" xml:space="preserve"><value>Ocurrió un error al procesar la solicitud. Intenta de nuevo.</value></data>
+  <data name="Reset_NewPwd_PageTitle" xml:space="preserve"><value>Nueva Contraseña</value></data>
+  <data name="Reset_NewPwd_Heading" xml:space="preserve"><value>NUEVA CONTRASEÑA</value></data>
+  <data name="Reset_NewPwd_Instrucciones" xml:space="preserve"><value>Crea una contraseña segura para tu cuenta.</value></data>
+  <data name="Reset_NewPwd_Label" xml:space="preserve"><value>Nueva Contraseña</value></data>
+  <data name="Reset_NewPwd_Placeholder" xml:space="preserve"><value>Mínimo 8 caracteres</value></data>
+  <data name="Reset_NewPwd_ConfirmLabel" xml:space="preserve"><value>Confirmar Contraseña</value></data>
+  <data name="Reset_NewPwd_ConfirmPlaceholder" xml:space="preserve"><value>Repite la nueva contraseña</value></data>
+  <data name="Reset_NewPwd_Btn" xml:space="preserve"><value>CAMBIAR CONTRASEÑA</value></data>
+  <data name="Reset_NewPwd_ErrorEmpty" xml:space="preserve"><value>Debe ingresar una contraseña.</value></data>
+  <data name="Reset_NewPwd_ErrorLen" xml:space="preserve"><value>La contraseña debe tener al menos 8 caracteres.</value></data>
+  <data name="Reset_NewPwd_ErrorMatch" xml:space="preserve"><value>Las contraseñas no coinciden.</value></data>
+  <data name="Reset_NewPwd_TokenInvalido" xml:space="preserve"><value>El enlace de recuperación no es válido o ha expirado.</value></data>
+  <data name="Reset_NewPwd_TokenExpirado" xml:space="preserve"><value>El enlace ha expirado. Solicita uno nuevo.</value></data>
+  <data name="Reset_NewPwd_BtnSolicitarNuevo" xml:space="preserve"><value>Solicitar nuevo enlace</value></data>
+  <data name="Reset_NewPwd_Exito" xml:space="preserve"><value>¡Contraseña actualizada! Ahora puedes iniciar sesión con tu nueva contraseña.</value></data>
+  <data name="Reset_Email_Subject" xml:space="preserve"><value>Restablecer contraseña — Bufins</value></data>
 
   <!-- HOME / DASHBOARD -->
   <data name="Home_GreetingMorning" xml:space="preserve"><value>Buenos días</value></data>
@@ -87,6 +117,8 @@
   <data name="Home_TooltipNoticia" xml:space="preserve"><value>Ir a la noticia</value></data>
 
   <!-- COMUNES (SweetAlert, botones reutilizables) -->
+  <data name="Common_Si" xml:space="preserve"><value>Sí</value></data>
+  <data name="Common_No" xml:space="preserve"><value>No</value></data>
   <data name="Common_Exito" xml:space="preserve"><value>¡Éxito!</value></data>
   <data name="Common_Error" xml:space="preserve"><value>Error</value></data>
   <data name="Common_Informacion" xml:space="preserve"><value>Información</value></data>
@@ -336,6 +368,8 @@
   <!-- COMMON SHARED (CRUD) -->
   <data name="Common_ThAcciones" xml:space="preserve"><value>Acciones</value></data>
   <data name="Common_GuardarCambios" xml:space="preserve"><value>Guardar cambios</value></data>
+  <data name="Common_Editar" xml:space="preserve"><value>Editar</value></data>
+  <data name="Common_Eliminar" xml:space="preserve"><value>Eliminar</value></data>
   <data name="Common_BtnEliminar" xml:space="preserve"><value>Eliminar</value></data>
   <data name="Common_BtnCrear" xml:space="preserve"><value>Crear</value></data>
 
@@ -849,6 +883,56 @@
     425.555.0100</value></data>
   <data name="Contact_Support" xml:space="preserve"><value>Soporte:</value></data>
   <data name="Contact_Marketing" xml:space="preserve"><value>Marketing:</value></data>
+
+  <!-- CUENTAS DE CORREO -->
+  <data name="Correo_PageTitle"            xml:space="preserve"><value>Cuentas de Correo</value></data>
+  <data name="Correo_PageSubtitle"         xml:space="preserve"><value>Gestiona las cuentas SMTP del sistema</value></data>
+  <data name="Correo_BtnNueva"             xml:space="preserve"><value>Nueva Cuenta</value></data>
+  <data name="Correo_ThNombre"             xml:space="preserve"><value>Nombre</value></data>
+  <data name="Correo_ThServidor"           xml:space="preserve"><value>Servidor</value></data>
+  <data name="Correo_ThPuerto"             xml:space="preserve"><value>Puerto</value></data>
+  <data name="Correo_ThSsl"               xml:space="preserve"><value>SSL</value></data>
+  <data name="Correo_ThUsuario"            xml:space="preserve"><value>Usuario</value></data>
+  <data name="Correo_ThRemitente"          xml:space="preserve"><value>Remitente</value></data>
+  <data name="Correo_ThEstado"             xml:space="preserve"><value>Estado</value></data>
+  <data name="Correo_ThPredeterminada"     xml:space="preserve"><value>Predeterminada</value></data>
+  <data name="Correo_ThAcciones"           xml:space="preserve"><value>Acciones</value></data>
+  <data name="Correo_FieldNombre"          xml:space="preserve"><value>Nombre de la cuenta</value></data>
+  <data name="Correo_FieldNombrePh"        xml:space="preserve"><value>Ej. Cuenta principal, Soporte...</value></data>
+  <data name="Correo_FieldHost"            xml:space="preserve"><value>Servidor SMTP (Host)</value></data>
+  <data name="Correo_FieldHostPh"          xml:space="preserve"><value>Ej. bufins.com, smtp.gmail.com</value></data>
+  <data name="Correo_FieldPuerto"          xml:space="preserve"><value>Puerto</value></data>
+  <data name="Correo_FieldSsl"             xml:space="preserve"><value>Usar SSL/TLS</value></data>
+  <data name="Correo_FieldIgnorarCert"     xml:space="preserve"><value>Ignorar certificado del servidor</value></data>
+  <data name="Correo_FieldIgnorarCertHelp" xml:space="preserve"><value>Activar si el servidor usa certificado autofirmado (común en Plesk)</value></data>
+  <data name="Correo_FieldUsuario"         xml:space="preserve"><value>Usuario / Email de autenticación</value></data>
+  <data name="Correo_FieldContrasena"      xml:space="preserve"><value>Contraseña</value></data>
+  <data name="Correo_FieldContrasenaEdit"  xml:space="preserve"><value>Contraseña (dejar vacío para mantener la actual)</value></data>
+  <data name="Correo_FieldRemitente"       xml:space="preserve"><value>Dirección remitente (From)</value></data>
+  <data name="Correo_FieldNombreRemitente" xml:space="preserve"><value>Nombre visible del remitente</value></data>
+  <data name="Correo_FieldPredeterminada"  xml:space="preserve"><value>Establecer como cuenta predeterminada</value></data>
+  <data name="Correo_BtnProbar"            xml:space="preserve"><value>Probar</value></data>
+  <data name="Correo_BtnPredeterminada"    xml:space="preserve"><value>Establecer predeterminada</value></data>
+  <data name="Correo_ModalCrearTitle"      xml:space="preserve"><value>Nueva Cuenta de Correo</value></data>
+  <data name="Correo_ModalEditarTitle"     xml:space="preserve"><value>Editar Cuenta de Correo</value></data>
+  <data name="Correo_ModalEliminarTitle"   xml:space="preserve"><value>Eliminar Cuenta</value></data>
+  <data name="Correo_ModalEliminarMsg"     xml:space="preserve"><value>¿Estás seguro de eliminar la cuenta</value></data>
+  <data name="Correo_ModalEliminarWarning" xml:space="preserve"><value>Esta acción no se puede deshacer.</value></data>
+  <data name="Correo_ModalProbarTitle"     xml:space="preserve"><value>Probar Conexión SMTP</value></data>
+  <data name="Correo_ProbarDestinatario"   xml:space="preserve"><value>Enviar correo de prueba a</value></data>
+  <data name="Correo_ProbarDestinatarioPh" xml:space="preserve"><value>correo@destino.com</value></data>
+  <data name="Correo_BtnEnviarPrueba"      xml:space="preserve"><value>Enviar prueba</value></data>
+  <data name="Correo_NoRegistros"          xml:space="preserve"><value>No hay cuentas de correo configuradas.</value></data>
+  <data name="Correo_CreadaOk"             xml:space="preserve"><value>Cuenta de correo creada correctamente.</value></data>
+  <data name="Correo_EditadaOk"            xml:space="preserve"><value>Cuenta de correo actualizada correctamente.</value></data>
+  <data name="Correo_EliminadaOk"          xml:space="preserve"><value>Cuenta de correo eliminada.</value></data>
+  <data name="Correo_PredeterminadaOk"     xml:space="preserve"><value>Cuenta establecida como predeterminada.</value></data>
+  <data name="Correo_ErrorCamposReq"       xml:space="preserve"><value>Completa todos los campos obligatorios.</value></data>
+  <data name="Correo_ErrorCrear"           xml:space="preserve"><value>Error al crear la cuenta</value></data>
+  <data name="Correo_ErrorEditar"          xml:space="preserve"><value>Error al editar la cuenta</value></data>
+  <data name="Correo_ErrorEliminar"        xml:space="preserve"><value>Error al eliminar la cuenta</value></data>
+  <data name="Correo_ErrorPredeterminada"  xml:space="preserve"><value>Error al establecer predeterminada</value></data>
+  <data name="Correo_TotalCuentas"         xml:space="preserve"><value>cuentas configuradas</value></data>
 
   <!-- NOTIFICACIONES -->
   <data name="Notif_Titulo" xml:space="preserve"><value>Notificaciones</value></data>

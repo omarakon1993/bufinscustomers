@@ -11,7 +11,6 @@ namespace bufinscustomers.Controllers
         public JsonResult Index()
         {
             string dbStatus = "ok";
-            string dbError = null;
 
             try
             {

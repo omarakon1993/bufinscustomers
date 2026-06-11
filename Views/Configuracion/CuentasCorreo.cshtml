@@ -1,0 +1,402 @@
+@model IEnumerable<bufinscustomers.Models.CuentaCorreo>
+@using bufinscustomers.Helpers
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>@Resources.Strings.Correo_PageTitle</title>
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="~/Assets/css/configuracion-admin.css" rel="stylesheet" />
+</head>
+<body>
+
+@{
+    var successMsg = TempData["SuccessMessage"] as string;
+    var errorMsg   = TempData["ErrorMessage"]   as string;
+}
+
+@if (!string.IsNullOrEmpty(successMsg))
+{
+    <script>
+        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'success', title: '@HttpUtility.JavaScriptStringEncode(successMsg)', showConfirmButton: false, timer: 3500, timerProgressBar: true });
+    </script>
+}
+@if (!string.IsNullOrEmpty(errorMsg))
+{
+    <script>
+        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'error', title: '@HttpUtility.JavaScriptStringEncode(errorMsg)', showConfirmButton: false, timer: 5000, timerProgressBar: true });
+    </script>
+}
+
+<div class="card shadow mb-4 mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-envelope-open-text mr-1"></i> @Resources.Strings.Correo_PageTitle</span>
+        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#crearModal">
+            <i class="fas fa-plus mr-1"></i>@Resources.Strings.Correo_BtnNueva
+        </button>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive table-wrapper">
+            <table class="table table-bordered table-hover table-compact">
+                <thead>
+                    <tr>
+                        <th>@Resources.Strings.Correo_ThNombre</th>
+                        <th>@Resources.Strings.Correo_ThServidor</th>
+                        <th class="text-center" style="width:70px;">@Resources.Strings.Correo_ThPuerto</th>
+                        <th class="text-center" style="width:55px;">@Resources.Strings.Correo_ThSsl</th>
+                        <th>@Resources.Strings.Correo_ThUsuario</th>
+                        <th>@Resources.Strings.Correo_ThRemitente</th>
+                        <th class="text-center" style="width:90px;">@Resources.Strings.Correo_ThEstado</th>
+                        <th class="text-center" style="width:110px;">@Resources.Strings.Correo_ThPredeterminada</th>
+                        <th class="text-center col-acciones">@Resources.Strings.Common_ThAcciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-3">
+                                <i class="fas fa-envelope mr-2"></i>@Resources.Strings.Correo_NoRegistros
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var c in Model)
+                    {
+                        <tr id="fila-@c.Id">
+                            <td>
+                                <strong>@c.Nombre</strong>
+                                @if (c.IgnorarCertificado)
+                                {
+                                    <small title="@Resources.Strings.Correo_FieldIgnorarCert" class="text-muted ml-1"><i class="fas fa-shield-alt"></i></small>
+                                }
+                            </td>
+                            <td><code>@c.Host</code></td>
+                            <td class="text-center"><span class="badge badge-secondary">@c.Puerto</span></td>
+                            <td class="text-center">
+                                @if (c.Ssl)
+                                {
+                                    <i class="fas fa-lock text-success" title="SSL/TLS"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-lock-open text-warning" title="Sin SSL"></i>
+                                }
+                            </td>
+                            <td>@c.Usuario</td>
+                            <td>
+                                @c.Remitente
+                                @if (c.NombreRemitente != c.Usuario && !string.IsNullOrEmpty(c.NombreRemitente))
+                                {
+                                    <small class="text-muted d-block">@c.NombreRemitente</small>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <button type="button"
+                                        id="btnActiva-@c.Id"
+                                        class="btn btn-sm @(c.Activa ? "btn-success" : "btn-secondary")"
+                                        onclick="toggleActiva(@c.Id)"
+                                        title="@(c.Activa ? "Activa — clic para desactivar" : "Inactiva — clic para activar")">
+                                    @if (c.Activa) {
+                                        <span><i class="fas fa-check-circle mr-1"></i>@Resources.Strings.Common_Activo</span>
+                                    } else {
+                                        <span><i class="fas fa-times-circle mr-1"></i>@Resources.Strings.Common_Inactivo</span>
+                                    }
+                                </button>
+                            </td>
+                            <td class="text-center">
+                                @if (c.Predeterminada)
+                                {
+                                    <span class="badge-activo"><i class="fas fa-star mr-1"></i>@Resources.Strings.Common_Si</span>
+                                }
+                                else
+                                {
+                                    <form method="post" action="@Url.Action("EstablecerPredeterminada","CuentasCorreo")" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@c.Id"/>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary" title="@Resources.Strings.Correo_BtnPredeterminada">
+                                            <i class="fas fa-star"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                            <td class="col-acciones">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-primary btn-sm"
+                                            title="@Resources.Strings.Common_Editar"
+                                            onclick="abrirEditar(@c.Id,'@Html.AttributeEncode(c.Nombre)','@Html.AttributeEncode(c.Host)',@c.Puerto,@c.Ssl.ToString().ToLower(),@c.IgnorarCertificado.ToString().ToLower(),'@Html.AttributeEncode(c.Usuario)','@Html.AttributeEncode(c.Remitente)','@Html.AttributeEncode(c.NombreRemitente)',@c.Predeterminada.ToString().ToLower())">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm"
+                                            title="@Resources.Strings.Correo_BtnProbar"
+                                            onclick="abrirProbar(@c.Id,'@Html.AttributeEncode(c.Nombre)')">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                    @if (!c.Predeterminada)
+                                    {
+                                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                                title="@Resources.Strings.Common_Eliminar"
+                                                onclick="confirmarEliminar(@c.Id,'@Html.AttributeEncode(c.Nombre)')">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ══ FORM ELIMINAR (oculto) ══ -->
+<form id="frmEliminar" method="post" action="@Url.Action("Eliminar","CuentasCorreo")" style="display:none;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" id="eliminarId"/>
+</form>
+
+<!-- ══ MODAL CREAR ══ -->
+<div class="modal fade" id="crearModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.Correo_ModalCrearTitle</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form method="post" action="@Url.Action("Crear","CuentasCorreo")">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    @Html.Partial("~/Views/Configuracion/_CuentaCorreoFormFields.cshtml",
+                        new bufinscustomers.Models.CuentaCorreo { Puerto = 465, Ssl = true, IgnorarCertificado = true },
+                        new ViewDataDictionary { { "esCrear", true } })
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-save mr-1"></i>@Resources.Strings.Layout_Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL EDITAR ══ -->
+<div class="modal fade" id="editarModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit mr-1"></i>@Resources.Strings.Correo_ModalEditarTitle</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form method="post" action="@Url.Action("Editar","CuentasCorreo")">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editId"/>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldNombre <span class="text-danger">*</span></label>
+                            <input type="text" name="Nombre" id="editNombre" class="form-control form-control-sm" placeholder="@Resources.Strings.Correo_FieldNombrePh" required/>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label><i class="fas fa-server mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldHost <span class="text-danger">*</span></label>
+                            <input type="text" name="Host" id="editHost" class="form-control form-control-sm" placeholder="@Resources.Strings.Correo_FieldHostPh" required/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-2 mb-3">
+                            <label><i class="fas fa-plug mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldPuerto <span class="text-danger">*</span></label>
+                            <input type="number" name="Puerto" id="editPuerto" class="form-control form-control-sm" min="1" max="65535" required/>
+                        </div>
+                        <div class="col-md-3 mb-3 d-flex align-items-end pb-1">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" name="Ssl" id="editSsl" value="true"/>
+                                <label class="custom-control-label" for="editSsl">@Resources.Strings.Correo_FieldSsl</label>
+                            </div>
+                        </div>
+                        <div class="col-md-7 mb-3 d-flex align-items-end pb-1">
+                            <div>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" name="IgnorarCertificado" id="editIgnorarCert" value="true"/>
+                                    <label class="custom-control-label" for="editIgnorarCert">@Resources.Strings.Correo_FieldIgnorarCert</label>
+                                </div>
+                                <small class="text-muted">@Resources.Strings.Correo_FieldIgnorarCertHelp</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label><i class="fas fa-user mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldUsuario <span class="text-danger">*</span></label>
+                            <input type="text" name="Usuario" id="editUsuario" class="form-control form-control-sm" autocomplete="off" required/>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label><i class="fas fa-key mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldContrasenaEdit</label>
+                            <input type="password" name="Contrasena" id="editContrasena" class="form-control form-control-sm" autocomplete="new-password"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label><i class="fas fa-at mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldRemitente <span class="text-danger">*</span></label>
+                            <input type="email" name="Remitente" id="editRemitente" class="form-control form-control-sm" required/>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label><i class="fas fa-signature mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldNombreRemitente</label>
+                            <input type="text" name="NombreRemitente" id="editNombreRemitente" class="form-control form-control-sm"/>
+                        </div>
+                    </div>
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" name="Predeterminada" id="editPredeterminada" value="true"/>
+                        <label class="custom-control-label" for="editPredeterminada">@Resources.Strings.Correo_FieldPredeterminada</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-save mr-1"></i>@Resources.Strings.Common_GuardarCambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL PROBAR CONEXIÓN ══ -->
+<div class="modal fade" id="probarModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#0284c7,#38bdf8);color:white;">
+                <h5 class="modal-title"><i class="fas fa-paper-plane mr-2"></i>@Resources.Strings.Correo_ModalProbarTitle</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3" id="probarNombreCuenta"></p>
+                <div class="form-group mb-2">
+                    <label><i class="fas fa-envelope mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_ProbarDestinatario <span class="text-danger">*</span></label>
+                    <input type="email" id="probarDestinatario" class="form-control form-control-sm" placeholder="@Resources.Strings.Correo_ProbarDestinatarioPh"/>
+                </div>
+                <div id="probarResultado" class="mt-3" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnEnviarPrueba" onclick="enviarPrueba()">
+                    <i class="fas fa-paper-plane mr-1"></i>@Resources.Strings.Correo_BtnEnviarPrueba
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var _probarId  = 0;
+    var _urlToggle = '@Url.Action("ToggleActiva","CuentasCorreo")';
+    var _urlProbar = '@Url.Action("ProbarConexion","CuentasCorreo")';
+
+    /* ── EDITAR ── */
+    function abrirEditar(id, nombre, host, puerto, ssl, ignorarCert, usuario, remitente, nombreRemitente, predeterminada) {
+        document.getElementById('editId').value             = id;
+        document.getElementById('editNombre').value         = nombre;
+        document.getElementById('editHost').value           = host;
+        document.getElementById('editPuerto').value         = puerto;
+        document.getElementById('editUsuario').value        = usuario;
+        document.getElementById('editContrasena').value     = '';
+        document.getElementById('editRemitente').value      = remitente;
+        document.getElementById('editNombreRemitente').value = nombreRemitente;
+        document.getElementById('editSsl').checked          = (ssl === true || ssl === 'true');
+        document.getElementById('editIgnorarCert').checked  = (ignorarCert === true || ignorarCert === 'true');
+        document.getElementById('editPredeterminada').checked = (predeterminada === true || predeterminada === 'true');
+        $('#editarModal').modal('show');
+    }
+
+    /* ── ELIMINAR ── */
+    function confirmarEliminar(id, nombre) {
+        Swal.fire({
+            title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Correo_ModalEliminarTitle)',
+            text: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Correo_ModalEliminarMsg) "' + nombre + '"',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e74c3c',
+            confirmButtonText: '<i class="fas fa-trash-alt mr-1"></i>@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_BtnEliminar)',
+            cancelButtonText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel)',
+            customClass: { confirmButton: 'btn btn-danger btn-sm', cancelButton: 'btn btn-secondary btn-sm' },
+            buttonsStyling: false
+        }).then(function(r) {
+            if (!r.isConfirmed) return;
+            document.getElementById('eliminarId').value = id;
+            document.getElementById('frmEliminar').submit();
+        });
+    }
+
+    /* ── PROBAR ── */
+    function abrirProbar(id, nombre) {
+        _probarId = id;
+        document.getElementById('probarNombreCuenta').textContent = nombre;
+        document.getElementById('probarDestinatario').value = '';
+        var res = document.getElementById('probarResultado');
+        res.style.display = 'none';
+        res.innerHTML = '';
+        $('#probarModal').modal('show');
+    }
+
+    function enviarPrueba() {
+        var destino = document.getElementById('probarDestinatario').value.trim();
+        if (!destino) { document.getElementById('probarDestinatario').focus(); return; }
+
+        var $btn = $('#btnEnviarPrueba');
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Enviando...');
+        document.getElementById('probarResultado').style.display = 'none';
+
+        // El token CSRF lo agrega el $.ajaxSetup global del layout — NO incluir manualmente
+        $.ajax({
+            url:  _urlProbar,
+            type: 'POST',
+            data: { id: _probarId, correoDestino: destino },
+            success: function(r) {
+                var ok  = r.success;
+                var cls = ok ? 'alert-success' : 'alert-danger';
+                var ico = ok ? 'fa-check-circle' : 'fa-times-circle';
+                var res = document.getElementById('probarResultado');
+                res.innerHTML = '<div class="alert ' + cls + ' py-2"><i class="fas ' + ico + ' mr-2"></i>' + r.message + '</div>';
+                res.style.display = '';
+            },
+            error: function(xhr) {
+                var res = document.getElementById('probarResultado');
+                res.innerHTML = '<div class="alert alert-danger py-2"><i class="fas fa-times-circle mr-2"></i>' + (xhr.responseText || 'Error de conexion') + '</div>';
+                res.style.display = '';
+            },
+            complete: function() {
+                $btn.prop('disabled', false).html('<i class="fas fa-paper-plane mr-1"></i>@HttpUtility.JavaScriptStringEncode(Resources.Strings.Correo_BtnEnviarPrueba)');
+            }
+        });
+    }
+
+    /* ── TOGGLE ACTIVA ── */
+    function toggleActiva(id) {
+        // El token CSRF lo agrega el $.ajaxSetup global del layout — NO incluir manualmente
+        $.ajax({
+            url:  _urlToggle,
+            type: 'POST',
+            data: { id: id },
+            success: function(r) {
+                if (!r.success) { Swal.fire({ icon: 'error', title: 'Error', text: r.message, toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 }); return; }
+                var $btn = $('#btnActiva-' + id);
+                if (r.activa) {
+                    $btn.removeClass('btn-secondary').addClass('btn-success')
+                        .html('<span><i class="fas fa-check-circle mr-1"></i>@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Activo)</span>');
+                } else {
+                    $btn.removeClass('btn-success').addClass('btn-secondary')
+                        .html('<span><i class="fas fa-times-circle mr-1"></i>@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Inactivo)</span>');
+                }
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

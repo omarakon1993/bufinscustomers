@@ -49,6 +49,16 @@
     <Reference Include="Antlr3.Runtime, Version=3.5.0.2, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL">
       <HintPath>packages\Antlr.3.5.0.2\lib\Antlr3.Runtime.dll</HintPath>
     </Reference>
+    <Reference Include="BouncyCastle.Cryptography, Version=2.0.0.0, Culture=neutral, PublicKeyToken=072edcf4a5328938, processorArchitecture=MSIL">
+      <HintPath>packages\BouncyCastle.Cryptography.2.6.2\lib\net461\BouncyCastle.Cryptography.dll</HintPath>
+    </Reference>
+    <Reference Include="MailKit, Version=4.16.0.0, Culture=neutral, PublicKeyToken=4e064fe7c44a8f1b, processorArchitecture=MSIL">
+      <HintPath>packages\MailKit.4.16.0\lib\net48\MailKit.dll</HintPath>
+    </Reference>
+    <Reference Include="MimeKit, Version=4.16.0.0, Culture=neutral, PublicKeyToken=bede1c8a46c66814, processorArchitecture=MSIL">
+      <HintPath>packages\MimeKit.4.16.0\lib\net48\MimeKit.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="BCrypt.Net-Next">
       <HintPath>packages\BCrypt.Net-Next.4.0.3\lib\net48\BCrypt.Net-Next.dll</HintPath>
     </Reference>
@@ -251,6 +261,10 @@
     <Compile Include="Services\PermisosService.cs" />
     <Compile Include="Services\ReportesService.cs" />
     <Compile Include="Services\UsuarioService.cs" />
+    <Compile Include="Services\EmailService.cs" />
+    <Compile Include="Models\CuentaCorreoModels.cs" />
+    <Compile Include="Services\CuentasCorreoService.cs" />
+    <Compile Include="Controllers\CuentasCorreoController.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="App_GlobalResources\Strings.resx" />
@@ -6177,11 +6191,18 @@
     <Content Include="Views\Home\Contact.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Acceso\Login.cshtml" />
+    <Content Include="Views\Acceso\SolicitarReset.cshtml" />
+    <Content Include="Views\Acceso\RestablecerClave.cshtml" />
+    <Content Include="Views\Configuracion\CuentasCorreo.cshtml" />
+    <Content Include="Views\Configuracion\_CuentaCorreoFormFields.cshtml" />
     <Content Include="Views\Datos\CargueExcel.cshtml" />
     <Content Include="Views\Configuracion\Usuarios.cshtml" />
     <Content Include="Views\Configuracion\Empresas.cshtml" />
     <Content Include="Views\Reportes\Reportes.cshtml" />
     <Content Include="Scripts\bootstrap.min.js.map" />
+    <None Include="Scripts\Migracion_RecuperacionClave.sql" />
+    <None Include="Scripts\Crear_TablaConfiguracionCuentasCorreo.sql" />
+    <None Include="Scripts\Insertar_MenuCuentasCorreo.sql" />
     <Content Include="Scripts\bootstrap.js.map" />
     <Content Include="Scripts\bootstrap.esm.min.js.map" />
     <Content Include="Scripts\bootstrap.esm.js.map" />

@@ -439,6 +439,181 @@ namespace bufinscustomers.Controllers
             return usuario;
         }
 
+        // ====== RECUPERACIÓN DE CONTRASEÑA ======
+
+        [HttpGet]
+        public ActionResult SolicitarReset()
+        {
+            return View("~/Views/Acceso/SolicitarReset.cshtml");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult SolicitarReset(string correo)
+        {
+            if (string.IsNullOrWhiteSpace(correo) || !EsCorreoValido(correo.Trim()))
+            {
+                ViewData["Error"] = R("Reset_ErrorEmail");
+                return View("~/Views/Acceso/SolicitarReset.cshtml");
+            }
+
+            correo = correo.Trim().ToLower();
+
+            try
+            {
+                // Buscar usuario — siempre mostrar mensaje de éxito (anti-enumeración)
+                int usuarioId = 0;
+                string nombreUsuario = null;
+                string correoReal = null;
+
+                using (var cn = new SqlConnection(CadenaConexion))
+                {
+                    var cmd = new SqlCommand(
+                        "SELECT TOP 1 Id, Nombre, Correo FROM Usuarios WHERE LOWER(Correo) = @Correo", cn);
+                    cmd.Parameters.AddWithValue("@Correo", correo);
+                    cn.Open();
+                    using (var r = cmd.ExecuteReader())
+                    {
+                        if (r.Read())
+                        {
+                            usuarioId    = Convert.ToInt32(r["Id"]);
+                            nombreUsuario = r["Nombre"].ToString();
+                            correoReal   = r["Correo"].ToString();
+                        }
+                    }
+                }
+
+                if (usuarioId > 0)
+                {
+                    // Generar token seguro (32 bytes aleatorios, base64url)
+                    var bytes = new byte[32];
+                    using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+                        rng.GetBytes(bytes);
+                    string token = Convert.ToBase64String(bytes)
+                        .Replace('+', '-').Replace('/', '_').TrimEnd('=');
+                    DateTime expiry = DateTime.Now.AddHours(1);
+
+                    // Guardar token y expiración en BD
+                    using (var cn = new SqlConnection(CadenaConexion))
+                    {
+                        var cmd = new SqlCommand(
+                            "UPDATE Usuarios SET ResetToken = @Token, ResetTokenExpiry = @Expiry WHERE Id = @Id", cn);
+                        cmd.Parameters.AddWithValue("@Token",  token);
+                        cmd.Parameters.AddWithValue("@Expiry", expiry);
+                        cmd.Parameters.AddWithValue("@Id",     usuarioId);
+                        cn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    // Construir enlace y enviar correo
+                    string enlace   = Url.Action("RestablecerClave", "Acceso",
+                        new { token = token }, Request.Url.Scheme);
+                    bool esIngles   = System.Threading.Thread.CurrentThread.CurrentUICulture
+                                          .TwoLetterISOLanguageName == "en";
+                    new Services.EmailService().EnviarRecuperacionClave(
+                        correoReal, nombreUsuario, enlace, esIngles);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error internamente sin exponerlo al cliente (anti-enumeración)
+                System.Diagnostics.Trace.TraceError("[SolicitarReset] {0}", ex.Message);
+            }
+
+            // Siempre mostrar pantalla de éxito independientemente del resultado (anti-enumeración)
+            ViewData["Enviado"] = true;
+            return View("~/Views/Acceso/SolicitarReset.cshtml");
+        }
+
+        [HttpGet]
+        public ActionResult RestablecerClave(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+                return RedirectToAction("Login");
+
+            // Verificar que el token existe y no expiró
+            bool valido = false;
+            using (var cn = new SqlConnection(CadenaConexion))
+            {
+                var cmd = new SqlCommand(
+                    @"SELECT COUNT(1) FROM Usuarios
+                      WHERE ResetToken = @Token AND ResetTokenExpiry > GETDATE()", cn);
+                cmd.Parameters.AddWithValue("@Token", token);
+                cn.Open();
+                valido = Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+            }
+
+            if (!valido)
+            {
+                ViewData["TokenInvalido"] = true;
+                return View("~/Views/Acceso/RestablecerClave.cshtml");
+            }
+
+            ViewData["Token"] = token;
+            return View("~/Views/Acceso/RestablecerClave.cshtml");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult RestablecerClave(string token, string nuevaClave, string confirmarClave)
+        {
+            if (string.IsNullOrEmpty(token))
+                return RedirectToAction("Login");
+
+            // Validaciones cliente se repiten en servidor
+            if (string.IsNullOrWhiteSpace(nuevaClave) || nuevaClave.Length < 8)
+            {
+                ViewData["Token"] = token;
+                ViewData["Error"] = nuevaClave?.Length < 8
+                    ? R("Reset_NewPwd_ErrorLen") : R("Reset_NewPwd_ErrorEmpty");
+                return View("~/Views/Acceso/RestablecerClave.cshtml");
+            }
+            if (nuevaClave != confirmarClave)
+            {
+                ViewData["Token"] = token;
+                ViewData["Error"] = R("Reset_NewPwd_ErrorMatch");
+                return View("~/Views/Acceso/RestablecerClave.cshtml");
+            }
+
+            // Buscar usuario por token válido
+            int usuarioId = 0;
+            using (var cn = new SqlConnection(CadenaConexion))
+            {
+                var cmd = new SqlCommand(
+                    @"SELECT TOP 1 Id FROM Usuarios
+                      WHERE ResetToken = @Token AND ResetTokenExpiry > GETDATE()", cn);
+                cmd.Parameters.AddWithValue("@Token", token);
+                cn.Open();
+                var result = cmd.ExecuteScalar();
+                if (result != null && result != DBNull.Value)
+                    usuarioId = Convert.ToInt32(result);
+            }
+
+            if (usuarioId == 0)
+            {
+                ViewData["TokenInvalido"] = true;
+                return View("~/Views/Acceso/RestablecerClave.cshtml");
+            }
+
+            // Actualizar contraseña y limpiar token
+            string hash = HashearContrasena(nuevaClave.Trim());
+            using (var cn = new SqlConnection(CadenaConexion))
+            {
+                var cmd = new SqlCommand(
+                    @"UPDATE Usuarios
+                      SET Clave = @Clave, ResetToken = NULL, ResetTokenExpiry = NULL,
+                          IntentosFallidos = 0, BloqueadoHasta = NULL
+                      WHERE Id = @Id", cn);
+                cmd.Parameters.AddWithValue("@Clave", hash);
+                cmd.Parameters.AddWithValue("@Id",    usuarioId);
+                cn.Open();
+                cmd.ExecuteNonQuery();
+            }
+
+            ViewData["Exito"] = true;
+            return View("~/Views/Acceso/RestablecerClave.cshtml");
+        }
+
         [HttpGet]
         public ActionResult SetLanguage(string lang, string returnUrl)
         {
