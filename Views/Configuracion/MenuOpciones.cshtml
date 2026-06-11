@@ -159,6 +159,7 @@
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form method="post" action="/MenuOpciones/Crear">
+    @Html.AntiForgeryToken()
                 <div class="modal-body">
                     <!-- Fila 1: Código / Icono / Orden -->
                     <div class="row">
@@ -265,6 +266,7 @@
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form method="post" action="/MenuOpciones/Editar">
+    @Html.AntiForgeryToken()
                 <input type="hidden" id="editId" name="Id" />
                 <div class="modal-body">
                     <!-- Fila 1: Código / Icono / Orden -->
@@ -365,6 +367,7 @@
 
 <!-- Form eliminar oculto -->
 <form id="frmElim" method="post" action="/MenuOpciones/Eliminar" style="display:none">
+    @Html.AntiForgeryToken()
     <input type="hidden" name="id" id="elimId" />
 </form>
 

@@ -1,4 +1,4 @@
-@model List<bufinscustomers.Models.WidgetTarjeta>
+﻿@model List<bufinscustomers.Models.WidgetTarjeta>
 @using bufinscustomers.Helpers
 @using System.Web.Script.Serialization
 
@@ -121,6 +121,7 @@
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form method="post" action="/Widgets/Crear">
+    @Html.AntiForgeryToken()
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -230,6 +231,7 @@
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form method="post" action="/Widgets/Editar">
+    @Html.AntiForgeryToken()
                 <input type="hidden" name="Id" id="e_Id" />
                 <div class="modal-body">
                     <div class="row">
@@ -331,6 +333,7 @@
 
 <!-- Form eliminar oculto -->
 <form id="frmElim" method="post" action="/Widgets/Eliminar" style="display:none">
+    @Html.AntiForgeryToken()
     <input type="hidden" name="id" id="elimId" />
 </form>
 

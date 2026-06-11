@@ -1,4 +1,4 @@
-@model IEnumerable<bufinscustomers.Models.Empresas>
+﻿@model IEnumerable<bufinscustomers.Models.Empresas>
 @using bufinscustomers.Helpers
 
 <!DOCTYPE html>
@@ -176,6 +176,7 @@
                         <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                     </button>
                     <form id="deleteForm" method="post" action="/Empresa/EliminarEmpresa" style="display: inline;">
+    @Html.AntiForgeryToken()
                         <input type="hidden" id="idEmpresa" name="idEmpresa" />
                         <button type="submit" class="btn btn-danger btn-sm">
                             <i class="fas fa-trash-alt mr-1"></i>@Resources.Strings.Common_BtnEliminar
@@ -197,6 +198,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="editEmpresaForm" method="post" action="/Empresa/EditarEmpresa">
+    @Html.AntiForgeryToken()
                     <input type="hidden" id="editIdEmpresa" name="Id" />
                     <div class="modal-body">
                         <div class="mb-3 mt-3">
@@ -254,6 +256,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="crearEmpresaForm" method="post" action="/Empresa/CrearEmpresa">
+    @Html.AntiForgeryToken()
                     <div class="modal-body">
                         <div class="mb-3 mt-3">
                             <label for="crearNombre" class="form-label">

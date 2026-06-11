@@ -109,6 +109,7 @@
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form method="post" action="/GestorGrupos/Crear">
+    @Html.AntiForgeryToken()
                 <div class="modal-body">
                     <!-- Fila 1: Nombre ES / Nombre EN -->
                     <div class="row">
@@ -166,6 +167,7 @@
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form method="post" action="/GestorGrupos/Editar">
+    @Html.AntiForgeryToken()
                 <input type="hidden" name="Id" id="editId" />
                 <div class="modal-body">
                     <!-- Fila 1: Nombre ES / Nombre EN -->
@@ -217,6 +219,7 @@
 
 <!-- Form eliminar oculto -->
 <form id="frmElim" method="post" action="/GestorGrupos/Eliminar" style="display:none">
+    @Html.AntiForgeryToken()
     <input type="hidden" name="id" id="elimId" />
 </form>
 

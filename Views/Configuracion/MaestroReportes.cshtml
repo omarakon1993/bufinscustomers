@@ -238,6 +238,7 @@
                         <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                     </button>
                     <form id="deleteForm" method="post" action="/Reportes/EliminarReporte" style="display: inline;">
+    @Html.AntiForgeryToken()
                         <input type="hidden" id="idReporte" name="idReporte" />
                         <button type="submit" class="btn btn-danger btn-sm">
                             <i class="fas fa-trash-alt mr-1"></i>@Resources.Strings.Common_BtnEliminar
@@ -261,6 +262,7 @@
                     </button>
                 </div>
                 <form method="post" action="/Reportes/EditarReporte" onsubmit="return validarFormularioEditar()">
+    @Html.AntiForgeryToken()
                     <div class="modal-body">
                         <input type="hidden" id="editIdReporte" name="Id" />
 
@@ -342,6 +344,7 @@
                     </button>
                 </div>
                 <form method="post" action="/Reportes/CrearReporte" onsubmit="return validarFormularioCrear()">
+    @Html.AntiForgeryToken()
                     <div class="modal-body">
                         <div class="row">
                             <div class="col-md-6 mb-3">

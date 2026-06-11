@@ -359,6 +359,7 @@
                         <i class="fas fa-times mr-2"></i>@Resources.Strings.Layout_Cancel
                     </button>
                     <form id="deleteForm" method="post" action="/Usuario/EliminarUsuario" style="display: inline;">
+    @Html.AntiForgeryToken()
                         <input type="hidden" id="idUsuario" name="idUsuario" />
                         <button type="submit" class="btn btn-danger">
                             <i class="fas fa-trash-alt mr-2"></i>@Resources.Strings.Common_BtnEliminar
@@ -380,6 +381,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="editUserForm" method="post" action="/Usuario/EditarUsuario" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
                     <input type="hidden" id="editIdUsuario" name="Id" />
                     <div class="modal-body">
                         <!-- Pestañas de navegación -->
@@ -535,6 +537,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="crearUsuarioForm" method="post" action="/Usuario/Registrar" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
                     <div class="modal-body">
                         <!-- Pestañas de navegación -->
                         <ul class="nav nav-tabs" id="crearUsuarioTabs" role="tablist">
@@ -693,6 +696,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="cambiarClaveForm" method="post" action="/Usuario/CambiarClave">
+    @Html.AntiForgeryToken()
                     <input type="hidden" id="cambioClaveIdUsuario" name="idUsuario" />
                     <div class="modal-body">
                         <div class="mb-3 mt-3">
