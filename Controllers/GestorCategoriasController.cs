@@ -1,4 +1,4 @@
-using bufinscustomers.Helpers;
+﻿using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
@@ -21,6 +21,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult Crear(CategoriaMenu model)
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
@@ -43,6 +44,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult Editar(CategoriaMenu model)
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
@@ -65,6 +67,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult Eliminar(int id)
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())

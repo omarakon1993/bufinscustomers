@@ -1,4 +1,4 @@
-@model bufinscustomers.Models.HistorialVersionesPageViewModel
+﻿@model bufinscustomers.Models.HistorialVersionesPageViewModel
 @using bufinscustomers.Helpers
 @using System.Linq
 
@@ -232,11 +232,11 @@
 <script>
     var _histTotal = @totalVersiones;
     var _histMsg = {
-        totalVersiones: '@Html.Raw(Resources.Strings.Hist_TotalVersiones.Replace("'", "\\'"))',
-        confirmTitle:   '@Html.Raw(Resources.Strings.Hist_JS_ConfirmTitle.Replace("'", "\\'"))',
-        confirmBtn:     '@Html.Raw(Resources.Strings.Hist_JS_ConfirmBtn.Replace("'", "\\'"))',
-        cancelBtn:      '@Html.Raw(Resources.Strings.Hist_JS_CancelBtn.Replace("'", "\\'"))',
-        confirmTextTpl: '@Html.Raw(Resources.Strings.Hist_JS_ConfirmText.Replace("'", "\\'"))'
+        totalVersiones: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_TotalVersiones)',
+        confirmTitle:   '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_JS_ConfirmTitle)',
+        confirmBtn:     '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_JS_ConfirmBtn)',
+        cancelBtn:      '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_JS_CancelBtn)',
+        confirmTextTpl: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_JS_ConfirmText)'
     };
 
     $(document).ready(function () {

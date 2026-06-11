@@ -22,10 +22,10 @@ namespace bufinscustomers.Controllers
                     cmd.ExecuteScalar();
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 dbStatus = "error";
-                dbError = ex.Message;
+                // A4: No exponer mensaje de excepción SQL al cliente
             }
 
             bool healthy = dbStatus == "ok";
@@ -36,7 +36,6 @@ namespace bufinscustomers.Controllers
             {
                 status    = healthy ? "ok" : "degraded",
                 db        = dbStatus,
-                dbError,
                 timestamp = DateTime.UtcNow.ToString("o")
             }, JsonRequestBehavior.AllowGet);
         }

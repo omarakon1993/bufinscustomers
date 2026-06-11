@@ -93,6 +93,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult CrearReporte(Reportes reporte)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
@@ -130,6 +131,7 @@ namespace bufinscustomers.Controllers
 
     
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult EditarReporte(Reportes reporte)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
@@ -165,6 +167,7 @@ namespace bufinscustomers.Controllers
 
       
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult EliminarReporte(int idReporte)
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
@@ -193,6 +196,7 @@ namespace bufinscustomers.Controllers
 
  
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult ValidarURL(string url)
         {
             bool esValida = EsURLValida(url);

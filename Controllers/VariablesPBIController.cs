@@ -1,4 +1,4 @@
-using bufinscustomers.Helpers;
+﻿using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
@@ -37,6 +37,7 @@ namespace bufinscustomers.Controllers
         /// Consulta datos con filtros (AJAX POST)
         /// </summary>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult ConsultarDatos(FiltrosVariablesPBI filtros)
         {
             if (!VerificarSuperAdmin())

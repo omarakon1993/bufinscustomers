@@ -1,4 +1,4 @@
-@model bufinscustomers.Models.ModeloPageViewModel
+﻿@model bufinscustomers.Models.ModeloPageViewModel
 @using bufinscustomers.Helpers
 @{
     ViewBag.Title = Resources.Strings.Modelo_PageTitle;
@@ -126,10 +126,10 @@
 
 <script>
     var _modeloMsg = {
-        selectEmpresaPrimero: '@Html.Raw(Resources.Strings.Modelo_SelectEmpresaPrimero)',
+        selectEmpresaPrimero: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_SelectEmpresaPrimero)',
         cargando: '@Resources.Strings.Modelo_JS_Cargando',
-        sinAnio: '@Html.Raw(Resources.Strings.Modelo_JS_SinAnio)',
-        errorAnio: '@Html.Raw(Resources.Strings.Modelo_JS_ErrorAnio)',
+        sinAnio: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_SelectEmpresaPrimero)',
+        errorAnio: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_SelectEmpresaPrimero)',
         ejecutando: '@Resources.Strings.Modelo_JS_Ejecutando'
     };
     var _commonMsg = {

@@ -1,4 +1,4 @@
-@using bufinscustomers.Helpers
+﻿@using bufinscustomers.Helpers
 @using System.Globalization
 @using System.Web.Script.Serialization
 @model List<bufinscustomers.Models.WidgetTarjetaViewModel>
@@ -679,14 +679,14 @@
 <script>
 (function () {
     var _s = {
-        vigente:   '@Html.Raw(Resources.Strings.Home_TRM_Vigente)',
-        noDisp:    '@Html.Raw(Resources.Strings.Home_TRM_NoDisponible)',
-        vacias:    '@Html.Raw(Resources.Strings.Home_Noticias_Vacias)',
-        noConfig:  '@Html.Raw(Resources.Strings.Home_Noticias_NoConfig)',
-        error:     '@Html.Raw(Resources.Strings.Home_IndicadoresError)',
-        colapsar:  '@Html.Raw(Resources.Strings.Home_TooltipColapsar)',
-        expandir:  '@Html.Raw(Resources.Strings.Home_TooltipExpandir)',
-        irNoticia: '@Html.Raw(Resources.Strings.Home_TooltipNoticia)'
+        vigente:   '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_Vigente)',
+        noDisp:    '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_Vigente)',
+        vacias:    '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_Vigente)',
+        noConfig:  '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_Vigente)',
+        error:     '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_Vigente)',
+        colapsar:  '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_Vigente)',
+        expandir:  '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_Vigente)',
+        irNoticia: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_Vigente)'
     };
 
     var _urlNoticias = '@Url.Action("ObtenerNoticias", "Home")';

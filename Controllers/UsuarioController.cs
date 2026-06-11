@@ -126,6 +126,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult EliminarUsuario(int idUsuario)
         {
             // Verificar permisos de eliminación
@@ -185,6 +186,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult EditarUsuario(Usuarios oUsuario, HttpPostedFileBase ImagenUsuario)
         {
             // Verificar permisos de edición
@@ -276,6 +278,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult Registrar(Usuarios oUsuario, HttpPostedFileBase ImagenUsuario)
         {
             // Verificar permisos de creación
@@ -414,6 +417,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult CambiarClave(int idUsuario, string nuevaClave, string confirmarNuevaClave)
         {
             // Verificar permisos
@@ -512,6 +516,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult CargarImagenUsuario(HttpPostedFileBase ImagenUsuario)
         {
             if (ImagenUsuario != null && ImagenUsuario.ContentLength > 0)

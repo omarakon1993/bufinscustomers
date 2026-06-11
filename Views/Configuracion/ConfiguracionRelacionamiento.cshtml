@@ -1,4 +1,4 @@
-@model dynamic
+﻿@model dynamic
 @using bufinscustomers.Models
 
 @{
@@ -76,6 +76,7 @@
         </h3>
 
         <form id="formCarga" action="@Url.Action("CargarExcel", "ConfiguracionRelacionamiento")" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
             <div class="filter-section">
                 <p style="font-size: 0.85rem; color: #6c757d; margin-bottom: 1rem;">
                     <i class="fas fa-info-circle" style="color: #6366F1;"></i>
@@ -223,8 +224,8 @@
 
 @section scripts {
     <script>
-        var _dropText    = '@Html.Raw(Resources.Strings.CfgRel_DropText.Replace("'", "\\'"))';
-        var _dropSubtext = '@Html.Raw(Resources.Strings.CfgRel_DropSubtext.Replace("'", "\\'"))';
+        var _dropText    = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_DropText)';
+        var _dropSubtext = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_DropSubtext)';
 
         $(document).ready(function () {
             var dropZone = $('#dropZone');
@@ -283,8 +284,8 @@
                 if (ext !== 'xlsx' && ext !== 'xlsm') {
                     Swal.fire({
                         icon: 'warning',
-                        title: '@Html.Raw(Resources.Strings.CfgRel_JS_FormatoInvalido.Replace("'", "\\'"))',
-                        text: '@Html.Raw(Resources.Strings.CfgRel_JS_FormatoText.Replace("'", "\\'"))'
+                        title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_FormatoInvalido)',
+                        text: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_FormatoText)'
                     });
                     return;
                 }
@@ -321,16 +322,16 @@
 
                 Swal.fire({
                     icon: 'warning',
-                    title: '@Html.Raw(Resources.Strings.CfgRel_TitleConfirmar.Replace("'", "\\'"))',
-                    html: '<strong>@Html.Raw(Resources.Strings.CfgRel_JS_ConfTexto1.Replace("'", "\\'"))</strong> @Html.Raw(Resources.Strings.CfgRel_JS_ConfTexto2.Replace("'", "\\'"))<br><br>@Html.Raw(Resources.Strings.CfgRel_JS_ConfPregunta.Replace("'", "\\'"))',
+                    title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_TitleConfirmar)',
+                    html: '<strong>@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_ConfTexto1)</strong> @HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_ConfTexto2)<br><br>@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_ConfPregunta)',
                     showCancelButton: true,
-                    confirmButtonText: '@Html.Raw(Resources.Strings.CfgRel_JS_SiCargar.Replace("'", "\\'"))',
-                    cancelButtonText: '@Html.Raw(Resources.Strings.Layout_Cancel.Replace("'", "\\'"))',
+                    confirmButtonText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_SiCargar)',
+                    cancelButtonText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel)',
                     confirmButtonColor: '#6366F1',
                     cancelButtonColor: '#6c757d'
                 }).then(function (result) {
                     if (result.isConfirmed) {
-                        btnCargar.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>@Html.Raw(Resources.Strings.CfgRel_JS_Procesando.Replace("'", "\\'"))');
+                        btnCargar.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_Procesando)');
 
                         var overlay = document.getElementById('overlayProcesando');
                         overlay.style.display = 'flex';

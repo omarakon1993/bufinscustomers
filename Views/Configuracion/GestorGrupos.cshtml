@@ -1,4 +1,4 @@
-@model IEnumerable<bufinscustomers.Models.GrupoMenu>
+﻿@model IEnumerable<bufinscustomers.Models.GrupoMenu>
 @using bufinscustomers.Helpers
 @using System.Web.Script.Serialization
 
@@ -235,13 +235,13 @@
 
     function confirmarEliminar(id, nombre) {
         Swal.fire({
-            title: '@Html.Raw(Resources.Strings.Grp_JS_ElimTitle.Replace("'", "\\'"))',
-            text: '"' + nombre + '" @Html.Raw(Resources.Strings.Grp_JS_ElimSuffix.Replace("'", "\\'"))',
+            title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Grp_JS_ElimTitle)',
+            text: '"' + nombre + '" @HttpUtility.JavaScriptStringEncode(Resources.Strings.Grp_JS_ElimSuffix)',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#e74a3b',
-            cancelButtonText: '@Html.Raw(Resources.Strings.Layout_Cancel.Replace("'", "\\'"))',
-            confirmButtonText: '@Html.Raw(Resources.Strings.Common_BtnEliminar.Replace("'", "\\'"))'
+            cancelButtonText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel)',
+            confirmButtonText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_BtnEliminar)'
         }).then(function(r) {
             if (r.isConfirmed) {
                 document.getElementById('elimId').value = id;

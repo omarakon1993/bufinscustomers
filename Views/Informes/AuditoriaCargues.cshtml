@@ -1,4 +1,4 @@
-@model IEnumerable<bufinscustomers.Models.AuditoriaCargues>
+﻿@model IEnumerable<bufinscustomers.Models.AuditoriaCargues>
 @using bufinscustomers.Helpers
 
 @{
@@ -184,8 +184,8 @@
     <script>
         var _auditTotal = @totalCargues;
         var _auditMsg = {
-            totalCargues:  '@Html.Raw(Resources.Strings.Audit_TotalCargues.Replace("'", "\\'"))',
-            exportSuccess: '@Html.Raw(Resources.Strings.Audit_ExportSuccess.Replace("'", "\\'"))'
+            totalCargues:  '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_TotalCargues)',
+            exportSuccess: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_ExportSuccess)'
         };
 
         $(document).ready(function () {

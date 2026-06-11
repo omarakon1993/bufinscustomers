@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewBag.Title = Resources.Strings.Rprt_PageTitle;
     Layout = "~/Views/Shared/_Layout.cshtml";
     var usuario = bufinscustomers.Helpers.UsuarioSesionHelper.UsuarioActual;
@@ -242,12 +242,12 @@
 @section scripts {
 <script>
     const esSuperAdmin = @Html.Raw(esSuperAdmin.ToString().ToLower());
-    const _strSelReporte    = '@Html.Raw(Resources.Strings.Rprt_SelReporte.Replace("'", "\\'"))';
-    const _strNoReportes    = '@Html.Raw(Resources.Strings.Rprt_NoReportes.Replace("'", "\\'"))';
-    const _strCargando      = '@Html.Raw(Resources.Strings.Rprt_JS_Cargando.Replace("'", "\\'"))';
-    const _strVerReporte    = '@Html.Raw(Resources.Strings.Rprt_JS_Ver.Replace("'", "\\'"))';
-    const _strPantallaComp  = '@Html.Raw(Resources.Strings.Rprt_BtnPantallaCompleta.Replace("'", "\\'"))';
-    const _strSalirPantalla = '@Html.Raw(Resources.Strings.Rprt_BtnSalirPantalla.Replace("'", "\\'"))';
+    const _strSelReporte    = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_SelReporte)';
+    const _strNoReportes    = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_NoReportes)';
+    const _strCargando      = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_Cargando)';
+    const _strVerReporte    = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_Ver)';
+    const _strPantallaComp  = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_BtnPantallaCompleta)';
+    const _strSalirPantalla = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_BtnSalirPantalla)';
 
     // ─────────────────────────────────────────────────────────────────
     // Utilidades
@@ -351,7 +351,7 @@
                 $('#selectReporte').empty().append('<option value="">' + _strNoReportes + '</option>');
                 Swal.fire({
                     toast: true, position: 'top-end', icon: 'error',
-                    title: '@Html.Raw(Resources.Strings.Rprt_JS_ErrorFiltrar.Replace("'", "\\'"))',
+                    title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_ErrorFiltrar)',
                     showConfirmButton: false, timer: 3000
                 });
             }
@@ -385,7 +385,7 @@
         if (!idReporte) {
             Swal.fire({
                 toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end',
-                icon: 'warning', title: '@Html.Raw(Resources.Strings.Rprt_JS_SinReporte.Replace("'", "\\'"))',
+                icon: 'warning', title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_SinReporte)',
                 showConfirmButton: false, timer: 3000, timerProgressBar: true,
                 didOpen: (t) => { t.addEventListener('mouseenter', Swal.stopTimer); t.addEventListener('mouseleave', Swal.resumeTimer); }
             });
@@ -410,7 +410,7 @@
                 } else {
                     Swal.fire({
                         toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end',
-                        icon: 'info', title: '@Html.Raw(Resources.Strings.Rprt_JS_SinEnlace.Replace("'", "\\'"))',
+                        icon: 'info', title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_SinEnlace)',
                         showConfirmButton: false, timer: 3500, timerProgressBar: true
                     });
                     $('#btnPantallaCompleta').hide();
@@ -419,7 +419,7 @@
             error: function () {
                 Swal.fire({
                     toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end',
-                    icon: 'error', title: '@Html.Raw(Resources.Strings.Rprt_JS_ErrorEnlace.Replace("'", "\\'"))',
+                    icon: 'error', title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_ErrorEnlace)',
                     showConfirmButton: false, timer: 3500, timerProgressBar: true
                 });
             },
@@ -439,7 +439,7 @@
         const container = document.getElementById('iframeContainer');
         if (!document.fullscreenElement) {
             container.requestFullscreen().catch(() => {
-                Swal.fire({ toast:true, position:'top-end', icon:'error', title:'@Html.Raw(Resources.Strings.Rprt_JS_SinPantallaCompleta.Replace("'", "\\'"))', showConfirmButton:false, timer:3000 });
+                Swal.fire({ toast:true, position:'top-end', icon:'error', title:'@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_SinPantallaCompleta)', showConfirmButton:false, timer:3000 });
             });
         } else {
             document.exitFullscreen();

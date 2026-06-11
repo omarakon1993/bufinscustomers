@@ -722,7 +722,7 @@
             const idEmpresa = $('#selectEmpresa').val();
 
             if (!idEmpresa) {
-                mostrarAlerta('warning', '@Html.Raw(Resources.Strings.CfgEmp_JS_SelEmpresa.Replace("'", "\\'"))');
+                mostrarAlerta('warning', '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_JS_SelEmpresa)');
                 return;
             }
 
@@ -782,7 +782,7 @@
                 contenedor.html(`
                             <div class="empty-state">
                                 <i class="fas fa-inbox"></i>
-                                <p>@Html.Raw(Resources.Strings.CfgEmp_NoElementos.Replace("'", "\\'"))</p>
+                                <p>@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_NoElementos)</p>
                             </div>
                         `);
                 return;
@@ -886,7 +886,7 @@
             const valor = input.val().trim();
 
             if (!valor) {
-                mostrarAlerta('warning', '@Html.Raw(Resources.Strings.CfgEmp_JS_IngresarValor.Replace("'", "\\'"))');
+                mostrarAlerta('warning', '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_JS_IngresarValor)');
                 return;
             }
 
@@ -900,7 +900,7 @@
 
             const idConfig = $('#idConfiguracion').val();
             if (!idConfig || idConfig == '0') {
-                mostrarAlerta('warning', '@Html.Raw(Resources.Strings.CfgEmp_JS_NecesitaConfig.Replace("'", "\\'"))');
+                mostrarAlerta('warning', '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_JS_NecesitaConfig)');
                 return;
             }
 
@@ -929,14 +929,14 @@
 
         function eliminarItem(tipo, id) {
             Swal.fire({
-                title: '@Html.Raw(Resources.Strings.CfgEmp_JS_EliminarTitle.Replace("'", "\\'"))',
-                text: '@Html.Raw(Resources.Strings.CfgEmp_JS_EliminarText.Replace("'", "\\'"))',
+                title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_JS_EliminarTitle)',
+                text: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_JS_EliminarText)',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#3085d6',
-                confirmButtonText: '@Html.Raw(Resources.Strings.CfgEmp_JS_Eliminar.Replace("'", "\\'"))',
-                cancelButtonText: '@Html.Raw(Resources.Strings.Layout_Cancel.Replace("'", "\\'"))'
+                confirmButtonText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_JS_Eliminar)',
+                cancelButtonText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel)'
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
@@ -966,7 +966,7 @@
                 data: { tipo: mapearTipoParaServidor(tipo), ids: ids },
                 success: function (response) {
                     if (response.success) {
-                        mostrarAlerta('success', '@Html.Raw(Resources.Strings.CfgEmp_JS_OrdenActualizado.Replace("'", "\\'"))', 2000);
+                        mostrarAlerta('success', '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_JS_OrdenActualizado)', 2000);
                     }
                 },
                 error: function () {
@@ -1013,7 +1013,7 @@
         function abrirModalCerrarAnio() {
             const anioActual = $('#anioEjecucion').val();
             if (!anioActual) {
-                mostrarAlerta('warning', '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_NecesitaConfig.Replace("'", "\\'"))');
+                mostrarAlerta('warning', '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_NecesitaConfig)');
                 return;
             }
             $('.lbl-anio-actual').text(anioActual);
@@ -1026,26 +1026,26 @@
             const nuevoAnio  = parseInt($('#inputNuevoAnio').val());
 
             if (!nuevoAnio || nuevoAnio < 2000 || nuevoAnio > 2100) {
-                mostrarAlerta('warning', '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_AnioInvalido.Replace("'", "\\'"))');
+                mostrarAlerta('warning', '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_AnioInvalido)');
                 return;
             }
             if (nuevoAnio === anioActual) {
-                mostrarAlerta('warning', '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_AnioIgual.Replace("'", "\\'"))');
+                mostrarAlerta('warning', '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_AnioIgual)');
                 return;
             }
 
             $('#modalCierreAnio').modal('hide');
 
             Swal.fire({
-                title: '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ConfirmTitle.Replace("'", "\\'"))',
-                html: `@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ConfirmHtmlPart1) <strong>${anioActual}</strong> @Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ConfirmHtmlPart2) <strong>${nuevoAnio}</strong>.<br><br>` +
-                      `<span class="text-danger"><strong>@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ConfirmHtmlPart3)</strong></span>`,
+                title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_ConfirmTitle)',
+                html: `@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_ConfirmHtmlPart1) <strong>${anioActual}</strong> @HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_ConfirmHtmlPart2) <strong>${nuevoAnio}</strong>.<br><br>` +
+                      `<span class="text-danger"><strong>@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_ConfirmHtmlPart3)</strong></span>`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#c0392b',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: '<i class="fas fa-exchange-alt mr-1"></i> @Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ConfirmBtn.Replace("'", "\\'"))',
-                cancelButtonText: '@Html.Raw(Resources.Strings.Layout_Cancel.Replace("'", "\\'"))'
+                confirmButtonText: '<i class="fas fa-exchange-alt mr-1"></i> @HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_ConfirmBtn)',
+                cancelButtonText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel)'
             }).then(function (result) {
                 if (result.isConfirmed) {
                     ejecutarCierreAnio($('#idEmpresaConfig').val(), nuevoAnio);
@@ -1055,8 +1055,8 @@
 
         function ejecutarCierreAnio(idEmpresa, nuevoAnio) {
             Swal.fire({
-                title: '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ProcTitle.Replace("'", "\\'"))',
-                text: '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ProcText.Replace("'", "\\'"))',
+                title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_ProcTitle)',
+                text: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_ProcText)',
                 allowOutsideClick: false,
                 allowEscapeKey: false,
                 didOpen: function () { Swal.showLoading(); }
@@ -1071,16 +1071,16 @@
                     if (response.success) {
                         Swal.fire({
                             icon: 'success',
-                            title: '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_OkTitle.Replace("'", "\\'"))',
+                            title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_OkTitle)',
                             text: response.message,
-                            confirmButtonText: '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_OkBtn.Replace("'", "\\'"))'
+                            confirmButtonText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_OkBtn)'
                         }).then(function () {
                             cargarConfiguracion();
                         });
                     } else {
                         Swal.fire({
                             icon: 'error',
-                            title: '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ErrTitle.Replace("'", "\\'"))',
+                            title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_ErrTitle)',
                             text: response.message
                         });
                     }
@@ -1089,8 +1089,8 @@
                     Swal.close();
                     Swal.fire({
                         icon: 'error',
-                        title: '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ConnErrTitle.Replace("'", "\\'"))',
-                        text: '@Html.Raw(Resources.Strings.CfgEmp_Cierre_JS_ConnErrText.Replace("'", "\\'"))'
+                        title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_ConnErrTitle)',
+                        text: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_ConnErrText)'
                     });
                 }
             });

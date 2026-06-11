@@ -30,6 +30,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult Registrar(Usuarios oUsuario)
         {
             bool registrado;
@@ -76,9 +77,18 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult Login(Usuarios oUsuario)
         {
             oUsuario.Clave = oUsuario.Clave.Trim();
+
+            // A7: Rate limiting por IP — rechaza IPs con demasiados intentos fallidos
+            string clientIp = GetClientIp();
+            if (EstaIPBloqueada(clientIp))
+            {
+                ViewData["Mensaje"] = $"Demasiados intentos fallidos desde esta dirección. Intenta de nuevo en {RATE_LIMIT_MINUTOS} minuto(s).";
+                return View();
+            }
 
             string inputUsuario = "";
             string inputCorreo = "";
@@ -136,6 +146,7 @@ namespace bufinscustomers.Controllers
             if (credencialesValidas)
             {
                 ResetearIntentosFallidos(usuarioId);
+                LimpiarContadorIP(clientIp); // A7: resetear rate limit IP en login exitoso
 
                 // Migrate SHA256 → BCrypt on first successful login
                 if (!EsHashBCrypt(hashAlmacenado))
@@ -148,7 +159,10 @@ namespace bufinscustomers.Controllers
                         cmd.Parameters.AddWithValue("@Clave", nuevoHash);
                         cmd.Parameters.AddWithValue("@Id", usuarioId);
                         cn.Open();
-                        cmd.ExecuteNonQuery();
+                        // A10: verificar que el UPDATE afectó exactamente 1 fila
+                        int rowsActualizados = cmd.ExecuteNonQuery();
+                        if (rowsActualizados != 1)
+                            throw new InvalidOperationException($"Error en migración SHA256→BCrypt: {rowsActualizados} filas afectadas para usuario {usuarioId}.");
                     }
                 }
 
@@ -158,6 +172,7 @@ namespace bufinscustomers.Controllers
             {
                 RegistrarIntentoFallido(usuarioId, intentosFallidos,
                     out int nuevosIntentos, out DateTime? nuevoBloqueadoHasta);
+                RegistrarIntentoIP(clientIp); // A7
 
                 if (nuevoBloqueadoHasta.HasValue)
                 {
@@ -177,12 +192,15 @@ namespace bufinscustomers.Controllers
 
                 if (usuarioCompleto != null)
                 {
-                    UsuarioSesionHelper.EstablecerUsuarioEnSesion(usuarioCompleto);
-
-                    if (Request.QueryString["expired"] == "true")
-                        ViewData["Mensaje"] = "Su sesión anterior expiró. Ha iniciado sesión correctamente.";
-
-                    return RedirectToAction("index", "Home");
+                    // A6: Regenerar SessionID para prevenir session fixation
+                    string loginToken = Guid.NewGuid().ToString("N");
+                    System.Web.HttpRuntime.Cache.Insert(
+                        "_lt_" + loginToken, usuarioCompleto.Id, null,
+                        DateTime.Now.AddSeconds(60), System.Web.Caching.Cache.NoSlidingExpiration);
+                    Session.Abandon();
+                    Response.Cookies.Add(new HttpCookie("_lt", loginToken)
+                        { HttpOnly = true, Secure = Request.IsSecureConnection, Path = "/" });
+                    return RedirectToAction("FinalizarLogin");
                 }
                 else
                 {
@@ -192,6 +210,7 @@ namespace bufinscustomers.Controllers
             }
             else
             {
+                RegistrarIntentoIP(clientIp); // A7: usuario no encontrado también cuenta
                 ViewData["Mensaje"] = "Usuario o clave incorrecta.";
                 return View();
             }
@@ -239,6 +258,7 @@ namespace bufinscustomers.Controllers
         /// Método para extender la sesión vía AJAX
         /// </summary>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult ExtenderSesion()
         {
             try
@@ -281,85 +301,76 @@ namespace bufinscustomers.Controllers
             return RedirectToAction("Login", "Acceso");
         }
 
-        /// <summary>
-        /// Obtener información de la sesión actual (para debugging)
-        /// </summary>
+        // A3: Endpoint mínimo y seguro para verificar estado de sesión desde JS
         [HttpGet]
-        public JsonResult InfoSesion()
+        public JsonResult VerificarSesion()
         {
-            try
+            var sessionInfo = UsuarioSesionHelper.ObtenerInfoSesion();
+            return Json(new
             {
-                var sessionInfo = UsuarioSesionHelper.ObtenerInfoSesion();
-                var usuario = UsuarioSesionHelper.UsuarioActual;
-                
-                return Json(new {
-                    success = true,
-                    estaAutenticado = UsuarioSesionHelper.EstaAutenticado(),
-                    esAdmin = UsuarioSesionHelper.EsAdministrador(),
-                    usuario = usuario?.Nombre + " " + usuario?.Apellidos,
-                    usuarioCompleto = new {
-                        id = usuario?.Id,
-                        nombre = usuario?.Nombre,
-                        apellidos = usuario?.Apellidos,
-                        correo = usuario?.Correo,
-                        telefono = usuario?.Telefono,
-                        admin = usuario?.Admin,
-                        idEmpresa = usuario?.IdEmpresa,
-                        usuario = usuario?.Usuario
-                    },
-                    sessionInfo = sessionInfo
-                }, JsonRequestBehavior.AllowGet);
-            }
-            catch (Exception ex)
-            {
-                return Json(new { 
-                    success = false, 
-                    message = ex.Message 
-                }, JsonRequestBehavior.AllowGet);
-            }
+                success          = true,
+                estaAutenticado  = UsuarioSesionHelper.EstaAutenticado(),
+                minutosRestantes = sessionInfo?.MinutosRestantes ?? 0,
+                estaPorExpirar   = sessionInfo?.EstaPorExpirar ?? false
+            }, JsonRequestBehavior.AllowGet);
         }
 
-        /// <summary>
-        /// Método de debugging para verificar los datos del usuario en sesión
-        /// </summary>
+        // A6: Completa el login en una nueva sesión (session ID regenerado)
         [HttpGet]
-        public JsonResult DebugUsuario()
+        public ActionResult FinalizarLogin()
         {
-            try
-            {
-                var usuarioCompleto = Session["UsuarioCompleto"] as Usuarios;
-                var usuarioCompatible = Session["usuario"] as Usuarios;
-                var idUsuario = Session["IdUsuario"];
+            var cookie = Request.Cookies["_lt"];
+            if (cookie == null || string.IsNullOrEmpty(cookie.Value))
+                return RedirectToAction("Login");
 
-                return Json(new {
-                    success = true,
-                    usuarioCompleto = usuarioCompleto != null ? new {
-                        id = usuarioCompleto.Id,
-                        nombre = usuarioCompleto.Nombre,
-                        apellidos = usuarioCompleto.Apellidos,
-                        correo = usuarioCompleto.Correo,
-                        usuario = usuarioCompleto.Usuario,
-                        admin = usuarioCompleto.Admin,
-                        idEmpresa = usuarioCompleto.IdEmpresa
-                    } : null,
-                    usuarioCompatible = usuarioCompatible != null ? new {
-                        id = usuarioCompatible.Id,
-                        nombre = usuarioCompatible.Nombre,
-                        apellidos = usuarioCompatible.Apellidos,
-                        correo = usuarioCompatible.Correo
-                    } : null,
-                    idUsuario = idUsuario,
-                    sessionKeys = Session.Keys.Cast<string>().ToArray(),
-                    debugInfo = UsuarioSesionHelper.ObtenerInfoDebugUsuario()
-                }, JsonRequestBehavior.AllowGet);
-            }
-            catch (Exception ex)
-            {
-                return Json(new { 
-                    success = false, 
-                    message = ex.Message 
-                }, JsonRequestBehavior.AllowGet);
-            }
+            var cacheKey = "_lt_" + cookie.Value;
+            var cached   = System.Web.HttpRuntime.Cache[cacheKey];
+
+            // Invalidar token (uso único)
+            Response.Cookies.Add(new HttpCookie("_lt")
+                { Expires = DateTime.Now.AddDays(-1), HttpOnly = true, Secure = Request.IsSecureConnection, Path = "/" });
+            System.Web.HttpRuntime.Cache.Remove(cacheKey);
+
+            if (cached == null) return RedirectToAction("Login");
+
+            Usuarios usuarioCompleto = ObtenerUsuarioCompletoPorId((int)cached);
+            if (usuarioCompleto == null) return RedirectToAction("Login");
+
+            UsuarioSesionHelper.EstablecerUsuarioEnSesion(usuarioCompleto);
+            return RedirectToAction("Index", "Home");
+        }
+
+        // ====== A7: Rate limiting por IP ======
+        private const int RATE_LIMIT_MAX = 20;
+        private const int RATE_LIMIT_MINUTOS = 15;
+
+        private string GetClientIp()
+        {
+            string ip = Request.ServerVariables["HTTP_X_FORWARDED_FOR"] ?? Request.UserHostAddress ?? "";
+            if (ip.Contains(",")) ip = ip.Split(',')[0].Trim();
+            return ip;
+        }
+
+        private bool EstaIPBloqueada(string ip)
+        {
+            if (string.IsNullOrEmpty(ip)) return false;
+            var entry = System.Web.HttpRuntime.Cache["_rl_" + ip] as int?;
+            return entry.HasValue && entry.Value >= RATE_LIMIT_MAX;
+        }
+
+        private void RegistrarIntentoIP(string ip)
+        {
+            if (string.IsNullOrEmpty(ip)) return;
+            var key = "_rl_" + ip;
+            var actual = System.Web.HttpRuntime.Cache[key] as int? ?? 0;
+            System.Web.HttpRuntime.Cache.Insert(key, actual + 1, null,
+                DateTime.Now.AddMinutes(RATE_LIMIT_MINUTOS), System.Web.Caching.Cache.NoSlidingExpiration);
+        }
+
+        private void LimpiarContadorIP(string ip)
+        {
+            if (!string.IsNullOrEmpty(ip))
+                System.Web.HttpRuntime.Cache.Remove("_rl_" + ip);
         }
 
         private bool EsCorreoValido(string correo)

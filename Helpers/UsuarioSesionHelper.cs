@@ -16,6 +16,8 @@ namespace bufinscustomers.Helpers
         private const string LOGIN_TIME_KEY = "LoginTime";
         private const string PERMISOS_CACHE_KEY = "UsuarioPermisosCodigos";
         // Clave de sesión por idioma: "UsuarioMenuSidebar_es-CO" o "UsuarioMenuSidebar_en-US"
+        // Importante: incluye la cultura porque ConstruirMenuJerarquico resuelve nombres
+        // ES/EN con ResolverNombre() en el momento de la construcción, no en el render.
         private static string MENU_SIDEBAR_KEY =>
             "UsuarioMenuSidebar_" + System.Threading.Thread.CurrentThread.CurrentUICulture.Name;
 
@@ -85,7 +87,7 @@ namespace bufinscustomers.Helpers
             context.Session[LAST_ACTIVITY_KEY] = now;
             context.Session[LOGIN_TIME_KEY] = now;
 
-            // Limpiar caché de permisos para que se recargue con el nuevo usuario
+            // Limpiar caché de permisos y sidebar de ambos idiomas
             context.Session.Remove(PERMISOS_CACHE_KEY);
             context.Session.Remove("UsuarioMenuSidebar_es-CO");
             context.Session.Remove("UsuarioMenuSidebar_en-US");

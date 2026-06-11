@@ -1,4 +1,4 @@
-using bufinscustomers.Helpers;
+﻿using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
@@ -22,6 +22,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+       [ValidateAntiForgeryToken]
         [ValidateInput(false)]
         public async Task<ActionResult> Crear(WidgetTarjeta model)
         {
@@ -49,6 +50,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+       [ValidateAntiForgeryToken]
         [ValidateInput(false)]
         public async Task<ActionResult> Editar(WidgetTarjeta model)
         {
@@ -76,6 +78,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<ActionResult> Eliminar(int id)
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())

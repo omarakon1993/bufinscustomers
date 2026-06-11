@@ -1,4 +1,4 @@
-using bufinscustomers.Helpers;
+﻿using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
@@ -120,6 +120,7 @@ namespace bufinscustomers.Controllers
         #region Guardar Configuraci�n B�sica
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult GuardarConfiguracionBasica(ConfiguracionEmpresa configuracion)
         {
             try
@@ -184,6 +185,7 @@ namespace bufinscustomers.Controllers
         #region Agregar �tem
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult AgregarItem(string tipo, int idConfiguracion, string valor)
         {
             try
@@ -245,6 +247,7 @@ namespace bufinscustomers.Controllers
         #region Eliminar �tem
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult EliminarItem(string tipo, int id)
         {
             try
@@ -279,6 +282,7 @@ namespace bufinscustomers.Controllers
         #region Actualizar Orden
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult ActualizarOrden(string tipo, string ids)
         {
             try
@@ -318,6 +322,7 @@ namespace bufinscustomers.Controllers
         #region Cerrar Año de Ejecución
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult CerrarAnioEjecucion(int idEmpresa, int nuevoAnio)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;

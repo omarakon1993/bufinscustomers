@@ -1,4 +1,4 @@
-using System.Web.Mvc;
+﻿using System.Web.Mvc;
 using bufinscustomers.Models;
 using bufinscustomers.Services;
 using bufinscustomers.Helpers;
@@ -43,6 +43,7 @@ namespace bufinscustomers.Controllers
 
         // Exportar auditor�a a Excel
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult ExportarAuditoriaExcel(string empresa = "", string usuario = "", string fechaDesde = "", string fechaHasta = "")
         {
             try

@@ -1,4 +1,4 @@
-@model dynamic
+﻿@model dynamic
 @using bufinscustomers.Models
 
 @{
@@ -269,18 +269,18 @@ $(document).ready(function () {
     var _filtrados       = [];
     var _paginaActual    = 1;
 
-    var _strTodosUsuarios  = '@Html.Raw(Resources.Strings.AudIA_TodosUsuarios.Replace("'", "\\'"))';
-    var _strErrorHistorial = '@Html.Raw(Resources.Strings.AudIA_JS_ErrorHistorial.Replace("'", "\\'"))';
-    var _strMostrando      = '@Html.Raw(Resources.Strings.AudIA_Mostrando.Replace("'", "\\'"))';
-    var _strDe             = '@Html.Raw(Resources.Strings.AudIA_De.Replace("'", "\\'"))';
-    var _strBadgeResumen   = '@Html.Raw(Resources.Strings.AudIA_BadgeResumen.Replace("'", "\\'"))';
-    var _strBadgePregunta  = '@Html.Raw(Resources.Strings.AudIA_BadgePregunta.Replace("'", "\\'"))';
-    var _strResumenAuto    = '@Html.Raw(Resources.Strings.AudIA_ResumenAuto.Replace("'", "\\'"))';
-    var _strPreguntaRealiz = '@Html.Raw(Resources.Strings.AudIA_LabelPreguntaRealiz.Replace("'", "\\'"))';
-    var _strTipoRG         = '@Html.Raw(Resources.Strings.AudIA_LabelTipoRG.Replace("'", "\\'"))';
-    var _strTitleRespuesta = '@Html.Raw(Resources.Strings.AudIA_TitleRespuesta.Replace("'", "\\'"))';
-    var _strVer            = '@Html.Raw(Resources.Strings.AudIA_ThVer.Replace("'", "\\'"))';
-    var _strError          = '@Html.Raw(Resources.Strings.Common_Error.Replace("'", "\\'"))';
+    var _strTodosUsuarios  = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_TodosUsuarios)';
+    var _strErrorHistorial = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_JS_ErrorHistorial)';
+    var _strMostrando      = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_Mostrando)';
+    var _strDe             = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_De)';
+    var _strBadgeResumen   = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_BadgeResumen)';
+    var _strBadgePregunta  = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_BadgePregunta)';
+    var _strResumenAuto    = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_ResumenAuto)';
+    var _strPreguntaRealiz = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LabelPreguntaRealiz)';
+    var _strTipoRG         = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LabelTipoRG)';
+    var _strTitleRespuesta = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_TitleRespuesta)';
+    var _strVer            = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_ThVer)';
+    var _strError          = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error)';
 
     /* ── Carga inicial ── */
     consultarServidor();

@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewBag.Title = Resources.Strings.PUC_PageTitle;
 }
 
@@ -149,12 +149,12 @@
 <script>
     var _pucMsg = {
         todos:          '@Resources.Strings.Common_Todos',
-        registrosPag:   '@Html.Raw(Resources.Strings.Common_RegistrosPag)',
-        errorConexion:  '@Html.Raw(Resources.Strings.PUC_JS_ErrorConexion)',
+        registrosPag:   '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag)',
+        errorConexion:  '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag)',
         exportando:     '@Resources.Strings.Common_JS_ExportandoExcel',
-        generandoExcel: '@Html.Raw(Resources.Strings.Common_JS_GenerandoExcel)',
-        noResultados:   '@Html.Raw(Resources.Strings.Common_Select2NoResults)',
-        buscando:       '@Html.Raw(Resources.Strings.Common_Select2Searching)'
+        generandoExcel: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag)',
+        noResultados:   '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag)',
+        buscando:       '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag)'
     };
 </script>
 <script>

@@ -1,4 +1,4 @@
-using bufinscustomers.Helpers;
+﻿using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
@@ -143,6 +143,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult EjecutarModelo(int idEmpresa, string anio, int idModelo)
         {
             try
@@ -253,6 +254,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult CargarExcel(HttpPostedFileBase archivoExcel, int idEmpresaSeleccionada, int anioSeleccionado, string modoSeleccionado)
         {
             var resultado = new ResultadoCargaExcel();

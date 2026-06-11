@@ -1,4 +1,4 @@
-using bufinscustomers.Helpers;
+﻿using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
@@ -89,6 +89,7 @@ namespace bufinscustomers.Controllers
         /// Consulta los datos con filtros aplicados
         /// </summary>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult ConsultarDatos(FiltrosInformeRelacionamientos filtros)
         {
             try
@@ -161,6 +162,7 @@ namespace bufinscustomers.Controllers
         /// Exporta los datos consultados a Excel
         /// </summary>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult ExportarExcel(FiltrosInformeRelacionamientos filtros)
         {
             try

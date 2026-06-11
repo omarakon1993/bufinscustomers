@@ -1,4 +1,4 @@
-@using bufinscustomers.Models
+﻿@using bufinscustomers.Models
 @{
     ViewBag.Title = Resources.Strings.Datos_PageTitle;
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -58,6 +58,7 @@
         </h3>
 
         <form id="formCarga" action="@Url.Action("CargarExcel", "Datos")" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
             <div class="filter-section">
                 <p style="font-size: 0.85rem; color: #6c757d; margin-bottom: 1rem;">
                     <i class="fas fa-info-circle" style="color: #6366F1;"></i>
@@ -649,17 +650,17 @@
     <script>
         var _datosMsg = {
             formatoInvalido: '@Resources.Strings.Datos_JS_FormatoInvalido',
-            soloXlsx: '@Html.Raw(Resources.Strings.Datos_JS_SoloXlsx)',
+            soloXlsx: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SoloXlsx)',
             empresaRequerida: '@Resources.Strings.Datos_JS_EmpresaRequerida',
-            seleccionarEmpresa: '@Html.Raw(Resources.Strings.Datos_JS_SeleccionarEmpresa)',
+            seleccionarEmpresa: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SoloXlsx)',
             confirmarCarga: '@Resources.Strings.Datos_JS_ConfirmarCarga',
-            confirmarBold: '@Html.Raw(Resources.Strings.Datos_JS_ConfirmarBold)',
-            confirmarRest: '@Html.Raw(Resources.Strings.Datos_JS_ConfirmarRest)',
-            confirmarPregunta: '@Html.Raw(Resources.Strings.Datos_JS_ConfirmarPregunta)',
-            siCargar: '@Html.Raw(Resources.Strings.Datos_JS_SiCargar)',
+            confirmarBold: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SoloXlsx)',
+            confirmarRest: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SoloXlsx)',
+            confirmarPregunta: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SoloXlsx)',
+            siCargar: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SoloXlsx)',
             cancelar: '@Resources.Strings.Layout_Cancel',
             procesando: '@Resources.Strings.Datos_JS_Procesando',
-            dropText: '@Html.Raw(Resources.Strings.Datos_DropText)',
+            dropText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SoloXlsx)',
             dropSubtext: '@Resources.Strings.Datos_DropSubtext',
             selectAnio: '@Resources.Strings.Datos_JS_SelectAnio',
             anioEjecucion: '@Resources.Strings.Datos_JS_AnioEjecucion',

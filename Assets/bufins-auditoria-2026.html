@@ -1,0 +1,1426 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Bufins Customers — Auditoría Técnica 2026</title>
+<style>
+  :root {
+    --primary: #4f46e5;
+    --primary-dark: #3730a3;
+    --danger: #dc2626;
+    --danger-light: #fef2f2;
+    --danger-border: #fecaca;
+    --warning: #d97706;
+    --warning-light: #fffbeb;
+    --warning-border: #fde68a;
+    --success: #059669;
+    --success-light: #f0fdf4;
+    --success-border: #a7f3d0;
+    --info: #0284c7;
+    --info-light: #f0f9ff;
+    --info-border: #bae6fd;
+    --purple: #7c3aed;
+    --purple-light: #faf5ff;
+    --purple-border: #e9d5ff;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--gray-100);
+    color: var(--gray-800);
+    line-height: 1.6;
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%);
+    color: white;
+    padding: 60px 40px 50px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    top: -200px; right: -100px;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    bottom: -100px; left: 60px;
+  }
+  .hero-content { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 14px;
+  }
+  .hero h1 span { color: #a5b4fc; }
+  .hero p { font-size: 18px; color: rgba(255,255,255,0.75); max-width: 650px; }
+  .hero-meta {
+    display: flex; gap: 28px; margin-top: 28px; flex-wrap: wrap;
+  }
+  .hero-meta-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; color: rgba(255,255,255,0.7);
+  }
+  .hero-meta-item strong { color: white; }
+
+  /* ─── SUMMARY CARDS ─── */
+  .summary-section { padding: 40px; max-width: 1100px; margin: 0 auto; }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .summary-card {
+    background: white;
+    border-radius: 14px;
+    padding: 22px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+    border-top: 4px solid transparent;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  }
+  .summary-card.danger { border-top-color: var(--danger); }
+  .summary-card.warning { border-top-color: var(--warning); }
+  .summary-card.info { border-top-color: var(--info); }
+  .summary-card.success { border-top-color: var(--success); }
+  .summary-card.purple { border-top-color: var(--purple); }
+  .card-number {
+    font-size: 36px; font-weight: 800; line-height: 1;
+    margin-bottom: 4px;
+  }
+  .summary-card.danger .card-number { color: var(--danger); }
+  .summary-card.warning .card-number { color: var(--warning); }
+  .summary-card.info .card-number { color: var(--info); }
+  .summary-card.success .card-number { color: var(--success); }
+  .summary-card.purple .card-number { color: var(--purple); }
+  .card-label { font-size: 13px; color: var(--gray-500); font-weight: 500; }
+  .card-desc { font-size: 11px; color: var(--gray-400); margin-top: 4px; }
+
+  /* ─── SECTION TITLE ─── */
+  .section-title {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 22px; font-weight: 700;
+    color: var(--gray-800);
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--gray-200);
+    margin-bottom: 24px;
+    margin-top: 40px;
+  }
+  .section-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .icon-danger { background: var(--danger-light); color: var(--danger); }
+  .icon-warning { background: var(--warning-light); color: var(--warning); }
+  .icon-info { background: var(--info-light); color: var(--info); }
+  .icon-success { background: var(--success-light); color: var(--success); }
+  .icon-purple { background: var(--purple-light); color: var(--purple); }
+
+  /* ─── FINDING CARDS ─── */
+  .findings-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; }
+
+  .finding-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .finding-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.10); }
+
+  .finding-header {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 18px 22px 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .finding-number {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .badge-danger { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger-border); }
+  .badge-warning { background: var(--warning-light); color: var(--warning); border: 1px solid var(--warning-border); }
+  .badge-info { background: var(--info-light); color: var(--info); border: 1px solid var(--info-border); }
+  .badge-success { background: var(--success-light); color: var(--success); border: 1px solid var(--success-border); }
+  .badge-purple { background: var(--purple-light); color: var(--purple); border: 1px solid var(--purple-border); }
+
+  .finding-title-block { flex: 1; }
+  .finding-title {
+    font-size: 15px; font-weight: 600; color: var(--gray-800);
+    margin-bottom: 4px; line-height: 1.4;
+  }
+  .finding-subtitle { font-size: 13px; color: var(--gray-500); }
+
+  .severity-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.4px;
+    flex-shrink: 0; margin-top: 2px;
+  }
+  .sev-implemented { background: #f0fdf4; color: #15803d; border: 1px solid #86efac; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 3px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px; }
+.finding-card.implemented { opacity: 0.80; }
+.finding-card.implemented .finding-header { background: linear-gradient(90deg, #f0fdf4 0%, #fff 100%); border-left: 4px solid #059669; }
+.sev-critical { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+  .sev-high { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+  .sev-medium { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+  .sev-low { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+  .sev-feature { background: var(--purple-light); color: var(--purple); border: 1px solid var(--purple-border); }
+
+  .finding-body {
+    padding: 0 22px 18px;
+    border-top: 1px solid var(--gray-100);
+    display: none;
+  }
+  .finding-body.open { display: block; }
+
+  .finding-detail { font-size: 14px; color: var(--gray-600); line-height: 1.7; margin-top: 12px; }
+
+  .file-ref {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--gray-100); border: 1px solid var(--gray-200);
+    border-radius: 6px; padding: 2px 8px;
+    font-size: 12px; font-family: 'Consolas', 'Courier New', monospace;
+    color: var(--gray-700); margin: 2px 3px 2px 0;
+  }
+
+  .code-block {
+    background: #0f172a;
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12.5px;
+    color: #e2e8f0;
+    overflow-x: auto;
+    margin: 12px 0;
+    line-height: 1.6;
+  }
+  .code-block .comment { color: #94a3b8; }
+  .code-block .keyword { color: #818cf8; }
+  .code-block .string { color: #86efac; }
+  .code-block .attr { color: #fda4af; }
+
+  .fix-block {
+    background: #f0fdf4;
+    border: 1px solid #a7f3d0;
+    border-left: 4px solid var(--success);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 14px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--gray-700);
+  }
+  .fix-block strong { color: var(--success); display: block; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; }
+
+  .risk-block {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-left: 4px solid var(--danger);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 14px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--gray-700);
+  }
+  .risk-block strong { color: var(--danger); display: block; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; }
+
+  .effort-row {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-top: 14px;
+  }
+  .effort-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 6px;
+    font-size: 12px; font-weight: 500;
+    background: var(--gray-100); color: var(--gray-600);
+    border: 1px solid var(--gray-200);
+  }
+
+  /* ─── PRIORITY TABLE ─── */
+  .priority-table-wrapper {
+    background: white; border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    overflow: hidden; margin-bottom: 40px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    background: var(--gray-800); color: white;
+    padding: 12px 16px; text-align: left;
+    font-weight: 600; font-size: 12px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  td { padding: 11px 16px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--gray-50); }
+  .priority-num {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: white;
+    background: var(--primary);
+  }
+
+  /* ─── ROADMAP ─── */
+  .roadmap { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 40px; }
+  .roadmap-lane {
+    background: white; border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .lane-header {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 14px;
+    margin-bottom: 16px; padding-bottom: 12px;
+    border-bottom: 2px dashed var(--gray-200);
+  }
+  .lane-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-red { background: var(--danger); }
+  .dot-amber { background: var(--warning); }
+  .dot-blue { background: var(--info); }
+  .dot-purple { background: var(--purple); }
+
+  .roadmap-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 8px 0; border-bottom: 1px solid var(--gray-100);
+    font-size: 13px; color: var(--gray-700);
+  }
+  .roadmap-item:last-child { border-bottom: none; }
+  .roadmap-item-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .roadmap-item-text { line-height: 1.5; }
+  .roadmap-item-text small { display: block; color: var(--gray-400); font-size: 11px; margin-top: 2px; }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    text-align: center;
+    padding: 30px 40px;
+    background: var(--gray-800);
+    color: var(--gray-400);
+    font-size: 13px;
+  }
+  .footer strong { color: white; }
+
+  /* ─── EXPAND TOGGLE ─── */
+  .toggle-arrow {
+    font-size: 12px; color: var(--gray-400);
+    flex-shrink: 0; margin-top: 5px;
+    transition: transform 0.2s;
+  }
+  .finding-header.expanded .toggle-arrow { transform: rotate(180deg); }
+
+  /* ─── PROGRESS BAR ─── */
+  .progress-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px; }
+  .prog-item { display: flex; align-items: center; gap: 12px; }
+  .prog-label { font-size: 13px; color: var(--gray-600); width: 200px; flex-shrink: 0; }
+  .prog-bar-bg { flex: 1; height: 8px; background: var(--gray-200); border-radius: 99px; overflow: hidden; }
+  .prog-bar { height: 100%; border-radius: 99px; }
+  .prog-val { font-size: 12px; font-weight: 700; color: var(--gray-600); width: 36px; text-align: right; flex-shrink: 0; }
+
+  @media (max-width: 700px) {
+    .hero h1 { font-size: 28px; }
+    .hero { padding: 36px 20px 32px; }
+    .summary-section { padding: 24px 16px; }
+    .summary-grid { grid-template-columns: 1fr 1fr; }
+    .effort-row { flex-direction: column; }
+    .roadmap { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ HERO ═══════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">🔍 Auditoría Técnica Integral</div>
+    <h1>Bufins Customers<br/><span>Plan de Mejora 2026</span></h1>
+    <p>Análisis de seguridad, rendimiento y funcionalidades nuevas para la plataforma de gestión financiera.</p>
+    <div class="hero-meta">
+      <div class="hero-meta-item">📅 <strong>Junio 2026</strong></div>
+      <div class="hero-meta-item">🏗️ Stack: <strong>ASP.NET MVC 5 · .NET 4.8 · SQL Server</strong></div>
+      <div class="hero-meta-item">🔎 Archivos revisados: <strong>~29 controladores · 90+ vistas</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ MAIN ═══════════════════════════════════════ -->
+<div class="summary-section">
+
+  <!-- SCORE CARDS -->
+  <div class="summary-grid">
+    <div class="summary-card danger">
+      <div class="card-number">3</div>
+      <div class="card-label">Crítico / Alto</div>
+      <div class="card-desc">Acción inmediata</div>
+    </div>
+    <div class="summary-card warning">
+      <div class="card-number">7</div>
+      <div class="card-label">Seguridad Media</div>
+      <div class="card-desc">Resolver esta sprint</div>
+    </div>
+    <div class="summary-card info">
+      <div class="card-number">5</div>
+      <div class="card-label">Rendimiento</div>
+      <div class="card-desc">Impacto en escala</div>
+    </div>
+    <div class="summary-card success">
+      <div class="card-number">6</div>
+      <div class="card-label">Buenas Prácticas</div>
+      <div class="card-desc">Calidad del código</div>
+    </div>
+    <div class="summary-card purple">
+      <div class="card-number">8</div>
+      <div class="card-label">Funcionalidades</div>
+      <div class="card-desc">Nuevas capacidades</div>
+    </div>
+  </div>
+
+  <!-- HEALTH BARS -->
+  <div class="section-title">
+    <div class="section-icon icon-info">📊</div>
+    Estado actual de la plataforma
+  </div>
+  <div class="progress-row">
+    <div class="prog-item">
+      <span class="prog-label">Protección CSRF ✅</span>
+      <div class="prog-bar-bg"><div class="prog-bar" style="width:100%;background:#059669"></div></div>
+      <span class="prog-val" style="color:#059669">100%</span>
+    </div>
+    <div class="prog-item">
+      <span class="prog-label">Cobertura antiforgery (vistas) ✅</span>
+      <div class="prog-bar-bg"><div class="prog-bar" style="width:100%;background:#059669"></div></div>
+      <span class="prog-val" style="color:#059669">100%</span>
+    </div>
+    <div class="prog-item">
+      <span class="prog-label">Cabeceras de seguridad HTTP ✅</span>
+      <div class="prog-bar-bg"><div class="prog-bar" style="width:95%;background:#059669"></div></div>
+      <span class="prog-val" style="color:#059669">95%</span>
+    </div>
+    <div class="prog-item">
+      <span class="prog-label">Logging y auditoría</span>
+      <div class="prog-bar-bg"><div class="prog-bar" style="width:20%;background:#dc2626"></div></div>
+      <span class="prog-val" style="color:#dc2626">20%</span>
+    </div>
+    <div class="prog-item">
+      <span class="prog-label">Paginación en listados</span>
+      <div class="prog-bar-bg"><div class="prog-bar" style="width:0%;background:#dc2626"></div></div>
+      <span class="prog-val" style="color:#dc2626">0%</span>
+    </div>
+    <div class="prog-item">
+      <span class="prog-label">Autenticación de sesión ✅</span>
+      <div class="prog-bar-bg"><div class="prog-bar" style="width:90%;background:#059669"></div></div>
+      <span class="prog-val" style="color:#059669">90%</span>
+    </div>
+    <div class="prog-item">
+      <span class="prog-label">Protección fuerza bruta login</span>
+      <div class="prog-bar-bg"><div class="prog-bar" style="width:65%;background:#d97706"></div></div>
+      <span class="prog-val" style="color:#d97706">65%</span>
+    </div>
+  </div>
+
+  <!-- ════════════ SECCIÓN A — SEGURIDAD ════════════ -->
+  <div class="section-title">
+    <div class="section-icon icon-danger">🔐</div>
+    A — Vulnerabilidades de Seguridad
+  </div>
+
+  <div class="findings-list">
+
+    <!-- A1 -->
+    <div class="finding-card implemented">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-danger">A1</div>
+        <div class="finding-title-block">
+          <div class="finding-title"><span style="color:#059669;font-size:11px;font-weight:700;margin-right:6px;">✅ IMPLEMENTADO</span> CSRF — Falta <code>[ValidateAntiForgeryToken]</code> en la mayoría de controladores</div>
+          <div class="finding-subtitle">
+            Solo 9 ocurrencias en 4 de 29 controladores · Login y Registro sin protección
+          </div>
+        </div>
+        <span class="severity-badge sev-critical">🔴 Crítico</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          Un atacante puede crear una página web maliciosa que envíe formularios HTTP POST en nombre de un usuario autenticado sin que este lo sepa. Los endpoints más críticos sin protección son los de <strong>Login y Registro</strong> (<span class="file-ref">AccesoController.cs:32</span> y <span class="file-ref">AccesoController.cs:78</span>).
+        </div>
+        <div class="risk-block"><strong>Riesgo concreto</strong>Un atacante puede forzar el registro de cuentas, cambiar configuraciones de empresa, eliminar reportes o ejecutar modelos financieros desde la sesión de un usuario sin su consentimiento.</div>
+        <div class="code-block"><span class="comment">// ❌ Actual — sin protección</span>
+[HttpPost]
+<span class="keyword">public</span> ActionResult Login(Usuarios oUsuario) { ... }
+
+<span class="comment">// ✅ Correcto</span>
+[HttpPost]
+[<span class="attr">ValidateAntiForgeryToken</span>]
+<span class="keyword">public</span> ActionResult Login(Usuarios oUsuario) { ... }</div>
+        <div class="code-block"><span class="comment">// ✅ En CADA formulario de vista .cshtml</span>
+@<span class="keyword">using</span> (Html.BeginForm()) {
+    @Html.AntiForgeryToken()
+    ...
+}</div>
+        <div class="fix-block"><strong>Corrección</strong>Agregar <code>[ValidateAntiForgeryToken]</code> a todos los métodos POST en los 29 controladores. Agregar <code>@Html.AntiForgeryToken()</code> en todos los formularios de vistas. Esfuerzo: 2–4 horas.</div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 3–4 h</span>
+          <span class="effort-tag">🎯 Prioridad #1</span>
+          <span class="effort-tag">📂 Todos los controladores</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- A2 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-danger">A2</div>
+        <div class="finding-title-block">
+          <div class="finding-title">Modo Debug activo en producción (<code>debug="true"</code>)</div>
+          <div class="finding-subtitle"><span class="file-ref">Web.config:23</span></div>
+        </div>
+        <span class="severity-badge sev-critical">🔴 Crítico</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          <code>&lt;compilation debug="true"/&gt;</code> en Web.config expone stack traces completos, nombres de variables internas y rutas del servidor en mensajes de error visibles al usuario. Además reduce el rendimiento (~30% más lento en compilación JIT).
+        </div>
+        <div class="code-block"><span class="comment">// ❌ Web.config actual (línea 23)</span>
+&lt;<span class="attr">compilation</span> <span class="keyword">debug</span>=<span class="string">"true"</span> targetFramework=<span class="string">"4.8"</span>/&gt;
+
+<span class="comment">// ✅ Correcto para producción</span>
+&lt;<span class="attr">compilation</span> <span class="keyword">debug</span>=<span class="string">"false"</span> targetFramework=<span class="string">"4.8"</span>/&gt;</div>
+        <div class="fix-block"><strong>Corrección</strong>Cambiar a <code>debug="false"</code> y usar Web.Release.config transform para asegurar que nunca se despliegue en debug. Esfuerzo: 5 minutos.</div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 5 min</span>
+          <span class="effort-tag">🎯 Prioridad #2</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- A3 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-danger">A3</div>
+        <div class="finding-title-block">
+          <div class="finding-title"><span style="color:#059669;font-size:11px;font-weight:700;margin-right:6px;">✅ IMPLEMENTADO</span> Endpoints de debug públicos exponen datos de sesión</div>
+          <div class="finding-subtitle"><span class="file-ref">AccesoController.cs:288</span> — InfoSesion() · <span class="file-ref">AccesoController.cs:326</span> — DebugUsuario()</div>
+        </div>
+        <span class="severity-badge sev-high">🟠 Alto</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          Los métodos <code>InfoSesion()</code> y <code>DebugUsuario()</code> retornan JSON con nivel de admin, IdEmpresa, ID de usuario y claves de sesión a cualquier usuario autenticado que navegue a la URL directamente. Cualquier usuario normal puede ver la estructura de permisos del sistema.
+        </div>
+        <div class="fix-block"><strong>Corrección</strong>Eliminar ambos métodos si no están en uso activo. Si se necesitan para diagnóstico, envolverlos en <code>#if DEBUG</code> o restringirlos a Super Admin y registrar cada acceso en auditoría.</div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 15 min</span>
+          <span class="effort-tag">🎯 Prioridad #3</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- A4 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-warning">A4</div>
+        <div class="finding-title-block">
+          <div class="finding-title"><span style="color:#059669;font-size:11px;font-weight:700;margin-right:6px;">✅ IMPLEMENTADO</span> HealthController filtra mensajes de excepción de base de datos</div>
+          <div class="finding-subtitle"><span class="file-ref">HealthController.cs:28</span> — dbError = ex.Message</div>
+        </div>
+        <span class="severity-badge sev-medium">🟡 Medio</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          El endpoint <code>GET /Health</code> no requiere autenticación (no tiene <code>[ValidarSesion]</code>) y expone el mensaje de excepción SQL completo cuando hay error de conexión. Esto puede revelar el nombre del servidor SQL, cadena de conexión parcial y versión del motor de base de datos.
+        </div>
+        <div class="code-block"><span class="comment">// ❌ Actual</span>
+<span class="keyword">catch</span> (Exception ex) {
+    dbStatus = <span class="string">"error"</span>;
+    dbError = ex.Message; <span class="comment">// expone: "Cannot open server X login failed for user Y"</span>
+}
+
+<span class="comment">// ✅ Correcto</span>
+<span class="keyword">catch</span> (Exception ex) {
+    dbStatus = <span class="string">"error"</span>;
+    Log.Error(ex, <span class="string">"Health check DB failure"</span>);
+    <span class="comment">// dbError omitido en respuesta JSON</span>
+}</div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 10 min</span>
+          <span class="effort-tag">🎯 Prioridad #4</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- A5 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-warning">A5</div>
+        <div class="finding-title-block">
+          <div class="finding-title"><span style="color:#059669;font-size:11px;font-weight:700;margin-right:6px;">✅ IMPLEMENTADO</span> Falta cabecera Content-Security-Policy (CSP)</div>
+          <div class="finding-subtitle"><span class="file-ref">Web.config:83-94</span> — Cabeceras parciales</div>
+        </div>
+        <span class="severity-badge sev-medium">🟡 Medio</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          El sitio tiene <code>X-Content-Type-Options</code>, <code>X-Frame-Options</code>, <code>HSTS</code> y <code>Referrer-Policy</code>, pero falta <strong>Content-Security-Policy</strong> y <strong>X-XSS-Protection</strong>. Sin CSP, un XSS inyectado puede ejecutar scripts arbitrarios.
+        </div>
+        <div class="code-block">&lt;<span class="attr">add</span> name=<span class="string">"Content-Security-Policy"</span>
+     value=<span class="string">"default-src 'self';
+            script-src 'self' 'unsafe-inline' cdnjs.cloudflare.com;
+            style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com fonts.googleapis.com;
+            font-src 'self' fonts.gstatic.com cdnjs.cloudflare.com;
+            img-src 'self' data:;
+            connect-src 'self'"</span>/&gt;
+&lt;<span class="attr">add</span> name=<span class="string">"X-XSS-Protection"</span> value=<span class="string">"1; mode=block"</span>/&gt;</div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 1–2 h</span>
+          <span class="effort-tag">📂 Web.config</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- A6 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-warning">A6</div>
+        <div class="finding-title-block">
+          <div class="finding-title"><span style="color:#059669;font-size:11px;font-weight:700;margin-right:6px;">✅ IMPLEMENTADO</span> Fijación de sesión — SessionID no se regenera al hacer login</div>
+          <div class="finding-subtitle"><span class="file-ref">UsuarioSesionHelper.cs</span> — EstablecerUsuarioEnSesion()</div>
+        </div>
+        <span class="severity-badge sev-medium">🟡 Medio</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          Aunque <code>regenerateExpiredSessionId="true"</code> está configurado (regenera sesiones expiradas), el ID de sesión no se abandona y regenera en el momento exacto del login. Un atacante que capture el SessionID de una sesión no-autenticada puede usarlo para asumir la identidad del usuario después del login.
+        </div>
+        <div class="code-block"><span class="comment">// ✅ Agregar ANTES de EstablecerUsuarioEnSesion</span>
+<span class="keyword">var</span> oldItems = Session.Keys.Cast&lt;<span class="keyword">string</span>&gt;()
+    .ToDictionary(k => k, k => Session[k]);
+Session.Abandon();
+Session.Clear();
+<span class="comment">// El nuevo request genera un nuevo SessionID automáticamente</span>
+<span class="keyword">foreach</span> (<span class="keyword">var</span> item <span class="keyword">in</span> oldItems)
+    Session[item.Key] = item.Value;</div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 1 h</span>
+          <span class="effort-tag">📂 UsuarioSesionHelper.cs</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- A7 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-warning">A7</div>
+        <div class="finding-title-block">
+          <div class="finding-title"><span style="color:#059669;font-size:11px;font-weight:700;margin-right:6px;">✅ IMPLEMENTADO</span> Sin límite de velocidad por IP en login y registro</div>
+          <div class="finding-subtitle"><span class="file-ref">AccesoController.cs</span> — Brute-force por cuenta protegido, no por IP</div>
+        </div>
+        <span class="severity-badge sev-medium">🟡 Medio</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          El sistema ya tiene protección de bloqueo de cuenta por intentos fallidos (columnas <code>IntentosFallidos</code> y <code>BloqueadoHasta</code>), pero un atacante puede hacer fuerza bruta distribuida con múltiples cuentas desde la misma IP sin ser detectado, o enumerar usuarios a través del mensaje de respuesta.
+        </div>
+        <div class="fix-block"><strong>Corrección sugerida</strong>Implementar throttling por IP usando un cache en memoria (diccionario + timestamp). Alternativamente, integrar un CAPTCHA de Google reCAPTCHA v3 en el formulario de login después del 3er intento fallido desde la misma IP.</div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 3–5 h</span>
+          <span class="effort-tag">📂 AccesoController.cs + BaseController.cs</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- A8 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-warning">A8</div>
+        <div class="finding-title-block">
+          <div class="finding-title"><span style="color:#059669;font-size:11px;font-weight:700;margin-right:6px;">✅ IMPLEMENTADO</span> Uso inconsistente de Html.Raw() en vistas — riesgo XSS</div>
+          <div class="finding-subtitle">Varios archivos .cshtml — inyección de strings de recursos vía JS</div>
+        </div>
+        <span class="severity-badge sev-medium">🟡 Medio</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          Se usa <code>@Html.Raw(Resources.Strings.Key)</code> para inyectar strings en variables JavaScript dentro de los scripts de las vistas. Si un valor de recurso contiene caracteres especiales (<code>'</code>, <code>&lt;</code>, <code>&gt;</code>, <code>"</code>), puede romper el contexto JavaScript y abrir un vector XSS.
+        </div>
+        <div class="code-block"><span class="comment">// ❌ Actual — inseguro</span>
+<span class="keyword">var</span> msg = <span class="string">'@Html.Raw(Resources.Strings.Login_ErrorEmail)'</span>;
+
+<span class="comment">// ✅ Correcto — codificar para contexto JS</span>
+<span class="keyword">var</span> msg = <span class="string">'@HttpUtility.JavaScriptStringEncode(Resources.Strings.Login_ErrorEmail)'</span>;</div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 2 h</span>
+          <span class="effort-tag">📂 Todas las vistas con bloques &lt;script&gt;</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- A9 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-warning">A9</div>
+        <div class="finding-title-block">
+          <div class="finding-title">Timeout de comandos SQL no configurado en servicios</div>
+          <div class="finding-subtitle">Todos los servicios con SqlCommand — por defecto 30 segundos del pool</div>
+        </div>
+        <span class="severity-badge sev-low">🟢 Bajo</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          Ningún <code>SqlCommand</code> en los servicios tiene <code>CommandTimeout</code> explícito. El timeout por defecto del pool de conexiones de .NET es 30 segundos, pero queries pesadas (como las de modelos de ejecución) pueden demorar más, consumiendo conexiones del pool y degradando el servicio para otros usuarios.
+        </div>
+        <div class="code-block"><span class="comment">// ✅ Agregar en todos los SqlCommand de servicios</span>
+<span class="keyword">var</span> cmd = <span class="keyword">new</span> SqlCommand(<span class="string">"sp_ObtenerDatos"</span>, cn);
+cmd.CommandTimeout = 30; <span class="comment">// queries normales</span>
+<span class="comment">// Para ModelosEjecucion ya está en 300s — correcto</span></div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 1 h</span>
+          <span class="effort-tag">📂 BaseService.cs o cada servicio</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- A10 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-warning">A10</div>
+        <div class="finding-title-block">
+          <div class="finding-title"><span style="color:#059669;font-size:11px;font-weight:700;margin-right:6px;">✅ IMPLEMENTADO</span> Migración SHA256→BCrypt sin validación del UPDATE</div>
+          <div class="finding-subtitle"><span class="file-ref">AccesoController.cs:140–153</span></div>
+        </div>
+        <span class="severity-badge sev-low">🟢 Bajo</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          Al detectar un hash SHA256, el código actualiza la contraseña del usuario al formato BCrypt pero no verifica si el <code>ExecuteNonQuery()</code> afectó exactamente 1 fila. Si el UPDATE falla silenciosamente por un error de concurrencia, el usuario queda con hash vacío o corrupto.
+        </div>
+        <div class="code-block"><span class="keyword">int</span> rows = cmd.ExecuteNonQuery();
+<span class="keyword">if</span> (rows != 1)
+    <span class="keyword">throw new</span> Exception(<span class="string">"Error al migrar contraseña: filas afectadas = "</span> + rows);</div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 30 min</span>
+          <span class="effort-tag">📂 AccesoController.cs</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /findings-list seguridad -->
+
+
+  <!-- ════════════ SECCIÓN B — RENDIMIENTO ════════════ -->
+  <div class="section-title">
+    <div class="section-icon icon-warning">⚡</div>
+    B — Rendimiento y Escalabilidad
+  </div>
+
+  <div class="findings-list">
+
+    <!-- B1 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-warning">B1</div>
+        <div class="finding-title-block">
+          <div class="finding-title">Sin paginación en ningún listado — carga total en memoria</div>
+          <div class="finding-subtitle">UsuarioController · EmpresaController · ReportesController · AuditoriaCarguesController</div>
+        </div>
+        <span class="severity-badge sev-high">🟠 Alto</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          Todos los listados cargan el 100% de los registros en memoria y los envían al cliente. Con crecimiento en datos (10.000+ registros de auditoría, histórico de cargues, usuarios multi-empresa), esto producirá picos de memoria y tiempos de respuesta inaceptables.
+        </div>
+        <div class="code-block"><span class="comment">// ✅ Patrón a implementar en stored procedures</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> Usuarios
+<span class="keyword">WHERE</span> IdEmpresa = @IdEmpresa
+<span class="keyword">ORDER BY</span> Nombre
+<span class="keyword">OFFSET</span> (@Pagina - 1) * @TamanoPagina <span class="keyword">ROWS</span>
+<span class="keyword">FETCH NEXT</span> @TamanoPagina <span class="keyword">ROWS ONLY</span>;</div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 1–2 días</span>
+          <span class="effort-tag">🎯 Alto impacto</span>
+          <span class="effort-tag">📂 4+ controladores · 4+ SPs</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- B2 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-warning">B2</div>
+        <div class="finding-title-block">
+          <div class="finding-title">Logs de importación Excel almacenados solo en Session (volátiles)</div>
+          <div class="finding-subtitle"><span class="file-ref">DatosController.cs</span> — Session["LogImportacion"]</div>
+        </div>
+        <span class="severity-badge sev-medium">🟡 Medio</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          El log completo de importación se almacena en Session. Si la sesión expira antes de que el usuario descargue el log, se pierde para siempre. Además, logs de importaciones grandes (miles de filas) consumen memoria de IIS sin límite.
+        </div>
+        <div class="fix-block"><strong>Mejora sugerida</strong>Persistir los logs en la tabla <code>AuditoriaImportacion</code> (a crear) con columnas: <code>Id, UsuarioId, NombreArchivo, FilasOk, FilasError, FechaHora, TextoLog</code>. Permitir consultar el historial desde Auditoría de Cargues.</div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 4–6 h</span>
+          <span class="effort-tag">📂 DatosController.cs + nueva tabla</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- B3 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-warning">B3</div>
+        <div class="finding-title-block">
+          <div class="finding-title"><span style="color:#d97706;font-size:11px;font-weight:700;margin-right:6px;">⚠️ REVERTIDO</span> Caché de permisos y menú sidebar por idioma — cache miss al cambiar idioma</div>
+          <div class="finding-subtitle"><span class="file-ref">UsuarioSesionHelper.cs</span> — Claves con sufijo de cultura</div>
+        </div>
+        <span class="severity-badge sev-medium">🟡 Medio</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          La clave de caché del menú sidebar incluye el código de cultura (<code>UsuarioMenuSidebar_es-CO</code>). Cada vez que el usuario cambia de idioma se invalida el caché y se ejecuta una nueva consulta a BD. Dado que el menú solo contiene nombres en un idioma, este sufijo es innecesario.
+        </div>
+        <div class="fix-block"><strong>Corrección</strong>Usar clave fija <code>"UsuarioMenuSidebar"</code>. Si en el futuro se requieren menús multilingues, manejar la traducción en la vista, no en el caché.</div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 30 min</span>
+          <span class="effort-tag">📂 UsuarioSesionHelper.cs</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- B4 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-warning">B4</div>
+        <div class="finding-title-block">
+          <div class="finding-title">Sin manejo de errores centralizado — excepciones no logeadas</div>
+          <div class="finding-subtitle"><span class="file-ref">App_Start/FilterConfig.cs</span> — Sin GlobalExceptionFilter</div>
+        </div>
+        <span class="severity-badge sev-medium">🟡 Medio</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          No existe un filtro de excepción global registrado en <code>FilterConfig</code>. Las excepciones no capturadas en controladores muestran páginas de error genéricas pero no se loguean en ningún sistema centralizado. Cuando algo falla en producción, no hay visibilidad.
+        </div>
+        <div class="code-block"><span class="comment">// App_Start/FilterConfig.cs</span>
+filters.Add(<span class="keyword">new</span> HandleErrorAttribute());
+filters.Add(<span class="keyword">new</span> GlobalExceptionFilter()); <span class="comment">// ← agregar</span></div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 2 h</span>
+          <span class="effort-tag">📂 FilterConfig.cs + nuevo GlobalExceptionFilter</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- B5 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-info">B5</div>
+        <div class="finding-title-block">
+          <div class="finding-title">Sin framework de logging estructurado (Serilog / NLog)</div>
+          <div class="finding-subtitle">Codebase — Solo logging ad-hoc en DatosController</div>
+        </div>
+        <span class="severity-badge sev-medium">🟡 Medio</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          No existe un sistema centralizado de logging. El único log disponible es el de importación de Excel en <code>DatosController</code>, que es temporal en sesión. Operaciones críticas como creación de usuarios, cambios de permisos y ejecución de modelos no dejan rastro.
+        </div>
+        <div class="fix-block"><strong>Recomendación</strong>Instalar <strong>Serilog</strong> via NuGet (<code>Serilog.AspNet</code>). Configurar sink a archivo rotativo y opcionalmente a Application Insights o Seq. Agregar logs en: login/logout, creación/eliminación de entidades, errores de importación, consultas IA.</div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 4 h setup + gradual</span>
+          <span class="effort-tag">📂 Global.asax.cs + BaseController.cs</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /findings rendimiento -->
+
+
+  <!-- ════════════ SECCIÓN C — FUNCIONALIDADES NUEVAS ════════════ -->
+  <div class="section-title">
+    <div class="section-icon icon-purple">🚀</div>
+    C — Funcionalidades Nuevas Sugeridas
+  </div>
+
+  <div class="findings-list">
+
+    <!-- C1 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-purple">C1</div>
+        <div class="finding-title-block">
+          <div class="finding-title">Tabla de Auditoría de Acciones Críticas</div>
+          <div class="finding-subtitle">Trazabilidad completa: quién hizo qué, cuándo y desde qué IP</div>
+        </div>
+        <span class="severity-badge sev-feature">🟣 Feature</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          Crear una tabla <code>AuditoriaSistema</code> que registre automáticamente todas las operaciones sensibles: creación/eliminación de usuarios, cambios de permisos, login/logout, ejecuciones de modelos, rollbacks de versiones.
+        </div>
+        <div class="code-block"><span class="comment">-- Nueva tabla</span>
+<span class="keyword">CREATE TABLE</span> AuditoriaSistema (
+    Id          <span class="keyword">INT</span> IDENTITY PRIMARY KEY,
+    IdUsuario   <span class="keyword">INT</span>,
+    Accion      <span class="keyword">VARCHAR</span>(100),    <span class="comment">-- 'LOGIN', 'CREAR_USUARIO', etc.</span>
+    Descripcion <span class="keyword">NVARCHAR</span>(500),
+    IdEmpresa   <span class="keyword">INT</span>,
+    IPAddress   <span class="keyword">VARCHAR</span>(45),
+    UserAgent   <span class="keyword">VARCHAR</span>(300),
+    FechaHora   <span class="keyword">DATETIME2</span> DEFAULT GETUTCDATE()
+);</div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 1 día</span>
+          <span class="effort-tag">💡 Impacto: Compliance + Seguridad</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- C2 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-purple">C2</div>
+        <div class="finding-title-block">
+          <div class="finding-title">Restablecimiento de contraseña por correo electrónico</div>
+          <div class="finding-subtitle">Actualmente el admin debe cambiar la clave manualmente — UsuarioController</div>
+        </div>
+        <span class="severity-badge sev-feature">🟣 Feature</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          Agregar flujo de auto-reset de contraseña: el usuario ingresa su correo, el sistema envía un enlace con token de un solo uso (TTL 1 hora), el usuario establece nueva contraseña. Reduce carga al admin y mejora experiencia de usuario.
+        </div>
+        <div class="code-block"><span class="comment">-- Columnas a agregar en Usuarios</span>
+ResetToken     <span class="keyword">VARCHAR</span>(128) <span class="keyword">NULL</span>,
+ResetTokenExp  <span class="keyword">DATETIME</span>    <span class="keyword">NULL</span>
+
+<span class="comment">// Flujo: SolicitarReset() → enviar email → ValidarToken() → CambiarClave()</span></div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 1–2 días</span>
+          <span class="effort-tag">📦 NuGet: SmtpClient o SendGrid</span>
+          <span class="effort-tag">💡 UX crítico</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- C3 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-purple">C3</div>
+        <div class="finding-title-block">
+          <div class="finding-title">Autenticación en dos factores (2FA) con TOTP</div>
+          <div class="finding-subtitle">Google Authenticator / Microsoft Authenticator</div>
+        </div>
+        <span class="severity-badge sev-feature">🟣 Feature</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          Agregar opción de 2FA opcional por usuario usando TOTP (RFC 6238). Al activar, el usuario escanea un QR con Google/Microsoft Authenticator. En cada login se solicita el código de 6 dígitos. Especialmente importante para Super Admin y Admin de Empresa.
+        </div>
+        <div class="code-block"><span class="comment">-- Columnas a agregar en Usuarios</span>
+Totp2FASecret  <span class="keyword">VARCHAR</span>(32) <span class="keyword">NULL</span>,
+Totp2FAActivo  <span class="keyword">BIT</span> DEFAULT 0
+
+<span class="comment">// NuGet: Otp.NET para generar/validar códigos TOTP</span></div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 2–3 días</span>
+          <span class="effort-tag">📦 NuGet: Otp.NET + QRCoder</span>
+          <span class="effort-tag">💡 Seguridad admin</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- C4 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-purple">C4</div>
+        <div class="finding-title-block">
+          <div class="finding-title">Sesiones activas: ver y cerrar sesiones concurrentes</div>
+          <div class="finding-subtitle">Detectar acceso simultáneo desde múltiples dispositivos</div>
+        </div>
+        <span class="severity-badge sev-feature">🟣 Feature</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          Crear tabla <code>SesionesActivas</code> que registre logins activos con IP, User-Agent y timestamp. Los admins pueden ver qué usuarios están conectados, desde dónde, y cerrar sesiones remotamente. Los usuarios pueden ver sus propias sesiones activas en su perfil.
+        </div>
+        <div class="code-block"><span class="keyword">CREATE TABLE</span> SesionesActivas (
+    SessionId    <span class="keyword">VARCHAR</span>(128) PRIMARY KEY,
+    IdUsuario    <span class="keyword">INT</span>,
+    IPAddress    <span class="keyword">VARCHAR</span>(45),
+    UserAgent    <span class="keyword">VARCHAR</span>(300),
+    Inicio       <span class="keyword">DATETIME2</span>,
+    UltimaAct    <span class="keyword">DATETIME2</span>
+);</div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 1 día</span>
+          <span class="effort-tag">💡 Seguridad + UX</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- C5 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-purple">C5</div>
+        <div class="finding-title-block">
+          <div class="finding-title">Dashboard de métricas del sistema para Super Admin</div>
+          <div class="finding-subtitle">Uso de IA, cargues por empresa, usuarios activos, errores recientes</div>
+        </div>
+        <span class="severity-badge sev-feature">🟣 Feature</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          Pantalla dedicada para Super Admin con tarjetas de KPIs del sistema: consultas IA en las últimas 24h, cargues Excel exitosos vs. fallidos, empresas con actividad reciente, usuarios activos hoy, errores en los últimos 7 días. Datos provenientes de las tablas de auditoría existentes.
+        </div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 2–3 días</span>
+          <span class="effort-tag">📦 Chart.js (ya en proyecto)</span>
+          <span class="effort-tag">💡 Visibilidad operativa</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- C6 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-purple">C6</div>
+        <div class="finding-title-block">
+          <div class="finding-title">Historial persistente de logs de importación Excel</div>
+          <div class="finding-subtitle">Reemplaza Session["LogImportacion"] por tabla en BD</div>
+        </div>
+        <span class="severity-badge sev-feature">🟣 Feature</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          Persistir los logs de cada cargue en una tabla <code>LogsImportacion</code>. Permite al usuario volver al módulo de auditoría días después y re-descargar el log de cualquier cargue previo. También habilita análisis de patrones de error.
+        </div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 4–6 h</span>
+          <span class="effort-tag">💡 Reemplaza lógica existente</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- C7 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-purple">C7</div>
+        <div class="finding-title-block">
+          <div class="finding-title">Feature Flags — activar/desactivar funciones sin redeploy</div>
+          <div class="finding-subtitle">Tabla FeatureFlags en BD + helper en sesión</div>
+        </div>
+        <span class="severity-badge sev-feature">🟣 Feature</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          Tabla <code>FeatureFlags</code> con <code>Codigo</code>, <code>Activo</code> (bit), <code>Descripcion</code>. En Super Admin, una pantalla permite activar/desactivar funcionalidades en vivo (sin redeploy). Útil para rollout gradual de nuevas features o rollback de emergencia.
+        </div>
+        <div class="code-block"><span class="comment">// Uso en controlador</span>
+<span class="keyword">if</span> (FeatureFlagHelper.EstaActivo(<span class="string">"NUEVA_FUNCION_2FA"</span>))
+    <span class="keyword">return</span> View(<span class="string">"~/Views/Seguridad/Configurar2FA.cshtml"</span>);</div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 1 día</span>
+          <span class="effort-tag">💡 DevOps + Seguridad</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- C8 -->
+    <div class="finding-card">
+      <div class="finding-header" onclick="toggle(this)">
+        <div class="finding-number badge-purple">C8</div>
+        <div class="finding-title-block">
+          <div class="finding-title">Exportación avanzada: PDF + Excel con formato desde Informes IA</div>
+          <div class="finding-subtitle">Descarga directa del análisis IA como documento formateado</div>
+        </div>
+        <span class="severity-badge sev-feature">🟣 Feature</span>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="finding-body">
+        <div class="finding-detail">
+          Agregar botón "Descargar PDF" en el módulo de Análisis IA que genere un documento con: encabezado de empresa, tabla de datos consultada, y la respuesta del análisis formateada en markdown. Usar <strong>DinkToPdf</strong> o <strong>iTextSharp</strong> para generar PDF desde el HTML renderizado.
+        </div>
+        <div class="effort-row">
+          <span class="effort-tag">⏱ 1–2 días</span>
+          <span class="effort-tag">📦 NuGet: DinkToPdf o iTextSharp</span>
+          <span class="effort-tag">💡 UX gerencial</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /findings nuevas funcionalidades -->
+
+
+  <!-- ════════════ TABLA PRIORIDADES ════════════ -->
+  <div class="section-title">
+    <div class="section-icon icon-danger">📋</div>
+    Tabla de Prioridades — Hoja de Ruta
+  </div>
+
+  <div class="priority-table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Acción</th>
+          <th>Categoría</th>
+          <th>Esfuerzo</th>
+          <th>Impacto</th>
+          <th>Archivos clave</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="priority-num">1</span></td>
+          <td><strong>[ValidateAntiForgeryToken] en todos los POST</strong></td>
+          <td><span class="severity-badge sev-critical">Crítico</span></td>
+          <td>3–4 h</td>
+          <td>🔐 Elimina CSRF</td>
+          <td><span class="file-ref">Todos los controllers</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-num">2</span></td>
+          <td><strong>debug="false" en Web.config</strong></td>
+          <td><span class="severity-badge sev-critical">Crítico</span></td>
+          <td>5 min</td>
+          <td>🔐 Oculta stack traces</td>
+          <td><span class="file-ref">Web.config:23</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-num">3</span></td>
+          <td><strong>Eliminar/restringir InfoSesion() y DebugUsuario()</strong></td>
+          <td><span class="severity-badge sev-high">Alto</span></td>
+          <td>15 min</td>
+          <td>🔐 Elimina info disclosure</td>
+          <td><span class="file-ref">AccesoController.cs:288</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-num">4</span></td>
+          <td><strong>Ocultar dbError en HealthController</strong></td>
+          <td><span class="severity-badge sev-high">Alto</span></td>
+          <td>10 min</td>
+          <td>🔐 No filtra datos BD</td>
+          <td><span class="file-ref">HealthController.cs:28</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-num">5</span></td>
+          <td><strong>Agregar CSP + X-XSS-Protection headers</strong></td>
+          <td><span class="severity-badge sev-medium">Medio</span></td>
+          <td>1–2 h</td>
+          <td>🔐 Mitiga XSS</td>
+          <td><span class="file-ref">Web.config:83</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-num">6</span></td>
+          <td><strong>Regeneración de SessionID al login</strong></td>
+          <td><span class="severity-badge sev-medium">Medio</span></td>
+          <td>1 h</td>
+          <td>🔐 Previene session fixation</td>
+          <td><span class="file-ref">UsuarioSesionHelper.cs</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-num">7</span></td>
+          <td><strong>Paginación server-side en listados</strong></td>
+          <td><span class="severity-badge sev-high">Alto</span></td>
+          <td>1–2 días</td>
+          <td>⚡ Escala a 10k+ registros</td>
+          <td><span class="file-ref">4+ controllers + SPs</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-num">8</span></td>
+          <td><strong>Logging centralizado con Serilog</strong></td>
+          <td><span class="severity-badge sev-medium">Medio</span></td>
+          <td>4 h</td>
+          <td>📊 Visibilidad en producción</td>
+          <td><span class="file-ref">Global.asax + BaseController</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-num">9</span></td>
+          <td><strong>Tabla auditoría de acciones críticas</strong></td>
+          <td><span class="severity-badge sev-feature">Feature</span></td>
+          <td>1 día</td>
+          <td>📋 Compliance + forensic</td>
+          <td><span class="file-ref">Nueva tabla + service</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-num">10</span></td>
+          <td><strong>Reset de contraseña por email</strong></td>
+          <td><span class="severity-badge sev-feature">Feature</span></td>
+          <td>1–2 días</td>
+          <td>👤 UX crítico</td>
+          <td><span class="file-ref">AccesoController + vistas</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-num">11</span></td>
+          <td><strong>Historial persistente de logs Excel</strong></td>
+          <td><span class="severity-badge sev-feature">Feature</span></td>
+          <td>4–6 h</td>
+          <td>📁 Reemplaza log en sesión</td>
+          <td><span class="file-ref">DatosController + nueva tabla</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-num">12</span></td>
+          <td><strong>2FA con TOTP</strong></td>
+          <td><span class="severity-badge sev-feature">Feature</span></td>
+          <td>2–3 días</td>
+          <td>🔐 Protege admins</td>
+          <td><span class="file-ref">AccesoController + Usuarios</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+
+  <!-- ════════════ ROADMAP ════════════ -->
+  <div class="section-title">
+    <div class="section-icon icon-info">🗓️</div>
+    Roadmap Sugerido
+  </div>
+
+  <div class="roadmap">
+    <div class="roadmap-lane">
+      <div class="lane-header">
+        <div class="lane-dot dot-red"></div>
+        Semana 1 — Críticos
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">🔴</span>
+        <div class="roadmap-item-text">
+          AntiForgeryToken en todos los POST
+          <small>~3–4 horas · 29 controladores</small>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">🔴</span>
+        <div class="roadmap-item-text">
+          debug="false" en Web.config
+          <small>5 minutos</small>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">🔴</span>
+        <div class="roadmap-item-text">
+          Eliminar endpoints de debug
+          <small>AccesoController.cs:288 y :326</small>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">🔴</span>
+        <div class="roadmap-item-text">
+          Ocultar dbError en HealthController
+          <small>1 línea de código</small>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">🟠</span>
+        <div class="roadmap-item-text">
+          Headers CSP + X-XSS-Protection
+          <small>Web.config · 1–2 horas</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="roadmap-lane">
+      <div class="lane-header">
+        <div class="lane-dot dot-amber"></div>
+        Semanas 2–3 — Mejoras de Seguridad
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">🟡</span>
+        <div class="roadmap-item-text">
+          Regenerar SessionID al login
+          <small>UsuarioSesionHelper.cs</small>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">🟡</span>
+        <div class="roadmap-item-text">
+          Rate limiting por IP en login
+          <small>AccesoController.cs</small>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">🟡</span>
+        <div class="roadmap-item-text">
+          Reemplazar Html.Raw() con JavaScriptStringEncode
+          <small>Todas las vistas con &lt;script&gt;</small>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">🟡</span>
+        <div class="roadmap-item-text">
+          CommandTimeout en todos los SqlCommand de servicios
+          <small>BaseService.cs o servicios individuales</small>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">🟡</span>
+        <div class="roadmap-item-text">
+          Logging centralizado con Serilog
+          <small>Global.asax + BaseController</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="roadmap-lane">
+      <div class="lane-header">
+        <div class="lane-dot dot-blue"></div>
+        Mes 2 — Rendimiento
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">⚡</span>
+        <div class="roadmap-item-text">
+          Paginación server-side en listados
+          <small>Usuarios · Empresas · Reportes · Auditoría</small>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">⚡</span>
+        <div class="roadmap-item-text">
+          Tabla AuditoriaSistema + GlobalExceptionFilter
+          <small>Nueva tabla + FilterConfig</small>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">⚡</span>
+        <div class="roadmap-item-text">
+          Historial persistente de logs de cargue
+          <small>DatosController + tabla LogsImportacion</small>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">⚡</span>
+        <div class="roadmap-item-text">
+          Reset de contraseña por email
+          <small>AccesoController + vistas + SMTP</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="roadmap-lane">
+      <div class="lane-header">
+        <div class="lane-dot dot-purple"></div>
+        Mes 3–4 — Nuevas Funciones
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">🚀</span>
+        <div class="roadmap-item-text">
+          Sesiones activas + cierre remoto
+          <small>Tabla SesionesActivas + UI admin</small>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">🚀</span>
+        <div class="roadmap-item-text">
+          Dashboard métricas sistema (Super Admin)
+          <small>Consultas IA · Cargues · Errores recientes</small>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">🚀</span>
+        <div class="roadmap-item-text">
+          Feature Flags desde BD
+          <small>Tabla FeatureFlags + helper</small>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">🚀</span>
+        <div class="roadmap-item-text">
+          2FA con TOTP (Google Authenticator)
+          <small>Usuarios + AccesoController + NuGet Otp.NET</small>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-item-icon">🚀</span>
+        <div class="roadmap-item-text">
+          Exportar análisis IA a PDF
+          <small>AnalisisIAController + DinkToPdf</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /summary-section -->
+
+<!-- FOOTER -->
+<div class="footer">
+  Generado para <strong>Bufins Customers</strong> · ASP.NET MVC 5 / .NET 4.8 · <strong>Junio 2026</strong><br/>
+  Análisis basado en revisión directa del código fuente · ~29 controladores · 90+ vistas · 20+ servicios
+</div>
+
+<script>
+  function toggle(header) {
+    var body = header.nextElementSibling;
+    var isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    header.classList.toggle('expanded', !isOpen);
+  }
+</script>
+
+</body>
+</html>

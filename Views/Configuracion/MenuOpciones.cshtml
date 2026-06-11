@@ -1,4 +1,4 @@
-@model IEnumerable<bufinscustomers.Models.MenuOpciones>
+﻿@model IEnumerable<bufinscustomers.Models.MenuOpciones>
 @using bufinscustomers.Helpers
 @using System.Web.Script.Serialization
 
@@ -374,12 +374,12 @@
     var _categorias = @Html.Raw(categoriasJson);
 
     var _menuMsg = {
-        selCategoria: '@Html.Raw(Resources.Strings.Menu_SelCategoria)',
-        selGrupo: '@Html.Raw(Resources.Strings.Menu_SelGrupo)',
-        eliminarTitle: '@Html.Raw(Resources.Strings.Menu_JS_EliminarTitle)',
-        eliminarText: '@Html.Raw(Resources.Strings.Menu_JS_EliminarText)',
+        selCategoria: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_SelCategoria)',
+        selGrupo: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_SelCategoria)',
+        eliminarTitle: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_SelCategoria)',
+        eliminarText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_SelCategoria)',
         cancelar: '@Resources.Strings.Layout_Cancel',
-        confirmarEliminar: '@Html.Raw(Resources.Strings.Menu_JS_ConfirmarEliminar)'
+        confirmarEliminar: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_SelCategoria)'
     };
 
     function poblarCategorias(selectId, idCategoriaSeleccionada) {

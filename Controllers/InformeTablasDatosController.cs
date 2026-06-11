@@ -1,4 +1,4 @@
-using bufinscustomers.Helpers;
+﻿using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
@@ -108,6 +108,7 @@ namespace bufinscustomers.Controllers
         /// Consulta los datos con filtros aplicados
         /// </summary>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult ConsultarDatos(FiltrosInformeTablasDatos filtros)
         {
             try
@@ -198,6 +199,7 @@ namespace bufinscustomers.Controllers
         /// Consulta la IA con los datos actuales y una pregunta opcional
         /// </summary>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<JsonResult> ConsultarConIA(FiltrosInformeTablasDatos filtros, string pregunta, string historialJson = null)
         {
             try
@@ -373,6 +375,7 @@ namespace bufinscustomers.Controllers
         /// Exporta los datos consultados a Excel
         /// </summary>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult ExportarExcel(FiltrosInformeTablasDatos filtros)
         {
             try
@@ -504,6 +507,7 @@ namespace bufinscustomers.Controllers
         /// Exporta datos + análisis de IA en un Excel con dos hojas
         /// </summary>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult ExportarExcelConIA(FiltrosInformeTablasDatos filtros, string textoAnalisis)
         {
             try

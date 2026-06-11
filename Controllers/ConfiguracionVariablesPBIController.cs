@@ -1,4 +1,4 @@
-using bufinscustomers.Helpers;
+﻿using bufinscustomers.Helpers;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
 using OfficeOpenXml;
@@ -35,6 +35,7 @@ namespace bufinscustomers.Controllers
         /// Procesa el archivo Excel y carga los datos en OrdenVariables
         /// </summary>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult CargarExcel(HttpPostedFileBase archivoExcel)
         {
             if (!VerificarSuperAdmin())

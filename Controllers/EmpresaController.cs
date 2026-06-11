@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using System.Web.Mvc;
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
@@ -29,6 +29,7 @@ namespace bufinscustomers.Controllers
 
         // POST: Crear empresa (solo Super Admin)
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult CrearEmpresa(Empresas empresa)
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
@@ -55,6 +56,7 @@ namespace bufinscustomers.Controllers
 
         // POST: Editar empresa
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult EditarEmpresa(Empresas empresa)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
@@ -81,6 +83,7 @@ namespace bufinscustomers.Controllers
 
         // POST: Eliminar empresa (solo Super Admin)
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult EliminarEmpresa(int idEmpresa)
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())

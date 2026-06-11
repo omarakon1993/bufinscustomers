@@ -124,6 +124,7 @@
             @Resources.Strings.CfgVarPBI_TitleCarga
         </h3>
         <form id="formCarga" action="@Url.Action("CargarExcel","ConfiguracionVariablesPBI")" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
             <div class="filter-section">
                 <p style="font-size:0.85rem;color:#6c757d;margin-bottom:1rem;">
                     <i class="fas fa-info-circle" style="color:#6366F1;"></i>

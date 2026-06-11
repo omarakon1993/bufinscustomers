@@ -1,4 +1,4 @@
-using bufinscustomers.Helpers;
+﻿using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
@@ -39,6 +39,7 @@ namespace bufinscustomers.Controllers
         /// Procesa el archivo Excel y carga los datos en las tablas REL_
         /// </summary>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult CargarExcel(HttpPostedFileBase archivoExcel)
         {
             if (!VerificarAdmin())

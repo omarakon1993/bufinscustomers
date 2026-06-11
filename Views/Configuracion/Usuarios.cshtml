@@ -1,4 +1,4 @@
-@using bufinscustomers.Models
+﻿@using bufinscustomers.Models
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -808,8 +808,8 @@
     @section scripts {
         <script>
             var _usrMsg = {
-                camposReq: '@Html.Raw(Resources.Strings.Usr_JS_CamposReq)',
-                archivoGrande: '@Html.Raw(Resources.Strings.Usr_JS_ArchivoGrande)'
+                camposReq: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_CamposReq)',
+                archivoGrande: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_CamposReq)'
             };
 
             function setIdUsuario(id) {

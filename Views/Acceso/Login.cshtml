@@ -137,6 +137,7 @@
             </div>
 
             <form id="loginForm" action="@Url.Action("Login", "Acceso")" method="post">
+                @Html.AntiForgeryToken()
 
                 <div class="input-group">
                     <div class="input-icon">
@@ -168,8 +169,8 @@
                 </div>
                 <script>
                     var _loginMsg = {
-                        errorEmail: '@Html.Raw(Resources.Strings.Login_ErrorEmail)',
-                        errorPassword: '@Html.Raw(Resources.Strings.Login_ErrorPassword)'
+                        errorEmail: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Login_ErrorEmail)',
+                        errorPassword: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Login_ErrorEmail)'
                     };
 
                     function validarFormulario() {

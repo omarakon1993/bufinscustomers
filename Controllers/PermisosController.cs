@@ -1,4 +1,4 @@
-using bufinscustomers.Helpers;
+﻿using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
@@ -105,6 +105,7 @@ namespace bufinscustomers.Controllers
         /// <param name="idUsuario">ID del usuario</param>
         /// <param name="permisos">Lista de IDs de permisos asignados</param>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult Guardar(int idUsuario, List<int> permisos)
         {
             var usuarioActual = UsuarioSesionHelper.UsuarioActual;

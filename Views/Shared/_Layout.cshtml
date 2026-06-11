@@ -605,6 +605,9 @@
             }
 
             var formData = new FormData($('#formCargarImagen')[0]);
+            // A1: Incluir token CSRF en FormData (no lo incluye ajaxSetup automático)
+            var _csrfImagen = $('input[name="__RequestVerificationToken"]').first().val();
+            if (_csrfImagen) formData.append('__RequestVerificationToken', _csrfImagen);
             $.ajax({
                 url: $('#formCargarImagen').attr('action'),
                 type: 'POST',
@@ -854,7 +857,7 @@
         // Verificar estado de sesión con el servidor
         function verificarEstadoSesion() {
             $.ajax({
-                url: '@Url.Action("InfoSesion", "Acceso")',
+                url: '@Url.Action("VerificarSesion", "Acceso")',
                 type: 'GET',
                 timeout: 5000,
                 success: function(response) {
@@ -862,7 +865,7 @@
                         // Sesión no válida en servidor
                         limpiarTimersSesion();
                         cerrarSesionAutomatica();
-                    } else if (response.sessionInfo && response.sessionInfo.EstaPorExpirar && !warningShown) {
+                    } else if (response.estaPorExpirar && !warningShown) {
                         // Sesión próxima a expirar
                         limpiarTimersSesion();
                         mostrarAdvertenciaSesion();
@@ -1090,12 +1093,12 @@
         function notifLimpiarTodas(ev) {
             if (ev) ev.stopPropagation();
             Swal.fire({
-                title: '@Html.Raw(Resources.Strings.Notif_LimpiarConfirmTitulo)',
-                text:  '@Html.Raw(Resources.Strings.Notif_LimpiarConfirmMsg)',
+                title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Notif_LimpiarConfirmTitulo)',
+                text:  '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Notif_LimpiarConfirmTitulo)',
                 icon:  'warning',
                 showCancelButton: true,
-                confirmButtonText: '<i class="fas fa-trash-alt mr-1"></i> @Html.Raw(Resources.Strings.Notif_LimpiarConfirmBtn)',
-                cancelButtonText:  '<i class="fas fa-times mr-1"></i> @Html.Raw(Resources.Strings.Layout_Close)',
+                confirmButtonText: '<i class="fas fa-trash-alt mr-1"></i> @HttpUtility.JavaScriptStringEncode(Resources.Strings.Notif_LimpiarConfirmBtn)',
+                cancelButtonText:  '<i class="fas fa-times mr-1"></i> @HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Close)',
                 confirmButtonColor: '#dc2626',
                 customClass: { confirmButton: 'btn btn-danger btn-sm', cancelButton: 'btn btn-secondary btn-sm' },
                 buttonsStyling: false
@@ -1139,15 +1142,27 @@
             }
         });
 
-        // Debug: Función global para obtener info de sesión (solo en desarrollo)
-        window.obtenerInfoSesion = function() {
-            $.get('@Url.Action("InfoSesion", "Acceso")', function(data) {
-                console.log('Estado de sesión:', data);
-            });
-        };
     </script>
 
     <!-- Floating language pill — shown dynamically when topbar lang switcher is off-screen -->
+    @* A1: Token CSRF global — disponible para $.ajaxSetup y formularios inline *@
+    <div id="csrf-token-holder" style="display:none">@Html.AntiForgeryToken()</div>
+    <script>
+    // A1: Incluir token CSRF en TODOS los AJAX POST automáticamente
+    // (excepto FormData multipart que lo agrega manualmente)
+    $.ajaxSetup({
+        beforeSend: function (xhr, settings) {
+            if (settings.type && settings.type.toUpperCase() === 'POST' && settings.processData !== false) {
+                var token = $('#csrf-token-holder input[name="__RequestVerificationToken"]').val();
+                if (token) {
+                    settings.data = (settings.data ? settings.data + '&' : '') +
+                        '__RequestVerificationToken=' + encodeURIComponent(token);
+                }
+            }
+        }
+    });
+    </script>
+
     <div class="lang-float-pill">
         <i class="fas fa-globe lang-switcher-icon"></i>
         <div class="lang-switcher">

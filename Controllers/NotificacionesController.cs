@@ -1,4 +1,4 @@
-using bufinscustomers.Helpers;
+﻿using bufinscustomers.Helpers;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
 using System.Web.Mvc;
@@ -22,6 +22,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult MarcarLeida(int id)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
@@ -31,6 +32,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult MarcarTodasLeidas()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
@@ -40,6 +42,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult LimpiarTodas()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
@@ -49,6 +52,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult Eliminar(int id)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;

@@ -1,4 +1,4 @@
-@model bufinscustomers.Models.GestionOpcionesMenuViewModel
+﻿@model bufinscustomers.Models.GestionOpcionesMenuViewModel
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewBag.Title = Resources.Strings.Perm_PageTitle;
@@ -386,8 +386,8 @@
                 });
 
                 Swal.fire({
-                    title: '@Html.Raw(Resources.Strings.Perm_JS_Guardando.Replace("'", "\\'"))',
-                    text: '@Html.Raw(Resources.Strings.Perm_JS_Espere.Replace("'", "\\'"))',
+                    title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Perm_JS_Guardando)',
+                    text: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Perm_JS_Espere)',
                     allowOutsideClick: false,
                     allowEscapeKey: false,
                     didOpen: () => {
@@ -407,16 +407,16 @@
                         if (response.success) {
                             Swal.fire({
                                 icon: 'success',
-                                title: '@Html.Raw(Resources.Strings.Perm_JS_OpActualizadas.Replace("'", "\\'"))',
+                                title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Perm_JS_OpActualizadas)',
                                 text: response.message,
                                 showConfirmButton: true,
-                                confirmButtonText: '@Html.Raw(Resources.Strings.Common_Aceptar.Replace("'", "\\'"))',
+                                confirmButtonText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Aceptar)',
                                 confirmButtonColor: '#583AFF'
                             });
                         } else {
                             Swal.fire({
                                 icon: 'error',
-                                title: '@Html.Raw(Resources.Strings.Common_Error.Replace("'", "\\'"))',
+                                title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error)',
                                 text: response.message,
                                 showConfirmButton: true
                             });
@@ -425,8 +425,8 @@
                     error: function () {
                         Swal.fire({
                             icon: 'error',
-                            title: '@Html.Raw(Resources.Strings.Common_Error.Replace("'", "\\'"))',
-                            text: '@Html.Raw(Resources.Strings.Perm_JS_ErrorGuardar.Replace("'", "\\'"))',
+                            title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error)',
+                            text: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Perm_JS_ErrorGuardar)',
                             showConfirmButton: true
                         });
                     }
