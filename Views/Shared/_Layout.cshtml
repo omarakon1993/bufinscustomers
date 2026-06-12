@@ -1087,29 +1087,27 @@
 
         function notifMarcarTodas(ev) {
             if (ev) ev.stopPropagation();
-            $.post(_notifTodasUrl, function(r) { if (r.success) notifCargar(); });
+            var token = $('#csrf-token-holder input[name="__RequestVerificationToken"]').val();
+            $.post(_notifTodasUrl, { __RequestVerificationToken: token }, function(r) { if (r.success) notifCargar(); });
         }
 
         function notifLimpiarTodas(ev) {
             if (ev) ev.stopPropagation();
             Swal.fire({
-                title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Notif_LimpiarConfirmTitulo)',
-                text:  '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Notif_LimpiarConfirmTitulo)',
+                title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Notif_LimpiarConfirmTitulo))',
+                text:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Notif_LimpiarConfirmMsg))',
                 icon:  'warning',
                 showCancelButton: true,
-                confirmButtonText: '<i class="fas fa-trash-alt mr-1"></i> @HttpUtility.JavaScriptStringEncode(Resources.Strings.Notif_LimpiarConfirmBtn)',
-                cancelButtonText:  '<i class="fas fa-times mr-1"></i> @HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Close)',
+                confirmButtonText: '<i class="fas fa-trash-alt mr-1"></i> @Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Notif_LimpiarConfirmBtn))',
+                cancelButtonText:  '<i class="fas fa-times mr-1"></i> @Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Close))',
                 confirmButtonColor: '#dc2626',
                 customClass: { confirmButton: 'btn btn-danger btn-sm', cancelButton: 'btn btn-secondary btn-sm' },
                 buttonsStyling: false
             }).then(function(result) {
                 if (!result.isConfirmed) return;
-                $.post(_notifLimpiarUrl, function(r) {
-                    if (r.success) {
-                        document.getElementById('notifList').innerHTML = '';
-                        document.getElementById('notifVacio').style.display = '';
-                        document.getElementById('notifBadge').style.display = 'none';
-                    }
+                var token = $('#csrf-token-holder input[name="__RequestVerificationToken"]').val();
+                $.post(_notifLimpiarUrl, { __RequestVerificationToken: token }, function(r) {
+                    if (r.success) notifCargar();
                 });
             });
         }
@@ -1153,6 +1151,8 @@
     $.ajaxSetup({
         beforeSend: function (xhr, settings) {
             if (settings.type && settings.type.toUpperCase() === 'POST' && settings.processData !== false) {
+                var currentData = typeof settings.data === 'string' ? settings.data : '';
+                if (currentData.indexOf('__RequestVerificationToken') >= 0) return; // ya incluido, no duplicar
                 var token = $('#csrf-token-holder input[name="__RequestVerificationToken"]').val();
                 if (token) {
                     settings.data = (settings.data ? settings.data + '&' : '') +
