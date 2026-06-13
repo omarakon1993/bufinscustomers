@@ -134,7 +134,9 @@
       "PowerShell(cd \"C:\\\\Users\\\\omara\\\\OneDrive\\\\Omar Akon Personal\\\\Proyectos OAG\\\\Bufins Web\\\\Bufins principal web\\\\bufinscustomers\"; $bytes = [System.IO.File]::ReadAllBytes\\(\"Views\\\\Datos\\\\CargueExcel.cshtml\"\\); \"Primeros 4 bytes: $\\($bytes[0..3] -join ', '\\)\"; \"Total bytes: $\\($bytes.Length\\)\")",
       "PowerShell(Out-File *)",
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\omara\\\\OneDrive\\\\Omar Akon Personal\\\\Proyectos OAG\\\\Bufins Web\\\\Bufins principal web\\\\bufinscustomers\" -Recurse -Directory | Select-Object -First 50 | ForEach-Object { $_.FullName })",
-      "WebFetch(domain:win2-co.conexcol.net)"
+      "WebFetch(domain:win2-co.conexcol.net)",
+      "WebFetch(domain:www.bufins.com)",
+      "WebFetch(domain:bufins.com)"
     ],
     "deny": [],
     "ask": []
