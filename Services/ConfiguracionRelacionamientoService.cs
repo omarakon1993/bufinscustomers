@@ -176,15 +176,20 @@ namespace bufinscustomers.Services
                     // Ejecutar carga dentro de una transaccion
                     using (SqlTransaction transaction = cn.BeginTransaction())
                     {
+                        string tablaConError = null;
+                        DetalleCargaHoja detalleConError = null;
+
                         try
                         {
                             foreach (var (hoja, nombreTabla) in hojasValidas)
                             {
+                                tablaConError = nombreTabla;
                                 var detalle = new DetalleCargaHoja
                                 {
                                     NombreHoja = hoja.Name,
                                     NombreTabla = nombreTabla
                                 };
+                                detalleConError = detalle;
 
                                 // Obtener columnas de la tabla SQL
                                 var columnasSQL = ObtenerColumnasTablaTx(cn, transaction, nombreTabla);
@@ -286,9 +291,18 @@ namespace bufinscustomers.Services
                             try { transaction.Rollback(); } catch { }
 
                             resultado.Exito = false;
-                            resultado.Mensaje = $"Error durante la carga. Se revirtieron todos los cambios: {ex.Message}";
+                            string prefijo = tablaConError != null ? $" [Tabla: {tablaConError}]" : "";
+                            resultado.Mensaje = $"Error durante la carga. Se revirtieron todos los cambios:{prefijo} {ex.Message}";
 
-                            // Marcar hojas no procesadas aun
+                            // Registrar el detalle de la tabla que falló (si aún no estaba en la lista)
+                            if (detalleConError != null && !resultado.DetalleHojas.Contains(detalleConError))
+                            {
+                                detalleConError.Estado = "Error";
+                                detalleConError.MensajeError = ex.Message;
+                                resultado.DetalleHojas.Add(detalleConError);
+                            }
+
+                            // Marcar hojas ya procesadas como revertidas
                             foreach (var detalle in resultado.DetalleHojas.Where(d => d.Estado == "Exitoso"))
                             {
                                 detalle.Estado = "Revertido";
