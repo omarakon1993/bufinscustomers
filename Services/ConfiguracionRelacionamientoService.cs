@@ -514,7 +514,7 @@ namespace bufinscustomers.Services
 
             // 2. Cargar todos los datos en memoria con DataAdapter (evita conflictos de reader abierto)
             var dt = new DataTable();
-            using (SqlCommand cmd = new SqlCommand($"SELECT * FROM dbo.[{nombreTabla}]", cn))
+            using (SqlCommand cmd = new SqlCommand($"SELECT * FROM dbo.[{nombreTabla}] ORDER BY Id ASC", cn))
             using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
                 adapter.Fill(dt);
 
