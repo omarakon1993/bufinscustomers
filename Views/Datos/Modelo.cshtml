@@ -1,4 +1,4 @@
-﻿@model bufinscustomers.Models.ModeloPageViewModel
+@model bufinscustomers.Models.ModeloPageViewModel
 @using bufinscustomers.Helpers
 @{
     ViewBag.Title = Resources.Strings.Modelo_PageTitle;
@@ -8,8 +8,50 @@
     var idEmpresaUsuario = usuario?.IdEmpresa ?? 0;
 }
 
-<link href="~/Assets/css/informe-relacionamientos.css" rel="stylesheet" />
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
 
+<style>
+    .btn-export-all {
+        position: relative;
+        overflow: hidden;
+        color: #fff !important;
+        border: none;
+        background: linear-gradient(110deg, #059669 0%, #10b981 40%, #34d399 60%, #10b981 80%, #059669 100%);
+        background-size: 300% 100%;
+        padding: 0.375rem 0.85rem;
+        border-radius: 0.45rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        transition: box-shadow 0.25s ease;
+        animation: exportShine 4s linear infinite;
+    }
+    .btn-export-all:disabled {
+        background: #9ca3af !important;
+        animation: none !important;
+        cursor: not-allowed;
+        box-shadow: none !important;
+        opacity: 0.7;
+    }
+    .btn-export-all:not(:disabled):hover {
+        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.45);
+        animation: exportShine 1.8s linear infinite;
+    }
+    .btn-export-all:not(:disabled):hover .ico-export {
+        transform: translateY(-2px) scale(1.15);
+    }
+    .ico-export {
+        transition: transform 0.25s ease;
+        display: inline-block;
+    }
+    @@keyframes exportShine {
+        0%   { background-position: 100% 0; }
+        100% { background-position: -200% 0; }
+    }
+</style>
+
+@Html.AntiForgeryToken()
 
 <div class="container-fluid px-4">
 
@@ -21,103 +63,137 @@
         </div>
     </div>
 
-
-    <!-- Card principal -->
+    <!-- Filter card -->
     <div class="filter-card">
         <h3 class="filter-card-title">
             <i class="fas fa-play-circle"></i>
-            @Resources.Strings.Modelo_CardTitle
+            @Resources.Strings.Modelo_CardTitleFiltros
         </h3>
+        <div class="filter-section">
+            <div class="row g-3">
 
-        <form id="modeloForm" method="post" action="@Url.Action("EjecutarModelo", "Datos")">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="idModelo" id="idModelo" value="" />
-
-            <div class="filter-section">
-                <div class="row g-3">
-
-                    <!-- Empresa -->
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="idEmpresa">
-                                <i class="fas fa-building"></i>
-                                @Resources.Strings.Modelo_LabelEmpresa <span class="required">*</span>
-                            </label>
-                            <select class="form-control" id="idEmpresa" name="idEmpresa" required>
-                                <option value="">@Resources.Strings.Modelo_SelectEmpresa</option>
-                                @if (esAdmin)
+                <!-- Empresa -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="idEmpresa">
+                            <i class="fas fa-building mr-1"></i>
+                            @Resources.Strings.Modelo_LabelEmpresa <span class="required">*</span>
+                        </label>
+                        <select class="form-control" id="idEmpresa">
+                            <option value="">@Resources.Strings.Modelo_SelectEmpresa</option>
+                            @if (esAdmin)
+                            {
+                                foreach (var empresa in Model.Empresas)
                                 {
-                                    foreach (var empresa in Model.Empresas)
-                                    {
-                                        <option value="@empresa.Id">@empresa.Nombre</option>
-                                    }
+                                    <option value="@empresa.Id" data-nombre="@empresa.Nombre">@empresa.Nombre</option>
                                 }
-                                else
+                            }
+                            else
+                            {
+                                var emp = Model.Empresas.FirstOrDefault(e => e.Id == idEmpresaUsuario);
+                                if (emp != null)
                                 {
-                                    var emp = Model.Empresas.FirstOrDefault(e => e.Id == idEmpresaUsuario);
-                                    if (emp != null)
-                                    {
-                                        <option value="@emp.Id">@emp.Nombre</option>
-                                    }
+                                    <option value="@emp.Id" data-nombre="@emp.Nombre">@emp.Nombre</option>
                                 }
-                            </select>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Modelo -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="selectModelo">
+                            <i class="fas fa-cog mr-1"></i>
+                            @Resources.Strings.Modelo_LabelModelo <span class="required">*</span>
+                        </label>
+                        <select class="form-control" id="selectModelo">
+                            <option value="">@Resources.Strings.Modelo_SelectModelo</option>
+                            @foreach (var m in Model.Modelos)
+                            {
+                                <option value="@m.Id"
+                                        data-descripcion="@(m.Descripcion ?? "")"
+                                        data-icono="@(m.Icono ?? "fas fa-cog")"
+                                        data-nombre="@m.Nombre">
+                                    @m.Nombre
+                                </option>
+                            }
+                        </select>
+                        <div id="modeloInfoPanel" style="display:none;margin-top:6px;padding:8px 12px;background:#f0f0ff;border-radius:8px;border-left:3px solid #6366F1;font-size:0.85rem;color:#4b5563;">
+                            <i id="modeloIcono" class="fas fa-cog mr-1" style="color:#6366F1;"></i>
+                            <span id="modeloDescripcion"></span>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Año -->
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="anio">
-                                <i class="fas fa-calendar-alt"></i>
-                                @Resources.Strings.Modelo_LabelAnio <span class="required">*</span>
-                            </label>
-                            <select class="form-control" id="anio" name="anio" required disabled>
-                                <option value="">@Resources.Strings.Modelo_SelectEmpresaPrimero</option>
-                            </select>
-                        </div>
-                    </div>
+            </div>
+        </div>
 
-                    <!-- Modelo -->
-                    <div class="col-md-8">
-                        <div class="form-group">
-                            <label for="selectModelo">
-                                <i class="fas fa-cog"></i>
-                                @Resources.Strings.Modelo_LabelModelo <span class="required">*</span>
-                            </label>
-                            <select class="form-control" id="selectModelo" required>
-                                <option value="">@Resources.Strings.Modelo_SelectModelo</option>
-                                @foreach (var m in Model.Modelos)
-                                {
-                                    <option value="@m.Id"
-                                            data-descripcion="@(m.Descripcion ?? "")"
-                                            data-icono="@(m.Icono ?? "fas fa-cog")">
-                                        @m.Nombre
-                                    </option>
-                                }
-                            </select>
-                            <!-- Panel informativo dinámico -->
-                            <div id="modeloInfoPanel" class="modelo-info-panel">
-                                <i id="modeloIcono" class="fas fa-cog"></i>
-                                <span id="modeloDescripcion"></span>
-                            </div>
-                        </div>
-                    </div>
+        <div class="btn-group-actions">
+            <button type="button" id="btnEjecutar" class="btn btn-modern-gradient" disabled onclick="ejecutarModelo()">
+                <i class="fas fa-play mr-1"></i>
+                <span id="btnTexto">@Resources.Strings.Modelo_BtnEjecutar</span>
+            </button>
+            <button type="button" id="btnExportarTodos" class="btn btn-export-all" disabled onclick="exportarExcel('todos')" title="@Resources.Strings.Modelo_BtnExportTooltip">
+                <span class="ico-export"><i class="fas fa-layer-group mr-1"></i></span>
+                @Resources.Strings.Modelo_BtnExportarTodos
+            </button>
+            <small class="text-muted" id="textoAyuda">
+                <i class="fas fa-info-circle" style="color:#6366F1;"></i>
+                @Resources.Strings.Modelo_HintCompletar
+            </small>
+        </div>
+    </div>
 
+    <!-- Loading (ejecución AJAX) -->
+    <div id="loadingEjecucion" style="display:none;text-align:center;padding:2.5rem;">
+        <div class="spinner-border text-primary" style="width:3rem;height:3rem;" role="status"></div>
+        <p class="mt-3 text-muted fw-semibold">@Resources.Strings.Modelo_JS_Ejecutando</p>
+    </div>
+
+    <!-- Overlay exportación (fetch/blob) -->
+    <div id="overlayExportacion" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;justify-content:center;align-items:center;">
+        <div style="background:#fff;border-radius:16px;padding:2.5rem 3rem;text-align:center;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+            <div class="spinner-border text-primary mb-3" style="width:3rem;height:3rem;" role="status"></div>
+            <h5 id="overlayTitulo" style="font-weight:700;color:#1e293b;">@Resources.Strings.Modelo_JS_ExportandoTodos</h5>
+            <p class="text-muted mb-0" id="overlayTimerTexto">0s</p>
+        </div>
+    </div>
+
+    <!-- Resultados del modelo individual -->
+    <div id="resultadosSection" style="display:none;">
+        <div class="table-container">
+            <div class="table-header">
+                <h5>
+                    <i id="resultadosIcono" class="fas fa-table mr-2"></i>
+                    <span id="resultadosTitulo">@Resources.Strings.Modelo_Resultados</span>
+                </h5>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="info-badge" id="resultadosContador">0 @Resources.Strings.Modelo_Registros</span>
+                    <button type="button" id="btnExportarModelo" class="btn btn-sm btn-success" onclick="exportarExcel('individual')" title="@Resources.Strings.Modelo_BtnExportarModelo">
+                        <i class="fas fa-file-excel mr-1"></i>
+                        @Resources.Strings.Modelo_BtnExportarModelo
+                    </button>
                 </div>
             </div>
-
-            <!-- Botón -->
-            <div class="d-flex align-items-center gap-3 mt-2">
-                <button type="submit" id="btnEjecutar" class="btn-modern-gradient" disabled>
-                    <i class="fas fa-play me-2"></i>
-                    <span id="btnTexto">@Resources.Strings.Modelo_BtnEjecutar</span>
-                </button>
-                <small class="text-muted" id="textoAyuda">
-                    <i class="fas fa-info-circle" style="color:#6366F1;"></i>
-                    @Resources.Strings.Modelo_HintCompletar
-                </small>
+            <div class="table-wrapper" style="max-height:520px;overflow:auto;">
+                <table class="data-table">
+                    <thead id="resultadosThead"></thead>
+                    <tbody id="resultadosTbody"></tbody>
+                </table>
             </div>
-        </form>
+            <!-- Paginación -->
+            <div class="pagination-controls" id="paginacionControls" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- Estado vacío -->
+    <div id="noResultados" style="display:none;">
+        <div class="no-data-message">
+            <i class="fas fa-inbox"></i>
+            <h4>@Resources.Strings.Modelo_NoResultados</h4>
+            <p>@Resources.Strings.Modelo_NoResultadosDesc</p>
+        </div>
     </div>
 
 </div>
@@ -125,148 +201,255 @@
 @section scripts {
 
 <script>
-    var _modeloMsg = {
-        selectEmpresaPrimero: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_SelectEmpresaPrimero)',
-        cargando: '@Resources.Strings.Modelo_JS_Cargando',
-        sinAnio: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_SelectEmpresaPrimero)',
-        errorAnio: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_SelectEmpresaPrimero)',
-        ejecutando: '@Resources.Strings.Modelo_JS_Ejecutando'
+    var _modelo = {
+        urlEjecutar:          '@Url.Action("EjecutarModeloAjax",       "Datos")',
+        urlExportarTodos:     '@Url.Action("ExportarTodosModelos",     "Datos")',
+        urlExportarIndividual:'@Url.Action("ExportarModeloIndividual", "Datos")',
+        token: $('input[name="__RequestVerificationToken"]').val(),
+        textos: {
+            ejecutando:       '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_Ejecutando)',
+            exportandoTodos:  '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_ExportandoTodos)',
+            exportandoUno:    '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_BtnExportarModelo)',
+            registros:        '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Registros)',
+            btnEjecutar:      '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_BtnEjecutar)',
+            exito:            '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Exito)',
+            error:            '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error)',
+            aceptar:          '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Aceptar)'
+        }
     };
-    var _commonMsg = {
-        exito: '@Resources.Strings.Common_Exito',
-        error: '@Resources.Strings.Common_Error',
-        informacion: '@Resources.Strings.Common_Informacion',
-        aceptar: '@Resources.Strings.Common_Aceptar'
+
+    // ── Estado de paginación ──────────────────────────────────────────────
+    var _pag = {
+        filas:      [],
+        columnas:   [],
+        pagina:     1,
+        porPagina:  50,
+        idModelo:   null,
+        idEmpresa:  null
     };
+
+    $(function () {
+
+        $('#idEmpresa, #selectModelo').on('change', actualizarBotones);
+
+        $('#selectModelo').on('change', function () {
+            var $opt = $(this).find(':selected');
+            var val  = $(this).val();
+            var desc = $opt.data('descripcion');
+            var ico  = $opt.data('icono') || 'fas fa-cog';
+            if (val && desc) {
+                $('#modeloIcono').attr('class', ico + ' mr-1').css('color', '#6366F1');
+                $('#modeloDescripcion').text(desc);
+                $('#modeloInfoPanel').show();
+            } else {
+                $('#modeloInfoPanel').hide();
+            }
+        });
+
+        function actualizarBotones() {
+            var tieneEmpresa = !!$('#idEmpresa').val();
+            var ok = tieneEmpresa && !!$('#selectModelo').val();
+            $('#btnEjecutar').prop('disabled', !ok);
+            $('#btnExportarTodos').prop('disabled', !tieneEmpresa);
+            $('#textoAyuda').toggle(!ok);
+        }
+
+        if ($('#idEmpresa option').length === 2)
+            $('#idEmpresa option:last').prop('selected', true).trigger('change');
+    });
+
+    // ── Ejecutar modelo individual (AJAX) ─────────────────────────────────
+    function ejecutarModelo() {
+        var idEmpresa = $('#idEmpresa').val();
+        var idModelo  = $('#selectModelo').val();
+        var nomModelo = $('#selectModelo option:selected').data('nombre') || '';
+        var icoModelo = $('#selectModelo option:selected').data('icono') || 'fas fa-table';
+
+        $('#resultadosSection').hide();
+        $('#noResultados').hide();
+        $('#loadingEjecucion').show();
+        $('#btnEjecutar').prop('disabled', true);
+        $('#btnTexto').text(_modelo.textos.ejecutando);
+
+        $.ajax({
+            url:  _modelo.urlEjecutar,
+            type: 'POST',
+            data: {
+                __RequestVerificationToken: _modelo.token,
+                idEmpresa: idEmpresa,
+                idModelo:  idModelo
+            },
+            success: function (resp) {
+                $('#loadingEjecucion').hide();
+                $('#btnEjecutar').prop('disabled', false);
+                $('#btnTexto').text(_modelo.textos.btnEjecutar);
+
+                if (!resp.exito) {
+                    Swal.fire({ icon: 'error', title: _modelo.textos.error, text: resp.mensaje,
+                                confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#6366F1' });
+                    return;
+                }
+
+                if (!resp.columnas || resp.columnas.length === 0 || !resp.filas || resp.filas.length === 0) {
+                    $('#noResultados').show();
+                    return;
+                }
+
+                // Guardar estado de paginación
+                _pag.filas     = resp.filas;
+                _pag.columnas  = resp.columnas;
+                _pag.pagina    = 1;
+                _pag.idModelo  = idModelo;
+                _pag.idEmpresa = idEmpresa;
+
+                // Header de la tabla
+                var thead = '<tr>';
+                for (var i = 0; i < resp.columnas.length; i++)
+                    thead += '<th>' + $('<span>').text(resp.columnas[i]).html() + '</th>';
+                thead += '</tr>';
+                $('#resultadosThead').html(thead);
+
+                // Información del encabezado de la sección
+                $('#resultadosIcono').attr('class', icoModelo + ' mr-2');
+                $('#resultadosTitulo').text(nomModelo);
+                $('#resultadosContador').text(resp.filas.length + ' ' + _modelo.textos.registros);
+
+                renderPagina(1);
+                $('#resultadosSection').show();
+                $('html, body').animate({ scrollTop: $('#resultadosSection').offset().top - 20 }, 400);
+            },
+            error: function () {
+                $('#loadingEjecucion').hide();
+                $('#btnEjecutar').prop('disabled', false);
+                $('#btnTexto').text(_modelo.textos.btnEjecutar);
+                Swal.fire({ icon: 'error', title: _modelo.textos.error,
+                            text: 'Error de conexión al ejecutar el modelo.',
+                            confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#6366F1' });
+            }
+        });
+    }
+
+    // ── Paginación ────────────────────────────────────────────────────────
+    function renderPagina(pagina) {
+        _pag.pagina = pagina;
+        var inicio  = (pagina - 1) * _pag.porPagina;
+        var fin     = Math.min(inicio + _pag.porPagina, _pag.filas.length);
+        var slice   = _pag.filas.slice(inicio, fin);
+
+        var tbody = '';
+        for (var r = 0; r < slice.length; r++) {
+            tbody += '<tr>';
+            for (var c = 0; c < slice[r].length; c++)
+                tbody += '<td>' + $('<span>').text(slice[r][c]).html() + '</td>';
+            tbody += '</tr>';
+        }
+        $('#resultadosTbody').html(tbody);
+
+        actualizarPaginacion();
+    }
+
+    function actualizarPaginacion() {
+        var total  = Math.ceil(_pag.filas.length / _pag.porPagina);
+        var actual = _pag.pagina;
+        var $ctrl  = $('#paginacionControls');
+
+        if (total <= 1) { $ctrl.hide(); return; }
+
+        var ini = Math.max(1, actual - 2);
+        var fin = Math.min(total, ini + 4);
+        ini = Math.max(1, fin - 4);
+
+        var html = '';
+        html += '<button class="btn-pagination' + (actual === 1 ? ' disabled' : '') + '" ' +
+                (actual === 1 ? 'disabled' : 'onclick="renderPagina(' + (actual - 1) + ')"') + '>' +
+                '<i class="fas fa-chevron-left"></i></button>';
+
+        for (var p = ini; p <= fin; p++) {
+            html += '<button class="btn-pagination' + (p === actual ? ' active' : '') +
+                    '" onclick="renderPagina(' + p + ')">' + p + '</button>';
+        }
+
+        html += '<button class="btn-pagination' + (actual === total ? ' disabled' : '') + '" ' +
+                (actual === total ? 'disabled' : 'onclick="renderPagina(' + (actual + 1) + ')"') + '>' +
+                '<i class="fas fa-chevron-right"></i></button>';
+
+        $ctrl.html(html).show();
+    }
+
+    // ── Exportar (todos los modelos O el modelo individual) ───────────────
+    function exportarExcel(modo) {
+        var idEmpresa = $('#idEmpresa').val();
+        if (!idEmpresa) return;
+
+        var url, titulo;
+        if (modo === 'todos') {
+            url    = _modelo.urlExportarTodos + '?idEmpresa=' + idEmpresa;
+            titulo = _modelo.textos.exportandoTodos;
+        } else {
+            if (!_pag.idModelo) return;
+            url    = _modelo.urlExportarIndividual + '?idEmpresa=' + idEmpresa + '&idModelo=' + _pag.idModelo;
+            titulo = _modelo.textos.exportandoUno;
+        }
+
+        document.getElementById('overlayTitulo').textContent = titulo;
+
+        var overlay  = document.getElementById('overlayExportacion');
+        overlay.style.display = 'flex';
+        var segundos = 0;
+        var timer = setInterval(function () {
+            segundos++;
+            document.getElementById('overlayTimerTexto').textContent = segundos + 's';
+        }, 1000);
+
+        var filename = 'Modelos.xlsx';
+        fetch(url)
+            .then(function (response) {
+                if (!response.ok) throw new Error('Error en la respuesta del servidor.');
+                var cd    = response.headers.get('Content-Disposition') || '';
+                var match = cd.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                if (match) filename = match[1].replace(/['"]/g, '');
+                return response.blob();
+            })
+            .then(function (blob) {
+                var url = window.URL.createObjectURL(blob);
+                var a   = document.createElement('a');
+                a.href  = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(function (err) {
+                Swal.fire({ icon: 'error', title: _modelo.textos.error, text: err.message,
+                            confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#6366F1' });
+            })
+            .finally(function () {
+                clearInterval(timer);
+                overlay.style.display = 'none';
+            });
+    }
 </script>
 
 @if (TempData["SuccessMessage"] != null)
 {
     <script>
-        Swal.fire({
-            icon: 'success',
-            title: _commonMsg.exito,
-            text: '@Html.Raw(TempData["SuccessMessage"].ToString().Replace("'", "\\'"))',
-            confirmButtonText: _commonMsg.aceptar,
-            confirmButtonColor: '#6366F1',
-            allowOutsideClick: false
-        }).then(function () {
-            location.reload();
+        $(function () {
+            Swal.fire({ icon: 'success', title: _modelo.textos.exito,
+                        text: '@Html.Raw(TempData["SuccessMessage"].ToString().Replace("'", "\\'"))',
+                        confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#6366F1' });
         });
     </script>
 }
 @if (TempData["ErrorMessage"] != null)
 {
     <script>
-        Swal.fire({
-            icon: 'error',
-            title: _commonMsg.error,
-            text: '@Html.Raw(TempData["ErrorMessage"].ToString().Replace("'", "\\'"))',
-            confirmButtonText: _commonMsg.aceptar,
-            confirmButtonColor: '#6366F1',
-            allowOutsideClick: false
-        }).then(function () {
-            location.reload();
-        });
-    </script>
-}
-@if (TempData["InfoMessage"] != null)
-{
-    <script>
-        Swal.fire({
-            icon: 'info',
-            title: _commonMsg.informacion,
-            text: '@Html.Raw(TempData["InfoMessage"].ToString().Replace("'", "\\'"))',
-            confirmButtonText: _commonMsg.aceptar,
-            confirmButtonColor: '#6366F1',
-            allowOutsideClick: false
-        }).then(function () {
-            location.reload();
+        $(function () {
+            Swal.fire({ icon: 'error', title: _modelo.textos.error,
+                        text: '@Html.Raw(TempData["ErrorMessage"].ToString().Replace("'", "\\'"))',
+                        confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#6366F1' });
         });
     </script>
 }
 
-<script>
-    $(function () {
-
-        // ── Cargar año al cambiar empresa ───────────────────────────────
-        $('#idEmpresa').on('change', function () {
-            var idEmpresa = $(this).val();
-            var $anio = $('#anio');
-
-            if (!idEmpresa) {
-                $anio.html('<option value="">' + _modeloMsg.selectEmpresaPrimero + '</option>');
-                $anio.prop('disabled', true);
-                actualizarBoton();
-                return;
-            }
-
-            $anio.html('<option value="">' + _modeloMsg.cargando + '</option>');
-            $anio.prop('disabled', true);
-
-            $.ajax({
-                url: '/Datos/ObtenerAnioEjecucion',
-                type: 'GET',
-                data: { idEmpresa: idEmpresa },
-                success: function (response) {
-                    if (response.success) {
-                        $anio.html('<option value="' + response.anioEjecucion + '" selected>' + response.anioEjecucion + '</option>');
-                        $anio.prop('disabled', false);
-                    } else {
-                        $anio.html('<option value="">' + (response.message || _modeloMsg.sinAnio) + '</option>');
-                        $anio.prop('disabled', true);
-                    }
-                    actualizarBoton();
-                },
-                error: function () {
-                    $anio.html('<option value="">' + _modeloMsg.errorAnio + '</option>');
-                    $anio.prop('disabled', true);
-                    actualizarBoton();
-                }
-            });
-        });
-
-        $('#anio').on('change', actualizarBoton);
-
-        // ── Actualizar panel descripción al cambiar modelo ───────────────
-        $('#selectModelo').on('change', function () {
-            var $opt = $(this).find(':selected');
-            var val = $(this).val();
-            var desc = $opt.data('descripcion');
-            var icono = $opt.data('icono') || 'fas fa-cog';
-
-            $('#idModelo').val(val);
-
-            var $panel = $('#modeloInfoPanel');
-            if (val && desc) {
-                $('#modeloIcono').attr('class', icono);
-                $('#modeloDescripcion').text(desc);
-                $panel.addClass('visible');
-            } else {
-                $panel.removeClass('visible');
-            }
-
-            actualizarBoton();
-        });
-
-        // ── Habilitar/deshabilitar botón ─────────────────────────────────
-        function actualizarBoton() {
-            var ok = $('#idEmpresa').val() && $('#anio').val() && $('#selectModelo').val();
-            var $btn = $('#btnEjecutar');
-            var $ayuda = $('#textoAyuda');
-            $btn.prop('disabled', !ok);
-            $ayuda.toggle(!ok);
-        }
-
-        // ── Loading state al hacer submit ────────────────────────────────
-        $('#modeloForm').on('submit', function () {
-            if (!$('#idModelo').val()) return false;
-
-            var $btn = $('#btnEjecutar');
-            $btn.prop('disabled', true);
-            $('#btnTexto').text(_modeloMsg.ejecutando);
-            $btn.find('i').attr('class', 'spinner-border spinner-border-sm me-2');
-        });
-    });
-</script>
 }

@@ -3,6 +3,7 @@ using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
 using OfficeOpenXml;
+using OfficeOpenXml.Table;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -10,6 +11,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Mvc;
 namespace bufinscustomers.Controllers
@@ -227,6 +229,360 @@ namespace bufinscustomers.Controllers
             }
 
             return RedirectToAction("Modelo");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult EjecutarModeloAjax(int idEmpresa, int idModelo)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (usuario == null)
+                return Json(new { exito = false, mensaje = "Sesión no válida.", columnas = new List<string>(), filas = new List<List<string>>() });
+
+            if (!UsuarioSesionHelper.EsSuperAdmin() && usuario.IdEmpresa != idEmpresa)
+                return Json(new { exito = false, mensaje = "No tiene permisos para ejecutar el modelo en esta empresa.", columnas = new List<string>(), filas = new List<List<string>>() });
+
+            var modelo = _modeloService.ObtenerModeloPorId(idModelo);
+            if (modelo == null)
+                return Json(new { exito = false, mensaje = "El modelo seleccionado no existe o no está activo.", columnas = new List<string>(), filas = new List<List<string>>() });
+
+            try
+            {
+                using (SqlConnection cn = new SqlConnection(CadenaConexion))
+                using (SqlCommand cmd = new SqlCommand(modelo.NombreSP, cn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                    cmd.Parameters.AddWithValue("@IdUsuario", usuario.Id);
+                    cmd.CommandTimeout = 300;
+                    cn.Open();
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        int codMessage = 1;
+                        string mensajeResp = "Ejecutado correctamente.";
+                        var lastCols = new List<string>();
+                        var lastFilas = new List<List<string>>();
+
+                        do
+                        {
+                            int fieldCount = reader.FieldCount;
+                            var cols = new List<string>();
+                            for (int i = 0; i < fieldCount; i++)
+                                cols.Add(reader.GetName(i));
+
+                            bool esStatus = cols.Contains("CodMessage");
+                            var filas = new List<List<string>>();
+
+                            while (reader.Read())
+                            {
+                                if (esStatus)
+                                {
+                                    try { codMessage = Convert.ToInt32(reader["CodMessage"]); } catch { }
+                                    try { var m = reader["ErrorMessage"]; if (m != DBNull.Value) mensajeResp = m.ToString(); } catch { }
+                                }
+                                else
+                                {
+                                    var fila = new List<string>();
+                                    for (int i = 0; i < fieldCount; i++)
+                                        fila.Add(reader.IsDBNull(i) ? "" : reader.GetValue(i).ToString());
+                                    filas.Add(fila);
+                                }
+                            }
+
+                            if (!esStatus && cols.Count > 0)
+                            {
+                                lastCols = cols;
+                                lastFilas = filas;
+                            }
+                        } while (reader.NextResult());
+
+                        if (codMessage == 1)
+                            new NotificacionesService().Crear(usuario.Id, R("Notif_ModeloEjecutado"), mensajeResp, "success");
+                        else
+                            new NotificacionesService().Crear(usuario.Id, R("Notif_ErrorModelo"), mensajeResp, "error");
+
+                        return Json(new { exito = codMessage == 1, mensaje = mensajeResp, columnas = lastCols, filas = lastFilas });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { exito = false, mensaje = "Error al ejecutar el modelo: " + ex.Message, columnas = new List<string>(), filas = new List<List<string>>() });
+            }
+        }
+
+        public ActionResult ExportarTodosModelos(int idEmpresa)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (usuario == null)
+                return RedirectToAction("Login", "Acceso");
+
+            if (!UsuarioSesionHelper.EsSuperAdmin() && usuario.IdEmpresa != idEmpresa)
+            {
+                SetErrorMessage("No tiene permisos para exportar datos de esta empresa.");
+                return RedirectToAction("Modelo");
+            }
+
+            try
+            {
+                var empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+                var modelos = _modeloService.ObtenerModelosActivos();
+
+                using (var package = new ExcelPackage())
+                {
+                    EscribirHojaIndiceModelos(package.Workbook.Worksheets.Add("Índice"), empresa, modelos, DateTime.Now);
+
+                    using (SqlConnection cn = new SqlConnection(CadenaConexion))
+                    {
+                        cn.Open();
+                        foreach (var modelo in modelos)
+                        {
+                            string sheetName = modelo.NombreSP.StartsWith("sp_", StringComparison.OrdinalIgnoreCase)
+                                ? modelo.NombreSP.Substring(3)
+                                : modelo.NombreSP;
+                            if (sheetName.Length > 31) sheetName = sheetName.Substring(0, 31);
+
+                            var ws = package.Workbook.Worksheets.Add(sheetName);
+                            try
+                            {
+                                EjecutarModeloYEscribirHoja(cn, ws, modelo, idEmpresa, usuario.Id);
+                            }
+                            catch (Exception exModelo)
+                            {
+                                ws.Cells[1, 1].Value = "Error al ejecutar el modelo";
+                                ws.Cells[2, 1].Value = exModelo.Message;
+                                ws.Column(1).Width = 60;
+                            }
+                        }
+                    }
+
+                    byte[] fileBytes = package.GetAsByteArray();
+                    string empId = !string.IsNullOrWhiteSpace(empresa?.Abreviatura)
+                        ? empresa.Abreviatura
+                        : (empresa?.Nombre ?? "Empresa").Replace(" ", "_");
+                    string fileName = $"Modelos_{empId}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx";
+                    return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+                }
+            }
+            catch (Exception ex)
+            {
+                SetErrorMessage("Error al exportar los modelos: " + ex.Message);
+                return RedirectToAction("Modelo");
+            }
+        }
+
+        private void EscribirHojaIndiceModelos(ExcelWorksheet ws, Empresas empresa, List<ModeloEjecucion> modelos, DateTime fechaExportacion)
+        {
+            ws.Cells[1, 1].Value = "EXPORTACIÓN DE MODELOS FINANCIEROS";
+            ws.Cells[1, 1, 1, 4].Merge = true;
+            ws.Cells[1, 1].Style.Font.Bold = true;
+            ws.Cells[1, 1].Style.Font.Size = 14;
+            ws.Cells[1, 1].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+            ws.Cells[1, 1].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+            ws.Cells[1, 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(99, 102, 241));
+            ws.Cells[1, 1].Style.Font.Color.SetColor(System.Drawing.Color.White);
+
+            int row = 3;
+            Action<string, string> writeInfo = (label, value) =>
+            {
+                ws.Cells[row, 1].Value = label;
+                ws.Cells[row, 1].Style.Font.Bold = true;
+                ws.Cells[row, 2].Value = value;
+                ws.Cells[row, 2, row, 4].Merge = true;
+                row++;
+            };
+
+            writeInfo("Empresa:", empresa?.Nombre ?? "—");
+            writeInfo("NIT:", empresa?.Nit ?? "—");
+            writeInfo("Dirección:", empresa?.Direccion ?? "—");
+            writeInfo("Fecha de exportación:", fechaExportacion.ToString("dd/MM/yyyy HH:mm:ss"));
+            writeInfo("Total modelos:", modelos.Count.ToString());
+
+            row++;
+            ws.Cells[row, 1].Value = "#";
+            ws.Cells[row, 2].Value = "Modelo";
+            ws.Cells[row, 3].Value = "Procedimiento";
+            ws.Cells[row, 4].Value = "Descripción";
+            var hdrRange = ws.Cells[row, 1, row, 4];
+            hdrRange.Style.Font.Bold = true;
+            hdrRange.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+            hdrRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(230, 230, 250));
+            row++;
+
+            foreach (var m in modelos)
+            {
+                ws.Cells[row, 1].Value = m.Orden;
+                ws.Cells[row, 2].Value = m.Nombre;
+                ws.Cells[row, 3].Value = m.NombreSP;
+                ws.Cells[row, 4].Value = m.Descripcion;
+                row++;
+            }
+
+            ws.Column(1).Width = 6;
+            ws.Column(2).Width = 28;
+            ws.Column(3).Width = 32;
+            ws.Column(4).Width = 42;
+        }
+
+        private static readonly HashSet<string> _moneyColNames =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Valor", "ValorAcumulado", "ValorFuturo" };
+
+        private void EjecutarModeloYEscribirHoja(SqlConnection cn, ExcelWorksheet ws, ModeloEjecucion modelo, int idEmpresa, int idUsuario)
+        {
+            using (var cmd = new SqlCommand(modelo.NombreSP, cn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
+                cmd.CommandTimeout = 180;
+
+                using (var reader = cmd.ExecuteReader())
+                {
+                    List<string> lastCols      = null;
+                    List<bool>   lastIsMoney   = null;
+                    List<List<object>> lastData = null;
+
+                    do
+                    {
+                        int fieldCount = reader.FieldCount;
+                        var cols = new List<string>();
+                        for (int i = 0; i < fieldCount; i++)
+                            cols.Add(reader.GetName(i));
+
+                        bool esStatus = cols.Contains("CodMessage");
+
+                        if (!esStatus && fieldCount > 0)
+                        {
+                            // Marca qué columnas son dinero — se decide una sola vez por result set
+                            var isMoney = cols.Select(c => _moneyColNames.Contains(c)).ToList();
+                            var data    = new List<List<object>>();
+
+                            while (reader.Read())
+                            {
+                                var row = new List<object>();
+                                for (int i = 0; i < fieldCount; i++)
+                                {
+                                    if (reader.IsDBNull(i))
+                                    {
+                                        row.Add(null);
+                                    }
+                                    else if (isMoney[i])
+                                    {
+                                        // Lee el valor nativo del reader — SIN pasar por string.
+                                        // Convert.ToDecimal maneja money, decimal, float, int, etc.
+                                        try   { row.Add(Convert.ToDecimal(reader.GetValue(i))); }
+                                        catch { row.Add(reader.GetValue(i).ToString()); }
+                                    }
+                                    else
+                                    {
+                                        row.Add(reader.GetValue(i).ToString());
+                                    }
+                                }
+                                data.Add(row);
+                            }
+
+                            lastCols    = cols;
+                            lastIsMoney = isMoney;
+                            lastData    = data;
+                        }
+                        else
+                        {
+                            while (reader.Read()) { }
+                        }
+                    } while (reader.NextResult());
+
+                    if (lastCols == null || lastData == null) return;
+
+                    // Headers
+                    for (int c = 0; c < lastCols.Count; c++)
+                        ws.Cells[1, c + 1].Value = lastCols[c];
+
+                    var headerRange = ws.Cells[1, 1, 1, lastCols.Count];
+                    headerRange.Style.Font.Bold = true;
+                    headerRange.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                    headerRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(99, 102, 241));
+                    headerRange.Style.Font.Color.SetColor(System.Drawing.Color.White);
+
+                    // Data — EPPlus escribe decimal como número real, string como texto
+                    for (int r = 0; r < lastData.Count; r++)
+                        for (int c = 0; c < lastData[r].Count; c++)
+                            ws.Cells[r + 2, c + 1].Value = lastData[r][c];
+
+                    // Formatos por rango de columna completa (una operación por columna)
+                    if (lastData.Count > 0)
+                    {
+                        for (int c = 0; c < lastCols.Count; c++)
+                        {
+                            string fmt = lastIsMoney[c] ? "#,##0.00" : "@";
+                            ws.Cells[2, c + 1, lastData.Count + 1, c + 1].Style.Numberformat.Format = fmt;
+                        }
+
+                        string safeName = "tbl_" + Regex.Replace(ws.Name, "[^A-Za-z0-9]", "_");
+                        var tbl = ws.Tables.Add(ws.Cells[1, 1, lastData.Count + 1, lastCols.Count], safeName);
+                        tbl.TableStyle = TableStyles.Medium2;
+                    }
+
+                    ws.View.FreezePanes(2, 1);
+                    for (int c = 1; c <= lastCols.Count; c++)
+                        ws.Column(c).Width = 22;
+                }
+            }
+        }
+
+        public ActionResult ExportarModeloIndividual(int idEmpresa, int idModelo)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (usuario == null)
+                return RedirectToAction("Login", "Acceso");
+
+            if (!UsuarioSesionHelper.EsSuperAdmin() && usuario.IdEmpresa != idEmpresa)
+            {
+                SetErrorMessage("No tiene permisos para exportar datos de esta empresa.");
+                return RedirectToAction("Modelo");
+            }
+
+            var modelo = _modeloService.ObtenerModeloPorId(idModelo);
+            if (modelo == null)
+            {
+                SetErrorMessage("El modelo seleccionado no existe o no está activo.");
+                return RedirectToAction("Modelo");
+            }
+
+            try
+            {
+                var empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+
+                using (var package = new ExcelPackage())
+                {
+                    EscribirHojaIndiceModelos(
+                        package.Workbook.Worksheets.Add("Índice"),
+                        empresa, new List<ModeloEjecucion> { modelo }, DateTime.Now);
+
+                    string sheetName = modelo.NombreSP.StartsWith("sp_", StringComparison.OrdinalIgnoreCase)
+                        ? modelo.NombreSP.Substring(3) : modelo.NombreSP;
+                    if (sheetName.Length > 31) sheetName = sheetName.Substring(0, 31);
+
+                    var ws = package.Workbook.Worksheets.Add(sheetName);
+                    using (var cn = new SqlConnection(CadenaConexion))
+                    {
+                        cn.Open();
+                        EjecutarModeloYEscribirHoja(cn, ws, modelo, idEmpresa, usuario.Id);
+                    }
+
+                    byte[] fileBytes = package.GetAsByteArray();
+                    string empId = !string.IsNullOrWhiteSpace(empresa?.Abreviatura)
+                        ? empresa.Abreviatura
+                        : (empresa?.Nombre ?? "Empresa").Replace(" ", "_");
+                    string fileName = $"{sheetName}_{empId}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx";
+                    return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+                }
+            }
+            catch (Exception ex)
+            {
+                SetErrorMessage("Error al exportar el modelo: " + ex.Message);
+                return RedirectToAction("Modelo");
+            }
         }
 
         public ActionResult CargueExcel()
