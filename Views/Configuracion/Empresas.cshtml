@@ -75,12 +75,13 @@
         }
 
         /* Anchos de columna */
-        .table-compact .col-id { width: 6%; text-align: center; }
-        .table-compact .col-nombre { width: 20%; }
-        .table-compact .col-nit { width: 14%; }
-        .table-compact .col-direccion { width: 18%; }
-        .table-compact .col-telefono { width: 12%; }
-        .table-compact .col-correo { width: 18%; }
+        .table-compact .col-id { width: 5%; text-align: center; }
+        .table-compact .col-abreviatura { width: 10%; text-align: center; }
+        .table-compact .col-nombre { width: 17%; }
+        .table-compact .col-nit { width: 12%; }
+        .table-compact .col-direccion { width: 15%; }
+        .table-compact .col-telefono { width: 10%; }
+        .table-compact .col-correo { width: 19%; }
         .table-compact .col-acciones { width: 12%; text-align: center; white-space: nowrap; }
 
         /* === BOTONES DE ACCIONES === */
@@ -109,6 +110,7 @@
                     <thead>
                         <tr>
                             <th class="col-id">Id</th>
+                            <th class="col-abreviatura">@Resources.Strings.Emp_ThAbreviatura</th>
                             <th class="col-nombre">@Resources.Strings.Emp_ThNombre</th>
                             <th class="col-nit">@Resources.Strings.Emp_ThNit</th>
                             <th class="col-direccion">@Resources.Strings.Emp_ThDireccion</th>
@@ -122,6 +124,12 @@
                         {
                             <tr>
                                 <td class="col-id">@empresa.Id</td>
+                                <td class="col-abreviatura">
+                                    @if (!string.IsNullOrEmpty(empresa.Abreviatura))
+                                    {
+                                        <span style="background:linear-gradient(135deg,#6366F1,#3B82F6);color:white;padding:0.15rem 0.55rem;border-radius:9999px;font-size:0.75rem;font-weight:600;letter-spacing:0.5px;">@empresa.Abreviatura</span>
+                                    }
+                                </td>
                                 <td class="col-nombre" title="@empresa.Nombre">@empresa.Nombre</td>
                                 <td class="col-nit">@empresa.Nit</td>
                                 <td class="col-direccion" title="@empresa.Direccion">@empresa.Direccion</td>
@@ -130,7 +138,7 @@
                                 <td class="col-acciones">
                                     <div class="btn-group" role="group" aria-label="@Resources.Strings.Common_ThAcciones">
                                         <button type="button" class="btn btn-primary" title="@Resources.Strings.Emp_TitleEditar" data-toggle="modal" data-target="#editEmpresaModal"
-                                                onclick="setEditEmpresa(@empresa.Id, '@empresa.Nombre', '@empresa.Nit', '@empresa.Direccion', '@empresa.Telefono', '@empresa.Correo')">
+                                                onclick="setEditEmpresa(@empresa.Id, '@empresa.Nombre', '@empresa.Nit', '@empresa.Direccion', '@empresa.Telefono', '@empresa.Correo', '@empresa.Abreviatura')">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         @if (UsuarioSesionHelper.EsSuperAdmin())
@@ -231,6 +239,16 @@
                             </label>
                             <input type="email" class="form-control form-control-sm" id="editCorreo" name="Correo" maxlength="150" />
                         </div>
+                        <div class="mb-3">
+                            <label for="editAbreviatura" class="form-label">
+                                <i class="fas fa-tag mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelAbreviatura
+                            </label>
+                            <input type="text" class="form-control form-control-sm" id="editAbreviatura" name="Abreviatura"
+                                   maxlength="12" pattern="[A-Za-z]{1,12}" required
+                                   placeholder="@Resources.Strings.Emp_HintAbreviatura"
+                                   oninput="this.value = this.value.replace(/[^A-Za-z]/g, '');" />
+                            <small class="form-text text-muted">@Resources.Strings.Emp_HintAbreviatura</small>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
@@ -287,6 +305,16 @@
                                 <i class="fas fa-envelope mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelCorreo
                             </label>
                             <input type="email" class="form-control form-control-sm" id="crearCorreo" name="Correo" maxlength="150" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="crearAbreviatura" class="form-label">
+                                <i class="fas fa-tag mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelAbreviatura
+                            </label>
+                            <input type="text" class="form-control form-control-sm" id="crearAbreviatura" name="Abreviatura"
+                                   maxlength="12" pattern="[A-Za-z]{1,12}" required
+                                   placeholder="@Resources.Strings.Emp_HintAbreviatura"
+                                   oninput="this.value = this.value.replace(/[^A-Za-z]/g, '');" />
+                            <small class="form-text text-muted">@Resources.Strings.Emp_HintAbreviatura</small>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -367,13 +395,14 @@
             document.getElementById("idEmpresa").value = id;
         }
 
-        function setEditEmpresa(id, nombre, nit, direccion, telefono, correo) {
+        function setEditEmpresa(id, nombre, nit, direccion, telefono, correo, abreviatura) {
             document.getElementById("editIdEmpresa").value = id;
             document.getElementById("editNombre").value = nombre;
             document.getElementById("editNit").value = nit;
             document.getElementById("editDireccion").value = direccion;
             document.getElementById("editTelefono").value = telefono;
             document.getElementById("editCorreo").value = correo;
+            document.getElementById("editAbreviatura").value = abreviatura || '';
         }
     </script>
 </body>

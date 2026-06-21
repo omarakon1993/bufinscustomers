@@ -30,6 +30,8 @@ namespace bufinscustomers.Services
                             empresa.Direccion = (string)reader["EmpDireccion"];
                             empresa.Telefono = reader["EmpTelefono"] != DBNull.Value ? (string)reader["EmpTelefono"] : string.Empty;
                             empresa.Correo = reader["EmpCorreo"] != DBNull.Value ? (string)reader["EmpCorreo"] : string.Empty;
+                            try { empresa.Abreviatura = reader["EmpAbreviatura"] != DBNull.Value ? (string)reader["EmpAbreviatura"] : string.Empty; }
+                            catch (IndexOutOfRangeException) { }
                             empresas.Add(empresa);
                         }
                     }
@@ -53,6 +55,7 @@ namespace bufinscustomers.Services
                 cmd.Parameters.AddWithValue("@EmpDireccion", empresa.Direccion);
                 cmd.Parameters.AddWithValue("@EmpTelefono", string.IsNullOrWhiteSpace(empresa.Telefono) ? (object)DBNull.Value : empresa.Telefono);
                 cmd.Parameters.AddWithValue("@EmpCorreo", string.IsNullOrWhiteSpace(empresa.Correo) ? (object)DBNull.Value : empresa.Correo);
+                cmd.Parameters.AddWithValue("@EmpAbreviatura", string.IsNullOrWhiteSpace(empresa.Abreviatura) ? (object)DBNull.Value : empresa.Abreviatura);
                 cmd.Parameters.Add("@Registrado", SqlDbType.Bit).Direction = ParameterDirection.Output;
                 cmd.Parameters.Add("@Mensaje", SqlDbType.VarChar, 100).Direction = ParameterDirection.Output;
                 cmd.CommandType = CommandType.StoredProcedure;
@@ -80,6 +83,7 @@ namespace bufinscustomers.Services
                 cmd.Parameters.AddWithValue("@EmpDireccion", empresa.Direccion);
                 cmd.Parameters.AddWithValue("@EmpTelefono", string.IsNullOrWhiteSpace(empresa.Telefono) ? (object)DBNull.Value : empresa.Telefono);
                 cmd.Parameters.AddWithValue("@EmpCorreo", string.IsNullOrWhiteSpace(empresa.Correo) ? (object)DBNull.Value : empresa.Correo);
+                cmd.Parameters.AddWithValue("@EmpAbreviatura", string.IsNullOrWhiteSpace(empresa.Abreviatura) ? (object)DBNull.Value : empresa.Abreviatura);
                 cmd.Parameters.Add("@Actualizado", SqlDbType.Bit).Direction = ParameterDirection.Output;
                 cmd.Parameters.Add("@Mensaje", SqlDbType.NVarChar, 200).Direction = ParameterDirection.Output;
                 cmd.CommandType = CommandType.StoredProcedure;
