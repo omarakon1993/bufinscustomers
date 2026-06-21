@@ -221,6 +221,8 @@
         }
     };
 
+    var _moneyColSet = { 'valor': true, 'valoracumulado': true, 'valorfuturo': true };
+
     // ── Estado de paginación ──────────────────────────────────────────────
     var _pag = {
         filas:      [],
@@ -342,8 +344,15 @@
         var tbody = '';
         for (var r = 0; r < slice.length; r++) {
             tbody += '<tr>';
-            for (var c = 0; c < slice[r].length; c++)
-                tbody += '<td>' + $('<span>').text(slice[r][c]).html() + '</td>';
+            for (var c = 0; c < slice[r].length; c++) {
+                var val = slice[r][c];
+                if (val !== '' && _moneyColSet[(_pag.columnas[c] || '').toLowerCase()]) {
+                    var num = parseFloat(val);
+                    if (!isNaN(num))
+                        val = num.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+                tbody += '<td>' + $('<span>').text(val).html() + '</td>';
+            }
             tbody += '</tr>';
         }
         $('#resultadosTbody').html(tbody);

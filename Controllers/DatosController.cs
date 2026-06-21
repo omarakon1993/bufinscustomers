@@ -272,6 +272,7 @@ namespace bufinscustomers.Controllers
                                 cols.Add(reader.GetName(i));
 
                             bool esStatus = cols.Contains("CodMessage");
+                            var isMoney   = cols.Select(c => _moneyColNames.Contains(c)).ToList();
                             var filas = new List<List<string>>();
 
                             while (reader.Read())
@@ -285,7 +286,17 @@ namespace bufinscustomers.Controllers
                                 {
                                     var fila = new List<string>();
                                     for (int i = 0; i < fieldCount; i++)
-                                        fila.Add(reader.IsDBNull(i) ? "" : reader.GetValue(i).ToString());
+                                    {
+                                        if (reader.IsDBNull(i))
+                                            fila.Add("");
+                                        else if (isMoney[i])
+                                        {
+                                            try { fila.Add(Convert.ToDecimal(reader.GetValue(i)).ToString(System.Globalization.CultureInfo.InvariantCulture)); }
+                                            catch { fila.Add(reader.GetValue(i).ToString()); }
+                                        }
+                                        else
+                                            fila.Add(reader.GetValue(i).ToString());
+                                    }
                                     filas.Add(fila);
                                 }
                             }
