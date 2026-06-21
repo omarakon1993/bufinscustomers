@@ -94,6 +94,27 @@ namespace bufinscustomers.Controllers
         }
 
         /// <summary>
+        /// Descarga un Excel con todos los datos actuales de las tablas REL_
+        /// </summary>
+        public ActionResult DescargarRelacionamientos()
+        {
+            if (!VerificarAdmin())
+                return RedirectToAction("ConfiguracionRelacionamiento");
+
+            try
+            {
+                byte[] fileBytes = _service.ExportarRelacionamientosExcel();
+                string fileName = $"Relacionamientos_BUFINS_SQL_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx";
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error al exportar relacionamientos: {ex.Message}";
+                return RedirectToAction("ConfiguracionRelacionamiento");
+            }
+        }
+
+        /// <summary>
         /// Descarga plantilla Excel con las hojas y columnas de las tablas REL_
         /// </summary>
         public ActionResult DescargarPlantilla()

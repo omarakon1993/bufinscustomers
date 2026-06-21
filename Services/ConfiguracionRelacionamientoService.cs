@@ -1,10 +1,12 @@
 using bufinscustomers.Models;
 using OfficeOpenXml;
+using OfficeOpenXml.Table;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace bufinscustomers.Services
 {
@@ -375,6 +377,226 @@ namespace bufinscustomers.Services
                 return DateTime.TryParse(valor, out DateTime dt) ? (object)dt : DBNull.Value;
 
             return valor;
+        }
+
+        /// <summary>
+        /// Exporta todos los datos actuales de las tablas REL_ a un Excel profesional.
+        /// Columnas money/smallmoney → formato moneda; resto → texto.
+        /// </summary>
+        public byte[] ExportarRelacionamientosExcel()
+        {
+            using (var package = new ExcelPackage())
+            {
+                using (SqlConnection cn = new SqlConnection(CadenaConexion))
+                {
+                    cn.Open();
+
+                    var tablas = new List<TablaRelInfo>();
+                    string queryTablas = @"
+                        SELECT t.TABLE_NAME,
+                               (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS c WHERE c.TABLE_NAME = t.TABLE_NAME) AS TotalColumnas
+                        FROM INFORMATION_SCHEMA.TABLES t
+                        WHERE t.TABLE_TYPE = 'BASE TABLE' AND t.TABLE_NAME LIKE 'REL_%'
+                        ORDER BY t.TABLE_NAME";
+
+                    using (SqlCommand cmd = new SqlCommand(queryTablas, cn))
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            tablas.Add(new TablaRelInfo
+                            {
+                                NombreTabla = reader.GetString(0),
+                                TotalColumnas = reader.GetInt32(1)
+                            });
+                        }
+                    }
+
+                    foreach (var tabla in tablas)
+                    {
+                        try
+                        {
+                            string countQuery = $"SELECT COUNT(*) FROM dbo.[{tabla.NombreTabla}]";
+                            using (SqlCommand cmd = new SqlCommand(countQuery, cn))
+                                tabla.TotalRegistros = (int)cmd.ExecuteScalar();
+                        }
+                        catch { tabla.TotalRegistros = 0; }
+                    }
+
+                    EscribirHojaIndice(package.Workbook.Worksheets.Add("Índice"), tablas);
+
+                    foreach (var tabla in tablas)
+                    {
+                        var ws = package.Workbook.Worksheets.Add(tabla.NombreTabla);
+                        EscribirHojaDatos(cn, ws, tabla.NombreTabla);
+                    }
+                }
+
+                return package.GetAsByteArray();
+            }
+        }
+
+        private void EscribirHojaIndice(ExcelWorksheet ws, List<TablaRelInfo> tablas)
+        {
+            var colorPrimario = System.Drawing.Color.FromArgb(99, 102, 241);
+            var colorSecundario = System.Drawing.Color.FromArgb(59, 130, 246);
+            var colorFilaPar = System.Drawing.Color.FromArgb(239, 246, 255);
+
+            // Título
+            ws.Cells[1, 1, 1, 4].Merge = true;
+            ws.Cells[1, 1].Value = "Relacionamientos BUFINS";
+            ws.Cells[1, 1].Style.Font.Bold = true;
+            ws.Cells[1, 1].Style.Font.Size = 14;
+            ws.Cells[1, 1].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+            ws.Cells[1, 1].Style.Fill.BackgroundColor.SetColor(colorPrimario);
+            ws.Cells[1, 1].Style.Font.Color.SetColor(System.Drawing.Color.White);
+            ws.Cells[1, 1].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+            ws.Cells[1, 1].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;
+            ws.Row(1).Height = 28;
+
+            // Subtítulo con fecha
+            ws.Cells[2, 1, 2, 4].Merge = true;
+            ws.Cells[2, 1].Value = $"Exportado el {DateTime.Now:dd/MM/yyyy} a las {DateTime.Now:HH:mm}  |  {tablas.Count} tabla(s) disponible(s)";
+            ws.Cells[2, 1].Style.Font.Italic = true;
+            ws.Cells[2, 1].Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(107, 114, 128));
+            ws.Cells[2, 1].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+
+            // Encabezados de tabla
+            string[] headers = { "Tabla en Base de Datos", "Registros", "Columnas", "Nombre en este archivo" };
+            for (int c = 0; c < headers.Length; c++)
+            {
+                var cell = ws.Cells[4, c + 1];
+                cell.Value = headers[c];
+                cell.Style.Font.Bold = true;
+                cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                cell.Style.Fill.BackgroundColor.SetColor(colorSecundario);
+                cell.Style.Font.Color.SetColor(System.Drawing.Color.White);
+                cell.Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                cell.Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Medium;
+                cell.Style.Border.Bottom.Color.SetColor(colorPrimario);
+            }
+
+            // Filas de datos
+            for (int i = 0; i < tablas.Count; i++)
+            {
+                int fila = 5 + i;
+                ws.Cells[fila, 1].Value = tablas[i].NombreTabla;
+                ws.Cells[fila, 2].Value = tablas[i].TotalRegistros;
+                ws.Cells[fila, 3].Value = tablas[i].TotalColumnas;
+                ws.Cells[fila, 4].Value = tablas[i].NombreTabla;
+
+                ws.Cells[fila, 2].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                ws.Cells[fila, 3].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+
+                if (i % 2 == 0)
+                {
+                    ws.Cells[fila, 1, fila, 4].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                    ws.Cells[fila, 1, fila, 4].Style.Fill.BackgroundColor.SetColor(colorFilaPar);
+                }
+
+                // Borde inferior sutil
+                ws.Cells[fila, 1, fila, 4].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Hair;
+                ws.Cells[fila, 1, fila, 4].Style.Border.Bottom.Color.SetColor(System.Drawing.Color.FromArgb(209, 213, 219));
+            }
+
+            ws.Column(1).Width = 38;
+            ws.Column(2).Width = 14;
+            ws.Column(3).Width = 12;
+            ws.Column(4).Width = 38;
+            ws.View.FreezePanes(5, 1);
+        }
+
+        private void EscribirHojaDatos(SqlConnection cn, ExcelWorksheet ws, string nombreTabla)
+        {
+            // 1. Obtener tipos SQL (para money) — reader cerrado antes de abrir el siguiente
+            var tiposColumnas = ObtenerColumnasConTiposSql(cn, nombreTabla);
+            var tipoPorNombre = tiposColumnas.ToDictionary(t => t.Name, t => t.SqlType, StringComparer.OrdinalIgnoreCase);
+
+            // 2. Cargar todos los datos en memoria con DataAdapter (evita conflictos de reader abierto)
+            var dt = new DataTable();
+            using (SqlCommand cmd = new SqlCommand($"SELECT * FROM dbo.[{nombreTabla}]", cn))
+            using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                adapter.Fill(dt);
+
+            int totalCols = dt.Columns.Count;
+            int totalRows = dt.Rows.Count;
+
+            if (totalCols == 0) return;
+
+            // 3. Identificar columnas money upfront (una sola vez)
+            var moneyColIndices = new HashSet<int>();
+            for (int col = 0; col < totalCols; col++)
+            {
+                string colName = dt.Columns[col].ColumnName;
+                if (tipoPorNombre.TryGetValue(colName, out string sqlType) &&
+                    (sqlType == "money" || sqlType == "smallmoney"))
+                    moneyColIndices.Add(col);
+            }
+
+            // 4. Escribir encabezados (solo valores, el estilo lo pone el ExcelTable)
+            for (int col = 0; col < totalCols; col++)
+                ws.Cells[1, col + 1].Value = dt.Columns[col].ColumnName;
+
+            // 5. Escribir valores SIN operaciones de estilo por celda
+            for (int row = 0; row < totalRows; row++)
+            {
+                for (int col = 0; col < totalCols; col++)
+                {
+                    var value = dt.Rows[row][col];
+                    var cell = ws.Cells[row + 2, col + 1];
+
+                    if (value == DBNull.Value || value == null)
+                        cell.Value = "";
+                    else if (moneyColIndices.Contains(col))
+                        cell.Value = Convert.ToDouble(value);
+                    else
+                        cell.Value = value.ToString();
+                }
+            }
+
+            // 6. Aplicar formato numérico por columna como operación de rango (una op por columna, no por celda)
+            if (totalRows > 0)
+            {
+                for (int col = 0; col < totalCols; col++)
+                {
+                    ws.Cells[2, col + 1, totalRows + 1, col + 1].Style.Numberformat.Format =
+                        moneyColIndices.Contains(col) ? "#,##0.00" : "@";
+                }
+            }
+
+            // 7. ExcelTable con estilo nativo — alternado de filas, filtro y encabezado sin overhead de C#
+            int lastRow = Math.Max(2, totalRows + 1);
+            string safeName = "tbl_" + Regex.Replace(nombreTabla, "[^A-Za-z0-9]", "_");
+            var tbl = ws.Tables.Add(ws.Cells[1, 1, lastRow, totalCols], safeName);
+            tbl.TableStyle = TableStyles.Medium2;
+
+            // 8. Anchos fijos (AutoFitColumns escanea todas las celdas y es extremadamente lento)
+            for (int col = 1; col <= totalCols; col++)
+                ws.Column(col).Width = 24;
+
+            ws.View.FreezePanes(2, 1);
+        }
+
+        private List<(string Name, string SqlType)> ObtenerColumnasConTiposSql(SqlConnection cn, string nombreTabla)
+        {
+            var columnas = new List<(string Name, string SqlType)>();
+            string query = @"
+                SELECT COLUMN_NAME, DATA_TYPE
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_NAME = @TableName
+                ORDER BY ORDINAL_POSITION";
+
+            using (SqlCommand cmd = new SqlCommand(query, cn))
+            {
+                cmd.Parameters.AddWithValue("@TableName", nombreTabla);
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                        columnas.Add((reader.GetString(0), reader.GetString(1)));
+                }
+            }
+
+            return columnas;
         }
 
         /// <summary>

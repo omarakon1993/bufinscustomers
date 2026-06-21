@@ -43,22 +43,34 @@
 
     <!-- Card de tablas disponibles -->
     <div class="filter-card" style="margin-bottom: 1.25rem;">
-        <h3 class="filter-card-title">
-            <i class="fas fa-database"></i>
-            @Resources.Strings.CfgRel_TitleTablas
-        </h3>
-        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.85rem;">
+            <h3 class="filter-card-title" style="margin: 0;">
+                <i class="fas fa-database"></i>
+                @Resources.Strings.CfgRel_TitleTablas
+                @if (tablasRel != null && tablasRel.Count > 0)
+                {
+                    <span class="info-badge" style="margin-left: 0.5rem; font-size: 0.75rem;">@tablasRel.Count @Resources.Strings.CfgRel_Tablas</span>
+                }
+            </h3>
+            @if (tablasRel != null && tablasRel.Count > 0)
+            {
+                <button type="button"
+                        onclick="iniciarExportacionRelacionamientos()"
+                        class="btn btn-modern-success"
+                        title="@Resources.Strings.CfgRel_ExportTooltip"
+                        style="font-size: 0.83rem; padding: 0.45rem 1rem;">
+                    <i class="fas fa-file-excel mr-2"></i>@Resources.Strings.CfgRel_BtnDescargarDatos
+                </button>
+            }
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
             @if (tablasRel != null && tablasRel.Count > 0)
             {
                 foreach (var tabla in tablasRel)
                 {
-                    <div style="background: linear-gradient(135deg, #6366F1, #3B82F6); color: white; padding: 0.625rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);">
-                        <i class="fas fa-table" style="margin-right: 6px;"></i>
-                        <strong>@tabla.NombreTabla</strong>
-                        <span style="opacity: 0.85; margin-left: 8px; font-size: 0.75rem;">
-                            @tabla.TotalRegistros @Resources.Strings.CfgRel_Registros &middot; @tabla.TotalColumnas @Resources.Strings.CfgRel_ColCount
-                        </span>
-                    </div>
+                    <span style="background: linear-gradient(135deg, #6366F1, #3B82F6); color: white; padding: 0.3rem 0.8rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 500; white-space: nowrap; box-shadow: 0 1px 4px rgba(99,102,241,0.2);">
+                        <i class="fas fa-table" style="margin-right: 5px; font-size: 0.7rem; opacity: 0.85;"></i>@tabla.NombreTabla
+                    </span>
                 }
             }
             else
@@ -226,6 +238,54 @@
     <script>
         var _dropText    = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_DropText)';
         var _dropSubtext = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_DropSubtext)';
+        var _urlExportar = '@Url.Action("DescargarRelacionamientos", "ConfiguracionRelacionamiento")';
+
+        function iniciarExportacionRelacionamientos() {
+            var overlay = document.getElementById('overlayProcesando');
+            overlay.style.display = 'flex';
+
+            var segundos = 0;
+            var timerInterval = setInterval(function () {
+                segundos++;
+                var m = Math.floor(segundos / 60);
+                var s = segundos % 60;
+                document.getElementById('overlayTimer').textContent =
+                    m > 0 ? m + 'm ' + s + 's' : s + 's';
+            }, 1000);
+
+            var filename = 'Relacionamientos_BUFINS_SQL.xlsx';
+
+            // fetch() resuelve cuando el servidor terminó de enviar todos los bytes —
+            // a diferencia de window.location.href, esto sí permite saber cuándo termina.
+            fetch(_urlExportar)
+                .then(function (response) {
+                    var ct = response.headers.get('Content-Type') || '';
+                    if (!ct.includes('spreadsheetml')) {
+                        throw new Error('Error al generar el archivo de exportación.');
+                    }
+                    var disp = response.headers.get('Content-Disposition') || '';
+                    var m = disp.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                    if (m) filename = m[1].replace(/['"]/g, '');
+                    return response.blob();
+                })
+                .then(function (blob) {
+                    var url = window.URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(function (err) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+                })
+                .finally(function () {
+                    clearInterval(timerInterval);
+                    overlay.style.display = 'none';
+                });
+        }
 
         $(document).ready(function () {
             var dropZone = $('#dropZone');
