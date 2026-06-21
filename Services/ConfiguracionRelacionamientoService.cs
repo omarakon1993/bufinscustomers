@@ -523,13 +523,15 @@ namespace bufinscustomers.Services
 
             if (totalCols == 0) return;
 
-            // 3. Identificar columnas money upfront (una sola vez)
+            // 3. Identificar columnas numéricas upfront (una sola vez)
             var moneyColIndices = new HashSet<int>();
             for (int col = 0; col < totalCols; col++)
             {
                 string colName = dt.Columns[col].ColumnName;
                 if (tipoPorNombre.TryGetValue(colName, out string sqlType) &&
-                    (sqlType == "money" || sqlType == "smallmoney"))
+                    (sqlType == "money" || sqlType == "smallmoney" ||
+                     sqlType == "decimal" || sqlType == "numeric" ||
+                     sqlType == "float" || sqlType == "real"))
                     moneyColIndices.Add(col);
             }
 
