@@ -333,6 +333,8 @@ namespace bufinscustomers.Controllers
                 {
                     EscribirHojaIndiceModelos(package.Workbook.Worksheets.Add("Índice"), empresa, modelos, DateTime.Now);
 
+                    var erroresModelos = new List<(string Nombre, string NombreSP, string Mensaje)>();
+
                     using (SqlConnection cn = new SqlConnection(CadenaConexion))
                     {
                         cn.Open();
@@ -350,11 +352,18 @@ namespace bufinscustomers.Controllers
                             }
                             catch (Exception exModelo)
                             {
-                                ws.Cells[1, 1].Value = "Error al ejecutar el modelo";
-                                ws.Cells[2, 1].Value = exModelo.Message;
-                                ws.Column(1).Width = 60;
+                                package.Workbook.Worksheets.Delete(sheetName);
+                                erroresModelos.Add((modelo.Nombre, modelo.NombreSP, exModelo.Message));
                             }
                         }
+                    }
+
+                    if (erroresModelos.Count > 0)
+                    {
+                        return Json(new
+                        {
+                            errores = erroresModelos.Select(e => new { nombre = e.Nombre, nombreSP = e.NombreSP, mensaje = e.Mensaje })
+                        }, JsonRequestBehavior.AllowGet);
                     }
 
                     byte[] fileBytes = package.GetAsByteArray();

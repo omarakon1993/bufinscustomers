@@ -212,9 +212,12 @@
             exportandoUno:    '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_BtnExportarModelo)',
             registros:        '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Registros)',
             btnEjecutar:      '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_BtnEjecutar)',
-            exito:            '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Exito)',
-            error:            '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error)',
-            aceptar:          '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Aceptar)'
+            exito:              '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Exito)',
+            error:              '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error)',
+            aceptar:            '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Aceptar)',
+            erroresExportacion: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_ErroresExportacion)',
+            descargarLog:       '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_DescargarLog)',
+            cerrar:             '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_Cerrar)'
         }
     };
 
@@ -405,29 +408,80 @@
         fetch(url)
             .then(function (response) {
                 if (!response.ok) throw new Error('Error en la respuesta del servidor.');
+                var ct = response.headers.get('Content-Type') || '';
+                if (ct.indexOf('application/json') >= 0) {
+                    return response.json().then(function (data) { return { tipo: 'error', data: data }; });
+                }
                 var cd    = response.headers.get('Content-Disposition') || '';
                 var match = cd.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
                 if (match) filename = match[1].replace(/['"]/g, '');
-                return response.blob();
+                return response.blob().then(function (blob) { return { tipo: 'archivo', blob: blob }; });
             })
-            .then(function (blob) {
-                var url = window.URL.createObjectURL(blob);
-                var a   = document.createElement('a');
-                a.href  = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            })
-            .catch(function (err) {
-                Swal.fire({ icon: 'error', title: _modelo.textos.error, text: err.message,
-                            confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#6366F1' });
-            })
-            .finally(function () {
+            .then(function (result) {
                 clearInterval(timer);
                 overlay.style.display = 'none';
+                if (result.tipo === 'error') {
+                    mostrarErroresModelos(result.data.errores);
+                } else {
+                    var blobUrl = window.URL.createObjectURL(result.blob);
+                    var a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(blobUrl);
+                }
+            })
+            .catch(function (err) {
+                clearInterval(timer);
+                overlay.style.display = 'none';
+                Swal.fire({ icon: 'error', title: _modelo.textos.error, text: err.message,
+                            confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#6366F1' });
             });
+    }
+
+    function mostrarErroresModelos(errores) {
+        var html = '<div style="text-align:left;max-height:280px;overflow-y:auto;padding-right:4px;">';
+        errores.forEach(function (e) {
+            html += '<div style="margin-bottom:10px;padding:10px 12px;background:#fef2f2;border-left:4px solid #ef4444;border-radius:4px;">';
+            html += '<strong style="color:#1f2937;">' + e.nombre + '</strong><br>';
+            html += '<small style="color:#6b7280;">' + e.nombreSP + '</small><br>';
+            html += '<span style="color:#dc2626;font-size:0.85em;">' + e.mensaje + '</span>';
+            html += '</div>';
+        });
+        html += '</div>';
+
+        Swal.fire({
+            icon: 'error',
+            title: _modelo.textos.erroresExportacion,
+            html: html,
+            width: 640,
+            confirmButtonText: '<i class="fas fa-download mr-1"></i> ' + _modelo.textos.descargarLog,
+            confirmButtonColor: '#6366f1',
+            showCancelButton: true,
+            cancelButtonText: _modelo.textos.cerrar,
+            cancelButtonColor: '#6b7280'
+        }).then(function (result) {
+            if (!result.isConfirmed) return;
+            var txt = 'ERRORES EN EXPORTACIÓN DE MODELOS\n';
+            txt += '====================================\n\n';
+            errores.forEach(function (e) {
+                txt += 'Modelo   : ' + e.nombre + '\n';
+                txt += 'SP       : ' + e.nombreSP + '\n';
+                txt += 'Error    : ' + e.mensaje + '\n';
+                txt += '------------------------------------\n\n';
+            });
+            var blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+            var bUrl = URL.createObjectURL(blob);
+            var a    = document.createElement('a');
+            a.href   = bUrl;
+            a.download = 'ErroresExportacion_' + new Date().toISOString().slice(0, 10) + '.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(bUrl);
+        });
     }
 </script>
 
