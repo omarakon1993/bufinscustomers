@@ -102,18 +102,15 @@ html.sidebar-init-collapsed .main-content{margin-left:var(--sidebar-width-collap
 .topbar .text-gray-400 i{font-size:.66rem!important}
 
 /* ===== MENU DESTACADO ===== */
-/* Fondo con gradiente muy sutil y borde izquierdo en color acento */
-.sidebar-nav-link.destacado{background:linear-gradient(90deg,rgba(88,58,255,.09) 0%,rgba(1,225,215,.03) 100%);border-left-color:rgba(1,225,215,.55)}
-/* Icono con glow suave pulsante */
-.sidebar-nav-link.destacado .sidebar-nav-icon{color:#01E1D7;animation:destIconPulse 3.5s ease-in-out infinite}
-.sidebar-nav-link.destacado .sidebar-nav-text::after{content:'★';font-size:.6rem;color:rgba(1,225,215,.65);margin-left:5px;vertical-align:baseline ;line-height:1}
-.sidebar-nav-link.destacado .sidebar-nav-text{font-weight:600;color:#e2f0ff}
-/* Hover: intensifica levemente, mantiene la identidad destacada */
-.sidebar-nav-link.destacado:hover{background:linear-gradient(90deg,rgba(88,58,255,.17) 0%,rgba(1,225,215,.09) 100%);border-left-color:#01E1D7;color:#01E1D7}
-.sidebar-nav-link.destacado:hover .sidebar-nav-icon{animation:none;transform:scale(1.12)}
-/* Activo: combina active + destacado */
-.sidebar-nav-link.destacado.active{background:linear-gradient(90deg,rgba(88,58,255,.28) 0%,rgba(1,225,215,.1) 100%)}
-.sidebar-nav-link.destacado.active .sidebar-nav-icon{animation:none;filter:drop-shadow(0 0 5px rgba(1,225,215,.7))}
-/* Animación del icono: glow pulsante lento */
-@keyframes destIconPulse{0%,100%{filter:drop-shadow(0 0 1px rgba(1,225,215,.2));color:#01E1D7}50%{filter:drop-shadow(0 0 6px rgba(1,225,215,.65));color:#4df0eb}}
+/* Fondo muy sutil cyan + borde semitransparente — más tenue que el hover para no confundirse */
+.sidebar-nav-link.destacado{background:linear-gradient(90deg,rgba(1,225,215,.055) 0%,transparent 75%);border-left-color:transparent;box-shadow:inset 0 0 0 1px rgba(1,225,215,.22);overflow:hidden}
+.sidebar-nav-link.destacado .sidebar-nav-icon{color:rgba(1,225,215,.8)}
+.sidebar-nav-link.destacado .sidebar-nav-text{font-weight:600;color:#e8fffe}
+.sidebar-nav-link.destacado .sidebar-nav-text::after{content:'★';font-size:.6rem;color:rgba(1,225,215,.65);margin-left:5px;vertical-align:baseline;line-height:1}
+/* Barrido más seguido: cada ~2.5 s */
+.sidebar-nav-link.destacado::after{content:'';position:absolute;top:0;left:-80%;width:55%;height:100%;background:linear-gradient(90deg,transparent 0%,rgba(1,225,215,.22) 50%,transparent 100%);animation:destShine 2.5s ease-in-out infinite;pointer-events:none}
+@keyframes destShine{0%{left:-80%;opacity:1}55%{left:130%;opacity:1}56%{left:130%;opacity:0}100%{left:130%;opacity:0}}
+.sidebar-nav-link.destacado:hover::after{animation-play-state:paused}
+.sidebar-nav-link.destacado.active{background:linear-gradient(90deg,rgba(1,225,215,.13) 0%,rgba(1,225,215,.03) 100%);border-left-color:transparent;box-shadow:inset 0 0 0 1px rgba(1,225,215,.35)}
+.sidebar-nav-link.destacado.active .sidebar-nav-icon{color:#01E1D7}
 .topbar .img-profile{width:1.85rem!important;height:1.85rem!important}
