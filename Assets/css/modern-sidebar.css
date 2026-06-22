@@ -106,7 +106,7 @@ html.sidebar-init-collapsed .main-content{margin-left:var(--sidebar-width-collap
 .sidebar-nav-link.destacado{background:linear-gradient(90deg,rgba(88,58,255,.09) 0%,rgba(1,225,215,.03) 100%);border-left-color:rgba(1,225,215,.55)}
 /* Icono con glow suave pulsante */
 .sidebar-nav-link.destacado .sidebar-nav-icon{color:#01E1D7;animation:destIconPulse 3.5s ease-in-out infinite}
-/* Texto ligeramente más claro/bold */
+.sidebar-nav-link.destacado .sidebar-nav-text::after{content:'★';font-size:.6rem;color:rgba(1,225,215,.65);margin-left:5px;vertical-align:baseline ;line-height:1}
 .sidebar-nav-link.destacado .sidebar-nav-text{font-weight:600;color:#e2f0ff}
 /* Hover: intensifica levemente, mantiene la identidad destacada */
 .sidebar-nav-link.destacado:hover{background:linear-gradient(90deg,rgba(88,58,255,.17) 0%,rgba(1,225,215,.09) 100%);border-left-color:#01E1D7;color:#01E1D7}
