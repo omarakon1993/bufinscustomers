@@ -233,8 +233,13 @@
             <i class="bi bi-people-fill"></i> @Resources.Strings.Usr_PageTitle
         </div>
         <div class="card-body p-0">
+            <div class="px-3 pt-2 pb-1 border-bottom bg-white">
+                <input type="text" id="buscarUsuario" class="form-control form-control-sm"
+                       style="max-width:280px;"
+                       placeholder="@Resources.Strings.Layout_SearchPlaceholder">
+            </div>
             <div class="table-responsive table-wrapper">
-                <table class="table table-bordered table-hover table-compact">
+                <table id="tablaUsuarios" class="table table-bordered table-hover table-compact">
                     <thead>
                         <tr>
                             <th class="col-img"></th>
@@ -328,7 +333,58 @@
                 </table>
 
             </div>
+            <div class="px-3 py-2 d-flex justify-content-between align-items-center border-top" style="font-size:0.82rem;">
+                <span class="text-muted" id="usr-info"></span>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary" id="usr-prev" onclick="usrCambiarPagina(-1)">&#8249;</button>
+                    <span class="mx-2" id="usr-pagnum" style="min-width:70px;display:inline-block;text-align:center;"></span>
+                    <button class="btn btn-sm btn-outline-secondary" id="usr-next" onclick="usrCambiarPagina(1)">&#8250;</button>
+                </div>
+            </div>
         </div>
+        <script>
+        (function () {
+            var POR_PAGINA = 15;
+            var paginaActual = 1;
+            var filasFiltradas = [];
+
+            function todasLasFilas() {
+                return Array.from(document.querySelectorAll('#tablaUsuarios tbody tr'));
+            }
+
+            function aplicarFiltro() {
+                var q = (document.getElementById('buscarUsuario').value || '').toLowerCase().trim();
+                filasFiltradas = todasLasFilas().filter(function (r) {
+                    return !q || r.textContent.toLowerCase().indexOf(q) !== -1;
+                });
+                paginaActual = 1;
+                renderizar();
+            }
+
+            function renderizar() {
+                var inicio = (paginaActual - 1) * POR_PAGINA;
+                var fin = inicio + POR_PAGINA;
+                var totalPaginas = Math.max(1, Math.ceil(filasFiltradas.length / POR_PAGINA));
+
+                todasLasFilas().forEach(function (r) { r.style.display = 'none'; });
+                filasFiltradas.slice(inicio, fin).forEach(function (r) { r.style.display = ''; });
+
+                document.getElementById('usr-info').textContent =
+                    filasFiltradas.length + ' @Resources.Strings.Common_RegistrosPag ' + paginaActual + ' / ' + totalPaginas;
+                document.getElementById('usr-prev').disabled = paginaActual <= 1;
+                document.getElementById('usr-next').disabled = paginaActual >= totalPaginas;
+            }
+
+            window.usrCambiarPagina = function (dir) {
+                var totalPaginas = Math.max(1, Math.ceil(filasFiltradas.length / POR_PAGINA));
+                paginaActual = Math.min(totalPaginas, Math.max(1, paginaActual + dir));
+                renderizar();
+            };
+
+            document.getElementById('buscarUsuario').addEventListener('input', aplicarFiltro);
+            aplicarFiltro();
+        })();
+        </script>
         <div class="card-footer">
             @if (ViewBag.PuedeCrear == true)
             {

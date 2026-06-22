@@ -11,13 +11,15 @@ namespace bufinscustomers.Helpers
     public static class UsuarioSesionHelper
     {
         // ========== CONSTANTES PARA KEYS DE SESIÓN ==========
-        private const string USUARIO_SESSION_KEY = "UsuarioCompleto";
-        private const string LAST_ACTIVITY_KEY = "LastActivity";
-        private const string LOGIN_TIME_KEY = "LoginTime";
-        private const string PERMISOS_CACHE_KEY = "UsuarioPermisosCodigos";
-        // Clave de sesión por idioma: "UsuarioMenuSidebar_es-CO" o "UsuarioMenuSidebar_en-US"
-        // Importante: incluye la cultura porque ConstruirMenuJerarquico resuelve nombres
-        // ES/EN con ResolverNombre() en el momento de la construcción, no en el render.
+        private const string USUARIO_SESSION_KEY    = "UsuarioCompleto";
+        private const string LAST_ACTIVITY_KEY      = "LastActivity";
+        private const string LOGIN_TIME_KEY         = "LoginTime";
+        private const string PERMISOS_CACHE_KEY     = "UsuarioPermisosCodigos";
+        private const string USUARIO_COMPAT_ID_KEY  = "IdUsuario";
+        private const string USUARIO_COMPAT_OBJ_KEY = "usuario";
+        private const string MENU_SIDEBAR_ES_KEY    = "UsuarioMenuSidebar_es-CO";
+        private const string MENU_SIDEBAR_EN_KEY    = "UsuarioMenuSidebar_en-US";
+        // Clave dinámica por cultura activa (construida en el momento del acceso)
         private static string MENU_SIDEBAR_KEY =>
             "UsuarioMenuSidebar_" + System.Threading.Thread.CurrentThread.CurrentUICulture.Name;
 
@@ -55,7 +57,7 @@ namespace bufinscustomers.Helpers
 
                 // ========== BACKWARD COMPATIBILITY ==========
                 // Si no hay usuario completo, intentar con IdUsuario (solo una vez)
-                var idUsuario = context.Session["IdUsuario"] as int?;
+                var idUsuario = context.Session[USUARIO_COMPAT_ID_KEY] as int?;
                 if (idUsuario.HasValue)
                 {
                     usuario = ObtenerUsuarioPorId(idUsuario.Value);
@@ -81,16 +83,16 @@ namespace bufinscustomers.Helpers
             var now = DateTime.Now;
             
             // Almacenar usuario completo en sesión
-            context.Session[USUARIO_SESSION_KEY] = usuario;
-            context.Session["IdUsuario"] = usuario.Id; // Mantener por compatibilidad
-            context.Session["usuario"] = usuario; // Mantener por compatibilidad
-            context.Session[LAST_ACTIVITY_KEY] = now;
-            context.Session[LOGIN_TIME_KEY] = now;
+            context.Session[USUARIO_SESSION_KEY]    = usuario;
+            context.Session[USUARIO_COMPAT_ID_KEY]  = usuario.Id;
+            context.Session[USUARIO_COMPAT_OBJ_KEY] = usuario;
+            context.Session[LAST_ACTIVITY_KEY]      = now;
+            context.Session[LOGIN_TIME_KEY]         = now;
 
             // Limpiar caché de permisos y sidebar de ambos idiomas
             context.Session.Remove(PERMISOS_CACHE_KEY);
-            context.Session.Remove("UsuarioMenuSidebar_es-CO");
-            context.Session.Remove("UsuarioMenuSidebar_en-US");
+            context.Session.Remove(MENU_SIDEBAR_ES_KEY);
+            context.Session.Remove(MENU_SIDEBAR_EN_KEY);
         }
 
         /// <summary>
@@ -196,8 +198,8 @@ namespace bufinscustomers.Helpers
             if (context?.Session == null) return "Sin contexto de sesi�n";
 
             var usuario = context.Session[USUARIO_SESSION_KEY] as Usuarios;
-            var usuarioCompatible = context.Session["usuario"] as Usuarios;
-            var idUsuario = context.Session["IdUsuario"];
+            var usuarioCompatible = context.Session[USUARIO_COMPAT_OBJ_KEY] as Usuarios;
+            var idUsuario = context.Session[USUARIO_COMPAT_ID_KEY];
 
             return $"UsuarioCompleto: {(usuario != null ? $"Id:{usuario.Id}, Nombre:{usuario.Nombre}, Apellidos:{usuario.Apellidos}, Correo:{usuario.Correo}" : "NULL")} | " +
                    $"UsuarioCompatible: {(usuarioCompatible != null ? $"Id:{usuarioCompatible.Id}, Nombre:{usuarioCompatible.Nombre}, Apellidos:{usuarioCompatible.Apellidos}" : "NULL")} | " +
@@ -344,8 +346,8 @@ namespace bufinscustomers.Helpers
             if (context?.Session == null) return;
 
             context.Session.Remove(PERMISOS_CACHE_KEY);
-            context.Session.Remove("UsuarioMenuSidebar_es-CO");
-            context.Session.Remove("UsuarioMenuSidebar_en-US");
+            context.Session.Remove(MENU_SIDEBAR_ES_KEY);
+            context.Session.Remove(MENU_SIDEBAR_EN_KEY);
         }
 
         /// <summary>

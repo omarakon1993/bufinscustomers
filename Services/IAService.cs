@@ -15,7 +15,7 @@ namespace bufinscustomers.Services
     {
         private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
         private const string OpenAIEndpoint = "https://api.openai.com/v1/chat/completions";
-        private const string OpenAIModelDefault = "gpt-4o-mini";
+        private const string OpenAIModelDefault = "gpt-4o";
         private const int MaxTokensDefault = 1024;
         private static readonly MemoryCache _cache = MemoryCache.Default;
         private const int CacheTtlHoras = 4;
@@ -32,7 +32,8 @@ namespace bufinscustomers.Services
             string instruccionesPersonalizadas = null,
             string guardrailSistema = null,
             string modelo = null,
-            int maxTokens = 0)
+            int maxTokens = 0,
+            double? temperature = null)
         {
             try
             {
@@ -87,15 +88,19 @@ namespace bufinscustomers.Services
                         messages.Add(new { role = "user", content = request.Pregunta });
                 }
 
-                var body = new
+                // Construir body dinámicamente — temperature solo se incluye si está configurada.
+                // Modelos nuevos (o1, o3, gpt-5.x) no aceptan temperature != 1; si el campo está
+                // vacío en ConfiguracionSistema el parámetro se omite y el modelo usa su default.
+                var bodyDict = new System.Collections.Generic.Dictionary<string, object>
                 {
-                    model       = modeloFinal,
-                    messages    = messages.ToArray(),
-                    temperature = 0.4,
-                    max_tokens  = tokensFinal
+                    ["model"]                 = modeloFinal,
+                    ["messages"]              = messages.ToArray(),
+                    ["max_completion_tokens"] = tokensFinal,
                 };
+                if (temperature.HasValue)
+                    bodyDict["temperature"] = temperature.Value;
 
-                string jsonBody = JsonConvert.SerializeObject(body);
+                string jsonBody = JsonConvert.SerializeObject(bodyDict);
                 var httpRequest = new HttpRequestMessage(HttpMethod.Post, OpenAIEndpoint);
                 httpRequest.Headers.Add("Authorization", "Bearer " + _apiKey);
                 httpRequest.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
@@ -122,7 +127,10 @@ namespace bufinscustomers.Services
                     PromptContextoInicial = promptContextoInicial
                 };
 
-                _cache.Set(cacheKey, response, DateTimeOffset.Now.AddHours(CacheTtlHoras));
+                // Solo cachear si hay contenido real (no la respuesta de diagnóstico)
+                if (!string.IsNullOrWhiteSpace(respuesta) && !respuesta.StartsWith("El modelo devolvió contenido vacío"))
+                    _cache.Set(cacheKey, response, DateTimeOffset.Now.AddHours(CacheTtlHoras));
+
                 return response;
             }
             catch (TaskCanceledException)
@@ -137,13 +145,13 @@ namespace bufinscustomers.Services
 
         private string GenerarCacheKey(IAConsultaRequest request, string instrucciones, string guardrail, string modelo, int maxTokens)
         {
-            // Hash del contenido real de los datos para invalidar caché cuando cambian
+            // Fingerprint ligero del JSON para invalidar caché cuando cambian los datos
             string dataHash = string.Empty;
             if (!string.IsNullOrEmpty(request.DatosJson))
             {
-                using (var sha = SHA256.Create())
+                using (var md5d = MD5.Create())
                 {
-                    byte[] h = sha.ComputeHash(Encoding.UTF8.GetBytes(request.DatosJson));
+                    byte[] h = md5d.ComputeHash(Encoding.UTF8.GetBytes(request.DatosJson));
                     dataHash = BitConverter.ToString(h).Replace("-", "").Substring(0, 12).ToLowerInvariant();
                 }
             }
@@ -212,13 +220,72 @@ namespace bufinscustomers.Services
         {
             try
             {
-                var obj = JObject.Parse(jsonResponse);
-                return obj["choices"]?[0]?["message"]?["content"]?.ToString()
-                    ?? "No se pudo extraer la respuesta.";
+                var obj    = JObject.Parse(jsonResponse);
+                var choice = obj["choices"]?[0];
+                var mensaje = choice?["message"];
+
+                if (mensaje != null)
+                {
+                    // 1. content como string (formato estándar gpt-3.5 → gpt-4o → gpt-5)
+                    var contentToken = mensaje["content"];
+                    if (contentToken != null && contentToken.Type != JTokenType.Null)
+                    {
+                        if (contentToken.Type == JTokenType.Array)
+                        {
+                            // Content como array de bloques (gpt-4.5+, gpt-5.x, modelos multimodales).
+                            // Tipos de bloque que contienen texto: "text", "output_text".
+                            // Se excluyen: "reasoning" (pensamiento interno), "image_url".
+                            var sb = new StringBuilder();
+                            foreach (var block in contentToken)
+                            {
+                                string bType = block["type"]?.ToString() ?? "";
+                                bool esTexto  = !string.Equals(bType, "reasoning",  StringComparison.OrdinalIgnoreCase)
+                                             && !string.Equals(bType, "image_url",   StringComparison.OrdinalIgnoreCase);
+                                if (esTexto)
+                                {
+                                    string txt = block["text"]?.ToString();
+                                    if (!string.IsNullOrWhiteSpace(txt))
+                                        sb.AppendLine(txt);
+                                }
+                            }
+                            string res = sb.ToString().Trim();
+                            if (!string.IsNullOrWhiteSpace(res))
+                                return res;
+                        }
+                        else
+                        {
+                            string texto = contentToken.ToString();
+                            if (!string.IsNullOrWhiteSpace(texto))
+                                return texto;
+                        }
+                    }
+
+                    // 2. refusal — el modelo rechazó la solicitud (OpenAI structured refusals)
+                    var refusalToken = mensaje["refusal"];
+                    if (refusalToken != null && refusalToken.Type != JTokenType.Null)
+                    {
+                        string refusal = refusalToken.ToString();
+                        if (!string.IsNullOrWhiteSpace(refusal))
+                            return $"El modelo rechazó la solicitud: {refusal}";
+                    }
+                }
+
+                // 3. Diagnóstico: muestra finish_reason y los primeros 800 chars del JSON real
+                // para identificar qué campo usa gpt-5.x cuando content es null.
+                string finishReason = choice?["finish_reason"]?.ToString() ?? "desconocido";
+                string preview      = jsonResponse.Length > 800
+                    ? jsonResponse.Substring(0, 800) + "…"
+                    : jsonResponse;
+
+                System.Diagnostics.Trace.TraceWarning(
+                    "[IAService] Content nulo. finish_reason={0}. Response: {1}", finishReason, preview);
+
+                return $"El modelo devolvió contenido vacío (finish_reason: {finishReason}). " +
+                       $"Estructura recibida: {preview}";
             }
-            catch
+            catch (Exception ex)
             {
-                return "Error al procesar la respuesta de OpenAI.";
+                return $"Error al procesar la respuesta de OpenAI: {ex.Message}";
             }
         }
 

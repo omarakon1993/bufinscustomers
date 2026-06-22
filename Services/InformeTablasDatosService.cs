@@ -113,12 +113,12 @@ namespace bufinscustomers.Services
                     cn.Open();
 
                     // Primero verificar qué columna existe (Variables o Variable)
-                    string checkQuery = string.Format(@"
+                    const string checkQuery = @"
                         SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-                        WHERE TABLE_NAME = '{0}' AND COLUMN_NAME = 'Variables'",
-                        nombreTabla.Replace("[", "").Replace("]", ""));
+                        WHERE TABLE_NAME = @TableName AND COLUMN_NAME = 'Variables'";
 
                     SqlCommand checkCmd = new SqlCommand(checkQuery, cn);
+                    checkCmd.Parameters.AddWithValue("@TableName", nombreTabla);
                     int tieneVariablesPlural = (int)checkCmd.ExecuteScalar();
 
                     string columnaNombre = tieneVariablesPlural > 0 ? "Variables" : "Variable";
@@ -386,6 +386,12 @@ namespace bufinscustomers.Services
             }
 
             return resultado;
+        }
+
+        public System.Threading.Tasks.Task<ResultadoInformeTablasDatos> ConsultarDatosAsync(
+            FiltrosInformeTablasDatos filtros, bool esAdmin, int? idEmpresaUsuario = null)
+        {
+            return System.Threading.Tasks.Task.Run(() => ConsultarDatos(filtros, esAdmin, idEmpresaUsuario));
         }
 
         /// <summary>

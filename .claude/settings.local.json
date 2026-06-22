@@ -136,7 +136,8 @@
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\omara\\\\OneDrive\\\\Omar Akon Personal\\\\Proyectos OAG\\\\Bufins Web\\\\Bufins principal web\\\\bufinscustomers\" -Recurse -Directory | Select-Object -First 50 | ForEach-Object { $_.FullName })",
       "WebFetch(domain:win2-co.conexcol.net)",
       "WebFetch(domain:www.bufins.com)",
-      "WebFetch(domain:bufins.com)"
+      "WebFetch(domain:bufins.com)",
+      "PowerShell(& \"C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\MSBuild\\\\Current\\\\Bin\\\\MSBuild.exe\" \"C:\\\\Users\\\\omara\\\\OneDrive\\\\Omar Akon Personal\\\\Proyectos OAG\\\\Bufins Web\\\\Bufins principal web\\\\bufinscustomers\\\\bufinscustomers.sln\" /p:Configuration=Debug /nologo /verbosity:minimal 2>&1 | Select-Object -Last 20)"
     ],
     "deny": [],
     "ask": []

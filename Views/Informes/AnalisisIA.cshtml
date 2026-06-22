@@ -408,7 +408,8 @@ $(document).ready(function () {
         scrollChat();
 
         var bodyEl   = $wrap.find('.ia-response-body')[0];
-        var segments = respuesta.split('\n\n').filter(function(s){ return s.trim().length > 0; });
+        var textoFinal = (respuesta || '').trim() || '(Sin respuesta del modelo)';
+        var segments = textoFinal.split('\n\n').filter(function(s){ return s.trim().length > 0; });
         var idx      = 0;
 
         function revealNext() {
@@ -420,7 +421,7 @@ $(document).ready(function () {
                 scrollChat();
                 setTimeout(revealNext, 190);
             } else {
-                bodyEl.innerHTML = renderMarkdown(respuesta);
+                bodyEl.innerHTML = renderMarkdown(textoFinal);
                 scrollChat();
             }
         }
@@ -469,14 +470,15 @@ $(document).ready(function () {
                                 : resp.TotalFilas + ' registros analizados'
                         );
                     }
-                    appendAssistantBubble(resp.Respuesta);
+                    var textoRespuesta = (resp.Respuesta || '').trim() || '(Sin respuesta del modelo)';
+                    appendAssistantBubble(textoRespuesta);
                     // Actualizar historial multi-turn
                     if (_chatHistorial.length === 0 && resp.PromptContextoInicial) {
                         _chatHistorial.push({ Rol: 'user', Contenido: resp.PromptContextoInicial });
                     } else if (pregunta) {
                         _chatHistorial.push({ Rol: 'user', Contenido: pregunta });
                     }
-                    _chatHistorial.push({ Rol: 'assistant', Contenido: resp.Respuesta });
+                    _chatHistorial.push({ Rol: 'assistant', Contenido: textoRespuesta });
                     document.getElementById('btnExportarPDF').style.display   = 'inline-flex';
                     document.getElementById('btnExportarExcel').style.display = 'inline-flex';
                 } else {

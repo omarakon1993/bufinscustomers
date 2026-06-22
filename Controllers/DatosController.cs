@@ -19,6 +19,8 @@ namespace bufinscustomers.Controllers
     [ValidarSesion]
     public class DatosController : BaseController
     {
+        private const string SESSION_LOG_IMPORTACION = "LogImportacion";
+
         private readonly EmpresaService _empresaService = new EmpresaService();
         private readonly ConfiguracionEmpresaService _configuracionService = new ConfiguracionEmpresaService();
         private readonly ModeloService _modeloService = new ModeloService();
@@ -54,13 +56,13 @@ namespace bufinscustomers.Controllers
         {
             if (_logBuilder.Length > 0)
             {
-                Session["LogImportacion"] = _logBuilder.ToString();
+                Session[SESSION_LOG_IMPORTACION] = _logBuilder.ToString();
             }
         }
 
         public ActionResult DescargarLog()
         {
-            var log = Session["LogImportacion"] as string;
+            var log = Session[SESSION_LOG_IMPORTACION] as string;
             if (string.IsNullOrEmpty(log))
             {
                 return Content("No hay log disponible para descargar.");

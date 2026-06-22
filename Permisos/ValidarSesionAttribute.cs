@@ -21,12 +21,14 @@ namespace bufinscustomers.Permisos
                 // Si es petición AJAX, retornar JSON
                 if (filterContext.HttpContext.Request.IsAjaxRequest())
                 {
+                    // Header que el handler global de jQuery detecta para disparar cerrarSesionAutomatica()
+                    filterContext.HttpContext.Response.Headers.Add("X-Session-Expired", "true");
                     filterContext.Result = new JsonResult
                     {
-                        Data = new { 
-                            success = false, 
-                            message = "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.", 
-                            redirectUrl = "/Acceso/Login?expired=true",
+                        Data = new {
+                            success        = false,
+                            message        = "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+                            redirectUrl    = "/Acceso/Login?expired=true",
                             sessionExpired = true
                         },
                         JsonRequestBehavior = JsonRequestBehavior.AllowGet

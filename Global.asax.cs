@@ -23,6 +23,23 @@ namespace bufinscustomers
             ExcelPackage.License.SetNonCommercialOrganization("bufinscustomers");
         }
 
+        protected void Application_Error(object sender, EventArgs e)
+        {
+            Exception ex = Server.GetLastError();
+            if (ex == null) return;
+
+            // Desenvuelve HttpUnhandledException para obtener la excepción real
+            if (ex is HttpUnhandledException && ex.InnerException != null)
+                ex = ex.InnerException;
+
+            System.Diagnostics.Trace.TraceError(
+                "[Application_Error] {0}: {1}\nStack: {2}\nURL: {3}",
+                ex.GetType().Name,
+                ex.Message,
+                ex.StackTrace,
+                Request?.Url?.ToString() ?? "(unknown)");
+        }
+
         protected void Application_AcquireRequestState(object sender, EventArgs e)
         {
             string lang = "es-CO";

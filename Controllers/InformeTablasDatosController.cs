@@ -222,7 +222,7 @@ namespace bufinscustomers.Controllers
                     return Json(new IAConsultaResponse { Exitoso = false, Error = "Debe seleccionar un Año para el análisis IA." });
                 }
 
-                var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaUsuario);
+                var resultado = await _service.ConsultarDatosAsync(filtros, esAdmin, idEmpresaUsuario);
 
                 if (resultado.TotalRegistros == 0)
                 {
@@ -254,11 +254,18 @@ namespace bufinscustomers.Controllers
                 var tApiKey    = cfgSvc.ObtenerValorAsync("OpenAIApiKey");
                 var tModelo    = cfgSvc.ObtenerValorAsync("OpenAIModel");
                 var tMaxTokens = cfgSvc.ObtenerValorAsync("OpenAIMaxTokens");
-                await Task.WhenAll(tApiKey, tModelo, tMaxTokens);
+                var tTemp      = cfgSvc.ObtenerValorAsync("OpenAITemperature");
+                await Task.WhenAll(tApiKey, tModelo, tMaxTokens, tTemp);
 
-                string apiKey   = (tApiKey.Result ?? (System.Configuration.ConfigurationManager.AppSettings["OpenAIApiKey"] ?? "")).Trim();
-                string modeloIA = tModelo.Result ?? "gpt-4o-mini";
+                string apiKey   = (tApiKey.Result ?? "").Trim();
+                string modeloIA = (tModelo.Result ?? "gpt-4o").Trim();
                 int maxTokensIA = (int.TryParse(tMaxTokens.Result, out int ptk) && ptk > 0) ? ptk : 1024;
+                // Si OpenAITemperature está vacío o no existe → null → no se envía al API
+                double? temperatureIA = double.TryParse(
+                    tTemp.Result,
+                    System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out double tVal) ? (double?)tVal : null;
 
                 var iaService = new IAService(apiKey);
 
@@ -312,7 +319,7 @@ namespace bufinscustomers.Controllers
                     Historial = historial
                 };
 
-                var response = await iaService.ConsultarAsync(request, instrucciones, guardrail, modeloIA, maxTokensIA);
+                var response = await iaService.ConsultarAsync(request, instrucciones, guardrail, modeloIA, maxTokensIA, temperatureIA);
                 response.FilasEnviadas = filasEnviadas;
                 response.TotalFilas = resultado.TotalRegistros;
 

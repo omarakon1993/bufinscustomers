@@ -44,7 +44,7 @@ namespace bufinscustomers.Services
                     cmd.ExecuteNonQuery();
                 }
             }
-            catch { /* las notificaciones no deben romper el flujo principal */ }
+            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[Notificaciones.Crear] {0}", ex.Message); }
         }
 
         public (List<Notificacion> Items, int NoLeidas) ObtenerRecientes(int idUsuario)
@@ -73,7 +73,7 @@ namespace bufinscustomers.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[Notificaciones.ObtenerRecientes] {0}", ex.Message); }
             return (list, noLeidas);
         }
 
@@ -91,7 +91,7 @@ namespace bufinscustomers.Services
                     cmd.ExecuteNonQuery();
                 }
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[Notificaciones.MarcarLeida] {0}", ex.Message); }
         }
 
         public void MarcarTodasLeidas(int idUsuario)
@@ -107,7 +107,7 @@ namespace bufinscustomers.Services
                     cmd.ExecuteNonQuery();
                 }
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[Notificaciones.MarcarTodasLeidas] {0}", ex.Message); }
         }
 
         public void LimpiarTodas(int idUsuario)
@@ -123,7 +123,7 @@ namespace bufinscustomers.Services
                     cmd.ExecuteNonQuery();
                 }
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[Notificaciones.LimpiarTodas] {0}", ex.Message); }
         }
 
         public void Eliminar(int id, int idUsuario)
@@ -140,7 +140,7 @@ namespace bufinscustomers.Services
                     cmd.ExecuteNonQuery();
                 }
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[Notificaciones.Eliminar] {0}", ex.Message); }
         }
 
         private static Notificacion Map(SqlDataReader r) => new Notificacion

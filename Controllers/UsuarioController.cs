@@ -48,11 +48,9 @@ namespace bufinscustomers.Controllers
             }
             else
             {
-                // Admin 0 o 1 con permiso solo ven usuarios de su empresa y excluyen Super Admins
-                var idEmpresa = UsuarioSesionHelper.UsuarioActual.IdEmpresa;
-                usuarios = GetUsuariosFromStoredProcedure()
-                    .Where(u => u.IdEmpresa == idEmpresa && u.Admin != 2)
-                    .ToList();
+                // Admin 0 o 1: consulta directa filtrada por empresa, evita cargar todos los usuarios
+                var idEmpresa = UsuarioSesionHelper.UsuarioActual.IdEmpresa ?? 0;
+                usuarios = GetUsuariosPorEmpresa(idEmpresa);
             }
 
             // Pasar información de permisos al ViewBag para la vista
@@ -63,6 +61,51 @@ namespace bufinscustomers.Controllers
             ViewBag.PuedeEliminar = UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR");
 
             return View("~/Views/Configuracion/Usuarios.cshtml", usuarios);
+        }
+
+        private List<Usuarios> GetUsuariosPorEmpresa(int idEmpresa)
+        {
+            var lista = new List<Usuarios>();
+            using (var cn = new SqlConnection(CadenaConexion))
+            {
+                var cmd = new SqlCommand(@"
+                    SELECT u.Id, u.Usuario, u.Clave, u.Nombre, u.Apellidos, u.Correo,
+                           u.Telefono, u.Admin, u.IdEmpresa,
+                           CASE WHEN EXISTS (SELECT 1 FROM UsuarioImagenes WHERE UsuarioId = u.Id)
+                                THEN 1 ELSE NULL END AS ImagenBase64,
+                           ISNULL(u.LimiteConsultasIA, 0) AS LimiteConsultasIA
+                    FROM Usuarios u
+                    WHERE u.IdEmpresa = @IdEmpresa
+                      AND (u.Admin IS NULL OR u.Admin <> 2)
+                    ORDER BY u.Nombre, u.Apellidos", cn);
+                cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                cn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        lista.Add(new Usuarios
+                        {
+                            Id        = Convert.ToInt32(reader["Id"]),
+                            Usuario   = reader["Usuario"].ToString(),
+                            Clave     = reader["Clave"].ToString(),
+                            Nombre    = reader["Nombre"].ToString(),
+                            Apellidos = reader["Apellidos"].ToString(),
+                            Correo    = reader["Correo"].ToString(),
+                            Telefono  = reader["Telefono"].ToString(),
+                            Admin     = reader["Admin"] != DBNull.Value ? (byte?)reader["Admin"] : null,
+                            IdEmpresa = reader["IdEmpresa"] != DBNull.Value ? (int?)reader["IdEmpresa"] : null,
+                            Imagen    = reader["ImagenBase64"] != DBNull.Value
+                                            ? new ImagenUsuario { UsuarioId = Convert.ToInt32(reader["Id"]) }
+                                            : null,
+                            LimiteConsultasIA = reader["LimiteConsultasIA"] != DBNull.Value
+                                            ? (int?)Convert.ToInt32(reader["LimiteConsultasIA"])
+                                            : 0
+                        });
+                    }
+                }
+            }
+            return lista;
         }
 
         private List<Usuarios> GetUsuariosFromStoredProcedure()

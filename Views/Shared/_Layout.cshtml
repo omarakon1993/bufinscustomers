@@ -654,14 +654,15 @@
         var sessionTimeoutMinutes = 20; // Configurado en Web.config
         var sessionWarningMinutes = 5;  // Advertir 5 minutos antes
         var sessionCheckInterval = 60000; // Verificar cada minuto
-        
+
         var sessionTimeoutMs = sessionTimeoutMinutes * 60 * 1000;
         var warningTimeMs = sessionTimeoutMs - (sessionWarningMinutes * 60 * 1000);
-        
-        var warningShown = false;
+
+        var warningShown    = false;
+        var logoutInProgress = false; // guard: evita doble ejecución de cerrarSesionAutomatica
         var sessionWarningTimer = null;
         var sessionTimeoutTimer = null;
-        var activityCheckTimer = null;
+        var activityCheckTimer  = null;
 
         // Inicializar manejo de sesión
         function inicializarManejoSesion() {
@@ -800,6 +801,10 @@
 
         // Cerrar sesión automática por timeout
         function cerrarSesionAutomatica() {
+            if (logoutInProgress) return; // evita que dos timers simultáneos dupliquen el diálogo
+            logoutInProgress = true;
+            limpiarTimersSesion();
+            Swal.close(); // cierra cualquier diálogo activo (ej. warning de 5 min)
             Swal.fire({
                 icon: 'info',
                 title: '⏰ Sesión expirada',
@@ -833,7 +838,7 @@
                     }, 1000);
                 }
             }).then(() => {
-                window.location.href = '@Url.Action("Login", "Acceso")?expired=true';
+                window.location.href = '@Url.Action("CerrarSesion", "Acceso")?expired=true';
             });
         }
 
@@ -904,6 +909,14 @@
                 activityCheckTimer = null;
             }
         }
+
+        // Page Visibility API — verifica sesión inmediatamente al volver al tab
+        // Esto resuelve el caso donde el browser congela los timers en tabs inactivos
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'visible' && !logoutInProgress) {
+                verificarEstadoSesion();
+            }
+        });
 
         // Detectar actividad del usuario para reiniciar timers
         var activityEvents = ['click', 'keypress', 'scroll', 'mousemove', 'touchstart'];

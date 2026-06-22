@@ -295,10 +295,12 @@ namespace bufinscustomers.Controllers
         /// <summary>
         /// Método para cerrar sesión mejorado
         /// </summary>
-        public ActionResult CerrarSesion()
+        public ActionResult CerrarSesion(bool expired = false)
         {
             UsuarioSesionHelper.LimpiarSesion();
-            return RedirectToAction("Login", "Acceso");
+            return expired
+                ? RedirectToAction("Login", "Acceso", new { expired = true })
+                : RedirectToAction("Login", "Acceso");
         }
 
         // A3: Endpoint mínimo y seguro para verificar estado de sesión desde JS
@@ -346,9 +348,7 @@ namespace bufinscustomers.Controllers
 
         private string GetClientIp()
         {
-            string ip = Request.ServerVariables["HTTP_X_FORWARDED_FOR"] ?? Request.UserHostAddress ?? "";
-            if (ip.Contains(",")) ip = ip.Split(',')[0].Trim();
-            return ip;
+            return Request.UserHostAddress ?? "";
         }
 
         private bool EstaIPBloqueada(string ip)
