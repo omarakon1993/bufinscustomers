@@ -18,6 +18,7 @@ namespace bufinscustomers.Models
         public int? IdCategoria { get; set; }
         public bool SoloSuperAdmin { get; set; }
         public bool SoloAdminEmpresa { get; set; }
+        public bool EsDestacado { get; set; }
 
         // Propiedades de solo lectura para renderizado, pobladas via JOIN
         public string Categoria { get; set; }

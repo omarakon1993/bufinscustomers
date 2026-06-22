@@ -16,7 +16,7 @@ namespace bufinscustomers.Services
         private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
         private const string OpenAIEndpoint = "https://api.openai.com/v1/chat/completions";
         private const string OpenAIModelDefault = "gpt-4o";
-        private const int MaxTokensDefault = 1024;
+        private const int MaxTokensDefault = 8000;
         private static readonly MemoryCache _cache = MemoryCache.Default;
         private const int CacheTtlHoras = 4;
 

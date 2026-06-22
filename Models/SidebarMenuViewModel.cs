@@ -26,5 +26,6 @@ namespace bufinscustomers.Models
         public string Controller { get; set; }
         public string Action { get; set; }
         public string Icono { get; set; }
+        public bool EsDestacado { get; set; }
     }
 }

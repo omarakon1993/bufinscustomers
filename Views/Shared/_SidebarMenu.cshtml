@@ -39,7 +39,7 @@
                     {
                         bool dirActivo = itemDir.Controller == curCtrl && itemDir.Action == curAction;
                         <div class="sidebar-nav-item">
-                            <a class="sidebar-nav-link @(dirActivo ? "active" : "")" href="@Url.Action(itemDir.Action, itemDir.Controller)">
+                            <a class="sidebar-nav-link @(dirActivo ? "active" : "") @(itemDir.EsDestacado ? "destacado" : "")" href="@Url.Action(itemDir.Action, itemDir.Controller)">
                                 <i class="@itemDir.Icono sidebar-nav-icon"></i>
                                 <span class="sidebar-nav-text">@itemDir.Nombre</span>
                             </a>
@@ -56,7 +56,7 @@
                     }
                     bool soloActivo = soloItem.Controller == curCtrl && soloItem.Action == curAction;
                     <div class="sidebar-nav-item">
-                        <a class="sidebar-nav-link @(soloActivo ? "active" : "")" href="@Url.Action(soloItem.Action, soloItem.Controller)">
+                        <a class="sidebar-nav-link @(soloActivo ? "active" : "") @(soloItem.EsDestacado ? "destacado" : "")" href="@Url.Action(soloItem.Action, soloItem.Controller)">
                             <i class="@grupo.Icono sidebar-nav-icon"></i>
                             <span class="sidebar-nav-text">@linkText</span>
                         </a>

@@ -42,9 +42,9 @@ namespace bufinscustomers.Controllers
             // MaxTokens: validar rango
             if (item.Clave == "OpenAIMaxTokens")
             {
-                if (int.TryParse(item.Valor, out int t) && (t < 100 || t > 32000))
+                if (int.TryParse(item.Valor, out int t) && (t < 100 || t > 100000))
                 {
-                    SetErrorMessage("El valor de MaxTokens debe estar entre 100 y 32000.");
+                    SetErrorMessage("El valor de MaxTokens debe estar entre 100 y 100000.");
                     return RedirectToAction("Index");
                 }
             }

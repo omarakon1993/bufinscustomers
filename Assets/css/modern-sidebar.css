@@ -100,4 +100,20 @@ html.sidebar-init-collapsed .main-content{margin-left:var(--sidebar-width-collap
 .topbar .text-gray-600.small{font-size:.83rem!important}
 .topbar .text-gray-400{font-size:.71rem!important}
 .topbar .text-gray-400 i{font-size:.66rem!important}
+
+/* ===== MENU DESTACADO ===== */
+/* Fondo con gradiente muy sutil y borde izquierdo en color acento */
+.sidebar-nav-link.destacado{background:linear-gradient(90deg,rgba(88,58,255,.09) 0%,rgba(1,225,215,.03) 100%);border-left-color:rgba(1,225,215,.55)}
+/* Icono con glow suave pulsante */
+.sidebar-nav-link.destacado .sidebar-nav-icon{color:#01E1D7;animation:destIconPulse 3.5s ease-in-out infinite}
+/* Texto ligeramente más claro/bold */
+.sidebar-nav-link.destacado .sidebar-nav-text{font-weight:600;color:#e2f0ff}
+/* Hover: intensifica levemente, mantiene la identidad destacada */
+.sidebar-nav-link.destacado:hover{background:linear-gradient(90deg,rgba(88,58,255,.17) 0%,rgba(1,225,215,.09) 100%);border-left-color:#01E1D7;color:#01E1D7}
+.sidebar-nav-link.destacado:hover .sidebar-nav-icon{animation:none;transform:scale(1.12)}
+/* Activo: combina active + destacado */
+.sidebar-nav-link.destacado.active{background:linear-gradient(90deg,rgba(88,58,255,.28) 0%,rgba(1,225,215,.1) 100%)}
+.sidebar-nav-link.destacado.active .sidebar-nav-icon{animation:none;filter:drop-shadow(0 0 5px rgba(1,225,215,.7))}
+/* Animación del icono: glow pulsante lento */
+@keyframes destIconPulse{0%,100%{filter:drop-shadow(0 0 1px rgba(1,225,215,.2));color:#01E1D7}50%{filter:drop-shadow(0 0 6px rgba(1,225,215,.65));color:#4df0eb}}
 .topbar .img-profile{width:1.85rem!important;height:1.85rem!important}

@@ -35,6 +35,10 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
+            // Solo Super Admin puede crear menús destacados
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+                opcion.EsDestacado = false;
+
             try
             {
                 bool creado = _menuOpcionesService.CrearMenuOpcion(opcion);
@@ -65,6 +69,10 @@ namespace bufinscustomers.Controllers
             {
                 return RedirectToAction("Index", "Home");
             }
+
+            // Solo Super Admin puede marcar menús como destacados
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+                opcion.EsDestacado = false;
 
             try
             {

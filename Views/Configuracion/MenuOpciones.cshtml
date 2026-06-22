@@ -21,7 +21,7 @@
     var opcionesJson = jss.Serialize(Model.Select(o => new {
         o.Id, o.Codigo, o.Nombre, o.NombreEN, o.Descripcion, o.Icono, o.Orden,
         o.Controller, o.Action, o.IdGrupo, o.IdCategoria, o.NombreGrupo, o.Categoria,
-        o.SoloSuperAdmin, o.SoloAdminEmpresa
+        o.SoloSuperAdmin, o.SoloAdminEmpresa, o.EsDestacado
     }));
 
     var grupos     = ViewBag.Grupos     as List<bufinscustomers.Models.GrupoMenu>     ?? new List<bufinscustomers.Models.GrupoMenu>();
@@ -59,18 +59,23 @@
     .table-compact thead th { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; color: #555; padding: 0.5rem 0.4rem; white-space: nowrap; border-bottom: 2px solid #dee2e6; background-color: #f8f9fa; position: sticky; top: 0; z-index: 1; }
     .table-compact tbody td { font-size: 0.8rem; padding: 0.35rem 0.4rem; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .table-compact tbody tr:hover { background-color: #f0edff; }
-    .table-compact .col-codigo    { width: 16%; }
-    .table-compact .col-nombre    { width: 12%; }
-    .table-compact .col-nombre-en { width: 12%; }
+    .table-compact .col-codigo    { width: 15%; }
+    .table-compact .col-nombre    { width: 11%; }
+    .table-compact .col-nombre-en { width: 11%; }
     .table-compact .col-categoria { width: 10%; }
-    .table-compact .col-grupo     { width: 11%; }
-    .table-compact .col-ruta      { width: 13%; }
-    .table-compact .col-orden     { width: 5%;  text-align: center; }
+    .table-compact .col-grupo     { width: 10%; }
+    .table-compact .col-ruta      { width: 12%; }
+    .table-compact .col-orden     { width: 4%;  text-align: center; }
     .table-compact .col-acceso    { width: 9%;  text-align: center; }
+    .table-compact .col-destacado { width: 6%;  text-align: center; }
     .table-compact .col-acciones  { width: 12%; text-align: center; white-space: nowrap; }
-    .badge-super     { background-color: #dc3545; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
-    .badge-normal    { background-color: #28a745; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
-    .badge-admin-emp { background-color: #ffc107; color: #212529; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
+    .badge-super      { background-color: #dc3545; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
+    .badge-normal     { background-color: #28a745; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
+    .badge-admin-emp  { background-color: #ffc107; color: #212529; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
+    .badge-destacado  { background: linear-gradient(135deg,#583AFF,#01E1D7); color: white; padding: 2px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
+    .check-dest-label { display:flex;align-items:center;gap:.4rem;padding:.55rem .85rem;border-radius:8px;border:1px solid rgba(88,58,255,.25);background:linear-gradient(90deg,rgba(88,58,255,.06),rgba(1,225,215,.04));cursor:pointer;transition:border-color .15s,background .15s }
+    .check-dest-label:hover { border-color:rgba(1,225,215,.5);background:linear-gradient(90deg,rgba(88,58,255,.1),rgba(1,225,215,.07)) }
+    .check-dest-icon { font-size:1rem;background:linear-gradient(135deg,#583AFF,#01E1D7);-webkit-background-clip:text;-webkit-text-fill-color:transparent }
     .btn-group { gap: 0.25rem; }
     .btn-group .btn { padding: 0.2rem 0.45rem; font-size: 0.75rem; border-radius: 0.25rem; }
 </style>
@@ -92,13 +97,14 @@
                         <th class="col-ruta">@Resources.Strings.Menu_ThRuta</th>
                         <th class="col-orden">@Resources.Strings.Menu_ThOrden</th>
                         <th class="col-acceso">@Resources.Strings.Menu_ThAcceso</th>
+                        <th class="col-destacado">@Resources.Strings.Menu_ThDestacado</th>
                         <th class="col-acciones">@Resources.Strings.Common_ThAcciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (!Model.Any())
                     {
-                        <tr><td colspan="9" class="text-center text-muted py-3">@Resources.Strings.Menu_NoOpciones</td></tr>
+                        <tr><td colspan="10" class="text-center text-muted py-3">@Resources.Strings.Menu_NoOpciones</td></tr>
                     }
                     @foreach (var opcion in Model)
                     {
@@ -122,6 +128,12 @@
                                 else
                                 {
                                     <span class="badge-normal">@Resources.Strings.Menu_BadgeTodos</span>
+                                }
+                            </td>
+                            <td class="col-destacado">
+                                @if (opcion.EsDestacado)
+                                {
+                                    <span class="badge-destacado" title="@Resources.Strings.Menu_BadgeDestacado">&#9733;</span>
                                 }
                             </td>
                             <td class="col-acciones">
@@ -243,6 +255,17 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Fila 7: Menú destacado -->
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <label class="check-dest-label" for="crearEsDestacado">
+                                <input type="checkbox" name="EsDestacado" value="true" id="crearEsDestacado" style="display:none" />
+                                <input type="hidden" name="EsDestacado" value="false" />
+                                <i class="fas fa-star check-dest-icon"></i>
+                                <span><strong>@Resources.Strings.Menu_LabelEsDestacado</strong> &mdash; <small class="text-muted">@Resources.Strings.Menu_LabelEsDestacadoDesc</small></span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
@@ -351,6 +374,17 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Fila 7: Menú destacado -->
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <label class="check-dest-label" id="editDestacadoLabel" for="editEsDestacado">
+                                <input type="checkbox" name="EsDestacado" value="true" id="editEsDestacado" style="display:none" />
+                                <input type="hidden" name="EsDestacado" value="false" />
+                                <i class="fas fa-star check-dest-icon"></i>
+                                <span><strong>@Resources.Strings.Menu_LabelEsDestacado</strong> &mdash; <small class="text-muted">@Resources.Strings.Menu_LabelEsDestacadoDesc</small></span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
@@ -436,6 +470,8 @@
         document.getElementById('editAction').value      = o.Action        || '';
         document.getElementById('editSoloSuperAdmin').checked   = o.SoloSuperAdmin;
         document.getElementById('editSoloAdminEmpresa').checked = o.SoloAdminEmpresa;
+        document.getElementById('editEsDestacado').checked      = o.EsDestacado;
+        actualizarEstiloDestacado('editDestacadoLabel', o.EsDestacado);
 
         var idCat = o.IdCategoria || 0;
         if (!idCat && o.IdGrupo) {
@@ -480,9 +516,35 @@
         });
     }
 
+    function actualizarEstiloDestacado(labelId, activo) {
+        var lbl = document.getElementById(labelId);
+        if (!lbl) return;
+        if (activo) {
+            lbl.style.borderColor = 'rgba(1,225,215,.6)';
+            lbl.style.background  = 'linear-gradient(90deg,rgba(88,58,255,.14),rgba(1,225,215,.09))';
+        } else {
+            lbl.style.borderColor = '';
+            lbl.style.background  = '';
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         poblarCategorias('crearCategoria', _categorias.length > 0 ? _categorias[0].Id : 0);
         filtrarGrupos('crear');
+
+        // Toggle visual para los checkboxes de "Destacado"
+        ['crearEsDestacado', 'editEsDestacado'].forEach(function (chkId) {
+            var chk = document.getElementById(chkId);
+            var lblId = chkId === 'crearEsDestacado' ? 'crearEsDestacado' : 'editDestacadoLabel';
+            if (!chk) return;
+            var lbl = chk.closest('label') || document.getElementById(lblId);
+            if (lbl) {
+                lbl.addEventListener('click', function () {
+                    chk.checked = !chk.checked;
+                    actualizarEstiloDestacado(lbl.id || lblId, chk.checked);
+                });
+            }
+        });
     });
 </script>
 </body>

@@ -96,6 +96,9 @@ namespace bufinscustomers.Services
             try { opcion.IdCategoria = reader["IdCategoria"] != DBNull.Value ? (int?)Convert.ToInt32(reader["IdCategoria"]) : null; }
             catch (IndexOutOfRangeException) { }
 
+            try { opcion.EsDestacado = reader["EsDestacado"] != DBNull.Value && Convert.ToBoolean(reader["EsDestacado"]); }
+            catch (IndexOutOfRangeException) { }
+
             try { opcion.NombreEN         = reader["NombreEN"]         != DBNull.Value ? reader["NombreEN"].ToString()         : null; }
             catch (IndexOutOfRangeException) { }
             try { opcion.NombreCategoriaEN = reader["NombreCategoriaEN"] != DBNull.Value ? reader["NombreCategoriaEN"].ToString() : null; }
@@ -216,7 +219,8 @@ namespace bufinscustomers.Services
                             Nombre = ResolverNombre(opcion.Nombre, opcion.NombreEN),
                             Controller = opcion.Controller,
                             Action = opcion.Action,
-                            Icono = opcion.Icono
+                            Icono = opcion.Icono,
+                            EsDestacado = opcion.EsDestacado
                         });
                     }
 
@@ -240,7 +244,7 @@ namespace bufinscustomers.Services
             {
                 using (SqlCommand cmd = new SqlCommand(
                     @"SELECT m.Id, m.Codigo, m.Nombre, m.NombreEN, m.Descripcion, m.Icono, m.Orden,
-                             m.Controller, m.[Action], m.IdGrupo, m.IdCategoria, m.SoloSuperAdmin, m.SoloAdminEmpresa,
+                             m.Controller, m.[Action], m.IdGrupo, m.IdCategoria, m.SoloSuperAdmin, m.SoloAdminEmpresa, m.EsDestacado,
                              g.Nombre  AS NombreGrupo,
                              g.NombreEN AS NombreGrupoEN,
                              g.Icono   AS IconoGrupo,
@@ -277,9 +281,9 @@ namespace bufinscustomers.Services
             {
                 using (SqlCommand cmd = new SqlCommand(
                     @"INSERT INTO MenuOpciones
-                        (Codigo, Nombre, NombreEN, Descripcion, Icono, Orden, Controller, [Action], Activo, IdGrupo, IdCategoria, SoloSuperAdmin, SoloAdminEmpresa)
+                        (Codigo, Nombre, NombreEN, Descripcion, Icono, Orden, Controller, [Action], Activo, IdGrupo, IdCategoria, SoloSuperAdmin, SoloAdminEmpresa, EsDestacado)
                       VALUES
-                        (@Codigo, @Nombre, @NombreEN, @Descripcion, @Icono, @Orden, @Controller, @Action, 1, @IdGrupo, @IdCategoria, @SoloSuperAdmin, @SoloAdminEmpresa)", cn))
+                        (@Codigo, @Nombre, @NombreEN, @Descripcion, @Icono, @Orden, @Controller, @Action, 1, @IdGrupo, @IdCategoria, @SoloSuperAdmin, @SoloAdminEmpresa, @EsDestacado)", cn))
                 {
                     cmd.Parameters.AddWithValue("@Codigo",         opcion.Codigo ?? "");
                     cmd.Parameters.AddWithValue("@Nombre",         opcion.Nombre ?? "");
@@ -293,6 +297,7 @@ namespace bufinscustomers.Services
                     cmd.Parameters.AddWithValue("@IdCategoria",    opcion.IdCategoria.HasValue ? (object)opcion.IdCategoria.Value : DBNull.Value);
                     cmd.Parameters.AddWithValue("@SoloSuperAdmin", opcion.SoloSuperAdmin);
                     cmd.Parameters.AddWithValue("@SoloAdminEmpresa", opcion.SoloAdminEmpresa);
+                    cmd.Parameters.AddWithValue("@EsDestacado", opcion.EsDestacado);
 
                     cn.Open();
                     return cmd.ExecuteNonQuery() > 0;
@@ -313,7 +318,8 @@ namespace bufinscustomers.Services
                         Icono = @Icono, Orden = @Orden,
                         Controller = @Controller, [Action] = @Action,
                         IdGrupo = @IdGrupo, IdCategoria = @IdCategoria,
-                        SoloSuperAdmin = @SoloSuperAdmin, SoloAdminEmpresa = @SoloAdminEmpresa
+                        SoloSuperAdmin = @SoloSuperAdmin, SoloAdminEmpresa = @SoloAdminEmpresa,
+                        EsDestacado = @EsDestacado
                       WHERE Id = @Id", cn))
                 {
                     cmd.Parameters.AddWithValue("@Id",             opcion.Id);
@@ -329,6 +335,7 @@ namespace bufinscustomers.Services
                     cmd.Parameters.AddWithValue("@IdCategoria",    opcion.IdCategoria.HasValue ? (object)opcion.IdCategoria.Value : DBNull.Value);
                     cmd.Parameters.AddWithValue("@SoloSuperAdmin", opcion.SoloSuperAdmin);
                     cmd.Parameters.AddWithValue("@SoloAdminEmpresa", opcion.SoloAdminEmpresa);
+                    cmd.Parameters.AddWithValue("@EsDestacado", opcion.EsDestacado);
 
                     cn.Open();
                     return cmd.ExecuteNonQuery() > 0;

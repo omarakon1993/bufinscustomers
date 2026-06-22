@@ -259,7 +259,7 @@ namespace bufinscustomers.Controllers
 
                 string apiKey   = (tApiKey.Result ?? "").Trim();
                 string modeloIA = (tModelo.Result ?? "gpt-4o").Trim();
-                int maxTokensIA = (int.TryParse(tMaxTokens.Result, out int ptk) && ptk > 0) ? ptk : 1024;
+                int maxTokensIA = (int.TryParse(tMaxTokens.Result, out int ptk) && ptk > 0) ? ptk : 8000;
                 // Si OpenAITemperature está vacío o no existe → null → no se envía al API
                 double? temperatureIA = double.TryParse(
                     tTemp.Result,
