@@ -385,7 +385,7 @@
                     tbody.append(row);
                 }
 
-                $('#totalRegistros').text(resp.totalRegistros + ' @Resources.Strings.Common_RegistrosPag ' + paginaActual + '/' + totalPaginas);
+                $('#totalRegistros').text(resp.totalRegistros + ' @Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag)) ' + paginaActual + '/' + totalPaginas);
                 crearPaginacion(totalPaginas);
                 $('#resultadosContainer').show();
                 $('#btnExportar').show();

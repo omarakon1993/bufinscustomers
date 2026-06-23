@@ -98,6 +98,45 @@
         border-top: 1px dashed #e2e8f0;
         margin: 0.75rem 0;
     }
+
+    /* ── Logo Power BI en header ─────────────────────────────────── */
+    .powerbi-header .powerbi-header-content {
+        justify-content: space-between !important;
+        width: 100% !important;
+    }
+    .pbi-header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .pbi-logo-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: white;
+        border-radius: 8px;
+        padding: 6px 13px 6px 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+        transition: box-shadow 0.2s;
+    }
+    .pbi-logo-badge:hover {
+        box-shadow: 0 3px 14px rgba(0,0,0,0.26);
+    }
+    .pbi-logo-badge .pbi-label {
+        font-size: 0.73rem;
+        font-weight: 700;
+        color: #1e293b;
+        letter-spacing: 0.2px;
+        line-height: 1;
+    }
+    .pbi-logo-badge .pbi-sub {
+        font-size: 0.58rem;
+        font-weight: 500;
+        color: #64748b;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        line-height: 1;
+    }
 </style>
 
 <div class="container-fluid px-4">
@@ -105,8 +144,23 @@
     <!-- Header -->
     <div class="powerbi-header">
         <div class="powerbi-header-content">
-            <i class="fas fa-chart-pie powerbi-header-icon"></i>
-            <h1 class="powerbi-header-title">@Resources.Strings.Rprt_PageTitle</h1>
+            <div class="pbi-header-left">
+                <i class="fas fa-chart-column powerbi-header-icon"></i>
+                <h1 class="powerbi-header-title">@Resources.Strings.Rprt_PageTitle</h1>
+            </div>
+            <div class="pbi-logo-badge">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="26" height="26" style="flex-shrink:0">
+                    <rect width="100" height="100" rx="14" fill="#F2C811"/>
+                    <rect x="12" y="60" width="14" height="28" rx="3" fill="white"/>
+                    <rect x="31" y="42" width="14" height="46" rx="3" fill="white"/>
+                    <rect x="50" y="20" width="14" height="68" rx="3" fill="white"/>
+                    <rect x="69" y="38" width="14" height="50" rx="3" fill="rgba(255,255,255,0.88)"/>
+                </svg>
+                <div style="display:flex;flex-direction:column;gap:2px">
+                    <span class="pbi-label">Power BI</span>
+                    <span class="pbi-sub">Microsoft</span>
+                </div>
+            </div>
         </div>
     </div>
 

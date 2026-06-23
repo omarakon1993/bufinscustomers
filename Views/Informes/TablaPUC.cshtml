@@ -149,12 +149,12 @@
 <script>
     var _pucMsg = {
         todos:          '@Resources.Strings.Common_Todos',
-        registrosPag:   '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag)',
-        errorConexion:  '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag)',
+        registrosPag:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag))',
+        errorConexion:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag))',
         exportando:     '@Resources.Strings.Common_JS_ExportandoExcel',
-        generandoExcel: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag)',
-        noResultados:   '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag)',
-        buscando:       '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag)'
+        generandoExcel: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag))',
+        noResultados:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag))',
+        buscando:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag))'
     };
 </script>
 <script>

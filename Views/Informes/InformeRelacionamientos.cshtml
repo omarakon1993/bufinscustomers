@@ -215,7 +215,7 @@
         sinDatosExportar:   '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
         exportando:         '@Resources.Strings.Common_JS_ExportandoExcel',
         generandoExcel:     '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
-        registrosPag:       '@Resources.Strings.Common_RegistrosPag',
+        registrosPag:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag))',
         noResultados:       '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
         buscando:           '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
         error:              '@Resources.Strings.Common_Error',

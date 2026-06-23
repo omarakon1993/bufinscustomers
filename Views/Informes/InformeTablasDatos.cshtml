@@ -230,7 +230,7 @@
             generandoExcel:    '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios)',
             todos:             '@Resources.Strings.Common_Todos',
             todas:             '@Resources.Strings.Common_Todas',
-            registrosPag:      '@Resources.Strings.Common_RegistrosPag',
+            registrosPag:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag))',
             noResultados:      '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios)',
             buscando:          '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios)',
             error:             '@Resources.Strings.Common_Error'

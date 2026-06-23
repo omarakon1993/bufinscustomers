@@ -98,6 +98,23 @@
         .btn-group .btn i {
             margin-right: 0;
         }
+
+        /* === BUSCADOR === */
+        .gestor-search-bar { padding: .55rem 1rem; background: #f8f9fa; border-bottom: 1px solid #e9ecef; }
+        .gestor-search-wrapper { position: relative; max-width: 300px; }
+        .gestor-search-icon { position: absolute; left: .65rem; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: .72rem; pointer-events: none; }
+        .gestor-search-input { width: 100%; padding: .36rem .75rem .36rem 2rem; font-size: .8rem; border: 1px solid #dee2e6; border-radius: 6px; outline: none; transition: border-color .15s, box-shadow .15s; background: #fff; color: #374151; }
+        .gestor-search-input:focus { border-color: #583AFF; box-shadow: 0 0 0 3px rgba(88,58,255,.12); }
+        .gestor-search-input::placeholder { color: #b0b7c3; }
+
+        /* === PAGINACIÓN === */
+        .gestor-pagination { padding: .45rem 1rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e9ecef; background: #fafafa; }
+        .gestor-pag-info { font-size: .74rem; color: #6b7280; font-weight: 500; }
+        .gestor-pag-controls { display: flex; align-items: center; gap: .3rem; }
+        .gestor-pag-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid #dee2e6; background: #fff; color: #583AFF; font-size: .7rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; padding: 0; }
+        .gestor-pag-btn:hover:not(:disabled) { background: linear-gradient(90deg,#583AFF,#01E1D7); border-color: transparent; color: #fff; transform: scale(1.08); }
+        .gestor-pag-btn:disabled { opacity: .35; cursor: not-allowed; color: #9ca3af; }
+        .gestor-pag-num { font-size: .74rem; font-weight: 600; color: #374151; min-width: 62px; text-align: center; }
     </style>
 
     <div class="card shadow mb-4 mt-4">
@@ -105,10 +122,12 @@
             <i class="bi bi-building-fill"></i> @Resources.Strings.Emp_PageTitle
         </div>
         <div class="card-body p-0">
-            <div class="px-3 pt-2 pb-1 border-bottom bg-white">
-                <input type="text" id="buscarEmpresa" class="form-control form-control-sm"
-                       style="max-width:280px;"
-                       placeholder="@Resources.Strings.Layout_SearchPlaceholder">
+            <div class="gestor-search-bar">
+                <div class="gestor-search-wrapper">
+                    <i class="fas fa-search gestor-search-icon"></i>
+                    <input type="text" id="buscarEmpresa" class="gestor-search-input"
+                           placeholder="@Resources.Strings.Layout_SearchPlaceholder">
+                </div>
             </div>
             <div class="table-responsive table-wrapper">
                 <table id="tablaEmpresas" class="table table-bordered table-hover table-compact">
@@ -159,12 +178,16 @@
                     </tbody>
                 </table>
             </div>
-            <div class="px-3 py-2 d-flex justify-content-between align-items-center border-top" style="font-size:0.82rem;">
-                <span class="text-muted" id="emp-info"></span>
-                <div>
-                    <button class="btn btn-sm btn-outline-secondary" id="emp-prev" onclick="empCambiarPagina(-1)">&#8249;</button>
-                    <span class="mx-2" id="emp-pagnum" style="min-width:70px;display:inline-block;text-align:center;"></span>
-                    <button class="btn btn-sm btn-outline-secondary" id="emp-next" onclick="empCambiarPagina(1)">&#8250;</button>
+            <div class="gestor-pagination">
+                <span class="gestor-pag-info" id="emp-info"></span>
+                <div class="gestor-pag-controls">
+                    <button class="gestor-pag-btn" id="emp-prev" onclick="empCambiarPagina(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="gestor-pag-num" id="emp-pagnum"></span>
+                    <button class="gestor-pag-btn" id="emp-next" onclick="empCambiarPagina(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -196,7 +219,7 @@
                 filasFiltradas.slice(inicio, fin).forEach(function (r) { r.style.display = ''; });
 
                 document.getElementById('emp-info').textContent =
-                    filasFiltradas.length + ' @Resources.Strings.Common_RegistrosPag ' + paginaActual + ' / ' + totalPaginas;
+                    filasFiltradas.length + ' @Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag)) ' + paginaActual + ' / ' + totalPaginas;
                 document.getElementById('emp-prev').disabled = paginaActual <= 1;
                 document.getElementById('emp-next').disabled = paginaActual >= totalPaginas;
             }
