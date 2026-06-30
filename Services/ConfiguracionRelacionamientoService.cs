@@ -232,9 +232,23 @@ namespace bufinscustomers.Services
 
                                     for (int col = 1; col <= columnasValidas; col++)
                                     {
-                                        var valor = hoja.Cells[row, col].Text?.Trim();
-                                        if (!string.IsNullOrWhiteSpace(valor)) filaVacia = false;
-                                        dr[col - 1] = ConvertirValorExcel(valor, dt.Columns[col - 1].DataType);
+                                        var celda = hoja.Cells[row, col];
+                                        var rawValue = celda.Value;
+                                        var valorTexto = celda.Text?.Trim();
+
+                                        if (rawValue != null || !string.IsNullOrWhiteSpace(valorTexto))
+                                            filaVacia = false;
+
+                                        var tipoCol = dt.Columns[col - 1].DataType;
+
+                                        // Para columnas numéricas usar el valor bruto de EPPlus (double).
+                                        // Evita que el formato visual del Excel (paréntesis para negativos,
+                                        // guión para ceros, separadores de miles locales) rompa el parse.
+                                        if (rawValue is double d &&
+                                            (tipoCol == typeof(decimal) || tipoCol == typeof(double) || tipoCol == typeof(float)))
+                                            dr[col - 1] = Convert.ChangeType(d, tipoCol);
+                                        else
+                                            dr[col - 1] = ConvertirValorExcel(valorTexto, tipoCol);
                                     }
 
                                     if (!filaVacia)
