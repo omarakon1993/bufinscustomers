@@ -649,7 +649,7 @@
         });
 
         // ========== GESTIÓN AVANZADA DE SESIONES ==========
-        
+
         // Variables de configuración de sesión
         var sessionTimeoutMinutes = 20; // Configurado en Web.config
         var sessionWarningMinutes = 5;  // Advertir 5 minutos antes
@@ -664,21 +664,55 @@
         var sessionTimeoutTimer = null;
         var activityCheckTimer  = null;
 
+        // Clave localStorage para rastrear tiempo real de actividad
+        // (los setTimeout se congelan en tabs inactivos; localStorage no)
+        var SESSION_ACTIVITY_KEY = 'bufins_last_activity';
+
+        function actualizarUltimaActividad() {
+            try { localStorage.setItem(SESSION_ACTIVITY_KEY, Date.now().toString()); } catch (e) {}
+        }
+
+        function obtenerUltimaActividad() {
+            try { return parseInt(localStorage.getItem(SESSION_ACTIVITY_KEY)) || 0; } catch (e) { return 0; }
+        }
+
+        // Verifica con el reloj real (no con timers JS) si ya expiró la sesión.
+        // Se llama al volver a la pestaña para cubrir el caso de inactividad larga.
+        function verificarTimeoutPorRelojReal() {
+            if (logoutInProgress) return true;
+            var lastActivity = obtenerUltimaActividad();
+            if (lastActivity > 0 && (Date.now() - lastActivity) >= sessionTimeoutMs) {
+                cerrarSesionAutomatica();
+                return true;
+            }
+            // También verificar si ya corresponde mostrar la advertencia
+            if (lastActivity > 0 && !warningShown && (Date.now() - lastActivity) >= warningTimeMs) {
+                mostrarAdvertenciaSesion();
+                return true;
+            }
+            return false;
+        }
+
         // Inicializar manejo de sesión
         function inicializarManejoSesion() {
+            actualizarUltimaActividad();
+
             // Timer para mostrar advertencia
             sessionWarningTimer = setTimeout(function() {
                 mostrarAdvertenciaSesion();
             }, warningTimeMs);
-            
+
             // Timer para logout automático
             sessionTimeoutTimer = setTimeout(function() {
                 cerrarSesionAutomatica();
             }, sessionTimeoutMs);
-            
+
             // Verificar estado de sesión periódicamente
             activityCheckTimer = setInterval(function() {
-                verificarEstadoSesion();
+                // Primero verificar por reloj real (cubre tabs throttled)
+                if (!verificarTimeoutPorRelojReal()) {
+                    verificarEstadoSesion();
+                }
             }, sessionCheckInterval);
         }
 
@@ -877,12 +911,13 @@
                     }
                 },
                 error: function(xhr, status, error) {
-                    // Solo actuar si es un error 401 (no autorizado)
                     if (xhr.status === 401) {
                         limpiarTimersSesion();
                         cerrarSesionAutomatica();
+                    } else {
+                        // Para otros errores, verificar por reloj real por si acaso
+                        verificarTimeoutPorRelojReal();
                     }
-                    // Otros errores los ignoramos (podrían ser problemas de red temporales)
                 }
             });
         }
@@ -891,7 +926,8 @@
         function reiniciarTimersSesion() {
             limpiarTimersSesion();
             warningShown = false;
-            inicializarManejoSesion();
+            logoutInProgress = false;
+            inicializarManejoSesion(); // ya llama actualizarUltimaActividad()
         }
 
         // Limpiar todos los timers de sesión
@@ -910,11 +946,14 @@
             }
         }
 
-        // Page Visibility API — verifica sesión inmediatamente al volver al tab
-        // Esto resuelve el caso donde el browser congela los timers en tabs inactivos
+        // Page Visibility API — verifica sesión inmediatamente al volver al tab.
+        // Primero revisa el tiempo real via localStorage (cubre el caso de browser
+        // throttling donde los timers JS no dispararon mientras el tab era invisible).
         document.addEventListener('visibilitychange', function () {
             if (document.visibilityState === 'visible' && !logoutInProgress) {
-                verificarEstadoSesion();
+                if (!verificarTimeoutPorRelojReal()) {
+                    verificarEstadoSesion();
+                }
             }
         });
 
@@ -929,6 +968,7 @@
                 var now = Date.now();
                 if (now - lastActivityTime > activityThreshold) {
                     lastActivityTime = now;
+                    actualizarUltimaActividad(); // Persiste en localStorage (survives throttling)
                     // Solo reiniciar si no se ha mostrado la advertencia
                     if (!warningShown) {
                         reiniciarTimersSesion();
