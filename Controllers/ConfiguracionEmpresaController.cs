@@ -3,6 +3,7 @@ using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
 
@@ -12,10 +13,14 @@ namespace bufinscustomers.Controllers
     public class ConfiguracionEmpresaController : BaseController
     {
         private readonly ConfiguracionEmpresaService _configuracionService;
+        private readonly EmpresaTablasResumenIAService _resumenIAService;
+        private readonly InformeTablasDatosService _tablasService;
 
         public ConfiguracionEmpresaController()
         {
             _configuracionService = new ConfiguracionEmpresaService();
+            _resumenIAService = new EmpresaTablasResumenIAService();
+            _tablasService = new InformeTablasDatosService();
         }
 
         #region Vista Principal
@@ -41,7 +46,8 @@ namespace bufinscustomers.Controllers
 
                 ViewBag.Empresas = empresas;
                 ViewBag.EsAdmin = UsuarioSesionHelper.EsSuperAdmin();
-                
+                ViewBag.TablasDisponibles = _tablasService.ObtenerTablasDisponibles();
+
                 return View("~/Views/Configuracion/ConfiguracionesEmpresas.cshtml");
             }
             catch (Exception ex)
@@ -105,7 +111,8 @@ namespace bufinscustomers.Controllers
                         LineasNegocio = configuracion.LineasNegocio.Select(l => new { l.Id, l.NombreLinea, l.Orden }),
                         Ajuste1 = configuracion.Ajuste1.Select(a => new { a.Id, a.NombreAjuste, a.Orden }),
                         Ajuste2 = configuracion.Ajuste2.Select(a => new { a.Id, a.NombreAjuste, a.Orden }),
-                        AnosHistoricos = configuracion.AnosHistoricos.Select(a => new { a.Id, a.NombreAno, a.Orden })
+                        AnosHistoricos = configuracion.AnosHistoricos.Select(a => new { a.Id, a.NombreAno, a.Orden }),
+                        TablasResumenIA = _resumenIAService.ObtenerTablasAsignadas(idEmpresa)
                     }
                 }, JsonRequestBehavior.AllowGet);
             }
@@ -458,6 +465,34 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = $"Error durante la transición: {ex.Message}" });
+            }
+        }
+
+        #endregion
+
+        #region Resumen Ejecutivo IA - Tablas por Empresa
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult GuardarTablasResumenIA(int idEmpresa, List<string> tablas)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (usuario == null)
+                return Json(new { success = false, message = "Sesi�n no v�lida" });
+
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+                return Json(new { success = false, message = R("Common_SinPermisos") });
+
+            try
+            {
+                if (tablas == null) tablas = new List<string>();
+                _resumenIAService.GuardarTablasEmpresa(idEmpresa, tablas, usuario.Id);
+
+                return Json(new { success = true, message = R("CfgResumenIA_Guardado") });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = R("CfgResumenIA_ErrorGuardar") + " " + ex.Message });
             }
         }
 

@@ -116,6 +116,17 @@
   <data name="Home_TooltipExpandir" xml:space="preserve"><value>Expand section</value></data>
   <data name="Home_TooltipNoticia" xml:space="preserve"><value>Go to article</value></data>
 
+  <!-- HOME / RESUMEN IA -->
+  <data name="Home_IA_SectionTitle" xml:space="preserve"><value>AI Executive Summary</value></data>
+  <data name="Home_IA_BtnGenerar" xml:space="preserve"><value>Generate summary</value></data>
+  <data name="Home_IA_Cargando" xml:space="preserve"><value>Analyzing the latest financial data...</value></data>
+  <data name="Home_IA_SeleccioneEmpresa" xml:space="preserve"><value>Select a company to generate the summary.</value></data>
+  <data name="Home_IA_SinEmpresa" xml:space="preserve"><value>Your user has no company assigned.</value></data>
+  <data name="Home_IA_SinConfigurar" xml:space="preserve"><value>The AI executive summary is not configured for this company. Contact an administrator.</value></data>
+  <data name="Home_IA_SinDatos" xml:space="preserve"><value>No financial data available to generate the summary.</value></data>
+  <data name="Home_IA_ErrorConexion" xml:space="preserve"><value>Could not generate the summary. Please try again.</value></data>
+  <data name="Home_IA_TablasConfiguradas" xml:space="preserve"><value>Tables analyzed:</value></data>
+
   <!-- COMMON (SweetAlert, reusable buttons) -->
   <data name="Common_Si" xml:space="preserve"><value>Yes</value></data>
   <data name="Common_No" xml:space="preserve"><value>No</value></data>
@@ -123,6 +134,7 @@
   <data name="Common_Error" xml:space="preserve"><value>Error</value></data>
   <data name="Common_Informacion" xml:space="preserve"><value>Information</value></data>
   <data name="Common_Aceptar" xml:space="preserve"><value>Accept</value></data>
+  <data name="Common_SinPermisos" xml:space="preserve"><value>You do not have permission to perform this action.</value></data>
 
   <!-- DATOS / EXCEL UPLOAD - UI -->
   <data name="Datos_PageTitle" xml:space="preserve"><value>Excel Import</value></data>
@@ -532,6 +544,13 @@
   <data name="Prompt_LabelCodigo" xml:space="preserve"><value>Code</value></data>
   <data name="Prompt_LabelTextoPrompt" xml:space="preserve"><value>Prompt text</value></data>
   <data name="Prompt_LabelTextoHint" xml:space="preserve"><value>(instructions to be sent to the AI)</value></data>
+
+  <!-- AI SUMMARY CONFIGURATION PER COMPANY (tab inside Company Configuration) -->
+  <data name="CfgResumenIA_TabLabel" xml:space="preserve"><value>AI Summary</value></data>
+  <data name="CfgResumenIA_TablasTitle" xml:space="preserve"><value>Tables used for the AI executive summary</value></data>
+  <data name="CfgResumenIA_SeleccioneEmpresaTexto" xml:space="preserve"><value>Select which financial tables feed this company's AI executive summary (shown on the Dashboard).</value></data>
+  <data name="CfgResumenIA_Guardado" xml:space="preserve"><value>Tables updated successfully.</value></data>
+  <data name="CfgResumenIA_ErrorGuardar" xml:space="preserve"><value>Error saving the configuration.</value></data>
 
   <!-- REPORTS MASTER -->
   <data name="Rep_PageTitle" xml:space="preserve"><value>Reports Manager</value></data>

@@ -90,6 +90,98 @@
         </div>
     }
 
+    <div class="dash-section" id="resumenia-section" style="position:relative;z-index:1;margin-bottom:1.75rem;">
+        <div class="dash-section-label dash-section-toggle" data-target="sec-resumenia-body" data-key="bufins_sec_resumenia" title="@Resources.Strings.Home_TooltipColapsar">
+            <i class="fas fa-robot"></i> @Resources.Strings.Home_IA_SectionTitle
+            <i class="fas fa-chevron-down dash-section-chevron" style="font-size:.62rem;margin-left:.3rem;"></i>
+        </div>
+        <div id="sec-resumenia-body">
+            <div class="dash-resumenia-card">
+                <div class="dash-resumenia-controls">
+                    @if (UsuarioSesionHelper.EsSuperAdmin())
+                    {
+                        <select id="resumenia-empresa" class="dash-resumenia-select">
+                            <option value="">@Resources.Strings.Common_Seleccione</option>
+                            @if (empresas != null)
+                            {
+                                foreach (var e in empresas)
+                                {
+                                    <option value="@e.Id">@e.Nombre</option>
+                                }
+                            }
+                        </select>
+                    }
+                    <button type="button" id="btn-resumenia-generar" class="dash-resumenia-btn">
+                        <i class="fas fa-magic"></i> @Resources.Strings.Home_IA_BtnGenerar
+                    </button>
+                </div>
+
+                <div id="resumenia-tablas-info" class="dash-resumenia-tablas-info" style="display:none;">
+                    <span class="dash-resumenia-tablas-label">
+                        <i class="fas fa-table"></i> @Resources.Strings.Home_IA_TablasConfiguradas
+                    </span>
+                    <span id="resumenia-tablas-chips" class="dash-resumenia-chips"></span>
+                </div>
+
+                <div id="resumenia-loading" style="display:none;font-size:.78rem;color:#A0A0B8;align-items:center;gap:.5rem;padding:.6rem 0;">
+                    <i class="fas fa-spinner fa-spin"></i> @Resources.Strings.Home_IA_Cargando
+                </div>
+
+                <div id="resumenia-content" class="dash-resumenia-content" style="display:none;"></div>
+
+                <div id="resumenia-error" class="dash-resumenia-error" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-section" id="indic-section" style="position:relative;z-index:1;margin-bottom:1.75rem;">
+        <div class="dash-section-label dash-section-toggle" data-target="sec-indic-body" data-key="bufins_sec_indic" title="@Resources.Strings.Home_TooltipColapsar">
+            <i class="fas fa-chart-line"></i> @Resources.Strings.Home_SectionIndicadores
+            <button id="btn-indic-refresh" class="dash-indic-refreshbtn" title="@Resources.Strings.Home_IndicadoresActualizar">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <i class="fas fa-chevron-down dash-section-chevron" style="font-size:.62rem;margin-left:.3rem;"></i>
+        </div>
+        <div id="sec-indic-body">
+
+        <div id="indic-loading" style="font-size:.78rem;color:#A0A0B8;display:flex;align-items:center;gap:.5rem;padding:.5rem 0;">
+            <i class="fas fa-spinner fa-spin"></i> @Resources.Strings.Home_IndicadoresCargando
+        </div>
+
+        <div id="indic-content" style="display:none;">
+            <div class="dash-indic-grid">
+
+                <!-- Tasa de cambio USD/COP -->
+                <div class="dash-kpi-card dash-indic-trm-card">
+                    <div class="dash-kpi-icon" style="background:linear-gradient(135deg,#28A745,#01E1D7)">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="dash-kpi-body">
+                        <div class="dash-kpi-value" id="trm-valor" style="font-size:1.3rem;">—</div>
+                        <div class="dash-kpi-label">@Resources.Strings.Home_TRM_Titulo</div>
+                        <div class="dash-kpi-etiqueta" id="trm-fecha"></div>
+                        <div class="dash-kpi-empresa" style="font-size:.56rem;margin-top:3px;">
+                            <i class="fas fa-link"></i> @Resources.Strings.Home_TRM_Fuente
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Noticias -->
+                <div class="dash-noticias-card">
+                    <div class="dash-noticias-hdr">
+                        <i class="fas fa-newspaper"></i>
+                        <span>@Resources.Strings.Home_Noticias_Titulo</span>
+                    </div>
+                    <div id="noticias-leyenda" class="dash-noticias-leyenda" style="display:none;"></div>
+                    <div id="noticias-container" style="display:none;"></div>
+                    <div class="dash-noticias-hint" id="noticias-hint" style="display:none;"></div>
+                </div>
+
+            </div>
+        </div>
+        </div><!-- /sec-indic-body -->
+    </div>
+
     @if (kpiRows.Any() || graficoCards.Any())
     {
         <div class="dash-section">
@@ -158,55 +250,6 @@
             </div><!-- /sec-widgets-body -->
         </div>
     }
-
-
-    <div class="dash-section" id="indic-section" style="position:relative;z-index:1;margin-bottom:1.75rem;">
-        <div class="dash-section-label dash-section-toggle" data-target="sec-indic-body" data-key="bufins_sec_indic" title="@Resources.Strings.Home_TooltipColapsar">
-            <i class="fas fa-chart-line"></i> @Resources.Strings.Home_SectionIndicadores
-            <button id="btn-indic-refresh" class="dash-indic-refreshbtn" title="@Resources.Strings.Home_IndicadoresActualizar">
-                <i class="fas fa-sync-alt"></i>
-            </button>
-            <i class="fas fa-chevron-down dash-section-chevron" style="font-size:.62rem;margin-left:.3rem;"></i>
-        </div>
-        <div id="sec-indic-body">
-
-        <div id="indic-loading" style="font-size:.78rem;color:#A0A0B8;display:flex;align-items:center;gap:.5rem;padding:.5rem 0;">
-            <i class="fas fa-spinner fa-spin"></i> @Resources.Strings.Home_IndicadoresCargando
-        </div>
-
-        <div id="indic-content" style="display:none;">
-            <div class="dash-indic-grid">
-
-                <!-- Tasa de cambio USD/COP -->
-                <div class="dash-kpi-card dash-indic-trm-card">
-                    <div class="dash-kpi-icon" style="background:linear-gradient(135deg,#28A745,#01E1D7)">
-                        <i class="fas fa-dollar-sign"></i>
-                    </div>
-                    <div class="dash-kpi-body">
-                        <div class="dash-kpi-value" id="trm-valor" style="font-size:1.3rem;">—</div>
-                        <div class="dash-kpi-label">@Resources.Strings.Home_TRM_Titulo</div>
-                        <div class="dash-kpi-etiqueta" id="trm-fecha"></div>
-                        <div class="dash-kpi-empresa" style="font-size:.56rem;margin-top:3px;">
-                            <i class="fas fa-link"></i> @Resources.Strings.Home_TRM_Fuente
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Noticias -->
-                <div class="dash-noticias-card">
-                    <div class="dash-noticias-hdr">
-                        <i class="fas fa-newspaper"></i>
-                        <span>@Resources.Strings.Home_Noticias_Titulo</span>
-                    </div>
-                    <div id="noticias-leyenda" class="dash-noticias-leyenda" style="display:none;"></div>
-                    <div id="noticias-container" style="display:none;"></div>
-                    <div class="dash-noticias-hint" id="noticias-hint" style="display:none;"></div>
-                </div>
-
-            </div>
-        </div>
-        </div><!-- /sec-indic-body -->
-    </div>
 
 </div>
 
@@ -487,6 +530,54 @@
 
     @@media (max-width:768px) {
         .dash-indic-grid { grid-template-columns:1fr; }
+    }
+
+    /* ---------- Resumen Ejecutivo IA ---------- */
+    .dash-resumenia-card {
+        background:#fff;
+        border:1px solid rgba(88,58,255,.12);
+        border-radius:9px;
+        box-shadow:0 2px 8px rgba(22,9,51,.05);
+        padding:13px 15px;
+    }
+    .dash-resumenia-controls { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+    .dash-resumenia-select {
+        border:1px solid rgba(88,58,255,.25); border-radius:7px;
+        padding:.4rem .7rem; font-size:.78rem; color:#160933;
+        min-width:220px; background:#fff;
+    }
+    .dash-resumenia-btn {
+        background:linear-gradient(90deg,#583AFF,#01E1D7);
+        border:none; color:#fff; font-weight:600;
+        font-size:.78rem; padding:.5rem 1.1rem; border-radius:7px;
+        display:inline-flex; align-items:center; gap:.4rem;
+        transition:transform .15s ease, box-shadow .15s ease;
+    }
+    .dash-resumenia-btn:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(88,58,255,.35); color:#fff; }
+    .dash-resumenia-btn:disabled { opacity:.6; transform:none; box-shadow:none; cursor:not-allowed; }
+    .dash-resumenia-content {
+        margin-top:.9rem; font-size:.83rem; color:#393F45; line-height:1.55;
+        border-top:1px solid rgba(88,58,255,.08); padding-top:.9rem;
+    }
+    .dash-resumenia-error {
+        margin-top:.9rem; font-size:.78rem; color:#e02424;
+        background:#fef2f2; border:1px solid #fecaca; border-radius:7px; padding:.6rem .8rem;
+    }
+    .dash-resumenia-tablas-info {
+        margin-top:.55rem; display:flex; align-items:center; flex-wrap:wrap; gap:.4rem;
+    }
+    .dash-resumenia-tablas-label {
+        font-size:.62rem; font-weight:700; color:#A0A0B8;
+        text-transform:uppercase; letter-spacing:.5px; white-space:nowrap;
+    }
+    .dash-resumenia-chips { display:flex; flex-wrap:wrap; gap:.3rem; }
+    .dash-resumenia-chip {
+        background:rgba(88,58,255,.08); color:#583AFF;
+        border-radius:99px; padding:.15rem .6rem;
+        font-size:.66rem; font-weight:600;
+    }
+    .dash-resumenia-chip-vacio {
+        font-size:.68rem; color:#FCA311; font-style:italic; font-weight:500;
     }
 </style>
 
@@ -879,10 +970,112 @@
         });
     }
 
+    // ── Resumen Ejecutivo IA ──────────────────────────────────
+    var _ia = {
+        seleccioneEmpresa: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_IA_SeleccioneEmpresa))',
+        errorConexion:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_IA_ErrorConexion))',
+        sinTablas:         '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_IA_SinConfigurar))'
+    };
+    var _urlResumenIA = '@Url.Action("ObtenerResumenIA", "Home")';
+    var _urlTablasConfiguradasIA = '@Url.Action("ObtenerTablasConfiguradasIA", "Home")';
+
+    function cargarTablasConfiguradasIA(idEmpresa) {
+        var $info  = $('#resumenia-tablas-info');
+        var $chips = $('#resumenia-tablas-chips');
+        $chips.empty();
+        $info.hide();
+
+        var data = {};
+        if (idEmpresa) data.idEmpresa = idEmpresa;
+
+        $.get(_urlTablasConfiguradasIA, data, function (resp) {
+            if (!resp.success) return;
+            if (resp.tablas && resp.tablas.length > 0) {
+                resp.tablas.forEach(function (nombre) {
+                    $chips.append($('<span class="dash-resumenia-chip"></span>').text(nombre));
+                });
+            } else {
+                $chips.append($('<span class="dash-resumenia-chip-vacio"></span>').text(_ia.sinTablas));
+            }
+            $info.show();
+        });
+    }
+
+    function renderMarkdownIA(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g,'<em>$1</em>')
+            .replace(/^### (.+)$/gm,'<h6 style="color:#4f46e5;font-weight:700;margin-top:12px;">$1</h6>')
+            .replace(/^## (.+)$/gm, '<h5 style="color:#4f46e5;font-weight:700;margin-top:14px;">$1</h5>')
+            .replace(/^# (.+)$/gm,  '<h4 style="color:#312e81;font-weight:700;margin-top:16px;">$1</h4>')
+            .replace(/^[-*] (.+)$/gm,'<li>$1</li>')
+            .replace(/(<li>[\s\S]+?<\/li>)/g,'<ul style="padding-left:18px;margin-bottom:8px;">$1</ul>')
+            .replace(/\n\n/g,'</p><p style="margin-bottom:8px;">')
+            .replace(/\n/g,'<br>');
+    }
+
+    function generarResumenIA() {
+        var $btn     = $('#btn-resumenia-generar');
+        var $loading = $('#resumenia-loading');
+        var $content = $('#resumenia-content');
+        var $error   = $('#resumenia-error');
+        var idEmpresa = $('#resumenia-empresa').length ? $('#resumenia-empresa').val() : null;
+
+        if ($('#resumenia-empresa').length && !idEmpresa) {
+            $error.text(_ia.seleccioneEmpresa).show();
+            $content.hide();
+            return;
+        }
+
+        $btn.prop('disabled', true);
+        $error.hide();
+        $content.hide();
+        $loading.show().css('display', 'flex');
+
+        $.ajax({
+            url: _urlResumenIA,
+            type: 'POST',
+            data: { idEmpresa: idEmpresa },
+            success: function (resp) {
+                $loading.hide();
+                $btn.prop('disabled', false);
+                if (resp.Exitoso) {
+                    $content.html(renderMarkdownIA(resp.Respuesta)).show();
+                } else {
+                    $error.text(resp.Error || _ia.errorConexion).show();
+                }
+            },
+            error: function () {
+                $loading.hide();
+                $btn.prop('disabled', false);
+                $error.text(_ia.errorConexion).show();
+            }
+        });
+    }
+
     $(document).ready(function () {
         initSecciones();
         cargar(false);
         $('#btn-indic-refresh').on('click', function () { cargar(true); });
+        $('#btn-resumenia-generar').on('click', generarResumenIA);
+
+        var $resumeniaEmpresa = $('#resumenia-empresa');
+        if ($resumeniaEmpresa.length) {
+            $resumeniaEmpresa.on('change', function () {
+                var idEmpresa = $(this).val();
+                $('#resumenia-content').hide();
+                $('#resumenia-error').hide();
+                if (idEmpresa) {
+                    cargarTablasConfiguradasIA(idEmpresa);
+                } else {
+                    $('#resumenia-tablas-info').hide();
+                }
+            });
+        } else {
+            cargarTablasConfiguradasIA(null);
+        }
     });
 })();
 </script>
