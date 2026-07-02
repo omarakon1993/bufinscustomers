@@ -91,7 +91,7 @@
     }
 
     <div class="dash-section" id="resumenia-section" style="position:relative;z-index:1;margin-bottom:1.75rem;">
-        <div class="dash-section-label dash-section-toggle" data-target="sec-resumenia-body" data-key="bufins_sec_resumenia" title="@Resources.Strings.Home_TooltipColapsar">
+        <div class="dash-section-label dash-section-toggle" data-target="sec-resumenia-body" title="@Resources.Strings.Home_TooltipColapsar">
             <i class="fas fa-robot"></i> @Resources.Strings.Home_IA_SectionTitle
             <i class="fas fa-chevron-down dash-section-chevron" style="font-size:.62rem;margin-left:.3rem;"></i>
         </div>
@@ -135,7 +135,7 @@
     </div>
 
     <div class="dash-section" id="indic-section" style="position:relative;z-index:1;margin-bottom:1.75rem;">
-        <div class="dash-section-label dash-section-toggle" data-target="sec-indic-body" data-key="bufins_sec_indic" title="@Resources.Strings.Home_TooltipColapsar">
+        <div class="dash-section-label dash-section-toggle" data-target="sec-indic-body" title="@Resources.Strings.Home_TooltipColapsar">
             <i class="fas fa-chart-line"></i> @Resources.Strings.Home_SectionIndicadores
             <button id="btn-indic-refresh" class="dash-indic-refreshbtn" title="@Resources.Strings.Home_IndicadoresActualizar">
                 <i class="fas fa-sync-alt"></i>
@@ -152,17 +152,15 @@
             <div class="dash-indic-grid">
 
                 <!-- Tasa de cambio USD/COP -->
-                <div class="dash-kpi-card dash-indic-trm-card">
+                <div class="dash-indic-trm-card">
                     <div class="dash-kpi-icon" style="background:linear-gradient(135deg,#28A745,#01E1D7)">
                         <i class="fas fa-dollar-sign"></i>
                     </div>
-                    <div class="dash-kpi-body">
-                        <div class="dash-kpi-value" id="trm-valor" style="font-size:1.3rem;">—</div>
-                        <div class="dash-kpi-label">@Resources.Strings.Home_TRM_Titulo</div>
-                        <div class="dash-kpi-etiqueta" id="trm-fecha"></div>
-                        <div class="dash-kpi-empresa" style="font-size:.56rem;margin-top:3px;">
-                            <i class="fas fa-link"></i> @Resources.Strings.Home_TRM_Fuente
-                        </div>
+                    <div class="dash-kpi-value" id="trm-valor">—</div>
+                    <div class="dash-kpi-label">@Resources.Strings.Home_TRM_Titulo</div>
+                    <div class="dash-kpi-etiqueta" id="trm-fecha"></div>
+                    <div class="dash-kpi-empresa">
+                        <i class="fas fa-link"></i> @Resources.Strings.Home_TRM_Fuente
                     </div>
                 </div>
 
@@ -185,7 +183,7 @@
     @if (kpiRows.Any() || graficoCards.Any())
     {
         <div class="dash-section">
-            <div class="dash-section-label dash-section-toggle" data-target="sec-widgets-body" data-key="bufins_sec_widgets" title="@Resources.Strings.Home_TooltipColapsar">
+            <div class="dash-section-label dash-section-toggle" data-target="sec-widgets-body" title="@Resources.Strings.Home_TooltipColapsar">
                 <i class="fas fa-th-large"></i> @Resources.Strings.Home_SectionWidgets
                 <i class="fas fa-chevron-down dash-section-chevron" style="margin-left:auto;font-size:.62rem;"></i>
             </div>
@@ -440,85 +438,99 @@
 
     .dash-indic-grid {
         display:grid;
-        grid-template-columns:180px 1fr;
-        gap:9px;
-        align-items:start;
+        grid-template-columns:190px 1fr;
+        gap:12px;
+        align-items:stretch;
     }
-    .dash-indic-trm-card { min-width:0; }
-    .dash-indic-trm-card .dash-kpi-label    { font-size:.68rem; color:#393F45; }
-    .dash-indic-trm-card .dash-kpi-etiqueta { font-size:.68rem; color:#6B6787; }
-    .dash-indic-trm-card .dash-kpi-empresa  { font-size:.63rem; color:#6B6787; }
+
+    /* TRM — tarjeta oscura destacada, la sección ahora es la protagonista */
+    .dash-indic-trm-card {
+        min-width:0; background:linear-gradient(160deg,#160933,#241154);
+        border-radius:11px; padding:16px 14px;
+        display:flex; flex-direction:column; justify-content:center; gap:4px;
+        box-shadow:0 6px 16px rgba(22,9,51,.22);
+    }
+    .dash-indic-trm-card .dash-kpi-icon {
+        width:32px; height:32px; margin-bottom:4px;
+    }
+    .dash-indic-trm-card .dash-kpi-value    { color:#fff; font-size:1.25rem; }
+    .dash-indic-trm-card .dash-kpi-label    { font-size:.64rem; color:rgba(255,255,255,.55); text-transform:uppercase; letter-spacing:.5px; }
+    .dash-indic-trm-card .dash-kpi-etiqueta { font-size:.6rem; color:rgba(255,255,255,.4); }
+    .dash-indic-trm-card .dash-kpi-empresa  { font-size:.58rem; color:#01E1D7; margin-top:6px; }
 
     /* Noticias */
     .dash-noticias-card {
         background:#fff;
         border:1px solid rgba(88,58,255,.12);
-        border-radius:9px;
-        box-shadow:0 2px 8px rgba(22,9,51,.05);
+        border-radius:11px;
+        box-shadow:0 4px 14px rgba(22,9,51,.06);
         overflow:hidden;
+        display:flex; flex-direction:column;
     }
     .dash-noticias-hdr {
         display:flex; align-items:center; gap:.5rem;
-        padding:9px 13px;
-        font-size:.76rem; font-weight:700; color:#6B6787;
-        text-transform:uppercase; letter-spacing:.6px;
+        padding:10px 14px;
+        font-size:.78rem; font-weight:800; color:#160933;
         border-bottom:1px solid rgba(88,58,255,.08);
     }
     .dash-noticias-hdr i { color:#583AFF; }
 
-    /* Leyenda de fuentes */
+    /* Leyenda de portales — se conserva, tratamiento sutil */
     .dash-noticias-leyenda {
-        display:flex; flex-wrap:wrap; gap:.5rem;
-        padding:7px 13px;
+        display:flex; flex-wrap:wrap; gap:.4rem;
+        padding:7px 12px;
         background:#FAFAFA;
         border-bottom:1px solid rgba(88,58,255,.07);
     }
     .feed-leyenda-item {
-        display:flex; align-items:center; gap:.35rem;
-        font-size:.68rem; font-weight:700;
-        color:#6B6787; text-transform:uppercase; letter-spacing:.5px;
+        display:flex; align-items:center; gap:.3rem;
+        font-size:.62rem; font-weight:700;
+        color:#8A86A8; text-transform:uppercase; letter-spacing:.4px;
+        background:#fff; border:1px solid rgba(88,58,255,.08);
+        border-radius:99px; padding:2px 8px;
     }
     .feed-leyenda-dot {
-        width:9px; height:9px; border-radius:50%; flex-shrink:0;
+        width:7px; height:7px; border-radius:50%; flex-shrink:0;
     }
 
-    /* Grupos por feed */
+    /* Lista de noticias — más compacta y con scroll para caber más titulares */
+    #noticias-container { max-height:280px; overflow-y:auto; }
+
     .dash-feed-grupo {
-        margin:5px 8px 4px;
+        margin:4px 6px 3px;
         border-left:3px solid #583AFF;
         border-radius:0 7px 7px 0;
         overflow:hidden;
     }
-    .dash-feed-grupo:last-child { margin-bottom:7px; }
+    .dash-feed-grupo:last-child { margin-bottom:6px; }
 
-    /* Cabecera del grupo */
     .dash-feed-grupo-hdr {
         display:flex; align-items:center; gap:.4rem;
-        padding:4px 9px;
-        font-size:.66rem; font-weight:800;
+        padding:3px 8px;
+        font-size:.62rem; font-weight:800;
         text-transform:uppercase; letter-spacing:.5px;
     }
-    .dash-feed-grupo-hdr i { font-size:.58rem; }
+    .dash-feed-grupo-hdr i { font-size:.56rem; }
 
     .dash-noticias-list { list-style:none; margin:0; padding:0; }
     .dash-noticia-item { border-bottom:1px solid rgba(88,58,255,.06); }
     .dash-noticia-item:last-child { border-bottom:none; }
     .dash-noticia-item a {
-        display:flex; align-items:flex-start; gap:8px;
-        padding:7px 11px 7px 9px;
+        display:flex; align-items:flex-start; gap:7px;
+        padding:5px 10px 5px 8px;
         text-decoration:none;
         transition:background .12s;
     }
     .dash-noticia-item a:hover { background:rgba(88,58,255,.04); }
     .dash-noticia-titulo {
-        font-size:.82rem; color:#160933; font-weight:500;
-        line-height:1.35; flex:1; min-width:0;
+        font-size:.76rem; color:#160933; font-weight:500;
+        line-height:1.3; flex:1; min-width:0;
         overflow:hidden; display:-webkit-box;
-        -webkit-line-clamp:2; -webkit-box-orient:vertical;
+        -webkit-line-clamp:1; -webkit-box-orient:vertical;
     }
     .dash-noticia-fecha {
-        font-size:.66rem; color:#6B6787;
-        white-space:nowrap; flex-shrink:0; padding-top:2px;
+        font-size:.62rem; color:#6B6787;
+        white-space:nowrap; flex-shrink:0; padding-top:1px;
     }
     .dash-noticias-hint {
         padding:12px 13px;
@@ -532,39 +544,39 @@
         .dash-indic-grid { grid-template-columns:1fr; }
     }
 
-    /* ---------- Resumen Ejecutivo IA ---------- */
+    /* ---------- Resumen Ejecutivo IA — franja compacta ---------- */
     .dash-resumenia-card {
         background:#fff;
         border:1px solid rgba(88,58,255,.12);
         border-radius:9px;
         box-shadow:0 2px 8px rgba(22,9,51,.05);
-        padding:13px 15px;
+        padding:10px 13px;
     }
-    .dash-resumenia-controls { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+    .dash-resumenia-controls { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
     .dash-resumenia-select {
         border:1px solid rgba(88,58,255,.25); border-radius:7px;
-        padding:.4rem .7rem; font-size:.78rem; color:#160933;
-        min-width:220px; background:#fff;
+        padding:.35rem .6rem; font-size:.72rem; color:#160933;
+        min-width:200px; background:#fff;
     }
     .dash-resumenia-btn {
         background:linear-gradient(90deg,#583AFF,#01E1D7);
         border:none; color:#fff; font-weight:600;
-        font-size:.78rem; padding:.5rem 1.1rem; border-radius:7px;
+        font-size:.72rem; padding:.4rem .9rem; border-radius:7px;
         display:inline-flex; align-items:center; gap:.4rem;
         transition:transform .15s ease, box-shadow .15s ease;
     }
     .dash-resumenia-btn:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(88,58,255,.35); color:#fff; }
     .dash-resumenia-btn:disabled { opacity:.6; transform:none; box-shadow:none; cursor:not-allowed; }
     .dash-resumenia-content {
-        margin-top:.9rem; font-size:.83rem; color:#393F45; line-height:1.55;
-        border-top:1px solid rgba(88,58,255,.08); padding-top:.9rem;
+        margin-top:.7rem; font-size:.79rem; color:#393F45; line-height:1.5;
+        border-top:1px solid rgba(88,58,255,.08); padding-top:.7rem;
     }
     .dash-resumenia-error {
-        margin-top:.9rem; font-size:.78rem; color:#e02424;
-        background:#fef2f2; border:1px solid #fecaca; border-radius:7px; padding:.6rem .8rem;
+        margin-top:.7rem; font-size:.75rem; color:#e02424;
+        background:#fef2f2; border:1px solid #fecaca; border-radius:7px; padding:.5rem .7rem;
     }
     .dash-resumenia-tablas-info {
-        margin-top:.55rem; display:flex; align-items:center; flex-wrap:wrap; gap:.4rem;
+        margin-top:.45rem; display:flex; align-items:center; flex-wrap:wrap; gap:.4rem;
     }
     .dash-resumenia-tablas-label {
         font-size:.62rem; font-weight:700; color:#A0A0B8;
@@ -947,26 +959,45 @@
     }
 
     function initSecciones() {
-        // Restaurar estado guardado en localStorage
-        $('.dash-section-toggle').each(function () {
-            if (localStorage.getItem($(this).data('key')) === '0') {
-                $('#' + $(this).data('target')).hide();
-                $(this).find('.dash-section-chevron').addClass('rotado');
-                $(this).attr('title', _s.expandir);
-            }
-        });
+        // Estado inicial fijo en cada carga: Indicadores y Widgets abiertos, Resumen IA colapsado
+        var $iaToggle = $('#resumenia-section .dash-section-toggle');
+        $('#' + $iaToggle.data('target')).hide();
+        $iaToggle.find('.dash-section-chevron').addClass('rotado');
+        $iaToggle.attr('title', _s.expandir);
 
-        // Toggle al hacer clic en el label (excluye el botón de refresh)
+        function colapsar($lbl) {
+            var $body = $('#' + $lbl.data('target'));
+            if (!$body.is(':visible')) return;
+            $body.slideUp(180);
+            $lbl.find('.dash-section-chevron').addClass('rotado');
+            $lbl.attr('title', _s.expandir);
+        }
+
+        // Toggle al hacer clic en el label (excluye el botón de refresh).
+        // Resumen IA es excluyente con las otras dos: al expandir IA se colapsan Indicadores
+        // y Widgets; al expandir Indicadores o Widgets solo se colapsa IA (esas dos pueden
+        // convivir abiertas entre sí).
         $(document).on('click', '.dash-section-toggle', function (e) {
             if ($(e.target).closest('#btn-indic-refresh').length) return;
             var $lbl  = $(this);
             var $body = $('#' + $lbl.data('target'));
             var $chev = $lbl.find('.dash-section-chevron');
             var abierto = $body.is(':visible');
-            $body[abierto ? 'slideUp' : 'slideDown'](180);
-            $chev.toggleClass('rotado', abierto);
-            $lbl.attr('title', abierto ? _s.expandir : _s.colapsar);
-            localStorage.setItem($lbl.data('key'), abierto ? '0' : '1');
+            var esIA = $lbl.data('target') === 'sec-resumenia-body';
+
+            if (abierto) {
+                colapsar($lbl);
+            } else {
+                $body.slideDown(180);
+                $chev.removeClass('rotado');
+                $lbl.attr('title', _s.colapsar);
+
+                if (esIA) {
+                    $('.dash-section-toggle').not($lbl).each(function () { colapsar($(this)); });
+                } else {
+                    colapsar($('#resumenia-section .dash-section-toggle'));
+                }
+            }
         });
     }
 

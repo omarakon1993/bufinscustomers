@@ -25,7 +25,7 @@ namespace bufinscustomers.Services
         }
 
         private const string CacheFeeds   = "IndicadoresFeeds";
-        private const int    MaxPorFeed   = 4;
+        private const int    MaxPorFeed   = 7;
         private const int    TimeoutFeed  = 8; // segundos por feed
 
         // -------------------------------------------------------
