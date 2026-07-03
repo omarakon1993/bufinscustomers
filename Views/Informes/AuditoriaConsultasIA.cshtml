@@ -24,8 +24,8 @@
     transition: all .15s;
     white-space: nowrap;
 }
-.aud-date-chip:hover  { border-color: #6366F1; color: #6366F1; background: #eef2ff; }
-.aud-date-chip.active { background: #6366F1; border-color: #6366F1; color: #fff; }
+.aud-date-chip:hover  { border-color: #583AFF; color: #583AFF; background: #eef2ff; }
+.aud-date-chip.active { background: #583AFF; border-color: #583AFF; color: #fff; }
 
 /* Badges tipo */
 .aud-tipo-badge {
@@ -33,7 +33,7 @@
     font-size: .72rem; font-weight: 700;
     padding: 3px 10px; border-radius: 99px; white-space: nowrap;
 }
-.aud-tipo-resumen  { background: #e0e7ff; color: #3730a3; }
+.aud-tipo-resumen  { background: #ede9fe; color: #583AFF; }
 .aud-tipo-pregunta { background: #fce7f3; color: #be185d; }
 
 /* Celda pregunta truncada */
@@ -55,7 +55,7 @@
 /* Botón ver */
 .aud-btn-ver {
     background: #eef2ff; border: 1px solid #c7d2fe;
-    color: #6366F1; border-radius: 6px;
+    color: #583AFF; border-radius: 6px;
     padding: 4px 12px; font-size: .76rem; font-weight: 600;
     cursor: pointer; transition: background .15s; white-space: nowrap;
 }
@@ -63,12 +63,12 @@
 
 /* Bloque pregunta en SweetAlert */
 .ia-pregunta-block {
-    background: #eef2ff; border-left: 4px solid #6366F1;
+    background: #eef2ff; border-left: 4px solid #583AFF;
     border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;
 }
 .ia-pregunta-block .ia-pregunta-label {
     font-size: .75rem; font-weight: 700; letter-spacing: .07em;
-    text-transform: uppercase; color: #4f46e5; margin-bottom: 4px;
+    text-transform: uppercase; color: #583AFF; margin-bottom: 4px;
 }
 .ia-pregunta-block .ia-pregunta-texto { color: #1e1b4b; font-weight: 500; font-size: .97rem; }
 </style>
@@ -216,10 +216,10 @@
                     <i class="fas fa-list mr-2"></i>@Resources.Strings.AudIA_TitleHistorial
                 </h5>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span id="audStatTotal"   class="info-badge" style="background:linear-gradient(135deg,#6366F1,#3B82F6);display:none;">
+                    <span id="audStatTotal"   class="info-badge" style="background:var(--app-btn-gradient);display:none;">
                         <i class="fas fa-list-ul mr-1"></i><span>0</span> total
                     </span>
-                    <span id="audStatResumenes" class="info-badge" style="background:linear-gradient(135deg,#3730a3,#6366F1);display:none;">
+                    <span id="audStatResumenes" class="info-badge" style="background:linear-gradient(135deg,#583AFF,#4a2de0);display:none;">
                         <i class="fas fa-magic mr-1"></i><span>0</span> res&uacute;menes
                     </span>
                     <span id="audStatPreguntas" class="info-badge" style="background:linear-gradient(135deg,#be185d,#e879a4);display:none;">
@@ -470,7 +470,7 @@ $(document).ready(function () {
             ));
             tr.append($('<td>').html(tipoBadge));
             tr.append($('<td>').html(preguntaHtml));
-            tr.append($('<td class="text-center">').css({ fontWeight: '700', color: '#6366F1' }).text(r.FilasAnalizadas));
+            tr.append($('<td class="text-center">').css({ fontWeight: '700', color: '#583AFF' }).text(r.FilasAnalizadas));
             tr.append($('<td class="text-center">').append(btnVer));
             tbody.append(tr);
         });
@@ -552,9 +552,9 @@ $(document).ready(function () {
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.+?)\*/g, '<em>$1</em>')
-            .replace(/^### (.+)$/gm, '<h6 style="color:#6366F1;font-weight:700;margin-top:12px;">$1</h6>')
-            .replace(/^## (.+)$/gm,  '<h5 style="color:#6366F1;font-weight:700;margin-top:14px;">$1</h5>')
-            .replace(/^# (.+)$/gm,   '<h4 style="color:#312e81;font-weight:700;margin-top:16px;">$1</h4>')
+            .replace(/^### (.+)$/gm, '<h6 style="color:#583AFF;font-weight:700;margin-top:12px;">$1</h6>')
+            .replace(/^## (.+)$/gm,  '<h5 style="color:#583AFF;font-weight:700;margin-top:14px;">$1</h5>')
+            .replace(/^# (.+)$/gm,   '<h4 style="color:#160933;font-weight:700;margin-top:16px;">$1</h4>')
             .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
             .replace(/(<li>[\s\S]+?<\/li>)/g, '<ul style="padding-left:18px;margin-bottom:8px;">$1</ul>')
             .replace(/\n\n/g, '</p><p style="margin-bottom:8px;">')

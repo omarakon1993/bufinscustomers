@@ -22,13 +22,13 @@
             background: #fff;
             border-radius: 14px;
             border: 1px solid #ede9fe;
-            box-shadow: 0 2px 12px rgba(79,70,229,.08);
+            box-shadow: 0 2px 12px rgba(22,9,51,.08);
             overflow: hidden;
             transition: box-shadow .2s;
         }
-        .cfg-ia-card:hover { box-shadow: 0 4px 20px rgba(79,70,229,.15); }
+        .cfg-ia-card:hover { box-shadow: 0 4px 20px rgba(22,9,51,.15); }
         .cfg-ia-card-header {
-            background: linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);
+            background: var(--app-glow-bg);
             padding: 12px 16px;
             display: flex;
             align-items: center;
@@ -66,11 +66,11 @@
         .btn-load-models {
             display: inline-flex; align-items: center; gap: 6px;
             padding: 6px 14px; font-size: .78rem; font-weight: 600;
-            border: 1.5px solid #6366f1; border-radius: 8px;
-            background: #fff; color: #4f46e5; cursor: pointer;
+            border: 1.5px solid #583AFF; border-radius: 8px;
+            background: #fff; color: #583AFF; cursor: pointer;
             transition: all .2s; white-space: nowrap;
         }
-        .btn-load-models:hover { background: #4f46e5; color: #fff; }
+        .btn-load-models:hover { background: #583AFF; color: #fff; }
         .btn-load-models:disabled { opacity: .6; cursor: not-allowed; }
         /* Hint badge verde OK */
         .modelos-badge {
@@ -85,9 +85,9 @@
             position: absolute;
             top: calc(100% + 2px); left: 0; right: 0;
             background: #fff;
-            border: 1.5px solid #6366f1;
+            border: 1.5px solid #583AFF;
             border-radius: 10px;
-            box-shadow: 0 8px 28px rgba(79,70,229,.18);
+            box-shadow: 0 8px 28px rgba(22,9,51,.18);
             z-index: 1060;
             overflow: hidden;
         }
@@ -101,7 +101,7 @@
             padding: 4px 10px; font-size: .78rem; outline: none;
             background: #fff; color: #374151;
         }
-        .modelos-search-wrap input:focus { border-color: #6366f1; }
+        .modelos-search-wrap input:focus { border-color: #583AFF; }
         .modelos-lista {
             max-height: 200px;
             overflow-y: auto;
@@ -119,8 +119,8 @@
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .modelo-item:last-child { border-bottom: none; }
-        .modelo-item:hover { background: #ede9fe; color: #4f46e5; }
-        .modelo-item.activo { background: #4f46e5; color: #fff; font-weight: 600; }
+        .modelo-item:hover { background: #ede9fe; color: #583AFF; }
+        .modelo-item.activo { background: #583AFF; color: #fff; font-weight: 600; }
         .modelo-item strong { color: inherit; text-decoration: underline; }
         .modelo-item-empty {
             padding: 12px 14px; font-size: .78rem; color: #9ca3af; text-align: center;
@@ -131,7 +131,7 @@
             position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
             background: none; border: none; color: #9ca3af; cursor: pointer; padding: 0;
         }
-        .input-pass-wrap .btn-eye:hover { color: #4f46e5; }
+        .input-pass-wrap .btn-eye:hover { color: #583AFF; }
         /* Separador nueva cfg */
         .cfg-nueva-section {
             padding: 0 20px 20px;

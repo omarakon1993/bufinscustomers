@@ -119,8 +119,8 @@
                                 </option>
                             }
                         </select>
-                        <div id="modeloInfoPanel" style="display:none;margin-top:6px;padding:8px 12px;background:#f0f0ff;border-radius:8px;border-left:3px solid #6366F1;font-size:0.85rem;color:#4b5563;">
-                            <i id="modeloIcono" class="fas fa-cog mr-1" style="color:#6366F1;"></i>
+                        <div id="modeloInfoPanel" style="display:none;margin-top:6px;padding:8px 12px;background:#f0f0ff;border-radius:8px;border-left:3px solid #583AFF;font-size:0.85rem;color:#4b5563;">
+                            <i id="modeloIcono" class="fas fa-cog mr-1" style="color:#583AFF;"></i>
                             <span id="modeloDescripcion"></span>
                         </div>
                     </div>
@@ -139,7 +139,7 @@
                 @Resources.Strings.Modelo_BtnExportarTodos
             </button>
             <small class="text-muted" id="textoAyuda">
-                <i class="fas fa-info-circle" style="color:#6366F1;"></i>
+                <i class="fas fa-info-circle" style="color:#583AFF;"></i>
                 @Resources.Strings.Modelo_HintCompletar
             </small>
         </div>
@@ -243,7 +243,7 @@
             var desc = $opt.data('descripcion');
             var ico  = $opt.data('icono') || 'fas fa-cog';
             if (val && desc) {
-                $('#modeloIcono').attr('class', ico + ' mr-1').css('color', '#6366F1');
+                $('#modeloIcono').attr('class', ico + ' mr-1').css('color', '#583AFF');
                 $('#modeloDescripcion').text(desc);
                 $('#modeloInfoPanel').show();
             } else {
@@ -291,7 +291,7 @@
 
                 if (!resp.exito) {
                     Swal.fire({ icon: 'error', title: _modelo.textos.error, text: resp.mensaje,
-                                confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#6366F1' });
+                                confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
                     return;
                 }
 
@@ -329,7 +329,7 @@
                 $('#btnTexto').text(_modelo.textos.btnEjecutar);
                 Swal.fire({ icon: 'error', title: _modelo.textos.error,
                             text: 'Error de conexión al ejecutar el modelo.',
-                            confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#6366F1' });
+                            confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
             }
         });
     }
@@ -446,7 +446,7 @@
                 clearInterval(timer);
                 overlay.style.display = 'none';
                 Swal.fire({ icon: 'error', title: _modelo.textos.error, text: err.message,
-                            confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#6366F1' });
+                            confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
             });
     }
 
@@ -467,7 +467,7 @@
             html: html,
             width: 640,
             confirmButtonText: '<i class="fas fa-download mr-1"></i> ' + _modelo.textos.descargarLog,
-            confirmButtonColor: '#6366f1',
+            confirmButtonColor: '#583AFF',
             showCancelButton: true,
             cancelButtonText: _modelo.textos.cerrar,
             cancelButtonColor: '#6b7280'
@@ -500,7 +500,7 @@
         $(function () {
             Swal.fire({ icon: 'success', title: _modelo.textos.exito,
                         text: '@Html.Raw(TempData["SuccessMessage"].ToString().Replace("'", "\\'"))',
-                        confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#6366F1' });
+                        confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
         });
     </script>
 }
@@ -510,7 +510,7 @@
         $(function () {
             Swal.fire({ icon: 'error', title: _modelo.textos.error,
                         text: '@Html.Raw(TempData["ErrorMessage"].ToString().Replace("'", "\\'"))',
-                        confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#6366F1' });
+                        confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
         });
     </script>
 }

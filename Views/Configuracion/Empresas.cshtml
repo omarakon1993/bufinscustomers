@@ -22,7 +22,7 @@
         }
 
         .card-header {
-            background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
+            background: var(--app-glow-bg);
             color: white;
             padding: 1rem 1.2rem;
             font-weight: 600;
@@ -151,7 +151,7 @@
                                 <td class="col-abreviatura">
                                     @if (!string.IsNullOrEmpty(empresa.Abreviatura))
                                     {
-                                        <span style="background:linear-gradient(135deg,#6366F1,#3B82F6);color:white;padding:0.15rem 0.55rem;border-radius:9999px;font-size:0.75rem;font-weight:600;letter-spacing:0.5px;">@empresa.Abreviatura</span>
+                                        <span style="background:var(--app-btn-gradient);color:white;padding:0.15rem 0.55rem;border-radius:9999px;font-size:0.75rem;font-weight:600;letter-spacing:0.5px;">@empresa.Abreviatura</span>
                                     }
                                 </td>
                                 <td class="col-nombre" title="@empresa.Nombre">@empresa.Nombre</td>

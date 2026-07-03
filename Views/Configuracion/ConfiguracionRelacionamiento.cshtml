@@ -68,7 +68,7 @@
             {
                 foreach (var tabla in tablasRel)
                 {
-                    <span style="background: linear-gradient(135deg, #6366F1, #3B82F6); color: white; padding: 0.3rem 0.8rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 500; white-space: nowrap; box-shadow: 0 1px 4px rgba(99,102,241,0.2);">
+                    <span style="background: var(--app-btn-gradient); color: white; padding: 0.3rem 0.8rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 500; white-space: nowrap; box-shadow: 0 1px 4px rgba(22,9,51,0.25);">
                         <i class="fas fa-table" style="margin-right: 5px; font-size: 0.7rem; opacity: 0.85;"></i>@tabla.NombreTabla
                     </span>
                 }
@@ -91,7 +91,7 @@
             @Html.AntiForgeryToken()
             <div class="filter-section">
                 <p style="font-size: 0.85rem; color: #6c757d; margin-bottom: 1rem;">
-                    <i class="fas fa-info-circle" style="color: #6366F1;"></i>
+                    <i class="fas fa-info-circle" style="color: #583AFF;"></i>
                     @Html.Raw(Resources.Strings.CfgRel_InfoText)
                 </p>
 
@@ -147,11 +147,11 @@
                 </div>
                 @if (resultado.TotalHojasProcesadas > 0)
                 {
-                    <div style="background: linear-gradient(135deg, #3B82F6, #06B6D4); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
+                    <div style="background: var(--app-btn-gradient); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
                         <i class="fas fa-table" style="margin-right: 4px;"></i>
                         @resultado.TotalHojasProcesadas @Resources.Strings.CfgRel_Tablas
                     </div>
-                    <div style="background: linear-gradient(135deg, #6366F1, #3B82F6); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
+                    <div style="background: var(--app-btn-gradient); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
                         <i class="fas fa-database" style="margin-right: 4px;"></i>
                         @resultado.TotalFilasInsertadas @Resources.Strings.CfgRel_Registros
                     </div>
@@ -223,13 +223,13 @@
 <div id="overlayProcesando" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(15,12,41,0.7); backdrop-filter:blur(4px); align-items:center; justify-content:center;">
     <div style="background:white; border-radius:1.25rem; padding:2.5rem 3rem; text-align:center; box-shadow:0 24px 64px rgba(0,0,0,0.35); max-width:380px; width:90%;">
         <div style="margin-bottom:1.25rem;">
-            <i class="fas fa-spinner fa-spin" style="font-size:3rem; color:#6366F1;"></i>
+            <i class="fas fa-spinner fa-spin" style="font-size:3rem; color:#583AFF;"></i>
         </div>
         <h5 style="font-weight:700; color:#1e1b4b; margin-bottom:0.4rem;">@Resources.Strings.Datos_JS_Procesando</h5>
         <p style="color:#6c757d; font-size:0.88rem; margin-bottom:1rem;">@Resources.Strings.Datos_OverlayNoCierre</p>
         <div style="background:#f0f4ff; border-radius:0.5rem; padding:0.5rem 1rem; display:inline-block;">
-            <i class="fas fa-clock" style="color:#6366F1; margin-right:0.4rem;"></i>
-            <span id="overlayTimer" style="font-size:0.9rem; font-weight:600; color:#6366F1;">0s</span>
+            <i class="fas fa-clock" style="color:#583AFF; margin-right:0.4rem;"></i>
+            <span id="overlayTimer" style="font-size:0.9rem; font-weight:600; color:#583AFF;">0s</span>
         </div>
     </div>
 </div>
@@ -303,7 +303,7 @@
                 e.preventDefault();
                 e.stopPropagation();
                 $(this).css({
-                    'border-color': '#6366F1',
+                    'border-color': '#583AFF',
                     'background': '#eef2ff'
                 });
             });
@@ -387,7 +387,7 @@
                     showCancelButton: true,
                     confirmButtonText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_SiCargar)',
                     cancelButtonText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel)',
-                    confirmButtonColor: '#6366F1',
+                    confirmButtonColor: '#583AFF',
                     cancelButtonColor: '#6c757d'
                 }).then(function (result) {
                     if (result.isConfirmed) {
