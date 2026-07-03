@@ -3,13 +3,14 @@
 /* ── Language Switcher (bufinsweb style) ────────────────────────────── */
 .lang-switcher-wrapper{display:inline-flex;align-items:center;gap:7px}
 .lang-switcher-icon{font-size:.72rem;color:rgba(255,255,255,.28);flex-shrink:0}
-.lang-switcher{display:inline-flex;align-items:center;background:rgba(255,255,255,.04);border:1px solid rgba(1,225,215,.18);border-radius:100px;padding:3px}
+.lang-switcher{display:inline-flex;align-items:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:100px;padding:3px}
 .lang-btn{display:flex;align-items:center;padding:5px 13px;border-radius:100px;text-decoration:none!important;color:rgba(255,255,255,.4);font-size:.74rem;font-weight:500;letter-spacing:.01em;transition:all .22s ease;white-space:nowrap;line-height:1}
 .lang-btn:hover,.lang-btn:focus{color:rgba(255,255,255,.82);background:rgba(255,255,255,.06);text-decoration:none!important}
-.lang-btn.active{background:rgba(1,225,215,.1);color:#01E1D7;font-weight:600;box-shadow:inset 0 0 0 1px rgba(1,225,215,.2)}
-.lang-btn.active:hover,.lang-btn.active:focus{background:rgba(1,225,215,.15);color:#01E1D7;text-decoration:none!important}
+.lang-btn.active{background:linear-gradient(90deg,#6366F1,#3B82F6,#06B6D4,#01E1D7);color:#fff;font-weight:700;box-shadow:none}
+.lang-btn.active:hover,.lang-btn.active:focus{background:linear-gradient(90deg,#6366F1,#3B82F6,#06B6D4,#01E1D7);color:#fff;text-decoration:none!important}
 .lang-sep{width:1px;height:14px;background:rgba(1,225,215,.13);flex-shrink:0;margin:0 1px;align-self:center}
-.lang-pill-nav{display:flex;align-items:center;padding:0 .7rem}
+.lang-pill-nav{display:flex;align-items:center}
+ul.navbar-nav.ml-auto{gap:.7rem}
 /* Floating pill — hidden by default, shown via JS when topbar lang switcher leaves viewport */
 .lang-float-pill{position:fixed;bottom:20px;right:20px;z-index:1049;display:inline-flex;align-items:center;gap:8px;background:rgba(22,9,51,.9);border:1px solid rgba(1,225,215,.22);border-radius:100px;padding:7px 5px 7px 14px;box-shadow:0 4px 20px rgba(0,0,0,.35);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:0;pointer-events:none;transform:translateY(8px);transition:opacity .25s ease,transform .25s ease,box-shadow .2s ease}
 .lang-float-pill.lang-float-visible{opacity:1;pointer-events:auto;transform:translateY(0)}
@@ -30,4 +31,21 @@
 .user-dd-lang-row .lang-switcher{background:rgba(255,255,255,.04);border-color:rgba(1,225,215,.15);padding:2px}
 .user-dd-lang-row .lang-btn{font-size:.68rem;padding:3px 10px}
 .user-dd-logout i{color:rgba(239,68,68,.8)!important}
+
+/* ── Topbar icon buttons (SaaS elevado) ────────────────────────────── */
+.topbar-icon-li{display:flex;align-items:center}
+.topbar-icon-btn{width:2.15rem;height:2.15rem;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.65);display:flex!important;align-items:center;justify-content:center;position:relative;flex-shrink:0;text-decoration:none!important;transition:background .15s ease,border-color .15s ease,color .15s ease}
+.topbar-icon-btn:hover,.topbar-icon-btn:focus{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.22);color:#fff;text-decoration:none!important}
+
+/* ── User Trigger (topbar corner, SaaS elevado) ────────────────────── */
+.user-trigger{display:flex!important;align-items:center;gap:.6rem;padding:.14rem .7rem .14rem .2rem;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);text-decoration:none!important;transition:background .18s ease,border-color .18s ease}
+.user-trigger:hover,.user-trigger:focus{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.22);text-decoration:none!important}
+.user-trigger-info{display:flex;flex-direction:column;align-items:flex-start;gap:.05rem}
+.user-trigger-name{font-size:.78rem;font-weight:600;color:#fff;line-height:1.3;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role-line{font-size:.66rem;font-weight:600;color:#01E1D7;white-space:nowrap;line-height:1.3}
+.user-avatar-wrap{position:relative;flex-shrink:0;line-height:0}
+.user-avatar-wrap img.img-profile{border-radius:50%;box-shadow:0 0 0 2px rgba(1,225,215,.28)}
+.user-avatar-initials{width:1.85rem;height:1.85rem;border-radius:50%;background:linear-gradient(90deg,#6366F1,#3B82F6,#06B6D4,#01E1D7);display:flex;align-items:center;justify-content:center;font-size:.66rem;font-weight:700;color:#fff;box-shadow:0 0 0 2px rgba(1,225,215,.28);flex-shrink:0}
+.user-super-badge{position:absolute;top:-3px;right:-3px;width:12px;height:12px;border-radius:50%;background:#160933;color:#FFD700;font-size:.42rem;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1px rgba(255,215,0,.45)}
+@media(max-width:991px){.user-trigger{padding:.22rem}}
 .user-dd-logout:hover,.user-dd-logout:focus{background:rgba(239,68,68,.1)!important;color:#fca5a5!important}

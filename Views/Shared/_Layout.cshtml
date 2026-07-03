@@ -169,16 +169,13 @@
                             </div>
                         </li>
                         <!-- Campanita de notificaciones -->
-                        <li class="nav-item dropdown no-arrow" id="notifBellItem" style="display:none;">
-                            <a class="nav-link position-relative" href="#" id="notifDropdown" role="button"
+                        <li class="nav-item dropdown no-arrow topbar-icon-li" id="notifBellItem" style="display:none;">
+                            <a class="topbar-icon-btn" href="#" id="notifDropdown" role="button"
                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
-                               title="@Resources.Strings.Notif_Titulo"
-                               style="padding:0.32rem 0.6rem; border-radius:8px; transition:background .15s;"
-                               onmouseover="this.style.background='rgba(255,255,255,0.1)'"
-                               onmouseout="this.style.background='transparent'">
-                                <i class="fas fa-bell" style="color:rgba(255,255,255,0.9); font-size:0.95rem;"></i>
+                               title="@Resources.Strings.Notif_Titulo">
+                                <i class="fas fa-bell" style="font-size:0.85rem;"></i>
                                 <span id="notifBadge"
-                                      style="display:none; position:absolute; top:0; right:0; background:#ef4444; color:white; font-size:0.48rem; font-weight:700; min-width:13px; height:13px; border-radius:7px; line-height:13px; padding:0 2px; text-align:center; border:2px solid transparent; box-shadow:0 1px 4px rgba(239,68,68,0.5);">0</span>
+                                      style="display:none; position:absolute; top:-3px; right:-3px; background:#ef4444; color:white; font-size:0.48rem; font-weight:700; min-width:13px; height:13px; border-radius:7px; line-height:13px; padding:0 2px; text-align:center; border:2px solid #160933; box-shadow:0 1px 4px rgba(239,68,68,0.5);">0</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-right animated--grow-in"
                                  id="notifPanel"
@@ -217,58 +214,49 @@
                                 </div>
                             </div>
                         </li>
-                        <li class="nav-item dropdown no-arrow">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                        <li class="nav-item dropdown no-arrow topbar-icon-li">
+                            <a class="nav-link dropdown-toggle user-trigger" href="#" id="userDropdown" role="button"
                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <div class="d-none d-lg-inline mr-2 text-left">
-                                    <div class="text-gray-600 small" style="color: white !important; font-weight: 600;">
-                                        @(UsuarioSesionHelper.UsuarioActual != null ? UsuarioSesionHelper.UsuarioActual.Nombre + " " + UsuarioSesionHelper.UsuarioActual.Apellidos : Resources.Strings.Layout_Guest)
-                                    </div>
-                                    @{
-                                        var empresasTopbar = ViewBag.Empresas as List<bufinscustomers.Models.Empresas>;
-                                        var empresaUsuarioTopbar = empresasTopbar?.FirstOrDefault(e => e.Id == idEmpresa);
-                                        var empresaAbrevTopbar = !string.IsNullOrEmpty(empresaUsuarioTopbar?.Abreviatura) ? empresaUsuarioTopbar.Abreviatura : empresaUsuarioTopbar?.Nombre;
-                                        var adminLevel = UsuarioSesionHelper.UsuarioActual?.Admin;
-                                        string rolTexto;
-                                        string rolIcono;
-                                        string rolColor;
-                                        if (adminLevel == 2)
-                                        {
-                                            rolTexto = Resources.Strings.Layout_RoleSuperAdmin;
-                                            rolIcono = "fas fa-crown";
-                                            rolColor = "#FFD700";
-                                        }
-                                        else if (adminLevel == 1)
-                                        {
-                                            rolTexto = Resources.Strings.Layout_RoleAdmin + (empresaAbrevTopbar != null ? " - " + empresaAbrevTopbar : "");
-                                            rolIcono = "fas fa-user-shield";
-                                            rolColor = "#01E1D7";
-                                        }
-                                        else
-                                        {
-                                            rolTexto = Resources.Strings.Layout_RoleUser + (empresaAbrevTopbar != null ? " - " + empresaAbrevTopbar : "");
-                                            rolIcono = "fas fa-user";
-                                            rolColor = "rgba(255, 255, 255, 0.7)";
-                                        }
+                                @{
+                                    var empresasTopbar = ViewBag.Empresas as List<bufinscustomers.Models.Empresas>;
+                                    var empresaUsuarioTopbar = empresasTopbar?.FirstOrDefault(e => e.Id == idEmpresa);
+                                    var empresaAbrevTopbar = !string.IsNullOrEmpty(empresaUsuarioTopbar?.Abreviatura) ? empresaUsuarioTopbar.Abreviatura : empresaUsuarioTopbar?.Nombre;
+                                    var adminLevel = UsuarioSesionHelper.UsuarioActual?.Admin;
+                                    string rolTexto = adminLevel == 2 ? Resources.Strings.Layout_RoleSuperAdmin
+                                                     : adminLevel == 1 ? Resources.Strings.Layout_RoleAdmin
+                                                     : Resources.Strings.Layout_RoleUser;
+                                    string iniciales = usuario != null
+                                        ? ((!string.IsNullOrEmpty(usuario.Nombre) ? usuario.Nombre.Substring(0, 1) : "") +
+                                           (!string.IsNullOrEmpty(usuario.Apellidos) ? usuario.Apellidos.Substring(0, 1) : "")).ToUpper()
+                                        : "?";
+                                }
+                                <div class="user-avatar-wrap">
+                                    @if (usuario?.Imagen != null)
+                                    {
+                                        <img src="@Url.Action("Imagen", "Usuario", new { id = usuario.Id })"
+                                             alt="Imagen de usuario"
+                                             class="imgPerfil img-profile rounded-circle" />
                                     }
-                                    <div class="text-gray-400" style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.7) !important;">
-                                        <i class="@rolIcono" style="font-size: 0.7rem; margin-right: 4px; color: @rolColor !important;"></i>@rolTexto
-                                    </div>
+                                    else
+                                    {
+                                        <span class="user-avatar-initials">@iniciales</span>
+                                    }
+                                    @if (adminLevel == 2)
+                                    {
+                                        <i class="fas fa-crown user-super-badge" title="@Resources.Strings.Layout_RoleSuperAdmin"></i>
+                                    }
                                 </div>
-                                @if (usuario?.Imagen != null)
-                                {
-                                    <img src="@Url.Action("Imagen", "Usuario", new { id = usuario.Id })"
-                                         alt="Imagen de usuario"
-                                         class="imgPerfil img-profile rounded-circle"
-                                         style="max-width:150px; max-height:150px;" />
-                                }
-                                else
-                                {
-                                    <img src="~/Assets/img/avatar.png"
-                                         alt="Imagen por defecto"
-                                         class="imgPerfil img-profile rounded-circle"
-                                         style="max-width:150px; max-height:150px;" />
-                                }
+                                <div class="d-none d-lg-flex user-trigger-info">
+                                    <span class="user-trigger-name">
+                                        @(UsuarioSesionHelper.UsuarioActual != null ? UsuarioSesionHelper.UsuarioActual.Nombre + " " + UsuarioSesionHelper.UsuarioActual.Apellidos : Resources.Strings.Layout_Guest)
+                                    </span>
+                                    <span class="user-role-line">
+                                        @rolTexto@if (adminLevel != 2 && empresaAbrevTopbar != null)
+                                        {
+                                            <text>&nbsp;&middot; @empresaAbrevTopbar</text>
+                                        }
+                                    </span>
+                                </div>
                             </a>
                             <div class="dropdown-menu dropdown-menu-right animated--grow-in user-dropdown-menu"
                                  aria-labelledby="userDropdown">
