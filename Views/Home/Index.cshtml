@@ -307,7 +307,7 @@
     }
     .dash-header-card::before {
         content:''; position:absolute; top:0; left:0; right:0; height:3px;
-        background:linear-gradient(90deg,#583AFF 0%,#3B82F6 45%,#01E1D7 100%);
+        background:linear-gradient(90deg,#583AFF 0%,#01E1D7 100%);
     }
     .dash-header-main { flex:1; min-width:0; }
 
@@ -408,7 +408,7 @@
     }
     .dash-kpi-card.dash-kpi-dark::before {
         content:""; position:absolute; top:0; left:0; right:0; height:3px;
-        background:linear-gradient(90deg,#01E1D7,#9B5DE5);
+        background:linear-gradient(90deg,#01E1D7,#583AFF);
     }
     .dash-kpi-card.dash-kpi-dark:hover { box-shadow:0 8px 22px rgba(22,9,51,.55); }
     .dash-kpi-card.dash-kpi-dark .dash-kpi-icon    { box-shadow:0 4px 10px rgba(88,58,255,.35); }
@@ -450,7 +450,7 @@
         box-shadow:0 4px 16px rgba(22,9,51,.45);
     }
     .dash-graf-card.dash-graf-dark::before {
-        background:linear-gradient(90deg,#01E1D7,#9B5DE5);
+        background:linear-gradient(90deg,#01E1D7,#583AFF);
         opacity:1;
     }
 
@@ -1115,9 +1115,9 @@
             .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
             .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
             .replace(/\*(.+?)\*/g,'<em>$1</em>')
-            .replace(/^### (.+)$/gm,'<h6 style="color:#4f46e5;font-weight:700;margin-top:12px;">$1</h6>')
-            .replace(/^## (.+)$/gm, '<h5 style="color:#4f46e5;font-weight:700;margin-top:14px;">$1</h5>')
-            .replace(/^# (.+)$/gm,  '<h4 style="color:#312e81;font-weight:700;margin-top:16px;">$1</h4>')
+            .replace(/^### (.+)$/gm,'<h6 style="color:#583AFF;font-weight:700;margin-top:12px;">$1</h6>')
+            .replace(/^## (.+)$/gm, '<h5 style="color:#583AFF;font-weight:700;margin-top:14px;">$1</h5>')
+            .replace(/^# (.+)$/gm,  '<h4 style="color:#160933;font-weight:700;margin-top:16px;">$1</h4>')
             .replace(/^[-*] (.+)$/gm,'<li>$1</li>')
             .replace(/(<li>[\s\S]+?<\/li>)/g,'<ul style="padding-left:18px;margin-bottom:8px;">$1</ul>')
             .replace(/\n\n/g,'</p><p style="margin-bottom:8px;">')

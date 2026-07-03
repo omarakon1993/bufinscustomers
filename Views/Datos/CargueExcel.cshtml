@@ -44,7 +44,7 @@
     {
         <div class="filter-card" style="margin-bottom: 1.25rem; padding: 0.75rem 1.25rem;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fas fa-info-circle" style="color: #6366F1;"></i>
+                <i class="fas fa-info-circle" style="color: #583AFF;"></i>
                 <span style="font-size: 0.85rem; color: #4a5568;">@ViewBag.UltimoUsuarioCargue</span>
             </div>
         </div>
@@ -61,7 +61,7 @@
             @Html.AntiForgeryToken()
             <div class="filter-section">
                 <p style="font-size: 0.85rem; color: #6c757d; margin-bottom: 1rem;">
-                    <i class="fas fa-info-circle" style="color: #6366F1;"></i>
+                    <i class="fas fa-info-circle" style="color: #583AFF;"></i>
                     @Resources.Strings.Datos_UploadHint1
                     <strong>@Resources.Strings.Datos_UploadHint2</strong>
                     @Resources.Strings.Datos_UploadHint3
@@ -86,14 +86,14 @@
                     <!-- Selector de Año -->
                     <div class="col-md-6 form-group mb-3" id="divSelectAnio" style="display: none;">
                         <label for="selectAnio" class="form-label" style="font-weight: 600; font-size: 0.9rem;">
-                            <i class="fas fa-calendar-alt mr-1" style="color: #6366F1;"></i>
+                            <i class="fas fa-calendar-alt mr-1" style="color: #583AFF;"></i>
                             @Resources.Strings.Datos_AnioLabel
                         </label>
                         <select class="form-control form-control-sm" id="selectAnio" name="anioSeleccionado">
                             <option value="">@Resources.Strings.Datos_JS_SelectAnio</option>
                         </select>
                         <input type="hidden" name="modoSeleccionado" id="modoSeleccionado" value="" />
-                        <div id="loadingAnios" style="display: none; font-size: 0.82rem; color: #6366F1; margin-top: 0.35rem;">
+                        <div id="loadingAnios" style="display: none; font-size: 0.82rem; color: #583AFF; margin-top: 0.35rem;">
                             <i class="fas fa-spinner fa-spin mr-1"></i>@Resources.Strings.Datos_CargandoAnios
                         </div>
                     </div>
@@ -118,13 +118,13 @@
                 <button type="submit" id="btnCargar" class="btn btn-modern-gradient" disabled>
                     <i class="fas fa-upload mr-2"></i>@Resources.Strings.Datos_BtnCargar
                 </button>
-                <button type="button" id="btnInstructivo" class="btn btn-modern-gradient" style="background: linear-gradient(135deg, #6366F1, #3B82F6);">
+                <button type="button" id="btnInstructivo" class="btn btn-modern-secondary">
                     <i class="fas fa-book mr-2"></i>@Resources.Strings.Datos_BtnInstructivo
                 </button>
-                <a href="~/Assets/Plantillas/InstructivoPlantillaCargue.xlsx" download class="btn btn-modern-success">
+                <a href="~/Assets/Plantillas/InstructivoPlantillaCargue.xlsx" download class="btn btn-modern-secondary">
                     <i class="fas fa-download mr-2"></i>@Resources.Strings.Datos_BtnInstructivoExcel
                 </a>
-                <a href="~/Assets/Plantillas/PlantillaBufins.xlsx" download class="btn btn-modern-success">
+                <a href="~/Assets/Plantillas/PlantillaBufins.xlsx" download class="btn btn-modern-secondary">
                     <i class="fas fa-file-download mr-2"></i>@Resources.Strings.Datos_BtnPlantilla
                 </a>
                 @if (resultado != null && resultado.MostrarDescargaLog)
@@ -163,11 +163,11 @@
                 </div>
                 @if (resultado.TotalHojasProcesadas > 0)
                 {
-                    <div style="background: linear-gradient(135deg, #3B82F6, #06B6D4); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
+                    <div style="background: var(--app-btn-gradient); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
                         <i class="fas fa-table" style="margin-right: 4px;"></i>
                         @resultado.TotalHojasProcesadas @Resources.Strings.Datos_Tablas
                     </div>
-                    <div style="background: linear-gradient(135deg, #6366F1, #3B82F6); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
+                    <div style="background: var(--app-btn-gradient); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
                         <i class="fas fa-database" style="margin-right: 4px;"></i>
                         @resultado.TotalFilasInsertadas.ToString("N0") @Resources.Strings.Datos_Registros
                     </div>
@@ -242,13 +242,13 @@
 <div id="overlayProcesando" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(15,12,41,0.7); backdrop-filter:blur(4px); align-items:center; justify-content:center;">
     <div style="background:white; border-radius:1.25rem; padding:2.5rem 3rem; text-align:center; box-shadow:0 24px 64px rgba(0,0,0,0.35); max-width:380px; width:90%;">
         <div style="margin-bottom:1.25rem;">
-            <i class="fas fa-spinner fa-spin" style="font-size:3rem; color:#6366F1;"></i>
+            <i class="fas fa-spinner fa-spin" style="font-size:3rem; color:#583AFF;"></i>
         </div>
         <h5 style="font-weight:700; color:#1e1b4b; margin-bottom:0.4rem;" id="overlayTitulo">@Resources.Strings.Datos_JS_Procesando</h5>
         <p style="color:#6c757d; font-size:0.88rem; margin-bottom:1rem;">@Resources.Strings.Datos_OverlayNoCierre</p>
         <div style="background:#f0f4ff; border-radius:0.5rem; padding:0.5rem 1rem; display:inline-block;">
-            <i class="fas fa-clock" style="color:#6366F1; margin-right:0.4rem;"></i>
-            <span id="overlayTimer" style="font-size:0.9rem; font-weight:600; color:#6366F1;">0s</span>
+            <i class="fas fa-clock" style="color:#583AFF; margin-right:0.4rem;"></i>
+            <span id="overlayTimer" style="font-size:0.9rem; font-weight:600; color:#583AFF;">0s</span>
         </div>
     </div>
 </div>
@@ -262,7 +262,7 @@
         box-shadow: 0 25px 60px rgba(88, 58, 255, 0.2);
     }
     #instructivoModal .modal-header {
-        background: linear-gradient(135deg, #583AFF 0%, #6366F1 40%, #01E1D7 100%);
+        background: var(--content-gradient);
         padding: 1.25rem 1.75rem;
         border-bottom: none;
     }
@@ -281,7 +281,7 @@
     }
     #instructivoModal .instructivo-intro {
         background: linear-gradient(135deg, #f0f4ff, #eef2ff);
-        border-left: 4px solid #6366F1;
+        border-left: 4px solid #583AFF;
         border-radius: 0 0.5rem 0.5rem 0;
         padding: 1rem 1.25rem;
         margin-bottom: 1.25rem;
@@ -334,7 +334,7 @@
         line-height: 1.5;
     }
     #instructivoModal .accordion .btn-accordion {
-        background: linear-gradient(135deg, #583AFF, #6366F1);
+        background: var(--app-btn-gradient);
         border: none;
         padding: 11px 18px;
         border-radius: 8px;
@@ -344,7 +344,7 @@
         transition: all 0.2s ease;
     }
     #instructivoModal .accordion .btn-accordion:hover {
-        background: linear-gradient(135deg, #4c2fe6, #5558e6);
+        background: var(--app-btn-gradient-hover);
     }
     #instructivoModal .accordion .btn-accordion i {
         opacity: 0.85;
@@ -357,7 +357,7 @@
         transition: border-color 0.2s ease;
     }
     #instructivoModal .search-input:focus {
-        border-color: #6366F1;
+        border-color: #583AFF;
         box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     }
     #instructivoModal .collapse-rules ol {
@@ -389,11 +389,11 @@
             <div class="modal-body">
                 <div class="instructivo-intro">
                     <p>
-                        <i class="fas fa-database mr-2" style="color: #6366F1;"></i>
+                        <i class="fas fa-database mr-2" style="color: #583AFF;"></i>
                         @Resources.Strings.Datos_InstructivoIntro1
                     </p>
                     <p>
-                        <i class="fas fa-info-circle mr-2" style="color: #06B6D4;"></i>
+                        <i class="fas fa-info-circle mr-2" style="color: #01E1D7;"></i>
                         @Resources.Strings.Datos_InstructivoIntro2
                     </p>
                 </div>
@@ -402,7 +402,7 @@
                     <button class="btn btn-section-toggle w-100 text-white" type="button"
                             data-toggle="collapse" data-target="#collapseInstructivo"
                             aria-expanded="false" aria-controls="collapseInstructivo"
-                            style="background: linear-gradient(135deg, #583AFF, #6366F1);">
+                            style="background: var(--app-btn-gradient);">
                         <i class="fas fa-exclamation-triangle mr-2"></i> @Resources.Strings.Datos_BtnParaTenerEnCuenta
                     </button>
                 </div>
@@ -739,7 +739,7 @@
                 e.preventDefault();
                 e.stopPropagation();
                 $(this).css({
-                    'border-color': '#6366F1',
+                    'border-color': '#583AFF',
                     'background': '#eef2ff'
                 });
             });
@@ -858,7 +858,7 @@
                     showCancelButton: true,
                     confirmButtonText: _datosMsg.siCargar,
                     cancelButtonText: _datosMsg.cancelar,
-                    confirmButtonColor: '#6366F1',
+                    confirmButtonColor: '#583AFF',
                     cancelButtonColor: '#6c757d'
                 }).then(function (result) {
                     if (result.isConfirmed) {

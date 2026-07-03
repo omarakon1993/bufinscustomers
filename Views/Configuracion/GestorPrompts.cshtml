@@ -11,10 +11,14 @@
 </head>
 <body>
 
-    <div class="card shadow mb-4 mt-4">
-        <div class="card-header">
-            <i class="fas fa-robot"></i> @Resources.Strings.Prompt_PageTitle
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-robot powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.Prompt_PageTitle</h1>
         </div>
+    </div>
+
+    <div class="card shadow mb-4 mt-4">
         <div class="card-body p-0">
             <div class="table-responsive table-wrapper">
                 <table class="table table-bordered table-hover table-compact">
@@ -58,13 +62,13 @@
                                 </td>
                                 <td class="col-acciones">
                                     <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-info btn-sm" title="@Resources.Strings.Prompt_TitleVer"
+                                        <button type="button" class="btn btn-primary btn-sm" title="@Resources.Strings.Prompt_TitleVer"
                                                 data-toggle="modal" data-target="#verTextoModal"
                                                 data-nombre="@Html.AttributeEncode(p.Nombre)"
                                                 data-texto="@Html.AttributeEncode(p.TextoPrompt ?? string.Empty)">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <button type="button" class="btn btn-primary btn-editar-prompt" title="@Resources.Strings.Prompt_TitleEditar"
+                                        <button type="button" class="btn btn-primary btn-sm btn-editar-prompt" title="@Resources.Strings.Prompt_TitleEditar"
                                                 data-toggle="modal" data-target="#editarModal"
                                                 data-id="@p.Id"
                                                 data-codigo="@Html.AttributeEncode(p.Codigo)"
@@ -74,7 +78,7 @@
                                                 data-activo="@(p.Activo ? "true" : "false")">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-danger btn-eliminar-prompt" title="@Resources.Strings.Prompt_TitleEliminar"
+                                        <button type="button" class="btn btn-danger btn-sm btn-eliminar-prompt" title="@Resources.Strings.Prompt_TitleEliminar"
                                                 data-toggle="modal" data-target="#eliminarModal"
                                                 data-id="@p.Id"
                                                 data-nombre="@Html.AttributeEncode(p.Nombre)">
@@ -89,7 +93,7 @@
             </div>
         </div>
         <div class="card-footer">
-            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearModal">
+            <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#crearModal">
                 <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Prompt_BtnCrear
             </button>
         </div>

@@ -92,16 +92,16 @@
         padding: 0.6rem 1rem;
         background: linear-gradient(135deg, #f8f9ff, #eef2ff);
         border-radius: 0.5rem;
-        border-left: 4px solid #6366F1;
+        border-left: 4px solid #583AFF;
         font-size: 0.83rem;
         color: #4b5563;
         margin-bottom: 1rem;
     }
-    .audit-info-bar i { color: #6366F1; }
+    .audit-info-bar i { color: #583AFF; }
 
     /* ── Cabecera de tabla ───────────────────────────────────── */
     .tabla-nombre-header {
-        background: linear-gradient(135deg, #6366F1, #3B82F6);
+        background: var(--content-gradient);
         color: white;
         font-weight: 700;
         font-size: 0.8rem;
@@ -197,7 +197,7 @@
                 <button type="button" id="btnLimpiar" class="btn btn-modern-secondary">
                     <i class="fas fa-eraser mr-2"></i>@Resources.Strings.VarPBI_BtnLimpiar
                 </button>
-                <button type="button" id="btnExportar" class="btn btn-modern-success" style="display:none;">
+                <button type="button" id="btnExportar" class="btn btn-modern-secondary" style="display:none;">
                     <i class="fas fa-file-excel mr-2"></i>@Resources.Strings.VarPBI_BtnExportar
                 </button>
             </div>

@@ -21,18 +21,6 @@
             background-color: #583AFF !important;
         }
 
-        .card-header {
-            background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
-            color: white;
-            padding: 1rem 1.2rem;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .card-header i {
-            margin-right: 8px;
-        }
-
         /* === TABLA COMPACTA === */
         .table-wrapper {
             max-height: 450px;
@@ -51,11 +39,11 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.3px;
-            color: #555;
+            color: #fff;
             padding: 0.5rem 0.4rem;
             white-space: nowrap;
             border-bottom: 2px solid #dee2e6;
-            background-color: #f8f9fa;
+            background: var(--content-gradient);
             position: sticky;
             top: 0;
             z-index: 1;
@@ -105,7 +93,7 @@
         }
 
         .enlace-reporte:hover {
-            color: #3a22d4;
+            color: #583AFF;
             text-decoration: none;
         }
 
@@ -131,10 +119,14 @@
         .url-feedback.invalid { color: #dc3545; }
     </style>
 
-    <div class="card shadow mb-4 mt-4">
-        <div class="card-header">
-            <i class="fas fa-file-powerpoint"></i> @Resources.Strings.Rep_PageTitle
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-file-powerpoint powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.Rep_PageTitle</h1>
         </div>
+    </div>
+
+    <div class="card shadow mb-4 mt-4">
         <div class="card-body p-0">
             <div class="table-responsive table-wrapper">
                 <table class="table table-bordered table-hover table-compact" id="dataTable">
@@ -195,7 +187,7 @@
                                                 onclick="setEditReporteFromData(this)">
                                             <i class="fas fa-edit mr-1"></i>@Resources.Strings.Rep_BtnEditar
                                         </button>
-                                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                        <button type="button" class="btn btn-danger btn-sm"
                                                 data-toggle="modal" data-target="#confirmDeleteModal"
                                                 onclick="setIdReporte(@reporte.Id)">
                                             <i class="fas fa-trash-alt mr-1"></i>@Resources.Strings.Common_BtnEliminar
@@ -209,7 +201,7 @@
             </div>
         </div>
         <div class="card-footer">
-            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearReporteModal">
+            <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#crearReporteModal">
                 <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Rep_BtnCrear
             </button>
         </div>

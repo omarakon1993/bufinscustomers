@@ -29,13 +29,17 @@
     </script>
 }
 
-<div class="card shadow mb-4 mt-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="fas fa-envelope-open-text mr-1"></i> @Resources.Strings.Correo_PageTitle</span>
-        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#crearModal">
-            <i class="fas fa-plus mr-1"></i>@Resources.Strings.Correo_BtnNueva
-        </button>
+<div class="powerbi-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+    <div class="powerbi-header-content">
+        <i class="fas fa-envelope-open-text powerbi-header-icon"></i>
+        <h1 class="powerbi-header-title">@Resources.Strings.Correo_PageTitle</h1>
     </div>
+    <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#crearModal">
+        <i class="fas fa-plus mr-1"></i>@Resources.Strings.Correo_BtnNueva
+    </button>
+</div>
+
+<div class="card shadow mb-4 mt-4">
     <div class="card-body p-0">
         <div class="table-responsive table-wrapper">
             <table class="table table-bordered table-hover table-compact">
@@ -114,7 +118,7 @@
                                     <form method="post" action="@Url.Action("EstablecerPredeterminada","CuentasCorreo")" style="display:inline;">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@c.Id"/>
-                                        <button type="submit" class="btn btn-sm btn-outline-primary" title="@Resources.Strings.Correo_BtnPredeterminada">
+                                        <button type="submit" class="btn btn-sm btn-primary" title="@Resources.Strings.Correo_BtnPredeterminada">
                                             <i class="fas fa-star"></i>
                                         </button>
                                     </form>
@@ -127,14 +131,14 @@
                                             onclick="abrirEditar(@c.Id,'@Html.AttributeEncode(c.Nombre)','@Html.AttributeEncode(c.Host)',@c.Puerto,@c.Ssl.ToString().ToLower(),@c.IgnorarCertificado.ToString().ToLower(),'@Html.AttributeEncode(c.Usuario)','@Html.AttributeEncode(c.Remitente)','@Html.AttributeEncode(c.NombreRemitente)',@c.Predeterminada.ToString().ToLower())">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button type="button" class="btn btn-info btn-sm"
+                                    <button type="button" class="btn btn-primary btn-sm"
                                             title="@Resources.Strings.Correo_BtnProbar"
                                             onclick="abrirProbar(@c.Id,'@Html.AttributeEncode(c.Nombre)')">
                                         <i class="fas fa-paper-plane"></i>
                                     </button>
                                     @if (!c.Predeterminada)
                                     {
-                                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                        <button type="button" class="btn btn-danger btn-sm"
                                                 title="@Resources.Strings.Common_Eliminar"
                                                 onclick="confirmarEliminar(@c.Id,'@Html.AttributeEncode(c.Nombre)')">
                                             <i class="fas fa-trash-alt"></i>
@@ -269,7 +273,7 @@
 <div class="modal fade" id="probarModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header" style="background:linear-gradient(135deg,#0284c7,#38bdf8);color:white;">
+            <div class="modal-header" style="background:var(--content-gradient);color:white;">
                 <h5 class="modal-title"><i class="fas fa-paper-plane mr-2"></i>@Resources.Strings.Correo_ModalProbarTitle</h5>
                 <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
             </div>

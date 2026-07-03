@@ -28,18 +28,6 @@
             background-color: #583AFF !important;
         }
 
-        .card-header {
-            background: linear-gradient(90deg, var(--color-primario), var(--color-secundario));
-            color: white;
-            padding: 1rem 1.2rem;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .card-header i {
-            margin-right: 8px;
-        }
-
         /* === TABLA COMPACTA === */
         .table-wrapper {
             max-height: 500px;
@@ -58,11 +46,11 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.3px;
-            color: #555;
+            color: #fff;
             padding: 0.5rem 0.4rem;
             white-space: nowrap;
             border-bottom: 2px solid #dee2e6;
-            background-color: #f8f9fa;
+            background: var(--content-gradient);
             position: sticky;
             top: 0;
             z-index: 1;
@@ -218,10 +206,6 @@
                 padding: 0.35rem 0.75rem;
             }
 
-            .card-header {
-                padding: 0.875rem 1rem;
-                font-size: 1rem;
-            }
         }
 
         /* Scrollbar personalizada */
@@ -245,10 +229,14 @@
         }
     </style>
 
-    <div class="card shadow mb-4 mt-4">
-        <div class="card-header">
-            <i class="bi bi-people-fill"></i> @Resources.Strings.Usr_PageTitle
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-users powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.Usr_PageTitle</h1>
         </div>
+    </div>
+
+    <div class="card shadow mb-4 mt-4">
         <div class="card-body p-0">
             <div class="gestor-search-bar">
                 <div class="gestor-search-wrapper">
@@ -304,15 +292,15 @@
                                 <td class="col-rol" data-label="@Resources.Strings.Usr_ThRol">
                                     @if (usuario.Admin == 2)
                                     {
-                                        <span class="badge badge-danger">@Resources.Strings.Usr_BadgeSuperAdmin</span>
+                                        <span class="badge badge-role-superadmin">@Resources.Strings.Usr_BadgeSuperAdmin</span>
                                     }
                                     else if (usuario.Admin == 1)
                                     {
-                                        <span class="badge badge-warning">@Resources.Strings.Usr_BadgeAdmin</span>
+                                        <span class="badge badge-role-admin">@Resources.Strings.Usr_BadgeAdmin</span>
                                     }
                                     else
                                     {
-                                        <span class="badge badge-secondary">@Resources.Strings.Usr_BadgeUsuario</span>
+                                        <span class="badge badge-role-usuario">@Resources.Strings.Usr_BadgeUsuario</span>
                                     }
                                     @if (usuario.Admin != 2 && (ViewBag.EsSuperAdmin == true || ViewBag.EsAdminEmpresa == true))
                                     {
@@ -326,20 +314,20 @@
                                     <div class="btn-group" role="group" aria-label="@Resources.Strings.Common_ThAcciones">
                                         @if (ViewBag.PuedeEditar == true)
                                         {
-                                            <button type="button" class="btn btn-primary" title="@Resources.Strings.Usr_TitleEditar" data-toggle="modal" data-target="#editUserModal"
+                                            <button type="button" class="btn btn-sm btn-primary" title="@Resources.Strings.Usr_TitleEditar" data-toggle="modal" data-target="#editUserModal"
                                                     onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa', '@usuario.Usuario', '@usuario.Clave', '@(imagenUsuario != null ? Url.Action("Imagen", "Usuario", new { id = usuario.Id }) : "")', @(usuario.LimiteConsultasIA ?? 0))">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                         }
                                         @if (ViewBag.PuedeEliminar == true)
                                         {
-                                            <button type="button" class="btn btn-outline-danger" title="@Resources.Strings.Usr_TitleEliminar" data-toggle="modal" data-target="#confirmDeleteModal" onclick="setIdUsuario(@usuario.Id)">
+                                            <button type="button" class="btn btn-sm btn-danger" title="@Resources.Strings.Usr_TitleEliminar" data-toggle="modal" data-target="#confirmDeleteModal" onclick="setIdUsuario(@usuario.Id)">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         }
                                         @if ((ViewBag.EsSuperAdmin == true || ViewBag.EsAdminEmpresa == true) && usuario.Admin != 2)
                                         {
-                                            <a href="@Url.Action("Gestionar", "Permisos", new { id = usuario.Id })" class="btn btn-outline-success" title="@Resources.Strings.Usr_TitlePermisos">
+                                            <a href="@Url.Action("Gestionar", "Permisos", new { id = usuario.Id })" class="btn btn-sm btn-primary" title="@Resources.Strings.Usr_TitlePermisos">
                                                 <i class="fas fa-shield-alt"></i>
                                             </a>
                                         }
@@ -411,7 +399,7 @@
         <div class="card-footer">
             @if (ViewBag.PuedeCrear == true)
             {
-                <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearUsuarioModal">
+                <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#crearUsuarioModal">
                     <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Usr_BtnCrear
                 </button>
             }
