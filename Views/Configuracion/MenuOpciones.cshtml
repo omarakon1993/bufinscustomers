@@ -52,8 +52,6 @@
 
 <style>
     :root { --color-primario: #583AFF; --color-secundario: #01E1D7; }
-    .card-header { background: var(--app-glow-bg); color: white; padding: 1rem 1.2rem; font-weight: 600; font-size: 1.1rem; }
-    .card-header i { margin-right: 8px; }
     .table-wrapper { max-height: 500px; overflow-y: auto; overflow-x: hidden; }
     .table-compact { table-layout: fixed; width: 100%; margin-bottom: 0; }
     .table-compact thead th { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; color: #555; padding: 0.5rem 0.4rem; white-space: nowrap; border-bottom: 2px solid #dee2e6; background-color: #f8f9fa; position: sticky; top: 0; z-index: 1; }
@@ -69,9 +67,9 @@
     .table-compact .col-acceso    { width: 9%;  text-align: center; }
     .table-compact .col-destacado { width: 6%;  text-align: center; }
     .table-compact .col-acciones  { width: 12%; text-align: center; white-space: nowrap; }
-    .badge-super      { background-color: #dc3545; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
-    .badge-normal     { background-color: #28a745; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
-    .badge-admin-emp  { background-color: #ffc107; color: #212529; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
+    .badge-super      { background-color: #583AFF; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
+    .badge-normal     { background-color: #6c757d; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
+    .badge-admin-emp  { background-color: #f59e0b; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
     .badge-destacado  { background: linear-gradient(135deg,#583AFF,#01E1D7); color: white; padding: 2px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
     .check-dest-label { display:flex;align-items:center;gap:.4rem;padding:.55rem .85rem;border-radius:8px;border:1px solid rgba(88,58,255,.25);background:linear-gradient(90deg,rgba(88,58,255,.06),rgba(1,225,215,.04));cursor:pointer;transition:border-color .15s,background .15s }
     .check-dest-label:hover { border-color:rgba(1,225,215,.5);background:linear-gradient(90deg,rgba(88,58,255,.1),rgba(1,225,215,.07)) }
@@ -80,10 +78,14 @@
     .btn-group .btn { padding: 0.2rem 0.45rem; font-size: 0.75rem; border-radius: 0.25rem; }
 </style>
 
-<div class="card shadow mb-4 mt-4">
-    <div class="card-header">
-        <i class="fas fa-bars"></i> @Resources.Strings.Menu_PageTitle
+<div class="powerbi-header">
+    <div class="powerbi-header-content">
+        <i class="fas fa-bars powerbi-header-icon"></i>
+        <h1 class="powerbi-header-title">@Resources.Strings.Menu_PageTitle</h1>
     </div>
+</div>
+
+<div class="card shadow mb-4 mt-4">
     <div class="card-body p-0">
         <div class="table-responsive table-wrapper">
             <table class="table table-bordered table-hover table-compact">
@@ -138,12 +140,12 @@
                             </td>
                             <td class="col-acciones">
                                 <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-primary" title="@Resources.Strings.Menu_TitleEditar"
+                                    <button type="button" class="btn btn-sm btn-primary" title="@Resources.Strings.Menu_TitleEditar"
                                             data-toggle="modal" data-target="#editModal"
                                             onclick="cargarEditar(@opcion.Id)">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button type="button" class="btn btn-outline-danger" title="@Resources.Strings.Menu_TitleEliminar"
+                                    <button type="button" class="btn btn-sm btn-danger" title="@Resources.Strings.Menu_TitleEliminar"
                                             onclick="confirmarEliminar(@opcion.Id)">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
@@ -156,7 +158,7 @@
         </div>
     </div>
     <div class="card-footer">
-        <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearModal">
+        <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#crearModal">
             <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Menu_BtnCrear
         </button>
     </div>

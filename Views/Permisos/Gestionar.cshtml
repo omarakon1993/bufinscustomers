@@ -19,18 +19,6 @@
             --color-secundario: #01E1D7;
         }
 
-        .card-header-permisos {
-            background: var(--app-glow-bg);
-            color: white;
-            padding: 1.2rem 1.5rem;
-            font-weight: 600;
-            font-size: 1.2rem;
-        }
-
-        .card-header-permisos i {
-            margin-right: 8px;
-        }
-
         .badge-role {
             font-size: 0.85rem;
             padding: 0.4rem 0.8rem;
@@ -170,11 +158,6 @@
         }
 
         @@media (max-width: 767px) {
-            .card-header-permisos {
-                font-size: 1rem;
-                padding: 1rem;
-            }
-
             .categoria-titulo {
                 font-size: 1rem;
             }
@@ -198,16 +181,22 @@
         }
     </style>
 
-    <div class="card shadow mb-4 mt-4">
-        <div class="card-header-permisos">
-            <i class="fas fa-shield-alt"></i> @Resources.Strings.Perm_PageTitle
-            <span class="d-block d-md-inline mt-1 mt-md-0 ml-md-2" style="font-weight: 400; font-size: 1rem;">
-                @Model.Usuario.Nombre @Model.Usuario.Apellidos
-            </span>
-            <span class="badge badge-info badge-role ml-2">
-                @(Model.Usuario.Admin == 0 ? Resources.Strings.Perm_RolNormal : Resources.Strings.Perm_RolAdminEmp)
-            </span>
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-shield-alt powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">
+                @Resources.Strings.Perm_PageTitle
+                <span class="d-block d-md-inline mt-1 mt-md-0 ml-md-2" style="font-weight: 400; font-size: 1rem;">
+                    @Model.Usuario.Nombre @Model.Usuario.Apellidos
+                </span>
+                <span class="badge badge-role @(Model.Usuario.Admin == 0 ? "badge-role-usuario" : "badge-role-admin") ml-2">
+                    @(Model.Usuario.Admin == 0 ? Resources.Strings.Perm_RolNormal : Resources.Strings.Perm_RolAdminEmp)
+                </span>
+            </h1>
         </div>
+    </div>
+
+    <div class="card shadow mb-4 mt-4">
         <div class="card-body">
             <form id="formPermisos">
                 <input type="hidden" id="idUsuario" value="@Model.Usuario.Id" />

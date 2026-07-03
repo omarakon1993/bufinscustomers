@@ -13,10 +13,14 @@
 </head>
 <body>
 
-    <div class="card shadow mb-4 mt-4">
-        <div class="card-header">
-            <i class="fas fa-sliders"></i> @Resources.Strings.Mod_PageTitle
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-sliders powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.Mod_PageTitle</h1>
         </div>
+    </div>
+
+    <div class="card shadow mb-4 mt-4">
         <div class="card-body p-0">
             <div class="table-responsive table-wrapper">
                 <table class="table table-bordered table-hover table-compact">
@@ -74,12 +78,12 @@
                                 </td>
                                 <td class="col-acciones">
                                     <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-primary" title="@Resources.Strings.Mod_TitleEditar"
+                                        <button type="button" class="btn btn-sm btn-primary" title="@Resources.Strings.Mod_TitleEditar"
                                                 data-toggle="modal" data-target="#editarModal"
                                                 onclick="setEditarModelo(@m.Id, '@Html.Raw(m.Nombre.Replace("'","\\'" ))', '@Html.Raw(m.NombreSP.Replace("'","\\'" ))', '@Html.Raw((m.Descripcion ?? "").Replace("'","\\'" ))', '@Html.Raw((m.Icono ?? "").Replace("'","\\'" ))', @m.Orden, @(m.Activo ? "true" : "false"))">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-danger" title="@Resources.Strings.Mod_TitleEliminar"
+                                        <button type="button" class="btn btn-sm btn-danger" title="@Resources.Strings.Mod_TitleEliminar"
                                                 data-toggle="modal" data-target="#eliminarModal"
                                                 onclick="setEliminarModelo(@m.Id, '@Html.Raw(m.Nombre.Replace("'","\\'" ))')">
                                             <i class="fas fa-trash-alt"></i>
@@ -93,7 +97,7 @@
             </div>
         </div>
         <div class="card-footer">
-            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearModal">
+            <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#crearModal">
                 <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Mod_BtnCrear
             </button>
         </div>

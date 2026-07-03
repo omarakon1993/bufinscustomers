@@ -48,11 +48,15 @@
     </script>
 }
 
+<div class="powerbi-header">
+    <div class="powerbi-header-content">
+        <i class="fas fa-th-large powerbi-header-icon"></i>
+        <h1 class="powerbi-header-title">@Resources.Strings.Wid_PageTitle</h1>
+    </div>
+</div>
+
 <!-- ===== TABLA ===== -->
 <div class="card shadow mb-4 mt-4">
-    <div class="card-header">
-        <i class="fas fa-th-large"></i> @Resources.Strings.Wid_PageTitle
-    </div>
     <div class="card-body p-0">
         <div class="table-responsive table-wrapper">
             <table class="table table-bordered table-hover table-compact">
@@ -89,11 +93,11 @@
                             </td>
                             <td style="text-align:center">
                                 <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-primary" title="Editar" data-toggle="modal" data-target="#modalEditar"
+                                    <button type="button" class="btn btn-sm btn-primary" title="Editar" data-toggle="modal" data-target="#modalEditar"
                                             onclick="cargarEditar(@t.Id)">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button type="button" class="btn btn-outline-danger" title="Eliminar"
+                                    <button type="button" class="btn btn-sm btn-danger" title="Eliminar"
                                             onclick="confirmarEliminar(@t.Id,'@Html.Raw(t.Nombre?.Replace("'","\\'")??"")')">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
@@ -106,7 +110,7 @@
         </div>
     </div>
     <div class="card-footer">
-        <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#modalCrear">
+        <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#modalCrear">
             <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Wid_BtnNuevo
         </button>
     </div>

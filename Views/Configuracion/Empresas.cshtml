@@ -21,18 +21,6 @@
             background-color: #583AFF !important;
         }
 
-        .card-header {
-            background: var(--app-glow-bg);
-            color: white;
-            padding: 1rem 1.2rem;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .card-header i {
-            margin-right: 8px;
-        }
-
         /* === TABLA COMPACTA === */
         .table-wrapper {
             max-height: 400px;
@@ -117,10 +105,14 @@
         .gestor-pag-num { font-size: .74rem; font-weight: 600; color: #374151; min-width: 62px; text-align: center; }
     </style>
 
-    <div class="card shadow mb-4 mt-4">
-        <div class="card-header">
-            <i class="bi bi-building-fill"></i> @Resources.Strings.Emp_PageTitle
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-building powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.Emp_PageTitle</h1>
         </div>
+    </div>
+
+    <div class="card shadow mb-4 mt-4">
         <div class="card-body p-0">
             <div class="gestor-search-bar">
                 <div class="gestor-search-wrapper">
@@ -161,13 +153,13 @@
                                 <td class="col-correo" title="@empresa.Correo">@empresa.Correo</td>
                                 <td class="col-acciones">
                                     <div class="btn-group" role="group" aria-label="@Resources.Strings.Common_ThAcciones">
-                                        <button type="button" class="btn btn-primary" title="@Resources.Strings.Emp_TitleEditar" data-toggle="modal" data-target="#editEmpresaModal"
+                                        <button type="button" class="btn btn-sm btn-primary" title="@Resources.Strings.Emp_TitleEditar" data-toggle="modal" data-target="#editEmpresaModal"
                                                 onclick="setEditEmpresa(@empresa.Id, '@empresa.Nombre', '@empresa.Nit', '@empresa.Direccion', '@empresa.Telefono', '@empresa.Correo', '@empresa.Abreviatura')">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         @if (UsuarioSesionHelper.EsSuperAdmin())
                                         {
-                                            <button type="button" class="btn btn-outline-danger" title="@Resources.Strings.Emp_TitleEliminar" data-toggle="modal" data-target="#confirmDeleteModal" onclick="setIdEmpresa(@empresa.Id)">
+                                            <button type="button" class="btn btn-sm btn-danger" title="@Resources.Strings.Emp_TitleEliminar" data-toggle="modal" data-target="#confirmDeleteModal" onclick="setIdEmpresa(@empresa.Id)">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         }
@@ -237,7 +229,7 @@
         @if (UsuarioSesionHelper.EsSuperAdmin())
         {
         <div class="card-footer">
-            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#crearEmpresaModal">
+            <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#crearEmpresaModal">
                 <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Emp_BtnCrear
             </button>
         </div>

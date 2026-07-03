@@ -140,12 +140,13 @@
 </head>
 <body>
 
-    <!-- ── Header card ── -->
-    <div class="card shadow mb-2 mt-4">
-        <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <span><i class="fas fa-sliders-h"></i> @Resources.Strings.CfgIA_PageTitle</span>
-            <small style="font-weight:400;opacity:.85;">@Resources.Strings.CfgIA_HeaderDesc</small>
+    <!-- ── Header ── -->
+    <div class="powerbi-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div class="powerbi-header-content">
+            <i class="fas fa-sliders-h powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.CfgIA_PageTitle</h1>
         </div>
+        <small style="font-weight:400;opacity:.85;color:#fff;">@Resources.Strings.CfgIA_HeaderDesc</small>
     </div>
 
     <!-- ── Grid de tarjetas ── -->
@@ -200,7 +201,7 @@
                                     onclick="abrirEditar('@Html.Raw(item.Clave)', '@Html.Raw((item.Valor ?? "").Replace("'", "\\'"))', '@Html.Raw((item.Descripcion ?? "").Replace("'", "\\'"))')">
                                 <i class="fas fa-edit mr-1"></i>@Resources.Strings.CfgIA_TitleEditar
                             </button>
-                            <button type="button" class="btn btn-outline-danger btn-sm"
+                            <button type="button" class="btn btn-danger btn-sm"
                                     title="@Resources.Strings.CfgIA_TitleEliminar"
                                     onclick="abrirEliminar('@Html.Raw(item.Clave)')">
                                 <i class="fas fa-trash-alt"></i>
@@ -214,7 +215,7 @@
 
     <!-- ── Botón Nueva configuración ── -->
     <div class="cfg-nueva-section">
-        <button type="button" class="btn btn-success btn-sm"
+        <button type="button" class="btn-modern-success"
                 onclick="abrirNuevo()">
             <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.CfgIA_BtnCrear
         </button>
