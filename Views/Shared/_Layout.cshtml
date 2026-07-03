@@ -227,6 +227,7 @@
                                     @{
                                         var empresasTopbar = ViewBag.Empresas as List<bufinscustomers.Models.Empresas>;
                                         var empresaUsuarioTopbar = empresasTopbar?.FirstOrDefault(e => e.Id == idEmpresa);
+                                        var empresaAbrevTopbar = !string.IsNullOrEmpty(empresaUsuarioTopbar?.Abreviatura) ? empresaUsuarioTopbar.Abreviatura : empresaUsuarioTopbar?.Nombre;
                                         var adminLevel = UsuarioSesionHelper.UsuarioActual?.Admin;
                                         string rolTexto;
                                         string rolIcono;
@@ -239,13 +240,13 @@
                                         }
                                         else if (adminLevel == 1)
                                         {
-                                            rolTexto = Resources.Strings.Layout_RoleAdmin + (empresaUsuarioTopbar != null ? " - " + empresaUsuarioTopbar.Nombre : "");
+                                            rolTexto = Resources.Strings.Layout_RoleAdmin + (empresaAbrevTopbar != null ? " - " + empresaAbrevTopbar : "");
                                             rolIcono = "fas fa-user-shield";
                                             rolColor = "#01E1D7";
                                         }
                                         else
                                         {
-                                            rolTexto = Resources.Strings.Layout_RoleUser + (empresaUsuarioTopbar != null ? " - " + empresaUsuarioTopbar.Nombre : "");
+                                            rolTexto = Resources.Strings.Layout_RoleUser + (empresaAbrevTopbar != null ? " - " + empresaAbrevTopbar : "");
                                             rolIcono = "fas fa-user";
                                             rolColor = "rgba(255, 255, 255, 0.7)";
                                         }
