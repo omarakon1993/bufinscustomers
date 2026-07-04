@@ -160,6 +160,13 @@
         </div>
     </div>
 
+    <!-- Estado inicial: aun no se ha ejecutado ninguna consulta -->
+    <div id="estadoInicial" class="empty-state-initial">
+        <div class="empty-state-initial-icon"><i class="fas fa-table"></i></div>
+        <h4>@Resources.Strings.Common_EstadoInicialTitulo</h4>
+        <p>@Resources.Strings.Modelo_EstadoInicialDesc</p>
+    </div>
+
     <!-- Resultados del modelo individual -->
     <div id="resultadosSection" style="display:none;">
         <div class="table-container">
@@ -270,6 +277,7 @@
         var nomModelo = $('#selectModelo option:selected').data('nombre') || '';
         var icoModelo = $('#selectModelo option:selected').data('icono') || 'fas fa-table';
 
+        $('#estadoInicial').hide();
         $('#resultadosSection').hide();
         $('#noResultados').hide();
         $('#loadingEjecucion').show();
@@ -290,6 +298,7 @@
                 $('#btnTexto').text(_modelo.textos.btnEjecutar);
 
                 if (!resp.exito) {
+                    $('#estadoInicial').show();
                     Swal.fire({ icon: 'error', title: _modelo.textos.error, text: resp.mensaje,
                                 confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
                     return;
@@ -327,6 +336,7 @@
                 $('#loadingEjecucion').hide();
                 $('#btnEjecutar').prop('disabled', false);
                 $('#btnTexto').text(_modelo.textos.btnEjecutar);
+                $('#estadoInicial').show();
                 Swal.fire({ icon: 'error', title: _modelo.textos.error,
                             text: 'Error de conexión al ejecutar el modelo.',
                             confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });

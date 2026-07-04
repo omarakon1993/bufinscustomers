@@ -204,10 +204,11 @@
         </form>
     </div>
 
-    <!-- Spinner -->
-    <div id="loadingSpinner" class="loading-spinner">
-        <i class="fas fa-spinner"></i>
-        <p>@Resources.Strings.VarPBI_Consultando</p>
+    <!-- Estado inicial: aun no se ha ejecutado ninguna consulta -->
+    <div id="estadoInicial" class="empty-state-initial">
+        <div class="empty-state-initial-icon"><i class="fas fa-sort-numeric-down"></i></div>
+        <h4>@Resources.Strings.Common_EstadoInicialTitulo</h4>
+        <p>@Resources.Strings.VarPBI_EstadoInicialDesc</p>
     </div>
 
     <!-- Resultados -->
@@ -290,32 +291,58 @@
                     SoloSubtotales: soloSubtotales
                 };
 
-                $('#loadingSpinner').show();
-                ocultarResultados();
+                mostrarEsqueleto();
 
                 $.ajax({
                     url: '@Url.Action("ConsultarDatos", "VariablesPBI")',
                     type: 'POST',
                     data: filtrosActuales,
                     success: function (resp) {
-                        $('#loadingSpinner').hide();
                         if (resp.success) {
                             datosActuales = resp;
                             paginaActual = 1;
                             if (resp.totalRegistros > 0) {
                                 mostrarResultados(resp);
                             } else {
+                                ocultarResultados();
+                                $('#estadoInicial').hide();
                                 $('#noDataMessage').show();
                             }
                         } else {
+                            ocultarResultados();
                             Swal.fire({ icon: 'error', title: '@Resources.Strings.Common_Error', text: resp.message });
                         }
                     },
                     error: function () {
-                        $('#loadingSpinner').hide();
+                        ocultarResultados();
                         Swal.fire({ icon: 'error', title: '@Resources.Strings.Common_Error', text: '@Resources.Strings.VarPBI_JS_ErrorConexion' });
                     }
                 });
+            }
+
+            // Funcion: mostrar filas "esqueleto" mientras se consulta
+            function mostrarEsqueleto(filas, columnas) {
+                filas = filas || 6;
+                columnas = columnas || 13;
+
+                var tbody = $('#tablaBody');
+                tbody.empty();
+
+                for (var r = 0; r < filas; r++) {
+                    var row = $('<tr>').addClass('skeleton-row');
+                    for (var c = 0; c < columnas; c++) {
+                        var ancho = 45 + Math.floor(Math.random() * 45);
+                        row.append($('<td>').append($('<div>').addClass('skeleton-bar').css('width', ancho + '%')));
+                    }
+                    tbody.append(row);
+                }
+
+                $('#estadoInicial').hide();
+                $('#noDataMessage').hide();
+                $('#btnExportar').hide();
+                $('#totalRegistros').text('');
+                $('#auditBar').hide();
+                $('#resultadosContainer').show();
             }
 
             // ── Mostrar resultados ─────────────────────────────────────────
@@ -445,6 +472,7 @@
                 $('#resultadosContainer').hide();
                 $('#noDataMessage').hide();
                 $('#btnExportar').hide();
+                $('#estadoInicial').show();
                 datosActuales = null;
             }
 

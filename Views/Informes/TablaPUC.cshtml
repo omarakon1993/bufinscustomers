@@ -107,10 +107,11 @@
         </form>
     </div>
 
-    <!-- Spinner -->
-    <div id="loadingSpinner" class="loading-spinner" style="display:none;">
-        <i class="fas fa-spinner fa-spin"></i>
-        <p>@Resources.Strings.Common_ConsultandoDatos</p>
+    <!-- Estado inicial: aun no se ha ejecutado ninguna consulta -->
+    <div id="estadoInicial" class="empty-state-initial">
+        <div class="empty-state-initial-icon"><i class="fas fa-book-open"></i></div>
+        <h4>@Resources.Strings.Common_EstadoInicialTitulo</h4>
+        <p>@Resources.Strings.PUC_EstadoInicialDesc</p>
     </div>
 
     <!-- Resultados -->
@@ -197,15 +198,13 @@
                 Nombre: $('#txtNombre').val().trim() || null
             };
 
-            $('#loadingSpinner').show();
-            ocultarResultados();
+            mostrarEsqueleto();
 
             $.ajax({
                 url:  '@Url.Action("ConsultarDatos", "TablaPUC")',
                 type: 'POST',
                 data: filtrosActuales,
                 success: function (r) {
-                    $('#loadingSpinner').hide();
                     if (r.success) {
                         datosActuales = r;
                         paginaActual = 1;
@@ -214,17 +213,44 @@
                             $('#resultadosContainer').show();
                             $('#btnExportar').show();
                         } else {
+                            ocultarResultados();
+                            $('#estadoInicial').hide();
                             $('#noDataMessage').show();
                         }
                     } else {
+                        ocultarResultados();
                         Swal.fire({ icon: 'error', title: 'Error', text: r.message || _pucMsg.errorConexion });
                     }
                 },
                 error: function () {
-                    $('#loadingSpinner').hide();
+                    ocultarResultados();
                     Swal.fire({ icon: 'error', title: 'Error', text: _pucMsg.errorConexion });
                 }
             });
+        }
+
+        // Funcion: mostrar filas "esqueleto" mientras se consulta
+        function mostrarEsqueleto(filas, columnas) {
+            filas = filas || 6;
+            columnas = columnas || 4;
+
+            var tbody = $('#tablaBody');
+            tbody.empty();
+
+            for (var r2 = 0; r2 < filas; r2++) {
+                var row = $('<tr>').addClass('skeleton-row');
+                for (var c = 0; c < columnas; c++) {
+                    var ancho = 45 + Math.floor(Math.random() * 45);
+                    row.append($('<td>').append($('<div>').addClass('skeleton-bar').css('width', ancho + '%')));
+                }
+                tbody.append(row);
+            }
+
+            $('#estadoInicial').hide();
+            $('#noDataMessage').hide();
+            $('#btnExportar').hide();
+            $('#totalRegistros').text('');
+            $('#resultadosContainer').show();
         }
 
         function renderTabla() {
@@ -294,6 +320,7 @@
             $('#resultadosContainer').hide();
             $('#noDataMessage').hide();
             $('#btnExportar').hide();
+            $('#estadoInicial').show();
             datosActuales = null;
         }
 

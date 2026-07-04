@@ -181,10 +181,11 @@
         </form>
     </div>
 
-    <!-- Loading Spinner -->
-    <div id="loadingSpinner" class="loading-spinner">
-        <i class="fas fa-spinner"></i>
-        <p>@Resources.Strings.Common_ConsultandoDatos</p>
+    <!-- Estado inicial: aun no se ha ejecutado ninguna consulta -->
+    <div id="estadoInicial" class="empty-state-initial">
+        <div class="empty-state-initial-icon"><i class="fas fa-table"></i></div>
+        <h4>@Resources.Strings.Common_EstadoInicialTitulo</h4>
+        <p>@Resources.Strings.Tablas_EstadoInicialDesc</p>
     </div>
 
     <!-- Tabla de resultados -->
@@ -385,16 +386,13 @@
                 };
 
                 filtrosActuales = formData;
-                $('#loadingSpinner').show();
-                ocultarResultados();
+                mostrarEsqueleto();
 
                 $.ajax({
                     url: '@Url.Action("ConsultarDatos", "InformeTablasDatos")',
                     type: 'POST',
                     data: formData,
                     success: function (response) {
-                        $('#loadingSpinner').hide();
-
                         if (response.success) {
                             datosActuales = response;
                             paginaActual = 1;
@@ -402,9 +400,12 @@
                             if (response.totalRegistros > 0) {
                                 mostrarResultados(response);
                             } else {
+                                ocultarResultados();
+                                $('#estadoInicial').hide();
                                 $('#noDataMessage').show();
                             }
                         } else {
+                            ocultarResultados();
                             Swal.fire({
                                 icon: 'error',
                                 title: _tablasMsg.error,
@@ -413,7 +414,7 @@
                         }
                     },
                     error: function () {
-                        $('#loadingSpinner').hide();
+                        ocultarResultados();
                         Swal.fire({
                             icon: 'error',
                             title: _tablasMsg.error,
@@ -421,6 +422,38 @@
                         });
                     }
                 });
+            }
+
+            // Funcion: mostrar filas "esqueleto" mientras se consulta
+            function mostrarEsqueleto(filas, columnas) {
+                filas = filas || 6;
+                columnas = columnas || 5;
+
+                var thead = $('#tablaHeader');
+                var tbody = $('#tablaBody');
+                thead.empty();
+                tbody.empty();
+
+                var headerRow = $('<tr>');
+                for (var c = 0; c < columnas; c++) {
+                    headerRow.append($('<th>').html('&nbsp;'));
+                }
+                thead.append(headerRow);
+
+                for (var r = 0; r < filas; r++) {
+                    var row = $('<tr>').addClass('skeleton-row');
+                    for (var c2 = 0; c2 < columnas; c2++) {
+                        var ancho = 45 + Math.floor(Math.random() * 45);
+                        row.append($('<td>').append($('<div>').addClass('skeleton-bar').css('width', ancho + '%')));
+                    }
+                    tbody.append(row);
+                }
+
+                $('#estadoInicial').hide();
+                $('#noDataMessage').hide();
+                $('#btnExportar').hide();
+                $('#totalRegistros').text('');
+                $('#resultadosContainer').show();
             }
 
             // Funcion: mostrar resultados con paginacion
@@ -543,6 +576,7 @@
                 $('#resultadosContainer').hide();
                 $('#noDataMessage').hide();
                 $('#btnExportar').hide();
+                $('#estadoInicial').show();
                 datosActuales = null;
             }
 

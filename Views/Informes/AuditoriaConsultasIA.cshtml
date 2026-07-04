@@ -202,12 +202,6 @@
         </div>
     </div>
 
-    <!-- Loading Spinner -->
-    <div id="audLoading" class="loading-spinner">
-        <i class="fas fa-spinner"></i>
-        <p>@Resources.Strings.AudIA_LoadingHistorial</p>
-    </div>
-
     <!-- Tabla de resultados -->
     <div id="audResultadosContainer" style="display:none;">
         <div class="table-container">
@@ -358,24 +352,42 @@ $(document).ready(function () {
         if (desde)   params.desde    = desde;
         if (hasta)   params.hasta    = hasta;
 
-        $('#audLoading').show();
-        $('#audResultadosContainer,#audSinResultados').hide();
-        $('#audStatTotal,#audStatResumenes,#audStatPreguntas').hide();
+        mostrarEsqueleto();
 
         $.ajax({
             url  : '@Url.Action("ObtenerAuditoria","AuditoriaConsultasIA")',
             type : 'GET',
             data : params,
             success: function (registros) {
-                $('#audLoading').hide();
                 _todosRegistros = registros || [];
                 aplicarFiltrosLocales();
             },
             error: function () {
-                $('#audLoading').hide();
+                $('#audResultadosContainer').hide();
                 Swal.fire({ icon: 'error', title: _strError, text: _strErrorHistorial });
             }
         });
+    }
+
+    /* ── Filas "esqueleto" mientras se consulta ── */
+    function mostrarEsqueleto() {
+        var columnas = @(esAdmin ? 8 : 7);
+        var tbody = $('#audTbody').empty();
+
+        for (var r = 0; r < 6; r++) {
+            var row = $('<tr>').addClass('skeleton-row');
+            for (var c = 0; c < columnas; c++) {
+                var ancho = 45 + Math.floor(Math.random() * 45);
+                row.append($('<td>').append($('<div>').addClass('skeleton-bar').css('width', ancho + '%')));
+            }
+            tbody.append(row);
+        }
+
+        $('#audSinResultados').hide();
+        $('#audStatTotal,#audStatResumenes,#audStatPreguntas').hide();
+        $('#audPaginaInfo').text('');
+        $('#audPaginacion').empty();
+        $('#audResultadosContainer').show();
     }
 
     /* ── Filtros locales: tipo + búsqueda ── */
