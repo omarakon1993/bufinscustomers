@@ -18,9 +18,33 @@ namespace bufinscustomers.Controllers
 {
     public class AccesoController : BaseController
     {
-        // GET: Acceso
-        public ActionResult Login()
+        // Si el token anti-falsificación no se puede validar (típicamente porque el formulario
+        // de login quedó abierto en el navegador desde antes de que el proceso del servidor
+        // reiniciara/reciclara), no mostrar el error genérico: volver a Login con un mensaje claro.
+        protected override void OnException(ExceptionContext filterContext)
         {
+            if (filterContext.Exception is HttpAntiForgeryException)
+            {
+                System.Diagnostics.Trace.TraceWarning(
+                    "[AccesoController] Token anti-falsificación inválido en {0}. Redirigiendo a Login.",
+                    filterContext.HttpContext.Request.Url);
+
+                filterContext.ExceptionHandled = true;
+                filterContext.Result = new RedirectResult(
+                    Url.Action("Login", "Acceso") + "?tokenExpirado=true");
+                return;
+            }
+
+            base.OnException(filterContext);
+        }
+
+        // GET: Acceso
+        public ActionResult Login(bool tokenExpirado = false)
+        {
+            if (tokenExpirado)
+            {
+                ViewData["Mensaje"] = R("Login_ErrorTokenExpirado");
+            }
             return View();
         }
 
