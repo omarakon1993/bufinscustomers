@@ -356,6 +356,19 @@ Use `notifPushLocal('tipo', _notifStr.keyTitulo, _notifStr.keyMsg)` in JS for tr
 
 Every new view or UI modification MUST follow the site's existing visual design system. Do not use plain Bootstrap classes, custom inline styles, or new CSS files — always use the components defined in `Assets/css/bufins-components.css` plus Bootstrap's grid system.
 
+> **MANDATORY:** For any new page, option, or UI change, always base the design on the standards already established across the app — reuse existing classes/components/colors exactly as documented in this section instead of inventing new ones. Before styling anything new, check how the same kind of element (header, button, badge, table, modal) is already done elsewhere in the app and match it. Never introduce a new color, gradient, or one-off CSS rule when an existing shared class already covers the case.
+
+### Brand gradients — which one to use where
+
+There are two distinct gradient variables (both defined in `Assets/css/modern-sidebar.css`). Do not confuse them or use one in place of the other:
+
+| Variable | Value | Used for |
+|----------|-------|----------|
+| `--content-gradient` | `linear-gradient(90deg,#6366F1 0%,#3B82F6 35%,#06B6D4 70%,#01E1D7 100%)` | Content elements: `.powerbi-header`, `.btn-modern-gradient` (primary action), `.data-table thead th`, `.modal-header` |
+| `--app-glow-bg` (+ `--app-glow-bg-hover`) | Dark radial glow over `#160933` | Chrome (sidebar, topbar) **and** neutral/secondary buttons: `.btn-modern-secondary`, `.btn-outline-secondary`, modal Cancelar buttons |
+
+`.btn-modern-success` (green) stays reserved for create/activate/confirm actions only — never for downloads or neutral actions (those use `.btn-modern-secondary`, which is intentionally styled with the dark chrome gradient, not gray or white).
+
 ### Required stylesheet
 
 Every view that renders a content page must include:
@@ -425,7 +438,7 @@ All content pages follow this exact layout skeleton:
 | Button group | `.btn-group-actions` | Row of action buttons at the bottom of a filter panel |
 | Primary button | `.btn-modern-gradient` | Main action (Consultar, Guardar, etc.) |
 | Success button | `.btn-modern-success` | Positive secondary action |
-| Secondary button | `.btn-modern-secondary` | Cancel, Limpiar, back |
+| Secondary button | `.btn-modern-secondary` | Cancel, Limpiar, Instructivo, descargar plantilla/log — dark chrome gradient (`--app-glow-bg`), not gray/white |
 | Table wrapper | `.table-container` → `.table-header` → `.table-wrapper` → `.data-table` | Full table with sticky gradient header |
 | Count badge | `.info-badge` | Green pill showing record count in table header |
 | Empty state | `.no-data-message` | Centered icon + text when no results |

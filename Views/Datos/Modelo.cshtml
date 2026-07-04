@@ -14,9 +14,9 @@
     .btn-export-all {
         position: relative;
         overflow: hidden;
-        color: #6c757d !important;
-        border: 1.5px solid #d1d5db;
-        background: linear-gradient(110deg, #f8f9fc 0%, #ffffff 40%, #eef0f7 60%, #ffffff 80%, #f8f9fc 100%);
+        color: #fff !important;
+        border: none;
+        background: linear-gradient(110deg, #160933 0%, #2d1b5e 25%, #583AFF 50%, #2d1b5e 75%, #160933 100%);
         background-size: 300% 100%;
         padding: 0.375rem 0.85rem;
         border-radius: 0.45rem;
@@ -24,7 +24,7 @@
         font-weight: 600;
         letter-spacing: 0.01em;
         cursor: pointer;
-        transition: box-shadow 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+        transition: box-shadow 0.25s ease;
         animation: exportShine 4s linear infinite;
     }
     .btn-export-all:disabled {
@@ -35,9 +35,7 @@
         opacity: 0.7;
     }
     .btn-export-all:not(:disabled):hover {
-        color: #2d3748 !important;
-        border-color: #6c757d;
-        box-shadow: 0 4px 20px rgba(108, 117, 125, 0.25);
+        box-shadow: 0 4px 20px rgba(88, 58, 255, 0.45);
         animation: exportShine 1.8s linear infinite;
     }
     .btn-export-all:not(:disabled):hover .ico-export {
