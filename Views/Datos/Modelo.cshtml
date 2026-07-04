@@ -16,7 +16,7 @@
         overflow: hidden;
         color: #fff !important;
         border: none;
-        background: linear-gradient(110deg, #160933 0%, #2d1b5e 25%, #583AFF 50%, #2d1b5e 75%, #160933 100%);
+        background: linear-gradient(110deg, #185c37 0%, #217346 25%, #2e9e5b 50%, #217346 75%, #185c37 100%);
         background-size: 300% 100%;
         padding: 0.375rem 0.85rem;
         border-radius: 0.45rem;
@@ -35,7 +35,7 @@
         opacity: 0.7;
     }
     .btn-export-all:not(:disabled):hover {
-        box-shadow: 0 4px 20px rgba(88, 58, 255, 0.45);
+        box-shadow: 0 4px 20px rgba(33, 115, 70, 0.45);
         animation: exportShine 1.8s linear infinite;
     }
     .btn-export-all:not(:disabled):hover .ico-export {
@@ -177,7 +177,7 @@
                 </h5>
                 <div class="d-flex align-items-center gap-2">
                     <span class="info-badge" id="resultadosContador">0 @Resources.Strings.Modelo_Registros</span>
-                    <button type="button" id="btnExportarModelo" class="btn-modern-secondary" onclick="exportarExcel('individual')" title="@Resources.Strings.Modelo_BtnExportarModelo">
+                    <button type="button" id="btnExportarModelo" class="btn-modern-excel" onclick="exportarExcel('individual')" title="@Resources.Strings.Modelo_BtnExportarModelo">
                         <i class="fas fa-file-excel mr-1"></i>
                         @Resources.Strings.Modelo_BtnExportarModelo
                     </button>

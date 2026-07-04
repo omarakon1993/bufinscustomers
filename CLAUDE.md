@@ -439,6 +439,7 @@ All content pages follow this exact layout skeleton:
 | Primary button | `.btn-modern-gradient` | Main action (Consultar, Guardar, etc.) |
 | Success button | `.btn-modern-success` | Positive secondary action |
 | Secondary button | `.btn-modern-secondary` | Cancel, Limpiar, Instructivo, descargar plantilla/log — dark chrome gradient (`--app-glow-bg`), not gray/white |
+| Excel export button | `.btn-modern-excel` | Any button that exports/downloads data as an Excel file (`fa-file-excel` icon) — Excel brand green (`#217346`, hover `#185c37`). Do not use for templates/instructivos, only for actual data exports |
 | Table wrapper | `.table-container` → `.table-header` → `.table-wrapper` → `.data-table` | Full table with sticky gradient header |
 | Count badge | `.info-badge` | Green pill showing record count in table header |
 | Empty state | `.no-data-message` | Centered icon + text when no results |
