@@ -94,6 +94,10 @@ namespace bufinscustomers.Controllers
                 else
                     SetErrorMessage("No se pudo eliminar el modelo. Intente nuevamente.");
             }
+            catch (System.Data.SqlClient.SqlException ex) when (ex.Number == 547)
+            {
+                SetErrorMessage("No se puede eliminar el modelo porque tiene registros relacionados (por ejemplo, ejecuciones previas). Puedes inactivarlo en su lugar desde Editar.");
+            }
             catch (Exception ex)
             {
                 SetErrorMessage("Error al eliminar el modelo: " + ex.Message);

@@ -117,7 +117,7 @@ namespace bufinscustomers.Services
             using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
                 SqlCommand cmd = new SqlCommand(
-                    "UPDATE ModelosEjecucion SET Activo = 0 WHERE Id = @Id", cn);
+                    "DELETE FROM ModelosEjecucion WHERE Id = @Id", cn);
                 cmd.Parameters.AddWithValue("@Id", id);
                 cn.Open();
                 return cmd.ExecuteNonQuery() > 0;
