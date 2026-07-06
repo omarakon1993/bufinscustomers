@@ -448,7 +448,7 @@ namespace bufinscustomers.Controllers
         }
 
         private static readonly HashSet<string> _moneyColNames =
-            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Valor", "ValorAcumulado", "ValorFuturo" };
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Valor", "ValorAcumulado", "ValorFuturo", "ValorPresupuesto", "ValorPresupuestoAcumulado", "ValorPresupuestoConAjuste" };
 
         private void EjecutarModeloYEscribirHoja(SqlConnection cn, ExcelWorksheet ws, ModeloEjecucion modelo, int idEmpresa, int idUsuario)
         {
