@@ -366,15 +366,20 @@ namespace bufinscustomers.Controllers
             oUsuario.Clave = oUsuario.Clave.Trim();
             oUsuario.ConfirmarClave = oUsuario.ConfirmarClave.Trim();
 
-            if (oUsuario.Clave == oUsuario.ConfirmarClave)
-            {
-                oUsuario.Clave = HashearContrasena(oUsuario.Clave);
-            }
-            else
+            if (oUsuario.Clave != oUsuario.ConfirmarClave)
             {
                 SetErrorMessage("Las contraseñas no coinciden");
                 return RedirectToAction("Usuarios");
             }
+
+            string mensajeClave;
+            if (!EsClaveSegura(oUsuario.Clave, oUsuario.Usuario, out mensajeClave))
+            {
+                SetErrorMessage(mensajeClave);
+                return RedirectToAction("Usuarios");
+            }
+
+            oUsuario.Clave = HashearContrasena(oUsuario.Clave);
 
             if (oUsuario.Admin == null)
             {
@@ -470,11 +475,12 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Usuarios");
             }
 
+            var usuarioService = new UsuarioService();
+            var usuarioDestino = usuarioService.ObtenerUsuarioPorId(idUsuario);
+
             // Si no es SuperAdmin, solo puede cambiar claves de usuarios de su empresa
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
-                var usuarioService = new UsuarioService();
-                var usuarioDestino = usuarioService.ObtenerUsuarioPorId(idUsuario);
                 if (usuarioDestino == null || usuarioDestino.IdEmpresa != UsuarioSesionHelper.UsuarioActual.IdEmpresa)
                 {
                     SetErrorMessage("No tienes permisos para cambiar la clave de usuarios de otras empresas.");
@@ -491,6 +497,13 @@ namespace bufinscustomers.Controllers
             if (nuevaClave.Trim() != confirmarNuevaClave.Trim())
             {
                 SetErrorMessage("Las contraseñas no coinciden.");
+                return RedirectToAction("Usuarios");
+            }
+
+            string mensajeClave;
+            if (!EsClaveSegura(nuevaClave.Trim(), usuarioDestino?.Usuario, out mensajeClave))
+            {
+                SetErrorMessage(mensajeClave);
                 return RedirectToAction("Usuarios");
             }
 
@@ -525,6 +538,67 @@ namespace bufinscustomers.Controllers
         {
             // Solo letras minúsculas, números y puntos, sin espacios, empieza con letra, 4-20 caracteres
             return System.Text.RegularExpressions.Regex.IsMatch(usuario, @"^[a-z][a-z0-9.]{3,19}$");
+        }
+
+        private static readonly HashSet<string> ClavesComunes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "12345678", "123456789", "1234567890", "password", "Password1", "Password123",
+            "qwerty123", "qwertyui", "11111111", "00000000", "abcd1234", "abc12345",
+            "contraseña", "contrasena", "Contrasena1", "Contraseña1", "admin123", "Admin123",
+            "bufins123", "Bufins123", "12345678a", "a12345678", "iloveyou1", "letmein123",
+            "welcome123", "changeme1", "usuario123", "colombia1", "Colombia1",
+            "Password1!", "Qwerty123!", "Contrasena1!", "Admin123!", "12345678910",
+            "abcdefgh1", "Abcdefgh1", "password1!", "P@ssword1", "P@ssw0rd", "Bufins123!"
+        };
+
+        // Política de contraseñas: mínimo 10 caracteres, mayúscula, minúscula, número,
+        // carácter especial, sin 3+ caracteres repetidos seguidos, sin ser una clave
+        // común ni contener el nombre de usuario.
+        private bool EsClaveSegura(string clave, string usuario, out string mensajeError)
+        {
+            if (string.IsNullOrEmpty(clave) || clave.Length < 10)
+            {
+                mensajeError = "La contraseña debe tener al menos 10 caracteres.";
+                return false;
+            }
+            if (!System.Text.RegularExpressions.Regex.IsMatch(clave, @"[a-z]"))
+            {
+                mensajeError = "La contraseña debe incluir al menos una letra minúscula.";
+                return false;
+            }
+            if (!System.Text.RegularExpressions.Regex.IsMatch(clave, @"[A-Z]"))
+            {
+                mensajeError = "La contraseña debe incluir al menos una letra mayúscula.";
+                return false;
+            }
+            if (!System.Text.RegularExpressions.Regex.IsMatch(clave, @"[0-9]"))
+            {
+                mensajeError = "La contraseña debe incluir al menos un número.";
+                return false;
+            }
+            if (!System.Text.RegularExpressions.Regex.IsMatch(clave, @"[^A-Za-z0-9]"))
+            {
+                mensajeError = "La contraseña debe incluir al menos un carácter especial (ej: !@#$%).";
+                return false;
+            }
+            if (System.Text.RegularExpressions.Regex.IsMatch(clave, @"(.)\1\1"))
+            {
+                mensajeError = "La contraseña no debe tener 3 o más caracteres repetidos seguidos.";
+                return false;
+            }
+            if (ClavesComunes.Contains(clave))
+            {
+                mensajeError = "Esta contraseña es demasiado común. Elige una más segura.";
+                return false;
+            }
+            if (!string.IsNullOrEmpty(usuario) && clave.IndexOf(usuario, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                mensajeError = "La contraseña no debe contener el nombre de usuario.";
+                return false;
+            }
+
+            mensajeError = null;
+            return true;
         }
 
         private void GuardarImagenUsuario(int usuarioId, HttpPostedFileBase imagenArchivo)

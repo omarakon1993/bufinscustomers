@@ -227,6 +227,40 @@
         .table-wrapper::-webkit-scrollbar-thumb:hover {
             background: #888;
         }
+
+        /* === CHECKLIST DE CONTRASEÑA (chips compactos) === */
+        .pwd-checklist {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            margin-top: 0.4rem;
+        }
+
+        .pwd-check-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.12rem 0.5rem;
+            border-radius: 999px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            color: #9ca3af;
+            font-size: 0.66rem;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: all 0.15s ease;
+        }
+
+        .pwd-check-item i {
+            font-size: 0.6rem;
+        }
+
+        .pwd-check-item.ok {
+            background: #d1fae5;
+            border-color: #6ee7b7;
+            color: #059669;
+            font-weight: 600;
+        }
     </style>
 
     <div class="powerbi-header">
@@ -488,10 +522,10 @@
                                     <div class="col-md-4 mb-3 mt-3">
                                         <label for="editUsuario" class="form-label">
                                             <i class="fas fa-user-tag mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelUsuario
+                                            <small class="text-muted">(@Resources.Strings.Common_Automatico)</small>
                                         </label>
                                         <input type="text" class="form-control" id="editUsuario" name="Usuario" required readonly
                                                placeholder="@Resources.Strings.Usr_PlaceholderUsuario" style="background-color:#f3f4f6;cursor:not-allowed;" />
-                                        <small class="form-text text-muted">@Resources.Strings.Usr_HintUsuario</small>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -651,10 +685,10 @@
                                     <div class="col-md-4 mb-3 mt-3">
                                         <label for="crearUsuario" class="form-label">
                                             <i class="fas fa-user-tag mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelUsuario
+                                            <small class="text-muted">(@Resources.Strings.Common_Automatico)</small>
                                         </label>
                                         <input type="text" class="form-control" id="crearUsuario" name="Usuario" required readonly
                                                placeholder="@Resources.Strings.Usr_PlaceholderUsuario" style="background-color:#f3f4f6;cursor:not-allowed;" />
-                                        <small class="form-text text-muted">@Resources.Strings.Usr_HintUsuario</small>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -662,14 +696,23 @@
                                         <label for="crearClave" class="form-label">
                                             <i class="fas fa-lock mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelClave <span class="required">*</span>
                                         </label>
-                                        <input type="password" class="form-control" id="crearClave" name="Clave" required />
-                                        <small class="form-text text-muted">@Resources.Strings.Usr_HintClave</small>
+                                        <input type="password" class="form-control" id="crearClave" name="Clave" required
+                                               minlength="10" title="@Resources.Strings.Usr_PwdPatternTitle" />
+                                        <div class="pwd-checklist" id="crearClaveChecklist">
+                                            <div class="pwd-check-item" data-check="len"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqLen</div>
+                                            <div class="pwd-check-item" data-check="upper"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqUpper</div>
+                                            <div class="pwd-check-item" data-check="lower"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqLower</div>
+                                            <div class="pwd-check-item" data-check="num"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqNum</div>
+                                            <div class="pwd-check-item" data-check="special"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqSpecial</div>
+                                            <div class="pwd-check-item" data-check="noRepeat"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqNoRepeat</div>
+                                        </div>
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <label for="crearConfirmarClave" class="form-label">
                                             <i class="fas fa-lock-open mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelConfirmarClave <span class="required">*</span>
                                         </label>
                                         <input type="password" class="form-control" id="crearConfirmarClave" name="ConfirmarClave" required />
+                                        <small class="form-text" id="crearClaveMatchFeedback"></small>
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <label for="crearTelefono" class="form-label">
@@ -785,11 +828,21 @@
                     <div class="modal-body">
                         <div class="mb-3 mt-3">
                             <label for="nuevaClave" class="form-label"><i class="fas fa-lock mr-2"></i>@Resources.Strings.Usr_LabelNuevaClave</label>
-                            <input type="password" class="form-control" id="nuevaClave" name="nuevaClave" required />
+                            <input type="password" class="form-control" id="nuevaClave" name="nuevaClave" required
+                                   minlength="10" title="@Resources.Strings.Usr_PwdPatternTitle" />
+                            <div class="pwd-checklist" id="nuevaClaveChecklist">
+                                <div class="pwd-check-item" data-check="len"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqLen</div>
+                                <div class="pwd-check-item" data-check="upper"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqUpper</div>
+                                <div class="pwd-check-item" data-check="lower"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqLower</div>
+                                <div class="pwd-check-item" data-check="num"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqNum</div>
+                                <div class="pwd-check-item" data-check="special"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqSpecial</div>
+                                <div class="pwd-check-item" data-check="noRepeat"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqNoRepeat</div>
+                            </div>
                         </div>
                         <div class="mb-3 mt-3">
                             <label for="confirmarNuevaClave" class="form-label"><i class="fas fa-lock-open mr-2"></i>@Resources.Strings.Usr_LabelConfNuevaClave</label>
                             <input type="password" class="form-control" id="confirmarNuevaClave" name="confirmarNuevaClave" required />
+                            <small class="form-text" id="nuevaClaveMatchFeedback"></small>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -972,6 +1025,85 @@
             document.getElementById('crearApellidos').addEventListener('input', generarUsuarioSugeridoCrear);
             document.getElementById('editNombre').addEventListener('input', generarUsuarioSugeridoEditar);
             document.getElementById('editApellidos').addEventListener('input', generarUsuarioSugeridoEditar);
+
+            // ── Validación intuitiva de contraseña (checklist en vivo + coincidencia) ──
+            var _pwdMsg = {
+                coincide: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_PwdMatch))',
+                noCoincide: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_PwdNoMatch))',
+                incompleta: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_PwdIncompleta))'
+            };
+
+            function evaluarRequisitosClave(clave) {
+                return {
+                    len: clave.length >= 10,
+                    upper: /[A-Z]/.test(clave),
+                    lower: /[a-z]/.test(clave),
+                    num: /[0-9]/.test(clave),
+                    special: /[^A-Za-z0-9]/.test(clave),
+                    noRepeat: clave.length > 0 && !/(.)\1\1/.test(clave)
+                };
+            }
+
+            function actualizarChecklistClave(inputId, checklistId) {
+                var campo = document.getElementById(inputId);
+                var clave = campo.value;
+                var resultado = evaluarRequisitosClave(clave);
+                var checklist = document.getElementById(checklistId);
+
+                if (checklist) {
+                    Object.keys(resultado).forEach(function (key) {
+                        var item = checklist.querySelector('[data-check="' + key + '"]');
+                        if (!item) return;
+                        var icono = item.querySelector('i');
+                        if (resultado[key]) {
+                            item.classList.add('ok');
+                            icono.className = 'fas fa-check-circle';
+                        } else {
+                            item.classList.remove('ok');
+                            icono.className = 'fas fa-circle';
+                        }
+                    });
+                }
+
+                var todoOk = Object.keys(resultado).every(function (key) { return resultado[key]; });
+                campo.setCustomValidity((clave.length > 0 && !todoOk) ? _pwdMsg.incompleta : '');
+            }
+
+            function actualizarCoincidenciaClave(claveId, confirmarId, feedbackId) {
+                var clave = document.getElementById(claveId).value;
+                var campoConfirmar = document.getElementById(confirmarId);
+                var confirmar = campoConfirmar.value;
+                var feedback = document.getElementById(feedbackId);
+
+                if (!confirmar) {
+                    campoConfirmar.setCustomValidity('');
+                    if (feedback) { feedback.textContent = ''; feedback.className = 'form-text'; }
+                    return;
+                }
+                if (clave === confirmar) {
+                    campoConfirmar.setCustomValidity('');
+                    if (feedback) { feedback.textContent = '✓ ' + _pwdMsg.coincide; feedback.className = 'form-text text-success'; }
+                } else {
+                    campoConfirmar.setCustomValidity(_pwdMsg.noCoincide);
+                    if (feedback) { feedback.textContent = '✗ ' + _pwdMsg.noCoincide; feedback.className = 'form-text text-danger'; }
+                }
+            }
+
+            document.getElementById('crearClave').addEventListener('input', function () {
+                actualizarChecklistClave('crearClave', 'crearClaveChecklist');
+                actualizarCoincidenciaClave('crearClave', 'crearConfirmarClave', 'crearClaveMatchFeedback');
+            });
+            document.getElementById('crearConfirmarClave').addEventListener('input', function () {
+                actualizarCoincidenciaClave('crearClave', 'crearConfirmarClave', 'crearClaveMatchFeedback');
+            });
+
+            document.getElementById('nuevaClave').addEventListener('input', function () {
+                actualizarChecklistClave('nuevaClave', 'nuevaClaveChecklist');
+                actualizarCoincidenciaClave('nuevaClave', 'confirmarNuevaClave', 'nuevaClaveMatchFeedback');
+            });
+            document.getElementById('confirmarNuevaClave').addEventListener('input', function () {
+                actualizarCoincidenciaClave('nuevaClave', 'confirmarNuevaClave', 'nuevaClaveMatchFeedback');
+            });
 
             function setEditUser(id, nombre, apellidos, telefono, Correo, admin, idEmpresa, usuario, clave, imagenUrl, limiteConsultasIA) {
 
@@ -1264,11 +1396,21 @@
                 document.getElementById('crearUsuarioForm').reset();
                 removeImageCreate();
                 document.getElementById('crearUsuario').value = '';
+                document.getElementById('crearConfirmarClave').setCustomValidity('');
+                document.getElementById('crearClaveMatchFeedback').textContent = '';
+                actualizarChecklistClave('crearClave', 'crearClaveChecklist');
             });
 
             $('#editUserModal').on('hidden.bs.modal', function () {
                 // No resetear completamente, solo limpiar la imagen nueva si no se guardó
                 // El formulario se llena con setEditUser
+            });
+
+            $('#cambiarClaveModal').on('hidden.bs.modal', function () {
+                document.getElementById('cambiarClaveForm').reset();
+                document.getElementById('confirmarNuevaClave').setCustomValidity('');
+                document.getElementById('nuevaClaveMatchFeedback').textContent = '';
+                actualizarChecklistClave('nuevaClave', 'nuevaClaveChecklist');
             });
 
         </script>
