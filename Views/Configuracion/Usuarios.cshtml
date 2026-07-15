@@ -261,6 +261,38 @@
             color: #059669;
             font-weight: 600;
         }
+
+        .pwd-input-wrapper {
+            position: relative;
+        }
+
+        .pwd-input-wrapper .form-control {
+            padding-right: 40px;
+        }
+
+        .pwd-toggle-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: calc(1.5em + .75rem + 2px);
+            width: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            color: #6b7280;
+            font-size: 0.95rem;
+            transition: color 0.15s ease;
+        }
+
+        .pwd-toggle-btn:hover,
+        .pwd-toggle-btn:focus {
+            color: #583AFF;
+            outline: none;
+        }
     </style>
 
     <div class="powerbi-header">
@@ -696,8 +728,13 @@
                                         <label for="crearClave" class="form-label">
                                             <i class="fas fa-lock mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelClave <span class="required">*</span>
                                         </label>
-                                        <input type="password" class="form-control" id="crearClave" name="Clave" required
-                                               minlength="10" title="@Resources.Strings.Usr_PwdPatternTitle" />
+                                        <div class="pwd-input-wrapper">
+                                            <input type="password" class="form-control" id="crearClave" name="Clave" required
+                                                   minlength="10" title="@Resources.Strings.Usr_PwdPatternTitle" />
+                                            <button type="button" class="pwd-toggle-btn" onclick="togglePwd('crearClave', this)" tabindex="-1" title="@Resources.Strings.Usr_PwdMostrar" aria-label="@Resources.Strings.Usr_PwdMostrar">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
                                         <div class="pwd-checklist" id="crearClaveChecklist">
                                             <div class="pwd-check-item" data-check="len"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqLen</div>
                                             <div class="pwd-check-item" data-check="upper"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqUpper</div>
@@ -711,7 +748,12 @@
                                         <label for="crearConfirmarClave" class="form-label">
                                             <i class="fas fa-lock-open mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelConfirmarClave <span class="required">*</span>
                                         </label>
-                                        <input type="password" class="form-control" id="crearConfirmarClave" name="ConfirmarClave" required />
+                                        <div class="pwd-input-wrapper">
+                                            <input type="password" class="form-control" id="crearConfirmarClave" name="ConfirmarClave" required />
+                                            <button type="button" class="pwd-toggle-btn" onclick="togglePwd('crearConfirmarClave', this)" tabindex="-1" title="@Resources.Strings.Usr_PwdMostrar" aria-label="@Resources.Strings.Usr_PwdMostrar">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
                                         <small class="form-text" id="crearClaveMatchFeedback"></small>
                                     </div>
                                     <div class="col-md-4 mb-3">
@@ -828,8 +870,13 @@
                     <div class="modal-body">
                         <div class="mb-3 mt-3">
                             <label for="nuevaClave" class="form-label"><i class="fas fa-lock mr-2"></i>@Resources.Strings.Usr_LabelNuevaClave</label>
-                            <input type="password" class="form-control" id="nuevaClave" name="nuevaClave" required
-                                   minlength="10" title="@Resources.Strings.Usr_PwdPatternTitle" />
+                            <div class="pwd-input-wrapper">
+                                <input type="password" class="form-control" id="nuevaClave" name="nuevaClave" required
+                                       minlength="10" title="@Resources.Strings.Usr_PwdPatternTitle" />
+                                <button type="button" class="pwd-toggle-btn" onclick="togglePwd('nuevaClave', this)" tabindex="-1" title="@Resources.Strings.Usr_PwdMostrar" aria-label="@Resources.Strings.Usr_PwdMostrar">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                             <div class="pwd-checklist" id="nuevaClaveChecklist">
                                 <div class="pwd-check-item" data-check="len"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqLen</div>
                                 <div class="pwd-check-item" data-check="upper"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqUpper</div>
@@ -841,7 +888,12 @@
                         </div>
                         <div class="mb-3 mt-3">
                             <label for="confirmarNuevaClave" class="form-label"><i class="fas fa-lock-open mr-2"></i>@Resources.Strings.Usr_LabelConfNuevaClave</label>
-                            <input type="password" class="form-control" id="confirmarNuevaClave" name="confirmarNuevaClave" required />
+                            <div class="pwd-input-wrapper">
+                                <input type="password" class="form-control" id="confirmarNuevaClave" name="confirmarNuevaClave" required />
+                                <button type="button" class="pwd-toggle-btn" onclick="togglePwd('confirmarNuevaClave', this)" tabindex="-1" title="@Resources.Strings.Usr_PwdMostrar" aria-label="@Resources.Strings.Usr_PwdMostrar">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                             <small class="form-text" id="nuevaClaveMatchFeedback"></small>
                         </div>
                     </div>
@@ -950,8 +1002,27 @@
         <script>
             var _usrMsg = {
                 camposReq: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_CamposReq)',
-                archivoGrande: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_CamposReq)'
+                archivoGrande: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_CamposReq)',
+                pwdMostrar: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_PwdMostrar)',
+                pwdOcultar: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_PwdOcultar)'
             };
+
+            function togglePwd(inputId, btn) {
+                var inp = document.getElementById(inputId);
+                if (!inp) return;
+                var ic = btn.querySelector('i');
+                if (inp.type === 'password') {
+                    inp.type = 'text';
+                    ic.classList.replace('fa-eye', 'fa-eye-slash');
+                    btn.title = _usrMsg.pwdOcultar;
+                    btn.setAttribute('aria-label', _usrMsg.pwdOcultar);
+                } else {
+                    inp.type = 'password';
+                    ic.classList.replace('fa-eye-slash', 'fa-eye');
+                    btn.title = _usrMsg.pwdMostrar;
+                    btn.setAttribute('aria-label', _usrMsg.pwdMostrar);
+                }
+            }
 
             // Nombres de usuario ya existentes (para evitar sugerir uno duplicado)
             var _usuariosExistentes = [
