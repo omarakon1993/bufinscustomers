@@ -403,6 +403,8 @@
   <data name="Common_Eliminar" xml:space="preserve"><value>Delete</value></data>
   <data name="Common_BtnEliminar" xml:space="preserve"><value>Delete</value></data>
   <data name="Common_BtnCrear" xml:space="preserve"><value>Create</value></data>
+  <data name="Common_CamposObligatorios" xml:space="preserve"><value>Required fields</value></data>
+  <data name="Common_Opcional" xml:space="preserve"><value>Optional</value></data>
 
   <!-- COMPANIES -->
   <data name="Emp_PageTitle" xml:space="preserve"><value>Company Manager</value></data>
@@ -426,6 +428,17 @@
   <data name="Emp_ThAbreviatura" xml:space="preserve"><value>Abbreviation</value></data>
   <data name="Emp_LabelAbreviatura" xml:space="preserve"><value>Abbreviation</value></data>
   <data name="Emp_HintAbreviatura" xml:space="preserve"><value>Letters only (a-z, A-Z), 12 characters max</value></data>
+  <data name="Emp_PlaceholderNombre" xml:space="preserve"><value>E.g.: Bufins S.A.S.</value></data>
+  <data name="Emp_HintNombre" xml:space="preserve"><value>Company's full legal name</value></data>
+  <data name="Emp_PlaceholderNit" xml:space="preserve"><value>E.g.: 900123456-7</value></data>
+  <data name="Emp_HintNit" xml:space="preserve"><value>Tax identification number, including the verification digit</value></data>
+  <data name="Emp_PlaceholderDireccion" xml:space="preserve"><value>E.g.: 123 Main St, Bogotá</value></data>
+  <data name="Emp_HintDireccion" xml:space="preserve"><value>Physical address of the main office</value></data>
+  <data name="Emp_PlaceholderTelefono" xml:space="preserve"><value>E.g.: 3001234567</value></data>
+  <data name="Emp_HintTelefono" xml:space="preserve"><value>Numbers only, 7 to 15 digits (optional)</value></data>
+  <data name="Emp_PlaceholderCorreo" xml:space="preserve"><value>E.g.: contact@company.com</value></data>
+  <data name="Emp_HintCorreo" xml:space="preserve"><value>Company's contact email (optional)</value></data>
+  <data name="Emp_PlaceholderAbreviatura" xml:space="preserve"><value>E.g.: Bufins</value></data>
 
   <!-- MENU OPTIONS -->
   <data name="Menu_PageTitle" xml:space="preserve"><value>Menu Options Manager</value></data>
@@ -460,6 +473,14 @@
   <data name="Menu_LabelSoloAdminEmpresa" xml:space="preserve"><value>Company Admin only</value></data>
   <data name="Menu_LabelEsDestacado" xml:space="preserve"><value>Featured menu</value></data>
   <data name="Menu_LabelEsDestacadoDesc" xml:space="preserve"><value>Highlights this menu in the sidebar with animation and special style</value></data>
+  <data name="Menu_PlaceholderNombre" xml:space="preserve"><value>E.g.: Upload Template</value></data>
+  <data name="Menu_PlaceholderNombreEN" xml:space="preserve"><value>E.g.: Upload Template</value></data>
+  <data name="Menu_PlaceholderDescripcion" xml:space="preserve"><value>E.g.: Lets users upload financial data from Excel</value></data>
+  <data name="Menu_PlaceholderController" xml:space="preserve"><value>E.g.: Datos</value></data>
+  <data name="Menu_PlaceholderAction" xml:space="preserve"><value>E.g.: CargueExcel</value></data>
+  <data name="Menu_HintCodigo" xml:space="preserve"><value>Unique identifier in uppercase, used in permissions and controllers</value></data>
+  <data name="Menu_HintController" xml:space="preserve"><value>MVC controller name, without the "Controller" suffix</value></data>
+  <data name="Menu_HintAction" xml:space="preserve"><value>Exact action method name inside the controller</value></data>
   <data name="Menu_BadgeDestacado" xml:space="preserve"><value>Featured</value></data>
   <data name="Menu_ThDestacado" xml:space="preserve"><value>Feat.</value></data>
   <data name="Menu_SidebarLocation" xml:space="preserve"><value>Sidebar location</value></data>
@@ -488,7 +509,7 @@
   <data name="Usr_ModalEditTitle" xml:space="preserve"><value>Edit User</value></data>
   <data name="Usr_ModalCreateTitle" xml:space="preserve"><value>Create user</value></data>
   <data name="Usr_TabAuth" xml:space="preserve"><value>Authentication</value></data>
-  <data name="Usr_TabDatos" xml:space="preserve"><value>User Data</value></data>
+  <data name="Usr_TabDatos" xml:space="preserve"><value>Data &amp; Access</value></data>
   <data name="Usr_TabImagen" xml:space="preserve"><value>Image</value></data>
   <data name="Usr_LabelUsuario" xml:space="preserve"><value>Username</value></data>
   <data name="Usr_LabelClave" xml:space="preserve"><value>Password</value></data>
@@ -515,6 +536,17 @@
   <data name="Usr_ModalImagenTitle" xml:space="preserve"><value>User Image</value></data>
   <data name="Usr_JS_CamposReq" xml:space="preserve"><value>Please complete all required fields.</value></data>
   <data name="Usr_JS_ArchivoGrande" xml:space="preserve"><value>The file is too large. Maximum 10MB.</value></data>
+  <data name="Usr_PlaceholderUsuario" xml:space="preserve"><value>Fills in once you enter the first and last name</value></data>
+  <data name="Usr_HintUsuario" xml:space="preserve"><value>Automatically generated from the first and last name; not editable</value></data>
+  <data name="Usr_HintClave" xml:space="preserve"><value>Recommended: at least 8 characters, mixing letters and numbers</value></data>
+  <data name="Usr_PlaceholderNombre" xml:space="preserve"><value>E.g.: John</value></data>
+  <data name="Usr_PlaceholderApellidos" xml:space="preserve"><value>E.g.: Smith Doe</value></data>
+  <data name="Usr_PlaceholderTelefono" xml:space="preserve"><value>E.g.: 3001234567</value></data>
+  <data name="Usr_HintTelefono" xml:space="preserve"><value>Numbers only, 7 to 15 digits (optional)</value></data>
+  <data name="Usr_PlaceholderCorreo" xml:space="preserve"><value>E.g.: jgomez@company.com</value></data>
+  <data name="Usr_HintCorreo" xml:space="preserve"><value>Used for notifications and account recovery</value></data>
+  <data name="Usr_HintEmpresa" xml:space="preserve"><value>Company this user belongs to</value></data>
+  <data name="Usr_HintLimiteConsultasIA" xml:space="preserve"><value>0 = no access · maximum 10 queries per day</value></data>
 
   <!-- COMMON ADDITIONAL -->
   <data name="Common_ModalDeleteTitle" xml:space="preserve"><value>Confirm deletion</value></data>
@@ -534,6 +566,8 @@
   <data name="Mod_ModalDeleteNote" xml:space="preserve"><value>This action will permanently delete the model and it cannot be recovered. If you only want to hide it, you can deactivate it from Edit.</value></data>
   <data name="Mod_LabelSP" xml:space="preserve"><value>Stored SP</value></data>
   <data name="Mod_IconoHint" xml:space="preserve"><value>(FontAwesome class)</value></data>
+  <data name="Mod_HintSP" xml:space="preserve"><value>Exact name of the stored procedure in the database</value></data>
+  <data name="Mod_HintDescripcion" xml:space="preserve"><value>Brief explanation of what this model calculates (optional)</value></data>
 
   <!-- AI PROMPTS MANAGER -->
   <data name="Prompt_PageTitle" xml:space="preserve"><value>AI Prompts Manager</value></data>
@@ -577,6 +611,10 @@
   <data name="Rep_LabelAnioInicial" xml:space="preserve"><value>Starting Year</value></data>
   <data name="Rep_LabelAnioFinal" xml:space="preserve"><value>Ending Year</value></data>
   <data name="Rep_LabelEnlaceHTML" xml:space="preserve"><value>HTML Link</value></data>
+  <data name="Rep_PlaceholderNombre" xml:space="preserve"><value>E.g.: Monthly Financial Report</value></data>
+  <data name="Rep_PlaceholderEnlaceHTML" xml:space="preserve"><value>E.g.: https://app.powerbi.com/view?r=...</value></data>
+  <data name="Rep_HintEnlaceHTML" xml:space="preserve"><value>Full URL of the embedded report (Power BI or another viewer)</value></data>
+  <data name="Rep_HintDescripcion" xml:space="preserve"><value>Additional context about the report's content (optional)</value></data>
   <data name="Rep_SelEmpresa" xml:space="preserve"><value>Select a company</value></data>
   <data name="Rep_BtnActualizar" xml:space="preserve"><value>Update</value></data>
   <data name="Rep_JS_SinEnlace" xml:space="preserve"><value>No link available</value></data>
@@ -960,6 +998,10 @@
   <data name="Correo_FieldRemitente"       xml:space="preserve"><value>From address (sender)</value></data>
   <data name="Correo_FieldNombreRemitente" xml:space="preserve"><value>Sender display name</value></data>
   <data name="Correo_FieldPredeterminada"  xml:space="preserve"><value>Set as default account</value></data>
+  <data name="Correo_FieldPuertoPh"        xml:space="preserve"><value>E.g.: 465 (SSL) or 587 (TLS)</value></data>
+  <data name="Correo_FieldUsuarioPh"       xml:space="preserve"><value>E.g.: notifications@bufins.com</value></data>
+  <data name="Correo_FieldRemitentePh"     xml:space="preserve"><value>E.g.: notifications@bufins.com</value></data>
+  <data name="Correo_HintRemitente"        xml:space="preserve"><value>Usually should match the authentication username</value></data>
   <data name="Correo_BtnProbar"            xml:space="preserve"><value>Test</value></data>
   <data name="Correo_BtnPredeterminada"    xml:space="preserve"><value>Set as default</value></data>
   <data name="Correo_ModalCrearTitle"      xml:space="preserve"><value>New Email Account</value></data>

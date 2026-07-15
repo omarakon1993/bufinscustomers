@@ -200,6 +200,7 @@
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="Id" id="editId"/>
                 <div class="modal-body">
+                    <small class="form-text text-muted mb-3 d-block"><span class="text-danger">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                     <div class="row">
                         <div class="col-md-8 mb-3">
                             <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldNombre <span class="text-danger">*</span></label>
@@ -213,7 +214,8 @@
                     <div class="row">
                         <div class="col-md-2 mb-3">
                             <label><i class="fas fa-plug mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldPuerto <span class="text-danger">*</span></label>
-                            <input type="number" name="Puerto" id="editPuerto" class="form-control form-control-sm" min="1" max="65535" required/>
+                            <input type="number" name="Puerto" id="editPuerto" class="form-control form-control-sm" min="1" max="65535" required
+                                   placeholder="@Resources.Strings.Correo_FieldPuertoPh"/>
                         </div>
                         <div class="col-md-3 mb-3 d-flex align-items-end pb-1">
                             <div class="custom-control custom-switch">
@@ -234,7 +236,8 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label><i class="fas fa-user mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldUsuario <span class="text-danger">*</span></label>
-                            <input type="text" name="Usuario" id="editUsuario" class="form-control form-control-sm" autocomplete="off" required/>
+                            <input type="text" name="Usuario" id="editUsuario" class="form-control form-control-sm" autocomplete="off" required
+                                   placeholder="@Resources.Strings.Correo_FieldUsuarioPh"/>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label><i class="fas fa-key mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldContrasenaEdit</label>
@@ -244,7 +247,9 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label><i class="fas fa-at mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldRemitente <span class="text-danger">*</span></label>
-                            <input type="email" name="Remitente" id="editRemitente" class="form-control form-control-sm" required/>
+                            <input type="email" name="Remitente" id="editRemitente" class="form-control form-control-sm" required
+                                   placeholder="@Resources.Strings.Correo_FieldRemitentePh"/>
+                            <small class="form-text text-muted">@Resources.Strings.Correo_HintRemitente</small>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label><i class="fas fa-signature mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldNombreRemitente</label>

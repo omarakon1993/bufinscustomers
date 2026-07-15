@@ -3,6 +3,7 @@
     bool esCrear = ViewData["esCrear"] as bool? ?? false;
     string prefix = esCrear ? "crear" : "crear2"; // unused, fields use name= directly
 }
+<small class="form-text text-muted mb-3 d-block"><span class="required">*</span> @Resources.Strings.Common_CamposObligatorios</small>
 <div class="row">
     <div class="col-md-8 form-group">
         <label><i class="fas fa-tag mr-1"></i>@Resources.Strings.Correo_FieldNombre <span class="required">*</span></label>
@@ -18,7 +19,8 @@
 <div class="row">
     <div class="col-md-3 form-group">
         <label><i class="fas fa-plug mr-1"></i>@Resources.Strings.Correo_FieldPuerto <span class="required">*</span></label>
-        <input type="number" name="Puerto" class="form-control" value="@Model.Puerto" min="1" max="65535" required/>
+        <input type="number" name="Puerto" class="form-control" value="@Model.Puerto" min="1" max="65535" required
+               placeholder="@Resources.Strings.Correo_FieldPuertoPh"/>
     </div>
     <div class="col-md-3 form-group d-flex align-items-end pb-2">
         <div class="custom-control custom-switch">
@@ -40,7 +42,7 @@
     <div class="col-md-6 form-group">
         <label><i class="fas fa-user mr-1"></i>@Resources.Strings.Correo_FieldUsuario <span class="required">*</span></label>
         <input type="text" name="Usuario" class="form-control" value="@Model.Usuario"
-               autocomplete="off" required/>
+               autocomplete="off" required placeholder="@Resources.Strings.Correo_FieldUsuarioPh"/>
     </div>
     <div class="col-md-6 form-group">
         <label><i class="fas fa-key mr-1"></i>
@@ -54,7 +56,9 @@
 <div class="row">
     <div class="col-md-6 form-group">
         <label><i class="fas fa-at mr-1"></i>@Resources.Strings.Correo_FieldRemitente <span class="required">*</span></label>
-        <input type="email" name="Remitente" class="form-control" value="@Model.Remitente" required/>
+        <input type="email" name="Remitente" class="form-control" value="@Model.Remitente" required
+               placeholder="@Resources.Strings.Correo_FieldRemitentePh"/>
+        <small class="form-text text-muted">@Resources.Strings.Correo_HintRemitente</small>
     </div>
     <div class="col-md-6 form-group">
         <label><i class="fas fa-signature mr-1"></i>@Resources.Strings.Correo_FieldNombreRemitente</label>

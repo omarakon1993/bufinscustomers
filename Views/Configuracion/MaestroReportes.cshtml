@@ -256,6 +256,7 @@
                 <form method="post" action="/Reportes/EditarReporte" onsubmit="return validarFormularioEditar()">
     @Html.AntiForgeryToken()
                     <div class="modal-body">
+                        <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                         <input type="hidden" id="editIdReporte" name="Id" />
 
                         <div class="row">
@@ -275,7 +276,8 @@
                                 <label for="editNombre" class="form-label">
                                     <i class="fas fa-file-alt mr-2" style="color: #583AFF;"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" class="form-control form-control-sm" id="editNombre" name="Nombre" required />
+                                <input type="text" class="form-control form-control-sm" id="editNombre" name="Nombre" required
+                                       placeholder="@Resources.Strings.Rep_PlaceholderNombre" />
                             </div>
                         </div>
 
@@ -299,6 +301,7 @@
                                 <i class="fas fa-align-left mr-2" style="color: #583AFF;"></i>@Resources.Strings.Common_LabelDescripcion
                             </label>
                             <textarea class="form-control form-control-sm" id="editDescripcion" name="Descripcion" rows="2"></textarea>
+                            <small class="form-text text-muted">@Resources.Strings.Rep_HintDescripcion</small>
                         </div>
 
                         <div class="mb-3 url-input">
@@ -306,7 +309,9 @@
                                 <i class="fas fa-link mr-2" style="color: #583AFF;"></i>@Resources.Strings.Rep_LabelEnlaceHTML <span class="text-danger">*</span>
                             </label>
                             <input type="text" class="form-control form-control-sm" id="editEnlaceHTML" name="EnlaceHTML" required
+                                   placeholder="@Resources.Strings.Rep_PlaceholderEnlaceHTML"
                                    oninput="validarURL('editEnlaceHTML', 'editUrlFeedback')" />
+                            <small class="form-text text-muted">@Resources.Strings.Rep_HintEnlaceHTML</small>
                             <div id="editUrlFeedback" class="url-feedback"></div>
                         </div>
                     </div>
@@ -338,6 +343,7 @@
                 <form method="post" action="/Reportes/CrearReporte" onsubmit="return validarFormularioCrear()">
     @Html.AntiForgeryToken()
                     <div class="modal-body">
+                        <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="IdEmpresa" class="form-label">
@@ -355,7 +361,8 @@
                                 <label for="Nombre" class="form-label">
                                     <i class="fas fa-file-alt mr-2" style="color: #583AFF;"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" class="form-control form-control-sm" id="Nombre" name="Nombre" required />
+                                <input type="text" class="form-control form-control-sm" id="Nombre" name="Nombre" required
+                                       placeholder="@Resources.Strings.Rep_PlaceholderNombre" />
                             </div>
                         </div>
 
@@ -379,6 +386,7 @@
                                 <i class="fas fa-align-left mr-2" style="color: #583AFF;"></i>@Resources.Strings.Common_LabelDescripcion
                             </label>
                             <textarea class="form-control form-control-sm" id="Descripcion" name="Descripcion" rows="2"></textarea>
+                            <small class="form-text text-muted">@Resources.Strings.Rep_HintDescripcion</small>
                         </div>
 
                         <div class="mb-3 url-input">
@@ -386,7 +394,9 @@
                                 <i class="fas fa-link mr-2" style="color: #583AFF;"></i>@Resources.Strings.Rep_LabelEnlaceHTML <span class="text-danger">*</span>
                             </label>
                             <input type="text" class="form-control form-control-sm" id="EnlaceHTML" name="EnlaceHTML" required
+                                   placeholder="@Resources.Strings.Rep_PlaceholderEnlaceHTML"
                                    oninput="validarURL('EnlaceHTML', 'createUrlFeedback')" />
+                            <small class="form-text text-muted">@Resources.Strings.Rep_HintEnlaceHTML</small>
                             <div id="createUrlFeedback" class="url-feedback"></div>
                         </div>
                     </div>

@@ -110,6 +110,7 @@
             <form method="post" action="/GestorCategorias/Crear">
     @Html.AntiForgeryToken()
                 <div class="modal-body">
+                    <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                     <!-- Fila 1: Nombre ES / Nombre EN -->
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -158,6 +159,7 @@
     @Html.AntiForgeryToken()
                 <input type="hidden" name="Id" id="editId" />
                 <div class="modal-body">
+                    <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                     <!-- Fila 1: Nombre ES / Nombre EN -->
                     <div class="row">
                         <div class="col-md-6 mb-3">

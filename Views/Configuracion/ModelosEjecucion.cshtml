@@ -118,6 +118,7 @@
                 <form method="post" action="@Url.Action("Crear", "ModelosEjecucion")">
                     @Html.AntiForgeryToken()
                     <div class="modal-body">
+                        <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                         <div class="row">
                             <div class="col-md-6 mb-3 mt-2">
                                 <label for="crearNombre" class="form-label">
@@ -133,6 +134,7 @@
                                 <input type="text" class="form-control form-control-sm" id="crearNombreSP" name="NombreSP"
                                        placeholder="Ej: sp_ModeloEbitda" maxlength="150" required
                                        style="font-family: monospace;" />
+                                <small class="form-text text-muted">@Resources.Strings.Mod_HintSP</small>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -141,6 +143,7 @@
                             </label>
                             <input type="text" class="form-control form-control-sm" id="crearDescripcion" name="Descripcion"
                                    placeholder="Ej: Ganancias antes de intereses e impuestos" maxlength="255" />
+                            <small class="form-text text-muted">@Resources.Strings.Mod_HintDescripcion</small>
                         </div>
                         <div class="row">
                             <div class="col-md-8 mb-3">
@@ -196,6 +199,7 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" id="editId" name="Id" />
                     <div class="modal-body">
+                        <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                         <div class="row">
                             <div class="col-md-6 mb-3 mt-2">
                                 <label for="editNombre" class="form-label">
@@ -210,6 +214,7 @@
                                 </label>
                                 <input type="text" class="form-control form-control-sm" id="editNombreSP" name="NombreSP"
                                        maxlength="150" required style="font-family: monospace;" />
+                                <small class="form-text text-muted">@Resources.Strings.Mod_HintSP</small>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -218,6 +223,7 @@
                             </label>
                             <input type="text" class="form-control form-control-sm" id="editDescripcion" name="Descripcion"
                                    maxlength="255" />
+                            <small class="form-text text-muted">@Resources.Strings.Mod_HintDescripcion</small>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">

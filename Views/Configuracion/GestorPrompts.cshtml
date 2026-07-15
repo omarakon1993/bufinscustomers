@@ -134,6 +134,7 @@
                 <form method="post" action="@Url.Action("Crear", "GestorPrompts")">
                     @Html.AntiForgeryToken()
                     <div class="modal-body">
+                        <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                         <div class="row">
                             <div class="col-md-5 mb-3 mt-2">
                                 <label for="crearCodigo" class="form-label">
@@ -194,6 +195,7 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" id="editId" name="Id" />
                     <div class="modal-body">
+                        <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                         <div class="row">
                             <div class="col-md-5 mb-3 mt-2">
                                 <label for="editCodigo" class="form-label">

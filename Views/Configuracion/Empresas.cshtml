@@ -268,7 +268,7 @@
 
     <!-- Modal de edicion -->
     <div class="modal fade" id="editEmpresaModal" tabindex="-1" aria-labelledby="editEmpresaModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editEmpresaModalLabel">
@@ -280,45 +280,63 @@
     @Html.AntiForgeryToken()
                     <input type="hidden" id="editIdEmpresa" name="Id" />
                     <div class="modal-body">
-                        <div class="mb-3 mt-3">
-                            <label for="editNombre" class="form-label">
-                                <i class="fas fa-building mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelNombre
-                            </label>
-                            <input type="text" class="form-control form-control-sm" id="editNombre" name="Nombre" required />
+                        <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editNombre" class="form-label">
+                                    <i class="fas fa-building mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelNombre <span class="required">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="editNombre" name="Nombre" required
+                                       placeholder="@Resources.Strings.Emp_PlaceholderNombre" />
+                                <small class="form-text text-muted">@Resources.Strings.Emp_HintNombre</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editAbreviatura" class="form-label">
+                                    <i class="fas fa-tag mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelAbreviatura <span class="required">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="editAbreviatura" name="Abreviatura"
+                                       maxlength="12" pattern="[A-Za-z]{1,12}" required
+                                       placeholder="@Resources.Strings.Emp_PlaceholderAbreviatura"
+                                       oninput="this.value = this.value.replace(/[^A-Za-z]/g, '');" />
+                                <small class="form-text text-muted">@Resources.Strings.Emp_HintAbreviatura</small>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="editNit" class="form-label">
-                                <i class="fas fa-id-card mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelNit
-                            </label>
-                            <input type="text" class="form-control form-control-sm" id="editNit" name="Nit" required />
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editNit" class="form-label">
+                                    <i class="fas fa-id-card mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelNit <span class="required">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="editNit" name="Nit" required
+                                       placeholder="@Resources.Strings.Emp_PlaceholderNit" />
+                                <small class="form-text text-muted">@Resources.Strings.Emp_HintNit</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editTelefono" class="form-label">
+                                    <i class="fas fa-phone mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelTelefono
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="editTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo numeros, sin espacios ni guiones"
+                                       placeholder="@Resources.Strings.Emp_PlaceholderTelefono"
+                                       oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
+                                <small class="form-text text-muted">@Resources.Strings.Emp_HintTelefono</small>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="editDireccion" class="form-label">
-                                <i class="fas fa-map-marker-alt mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelDireccion
-                            </label>
-                            <input type="text" class="form-control form-control-sm" id="editDireccion" name="Direccion" required />
-                        </div>
-                        <div class="mb-3">
-                            <label for="editTelefono" class="form-label">
-                                <i class="fas fa-phone mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelTelefono
-                            </label>
-                            <input type="text" class="form-control form-control-sm" id="editTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo numeros, sin espacios ni guiones" oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
-                        </div>
-                        <div class="mb-3">
-                            <label for="editCorreo" class="form-label">
-                                <i class="fas fa-envelope mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelCorreo
-                            </label>
-                            <input type="email" class="form-control form-control-sm" id="editCorreo" name="Correo" maxlength="150" />
-                        </div>
-                        <div class="mb-3">
-                            <label for="editAbreviatura" class="form-label">
-                                <i class="fas fa-tag mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelAbreviatura
-                            </label>
-                            <input type="text" class="form-control form-control-sm" id="editAbreviatura" name="Abreviatura"
-                                   maxlength="12" pattern="[A-Za-z]{1,12}" required
-                                   placeholder="@Resources.Strings.Emp_HintAbreviatura"
-                                   oninput="this.value = this.value.replace(/[^A-Za-z]/g, '');" />
-                            <small class="form-text text-muted">@Resources.Strings.Emp_HintAbreviatura</small>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editDireccion" class="form-label">
+                                    <i class="fas fa-map-marker-alt mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelDireccion <span class="required">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="editDireccion" name="Direccion" required
+                                       placeholder="@Resources.Strings.Emp_PlaceholderDireccion" />
+                                <small class="form-text text-muted">@Resources.Strings.Emp_HintDireccion</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editCorreo" class="form-label">
+                                    <i class="fas fa-envelope mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelCorreo
+                                </label>
+                                <input type="email" class="form-control form-control-sm" id="editCorreo" name="Correo" maxlength="150"
+                                       placeholder="@Resources.Strings.Emp_PlaceholderCorreo" />
+                                <small class="form-text text-muted">@Resources.Strings.Emp_HintCorreo</small>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -336,7 +354,7 @@
 
     <!-- Modal de Creacion -->
     <div class="modal fade" id="crearEmpresaModal" tabindex="-1" aria-labelledby="crearEmpresaModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="crearEmpresaModalLabel">
@@ -347,45 +365,63 @@
                 <form id="crearEmpresaForm" method="post" action="/Empresa/CrearEmpresa">
     @Html.AntiForgeryToken()
                     <div class="modal-body">
-                        <div class="mb-3 mt-3">
-                            <label for="crearNombre" class="form-label">
-                                <i class="fas fa-building mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelNombre
-                            </label>
-                            <input type="text" class="form-control form-control-sm" id="crearNombre" name="Nombre" required />
+                        <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="crearNombre" class="form-label">
+                                    <i class="fas fa-building mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelNombre <span class="required">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="crearNombre" name="Nombre" required
+                                       placeholder="@Resources.Strings.Emp_PlaceholderNombre" />
+                                <small class="form-text text-muted">@Resources.Strings.Emp_HintNombre</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="crearAbreviatura" class="form-label">
+                                    <i class="fas fa-tag mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelAbreviatura <span class="required">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="crearAbreviatura" name="Abreviatura"
+                                       maxlength="12" pattern="[A-Za-z]{1,12}" required
+                                       placeholder="@Resources.Strings.Emp_PlaceholderAbreviatura"
+                                       oninput="this.value = this.value.replace(/[^A-Za-z]/g, '');" />
+                                <small class="form-text text-muted">@Resources.Strings.Emp_HintAbreviatura</small>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="crearNit" class="form-label">
-                                <i class="fas fa-id-card mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelNit
-                            </label>
-                            <input type="text" class="form-control form-control-sm" id="crearNit" name="Nit" required />
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="crearNit" class="form-label">
+                                    <i class="fas fa-id-card mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelNit <span class="required">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="crearNit" name="Nit" required
+                                       placeholder="@Resources.Strings.Emp_PlaceholderNit" />
+                                <small class="form-text text-muted">@Resources.Strings.Emp_HintNit</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="crearTelefono" class="form-label">
+                                    <i class="fas fa-phone mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelTelefono
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="crearTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo numeros, sin espacios ni guiones"
+                                       placeholder="@Resources.Strings.Emp_PlaceholderTelefono"
+                                       oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
+                                <small class="form-text text-muted">@Resources.Strings.Emp_HintTelefono</small>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="crearDireccion" class="form-label">
-                                <i class="fas fa-map-marker-alt mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelDireccion
-                            </label>
-                            <input type="text" class="form-control form-control-sm" id="crearDireccion" name="Direccion" required />
-                        </div>
-                        <div class="mb-3">
-                            <label for="crearTelefono" class="form-label">
-                                <i class="fas fa-phone mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelTelefono
-                            </label>
-                            <input type="text" class="form-control form-control-sm" id="crearTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo numeros, sin espacios ni guiones" oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
-                        </div>
-                        <div class="mb-3">
-                            <label for="crearCorreo" class="form-label">
-                                <i class="fas fa-envelope mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelCorreo
-                            </label>
-                            <input type="email" class="form-control form-control-sm" id="crearCorreo" name="Correo" maxlength="150" />
-                        </div>
-                        <div class="mb-3">
-                            <label for="crearAbreviatura" class="form-label">
-                                <i class="fas fa-tag mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelAbreviatura
-                            </label>
-                            <input type="text" class="form-control form-control-sm" id="crearAbreviatura" name="Abreviatura"
-                                   maxlength="12" pattern="[A-Za-z]{1,12}" required
-                                   placeholder="@Resources.Strings.Emp_HintAbreviatura"
-                                   oninput="this.value = this.value.replace(/[^A-Za-z]/g, '');" />
-                            <small class="form-text text-muted">@Resources.Strings.Emp_HintAbreviatura</small>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="crearDireccion" class="form-label">
+                                    <i class="fas fa-map-marker-alt mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelDireccion <span class="required">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="crearDireccion" name="Direccion" required
+                                       placeholder="@Resources.Strings.Emp_PlaceholderDireccion" />
+                                <small class="form-text text-muted">@Resources.Strings.Emp_HintDireccion</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="crearCorreo" class="form-label">
+                                    <i class="fas fa-envelope mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelCorreo
+                                </label>
+                                <input type="email" class="form-control form-control-sm" id="crearCorreo" name="Correo" maxlength="150"
+                                       placeholder="@Resources.Strings.Emp_PlaceholderCorreo" />
+                                <small class="form-text text-muted">@Resources.Strings.Emp_HintCorreo</small>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">

@@ -175,11 +175,13 @@
             <form method="post" action="/MenuOpciones/Crear">
     @Html.AntiForgeryToken()
                 <div class="modal-body">
+                    <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                     <!-- Fila 1: Código / Icono / Orden -->
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label><i class="fas fa-code mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelCodigo <span class="text-danger">*</span></label>
                             <input type="text" class="form-control form-control-sm" name="Codigo" required placeholder="Ej: DATOS_NUEVA_OPCION" />
+                            <small class="form-text text-muted">@Resources.Strings.Menu_HintCodigo</small>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono</label>
@@ -194,27 +196,29 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelNombre <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-sm" name="Nombre" required placeholder="@Resources.Strings.Menu_LabelNombre" />
+                            <input type="text" class="form-control form-control-sm" name="Nombre" required placeholder="@Resources.Strings.Menu_PlaceholderNombre" />
                         </div>
                         <div class="col-md-6 mb-3">
                             <label><i class="fas fa-globe mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelNombreEN</label>
-                            <input type="text" class="form-control form-control-sm" name="NombreEN" id="nombreEN" placeholder="@Resources.Strings.Menu_LabelNombreEN" />
+                            <input type="text" class="form-control form-control-sm" name="NombreEN" id="nombreEN" placeholder="@Resources.Strings.Menu_PlaceholderNombreEN" />
                         </div>
                     </div>
                     <!-- Fila 3: Descripción -->
                     <div class="mb-3">
                         <label><i class="fas fa-align-left mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelDescripcion</label>
-                        <input type="text" class="form-control form-control-sm" name="Descripcion" placeholder="@Resources.Strings.Menu_LabelDescripcion" />
+                        <input type="text" class="form-control form-control-sm" name="Descripcion" placeholder="@Resources.Strings.Menu_PlaceholderDescripcion" />
                     </div>
                     <!-- Fila 4: Controller / Action -->
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label><i class="fas fa-sitemap mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelController <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-sm" name="Controller" required placeholder="@Resources.Strings.Menu_LabelController" />
+                            <input type="text" class="form-control form-control-sm" name="Controller" required placeholder="@Resources.Strings.Menu_PlaceholderController" />
+                            <small class="form-text text-muted">@Resources.Strings.Menu_HintController</small>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label><i class="fas fa-play mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelAction <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-sm" name="Action" required placeholder="@Resources.Strings.Menu_LabelAction" />
+                            <input type="text" class="form-control form-control-sm" name="Action" required placeholder="@Resources.Strings.Menu_PlaceholderAction" />
+                            <small class="form-text text-muted">@Resources.Strings.Menu_HintAction</small>
                         </div>
                     </div>
                     <hr />
@@ -294,11 +298,13 @@
     @Html.AntiForgeryToken()
                 <input type="hidden" id="editId" name="Id" />
                 <div class="modal-body">
+                    <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                     <!-- Fila 1: Código / Icono / Orden -->
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label><i class="fas fa-code mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelCodigo <span class="text-danger">*</span></label>
                             <input type="text" class="form-control form-control-sm" id="editCodigo" name="Codigo" required />
+                            <small class="form-text text-muted">@Resources.Strings.Menu_HintCodigo</small>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono</label>
@@ -330,10 +336,12 @@
                         <div class="col-md-6 mb-3">
                             <label><i class="fas fa-sitemap mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelController <span class="text-danger">*</span></label>
                             <input type="text" class="form-control form-control-sm" id="editController" name="Controller" required />
+                            <small class="form-text text-muted">@Resources.Strings.Menu_HintController</small>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label><i class="fas fa-play mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelAction <span class="text-danger">*</span></label>
                             <input type="text" class="form-control form-control-sm" id="editAction" name="Action" required />
+                            <small class="form-text text-muted">@Resources.Strings.Menu_HintAction</small>
                         </div>
                     </div>
                     <hr />
