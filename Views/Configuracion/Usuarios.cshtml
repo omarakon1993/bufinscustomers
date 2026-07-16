@@ -72,12 +72,13 @@
         /* Anchos de columna */
         .table-compact .col-img { width: 5%; text-align: center; }
         .table-compact .col-id { width: 5%; text-align: center; }
-        .table-compact .col-nombre { width: 13%; }
-        .table-compact .col-apellidos { width: 13%; }
-        .table-compact .col-telefono { width: 10%; }
-        .table-compact .col-correo { width: 16%; }
-        .table-compact .col-rol { width: 10%; text-align: center; }
-        .table-compact .col-empresa { width: 13%; }
+        .table-compact .col-nombre { width: 11%; }
+        .table-compact .col-apellidos { width: 11%; }
+        .table-compact .col-usuario { width: 10%; }
+        .table-compact .col-telefono { width: 8%; }
+        .table-compact .col-correo { width: 14%; }
+        .table-compact .col-rol { width: 9%; text-align: center; }
+        .table-compact .col-empresa { width: 12%; }
         .table-compact .col-acciones { width: 15%; text-align: center; white-space: nowrap; }
 
         /* === BADGES DE ROL === */
@@ -319,10 +320,11 @@
                             <th class="col-id">Id</th>
                             <th class="col-nombre">@Resources.Strings.Usr_LabelNombre</th>
                             <th class="col-apellidos">@Resources.Strings.Usr_ThApellidos</th>
-                            <th class="col-telefono">@Resources.Strings.Usr_ThTelefono</th>
+                            <th class="col-usuario">@Resources.Strings.Usr_LabelUsuario</th>
                             <th class="col-correo">@Resources.Strings.Usr_ThCorreo</th>
-                            <th class="col-rol">@Resources.Strings.Usr_ThRol</th>
+                            <th class="col-telefono">@Resources.Strings.Usr_ThTelefono</th>
                             <th class="col-empresa">@Resources.Strings.Usr_ThEmpresa</th>
+                            <th class="col-rol">@Resources.Strings.Usr_ThRol</th>
                             <th class="col-acciones">@Resources.Strings.Common_ThAcciones</th>
                         </tr>
                     </thead>
@@ -353,8 +355,10 @@
                                 <td class="col-id" data-label="Id">@usuario.Id</td>
                                 <td class="col-nombre" data-label="@Resources.Strings.Usr_LabelNombre" title="@usuario.Nombre">@usuario.Nombre</td>
                                 <td class="col-apellidos" data-label="@Resources.Strings.Usr_ThApellidos" title="@usuario.Apellidos">@usuario.Apellidos</td>
-                                <td class="col-telefono" data-label="@Resources.Strings.Usr_ThTelefono">@usuario.Telefono</td>
+                                <td class="col-usuario" data-label="@Resources.Strings.Usr_LabelUsuario" title="@usuario.Usuario">@usuario.Usuario</td>
                                 <td class="col-correo" data-label="@Resources.Strings.Usr_ThCorreo" title="@usuario.Correo">@usuario.Correo</td>
+                                <td class="col-telefono" data-label="@Resources.Strings.Usr_ThTelefono">@usuario.Telefono</td>
+                                <td class="col-empresa" data-label="@Resources.Strings.Usr_ThEmpresa" title="@(empresa != null ? empresa.Nombre : "")">@(empresa != null ? empresa.Nombre : string.Empty)</td>
                                 <td class="col-rol" data-label="@Resources.Strings.Usr_ThRol">
                                     @if (usuario.Admin == 2)
                                     {
@@ -375,7 +379,6 @@
                                         </small>
                                     }
                                 </td>
-                                <td class="col-empresa" data-label="@Resources.Strings.Usr_ThEmpresa" title="@(empresa != null ? empresa.Nombre : "")">@(empresa != null ? empresa.Nombre : string.Empty)</td>
                                 <td class="col-acciones" data-label="@Resources.Strings.Common_ThAcciones">
                                     <div class="btn-group" role="group" aria-label="@Resources.Strings.Common_ThAcciones">
                                         @if (ViewBag.PuedeEditar == true)

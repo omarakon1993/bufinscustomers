@@ -77,7 +77,7 @@ namespace bufinscustomers.Controllers
                     FROM Usuarios u
                     WHERE u.IdEmpresa = @IdEmpresa
                       AND (u.Admin IS NULL OR u.Admin <> 2)
-                    ORDER BY u.Nombre, u.Apellidos", cn);
+                    ORDER BY u.Id", cn);
                 cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
                 cn.Open();
                 using (var reader = cmd.ExecuteReader())
@@ -165,7 +165,7 @@ namespace bufinscustomers.Controllers
                 }
             }
 
-            return usuarios;
+            return usuarios.OrderBy(u => u.Id).ToList();
         }
 
         [HttpPost]
