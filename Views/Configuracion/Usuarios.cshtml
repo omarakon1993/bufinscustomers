@@ -608,6 +608,9 @@
                                         {
                                             <small class="form-text text-muted">@Resources.Strings.Usr_NotaSuperAdmin</small>
                                         }
+                                        <small id="editAdminRolWarning" class="form-text" style="display:none;color:#b45309;">
+                                            <i class="fas fa-exclamation-triangle mr-1"></i>@Resources.Strings.Usr_AvisoCambioRol
+                                        </small>
                                     </div>
                                     @if (ViewBag.EsSuperAdmin == true || ViewBag.EsAdminEmpresa == true)
                                     {
@@ -1004,8 +1007,40 @@
                 camposReq: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_CamposReq)',
                 archivoGrande: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_CamposReq)',
                 pwdMostrar: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_PwdMostrar)',
-                pwdOcultar: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_PwdOcultar)'
+                pwdOcultar: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_PwdOcultar)',
+                rolCambioTitulo: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_RolCambioTitulo)',
+                rolCambioTexto: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_RolCambioTexto)',
+                rolCambioConfirmar: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_RolCambioConfirmar)',
+                rolCambioCancelar: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_RolCambioCancelar)'
             };
+
+            // Aviso inline al cambiar el rol en el modal de edición
+            var _editAdminSelect = document.getElementById("editAdmin");
+            if (_editAdminSelect) {
+                _editAdminSelect.addEventListener('change', function () {
+                    var warningEl = document.getElementById("editAdminRolWarning");
+                    warningEl.style.display = (this.value !== _editAdminOriginal) ? 'block' : 'none';
+                });
+            }
+
+            // Confirmación adicional al guardar la edición si el rol fue modificado
+            function confirmarCambioRolUsuario() {
+                var adminActual = document.getElementById("editAdmin").value;
+                if (adminActual === _editAdminOriginal) {
+                    return true;
+                }
+                return Swal.fire({
+                    icon: 'warning',
+                    title: _usrMsg.rolCambioTitulo,
+                    text: _usrMsg.rolCambioTexto,
+                    showCancelButton: true,
+                    confirmButtonText: _usrMsg.rolCambioConfirmar,
+                    cancelButtonText: _usrMsg.rolCambioCancelar,
+                    confirmButtonColor: '#583AFF'
+                }).then(function (result) {
+                    return result.isConfirmed;
+                });
+            }
 
             function togglePwd(inputId, btn) {
                 var inp = document.getElementById(inputId);
@@ -1040,6 +1075,7 @@
             // Estándar: inicial del nombre + primer apellido. Si ya existe, se van agregando
             // letras del nombre (jgomez -> jugomez -> juagomez ...) hasta encontrar uno libre.
             var _editUsuarioOriginal = '';
+            var _editAdminOriginal = '';
 
             function quitarAcentos(texto) {
                 return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -1187,6 +1223,8 @@
                 // Establecer el valor del selector de rol (Admin puede ser 0, 1 o 2)
                 var adminValue = admin || 0; // Si es null, establecer en 0
                 document.getElementById("editAdmin").value = adminValue.toString();
+                _editAdminOriginal = adminValue.toString();
+                document.getElementById("editAdminRolWarning").style.display = 'none';
 
                 var limiteEl = document.getElementById("editLimiteConsultasIA");
                 if (limiteEl) limiteEl.value = limiteConsultasIA || 0;
@@ -1226,7 +1264,7 @@
                 $('#editUserModal').modal('hide');
             }
 
-            function validarFormularioConAlerta(formId, buttonId) {
+            function validarFormularioConAlerta(formId, buttonId, confirmacionExtra) {
                 document.getElementById(buttonId).addEventListener('click', function () {
                     var form = document.getElementById(formId);
                     if (!form.checkValidity()) {
@@ -1259,6 +1297,18 @@
                         });
                         return;
                     }
+
+                    if (typeof confirmacionExtra === 'function') {
+                        var resultado = confirmacionExtra();
+                        if (resultado && typeof resultado.then === 'function') {
+                            resultado.then(function (continuar) {
+                                if (continuar) form.submit();
+                            });
+                            return;
+                        }
+                        if (!resultado) return;
+                    }
+
                     form.submit();
                 });
             }
@@ -1266,7 +1316,7 @@
 
             // Llama la función para cada formulario/modal
             validarFormularioConAlerta('crearUsuarioForm', 'btnCrearUsuario');
-            validarFormularioConAlerta('editUserForm', 'btnEditarUsuario');
+            validarFormularioConAlerta('editUserForm', 'btnEditarUsuario', confirmarCambioRolUsuario);
 
             // Función para comprimir imagen usando canvas
             function compressImage(file, maxWidth, maxHeight, quality) {

@@ -323,6 +323,7 @@ The app has a persistent bell-icon notification center visible in the top navbar
 | Company deleted | `warning` | `EmpresaController` | `Notif_EmpresaEliminada` |
 | User created | `success` | `UsuarioController` | `Notif_UsuarioCreado` |
 | User deleted | `warning` | `UsuarioController` | `Notif_UsuarioEliminado` |
+| User role changed (permissions reset to new role's defaults) | `warning` | `UsuarioController` | `Notif_PermisosReiniciados` |
 | Report (PBI) created | `success` | `ReportesController` | `Notif_ReporteCreado` |
 | Report (PBI) deleted | `warning` | `ReportesController` | `Notif_ReporteEliminado` |
 | Session expiring (client-side) | `warning` | `_Layout.cshtml` (JS only) | `Notif_SesionExpiraTitulo` |

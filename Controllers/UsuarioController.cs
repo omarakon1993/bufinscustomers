@@ -258,6 +258,12 @@ namespace bufinscustomers.Controllers
             }
 
             oUsuario.Telefono = oUsuario.Telefono == null ? "" : oUsuario.Telefono;
+
+            // Capturar el rol actual antes de actualizar, para detectar si cambia
+            var usuarioService = new UsuarioService();
+            var usuarioAntesDeEditar = usuarioService.ObtenerUsuarioPorId(oUsuario.Id);
+            byte? adminAnterior = usuarioAntesDeEditar?.Admin ?? 0;
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(CadenaConexion))
@@ -287,6 +293,17 @@ namespace bufinscustomers.Controllers
 
                         connection.Open();
                         command.ExecuteNonQuery();
+                    }
+
+                    // Si el rol cambió, reiniciar los permisos de menú a los del nuevo rol por defecto
+                    if (oUsuario.Admin != adminAnterior)
+                    {
+                        AsignarPermisosPorDefecto(oUsuario.Id, oUsuario.Admin);
+                        new NotificacionesService().Crear(
+                            UsuarioSesionHelper.UsuarioActual?.Id ?? 0,
+                            R("Notif_PermisosReiniciados"),
+                            $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim(),
+                            "warning");
                     }
 
                     // Actualizar límite de consultas IA (solo admins pueden setearlo, max 10)
@@ -440,6 +457,12 @@ namespace bufinscustomers.Controllers
 
             if (registrado)
             {
+                // Asignar automáticamente los permisos de menú por defecto según el tipo de usuario
+                if (usuarioId > 0)
+                {
+                    AsignarPermisosPorDefecto(usuarioId, oUsuario.Admin);
+                }
+
                 // Procesar imagen si se cargó una y el usuario se registró correctamente
                 if (ImagenUsuario != null && ImagenUsuario.ContentLength > 0 && usuarioId > 0)
                 {
@@ -532,6 +555,27 @@ namespace bufinscustomers.Controllers
             }
 
             return RedirectToAction("Usuarios");
+        }
+
+        /// <summary>
+        /// Asigna al usuario todas las opciones de menú que le apliquen por defecto según su rol.
+        /// Reemplaza cualquier asignación previa (usado tanto en creación como al cambiar de rol).
+        /// Admin 2 (Super Admin) no requiere asignación: siempre tiene acceso total.
+        /// </summary>
+        private void AsignarPermisosPorDefecto(int idUsuario, byte? nivelAdmin)
+        {
+            if (nivelAdmin == 2) return;
+
+            var menuService = new MenuOpcionesService();
+            var todasLasOpciones = menuService.ObtenerTodas();
+
+            List<int> idsOpcionesPorDefecto = (nivelAdmin == 1)
+                // Admin de Empresa: todas las opciones excepto las exclusivas de Super Admin
+                ? todasLasOpciones.Where(o => !o.SoloSuperAdmin).Select(o => o.Id).ToList()
+                // Usuario Normal: todas las opciones excepto las de Super Admin y Admin de Empresa
+                : todasLasOpciones.Where(o => !o.SoloSuperAdmin && !o.SoloAdminEmpresa).Select(o => o.Id).ToList();
+
+            menuService.GuardarOpcionesUsuario(idUsuario, idsOpcionesPorDefecto, UsuarioSesionHelper.UsuarioActual?.Id ?? 0);
         }
 
         private bool EsUsuarioValido(string usuario)
