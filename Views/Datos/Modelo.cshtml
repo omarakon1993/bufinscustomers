@@ -152,11 +152,11 @@
     </div>
 
     <!-- Overlay exportación (fetch/blob) -->
-    <div id="overlayExportacion" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;justify-content:center;align-items:center;">
-        <div style="background:#fff;border-radius:16px;padding:2.5rem 3rem;text-align:center;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-            <div class="spinner-border text-primary mb-3" style="width:3rem;height:3rem;" role="status"></div>
-            <h5 id="overlayTitulo" style="font-weight:700;color:#1e293b;">@Resources.Strings.Modelo_JS_ExportandoTodos</h5>
-            <p class="text-muted mb-0" id="overlayTimerTexto">0s</p>
+    <div id="overlayExportacion" class="overlay-cargando" style="display:none;">
+        <div class="overlay-cargando-card">
+            @Html.Partial("_LoaderDots", "aqua")
+            <h5 id="overlayTitulo" class="overlay-cargando-title">@Resources.Strings.Modelo_JS_ExportandoTodos</h5>
+            <p class="overlay-cargando-text mb-0" id="overlayTimerTexto">0s</p>
         </div>
     </div>
 

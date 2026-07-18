@@ -1,0 +1,14 @@
+@model string
+@*
+    Loader 3 · Puntos en cascada — para modales pequeños o inline.
+    Uso: @Html.Partial("_LoaderDots", "aqua")  -> fondo oscuro (default)
+         @Html.Partial("_LoaderDots", "dark")  -> fondo claro/blanco
+*@
+@{
+    var variant = Model == "dark" ? "dark" : "aqua";
+    var wordmark = variant == "dark" ? "~/Assets/img/Bufins_Wordmark_Dark.png" : "~/Assets/img/Bufins_Wordmark_Aqua.png";
+}
+<div class="l3-wrap">
+    <img class="l3-logo" src="@Url.Content(wordmark)" alt="Bufins">
+    <div class="l3-dots"><span></span><span></span><span></span><span></span></div>
+</div>
