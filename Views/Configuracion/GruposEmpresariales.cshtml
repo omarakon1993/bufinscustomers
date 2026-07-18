@@ -1,0 +1,261 @@
+@model IEnumerable<bufinscustomers.Models.GrupoEmpresarial>
+@using bufinscustomers.Helpers
+@using System.Linq
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>@Resources.Strings.Grupo_PageTitle</title>
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="~/Assets/css/configuracion-admin.css" rel="stylesheet" />
+</head>
+<body>
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-sitemap powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.Grupo_PageTitle</h1>
+        </div>
+    </div>
+
+    <div class="alert alert-info mt-4" style="border-left: 4px solid #583AFF;">
+        <i class="fas fa-info-circle mr-2"></i>@Resources.Strings.Grupo_InfoAcceso
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-body p-0">
+            <div class="table-responsive table-wrapper">
+                <table class="table table-bordered table-hover table-compact">
+                    <thead>
+                        <tr>
+                            <th class="col-id">Id</th>
+                            <th class="col-nombre">@Resources.Strings.Emp_LabelNombre</th>
+                            <th class="col-desc">@Resources.Strings.Common_LabelDescripcion</th>
+                            <th class="col-empresas">@Resources.Strings.Grupo_ThEmpresas</th>
+                            <th class="col-estado">@Resources.Strings.Common_Estado</th>
+                            <th class="col-acciones">@Resources.Strings.Common_ThAcciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-3">
+                                    @Resources.Strings.Grupo_NoGrupos
+                                </td>
+                            </tr>
+                        }
+                        @foreach (var g in Model)
+                        {
+                            <tr>
+                                <td class="col-id">@g.Id</td>
+                                <td class="col-nombre" title="@g.Nombre"><strong>@g.Nombre</strong></td>
+                                <td class="col-desc" title="@g.Descripcion">@(string.IsNullOrEmpty(g.Descripcion) ? "—" : g.Descripcion)</td>
+                                <td class="col-empresas">
+                                    <span style="background:var(--app-btn-gradient);color:white;padding:0.15rem 0.6rem;border-radius:9999px;font-size:0.75rem;font-weight:600;">
+                                        @g.TotalEmpresas
+                                    </span>
+                                </td>
+                                <td class="col-estado">
+                                    @if (g.Activo)
+                                    {
+                                        <span class="badge-activo">@Resources.Strings.Common_Activo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-inactivo">@Resources.Strings.Common_Inactivo</span>
+                                    }
+                                </td>
+                                <td class="col-acciones">
+                                    <div class="btn-group" role="group">
+                                        <a class="btn btn-primary btn-sm" title="@Resources.Strings.Grupo_TitleGestionarEmpresas"
+                                           href="@Url.Action("Gestionar", "GruposEmpresariales", new { id = g.Id })">
+                                            <i class="fas fa-building"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-primary btn-sm btn-editar-grupo" title="@Resources.Strings.Grupo_TitleEditar"
+                                                data-toggle="modal" data-target="#editarModal"
+                                                data-id="@g.Id"
+                                                data-nombre="@Html.AttributeEncode(g.Nombre)"
+                                                data-desc="@Html.AttributeEncode(g.Descripcion ?? string.Empty)"
+                                                data-activo="@(g.Activo ? "true" : "false")">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-danger btn-sm btn-eliminar-grupo" title="@Resources.Strings.Grupo_TitleEliminar"
+                                                data-toggle="modal" data-target="#eliminarModal"
+                                                data-id="@g.Id"
+                                                data-nombre="@Html.AttributeEncode(g.Nombre)">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#crearModal">
+                <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Grupo_BtnCrear
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ MODAL CREAR ═══════════════════ -->
+    <div class="modal fade" id="crearModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus-circle" style="color:#583AFF;"></i> @Resources.Strings.Grupo_ModalCreateTitle
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <form method="post" action="@Url.Action("Crear", "GruposEmpresariales")">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-body">
+                        <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
+                        <div class="mb-3">
+                            <label for="crearNombre" class="form-label">
+                                <i class="fas fa-sitemap mr-2" style="color:#583AFF;"></i>@Resources.Strings.Emp_LabelNombre <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control form-control-sm" id="crearNombre" name="Nombre"
+                                   placeholder="@Resources.Strings.Grupo_PlaceholderNombre" maxlength="150" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="crearDescripcion" class="form-label">
+                                <i class="fas fa-align-left mr-2" style="color:#583AFF;"></i>@Resources.Strings.Common_LabelDescripcion
+                            </label>
+                            <input type="text" class="form-control form-control-sm" id="crearDescripcion" name="Descripcion"
+                                   placeholder="@Resources.Strings.Grupo_PlaceholderDescripcion" maxlength="500" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                            <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.Common_BtnCrear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ MODAL EDITAR ═══════════════════ -->
+    <div class="modal fade" id="editarModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit" style="color:#583AFF;"></i> @Resources.Strings.Grupo_ModalEditTitle
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <form method="post" action="@Url.Action("Editar", "GruposEmpresariales")">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="editId" name="Id" />
+                    <div class="modal-body">
+                        <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
+                        <div class="mb-3">
+                            <label for="editNombre" class="form-label">
+                                <i class="fas fa-sitemap mr-2" style="color:#583AFF;"></i>@Resources.Strings.Emp_LabelNombre <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control form-control-sm" id="editNombre" name="Nombre"
+                                   maxlength="150" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="editDescripcion" class="form-label">
+                                <i class="fas fa-align-left mr-2" style="color:#583AFF;"></i>@Resources.Strings.Common_LabelDescripcion
+                            </label>
+                            <input type="text" class="form-control form-control-sm" id="editDescripcion" name="Descripcion"
+                                   maxlength="500" />
+                        </div>
+                        <div class="mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="editActivo" name="Activo" value="true" />
+                                <input type="hidden" name="Activo" value="false" />
+                                <label class="form-check-label" for="editActivo">@Resources.Strings.Common_Activo</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                            <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-save mr-1"></i>@Resources.Strings.Common_GuardarCambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ MODAL ELIMINAR ═══════════════════ -->
+    <div class="modal fade" id="eliminarModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle"></i> @Resources.Strings.Common_ModalDeleteTitle
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">
+                        <i class="fas fa-question-circle text-warning mr-2"></i>
+                        @Resources.Strings.Grupo_ModalDeleteBody <strong id="eliminarNombre"></strong>?
+                    </p>
+                    <p class="text-muted small mt-2 mb-0">@Resources.Strings.Grupo_ModalDeleteNote</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
+                    </button>
+                    <form method="post" action="@Url.Action("Eliminar", "GruposEmpresariales")" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" id="eliminarId" name="id" />
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash-alt mr-1"></i>@Resources.Strings.Common_BtnEliminar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <script>
+            Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'error', title: '@TempData["ErrorMessage"]', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        </script>
+    }
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <script>
+            Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'success', title: '@TempData["SuccessMessage"]', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        </script>
+    }
+
+    @section scripts {
+    <script>
+        $('#editarModal').on('show.bs.modal', function (event) {
+            var btn = event.relatedTarget;
+            document.getElementById('editId').value          = btn.dataset.id;
+            document.getElementById('editNombre').value      = btn.dataset.nombre;
+            document.getElementById('editDescripcion').value = btn.dataset.desc || '';
+            document.getElementById('editActivo').checked    = btn.dataset.activo === 'true';
+        });
+
+        $('#eliminarModal').on('show.bs.modal', function (event) {
+            var btn = event.relatedTarget;
+            document.getElementById('eliminarId').value           = btn.dataset.id;
+            document.getElementById('eliminarNombre').textContent = '"' + btn.dataset.nombre + '"';
+        });
+    </script>
+    }
+</body>
+</html>

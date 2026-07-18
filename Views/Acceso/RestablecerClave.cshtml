@@ -1,4 +1,4 @@
-﻿@{
+﻿﻿@{
     Layout = null;
     var _isEnglish = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
     var _esActiveClass = !_isEnglish ? "active" : "";
@@ -170,13 +170,13 @@
 
                     <script>
                         var _rMsg = {
-                            errorEmpty:  '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_NewPwd_ErrorEmpty)',
-                            errorLen:    '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_NewPwd_ErrorLen)',
-                            errorMatch:  '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_NewPwd_ErrorMatch)',
-                            strengthWeak:   '@HttpUtility.JavaScriptStringEncode(_isEnglish ? "Weak" : "D\u00E9bil")',
-                            strengthFair:   '@HttpUtility.JavaScriptStringEncode(_isEnglish ? "Fair" : "Regular")',
-                            strengthGood:   '@HttpUtility.JavaScriptStringEncode(_isEnglish ? "Good" : "Buena")',
-                            strengthStrong: '@HttpUtility.JavaScriptStringEncode(_isEnglish ? "Strong" : "Fuerte")'
+                            errorEmpty:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_NewPwd_ErrorEmpty))',
+                            errorLen:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_NewPwd_ErrorLen))',
+                            errorMatch:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_NewPwd_ErrorMatch))',
+                            strengthWeak:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(_isEnglish ? "Weak" : "D\u00E9bil"))',
+                            strengthFair:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(_isEnglish ? "Fair" : "Regular"))',
+                            strengthGood:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(_isEnglish ? "Good" : "Buena"))',
+                            strengthStrong: '@Html.Raw(HttpUtility.JavaScriptStringEncode(_isEnglish ? "Strong" : "Fuerte"))'
                         };
 
                         function togglePwd(inputId, btn) {
@@ -245,7 +245,7 @@
                                 toast: true,
                                 position: window.innerWidth <= 768 ? 'top' : 'top-end',
                                 icon: 'warning',
-                                title: '@HttpUtility.JavaScriptStringEncode(ViewData["Error"].ToString())',
+                                title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(ViewData["Error"].ToString()))',
                                 showConfirmButton: false,
                                 timer: 5000,
                                 timerProgressBar: true

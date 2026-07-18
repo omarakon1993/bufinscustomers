@@ -33,11 +33,12 @@ namespace bufinscustomers.Controllers
             }
             else
             {
-                // Si no es admin, filtrar solo por su empresa
-                var idEmpresa = usuario?.IdEmpresa;
-                auditorias = _auditoriaCarguesService.ObtenerAuditoriaCargues(idEmpresa);
+                // Si no es admin, mostrar su empresa y las de su mismo grupo empresarial
+                var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
+                auditorias = _auditoriaCarguesService.ObtenerAuditoriaCargues()
+                    .Where(a => idsPermitidos.Contains(a.IdEmpresa)).ToList();
             }
-            
+
             return View("~/Views/Informes/AuditoriaCargues.cshtml", auditorias);
         }
 
@@ -60,8 +61,9 @@ namespace bufinscustomers.Controllers
                 }
                 else
                 {
-                    var idEmpresa = usuarioActual?.IdEmpresa;
-                    auditorias = _auditoriaCarguesService.ObtenerAuditoriaCargues(idEmpresa);
+                    var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuarioActual) ?? new List<int>();
+                    auditorias = _auditoriaCarguesService.ObtenerAuditoriaCargues()
+                        .Where(a => idsPermitidos.Contains(a.IdEmpresa)).ToList();
                 }
 
                 // Aplicar filtros

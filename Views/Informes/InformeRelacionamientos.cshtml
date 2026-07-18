@@ -1,4 +1,4 @@
-﻿@model dynamic
+﻿﻿@model dynamic
 @using bufinscustomers.Models
 
 @{
@@ -208,21 +208,21 @@
 
 <script>
     var _relMsg = {
-        seleccione:         '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
+        seleccione:         '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
         todos:              '@Resources.Strings.Common_Todos',
         todas:              '@Resources.Strings.Common_Todas',
         tablaRequerida:     '@Resources.Strings.Common_JS_TablaRequerida',
-        tablaSeleccionar:   '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
-        sinDatosExportar:   '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
+        tablaSeleccionar:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
+        sinDatosExportar:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
         exportando:         '@Resources.Strings.Common_JS_ExportandoExcel',
-        generandoExcel:     '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
+        generandoExcel:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
         registrosPag:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag))',
-        noResultados:       '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
-        buscando:           '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
+        noResultados:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
+        buscando:           '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
         error:              '@Resources.Strings.Common_Error',
-        errorTipos:         '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
-        errorDescripciones: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
-        errorConexion:      '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)'
+        errorTipos:         '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
+        errorDescripciones: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
+        errorConexion:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))'
     };
 </script>
 

@@ -1,0 +1,171 @@
+@model bufinscustomers.Models.GestionarGrupoEmpresasViewModel
+@using System.Linq
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>@Resources.Strings.Grupo_GestionarPageTitle</title>
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="~/Assets/css/configuracion-admin.css" rel="stylesheet" />
+    <style>
+        .empresa-item {
+            padding: 0.85rem 1rem;
+            background: #f8f9fa;
+            border-radius: 0.5rem;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.2s ease;
+        }
+
+        .empresa-item.disponible:hover {
+            background: #e9ecef;
+        }
+
+        .empresa-item.bloqueada {
+            opacity: 0.6;
+        }
+
+        .empresa-nombre {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .empresa-otro-grupo {
+            font-size: 0.78rem;
+            color: #b45309;
+        }
+
+        .custom-switch .custom-control-input:checked ~ .custom-control-label::before {
+            background-color: #583AFF;
+            border-color: #583AFF;
+        }
+
+        .btn-guardar {
+            background: var(--app-btn-gradient);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.6rem 1.75rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-building powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">
+                @Resources.Strings.Grupo_GestionarPageTitle
+                <span class="d-block d-md-inline mt-1 mt-md-0 ml-md-2" style="font-weight: 400; font-size: 1rem;">
+                    @Model.Grupo.Nombre
+                </span>
+            </h1>
+        </div>
+    </div>
+
+    <div class="alert alert-info mt-4" style="border-left: 4px solid #583AFF;">
+        <i class="fas fa-info-circle mr-2"></i>@Resources.Strings.Grupo_InfoGestionar
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <input type="hidden" id="idGrupo" value="@Model.Grupo.Id" />
+
+            @if (Model.Empresas == null || !Model.Empresas.Any())
+            {
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>@Resources.Strings.Grupo_NoEmpresasDisponibles
+                </div>
+            }
+            else
+            {
+                foreach (var empresa in Model.Empresas)
+                {
+                    bool bloqueada = !string.IsNullOrEmpty(empresa.NombreOtroGrupo);
+                    <div class="empresa-item @(bloqueada ? "bloqueada" : "disponible")">
+                        <div>
+                            <div class="empresa-nombre">@empresa.Nombre</div>
+                            @if (bloqueada)
+                            {
+                                <div class="empresa-otro-grupo">
+                                    <i class="fas fa-lock mr-1"></i>@Resources.Strings.Grupo_YaPerteneceA <strong>@empresa.NombreOtroGrupo</strong>
+                                </div>
+                            }
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox"
+                                   class="custom-control-input empresa-checkbox"
+                                   id="empresa_@empresa.Id"
+                                   value="@empresa.Id"
+                                   @(bloqueada ? "disabled" : "")
+                                   @(empresa.Seleccionada ? "checked" : "")>
+                            <label class="custom-control-label" for="empresa_@empresa.Id"></label>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+        <div class="card-footer text-center">
+            <button type="button" class="btn btn-guardar" onclick="guardarEmpresas()">
+                <i class="fas fa-save mr-2"></i>@Resources.Strings.Common_GuardarCambios
+            </button>
+            <a href="@Url.Action("Index", "GruposEmpresariales")" class="btn btn-secondary ml-2">
+                <i class="fas fa-arrow-left mr-2"></i>@Resources.Strings.Grupo_BtnVolver
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <script>
+            Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'error', title: '@TempData["ErrorMessage"]', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        </script>
+    }
+
+    @section scripts {
+    <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
+    <script>
+        function guardarEmpresas() {
+            var idGrupo = $('#idGrupo').val();
+            var idsEmpresas = [];
+
+            $('.empresa-checkbox:checked').each(function () {
+                idsEmpresas.push(parseInt($(this).val()));
+            });
+
+            Swal.fire({
+                title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Grupo_JS_Guardando))',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            $.ajax({
+                url: '@Url.Action("GuardarEmpresas", "GruposEmpresariales")',
+                type: 'POST',
+                data: { idGrupo: idGrupo, idsEmpresas: idsEmpresas },
+                traditional: true,
+                success: function (response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Exito))',
+                            text: response.message,
+                            confirmButtonColor: '#583AFF'
+                        }).then(function () { location.reload(); });
+                    } else {
+                        Swal.fire({ icon: 'error', title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error))', text: response.message });
+                    }
+                },
+                error: function () {
+                    Swal.fire({ icon: 'error', title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error))', text: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Grupo_JS_ErrorGuardar))' });
+                }
+            });
+        }
+    </script>
+    }
+</body>
+</html>

@@ -23,20 +23,32 @@ namespace bufinscustomers.Controllers
             var usuario  = UsuarioSesionHelper.UsuarioActual;
             bool esAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
+            // Empresa propia y las de su mismo grupo empresarial (solo consulta del dashboard)
+            var idsPermitidos = esAdmin ? null : (EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>());
+
             var tarjetasConfig = await svc.ObtenerActivasAsync();
             var vm = new List<WidgetTarjetaViewModel>();
 
             foreach (var t in tarjetasConfig)
             {
                 var item = new WidgetTarjetaViewModel { Config = t };
-                int? filtro = esAdmin ? (int?)null : usuario?.IdEmpresa;
 
                 if (!string.IsNullOrWhiteSpace(t.ConsultaSQL))
                 {
                     if (t.Tipo == 1)
-                        item.KpiResultados = await svc.EjecutarKpiAsync(t.ConsultaSQL, filtro);
+                    {
+                        var resultados = await svc.EjecutarKpiAsync(t.ConsultaSQL, null);
+                        item.KpiResultados = idsPermitidos == null
+                            ? resultados
+                            : resultados.Where(r => idsPermitidos.Contains(r.IdEmpresa)).ToList();
+                    }
                     else if (t.Tipo == 2)
-                        item.GraficoResultados = await svc.EjecutarGraficoAsync(t.ConsultaSQL, filtro);
+                    {
+                        var resultados = await svc.EjecutarGraficoAsync(t.ConsultaSQL, null);
+                        item.GraficoResultados = idsPermitidos == null
+                            ? resultados
+                            : resultados.Where(r => idsPermitidos.Contains(r.IdEmpresa)).ToList();
+                    }
                 }
                 vm.Add(item);
             }
@@ -84,7 +96,9 @@ namespace bufinscustomers.Controllers
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
-                int? idEmpresaObjetivo = esAdmin ? idEmpresa : usuario?.IdEmpresa;
+                int? idEmpresaObjetivo = esAdmin
+                    ? idEmpresa
+                    : (idEmpresa.HasValue && EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa.Value) ? idEmpresa : usuario?.IdEmpresa);
                 if (!idEmpresaObjetivo.HasValue)
                     return Json(new { success = true, tablas = new string[0] }, JsonRequestBehavior.AllowGet);
 
@@ -122,6 +136,10 @@ namespace bufinscustomers.Controllers
                 {
                     if (!idEmpresa.HasValue)
                         return Json(new IAConsultaResponse { Exitoso = false, Error = R("Home_IA_SeleccioneEmpresa") });
+                    idEmpresaObjetivo = idEmpresa.Value;
+                }
+                else if (idEmpresa.HasValue && EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa.Value))
+                {
                     idEmpresaObjetivo = idEmpresa.Value;
                 }
                 else

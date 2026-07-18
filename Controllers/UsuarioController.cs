@@ -29,12 +29,13 @@ namespace bufinscustomers.Controllers
             }
 
             var empresas = _empresaService.ObtenerEmpresas();
+            var usuarioActual = UsuarioSesionHelper.UsuarioActual;
 
-            // Admin 0/1 solo ve su propia empresa en los dropdowns
+            // Admin 0/1 ve su propia empresa y las de su mismo grupo empresarial en los dropdowns
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
-                var idEmpresaUsuario = UsuarioSesionHelper.UsuarioActual.IdEmpresa;
-                empresas = empresas.Where(e => e.Id == idEmpresaUsuario).ToList();
+                var idsPermitidosDropdown = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuarioActual) ?? new List<int>();
+                empresas = empresas.Where(e => idsPermitidosDropdown.Contains(e.Id)).ToList();
             }
 
             ViewBag.Empresas = empresas;
@@ -48,9 +49,9 @@ namespace bufinscustomers.Controllers
             }
             else
             {
-                // Admin 0 o 1: consulta directa filtrada por empresa, evita cargar todos los usuarios
-                var idEmpresa = UsuarioSesionHelper.UsuarioActual.IdEmpresa ?? 0;
-                usuarios = GetUsuariosPorEmpresa(idEmpresa);
+                // Admin 0 o 1: consulta directa filtrada por empresa(s), evita cargar todos los usuarios
+                var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuarioActual) ?? new List<int>();
+                usuarios = GetUsuariosPorEmpresas(idsPermitidos);
             }
 
             // Pasar información de permisos al ViewBag para la vista
@@ -63,22 +64,34 @@ namespace bufinscustomers.Controllers
             return View("~/Views/Configuracion/Usuarios.cshtml", usuarios);
         }
 
-        private List<Usuarios> GetUsuariosPorEmpresa(int idEmpresa)
+        private List<Usuarios> GetUsuariosPorEmpresas(List<int> idsEmpresa)
         {
             var lista = new List<Usuarios>();
+            if (idsEmpresa == null || idsEmpresa.Count == 0)
+                return lista;
+
             using (var cn = new SqlConnection(CadenaConexion))
             {
-                var cmd = new SqlCommand(@"
+                var nombresParametros = new List<string>();
+                var cmd = new SqlCommand();
+                for (int i = 0; i < idsEmpresa.Count; i++)
+                {
+                    var nombreParametro = "@IdEmpresa" + i;
+                    nombresParametros.Add(nombreParametro);
+                    cmd.Parameters.AddWithValue(nombreParametro, idsEmpresa[i]);
+                }
+
+                cmd.CommandText = @"
                     SELECT u.Id, u.Usuario, u.Clave, u.Nombre, u.Apellidos, u.Correo,
                            u.Telefono, u.Admin, u.IdEmpresa,
                            CASE WHEN EXISTS (SELECT 1 FROM UsuarioImagenes WHERE UsuarioId = u.Id)
                                 THEN 1 ELSE NULL END AS ImagenBase64,
                            ISNULL(u.LimiteConsultasIA, 0) AS LimiteConsultasIA
                     FROM Usuarios u
-                    WHERE u.IdEmpresa = @IdEmpresa
+                    WHERE u.IdEmpresa IN (" + string.Join(",", nombresParametros) + @")
                       AND (u.Admin IS NULL OR u.Admin <> 2)
-                    ORDER BY u.Id", cn);
-                cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                    ORDER BY u.Id";
+                cmd.Connection = cn;
                 cn.Open();
                 using (var reader = cmd.ExecuteReader())
                 {
@@ -189,8 +202,9 @@ namespace bufinscustomers.Controllers
 
                     if (usuarioAEliminar != null)
                     {
-                        var idEmpresaActual = UsuarioSesionHelper.UsuarioActual.IdEmpresa;
-                        if (usuarioAEliminar.IdEmpresa != idEmpresaActual)
+                        bool tieneAcceso = usuarioAEliminar.IdEmpresa.HasValue
+                            && EmpresaAccesoHelper.TieneAcceso(UsuarioSesionHelper.UsuarioActual, usuarioAEliminar.IdEmpresa.Value);
+                        if (!tieneAcceso)
                         {
                             SetErrorMessage("No tienes permisos para eliminar usuarios de otras empresas.");
                             return RedirectToAction("Usuarios");
@@ -246,11 +260,12 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Usuarios");
             }
 
-            // Si no es Admin 2, solo puede editar usuarios de su empresa
+            // Si no es Admin 2, solo puede editar usuarios de su empresa o de su mismo grupo empresarial
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
-                var idEmpresaActual = UsuarioSesionHelper.UsuarioActual.IdEmpresa;
-                if (oUsuario.IdEmpresa != idEmpresaActual)
+                bool tieneAcceso = oUsuario.IdEmpresa.HasValue
+                    && EmpresaAccesoHelper.TieneAcceso(UsuarioSesionHelper.UsuarioActual, oUsuario.IdEmpresa.Value);
+                if (!tieneAcceso)
                 {
                     SetErrorMessage("No tienes permisos para editar usuarios de otras empresas.");
                     return RedirectToAction("Usuarios");
@@ -365,11 +380,16 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Usuarios");
             }
 
-            // Si no es Admin 2, solo puede crear usuarios de su empresa
+            // Si no es Admin 2, solo puede crear usuarios de su empresa o de su mismo grupo empresarial
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
-                var idEmpresaActual = UsuarioSesionHelper.UsuarioActual.IdEmpresa;
-                oUsuario.IdEmpresa = idEmpresaActual; // Forzar la empresa del usuario actual
+                var usuarioActual = UsuarioSesionHelper.UsuarioActual;
+                bool idEmpresaValida = oUsuario.IdEmpresa.HasValue
+                    && EmpresaAccesoHelper.TieneAcceso(usuarioActual, oUsuario.IdEmpresa.Value);
+                if (!idEmpresaValida)
+                {
+                    oUsuario.IdEmpresa = usuarioActual.IdEmpresa; // Empresa principal por defecto
+                }
             }
 
             // Elimina espacios de campos
@@ -478,6 +498,7 @@ namespace bufinscustomers.Controllers
                 }
                 SetSuccessMessage(mensaje);
                 new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_UsuarioCreado"), $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim(), "success");
+                EnviarCorreoBienvenida(oUsuario);
             }
             else
             {
@@ -501,10 +522,12 @@ namespace bufinscustomers.Controllers
             var usuarioService = new UsuarioService();
             var usuarioDestino = usuarioService.ObtenerUsuarioPorId(idUsuario);
 
-            // Si no es SuperAdmin, solo puede cambiar claves de usuarios de su empresa
+            // Si no es SuperAdmin, solo puede cambiar claves de usuarios de su empresa o de su mismo grupo empresarial
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
-                if (usuarioDestino == null || usuarioDestino.IdEmpresa != UsuarioSesionHelper.UsuarioActual.IdEmpresa)
+                bool tieneAcceso = usuarioDestino != null && usuarioDestino.IdEmpresa.HasValue
+                    && EmpresaAccesoHelper.TieneAcceso(UsuarioSesionHelper.UsuarioActual, usuarioDestino.IdEmpresa.Value);
+                if (!tieneAcceso)
                 {
                     SetErrorMessage("No tienes permisos para cambiar la clave de usuarios de otras empresas.");
                     return RedirectToAction("Usuarios");
@@ -555,6 +578,49 @@ namespace bufinscustomers.Controllers
             }
 
             return RedirectToAction("Usuarios");
+        }
+
+        // Botón manual "Enviar información por correo" en el gestor: reenvía al usuario los mismos
+        // datos de cuenta que recibió al crearse (sin contraseña).
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult EnviarInfoCorreo(int idUsuario)
+        {
+            if (!UsuarioSesionHelper.EsSuperAdmin() && !UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR"))
+            {
+                return Json(new { success = false, message = R("Usr_ErrorSinPermiso") });
+            }
+
+            var usuarioService = new UsuarioService();
+            var usuarioDestino = usuarioService.ObtenerUsuarioPorId(idUsuario);
+
+            if (usuarioDestino == null)
+            {
+                return Json(new { success = false, message = R("Usr_ErrorNoEncontrado") });
+            }
+
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+            {
+                bool tieneAcceso = usuarioDestino.IdEmpresa.HasValue
+                    && EmpresaAccesoHelper.TieneAcceso(UsuarioSesionHelper.UsuarioActual, usuarioDestino.IdEmpresa.Value);
+                if (!tieneAcceso)
+                {
+                    return Json(new { success = false, message = R("Usr_ErrorSinPermiso") });
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(usuarioDestino.Correo))
+            {
+                return Json(new { success = false, message = R("Usr_ErrorSinCorreo") });
+            }
+
+            bool enviado = EnviarCorreoBienvenida(usuarioDestino);
+
+            return Json(new
+            {
+                success = enviado,
+                message = enviado ? R("Usr_InfoCorreoEnviado") : R("Usr_ErrorInfoCorreo")
+            });
         }
 
         /// <summary>
@@ -643,6 +709,36 @@ namespace bufinscustomers.Controllers
 
             mensajeError = null;
             return true;
+        }
+
+        /// <summary>
+        /// Envía al correo del usuario sus datos de cuenta (sin la contraseña — nunca se envía
+        /// en texto plano) más la leyenda de cómo recuperar/cambiar la clave. Usado tanto al
+        /// crear el usuario (fire-and-forget) como desde el botón manual "Enviar información
+        /// por correo" del gestor (donde sí importa el resultado). Nunca lanza excepción.
+        /// </summary>
+        private bool EnviarCorreoBienvenida(Usuarios oUsuario)
+        {
+            if (string.IsNullOrWhiteSpace(oUsuario.Correo))
+                return false;
+
+            try
+            {
+                string nombreEmpresa = _empresaService.ObtenerEmpresas()
+                    .FirstOrDefault(e => e.Id == oUsuario.IdEmpresa)?.Nombre;
+                string nombreCompleto = $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim();
+                bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+                string enlaceLogin = Url.Action("Login", "Acceso", null, Request.Url.Scheme);
+
+                new EmailService().EnviarBienvenidaUsuario(
+                    oUsuario.Correo, nombreCompleto, oUsuario.Usuario, nombreEmpresa, oUsuario.Telefono, enlaceLogin, esIngles);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("[UsuarioController] Error al enviar correo de bienvenida: {0}", ex.Message);
+                return false;
+            }
         }
 
         private void GuardarImagenUsuario(int usuarioId, HttpPostedFileBase imagenArchivo)

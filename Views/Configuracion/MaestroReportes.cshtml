@@ -1,4 +1,4 @@
-﻿@model IEnumerable<bufinscustomers.Models.Reportes>
+﻿﻿@model IEnumerable<bufinscustomers.Models.Reportes>
 
 <!DOCTYPE html>
 <html lang="es">
@@ -474,8 +474,8 @@
     }
 
     <script>
-        var _urlCorrecta   = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_URLCorrecta)';
-        var _urlIncorrecta = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_URLIncorrecta)';
+        var _urlCorrecta   = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_URLCorrecta))';
+        var _urlIncorrecta = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_URLIncorrecta))';
 
         function esURLValida(url) {
             try {
@@ -532,7 +532,7 @@
                     toast: true,
                     position: window.innerWidth <= 768 ? 'top' : 'top-end',
                     icon: 'warning',
-                    title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_SinEnlace)',
+                    title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_SinEnlace))',
                     showConfirmButton: false,
                     timer: 3000,
                     timerProgressBar: true
@@ -545,7 +545,7 @@
                     toast: true,
                     position: window.innerWidth <= 768 ? 'top' : 'top-end',
                     icon: 'error',
-                    title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_EnlaceCorto)',
+                    title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_EnlaceCorto))',
                     showConfirmButton: false,
                     timer: 3000,
                     timerProgressBar: true
@@ -566,7 +566,7 @@
                     toast: true,
                     position: window.innerWidth <= 768 ? 'top' : 'top-end',
                     icon: 'error',
-                    title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_ErrorAbrir)',
+                    title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_ErrorAbrir))',
                     showConfirmButton: false,
                     timer: 3000,
                     timerProgressBar: true
@@ -582,8 +582,8 @@
                     toast: true,
                     position: window.innerWidth <= 768 ? 'top' : 'top-end',
                     icon: 'error',
-                    title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_IngresaURL)',
-                    text: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_EjemplosURL)',
+                    title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_IngresaURL))',
+                    text: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_EjemplosURL))',
                     showConfirmButton: false,
                     timer: 4000,
                     timerProgressBar: true
@@ -600,8 +600,8 @@
                     toast: true,
                     position: window.innerWidth <= 768 ? 'top' : 'top-end',
                     icon: 'error',
-                    title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_IngresaURL)',
-                    text: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_EjemplosURL)',
+                    title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_IngresaURL))',
+                    text: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rep_JS_EjemplosURL))',
                     showConfirmButton: false,
                     timer: 4000,
                     timerProgressBar: true

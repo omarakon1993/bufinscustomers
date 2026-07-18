@@ -104,6 +104,19 @@ The `Usuarios.Admin` field (byte?) defines access levels:
 
 Check with: `EsUsuarioNormal()`, `EsAdminEmpresa()`, `EsSuperAdmin()`, `EsAdministrador()` (returns true for Admin=1)
 
+### Multi-Company Group Access (Grupos Empresariales)
+
+Companies can optionally belong to a **Grupo Empresarial** (`GruposEmpresariales` table). A company belongs to at most one group (`Empresas.IdGrupoEmpresarial`, nullable FK). Only Super Admin manages groups and which companies belong to them, via `GruposEmpresarialesController` (`~/Views/Configuracion/GruposEmpresariales.cshtml` for CRUD of groups, `~/Views/Configuracion/GestionarGrupoEmpresas.cshtml` for assigning companies to a group). `GrupoEmpresarialService` (`Services/GrupoEmpresarialService.cs`) does the CRUD + `AsignarEmpresas(idGrupo, idsEmpresas)` — a full-replace assignment that is the only code path allowed to write `IdGrupoEmpresarial`, guaranteeing a company never ends up in two groups. The Empresas gestor (`Views/Configuracion/Empresas.cshtml`) shows the group as a read-only badge — it is never editable from there.
+
+**What group membership unlocks:** a user whose own company belongs to a group has **full access — read AND write** — to every other company in the same group, exactly as if it were their own: viewing reports/dashboards/audits, creating/editing/deleting users, editing financial configuration, uploading Excel and executing models, editing the company record, and managing permissions. The only thing that stays special about `Usuarios.IdEmpresa` (the "empresa principal") is that it's the default/preselected company in dropdowns and the fallback when a submitted company isn't valid — it carries no extra privilege over a sibling company in the same group. Creating/deleting companies and creating/managing `GruposEmpresariales` themselves remain Super Admin-only, unrelated to this.
+
+**How it's implemented:**
+- `Helpers/EmpresaCacheHelper.cs` — the single app-wide (not session) cache of all companies (5 min TTL, `MemoryCache`), including `IdGrupoEmpresarial`. Deliberately not session-cached: a Super Admin can reassign a company's group and every already-logged-in user picks up the change within the same TTL window, instead of only after their next login.
+- `Helpers/EmpresaAccesoHelper.cs` — `TieneAcceso(usuario, idEmpresa)` (bool) and `ObtenerIdsEmpresasPermitidas(usuario)` (`List<int>`, `null` = Super Admin/no filter). Both are group-aware and read from `EmpresaCacheHelper`. Used uniformly for both read and write checks.
+- `Filters/EmpresasViewBagFilter.cs` uses `EmpresaAccesoHelper` to populate `ViewBag.Empresas`, so every empresa dropdown across the app is group-aware by default.
+
+> **MANDATORY:** any new controller action scoped by empresa — whether it queries/displays data or creates/edits/deletes it — must use `EmpresaAccesoHelper.TieneAcceso()` / `ObtenerIdsEmpresasPermitidas()` instead of comparing `usuario.IdEmpresa == idEmpresa` directly, so access correctly expands to the user's group. The only exceptions are actions already reserved for Super Admin regardless of company (creating/deleting companies, managing `GruposEmpresariales`), which keep their existing `EsSuperAdmin()` checks untouched.
+
 ### Menu-Based Permissions System
 
 Permissions are managed through the `MenuOpciones` table and `MenuOpcionesService` (`Services/PermisosService.cs`):
@@ -120,7 +133,7 @@ Known permission codes (BD codes, used in sidebar and controllers):
 - `DATOS_PLANTILLA_CARGUE`, `DATOS_MODELO_EJECUCION` (Datos)
 - `INFORMES_REPORTES_PBI`, `INFORMES_AUDITORIA_CARGUES`, `INFORMES_TABLAS_DATOS`, `INFORMES_RELACIONAMIENTOS` (Informes)
 - `ADMIN_USUARIOS_GESTOR`, `ADMIN_EMPRESAS_GESTOR`, `ADMIN_REPORTES_GESTOR` (Administración)
-- `ADMIN_CONFIG_EMPRESAS`, `ADMIN_CONFIG_RELACIONAMIENTOS`, `ADMIN_CONFIG_MENU`, `ADMIN_CONFIG_PROMPTS` (Configuración - both `ADMIN_CONFIG_MENU` and `ADMIN_CONFIG_PROMPTS` are SoloSuperAdmin)
+- `ADMIN_CONFIG_EMPRESAS`, `ADMIN_CONFIG_RELACIONAMIENTOS`, `ADMIN_CONFIG_MENU`, `ADMIN_CONFIG_PROMPTS`, `ADMIN_CONFIG_GRUPOS_EMPRESARIALES` (Configuración - `ADMIN_CONFIG_MENU`, `ADMIN_CONFIG_PROMPTS` and `ADMIN_CONFIG_GRUPOS_EMPRESARIALES` are SoloSuperAdmin)
 
 **Dynamic Sidebar**: The sidebar in `_Layout.cshtml` uses `Html.RenderPartial("_SidebarMenu", UsuarioSesionHelper.ObtenerMenuSidebar())`. Menu options are read from `MenuOpciones` table with columns `NombreGrupo`, `IconoGrupo`, `IconoCategoria`, `OrdenCategoria` for hierarchical rendering. New menu items added to the table auto-appear in the sidebar and permission manager.
 
@@ -144,6 +157,7 @@ Views are organized by **functional area**, not by controller name. Controllers 
 | MenuOpcionesController | `~/Views/Configuracion/MenuOpciones.cshtml` |
 | ModelosEjecucionController | `~/Views/Configuracion/ModelosEjecucion.cshtml` |
 | GestorPromptsController | `~/Views/Configuracion/GestorPrompts.cshtml` |
+| GruposEmpresarialesController | `~/Views/Configuracion/GruposEmpresariales.cshtml`, `~/Views/Configuracion/GestionarGrupoEmpresas.cshtml` |
 | ReportesController (CRUD) | `~/Views/Configuracion/MaestroReportes.cshtml` |
 | ReportesController (embed) | `~/Views/Reportes/Reportes.cshtml` |
 | DatosController | `~/Views/Datos/CargueExcel.cshtml`, `~/Views/Datos/Modelo.cshtml` |
@@ -180,6 +194,7 @@ When creating new controllers, use explicit view paths with `~/Views/{area}/{vie
 - **ModeloController** - Financial model execution (Datos area, `[ValidarSesion]`)
 - **ModelosEjecucionController** - Model execution management/configuration (`[ValidarSesion]`)
 - **GestorPromptsController** - IA prompt CRUD, Super Admin only (`[ValidarSesion]`). Actions: `Index`, `Crear`, `Editar`, `Eliminar` (soft-delete)
+- **GruposEmpresarialesController** - Business group (holding) CRUD and company assignment, Super Admin only (`[ValidarSesion]`). Actions: `Index`, `Crear`, `Editar`, `Eliminar` (soft-delete), `Gestionar` (assign-companies screen), `GuardarEmpresas` (AJAX). See "Multi-Company Group Access" above.
 - **AnalisisIAController** - Standalone AI analysis page; reuses `InformeTablasDatosService` for table/empresa lists; company-scoped for non-Super Admin (`[ValidarSesion]`)
 - **AuditoriaCarguesController** - Upload audit trail (no `[ValidarSesion]`, manual checks)
 
@@ -326,6 +341,9 @@ The app has a persistent bell-icon notification center visible in the top navbar
 | User role changed (permissions reset to new role's defaults) | `warning` | `UsuarioController` | `Notif_PermisosReiniciados` |
 | Report (PBI) created | `success` | `ReportesController` | `Notif_ReporteCreado` |
 | Report (PBI) deleted | `warning` | `ReportesController` | `Notif_ReporteEliminado` |
+| Business group created | `success` | `GruposEmpresarialesController` | `Notif_GrupoCreado` |
+| Business group deleted | `warning` | `GruposEmpresarialesController` | `Notif_GrupoEliminado` |
+| Business group's companies updated | `success` | `GruposEmpresarialesController` | `Notif_GrupoEmpresasActualizadas` |
 | Session expiring (client-side) | `warning` | `_Layout.cshtml` (JS only) | `Notif_SesionExpiraTitulo` |
 | Version rollback success | `success` | `HistorialVersionesCarguesController` | `Notif_RollbackEjecutado` |
 | Version rollback error | `error` | `HistorialVersionesCarguesController` | `Notif_ErrorRollback` |

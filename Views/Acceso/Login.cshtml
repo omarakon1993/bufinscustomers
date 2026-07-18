@@ -1,4 +1,4 @@
-﻿@{
+﻿﻿@{
     Layout = null;
     var _isEnglish = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
     var _esActiveClass = !_isEnglish ? "active" : "";
@@ -141,7 +141,7 @@
 
                 <div class="input-group">
                     <div class="input-icon">
-                        <i class="fas fa-envelope"></i>
+                        <i class="fas fa-user"></i>
                     </div>
                     <div class="input-wrapper">
                         <label for="Correo">@Resources.Strings.Login_EmailLabel</label>
@@ -178,8 +178,8 @@
                 </div>
                 <script>
                     var _loginMsg = {
-                        errorEmail: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Login_ErrorEmail)',
-                        errorPassword: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Login_ErrorEmail)'
+                        errorEmail: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Login_ErrorEmail))',
+                        errorPassword: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Login_ErrorPassword))'
                     };
 
                     function validarFormulario() {

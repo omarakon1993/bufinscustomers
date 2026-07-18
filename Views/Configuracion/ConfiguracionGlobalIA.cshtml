@@ -1,4 +1,4 @@
-﻿@model IEnumerable<bufinscustomers.Models.ConfiguracionSistemaItem>
+﻿﻿@model IEnumerable<bufinscustomers.Models.ConfiguracionSistemaItem>
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -406,12 +406,12 @@
     @section scripts {
     <script>
     var _cfgMsg = {
-        cargando:       '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos)',
-        cargados:       '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos)',
-        errorModelos:   '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos)',
-        apiKeyVacia:    '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos)',
-        tituloEditar:   '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos)',
-        tituloCrear:    '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos)',
+        cargando:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos))',
+        cargados:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos))',
+        errorModelos:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos))',
+        apiKeyVacia:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos))',
+        tituloEditar:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos))',
+        tituloCrear:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos))',
         urlCargar:      '@Url.Action("ObtenerModelosOpenAI","ConfiguracionGlobalIA")'
     };
 
@@ -607,7 +607,7 @@
             type: 'GET',
             success: function (resp) {
                 btn.disabled = false;
-                span.textContent = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos)';
+                span.textContent = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos))';
 
                 if (!resp.ok) {
                     Swal.fire({ icon:'error', title:'Error', text: resp.mensaje || _cfgMsg.errorModelos,
@@ -632,7 +632,7 @@
             },
             error: function () {
                 btn.disabled = false;
-                span.textContent = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos)';
+                span.textContent = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos))';
                 Swal.fire({ icon:'error', title:'Error', text: _cfgMsg.errorModelos,
                     toast:true, position:'top-end', showConfirmButton:false, timer:4000 });
             }

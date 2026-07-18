@@ -1,4 +1,4 @@
-﻿@model dynamic
+﻿﻿@model dynamic
 @using bufinscustomers.Models
 
 @{
@@ -236,8 +236,8 @@
 
 @section scripts {
     <script>
-        var _dropText    = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_DropText)';
-        var _dropSubtext = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_DropSubtext)';
+        var _dropText    = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_DropText))';
+        var _dropSubtext = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_DropSubtext))';
         var _urlExportar = '@Url.Action("DescargarRelacionamientos", "ConfiguracionRelacionamiento")';
 
         function iniciarExportacionRelacionamientos() {
@@ -344,8 +344,8 @@
                 if (ext !== 'xlsx' && ext !== 'xlsm') {
                     Swal.fire({
                         icon: 'warning',
-                        title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_FormatoInvalido)',
-                        text: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_FormatoText)'
+                        title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_FormatoInvalido))',
+                        text: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_FormatoText))'
                     });
                     return;
                 }
@@ -382,16 +382,16 @@
 
                 Swal.fire({
                     icon: 'warning',
-                    title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_TitleConfirmar)',
-                    html: '<strong>@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_ConfTexto1)</strong> @HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_ConfTexto2)<br><br>@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_ConfPregunta)',
+                    title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_TitleConfirmar))',
+                    html: '<strong>@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_ConfTexto1))</strong> @Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_ConfTexto2))<br><br>@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_ConfPregunta))',
                     showCancelButton: true,
-                    confirmButtonText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_SiCargar)',
-                    cancelButtonText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel)',
+                    confirmButtonText: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_SiCargar))',
+                    cancelButtonText: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel))',
                     confirmButtonColor: '#583AFF',
                     cancelButtonColor: '#6c757d'
                 }).then(function (result) {
                     if (result.isConfirmed) {
-                        btnCargar.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>@HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_Procesando)');
+                        btnCargar.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgRel_JS_Procesando))');
 
                         var overlay = document.getElementById('overlayProcesando');
                         overlay.style.display = 'flex';

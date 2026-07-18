@@ -20,7 +20,9 @@ namespace bufinscustomers.Controllers
 
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
-                empresas = empresas.Where(e => e.Id == usuario.IdEmpresa).ToList();
+                // Empresa propia y las de su mismo grupo empresarial
+                var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new System.Collections.Generic.List<int>();
+                empresas = empresas.Where(e => idsPermitidos.Contains(e.Id)).ToList();
             }
 
             return View("~/Views/Configuracion/Empresas.cshtml", empresas);
@@ -61,7 +63,7 @@ namespace bufinscustomers.Controllers
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
 
-            if (!UsuarioSesionHelper.EsSuperAdmin() && empresa.Id != usuario.IdEmpresa)
+            if (!EmpresaAccesoHelper.TieneAcceso(usuario, empresa.Id))
             {
                 SetErrorMessage("No tiene permisos para editar esta empresa.");
                 return RedirectToAction("Empresas");

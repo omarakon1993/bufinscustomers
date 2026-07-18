@@ -17,19 +17,26 @@ namespace bufinscustomers.Controllers
         public ActionResult Index(int? idEmpresa, int? anio, byte? modo)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
+            var esSuperAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                idEmpresa = usuario.IdEmpresa;
+            if (!esSuperAdmin)
+            {
+                // Permitir su empresa o una de su mismo grupo empresarial (solo consulta del historial)
+                idEmpresa = (idEmpresa.HasValue && EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa.Value))
+                    ? idEmpresa
+                    : usuario.IdEmpresa;
+            }
 
             var versiones = _service.ObtenerHistorial(idEmpresa, anio, modo);
             var todasEmpresas = _empresaService.ObtenerEmpresas();
+            var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario);
 
             var vm = new HistorialVersionesPageViewModel
             {
                 Versiones       = versiones,
-                Empresas        = UsuarioSesionHelper.EsSuperAdmin()
+                Empresas        = idsPermitidos == null
                                     ? todasEmpresas
-                                    : todasEmpresas.Where(e => e.Id == usuario.IdEmpresa).ToList(),
+                                    : todasEmpresas.Where(e => idsPermitidos.Contains(e.Id)).ToList(),
                 IdEmpresaFiltro = idEmpresa,
                 AnioFiltro      = anio,
                 ModoFiltro      = modo,
@@ -58,7 +65,7 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Index", new { idEmpresa = idEmpresaFiltro, anio = anioFiltro, modo = modoFiltro });
             }
 
-            if (!UsuarioSesionHelper.EsSuperAdmin() && version.IdEmpresa != usuario.IdEmpresa)
+            if (!EmpresaAccesoHelper.TieneAcceso(usuario, version.IdEmpresa))
             {
                 SetErrorMessage(R("Hist_ErrorSinPermiso"));
                 return RedirectToAction("Index");

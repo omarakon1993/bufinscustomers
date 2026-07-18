@@ -41,7 +41,8 @@ namespace bufinscustomers.Controllers
                 
                 if (!UsuarioSesionHelper.EsSuperAdmin())
                 {
-                    empresas = empresas.Where(e => e.Id == usuario.IdEmpresa).ToList();
+                    var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new System.Collections.Generic.List<int>();
+                    empresas = empresas.Where(e => idsPermitidos.Contains(e.Id)).ToList();
                 }
 
                 ViewBag.Empresas = empresas;
@@ -73,7 +74,7 @@ namespace bufinscustomers.Controllers
                     return Json(new { success = false, message = "Sesi�n no v�lida" }, JsonRequestBehavior.AllowGet);
                 }
 
-                if (!UsuarioSesionHelper.EsSuperAdmin() && usuario.IdEmpresa != idEmpresa)
+                if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
                 {
                     return Json(new { success = false, message = "No tiene permisos para ver esta configuraci�n" }, JsonRequestBehavior.AllowGet);
                 }
@@ -139,7 +140,7 @@ namespace bufinscustomers.Controllers
                     return Json(new { success = false, message = "Sesi�n no v�lida" });
                 }
 
-                if (!UsuarioSesionHelper.EsSuperAdmin() && usuario.IdEmpresa != configuracion.IdEmpresa)
+                if (!EmpresaAccesoHelper.TieneAcceso(usuario, configuracion.IdEmpresa))
                 {
                     return Json(new { success = false, message = "No tiene permisos para modificar esta configuraci�n" });
                 }
@@ -336,7 +337,7 @@ namespace bufinscustomers.Controllers
             if (usuario == null)
                 return Json(new { success = false, message = "Sesión no válida." });
 
-            if (!UsuarioSesionHelper.EsSuperAdmin() && usuario.IdEmpresa != idEmpresa)
+            if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
                 return Json(new { success = false, message = "No tiene permisos para esta operación." });
 
             var config = _configuracionService.ObtenerConfiguracionPorEmpresa(idEmpresa);
@@ -516,7 +517,8 @@ namespace bufinscustomers.Controllers
                 
                 if (!UsuarioSesionHelper.EsSuperAdmin())
                 {
-                    empresas = empresas.Where(e => e.Id == usuario.IdEmpresa).ToList();
+                    var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new System.Collections.Generic.List<int>();
+                    empresas = empresas.Where(e => idsPermitidos.Contains(e.Id)).ToList();
                 }
 
                 return Json(new

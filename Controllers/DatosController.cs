@@ -79,7 +79,10 @@ namespace bufinscustomers.Controllers
             var usuario = UsuarioSesionHelper.UsuarioActual;
             var empresas = _empresaService.ObtenerEmpresas();
             if (!UsuarioSesionHelper.EsSuperAdmin())
-                empresas = empresas.Where(e => e.Id == usuario.IdEmpresa).ToList();
+            {
+                var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
+                empresas = empresas.Where(e => idsPermitidos.Contains(e.Id)).ToList();
+            }
 
             var vm = new Models.ModeloPageViewModel
             {
@@ -98,7 +101,7 @@ namespace bufinscustomers.Controllers
                 if (usuario == null)
                     return Json(new { success = false, message = "Sesión no válida." }, JsonRequestBehavior.AllowGet);
 
-                if (!UsuarioSesionHelper.EsSuperAdmin() && usuario.IdEmpresa != idEmpresa)
+                if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
                     return Json(new { success = false, message = "No tiene permisos para consultar esta empresa." }, JsonRequestBehavior.AllowGet);
 
                 var config = _configuracionService.ObtenerConfiguracionPorEmpresa(idEmpresa);
@@ -121,7 +124,7 @@ namespace bufinscustomers.Controllers
                 if (usuario == null)
                     return Json(new { success = false, message = "Sesión no válida." }, JsonRequestBehavior.AllowGet);
 
-                if (!UsuarioSesionHelper.EsSuperAdmin() && usuario.IdEmpresa != idEmpresa)
+                if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
                     return Json(new { success = false, message = "No tiene permisos para consultar esta empresa." }, JsonRequestBehavior.AllowGet);
 
                 var config = _configuracionService.ObtenerConfiguracionPorEmpresa(idEmpresa);
@@ -159,7 +162,7 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Login", "Acceso");
                 }
 
-                if (!UsuarioSesionHelper.EsSuperAdmin() && usuario.IdEmpresa != idEmpresa)
+                if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
                 {
                     SetErrorMessage("No tiene permisos para ejecutar el modelo en esta empresa.");
                     return RedirectToAction("Modelo");
@@ -241,7 +244,7 @@ namespace bufinscustomers.Controllers
             if (usuario == null)
                 return Json(new { exito = false, mensaje = "Sesión no válida.", columnas = new List<string>(), filas = new List<List<string>>() });
 
-            if (!UsuarioSesionHelper.EsSuperAdmin() && usuario.IdEmpresa != idEmpresa)
+            if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
                 return Json(new { exito = false, mensaje = "No tiene permisos para ejecutar el modelo en esta empresa.", columnas = new List<string>(), filas = new List<List<string>>() });
 
             var modelo = _modeloService.ObtenerModeloPorId(idModelo);
@@ -331,7 +334,7 @@ namespace bufinscustomers.Controllers
             if (usuario == null)
                 return RedirectToAction("Login", "Acceso");
 
-            if (!UsuarioSesionHelper.EsSuperAdmin() && usuario.IdEmpresa != idEmpresa)
+            if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
             {
                 SetErrorMessage("No tiene permisos para exportar datos de esta empresa.");
                 return RedirectToAction("Modelo");
@@ -558,7 +561,7 @@ namespace bufinscustomers.Controllers
             if (usuario == null)
                 return RedirectToAction("Login", "Acceso");
 
-            if (!UsuarioSesionHelper.EsSuperAdmin() && usuario.IdEmpresa != idEmpresa)
+            if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
             {
                 SetErrorMessage("No tiene permisos para exportar datos de esta empresa.");
                 return RedirectToAction("Modelo");
@@ -619,11 +622,9 @@ namespace bufinscustomers.Controllers
             }
             else
             {
-                var empresaUsuario = _empresaService.ObtenerEmpresas()
-                    .FirstOrDefault(e => e.Id == idEmpresa);
-                empresasDisponibles = empresaUsuario != null
-                    ? new List<Empresas> { empresaUsuario }
-                    : new List<Empresas>();
+                var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
+                empresasDisponibles = _empresaService.ObtenerEmpresas()
+                    .Where(e => idsPermitidos.Contains(e.Id)).ToList();
             }
             ViewBag.Empresas = empresasDisponibles;
             ViewBag.UltimoUsuarioCargue = ObtenerUltimoUsuarioCargue(idEmpresa);
@@ -646,7 +647,7 @@ namespace bufinscustomers.Controllers
             }
 
             var usuarioValidacion = UsuarioSesionHelper.UsuarioActual;
-            if (!UsuarioSesionHelper.EsSuperAdmin() && usuarioValidacion?.IdEmpresa != idEmpresaSeleccionada)
+            if (!EmpresaAccesoHelper.TieneAcceso(usuarioValidacion, idEmpresaSeleccionada))
             {
                 SetErrorMessage("No tiene permisos para cargar datos en esta empresa.");
                 return RedirectToAction("CargueExcel");

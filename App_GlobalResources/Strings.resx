@@ -45,12 +45,12 @@
 
   <!-- LOGIN -->
   <data name="Login_BackLink" xml:space="preserve"><value>← Volver a bufins.com</value></data>
-  <data name="Login_EmailLabel" xml:space="preserve"><value>Correo Electrónico</value></data>
-  <data name="Login_EmailPlaceholder" xml:space="preserve"><value>Ingrese su correo</value></data>
+  <data name="Login_EmailLabel" xml:space="preserve"><value>Usuario o Correo Electrónico</value></data>
+  <data name="Login_EmailPlaceholder" xml:space="preserve"><value>Ingrese su usuario o correo</value></data>
   <data name="Login_PasswordLabel" xml:space="preserve"><value>Contraseña</value></data>
   <data name="Login_PasswordPlaceholder" xml:space="preserve"><value>Ingrese su contraseña</value></data>
   <data name="Login_Button" xml:space="preserve"><value>INICIAR SESION</value></data>
-  <data name="Login_ErrorEmail" xml:space="preserve"><value>Debe ingresar un correo.</value></data>
+  <data name="Login_ErrorEmail" xml:space="preserve"><value>Debe ingresar su usuario o correo.</value></data>
   <data name="Login_ErrorTokenExpirado" xml:space="preserve"><value>Tu sesión expiró. Por favor, ingresa tus datos nuevamente.</value></data>
   <data name="Login_ErrorPassword" xml:space="preserve"><value>Debe ingresar una contraseña.</value></data>
   <data name="Login_ForgotPassword" xml:space="preserve"><value>¿Olvidaste tu contraseña?</value></data>
@@ -431,6 +431,7 @@
   <data name="Emp_ThAbreviatura" xml:space="preserve"><value>Abreviatura</value></data>
   <data name="Emp_LabelAbreviatura" xml:space="preserve"><value>Abreviatura</value></data>
   <data name="Emp_HintAbreviatura" xml:space="preserve"><value>Solo letras (a-z, A-Z), máximo 12 caracteres</value></data>
+  <data name="Emp_ThGrupo" xml:space="preserve"><value>Grupo</value></data>
   <data name="Emp_PlaceholderNombre" xml:space="preserve"><value>Ej: Bufins S.A.S.</value></data>
   <data name="Emp_HintNombre" xml:space="preserve"><value>Razón social completa de la empresa</value></data>
   <data name="Emp_PlaceholderNit" xml:space="preserve"><value>Ej: 900123456-7</value></data>
@@ -454,6 +455,11 @@
   <data name="Menu_ThOrden" xml:space="preserve"><value>Ord.</value></data>
   <data name="Menu_ThAcceso" xml:space="preserve"><value>Acceso</value></data>
   <data name="Menu_NoOpciones" xml:space="preserve"><value>No hay opciones registradas.</value></data>
+  <data name="Menu_HintArrastrar" xml:space="preserve"><value>Arrastra las filas usando el icono ⣿ para reordenar. El orden es una secuencia única sobre todos los menús: al soltar, se recalcula automáticamente el de los demás.</value></data>
+  <data name="Menu_HintOrden" xml:space="preserve"><value>Posición global entre todos los menús (1, 2, 3...). Se recalcula automáticamente al arrastrar filas en la lista principal.</value></data>
+  <data name="Menu_OrdenActualizado" xml:space="preserve"><value>Orden actualizado correctamente.</value></data>
+  <data name="Menu_ErrorActualizarOrden" xml:space="preserve"><value>No se pudo actualizar el orden. Intente nuevamente.</value></data>
+  <data name="Menu_ErrorSinPermiso" xml:space="preserve"><value>No tiene permisos para esta acción.</value></data>
   <data name="Menu_BadgeSuperAdmin" xml:space="preserve"><value>Super Admin</value></data>
   <data name="Menu_BadgeAdminEmp" xml:space="preserve"><value>Admin Emp.</value></data>
   <data name="Menu_BadgeTodos" xml:space="preserve"><value>Todos</value></data>
@@ -506,6 +512,14 @@
   <data name="Usr_TitleEditar" xml:space="preserve"><value>Editar usuario</value></data>
   <data name="Usr_TitleEliminar" xml:space="preserve"><value>Eliminar usuario</value></data>
   <data name="Usr_TitlePermisos" xml:space="preserve"><value>Gestionar permisos</value></data>
+  <data name="Usr_TitleEnviarInfoCorreo" xml:space="preserve"><value>Enviar información de la cuenta por correo</value></data>
+  <data name="Usr_ConfirmEnviarInfoCorreo" xml:space="preserve"><value>¿Enviar la información de la cuenta al correo registrado del usuario?</value></data>
+  <data name="Usr_BtnEnviarInfoCorreo" xml:space="preserve"><value>Enviar</value></data>
+  <data name="Usr_InfoCorreoEnviado" xml:space="preserve"><value>Información enviada al correo del usuario.</value></data>
+  <data name="Usr_ErrorInfoCorreo" xml:space="preserve"><value>No se pudo enviar el correo. Intenta nuevamente.</value></data>
+  <data name="Usr_ErrorSinCorreo" xml:space="preserve"><value>Este usuario no tiene un correo registrado.</value></data>
+  <data name="Usr_ErrorSinPermiso" xml:space="preserve"><value>No tienes permisos para esta acción.</value></data>
+  <data name="Usr_ErrorNoEncontrado" xml:space="preserve"><value>Usuario no encontrado.</value></data>
   <data name="Usr_BtnCrear" xml:space="preserve"><value>Crear Usuario</value></data>
   <data name="Usr_ModalDeleteTitle" xml:space="preserve"><value>Confirmar eliminación</value></data>
   <data name="Usr_ModalDeleteBody" xml:space="preserve"><value>¿Estás seguro de que deseas eliminar este usuario?</value></data>
@@ -602,6 +616,43 @@
   <data name="Prompt_LabelCodigo" xml:space="preserve"><value>Código</value></data>
   <data name="Prompt_LabelTextoPrompt" xml:space="preserve"><value>Texto del prompt</value></data>
   <data name="Prompt_LabelTextoHint" xml:space="preserve"><value>(instrucciones que se enviarán a la IA)</value></data>
+
+  <!-- GRUPOS EMPRESARIALES -->
+  <data name="Grupo_PageTitle" xml:space="preserve"><value>Grupos Empresariales</value></data>
+  <data name="Grupo_InfoAcceso" xml:space="preserve"><value>Los usuarios de una empresa que pertenece a un grupo pueden ver los datos (reportes, informes, dashboard) de las demás empresas del mismo grupo. La administración de cada empresa (usuarios, configuración, permisos) sigue siendo exclusiva de su propia empresa.</value></data>
+  <data name="Grupo_ThEmpresas" xml:space="preserve"><value>Empresas</value></data>
+  <data name="Grupo_NoGrupos" xml:space="preserve"><value>No hay grupos empresariales registrados.</value></data>
+  <data name="Grupo_TitleGestionarEmpresas" xml:space="preserve"><value>Gestionar empresas del grupo</value></data>
+  <data name="Grupo_TitleEditar" xml:space="preserve"><value>Editar grupo</value></data>
+  <data name="Grupo_TitleEliminar" xml:space="preserve"><value>Eliminar grupo</value></data>
+  <data name="Grupo_BtnCrear" xml:space="preserve"><value>Crear grupo empresarial</value></data>
+  <data name="Grupo_ModalCreateTitle" xml:space="preserve"><value>Crear grupo empresarial</value></data>
+  <data name="Grupo_ModalEditTitle" xml:space="preserve"><value>Editar grupo empresarial</value></data>
+  <data name="Grupo_ModalDeleteBody" xml:space="preserve"><value>¿Estás seguro de que deseas eliminar el grupo</value></data>
+  <data name="Grupo_ModalDeleteNote" xml:space="preserve"><value>Las empresas que pertenecen a este grupo quedarán sin grupo asignado.</value></data>
+  <data name="Grupo_PlaceholderNombre" xml:space="preserve"><value>Ej: Grupo Financiero ABC</value></data>
+  <data name="Grupo_PlaceholderDescripcion" xml:space="preserve"><value>Ej: Empresas del holding ABC</value></data>
+  <data name="Grupo_GestionarPageTitle" xml:space="preserve"><value>Gestionar empresas del grupo</value></data>
+  <data name="Grupo_InfoGestionar" xml:space="preserve"><value>Selecciona las empresas que pertenecen a este grupo. Una empresa solo puede pertenecer a un grupo a la vez.</value></data>
+  <data name="Grupo_NoEmpresasDisponibles" xml:space="preserve"><value>No hay empresas registradas.</value></data>
+  <data name="Grupo_YaPerteneceA" xml:space="preserve"><value>Ya pertenece al grupo</value></data>
+  <data name="Grupo_BtnVolver" xml:space="preserve"><value>Volver</value></data>
+  <data name="Grupo_JS_Guardando" xml:space="preserve"><value>Guardando...</value></data>
+  <data name="Grupo_JS_ErrorGuardar" xml:space="preserve"><value>No se pudieron guardar las empresas del grupo. Intente nuevamente.</value></data>
+  <data name="Grupo_ErrorNombreObligatorio" xml:space="preserve"><value>El nombre del grupo es obligatorio.</value></data>
+  <data name="Grupo_MensajeCreado" xml:space="preserve"><value>Grupo empresarial creado correctamente.</value></data>
+  <data name="Grupo_ErrorCrear" xml:space="preserve"><value>No se pudo crear el grupo empresarial. Intente nuevamente.</value></data>
+  <data name="Grupo_MensajeEditado" xml:space="preserve"><value>Grupo empresarial actualizado correctamente.</value></data>
+  <data name="Grupo_ErrorEditar" xml:space="preserve"><value>No se pudo actualizar el grupo empresarial. Intente nuevamente.</value></data>
+  <data name="Grupo_MensajeEliminado" xml:space="preserve"><value>Grupo empresarial eliminado correctamente.</value></data>
+  <data name="Grupo_ErrorEliminar" xml:space="preserve"><value>No se pudo eliminar el grupo empresarial. Intente nuevamente.</value></data>
+  <data name="Grupo_ErrorNoEncontrado" xml:space="preserve"><value>Grupo empresarial no encontrado.</value></data>
+  <data name="Grupo_ErrorNoPermisos" xml:space="preserve"><value>No tiene permisos para esta acción.</value></data>
+  <data name="Grupo_MensajeEmpresasAsignadas" xml:space="preserve"><value>Empresas del grupo actualizadas correctamente.</value></data>
+  <data name="Grupo_ErrorAsignarEmpresas" xml:space="preserve"><value>No se pudieron guardar las empresas del grupo.</value></data>
+  <data name="Notif_GrupoCreado" xml:space="preserve"><value>Grupo empresarial creado</value></data>
+  <data name="Notif_GrupoEliminado" xml:space="preserve"><value>Grupo empresarial eliminado</value></data>
+  <data name="Notif_GrupoEmpresasActualizadas" xml:space="preserve"><value>Empresas del grupo actualizadas</value></data>
 
   <!-- CONFIGURACIÓN RESUMEN IA POR EMPRESA (pestaña dentro de Configuración Empresas) -->
   <data name="CfgResumenIA_TabLabel" xml:space="preserve"><value>Resumen IA</value></data>

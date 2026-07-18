@@ -9,5 +9,10 @@ namespace bufinscustomers.Models
         public string Telefono { get; set; }
         public string Correo { get; set; }
         public string Abreviatura { get; set; }
+
+        public int? IdGrupoEmpresarial { get; set; }
+
+        // Solo lectura, poblado via JOIN para mostrar el grupo en el gestor de Empresas
+        public string NombreGrupoEmpresarial { get; set; }
     }
 }

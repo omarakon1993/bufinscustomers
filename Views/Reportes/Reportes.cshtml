@@ -1,4 +1,4 @@
-﻿@{
+﻿﻿@{
     ViewBag.Title = Resources.Strings.Rprt_PageTitle;
     Layout = "~/Views/Shared/_Layout.cshtml";
     var usuario = bufinscustomers.Helpers.UsuarioSesionHelper.UsuarioActual;
@@ -183,21 +183,21 @@
                             <i class="fas fa-building"></i>
                             @Resources.Strings.Rprt_LabelEmpresa <span class="required">*</span>
                         </label>
-                        @if (esSuperAdmin)
-                        {
-                            <select id="filtroEmpresa" class="form-control">
-                                <option value="">@Resources.Strings.Rprt_TodasEmpresas</option>
-                            </select>
-                        }
-                        else
-                        {
-                            <!-- Usuario normal: muestra su empresa como badge no editable -->
-                            <div class="empresa-badge" id="empresaBadge">
-                                <i class="fas fa-lock"></i>
-                                <span id="empresaNombreDisplay">@Resources.Strings.Rprt_JS_Cargando</span>
-                            </div>
-                            <input type="hidden" id="filtroEmpresa" value="" />
-                        }
+                        <!--
+                            #filtroEmpresa (hidden) es la única fuente de verdad de la empresa
+                            seleccionada. La UI visible cambia según cuántas empresas tenga el
+                            usuario: selector editable (Super Admin, o usuario con más de una
+                            empresa por pertenecer a un Grupo Empresarial) o badge fijo (una sola
+                            empresa disponible).
+                        -->
+                        <input type="hidden" id="filtroEmpresa" value="" />
+                        <select id="filtroEmpresaVisible" class="form-control" style="display:none;">
+                            <option value="">@Resources.Strings.Rprt_TodasEmpresas</option>
+                        </select>
+                        <div class="empresa-badge" id="empresaBadge" style="display:none;">
+                            <i class="fas fa-lock"></i>
+                            <span id="empresaNombreDisplay">@Resources.Strings.Rprt_JS_Cargando</span>
+                        </div>
                     </div>
                 </div>
 
@@ -296,12 +296,12 @@
 @section scripts {
 <script>
     const esSuperAdmin = @Html.Raw(esSuperAdmin.ToString().ToLower());
-    const _strSelReporte    = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_SelReporte)';
-    const _strNoReportes    = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_NoReportes)';
-    const _strCargando      = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_Cargando)';
-    const _strVerReporte    = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_Ver)';
-    const _strPantallaComp  = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_BtnPantallaCompleta)';
-    const _strSalirPantalla = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_BtnSalirPantalla)';
+    const _strSelReporte    = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_SelReporte))';
+    const _strNoReportes    = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_NoReportes))';
+    const _strCargando      = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_Cargando))';
+    const _strVerReporte    = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_Ver))';
+    const _strPantallaComp  = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_BtnPantallaCompleta))';
+    const _strSalirPantalla = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_BtnSalirPantalla))';
 
     // ─────────────────────────────────────────────────────────────────
     // Utilidades
@@ -334,7 +334,7 @@
     }
 
     function getEmpresaSeleccionada() {
-        return esSuperAdmin ? $('#filtroEmpresa').val() : $('#filtroEmpresa').val();
+        return $('#filtroEmpresa').val();
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -360,20 +360,25 @@
         .then(data => {
             if (!Array.isArray(data)) return;
 
-            if (esSuperAdmin) {
-                // Super Admin: poblar dropdown con todas las empresas
-                const sel = document.getElementById('filtroEmpresa');
+            if (esSuperAdmin || data.length > 1) {
+                // Super Admin (todas las empresas) o usuario con más de una empresa disponible
+                // (empresa propia + empresas de su mismo Grupo Empresarial): selector editable.
+                const sel = document.getElementById('filtroEmpresaVisible');
                 data.forEach(emp => {
                     const o = document.createElement('option');
                     o.value    = emp.nombre;
                     o.textContent = emp.nombre;
                     sel.appendChild(o);
                 });
-                // Cargar todos los reportes por defecto (sin filtro de empresa)
+                sel.style.display = '';
+                document.getElementById('empresaBadge').style.display = 'none';
+                // Sin selección explícita: se ven los reportes de todas sus empresas disponibles
                 cargarReportesFiltrados();
 
             } else {
-                // Usuario normal: solo tiene su empresa → mostrarla y cargar sus reportes
+                // Una sola empresa disponible: mostrarla como badge no editable
+                document.getElementById('filtroEmpresaVisible').style.display = 'none';
+                document.getElementById('empresaBadge').style.display = '';
                 if (data.length > 0) {
                     const empresa = data[0];
                     document.getElementById('empresaNombreDisplay').textContent = empresa.nombre;
@@ -405,7 +410,7 @@
                 $('#selectReporte').empty().append('<option value="">' + _strNoReportes + '</option>');
                 Swal.fire({
                     toast: true, position: 'top-end', icon: 'error',
-                    title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_ErrorFiltrar)',
+                    title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_ErrorFiltrar))',
                     showConfirmButton: false, timer: 3000
                 });
             }
@@ -413,8 +418,9 @@
     }
 
     $(document).ready(function () {
-        // Cambio de empresa → recargar reportes y limpiar iframe
-        $('#filtroEmpresa').on('change', function () {
+        // Cambio de empresa (selector visible) → actualizar el valor real, recargar reportes y limpiar iframe
+        $('#filtroEmpresaVisible').on('change', function () {
+            $('#filtroEmpresa').val(this.value);
             limpiarIframe();
             cargarReportesFiltrados();
         });
@@ -439,7 +445,7 @@
         if (!idReporte) {
             Swal.fire({
                 toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end',
-                icon: 'warning', title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_SinReporte)',
+                icon: 'warning', title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_SinReporte))',
                 showConfirmButton: false, timer: 3000, timerProgressBar: true,
                 didOpen: (t) => { t.addEventListener('mouseenter', Swal.stopTimer); t.addEventListener('mouseleave', Swal.resumeTimer); }
             });
@@ -464,7 +470,7 @@
                 } else {
                     Swal.fire({
                         toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end',
-                        icon: 'info', title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_SinEnlace)',
+                        icon: 'info', title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_SinEnlace))',
                         showConfirmButton: false, timer: 3500, timerProgressBar: true
                     });
                     $('#btnPantallaCompleta').hide();
@@ -473,7 +479,7 @@
             error: function () {
                 Swal.fire({
                     toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end',
-                    icon: 'error', title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_ErrorEnlace)',
+                    icon: 'error', title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_ErrorEnlace))',
                     showConfirmButton: false, timer: 3500, timerProgressBar: true
                 });
             },
@@ -493,7 +499,7 @@
         const container = document.getElementById('iframeContainer');
         if (!document.fullscreenElement) {
             container.requestFullscreen().catch(() => {
-                Swal.fire({ toast:true, position:'top-end', icon:'error', title:'@HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_SinPantallaCompleta)', showConfirmButton:false, timer:3000 });
+                Swal.fire({ toast:true, position:'top-end', icon:'error', title:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rprt_JS_SinPantallaCompleta))', showConfirmButton:false, timer:3000 });
             });
         } else {
             document.exitFullscreen();

@@ -19,13 +19,13 @@
 @if (!string.IsNullOrEmpty(successMsg))
 {
     <script>
-        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'success', title: '@HttpUtility.JavaScriptStringEncode(successMsg)', showConfirmButton: false, timer: 3500, timerProgressBar: true });
+        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'success', title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(successMsg))', showConfirmButton: false, timer: 3500, timerProgressBar: true });
     </script>
 }
 @if (!string.IsNullOrEmpty(errorMsg))
 {
     <script>
-        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'error', title: '@HttpUtility.JavaScriptStringEncode(errorMsg)', showConfirmButton: false, timer: 5000, timerProgressBar: true });
+        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'error', title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(errorMsg))', showConfirmButton: false, timer: 5000, timerProgressBar: true });
     </script>
 }
 
@@ -326,13 +326,13 @@
     /* ── ELIMINAR ── */
     function confirmarEliminar(id, nombre) {
         Swal.fire({
-            title: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Correo_ModalEliminarTitle)',
-            text: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Correo_ModalEliminarMsg) "' + nombre + '"',
+            title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Correo_ModalEliminarTitle))',
+            text: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Correo_ModalEliminarMsg)) "' + nombre + '"',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#e74c3c',
-            confirmButtonText: '<i class="fas fa-trash-alt mr-1"></i>@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_BtnEliminar)',
-            cancelButtonText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel)',
+            confirmButtonText: '<i class="fas fa-trash-alt mr-1"></i>@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_BtnEliminar))',
+            cancelButtonText: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel))',
             customClass: { confirmButton: 'btn btn-danger btn-sm', cancelButton: 'btn btn-secondary btn-sm' },
             buttonsStyling: false
         }).then(function(r) {
@@ -380,7 +380,7 @@
                 res.style.display = '';
             },
             complete: function() {
-                $btn.prop('disabled', false).html('<i class="fas fa-paper-plane mr-1"></i>@HttpUtility.JavaScriptStringEncode(Resources.Strings.Correo_BtnEnviarPrueba)');
+                $btn.prop('disabled', false).html('<i class="fas fa-paper-plane mr-1"></i>@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Correo_BtnEnviarPrueba))');
             }
         });
     }
@@ -397,10 +397,10 @@
                 var $btn = $('#btnActiva-' + id);
                 if (r.activa) {
                     $btn.removeClass('btn-secondary').addClass('btn-success')
-                        .html('<span><i class="fas fa-check-circle mr-1"></i>@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Activo)</span>');
+                        .html('<span><i class="fas fa-check-circle mr-1"></i>@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Activo))</span>');
                 } else {
                     $btn.removeClass('btn-success').addClass('btn-secondary')
-                        .html('<span><i class="fas fa-times-circle mr-1"></i>@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Inactivo)</span>');
+                        .html('<span><i class="fas fa-times-circle mr-1"></i>@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Inactivo))</span>');
                 }
             }
         });

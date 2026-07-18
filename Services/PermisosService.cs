@@ -344,6 +344,42 @@ namespace bufinscustomers.Services
         }
 
         /// <summary>
+        /// Actualiza el campo Orden de varias opciones de menú a la vez (drag &amp; drop en el gestor).
+        /// </summary>
+        public bool ActualizarOrden(List<(int Id, int Orden)> pares)
+        {
+            if (pares == null || pares.Count == 0) return true;
+
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
+            {
+                cn.Open();
+                using (SqlTransaction tx = cn.BeginTransaction())
+                {
+                    try
+                    {
+                        foreach (var par in pares)
+                        {
+                            using (SqlCommand cmd = new SqlCommand(
+                                "UPDATE MenuOpciones SET Orden = @Orden WHERE Id = @Id", cn, tx))
+                            {
+                                cmd.Parameters.AddWithValue("@Orden", par.Orden);
+                                cmd.Parameters.AddWithValue("@Id", par.Id);
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+                        tx.Commit();
+                        return true;
+                    }
+                    catch
+                    {
+                        tx.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Elimina una opción de menú (desactiva con Activo = 0)
         /// </summary>
         public bool EliminarMenuOpcion(int id)

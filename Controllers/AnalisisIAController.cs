@@ -26,7 +26,10 @@ namespace bufinscustomers.Controllers
             if (esSuperAdmin)
                 ViewBag.Empresas = _service.ObtenerEmpresas();
             else
-                ViewBag.Empresas = _service.ObtenerEmpresas().Where(e => e.Id == idEmpresa).ToList();
+            {
+                var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new System.Collections.Generic.List<int>();
+                ViewBag.Empresas = _service.ObtenerEmpresas().Where(e => idsPermitidos.Contains(e.Id)).ToList();
+            }
 
             // Modelo IA activo desde BD (mostrado en el badge del header)
             var cfgSvc = new ConfiguracionSistemaService();

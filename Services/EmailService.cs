@@ -5,6 +5,7 @@ using MimeKit;
 using System;
 using System.Configuration;
 using System.Text;
+using System.Web;
 
 namespace bufinscustomers.Services
 {
@@ -57,6 +58,19 @@ namespace bufinscustomers.Services
         {
             string asunto = esIngles ? "Reset your password - Bufins" : "Restablecer contrasena - Bufins";
             Enviar(destinatario, asunto, ConstruirEmailHtml(nombre, enlace, esIngles));
+        }
+
+        /// <summary>
+        /// Correo de bienvenida cuando se crea un usuario nuevo. No incluye la contrase&ntilde;a
+        /// (nunca se env&iacute;a en texto plano) &mdash; solo datos informativos y c&oacute;mo
+        /// recuperar/cambiar la clave.
+        /// </summary>
+        public void EnviarBienvenidaUsuario(string destinatario, string nombreCompleto, string nombreUsuario,
+            string empresa, string telefono, string enlaceLogin, bool esIngles)
+        {
+            string asunto = esIngles ? "Your Bufins account was created" : "Se creó tu cuenta en Bufins";
+            Enviar(destinatario, asunto,
+                ConstruirEmailBienvenidaHtml(nombreCompleto, nombreUsuario, empresa, telefono, enlaceLogin, esIngles));
         }
 
         private void Enviar(string destinatario, string asunto, string htmlBody)
@@ -134,6 +148,69 @@ namespace bufinscustomers.Services
     </p>
     <div style=""background:#f8f9ff;border-left:4px solid #6366f1;padding:14px 18px;font-size:13px;color:#4b5563;margin:16px 0;"">{expira}</div>
     <p style=""font-size:13px;color:#9ca3af;text-align:center;"">{ignorar}</p>
+  </td></tr>
+  <tr><td style=""background:#f8f9ff;padding:20px;text-align:center;font-size:12px;color:#9ca3af;border-top:1px solid #e5e7eb;"">
+    &copy; Bufins &mdash; Business Finance Always Everywhere
+  </td></tr>
+ </table>
+ </td></tr>
+</table>
+</body></html>";
+        }
+
+        private static string ConstruirEmailBienvenidaHtml(string nombreCompleto, string nombreUsuario,
+            string empresa, string telefono, string enlaceLogin, bool esIngles)
+        {
+            string saludo = esIngles
+                ? $"Hello{(string.IsNullOrEmpty(nombreCompleto) ? "" : " " + nombreCompleto)},"
+                : $"Hola{(string.IsNullOrEmpty(nombreCompleto) ? "" : " " + nombreCompleto)},";
+            string cuerpo = esIngles
+                ? "An account was created for you on Bufins. Here are your account details:"
+                : "Se cre&oacute; una cuenta para ti en Bufins. Estos son los datos de tu cuenta:";
+            string lblEmpresa  = esIngles ? "Company" : "Empresa";
+            string lblNombre   = esIngles ? "Name" : "Nombre";
+            string lblCelular  = esIngles ? "Mobile phone" : "N&uacute;mero de celular";
+            string lblUsuario  = esIngles ? "Username" : "Nombre de usuario";
+            string valorVacio  = esIngles ? "Not provided" : "No registrado";
+            string btnTxt      = esIngles ? "Go to login" : "Ir al inicio de sesi&oacute;n";
+            string leyenda     = esIngles
+                ? "If you want to <strong>recover</strong> your password, you can do so from the login screen (\"Forgot your password?\"). To <strong>change</strong> it, do so from the User Manager."
+                : "Si deseas <strong>recuperar</strong> tu contrase&ntilde;a, puedes hacerlo desde la pantalla de inicio de sesi&oacute;n (\"&iquest;Olvidaste tu contrase&ntilde;a?\"). Para <strong>cambiarla</strong>, hazlo desde el Gestor de Usuarios.";
+
+            string Fila(string etiqueta, string valor) => $@"
+    <tr>
+      <td style=""padding:8px 0;font-size:13px;color:#9ca3af;width:40%;"">{etiqueta}</td>
+      <td style=""padding:8px 0;font-size:14px;color:#1e1b4b;font-weight:600;"">{HttpUtility.HtmlEncode(string.IsNullOrWhiteSpace(valor) ? valorVacio : valor)}</td>
+    </tr>";
+
+            return $@"<!DOCTYPE html>
+<html lang=""{(esIngles ? "en" : "es")}"">
+<head><meta charset=""UTF-8""><meta name=""viewport"" content=""width=device-width,initial-scale=1""></head>
+<body style=""margin:0;padding:0;background:#f0f2f8;font-family:'Segoe UI',Arial,sans-serif;"">
+<table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background:#f0f2f8;padding:32px 16px;"">
+ <tr><td align=""center"">
+ <table width=""600"" cellpadding=""0"" cellspacing=""0"" style=""max-width:600px;width:100%;background:#fff;border-radius:16px;overflow:hidden;"">
+  <tr><td style=""background:linear-gradient(135deg,#1e1b4b,#312e81,#4338ca);padding:36px 40px 28px;text-align:center;"">
+    <div style=""font-size:28px;font-weight:900;color:#fff;letter-spacing:3px;"">bufins</div>
+    <div style=""font-size:9px;color:rgba(255,255,255,0.6);letter-spacing:2px;text-transform:uppercase;"">Business Finance Always Everywhere</div>
+  </td></tr>
+  <tr><td style=""padding:40px;"">
+    <p style=""font-size:18px;font-weight:600;color:#1e1b4b;margin:0 0 12px;"">{saludo}</p>
+    <p style=""font-size:15px;color:#4b5563;line-height:1.7;margin:0 0 20px;"">{cuerpo}</p>
+    <table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background:#f8f9ff;border-radius:12px;padding:18px 20px;margin:0 0 24px;"">
+      <tr><td>
+        <table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""border-collapse:collapse;"">
+          {Fila(lblEmpresa, empresa)}
+          {Fila(lblNombre, nombreCompleto)}
+          {Fila(lblCelular, telefono)}
+          {Fila(lblUsuario, nombreUsuario)}
+        </table>
+      </td></tr>
+    </table>
+    <table width=""100%"" cellpadding=""0"" cellspacing=""0""><tr><td align=""center"" style=""padding:0 0 24px;"">
+      <a href=""{enlaceLogin}"" style=""display:inline-block;background:linear-gradient(135deg,#4338ca,#6d28d9);color:#fff;text-decoration:none;padding:16px 40px;border-radius:50px;font-size:15px;font-weight:700;"">{btnTxt}</a>
+    </td></tr></table>
+    <div style=""background:#f8f9ff;border-left:4px solid #6366f1;padding:14px 18px;font-size:13px;color:#4b5563;line-height:1.6;margin:16px 0;"">{leyenda}</div>
   </td></tr>
   <tr><td style=""background:#f8f9ff;padding:20px;text-align:center;font-size:12px;color:#9ca3af;border-top:1px solid #e5e7eb;"">
     &copy; Bufins &mdash; Business Finance Always Everywhere

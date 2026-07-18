@@ -1,4 +1,4 @@
-﻿@model dynamic
+﻿﻿@model dynamic
 @using bufinscustomers.Models
 
 @{
@@ -263,18 +263,18 @@ $(document).ready(function () {
     var _filtrados       = [];
     var _paginaActual    = 1;
 
-    var _strTodosUsuarios  = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_TodosUsuarios)';
-    var _strErrorHistorial = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_JS_ErrorHistorial)';
-    var _strMostrando      = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_Mostrando)';
-    var _strDe             = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_De)';
-    var _strBadgeResumen   = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_BadgeResumen)';
-    var _strBadgePregunta  = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_BadgePregunta)';
-    var _strResumenAuto    = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_ResumenAuto)';
-    var _strPreguntaRealiz = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LabelPreguntaRealiz)';
-    var _strTipoRG         = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LabelTipoRG)';
-    var _strTitleRespuesta = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_TitleRespuesta)';
-    var _strVer            = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_ThVer)';
-    var _strError          = '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error)';
+    var _strTodosUsuarios  = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_TodosUsuarios))';
+    var _strErrorHistorial = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_JS_ErrorHistorial))';
+    var _strMostrando      = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_Mostrando))';
+    var _strDe             = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_De))';
+    var _strBadgeResumen   = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_BadgeResumen))';
+    var _strBadgePregunta  = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_BadgePregunta))';
+    var _strResumenAuto    = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_ResumenAuto))';
+    var _strPreguntaRealiz = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LabelPreguntaRealiz))';
+    var _strTipoRG         = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LabelTipoRG))';
+    var _strTitleRespuesta = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_TitleRespuesta))';
+    var _strVer            = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_ThVer))';
+    var _strError          = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error))';
 
     /* ── Carga inicial ── */
     consultarServidor();

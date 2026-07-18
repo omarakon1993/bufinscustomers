@@ -32,7 +32,7 @@ namespace bufinscustomers.Services
             }
         }
 
-        public List<AuditoriaAnalisisIA> ObtenerRegistros(int? idUsuario, int? idEmpresa, DateTime? desde, DateTime? hasta)
+        public List<AuditoriaAnalisisIA> ObtenerRegistros(int? idUsuario, List<int> idsEmpresa, DateTime? desde, DateTime? hasta)
         {
             var lista = new List<AuditoriaAnalisisIA>();
             using (var cn = new SqlConnection(CadenaConexion))
@@ -47,10 +47,18 @@ namespace bufinscustomers.Services
                     sql += " AND IdUsuario = @IdUsuario";
                     cmd.Parameters.AddWithValue("@IdUsuario", idUsuario.Value);
                 }
-                if (idEmpresa.HasValue)
+                if (idsEmpresa != null)
                 {
-                    sql += " AND IdEmpresa = @IdEmpresa";
-                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa.Value);
+                    var nombresParametros = new List<string>();
+                    for (int i = 0; i < idsEmpresa.Count; i++)
+                    {
+                        var nombreParametro = "@IdEmpresa" + i;
+                        nombresParametros.Add(nombreParametro);
+                        cmd.Parameters.AddWithValue(nombreParametro, idsEmpresa[i]);
+                    }
+                    sql += idsEmpresa.Count > 0
+                        ? " AND IdEmpresa IN (" + string.Join(",", nombresParametros) + ")"
+                        : " AND 1 = 0";
                 }
                 if (desde.HasValue)
                 {
@@ -109,7 +117,7 @@ namespace bufinscustomers.Services
             catch { return 0; }
         }
 
-        public List<UsuarioAuditoriaDto> ObtenerUsuariosDeEmpresa(int? idEmpresa)
+        public List<UsuarioAuditoriaDto> ObtenerUsuariosDeEmpresa(List<int> idsEmpresa)
         {
             var lista = new List<UsuarioAuditoriaDto>();
             using (var cn = new SqlConnection(CadenaConexion))
@@ -117,10 +125,18 @@ namespace bufinscustomers.Services
                 var sql = "SELECT DISTINCT IdUsuario, NombreUsuario FROM AuditoriaAnalisisIA WHERE 1=1";
                 var cmd = new SqlCommand();
 
-                if (idEmpresa.HasValue)
+                if (idsEmpresa != null)
                 {
-                    sql += " AND IdEmpresa = @IdEmpresa";
-                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa.Value);
+                    var nombresParametros = new List<string>();
+                    for (int i = 0; i < idsEmpresa.Count; i++)
+                    {
+                        var nombreParametro = "@IdEmpresa" + i;
+                        nombresParametros.Add(nombreParametro);
+                        cmd.Parameters.AddWithValue(nombreParametro, idsEmpresa[i]);
+                    }
+                    sql += idsEmpresa.Count > 0
+                        ? " AND IdEmpresa IN (" + string.Join(",", nombresParametros) + ")"
+                        : " AND 1 = 0";
                 }
 
                 sql += " ORDER BY NombreUsuario";

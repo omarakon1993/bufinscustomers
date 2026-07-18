@@ -3,6 +3,8 @@ using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Web.Mvc;
 
 namespace bufinscustomers.Controllers
@@ -94,6 +96,37 @@ namespace bufinscustomers.Controllers
             }
 
             return RedirectToAction("Index");
+        }
+
+        // Actualiza el Orden de varias opciones a la vez (drag & drop en la pantalla principal del gestor)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult ActualizarOrden(List<int> ids, List<int> ordenes)
+        {
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+                return Json(new { success = false, message = R("Menu_ErrorSinPermiso") });
+
+            if (ids == null || ordenes == null || ids.Count == 0 || ids.Count != ordenes.Count)
+                return Json(new { success = false, message = R("Menu_ErrorActualizarOrden") });
+
+            try
+            {
+                var pares = ids.Zip(ordenes, (id, orden) => (Id: id, Orden: orden)).ToList();
+                bool actualizado = _menuOpcionesService.ActualizarOrden(pares);
+
+                if (actualizado)
+                    UsuarioSesionHelper.InvalidarCachePermisos();
+
+                return Json(new
+                {
+                    success = actualizado,
+                    message = actualizado ? R("Menu_OrdenActualizado") : R("Menu_ErrorActualizarOrden")
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = R("Menu_ErrorActualizarOrden") + ": " + ex.Message });
+            }
         }
 
         [HttpPost]

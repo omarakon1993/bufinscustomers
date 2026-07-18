@@ -39,9 +39,10 @@ namespace bufinscustomers.Controllers
             }
             else
             {
-                // Para usuarios no admin, solo mostrar su empresa
+                // Para usuarios no admin, mostrar su empresa y las de su mismo grupo empresarial
                 var empresas = _service.ObtenerEmpresas();
-                ViewBag.Empresas = empresas.Where(e => e.Id == idEmpresa).ToList();
+                var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
+                ViewBag.Empresas = empresas.Where(e => idsPermitidos.Contains(e.Id)).ToList();
             }
 
             ViewBag.EsAdmin = esAdmin;
@@ -61,10 +62,12 @@ namespace bufinscustomers.Controllers
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
-                // Si no es admin, usar su empresa
+                // Si no es admin, permitir su empresa o una del mismo grupo empresarial
                 if (!esAdmin)
                 {
-                    idEmpresa = usuario?.IdEmpresa;
+                    idEmpresa = (idEmpresa.HasValue && EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa.Value))
+                        ? idEmpresa
+                        : usuario?.IdEmpresa;
                 }
 
                 var anios = _service.ObtenerAñosDisponibles(nombreTabla, idEmpresa);
@@ -88,10 +91,12 @@ namespace bufinscustomers.Controllers
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
-                // Si no es admin, usar su empresa
+                // Si no es admin, permitir su empresa o una del mismo grupo empresarial
                 if (!esAdmin)
                 {
-                    idEmpresa = usuario?.IdEmpresa;
+                    idEmpresa = (idEmpresa.HasValue && EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa.Value))
+                        ? idEmpresa
+                        : usuario?.IdEmpresa;
                 }
 
                 var variables = _service.ObtenerVariablesDisponibles(nombreTabla, idEmpresa);
@@ -117,12 +122,18 @@ namespace bufinscustomers.Controllers
                 var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
                 var idEmpresaUsuario = usuario?.IdEmpresa;
 
-                // Usuarios no-SuperAdmin solo pueden ver su propia empresa
+                // Usuarios no-SuperAdmin pueden ver su propia empresa o una de su mismo grupo empresarial
                 if (!esAdmin)
                 {
-                    if (filtros.IdEmpresa.HasValue && filtros.IdEmpresa != idEmpresaUsuario)
-                        return Json(new { success = false, message = "No tiene permisos para consultar datos de otra empresa" });
-                    filtros.IdEmpresa = idEmpresaUsuario;
+                    if (filtros.IdEmpresa.HasValue)
+                    {
+                        if (!EmpresaAccesoHelper.TieneAcceso(usuario, filtros.IdEmpresa.Value))
+                            return Json(new { success = false, message = "No tiene permisos para consultar datos de otra empresa" });
+                    }
+                    else
+                    {
+                        filtros.IdEmpresa = idEmpresaUsuario;
+                    }
                 }
 
                 // Realizar consulta
@@ -208,12 +219,18 @@ namespace bufinscustomers.Controllers
                 var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
                 var idEmpresaUsuario = usuario?.IdEmpresa;
 
-                // Usuarios no-SuperAdmin solo pueden ver su propia empresa
+                // Usuarios no-SuperAdmin pueden ver su propia empresa o una de su mismo grupo empresarial
                 if (!esAdmin)
                 {
-                    if (filtros.IdEmpresa.HasValue && filtros.IdEmpresa != idEmpresaUsuario)
-                        return Json(new IAConsultaResponse { Exitoso = false, Error = "No tiene permisos para consultar datos de otra empresa." });
-                    filtros.IdEmpresa = idEmpresaUsuario;
+                    if (filtros.IdEmpresa.HasValue)
+                    {
+                        if (!EmpresaAccesoHelper.TieneAcceso(usuario, filtros.IdEmpresa.Value))
+                            return Json(new IAConsultaResponse { Exitoso = false, Error = "No tiene permisos para consultar datos de otra empresa." });
+                    }
+                    else
+                    {
+                        filtros.IdEmpresa = idEmpresaUsuario;
+                    }
                 }
 
                 // Año obligatorio para el análisis IA (reduce el volumen de datos)
@@ -394,12 +411,18 @@ namespace bufinscustomers.Controllers
                 // Usuarios no-SuperAdmin solo pueden exportar su propia empresa
                 if (!esAdmin)
                 {
-                    if (filtros.IdEmpresa.HasValue && filtros.IdEmpresa != idEmpresaUsuario)
+                    if (filtros.IdEmpresa.HasValue)
                     {
-                        TempData["ErrorMessage"] = "No tiene permisos para exportar datos de otra empresa";
-                        return RedirectToAction("InformeTablasDatos");
+                        if (!EmpresaAccesoHelper.TieneAcceso(usuario, filtros.IdEmpresa.Value))
+                        {
+                            TempData["ErrorMessage"] = "No tiene permisos para exportar datos de otra empresa";
+                            return RedirectToAction("InformeTablasDatos");
+                        }
                     }
-                    filtros.IdEmpresa = idEmpresaUsuario;
+                    else
+                    {
+                        filtros.IdEmpresa = idEmpresaUsuario;
+                    }
                 }
 
                 // Obtener datos
@@ -525,12 +548,18 @@ namespace bufinscustomers.Controllers
 
                 if (!esAdmin)
                 {
-                    if (filtros.IdEmpresa.HasValue && filtros.IdEmpresa != idEmpresaUsuario)
+                    if (filtros.IdEmpresa.HasValue)
                     {
-                        TempData["ErrorMessage"] = "No tiene permisos para exportar datos de otra empresa";
-                        return RedirectToAction("InformeTablasDatos");
+                        if (!EmpresaAccesoHelper.TieneAcceso(usuario, filtros.IdEmpresa.Value))
+                        {
+                            TempData["ErrorMessage"] = "No tiene permisos para exportar datos de otra empresa";
+                            return RedirectToAction("InformeTablasDatos");
+                        }
                     }
-                    filtros.IdEmpresa = idEmpresaUsuario;
+                    else
+                    {
+                        filtros.IdEmpresa = idEmpresaUsuario;
+                    }
                 }
 
                 var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaUsuario);

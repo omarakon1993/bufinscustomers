@@ -82,12 +82,14 @@ namespace bufinscustomers.Controllers
 
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
-                reportes = reportes.FindAll(r => r.IdEmpresa == usuario.IdEmpresa);
+                var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
+                reportes = reportes.FindAll(r => idsPermitidos.Contains(r.IdEmpresa));
+                ViewBag.Empresas = _reportesService.ObtenerEmpresas().FindAll(e => idsPermitidos.Contains(e.Id));
             }
-
-            ViewBag.Empresas = UsuarioSesionHelper.EsSuperAdmin()
-                ? _reportesService.ObtenerEmpresas()
-                : _reportesService.ObtenerEmpresas().FindAll(e => e.Id == usuario.IdEmpresa);
+            else
+            {
+                ViewBag.Empresas = _reportesService.ObtenerEmpresas();
+            }
 
             return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
         }
@@ -97,7 +99,7 @@ namespace bufinscustomers.Controllers
         public ActionResult CrearReporte(Reportes reporte)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            if (!UsuarioSesionHelper.EsSuperAdmin() && reporte.IdEmpresa != usuario.IdEmpresa)
+            if (!EmpresaAccesoHelper.TieneAcceso(usuario, reporte.IdEmpresa))
             {
                 TempData["ErrorMessage"] = "No tiene permisos para crear reportes en otra empresa.";
                 return RedirectToAction("MaestroReportes");
@@ -135,7 +137,7 @@ namespace bufinscustomers.Controllers
         public ActionResult EditarReporte(Reportes reporte)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            if (!UsuarioSesionHelper.EsSuperAdmin() && reporte.IdEmpresa != usuario.IdEmpresa)
+            if (!EmpresaAccesoHelper.TieneAcceso(usuario, reporte.IdEmpresa))
             {
                 TempData["ErrorMessage"] = "No tiene permisos para editar reportes de otra empresa.";
                 return RedirectToAction("MaestroReportes");
@@ -174,7 +176,7 @@ namespace bufinscustomers.Controllers
             {
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 var reporte = _reportesService.ObtenerReportes().Find(r => r.Id == idReporte);
-                if (reporte != null && reporte.IdEmpresa != usuario.IdEmpresa)
+                if (reporte != null && !EmpresaAccesoHelper.TieneAcceso(usuario, reporte.IdEmpresa))
                 {
                     TempData["ErrorMessage"] = "No tiene permisos para eliminar reportes de otra empresa.";
                     return RedirectToAction("MaestroReportes");
@@ -241,8 +243,20 @@ namespace bufinscustomers.Controllers
                 }
                 else
                 {
-                    cmd = new SqlCommand("SELECT EmpId, EmpNombre FROM dbo.Empresas WHERE EmpId = @IdEmpresa", conn);
-                    cmd.Parameters.AddWithValue("@IdEmpresa", usuario.IdEmpresa);
+                    // Empresa propia y las de su mismo grupo empresarial (solo consulta)
+                    var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
+                    var nombresParametros = new List<string>();
+                    cmd = new SqlCommand();
+                    for (int i = 0; i < idsPermitidos.Count; i++)
+                    {
+                        var nombreParametro = "@IdEmpresa" + i;
+                        nombresParametros.Add(nombreParametro);
+                        cmd.Parameters.AddWithValue(nombreParametro, idsPermitidos[i]);
+                    }
+                    cmd.CommandText = idsPermitidos.Count > 0
+                        ? "SELECT EmpId, EmpNombre FROM dbo.Empresas WHERE EmpId IN (" + string.Join(",", nombresParametros) + ")"
+                        : "SELECT EmpId, EmpNombre FROM dbo.Empresas WHERE 1 = 0";
+                    cmd.Connection = conn;
                 }
 
                 conn.Open();
@@ -318,8 +332,19 @@ namespace bufinscustomers.Controllers
                 }
                 else
                 {
-                    cmd = new SqlCommand("SELECT Id, Nombre FROM dbo.Reportes WHERE IdEmpresa = @IdEmpresa ORDER BY Nombre", conn);
-                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                    var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
+                    var nombresParametros = new List<string>();
+                    cmd = new SqlCommand();
+                    for (int i = 0; i < idsPermitidos.Count; i++)
+                    {
+                        var nombreParametro = "@IdEmpresa" + i;
+                        nombresParametros.Add(nombreParametro);
+                        cmd.Parameters.AddWithValue(nombreParametro, idsPermitidos[i]);
+                    }
+                    cmd.CommandText = idsPermitidos.Count > 0
+                        ? "SELECT Id, Nombre FROM dbo.Reportes WHERE IdEmpresa IN (" + string.Join(",", nombresParametros) + ") ORDER BY Nombre"
+                        : "SELECT Id, Nombre FROM dbo.Reportes WHERE 1 = 0";
+                    cmd.Connection = conn;
                 }
 
                 using (var reader = cmd.ExecuteReader())
@@ -380,8 +405,32 @@ namespace bufinscustomers.Controllers
 
                 if (!esAdmin)
                 {
-                    query += " AND IdEmpresa = @idEmpresa";
-                    parametros.Add(new SqlParameter("@idEmpresa", idEmpresa));
+                    // Restringe siempre a las empresas permitidas (propia + mismo grupo empresarial),
+                    // sin importar lo que venga en "empresa" — evita fuga hacia otra empresa por tampering.
+                    var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
+                    if (idsPermitidos.Count > 0)
+                    {
+                        var nombresParametros = new List<string>();
+                        for (int i = 0; i < idsPermitidos.Count; i++)
+                        {
+                            var nombreParametro = "@idEmpresa" + i;
+                            nombresParametros.Add(nombreParametro);
+                            parametros.Add(new SqlParameter(nombreParametro, idsPermitidos[i]));
+                        }
+                        query += " AND IdEmpresa IN (" + string.Join(",", nombresParametros) + ")";
+                    }
+                    else
+                    {
+                        query += " AND 1 = 0";
+                    }
+
+                    // Si el usuario tiene más de una empresa disponible (mismo grupo) y eligió una
+                    // en el selector, se acota a esa; si no seleccionó ninguna, se ven todas las suyas.
+                    if (!string.IsNullOrEmpty(empresa))
+                    {
+                        query += " AND EmpNombre = @empresaNombre";
+                        parametros.Add(new SqlParameter("@empresaNombre", empresa));
+                    }
                 }
                 else if (!string.IsNullOrEmpty(empresa))
                 {
@@ -438,7 +487,7 @@ namespace bufinscustomers.Controllers
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
                 var usuario = UsuarioSesionHelper.UsuarioActual;
-                if (idEmpresaReporte != usuario.IdEmpresa)
+                if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresaReporte))
                 {
                     return Json(new { enlace = "", error = "No tiene permisos para ver este reporte" }, JsonRequestBehavior.AllowGet);
                 }

@@ -1,4 +1,4 @@
-﻿@model dynamic
+﻿﻿@model dynamic
 @using bufinscustomers.Models
 
 @{
@@ -218,22 +218,22 @@
 @section scripts {
     <script>
         var _tablasMsg = {
-            errorAnios:        '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios)',
-            errorVariables:    '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios)',
-            errorConexion:     '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios)',
+            errorAnios:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios))',
+            errorVariables:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios))',
+            errorConexion:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios))',
             tablaRequerida:    '@Resources.Strings.Common_JS_TablaRequerida',
-            tablaSeleccionar:  '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios)',
+            tablaSeleccionar:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios))',
             empresaRequerida:  '@Resources.Strings.Common_JS_EmpresaRequerida',
-            empresaSeleccionar:'@HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios)',
+            empresaSeleccionar:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios))',
             sinDatos:          '@Resources.Strings.Common_JS_SinDatos',
-            sinDatosExportar:  '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios)',
+            sinDatosExportar:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios))',
             exportando:        '@Resources.Strings.Common_JS_ExportandoExcel',
-            generandoExcel:    '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios)',
+            generandoExcel:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios))',
             todos:             '@Resources.Strings.Common_Todos',
             todas:             '@Resources.Strings.Common_Todas',
             registrosPag:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag))',
-            noResultados:      '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios)',
-            buscando:          '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios)',
+            noResultados:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios))',
+            buscando:          '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Tablas_JS_ErrorAnios))',
             error:             '@Resources.Strings.Common_Error'
         };
 

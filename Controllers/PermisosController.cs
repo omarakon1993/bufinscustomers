@@ -48,10 +48,12 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Usuarios", "Usuario");
             }
 
-            // Admin 1 solo puede gestionar usuarios de su misma empresa
+            // Admin 1 puede gestionar usuarios de su empresa o de su mismo grupo empresarial
             if (UsuarioSesionHelper.EsAdminEmpresa())
             {
-                if (usuario.IdEmpresa != usuarioActual.IdEmpresa)
+                bool tieneAcceso = usuario.IdEmpresa.HasValue
+                    && EmpresaAccesoHelper.TieneAcceso(usuarioActual, usuario.IdEmpresa.Value);
+                if (!tieneAcceso)
                 {
                     SetErrorMessage("No tienes permisos para gestionar opciones de usuarios de otras empresas.");
                     return RedirectToAction("Usuarios", "Usuario");
@@ -131,10 +133,12 @@ namespace bufinscustomers.Controllers
                     return Json(new { success = false, message = "No se pueden modificar permisos de Super Administradores." });
                 }
 
-                // Admin 1 solo puede gestionar usuarios de su empresa
+                // Admin 1 puede gestionar usuarios de su empresa o de su mismo grupo empresarial
                 if (UsuarioSesionHelper.EsAdminEmpresa())
                 {
-                    if (usuarioTarget.IdEmpresa != usuarioActual.IdEmpresa)
+                    bool tieneAcceso = usuarioTarget.IdEmpresa.HasValue
+                        && EmpresaAccesoHelper.TieneAcceso(usuarioActual, usuarioTarget.IdEmpresa.Value);
+                    if (!tieneAcceso)
                     {
                         return Json(new { success = false, message = "No tienes permisos para gestionar usuarios de otras empresas." });
                     }

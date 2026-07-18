@@ -214,17 +214,17 @@
         urlExportarIndividual:'@Url.Action("ExportarModeloIndividual", "Datos")',
         token: $('input[name="__RequestVerificationToken"]').val(),
         textos: {
-            ejecutando:       '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_Ejecutando)',
-            exportandoTodos:  '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_ExportandoTodos)',
-            exportandoUno:    '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_BtnExportarModelo)',
-            registros:        '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Registros)',
-            btnEjecutar:      '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_BtnEjecutar)',
-            exito:              '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Exito)',
-            error:              '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error)',
-            aceptar:            '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Aceptar)',
-            erroresExportacion: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_ErroresExportacion)',
-            descargarLog:       '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_DescargarLog)',
-            cerrar:             '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_Cerrar)'
+            ejecutando:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_Ejecutando))',
+            exportandoTodos:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_ExportandoTodos))',
+            exportandoUno:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_BtnExportarModelo))',
+            registros:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Registros))',
+            btnEjecutar:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_BtnEjecutar))',
+            exito:              '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Exito))',
+            error:              '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error))',
+            aceptar:            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Aceptar))',
+            erroresExportacion: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_ErroresExportacion))',
+            descargarLog:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_DescargarLog))',
+            cerrar:             '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_Cerrar))'
         }
     };
 

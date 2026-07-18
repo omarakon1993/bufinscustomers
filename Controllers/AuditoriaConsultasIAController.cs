@@ -2,6 +2,7 @@ using bufinscustomers.Helpers;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
 
@@ -37,22 +38,22 @@ namespace bufinscustomers.Controllers
             var esSuperAdmin   = UsuarioSesionHelper.EsSuperAdmin();
             var esAdminEmpresa = UsuarioSesionHelper.EsAdminEmpresa();
 
-            int? filtroIdEmpresa = null;
+            List<int> filtroIdsEmpresa = null;
             int? filtroIdUsuario = null;
 
             if (!esSuperAdmin && !esAdminEmpresa)
             {
                 filtroIdUsuario = usuario.Id;
-                filtroIdEmpresa = usuario.IdEmpresa;
+                filtroIdsEmpresa = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
             }
             else if (!esSuperAdmin)
             {
-                filtroIdEmpresa = usuario.IdEmpresa;
+                filtroIdsEmpresa = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
                 if (idUsuario.HasValue) filtroIdUsuario = idUsuario;
             }
             else
             {
-                if (idEmpresa.HasValue) filtroIdEmpresa = idEmpresa;
+                if (idEmpresa.HasValue) filtroIdsEmpresa = new List<int> { idEmpresa.Value };
                 if (idUsuario.HasValue) filtroIdUsuario = idUsuario;
             }
 
@@ -61,7 +62,7 @@ namespace bufinscustomers.Controllers
             if (!string.IsNullOrWhiteSpace(hasta) && DateTime.TryParse(hasta, out var h)) fechaHasta = h;
 
             var registros = new AuditoriaAnalisisIAService()
-                .ObtenerRegistros(filtroIdUsuario, filtroIdEmpresa, fechaDesde, fechaHasta);
+                .ObtenerRegistros(filtroIdUsuario, filtroIdsEmpresa, fechaDesde, fechaHasta);
 
             return Json(registros.Select(r => new
             {
@@ -83,10 +84,12 @@ namespace bufinscustomers.Controllers
             var usuario      = UsuarioSesionHelper.UsuarioActual;
             var esSuperAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
-            int? filtroIdEmpresa = esSuperAdmin ? idEmpresa : usuario.IdEmpresa;
+            List<int> filtroIdsEmpresa = esSuperAdmin
+                ? (idEmpresa.HasValue ? new List<int> { idEmpresa.Value } : null)
+                : (EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>());
 
             var usuarios = new AuditoriaAnalisisIAService()
-                .ObtenerUsuariosDeEmpresa(filtroIdEmpresa);
+                .ObtenerUsuariosDeEmpresa(filtroIdsEmpresa);
 
             return Json(usuarios, JsonRequestBehavior.AllowGet);
         }

@@ -170,6 +170,7 @@
     <Compile Include="Controllers\ModelosEjecucionController.cs" />
     <Compile Include="Controllers\ConfiguracionGlobalIAController.cs" />
     <Compile Include="Controllers\GestorPromptsController.cs" />
+    <Compile Include="Controllers\GruposEmpresarialesController.cs" />
     <Compile Include="Controllers\HistorialVersionesCarguesController.cs" />
     <Compile Include="Controllers\TablaPUCController.cs" />
     <Compile Include="Controllers\GestorCategoriasController.cs" />
@@ -195,6 +196,8 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Helpers\UsuarioSesionHelper.cs" />
+    <Compile Include="Helpers\EmpresaCacheHelper.cs" />
+    <Compile Include="Helpers\EmpresaAccesoHelper.cs" />
     <Compile Include="Models\AuditoriaCargues.cs" />
     <Compile Include="Models\HistorialVersionesCarguesModels.cs" />
     <Compile Include="Models\ConfigAjuste1.cs" />
@@ -208,6 +211,7 @@
     <Compile Include="Models\ConfiguracionEmpresa.cs" />
     <Compile Include="Controllers\ConfiguracionEmpresaController.cs" />
     <Compile Include="Models\Empresas.cs" />
+    <Compile Include="Models\GrupoEmpresarial.cs" />
     <Compile Include="Models\ModeloEjecucion.cs" />
     <Compile Include="Models\ImagenUsuario.cs" />
     <Compile Include="Models\CargueExcelModels.cs" />
@@ -251,6 +255,7 @@
     <Compile Include="Services\IAService.cs" />
     <Compile Include="Services\AuditoriaAnalisisIAService.cs" />
     <Compile Include="Services\GestorPromptsService.cs" />
+    <Compile Include="Services\GrupoEmpresarialService.cs" />
     <Compile Include="Services\IndicadoresFinancierosService.cs" />
     <Compile Include="Services\NotificacionesService.cs" />
     <Compile Include="Services\HistorialVersionesCarguesService.cs" />
@@ -6226,6 +6231,8 @@
     <Content Include="Views\Configuracion\ModelosEjecucion.cshtml" />
     <Content Include="Views\Configuracion\ConfiguracionGlobalIA.cshtml" />
     <Content Include="Views\Configuracion\GestorPrompts.cshtml" />
+    <Content Include="Views\Configuracion\GruposEmpresariales.cshtml" />
+    <Content Include="Views\Configuracion\GestionarGrupoEmpresas.cshtml" />
     <Content Include="Views\Configuracion\Widgets.cshtml" />
     <Content Include="Views\Configuracion\GestorCategorias.cshtml" />
     <Content Include="Views\Configuracion\GestorGrupos.cshtml" />

@@ -1,4 +1,4 @@
-﻿@model dynamic
+﻿﻿@model dynamic
 @using bufinscustomers.Models
 
 @{
@@ -225,42 +225,42 @@
 
 <script>
     var _iaMsg = {
-        seleccione:         '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
+        seleccione:         '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
         todos:              '@Resources.Strings.Common_Todos',
         todas:              '@Resources.Strings.Common_Todas',
         tablaRequerida:     '@Resources.Strings.Common_JS_TablaRequerida',
-        tablaSeleccionar:   '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
+        tablaSeleccionar:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
         empresaRequerida:   '@Resources.Strings.Common_JS_EmpresaRequerida',
-        empresaSeleccionar: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
+        empresaSeleccionar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
         anioRequerido:      '@Resources.Strings.IA_JS_AnioRequerido',
-        anioSeleccionar:    '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
+        anioSeleccionar:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
         preguntaVacia:      '@Resources.Strings.IA_JS_PreguntaVacia',
-        preguntaEscribir:   '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
+        preguntaEscribir:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
         asistenteError:     '@Resources.Strings.IA_JS_AsistenteError',
         conexionError:      '@Resources.Strings.IA_JS_ConexionError',
-        servicioIA:         '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
+        servicioIA:         '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
         preguntaLabel:      '@Resources.Strings.IA_JS_PreguntaLabel',
-        generandoPDF:       '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
-        errorPDF:           '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
-        filasInfo:          '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
-        noResultados:       '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
-        buscando:           '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
+        generandoPDF:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
+        errorPDF:           '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
+        filasInfo:          '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
+        noResultados:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
+        buscando:           '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
         error:              '@Resources.Strings.Common_Error',
-        pdfTitle:           '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
-        pdfSubtitle:        '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
-        pdfFiltros:         '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
-        pdfFooter:          '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
+        pdfTitle:           '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
+        pdfSubtitle:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
+        pdfFiltros:         '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
+        pdfFooter:          '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
         labelTabla:         '@Resources.Strings.Common_LabelTabla',
         labelEmpresa:       '@Resources.Strings.Common_LabelEmpresa',
-        labelAnio:          '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
+        labelAnio:          '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
         labelMes:           '@Resources.Strings.Common_LabelMes',
         labelVariable:      '@Resources.Strings.Common_LabelVariable',
-        btnExportarPDF:     '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
+        btnExportarPDF:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
         mesTextoTodos:      '@Resources.Strings.Common_Todos',
-        respuestaHeader:    '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
+        respuestaHeader:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
         preguntaLarga:      '@Resources.Strings.IA_JS_PreguntaLarga',
-        preguntaLargaTexto: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
-        btnExcelConIA:      '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione)',
+        preguntaLargaTexto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
+        btnExcelConIA:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))',
     };
 
     // Global so exportarExcelConIA() (outside document.ready) can read it

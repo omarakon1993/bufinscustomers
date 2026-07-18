@@ -1,4 +1,4 @@
-﻿@using bufinscustomers.Models
+﻿﻿@using bufinscustomers.Models
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -399,6 +399,12 @@
                                             <a href="@Url.Action("Gestionar", "Permisos", new { id = usuario.Id })" class="btn btn-sm btn-primary" title="@Resources.Strings.Usr_TitlePermisos">
                                                 <i class="fas fa-shield-alt"></i>
                                             </a>
+                                        }
+                                        @if (ViewBag.PuedeEditar == true)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-primary" title="@Resources.Strings.Usr_TitleEnviarInfoCorreo" onclick="enviarInfoCorreo(@usuario.Id, this)">
+                                                <i class="fas fa-paper-plane"></i>
+                                            </button>
                                         }
                                     </div>
                                 </td>
@@ -1007,14 +1013,14 @@
     @section scripts {
         <script>
             var _usrMsg = {
-                camposReq: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_CamposReq)',
-                archivoGrande: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_CamposReq)',
-                pwdMostrar: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_PwdMostrar)',
-                pwdOcultar: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_PwdOcultar)',
-                rolCambioTitulo: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_RolCambioTitulo)',
-                rolCambioTexto: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_RolCambioTexto)',
-                rolCambioConfirmar: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_RolCambioConfirmar)',
-                rolCambioCancelar: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_RolCambioCancelar)'
+                camposReq: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_CamposReq))',
+                archivoGrande: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_CamposReq))',
+                pwdMostrar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_PwdMostrar))',
+                pwdOcultar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_PwdOcultar))',
+                rolCambioTitulo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_RolCambioTitulo))',
+                rolCambioTexto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_RolCambioTexto))',
+                rolCambioConfirmar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_RolCambioConfirmar))',
+                rolCambioCancelar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_JS_RolCambioCancelar))'
             };
 
             // Aviso inline al cambiar el rol en el modal de edición
@@ -1072,6 +1078,67 @@
 
             function setIdUsuario(id) {
                 document.getElementById("idUsuario").value = id;
+            }
+
+            var _correoMsg = {
+                confirmar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_ConfirmEnviarInfoCorreo))',
+                cancelar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel))',
+                enviar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_BtnEnviarInfoCorreo))',
+                errorGenerico: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_ErrorInfoCorreo))'
+            };
+
+            function enviarInfoCorreo(idUsuario, btn) {
+                Swal.fire({
+                    icon: 'question',
+                    text: _correoMsg.confirmar,
+                    showCancelButton: true,
+                    cancelButtonText: _correoMsg.cancelar,
+                    confirmButtonText: _correoMsg.enviar,
+                    confirmButtonColor: '#583AFF'
+                }).then(function (result) {
+                    if (!result.isConfirmed) return;
+
+                    var icono = btn.querySelector('i');
+                    btn.disabled = true;
+                    icono.className = 'fas fa-spinner fa-spin';
+
+                    $.ajax({
+                        url: '@Url.Action("EnviarInfoCorreo", "Usuario")',
+                        type: 'POST',
+                        data: {
+                            idUsuario: idUsuario,
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val()
+                        },
+                        success: function (response) {
+                            var isMobile = window.innerWidth <= 768;
+                            Swal.fire({
+                                toast: true,
+                                position: isMobile ? 'top' : 'top-end',
+                                icon: response.success ? 'success' : 'error',
+                                title: response.message,
+                                showConfirmButton: false,
+                                timer: 3500,
+                                timerProgressBar: true
+                            });
+                        },
+                        error: function () {
+                            var isMobile = window.innerWidth <= 768;
+                            Swal.fire({
+                                toast: true,
+                                position: isMobile ? 'top' : 'top-end',
+                                icon: 'error',
+                                title: _correoMsg.errorGenerico,
+                                showConfirmButton: false,
+                                timer: 3500,
+                                timerProgressBar: true
+                            });
+                        },
+                        complete: function () {
+                            btn.disabled = false;
+                            icono.className = 'fas fa-paper-plane';
+                        }
+                    });
+                });
             }
 
             // ── Generación automática (no editable) del nombre de usuario ──

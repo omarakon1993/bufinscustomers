@@ -65,11 +65,18 @@
         /* Anchos de columna */
         .table-compact .col-id { width: 5%; text-align: center; }
         .table-compact .col-abreviatura { width: 10%; text-align: center; }
-        .table-compact .col-nombre { width: 17%; }
-        .table-compact .col-nit { width: 12%; }
-        .table-compact .col-direccion { width: 15%; }
-        .table-compact .col-telefono { width: 10%; }
-        .table-compact .col-correo { width: 19%; }
+        .table-compact .col-nombre { width: 15%; }
+        .table-compact .col-nit { width: 10%; }
+        .table-compact .col-direccion { width: 13%; }
+        .table-compact .col-telefono { width: 9%; }
+        .table-compact .col-correo { width: 16%; }
+        .table-compact .col-grupo {
+            width: 14%;
+            text-align: center;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+        }
         .table-compact .col-acciones { width: 12%; text-align: center; white-space: nowrap; }
 
         /* === BOTONES DE ACCIONES === */
@@ -132,6 +139,7 @@
                             <th class="col-direccion">@Resources.Strings.Emp_ThDireccion</th>
                             <th class="col-telefono">@Resources.Strings.Emp_ThTelefono</th>
                             <th class="col-correo">@Resources.Strings.Emp_ThCorreo</th>
+                            <th class="col-grupo">@Resources.Strings.Emp_ThGrupo</th>
                             <th class="col-acciones">@Resources.Strings.Common_ThAcciones</th>
                         </tr>
                     </thead>
@@ -151,6 +159,18 @@
                                 <td class="col-direccion" title="@empresa.Direccion">@empresa.Direccion</td>
                                 <td class="col-telefono">@empresa.Telefono</td>
                                 <td class="col-correo" title="@empresa.Correo">@empresa.Correo</td>
+                                <td class="col-grupo">
+                                    @if (!string.IsNullOrEmpty(empresa.NombreGrupoEmpresarial))
+                                    {
+                                        <span style="background:#f0edff;color:#583AFF;padding:0.15rem 0.55rem;border-radius:9999px;font-size:0.72rem;font-weight:600;" title="@empresa.NombreGrupoEmpresarial">
+                                            <i class="fas fa-sitemap mr-1"></i>@empresa.NombreGrupoEmpresarial
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
                                 <td class="col-acciones">
                                     <div class="btn-group" role="group" aria-label="@Resources.Strings.Common_ThAcciones">
                                         <button type="button" class="btn btn-sm btn-primary" title="@Resources.Strings.Emp_TitleEditar" data-toggle="modal" data-target="#editEmpresaModal"

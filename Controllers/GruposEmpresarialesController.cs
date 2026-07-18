@@ -1,0 +1,180 @@
+using bufinscustomers.Helpers;
+using bufinscustomers.Models;
+using bufinscustomers.Permisos;
+using bufinscustomers.Services;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web.Mvc;
+
+namespace bufinscustomers.Controllers
+{
+    // Gestión de grupos empresariales y asignación de empresas — Super Admin únicamente.
+    // Solo controla a qué grupo pertenece cada empresa; el acceso de lectura que ese
+    // grupo habilita entre empresas hermanas se resuelve en EmpresaAccesoHelper.
+    [ValidarSesion]
+    public class GruposEmpresarialesController : BaseController
+    {
+        private readonly GrupoEmpresarialService _service = new GrupoEmpresarialService();
+        private readonly EmpresaService _empresaService = new EmpresaService();
+
+        public ActionResult Index()
+        {
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+                return RedirectToAction("Index", "Home");
+
+            var grupos = _service.ObtenerTodos();
+            return View("~/Views/Configuracion/GruposEmpresariales.cshtml", grupos);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Crear(GrupoEmpresarial grupo)
+        {
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+                return RedirectToAction("Index", "Home");
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(grupo.Nombre))
+                {
+                    SetErrorMessage(R("Grupo_ErrorNombreObligatorio"));
+                    return RedirectToAction("Index");
+                }
+
+                bool ok = _service.Crear(grupo);
+                if (ok)
+                {
+                    SetSuccessMessage(R("Grupo_MensajeCreado"));
+                    new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_GrupoCreado"), grupo.Nombre, "success");
+                }
+                else
+                    SetErrorMessage(R("Grupo_ErrorCrear"));
+            }
+            catch (Exception ex)
+            {
+                SetErrorMessage(R("Grupo_ErrorCrear") + ": " + ex.Message);
+            }
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Editar(GrupoEmpresarial grupo)
+        {
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+                return RedirectToAction("Index", "Home");
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(grupo.Nombre))
+                {
+                    SetErrorMessage(R("Grupo_ErrorNombreObligatorio"));
+                    return RedirectToAction("Index");
+                }
+
+                bool ok = _service.Editar(grupo);
+                if (ok)
+                    SetSuccessMessage(R("Grupo_MensajeEditado"));
+                else
+                    SetErrorMessage(R("Grupo_ErrorEditar"));
+            }
+            catch (Exception ex)
+            {
+                SetErrorMessage(R("Grupo_ErrorEditar") + ": " + ex.Message);
+            }
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Eliminar(int id)
+        {
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+                return RedirectToAction("Index", "Home");
+
+            try
+            {
+                var grupo = _service.ObtenerPorId(id);
+                bool ok = _service.Eliminar(id);
+                if (ok)
+                {
+                    SetSuccessMessage(R("Grupo_MensajeEliminado"));
+                    new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_GrupoEliminado"), grupo?.Nombre, "warning");
+                }
+                else
+                    SetErrorMessage(R("Grupo_ErrorEliminar"));
+            }
+            catch (Exception ex)
+            {
+                SetErrorMessage(R("Grupo_ErrorEliminar") + ": " + ex.Message);
+            }
+
+            return RedirectToAction("Index");
+        }
+
+        // Pantalla de checkboxes para asignar empresas al grupo.
+        public ActionResult Gestionar(int id)
+        {
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+                return RedirectToAction("Index", "Home");
+
+            var grupo = _service.ObtenerPorId(id);
+            if (grupo == null)
+            {
+                SetErrorMessage(R("Grupo_ErrorNoEncontrado"));
+                return RedirectToAction("Index");
+            }
+
+            var todasLasEmpresas = _empresaService.ObtenerEmpresas();
+            var empresasSeleccionables = todasLasEmpresas.Select(e => new EmpresaSeleccionableViewModel
+            {
+                Id = e.Id,
+                Nombre = e.Nombre,
+                Abreviatura = e.Abreviatura,
+                Seleccionada = e.IdGrupoEmpresarial == id,
+                NombreOtroGrupo = (e.IdGrupoEmpresarial.HasValue && e.IdGrupoEmpresarial != id) ? e.NombreGrupoEmpresarial : null
+            }).OrderBy(e => e.Nombre).ToList();
+
+            var viewModel = new GestionarGrupoEmpresasViewModel
+            {
+                Grupo = grupo,
+                Empresas = empresasSeleccionables
+            };
+
+            return View("~/Views/Configuracion/GestionarGrupoEmpresas.cshtml", viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult GuardarEmpresas(int idGrupo, List<int> idsEmpresas)
+        {
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+                return Json(new { success = false, message = R("Grupo_ErrorNoPermisos") });
+
+            try
+            {
+                var grupo = _service.ObtenerPorId(idGrupo);
+                if (grupo == null)
+                    return Json(new { success = false, message = R("Grupo_ErrorNoEncontrado") });
+
+                idsEmpresas = idsEmpresas ?? new List<int>();
+
+                bool ok = _service.AsignarEmpresas(idGrupo, idsEmpresas);
+                if (ok)
+                {
+                    new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_GrupoEmpresasActualizadas"), grupo.Nombre, "success");
+                    return Json(new { success = true, message = R("Grupo_MensajeEmpresasAsignadas") });
+                }
+
+                return Json(new { success = false, message = R("Grupo_ErrorAsignarEmpresas") });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = R("Grupo_ErrorAsignarEmpresas") + ": " + ex.Message });
+            }
+        }
+    }
+}

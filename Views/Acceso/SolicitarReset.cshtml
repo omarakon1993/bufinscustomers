@@ -127,7 +127,7 @@
 
                     <script>
                         var _resetMsg = {
-                            errorEmail: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_ErrorEmail)'
+                            errorEmail: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_ErrorEmail))'
                         };
 
                         function enviarReset() {
@@ -161,7 +161,7 @@
                                 toast: true,
                                 position: window.innerWidth <= 768 ? 'top' : 'top-end',
                                 icon: 'warning',
-                                title: '@HttpUtility.JavaScriptStringEncode(ViewData["Error"].ToString())',
+                                title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(ViewData["Error"].ToString()))',
                                 showConfirmButton: false,
                                 timer: 5000,
                                 timerProgressBar: true

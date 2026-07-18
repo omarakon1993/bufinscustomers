@@ -39,7 +39,49 @@ namespace bufinscustomers.Services
                 }
             }
 
+            AsignarGrupoEmpresarial(empresas);
+
             return empresas.OrderBy(e => e.Id).ToList();
+        }
+
+        /// <summary>
+        /// sp_ObtenerEmpresas no conoce la columna IdGrupoEmpresarial (agregada después a la
+        /// tabla Empresas), así que el grupo se completa con una consulta inline separada
+        /// en vez de modificar el stored procedure existente.
+        /// </summary>
+        private void AsignarGrupoEmpresarial(List<Empresas> empresas)
+        {
+            if (empresas.Count == 0) return;
+
+            var grupos = new Dictionary<int, (int? IdGrupo, string NombreGrupo)>();
+
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
+            {
+                SqlCommand cmd = new SqlCommand(
+                    @"SELECT e.EmpId AS Id, e.IdGrupoEmpresarial, g.Nombre AS NombreGrupo
+                      FROM Empresas e
+                      LEFT JOIN GruposEmpresariales g ON g.Id = e.IdGrupoEmpresarial", cn);
+                cn.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        int id = (int)reader["Id"];
+                        int? idGrupo = reader["IdGrupoEmpresarial"] == DBNull.Value ? (int?)null : (int)reader["IdGrupoEmpresarial"];
+                        string nombreGrupo = reader["NombreGrupo"] == DBNull.Value ? null : (string)reader["NombreGrupo"];
+                        grupos[id] = (idGrupo, nombreGrupo);
+                    }
+                }
+            }
+
+            foreach (var empresa in empresas)
+            {
+                if (grupos.TryGetValue(empresa.Id, out var info))
+                {
+                    empresa.IdGrupoEmpresarial = info.IdGrupo;
+                    empresa.NombreGrupoEmpresarial = info.NombreGrupo;
+                }
+            }
         }
 
         // Crear empresa

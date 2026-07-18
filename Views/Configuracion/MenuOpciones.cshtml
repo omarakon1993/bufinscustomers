@@ -1,4 +1,4 @@
-﻿@model IEnumerable<bufinscustomers.Models.MenuOpciones>
+﻿﻿@model IEnumerable<bufinscustomers.Models.MenuOpciones>
 @using bufinscustomers.Helpers
 @using System.Web.Script.Serialization
 
@@ -29,6 +29,18 @@
 
     var gruposJson     = jss.Serialize(grupos.Select(g     => new { g.Id, g.Nombre, g.Icono, g.IdCategoria, g.NombreCategoria }));
     var categoriasJson = jss.Serialize(categorias.Select(c => new { c.Id, c.Nombre }));
+
+    // Paleta de colores por categoría — ayuda a identificar visualmente a qué categoría/grupo
+    // pertenece cada fila y dónde son válidos los arrastres para reordenar.
+    var paletaColores = new[] { "#583AFF", "#01E1D7", "#F59E0B", "#EC4899", "#10B981", "#3B82F6", "#8B5CF6", "#EF4444", "#14B8A6", "#F97316" };
+    var categoriasOrdenadas = categorias.OrderBy(c => c.Orden).ToList();
+    var catColores = new Dictionary<int, string>();
+    for (int i = 0; i < categoriasOrdenadas.Count; i++)
+    {
+        catColores[categoriasOrdenadas[i].Id] = paletaColores[i % paletaColores.Length];
+    }
+
+    Func<int?, string> ColorCategoria = idCat => (idCat.HasValue && catColores.ContainsKey(idCat.Value)) ? catColores[idCat.Value] : "#9ca3af";
 }
 
 @if (!string.IsNullOrEmpty(successMsg))
@@ -57,7 +69,8 @@
     .table-compact thead th { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; color: #fff; padding: 0.5rem 0.4rem; white-space: nowrap; border-bottom: 2px solid #dee2e6; background: var(--content-gradient); position: sticky; top: 0; z-index: 1; }
     .table-compact tbody td { font-size: 0.8rem; padding: 0.35rem 0.4rem; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .table-compact tbody tr:hover { background-color: #f0edff; }
-    .table-compact .col-codigo    { width: 15%; }
+    .table-compact .col-handle    { width: 3%;  text-align: center; cursor: grab; color: #9ca3af; }
+    .table-compact .col-codigo    { width: 12%; }
     .table-compact .col-nombre    { width: 11%; }
     .table-compact .col-nombre-en { width: 11%; }
     .table-compact .col-categoria { width: 10%; }
@@ -76,6 +89,14 @@
     .check-dest-icon { font-size:1rem;background:linear-gradient(135deg,#583AFF,#01E1D7);-webkit-background-clip:text;-webkit-text-fill-color:transparent }
     .btn-group { gap: 0.25rem; }
     .btn-group .btn { padding: 0.2rem 0.45rem; font-size: 0.75rem; border-radius: 0.25rem; }
+    #tablaMenuOpciones tbody tr[draggable="true"] { transition: background-color .15s, opacity .15s; }
+    #tablaMenuOpciones tbody tr.dragging-row { opacity: 0.4; }
+    #tablaMenuOpciones tbody tr.drag-over-row { background-color: #ede9ff; }
+    .cat-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0 0 .6rem; }
+    .cat-legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; color: #4b5563; font-weight: 500; }
+    .cat-legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .cat-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; color: #fff; white-space: nowrap; }
+    .grupo-badge { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; background: #fff; white-space: nowrap; }
 </style>
 
 <div class="powerbi-header">
@@ -85,12 +106,22 @@
     </div>
 </div>
 
+<p class="text-muted small mb-2"><i class="fas fa-arrows-alt mr-1"></i>@Resources.Strings.Menu_HintArrastrar</p>
+
+<div class="cat-legend">
+    @foreach (var cat in categoriasOrdenadas)
+    {
+        <span class="cat-legend-item"><span class="cat-legend-dot" style="background:@catColores[cat.Id];"></span>@cat.Nombre</span>
+    }
+</div>
+
 <div class="card shadow mb-4 mt-4">
     <div class="card-body p-0">
         <div class="table-responsive table-wrapper">
-            <table class="table table-bordered table-hover table-compact">
+            <table id="tablaMenuOpciones" class="table table-bordered table-hover table-compact">
                 <thead>
                     <tr>
+                        <th class="col-handle"></th>
                         <th class="col-codigo">@Resources.Strings.Menu_ThCodigo</th>
                         <th class="col-nombre">@Resources.Strings.Menu_ThNombre</th>
                         <th class="col-nombre-en">@Resources.Strings.Menu_ThNombreEN</th>
@@ -106,16 +137,28 @@
                 <tbody>
                     @if (!Model.Any())
                     {
-                        <tr><td colspan="10" class="text-center text-muted py-3">@Resources.Strings.Menu_NoOpciones</td></tr>
+                        <tr><td colspan="11" class="text-center text-muted py-3">@Resources.Strings.Menu_NoOpciones</td></tr>
                     }
                     @foreach (var opcion in Model)
                     {
-                        <tr>
+                        var colorCat = ColorCategoria(opcion.IdCategoria);
+                        <tr draggable="true" data-id="@opcion.Id">
+                            <td class="col-handle" style="border-left:4px solid @colorCat;"><i class="fas fa-grip-vertical"></i></td>
                             <td class="col-codigo" title="@opcion.Codigo"><code style="font-size:0.75rem;">@opcion.Codigo</code></td>
                             <td class="col-nombre" title="@opcion.Nombre">@opcion.Nombre</td>
                             <td class="col-nombre-en" title="@opcion.NombreEN">@opcion.NombreEN</td>
-                            <td class="col-categoria">@opcion.Categoria</td>
-                            <td class="col-grupo" title="@opcion.NombreGrupo">@opcion.NombreGrupo</td>
+                            <td class="col-categoria">
+                                @if (!string.IsNullOrEmpty(opcion.Categoria))
+                                {
+                                    <span class="cat-badge" style="background:@colorCat;">@opcion.Categoria</span>
+                                }
+                            </td>
+                            <td class="col-grupo" title="@opcion.NombreGrupo">
+                                @if (!string.IsNullOrEmpty(opcion.NombreGrupo))
+                                {
+                                    <span class="grupo-badge" style="border:1px solid @colorCat;color:@colorCat;">@opcion.NombreGrupo</span>
+                                }
+                            </td>
                             <td class="col-ruta" title="@opcion.Controller / @opcion.Action">@opcion.Controller / @opcion.Action</td>
                             <td class="col-orden">@opcion.Orden</td>
                             <td class="col-acceso">
@@ -190,6 +233,7 @@
                         <div class="col-md-2 mb-3">
                             <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelOrden</label>
                             <input type="number" class="form-control form-control-sm" name="Orden" value="0" min="0" />
+                            <small class="form-text text-muted">@Resources.Strings.Menu_HintOrden</small>
                         </div>
                     </div>
                     <!-- Fila 2: Nombre ES / Nombre EN (pareados) -->
@@ -313,6 +357,7 @@
                         <div class="col-md-2 mb-3">
                             <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelOrden</label>
                             <input type="number" class="form-control form-control-sm" id="editOrden" name="Orden" min="0" />
+                            <small class="form-text text-muted">@Resources.Strings.Menu_HintOrden</small>
                         </div>
                     </div>
                     <!-- Fila 2: Nombre ES / Nombre EN (pareados) -->
@@ -421,12 +466,12 @@
     var _categorias = @Html.Raw(categoriasJson);
 
     var _menuMsg = {
-        selCategoria: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_SelCategoria)',
-        selGrupo: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_SelCategoria)',
-        eliminarTitle: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_SelCategoria)',
-        eliminarText: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_SelCategoria)',
+        selCategoria: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_SelCategoria))',
+        selGrupo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_SelCategoria))',
+        eliminarTitle: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_SelCategoria))',
+        eliminarText: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_SelCategoria))',
         cancelar: '@Resources.Strings.Layout_Cancel',
-        confirmarEliminar: '@HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_SelCategoria)'
+        confirmarEliminar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_SelCategoria))'
     };
 
     function poblarCategorias(selectId, idCategoriaSeleccionada) {
@@ -538,9 +583,123 @@
         }
     }
 
+    // ───────────── Drag & drop para reordenar (columna Orden) ─────────────
+    var _dragSrcRow = null;
+
+    function initDragOrden() {
+        var tbody = document.querySelector('#tablaMenuOpciones tbody');
+        if (!tbody) return;
+
+        Array.from(tbody.querySelectorAll('tr[draggable="true"]')).forEach(function (row) {
+            row.addEventListener('dragstart', function () {
+                _dragSrcRow = row;
+                row.classList.add('dragging-row');
+            });
+            row.addEventListener('dragend', function () {
+                row.classList.remove('dragging-row');
+                tbody.querySelectorAll('.drag-over-row').forEach(function (r) { r.classList.remove('drag-over-row'); });
+            });
+            row.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                if (!_dragSrcRow || _dragSrcRow === row) return;
+                tbody.querySelectorAll('.drag-over-row').forEach(function (r) { r.classList.remove('drag-over-row'); });
+                row.classList.add('drag-over-row');
+                var bounding = row.getBoundingClientRect();
+                var offset = e.clientY - bounding.top;
+                if (offset > bounding.height / 2) {
+                    row.parentNode.insertBefore(_dragSrcRow, row.nextSibling);
+                } else {
+                    row.parentNode.insertBefore(_dragSrcRow, row);
+                }
+            });
+            row.addEventListener('drop', function (e) {
+                e.preventDefault();
+                row.classList.remove('drag-over-row');
+                solicitarGuardarOrden();
+            });
+        });
+    }
+
+    // Debounce + guard: si el usuario arrastra varias filas seguidas, solo se
+    // envía UNA petición a la vez y siempre con el estado final más reciente,
+    // evitando que respuestas fuera de orden pisen un cambio más nuevo.
+    var _guardarTimeout = null;
+    var _guardandoOrden = false;
+    var _reintentarAlTerminar = false;
+
+    function solicitarGuardarOrden() {
+        if (_guardarTimeout) clearTimeout(_guardarTimeout);
+        _guardarTimeout = setTimeout(function () {
+            if (_guardandoOrden) {
+                _reintentarAlTerminar = true;
+                return;
+            }
+            guardarNuevoOrden();
+        }, 300);
+    }
+
+    function guardarNuevoOrden() {
+        var tbody = document.querySelector('#tablaMenuOpciones tbody');
+        var filas = Array.from(tbody.querySelectorAll('tr[data-id]'));
+        if (filas.length === 0) return;
+
+        var mapaOpciones = {};
+        _opciones.forEach(function (o) { mapaOpciones[o.Id] = o; });
+
+        // Secuencia global 1..N sobre TODOS los menús de la base de datos, sin importar
+        // categoría/grupo: mover un menú recalcula el orden de todos los demás.
+        var ids = [];
+        var ordenes = [];
+
+        filas.forEach(function (fila, idx) {
+            var id = parseInt(fila.dataset.id);
+            if (!mapaOpciones[id]) return;
+            ids.push(id);
+            ordenes.push(idx + 1);
+        });
+
+        _guardandoOrden = true;
+
+        $.ajax({
+            url: '@Url.Action("ActualizarOrden", "MenuOpciones")',
+            type: 'POST',
+            data: {
+                ids: ids,
+                ordenes: ordenes,
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val()
+            },
+            traditional: true,
+            success: function (response) {
+                var icon = response.success ? 'success' : 'error';
+                if (response.success) {
+                    ids.forEach(function (id, idx) {
+                        if (mapaOpciones[id]) mapaOpciones[id].Orden = ordenes[idx];
+                    });
+                    filas.forEach(function (fila) {
+                        var id = parseInt(fila.dataset.id);
+                        var celda = fila.querySelector('.col-orden');
+                        if (celda && mapaOpciones[id]) celda.textContent = mapaOpciones[id].Orden;
+                    });
+                }
+                Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: icon, title: response.message, showConfirmButton: false, timer: 2500, timerProgressBar: true });
+            },
+            error: function () {
+                Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'error', title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_ErrorActualizarOrden))', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+            },
+            complete: function () {
+                _guardandoOrden = false;
+                if (_reintentarAlTerminar) {
+                    _reintentarAlTerminar = false;
+                    guardarNuevoOrden();
+                }
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         poblarCategorias('crearCategoria', _categorias.length > 0 ? _categorias[0].Id : 0);
         filtrarGrupos('crear');
+        initDragOrden();
 
         // Toggle visual para los checkboxes de "Destacado"
         ['crearEsDestacado', 'editEsDestacado'].forEach(function (chkId) {
