@@ -61,16 +61,28 @@ namespace bufinscustomers.Services
         }
 
         /// <summary>
-        /// Correo de bienvenida cuando se crea un usuario nuevo. No incluye la contrase&ntilde;a
-        /// (nunca se env&iacute;a en texto plano) &mdash; solo datos informativos y c&oacute;mo
-        /// recuperar/cambiar la clave.
+        /// Correo de bienvenida cuando se crea un usuario nuevo (o se reenv&iacute;a manualmente su
+        /// informaci&oacute;n). No incluye la contrase&ntilde;a (nunca se env&iacute;a en texto plano)
+        /// &mdash; solo datos informativos y c&oacute;mo recuperar/cambiar la clave.
         /// </summary>
         public void EnviarBienvenidaUsuario(string destinatario, string nombreCompleto, string nombreUsuario,
             string empresa, string telefono, string enlaceLogin, bool esIngles)
         {
             string asunto = esIngles ? "Your Bufins account was created" : "Se creó tu cuenta en Bufins";
             Enviar(destinatario, asunto,
-                ConstruirEmailBienvenidaHtml(nombreCompleto, nombreUsuario, empresa, telefono, enlaceLogin, esIngles));
+                ConstruirEmailBienvenidaHtml(nombreCompleto, nombreUsuario, empresa, telefono, destinatario, enlaceLogin, esIngles, esActualizacionCuenta: false));
+        }
+
+        /// <summary>
+        /// Notifica al usuario que un administrador actualiz&oacute; su informaci&oacute;n de cuenta
+        /// (nombre, correo, tel&eacute;fono, empresa, etc.). No incluye la contrase&ntilde;a.
+        /// </summary>
+        public void EnviarNotificacionUsuarioActualizado(string destinatario, string nombreCompleto, string nombreUsuario,
+            string empresa, string telefono, string enlaceLogin, bool esIngles)
+        {
+            string asunto = esIngles ? "Your Bufins account information was updated" : "Tu información de cuenta en Bufins fue actualizada";
+            Enviar(destinatario, asunto,
+                ConstruirEmailBienvenidaHtml(nombreCompleto, nombreUsuario, empresa, telefono, destinatario, enlaceLogin, esIngles, esActualizacionCuenta: true));
         }
 
         private void Enviar(string destinatario, string asunto, string htmlBody)
@@ -159,16 +171,21 @@ namespace bufinscustomers.Services
         }
 
         private static string ConstruirEmailBienvenidaHtml(string nombreCompleto, string nombreUsuario,
-            string empresa, string telefono, string enlaceLogin, bool esIngles)
+            string empresa, string telefono, string correo, string enlaceLogin, bool esIngles, bool esActualizacionCuenta)
         {
             string saludo = esIngles
                 ? $"Hello{(string.IsNullOrEmpty(nombreCompleto) ? "" : " " + nombreCompleto)},"
                 : $"Hola{(string.IsNullOrEmpty(nombreCompleto) ? "" : " " + nombreCompleto)},";
-            string cuerpo = esIngles
-                ? "An account was created for you on Bufins. Here are your account details:"
-                : "Se cre&oacute; una cuenta para ti en Bufins. Estos son los datos de tu cuenta:";
+            string cuerpo = esActualizacionCuenta
+                ? (esIngles
+                    ? "An administrator updated your Bufins account information. Here are your current account details:"
+                    : "Un administrador actualiz&oacute; la informaci&oacute;n de tu cuenta en Bufins. Estos son tus datos de cuenta actuales:")
+                : (esIngles
+                    ? "An account was created for you on Bufins. Here are your account details:"
+                    : "Se cre&oacute; una cuenta para ti en Bufins. Estos son los datos de tu cuenta:");
             string lblEmpresa  = esIngles ? "Company" : "Empresa";
             string lblNombre   = esIngles ? "Name" : "Nombre";
+            string lblCorreo   = esIngles ? "Email" : "Correo electr&oacute;nico";
             string lblCelular  = esIngles ? "Mobile phone" : "N&uacute;mero de celular";
             string lblUsuario  = esIngles ? "Username" : "Nombre de usuario";
             string valorVacio  = esIngles ? "Not provided" : "No registrado";
@@ -202,6 +219,7 @@ namespace bufinscustomers.Services
         <table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""border-collapse:collapse;"">
           {Fila(lblEmpresa, empresa)}
           {Fila(lblNombre, nombreCompleto)}
+          {Fila(lblCorreo, correo)}
           {Fila(lblCelular, telefono)}
           {Fila(lblUsuario, nombreUsuario)}
         </table>

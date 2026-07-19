@@ -343,6 +343,7 @@ namespace bufinscustomers.Controllers
                 }
 
                 SetSuccessMessage("Usuario actualizado correctamente.");
+                EnviarCorreoUsuarioActualizado(oUsuario);
             }
             catch (Exception ex)
             {
@@ -737,6 +738,34 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 System.Diagnostics.Trace.TraceError("[UsuarioController] Error al enviar correo de bienvenida: {0}", ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Notifica al usuario que un administrador actualizó su información de cuenta.
+        /// Fire-and-forget: nunca lanza excepción.
+        /// </summary>
+        private bool EnviarCorreoUsuarioActualizado(Usuarios oUsuario)
+        {
+            if (oUsuario == null || string.IsNullOrWhiteSpace(oUsuario.Correo))
+                return false;
+
+            try
+            {
+                string nombreEmpresa = _empresaService.ObtenerEmpresas()
+                    .FirstOrDefault(e => e.Id == oUsuario.IdEmpresa)?.Nombre;
+                string nombreCompleto = $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim();
+                bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+                string enlaceLogin = Url.Action("Login", "Acceso", null, Request.Url.Scheme);
+
+                new EmailService().EnviarNotificacionUsuarioActualizado(
+                    oUsuario.Correo, nombreCompleto, oUsuario.Usuario, nombreEmpresa, oUsuario.Telefono, enlaceLogin, esIngles);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("[UsuarioController] Error al enviar correo de usuario actualizado: {0}", ex.Message);
                 return false;
             }
         }
