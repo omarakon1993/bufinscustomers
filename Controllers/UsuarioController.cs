@@ -615,7 +615,7 @@ namespace bufinscustomers.Controllers
                 return Json(new { success = false, message = R("Usr_ErrorSinCorreo") });
             }
 
-            bool enviado = EnviarCorreoBienvenida(usuarioDestino);
+            bool enviado = EnviarCorreoBienvenida(usuarioDestino, esReenvio: true);
 
             return Json(new
             {
@@ -715,10 +715,12 @@ namespace bufinscustomers.Controllers
         /// <summary>
         /// Envía al correo del usuario sus datos de cuenta (sin la contraseña — nunca se envía
         /// en texto plano) más la leyenda de cómo recuperar/cambiar la clave. Usado tanto al
-        /// crear el usuario (fire-and-forget) como desde el botón manual "Enviar información
-        /// por correo" del gestor (donde sí importa el resultado). Nunca lanza excepción.
+        /// crear el usuario (fire-and-forget, <paramref name="esReenvio"/>=false) como desde el
+        /// botón manual "Enviar información por correo" del gestor (<paramref name="esReenvio"/>=true,
+        /// donde sí importa el resultado). Cada caso usa su propio asunto/texto introductorio.
+        /// Nunca lanza excepción.
         /// </summary>
-        private bool EnviarCorreoBienvenida(Usuarios oUsuario)
+        private bool EnviarCorreoBienvenida(Usuarios oUsuario, bool esReenvio = false)
         {
             if (string.IsNullOrWhiteSpace(oUsuario.Correo))
                 return false;
@@ -731,8 +733,17 @@ namespace bufinscustomers.Controllers
                 bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
                 string enlaceLogin = Url.Action("Login", "Acceso", null, Request.Url.Scheme);
 
-                new EmailService().EnviarBienvenidaUsuario(
-                    oUsuario.Correo, nombreCompleto, oUsuario.Usuario, nombreEmpresa, oUsuario.Telefono, enlaceLogin, esIngles);
+                var emailService = new EmailService();
+                if (esReenvio)
+                {
+                    emailService.EnviarReenvioInfoUsuario(
+                        oUsuario.Correo, nombreCompleto, oUsuario.Usuario, nombreEmpresa, oUsuario.Telefono, enlaceLogin, esIngles);
+                }
+                else
+                {
+                    emailService.EnviarBienvenidaUsuario(
+                        oUsuario.Correo, nombreCompleto, oUsuario.Usuario, nombreEmpresa, oUsuario.Telefono, enlaceLogin, esIngles);
+                }
                 return true;
             }
             catch (Exception ex)

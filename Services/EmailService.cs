@@ -61,16 +61,28 @@ namespace bufinscustomers.Services
         }
 
         /// <summary>
-        /// Correo de bienvenida cuando se crea un usuario nuevo (o se reenv&iacute;a manualmente su
-        /// informaci&oacute;n). No incluye la contrase&ntilde;a (nunca se env&iacute;a en texto plano)
-        /// &mdash; solo datos informativos y c&oacute;mo recuperar/cambiar la clave.
+        /// Correo de bienvenida cuando se crea un usuario nuevo. No incluye la contrase&ntilde;a
+        /// (nunca se env&iacute;a en texto plano) &mdash; solo datos informativos y c&oacute;mo
+        /// recuperar/cambiar la clave.
         /// </summary>
         public void EnviarBienvenidaUsuario(string destinatario, string nombreCompleto, string nombreUsuario,
             string empresa, string telefono, string enlaceLogin, bool esIngles)
         {
             string asunto = esIngles ? "Your Bufins account was created" : "Se creó tu cuenta en Bufins";
             Enviar(destinatario, asunto,
-                ConstruirEmailBienvenidaHtml(nombreCompleto, nombreUsuario, empresa, telefono, destinatario, enlaceLogin, esIngles, esActualizacionCuenta: false));
+                ConstruirEmailBienvenidaHtml(nombreCompleto, nombreUsuario, empresa, telefono, destinatario, enlaceLogin, esIngles, ModoCorreoCuenta.Creacion));
+        }
+
+        /// <summary>
+        /// Reenv&iacute;a manualmente (bot&oacute;n "Enviar informaci&oacute;n por correo" del gestor)
+        /// los mismos datos de cuenta que el usuario recibi&oacute; al crearse. No incluye la contrase&ntilde;a.
+        /// </summary>
+        public void EnviarReenvioInfoUsuario(string destinatario, string nombreCompleto, string nombreUsuario,
+            string empresa, string telefono, string enlaceLogin, bool esIngles)
+        {
+            string asunto = esIngles ? "Your Bufins account information" : "Tu información de cuenta en Bufins";
+            Enviar(destinatario, asunto,
+                ConstruirEmailBienvenidaHtml(nombreCompleto, nombreUsuario, empresa, telefono, destinatario, enlaceLogin, esIngles, ModoCorreoCuenta.Reenvio));
         }
 
         /// <summary>
@@ -82,8 +94,10 @@ namespace bufinscustomers.Services
         {
             string asunto = esIngles ? "Your Bufins account information was updated" : "Tu información de cuenta en Bufins fue actualizada";
             Enviar(destinatario, asunto,
-                ConstruirEmailBienvenidaHtml(nombreCompleto, nombreUsuario, empresa, telefono, destinatario, enlaceLogin, esIngles, esActualizacionCuenta: true));
+                ConstruirEmailBienvenidaHtml(nombreCompleto, nombreUsuario, empresa, telefono, destinatario, enlaceLogin, esIngles, ModoCorreoCuenta.Actualizacion));
         }
+
+        private enum ModoCorreoCuenta { Creacion, Reenvio, Actualizacion }
 
         private void Enviar(string destinatario, string asunto, string htmlBody)
         {
@@ -171,18 +185,30 @@ namespace bufinscustomers.Services
         }
 
         private static string ConstruirEmailBienvenidaHtml(string nombreCompleto, string nombreUsuario,
-            string empresa, string telefono, string correo, string enlaceLogin, bool esIngles, bool esActualizacionCuenta)
+            string empresa, string telefono, string correo, string enlaceLogin, bool esIngles, ModoCorreoCuenta modo)
         {
             string saludo = esIngles
                 ? $"Hello{(string.IsNullOrEmpty(nombreCompleto) ? "" : " " + nombreCompleto)},"
                 : $"Hola{(string.IsNullOrEmpty(nombreCompleto) ? "" : " " + nombreCompleto)},";
-            string cuerpo = esActualizacionCuenta
-                ? (esIngles
-                    ? "An administrator updated your Bufins account information. Here are your current account details:"
-                    : "Un administrador actualiz&oacute; la informaci&oacute;n de tu cuenta en Bufins. Estos son tus datos de cuenta actuales:")
-                : (esIngles
-                    ? "An account was created for you on Bufins. Here are your account details:"
-                    : "Se cre&oacute; una cuenta para ti en Bufins. Estos son los datos de tu cuenta:");
+            string cuerpo;
+            switch (modo)
+            {
+                case ModoCorreoCuenta.Actualizacion:
+                    cuerpo = esIngles
+                        ? "An administrator updated your Bufins account information. Here are your current account details:"
+                        : "Un administrador actualiz&oacute; la informaci&oacute;n de tu cuenta en Bufins. Estos son tus datos de cuenta actuales:";
+                    break;
+                case ModoCorreoCuenta.Reenvio:
+                    cuerpo = esIngles
+                        ? "As requested, here is your account information on Bufins:"
+                        : "Como lo solicitaste, aqu&iacute; tienes de nuevo la informaci&oacute;n de tu cuenta en Bufins:";
+                    break;
+                default:
+                    cuerpo = esIngles
+                        ? "An account was created for you on Bufins. Here are your account details:"
+                        : "Se cre&oacute; una cuenta para ti en Bufins. Estos son los datos de tu cuenta:";
+                    break;
+            }
             string lblEmpresa  = esIngles ? "Company" : "Empresa";
             string lblNombre   = esIngles ? "Name" : "Nombre";
             string lblCorreo   = esIngles ? "Email" : "Correo electr&oacute;nico";
