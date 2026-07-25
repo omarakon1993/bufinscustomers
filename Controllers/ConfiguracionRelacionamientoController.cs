@@ -2,7 +2,7 @@
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
-using OfficeOpenXml;
+using ClosedXML.Excel;
 using System;
 using System.IO;
 using System.Web;
@@ -67,7 +67,7 @@ namespace bufinscustomers.Controllers
                     archivoExcel.InputStream.CopyTo(stream);
                     stream.Position = 0;
 
-                    using (var package = new ExcelPackage(stream))
+                    using (var package = new XLWorkbook(stream))
                     {
                         var resultado = _service.CargarDatosDesdeExcel(package);
 

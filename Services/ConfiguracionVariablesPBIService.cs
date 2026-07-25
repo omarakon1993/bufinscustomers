@@ -1,11 +1,11 @@
 using bufinscustomers.Models;
-using OfficeOpenXml;
-using OfficeOpenXml.Style;
+using ClosedXML.Excel;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
+using System.IO;
 
 namespace bufinscustomers.Services
 {
@@ -52,7 +52,7 @@ namespace bufinscustomers.Services
         /// Carga los datos del Excel a la tabla OrdenVariables.
         /// Primero compara con BD para generar el diff, luego reemplaza con transacción.
         /// </summary>
-        public ResultadoCargaVariablesPBI CargarDesdeExcel(ExcelPackage package, string usuarioNombre)
+        public ResultadoCargaVariablesPBI CargarDesdeExcel(XLWorkbook package, string usuarioNombre)
         {
             var resultado = new ResultadoCargaVariablesPBI();
 
@@ -130,9 +130,9 @@ namespace bufinscustomers.Services
         /// </summary>
         public byte[] GenerarPlantillaExcel()
         {
-            using (var package = new ExcelPackage())
+            using (var package = new XLWorkbook())
             {
-                var ws = package.Workbook.Worksheets.Add("OrdenVariables");
+                var ws = package.Worksheets.Add("OrdenVariables");
                 var columnas = new[]
                 {
                     "Nombre tabla", "Variable", "Orden variable", "Subtotal variable",
@@ -143,20 +143,23 @@ namespace bufinscustomers.Services
 
                 for (int i = 0; i < columnas.Length; i++)
                 {
-                    var cell = ws.Cells[1, i + 1];
+                    var cell = ws.Cell(1, i + 1);
                     cell.Value = columnas[i];
                     cell.Style.Font.Bold = true;
-                    cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                    cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(99, 102, 241));
-                    cell.Style.Font.Color.SetColor(Color.White);
-                    cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    cell.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
+                    cell.Style.Font.FontColor = XLColor.White;
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 }
 
-                ws.Cells[1, 1, 1, columnas.Length].AutoFilter = true;
-                ws.View.FreezePanes(2, 1);
-                ws.Cells.AutoFitColumns();
+                ws.Range(1, 1, 1, columnas.Length).SetAutoFilter();
+                ws.SheetView.Freeze(1, 0);
+                ws.Columns().AdjustToContents();
 
-                return package.GetAsByteArray();
+                using (var ms = new MemoryStream())
+                {
+                    package.SaveAs(ms);
+                    return ms.ToArray();
+                }
             }
         }
 
@@ -165,18 +168,18 @@ namespace bufinscustomers.Services
         /// <summary>
         /// Lee la primera hoja de datos del Excel y retorna lista de diccionarios col→valor (con nombres BD)
         /// </summary>
-        private List<Dictionary<string, string>> LeerExcel(ExcelPackage package)
+        private List<Dictionary<string, string>> LeerExcel(XLWorkbook package)
         {
             var datos = new List<Dictionary<string, string>>();
 
-            if (package.Workbook.Worksheets.Count == 0)
+            if (package.Worksheets.Count == 0)
                 return datos;
 
             // Usar primera hoja que tenga datos
-            ExcelWorksheet hoja = null;
-            foreach (var ws in package.Workbook.Worksheets)
+            IXLWorksheet hoja = null;
+            foreach (var ws in package.Worksheets)
             {
-                if (ws.Dimension != null && ws.Dimension.End.Row > 1)
+                if (ws.LastRowUsed() != null && ws.LastRowUsed().RowNumber() > 1)
                 {
                     hoja = ws;
                     break;
@@ -186,14 +189,14 @@ namespace bufinscustomers.Services
             if (hoja == null)
                 return datos;
 
-            int totalCols = hoja.Dimension.End.Column;
-            int totalRows = hoja.Dimension.End.Row;
+            int totalCols = hoja.LastColumnUsed().ColumnNumber();
+            int totalRows = hoja.LastRowUsed().RowNumber();
 
             // Leer encabezados y mapear a nombres BD
             var mapeoIndice = new Dictionary<int, string>(); // indice columna Excel → nombre columna BD
             for (int col = 1; col <= totalCols; col++)
             {
-                string header = hoja.Cells[1, col].Text?.Trim();
+                string header = hoja.Cell(1, col).GetFormattedString()?.Trim();
                 if (string.IsNullOrWhiteSpace(header)) continue;
 
                 if (MapeoColumnas.TryGetValue(header, out string colBD))
@@ -219,7 +222,7 @@ namespace bufinscustomers.Services
 
                 foreach (var kv in mapeoIndice)
                 {
-                    string valor = hoja.Cells[row, kv.Key].Text?.Trim() ?? "";
+                    string valor = hoja.Cell(row, kv.Key).GetFormattedString()?.Trim() ?? "";
                     registro[kv.Value] = valor;
                     if (!string.IsNullOrWhiteSpace(valor)) filaVacia = false;
                 }

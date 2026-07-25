@@ -2,11 +2,11 @@
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
-using OfficeOpenXml;
-using OfficeOpenXml.Style;
+using ClosedXML.Excel;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Web.Mvc;
 
@@ -180,7 +180,7 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("InformeRelacionamientos");
                 }
 
-                using (var package = new ExcelPackage())
+                using (var package = new XLWorkbook())
                 {
                     var tablas = _service.ObtenerTablasDisponibles();
                     var tablaSeleccionada = tablas.FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla);
@@ -189,22 +189,21 @@ namespace bufinscustomers.Controllers
                     if (nombreHoja.Length > 31)
                         nombreHoja = nombreHoja.Substring(0, 31);
 
-                    var worksheet = package.Workbook.Worksheets.Add(nombreHoja);
+                    var worksheet = package.Worksheets.Add(nombreHoja);
 
                     // Encabezados
                     int col = 1;
                     foreach (var nombreColumna in resultado.Columnas)
                     {
-                        var cell = worksheet.Cells[1, col];
+                        var cell = worksheet.Cell(1, col);
                         cell.Value = _service.ObtenerNombreAmigableColumna(nombreColumna);
 
                         cell.Style.Font.Bold = true;
-                        cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(99, 102, 241));
-                        cell.Style.Font.Color.SetColor(Color.White);
-                        cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                        cell.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
-                        cell.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                        cell.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
+                        cell.Style.Font.FontColor = XLColor.White;
+                        cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                        cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
 
                         col++;
                     }
@@ -247,7 +246,7 @@ namespace bufinscustomers.Controllers
                         col = 1;
                         foreach (var nombreColumna in resultado.Columnas)
                         {
-                            var cell = worksheet.Cells[fila, col];
+                            var cell = worksheet.Cell(fila, col);
                             var valor = registro.ContainsKey(nombreColumna) ? registro[nombreColumna] : null;
 
                             if (valor != null)
@@ -255,17 +254,17 @@ namespace bufinscustomers.Controllers
                                 if (valor is DateTime)
                                 {
                                     cell.Value = (DateTime)valor;
-                                    cell.Style.Numberformat.Format = "dd/mm/yyyy";
+                                    cell.Style.NumberFormat.Format = "dd/mm/yyyy";
                                 }
                                 else if (valor is decimal || valor is double || valor is float)
                                 {
-                                    cell.Value = valor;
-                                    cell.Style.Numberformat.Format = "#,##0.00";
+                                    ExcelCellHelper.SetValue(cell, valor);
+                                    cell.Style.NumberFormat.Format = "#,##0.00";
                                 }
                                 else if (valor is int || valor is long)
                                 {
-                                    cell.Value = valor;
-                                    cell.Style.Numberformat.Format = "#,##0";
+                                    ExcelCellHelper.SetValue(cell, valor);
+                                    cell.Style.NumberFormat.Format = "#,##0";
                                 }
                                 else
                                 {
@@ -273,22 +272,27 @@ namespace bufinscustomers.Controllers
                                 }
                             }
 
-                            cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            cell.Style.Fill.BackgroundColor.SetColor(colorFondo);
-                            cell.Style.Border.BorderAround(ExcelBorderStyle.Thin, Color.LightGray);
+                            cell.Style.Fill.BackgroundColor = XLColor.FromColor(colorFondo);
+                            cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                            cell.Style.Border.OutsideBorderColor = XLColor.FromColor(Color.LightGray);
 
                             col++;
                         }
                         fila++;
                     }
 
-                    worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
-                    worksheet.Cells[1, 1, 1, resultado.Columnas.Count].AutoFilter = true;
-                    worksheet.View.FreezePanes(2, 1);
+                    worksheet.Columns().AdjustToContents();
+                    worksheet.Range(1, 1, 1, resultado.Columnas.Count).SetAutoFilter();
+                    worksheet.SheetView.Freeze(1, 0);
 
                     string nombreArchivo = $"Relacionamientos_{nombreHoja}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
 
-                    byte[] fileBytes = package.GetAsByteArray();
+                    byte[] fileBytes;
+                    using (var ms = new MemoryStream())
+                    {
+                        package.SaveAs(ms);
+                        fileBytes = ms.ToArray();
+                    }
                     return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
                 }
             }

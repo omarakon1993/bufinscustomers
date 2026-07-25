@@ -5,10 +5,9 @@ using bufinscustomers.Helpers;
 using bufinscustomers.Permisos;
 using System.Collections.Generic;
 using System.Linq;
-using OfficeOpenXml;
+using ClosedXML.Excel;
 using System.IO;
 using System;
-using OfficeOpenXml.Style;
 using System.Drawing;
 
 namespace bufinscustomers.Controllers
@@ -80,10 +79,10 @@ namespace bufinscustomers.Controllers
                     auditorias = auditorias.Where(a => a.FechaCargue.Date <= hasta.Date).ToList();
 
                 // Generar archivo Excel
-                using (var package = new ExcelPackage())
+                using (var package = new XLWorkbook())
                 {
-                    var worksheet = package.Workbook.Worksheets.Add("Auditor�a Cargues");
-                    
+                    var worksheet = package.Worksheets.Add("Auditor�a Cargues");
+
                     // Configurar encabezados
                     Func<string, string> R = key => HttpContext.GetGlobalResourceObject("Strings", key)?.ToString() ?? key;
                     var headers = new List<string>
@@ -94,60 +93,61 @@ namespace bufinscustomers.Controllers
                         R("Audit_ThUsuario"),
                         R("Audit_ThArchivo")
                     };
-                    
+
                     // Aplicar encabezados
                     for (int i = 0; i < headers.Count; i++)
                     {
-                        worksheet.Cells[1, i + 1].Value = headers[i];
-                        worksheet.Cells[1, i + 1].Style.Font.Bold = true;
-                        worksheet.Cells[1, i + 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[1, i + 1].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(88, 58, 255));
-                        worksheet.Cells[1, i + 1].Style.Font.Color.SetColor(Color.White);
-                        worksheet.Cells[1, i + 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                        worksheet.Cell(1, i + 1).Value = headers[i];
+                        worksheet.Cell(1, i + 1).Style.Font.Bold = true;
+                        worksheet.Cell(1, i + 1).Style.Fill.BackgroundColor = XLColor.FromArgb(88, 58, 255);
+                        worksheet.Cell(1, i + 1).Style.Font.FontColor = XLColor.White;
+                        worksheet.Cell(1, i + 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                     }
-                    
+
                     // Llenar datos
                     int row = 2;
                     foreach (var auditoria in auditorias.OrderByDescending(x => x.FechaCargue))
                     {
                         int col = 1;
-                        
-                        worksheet.Cells[row, col++].Value = auditoria.FechaCargue.ToString("dd/MM/yyyy");
-                        worksheet.Cells[row, col++].Value = auditoria.FechaCargue.ToString("HH:mm:ss");
-                        worksheet.Cells[row, col++].Value = auditoria.NombreEmpresa;
-                        worksheet.Cells[row, col++].Value = auditoria.Usuario;
-                        worksheet.Cells[row, col++].Value = auditoria.NombreArchivo;
+
+                        worksheet.Cell(row, col++).Value = auditoria.FechaCargue.ToString("dd/MM/yyyy");
+                        worksheet.Cell(row, col++).Value = auditoria.FechaCargue.ToString("HH:mm:ss");
+                        worksheet.Cell(row, col++).Value = auditoria.NombreEmpresa;
+                        worksheet.Cell(row, col++).Value = auditoria.Usuario;
+                        worksheet.Cell(row, col++).Value = auditoria.NombreArchivo;
                         row++;
                     }
-                    
+
                     // Agregar total de registros al final
                     if (auditorias.Any())
                     {
                         row += 1; // Espacio
-                        worksheet.Cells[row, 1].Value = "Total de registros:";
-                        worksheet.Cells[row, 1].Style.Font.Bold = true;
-                        worksheet.Cells[row, 2].Value = auditorias.Count;
-                        worksheet.Cells[row, 2].Style.Font.Bold = true;
+                        worksheet.Cell(row, 1).Value = "Total de registros:";
+                        worksheet.Cell(row, 1).Style.Font.Bold = true;
+                        worksheet.Cell(row, 2).Value = auditorias.Count;
+                        worksheet.Cell(row, 2).Style.Font.Bold = true;
                     }
-                    
+
                     // Ajustar anchos de columna
-                    worksheet.Cells.AutoFitColumns();
-                    
+                    worksheet.Columns().AdjustToContents();
+
                     // Aplicar bordes
-                    var dataRange = worksheet.Cells[1, 1, row, headers.Count];
-                    dataRange.Style.Border.Top.Style = ExcelBorderStyle.Thin;
-                    dataRange.Style.Border.Left.Style = ExcelBorderStyle.Thin;
-                    dataRange.Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                    dataRange.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                    
+                    var dataRange = worksheet.Range(1, 1, row, headers.Count);
+                    dataRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+
                     // Generar nombre de archivo
                     var hayFiltros = !string.IsNullOrEmpty(empresa) || !string.IsNullOrEmpty(usuario)
                                   || !string.IsNullOrEmpty(fechaDesde) || !string.IsNullOrEmpty(fechaHasta);
                     var nombreArchivo = $"Auditoria_Cargues_{DateTime.Now:yyyyMMdd_HHmmss}{(hayFiltros ? "_Filtrado" : "")}.xlsx";
-                    
+
                     // Convertir a bytes
-                    var fileBytes = package.GetAsByteArray();
-                    
+                    byte[] fileBytes;
+                    using (var ms = new MemoryStream())
+                    {
+                        package.SaveAs(ms);
+                        fileBytes = ms.ToArray();
+                    }
+
                     // Retornar archivo para descarga
                     return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
                 }

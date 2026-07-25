@@ -2,12 +2,12 @@
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
+using ClosedXML.Excel;
 using Newtonsoft.Json;
-using OfficeOpenXml;
-using OfficeOpenXml.Style;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Mvc;
@@ -435,7 +435,7 @@ namespace bufinscustomers.Controllers
                 }
 
                 // Crear archivo Excel
-                using (var package = new ExcelPackage())
+                using (var package = new XLWorkbook())
                 {
                     // Obtener nombre amigable de la tabla
                     var tablas = _service.ObtenerTablasDisponibles();
@@ -446,23 +446,22 @@ namespace bufinscustomers.Controllers
                     if (nombreHoja.Length > 31)
                         nombreHoja = nombreHoja.Substring(0, 31);
 
-                    var worksheet = package.Workbook.Worksheets.Add(nombreHoja);
+                    var worksheet = package.Worksheets.Add(nombreHoja);
 
                     // Agregar encabezados con nombres amigables
                     int col = 1;
                     foreach (var nombreColumna in resultado.Columnas)
                     {
-                        var cell = worksheet.Cells[1, col];
+                        var cell = worksheet.Cell(1, col);
                         cell.Value = _service.ObtenerNombreAmigableColumna(nombreColumna);
 
                         // Estilo del encabezado
                         cell.Style.Font.Bold = true;
-                        cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(99, 102, 241)); // Color del tema
-                        cell.Style.Font.Color.SetColor(Color.White);
-                        cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                        cell.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
-                        cell.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                        cell.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241); // Color del tema
+                        cell.Style.Font.FontColor = XLColor.White;
+                        cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                        cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
 
                         col++;
                     }
@@ -474,7 +473,7 @@ namespace bufinscustomers.Controllers
                         col = 1;
                         foreach (var nombreColumna in resultado.Columnas)
                         {
-                            var cell = worksheet.Cells[fila, col];
+                            var cell = worksheet.Cell(fila, col);
                             var valor = registro.ContainsKey(nombreColumna) ? registro[nombreColumna] : null;
 
                             if (valor != null)
@@ -483,17 +482,17 @@ namespace bufinscustomers.Controllers
                                 if (valor is DateTime)
                                 {
                                     cell.Value = (DateTime)valor;
-                                    cell.Style.Numberformat.Format = "dd/mm/yyyy";
+                                    cell.Style.NumberFormat.Format = "dd/mm/yyyy";
                                 }
                                 else if (valor is decimal || valor is double || valor is float)
                                 {
-                                    cell.Value = valor;
-                                    cell.Style.Numberformat.Format = "#,##0.00";
+                                    ExcelCellHelper.SetValue(cell, valor);
+                                    cell.Style.NumberFormat.Format = "#,##0.00";
                                 }
                                 else if (valor is int || valor is long)
                                 {
-                                    cell.Value = valor;
-                                    cell.Style.Numberformat.Format = "#,##0";
+                                    ExcelCellHelper.SetValue(cell, valor);
+                                    cell.Style.NumberFormat.Format = "#,##0";
                                 }
                                 else
                                 {
@@ -502,7 +501,8 @@ namespace bufinscustomers.Controllers
                             }
 
                             // Estilo de la celda
-                            cell.Style.Border.BorderAround(ExcelBorderStyle.Thin, Color.LightGray);
+                            cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                            cell.Style.Border.OutsideBorderColor = XLColor.FromColor(Color.LightGray);
 
                             col++;
                         }
@@ -510,19 +510,24 @@ namespace bufinscustomers.Controllers
                     }
 
                     // Autoajustar columnas
-                    worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+                    worksheet.Columns().AdjustToContents();
 
                     // Agregar filtros automáticos
-                    worksheet.Cells[1, 1, 1, resultado.Columnas.Count].AutoFilter = true;
+                    worksheet.Range(1, 1, 1, resultado.Columnas.Count).SetAutoFilter();
 
                     // Congelar primera fila
-                    worksheet.View.FreezePanes(2, 1);
+                    worksheet.SheetView.Freeze(1, 0);
 
                     // Generar nombre de archivo
                     string nombreArchivo = $"Informe_{nombreHoja}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
 
                     // Retornar archivo
-                    byte[] fileBytes = package.GetAsByteArray();
+                    byte[] fileBytes;
+                    using (var ms = new MemoryStream())
+                    {
+                        package.SaveAs(ms);
+                        fileBytes = ms.ToArray();
+                    }
                     return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
                 }
             }
@@ -567,21 +572,20 @@ namespace bufinscustomers.Controllers
                 string nombreTabla = tablas.FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla)?.NombreAmigable ?? filtros.NombreTabla;
                 string hojaNombre  = nombreTabla.Length > 31 ? nombreTabla.Substring(0, 31) : nombreTabla;
 
-                using (var package = new ExcelPackage())
+                using (var package = new XLWorkbook())
                 {
                     // ── Hoja 1: Datos ──────────────────────────────────────────
-                    var wsData = package.Workbook.Worksheets.Add(hojaNombre);
+                    var wsData = package.Worksheets.Add(hojaNombre);
                     int col = 1;
                     foreach (var c in resultado.Columnas)
                     {
-                        var cell = wsData.Cells[1, col];
+                        var cell = wsData.Cell(1, col);
                         cell.Value = _service.ObtenerNombreAmigableColumna(c);
                         cell.Style.Font.Bold = true;
-                        cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(99, 102, 241));
-                        cell.Style.Font.Color.SetColor(Color.White);
-                        cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                        cell.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                        cell.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
+                        cell.Style.Font.FontColor = XLColor.White;
+                        cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
                         col++;
                     }
                     int fila = 2;
@@ -590,46 +594,47 @@ namespace bufinscustomers.Controllers
                         col = 1;
                         foreach (var c in resultado.Columnas)
                         {
-                            var cell  = wsData.Cells[fila, col];
+                            var cell  = wsData.Cell(fila, col);
                             var valor = registro.ContainsKey(c) ? registro[c] : null;
                             if (valor != null)
                             {
                                 if (valor is decimal || valor is double || valor is float)
-                                { cell.Value = valor; cell.Style.Numberformat.Format = "#,##0.00"; }
+                                { ExcelCellHelper.SetValue(cell, valor); cell.Style.NumberFormat.Format = "#,##0.00"; }
                                 else if (valor is int || valor is long)
-                                { cell.Value = valor; cell.Style.Numberformat.Format = "#,##0"; }
+                                { ExcelCellHelper.SetValue(cell, valor); cell.Style.NumberFormat.Format = "#,##0"; }
                                 else if (valor is DateTime)
-                                { cell.Value = (DateTime)valor; cell.Style.Numberformat.Format = "dd/mm/yyyy"; }
+                                { cell.Value = (DateTime)valor; cell.Style.NumberFormat.Format = "dd/mm/yyyy"; }
                                 else cell.Value = valor.ToString();
                             }
-                            cell.Style.Border.BorderAround(ExcelBorderStyle.Thin, Color.LightGray);
+                            cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                            cell.Style.Border.OutsideBorderColor = XLColor.FromColor(Color.LightGray);
                             col++;
                         }
                         fila++;
                     }
-                    wsData.Cells[wsData.Dimension.Address].AutoFitColumns();
-                    wsData.Cells[1, 1, 1, resultado.Columnas.Count].AutoFilter = true;
-                    wsData.View.FreezePanes(2, 1);
+                    wsData.Columns().AdjustToContents();
+                    wsData.Range(1, 1, 1, resultado.Columnas.Count).SetAutoFilter();
+                    wsData.SheetView.Freeze(1, 0);
 
                     // ── Hoja 2: Análisis IA ────────────────────────────────────
                     if (!string.IsNullOrWhiteSpace(textoAnalisis))
                     {
                         string hojaNombreIA = R("IA_Excel_HojaAnalisis") ?? "Análisis IA";
-                        var wsIA = package.Workbook.Worksheets.Add(hojaNombreIA);
+                        var wsIA = package.Worksheets.Add(hojaNombreIA);
 
-                        wsIA.Cells[1, 1].Value = R("IA_PDF_Title") ?? "Análisis Gerencial IA";
-                        wsIA.Cells[1, 1].Style.Font.Bold = true;
-                        wsIA.Cells[1, 1].Style.Font.Size = 14;
-                        wsIA.Cells[1, 1].Style.Font.Color.SetColor(Color.FromArgb(79, 70, 229));
+                        wsIA.Cell(1, 1).Value = R("IA_PDF_Title") ?? "Análisis Gerencial IA";
+                        wsIA.Cell(1, 1).Style.Font.Bold = true;
+                        wsIA.Cell(1, 1).Style.Font.FontSize = 14;
+                        wsIA.Cell(1, 1).Style.Font.FontColor = XLColor.FromArgb(79, 70, 229);
 
-                        wsIA.Cells[2, 1].Value = ConstruirDescripcionFiltros(filtros);
-                        wsIA.Cells[2, 1].Style.Font.Italic = true;
-                        wsIA.Cells[2, 1].Style.Font.Color.SetColor(Color.Gray);
+                        wsIA.Cell(2, 1).Value = ConstruirDescripcionFiltros(filtros);
+                        wsIA.Cell(2, 1).Style.Font.Italic = true;
+                        wsIA.Cell(2, 1).Style.Font.FontColor = XLColor.FromColor(Color.Gray);
 
-                        wsIA.Cells[3, 1].Value = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
-                        wsIA.Cells[3, 1].Style.Font.Italic = true;
-                        wsIA.Cells[3, 1].Style.Font.Size = 9;
-                        wsIA.Cells[3, 1].Style.Font.Color.SetColor(Color.Gray);
+                        wsIA.Cell(3, 1).Value = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+                        wsIA.Cell(3, 1).Style.Font.Italic = true;
+                        wsIA.Cell(3, 1).Style.Font.FontSize = 9;
+                        wsIA.Cell(3, 1).Style.Font.FontColor = XLColor.FromColor(Color.Gray);
 
                         string textoLimpio = LimpiarMarkdown(textoAnalisis);
                         var parrafos = textoLimpio.Split(new[] { "\n\n", "\r\n\r\n" }, StringSplitOptions.RemoveEmptyEntries);
@@ -638,17 +643,23 @@ namespace bufinscustomers.Controllers
                         {
                             string linea = parrafo.Trim();
                             if (string.IsNullOrWhiteSpace(linea)) continue;
-                            wsIA.Cells[filaIA, 1].Value      = linea;
-                            wsIA.Cells[filaIA, 1].Style.WrapText = true;
+                            wsIA.Cell(filaIA, 1).Value      = linea;
+                            wsIA.Cell(filaIA, 1).Style.Alignment.WrapText = true;
                             if (linea.StartsWith("•") == false && linea.Length < 100 && !linea.Contains(".") && !linea.Contains(","))
-                                wsIA.Cells[filaIA, 1].Style.Font.Bold = true;
+                                wsIA.Cell(filaIA, 1).Style.Font.Bold = true;
                             filaIA++;
                         }
                         wsIA.Column(1).Width = 110;
                     }
 
                     string archivo = $"AnalisisIA_{hojaNombre}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-                    return File(package.GetAsByteArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", archivo);
+                    byte[] fileBytes;
+                    using (var ms = new MemoryStream())
+                    {
+                        package.SaveAs(ms);
+                        fileBytes = ms.ToArray();
+                    }
+                    return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", archivo);
                 }
             }
             catch (Exception ex)

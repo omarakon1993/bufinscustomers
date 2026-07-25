@@ -141,7 +141,8 @@
       "Bash(node -e ' *)",
       "Bash(unzip -l \"/c/Users/omara/OneDrive/Omar Akon Personal/Proyectos OAG/Bufins Web/Common/Documentacion BUFINS/Tecnica/BUFINS.zip\")",
       "Bash(cp \"/c/Users/omara/OneDrive/Omar Akon Personal/Proyectos OAG/Bufins Web/Common/Documentacion BUFINS/Tecnica/BUFINS/Assets/img/Bufins_Wordmark_Aqua.png\" \"/c/Users/omara/OneDrive/Omar Akon Personal/Proyectos OAG/Bufins Web/Bufins principal web/bufinscustomers/Assets/img/Bufins_Wordmark_Aqua.png\")",
-      "Bash(cp \"/c/Users/omara/OneDrive/Omar Akon Personal/Proyectos OAG/Bufins Web/Common/Documentacion BUFINS/Tecnica/BUFINS/Assets/img/Bufins_Wordmark_Dark.png\" \"/c/Users/omara/OneDrive/Omar Akon Personal/Proyectos OAG/Bufins Web/Bufins principal web/bufinscustomers/Assets/img/Bufins_Wordmark_Dark.png\")"
+      "Bash(cp \"/c/Users/omara/OneDrive/Omar Akon Personal/Proyectos OAG/Bufins Web/Common/Documentacion BUFINS/Tecnica/BUFINS/Assets/img/Bufins_Wordmark_Dark.png\" \"/c/Users/omara/OneDrive/Omar Akon Personal/Proyectos OAG/Bufins Web/Bufins principal web/bufinscustomers/Assets/img/Bufins_Wordmark_Dark.png\")",
+      "PowerShell(& \"C:\\\\Program Files\\\\Microsoft Visual Studio\\\\18\\\\Community\\\\MSBuild\\\\Current\\\\Bin\\\\amd64\\\\MSBuild.exe\" bufinscustomers.sln /t:restore /p:RestorePackagesConfig=true /v:minimal 2>&1 | Select-Object -Last 40)"
     ],
     "deny": [],
     "ask": []

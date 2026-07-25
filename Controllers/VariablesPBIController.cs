@@ -2,10 +2,10 @@
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
-using OfficeOpenXml;
-using OfficeOpenXml.Style;
+using ClosedXML.Excel;
 using System;
 using System.Drawing;
+using System.IO;
 using System.Web.Mvc;
 
 namespace bufinscustomers.Controllers
@@ -86,11 +86,11 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                using (var package = new ExcelPackage())
+                using (var package = new XLWorkbook())
                 {
                     string nombreHoja = string.IsNullOrWhiteSpace(filtros?.NombreTabla) ? "Variables PBI" : filtros.NombreTabla;
                     if (nombreHoja.Length > 31) nombreHoja = nombreHoja.Substring(0, 31);
-                    var ws = package.Workbook.Worksheets.Add(nombreHoja);
+                    var ws = package.Worksheets.Add(nombreHoja);
 
                     // Encabezados
                     var columnas = new[] {
@@ -102,14 +102,13 @@ namespace bufinscustomers.Controllers
 
                     for (int i = 0; i < columnas.Length; i++)
                     {
-                        var cell = ws.Cells[1, i + 1];
+                        var cell = ws.Cell(1, i + 1);
                         cell.Value = columnas[i];
                         cell.Style.Font.Bold = true;
-                        cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(99, 102, 241));
-                        cell.Style.Font.Color.SetColor(Color.White);
-                        cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                        cell.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                        cell.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
+                        cell.Style.Font.FontColor = XLColor.White;
+                        cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
                     }
 
                     // Colores alternantes por NombreTabla
@@ -148,24 +147,29 @@ namespace bufinscustomers.Controllers
 
                         for (int col = 0; col < valores.Length; col++)
                         {
-                            var cell = ws.Cells[fila, col + 1];
-                            cell.Value = valores[col];
+                            var cell = ws.Cell(fila, col + 1);
+                            ExcelCellHelper.SetValue(cell, valores[col]);
                             if (valores[col] is DateTime dt)
-                                cell.Style.Numberformat.Format = "dd/mm/yyyy hh:mm";
-                            cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            cell.Style.Fill.BackgroundColor.SetColor(colorFondo);
-                            cell.Style.Border.BorderAround(ExcelBorderStyle.Thin, Color.LightGray);
+                                cell.Style.NumberFormat.Format = "dd/mm/yyyy hh:mm";
+                            cell.Style.Fill.BackgroundColor = XLColor.FromColor(colorFondo);
+                            cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                            cell.Style.Border.OutsideBorderColor = XLColor.FromColor(Color.LightGray);
                         }
 
                         fila++;
                     }
 
-                    ws.Cells[ws.Dimension.Address].AutoFitColumns();
-                    ws.Cells[1, 1, 1, columnas.Length].AutoFilter = true;
-                    ws.View.FreezePanes(2, 1);
+                    ws.Columns().AdjustToContents();
+                    ws.Range(1, 1, 1, columnas.Length).SetAutoFilter();
+                    ws.SheetView.Freeze(1, 0);
 
                     string nombreArchivo = $"VariablesPBI_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-                    byte[] fileBytes = package.GetAsByteArray();
+                    byte[] fileBytes;
+                    using (var ms = new MemoryStream())
+                    {
+                        package.SaveAs(ms);
+                        fileBytes = ms.ToArray();
+                    }
                     return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
                 }
             }

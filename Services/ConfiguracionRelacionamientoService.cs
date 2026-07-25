@@ -1,6 +1,6 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
-using OfficeOpenXml;
-using OfficeOpenXml.Table;
+using ClosedXML.Excel;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -99,7 +99,7 @@ namespace bufinscustomers.Services
         /// Carga datos desde un Excel a las tablas REL_ correspondientes
         /// Usa transaccion global: si una hoja falla, se revierte TODO
         /// </summary>
-        public ResultadoCargaRelacionamiento CargarDatosDesdeExcel(ExcelPackage package)
+        public ResultadoCargaRelacionamiento CargarDatosDesdeExcel(XLWorkbook package)
         {
             var resultado = new ResultadoCargaRelacionamiento();
 
@@ -125,9 +125,9 @@ namespace bufinscustomers.Services
                     }
 
                     // Clasificar hojas del Excel
-                    var hojasValidas = new List<(ExcelWorksheet hoja, string nombreTabla)>();
+                    var hojasValidas = new List<(IXLWorksheet hoja, string nombreTabla)>();
 
-                    foreach (var hoja in package.Workbook.Worksheets)
+                    foreach (var hoja in package.Worksheets)
                     {
                         string nombreHoja = hoja.Name.Trim();
 
@@ -138,7 +138,7 @@ namespace bufinscustomers.Services
                         if (tablaMatch != null)
                         {
                             // Verificar que la hoja tenga datos
-                            if (hoja.Dimension == null || hoja.Dimension.End.Row < 2)
+                            if (hoja.LastRowUsed() == null || hoja.LastRowUsed().RowNumber() < 2)
                             {
                                 resultado.DetalleHojas.Add(new DetalleCargaHoja
                                 {
@@ -197,14 +197,14 @@ namespace bufinscustomers.Services
                                 var columnasSQL = ObtenerColumnasTablaTx(cn, transaction, nombreTabla);
 
                                 // Leer datos del Excel
-                                int totalCols = hoja.Dimension.End.Column;
-                                int totalRows = hoja.Dimension.End.Row;
+                                int totalCols = hoja.LastColumnUsed().ColumnNumber();
+                                int totalRows = hoja.LastRowUsed().RowNumber();
 
                                 // Leer encabezados del Excel
                                 var columnasExcel = new List<string>();
                                 for (int col = 1; col <= totalCols; col++)
                                 {
-                                    string header = hoja.Cells[1, col].Text?.Trim();
+                                    string header = hoja.Cell(1, col).GetFormattedString()?.Trim();
                                     if (!string.IsNullOrWhiteSpace(header))
                                         columnasExcel.Add(header);
                                     else
@@ -232,21 +232,21 @@ namespace bufinscustomers.Services
 
                                     for (int col = 1; col <= columnasValidas; col++)
                                     {
-                                        var celda = hoja.Cells[row, col];
+                                        var celda = hoja.Cell(row, col);
                                         var rawValue = celda.Value;
-                                        var valorTexto = celda.Text?.Trim();
+                                        var valorTexto = celda.GetFormattedString()?.Trim();
 
-                                        if (rawValue != null || !string.IsNullOrWhiteSpace(valorTexto))
+                                        if (!rawValue.IsBlank || !string.IsNullOrWhiteSpace(valorTexto))
                                             filaVacia = false;
 
                                         var tipoCol = dt.Columns[col - 1].DataType;
 
-                                        // Para columnas numéricas usar el valor bruto de EPPlus (double).
+                                        // Para columnas numéricas usar el valor bruto de ClosedXML (double).
                                         // Evita que el formato visual del Excel (paréntesis para negativos,
                                         // guión para ceros, separadores de miles locales) rompa el parse.
-                                        if (rawValue is double d &&
+                                        if (rawValue.IsNumber &&
                                             (tipoCol == typeof(decimal) || tipoCol == typeof(double) || tipoCol == typeof(float)))
-                                            dr[col - 1] = Convert.ChangeType(d, tipoCol);
+                                            dr[col - 1] = Convert.ChangeType(rawValue.GetNumber(), tipoCol);
                                         else
                                             dr[col - 1] = ConvertirValorExcel(valorTexto, tipoCol);
                                     }
@@ -399,7 +399,7 @@ namespace bufinscustomers.Services
         /// </summary>
         public byte[] ExportarRelacionamientosExcel()
         {
-            using (var package = new ExcelPackage())
+            using (var package = new XLWorkbook())
             {
                 using (SqlConnection cn = new SqlConnection(CadenaConexion))
                 {
@@ -437,90 +437,91 @@ namespace bufinscustomers.Services
                         catch { tabla.TotalRegistros = 0; }
                     }
 
-                    EscribirHojaIndice(package.Workbook.Worksheets.Add("Índice"), tablas);
+                    EscribirHojaIndice(package.Worksheets.Add("Índice"), tablas);
 
                     foreach (var tabla in tablas)
                     {
-                        var ws = package.Workbook.Worksheets.Add(tabla.NombreTabla);
+                        var ws = package.Worksheets.Add(tabla.NombreTabla);
                         EscribirHojaDatos(cn, ws, tabla.NombreTabla);
                     }
                 }
 
-                return package.GetAsByteArray();
+                using (var ms = new System.IO.MemoryStream())
+                {
+                    package.SaveAs(ms);
+                    return ms.ToArray();
+                }
             }
         }
 
-        private void EscribirHojaIndice(ExcelWorksheet ws, List<TablaRelInfo> tablas)
+        private void EscribirHojaIndice(IXLWorksheet ws, List<TablaRelInfo> tablas)
         {
-            var colorPrimario = System.Drawing.Color.FromArgb(99, 102, 241);
-            var colorSecundario = System.Drawing.Color.FromArgb(59, 130, 246);
-            var colorFilaPar = System.Drawing.Color.FromArgb(239, 246, 255);
+            var colorPrimario = XLColor.FromArgb(99, 102, 241);
+            var colorSecundario = XLColor.FromArgb(59, 130, 246);
+            var colorFilaPar = XLColor.FromArgb(239, 246, 255);
 
             // Título
-            ws.Cells[1, 1, 1, 4].Merge = true;
-            ws.Cells[1, 1].Value = "Relacionamientos BUFINS";
-            ws.Cells[1, 1].Style.Font.Bold = true;
-            ws.Cells[1, 1].Style.Font.Size = 14;
-            ws.Cells[1, 1].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-            ws.Cells[1, 1].Style.Fill.BackgroundColor.SetColor(colorPrimario);
-            ws.Cells[1, 1].Style.Font.Color.SetColor(System.Drawing.Color.White);
-            ws.Cells[1, 1].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
-            ws.Cells[1, 1].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;
+            ws.Range(1, 1, 1, 4).Merge();
+            ws.Cell(1, 1).Value = "Relacionamientos BUFINS";
+            ws.Cell(1, 1).Style.Font.Bold = true;
+            ws.Cell(1, 1).Style.Font.FontSize = 14;
+            ws.Cell(1, 1).Style.Fill.BackgroundColor = colorPrimario;
+            ws.Cell(1, 1).Style.Font.FontColor = XLColor.White;
+            ws.Cell(1, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            ws.Cell(1, 1).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
             ws.Row(1).Height = 28;
 
             // Subtítulo con fecha
-            ws.Cells[2, 1, 2, 4].Merge = true;
-            ws.Cells[2, 1].Value = $"Exportado el {DateTime.Now:dd/MM/yyyy} a las {DateTime.Now:HH:mm}  |  {tablas.Count} tabla(s) disponible(s)";
-            ws.Cells[2, 1].Style.Font.Italic = true;
-            ws.Cells[2, 1].Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(107, 114, 128));
-            ws.Cells[2, 1].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+            ws.Range(2, 1, 2, 4).Merge();
+            ws.Cell(2, 1).Value = $"Exportado el {DateTime.Now:dd/MM/yyyy} a las {DateTime.Now:HH:mm}  |  {tablas.Count} tabla(s) disponible(s)";
+            ws.Cell(2, 1).Style.Font.Italic = true;
+            ws.Cell(2, 1).Style.Font.FontColor = XLColor.FromArgb(107, 114, 128);
+            ws.Cell(2, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
             // Encabezados de tabla
             string[] headers = { "Tabla en Base de Datos", "Registros", "Columnas", "Nombre en este archivo" };
             for (int c = 0; c < headers.Length; c++)
             {
-                var cell = ws.Cells[4, c + 1];
+                var cell = ws.Cell(4, c + 1);
                 cell.Value = headers[c];
                 cell.Style.Font.Bold = true;
-                cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                cell.Style.Fill.BackgroundColor.SetColor(colorSecundario);
-                cell.Style.Font.Color.SetColor(System.Drawing.Color.White);
-                cell.Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
-                cell.Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Medium;
-                cell.Style.Border.Bottom.Color.SetColor(colorPrimario);
+                cell.Style.Fill.BackgroundColor = colorSecundario;
+                cell.Style.Font.FontColor = XLColor.White;
+                cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                cell.Style.Border.BottomBorder = XLBorderStyleValues.Medium;
+                cell.Style.Border.BottomBorderColor = colorPrimario;
             }
 
             // Filas de datos
             for (int i = 0; i < tablas.Count; i++)
             {
                 int fila = 5 + i;
-                ws.Cells[fila, 1].Value = tablas[i].NombreTabla;
-                ws.Cells[fila, 2].Value = tablas[i].TotalRegistros;
-                ws.Cells[fila, 3].Value = tablas[i].TotalColumnas;
-                ws.Cells[fila, 4].Value = tablas[i].NombreTabla;
+                ws.Cell(fila, 1).Value = tablas[i].NombreTabla;
+                ws.Cell(fila, 2).Value = tablas[i].TotalRegistros;
+                ws.Cell(fila, 3).Value = tablas[i].TotalColumnas;
+                ws.Cell(fila, 4).Value = tablas[i].NombreTabla;
 
-                ws.Cells[fila, 2].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
-                ws.Cells[fila, 3].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                ws.Cell(fila, 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                ws.Cell(fila, 3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
                 if (i % 2 == 0)
                 {
-                    ws.Cells[fila, 1, fila, 4].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                    ws.Cells[fila, 1, fila, 4].Style.Fill.BackgroundColor.SetColor(colorFilaPar);
+                    ws.Range(fila, 1, fila, 4).Style.Fill.BackgroundColor = colorFilaPar;
                 }
 
                 // Borde inferior sutil
-                ws.Cells[fila, 1, fila, 4].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Hair;
-                ws.Cells[fila, 1, fila, 4].Style.Border.Bottom.Color.SetColor(System.Drawing.Color.FromArgb(209, 213, 219));
+                ws.Range(fila, 1, fila, 4).Style.Border.BottomBorder = XLBorderStyleValues.Hair;
+                ws.Range(fila, 1, fila, 4).Style.Border.BottomBorderColor = XLColor.FromArgb(209, 213, 219);
             }
 
             ws.Column(1).Width = 38;
             ws.Column(2).Width = 14;
             ws.Column(3).Width = 12;
             ws.Column(4).Width = 38;
-            ws.View.FreezePanes(5, 1);
+            ws.SheetView.Freeze(4, 0);
         }
 
-        private void EscribirHojaDatos(SqlConnection cn, ExcelWorksheet ws, string nombreTabla)
+        private void EscribirHojaDatos(SqlConnection cn, IXLWorksheet ws, string nombreTabla)
         {
             // 1. Obtener tipos SQL (para money) — reader cerrado antes de abrir el siguiente
             var tiposColumnas = ObtenerColumnasConTiposSql(cn, nombreTabla);
@@ -551,7 +552,7 @@ namespace bufinscustomers.Services
 
             // 4. Escribir encabezados (solo valores, el estilo lo pone el ExcelTable)
             for (int col = 0; col < totalCols; col++)
-                ws.Cells[1, col + 1].Value = dt.Columns[col].ColumnName;
+                ws.Cell(1, col + 1).Value = dt.Columns[col].ColumnName;
 
             // 5. Escribir valores SIN operaciones de estilo por celda
             for (int row = 0; row < totalRows; row++)
@@ -559,7 +560,7 @@ namespace bufinscustomers.Services
                 for (int col = 0; col < totalCols; col++)
                 {
                     var value = dt.Rows[row][col];
-                    var cell = ws.Cells[row + 2, col + 1];
+                    var cell = ws.Cell(row + 2, col + 1);
 
                     if (value == DBNull.Value || value == null)
                         cell.Value = "";
@@ -575,7 +576,7 @@ namespace bufinscustomers.Services
             {
                 for (int col = 0; col < totalCols; col++)
                 {
-                    ws.Cells[2, col + 1, totalRows + 1, col + 1].Style.Numberformat.Format =
+                    ws.Range(2, col + 1, totalRows + 1, col + 1).Style.NumberFormat.Format =
                         moneyColIndices.Contains(col) ? "#,##0.00" : "@";
                 }
             }
@@ -583,14 +584,14 @@ namespace bufinscustomers.Services
             // 7. ExcelTable con estilo nativo — alternado de filas, filtro y encabezado sin overhead de C#
             int lastRow = Math.Max(2, totalRows + 1);
             string safeName = "tbl_" + Regex.Replace(nombreTabla, "[^A-Za-z0-9]", "_");
-            var tbl = ws.Tables.Add(ws.Cells[1, 1, lastRow, totalCols], safeName);
-            tbl.TableStyle = TableStyles.Medium2;
+            var tbl = ws.Range(1, 1, lastRow, totalCols).CreateTable(safeName);
+            tbl.Theme = XLTableTheme.TableStyleMedium2;
 
             // 8. Anchos fijos (AutoFitColumns escanea todas las celdas y es extremadamente lento)
             for (int col = 1; col <= totalCols; col++)
                 ws.Column(col).Width = 24;
 
-            ws.View.FreezePanes(2, 1);
+            ws.SheetView.Freeze(1, 0);
         }
 
         private List<(string Name, string SqlType)> ObtenerColumnasConTiposSql(SqlConnection cn, string nombreTabla)
@@ -620,7 +621,7 @@ namespace bufinscustomers.Services
         /// </summary>
         public byte[] GenerarPlantillaExcel()
         {
-            using (var package = new ExcelPackage())
+            using (var package = new XLWorkbook())
             {
                 using (SqlConnection cn = new SqlConnection(CadenaConexion))
                 {
@@ -630,27 +631,30 @@ namespace bufinscustomers.Services
 
                     foreach (var tabla in tablas)
                     {
-                        var ws = package.Workbook.Worksheets.Add(tabla.NombreTabla);
+                        var ws = package.Worksheets.Add(tabla.NombreTabla);
 
                         // Escribir encabezados
                         var columnas = ObtenerColumnasTabla(cn, tabla.NombreTabla);
                         for (int i = 0; i < columnas.Count; i++)
                         {
-                            var cell = ws.Cells[1, i + 1];
+                            var cell = ws.Cell(1, i + 1);
                             cell.Value = columnas[i];
                             cell.Style.Font.Bold = true;
-                            cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                            cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(99, 102, 241));
-                            cell.Style.Font.Color.SetColor(System.Drawing.Color.White);
+                            cell.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
+                            cell.Style.Font.FontColor = XLColor.White;
                         }
 
-                        ws.Cells[1, 1, 1, Math.Max(columnas.Count, 1)].AutoFilter = true;
-                        ws.View.FreezePanes(2, 1);
-                        ws.Cells.AutoFitColumns();
+                        ws.Range(1, 1, 1, Math.Max(columnas.Count, 1)).SetAutoFilter();
+                        ws.SheetView.Freeze(1, 0);
+                        ws.Columns().AdjustToContents();
                     }
                 }
 
-                return package.GetAsByteArray();
+                using (var ms = new System.IO.MemoryStream())
+                {
+                    package.SaveAs(ms);
+                    return ms.ToArray();
+                }
             }
         }
     }

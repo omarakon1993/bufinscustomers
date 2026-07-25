@@ -2,8 +2,7 @@
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
-using OfficeOpenXml;
-using OfficeOpenXml.Table;
+using ClosedXML.Excel;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -345,9 +344,9 @@ namespace bufinscustomers.Controllers
                 var empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
                 var modelos = _modeloService.ObtenerModelosActivos();
 
-                using (var package = new ExcelPackage())
+                using (var package = new XLWorkbook())
                 {
-                    EscribirHojaIndiceModelos(package.Workbook.Worksheets.Add("Índice"), empresa, modelos, DateTime.Now);
+                    EscribirHojaIndiceModelos(package.Worksheets.Add("Índice"), empresa, modelos, DateTime.Now);
 
                     var erroresModelos = new List<(string Nombre, string NombreSP, string Mensaje)>();
 
@@ -361,14 +360,14 @@ namespace bufinscustomers.Controllers
                                 : modelo.NombreSP;
                             if (sheetName.Length > 31) sheetName = sheetName.Substring(0, 31);
 
-                            var ws = package.Workbook.Worksheets.Add(sheetName);
+                            var ws = package.Worksheets.Add(sheetName);
                             try
                             {
                                 EjecutarModeloYEscribirHoja(cn, ws, modelo, idEmpresa, usuario.Id);
                             }
                             catch (Exception exModelo)
                             {
-                                package.Workbook.Worksheets.Delete(sheetName);
+                                package.Worksheets.Delete(sheetName);
                                 erroresModelos.Add((modelo.Nombre, modelo.NombreSP, exModelo.Message));
                             }
                         }
@@ -382,7 +381,12 @@ namespace bufinscustomers.Controllers
                         }, JsonRequestBehavior.AllowGet);
                     }
 
-                    byte[] fileBytes = package.GetAsByteArray();
+                    byte[] fileBytes;
+                    using (var ms = new MemoryStream())
+                    {
+                        package.SaveAs(ms);
+                        fileBytes = ms.ToArray();
+                    }
                     string empId = !string.IsNullOrWhiteSpace(empresa?.Abreviatura)
                         ? empresa.Abreviatura
                         : (empresa?.Nombre ?? "Empresa").Replace(" ", "_");
@@ -397,24 +401,23 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        private void EscribirHojaIndiceModelos(ExcelWorksheet ws, Empresas empresa, List<ModeloEjecucion> modelos, DateTime fechaExportacion)
+        private void EscribirHojaIndiceModelos(IXLWorksheet ws, Empresas empresa, List<ModeloEjecucion> modelos, DateTime fechaExportacion)
         {
-            ws.Cells[1, 1].Value = "EXPORTACIÓN DE MODELOS FINANCIEROS";
-            ws.Cells[1, 1, 1, 4].Merge = true;
-            ws.Cells[1, 1].Style.Font.Bold = true;
-            ws.Cells[1, 1].Style.Font.Size = 14;
-            ws.Cells[1, 1].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
-            ws.Cells[1, 1].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-            ws.Cells[1, 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(99, 102, 241));
-            ws.Cells[1, 1].Style.Font.Color.SetColor(System.Drawing.Color.White);
+            ws.Cell(1, 1).Value = "EXPORTACIÓN DE MODELOS FINANCIEROS";
+            ws.Range(1, 1, 1, 4).Merge();
+            ws.Cell(1, 1).Style.Font.Bold = true;
+            ws.Cell(1, 1).Style.Font.FontSize = 14;
+            ws.Cell(1, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            ws.Cell(1, 1).Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
+            ws.Cell(1, 1).Style.Font.FontColor = XLColor.White;
 
             int row = 3;
             Action<string, string> writeInfo = (label, value) =>
             {
-                ws.Cells[row, 1].Value = label;
-                ws.Cells[row, 1].Style.Font.Bold = true;
-                ws.Cells[row, 2].Value = value;
-                ws.Cells[row, 2, row, 4].Merge = true;
+                ws.Cell(row, 1).Value = label;
+                ws.Cell(row, 1).Style.Font.Bold = true;
+                ws.Cell(row, 2).Value = value;
+                ws.Range(row, 2, row, 4).Merge();
                 row++;
             };
 
@@ -425,22 +428,21 @@ namespace bufinscustomers.Controllers
             writeInfo("Total modelos:", modelos.Count.ToString());
 
             row++;
-            ws.Cells[row, 1].Value = "#";
-            ws.Cells[row, 2].Value = "Modelo";
-            ws.Cells[row, 3].Value = "Procedimiento";
-            ws.Cells[row, 4].Value = "Descripción";
-            var hdrRange = ws.Cells[row, 1, row, 4];
+            ws.Cell(row, 1).Value = "#";
+            ws.Cell(row, 2).Value = "Modelo";
+            ws.Cell(row, 3).Value = "Procedimiento";
+            ws.Cell(row, 4).Value = "Descripción";
+            var hdrRange = ws.Range(row, 1, row, 4);
             hdrRange.Style.Font.Bold = true;
-            hdrRange.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-            hdrRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(230, 230, 250));
+            hdrRange.Style.Fill.BackgroundColor = XLColor.FromArgb(230, 230, 250);
             row++;
 
             foreach (var m in modelos)
             {
-                ws.Cells[row, 1].Value = m.Orden;
-                ws.Cells[row, 2].Value = m.Nombre;
-                ws.Cells[row, 3].Value = m.NombreSP;
-                ws.Cells[row, 4].Value = m.Descripcion;
+                ws.Cell(row, 1).Value = m.Orden;
+                ws.Cell(row, 2).Value = m.Nombre;
+                ws.Cell(row, 3).Value = m.NombreSP;
+                ws.Cell(row, 4).Value = m.Descripcion;
                 row++;
             }
 
@@ -451,9 +453,9 @@ namespace bufinscustomers.Controllers
         }
 
         private static readonly HashSet<string> _moneyColNames =
-            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Valor", "ValorAcumulado", "ValorFuturo", "ValorPresupuesto", "ValorPresupuestoAcumulado", "ValorPresupuestoConAjuste" };
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Valor", "ValorAcumulado", "ValorFuturo", "ValorFuturoAcumulado", "ValorPresupuesto", "ValorPresupuestoAcumulado", "ValorPresupuestoConAjuste" };
 
-        private void EjecutarModeloYEscribirHoja(SqlConnection cn, ExcelWorksheet ws, ModeloEjecucion modelo, int idEmpresa, int idUsuario)
+        private void EjecutarModeloYEscribirHoja(SqlConnection cn, IXLWorksheet ws, ModeloEjecucion modelo, int idEmpresa, int idUsuario)
         {
             using (var cmd = new SqlCommand(modelo.NombreSP, cn))
             {
@@ -521,18 +523,17 @@ namespace bufinscustomers.Controllers
 
                     // Headers
                     for (int c = 0; c < lastCols.Count; c++)
-                        ws.Cells[1, c + 1].Value = lastCols[c];
+                        ws.Cell(1, c + 1).Value = lastCols[c];
 
-                    var headerRange = ws.Cells[1, 1, 1, lastCols.Count];
+                    var headerRange = ws.Range(1, 1, 1, lastCols.Count);
                     headerRange.Style.Font.Bold = true;
-                    headerRange.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                    headerRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(99, 102, 241));
-                    headerRange.Style.Font.Color.SetColor(System.Drawing.Color.White);
+                    headerRange.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
+                    headerRange.Style.Font.FontColor = XLColor.White;
 
-                    // Data — EPPlus escribe decimal como número real, string como texto
+                    // Data — se escribe decimal como número real, string como texto
                     for (int r = 0; r < lastData.Count; r++)
                         for (int c = 0; c < lastData[r].Count; c++)
-                            ws.Cells[r + 2, c + 1].Value = lastData[r][c];
+                            ExcelCellHelper.SetValue(ws.Cell(r + 2, c + 1), lastData[r][c]);
 
                     // Formatos por rango de columna completa (una operación por columna)
                     if (lastData.Count > 0)
@@ -540,15 +541,15 @@ namespace bufinscustomers.Controllers
                         for (int c = 0; c < lastCols.Count; c++)
                         {
                             string fmt = lastIsMoney[c] ? "#,##0.00" : "@";
-                            ws.Cells[2, c + 1, lastData.Count + 1, c + 1].Style.Numberformat.Format = fmt;
+                            ws.Range(2, c + 1, lastData.Count + 1, c + 1).Style.NumberFormat.Format = fmt;
                         }
 
                         string safeName = "tbl_" + Regex.Replace(ws.Name, "[^A-Za-z0-9]", "_");
-                        var tbl = ws.Tables.Add(ws.Cells[1, 1, lastData.Count + 1, lastCols.Count], safeName);
-                        tbl.TableStyle = TableStyles.Medium2;
+                        var tbl = ws.Range(1, 1, lastData.Count + 1, lastCols.Count).CreateTable(safeName);
+                        tbl.Theme = XLTableTheme.TableStyleMedium2;
                     }
 
-                    ws.View.FreezePanes(2, 1);
+                    ws.SheetView.Freeze(1, 0);
                     for (int c = 1; c <= lastCols.Count; c++)
                         ws.Column(c).Width = 22;
                 }
@@ -578,24 +579,29 @@ namespace bufinscustomers.Controllers
             {
                 var empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
 
-                using (var package = new ExcelPackage())
+                using (var package = new XLWorkbook())
                 {
                     EscribirHojaIndiceModelos(
-                        package.Workbook.Worksheets.Add("Índice"),
+                        package.Worksheets.Add("Índice"),
                         empresa, new List<ModeloEjecucion> { modelo }, DateTime.Now);
 
                     string sheetName = modelo.NombreSP.StartsWith("sp_", StringComparison.OrdinalIgnoreCase)
                         ? modelo.NombreSP.Substring(3) : modelo.NombreSP;
                     if (sheetName.Length > 31) sheetName = sheetName.Substring(0, 31);
 
-                    var ws = package.Workbook.Worksheets.Add(sheetName);
+                    var ws = package.Worksheets.Add(sheetName);
                     using (var cn = new SqlConnection(CadenaConexion))
                     {
                         cn.Open();
                         EjecutarModeloYEscribirHoja(cn, ws, modelo, idEmpresa, usuario.Id);
                     }
 
-                    byte[] fileBytes = package.GetAsByteArray();
+                    byte[] fileBytes;
+                    using (var ms = new MemoryStream())
+                    {
+                        package.SaveAs(ms);
+                        fileBytes = ms.ToArray();
+                    }
                     string empId = !string.IsNullOrWhiteSpace(empresa?.Abreviatura)
                         ? empresa.Abreviatura
                         : (empresa?.Nombre ?? "Empresa").Replace(" ", "_");
@@ -707,13 +713,13 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                using (var package = new ExcelPackage(archivoExcel.InputStream))
+                using (var package = new XLWorkbook(archivoExcel.InputStream))
                     {
                         int hojasEsperadas = _mapeoHistorico.Count;
-                        if (package.Workbook.Worksheets.Count != hojasEsperadas)
+                        if (package.Worksheets.Count != hojasEsperadas)
                         {
                             resultado.Exito = false;
-                            resultado.Mensaje = $"La plantilla debe contener exactamente {hojasEsperadas} hojas. El archivo tiene {package.Workbook.Worksheets.Count} hojas.";
+                            resultado.Mensaje = $"La plantilla debe contener exactamente {hojasEsperadas} hojas. El archivo tiene {package.Worksheets.Count} hojas.";
                             TempData["ResultadoCarga"] = resultado;
                             TempData["NombreArchivo"] = nombreArchivoOriginal;
                             SetErrorMessage(resultado.Mensaje);
@@ -744,7 +750,7 @@ namespace bufinscustomers.Controllers
 
                                         EliminarEjecucionDeIni(conn, anioSeleccionado, idEmpresaSeleccionada, tx);
 
-                                        foreach (var hoja in package.Workbook.Worksheets)
+                                        foreach (var hoja in package.Worksheets)
                                         {
                                             var detalle = new DetalleCargaHojaExcel { NombreHoja = hoja.Name };
                                             var nombreNorm = NormalizarNombre(hoja.Name);
@@ -857,7 +863,7 @@ namespace bufinscustomers.Controllers
 
                                         EliminarAnosHistoricosDeIni(conn, anioSeleccionado, idEmpresaSeleccionada, tx);
 
-                                        foreach (var hoja in package.Workbook.Worksheets)
+                                        foreach (var hoja in package.Worksheets)
                                         {
                                             var detalle = new DetalleCargaHojaExcel { NombreHoja = hoja.Name };
                                             var nombreNormalizado = NormalizarNombre(hoja.Name);
@@ -1271,10 +1277,10 @@ namespace bufinscustomers.Controllers
 
         // ─── New helper methods ───────────────────────────────────────────────────
 
-        private DataTable LeerHojaEnDataTable(ExcelWorksheet hoja, DetalleCargaHojaExcel detalle, string filtroAnio = null)
+        private DataTable LeerHojaEnDataTable(IXLWorksheet hoja, DetalleCargaHojaExcel detalle, string filtroAnio = null)
         {
-            int totalCols = hoja.Dimension?.End.Column ?? 0;
-            int totalRows = hoja.Dimension?.End.Row ?? 0;
+            int totalCols = hoja.LastColumnUsed()?.ColumnNumber() ?? 0;
+            int totalRows = hoja.LastRowUsed()?.RowNumber() ?? 0;
 
             if (totalCols == 0 || totalRows == 0)
             {
@@ -1287,7 +1293,7 @@ namespace bufinscustomers.Controllers
             bool filaCabeceraValida = false;
             for (int col = 1; col <= totalCols; col++)
             {
-                if (!string.IsNullOrWhiteSpace(hoja.Cells[1, col].Text))
+                if (!string.IsNullOrWhiteSpace(hoja.Cell(1, col).GetFormattedString()))
                 {
                     filaCabeceraValida = true;
                     break;
@@ -1304,7 +1310,7 @@ namespace bufinscustomers.Controllers
             int columnasValidas = 0;
             for (int col = 1; col <= totalCols; col++)
             {
-                if (!string.IsNullOrWhiteSpace(hoja.Cells[1, col].Text.Trim()))
+                if (!string.IsNullOrWhiteSpace(hoja.Cell(1, col).GetFormattedString().Trim()))
                     columnasValidas++;
                 else
                     break;
@@ -1323,7 +1329,7 @@ namespace bufinscustomers.Controllers
             {
                 for (int col = 1; col <= columnasValidas; col++)
                 {
-                    var header = hoja.Cells[1, col].Text?.Trim() ?? "";
+                    var header = hoja.Cell(1, col).GetFormattedString()?.Trim() ?? "";
                     if (string.Equals(header, "Año", StringComparison.OrdinalIgnoreCase) ||
                         string.Equals(header, "Anio", StringComparison.OrdinalIgnoreCase) ||
                         string.Equals(header, "Year", StringComparison.OrdinalIgnoreCase))
@@ -1341,7 +1347,7 @@ namespace bufinscustomers.Controllers
 
             var dt = new DataTable(nombreTabla);
             for (int col = 1; col <= columnasValidas; col++)
-                dt.Columns.Add(hoja.Cells[1, col].Text.Trim(), typeof(object));
+                dt.Columns.Add(hoja.Cell(1, col).GetFormattedString().Trim(), typeof(object));
 
             int filasVaciasConsecutivas = 0;
             int filasIgnoradasPorAnio = 0;
@@ -1351,18 +1357,18 @@ namespace bufinscustomers.Controllers
                 var dr = dt.NewRow();
                 for (int col = 1; col <= columnasValidas; col++)
                 {
-                    var cellObj = hoja.Cells[row, col].Value;
+                    var cellValue = hoja.Cell(row, col).Value;
                     object drVal;
-                    if (cellObj is double)
+                    if (cellValue.IsNumber)
                     {
                         // Celda numérica: guardar como double nativo — sin conversión a texto
                         // para evitar toda ambigüedad de separadores decimales/miles
-                        drVal = cellObj;
+                        drVal = cellValue.GetNumber();
                         filaVacia = false; // cualquier número (incluso cero) es dato real
                     }
                     else
                     {
-                        string valorStr = cellObj?.ToString()?.Trim() ?? "";
+                        string valorStr = cellValue.IsBlank ? "" : cellValue.ToString().Trim();
                         if (!string.IsNullOrWhiteSpace(valorStr)) filaVacia = false;
                         drVal = (object)valorStr;
                     }
@@ -1592,7 +1598,7 @@ namespace bufinscustomers.Controllers
         // ─── Existing helper methods ──────────────────────────────────────────────
 
         /// <summary>
-        /// Convierte cualquier valor de celda EPPlus a decimal exacto para SqlBulkCopy.
+        /// Convierte cualquier valor de celda de Excel a decimal exacto para SqlBulkCopy.
         /// Para double nativo usa round-trip via string; para texto usa SanitizarValorNumerico.
         /// Nunca lanza excepción: retorna 0 ante cualquier caso inválido.
         /// </summary>
