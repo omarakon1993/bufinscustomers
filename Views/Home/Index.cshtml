@@ -65,6 +65,19 @@
     string nombreEmpresaActual = usuario != null && usuario.IdEmpresa.HasValue && empMap.ContainsKey(usuario.IdEmpresa.Value) ? empMap[usuario.IdEmpresa.Value] : null;
     string abrevEmpresaActual = usuario != null && usuario.IdEmpresa.HasValue && empAbrevMap.ContainsKey(usuario.IdEmpresa.Value) ? empAbrevMap[usuario.IdEmpresa.Value] : null;
 
+    // Si la empresa principal del usuario pertenece a un grupo empresarial, mostramos las
+    // empresas hermanas del grupo para que sepa que también puede consultarlas.
+    // (ViewBag.Empresas ya viene filtrado por EmpresaAccesoHelper: para un usuario no Super
+    // Admin contiene exactamente su empresa + las del mismo grupo.)
+    var empresaPropia = usuario != null && usuario.IdEmpresa.HasValue && empresas != null
+        ? empresas.FirstOrDefault(e => e.Id == usuario.IdEmpresa.Value)
+        : null;
+    string nombreGrupoEmpresarial = empresaPropia != null ? empresaPropia.NombreGrupoEmpresarial : null;
+    var empresasGrupo = empresaPropia != null && empresaPropia.IdGrupoEmpresarial.HasValue && empresas != null
+        ? empresas.Where(e => e.IdGrupoEmpresarial == empresaPropia.IdGrupoEmpresarial && e.Id != empresaPropia.Id)
+                  .OrderBy(e => e.Nombre).ToList()
+        : new List<bufinscustomers.Models.Empresas>();
+
     // Serialización de datos para Chart.js
     var jss = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
     var graficosJson = jss.Serialize(graficoCards.Select(g => new {
@@ -108,6 +121,23 @@
                     }
                     <span class="dash-empresa-nombre">@nombreEmpresaActual</span>
                 </div>
+
+                if (empresasGrupo.Any())
+                {
+                    <div class="dash-grupo-row">
+                        <span class="dash-grupo-label" title="@nombreGrupoEmpresarial">
+                            <i class="fas fa-sitemap"></i>
+                            @(!string.IsNullOrEmpty(nombreGrupoEmpresarial) ? nombreGrupoEmpresarial : Resources.Strings.Home_GrupoLabel)
+                        </span>
+                        <span class="dash-grupo-acceso">@string.Format(Resources.Strings.Home_GrupoAcceso, empresasGrupo.Count)</span>
+                        <span class="dash-grupo-chips">
+                            @foreach (var eg in empresasGrupo)
+                            {
+                                <span class="dash-empresa-chip-light" title="@eg.Nombre">@(empAbrevMap.ContainsKey(eg.Id) ? empAbrevMap[eg.Id] : eg.Nombre)</span>
+                            }
+                        </span>
+                    </div>
+                }
             }
             <div class="dash-greeting-text">
                 <span class="dash-hello">@Html.Raw(saludoHtml), <strong>@nombreUsuario</strong></span>
@@ -336,6 +366,23 @@
         padding:.14rem .35rem; border-radius:4px;
         cursor:default;
     }
+
+    /* Grupo empresarial: empresas hermanas a las que el usuario también tiene acceso */
+    .dash-grupo-row {
+        display:flex; align-items:center; flex-wrap:wrap; gap:.4rem;
+        margin-bottom:.5rem;
+    }
+    .dash-grupo-label {
+        display:inline-flex; align-items:center; gap:.3rem;
+        font-size:.6rem; font-weight:800; letter-spacing:.03em;
+        color:#583AFF; text-transform:uppercase;
+        background:rgba(88,58,255,.07);
+        border:1px solid rgba(88,58,255,.15);
+        padding:.16rem .45rem; border-radius:5px;
+    }
+    .dash-grupo-label i { font-size:.6rem; }
+    .dash-grupo-acceso { font-size:.66rem; font-weight:600; color:#9691AE; }
+    .dash-grupo-chips { display:flex; flex-wrap:wrap; gap:.3rem; }
 
     .dash-greeting-text { display:flex; flex-direction:column; gap:.2rem; }
     .dash-hello { font-size:1.3rem; font-weight:800; color:#160933; letter-spacing:-.2px; }
