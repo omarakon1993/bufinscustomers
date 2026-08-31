@@ -9,6 +9,37 @@ namespace bufinscustomers.Services
 {
     public class EmpresaService : BaseService
     {
+        /// <summary>
+        /// Id de la empresa principal (Bufins) a la que se asocian por defecto los Super Admin.
+        /// Prioridad: clave de sistema <c>EmpresaPrincipalId</c> → empresa llamada "Bufins"
+        /// (o que empiece por "Bufins") → <c>null</c> si no se encuentra ninguna.
+        /// </summary>
+        public int? ObtenerIdEmpresaPrincipal()
+        {
+            try
+            {
+                var cfg = new ConfiguracionSistemaService().ObtenerValor("EmpresaPrincipalId");
+                if (int.TryParse(cfg, out int idCfg) && idCfg > 0)
+                    return idCfg;
+            }
+            catch { /* la clave puede no existir */ }
+
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand(
+                    @"SELECT TOP 1 EmpId FROM dbo.Empresas
+                      WHERE EmpNombre = 'Bufins' OR EmpNombre LIKE 'Bufins%'
+                      ORDER BY CASE WHEN EmpNombre = 'Bufins' THEN 0 ELSE 1 END, EmpId", cn))
+                {
+                    cn.Open();
+                    var o = cmd.ExecuteScalar();
+                    return (o != null && o != DBNull.Value) ? (int?)Convert.ToInt32(o) : null;
+                }
+            }
+            catch { return null; }
+        }
+
         public List<Empresas> ObtenerEmpresas()
         {
             List<Empresas> empresas = new List<Empresas>();

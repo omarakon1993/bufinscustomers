@@ -211,6 +211,39 @@ namespace bufinscustomers.Controllers
             }, JsonRequestBehavior.AllowGet);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult Limpiar(bool completo, int? meses, int? idEmpresa)
+        {
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+                return Json(new { success = false, message = R("Audit_LimpiarSinPermiso") });
+
+            try
+            {
+                int? mesesConservar = completo ? (int?)null : meses;
+
+                if (!completo && (!mesesConservar.HasValue || mesesConservar.Value < 1 || mesesConservar.Value > 120))
+                    return Json(new { success = false, message = R("Audit_LimpiarMesesInvalido") });
+
+                int eliminados = _svc.Limpiar(mesesConservar, idEmpresa);
+
+                var usuario = UsuarioSesionHelper.UsuarioActual;
+                if (usuario != null)
+                {
+                    string mensaje = completo
+                        ? string.Format(R("Audit_NotifMsgTodo"), eliminados)
+                        : string.Format(R("Audit_NotifMsgConservar"), eliminados, mesesConservar.Value);
+                    new NotificacionesService().Crear(usuario.Id, R("Notif_AuditoriaLimpiada"), mensaje, "warning", "/Auditoria");
+                }
+
+                return Json(new { success = true, eliminados });
+            }
+            catch
+            {
+                return Json(new { success = false, message = R("Audit_LimpiarError") });
+            }
+        }
+
         private static string Embellecer(string json)
         {
             if (string.IsNullOrWhiteSpace(json)) return null;

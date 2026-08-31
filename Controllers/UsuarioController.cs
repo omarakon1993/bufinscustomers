@@ -280,6 +280,13 @@ namespace bufinscustomers.Controllers
                             oUsuario.Admin = 0;
                         }
 
+                        // Super Admin → empresa principal (Bufins) por defecto si no se indicó otra.
+                        if (oUsuario.Admin == 2 && (oUsuario.IdEmpresa ?? 0) == 0)
+                        {
+                            var idPrincipal = new EmpresaService().ObtenerIdEmpresaPrincipal();
+                            if (idPrincipal.HasValue) oUsuario.IdEmpresa = idPrincipal.Value;
+                        }
+
                         command.CommandType = CommandType.StoredProcedure;
                         command.Parameters.AddWithValue("@Id", oUsuario.Id);
                         command.Parameters.AddWithValue("@Nombre", oUsuario.Nombre);
@@ -412,6 +419,14 @@ namespace bufinscustomers.Controllers
             if (oUsuario.Admin < 0 || oUsuario.Admin > 2)
             {
                 oUsuario.Admin = 0;
+            }
+
+            // Los Super Admin se asocian por defecto a la empresa principal (Bufins)
+            // cuando no se indicó otra.
+            if (oUsuario.Admin == 2 && (oUsuario.IdEmpresa ?? 0) == 0)
+            {
+                var idPrincipal = new EmpresaService().ObtenerIdEmpresaPrincipal();
+                if (idPrincipal.HasValue) oUsuario.IdEmpresa = idPrincipal.Value;
             }
 
             using (SqlConnection cn = new SqlConnection(CadenaConexion))

@@ -280,6 +280,34 @@ namespace bufinscustomers.Services
             return null;
         }
 
+        /// <summary>
+        /// Borra filas de auditoría (solo Super Admin). <paramref name="mesesConservar"/> null/&lt;=0 = todo;
+        /// en caso contrario conserva los últimos N meses. <paramref name="idEmpresa"/> null = todas las
+        /// empresas; con valor = solo esa empresa. Devuelve las filas eliminadas.
+        /// </summary>
+        public int Limpiar(int? mesesConservar, int? idEmpresa)
+        {
+            var sql = new StringBuilder("DELETE FROM dbo.Auditoria WHERE 1 = 1");
+            using (var cn = new SqlConnection(CadenaConexion))
+            using (var cmd = new SqlCommand())
+            {
+                if (idEmpresa.HasValue)
+                {
+                    sql.Append(" AND IdEmpresa = @IdEmpresa");
+                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa.Value);
+                }
+                if (mesesConservar.HasValue && mesesConservar.Value > 0)
+                {
+                    sql.Append(" AND Fecha < DATEADD(MONTH, -@Meses, GETDATE())");
+                    cmd.Parameters.AddWithValue("@Meses", mesesConservar.Value);
+                }
+                cmd.Connection = cn;
+                cmd.CommandText = sql.ToString();
+                cn.Open();
+                return cmd.ExecuteNonQuery();
+            }
+        }
+
         /// <summary>Valores distintos de <c>Tipo</c> presentes, para poblar el filtro del visor.</summary>
         public List<string> ObtenerTiposUsados()
         {
