@@ -1,0 +1,98 @@
+﻿<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>@(ViewBag.Code ?? "Error") · Bufins</title>
+    <style>
+        :root {
+            --bg: #160933;
+            --card: #1f0f45;
+            --line: rgba(255,255,255,.12);
+            --ink: #F3F1FB;
+            --ink-soft: #b9b2d6;
+            --grad: linear-gradient(90deg,#6366F1 0%,#3B82F6 35%,#06B6D4 70%,#01E1D7 100%);
+        }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            -webkit-font-smoothing: antialiased;
+        }
+        .err-card {
+            width: 100%;
+            max-width: 460px;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 40px 36px 34px;
+            text-align: center;
+            box-shadow: 0 24px 60px -24px rgba(0,0,0,.6);
+        }
+        .err-card::before {
+            content: "";
+            display: block;
+            height: 4px;
+            width: 64px;
+            margin: 0 auto 26px;
+            border-radius: 3px;
+            background: var(--grad);
+        }
+        .err-code {
+            font-size: 3.6rem;
+            font-weight: 800;
+            line-height: 1;
+            margin: 0 0 10px;
+            letter-spacing: -.03em;
+            background: var(--grad);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .err-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 0 0 10px;
+        }
+        .err-desc {
+            font-size: .95rem;
+            line-height: 1.6;
+            color: var(--ink-soft);
+            margin: 0 auto 26px;
+            max-width: 34ch;
+        }
+        .err-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .err-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 9px;
+            font-size: .9rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid transparent;
+            background-image: var(--grad);
+            color: #0b1020;
+        }
+        .err-btn.secondary {
+            background: transparent;
+            background-image: none;
+            color: var(--ink);
+            border-color: var(--line);
+        }
+        .err-btn:focus-visible { outline: 2px solid #01E1D7; outline-offset: 2px; }
+    </style>
+</head>
+<body>
+    <div class="err-card">
+        @RenderBody()
+    </div>
+</body>
+</html>

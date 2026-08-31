@@ -1,5 +1,6 @@
 ﻿using System.Web;
 using System.Web.Mvc;
+using bufinscustomers.Filters;
 
 namespace bufinscustomers
 {
@@ -7,7 +8,8 @@ namespace bufinscustomers
     {
         public static void RegisterGlobalFilters(GlobalFilterCollection filters)
         {
-            filters.Add(new HandleErrorAttribute());
+            // Igual que HandleErrorAttribute, pero registra la excepción en AppLogger.
+            filters.Add(new LoggingHandleErrorAttribute());
             filters.Add(new EmpresasViewBagFilter()); // <-- Aquí agregas tu filtro
         }
     }

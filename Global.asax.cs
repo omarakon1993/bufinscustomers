@@ -29,12 +29,9 @@ namespace bufinscustomers
             if (ex is HttpUnhandledException && ex.InnerException != null)
                 ex = ex.InnerException;
 
-            System.Diagnostics.Trace.TraceError(
-                "[Application_Error] {0}: {1}\nStack: {2}\nURL: {3}",
-                ex.GetType().Name,
-                ex.Message,
-                ex.StackTrace,
-                Request?.Url?.ToString() ?? "(unknown)");
+            // Red de seguridad: excepciones que no pasaron por LoggingHandleErrorAttribute
+            // (errores de routing, de la propia vista de error, etc.).
+            bufinscustomers.Helpers.AppLogger.Error(ex, "Application_Error");
         }
 
         protected void Application_AcquireRequestState(object sender, EventArgs e)

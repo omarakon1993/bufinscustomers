@@ -84,13 +84,13 @@ namespace bufinscustomers.Controllers
             {
                 string msg = string.Format(R("Hist_RollbackExitoso"), version.Anio, version.NombreEmpresa);
                 SetSuccessMessage(msg);
-                new NotificacionesService().Crear(usuario.Id, R("Notif_RollbackEjecutado"), msg, "success");
+                new NotificacionesService().Crear(usuario.Id, R("Notif_RollbackEjecutado"), msg, "success", "/HistorialVersionesCargues");
             }
             else
             {
                 string msg = R("Hist_ErrorRollback");
                 SetErrorMessage(msg);
-                new NotificacionesService().Crear(usuario.Id, R("Notif_ErrorRollback"), msg, "error");
+                new NotificacionesService().Crear(usuario.Id, R("Notif_ErrorRollback"), msg, "error", "/HistorialVersionesCargues");
             }
 
             return RedirectToAction("Index", new { idEmpresa = idEmpresaFiltro, anio = anioFiltro, modo = modoFiltro });

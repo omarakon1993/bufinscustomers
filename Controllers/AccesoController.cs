@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using System.IO;
 using System.ComponentModel;
 using bufinscustomers.Helpers;
+using bufinscustomers.Services;
 using Newtonsoft.Json;
 
 namespace bufinscustomers.Controllers
@@ -70,7 +71,7 @@ namespace bufinscustomers.Controllers
             }
             else
             {
-                ViewData["Mensaje"] = "Las contraseñas no coinciden";
+                ViewData["Mensaje"] = R("Login_ErrorClavesNoCoinciden");
                 return View();
             }
 
@@ -109,7 +110,7 @@ namespace bufinscustomers.Controllers
             string clientIp = GetClientIp();
             if (EstaIPBloqueada(clientIp))
             {
-                ViewData["Mensaje"] = $"Demasiados intentos fallidos desde esta dirección. Intenta de nuevo en {RATE_LIMIT_MINUTOS} minuto(s).";
+                ViewData["Mensaje"] = string.Format(R("Login_ErrorRateLimitIP"), RATE_LIMIT_MINUTOS);
                 return View();
             }
 
@@ -125,11 +126,12 @@ namespace bufinscustomers.Controllers
             string hashAlmacenado = null;
             int intentosFallidos = 0;
             DateTime? bloqueadoHasta = null;
+            int? idEmpresaLogin = null;   // empresa del usuario, para la auditoría de seguridad
 
             using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
                 string sql = @"
-                    SELECT TOP 1 Id, Clave, IntentosFallidos, BloqueadoHasta FROM Usuarios
+                    SELECT TOP 1 Id, Clave, IntentosFallidos, BloqueadoHasta, IdEmpresa FROM Usuarios
                     WHERE (@Usuario <> '' AND Usuario = @Usuario)
                        OR (@Correo  <> '' AND Correo  = @Correo)";
                 SqlCommand cmd = new SqlCommand(sql, cn);
@@ -150,6 +152,12 @@ namespace bufinscustomers.Controllers
                                 ? (DateTime?)Convert.ToDateTime(reader["BloqueadoHasta"]) : null;
                         }
                         catch (IndexOutOfRangeException) { }
+                        try
+                        {
+                            idEmpresaLogin = reader["IdEmpresa"] != DBNull.Value
+                                ? (int?)Convert.ToInt32(reader["IdEmpresa"]) : null;
+                        }
+                        catch (IndexOutOfRangeException) { }
                     }
                 }
             }
@@ -158,7 +166,9 @@ namespace bufinscustomers.Controllers
             if (usuarioId > 0 && bloqueadoHasta.HasValue && bloqueadoHasta.Value > DateTime.Now)
             {
                 int minutosRestantes = (int)Math.Ceiling((bloqueadoHasta.Value - DateTime.Now).TotalMinutes);
-                ViewData["Mensaje"] = $"Cuenta bloqueada temporalmente. Intenta de nuevo en {minutosRestantes} minuto(s).";
+                new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Bloqueo,
+                    $"Intento de inicio de sesión con cuenta bloqueada ({oUsuario.Correo})", usuarioId, null, idEmpresaLogin);
+                ViewData["Mensaje"] = string.Format(R("Login_ErrorCuentaBloqueada"), minutosRestantes);
                 return View();
             }
 
@@ -197,14 +207,21 @@ namespace bufinscustomers.Controllers
                     out int nuevosIntentos, out DateTime? nuevoBloqueadoHasta);
                 RegistrarIntentoIP(clientIp); // A7
 
+                new AuditoriaService().RegistrarSeguridad(
+                    nuevoBloqueadoHasta.HasValue ? AuditoriaAccion.Bloqueo : AuditoriaAccion.LoginFallido,
+                    nuevoBloqueadoHasta.HasValue
+                        ? $"Cuenta bloqueada tras {nuevosIntentos} intentos fallidos ({oUsuario.Correo})"
+                        : $"Credenciales incorrectas ({oUsuario.Correo}), intento {nuevosIntentos}",
+                    usuarioId, null, idEmpresaLogin);
+
                 if (nuevoBloqueadoHasta.HasValue)
                 {
                     int minutosBloqueo = nuevosIntentos >= 15 ? 1440 : nuevosIntentos >= 10 ? 60 : 15;
-                    ViewData["Mensaje"] = $"Cuenta bloqueada temporalmente. Intenta de nuevo en {minutosBloqueo} minuto(s).";
+                    ViewData["Mensaje"] = string.Format(R("Login_ErrorCuentaBloqueada"), minutosBloqueo);
                 }
                 else
                 {
-                    ViewData["Mensaje"] = "Usuario o clave incorrecta.";
+                    ViewData["Mensaje"] = R("Login_ErrorCredenciales");
                 }
                 return View();
             }
@@ -215,6 +232,12 @@ namespace bufinscustomers.Controllers
 
                 if (usuarioCompleto != null)
                 {
+                    new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Login,
+                        "Inicio de sesión exitoso",
+                        usuarioCompleto.Id,
+                        ((usuarioCompleto.Nombre ?? "") + " " + (usuarioCompleto.Apellidos ?? "")).Trim(),
+                        usuarioCompleto.IdEmpresa ?? idEmpresaLogin);
+
                     // A6: Regenerar SessionID para prevenir session fixation
                     string loginToken = Guid.NewGuid().ToString("N");
                     System.Web.HttpRuntime.Cache.Insert(
@@ -227,14 +250,16 @@ namespace bufinscustomers.Controllers
                 }
                 else
                 {
-                    ViewData["Mensaje"] = "Error al cargar los datos del usuario";
+                    ViewData["Mensaje"] = R("Login_ErrorCargarUsuario");
                     return View();
                 }
             }
             else
             {
                 RegistrarIntentoIP(clientIp); // A7: usuario no encontrado también cuenta
-                ViewData["Mensaje"] = "Usuario o clave incorrecta.";
+                new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.LoginFallido,
+                    $"Intento de inicio de sesión con identificador inexistente ({oUsuario.Correo})", null, null);
+                ViewData["Mensaje"] = R("Login_ErrorCredenciales");
                 return View();
             }
         }

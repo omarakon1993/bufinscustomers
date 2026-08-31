@@ -8,15 +8,13 @@ using System.Web.Mvc;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
+    [SoloSuperAdmin]
     public class GestorCategoriasController : BaseController
     {
         private readonly MenuEstructuraService _svc = new MenuEstructuraService();
 
         public ActionResult Index()
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             return View("~/Views/Configuracion/GestorCategorias.cshtml", _svc.ObtenerCategorias());
         }
 
@@ -24,9 +22,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Crear(CategoriaMenu model)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             try
             {
                 if (string.IsNullOrWhiteSpace(model.Nombre))
@@ -47,9 +42,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Editar(CategoriaMenu model)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             try
             {
                 if (string.IsNullOrWhiteSpace(model.Nombre))
@@ -70,9 +62,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Eliminar(int id)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             try
             {
                 bool ok = _svc.EliminarCategoria(id);

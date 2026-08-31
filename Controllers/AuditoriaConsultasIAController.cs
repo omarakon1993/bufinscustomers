@@ -18,7 +18,7 @@ namespace bufinscustomers.Controllers
 
             if (!esSuperAdmin && !esAdminEmpresa)
             {
-                SetErrorMessage("No tienes permisos para acceder a esta sección.");
+                SetErrorMessage(R("AudIA_SinPermisoSeccion"));
                 return RedirectToAction("Index", "Home");
             }
 
@@ -100,7 +100,7 @@ namespace bufinscustomers.Controllers
                     string mensaje = completo
                         ? string.Format(R("AudIA_NotifMsgTodo"), eliminados)
                         : string.Format(R("AudIA_NotifMsgConservar"), eliminados, mesesConservar.Value);
-                    new NotificacionesService().Crear(usuario.Id, R("Notif_AuditoriaLimpiada"), mensaje, "warning");
+                    new NotificacionesService().Crear(usuario.Id, R("Notif_AuditoriaLimpiada"), mensaje, "warning", "/AuditoriaConsultasIA");
                 }
 
                 return Json(new { success = true, eliminados });

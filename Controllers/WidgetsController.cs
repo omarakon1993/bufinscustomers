@@ -9,15 +9,13 @@ using System.Web.Mvc;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
+    [SoloSuperAdmin]
     public class WidgetsController : BaseController
     {
         private readonly WidgetsService _svc = new WidgetsService();
 
         public async Task<ActionResult> Index()
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             return View("~/Views/Configuracion/Widgets.cshtml", await _svc.ObtenerTodasAsync());
         }
 
@@ -26,9 +24,6 @@ namespace bufinscustomers.Controllers
         [ValidateInput(false)]
         public async Task<ActionResult> Crear(WidgetTarjeta model)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             try
             {
                 if (string.IsNullOrWhiteSpace(model.Nombre))
@@ -54,9 +49,6 @@ namespace bufinscustomers.Controllers
         [ValidateInput(false)]
         public async Task<ActionResult> Editar(WidgetTarjeta model)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             try
             {
                 if (string.IsNullOrWhiteSpace(model.Nombre))
@@ -81,9 +73,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Eliminar(int id)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             try
             {
                 bool ok = await _svc.EliminarAsync(id);

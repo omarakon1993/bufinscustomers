@@ -1,0 +1,11 @@
+﻿@{
+    Layout = "~/Views/Error/_ErrorLayout.cshtml";
+    ViewBag.Code = "403";
+}
+<h1 class="err-code">403</h1>
+<h2 class="err-title">@Resources.Strings.Err_403_Title</h2>
+<p class="err-desc">@Resources.Strings.Err_403_Desc</p>
+<div class="err-actions">
+    <a class="err-btn" href="@Url.Action("Index", "Home")">@Resources.Strings.Err_VolverInicio</a>
+    <a class="err-btn secondary" href="@Url.Action("Login", "Acceso")">@Resources.Strings.Err_IniciarSesion</a>
+</div>

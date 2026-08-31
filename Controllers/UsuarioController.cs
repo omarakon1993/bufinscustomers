@@ -19,15 +19,9 @@ namespace bufinscustomers.Controllers
         private EmpresaService _empresaService = new EmpresaService();
 
         // GET: Usuario
+        [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
         public ActionResult Usuarios()
         {
-            // Verificar permisos: Admin 2 o tener permiso USUARIOS_VER
-            if (!UsuarioSesionHelper.EsSuperAdmin() && !UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR"))
-            {
-                SetErrorMessage("No tienes permisos para ver usuarios.");
-                return RedirectToAction("Index", "Home");
-            }
-
             var empresas = _empresaService.ObtenerEmpresas();
             var usuarioActual = UsuarioSesionHelper.UsuarioActual;
 
@@ -183,15 +177,9 @@ namespace bufinscustomers.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
         public ActionResult EliminarUsuario(int idUsuario)
         {
-            // Verificar permisos de eliminación
-            if (!UsuarioSesionHelper.EsSuperAdmin() && !UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR"))
-            {
-                SetErrorMessage("No tienes permisos para eliminar usuarios.");
-                return RedirectToAction("Usuarios");
-            }
-
             try
             {
                 // Si no es Admin 2, verificar que el usuario a eliminar sea de su empresa
@@ -232,7 +220,9 @@ namespace bufinscustomers.Controllers
                 }
 
                 SetSuccessMessage("Usuario eliminado correctamente.");
-                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_UsuarioEliminado"), null, "warning");
+                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_UsuarioEliminado"), null, "warning", "/Usuario/Usuarios");
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Eliminar,
+                    "Usuarios", idUsuario.ToString(), $"Usuario eliminado (Id {idUsuario})");
             }
             catch (Exception ex)
             {
@@ -244,15 +234,9 @@ namespace bufinscustomers.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
         public ActionResult EditarUsuario(Usuarios oUsuario, HttpPostedFileBase ImagenUsuario)
         {
-            // Verificar permisos de edición
-            if (!UsuarioSesionHelper.EsSuperAdmin() && !UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR"))
-            {
-                SetErrorMessage("No tienes permisos para editar usuarios.");
-                return RedirectToAction("Usuarios");
-            }
-
             // Solo Admin 2 puede asignar Admin 2
             if (oUsuario.Admin == 2 && !UsuarioSesionHelper.EsSuperAdmin())
             {
@@ -318,7 +302,8 @@ namespace bufinscustomers.Controllers
                             UsuarioSesionHelper.UsuarioActual?.Id ?? 0,
                             R("Notif_PermisosReiniciados"),
                             $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim(),
-                            "warning");
+                            "warning",
+                            "/Usuario/Usuarios");
                     }
 
                     // Actualizar límite de consultas IA (solo admins pueden setearlo, max 10)
@@ -343,6 +328,11 @@ namespace bufinscustomers.Controllers
                 }
 
                 SetSuccessMessage("Usuario actualizado correctamente.");
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Editar,
+                    "Usuarios", oUsuario.Id.ToString(),
+                    $"Usuario editado: {oUsuario.Correo} (rol {oUsuario.Admin})", null,
+                    new { oUsuario.Id, oUsuario.Nombre, oUsuario.Apellidos, oUsuario.Correo, oUsuario.Usuario, oUsuario.Admin, oUsuario.IdEmpresa },
+                    idEmpresa: oUsuario.IdEmpresa);
                 EnviarCorreoUsuarioActualizado(oUsuario);
             }
             catch (Exception ex)
@@ -355,15 +345,9 @@ namespace bufinscustomers.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
         public ActionResult Registrar(Usuarios oUsuario, HttpPostedFileBase ImagenUsuario)
         {
-            // Verificar permisos de creación
-            if (!UsuarioSesionHelper.EsSuperAdmin() && !UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR"))
-            {
-                SetErrorMessage("No tienes permisos para crear usuarios.");
-                return RedirectToAction("Usuarios");
-            }
-
             bool registrado;
             string mensaje;
             int usuarioId = 0;
@@ -498,7 +482,12 @@ namespace bufinscustomers.Controllers
                     }
                 }
                 SetSuccessMessage(mensaje);
-                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_UsuarioCreado"), $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim(), "success");
+                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_UsuarioCreado"), $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim(), "success", "/Usuario/Usuarios");
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Crear,
+                    "Usuarios", usuarioId.ToString(),
+                    $"Usuario creado: {oUsuario.Correo} (rol {oUsuario.Admin})", null,
+                    new { Id = usuarioId, oUsuario.Nombre, oUsuario.Apellidos, oUsuario.Correo, oUsuario.Usuario, oUsuario.Admin, oUsuario.IdEmpresa },
+                    idEmpresa: oUsuario.IdEmpresa);
                 EnviarCorreoBienvenida(oUsuario);
             }
             else
@@ -511,15 +500,9 @@ namespace bufinscustomers.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
         public ActionResult CambiarClave(int idUsuario, string nuevaClave, string confirmarNuevaClave)
         {
-            // Verificar permisos
-            if (!UsuarioSesionHelper.EsSuperAdmin() && !UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR"))
-            {
-                SetErrorMessage("No tienes permisos para cambiar la clave de usuarios.");
-                return RedirectToAction("Usuarios");
-            }
-
             var usuarioService = new UsuarioService();
             var usuarioDestino = usuarioService.ObtenerUsuarioPorId(idUsuario);
 
@@ -585,13 +568,9 @@ namespace bufinscustomers.Controllers
         // datos de cuenta que recibió al crearse (sin contraseña).
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
         public JsonResult EnviarInfoCorreo(int idUsuario)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin() && !UsuarioSesionHelper.TienePermiso("ADMIN_USUARIOS_GESTOR"))
-            {
-                return Json(new { success = false, message = R("Usr_ErrorSinPermiso") });
-            }
-
             var usuarioService = new UsuarioService();
             var usuarioDestino = usuarioService.ObtenerUsuarioPorId(idUsuario);
 

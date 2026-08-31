@@ -10,6 +10,7 @@ using System.Web.Mvc;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
+    [SoloSuperAdmin]
     public class MenuOpcionesController : BaseController
     {
         private readonly MenuOpcionesService _menuOpcionesService = new MenuOpcionesService();
@@ -17,11 +18,6 @@ namespace bufinscustomers.Controllers
 
         public ActionResult Index()
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-            {
-                return RedirectToAction("Index", "Home");
-            }
-
             var opciones = _menuOpcionesService.ObtenerTodas();
             ViewBag.Grupos = _menuEstructuraService.ObtenerGrupos();
             ViewBag.Categorias = _menuEstructuraService.ObtenerCategorias();
@@ -32,15 +28,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Crear(MenuOpciones opcion)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-            {
-                return RedirectToAction("Index", "Home");
-            }
-
-            // Solo Super Admin puede crear menús destacados
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                opcion.EsDestacado = false;
-
             try
             {
                 bool creado = _menuOpcionesService.CrearMenuOpcion(opcion);
@@ -49,6 +36,8 @@ namespace bufinscustomers.Controllers
                 {
                     UsuarioSesionHelper.InvalidarCachePermisos();
                     SetSuccessMessage("Opción de menú creada correctamente.");
+                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Menu, AuditoriaAccion.Crear,
+                        "MenuOpciones", opcion.Id.ToString(), $"Opción de menú creada: {opcion.Nombre} ({opcion.Codigo})", null, opcion);
                 }
                 else
                 {
@@ -67,15 +56,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Editar(MenuOpciones opcion)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-            {
-                return RedirectToAction("Index", "Home");
-            }
-
-            // Solo Super Admin puede marcar menús como destacados
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                opcion.EsDestacado = false;
-
             try
             {
                 bool editado = _menuOpcionesService.EditarMenuOpcion(opcion);
@@ -84,6 +64,8 @@ namespace bufinscustomers.Controllers
                 {
                     UsuarioSesionHelper.InvalidarCachePermisos();
                     SetSuccessMessage("Opción de menú actualizada correctamente.");
+                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Menu, AuditoriaAccion.Editar,
+                        "MenuOpciones", opcion.Id.ToString(), $"Opción de menú editada: {opcion.Nombre} ({opcion.Codigo})", null, opcion);
                 }
                 else
                 {
@@ -103,9 +85,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public JsonResult ActualizarOrden(List<int> ids, List<int> ordenes)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return Json(new { success = false, message = R("Menu_ErrorSinPermiso") });
-
             if (ids == null || ordenes == null || ids.Count == 0 || ids.Count != ordenes.Count)
                 return Json(new { success = false, message = R("Menu_ErrorActualizarOrden") });
 
@@ -133,11 +112,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Eliminar(int id)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-            {
-                return RedirectToAction("Index", "Home");
-            }
-
             try
             {
                 bool eliminado = _menuOpcionesService.EliminarMenuOpcion(id);
@@ -146,6 +120,8 @@ namespace bufinscustomers.Controllers
                 {
                     UsuarioSesionHelper.InvalidarCachePermisos();
                     SetSuccessMessage("Opción de menú eliminada correctamente.");
+                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Menu, AuditoriaAccion.Eliminar,
+                        "MenuOpciones", id.ToString(), $"Opción de menú eliminada (Id {id})");
                 }
                 else
                 {

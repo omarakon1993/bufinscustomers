@@ -53,6 +53,11 @@
   <data name="Login_ErrorEmail" xml:space="preserve"><value>Please enter your username or email.</value></data>
   <data name="Login_ErrorTokenExpirado" xml:space="preserve"><value>Your session expired. Please enter your credentials again.</value></data>
   <data name="Login_ErrorPassword" xml:space="preserve"><value>Please enter your password.</value></data>
+  <data name="Login_ErrorClavesNoCoinciden" xml:space="preserve"><value>Passwords do not match</value></data>
+  <data name="Login_ErrorRateLimitIP" xml:space="preserve"><value>Too many failed attempts from this address. Try again in {0} minute(s).</value></data>
+  <data name="Login_ErrorCuentaBloqueada" xml:space="preserve"><value>Account temporarily locked. Try again in {0} minute(s).</value></data>
+  <data name="Login_ErrorCredenciales" xml:space="preserve"><value>Incorrect username or password.</value></data>
+  <data name="Login_ErrorCargarUsuario" xml:space="preserve"><value>Error loading user data.</value></data>
   <data name="Login_ForgotPassword" xml:space="preserve"><value>Forgot your password?</value></data>
 
   <!-- PASSWORD RECOVERY -->
@@ -109,7 +114,11 @@
   <data name="Home_TRM_Fuente" xml:space="preserve"><value>Source: ExchangeRate-API</value></data>
   <data name="Home_TRM_Vigente" xml:space="preserve"><value>As of:</value></data>
   <data name="Home_TRM_NoDisponible" xml:space="preserve"><value>Unavailable</value></data>
+  <data name="Home_TRM_EUR" xml:space="preserve"><value>EUR / COP</value></data>
   <data name="Home_Noticias_Titulo" xml:space="preserve"><value>Financial News</value></data>
+  <data name="Home_Noticias_IrNoticia" xml:space="preserve"><value>Open news in a new tab</value></data>
+  <data name="Home_Noticias_Expandir" xml:space="preserve"><value>Expand</value></data>
+  <data name="Home_Noticias_Colapsar" xml:space="preserve"><value>Collapse</value></data>
   <data name="Home_Noticias_NoConfig" xml:space="preserve"><value>Set RSS feed URLs in Web.config (IndicadoresRSSFeed1 / IndicadoresRSSFeed2) to activate news.</value></data>
   <data name="Home_Noticias_Vacias" xml:space="preserve"><value>No news available at this time.</value></data>
   <data name="Home_Noticias_Error" xml:space="preserve"><value>Could not load news.</value></data>
@@ -434,6 +443,12 @@
   <data name="Emp_ThGrupo" xml:space="preserve"><value>Group</value></data>
   <data name="Emp_PlaceholderNombre" xml:space="preserve"><value>E.g.: Bufins S.A.S.</value></data>
   <data name="Emp_HintNombre" xml:space="preserve"><value>Company's full legal name</value></data>
+  <data name="Emp_SinPermisoCrear" xml:space="preserve"><value>You do not have permission to create companies.</value></data>
+  <data name="Emp_SinPermisoEditar" xml:space="preserve"><value>You do not have permission to edit this company.</value></data>
+  <data name="Emp_SinPermisoEliminar" xml:space="preserve"><value>You do not have permission to delete companies.</value></data>
+  <data name="Emp_Creada" xml:space="preserve"><value>Company created successfully.</value></data>
+  <data name="Emp_Eliminada" xml:space="preserve"><value>Company deleted successfully.</value></data>
+  <data name="Emp_ErrorEliminar" xml:space="preserve"><value>Error deleting the company.</value></data>
   <data name="Emp_PlaceholderNit" xml:space="preserve"><value>E.g.: 900123456-7</value></data>
   <data name="Emp_HintNit" xml:space="preserve"><value>Tax identification number, including the verification digit</value></data>
   <data name="Emp_PlaceholderDireccion" xml:space="preserve"><value>E.g.: 123 Main St, Bogotá</value></data>
@@ -950,6 +965,7 @@
   <data name="AudIA_Mostrando" xml:space="preserve"><value>Showing</value></data>
   <data name="AudIA_De" xml:space="preserve"><value>of</value></data>
   <data name="AudIA_EstadoInicialDesc" xml:space="preserve"><value>Select the filters you need above and click 'Search' to see the history here.</value></data>
+  <data name="AudIA_SinPermisoSeccion" xml:space="preserve"><value>You do not have permission to access this section.</value></data>
   <data name="AudIA_BtnLimpiarAuditoria" xml:space="preserve"><value>Clear audit log</value></data>
   <data name="AudIA_LimpiarTitulo" xml:space="preserve"><value>Clear AI query audit log</value></data>
   <data name="AudIA_LimpiarDesc" xml:space="preserve"><value>Choose how to purge the records. This action cannot be undone.</value></data>
@@ -969,6 +985,49 @@
   <data name="AudIA_NotifMsgTodo" xml:space="preserve"><value>The entire AI query audit history was deleted: {0} record(s).</value></data>
   <data name="AudIA_NotifMsgConservar" xml:space="preserve"><value>Deleted {0} AI query audit record(s) older than {1} month(s).</value></data>
   <data name="Notif_AuditoriaLimpiada" xml:space="preserve"><value>AI audit log cleared</value></data>
+
+  <!-- GENERAL AUDIT (single table) -->
+  <data name="Audit_PageTitle" xml:space="preserve"><value>General Audit Log</value></data>
+  <data name="Audit_HeaderTitle" xml:space="preserve"><value>System-wide Audit Log</value></data>
+  <data name="Audit_AlcanceEmpresa" xml:space="preserve"><value>You only see sign-in events for users of your company or business group.</value></data>
+  <data name="Audit_LabelTipo" xml:space="preserve"><value>Type</value></data>
+  <data name="Audit_LabelAccion" xml:space="preserve"><value>Action</value></data>
+  <data name="Audit_LabelEmpresa" xml:space="preserve"><value>Company</value></data>
+  <data name="Audit_LabelEntidad" xml:space="preserve"><value>Entity</value></data>
+  <data name="Audit_LabelDesde" xml:space="preserve"><value>From</value></data>
+  <data name="Audit_LabelHasta" xml:space="preserve"><value>To</value></data>
+  <data name="Audit_LabelBuscar" xml:space="preserve"><value>Search</value></data>
+  <data name="Audit_BuscarPlaceholder" xml:space="preserve"><value>Description, user, id…</value></data>
+  <data name="Audit_ThFecha" xml:space="preserve"><value>Date</value></data>
+  <data name="Audit_ThTipo" xml:space="preserve"><value>Type</value></data>
+  <data name="Audit_ThAccion" xml:space="preserve"><value>Action</value></data>
+  <data name="Audit_ThEntidad" xml:space="preserve"><value>Entity</value></data>
+  <data name="Audit_ThDescripcion" xml:space="preserve"><value>Description</value></data>
+  <data name="Audit_ThUsuario" xml:space="preserve"><value>User</value></data>
+  <data name="Audit_ThEmpresa" xml:space="preserve"><value>Company</value></data>
+  <data name="Audit_ThIp" xml:space="preserve"><value>IP</value></data>
+  <data name="Audit_ThDetalle" xml:space="preserve"><value>Detail</value></data>
+  <data name="Audit_BtnVer" xml:space="preserve"><value>View</value></data>
+  <data name="Audit_BtnExportar" xml:space="preserve"><value>Export to Excel</value></data>
+  <data name="Audit_BtnImprimir" xml:space="preserve"><value>Print / PDF</value></data>
+  <data name="Audit_TotalRegistros" xml:space="preserve"><value>records</value></data>
+  <data name="Audit_Mostrando" xml:space="preserve"><value>Showing</value></data>
+  <data name="Audit_De" xml:space="preserve"><value>of</value></data>
+  <data name="Audit_SinResultados" xml:space="preserve"><value>No audit records</value></data>
+  <data name="Audit_SinResultadosDesc" xml:space="preserve"><value>Adjust the filters to see results.</value></data>
+  <data name="Audit_ModalTitulo" xml:space="preserve"><value>Audit detail</value></data>
+  <data name="Audit_ValorAnterior" xml:space="preserve"><value>Previous value</value></data>
+  <data name="Audit_ValorNuevo" xml:space="preserve"><value>New value</value></data>
+  <data name="Audit_Copiar" xml:space="preserve"><value>Copy</value></data>
+  <data name="Audit_Copiado" xml:space="preserve"><value>Copied</value></data>
+  <data name="Audit_JS_Error" xml:space="preserve"><value>Could not load the audit log.</value></data>
+  <data name="Audit_Acc_Crear" xml:space="preserve"><value>Create</value></data>
+  <data name="Audit_Acc_Editar" xml:space="preserve"><value>Edit</value></data>
+  <data name="Audit_Acc_Eliminar" xml:space="preserve"><value>Delete</value></data>
+  <data name="Audit_Acc_Asignar" xml:space="preserve"><value>Assign</value></data>
+  <data name="Audit_Acc_Login" xml:space="preserve"><value>Sign-in</value></data>
+  <data name="Audit_Acc_LoginFallido" xml:space="preserve"><value>Failed sign-in</value></data>
+  <data name="Audit_Acc_Bloqueo" xml:space="preserve"><value>Account lockout</value></data>
 
   <!-- PBI VARIABLES CONFIGURATION -->
   <data name="CfgVarPBI_PageTitle" xml:space="preserve"><value>PBI Variables Configuration</value></data>
@@ -1045,6 +1104,15 @@
   <!-- ERROR PAGE -->
   <data name="Error_Title" xml:space="preserve"><value>Error.</value></data>
   <data name="Error_Subtitle" xml:space="preserve"><value>Error processing request.</value></data>
+  <data name="Err_VolverInicio" xml:space="preserve"><value>Back to home</value></data>
+  <data name="Err_IniciarSesion" xml:space="preserve"><value>Sign in</value></data>
+  <data name="Err_500_Title" xml:space="preserve"><value>Something went wrong</value></data>
+  <data name="Err_500_Desc" xml:space="preserve"><value>An unexpected error occurred and has been logged. Please try again in a moment.</value></data>
+  <data name="Err_404_Title" xml:space="preserve"><value>Page not found</value></data>
+  <data name="Err_404_Desc" xml:space="preserve"><value>The address you opened doesn't exist or was moved.</value></data>
+  <data name="Err_403_Title" xml:space="preserve"><value>Access denied</value></data>
+  <data name="Err_403_Desc" xml:space="preserve"><value>Your account doesn't have permission to view this section. If you think this is a mistake, contact your administrator.</value></data>
+  <data name="Err_403_Json" xml:space="preserve"><value>You don't have permission to perform this action.</value></data>
 
   <!-- ABOUT PAGE -->
   <data name="About_Title" xml:space="preserve"><value>About</value></data>

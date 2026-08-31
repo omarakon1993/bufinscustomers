@@ -11,5 +11,6 @@ namespace bufinscustomers.Models
         public string   Tipo          { get; set; }   // success | info | warning | error
         public bool     Leida         { get; set; }
         public DateTime FechaCreacion { get; set; }
+        public string   Url           { get; set; }   // D4: destino al hacer clic (opcional)
     }
 }

@@ -8,8 +8,10 @@
  *       Mensaje       NVARCHAR(500) NULL,
  *       Tipo          NVARCHAR(20)  NOT NULL CONSTRAINT DF_Notif_Tipo DEFAULT 'info',
  *       Leida         BIT           NOT NULL CONSTRAINT DF_Notif_Leida DEFAULT 0,
- *       FechaCreacion DATETIME      NOT NULL CONSTRAINT DF_Notif_Fecha DEFAULT GETDATE()
+ *       FechaCreacion DATETIME      NOT NULL CONSTRAINT DF_Notif_Fecha DEFAULT GETDATE(),
+ *       Url           NVARCHAR(300) NULL   -- D4: destino al hacer clic en la notificación
  *   );
+ *   -- Si la tabla ya existe:  ALTER TABLE Notificaciones ADD Url NVARCHAR(300) NULL;
  *   CREATE INDEX IX_Notificaciones_Usuario
  *       ON Notificaciones (IdUsuario, Leida, FechaCreacion DESC);
  */
@@ -24,15 +26,15 @@ namespace bufinscustomers.Services
 {
     public class NotificacionesService : BaseService
     {
-        public void Crear(int idUsuario, string titulo, string mensaje = null, string tipo = "info")
+        public void Crear(int idUsuario, string titulo, string mensaje = null, string tipo = "info", string url = null)
         {
             try
             {
                 using (var cn = new SqlConnection(CadenaConexion))
                 {
                     var cmd = new SqlCommand(@"
-                        INSERT INTO Notificaciones (IdUsuario, Titulo, Mensaje, Tipo)
-                        VALUES (@IdUsuario, @Titulo, @Mensaje, @Tipo);
+                        INSERT INTO Notificaciones (IdUsuario, Titulo, Mensaje, Tipo, Url)
+                        VALUES (@IdUsuario, @Titulo, @Mensaje, @Tipo, @Url);
                         DELETE FROM Notificaciones
                         WHERE IdUsuario = @IdUsuario
                           AND FechaCreacion < DATEADD(DAY, -15, GETDATE())", cn);
@@ -40,6 +42,7 @@ namespace bufinscustomers.Services
                     cmd.Parameters.AddWithValue("@Titulo",    titulo);
                     cmd.Parameters.AddWithValue("@Mensaje",   (object)mensaje ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@Tipo",      tipo);
+                    cmd.Parameters.AddWithValue("@Url",       (object)url ?? DBNull.Value);
                     cn.Open();
                     cmd.ExecuteNonQuery();
                 }
@@ -56,7 +59,7 @@ namespace bufinscustomers.Services
                 using (var cn = new SqlConnection(CadenaConexion))
                 {
                     var cmd = new SqlCommand(@"
-                        SELECT TOP 20 Id, Titulo, Mensaje, Tipo, Leida, FechaCreacion
+                        SELECT TOP 20 Id, Titulo, Mensaje, Tipo, Leida, FechaCreacion, Url
                         FROM Notificaciones
                         WHERE IdUsuario = @IdUsuario
                         ORDER BY FechaCreacion DESC;
@@ -143,14 +146,21 @@ namespace bufinscustomers.Services
             catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[Notificaciones.Eliminar] {0}", ex.Message); }
         }
 
-        private static Notificacion Map(SqlDataReader r) => new Notificacion
+        private static Notificacion Map(SqlDataReader r)
         {
-            Id            = Convert.ToInt32(r["Id"]),
-            Titulo        = r["Titulo"].ToString(),
-            Mensaje       = r["Mensaje"] == DBNull.Value ? null : r["Mensaje"].ToString(),
-            Tipo          = r["Tipo"].ToString(),
-            Leida         = Convert.ToBoolean(r["Leida"]),
-            FechaCreacion = Convert.ToDateTime(r["FechaCreacion"])
-        };
+            var n = new Notificacion
+            {
+                Id            = Convert.ToInt32(r["Id"]),
+                Titulo        = r["Titulo"].ToString(),
+                Mensaje       = r["Mensaje"] == DBNull.Value ? null : r["Mensaje"].ToString(),
+                Tipo          = r["Tipo"].ToString(),
+                Leida         = Convert.ToBoolean(r["Leida"]),
+                FechaCreacion = Convert.ToDateTime(r["FechaCreacion"])
+            };
+            // Backward-compatible: la columna Url puede no existir aún en la BD.
+            try { n.Url = r["Url"] == DBNull.Value ? null : r["Url"].ToString(); }
+            catch (IndexOutOfRangeException) { }
+            return n;
+        }
     }
 }

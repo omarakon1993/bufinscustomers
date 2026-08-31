@@ -203,12 +203,12 @@ namespace bufinscustomers.Controllers
                             if (codMessage == 1)
                             {
                                 SetSuccessMessage(mensaje);
-                                new NotificacionesService().Crear(usuario.Id, R("Notif_ModeloEjecutado"), mensaje, "success");
+                                new NotificacionesService().Crear(usuario.Id, R("Notif_ModeloEjecutado"), mensaje, "success", "/Datos/Modelo");
                             }
                             else
                             {
                                 SetErrorMessage(mensaje);
-                                new NotificacionesService().Crear(usuario.Id, R("Notif_ErrorModelo"), mensaje, "error");
+                                new NotificacionesService().Crear(usuario.Id, R("Notif_ErrorModelo"), mensaje, "error", "/Datos/Modelo");
                             }
                         }
                         else
@@ -304,9 +304,9 @@ namespace bufinscustomers.Controllers
                         } while (reader.NextResult());
 
                         if (codMessage == 1)
-                            new NotificacionesService().Crear(usuario.Id, R("Notif_ModeloEjecutado"), mensajeResp, "success");
+                            new NotificacionesService().Crear(usuario.Id, R("Notif_ModeloEjecutado"), mensajeResp, "success", "/Datos/Modelo");
                         else
-                            new NotificacionesService().Crear(usuario.Id, R("Notif_ErrorModelo"), mensajeResp, "error");
+                            new NotificacionesService().Crear(usuario.Id, R("Notif_ErrorModelo"), mensajeResp, "error", "/Datos/Modelo");
 
                         return Json(new { exito = codMessage == 1, mensaje = mensajeResp, columnas = lastCols, filas = lastFilas });
                     }
@@ -942,13 +942,13 @@ namespace bufinscustomers.Controllers
                         {
                             SetSuccessMessage(resultado.Mensaje);
                             if (usuarioValidacion != null)
-                                new NotificacionesService().Crear(usuarioValidacion.Id, R("Notif_CargueCompletado"), resultado.Mensaje, "success");
+                                new NotificacionesService().Crear(usuarioValidacion.Id, R("Notif_CargueCompletado"), resultado.Mensaje, "success", "/Datos/CargueExcel");
                         }
                         else
                         {
                             SetErrorMessage(resultado.Mensaje);
                             if (usuarioValidacion != null)
-                                new NotificacionesService().Crear(usuarioValidacion.Id, R("Notif_ErrorCargue"), resultado.Mensaje, "error");
+                                new NotificacionesService().Crear(usuarioValidacion.Id, R("Notif_ErrorCargue"), resultado.Mensaje, "error", "/Datos/CargueExcel");
                         }
                     }
             }

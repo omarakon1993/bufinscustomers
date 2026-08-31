@@ -36,7 +36,7 @@ namespace bufinscustomers.Controllers
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
-                SetErrorMessage("No tiene permisos para crear empresas.");
+                SetErrorMessage(R("Emp_SinPermisoCrear"));
                 return RedirectToAction("Empresas");
             }
 
@@ -46,8 +46,10 @@ namespace bufinscustomers.Controllers
             if (registrado)
             {
                 EmpresasViewBagFilter.Invalidar();
-                SetSuccessMessage("Empresa creada correctamente.");
-                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_EmpresaCreada"), empresa.Nombre, "success");
+                SetSuccessMessage(R("Emp_Creada"));
+                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_EmpresaCreada"), empresa.Nombre, "success", "/Empresa/Empresas");
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Crear,
+                    "Empresas", empresa.Id.ToString(), $"Empresa creada: {empresa.Nombre}", null, empresa, idEmpresa: empresa.Id);
             }
             else
                 SetErrorMessage(mensaje);
@@ -65,7 +67,7 @@ namespace bufinscustomers.Controllers
 
             if (!EmpresaAccesoHelper.TieneAcceso(usuario, empresa.Id))
             {
-                SetErrorMessage("No tiene permisos para editar esta empresa.");
+                SetErrorMessage(R("Emp_SinPermisoEditar"));
                 return RedirectToAction("Empresas");
             }
 
@@ -76,6 +78,8 @@ namespace bufinscustomers.Controllers
             {
                 EmpresasViewBagFilter.Invalidar();
                 SetSuccessMessage(mensaje);
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Editar,
+                    "Empresas", empresa.Id.ToString(), $"Empresa editada: {empresa.Nombre}", null, empresa, idEmpresa: empresa.Id);
             }
             else
                 SetErrorMessage(mensaje);
@@ -90,7 +94,7 @@ namespace bufinscustomers.Controllers
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
-                SetErrorMessage("No tiene permisos para eliminar empresas.");
+                SetErrorMessage(R("Emp_SinPermisoEliminar"));
                 return RedirectToAction("Empresas");
             }
 
@@ -99,11 +103,13 @@ namespace bufinscustomers.Controllers
             if (eliminado)
             {
                 EmpresasViewBagFilter.Invalidar();
-                SetSuccessMessage("Empresa eliminada correctamente.");
-                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_EmpresaEliminada"), null, "warning");
+                SetSuccessMessage(R("Emp_Eliminada"));
+                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_EmpresaEliminada"), null, "warning", "/Empresa/Empresas");
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Eliminar,
+                    "Empresas", idEmpresa.ToString(), $"Empresa eliminada (Id {idEmpresa})", idEmpresa: idEmpresa);
             }
             else
-                SetErrorMessage("Error al eliminar la empresa.");
+                SetErrorMessage(R("Emp_ErrorEliminar"));
 
             return RedirectToAction("Empresas");
         }

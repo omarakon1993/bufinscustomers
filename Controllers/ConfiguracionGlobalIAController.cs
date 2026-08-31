@@ -13,15 +13,13 @@ using System.Web.Mvc;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
+    [SoloSuperAdmin]
     public class ConfiguracionGlobalIAController : BaseController
     {
         private readonly ConfiguracionSistemaService _svc = new ConfiguracionSistemaService();
 
         public ActionResult Index()
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             var items = _svc.ObtenerTodos();
             return View("~/Views/Configuracion/ConfiguracionGlobalIA.cshtml", items);
         }
@@ -30,9 +28,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Guardar(ConfiguracionSistemaItem item)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             if (string.IsNullOrWhiteSpace(item?.Clave))
             {
                 SetErrorMessage(R("CfgIA_MsgErrorGuardar") ?? "La clave no puede estar vacía.");
@@ -62,9 +57,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Eliminar(string clave)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             bool ok = _svc.Eliminar(clave ?? "");
             if (ok)
                 SetSuccessMessage("Configuración eliminada.");
@@ -77,9 +69,6 @@ namespace bufinscustomers.Controllers
         [HttpGet]
         public async Task<JsonResult> ObtenerModelosOpenAI()
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return Json(new { ok = false, mensaje = "Sin permisos." }, JsonRequestBehavior.AllowGet);
-
             try
             {
                 string apiKey = (_svc.ObtenerValor("OpenAIApiKey") ?? "").Trim();

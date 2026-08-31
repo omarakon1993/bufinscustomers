@@ -157,6 +157,11 @@ namespace bufinscustomers.Controllers
                 // Invalidar caché de permisos del admin que está guardando
                 UsuarioSesionHelper.InvalidarCachePermisos();
 
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Permisos, AuditoriaAccion.Asignar,
+                    "UsuarioMenuPermisos", idUsuario.ToString(),
+                    $"Permisos de menú actualizados para {usuarioTarget.Correo} ({permisos.Count} opción/es)",
+                    null, new { idUsuario, permisos }, idEmpresa: usuarioTarget.IdEmpresa);
+
                 SetSuccessMessage("Opciones de menú actualizadas correctamente.");
                 return Json(new { success = true, message = "Opciones de menú actualizadas correctamente." });
             }

@@ -27,9 +27,11 @@ namespace bufinscustomers.Controllers
             var idsPermitidos = esAdmin ? null : (EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>());
 
             var tarjetasConfig = await svc.ObtenerActivasAsync();
-            var vm = new List<WidgetTarjetaViewModel>();
 
-            foreach (var t in tarjetasConfig)
+            // D1: cada widget se resuelve en paralelo (antes: en serie con await dentro del foreach).
+            // E2: el resultado crudo de cada consulta SQL se cachea 60 s (compartido entre usuarios);
+            //     el filtrado por empresa se aplica por-petición sobre la copia cacheada.
+            var tareas = tarjetasConfig.Select(async t =>
             {
                 var item = new WidgetTarjetaViewModel { Config = t };
 
@@ -37,36 +39,47 @@ namespace bufinscustomers.Controllers
                 {
                     if (t.Tipo == 1)
                     {
-                        var resultados = await svc.EjecutarKpiAsync(t.ConsultaSQL, null);
-                        item.KpiResultados = idsPermitidos == null
+                        var resultados = await WidgetCacheadoAsync("wk:" + t.ConsultaSQL,
+                            () => svc.EjecutarKpiAsync(t.ConsultaSQL, null));
+                        item.KpiResultados = (idsPermitidos == null || resultados == null)
                             ? resultados
                             : resultados.Where(r => idsPermitidos.Contains(r.IdEmpresa)).ToList();
                     }
                     else if (t.Tipo == 2)
                     {
-                        var resultados = await svc.EjecutarGraficoAsync(t.ConsultaSQL, null);
-                        item.GraficoResultados = idsPermitidos == null
+                        var resultados = await WidgetCacheadoAsync("wg:" + t.ConsultaSQL,
+                            () => svc.EjecutarGraficoAsync(t.ConsultaSQL, null));
+                        item.GraficoResultados = (idsPermitidos == null || resultados == null)
                             ? resultados
                             : resultados.Where(r => idsPermitidos.Contains(r.IdEmpresa)).ToList();
                     }
                 }
-                vm.Add(item);
-            }
+                return item;
+            });
 
+            var vm = (await Task.WhenAll(tareas)).ToList();
             return View(vm);
         }
-        public ActionResult About()
-        {
-            ViewBag.Message = "Your application description page.";
 
-            return View();
-        }
-        public ActionResult Contact()
-        {
-            ViewBag.Message = "Your contact page.";
+        // E2 — caché corta (60 s) del resultado crudo de una consulta de widget.
+        private static readonly System.Runtime.Caching.ObjectCache _widgetCache =
+            System.Runtime.Caching.MemoryCache.Default;
 
-            return View();
+        private static async Task<T> WidgetCacheadoAsync<T>(string clave, Func<Task<T>> factory) where T : class
+        {
+            if (_widgetCache.Get(clave) is T hit) return hit;
+
+            var valor = await factory();
+            if (valor != null)
+            {
+                _widgetCache.Set(clave, valor, new System.Runtime.Caching.CacheItemPolicy
+                {
+                    AbsoluteExpiration = DateTimeOffset.Now.AddSeconds(60)
+                });
+            }
+            return valor;
         }
+
         [HttpGet]
         public async Task<ActionResult> ObtenerNoticias(bool refresh = false)
         {

@@ -1,10 +1,10 @@
 ﻿@{
     Layout = "~/Views/Error/_ErrorLayout.cshtml";
-    ViewBag.Code = "500";
+    ViewBag.Code = "404";
 }
-<h1 class="err-code">500</h1>
-<h2 class="err-title">@Resources.Strings.Err_500_Title</h2>
-<p class="err-desc">@Resources.Strings.Err_500_Desc</p>
+<h1 class="err-code">404</h1>
+<h2 class="err-title">@Resources.Strings.Err_404_Title</h2>
+<p class="err-desc">@Resources.Strings.Err_404_Desc</p>
 <div class="err-actions">
     <a class="err-btn" href="@Url.Action("Index", "Home")">@Resources.Strings.Err_VolverInicio</a>
 </div>

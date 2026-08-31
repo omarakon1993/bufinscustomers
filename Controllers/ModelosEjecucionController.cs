@@ -8,15 +8,13 @@ using System.Web.Mvc;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
+    [SoloSuperAdmin]
     public class ModelosEjecucionController : BaseController
     {
         private readonly ModeloService _modeloService = new ModeloService();
 
         public ActionResult Index()
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             var modelos = _modeloService.ObtenerTodos();
             return View("~/Views/Configuracion/ModelosEjecucion.cshtml", modelos);
         }
@@ -25,9 +23,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Crear(ModeloEjecucion modelo)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             try
             {
                 if (string.IsNullOrWhiteSpace(modelo.Nombre) || string.IsNullOrWhiteSpace(modelo.NombreSP))
@@ -38,7 +33,11 @@ namespace bufinscustomers.Controllers
 
                 bool ok = _modeloService.Crear(modelo);
                 if (ok)
+                {
                     SetSuccessMessage("Modelo '" + modelo.Nombre + "' creado correctamente.");
+                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Modelos, AuditoriaAccion.Crear,
+                        "ModelosEjecucion", modelo.Id.ToString(), $"Modelo de ejecución creado: {modelo.Nombre} (SP {modelo.NombreSP})", null, modelo);
+                }
                 else
                     SetErrorMessage("No se pudo crear el modelo. Intente nuevamente.");
             }
@@ -54,9 +53,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Editar(ModeloEjecucion modelo)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             try
             {
                 if (string.IsNullOrWhiteSpace(modelo.Nombre) || string.IsNullOrWhiteSpace(modelo.NombreSP))
@@ -67,7 +63,11 @@ namespace bufinscustomers.Controllers
 
                 bool ok = _modeloService.Editar(modelo);
                 if (ok)
+                {
                     SetSuccessMessage("Modelo '" + modelo.Nombre + "' actualizado correctamente.");
+                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Modelos, AuditoriaAccion.Editar,
+                        "ModelosEjecucion", modelo.Id.ToString(), $"Modelo de ejecución editado: {modelo.Nombre} (SP {modelo.NombreSP})", null, modelo);
+                }
                 else
                     SetErrorMessage("No se pudo actualizar el modelo. Intente nuevamente.");
             }
@@ -83,14 +83,15 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Eliminar(int id)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             try
             {
                 bool ok = _modeloService.Eliminar(id);
                 if (ok)
+                {
                     SetSuccessMessage("Modelo eliminado correctamente.");
+                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Modelos, AuditoriaAccion.Eliminar,
+                        "ModelosEjecucion", id.ToString(), $"Modelo de ejecución eliminado/inactivado (Id {id})");
+                }
                 else
                     SetErrorMessage("No se pudo eliminar el modelo. Intente nuevamente.");
             }

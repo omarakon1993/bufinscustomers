@@ -168,13 +168,17 @@ namespace bufinscustomers.Controllers
 
                 string mensaje;
                 bool resultado = _configuracionService.GuardarConfiguracionBasica(
-                    configuracion, 
-                    usuario.Id, 
+                    configuracion,
+                    usuario.Id,
                     out mensaje
                 );
 
                 if (resultado)
                 {
+                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Editar,
+                        "ConfiguracionEmpresa", configuracion.IdEmpresa.ToString(),
+                        $"Configuración básica guardada (empresa {configuracion.IdEmpresa})",
+                        null, configuracion, idEmpresa: configuracion.IdEmpresa);
                     return Json(new { success = true, message = mensaje });
                 }
                 else
@@ -446,6 +450,11 @@ namespace bufinscustomers.Controllers
                     }
                 }
 
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Editar,
+                    "ConfiguracionEmpresa", idEmpresa.ToString(),
+                    $"Cierre de año: {anioActual} archivado como histórico, nuevo año de ejecución {nuevoAnio}",
+                    null, new { idEmpresa, anioAnterior = anioActual, anioNuevo = nuevoAnio }, idEmpresa: idEmpresa);
+
                 return Json(new
                 {
                     success = true,
@@ -478,6 +487,11 @@ namespace bufinscustomers.Controllers
             {
                 if (tablas == null) tablas = new List<string>();
                 _resumenIAService.GuardarTablasEmpresa(idEmpresa, tablas, usuario.Id);
+
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Editar,
+                    "EmpresaTablasResumenIA", idEmpresa.ToString(),
+                    $"Tablas del resumen IA actualizadas (empresa {idEmpresa}): {tablas.Count}",
+                    null, new { idEmpresa, tablas }, idEmpresa: idEmpresa);
 
                 return Json(new { success = true, message = R("CfgResumenIA_Guardado") });
             }

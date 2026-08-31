@@ -8,15 +8,13 @@ using System.Web.Mvc;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
+    [SoloSuperAdmin]
     public class GestorPromptsController : BaseController
     {
         private readonly GestorPromptsService _service = new GestorPromptsService();
 
         public ActionResult Index()
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             var prompts = _service.ObtenerTodos();
             return View("~/Views/Configuracion/GestorPrompts.cshtml", prompts);
         }
@@ -25,9 +23,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Crear(PromptIA prompt)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             try
             {
                 if (string.IsNullOrWhiteSpace(prompt.Codigo) || string.IsNullOrWhiteSpace(prompt.Nombre) || string.IsNullOrWhiteSpace(prompt.TextoPrompt))
@@ -54,9 +49,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Editar(PromptIA prompt)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             try
             {
                 if (string.IsNullOrWhiteSpace(prompt.Codigo) || string.IsNullOrWhiteSpace(prompt.Nombre) || string.IsNullOrWhiteSpace(prompt.TextoPrompt))
@@ -83,9 +75,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Eliminar(int id)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             try
             {
                 bool ok = _service.Eliminar(id);

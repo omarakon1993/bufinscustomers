@@ -53,6 +53,11 @@
   <data name="Login_ErrorEmail" xml:space="preserve"><value>Debe ingresar su usuario o correo.</value></data>
   <data name="Login_ErrorTokenExpirado" xml:space="preserve"><value>Tu sesión expiró. Por favor, ingresa tus datos nuevamente.</value></data>
   <data name="Login_ErrorPassword" xml:space="preserve"><value>Debe ingresar una contraseña.</value></data>
+  <data name="Login_ErrorClavesNoCoinciden" xml:space="preserve"><value>Las contraseñas no coinciden</value></data>
+  <data name="Login_ErrorRateLimitIP" xml:space="preserve"><value>Demasiados intentos fallidos desde esta dirección. Intenta de nuevo en {0} minuto(s).</value></data>
+  <data name="Login_ErrorCuentaBloqueada" xml:space="preserve"><value>Cuenta bloqueada temporalmente. Intenta de nuevo en {0} minuto(s).</value></data>
+  <data name="Login_ErrorCredenciales" xml:space="preserve"><value>Usuario o clave incorrecta.</value></data>
+  <data name="Login_ErrorCargarUsuario" xml:space="preserve"><value>Error al cargar los datos del usuario.</value></data>
   <data name="Login_ForgotPassword" xml:space="preserve"><value>¿Olvidaste tu contraseña?</value></data>
 
   <!-- RECUPERAR CONTRASEÑA -->
@@ -109,7 +114,11 @@
   <data name="Home_TRM_Fuente" xml:space="preserve"><value>Fuente: ExchangeRate-API</value></data>
   <data name="Home_TRM_Vigente" xml:space="preserve"><value>Vigente:</value></data>
   <data name="Home_TRM_NoDisponible" xml:space="preserve"><value>No disponible</value></data>
+  <data name="Home_TRM_EUR" xml:space="preserve"><value>EUR / COP</value></data>
   <data name="Home_Noticias_Titulo" xml:space="preserve"><value>Noticias Financieras</value></data>
+  <data name="Home_Noticias_IrNoticia" xml:space="preserve"><value>Abrir noticia en una pestaña nueva</value></data>
+  <data name="Home_Noticias_Expandir" xml:space="preserve"><value>Expandir</value></data>
+  <data name="Home_Noticias_Colapsar" xml:space="preserve"><value>Colapsar</value></data>
   <data name="Home_Noticias_NoConfig" xml:space="preserve"><value>Configure las URLs de los feeds RSS en Web.config (IndicadoresRSSFeed1 / IndicadoresRSSFeed2) para activar las noticias.</value></data>
   <data name="Home_Noticias_Vacias" xml:space="preserve"><value>No hay noticias disponibles en este momento.</value></data>
   <data name="Home_Noticias_Error" xml:space="preserve"><value>No se pudieron cargar las noticias.</value></data>
@@ -436,6 +445,12 @@
   <data name="Emp_ThGrupo" xml:space="preserve"><value>Grupo</value></data>
   <data name="Emp_PlaceholderNombre" xml:space="preserve"><value>Ej: Bufins S.A.S.</value></data>
   <data name="Emp_HintNombre" xml:space="preserve"><value>Razón social completa de la empresa</value></data>
+  <data name="Emp_SinPermisoCrear" xml:space="preserve"><value>No tiene permisos para crear empresas.</value></data>
+  <data name="Emp_SinPermisoEditar" xml:space="preserve"><value>No tiene permisos para editar esta empresa.</value></data>
+  <data name="Emp_SinPermisoEliminar" xml:space="preserve"><value>No tiene permisos para eliminar empresas.</value></data>
+  <data name="Emp_Creada" xml:space="preserve"><value>Empresa creada correctamente.</value></data>
+  <data name="Emp_Eliminada" xml:space="preserve"><value>Empresa eliminada correctamente.</value></data>
+  <data name="Emp_ErrorEliminar" xml:space="preserve"><value>Error al eliminar la empresa.</value></data>
   <data name="Emp_PlaceholderNit" xml:space="preserve"><value>Ej: 900123456-7</value></data>
   <data name="Emp_HintNit" xml:space="preserve"><value>Número de identificación tributaria, incluyendo el dígito de verificación</value></data>
   <data name="Emp_PlaceholderDireccion" xml:space="preserve"><value>Ej: Calle 100 # 15-20, Bogotá</value></data>
@@ -952,6 +967,7 @@
   <data name="AudIA_Mostrando" xml:space="preserve"><value>Mostrando</value></data>
   <data name="AudIA_De" xml:space="preserve"><value>de</value></data>
   <data name="AudIA_EstadoInicialDesc" xml:space="preserve"><value>Selecciona los filtros que necesites arriba y haz clic en 'Buscar' para ver el historial aquí.</value></data>
+  <data name="AudIA_SinPermisoSeccion" xml:space="preserve"><value>No tienes permisos para acceder a esta sección.</value></data>
   <data name="AudIA_BtnLimpiarAuditoria" xml:space="preserve"><value>Limpiar auditoría</value></data>
   <data name="AudIA_LimpiarTitulo" xml:space="preserve"><value>Limpiar auditoría de consultas IA</value></data>
   <data name="AudIA_LimpiarDesc" xml:space="preserve"><value>Elige cómo depurar los registros. Esta acción no se puede deshacer.</value></data>
@@ -971,6 +987,49 @@
   <data name="AudIA_NotifMsgTodo" xml:space="preserve"><value>Se eliminó todo el historial de auditoría de consultas IA: {0} registro(s).</value></data>
   <data name="AudIA_NotifMsgConservar" xml:space="preserve"><value>Se eliminaron {0} registro(s) de auditoría de consultas IA con más de {1} mes(es) de antigüedad.</value></data>
   <data name="Notif_AuditoriaLimpiada" xml:space="preserve"><value>Auditoría IA limpiada</value></data>
+
+  <!-- AUDITORÍA GENERAL (tabla única) -->
+  <data name="Audit_PageTitle" xml:space="preserve"><value>Auditoría General</value></data>
+  <data name="Audit_HeaderTitle" xml:space="preserve"><value>Auditoría General del Sistema</value></data>
+  <data name="Audit_AlcanceEmpresa" xml:space="preserve"><value>Ves únicamente los inicios de sesión de los usuarios de tu empresa o grupo empresarial.</value></data>
+  <data name="Audit_LabelTipo" xml:space="preserve"><value>Tipo</value></data>
+  <data name="Audit_LabelAccion" xml:space="preserve"><value>Acción</value></data>
+  <data name="Audit_LabelEmpresa" xml:space="preserve"><value>Empresa</value></data>
+  <data name="Audit_LabelEntidad" xml:space="preserve"><value>Entidad</value></data>
+  <data name="Audit_LabelDesde" xml:space="preserve"><value>Desde</value></data>
+  <data name="Audit_LabelHasta" xml:space="preserve"><value>Hasta</value></data>
+  <data name="Audit_LabelBuscar" xml:space="preserve"><value>Buscar</value></data>
+  <data name="Audit_BuscarPlaceholder" xml:space="preserve"><value>Descripción, usuario, id…</value></data>
+  <data name="Audit_ThFecha" xml:space="preserve"><value>Fecha</value></data>
+  <data name="Audit_ThTipo" xml:space="preserve"><value>Tipo</value></data>
+  <data name="Audit_ThAccion" xml:space="preserve"><value>Acción</value></data>
+  <data name="Audit_ThEntidad" xml:space="preserve"><value>Entidad</value></data>
+  <data name="Audit_ThDescripcion" xml:space="preserve"><value>Descripción</value></data>
+  <data name="Audit_ThUsuario" xml:space="preserve"><value>Usuario</value></data>
+  <data name="Audit_ThEmpresa" xml:space="preserve"><value>Empresa</value></data>
+  <data name="Audit_ThIp" xml:space="preserve"><value>IP</value></data>
+  <data name="Audit_ThDetalle" xml:space="preserve"><value>Detalle</value></data>
+  <data name="Audit_BtnVer" xml:space="preserve"><value>Ver</value></data>
+  <data name="Audit_BtnExportar" xml:space="preserve"><value>Exportar Excel</value></data>
+  <data name="Audit_BtnImprimir" xml:space="preserve"><value>Imprimir / PDF</value></data>
+  <data name="Audit_TotalRegistros" xml:space="preserve"><value>registros</value></data>
+  <data name="Audit_Mostrando" xml:space="preserve"><value>Mostrando</value></data>
+  <data name="Audit_De" xml:space="preserve"><value>de</value></data>
+  <data name="Audit_SinResultados" xml:space="preserve"><value>Sin registros de auditoría</value></data>
+  <data name="Audit_SinResultadosDesc" xml:space="preserve"><value>Ajusta los filtros para ver resultados.</value></data>
+  <data name="Audit_ModalTitulo" xml:space="preserve"><value>Detalle de auditoría</value></data>
+  <data name="Audit_ValorAnterior" xml:space="preserve"><value>Valor anterior</value></data>
+  <data name="Audit_ValorNuevo" xml:space="preserve"><value>Valor nuevo</value></data>
+  <data name="Audit_Copiar" xml:space="preserve"><value>Copiar</value></data>
+  <data name="Audit_Copiado" xml:space="preserve"><value>Copiado</value></data>
+  <data name="Audit_JS_Error" xml:space="preserve"><value>No se pudo cargar la auditoría.</value></data>
+  <data name="Audit_Acc_Crear" xml:space="preserve"><value>Crear</value></data>
+  <data name="Audit_Acc_Editar" xml:space="preserve"><value>Editar</value></data>
+  <data name="Audit_Acc_Eliminar" xml:space="preserve"><value>Eliminar</value></data>
+  <data name="Audit_Acc_Asignar" xml:space="preserve"><value>Asignar</value></data>
+  <data name="Audit_Acc_Login" xml:space="preserve"><value>Inicio de sesión</value></data>
+  <data name="Audit_Acc_LoginFallido" xml:space="preserve"><value>Inicio de sesión fallido</value></data>
+  <data name="Audit_Acc_Bloqueo" xml:space="preserve"><value>Bloqueo de cuenta</value></data>
 
   <!-- CONFIGURACIÓN VARIABLES PBI -->
   <data name="CfgVarPBI_PageTitle" xml:space="preserve"><value>Configuración Variables PBI</value></data>
@@ -1047,6 +1106,15 @@
   <!-- ERROR PAGE -->
   <data name="Error_Title" xml:space="preserve"><value>Error.</value></data>
   <data name="Error_Subtitle" xml:space="preserve"><value>Error al procesar la solicitud.</value></data>
+  <data name="Err_VolverInicio" xml:space="preserve"><value>Volver al inicio</value></data>
+  <data name="Err_IniciarSesion" xml:space="preserve"><value>Iniciar sesión</value></data>
+  <data name="Err_500_Title" xml:space="preserve"><value>Algo salió mal</value></data>
+  <data name="Err_500_Desc" xml:space="preserve"><value>Ocurrió un error inesperado y ya quedó registrado. Intenta de nuevo en un momento.</value></data>
+  <data name="Err_404_Title" xml:space="preserve"><value>Página no encontrada</value></data>
+  <data name="Err_404_Desc" xml:space="preserve"><value>La dirección que abriste no existe o fue movida.</value></data>
+  <data name="Err_403_Title" xml:space="preserve"><value>Sin permiso</value></data>
+  <data name="Err_403_Desc" xml:space="preserve"><value>Tu cuenta no tiene permiso para ver esta sección. Si crees que es un error, contacta al administrador.</value></data>
+  <data name="Err_403_Json" xml:space="preserve"><value>No tienes permiso para realizar esta acción.</value></data>
 
   <!-- ABOUT PAGE -->
   <data name="About_Title" xml:space="preserve"><value>Acerca de</value></data>

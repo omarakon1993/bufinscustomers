@@ -46,7 +46,9 @@ namespace bufinscustomers.Controllers
                 if (ok)
                 {
                     SetSuccessMessage(R("Grupo_MensajeCreado"));
-                    new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_GrupoCreado"), grupo.Nombre, "success");
+                    new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_GrupoCreado"), grupo.Nombre, "success", "/GruposEmpresariales");
+                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Grupos, AuditoriaAccion.Crear,
+                        "GruposEmpresariales", grupo.Id.ToString(), $"Grupo empresarial creado: {grupo.Nombre}", null, grupo);
                 }
                 else
                     SetErrorMessage(R("Grupo_ErrorCrear"));
@@ -76,7 +78,11 @@ namespace bufinscustomers.Controllers
 
                 bool ok = _service.Editar(grupo);
                 if (ok)
+                {
                     SetSuccessMessage(R("Grupo_MensajeEditado"));
+                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Grupos, AuditoriaAccion.Editar,
+                        "GruposEmpresariales", grupo.Id.ToString(), $"Grupo empresarial editado: {grupo.Nombre}", null, grupo);
+                }
                 else
                     SetErrorMessage(R("Grupo_ErrorEditar"));
             }
@@ -102,7 +108,9 @@ namespace bufinscustomers.Controllers
                 if (ok)
                 {
                     SetSuccessMessage(R("Grupo_MensajeEliminado"));
-                    new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_GrupoEliminado"), grupo?.Nombre, "warning");
+                    new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_GrupoEliminado"), grupo?.Nombre, "warning", "/GruposEmpresariales");
+                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Grupos, AuditoriaAccion.Eliminar,
+                        "GruposEmpresariales", id.ToString(), $"Grupo empresarial eliminado: {grupo?.Nombre} (Id {id})", grupo, null);
                 }
                 else
                     SetErrorMessage(R("Grupo_ErrorEliminar"));
@@ -165,7 +173,10 @@ namespace bufinscustomers.Controllers
                 bool ok = _service.AsignarEmpresas(idGrupo, idsEmpresas);
                 if (ok)
                 {
-                    new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_GrupoEmpresasActualizadas"), grupo.Nombre, "success");
+                    new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_GrupoEmpresasActualizadas"), grupo.Nombre, "success", "/GruposEmpresariales");
+                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Grupos, AuditoriaAccion.Asignar,
+                        "GruposEmpresariales", idGrupo.ToString(),
+                        $"Empresas del grupo '{grupo.Nombre}' actualizadas ({idsEmpresas.Count})", null, new { idsEmpresas });
                     return Json(new { success = true, message = R("Grupo_MensajeEmpresasAsignadas") });
                 }
 

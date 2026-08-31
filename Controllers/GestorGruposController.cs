@@ -8,15 +8,13 @@ using System.Web.Mvc;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
+    [SoloSuperAdmin]
     public class GestorGruposController : BaseController
     {
         private readonly MenuEstructuraService _svc = new MenuEstructuraService();
 
         public ActionResult Index()
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             ViewBag.Categorias = _svc.ObtenerCategorias();
             return View("~/Views/Configuracion/GestorGrupos.cshtml", _svc.ObtenerGrupos());
         }
@@ -25,9 +23,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Crear(GrupoMenu model)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             try
             {
                 if (string.IsNullOrWhiteSpace(model.Nombre))
@@ -48,9 +43,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Editar(GrupoMenu model)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             try
             {
                 if (string.IsNullOrWhiteSpace(model.Nombre))
@@ -71,9 +63,6 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Eliminar(int id)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
-                return RedirectToAction("Index", "Home");
-
             try
             {
                 bool ok = _svc.EliminarGrupo(id);

@@ -28,7 +28,7 @@ nuget restore bufinscustomers.sln
 4. **Views** (`Views/`) - Razor views organized by functional area (Configuracion, Datos, Informes, etc.)
 5. **Helpers** (`Helpers/`) - `UsuarioSesionHelper` (session/auth management)
 6. **Filters** (`Filters/`) - `EmpresasViewBagFilter` (registered globally in `FilterConfig`)
-7. **Permisos** (`Permisos/`) - `ValidarSesionAttribute`, `RequierePermisoAttribute`
+7. **Permisos** (`Permisos/`) - `ValidarSesionAttribute`, `RequierePermisoAttribute`, `SoloSuperAdminAttribute`
 
 ### User Profile Images
 
@@ -124,14 +124,15 @@ Permissions are managed through the `MenuOpciones` table and `MenuOpcionesServic
 - **`MenuOpciones`** model (`Models/PermisosModulos.cs`) - Menu items with hierarchical structure (parent/child), codes, categories. Includes `SoloSuperAdmin` (bool/bit): when true, only visible to Admin=2 and excluded from assignment for Admin 0/1. Also `SoloAdminEmpresa` (bool/bit): when true, not assignable to Admin=0 users (only Admin 1 and 2 can use it).
 - **`UsuarioMenuPermisos`** model (`Models/UsuarioPermisos.cs`) - Junction table linking users to menu options
 - **`MenuOpcionesService`** - CRUD for menu options and permission assignments. Key methods: `ObtenerTodas()`, `CrearMenuOpcion()`, `EditarMenuOpcion()`, `EliminarMenuOpcion()`, `ObtenerMenuParaUsuario()`, `ObtenerCodigosPermisos()`, `GuardarOpcionesUsuario()`
-- **`RequierePermisoAttribute`** (`Permisos/RequierePermisoAttribute.cs`) - Available for controller-level permission enforcement via `[RequierePermiso("CODE")]`, but currently not used by any controller. Permissions are checked manually inline with `UsuarioSesionHelper.TienePermiso("CODE")` or `EsSuperAdmin()`.
+- **`RequierePermisoAttribute`** (`Permisos/RequierePermisoAttribute.cs`) - Action filter for permission enforcement: `[RequierePermiso("CODE")]` or `[RequierePermiso("CODE1,CODE2")]` (any-of). Super Admin always passes (via `TienePermiso`). On failure: AJAX → JSON `{ success=false, forbidden=true }` + HTTP 403; normal request → redirect to `~/Error/Forbidden`. **Preferred over inline `if (!EsSuperAdmin() && !TienePermiso("CODE"))` checks** — the framework enforces it even when a new action forgets the guard. Used by `UsuarioController` (all `ADMIN_USUARIOS_GESTOR` actions), `HistorialVersionesCarguesController`, `AuditoriaController`. Keep `ViewBag.Puede*` flags (they drive UI visibility, not access).
+- **`SoloSuperAdminAttribute`** (`Permisos/SoloSuperAdminAttribute.cs`) - Same shape as `RequierePermiso` but gates on `EsSuperAdmin()`. Applied **at class level** (next to `[ValidarSesion]`) on the controllers that are 100% Super Admin: `MenuOpcionesController`, `ModelosEjecucionController`, `GestorPromptsController`, `GestorCategoriasController`, `GestorGruposController`, `WidgetsController`, `ConfiguracionGlobalIAController` — their inline `if (!EsSuperAdmin()) return RedirectToAction("Index","Home")` guards were removed. Controllers with mixed gates (Admin de Empresa allowed, or empresa/grupo access — `EmpresaController`, `PermisosController`, `DatosController`, `ConfiguracionEmpresaController`, the Informe* controllers) keep inline checks **by design**, not as debt.
 - **`UsuarioSesionHelper.TienePermiso("CODE")`** - Checks permissions using a cached HashSet in session (one DB query per session, not per page load). Super Admin (Admin=2) always returns true.
 - **`UsuarioSesionHelper.ObtenerMenuSidebar()`** - Returns cached `List<SidebarCategoriaViewModel>` for dynamic sidebar rendering via `_SidebarMenu.cshtml` partial.
 - **`UsuarioSesionHelper.InvalidarCachePermisos()`** - Clears permission/menu cache. Called after saving permissions or on login.
 
 Known permission codes (BD codes, used in sidebar and controllers):
 - `DATOS_PLANTILLA_CARGUE`, `DATOS_MODELO_EJECUCION` (Datos)
-- `INFORMES_REPORTES_PBI`, `INFORMES_AUDITORIA_CARGUES`, `INFORMES_TABLAS_DATOS`, `INFORMES_RELACIONAMIENTOS` (Informes)
+- `INFORMES_REPORTES_PBI`, `INFORMES_AUDITORIA_CARGUES`, `INFORMES_TABLAS_DATOS`, `INFORMES_RELACIONAMIENTOS`, `INFORMES_AUDITORIA_GENERAL` (Informes — `INFORMES_AUDITORIA_GENERAL` is SoloSuperAdmin, visor de la tabla `Auditoria`)
 - `ADMIN_USUARIOS_GESTOR`, `ADMIN_EMPRESAS_GESTOR`, `ADMIN_REPORTES_GESTOR` (Administración)
 - `ADMIN_CONFIG_EMPRESAS`, `ADMIN_CONFIG_RELACIONAMIENTOS`, `ADMIN_CONFIG_MENU`, `ADMIN_CONFIG_PROMPTS`, `ADMIN_CONFIG_GRUPOS_EMPRESARIALES` (Configuración - `ADMIN_CONFIG_MENU`, `ADMIN_CONFIG_PROMPTS` and `ADMIN_CONFIG_GRUPOS_EMPRESARIALES` are SoloSuperAdmin)
 
@@ -166,6 +167,7 @@ Views are organized by **functional area**, not by controller name. Controllers 
 | InformeRelacionamientosController | `~/Views/Informes/InformeRelacionamientos.cshtml` |
 | AuditoriaCarguesController | `~/Views/Informes/AuditoriaCargues.cshtml` |
 | AuditoriaConsultasIAController | `~/Views/Informes/AuditoriaConsultasIA.cshtml` |
+| AuditoriaController | `~/Views/Informes/Auditoria.cshtml` |
 | HistorialVersionesCarguesController | `~/Views/Informes/HistorialVersionesCargues.cshtml` |
 | TablaPUCController | `~/Views/Informes/TablaPUC.cshtml` |
 | VariablesPBIController | `~/Views/Informes/VariablesPBI.cshtml` |
@@ -174,8 +176,9 @@ Views are organized by **functional area**, not by controller name. Controllers 
 | WidgetsController | `~/Views/Configuracion/Widgets.cshtml` |
 | ConfiguracionVariablesPBIController | `~/Views/Configuracion/ConfiguracionVariablesPBI.cshtml` |
 | PermisosController | `~/Views/Permisos/Gestionar.cshtml` |
+| ErrorController | `~/Views/Error/*` (convention — see "Error Pages" below) |
 
-When creating new controllers, use explicit view paths with `~/Views/{area}/{view}.cshtml`.
+When creating new controllers, use explicit view paths with `~/Views/{area}/{view}.cshtml`. (`ErrorController` is the deliberate exception: it uses convention-based `Views/Error/` so the pages stay minimal and independent.)
 
 ### Key Controllers
 
@@ -271,6 +274,25 @@ Currently integrated in `InformeTablasDatosController.ConsultarConIA()` — re-q
 
 `EmpresasViewBagFilter` (`Filters/EmpresasViewBagFilter.cs`) is registered globally in `FilterConfig` and loads all companies into `ViewBag.Empresas` for every request.
 
+`LoggingHandleErrorAttribute` (`Filters/LoggingHandleErrorAttribute.cs`) is the other global filter — a `HandleErrorAttribute` subclass that logs the exception to `AppLogger` before letting `customErrors` render the error page. Registered in `FilterConfig` in place of the stock `HandleErrorAttribute`.
+
+### Logging (`AppLogger`)
+
+`Helpers/AppLogger.cs` — dependency-free app logger. Writes one line per event to `App_Data/logs/app-yyyyMMdd.log` (daily rotation, 30-day retention), never throws (falls back to `Trace`). API: `AppLogger.Info/Warn/Error(mensaje, ...)` and `AppLogger.Error(Exception, contexto)`. Each line carries timestamp, level, request ip/user/url, optional `ctx=`, message, and the full exception chain. Wired into `Global.asax.Application_Error` (safety net) and `LoggingHandleErrorAttribute` (MVC pipeline). Use it in any `catch` where today the code only does `SetErrorMessage(ex.Message)` or swallows silently.
+
+### Auditoría centralizada (`AuditoriaService`)
+
+Tabla **única** `Auditoria` para TODA auditoría del sistema, diferenciada por columna `Tipo`. Ver el CREATE + índices en el encabezado de `Services/AuditoriaService.cs`. Modelos y constantes en `Models/AuditoriaModels.cs` (`RegistroAuditoria`, `AuditoriaTipo`, `AuditoriaAccion`, `AuditoriaFiltro`, `AuditoriaResultado`).
+
+- **Escribir**: `new AuditoriaService().RegistrarCambio(AuditoriaTipo.X, AuditoriaAccion.Y, entidad, entidadId, descripcion, valorAnterior, valorNuevo, idEmpresa)` — serializa `valor*` a JSON. Para seguridad: `RegistrarSeguridad(accion, descripcion, idUsuario, nombreUsuario, idEmpresa)` — en el login se pasa la empresa del usuario explícitamente (aún no hay sesión), y `AccesoController.Login` la lee con la columna `IdEmpresa` del `SELECT` de credenciales; esto es lo que permite el alcance por empresa del visor. `Registrar(RegistroAuditoria)` autocompleta fecha/usuario/IP/user-agent desde `HttpContext`. **Nunca lanza** (cae a `Trace`), así que se llama después de la operación exitosa sin envolver en try/catch.
+- **Ya instrumentado**: `EmpresaController` (crear/editar/eliminar), `GruposEmpresarialesController` (crear/editar/eliminar/asignar-empresas), `MenuOpcionesController` (crear/editar/eliminar), `PermisosController.Guardar`, `ModelosEjecucionController` (crear/editar/eliminar), `UsuarioController` (crear/editar/eliminar), `ConfiguracionEmpresaController` (guardar config básica / cierre de año / tablas resumen IA), `AccesoController.Login` (éxito, fallido, bloqueo — esto es B3). Para auditar algo nuevo: elegir/crear código en `AuditoriaTipo` y añadir una línea `RegistrarCambio(...)` tras el éxito.
+- **Visor**: `AuditoriaController` + `~/Views/Informes/Auditoria.cshtml`. `[ValidarSesion]` + gate inline `EsSuperAdmin() || EsAdminEmpresa()` (otros roles → `~/Error/Forbidden`). **Alcance por rol**: Super Admin ve todo; **Admin de Empresa** ve solo `Tipo = SEGURIDAD` (inicios de sesión) de usuarios de su empresa/grupo — `AplicarAlcance()` fuerza `Tipo` y `AuditoriaFiltro.IdsEmpresaPermitidas` (vía `EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas`), y `Detalle` revalida por fila. Filtros Tipo/Entidad ocultos para no-Super. **No auto-carga**: la grilla solo se llena al pulsar «Consultar». **Paginación server-side** (`Consultar` → `{ items, total, pagina, totalPaginas }` con `OFFSET/FETCH`; la vista muestra «Mostrando X–Y de N»). Detalle en modal `Swal` con JSON coloreado + botón Copiar; export Excel + Imprimir/PDF.
+- Las tablas `AuditoriaCargues` y `AuditoriaAnalisisIA` (con sus servicios/vistas propias) **siguen separadas por ahora**; la idea es migrarlas a `Auditoria` como `Tipo` más adelante.
+
+### Error Pages
+
+`ErrorController` (`Controllers/ErrorController.cs`, no `[ValidarSesion]`) renders branded, session-independent pages: `Index` (500), `NotFound` (404), `Forbidden` (403) — each sets `Response.StatusCode` + `TrySkipIisCustomErrors`. Views in `Views/Error/` use `Views/Error/_ErrorLayout.cshtml` (`Layout = null`, self-contained dark-purple + brand-gradient card, strings from `Err_*` resx keys). `Views/Shared/Error.cshtml` (used by `LoggingHandleErrorAttribute`) shares the same layout. Routing in: `Web.config` `<customErrors defaultRedirect="~/Error" redirectMode="ResponseRewrite">` with `<error>` for 403/404, plus `<httpErrors existingResponse="Auto">` in `system.webServer` for errors that never reach MVC.
+
 ### Frontend Stack
 
 - Bootstrap 5.3.7 + SB Admin 2 theme with custom modern sidebar (`Assets/css/modern-sidebar.css`, `Assets/js/modern-sidebar.js`)
@@ -297,6 +319,7 @@ Currently integrated in `InformeTablasDatosController.ConsultarConIA()` — re-q
 - **i18n OBLIGATORIO — SIEMPRE en ambos idiomas:** Cada string visible para el usuario (vistas, JS, controladores) debe agregarse a AMBOS archivos de recursos antes de implementar la UI: `App_GlobalResources/Strings.resx` (es-CO) y `App_GlobalResources/Strings.en-US.resx` (en-US). Nunca hardcodear texto en vistas ni JS. Ver sección "Internationalization (i18n)" para detalles completos.
 - **Estilos — SIEMPRE usar el sistema de diseño del sitio:** Toda vista nueva o modificada DEBE seguir los mismos estilos visuales del sitio. Ver sección "UI Style System — MANDATORY" para la referencia completa.
 - **Notificaciones internas — PREGUNTAR SIEMPRE:** Al implementar cualquier feature nuevo que tenga un resultado observable (cargue, exportación, ejecución, creación/eliminación de entidades, rollback, etc.), preguntar explícitamente al usuario si desea agregar notificaciones internas para esa acción antes de cerrar el task. Si el usuario dice sí, agregar las llamadas a `NotificacionesService.Crear(...)` en el controller correspondiente, las claves a ambos `.resx`, y actualizar la tabla "Active notifications" en esta sección de CLAUDE.md.
+- **Auditoría — PREGUNTAR/SUGERIR SIEMPRE:** Al crear o modificar cualquier acción que cambie estado persistente (crear/editar/eliminar entidades, guardar configuración, asignar permisos/empresas, cierres, rollbacks, ejecuciones, eventos de seguridad, etc.), sugerir explícitamente al usuario registrarla en la auditoría central antes de cerrar el task. Si acepta: añadir una línea `new AuditoriaService().RegistrarCambio(AuditoriaTipo.X, AuditoriaAccion.Y, entidad, entidadId, descripcion, valorAnterior, valorNuevo, idEmpresa)` tras la operación exitosa (o `RegistrarSeguridad(...)` para login/bloqueos), crear el código en `AuditoriaTipo` si hace falta, y actualizar la lista "Ya instrumentado" en la sección "Auditoría centralizada". `AuditoriaService` nunca lanza, así que no se envuelve en try/catch.
 - **Modales de confirmación/alerta y overlays de carga — SIEMPRE con el tema oscuro:** Todo modal nuevo de confirmación, eliminación, alerta o confirmación de guardado DEBE llevar la clase `modal-confirm` en su `.modal` exterior (nunca en modales de crear/editar/gestionar, que se quedan con el look claro de Bootstrap de siempre). Todo overlay nuevo de "cargando/procesando" de pantalla completa DEBE usar las clases `.overlay-cargando`/`.overlay-cargando-card`/`.overlay-cargando-icon`/`.overlay-cargando-title`/`.overlay-cargando-text`/`.overlay-cargando-timer` en vez de estilos inline propios. Todo `Swal.fire(...)` hereda el tema oscuro automáticamente, sin nada que hacer. Ver sección "Confirmation/alert modals — unified dark theme" para la referencia completa y ejemplos de markup.
 
 ## Internationalization (i18n) — MANDATORY
@@ -329,10 +352,10 @@ Both files must always stay in sync: every key present in one must exist in the 
 The app has a persistent bell-icon notification center visible in the top navbar for every authenticated user.
 
 ### Architecture
-- **DB table:** `Notificaciones` (`Id`, `IdUsuario`, `Titulo`, `Mensaje`, `Tipo`, `Leida`, `FechaCreacion`). Auto-cleanup: rows older than 30 days are deleted on insert.
+- **DB table:** `Notificaciones` (`Id`, `IdUsuario`, `Titulo`, `Mensaje`, `Tipo`, `Leida`, `FechaCreacion`, `Url`). Auto-cleanup: rows older than 30 days are deleted on insert. `Url` (nullable, D4) is the deep-link opened when the notification is clicked — `NotificacionesService.Crear(idUsuario, titulo, mensaje, tipo, url)`. Pass a relative path like `"/Datos/CargueExcel"`. Requires `ALTER TABLE Notificaciones ADD Url NVARCHAR(300) NULL;` (the reader is backward-compatible if the column is missing, but `ObtenerRecientes` selects it explicitly).
 - **Service:** `NotificacionesService` (`Services/NotificacionesService.cs`) — `Crear(idUsuario, titulo, mensaje, tipo)`. Swallows all exceptions so it never breaks the main flow.
 - **Controller:** `NotificacionesController` (`Controllers/NotificacionesController.cs`) — endpoints `GET /Notificaciones/Recientes`, `POST /Notificaciones/MarcarLeida`, `POST /Notificaciones/MarcarTodasLeidas`, `POST /Notificaciones/Eliminar`.
-- **Frontend:** Bell icon with badge in `_Layout.cshtml`. Polls `GET /Notificaciones/Recientes` every 30 s. JS functions: `notifPushLocal(tipo, titulo, mensaje)` for transient client-side alerts (no DB).
+- **Frontend:** Bell icon with badge in `_Layout.cshtml`. Polls `GET /Notificaciones/Recientes` every 30 s, **paused while the tab is hidden** (`document.hidden`), with an immediate refresh on `visibilitychange` back to visible (D4). Clicking a notification marks it read and, if it has a `Url`, navigates there. JS functions: `notifPushLocal(tipo, titulo, mensaje)` for transient client-side alerts (no DB). Also in `_Layout`: a **silent session keepalive** (D5) — user activity fires `POST /Acceso/ExtenderSesion` at most every 5 min with no UI, so an active user never hits the server-side timeout.
 
 ### Notification types
 | `Tipo` | Color | Icon | Use for |

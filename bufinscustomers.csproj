@@ -195,11 +195,13 @@
     <Compile Include="Controllers\TablaPUCController.cs" />
     <Compile Include="Controllers\GestorCategoriasController.cs" />
     <Compile Include="Controllers\GestorGruposController.cs" />
+    <Compile Include="Controllers\ErrorController.cs" />
     <Compile Include="Controllers\HealthController.cs" />
     <Compile Include="Controllers\NotificacionesController.cs" />
     <Compile Include="Controllers\WidgetsController.cs" />
     <Compile Include="Controllers\AnalisisIAController.cs" />
     <Compile Include="Controllers\AuditoriaConsultasIAController.cs" />
+    <Compile Include="Controllers\AuditoriaController.cs" />
     <Compile Include="Controllers\DatosController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ConfiguracionRelacionamientoController.cs" />
@@ -212,12 +214,14 @@
     <Compile Include="Controllers\ReportesController.cs" />
     <Compile Include="Controllers\UsuarioController.cs" />
     <Compile Include="Filters\EmpresasViewBagFilter.cs" />
+    <Compile Include="Filters\LoggingHandleErrorAttribute.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Helpers\UsuarioSesionHelper.cs" />
     <Compile Include="Helpers\EmpresaCacheHelper.cs" />
     <Compile Include="Helpers\EmpresaAccesoHelper.cs" />
+    <Compile Include="Helpers\AppLogger.cs" />
     <Compile Include="Helpers\ExcelCellHelper.cs" />
     <Compile Include="Helpers\TablasCargueHelper.cs" />
     <Compile Include="Models\AuditoriaCargues.cs" />
@@ -239,6 +243,7 @@
     <Compile Include="Models\CargueExcelModels.cs" />
     <Compile Include="Models\IAModels.cs" />
     <Compile Include="Models\AuditoriaAnalisisIA.cs" />
+    <Compile Include="Models\AuditoriaModels.cs" />
     <Compile Include="Models\ConfiguracionSistemaItem.cs" />
     <Compile Include="Models\GestorPromptModels.cs" />
     <Compile Include="Models\IndicadoresModels.cs" />
@@ -257,6 +262,7 @@
     <Compile Include="Models\UsuarioPermisos.cs" />
     <Compile Include="Models\Usuarios.cs" />
     <Compile Include="Permisos\RequierePermisoAttribute.cs" />
+    <Compile Include="Permisos\SoloSuperAdminAttribute.cs" />
     <Compile Include="Permisos\ValidarSesionAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
@@ -276,6 +282,7 @@
     <Compile Include="Services\VariablesPBIService.cs" />
     <Compile Include="Services\IAService.cs" />
     <Compile Include="Services\AuditoriaAnalisisIAService.cs" />
+    <Compile Include="Services\AuditoriaService.cs" />
     <Compile Include="Services\GestorPromptsService.cs" />
     <Compile Include="Services\GrupoEmpresarialService.cs" />
     <Compile Include="Services\IndicadoresFinancierosService.cs" />
@@ -6221,9 +6228,11 @@
     <Content Include="Views\Shared\_LoaderDots.cshtml" />
     <Content Include="Views\Shared\_LoaderRing.cshtml" />
     <Content Include="Views\Shared\_LoaderSweep.cshtml" />
-    <Content Include="Views\Home\About.cshtml" />
-    <Content Include="Views\Home\Contact.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="Views\Error\_ErrorLayout.cshtml" />
+    <Content Include="Views\Error\Index.cshtml" />
+    <Content Include="Views\Error\NotFound.cshtml" />
+    <Content Include="Views\Error\Forbidden.cshtml" />
     <Content Include="Views\Acceso\Login.cshtml" />
     <Content Include="Views\Acceso\SolicitarReset.cshtml" />
     <Content Include="Views\Acceso\RestablecerClave.cshtml" />
@@ -6250,6 +6259,7 @@
     <Content Include="Views\Informes\InformeTablasDatos.cshtml" />
     <Content Include="Views\Informes\AnalisisIA.cshtml" />
     <Content Include="Views\Informes\AuditoriaConsultasIA.cshtml" />
+    <Content Include="Views\Informes\Auditoria.cshtml" />
     <Content Include="Views\Informes\VariablesPBI.cshtml" />
     <Content Include="Views\Configuracion\ConfiguracionesEmpresas.cshtml" />
     <Content Include="Views\Configuracion\ConfiguracionRelacionamiento.cshtml" />

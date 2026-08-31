@@ -217,6 +217,7 @@
                     <div class="dash-kpi-value" id="trm-valor">—</div>
                     <div class="dash-kpi-label">@Resources.Strings.Home_TRM_Titulo</div>
                     <div class="dash-kpi-etiqueta" id="trm-fecha"></div>
+                    <div class="dash-kpi-etiqueta" id="trm-eur"></div>
                     <div class="dash-kpi-empresa">
                         <i class="fas fa-link"></i> @Resources.Strings.Home_TRM_Fuente
                     </div>
@@ -907,13 +908,14 @@
 (function () {
     var _s = {
         vigente:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_Vigente))',
-        noDisp:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_Vigente))',
-        vacias:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_Vigente))',
-        noConfig:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_Vigente))',
-        error:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_Vigente))',
-        colapsar:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_Vigente))',
-        expandir:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_Vigente))',
-        irNoticia: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_Vigente))'
+        noDisp:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_NoDisponible))',
+        eurLabel:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_EUR))',
+        vacias:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_Vacias))',
+        noConfig:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_NoConfig))',
+        error:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_Error))',
+        colapsar:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_Colapsar))',
+        expandir:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_Expandir))',
+        irNoticia: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_IrNoticia))'
     };
 
     var _urlNoticias = '@Url.Action("ObtenerNoticias", "Home")';
@@ -938,14 +940,16 @@
     var TRM_KEY = 'bufins_trm';
     var TRM_TTL = 7200000;
 
-    function mostrarTRM(cop, fecha) {
+    function mostrarTRM(cop, fecha, eur) {
         $('#trm-valor').html('$' + fmtCOP(cop));
         $('#trm-fecha').text(_s.vigente + ' ' + fecha);
+        $('#trm-eur').text(eur && eur > 0 ? (_s.eurLabel + ' $' + fmtCOP(eur)) : '');
     }
 
     function mostrarTRMNoDisp() {
         $('#trm-valor').html('<span class="dash-trm-nodisp">' + esc(_s.noDisp) + '</span>');
         $('#trm-fecha').text('');
+        $('#trm-eur').text('');
     }
 
     function renderNoticias(d) {
@@ -1040,7 +1044,7 @@
                     if (raw) {
                         var obj = JSON.parse(raw);
                         if (Date.now() - obj.ts < TRM_TTL) {
-                            mostrarTRM(obj.cop, obj.fecha);
+                            mostrarTRM(obj.cop, obj.fecha, obj.eur);
                             fin();
                             return; // usa cache, no hace fetch
                         }
@@ -1051,6 +1055,8 @@
                 .then(function (r) { return r.json(); })
                 .then(function (d) {
                     var cop = d.rates && d.rates.COP ? parseFloat(d.rates.COP) : 0;
+                    var eur = (d.rates && d.rates.COP && d.rates.EUR)
+                        ? (parseFloat(d.rates.COP) / parseFloat(d.rates.EUR)) : 0;
                     if (d.result === 'success' && cop > 0) {
                         var utc = d.time_last_update_utc || '';
                         var fechaFmt = '';
@@ -1062,8 +1068,8 @@
                                            dt.getUTCFullYear();
                             }
                         }
-                        try { sessionStorage.setItem(TRM_KEY, JSON.stringify({ cop: cop, fecha: fechaFmt, ts: Date.now() })); } catch (e) {}
-                        mostrarTRM(cop, fechaFmt);
+                        try { sessionStorage.setItem(TRM_KEY, JSON.stringify({ cop: cop, eur: eur, fecha: fechaFmt, ts: Date.now() })); } catch (e) {}
+                        mostrarTRM(cop, fechaFmt, eur);
                     } else {
                         mostrarTRMNoDisp();
                     }
