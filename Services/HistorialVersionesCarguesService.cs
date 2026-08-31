@@ -1,25 +1,64 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Text;
 
 namespace bufinscustomers.Services
 {
     public class HistorialVersionesCarguesService : BaseService
     {
-        public const int MaxVersionesPorEscenario = 3;
+        // Versiones que se conservan por escenario (empresa + año + modo). Al superarlo,
+        // el cargue purga la más antigua junto con sus snapshots. La vista muestra este
+        // número en el banner de límite vía HistorialVersionesPageViewModel.MaxVersiones.
+        public const int MaxVersionesPorEscenario = 2;
 
-        private static readonly string[] _tablasIni = {
-            "Ini_BalancePrueba", "Ini_CteYnoCte", "Ini_EjecPCH", "Ini_PCH",
-            "Ini_PptoPYG", "Ini_PptoPYGConAjuste", "Ini_PresupuestoBalance",
-            "Ini_PYG", "Ini_PYGDetalladoConAjuste"
-        };
+        // Tablas Ini_ versionadas por el historial. Fuente única: Helpers/TablasCargueHelper.cs
+        // (la misma lista que usa el cargue en DatosController), para que agregar/quitar una
+        // tabla del cargue no deje el snapshot ni el rollback desincronizados.
+        private static string[] _tablasIni => TablasCargueHelper.TablasIni;
 
         // ── Llamado desde DatosController DENTRO de la transacción ───────────
 
         public int CrearSnapshotEnTransaccion(
+            SqlConnection conn,
+            SqlTransaction tx,
+            int idEmpresa,
+            string nombreEmpresa,
+            int anio,
+            byte modo,
+            int idUsuario,
+            string nombreUsuario,
+            string nombreArchivo)
+        {
+            // El snapshot comparte la transacción del cargue. Un savepoint lo vuelve
+            // atómico: si falla a mitad (p. ej. una tabla no se puede serializar), se
+            // deshace SOLO lo del snapshot y el cargue continúa sin fila de historial,
+            // en vez de dejar una versión parcial (que un rollback futuro aplicaría mal).
+            const string savePoint = "PreSnapshotHistorial";
+            tx.Save(savePoint);
+            try
+            {
+                return CrearSnapshotInterno(
+                    conn, tx, idEmpresa, nombreEmpresa, anio, modo,
+                    idUsuario, nombreUsuario, nombreArchivo);
+            }
+            catch
+            {
+                // La tx puede quedar condenada por el error; si el savepoint ya no es
+                // válido el caller hará rollback total. Se ignora ese caso aquí.
+                try { tx.Rollback(savePoint); } catch { }
+                throw;
+            }
+        }
+
+        private int CrearSnapshotInterno(
             SqlConnection conn,
             SqlTransaction tx,
             int idEmpresa,
@@ -84,14 +123,27 @@ namespace bufinscustomers.Services
 
             foreach (var tabla in _tablasIni)
             {
-                string json = SerializarTabla(conn, tx, tabla, whereClause, idEmpresa, anio);
+                string json;
+                try
+                {
+                    json = SerializarTabla(conn, tx, tabla, whereClause, idEmpresa, anio);
+                }
+                catch (Exception ex)
+                {
+                    // No enmascarar como tabla vacía: abortar el snapshot completo.
+                    throw new InvalidOperationException(
+                        $"No se pudo capturar el snapshot de la tabla '{tabla}': {ex.Message}", ex);
+                }
+
+                // El JSON se guarda comprimido (GZip) en DatosGzip; DatosJson queda vacío.
+                // El formato GZip es el mismo que produce/lee T-SQL COMPRESS()/DECOMPRESS().
                 using (var cmd = new SqlCommand(@"
-                    INSERT INTO dbo.SnapshotsCargues (IdHistorial, NombreTabla, DatosJson)
-                    VALUES (@IdHistorial, @NombreTabla, @DatosJson)", conn, tx))
+                    INSERT INTO dbo.SnapshotsCargues (IdHistorial, NombreTabla, DatosJson, DatosGzip)
+                    VALUES (@IdHistorial, @NombreTabla, '', @DatosGzip)", conn, tx))
                 {
                     cmd.Parameters.AddWithValue("@IdHistorial", idHistorial);
                     cmd.Parameters.AddWithValue("@NombreTabla", tabla);
-                    cmd.Parameters.AddWithValue("@DatosJson", json);
+                    cmd.Parameters.Add("@DatosGzip", SqlDbType.VarBinary, -1).Value = Comprimir(json);
                     cmd.ExecuteNonQuery();
                 }
             }
@@ -168,13 +220,30 @@ namespace bufinscustomers.Services
                     {
                         var snapshots = new Dictionary<string, string>();
                         using (var cmd = new SqlCommand(
-                            "SELECT NombreTabla, DatosJson FROM dbo.SnapshotsCargues WHERE IdHistorial = @IdHistorial",
+                            "SELECT NombreTabla, DatosJson, DatosGzip FROM dbo.SnapshotsCargues WHERE IdHistorial = @IdHistorial",
                             conn, tx))
                         {
                             cmd.Parameters.AddWithValue("@IdHistorial", idHistorial);
                             using (var r = cmd.ExecuteReader())
                                 while (r.Read())
-                                    snapshots[r["NombreTabla"].ToString()] = r["DatosJson"].ToString();
+                                {
+                                    // Preferir la versión comprimida; las filas antiguas
+                                    // (pre-compresión) siguen en DatosJson como texto plano.
+                                    string json = r["DatosGzip"] != DBNull.Value
+                                        ? Descomprimir((byte[])r["DatosGzip"])
+                                        : r["DatosJson"].ToString();
+                                    snapshots[r["NombreTabla"].ToString()] = json;
+                                }
+                        }
+
+                        // Versión incompleta: faltan snapshots de tablas que hoy forman parte
+                        // del cargue. Restaurar parcialmente dejaría los estados financieros
+                        // inconsistentes — se aborta sin tocar ninguna tabla.
+                        var tablasFaltantes = _tablasIni.Where(t => !snapshots.ContainsKey(t)).ToList();
+                        if (tablasFaltantes.Count > 0)
+                        {
+                            try { tx.Rollback(); } catch { }
+                            return false;
                         }
 
                         string deleteWhere = version.Modo == 0
@@ -191,8 +260,10 @@ namespace bufinscustomers.Services
                                 cmd.ExecuteNonQuery();
                             }
 
-                            if (snapshots.TryGetValue(tabla, out string json) &&
-                                !string.IsNullOrWhiteSpace(json) && json != "[]")
+                            // json != "[]" ⇒ la tabla tenía filas en el snapshot; si estaba
+                            // vacía se deja vacía tras el DELETE (comportamiento correcto).
+                            string json = snapshots[tabla];
+                            if (!string.IsNullOrWhiteSpace(json) && json != "[]")
                             {
                                 ReinsertarDesdeJson(conn, tx, tabla, json);
                             }
@@ -255,33 +326,29 @@ namespace bufinscustomers.Services
         private string SerializarTabla(SqlConnection conn, SqlTransaction tx,
             string tabla, string whereClause, int idEmpresa, int anio)
         {
-            try
+            // Sin catch: si la lectura falla, la excepción sube y CrearSnapshotInterno
+            // aborta el snapshot completo. Una tabla realmente vacía devuelve "[]" de
+            // forma natural (lista sin filas), que NO es un error.
+            var rows = new List<Dictionary<string, object>>();
+            using (var cmd = new SqlCommand($"SELECT * FROM dbo.[{tabla}] {whereClause}", conn, tx))
             {
-                var rows = new List<Dictionary<string, object>>();
-                using (var cmd = new SqlCommand($"SELECT * FROM dbo.[{tabla}] {whereClause}", conn, tx))
+                cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                cmd.Parameters.AddWithValue("@Anio", anio);
+                using (var r = cmd.ExecuteReader())
                 {
-                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                    cmd.Parameters.AddWithValue("@Anio", anio);
-                    using (var r = cmd.ExecuteReader())
+                    while (r.Read())
                     {
-                        while (r.Read())
-                        {
-                            var row = new Dictionary<string, object>();
-                            for (int i = 0; i < r.FieldCount; i++)
-                                row[r.GetName(i)] = r.IsDBNull(i) ? null : r.GetValue(i);
-                            rows.Add(row);
-                        }
+                        var row = new Dictionary<string, object>();
+                        for (int i = 0; i < r.FieldCount; i++)
+                            row[r.GetName(i)] = r.IsDBNull(i) ? null : r.GetValue(i);
+                        rows.Add(row);
                     }
                 }
-                return JsonConvert.SerializeObject(rows, new JsonSerializerSettings
-                {
-                    DateFormatString = "yyyy-MM-ddTHH:mm:ss"
-                });
             }
-            catch
+            return JsonConvert.SerializeObject(rows, new JsonSerializerSettings
             {
-                return "[]";
-            }
+                DateFormatString = "yyyy-MM-ddTHH:mm:ss"
+            });
         }
 
         private void ReinsertarDesdeJson(SqlConnection conn, SqlTransaction tx, string tabla, string json)
@@ -325,23 +392,66 @@ namespace bufinscustomers.Services
         private void PurgarVersionesAntiguas(SqlConnection conn, SqlTransaction tx,
             int idEmpresa, int anio, byte modo)
         {
+            // No se depende de un FK ON DELETE CASCADE: se borran primero los snapshots
+            // (hijos) de las versiones que sobran en este escenario, luego las versiones,
+            // y por último se barre cualquier snapshot huérfano que pudiera existir.
+            // El ORDER BY EsVersionActual DESC garantiza que la versión activa (que tras
+            // un rollback puede NO ser la de fecha más reciente) nunca se purgue.
             using (var cmd = new SqlCommand(@"
+                DECLARE @Sobrantes TABLE (Id INT PRIMARY KEY);
+
+                INSERT INTO @Sobrantes (Id)
+                SELECT Id FROM (
+                    SELECT Id,
+                           ROW_NUMBER() OVER (
+                               ORDER BY EsVersionActual DESC, FechaCargue DESC) AS rn
+                    FROM dbo.HistorialVersionesCargues
+                    WHERE IdEmpresa = @IdEmpresa AND Anio = @Anio AND Modo = @Modo
+                ) ranked
+                WHERE rn > @MaxVersiones;
+
+                DELETE FROM dbo.SnapshotsCargues
+                WHERE IdHistorial IN (SELECT Id FROM @Sobrantes);
+
                 DELETE FROM dbo.HistorialVersionesCargues
-                WHERE Id IN (
-                    SELECT Id FROM (
-                        SELECT Id,
-                               ROW_NUMBER() OVER (ORDER BY FechaCargue DESC) AS rn
-                        FROM dbo.HistorialVersionesCargues
-                        WHERE IdEmpresa = @IdEmpresa AND Anio = @Anio AND Modo = @Modo
-                    ) ranked
-                    WHERE rn > @MaxVersiones
-                )", conn, tx))
+                WHERE Id IN (SELECT Id FROM @Sobrantes);
+
+                DELETE s
+                FROM dbo.SnapshotsCargues s
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM dbo.HistorialVersionesCargues h WHERE h.Id = s.IdHistorial
+                );", conn, tx))
             {
                 cmd.Parameters.AddWithValue("@IdEmpresa",   idEmpresa);
                 cmd.Parameters.AddWithValue("@Anio",        anio);
                 cmd.Parameters.AddWithValue("@Modo",        modo);
                 cmd.Parameters.AddWithValue("@MaxVersiones", MaxVersionesPorEscenario);
                 cmd.ExecuteNonQuery();
+            }
+        }
+
+        // ── Compresión GZip (formato compatible con T-SQL COMPRESS/DECOMPRESS) ─
+
+        private static byte[] Comprimir(string texto)
+        {
+            var bytes = Encoding.UTF8.GetBytes(texto ?? "[]");
+            using (var ms = new MemoryStream())
+            {
+                using (var gz = new GZipStream(ms, CompressionLevel.Optimal, leaveOpen: true))
+                    gz.Write(bytes, 0, bytes.Length);
+                return ms.ToArray();
+            }
+        }
+
+        private static string Descomprimir(byte[] datos)
+        {
+            if (datos == null || datos.Length == 0) return "[]";
+            using (var msIn = new MemoryStream(datos))
+            using (var gz = new GZipStream(msIn, CompressionMode.Decompress))
+            using (var msOut = new MemoryStream())
+            {
+                gz.CopyTo(msOut);
+                return Encoding.UTF8.GetString(msOut.ToArray());
             }
         }
 

@@ -51,6 +51,38 @@
     text-decoration:none; display:inline-flex; align-items:center; gap:6px;
 }
 .audit-btn-header:hover { background:rgba(255,255,255,.30); color:#fff; text-decoration:none; }
+.audit-btn-header.audit-btn-danger { background:rgba(220,53,69,.28); border-color:rgba(255,255,255,.55); }
+.audit-btn-header.audit-btn-danger:hover { background:rgba(220,53,69,.48); }
+
+/* Contenido del modal "Limpiar auditoría" (dentro de SweetAlert, tema oscuro) */
+.aud-limp-wrap { text-align:left; }
+.aud-limp-desc {
+    font-size:.85rem; line-height:1.5; color:#9ca3af;
+    margin:0 0 16px; padding-bottom:12px;
+    border-bottom:1px solid rgba(255,255,255,.12);
+}
+.aud-limp-opt {
+    display:flex; align-items:flex-start; gap:10px;
+    padding:12px 14px; margin-bottom:10px;
+    border:1.5px solid rgba(255,255,255,.16); border-radius:10px;
+    cursor:pointer; transition:border-color .15s, background .15s;
+}
+.aud-limp-opt:last-child { margin-bottom:0; }
+.aud-limp-opt:hover { border-color:rgba(139,125,255,.7); }
+.aud-limp-opt.is-active { border-color:#8b7dff; background:rgba(88,58,255,.16); }
+.aud-limp-opt > input[type=radio] { margin:3px 0 0; accent-color:#8b7dff; flex:0 0 auto; }
+.aud-limp-opt-body { flex:1; min-width:0; }
+.aud-limp-opt-title { display:block; font-weight:600; font-size:.92rem; color:#f3f4f6; }
+.aud-limp-opt-hint  { display:block; font-size:.78rem; color:#9ca3af; margin-top:3px; }
+.aud-limp-meses-row { display:flex; align-items:center; gap:8px; margin-top:10px; }
+.aud-limp-meses-row label { margin:0; font-size:.8rem; color:#cbd5e1; }
+.aud-limp-meses-input {
+    width:88px; padding:6px 10px; font-size:.9rem; text-align:center;
+    border:1.5px solid rgba(255,255,255,.25); border-radius:8px;
+    background:rgba(255,255,255,.06); color:#f3f4f6;
+}
+.aud-limp-meses-input:focus { outline:none; border-color:#8b7dff; }
+.aud-limp-meses-input:disabled { opacity:.4; cursor:not-allowed; }
 
 /* Botón ver */
 .aud-btn-ver {
@@ -75,15 +107,25 @@
 
 <div class="container-fluid px-4">
 
+    @Html.AntiForgeryToken()
+
     <!-- Header -->
     <div class="powerbi-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
         <div class="powerbi-header-content">
             <i class="fas fa-history powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@Resources.Strings.AudIA_PageTitle</h1>
         </div>
-        <a href="@Url.Action("Index","AnalisisIA")" class="audit-btn-header">
-            <i class="fas fa-robot"></i> @Resources.Strings.AudIA_LinkAnalisisIA
-        </a>
+        <div class="d-flex align-items-center" style="gap:8px;flex-wrap:wrap;">
+            @if (esAdmin)
+            {
+                <button type="button" id="btnLimpiarAuditoria" class="audit-btn-header audit-btn-danger">
+                    <i class="fas fa-trash-alt"></i> @Resources.Strings.AudIA_BtnLimpiarAuditoria
+                </button>
+            }
+            <a href="@Url.Action("Index","AnalisisIA")" class="audit-btn-header">
+                <i class="fas fa-robot"></i> @Resources.Strings.AudIA_LinkAnalisisIA
+            </a>
+        </div>
     </div>
 
     <!-- Card de filtros -->
@@ -275,6 +317,24 @@ $(document).ready(function () {
     var _strTitleRespuesta = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_TitleRespuesta))';
     var _strVer            = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_ThVer))';
     var _strError          = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error))';
+    var _strExito          = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Exito))';
+
+    var _limp = {
+        titulo:          '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LimpiarTitulo))',
+        desc:            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LimpiarDesc))',
+        opcionTodo:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LimpiarOpcionTodo))',
+        opcionTodoHint:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LimpiarOpcionTodoHint))',
+        opcionConservar:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LimpiarOpcionConservar))',
+        opcionConservarHint:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LimpiarOpcionConservarHint))',
+        mesesLabel:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LimpiarMesesLabel))',
+        confirmarBtn:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LimpiarConfirmarBtn))',
+        cancelarBtn:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LimpiarCancelarBtn))',
+        mesesInvalido:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LimpiarMesesInvalido))',
+        confirmTodo:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LimpiarConfirmTodo))',
+        confirmConservar:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LimpiarConfirmConservar))',
+        exito:           '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LimpiarExito))',
+        errorMsg:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LimpiarError))'
+    };
 
     /* ── Carga inicial ── */
     consultarServidor();
@@ -290,6 +350,121 @@ $(document).ready(function () {
         $('#audBusquedaTexto').val('');
         $('.aud-date-chip').removeClass('active');
         consultarServidor();
+    });
+
+    /* ── Limpiar auditoría (solo Super Admin) ── */
+    $('#btnLimpiarAuditoria').on('click', function () {
+        Swal.fire({
+            title: _limp.titulo,
+            html:
+                '<div class="aud-limp-wrap">' +
+                  '<p class="aud-limp-desc">' + _limp.desc + '</p>' +
+                  '<label class="aud-limp-opt is-active" data-modo="todo">' +
+                    '<input type="radio" name="audLimpModo" value="todo" checked>' +
+                    '<span class="aud-limp-opt-body">' +
+                      '<span class="aud-limp-opt-title">' + _limp.opcionTodo + '</span>' +
+                      '<span class="aud-limp-opt-hint">' + _limp.opcionTodoHint + '</span>' +
+                    '</span>' +
+                  '</label>' +
+                  '<label class="aud-limp-opt" data-modo="conservar">' +
+                    '<input type="radio" name="audLimpModo" value="conservar">' +
+                    '<span class="aud-limp-opt-body">' +
+                      '<span class="aud-limp-opt-title">' + _limp.opcionConservar + '</span>' +
+                      '<span class="aud-limp-opt-hint">' + _limp.opcionConservarHint + '</span>' +
+                      '<span class="aud-limp-meses-row">' +
+                        '<label for="audLimpMeses">' + _limp.mesesLabel + '</label>' +
+                        '<input type="number" id="audLimpMeses" class="aud-limp-meses-input" min="1" max="120" value="6" disabled>' +
+                      '</span>' +
+                    '</span>' +
+                  '</label>' +
+                '</div>',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: _limp.confirmarBtn,
+            cancelButtonText: _limp.cancelarBtn,
+            confirmButtonColor: '#e74c3c',
+            reverseButtons: true,
+            didOpen: function () {
+                var popup      = Swal.getPopup();
+                var mesesInput = popup.querySelector('#audLimpMeses');
+                var opciones   = popup.querySelectorAll('.aud-limp-opt');
+                var radios     = popup.querySelectorAll('input[name="audLimpModo"]');
+
+                function sincronizar() {
+                    var sel = popup.querySelector('input[name="audLimpModo"]:checked');
+                    var modo = sel ? sel.value : 'todo';
+                    opciones.forEach(function (o) {
+                        o.classList.toggle('is-active', o.getAttribute('data-modo') === modo);
+                    });
+                    mesesInput.disabled = (modo !== 'conservar');
+                }
+
+                radios.forEach(function (r) { r.addEventListener('change', sincronizar); });
+                // Enfocar el campo de meses activa automáticamente "conservar"
+                mesesInput.addEventListener('focus', function () {
+                    popup.querySelector('input[name="audLimpModo"][value="conservar"]').checked = true;
+                    sincronizar();
+                });
+                sincronizar();
+            },
+            preConfirm: function () {
+                var sel = document.querySelector('input[name="audLimpModo"]:checked');
+                var modo = sel ? sel.value : 'todo';
+                if (modo === 'conservar') {
+                    var m = parseInt(document.getElementById('audLimpMeses').value, 10);
+                    if (isNaN(m) || m < 1 || m > 120) {
+                        Swal.showValidationMessage(_limp.mesesInvalido);
+                        return false;
+                    }
+                    return { completo: false, meses: m };
+                }
+                return { completo: true, meses: null };
+            }
+        }).then(function (res) {
+            if (!res.isConfirmed) return;
+            var opts = res.value;
+            var texto = opts.completo
+                ? _limp.confirmTodo
+                : _limp.confirmConservar.replace('{0}', opts.meses);
+
+            Swal.fire({
+                title: _limp.titulo,
+                text: texto,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: _limp.confirmarBtn,
+                cancelButtonText: _limp.cancelarBtn,
+                confirmButtonColor: '#e74c3c',
+                reverseButtons: true
+            }).then(function (c) {
+                if (!c.isConfirmed) return;
+                var token = $('input[name="__RequestVerificationToken"]').val();
+                $.ajax({
+                    url: '@Url.Action("LimpiarAuditoria","AuditoriaConsultasIA")',
+                    type: 'POST',
+                    data: {
+                        completo: opts.completo,
+                        meses: opts.meses,
+                        __RequestVerificationToken: token
+                    },
+                    success: function (r) {
+                        if (r && r.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: _strExito,
+                                text: _limp.exito.replace('{0}', r.eliminados)
+                            });
+                            consultarServidor();
+                        } else {
+                            Swal.fire({ icon: 'error', title: _strError, text: (r && r.message) || _limp.errorMsg });
+                        }
+                    },
+                    error: function () {
+                        Swal.fire({ icon: 'error', title: _strError, text: _limp.errorMsg });
+                    }
+                });
+            });
+        });
     });
 
     /* ── Filtros locales ── */

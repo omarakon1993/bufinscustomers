@@ -26,19 +26,10 @@ namespace bufinscustomers.Controllers
         private readonly HistorialVersionesCarguesService _historialService = new HistorialVersionesCarguesService();
         private StringBuilder _logBuilder = new StringBuilder();
 
-        private static readonly Dictionary<string, string> _mapeoHistorico =
-            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-            {
-                { "Z_BalancePrueba",             "Ini_BalancePrueba" },
-                { "Z_CteYnoCte",                 "Ini_CteYnoCte" },
-                { "Z_EjecPCH",                   "Ini_EjecPCH" },
-                { "Z_PCH",                       "Ini_PCH" },
-                { "Z_PptoPYGDetallado",          "Ini_PptoPYG" },
-                { "Z_PptoPYGDetalladoConAjuste", "Ini_PptoPYGConAjuste" },
-                { "Z_PresupuestoBalance",        "Ini_PresupuestoBalance" },
-                { "Z_PYGDetallado",              "Ini_PYG" },
-                { "Z_PYGDetalladoConAjuste",     "Ini_PYGDetalladoConAjuste" },
-            };
+        // Mapeo hoja Z_ → tabla Ini_. Fuente única: Helpers/TablasCargueHelper.cs
+        // (compartida con HistorialVersionesCarguesService y ConfiguracionEmpresaController).
+        private static readonly IReadOnlyDictionary<string, string> _mapeoHistorico =
+            TablasCargueHelper.MapeoZaIni;
 
         private void LogToFile(string mensaje)
         {

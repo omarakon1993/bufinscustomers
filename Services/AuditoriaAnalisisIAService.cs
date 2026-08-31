@@ -71,7 +71,9 @@ namespace bufinscustomers.Services
                     cmd.Parameters.AddWithValue("@Hasta", hasta.Value.AddDays(1));
                 }
 
-                sql += " ORDER BY FechaPregunta DESC";
+                // Fecha descendente (más reciente primero); Id como desempate para un
+                // orden estable cuando varias consultas comparten el mismo timestamp.
+                sql += " ORDER BY FechaPregunta DESC, Id DESC";
                 cmd.CommandText = sql;
                 cmd.Connection = cn;
                 cn.Open();
@@ -98,6 +100,31 @@ namespace bufinscustomers.Services
                 }
             }
             return lista;
+        }
+
+        /// <summary>
+        /// Borra registros de auditoría. Si <paramref name="mesesConservar"/> es null o &lt;= 0,
+        /// elimina TODA la tabla; en caso contrario conserva solo los registros de los últimos
+        /// N meses. Devuelve la cantidad de filas eliminadas.
+        /// </summary>
+        public int LimpiarAuditoria(int? mesesConservar)
+        {
+            using (var cn = new SqlConnection(CadenaConexion))
+            {
+                SqlCommand cmd;
+                if (mesesConservar.HasValue && mesesConservar.Value > 0)
+                {
+                    cmd = new SqlCommand(
+                        "DELETE FROM AuditoriaAnalisisIA WHERE FechaPregunta < DATEADD(MONTH, -@Meses, GETDATE())", cn);
+                    cmd.Parameters.AddWithValue("@Meses", mesesConservar.Value);
+                }
+                else
+                {
+                    cmd = new SqlCommand("DELETE FROM AuditoriaAnalisisIA", cn);
+                }
+                cn.Open();
+                return cmd.ExecuteNonQuery();
+            }
         }
 
         public int ContarConsultasHoy(int idUsuario)

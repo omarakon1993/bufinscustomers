@@ -78,6 +78,39 @@ namespace bufinscustomers.Controllers
             }), JsonRequestBehavior.AllowGet);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult LimpiarAuditoria(bool completo, int? meses)
+        {
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+                return Json(new { success = false, message = R("AudIA_LimpiarSinPermiso") });
+
+            try
+            {
+                int? mesesConservar = completo ? (int?)null : meses;
+
+                if (!completo && (!mesesConservar.HasValue || mesesConservar.Value < 1 || mesesConservar.Value > 120))
+                    return Json(new { success = false, message = R("AudIA_LimpiarMesesInvalido") });
+
+                int eliminados = new AuditoriaAnalisisIAService().LimpiarAuditoria(mesesConservar);
+
+                var usuario = UsuarioSesionHelper.UsuarioActual;
+                if (usuario != null)
+                {
+                    string mensaje = completo
+                        ? string.Format(R("AudIA_NotifMsgTodo"), eliminados)
+                        : string.Format(R("AudIA_NotifMsgConservar"), eliminados, mesesConservar.Value);
+                    new NotificacionesService().Crear(usuario.Id, R("Notif_AuditoriaLimpiada"), mensaje, "warning");
+                }
+
+                return Json(new { success = true, eliminados });
+            }
+            catch
+            {
+                return Json(new { success = false, message = R("AudIA_LimpiarError") });
+            }
+        }
+
         [HttpGet]
         public JsonResult ObtenerUsuariosAuditoria(int? idEmpresa)
         {

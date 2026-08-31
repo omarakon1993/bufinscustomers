@@ -356,19 +356,9 @@ namespace bufinscustomers.Controllers
             if (yaEsHistorico)
                 return Json(new { success = false, message = $"El año {nuevoAnio} ya está registrado como año histórico." });
 
-            var tablasIni = new[]
-            {
-                "Ini_BalancePrueba", "Ini_CteYnoCte", "Ini_EjecPCH", "Ini_PCH",
-                "Ini_PptoPYG", "Ini_PptoPYGConAjuste", "Ini_PresupuestoBalance",
-                "Ini_PYG", "Ini_PYGDetalladoConAjuste"
-            };
-
-            var tablasZ = new[]
-            {
-                "Z_BalancePrueba", "Z_CteYnoCte", "Z_EjecPCH", "Z_PCH",
-                "Z_PptoPYGDetallado", "Z_PptoPYGDetalladoConAjuste", "Z_PresupuestoBalance",
-                "Z_PYGDetallado", "Z_PYGDetalladoConAjuste"
-            };
+            // Fuente única: Helpers/TablasCargueHelper.cs (compartida con el cargue y el historial).
+            var tablasIni = TablasCargueHelper.TablasIni;
+            var tablasZ = TablasCargueHelper.TablasZ;
 
             try
             {

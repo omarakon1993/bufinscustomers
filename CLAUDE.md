@@ -206,7 +206,15 @@ Per-sheet results use `DetalleCargaHojaExcel` (`Models/CargueExcelModels.cs`):
 - `Estado` values: `"Exitoso"`, `"Error"`, `"Ignorada"` (empty/no headers/no data rows)
 - `ResultadoCargaExcel.MostrarDescargaLog` (bool) — set to `true` on error to show the download button
 
-Import rules: the workbook must have exactly 10 sheets; 5 consecutive empty rows terminate data reading.
+Import rules: the workbook must have exactly as many sheets as `TablasCargueHelper.MapeoZaIni` has entries (currently 9 — see `Helpers/TablasCargueHelper.cs`, the single source of truth for the sheet-`Z_` → table-`Ini_` set, shared by `DatosController`, `HistorialVersionesCarguesService` and `ConfiguracionEmpresaController`); 5 consecutive empty rows terminate data reading.
+
+### Historial de Versiones de Cargues (rollback)
+
+Every successful Excel upload (ejecución **and** histórico) writes a version row to `HistorialVersionesCargues` plus one `SnapshotsCargues` row per `Ini_` table, inside the same DB transaction as the upload. `HistorialVersionesCarguesService`:
+- **Snapshot is atomic**: wrapped in a SQL savepoint (`CrearSnapshotEnTransaccion` → `CrearSnapshotInterno`). If it fails mid-way it rolls back only its own work and the upload continues **without** a history row — never a partial version. `SerializarTabla` no longer swallows errors (a real read failure aborts the whole snapshot; a genuinely empty table serializes to `"[]"`).
+- **Snapshot payload is GZip-compressed**: `Comprimir`/`Descomprimir` in the service GZip **UTF-8** bytes; stored in `SnapshotsCargues.DatosGzip` (`VARBINARY(MAX)`), `DatosJson` left `''`. Rollback reads `DatosGzip`, falling back to `DatosJson` for any legacy plain-text row. Requires the column: `ALTER TABLE dbo.SnapshotsCargues ADD DatosGzip VARBINARY(MAX) NULL;`. Note: T-SQL `COMPRESS(DatosJson)` would GZip the UTF-16 bytes of an `nvarchar` — not readable by `Descomprimir` — so never populate `DatosGzip` from SQL.
+- **Retention**: `MaxVersionesPorEscenario = 2` (const). Per **escenario** = (IdEmpresa, Anio, Modo), only the 2 most recent versions are kept — ranked `EsVersionActual DESC, FechaCargue DESC` so the active version is never purged even after a rollback. `PurgarVersionesAntiguas` runs on every upload, deletes the surplus versions **and their `SnapshotsCargues` children explicitly** (no reliance on `ON DELETE CASCADE`) and sweeps any orphan snapshot rows. There is no time-based purge and no UI maintenance action — changing the const takes effect for each escenario on its next upload.
+- **Rollback** (`EjecutarRollback`) aborts (returns false, no changes) if the version is missing any expected `Ini_` snapshot, instead of partially restoring.
 
 ### Excel Reading/Writing (ClosedXML)
 
@@ -355,6 +363,7 @@ The app has a persistent bell-icon notification center visible in the top navbar
 | Session expiring (client-side) | `warning` | `_Layout.cshtml` (JS only) | `Notif_SesionExpiraTitulo` |
 | Version rollback success | `success` | `HistorialVersionesCarguesController` | `Notif_RollbackEjecutado` |
 | Version rollback error | `error` | `HistorialVersionesCarguesController` | `Notif_ErrorRollback` |
+| AI query audit log cleared (full or keep-last-N-months) | `warning` | `AuditoriaConsultasIAController` | `Notif_AuditoriaLimpiada` |
 
 ### When to create a notification (server-side)
 > **MANDATORY:** When finishing any new feature, explicitly ask the user whether to add internal notifications before closing the task. If yes: add `NotificacionesService.Crear(...)` calls, add keys to both `.resx` files, and update the Active notifications table above.
