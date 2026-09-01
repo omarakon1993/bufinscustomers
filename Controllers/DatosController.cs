@@ -706,11 +706,21 @@ namespace bufinscustomers.Controllers
             {
                 using (var package = new XLWorkbook(archivoExcel.InputStream))
                     {
-                        int hojasEsperadas = _mapeoHistorico.Count;
-                        if (package.Worksheets.Count != hojasEsperadas)
+                        // La plantilla debe traer las hojas Z_ esperadas. Se permiten hojas
+                        // adicionales no reconocidas (p. ej. la hoja auxiliar "Datos" que solo
+                        // alimenta las listas de validación del Excel): se ignoran más abajo.
+                        var hojasLibro = package.Worksheets
+                            .Select(w => NormalizarNombre(w.Name))
+                            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                        var hojasFaltantes = _mapeoHistorico.Keys
+                            .Where(z => !hojasLibro.Contains(NormalizarNombre(z)))
+                            .ToList();
+
+                        if (hojasFaltantes.Any())
                         {
                             resultado.Exito = false;
-                            resultado.Mensaje = $"La plantilla debe contener exactamente {hojasEsperadas} hojas. El archivo tiene {package.Worksheets.Count} hojas.";
+                            resultado.Mensaje = $"La plantilla no contiene todas las hojas requeridas. Faltan: {string.Join(", ", hojasFaltantes)}.";
                             TempData["ResultadoCarga"] = resultado;
                             TempData["NombreArchivo"] = nombreArchivoOriginal;
                             SetErrorMessage(resultado.Mensaje);
@@ -743,8 +753,13 @@ namespace bufinscustomers.Controllers
 
                                         foreach (var hoja in package.Worksheets)
                                         {
-                                            var detalle = new DetalleCargaHojaExcel { NombreHoja = hoja.Name };
                                             var nombreNorm = NormalizarNombre(hoja.Name);
+
+                                            // Hoja auxiliar de la plantilla (listas de validación, etc.): se omite.
+                                            if (!_hojasCargueReconocidas.Contains(nombreNorm))
+                                                continue;
+
+                                            var detalle = new DetalleCargaHojaExcel { NombreHoja = hoja.Name };
                                             var dt = LeerHojaEnDataTable(hoja, detalle, anioSeleccionado.ToString());
 
                                             if (dt == null)
@@ -856,8 +871,13 @@ namespace bufinscustomers.Controllers
 
                                         foreach (var hoja in package.Worksheets)
                                         {
-                                            var detalle = new DetalleCargaHojaExcel { NombreHoja = hoja.Name };
                                             var nombreNormalizado = NormalizarNombre(hoja.Name);
+
+                                            // Hoja auxiliar de la plantilla (listas de validación, etc.): se omite.
+                                            if (!_hojasCargueReconocidas.Contains(nombreNormalizado))
+                                                continue;
+
+                                            var detalle = new DetalleCargaHojaExcel { NombreHoja = hoja.Name };
 
                                             if (!_mapeoHistorico.TryGetValue(nombreNormalizado, out string nombreTablaIni))
                                             {
@@ -1243,6 +1263,15 @@ namespace bufinscustomers.Controllers
 
         // Tablas Z_ que se usan en GuardarEnSQLServer pero no tienen mapeo en _mapeoHistorico
         private static readonly string[] _tablasZSinMapeo = { "Z_TablaPUC" };
+
+        // Nombres (normalizados) de las hojas que el cargue reconoce y procesa: las del
+        // mapeo Z_ → Ini_ más las Z_ que van directo a SQL. Cualquier otra hoja del libro
+        // (p. ej. la hoja auxiliar "Datos" con las listas de validación de la plantilla)
+        // se ignora por completo: no se valida ni se carga.
+        private static readonly HashSet<string> _hojasCargueReconocidas =
+            new HashSet<string>(
+                _mapeoHistorico.Keys.Concat(_tablasZSinMapeo),
+                StringComparer.OrdinalIgnoreCase);
 
         private void LimpiarTablasEnError(SqlConnection conn, int idEmpresa)
         {
