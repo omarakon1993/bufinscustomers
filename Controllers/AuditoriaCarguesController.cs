@@ -20,6 +20,7 @@ namespace bufinscustomers.Controllers
         // Listar auditorias de cargues
         public ActionResult AuditoriaCargues()
         {
+            ViewBag.Embed = string.Equals(Request.QueryString["embed"], "1");
             var usuario = UsuarioSesionHelper.UsuarioActual;
             var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
             

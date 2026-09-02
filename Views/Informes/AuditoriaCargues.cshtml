@@ -3,6 +3,7 @@
 
 @{
     ViewBag.Title = Resources.Strings.Audit_PageTitle;
+    if ((bool)(ViewBag.Embed ?? false)) { Layout = "~/Views/Shared/_LayoutFragment.cshtml"; }
     var esSuperAdmin = UsuarioSesionHelper.EsSuperAdmin();
     var totalCargues = Model.Count();
     var empresas = Model.Select(x => x.NombreEmpresa).Distinct().OrderBy(x => x).ToList();

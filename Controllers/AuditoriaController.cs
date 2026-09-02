@@ -56,6 +56,7 @@ namespace bufinscustomers.Controllers
             if (!PuedeAcceder(out bool esSuper))
                 return new RedirectResult("~/Error/Forbidden");
 
+            ViewBag.Embed = string.Equals(Request.QueryString["embed"], "1");
             ViewBag.EsSuperAdmin = esSuper;
             ViewBag.Tipos = esSuper ? _svc.ObtenerTiposUsados() : new List<string>();
 
@@ -73,6 +74,7 @@ namespace bufinscustomers.Controllers
 
         [HttpGet]
         public JsonResult Consultar(string tipo, string accion, int? idEmpresa, string entidad,
+            string entidadId, string severidad, string operacionId,
             string texto, string desde, string hasta, int pagina = 1, int tam = 25)
         {
             if (!PuedeAcceder(out bool esSuper)) return Prohibido();
@@ -80,10 +82,12 @@ namespace bufinscustomers.Controllers
             DateTime? d = null, h = null;
             if (DateTime.TryParse(desde, out var dd)) d = dd;
             if (DateTime.TryParse(hasta, out var hh)) h = hh;
+            Guid? op = Guid.TryParse(operacionId, out var gg) ? gg : (Guid?)null;
 
             var filtro = new AuditoriaFiltro
             {
                 Tipo = tipo, Accion = accion, IdEmpresa = idEmpresa, Entidad = entidad,
+                EntidadId = entidadId, Severidad = severidad, OperacionId = op,
                 Texto = texto, Desde = d, Hasta = h, Pagina = pagina, TamanoPagina = tam
             };
             AplicarAlcance(filtro, esSuper);
@@ -105,6 +109,9 @@ namespace bufinscustomers.Controllers
                     a.Accion,
                     a.Entidad,
                     a.EntidadId,
+                    a.EntidadNombre,
+                    Severidad     = a.Severidad ?? AuditoriaSeveridad.Derivar(a.Tipo, a.Accion),
+                    OperacionId   = a.OperacionId?.ToString(),
                     a.Descripcion,
                     a.NombreUsuario,
                     Empresa       = a.NombreEmpresa,
@@ -116,6 +123,7 @@ namespace bufinscustomers.Controllers
 
         [HttpGet]
         public ActionResult ExportarExcel(string tipo, string accion, int? idEmpresa, string entidad,
+            string entidadId, string severidad, string operacionId,
             string texto, string desde, string hasta)
         {
             if (!PuedeAcceder(out bool esSuper))
@@ -124,10 +132,12 @@ namespace bufinscustomers.Controllers
             DateTime? d = null, h = null;
             if (DateTime.TryParse(desde, out var dd)) d = dd;
             if (DateTime.TryParse(hasta, out var hh)) h = hh;
+            Guid? op = Guid.TryParse(operacionId, out var gg) ? gg : (Guid?)null;
 
             var filtro = new AuditoriaFiltro
             {
                 Tipo = tipo, Accion = accion, IdEmpresa = idEmpresa, Entidad = entidad,
+                EntidadId = entidadId, Severidad = severidad, OperacionId = op,
                 Texto = texto, Desde = d, Hasta = h
             };
             AplicarAlcance(filtro, esSuper);
@@ -137,7 +147,7 @@ namespace bufinscustomers.Controllers
             using (var wb = new XLWorkbook())
             {
                 var ws = wb.Worksheets.Add("Auditoria");
-                string[] cab = { "Fecha", "Tipo", "Accion", "Entidad", "EntidadId", "Descripcion",
+                string[] cab = { "Fecha", "Tipo", "Accion", "Entidad", "Nombre", "Severidad", "Descripcion",
                                  "Usuario", "Empresa", "IP", "ValorAnterior", "ValorNuevo" };
                 for (int i = 0; i < cab.Length; i++) ws.Cell(1, i + 1).Value = cab[i];
                 ws.Row(1).Style.Font.Bold = true;
@@ -149,14 +159,15 @@ namespace bufinscustomers.Controllers
                     ws.Cell(fila, 1).Style.DateFormat.Format = "yyyy-mm-dd hh:mm:ss";
                     ws.Cell(fila, 2).Value = a.Tipo ?? "";
                     ws.Cell(fila, 3).Value = a.Accion ?? "";
-                    ws.Cell(fila, 4).Value = a.Entidad ?? "";
-                    ws.Cell(fila, 5).Value = a.EntidadId ?? "";
-                    ws.Cell(fila, 6).Value = a.Descripcion ?? "";
-                    ws.Cell(fila, 7).Value = a.NombreUsuario ?? "";
-                    ws.Cell(fila, 8).Value = a.NombreEmpresa ?? "";
-                    ws.Cell(fila, 9).Value = a.IpAddress ?? "";
-                    ws.Cell(fila, 10).Value = a.ValorAnterior ?? "";
-                    ws.Cell(fila, 11).Value = a.ValorNuevo ?? "";
+                    ws.Cell(fila, 4).Value = (a.Entidad ?? "") + (string.IsNullOrEmpty(a.EntidadId) ? "" : " #" + a.EntidadId);
+                    ws.Cell(fila, 5).Value = a.EntidadNombre ?? "";
+                    ws.Cell(fila, 6).Value = a.Severidad ?? AuditoriaSeveridad.Derivar(a.Tipo, a.Accion);
+                    ws.Cell(fila, 7).Value = a.Descripcion ?? "";
+                    ws.Cell(fila, 8).Value = a.NombreUsuario ?? "";
+                    ws.Cell(fila, 9).Value = a.NombreEmpresa ?? "";
+                    ws.Cell(fila, 10).Value = a.IpAddress ?? "";
+                    ws.Cell(fila, 11).Value = a.ValorAnterior ?? "";
+                    ws.Cell(fila, 12).Value = a.ValorNuevo ?? "";
                     fila++;
                 }
 
@@ -201,6 +212,9 @@ namespace bufinscustomers.Controllers
                 a.Accion,
                 a.Entidad,
                 a.EntidadId,
+                a.EntidadNombre,
+                severidad     = a.Severidad ?? AuditoriaSeveridad.Derivar(a.Tipo, a.Accion),
+                operacionId   = a.OperacionId?.ToString(),
                 a.Descripcion,
                 a.NombreUsuario,
                 empresa       = a.NombreEmpresa,

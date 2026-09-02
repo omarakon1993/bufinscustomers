@@ -77,15 +77,40 @@ namespace bufinscustomers.Services
 
                 CompletarDesdeContexto(r);
 
+                // Autocompletados de legibilidad (fase 2/3).
+                if (string.IsNullOrWhiteSpace(r.Severidad))
+                    r.Severidad = AuditoriaSeveridad.Derivar(r.Tipo, r.Accion);
+                if (string.IsNullOrWhiteSpace(r.EntidadNombre))
+                    r.EntidadNombre = ExtraerNombre(r.ValorNuevo) ?? ExtraerNombre(r.ValorAnterior);
+                if (!r.OperacionId.HasValue)
+                    r.OperacionId = ObtenerOperacionIdPeticion();
+
+                bool cols23 = TieneColumnasFase23();
+
                 using (var cn = new SqlConnection(CadenaConexion))
                 {
-                    var cmd = new SqlCommand(@"
+                    var cmd = new SqlCommand(cols23 ? @"
+                        INSERT INTO Auditoria
+                            (Fecha, Tipo, Categoria, Accion, Entidad, EntidadId, EntidadNombre, Severidad,
+                             OperacionId, Descripcion, ValorAnterior, ValorNuevo, IdUsuario, NombreUsuario,
+                             IdEmpresa, IpAddress, UserAgent)
+                        VALUES
+                            (@Fecha, @Tipo, @Categoria, @Accion, @Entidad, @EntidadId, @EntidadNombre, @Severidad,
+                             @OperacionId, @Descripcion, @ValorAnterior, @ValorNuevo, @IdUsuario, @NombreUsuario,
+                             @IdEmpresa, @IpAddress, @UserAgent)" : @"
                         INSERT INTO Auditoria
                             (Fecha, Tipo, Categoria, Accion, Entidad, EntidadId, Descripcion,
                              ValorAnterior, ValorNuevo, IdUsuario, NombreUsuario, IdEmpresa, IpAddress, UserAgent)
                         VALUES
                             (@Fecha, @Tipo, @Categoria, @Accion, @Entidad, @EntidadId, @Descripcion,
                              @ValorAnterior, @ValorNuevo, @IdUsuario, @NombreUsuario, @IdEmpresa, @IpAddress, @UserAgent)", cn);
+
+                    if (cols23)
+                    {
+                        cmd.Parameters.AddWithValue("@EntidadNombre", (object)Recorte(r.EntidadNombre, 200) ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@Severidad",     (object)Recorte(r.Severidad, 20) ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@OperacionId",   (object)r.OperacionId ?? DBNull.Value);
+                    }
 
                     cmd.Parameters.AddWithValue("@Fecha",         r.Fecha);
                     cmd.Parameters.AddWithValue("@Tipo",          Recorte(r.Tipo, 40) ?? "GENERAL");
@@ -112,10 +137,13 @@ namespace bufinscustomers.Services
             }
         }
 
-        /// <summary>Atajo para cambios de configuración/CRUD. Serializa <paramref name="valorAnterior"/>/<paramref name="valorNuevo"/> a JSON.</summary>
+        /// <summary>Atajo para cambios de configuración/CRUD. Serializa <paramref name="valorAnterior"/>/<paramref name="valorNuevo"/> a JSON.
+        /// <paramref name="entidadNombre"/> y <paramref name="severidad"/> son opcionales: si no se
+        /// pasan, se derivan del JSON y de la acción respectivamente.</summary>
         public void RegistrarCambio(string tipo, string accion, string entidad, string entidadId,
             string descripcion, object valorAnterior = null, object valorNuevo = null,
-            int? idEmpresa = null, string categoria = null)
+            int? idEmpresa = null, string categoria = null,
+            string entidadNombre = null, string severidad = null)
         {
             Registrar(new RegistroAuditoria
             {
@@ -124,6 +152,8 @@ namespace bufinscustomers.Services
                 Accion        = accion,
                 Entidad       = entidad,
                 EntidadId     = entidadId,
+                EntidadNombre = entidadNombre,
+                Severidad     = severidad,
                 Descripcion   = descripcion,
                 ValorAnterior = Serializar(valorAnterior),
                 ValorNuevo    = Serializar(valorNuevo),
@@ -171,7 +201,7 @@ namespace bufinscustomers.Services
                     res.Total = Convert.ToInt32(cmdCount.ExecuteScalar());
                 }
 
-                string sql = SelectBase + filtro + @"
+                string sql = SelectBase() + filtro + @"
                     ORDER BY a.Fecha DESC, a.Id DESC
                     OFFSET @Offset ROWS FETCH NEXT @Tam ROWS ONLY";
 
@@ -196,7 +226,7 @@ namespace bufinscustomers.Services
 
             using (var cn = new SqlConnection(CadenaConexion))
             using (var cmd = new SqlCommand(
-                "SELECT TOP (@Max) " + SelectColumnas + " FROM dbo.Auditoria a LEFT JOIN dbo.Empresas e ON e.EmpId = a.IdEmpresa"
+                "SELECT TOP (@Max) " + SelectColumnas() + " FROM dbo.Auditoria a LEFT JOIN dbo.Empresas e ON e.EmpId = a.IdEmpresa"
                 + filtro + " ORDER BY a.Fecha DESC, a.Id DESC", cn))
             {
                 foreach (var p in parametros) cmd.Parameters.Add(Clonar(p));
@@ -209,13 +239,40 @@ namespace bufinscustomers.Services
             return lista;
         }
 
-        private const string SelectColumnas =
+        private const string SelectColumnasBase =
             @"a.Id, a.Fecha, a.Tipo, a.Categoria, a.Accion, a.Entidad, a.EntidadId,
               a.Descripcion, a.ValorAnterior, a.ValorNuevo, a.IdUsuario, a.NombreUsuario,
               a.IdEmpresa, e.EmpNombre AS NombreEmpresa, a.IpAddress, a.UserAgent";
 
-        private const string SelectBase =
-            "SELECT " + SelectColumnas + " FROM dbo.Auditoria a LEFT JOIN dbo.Empresas e ON e.EmpId = a.IdEmpresa";
+        /// <summary>Lista de columnas del SELECT — incluye las de fase 2/3 solo si existen en la BD.</summary>
+        private static string SelectColumnas() =>
+            TieneColumnasFase23()
+                ? SelectColumnasBase + ", a.EntidadNombre, a.Severidad, a.OperacionId"
+                : SelectColumnasBase;
+
+        private static string SelectBase() =>
+            "SELECT " + SelectColumnas() + " FROM dbo.Auditoria a LEFT JOIN dbo.Empresas e ON e.EmpId = a.IdEmpresa";
+
+        private static bool? _colsFase23;
+        /// <summary>True si <c>dbo.Auditoria</c> ya tiene las columnas EntidadNombre / Severidad / OperacionId.</summary>
+        private static bool TieneColumnasFase23()
+        {
+            if (_colsFase23.HasValue) return _colsFase23.Value;
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand(
+                    @"SELECT COUNT(*) FROM sys.columns
+                      WHERE object_id = OBJECT_ID('dbo.Auditoria')
+                        AND name IN ('EntidadNombre','Severidad','OperacionId')", cn))
+                {
+                    cn.Open();
+                    _colsFase23 = Convert.ToInt32(cmd.ExecuteScalar()) == 3;
+                }
+            }
+            catch { _colsFase23 = false; }
+            return _colsFase23.Value;
+        }
 
         private static (string filtro, List<SqlParameter> parametros) ConstruirFiltro(AuditoriaFiltro f)
         {
@@ -233,6 +290,9 @@ namespace bufinscustomers.Services
             if (f.IdUsuario.HasValue)                  Add(" AND a.IdUsuario = @IdUsuario", "@IdUsuario", f.IdUsuario.Value);
             if (f.IdEmpresa.HasValue)                  Add(" AND a.IdEmpresa = @IdEmpresa", "@IdEmpresa", f.IdEmpresa.Value);
             if (!string.IsNullOrWhiteSpace(f.Entidad)) Add(" AND a.Entidad = @Entidad", "@Entidad", f.Entidad.Trim());
+            if (!string.IsNullOrWhiteSpace(f.EntidadId)) Add(" AND a.EntidadId = @EntidadId", "@EntidadId", f.EntidadId.Trim());
+            if (!string.IsNullOrWhiteSpace(f.Severidad)) Add(" AND a.Severidad = @Severidad", "@Severidad", f.Severidad.Trim());
+            if (f.OperacionId.HasValue)               Add(" AND a.OperacionId = @OperacionId", "@OperacionId", f.OperacionId.Value);
             if (f.Desde.HasValue)                      Add(" AND a.Fecha >= @Desde",    "@Desde", f.Desde.Value.Date);
             if (f.Hasta.HasValue)                      Add(" AND a.Fecha < @Hasta",     "@Hasta", f.Hasta.Value.Date.AddDays(1));
             if (!string.IsNullOrWhiteSpace(f.Texto))
@@ -265,12 +325,9 @@ namespace bufinscustomers.Services
         public RegistroAuditoria ObtenerPorId(long id)
         {
             using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(@"
-                SELECT a.Id, a.Fecha, a.Tipo, a.Categoria, a.Accion, a.Entidad, a.EntidadId,
-                       a.Descripcion, a.ValorAnterior, a.ValorNuevo, a.IdUsuario, a.NombreUsuario,
-                       a.IdEmpresa, e.EmpNombre AS NombreEmpresa, a.IpAddress, a.UserAgent
-                FROM dbo.Auditoria a LEFT JOIN dbo.Empresas e ON e.EmpId = a.IdEmpresa
-                WHERE a.Id = @Id", cn))
+            using (var cmd = new SqlCommand(
+                "SELECT " + SelectColumnas() +
+                " FROM dbo.Auditoria a LEFT JOIN dbo.Empresas e ON e.EmpId = a.IdEmpresa WHERE a.Id = @Id", cn))
             {
                 cmd.Parameters.AddWithValue("@Id", id);
                 cn.Open();
@@ -398,29 +455,81 @@ namespace bufinscustomers.Services
             catch { return o.ToString(); }
         }
 
+        // Nombres de campo (en el JSON de valor*) que sirven como etiqueta legible de la entidad.
+        private static readonly string[] CamposNombre =
+            { "Nombre", "EmpNombre", "Titulo", "NombreCompleto", "NombreGrupo", "Codigo", "Correo", "Descripcion" };
+
+        /// <summary>Busca en el JSON un campo que sirva como nombre legible de la entidad.</summary>
+        private static string ExtraerNombre(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json)) return null;
+            try
+            {
+                var o = JsonConvert.DeserializeObject(json) as Newtonsoft.Json.Linq.JObject;
+                if (o == null) return null;
+                foreach (var campo in CamposNombre)
+                {
+                    var tok = o.GetValue(campo, StringComparison.OrdinalIgnoreCase);
+                    var val = tok?.Type == Newtonsoft.Json.Linq.JTokenType.String ? tok.ToString() : null;
+                    if (!string.IsNullOrWhiteSpace(val)) return val.Length <= 200 ? val : val.Substring(0, 200);
+                }
+            }
+            catch { }
+            return null;
+        }
+
+        /// <summary>Un GUID por petición HTTP: agrupa los cambios escritos en la misma operación.</summary>
+        private static Guid ObtenerOperacionIdPeticion()
+        {
+            try
+            {
+                var ctx = HttpContext.Current;
+                if (ctx != null)
+                {
+                    if (ctx.Items["_auditoria_op"] is Guid g) return g;
+                    var nuevo = Guid.NewGuid();
+                    ctx.Items["_auditoria_op"] = nuevo;
+                    return nuevo;
+                }
+            }
+            catch { }
+            return Guid.NewGuid();
+        }
+
         private static string Recorte(string s, int max) =>
             string.IsNullOrEmpty(s) ? s : (s.Length <= max ? s : s.Substring(0, max));
 
         private static SqlParameter Clonar(SqlParameter p) => new SqlParameter(p.ParameterName, p.Value);
 
-        private static RegistroAuditoria Map(SqlDataReader r) => new RegistroAuditoria
+        private static RegistroAuditoria Map(SqlDataReader r)
         {
-            Id            = Convert.ToInt64(r["Id"]),
-            Fecha         = Convert.ToDateTime(r["Fecha"]),
-            Tipo          = r["Tipo"].ToString(),
-            Categoria     = r["Categoria"] == DBNull.Value ? null : r["Categoria"].ToString(),
-            Accion        = r["Accion"].ToString(),
-            Entidad       = r["Entidad"] == DBNull.Value ? null : r["Entidad"].ToString(),
-            EntidadId     = r["EntidadId"] == DBNull.Value ? null : r["EntidadId"].ToString(),
-            Descripcion   = r["Descripcion"] == DBNull.Value ? null : r["Descripcion"].ToString(),
-            ValorAnterior = r["ValorAnterior"] == DBNull.Value ? null : r["ValorAnterior"].ToString(),
-            ValorNuevo    = r["ValorNuevo"] == DBNull.Value ? null : r["ValorNuevo"].ToString(),
-            IdUsuario     = r["IdUsuario"] == DBNull.Value ? (int?)null : Convert.ToInt32(r["IdUsuario"]),
-            NombreUsuario = r["NombreUsuario"] == DBNull.Value ? null : r["NombreUsuario"].ToString(),
-            IdEmpresa     = r["IdEmpresa"] == DBNull.Value ? (int?)null : Convert.ToInt32(r["IdEmpresa"]),
-            NombreEmpresa = r["NombreEmpresa"] == DBNull.Value ? null : r["NombreEmpresa"].ToString(),
-            IpAddress     = r["IpAddress"] == DBNull.Value ? null : r["IpAddress"].ToString(),
-            UserAgent     = r["UserAgent"] == DBNull.Value ? null : r["UserAgent"].ToString()
-        };
+            var reg = new RegistroAuditoria
+            {
+                Id            = Convert.ToInt64(r["Id"]),
+                Fecha         = Convert.ToDateTime(r["Fecha"]),
+                Tipo          = r["Tipo"].ToString(),
+                Categoria     = r["Categoria"] == DBNull.Value ? null : r["Categoria"].ToString(),
+                Accion        = r["Accion"].ToString(),
+                Entidad       = r["Entidad"] == DBNull.Value ? null : r["Entidad"].ToString(),
+                EntidadId     = r["EntidadId"] == DBNull.Value ? null : r["EntidadId"].ToString(),
+                Descripcion   = r["Descripcion"] == DBNull.Value ? null : r["Descripcion"].ToString(),
+                ValorAnterior = r["ValorAnterior"] == DBNull.Value ? null : r["ValorAnterior"].ToString(),
+                ValorNuevo    = r["ValorNuevo"] == DBNull.Value ? null : r["ValorNuevo"].ToString(),
+                IdUsuario     = r["IdUsuario"] == DBNull.Value ? (int?)null : Convert.ToInt32(r["IdUsuario"]),
+                NombreUsuario = r["NombreUsuario"] == DBNull.Value ? null : r["NombreUsuario"].ToString(),
+                IdEmpresa     = r["IdEmpresa"] == DBNull.Value ? (int?)null : Convert.ToInt32(r["IdEmpresa"]),
+                NombreEmpresa = r["NombreEmpresa"] == DBNull.Value ? null : r["NombreEmpresa"].ToString(),
+                IpAddress     = r["IpAddress"] == DBNull.Value ? null : r["IpAddress"].ToString(),
+                UserAgent     = r["UserAgent"] == DBNull.Value ? null : r["UserAgent"].ToString()
+            };
+            // Columnas de fase 2/3: tolerar esquemas anteriores a la migración.
+            try { reg.EntidadNombre = r["EntidadNombre"] == DBNull.Value ? null : r["EntidadNombre"].ToString(); }
+            catch (IndexOutOfRangeException) { }
+            try { reg.Severidad = r["Severidad"] == DBNull.Value ? null : r["Severidad"].ToString(); }
+            catch (IndexOutOfRangeException) { }
+            try { reg.OperacionId = r["OperacionId"] == DBNull.Value ? (Guid?)null : (Guid)r["OperacionId"]; }
+            catch (IndexOutOfRangeException) { }
+            return reg;
+        }
     }
 }

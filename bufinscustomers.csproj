@@ -202,6 +202,8 @@
     <Compile Include="Controllers\AnalisisIAController.cs" />
     <Compile Include="Controllers\AuditoriaConsultasIAController.cs" />
     <Compile Include="Controllers\AuditoriaController.cs" />
+    <Compile Include="Controllers\AuditoriaHubController.cs" />
+    <Compile Include="Controllers\InformeNavegacionController.cs" />
     <Compile Include="Controllers\DatosController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ConfiguracionRelacionamientoController.cs" />
@@ -215,6 +217,7 @@
     <Compile Include="Controllers\UsuarioController.cs" />
     <Compile Include="Filters\EmpresasViewBagFilter.cs" />
     <Compile Include="Filters\LoggingHandleErrorAttribute.cs" />
+    <Compile Include="Filters\RegistroNavegacionFilter.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -224,6 +227,7 @@
     <Compile Include="Helpers\AppLogger.cs" />
     <Compile Include="Helpers\ClientIpHelper.cs" />
     <Compile Include="Helpers\PoliticaContrasena.cs" />
+    <Compile Include="Helpers\MenuRutaCacheHelper.cs" />
     <Compile Include="Helpers\ExcelCellHelper.cs" />
     <Compile Include="Helpers\TablasCargueHelper.cs" />
     <Compile Include="Models\AuditoriaCargues.cs" />
@@ -246,6 +250,7 @@
     <Compile Include="Models\IAModels.cs" />
     <Compile Include="Models\AuditoriaAnalisisIA.cs" />
     <Compile Include="Models\AuditoriaModels.cs" />
+    <Compile Include="Models\NavegacionModels.cs" />
     <Compile Include="Models\ConfiguracionSistemaItem.cs" />
     <Compile Include="Models\GestorPromptModels.cs" />
     <Compile Include="Models\IndicadoresModels.cs" />
@@ -285,6 +290,7 @@
     <Compile Include="Services\IAService.cs" />
     <Compile Include="Services\AuditoriaAnalisisIAService.cs" />
     <Compile Include="Services\AuditoriaService.cs" />
+    <Compile Include="Services\AuditoriaNavegacionService.cs" />
     <Compile Include="Services\GestorPromptsService.cs" />
     <Compile Include="Services\GrupoEmpresarialService.cs" />
     <Compile Include="Services\IndicadoresFinancierosService.cs" />
@@ -6263,6 +6269,9 @@
     <Content Include="Views\Informes\AnalisisIA.cshtml" />
     <Content Include="Views\Informes\AuditoriaConsultasIA.cshtml" />
     <Content Include="Views\Informes\Auditoria.cshtml" />
+    <Content Include="Views\Informes\AuditoriaHub.cshtml" />
+    <Content Include="Views\Informes\InformeNavegacion.cshtml" />
+    <Content Include="Views\Shared\_LayoutFragment.cshtml" />
     <Content Include="Views\Informes\VariablesPBI.cshtml" />
     <Content Include="Views\Configuracion\ConfiguracionesEmpresas.cshtml" />
     <Content Include="Views\Configuracion\ConfiguracionRelacionamiento.cshtml" />

@@ -35,6 +35,7 @@ namespace bufinscustomers.Controllers
                 if (creado)
                 {
                     UsuarioSesionHelper.InvalidarCachePermisos();
+                    MenuRutaCacheHelper.Invalidar();
                     SetSuccessMessage("Opción de menú creada correctamente.");
                     new AuditoriaService().RegistrarCambio(AuditoriaTipo.Menu, AuditoriaAccion.Crear,
                         "MenuOpciones", opcion.Id.ToString(), $"Opción de menú creada: {opcion.Nombre} ({opcion.Codigo})", null, opcion);
@@ -63,6 +64,7 @@ namespace bufinscustomers.Controllers
                 if (editado)
                 {
                     UsuarioSesionHelper.InvalidarCachePermisos();
+                    MenuRutaCacheHelper.Invalidar();
                     SetSuccessMessage("Opción de menú actualizada correctamente.");
                     new AuditoriaService().RegistrarCambio(AuditoriaTipo.Menu, AuditoriaAccion.Editar,
                         "MenuOpciones", opcion.Id.ToString(), $"Opción de menú editada: {opcion.Nombre} ({opcion.Codigo})", null, opcion);
@@ -94,7 +96,10 @@ namespace bufinscustomers.Controllers
                 bool actualizado = _menuOpcionesService.ActualizarOrden(pares);
 
                 if (actualizado)
+                {
                     UsuarioSesionHelper.InvalidarCachePermisos();
+                    MenuRutaCacheHelper.Invalidar();
+                }
 
                 return Json(new
                 {
@@ -119,6 +124,7 @@ namespace bufinscustomers.Controllers
                 if (eliminado)
                 {
                     UsuarioSesionHelper.InvalidarCachePermisos();
+                    MenuRutaCacheHelper.Invalidar();
                     SetSuccessMessage("Opción de menú eliminada correctamente.");
                     new AuditoriaService().RegistrarCambio(AuditoriaTipo.Menu, AuditoriaAccion.Eliminar,
                         "MenuOpciones", id.ToString(), $"Opción de menú eliminada (Id {id})");

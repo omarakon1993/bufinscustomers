@@ -1,0 +1,229 @@
+﻿@{
+    ViewBag.Title = Resources.Strings.AudHub_PageTitle;
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+
+<style>
+    /* ---- Segmented control con "thumb" deslizante (una sola pastilla que se desplaza) ---- */
+    .audhub-seg {
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        padding: 6px;
+        background: #eef0f4;
+        border: 1px solid #e3e6eb;
+        border-radius: 999px;
+        margin: 0 0 1.15rem;
+    }
+    .audhub-seg-thumb {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 0;
+        height: 0;
+        border-radius: 999px;
+        background: linear-gradient(90deg,#6366F1 0%,#3B82F6 35%,#06B6D4 70%,#01E1D7 100%);
+        box-shadow: 0 8px 20px -8px rgba(59,130,246,.6);
+        transform: translate(0, 0);
+        transition: transform .42s cubic-bezier(.32,.72,0,1),
+                    width     .42s cubic-bezier(.32,.72,0,1),
+                    height    .42s cubic-bezier(.32,.72,0,1);
+        will-change: transform, width, height;
+        pointer-events: none;
+        z-index: 0;
+    }
+    .audhub-seg-thumb.no-anim { transition: none; }
+
+    .audhub-seg-btn {
+        position: relative;
+        z-index: 1;
+        border: 0;
+        background: transparent;
+        color: #5b6472;
+        font-size: .9rem;
+        font-weight: 600;
+        padding: .62rem .6rem;
+        border-radius: 999px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        white-space: nowrap;
+        transition: color .34s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .audhub-seg-btn:hover:not(.is-active) { color: #3b3f66; }
+    .audhub-seg-btn.is-active { color: #fff; }
+    .audhub-seg-btn i { font-size: .9em; }
+
+    @@media (max-width: 680px) {
+        .audhub-seg { grid-template-columns: repeat(2, 1fr); border-radius: 22px; }
+        .audhub-seg-btn { border-radius: 18px; }
+    }
+    @@media (prefers-reduced-motion: reduce) {
+        .audhub-seg-thumb { transition: none; }
+        #audhubPanel { transition: none; }
+    }
+
+    /* ---- Panel: el contenido de la pestaña se inyecta aquí (mismo DOM, no iframe) ---- */
+    .audhub-panel-wrap { position: relative; min-height: 340px; }
+    #audhubPanel { transition: opacity .22s ease; }
+    #audhubPanel.is-loading { opacity: .32; pointer-events: none; }
+    #audhubPanel > .container-fluid.px-4 { padding-left: 0 !important; padding-right: 0 !important; }
+    #audhubPanel .powerbi-header { display: none !important; }   /* el hub ya muestra el título */
+
+    .audhub-spin {
+        position: absolute;
+        top: 46px; left: 0; right: 0;
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; pointer-events: none;
+        transition: opacity .2s ease;
+    }
+    .audhub-spin.on { opacity: 1; }
+    .audhub-spin .s {
+        width: 26px; height: 26px;
+        border: 2.5px solid #d7dbe2; border-top-color: #3B82F6;
+        border-radius: 50%; animation: audhubSpin .7s linear infinite;
+    }
+    @@keyframes audhubSpin { to { transform: rotate(360deg); } }
+
+    .audhub-error {
+        padding: 3rem 1rem; text-align: center; color: #b3352e; font-size: .92rem;
+    }
+</style>
+
+<div class="container-fluid px-4">
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-shield-alt powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.AudHub_HeaderTitle</h1>
+        </div>
+    </div>
+
+    <div class="audhub-seg" id="audhubTabs" role="tablist">
+        <span class="audhub-seg-thumb no-anim" aria-hidden="true"></span>
+        <button type="button" class="audhub-seg-btn is-active" data-key="cambios"
+                data-title="@Resources.Strings.AudHub_TitleCambios"
+                data-url="@Url.Action("Index", "Auditoria", new { embed = 1 })">
+            <i class="fas fa-edit"></i>@Resources.Strings.AudHub_TabCambios
+        </button>
+        <button type="button" class="audhub-seg-btn" data-key="navegacion"
+                data-title="@Resources.Strings.AudHub_TitleNavegacion"
+                data-url="@Url.Action("Index", "InformeNavegacion", new { embed = 1 })">
+            <i class="fas fa-route"></i>@Resources.Strings.AudHub_TabNavegacion
+        </button>
+        <button type="button" class="audhub-seg-btn" data-key="cargues"
+                data-title="@Resources.Strings.AudHub_TitleCargues"
+                data-url="@Url.Action("AuditoriaCargues", "AuditoriaCargues", new { embed = 1 })">
+            <i class="fas fa-file-upload"></i>@Resources.Strings.AudHub_TabCargues
+        </button>
+        <button type="button" class="audhub-seg-btn" data-key="ia"
+                data-title="@Resources.Strings.AudHub_TitleIA"
+                data-url="@Url.Action("Index", "AuditoriaConsultasIA", new { embed = 1 })">
+            <i class="fas fa-robot"></i>@Resources.Strings.AudHub_TabIA
+        </button>
+    </div>
+
+    <div class="audhub-panel-wrap">
+        <div id="audhubPanel"></div>
+        <div class="audhub-spin" id="audhubSpin"><span class="s"></span></div>
+    </div>
+
+</div>
+
+@section scripts {
+<script>
+$(function () {
+    var $panel  = $('#audhubPanel');
+    var $spin   = $('#audhubSpin');
+    var $tabs   = $('#audhubTabs .audhub-seg-btn');
+    var $thumb  = $('#audhubTabs .audhub-seg-thumb');
+    var $titulo = $('.powerbi-header-title');
+    var STORAGE_KEY = 'bufins_audhub_tab';
+    var cargando = false;
+    var spinTimer = null;
+
+    var ERROR = '<div class="audhub-error">@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_JS_Error))</div>';
+
+    var $seg = $('#audhubTabs');
+
+    // Coloca el "thumb" exactamente sobre el botón (medición robusta con getBoundingClientRect).
+    function moverThumb(btn, sinAnim) {
+        if (!btn) return;
+        var cont = $seg[0];
+        var cr = cont.getBoundingClientRect();
+        var br = btn.getBoundingClientRect();
+        var x = br.left - cr.left - cont.clientLeft;
+        var y = br.top  - cr.top  - cont.clientTop;
+        if (sinAnim) $thumb.addClass('no-anim');
+        $thumb.css({
+            width:  br.width + 'px',
+            height: br.height + 'px',
+            transform: 'translate(' + x + 'px,' + y + 'px)'
+        });
+        if (sinAnim) {
+            void $thumb[0].offsetWidth;   // forzar reflow y reactivar la transición
+            $thumb.removeClass('no-anim');
+        }
+    }
+
+    function activar($btn, primera) {
+        if (!$btn || !$btn.length) return;
+        if (cargando && !primera) return;
+        cargando = true;
+
+        $tabs.removeClass('is-active');
+        $btn.addClass('is-active');
+        moverThumb($btn[0], !!primera);
+
+        var t = $btn.data('title');
+        if (t) $titulo.text(t);
+        try { sessionStorage.setItem(STORAGE_KEY, $btn.data('key')); } catch (e) { }
+
+        // Contenido: se atenúa el actual y solo aparece el spinner si tarda > 220 ms.
+        $panel.addClass('is-loading');
+        clearTimeout(spinTimer);
+        spinTimer = setTimeout(function () { $spin.addClass('on'); }, 220);
+
+        $panel.load($btn.data('url'), function (resp, status) {
+            clearTimeout(spinTimer);
+            $spin.removeClass('on');
+            if (status === 'error') $panel.html(ERROR);
+            // pequeño respiro para que el navegador pinte el contenido nuevo antes del fade-in
+            requestAnimationFrame(function () { $panel.removeClass('is-loading'); });
+            cargando = false;
+        });
+    }
+
+    $tabs.on('click', function () {
+        var $b = $(this);
+        if ($b.hasClass('is-active')) return;
+        activar($b);
+    });
+
+    // Reposicionar el thumb si cambia el ancho de la ventana (o al wrap en móvil).
+    var rz;
+    $(window).on('resize', function () {
+        clearTimeout(rz);
+        rz = setTimeout(function () {
+            var a = $tabs.filter('.is-active')[0];
+            if (a) moverThumb(a, true);
+        }, 120);
+    });
+
+    var guardada = null;
+    try { guardada = sessionStorage.getItem(STORAGE_KEY); } catch (e) { }
+    var $inicial = guardada ? $tabs.filter('[data-key="' + guardada + '"]') : $();
+    if (!$inicial.length) $inicial = $tabs.first();
+
+    activar($inicial, true);
+    // Reajuste tras cargar fuentes / layout definitivo.
+    $(window).on('load', function () { moverThumb($tabs.filter('.is-active')[0], true); });
+    requestAnimationFrame(function () { moverThumb($tabs.filter('.is-active')[0], true); });
+});
+</script>
+}

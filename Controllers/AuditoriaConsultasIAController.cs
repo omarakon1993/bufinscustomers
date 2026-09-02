@@ -22,11 +22,24 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
+            ViewBag.Embed         = string.Equals(Request.QueryString["embed"], "1");
             ViewBag.EsAdmin        = esSuperAdmin;
             ViewBag.EsAdminEmpresa = esAdminEmpresa;
 
             if (esSuperAdmin)
+            {
                 ViewBag.EmpresasFiltro = new InformeTablasDatosService().ObtenerEmpresas();
+            }
+            else if (esAdminEmpresa)
+            {
+                // Admin de Empresa: filtro de empresa acotado a su grupo (solo si el grupo
+                // tiene más de una empresa; con una sola no aporta nada).
+                var permitidas = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(UsuarioSesionHelper.UsuarioActual)
+                                 ?? new List<int>();
+                if (permitidas.Count > 1)
+                    ViewBag.EmpresasFiltro = new InformeTablasDatosService().ObtenerEmpresas()
+                        .Where(e => permitidas.Contains(e.Id)).ToList();
+            }
 
             return View("~/Views/Informes/AuditoriaConsultasIA.cshtml");
         }
@@ -49,6 +62,9 @@ namespace bufinscustomers.Controllers
             else if (!esSuperAdmin)
             {
                 filtroIdsEmpresa = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
+                // Si pide una empresa concreta y está dentro de su grupo, se acota a ella.
+                if (idEmpresa.HasValue && filtroIdsEmpresa.Contains(idEmpresa.Value))
+                    filtroIdsEmpresa = new List<int> { idEmpresa.Value };
                 if (idUsuario.HasValue) filtroIdUsuario = idUsuario;
             }
             else
@@ -117,9 +133,17 @@ namespace bufinscustomers.Controllers
             var usuario      = UsuarioSesionHelper.UsuarioActual;
             var esSuperAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
-            List<int> filtroIdsEmpresa = esSuperAdmin
-                ? (idEmpresa.HasValue ? new List<int> { idEmpresa.Value } : null)
-                : (EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>());
+            List<int> filtroIdsEmpresa;
+            if (esSuperAdmin)
+            {
+                filtroIdsEmpresa = idEmpresa.HasValue ? new List<int> { idEmpresa.Value } : null;
+            }
+            else
+            {
+                filtroIdsEmpresa = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
+                if (idEmpresa.HasValue && filtroIdsEmpresa.Contains(idEmpresa.Value))
+                    filtroIdsEmpresa = new List<int> { idEmpresa.Value };
+            }
 
             var usuarios = new AuditoriaAnalisisIAService()
                 .ObtenerUsuariosDeEmpresa(filtroIdsEmpresa);

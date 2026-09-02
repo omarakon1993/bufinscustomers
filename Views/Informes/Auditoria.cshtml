@@ -2,6 +2,7 @@
 @using System.Linq
 @{
     ViewBag.Title = Resources.Strings.Audit_PageTitle;
+    if ((bool)(ViewBag.Embed ?? false)) { Layout = "~/Views/Shared/_LayoutFragment.cshtml"; }
     var tipos = ViewBag.Tipos as System.Collections.Generic.List<string> ?? new System.Collections.Generic.List<string>();
     var empresas = ViewBag.Empresas as System.Collections.Generic.List<Empresas> ?? new System.Collections.Generic.List<Empresas>();
     var esSuper = (bool)(ViewBag.EsSuperAdmin ?? false);
@@ -85,6 +86,42 @@
     }
     .aud-limp-emp-select:focus { outline:none; border-color:#8b7dff; }
     .aud-limp-emp-select:disabled { opacity:.4; cursor:not-allowed; }
+
+    /* ---- Fase 2/3: severidad, diff, historial por entidad, línea de tiempo ---- */
+    .sev-dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:.45rem; vertical-align:middle; }
+    .sev-Info { background:#3b82f6; } .sev-Advertencia { background:#f59e0b; } .sev-Critico { background:#ef4444; }
+    tr.row-Critico > td:first-child { box-shadow: inset 3px 0 0 #ef4444; }
+    tr.row-Advertencia > td:first-child { box-shadow: inset 3px 0 0 #f59e0b; }
+    .ent-nombre { font-weight:600; } .ent-ruta { font-size:.74rem; color:#8890a0; }
+    .btn-hist { border:1px solid #d1d5db; background:#fff; color:#6b7280; border-radius:6px; padding:.12rem .4rem; cursor:pointer; font-size:.78rem; margin-left:.35rem; }
+    .btn-hist:hover { border-color:#8b7dff; color:#583AFF; }
+
+    .aud-chips { display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:.75rem; }
+    .aud-chip { display:inline-flex; align-items:center; gap:.5rem; padding:.3rem .7rem; background:#eef2ff; border:1px solid #c7d2fe; border-radius:999px; font-size:.8rem; color:#4338ca; }
+    .aud-chip button { background:none; border:none; color:inherit; cursor:pointer; font-size:1rem; line-height:1; padding:0; }
+
+    .view-toggle { display:inline-flex; border:1px solid #e3e6eb; border-radius:8px; overflow:hidden; }
+    .view-toggle button { background:#fff; border:none; padding:.35rem .8rem; font-size:.8rem; color:#556074; cursor:pointer; }
+    .view-toggle button.is-active { background:linear-gradient(90deg,#6366F1,#3B82F6,#06B6D4); color:#fff; }
+
+    .aud-tl { list-style:none; margin:0; padding:4px 2px; }
+    .aud-tl li { display:flex; gap:.8rem; padding:.7rem .2rem; border-bottom:1px solid #eef0f4; }
+    .aud-tl li:last-child { border-bottom:0; }
+    .aud-tl .tl-dot { flex:0 0 auto; width:10px; height:10px; border-radius:50%; margin-top:.4rem; }
+    .aud-tl .tl-body { flex:1; min-width:0; font-size:.9rem; line-height:1.5; }
+    .aud-tl .tl-meta { font-size:.76rem; color:#8890a0; margin-top:.15rem; }
+    .aud-tl-ver { background:none; border:none; color:#583AFF; cursor:pointer; font-size:.78rem; padding:0; margin-left:.4rem; }
+
+    .aud-diff { margin-top:1.05rem; }
+    .aud-diff-lbl { font:600 .68rem/1 "IBM Plex Mono", monospace; letter-spacing:.1em; text-transform:uppercase; opacity:.62; margin-bottom:.5rem; }
+    .aud-diff-tbl { width:100%; border-collapse:collapse; font-size:.8rem; }
+    .aud-diff-tbl td { padding:.35rem .55rem; border-bottom:1px solid rgba(255,255,255,.07); vertical-align:top; word-break:break-word; }
+    .aud-diff-tbl td.k { font-family:"IBM Plex Mono", monospace; color:#b0a8ff; white-space:nowrap; }
+    .aud-diff-old { color:#ff9d97; text-decoration:line-through; opacity:.85; }
+    .aud-diff-arrow { opacity:.5; margin:0 .35rem; }
+    .aud-diff-new { color:#7ee0b0; }
+    .aud-diff-none { font-size:.82rem; opacity:.6; font-style:italic; }
+    details.aud-raw > summary { cursor:pointer; font:600 .66rem/1 "IBM Plex Mono", monospace; letter-spacing:.08em; text-transform:uppercase; opacity:.5; margin-top:1rem; list-style:revert; }
 </style>
 
 <div class="container-fluid px-4">
@@ -140,6 +177,20 @@
                         </select>
                     </div>
                 </div>
+                @if (esSuper)
+                {
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label><i class="fas fa-signal mr-1"></i>@Resources.Strings.Audit_LabelSeveridad</label>
+                            <select id="fSeveridad" class="form-control">
+                                <option value="">@Resources.Strings.Common_Todos</option>
+                                <option value="Critico">@Resources.Strings.Audit_Sev_Critico</option>
+                                <option value="Advertencia">@Resources.Strings.Audit_Sev_Advertencia</option>
+                                <option value="Info">@Resources.Strings.Audit_Sev_Info</option>
+                            </select>
+                        </div>
+                    </div>
+                }
                 <div class="col-md-3">
                     <div class="form-group">
                         <label><i class="fas fa-building mr-1"></i>@Resources.Strings.Audit_LabelEmpresa</label>
@@ -207,6 +258,8 @@
 
     @Html.AntiForgeryToken()
 
+    <div id="chipsFiltro" class="aud-chips" style="display:none;"></div>
+
     <div id="resultadosContainer" style="display:none;">
         <div class="table-container">
             <div class="table-header">
@@ -214,16 +267,20 @@
                 <div class="d-flex align-items-center" style="gap:.6rem;flex-wrap:wrap;">
                     <span id="totalBadge" class="info-badge">0 @Resources.Strings.Audit_TotalRegistros</span>
                     <span id="paginaInfo" style="font-size:.77rem;color:#6c757d;"></span>
+                    <span class="view-toggle" role="group">
+                        <button type="button" id="vwTabla" class="is-active"><i class="fas fa-table mr-1"></i>@Resources.Strings.Audit_VistaTabla</button>
+                        <button type="button" id="vwTimeline"><i class="fas fa-stream mr-1"></i>@Resources.Strings.Audit_VistaTimeline</button>
+                    </span>
                 </div>
             </div>
-            <div class="table-wrapper">
+            <div id="vistaTabla" class="table-wrapper">
                 <table class="data-table">
                     <thead>
                         <tr>
                             <th style="width:150px;">@Resources.Strings.Audit_ThFecha</th>
                             <th style="width:120px;">@Resources.Strings.Audit_ThTipo</th>
                             <th style="width:110px;">@Resources.Strings.Audit_ThAccion</th>
-                            <th style="width:130px;">@Resources.Strings.Audit_ThEntidad</th>
+                            <th style="width:170px;">@Resources.Strings.Audit_ThEntidad</th>
                             <th>@Resources.Strings.Audit_ThDescripcion</th>
                             <th style="width:150px;">@Resources.Strings.Audit_ThUsuario</th>
                             <th style="width:120px;">@Resources.Strings.Audit_ThEmpresa</th>
@@ -234,6 +291,7 @@
                     <tbody id="tbody"></tbody>
                 </table>
             </div>
+            <ul id="vistaTimeline" class="aud-tl" style="display:none;"></ul>
             <div id="paginacion" class="pagination-controls"></div>
         </div>
     </div>
@@ -266,8 +324,21 @@ $(function () {
         mEmpresa: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_ThEmpresa))',
         mIp:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_ThIp))',
         copiar:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Copiar))',
-        copiado:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Copiado))'
+        copiado:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Copiado))',
+        sevInfo:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Sev_Info))',
+        sevAdv:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Sev_Advertencia))',
+        sevCrit:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Sev_Critico))',
+        diffTit:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_DiffTitulo))',
+        diffSin:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_DiffSinCambios))',
+        rawJson:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_VerJsonCrudo))',
+        histDe:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_HistorialDe))',
+        histTip:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_HistorialTooltip))',
+        opLabel:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Operacion))',
+        opVer:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_VerOperacion))',
+        verDet:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_ThDetalle))',
+        refLbl:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LabelEntidad))'
     };
+    var SEV = { Info: S.sevInfo, Advertencia: S.sevAdv, Critico: S.sevCrit };
     var ACC = {
         Crear:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Acc_Crear))',
         Editar:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Acc_Editar))',
@@ -311,31 +382,67 @@ $(function () {
 
     function esc(s) { return $('<div>').text(s == null ? '' : s).html(); }
     function accionLabel(a) { return ACC[a] || a || ''; }
+    function sevLabel(s) { return SEV[s] || s || ''; }
+
+    var _vista = 'tabla';          // 'tabla' | 'timeline'
+    var _ultimos = [];             // últimos items para re-render al cambiar de vista
+    var _histEnt = null;           // { entidad, entidadId } filtro "historial de un registro"
+    var _opId = null;              // operacionId filtro "ver operación completa"
+
+    function paramsFiltro() {
+        return {
+            tipo:       $('#fTipo').val(),
+            accion:     $('#fAccion').val(),
+            severidad:  $('#fSeveridad').val() || '',
+            idEmpresa:  $('#fEmpresa').val() || '',
+            entidad:    _histEnt ? _histEnt.entidad : $('#fEntidad').val(),
+            entidadId:  _histEnt ? _histEnt.entidadId : '',
+            operacionId:_opId || '',
+            texto:      $('#fTexto').val(),
+            desde:      $('#fDesde').val(),
+            hasta:      $('#fHasta').val()
+        };
+    }
 
     function consultar(pagina) {
         _pagina = pagina || 1;
-        $.getJSON('@Url.Action("Consultar", "Auditoria")', {
-            tipo:     $('#fTipo').val(),
-            accion:   $('#fAccion').val(),
-            idEmpresa:$('#fEmpresa').val() || '',
-            entidad:  $('#fEntidad').val(),
-            texto:    $('#fTexto').val(),
-            desde:    $('#fDesde').val(),
-            hasta:    $('#fHasta').val(),
-            pagina:   _pagina,
-            tam:      PAGE_SIZE
-        }).done(render).fail(function () {
+        var p = paramsFiltro();
+        p.pagina = _pagina; p.tam = PAGE_SIZE;
+        $.getJSON('@Url.Action("Consultar", "Auditoria")', p).done(render).fail(function () {
             Swal.fire({ icon: 'error', title: S.errTit, text: S.error });
         });
+    }
+
+    function pintarChips() {
+        var $c = $('#chipsFiltro').empty();
+        if (_histEnt) {
+            $c.append(
+                $('<span class="aud-chip">').append(
+                    document.createTextNode(S.histDe + ' ' + _histEnt.entidad + ' #' + _histEnt.entidadId + '  '),
+                    $('<button title="x">').html('&times;').on('click', function () { _histEnt = null; pintarChips(); consultar(1); })
+                )
+            );
+        }
+        if (_opId) {
+            $c.append(
+                $('<span class="aud-chip">').append(
+                    document.createTextNode(S.opLabel + '  '),
+                    $('<button title="x">').html('&times;').on('click', function () { _opId = null; pintarChips(); consultar(1); })
+                )
+            );
+        }
+        $c.toggle(!!(_histEnt || _opId));
     }
 
     function render(r) {
         if (!r || !r.success) { Swal.fire({ icon: 'error', title: S.errTit, text: S.error }); return; }
 
-        var tbody = $('#tbody').empty();
         $('#totalBadge').text(r.total.toLocaleString() + ' ' + S.total);
+        _ultimos = r.items || [];
+        _paginaActual = r.pagina; _totalPaginas = r.totalPaginas;
 
-        if (!r.items.length) {
+        if (!_ultimos.length) {
+            $('#tbody').empty(); $('#vistaTimeline').empty();
             $('#paginaInfo').text('');
             $('#paginacion').empty();
             $('#resultadosContainer').hide();
@@ -349,12 +456,46 @@ $(function () {
         $('#sinResultados').hide();
         $('#resultadosContainer').show();
 
-        r.items.forEach(function (a) {
-            var tr = $('<tr>');
-            tr.append($('<td>').css('white-space', 'nowrap').text(a.Fecha));
+        pintarVista();
+        renderPaginacion(r.pagina, r.totalPaginas);
+    }
+
+    var _paginaActual = 1, _totalPaginas = 1;
+
+    function pintarVista() {
+        $('#vwTabla').toggleClass('is-active', _vista === 'tabla');
+        $('#vwTimeline').toggleClass('is-active', _vista === 'timeline');
+        $('#vistaTabla').toggle(_vista === 'tabla');
+        $('#vistaTimeline').toggle(_vista === 'timeline');
+        if (_vista === 'tabla') renderTabla(_ultimos); else renderTimeline(_ultimos);
+    }
+
+    function entidadCelda(a) {
+        var nombre = a.EntidadNombre || a.Entidad || '';
+        var ruta   = (a.Entidad || '') + (a.EntidadId ? ' #' + a.EntidadId : '');
+        var $td = $('<td>');
+        $td.append($('<span class="ent-nombre">').text(nombre));
+        if (nombre !== ruta && ruta) $td.append($('<div class="ent-ruta">').text(ruta));
+        if (a.EntidadId) {
+            $('<button class="btn-hist" title="' + esc(S.histTip) + '">')
+                .html('<i class="fas fa-history"></i>')
+                .on('click', function () {
+                    _histEnt = { entidad: a.Entidad, entidadId: a.EntidadId };
+                    _opId = null; pintarChips(); consultar(1);
+                }).appendTo($td);
+        }
+        return $td;
+    }
+
+    function renderTabla(items) {
+        var tbody = $('#tbody').empty();
+        items.forEach(function (a) {
+            var tr = $('<tr class="row-' + (a.Severidad || 'Info') + '">');
+            tr.append($('<td>').css('white-space', 'nowrap')
+                .html('<span class="sev-dot sev-' + (a.Severidad || 'Info') + '" title="' + esc(sevLabel(a.Severidad)) + '"></span>' + esc(a.Fecha)));
             tr.append($('<td>').html('<span class="badge badge-info">' + esc(a.Tipo) + '</span>'));
             tr.append($('<td>').text(accionLabel(a.Accion)));
-            tr.append($('<td>').text((a.Entidad || '') + (a.EntidadId ? ' #' + a.EntidadId : '')));
+            tr.append(entidadCelda(a));
             tr.append($('<td>').text(a.Descripcion || ''));
             tr.append($('<td>').text(a.NombreUsuario || ''));
             tr.append($('<td>').text(a.Empresa || ''));
@@ -372,8 +513,32 @@ $(function () {
             tr.append(celdaVer);
             tbody.append(tr);
         });
+    }
 
-        renderPaginacion(r.pagina, r.totalPaginas);
+    function renderTimeline(items) {
+        var $ul = $('#vistaTimeline').empty();
+        items.forEach(function (a) {
+            var nombre = a.EntidadNombre || a.Entidad || '';
+            var $li = $('<li>');
+            $li.append($('<span class="tl-dot sev-' + (a.Severidad || 'Info') + '">'));
+            var $body = $('<div class="tl-body">');
+            $body.append(
+                $('<span>').append(
+                    $('<b>').text(a.NombreUsuario || '—'),
+                    document.createTextNode(' · ' + accionLabel(a.Accion) + ' '),
+                    $('<b>').text(nombre)
+                )
+            );
+            if (a.Descripcion) $body.append($('<div>').css({ fontSize: '.85rem', opacity: .85 }).text(a.Descripcion));
+            var meta = a.Fecha + '  ·  ' + a.Tipo + (a.Empresa ? '  ·  ' + a.Empresa : '');
+            var $meta = $('<div class="tl-meta">').text(meta);
+            if (a.TieneDetalle) {
+                $('<button class="aud-tl-ver">').text(S.verDet).on('click', function () { verDetalle(a.Id); }).appendTo($meta);
+            }
+            $body.append($meta);
+            $li.append($body);
+            $ul.append($li);
+        });
     }
 
     function renderPaginacion(actual, totalPags) {
@@ -434,22 +599,72 @@ $(function () {
              + '</div>';
     }
 
+    function parseSafe(s) { try { return s ? JSON.parse(s) : null; } catch (e) { return undefined; } }
+    function fmtVal(v) {
+        if (v === null) return '∅';
+        if (v === undefined) return '';
+        if (typeof v === 'object') { try { return JSON.stringify(v); } catch (e) { return String(v); } }
+        return String(v);
+    }
+
+    // Diff campo a campo entre dos objetos JSON. Devuelve null si no se puede (no son objetos).
+    function renderDiff(antStr, nueStr) {
+        var a = parseSafe(antStr), n = parseSafe(nueStr);
+        if (a === undefined || n === undefined) return '';
+        var esObj = function (x) { return x && typeof x === 'object' && !Array.isArray(x); };
+        var ao = esObj(a) ? a : (a == null ? {} : null);
+        var no = esObj(n) ? n : (n == null ? {} : null);
+        if (ao === null || no === null) return '';        // valores no-objeto: se deja el JSON crudo
+
+        var keys = {}; Object.keys(ao).forEach(function (k) { keys[k] = 1; }); Object.keys(no).forEach(function (k) { keys[k] = 1; });
+        var filas = '';
+        Object.keys(keys).sort().forEach(function (k) {
+            var av = ao[k], nv = no[k];
+            if (JSON.stringify(av) === JSON.stringify(nv)) return;
+            var cell;
+            if (!(k in ao))      cell = '<span class="aud-diff-new">' + esc(fmtVal(nv)) + '</span>';
+            else if (!(k in no)) cell = '<span class="aud-diff-old">' + esc(fmtVal(av)) + '</span>';
+            else cell = '<span class="aud-diff-old">' + esc(fmtVal(av)) + '</span>'
+                      + '<span class="aud-diff-arrow">→</span>'
+                      + '<span class="aud-diff-new">' + esc(fmtVal(nv)) + '</span>';
+            filas += '<tr><td class="k">' + esc(k) + '</td><td>' + cell + '</td></tr>';
+        });
+
+        var cuerpo = filas
+            ? '<table class="aud-diff-tbl">' + filas + '</table>'
+            : '<div class="aud-diff-none">' + esc(S.diffSin) + '</div>';
+        return '<div class="aud-diff"><div class="aud-diff-lbl">' + esc(S.diffTit) + '</div>' + cuerpo + '</div>';
+    }
+
     function verDetalle(id) {
         $.getJSON('@Url.Action("Detalle", "Auditoria")', { id: id }).done(function (d) {
             if (!d || !d.success) { Swal.fire({ icon: 'error', title: S.errTit, text: S.error }); return; }
 
-            var entidad = (d.entidad || '') + (d.entidadId ? ' #' + d.entidadId : '');
+            var entidadTxt = d.entidadNombre || d.entidad || '';
+            var entidadRuta = (d.entidad || '') + (d.entidadId ? ' #' + d.entidadId : '');
+            var diffHtml = renderDiff(d.valorAnterior, d.valorNuevo);
+            var opBtn = d.operacionId
+                ? '<button type="button" id="audVerOp" class="aud-dt-copy" style="margin-top:.4rem;">' + esc(S.opVer) + '</button>'
+                : '';
+            var rawHtml = (d.valorAnterior || d.valorNuevo)
+                ? '<details class="aud-raw"' + (diffHtml ? '' : ' open') + '><summary>' + esc(S.rawJson) + '</summary>'
+                    + bloque(S.vAnt, d.valorAnterior) + bloque(S.vNue, d.valorNuevo) + '</details>'
+                : '';
+
             var html = '<div class="aud-dt">'
                 + '<div class="aud-dt-fecha">' + esc(d.fecha) + '</div>'
                 + '<div class="aud-dt-chips">'
-                +   dtChip(d.tipo, 'tipo') + dtChip(accionLabel(d.accion)) + dtChip(entidad)
+                +   '<span class="aud-dt-chip"><span class="sev-dot sev-' + (d.severidad || 'Info') + '"></span>' + esc(sevLabel(d.severidad)) + '</span>'
+                +   dtChip(d.tipo, 'tipo') + dtChip(accionLabel(d.accion)) + dtChip(entidadTxt)
                 + '</div>'
                 + (d.descripcion ? '<p class="aud-dt-desc">' + esc(d.descripcion) + '</p>' : '')
                 + '<div class="aud-dt-meta">'
                 +   dtMeta(S.mUsuario, d.nombreUsuario) + dtMeta(S.mEmpresa, d.empresa) + dtMeta(S.mIp, d.ipAddress)
+                +   (entidadRuta && entidadRuta !== entidadTxt ? dtMeta(S.refLbl, entidadRuta) : '')
                 + '</div>'
-                + bloque(S.vAnt, d.valorAnterior)
-                + bloque(S.vNue, d.valorNuevo)
+                + diffHtml
+                + opBtn
+                + rawHtml
                 + '</div>';
 
             Swal.fire({
@@ -459,7 +674,13 @@ $(function () {
                 showConfirmButton: false,
                 showCloseButton: true,
                 didOpen: function (popup) {
+                    var vo = popup.querySelector('#audVerOp');
+                    if (vo) vo.addEventListener('click', function () {
+                        _opId = d.operacionId; _histEnt = null;
+                        Swal.close(); pintarChips(); consultar(1);
+                    });
                     popup.querySelectorAll('.aud-dt-copy').forEach(function (btn) {
+                        if (btn.id === 'audVerOp') return;
                         btn.addEventListener('click', function () {
                             var pre = popup.querySelector('#' + btn.getAttribute('data-target'));
                             if (!pre) return;
@@ -488,6 +709,7 @@ $(function () {
 
     function estadoInicial() {
         $('#tbody').empty();
+        $('#vistaTimeline').empty();
         $('#paginacion').empty();
         $('#paginaInfo').text('');
         $('#totalBadge').text('0 ' + S.total);
@@ -497,23 +719,18 @@ $(function () {
 
     $('#btnConsultar').on('click', function () { consultar(1); });
     $('#btnLimpiar').on('click', function () {
-        $('#fTipo, #fAccion, #fEmpresa').val('');
+        $('#fTipo, #fAccion, #fSeveridad, #fEmpresa').val('');
         $('#fEntidad, #fTexto, #fDesde, #fHasta').val('');
+        _histEnt = null; _opId = null; pintarChips();
         // Igual que al entrar: no consulta, vuelve al estado vacío.
         estadoInicial();
     });
     $('#btnExportar').on('click', function () {
-        var qs = $.param({
-            tipo:      $('#fTipo').val(),
-            accion:    $('#fAccion').val(),
-            idEmpresa: $('#fEmpresa').val() || '',
-            entidad:   $('#fEntidad').val(),
-            texto:     $('#fTexto').val(),
-            desde:     $('#fDesde').val(),
-            hasta:     $('#fHasta').val()
-        });
-        window.location = '@Url.Action("ExportarExcel", "Auditoria")' + '?' + qs;
+        window.location = '@Url.Action("ExportarExcel", "Auditoria")' + '?' + $.param(paramsFiltro());
     });
+
+    $('#vwTabla').on('click', function () { if (_vista === 'tabla') return; _vista = 'tabla'; pintarVista(); });
+    $('#vwTimeline').on('click', function () { if (_vista === 'timeline') return; _vista = 'timeline'; pintarVista(); });
     $('#btnImprimir').on('click', function () {
         var cont = document.querySelector('#resultadosContainer .table-container');
         if (!cont) return;

@@ -35,6 +35,18 @@ namespace bufinscustomers.Models
         /// <summary>JSON del estado nuevo (opcional).</summary>
         public string ValorNuevo { get; set; }
 
+        /// <summary>Nombre legible de la entidad afectada, instantánea en el momento del cambio
+        /// ("ACME S.A.S." en vez de "Empresas #42"). Se autocompleta desde el JSON si no se pasa.</summary>
+        public string EntidadNombre { get; set; }
+
+        /// <summary>Nivel para resaltar en el visor — ver <see cref="AuditoriaSeveridad"/>.
+        /// Se deriva de la acción/tipo si no se pasa.</summary>
+        public string Severidad { get; set; }
+
+        /// <summary>Identificador de la operación (petición HTTP) que agrupa los cambios escritos
+        /// juntos. Se autocompleta con un GUID por petición.</summary>
+        public Guid? OperacionId { get; set; }
+
         public int? IdUsuario { get; set; }
         public string NombreUsuario { get; set; }
         public int? IdEmpresa { get; set; }
@@ -70,6 +82,33 @@ namespace bufinscustomers.Models
         public const string Bloqueo      = "Bloqueo";
     }
 
+    /// <summary>Nivel de una fila de auditoría, para resaltar en el visor.</summary>
+    public static class AuditoriaSeveridad
+    {
+        public const string Info        = "Info";
+        public const string Advertencia = "Advertencia";
+        public const string Critico     = "Critico";
+
+        /// <summary>Deriva la severidad de la acción/tipo cuando no se especifica una explícita.</summary>
+        public static string Derivar(string tipo, string accion)
+        {
+            switch (accion)
+            {
+                case AuditoriaAccion.Eliminar:
+                case AuditoriaAccion.Bloqueo:
+                    return Critico;
+                case AuditoriaAccion.Crear:
+                case AuditoriaAccion.Asignar:
+                case AuditoriaAccion.LoginFallido:
+                    return Advertencia;
+                default:
+                    // Cualquier cambio en permisos merece atención aunque sea "Editar".
+                    return string.Equals(tipo, AuditoriaTipo.Permisos, StringComparison.OrdinalIgnoreCase)
+                        ? Advertencia : Info;
+            }
+        }
+    }
+
     /// <summary>Filtros del visor de auditoría. Paginación server-side.</summary>
     public class AuditoriaFiltro
     {
@@ -78,6 +117,11 @@ namespace bufinscustomers.Models
         public int? IdUsuario { get; set; }
         public int? IdEmpresa { get; set; }
         public string Entidad { get; set; }
+        /// <summary>Historial de un registro concreto (se usa junto con <see cref="Entidad"/>).</summary>
+        public string EntidadId { get; set; }
+        public string Severidad { get; set; }
+        /// <summary>Todos los cambios escritos en la misma operación (petición).</summary>
+        public Guid? OperacionId { get; set; }
         public string Texto { get; set; }
         public DateTime? Desde { get; set; }
         public DateTime? Hasta { get; set; }

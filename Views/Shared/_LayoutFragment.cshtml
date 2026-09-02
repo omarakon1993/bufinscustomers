@@ -1,0 +1,8 @@
+@*
+    Layout "fragmento": solo el cuerpo de la vista + su sección de scripts, sin <html>/<head>
+    ni bundles. Se usa cuando una vista se inyecta con jQuery .load() dentro de otra página
+    (p. ej. las pestañas del hub de Auditoría). jQuery ejecuta los <script> del fragmento;
+    jQuery / SweetAlert / el helper CSRF ya están cargados en la página anfitriona.
+*@
+@RenderBody()
+@RenderSection("scripts", required: false)

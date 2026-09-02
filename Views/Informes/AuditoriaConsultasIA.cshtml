@@ -3,9 +3,14 @@
 
 @{
     ViewBag.Title = Resources.Strings.AudIA_PageTitle;
+    var embed = (bool)(ViewBag.Embed ?? false);
+    if (embed) { Layout = "~/Views/Shared/_LayoutFragment.cshtml"; }
     var esAdmin        = (bool)ViewBag.EsAdmin;
     var esAdminEmpresa = (bool)(ViewBag.EsAdminEmpresa ?? false);
     var empresasFiltro = ViewBag.EmpresasFiltro as List<Empresas>;
+    // Se muestra la empresa (filtro + columna) al Super Admin y al Admin de Empresa cuyo grupo
+    // tenga más de una empresa (el controlador solo puebla empresasFiltro en ese caso).
+    var verEmpresa     = esAdmin || (empresasFiltro != null && empresasFiltro.Count > 1);
 }
 
 <link href="~/Assets/css/informe-relacionamientos.css" rel="stylesheet" />
@@ -109,24 +114,32 @@
 
     @Html.AntiForgeryToken()
 
-    <!-- Header -->
-    <div class="powerbi-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-        <div class="powerbi-header-content">
-            <i class="fas fa-history powerbi-header-icon"></i>
-            <h1 class="powerbi-header-title">@Resources.Strings.AudIA_PageTitle</h1>
+    @if (!embed)
+    {
+        <!-- Header -->
+        <div class="powerbi-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <div class="powerbi-header-content">
+                <i class="fas fa-history powerbi-header-icon"></i>
+                <h1 class="powerbi-header-title">@Resources.Strings.AudIA_PageTitle</h1>
+            </div>
+            <div class="d-flex align-items-center" style="gap:8px;flex-wrap:wrap;">
+                @if (esAdmin)
+                {
+                    <button type="button" id="btnLimpiarAuditoria" class="audit-btn-header audit-btn-danger">
+                        <i class="fas fa-trash-alt"></i> @Resources.Strings.AudIA_BtnLimpiarAuditoria
+                    </button>
+                }
+            </div>
         </div>
-        <div class="d-flex align-items-center" style="gap:8px;flex-wrap:wrap;">
-            @if (esAdmin)
-            {
-                <button type="button" id="btnLimpiarAuditoria" class="audit-btn-header audit-btn-danger">
-                    <i class="fas fa-trash-alt"></i> @Resources.Strings.AudIA_BtnLimpiarAuditoria
-                </button>
-            }
-            <a href="@Url.Action("Index","AnalisisIA")" class="audit-btn-header">
-                <i class="fas fa-robot"></i> @Resources.Strings.AudIA_LinkAnalisisIA
-            </a>
+    }
+    else if (esAdmin)
+    {
+        <div class="d-flex justify-content-end" style="margin-bottom:.9rem;">
+            <button type="button" id="btnLimpiarAuditoria" class="btn btn-sm btn-danger">
+                <i class="fas fa-trash-alt mr-1"></i>@Resources.Strings.AudIA_BtnLimpiarAuditoria
+            </button>
         </div>
-    </div>
+    }
 
     <!-- Card de filtros -->
     <div class="filter-card">
@@ -138,7 +151,7 @@
         <div class="filter-section">
             <div class="row">
 
-                @if (esAdmin)
+                @if (verEmpresa)
                 {
                     <div class="col-md-4">
                         <div class="form-group">
@@ -270,7 +283,7 @@
                         <tr>
                             <th style="width:150px;">@Resources.Strings.AudIA_ThFecha</th>
                             <th style="min-width:130px;">@Resources.Strings.AudIA_ThUsuario</th>
-                            @if (esAdmin) { <th style="min-width:110px;">@Resources.Strings.AudIA_ThEmpresa</th> }
+                            @if (verEmpresa) { <th style="min-width:110px;">@Resources.Strings.AudIA_ThEmpresa</th> }
                             <th style="min-width:160px;">@Resources.Strings.AudIA_ThTablaFiltros</th>
                             <th style="width:110px;">@Resources.Strings.AudIA_ThTipo</th>
                             <th>@Resources.Strings.AudIA_ThPregunta</th>
@@ -300,6 +313,7 @@ $(document).ready(function () {
 
     var esAdminJS        = @(esAdmin ? "true" : "false");
     var esAdminEmpresaJS = @(esAdminEmpresa ? "true" : "false");
+    var verEmpresaJS     = @(verEmpresa ? "true" : "false");
     var PAGE_SIZE        = 20;
     var _todosRegistros  = [];
     var _filtrados       = [];
@@ -650,7 +664,7 @@ $(document).ready(function () {
             var tr = $('<tr>');
             tr.append($('<td>').css({ whiteSpace: 'nowrap', fontSize: '.8rem', color: '#6b7280' }).text(r.FechaPregunta));
             tr.append($('<td>').css('font-weight', '600').text(r.NombreUsuario));
-            if (esAdminJS) tr.append($('<td>').text(r.NombreEmpresa));
+            if (verEmpresaJS) tr.append($('<td>').text(r.NombreEmpresa));
             tr.append($('<td>').html(
                 '<span style="font-weight:600;">' + $('<div>').text(r.NombreTabla).html() + '</span>'
                 + (r.Filtros ? '<br><small style="color:#9ca3af;font-size:.74rem;">' + $('<div>').text(r.Filtros).html() + '</small>' : '')
