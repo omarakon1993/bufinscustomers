@@ -768,9 +768,10 @@
             $.ajax({
                 url: '@Url.Action("ExtenderSesion", "Acceso")',
                 type: 'POST',
+                dataType: 'json',
                 timeout: 10000,
                 success: function(response) {
-                    if (response.success) {
+                    if (response && response.success) {
                         // Mostrar mensaje de éxito
                         const isMobile = window.innerWidth <= 768;
                         Swal.fire({
@@ -964,6 +965,7 @@
             $.ajax({
                 url: '@Url.Action("ExtenderSesion", "Acceso")',
                 type: 'POST',
+                dataType: 'json',
                 timeout: 8000,
                 success: function (r) { if (r && r.success) reiniciarTimersSesion(); }
                 // sin UI: si falla, los timers normales y ajaxError se encargan
@@ -1222,12 +1224,19 @@
     $.ajaxSetup({
         beforeSend: function (xhr, settings) {
             if (settings.type && settings.type.toUpperCase() === 'POST' && settings.processData !== false) {
-                var currentData = typeof settings.data === 'string' ? settings.data : '';
-                if (currentData.indexOf('__RequestVerificationToken') >= 0) return; // ya incluido, no duplicar
+                var hadData = typeof settings.data === 'string' && settings.data.length > 0;
+                if (hadData && settings.data.indexOf('__RequestVerificationToken') >= 0) return; // ya incluido
                 var token = $('#csrf-token-holder input[name="__RequestVerificationToken"]').val();
-                if (token) {
-                    settings.data = (settings.data ? settings.data + '&' : '') +
-                        '__RequestVerificationToken=' + encodeURIComponent(token);
+                if (!token) return;
+                settings.data = (hadData ? settings.data + '&' : '') +
+                    '__RequestVerificationToken=' + encodeURIComponent(token);
+                // Si la llamada no traía cuerpo (p. ej. ExtenderSesion / keepalive), jQuery no
+                // fijó el Content-Type de formulario y el servidor no poblaría Request.Form,
+                // así que el token viajaría "invisible" y ValidateAntiForgeryToken fallaría.
+                // Lo forzamos aquí, salvo que la llamada haya pedido otro contentType (JSON).
+                if (!hadData && settings.contentType !== false &&
+                    (!settings.contentType || settings.contentType.indexOf('urlencoded') >= 0)) {
+                    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
                 }
             }
         }

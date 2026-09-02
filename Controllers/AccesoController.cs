@@ -37,10 +37,31 @@ namespace bufinscustomers.Controllers
             if (filterContext.Exception is HttpAntiForgeryException)
             {
                 System.Diagnostics.Trace.TraceWarning(
-                    "[AccesoController] Token anti-falsificación inválido en {0}. Redirigiendo a Login.",
+                    "[AccesoController] Token anti-falsificación inválido en {0}.",
                     filterContext.HttpContext.Request.Url);
 
                 filterContext.ExceptionHandled = true;
+
+                // Peticiones AJAX (p. ej. ExtenderSesion): nunca redirigir — el cliente
+                // recibiría el HTML del login y lo interpretaría como una respuesta válida.
+                // Devolver JSON que el JS del layout ya sabe manejar.
+                if (filterContext.HttpContext.Request.IsAjaxRequest())
+                {
+                    filterContext.HttpContext.Response.StatusCode = 200;
+                    filterContext.Result = new JsonResult
+                    {
+                        Data = new
+                        {
+                            success = false,
+                            sessionExpired = true,
+                            message = "",
+                            redirectUrl = Url.Action("Login", "Acceso")
+                        },
+                        JsonRequestBehavior = JsonRequestBehavior.AllowGet
+                    };
+                    return;
+                }
+
                 filterContext.Result = new RedirectResult(
                     Url.Action("Login", "Acceso") + "?tokenExpirado=true");
                 return;
