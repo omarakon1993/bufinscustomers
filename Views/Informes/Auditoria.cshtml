@@ -122,6 +122,45 @@
     .aud-diff-new { color:#7ee0b0; }
     .aud-diff-none { font-size:.82rem; opacity:.6; font-style:italic; }
     details.aud-raw > summary { cursor:pointer; font:600 .66rem/1 "IBM Plex Mono", monospace; letter-spacing:.08em; text-transform:uppercase; opacity:.5; margin-top:1rem; list-style:revert; }
+
+    /* ---- Tabla que SIEMPRE cabe en el ancho del panel (sin scroll horizontal) ---- */
+    #resultadosContainer .data-table { table-layout: fixed; width: 100%; }
+    #resultadosContainer .data-table th,
+    #resultadosContainer .data-table td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Anchos por columna (1 Fecha · 2 Tipo · 3 Acción · 4 Entidad · 5 Descripción · 6 Usuario · 7 Empresa · 8 Detalle) */
+    #resultadosContainer .data-table tr > :nth-child(1) { width: 13%; }
+    #resultadosContainer .data-table tr > :nth-child(2) { width: 9%;  }
+    #resultadosContainer .data-table tr > :nth-child(3) { width: 9%;  }
+    #resultadosContainer .data-table tr > :nth-child(4) { width: 17%; }
+    #resultadosContainer .data-table tr > :nth-child(5) { width: 29%; }
+    #resultadosContainer .data-table tr > :nth-child(6) { width: 13%; }
+    #resultadosContainer .data-table tr > :nth-child(7) { width: 10%; }
+    #resultadosContainer .data-table tr > :nth-child(8) { width: 62px; }
+
+    /* Entidad: solo el nombre (recortado) + el botón de historial en una línea.
+       La ruta técnica ("Empresas #42") queda solo en el modal de detalle. */
+    #resultadosContainer .data-table td:nth-child(4) .ent-ruta { display: none; }
+    #resultadosContainer .data-table td:nth-child(4) .ent-nombre {
+        display: inline-block; max-width: calc(100% - 26px); overflow: hidden;
+        text-overflow: ellipsis; white-space: nowrap; vertical-align: middle;
+    }
+
+    /* Columna "ver detalle" fija a la derecha: el ojo siempre visible */
+    #resultadosContainer .data-table tr > :nth-child(8) {
+        position: sticky; right: 0; background: #fff; text-align: center;
+        box-shadow: -7px 0 8px -6px rgba(20,25,35,.13);
+    }
+    #resultadosContainer .data-table thead th:nth-child(8) {
+        background: linear-gradient(90deg,#6366F1,#3B82F6,#06B6D4,#01E1D7); z-index: 12;
+    }
+
+    /* Responsive: se ocultan columnas de menor prioridad en pantallas estrechas
+       (el layout fijo garantiza que nunca haya scroll horizontal en ningún caso) */
+    @@media (max-width: 1180px) { #resultadosContainer .data-table tr > :nth-child(7) { display: none; } } /* Empresa */
+    @@media (max-width: 920px)  { #resultadosContainer .data-table tr > :nth-child(2) { display: none; } } /* Tipo */
+    @@media (max-width: 720px)  { #resultadosContainer .data-table tr > :nth-child(6) { display: none; } } /* Usuario */
+    @@media (max-width: 560px)  { #resultadosContainer .data-table tr > :nth-child(3) { display: none; } } /* Acción */
 </style>
 
 <div class="container-fluid px-4">
@@ -277,15 +316,14 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th style="width:150px;">@Resources.Strings.Audit_ThFecha</th>
-                            <th style="width:120px;">@Resources.Strings.Audit_ThTipo</th>
-                            <th style="width:110px;">@Resources.Strings.Audit_ThAccion</th>
-                            <th style="width:170px;">@Resources.Strings.Audit_ThEntidad</th>
+                            <th>@Resources.Strings.Audit_ThFecha</th>
+                            <th>@Resources.Strings.Audit_ThTipo</th>
+                            <th>@Resources.Strings.Audit_ThAccion</th>
+                            <th>@Resources.Strings.Audit_ThEntidad</th>
                             <th>@Resources.Strings.Audit_ThDescripcion</th>
-                            <th style="width:150px;">@Resources.Strings.Audit_ThUsuario</th>
-                            <th style="width:120px;">@Resources.Strings.Audit_ThEmpresa</th>
-                            <th style="width:110px;">@Resources.Strings.Audit_ThIp</th>
-                            <th style="width:70px;" class="text-center">@Resources.Strings.Audit_ThDetalle</th>
+                            <th>@Resources.Strings.Audit_ThUsuario</th>
+                            <th>@Resources.Strings.Audit_ThEmpresa</th>
+                            <th class="text-center">@Resources.Strings.Audit_ThDetalle</th>
                         </tr>
                     </thead>
                     <tbody id="tbody"></tbody>
@@ -473,7 +511,7 @@ $(function () {
     function entidadCelda(a) {
         var nombre = a.EntidadNombre || a.Entidad || '';
         var ruta   = (a.Entidad || '') + (a.EntidadId ? ' #' + a.EntidadId : '');
-        var $td = $('<td>');
+        var $td = $('<td>').attr('title', nombre + (ruta && ruta !== nombre ? '  ·  ' + ruta : ''));
         $td.append($('<span class="ent-nombre">').text(nombre));
         if (nombre !== ruta && ruta) $td.append($('<div class="ent-ruta">').text(ruta));
         if (a.EntidadId) {
@@ -496,10 +534,9 @@ $(function () {
             tr.append($('<td>').html('<span class="badge badge-info">' + esc(a.Tipo) + '</span>'));
             tr.append($('<td>').text(accionLabel(a.Accion)));
             tr.append(entidadCelda(a));
-            tr.append($('<td>').text(a.Descripcion || ''));
-            tr.append($('<td>').text(a.NombreUsuario || ''));
-            tr.append($('<td>').text(a.Empresa || ''));
-            tr.append($('<td>').css('font-family', 'monospace').text(a.IpAddress || ''));
+            tr.append($('<td>').attr('title', a.Descripcion || '').text(a.Descripcion || ''));
+            tr.append($('<td>').attr('title', a.NombreUsuario || '').text(a.NombreUsuario || ''));
+            tr.append($('<td>').attr('title', a.Empresa || '').text(a.Empresa || ''));
 
             var celdaVer = $('<td class="text-center">');
             if (a.TieneDetalle) {
