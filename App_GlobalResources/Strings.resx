@@ -76,12 +76,12 @@
   <data name="Reset_NewPwd_Heading" xml:space="preserve"><value>NUEVA CONTRASEÑA</value></data>
   <data name="Reset_NewPwd_Instrucciones" xml:space="preserve"><value>Crea una contraseña segura para tu cuenta.</value></data>
   <data name="Reset_NewPwd_Label" xml:space="preserve"><value>Nueva Contraseña</value></data>
-  <data name="Reset_NewPwd_Placeholder" xml:space="preserve"><value>Mínimo 8 caracteres</value></data>
+  <data name="Reset_NewPwd_Placeholder" xml:space="preserve"><value>Mínimo 12 caracteres</value></data>
   <data name="Reset_NewPwd_ConfirmLabel" xml:space="preserve"><value>Confirmar Contraseña</value></data>
   <data name="Reset_NewPwd_ConfirmPlaceholder" xml:space="preserve"><value>Repite la nueva contraseña</value></data>
   <data name="Reset_NewPwd_Btn" xml:space="preserve"><value>CAMBIAR CONTRASEÑA</value></data>
   <data name="Reset_NewPwd_ErrorEmpty" xml:space="preserve"><value>Debe ingresar una contraseña.</value></data>
-  <data name="Reset_NewPwd_ErrorLen" xml:space="preserve"><value>La contraseña debe tener al menos 8 caracteres.</value></data>
+  <data name="Reset_NewPwd_ErrorLen" xml:space="preserve"><value>La contraseña debe tener al menos 12 caracteres.</value></data>
   <data name="Reset_NewPwd_ErrorMatch" xml:space="preserve"><value>Las contraseñas no coinciden.</value></data>
   <data name="Reset_NewPwd_TokenInvalido" xml:space="preserve"><value>El enlace de recuperación no es válido o ha expirado.</value></data>
   <data name="Reset_NewPwd_TokenExpirado" xml:space="preserve"><value>El enlace ha expirado. Solicita uno nuevo.</value></data>
@@ -1264,6 +1264,23 @@
   <data name="Notif_ErrorRollback" xml:space="preserve"><value>Error al restaurar versión</value></data>
   <data name="Hist_BadgeLimite" xml:space="preserve"><value>Límite de historial</value></data>
   <data name="Hist_BadgeTexto" xml:space="preserve"><value>Se conservan máximo {0} versiones por combinación de empresa + año de datos + modo (ejecución o histórico). Al superar este límite, la versión más antigua se elimina automáticamente.</value></data>
+  <!-- POLÍTICA DE CONTRASEÑAS -->
+  <data name="Pwd_ErrorLongitud" xml:space="preserve"><value>La contraseña debe tener al menos 12 caracteres.</value></data>
+  <data name="Pwd_ErrorMinuscula" xml:space="preserve"><value>La contraseña debe incluir al menos una letra minúscula.</value></data>
+  <data name="Pwd_ErrorMayuscula" xml:space="preserve"><value>La contraseña debe incluir al menos una letra mayúscula.</value></data>
+  <data name="Pwd_ErrorNumero" xml:space="preserve"><value>La contraseña debe incluir al menos un número.</value></data>
+  <data name="Pwd_ErrorEspecial" xml:space="preserve"><value>La contraseña debe incluir al menos un carácter especial (ej: !@#$%).</value></data>
+  <data name="Pwd_ErrorRepetidos" xml:space="preserve"><value>La contraseña no debe tener 3 o más caracteres repetidos seguidos.</value></data>
+  <data name="Pwd_ErrorComun" xml:space="preserve"><value>Esta contraseña es demasiado común. Elige una más segura.</value></data>
+  <data name="Pwd_ErrorContieneUsuario" xml:space="preserve"><value>La contraseña no debe contener el nombre de usuario.</value></data>
+  <data name="Pwd_ErrorFiltrada" xml:space="preserve"><value>Esta contraseña apareció en filtraciones de datos conocidas. Elige una distinta.</value></data>
+  <!-- NOTIFICACIONES — BLOQUEO DE CUENTA -->
+  <data name="Notif_CuentaBloqueadaTitulo" xml:space="preserve"><value>Tu cuenta fue bloqueada temporalmente</value></data>
+  <data name="Notif_CuentaBloqueadaMsg" xml:space="preserve"><value>Detectamos varios intentos de inicio de sesión fallidos y bloqueamos tu cuenta por seguridad. Si no fuiste tú, cambia tu contraseña cuando recuperes el acceso.</value></data>
+  <data name="Notif_CuentaBloqueadaAdminTitulo" xml:space="preserve"><value>Cuenta de usuario bloqueada por intentos fallidos</value></data>
+  <data name="Notif_CuentaBloqueadaAdminMsg" xml:space="preserve"><value>La cuenta "{0}" se bloqueó tras {1} intentos de inicio de sesión fallidos. Revisa la auditoría de seguridad.</value></data>
+  <data name="Notif_ModoDefensivoTitulo" xml:space="preserve"><value>Modo defensivo de acceso activado</value></data>
+  <data name="Notif_ModoDefensivoMsg" xml:space="preserve"><value>Se detectó un pico de intentos de inicio de sesión fallidos en todo el sistema. El límite por IP se endureció automáticamente. Revisa la auditoría de seguridad.</value></data>
   <!-- IA MEJORAS -->
   <data name="IA_BtnExportarExcel" xml:space="preserve"><value>Exportar Excel con IA</value></data>
   <data name="IA_LimiteConsultas" xml:space="preserve"><value>Límite diario alcanzado</value></data>

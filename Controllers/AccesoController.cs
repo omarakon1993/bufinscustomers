@@ -18,6 +18,17 @@ namespace bufinscustomers.Controllers
 {
     public class AccesoController : BaseController
     {
+        // A11: hash BCrypt (cost 12) señuelo — vector de prueba público del algoritmo. Solo se
+        // usa para gastar el mismo tiempo de CPU que una verificación real cuando el identificador
+        // no existe, de modo que "usuario inexistente" y "clave incorrecta" tarden lo mismo.
+        private const string HASH_SENUELO = "$2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW";
+
+        // A12: control de ruido en la auditoría de seguridad.
+        private const int AUDIT_THROTTLE_MIN = 10;              // 1 fila por IP cada N min (identificador inexistente)
+        private const int AUDIT_SEGURIDAD_RETENCION_DIAS = 90;  // se purgan los intentos anónimos más antiguos
+        private static DateTime _ultimaPurgaAuditoria = DateTime.MinValue;
+        private static readonly object _purgaAuditoriaLock = new object();
+
         // Si el token anti-falsificación no se puede validar (típicamente porque el formulario
         // de login quedó abierto en el navegador desde antes de que el proceso del servidor
         // reiniciara/reciclara), no mostrar el error genérico: volver a Login con un mensaje claro.
@@ -65,15 +76,21 @@ namespace bufinscustomers.Controllers
             oUsuario.Clave = oUsuario.Clave.Trim();
             oUsuario.ConfirmarClave = oUsuario.ConfirmarClave.Trim();
 
-            if (oUsuario.Clave == oUsuario.ConfirmarClave)
-            {
-                oUsuario.Clave = HashearContrasena(oUsuario.Clave);
-            }
-            else
+            if (oUsuario.Clave != oUsuario.ConfirmarClave)
             {
                 ViewData["Mensaje"] = R("Login_ErrorClavesNoCoinciden");
                 return View();
             }
+
+            // A13: política de contraseñas centralizada (longitud, complejidad, claves comunes,
+            // y comprobación contra filtraciones conocidas — Have I Been Pwned).
+            if (!Helpers.PoliticaContrasena.Validar(oUsuario.Clave, null, out string errClave))
+            {
+                ViewData["Mensaje"] = R(errClave);
+                return View();
+            }
+
+            oUsuario.Clave = HashearContrasena(oUsuario.Clave);
 
             using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
@@ -106,11 +123,14 @@ namespace bufinscustomers.Controllers
         {
             oUsuario.Clave = oUsuario.Clave.Trim();
 
-            // A7: Rate limiting por IP — rechaza IPs con demasiados intentos fallidos
+            // A7 / A14: Rate limiting por IP (persistente en BD) — rechaza IPs con demasiados
+            // intentos fallidos.
             string clientIp = GetClientIp();
-            if (EstaIPBloqueada(clientIp))
+            var estadoIp = new RateLimitLoginService().Comprobar(clientIp);
+            if (estadoIp.Bloqueada)
             {
-                ViewData["Mensaje"] = string.Format(R("Login_ErrorRateLimitIP"), RATE_LIMIT_MINUTOS);
+                ViewData["Mensaje"] = string.Format(R("Login_ErrorRateLimitIP"),
+                    Math.Max(1, estadoIp.MinutosRestantes));
                 return View();
             }
 
@@ -172,14 +192,18 @@ namespace bufinscustomers.Controllers
                 return View();
             }
 
-            bool credencialesValidas = usuarioId > 0
-                && hashAlmacenado != null
-                && VerificarContrasena(oUsuario.Clave, hashAlmacenado);
+            // A11: verificar SIEMPRE contra un hash BCrypt (real o señuelo) para que el tiempo de
+            // respuesta no delate si el identificador existe (enumeración de usuarios por
+            // temporización — cuando no había usuario, antes se saltaba el BCrypt y la respuesta
+            // volvía mucho más rápido).
+            string hashParaVerificar = hashAlmacenado ?? HASH_SENUELO;
+            bool hashCoincide = VerificarContrasena(oUsuario.Clave, hashParaVerificar);
+            bool credencialesValidas = usuarioId > 0 && hashAlmacenado != null && hashCoincide;
 
             if (credencialesValidas)
             {
                 ResetearIntentosFallidos(usuarioId);
-                LimpiarContadorIP(clientIp); // A7: resetear rate limit IP en login exitoso
+                new RateLimitLoginService().Limpiar(clientIp); // A7/A14: resetear rate limit IP en login exitoso
 
                 // Migrate SHA256 → BCrypt on first successful login
                 if (!EsHashBCrypt(hashAlmacenado))
@@ -205,7 +229,8 @@ namespace bufinscustomers.Controllers
             {
                 RegistrarIntentoFallido(usuarioId, intentosFallidos,
                     out int nuevosIntentos, out DateTime? nuevoBloqueadoHasta);
-                RegistrarIntentoIP(clientIp); // A7
+                var rlReal = new RateLimitLoginService().RegistrarFallo(clientIp); // A7/A14
+                if (rlReal.ModoDefensivoActivado) NotificarModoDefensivo();
 
                 new AuditoriaService().RegistrarSeguridad(
                     nuevoBloqueadoHasta.HasValue ? AuditoriaAccion.Bloqueo : AuditoriaAccion.LoginFallido,
@@ -216,6 +241,10 @@ namespace bufinscustomers.Controllers
 
                 if (nuevoBloqueadoHasta.HasValue)
                 {
+                    // A12: una cuenta REAL acaba de bloquearse — avisar (a diferencia del ruido
+                    // de bots contra identificadores inexistentes, esto sí merece atención).
+                    NotificarBloqueoCuenta(usuarioId, oUsuario.Correo, nuevosIntentos);
+
                     int minutosBloqueo = nuevosIntentos >= 15 ? 1440 : nuevosIntentos >= 10 ? 60 : 15;
                     ViewData["Mensaje"] = string.Format(R("Login_ErrorCuentaBloqueada"), minutosBloqueo);
                 }
@@ -256,9 +285,25 @@ namespace bufinscustomers.Controllers
             }
             else
             {
-                RegistrarIntentoIP(clientIp); // A7: usuario no encontrado también cuenta
-                new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.LoginFallido,
-                    $"Intento de inicio de sesión con identificador inexistente ({oUsuario.Correo})", null, null);
+                var rlAnon = new RateLimitLoginService().RegistrarFallo(clientIp); // A7/A14: usuario no encontrado también cuenta
+                if (rlAnon.ModoDefensivoActivado) NotificarModoDefensivo();
+
+                // A12: los intentos contra identificadores inexistentes son ruido de bots. Se
+                // deja rastro completo en el log de aplicación SIEMPRE, pero en la tabla
+                // Auditoria solo 1 fila por IP cada AUDIT_THROTTLE_MIN minutos, para no ahogar
+                // la bitácora de seguridad ni inflar la tabla.
+                Helpers.AppLogger.Warn(
+                    $"Login: identificador inexistente ({oUsuario.Correo}) desde ip={clientIp}", "Acceso.Login");
+
+                if (DebeAuditarFalloAnonimo(clientIp))
+                {
+                    new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.LoginFallido,
+                        $"Intento de inicio de sesión con identificador inexistente ({oUsuario.Correo}) " +
+                        $"[se omiten repeticiones de la misma IP durante {AUDIT_THROTTLE_MIN} min]",
+                        null, null);
+                }
+
+                PurgarAuditoriaSeguridadOportunista();
                 ViewData["Mensaje"] = R("Login_ErrorCredenciales");
                 return View();
             }
@@ -390,35 +435,181 @@ namespace bufinscustomers.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        // ====== A7: Rate limiting por IP ======
-        private const int RATE_LIMIT_MAX = 20;
-        private const int RATE_LIMIT_MINUTOS = 15;
+        // ====== A7 / A14: Rate limiting por IP ======
+        // El estado (contador y bloqueo por IP + detección de pico global "modo defensivo")
+        // vive en RateLimitLoginService (tabla dbo.IntentosLoginIP, con caché en memoria de
+        // respaldo). Aquí solo queda la resolución de la IP.
 
         private string GetClientIp()
         {
-            return Request.UserHostAddress ?? "";
+            // A11: resuelve la IP real detrás de un proxy inverso / CDN cuando Web.config
+            // declara los proxies de confianza (TrustedProxies). Sin esa config, equivale
+            // a Request.UserHostAddress.
+            return Helpers.ClientIpHelper.ObtenerIp(Request);
         }
 
-        private bool EstaIPBloqueada(string ip)
+        /// <summary>
+        /// A14: avisa a los Super Admin de que el rate-limit de login entró en MODO DEFENSIVO
+        /// (pico global de intentos fallidos). Se llama como mucho una vez cada 30 min — el
+        /// servicio ya lo controla con la bandera <c>ModoDefensivoActivado</c>. Nunca lanza.
+        /// </summary>
+        private void NotificarModoDefensivo()
         {
-            if (string.IsNullOrEmpty(ip)) return false;
-            var entry = System.Web.HttpRuntime.Cache["_rl_" + ip] as int?;
-            return entry.HasValue && entry.Value >= RATE_LIMIT_MAX;
+            try
+            {
+                Helpers.AppLogger.Warn(
+                    "Rate-limit de login en MODO DEFENSIVO: pico global de intentos fallidos, umbral por IP endurecido.",
+                    "Acceso.Login");
+
+                var notif = new NotificacionesService();
+                string titulo = R("Notif_ModoDefensivoTitulo");
+                string msg = R("Notif_ModoDefensivoMsg");
+                foreach (int idAdmin in ObtenerIdsSuperAdmin())
+                    notif.Crear(idAdmin, titulo, msg, "error", "/Auditoria");
+
+                EnviarAlertaSeguridadPorCorreo(titulo, msg);
+            }
+            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[NotificarModoDefensivo] {0}", ex.Message); }
         }
 
-        private void RegistrarIntentoIP(string ip)
+        /// <summary>
+        /// Envía por correo (en segundo plano) una alerta de seguridad a los destinatarios de
+        /// <c>appSettings["SeguridadAlertasDestino"]</c> — cada token separado por comas es un
+        /// correo (si contiene "@") o un nombre de usuario que se resuelve a su correo. Vacío =
+        /// no se envía correo (solo la notificación interna). Fire-and-forget: nunca bloquea el login.
+        /// </summary>
+        private void EnviarAlertaSeguridadPorCorreo(string titulo, string mensaje)
         {
-            if (string.IsNullOrEmpty(ip)) return;
-            var key = "_rl_" + ip;
-            var actual = System.Web.HttpRuntime.Cache[key] as int? ?? 0;
-            System.Web.HttpRuntime.Cache.Insert(key, actual + 1, null,
-                DateTime.Now.AddMinutes(RATE_LIMIT_MINUTOS), System.Web.Caching.Cache.NoSlidingExpiration);
+            var correos = ObtenerCorreosAlertaSeguridad();
+            if (correos.Count == 0) return;
+
+            string enlace = null;
+            try { enlace = Url.Action("Index", "Auditoria", null, Request.Url.Scheme); } catch { }
+            string asunto = "[Bufins] " + titulo;
+
+            System.Web.Hosting.HostingEnvironment.QueueBackgroundWorkItem(ct =>
+            {
+                try
+                {
+                    var email = new EmailService();
+                    foreach (var c in correos)
+                    {
+                        try { email.EnviarAlertaSeguridad(c, asunto, titulo, mensaje, enlace); }
+                        catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[EnviarAlertaSeguridad] {0}: {1}", c, ex.Message); }
+                    }
+                }
+                catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[EnviarAlertaSeguridad] {0}", ex.Message); }
+            });
         }
 
-        private void LimpiarContadorIP(string ip)
+        private System.Collections.Generic.List<string> ObtenerCorreosAlertaSeguridad()
         {
-            if (!string.IsNullOrEmpty(ip))
-                System.Web.HttpRuntime.Cache.Remove("_rl_" + ip);
+            var lista = new System.Collections.Generic.List<string>();
+            string destino = System.Configuration.ConfigurationManager.AppSettings["SeguridadAlertasDestino"];
+            if (string.IsNullOrWhiteSpace(destino)) return lista;
+
+            var usuarios = new System.Collections.Generic.List<string>();
+            foreach (var raw in destino.Split(','))
+            {
+                var t = raw.Trim();
+                if (t.Length == 0) continue;
+                if (t.Contains("@")) { if (!lista.Contains(t)) lista.Add(t); }
+                else if (!usuarios.Contains(t)) usuarios.Add(t);
+            }
+
+            if (usuarios.Count > 0)
+            {
+                try
+                {
+                    var pars = usuarios.Select((u, i) => "@u" + i).ToArray();
+                    using (var cn = new SqlConnection(CadenaConexion))
+                    {
+                        var cmd = new SqlCommand(
+                            "SELECT Correo FROM Usuarios WHERE Usuario IN (" + string.Join(",", pars) +
+                            ") AND Correo IS NOT NULL AND LTRIM(RTRIM(Correo)) <> ''", cn);
+                        for (int i = 0; i < usuarios.Count; i++) cmd.Parameters.AddWithValue(pars[i], usuarios[i]);
+                        cn.Open();
+                        using (var r = cmd.ExecuteReader())
+                            while (r.Read())
+                            {
+                                var c = r["Correo"].ToString().Trim();
+                                if (c.Length > 0 && !lista.Contains(c)) lista.Add(c);
+                            }
+                    }
+                }
+                catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[ObtenerCorreosAlertaSeguridad] {0}", ex.Message); }
+            }
+            return lista;
+        }
+
+        // ====== A12: ruido / alertas de la auditoría de seguridad ======
+
+        /// <summary>
+        /// True si se debe escribir una fila en <c>Auditoria</c> por un intento con identificador
+        /// inexistente desde <paramref name="ip"/>. Limita a 1 fila por IP cada
+        /// <see cref="AUDIT_THROTTLE_MIN"/> minutos (los repetidos solo van al log de aplicación).
+        /// </summary>
+        private static bool DebeAuditarFalloAnonimo(string ip)
+        {
+            if (string.IsNullOrEmpty(ip)) return true;
+            string key = "_afa_" + ip;
+            if (System.Web.HttpRuntime.Cache[key] != null) return false;
+            System.Web.HttpRuntime.Cache.Insert(key, 1, null,
+                DateTime.Now.AddMinutes(AUDIT_THROTTLE_MIN), System.Web.Caching.Cache.NoSlidingExpiration);
+            return true;
+        }
+
+        /// <summary>Purga los intentos de seguridad anónimos antiguos, como mucho una vez al día.</summary>
+        private void PurgarAuditoriaSeguridadOportunista()
+        {
+            if ((DateTime.Now - _ultimaPurgaAuditoria).TotalHours < 24) return;
+            lock (_purgaAuditoriaLock)
+            {
+                if ((DateTime.Now - _ultimaPurgaAuditoria).TotalHours < 24) return;
+                _ultimaPurgaAuditoria = DateTime.Now;
+            }
+            try { new AuditoriaService().PurgarSeguridadAnonimaAntigua(AUDIT_SEGURIDAD_RETENCION_DIAS); }
+            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[PurgarAuditoriaSeguridad] {0}", ex.Message); }
+        }
+
+        /// <summary>
+        /// Avisa de que una cuenta REAL acaba de bloquearse por intentos fallidos: log de
+        /// aplicación + notificación interna al propio usuario y a cada Super Admin. Nunca lanza.
+        /// </summary>
+        private void NotificarBloqueoCuenta(int usuarioId, string identificador, int intentos)
+        {
+            try
+            {
+                Helpers.AppLogger.Warn(
+                    $"Cuenta bloqueada por {intentos} intentos fallidos: usuarioId={usuarioId} ({identificador})",
+                    "Acceso.Login");
+
+                var notif = new NotificacionesService();
+                notif.Crear(usuarioId, R("Notif_CuentaBloqueadaTitulo"), R("Notif_CuentaBloqueadaMsg"), "warning");
+
+                string msgAdmin = string.Format(R("Notif_CuentaBloqueadaAdminMsg"), identificador, intentos);
+                foreach (int idAdmin in ObtenerIdsSuperAdmin())
+                    if (idAdmin != usuarioId)
+                        notif.Crear(idAdmin, R("Notif_CuentaBloqueadaAdminTitulo"), msgAdmin, "error", "/Auditoria");
+            }
+            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[NotificarBloqueoCuenta] {0}", ex.Message); }
+        }
+
+        private System.Collections.Generic.List<int> ObtenerIdsSuperAdmin()
+        {
+            var ids = new System.Collections.Generic.List<int>();
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                {
+                    var cmd = new SqlCommand("SELECT Id FROM Usuarios WHERE Admin = 2", cn);
+                    cn.Open();
+                    using (var r = cmd.ExecuteReader())
+                        while (r.Read()) ids.Add(Convert.ToInt32(r["Id"]));
+                }
+            }
+            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[ObtenerIdsSuperAdmin] {0}", ex.Message); }
+            return ids;
         }
 
         private bool EsCorreoValido(string correo)
@@ -609,11 +800,18 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Login");
 
             // Validaciones cliente se repiten en servidor
-            if (string.IsNullOrWhiteSpace(nuevaClave) || nuevaClave.Length < 8)
+            if (string.IsNullOrWhiteSpace(nuevaClave))
             {
                 ViewData["Token"] = token;
-                ViewData["Error"] = nuevaClave?.Length < 8
-                    ? R("Reset_NewPwd_ErrorLen") : R("Reset_NewPwd_ErrorEmpty");
+                ViewData["Error"] = R("Reset_NewPwd_ErrorEmpty");
+                return View("~/Views/Acceso/RestablecerClave.cshtml");
+            }
+            // A13: política de contraseñas centralizada (longitud mínima 12, complejidad,
+            // claves comunes y comprobación contra filtraciones — Have I Been Pwned).
+            if (!Helpers.PoliticaContrasena.Validar(nuevaClave.Trim(), null, out string errClave))
+            {
+                ViewData["Token"] = token;
+                ViewData["Error"] = R(errClave);
                 return View("~/Views/Acceso/RestablecerClave.cshtml");
             }
             if (nuevaClave != confirmarClave)

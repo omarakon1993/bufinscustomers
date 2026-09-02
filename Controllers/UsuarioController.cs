@@ -645,65 +645,19 @@ namespace bufinscustomers.Controllers
             return System.Text.RegularExpressions.Regex.IsMatch(usuario, @"^[a-z][a-z0-9.]{3,19}$");
         }
 
-        private static readonly HashSet<string> ClavesComunes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "12345678", "123456789", "1234567890", "password", "Password1", "Password123",
-            "qwerty123", "qwertyui", "11111111", "00000000", "abcd1234", "abc12345",
-            "contraseña", "contrasena", "Contrasena1", "Contraseña1", "admin123", "Admin123",
-            "bufins123", "Bufins123", "12345678a", "a12345678", "iloveyou1", "letmein123",
-            "welcome123", "changeme1", "usuario123", "colombia1", "Colombia1",
-            "Password1!", "Qwerty123!", "Contrasena1!", "Admin123!", "12345678910",
-            "abcdefgh1", "Abcdefgh1", "password1!", "P@ssword1", "P@ssw0rd", "Bufins123!"
-        };
-
-        // Política de contraseñas: mínimo 10 caracteres, mayúscula, minúscula, número,
-        // carácter especial, sin 3+ caracteres repetidos seguidos, sin ser una clave
-        // común ni contener el nombre de usuario.
+        // Política de contraseñas centralizada en Helpers.PoliticaContrasena (longitud mínima 12,
+        // complejidad, sin 3+ repetidos, sin claves comunes ni el nombre de usuario, y sin
+        // aparecer en filtraciones conocidas — Have I Been Pwned). Devuelve el mensaje ya
+        // traducido a la cultura activa.
         private bool EsClaveSegura(string clave, string usuario, out string mensajeError)
         {
-            if (string.IsNullOrEmpty(clave) || clave.Length < 10)
+            if (PoliticaContrasena.Validar(clave, usuario, out string errKey))
             {
-                mensajeError = "La contraseña debe tener al menos 10 caracteres.";
-                return false;
+                mensajeError = null;
+                return true;
             }
-            if (!System.Text.RegularExpressions.Regex.IsMatch(clave, @"[a-z]"))
-            {
-                mensajeError = "La contraseña debe incluir al menos una letra minúscula.";
-                return false;
-            }
-            if (!System.Text.RegularExpressions.Regex.IsMatch(clave, @"[A-Z]"))
-            {
-                mensajeError = "La contraseña debe incluir al menos una letra mayúscula.";
-                return false;
-            }
-            if (!System.Text.RegularExpressions.Regex.IsMatch(clave, @"[0-9]"))
-            {
-                mensajeError = "La contraseña debe incluir al menos un número.";
-                return false;
-            }
-            if (!System.Text.RegularExpressions.Regex.IsMatch(clave, @"[^A-Za-z0-9]"))
-            {
-                mensajeError = "La contraseña debe incluir al menos un carácter especial (ej: !@#$%).";
-                return false;
-            }
-            if (System.Text.RegularExpressions.Regex.IsMatch(clave, @"(.)\1\1"))
-            {
-                mensajeError = "La contraseña no debe tener 3 o más caracteres repetidos seguidos.";
-                return false;
-            }
-            if (ClavesComunes.Contains(clave))
-            {
-                mensajeError = "Esta contraseña es demasiado común. Elige una más segura.";
-                return false;
-            }
-            if (!string.IsNullOrEmpty(usuario) && clave.IndexOf(usuario, StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                mensajeError = "La contraseña no debe contener el nombre de usuario.";
-                return false;
-            }
-
-            mensajeError = null;
-            return true;
+            mensajeError = R(errKey);
+            return false;
         }
 
         /// <summary>

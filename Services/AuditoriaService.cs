@@ -308,6 +308,40 @@ namespace bufinscustomers.Services
             }
         }
 
+        /// <summary>
+        /// A12: elimina intentos de seguridad ANÓNIMOS (sin usuario asociado — típicamente bots
+        /// probando identificadores inexistentes) con más de <paramref name="diasConservar"/> días.
+        /// No toca los eventos de seguridad ligados a un usuario real. Devuelve las filas borradas.
+        /// Nunca lanza.
+        /// </summary>
+        public int PurgarSeguridadAnonimaAntigua(int diasConservar)
+        {
+            if (diasConservar < 1) diasConservar = 90;
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand(@"
+                    DELETE FROM dbo.Auditoria
+                    WHERE Tipo = @Tipo
+                      AND IdUsuario IS NULL
+                      AND Accion IN (@A1, @A2)
+                      AND Fecha < DATEADD(DAY, -@Dias, GETDATE())", cn))
+                {
+                    cmd.Parameters.AddWithValue("@Tipo", AuditoriaTipo.Seguridad);
+                    cmd.Parameters.AddWithValue("@A1", AuditoriaAccion.LoginFallido);
+                    cmd.Parameters.AddWithValue("@A2", AuditoriaAccion.Bloqueo);
+                    cmd.Parameters.AddWithValue("@Dias", diasConservar);
+                    cn.Open();
+                    return cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceWarning("[AuditoriaService.PurgarSeguridadAnonimaAntigua] {0}", ex.Message);
+                return 0;
+            }
+        }
+
         /// <summary>Valores distintos de <c>Tipo</c> presentes, para poblar el filtro del visor.</summary>
         public List<string> ObtenerTiposUsados()
         {
@@ -335,7 +369,10 @@ namespace bufinscustomers.Services
                 var ctx = HttpContext.Current;
                 if (ctx == null) return;
 
-                if (string.IsNullOrEmpty(r.IpAddress)) r.IpAddress = ctx.Request?.UserHostAddress;
+                if (string.IsNullOrEmpty(r.IpAddress))
+                    r.IpAddress = bufinscustomers.Helpers.ClientIpHelper.ObtenerIp();
+                if (string.IsNullOrEmpty(r.IpAddress))
+                    r.IpAddress = ctx.Request?.UserHostAddress;
                 if (string.IsNullOrEmpty(r.UserAgent)) r.UserAgent = ctx.Request?.UserAgent;
 
                 if (!r.IdUsuario.HasValue || string.IsNullOrEmpty(r.NombreUsuario))

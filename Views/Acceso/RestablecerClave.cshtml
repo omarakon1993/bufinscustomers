@@ -197,8 +197,8 @@
                             if (!pwd) { fill.style.width = '0%'; label.textContent = ''; return; }
 
                             var score = 0;
-                            if (pwd.length >= 8)  score++;
                             if (pwd.length >= 12) score++;
+                            if (pwd.length >= 16) score++;
                             if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
                             if (/\d/.test(pwd))  score++;
                             if (/[^A-Za-z0-9]/.test(pwd)) score++;
@@ -224,7 +224,7 @@
                             var msg = null;
 
                             if (!nueva)           msg = _rMsg.errorEmpty;
-                            else if (nueva.length < 8) msg = _rMsg.errorLen;
+                            else if (nueva.length < 12) msg = _rMsg.errorLen;
                             else if (nueva !== confirmar) msg = _rMsg.errorMatch;
 
                             if (msg) {

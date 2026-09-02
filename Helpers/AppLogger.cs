@@ -81,7 +81,13 @@ namespace bufinscustomers.Helpers
             {
                 var ctx = HttpContext.Current;
                 if (ctx == null) return "req=-";
-                string ip  = ctx.Request?.UserHostAddress ?? "-";
+                string ip = "-";
+                try
+                {
+                    ip = ClientIpHelper.ObtenerIp();
+                    if (string.IsNullOrEmpty(ip)) ip = ctx.Request?.UserHostAddress ?? "-";
+                }
+                catch { ip = ctx.Request?.UserHostAddress ?? "-"; }
                 string url = ctx.Request?.RawUrl ?? "-";
                 string user = "-";
                 try { user = (ctx.Session?["UsuarioCompleto"] as bufinscustomers.Models.Usuarios)?.Correo ?? "-"; }

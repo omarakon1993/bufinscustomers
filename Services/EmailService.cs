@@ -97,6 +97,17 @@ namespace bufinscustomers.Services
                 ConstruirEmailBienvenidaHtml(nombreCompleto, nombreUsuario, empresa, telefono, destinatario, enlaceLogin, esIngles, ModoCorreoCuenta.Actualizacion));
         }
 
+        /// <summary>
+        /// Correo de alerta de seguridad para el equipo (texto ya resuelto por el controlador,
+        /// que es quien tiene acceso a los recursos i18n). Plantilla de marca con acento rojo.
+        /// Puede tardar por el handshake SMTP: convócalo en segundo plano, nunca en línea con
+        /// un flujo crítico como el login.
+        /// </summary>
+        public void EnviarAlertaSeguridad(string destinatario, string asunto, string titulo, string mensaje, string enlace = null)
+        {
+            Enviar(destinatario, asunto, ConstruirEmailAlertaHtml(titulo, mensaje, enlace));
+        }
+
         private enum ModoCorreoCuenta { Creacion, Reenvio, Actualizacion }
 
         private void Enviar(string destinatario, string asunto, string htmlBody)
@@ -174,6 +185,41 @@ namespace bufinscustomers.Services
     </p>
     <div style=""background:#f8f9ff;border-left:4px solid #6366f1;padding:14px 18px;font-size:13px;color:#4b5563;margin:16px 0;"">{expira}</div>
     <p style=""font-size:13px;color:#9ca3af;text-align:center;"">{ignorar}</p>
+  </td></tr>
+  <tr><td style=""background:#f8f9ff;padding:20px;text-align:center;font-size:12px;color:#9ca3af;border-top:1px solid #e5e7eb;"">
+    &copy; Bufins &mdash; Business Finance Always Everywhere
+  </td></tr>
+ </table>
+ </td></tr>
+</table>
+</body></html>";
+        }
+
+        private static string ConstruirEmailAlertaHtml(string titulo, string mensaje, string enlace)
+        {
+            string bloqueEnlace = string.IsNullOrWhiteSpace(enlace) ? "" : $@"
+    <table width=""100%"" cellpadding=""0"" cellspacing=""0""><tr><td align=""center"" style=""padding:4px 0 24px;"">
+      <a href=""{enlace}"" style=""display:inline-block;background:linear-gradient(135deg,#4338ca,#6d28d9);color:#fff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:14px;font-weight:700;"">Abrir auditor&iacute;a</a>
+    </td></tr></table>";
+
+            return $@"<!DOCTYPE html>
+<html lang=""es"">
+<head><meta charset=""UTF-8""><meta name=""viewport"" content=""width=device-width,initial-scale=1""></head>
+<body style=""margin:0;padding:0;background:#f0f2f8;font-family:'Segoe UI',Arial,sans-serif;"">
+<table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background:#f0f2f8;padding:32px 16px;"">
+ <tr><td align=""center"">
+ <table width=""600"" cellpadding=""0"" cellspacing=""0"" style=""max-width:600px;width:100%;background:#fff;border-radius:16px;overflow:hidden;"">
+  <tr><td style=""background:linear-gradient(135deg,#7f1d1d,#b91c1c,#dc2626);padding:32px 40px 24px;text-align:center;"">
+    <div style=""font-size:26px;font-weight:900;color:#fff;letter-spacing:3px;"">bufins</div>
+    <div style=""font-size:10px;color:rgba(255,255,255,0.8);letter-spacing:2px;text-transform:uppercase;"">Alerta de seguridad</div>
+  </td></tr>
+  <tr><td style=""padding:36px 40px;"">
+    <p style=""font-size:18px;font-weight:700;color:#7f1d1d;margin:0 0 14px;"">{HttpUtility.HtmlEncode(titulo)}</p>
+    <p style=""font-size:15px;color:#4b5563;line-height:1.7;margin:0 0 24px;"">{HttpUtility.HtmlEncode(mensaje)}</p>
+    {bloqueEnlace}
+    <div style=""background:#fef2f2;border-left:4px solid #dc2626;padding:14px 18px;font-size:13px;color:#4b5563;margin:8px 0 0;"">
+      Aviso autom&aacute;tico del sistema Bufins. No respondas a este correo.
+    </div>
   </td></tr>
   <tr><td style=""background:#f8f9ff;padding:20px;text-align:center;font-size:12px;color:#9ca3af;border-top:1px solid #e5e7eb;"">
     &copy; Bufins &mdash; Business Finance Always Everywhere

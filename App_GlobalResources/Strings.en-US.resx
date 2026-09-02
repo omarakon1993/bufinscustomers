@@ -76,12 +76,12 @@
   <data name="Reset_NewPwd_Heading" xml:space="preserve"><value>NEW PASSWORD</value></data>
   <data name="Reset_NewPwd_Instrucciones" xml:space="preserve"><value>Create a secure password for your account.</value></data>
   <data name="Reset_NewPwd_Label" xml:space="preserve"><value>New Password</value></data>
-  <data name="Reset_NewPwd_Placeholder" xml:space="preserve"><value>At least 8 characters</value></data>
+  <data name="Reset_NewPwd_Placeholder" xml:space="preserve"><value>At least 12 characters</value></data>
   <data name="Reset_NewPwd_ConfirmLabel" xml:space="preserve"><value>Confirm Password</value></data>
   <data name="Reset_NewPwd_ConfirmPlaceholder" xml:space="preserve"><value>Repeat the new password</value></data>
   <data name="Reset_NewPwd_Btn" xml:space="preserve"><value>CHANGE PASSWORD</value></data>
   <data name="Reset_NewPwd_ErrorEmpty" xml:space="preserve"><value>Please enter a password.</value></data>
-  <data name="Reset_NewPwd_ErrorLen" xml:space="preserve"><value>Password must be at least 8 characters long.</value></data>
+  <data name="Reset_NewPwd_ErrorLen" xml:space="preserve"><value>Password must be at least 12 characters long.</value></data>
   <data name="Reset_NewPwd_ErrorMatch" xml:space="preserve"><value>Passwords do not match.</value></data>
   <data name="Reset_NewPwd_TokenInvalido" xml:space="preserve"><value>The recovery link is invalid or has expired.</value></data>
   <data name="Reset_NewPwd_TokenExpirado" xml:space="preserve"><value>The link has expired. Please request a new one.</value></data>
@@ -1262,6 +1262,23 @@
   <data name="Notif_ErrorRollback" xml:space="preserve"><value>Error restoring version</value></data>
   <data name="Hist_BadgeLimite" xml:space="preserve"><value>History limit</value></data>
   <data name="Hist_BadgeTexto" xml:space="preserve"><value>A maximum of {0} versions are kept per combination of company + data year + mode (execution or historical). When this limit is exceeded, the oldest version is deleted automatically.</value></data>
+  <!-- PASSWORD POLICY -->
+  <data name="Pwd_ErrorLongitud" xml:space="preserve"><value>Password must be at least 12 characters long.</value></data>
+  <data name="Pwd_ErrorMinuscula" xml:space="preserve"><value>Password must include at least one lowercase letter.</value></data>
+  <data name="Pwd_ErrorMayuscula" xml:space="preserve"><value>Password must include at least one uppercase letter.</value></data>
+  <data name="Pwd_ErrorNumero" xml:space="preserve"><value>Password must include at least one number.</value></data>
+  <data name="Pwd_ErrorEspecial" xml:space="preserve"><value>Password must include at least one special character (e.g. !@#$%).</value></data>
+  <data name="Pwd_ErrorRepetidos" xml:space="preserve"><value>Password must not contain 3 or more identical characters in a row.</value></data>
+  <data name="Pwd_ErrorComun" xml:space="preserve"><value>This password is too common. Please choose a stronger one.</value></data>
+  <data name="Pwd_ErrorContieneUsuario" xml:space="preserve"><value>Password must not contain the username.</value></data>
+  <data name="Pwd_ErrorFiltrada" xml:space="preserve"><value>This password has appeared in known data breaches. Please choose a different one.</value></data>
+  <!-- NOTIFICATIONS — ACCOUNT LOCKOUT -->
+  <data name="Notif_CuentaBloqueadaTitulo" xml:space="preserve"><value>Your account was temporarily locked</value></data>
+  <data name="Notif_CuentaBloqueadaMsg" xml:space="preserve"><value>We detected several failed sign-in attempts and locked your account as a precaution. If this wasn't you, change your password once you regain access.</value></data>
+  <data name="Notif_CuentaBloqueadaAdminTitulo" xml:space="preserve"><value>User account locked after failed attempts</value></data>
+  <data name="Notif_CuentaBloqueadaAdminMsg" xml:space="preserve"><value>Account "{0}" was locked after {1} failed sign-in attempts. Review the security audit log.</value></data>
+  <data name="Notif_ModoDefensivoTitulo" xml:space="preserve"><value>Login defensive mode activated</value></data>
+  <data name="Notif_ModoDefensivoMsg" xml:space="preserve"><value>A spike of failed sign-in attempts was detected system-wide. The per-IP limit was automatically tightened. Review the security audit log.</value></data>
   <!-- IA IMPROVEMENTS -->
   <data name="IA_BtnExportarExcel" xml:space="preserve"><value>Export Excel with AI</value></data>
   <data name="IA_LimiteConsultas" xml:space="preserve"><value>Daily limit reached</value></data>
