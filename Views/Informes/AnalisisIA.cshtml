@@ -24,8 +24,25 @@
 }
 .audit-btn-header:hover { background:rgba(255,255,255,.30); color:#fff; }
 
-/* ── Cabecera del panel: acciones a la derecha (exportar en icono + Nueva consulta) ── */
+/* ── Cabecera del panel: acciones a la derecha (exportar + Nueva consulta) ── */
 .ia-header-actions { display:flex; align-items:center; gap:8px; }
+/* Botones de exportar: mismo alto que "Nueva consulta", icono más grande y con el color de marca
+   de cada formato (rojo PDF / verde Excel). Vencen a analisis-ia-consola-clara.css por especificidad. */
+.ia-header-actions > button { min-height:34px; }
+.ia-header-actions .btn-exportar-pdf,
+.ia-header-actions .btn-exportar-excel {
+    width:auto; height:auto; padding:6px 14px; gap:0;
+    border:none; border-radius:9px;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:1.05rem; line-height:1; color:#fff;
+    box-shadow:0 6px 16px -11px rgba(22,9,51,.55);
+    transition:background .15s;
+}
+.ia-header-actions .btn-exportar-pdf          { background:#e2483d; }
+.ia-header-actions .btn-exportar-pdf:hover    { background:#c9392f; color:#fff; transform:none; }
+.ia-header-actions .btn-exportar-excel        { background:#217346; }
+.ia-header-actions .btn-exportar-excel:hover  { background:#185c37; color:#fff; transform:none; }
+.ia-header-actions .btn-label { display:none; }
 
 /* Panel colapsable de "Detalles" en la barra de acciones de la respuesta */
 .ia-detalles-panel {
