@@ -8,6 +8,41 @@
 
 <link href="~/Assets/css/informe-relacionamientos.css" rel="stylesheet" />
 
+<style>
+    /* Botonera de acciones más compacta (evita el wrap en pantallas de 14") */
+    #formCarga .btn-group-actions { gap: 0.5rem; }
+    #formCarga .btn-group-actions .btn {
+        padding: 0.45rem 0.9rem;
+        font-size: 0.8rem;
+    }
+    #formCarga .btn-group-actions .btn i { margin-right: 0.4rem !important; }
+
+    /* Aviso en línea de "qué falta" para habilitar Cargar Datos */
+    .carga-inline-hint {
+        display: none;
+        align-items: center;
+        gap: 7px;
+        margin-top: 0.75rem;
+        padding: 8px 12px;
+        background: #fff7e6;
+        border: 1px solid #ffe0a3;
+        border-radius: 8px;
+        color: #8a5300;
+        font-size: 0.78rem;
+    }
+    .carga-inline-hint.show { display: flex; }
+    .carga-inline-hint i { color: #d97706; }
+
+    /* Alerta "Confirmar carga": icono y título un poco más pequeños */
+    .swal-carga-compact .swal2-icon {
+        width: 3.4em;
+        height: 3.4em;
+        margin: 1.4em auto 0.4em;
+    }
+    .swal-carga-compact .swal2-icon .swal2-icon-content { font-size: 2.4em; }
+    .swal-carga-compact .swal2-title { font-size: 1.2rem; }
+</style>
+
 <div class="container-fluid px-4">
     <!-- Header -->
     <div class="powerbi-header">
@@ -136,6 +171,11 @@
                 <button type="button" id="btnLimpiar" class="btn btn-modern-secondary" style="display: none;">
                     <i class="fas fa-times mr-2"></i>@Resources.Strings.Datos_BtnQuitarArchivo
                 </button>
+            </div>
+
+            <!-- Aviso: qué falta para habilitar "Cargar Datos" -->
+            <div id="cargaHint" class="carga-inline-hint" role="status">
+                <i class="fas fa-info-circle"></i> <span id="cargaHintTexto"></span>
             </div>
         </form>
     </div>
@@ -647,19 +687,21 @@
 @section scripts {
     <script>
         var _datosMsg = {
-            formatoInvalido: '@Resources.Strings.Datos_JS_FormatoInvalido',
+            formatoInvalido: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_FormatoInvalido))',
             soloXlsx: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SoloXlsx))',
-            empresaRequerida: '@Resources.Strings.Datos_JS_EmpresaRequerida',
-            seleccionarEmpresa: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SoloXlsx))',
-            confirmarCarga: '@Resources.Strings.Datos_JS_ConfirmarCarga',
-            confirmarBold: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SoloXlsx))',
-            confirmarRest: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SoloXlsx))',
-            confirmarPregunta: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SoloXlsx))',
-            siCargar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SoloXlsx))',
-            cancelar: '@Resources.Strings.Layout_Cancel',
-            procesando: '@Resources.Strings.Datos_JS_Procesando',
-            dropText: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SoloXlsx))',
-            dropSubtext: '@Resources.Strings.Datos_DropSubtext',
+            empresaRequerida: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_EmpresaRequerida))',
+            seleccionarEmpresa: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SeleccionarEmpresa))',
+            confirmarCarga: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_ConfirmarCarga))',
+            confirmarBold: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_ConfirmarBold))',
+            confirmarRest: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_ConfirmarRest))',
+            confirmarPregunta: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_ConfirmarPregunta))',
+            siCargar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SiCargar))',
+            cancelar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel))',
+            procesando: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_Procesando))',
+            dropText: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_DropText))',
+            dropSubtext: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_DropSubtext))',
+            empresaLabel: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_EmpresaLabel))',
+            anioLabel: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_AnioLabel))',
             selectAnio: '@Resources.Strings.Datos_JS_SelectAnio',
             anioEjecucion: '@Resources.Strings.Datos_JS_AnioEjecucion',
             anosHistoricos: '@Resources.Strings.Datos_JS_AnosHistoricos',
@@ -669,7 +711,12 @@
             configIncompleta: '@Resources.Strings.Datos_JS_ConfigIncompleta',
             errorCargarAnios: '@Resources.Strings.Datos_JS_ErrorCargarAnios',
             modoEjecucion: '@Resources.Strings.Datos_JS_ModoEjecucion',
-            modoHistorico: '@Resources.Strings.Datos_JS_ModoHistorico'
+            modoHistorico: '@Resources.Strings.Datos_JS_ModoHistorico',
+            modo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_Modo))',
+            faltan: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_Faltan))',
+            faltaEmpresa: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_FaltaEmpresa))',
+            faltaAnio: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_FaltaAnio))',
+            faltaArchivo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_FaltaArchivo))'
         };
 
         $(document).ready(function () {
@@ -677,6 +724,25 @@
             var fileInput = $('#archivoExcel');
             var btnCargar = $('#btnCargar');
             var btnLimpiar = $('#btnLimpiar');
+
+            // ── Habilita "Cargar Datos" solo con empresa + año + archivo ─────────
+            function estadoBotonCargar() {
+                var faltan = [];
+                var emp = $('#idEmpresaSeleccionada').val();
+                if (!emp || emp === '0')            faltan.push(_datosMsg.faltaEmpresa);
+                if (!$('#selectAnio').val())        faltan.push(_datosMsg.faltaAnio);
+                if (!fileInput[0].files.length)     faltan.push(_datosMsg.faltaArchivo);
+
+                var ok = faltan.length === 0;
+                btnCargar.prop('disabled', !ok);
+                if (ok) {
+                    $('#cargaHint').removeClass('show');
+                } else {
+                    $('#cargaHintTexto').text(_datosMsg.faltan + ' ' + faltan.join(', '));
+                    $('#cargaHint').addClass('show');
+                }
+            }
+            estadoBotonCargar();
 
             // ── Selector de año ──────────────────────────────────────────────────
             $('#idEmpresaSeleccionada').on('change', function () {
@@ -688,6 +754,7 @@
                 selectAnio.html('<option value="">' + _datosMsg.selectAnio + '</option>');
                 $('#modoSeleccionado').val('');
                 divAnio.hide();
+                estadoBotonCargar();
 
                 if (!idEmpresa || idEmpresa === '0') return;
 
@@ -724,6 +791,7 @@
             $('#selectAnio').on('change', function () {
                 var modo = $(this).find(':selected').data('modo') || '';
                 $('#modoSeleccionado').val(modo);
+                estadoBotonCargar();
             });
 
             // ── Drop Zone ────────────────────────────────────────────────────────
@@ -791,8 +859,8 @@
                     'border-color': '#10b981',
                     'background': '#f0fdf4'
                 });
-                btnCargar.prop('disabled', false);
                 btnLimpiar.show();
+                estadoBotonCargar();
             }
 
             // Quitar archivo
@@ -805,8 +873,8 @@
                     'border-color': '#d1d5db',
                     'background': 'white'
                 });
-                btnCargar.prop('disabled', true);
                 btnLimpiar.hide();
+                estadoBotonCargar();
             });
 
             // Abrir modal instructivo
@@ -843,21 +911,39 @@
                 }
 
                 var modo = $('#modoSeleccionado').val();
-                var modoLabel = modo === 'ejecucion'
-                    ? '<i class="fas fa-play-circle mr-1" style="color:#10b981;"></i>' + _datosMsg.modoEjecucion + ' <strong>' + anio + '</strong>'
-                    : '<i class="fas fa-history mr-1" style="color:#f59e0b;"></i>' + _datosMsg.modoHistorico + ' <strong>' + anio + '</strong>';
+                var esEjecucion = modo === 'ejecucion';
+                var empresaNombre = $('#idEmpresaSeleccionada option:selected').text();
+                var modoBadge = esEjecucion
+                    ? '<span style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(16,185,129,.16);color:#34d399;border:1px solid rgba(16,185,129,.32);border-radius:999px;padding:.15rem .65rem;font-size:.82rem;font-weight:600;"><i class="fas fa-play-circle"></i>' + _datosMsg.modoEjecucion.replace(':', '') + '</span>'
+                    : '<span style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(245,158,11,.16);color:#fbbf24;border:1px solid rgba(245,158,11,.32);border-radius:999px;padding:.15rem .65rem;font-size:.82rem;font-weight:600;"><i class="fas fa-history"></i>' + _datosMsg.modoHistorico.replace(':', '') + '</span>';
+
+                var filaResumen = function (icono, etiqueta, valor) {
+                    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.6rem 0;">' +
+                           '<span style="color:rgba(255,255,255,.5);font-size:.85rem;white-space:nowrap;"><i class="fas ' + icono + '" style="width:16px;margin-right:.5rem;opacity:.8;"></i>' + etiqueta + '</span>' +
+                           '<span style="color:#fff;font-size:.9rem;font-weight:600;text-align:right;">' + valor + '</span></div>';
+                };
 
                 Swal.fire({
                     icon: 'warning',
                     title: _datosMsg.confirmarCarga,
-                    html: '<strong>' + _datosMsg.confirmarBold + '</strong> ' + _datosMsg.confirmarRest +
-                          '<br><div style="margin: 0.75rem 0; padding: 0.5rem 0.75rem; background: #f0f4ff; border-radius: 6px; font-size: 0.92rem;">' + modoLabel + '</div>' +
-                          _datosMsg.confirmarPregunta,
+                    html: '<p style="color:rgba(255,255,255,.66);font-size:.9rem;line-height:1.5;margin:.25rem 0 1rem;">' +
+                              '<strong style="color:#fbbf24;font-weight:600;">' + _datosMsg.confirmarBold + '</strong> ' + _datosMsg.confirmarRest +
+                          '</p>' +
+                          '<div style="background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:.35rem 1rem;text-align:left;">' +
+                              filaResumen('fa-building', _datosMsg.empresaLabel.replace(':', ''), empresaNombre) +
+                              '<div style="height:1px;background:rgba(255,255,255,.07);"></div>' +
+                              filaResumen('fa-calendar-alt', _datosMsg.anioLabel.replace(':', ''), anio) +
+                              '<div style="height:1px;background:rgba(255,255,255,.07);"></div>' +
+                              filaResumen('fa-cog', _datosMsg.modo, modoBadge) +
+                          '</div>' +
+                          '<p style="color:rgba(255,255,255,.8);font-size:.92rem;font-weight:600;margin:1.1rem 0 0;">' + _datosMsg.confirmarPregunta + '</p>',
+                    width: 460,
+                    customClass: { popup: 'swal-carga-compact' },
                     showCancelButton: true,
-                    confirmButtonText: _datosMsg.siCargar,
-                    cancelButtonText: _datosMsg.cancelar,
-                    confirmButtonColor: '#583AFF',
-                    cancelButtonColor: '#6c757d'
+                    reverseButtons: true,
+                    focusCancel: true,
+                    confirmButtonText: '<i class="fas fa-upload mr-2"></i>' + _datosMsg.siCargar,
+                    cancelButtonText: _datosMsg.cancelar
                 }).then(function (result) {
                     if (result.isConfirmed) {
                         btnCargar.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>' + _datosMsg.procesando);
