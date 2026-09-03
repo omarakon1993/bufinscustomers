@@ -13,6 +13,7 @@
 <link href="~/Assets/css/informe-tablas-datos.css" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css"  rel="stylesheet" />
 <link href="~/Assets/css/analisis-ia.css"           rel="stylesheet" />
+<link href="~/Assets/css/analisis-ia-consola-clara.css" rel="stylesheet" />
 
 <style>
 /* ── Botón historial auditoría ── */
@@ -23,47 +24,13 @@
 }
 .audit-btn-header:hover { background:rgba(255,255,255,.30); color:#fff; }
 
-/* ── Selector de modo + botón Generar, unidos en un solo control (N06) ── */
-.ia-gen-group { display:inline-flex; align-items:stretch; }
-.ia-modo-select {
-    border:1px solid #d8d2f5; background:#fff; color:#3f3a63;
-    border-radius:10px 0 0 10px; padding:7px 12px; font-size:.84rem; font-weight:600;
-    cursor:pointer; outline:none; max-width:220px; align-self:stretch;
-}
-.ia-modo-select:focus { border-color:#583AFF; }
-.ia-gen-group .btn-generar-resumen {
-    border-radius:0 10px 10px 0; box-shadow:none;
-}
-.ia-gen-group .btn-generar-resumen:hover { transform:none; }
+/* ── Cabecera del panel: acciones a la derecha (exportar en icono + Nueva consulta) ── */
+.ia-header-actions { display:flex; align-items:center; gap:8px; }
 
-/* ── Pie de metadatos de cada respuesta (N02 / N03 / N14) ── */
-.ia-msg-meta {
-    display:flex; flex-wrap:wrap; align-items:center; gap:6px;
-    margin-top:10px; padding-top:8px; border-top:1px dashed #e5e0f5;
-    font-size:.76rem;
-}
-.ia-act-btn, .ia-fb-btn, .ia-link-btn {
-    border:1px solid #d8d2f5; background:#f6f4ff; color:#4a2de0;
-    border-radius:999px; padding:3px 10px; font-size:.75rem; font-weight:600;
-    cursor:pointer; transition:background .15s, border-color .15s;
-}
-.ia-act-btn:hover, .ia-fb-btn:hover, .ia-link-btn:hover { background:#ece7ff; border-color:#b9abf5; }
-.ia-fb-btn { padding:3px 9px; }
-.ia-fb-btn.is-active { background:#583AFF; border-color:#583AFF; color:#fff; }
-.ia-fb-btn:disabled { cursor:default; opacity:.9; }
-.ia-fb { display:inline-flex; gap:4px; }
-.ia-meta-chip {
-    display:inline-flex; align-items:center; gap:4px;
-    background:#fff7e6; border:1px solid #ffe0a3; color:#a86400;
-    border-radius:999px; padding:3px 9px; font-weight:600;
-}
-.ia-meta-details { color:#8a83a8; }
-.ia-meta-details summary { cursor:pointer; user-select:none; }
-.ia-meta-details > div { margin-top:4px; color:#6b6486; font-variant-numeric:tabular-nums; }
-.ia-trunc-note {
-    display:inline-flex; align-items:center; gap:5px;
-    background:#fff4e5; border:1px solid #ffd8a8; color:#9a5b00;
-    border-radius:999px; padding:3px 10px; font-weight:600;
+/* Panel colapsable de "Detalles" en la barra de acciones de la respuesta */
+.ia-detalles-panel {
+    padding:0 22px 12px; font-size:.75rem; color:#6b7280;
+    font-family:'JetBrains Mono',SFMono-Regular,Consolas,monospace;
 }
 
 /* Aviso en línea de filtros incompletos (N: controles UX) */
@@ -231,27 +198,29 @@ textarea.ia-text-input { resize:none; overflow-y:auto; max-height:130px; line-he
                     <div id="iaContexto" class="ia-panel-context"></div>
                 </div>
             </div>
-            <button type="button" id="btnNuevaConsulta" class="btn-nueva-consulta">
-                <i class="fas fa-redo-alt"></i> @Resources.Strings.IA_BtnNuevaConsulta
-            </button>
+            <div class="ia-header-actions">
+                <button type="button" id="btnExportarPDF" class="btn-exportar-pdf" onclick="exportarAnalisisPDF()"
+                        title="@Resources.Strings.IA_BtnExportarPDF" style="display:none;">
+                    <i class="fas fa-file-pdf"></i><span class="btn-label">@Resources.Strings.IA_BtnExportarPDF</span>
+                </button>
+                <button type="button" id="btnExportarExcel" class="btn-exportar-excel" onclick="exportarExcelConIA()"
+                        title="@Resources.Strings.IA_BtnExportarExcel" style="display:none;">
+                    <i class="fas fa-file-excel"></i><span class="btn-label">@Resources.Strings.IA_BtnExportarExcel</span>
+                </button>
+                <button type="button" id="btnNuevaConsulta" class="btn-nueva-consulta">
+                    <i class="fas fa-redo-alt"></i> @Resources.Strings.IA_BtnNuevaConsulta
+                </button>
+            </div>
         </div>
         <div class="ia-actions-bar">
-            <span class="ia-gen-group">
-                <select id="selectModoIA" class="ia-modo-select" title="@Resources.Strings.IA_LabelModo">
-                    <option value="resumen">@Resources.Strings.IA_ModoResumen</option>
-                    <option value="detallado">@Resources.Strings.IA_ModoDetallado</option>
-                    <option value="cifras">@Resources.Strings.IA_ModoCifras</option>
-                    <option value="riesgo">@Resources.Strings.IA_ModoRiesgo</option>
-                </select>
-                <button type="button" id="btnResumenIA" class="btn-generar-resumen">
-                    <i class="fas fa-magic"></i> @Resources.Strings.IA_BtnGenerar
-                </button>
-            </span>
-            <button type="button" id="btnExportarPDF" class="btn-exportar-pdf" onclick="exportarAnalisisPDF()" style="display:none;">
-                <i class="fas fa-file-pdf"></i> @Resources.Strings.IA_BtnExportarPDF
-            </button>
-            <button type="button" id="btnExportarExcel" class="btn-exportar-excel" onclick="exportarExcelConIA()" style="display:none;">
-                <i class="fas fa-file-excel"></i> @Resources.Strings.IA_BtnExportarExcel
+            <div class="ia-segmented" id="iaTipoAnalisis" role="tablist" title="@Resources.Strings.IA_LabelModo">
+                <button type="button" class="is-active" data-tipo="resumen">@Resources.Strings.IA_ModoResumen</button>
+                <button type="button" data-tipo="detallado">@Resources.Strings.IA_ModoDetallado</button>
+                <button type="button" data-tipo="cifras">@Resources.Strings.IA_ModoCifras</button>
+                <button type="button" data-tipo="riesgo">@Resources.Strings.IA_ModoRiesgo</button>
+            </div>
+            <button type="button" id="btnResumenIA" class="btn-generar-resumen">
+                <i class="fas fa-magic"></i> @Resources.Strings.IA_BtnGenerar
             </button>
             <span class="ia-hint">@Resources.Strings.IA_PreguntaHint</span>
         </div>
@@ -364,6 +333,7 @@ textarea.ia-text-input { resize:none; overflow-y:auto; max-height:130px; line-he
         metaDesdeCache:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_MetaDesdeCache))',
         metaDetalles:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_MetaDetalles))',
         metaTokens:         '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_MetaTokens))',
+        metaFilas:          '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_MetaFilas))',
         btnGenerar:         '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_BtnGenerar))',
         filtrosFaltan:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_FiltrosFaltan))',
         loadingSeg:         '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_LoadingSeg))',
@@ -390,6 +360,12 @@ textarea.ia-text-input { resize:none; overflow-y:auto; max-height:130px; line-he
             return t ? $('<div>').text(t).html().replace(/\n/g, '<br>') : '';
         };
     }
+    // En Análisis IA además se colorean las cifras (num-pos/num-neg) — estilo "Consola clara".
+    window.renderMD = function (t) {
+        return (typeof window.bufinsMarkdown === 'function')
+            ? window.bufinsMarkdown(t, { numeros: true })
+            : window.renderMarkdown(t);
+    };
 </script>
 
 <script>
@@ -533,14 +509,30 @@ $(document).ready(function () {
         scrollChat();
     }
 
-    // Reveal párrafo a párrafo + pie de metadatos (N02 valoración, N03 acciones, N14 caché/coste)
-    function appendAssistantBubble(respuesta, meta) {
+    // Reveal párrafo a párrafo. Estructura "Consola clara": cabecera con franja de metadatos a la
+    // derecha, cuerpo, y barra de acciones (chips + votos + Detalles) bajo el cuerpo.
+    function appendAssistantBubble(respuesta, meta, segTranscurridos) {
+        meta = meta || {};
+
+        var metaHeader = [];
+        var filasTot = meta.TotalFilas || 0, filasEnv = meta.FilasEnviadas || 0;
+        if (filasEnv || filasTot) {
+            metaHeader.push((filasTot && filasEnv && filasEnv < filasTot)
+                ? filasEnv.toLocaleString() + '/' + filasTot.toLocaleString() + ' ' + _iaMsg.metaFilas
+                : (filasEnv || filasTot).toLocaleString() + ' ' + _iaMsg.metaFilas);
+        }
+        if (segTranscurridos != null) metaHeader.push(segTranscurridos + ' ' + _iaMsg.loadingSeg);
+        if (meta.DesdeCache) metaHeader.push(_iaMsg.metaDesdeCache);
+
         var $wrap = $('<div class="ia-chat-assistant-wrap">'
-            + '<div class="ia-chat-avatar ia-chat-avatar-bot"><i class="fas fa-robot"></i></div>'
             + '<div class="ia-chat-assistant-inner">'
-            +   '<div class="ia-response-header"><i class="fas fa-stars"></i> ' + _iaMsg.respuestaHeader + '</div>'
+            +   '<div class="ia-response-header">'
+            +     '<span><i class="fas fa-stream"></i> ' + esc(_iaMsg.respuestaHeader) + '</span>'
+            +     '<span class="ia-response-meta"></span>'
+            +   '</div>'
             +   '<div class="ia-response-body"></div>'
             + '</div></div>');
+        $wrap.find('.ia-response-meta').text(metaHeader.join(' · '));
         $('#iaChatMessages').append($wrap);
         scrollChat();
 
@@ -553,16 +545,14 @@ $(document).ready(function () {
 
         function revealNext() {
             if (idx < segments.length) {
-                // O(n): se renderiza e inserta SOLO el segmento nuevo, no toda la respuesta en cada tick.
                 var frag = document.createElement('div');
-                frag.innerHTML = renderMarkdown(segments[idx]);
+                frag.innerHTML = renderMD(segments[idx]);
                 while (frag.firstChild) bodyEl.insertBefore(frag.firstChild, $cursor[0]);
                 idx++;
                 scrollChat();
                 setTimeout(revealNext, 190);
             } else {
-                // Pasada final: normaliza cualquier bloque partido por '\n\n' (tablas, bloques de código…).
-                bodyEl.innerHTML = renderMarkdown(textoFinal);
+                bodyEl.innerHTML = renderMD(textoFinal);
                 renderMetaFooter($wrap, meta);
                 scrollChat();
             }
@@ -572,48 +562,40 @@ $(document).ready(function () {
 
     function renderMetaFooter($wrap, meta) {
         meta = meta || {};
-        var $meta = $('<div class="ia-msg-meta"></div>');
+        var $inner = $wrap.find('.ia-chat-assistant-inner');
 
-        // N03 — acciones rápidas: solo en la respuesta más reciente
-        $('#iaChatMessages .ia-act-btn').remove();
-        [{ act: 'regenerar', ic: 'fa-rotate-right', t: _iaMsg.accRegenerar },
-         { act: 'corto',     ic: 'fa-compress',     t: _iaMsg.accCorto },
-         { act: 'ingles',    ic: 'fa-language',     t: _iaMsg.accIngles }].forEach(function (a) {
-            $('<button type="button" class="ia-act-btn">')
+        // Los chips y el panel de detalles solo viven en la última respuesta.
+        $('#iaChatMessages .ia-response-actions, #iaChatMessages .ia-detalles-panel').remove();
+
+        var $bar = $('<div class="ia-response-actions"></div>');
+
+        // N03 — chips Regenerar / Más corto / En inglés
+        [{ act:'regenerar', ic:'fa-redo-alt',     t:_iaMsg.accRegenerar },
+         { act:'corto',     ic:'fa-compress-alt', t:_iaMsg.accCorto },
+         { act:'ingles',    ic:'fa-language',     t:_iaMsg.accIngles }].forEach(function (a) {
+            $('<button type="button" class="ia-chip">')
                 .attr('data-act', a.act)
                 .html('<i class="fas ' + a.ic + '"></i> ' + esc(a.t))
-                .appendTo($meta);
+                .appendTo($bar);
         });
 
-        // N14 — chip "desde caché"
-        if (meta.DesdeCache) {
-            $('<span class="ia-meta-chip"><i class="fas fa-bolt"></i> ' + esc(_iaMsg.metaDesdeCache) + '</span>').appendTo($meta);
-        }
+        $('<span class="spacer"></span>').appendTo($bar);
 
-        // Aviso de datos recortados: N de M registros analizados
-        if (meta.FilasEnviadas && meta.TotalFilas && meta.FilasEnviadas < meta.TotalFilas) {
-            $('<span class="ia-trunc-note"><i class="fas fa-scissors"></i> '
-                + Number(meta.FilasEnviadas).toLocaleString() + ' / ' + Number(meta.TotalFilas).toLocaleString()
-                + ' ' + esc(_iaMsg.truncNote) + '</span>').appendTo($meta);
-        }
-
-        // N02 — valoración 👍 / 👎 (necesita la fila de auditoría)
+        // N02 — votos 👍/👎 + enlace permanente (necesitan la fila de auditoría)
         if (meta.IdAuditoria) {
-            var $fb = $('<span class="ia-fb"></span>').attr('data-id', meta.IdAuditoria);
-            $('<button type="button" class="ia-fb-btn" data-v="1"><i class="far fa-thumbs-up"></i></button>')
-                .attr('title', _iaMsg.feedbackUtil).attr('aria-label', _iaMsg.feedbackUtil).appendTo($fb);
-            $('<button type="button" class="ia-fb-btn" data-v="0"><i class="far fa-thumbs-down"></i></button>')
-                .attr('title', _iaMsg.feedbackNoUtil).attr('aria-label', _iaMsg.feedbackNoUtil).appendTo($fb);
-            $fb.appendTo($meta);
-
-            // Enlace permanente al análisis (para citarlo desde otras pantallas)
-            $('<button type="button" class="ia-link-btn"><i class="fas fa-link"></i></button>')
+            var $g = $('<span class="ia-fb"></span>').attr('data-id', meta.IdAuditoria);
+            $('<button type="button" class="ia-vote" data-v="1"><i class="far fa-thumbs-up"></i></button>')
+                .attr('title', _iaMsg.feedbackUtil).attr('aria-label', _iaMsg.feedbackUtil).appendTo($g);
+            $('<button type="button" class="ia-vote" data-v="0"><i class="far fa-thumbs-down"></i></button>')
+                .attr('title', _iaMsg.feedbackNoUtil).attr('aria-label', _iaMsg.feedbackNoUtil).appendTo($g);
+            $g.appendTo($bar);
+            $('<button type="button" class="ia-vote ia-link-btn"><i class="fas fa-link"></i></button>')
                 .attr('data-id', meta.IdAuditoria)
                 .attr('title', _iaMsg.accEnlace).attr('aria-label', _iaMsg.accEnlace)
-                .appendTo($meta);
+                .appendTo($bar);
         }
 
-        // N14 — detalles: modelo · tokens (prompt + respuesta) · coste estimado
+        // N14 — "Detalles" colapsable: modelo · tokens (prompt + respuesta) · coste estimado
         var partes = [];
         if (meta.Modelo) partes.push(esc(meta.Modelo));
         if (meta.TokensTotal) {
@@ -621,15 +603,22 @@ $(document).ready(function () {
                 + ' (' + Number(meta.TokensPrompt || 0).toLocaleString()
                 + ' + ' + Number(meta.TokensRespuesta || 0).toLocaleString() + ')');
         }
-        if (meta.CostoEstimadoUSD && Number(meta.CostoEstimadoUSD) > 0) {
+        if (meta.CostoEstimadoUSD && Number(meta.CostoEstimadoUSD) > 0)
             partes.push('~US$' + Number(meta.CostoEstimadoUSD).toFixed(4));
-        }
-        if (partes.length) {
-            $('<details class="ia-meta-details"><summary>' + esc(_iaMsg.metaDetalles) + '</summary><div>'
-                + partes.join(' · ') + '</div></details>').appendTo($meta);
-        }
 
-        $wrap.find('.ia-chat-assistant-inner').append($meta);
+        $inner.append($bar);
+
+        if (partes.length) {
+            var $tog = $('<span class="ia-detalles">' + esc(_iaMsg.metaDetalles) + ' <i class="fas fa-chevron-down"></i></span>');
+            var $pan = $('<div class="ia-detalles-panel" hidden></div>').text(partes.join('   ·   '));
+            $tog.on('click', function () {
+                var mostrar = $pan.prop('hidden');
+                $pan.prop('hidden', !mostrar);
+                $tog.find('i').toggleClass('fa-chevron-down', !mostrar).toggleClass('fa-chevron-up', mostrar);
+            });
+            $tog.appendTo($bar);
+            $pan.appendTo($inner);
+        }
     }
 
     function scrollChat() {
@@ -657,7 +646,7 @@ $(document).ready(function () {
         scrollChat();
         _iaEnCurso = true;
         $('#btnResumenIA,#btnPreguntarIA').prop('disabled', true);
-        $('#iaChatMessages .ia-act-btn, #iaChatMessages .ia-fb-btn').prop('disabled', true);
+        $('#iaChatMessages .ia-chip, #iaChatMessages .ia-vote').prop('disabled', true);
 
         // Cronómetro de la llamada
         _t0 = Date.now();
@@ -668,7 +657,7 @@ $(document).ready(function () {
 
         var data = $.extend({}, filtrosActuales);
         if (pregunta) data.pregunta = pregunta;
-        data.modo = $('#selectModoIA').val() || 'resumen';
+        data.modo = modoActual();
         if (_chatHistorial.length > 0) data.historialJson = JSON.stringify(_chatHistorial);
 
         function terminar() {
@@ -676,7 +665,7 @@ $(document).ready(function () {
             pararTimer();
             _iaEnCurso = false;
             $('#btnResumenIA,#btnPreguntarIA').prop('disabled', false);
-            $('#iaChatMessages .ia-act-btn, #iaChatMessages .ia-fb-btn:not(.is-active)').prop('disabled', false);
+            $('#iaChatMessages .ia-chip, #iaChatMessages .ia-vote:not(.is-active)').prop('disabled', false);
         }
         function reintentar() { consultarIA(_ultimaConsulta.pregunta, _ultimaConsulta.fresca, true); }
 
@@ -695,7 +684,8 @@ $(document).ready(function () {
                         );
                     }
                     var textoRespuesta = (resp.Respuesta || '').trim() || '(Sin respuesta del modelo)';
-                    appendAssistantBubble(textoRespuesta, resp);
+                    var seg = ((Date.now() - _t0) / 1000).toFixed(1).replace('.', ',');
+                    appendAssistantBubble(textoRespuesta, resp, seg);
                     if (_chatHistorial.length === 0 && resp.PromptContextoInicial) {
                         _chatHistorial.push({ Rol: 'user', Contenido: resp.PromptContextoInicial });
                     } else if (pregunta) {
@@ -733,21 +723,21 @@ $(document).ready(function () {
     }
 
     // N02 — valoración 👍/👎 de una respuesta
-    $('#iaChatMessages').on('click', '.ia-fb-btn', function () {
+    $('#iaChatMessages').on('click', '.ia-vote[data-v]', function () {
         if (_iaEnCurso) return;
         var $b = $(this), $fb = $b.closest('.ia-fb');
         var id = $fb.data('id'), v = $b.data('v');
         if (!id) return;
-        $fb.find('.ia-fb-btn').prop('disabled', true).removeClass('is-active');
+        $fb.find('.ia-vote').prop('disabled', true).removeClass('is-active');
         $b.addClass('is-active');
         $.post(_iaMsg.valorarUrl, { id: id, valor: v }).fail(function () {
-            $fb.find('.ia-fb-btn').prop('disabled', false);
+            $fb.find('.ia-vote').prop('disabled', false);
             $b.removeClass('is-active');
         });
     });
 
     // N03 — acciones rápidas sobre la última respuesta
-    $('#iaChatMessages').on('click', '.ia-act-btn', function () {
+    $('#iaChatMessages').on('click', '.ia-chip[data-act]', function () {
         if (_iaEnCurso || !filtrosActuales) return;
         var act = $(this).data('act');
         var instr = act === 'corto'  ? _iaMsg.instrCorto
@@ -772,14 +762,20 @@ $(document).ready(function () {
         }
     });
 
-    // Generar = conversación fresca con el modo seleccionado en la lista contigua
-    $('#btnResumenIA').on('click', function () { consultarIA(null, true); });
+    // Segmented control de tipo de análisis ("Consola clara")
+    function modoActual() { return $('#iaTipoAnalisis button.is-active').data('tipo') || 'resumen'; }
     function actualizarTituloGenerar() {
-        var modo = $('#selectModoIA option:selected').text();
-        $('#btnResumenIA').attr('title', _iaMsg.btnGenerar + ' · ' + modo);
+        $('#btnResumenIA').attr('title', _iaMsg.btnGenerar + ' · ' + $('#iaTipoAnalisis button.is-active').text());
     }
-    $('#selectModoIA').on('change', actualizarTituloGenerar);
+    $('#iaTipoAnalisis button').on('click', function () {
+        $('#iaTipoAnalisis button').removeClass('is-active');
+        $(this).addClass('is-active');
+        actualizarTituloGenerar();
+    });
     actualizarTituloGenerar();
+
+    // Generar = conversación fresca con el modo seleccionado en el segmented
+    $('#btnResumenIA').on('click', function () { consultarIA(null, true); });
     $('#btnPreguntarIA').on('click', function () {
         if (_iaEnCurso) return;
         var p = $('#txtPreguntaIA').val().trim();
@@ -817,7 +813,8 @@ $(document).ready(function () {
 async function exportarAnalisisPDF() {
     var btn = document.getElementById('btnExportarPDF');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + _iaMsg.generandoPDF;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    btn.title = _iaMsg.generandoPDF;
     try {
         var ahora = new Date();
         var fechaTexto = ahora.toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'})
@@ -888,7 +885,7 @@ async function exportarAnalisisPDF() {
             }
 
             contenidoHtml += '<div class="pdf-seccion-body">'
-                           + renderMarkdown(_chatHistorial[i].Contenido)
+                           + renderMD(_chatHistorial[i].Contenido)
                            + '</div>';
             contenidoHtml += '</div>';
         }
@@ -964,7 +961,8 @@ async function exportarAnalisisPDF() {
         Swal.fire({icon:'error', title:_iaMsg.error, text:_iaMsg.errorPDF});
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-file-pdf"></i> ' + _iaMsg.btnExportarPDF;
+        btn.innerHTML = '<i class="fas fa-file-pdf"></i><span class="btn-label">' + _iaMsg.btnExportarPDF + '</span>';
+        btn.title = _iaMsg.btnExportarPDF;
     }
 }
 </script>
@@ -982,7 +980,7 @@ function exportarExcelConIA() {
     }
 
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + _iaMsg.btnExcelConIA;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
     var form = document.createElement('form');
     form.method = 'POST';
@@ -1015,7 +1013,7 @@ function exportarExcelConIA() {
 
     setTimeout(function() {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-file-excel"></i> ' + _iaMsg.btnExcelConIA;
+        btn.innerHTML = '<i class="fas fa-file-excel"></i><span class="btn-label">' + _iaMsg.btnExcelConIA + '</span>';
     }, 3000);
 }
 

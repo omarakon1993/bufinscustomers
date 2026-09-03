@@ -1,0 +1,211 @@
+/* Fuente monoespaciada: se usa la del sistema (Consolas en Windows, SF Mono en macOS).
+   No se carga nada online. Si quieres "JetBrains Mono" exacta, deja los .woff2 en
+   Assets/GoogleApis/fonts/ y añade un @font-face local como el de Assets/GoogleApis/Family.css. */
+
+/* ============================================================
+   analisis-ia-consola-clara.css
+   Estilo "Consola clara" (2a) para la vista Análisis IA.
+   Cárgalo DESPUÉS de analisis-ia.css en Views/Informes/AnalisisIA.cshtml:
+
+     <link href="~/Assets/css/analisis-ia.css"                rel="stylesheet" />
+     <link href="~/Assets/css/analisis-ia-consola-clara.css"  rel="stylesheet" />
+
+   Reutiliza las clases que ya existen en la vista. Los bloques marcados
+   [NUEVO] requieren el HTML del final de este archivo.
+   Tokens de marca: #160933 · #583AFF · #01E1D7 · --app-btn-gradient
+   ============================================================ */
+
+/* ── Tarjeta del panel ───────────────────────────────────── */
+.ia-panel{
+    background:#fff;
+    border:1px solid #e5e7eb;
+    border-radius:18px;
+    box-shadow:0 1px 2px rgba(22,9,51,.04),0 18px 44px -24px rgba(22,9,51,.22);
+    overflow:hidden;
+}
+
+/* ── Cabecera: blanca, sin degradado de fondo ────────────── */
+.ia-panel-header{
+    background:#fff;
+    border-bottom:1px solid #f1f2f6;
+    padding:18px 26px;
+}
+.ia-panel-header-left{gap:14px}
+.ia-panel-icon{
+    width:40px;height:40px;border-radius:11px;
+    background:var(--app-btn-gradient);
+    box-shadow:0 8px 20px -8px rgba(88,58,255,.65);
+    font-size:1rem;color:#fff;
+}
+.ia-panel-title{font-size:.95rem;font-weight:700;color:#160933;letter-spacing:-.1px}
+.ia-panel-context{font-size:.72rem;color:#8b90a0;margin-top:3px}
+
+/* Badge del modelo (gpt-4o) en la cabecera clara */
+.ia-header-badge{
+    background:#effefc;border:1px solid #99f0ea;color:#0f766e;
+    font-weight:700;backdrop-filter:none;
+}
+
+/* Botón "Nueva consulta": sólido morado */
+.btn-nueva-consulta{
+    background:#583AFF;border:1px solid #583AFF;color:#fff;
+    border-radius:9px;padding:8px 15px;font-size:.78rem;font-weight:700;
+}
+.btn-nueva-consulta:hover{background:#4a2de0;border-color:#4a2de0}
+
+/* ── Barra de acciones ───────────────────────────────────── */
+.ia-actions-bar{padding:18px 26px 6px;gap:10px}
+.btn-generar-resumen{
+    padding:9px 18px;border-radius:10px;font-size:.81rem;font-weight:700;
+    box-shadow:0 8px 22px -12px rgba(88,58,255,.85);
+}
+.ia-hint{font-size:.75rem;color:#9ca3af}
+
+/* Exportar PDF / Excel como botones-icono neutros */
+.btn-exportar-pdf,
+.btn-exportar-excel{
+    width:34px;height:34px;padding:0;gap:0;
+    border:1px solid #e5e7eb;border-radius:9px;
+    background:#fff;color:#6b7280;font-size:.78rem;
+    justify-content:center;
+}
+.btn-exportar-pdf:hover,
+.btn-exportar-excel:hover{
+    background:#f9fafb;color:#374151;border-color:#e5e7eb;
+    transform:none;box-shadow:none;
+}
+/* Oculta el texto del botón y deja solo el icono (envuelve el texto en <span class="btn-label">) */
+.btn-exportar-pdf .btn-label,
+.btn-exportar-excel .btn-label{display:none}
+
+/* ── Respuesta del asistente ─────────────────────────────── */
+.ia-chat-messages{padding:14px 26px 22px;gap:18px}
+.ia-chat-assistant-wrap{gap:0}
+.ia-chat-avatar-bot{display:none}          /* el icono ya vive en la cabecera */
+
+.ia-chat-assistant-inner{
+    background:#fbfbfd;
+    border:1px solid #e9eaf0;
+    border-radius:14px;
+    box-shadow:none;
+}
+.ia-response-header{
+    background:#fff;
+    border-bottom:1px solid #eef0f4;
+    color:#583AFF;
+    padding:11px 18px;
+    font-size:.69rem;letter-spacing:.14em;
+    justify-content:space-between;
+}
+/* Metadatos a la derecha de la cabecera de respuesta [NUEVO] */
+.ia-response-meta{
+    font-family:'JetBrains Mono',SFMono-Regular,Consolas,monospace;
+    font-size:.69rem;font-weight:700;color:#9ca3af;letter-spacing:0;
+    text-transform:none;
+}
+.ia-response-body{
+    padding:20px 22px;max-width:820px;
+    font-size:.94rem;line-height:1.8;color:#3f4451;
+}
+.ia-response-body strong{color:#160933;font-weight:700}
+
+/* Cifras monoespaciadas con color semántico [NUEVO]
+   (envuelve los números en <span class="num num-pos|num-neg|num-warn">) */
+.ia-response-body .num{
+    font-family:'JetBrains Mono',SFMono-Regular,Consolas,monospace;
+    font-weight:600;color:#160933;
+}
+.ia-response-body .num-pos{color:#0f766e}
+.ia-response-body .num-neg{color:#b91c1c}
+.ia-response-body .num-warn{color:#b45309}
+.ia-cursor{color:#583AFF}
+
+/* ── Acciones de la respuesta (Regenerar / Más corto / EN) [NUEVO] ── */
+.ia-response-actions{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    padding:12px 22px;border-top:1px solid #eef0f4;background:#fff;
+}
+.ia-chip{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:6px 12px;font-size:.75rem;font-weight:600;font-family:inherit;
+    border:1px solid #e5e7eb;border-radius:8px;background:#fff;color:#4b5563;
+    cursor:pointer;transition:border-color .15s,color .15s;
+}
+.ia-chip:hover{border-color:#583AFF;color:#583AFF}
+.ia-response-actions .spacer{flex:1}
+.ia-vote{
+    width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:.72rem;
+    border:1px solid #e5e7eb;background:#fff;color:#9ca3af;
+}
+.ia-vote.is-active{border-color:#99f0ea;background:#effefc;color:#0f766e}
+.ia-detalles{font-size:.75rem;font-weight:600;color:#8b90a0;cursor:pointer}
+
+/* ── Selector de tipo de análisis como segmented control [NUEVO] ── */
+.ia-segmented{
+    display:flex;padding:3px;border-radius:10px;
+    background:#f5f3ff;border:1px solid #ddd6fe;
+}
+.ia-segmented button{
+    padding:7px 14px;border:none;border-radius:7px;background:transparent;
+    font-family:inherit;font-size:.78rem;font-weight:600;color:#7c6bb5;cursor:pointer;
+}
+.ia-segmented button.is-active{
+    background:#fff;color:#583AFF;font-weight:700;
+    box-shadow:0 1px 3px rgba(22,9,51,.12);
+}
+
+/* ── Entrada ─────────────────────────────────────────────── */
+.ia-input-section{
+    padding:16px 26px 22px;background:#fcfcfd;
+    border-top:1px solid #f1f2f6;border-radius:0 0 18px 18px;
+}
+.ia-input-row{gap:10px;margin-bottom:0}
+.ia-text-input{border-radius:11px;padding:13px 16px;font-size:.88rem}
+.btn-enviar{
+    width:46px;height:46px;border-radius:11px;
+    box-shadow:0 10px 24px -12px rgba(88,58,255,.9);
+}
+.ia-input-footer{margin-top:10px}
+.ia-branding{font-size:.72rem;text-align:left}
+.ia-char-count{font-family:'JetBrains Mono',SFMono-Regular,Consolas,monospace;font-size:.72rem}
+
+/* ============================================================
+   HTML de los bloques [NUEVO] — para AnalisisIA.cshtml
+
+   1) Segmented control, dentro de .ia-actions-bar y ANTES de #btnResumenIA
+      (reemplaza el <select> de tipo de análisis):
+
+   <div class="ia-segmented" id="iaTipoAnalisis">
+       <button type="button" class="is-active" data-tipo="resumen">Resumen ejecutivo</button>
+       <button type="button" data-tipo="desviaciones">Desviaciones</button>
+       <button type="button" data-tipo="tendencia">Tendencia</button>
+   </div>
+
+   2) Metadatos en la cabecera de la respuesta (appendAssistantBubble):
+
+   <div class="ia-response-header">
+       <span><i class="fas fa-stream"></i> RESPUESTA DEL ASISTENTE</span>
+       <span class="ia-response-meta">480 filas · 1,4 s · caché</span>
+   </div>
+
+   3) Acciones de la respuesta, después de .ia-response-body:
+
+   <div class="ia-response-actions">
+       <button type="button" class="ia-chip"><i class="fas fa-redo-alt"></i> Regenerar</button>
+       <button type="button" class="ia-chip"><i class="fas fa-compress-alt"></i> Más corto</button>
+       <button type="button" class="ia-chip"><i class="fas fa-language"></i> En inglés</button>
+       <span class="spacer"></span>
+       <button type="button" class="ia-vote is-active"><i class="far fa-thumbs-up"></i></button>
+       <button type="button" class="ia-vote"><i class="far fa-thumbs-down"></i></button>
+       <span class="ia-detalles">Detalles <i class="fas fa-chevron-down"></i></span>
+   </div>
+
+   4) Botones de exportación en modo icono (oculta el texto sin borrarlo):
+
+   <button type="button" id="btnExportarPDF" class="btn-exportar-pdf">
+       <i class="fas fa-file-pdf"></i><span class="btn-label">Exportar PDF</span>
+   </button>
+
+   5) En renderMarkdown(), las cifras pueden envolverse así para el color semántico:
+      texto.replace(/(-[\d.,]+)/g, '<span class="num num-neg">$1</span>')
+   ============================================================ */

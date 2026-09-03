@@ -77,8 +77,27 @@
                (/\|/.test(line) && next != null && RE_TABLE_SEP.test(next) && /\|/.test(next));
     }
 
-    function render(md) {
+    // Envuelve cifras en <span class="num[ num-pos| num-neg]"> para darles fuente mono y color
+    // semántico (solo el signo decide el color; un número sin signo queda neutro). Opera solo
+    // sobre el texto entre etiquetas, así no toca los href ni las etiquetas ya insertadas.
+    function decorarNumeros(html) {
+        return html.replace(/>([^<]+)</g, function (_, txt) {
+            return ">" + txt.replace(
+                /([+\-−])?(\d{1,3}(?:[.,]\d{3})+|\d+)([.,]\d+)?(\s?%)?/g,
+                function (m, sig, ent, dec, pct) {
+                    if (!sig && !pct && !/[.,]/.test(ent) && ent.length < 4) return m; // ignora "5", años sueltos
+                    var cls = (sig === "-" || sig === "−") ? "num num-neg"
+                            : (sig === "+")                     ? "num num-pos"
+                            : "num";
+                    return '<span class="' + cls + '">' + m + "</span>";
+                }
+            ) + "<";
+        });
+    }
+
+    function render(md, opts) {
         if (!md) return "";
+        opts = opts || {};
         var lines = String(md).replace(/\r\n?/g, "\n").split("\n");
         var out = [];
         var stack = []; // pila de tipos de lista abiertos: 'ul' | 'ol'
@@ -178,7 +197,8 @@
         }
 
         closeLists(0);
-        return out.join("\n");
+        var html = out.join("\n");
+        return opts.numeros ? decorarNumeros(html) : html;
     }
 
     global.bufinsMarkdown = render;
