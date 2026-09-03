@@ -124,7 +124,10 @@
                     <h5>
                         <i class="fas fa-list mr-2"></i>@Resources.Strings.Common_Resultados
                     </h5>
-                    <span id="totalRegistros" class="info-badge">@totalCargues @Resources.Strings.Audit_TotalCargues</span>
+                    <div class="d-flex align-items-center" style="gap:.6rem;flex-wrap:wrap;">
+                        <span id="totalRegistros" class="info-badge">@totalCargues @Resources.Strings.Audit_TotalCargues</span>
+                        <span id="paginaInfoCargues" style="font-size:.77rem;color:#6c757d;"></span>
+                    </div>
                 </div>
                 <div class="table-wrapper">
                     <table id="auditoriaTable" class="data-table">
@@ -152,6 +155,7 @@
                         </tbody>
                     </table>
                 </div>
+                <div id="paginacionCargues" class="pagination-controls"></div>
             </div>
         </div>
 
@@ -184,49 +188,110 @@
 @section scripts {
     <script>
         var _auditTotal = @totalCargues;
+        var PAGE_SIZE = 25;
         var _auditMsg = {
             totalCargues:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_TotalCargues))',
-            exportSuccess: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_ExportSuccess))'
+            exportSuccess: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_ExportSuccess))',
+            mostrando:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Mostrando))',
+            de:            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_De))'
         };
 
         $(document).ready(function () {
+
+            // Todas las filas se guardan en memoria; el <tbody> solo contiene la página actual.
+            var $todasFilas   = $('#auditoriaTable tbody tr').detach();
+            var $filtradas    = $todasFilas;
+            var _paginaActual = 1;
 
             function aplicarFiltro() {
                 var empresa = $('#filterEmpresa').val();
                 var usuario = $('#filterUsuario').val().toLowerCase().trim();
                 var desde   = $('#filterDesde').val();
                 var hasta   = $('#filterHasta').val();
-                var visibles = 0;
 
-                $('#auditoriaTable tbody tr').each(function () {
-                    var $tr          = $(this);
-                    var tdEmpresa    = $tr.find('td:eq(1)').text().trim();
-                    var tdUsuario    = $tr.find('td:eq(2)').text().toLowerCase();
-                    var fechaFila    = $tr.data('fecha'); // yyyy-MM-dd
+                $filtradas = $todasFilas.filter(function () {
+                    var $tr       = $(this);
+                    var tdEmpresa = $tr.find('td:eq(1)').text().trim();
+                    var tdUsuario = $tr.find('td:eq(2)').text().toLowerCase();
+                    var fechaFila = $tr.attr('data-fecha'); // yyyy-MM-dd
 
                     var matchEmpresa = !empresa || tdEmpresa === empresa;
                     var matchUsuario = !usuario || tdUsuario.indexOf(usuario) > -1;
                     var matchDesde   = !desde   || fechaFila >= desde;
                     var matchHasta   = !hasta   || fechaFila <= hasta;
 
-                    if (matchEmpresa && matchUsuario && matchDesde && matchHasta) {
-                        $tr.show();
-                        visibles++;
-                    } else {
-                        $tr.hide();
-                    }
+                    return matchEmpresa && matchUsuario && matchDesde && matchHasta;
                 });
 
-                $('#totalRegistros').text(visibles + ' ' + _auditMsg.totalCargues);
+                _paginaActual = 1;
+                renderPagina(1);
+            }
 
-                if (visibles > 0) {
-                    $('#resultadosContainer').show();
-                    $('#noDataMessage').hide();
-                } else {
+            function renderPagina(pagina) {
+                var total     = $filtradas.length;
+                var totalPags = Math.max(1, Math.ceil(total / PAGE_SIZE));
+                pagina = Math.min(Math.max(1, pagina), totalPags);
+                _paginaActual = pagina;
+
+                $('#totalRegistros').text(total + ' ' + _auditMsg.totalCargues);
+
+                var $tbody = $('#auditoriaTable tbody');
+                $todasFilas.detach();
+                $tbody.empty();
+
+                if (total === 0) {
                     $('#resultadosContainer').hide();
                     $('#noDataMessage').show();
+                    $('#paginacionCargues').empty();
+                    $('#paginaInfoCargues').text('');
+                    return;
                 }
+
+                $('#resultadosContainer').show();
+                $('#noDataMessage').hide();
+
+                var inicio = (pagina - 1) * PAGE_SIZE;
+                var fin    = Math.min(inicio + PAGE_SIZE, total);
+                $tbody.append($filtradas.slice(inicio, fin));
+
+                $('#paginaInfoCargues').text(
+                    _auditMsg.mostrando + ' ' + (inicio + 1) + '–' + fin + ' ' + _auditMsg.de + ' ' + total
+                );
+
+                renderPaginacion(totalPags, pagina);
             }
+
+            function renderPaginacion(totalPags, actual) {
+                var $pag = $('#paginacionCargues').empty();
+                if (totalPags <= 1) return;
+
+                function btn(label, dest, activo, disabled) {
+                    return $('<button>')
+                        .addClass('btn-pagination' + (activo ? ' active' : ''))
+                        .prop('disabled', !!disabled)
+                        .html(label)
+                        .on('click', function () { renderPagina(dest); });
+                }
+
+                $pag.append(btn('<i class="fas fa-chevron-left"></i>', actual - 1, false, actual === 1));
+
+                var desde = Math.max(1, actual - 2);
+                var hasta = Math.min(totalPags, actual + 2);
+                if (desde > 1) {
+                    $pag.append(btn('1', 1, false, false));
+                    if (desde > 2) $pag.append($('<span class="pagination-dots">').text('…'));
+                }
+                for (var p = desde; p <= hasta; p++) { $pag.append(btn(p, p, p === actual, false)); }
+                if (hasta < totalPags) {
+                    if (hasta < totalPags - 1) $pag.append($('<span class="pagination-dots">').text('…'));
+                    $pag.append(btn(totalPags, totalPags, false, false));
+                }
+
+                $pag.append(btn('<i class="fas fa-chevron-right"></i>', actual + 1, false, actual === totalPags));
+            }
+
+            // Render inicial (primera página con todas las filas)
+            if (_auditTotal > 0) renderPagina(1);
 
             // Filtro en tiempo real
             $('#filterEmpresa, #filterUsuario, #filterDesde, #filterHasta').on('change keyup', function () {
@@ -244,12 +309,9 @@
                 $('#filterUsuario').val('');
                 $('#filterDesde').val('');
                 $('#filterHasta').val('');
-                $('#auditoriaTable tbody tr').show();
-                $('#totalRegistros').text(_auditTotal + ' ' + _auditMsg.totalCargues);
-                if (_auditTotal > 0) {
-                    $('#resultadosContainer').show();
-                    $('#noDataMessage').hide();
-                }
+                $filtradas = $todasFilas;
+                _paginaActual = 1;
+                renderPagina(1);
             });
 
             // Boton Exportar

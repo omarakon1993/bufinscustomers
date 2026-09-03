@@ -36,6 +36,12 @@ namespace bufinscustomers.Controllers
             string modeloBD = cfgSvc.ObtenerValor("OpenAIModel");
             ViewBag.ModeloIA = !string.IsNullOrWhiteSpace(modeloBD) ? modeloBD : "gpt-4o";
 
+            // Límite de caracteres de la pregunta (configurable; única fuente para maxlength + validación).
+            int maxCharsPregunta = 500;
+            if (int.TryParse(cfgSvc.ObtenerValor("IA_MaxCaracteresPregunta"), out int mcp) && mcp >= 50 && mcp <= 4000)
+                maxCharsPregunta = mcp;
+            ViewBag.MaxCharsPregunta = maxCharsPregunta;
+
             return View("~/Views/Informes/AnalisisIA.cshtml");
         }
 

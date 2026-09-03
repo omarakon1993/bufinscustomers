@@ -12,17 +12,66 @@
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
 
 <style>
-    .nav-tabs-bufins { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; }
-    .nav-tabs-bufins .tab-btn {
-        border: 1px solid #e3e6eb; background: #fff; color: #556074;
-        padding: .5rem 1rem; border-radius: 8px; font-size: .88rem; font-weight: 600;
-        cursor: pointer; transition: border-color .15s, color .15s, background .15s;
+    /* ---- Control segmentado con "thumb" deslizante (misma pastilla que se desplaza) ----
+       Mismo lenguaje visual que la cápsula de pestañas de AuditoriaHub (.audhub-seg). */
+    .nav-seg {
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        padding: 6px;
+        background: #eef0f4;
+        border: 1px solid #e3e6eb;
+        border-radius: 999px;
+        margin: 0 0 1.15rem;
     }
-    .nav-tabs-bufins .tab-btn:hover { border-color: #b9c0cc; }
-    .nav-tabs-bufins .tab-btn.is-active {
-        background: var(--content-gradient, linear-gradient(90deg,#6366F1,#3B82F6,#06B6D4));
-        color: #fff; border-color: transparent;
+    .nav-seg-thumb {
+        position: absolute;
+        left: 0; top: 0;
+        width: 0; height: 0;
+        border-radius: 999px;
+        background: linear-gradient(90deg,#6366F1 0%,#3B82F6 35%,#06B6D4 70%,#01E1D7 100%);
+        box-shadow: 0 8px 20px -8px rgba(59,130,246,.6);
+        transform: translate(0, 0);
+        transition: transform .42s cubic-bezier(.32,.72,0,1),
+                    width     .42s cubic-bezier(.32,.72,0,1),
+                    height    .42s cubic-bezier(.32,.72,0,1);
+        will-change: transform, width, height;
+        pointer-events: none;
+        z-index: 0;
     }
+    .nav-seg-thumb.no-anim { transition: none; }
+    .nav-seg-btn {
+        position: relative;
+        z-index: 1;
+        border: 0;
+        background: transparent;
+        color: #5b6472;
+        font-size: .9rem;
+        font-weight: 600;
+        padding: .62rem .6rem;
+        border-radius: 999px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        white-space: nowrap;
+        transition: color .34s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .nav-seg-btn:hover:not(.is-active) { color: #3b3f66; }
+    .nav-seg-btn.is-active { color: #fff; }
+    .nav-seg-btn i { font-size: .9em; }
+
+    @@media (max-width: 820px) {
+        .nav-seg { grid-template-columns: repeat(2, 1fr); border-radius: 22px; }
+        .nav-seg-btn { border-radius: 18px; font-size: .84rem; }
+    }
+    @@media (prefers-reduced-motion: reduce) {
+        .nav-seg-thumb { transition: none; }
+    }
+
     .rol-badge { font-size: .72rem; padding: .2em .55em; border-radius: 999px; background: #eef0f4; color: #4f5a6d; white-space: nowrap; }
     .rol-badge.r2 { background: #e6e0f7; color: #5b3aa6; }
     .rol-badge.r1 { background: #e0eef0; color: #0c6f79; }
@@ -133,15 +182,19 @@
         </div>
     </div>
 
-    <div class="nav-tabs-bufins">
-        <button type="button" class="tab-btn is-active" data-modo="detalle">
-            <i class="fas fa-list mr-1"></i>@Resources.Strings.Nav_TabDetalle
+    <div class="nav-seg" id="navSeg" role="tablist">
+        <span class="nav-seg-thumb no-anim" aria-hidden="true"></span>
+        <button type="button" class="nav-seg-btn is-active" data-modo="detalle">
+            <i class="fas fa-list"></i>@Resources.Strings.Nav_TabDetalle
         </button>
-        <button type="button" class="tab-btn" data-modo="usuarios">
-            <i class="fas fa-users mr-1"></i>@Resources.Strings.Nav_TabResumenUsuarios
+        <button type="button" class="nav-seg-btn" data-modo="usuarios">
+            <i class="fas fa-users"></i>@Resources.Strings.Nav_TabResumenUsuarios
         </button>
-        <button type="button" class="tab-btn" data-modo="paginas">
-            <i class="fas fa-file-alt mr-1"></i>@Resources.Strings.Nav_TabResumenPaginas
+        <button type="button" class="nav-seg-btn" data-modo="paginas">
+            <i class="fas fa-file-alt"></i>@Resources.Strings.Nav_TabResumenPaginas
+        </button>
+        <button type="button" class="nav-seg-btn" data-modo="usuariopagina">
+            <i class="fas fa-table"></i>@Resources.Strings.Nav_TabResumenUsuarioPagina
         </button>
     </div>
 
@@ -218,9 +271,10 @@ $(function () {
     }
 
     var URLS = {
-        detalle:  '@Url.Action("Detalle", "InformeNavegacion")',
-        usuarios: '@Url.Action("ResumenUsuarios", "InformeNavegacion")',
-        paginas:  '@Url.Action("ResumenPaginas", "InformeNavegacion")'
+        detalle:       '@Url.Action("Detalle", "InformeNavegacion")',
+        usuarios:      '@Url.Action("ResumenUsuarios", "InformeNavegacion")',
+        paginas:       '@Url.Action("ResumenPaginas", "InformeNavegacion")',
+        usuariopagina: '@Url.Action("ResumenUsuarioPagina", "InformeNavegacion")'
     };
 
     function consultar(pagina) {
@@ -230,6 +284,7 @@ $(function () {
         $.getJSON(URLS[_modo], data).done(function (r) {
             if (_modo === 'detalle') renderDetalle(r);
             else if (_modo === 'usuarios') renderUsuarios(r);
+            else if (_modo === 'usuariopagina') renderUsuarioPagina(r);
             else renderPaginas(r);
         }).fail(function () {
             Swal.fire({ icon: 'error', title: S.errTit, text: S.error });
@@ -315,6 +370,24 @@ $(function () {
         });
     }
 
+    function renderUsuarioPagina(r) {
+        if (!prep(r)) return;
+        head([S.thUsuario, S.thEmpresa, S.thPagina, S.thVisitas, S.thPrimera, S.thUltima]);
+        $('#totalBadge').text(r.items.length.toLocaleString() + ' ' + S.total);
+        $('#paginaInfo').text('');
+        var tb = $('#tbody');
+        r.items.forEach(function (x) {
+            var tr = $('<tr>');
+            tr.append($('<td>').text(x.NombreUsuario || ''));
+            tr.append($('<td>').text(x.Empresa || ''));
+            tr.append($('<td>').html(esc(x.Pagina) + '<div class="ruta-mini">' + esc(x.Ruta) + '</div>'));
+            tr.append($('<td>').css('font-variant-numeric', 'tabular-nums').text(x.Visitas.toLocaleString()));
+            tr.append($('<td>').css('white-space', 'nowrap').text(x.Primera));
+            tr.append($('<td>').css('white-space', 'nowrap').text(x.Ultima));
+            tb.append(tr);
+        });
+    }
+
     function renderPaginacion(actual, totalPags) {
         var $p = $('#paginacion').empty();
         if (totalPags <= 1) return;
@@ -338,12 +411,42 @@ $(function () {
         $('#resultadosContainer').hide(); $('#sinResultados').show();
     }
 
-    $('.nav-tabs-bufins .tab-btn').on('click', function () {
-        $('.nav-tabs-bufins .tab-btn').removeClass('is-active');
+    // ── Cápsula segmentada con "thumb" deslizante ──────────────────────────
+    var $seg   = $('#navSeg');
+    var $segBtns = $seg.find('.nav-seg-btn');
+    var $thumb  = $seg.find('.nav-seg-thumb');
+
+    function moverThumb(btn, sinAnim) {
+        if (!btn) return;
+        var cont = $seg[0];
+        var cr = cont.getBoundingClientRect();
+        var br = btn.getBoundingClientRect();
+        var x = br.left - cr.left - cont.clientLeft;
+        var y = br.top  - cr.top  - cont.clientTop;
+        if (sinAnim) $thumb.addClass('no-anim');
+        $thumb.css({
+            width:  br.width + 'px',
+            height: br.height + 'px',
+            transform: 'translate(' + x + 'px,' + y + 'px)'
+        });
+        if (sinAnim) { void $thumb[0].offsetWidth; $thumb.removeClass('no-anim'); }
+    }
+
+    $segBtns.on('click', function () {
+        if ($(this).hasClass('is-active')) return;
+        $segBtns.removeClass('is-active');
         $(this).addClass('is-active');
+        moverThumb(this, false);
         _modo = $(this).data('modo');
         estadoInicial();
     });
+
+    var _rz;
+    $(window).on('resize', function () {
+        clearTimeout(_rz);
+        _rz = setTimeout(function () { moverThumb($segBtns.filter('.is-active')[0], true); }, 120);
+    });
+    $(window).on('load', function () { moverThumb($segBtns.filter('.is-active')[0], true); });
 
     $('#btnConsultar').on('click', function () { consultar(1); });
     $('#btnLimpiar').on('click', function () {
@@ -353,11 +456,14 @@ $(function () {
     });
     $('#btnExportar').on('click', function () {
         var data = filtros();
-        data.modo = _modo === 'usuarios' ? 'usuarios' : (_modo === 'paginas' ? 'paginas' : 'detalle');
+        var validos = { usuarios: 1, paginas: 1, usuariopagina: 1 };
+        data.modo = validos[_modo] ? _modo : 'detalle';
         window.location = '@Url.Action("ExportarExcel", "InformeNavegacion")' + '?' + $.param(data);
     });
 
     estadoInicial();
+    moverThumb($segBtns.filter('.is-active')[0], true);
+    requestAnimationFrame(function () { moverThumb($segBtns.filter('.is-active')[0], true); });
 });
 </script>
 }

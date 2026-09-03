@@ -173,8 +173,9 @@
                                 : esTokens  ? "fas fa-tachometer-alt"
                                 :             "fas fa-cog";
 
-                string valorVisible = esApiKey && item.Valor?.Length > 8
-                    ? item.Valor.Substring(0, 6) + "••••••••" + item.Valor.Substring(item.Valor.Length - 4)
+                // Los secretos ya llegan enmascarados desde el servicio; el resto se muestra tal cual.
+                string valorVisible = item.EsSecreta
+                    ? (string.IsNullOrEmpty(item.Valor) ? "—" : item.Valor)
                     : (item.Valor ?? "—");
 
                 <div class="cfg-ia-card">
@@ -187,8 +188,8 @@
                             @(string.IsNullOrWhiteSpace(item.Descripcion) ? "—" : item.Descripcion)
                         </div>
                         <div class="cfg-ia-valor-row">
-                            <span class="cfg-ia-valor-text @(esApiKey ? "masked" : "")">@valorVisible</span>
-                            @if (esApiKey)
+                            <span class="cfg-ia-valor-text @(item.EsSecreta ? "masked" : "")">@valorVisible</span>
+                            @if (item.EsSecreta)
                             {
                                 <small class="text-muted" style="font-size:.68rem;white-space:nowrap;">
                                     <i class="fas fa-lock"></i> @Resources.Strings.CfgIA_LabelMasked
@@ -198,7 +199,7 @@
                         <div class="cfg-ia-actions">
                             <button type="button" class="btn btn-primary btn-sm"
                                     title="@Resources.Strings.CfgIA_TitleEditar"
-                                    onclick="abrirEditar('@Html.Raw(item.Clave)', '@Html.Raw((item.Valor ?? "").Replace("'", "\\'"))', '@Html.Raw((item.Descripcion ?? "").Replace("'", "\\'"))')">
+                                    onclick="abrirEditar('@Html.Raw(item.Clave)', '@Html.Raw(item.EsSecreta ? "" : (item.Valor ?? "").Replace("'", "\\'"))', '@Html.Raw((item.Descripcion ?? "").Replace("'", "\\'"))')">
                                 <i class="fas fa-edit mr-1"></i>@Resources.Strings.CfgIA_TitleEditar
                             </button>
                             <button type="button" class="btn btn-danger btn-sm"
@@ -269,18 +270,24 @@
                                 <span class="text-danger">*</span>
                             </label>
 
-                            <!-- API Key: password con toggle -->
+                            <!-- API Key: password con toggle. Empieza vacío; vacío = no cambiar. -->
                             <div id="wrapApiKey" style="display:none;">
                                 <div class="input-pass-wrap">
                                     <input type="password" class="form-control form-control-sm"
-                                           id="editValorApiKey" autocomplete="off" />
+                                           id="editValorApiKey" autocomplete="off"
+                                           placeholder="@Resources.Strings.CfgIA_ApiKeySinCambios" />
                                     <button type="button" class="btn-eye" onclick="toggleApiKey()">
                                         <i class="fas fa-eye" id="eyeIcon"></i>
                                     </button>
                                 </div>
-                                <small class="text-muted" style="font-size:.72rem;">
-                                    <i class="fas fa-shield-alt mr-1 text-success"></i>@Resources.Strings.CfgIA_ApiKeyHint
-                                </small>
+                                <div class="d-flex align-items-center flex-wrap mt-1" style="gap:8px;">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="revelarApiKey()">
+                                        <i class="fas fa-unlock-alt mr-1"></i>@Resources.Strings.CfgIA_BtnRevelar
+                                    </button>
+                                    <small class="text-muted" style="font-size:.72rem;">
+                                        <i class="fas fa-shield-alt mr-1 text-success"></i>@Resources.Strings.CfgIA_ApiKeyHint
+                                    </small>
+                                </div>
                             </div>
 
                             <!-- Modelo: custom dropdown con búsqueda -->
@@ -484,6 +491,31 @@
         }
     }
 
+    // ── revelar la API Key actual (llamada auditada al servidor) ──
+    function revelarApiKey() {
+        var token = $('input[name="__RequestVerificationToken"]').val();
+        $.ajax({
+            url: '@Url.Action("Revelar", "ConfiguracionGlobalIA")',
+            type: 'POST',
+            data: { clave: 'OpenAIApiKey', __RequestVerificationToken: token },
+            success: function (r) {
+                if (r && r.ok) {
+                    var inp = document.getElementById('editValorApiKey');
+                    inp.value = r.valor || '';
+                    inp.type  = 'text';
+                    document.getElementById('eyeIcon').className = 'fas fa-eye-slash';
+                } else {
+                    Swal.fire({ icon:'error', title:'Error', text:(r && r.mensaje) || 'No se pudo revelar la clave.',
+                        toast:true, position:'top-end', showConfirmButton:false, timer:3500 });
+                }
+            },
+            error: function () {
+                Swal.fire({ icon:'error', title:'Error', text:'No se pudo revelar la clave.',
+                    toast:true, position:'top-end', showConfirmButton:false, timer:3500 });
+            }
+        });
+    }
+
     // ── recopila el valor del control activo y envía el form ──
     function submitGuardar() {
         var clave = document.getElementById('editClave').value.trim();
@@ -503,7 +535,8 @@
             valor = document.getElementById('editValorGenerico').value.trim();
         }
 
-        if (!valor) {
+        // Para la API key, vacío es válido: significa "no cambiar" (el servidor conserva la actual).
+        if (!valor && clave !== 'OpenAIApiKey') {
             Swal.fire({ icon:'warning', title:'Valor requerido', text:'El campo Valor es requerido.', toast:true, position:'top-end', showConfirmButton:false, timer:2500 });
             return;
         }

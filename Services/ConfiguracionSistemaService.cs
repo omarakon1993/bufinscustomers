@@ -1,3 +1,4 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
@@ -8,6 +9,13 @@ namespace bufinscustomers.Services
 {
     public class ConfiguracionSistemaService : BaseService
     {
+        /// <summary>Claves cuyo valor es un secreto: se cifra en reposo y se enmascara en la lista.</summary>
+        private static readonly HashSet<string> ClavesSecretas =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "OpenAIApiKey" };
+
+        public static bool EsClaveSecreta(string clave) =>
+            !string.IsNullOrWhiteSpace(clave) && ClavesSecretas.Contains(clave.Trim());
+
         public List<ConfiguracionSistemaItem> ObtenerTodos()
         {
             var lista = new List<ConfiguracionSistemaItem>();
@@ -21,12 +29,21 @@ namespace bufinscustomers.Services
                     cn.Open();
                     using (var r = cmd.ExecuteReader())
                         while (r.Read())
+                        {
+                            var clave    = r["Clave"].ToString();
+                            var valorRaw = r["Valor"].ToString();
+                            bool secreta = EsClaveSecreta(clave);
                             lista.Add(new ConfiguracionSistemaItem
                             {
-                                Clave       = r["Clave"].ToString(),
-                                Valor       = r["Valor"].ToString(),
-                                Descripcion = r["Descripcion"].ToString()
+                                Clave       = clave,
+                                // Un secreto NUNCA sale de aquí en claro: solo su versión enmascarada.
+                                Valor       = secreta
+                                                ? SecretosProtegidos.Enmascarar(SecretosProtegidos.Descifrar(valorRaw))
+                                                : valorRaw,
+                                Descripcion = r["Descripcion"].ToString(),
+                                EsSecreta   = secreta
                             });
+                        }
                 }
             }
             catch (Exception ex)
@@ -40,6 +57,29 @@ namespace bufinscustomers.Services
         {
             try
             {
+                clave = clave.Trim();
+                bool secreta = EsClaveSecreta(clave);
+                string valorLimpio = valor?.Trim() ?? "";
+
+                // Secreto sin valor nuevo (o con la máscara de puntos): se conserva el valor
+                // almacenado y solo se actualiza la descripción — nunca se sobrescribe con vacío.
+                if (secreta && (valorLimpio.Length == 0 || valorLimpio.IndexOf('•') >= 0))
+                {
+                    using (var cn = new SqlConnection(CadenaConexion))
+                    {
+                        var cmdD = new SqlCommand(
+                            "UPDATE ConfiguracionSistema SET Descripcion = @Descripcion WHERE Clave = @Clave", cn);
+                        cmdD.Parameters.AddWithValue("@Clave", clave);
+                        cmdD.Parameters.AddWithValue("@Descripcion",
+                            string.IsNullOrWhiteSpace(descripcion) ? (object)DBNull.Value : descripcion.Trim());
+                        cn.Open();
+                        return cmdD.ExecuteNonQuery() > 0;
+                    }
+                }
+
+                // Un secreto se guarda cifrado en reposo.
+                string valorGuardar = secreta ? SecretosProtegidos.Cifrar(valorLimpio) : valorLimpio;
+
                 using (var cn = new SqlConnection(CadenaConexion))
                 {
                     var cmd = new SqlCommand(@"
@@ -50,8 +90,8 @@ namespace bufinscustomers.Services
                         ELSE
                             INSERT INTO ConfiguracionSistema (Clave, Valor, Descripcion)
                             VALUES (@Clave, @Valor, @Descripcion)", cn);
-                    cmd.Parameters.AddWithValue("@Clave",       clave.Trim());
-                    cmd.Parameters.AddWithValue("@Valor",        valor?.Trim() ?? "");
+                    cmd.Parameters.AddWithValue("@Clave",       clave);
+                    cmd.Parameters.AddWithValue("@Valor",        valorGuardar);
                     cmd.Parameters.AddWithValue("@Descripcion",
                         string.IsNullOrWhiteSpace(descripcion) ? (object)DBNull.Value : descripcion.Trim());
                     cn.Open();
@@ -91,8 +131,9 @@ namespace bufinscustomers.Services
                     cmd.Parameters.AddWithValue("@Clave", clave);
                     cn.Open();
                     object result = cmd.ExecuteScalar();
+                    // Descifrar es no-op si el valor no lleva el prefijo enc:v1: (valores en claro heredados).
                     return result != null && result != DBNull.Value
-                        ? result.ToString().Trim()
+                        ? SecretosProtegidos.Descifrar(result.ToString().Trim())
                         : null;
                 }
             }
@@ -114,8 +155,9 @@ namespace bufinscustomers.Services
                     cmd.Parameters.AddWithValue("@Clave", clave);
                     await cn.OpenAsync().ConfigureAwait(false);
                     object result = await cmd.ExecuteScalarAsync().ConfigureAwait(false);
+                    // Descifrar es no-op si el valor no lleva el prefijo enc:v1: (valores en claro heredados).
                     return result != null && result != DBNull.Value
-                        ? result.ToString().Trim()
+                        ? SecretosProtegidos.Descifrar(result.ToString().Trim())
                         : null;
                 }
             }

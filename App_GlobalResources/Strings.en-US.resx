@@ -332,8 +332,12 @@
   <data name="IA_JS_ConexionError" xml:space="preserve"><value>Connection error</value></data>
   <data name="IA_JS_ServicioIA" xml:space="preserve"><value>Could not reach the AI service.</value></data>
   <data name="IA_JS_PreguntaLabel" xml:space="preserve"><value>Question asked</value></data>
-  <data name="IA_JS_GenerandoPDF" xml:space="preserve"><value>Generating.</value></data>
+  <data name="IA_JS_GenerandoPDF" xml:space="preserve"><value>Generating PDF…</value></data>
   <data name="IA_JS_ErrorPDF" xml:space="preserve"><value>Could not generate the PDF.</value></data>
+  <data name="IA_JS_TablaSeleccionar" xml:space="preserve"><value>Select a table to analyze.</value></data>
+  <data name="IA_JS_EmpresaSeleccionar" xml:space="preserve"><value>Select a company.</value></data>
+  <data name="IA_JS_SinResultados" xml:space="preserve"><value>No results found</value></data>
+  <data name="IA_JS_Buscando" xml:space="preserve"><value>Searching…</value></data>
   <data name="IA_CharRestantes" xml:space="preserve"><value>characters remaining</value></data>
 
   <!-- DATA TABLES REPORT -->
@@ -1029,6 +1033,7 @@
   <data name="Nav_TabDetalle" xml:space="preserve"><value>Detail</value></data>
   <data name="Nav_TabResumenUsuarios" xml:space="preserve"><value>Summary by user</value></data>
   <data name="Nav_TabResumenPaginas" xml:space="preserve"><value>Summary by page</value></data>
+  <data name="Nav_TabResumenUsuarioPagina" xml:space="preserve"><value>User &amp; page summary</value></data>
   <data name="Nav_TotalRegistros" xml:space="preserve"><value>records</value></data>
   <data name="Nav_SinResultados" xml:space="preserve"><value>No visits recorded</value></data>
   <data name="Nav_SinResultadosDesc" xml:space="preserve"><value>Adjust the filters and click Search.</value></data>
@@ -1318,6 +1323,10 @@
   <data name="Hist_JS_ConfirmBtn" xml:space="preserve"><value>Yes, restore</value></data>
   <data name="Hist_JS_CancelBtn" xml:space="preserve"><value>Cancel</value></data>
   <data name="Notif_RollbackEjecutado" xml:space="preserve"><value>Version restored</value></data>
+  <data name="Notif_IAPresupuestoAvisoTitulo" xml:space="preserve"><value>AI usage at {3}%</value></data>
+  <data name="Notif_IAPresupuestoAvisoMsg" xml:space="preserve"><value>Company {0} has used {1} of {2} AI tokens this month ({3}%).</value></data>
+  <data name="Notif_IAPresupuestoAgotadoTitulo" xml:space="preserve"><value>AI budget exhausted</value></data>
+  <data name="Notif_IAPresupuestoAgotadoMsg" xml:space="preserve"><value>Company {0} has exhausted its monthly AI budget ({1} of {2} tokens). Non-admin user queries are blocked until next month or until the limit is raised.</value></data>
   <data name="Notif_ErrorRollback" xml:space="preserve"><value>Error restoring version</value></data>
   <data name="Hist_BadgeLimite" xml:space="preserve"><value>History limit</value></data>
   <data name="Hist_BadgeTexto" xml:space="preserve"><value>A maximum of {0} versions are kept per combination of company + data year + mode (execution or historical). When this limit is exceeded, the oldest version is deleted automatically.</value></data>
@@ -1342,10 +1351,36 @@
   <data name="IA_BtnExportarExcel" xml:space="preserve"><value>Export Excel with AI</value></data>
   <data name="IA_LimiteConsultas" xml:space="preserve"><value>Daily limit reached</value></data>
   <data name="IA_LimiteConsultasMensaje" xml:space="preserve"><value>You have reached the daily AI query limit configured by the administrator.</value></data>
+  <data name="IA_SinAccesoMensaje" xml:space="preserve"><value>You don't have access to AI Analysis. Ask an administrator to assign you a daily query limit.</value></data>
+  <data name="IA_HistorialGrandeMensaje" xml:space="preserve"><value>The conversation history is too large. Please start a new query.</value></data>
+  <data name="IA_PresupuestoAgotadoMensaje" xml:space="preserve"><value>This company has reached its monthly AI usage budget. Try again next month or ask an administrator to raise the limit.</value></data>
   <data name="IA_PreguntasSugeridas" xml:space="preserve"><value>Suggestions</value></data>
   <data name="IA_Excel_HojaAnalisis" xml:space="preserve"><value>AI Analysis</value></data>
   <data name="IA_JS_PreguntaLarga" xml:space="preserve"><value>Question too long</value></data>
   <data name="IA_JS_PreguntaLargaTexto" xml:space="preserve"><value>The question cannot exceed 500 characters.</value></data>
+  <data name="IA_LabelModo" xml:space="preserve"><value>Analysis mode</value></data>
+  <data name="IA_BtnGenerar" xml:space="preserve"><value>Generate</value></data>
+  <data name="IA_FiltrosFaltan" xml:space="preserve"><value>Missing:</value></data>
+  <data name="IA_LoadingSeg" xml:space="preserve"><value>s</value></data>
+  <data name="IA_RetryBtn" xml:space="preserve"><value>Retry</value></data>
+  <data name="IA_TruncNote" xml:space="preserve"><value>records analyzed (data truncated)</value></data>
+  <data name="IA_AccEnlace" xml:space="preserve"><value>Copy link</value></data>
+  <data name="IA_EnlaceCopiado" xml:space="preserve"><value>Link copied</value></data>
+  <data name="IA_ModoResumen" xml:space="preserve"><value>Executive summary</value></data>
+  <data name="IA_ModoDetallado" xml:space="preserve"><value>Detailed analysis</value></data>
+  <data name="IA_ModoCifras" xml:space="preserve"><value>Figures only</value></data>
+  <data name="IA_ModoRiesgo" xml:space="preserve"><value>Risk alerts</value></data>
+  <data name="IA_AccRegenerar" xml:space="preserve"><value>Regenerate</value></data>
+  <data name="IA_AccCorto" xml:space="preserve"><value>Shorter</value></data>
+  <data name="IA_AccIngles" xml:space="preserve"><value>In English</value></data>
+  <data name="IA_InstrRegenerar" xml:space="preserve"><value>Rephrase your last answer with different wording and structure, without changing the data.</value></data>
+  <data name="IA_InstrCorto" xml:space="preserve"><value>Summarize your last answer in 5 key bullet points, max 120 words.</value></data>
+  <data name="IA_InstrIngles" xml:space="preserve"><value>Translate your last answer into English.</value></data>
+  <data name="IA_FeedbackUtil" xml:space="preserve"><value>Helpful</value></data>
+  <data name="IA_FeedbackNoUtil" xml:space="preserve"><value>Not helpful</value></data>
+  <data name="IA_MetaDesdeCache" xml:space="preserve"><value>from cache</value></data>
+  <data name="IA_MetaDetalles" xml:space="preserve"><value>Details</value></data>
+  <data name="IA_MetaTokens" xml:space="preserve"><value>tokens</value></data>
   <!-- GLOBAL AI CONFIGURATION -->
   <data name="CfgIA_PageTitle" xml:space="preserve"><value>Global AI Configuration</value></data>
   <data name="CfgIA_HeaderDesc" xml:space="preserve"><value>Global parameters for the artificial intelligence module</value></data>
@@ -1367,7 +1402,10 @@
   <data name="CfgIA_LabelMasked" xml:space="preserve"><value>masked value</value></data>
   <data name="CfgIA_MaxTokensHint" xml:space="preserve"><value>Recommended range: 512 – 4096</value></data>
   <data name="CfgIA_ModeloHint" xml:space="preserve"><value>Select from list or type a custom model name</value></data>
-  <data name="CfgIA_ApiKeyHint" xml:space="preserve"><value>Stored securely in the database</value></data>
+  <data name="CfgIA_ApiKeyHint" xml:space="preserve"><value>Encrypted in the database. Leave blank to keep the current one.</value></data>
+  <data name="CfgIA_ApiKeySinCambios" xml:space="preserve"><value>•••••••• (blank = no change)</value></data>
+  <data name="CfgIA_BtnRevelar" xml:space="preserve"><value>Show current key</value></data>
+  <data name="CfgIA_JS_ClaveNoRevelable" xml:space="preserve"><value>This key cannot be revealed.</value></data>
   <data name="CfgIA_JS_CargandoModelos" xml:space="preserve"><value>Loading models.</value></data>
   <data name="CfgIA_JS_ModelosCargados" xml:space="preserve"><value>available models</value></data>
   <data name="CfgIA_JS_ErrorModelos" xml:space="preserve"><value>Could not load models. Check the API Key.</value></data>

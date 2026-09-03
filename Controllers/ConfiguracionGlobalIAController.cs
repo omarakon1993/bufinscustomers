@@ -66,6 +66,29 @@ namespace bufinscustomers.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>
+        /// Devuelve en claro el valor de una clave secreta (p. ej. la API key) para poder editarla.
+        /// Solo Super Admin (gate a nivel de clase) y queda registrado en la auditoría.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult Revelar(string clave)
+        {
+            if (!ConfiguracionSistemaService.EsClaveSecreta(clave))
+                return Json(new { ok = false, mensaje = R("CfgIA_JS_ClaveNoRevelable") ?? "Esta clave no admite revelado." });
+
+            string valor = _svc.ObtenerValor(clave);
+            var u = UsuarioSesionHelper.UsuarioActual;
+
+            new AuditoriaService().RegistrarCambio(
+                AuditoriaTipo.Configuracion, "Revelar", "ConfiguracionSistema", clave,
+                $"Secreto '{clave}' revelado en Configuración Global IA",
+                null, null, u?.IdEmpresa, severidad: AuditoriaSeveridad.Advertencia);
+            AppLogger.Warn($"Secreto de configuración revelado: {clave} (usuario {u?.Id})");
+
+            return Json(new { ok = true, valor = valor ?? "" });
+        }
+
         [HttpGet]
         public async Task<JsonResult> ObtenerModelosOpenAI()
         {

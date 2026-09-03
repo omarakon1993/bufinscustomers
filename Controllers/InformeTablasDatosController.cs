@@ -19,6 +19,12 @@ namespace bufinscustomers.Controllers
     {
         private InformeTablasDatosService _service = new InformeTablasDatosService();
 
+        // ── Límites del historial de conversación que envía el cliente (S04) ──
+        private const int MaxCharsHistorialJson    = 2_000_000; // ~2 MB de JSON crudo antes de parsear
+        private const int MaxMensajesHistorial     = 13;        // 1 mensaje de contexto + 6 pares Q&A
+        private const int MaxCharsMensajeHistorial = 60_000;    // por mensaje (salvo el de contexto)
+        private const int MaxCharsHistorialTotal   = 500_000;   // suma de todos los mensajes
+
         /// <summary>
         /// Vista principal de consulta de informes de tablas de datos
         /// </summary>
@@ -136,8 +142,10 @@ namespace bufinscustomers.Controllers
                     }
                 }
 
-                // Realizar consulta
-                var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaUsuario);
+                // Realizar consulta. El acceso a filtros.IdEmpresa ya se validó arriba (empresa
+                // propia o de su mismo grupo empresarial); se consulta esa empresa, no la del usuario.
+                var idEmpresaConsulta = filtros.IdEmpresa ?? idEmpresaUsuario;
+                var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaConsulta);
 
                 // Mapear nombres de columnas a nombres amigables
                 var columnasAmigables = resultado.Columnas.Select(c => new
@@ -211,7 +219,11 @@ namespace bufinscustomers.Controllers
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<JsonResult> ConsultarConIA(FiltrosInformeTablasDatos filtros, string pregunta, string historialJson = null)
+        // historialJson trae el prompt/respuestas de turnos anteriores; puede contener texto con
+        // < >, JSON, etc. que la validación de request de ASP.NET marcaría como "peligroso" (HTTP 500).
+        // El endpoint solo reenvía ese texto a OpenAI, nunca lo devuelve como HTML.
+        [ValidateInput(false)]
+        public async Task<JsonResult> ConsultarConIA(FiltrosInformeTablasDatos filtros, string pregunta, string historialJson = null, string modo = null)
         {
             try
             {
@@ -239,31 +251,63 @@ namespace bufinscustomers.Controllers
                     return Json(new IAConsultaResponse { Exitoso = false, Error = "Debe seleccionar un Año para el análisis IA." });
                 }
 
-                var resultado = await _service.ConsultarDatosAsync(filtros, esAdmin, idEmpresaUsuario);
+                // El acceso a filtros.IdEmpresa ya se validó arriba (empresa propia o de su mismo
+                // grupo empresarial). Cada análisis es de UNA empresa: se filtra por la empresa
+                // seleccionada, no por la del usuario, para que el filtro de empresa funcione en grupos.
+                var idEmpresaConsulta = filtros.IdEmpresa ?? idEmpresaUsuario;
+                var resultado = await _service.ConsultarDatosAsync(filtros, esAdmin, idEmpresaConsulta);
 
                 if (resultado.TotalRegistros == 0)
                 {
                     return Json(new IAConsultaResponse { Exitoso = false, Error = "No hay datos para analizar con los filtros seleccionados." });
                 }
 
-                // Deserializar historial de conversación si viene del cliente
+                // Deserializar y SANEAR el historial que envía el cliente (no es de confianza):
+                // se rechaza un blob desproporcionado antes de parsearlo y luego se acota nº de
+                // turnos y tamaño para que un cliente manipulado no infle el coste de cada llamada.
                 List<MensajeChatIA> historial = null;
                 if (!string.IsNullOrWhiteSpace(historialJson))
                 {
+                    if (historialJson.Length > MaxCharsHistorialJson)
+                        return Json(new IAConsultaResponse { Exitoso = false, Error = R("IA_HistorialGrandeMensaje") });
+
                     try { historial = JsonConvert.DeserializeObject<List<MensajeChatIA>>(historialJson); }
                     catch { historial = null; }
+
+                    historial = SanearHistorial(historial);
                 }
 
-                // Quota diaria por usuario (super admin queda exento)
+                // Quota diaria por usuario (super admin queda exento).
+                // limiteDiario: valor de Usuarios.LimiteConsultasIA si está definido; si es NULL o
+                // hay error de BD se usa el default global (IA_LimiteConsultasDefault, 20 si tampoco
+                // está); un 0 explícito en la columna significa "sin acceso al Análisis IA".
                 if (!esAdmin)
                 {
                     int limiteDiario = ObtenerLimiteConsultasIA(usuario.Id);
                     if (limiteDiario <= 0)
-                        return Json(new IAConsultaResponse { Exitoso = false, Error = R("IA_LimiteConsultasMensaje") });
+                        return Json(new IAConsultaResponse { Exitoso = false, Error = R("IA_SinAccesoMensaje") });
 
                     int consultasHoy = new AuditoriaAnalisisIAService().ContarConsultasHoy(usuario.Id);
                     if (consultasHoy >= limiteDiario)
                         return Json(new IAConsultaResponse { Exitoso = false, Error = R("IA_LimiteConsultasMensaje") });
+                }
+
+                // Presupuesto mensual de tokens por empresa (S03). 0 = ilimitado. Al agotarse se
+                // bloquea a los usuarios no-Super y se avisa a los Super Admin; al 80 % solo se avisa.
+                long presupuestoTokens = ObtenerPresupuestoTokensMensual();
+                if (presupuestoTokens > 0 && filtros.IdEmpresa.HasValue && filtros.IdEmpresa.Value > 0)
+                {
+                    long consumidosMes = new AuditoriaAnalisisIAService().SumarTokensMes(filtros.IdEmpresa.Value);
+                    if (consumidosMes >= presupuestoTokens)
+                    {
+                        NotificarPresupuestoIA(filtros.IdEmpresa.Value, consumidosMes, presupuestoTokens, agotado: true);
+                        if (!esAdmin)
+                            return Json(new IAConsultaResponse { Exitoso = false, Error = R("IA_PresupuestoAgotadoMensaje") });
+                    }
+                    else if (consumidosMes >= (long)(presupuestoTokens * 0.8))
+                    {
+                        NotificarPresupuestoIA(filtros.IdEmpresa.Value, consumidosMes, presupuestoTokens, agotado: false);
+                    }
                 }
 
                 // Leer configuración en paralelo
@@ -289,56 +333,50 @@ namespace bufinscustomers.Controllers
                 var tablaAmigable = _service.ObtenerTablasDisponibles()
                     .FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla)?.NombreAmigable ?? filtros.NombreTabla;
 
-                var promptConfig = new GestorPromptsService().ObtenerPorCodigo("RESUMEN_GERENCIAL");
-                string instrucciones = promptConfig?.TextoPrompt;
+                // Modo de análisis (N06): elige el prompt y el tope de tokens del resumen inicial.
+                var cfgModo = ConfigModo(modo);
+                var promptConfig = new GestorPromptsService().ObtenerPorCodigo(cfgModo.Codigo);
+                string instrucciones = promptConfig?.TextoPrompt ?? cfgModo.Fallback;
+
+                // Para el resumen inicial se usa el tope del modo (acotado por el configurado si es menor);
+                // para las preguntas de seguimiento se respeta el máximo configurado.
+                int maxTokensLlamada = string.IsNullOrWhiteSpace(pregunta)
+                    ? (maxTokensIA > 0 ? Math.Min(maxTokensIA, cfgModo.MaxTokens) : cfgModo.MaxTokens)
+                    : maxTokensIA;
 
                 var guardrailConfig = new GestorPromptsService().ObtenerPorCodigo("GUARDRAIL_SISTEMA");
                 string guardrail = guardrailConfig?.TextoPrompt;
 
-                // Serializar datos limitando el tamaño para no exceder el contexto del modelo.
-                // ~200 000 chars ≈ 50 000 tokens; deja ~78 000 tokens libres para el prompt y la respuesta
-                // dentro de los 128 000 tokens que soporta la mayoría de modelos GPT-4o.
+                // Datos en CSV compacto (≈ 40 % menos tokens que JSON) acotados por tamaño para no
+                // exceder el contexto del modelo. Solo en la primera llamada (los turnos siguientes
+                // reutilizan el contexto ya enviado).
                 const int MaxCharsData = 200_000;
-                string datosJson = null;
+                string datosCsv = null;
                 int filasEnviadas = resultado.TotalRegistros;
 
                 if (historial == null || historial.Count == 0)
-                {
-                    var jsonCompleto = JsonConvert.SerializeObject(resultado.Filas);
-                    if (jsonCompleto.Length <= MaxCharsData)
-                    {
-                        datosJson = jsonCompleto;
-                    }
-                    else
-                    {
-                        // Construir JSON fila a fila hasta respetar el límite
-                        var sb = new System.Text.StringBuilder("[");
-                        filasEnviadas = 0;
-                        foreach (var fila in resultado.Filas)
-                        {
-                            var filaJson = JsonConvert.SerializeObject(fila);
-                            var sep      = filasEnviadas == 0 ? "" : ",";
-                            if (sb.Length + sep.Length + filaJson.Length + 1 > MaxCharsData) break;
-                            sb.Append(sep).Append(filaJson);
-                            filasEnviadas++;
-                        }
-                        sb.Append("]");
-                        datosJson = sb.ToString();
-                    }
-                }
+                    datosCsv = ConstruirCsv(resultado.Columnas, resultado.Filas, MaxCharsData, out filasEnviadas);
 
                 var request = new IAConsultaRequest
                 {
                     Pregunta = string.IsNullOrWhiteSpace(pregunta) ? null : pregunta.Trim(),
-                    DatosJson = datosJson,
+                    DatosJson = datosCsv,
+                    FormatoDatos = "csv",
                     NombreTabla = tablaAmigable,
                     FiltrosDescripcion = ConstruirDescripcionFiltros(filtros),
                     Historial = historial
                 };
 
-                var response = await iaService.ConsultarAsync(request, instrucciones, guardrail, modeloIA, maxTokensIA, temperatureIA);
+                var response = await iaService.ConsultarAsync(request, instrucciones, guardrail, modeloIA, maxTokensLlamada, temperatureIA);
                 response.FilasEnviadas = filasEnviadas;
                 response.TotalFilas = resultado.TotalRegistros;
+
+                // Coste estimado (N14): tarifas USD por 1k tokens desde ConfiguracionSistema (0 = no mostrar).
+                var costos = ObtenerCostosIA();
+                if ((costos.Item1 > 0 || costos.Item2 > 0) && response.TokensTotal > 0)
+                    response.CostoEstimadoUSD = Math.Round(
+                        response.TokensPrompt    / 1000m * costos.Item1 +
+                        response.TokensRespuesta / 1000m * costos.Item2, 4);
 
                 if (response.Exitoso)
                 {
@@ -346,7 +384,7 @@ namespace bufinscustomers.Controllers
                     {
                         var empresa = _service.ObtenerEmpresas()
                             .FirstOrDefault(e => e.Id == filtros.IdEmpresa.GetValueOrDefault());
-                        new AuditoriaAnalisisIAService().Registrar(new AuditoriaAnalisisIA
+                        response.IdAuditoria = new AuditoriaAnalisisIAService().Registrar(new AuditoriaAnalisisIA
                         {
                             IdUsuario       = usuario.Id,
                             NombreUsuario   = $"{usuario.Nombre} {usuario.Apellidos}".Trim(),
@@ -357,10 +395,16 @@ namespace bufinscustomers.Controllers
                             Pregunta        = request.Pregunta,
                             Respuesta       = response.Respuesta,
                             FechaPregunta   = DateTime.Now,
-                            FilasAnalizadas = response.FilasEnviadas
+                            FilasAnalizadas = response.FilasEnviadas,
+                            TokensTotal     = response.TokensTotal
                         });
                     }
-                    catch { }
+                    catch (Exception exAud)
+                    {
+                        // La cuota diaria se deriva de esta tabla: si el INSERT falla, la consulta
+                        // se atendió pero no queda contabilizada. Se registra para poder detectarlo.
+                        AppLogger.Error(exAud, $"AuditoriaAnalisisIA no registrada (usuario {usuario?.Id}) — la cuota puede quedar descontada de menos");
+                    }
                 }
 
                 return Json(response);
@@ -369,6 +413,106 @@ namespace bufinscustomers.Controllers
             {
                 return Json(new IAConsultaResponse { Exitoso = false, Error = $"Error al procesar la consulta: {ex.Message}" });
             }
+        }
+
+        /// <summary>Valoración 👍/👎 de una respuesta de IA (N02). Solo el autor puede valorarla.</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult ValorarRespuestaIA(int id, int? valor)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (usuario == null) return Json(new { ok = false });
+
+            int? v = null;
+            if (valor.HasValue && (valor.Value == 0 || valor.Value == 1)) v = valor.Value;
+
+            bool ok = new AuditoriaAnalisisIAService().Valorar(id, usuario.Id, v);
+            return Json(new { ok });
+        }
+
+        // ── Modos de análisis (N06) ────────────────────────────────────────
+        // Cada modo elige un prompt de GestorPrompts (por código) y un tope de tokens para el
+        // resumen inicial. Si el código no está en GestorPrompts se usa el texto de reserva.
+
+        private const string FALLBACK_DETALLADO =
+            "Elabora un análisis financiero detallado y estructurado (6 a 10 párrafos) con subtítulos. " +
+            "Cubre desempeño por período, principales partidas, márgenes, variaciones relevantes, causas probables " +
+            "y recomendaciones accionables. Usa cifras concretas de los datos.";
+        private const string FALLBACK_CIFRAS =
+            "Responde SOLO con cifras clave en viñetas y una tabla markdown cuando aplique: totales por período, " +
+            "variaciones absolutas y porcentuales y los 5 valores más altos y más bajos. Sin narrativa, sin recomendaciones.";
+        private const string FALLBACK_RIESGO =
+            "Actúa como auditor: identifica señales de alerta y riesgos en los datos (caídas de ingresos, sobrecostos, " +
+            "tensión de liquidez, partidas atípicas, inconsistencias). Devuelve una lista priorizada (alto/medio/bajo) " +
+            "con la cifra que la sustenta y una acción sugerida para cada una.";
+
+        private (string Codigo, int MaxTokens, string Fallback) ConfigModo(string modo)
+        {
+            switch ((modo ?? "").Trim().ToLowerInvariant())
+            {
+                case "detallado": return ("ANALISIS_DETALLADO", 4000, FALLBACK_DETALLADO);
+                case "cifras":    return ("SOLO_CIFRAS",        1200, FALLBACK_CIFRAS);
+                case "riesgo":    return ("ALERTAS_RIESGO",     1800, FALLBACK_RIESGO);
+                default:          return ("RESUMEN_GERENCIAL",  1800, null); // null → IAService usa su default
+            }
+        }
+
+        /// <summary>Tarifas USD por 1.000 tokens (prompt, respuesta) desde ConfiguracionSistema. 0 = no calcular coste.</summary>
+        private (decimal, decimal) ObtenerCostosIA()
+        {
+            decimal p = 0m, s = 0m;
+            try
+            {
+                var cfg = new ConfiguracionSistemaService();
+                decimal.TryParse(cfg.ObtenerValor("IA_CostoPor1kTokensPrompt"),
+                    System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out p);
+                decimal.TryParse(cfg.ObtenerValor("IA_CostoPor1kTokensRespuesta"),
+                    System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out s);
+            }
+            catch (Exception ex) { AppLogger.Error(ex, "InformeTablasDatosController.ObtenerCostosIA"); }
+            return (p < 0 ? 0 : p, s < 0 ? 0 : s);
+        }
+
+        /// <summary>
+        /// Serializa las filas a CSV compacto (separador ';', encabezados con nombres amigables,
+        /// números con punto decimal invariante, fechas yyyy-MM-dd). Escribe filas hasta llegar a
+        /// <paramref name="maxChars"/> y devuelve por <paramref name="filasEscritas"/> cuántas cupieron.
+        /// </summary>
+        private string ConstruirCsv(List<string> columnas, List<Dictionary<string, object>> filas,
+            int maxChars, out int filasEscritas)
+        {
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            var sb = new System.Text.StringBuilder();
+            sb.Append(string.Join(";", columnas.Select(c => CsvCampo(_service.ObtenerNombreAmigableColumna(c))))).Append('\n');
+
+            int n = 0;
+            foreach (var fila in filas)
+            {
+                var linea = string.Join(";", columnas.Select(c =>
+                {
+                    object v = (fila != null && fila.TryGetValue(c, out var val)) ? val : null;
+                    string s;
+                    if (v == null || v == DBNull.Value)                 s = "";
+                    else if (v is DateTime dt)                          s = dt.ToString("yyyy-MM-dd");
+                    else if (v is decimal || v is double || v is float) s = Convert.ToDecimal(v, inv).ToString(inv);
+                    else if (v is int || v is long || v is short || v is byte) s = Convert.ToInt64(v).ToString(inv);
+                    else                                               s = v.ToString();
+                    return CsvCampo(s);
+                }));
+                if (sb.Length + linea.Length + 1 > maxChars) break;
+                sb.Append(linea).Append('\n');
+                n++;
+            }
+            filasEscritas = n;
+            return sb.ToString();
+        }
+
+        private static string CsvCampo(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return "";
+            return (s.IndexOf(';') >= 0 || s.IndexOf('"') >= 0 || s.IndexOf('\n') >= 0 || s.IndexOf('\r') >= 0)
+                ? "\"" + s.Replace("\"", "\"\"") + "\""
+                : s;
         }
 
         private string ConstruirDescripcionFiltros(FiltrosInformeTablasDatos filtros)
@@ -425,8 +569,10 @@ namespace bufinscustomers.Controllers
                     }
                 }
 
-                // Obtener datos
-                var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaUsuario);
+                // Obtener datos. El acceso a filtros.IdEmpresa ya se validó arriba (empresa propia
+                // o de su mismo grupo empresarial); se exporta esa empresa, no la del usuario.
+                var idEmpresaConsulta = filtros.IdEmpresa ?? idEmpresaUsuario;
+                var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaConsulta);
 
                 if (resultado.TotalRegistros == 0)
                 {
@@ -567,7 +713,9 @@ namespace bufinscustomers.Controllers
                     }
                 }
 
-                var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaUsuario);
+                // Cada exportación es de UNA empresa: la seleccionada (ya validada arriba), no la del usuario.
+                var idEmpresaConsulta = filtros.IdEmpresa ?? idEmpresaUsuario;
+                var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaConsulta);
                 var tablas    = _service.ObtenerTablasDisponibles();
                 string nombreTabla = tablas.FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla)?.NombreAmigable ?? filtros.NombreTabla;
                 string hojaNombre  = nombreTabla.Length > 31 ? nombreTabla.Substring(0, 31) : nombreTabla;
@@ -669,6 +817,12 @@ namespace bufinscustomers.Controllers
             }
         }
 
+        /// <summary>
+        /// Límite diario de consultas IA del usuario. Si <c>Usuarios.LimiteConsultasIA</c> tiene un
+        /// valor se devuelve tal cual (incluido <c>0</c> = sin acceso). Si es <c>NULL</c> —o hay un
+        /// error de BD— se cae al default global <c>IA_LimiteConsultasDefault</c> de
+        /// <c>ConfiguracionSistema</c> (20 si tampoco está configurado).
+        /// </summary>
         private int ObtenerLimiteConsultasIA(int idUsuario)
         {
             try
@@ -680,10 +834,127 @@ namespace bufinscustomers.Controllers
                     cmd.Parameters.AddWithValue("@Id", idUsuario);
                     cn.Open();
                     var result = cmd.ExecuteScalar();
-                    return result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
+                    if (result != null && result != DBNull.Value)
+                        return Convert.ToInt32(result);   // valor explícito (incl. 0 = sin acceso)
                 }
             }
-            catch { return 0; }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "InformeTablasDatosController.ObtenerLimiteConsultasIA");
+            }
+            return ObtenerLimiteConsultasIADefault();
+        }
+
+        /// <summary>Límite diario por defecto cuando el usuario no tiene uno propio configurado.</summary>
+        private int ObtenerLimiteConsultasIADefault()
+        {
+            try
+            {
+                var v = new ConfiguracionSistemaService().ObtenerValor("IA_LimiteConsultasDefault");
+                if (int.TryParse(v, out int d) && d >= 0)
+                    return d;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "InformeTablasDatosController.ObtenerLimiteConsultasIADefault");
+            }
+            return 20;
+        }
+
+        /// <summary>Presupuesto mensual de tokens IA por empresa (clave <c>IA_TokensMensualesPorEmpresa</c>). 0 = ilimitado.</summary>
+        private long ObtenerPresupuestoTokensMensual()
+        {
+            try
+            {
+                var v = new ConfiguracionSistemaService().ObtenerValor("IA_TokensMensualesPorEmpresa");
+                if (long.TryParse(v, out long t) && t >= 0) return t;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "InformeTablasDatosController.ObtenerPresupuestoTokensMensual");
+            }
+            return 0;
+        }
+
+        /// <summary>Avisa a los Super Admin del consumo de tokens de una empresa. Throttle: ≤ 1 aviso
+        /// por empresa y tipo (aviso/agotado) cada 24 h, vía <c>HttpRuntime.Cache</c>.</summary>
+        private void NotificarPresupuestoIA(int idEmpresa, long consumidos, long presupuesto, bool agotado)
+        {
+            string ck = "ia_presup_" + idEmpresa + "_" + (agotado ? "full" : "warn");
+            if (System.Web.HttpRuntime.Cache[ck] != null) return;
+            System.Web.HttpRuntime.Cache.Insert(ck, 1, null, DateTime.Now.AddHours(24),
+                System.Web.Caching.Cache.NoSlidingExpiration);
+
+            try
+            {
+                string nombreEmpresa = _service.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? ("#" + idEmpresa);
+                int pct = presupuesto > 0 ? (int)Math.Min(100, consumidos * 100 / presupuesto) : 0;
+                string titulo = R(agotado ? "Notif_IAPresupuestoAgotadoTitulo" : "Notif_IAPresupuestoAvisoTitulo");
+                string msg = string.Format(R(agotado ? "Notif_IAPresupuestoAgotadoMsg" : "Notif_IAPresupuestoAvisoMsg"),
+                    nombreEmpresa, consumidos.ToString("N0"), presupuesto.ToString("N0"), pct);
+
+                var notif = new NotificacionesService();
+                foreach (int idAdmin in ObtenerIdsSuperAdmin())
+                    notif.Crear(idAdmin, titulo, msg, agotado ? "error" : "warning", "/AuditoriaHub");
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "InformeTablasDatosController.NotificarPresupuestoIA");
+            }
+        }
+
+        private List<int> ObtenerIdsSuperAdmin()
+        {
+            var ids = new List<int>();
+            try
+            {
+                using (var cn = new System.Data.SqlClient.SqlConnection(CadenaConexion))
+                using (var cmd = new System.Data.SqlClient.SqlCommand("SELECT Id FROM Usuarios WHERE Admin = 2", cn))
+                {
+                    cn.Open();
+                    using (var r = cmd.ExecuteReader())
+                        while (r.Read()) ids.Add(Convert.ToInt32(r["Id"]));
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "InformeTablasDatosController.ObtenerIdsSuperAdmin");
+            }
+            return ids;
+        }
+
+        /// <summary>
+        /// Acota el historial que llega del cliente (S04): descarta mensajes con forma inválida,
+        /// limita el tamaño de cada mensaje (salvo el primero, que es el contexto que generó el
+        /// servidor), conserva solo el contexto + los últimos turnos, y aplica un tope de tamaño
+        /// total soltando los mensajes intermedios más antiguos.
+        /// </summary>
+        private static List<MensajeChatIA> SanearHistorial(List<MensajeChatIA> historial)
+        {
+            if (historial == null || historial.Count == 0) return null;
+
+            var limpio = historial
+                .Where(m => m != null
+                         && !string.IsNullOrEmpty(m.Contenido)
+                         && (m.Rol == "user" || m.Rol == "assistant" || m.Rol == "system"))
+                .ToList();
+            if (limpio.Count == 0) return null;
+
+            for (int i = 1; i < limpio.Count; i++)
+                if (limpio[i].Contenido.Length > MaxCharsMensajeHistorial)
+                    limpio[i].Contenido = limpio[i].Contenido.Substring(0, MaxCharsMensajeHistorial);
+
+            if (limpio.Count > MaxMensajesHistorial)
+            {
+                var recortado = new List<MensajeChatIA> { limpio[0] };
+                recortado.AddRange(limpio.Skip(limpio.Count - (MaxMensajesHistorial - 1)));
+                limpio = recortado;
+            }
+
+            while (limpio.Count > 2 && limpio.Sum(m => (long)m.Contenido.Length) > MaxCharsHistorialTotal)
+                limpio.RemoveAt(1);
+
+            return limpio;
         }
 
         private string LimpiarMarkdown(string texto)

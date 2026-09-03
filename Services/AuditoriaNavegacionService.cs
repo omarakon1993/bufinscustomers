@@ -271,6 +271,51 @@ namespace bufinscustomers.Services
             return lista;
         }
 
+        public List<NavegacionResumenUsuarioPagina> ResumenPorUsuarioPagina(NavegacionFiltro f, int top = 1000)
+        {
+            var lista = new List<NavegacionResumenUsuarioPagina>();
+            var (where, pars) = ConstruirFiltro(f ?? new NavegacionFiltro());
+
+            string sql = @"
+                SELECT TOP (" + (top < 1 ? 1 : top) + @") n.IdUsuario,
+                       MAX(n.NombreUsuario) AS NombreUsuario,
+                       MAX(e.EmpNombre)     AS NombreEmpresa,
+                       COALESCE(n.CodigoMenu, n.Controller + '/' + n.[Action]) AS Clave,
+                       MAX(n.TituloPagina) AS Titulo,
+                       MAX(n.Controller)   AS Controller,
+                       MAX(n.[Action])     AS [Action],
+                       COUNT(*)            AS Visitas,
+                       MIN(n.Fecha)        AS Primera,
+                       MAX(n.Fecha)        AS Ultima
+                FROM dbo.AuditoriaNavegacion n
+                LEFT JOIN dbo.Empresas e ON e.EmpId = n.IdEmpresa" + where + @"
+                GROUP BY n.IdUsuario, COALESCE(n.CodigoMenu, n.Controller + '/' + n.[Action])
+                ORDER BY Visitas DESC, n.IdUsuario";
+
+            using (var cn = new SqlConnection(CadenaConexion))
+            using (var cmd = new SqlCommand(sql, cn))
+            {
+                foreach (var p in pars) cmd.Parameters.Add(Clonar(p));
+                cn.Open();
+                using (var r = cmd.ExecuteReader())
+                    while (r.Read())
+                        lista.Add(new NavegacionResumenUsuarioPagina
+                        {
+                            IdUsuario     = r["IdUsuario"] == DBNull.Value ? (int?)null : Convert.ToInt32(r["IdUsuario"]),
+                            NombreUsuario = r["NombreUsuario"] == DBNull.Value ? null : r["NombreUsuario"].ToString(),
+                            NombreEmpresa = r["NombreEmpresa"] == DBNull.Value ? null : r["NombreEmpresa"].ToString(),
+                            Clave         = r["Clave"] == DBNull.Value ? null : r["Clave"].ToString(),
+                            Titulo        = r["Titulo"] == DBNull.Value ? null : r["Titulo"].ToString(),
+                            Controller    = r["Controller"] == DBNull.Value ? null : r["Controller"].ToString(),
+                            Action        = r["Action"] == DBNull.Value ? null : r["Action"].ToString(),
+                            Visitas       = Convert.ToInt32(r["Visitas"]),
+                            Primera       = Convert.ToDateTime(r["Primera"]),
+                            Ultima        = Convert.ToDateTime(r["Ultima"])
+                        });
+            }
+            return lista;
+        }
+
         // ── Helpers ─────────────────────────────────────────────────────────
 
         private static (string where, List<SqlParameter> pars) ConstruirFiltro(NavegacionFiltro f)

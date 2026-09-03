@@ -82,4 +82,19 @@ namespace bufinscustomers.Models
         public int UsuariosDistintos { get; set; }
         public DateTime Ultima { get; set; }
     }
+
+    /// <summary>Fila del resumen cruzado "por usuario y por página" (una fila por combinación usuario × página).</summary>
+    public class NavegacionResumenUsuarioPagina
+    {
+        public int? IdUsuario { get; set; }
+        public string NombreUsuario { get; set; }
+        public string NombreEmpresa { get; set; }
+        public string Clave { get; set; }        // CodigoMenu o "Controller/Action"
+        public string Titulo { get; set; }
+        public string Controller { get; set; }
+        public string Action { get; set; }
+        public int Visitas { get; set; }
+        public DateTime Primera { get; set; }
+        public DateTime Ultima { get; set; }
+    }
 }

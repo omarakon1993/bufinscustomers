@@ -8,15 +8,43 @@ namespace bufinscustomers.Services
 {
     public class AuditoriaAnalisisIAService : BaseService
     {
-        public void Registrar(AuditoriaAnalisisIA auditoria)
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> _cacheColumnas =
+            new System.Collections.Concurrent.ConcurrentDictionary<string, bool>();
+
+        /// <summary>True si <c>AuditoriaAnalisisIA</c> tiene la columna indicada. Cacheado: permite
+        /// convivir con esquemas donde aún no se han ejecutado las migraciones (S03 / N02).</summary>
+        private bool TieneColumna(string nombre)
         {
+            return _cacheColumnas.GetOrAdd(nombre, n =>
+            {
+                try
+                {
+                    using (var cn = new SqlConnection(CadenaConexion))
+                    using (var cmd = new SqlCommand(
+                        "SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.AuditoriaAnalisisIA') AND name = @n", cn))
+                    {
+                        cmd.Parameters.AddWithValue("@n", n);
+                        cn.Open();
+                        return cmd.ExecuteScalar() != null;
+                    }
+                }
+                catch { return false; }
+            });
+        }
+
+        /// <summary>Inserta la fila de auditoría y devuelve su <c>Id</c> (0 si no se pudo obtener).</summary>
+        public int Registrar(AuditoriaAnalisisIA auditoria)
+        {
+            bool conTokens = TieneColumna("TokensTotal");
+            string cols = "IdUsuario, NombreUsuario, IdEmpresa, NombreEmpresa, NombreTabla, Filtros, Pregunta, Respuesta, FechaPregunta, FilasAnalizadas"
+                        + (conTokens ? ", TokensTotal" : "");
+            string vals = "@IdUsuario, @NombreUsuario, @IdEmpresa, @NombreEmpresa, @NombreTabla, @Filtros, @Pregunta, @Respuesta, @FechaPregunta, @FilasAnalizadas"
+                        + (conTokens ? ", @TokensTotal" : "");
+
             using (var cn = new SqlConnection(CadenaConexion))
             {
-                var cmd = new SqlCommand(@"
-                    INSERT INTO AuditoriaAnalisisIA
-                        (IdUsuario, NombreUsuario, IdEmpresa, NombreEmpresa, NombreTabla, Filtros, Pregunta, Respuesta, FechaPregunta, FilasAnalizadas)
-                    VALUES
-                        (@IdUsuario, @NombreUsuario, @IdEmpresa, @NombreEmpresa, @NombreTabla, @Filtros, @Pregunta, @Respuesta, @FechaPregunta, @FilasAnalizadas)", cn);
+                var cmd = new SqlCommand(
+                    $"INSERT INTO AuditoriaAnalisisIA ({cols}) VALUES ({vals}); SELECT CAST(SCOPE_IDENTITY() AS INT);", cn);
                 cmd.Parameters.AddWithValue("@IdUsuario", auditoria.IdUsuario);
                 cmd.Parameters.AddWithValue("@NombreUsuario", auditoria.NombreUsuario);
                 cmd.Parameters.AddWithValue("@IdEmpresa", auditoria.IdEmpresa);
@@ -27,8 +55,66 @@ namespace bufinscustomers.Services
                 cmd.Parameters.AddWithValue("@Respuesta", auditoria.Respuesta);
                 cmd.Parameters.AddWithValue("@FechaPregunta", auditoria.FechaPregunta);
                 cmd.Parameters.AddWithValue("@FilasAnalizadas", auditoria.FilasAnalizadas);
+                if (conTokens) cmd.Parameters.AddWithValue("@TokensTotal", auditoria.TokensTotal);
                 cn.Open();
-                cmd.ExecuteNonQuery();
+                var r = cmd.ExecuteScalar();
+                return r == null || r == DBNull.Value ? 0 : Convert.ToInt32(r);
+            }
+        }
+
+        /// <summary>
+        /// Registra la valoración del usuario sobre una respuesta (N02). Solo el autor de la
+        /// consulta puede valorarla. <c>1</c> = útil, <c>0</c> = no útil, <c>null</c> = quitar.
+        /// Devuelve false si la columna no existe o la fila no es del usuario.
+        /// </summary>
+        public bool Valorar(int id, int idUsuario, int? valoracion)
+        {
+            if (!TieneColumna("Valoracion")) return false;
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand(
+                    "UPDATE AuditoriaAnalisisIA SET Valoracion = @v WHERE Id = @id AND IdUsuario = @u", cn))
+                {
+                    cmd.Parameters.AddWithValue("@v", (object)valoracion ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@id", id);
+                    cmd.Parameters.AddWithValue("@u", idUsuario);
+                    cn.Open();
+                    return cmd.ExecuteNonQuery() > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceWarning("[AuditoriaAnalisisIAService.Valorar] {0}", ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Suma de <c>TokensTotal</c> de la empresa en el mes en curso (S03). <c>0</c> ante cualquier
+        /// error o si la columna no existe — así un fallo de medición nunca bloquea a la empresa.
+        /// </summary>
+        public long SumarTokensMes(int idEmpresa)
+        {
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand(
+                    @"SELECT ISNULL(SUM(CAST(TokensTotal AS BIGINT)), 0)
+                      FROM AuditoriaAnalisisIA
+                      WHERE IdEmpresa = @IdEmpresa
+                        AND FechaPregunta >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)", cn))
+                {
+                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                    cn.Open();
+                    var r = cmd.ExecuteScalar();
+                    return r == null || r == DBNull.Value ? 0L : Convert.ToInt64(r);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceWarning("[AuditoriaAnalisisIAService.SumarTokensMes] {0}", ex.Message);
+                return 0L;
             }
         }
 

@@ -308,6 +308,7 @@
 </div>
 
 @section scripts {
+<script src="~/Assets/js/bufins-markdown.js"></script>
 <script>
 $(document).ready(function () {
 
@@ -550,12 +551,28 @@ $(document).ready(function () {
             success: function (registros) {
                 _todosRegistros = registros || [];
                 aplicarFiltrosLocales();
+                abrirDeepLinkIA();
             },
             error: function () {
                 $('#audResultadosContainer').hide();
                 Swal.fire({ icon: 'error', title: _strError, text: _strErrorHistorial });
             }
         });
+    }
+
+    /* ── Enlace permanente: ?ia=<id> abre esa consulta al cargar ── */
+    var _deepLinkIAHecho = false;
+    function abrirDeepLinkIA() {
+        if (_deepLinkIAHecho) return;
+        var m = /[?&]ia=(\d+)/.exec(location.search);
+        if (!m) return;
+        _deepLinkIAHecho = true;
+        for (var i = 0; i < _todosRegistros.length; i++) {
+            if (String(_todosRegistros[i].Id) === m[1]) {
+                verRespuesta(_todosRegistros[i].Pregunta, _todosRegistros[i].Respuesta, _todosRegistros[i].Filtros);
+                return;
+            }
+        }
     }
 
     /* ── Filas "esqueleto" mientras se consulta ── */
@@ -746,20 +763,12 @@ $(document).ready(function () {
         });
     }
 
-    /* ── Markdown renderer ── */
+    /* ── Markdown renderer ──
+       Lo aporta ~/Assets/js/bufins-markdown.js (window.renderMarkdown). Fallback mínimo
+       por si el archivo no cargó. */
     function renderMarkdown(text) {
-        if (!text) return '';
-        return text
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.+?)\*/g, '<em>$1</em>')
-            .replace(/^### (.+)$/gm, '<h6 style="color:#583AFF;font-weight:700;margin-top:12px;">$1</h6>')
-            .replace(/^## (.+)$/gm,  '<h5 style="color:#583AFF;font-weight:700;margin-top:14px;">$1</h5>')
-            .replace(/^# (.+)$/gm,   '<h4 style="color:#160933;font-weight:700;margin-top:16px;">$1</h4>')
-            .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
-            .replace(/(<li>[\s\S]+?<\/li>)/g, '<ul style="padding-left:18px;margin-bottom:8px;">$1</ul>')
-            .replace(/\n\n/g, '</p><p style="margin-bottom:8px;">')
-            .replace(/\n/g, '<br>');
+        if (typeof window.bufinsMarkdown === 'function') return window.bufinsMarkdown(text);
+        return text ? $('<div>').text(text).html().replace(/\n/g, '<br>') : '';
     }
 
 });

@@ -157,6 +157,32 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpGet]
+        public JsonResult ResumenUsuarioPagina(int? idUsuario, int? idEmpresa, string codigoMenu, int? rol,
+            string desde, string hasta)
+        {
+            if (!PuedeAcceder(out bool esSuper)) return Prohibido();
+
+            var f = ConstruirFiltro(idUsuario, idEmpresa, codigoMenu, rol, desde, hasta);
+            AplicarAlcance(f, esSuper);
+
+            var filas = _svc.ResumenPorUsuarioPagina(f);
+            return Json(new
+            {
+                success = true,
+                items = filas.Select(x => new
+                {
+                    x.NombreUsuario,
+                    Empresa = x.NombreEmpresa,
+                    Pagina  = x.Titulo ?? x.Clave,
+                    Ruta    = (x.Controller ?? "") + "/" + (x.Action ?? ""),
+                    x.Visitas,
+                    Primera = x.Primera.ToString("dd/MM/yyyy HH:mm"),
+                    Ultima  = x.Ultima.ToString("dd/MM/yyyy HH:mm")
+                })
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
         public ActionResult ExportarExcel(string modo, int? idUsuario, int? idEmpresa, string codigoMenu,
             int? rol, string desde, string hasta)
         {
@@ -183,6 +209,27 @@ namespace bufinscustomers.Controllers
                         ws.Cell(fila, 4).Value = u.PaginasDistintas;
                         ws.Cell(fila, 5).Value = u.Primera; ws.Cell(fila, 5).Style.DateFormat.Format = "yyyy-mm-dd hh:mm";
                         ws.Cell(fila, 6).Value = u.Ultima;  ws.Cell(fila, 6).Style.DateFormat.Format = "yyyy-mm-dd hh:mm";
+                        fila++;
+                    }
+                    ws.Columns().AdjustToContents();
+                    ws.SheetView.Freeze(1, 0);
+                }
+                else if (string.Equals(modo, "usuariopagina", StringComparison.OrdinalIgnoreCase))
+                {
+                    var ws = wb.Worksheets.Add("Resumen usuario y página");
+                    string[] cab = { "Usuario", "Empresa", "Página", "Ruta", "Visitas", "Primera actividad", "Última actividad" };
+                    for (int i = 0; i < cab.Length; i++) ws.Cell(1, i + 1).Value = cab[i];
+                    ws.Row(1).Style.Font.Bold = true;
+                    int fila = 2;
+                    foreach (var x in _svc.ResumenPorUsuarioPagina(f))
+                    {
+                        ws.Cell(fila, 1).Value = x.NombreUsuario ?? "";
+                        ws.Cell(fila, 2).Value = x.NombreEmpresa ?? "";
+                        ws.Cell(fila, 3).Value = x.Titulo ?? x.Clave ?? "";
+                        ws.Cell(fila, 4).Value = (x.Controller ?? "") + "/" + (x.Action ?? "");
+                        ws.Cell(fila, 5).Value = x.Visitas;
+                        ws.Cell(fila, 6).Value = x.Primera; ws.Cell(fila, 6).Style.DateFormat.Format = "yyyy-mm-dd hh:mm";
+                        ws.Cell(fila, 7).Value = x.Ultima;  ws.Cell(fila, 7).Style.DateFormat.Format = "yyyy-mm-dd hh:mm";
                         fila++;
                     }
                     ws.Columns().AdjustToContents();
