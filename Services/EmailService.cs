@@ -3,7 +3,9 @@ using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
 using System;
+using System.Collections.Generic;
 using System.Configuration;
+using System.Linq;
 using System.Text;
 using System.Web;
 
@@ -108,6 +110,30 @@ namespace bufinscustomers.Services
             Enviar(destinatario, asunto, ConstruirEmailAlertaHtml(titulo, mensaje, enlace));
         }
 
+        /// <summary>
+        /// Env&iacute;a el Excel de modelos financieros exportados a uno o varios destinatarios
+        /// (separados por coma o punto y coma) con una plantilla de marca. El handshake SMTP y
+        /// la generaci&oacute;n del adjunto pueden tardar: ll&aacute;malo desde un flujo que ya
+        /// muestra un overlay de carga, nunca en l&iacute;nea con un flujo cr&iacute;tico.
+        /// </summary>
+        public void EnviarModelosExportados(string destinatarios, string tituloEmpresa,
+            IEnumerable<string> modelos, string mensajePersonal, string nombreQuienEnvia,
+            string nombreArchivo, byte[] adjunto, bool esIngles)
+        {
+            string asunto = esIngles
+                ? $"Financial models - {tituloEmpresa}"
+                : $"Modelos financieros - {tituloEmpresa}";
+
+            var adjuntos = new List<(string nombre, byte[] datos, string mime)>
+            {
+                (nombreArchivo, adjunto, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            };
+
+            EnviarConAdjuntos(destinatarios, asunto,
+                ConstruirEmailModelosHtml(tituloEmpresa, modelos, mensajePersonal, nombreQuienEnvia, nombreArchivo, esIngles),
+                adjuntos);
+        }
+
         private enum ModoCorreoCuenta { Creacion, Reenvio, Actualizacion }
 
         private void Enviar(string destinatario, string asunto, string htmlBody)
@@ -130,6 +156,56 @@ namespace bufinscustomers.Services
                     sslOpts = SecureSocketOptions.SslOnConnect;      // SSL implicito
                 else if (_ssl)
                     sslOpts = SecureSocketOptions.StartTls;          // STARTTLS
+                else
+                    sslOpts = SecureSocketOptions.None;
+
+                if (_ignorarCert)
+                    client.ServerCertificateValidationCallback = (s, c, ch, e) => true;
+
+                client.Connect(_host, _puerto, sslOpts);
+                client.Authenticate(_usuario, _contrasena);
+                client.Send(message);
+                client.Disconnect(quit: true);
+            }
+        }
+
+        /// <summary>
+        /// Variante de <see cref="Enviar"/> que admite varios destinatarios (separados por coma
+        /// o punto y coma) y adjuntos binarios.
+        /// </summary>
+        private void EnviarConAdjuntos(string destinatarios, string asunto, string htmlBody,
+            List<(string nombre, byte[] datos, string mime)> adjuntos)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_nombreRemitente, _remitente));
+
+            string normalizado = (destinatarios ?? "").Replace(";", ",");
+            foreach (var addr in InternetAddressList.Parse(normalizado))
+                message.To.Add(addr);
+
+            if (message.To.Count == 0)
+                throw new InvalidOperationException("No hay destinatarios validos.");
+
+            message.Subject = asunto;
+
+            var builder = new BodyBuilder { HtmlBody = htmlBody };
+            if (adjuntos != null)
+            {
+                foreach (var a in adjuntos)
+                {
+                    if (a.datos == null || a.datos.Length == 0) continue;
+                    builder.Attachments.Add(a.nombre, a.datos, ContentType.Parse(a.mime));
+                }
+            }
+            message.Body = builder.ToMessageBody();
+
+            using (var client = new SmtpClient())
+            {
+                SecureSocketOptions sslOpts;
+                if (_ssl && _puerto == 465)
+                    sslOpts = SecureSocketOptions.SslOnConnect;
+                else if (_ssl)
+                    sslOpts = SecureSocketOptions.StartTls;
                 else
                     sslOpts = SecureSocketOptions.None;
 
@@ -220,6 +296,65 @@ namespace bufinscustomers.Services
     <div style=""background:#fef2f2;border-left:4px solid #dc2626;padding:14px 18px;font-size:13px;color:#4b5563;margin:8px 0 0;"">
       Aviso autom&aacute;tico del sistema Bufins. No respondas a este correo.
     </div>
+  </td></tr>
+  <tr><td style=""background:#f8f9ff;padding:20px;text-align:center;font-size:12px;color:#9ca3af;border-top:1px solid #e5e7eb;"">
+    &copy; Bufins &mdash; Business Finance Always Everywhere
+  </td></tr>
+ </table>
+ </td></tr>
+</table>
+</body></html>";
+        }
+
+        private static string ConstruirEmailModelosHtml(string empresa, IEnumerable<string> modelos,
+            string mensajePersonal, string nombreQuienEnvia, string nombreArchivo, bool esIngles)
+        {
+            var lista = (modelos ?? Enumerable.Empty<string>())
+                .Where(m => !string.IsNullOrWhiteSpace(m)).ToList();
+
+            string titulo   = esIngles ? "Financial models export" : "Exportaci&oacute;n de modelos financieros";
+            string intro    = esIngles
+                ? $"You have received the export of the financial models for <strong>{HttpUtility.HtmlEncode(empresa)}</strong>. The Excel file is attached to this email."
+                : $"Has recibido la exportaci&oacute;n de los modelos financieros de <strong>{HttpUtility.HtmlEncode(empresa)}</strong>. El archivo Excel va adjunto a este correo.";
+            string lblLista = esIngles ? "Included models" : "Modelos incluidos";
+            string lblArch  = esIngles ? "Attached file" : "Archivo adjunto";
+            string lblDe    = esIngles ? "Sent by" : "Enviado por";
+
+            string filasModelos = string.Join("", lista.Select(m =>
+                $@"<tr><td style=""padding:6px 0;font-size:14px;color:#1e1b4b;"">
+                     <span style=""color:#6366f1;font-weight:700;"">&bull;</span>&nbsp;{HttpUtility.HtmlEncode(m)}
+                   </td></tr>"));
+
+            string bloqueMensaje = string.IsNullOrWhiteSpace(mensajePersonal) ? "" : $@"
+    <div style=""background:#f8f9ff;border-left:4px solid #6366f1;padding:14px 18px;font-size:14px;color:#4b5563;line-height:1.6;margin:0 0 22px;white-space:pre-wrap;"">{HttpUtility.HtmlEncode(mensajePersonal)}</div>";
+
+            string bloqueDe = string.IsNullOrWhiteSpace(nombreQuienEnvia) ? "" :
+                $@"<p style=""font-size:13px;color:#9ca3af;margin:4px 0 0;"">{lblDe}: {HttpUtility.HtmlEncode(nombreQuienEnvia)}</p>";
+
+            return $@"<!DOCTYPE html>
+<html lang=""{(esIngles ? "en" : "es")}"">
+<head><meta charset=""UTF-8""><meta name=""viewport"" content=""width=device-width,initial-scale=1""></head>
+<body style=""margin:0;padding:0;background:#f0f2f8;font-family:'Segoe UI',Arial,sans-serif;"">
+<table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background:#f0f2f8;padding:32px 16px;"">
+ <tr><td align=""center"">
+ <table width=""600"" cellpadding=""0"" cellspacing=""0"" style=""max-width:600px;width:100%;background:#fff;border-radius:16px;overflow:hidden;"">
+  <tr><td style=""background:linear-gradient(135deg,#1e1b4b,#312e81,#4338ca);padding:36px 40px 28px;text-align:center;"">
+    <div style=""font-size:28px;font-weight:900;color:#fff;letter-spacing:3px;"">bufins</div>
+    <div style=""font-size:9px;color:rgba(255,255,255,0.6);letter-spacing:2px;text-transform:uppercase;"">Business Finance Always Everywhere</div>
+  </td></tr>
+  <tr><td style=""padding:40px;"">
+    <p style=""font-size:18px;font-weight:700;color:#1e1b4b;margin:0 0 12px;"">{titulo}</p>
+    <p style=""font-size:15px;color:#4b5563;line-height:1.7;margin:0 0 22px;"">{intro}</p>
+    {bloqueMensaje}
+    <p style=""font-size:13px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;"">{lblLista}</p>
+    <table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background:#f8f9ff;border-radius:12px;padding:12px 18px;margin:0 0 22px;"">
+      <tr><td><table width=""100%"" cellpadding=""0"" cellspacing=""0"">{filasModelos}</table></td></tr>
+    </table>
+    <div style=""display:flex;align-items:center;gap:10px;background:#eef2ff;border-radius:10px;padding:14px 18px;"">
+      <span style=""font-size:22px;"">&#128196;</span>
+      <span style=""font-size:14px;color:#1e1b4b;font-weight:600;word-break:break-all;"">{lblArch}: {HttpUtility.HtmlEncode(nombreArchivo)}</span>
+    </div>
+    {bloqueDe}
   </td></tr>
   <tr><td style=""background:#f8f9ff;padding:20px;text-align:center;font-size:12px;color:#9ca3af;border-top:1px solid #e5e7eb;"">
     &copy; Bufins &mdash; Business Finance Always Everywhere

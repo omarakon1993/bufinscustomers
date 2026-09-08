@@ -49,6 +49,45 @@
         0%   { background-position: 100% 0; }
         100% { background-position: -200% 0; }
     }
+
+    /* Botones de acción más compactos */
+    #btnEjecutar, #btnExportarTodos, #btnEnviarCorreo {
+        padding: 0.45rem 1.05rem !important;
+        font-size: 0.8125rem !important;
+    }
+
+    /* Modal: lista de modelos seleccionables */
+    .mc-modelos-box {
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        max-height: 210px;
+        overflow-y: auto;
+        background: #fff;
+    }
+    .mc-modelo-item {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.4rem 0.8rem;
+        margin: 0;
+        font-weight: 500;
+        font-size: 0.85rem;
+        color: #2d3748;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f1f4;
+    }
+    .mc-modelo-item:last-child { border-bottom: none; }
+    .mc-modelo-item:hover { background: #f8f9fc; }
+    .mc-modelo-item input { cursor: pointer; margin: 0; }
+    .mc-modelo-all {
+        background: #f8f9fc;
+        font-weight: 600;
+        color: #1e1b4b;
+        position: sticky;
+        top: 0;
+        border-bottom: 1px solid #e3e6f0;
+        z-index: 1;
+    }
 </style>
 
 @Html.AntiForgeryToken()
@@ -138,6 +177,10 @@
                 <span class="ico-export"><i class="fas fa-layer-group mr-1"></i></span>
                 @Resources.Strings.Modelo_BtnExportarTodos
             </button>
+            <button type="button" id="btnEnviarCorreo" class="btn btn-modern-secondary" disabled onclick="abrirModalCorreo()" title="@Resources.Strings.Modelo_BtnEnviarTooltip">
+                <i class="fas fa-paper-plane mr-1"></i>
+                @Resources.Strings.Modelo_BtnEnviarCorreo
+            </button>
             <small class="text-muted" id="textoAyuda">
                 <i class="fas fa-info-circle" style="color:#583AFF;"></i>
                 @Resources.Strings.Modelo_HintCompletar
@@ -203,6 +246,75 @@
         </div>
     </div>
 
+    <!-- Modal: enviar modelos por correo -->
+    <div class="modal fade" id="modalEnviarCorreo" tabindex="-1" role="dialog" aria-labelledby="modalEnviarCorreoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEnviarCorreoLabel">
+                        <i class="fas fa-paper-plane mr-2" style="color:#583AFF;"></i>@Resources.Strings.Modelo_Correo_ModalTitle
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3" style="font-size:0.85rem;">
+                        <i class="fas fa-building mr-1" style="color:#583AFF;"></i>
+                        @Resources.Strings.Modelo_LabelEmpresa: <strong id="correoEmpresaNombre">—</strong>
+                    </p>
+
+                    <div class="form-group">
+                        <label>
+                            <i class="fas fa-cubes mr-1"></i>@Resources.Strings.Modelo_Correo_LabelModelos <span class="required">*</span>
+                        </label>
+                        <div class="mc-modelos-box">
+                            <label class="mc-modelo-item mc-modelo-all">
+                                <input type="checkbox" id="correoSelAll">
+                                <span>@Resources.Strings.Modelo_Correo_SelTodos</span>
+                            </label>
+                            <div id="correoListaModelos">
+                                @foreach (var m in Model.Modelos)
+                                {
+                                    <label class="mc-modelo-item">
+                                        <input type="checkbox" class="mc-modelo-chk" value="@m.Id">
+                                        <span>@m.Nombre</span>
+                                    </label>
+                                }
+                            </div>
+                        </div>
+                        <small class="form-text text-muted" id="correoContadorModelos">0 @Resources.Strings.Modelo_Correo_Seleccionados</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="correoDestino">
+                            <i class="fas fa-at mr-1"></i>@Resources.Strings.Modelo_Correo_LabelDestino <span class="required">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="correoDestino" autocomplete="off"
+                               placeholder="@Resources.Strings.Modelo_Correo_PlaceholderDestino">
+                        <small class="form-text text-muted">@Resources.Strings.Modelo_Correo_HintDestino</small>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label for="correoMensaje">
+                            <i class="fas fa-align-left mr-1"></i>@Resources.Strings.Modelo_Correo_LabelMensaje
+                        </label>
+                        <textarea class="form-control" id="correoMensaje" rows="2" maxlength="1000"
+                                  placeholder="@Resources.Strings.Modelo_Correo_PlaceholderMensaje"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnEnviarCorreoConfirmar" onclick="enviarModelosCorreo()">
+                        <i class="fas fa-paper-plane mr-1"></i>@Resources.Strings.Modelo_Correo_BtnEnviar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 @section scripts {
@@ -212,8 +324,14 @@
         urlEjecutar:          '@Url.Action("EjecutarModeloAjax",       "Datos")',
         urlExportarTodos:     '@Url.Action("ExportarTodosModelos",     "Datos")',
         urlExportarIndividual:'@Url.Action("ExportarModeloIndividual", "Datos")',
+        urlEnviarCorreo:      '@Url.Action("EnviarModelosPorCorreo",   "Datos")',
         token: $('input[name="__RequestVerificationToken"]').val(),
         textos: {
+            correoEnviando:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Correo_Enviando))',
+            correoExitoTitulo:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Correo_ExitoTitulo))',
+            correoValModelos:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Correo_ValModelos))',
+            correoValCorreo:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Correo_ValCorreo))',
+            correoSeleccionados:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Correo_Seleccionados))',
             ejecutando:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_Ejecutando))',
             exportandoTodos:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_ExportandoTodos))',
             exportandoUno:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_BtnExportarModelo))',
@@ -263,12 +381,121 @@
             var ok = tieneEmpresa && !!$('#selectModelo').val();
             $('#btnEjecutar').prop('disabled', !ok);
             $('#btnExportarTodos').prop('disabled', !tieneEmpresa);
+            $('#btnEnviarCorreo').prop('disabled', !tieneEmpresa);
             $('#textoAyuda').toggle(!ok);
         }
 
         if ($('#idEmpresa option').length === 2)
             $('#idEmpresa option:last').prop('selected', true).trigger('change');
+
+        // ── Modal enviar por correo ──────────────────────────────────────
+        $('#correoSelAll').on('change', function () {
+            $('.mc-modelo-chk').prop('checked', this.checked);
+            actualizarContadorCorreo();
+        });
+        $(document).on('change', '.mc-modelo-chk', actualizarContadorCorreo);
     });
+
+    function actualizarContadorCorreo() {
+        var total = $('.mc-modelo-chk').length;
+        var n = $('.mc-modelo-chk:checked').length;
+        $('#correoContadorModelos').text(n + ' ' + _modelo.textos.correoSeleccionados);
+        $('#correoSelAll')
+            .prop('checked', n > 0 && n === total)
+            .prop('indeterminate', n > 0 && n < total);
+    }
+
+    function abrirModalCorreo() {
+        var idEmpresa = $('#idEmpresa').val();
+        if (!idEmpresa) return;
+
+        $('#correoEmpresaNombre').text($('#idEmpresa option:selected').data('nombre') || $('#idEmpresa option:selected').text());
+
+        // Preselecciona el modelo elegido arriba (si hay); si no, ninguno.
+        var idModeloSel = $('#selectModelo').val();
+        $('.mc-modelo-chk').each(function () {
+            this.checked = idModeloSel ? (this.value === String(idModeloSel)) : false;
+        });
+
+        // Recuerda el último destino usado.
+        try {
+            var last = localStorage.getItem('bufins_modelo_correo_dest');
+            if (last && !$('#correoDestino').val()) $('#correoDestino').val(last);
+        } catch (e) { }
+
+        actualizarContadorCorreo();
+        $('#modalEnviarCorreo').modal('show');
+    }
+
+    function enviarModelosCorreo() {
+        var idEmpresa = $('#idEmpresa').val();
+        if (!idEmpresa) return;
+
+        var ids = $('.mc-modelo-chk:checked').map(function () { return this.value; }).get();
+        if (ids.length === 0) {
+            Swal.fire({ icon: 'warning', title: _modelo.textos.error, text: _modelo.textos.correoValModelos,
+                        confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
+            return;
+        }
+
+        var correosRaw = ($('#correoDestino').val() || '').trim();
+        var tokens = correosRaw.split(/[,;\s]+/).filter(function (t) { return t.length > 0; });
+        var rx = /^[^@@\s]+@@[^@@\s]+\.[^@@\s]+$/;
+        if (tokens.length === 0 || !tokens.every(function (t) { return rx.test(t); })) {
+            Swal.fire({ icon: 'warning', title: _modelo.textos.error, text: _modelo.textos.correoValCorreo,
+                        confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
+            return;
+        }
+
+        try { localStorage.setItem('bufins_modelo_correo_dest', correosRaw); } catch (e) { }
+
+        var totalModelos = $('.mc-modelo-chk').length;
+        var idsModelos = (ids.length === totalModelos) ? 'todos' : ids.join(',');
+
+        $('#modalEnviarCorreo').modal('hide');
+
+        document.getElementById('overlayTitulo').textContent = _modelo.textos.correoEnviando;
+        var overlay = document.getElementById('overlayExportacion');
+        overlay.style.display = 'flex';
+        var segundos = 0;
+        document.getElementById('overlayTimerTexto').textContent = '0s';
+        var timer = setInterval(function () {
+            segundos++;
+            document.getElementById('overlayTimerTexto').textContent = segundos + 's';
+        }, 1000);
+
+        $.ajax({
+            url: _modelo.urlEnviarCorreo,
+            type: 'POST',
+            data: {
+                __RequestVerificationToken: _modelo.token,
+                idEmpresa: idEmpresa,
+                idsModelos: idsModelos,
+                correos: correosRaw,
+                mensaje: $('#correoMensaje').val() || ''
+            },
+            success: function (resp) {
+                clearInterval(timer);
+                overlay.style.display = 'none';
+                if (resp && resp.exito) {
+                    Swal.fire({ icon: 'success', title: _modelo.textos.correoExitoTitulo, text: resp.mensaje,
+                                confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
+                } else if (resp && resp.errores) {
+                    mostrarErroresModelos(resp.errores);
+                } else {
+                    Swal.fire({ icon: 'error', title: _modelo.textos.error, text: (resp && resp.mensaje) || 'Error',
+                                confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
+                }
+            },
+            error: function () {
+                clearInterval(timer);
+                overlay.style.display = 'none';
+                Swal.fire({ icon: 'error', title: _modelo.textos.error,
+                            text: 'Error de conexión al enviar el correo.',
+                            confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
+            }
+        });
+    }
 
     // ── Ejecutar modelo individual (AJAX) ─────────────────────────────────
     function ejecutarModelo() {

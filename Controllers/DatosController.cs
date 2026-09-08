@@ -607,6 +607,163 @@ namespace bufinscustomers.Controllers
             }
         }
 
+        private static readonly Regex _rxCorreo =
+            new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
+
+        /// <summary>
+        /// Genera el Excel de los modelos indicados (uno, varios o todos los activos) para una
+        /// empresa y lo envía como adjunto a uno o varios correos. Síncrono: la vista muestra un
+        /// overlay de carga mientras dura. Devuelve JSON — { exito, mensaje } o { errores } cuando
+        /// algún modelo falla al ejecutarse.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult EnviarModelosPorCorreo(int idEmpresa, string idsModelos, string correos, string mensaje)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (usuario == null)
+                return Json(new { exito = false, mensaje = "Sesión no válida." });
+
+            if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
+                return Json(new { exito = false, mensaje = "No tiene permisos para enviar datos de esta empresa." });
+
+            // ── Destinatarios ────────────────────────────────────────────────
+            var listaCorreos = (correos ?? "")
+                .Split(new[] { ',', ';', ' ', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(c => c.Trim())
+                .Where(c => c.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (listaCorreos.Count == 0)
+                return Json(new { exito = false, mensaje = R("Modelo_Correo_ValCorreo") });
+
+            var invalidos = listaCorreos.Where(c => !_rxCorreo.IsMatch(c)).ToList();
+            if (invalidos.Any())
+                return Json(new { exito = false, mensaje = R("Modelo_Correo_ValCorreo") + " (" + string.Join(", ", invalidos) + ")" });
+
+            if (listaCorreos.Count > 10)
+                return Json(new { exito = false, mensaje = "Máximo 10 destinatarios por envío." });
+
+            // ── Modelos a incluir ────────────────────────────────────────────
+            var todos = _modeloService.ObtenerModelosActivos();
+            bool esTodos = string.IsNullOrWhiteSpace(idsModelos)
+                || string.Equals(idsModelos.Trim(), "todos", StringComparison.OrdinalIgnoreCase);
+
+            List<ModeloEjecucion> modelos;
+            if (esTodos)
+            {
+                modelos = todos;
+            }
+            else
+            {
+                var ids = new HashSet<int>(idsModelos
+                    .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => int.TryParse(s.Trim(), out var n) ? n : 0)
+                    .Where(n => n > 0));
+                modelos = todos.Where(m => ids.Contains(m.Id)).ToList();
+            }
+
+            if (modelos.Count == 0)
+                return Json(new { exito = false, mensaje = R("Modelo_Correo_ValModelos") });
+
+            try
+            {
+                var empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+                var erroresModelos = new List<(string Nombre, string NombreSP, string Mensaje)>();
+                string ultimaHoja = null;
+                byte[] fileBytes;
+
+                using (var package = new XLWorkbook())
+                {
+                    EscribirHojaIndiceModelos(package.Worksheets.Add("Índice"), empresa, modelos, DateTime.Now);
+
+                    using (SqlConnection cn = new SqlConnection(CadenaConexion))
+                    {
+                        cn.Open();
+                        foreach (var modelo in modelos)
+                        {
+                            string sheetName = modelo.NombreSP.StartsWith("sp_", StringComparison.OrdinalIgnoreCase)
+                                ? modelo.NombreSP.Substring(3)
+                                : modelo.NombreSP;
+                            if (sheetName.Length > 31) sheetName = sheetName.Substring(0, 31);
+
+                            var ws = package.Worksheets.Add(sheetName);
+                            try
+                            {
+                                EjecutarModeloYEscribirHoja(cn, ws, modelo, idEmpresa, usuario.Id);
+                                ultimaHoja = sheetName;
+                            }
+                            catch (Exception exModelo)
+                            {
+                                package.Worksheets.Delete(sheetName);
+                                erroresModelos.Add((modelo.Nombre, modelo.NombreSP, exModelo.Message));
+                            }
+                        }
+                    }
+
+                    if (erroresModelos.Count > 0)
+                    {
+                        return Json(new
+                        {
+                            exito = false,
+                            errores = erroresModelos.Select(e => new { nombre = e.Nombre, nombreSP = e.NombreSP, mensaje = e.Mensaje })
+                        });
+                    }
+
+                    using (var ms = new MemoryStream())
+                    {
+                        package.SaveAs(ms);
+                        fileBytes = ms.ToArray();
+                    }
+                }
+
+                string empId = !string.IsNullOrWhiteSpace(empresa?.Abreviatura)
+                    ? empresa.Abreviatura
+                    : (empresa?.Nombre ?? "Empresa").Replace(" ", "_");
+                string fileName = (modelos.Count == 1 && ultimaHoja != null)
+                    ? $"{ultimaHoja}_{empId}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx"
+                    : $"Modelos_{empId}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx";
+
+                bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+                string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
+
+                new EmailService().EnviarModelosExportados(
+                    string.Join(", ", listaCorreos),
+                    empresa?.Nombre ?? "Empresa",
+                    modelos.Select(m => m.Nombre),
+                    mensaje,
+                    quienEnvia,
+                    fileName,
+                    fileBytes,
+                    esIngles);
+
+                string resumen = $"{modelos.Count} modelo(s) de '{empresa?.Nombre ?? "Empresa"}' enviados a {string.Join(", ", listaCorreos)}.";
+
+                new NotificacionesService().Crear(usuario.Id, R("Notif_ModelosEnviadosCorreo"), resumen, "success", "/Datos/Modelo");
+
+                new AuditoriaService().RegistrarCambio(
+                    AuditoriaTipo.Modelos, AuditoriaAccion.Enviar, "ModelosEjecucion", idEmpresa.ToString(),
+                    resumen, null,
+                    new
+                    {
+                        empresa = empresa?.Nombre,
+                        modelos = modelos.Select(m => m.Nombre).ToList(),
+                        destinatarios = listaCorreos,
+                        archivo = fileName
+                    },
+                    idEmpresa, entidadNombre: empresa?.Nombre, severidad: AuditoriaSeveridad.Advertencia);
+
+                return Json(new { exito = true, mensaje = R("Modelo_JS_CorreoEnviado") });
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "EnviarModelosPorCorreo");
+                new NotificacionesService().Crear(usuario.Id, R("Notif_ErrorEnvioCorreoModelos"), ex.Message, "error", "/Datos/Modelo");
+                return Json(new { exito = false, mensaje = "No se pudo enviar el correo: " + ex.Message });
+            }
+        }
+
         public ActionResult CargueExcel()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;

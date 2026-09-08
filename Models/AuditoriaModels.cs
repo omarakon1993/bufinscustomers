@@ -77,6 +77,7 @@ namespace bufinscustomers.Models
         public const string Editar       = "Editar";
         public const string Eliminar     = "Eliminar";
         public const string Asignar      = "Asignar";
+        public const string Enviar       = "Enviar";
         public const string Login        = "Login";
         public const string LoginFallido = "LoginFallido";
         public const string Bloqueo      = "Bloqueo";
