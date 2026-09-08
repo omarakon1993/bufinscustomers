@@ -40,6 +40,7 @@ namespace bufinscustomers.Controllers
             if (esSuperAdmin) return;
 
             f.Tipo = AuditoriaTipo.Seguridad;   // ignora cualquier tipo pedido por el cliente
+            f.ExcluirTipo = null;
             f.Entidad = null;
             var permitidas = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(UsuarioSesionHelper.UsuarioActual);
             f.IdsEmpresaPermitidas = permitidas ?? new List<int>();
@@ -61,21 +62,23 @@ namespace bufinscustomers.Controllers
             ViewBag.Tipos = esSuper ? _svc.ObtenerTiposUsados() : new List<string>();
 
             var empresas = new EmpresaService().ObtenerEmpresas();
+            List<int> permitidasEmp = null;
             if (!esSuper)
             {
-                var permitidas = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(UsuarioSesionHelper.UsuarioActual)
-                                 ?? new List<int>();
-                empresas = empresas.Where(e => permitidas.Contains(e.Id)).ToList();
+                permitidasEmp = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(UsuarioSesionHelper.UsuarioActual)
+                                ?? new List<int>();
+                empresas = empresas.Where(e => permitidasEmp.Contains(e.Id)).ToList();
             }
             ViewBag.Empresas = empresas;
+            ViewBag.Usuarios = _svc.ObtenerUsuariosParaFiltro(permitidasEmp);
 
             return View("~/Views/Informes/Auditoria.cshtml");
         }
 
         [HttpGet]
-        public JsonResult Consultar(string tipo, string accion, int? idEmpresa, string entidad,
+        public JsonResult Consultar(string tipo, string accion, int? idEmpresa, int? idUsuario, string entidad,
             string entidadId, string severidad, string operacionId,
-            string texto, string desde, string hasta, int pagina = 1, int tam = 25)
+            string texto, string desde, string hasta, string excluirTipo = null, int pagina = 1, int tam = 25)
         {
             if (!PuedeAcceder(out bool esSuper)) return Prohibido();
 
@@ -86,8 +89,8 @@ namespace bufinscustomers.Controllers
 
             var filtro = new AuditoriaFiltro
             {
-                Tipo = tipo, Accion = accion, IdEmpresa = idEmpresa, Entidad = entidad,
-                EntidadId = entidadId, Severidad = severidad, OperacionId = op,
+                Tipo = tipo, ExcluirTipo = excluirTipo, Accion = accion, IdEmpresa = idEmpresa, IdUsuario = idUsuario,
+                Entidad = entidad, EntidadId = entidadId, Severidad = severidad, OperacionId = op,
                 Texto = texto, Desde = d, Hasta = h, Pagina = pagina, TamanoPagina = tam
             };
             AplicarAlcance(filtro, esSuper);
@@ -122,9 +125,9 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpGet]
-        public ActionResult ExportarExcel(string tipo, string accion, int? idEmpresa, string entidad,
+        public ActionResult ExportarExcel(string tipo, string accion, int? idEmpresa, int? idUsuario, string entidad,
             string entidadId, string severidad, string operacionId,
-            string texto, string desde, string hasta)
+            string texto, string desde, string hasta, string excluirTipo = null)
         {
             if (!PuedeAcceder(out bool esSuper))
                 return new RedirectResult("~/Error/Forbidden");
@@ -136,8 +139,8 @@ namespace bufinscustomers.Controllers
 
             var filtro = new AuditoriaFiltro
             {
-                Tipo = tipo, Accion = accion, IdEmpresa = idEmpresa, Entidad = entidad,
-                EntidadId = entidadId, Severidad = severidad, OperacionId = op,
+                Tipo = tipo, ExcluirTipo = excluirTipo, Accion = accion, IdEmpresa = idEmpresa, IdUsuario = idUsuario,
+                Entidad = entidad, EntidadId = entidadId, Severidad = severidad, OperacionId = op,
                 Texto = texto, Desde = d, Hasta = h
             };
             AplicarAlcance(filtro, esSuper);
@@ -208,6 +211,7 @@ namespace bufinscustomers.Controllers
             {
                 success       = true,
                 fecha         = a.Fecha.ToString("dd/MM/yyyy HH:mm:ss"),
+                fechaIso      = a.Fecha.ToString("yyyy-MM-ddTHH:mm:ss"),
                 a.Tipo,
                 a.Accion,
                 a.Entidad,
@@ -221,8 +225,66 @@ namespace bufinscustomers.Controllers
                 a.IpAddress,
                 a.UserAgent,
                 valorAnterior = Embellecer(a.ValorAnterior),
-                valorNuevo    = Embellecer(a.ValorNuevo)
+                valorNuevo    = Embellecer(a.ValorNuevo),
+                permisosDetalle = ResolverPermisos(a)
             }, JsonRequestBehavior.AllowGet);
+        }
+
+        /// <summary>
+        /// Para las filas de <c>UsuarioMenuPermisos</c> traduce el JSON crudo
+        /// (<c>{"idUsuario":N,"permisos":[ids]}</c>) a nombre de usuario + nombres de las
+        /// opciones de menú, para el bloque "Qué cambió" del detalle. Devuelve null si no aplica.
+        /// </summary>
+        private object ResolverPermisos(RegistroAuditoria a)
+        {
+            if (!string.Equals(a.Entidad, "UsuarioMenuPermisos", StringComparison.OrdinalIgnoreCase))
+                return null;
+            if (string.IsNullOrWhiteSpace(a.ValorNuevo)) return null;
+
+            try
+            {
+                var o = Newtonsoft.Json.Linq.JObject.Parse(a.ValorNuevo);
+                int? idUsuario = (int?)o["idUsuario"];
+                var ids = o["permisos"] != null
+                    ? o["permisos"].Select(t => (int)t).ToList()
+                    : new List<int>();
+
+                bool en = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+                string usuario = idUsuario.HasValue ? "#" + idUsuario.Value : null;
+                var opciones = new List<string>();
+
+                using (var cn = new System.Data.SqlClient.SqlConnection(CadenaConexion))
+                {
+                    cn.Open();
+
+                    if (idUsuario.HasValue)
+                        using (var cmd = new System.Data.SqlClient.SqlCommand(
+                            "SELECT LTRIM(RTRIM(ISNULL(Nombre,'') + ' ' + ISNULL(Apellidos,''))) FROM Usuarios WHERE Id = @id", cn))
+                        {
+                            cmd.Parameters.AddWithValue("@id", idUsuario.Value);
+                            var r = cmd.ExecuteScalar();
+                            if (r != null && r != DBNull.Value && !string.IsNullOrWhiteSpace(r.ToString()))
+                                usuario = r.ToString();
+                        }
+
+                    if (ids.Count > 0)
+                    {
+                        var slots = ids.Select((_, i) => "@p" + i).ToList();
+                        using (var cmd = new System.Data.SqlClient.SqlCommand(
+                            "SELECT " + (en ? "ISNULL(NombreEN, Nombre)" : "Nombre") +
+                            " FROM MenuOpciones WHERE Id IN (" + string.Join(",", slots) + ") ORDER BY Orden", cn))
+                        {
+                            for (int i = 0; i < ids.Count; i++) cmd.Parameters.AddWithValue("@p" + i, ids[i]);
+                            using (var rd = cmd.ExecuteReader())
+                                while (rd.Read())
+                                    if (rd[0] != DBNull.Value) opciones.Add(rd[0].ToString());
+                        }
+                    }
+                }
+
+                return new { usuario, cantidad = ids.Count, opciones };
+            }
+            catch { return null; }
         }
 
         [HttpPost]

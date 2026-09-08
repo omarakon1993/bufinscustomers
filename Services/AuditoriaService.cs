@@ -286,6 +286,7 @@ namespace bufinscustomers.Services
             }
 
             if (!string.IsNullOrWhiteSpace(f.Tipo))    Add(" AND a.Tipo = @Tipo",       "@Tipo", f.Tipo.Trim());
+            if (!string.IsNullOrWhiteSpace(f.ExcluirTipo)) Add(" AND a.Tipo <> @ExcluirTipo", "@ExcluirTipo", f.ExcluirTipo.Trim());
             if (!string.IsNullOrWhiteSpace(f.Accion))  Add(" AND a.Accion = @Accion",   "@Accion", f.Accion.Trim());
             if (f.IdUsuario.HasValue)                  Add(" AND a.IdUsuario = @IdUsuario", "@IdUsuario", f.IdUsuario.Value);
             if (f.IdEmpresa.HasValue)                  Add(" AND a.IdEmpresa = @IdEmpresa", "@IdEmpresa", f.IdEmpresa.Value);
@@ -414,6 +415,39 @@ namespace bufinscustomers.Services
                 }
             }
             catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[AuditoriaService.ObtenerTiposUsados] {0}", ex.Message); }
+            return lista;
+        }
+
+        /// <summary>
+        /// Usuarios que aparecen en la tabla de auditoría (id + nombre instantáneo), para poblar el
+        /// filtro "Usuario" del visor. <paramref name="idsEmpresaPermitidas"/> null = todos (Super
+        /// Admin); con valores = solo los de esas empresas; lista vacía = ninguno.
+        /// </summary>
+        public List<KeyValuePair<int, string>> ObtenerUsuariosParaFiltro(List<int> idsEmpresaPermitidas)
+        {
+            var lista = new List<KeyValuePair<int, string>>();
+            if (idsEmpresaPermitidas != null && idsEmpresaPermitidas.Count == 0) return lista;
+
+            string filtroEmp = "";
+            if (idsEmpresaPermitidas != null)
+                filtroEmp = " AND IdEmpresa IN (" + string.Join(",", idsEmpresaPermitidas) + ")";
+
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand(
+                    "SELECT IdUsuario, MAX(NombreUsuario) AS NombreUsuario FROM Auditoria " +
+                    "WHERE IdUsuario IS NOT NULL AND NombreUsuario IS NOT NULL AND LTRIM(RTRIM(NombreUsuario)) <> ''" +
+                    filtroEmp +
+                    " GROUP BY IdUsuario ORDER BY NombreUsuario", cn))
+                {
+                    cn.Open();
+                    using (var r = cmd.ExecuteReader())
+                        while (r.Read())
+                            lista.Add(new KeyValuePair<int, string>(Convert.ToInt32(r["IdUsuario"]), r["NombreUsuario"].ToString()));
+                }
+            }
+            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[AuditoriaService.ObtenerUsuariosParaFiltro] {0}", ex.Message); }
             return lista;
         }
 

@@ -5,44 +5,99 @@
     if ((bool)(ViewBag.Embed ?? false)) { Layout = "~/Views/Shared/_LayoutFragment.cshtml"; }
     var tipos = ViewBag.Tipos as System.Collections.Generic.List<string> ?? new System.Collections.Generic.List<string>();
     var empresas = ViewBag.Empresas as System.Collections.Generic.List<Empresas> ?? new System.Collections.Generic.List<Empresas>();
+    var usuariosFiltro = ViewBag.Usuarios as System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<int, string>>
+        ?? new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<int, string>>();
     var esSuper = (bool)(ViewBag.EsSuperAdmin ?? false);
 }
 
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
 
 <style>
-    /* Modal "Detalle de auditoría" (dentro de SweetAlert, tema oscuro) */
-    .aud-dt { text-align: left; color: #ECEAF6; }
-    .aud-dt-fecha { font-size: 1rem; font-weight: 600; margin-bottom: .55rem; letter-spacing: .01em; }
-    .aud-dt-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .7rem; }
+    /* ===== Modal "Detalle de auditoría" (SweetAlert2, tema oscuro) ===== */
+    .aud-dt { text-align: left; color: #E9E7F6; --dt-accent: #8b7dff; --dt-badge-bg: rgba(139,125,255,.16); --dt-badge-bd: rgba(139,125,255,.4); }
+    .aud-dt.dt-sev-Info        { --dt-accent: #5b9bff; --dt-badge-bg: rgba(91,155,255,.16);  --dt-badge-bd: rgba(91,155,255,.4); }
+    .aud-dt.dt-sev-Advertencia { --dt-accent: #f5b345; --dt-badge-bg: rgba(245,179,69,.16);  --dt-badge-bd: rgba(245,179,69,.42); }
+    .aud-dt.dt-sev-Critico     { --dt-accent: #ff6b64; --dt-badge-bg: rgba(255,107,100,.16); --dt-badge-bd: rgba(255,107,100,.42); }
+
+    .aud-dt-head { display: flex; align-items: flex-start; gap: .75rem; }
+    .aud-dt-ico {
+        flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center; font-size: 1rem;
+        background: var(--dt-badge-bg); border: 1px solid var(--dt-badge-bd); color: var(--dt-accent);
+    }
+    .aud-dt-htxt { min-width: 0; flex: 1; }
+    .aud-dt-title { display: block; font-size: 1.02rem; font-weight: 700; line-height: 1.3; color: #fff; }
+    .aud-dt-sub { display: block; font-size: .8rem; color: #a9a4c8; margin-top: .15rem; }
+    .aud-dt-rule { height: 1px; background: rgba(255,255,255,.1); margin: .85rem 0; }
+
+    .aud-dt-chips { display: flex; flex-wrap: wrap; gap: .4rem; }
     .aud-dt-chip {
-        font: 600 .72rem/1 "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-        letter-spacing: .03em; padding: .34em .58em; border-radius: 5px;
-        border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.05); white-space: nowrap;
+        display: inline-flex; align-items: center; gap: .4rem;
+        font: 500 .74rem/1 -apple-system, "Segoe UI", system-ui, sans-serif;
+        padding: .34rem .62rem; border-radius: 999px;
+        background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); color: #cfcbe6; white-space: nowrap;
     }
-    .aud-dt-chip.tipo { color: #c3bcff; border-color: rgba(139,125,255,.55); background: rgba(139,125,255,.15); }
-    .aud-dt-desc { font-size: .9rem; line-height: 1.55; opacity: .92; margin: 0 0 .55rem; }
+    .aud-dt-chip.tipo { color: #c6bfff; border-color: rgba(139,125,255,.4); background: rgba(139,125,255,.14); }
+    .aud-dt-chip .sev-dot { margin: 0; width: 8px; height: 8px; }
+
+    .aud-dt-desc {
+        font-size: .88rem; line-height: 1.55; color: #d6d2ec; margin: .85rem 0 0;
+        padding: .55rem .78rem; border-left: 2px solid var(--dt-accent);
+        background: rgba(255,255,255,.035); border-radius: 0 8px 8px 0;
+    }
+
+    .aud-dt-sec { margin-top: 1rem; }
+    .aud-dt-sec-lbl {
+        font: 600 .66rem/1 "IBM Plex Mono", ui-monospace, Menlo, monospace;
+        letter-spacing: .12em; text-transform: uppercase; color: #8f8ab0; margin-bottom: .45rem;
+    }
+    .aud-dt-panel { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.09); border-radius: 10px; overflow: hidden; }
+    .aud-kv { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    .aud-kv tr + tr td { border-top: 1px solid rgba(255,255,255,.06); }
+    .aud-kv td { padding: .5rem .7rem; vertical-align: top; }
+    .aud-kv td.k { width: 38%; color: #a29dc4; font-weight: 500; white-space: nowrap; }
+    .aud-kv td.v { color: #ECE9FA; word-break: break-word; }
+    .aud-kv .o { color: #ff9d97; text-decoration: line-through; opacity: .8; }
+    .aud-kv .arw { color: #6f6a90; margin: 0 .4rem; }
+    .aud-kv .n { color: #7ee0b0; }
+    .aud-dt-none { padding: .6rem .7rem; font-size: .82rem; font-style: italic; color: #8f8ab0; }
+
     .aud-dt-meta {
-        display: flex; flex-wrap: wrap; gap: .3rem 1.15rem; font-size: .78rem; opacity: .6;
-        padding-top: .6rem; border-top: 1px solid rgba(255,255,255,.1);
+        display: flex; flex-wrap: wrap; gap: .25rem 1.1rem; font-size: .74rem; color: #837e9f;
+        margin-top: .9rem; padding-top: .7rem; border-top: 1px solid rgba(255,255,255,.08);
     }
-    .aud-dt-meta b { font-weight: 600; opacity: .85; }
-    .aud-dt-block { margin-top: 1.05rem; }
+    .aud-dt-meta b { color: #a29dc4; font-weight: 600; }
+
+    .aud-dt-btn {
+        display: inline-flex; align-items: center; gap: .45rem; margin-top: .9rem;
+        font: 600 .78rem/1 inherit; padding: .5rem .85rem; border-radius: 8px; cursor: pointer;
+        background: rgba(139,125,255,.14); border: 1px solid rgba(139,125,255,.4); color: #c6bfff; transition: background .15s;
+    }
+    .aud-dt-btn:hover { background: rgba(139,125,255,.24); }
+
+    details.aud-raw { margin-top: .9rem; }
+    details.aud-raw > summary {
+        cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: .4rem;
+        font: 600 .72rem/1 "IBM Plex Mono", monospace; letter-spacing: .06em; text-transform: uppercase;
+        color: #837e9f; padding: .3rem 0;
+    }
+    details.aud-raw > summary::-webkit-details-marker { display: none; }
+    details.aud-raw > summary::before { content: "\25B8"; font-size: .85em; transition: transform .15s; }
+    details.aud-raw[open] > summary::before { transform: rotate(90deg); }
+    .aud-dt-block { margin-top: .7rem; }
     .aud-dt-block-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: .35rem; }
-    .aud-dt-block-lbl {
-        font: 600 .68rem/1 "IBM Plex Mono", monospace; letter-spacing: .1em; text-transform: uppercase; opacity: .62;
-    }
+    .aud-dt-block-lbl { font: 600 .64rem/1 "IBM Plex Mono", monospace; letter-spacing: .1em; text-transform: uppercase; color: #7c7799; }
     .aud-dt-copy {
-        font: 600 .64rem/1 "IBM Plex Mono", monospace; letter-spacing: .06em; text-transform: uppercase;
-        background: transparent; border: 1px solid rgba(255,255,255,.22); color: inherit;
-        border-radius: 5px; padding: .32em .55em; cursor: pointer; opacity: .7; transition: opacity .15s, border-color .15s;
+        font: 600 .62rem/1 "IBM Plex Mono", monospace; letter-spacing: .06em; text-transform: uppercase;
+        background: transparent; border: 1px solid rgba(255,255,255,.2); color: #9d98bd;
+        border-radius: 5px; padding: .3em .55em; cursor: pointer; transition: color .15s, border-color .15s;
     }
-    .aud-dt-copy:hover { opacity: 1; border-color: rgba(255,255,255,.45); }
+    .aud-dt-copy:hover { color: #fff; border-color: rgba(255,255,255,.45); }
     .aud-dt-pre {
-        margin: 0; padding: 12px 14px; border-radius: 9px; color: #EDEBFA;
-        background: rgba(0,0,0,.34); border: 1px solid rgba(255,255,255,.12);
-        font: 400 .78rem/1.55 "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-        white-space: pre-wrap; word-break: break-word; max-height: 38vh; overflow: auto;
+        margin: 0; padding: 11px 13px; border-radius: 8px; color: #E6E2FA;
+        background: rgba(0,0,0,.32); border: 1px solid rgba(255,255,255,.1);
+        font: 400 .74rem/1.55 "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+        white-space: pre-wrap; word-break: break-word; max-height: 34vh; overflow: auto;
     }
     .aud-dt-pre .j-key { color: #b0a8ff; }
     .aud-dt-pre .j-str { color: #7ee0b0; }
@@ -112,55 +167,140 @@
     .aud-tl .tl-meta { font-size:.76rem; color:#8890a0; margin-top:.15rem; }
     .aud-tl-ver { background:none; border:none; color:#583AFF; cursor:pointer; font-size:.78rem; padding:0; margin-left:.4rem; }
 
-    .aud-diff { margin-top:1.05rem; }
-    .aud-diff-lbl { font:600 .68rem/1 "IBM Plex Mono", monospace; letter-spacing:.1em; text-transform:uppercase; opacity:.62; margin-bottom:.5rem; }
-    .aud-diff-tbl { width:100%; border-collapse:collapse; font-size:.8rem; }
-    .aud-diff-tbl td { padding:.35rem .55rem; border-bottom:1px solid rgba(255,255,255,.07); vertical-align:top; word-break:break-word; }
-    .aud-diff-tbl td.k { font-family:"IBM Plex Mono", monospace; color:#b0a8ff; white-space:nowrap; }
-    .aud-diff-old { color:#ff9d97; text-decoration:line-through; opacity:.85; }
-    .aud-diff-arrow { opacity:.5; margin:0 .35rem; }
-    .aud-diff-new { color:#7ee0b0; }
-    .aud-diff-none { font-size:.82rem; opacity:.6; font-style:italic; }
-    details.aud-raw > summary { cursor:pointer; font:600 .66rem/1 "IBM Plex Mono", monospace; letter-spacing:.08em; text-transform:uppercase; opacity:.5; margin-top:1rem; list-style:revert; }
 
-    /* ---- Tabla que SIEMPRE cabe en el ancho del panel (sin scroll horizontal) ---- */
+    /* ---- Tabla legible: 5 columnas (Cuándo · Actividad · Usuario · Empresa · ojo) ---- */
     #resultadosContainer .data-table { table-layout: fixed; width: 100%; }
-    #resultadosContainer .data-table th,
-    #resultadosContainer .data-table td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-    /* Anchos por columna (1 Fecha · 2 Tipo · 3 Acción · 4 Entidad · 5 Descripción · 6 Usuario · 7 Empresa · 8 Detalle) */
-    #resultadosContainer .data-table tr > :nth-child(1) { width: 13%; }
-    #resultadosContainer .data-table tr > :nth-child(2) { width: 9%;  }
-    #resultadosContainer .data-table tr > :nth-child(3) { width: 9%;  }
-    #resultadosContainer .data-table tr > :nth-child(4) { width: 17%; }
-    #resultadosContainer .data-table tr > :nth-child(5) { width: 29%; }
-    #resultadosContainer .data-table tr > :nth-child(6) { width: 13%; }
-    #resultadosContainer .data-table tr > :nth-child(7) { width: 10%; }
-    #resultadosContainer .data-table tr > :nth-child(8) { width: 62px; }
-
-    /* Entidad: solo el nombre (recortado) + el botón de historial en una línea.
-       La ruta técnica ("Empresas #42") queda solo en el modal de detalle. */
-    #resultadosContainer .data-table td:nth-child(4) .ent-ruta { display: none; }
-    #resultadosContainer .data-table td:nth-child(4) .ent-nombre {
-        display: inline-block; max-width: calc(100% - 26px); overflow: hidden;
-        text-overflow: ellipsis; white-space: nowrap; vertical-align: middle;
-    }
+    #resultadosContainer .data-table th { white-space: nowrap; }
+    #resultadosContainer .data-table td { overflow: hidden; text-overflow: ellipsis; }
+    #resultadosContainer .data-table tr > :nth-child(1) { width: 15%; white-space: nowrap; }
+    #resultadosContainer .data-table tr > :nth-child(2) { width: 52%; white-space: normal; }
+    #resultadosContainer .data-table tr > :nth-child(3) { width: 16%; white-space: nowrap; }
+    #resultadosContainer .data-table tr > :nth-child(4) { width: 15%; white-space: nowrap; }
+    #resultadosContainer .data-table tr > :nth-child(5) { width: 52px; }
 
     /* Columna "ver detalle" fija a la derecha: el ojo siempre visible */
-    #resultadosContainer .data-table tr > :nth-child(8) {
+    #resultadosContainer .data-table tr > :nth-child(5) {
         position: sticky; right: 0; background: #fff; text-align: center;
         box-shadow: -7px 0 8px -6px rgba(20,25,35,.13);
     }
-    #resultadosContainer .data-table thead th:nth-child(8) {
+    #resultadosContainer .data-table thead th:nth-child(5) {
         background: linear-gradient(90deg,#6366F1,#3B82F6,#06B6D4,#01E1D7); z-index: 12;
     }
 
-    /* Responsive: se ocultan columnas de menor prioridad en pantallas estrechas
-       (el layout fijo garantiza que nunca haya scroll horizontal en ningún caso) */
-    @@media (max-width: 1180px) { #resultadosContainer .data-table tr > :nth-child(7) { display: none; } } /* Empresa */
-    @@media (max-width: 920px)  { #resultadosContainer .data-table tr > :nth-child(2) { display: none; } } /* Tipo */
-    @@media (max-width: 720px)  { #resultadosContainer .data-table tr > :nth-child(6) { display: none; } } /* Usuario */
-    @@media (max-width: 560px)  { #resultadosContainer .data-table tr > :nth-child(3) { display: none; } } /* Acción */
+    /* Celda "Cuándo": tiempo relativo + fecha exacta debajo */
+    .cel-when .rel { font-weight: 600; }
+    .cel-when .abs { display: block; color: #8890a0; font-size: .74rem; }
+
+    /* Celda "Actividad": verbo + chip de área + descripción */
+    .act-line { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; font-weight: 600; color: #2d3748; }
+    .act-desc { color: #6b7280; font-size: .85rem; margin-top: .12rem; white-space: normal; }
+    .area-chip {
+        font: 600 .66rem/1 "IBM Plex Mono", ui-monospace, Menlo, monospace; letter-spacing: .03em;
+        text-transform: uppercase; padding: .16em .5em; border-radius: 5px;
+        background: #eef0f7; color: #55607a; white-space: nowrap;
+    }
+
+    /* Responsive: se ocultan columnas de menor prioridad (layout fijo ⇒ nunca hay scroll horizontal) */
+    @@media (max-width: 1080px) { #resultadosContainer .data-table tr > :nth-child(4) { display: none; } } /* Empresa */
+    @@media (max-width: 760px)  { #resultadosContainer .data-table tr > :nth-child(3) { display: none; } } /* Usuario */
+
+    /* ===== Panel de filtros — compacto y ordenado ===== */
+    .af-titlebar {
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+        border-bottom: 2px solid #e3e6f0; margin-bottom: 1rem; padding-bottom: .7rem;
+    }
+    .af-titlebar .filter-card-title { border: 0; margin: 0; padding: 0; }
+
+    /* Controles del panel — misma altura para uniformidad */
+    .aud-filtros { --f-h: 34px; }
+    .aud-filtros label {
+        font-size: .74rem; font-weight: 600; color: #556074; margin-bottom: .25rem; gap: .3rem;
+    }
+    .aud-filtros label i { font-size: .72rem; }
+    .aud-filtros .form-control { font-size: .82rem; height: var(--f-h); padding: 0 .6rem; }
+    .aud-filtros select.form-control { padding-right: 1.9rem; }
+    .aud-filtros .form-group { margin-bottom: 0; }
+
+    .af-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+        gap: .7rem .8rem; margin-bottom: .8rem;
+    }
+
+    /* Buscar y cápsula de período: cada uno en su PROPIA fila, siempre (posición fija,
+       no depende del ancho de la ventana). */
+    .af-buscar-row { margin-bottom: .7rem; }
+    .af-periodo-row { display: block; }
+
+    .af-buscar {
+        display: flex; align-items: center; gap: .45rem; height: var(--f-h);
+        border: 1px solid #d1d5db; border-radius: .375rem; padding: 0 .65rem; background: #fff;
+        width: 100%; max-width: 620px;
+    }
+    .af-buscar:focus-within { border-color: #583AFF; box-shadow: 0 0 0 2px rgba(88,58,255,.1); }
+    .af-buscar i { color: #9aa1b4; font-size: .8rem; }
+    .af-buscar input {
+        flex: 1; border: 0; outline: 0; padding: 0; height: 100%; font-size: .82rem;
+        background: transparent; color: #2d3748; min-width: 0;
+    }
+
+    .aud-modo { display: inline-flex; border: 1px solid #d1d5db; border-radius: 8px; overflow: hidden; }
+    .aud-modo button {
+        appearance: none; border: 0; background: #fff; color: #6b7280;
+        font: 600 .78rem/1 inherit; padding: .42rem .85rem; cursor: pointer; display: inline-flex; align-items: center;
+    }
+    .aud-modo button + button { border-left: 1px solid #d1d5db; }
+    .aud-modo button.on { background: var(--content-gradient, linear-gradient(90deg,#6366F1,#3B82F6,#06B6D4,#01E1D7)); color: #fff; }
+
+    /* ===== Cápsula de período (segmentos + rango calculado a la derecha) ===== */
+    .aud-periodo-cap {
+        display: inline-flex; align-items: stretch; flex-wrap: nowrap; min-height: var(--f-h);
+        max-width: 100%; background: #fff; border: 1px solid #d8d4ea; border-radius: 8px; overflow: hidden;
+        box-shadow: 0 1px 3px rgba(22,9,51,.06);
+    }
+    .aud-periodo-lbl {
+        display: flex; align-items: center; gap: 6px; padding: 0 11px;
+        background: #f4f2fd; border-right: 1px solid #e6e2f5;
+        color: #583AFF; font-size: .64rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; white-space: nowrap;
+    }
+    .aud-date-chip {
+        border: 0; background: transparent; color: #6b7280;
+        padding: 0 13px; font-size: .78rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+        display: inline-flex; align-items: center; transition: background .15s, color .15s, box-shadow .15s;
+    }
+    .aud-date-chip:hover:not(.on) { background: #f8f9fc; color: #583AFF; }
+    .aud-date-chip.on { background: #ede9fe; color: #583AFF; font-weight: 800; box-shadow: inset 0 -2px 0 #583AFF; }
+    .aud-date-chip[data-range="custom"] { padding: 0 11px; font-size: .8rem; }
+    .aud-periodo-fechas {
+        display: flex; align-items: center; gap: 6px; padding: 0 10px;
+        border-left: 1px solid #e6e2f5; background: #fbfbfe;
+    }
+    .aud-periodo-fechas input {
+        font-size: .74rem; padding: 3px 6px; border: 1px solid #d1d5db; border-radius: 5px; color: #2d3748;
+    }
+    .aud-periodo-fechas span { color: #8890a0; font-size: .74rem; }
+    .aud-periodo-rango {
+        display: flex; align-items: center; gap: 7px; padding: 0 12px;
+        border-left: 1px solid #e6e2f5; background: #fbfbfe;
+    }
+    .aud-periodo-rango-txt { font-size: .78rem; font-weight: 700; color: #2d3748; white-space: nowrap; }
+    .aud-periodo-rango-badge {
+        font-size: .66rem; font-weight: 700; color: #01A79F;
+        background: rgba(1,225,215,.14); border-radius: 99px; padding: 2px 8px; white-space: nowrap;
+    }
+    @@media (max-width: 767px) {
+        .aud-periodo-cap { width: 100%; flex-wrap: wrap; }
+        .aud-periodo-fechas, .aud-periodo-rango { flex: 1 1 100%; border-left: 0; border-top: 1px solid #e6e2f5; padding: 6px 10px; }
+    }
+
+    details.aud-adv { margin-top: .9rem; border-top: 1px dashed #e3e6f0; padding-top: .6rem; }
+    details.aud-adv > summary {
+        cursor: pointer; font-weight: 600; font-size: .78rem; color: #583AFF; list-style: none;
+        display: inline-flex; align-items: center; gap: .35rem; user-select: none;
+    }
+    details.aud-adv > summary::-webkit-details-marker { display: none; }
+    details.aud-adv > summary::before { content: "\25B8"; font-size: .8em; transition: transform .15s; }
+    details.aud-adv[open] > summary::before { transform: rotate(90deg); }
+    details.aud-adv .form-control { max-width: 240px; }
 </style>
 
 <div class="container-fluid px-4">
@@ -180,98 +320,102 @@
     }
 
     <div class="filter-card">
-        <h3 class="filter-card-title"><i class="fas fa-filter"></i> @Resources.Strings.Common_FiltrosConsulta</h3>
-        <div class="filter-section">
-            <div class="row">
-                @if (esSuper)
-                {
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label><i class="fas fa-tag mr-1"></i>@Resources.Strings.Audit_LabelTipo</label>
-                            <select id="fTipo" class="form-control">
-                                <option value="">@Resources.Strings.Common_Todos</option>
-                                @foreach (var t in tipos)
-                                {
-                                    <option value="@t">@t</option>
-                                }
-                            </select>
-                        </div>
-                    </div>
-                }
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label><i class="fas fa-bolt mr-1"></i>@Resources.Strings.Audit_LabelAccion</label>
-                        <select id="fAccion" class="form-control">
-                            <option value="">@Resources.Strings.Common_Todos</option>
-                            @if (esSuper)
-                            {
-                                <option value="Crear">@Resources.Strings.Audit_Acc_Crear</option>
-                                <option value="Editar">@Resources.Strings.Audit_Acc_Editar</option>
-                                <option value="Eliminar">@Resources.Strings.Audit_Acc_Eliminar</option>
-                                <option value="Asignar">@Resources.Strings.Audit_Acc_Asignar</option>
-                            }
-                            <option value="Login">@Resources.Strings.Audit_Acc_Login</option>
-                            <option value="LoginFallido">@Resources.Strings.Audit_Acc_LoginFallido</option>
-                            <option value="Bloqueo">@Resources.Strings.Audit_Acc_Bloqueo</option>
-                        </select>
-                    </div>
+        <div class="af-titlebar">
+            <h3 class="filter-card-title"><i class="fas fa-filter"></i> @Resources.Strings.Common_FiltrosConsulta</h3>
+            @if (esSuper)
+            {
+                <div class="aud-modo" role="group" aria-label="@Resources.Strings.Audit_ModoCambios">
+                    <button type="button" id="modoCambios" class="on"><i class="fas fa-exchange-alt mr-2"></i>@Resources.Strings.Audit_ModoCambios</button>
+                    <button type="button" id="modoLogin"><i class="fas fa-sign-in-alt mr-2"></i>@Resources.Strings.Audit_ModoLogin</button>
                 </div>
+            }
+        </div>
+
+        <div class="filter-section aud-filtros">
+
+            <div class="af-grid">
                 @if (esSuper)
                 {
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label><i class="fas fa-signal mr-1"></i>@Resources.Strings.Audit_LabelSeveridad</label>
-                            <select id="fSeveridad" class="form-control">
-                                <option value="">@Resources.Strings.Common_Todos</option>
-                                <option value="Critico">@Resources.Strings.Audit_Sev_Critico</option>
-                                <option value="Advertencia">@Resources.Strings.Audit_Sev_Advertencia</option>
-                                <option value="Info">@Resources.Strings.Audit_Sev_Info</option>
-                            </select>
-                        </div>
-                    </div>
-                }
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label><i class="fas fa-building mr-1"></i>@Resources.Strings.Audit_LabelEmpresa</label>
-                        <select id="fEmpresa" class="form-control">
-                            <option value="">@Resources.Strings.Common_Todos</option>
-                            @foreach (var e in empresas)
+                    <div class="form-group" id="wrapArea">
+                        <label><i class="fas fa-layer-group"></i>@Resources.Strings.Audit_LabelArea</label>
+                        <select id="fArea" class="form-control">
+                            <option value="">@Resources.Strings.Audit_TodasAreas</option>
+                            @foreach (var t in tipos.Where(x => !string.Equals(x, "SEGURIDAD", StringComparison.OrdinalIgnoreCase)))
                             {
-                                <option value="@e.Id">@e.Nombre</option>
+                                <option value="@t">@t</option>
                             }
                         </select>
                     </div>
-                </div>
-                @if (esSuper)
-                {
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label><i class="fas fa-cube mr-1"></i>@Resources.Strings.Audit_LabelEntidad</label>
-                            <input type="text" id="fEntidad" class="form-control" placeholder="Empresas, MenuOpciones…" />
-                        </div>
-                    </div>
                 }
+                <div class="form-group">
+                    <label><i class="fas fa-bolt"></i>@Resources.Strings.Audit_LabelQueOcurrio</label>
+                    <select id="fAccion" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i>@Resources.Strings.Audit_ThUsuario</label>
+                    <select id="fUsuario" class="form-control">
+                        <option value="">@Resources.Strings.Audit_TodosUsuarios</option>
+                        @foreach (var u in usuariosFiltro)
+                        {
+                            <option value="@u.Key">@u.Value</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-building"></i>@Resources.Strings.Audit_LabelEmpresa</label>
+                    <select id="fEmpresa" class="form-control">
+                        <option value="">@Resources.Strings.Audit_TodasEmpresas</option>
+                        @foreach (var e in empresas)
+                        {
+                            <option value="@e.Id">@e.Nombre</option>
+                        }
+                    </select>
+                </div>
             </div>
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label><i class="fas fa-calendar mr-1"></i>@Resources.Strings.Audit_LabelDesde</label>
-                        <input type="date" id="fDesde" class="form-control" />
-                    </div>
+
+            <div class="af-buscar-row">
+                <div class="af-buscar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="fTexto" placeholder="@Resources.Strings.Audit_BuscarPlaceholder2" aria-label="@Resources.Strings.Audit_LabelBuscar" />
                 </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label><i class="fas fa-calendar mr-1"></i>@Resources.Strings.Audit_LabelHasta</label>
-                        <input type="date" id="fHasta" class="form-control" />
+            </div>
+
+            <div class="af-periodo-row">
+                <div class="aud-periodo-cap" id="fPeriodo" role="group" aria-label="@Resources.Strings.Audit_LabelPeriodo">
+                    <span class="aud-periodo-lbl"><i class="fas fa-calendar-alt"></i>@Resources.Strings.Audit_LabelPeriodo</span>
+                    <button type="button" class="aud-date-chip" data-range="hoy">@Resources.Strings.Audit_Per_Hoy</button>
+                    <button type="button" class="aud-date-chip" data-range="7">@Resources.Strings.Audit_Per_7</button>
+                    <button type="button" class="aud-date-chip on" data-range="30">@Resources.Strings.Audit_Per_30</button>
+                    <button type="button" class="aud-date-chip" data-range="mes">@Resources.Strings.Audit_Per_Mes</button>
+                    <button type="button" class="aud-date-chip" data-range="custom" title="@Resources.Strings.Audit_Per_Custom" aria-label="@Resources.Strings.Audit_Per_Custom"><i class="fas fa-sliders-h"></i></button>
+                    <div class="aud-periodo-fechas" id="wrapFechas" style="display:none;">
+                        <input type="date" id="fDesde" aria-label="@Resources.Strings.Audit_LabelDesde" />
+                        <span>&ndash;</span>
+                        <input type="date" id="fHasta" aria-label="@Resources.Strings.Audit_LabelHasta" />
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label><i class="fas fa-search mr-1"></i>@Resources.Strings.Audit_LabelBuscar</label>
-                        <input type="text" id="fTexto" class="form-control" placeholder="@Resources.Strings.Audit_BuscarPlaceholder" />
+                    <div class="aud-periodo-rango" id="audRango" style="display:none;">
+                        <span class="aud-periodo-rango-txt" id="audRangoTxt"></span>
+                        <span class="aud-periodo-rango-badge" id="audRangoDias"></span>
                     </div>
                 </div>
             </div>
+
+            @if (esSuper)
+            {
+                <details class="aud-adv">
+                    <summary>@Resources.Strings.Audit_FiltrosAvanzados</summary>
+                    <div class="form-group" style="margin-top:.6rem;">
+                        <label><i class="fas fa-signal"></i>@Resources.Strings.Audit_LabelRelevancia</label>
+                        <select id="fSeveridad" class="form-control">
+                            <option value="">@Resources.Strings.Common_Todos</option>
+                            <option value="Critico">@Resources.Strings.Audit_Rel_Alta</option>
+                            <option value="Advertencia">@Resources.Strings.Audit_Rel_Media</option>
+                            <option value="Info">@Resources.Strings.Audit_Rel_Normal</option>
+                        </select>
+                    </div>
+                </details>
+            }
+
             <div class="btn-group-actions">
                 <button type="button" id="btnConsultar" class="btn btn-modern-gradient">
                     <i class="fas fa-search mr-1"></i>@Resources.Strings.Common_Consultar
@@ -316,11 +460,8 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>@Resources.Strings.Audit_ThFecha</th>
-                            <th>@Resources.Strings.Audit_ThTipo</th>
-                            <th>@Resources.Strings.Audit_ThAccion</th>
-                            <th>@Resources.Strings.Audit_ThEntidad</th>
-                            <th>@Resources.Strings.Audit_ThDescripcion</th>
+                            <th>@Resources.Strings.Audit_ThCuando</th>
+                            <th>@Resources.Strings.Audit_ThActividad</th>
                             <th>@Resources.Strings.Audit_ThUsuario</th>
                             <th>@Resources.Strings.Audit_ThEmpresa</th>
                             <th class="text-center">@Resources.Strings.Audit_ThDetalle</th>
@@ -374,8 +515,142 @@ $(function () {
         opLabel:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Operacion))',
         opVer:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_VerOperacion))',
         verDet:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_ThDetalle))',
-        refLbl:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LabelEntidad))'
+        refLbl:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LabelEntidad))',
+        queCambio:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_QueCambio))',
+        datosTec: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_VerDatosTecnicos))',
+        verTodoOp:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_VerTodoOperacion))',
+        permOpc:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_PermOpciones))',
+        permUsr:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_ThUsuario))',
+        permCant: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_PermCantidad))',
+        relAlta:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Rel_Alta))',
+        relMedia: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Rel_Media))',
+        relNormal:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Rel_Normal))',
+        trAhora:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_TR_Ahora))',
+        trMin:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_TR_Min))',
+        trHoras:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_TR_Horas))',
+        trAyer:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_TR_Ayer))',
+        trHoy:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_TR_Hoy))',
+        meses:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Meses))',
+        diaSing:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Dia))',
+        diaPlur:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Dias))',
+        accCrear: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Acc_Crear))',
+        accEditar:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Acc_Editar))',
+        accElim:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Acc_Eliminar))',
+        accAsig:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Acc_Asignar))',
+        accLogin: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Acc_Login))',
+        accLoginF:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Acc_LoginFallido))',
+        accBloq:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Acc_Bloqueo))',
+        accEnviar:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_BtnEnviarCorreo))',
+        todo:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Todos))',
+        cualqCambio:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_CualquierCambio))',
+        cualqAcceso:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_CualquierAcceso))'
     };
+    var ES_SUPER = @(esSuper ? "true" : "false");
+
+    function parseMapa(s) {
+        var m = {};
+        (s || '').split('|').forEach(function (par) {
+            var i = par.indexOf('=');
+            if (i > 0) m[par.slice(0, i)] = par.slice(i + 1);
+        });
+        return m;
+    }
+    var MAPA_AREA   = parseMapa('@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_AreasMap))');
+    var MAPA_FRASE  = parseMapa('@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_AccFraseMap))');
+    var MAPA_ACCOPT = parseMapa('@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_AccOptMap))');
+    var MAPA_CAMPO  = parseMapa('@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_CamposMap))');
+    var MESES = S.meses.split(',');
+
+    var ACC_ICO = {
+        Crear: 'fa-plus', Editar: 'fa-pen', Eliminar: 'fa-trash-alt', Asignar: 'fa-key',
+        Enviar: 'fa-paper-plane', Login: 'fa-sign-in-alt', LoginFallido: 'fa-exclamation-triangle', Bloqueo: 'fa-lock'
+    };
+    function areaLabel(t)  { return MAPA_AREA[t] || t || ''; }
+    function fraseLabel(a) { return MAPA_FRASE[a] || accionLabel(a); }
+    function campoLabel(k) { return MAPA_CAMPO[k] || k; }
+    function accIco(a)     { return ACC_ICO[a] || 'fa-info-circle'; }
+    function relLabel(sev) { return sev === 'Critico' ? S.relAlta : (sev === 'Advertencia' ? S.relMedia : S.relNormal); }
+
+    // "dd/MM/yyyy HH:mm:ss" -> Date
+    function parseFecha(f) {
+        var m = /(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})/.exec(f || '');
+        if (!m) return null;
+        return new Date(+m[3], +m[2] - 1, +m[1], +m[4], +m[5], +m[6]);
+    }
+    function hhmm(d) { return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+    function fechaCorta(d) { return d.getDate() + ' ' + (MESES[d.getMonth()] || ''); }
+    function tiempoRelativo(f) {
+        var d = parseFecha(f);
+        if (!d) return { rel: f || '', abs: '' };
+        var ahora = new Date();
+        var difMin = Math.floor((ahora - d) / 60000);
+        var abs = ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + ' ' + hhmm(d);
+        var rel;
+        if (difMin < 1)        rel = S.trAhora;
+        else if (difMin < 60)  rel = S.trMin.replace('{0}', difMin);
+        else if (difMin < 60 * 8) rel = S.trHoras.replace('{0}', Math.floor(difMin / 60));
+        else {
+            var hoy0 = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+            var dia0 = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            var difDia = Math.round((hoy0 - dia0) / 86400000);
+            if (difDia === 0)      rel = S.trHoy.replace('{0}', hhmm(d));
+            else if (difDia === 1) rel = S.trAyer.replace('{0}', hhmm(d));
+            else if (d.getFullYear() === ahora.getFullYear()) rel = fechaCorta(d);
+            else rel = fechaCorta(d) + ' ' + d.getFullYear();
+        }
+        return { rel: rel, abs: abs };
+    }
+
+    var _modo = 'cambios';   // 'cambios' | 'login'  (solo aplica a Super Admin)
+
+    function poblarAcciones() {
+        var login = (_modo === 'login') || !ES_SUPER;
+        var $s = $('#fAccion').empty();
+        $s.append($('<option value="">').text(login ? S.cualqAcceso : S.cualqCambio));
+        if (login) {
+            [['Login', S.accLogin], ['LoginFallido', S.accLoginF], ['Bloqueo', S.accBloq]]
+                .forEach(function (o) { $s.append($('<option>').val(o[0]).text(o[1])); });
+        } else {
+            [['Crear', MAPA_ACCOPT.Crear || S.accCrear], ['Editar', MAPA_ACCOPT.Editar || S.accEditar],
+             ['Eliminar', MAPA_ACCOPT.Eliminar || S.accElim], ['Asignar', MAPA_ACCOPT.Asignar || S.accAsig],
+             ['Enviar', MAPA_ACCOPT.Enviar || S.accEnviar]]
+                .forEach(function (o) { $s.append($('<option>').val(o[0]).text(o[1])); });
+        }
+    }
+
+    // Rango de fechas a partir de los botones de período.
+    function rangoPeriodo() {
+        var r = $('#fPeriodo button.on').attr('data-range') || '30';
+        if (r === 'custom') return { desde: $('#fDesde').val(), hasta: $('#fHasta').val() };
+        var hoy = new Date();
+        var d = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+        if (r === '7') d.setDate(d.getDate() - 6);
+        else if (r === '30') d.setDate(d.getDate() - 29);
+        else if (r === 'mes') d = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        function f(x) { return x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2) + '-' + ('0' + x.getDate()).slice(-2); }
+        return { desde: f(d), hasta: f(hoy) };
+    }
+
+    // Pinta el rango calculado en la cápsula ("8 sep – 12 sep" · "5 días").
+    function pintarRango(desde, hasta) {
+        var $box = $('#audRango');
+        if (!desde || !hasta) { $box.hide(); return; }
+        function corto(s) {
+            var p = s.split('-');
+            return parseInt(p[2], 10) + ' ' + (MESES[parseInt(p[1], 10) - 1] || '');
+        }
+        var dias = Math.round((new Date(hasta) - new Date(desde)) / 86400000) + 1;
+        if (isNaN(dias) || dias < 1) { $box.hide(); return; }
+        $('#audRangoTxt').text(desde === hasta ? corto(hasta) : corto(desde) + ' – ' + corto(hasta));
+        $('#audRangoDias').text(dias + ' ' + (dias === 1 ? S.diaSing : S.diaPlur));
+        $box.show();
+    }
+
+    function aplicarPeriodoUI() {
+        var r = rangoPeriodo();
+        pintarRango(r.desde, r.hasta);
+    }
+
     var SEV = { Info: S.sevInfo, Advertencia: S.sevAdv, Critico: S.sevCrit };
     var ACC = {
         Crear:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Acc_Crear))',
@@ -428,18 +703,30 @@ $(function () {
     var _opId = null;              // operacionId filtro "ver operación completa"
 
     function paramsFiltro() {
-        return {
-            tipo:       $('#fTipo').val(),
-            accion:     $('#fAccion').val(),
-            severidad:  $('#fSeveridad').val() || '',
-            idEmpresa:  $('#fEmpresa').val() || '',
-            entidad:    _histEnt ? _histEnt.entidad : $('#fEntidad').val(),
-            entidadId:  _histEnt ? _histEnt.entidadId : '',
-            operacionId:_opId || '',
-            texto:      $('#fTexto').val(),
-            desde:      $('#fDesde').val(),
-            hasta:      $('#fHasta').val()
+        var rango = rangoPeriodo();
+        var p = {
+            accion:      $('#fAccion').val() || '',
+            severidad:   $('#fSeveridad').val() || '',
+            idEmpresa:   $('#fEmpresa').val() || '',
+            idUsuario:   $('#fUsuario').val() || '',
+            entidad:     _histEnt ? _histEnt.entidad : '',
+            entidadId:   _histEnt ? _histEnt.entidadId : '',
+            operacionId: _opId || '',
+            texto:       $('#fTexto').val() || '',
+            desde:       rango.desde || '',
+            hasta:       rango.hasta || ''
         };
+        if (!ES_SUPER) return p;               // el backend fuerza Tipo = SEGURIDAD
+        if (_histEnt || _opId) return p;        // el historial / la operación mandan solos
+
+        if (_modo === 'login') {
+            p.tipo = 'SEGURIDAD';
+        } else {
+            var area = $('#fArea').val();
+            if (area) p.tipo = area;
+            else p.excluirTipo = 'SEGURIDAD';
+        }
+        return p;
     }
 
     function consultar(pagina) {
@@ -528,16 +815,37 @@ $(function () {
     function renderTabla(items) {
         var tbody = $('#tbody').empty();
         items.forEach(function (a) {
-            var tr = $('<tr class="row-' + (a.Severidad || 'Info') + '">');
-            tr.append($('<td>').css('white-space', 'nowrap')
-                .html('<span class="sev-dot sev-' + (a.Severidad || 'Info') + '" title="' + esc(sevLabel(a.Severidad)) + '"></span>' + esc(a.Fecha)));
-            tr.append($('<td>').html('<span class="badge badge-info">' + esc(a.Tipo) + '</span>'));
-            tr.append($('<td>').text(accionLabel(a.Accion)));
-            tr.append(entidadCelda(a));
-            tr.append($('<td>').attr('title', a.Descripcion || '').text(a.Descripcion || ''));
-            tr.append($('<td>').attr('title', a.NombreUsuario || '').text(a.NombreUsuario || ''));
-            tr.append($('<td>').attr('title', a.Empresa || '').text(a.Empresa || ''));
+            var sev = a.Severidad || 'Info';
+            var tr = $('<tr class="row-' + sev + '">');
 
+            // 1 · Cuándo
+            var t = tiempoRelativo(a.Fecha);
+            tr.append($('<td class="cel-when">').attr('title', a.Fecha)
+                .html('<span class="rel">' + esc(t.rel) + '</span><span class="abs">' + esc(t.abs) + '</span>'));
+
+            // 2 · Actividad
+            var nombre = a.EntidadNombre || '';
+            var $line = $('<div class="act-line">');
+            $line.append($('<span class="sev-dot sev-' + sev + '" title="' + esc(relLabel(sev)) + '">'));
+            $line.append(document.createTextNode(fraseLabel(a.Accion) + (nombre ? ' ' + nombre : '')));
+            $line.append($('<span class="area-chip">').text(areaLabel(a.Tipo)));
+            if (a.EntidadId) {
+                $('<button class="btn-hist" title="' + esc(S.histTip) + '">')
+                    .html('<i class="fas fa-history"></i>')
+                    .on('click', function () {
+                        _histEnt = { entidad: a.Entidad, entidadId: a.EntidadId };
+                        _opId = null; pintarChips(); consultar(1);
+                    }).appendTo($line);
+            }
+            var $act = $('<td>').append($line);
+            if (a.Descripcion) $act.append($('<div class="act-desc">').attr('title', a.Descripcion).text(a.Descripcion));
+            tr.append($act);
+
+            // 3-4 · Usuario / Empresa
+            tr.append($('<td>').attr('title', a.NombreUsuario || '').text(a.NombreUsuario || '—'));
+            tr.append($('<td>').attr('title', a.Empresa || '').text(a.Empresa || '—'));
+
+            // 5 · Detalle
             var celdaVer = $('<td class="text-center">');
             if (a.TieneDetalle) {
                 $('<button class="btn btn-sm btn-primary">')
@@ -562,12 +870,12 @@ $(function () {
             $body.append(
                 $('<span>').append(
                     $('<b>').text(a.NombreUsuario || '—'),
-                    document.createTextNode(' · ' + accionLabel(a.Accion) + ' '),
+                    document.createTextNode(' · ' + fraseLabel(a.Accion) + ' '),
                     $('<b>').text(nombre)
                 )
             );
             if (a.Descripcion) $body.append($('<div>').css({ fontSize: '.85rem', opacity: .85 }).text(a.Descripcion));
-            var meta = a.Fecha + '  ·  ' + a.Tipo + (a.Empresa ? '  ·  ' + a.Empresa : '');
+            var meta = a.Fecha + '  ·  ' + areaLabel(a.Tipo) + (a.Empresa ? '  ·  ' + a.Empresa : '');
             var $meta = $('<div class="tl-meta">').text(meta);
             if (a.TieneDetalle) {
                 $('<button class="aud-tl-ver">').text(S.verDet).on('click', function () { verDetalle(a.Id); }).appendTo($meta);
@@ -638,8 +946,9 @@ $(function () {
 
     function parseSafe(s) { try { return s ? JSON.parse(s) : null; } catch (e) { return undefined; } }
     function fmtVal(v) {
-        if (v === null) return '∅';
+        if (v === null) return '—';
         if (v === undefined) return '';
+        if (Array.isArray(v)) return v.map(fmtVal).join(', ');
         if (typeof v === 'object') { try { return JSON.stringify(v); } catch (e) { return String(v); } }
         return String(v);
     }
@@ -659,47 +968,77 @@ $(function () {
             var av = ao[k], nv = no[k];
             if (JSON.stringify(av) === JSON.stringify(nv)) return;
             var cell;
-            if (!(k in ao))      cell = '<span class="aud-diff-new">' + esc(fmtVal(nv)) + '</span>';
-            else if (!(k in no)) cell = '<span class="aud-diff-old">' + esc(fmtVal(av)) + '</span>';
-            else cell = '<span class="aud-diff-old">' + esc(fmtVal(av)) + '</span>'
-                      + '<span class="aud-diff-arrow">→</span>'
-                      + '<span class="aud-diff-new">' + esc(fmtVal(nv)) + '</span>';
-            filas += '<tr><td class="k">' + esc(k) + '</td><td>' + cell + '</td></tr>';
+            if (!(k in ao))      cell = '<span class="n">' + esc(fmtVal(nv)) + '</span>';
+            else if (!(k in no)) cell = '<span class="o">' + esc(fmtVal(av)) + '</span>';
+            else cell = '<span class="o">' + esc(fmtVal(av)) + '</span>'
+                      + '<span class="arw">&rarr;</span>'
+                      + '<span class="n">' + esc(fmtVal(nv)) + '</span>';
+            filas += '<tr><td class="k">' + esc(campoLabel(k)) + '</td><td class="v">' + cell + '</td></tr>';
         });
 
         var cuerpo = filas
-            ? '<table class="aud-diff-tbl">' + filas + '</table>'
-            : '<div class="aud-diff-none">' + esc(S.diffSin) + '</div>';
-        return '<div class="aud-diff"><div class="aud-diff-lbl">' + esc(S.diffTit) + '</div>' + cuerpo + '</div>';
+            ? '<div class="aud-dt-panel"><table class="aud-kv">' + filas + '</table></div>'
+            : '<div class="aud-dt-panel"><div class="aud-dt-none">' + esc(S.diffSin) + '</div></div>';
+        return seccion(S.queCambio, cuerpo);
+    }
+
+    function seccion(lbl, cuerpo) {
+        return '<div class="aud-dt-sec"><div class="aud-dt-sec-lbl">' + esc(lbl) + '</div>' + cuerpo + '</div>';
+    }
+
+    // Bloque "Qué cambió" para las filas de permisos (usuario + opciones de menú resueltas).
+    function renderPermisos(pd) {
+        if (!pd) return '';
+        var filas = '<tr><td class="k">' + esc(S.permUsr) + '</td><td class="v">' + esc(pd.usuario || '—') + '</td></tr>';
+        var ops = (pd.opciones && pd.opciones.length)
+            ? pd.opciones.map(function (o) { return esc(o); }).join(', ')
+            : esc(S.permCant.replace('{0}', pd.cantidad || 0));
+        filas += '<tr><td class="k">' + esc(S.permOpc) + '</td><td class="v">' + ops + '</td></tr>';
+        return seccion(S.queCambio, '<div class="aud-dt-panel"><table class="aud-kv">' + filas + '</table></div>');
     }
 
     function verDetalle(id) {
         $.getJSON('@Url.Action("Detalle", "Auditoria")', { id: id }).done(function (d) {
             if (!d || !d.success) { Swal.fire({ icon: 'error', title: S.errTit, text: S.error }); return; }
 
-            var entidadTxt = d.entidadNombre || d.entidad || '';
+            var entidadTxt = d.entidadNombre || '';
             var entidadRuta = (d.entidad || '') + (d.entidadId ? ' #' + d.entidadId : '');
-            var diffHtml = renderDiff(d.valorAnterior, d.valorNuevo);
+            var t = tiempoRelativo(d.fecha);
+
+            var cambiosHtml = d.permisosDetalle
+                ? renderPermisos(d.permisosDetalle)
+                : renderDiff(d.valorAnterior, d.valorNuevo);
+
+            var sev = d.severidad || 'Info';
+            var titulo = fraseLabel(d.accion) + (entidadTxt ? ' · ' + entidadTxt : '');
+
             var opBtn = d.operacionId
-                ? '<button type="button" id="audVerOp" class="aud-dt-copy" style="margin-top:.4rem;">' + esc(S.opVer) + '</button>'
+                ? '<button type="button" id="audVerOp" class="aud-dt-btn"><i class="fas fa-sitemap"></i>' + esc(S.verTodoOp) + '</button>'
                 : '';
             var rawHtml = (d.valorAnterior || d.valorNuevo)
-                ? '<details class="aud-raw"' + (diffHtml ? '' : ' open') + '><summary>' + esc(S.rawJson) + '</summary>'
+                ? '<details class="aud-raw"><summary>' + esc(S.datosTec) + '</summary>'
                     + bloque(S.vAnt, d.valorAnterior) + bloque(S.vNue, d.valorNuevo) + '</details>'
                 : '';
 
-            var html = '<div class="aud-dt">'
-                + '<div class="aud-dt-fecha">' + esc(d.fecha) + '</div>'
+            var html = '<div class="aud-dt dt-sev-' + sev + '">'
+                + '<div class="aud-dt-head">'
+                +   '<span class="aud-dt-ico"><i class="fas ' + accIco(d.accion) + '"></i></span>'
+                +   '<span class="aud-dt-htxt">'
+                +     '<span class="aud-dt-title">' + esc(titulo) + '</span>'
+                +     '<span class="aud-dt-sub" title="' + esc(d.fecha) + '">' + esc(d.nombreUsuario || '—') + (t.rel ? ' &middot; ' + esc(t.rel) : '') + '</span>'
+                +   '</span>'
+                + '</div>'
+                + '<div class="aud-dt-rule"></div>'
                 + '<div class="aud-dt-chips">'
-                +   '<span class="aud-dt-chip"><span class="sev-dot sev-' + (d.severidad || 'Info') + '"></span>' + esc(sevLabel(d.severidad)) + '</span>'
-                +   dtChip(d.tipo, 'tipo') + dtChip(accionLabel(d.accion)) + dtChip(entidadTxt)
+                +   '<span class="aud-dt-chip"><span class="sev-dot sev-' + sev + '"></span>' + esc(relLabel(sev)) + '</span>'
+                +   dtChip(areaLabel(d.tipo), 'tipo') + (d.empresa ? dtChip(d.empresa) : '')
                 + '</div>'
                 + (d.descripcion ? '<p class="aud-dt-desc">' + esc(d.descripcion) + '</p>' : '')
+                + cambiosHtml
                 + '<div class="aud-dt-meta">'
                 +   dtMeta(S.mUsuario, d.nombreUsuario) + dtMeta(S.mEmpresa, d.empresa) + dtMeta(S.mIp, d.ipAddress)
-                +   (entidadRuta && entidadRuta !== entidadTxt ? dtMeta(S.refLbl, entidadRuta) : '')
+                +   (d.entidadId && entidadRuta !== entidadTxt ? dtMeta(S.refLbl, entidadRuta) : '')
                 + '</div>'
-                + diffHtml
                 + opBtn
                 + rawHtml
                 + '</div>';
@@ -707,7 +1046,7 @@ $(function () {
             Swal.fire({
                 title: S.modal,
                 html: html,
-                width: '720px',
+                width: '620px',
                 showConfirmButton: false,
                 showCloseButton: true,
                 didOpen: function (popup) {
@@ -754,10 +1093,42 @@ $(function () {
         $('#sinResultados').show();
     }
 
+    // ── Modo (Cambios del sistema / Inicios de sesión) — solo Super Admin ──
+    function setModo(m) {
+        _modo = m;
+        $('#modoCambios').toggleClass('on', m === 'cambios');
+        $('#modoLogin').toggleClass('on', m === 'login');
+        $('#wrapArea').toggle(m === 'cambios');
+        if (m === 'login') $('#fArea').val('');
+        poblarAcciones();
+    }
+    $('#modoCambios').on('click', function () { if (_modo !== 'cambios') setModo('cambios'); });
+    $('#modoLogin').on('click', function () { if (_modo !== 'login') setModo('login'); });
+
+    // ── Período (cápsula) ──
+    $('#fPeriodo button').on('click', function () {
+        $('#fPeriodo button').removeClass('on');
+        $(this).addClass('on');
+        $('#wrapFechas').css('display', $(this).attr('data-range') === 'custom' ? 'flex' : 'none');
+        aplicarPeriodoUI();
+    });
+    $('#fDesde, #fHasta').on('change', function () {
+        if ($('#fPeriodo button.on').attr('data-range') === 'custom') aplicarPeriodoUI();
+    });
+
+    // Estado inicial del panel
+    poblarAcciones();
+    aplicarPeriodoUI();
+
     $('#btnConsultar').on('click', function () { consultar(1); });
     $('#btnLimpiar').on('click', function () {
-        $('#fTipo, #fAccion, #fSeveridad, #fEmpresa').val('');
-        $('#fEntidad, #fTexto, #fDesde, #fHasta').val('');
+        $('#fArea, #fAccion, #fSeveridad, #fEmpresa, #fUsuario').val('');
+        $('#fTexto, #fDesde, #fHasta').val('');
+        $('#fPeriodo button').removeClass('on');
+        $('#fPeriodo button[data-range="30"]').addClass('on');
+        $('#wrapFechas').hide();
+        aplicarPeriodoUI();
+        if (ES_SUPER) setModo('cambios');
         _histEnt = null; _opId = null; pintarChips();
         // Igual que al entrar: no consulta, vuelve al estado vacío.
         estadoInicial();

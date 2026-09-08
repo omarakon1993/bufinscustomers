@@ -114,6 +114,8 @@ namespace bufinscustomers.Models
     public class AuditoriaFiltro
     {
         public string Tipo { get; set; }
+        /// <summary>Excluye un tipo del resultado (p. ej. ocultar SEGURIDAD en la vista de "cambios del sistema").</summary>
+        public string ExcluirTipo { get; set; }
         public string Accion { get; set; }
         public int? IdUsuario { get; set; }
         public int? IdEmpresa { get; set; }
