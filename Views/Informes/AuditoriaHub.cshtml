@@ -1,5 +1,6 @@
 ﻿@{
     ViewBag.Title = Resources.Strings.AudHub_PageTitle;
+    var esNormal = (bool)(ViewBag.EsUsuarioNormal ?? false);
 }
 
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
@@ -17,6 +18,7 @@
         border-radius: 999px;
         margin: 0 0 1.15rem;
     }
+    .audhub-seg.solo1 { grid-template-columns: 1fr; max-width: 260px; }
     .audhub-seg-thumb {
         position: absolute;
         left: 0;
@@ -61,6 +63,7 @@
 
     @@media (max-width: 680px) {
         .audhub-seg { grid-template-columns: repeat(2, 1fr); border-radius: 22px; }
+        .audhub-seg.solo1 { grid-template-columns: 1fr; }
         .audhub-seg-btn { border-radius: 18px; }
     }
     @@media (prefers-reduced-motion: reduce) {
@@ -104,28 +107,31 @@
         </div>
     </div>
 
-    <div class="audhub-seg" id="audhubTabs" role="tablist">
+    <div class="audhub-seg @(esNormal ? "solo1" : "")" id="audhubTabs" role="tablist">
         <span class="audhub-seg-thumb no-anim" aria-hidden="true"></span>
         <button type="button" class="audhub-seg-btn is-active" data-key="cambios"
                 data-title="@Resources.Strings.AudHub_TitleCambios"
                 data-url="@Url.Action("Index", "Auditoria", new { embed = 1 })">
             <i class="fas fa-edit"></i>@Resources.Strings.AudHub_TabCambios
         </button>
-        <button type="button" class="audhub-seg-btn" data-key="navegacion"
-                data-title="@Resources.Strings.AudHub_TitleNavegacion"
-                data-url="@Url.Action("Index", "InformeNavegacion", new { embed = 1 })">
-            <i class="fas fa-route"></i>@Resources.Strings.AudHub_TabNavegacion
-        </button>
-        <button type="button" class="audhub-seg-btn" data-key="cargues"
-                data-title="@Resources.Strings.AudHub_TitleCargues"
-                data-url="@Url.Action("AuditoriaCargues", "AuditoriaCargues", new { embed = 1 })">
-            <i class="fas fa-file-upload"></i>@Resources.Strings.AudHub_TabCargues
-        </button>
-        <button type="button" class="audhub-seg-btn" data-key="ia"
-                data-title="@Resources.Strings.AudHub_TitleIA"
-                data-url="@Url.Action("Index", "AuditoriaConsultasIA", new { embed = 1 })">
-            <i class="fas fa-robot"></i>@Resources.Strings.AudHub_TabIA
-        </button>
+        @if (!esNormal)
+        {
+            <button type="button" class="audhub-seg-btn" data-key="navegacion"
+                    data-title="@Resources.Strings.AudHub_TitleNavegacion"
+                    data-url="@Url.Action("Index", "InformeNavegacion", new { embed = 1 })">
+                <i class="fas fa-route"></i>@Resources.Strings.AudHub_TabNavegacion
+            </button>
+            <button type="button" class="audhub-seg-btn" data-key="cargues"
+                    data-title="@Resources.Strings.AudHub_TitleCargues"
+                    data-url="@Url.Action("AuditoriaCargues", "AuditoriaCargues", new { embed = 1 })">
+                <i class="fas fa-file-upload"></i>@Resources.Strings.AudHub_TabCargues
+            </button>
+            <button type="button" class="audhub-seg-btn" data-key="ia"
+                    data-title="@Resources.Strings.AudHub_TitleIA"
+                    data-url="@Url.Action("Index", "AuditoriaConsultasIA", new { embed = 1 })">
+                <i class="fas fa-robot"></i>@Resources.Strings.AudHub_TabIA
+            </button>
+        }
     </div>
 
     <div class="audhub-panel-wrap">

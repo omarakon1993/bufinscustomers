@@ -17,9 +17,11 @@ namespace bufinscustomers.Controllers
     ///
     /// Alcance:
     ///  - <b>Super Admin</b>: ve todo, todos los tipos, todas las empresas.
-    ///  - <b>Admin de Empresa</b>: solo eventos de <c>Tipo = SEGURIDAD</c> (inicios de sesión)
-    ///    de usuarios de su empresa o de su mismo grupo empresarial.
-    ///  - Cualquier otro rol: sin acceso.
+    ///  - <b>Admin de Empresa</b>: la misma experiencia completa (todos los tipos: cambios,
+    ///    ejecuciones de modelos, cargues, etc.) pero acotada a su empresa o su mismo grupo
+    ///    empresarial. Excepción: <c>Limpiar</c> sigue siendo exclusivo de Super Admin.
+    ///  - <b>Usuario Normal</b>: acceso disponible (quién ve la opción en el menú se controla
+    ///    por permiso/menú, no aquí); solo puede ver su propia auditoría (<c>IdUsuario</c>).
     /// </summary>
     [ValidarSesion]
     public class AuditoriaController : BaseController
@@ -28,20 +30,32 @@ namespace bufinscustomers.Controllers
 
         // ── Gate + alcance ──────────────────────────────────────────────────
 
-        private bool PuedeAcceder(out bool esSuperAdmin)
+        /// <summary>
+        /// Cualquier usuario con sesión válida puede entrar (quién ve la opción se controla por
+        /// menú/permiso, no por rol aquí). Devuelve el rol para que cada endpoint aplique su alcance.
+        /// </summary>
+        private bool PuedeAcceder(out bool esSuperAdmin, out bool esUsuarioNormal)
         {
             esSuperAdmin = UsuarioSesionHelper.EsSuperAdmin();
-            return esSuperAdmin || UsuarioSesionHelper.EsAdminEmpresa();
+            esUsuarioNormal = UsuarioSesionHelper.EsUsuarioNormal();
+            return UsuarioSesionHelper.UsuarioActual != null;
         }
 
-        /// <summary>Aplica el recorte por rol al filtro (fuerza Tipo/empresas para no-Super Admin).</summary>
-        private void AplicarAlcance(AuditoriaFiltro f, bool esSuperAdmin)
+        /// <summary>
+        /// Aplica el recorte por rol al filtro: Admin de Empresa ve todos los tipos igual que Super
+        /// Admin, solo acotado por empresa/grupo; Usuario Normal solo ve sus propias filas (<c>IdUsuario</c>).
+        /// </summary>
+        private void AplicarAlcance(AuditoriaFiltro f, bool esSuperAdmin, bool esUsuarioNormal)
         {
             if (esSuperAdmin) return;
 
-            f.Tipo = AuditoriaTipo.Seguridad;   // ignora cualquier tipo pedido por el cliente
-            f.ExcluirTipo = null;
-            f.Entidad = null;
+            if (esUsuarioNormal)
+            {
+                f.IdUsuario = UsuarioSesionHelper.UsuarioActual.Id;   // ignora cualquier idUsuario pedido por el cliente
+                f.IdsEmpresaPermitidas = null;                        // ya queda acotado por usuario
+                return;
+            }
+
             var permitidas = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(UsuarioSesionHelper.UsuarioActual);
             f.IdsEmpresaPermitidas = permitidas ?? new List<int>();
         }
@@ -54,23 +68,31 @@ namespace bufinscustomers.Controllers
 
         public ActionResult Index()
         {
-            if (!PuedeAcceder(out bool esSuper))
+            if (!PuedeAcceder(out bool esSuper, out bool esNormal))
                 return new RedirectResult("~/Error/Forbidden");
+
+            var usuario = UsuarioSesionHelper.UsuarioActual;
 
             ViewBag.Embed = string.Equals(Request.QueryString["embed"], "1");
             ViewBag.EsSuperAdmin = esSuper;
-            ViewBag.Tipos = esSuper ? _svc.ObtenerTiposUsados() : new List<string>();
+            ViewBag.EsUsuarioNormal = esNormal;
+            ViewBag.Tipos = _svc.ObtenerTiposUsados();
 
             var empresas = new EmpresaService().ObtenerEmpresas();
             List<int> permitidasEmp = null;
-            if (!esSuper)
+            if (esNormal)
             {
-                permitidasEmp = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(UsuarioSesionHelper.UsuarioActual)
-                                ?? new List<int>();
+                empresas = empresas.Where(e => usuario.IdEmpresa.HasValue && e.Id == usuario.IdEmpresa.Value).ToList();
+            }
+            else if (!esSuper)
+            {
+                permitidasEmp = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
                 empresas = empresas.Where(e => permitidasEmp.Contains(e.Id)).ToList();
             }
             ViewBag.Empresas = empresas;
-            ViewBag.Usuarios = _svc.ObtenerUsuariosParaFiltro(permitidasEmp);
+            ViewBag.Usuarios = esNormal
+                ? new List<KeyValuePair<int, string>>()
+                : _svc.ObtenerUsuariosParaFiltro(permitidasEmp);
 
             return View("~/Views/Informes/Auditoria.cshtml");
         }
@@ -80,7 +102,7 @@ namespace bufinscustomers.Controllers
             string entidadId, string severidad, string operacionId,
             string texto, string desde, string hasta, string excluirTipo = null, int pagina = 1, int tam = 25)
         {
-            if (!PuedeAcceder(out bool esSuper)) return Prohibido();
+            if (!PuedeAcceder(out bool esSuper, out bool esNormal)) return Prohibido();
 
             DateTime? d = null, h = null;
             if (DateTime.TryParse(desde, out var dd)) d = dd;
@@ -93,7 +115,7 @@ namespace bufinscustomers.Controllers
                 Entidad = entidad, EntidadId = entidadId, Severidad = severidad, OperacionId = op,
                 Texto = texto, Desde = d, Hasta = h, Pagina = pagina, TamanoPagina = tam
             };
-            AplicarAlcance(filtro, esSuper);
+            AplicarAlcance(filtro, esSuper, esNormal);
 
             var res = _svc.Consultar(filtro);
 
@@ -129,7 +151,7 @@ namespace bufinscustomers.Controllers
             string entidadId, string severidad, string operacionId,
             string texto, string desde, string hasta, string excluirTipo = null)
         {
-            if (!PuedeAcceder(out bool esSuper))
+            if (!PuedeAcceder(out bool esSuper, out bool esNormal))
                 return new RedirectResult("~/Error/Forbidden");
 
             DateTime? d = null, h = null;
@@ -143,7 +165,7 @@ namespace bufinscustomers.Controllers
                 Entidad = entidad, EntidadId = entidadId, Severidad = severidad, OperacionId = op,
                 Texto = texto, Desde = d, Hasta = h
             };
-            AplicarAlcance(filtro, esSuper);
+            AplicarAlcance(filtro, esSuper, esNormal);
 
             var filas = _svc.ConsultarParaExport(filtro);
 
@@ -190,21 +212,27 @@ namespace bufinscustomers.Controllers
         [HttpGet]
         public JsonResult Detalle(long id)
         {
-            if (!PuedeAcceder(out bool esSuper)) return Prohibido();
+            if (!PuedeAcceder(out bool esSuper, out bool esNormal)) return Prohibido();
 
             var a = _svc.ObtenerPorId(id);
             if (a == null) return Json(new { success = false }, JsonRequestBehavior.AllowGet);
 
-            // Un Admin de Empresa solo puede ver el detalle de eventos de seguridad de su alcance.
             if (!esSuper)
             {
-                if (!string.Equals(a.Tipo, AuditoriaTipo.Seguridad, StringComparison.OrdinalIgnoreCase))
-                    return Prohibido();
-
-                var permitidas = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(UsuarioSesionHelper.UsuarioActual)
-                                 ?? new List<int>();
-                if (!a.IdEmpresa.HasValue || !permitidas.Contains(a.IdEmpresa.Value))
-                    return Prohibido();
+                if (esNormal)
+                {
+                    // Usuario Normal solo puede ver el detalle de su propia auditoría.
+                    if (a.IdUsuario != UsuarioSesionHelper.UsuarioActual.Id)
+                        return Prohibido();
+                }
+                else
+                {
+                    // Admin de Empresa solo puede ver el detalle de eventos dentro de su empresa/grupo.
+                    var permitidas = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(UsuarioSesionHelper.UsuarioActual)
+                                     ?? new List<int>();
+                    if (!a.IdEmpresa.HasValue || !permitidas.Contains(a.IdEmpresa.Value))
+                        return Prohibido();
+                }
             }
 
             return Json(new

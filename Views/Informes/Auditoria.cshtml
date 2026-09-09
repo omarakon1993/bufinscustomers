@@ -8,6 +8,7 @@
     var usuariosFiltro = ViewBag.Usuarios as System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<int, string>>
         ?? new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<int, string>>();
     var esSuper = (bool)(ViewBag.EsSuperAdmin ?? false);
+    var esNormal = (bool)(ViewBag.EsUsuarioNormal ?? false);
 }
 
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
@@ -318,7 +319,13 @@
         </div>
     </div>
 
-    @if (!esSuper)
+    @if (esNormal)
+    {
+        <div class="alert alert-info d-flex align-items-center" role="alert" style="border-left:4px solid #583AFF;">
+            <i class="fas fa-info-circle mr-2"></i>@Resources.Strings.Audit_AlcancePropio
+        </div>
+    }
+    else if (!esSuper)
     {
         <div class="alert alert-info d-flex align-items-center" role="alert" style="border-left:4px solid #583AFF;">
             <i class="fas fa-info-circle mr-2"></i>@Resources.Strings.Audit_AlcanceEmpresa
@@ -328,45 +335,42 @@
     <div class="filter-card">
         <div class="af-titlebar">
             <h3 class="filter-card-title"><i class="fas fa-filter"></i> @Resources.Strings.Common_FiltrosConsulta</h3>
-            @if (esSuper)
-            {
-                <div class="aud-modo" role="group" aria-label="@Resources.Strings.Audit_ModoCambios">
-                    <button type="button" id="modoCambios" class="on"><i class="fas fa-exchange-alt mr-2"></i>@Resources.Strings.Audit_ModoCambios</button>
-                    <button type="button" id="modoLogin"><i class="fas fa-sign-in-alt mr-2"></i>@Resources.Strings.Audit_ModoLogin</button>
-                </div>
-            }
+            <div class="aud-modo" role="group" aria-label="@Resources.Strings.Audit_ModoCambios">
+                <button type="button" id="modoCambios" class="on"><i class="fas fa-exchange-alt mr-2"></i>@Resources.Strings.Audit_ModoCambios</button>
+                <button type="button" id="modoLogin"><i class="fas fa-sign-in-alt mr-2"></i>@Resources.Strings.Audit_ModoLogin</button>
+            </div>
         </div>
 
         <div class="filter-section aud-filtros">
 
             <div class="af-grid">
-                @if (esSuper)
-                {
-                    <div class="form-group" id="wrapArea">
-                        <label><i class="fas fa-layer-group"></i>@Resources.Strings.Audit_LabelArea</label>
-                        <select id="fArea" class="form-control">
-                            <option value="">@Resources.Strings.Audit_TodasAreas</option>
-                            @foreach (var t in tipos.Where(x => !string.Equals(x, "SEGURIDAD", StringComparison.OrdinalIgnoreCase)))
-                            {
-                                <option value="@t">@t</option>
-                            }
-                        </select>
-                    </div>
-                }
+                <div class="form-group" id="wrapArea">
+                    <label><i class="fas fa-layer-group"></i>@Resources.Strings.Audit_LabelArea</label>
+                    <select id="fArea" class="form-control">
+                        <option value="">@Resources.Strings.Audit_TodasAreas</option>
+                        @foreach (var t in tipos.Where(x => !string.Equals(x, "SEGURIDAD", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            <option value="@t">@t</option>
+                        }
+                    </select>
+                </div>
                 <div class="form-group">
                     <label><i class="fas fa-bolt"></i>@Resources.Strings.Audit_LabelQueOcurrio</label>
                     <select id="fAccion" class="form-control"></select>
                 </div>
-                <div class="form-group">
-                    <label><i class="fas fa-user"></i>@Resources.Strings.Audit_ThUsuario</label>
-                    <select id="fUsuario" class="form-control">
-                        <option value="">@Resources.Strings.Audit_TodosUsuarios</option>
-                        @foreach (var u in usuariosFiltro)
-                        {
-                            <option value="@u.Key">@u.Value</option>
-                        }
-                    </select>
-                </div>
+                @if (!esNormal)
+                {
+                    <div class="form-group">
+                        <label><i class="fas fa-user"></i>@Resources.Strings.Audit_ThUsuario</label>
+                        <select id="fUsuario" class="form-control">
+                            <option value="">@Resources.Strings.Audit_TodosUsuarios</option>
+                            @foreach (var u in usuariosFiltro)
+                            {
+                                <option value="@u.Key">@u.Value</option>
+                            }
+                        </select>
+                    </div>
+                }
                 <div class="form-group">
                     <label><i class="fas fa-building"></i>@Resources.Strings.Audit_LabelEmpresa</label>
                     <select id="fEmpresa" class="form-control">
@@ -406,21 +410,18 @@
                 </div>
             </div>
 
-            @if (esSuper)
-            {
-                <details class="aud-adv">
-                    <summary>@Resources.Strings.Audit_FiltrosAvanzados</summary>
-                    <div class="form-group" style="margin-top:.6rem;">
-                        <label><i class="fas fa-signal"></i>@Resources.Strings.Audit_LabelRelevancia</label>
-                        <select id="fSeveridad" class="form-control">
-                            <option value="">@Resources.Strings.Common_Todos</option>
-                            <option value="Critico">@Resources.Strings.Audit_Rel_Alta</option>
-                            <option value="Advertencia">@Resources.Strings.Audit_Rel_Media</option>
-                            <option value="Info">@Resources.Strings.Audit_Rel_Normal</option>
-                        </select>
-                    </div>
-                </details>
-            }
+            <details class="aud-adv">
+                <summary>@Resources.Strings.Audit_FiltrosAvanzados</summary>
+                <div class="form-group" style="margin-top:.6rem;">
+                    <label><i class="fas fa-signal"></i>@Resources.Strings.Audit_LabelRelevancia</label>
+                    <select id="fSeveridad" class="form-control">
+                        <option value="">@Resources.Strings.Common_Todos</option>
+                        <option value="Critico">@Resources.Strings.Audit_Rel_Alta</option>
+                        <option value="Advertencia">@Resources.Strings.Audit_Rel_Media</option>
+                        <option value="Info">@Resources.Strings.Audit_Rel_Normal</option>
+                    </select>
+                </div>
+            </details>
 
             <div class="btn-group-actions">
                 <button type="button" id="btnConsultar" class="btn btn-modern-gradient">
@@ -607,10 +608,10 @@ $(function () {
         return { rel: rel, abs: abs };
     }
 
-    var _modo = 'cambios';   // 'cambios' | 'login'  (solo aplica a Super Admin)
+    var _modo = 'cambios';   // 'cambios' | 'login'
 
     function poblarAcciones() {
-        var login = (_modo === 'login') || !ES_SUPER;
+        var login = (_modo === 'login');
         var $s = $('#fAccion').empty();
         $s.append($('<option value="">').text(login ? S.cualqAcceso : S.cualqCambio));
         if (login) {
@@ -722,7 +723,6 @@ $(function () {
             desde:       rango.desde || '',
             hasta:       rango.hasta || ''
         };
-        if (!ES_SUPER) return p;               // el backend fuerza Tipo = SEGURIDAD
         if (_histEnt || _opId) return p;        // el historial / la operación mandan solos
 
         if (_modo === 'login') {
@@ -1100,7 +1100,7 @@ $(function () {
         $('#sinResultados').show();
     }
 
-    // ── Modo (Cambios del sistema / Inicios de sesión) — solo Super Admin ──
+    // ── Modo (Cambios del sistema / Inicios de sesión) ──
     function setModo(m) {
         _modo = m;
         $('#modoCambios').toggleClass('on', m === 'cambios');
@@ -1135,7 +1135,7 @@ $(function () {
         $('#fPeriodo button[data-range="30"]').addClass('on');
         $('#wrapFechas').hide();
         aplicarPeriodoUI();
-        if (ES_SUPER) setModo('cambios');
+        setModo('cambios');
         _histEnt = null; _opId = null; pintarChips();
         // Igual que al entrar: no consulta, vuelve al estado vacío.
         estadoInicial();
