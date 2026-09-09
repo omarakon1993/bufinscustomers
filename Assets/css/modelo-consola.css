@@ -1,0 +1,220 @@
+/* ===== Ejecución de modelos · consola 1a =====================================
+   Usa exclusivamente los tokens de :root definidos en modern-sidebar.css
+   (--app-glow-bg, --app-btn-gradient, --content-gradient, #160933, #583AFF, #01E1D7).
+   El encabezado de la página es el banner estándar .powerbi-header; aquí solo se
+   estilan la barra de trabajo, el selector de modelos, los botones de acción,
+   la cabecera de la tarjeta de resultados y la tabla.
+   ========================================================================== */
+
+/* El banner del título queda a la misma altura que en el resto de opciones
+   (sin el tirón de -16px hacia arriba; se conserva el sangrado lateral). */
+.mc-page > .powerbi-header{ margin-top:0 !important; }
+
+/* --- Barra de trabajo pegajosa (tarjeta independiente) --- */
+.mc-toolbar{
+  background:#fff;
+  border:1px solid #e3e6f0;
+  border-radius:8px;
+  padding:14px 22px;
+  display:flex;flex-direction:column;gap:12px;
+  position:sticky;top:0;z-index:20;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+  margin-bottom:1.25rem;
+}
+/* fila 1: filtros · fila 2: acciones */
+.mc-toolbar-row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.mc-toolbar-acciones{align-items:stretch}
+.mc-toolbar-acciones > .mc-btn-primary,
+.mc-toolbar-acciones > .mc-btn-solid{
+  flex:1 1 200px;min-width:0;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  height:38px;padding:0 1rem;line-height:1;
+  white-space:nowrap;overflow:hidden;
+}
+/* el nombre largo del botón dinámico no debe crecer el alto: se recorta con puntos suspensivos */
+.mc-toolbar-acciones > button > .mc-ico{flex:0 0 auto}
+.mc-toolbar-acciones > button > span:not(.mc-ico){
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;
+}
+.mc-field{display:flex;flex-direction:column;gap:5px;min-width:200px;flex:1 1 220px}
+.mc-field.wide{min-width:280px;flex:1 1 300px}
+.mc-field label{
+  font-size:11px;font-weight:700;color:#6c757d;
+  letter-spacing:.06em;text-transform:uppercase;margin:0;display:block;
+}
+.mc-field label .required{color:#ef4444}
+.mc-field .form-control{
+  height:auto;min-height:38px;padding:.42rem .7rem;font-size:13.5px;font-weight:600;color:#2d3748;
+  border:1px solid #d1d5db;border-radius:8px;
+}
+.mc-field .form-control:focus{
+  border-color:#583AFF;box-shadow:0 0 0 2px rgba(88,58,255,.1);
+}
+.mc-sep{width:1px;height:34px;background:#e3e6f0;margin:0 2px}
+
+/* --- Selector de modelos (uno o varios) --- */
+.mc-multiselect{position:relative}
+.mc-ms-toggle{
+  width:100%;min-height:38px;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:.42rem .7rem;font-size:13.5px;font-weight:600;color:#2d3748;
+  border:1px solid #d1d5db;border-radius:8px;background:#fff;cursor:pointer;text-align:left;
+}
+.mc-ms-toggle:hover{border-color:#a5b4fc}
+.mc-ms-toggle:focus,.mc-multiselect.open .mc-ms-toggle{
+  border-color:#583AFF;box-shadow:0 0 0 2px rgba(88,58,255,.1);outline:none;
+}
+.mc-ms-toggle > span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.mc-ms-toggle > span:not(.has-sel){color:#9ca3af;font-weight:500}
+.mc-ms-toggle > i{color:#9ca3af;font-size:11px;flex-shrink:0;transition:transform .18s ease}
+.mc-multiselect.open .mc-ms-toggle > i{transform:rotate(180deg)}
+.mc-ms-panel{
+  position:absolute;z-index:40;top:calc(100% + 4px);left:0;right:0;
+  background:#fff;border:1px solid #d1d5db;border-radius:8px;
+  box-shadow:0 10px 28px rgba(22,9,51,.16);max-height:280px;overflow-y:auto;
+}
+
+/* Lista de casillas de modelos (panel del selector + modal de correo) */
+.mc-modelos-box{
+  border:1px solid #d1d5db;border-radius:.375rem;
+  max-height:210px;overflow-y:auto;background:#fff;
+}
+.mc-modelo-item{
+  display:flex;align-items:center;gap:.55rem;padding:.4rem .8rem;margin:0;
+  font-weight:500;font-size:.85rem;color:#2d3748;cursor:pointer;
+  border-bottom:1px solid #f1f1f4;
+}
+.mc-modelo-item:last-child{border-bottom:none}
+.mc-modelo-item:hover{background:#f8f9fc}
+.mc-modelo-item input{cursor:pointer;margin:0}
+.mc-modelo-all{
+  background:#f8f9fc;font-weight:600;color:#1e1b4b;
+  position:sticky;top:0;border-bottom:1px solid #e3e6f0;z-index:1;
+}
+
+/* Botón primario: ÚNICO degradado de la pantalla (aparte del banner del header) */
+.mc-btn-primary{
+  background:var(--content-gradient);color:#fff;border:none;
+  padding:.5rem 1.15rem;border-radius:8px;font-weight:700;font-size:13px;
+  cursor:pointer;box-shadow:0 2px 8px rgba(22,9,51,.3);transition:all .2s ease;
+}
+.mc-btn-primary:hover:not(:disabled){
+  background:var(--content-gradient-hover);transform:translateY(-1px);
+  box-shadow:0 4px 12px rgba(22,9,51,.4);color:#fff;
+}
+.mc-btn-primary:disabled{
+  background:#e0ddf0 !important;color:#a39cc0 !important;
+  box-shadow:none !important;cursor:not-allowed;transform:none !important;
+}
+
+/* Botones de acción sólidos con brillo animado sutil (como el antiguo "Exportar todos") */
+.mc-btn-solid{
+  position:relative;overflow:hidden;color:#fff !important;border:none;
+  padding:.5rem 1.1rem;border-radius:8px;font-weight:700;font-size:13px;
+  letter-spacing:.01em;cursor:pointer;
+  background-size:300% 100%;
+  animation:mcShine 4s linear infinite;
+  transition:box-shadow .25s ease,transform .2s ease;
+}
+.mc-btn-solid .mc-ico{display:inline-block;transition:transform .25s ease}
+.mc-btn-solid:not(:disabled):hover{animation-duration:1.8s;transform:translateY(-1px)}
+.mc-btn-solid:not(:disabled):hover .mc-ico{transform:translateY(-2px) scale(1.15)}
+.mc-btn-solid:disabled{
+  background:#9ca3af !important;animation:none !important;
+  cursor:not-allowed;opacity:.7;box-shadow:none !important;transform:none !important;
+}
+.mc-btn-solid.excel{
+  background-image:linear-gradient(110deg,#185c37 0%,#217346 25%,#2e9e5b 50%,#217346 75%,#185c37 100%);
+}
+.mc-btn-solid.excel:not(:disabled):hover{box-shadow:0 4px 18px rgba(33,115,70,.45)}
+.mc-btn-solid.mail{
+  background-image:linear-gradient(110deg,#150a33 0%,#160933 22%,#3a2a86 50%,#160933 78%,#150a33 100%);
+}
+.mc-btn-solid.mail:not(:disabled):hover{box-shadow:0 4px 18px rgba(88,58,255,.4)}
+@keyframes mcShine{0%{background-position:100% 0}100%{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){
+  .mc-btn-solid{animation:none !important}
+}
+
+/* Filtro sobre resultados */
+.mc-search{
+  margin-left:auto;display:flex;align-items:center;gap:8px;
+  border:1px solid #d1d5db;border-radius:8px;padding:.42rem .7rem;
+  background:#fff;min-width:190px;
+}
+.mc-search i{color:#9ca3af;font-size:12px}
+.mc-search input{
+  border:none;outline:none;font-size:13px;width:100%;color:#2d3748;background:transparent;
+}
+.mc-search input::placeholder{color:#9ca3af}
+
+/* Panel de descripción del modelo */
+.mc-modelo-info{
+  width:100%;margin-top:2px;padding:7px 12px;background:#f0f0ff;border-radius:8px;
+  border-left:3px solid #583AFF;font-size:12.5px;color:#4b5563;
+}
+
+/* --- Tarjeta de resultados --- */
+.mc-table-card{
+  background:#fff;border:1px solid #e3e6f0;border-radius:.5rem;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden;
+}
+
+/* Cabecera contextual de la tarjeta (título · empresa · nº registros) */
+.mc-table-head{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:12px 22px;border-bottom:1px solid #e3e6f0;background:#fff;
+}
+.mc-table-head-icon{color:#583AFF;font-size:14px}
+.mc-table-head-title{font-size:14px;font-weight:700;color:#160933;letter-spacing:-.2px}
+.mc-table-head-ctx{color:#9ca3af;font-size:12.5px}
+.mc-table-head-ctx:not(:empty)::before{content:"\00B7";margin-right:6px;color:#cbd5e1}
+.mc-table-head-count{
+  margin-left:auto;background:#eef9f0;color:#217346;
+  padding:.28rem .8rem;border-radius:1.2rem;font-size:11px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;
+}
+
+.mc-table-wrapper{max-height:60vh;overflow:auto}
+table.mc-table{width:100%;border-collapse:collapse;font-size:13px;margin:0}
+/* Mismo fondo que el banner .powerbi-header y que la tabla del resto de opciones */
+table.mc-table thead th{
+  background:var(--content-gradient);color:#fff;
+  padding:.55rem 1rem;text-align:left;
+  font-weight:700;font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+  white-space:nowrap;position:sticky;top:0;z-index:10;
+  border:1px solid rgba(255,255,255,.15);border-top:none;
+}
+table.mc-table thead th.num{text-align:right}
+table.mc-table tbody td{
+  padding:.5rem 1rem;border:none;border-bottom:1px solid #f1f0f6;color:#2d3748;
+}
+table.mc-table tbody tr:nth-child(even){background:#fbfaff}
+table.mc-table tbody td.num{
+  text-align:right;font-weight:700;color:#160933;font-variant-numeric:tabular-nums;
+}
+table.mc-table tbody td.key{
+  font-weight:700;color:#160933;font-variant-numeric:tabular-nums;
+}
+
+/* Pie de tabla: rango + paginación */
+.mc-table-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 22px;border-top:1px solid #e3e6f0;background:#fff;flex-wrap:wrap;
+}
+.mc-range{font-size:12.5px;color:#6c757d}
+.mc-pag{display:flex;gap:6px}
+.mc-pag .btn-pagination{
+  min-width:32px;height:32px;border-radius:8px;font-size:12.5px;
+}
+.mc-pag .btn-pagination.active{
+  background:var(--app-btn-gradient);border-color:transparent;color:#fff;font-weight:700;
+}
+
+@media (max-width:991px){
+  .mc-toolbar{position:static}
+  .mc-search{margin-left:0;width:100%}
+  .mc-field,.mc-field.wide{min-width:100%;flex-basis:100%}
+  .mc-toolbar-acciones > .mc-btn-primary,
+  .mc-toolbar-acciones > .mc-btn-solid{flex-basis:100%}
+  .mc-table-head-count{margin-left:0}
+}

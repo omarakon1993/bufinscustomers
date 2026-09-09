@@ -11,7 +11,8 @@ namespace bufinscustomers
                 "~/Assets/css/responsive-custom.css",
                 "~/Assets/css/modern-sidebar.css",
                 "~/Assets/css/bufins-components.css",
-                "~/Assets/css/layout.css"));
+                "~/Assets/css/layout.css",
+                "~/Assets/css/modelo-consola.css"));
 
             // JS global (orden es crítico: jQuery → Bootstrap → plugins → custom)
             bundles.Add(new ScriptBundle("~/bundles/js-global").Include(

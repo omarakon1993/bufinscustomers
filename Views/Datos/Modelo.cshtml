@@ -10,204 +10,104 @@
 
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
 
-<style>
-    .btn-export-all {
-        position: relative;
-        overflow: hidden;
-        color: #fff !important;
-        border: none;
-        background: linear-gradient(110deg, #185c37 0%, #217346 25%, #2e9e5b 50%, #217346 75%, #185c37 100%);
-        background-size: 300% 100%;
-        padding: 0.375rem 0.85rem;
-        border-radius: 0.45rem;
-        font-size: 0.875rem;
-        font-weight: 600;
-        letter-spacing: 0.01em;
-        cursor: pointer;
-        transition: box-shadow 0.25s ease;
-        animation: exportShine 4s linear infinite;
-    }
-    .btn-export-all:disabled {
-        background: #9ca3af !important;
-        animation: none !important;
-        cursor: not-allowed;
-        box-shadow: none !important;
-        opacity: 0.7;
-    }
-    .btn-export-all:not(:disabled):hover {
-        box-shadow: 0 4px 20px rgba(33, 115, 70, 0.45);
-        animation: exportShine 1.8s linear infinite;
-    }
-    .btn-export-all:not(:disabled):hover .ico-export {
-        transform: translateY(-2px) scale(1.15);
-    }
-    .ico-export {
-        transition: transform 0.25s ease;
-        display: inline-block;
-    }
-    @@keyframes exportShine {
-        0%   { background-position: 100% 0; }
-        100% { background-position: -200% 0; }
-    }
+<div class="container-fluid px-4 mc-page">
 
-    /* Botones de acción más compactos */
-    #btnEjecutar, #btnExportarTodos, #btnEnviarCorreo {
-        padding: 0.45rem 1.05rem !important;
-        font-size: 0.8125rem !important;
-    }
-
-    /* Botón "Exportar a Excel" del modelo individual: más pequeño y separado del badge de registros */
-    #btnExportarModelo {
-        padding: 0.35rem 0.85rem !important;
-        font-size: 0.75rem !important;
-        box-shadow: none;
-    }
-
-    /* Botón "Exportar todos/seleccionados" + botón compacto para elegir modelos específicos */
-    .btn-export-group {
-        display: inline-flex;
-        align-items: stretch;
-        gap: 2px;
-    }
-    .btn-elegir-modelos {
-        padding: 0.45rem 0.7rem !important;
-        font-size: 0.8125rem !important;
-    }
-
-    /* Modal: lista de modelos seleccionables */
-    .mc-modelos-box {
-        border: 1px solid #d1d5db;
-        border-radius: 0.375rem;
-        max-height: 210px;
-        overflow-y: auto;
-        background: #fff;
-    }
-    .mc-modelo-item {
-        display: flex;
-        align-items: center;
-        gap: 0.55rem;
-        padding: 0.4rem 0.8rem;
-        margin: 0;
-        font-weight: 500;
-        font-size: 0.85rem;
-        color: #2d3748;
-        cursor: pointer;
-        border-bottom: 1px solid #f1f1f4;
-    }
-    .mc-modelo-item:last-child { border-bottom: none; }
-    .mc-modelo-item:hover { background: #f8f9fc; }
-    .mc-modelo-item input { cursor: pointer; margin: 0; }
-    .mc-modelo-all {
-        background: #f8f9fc;
-        font-weight: 600;
-        color: #1e1b4b;
-        position: sticky;
-        top: 0;
-        border-bottom: 1px solid #e3e6f0;
-        z-index: 1;
-    }
-</style>
-
-@Html.AntiForgeryToken()
-
-<div class="container-fluid px-4">
-
-    <!-- Header -->
+    <!-- Header Power BI -->
     <div class="powerbi-header">
         <div class="powerbi-header-content">
-            <i class="fa-solid fa-database powerbi-header-icon"></i>
+            <i class="fas fa-database powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@Resources.Strings.Modelo_PageTitle</h1>
         </div>
     </div>
 
-    <!-- Filter card -->
-    <div class="filter-card">
-        <h3 class="filter-card-title">
-            <i class="fas fa-play-circle"></i>
-            @Resources.Strings.Modelo_CardTitleFiltros
-        </h3>
-        <div class="filter-section">
-            <div class="row g-3">
+    @Html.AntiForgeryToken()
 
-                <!-- Empresa -->
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="idEmpresa">
-                            <i class="fas fa-building mr-1"></i>
-                            @Resources.Strings.Modelo_LabelEmpresa <span class="required">*</span>
+    <!-- Barra de trabajo -->
+    <div class="mc-toolbar">
+
+        <!-- Fila 1: filtros -->
+        <div class="mc-toolbar-row">
+
+            <div class="mc-field">
+                <label for="idEmpresa">
+                    @Resources.Strings.Modelo_LabelEmpresa <span class="required">*</span>
+                </label>
+                <select class="form-control" id="idEmpresa">
+                    <option value="">@Resources.Strings.Modelo_SelectEmpresa</option>
+                    @if (esAdmin)
+                    {
+                        foreach (var empresa in Model.Empresas)
+                        {
+                            <option value="@empresa.Id" data-nombre="@empresa.Nombre">@empresa.Nombre</option>
+                        }
+                    }
+                    else
+                    {
+                        var emp = Model.Empresas.FirstOrDefault(e => e.Id == idEmpresaUsuario);
+                        if (emp != null)
+                        {
+                            <option value="@emp.Id" data-nombre="@emp.Nombre">@emp.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <!-- Selector unificado: uno o varios modelos (consultar usa el único elegido; exportar/correo usan la selección completa) -->
+            <div class="mc-field wide">
+                <label>@Resources.Strings.Modelo_LabelModelo <span class="required">*</span></label>
+                <div class="mc-multiselect" id="modeloPicker">
+                    <button type="button" class="mc-ms-toggle" id="modeloPickerToggle" aria-haspopup="true" aria-expanded="false">
+                        <span id="modeloPickerLabel">@Resources.Strings.Modelo_Picker_Placeholder</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="mc-ms-panel" id="modeloPickerPanel" hidden>
+                        <label class="mc-modelo-item mc-modelo-all">
+                            <input type="checkbox" id="modeloSelAll">
+                            <span>@Resources.Strings.Modelo_Correo_SelTodos</span>
                         </label>
-                        <select class="form-control" id="idEmpresa">
-                            <option value="">@Resources.Strings.Modelo_SelectEmpresa</option>
-                            @if (esAdmin)
-                            {
-                                foreach (var empresa in Model.Empresas)
-                                {
-                                    <option value="@empresa.Id" data-nombre="@empresa.Nombre">@empresa.Nombre</option>
-                                }
-                            }
-                            else
-                            {
-                                var emp = Model.Empresas.FirstOrDefault(e => e.Id == idEmpresaUsuario);
-                                if (emp != null)
-                                {
-                                    <option value="@emp.Id" data-nombre="@emp.Nombre">@emp.Nombre</option>
-                                }
-                            }
-                        </select>
+                        @foreach (var m in Model.Modelos)
+                        {
+                            <label class="mc-modelo-item">
+                                <input type="checkbox" class="mc-modelo-pick" value="@m.Id"
+                                       data-nombre="@m.Nombre"
+                                       data-descripcion="@(m.Descripcion ?? "")"
+                                       data-icono="@(m.Icono ?? "fas fa-cog")">
+                                <span>@m.Nombre</span>
+                            </label>
+                        }
                     </div>
                 </div>
+            </div>
 
-                <!-- Modelo -->
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="selectModelo">
-                            <i class="fas fa-cog mr-1"></i>
-                            @Resources.Strings.Modelo_LabelModelo <span class="required">*</span>
-                        </label>
-                        <select class="form-control" id="selectModelo">
-                            <option value="">@Resources.Strings.Modelo_SelectModelo</option>
-                            @foreach (var m in Model.Modelos)
-                            {
-                                <option value="@m.Id"
-                                        data-descripcion="@(m.Descripcion ?? "")"
-                                        data-icono="@(m.Icono ?? "fas fa-cog")"
-                                        data-nombre="@m.Nombre">
-                                    @m.Nombre
-                                </option>
-                            }
-                        </select>
-                        <div id="modeloInfoPanel" style="display:none;margin-top:6px;padding:8px 12px;background:#f0f0ff;border-radius:8px;border-left:3px solid #583AFF;font-size:0.85rem;color:#4b5563;">
-                            <i id="modeloIcono" class="fas fa-cog mr-1" style="color:#583AFF;"></i>
-                            <span id="modeloDescripcion"></span>
-                        </div>
-                    </div>
-                </div>
-
+            <div class="mc-search" id="mcSearchWrap" style="display:none;">
+                <i class="fas fa-search"></i>
+                <input type="text" id="filtroResultados" autocomplete="off"
+                       placeholder="@Resources.Strings.Modelo_FiltrarResultados">
             </div>
         </div>
 
-        <div class="btn-group-actions">
-            <button type="button" id="btnEjecutar" class="btn btn-modern-gradient" disabled onclick="ejecutarModelo()">
-                <i class="fas fa-play mr-1"></i>
-                <span id="btnTexto">@Resources.Strings.Modelo_BtnEjecutar</span>
+        <!-- Fila 2: acciones -->
+        <div class="mc-toolbar-row mc-toolbar-acciones">
+
+            <button type="button" id="btnEjecutar" class="mc-btn-primary" disabled onclick="ejecutarModelo()"
+                    title="@Resources.Strings.Modelo_Ejecutar_RequiereUno">
+                <span class="mc-ico"><i class="fas fa-play mr-1"></i></span><span id="btnTexto">@Resources.Strings.Modelo_BtnEjecutar</span>
             </button>
-            <div class="btn-export-group">
-                <button type="button" id="btnExportarTodos" class="btn btn-export-all" disabled onclick="exportarTodosOSeleccionado()" title="@Resources.Strings.Modelo_BtnExportTooltip">
-                    <span class="ico-export"><i id="btnExportarTodosIcono" class="fas fa-layer-group mr-1"></i></span>
-                    <span id="btnExportarTodosTexto">@Resources.Strings.Modelo_BtnExportarTodos</span>
-                </button>
-                <button type="button" id="btnElegirModelosExportar" class="btn btn-modern-secondary btn-elegir-modelos" disabled onclick="abrirModalElegirModelosExportar()" title="@Resources.Strings.Modelo_Exportar_BtnElegirTooltip">
-                    <i class="fas fa-tasks"></i>
-                </button>
-            </div>
-            <button type="button" id="btnEnviarCorreo" class="btn btn-modern-secondary" disabled onclick="abrirModalCorreo()" title="@Resources.Strings.Modelo_BtnEnviarTooltip">
-                <i class="fas fa-paper-plane mr-1"></i>
-                @Resources.Strings.Modelo_BtnEnviarCorreo
+
+            <button type="button" id="btnExportarTodos" class="mc-btn-solid excel" disabled
+                    onclick="exportarModelos()" title="@Resources.Strings.Modelo_BtnExportTooltip">
+                <span class="mc-ico"><i id="btnExportarTodosIcono" class="fas fa-layer-group mr-1"></i></span><span id="btnExportarTodosTexto">@Resources.Strings.Modelo_BtnExportarTodos</span>
             </button>
-            <small class="text-muted" id="textoAyuda">
-                <i class="fas fa-info-circle" style="color:#583AFF;"></i>
-                @Resources.Strings.Modelo_HintCompletar
-            </small>
+
+            <button type="button" id="btnEnviarCorreo" class="mc-btn-solid mail" disabled
+                    onclick="abrirModalCorreo()" title="@Resources.Strings.Modelo_BtnEnviarTooltip">
+                <span class="mc-ico"><i class="fas fa-paper-plane mr-1"></i></span><span>@Resources.Strings.Modelo_BtnEnviarCorreo</span>
+            </button>
+        </div>
+
+        <div id="modeloInfoPanel" class="mc-modelo-info" style="display:none;">
+            <i id="modeloIcono" class="fas fa-cog mr-1" style="color:#583AFF;"></i>
+            <span id="modeloDescripcion"></span>
         </div>
     </div>
 
@@ -235,28 +135,23 @@
 
     <!-- Resultados del modelo individual -->
     <div id="resultadosSection" style="display:none;">
-        <div class="table-container">
-            <div class="table-header">
-                <h5>
-                    <i id="resultadosIcono" class="fas fa-table mr-2"></i>
-                    <span id="resultadosTitulo">@Resources.Strings.Modelo_Resultados</span>
-                </h5>
-                <div class="d-flex align-items-center gap-3">
-                    <span class="info-badge" id="resultadosContador">0 @Resources.Strings.Modelo_Registros</span>
-                    <button type="button" id="btnExportarModelo" class="btn-modern-excel" onclick="exportarExcel('individual')" title="@Resources.Strings.Modelo_BtnExportarModelo">
-                        <i class="fas fa-file-excel mr-1"></i>
-                        @Resources.Strings.Modelo_BtnExportarModelo
-                    </button>
-                </div>
+        <div class="mc-table-card">
+            <div class="mc-table-head">
+                <i id="resultadosIcono" class="fas fa-table mc-table-head-icon"></i>
+                <span id="resultadosTitulo" class="mc-table-head-title">@Resources.Strings.Modelo_Resultados</span>
+                <span id="mcContexto" class="mc-table-head-ctx"></span>
+                <span id="resultadosContador" class="mc-table-head-count" style="display:none;"></span>
             </div>
-            <div class="table-wrapper" style="max-height:520px;overflow:auto;">
-                <table class="data-table">
+            <div class="mc-table-wrapper">
+                <table class="mc-table">
                     <thead id="resultadosThead"></thead>
                     <tbody id="resultadosTbody"></tbody>
                 </table>
             </div>
-            <!-- Paginación -->
-            <div class="pagination-controls" id="paginacionControls" style="display:none;"></div>
+            <div class="mc-table-foot">
+                <span class="mc-range" id="mcRango"></span>
+                <div class="pagination-controls mc-pag" id="paginacionControls" style="display:none;padding:0;margin:0;border:none;"></div>
+            </div>
         </div>
     </div>
 
@@ -284,7 +179,7 @@
                 <div class="modal-body">
                     <p class="text-muted mb-3" style="font-size:0.85rem;">
                         <i class="fas fa-building mr-1" style="color:#583AFF;"></i>
-                        @Resources.Strings.Modelo_LabelEmpresa: <strong id="correoEmpresaNombre">—</strong>
+                        @Resources.Strings.Modelo_LabelEmpresa: <strong id="correoEmpresaNombre">-</strong>
                     </p>
 
                     <div class="form-group">
@@ -338,53 +233,6 @@
         </div>
     </div>
 
-    <!-- Modal: elegir modelos específicos para exportar -->
-    <div class="modal fade" id="modalElegirModelosExportar" tabindex="-1" role="dialog" aria-labelledby="modalElegirModelosExportarLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalElegirModelosExportarLabel">
-                        <i class="fas fa-tasks mr-2" style="color:#583AFF;"></i>@Resources.Strings.Modelo_Exportar_ModalTitle
-                    </h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group mb-0">
-                        <label>
-                            <i class="fas fa-cubes mr-1"></i>@Resources.Strings.Modelo_Exportar_LabelModelos
-                        </label>
-                        <div class="mc-modelos-box">
-                            <label class="mc-modelo-item mc-modelo-all">
-                                <input type="checkbox" id="exportSelAll">
-                                <span>@Resources.Strings.Modelo_Correo_SelTodos</span>
-                            </label>
-                            <div id="exportListaModelos">
-                                @foreach (var m in Model.Modelos)
-                                {
-                                    <label class="mc-modelo-item">
-                                        <input type="checkbox" class="mc-modelo-export-chk" value="@m.Id" data-nombre="@m.Nombre">
-                                        <span>@m.Nombre</span>
-                                    </label>
-                                }
-                            </div>
-                        </div>
-                        <small class="form-text text-muted" id="exportContadorModelos">0 @Resources.Strings.Modelo_Correo_Seleccionados</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
-                    </button>
-                    <button type="button" class="btn btn-primary btn-sm" id="btnAplicarSeleccionExportar" onclick="aplicarSeleccionExportar()">
-                        <i class="fas fa-check mr-1"></i>@Resources.Strings.Modelo_Exportar_BtnAplicar
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </div>
 
 @section scripts {
@@ -420,7 +268,11 @@
             aceptar:            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Aceptar))',
             erroresExportacion: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_ErroresExportacion))',
             descargarLog:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_DescargarLog))',
-            cerrar:             '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_Cerrar))'
+            cerrar:             '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_Cerrar))',
+            pickerPlaceholder:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Picker_Placeholder))',
+            pickerTodos:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Picker_Todos))',
+            pickerVariosFmt:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Picker_VariosFmt))',
+            resultadosTitulo:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Resultados))'
         }
     };
 
@@ -429,6 +281,7 @@
     // ── Estado de paginación ──────────────────────────────────────────────
     var _pag = {
         filas:      [],
+        filasVista: [],   // filas tras aplicar el filtro de texto sobre los resultados
         columnas:   [],
         pagina:     1,
         porPagina:  50,
@@ -436,45 +289,91 @@
         idEmpresa:  null
     };
 
-    // Selección explícita de modelos hecha en el modal "Elegir modelos a exportar".
-    // null = sin selección explícita → el botón usa el modelo del filtro o exporta todos.
-    var _exportSeleccion = null;
+    // ── Selector de modelos (uno o varios) ───────────────────────────────
+    function modelosSeleccionados() {
+        return $('.mc-modelo-pick:checked').map(function () { return this.value; }).get();
+    }
+
+    function abrirPicker() {
+        $('#modeloPicker').addClass('open');
+        $('#modeloPickerToggle').attr('aria-expanded', 'true');
+        $('#modeloPickerPanel').prop('hidden', false);
+    }
+    function cerrarPicker() {
+        $('#modeloPicker').removeClass('open');
+        $('#modeloPickerToggle').attr('aria-expanded', 'false');
+        $('#modeloPickerPanel').prop('hidden', true);
+    }
+
+    // Repinta la etiqueta del selector según cuántos modelos hay marcados.
+    function pintarPickerLabel() {
+        var sel   = modelosSeleccionados();
+        var total = $('.mc-modelo-pick').length;
+        var $lbl  = $('#modeloPickerLabel');
+
+        if (sel.length === 0) {
+            $lbl.text(_modelo.textos.pickerPlaceholder).removeClass('has-sel');
+        } else if (sel.length === 1) {
+            $lbl.text($('.mc-modelo-pick:checked').data('nombre')).addClass('has-sel');
+        } else if (sel.length === total) {
+            $lbl.text(_modelo.textos.pickerTodos).addClass('has-sel');
+        } else {
+            $lbl.text(_modelo.textos.pickerVariosFmt.replace('{0}', sel.length)).addClass('has-sel');
+        }
+
+        $('#modeloSelAll')
+            .prop('checked', sel.length > 0 && sel.length === total)
+            .prop('indeterminate', sel.length > 0 && sel.length < total);
+    }
+
+    // Cambió la selección de modelos: descripción (solo con 1), etiqueta y botones.
+    function onModelosChange() {
+        var sel = modelosSeleccionados();
+
+        if (sel.length === 1) {
+            var $c   = $('.mc-modelo-pick:checked');
+            var desc = $c.data('descripcion');
+            var ico  = $c.data('icono') || 'fas fa-cog';
+            if (desc) {
+                $('#modeloIcono').attr('class', ico + ' mr-1').css('color', '#583AFF');
+                $('#modeloDescripcion').text(desc);
+                $('#modeloInfoPanel').show();
+            } else {
+                $('#modeloInfoPanel').hide();
+            }
+        } else {
+            $('#modeloInfoPanel').hide();
+        }
+
+        pintarPickerLabel();
+        actualizarBotones();
+    }
 
     function actualizarBotones() {
         var tieneEmpresa = !!$('#idEmpresa').val();
-        var ok = tieneEmpresa && !!$('#selectModelo').val();
-        $('#btnEjecutar').prop('disabled', !ok);
+        var nSel = modelosSeleccionados().length;
+        $('#btnEjecutar').prop('disabled', !(tieneEmpresa && nSel === 1));
         $('#btnExportarTodos').prop('disabled', !tieneEmpresa);
-        $('#btnElegirModelosExportar').prop('disabled', !tieneEmpresa);
         $('#btnEnviarCorreo').prop('disabled', !tieneEmpresa);
-        $('#textoAyuda').toggle(!ok);
-        actualizarBotonExportarTodos();
+        actualizarBotonExportar();
     }
 
-    // Texto/ícono del botón de exportación dinámico:
-    // 1) si hay una selección múltiple explícita (modal "Elegir modelos"), tiene prioridad;
-    // 2) si no, un modelo elegido en el filtro exporta solo ese;
-    // 3) sin nada seleccionado, exporta todos los modelos activos.
-    function actualizarBotonExportarTodos() {
-        if (_exportSeleccion && _exportSeleccion.length > 0) {
-            var nombresSel = $('.mc-modelo-export-chk').filter(function () {
-                return _exportSeleccion.indexOf(this.value) !== -1;
-            }).map(function () { return $(this).data('nombre'); }).get();
+    // Texto/ícono del botón de exportación, según la selección del selector unificado:
+    // 1 modelo → "Exportar <nombre>"; varios (no todos) → "Exportar N modelos seleccionados";
+    // ninguno o todos → "Exportar todos los modelos".
+    function actualizarBotonExportar() {
+        var sel   = modelosSeleccionados();
+        var total = $('.mc-modelo-pick').length;
 
+        if (sel.length === 1) {
+            var txtUno = _modelo.textos.btnDescargarModeloFmt.replace('{0}', $('.mc-modelo-pick:checked').data('nombre'));
             $('#btnExportarTodosIcono').attr('class', 'fas fa-file-excel mr-1');
-            $('#btnExportarTodosTexto').text(_modelo.textos.btnExportarSeleccionadosFmt.replace('{0}', _exportSeleccion.length));
-            $('#btnExportarTodos').attr('title', nombresSel.join(', '));
-            return;
-        }
-
-        var $opt = $('#selectModelo option:selected');
-        var idModeloSel = $('#selectModelo').val();
-        var nombreSel = $opt.data('nombre');
-
-        if (idModeloSel && nombreSel) {
+            $('#btnExportarTodosTexto').text(txtUno);
+            $('#btnExportarTodos').attr('title', txtUno);   // nombre completo al pasar el ratón (el botón lo recorta)
+        } else if (sel.length > 1 && sel.length < total) {
             $('#btnExportarTodosIcono').attr('class', 'fas fa-file-excel mr-1');
-            $('#btnExportarTodosTexto').text(_modelo.textos.btnDescargarModeloFmt.replace('{0}', nombreSel));
-            $('#btnExportarTodos').attr('title', _modelo.textos.exportTooltipSeleccionado);
+            $('#btnExportarTodosTexto').text(_modelo.textos.btnExportarSeleccionadosFmt.replace('{0}', sel.length));
+            $('#btnExportarTodos').attr('title', _modelo.textos.exportTooltipTodos);
         } else {
             $('#btnExportarTodosIcono').attr('class', 'fas fa-layer-group mr-1');
             $('#btnExportarTodosTexto').text(_modelo.textos.btnExportarTodos);
@@ -482,67 +381,41 @@
         }
     }
 
-    // ── Modal "Elegir modelos a exportar" ──────────────────────────────────
-    function abrirModalElegirModelosExportar() {
-        var idEmpresa = $('#idEmpresa').val();
-        if (!idEmpresa) return;
-
-        var preseleccion = _exportSeleccion || [];
-        $('.mc-modelo-export-chk').each(function () {
-            this.checked = preseleccion.indexOf(this.value) !== -1;
-        });
-        actualizarContadorExport();
-        $('#modalElegirModelosExportar').modal('show');
-    }
-
-    function actualizarContadorExport() {
-        var total = $('.mc-modelo-export-chk').length;
-        var n = $('.mc-modelo-export-chk:checked').length;
-        $('#exportContadorModelos').text(n + ' ' + _modelo.textos.correoSeleccionados);
-        $('#exportSelAll')
-            .prop('checked', n > 0 && n === total)
-            .prop('indeterminate', n > 0 && n < total);
-    }
-
-    function aplicarSeleccionExportar() {
-        var $chks = $('.mc-modelo-export-chk:checked');
-        var total = $('.mc-modelo-export-chk').length;
-
-        // 0 o todos marcados equivale a "sin selección explícita" (comportamiento por defecto).
-        _exportSeleccion = ($chks.length === 0 || $chks.length === total)
-            ? null
-            : $chks.map(function () { return this.value; }).get();
-
-        $('#modalElegirModelosExportar').modal('hide');
-        actualizarBotonExportarTodos();
-    }
-
     $(function () {
 
         $('#idEmpresa').on('change', actualizarBotones);
 
-        $('#selectModelo').on('change', function () {
-            // Elegir un modelo puntual en el filtro reemplaza cualquier selección múltiple previa
-            // (debe ir antes de actualizarBotones(), que es quien repinta el texto del botón).
-            _exportSeleccion = null;
-
-            var $opt = $(this).find(':selected');
-            var val  = $(this).val();
-            var desc = $opt.data('descripcion');
-            var ico  = $opt.data('icono') || 'fas fa-cog';
-            if (val && desc) {
-                $('#modeloIcono').attr('class', ico + ' mr-1').css('color', '#583AFF');
-                $('#modeloDescripcion').text(desc);
-                $('#modeloInfoPanel').show();
-            } else {
-                $('#modeloInfoPanel').hide();
-            }
-
-            actualizarBotones();
+        // ── Selector de modelos ─────────────────────────────────────────
+        $('#modeloPickerToggle').on('click', function (e) {
+            e.stopPropagation();
+            $('#modeloPicker').hasClass('open') ? cerrarPicker() : abrirPicker();
         });
+        $(document).on('click', function (e) {
+            if (!$(e.target).closest('#modeloPicker').length) cerrarPicker();
+        });
+        $('#modeloSelAll').on('change', function () {
+            $('.mc-modelo-pick').prop('checked', this.checked);
+            onModelosChange();
+        });
+        $(document).on('change', '.mc-modelo-pick', onModelosChange);
 
         if ($('#idEmpresa option').length === 2)
             $('#idEmpresa option:last').prop('selected', true).trigger('change');
+
+        onModelosChange();
+
+        // ── Filtro de texto sobre los resultados ya cargados (cliente) ────
+        $('#filtroResultados').on('input', function () {
+            var q = ($(this).val() || '').toLowerCase().trim();
+            _pag.filasVista = q
+                ? _pag.filas.filter(function (fila) {
+                      return fila.some(function (celda) {
+                          return String(celda == null ? '' : celda).toLowerCase().indexOf(q) >= 0;
+                      });
+                  })
+                : _pag.filas;
+            renderPagina(1);
+        });
 
         // ── Modal enviar por correo ──────────────────────────────────────
         $('#correoSelAll').on('change', function () {
@@ -550,13 +423,6 @@
             actualizarContadorCorreo();
         });
         $(document).on('change', '.mc-modelo-chk', actualizarContadorCorreo);
-
-        // ── Modal elegir modelos a exportar ───────────────────────────────
-        $('#exportSelAll').on('change', function () {
-            $('.mc-modelo-export-chk').prop('checked', this.checked);
-            actualizarContadorExport();
-        });
-        $(document).on('change', '.mc-modelo-export-chk', actualizarContadorExport);
     });
 
     function actualizarContadorCorreo() {
@@ -574,10 +440,10 @@
 
         $('#correoEmpresaNombre').text($('#idEmpresa option:selected').data('nombre') || $('#idEmpresa option:selected').text());
 
-        // Preselecciona el modelo elegido arriba (si hay); si no, ninguno.
-        var idModeloSel = $('#selectModelo').val();
+        // Preselecciona en el modal los modelos ya marcados en el selector unificado.
+        var sel = modelosSeleccionados();
         $('.mc-modelo-chk').each(function () {
-            this.checked = idModeloSel ? (this.value === String(idModeloSel)) : false;
+            this.checked = sel.indexOf(this.value) !== -1;
         });
 
         // Recuerda el último destino usado.
@@ -663,9 +529,13 @@
     // ── Ejecutar modelo individual (AJAX) ─────────────────────────────────
     function ejecutarModelo() {
         var idEmpresa = $('#idEmpresa').val();
-        var idModelo  = $('#selectModelo').val();
-        var nomModelo = $('#selectModelo option:selected').data('nombre') || '';
-        var icoModelo = $('#selectModelo option:selected').data('icono') || 'fas fa-table';
+        var sel = modelosSeleccionados();
+        if (!idEmpresa || sel.length !== 1) return;
+
+        var $c        = $('.mc-modelo-pick[value="' + sel[0] + '"]');
+        var idModelo  = sel[0];
+        var nomModelo = $c.data('nombre') || '';
+        var icoModelo = $c.data('icono') || 'fas fa-table';
 
         $('#estadoInicial').hide();
         $('#resultadosSection').hide();
@@ -684,11 +554,12 @@
             },
             success: function (resp) {
                 $('#loadingEjecucion').hide();
-                $('#btnEjecutar').prop('disabled', false);
                 $('#btnTexto').text(_modelo.textos.btnEjecutar);
+                actualizarBotones();
 
                 if (!resp.exito) {
                     $('#estadoInicial').show();
+                    ocultarHerramientasResultado();
                     Swal.fire({ icon: 'error', title: _modelo.textos.error, text: resp.mensaje,
                                 confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
                     return;
@@ -696,37 +567,52 @@
 
                 if (!resp.columnas || resp.columnas.length === 0 || !resp.filas || resp.filas.length === 0) {
                     $('#noResultados').show();
+                    ocultarHerramientasResultado();
                     return;
                 }
 
                 // Guardar estado de paginación
-                _pag.filas     = resp.filas;
-                _pag.columnas  = resp.columnas;
-                _pag.pagina    = 1;
-                _pag.idModelo  = idModelo;
-                _pag.idEmpresa = idEmpresa;
+                _pag.filas      = resp.filas;
+                _pag.filasVista = resp.filas;
+                _pag.columnas   = resp.columnas;
+                _pag.pagina     = 1;
+                _pag.idModelo   = idModelo;
+                _pag.idEmpresa  = idEmpresa;
 
-                // Header de la tabla
+                // Header de la tabla (alinea a la derecha las columnas de valor)
                 var thead = '<tr>';
-                for (var i = 0; i < resp.columnas.length; i++)
-                    thead += '<th>' + $('<span>').text(resp.columnas[i]).html() + '</th>';
+                for (var i = 0; i < resp.columnas.length; i++) {
+                    var esNum = !!_moneyColSet[(resp.columnas[i] || '').toLowerCase()];
+                    thead += '<th' + (esNum ? ' class="num"' : '') + '>' +
+                             $('<span>').text(resp.columnas[i]).html() + '</th>';
+                }
                 thead += '</tr>';
                 $('#resultadosThead').html(thead);
 
-                // Información del encabezado de la sección
-                $('#resultadosIcono').attr('class', icoModelo + ' mr-2');
+                // Cabecera contextual de la tarjeta de resultados
+                var nomEmpresa = $('#idEmpresa option:selected').data('nombre') ||
+                                 $('#idEmpresa option:selected').text();
+                $('#resultadosIcono').attr('class', icoModelo + ' mc-table-head-icon');
                 $('#resultadosTitulo').text(nomModelo);
-                $('#resultadosContador').text(resp.filas.length + ' ' + _modelo.textos.registros);
+                $('#mcContexto').text(nomEmpresa || '');   // el separador lo pone .mc-table-head-ctx::before (CSS)
+                $('#resultadosContador')
+                    .text(resp.filas.length + ' ' + _modelo.textos.registros)
+                    .show();
+
+                // Herramientas que solo aplican con resultados en pantalla
+                $('#mcSearchWrap').css('display', 'flex');
+                $('#filtroResultados').val('');
 
                 renderPagina(1);
                 $('#resultadosSection').show();
-                $('html, body').animate({ scrollTop: $('#resultadosSection').offset().top - 20 }, 400);
+                $('html, body').animate({ scrollTop: $('#resultadosSection').offset().top - 90 }, 400);
             },
             error: function () {
                 $('#loadingEjecucion').hide();
-                $('#btnEjecutar').prop('disabled', false);
                 $('#btnTexto').text(_modelo.textos.btnEjecutar);
+                actualizarBotones();
                 $('#estadoInicial').show();
+                ocultarHerramientasResultado();
                 Swal.fire({ icon: 'error', title: _modelo.textos.error,
                             text: 'Error de conexión al ejecutar el modelo.',
                             confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
@@ -734,34 +620,56 @@
         });
     }
 
+    // Oculta las herramientas que solo tienen sentido con una tabla de resultados en pantalla.
+    function ocultarHerramientasResultado() {
+        $('#mcSearchWrap').hide();
+        $('#resultadosContador').hide();
+        $('#mcContexto').text('');
+        $('#resultadosTitulo').text(_modelo.textos.resultadosTitulo);
+    }
+
     // ── Paginación ────────────────────────────────────────────────────────
     function renderPagina(pagina) {
         _pag.pagina = pagina;
-        var inicio  = (pagina - 1) * _pag.porPagina;
-        var fin     = Math.min(inicio + _pag.porPagina, _pag.filas.length);
-        var slice   = _pag.filas.slice(inicio, fin);
+        var datos  = _pag.filasVista.length || $('#filtroResultados').val() ? _pag.filasVista : _pag.filas;
+        var inicio = (pagina - 1) * _pag.porPagina;
+        var fin    = Math.min(inicio + _pag.porPagina, datos.length);
+        var slice  = datos.slice(inicio, fin);
 
         var tbody = '';
         for (var r = 0; r < slice.length; r++) {
             tbody += '<tr>';
             for (var c = 0; c < slice[r].length; c++) {
-                var val = slice[r][c];
-                if (val !== '' && _moneyColSet[(_pag.columnas[c] || '').toLowerCase()]) {
+                var col   = (_pag.columnas[c] || '').toLowerCase();
+                var esNum = !!_moneyColSet[col];
+                var esKey = (col === 'cuentapuc' || col === 'codigo');
+                var val   = slice[r][c];
+                if (val !== '' && esNum) {
                     var num = parseFloat(val);
                     if (!isNaN(num))
                         val = num.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 }
-                tbody += '<td>' + $('<span>').text(val).html() + '</td>';
+                var cls = esNum ? ' class="num"' : (esKey ? ' class="key"' : '');
+                tbody += '<td' + cls + '>' + $('<span>').text(val).html() + '</td>';
             }
             tbody += '</tr>';
         }
         $('#resultadosTbody').html(tbody);
 
-        actualizarPaginacion();
+        // Rango legible, p.ej. "1-50 de 2.268"
+        $('#mcRango').text(
+            datos.length === 0
+                ? '0'
+                : (inicio + 1).toLocaleString('es-CO') + '\u2013' + fin.toLocaleString('es-CO') +
+                  ' de ' + datos.length.toLocaleString('es-CO')
+        );
+
+        actualizarPaginacion(datos.length);
     }
 
-    function actualizarPaginacion() {
-        var total  = Math.ceil(_pag.filas.length / _pag.porPagina);
+    function actualizarPaginacion(totalFilas) {
+        var n      = (typeof totalFilas === 'number') ? totalFilas : _pag.filas.length;
+        var total  = Math.ceil(n / _pag.porPagina);
         var actual = _pag.pagina;
         var $ctrl  = $('#paginacionControls');
 
@@ -788,41 +696,39 @@
         $ctrl.html(html).show();
     }
 
-    // Botón "Exportar todos los modelos": prioriza una selección múltiple explícita
-    // (modal "Elegir modelos"); si no hay, usa el modelo elegido en el filtro;
-    // si tampoco hay ninguno, exporta todos.
-    function exportarTodosOSeleccionado() {
-        if (_exportSeleccion && _exportSeleccion.length > 0) {
-            exportarExcel('multiple');
-            return;
-        }
-        var idModeloSel = $('#selectModelo').val();
-        exportarExcel(idModeloSel ? 'seleccionado' : 'todos');
-    }
-
-    // ── Exportar (todos los modelos, una selección múltiple, el modelo elegido en el filtro, o el modelo individual ya ejecutado) ───────────────
-    function exportarExcel(modo) {
+    // Botón de exportación: usa la selección del selector unificado.
+    // 1 modelo → ese; varios (no todos) → esos; ninguno o todos → todos.
+    function exportarModelos() {
         var idEmpresa = $('#idEmpresa').val();
         if (!idEmpresa) return;
 
+        var sel   = modelosSeleccionados();
+        var total = $('.mc-modelo-pick').length;
+
+        if (sel.length === 1)                          exportarExcel('seleccionado', sel);
+        else if (sel.length > 1 && sel.length < total) exportarExcel('multiple', sel);
+        else                                           exportarExcel('todos', sel);
+    }
+
+    // ── Exportar (todos los modelos, una selección múltiple, o un único modelo) ───────────────
+    function exportarExcel(modo, ids) {
+        var idEmpresa = $('#idEmpresa').val();
+        if (!idEmpresa) return;
+        ids = ids || [];
+
         var url, titulo;
-        if (modo === 'todos') {
-            url    = _modelo.urlExportarTodos + '?idEmpresa=' + idEmpresa;
-            titulo = _modelo.textos.exportandoTodos;
-        } else if (modo === 'multiple') {
-            if (!_exportSeleccion || _exportSeleccion.length === 0) return;
-            url    = _modelo.urlExportarSeleccionados + '?idEmpresa=' + idEmpresa + '&idsModelos=' + _exportSeleccion.join(',');
+        if (modo === 'multiple') {
+            if (ids.length === 0) return;
+            url    = _modelo.urlExportarSeleccionados + '?idEmpresa=' + idEmpresa + '&idsModelos=' + ids.join(',');
             titulo = _modelo.textos.exportandoSeleccionados;
         } else if (modo === 'seleccionado') {
-            var idModeloSel = $('#selectModelo').val();
-            if (!idModeloSel) return;
-            var nombreSel = $('#selectModelo option:selected').data('nombre') || '';
-            url    = _modelo.urlExportarIndividual + '?idEmpresa=' + idEmpresa + '&idModelo=' + idModeloSel;
+            if (ids.length === 0) return;
+            var nombreSel = $('.mc-modelo-pick[value="' + ids[0] + '"]').data('nombre') || '';
+            url    = _modelo.urlExportarIndividual + '?idEmpresa=' + idEmpresa + '&idModelo=' + ids[0];
             titulo = nombreSel ? _modelo.textos.btnDescargarModeloFmt.replace('{0}', nombreSel) : _modelo.textos.exportandoUno;
         } else {
-            if (!_pag.idModelo) return;
-            url    = _modelo.urlExportarIndividual + '?idEmpresa=' + idEmpresa + '&idModelo=' + _pag.idModelo;
-            titulo = _modelo.textos.exportandoUno;
+            url    = _modelo.urlExportarTodos + '?idEmpresa=' + idEmpresa;
+            titulo = _modelo.textos.exportandoTodos;
         }
 
         document.getElementById('overlayTitulo').textContent = titulo;
@@ -901,7 +807,7 @@
             cancelButtonColor: '#6b7280'
         }).then(function (result) {
             if (!result.isConfirmed) return;
-            var txt = 'ERRORES EN EXPORTACIÓN DE MODELOS\n';
+            var txt = 'ERRORES EN EXPORTACION DE MODELOS\n';
             txt += '====================================\n\n';
             errores.forEach(function (e) {
                 txt += 'Modelo   : ' + e.nombre + '\n';
