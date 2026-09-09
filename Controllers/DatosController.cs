@@ -619,6 +619,13 @@ namespace bufinscustomers.Controllers
                         ? empresa.Abreviatura
                         : (empresa?.Nombre ?? "Empresa").Replace(" ", "_");
                     string fileName = $"{sheetName}_{empId}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx";
+
+                    new AuditoriaService().RegistrarCambio(
+                        AuditoriaTipo.Modelos, AuditoriaAccion.Exportar, "ModelosEjecucion", idEmpresa.ToString(),
+                        $"1 modelo(s) exportados de '{empresa?.Nombre ?? "Empresa"}'.", null,
+                        new { empresa = empresa?.Nombre, modelos = new List<string> { modelo.Nombre }, archivo = fileName },
+                        idEmpresa, entidadNombre: empresa?.Nombre, severidad: AuditoriaSeveridad.Advertencia);
+
                     return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
                 }
             }
@@ -866,12 +873,13 @@ namespace bufinscustomers.Controllers
                     esIngles);
 
                 string resumen = $"{modelos.Count} modelo(s) de '{empresa?.Nombre ?? "Empresa"}' enviados a {string.Join(", ", listaCorreos)}.";
+                string descripcionAuditoria = $"Enviado por correo electrónico: {resumen}";
 
                 new NotificacionesService().Crear(usuario.Id, R("Notif_ModelosEnviadosCorreo"), resumen, "success", "/Datos/Modelo");
 
                 new AuditoriaService().RegistrarCambio(
                     AuditoriaTipo.Modelos, AuditoriaAccion.Enviar, "ModelosEjecucion", idEmpresa.ToString(),
-                    resumen, null,
+                    descripcionAuditoria, null,
                     new
                     {
                         empresa = empresa?.Nombre,
