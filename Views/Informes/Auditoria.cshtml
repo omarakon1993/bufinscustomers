@@ -14,90 +14,96 @@
 
 <style>
     /* ===== Modal "Detalle de auditoría" (SweetAlert2, tema oscuro) ===== */
+    .aud-dt-popup.swal2-popup { padding: 1.1rem 1.25rem 1.35rem; border-radius: 14px; }
+    .aud-dt-popup .swal2-title { font-size: 1.02rem; font-weight: 600; padding: .1rem 2rem .2rem 0; margin: 0; text-align: left; }
+    .aud-dt-popup .swal2-html-container { font-size: .875rem; margin: .85rem 0 0; max-height: 72vh; overflow: auto; }
+    .aud-dt-popup .swal2-close { top: .55rem; right: .6rem; font-size: 1.6rem; }
+
     .aud-dt { text-align: left; color: #E9E7F6; --dt-accent: #8b7dff; --dt-badge-bg: rgba(139,125,255,.16); --dt-badge-bd: rgba(139,125,255,.4); }
     .aud-dt.dt-sev-Info        { --dt-accent: #5b9bff; --dt-badge-bg: rgba(91,155,255,.16);  --dt-badge-bd: rgba(91,155,255,.4); }
     .aud-dt.dt-sev-Advertencia { --dt-accent: #f5b345; --dt-badge-bg: rgba(245,179,69,.16);  --dt-badge-bd: rgba(245,179,69,.42); }
     .aud-dt.dt-sev-Critico     { --dt-accent: #ff6b64; --dt-badge-bg: rgba(255,107,100,.16); --dt-badge-bd: rgba(255,107,100,.42); }
 
-    .aud-dt-head { display: flex; align-items: flex-start; gap: .75rem; }
+    .aud-dt-head { display: flex; align-items: center; gap: .6rem; }
     .aud-dt-ico {
-        flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px;
-        display: flex; align-items: center; justify-content: center; font-size: 1rem;
+        flex: 0 0 auto; width: 30px; height: 30px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center; font-size: .82rem;
         background: var(--dt-badge-bg); border: 1px solid var(--dt-badge-bd); color: var(--dt-accent);
     }
     .aud-dt-htxt { min-width: 0; flex: 1; }
-    .aud-dt-title { display: block; font-size: 1.02rem; font-weight: 700; line-height: 1.3; color: #fff; }
-    .aud-dt-sub { display: block; font-size: .8rem; color: #a9a4c8; margin-top: .15rem; }
-    .aud-dt-rule { height: 1px; background: rgba(255,255,255,.1); margin: .85rem 0; }
+    .aud-dt-title { display: block; font-size: .92rem; font-weight: 600; line-height: 1.3; color: #fff; }
+    .aud-dt-sub { display: block; font-size: .76rem; color: #a9a4c8; margin-top: .1rem; }
 
-    .aud-dt-chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .aud-dt-chips { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .7rem; }
     .aud-dt-chip {
-        display: inline-flex; align-items: center; gap: .4rem;
-        font: 500 .74rem/1 -apple-system, "Segoe UI", system-ui, sans-serif;
-        padding: .34rem .62rem; border-radius: 999px;
+        display: inline-flex; align-items: center; gap: .35rem;
+        font: 500 .72rem/1 -apple-system, "Segoe UI", system-ui, sans-serif;
+        padding: .28rem .55rem; border-radius: 999px;
         background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); color: #cfcbe6; white-space: nowrap;
     }
     .aud-dt-chip.tipo { color: #c6bfff; border-color: rgba(139,125,255,.4); background: rgba(139,125,255,.14); }
-    .aud-dt-chip .sev-dot { margin: 0; width: 8px; height: 8px; }
+    .aud-dt-chip .sev-dot { margin: 0; width: 7px; height: 7px; }
 
     .aud-dt-desc {
-        font-size: .88rem; line-height: 1.55; color: #d6d2ec; margin: .85rem 0 0;
-        padding: .55rem .78rem; border-left: 2px solid var(--dt-accent);
-        background: rgba(255,255,255,.035); border-radius: 0 8px 8px 0;
+        font-size: .82rem; line-height: 1.5; color: #cfcbe4; margin: .7rem 0 0;
+        padding: .5rem .7rem; border-left: 2px solid var(--dt-accent);
+        background: rgba(255,255,255,.03); border-radius: 0 6px 6px 0;
     }
 
-    .aud-dt-sec { margin-top: 1rem; }
+    .aud-dt-sec { margin-top: .9rem; }
     .aud-dt-sec-lbl {
-        font: 600 .66rem/1 "IBM Plex Mono", ui-monospace, Menlo, monospace;
-        letter-spacing: .12em; text-transform: uppercase; color: #8f8ab0; margin-bottom: .45rem;
+        font: 600 .7rem/1 inherit; letter-spacing: .02em; text-transform: none;
+        color: #9993bd; margin-bottom: .4rem;
     }
-    .aud-dt-panel { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.09); border-radius: 10px; overflow: hidden; }
-    .aud-kv { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    .aud-dt-panel { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.09); border-radius: 8px; overflow: hidden; }
+    .aud-kv { width: 100%; border-collapse: collapse; font-size: .8rem; }
     .aud-kv tr + tr td { border-top: 1px solid rgba(255,255,255,.06); }
-    .aud-kv td { padding: .5rem .7rem; vertical-align: top; }
-    .aud-kv td.k { width: 38%; color: #a29dc4; font-weight: 500; white-space: nowrap; }
+    .aud-kv td { padding: .42rem .6rem; vertical-align: top; }
+    .aud-kv td.k { width: 32%; color: #a29dc4; font-weight: 500; font-size: .76rem; white-space: nowrap; }
     .aud-kv td.v { color: #ECE9FA; word-break: break-word; }
     .aud-kv .o { color: #ff9d97; text-decoration: line-through; opacity: .8; }
-    .aud-kv .arw { color: #6f6a90; margin: 0 .4rem; }
+    .aud-kv .arw { color: #6f6a90; margin: 0 .35rem; }
     .aud-kv .n { color: #7ee0b0; }
-    .aud-dt-none { padding: .6rem .7rem; font-size: .82rem; font-style: italic; color: #8f8ab0; }
+    .aud-dt-none { padding: .55rem .65rem; font-size: .8rem; font-style: italic; color: #8f8ab0; }
 
     .aud-dt-meta {
-        display: flex; flex-wrap: wrap; gap: .25rem 1.1rem; font-size: .74rem; color: #837e9f;
-        margin-top: .9rem; padding-top: .7rem; border-top: 1px solid rgba(255,255,255,.08);
+        display: flex; flex-wrap: wrap; gap: .3rem .9rem; font-size: .72rem; color: #837e9f;
+        margin-top: .8rem; padding-top: .6rem; border-top: 1px solid rgba(255,255,255,.08);
     }
-    .aud-dt-meta b { color: #a29dc4; font-weight: 600; }
+    .aud-dt-meta span { display: inline-flex; align-items: center; gap: .35rem; }
+    .aud-dt-meta i { font-size: .78em; opacity: .8; }
 
     .aud-dt-btn {
-        display: inline-flex; align-items: center; gap: .45rem; margin-top: .9rem;
-        font: 600 .78rem/1 inherit; padding: .5rem .85rem; border-radius: 8px; cursor: pointer;
+        display: inline-flex; align-items: center; gap: .4rem; margin-top: .8rem;
+        font: 600 .75rem/1 inherit; padding: .42rem .75rem; border-radius: 7px; cursor: pointer;
         background: rgba(139,125,255,.14); border: 1px solid rgba(139,125,255,.4); color: #c6bfff; transition: background .15s;
     }
     .aud-dt-btn:hover { background: rgba(139,125,255,.24); }
 
-    details.aud-raw { margin-top: .9rem; }
+    details.aud-raw { margin-top: .8rem; }
     details.aud-raw > summary {
         cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: .4rem;
-        font: 600 .72rem/1 "IBM Plex Mono", monospace; letter-spacing: .06em; text-transform: uppercase;
-        color: #837e9f; padding: .3rem 0;
+        font: 600 .72rem/1 inherit; letter-spacing: .02em; text-transform: none;
+        color: #837e9f; padding: .25rem 0;
     }
+    details.aud-raw > summary:hover { color: #b7b2d4; }
     details.aud-raw > summary::-webkit-details-marker { display: none; }
     details.aud-raw > summary::before { content: "\25B8"; font-size: .85em; transition: transform .15s; }
     details.aud-raw[open] > summary::before { transform: rotate(90deg); }
-    .aud-dt-block { margin-top: .7rem; }
-    .aud-dt-block-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: .35rem; }
-    .aud-dt-block-lbl { font: 600 .64rem/1 "IBM Plex Mono", monospace; letter-spacing: .1em; text-transform: uppercase; color: #7c7799; }
+    .aud-dt-block { margin-top: .6rem; }
+    .aud-dt-block-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: .3rem; }
+    .aud-dt-block-lbl { font: 600 .7rem/1 inherit; letter-spacing: .02em; text-transform: none; color: #8b86a8; }
     .aud-dt-copy {
-        font: 600 .62rem/1 "IBM Plex Mono", monospace; letter-spacing: .06em; text-transform: uppercase;
+        font: 600 .68rem/1 inherit; letter-spacing: 0;
         background: transparent; border: 1px solid rgba(255,255,255,.2); color: #9d98bd;
-        border-radius: 5px; padding: .3em .55em; cursor: pointer; transition: color .15s, border-color .15s;
+        border-radius: 5px; padding: .22em .55em; cursor: pointer; transition: color .15s, border-color .15s;
     }
     .aud-dt-copy:hover { color: #fff; border-color: rgba(255,255,255,.45); }
     .aud-dt-pre {
-        margin: 0; padding: 11px 13px; border-radius: 8px; color: #E6E2FA;
+        margin: 0; padding: 9px 11px; border-radius: 7px; color: #E6E2FA;
         background: rgba(0,0,0,.32); border: 1px solid rgba(255,255,255,.1);
-        font: 400 .74rem/1.55 "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-        white-space: pre-wrap; word-break: break-word; max-height: 34vh; overflow: auto;
+        font: 400 .72rem/1.5 "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+        white-space: pre-wrap; word-break: break-word; max-height: 24vh; overflow: auto;
     }
     .aud-dt-pre .j-key { color: #b0a8ff; }
     .aud-dt-pre .j-str { color: #7ee0b0; }
@@ -929,8 +935,8 @@ $(function () {
             }
         );
     }
-    function dtMeta(lbl, val) {
-        return val ? '<span><b>' + esc(lbl) + ':</b> ' + esc(val) + '</span>' : '';
+    function dtMetaIco(ico, val) {
+        return val ? '<span><i class="' + ico + '"></i>' + esc(val) + '</span>' : '';
     }
     function bloque(titulo, contenido) {
         if (!contenido) return '';
@@ -1028,7 +1034,6 @@ $(function () {
                 +     '<span class="aud-dt-sub" title="' + esc(d.fecha) + '">' + esc(d.nombreUsuario || '—') + (t.rel ? ' &middot; ' + esc(t.rel) : '') + '</span>'
                 +   '</span>'
                 + '</div>'
-                + '<div class="aud-dt-rule"></div>'
                 + '<div class="aud-dt-chips">'
                 +   '<span class="aud-dt-chip"><span class="sev-dot sev-' + sev + '"></span>' + esc(relLabel(sev)) + '</span>'
                 +   dtChip(areaLabel(d.tipo), 'tipo') + (d.empresa ? dtChip(d.empresa) : '')
@@ -1036,8 +1041,9 @@ $(function () {
                 + (d.descripcion ? '<p class="aud-dt-desc">' + esc(d.descripcion) + '</p>' : '')
                 + cambiosHtml
                 + '<div class="aud-dt-meta">'
-                +   dtMeta(S.mUsuario, d.nombreUsuario) + dtMeta(S.mEmpresa, d.empresa) + dtMeta(S.mIp, d.ipAddress)
-                +   (d.entidadId && entidadRuta !== entidadTxt ? dtMeta(S.refLbl, entidadRuta) : '')
+                +   dtMetaIco('fas fa-clock', t.abs || d.fecha)
+                +   dtMetaIco('fas fa-globe', d.ipAddress)
+                +   (d.entidadId && entidadRuta !== entidadTxt ? dtMetaIco('fas fa-hashtag', entidadRuta) : '')
                 + '</div>'
                 + opBtn
                 + rawHtml
@@ -1046,9 +1052,10 @@ $(function () {
             Swal.fire({
                 title: S.modal,
                 html: html,
-                width: '620px',
+                width: '560px',
                 showConfirmButton: false,
                 showCloseButton: true,
+                customClass: { popup: 'aud-dt-popup' },
                 didOpen: function (popup) {
                     var vo = popup.querySelector('#audVerOp');
                     if (vo) vo.addEventListener('click', function () {
