@@ -229,6 +229,10 @@ namespace bufinscustomers.Controllers
                 var guardrailConfig = new GestorPromptsService().ObtenerPorCodigo("GUARDRAIL_SISTEMA");
                 string guardrail = guardrailConfig?.TextoPrompt;
 
+                // Contexto de negocio de Bufins (Fase A): mismo conocimiento curado que en Análisis IA.
+                var contextoConfig = new GestorPromptsService().ObtenerPorCodigo("CONTEXTO_NEGOCIO_BUFINS");
+                string contextoNegocio = contextoConfig?.TextoPrompt;
+
                 var empresaInfo = tablasService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresaObjetivo);
                 string nombreEmpresa = empresaInfo?.Nombre ?? "—";
                 string nombreTablasEnviadas = string.Join(", ", datosPorTabla.Keys);
@@ -241,7 +245,7 @@ namespace bufinscustomers.Controllers
                     FiltrosDescripcion = $"Empresa {nombreEmpresa}, año más reciente disponible por tabla"
                 };
 
-                var response = await iaService.ConsultarAsync(request, instrucciones, guardrail, modeloIA, maxTokensIA, temperatureIA);
+                var response = await iaService.ConsultarAsync(request, instrucciones, guardrail, modeloIA, maxTokensIA, temperatureIA, contextoNegocio);
                 response.FilasEnviadas = totalFilasEnviadas;
                 response.TotalFilas = totalFilasEnviadas;
 

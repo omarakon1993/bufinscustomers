@@ -347,6 +347,11 @@ namespace bufinscustomers.Controllers
                 var guardrailConfig = new GestorPromptsService().ObtenerPorCodigo("GUARDRAIL_SISTEMA");
                 string guardrail = guardrailConfig?.TextoPrompt;
 
+                // Contexto de negocio de Bufins (Fase A): se aplica siempre, independiente del modo
+                // o de si hay pregunta explícita.
+                var contextoConfig = new GestorPromptsService().ObtenerPorCodigo("CONTEXTO_NEGOCIO_BUFINS");
+                string contextoNegocio = contextoConfig?.TextoPrompt;
+
                 // Datos en CSV compacto (≈ 40 % menos tokens que JSON) acotados por tamaño para no
                 // exceder el contexto del modelo. Solo en la primera llamada (los turnos siguientes
                 // reutilizan el contexto ya enviado).
@@ -367,7 +372,7 @@ namespace bufinscustomers.Controllers
                     Historial = historial
                 };
 
-                var response = await iaService.ConsultarAsync(request, instrucciones, guardrail, modeloIA, maxTokensLlamada, temperatureIA);
+                var response = await iaService.ConsultarAsync(request, instrucciones, guardrail, modeloIA, maxTokensLlamada, temperatureIA, contextoNegocio);
                 response.FilasEnviadas = filasEnviadas;
                 response.TotalFilas = resultado.TotalRegistros;
 

@@ -73,7 +73,8 @@ namespace bufinscustomers.Services
             string guardrailSistema = null,
             string modelo = null,
             int maxTokens = 0,
-            double? temperature = null)
+            double? temperature = null,
+            string contextoNegocio = null)
         {
             try
             {
@@ -92,7 +93,7 @@ namespace bufinscustomers.Services
                 int  ttlHoras    = ObtenerTtlHoras();
                 bool cacheActiva = ttlHoras > 0;
 
-                string cacheKey = GenerarCacheKey(request, instruccionesPersonalizadas, guardrailSistema, modeloFinal, tokensFinal);
+                string cacheKey = GenerarCacheKey(request, instruccionesPersonalizadas, guardrailSistema, modeloFinal, tokensFinal, contextoNegocio);
                 if (cacheActiva && _cache.Contains(cacheKey))
                 {
                     var cached = (IAConsultaResponse)_cache.Get(cacheKey);
@@ -153,7 +154,7 @@ namespace bufinscustomers.Services
                 if (esConversacionNueva)
                 {
                     // Primera llamada: construye contexto completo con los datos
-                    promptContextoInicial = ConstruirPrompt(request, instruccionesPersonalizadas);
+                    promptContextoInicial = ConstruirPrompt(request, instruccionesPersonalizadas, contextoNegocio);
                     messages.Add(new { role = "user", content = promptContextoInicial });
                 }
                 else
@@ -250,7 +251,7 @@ namespace bufinscustomers.Services
             }
         }
 
-        private string GenerarCacheKey(IAConsultaRequest request, string instrucciones, string guardrail, string modelo, int maxTokens)
+        private string GenerarCacheKey(IAConsultaRequest request, string instrucciones, string guardrail, string modelo, int maxTokens, string contextoNegocio = null)
         {
             // Fingerprint ligero del JSON para invalidar caché cuando cambian los datos
             string dataHash = string.Empty;
@@ -277,7 +278,7 @@ namespace bufinscustomers.Services
                 }
             }
 
-            string raw = $"{request.NombreTabla}|{request.FiltrosDescripcion}|{request.Pregunta}|{instrucciones}|{guardrail}|{dataHash}|{historialHash}|{modelo}|{maxTokens}";
+            string raw = $"{request.NombreTabla}|{request.FiltrosDescripcion}|{request.Pregunta}|{instrucciones}|{guardrail}|{contextoNegocio}|{dataHash}|{historialHash}|{modelo}|{maxTokens}";
             using (var md5 = MD5.Create())
             {
                 byte[] hash = md5.ComputeHash(Encoding.UTF8.GetBytes(raw));
@@ -411,7 +412,7 @@ namespace bufinscustomers.Services
             }
         }
 
-        private string ConstruirPrompt(IAConsultaRequest request, string instruccionesPersonalizadas)
+        private string ConstruirPrompt(IAConsultaRequest request, string instruccionesPersonalizadas, string contextoNegocio = null)
         {
             var sb = new StringBuilder();
             sb.AppendLine("Eres un analista financiero experto en finanzas corporativas colombianas.");
@@ -419,6 +420,19 @@ namespace bufinscustomers.Services
 
             if (!string.IsNullOrWhiteSpace(request.FiltrosDescripcion))
                 sb.AppendLine($"Filtros aplicados: {request.FiltrosDescripcion}.");
+
+            // Conocimiento/contexto de negocio de Bufins (Fase A): reglas, glosario y aclaraciones
+            // curadas por Super Admin en GestorPrompts (código CONTEXTO_NEGOCIO_BUFINS). Se envía
+            // siempre que exista, con o sin pregunta explícita, para que el agente interprete los
+            // datos con el mismo criterio de negocio en cualquier modo de análisis.
+            if (!string.IsNullOrWhiteSpace(contextoNegocio))
+            {
+                sb.AppendLine();
+                sb.AppendLine("Ten en cuenta siempre el siguiente contexto de negocio de Bufins al interpretar los datos y responder:");
+                sb.AppendLine("[CONTEXTO_NEGOCIO_BUFINS]");
+                sb.AppendLine(contextoNegocio);
+                sb.AppendLine("[FIN_CONTEXTO_NEGOCIO_BUFINS]");
+            }
 
             bool esCsv = string.Equals(request.FormatoDatos, "csv", StringComparison.OrdinalIgnoreCase);
             sb.AppendLine();
