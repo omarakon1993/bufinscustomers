@@ -155,6 +155,7 @@
   <data name="Datos_UploadHint2" xml:space="preserve"><value>Los datos existentes de la empresa seleccionada serán reemplazados.</value></data>
   <data name="Datos_UploadHint3" xml:space="preserve"><value>Si ocurre un error en cualquier hoja, se limpian todos los datos cargados.</value></data>
   <data name="Datos_EmpresaLabel" xml:space="preserve"><value>Empresa a cargar:</value></data>
+  <data name="Datos_EscenarioLabel" xml:space="preserve"><value>Escenario:</value></data>
   <data name="Datos_SelectEmpresa" xml:space="preserve"><value>Seleccione una empresa...</value></data>
   <data name="Datos_DropText" xml:space="preserve"><value>Arrastre su archivo aquí o haga clic para seleccionar</value></data>
   <data name="Datos_DropSubtext" xml:space="preserve"><value>Formatos permitidos: .xlsx, .xlsm</value></data>
@@ -252,6 +253,7 @@
   <data name="Modelo_PageTitle" xml:space="preserve"><value>Ejecución de modelos BUFINS</value></data>
   <data name="Modelo_CardTitle" xml:space="preserve"><value>Seleccione empresa, año y modelo</value></data>
   <data name="Modelo_LabelEmpresa" xml:space="preserve"><value>Empresa</value></data>
+  <data name="Modelo_LabelEscenario" xml:space="preserve"><value>Escenario</value></data>
   <data name="Modelo_SelectEmpresa" xml:space="preserve"><value>-- Seleccione una empresa --</value></data>
   <data name="Modelo_LabelAnio" xml:space="preserve"><value>Año de ejecución</value></data>
   <data name="Modelo_SelectEmpresaPrimero" xml:space="preserve"><value>-- Seleccione una empresa primero --</value></data>
@@ -675,6 +677,25 @@
   <data name="Mod_IconoHint" xml:space="preserve"><value>(clase FontAwesome)</value></data>
   <data name="Mod_HintSP" xml:space="preserve"><value>Nombre exacto del procedimiento almacenado en la base de datos</value></data>
   <data name="Mod_HintDescripcion" xml:space="preserve"><value>Breve explicación de qué calcula este modelo (opcional)</value></data>
+
+  <!-- ESCENARIOS DE DATOS -->
+  <data name="Esc_PageTitle" xml:space="preserve"><value>Gestor de escenarios</value></data>
+  <data name="Esc_PageHint" xml:space="preserve"><value>Un escenario es una copia paralela completa de los datos cargados (mismos años, misma configuración de la empresa). Escenario 1 es siempre el principal.</value></data>
+  <data name="Esc_NoEscenarios" xml:space="preserve"><value>No hay escenarios registrados.</value></data>
+  <data name="Esc_TitleDesactivar" xml:space="preserve"><value>Desactivar escenario</value></data>
+  <data name="Esc_TitleEditar" xml:space="preserve"><value>Editar escenario</value></data>
+  <data name="Esc_BtnCrear" xml:space="preserve"><value>Crear escenario</value></data>
+  <data name="Esc_ModalCreateTitle" xml:space="preserve"><value>Crear escenario</value></data>
+  <data name="Esc_ModalEditTitle" xml:space="preserve"><value>Editar escenario</value></data>
+  <data name="Esc_ModalDesactivarTitle" xml:space="preserve"><value>Desactivar escenario</value></data>
+  <data name="Esc_ModalDesactivarBody" xml:space="preserve"><value>¿Estás seguro de que deseas desactivar el escenario</value></data>
+  <data name="Esc_ModalDesactivarNote" xml:space="preserve"><value>El escenario no se elimina (queda referenciado por los datos ya cargados con él); solo deja de aparecer para elegir en Cargue, Historial y Modelos.</value></data>
+  <data name="Esc_BtnDesactivar" xml:space="preserve"><value>Desactivar</value></data>
+  <data name="GestorEscenarios_ErrorNombreRequerido" xml:space="preserve"><value>El nombre del escenario es obligatorio.</value></data>
+  <data name="GestorEscenarios_ErrorGuardar" xml:space="preserve"><value>No se pudo guardar el escenario. Intente nuevamente.</value></data>
+  <data name="GestorEscenarios_Creado" xml:space="preserve"><value>Escenario '{0}' creado correctamente.</value></data>
+  <data name="GestorEscenarios_Editado" xml:space="preserve"><value>Escenario '{0}' actualizado correctamente.</value></data>
+  <data name="GestorEscenarios_Desactivado" xml:space="preserve"><value>Escenario desactivado correctamente.</value></data>
 
   <!-- GESTOR DE PROMPTS IA -->
   <data name="Prompt_PageTitle" xml:space="preserve"><value>Gestor de Prompts IA</value></data>
@@ -1210,7 +1231,7 @@
   <data name="Audit_TR_Ayer" xml:space="preserve"><value>ayer {0}</value></data>
   <data name="Audit_TR_Hoy" xml:space="preserve"><value>hoy {0}</value></data>
   <data name="Audit_Meses" xml:space="preserve"><value>ene,feb,mar,abr,may,jun,jul,ago,sep,oct,nov,dic</value></data>
-  <data name="Audit_AreasMap" xml:space="preserve"><value>SEGURIDAD=Acceso|PERMISOS=Permisos y accesos|MENU=Menú del sistema|MODELOS=Modelos|USUARIOS=Usuarios|EMPRESAS=Empresas|GRUPOS_EMPRESARIALES=Grupos empresariales|CONFIGURACION=Configuración financiera|CARGUES=Cargue de datos</value></data>
+  <data name="Audit_AreasMap" xml:space="preserve"><value>SEGURIDAD=Acceso|PERMISOS=Permisos y accesos|MENU=Menú del sistema|MODELOS=Modelos|USUARIOS=Usuarios|EMPRESAS=Empresas|GRUPOS_EMPRESARIALES=Grupos empresariales|CONFIGURACION=Configuración financiera|CARGUES=Cargue de datos|ESCENARIOS=Escenarios</value></data>
   <data name="Audit_AccFraseMap" xml:space="preserve"><value>Crear=Creó|Editar=Modificó|Eliminar=Eliminó|Asignar=Actualizó permisos|Enviar=Envió por correo|Login=Inició sesión|LoginFallido=Intento de acceso fallido|Bloqueo=Cuenta bloqueada</value></data>
   <data name="Audit_AccOptMap" xml:space="preserve"><value>Crear=Se creó|Editar=Se modificó|Eliminar=Se eliminó|Asignar=Se asignó|Enviar=Se envió</value></data>
   <data name="Audit_CamposMap" xml:space="preserve"><value>empresa=Empresa|modelos=Modelos enviados|destinatarios=Destinatarios|archivo=Archivo|Nombre=Nombre|Apellidos=Apellidos|Correo=Correo|Telefono=Teléfono|Usuario=Usuario|Admin=Rol|Activo=Activo|IdEmpresa=Empresa|EmpNombre=Nombre|EmpNit=NIT|EmpDireccion=Dirección|EmpTelefono=Teléfono|EmpCorreo=Correo|Abreviatura=Abreviatura|IdGrupoEmpresarial=Grupo empresarial|NombreSP=Procedimiento|Descripcion=Descripción|Icono=Icono|Orden=Orden|Codigo=Código|idUsuario=Usuario|permisos=Opciones de menú</value></data>
@@ -1399,12 +1420,15 @@
   <data name="Hist_PageTitle" xml:space="preserve"><value>Historial de Cargues</value></data>
   <data name="Hist_HeaderTitle" xml:space="preserve"><value>Historial de Versiones de Cargues</value></data>
   <data name="Hist_LabelModo" xml:space="preserve"><value>Modo</value></data>
+  <data name="Hist_LabelEscenario" xml:space="preserve"><value>Escenario</value></data>
   <data name="Hist_ModoEjecucion" xml:space="preserve"><value>Ejecución</value></data>
   <data name="Hist_ModoHistorico" xml:space="preserve"><value>Histórico</value></data>
   <data name="Hist_ThVersion" xml:space="preserve"><value>Versión</value></data>
   <data name="Hist_ThEmpresa" xml:space="preserve"><value>Empresa</value></data>
   <data name="Hist_ThAnio" xml:space="preserve"><value>Año</value></data>
   <data name="Hist_ThModo" xml:space="preserve"><value>Modo</value></data>
+  <data name="Hist_ThEscenario" xml:space="preserve"><value>Escenario</value></data>
+  <data name="Hist_Escenario" xml:space="preserve"><value>Escenario</value></data>
   <data name="Hist_ThFecha" xml:space="preserve"><value>Fecha de Cargue</value></data>
   <data name="Hist_ThUsuario" xml:space="preserve"><value>Usuario</value></data>
   <data name="Hist_ThArchivo" xml:space="preserve"><value>Archivo</value></data>

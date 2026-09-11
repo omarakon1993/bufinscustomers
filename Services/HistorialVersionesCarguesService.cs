@@ -14,15 +14,29 @@ namespace bufinscustomers.Services
 {
     public class HistorialVersionesCarguesService : BaseService
     {
-        // Versiones que se conservan por escenario (empresa + año + modo). Al superarlo,
-        // el cargue purga la más antigua junto con sus snapshots. La vista muestra este
+        // Versiones que se conservan por llave de cargue (empresa + año + modo + escenario). Al
+        // superarlo, el cargue purga la más antigua junto con sus snapshots. La vista muestra este
         // número en el banner de límite vía HistorialVersionesPageViewModel.MaxVersiones.
-        public const int MaxVersionesPorEscenario = 2;
+        // (Antes se llamaba MaxVersionesPorEscenario — renombrado para no chocar con el concepto
+        // de negocio "Escenario 1/2" introducido después: aquí "escenario" solo significaba
+        // "la combinación empresa+año+modo", no tiene relación con Models.Escenario.)
+        public const int MaxVersionesPorLlaveCargue = 2;
 
         // Tablas Ini_ versionadas por el historial. Fuente única: Helpers/TablasCargueHelper.cs
         // (la misma lista que usa el cargue en DatosController), para que agregar/quitar una
         // tabla del cargue no deje el snapshot ni el rollback desincronizados.
         private static string[] _tablasIni => TablasCargueHelper.TablasIni;
+
+        /// <summary>
+        /// Predicado único de lectura/borrado sobre una tabla Ini_ para (empresa, año, modo,
+        /// escenario). Antes este WHERE estaba duplicado literalmente 4 veces en este archivo;
+        /// unificado aquí para que agregar una dimensión nueva (como Escenario) sea un solo cambio.
+        /// ISNULL(IdEscenario,1) tolera la columna recién agregada en filas antiguas sin backfill.
+        /// </summary>
+        private static string ConstruirWhere(byte modo) =>
+            modo == 0
+                ? "WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Anio AND Historico_Log = 0 AND ISNULL(IdEscenario,1) = @IdEscenario"
+                : "WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Anio AND ISNULL(IdEscenario,1) = @IdEscenario";
 
         // ── Llamado desde DatosController DENTRO de la transacción ───────────
 
@@ -35,7 +49,8 @@ namespace bufinscustomers.Services
             byte modo,
             int idUsuario,
             string nombreUsuario,
-            string nombreArchivo)
+            string nombreArchivo,
+            int idEscenario = 1)
         {
             // El snapshot comparte la transacción del cargue. Un savepoint lo vuelve
             // atómico: si falla a mitad (p. ej. una tabla no se puede serializar), se
@@ -47,7 +62,7 @@ namespace bufinscustomers.Services
             {
                 return CrearSnapshotInterno(
                     conn, tx, idEmpresa, nombreEmpresa, anio, modo,
-                    idUsuario, nombreUsuario, nombreArchivo);
+                    idUsuario, nombreUsuario, nombreArchivo, idEscenario);
             }
             catch
             {
@@ -67,66 +82,97 @@ namespace bufinscustomers.Services
             byte modo,
             int idUsuario,
             string nombreUsuario,
-            string nombreArchivo)
+            string nombreArchivo,
+            int idEscenario)
         {
             using (var cmd = new SqlCommand(@"
                 UPDATE dbo.HistorialVersionesCargues
                 SET EsVersionActual = 0
-                WHERE IdEmpresa = @IdEmpresa AND Anio = @Anio AND Modo = @Modo", conn, tx))
+                WHERE IdEmpresa = @IdEmpresa AND Anio = @Anio AND Modo = @Modo AND ISNULL(IdEscenario,1) = @IdEscenario", conn, tx))
             {
                 cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
                 cmd.Parameters.AddWithValue("@Anio", anio);
                 cmd.Parameters.AddWithValue("@Modo", modo);
+                cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
                 cmd.ExecuteNonQuery();
             }
 
-            int totalFilas = ContarFilasActuales(conn, tx, idEmpresa, anio, modo);
+            int totalFilas = ContarFilasActuales(conn, tx, idEmpresa, anio, modo, idEscenario);
 
             // Número global inmutable: siempre crece, nunca reinicia por mes
             int numeroVersionMes;
             using (var cmd = new SqlCommand(@"
                 SELECT ISNULL(MAX(NumeroVersionMes), 0) + 1
                 FROM dbo.HistorialVersionesCargues
-                WHERE IdEmpresa = @IdEmpresa AND Anio = @Anio AND Modo = @Modo", conn, tx))
+                WHERE IdEmpresa = @IdEmpresa AND Anio = @Anio AND Modo = @Modo AND ISNULL(IdEscenario,1) = @IdEscenario", conn, tx))
             {
                 cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
                 cmd.Parameters.AddWithValue("@Anio", anio);
                 cmd.Parameters.AddWithValue("@Modo", modo);
+                cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
                 numeroVersionMes = Convert.ToInt32(cmd.ExecuteScalar());
             }
 
             int idHistorial;
-            using (var cmd = new SqlCommand(@"
-                INSERT INTO dbo.HistorialVersionesCargues
-                    (IdEmpresa, NombreEmpresa, Anio, Modo, FechaCargue,
-                     IdUsuario, NombreUsuario, NombreArchivo, TotalFilas, EsVersionActual, NumeroVersionMes)
-                VALUES
-                    (@IdEmpresa, @NombreEmpresa, @Anio, @Modo, GETDATE(),
-                     @IdUsuario, @NombreUsuario, @NombreArchivo, @TotalFilas, 1, @NumeroVersionMes);
-                SELECT SCOPE_IDENTITY();", conn, tx))
+            // IdEscenario es una columna incremental (ver Sql/003_HistorialVersionesCargues_AddEscenario.sql);
+            // si aún no existe en la BD, se cae al INSERT sin ella (misma técnica que
+            // DatosController.RegistrarAuditoria con AuditoriaCargues).
+            try
             {
-                cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                cmd.Parameters.AddWithValue("@NombreEmpresa", nombreEmpresa);
-                cmd.Parameters.AddWithValue("@Anio", anio);
-                cmd.Parameters.AddWithValue("@Modo", modo);
-                cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
-                cmd.Parameters.AddWithValue("@NombreUsuario", nombreUsuario);
-                cmd.Parameters.AddWithValue("@NombreArchivo", nombreArchivo);
-                cmd.Parameters.AddWithValue("@TotalFilas", totalFilas);
-                cmd.Parameters.AddWithValue("@NumeroVersionMes", numeroVersionMes);
-                idHistorial = Convert.ToInt32(cmd.ExecuteScalar());
+                using (var cmd = new SqlCommand(@"
+                    INSERT INTO dbo.HistorialVersionesCargues
+                        (IdEmpresa, NombreEmpresa, Anio, Modo, FechaCargue,
+                         IdUsuario, NombreUsuario, NombreArchivo, TotalFilas, EsVersionActual, NumeroVersionMes, IdEscenario)
+                    VALUES
+                        (@IdEmpresa, @NombreEmpresa, @Anio, @Modo, GETDATE(),
+                         @IdUsuario, @NombreUsuario, @NombreArchivo, @TotalFilas, 1, @NumeroVersionMes, @IdEscenario);
+                    SELECT SCOPE_IDENTITY();", conn, tx))
+                {
+                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                    cmd.Parameters.AddWithValue("@NombreEmpresa", nombreEmpresa);
+                    cmd.Parameters.AddWithValue("@Anio", anio);
+                    cmd.Parameters.AddWithValue("@Modo", modo);
+                    cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
+                    cmd.Parameters.AddWithValue("@NombreUsuario", nombreUsuario);
+                    cmd.Parameters.AddWithValue("@NombreArchivo", nombreArchivo);
+                    cmd.Parameters.AddWithValue("@TotalFilas", totalFilas);
+                    cmd.Parameters.AddWithValue("@NumeroVersionMes", numeroVersionMes);
+                    cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
+                    idHistorial = Convert.ToInt32(cmd.ExecuteScalar());
+                }
+            }
+            catch (SqlException ex) when (ex.Message.IndexOf("IdEscenario", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                using (var cmd = new SqlCommand(@"
+                    INSERT INTO dbo.HistorialVersionesCargues
+                        (IdEmpresa, NombreEmpresa, Anio, Modo, FechaCargue,
+                         IdUsuario, NombreUsuario, NombreArchivo, TotalFilas, EsVersionActual, NumeroVersionMes)
+                    VALUES
+                        (@IdEmpresa, @NombreEmpresa, @Anio, @Modo, GETDATE(),
+                         @IdUsuario, @NombreUsuario, @NombreArchivo, @TotalFilas, 1, @NumeroVersionMes);
+                    SELECT SCOPE_IDENTITY();", conn, tx))
+                {
+                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                    cmd.Parameters.AddWithValue("@NombreEmpresa", nombreEmpresa);
+                    cmd.Parameters.AddWithValue("@Anio", anio);
+                    cmd.Parameters.AddWithValue("@Modo", modo);
+                    cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
+                    cmd.Parameters.AddWithValue("@NombreUsuario", nombreUsuario);
+                    cmd.Parameters.AddWithValue("@NombreArchivo", nombreArchivo);
+                    cmd.Parameters.AddWithValue("@TotalFilas", totalFilas);
+                    cmd.Parameters.AddWithValue("@NumeroVersionMes", numeroVersionMes);
+                    idHistorial = Convert.ToInt32(cmd.ExecuteScalar());
+                }
             }
 
-            string whereClause = modo == 0
-                ? "WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Anio AND Historico_Log = 0"
-                : "WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Anio";
+            string whereClause = ConstruirWhere(modo);
 
             foreach (var tabla in _tablasIni)
             {
                 string json;
                 try
                 {
-                    json = SerializarTabla(conn, tx, tabla, whereClause, idEmpresa, anio);
+                    json = SerializarTabla(conn, tx, tabla, whereClause, idEmpresa, anio, idEscenario);
                 }
                 catch (Exception ex)
                 {
@@ -148,21 +194,22 @@ namespace bufinscustomers.Services
                 }
             }
 
-            PurgarVersionesAntiguas(conn, tx, idEmpresa, anio, modo);
+            PurgarVersionesAntiguas(conn, tx, idEmpresa, anio, modo, idEscenario);
             return idHistorial;
         }
 
         // ── Consultas ─────────────────────────────────────────────────────────
 
-        public List<HistorialVersiones> ObtenerHistorial(int? idEmpresa, int? anio, byte? modo)
+        public List<HistorialVersiones> ObtenerHistorial(int? idEmpresa, int? anio, byte? modo, int? idEscenario = null)
         {
             var list = new List<HistorialVersiones>();
             string sql = @"
                 SELECT *
                 FROM dbo.HistorialVersionesCargues
-                WHERE (@IdEmpresa IS NULL OR IdEmpresa = @IdEmpresa)
-                  AND (@Anio     IS NULL OR Anio      = @Anio)
-                  AND (@Modo     IS NULL OR Modo      = @Modo)
+                WHERE (@IdEmpresa   IS NULL OR IdEmpresa           = @IdEmpresa)
+                  AND (@Anio        IS NULL OR Anio                = @Anio)
+                  AND (@Modo        IS NULL OR Modo                = @Modo)
+                  AND (@IdEscenario IS NULL OR ISNULL(IdEscenario,1) = @IdEscenario)
                 ORDER BY IdEmpresa, Anio, Modo, FechaCargue DESC";
 
             using (var conn = new SqlConnection(CadenaConexion))
@@ -171,6 +218,7 @@ namespace bufinscustomers.Services
                 cmd.Parameters.AddWithValue("@IdEmpresa", (object)idEmpresa ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Anio",      (object)anio     ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Modo",      (object)modo     ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@IdEscenario", (object)idEscenario ?? DBNull.Value);
                 conn.Open();
                 using (var r = cmd.ExecuteReader())
                     while (r.Read())
@@ -246,9 +294,7 @@ namespace bufinscustomers.Services
                             return false;
                         }
 
-                        string deleteWhere = version.Modo == 0
-                            ? "WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Anio AND Historico_Log = 0"
-                            : "WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Anio";
+                        string deleteWhere = ConstruirWhere(version.Modo);
 
                         foreach (var tabla in _tablasIni)
                         {
@@ -257,6 +303,7 @@ namespace bufinscustomers.Services
                             {
                                 cmd.Parameters.AddWithValue("@IdEmpresa", version.IdEmpresa);
                                 cmd.Parameters.AddWithValue("@Anio", version.Anio);
+                                cmd.Parameters.AddWithValue("@IdEscenario", version.IdEscenario);
                                 cmd.ExecuteNonQuery();
                             }
 
@@ -272,7 +319,7 @@ namespace bufinscustomers.Services
                         using (var cmd = new SqlCommand(@"
                             UPDATE dbo.HistorialVersionesCargues
                             SET EsVersionActual = 0
-                            WHERE IdEmpresa = @IdEmpresa AND Anio = @Anio AND Modo = @Modo;
+                            WHERE IdEmpresa = @IdEmpresa AND Anio = @Anio AND Modo = @Modo AND ISNULL(IdEscenario,1) = @IdEscenario;
 
                             UPDATE dbo.HistorialVersionesCargues
                             SET EsVersionActual          = 1,
@@ -284,6 +331,7 @@ namespace bufinscustomers.Services
                             cmd.Parameters.AddWithValue("@IdEmpresa",    version.IdEmpresa);
                             cmd.Parameters.AddWithValue("@Anio",         version.Anio);
                             cmd.Parameters.AddWithValue("@Modo",         version.Modo);
+                            cmd.Parameters.AddWithValue("@IdEscenario",  version.IdEscenario);
                             cmd.Parameters.AddWithValue("@IdUsrRev",     idUsuarioReversion);
                             cmd.Parameters.AddWithValue("@NombreUsrRev", nombreUsuarioReversion);
                             cmd.Parameters.AddWithValue("@IdHistorial",  idHistorial);
@@ -304,12 +352,10 @@ namespace bufinscustomers.Services
 
         // ── Helpers privados ──────────────────────────────────────────────────
 
-        private int ContarFilasActuales(SqlConnection conn, SqlTransaction tx, int idEmpresa, int anio, byte modo)
+        private int ContarFilasActuales(SqlConnection conn, SqlTransaction tx, int idEmpresa, int anio, byte modo, int idEscenario)
         {
             int total = 0;
-            string where = modo == 0
-                ? "WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Anio AND Historico_Log = 0"
-                : "WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Anio";
+            string where = ConstruirWhere(modo);
 
             foreach (var tabla in _tablasIni)
             {
@@ -317,6 +363,7 @@ namespace bufinscustomers.Services
                 {
                     cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
                     cmd.Parameters.AddWithValue("@Anio", anio);
+                    cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
                     total += Convert.ToInt32(cmd.ExecuteScalar());
                 }
             }
@@ -324,7 +371,7 @@ namespace bufinscustomers.Services
         }
 
         private string SerializarTabla(SqlConnection conn, SqlTransaction tx,
-            string tabla, string whereClause, int idEmpresa, int anio)
+            string tabla, string whereClause, int idEmpresa, int anio, int idEscenario)
         {
             // Sin catch: si la lectura falla, la excepción sube y CrearSnapshotInterno
             // aborta el snapshot completo. Una tabla realmente vacía devuelve "[]" de
@@ -334,6 +381,7 @@ namespace bufinscustomers.Services
             {
                 cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
                 cmd.Parameters.AddWithValue("@Anio", anio);
+                cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
                 using (var r = cmd.ExecuteReader())
                 {
                     while (r.Read())
@@ -390,10 +438,10 @@ namespace bufinscustomers.Services
         }
 
         private void PurgarVersionesAntiguas(SqlConnection conn, SqlTransaction tx,
-            int idEmpresa, int anio, byte modo)
+            int idEmpresa, int anio, byte modo, int idEscenario)
         {
             // No se depende de un FK ON DELETE CASCADE: se borran primero los snapshots
-            // (hijos) de las versiones que sobran en este escenario, luego las versiones,
+            // (hijos) de las versiones que sobran en esta llave de cargue, luego las versiones,
             // y por último se barre cualquier snapshot huérfano que pudiera existir.
             // El ORDER BY EsVersionActual DESC garantiza que la versión activa (que tras
             // un rollback puede NO ser la de fecha más reciente) nunca se purgue.
@@ -406,7 +454,7 @@ namespace bufinscustomers.Services
                            ROW_NUMBER() OVER (
                                ORDER BY EsVersionActual DESC, FechaCargue DESC) AS rn
                     FROM dbo.HistorialVersionesCargues
-                    WHERE IdEmpresa = @IdEmpresa AND Anio = @Anio AND Modo = @Modo
+                    WHERE IdEmpresa = @IdEmpresa AND Anio = @Anio AND Modo = @Modo AND ISNULL(IdEscenario,1) = @IdEscenario
                 ) ranked
                 WHERE rn > @MaxVersiones;
 
@@ -425,7 +473,8 @@ namespace bufinscustomers.Services
                 cmd.Parameters.AddWithValue("@IdEmpresa",   idEmpresa);
                 cmd.Parameters.AddWithValue("@Anio",        anio);
                 cmd.Parameters.AddWithValue("@Modo",        modo);
-                cmd.Parameters.AddWithValue("@MaxVersiones", MaxVersionesPorEscenario);
+                cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
+                cmd.Parameters.AddWithValue("@MaxVersiones", MaxVersionesPorLlaveCargue);
                 cmd.ExecuteNonQuery();
             }
         }
@@ -457,7 +506,7 @@ namespace bufinscustomers.Services
 
         private static HistorialVersiones MapHistorial(SqlDataReader r)
         {
-            return new HistorialVersiones
+            var version = new HistorialVersiones
             {
                 Id                     = Convert.ToInt32(r["Id"]),
                 IdEmpresa              = Convert.ToInt32(r["IdEmpresa"]),
@@ -483,6 +532,13 @@ namespace bufinscustomers.Services
                                             ? Convert.ToInt32(r["NumeroVersionMes"])
                                             : 1
             };
+
+            // Columna incremental (Sql/003_HistorialVersionesCargues_AddEscenario.sql) — patrón
+            // de lectura retrocompatible: si la BD todavía no la tiene, queda en 1 (Escenario principal).
+            try { version.IdEscenario = r["IdEscenario"] != DBNull.Value ? Convert.ToInt32(r["IdEscenario"]) : 1; }
+            catch (IndexOutOfRangeException) { }
+
+            return version;
         }
     }
 }

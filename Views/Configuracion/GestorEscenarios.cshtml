@@ -1,0 +1,254 @@
+@model IEnumerable<bufinscustomers.Models.Escenario>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>@Resources.Strings.Esc_PageTitle</title>
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="~/Assets/Scripts/jquery-3.7.1.min.js"></script>
+    <script src="~/Assets/Scripts/bootstrap.bundle.min.js"></script>
+    <link href="~/Assets/css/configuracion-admin.css" rel="stylesheet" />
+</head>
+<body>
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-layer-group powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.Esc_PageTitle</h1>
+        </div>
+    </div>
+
+    <p class="text-muted mt-3" style="font-size: 0.88rem;">
+        <i class="fas fa-info-circle mr-1"></i>@Resources.Strings.Esc_PageHint
+    </p>
+
+    <div class="card shadow mb-4 mt-2">
+        <div class="card-body p-0">
+            <div class="table-responsive table-wrapper">
+                <table class="table table-bordered table-hover table-compact">
+                    <thead>
+                        <tr>
+                            <th class="col-id">Id</th>
+                            <th class="col-nombre">@Resources.Strings.Emp_LabelNombre</th>
+                            <th class="col-icono">@Resources.Strings.Menu_LabelOrden</th>
+                            <th class="col-estado">@Resources.Strings.Common_Estado</th>
+                            <th class="col-acciones">@Resources.Strings.Common_ThAcciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-3">
+                                    @Resources.Strings.Esc_NoEscenarios
+                                </td>
+                            </tr>
+                        }
+                        @foreach (var e in Model)
+                        {
+                            <tr>
+                                <td class="col-id">@e.Id</td>
+                                <td class="col-nombre"><strong>@e.Nombre</strong></td>
+                                <td class="col-icono">@e.Orden</td>
+                                <td class="col-estado">
+                                    @if (e.Activo)
+                                    {
+                                        <span class="badge-activo">@Resources.Strings.Common_Activo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-inactivo">@Resources.Strings.Common_Inactivo</span>
+                                    }
+                                </td>
+                                <td class="col-acciones">
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-primary" title="@Resources.Strings.Esc_TitleEditar"
+                                                data-toggle="modal" data-target="#editarModal"
+                                                onclick="setEditarEscenario(@e.Id, '@Html.Raw(e.Nombre.Replace("'", "\\'"))', @e.Orden, @(e.Activo ? "true" : "false"))">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        @if (e.Activo)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-danger" title="@Resources.Strings.Esc_TitleDesactivar"
+                                                    data-toggle="modal" data-target="#desactivarModal"
+                                                    onclick="setDesactivarEscenario(@e.Id, '@Html.Raw(e.Nombre.Replace("'", "\\'"))')">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#crearModal">
+                <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Esc_BtnCrear
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ MODAL CREAR ═══════════════════ -->
+    <div class="modal fade" id="crearModal" tabindex="-1" aria-labelledby="crearModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="crearModalLabel">
+                        <i class="fas fa-plus-circle" style="color:#583AFF;"></i> @Resources.Strings.Esc_ModalCreateTitle
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" action="@Url.Action("Crear", "GestorEscenarios")">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-body">
+                        <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
+                        <div class="mb-3">
+                            <label for="crearNombre" class="form-label">
+                                <i class="fas fa-tag mr-2" style="color:#583AFF;"></i>@Resources.Strings.Emp_LabelNombre <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control form-control-sm" id="crearNombre" name="nombre"
+                                   placeholder="Ej: Escenario 3" maxlength="100" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                            <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.Common_BtnCrear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ MODAL EDITAR ═══════════════════ -->
+    <div class="modal fade" id="editarModal" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editarModalLabel">
+                        <i class="fas fa-edit" style="color:#583AFF;"></i> @Resources.Strings.Esc_ModalEditTitle
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" action="@Url.Action("Editar", "GestorEscenarios")">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="editId" name="id" />
+                    <div class="modal-body">
+                        <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
+                        <div class="row">
+                            <div class="col-md-8 mb-3 mt-2">
+                                <label for="editNombre" class="form-label">
+                                    <i class="fas fa-tag mr-2" style="color:#583AFF;"></i>@Resources.Strings.Emp_LabelNombre <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="editNombre" name="nombre"
+                                       maxlength="100" required />
+                            </div>
+                            <div class="col-md-4 mb-3 mt-2">
+                                <label for="editOrden" class="form-label">
+                                    <i class="fas fa-sort-numeric-up mr-2" style="color:#583AFF;"></i>@Resources.Strings.Menu_LabelOrden
+                                </label>
+                                <input type="number" class="form-control form-control-sm" id="editOrden" name="orden"
+                                       min="0" max="999" />
+                            </div>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editActivo" name="activo" value="true" />
+                            <input type="hidden" name="activo" value="false" />
+                            <label class="form-check-label" for="editActivo">@Resources.Strings.Common_Activo</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                            <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-save mr-1"></i>@Resources.Strings.Common_GuardarCambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ MODAL DESACTIVAR ═══════════════════ -->
+    <div class="modal fade modal-confirm" id="desactivarModal" tabindex="-1" aria-labelledby="desactivarModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="desactivarModalLabel">
+                        <i class="fas fa-exclamation-triangle"></i> @Resources.Strings.Esc_ModalDesactivarTitle
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">
+                        <i class="fas fa-question-circle text-warning mr-2"></i>
+                        @Resources.Strings.Esc_ModalDesactivarBody <strong id="desactivarNombre"></strong>?
+                    </p>
+                    <p class="text-muted small mt-2 mb-0">@Resources.Strings.Esc_ModalDesactivarNote</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
+                    </button>
+                    <form method="post" action="@Url.Action("Desactivar", "GestorEscenarios")" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" id="desactivarId" name="id" />
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="fas fa-ban mr-1"></i>@Resources.Strings.Esc_BtnDesactivar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <script>
+            Swal.fire({
+                toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'error',
+                title: '@TempData["ErrorMessage"]', showConfirmButton: false, timer: 3000, timerProgressBar: true,
+                didOpen: (toast) => { toast.addEventListener('mouseenter', Swal.stopTimer); toast.addEventListener('mouseleave', Swal.resumeTimer); }
+            });
+        </script>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <script>
+            Swal.fire({
+                toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'success',
+                title: '@TempData["SuccessMessage"]', showConfirmButton: false, timer: 3000, timerProgressBar: true,
+                didOpen: (toast) => { toast.addEventListener('mouseenter', Swal.stopTimer); toast.addEventListener('mouseleave', Swal.resumeTimer); }
+            });
+        </script>
+    }
+
+    <script>
+        function setEditarEscenario(id, nombre, orden, activo) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editNombre').value = nombre;
+            document.getElementById('editOrden').value = orden;
+            document.getElementById('editActivo').checked = (activo === true || activo === 'true');
+        }
+
+        function setDesactivarEscenario(id, nombre) {
+            document.getElementById('desactivarId').value = id;
+            document.getElementById('desactivarNombre').textContent = '"' + nombre + '"';
+        }
+    </script>
+</body>
+</html>

@@ -79,6 +79,21 @@
                 </div>
             </div>
 
+            <div class="mc-field">
+                <label for="idEscenario">
+                    @Resources.Strings.Modelo_LabelEscenario
+                </label>
+                <select class="form-control" id="idEscenario">
+                    @if (ViewBag.Escenarios != null)
+                    {
+                        foreach (var escenario in ViewBag.Escenarios)
+                        {
+                            <option value="@escenario.Id">@escenario.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+
             <div class="mc-search" id="mcSearchWrap" style="display:none;">
                 <i class="fas fa-search"></i>
                 <input type="text" id="filtroResultados" autocomplete="off"
@@ -501,7 +516,8 @@
                 idEmpresa: idEmpresa,
                 idsModelos: idsModelos,
                 correos: correosRaw,
-                mensaje: $('#correoMensaje').val() || ''
+                mensaje: $('#correoMensaje').val() || '',
+                idEscenario: $('#idEscenario').val()
             },
             success: function (resp) {
                 clearInterval(timer);
@@ -550,7 +566,8 @@
             data: {
                 __RequestVerificationToken: _modelo.token,
                 idEmpresa: idEmpresa,
-                idModelo:  idModelo
+                idModelo:  idModelo,
+                idEscenario: $('#idEscenario').val()
             },
             success: function (resp) {
                 $('#loadingEjecucion').hide();
@@ -714,20 +731,21 @@
     function exportarExcel(modo, ids) {
         var idEmpresa = $('#idEmpresa').val();
         if (!idEmpresa) return;
+        var idEscenario = $('#idEscenario').val();
         ids = ids || [];
 
         var url, titulo;
         if (modo === 'multiple') {
             if (ids.length === 0) return;
-            url    = _modelo.urlExportarSeleccionados + '?idEmpresa=' + idEmpresa + '&idsModelos=' + ids.join(',');
+            url    = _modelo.urlExportarSeleccionados + '?idEmpresa=' + idEmpresa + '&idsModelos=' + ids.join(',') + '&idEscenario=' + idEscenario;
             titulo = _modelo.textos.exportandoSeleccionados;
         } else if (modo === 'seleccionado') {
             if (ids.length === 0) return;
             var nombreSel = $('.mc-modelo-pick[value="' + ids[0] + '"]').data('nombre') || '';
-            url    = _modelo.urlExportarIndividual + '?idEmpresa=' + idEmpresa + '&idModelo=' + ids[0];
+            url    = _modelo.urlExportarIndividual + '?idEmpresa=' + idEmpresa + '&idModelo=' + ids[0] + '&idEscenario=' + idEscenario;
             titulo = nombreSel ? _modelo.textos.btnDescargarModeloFmt.replace('{0}', nombreSel) : _modelo.textos.exportandoUno;
         } else {
-            url    = _modelo.urlExportarTodos + '?idEmpresa=' + idEmpresa;
+            url    = _modelo.urlExportarTodos + '?idEmpresa=' + idEmpresa + '&idEscenario=' + idEscenario;
             titulo = _modelo.textos.exportandoTodos;
         }
 

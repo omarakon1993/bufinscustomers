@@ -11,6 +11,7 @@ namespace bufinscustomers
             // Igual que HandleErrorAttribute, pero registra la excepción en AppLogger.
             filters.Add(new LoggingHandleErrorAttribute());
             filters.Add(new EmpresasViewBagFilter()); // <-- Aquí agregas tu filtro
+            filters.Add(new EscenariosViewBagFilter()); // puebla ViewBag.Escenarios en cada request
             filters.Add(new RegistroNavegacionFilter()); // registra las visitas a páginas (AuditoriaNavegacion)
         }
     }

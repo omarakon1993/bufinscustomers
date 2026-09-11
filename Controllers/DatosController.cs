@@ -143,7 +143,7 @@ namespace bufinscustomers.Controllers
         // ── Descargar la plantilla BUFINS rellena con los datos actuales ─────────
 
         [HttpGet]
-        public ActionResult ObtenerAniosConDatos(int idEmpresa)
+        public ActionResult ObtenerAniosConDatos(int idEmpresa, int idEscenario = 1)
         {
             try
             {
@@ -154,7 +154,7 @@ namespace bufinscustomers.Controllers
                 if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
                     return Json(new { success = false, message = "No tiene permisos para consultar esta empresa." }, JsonRequestBehavior.AllowGet);
 
-                var anios = _plantillaConDatosService.ObtenerAniosConDatos(idEmpresa)
+                var anios = _plantillaConDatosService.ObtenerAniosConDatos(idEmpresa, idEscenario)
                     .Select(a => new { anio = a.Anio, registros = a.Registros });
 
                 return Json(new { success = true, anios }, JsonRequestBehavior.AllowGet);
@@ -167,7 +167,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpGet]
-        public ActionResult DescargarPlantillaConDatos(int idEmpresa, string anios)
+        public ActionResult DescargarPlantillaConDatos(int idEmpresa, string anios, int idEscenario = 1)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null || !EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
@@ -187,7 +187,7 @@ namespace bufinscustomers.Controllers
             int totalFilas;
             try
             {
-                bytes = _plantillaConDatosService.GenerarExcel(idEmpresa, listaAnios, out totalFilas);
+                bytes = _plantillaConDatosService.GenerarExcel(idEmpresa, listaAnios, idEscenario, out totalFilas);
             }
             catch (Exception ex)
             {
@@ -207,13 +207,13 @@ namespace bufinscustomers.Controllers
             string sufijoAnios = ordenados.Count == 1
                 ? ordenados[0].ToString()
                 : $"{ordenados.First()}-{ordenados.Last()}";
-            string fileName = $"PlantillaConDatos_{empresaSanit}_{sufijoAnios}.xlsx";
+            string fileName = $"PlantillaConDatos_{empresaSanit}_Esc{idEscenario}_{sufijoAnios}.xlsx";
 
             new AuditoriaService().RegistrarCambio(
                 AuditoriaTipo.Cargues, AuditoriaAccion.Exportar, "PlantillaConDatos", idEmpresa.ToString(),
-                $"Descargó la plantilla con datos de '{empresaNombre}' — año(s) {string.Join(", ", ordenados)}, {totalFilas} fila(s).",
+                $"Descargó la plantilla con datos de '{empresaNombre}' (Escenario {idEscenario}) — año(s) {string.Join(", ", ordenados)}, {totalFilas} fila(s).",
                 null,
-                new { empresa = empresaNombre, anios = ordenados, totalFilas, archivo = fileName },
+                new { empresa = empresaNombre, anios = ordenados, totalFilas, archivo = fileName, escenario = idEscenario },
                 idEmpresa, entidadNombre: empresaNombre, severidad: AuditoriaSeveridad.Advertencia);
 
             new NotificacionesService().Crear(
@@ -225,7 +225,7 @@ namespace bufinscustomers.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult EjecutarModelo(int idEmpresa, string anio, int idModelo)
+        public ActionResult EjecutarModelo(int idEmpresa, string anio, int idModelo, int idEscenario = 1)
         {
             try
             {
@@ -257,6 +257,7 @@ namespace bufinscustomers.Controllers
                     command.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
                     command.Parameters.AddWithValue("@IdUsuario", usuario.Id);
                     command.Parameters.AddWithValue("@Año", anio);
+                    command.Parameters.AddWithValue("@IdEscenario", idEscenario);
                     command.CommandTimeout = 300;
 
                     connection.Open();
@@ -312,7 +313,7 @@ namespace bufinscustomers.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult EjecutarModeloAjax(int idEmpresa, int idModelo)
+        public ActionResult EjecutarModeloAjax(int idEmpresa, int idModelo, int idEscenario = 1)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null)
@@ -333,6 +334,7 @@ namespace bufinscustomers.Controllers
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
                     cmd.Parameters.AddWithValue("@IdUsuario", usuario.Id);
+                    cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
                     cmd.CommandTimeout = 300;
                     cn.Open();
 
@@ -394,8 +396,8 @@ namespace bufinscustomers.Controllers
                             var empresaEjecutada = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
                             new AuditoriaService().RegistrarCambio(
                                 AuditoriaTipo.Modelos, AuditoriaAccion.Ejecutar, "ModelosEjecucion", idModelo.ToString(),
-                                $"Modelo '{modelo.Nombre}' ejecutado para '{empresaEjecutada?.Nombre ?? "Empresa"}'.", null,
-                                new { empresa = empresaEjecutada?.Nombre, modelo = modelo.Nombre, filas = lastFilas.Count },
+                                $"Modelo '{modelo.Nombre}' ejecutado para '{empresaEjecutada?.Nombre ?? "Empresa"}' (Escenario {idEscenario}).", null,
+                                new { empresa = empresaEjecutada?.Nombre, modelo = modelo.Nombre, filas = lastFilas.Count, escenario = idEscenario },
                                 idEmpresa, entidadNombre: modelo.Nombre);
                         }
                         else
@@ -413,7 +415,7 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        public ActionResult ExportarTodosModelos(int idEmpresa)
+        public ActionResult ExportarTodosModelos(int idEmpresa, int idEscenario = 1)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null)
@@ -449,7 +451,7 @@ namespace bufinscustomers.Controllers
                             var ws = package.Worksheets.Add(sheetName);
                             try
                             {
-                                EjecutarModeloYEscribirHoja(cn, ws, modelo, idEmpresa, usuario.Id);
+                                EjecutarModeloYEscribirHoja(cn, ws, modelo, idEmpresa, usuario.Id, idEscenario);
                             }
                             catch (Exception exModelo)
                             {
@@ -480,12 +482,12 @@ namespace bufinscustomers.Controllers
                     string empId = !string.IsNullOrWhiteSpace(empresa?.Abreviatura)
                         ? empresa.Abreviatura
                         : (empresa?.Nombre ?? "Empresa").Replace(" ", "_");
-                    string fileName = $"Modelos_{empId}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx";
+                    string fileName = $"Modelos_{empId}_Esc{idEscenario}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx";
 
                     new AuditoriaService().RegistrarCambio(
                         AuditoriaTipo.Modelos, AuditoriaAccion.Exportar, "ModelosEjecucion", idEmpresa.ToString(),
-                        $"{modelos.Count} modelo(s) exportados de '{empresa?.Nombre ?? "Empresa"}'.", null,
-                        new { empresa = empresa?.Nombre, modelos = modelos.Select(m => m.Nombre).ToList(), archivo = fileName },
+                        $"{modelos.Count} modelo(s) exportados de '{empresa?.Nombre ?? "Empresa"}' (Escenario {idEscenario}).", null,
+                        new { empresa = empresa?.Nombre, modelos = modelos.Select(m => m.Nombre).ToList(), archivo = fileName, escenario = idEscenario },
                         idEmpresa, entidadNombre: empresa?.Nombre, severidad: AuditoriaSeveridad.Advertencia);
 
                     return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
@@ -552,13 +554,14 @@ namespace bufinscustomers.Controllers
         private static readonly HashSet<string> _moneyColNames =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Valor", "ValorAcumulado", "ValorFuturo", "ValorFuturoAcumulado", "ValorForecast", "ValorPresupuesto", "ValorPresupuestoAcumulado", "ValorPresupuestoConAjuste" };
 
-        private void EjecutarModeloYEscribirHoja(SqlConnection cn, IXLWorksheet ws, ModeloEjecucion modelo, int idEmpresa, int idUsuario)
+        private void EjecutarModeloYEscribirHoja(SqlConnection cn, IXLWorksheet ws, ModeloEjecucion modelo, int idEmpresa, int idUsuario, int idEscenario)
         {
             using (var cmd = new SqlCommand(modelo.NombreSP, cn))
             {
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
                 cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
+                cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
                 cmd.CommandTimeout = 180;
 
                 using (var reader = cmd.ExecuteReader())
@@ -653,7 +656,7 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        public ActionResult ExportarModeloIndividual(int idEmpresa, int idModelo)
+        public ActionResult ExportarModeloIndividual(int idEmpresa, int idModelo, int idEscenario = 1)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null)
@@ -690,7 +693,7 @@ namespace bufinscustomers.Controllers
                     using (var cn = new SqlConnection(CadenaConexion))
                     {
                         cn.Open();
-                        EjecutarModeloYEscribirHoja(cn, ws, modelo, idEmpresa, usuario.Id);
+                        EjecutarModeloYEscribirHoja(cn, ws, modelo, idEmpresa, usuario.Id, idEscenario);
                     }
 
                     byte[] fileBytes;
@@ -702,12 +705,12 @@ namespace bufinscustomers.Controllers
                     string empId = !string.IsNullOrWhiteSpace(empresa?.Abreviatura)
                         ? empresa.Abreviatura
                         : (empresa?.Nombre ?? "Empresa").Replace(" ", "_");
-                    string fileName = $"{sheetName}_{empId}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx";
+                    string fileName = $"{sheetName}_{empId}_Esc{idEscenario}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx";
 
                     new AuditoriaService().RegistrarCambio(
                         AuditoriaTipo.Modelos, AuditoriaAccion.Exportar, "ModelosEjecucion", idEmpresa.ToString(),
-                        $"1 modelo(s) exportados de '{empresa?.Nombre ?? "Empresa"}'.", null,
-                        new { empresa = empresa?.Nombre, modelos = new List<string> { modelo.Nombre }, archivo = fileName },
+                        $"1 modelo(s) exportados de '{empresa?.Nombre ?? "Empresa"}' (Escenario {idEscenario}).", null,
+                        new { empresa = empresa?.Nombre, modelos = new List<string> { modelo.Nombre }, archivo = fileName, escenario = idEscenario },
                         idEmpresa, entidadNombre: empresa?.Nombre, severidad: AuditoriaSeveridad.Advertencia);
 
                     return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
@@ -725,7 +728,7 @@ namespace bufinscustomers.Controllers
         /// solo Excel, una hoja por modelo. Mismo contrato de respuesta que <see cref="ExportarTodosModelos"/>:
         /// archivo binario si todos los modelos se ejecutan bien, o JSON { errores, exitosos } si alguno falla.
         /// </summary>
-        public ActionResult ExportarModelosSeleccionados(int idEmpresa, string idsModelos)
+        public ActionResult ExportarModelosSeleccionados(int idEmpresa, string idsModelos, int idEscenario = 1)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null)
@@ -773,7 +776,7 @@ namespace bufinscustomers.Controllers
                             var ws = package.Worksheets.Add(sheetName);
                             try
                             {
-                                EjecutarModeloYEscribirHoja(cn, ws, modelo, idEmpresa, usuario.Id);
+                                EjecutarModeloYEscribirHoja(cn, ws, modelo, idEmpresa, usuario.Id, idEscenario);
                                 ultimaHoja = sheetName;
                             }
                             catch (Exception exModelo)
@@ -806,13 +809,13 @@ namespace bufinscustomers.Controllers
                         ? empresa.Abreviatura
                         : (empresa?.Nombre ?? "Empresa").Replace(" ", "_");
                     string fileName = (modelos.Count == 1 && ultimaHoja != null)
-                        ? $"{ultimaHoja}_{empId}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx"
-                        : $"Modelos_{empId}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx";
+                        ? $"{ultimaHoja}_{empId}_Esc{idEscenario}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx"
+                        : $"Modelos_{empId}_Esc{idEscenario}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx";
 
                     new AuditoriaService().RegistrarCambio(
                         AuditoriaTipo.Modelos, AuditoriaAccion.Exportar, "ModelosEjecucion", idEmpresa.ToString(),
-                        $"{modelos.Count} modelo(s) exportados de '{empresa?.Nombre ?? "Empresa"}'.", null,
-                        new { empresa = empresa?.Nombre, modelos = modelos.Select(m => m.Nombre).ToList(), archivo = fileName },
+                        $"{modelos.Count} modelo(s) exportados de '{empresa?.Nombre ?? "Empresa"}' (Escenario {idEscenario}).", null,
+                        new { empresa = empresa?.Nombre, modelos = modelos.Select(m => m.Nombre).ToList(), archivo = fileName, escenario = idEscenario },
                         idEmpresa, entidadNombre: empresa?.Nombre, severidad: AuditoriaSeveridad.Advertencia);
 
                     return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
@@ -836,7 +839,7 @@ namespace bufinscustomers.Controllers
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult EnviarModelosPorCorreo(int idEmpresa, string idsModelos, string correos, string mensaje)
+        public ActionResult EnviarModelosPorCorreo(int idEmpresa, string idsModelos, string correos, string mensaje, int idEscenario = 1)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null)
@@ -909,7 +912,7 @@ namespace bufinscustomers.Controllers
                             var ws = package.Worksheets.Add(sheetName);
                             try
                             {
-                                EjecutarModeloYEscribirHoja(cn, ws, modelo, idEmpresa, usuario.Id);
+                                EjecutarModeloYEscribirHoja(cn, ws, modelo, idEmpresa, usuario.Id, idEscenario);
                                 ultimaHoja = sheetName;
                             }
                             catch (Exception exModelo)
@@ -940,8 +943,8 @@ namespace bufinscustomers.Controllers
                     ? empresa.Abreviatura
                     : (empresa?.Nombre ?? "Empresa").Replace(" ", "_");
                 string fileName = (modelos.Count == 1 && ultimaHoja != null)
-                    ? $"{ultimaHoja}_{empId}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx"
-                    : $"Modelos_{empId}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx";
+                    ? $"{ultimaHoja}_{empId}_Esc{idEscenario}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx"
+                    : $"Modelos_{empId}_Esc{idEscenario}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx";
 
                 bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
@@ -956,7 +959,7 @@ namespace bufinscustomers.Controllers
                     fileBytes,
                     esIngles);
 
-                string resumen = $"{modelos.Count} modelo(s) de '{empresa?.Nombre ?? "Empresa"}' enviados a {string.Join(", ", listaCorreos)}.";
+                string resumen = $"{modelos.Count} modelo(s) de '{empresa?.Nombre ?? "Empresa"}' (Escenario {idEscenario}) enviados a {string.Join(", ", listaCorreos)}.";
                 string descripcionAuditoria = $"Enviado por correo electrónico: {resumen}";
 
                 new NotificacionesService().Crear(usuario.Id, R("Notif_ModelosEnviadosCorreo"), resumen, "success", "/Datos/Modelo");
@@ -969,7 +972,8 @@ namespace bufinscustomers.Controllers
                         empresa = empresa?.Nombre,
                         modelos = modelos.Select(m => m.Nombre).ToList(),
                         destinatarios = listaCorreos,
-                        archivo = fileName
+                        archivo = fileName,
+                        escenario = idEscenario
                     },
                     idEmpresa, entidadNombre: empresa?.Nombre, severidad: AuditoriaSeveridad.Advertencia);
 
@@ -1007,7 +1011,7 @@ namespace bufinscustomers.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult CargarExcel(HttpPostedFileBase archivoExcel, int idEmpresaSeleccionada, int anioSeleccionado, string modoSeleccionado)
+        public ActionResult CargarExcel(HttpPostedFileBase archivoExcel, int idEmpresaSeleccionada, int anioSeleccionado, string modoSeleccionado, int idEscenarioSeleccionado = 1)
         {
             var resultado = new ResultadoCargaExcel();
             string nombreArchivoOriginal = "";
@@ -1121,11 +1125,11 @@ namespace bufinscustomers.Controllers
                                             string _snapUsuario = ((usuarioActual?.Nombre ?? "") + " " + (usuarioActual?.Apellidos ?? "")).Trim();
                                             _historialService.CrearSnapshotEnTransaccion(
                                                 conn, tx, idEmpresaSeleccionada, _snapEmpresa,
-                                                anioSeleccionado, 0, idUsuario, _snapUsuario, nombreArchivoOriginal);
+                                                anioSeleccionado, 0, idUsuario, _snapUsuario, nombreArchivoOriginal, idEscenarioSeleccionado);
                                         }
                                         catch (Exception snapEx) { LogToFile($"Advertencia snapshot ejecucion: {snapEx.Message}"); }
 
-                                        EliminarEjecucionDeIni(conn, anioSeleccionado, idEmpresaSeleccionada, tx);
+                                        EliminarEjecucionDeIni(conn, anioSeleccionado, idEmpresaSeleccionada, idEscenarioSeleccionado, tx);
 
                                         foreach (var hoja in package.Worksheets)
                                         {
@@ -1149,7 +1153,7 @@ namespace bufinscustomers.Controllers
                                             if (_mapeoHistorico.TryGetValue(nombreNorm, out string nombreTablaIni))
                                             {
                                                 detalle.NombreTabla = nombreTablaIni;
-                                                exitoHoja = GuardarEnIni(conn, dt, nombreTablaIni, idEmpresaSeleccionada, idUsuario, historicoLog: 0, tx: tx);
+                                                exitoHoja = GuardarEnIni(conn, dt, nombreTablaIni, idEmpresaSeleccionada, idUsuario, idEscenarioSeleccionado, historicoLog: 0, tx: tx);
                                             }
                                             else
                                             {
@@ -1187,7 +1191,7 @@ namespace bufinscustomers.Controllers
 
                                         if (!errorEnCargaEjecucion)
                                         {
-                                            RegistrarAuditoria(conn, nombreArchivoOriginal, idEmpresaSeleccionada, tx);
+                                            RegistrarAuditoria(conn, nombreArchivoOriginal, idEmpresaSeleccionada, idEscenarioSeleccionado, tx);
                                             tx.Commit();
                                         }
                                     }
@@ -1212,7 +1216,7 @@ namespace bufinscustomers.Controllers
                             if (resultadoValidacion.esExitoso)
                             {
                                 resultado.Exito = true;
-                                resultado.Mensaje = $"Carga exitosa: {resultado.TotalHojasProcesadas} tabla(s) con {resultado.TotalFilasInsertadas:N0} registros. {resultadoValidacion.mensaje}";
+                                resultado.Mensaje = $"Carga exitosa (Escenario {idEscenarioSeleccionado}): {resultado.TotalHojasProcesadas} tabla(s) con {resultado.TotalFilasInsertadas:N0} registros. {resultadoValidacion.mensaje}";
                             }
                             else
                             {
@@ -1239,11 +1243,11 @@ namespace bufinscustomers.Controllers
                                             string _snapUsuario = ((usuarioActual?.Nombre ?? "") + " " + (usuarioActual?.Apellidos ?? "")).Trim();
                                             _historialService.CrearSnapshotEnTransaccion(
                                                 conn, tx, idEmpresaSeleccionada, _snapEmpresa,
-                                                anioSeleccionado, 1, idUsuario, _snapUsuario, nombreArchivoOriginal);
+                                                anioSeleccionado, 1, idUsuario, _snapUsuario, nombreArchivoOriginal, idEscenarioSeleccionado);
                                         }
                                         catch (Exception snapEx) { LogToFile($"Advertencia snapshot historico: {snapEx.Message}"); }
 
-                                        EliminarAnosHistoricosDeIni(conn, anioSeleccionado, idEmpresaSeleccionada, tx);
+                                        EliminarAnosHistoricosDeIni(conn, anioSeleccionado, idEmpresaSeleccionada, idEscenarioSeleccionado, tx);
 
                                         foreach (var hoja in package.Worksheets)
                                         {
@@ -1275,7 +1279,7 @@ namespace bufinscustomers.Controllers
                                                 continue;
                                             }
 
-                                            if (!GuardarEnIni(conn, dt, nombreTablaIni, idEmpresaSeleccionada, idUsuario, tx: tx))
+                                            if (!GuardarEnIni(conn, dt, nombreTablaIni, idEmpresaSeleccionada, idUsuario, idEscenarioSeleccionado, tx: tx))
                                             {
                                                 detalle.Estado = "Error";
                                                 detalle.MensajeError = TempData["Mensaje"]?.ToString() ?? "Error al guardar en tabla historica";
@@ -1305,7 +1309,7 @@ namespace bufinscustomers.Controllers
 
                                         if (!errorEnCargaHistorico)
                                         {
-                                            RegistrarAuditoria(conn, nombreArchivoOriginal, idEmpresaSeleccionada, tx);
+                                            RegistrarAuditoria(conn, nombreArchivoOriginal, idEmpresaSeleccionada, idEscenarioSeleccionado, tx);
                                             tx.Commit();
                                         }
                                     }
@@ -1327,7 +1331,7 @@ namespace bufinscustomers.Controllers
                             }
 
                             resultado.Exito = true;
-                            resultado.Mensaje = $"Carga historica exitosa: {resultado.TotalHojasProcesadas} tabla(s) con {resultado.TotalFilasInsertadas:N0} registros.";
+                            resultado.Mensaje = $"Carga historica exitosa (Escenario {idEscenarioSeleccionado}): {resultado.TotalHojasProcesadas} tabla(s) con {resultado.TotalFilasInsertadas:N0} registros.";
                         }
 
                         GuardarLogEnSession();
@@ -1808,37 +1812,39 @@ namespace bufinscustomers.Controllers
             return dt;
         }
 
-        private void EliminarAnosHistoricosDeIni(SqlConnection conn, int anio, int idEmpresa, SqlTransaction tx = null)
+        private void EliminarAnosHistoricosDeIni(SqlConnection conn, int anio, int idEmpresa, int idEscenario, SqlTransaction tx = null)
         {
             foreach (var tablaIni in _mapeoHistorico.Values.Distinct())
             {
                 using (var cmd = new SqlCommand(
-                    $"DELETE FROM [dbo].[{tablaIni}] WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Ano", conn, tx))
+                    $"DELETE FROM [dbo].[{tablaIni}] WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Ano AND ISNULL(IdEscenario,1) = @IdEscenario", conn, tx))
                 {
                     cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
                     cmd.Parameters.AddWithValue("@Ano", anio);
+                    cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
                     cmd.ExecuteNonQuery();
                 }
-                LogToFile($"Eliminados datos históricos de {tablaIni} año {anio} para empresa {idEmpresa}");
+                LogToFile($"Eliminados datos históricos de {tablaIni} año {anio} escenario {idEscenario} para empresa {idEmpresa}");
             }
         }
 
-        private void EliminarEjecucionDeIni(SqlConnection conn, int anio, int idEmpresa, SqlTransaction tx = null)
+        private void EliminarEjecucionDeIni(SqlConnection conn, int anio, int idEmpresa, int idEscenario, SqlTransaction tx = null)
         {
             foreach (var tablaIni in _mapeoHistorico.Values.Distinct())
             {
                 using (var cmd = new SqlCommand(
-                    $"DELETE FROM [dbo].[{tablaIni}] WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Ano AND Historico_Log = 0", conn, tx))
+                    $"DELETE FROM [dbo].[{tablaIni}] WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Ano AND Historico_Log = 0 AND ISNULL(IdEscenario,1) = @IdEscenario", conn, tx))
                 {
                     cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
                     cmd.Parameters.AddWithValue("@Ano", anio);
+                    cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
                     cmd.ExecuteNonQuery();
                 }
-                LogToFile($"Eliminados datos de ejecución de {tablaIni} año {anio} para empresa {idEmpresa}");
+                LogToFile($"Eliminados datos de ejecución de {tablaIni} año {anio} escenario {idEscenario} para empresa {idEmpresa}");
             }
         }
 
-        private bool GuardarEnIni(SqlConnection conn, DataTable dtExcel, string nombreTablaIni, int idEmpresa, int idUsuario, byte historicoLog = 1, SqlTransaction tx = null)
+        private bool GuardarEnIni(SqlConnection conn, DataTable dtExcel, string nombreTablaIni, int idEmpresa, int idUsuario, int idEscenario, byte historicoLog = 1, SqlTransaction tx = null)
         {
             try
             {
@@ -1908,6 +1914,9 @@ namespace bufinscustomers.Controllers
                                 break;
                             case "IdEmpresa_Log":
                                 destRow[colIni] = idEmpresa;
+                                break;
+                            case "IdEscenario":
+                                destRow[colIni] = idEscenario;
                                 break;
                             case "IdUsuarioCargue_Log":
                                 destRow[colIni] = idUsuario;
@@ -2339,7 +2348,7 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        private void RegistrarAuditoria(SqlConnection conn, string nombreArchivo, int idEmpresaArchivo, SqlTransaction tx = null)
+        private void RegistrarAuditoria(SqlConnection conn, string nombreArchivo, int idEmpresaArchivo, int idEscenario, SqlTransaction tx = null)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null) return;
@@ -2347,21 +2356,42 @@ namespace bufinscustomers.Controllers
             string nombreEmpresa = _empresaService.ObtenerEmpresas()
                                                    .FirstOrDefault(e => e.Id == idEmpresaArchivo)?.Nombre ?? "Desconocida";
 
-            string sql = @"
+            // IdEscenario es una columna incremental (ver Sql/004_AuditoriaCargues_AddEscenario.sql);
+            // si aún no existe en la BD, el INSERT explícito fallaría — se intenta primero con la
+            // columna y, si la BD todavía no la tiene, se cae al INSERT sin ella.
+            string sqlConEscenario = @"
+        INSERT INTO dbo.AuditoriaCargues (FechaCargue, IdUsuario, Usuario, IdEmpresa, NombreEmpresa, NombreArchivo, IdEscenario)
+        VALUES (@Fecha, @IdUsuario, @Usuario, @IdEmpresa, @NombreEmpresa, @NombreArchivo, @IdEscenario)
+    ";
+            string sqlSinEscenario = @"
         INSERT INTO dbo.AuditoriaCargues (FechaCargue, IdUsuario, Usuario, IdEmpresa, NombreEmpresa, NombreArchivo)
         VALUES (@Fecha, @IdUsuario, @Usuario, @IdEmpresa, @NombreEmpresa, @NombreArchivo)
     ";
 
-            using (var cmd = new SqlCommand(sql, conn, tx))
+            void EjecutarInsert(string sql, bool incluirEscenario)
             {
-                cmd.Parameters.AddWithValue("@Fecha", DateTime.Now);
-                cmd.Parameters.AddWithValue("@IdUsuario", usuario.Id);
-                cmd.Parameters.AddWithValue("@Usuario", usuario.Nombre+" "+usuario.Apellidos ?? "");
-                cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresaArchivo);
-                cmd.Parameters.AddWithValue("@NombreEmpresa", nombreEmpresa);
-                cmd.Parameters.AddWithValue("@NombreArchivo", nombreArchivo);
+                using (var cmd = new SqlCommand(sql, conn, tx))
+                {
+                    cmd.Parameters.AddWithValue("@Fecha", DateTime.Now);
+                    cmd.Parameters.AddWithValue("@IdUsuario", usuario.Id);
+                    cmd.Parameters.AddWithValue("@Usuario", usuario.Nombre + " " + usuario.Apellidos ?? "");
+                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresaArchivo);
+                    cmd.Parameters.AddWithValue("@NombreEmpresa", nombreEmpresa);
+                    cmd.Parameters.AddWithValue("@NombreArchivo", nombreArchivo);
+                    if (incluirEscenario)
+                        cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
 
-                cmd.ExecuteNonQuery();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+
+            try
+            {
+                EjecutarInsert(sqlConEscenario, incluirEscenario: true);
+            }
+            catch (SqlException ex) when (ex.Message.IndexOf("IdEscenario", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                EjecutarInsert(sqlSinEscenario, incluirEscenario: false);
             }
         }
 

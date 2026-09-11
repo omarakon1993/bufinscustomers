@@ -86,6 +86,21 @@
                         </select>
                     </div>
                 </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label><i class="fas fa-database mr-1"></i>@Resources.Strings.Hist_LabelEscenario</label>
+                        <select id="filterEscenario" class="form-control">
+                            <option value="">@Resources.Strings.Common_Todos</option>
+                            @if (ViewBag.Escenarios != null)
+                            {
+                                foreach (var escenario in ViewBag.Escenarios)
+                                {
+                                    <option value="@escenario.Id" @(Model.EscenarioFiltro == (int)escenario.Id ? "selected" : "")>@escenario.Nombre</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
                 <div class="col-md-2 d-flex align-items-end">
                     <div class="btn-group-actions mb-3 w-100">
                         <button type="button" id="btnFiltrar" class="btn btn-modern-gradient w-100">
@@ -121,6 +136,7 @@
                                 }
                                 <th>@Resources.Strings.Hist_ThAnio</th>
                                 <th>@Resources.Strings.Hist_ThModo</th>
+                                <th>@Resources.Strings.Hist_ThEscenario</th>
                                 <th>@Resources.Strings.Hist_ThFecha</th>
                                 <th>@Resources.Strings.Hist_ThUsuario</th>
                                 <th>@Resources.Strings.Hist_ThArchivo</th>
@@ -137,7 +153,8 @@
                             {
                                 <tr data-empresa="@v.NombreEmpresa"
                                     data-anio="@v.Anio"
-                                    data-modo="@v.ModoTexto">
+                                    data-modo="@v.ModoTexto"
+                                    data-escenario="@v.IdEscenario">
                                     <td>
                                         <strong class="text-primary">@v.VersionDisplay</strong>
                                     </td>
@@ -151,6 +168,7 @@
                                             @v.ModoTexto
                                         </span>
                                     </td>
+                                    <td>@Resources.Strings.Hist_Escenario @v.IdEscenario</td>
                                     <td>
                                         <strong>@v.FechaCargue.ToString("dd/MM/yyyy")</strong><br />
                                         <small class="text-muted">@v.FechaCargue.ToString("HH:mm:ss")</small>
@@ -226,6 +244,7 @@
     <input type="hidden" name="idEmpresaFiltro" value="@Model.IdEmpresaFiltro" />
     <input type="hidden" name="anioFiltro"      value="@Model.AnioFiltro" />
     <input type="hidden" name="modoFiltro"      value="@Model.ModoFiltro" />
+    <input type="hidden" name="escenarioFiltro" value="@Model.EscenarioFiltro" />
 }
 
 @section scripts {
@@ -242,18 +261,20 @@
     $(document).ready(function () {
 
         function aplicarFiltro() {
-            var empresa = $('#filterEmpresa').val();
-            var anio    = $('#filterAnio').val();
-            var modo    = $('#filterModo').val();
+            var empresa   = $('#filterEmpresa').val();
+            var anio      = $('#filterAnio').val();
+            var modo      = $('#filterModo').val();
+            var escenario = $('#filterEscenario').val();
             var visibles = 0;
 
             $('#historialTable tbody tr').each(function () {
                 var $tr = $(this);
-                var matchEmpresa = !empresa || $tr.data('empresa') === empresa;
-                var matchAnio    = !anio    || String($tr.data('anio')) === anio;
-                var matchModo    = !modo    || $tr.data('modo') === modo;
+                var matchEmpresa   = !empresa   || $tr.data('empresa') === empresa;
+                var matchAnio      = !anio      || String($tr.data('anio')) === anio;
+                var matchModo      = !modo      || $tr.data('modo') === modo;
+                var matchEscenario = !escenario || String($tr.data('escenario')) === escenario;
 
-                if (matchEmpresa && matchAnio && matchModo) {
+                if (matchEmpresa && matchAnio && matchModo && matchEscenario) {
                     $tr.show();
                     visibles++;
                 } else {
@@ -272,7 +293,7 @@
             }
         }
 
-        $('#filterEmpresa, #filterAnio, #filterModo').on('change', function () {
+        $('#filterEmpresa, #filterAnio, #filterModo, #filterEscenario').on('change', function () {
             aplicarFiltro();
         });
 
@@ -281,7 +302,7 @@
         });
 
         $('#btnLimpiar').on('click', function () {
-            $('#filterEmpresa, #filterAnio, #filterModo').val('');
+            $('#filterEmpresa, #filterAnio, #filterModo, #filterEscenario').val('');
             $('#historialTable tbody tr').show();
             $('#totalRegistros').text(_histTotal + ' ' + _histMsg.totalVersiones);
             if (_histTotal > 0) {

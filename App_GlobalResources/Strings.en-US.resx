@@ -155,6 +155,7 @@
   <data name="Datos_UploadHint2" xml:space="preserve"><value>Existing data for the selected company will be replaced.</value></data>
   <data name="Datos_UploadHint3" xml:space="preserve"><value>If an error occurs in any sheet, all loaded data is cleared.</value></data>
   <data name="Datos_EmpresaLabel" xml:space="preserve"><value>Company to upload:</value></data>
+  <data name="Datos_EscenarioLabel" xml:space="preserve"><value>Scenario:</value></data>
   <data name="Datos_SelectEmpresa" xml:space="preserve"><value>Select a company...</value></data>
   <data name="Datos_DropText" xml:space="preserve"><value>Drag your file here or click to select</value></data>
   <data name="Datos_DropSubtext" xml:space="preserve"><value>Allowed formats: .xlsx, .xlsm</value></data>
@@ -252,6 +253,7 @@
   <data name="Modelo_PageTitle" xml:space="preserve"><value>BUFINS Model Execution</value></data>
   <data name="Modelo_CardTitle" xml:space="preserve"><value>Select company, year and model</value></data>
   <data name="Modelo_LabelEmpresa" xml:space="preserve"><value>Company</value></data>
+  <data name="Modelo_LabelEscenario" xml:space="preserve"><value>Scenario</value></data>
   <data name="Modelo_SelectEmpresa" xml:space="preserve"><value>-- Select a company --</value></data>
   <data name="Modelo_LabelAnio" xml:space="preserve"><value>Execution Year</value></data>
   <data name="Modelo_SelectEmpresaPrimero" xml:space="preserve"><value>-- Select a company first --</value></data>
@@ -673,6 +675,25 @@
   <data name="Mod_IconoHint" xml:space="preserve"><value>(FontAwesome class)</value></data>
   <data name="Mod_HintSP" xml:space="preserve"><value>Exact name of the stored procedure in the database</value></data>
   <data name="Mod_HintDescripcion" xml:space="preserve"><value>Brief explanation of what this model calculates (optional)</value></data>
+
+  <!-- DATA SCENARIOS -->
+  <data name="Esc_PageTitle" xml:space="preserve"><value>Scenario manager</value></data>
+  <data name="Esc_PageHint" xml:space="preserve"><value>A scenario is a full parallel copy of the loaded data (same years, same company configuration). Scenario 1 is always the main one.</value></data>
+  <data name="Esc_NoEscenarios" xml:space="preserve"><value>No scenarios registered.</value></data>
+  <data name="Esc_TitleDesactivar" xml:space="preserve"><value>Deactivate scenario</value></data>
+  <data name="Esc_TitleEditar" xml:space="preserve"><value>Edit scenario</value></data>
+  <data name="Esc_BtnCrear" xml:space="preserve"><value>Create scenario</value></data>
+  <data name="Esc_ModalCreateTitle" xml:space="preserve"><value>Create scenario</value></data>
+  <data name="Esc_ModalEditTitle" xml:space="preserve"><value>Edit scenario</value></data>
+  <data name="Esc_ModalDesactivarTitle" xml:space="preserve"><value>Deactivate scenario</value></data>
+  <data name="Esc_ModalDesactivarBody" xml:space="preserve"><value>Are you sure you want to deactivate scenario</value></data>
+  <data name="Esc_ModalDesactivarNote" xml:space="preserve"><value>The scenario is not deleted (it stays referenced by data already loaded under it); it just stops appearing as an option in Upload, History and Models.</value></data>
+  <data name="Esc_BtnDesactivar" xml:space="preserve"><value>Deactivate</value></data>
+  <data name="GestorEscenarios_ErrorNombreRequerido" xml:space="preserve"><value>The scenario name is required.</value></data>
+  <data name="GestorEscenarios_ErrorGuardar" xml:space="preserve"><value>The scenario could not be saved. Please try again.</value></data>
+  <data name="GestorEscenarios_Creado" xml:space="preserve"><value>Scenario '{0}' created successfully.</value></data>
+  <data name="GestorEscenarios_Editado" xml:space="preserve"><value>Scenario '{0}' updated successfully.</value></data>
+  <data name="GestorEscenarios_Desactivado" xml:space="preserve"><value>Scenario deactivated successfully.</value></data>
 
   <!-- AI PROMPTS MANAGER -->
   <data name="Prompt_PageTitle" xml:space="preserve"><value>AI Prompts Manager</value></data>
@@ -1208,7 +1229,7 @@
   <data name="Audit_TR_Ayer" xml:space="preserve"><value>yesterday {0}</value></data>
   <data name="Audit_TR_Hoy" xml:space="preserve"><value>today {0}</value></data>
   <data name="Audit_Meses" xml:space="preserve"><value>Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec</value></data>
-  <data name="Audit_AreasMap" xml:space="preserve"><value>SEGURIDAD=Access|PERMISOS=Permissions &amp; access|MENU=System menu|MODELOS=Models|USUARIOS=Users|EMPRESAS=Companies|GRUPOS_EMPRESARIALES=Business groups|CONFIGURACION=Financial configuration|CARGUES=Data upload</value></data>
+  <data name="Audit_AreasMap" xml:space="preserve"><value>SEGURIDAD=Access|PERMISOS=Permissions &amp; access|MENU=System menu|MODELOS=Models|USUARIOS=Users|EMPRESAS=Companies|GRUPOS_EMPRESARIALES=Business groups|CONFIGURACION=Financial configuration|CARGUES=Data upload|ESCENARIOS=Scenarios</value></data>
   <data name="Audit_AccFraseMap" xml:space="preserve"><value>Crear=Created|Editar=Modified|Eliminar=Deleted|Asignar=Updated permissions|Enviar=Sent by email|Login=Signed in|LoginFallido=Failed sign-in attempt|Bloqueo=Account locked</value></data>
   <data name="Audit_AccOptMap" xml:space="preserve"><value>Crear=Created|Editar=Modified|Eliminar=Deleted|Asignar=Assigned|Enviar=Sent</value></data>
   <data name="Audit_CamposMap" xml:space="preserve"><value>empresa=Company|modelos=Models sent|destinatarios=Recipients|archivo=File|Nombre=Name|Apellidos=Last name|Correo=Email|Telefono=Phone|Usuario=Username|Admin=Role|Activo=Active|IdEmpresa=Company|EmpNombre=Name|EmpNit=Tax ID|EmpDireccion=Address|EmpTelefono=Phone|EmpCorreo=Email|Abreviatura=Abbreviation|IdGrupoEmpresarial=Business group|NombreSP=Stored procedure|Descripcion=Description|Icono=Icon|Orden=Order|Codigo=Code|idUsuario=User|permisos=Menu options</value></data>
@@ -1397,12 +1418,15 @@
   <data name="Hist_PageTitle" xml:space="preserve"><value>Upload History</value></data>
   <data name="Hist_HeaderTitle" xml:space="preserve"><value>Upload Version History</value></data>
   <data name="Hist_LabelModo" xml:space="preserve"><value>Mode</value></data>
+  <data name="Hist_LabelEscenario" xml:space="preserve"><value>Scenario</value></data>
   <data name="Hist_ModoEjecucion" xml:space="preserve"><value>Execution</value></data>
   <data name="Hist_ModoHistorico" xml:space="preserve"><value>Historical</value></data>
   <data name="Hist_ThVersion" xml:space="preserve"><value>Version</value></data>
   <data name="Hist_ThEmpresa" xml:space="preserve"><value>Company</value></data>
   <data name="Hist_ThAnio" xml:space="preserve"><value>Year</value></data>
   <data name="Hist_ThModo" xml:space="preserve"><value>Mode</value></data>
+  <data name="Hist_ThEscenario" xml:space="preserve"><value>Scenario</value></data>
+  <data name="Hist_Escenario" xml:space="preserve"><value>Scenario</value></data>
   <data name="Hist_ThFecha" xml:space="preserve"><value>Upload Date</value></data>
   <data name="Hist_ThUsuario" xml:space="preserve"><value>User</value></data>
   <data name="Hist_ThArchivo" xml:space="preserve"><value>File</value></data>

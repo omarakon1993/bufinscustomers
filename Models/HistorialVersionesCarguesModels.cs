@@ -11,6 +11,7 @@ namespace bufinscustomers.Models
         public int Anio { get; set; }
         public byte Modo { get; set; }
         public string ModoTexto => Modo == 0 ? "Ejecución" : "Histórico";
+        public int IdEscenario { get; set; } = 1;
         public DateTime FechaCargue { get; set; }
         public int IdUsuario { get; set; }
         public string NombreUsuario { get; set; }
@@ -32,6 +33,7 @@ namespace bufinscustomers.Models
         public int? IdEmpresaFiltro { get; set; }
         public int? AnioFiltro { get; set; }
         public byte? ModoFiltro { get; set; }
+        public int? EscenarioFiltro { get; set; }
         public int MaxVersiones { get; set; } = 3;
     }
 }

@@ -55,7 +55,7 @@ namespace bufinscustomers.Services
         /// Años con datos cargados para la empresa, con el total de filas (suma de las 9 tablas Ini_),
         /// ordenados de más reciente a más antiguo.
         /// </summary>
-        public List<AnioConDatos> ObtenerAniosConDatos(int idEmpresa)
+        public List<AnioConDatos> ObtenerAniosConDatos(int idEmpresa, int idEscenario = 1)
         {
             var acumulado = new Dictionary<int, int>();
 
@@ -67,9 +67,10 @@ namespace bufinscustomers.Services
                 {
                     using (var cmd = new SqlCommand(
                         $"SELECT [Año] AS Anio, COUNT(*) AS Total FROM dbo.[{tabla}] " +
-                        "WHERE IdEmpresa_Log = @IdEmpresa AND [Año] IS NOT NULL GROUP BY [Año]", cn))
+                        "WHERE IdEmpresa_Log = @IdEmpresa AND ISNULL(IdEscenario,1) = @IdEscenario AND [Año] IS NOT NULL GROUP BY [Año]", cn))
                     {
                         cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                        cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
                         using (var r = cmd.ExecuteReader())
                         {
                             while (r.Read())
@@ -95,7 +96,7 @@ namespace bufinscustomers.Services
         /// para la empresa y los años indicados. <paramref name="totalFilas"/> devuelve el total de
         /// filas escritas (0 = no había datos para esos años).
         /// </summary>
-        public byte[] GenerarExcel(int idEmpresa, List<int> anios, out int totalFilas)
+        public byte[] GenerarExcel(int idEmpresa, List<int> anios, int idEscenario, out int totalFilas)
         {
             totalFilas = 0;
 
@@ -160,9 +161,10 @@ namespace bufinscustomers.Services
 
                         using (var cmd = new SqlCommand(
                             $"SELECT {listaCols} FROM dbo.[{tablaIni}] " +
-                            $"WHERE IdEmpresa_Log = @IdEmpresa AND [Año] IN ({inAnios}){orderBy}", cn))
+                            $"WHERE IdEmpresa_Log = @IdEmpresa AND ISNULL(IdEscenario,1) = @IdEscenario AND [Año] IN ({inAnios}){orderBy}", cn))
                         {
                             cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                            cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
                             for (int i = 0; i < anios.Count; i++)
                                 cmd.Parameters.AddWithValue("@a" + i, anios[i]);
 
