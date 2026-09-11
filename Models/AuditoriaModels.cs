@@ -69,6 +69,7 @@ namespace bufinscustomers.Models
         public const string Modelos       = "MODELOS";
         public const string Grupos        = "GRUPOS_EMPRESARIALES";
         public const string Menu          = "MENU";
+        public const string Cargues       = "CARGUES";
     }
 
     public static class AuditoriaAccion

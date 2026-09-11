@@ -24,6 +24,7 @@ namespace bufinscustomers.Controllers
         private readonly ConfiguracionEmpresaService _configuracionService = new ConfiguracionEmpresaService();
         private readonly ModeloService _modeloService = new ModeloService();
         private readonly HistorialVersionesCarguesService _historialService = new HistorialVersionesCarguesService();
+        private readonly PlantillaConDatosService _plantillaConDatosService = new PlantillaConDatosService();
         private StringBuilder _logBuilder = new StringBuilder();
 
         // Mapeo hoja Z_ → tabla Ini_. Fuente única: Helpers/TablasCargueHelper.cs
@@ -137,6 +138,89 @@ namespace bufinscustomers.Controllers
             {
                 return Json(new { success = false, message = "Error: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
+        }
+
+        // ── Descargar la plantilla BUFINS rellena con los datos actuales ─────────
+
+        [HttpGet]
+        public ActionResult ObtenerAniosConDatos(int idEmpresa)
+        {
+            try
+            {
+                var usuario = UsuarioSesionHelper.UsuarioActual;
+                if (usuario == null)
+                    return Json(new { success = false, message = "Sesión no válida." }, JsonRequestBehavior.AllowGet);
+
+                if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
+                    return Json(new { success = false, message = "No tiene permisos para consultar esta empresa." }, JsonRequestBehavior.AllowGet);
+
+                var anios = _plantillaConDatosService.ObtenerAniosConDatos(idEmpresa)
+                    .Select(a => new { anio = a.Anio, registros = a.Registros });
+
+                return Json(new { success = true, anios }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "ObtenerAniosConDatos");
+                return Json(new { success = false, message = "Error: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public ActionResult DescargarPlantillaConDatos(int idEmpresa, string anios)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (usuario == null || !EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
+                return Json(new { error = R("Datos_PlantillaConDatosError") }, JsonRequestBehavior.AllowGet);
+
+            var listaAnios = (anios ?? "")
+                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => int.TryParse(s.Trim(), out int n) ? n : 0)
+                .Where(n => n > 0)
+                .Distinct()
+                .ToList();
+
+            if (listaAnios.Count == 0)
+                return Json(new { error = R("Datos_PlantillaConDatosSinSeleccion") }, JsonRequestBehavior.AllowGet);
+
+            byte[] bytes;
+            int totalFilas;
+            try
+            {
+                bytes = _plantillaConDatosService.GenerarExcel(idEmpresa, listaAnios, out totalFilas);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "DescargarPlantillaConDatos");
+                return Json(new { error = R("Datos_PlantillaConDatosError") }, JsonRequestBehavior.AllowGet);
+            }
+
+            if (totalFilas == 0)
+                return Json(new { error = R("Datos_PlantillaConDatosSinDatos") }, JsonRequestBehavior.AllowGet);
+
+            var empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+            string empresaNombre = empresa?.Nombre ?? "Empresa";
+            string empresaSanit = Regex.Replace(
+                !string.IsNullOrWhiteSpace(empresa?.Abreviatura) ? empresa.Abreviatura : empresaNombre,
+                "[^A-Za-z0-9]", "_");
+            var ordenados = listaAnios.OrderBy(a => a).ToList();
+            string sufijoAnios = ordenados.Count == 1
+                ? ordenados[0].ToString()
+                : $"{ordenados.First()}-{ordenados.Last()}";
+            string fileName = $"PlantillaConDatos_{empresaSanit}_{sufijoAnios}.xlsx";
+
+            new AuditoriaService().RegistrarCambio(
+                AuditoriaTipo.Cargues, AuditoriaAccion.Exportar, "PlantillaConDatos", idEmpresa.ToString(),
+                $"Descargó la plantilla con datos de '{empresaNombre}' — año(s) {string.Join(", ", ordenados)}, {totalFilas} fila(s).",
+                null,
+                new { empresa = empresaNombre, anios = ordenados, totalFilas, archivo = fileName },
+                idEmpresa, entidadNombre: empresaNombre, severidad: AuditoriaSeveridad.Advertencia);
+
+            new NotificacionesService().Crear(
+                usuario.Id, R("Notif_PlantillaConDatosDescargada"),
+                $"{empresaNombre} — {string.Join(", ", ordenados)}", "success", "/Datos/CargueExcel");
+
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
         [HttpPost]

@@ -159,8 +159,9 @@
   <data name="Datos_DropText" xml:space="preserve"><value>Drag your file here or click to select</value></data>
   <data name="Datos_DropSubtext" xml:space="preserve"><value>Allowed formats: .xlsx, .xlsm</value></data>
   <data name="Datos_BtnCargar" xml:space="preserve"><value>Upload Data</value></data>
-  <data name="Datos_BtnInstructivo" xml:space="preserve"><value>Dynamic Guide</value></data>
-  <data name="Datos_BtnInstructivoExcel" xml:space="preserve"><value>Excel Guide</value></data>
+  <data name="Datos_BtnInstructivo" xml:space="preserve"><value>Guide</value></data>
+  <data name="Datos_BtnInstructivoExcel" xml:space="preserve"><value>Download guide</value></data>
+  <data name="Datos_SinResultadosHoja" xml:space="preserve"><value>No sheets match your search.</value></data>
   <data name="Datos_BtnPlantilla" xml:space="preserve"><value>Template</value></data>
   <data name="Datos_BtnDescargarLog" xml:space="preserve"><value>Download Log</value></data>
   <data name="Datos_BtnQuitarArchivo" xml:space="preserve"><value>Remove file</value></data>
@@ -178,6 +179,21 @@
   <data name="Datos_ThFilas" xml:space="preserve"><value>Rows</value></data>
   <data name="Datos_ThColumnas" xml:space="preserve"><value>Columns</value></data>
   <data name="Datos_ThDetalle" xml:space="preserve"><value>Detail</value></data>
+
+  <!-- DATOS / DOWNLOAD TEMPLATE WITH DATA -->
+  <data name="Datos_BtnPlantillaConDatos" xml:space="preserve"><value>Template with data</value></data>
+  <data name="Datos_TipPlantillaConDatosBloqueado" xml:space="preserve"><value>Select a company first</value></data>
+  <data name="Datos_TipPlantillaConDatosHabilitado" xml:space="preserve"><value>Export the BUFINS template with the company's current data from the database</value></data>
+  <data name="Datos_ModalPlantillaConDatos_Titulo" xml:space="preserve"><value>Download template with data</value></data>
+  <data name="Datos_ModalPlantillaConDatos_Intro" xml:space="preserve"><value>Select the years to include. A single Excel file will be downloaded with the BUFINS template structure and the data currently loaded in the system.</value></data>
+  <data name="Datos_ModalPlantillaConDatos_SeleccionarTodos" xml:space="preserve"><value>Select all</value></data>
+  <data name="Datos_ModalPlantillaConDatos_Registros" xml:space="preserve"><value>records</value></data>
+  <data name="Datos_ModalPlantillaConDatos_SinAnios" xml:space="preserve"><value>This company has no data loaded.</value></data>
+  <data name="Datos_ModalPlantillaConDatos_Descargar" xml:space="preserve"><value>Download</value></data>
+  <data name="Datos_JS_PlantillaConDatosGenerando" xml:space="preserve"><value>Generating template with data…</value></data>
+  <data name="Datos_PlantillaConDatosSinDatos" xml:space="preserve"><value>There is no data for the selected years.</value></data>
+  <data name="Datos_PlantillaConDatosSinSeleccion" xml:space="preserve"><value>Select at least one year.</value></data>
+  <data name="Datos_PlantillaConDatosError" xml:space="preserve"><value>The template with data could not be generated.</value></data>
 
   <!-- DATOS / INSTRUCTIVO MODAL -->
   <data name="Datos_ModalTitle" xml:space="preserve"><value>Usage Guide</value></data>
@@ -1192,7 +1208,7 @@
   <data name="Audit_TR_Ayer" xml:space="preserve"><value>yesterday {0}</value></data>
   <data name="Audit_TR_Hoy" xml:space="preserve"><value>today {0}</value></data>
   <data name="Audit_Meses" xml:space="preserve"><value>Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec</value></data>
-  <data name="Audit_AreasMap" xml:space="preserve"><value>SEGURIDAD=Access|PERMISOS=Permissions &amp; access|MENU=System menu|MODELOS=Models|USUARIOS=Users|EMPRESAS=Companies|GRUPOS_EMPRESARIALES=Business groups|CONFIGURACION=Financial configuration</value></data>
+  <data name="Audit_AreasMap" xml:space="preserve"><value>SEGURIDAD=Access|PERMISOS=Permissions &amp; access|MENU=System menu|MODELOS=Models|USUARIOS=Users|EMPRESAS=Companies|GRUPOS_EMPRESARIALES=Business groups|CONFIGURACION=Financial configuration|CARGUES=Data upload</value></data>
   <data name="Audit_AccFraseMap" xml:space="preserve"><value>Crear=Created|Editar=Modified|Eliminar=Deleted|Asignar=Updated permissions|Enviar=Sent by email|Login=Signed in|LoginFallido=Failed sign-in attempt|Bloqueo=Account locked</value></data>
   <data name="Audit_AccOptMap" xml:space="preserve"><value>Crear=Created|Editar=Modified|Eliminar=Deleted|Asignar=Assigned|Enviar=Sent</value></data>
   <data name="Audit_CamposMap" xml:space="preserve"><value>empresa=Company|modelos=Models sent|destinatarios=Recipients|archivo=File|Nombre=Name|Apellidos=Last name|Correo=Email|Telefono=Phone|Usuario=Username|Admin=Role|Activo=Active|IdEmpresa=Company|EmpNombre=Name|EmpNit=Tax ID|EmpDireccion=Address|EmpTelefono=Phone|EmpCorreo=Email|Abreviatura=Abbreviation|IdGrupoEmpresarial=Business group|NombreSP=Stored procedure|Descripcion=Description|Icono=Icon|Orden=Order|Codigo=Code|idUsuario=User|permisos=Menu options</value></data>
@@ -1369,6 +1385,7 @@
   <data name="Notif_ErrorModelo" xml:space="preserve"><value>Model error</value></data>
   <data name="Notif_ModelosEnviadosCorreo" xml:space="preserve"><value>Models sent by email</value></data>
   <data name="Notif_ErrorEnvioCorreoModelos" xml:space="preserve"><value>Error sending models by email</value></data>
+  <data name="Notif_PlantillaConDatosDescargada" xml:space="preserve"><value>Template with data downloaded</value></data>
   <data name="Notif_EmpresaCreada" xml:space="preserve"><value>Company created</value></data>
   <data name="Notif_EmpresaEliminada" xml:space="preserve"><value>Company deleted</value></data>
   <data name="Notif_UsuarioCreado" xml:space="preserve"><value>User created</value></data>

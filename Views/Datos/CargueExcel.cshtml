@@ -156,12 +156,16 @@
                 <button type="button" id="btnInstructivo" class="btn btn-modern-secondary">
                     <i class="fas fa-book mr-2"></i>@Resources.Strings.Datos_BtnInstructivo
                 </button>
-                <a href="~/Assets/Plantillas/InstructivoPlantillaCargue.xlsx" download class="btn btn-modern-excel">
-                    <i class="fas fa-download mr-2"></i>@Resources.Strings.Datos_BtnInstructivoExcel
-                </a>
                 <a href="~/Assets/Plantillas/PlantillaBufins.xlsx" download class="btn btn-modern-excel">
                     <i class="fas fa-file-download mr-2"></i>@Resources.Strings.Datos_BtnPlantilla
                 </a>
+                <span id="wrapPlantillaConDatos" class="d-inline-block" tabindex="0"
+                      title="@Resources.Strings.Datos_TipPlantillaConDatosBloqueado">
+                    <button type="button" id="btnPlantillaConDatos" class="btn btn-modern-excel"
+                            title="@Resources.Strings.Datos_TipPlantillaConDatosBloqueado" style="pointer-events: none;" disabled>
+                        <i class="fas fa-database mr-2"></i>@Resources.Strings.Datos_BtnPlantillaConDatos
+                    </button>
+                </span>
                 @if (resultado != null && resultado.MostrarDescargaLog)
                 {
                     <a href="@Url.Action("DescargarLog", "Datos")" class="btn btn-modern-secondary">
@@ -291,133 +295,180 @@
     </div>
 </div>
 
-<!-- Modal Instructivo Dinámico -->
+<!-- Modal Instructivo -->
 <style>
     #instructivoModal .modal-content {
         border: none;
-        border-radius: 1rem;
+        border-radius: 14px;
         overflow: hidden;
-        box-shadow: 0 25px 60px rgba(88, 58, 255, 0.2);
+        box-shadow: 0 24px 60px rgba(88, 58, 255, 0.22);
     }
     #instructivoModal .modal-header {
         background: var(--content-gradient);
-        padding: 1.25rem 1.75rem;
+        padding: 1.05rem 1.5rem;
         border-bottom: none;
+        align-items: center;
+    }
+    #instructivoModal .modal-title {
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.12rem;
+        margin: 0;
+        letter-spacing: -0.2px;
+    }
+    #instructivoModal .instr-subtitle { color: rgba(255, 255, 255, 0.72); font-size: 0.76rem; }
+    #instructivoModal .instr-brand-badge {
+        width: 38px; height: 38px;
+        border-radius: 11px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        color: #fff;
+        font-weight: 800;
+        font-size: 1.15rem;
+        letter-spacing: -0.5px;
+        font-family: 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        flex-shrink: 0;
     }
     #instructivoModal .modal-body {
-        padding: 1.75rem;
+        padding: 1.4rem 1.5rem;
         color: #2d3748;
-        font-size: 0.92rem;
+        font-size: 0.88rem;
         line-height: 1.6;
-        max-height: 70vh;
-        overflow-y: auto;
     }
     #instructivoModal .modal-footer {
-        border-top: 1px solid #e2e8f0;
-        padding: 1rem 1.75rem;
+        border-top: 1px solid #e9ecf5;
+        padding: 0.85rem 1.5rem;
         background: #f8f9fc;
     }
-    #instructivoModal .instructivo-intro {
-        background: linear-gradient(135deg, #f0f4ff, #eef2ff);
-        border-left: 4px solid #583AFF;
-        border-radius: 0 0.5rem 0.5rem 0;
-        padding: 1rem 1.25rem;
-        margin-bottom: 1.25rem;
+
+    /* Intro */
+    #instructivoModal .instr-intro {
+        background: #f5f6ff;
+        border: 1px solid #e6e8ff;
+        border-radius: 10px;
+        padding: 13px 15px;
+        margin-bottom: 16px;
+        font-size: 0.84rem;
+        color: #4a5168;
+        line-height: 1.55;
     }
-    #instructivoModal .instructivo-intro p {
-        margin-bottom: 0.5rem;
+    #instructivoModal .instr-intro p { margin: 0; display: flex; gap: 0.55rem; }
+    #instructivoModal .instr-intro p + p { margin-top: 0.5rem; }
+    #instructivoModal .instr-intro i { margin-top: 0.15rem; color: #583AFF; flex-shrink: 0; }
+
+    /* Buscador */
+    #instructivoModal .instr-search-wrap { position: relative; margin-bottom: 14px; }
+    #instructivoModal .instr-search-wrap > i {
+        position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+        color: #9aa3b8; font-size: 0.82rem;
     }
-    #instructivoModal .instructivo-intro p:last-child {
-        margin-bottom: 0;
+    #instructivoModal .instr-search {
+        width: 100%;
+        border: 1.5px solid #e4e7f2;
+        border-radius: 9px;
+        padding: 0.55rem 0.9rem 0.55rem 2.35rem;
+        font-size: 0.85rem;
+        color: #2d3748;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
-    #instructivoModal .btn-section-toggle {
-        border: none;
-        padding: 12px 20px;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.9rem;
-        letter-spacing: 0.3px;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    #instructivoModal .btn-section-toggle:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    #instructivoModal .accordion .card {
-        border: 1px solid #e2e8f0;
-        border-radius: 8px !important;
-        overflow: hidden;
-        transition: box-shadow 0.2s ease;
-    }
-    #instructivoModal .accordion .card:hover {
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
-    }
-    #instructivoModal .accordion .card-header {
-        background: none;
-        border: none;
-        padding: 0;
-    }
-    #instructivoModal .accordion .card-body {
-        padding: 1rem 1.25rem;
-        background: #fafbfd;
-        font-size: 0.88rem;
-    }
-    #instructivoModal .accordion .card-body ul {
-        padding-left: 1.25rem;
-        margin-bottom: 0;
-    }
-    #instructivoModal .accordion .card-body ul li {
-        margin-bottom: 0.4rem;
-        line-height: 1.5;
-    }
-    #instructivoModal .accordion .btn-accordion {
-        background: var(--app-btn-gradient);
-        border: none;
-        padding: 11px 18px;
-        border-radius: 8px;
-        font-size: 0.88rem;
-        font-weight: 500;
-        letter-spacing: 0.2px;
-        transition: all 0.2s ease;
-    }
-    #instructivoModal .accordion .btn-accordion:hover {
-        background: var(--app-btn-gradient-hover);
-    }
-    #instructivoModal .accordion .btn-accordion i {
-        opacity: 0.85;
-    }
-    #instructivoModal .search-input {
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        font-size: 0.88rem;
-        transition: border-color 0.2s ease;
-    }
-    #instructivoModal .search-input:focus {
+    #instructivoModal .instr-search:focus {
         border-color: #583AFF;
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        box-shadow: 0 0 0 3px rgba(88, 58, 255, 0.12);
+        outline: none;
     }
-    #instructivoModal .collapse-rules ol {
-        padding-left: 1.25rem;
-        margin-bottom: 0;
+
+    /* Secciones e ítems: misma familia visual */
+    #instructivoModal .instr-section,
+    #instructivoModal .instr-item {
+        border: 1px solid #e9ecf5;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
     }
-    #instructivoModal .collapse-rules ol li {
-        margin-bottom: 0.5rem;
-        padding-left: 0.25rem;
-        line-height: 1.5;
+    #instructivoModal .instr-section { margin-bottom: 12px; }
+    #instructivoModal .instr-section:last-child { margin-bottom: 0; }
+    #instructivoModal .instr-item { border-radius: 8px; margin-bottom: 8px; }
+    #instructivoModal .instr-item:last-child { margin-bottom: 0; }
+
+    #instructivoModal .instr-head {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 13px 16px;
+        background: #fff;
+        border: none;
+        text-align: left;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #2d3748;
+        cursor: pointer;
+        transition: background 0.15s ease;
+    }
+    #instructivoModal .instr-item .instr-head {
+        padding: 10px 14px;
+        font-weight: 600;
+        font-size: 0.84rem;
+        color: #3a3f51;
+    }
+    #instructivoModal .instr-head:hover,
+    #instructivoModal .instr-head[aria-expanded="true"] { background: #f6f7fc; }
+    #instructivoModal .instr-head:focus { outline: none; }
+
+    #instructivoModal .instr-ico {
+        width: 30px; height: 30px;
+        border-radius: 8px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: rgba(88, 58, 255, 0.1);
+        color: #583AFF;
+        font-size: 0.78rem;
+        flex-shrink: 0;
+    }
+    #instructivoModal .instr-item .instr-ico { width: 26px; height: 26px; font-size: 0.72rem; }
+    #instructivoModal .instr-title { flex: 1; }
+    #instructivoModal .instr-chev { color: #a0a6b8; font-size: 0.78rem; transition: transform 0.2s ease; }
+    #instructivoModal .instr-head[aria-expanded="true"] .instr-chev { transform: rotate(180deg); }
+
+    #instructivoModal .instr-body {
+        padding: 14px 18px 16px;
+        background: #fbfbfe;
+        border-top: 1px solid #eef0f7;
+        font-size: 0.84rem;
+        color: #4a5168;
+        line-height: 1.6;
+    }
+    #instructivoModal .instr-item .instr-body { padding: 12px 16px 14px; font-size: 0.82rem; }
+    #instructivoModal .instr-body ol,
+    #instructivoModal .instr-body ul { padding-left: 1.15rem; margin-bottom: 0; }
+    #instructivoModal .instr-body li { margin-bottom: 0.4rem; }
+    #instructivoModal .instr-body li:last-child { margin-bottom: 0; }
+    #instructivoModal .instr-body ul ul { margin-top: 0.3rem; }
+    #instructivoModal .instr-body strong { color: #2d3748; }
+
+    #instructivoModal .instr-item.oculto { display: none; }
+    #instructivoModal .instr-sin-resultados {
+        display: none;
+        text-align: center;
+        color: #8a90a2;
+        font-size: 0.83rem;
+        padding: 14px 0 4px;
+    }
+
+    @@media (max-width: 575.98px) {
+        #instructivoModal .modal-body { padding: 1.1rem 1rem; }
     }
 </style>
 
 <div class="modal fade" id="instructivoModal" tabindex="-1" role="dialog" aria-labelledby="instructivoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <img src="~/Assets/img/logoBufinsInst.png" alt="Bufins" style="height: 38px; width: auto; filter: brightness(1.1);">
+                <div style="display: flex; align-items: center; gap: 0.85rem;">
+                    <span class="instr-brand-badge" aria-hidden="true">B</span>
                     <div>
-                        <h5 class="modal-title" id="instructivoModalLabel" style="color: #ffffff; font-weight: 700; font-size: 1.25rem; margin: 0; letter-spacing: -0.3px;">@Resources.Strings.Datos_ModalTitle</h5>
-                        <span style="color: rgba(255,255,255,0.7); font-size: 0.78rem;">@Resources.Strings.Datos_ModalSubtitle</span>
+                        <h5 class="modal-title" id="instructivoModalLabel">@Resources.Strings.Datos_ModalTitle</h5>
+                        <span class="instr-subtitle">@Resources.Strings.Datos_ModalSubtitle</span>
                     </div>
                 </div>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white; opacity: 0.9; text-shadow: none; font-size: 1.5rem;">
@@ -425,259 +476,265 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div class="instructivo-intro">
-                    <p>
-                        <i class="fas fa-database mr-2" style="color: #583AFF;"></i>
-                        @Resources.Strings.Datos_InstructivoIntro1
-                    </p>
-                    <p>
-                        <i class="fas fa-info-circle mr-2" style="color: #01E1D7;"></i>
-                        @Resources.Strings.Datos_InstructivoIntro2
-                    </p>
+                <div class="instr-intro">
+                    <p><i class="fas fa-database"></i><span>@Resources.Strings.Datos_InstructivoIntro1</span></p>
+                    <p><i class="fas fa-info-circle"></i><span>@Resources.Strings.Datos_InstructivoIntro2</span></p>
                 </div>
 
-                <div class="mb-3">
-                    <button class="btn btn-section-toggle w-100 text-white" type="button"
-                            data-toggle="collapse" data-target="#collapseInstructivo"
-                            aria-expanded="false" aria-controls="collapseInstructivo"
-                            style="background: var(--app-btn-gradient);">
-                        <i class="fas fa-exclamation-triangle mr-2"></i> @Resources.Strings.Datos_BtnParaTenerEnCuenta
+                <!-- Sección: reglas generales -->
+                <div class="instr-section">
+                    <button class="instr-head" type="button" data-toggle="collapse" data-target="#collapseInstructivo"
+                            aria-expanded="false" aria-controls="collapseInstructivo">
+                        <span class="instr-ico"><i class="fas fa-list-check"></i></span>
+                        <span class="instr-title">@Resources.Strings.Datos_BtnParaTenerEnCuenta</span>
+                        <i class="fas fa-chevron-down instr-chev"></i>
                     </button>
-                </div>
-                <div class="collapse" id="collapseInstructivo">
-                    <div class="card card-body collapse-rules" style="border: 1px solid #e2e8f0; border-radius: 8px; background: #fafbfd;">
-                        <ol>
-                            <li>@Resources.Strings.Datos_Regla1</li>
-                            <li>@Resources.Strings.Datos_Regla2</li>
-                            <li>@Resources.Strings.Datos_Regla3</li>
-                            <li>@Resources.Strings.Datos_Regla4</li>
-                            <li>@Resources.Strings.Datos_Regla5</li>
-                            <li>@Resources.Strings.Datos_Regla6</li>
-                            <li>@Resources.Strings.Datos_Regla7</li>
-                            <li>@Resources.Strings.Datos_Regla8</li>
-                            <li>@Resources.Strings.Datos_Regla9</li>
-                            <li>@Resources.Strings.Datos_Regla10</li>
-                            <li>@Resources.Strings.Datos_Regla11</li>
-                            <li>@Resources.Strings.Datos_Regla12</li>
-                        </ol>
+                    <div class="collapse" id="collapseInstructivo">
+                        <div class="instr-body">
+                            <ol>
+                                <li>@Resources.Strings.Datos_Regla1</li>
+                                <li>@Resources.Strings.Datos_Regla2</li>
+                                <li>@Resources.Strings.Datos_Regla3</li>
+                                <li>@Resources.Strings.Datos_Regla4</li>
+                                <li>@Resources.Strings.Datos_Regla5</li>
+                                <li>@Resources.Strings.Datos_Regla6</li>
+                                <li>@Resources.Strings.Datos_Regla7</li>
+                                <li>@Resources.Strings.Datos_Regla8</li>
+                                <li>@Resources.Strings.Datos_Regla9</li>
+                                <li>@Resources.Strings.Datos_Regla10</li>
+                                <li>@Resources.Strings.Datos_Regla11</li>
+                                <li>@Resources.Strings.Datos_Regla12</li>
+                            </ol>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <button class="btn btn-section-toggle w-100 text-white" type="button"
-                            data-toggle="collapse" data-target="#collapsePestanas"
-                            aria-expanded="false" aria-controls="collapsePestanas"
-                            style="background: linear-gradient(135deg, #01E1D7, #10b981);">
-                        <i class="fas fa-folder mr-2"></i> @Resources.Strings.Datos_BtnPestanas
+                <!-- Sección: guía por hoja -->
+                <div class="instr-section">
+                    <button class="instr-head" type="button" data-toggle="collapse" data-target="#collapsePestanas"
+                            aria-expanded="true" aria-controls="collapsePestanas">
+                        <span class="instr-ico"><i class="fas fa-folder-open"></i></span>
+                        <span class="instr-title">@Resources.Strings.Datos_BtnPestanas</span>
+                        <i class="fas fa-chevron-down instr-chev"></i>
                     </button>
-                </div>
-                <div class="collapse" id="collapsePestanas">
-                    <div class="card card-body">
-                        <style>
-                            .oculto { display: none !important; margin: 0 !important; }
-                            .visible-con-margen { display: block !important; margin-bottom: 0.5rem !important; }
-                        </style>
-
-                        <div class="mb-3">
-                            <input type="text" class="form-control search-input" id="busquedaPestanas" placeholder="@Resources.Strings.Datos_BuscarHoja" onkeyup="filtrarPestanas()">
-                        </div>
-                        <div class="accordion" id="accordionPestanas">
-
-                            <!-- Z_BalancePrueba -->
-                            <div class="card shadow-sm mb-2">
-                                <div class="card-header p-0" id="headingBalancePrueba">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-accordion w-100 text-white text-left"
-                                                data-toggle="collapse" data-target="#collapseBalancePrueba" aria-expanded="false" aria-controls="collapseBalancePrueba">
-                                            <i class="fas fa-coins mr-2"></i> Z_BalancePrueba
-                                        </button>
-                                    </h5>
-                                </div>
-                                <div id="collapseBalancePrueba" class="collapse" aria-labelledby="headingBalancePrueba" data-parent="#accordionPestanas">
-                                    <div class="card-body" style="padding: 12px 18px;">
-                                        <ul>
-                                            <li>Los datos de <strong>Z_BalancePrueba</strong> deben estar en la misma unidad de medida reportada en <strong>Z_Moneda</strong>.</li>
-                                            <li>La celda <strong>F1</strong> debe ser id&eacute;ntica a la reportada en <strong>Z_Moneda</strong>.</li>
-                                            <li>El nombre de las empresas deber&aacute; estar escrito en forma id&eacute;ntica a como se report&oacute; en la hoja de <strong>Z_Empresa</strong>.</li>
-                                            <li>El nombre de los pa&iacute;ses deber&aacute; estar escrito en forma id&eacute;ntica a como se report&oacute; en la hoja de <strong>Z_Paises</strong>.</li>
-                                            <li>En la celda <strong>A1</strong> coloque los datos del balance de prueba (balance de comprobaci&oacute;n) respetando el orden de las columnas. Esta informaci&oacute;n deber&aacute; estar por tres a&ntilde;os y por meses, comenzando por el a&ntilde;o actual y los dos a&ntilde;os anteriores para las empresas y pa&iacute;ses que se vayan a consolidar.</li>
-                                            <li>El <strong>Z_BalancePrueba</strong> debe estar a 1, 2, 4 y 6 d&iacute;gitos del PUC.</li>
-                                        </ul>
-                                    </div>
-                                </div>
+                    <div class="collapse show" id="collapsePestanas">
+                        <div class="instr-body">
+                            <div class="instr-search-wrap">
+                                <i class="fas fa-search"></i>
+                                <input type="text" class="instr-search" id="busquedaPestanas" placeholder="@Resources.Strings.Datos_BuscarHoja" onkeyup="filtrarPestanas()">
                             </div>
 
-                            <!-- Z_CteYnoCte -->
-                            <div class="card shadow-sm mb-2">
-                                <div class="card-header p-0" id="headingCteYnoCte">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-accordion w-100 text-white text-left"
-                                                data-toggle="collapse" data-target="#collapseCteYnoCte" aria-expanded="false" aria-controls="collapseCteYnoCte">
-                                            <i class="fas fa-book mr-2"></i> Z_CteYnoCte
-                                        </button>
-                                    </h5>
-                                </div>
-                                <div id="collapseCteYnoCte" class="collapse" aria-labelledby="headingCteYnoCte" data-parent="#accordionPestanas">
-                                    <div class="card-body" style="padding: 12px 18px;">
-                                        <ul>
-                                            <li>Aplican las mismas instrucciones de la hoja <strong>Z_BalancePrueba</strong> a 4 d&iacute;gitos del PUC, para las cuentas de activos y pasivos que deben clasificarse como de car&aacute;cter corriente y no corriente.</li>
-                                            <li>En la columna <strong>K</strong> deber&aacute; indicar si el activo o el pasivo es corriente o no corriente, para lo cual deber&aacute; usar la descripci&oacute;n de <strong>Z_Categorias</strong> usando la lista desplegable.</li>
-                                            <li>Las cuentas <strong>Z_CteYnoCte</strong> deben estar a 4 d&iacute;gitos del PUC.</li>
-                                        </ul>
+                            <div id="accordionPestanas">
+
+                                <!-- Z_BalancePrueba -->
+                                <div class="instr-item" data-hoja="Z_BalancePrueba">
+                                    <button class="instr-head" type="button" data-toggle="collapse" data-target="#collapseBalancePrueba" aria-expanded="false" aria-controls="collapseBalancePrueba">
+                                        <span class="instr-ico"><i class="fas fa-coins"></i></span>
+                                        <span class="instr-title">Z_BalancePrueba</span>
+                                        <i class="fas fa-chevron-down instr-chev"></i>
+                                    </button>
+                                    <div id="collapseBalancePrueba" class="collapse" data-parent="#accordionPestanas">
+                                        <div class="instr-body">
+                                            <ul>
+                                                <li>Los datos de <strong>Z_BalancePrueba</strong> deben estar en la misma unidad de medida reportada en <strong>Z_Moneda</strong>.</li>
+                                                <li>La celda <strong>F1</strong> debe ser id&eacute;ntica a la reportada en <strong>Z_Moneda</strong>.</li>
+                                                <li>El nombre de las empresas deber&aacute; estar escrito en forma id&eacute;ntica a como se report&oacute; en la hoja de <strong>Z_Empresa</strong>.</li>
+                                                <li>El nombre de los pa&iacute;ses deber&aacute; estar escrito en forma id&eacute;ntica a como se report&oacute; en la hoja de <strong>Z_Paises</strong>.</li>
+                                                <li>En la celda <strong>A1</strong> coloque los datos del balance de prueba (balance de comprobaci&oacute;n) respetando el orden de las columnas. Esta informaci&oacute;n deber&aacute; estar por tres a&ntilde;os y por meses, comenzando por el a&ntilde;o actual y los dos a&ntilde;os anteriores para las empresas y pa&iacute;ses que se vayan a consolidar.</li>
+                                                <li>El <strong>Z_BalancePrueba</strong> debe estar a 1, 2, 4 y 6 d&iacute;gitos del PUC.</li>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Z_PYGDetallado -->
-                            <div class="card shadow-sm mb-2">
-                                <div class="card-header p-0" id="headingPYGDetallado">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-accordion w-100 text-white text-left"
-                                                data-toggle="collapse" data-target="#collapsePYGDetallado" aria-expanded="false" aria-controls="collapsePYGDetallado">
-                                            <i class="fas fa-code mr-2"></i> Z_PYGDetallado
-                                        </button>
-                                    </h5>
-                                </div>
-                                <div id="collapsePYGDetallado" class="collapse" aria-labelledby="headingPYGDetallado" data-parent="#accordionPestanas">
-                                    <div class="card-body" style="padding: 12px 18px;">
-                                        <ul>
-                                            <li>Los datos de <strong>Z_PYGDetallado</strong> deben estar en la misma unidad de medida reportada en <strong>Z_Moneda</strong>.</li>
-                                            <li>La celda <strong>E (Nuevo saldo)</strong> debe ser id&eacute;ntica a la reportada en <strong>Z_Moneda</strong>.</li>
-                                            <li>El nombre de las empresas deber&aacute; estar escrito en forma id&eacute;ntica a como se report&oacute; en la hoja de <strong>Z_Empresa</strong>.</li>
-                                            <li>El nombre de los pa&iacute;ses deber&aacute; estar escrito en forma id&eacute;ntica a como se report&oacute; en la hoja de <strong>Z_Paises</strong>.</li>
-                                            <li>En la celda <strong>A1</strong> coloque los datos del estado de resultados a 6 d&iacute;gitos del PUC, respetando el orden de las columnas.</li>
-                                            <li>En la columna <strong>C (Tipo)</strong> coloque el nombre de las l&iacute;neas de venta que se hayan definido previamente.</li>
-                                            <li>En la columna <strong>D (L&iacute;nea de negocio)</strong> coloque el nombre de las l&iacute;neas de negocio que se hayan definido previamente.</li>
-                                            <li>En la columna <strong>J (Ajuste1)</strong> indique si el ingreso o el gasto se considera parte del Ebitda o no: <strong>Ebitda</strong> o <strong>No Ebitda</strong>.</li>
-                                            <li>
-                                                En la columna <strong>K (Ajuste2)</strong> coloque la clasificaci&oacute;n de los costos y los gastos seg&uacute;n su naturaleza:
-                                                <ul>
-                                                    <li>GASTOS FIJOS</li>
-                                                    <li>GASTOS VARIABLES</li>
-                                                    <li>OTROS GASTOS</li>
-                                                </ul>
-                                            </li>
-                                            <li>Las cuentas de <strong>Z_PYGDetallado</strong> deben estar a 6 d&iacute;gitos del PUC.</li>
-                                        </ul>
+                                <!-- Z_CteYnoCte -->
+                                <div class="instr-item" data-hoja="Z_CteYnoCte">
+                                    <button class="instr-head" type="button" data-toggle="collapse" data-target="#collapseCteYnoCte" aria-expanded="false" aria-controls="collapseCteYnoCte">
+                                        <span class="instr-ico"><i class="fas fa-book"></i></span>
+                                        <span class="instr-title">Z_CteYnoCte</span>
+                                        <i class="fas fa-chevron-down instr-chev"></i>
+                                    </button>
+                                    <div id="collapseCteYnoCte" class="collapse" data-parent="#accordionPestanas">
+                                        <div class="instr-body">
+                                            <ul>
+                                                <li>Aplican las mismas instrucciones de la hoja <strong>Z_BalancePrueba</strong> a 4 d&iacute;gitos del PUC, para las cuentas de activos y pasivos que deben clasificarse como de car&aacute;cter corriente y no corriente.</li>
+                                                <li>En la columna <strong>K</strong> deber&aacute; indicar si el activo o el pasivo es corriente o no corriente, para lo cual deber&aacute; usar la descripci&oacute;n de <strong>Z_Categorias</strong> usando la lista desplegable.</li>
+                                                <li>Las cuentas <strong>Z_CteYnoCte</strong> deben estar a 4 d&iacute;gitos del PUC.</li>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Z_PYGDetalladoConAjuste -->
-                            <div class="card shadow-sm mb-2">
-                                <div class="card-header p-0" id="headingPYGDetalladoConAjuste">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-accordion w-100 text-white text-left"
-                                                data-toggle="collapse" data-target="#collapsePYGDetalladoConAjuste" aria-expanded="false" aria-controls="collapsePYGDetalladoConAjuste">
-                                            <i class="fas fa-chart-line mr-2"></i> Z_PYGDetalladoConAjuste
-                                        </button>
-                                    </h5>
-                                </div>
-                                <div id="collapsePYGDetalladoConAjuste" class="collapse" aria-labelledby="headingPYGDetalladoConAjuste" data-parent="#accordionPestanas">
-                                    <div class="card-body" style="padding: 12px 18px;">
-                                        Esta hoja es id&eacute;ntica a la de Z_PYGDetallado. La &uacute;nica diferencia es que podr&aacute; reclasificar ingresos, costos y gastos para obtener el Ebitda Ajustado.
-                                        Las cuentas Z_PYGDetalladoConAjuste deben estar a 6 d&iacute;gitos del PUC.
+                                <!-- Z_PYGDetallado -->
+                                <div class="instr-item" data-hoja="Z_PYGDetallado">
+                                    <button class="instr-head" type="button" data-toggle="collapse" data-target="#collapsePYGDetallado" aria-expanded="false" aria-controls="collapsePYGDetallado">
+                                        <span class="instr-ico"><i class="fas fa-file-invoice-dollar"></i></span>
+                                        <span class="instr-title">Z_PYGDetallado</span>
+                                        <i class="fas fa-chevron-down instr-chev"></i>
+                                    </button>
+                                    <div id="collapsePYGDetallado" class="collapse" data-parent="#accordionPestanas">
+                                        <div class="instr-body">
+                                            <ul>
+                                                <li>Los datos de <strong>Z_PYGDetallado</strong> deben estar en la misma unidad de medida reportada en <strong>Z_Moneda</strong>.</li>
+                                                <li>La celda <strong>E (Nuevo saldo)</strong> debe ser id&eacute;ntica a la reportada en <strong>Z_Moneda</strong>.</li>
+                                                <li>El nombre de las empresas deber&aacute; estar escrito en forma id&eacute;ntica a como se report&oacute; en la hoja de <strong>Z_Empresa</strong>.</li>
+                                                <li>El nombre de los pa&iacute;ses deber&aacute; estar escrito en forma id&eacute;ntica a como se report&oacute; en la hoja de <strong>Z_Paises</strong>.</li>
+                                                <li>En la celda <strong>A1</strong> coloque los datos del estado de resultados a 6 d&iacute;gitos del PUC, respetando el orden de las columnas.</li>
+                                                <li>En la columna <strong>C (Tipo)</strong> coloque el nombre de las l&iacute;neas de venta que se hayan definido previamente.</li>
+                                                <li>En la columna <strong>D (L&iacute;nea de negocio)</strong> coloque el nombre de las l&iacute;neas de negocio que se hayan definido previamente.</li>
+                                                <li>En la columna <strong>J (Ajuste1)</strong> indique si el ingreso o el gasto se considera parte del Ebitda o no: <strong>Ebitda</strong> o <strong>No Ebitda</strong>.</li>
+                                                <li>
+                                                    En la columna <strong>K (Ajuste2)</strong> coloque la clasificaci&oacute;n de los costos y los gastos seg&uacute;n su naturaleza:
+                                                    <ul>
+                                                        <li>GASTOS FIJOS</li>
+                                                        <li>GASTOS VARIABLES</li>
+                                                        <li>OTROS GASTOS</li>
+                                                    </ul>
+                                                </li>
+                                                <li>Las cuentas de <strong>Z_PYGDetallado</strong> deben estar a 6 d&iacute;gitos del PUC.</li>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Z_PresupuestoBalance -->
-                            <div class="card shadow-sm mb-2">
-                                <div class="card-header p-0" id="headingPresupuestoBalance">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-accordion w-100 text-white text-left"
-                                                data-toggle="collapse" data-target="#collapsePresupuestoBalance" aria-expanded="false" aria-controls="collapsePresupuestoBalance">
-                                            <i class="fas fa-chart-bar mr-2"></i> Z_PresupuestoBalance
-                                        </button>
-                                    </h5>
-                                </div>
-                                <div id="collapsePresupuestoBalance" class="collapse" aria-labelledby="headingPresupuestoBalance" data-parent="#accordionPestanas">
-                                    <div class="card-body" style="padding: 12px 18px;">
-                                        En esta hoja se debe reportar el presupuesto de la compa&ntilde;&iacute;a por cuentas de balance a 1, 2, 4 y 6 d&iacute;gitos del PUC. En caso de no tener presupuesto de balance se debe dejar en blanco.
-                                        Las cuentas de Z_Presupuesto deben estar a 6 d&iacute;gitos del PUC.
+                                <!-- Z_PYGDetalladoConAjuste -->
+                                <div class="instr-item" data-hoja="Z_PYGDetalladoConAjuste">
+                                    <button class="instr-head" type="button" data-toggle="collapse" data-target="#collapsePYGDetalladoConAjuste" aria-expanded="false" aria-controls="collapsePYGDetalladoConAjuste">
+                                        <span class="instr-ico"><i class="fas fa-chart-line"></i></span>
+                                        <span class="instr-title">Z_PYGDetalladoConAjuste</span>
+                                        <i class="fas fa-chevron-down instr-chev"></i>
+                                    </button>
+                                    <div id="collapsePYGDetalladoConAjuste" class="collapse" data-parent="#accordionPestanas">
+                                        <div class="instr-body">
+                                            Esta hoja es id&eacute;ntica a la de Z_PYGDetallado. La &uacute;nica diferencia es que podr&aacute; reclasificar ingresos, costos y gastos para obtener el Ebitda Ajustado.
+                                            Las cuentas Z_PYGDetalladoConAjuste deben estar a 6 d&iacute;gitos del PUC.
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Z_PptoPYGDetallado -->
-                            <div class="card shadow-sm mb-2">
-                                <div class="card-header p-0" id="headingPptoPYGDetallado">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-accordion w-100 text-white text-left"
-                                                data-toggle="collapse" data-target="#collapsePptoPYGDetallado" aria-expanded="false" aria-controls="collapsePptoPYGDetallado">
-                                            <i class="fas fa-piggy-bank mr-2"></i> Z_PptoPYGDetallado
-                                        </button>
-                                    </h5>
-                                </div>
-                                <div id="collapsePptoPYGDetallado" class="collapse" aria-labelledby="headingPptoPYGDetallado" data-parent="#accordionPestanas">
-                                    <div class="card-body" style="padding: 12px 18px;">
-                                        Este es el presupuesto detallado discriminado por tipo y L&iacute;neas de negocio. La estructura de esta hoja es igual a la Z_PYGDetallado.
-                                        Las cuentas de Z_PresupuestoDetallado deben estar a 6 d&iacute;gitos del PUC.
+                                <!-- Z_PresupuestoBalance -->
+                                <div class="instr-item" data-hoja="Z_PresupuestoBalance">
+                                    <button class="instr-head" type="button" data-toggle="collapse" data-target="#collapsePresupuestoBalance" aria-expanded="false" aria-controls="collapsePresupuestoBalance">
+                                        <span class="instr-ico"><i class="fas fa-chart-bar"></i></span>
+                                        <span class="instr-title">Z_PresupuestoBalance</span>
+                                        <i class="fas fa-chevron-down instr-chev"></i>
+                                    </button>
+                                    <div id="collapsePresupuestoBalance" class="collapse" data-parent="#accordionPestanas">
+                                        <div class="instr-body">
+                                            En esta hoja se debe reportar el presupuesto de la compa&ntilde;&iacute;a por cuentas de balance a 1, 2, 4 y 6 d&iacute;gitos del PUC. En caso de no tener presupuesto de balance se debe dejar en blanco.
+                                            Las cuentas de Z_Presupuesto deben estar a 6 d&iacute;gitos del PUC.
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Z_PptoPYGDetalladoConAjuste -->
-                            <div class="card shadow-sm mb-2">
-                                <div class="card-header p-0" id="headingPptoPYGDetalladoConAjuste">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-accordion w-100 text-white text-left"
-                                                data-toggle="collapse" data-target="#collapsePptoPYGDetalladoConAjuste" aria-expanded="false" aria-controls="collapsePptoPYGDetalladoConAjuste">
-                                            <i class="fas fa-money-bill-wave mr-2"></i> Z_PptoPYGDetalladoConAjuste
-                                        </button>
-                                    </h5>
-                                </div>
-                                <div id="collapsePptoPYGDetalladoConAjuste" class="collapse" aria-labelledby="headingPptoPYGDetalladoConAjuste" data-parent="#accordionPestanas">
-                                    <div class="card-body" style="padding: 12px 18px;">
-                                        Este es el presupuesto detallado discriminado por tipo y L&iacute;neas de negocio. La estructura de esta hoja es igual a la Z_PYGDetalladoConAjuste.
-                                        Las cuentas de Z_PresupuestoDetalladoConAjuste deben estar a 6 d&iacute;gitos del PUC.
+                                <!-- Z_PptoPYGDetallado -->
+                                <div class="instr-item" data-hoja="Z_PptoPYGDetallado">
+                                    <button class="instr-head" type="button" data-toggle="collapse" data-target="#collapsePptoPYGDetallado" aria-expanded="false" aria-controls="collapsePptoPYGDetallado">
+                                        <span class="instr-ico"><i class="fas fa-piggy-bank"></i></span>
+                                        <span class="instr-title">Z_PptoPYGDetallado</span>
+                                        <i class="fas fa-chevron-down instr-chev"></i>
+                                    </button>
+                                    <div id="collapsePptoPYGDetallado" class="collapse" data-parent="#accordionPestanas">
+                                        <div class="instr-body">
+                                            Este es el presupuesto detallado discriminado por tipo y L&iacute;neas de negocio. La estructura de esta hoja es igual a la Z_PYGDetallado.
+                                            Las cuentas de Z_PresupuestoDetallado deben estar a 6 d&iacute;gitos del PUC.
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Z_PCH -->
-                            <div class="card shadow-sm mb-2">
-                                <div class="card-header p-0" id="headingPCH">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-accordion w-100 text-white text-left"
-                                                data-toggle="collapse" data-target="#collapsePCH" aria-expanded="false" aria-controls="collapsePCH">
-                                            <i class="fas fa-bullseye mr-2"></i> Z_PCH
-                                        </button>
-                                    </h5>
-                                </div>
-                                <div id="collapsePCH" class="collapse" aria-labelledby="headingPCH" data-parent="#accordionPestanas">
-                                    <div class="card-body" style="padding: 12px 18px;">
-                                        Las cuentas de Z_PCH deben estar a de 4 a 6 d&iacute;gitos del PUC y corresponden a las indicadas en la hoja.
-                                        Los valores de Z_PCH equivalen a los ahorros que se estiman como objetivos.
+                                <!-- Z_PptoPYGDetalladoConAjuste -->
+                                <div class="instr-item" data-hoja="Z_PptoPYGDetalladoConAjuste">
+                                    <button class="instr-head" type="button" data-toggle="collapse" data-target="#collapsePptoPYGDetalladoConAjuste" aria-expanded="false" aria-controls="collapsePptoPYGDetalladoConAjuste">
+                                        <span class="instr-ico"><i class="fas fa-money-bill-wave"></i></span>
+                                        <span class="instr-title">Z_PptoPYGDetalladoConAjuste</span>
+                                        <i class="fas fa-chevron-down instr-chev"></i>
+                                    </button>
+                                    <div id="collapsePptoPYGDetalladoConAjuste" class="collapse" data-parent="#accordionPestanas">
+                                        <div class="instr-body">
+                                            Este es el presupuesto detallado discriminado por tipo y L&iacute;neas de negocio. La estructura de esta hoja es igual a la Z_PYGDetalladoConAjuste.
+                                            Las cuentas de Z_PresupuestoDetalladoConAjuste deben estar a 6 d&iacute;gitos del PUC.
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Z_EjecPCH -->
-                            <div class="card shadow-sm mb-2">
-                                <div class="card-header p-0" id="headingEjecPCH">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-accordion w-100 text-white text-left"
-                                                data-toggle="collapse" data-target="#collapseEjecPCH" aria-expanded="false" aria-controls="collapseEjecPCH">
-                                            <i class="fas fa-flag mr-2"></i> Z_EjecPCH
-                                        </button>
-                                    </h5>
-                                </div>
-                                <div id="collapseEjecPCH" class="collapse" aria-labelledby="headingEjecPCH" data-parent="#accordionPestanas">
-                                    <div class="card-body" style="padding: 12px 18px;">
-                                        Las cuentas de Z_EjecPCH deben estar a de 4 a 6 d&iacute;gitos del PUC.
-                                        Las cuentas de Z_EjecPCH equivalen a los ahorros ejecutados.
+                                <!-- Z_PCH -->
+                                <div class="instr-item" data-hoja="Z_PCH">
+                                    <button class="instr-head" type="button" data-toggle="collapse" data-target="#collapsePCH" aria-expanded="false" aria-controls="collapsePCH">
+                                        <span class="instr-ico"><i class="fas fa-bullseye"></i></span>
+                                        <span class="instr-title">Z_PCH</span>
+                                        <i class="fas fa-chevron-down instr-chev"></i>
+                                    </button>
+                                    <div id="collapsePCH" class="collapse" data-parent="#accordionPestanas">
+                                        <div class="instr-body">
+                                            Las cuentas de Z_PCH deben estar a de 4 a 6 d&iacute;gitos del PUC y corresponden a las indicadas en la hoja.
+                                            Los valores de Z_PCH equivalen a los ahorros que se estiman como objetivos.
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
+                                <!-- Z_EjecPCH -->
+                                <div class="instr-item" data-hoja="Z_EjecPCH">
+                                    <button class="instr-head" type="button" data-toggle="collapse" data-target="#collapseEjecPCH" aria-expanded="false" aria-controls="collapseEjecPCH">
+                                        <span class="instr-ico"><i class="fas fa-flag"></i></span>
+                                        <span class="instr-title">Z_EjecPCH</span>
+                                        <i class="fas fa-chevron-down instr-chev"></i>
+                                    </button>
+                                    <div id="collapseEjecPCH" class="collapse" data-parent="#accordionPestanas">
+                                        <div class="instr-body">
+                                            Las cuentas de Z_EjecPCH deben estar a de 4 a 6 d&iacute;gitos del PUC.
+                                            Las cuentas de Z_EjecPCH equivalen a los ahorros ejecutados.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="instr-sin-resultados" id="pestanasSinResultados">
+                                    <i class="fas fa-search mr-1"></i>@Resources.Strings.Datos_SinResultadosHoja
+                                </div>
+
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-modern-gradient" data-dismiss="modal" style="padding: 0.5rem 1.5rem;">
+            <div class="modal-footer" style="justify-content: space-between;">
+                <a href="~/Assets/Plantillas/InstructivoPlantillaCargue.xlsx" download class="btn btn-modern-excel">
+                    <i class="fas fa-file-excel mr-2"></i>@Resources.Strings.Datos_BtnInstructivoExcel
+                </a>
+                <button type="button" class="btn btn-modern-gradient" data-dismiss="modal">
                     <i class="fas fa-times mr-2"></i>@Resources.Strings.Layout_Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: descargar plantilla con los datos actuales -->
+<div class="modal fade modal-confirm" id="modalPlantillaConDatos" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-database mr-2"></i>@Resources.Strings.Datos_ModalPlantillaConDatos_Titulo
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.88rem;">@Resources.Strings.Datos_ModalPlantillaConDatos_Intro</p>
+                <label style="display: flex; align-items: center; gap: 0.6rem; font-weight: 600; padding: 0.4rem 0.2rem; border-bottom: 1px solid rgba(255,255,255,0.08); cursor: pointer;">
+                    <input type="checkbox" id="pcdTodos" disabled>
+                    @Resources.Strings.Datos_ModalPlantillaConDatos_SeleccionarTodos
+                </label>
+                <div id="pcdListaAnios" style="max-height: 240px; overflow-y: auto; margin-top: 0.25rem;"></div>
+                <div id="pcdSinAnios" style="display: none; padding: 0.75rem 0; color: #fbbf24; font-size: 0.88rem;">
+                    @Resources.Strings.Datos_ModalPlantillaConDatos_SinAnios
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@Resources.Strings.Layout_Cancel</button>
+                <button type="button" id="btnPcdDescargar" class="btn btn-primary" disabled>
+                    <i class="fas fa-file-download mr-1"></i>@Resources.Strings.Datos_ModalPlantillaConDatos_Descargar
                 </button>
             </div>
         </div>
@@ -719,6 +776,30 @@
             faltaArchivo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_FaltaArchivo))'
         };
 
+        var _pcdUrls = {
+            anios: '@Url.Action("ObtenerAniosConDatos", "Datos")',
+            descargar: '@Url.Action("DescargarPlantillaConDatos", "Datos")'
+        };
+        var _pcdMsg = {
+            generando: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_PlantillaConDatosGenerando))',
+            registros: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_ModalPlantillaConDatos_Registros))',
+            sinAnios: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_ModalPlantillaConDatos_SinAnios))',
+            errorGenerico: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_PlantillaConDatosError))',
+            tipBloqueado: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_TipPlantillaConDatosBloqueado))',
+            tipHabilitado: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_TipPlantillaConDatosHabilitado))'
+        };
+
+        function actualizarTipPlantillaDatos(habilitado) {
+            var txt = habilitado ? _pcdMsg.tipHabilitado : _pcdMsg.tipBloqueado;
+            var wrap = document.getElementById('wrapPlantillaConDatos');
+            var btn = document.getElementById('btnPlantillaConDatos');
+            if (wrap) { wrap.setAttribute('title', txt); }
+            if (btn) {
+                btn.setAttribute('title', txt);
+                btn.style.pointerEvents = habilitado ? 'auto' : 'none';
+            }
+        }
+
         $(document).ready(function () {
             var dropZone = $('#dropZone');
             var fileInput = $('#archivoExcel');
@@ -754,6 +835,9 @@
                 selectAnio.html('<option value="">' + _datosMsg.selectAnio + '</option>');
                 $('#modoSeleccionado').val('');
                 divAnio.hide();
+                var empresaOk = !!idEmpresa && idEmpresa !== '0';
+                $('#btnPlantillaConDatos').prop('disabled', !empresaOk);
+                actualizarTipPlantillaDatos(empresaOk);
                 estadoBotonCargar();
 
                 if (!idEmpresa || idEmpresa === '0') return;
@@ -966,40 +1050,147 @@
                     }
                 });
             });
+
+            // ── Descargar plantilla con los datos actuales ───────────────────────
+            var $modalPcd = $('#modalPlantillaConDatos');
+
+            function actualizarBotonPcd() {
+                $('#btnPcdDescargar').prop('disabled', $('#pcdListaAnios .pcd-anio:checked').length === 0);
+            }
+
+            $('#btnPlantillaConDatos').on('click', function () {
+                var idEmpresa = $('#idEmpresaSeleccionada').val();
+                if (!idEmpresa || idEmpresa === '0') return;
+
+                $('#pcdListaAnios').html('<div style="padding:.6rem .2rem;color:#94a3b8;"><i class="fas fa-spinner fa-spin mr-2"></i></div>');
+                $('#pcdSinAnios').hide();
+                $('#pcdTodos').prop('checked', false).prop('disabled', true);
+                $('#btnPcdDescargar').prop('disabled', true);
+                $modalPcd.modal('show');
+
+                $.get(_pcdUrls.anios, { idEmpresa: idEmpresa })
+                    .done(function (data) {
+                        if (!data.success || !data.anios || data.anios.length === 0) {
+                            $('#pcdListaAnios').empty();
+                            $('#pcdSinAnios').text((data && data.message) ? data.message : _pcdMsg.sinAnios).show();
+                            return;
+                        }
+                        var html = '';
+                        $.each(data.anios, function (i, a) {
+                            html += '<label class="pcd-anio-row" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .2rem;cursor:pointer;">' +
+                                        '<input type="checkbox" class="pcd-anio" value="' + a.anio + '">' +
+                                        '<span style="font-weight:600;">' + a.anio + '</span>' +
+                                        '<span class="info-badge" style="margin-left:auto;">' + Number(a.registros).toLocaleString() + ' ' + _pcdMsg.registros + '</span>' +
+                                    '</label>';
+                        });
+                        $('#pcdListaAnios').html(html);
+                        $('#pcdTodos').prop('disabled', false);
+                    })
+                    .fail(function () {
+                        $('#pcdListaAnios').empty();
+                        $('#pcdSinAnios').text(_pcdMsg.errorGenerico).show();
+                    });
+            });
+
+            $('#pcdTodos').on('change', function () {
+                $('#pcdListaAnios .pcd-anio').prop('checked', this.checked);
+                actualizarBotonPcd();
+            });
+
+            $('#pcdListaAnios').on('change', '.pcd-anio', function () {
+                var total = $('#pcdListaAnios .pcd-anio').length;
+                var marcados = $('#pcdListaAnios .pcd-anio:checked').length;
+                $('#pcdTodos').prop('checked', total > 0 && marcados === total);
+                actualizarBotonPcd();
+            });
+
+            $('#btnPcdDescargar').on('click', function () {
+                var idEmpresa = $('#idEmpresaSeleccionada').val();
+                var anios = $('#pcdListaAnios .pcd-anio:checked').map(function () { return this.value; }).get();
+                if (!idEmpresa || anios.length === 0) return;
+
+                $modalPcd.modal('hide');
+
+                var overlay = document.getElementById('overlayProcesando');
+                var overlayTitulo = document.getElementById('overlayTitulo');
+                overlayTitulo.textContent = _pcdMsg.generando;
+                overlay.style.display = 'flex';
+                var segundos = 0;
+                var timer = setInterval(function () {
+                    segundos++;
+                    var m = Math.floor(segundos / 60), s = segundos % 60;
+                    document.getElementById('overlayTimer').textContent = m > 0 ? m + 'm ' + s + 's' : s + 's';
+                }, 1000);
+
+                function cerrarOverlay() {
+                    clearInterval(timer);
+                    overlay.style.display = 'none';
+                    overlayTitulo.textContent = _datosMsg.procesando;
+                }
+
+                var url = _pcdUrls.descargar + '?idEmpresa=' + encodeURIComponent(idEmpresa) +
+                          '&anios=' + encodeURIComponent(anios.join(','));
+
+                fetch(url)
+                    .then(function (r) {
+                        var ct = r.headers.get('Content-Type') || '';
+                        if (ct.indexOf('application/json') >= 0) {
+                            return r.json().then(function (d) { return { error: (d && d.error) ? d.error : _pcdMsg.errorGenerico }; });
+                        }
+                        var cd = r.headers.get('Content-Disposition') || '';
+                        var mm = cd.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                        var filename = mm ? mm[1].replace(/['"]/g, '') : 'PlantillaConDatos.xlsx';
+                        return r.blob().then(function (b) { return { blob: b, filename: filename }; });
+                    })
+                    .then(function (res) {
+                        cerrarOverlay();
+                        if (res.error) { Swal.fire({ icon: 'warning', text: res.error }); return; }
+                        var u = window.URL.createObjectURL(res.blob);
+                        var a = document.createElement('a');
+                        a.href = u;
+                        a.download = res.filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(u);
+                    })
+                    .catch(function () {
+                        cerrarOverlay();
+                        Swal.fire({ icon: 'error', text: _pcdMsg.errorGenerico });
+                    });
+            });
         });
 
-        // Filtro de búsqueda del instructivo
+        // Filtro de búsqueda del instructivo (guía por hoja)
         function filtrarPestanas() {
-            var input = document.getElementById('busquedaPestanas').value.toUpperCase();
-            var cards = document.querySelectorAll('#accordionPestanas .card');
+            var campo = document.getElementById('busquedaPestanas');
+            var q = (campo ? campo.value : '').trim().toUpperCase();
+            var items = document.querySelectorAll('#accordionPestanas .instr-item');
+            var visibles = 0;
 
-            cards.forEach(function (card) {
-                var boton = card.querySelector('button');
-                if (!boton) return;
-
-                var textoBoton = boton.textContent || boton.innerText;
-                var collapse = card.querySelector('.collapse');
-
-                if (textoBoton.toUpperCase().includes(input)) {
-                    card.classList.remove('oculto');
-                    card.classList.add('visible-con-margen');
+            items.forEach(function (item) {
+                var texto = (item.getAttribute('data-hoja') || item.textContent || '').toUpperCase();
+                var coincide = texto.indexOf(q) !== -1;
+                item.classList.toggle('oculto', !coincide);
+                if (coincide) {
+                    visibles++;
                 } else {
-                    if (collapse && $(collapse).hasClass('show')) {
-                        $(collapse).collapse('hide');
-                    }
-                    card.classList.add('oculto');
-                    card.classList.remove('visible-con-margen');
+                    var collapse = item.querySelector('.collapse.show');
+                    if (collapse) { $(collapse).collapse('hide'); }
                 }
             });
+
+            var vacio = document.getElementById('pestanasSinResultados');
+            if (vacio) { vacio.style.display = (visibles === 0 && q !== '') ? 'block' : 'none'; }
         }
 
-        // Limpiar filtro al cerrar modal
+        // Al cerrar el modal: limpiar buscador y volver al estado inicial de las secciones
         $('#instructivoModal').on('hidden.bs.modal', function () {
-            var input = document.getElementById('busquedaPestanas');
-            if (input) {
-                input.value = '';
-                filtrarPestanas();
-            }
+            var campo = document.getElementById('busquedaPestanas');
+            if (campo) { campo.value = ''; filtrarPestanas(); }
+            $('#accordionPestanas .collapse.show').collapse('hide');
+            $('#collapseInstructivo').collapse('hide');
+            $('#collapsePestanas').collapse('show');
         });
     </script>
 }
