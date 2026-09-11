@@ -690,10 +690,21 @@ namespace bufinscustomers.Controllers
                     if (sheetName.Length > 31) sheetName = sheetName.Substring(0, 31);
 
                     var ws = package.Worksheets.Add(sheetName);
-                    using (var cn = new SqlConnection(CadenaConexion))
+                    try
                     {
-                        cn.Open();
-                        EjecutarModeloYEscribirHoja(cn, ws, modelo, idEmpresa, usuario.Id, idEscenario);
+                        using (var cn = new SqlConnection(CadenaConexion))
+                        {
+                            cn.Open();
+                            EjecutarModeloYEscribirHoja(cn, ws, modelo, idEmpresa, usuario.Id, idEscenario);
+                        }
+                    }
+                    catch (Exception exModelo)
+                    {
+                        return Json(new
+                        {
+                            errores = new[] { new { nombre = modelo.Nombre, nombreSP = modelo.NombreSP, mensaje = exModelo.Message } },
+                            exitosos = new string[0]
+                        }, JsonRequestBehavior.AllowGet);
                     }
 
                     byte[] fileBytes;

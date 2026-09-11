@@ -739,6 +739,20 @@
             </div>
             <div class="modal-body">
                 <p style="font-size: 0.88rem;">@Resources.Strings.Datos_ModalPlantillaConDatos_Intro</p>
+                <div class="form-group" style="margin-bottom: 0.9rem;">
+                    <label for="pcdEscenario" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem;">
+                        <i class="fas fa-layer-group mr-1" style="color: #583AFF;"></i>@Resources.Strings.Datos_EscenarioLabel
+                    </label>
+                    <select class="form-control form-control-sm" id="pcdEscenario">
+                        @if (ViewBag.Escenarios != null)
+                        {
+                            foreach (var escenario in ViewBag.Escenarios)
+                            {
+                                <option value="@escenario.Id">@escenario.Nombre</option>
+                            }
+                        }
+                    </select>
+                </div>
                 <label style="display: flex; align-items: center; gap: 0.6rem; font-weight: 600; padding: 0.4rem 0.2rem; border-bottom: 1px solid rgba(255,255,255,0.08); cursor: pointer;">
                     <input type="checkbox" id="pcdTodos" disabled>
                     @Resources.Strings.Datos_ModalPlantillaConDatos_SeleccionarTodos
@@ -1084,16 +1098,15 @@
                 $('#btnPcdDescargar').prop('disabled', $('#pcdListaAnios .pcd-anio:checked').length === 0);
             }
 
-            $('#btnPlantillaConDatos').on('click', function () {
+            function cargarAniosPcd() {
                 var idEmpresa = $('#idEmpresaSeleccionada').val();
-                var idEscenario = $('#selectEscenario').val();
+                var idEscenario = $('#pcdEscenario').val();
                 if (!idEmpresa || idEmpresa === '0') return;
 
                 $('#pcdListaAnios').html('<div style="padding:.6rem .2rem;color:#94a3b8;"><i class="fas fa-spinner fa-spin mr-2"></i></div>');
                 $('#pcdSinAnios').hide();
                 $('#pcdTodos').prop('checked', false).prop('disabled', true);
                 $('#btnPcdDescargar').prop('disabled', true);
-                $modalPcd.modal('show');
 
                 $.get(_pcdUrls.anios, { idEmpresa: idEmpresa, idEscenario: idEscenario })
                     .done(function (data) {
@@ -1117,7 +1130,21 @@
                         $('#pcdListaAnios').empty();
                         $('#pcdSinAnios').text(_pcdMsg.errorGenerico).show();
                     });
+            }
+
+            $('#btnPlantillaConDatos').on('click', function () {
+                var idEmpresa = $('#idEmpresaSeleccionada').val();
+                if (!idEmpresa || idEmpresa === '0') return;
+
+                // Precarga con el escenario actualmente elegido en la página (si lo hay), sin atarse a él.
+                var idEscenarioActual = $('#selectEscenario').val();
+                if (idEscenarioActual) $('#pcdEscenario').val(idEscenarioActual);
+
+                $modalPcd.modal('show');
+                cargarAniosPcd();
             });
+
+            $('#pcdEscenario').on('change', cargarAniosPcd);
 
             $('#pcdTodos').on('change', function () {
                 $('#pcdListaAnios .pcd-anio').prop('checked', this.checked);
@@ -1133,7 +1160,7 @@
 
             $('#btnPcdDescargar').on('click', function () {
                 var idEmpresa = $('#idEmpresaSeleccionada').val();
-                var idEscenario = $('#selectEscenario').val();
+                var idEscenario = $('#pcdEscenario').val();
                 var anios = $('#pcdListaAnios .pcd-anio:checked').map(function () { return this.value; }).get();
                 if (!idEmpresa || anios.length === 0) return;
 

@@ -126,6 +126,11 @@
         </div>
     </div>
 
+    <div id="avisoSinDatosEscenario" class="alert alert-warning d-flex align-items-center" role="alert" style="display:none;border-left: 4px solid #f6c23e;">
+        <i class="fas fa-exclamation-triangle mr-3" style="font-size:1.2rem;"></i>
+        <div>@Resources.Strings.Modelo_AvisoSinDatosEscenario</div>
+    </div>
+
     <!-- Loading (ejecución AJAX) -->
     <div id="loadingEjecucion" style="display:none;text-align:center;padding:2.5rem;">
         <div class="spinner-border text-primary" style="width:3rem;height:3rem;" role="status"></div>
@@ -195,6 +200,9 @@
                     <p class="text-muted mb-3" style="font-size:0.85rem;">
                         <i class="fas fa-building mr-1" style="color:#583AFF;"></i>
                         @Resources.Strings.Modelo_LabelEmpresa: <strong id="correoEmpresaNombre">-</strong>
+                        &nbsp;&middot;&nbsp;
+                        <i class="fas fa-layer-group mr-1" style="color:#583AFF;"></i>
+                        @Resources.Strings.Modelo_Correo_LabelEscenario: <strong id="correoEscenarioNombre">-</strong>
                     </p>
 
                     <div class="form-group">
@@ -259,6 +267,7 @@
         urlExportarIndividual:'@Url.Action("ExportarModeloIndividual",   "Datos")',
         urlExportarSeleccionados:'@Url.Action("ExportarModelosSeleccionados", "Datos")',
         urlEnviarCorreo:      '@Url.Action("EnviarModelosPorCorreo",     "Datos")',
+        urlAniosConDatos:     '@Url.Action("ObtenerAniosConDatos",       "Datos")',
         token: $('input[name="__RequestVerificationToken"]').val(),
         textos: {
             correoEnviando:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Correo_Enviando))',
@@ -364,13 +373,43 @@
         actualizarBotones();
     }
 
+    var _sinDatosEscenario = false;
+
     function actualizarBotones() {
         var tieneEmpresa = !!$('#idEmpresa').val();
         var nSel = modelosSeleccionados().length;
-        $('#btnEjecutar').prop('disabled', !(tieneEmpresa && nSel === 1));
-        $('#btnExportarTodos').prop('disabled', !tieneEmpresa);
-        $('#btnEnviarCorreo').prop('disabled', !tieneEmpresa);
+        var habilitado = tieneEmpresa && !_sinDatosEscenario;
+        $('#btnEjecutar').prop('disabled', !(habilitado && nSel === 1));
+        $('#btnExportarTodos').prop('disabled', !habilitado);
+        $('#btnEnviarCorreo').prop('disabled', !habilitado);
         actualizarBotonExportar();
+    }
+
+    // Verifica si la empresa/escenario elegidos tienen datos cargados (reutiliza el mismo
+    // endpoint que usa "Plantilla con datos" en Cargue de Excel) y muestra un aviso en vez de
+    // dejar que el usuario dispare un error del procedimiento almacenado al ejecutar/exportar.
+    function verificarDatosEscenario() {
+        var idEmpresa = $('#idEmpresa').val();
+        var idEscenario = $('#idEscenario').val();
+
+        if (!idEmpresa) {
+            _sinDatosEscenario = false;
+            $('#avisoSinDatosEscenario').hide();
+            actualizarBotones();
+            return;
+        }
+
+        $.get(_modelo.urlAniosConDatos, { idEmpresa: idEmpresa, idEscenario: idEscenario })
+            .done(function (data) {
+                _sinDatosEscenario = !(data && data.success && data.anios && data.anios.length > 0);
+                $('#avisoSinDatosEscenario').toggle(_sinDatosEscenario);
+                actualizarBotones();
+            })
+            .fail(function () {
+                _sinDatosEscenario = false;
+                $('#avisoSinDatosEscenario').hide();
+                actualizarBotones();
+            });
     }
 
     // Texto/ícono del botón de exportación, según la selección del selector unificado:
@@ -398,7 +437,8 @@
 
     $(function () {
 
-        $('#idEmpresa').on('change', actualizarBotones);
+        $('#idEmpresa').on('change', function () { actualizarBotones(); verificarDatosEscenario(); });
+        $('#idEscenario').on('change', verificarDatosEscenario);
 
         // ── Selector de modelos ─────────────────────────────────────────
         $('#modeloPickerToggle').on('click', function (e) {
@@ -454,6 +494,7 @@
         if (!idEmpresa) return;
 
         $('#correoEmpresaNombre').text($('#idEmpresa option:selected').data('nombre') || $('#idEmpresa option:selected').text());
+        $('#correoEscenarioNombre').text($('#idEscenario option:selected').text());
 
         // Preselecciona en el modal los modelos ya marcados en el selector unificado.
         var sel = modelosSeleccionados();
