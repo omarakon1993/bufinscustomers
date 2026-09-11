@@ -40,6 +40,9 @@ namespace bufinscustomers.Services
                 "SaldoAnterior", "Debito", "Credito", "NuevoSaldo", "Valor", "Saldo"
             };
 
+        /// <summary>Orden preferido de las filas exportadas; se aplican solo las columnas que existan en cada tabla Ini_.</summary>
+        private static readonly string[] _ordenPreferido = { "Año", "Mes", "Cuenta", "Empresa", "Pais" };
+
         private const string FormatoNumero = "#,##0.00";
 
         public class AnioConDatos
@@ -145,9 +148,19 @@ namespace bufinscustomers.Services
                         var dt = new DataTable();
                         string listaCols = string.Join(", ", colsExport.Select(c => "[" + c + "]"));
 
+                        var colsOrden = _ordenPreferido
+                            .Where(columnasIni.Contains)
+                            .Select(c => (c == "Año" || c == "Mes")
+                                ? $"TRY_CONVERT(int, [{c}])"   // ordena numéricamente aunque la columna sea texto
+                                : "[" + c + "]")
+                            .ToList();
+                        string orderBy = colsOrden.Count > 0
+                            ? " ORDER BY " + string.Join(", ", colsOrden)
+                            : "";
+
                         using (var cmd = new SqlCommand(
                             $"SELECT {listaCols} FROM dbo.[{tablaIni}] " +
-                            $"WHERE IdEmpresa_Log = @IdEmpresa AND [Año] IN ({inAnios})", cn))
+                            $"WHERE IdEmpresa_Log = @IdEmpresa AND [Año] IN ({inAnios}){orderBy}", cn))
                         {
                             cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
                             for (int i = 0; i < anios.Count; i++)
