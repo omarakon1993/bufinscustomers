@@ -388,9 +388,16 @@
     // Verifica si la empresa/escenario elegidos tienen datos cargados (reutiliza el mismo
     // endpoint que usa "Plantilla con datos" en Cargue de Excel) y muestra un aviso en vez de
     // dejar que el usuario dispare un error del procedimiento almacenado al ejecutar/exportar.
+    //
+    // _verifSeq evita una condición de carrera: si el usuario cambia la selección varias veces
+    // seguidas (o la vuelve a dejar en blanco) mientras una consulta anterior sigue en camino,
+    // esa respuesta "vieja" ya no puede pintar el aviso — solo cuenta la última llamada emitida.
+    var _verifSeq = 0;
+
     function verificarDatosEscenario() {
         var idEmpresa = $('#idEmpresa').val();
         var idEscenario = $('#idEscenario').val();
+        var seq = ++_verifSeq;
 
         if (!idEmpresa) {
             _sinDatosEscenario = false;
@@ -401,11 +408,13 @@
 
         $.get(_modelo.urlAniosConDatos, { idEmpresa: idEmpresa, idEscenario: idEscenario })
             .done(function (data) {
+                if (seq !== _verifSeq) return; // respuesta obsoleta: ya hubo un cambio posterior
                 _sinDatosEscenario = !(data && data.success && data.anios && data.anios.length > 0);
                 $('#avisoSinDatosEscenario').toggle(_sinDatosEscenario);
                 actualizarBotones();
             })
             .fail(function () {
+                if (seq !== _verifSeq) return;
                 _sinDatosEscenario = false;
                 $('#avisoSinDatosEscenario').hide();
                 actualizarBotones();
