@@ -454,8 +454,14 @@
         });
         $(document).on('change', '.mc-modelo-pick', onModelosChange);
 
-        if ($('#idEmpresa option').length === 2)
-            $('#idEmpresa option:last').prop('selected', true).trigger('change');
+        // Nota: la única empresa se preselecciona sola, pero eso no cuenta como una elección
+        // deliberada del usuario — solo se actualizan los botones, sin disparar todavía el
+        // aviso de "sin datos" (ese se reserva para cuando el usuario realmente interactúa
+        // con empresa/escenario, o al intentar ejecutar/exportar).
+        if ($('#idEmpresa option').length === 2) {
+            $('#idEmpresa option:last').prop('selected', true);
+            actualizarBotones();
+        }
 
         onModelosChange();
 

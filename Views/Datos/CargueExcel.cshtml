@@ -726,21 +726,22 @@
 </div>
 
 <!-- Modal: descargar plantilla con los datos actuales -->
-<div class="modal fade modal-confirm" id="modalPlantillaConDatos" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade" id="modalPlantillaConDatos" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="fas fa-database mr-2"></i>@Resources.Strings.Datos_ModalPlantillaConDatos_Titulo
+                    <i class="fas fa-database mr-2" style="color: #583AFF;"></i>@Resources.Strings.Datos_ModalPlantillaConDatos_Titulo
                 </h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <p style="font-size: 0.88rem;">@Resources.Strings.Datos_ModalPlantillaConDatos_Intro</p>
-                <div class="form-group" style="margin-bottom: 0.9rem;">
-                    <label for="pcdEscenario" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem;">
+                <p class="text-muted mb-3" style="font-size: 0.85rem;">@Resources.Strings.Datos_ModalPlantillaConDatos_Intro</p>
+
+                <div class="form-group mb-3">
+                    <label for="pcdEscenario" class="form-label" style="font-size: 0.85rem;">
                         <i class="fas fa-layer-group mr-1" style="color: #583AFF;"></i>@Resources.Strings.Datos_EscenarioLabel
                     </label>
                     <select class="form-control form-control-sm" id="pcdEscenario">
@@ -753,18 +754,26 @@
                         }
                     </select>
                 </div>
-                <label style="display: flex; align-items: center; gap: 0.6rem; font-weight: 600; padding: 0.4rem 0.2rem; border-bottom: 1px solid rgba(255,255,255,0.08); cursor: pointer;">
-                    <input type="checkbox" id="pcdTodos" disabled>
-                    @Resources.Strings.Datos_ModalPlantillaConDatos_SeleccionarTodos
+
+                <label class="form-label" style="font-size: 0.85rem;">
+                    <i class="fas fa-calendar-alt mr-1" style="color: #583AFF;"></i>@Resources.Strings.Datos_ModalPlantillaConDatos_LabelAnios
                 </label>
-                <div id="pcdListaAnios" style="max-height: 240px; overflow-y: auto; margin-top: 0.25rem;"></div>
-                <div id="pcdSinAnios" style="display: none; padding: 0.75rem 0; color: #fbbf24; font-size: 0.88rem;">
-                    @Resources.Strings.Datos_ModalPlantillaConDatos_SinAnios
+                <div style="border: 1px solid #e5e7eb; border-radius: 0.5rem; overflow: hidden;">
+                    <label style="display: flex; align-items: center; gap: 0.6rem; font-weight: 600; font-size: 0.85rem; padding: 0.55rem 0.75rem; background: #f8f9fc; border-bottom: 1px solid #e5e7eb; cursor: pointer; margin: 0;">
+                        <input type="checkbox" id="pcdTodos" disabled>
+                        @Resources.Strings.Datos_ModalPlantillaConDatos_SeleccionarTodos
+                    </label>
+                    <div id="pcdListaAnios" style="max-height: 220px; overflow-y: auto;"></div>
+                    <div id="pcdSinAnios" style="display: none; margin: 0.5rem 0.6rem; padding: 0.55rem 0.75rem; background: #fff8e6; border: 1px solid #fde8a8; border-radius: 0.4rem; color: #8a5a00; font-size: 0.85rem;">
+                        @Resources.Strings.Datos_ModalPlantillaConDatos_SinAnios
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">@Resources.Strings.Layout_Cancel</button>
-                <button type="button" id="btnPcdDescargar" class="btn btn-primary" disabled>
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
+                </button>
+                <button type="button" id="btnPcdDescargar" class="btn btn-primary btn-sm" disabled>
                     <i class="fas fa-file-download mr-1"></i>@Resources.Strings.Datos_ModalPlantillaConDatos_Descargar
                 </button>
             </div>
@@ -1103,7 +1112,7 @@
                 var idEscenario = $('#pcdEscenario').val();
                 if (!idEmpresa || idEmpresa === '0') return;
 
-                $('#pcdListaAnios').html('<div style="padding:.6rem .2rem;color:#94a3b8;"><i class="fas fa-spinner fa-spin mr-2"></i></div>');
+                $('#pcdListaAnios').html('<div style="padding:1rem;text-align:center;color:#9ca3af;"><i class="fas fa-spinner fa-spin mr-2"></i></div>');
                 $('#pcdSinAnios').hide();
                 $('#pcdTodos').prop('checked', false).prop('disabled', true);
                 $('#btnPcdDescargar').prop('disabled', true);
@@ -1112,14 +1121,19 @@
                     .done(function (data) {
                         if (!data.success || !data.anios || data.anios.length === 0) {
                             $('#pcdListaAnios').empty();
-                            $('#pcdSinAnios').text((data && data.message) ? data.message : _pcdMsg.sinAnios).show();
+                            var nombreEscenario = $('#pcdEscenario option:selected').text();
+                            var nombreEmpresa = $('#idEmpresaSeleccionada option:selected').text();
+                            var msgSinAnios = (data && data.message)
+                                ? data.message
+                                : _pcdMsg.sinAnios.replace('{0}', nombreEscenario).replace('{1}', nombreEmpresa);
+                            $('#pcdSinAnios').text(msgSinAnios).show();
                             return;
                         }
                         var html = '';
                         $.each(data.anios, function (i, a) {
-                            html += '<label class="pcd-anio-row" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .2rem;cursor:pointer;">' +
+                            html += '<label class="pcd-anio-row" style="display:flex;align-items:center;gap:.6rem;padding:.5rem .75rem;cursor:pointer;border-bottom:1px solid #f1f3f5;">' +
                                         '<input type="checkbox" class="pcd-anio" value="' + a.anio + '">' +
-                                        '<span style="font-weight:600;">' + a.anio + '</span>' +
+                                        '<span style="font-weight:600;color:#1f2937;">' + a.anio + '</span>' +
                                         '<span class="info-badge" style="margin-left:auto;">' + Number(a.registros).toLocaleString() + ' ' + _pcdMsg.registros + '</span>' +
                                     '</label>';
                         });
