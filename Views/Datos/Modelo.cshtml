@@ -446,6 +446,11 @@
 
     $(function () {
 
+        // Blindaje del estado inicial: por si el navegador restaura la selección de un
+        // <select> tras un refresh (F5) sin disparar 'change', el aviso arranca siempre oculto.
+        _sinDatosEscenario = false;
+        $('#avisoSinDatosEscenario').hide();
+
         $('#idEmpresa').on('change', function () { actualizarBotones(); verificarDatosEscenario(); });
         $('#idEscenario').on('change', verificarDatosEscenario);
 
