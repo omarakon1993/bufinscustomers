@@ -111,8 +111,9 @@ textarea.ia-text-input { resize:none; overflow-y:auto; max-height:130px; line-he
             <i class="fas fa-filter"></i> @Resources.Strings.IA_FilterTitle
         </h3>
         <div class="filter-section">
+            <!-- Fila 1: contexto (qué tabla, de qué empresa, qué escenario) — los tres obligatorios -->
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-5">
                     <div class="form-group">
                         <label for="selectTabla"><i class="fas fa-table"></i> @Resources.Strings.Common_LabelTabla <span class="required">*</span></label>
                         <select id="selectTabla" class="form-control" required>
@@ -127,7 +128,7 @@ textarea.ia-text-input { resize:none; overflow-y:auto; max-height:130px; line-he
                         </select>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label for="selectEmpresa">
                             <i class="fas fa-building"></i>
@@ -145,13 +146,30 @@ textarea.ia-text-input { resize:none; overflow-y:auto; max-height:130px; line-he
                         </select>
                     </div>
                 </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="selectEscenario"><i class="fas fa-layer-group"></i> @Resources.Strings.Common_LabelEscenario <span class="required">*</span></label>
+                        <select id="selectEscenario" class="form-control" required>
+                            @if (ViewBag.Escenarios != null)
+                            {
+                                foreach (var esc in ViewBag.Escenarios)
+                                {
+                                    <option value="@esc.Id">@esc.Nombre</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
             </div>
+            <!-- Fila 2: alcance de datos dentro de ese escenario (año, mes y variable opcionales —
+                 dejar el año en blanco trae varios años a la vez para pedirle a la IA comparaciones
+                 año a año en la pregunta/prompt). -->
             <div class="row">
                 <div class="col-md-4">
                     <div class="form-group">
-                        <label for="selectAnio"><i class="fas fa-calendar-alt"></i> @Resources.Strings.Common_LabelAnio <span class="required">*</span></label>
-                        <select id="selectAnio" class="form-control" required>
-                            <option value="">@Resources.Strings.Common_Seleccione</option>
+                        <label for="selectAnio"><i class="fas fa-calendar-alt"></i> @Resources.Strings.Common_LabelAnio</label>
+                        <select id="selectAnio" class="form-control">
+                            <option value="">@Resources.Strings.Common_Todos</option>
                         </select>
                     </div>
                 </div>
@@ -310,8 +328,8 @@ textarea.ia-text-input { resize:none; overflow-y:auto; max-height:130px; line-he
         tablaSeleccionar:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_JS_TablaSeleccionar))',
         empresaRequerida:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_JS_EmpresaRequerida))',
         empresaSeleccionar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_JS_EmpresaSeleccionar))',
-        anioRequerido:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_JS_AnioRequerido))',
-        anioSeleccionar:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_JS_AnioSeleccionar))',
+        escenarioRequerido:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_JS_EscenarioRequerido))',
+        escenarioSeleccionar:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_JS_EscenarioSeleccionar))',
         preguntaVacia:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_JS_PreguntaVacia))',
         preguntaEscribir:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_JS_PreguntaEscribir))',
         asistenteError:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_JS_AsistenteError))',
@@ -333,6 +351,7 @@ textarea.ia-text-input { resize:none; overflow-y:auto; max-height:130px; line-he
         labelAnio:          '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_LabelAnio))',
         labelMes:           '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_LabelMes))',
         labelVariable:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_LabelVariable))',
+        labelEscenario:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_LabelEscenario))',
         btnExportarPDF:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_BtnExportarPDF))',
         mesTextoTodos:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Todos))',
         respuestaHeader:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IA_RespuestaHeader))',
@@ -399,12 +418,14 @@ $(document).ready(function () {
         searching: function () { return _iaMsg.buscando; }
     };
 
-    // ── Habilita "Analizar" solo con tabla + (empresa si es admin) + año ──
+    // ── Habilita "Analizar" solo con tabla + (empresa si es admin) + escenario ──
+    // Año queda fuera a propósito: dejarlo en blanco es válido (trae varios años a la vez para
+    // que la IA pueda comparar entre ellos si se le pregunta).
     function estadoBotonAnalizar() {
         var faltan = [];
         if (!$('#selectTabla').val())                    faltan.push(_iaMsg.labelTabla);
         if (esAdminJS && !$('#selectEmpresa').val())      faltan.push(_iaMsg.labelEmpresa);
-        if (!$('#selectAnio').val())                      faltan.push(_iaMsg.labelAnio);
+        if (!$('#selectEscenario').val())                 faltan.push(_iaMsg.labelEscenario);
         var ok = faltan.length === 0;
         $('#btnAnalizar').prop('disabled', !ok);
         if (ok) { $('#analizarHint').removeClass('show'); }
@@ -413,12 +434,13 @@ $(document).ready(function () {
             $('#analizarHint').addClass('show');
         }
     }
-    $('#selectTabla, #selectEmpresa, #selectAnio').on('change', estadoBotonAnalizar);
+    $('#selectTabla, #selectEmpresa, #selectEscenario, #selectAnio').on('change', estadoBotonAnalizar);
 
     // ── Filtros de datos ──────────────────────────────────
+    // Todas las tablas de este informe son de Ejecución de Modelos: el Escenario siempre aplica.
     $('#selectTabla').on('change', function () {
         var tabla   = $(this).val(), empresa = $('#selectEmpresa').val();
-        $('#selectAnio').html('<option value="">' + _iaMsg.seleccione + '</option>').trigger('change');
+        $('#selectAnio').html('<option value="">' + _iaMsg.todos + '</option>').trigger('change');
         $('#selectVariable').html('<option value="">' + _iaMsg.todas + '</option>').trigger('change');
         if (tabla) { cargarAnios(tabla, empresa); cargarVariables(tabla, empresa); }
     });
@@ -426,17 +448,21 @@ $(document).ready(function () {
         var tabla = $('#selectTabla').val(), empresa = $(this).val();
         if (tabla) { cargarAnios(tabla, empresa); cargarVariables(tabla, empresa); }
     });
+    $('#selectEscenario').on('change', function () {
+        var tabla = $('#selectTabla').val(), empresa = $('#selectEmpresa').val();
+        if (tabla) { cargarAnios(tabla, empresa); cargarVariables(tabla, empresa); }
+    });
     function cargarAnios(tabla, empresa) {
-        $.get('@Url.Action("ObtenerAnios","InformeTablasDatos")', { nombreTabla:tabla, idEmpresa:empresa||null }, function(r) {
+        $.get('@Url.Action("ObtenerAnios","InformeTablasDatos")', { nombreTabla:tabla, idEmpresa:empresa||null, idEscenario:$('#selectEscenario').val() }, function(r) {
             if (r.success) {
-                var s = $('#selectAnio').html('<option value="">' + _iaMsg.seleccione + '</option>');
+                var s = $('#selectAnio').html('<option value="">' + _iaMsg.todos + '</option>');
                 $.each(r.anios, function(i,a){ s.append($('<option>').val(a).text(a)); });
                 s.trigger('change');
             }
         });
     }
     function cargarVariables(tabla, empresa) {
-        $.get('@Url.Action("ObtenerVariables","InformeTablasDatos")', { nombreTabla:tabla, idEmpresa:empresa||null }, function(r) {
+        $.get('@Url.Action("ObtenerVariables","InformeTablasDatos")', { nombreTabla:tabla, idEmpresa:empresa||null, idEscenario:$('#selectEscenario').val() }, function(r) {
             if (r.success) {
                 var s = $('#selectVariable').html('<option value="">' + _iaMsg.todas + '</option>');
                 $.each(r.variables, function(i,v){ s.append($('<option>').val(v).text(v)); });
@@ -454,11 +480,12 @@ $(document).ready(function () {
             if (!empresa) { Swal.fire({icon:'warning',title:_iaMsg.empresaRequerida,text:_iaMsg.empresaSeleccionar}); return; }
             </text>
         }
-        if (!$('#selectAnio').val()) { Swal.fire({icon:'warning',title:_iaMsg.anioRequerido,text:_iaMsg.anioSeleccionar}); return; }
+        if (!$('#selectEscenario').val()) { Swal.fire({icon:'warning',title:_iaMsg.escenarioRequerido,text:_iaMsg.escenarioSeleccionar}); return; }
 
         filtrosActuales = {
             NombreTabla : tabla,
             IdEmpresa   : empresa || null,
+            IdEscenario : $('#selectEscenario').val(),
             Anio        : $('#selectAnio').val()     || null,
             Mes         : $('#selectMes').val()      || null,
             Variable    : $('#selectVariable').val() || null
@@ -468,6 +495,7 @@ $(document).ready(function () {
         var nombreTabla = $('#selectTabla option:selected').data('nombre') || tabla;
         var partes = [nombreTabla];
         if ($('#selectEmpresa option:selected').text() && empresa) partes.push($('#selectEmpresa option:selected').text());
+        partes.push($('#selectEscenario option:selected').text());
         if ($('#selectAnio').val()) partes.push(_iaMsg.labelAnio + ' ' + $('#selectAnio').val());
         if ($('#selectMes option:selected').text() && $('#selectMes').val()) partes.push($('#selectMes option:selected').text());
         if ($('#selectVariable').val()) partes.push($('#selectVariable').val());
@@ -481,8 +509,9 @@ $(document).ready(function () {
     $('#btnLimpiar').on('click', function () {
         $('#selectTabla').val('').trigger('change');
         $('#selectEmpresa').val($('#selectEmpresa option:first').val()).trigger('change');
+        $('#selectEscenario').val($('#selectEscenario option:first').val()).trigger('change');
         $('#selectMes,#selectAnio').val('').trigger('change');
-        $('#selectAnio').html('<option value="">' + _iaMsg.seleccione + '</option>').trigger('change');
+        $('#selectAnio').html('<option value="">' + _iaMsg.todos + '</option>').trigger('change');
         $('#selectVariable').html('<option value="">' + _iaMsg.todas + '</option>').trigger('change');
         resetPanel();
     });
@@ -819,7 +848,8 @@ $(document).ready(function () {
     // ── Select2 ───────────────────────────────────────────
     $('#selectTabla').select2($.extend({placeholder:_iaMsg.seleccione,allowClear:false},{width:'100%',language:s2lang}));
     $('#selectEmpresa').select2($.extend({placeholder:_iaMsg.seleccione,allowClear:false},{width:'100%',language:s2lang}));
-    $('#selectAnio').select2($.extend({placeholder:_iaMsg.seleccione,allowClear:false},{width:'100%',language:s2lang}));
+    $('#selectEscenario').select2($.extend({allowClear:false,minimumResultsForSearch:-1},{width:'100%',language:s2lang}));
+    $('#selectAnio').select2($.extend({placeholder:_iaMsg.todos,allowClear:true},{width:'100%',language:s2lang}));
     $('#selectMes').select2($.extend({placeholder:_iaMsg.todos,allowClear:true,minimumResultsForSearch:-1},{width:'100%',language:s2lang}));
     $('#selectVariable').select2($.extend({placeholder:_iaMsg.todas,allowClear:true},{width:'100%',language:s2lang}));
 
@@ -847,11 +877,12 @@ async function exportarAnalisisPDF() {
 
         // Filtros
         var filtrosData = [
-            {label:_iaMsg.labelTabla,    valor:tablaTexto},
-            {label:_iaMsg.labelEmpresa,  valor:nombreEmpresa},
-            {label:_iaMsg.labelAnio,     valor:filtros.Anio||'—'},
-            {label:_iaMsg.labelMes,      valor:mesTexto},
-            {label:_iaMsg.labelVariable, valor:filtros.Variable||_iaMsg.todas}
+            {label:_iaMsg.labelTabla,     valor:tablaTexto},
+            {label:_iaMsg.labelEmpresa,   valor:nombreEmpresa},
+            {label:_iaMsg.labelEscenario, valor:$('#selectEscenario option:selected').text().trim() || filtros.IdEscenario || '—'},
+            {label:_iaMsg.labelAnio,      valor:filtros.Anio||_iaMsg.todos},
+            {label:_iaMsg.labelMes,       valor:mesTexto},
+            {label:_iaMsg.labelVariable,  valor:filtros.Variable||_iaMsg.todas}
         ];
         var fHtml = '';
         filtrosData.forEach(function(f){

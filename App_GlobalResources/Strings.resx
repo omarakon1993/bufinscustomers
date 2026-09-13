@@ -144,6 +144,7 @@
   <data name="Common_No" xml:space="preserve"><value>No</value></data>
   <data name="Common_Exito" xml:space="preserve"><value>¡Éxito!</value></data>
   <data name="Common_Error" xml:space="preserve"><value>Error</value></data>
+  <data name="Common_TablaNoValida" xml:space="preserve"><value>Tabla no válida.</value></data>
   <data name="Common_Informacion" xml:space="preserve"><value>Información</value></data>
   <data name="Common_Aceptar" xml:space="preserve"><value>Aceptar</value></data>
   <data name="Common_SinPermisos" xml:space="preserve"><value>No tiene permisos para realizar esta acción.</value></data>
@@ -342,12 +343,31 @@
   <data name="Modelo_Correo_ExitoTitulo" xml:space="preserve"><value>Correo enviado</value></data>
   <data name="Modelo_JS_CorreoEnviado" xml:space="preserve"><value>El correo con los modelos se envió correctamente.</value></data>
 
+  <!-- INFORME DE MODELOS -->
+  <data name="InformeModelos_PageTitle" xml:space="preserve"><value>Informe de Modelos</value></data>
+  <data name="InformeModelos_EstadoInicialDesc" xml:space="preserve"><value>Selecciona una empresa y una o varias tablas arriba, luego haz clic en 'Consultar' para ver los datos aquí.</value></data>
+  <data name="InformeModelos_Picker_Placeholder" xml:space="preserve"><value>— Selecciona una o varias tablas —</value></data>
+  <data name="InformeModelos_Picker_Todas" xml:space="preserve"><value>Todas las tablas</value></data>
+  <data name="InformeModelos_Picker_VariasFmt" xml:space="preserve"><value>{0} tablas seleccionadas</value></data>
+  <data name="InformeModelos_BtnConsultarUnoFmt" xml:space="preserve"><value>Consultar {0}</value></data>
+  <data name="InformeModelos_BtnConsultarVariasFmt" xml:space="preserve"><value>Consultar {0} tablas seleccionadas</value></data>
+  <data name="InformeModelos_BtnConsultarTodas" xml:space="preserve"><value>Consultar todas las tablas</value></data>
+  <data name="InformeModelos_ConsultarTooltip" xml:space="preserve"><value>Selecciona una o varias tablas para consultarlas</value></data>
+  <data name="InformeModelos_ExportarTooltip" xml:space="preserve"><value>Exporta a Excel la tabla que estás viendo</value></data>
+  <data name="InformeModelos_JS_Consultando" xml:space="preserve"><value>Consultando datos.</value></data>
+  <data name="InformeModelos_JS_ConsultandoMultiFmt" xml:space="preserve"><value>Consultando {0} de {1}…</value></data>
+  <data name="InformeModelos_JS_ErrorConexion" xml:space="preserve"><value>Error de conexión al consultar los datos.</value></data>
+  <data name="InformeModelos_Resultados" xml:space="preserve"><value>Resultados</value></data>
+  <data name="InformeModelos_NoResultados" xml:space="preserve"><value>Sin datos</value></data>
+  <data name="InformeModelos_NoResultadosDesc" xml:space="preserve"><value>No hay datos cargados con los filtros seleccionados.</value></data>
+
   <!-- COMUNES - FILTROS Y DROPDOWNS -->
   <data name="Common_Seleccione" xml:space="preserve"><value>-- Seleccione --</value></data>
   <data name="Common_Todos" xml:space="preserve"><value>-- Todos --</value></data>
   <data name="Common_Todas" xml:space="preserve"><value>-- Todas --</value></data>
   <data name="Common_Consultar" xml:space="preserve"><value>Consultar</value></data>
   <data name="Common_Limpiar" xml:space="preserve"><value>Limpiar</value></data>
+  <data name="Common_SeleccionarTodos" xml:space="preserve"><value>Seleccionar todos</value></data>
   <data name="Common_ExportarExcel" xml:space="preserve"><value>Exportar Excel</value></data>
   <data name="Common_Resultados" xml:space="preserve"><value>Resultados</value></data>
   <data name="Common_NoData" xml:space="preserve"><value>No se encontraron datos</value></data>
@@ -359,6 +379,7 @@
   <data name="Common_FiltrosConsulta" xml:space="preserve"><value>Filtros de Consulta</value></data>
   <data name="Common_LabelTabla" xml:space="preserve"><value>Tabla</value></data>
   <data name="Common_LabelEmpresa" xml:space="preserve"><value>Empresa</value></data>
+  <data name="Common_LabelEscenario" xml:space="preserve"><value>Escenario</value></data>
   <data name="Common_LabelAnio" xml:space="preserve"><value>Año</value></data>
   <data name="Common_LabelMes" xml:space="preserve"><value>Mes</value></data>
   <data name="Common_LabelVariable" xml:space="preserve"><value>Variable</value></data>
@@ -408,8 +429,8 @@
   <data name="IA_PDF_Subtitle" xml:space="preserve"><value>Generado por IA BUFINS</value></data>
   <data name="IA_PDF_Filtros" xml:space="preserve"><value>Filtros aplicados</value></data>
   <data name="IA_PDF_Footer" xml:space="preserve"><value>BUFINS · Plataforma de Análisis Financiero</value></data>
-  <data name="IA_JS_AnioRequerido" xml:space="preserve"><value>Año requerido</value></data>
-  <data name="IA_JS_AnioSeleccionar" xml:space="preserve"><value>Debe seleccionar un año para el análisis IA.</value></data>
+  <data name="IA_JS_EscenarioRequerido" xml:space="preserve"><value>Escenario requerido</value></data>
+  <data name="IA_JS_EscenarioSeleccionar" xml:space="preserve"><value>Debe seleccionar un escenario para el análisis IA.</value></data>
   <data name="IA_JS_PreguntaVacia" xml:space="preserve"><value>Pregunta vacía</value></data>
   <data name="IA_JS_PreguntaEscribir" xml:space="preserve"><value>Escribe una pregunta antes de enviar.</value></data>
   <data name="IA_JS_AsistenteError" xml:space="preserve"><value>Asistente IA</value></data>
@@ -424,12 +445,6 @@
   <data name="IA_JS_Buscando" xml:space="preserve"><value>Buscando…</value></data>
   <data name="IA_CharRestantes" xml:space="preserve"><value>caracteres restantes</value></data>
 
-  <!-- INFORME TABLAS DE DATOS -->
-  <data name="Tablas_PageTitle" xml:space="preserve"><value>Informe de Tablas de Datos</value></data>
-  <data name="Tablas_JS_ErrorAnios" xml:space="preserve"><value>Error al cargar anos</value></data>
-  <data name="Tablas_JS_ErrorVariables" xml:space="preserve"><value>Error al cargar variables</value></data>
-  <data name="Tablas_JS_ErrorConexion" xml:space="preserve"><value>Error de conexion al consultar los datos</value></data>
-  <data name="Tablas_EstadoInicialDesc" xml:space="preserve"><value>Selecciona una tabla arriba y haz clic en 'Consultar' para ver los resultados aquí.</value></data>
 
   <!-- INFORME RELACIONAMIENTOS -->
   <data name="Rel_PageTitle" xml:space="preserve"><value>Informe Relacionamientos BUFINS</value></data>

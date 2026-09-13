@@ -13,6 +13,7 @@ namespace bufinscustomers.Models
         public int? Mes { get; set; }
         public int? IdEmpresa { get; set; }
         public string Variable { get; set; }
+        public int? IdEscenario { get; set; }
 
         // Propiedad alternativa para evitar problemas de encoding en JavaScript
         public int? Anio
@@ -51,5 +52,14 @@ namespace bufinscustomers.Models
         public string NombreTabla { get; set; }
         public string NombreAmigable { get; set; }
         public string Descripcion { get; set; }
+
+        /// <summary>
+        /// true si la tabla tiene columna IdEscenario (tablas de resultados de Ejecución de
+        /// Modelos) — controla si el selector de Escenario se muestra en Análisis IA.
+        /// </summary>
+        public bool TieneEscenario { get; set; }
+
+        /// <summary>Ícono FontAwesome para la tarjeta en "Informe de Modelos" (null → ícono genérico).</summary>
+        public string Icono { get; set; }
     }
 }

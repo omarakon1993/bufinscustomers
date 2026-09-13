@@ -1,0 +1,802 @@
+@model dynamic
+@using bufinscustomers.Models
+@{
+    ViewBag.Title = Resources.Strings.InformeModelos_PageTitle;
+    var tablas    = ViewBag.Tablas as List<TablaDatos>;
+    var empresas  = ViewBag.Empresas as List<Empresas>;
+    var esAdmin   = (bool)ViewBag.EsAdmin;
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/modelo-consola.css" rel="stylesheet" />
+
+<div class="container-fluid px-4 mc-page">
+
+    <!-- Header Power BI -->
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-table powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.InformeModelos_PageTitle</h1>
+        </div>
+    </div>
+
+    @Html.AntiForgeryToken()
+
+    <!-- Barra de trabajo -->
+    <div class="mc-toolbar">
+
+        <!-- Fila 1: filtros -->
+        <div class="mc-toolbar-row">
+
+            <div class="mc-field">
+                <label for="idEmpresa">
+                    @Resources.Strings.Common_LabelEmpresa @if (esAdmin) { <span class="required">*</span> }
+                </label>
+                <select class="form-control" id="idEmpresa" autocomplete="off" @(esAdmin ? "required" : "")>
+                    @if (esAdmin) { <option value="">@Resources.Strings.Common_Seleccione</option> }
+                    @if (empresas != null)
+                    {
+                        foreach (var e in empresas)
+                        {
+                            <option value="@e.Id" data-nombre="@e.Nombre">@e.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="mc-field">
+                <label for="idEscenario">
+                    @Resources.Strings.Common_LabelEscenario
+                </label>
+                <select class="form-control" id="idEscenario" autocomplete="off">
+                    @if (ViewBag.Escenarios != null)
+                    {
+                        foreach (var escenario in ViewBag.Escenarios)
+                        {
+                            <option value="@escenario.Id">@escenario.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="mc-field">
+                <label for="filtroAnio">
+                    @Resources.Strings.Common_LabelAnio
+                </label>
+                <input type="number" class="form-control" id="filtroAnio" autocomplete="off"
+                       min="2000" max="2100" placeholder="@Resources.Strings.Common_Todos">
+            </div>
+        </div>
+
+        <!-- Selector de tablas: tarjetas seleccionables — una, varias o todas -->
+        <div class="mc-modelos-panel">
+            <div class="mc-modelos-panel-head">
+                <span class="mc-modelos-panel-title">
+                    <i class="fas fa-cubes mr-1"></i>@Resources.Strings.Common_LabelTabla <span class="required">*</span>
+                </span>
+                <div class="mc-modelos-panel-actions">
+                    <span class="mc-modelos-contador" id="tablaContador">@Resources.Strings.InformeModelos_Picker_Placeholder</span>
+                    <label class="mc-chip-todos" id="tablaSelAllChip">
+                        <input type="checkbox" id="tablaSelAll">
+                        <i class="fas fa-check-double mr-1"></i>@Resources.Strings.Common_SeleccionarTodos
+                    </label>
+                </div>
+            </div>
+            <div class="mc-modelos-grid" id="tablaGrid">
+                @if (tablas != null)
+                {
+                    foreach (var t in tablas)
+                    {
+                        <label class="mc-modelo-card" title="@(t.Descripcion ?? t.NombreAmigable)">
+                            <input type="checkbox" class="mc-modelo-pick" value="@t.NombreTabla"
+                                   data-nombre="@t.NombreAmigable"
+                                   data-icono="@(t.Icono ?? "fas fa-table")">
+                            <span class="mc-modelo-card-check"><i class="fas fa-check"></i></span>
+                            <span class="mc-modelo-card-icon"><i class="@(t.Icono ?? "fas fa-table")"></i></span>
+                            <span class="mc-modelo-card-texto">
+                                <span class="mc-modelo-card-nombre">@t.NombreAmigable</span>
+                            </span>
+                        </label>
+                    }
+                }
+            </div>
+        </div>
+
+        <!-- Fila 2: acciones -->
+        <div class="mc-toolbar-row mc-toolbar-acciones">
+
+            <button type="button" id="btnConsultar" class="mc-btn-primary" disabled onclick="consultarTablas()"
+                    title="@Resources.Strings.InformeModelos_ConsultarTooltip">
+                <span class="mc-ico"><i class="fas fa-search mr-1"></i></span><span id="btnConsultarTexto">@Resources.Strings.Common_Consultar</span>
+            </button>
+
+            <button type="button" id="btnExportar" class="mc-btn-solid excel" disabled onclick="exportarActivo()"
+                    title="@Resources.Strings.InformeModelos_ExportarTooltip">
+                <span class="mc-ico"><i class="fas fa-file-excel mr-1"></i></span><span>@Resources.Strings.Common_ExportarExcel</span>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Loading (consulta AJAX) -->
+    <div id="loadingConsulta" style="display:none;text-align:center;padding:2.5rem;">
+        <div class="spinner-border text-primary" style="width:3rem;height:3rem;" role="status"></div>
+        <p class="mt-3 text-muted fw-semibold" id="loadingConsultaTexto">@Resources.Strings.InformeModelos_JS_Consultando</p>
+    </div>
+
+    <!-- Estado inicial: aun no se ha consultado nada -->
+    <div id="estadoInicial" class="empty-state-initial">
+        <div class="empty-state-initial-icon"><i class="fas fa-table"></i></div>
+        <h4>@Resources.Strings.Common_EstadoInicialTitulo</h4>
+        <p>@Resources.Strings.InformeModelos_EstadoInicialDesc</p>
+    </div>
+
+    <div id="resultadosAnchor"></div>
+
+    <!-- Cápsulas de navegación entre las tablas consultadas (solo si se consultó más de una) -->
+    <div id="resultadosTabs" class="mc-tabs" style="display:none;"></div>
+
+    <!-- Barra de filtros — SOLO afecta la tabla de resultados de abajo. Colapsada por defecto
+         (un botón); vive fuera de .mc-table-card (overflow:hidden) para no recortar el panel. -->
+    <div class="mc-filtro-bar" id="mcFiltroBar" style="display:none;">
+        <button type="button" class="mc-filtro-toggle" id="mcFiltroToggle" aria-expanded="false">
+            <i class="fas fa-filter"></i>
+            <span>@Resources.Strings.Modelo_Filtro_Btn</span>
+            <span class="mc-filtro-badge" id="mcFiltroBadge" style="display:none;">0</span>
+            <i class="fas fa-chevron-down mc-filtro-caret"></i>
+        </button>
+
+        <div class="mc-filtro-panel" id="mcFiltroPanel" hidden>
+            <div class="mc-filtro-seccion">
+                <label><i class="fas fa-search mr-1"></i>@Resources.Strings.Modelo_Filtro_Buscar</label>
+                <div class="mc-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="filtroResultados" autocomplete="off"
+                           placeholder="@Resources.Strings.Modelo_FiltrarResultados">
+                </div>
+            </div>
+
+            <div class="mc-filtro-sep"></div>
+
+            <div class="mc-filtro-seccion">
+                <label><i class="fas fa-sliders-h mr-1"></i>@Resources.Strings.Modelo_Filtro_PorCampo</label>
+                <div class="mc-filtro-builder">
+                    <select id="mcFiltroCampo" class="form-control form-control-sm"></select>
+                    <select id="mcFiltroOperador" class="form-control form-control-sm"></select>
+                    <input type="text" id="mcFiltroValor" class="form-control form-control-sm"
+                           placeholder="@Resources.Strings.Modelo_Filtro_Valor">
+                    <button type="button" id="mcFiltroAgregar" class="mc-filtro-add" title="@Resources.Strings.Modelo_Filtro_Agregar">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="mc-filtro-chips" id="mcFiltroChips"></div>
+            </div>
+
+            <div class="mc-filtro-foot">
+                <button type="button" id="mcFiltroLimpiar" class="mc-filtro-limpiar">
+                    <i class="fas fa-eraser mr-1"></i>@Resources.Strings.Common_Limpiar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resultados de la tabla activa -->
+    <div id="resultadosSection" style="display:none;">
+        <div class="mc-table-card">
+            <div class="mc-table-head">
+                <i id="resultadosIcono" class="fas fa-table mc-table-head-icon"></i>
+                <span id="resultadosTitulo" class="mc-table-head-title">@Resources.Strings.InformeModelos_Resultados</span>
+                <span id="mcContexto" class="mc-table-head-ctx"></span>
+                <span id="resultadosContador" class="mc-table-head-count" style="display:none;"></span>
+            </div>
+            <div class="mc-table-wrapper">
+                <table class="mc-table">
+                    <thead id="resultadosThead"></thead>
+                    <tbody id="resultadosTbody"></tbody>
+                </table>
+            </div>
+            <div class="mc-table-foot">
+                <span class="mc-range" id="mcRango"></span>
+                <div class="pagination-controls mc-pag" id="paginacionControls" style="display:none;padding:0;margin:0;border:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estado vacío / error de la tabla activa -->
+    <div id="noResultados" style="display:none;">
+        <div class="no-data-message">
+            <i id="noResultadosIcono" class="fas fa-inbox"></i>
+            <h4 id="noResultadosTitulo">@Resources.Strings.InformeModelos_NoResultados</h4>
+            <p id="noResultadosDesc">@Resources.Strings.InformeModelos_NoResultadosDesc</p>
+        </div>
+    </div>
+
+</div>
+
+@section scripts {
+
+<script>
+    var _im = {
+        urlConsultar: '@Url.Action("ConsultarDatos", "InformeModelos")',
+        urlExportar:  '@Url.Action("ExportarExcel",  "InformeModelos")',
+        token: $('input[name="__RequestVerificationToken"]').val(),
+        textos: {
+            pickerPlaceholder: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.InformeModelos_Picker_Placeholder))',
+            pickerTodas:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.InformeModelos_Picker_Todas))',
+            pickerVariasFmt:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.InformeModelos_Picker_VariasFmt))',
+            btnConsultar:            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Consultar))',
+            btnConsultarUnoFmt:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.InformeModelos_BtnConsultarUnoFmt))',
+            btnConsultarVariasFmt:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.InformeModelos_BtnConsultarVariasFmt))',
+            btnConsultarTodas:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.InformeModelos_BtnConsultarTodas))',
+            consultarTooltip:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.InformeModelos_ConsultarTooltip))',
+            consultando:             '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.InformeModelos_JS_Consultando))',
+            consultandoMultiFmt:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.InformeModelos_JS_ConsultandoMultiFmt))',
+            errorConexion:           '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.InformeModelos_JS_ErrorConexion))',
+            noResultadosTitulo:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.InformeModelos_NoResultados))',
+            noResultadosDesc:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.InformeModelos_NoResultadosDesc))',
+            registros:               '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Registros))',
+            error:                   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error))',
+            filtroSelectCampo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_SelectCampo))',
+            filtroChipValorFmt:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_ChipValorFmt))',
+            opContiene:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_Contiene))',
+            opNoContiene: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_NoContiene))',
+            opIgual:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_Igual))',
+            opEmpieza:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_Empieza))',
+            opTermina:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_Termina))',
+            opMayor:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_Mayor))',
+            opMayorIgual: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_MayorIgual))',
+            opMenor:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_Menor))',
+            opMenorIgual: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_MenorIgual))'
+        }
+    };
+
+    var _moneyColSet = { 'valor': true, 'valoracumulado': true, 'valorfuturo': true, 'valorpresupuesto': true, 'valorpresupuestoacumulado': true, 'valorpresupuestoconajuste': true };
+
+    // ── Estado de paginación ──────────────────────────────────────────────
+    var _pag = {
+        filas:      [],   // filas = objetos { nombreTecnico: valor, ... } (ya formateados por el servidor)
+        filasVista: [],
+        columnas:   [],   // [{ nombreTecnico, nombreAmigable }]
+        pagina:     1,
+        porPagina:  50
+    };
+
+    // ── Filtros de la tabla de resultados ─────────────────────────────────
+    // Dos mecanismos que se combinan con AND: una búsqueda de texto libre sobre TODAS las
+    // columnas (_busquedaGlobal) y una lista de filtros por campo específico (_filtrosCampo),
+    // cada uno con su propio operador según el tipo de columna (texto vs. numérica/dinero) —
+    // igual estilo/comportamiento que en Ejecución de Modelos.
+    var _busquedaGlobal = '';
+    var _filtrosCampo   = [];   // { campoTecnico, campoAmigable, operador, operadorLabel, valor, esNum }
+
+    function operadoresParaColumna(esNum) {
+        return esNum
+            ? [
+                  { value: 'igual',      label: _im.textos.opIgual },
+                  { value: 'mayor',      label: _im.textos.opMayor },
+                  { value: 'mayorigual', label: _im.textos.opMayorIgual },
+                  { value: 'menor',      label: _im.textos.opMenor },
+                  { value: 'menorigual', label: _im.textos.opMenorIgual }
+              ]
+            : [
+                  { value: 'contiene',   label: _im.textos.opContiene },
+                  { value: 'nocontiene', label: _im.textos.opNoContiene },
+                  { value: 'igual',      label: _im.textos.opIgual },
+                  { value: 'empieza',    label: _im.textos.opEmpieza },
+                  { value: 'termina',    label: _im.textos.opTermina }
+              ];
+    }
+
+    // Se llama cada vez que se activa una tabla nueva: sus columnas son distintas, así que los
+    // filtros de campo de la tabla anterior ya no aplican y se descartan junto con la búsqueda.
+    function reiniciarFiltroTabla() {
+        _busquedaGlobal = '';
+        _filtrosCampo   = [];
+        $('#filtroResultados').val('');
+        $('#mcFiltroPanel').prop('hidden', true);
+        $('#mcFiltroToggle').attr('aria-expanded', 'false').removeClass('is-open');
+
+        var opciones = '<option value="">' + _im.textos.filtroSelectCampo + '</option>';
+        for (var i = 0; i < _pag.columnas.length; i++) {
+            opciones += '<option value="' + i + '">' + $('<span>').text(_pag.columnas[i].nombreAmigable).html() + '</option>';
+        }
+        $('#mcFiltroCampo').html(opciones);
+        poblarOperadoresParaCampo();
+        pintarChipsFiltro();
+    }
+
+    function poblarOperadoresParaCampo() {
+        var idx = $('#mcFiltroCampo').val();
+        var esNum = idx !== '' && !!_moneyColSet[(_pag.columnas[idx].nombreTecnico || '').toLowerCase()];
+        var ops = operadoresParaColumna(esNum);
+        $('#mcFiltroOperador').html(ops.map(function (o) {
+            return '<option value="' + o.value + '">' + o.label + '</option>';
+        }).join(''));
+    }
+
+    function agregarFiltroCampo() {
+        var idx = $('#mcFiltroCampo').val();
+        var valor = ($('#mcFiltroValor').val() || '').trim();
+        if (idx === '' || idx == null || !valor) return;
+
+        var col      = _pag.columnas[idx];
+        var esNum    = !!_moneyColSet[(col.nombreTecnico || '').toLowerCase()];
+        var operador = $('#mcFiltroOperador').val();
+        var operadorLabel = $('#mcFiltroOperador option:selected').text();
+
+        _filtrosCampo.push({
+            campoTecnico: col.nombreTecnico, campoAmigable: col.nombreAmigable,
+            operador: operador, operadorLabel: operadorLabel, valor: valor, esNum: esNum
+        });
+
+        $('#mcFiltroValor').val('').focus();
+        pintarChipsFiltro();
+        aplicarFiltroYRender();
+    }
+
+    function pintarChipsFiltro() {
+        var html = _filtrosCampo.map(function (f, i) {
+            return '<span class="mc-filtro-chip" data-idx="' + i + '">' +
+                   '<strong>' + $('<span>').text(f.campoAmigable).html() + '</strong> ' +
+                   $('<span>').text(f.operadorLabel).html() + ' ' +
+                   _im.textos.filtroChipValorFmt.replace('{0}', $('<span>').text(f.valor).html()) +
+                   '<button type="button" class="mc-filtro-chip-x"><i class="fas fa-times"></i></button>' +
+                   '</span>';
+        }).join('');
+        $('#mcFiltroChips').html(html);
+
+        var total = _filtrosCampo.length + (_busquedaGlobal ? 1 : 0);
+        $('#mcFiltroBadge').text(total).toggle(total > 0);
+        $('#mcFiltroToggle').toggleClass('has-filtros', total > 0);
+    }
+
+    function evaluarFiltroCampo(valorCelda, f) {
+        if (f.esNum) {
+            var n = parseFloat(valorCelda);
+            var fv = parseFloat(f.valor.replace(',', '.'));
+            if (isNaN(n) || isNaN(fv)) return false;
+            switch (f.operador) {
+                case 'igual':      return n === fv;
+                case 'mayor':      return n > fv;
+                case 'mayorigual': return n >= fv;
+                case 'menor':      return n < fv;
+                case 'menorigual': return n <= fv;
+            }
+            return true;
+        }
+        var s   = String(valorCelda == null ? '' : valorCelda).toLowerCase();
+        var fv2 = f.valor.toLowerCase();
+        switch (f.operador) {
+            case 'contiene':   return s.indexOf(fv2) >= 0;
+            case 'nocontiene': return s.indexOf(fv2) < 0;
+            case 'igual':      return s === fv2;
+            case 'empieza':    return s.indexOf(fv2) === 0;
+            case 'termina':    return s.length >= fv2.length && s.slice(-fv2.length) === fv2;
+        }
+        return true;
+    }
+
+    function aplicarFiltroYRender() {
+        var datos = _pag.filas;
+
+        if (_busquedaGlobal) {
+            datos = datos.filter(function (fila) {
+                return _pag.columnas.some(function (col) {
+                    var v = fila[col.nombreTecnico];
+                    return String(v == null ? '' : v).toLowerCase().indexOf(_busquedaGlobal) >= 0;
+                });
+            });
+        }
+
+        _filtrosCampo.forEach(function (f) {
+            datos = datos.filter(function (fila) { return evaluarFiltroCampo(fila[f.campoTecnico], f); });
+        });
+
+        _pag.filasVista = datos;
+        renderPagina(1);
+    }
+
+    // ── Selector de tablas (una o varias) ─────────────────────────────────
+    function tablasSeleccionadas() {
+        return $('.mc-modelo-pick:checked').map(function () { return this.value; }).get();
+    }
+
+    function actualizarTarjetasTabla() {
+        $('.mc-modelo-card').each(function () {
+            var $card = $(this);
+            $card.toggleClass('is-selected', $card.find('.mc-modelo-pick').is(':checked'));
+        });
+    }
+
+    function pintarContadorTablas() {
+        var sel   = tablasSeleccionadas();
+        var total = $('.mc-modelo-pick').length;
+        var $ctd  = $('#tablaContador');
+
+        if (sel.length === 0) {
+            $ctd.text(_im.textos.pickerPlaceholder).removeClass('has-sel');
+        } else if (sel.length === 1) {
+            $ctd.text($('.mc-modelo-pick:checked').data('nombre')).addClass('has-sel');
+        } else if (sel.length === total) {
+            $ctd.text(_im.textos.pickerTodas).addClass('has-sel');
+        } else {
+            $ctd.text(_im.textos.pickerVariasFmt.replace('{0}', sel.length)).addClass('has-sel');
+        }
+
+        $('#tablaSelAll')
+            .prop('checked', sel.length > 0 && sel.length === total)
+            .prop('indeterminate', sel.length > 0 && sel.length < total);
+        $('#tablaSelAllChip').toggleClass('is-partial', sel.length > 0 && sel.length < total);
+    }
+
+    function onTablasChange() {
+        actualizarTarjetasTabla();
+        pintarContadorTablas();
+        actualizarBotones();
+    }
+
+    var _consultando = false;
+
+    function actualizarBotones() {
+        var tieneEmpresa = !!$('#idEmpresa').val();
+        var nSel = tablasSeleccionadas().length;
+        $('#btnConsultar').prop('disabled', !(tieneEmpresa && nSel > 0) || _consultando);
+        actualizarBotonConsultar();
+    }
+
+    // Texto del botón "Consultar": 1 tabla → "Consultar <nombre>"; varias (no todas) →
+    // "Consultar N tablas seleccionadas"; todas → "Consultar todas las tablas".
+    function actualizarBotonConsultar() {
+        if (_consultando) return;
+
+        var sel   = tablasSeleccionadas();
+        var total = $('.mc-modelo-pick').length;
+
+        if (sel.length === 1) {
+            var txtUno = _im.textos.btnConsultarUnoFmt.replace('{0}', $('.mc-modelo-pick:checked').data('nombre'));
+            $('#btnConsultarTexto').text(txtUno);
+            $('#btnConsultar').attr('title', txtUno);
+        } else if (sel.length > 1 && sel.length < total) {
+            $('#btnConsultarTexto').text(_im.textos.btnConsultarVariasFmt.replace('{0}', sel.length));
+            $('#btnConsultar').attr('title', _im.textos.consultarTooltip);
+        } else if (sel.length === total && total > 0) {
+            $('#btnConsultarTexto').text(_im.textos.btnConsultarTodas);
+            $('#btnConsultar').attr('title', _im.textos.btnConsultarTodas);
+        } else {
+            $('#btnConsultarTexto').text(_im.textos.btnConsultar);
+            $('#btnConsultar').attr('title', _im.textos.consultarTooltip);
+        }
+    }
+
+    $(function () {
+
+        $('#idEmpresa').on('change', actualizarBotones);
+        $(document).on('change', '.mc-modelo-pick', onTablasChange);
+        $('#tablaSelAll').on('change', function () {
+            $('.mc-modelo-pick').prop('checked', this.checked);
+            onTablasChange();
+        });
+
+        // La única empresa se preselecciona sola (no requiere acción del usuario).
+        if ($('#idEmpresa option').length === 2) {
+            $('#idEmpresa option:last').prop('selected', true);
+        }
+
+        onTablasChange();
+
+        // ── Cápsulas de navegación entre resultados de varias tablas ──────
+        $(document).on('click', '.mc-tab', function () {
+            if ($(this).hasClass('active')) return;
+            activarResultadoTabla($(this).data('id'));
+            $('html, body').animate({ scrollTop: $('#resultadosAnchor').offset().top - 90 }, 250);
+        });
+
+        // ── Filtro de la tabla de resultados ──────────────────────────────
+        $('#mcFiltroToggle').on('click', function (e) {
+            e.stopPropagation();
+            var abierto = !$('#mcFiltroPanel').prop('hidden');
+            $('#mcFiltroPanel').prop('hidden', abierto);
+            $('#mcFiltroToggle').attr('aria-expanded', String(!abierto)).toggleClass('is-open', !abierto);
+        });
+        $(document).on('click', function (e) {
+            if (!$(e.target).closest('#mcFiltroBar').length) {
+                $('#mcFiltroPanel').prop('hidden', true);
+                $('#mcFiltroToggle').attr('aria-expanded', 'false').removeClass('is-open');
+            }
+        });
+        $('#filtroResultados').on('input', function () {
+            _busquedaGlobal = ($(this).val() || '').toLowerCase().trim();
+            pintarChipsFiltro();
+            aplicarFiltroYRender();
+        });
+
+        $('#mcFiltroCampo').on('change', poblarOperadoresParaCampo);
+        $('#mcFiltroAgregar').on('click', agregarFiltroCampo);
+        $('#mcFiltroValor').on('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); agregarFiltroCampo(); }
+        });
+        $(document).on('click', '.mc-filtro-chip .mc-filtro-chip-x', function () {
+            var idx = $(this).closest('.mc-filtro-chip').data('idx');
+            _filtrosCampo.splice(idx, 1);
+            pintarChipsFiltro();
+            aplicarFiltroYRender();
+        });
+
+        $('#mcFiltroLimpiar').on('click', function () {
+            _filtrosCampo = [];
+            _busquedaGlobal = '';
+            $('#filtroResultados').val('');
+            pintarChipsFiltro();
+            aplicarFiltroYRender();
+        });
+    });
+
+    // ── Consultar tabla(s) (AJAX) ──────────────────────────────────────────
+    // Consulta, en fila (una petición a la vez), cada tabla marcada en el panel de tarjetas.
+    // Con 1 sola tabla se ve igual que siempre; con varias, al terminar se muestran cápsulas
+    // de navegación (una por tabla) para saltar entre sus datos sin perder ninguno.
+    var _resultadosMulti = {};   // nombreTabla -> { nombre, icono, columnas, filas, error }
+
+    function consultarTablas() {
+        var idEmpresa = $('#idEmpresa').val();
+        var sel = tablasSeleccionadas();
+        if (!idEmpresa || sel.length === 0 || _consultando) return;
+
+        var idEscenario = $('#idEscenario').val();
+        var anio = $('#filtroAnio').val() || null;
+
+        _consultando = true;
+        _resultadosMulti = {};
+        $('#estadoInicial').hide();
+        $('#resultadosSection').hide();
+        $('#noResultados').hide();
+        $('#resultadosTabs').hide().empty();
+        $('#mcFiltroBar').hide();
+        $('#btnConsultar, #btnExportar').prop('disabled', true);
+        $('.mc-modelo-pick, #tablaSelAll').prop('disabled', true);
+        $('#tablaGrid').addClass('is-disabled');
+        $('#loadingConsulta').show();
+
+        var cola      = sel.slice();
+        var totalCola = cola.length;
+
+        function siguiente() {
+            if (cola.length === 0) {
+                _consultando = false;
+                $('#loadingConsulta').hide();
+                $('.mc-modelo-pick, #tablaSelAll').prop('disabled', false);
+                $('#tablaGrid').removeClass('is-disabled');
+                actualizarBotones();
+                mostrarResultadosConsulta(sel);
+                return;
+            }
+
+            var tabla  = cola.shift();
+            var indice = totalCola - cola.length;
+            var $c     = $('.mc-modelo-pick[value="' + tabla + '"]');
+
+            $('#loadingConsultaTexto').text(
+                totalCola > 1
+                    ? _im.textos.consultandoMultiFmt.replace('{0}', indice).replace('{1}', totalCola)
+                    : _im.textos.consultando
+            );
+
+            $.ajax({
+                url:  _im.urlConsultar,
+                type: 'POST',
+                data: {
+                    __RequestVerificationToken: _im.token,
+                    NombreTabla: tabla,
+                    IdEmpresa:   idEmpresa,
+                    IdEscenario: idEscenario,
+                    Anio:        anio
+                },
+                success: function (resp) {
+                    _resultadosMulti[tabla] = {
+                        nombre:   $c.data('nombre') || '',
+                        icono:    $c.data('icono') || 'fas fa-table',
+                        columnas: resp.success ? resp.columnas : null,
+                        filas:    resp.success ? resp.datos : null,
+                        error:    resp.success ? null : (resp.message || _im.textos.error)
+                    };
+                    siguiente();
+                },
+                error: function () {
+                    _resultadosMulti[tabla] = {
+                        nombre: $c.data('nombre') || '', icono: $c.data('icono') || 'fas fa-table',
+                        columnas: null, filas: null, error: _im.textos.errorConexion
+                    };
+                    siguiente();
+                }
+            });
+        }
+        siguiente();
+    }
+
+    function mostrarResultadosConsulta(ids) {
+        if (ids.length > 1) {
+            var html = ids.map(function (id) {
+                var r = _resultadosMulti[id] || {};
+                var conError = !r.filas || r.error || r.filas.length === 0;
+                return '<button type="button" class="mc-tab' + (conError ? ' has-error' : '') + '" data-id="' + id + '">' +
+                       '<i class="' + (r.icono || 'fas fa-table') + '"></i>' +
+                       '<span>' + $('<span>').text(r.nombre || '').html() + '</span>' +
+                       (conError ? '<i class="fas fa-exclamation-circle"></i>' : '') +
+                       '</button>';
+            }).join('');
+            $('#resultadosTabs').html(html).show();
+        } else {
+            $('#resultadosTabs').hide().empty();
+        }
+
+        var primero = ids.filter(function (id) {
+            var r = _resultadosMulti[id];
+            return r && !r.error && r.filas && r.filas.length > 0;
+        })[0];
+
+        activarResultadoTabla(primero || ids[0]);
+        $('html, body').animate({ scrollTop: $('#resultadosAnchor').offset().top - 90 }, 400);
+    }
+
+    function activarResultadoTabla(nombreTabla) {
+        $('.mc-tab').removeClass('active').filter('[data-id="' + nombreTabla + '"]').addClass('active');
+
+        var r = _resultadosMulti[nombreTabla];
+
+        if (!r || r.error) {
+            $('#resultadosSection').hide();
+            $('#mcFiltroBar').hide();
+            $('#btnExportar').prop('disabled', true);
+            $('#noResultadosIcono').attr('class', 'fas fa-exclamation-triangle');
+            $('#noResultadosTitulo').text(_im.textos.error);
+            $('#noResultadosDesc').text((r && r.error) || _im.textos.noResultadosDesc);
+            $('#noResultados').show();
+            return;
+        }
+
+        if (!r.columnas || r.columnas.length === 0 || !r.filas || r.filas.length === 0) {
+            $('#resultadosSection').hide();
+            $('#mcFiltroBar').hide();
+            $('#btnExportar').prop('disabled', true);
+            $('#noResultadosIcono').attr('class', 'fas fa-inbox');
+            $('#noResultadosTitulo').text(_im.textos.noResultadosTitulo);
+            $('#noResultadosDesc').text(_im.textos.noResultadosDesc);
+            $('#noResultados').show();
+            return;
+        }
+
+        $('#noResultados').hide();
+
+        _pag.filas      = r.filas;
+        _pag.filasVista = r.filas;
+        _pag.columnas   = r.columnas;
+        _pag.pagina     = 1;
+        _pag.nombreTabla = nombreTabla;
+
+        var thead = '<tr>';
+        for (var i = 0; i < r.columnas.length; i++) {
+            var esNum = !!_moneyColSet[(r.columnas[i].nombreTecnico || '').toLowerCase()];
+            thead += '<th' + (esNum ? ' class="num"' : '') + '>' +
+                     $('<span>').text(r.columnas[i].nombreAmigable).html() + '</th>';
+        }
+        thead += '</tr>';
+        $('#resultadosThead').html(thead);
+
+        var nomEmpresa = $('#idEmpresa option:selected').data('nombre') || $('#idEmpresa option:selected').text();
+        $('#resultadosIcono').attr('class', r.icono + ' mc-table-head-icon');
+        $('#resultadosTitulo').text(r.nombre);
+        $('#mcContexto').text(nomEmpresa || '');
+        $('#resultadosContador').text(r.filas.length + ' ' + _im.textos.registros).show();
+
+        $('#mcFiltroBar').show();
+        reiniciarFiltroTabla();
+
+        renderPagina(1);
+        $('#resultadosSection').show();
+        $('#btnExportar').prop('disabled', false);
+    }
+
+    // ── Paginación ────────────────────────────────────────────────────────
+    function renderPagina(pagina) {
+        _pag.pagina = pagina;
+        var datos  = _pag.filasVista;
+        var inicio = (pagina - 1) * _pag.porPagina;
+        var fin    = Math.min(inicio + _pag.porPagina, datos.length);
+        var slice  = datos.slice(inicio, fin);
+
+        var tbody = '';
+        for (var r = 0; r < slice.length; r++) {
+            tbody += '<tr>';
+            for (var c = 0; c < _pag.columnas.length; c++) {
+                var col      = _pag.columnas[c];
+                var colLower = (col.nombreTecnico || '').toLowerCase();
+                var esNum    = !!_moneyColSet[colLower];
+                var esKey    = (colLower === 'cuentapuc' || colLower === 'codigo');
+                var val      = slice[r][col.nombreTecnico];
+                if (val !== '' && val != null && esNum) {
+                    var num = parseFloat(val);
+                    if (!isNaN(num))
+                        val = num.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+                var cls = esNum ? ' class="num"' : (esKey ? ' class="key"' : '');
+                tbody += '<td' + cls + '>' + $('<span>').text(val == null ? '' : val).html() + '</td>';
+            }
+            tbody += '</tr>';
+        }
+        $('#resultadosTbody').html(tbody);
+
+        $('#mcRango').text(
+            datos.length === 0
+                ? '0'
+                : (inicio + 1).toLocaleString('es-CO') + '\u2013' + fin.toLocaleString('es-CO') +
+                  ' de ' + datos.length.toLocaleString('es-CO')
+        );
+
+        actualizarPaginacion(datos.length);
+    }
+
+    function actualizarPaginacion(totalFilas) {
+        var n      = (typeof totalFilas === 'number') ? totalFilas : _pag.filas.length;
+        var total  = Math.ceil(n / _pag.porPagina);
+        var actual = _pag.pagina;
+        var $ctrl  = $('#paginacionControls');
+
+        if (total <= 1) { $ctrl.hide(); return; }
+
+        var ini = Math.max(1, actual - 2);
+        var fin = Math.min(total, ini + 4);
+        ini = Math.max(1, fin - 4);
+
+        var html = '';
+        html += '<button class="btn-pagination' + (actual === 1 ? ' disabled' : '') + '" ' +
+                (actual === 1 ? 'disabled' : 'onclick="renderPagina(' + (actual - 1) + ')"') + '>' +
+                '<i class="fas fa-chevron-left"></i></button>';
+
+        for (var p = ini; p <= fin; p++) {
+            html += '<button class="btn-pagination' + (p === actual ? ' active' : '') +
+                    '" onclick="renderPagina(' + p + ')">' + p + '</button>';
+        }
+
+        html += '<button class="btn-pagination' + (actual === total ? ' disabled' : '') + '" ' +
+                (actual === total ? 'disabled' : 'onclick="renderPagina(' + (actual + 1) + ')"') + '>' +
+                '<i class="fas fa-chevron-right"></i></button>';
+
+        $ctrl.html(html).show();
+    }
+
+    // ── Exportar a Excel la tabla activa (form POST → descarga nativa) ─────
+    function exportarActivo() {
+        if (!_pag.nombreTabla) return;
+        var idEmpresa = $('#idEmpresa').val();
+        if (!idEmpresa) return;
+
+        var btn = document.getElementById('btnExportar');
+        btn.disabled = true;
+
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = _im.urlExportar;
+
+        var campos = {
+            NombreTabla: _pag.nombreTabla,
+            IdEmpresa:   idEmpresa,
+            IdEscenario: $('#idEscenario').val(),
+            Anio:        $('#filtroAnio').val() || '',
+            __RequestVerificationToken: _im.token
+        };
+        Object.keys(campos).forEach(function (k) {
+            var input = document.createElement('input');
+            input.type  = 'hidden';
+            input.name  = k;
+            input.value = campos[k];
+            form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+
+        setTimeout(function () { btn.disabled = false; }, 2000);
+    }
+</script>
+}

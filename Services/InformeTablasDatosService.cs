@@ -28,25 +28,93 @@ namespace bufinscustomers.Services
         };
 
         /// <summary>
-        /// Obtiene la lista de tablas disponibles
+        /// Tablas de resultados de Ejecución de Modelos: una por cada sp_Modelo* (ver
+        /// "ModelosEjecucion Framework" en CLAUDE.md). El nombre de tabla = NombreSP sin el
+        /// prefijo "sp_" (mismo criterio ya usado para el nombre de hoja en Excel). Solo se
+        /// guarda aquí el ícono/descripción de reserva — el nombre amigable REAL se toma en vivo
+        /// de ModelosEjecucion (ModeloService), la misma fuente que usa Ejecución de Modelos, para
+        /// que ambas pantallas muestren siempre el mismo nombre sin duplicarlo.
+        /// </summary>
+        private static readonly Dictionary<string, (string Icono, string Descripcion)> TablasModeloBase = new Dictionary<string, (string, string)>
+        {
+            { "ModeloBalance", ("fas fa-balance-scale", "Resultado del modelo de Balance") },
+            { "ModeloBalanceDiff", ("fas fa-random", "Resultado del modelo de Balance Diferencial") },
+            { "ModeloBalancePpto", ("fas fa-clipboard-list", "Resultado del modelo de Balance Presupuesto") },
+            { "ModeloFlujoCaja", ("fas fa-money-bill-wave", "Resultado del modelo de Flujo de Caja") },
+            { "ModeloFlujoEfectivo", ("fas fa-exchange-alt", "Resultado del modelo de Flujo de Efectivo") },
+            { "ModeloLineasNegocio", ("fas fa-sitemap", "Resultado del modelo de Líneas de Negocio") },
+            { "ModeloPYG", ("fas fa-chart-line", "Resultado del modelo de Pérdidas y Ganancias") },
+            { "ModeloTesoreriaPpto", ("fas fa-university", "Resultado del modelo de Tesorería Presupuesto") }
+        };
+
+        /// <summary>
+        /// Obtiene la lista completa de tablas disponibles (las 10 vistas *_VT + las 8 de modelo).
         /// </summary>
         public List<TablaDatos> ObtenerTablasDisponibles()
         {
-            return TablasDisponibles.Values.OrderBy(t => t.NombreAmigable).ToList();
+            var lista = TablasDisponibles.Values.ToList();
+            lista.AddRange(ObtenerTablasModelos());
+            return lista.OrderBy(t => t.NombreAmigable).ToList();
         }
 
         /// <summary>
-        /// Valida que el nombre de tabla sea válido (prevención de SQL injection)
+        /// Solo las 8 tablas de resultados de Ejecución de Modelos — con el mismo nombre e ícono
+        /// que tiene configurado cada modelo en ModelosEjecucion (Gestor de Modelos). Un modelo
+        /// desactivado ahí hace que su tabla también desaparezca de aquí, igual que desaparece del
+        /// selector de Ejecución de Modelos. Usado por "Informe de Modelos" y por "Análisis IA".
+        /// </summary>
+        public List<TablaDatos> ObtenerTablasModelos()
+        {
+            var modelos = new ModeloService().ObtenerModelosActivos();
+            var resultado = new List<TablaDatos>();
+
+            foreach (var kv in TablasModeloBase)
+            {
+                var modelo = modelos.FirstOrDefault(m =>
+                    string.Equals(QuitarPrefijoSp(m.NombreSP), kv.Key, StringComparison.OrdinalIgnoreCase));
+
+                if (modelo == null) continue; // modelo inactivo o aún no configurado: su tabla no aparece
+
+                resultado.Add(new TablaDatos
+                {
+                    NombreTabla = kv.Key,
+                    NombreAmigable = modelo.Nombre,
+                    Descripcion = !string.IsNullOrWhiteSpace(modelo.Descripcion) ? modelo.Descripcion : kv.Value.Descripcion,
+                    Icono = !string.IsNullOrWhiteSpace(modelo.Icono) ? modelo.Icono : kv.Value.Icono,
+                    TieneEscenario = true
+                });
+            }
+
+            return resultado.OrderBy(t => t.NombreAmigable).ToList();
+        }
+
+        private static string QuitarPrefijoSp(string nombreSP)
+        {
+            return !string.IsNullOrEmpty(nombreSP) && nombreSP.StartsWith("sp_", StringComparison.OrdinalIgnoreCase)
+                ? nombreSP.Substring(3)
+                : nombreSP;
+        }
+
+        /// <summary>
+        /// Valida que el nombre de tabla sea válido (prevención de SQL injection): debe ser una de
+        /// las *_VT estáticas o una de las 8 de modelo (activas en ModelosEjecucion).
         /// </summary>
         private bool ValidarNombreTabla(string nombreTabla)
         {
-            return !string.IsNullOrWhiteSpace(nombreTabla) && TablasDisponibles.ContainsKey(nombreTabla);
+            return !string.IsNullOrWhiteSpace(nombreTabla)
+                && (TablasDisponibles.ContainsKey(nombreTabla) || TablasModeloBase.ContainsKey(nombreTabla));
+        }
+
+        /// <summary>true si el nombre corresponde a una de las 8 tablas de modelo (tienen IdEscenario).</summary>
+        private bool TablaTieneEscenario(string nombreTabla)
+        {
+            return !string.IsNullOrWhiteSpace(nombreTabla) && TablasModeloBase.ContainsKey(nombreTabla);
         }
 
         /// <summary>
         /// Obtiene los años disponibles en una tabla específica
         /// </summary>
-        public List<int> ObtenerAñosDisponibles(string nombreTabla, int? idEmpresa = null)
+        public List<int> ObtenerAñosDisponibles(string nombreTabla, int? idEmpresa = null, int? idEscenario = null)
         {
             if (!ValidarNombreTabla(nombreTabla))
                 return new List<int>();
@@ -66,6 +134,12 @@ namespace bufinscustomers.Services
                         query += " AND [IdEmpresa] = @IdEmpresa";
                     }
 
+                    bool aplicarEscenario = idEscenario.HasValue && TablaTieneEscenario(nombreTabla);
+                    if (aplicarEscenario)
+                    {
+                        query += " AND [IdEscenario] = @IdEscenario";
+                    }
+
                     query += " ORDER BY [Año] DESC";
 
                     SqlCommand cmd = new SqlCommand(query, cn);
@@ -73,6 +147,11 @@ namespace bufinscustomers.Services
                     if (idEmpresa.HasValue)
                     {
                         cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa.Value);
+                    }
+
+                    if (aplicarEscenario)
+                    {
+                        cmd.Parameters.AddWithValue("@IdEscenario", idEscenario.Value);
                     }
 
                     cn.Open();
@@ -99,7 +178,7 @@ namespace bufinscustomers.Services
         /// <summary>
         /// Obtiene las variables disponibles en una tabla específica
         /// </summary>
-        public List<string> ObtenerVariablesDisponibles(string nombreTabla, int? idEmpresa = null)
+        public List<string> ObtenerVariablesDisponibles(string nombreTabla, int? idEmpresa = null, int? idEscenario = null)
         {
             if (!ValidarNombreTabla(nombreTabla))
                 return new List<string>();
@@ -133,6 +212,12 @@ namespace bufinscustomers.Services
                         query += " AND [IdEmpresa] = @IdEmpresa";
                     }
 
+                    bool aplicarEscenario = idEscenario.HasValue && TablaTieneEscenario(nombreTabla);
+                    if (aplicarEscenario)
+                    {
+                        query += " AND [IdEscenario] = @IdEscenario";
+                    }
+
                     query += $" ORDER BY [{columnaNombre}]";
 
                     SqlCommand cmd = new SqlCommand(query, cn);
@@ -140,6 +225,11 @@ namespace bufinscustomers.Services
                     if (idEmpresa.HasValue)
                     {
                         cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa.Value);
+                    }
+
+                    if (aplicarEscenario)
+                    {
+                        cmd.Parameters.AddWithValue("@IdEscenario", idEscenario.Value);
                     }
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -209,15 +299,26 @@ namespace bufinscustomers.Services
 
                     // Verificar si tiene columna IdEmpresa para hacer JOIN
                     bool tieneIdEmpresa = columnasTabla.Any(c => c.Equals("IdEmpresa", StringComparison.OrdinalIgnoreCase));
-                    bool tieneUsuarioEjecucion = columnasTabla.Any(c => c.Equals("UsuarioEjecucion", StringComparison.OrdinalIgnoreCase));
 
-                    // Construir lista de columnas excluyendo IdEmpresa y UsuarioEjecucion
+                    // Columna del usuario que ejecutó/generó la fila: "UsuarioEjecucion" en las
+                    // vistas *_VT históricas, "IdUsuario" en las tablas de Ejecución de Modelos
+                    // (mismo parámetro @IdUsuario que reciben los sp_Modelo*) — incluye la que exista.
+                    string columnaUsuario = columnasTabla.FirstOrDefault(c => c.Equals("UsuarioEjecucion", StringComparison.OrdinalIgnoreCase))
+                        ?? columnasTabla.FirstOrDefault(c => c.Equals("IdUsuario", StringComparison.OrdinalIgnoreCase));
+                    bool tieneUsuarioEjecucion = columnaUsuario != null;
+
+                    // IdEscenario (tablas de Ejecución de Modelos): se cambia por el nombre del
+                    // escenario, igual que IdEmpresa/usuario se cambian por su nombre.
+                    bool tieneIdEscenario = columnasTabla.Any(c => c.Equals("IdEscenario", StringComparison.OrdinalIgnoreCase));
+
+                    // Construir lista de columnas excluyendo IdEmpresa, la columna de usuario e IdEscenario
                     List<string> columnasSeleccion = new List<string>();
                     foreach (var col in columnasTabla)
                     {
-                        // Excluir IdEmpresa y UsuarioEjecucion porque se reemplazarán con JOINs
+                        // Se reemplazan por sus JOINs correspondientes
                         if (!col.Equals("IdEmpresa", StringComparison.OrdinalIgnoreCase) &&
-                            !col.Equals("UsuarioEjecucion", StringComparison.OrdinalIgnoreCase))
+                            !col.Equals(columnaUsuario, StringComparison.OrdinalIgnoreCase) &&
+                            !col.Equals("IdEscenario", StringComparison.OrdinalIgnoreCase))
                         {
                             columnasSeleccion.Add($"t.[{col}]");
                         }
@@ -225,7 +326,7 @@ namespace bufinscustomers.Services
 
                     // Construir query con JOINs necesarios
                     string query;
-                    if (tieneIdEmpresa || tieneUsuarioEjecucion)
+                    if (tieneIdEmpresa || tieneUsuarioEjecucion || tieneIdEscenario)
                     {
                         string seleccion = string.Join(", ", columnasSeleccion);
 
@@ -237,6 +338,10 @@ namespace bufinscustomers.Services
                         if (tieneUsuarioEjecucion)
                         {
                             seleccion += ", COALESCE(NULLIF(LTRIM(RTRIM(ISNULL(u.Nombre, '') + ' ' + ISNULL(u.Apellidos, ''))), ''), u.Correo, 'Sin usuario') AS NombreUsuario";
+                        }
+                        if (tieneIdEscenario)
+                        {
+                            seleccion += ", ISNULL(esc.Nombre, CONVERT(varchar(10), t.IdEscenario)) AS NombreEscenario";
                         }
 
                         query = string.Format(@"
@@ -252,7 +357,11 @@ namespace bufinscustomers.Services
                         }
                         if (tieneUsuarioEjecucion)
                         {
-                            query += " LEFT JOIN dbo.Usuarios u ON t.UsuarioEjecucion = u.Id";
+                            query += $" LEFT JOIN dbo.Usuarios u ON t.[{columnaUsuario}] = u.Id";
+                        }
+                        if (tieneIdEscenario)
+                        {
+                            query += " LEFT JOIN dbo.Escenarios esc ON t.IdEscenario = esc.Id";
                         }
 
                         query += " WHERE 1=1";
@@ -267,7 +376,7 @@ namespace bufinscustomers.Services
                     List<SqlParameter> parametros = new List<SqlParameter>();
 
                     // Determinar si se debe usar prefijo de tabla basándose en si hay JOINs
-                    bool usarPrefijo = tieneIdEmpresa || tieneUsuarioEjecucion;
+                    bool usarPrefijo = tieneIdEmpresa || tieneUsuarioEjecucion || tieneIdEscenario;
                     string prefijo = usarPrefijo ? "t." : "";
 
                     // Filtro de empresa (seguridad: usuarios no admin solo ven su empresa)
@@ -283,6 +392,13 @@ namespace bufinscustomers.Services
                             query += $" AND {prefijo}[IdEmpresa] = @IdEmpresa";
                             parametros.Add(new SqlParameter("@IdEmpresa", filtros.IdEmpresa.Value));
                         }
+                    }
+
+                    // Filtro de escenario (tablas de Ejecución de Modelos)
+                    if (filtros.IdEscenario.HasValue && tieneIdEscenario)
+                    {
+                        query += $" AND {prefijo}[IdEscenario] = @IdEscenario";
+                        parametros.Add(new SqlParameter("@IdEscenario", filtros.IdEscenario.Value));
                     }
 
                     // Filtro de año
@@ -404,6 +520,7 @@ namespace bufinscustomers.Services
                 // Información de empresa y organización
                 { "NombreEmpresa", "Empresa" },
                 { "Empresa", "Empresa" },
+                { "NombreEscenario", "Escenario" },
 
                 // Información temporal
                 { "Año", "Año" },

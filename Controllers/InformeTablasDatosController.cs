@@ -26,45 +26,26 @@ namespace bufinscustomers.Controllers
         private const int MaxCharsHistorialTotal   = 500_000;   // suma de todos los mensajes
 
         /// <summary>
-        /// Vista principal de consulta de informes de tablas de datos
+        /// true solo para las tablas de resultados de Ejecución de Modelos — Análisis IA ya no
+        /// muestra ni acepta las 10 vistas *_VT (ver InformeTablasDatosService.ObtenerTablasModelos()).
         /// </summary>
-        public ActionResult InformeTablasDatos()
+        private bool EsTablaDeModelo(string nombreTabla)
         {
-            // Obtener información del usuario actual
-            var usuario = UsuarioSesionHelper.UsuarioActual;
-            var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
-            var idEmpresa = usuario?.IdEmpresa ?? 0;
-
-            // Cargar tablas disponibles
-            ViewBag.Tablas = _service.ObtenerTablasDisponibles();
-
-            // Cargar empresas (solo para admin)
-            if (esAdmin)
-            {
-                ViewBag.Empresas = _service.ObtenerEmpresas();
-            }
-            else
-            {
-                // Para usuarios no admin, mostrar su empresa y las de su mismo grupo empresarial
-                var empresas = _service.ObtenerEmpresas();
-                var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
-                ViewBag.Empresas = empresas.Where(e => idsPermitidos.Contains(e.Id)).ToList();
-            }
-
-            ViewBag.EsAdmin = esAdmin;
-            ViewBag.IdEmpresaUsuario = idEmpresa;
-
-            return View("~/Views/Informes/InformeTablasDatos.cshtml");
+            return !string.IsNullOrWhiteSpace(nombreTabla)
+                && _service.ObtenerTablasModelos().Any(t => t.NombreTabla == nombreTabla);
         }
 
         /// <summary>
         /// Obtiene los años disponibles para una tabla específica
         /// </summary>
         [HttpGet]
-        public JsonResult ObtenerAnios(string nombreTabla, int? idEmpresa = null)
+        public JsonResult ObtenerAnios(string nombreTabla, int? idEmpresa = null, int? idEscenario = null)
         {
             try
             {
+                if (!EsTablaDeModelo(nombreTabla))
+                    return Json(new { success = false, message = R("Common_TablaNoValida") }, JsonRequestBehavior.AllowGet);
+
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
@@ -76,7 +57,7 @@ namespace bufinscustomers.Controllers
                         : usuario?.IdEmpresa;
                 }
 
-                var anios = _service.ObtenerAñosDisponibles(nombreTabla, idEmpresa);
+                var anios = _service.ObtenerAñosDisponibles(nombreTabla, idEmpresa, idEscenario);
 
                 return Json(new { success = true, anios }, JsonRequestBehavior.AllowGet);
             }
@@ -90,10 +71,13 @@ namespace bufinscustomers.Controllers
         /// Obtiene las variables disponibles para una tabla específica
         /// </summary>
         [HttpGet]
-        public JsonResult ObtenerVariables(string nombreTabla, int? idEmpresa = null)
+        public JsonResult ObtenerVariables(string nombreTabla, int? idEmpresa = null, int? idEscenario = null)
         {
             try
             {
+                if (!EsTablaDeModelo(nombreTabla))
+                    return Json(new { success = false, message = R("Common_TablaNoValida") }, JsonRequestBehavior.AllowGet);
+
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
@@ -105,112 +89,13 @@ namespace bufinscustomers.Controllers
                         : usuario?.IdEmpresa;
                 }
 
-                var variables = _service.ObtenerVariablesDisponibles(nombreTabla, idEmpresa);
+                var variables = _service.ObtenerVariablesDisponibles(nombreTabla, idEmpresa, idEscenario);
 
                 return Json(new { success = true, variables }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
                 return Json(new { success = false, message = $"Error al obtener variables: {ex.Message}" }, JsonRequestBehavior.AllowGet);
-            }
-        }
-
-        /// <summary>
-        /// Consulta los datos con filtros aplicados
-        /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public JsonResult ConsultarDatos(FiltrosInformeTablasDatos filtros)
-        {
-            try
-            {
-                var usuario = UsuarioSesionHelper.UsuarioActual;
-                var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
-                var idEmpresaUsuario = usuario?.IdEmpresa;
-
-                // Usuarios no-SuperAdmin pueden ver su propia empresa o una de su mismo grupo empresarial
-                if (!esAdmin)
-                {
-                    if (filtros.IdEmpresa.HasValue)
-                    {
-                        if (!EmpresaAccesoHelper.TieneAcceso(usuario, filtros.IdEmpresa.Value))
-                            return Json(new { success = false, message = "No tiene permisos para consultar datos de otra empresa" });
-                    }
-                    else
-                    {
-                        filtros.IdEmpresa = idEmpresaUsuario;
-                    }
-                }
-
-                // Realizar consulta. El acceso a filtros.IdEmpresa ya se validó arriba (empresa
-                // propia o de su mismo grupo empresarial); se consulta esa empresa, no la del usuario.
-                var idEmpresaConsulta = filtros.IdEmpresa ?? idEmpresaUsuario;
-                var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaConsulta);
-
-                // Mapear nombres de columnas a nombres amigables
-                var columnasAmigables = resultado.Columnas.Select(c => new
-                {
-                    nombreTecnico = c,
-                    nombreAmigable = _service.ObtenerNombreAmigableColumna(c)
-                }).ToList();
-
-                // Formatear los datos para la vista
-                var datosFormateados = resultado.Filas.Select(fila =>
-                {
-                    var filaFormateada = new Dictionary<string, object>();
-                    foreach (var kvp in fila)
-                    {
-                        object valorFormateado = kvp.Value;
-
-                        // Formatear valores según el tipo
-                        if (kvp.Value != null)
-                        {
-                            if (kvp.Value is decimal)
-                            {
-                                valorFormateado = ((decimal)kvp.Value).ToString("N2");
-                            }
-                            else if (kvp.Value is double)
-                            {
-                                valorFormateado = ((double)kvp.Value).ToString("N2");
-                            }
-                            else if (kvp.Value is DateTime)
-                            {
-                                // Formatear fechas de ejecución con hora
-                                if (kvp.Key.Contains("Ejecucion") || kvp.Key.Contains("FechaEjecucion"))
-                                {
-                                    valorFormateado = ((DateTime)kvp.Value).ToString("dd/MM/yyyy HH:mm:ss");
-                                }
-                                else
-                                {
-                                    valorFormateado = ((DateTime)kvp.Value).ToString("dd/MM/yyyy");
-                                }
-                            }
-                        }
-                        else
-                        {
-                            valorFormateado = "";
-                        }
-
-                        filaFormateada[kvp.Key] = valorFormateado;
-                    }
-                    return filaFormateada;
-                }).ToList();
-
-                var jsonResult = Json(new
-                {
-                    success = true,
-                    datos = datosFormateados,
-                    columnas = columnasAmigables,
-                    totalRegistros = resultado.TotalRegistros,
-                    resultadosTruncados = resultado.ResultadosTruncados
-                }, JsonRequestBehavior.AllowGet);
-
-                jsonResult.MaxJsonLength = int.MaxValue;
-                return jsonResult;
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = $"Error al consultar datos: {ex.Message}" });
             }
         }
 
@@ -227,6 +112,11 @@ namespace bufinscustomers.Controllers
         {
             try
             {
+                if (!EsTablaDeModelo(filtros?.NombreTabla))
+                {
+                    return Json(new IAConsultaResponse { Exitoso = false, Error = R("Common_TablaNoValida") });
+                }
+
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
                 var idEmpresaUsuario = usuario?.IdEmpresa;
@@ -245,10 +135,13 @@ namespace bufinscustomers.Controllers
                     }
                 }
 
-                // Año obligatorio para el análisis IA (reduce el volumen de datos)
-                if (!filtros.Anio.HasValue)
+                // Escenario obligatorio (todas las tablas de modelo lo tienen y evita analizar sin
+                // querer el escenario equivocado). Año es OPCIONAL a propósito: dejarlo en blanco
+                // trae varios años a la vez (acotado por MaxFilasConsulta) para que el usuario pueda
+                // pedirle a la IA comparaciones año a año en la pregunta/prompt.
+                if (!filtros.IdEscenario.HasValue)
                 {
-                    return Json(new IAConsultaResponse { Exitoso = false, Error = "Debe seleccionar un Año para el análisis IA." });
+                    return Json(new IAConsultaResponse { Exitoso = false, Error = R("IA_JS_EscenarioSeleccionar") });
                 }
 
                 // El acceso a filtros.IdEmpresa ya se validó arriba (empresa propia o de su mismo
@@ -527,6 +420,13 @@ namespace bufinscustomers.Controllers
             if (filtros.IdEmpresa.HasValue)
                 partes.Add($"Empresa ID {filtros.IdEmpresa}");
 
+            if (filtros.IdEscenario.HasValue)
+            {
+                var nombreEscenario = EscenarioCacheHelper.ObtenerEscenariosCacheados()
+                    .FirstOrDefault(e => e.Id == filtros.IdEscenario.Value)?.Nombre ?? ("#" + filtros.IdEscenario.Value);
+                partes.Add($"Escenario {nombreEscenario}");
+            }
+
             if (filtros.Anio.HasValue)
                 partes.Add($"Año {filtros.Anio}");
 
@@ -545,151 +445,6 @@ namespace bufinscustomers.Controllers
         }
 
         /// <summary>
-        /// Exporta los datos consultados a Excel
-        /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult ExportarExcel(FiltrosInformeTablasDatos filtros)
-        {
-            try
-            {
-                var usuario = UsuarioSesionHelper.UsuarioActual;
-                var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
-                var idEmpresaUsuario = usuario?.IdEmpresa;
-
-                // Usuarios no-SuperAdmin solo pueden exportar su propia empresa
-                if (!esAdmin)
-                {
-                    if (filtros.IdEmpresa.HasValue)
-                    {
-                        if (!EmpresaAccesoHelper.TieneAcceso(usuario, filtros.IdEmpresa.Value))
-                        {
-                            TempData["ErrorMessage"] = "No tiene permisos para exportar datos de otra empresa";
-                            return RedirectToAction("InformeTablasDatos");
-                        }
-                    }
-                    else
-                    {
-                        filtros.IdEmpresa = idEmpresaUsuario;
-                    }
-                }
-
-                // Obtener datos. El acceso a filtros.IdEmpresa ya se validó arriba (empresa propia
-                // o de su mismo grupo empresarial); se exporta esa empresa, no la del usuario.
-                var idEmpresaConsulta = filtros.IdEmpresa ?? idEmpresaUsuario;
-                var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaConsulta);
-
-                if (resultado.TotalRegistros == 0)
-                {
-                    TempData["InfoMessage"] = "No hay datos para exportar con los filtros seleccionados";
-                    return RedirectToAction("InformeTablasDatos");
-                }
-
-                // Crear archivo Excel
-                using (var package = new XLWorkbook())
-                {
-                    // Obtener nombre amigable de la tabla
-                    var tablas = _service.ObtenerTablasDisponibles();
-                    var tablaSeleccionada = tablas.FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla);
-                    string nombreHoja = tablaSeleccionada?.NombreAmigable ?? filtros.NombreTabla;
-
-                    // Limitar el nombre de la hoja a 31 caracteres (límite de Excel)
-                    if (nombreHoja.Length > 31)
-                        nombreHoja = nombreHoja.Substring(0, 31);
-
-                    var worksheet = package.Worksheets.Add(nombreHoja);
-
-                    // Agregar encabezados con nombres amigables
-                    int col = 1;
-                    foreach (var nombreColumna in resultado.Columnas)
-                    {
-                        var cell = worksheet.Cell(1, col);
-                        cell.Value = _service.ObtenerNombreAmigableColumna(nombreColumna);
-
-                        // Estilo del encabezado
-                        cell.Style.Font.Bold = true;
-                        cell.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241); // Color del tema
-                        cell.Style.Font.FontColor = XLColor.White;
-                        cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                        cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                        cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-
-                        col++;
-                    }
-
-                    // Agregar datos
-                    int fila = 2;
-                    foreach (var registro in resultado.Filas)
-                    {
-                        col = 1;
-                        foreach (var nombreColumna in resultado.Columnas)
-                        {
-                            var cell = worksheet.Cell(fila, col);
-                            var valor = registro.ContainsKey(nombreColumna) ? registro[nombreColumna] : null;
-
-                            if (valor != null)
-                            {
-                                // Asignar valor según tipo
-                                if (valor is DateTime)
-                                {
-                                    cell.Value = (DateTime)valor;
-                                    cell.Style.NumberFormat.Format = "dd/mm/yyyy";
-                                }
-                                else if (valor is decimal || valor is double || valor is float)
-                                {
-                                    ExcelCellHelper.SetValue(cell, valor);
-                                    cell.Style.NumberFormat.Format = "#,##0.00";
-                                }
-                                else if (valor is int || valor is long)
-                                {
-                                    ExcelCellHelper.SetValue(cell, valor);
-                                    cell.Style.NumberFormat.Format = "#,##0";
-                                }
-                                else
-                                {
-                                    cell.Value = valor.ToString();
-                                }
-                            }
-
-                            // Estilo de la celda
-                            cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-                            cell.Style.Border.OutsideBorderColor = XLColor.FromColor(Color.LightGray);
-
-                            col++;
-                        }
-                        fila++;
-                    }
-
-                    // Autoajustar columnas
-                    worksheet.Columns().AdjustToContents();
-
-                    // Agregar filtros automáticos
-                    worksheet.Range(1, 1, 1, resultado.Columnas.Count).SetAutoFilter();
-
-                    // Congelar primera fila
-                    worksheet.SheetView.Freeze(1, 0);
-
-                    // Generar nombre de archivo
-                    string nombreArchivo = $"Informe_{nombreHoja}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-
-                    // Retornar archivo
-                    byte[] fileBytes;
-                    using (var ms = new MemoryStream())
-                    {
-                        package.SaveAs(ms);
-                        fileBytes = ms.ToArray();
-                    }
-                    return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
-                }
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = $"Error al exportar a Excel: {ex.Message}";
-                return RedirectToAction("InformeTablasDatos");
-            }
-        }
-
-        /// <summary>
         /// Exporta datos + análisis de IA en un Excel con dos hojas
         /// </summary>
         [HttpPost]
@@ -698,6 +453,12 @@ namespace bufinscustomers.Controllers
         {
             try
             {
+                if (!EsTablaDeModelo(filtros?.NombreTabla))
+                {
+                    TempData["ErrorMessage"] = R("Common_TablaNoValida");
+                    return RedirectToAction("Index", "AnalisisIA");
+                }
+
                 var usuario          = UsuarioSesionHelper.UsuarioActual;
                 var esAdmin          = UsuarioSesionHelper.EsSuperAdmin();
                 var idEmpresaUsuario = usuario?.IdEmpresa;
@@ -709,7 +470,7 @@ namespace bufinscustomers.Controllers
                         if (!EmpresaAccesoHelper.TieneAcceso(usuario, filtros.IdEmpresa.Value))
                         {
                             TempData["ErrorMessage"] = "No tiene permisos para exportar datos de otra empresa";
-                            return RedirectToAction("InformeTablasDatos");
+                            return RedirectToAction("Index", "AnalisisIA");
                         }
                     }
                     else
@@ -818,7 +579,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = $"Error al exportar: {ex.Message}";
-                return RedirectToAction("InformeTablasDatos");
+                return RedirectToAction("Index", "AnalisisIA");
             }
         }
 

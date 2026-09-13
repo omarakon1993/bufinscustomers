@@ -18,7 +18,9 @@ namespace bufinscustomers.Controllers
             var esAdminEmpresa = UsuarioSesionHelper.EsAdminEmpresa();
             var idEmpresa      = usuario?.IdEmpresa ?? 0;
 
-            ViewBag.Tablas           = _service.ObtenerTablasDisponibles();
+            // Solo las tablas de resultados de Ejecución de Modelos — con el mismo nombre que
+            // tienen configurado en Gestor de Modelos (ver InformeTablasDatosService.ObtenerTablasModelos()).
+            ViewBag.Tablas           = _service.ObtenerTablasModelos();
             ViewBag.EsAdmin          = esSuperAdmin;
             ViewBag.EsAdminEmpresa   = esAdminEmpresa;
             ViewBag.IdEmpresaUsuario = idEmpresa;
