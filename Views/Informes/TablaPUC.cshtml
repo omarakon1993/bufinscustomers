@@ -1,11 +1,12 @@
-﻿@{
+@{
     ViewBag.Title = Resources.Strings.PUC_PageTitle;
 }
 
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
-<link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
+<link href="~/Assets/css/puc-explorer.css" rel="stylesheet" />
 
 <div class="container-fluid px-4">
+    @Html.AntiForgeryToken()
     <!-- Header -->
     <div class="powerbi-header">
         <div class="powerbi-header-content">
@@ -30,326 +31,366 @@
         </div>
     }
 
-    <!-- Filtros -->
-    <div class="filter-card">
-        <h3 class="filter-card-title">
-            <i class="fas fa-filter"></i>
-            @Resources.Strings.Common_FiltrosConsulta
-        </h3>
-
-        <form id="formFiltros">
-            <div class="filter-section">
-                <div class="row">
-                    <!-- Tipo -->
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label for="selectTipo">
-                                <i class="fas fa-tag"></i>
-                                @Resources.Strings.PUC_LabelTipo
-                            </label>
-                            <select id="selectTipo" class="form-control">
-                                <option value="">@Resources.Strings.Common_Todos</option>
-                            </select>
-                        </div>
+    <div class="puc-layout">
+        <div class="puc-main">
+            <!-- Barra de exploración: buscador + exportar + breadcrumb -->
+            <div class="filter-card">
+                <div class="puc-toolbar-row">
+                    <div class="puc-search-wrap">
+                        <i class="fas fa-search puc-search-icon"></i>
+                        <input type="text" id="pucBuscar" class="puc-search-input" autocomplete="off"
+                               placeholder="@Resources.Strings.PUC_BuscarPlaceholder" />
+                        <div id="pucSearchResults" class="puc-search-results"></div>
                     </div>
+                    <button type="button" id="btnExportar" class="btn btn-modern-excel puc-export-btn">
+                        <i class="fas fa-file-excel mr-2"></i><span id="btnExportarTexto">@Resources.Strings.PUC_ExportarTodo</span>
+                    </button>
+                </div>
 
-                    <!-- Largo -->
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label for="selectLargo">
-                                <i class="fas fa-ruler"></i>
-                                @Resources.Strings.PUC_LabelLargo
-                            </label>
-                            <select id="selectLargo" class="form-control">
-                                <option value="">@Resources.Strings.Common_Todos</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Cuenta -->
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label for="txtCuenta">
-                                <i class="fas fa-hashtag"></i>
-                                @Resources.Strings.PUC_LabelCuenta
-                            </label>
-                            <input type="text" id="txtCuenta" class="form-control"
-                                   placeholder="@Resources.Strings.PUC_PlaceholderCuenta" autocomplete="off" />
-                        </div>
-                    </div>
-
-                    <!-- Nombre -->
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label for="txtNombre">
-                                <i class="fas fa-search"></i>
-                                @Resources.Strings.PUC_LabelNombre
-                            </label>
-                            <input type="text" id="txtNombre" class="form-control"
-                                   placeholder="@Resources.Strings.PUC_PlaceholderNombre" autocomplete="off" />
-                        </div>
+                <div class="puc-breadcrumb-bar">
+                    <div id="pucBreadcrumb" class="puc-breadcrumb"></div>
+                    <!-- Etiqueta de nivel actual -->
+                    <div id="pucLevelLabel" class="puc-level-label" style="display:none;">
+                        <i class="fas fa-layer-group"></i>
+                        <span id="pucLevelText"></span>
+                        <span id="pucLevelBadge" class="info-badge"></span>
                     </div>
                 </div>
             </div>
 
-            <!-- Botones -->
-            <div class="btn-group-actions">
-                <button type="button" id="btnConsultar" class="btn btn-modern-gradient">
-                    <i class="fas fa-search mr-2"></i>@Resources.Strings.Common_Consultar
-                </button>
-                <button type="button" id="btnLimpiar" class="btn btn-modern-secondary">
-                    <i class="fas fa-eraser mr-2"></i>@Resources.Strings.Common_Limpiar
-                </button>
-                <button type="button" id="btnExportar" class="btn btn-modern-excel" style="display:none;">
-                    <i class="fas fa-file-excel mr-2"></i>@Resources.Strings.Common_ExportarExcel
-                </button>
+            <!-- Descripción del nodo actual (se llena progresivamente; se oculta si está vacía) -->
+            <div id="pucDescripcionActual" class="puc-descripcion-box" style="display:none;">
+                <div class="puc-descripcion-head">
+                    <span class="puc-descripcion-label"><i class="fas fa-align-left"></i>@Resources.Strings.PUC_Descripcion</span>
+                    <button type="button" id="pucDescripcionToggle" class="puc-descripcion-toggle" style="display:none;"></button>
+                </div>
+                <div id="pucDescripcionTexto" class="puc-descripcion-text"></div>
             </div>
-        </form>
-    </div>
 
-    <!-- Estado inicial: aun no se ha ejecutado ninguna consulta -->
-    <div id="estadoInicial" class="empty-state-initial">
-        <div class="empty-state-initial-icon"><i class="fas fa-book-open"></i></div>
-        <h4>@Resources.Strings.Common_EstadoInicialTitulo</h4>
-        <p>@Resources.Strings.PUC_EstadoInicialDesc</p>
-    </div>
+            <!-- Cuadrícula de nodos -->
+            <div id="pucGrid" class="puc-grid"></div>
 
-    <!-- Resultados -->
-    <div id="resultadosContainer" style="display:none;">
-        <div class="table-container">
-            <div class="table-header">
-                <h5><i class="fas fa-list mr-2"></i>@Resources.Strings.Common_Resultados</h5>
-                <span id="totalRegistros" class="info-badge"></span>
+            <!-- Panel de detalle (cuenta hoja) -->
+            <div id="pucDetalle" class="puc-detail-panel" style="display:none;">
+                <div id="pucDetalleCodigo" class="puc-detail-code"></div>
+                <div id="pucDetalleNombre" class="puc-detail-name"></div>
+                <div class="puc-detail-meta">
+                    <div class="puc-detail-meta-item">
+                        <div class="puc-meta-label">@Resources.Strings.PUC_DetalleNivel</div>
+                        <div id="pucDetalleNivel" class="puc-meta-value"></div>
+                    </div>
+                    <div class="puc-detail-meta-item">
+                        <div class="puc-meta-label">@Resources.Strings.PUC_DetalleRuta</div>
+                        <div id="pucDetalleRuta" class="puc-meta-value"></div>
+                    </div>
+                </div>
+                <div id="pucDetalleDescripcionWrap" class="puc-descripcion-box" style="display:none;">
+                    <div class="puc-descripcion-head">
+                        <span class="puc-descripcion-label"><i class="fas fa-align-left"></i>@Resources.Strings.PUC_Descripcion</span>
+                        <button type="button" id="pucDetalleDescripcionToggle" class="puc-descripcion-toggle" style="display:none;"></button>
+                    </div>
+                    <div id="pucDetalleDescripcion" class="puc-descripcion-text"></div>
+                </div>
+                <div class="puc-detail-actions">
+                    <button type="button" id="btnCopiarCodigo" class="btn btn-modern-secondary">
+                        <i class="fas fa-copy mr-2"></i><span id="btnCopiarTexto">@Resources.Strings.PUC_CopiarCodigo</span>
+                    </button>
+                </div>
             </div>
-            <div class="table-wrapper">
-                <table id="tablaPUC" class="data-table">
-                    <thead>
-                        <tr>
-                            <th>@Resources.Strings.PUC_ThCuenta</th>
-                            <th>@Resources.Strings.PUC_ThNombre</th>
-                            <th>@Resources.Strings.PUC_ThLargo</th>
-                            <th>@Resources.Strings.PUC_ThTipo</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaBody"></tbody>
-                </table>
+
+            <!-- Sin datos -->
+            <div id="pucVacio" class="no-data-message" style="display:none;">
+                <i class="fas fa-inbox"></i>
+                <h4 id="pucVacioTitulo"></h4>
+                <p id="pucVacioDesc"></p>
             </div>
-            <div id="paginacion" class="pagination-controls"></div>
         </div>
-    </div>
 
-    <!-- Sin datos -->
-    <div id="noDataMessage" class="no-data-message" style="display:none;">
-        <i class="fas fa-inbox"></i>
-        <h4>@Resources.Strings.Common_NoData</h4>
-        <p>@Resources.Strings.Common_NoDataFiltros</p>
+        <!-- Riel lateral permanente: estructura de codificación del PUC -->
+        <aside class="puc-rail">
+            <div class="puc-rail-header">
+                <i class="fas fa-sitemap"></i>
+                <span>@Resources.Strings.PUC_EstructuraTitulo</span>
+            </div>
+            <div class="puc-rail-body">
+                <div class="puc-level" data-nivel-largo="1">
+                    <span class="puc-level-num">1</span>
+                    <span><b>@Resources.Strings.PUC_EstructuraClase</b> &middot; @Resources.Strings.PUC_EstructuraClaseDesc</span>
+                    <span class="puc-level-here">@Resources.Strings.PUC_EstructuraAqui</span>
+                </div>
+                <div class="puc-level" data-nivel-largo="2">
+                    <span class="puc-level-num">2</span>
+                    <span><b>@Resources.Strings.PUC_EstructuraGrupo</b> &middot; @Resources.Strings.PUC_EstructuraGrupoDesc</span>
+                    <span class="puc-level-here">@Resources.Strings.PUC_EstructuraAqui</span>
+                </div>
+                <div class="puc-level" data-nivel-largo="4">
+                    <span class="puc-level-num">4</span>
+                    <span><b>@Resources.Strings.PUC_EstructuraCuenta</b> &middot; @Resources.Strings.PUC_EstructuraCuentaDesc</span>
+                    <span class="puc-level-here">@Resources.Strings.PUC_EstructuraAqui</span>
+                </div>
+                <div class="puc-level" data-nivel-largo="6">
+                    <span class="puc-level-num">6</span>
+                    <span><b>@Resources.Strings.PUC_EstructuraSubcuenta</b> &middot; @Resources.Strings.PUC_EstructuraSubcuentaDesc</span>
+                    <span class="puc-level-here">@Resources.Strings.PUC_EstructuraAqui</span>
+                </div>
+                <div class="puc-rail-sep"></div>
+                <div class="puc-rail-note"><span class="puc-rail-dot puc-rail-dot-balance"></span>@Resources.Strings.PUC_EstructuraBalance</div>
+                <div class="puc-rail-note"><span class="puc-rail-dot puc-rail-dot-resultados"></span>@Resources.Strings.PUC_EstructuraResultados</div>
+                <div class="puc-rail-note"><span class="puc-rail-dot puc-rail-dot-orden"></span>@Resources.Strings.PUC_EstructuraOrden</div>
+            </div>
+        </aside>
     </div>
 </div>
 
 @section scripts {
 <script>
     var _pucMsg = {
-        todos:          '@Resources.Strings.Common_Todos',
-        registrosPag:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag))',
-        errorConexion:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag))',
-        exportando:     '@Resources.Strings.Common_JS_ExportandoExcel',
-        generandoExcel: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag))',
-        noResultados:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag))',
-        buscando:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_RegistrosPag))'
+        inicio:            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PUC_Inicio))',
+        exportarRama:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PUC_ExportarRama))',
+        exportarTodo:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PUC_ExportarTodo))',
+        sinCuentas:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PUC_SinCuentas))',
+        sinCuentasDesc:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PUC_SinCuentasDesc))',
+        sinResultados:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PUC_SinResultadosBusqueda))',
+        cuentasEnNivel:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PUC_CuentasEnNivel))',
+        copiarCodigo:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PUC_CopiarCodigo))',
+        codigoCopiado:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PUC_CodigoCopiado))',
+        exportando:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_JS_ExportandoExcel))',
+        generandoExcel:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_JS_GenerandoExcel))',
+        errorConexion:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PUC_JS_ErrorConexion))',
+        verMas:            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PUC_VerMas))',
+        verMenos:          '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PUC_VerMenos))'
     };
 </script>
 <script>
     $(document).ready(function () {
-        var datosActuales = null;
-        var filtrosActuales = null;
-        var paginaActual = 1;
-        var registrosPorPagina = 50;
+        var rutaActual = [];
 
-        var s2lang = {
-            noResults:  function () { return _pucMsg.noResultados; },
-            searching:  function () { return _pucMsg.buscando; }
-        };
+        cargarNivel();
 
-        // Cargar tipos y largos al inicio
-        $.get('@Url.Action("ObtenerTipos", "TablaPUC")', function (r) {
-            if (r.success && r.tipos) {
-                $.each(r.tipos, function (i, t) {
-                    $('#selectTipo').append($('<option>').val(t).text(t));
-                });
+        function cuentaActual() {
+            return rutaActual.length ? rutaActual[rutaActual.length - 1].Cuenta : null;
+        }
+
+        function cargarNivel() {
+            renderBreadcrumb();
+            renderDescripcionActual();
+            actualizarRailNivel();
+            mostrarSkeleton();
+
+            $.get('@Url.Action("ObtenerHijos", "TablaPUC")', { cuenta: cuentaActual() }, function (r) {
+                if (!r.success) { mostrarError(); return; }
+
+                if (r.nodos && r.nodos.length > 0) {
+                    renderGrid(r.nodos);
+                } else if (cuentaActual()) {
+                    mostrarDetalle(rutaActual[rutaActual.length - 1]);
+                } else {
+                    mostrarVacio(_pucMsg.sinCuentas, _pucMsg.sinCuentasDesc);
+                }
+            }).fail(mostrarError);
+        }
+
+        function renderBreadcrumb() {
+            var bc = $('#pucBreadcrumb').empty();
+
+            var inicio = $('<button>').addClass('puc-crumb').attr('type', 'button')
+                .append($('<i class="fas fa-home">'))
+                .append($('<span>').text(_pucMsg.inicio));
+            if (rutaActual.length > 0) {
+                inicio.on('click', function () { rutaActual = []; cargarNivel(); });
+            } else {
+                inicio.addClass('current');
             }
-        });
+            bc.append(inicio);
 
-        $.get('@Url.Action("ObtenerLargos", "TablaPUC")', function (r) {
-            if (r.success && r.largos) {
-                $.each(r.largos, function (i, l) {
-                    $('#selectLargo').append($('<option>').val(l).text(l));
-                });
+            $.each(rutaActual, function (i, nodo) {
+                bc.append($('<span>').addClass('puc-crumb-sep').html('<i class="fas fa-chevron-right"></i>'));
+                var esUltimo = (i === rutaActual.length - 1);
+                var crumb = $('<button>').addClass('puc-crumb').attr('type', 'button')
+                    .append($('<span>').addClass('puc-crumb-code').text(nodo.Cuenta))
+                    .append($('<span>').addClass('puc-crumb-name').text(nodo.Nombre));
+                if (esUltimo) {
+                    crumb.addClass('current');
+                } else {
+                    (function (idx) {
+                        crumb.on('click', function () { rutaActual = rutaActual.slice(0, idx + 1); cargarNivel(); });
+                    })(i);
+                }
+                bc.append(crumb);
+            });
+
+            $('#btnExportarTexto').text(rutaActual.length ? _pucMsg.exportarRama : _pucMsg.exportarTodo);
+        }
+
+        function renderDescripcionActual() {
+            var nodo = rutaActual.length ? rutaActual[rutaActual.length - 1] : null;
+            if (nodo && nodo.Descripcion) {
+                configurarDescripcion($('#pucDescripcionTexto'), $('#pucDescripcionToggle'), nodo.Descripcion);
+                $('#pucDescripcionActual').show();
+            } else {
+                $('#pucDescripcionActual').hide();
             }
-        });
+        }
 
-        // Consultar
-        $('#btnConsultar').on('click', consultar);
+        // Muestra el texto recortado a pocas lineas, con un enlace "Ver mas/menos" solo si es largo
+        function configurarDescripcion(textoEl, toggleEl, texto) {
+            textoEl.text(texto).removeClass('expanded');
+            toggleEl.off('click');
+            if (texto && texto.length > 220) {
+                toggleEl.show().text(_pucMsg.verMas).on('click', function () {
+                    var expandido = textoEl.toggleClass('expanded').hasClass('expanded');
+                    $(this).text(expandido ? _pucMsg.verMenos : _pucMsg.verMas);
+                });
+            } else {
+                toggleEl.hide();
+            }
+        }
 
-        function consultar() {
-            filtrosActuales = {
-                Tipo:   $('#selectTipo').val()  || null,
-                Largo:  $('#selectLargo').val() || null,
-                Cuenta: $('#txtCuenta').val().trim() || null,
-                Nombre: $('#txtNombre').val().trim() || null
-            };
-
-            mostrarEsqueleto();
-
-            $.ajax({
-                url:  '@Url.Action("ConsultarDatos", "TablaPUC")',
-                type: 'POST',
-                data: filtrosActuales,
-                success: function (r) {
-                    if (r.success) {
-                        datosActuales = r;
-                        paginaActual = 1;
-                        if (r.totalRegistros > 0) {
-                            renderTabla();
-                            $('#resultadosContainer').show();
-                            $('#btnExportar').show();
-                        } else {
-                            ocultarResultados();
-                            $('#estadoInicial').hide();
-                            $('#noDataMessage').show();
-                        }
-                    } else {
-                        ocultarResultados();
-                        Swal.fire({ icon: 'error', title: 'Error', text: r.message || _pucMsg.errorConexion });
-                    }
-                },
-                error: function () {
-                    ocultarResultados();
-                    Swal.fire({ icon: 'error', title: 'Error', text: _pucMsg.errorConexion });
+        // Marca en el riel lateral el nivel del codigo actualmente seleccionado en el breadcrumb
+        function actualizarRailNivel() {
+            var codigo = cuentaActual();
+            var largo = codigo ? String(codigo).length : null;
+            $('.puc-level').removeClass('is-active').each(function () {
+                if (largo !== null && $(this).data('nivel-largo') === largo) {
+                    $(this).addClass('is-active');
                 }
             });
         }
 
-        // Funcion: mostrar filas "esqueleto" mientras se consulta
-        function mostrarEsqueleto(filas, columnas) {
-            filas = filas || 6;
-            columnas = columnas || 4;
+        function renderGrid(nodos) {
+            $('#pucDetalle').hide();
+            $('#pucVacio').hide();
 
-            var tbody = $('#tablaBody');
-            tbody.empty();
+            var grid = $('#pucGrid').empty().show();
+            $.each(nodos, function (i, nodo) {
+                var card = $('<button>').addClass('puc-node-card').attr('type', 'button');
+                if (!nodo.TieneHijos) card.addClass('leaf');
+                card.append($('<span>').addClass('puc-node-code').text(nodo.Cuenta));
+                card.append($('<span>').addClass('puc-node-body').append($('<span>').addClass('puc-node-name').text(nodo.Nombre)));
+                card.append($('<i>').addClass('fas ' + (nodo.TieneHijos ? 'fa-chevron-right' : 'fa-eye') + ' puc-node-chevron'));
+                card.on('click', function () {
+                    rutaActual.push({ Cuenta: nodo.Cuenta, Nombre: nodo.Nombre, Tipo: nodo.Tipo, Descripcion: nodo.Descripcion });
+                    cargarNivel();
+                });
+                grid.append(card);
+            });
 
-            for (var r2 = 0; r2 < filas; r2++) {
-                var row = $('<tr>').addClass('skeleton-row');
-                for (var c = 0; c < columnas; c++) {
-                    var ancho = 45 + Math.floor(Math.random() * 45);
-                    row.append($('<td>').append($('<div>').addClass('skeleton-bar').css('width', ancho + '%')));
+            $('#pucLevelLabel').show();
+            $('#pucLevelText').text(nodos[0].Tipo + ':');
+            $('#pucLevelBadge').text(nodos.length + ' ' + _pucMsg.cuentasEnNivel);
+        }
+
+        function mostrarDetalle(nodo) {
+            $('#pucGrid').empty().hide();
+            $('#pucVacio').hide();
+            $('#pucLevelLabel').hide();
+            $('#pucDescripcionActual').hide();
+
+            $('#pucDetalleCodigo').text(nodo.Cuenta);
+            $('#pucDetalleNombre').text(nodo.Nombre);
+            $('#pucDetalleNivel').text(nodo.Tipo || '');
+            $('#pucDetalleRuta').text($.map(rutaActual, function (n) { return n.Cuenta + ' ' + n.Nombre; }).join('  >  '));
+            if (nodo.Descripcion) {
+                configurarDescripcion($('#pucDetalleDescripcion'), $('#pucDetalleDescripcionToggle'), nodo.Descripcion);
+                $('#pucDetalleDescripcionWrap').show();
+            } else {
+                $('#pucDetalleDescripcionWrap').hide();
+            }
+            $('#btnCopiarTexto').text(_pucMsg.copiarCodigo);
+            $('#pucDetalle').show();
+        }
+
+        function mostrarVacio(titulo, desc) {
+            $('#pucGrid').empty().hide();
+            $('#pucDetalle').hide();
+            $('#pucLevelLabel').hide();
+            $('#pucVacioTitulo').text(titulo);
+            $('#pucVacioDesc').text(desc);
+            $('#pucVacio').show();
+        }
+
+        function mostrarSkeleton() {
+            $('#pucDetalle').hide();
+            $('#pucVacio').hide();
+            $('#pucLevelLabel').hide();
+            var grid = $('#pucGrid').empty().show();
+            for (var i = 0; i < 6; i++) {
+                var card = $('<div>').addClass('puc-skeleton-card');
+                card.append($('<div>').addClass('skeleton-bar').css({ width: '54px', height: '22px', flex: '0 0 auto' }));
+                card.append($('<div>').addClass('skeleton-bar').css('width', (50 + Math.floor(Math.random() * 35)) + '%'));
+                grid.append(card);
+            }
+        }
+
+        function mostrarError() {
+            Swal.fire({ icon: 'error', title: 'Error', text: _pucMsg.errorConexion });
+        }
+
+        // Buscador con salto directo
+        var buscarTimeout = null;
+        $('#pucBuscar').on('input', function () {
+            var texto = $(this).val().trim();
+            clearTimeout(buscarTimeout);
+            if (texto.length < 2) { $('#pucSearchResults').removeClass('show').empty(); return; }
+            buscarTimeout = setTimeout(function () { ejecutarBusqueda(texto); }, 300);
+        });
+
+        function ejecutarBusqueda(texto) {
+            $.get('@Url.Action("Buscar", "TablaPUC")', { texto: texto }, function (r) {
+                var cont = $('#pucSearchResults').empty();
+                if (!r.success || !r.resultados || r.resultados.length === 0) {
+                    cont.append($('<div>').addClass('puc-search-empty').text(_pucMsg.sinResultados));
+                } else {
+                    $.each(r.resultados, function (i, item) {
+                        var row = $('<div>').addClass('puc-search-item')
+                            .append($('<span>').addClass('puc-code').text(item.Cuenta))
+                            .append($('<span>').addClass('puc-name').text(item.Nombre))
+                            .append($('<span>').addClass('puc-level-tag').text(item.Tipo));
+                        row.on('click', function () { saltarACuenta(item.Cuenta); });
+                        cont.append(row);
+                    });
                 }
-                tbody.append(row);
-            }
-
-            $('#estadoInicial').hide();
-            $('#noDataMessage').hide();
-            $('#btnExportar').hide();
-            $('#totalRegistros').text('');
-            $('#resultadosContainer').show();
+                cont.addClass('show');
+            });
         }
 
-        function renderTabla() {
-            var body = $('#tablaBody');
-            body.empty();
-
-            var total = datosActuales.datos.length;
-            var totalPaginas = Math.ceil(total / registrosPorPagina);
-            var inicio = (paginaActual - 1) * registrosPorPagina;
-            var fin    = Math.min(inicio + registrosPorPagina, total);
-
-            for (var i = inicio; i < fin; i++) {
-                var d = datosActuales.datos[i];
-                var row = $('<tr>');
-                row.append($('<td>').text(d.Cuenta || ''));
-                row.append($('<td>').text(d.Nombre || ''));
-                row.append($('<td style="text-align:center;">').text(d.Largo || ''));
-                row.append($('<td>').text(d.Tipo || ''));
-                body.append(row);
-            }
-
-            var pagLabel = _pucMsg.registrosPag + ' ' + paginaActual + '/' + totalPaginas;
-            $('#totalRegistros').text(total + ' | ' + pagLabel);
-            crearPaginacion(totalPaginas);
+        function saltarACuenta(cuenta) {
+            $('#pucSearchResults').removeClass('show').empty();
+            $('#pucBuscar').val('');
+            $.get('@Url.Action("ObtenerRuta", "TablaPUC")', { cuenta: cuenta }, function (r) {
+                if (r.success && r.ruta && r.ruta.length) {
+                    rutaActual = r.ruta;
+                    cargarNivel();
+                }
+            }).fail(mostrarError);
         }
 
-        function crearPaginacion(totalPaginas) {
-            var paginacion = $('#paginacion');
-            paginacion.empty();
-            if (totalPaginas <= 1) return;
-
-            paginacion.append(
-                $('<button>').addClass('btn-pagination').html('<i class="fas fa-chevron-left"></i>')
-                    .prop('disabled', paginaActual === 1)
-                    .on('click', function () { if (paginaActual > 1) { paginaActual--; renderTabla(); } })
-            );
-
-            var ini = Math.max(1, paginaActual - 2);
-            var fin = Math.min(totalPaginas, paginaActual + 2);
-
-            if (ini > 1) {
-                paginacion.append($('<button>').addClass('btn-pagination').text('1').on('click', function () { paginaActual = 1; renderTabla(); }));
-                if (ini > 2) paginacion.append($('<span>').addClass('pagination-dots').text('...'));
+        $(document).on('click', function (e) {
+            if (!$(e.target).closest('.puc-search-wrap').length) {
+                $('#pucSearchResults').removeClass('show');
             }
-
-            for (var i = ini; i <= fin; i++) {
-                (function (p) {
-                    var btn = $('<button>').addClass('btn-pagination').text(p).on('click', function () { paginaActual = p; renderTabla(); });
-                    if (p === paginaActual) btn.addClass('active');
-                    paginacion.append(btn);
-                })(i);
-            }
-
-            if (fin < totalPaginas) {
-                if (fin < totalPaginas - 1) paginacion.append($('<span>').addClass('pagination-dots').text('...'));
-                paginacion.append($('<button>').addClass('btn-pagination').text(totalPaginas).on('click', function () { paginaActual = totalPaginas; renderTabla(); }));
-            }
-
-            paginacion.append(
-                $('<button>').addClass('btn-pagination').html('<i class="fas fa-chevron-right"></i>')
-                    .prop('disabled', paginaActual === totalPaginas)
-                    .on('click', function () { if (paginaActual < totalPaginas) { paginaActual++; renderTabla(); } })
-            );
-        }
-
-        function ocultarResultados() {
-            $('#resultadosContainer').hide();
-            $('#noDataMessage').hide();
-            $('#btnExportar').hide();
-            $('#estadoInicial').show();
-            datosActuales = null;
-        }
-
-        // Limpiar
-        $('#btnLimpiar').on('click', function () {
-            $('#selectTipo').val('').trigger('change');
-            $('#selectLargo').val('').trigger('change');
-            $('#txtCuenta').val('');
-            $('#txtNombre').val('');
-            ocultarResultados();
         });
 
         // Exportar
         $('#btnExportar').on('click', function () {
-            if (!filtrosActuales) return;
             var form = $('<form>', { method: 'POST', action: '@Url.Action("ExportarExcel", "TablaPUC")' });
-            $.each(filtrosActuales, function (k, v) {
-                if (v) form.append($('<input>', { type: 'hidden', name: k, value: v }));
-            });
+            form.append($('<input>', { type: 'hidden', name: 'cuenta', value: cuentaActual() || '' }));
+            form.append($('input[name="__RequestVerificationToken"]').first().clone());
             $('body').append(form);
             form.submit();
             form.remove();
             Swal.fire({ icon: 'success', title: _pucMsg.exportando, text: _pucMsg.generandoExcel, timer: 2000, showConfirmButton: false });
         });
 
-        // Select2
-        $('#selectTipo').select2({ placeholder: _pucMsg.todos, allowClear: true, width: '100%', language: s2lang });
-        $('#selectLargo').select2({ placeholder: _pucMsg.todos, allowClear: true, width: '100%', language: s2lang });
+        // Copiar código
+        $('#btnCopiarCodigo').on('click', function () {
+            var codigo = $('#pucDetalleCodigo').text();
+            navigator.clipboard.writeText(codigo).then(function () {
+                var original = _pucMsg.copiarCodigo;
+                $('#btnCopiarTexto').text(_pucMsg.codigoCopiado);
+                setTimeout(function () { $('#btnCopiarTexto').text(original); }, 1800);
+            });
+        });
     });
 </script>
-<script src="~/Assets/js/select2/select2.min.js"></script>
 }

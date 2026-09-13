@@ -1,0 +1,90 @@
+/* ===== Explorador jerárquico del Plan Único de Cuentas — estilos propios de esta vista ===== */
+/* Construido sobre los tokens de marca ya usados en bufins-components.css (--content-gradient, #583AFF, #01E1D7, bordes #e3e6f0, radios 0.5rem) */
+
+.puc-toolbar-row{display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem;margin-bottom:0.75rem}
+.puc-search-wrap{position:relative;flex:1 1 320px;min-width:0}
+.puc-search-wrap i.puc-search-icon{position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:#583AFF;font-size:0.875rem;pointer-events:none}
+.puc-search-input{width:100%;border:1px solid #d1d5db;border-radius:0.375rem;padding:0.5rem 0.75rem 0.5rem 2rem;font-size:0.875rem;transition:all 0.2s ease}
+.puc-search-input:focus{border-color:#583AFF;box-shadow:0 0 0 2px rgba(88,58,255,0.1);outline:none}
+.puc-search-results{position:absolute;top:calc(100% + 4px);left:0;right:0;background:white;border:1px solid #e3e6f0;border-radius:0.5rem;box-shadow:0 12px 28px rgba(22,9,51,0.16);max-height:340px;overflow-y:auto;z-index:40;display:none}
+.puc-search-results.show{display:block}
+.puc-search-item{display:flex;align-items:center;gap:0.625rem;padding:0.625rem 0.875rem;cursor:pointer;border-bottom:1px solid #f1f2f8}
+.puc-search-item:last-child{border-bottom:none}
+.puc-search-item:hover,.puc-search-item.active{background:#f8f9fc}
+.puc-search-item .puc-code{font-family:'Consolas',monospace;font-weight:700;color:#583AFF;background:rgba(88,58,255,0.08);padding:0.1rem 0.45rem;border-radius:0.3rem;font-size:0.8rem;white-space:nowrap}
+.puc-search-item .puc-name{flex:1;min-width:0;font-size:0.85rem;color:#2d3748;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.puc-search-item .puc-level-tag{font-size:0.7rem;color:#6c757d;background:#eef0f7;padding:0.15rem 0.5rem;border-radius:1rem;white-space:nowrap}
+.puc-search-empty{padding:0.875rem;font-size:0.85rem;color:#6c757d;text-align:center}
+
+.puc-export-btn{flex:0 0 auto}
+
+/* Riel lateral permanente: estructura de codificación del PUC (reemplaza el tooltip) */
+.puc-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:1.25rem;align-items:start}
+.puc-main{min-width:0;display:flex;flex-direction:column;gap:1rem}
+.puc-rail{background:#fff;border:1px solid #e3e6f0;border-radius:.5rem;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden;position:sticky;top:1rem}
+.puc-rail-header{background:var(--content-gradient);padding:.75rem 1rem;display:flex;align-items:center;gap:.5rem;color:#fff;font-weight:700;font-size:.85rem}
+.puc-rail-body{padding:.875rem 1rem;display:flex;flex-direction:column;gap:.5rem}
+.puc-level{display:flex;align-items:center;gap:.7rem;padding:.55rem .7rem;border-radius:.4rem;background:#f8f9fc;font-size:.85rem;color:#4b5563}
+.puc-level b{color:#2d3748}
+.puc-level-num{width:24px;height:24px;border-radius:50%;background:#eef2ff;color:#583AFF;font-size:.75rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+.puc-level.is-active{background:rgba(88,58,255,.09);border:1px solid rgba(88,58,255,.28)}
+.puc-level.is-active .puc-level-num{background:#583AFF;color:#fff}
+.puc-level-here{display:none;margin-left:auto;font-size:.66rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#583AFF}
+.puc-level.is-active .puc-level-here{display:inline}
+.puc-rail-sep{height:1px;background:#e3e6f0;margin:.25rem 0}
+.puc-rail-note{display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:#4b5563}
+.puc-rail-dot{width:8px;height:8px;border-radius:2px;flex:none}
+.puc-rail-dot-balance{background:#583AFF}
+.puc-rail-dot-resultados{background:#06B6D4}
+.puc-rail-dot-orden{background:#f59e0b}
+@media (max-width:992px){.puc-layout{grid-template-columns:1fr}.puc-rail{position:static;order:-1}}
+
+.puc-breadcrumb-bar{display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap}
+.puc-breadcrumb{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:0.375rem;padding:0.625rem 0.875rem;background:#f8f9fc;border-radius:0.375rem;border-left:3px solid #583AFF;font-size:0.85rem}
+.puc-crumb{background:none;border:none;padding:0.2rem 0.4rem;border-radius:0.3rem;color:#583AFF;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:0.35rem;max-width:220px}
+.puc-crumb .puc-crumb-code{font-family:'Consolas',monospace;font-size:0.78rem;opacity:0.85}
+.puc-crumb .puc-crumb-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.puc-crumb:hover{background:rgba(88,58,255,0.1)}
+.puc-crumb.current{color:#2d3748;cursor:default;font-weight:700}
+.puc-crumb.current:hover{background:none}
+.puc-crumb-sep{color:#c7ccdb;font-size:0.7rem}
+@media (max-width:576px){.puc-crumb{max-width:150px}}
+
+.puc-level-label{flex:0 0 auto;font-size:0.8rem;color:#6c757d;display:flex;align-items:center;gap:0.4rem;white-space:nowrap}
+.puc-level-label .info-badge{padding:0.2rem 0.7rem;font-size:0.72rem}
+
+.puc-descripcion-box{background:#fff;border:1px solid #e3e6f0;border-left:3px solid #06B6D4;border-radius:0.5rem;box-shadow:0 2px 8px rgba(0,0,0,0.05);padding:0.75rem 1rem}
+.puc-descripcion-head{display:flex;align-items:center;justify-content:space-between;gap:0.75rem;margin-bottom:0.35rem}
+.puc-descripcion-label{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#0e7490;display:flex;align-items:center;gap:0.35rem;white-space:nowrap}
+.puc-descripcion-toggle{background:none;border:none;color:#583AFF;font-weight:600;font-size:0.75rem;cursor:pointer;padding:0;flex:none}
+.puc-descripcion-toggle:hover{text-decoration:underline}
+.puc-descripcion-text{font-size:0.85rem;color:#4a5568;line-height:1.55;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.puc-descripcion-text.expanded{display:block;-webkit-line-clamp:unset;overflow:visible}
+.puc-detail-panel .puc-descripcion-box{margin-top:1.25rem;box-shadow:none}
+
+.puc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.875rem}
+
+.puc-node-card{position:relative;display:flex;align-items:center;gap:0.75rem;background:white;border:1px solid #e3e6f0;border-radius:0.5rem;padding:0.875rem 1rem;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.05);transition:transform 0.15s ease,box-shadow 0.15s ease,border-color 0.15s ease;overflow:hidden;text-align:left}
+.puc-node-card::before{content:"";position:absolute;top:0;left:0;bottom:0;width:4px;background:var(--content-gradient)}
+.puc-node-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(22,9,51,0.14);border-color:#c7ccdb}
+.puc-node-card .puc-node-code{font-family:'Consolas',monospace;font-weight:700;color:#583AFF;background:rgba(88,58,255,0.08);padding:0.25rem 0.55rem;border-radius:0.35rem;font-size:0.8rem;flex:0 0 auto}
+.puc-node-card .puc-node-body{flex:1;min-width:0}
+.puc-node-card .puc-node-name{font-size:0.875rem;font-weight:600;color:#2d3748;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.puc-node-card .puc-node-chevron{flex:0 0 auto;color:#01E1D7;font-size:0.9rem;opacity:0.8;transition:transform 0.15s ease}
+.puc-node-card:hover .puc-node-chevron{transform:translateX(3px)}
+.puc-node-card.leaf .puc-node-chevron{color:#6c757d}
+
+.puc-skeleton-card{background:white;border:1px solid #e3e6f0;border-radius:0.5rem;padding:0.875rem 1rem;display:flex;gap:0.75rem;align-items:center}
+.puc-skeleton-card .skeleton-bar{height:14px}
+
+.puc-detail-panel{background:white;border-radius:0.5rem;padding:1.75rem;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #e3e6f0;position:relative;overflow:hidden}
+.puc-detail-panel::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:var(--content-gradient)}
+.puc-detail-code{font-family:'Consolas',monospace;font-size:1.75rem;font-weight:700;color:#583AFF;letter-spacing:0.02em}
+.puc-detail-name{font-size:1.15rem;font-weight:600;color:#2d3748;margin-top:0.25rem}
+.puc-detail-meta{display:flex;flex-wrap:wrap;gap:1.5rem;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid #e3e6f0}
+.puc-detail-meta-item{min-width:160px}
+.puc-detail-meta-item .puc-meta-label{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;color:#9ca3af;font-weight:700;margin-bottom:0.2rem}
+.puc-detail-meta-item .puc-meta-value{font-size:0.9rem;color:#2d3748;font-weight:500}
+.puc-detail-actions{margin-top:1.25rem}
+
+@media (max-width:768px){.puc-grid{grid-template-columns:1fr}.puc-detail-panel{padding:1.25rem}.puc-detail-code{font-size:1.4rem}}

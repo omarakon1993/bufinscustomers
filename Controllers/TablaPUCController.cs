@@ -1,5 +1,4 @@
-﻿using bufinscustomers.Helpers;
-using bufinscustomers.Models;
+using bufinscustomers.Helpers;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
 using ClosedXML.Excel;
@@ -26,15 +25,15 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpGet]
-        public JsonResult ObtenerTipos()
+        public JsonResult ObtenerHijos(string cuenta)
         {
             try
             {
                 if (!VerificarAcceso())
                     return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
 
-                var tipos = _service.ObtenerTipos();
-                return Json(new { success = true, tipos }, JsonRequestBehavior.AllowGet);
+                var nodos = _service.ObtenerHijos(cuenta);
+                return Json(new { success = true, nodos }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
@@ -43,15 +42,32 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpGet]
-        public JsonResult ObtenerLargos()
+        public JsonResult ObtenerRuta(string cuenta)
         {
             try
             {
                 if (!VerificarAcceso())
                     return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
 
-                var largos = _service.ObtenerLargos();
-                return Json(new { success = true, largos }, JsonRequestBehavior.AllowGet);
+                var ruta = _service.ObtenerRuta(cuenta);
+                return Json(new { success = true, ruta }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult Buscar(string texto)
+        {
+            try
+            {
+                if (!VerificarAcceso())
+                    return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
+
+                var resultados = _service.Buscar(texto);
+                return Json(new { success = true, resultados }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
@@ -61,41 +77,21 @@ namespace bufinscustomers.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public JsonResult ConsultarDatos(FiltrosTablaPUC filtros)
-        {
-            try
-            {
-                if (!VerificarAcceso())
-                    return Json(new { success = false, message = "Acceso denegado" });
-
-                var (filas, total) = _service.ConsultarDatos(filtros ?? new FiltrosTablaPUC());
-                var result = Json(new { success = true, datos = filas, totalRegistros = total });
-                result.MaxJsonLength = int.MaxValue;
-                return result;
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult ExportarExcel(FiltrosTablaPUC filtros)
+        public ActionResult ExportarExcel(string cuenta)
         {
             try
             {
                 if (!VerificarAcceso())
                     return RedirectToAction("TablaPUC");
 
-                var (filas, _) = _service.ConsultarDatos(filtros ?? new FiltrosTablaPUC());
+                var filas = _service.ObtenerSubarbol(cuenta);
 
                 using (var package = new XLWorkbook())
                 {
                     var ws = package.Worksheets.Add("TablaPUC");
                     Func<string, string> R = key => HttpContext.GetGlobalResourceObject("Strings", key)?.ToString() ?? key;
 
-                    string[] headers = { R("PUC_ThCuenta"), R("PUC_ThNombre"), R("PUC_ThLargo"), R("PUC_ThTipo") };
+                    string[] headers = { R("PUC_ThCuenta"), R("PUC_ThNombre"), R("PUC_ThLargo"), R("PUC_ThTipo"), R("PUC_Descripcion") };
                     for (int i = 0; i < headers.Length; i++)
                     {
                         var cell = ws.Cell(1, i + 1);
@@ -115,9 +111,10 @@ namespace bufinscustomers.Controllers
                         ws.Cell(row, 2).Value = fila.Nombre;
                         ws.Cell(row, 3).Value = fila.Largo;
                         ws.Cell(row, 4).Value = fila.Tipo;
+                        ws.Cell(row, 5).Value = fila.Descripcion;
 
                         var color = i % 2 == 0 ? XLColor.FromArgb(248, 250, 252) : XLColor.White;
-                        for (int c = 1; c <= 4; c++)
+                        for (int c = 1; c <= 5; c++)
                         {
                             ws.Cell(row, c).Style.Fill.BackgroundColor = color;
                             ws.Cell(row, c).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
@@ -126,10 +123,11 @@ namespace bufinscustomers.Controllers
                     }
 
                     ws.Columns().AdjustToContents();
-                    ws.Range(1, 1, 1, 4).SetAutoFilter();
+                    ws.Range(1, 1, 1, 5).SetAutoFilter();
                     ws.SheetView.Freeze(1, 0);
 
-                    string nombreArchivo = $"TablaPUC_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                    string sufijo = string.IsNullOrWhiteSpace(cuenta) ? "Completo" : cuenta;
+                    string nombreArchivo = $"TablaPUC_{sufijo}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
                     byte[] fileBytes;
                     using (var ms = new MemoryStream())
                     {
