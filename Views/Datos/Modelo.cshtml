@@ -32,7 +32,7 @@
                 <label for="idEmpresa">
                     @Resources.Strings.Modelo_LabelEmpresa <span class="required">*</span>
                 </label>
-                <select class="form-control" id="idEmpresa">
+                <select class="form-control" id="idEmpresa" autocomplete="off">
                     <option value="">@Resources.Strings.Modelo_SelectEmpresa</option>
                     @if (esAdmin)
                     {
@@ -52,38 +52,11 @@
                 </select>
             </div>
 
-            <!-- Selector unificado: uno o varios modelos (consultar usa el único elegido; exportar/correo usan la selección completa) -->
-            <div class="mc-field wide">
-                <label>@Resources.Strings.Modelo_LabelModelo <span class="required">*</span></label>
-                <div class="mc-multiselect" id="modeloPicker">
-                    <button type="button" class="mc-ms-toggle" id="modeloPickerToggle" aria-haspopup="true" aria-expanded="false">
-                        <span id="modeloPickerLabel">@Resources.Strings.Modelo_Picker_Placeholder</span>
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <div class="mc-ms-panel" id="modeloPickerPanel" hidden>
-                        <label class="mc-modelo-item mc-modelo-all">
-                            <input type="checkbox" id="modeloSelAll">
-                            <span>@Resources.Strings.Modelo_Correo_SelTodos</span>
-                        </label>
-                        @foreach (var m in Model.Modelos)
-                        {
-                            <label class="mc-modelo-item">
-                                <input type="checkbox" class="mc-modelo-pick" value="@m.Id"
-                                       data-nombre="@m.Nombre"
-                                       data-descripcion="@(m.Descripcion ?? "")"
-                                       data-icono="@(m.Icono ?? "fas fa-cog")">
-                                <span>@m.Nombre</span>
-                            </label>
-                        }
-                    </div>
-                </div>
-            </div>
-
             <div class="mc-field">
                 <label for="idEscenario">
                     @Resources.Strings.Modelo_LabelEscenario
                 </label>
-                <select class="form-control" id="idEscenario">
+                <select class="form-control" id="idEscenario" autocomplete="off">
                     @if (ViewBag.Escenarios != null)
                     {
                         foreach (var escenario in ViewBag.Escenarios)
@@ -93,11 +66,41 @@
                     }
                 </select>
             </div>
+        </div>
 
-            <div class="mc-search" id="mcSearchWrap" style="display:none;">
-                <i class="fas fa-search"></i>
-                <input type="text" id="filtroResultados" autocomplete="off"
-                       placeholder="@Resources.Strings.Modelo_FiltrarResultados">
+        <!-- Selector de modelos: tarjetas seleccionables — uno, varios o todos -->
+        <div class="mc-modelos-panel">
+            <div class="mc-modelos-panel-head">
+                <span class="mc-modelos-panel-title">
+                    <i class="fas fa-cubes mr-1"></i>@Resources.Strings.Modelo_LabelModelo <span class="required">*</span>
+                </span>
+                <div class="mc-modelos-panel-actions">
+                    <span class="mc-modelos-contador" id="modeloContador">@Resources.Strings.Modelo_Picker_Placeholder</span>
+                    <label class="mc-chip-todos" id="modeloSelAllChip">
+                        <input type="checkbox" id="modeloSelAll">
+                        <i class="fas fa-check-double mr-1"></i>@Resources.Strings.Modelo_Correo_SelTodos
+                    </label>
+                </div>
+            </div>
+            <div class="mc-modelos-grid" id="modeloGrid">
+                @foreach (var m in Model.Modelos)
+                {
+                    <label class="mc-modelo-card" title="@(m.Descripcion ?? m.Nombre)">
+                        <input type="checkbox" class="mc-modelo-pick" value="@m.Id"
+                               data-nombre="@m.Nombre"
+                               data-descripcion="@(m.Descripcion ?? "")"
+                               data-icono="@(m.Icono ?? "fas fa-cog")">
+                        <span class="mc-modelo-card-check"><i class="fas fa-check"></i></span>
+                        <span class="mc-modelo-card-icon"><i class="@(m.Icono ?? "fas fa-cog")"></i></span>
+                        <span class="mc-modelo-card-texto">
+                            <span class="mc-modelo-card-nombre">@m.Nombre</span>
+                            @if (!string.IsNullOrEmpty(m.Descripcion))
+                            {
+                                <span class="mc-modelo-card-desc">@m.Descripcion</span>
+                            }
+                        </span>
+                    </label>
+                }
             </div>
         </div>
 
@@ -120,15 +123,13 @@
             </button>
         </div>
 
-        <div id="modeloInfoPanel" class="mc-modelo-info" style="display:none;">
-            <i id="modeloIcono" class="fas fa-cog mr-1" style="color:#583AFF;"></i>
-            <span id="modeloDescripcion"></span>
-        </div>
     </div>
 
-    <div id="avisoSinDatosEscenario" class="alert alert-warning d-flex align-items-center" role="alert" style="display:none;border-left: 4px solid #f6c23e;">
-        <i class="fas fa-exclamation-triangle mr-3" style="font-size:1.2rem;"></i>
-        <div>@Resources.Strings.Modelo_AvisoSinDatosEscenario</div>
+    <div id="avisoSinDatosEscenario" class="alert alert-warning" role="alert" style="display:none;border-left: 4px solid #f6c23e;">
+        <div style="display:flex;align-items:center;">
+            <i class="fas fa-exclamation-triangle mr-3" style="font-size:1.2rem;"></i>
+            <div>@Resources.Strings.Modelo_AvisoSinDatosEscenario</div>
+        </div>
     </div>
 
     <!-- Loading (ejecución AJAX) -->
@@ -153,7 +154,58 @@
         <p>@Resources.Strings.Modelo_EstadoInicialDesc</p>
     </div>
 
-    <!-- Resultados del modelo individual -->
+    <div id="resultadosAnchor"></div>
+
+    <!-- Cápsulas de navegación entre los modelos consultados (solo si se consultó más de uno) -->
+    <div id="resultadosTabs" class="mc-tabs" style="display:none;"></div>
+
+    <!-- Barra de filtros — SOLO afecta la tabla de resultados de abajo, nunca la consulta al
+         servidor. Colapsada por defecto (un botón); el panel se abre bajo demanda para no
+         ocupar espacio permanente encima de la tabla. Vive fuera de .mc-table-card a propósito:
+         esa tarjeta tiene overflow:hidden (por las esquinas redondeadas) y recortaría el panel. -->
+    <div class="mc-filtro-bar" id="mcFiltroBar" style="display:none;">
+        <button type="button" class="mc-filtro-toggle" id="mcFiltroToggle" aria-expanded="false">
+            <i class="fas fa-filter"></i>
+            <span>@Resources.Strings.Modelo_Filtro_Btn</span>
+            <span class="mc-filtro-badge" id="mcFiltroBadge" style="display:none;">0</span>
+            <i class="fas fa-chevron-down mc-filtro-caret"></i>
+        </button>
+
+        <div class="mc-filtro-panel" id="mcFiltroPanel" hidden>
+            <div class="mc-filtro-seccion">
+                <label><i class="fas fa-search mr-1"></i>@Resources.Strings.Modelo_Filtro_Buscar</label>
+                <div class="mc-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="filtroResultados" autocomplete="off"
+                           placeholder="@Resources.Strings.Modelo_FiltrarResultados">
+                </div>
+            </div>
+
+            <div class="mc-filtro-sep"></div>
+
+            <div class="mc-filtro-seccion">
+                <label><i class="fas fa-sliders-h mr-1"></i>@Resources.Strings.Modelo_Filtro_PorCampo</label>
+                <div class="mc-filtro-builder">
+                    <select id="mcFiltroCampo" class="form-control form-control-sm"></select>
+                    <select id="mcFiltroOperador" class="form-control form-control-sm"></select>
+                    <input type="text" id="mcFiltroValor" class="form-control form-control-sm"
+                           placeholder="@Resources.Strings.Modelo_Filtro_Valor">
+                    <button type="button" id="mcFiltroAgregar" class="mc-filtro-add" title="@Resources.Strings.Modelo_Filtro_Agregar">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="mc-filtro-chips" id="mcFiltroChips"></div>
+            </div>
+
+            <div class="mc-filtro-foot">
+                <button type="button" id="mcFiltroLimpiar" class="mc-filtro-limpiar">
+                    <i class="fas fa-eraser mr-1"></i>@Resources.Strings.Common_Limpiar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resultados del modelo activo -->
     <div id="resultadosSection" style="display:none;">
         <div class="mc-table-card">
             <div class="mc-table-head">
@@ -175,12 +227,12 @@
         </div>
     </div>
 
-    <!-- Estado vacío -->
+    <!-- Estado vacío / error del modelo activo -->
     <div id="noResultados" style="display:none;">
         <div class="no-data-message">
-            <i class="fas fa-inbox"></i>
-            <h4>@Resources.Strings.Modelo_NoResultados</h4>
-            <p>@Resources.Strings.Modelo_NoResultadosDesc</p>
+            <i id="noResultadosIcono" class="fas fa-inbox"></i>
+            <h4 id="noResultadosTitulo">@Resources.Strings.Modelo_NoResultados</h4>
+            <p id="noResultadosDesc">@Resources.Strings.Modelo_NoResultadosDesc</p>
         </div>
     </div>
 
@@ -207,24 +259,12 @@
 
                     <div class="form-group">
                         <label>
-                            <i class="fas fa-cubes mr-1"></i>@Resources.Strings.Modelo_Correo_LabelModelos <span class="required">*</span>
+                            <i class="fas fa-cubes mr-1"></i>@Resources.Strings.Modelo_Correo_LabelModelos
                         </label>
-                        <div class="mc-modelos-box">
-                            <label class="mc-modelo-item mc-modelo-all">
-                                <input type="checkbox" id="correoSelAll">
-                                <span>@Resources.Strings.Modelo_Correo_SelTodos</span>
-                            </label>
-                            <div id="correoListaModelos">
-                                @foreach (var m in Model.Modelos)
-                                {
-                                    <label class="mc-modelo-item">
-                                        <input type="checkbox" class="mc-modelo-chk" value="@m.Id">
-                                        <span>@m.Nombre</span>
-                                    </label>
-                                }
-                            </div>
-                        </div>
-                        <small class="form-text text-muted" id="correoContadorModelos">0 @Resources.Strings.Modelo_Correo_Seleccionados</small>
+                        <div class="mc-correo-modelos-resumen" id="correoModelosResumen"></div>
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle mr-1"></i>@Resources.Strings.Modelo_Correo_ResumenHint
+                        </small>
                     </div>
 
                     <div class="form-group">
@@ -274,7 +314,6 @@
             correoExitoTitulo:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Correo_ExitoTitulo))',
             correoValModelos:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Correo_ValModelos))',
             correoValCorreo:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Correo_ValCorreo))',
-            correoSeleccionados:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Correo_Seleccionados))',
             ejecutando:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_Ejecutando))',
             exportandoTodos:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_ExportandoTodos))',
             exportandoUno:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_BtnExportarModelo))',
@@ -296,7 +335,27 @@
             pickerPlaceholder:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Picker_Placeholder))',
             pickerTodos:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Picker_Todos))',
             pickerVariosFmt:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Picker_VariosFmt))',
-            resultadosTitulo:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Resultados))'
+            resultadosTitulo:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Resultados))',
+            btnConsultarUnoFmt:          '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_BtnConsultarUnoFmt))',
+            btnConsultarSeleccionadosFmt:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_BtnConsultarSeleccionadosFmt))',
+            btnConsultarTodos:           '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_BtnConsultarTodos))',
+            ejecutarTooltip:             '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Ejecutar_RequiereUno))',
+            ejecutandoMultiFmt:          '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_EjecutandoMultiFmt))',
+            errorConexionConsulta:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_JS_ErrorConexionConsulta))',
+            exportTooltipMultiple:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_BtnExportTooltipMultiple))',
+            noResultadosTitulo:          '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_NoResultados))',
+            noResultadosDesc:            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_NoResultadosDesc))',
+            filtroSelectCampo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_SelectCampo))',
+            filtroChipValorFmt:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_ChipValorFmt))',
+            opContiene:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_Contiene))',
+            opNoContiene: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_NoContiene))',
+            opIgual:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_Igual))',
+            opEmpieza:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_Empieza))',
+            opTermina:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_Termina))',
+            opMayor:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_Mayor))',
+            opMayorIgual: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_MayorIgual))',
+            opMenor:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_Menor))',
+            opMenorIgual: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Filtro_Op_MenorIgual))'
         }
     };
 
@@ -305,7 +364,7 @@
     // ── Estado de paginación ──────────────────────────────────────────────
     var _pag = {
         filas:      [],
-        filasVista: [],   // filas tras aplicar el filtro de texto sobre los resultados
+        filasVista: [],   // filas tras aplicar los filtros de la tabla (búsqueda general + por campo)
         columnas:   [],
         pagina:     1,
         porPagina:  50,
@@ -313,76 +372,230 @@
         idEmpresa:  null
     };
 
+    // ── Filtros de la tabla de resultados ─────────────────────────────────
+    // Dos mecanismos que se combinan con AND: una búsqueda de texto libre sobre TODAS las
+    // columnas (_busquedaGlobal) y una lista de filtros por campo específico (_filtrosCampo),
+    // cada uno con su propio operador según el tipo de columna (texto vs. numérica/dinero).
+    var _busquedaGlobal = '';
+    var _filtrosCampo   = [];   // { campoIdx, campoNombre, operador, operadorLabel, valor, esNum }
+
+    function operadoresParaColumna(esNum) {
+        return esNum
+            ? [
+                  { value: 'igual',      label: _modelo.textos.opIgual },
+                  { value: 'mayor',      label: _modelo.textos.opMayor },
+                  { value: 'mayorigual', label: _modelo.textos.opMayorIgual },
+                  { value: 'menor',      label: _modelo.textos.opMenor },
+                  { value: 'menorigual', label: _modelo.textos.opMenorIgual }
+              ]
+            : [
+                  { value: 'contiene',   label: _modelo.textos.opContiene },
+                  { value: 'nocontiene', label: _modelo.textos.opNoContiene },
+                  { value: 'igual',      label: _modelo.textos.opIgual },
+                  { value: 'empieza',    label: _modelo.textos.opEmpieza },
+                  { value: 'termina',    label: _modelo.textos.opTermina }
+              ];
+    }
+
+    // Se llama cada vez que se muestra una tabla nueva (nuevo modelo consultado o cambio de
+    // cápsula): las columnas cambian de un modelo a otro, así que los filtros de campo de la
+    // tabla anterior ya no tendrían sentido y se descartan junto con la búsqueda de texto.
+    function reiniciarFiltrosTabla(columnas) {
+        _busquedaGlobal = '';
+        _filtrosCampo   = [];
+        $('#filtroResultados').val('');
+        $('#mcFiltroPanel').prop('hidden', true);
+        $('#mcFiltroToggle').attr('aria-expanded', 'false').removeClass('is-open');
+
+        var opciones = '<option value="">' + _modelo.textos.filtroSelectCampo + '</option>';
+        for (var i = 0; i < columnas.length; i++) {
+            opciones += '<option value="' + i + '">' + $('<span>').text(columnas[i]).html() + '</option>';
+        }
+        $('#mcFiltroCampo').html(opciones);
+        poblarOperadoresParaCampo();
+        pintarChipsFiltro();
+    }
+
+    // Repuebla el <select> de operadores según si la columna elegida es numérica/dinero o texto.
+    function poblarOperadoresParaCampo() {
+        var idx = $('#mcFiltroCampo').val();
+        var esNum = idx !== '' && !!_moneyColSet[(_pag.columnas[idx] || '').toLowerCase()];
+        var ops = operadoresParaColumna(esNum);
+        $('#mcFiltroOperador').html(ops.map(function (o) {
+            return '<option value="' + o.value + '">' + o.label + '</option>';
+        }).join(''));
+    }
+
+    // Agrega un filtro por campo a la lista (no reemplaza los existentes: se pueden combinar
+    // varios filtros, incluso sobre el mismo campo, todos exigidos a la vez — AND).
+    function agregarFiltroCampo() {
+        var idx = $('#mcFiltroCampo').val();
+        var valor = ($('#mcFiltroValor').val() || '').trim();
+        if (idx === '' || idx == null || !valor) return;
+
+        var campoNombre  = _pag.columnas[idx];
+        var esNum        = !!_moneyColSet[(campoNombre || '').toLowerCase()];
+        var operador     = $('#mcFiltroOperador').val();
+        var operadorLabel = $('#mcFiltroOperador option:selected').text();
+
+        _filtrosCampo.push({
+            campoIdx: parseInt(idx, 10), campoNombre: campoNombre,
+            operador: operador, operadorLabel: operadorLabel, valor: valor, esNum: esNum
+        });
+
+        $('#mcFiltroValor').val('').focus();
+        pintarChipsFiltro();
+        aplicarFiltrosYRender();
+    }
+
+    // Pinta los "chips" removibles de los filtros de campo activos + el badge con el total
+    // (búsqueda general cuenta como 1 más, si tiene texto).
+    function pintarChipsFiltro() {
+        var html = _filtrosCampo.map(function (f, i) {
+            return '<span class="mc-filtro-chip" data-idx="' + i + '">' +
+                   '<strong>' + $('<span>').text(f.campoNombre).html() + '</strong> ' +
+                   $('<span>').text(f.operadorLabel).html() + ' ' +
+                   _modelo.textos.filtroChipValorFmt.replace('{0}', $('<span>').text(f.valor).html()) +
+                   '<button type="button" class="mc-filtro-chip-x"><i class="fas fa-times"></i></button>' +
+                   '</span>';
+        }).join('');
+        $('#mcFiltroChips').html(html);
+
+        var total = _filtrosCampo.length + (_busquedaGlobal ? 1 : 0);
+        $('#mcFiltroBadge').text(total).toggle(total > 0);
+        $('#mcFiltroToggle').toggleClass('has-filtros', total > 0);
+    }
+
+    // Evalúa un único filtro de campo contra el valor de una celda.
+    function evaluarFiltroCampo(valorCelda, f) {
+        if (f.esNum) {
+            var n = parseFloat(valorCelda);
+            var fv = parseFloat(f.valor.replace(',', '.'));
+            if (isNaN(n) || isNaN(fv)) return false;
+            switch (f.operador) {
+                case 'igual':      return n === fv;
+                case 'mayor':      return n > fv;
+                case 'mayorigual': return n >= fv;
+                case 'menor':      return n < fv;
+                case 'menorigual': return n <= fv;
+            }
+            return true;
+        }
+        var s  = String(valorCelda == null ? '' : valorCelda).toLowerCase();
+        var fv2 = f.valor.toLowerCase();
+        switch (f.operador) {
+            case 'contiene':   return s.indexOf(fv2) >= 0;
+            case 'nocontiene': return s.indexOf(fv2) < 0;
+            case 'igual':      return s === fv2;
+            case 'empieza':    return s.indexOf(fv2) === 0;
+            case 'termina':    return s.length >= fv2.length && s.slice(-fv2.length) === fv2;
+        }
+        return true;
+    }
+
+    // Combina (AND) la búsqueda general + todos los filtros de campo sobre _pag.filas y
+    // repinta la primera página del resultado. Es la única puerta de entrada para filtrar:
+    // tanto el buscador general como el constructor de filtros por campo pasan por aquí.
+    function aplicarFiltrosYRender() {
+        var datos = _pag.filas;
+
+        if (_busquedaGlobal) {
+            datos = datos.filter(function (fila) {
+                return fila.some(function (celda) {
+                    return String(celda == null ? '' : celda).toLowerCase().indexOf(_busquedaGlobal) >= 0;
+                });
+            });
+        }
+
+        _filtrosCampo.forEach(function (f) {
+            datos = datos.filter(function (fila) { return evaluarFiltroCampo(fila[f.campoIdx], f); });
+        });
+
+        _pag.filasVista = datos;
+        renderPagina(1);
+    }
+
     // ── Selector de modelos (uno o varios) ───────────────────────────────
     function modelosSeleccionados() {
         return $('.mc-modelo-pick:checked').map(function () { return this.value; }).get();
     }
 
-    function abrirPicker() {
-        $('#modeloPicker').addClass('open');
-        $('#modeloPickerToggle').attr('aria-expanded', 'true');
-        $('#modeloPickerPanel').prop('hidden', false);
-    }
-    function cerrarPicker() {
-        $('#modeloPicker').removeClass('open');
-        $('#modeloPickerToggle').attr('aria-expanded', 'false');
-        $('#modeloPickerPanel').prop('hidden', true);
+    // Resalta visualmente las tarjetas marcadas (borde/fondo de marca vía clase .is-selected).
+    function actualizarTarjetasModelo() {
+        $('.mc-modelo-card').each(function () {
+            var $card = $(this);
+            $card.toggleClass('is-selected', $card.find('.mc-modelo-pick').is(':checked'));
+        });
     }
 
-    // Repinta la etiqueta del selector según cuántos modelos hay marcados.
-    function pintarPickerLabel() {
+    // Repinta el contador/resumen de la selección y el chip "Seleccionar todos" (tri-estado).
+    function pintarContadorModelos() {
         var sel   = modelosSeleccionados();
         var total = $('.mc-modelo-pick').length;
-        var $lbl  = $('#modeloPickerLabel');
+        var $ctd  = $('#modeloContador');
 
         if (sel.length === 0) {
-            $lbl.text(_modelo.textos.pickerPlaceholder).removeClass('has-sel');
+            $ctd.text(_modelo.textos.pickerPlaceholder).removeClass('has-sel');
         } else if (sel.length === 1) {
-            $lbl.text($('.mc-modelo-pick:checked').data('nombre')).addClass('has-sel');
+            $ctd.text($('.mc-modelo-pick:checked').data('nombre')).addClass('has-sel');
         } else if (sel.length === total) {
-            $lbl.text(_modelo.textos.pickerTodos).addClass('has-sel');
+            $ctd.text(_modelo.textos.pickerTodos).addClass('has-sel');
         } else {
-            $lbl.text(_modelo.textos.pickerVariosFmt.replace('{0}', sel.length)).addClass('has-sel');
+            $ctd.text(_modelo.textos.pickerVariosFmt.replace('{0}', sel.length)).addClass('has-sel');
         }
 
         $('#modeloSelAll')
             .prop('checked', sel.length > 0 && sel.length === total)
             .prop('indeterminate', sel.length > 0 && sel.length < total);
+        $('#modeloSelAllChip').toggleClass('is-partial', sel.length > 0 && sel.length < total);
     }
 
-    // Cambió la selección de modelos: descripción (solo con 1), etiqueta y botones.
+    // Cambió la selección de modelos: tarjetas, contador y botones.
     function onModelosChange() {
-        var sel = modelosSeleccionados();
-
-        if (sel.length === 1) {
-            var $c   = $('.mc-modelo-pick:checked');
-            var desc = $c.data('descripcion');
-            var ico  = $c.data('icono') || 'fas fa-cog';
-            if (desc) {
-                $('#modeloIcono').attr('class', ico + ' mr-1').css('color', '#583AFF');
-                $('#modeloDescripcion').text(desc);
-                $('#modeloInfoPanel').show();
-            } else {
-                $('#modeloInfoPanel').hide();
-            }
-        } else {
-            $('#modeloInfoPanel').hide();
-        }
-
-        pintarPickerLabel();
+        actualizarTarjetasModelo();
+        pintarContadorModelos();
         actualizarBotones();
     }
 
     var _sinDatosEscenario = false;
 
+    // Los tres botones de acción solo se habilitan cuando hay empresa + al menos un modelo
+    // marcado (con el chulito) — nunca se asume "todos" por selección vacía: lo que se
+    // consulta/exporta/envía es exactamente lo que está marcado arriba.
     function actualizarBotones() {
         var tieneEmpresa = !!$('#idEmpresa').val();
         var nSel = modelosSeleccionados().length;
-        var habilitado = tieneEmpresa && !_sinDatosEscenario;
-        $('#btnEjecutar').prop('disabled', !(habilitado && nSel === 1));
+        var habilitado = tieneEmpresa && !_sinDatosEscenario && nSel > 0;
+        $('#btnEjecutar').prop('disabled', !habilitado);
         $('#btnExportarTodos').prop('disabled', !habilitado);
         $('#btnEnviarCorreo').prop('disabled', !habilitado);
+        actualizarBotonConsultar();
         actualizarBotonExportar();
+    }
+
+    // Texto del botón "Consultar", igual de dinámico que el de exportar:
+    // 1 modelo → "Consultar <nombre>"; varios (no todos) → "Consultar N modelos seleccionados";
+    // todos → "Consultar todos los modelos"; ninguno → texto genérico (botón deshabilitado).
+    function actualizarBotonConsultar() {
+        if (_consultando) return; // no pisar el texto de progreso ("Consultando X de Y…")
+
+        var sel   = modelosSeleccionados();
+        var total = $('.mc-modelo-pick').length;
+
+        if (sel.length === 1) {
+            var txtUno = _modelo.textos.btnConsultarUnoFmt.replace('{0}', $('.mc-modelo-pick:checked').data('nombre'));
+            $('#btnTexto').text(txtUno);
+            $('#btnEjecutar').attr('title', txtUno);
+        } else if (sel.length > 1 && sel.length < total) {
+            $('#btnTexto').text(_modelo.textos.btnConsultarSeleccionadosFmt.replace('{0}', sel.length));
+            $('#btnEjecutar').attr('title', _modelo.textos.ejecutarTooltip);
+        } else if (sel.length === total && total > 0) {
+            $('#btnTexto').text(_modelo.textos.btnConsultarTodos);
+            $('#btnEjecutar').attr('title', _modelo.textos.btnConsultarTodos);
+        } else {
+            $('#btnTexto').text(_modelo.textos.btnEjecutar);
+            $('#btnEjecutar').attr('title', _modelo.textos.ejecutarTooltip);
+        }
     }
 
     // Verifica si la empresa/escenario elegidos tienen datos cargados (reutiliza el mismo
@@ -421,9 +634,9 @@
             });
     }
 
-    // Texto/ícono del botón de exportación, según la selección del selector unificado:
+    // Texto/ícono del botón de exportación, según lo marcado en el panel de modelos:
     // 1 modelo → "Exportar <nombre>"; varios (no todos) → "Exportar N modelos seleccionados";
-    // ninguno o todos → "Exportar todos los modelos".
+    // todos → "Exportar todos los modelos"; ninguno → texto genérico (botón deshabilitado).
     function actualizarBotonExportar() {
         var sel   = modelosSeleccionados();
         var total = $('.mc-modelo-pick').length;
@@ -436,6 +649,10 @@
         } else if (sel.length > 1 && sel.length < total) {
             $('#btnExportarTodosIcono').attr('class', 'fas fa-file-excel mr-1');
             $('#btnExportarTodosTexto').text(_modelo.textos.btnExportarSeleccionadosFmt.replace('{0}', sel.length));
+            $('#btnExportarTodos').attr('title', _modelo.textos.exportTooltipMultiple);
+        } else if (sel.length === total && total > 0) {
+            $('#btnExportarTodosIcono').attr('class', 'fas fa-layer-group mr-1');
+            $('#btnExportarTodosTexto').text(_modelo.textos.btnExportarTodos);
             $('#btnExportarTodos').attr('title', _modelo.textos.exportTooltipTodos);
         } else {
             $('#btnExportarTodosIcono').attr('class', 'fas fa-layer-group mr-1');
@@ -444,29 +661,50 @@
         }
     }
 
+    // Blindaje del estado inicial: por si el navegador restaura la selección de un <select>
+    // (tras un refresh F5, o al volver con el botón Atrás/Adelante desde el caché bfcache) sin
+    // disparar 'change', se re-sincroniza el aviso contra el valor real que haya quedado en los
+    // selects — en vez de solo ocultarlo a ciegas, que dejaba mostrado un aviso "congelado" de
+    // una visita anterior cuando la página volvía a mostrarse vía bfcache (evento que NO reejecuta
+    // $(document).ready, así que los tres intentos previos de arreglo no cubrían este caso).
+    function reiniciarAvisoEscenario() {
+        if ($('#idEmpresa').val()) {
+            verificarDatosEscenario();
+        } else {
+            _sinDatosEscenario = false;
+            $('#avisoSinDatosEscenario').hide();
+            actualizarBotones();
+        }
+    }
+
+    // 'pageshow' se dispara tanto en la carga normal como al volver a esta página restaurada
+    // desde el caché bfcache (botón Atrás/Adelante) — a diferencia de $(document).ready, que en
+    // una restauración bfcache NO se vuelve a ejecutar. Sin esto, el aviso quedaba "congelado"
+    // tal como estaba antes de navegar a otra pantalla y volver.
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) reiniciarAvisoEscenario();
+    });
+
     $(function () {
 
-        // Blindaje del estado inicial: por si el navegador restaura la selección de un
-        // <select> tras un refresh (F5) sin disparar 'change', el aviso arranca siempre oculto.
-        _sinDatosEscenario = false;
-        $('#avisoSinDatosEscenario').hide();
+        reiniciarAvisoEscenario();
 
         $('#idEmpresa').on('change', function () { actualizarBotones(); verificarDatosEscenario(); });
         $('#idEscenario').on('change', verificarDatosEscenario);
 
-        // ── Selector de modelos ─────────────────────────────────────────
-        $('#modeloPickerToggle').on('click', function (e) {
-            e.stopPropagation();
-            $('#modeloPicker').hasClass('open') ? cerrarPicker() : abrirPicker();
-        });
-        $(document).on('click', function (e) {
-            if (!$(e.target).closest('#modeloPicker').length) cerrarPicker();
-        });
+        // ── Selector de modelos (tarjetas) ────────────────────────────────
         $('#modeloSelAll').on('change', function () {
             $('.mc-modelo-pick').prop('checked', this.checked);
             onModelosChange();
         });
         $(document).on('change', '.mc-modelo-pick', onModelosChange);
+
+        // ── Cápsulas de navegación entre resultados de varios modelos ─────
+        $(document).on('click', '.mc-tab', function () {
+            if ($(this).hasClass('active')) return;
+            activarResultadoModelo($(this).data('id'));
+            $('html, body').animate({ scrollTop: $('#resultadosAnchor').offset().top - 90 }, 250);
+        });
 
         // Nota: la única empresa se preselecciona sola, pero eso no cuenta como una elección
         // deliberada del usuario — solo se actualizan los botones, sin disparar todavía el
@@ -479,48 +717,70 @@
 
         onModelosChange();
 
-        // ── Filtro de texto sobre los resultados ya cargados (cliente) ────
-        $('#filtroResultados').on('input', function () {
-            var q = ($(this).val() || '').toLowerCase().trim();
-            _pag.filasVista = q
-                ? _pag.filas.filter(function (fila) {
-                      return fila.some(function (celda) {
-                          return String(celda == null ? '' : celda).toLowerCase().indexOf(q) >= 0;
-                      });
-                  })
-                : _pag.filas;
-            renderPagina(1);
+        // ── Filtros de la tabla de resultados (búsqueda general + por campo) ──────
+        $('#mcFiltroToggle').on('click', function (e) {
+            e.stopPropagation();
+            var abierto = !$('#mcFiltroPanel').prop('hidden');
+            $('#mcFiltroPanel').prop('hidden', abierto);
+            $('#mcFiltroToggle').attr('aria-expanded', String(!abierto)).toggleClass('is-open', !abierto);
+        });
+        $(document).on('click', function (e) {
+            if (!$(e.target).closest('#mcFiltroBar').length) {
+                $('#mcFiltroPanel').prop('hidden', true);
+                $('#mcFiltroToggle').attr('aria-expanded', 'false').removeClass('is-open');
+            }
         });
 
-        // ── Modal enviar por correo ──────────────────────────────────────
-        $('#correoSelAll').on('change', function () {
-            $('.mc-modelo-chk').prop('checked', this.checked);
-            actualizarContadorCorreo();
+        $('#filtroResultados').on('input', function () {
+            _busquedaGlobal = ($(this).val() || '').toLowerCase().trim();
+            aplicarFiltrosYRender();
         });
-        $(document).on('change', '.mc-modelo-chk', actualizarContadorCorreo);
+
+        $('#mcFiltroCampo').on('change', poblarOperadoresParaCampo);
+
+        $('#mcFiltroAgregar').on('click', agregarFiltroCampo);
+        $('#mcFiltroValor').on('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); agregarFiltroCampo(); }
+        });
+
+        $(document).on('click', '.mc-filtro-chip .mc-filtro-chip-x', function () {
+            var idx = $(this).closest('.mc-filtro-chip').data('idx');
+            _filtrosCampo.splice(idx, 1);
+            pintarChipsFiltro();
+            aplicarFiltrosYRender();
+        });
+
+        $('#mcFiltroLimpiar').on('click', function () {
+            _filtrosCampo = [];
+            _busquedaGlobal = '';
+            $('#filtroResultados').val('');
+            pintarChipsFiltro();
+            aplicarFiltrosYRender();
+        });
     });
 
-    function actualizarContadorCorreo() {
-        var total = $('.mc-modelo-chk').length;
-        var n = $('.mc-modelo-chk:checked').length;
-        $('#correoContadorModelos').text(n + ' ' + _modelo.textos.correoSeleccionados);
-        $('#correoSelAll')
-            .prop('checked', n > 0 && n === total)
-            .prop('indeterminate', n > 0 && n < total);
+    // Pinta, dentro del modal de correo, los "chips" de solo lectura con los modelos que están
+    // marcados arriba en el panel de tarjetas — ya no hay una lista propia que seleccionar aquí.
+    function pintarResumenModelosCorreo() {
+        var sel   = modelosSeleccionados();
+        var total = $('.mc-modelo-pick').length;
+
+        var html = sel.map(function (id) {
+            var $c = $('.mc-modelo-pick[value="' + id + '"]');
+            return '<span class="mc-chip-modelo"><i class="' + ($c.data('icono') || 'fas fa-cog') + '"></i>' +
+                   $('<span>').text($c.data('nombre')).html() + '</span>';
+        }).join('');
+        $('#correoModelosResumen').html(html);
     }
 
     function abrirModalCorreo() {
         var idEmpresa = $('#idEmpresa').val();
-        if (!idEmpresa) return;
+        if (!idEmpresa || modelosSeleccionados().length === 0) return;
 
         $('#correoEmpresaNombre').text($('#idEmpresa option:selected').data('nombre') || $('#idEmpresa option:selected').text());
         $('#correoEscenarioNombre').text($('#idEscenario option:selected').text());
 
-        // Preselecciona en el modal los modelos ya marcados en el selector unificado.
-        var sel = modelosSeleccionados();
-        $('.mc-modelo-chk').each(function () {
-            this.checked = sel.indexOf(this.value) !== -1;
-        });
+        pintarResumenModelosCorreo();
 
         // Recuerda el último destino usado.
         try {
@@ -528,7 +788,6 @@
             if (last && !$('#correoDestino').val()) $('#correoDestino').val(last);
         } catch (e) { }
 
-        actualizarContadorCorreo();
         $('#modalEnviarCorreo').modal('show');
     }
 
@@ -536,7 +795,7 @@
         var idEmpresa = $('#idEmpresa').val();
         if (!idEmpresa) return;
 
-        var ids = $('.mc-modelo-chk:checked').map(function () { return this.value; }).get();
+        var ids = modelosSeleccionados();
         if (ids.length === 0) {
             Swal.fire({ icon: 'warning', title: _modelo.textos.error, text: _modelo.textos.correoValModelos,
                         confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
@@ -554,7 +813,7 @@
 
         try { localStorage.setItem('bufins_modelo_correo_dest', correosRaw); } catch (e) { }
 
-        var totalModelos = $('.mc-modelo-chk').length;
+        var totalModelos = $('.mc-modelo-pick').length;
         var idsModelos = (ids.length === totalModelos) ? 'todos' : ids.join(',');
 
         $('#modalEnviarCorreo').modal('hide');
@@ -603,113 +862,186 @@
         });
     }
 
-    // ── Ejecutar modelo individual (AJAX) ─────────────────────────────────
+    // ── Ejecutar modelo(s) (AJAX) ──────────────────────────────────────────
+    // Consulta, en fila (una petición a la vez, sin saturar la BD), cada modelo marcado en el
+    // panel de tarjetas. Con 1 solo modelo se comporta igual que antes; con varios, al terminar
+    // se muestran cápsulas de navegación (una por modelo) para saltar entre sus tablas de
+    // resultados sin perder ninguna.
+    var _resultadosMulti = {};   // idModelo -> { nombre, icono, columnas, filas, error }
+    var _idModeloActivo  = null;
+    var _consultando     = false;
+
     function ejecutarModelo() {
         var idEmpresa = $('#idEmpresa').val();
         var sel = modelosSeleccionados();
-        if (!idEmpresa || sel.length !== 1) return;
+        if (!idEmpresa || sel.length === 0 || _consultando) return;
 
-        var $c        = $('.mc-modelo-pick[value="' + sel[0] + '"]');
-        var idModelo  = sel[0];
-        var nomModelo = $c.data('nombre') || '';
-        var icoModelo = $c.data('icono') || 'fas fa-table';
+        var idEscenario = $('#idEscenario').val();
 
+        _consultando = true;
+        _resultadosMulti = {};
         $('#estadoInicial').hide();
         $('#resultadosSection').hide();
         $('#noResultados').hide();
+        $('#resultadosTabs').hide().empty();
         $('#loadingEjecucion').show();
-        $('#btnEjecutar').prop('disabled', true);
-        $('#btnTexto').text(_modelo.textos.ejecutando);
+        $('#btnEjecutar, #btnExportarTodos, #btnEnviarCorreo').prop('disabled', true);
+        $('.mc-modelo-pick, #modeloSelAll').prop('disabled', true);
+        $('#modeloGrid').addClass('is-disabled');
 
-        $.ajax({
-            url:  _modelo.urlEjecutar,
-            type: 'POST',
-            data: {
-                __RequestVerificationToken: _modelo.token,
-                idEmpresa: idEmpresa,
-                idModelo:  idModelo,
-                idEscenario: $('#idEscenario').val()
-            },
-            success: function (resp) {
+        var cola      = sel.slice();
+        var totalCola = cola.length;
+
+        function siguiente() {
+            if (cola.length === 0) {
+                _consultando = false;
                 $('#loadingEjecucion').hide();
-                $('#btnTexto').text(_modelo.textos.btnEjecutar);
+                $('.mc-modelo-pick, #modeloSelAll').prop('disabled', false);
+                $('#modeloGrid').removeClass('is-disabled');
                 actualizarBotones();
-
-                if (!resp.exito) {
-                    $('#estadoInicial').show();
-                    ocultarHerramientasResultado();
-                    Swal.fire({ icon: 'error', title: _modelo.textos.error, text: resp.mensaje,
-                                confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
-                    return;
-                }
-
-                if (!resp.columnas || resp.columnas.length === 0 || !resp.filas || resp.filas.length === 0) {
-                    $('#noResultados').show();
-                    ocultarHerramientasResultado();
-                    return;
-                }
-
-                // Guardar estado de paginación
-                _pag.filas      = resp.filas;
-                _pag.filasVista = resp.filas;
-                _pag.columnas   = resp.columnas;
-                _pag.pagina     = 1;
-                _pag.idModelo   = idModelo;
-                _pag.idEmpresa  = idEmpresa;
-
-                // Header de la tabla (alinea a la derecha las columnas de valor)
-                var thead = '<tr>';
-                for (var i = 0; i < resp.columnas.length; i++) {
-                    var esNum = !!_moneyColSet[(resp.columnas[i] || '').toLowerCase()];
-                    thead += '<th' + (esNum ? ' class="num"' : '') + '>' +
-                             $('<span>').text(resp.columnas[i]).html() + '</th>';
-                }
-                thead += '</tr>';
-                $('#resultadosThead').html(thead);
-
-                // Cabecera contextual de la tarjeta de resultados
-                var nomEmpresa = $('#idEmpresa option:selected').data('nombre') ||
-                                 $('#idEmpresa option:selected').text();
-                $('#resultadosIcono').attr('class', icoModelo + ' mc-table-head-icon');
-                $('#resultadosTitulo').text(nomModelo);
-                $('#mcContexto').text(nomEmpresa || '');   // el separador lo pone .mc-table-head-ctx::before (CSS)
-                $('#resultadosContador')
-                    .text(resp.filas.length + ' ' + _modelo.textos.registros)
-                    .show();
-
-                // Herramientas que solo aplican con resultados en pantalla
-                $('#mcSearchWrap').css('display', 'flex');
-                $('#filtroResultados').val('');
-
-                renderPagina(1);
-                $('#resultadosSection').show();
-                $('html, body').animate({ scrollTop: $('#resultadosSection').offset().top - 90 }, 400);
-            },
-            error: function () {
-                $('#loadingEjecucion').hide();
-                $('#btnTexto').text(_modelo.textos.btnEjecutar);
-                actualizarBotones();
-                $('#estadoInicial').show();
-                ocultarHerramientasResultado();
-                Swal.fire({ icon: 'error', title: _modelo.textos.error,
-                            text: 'Error de conexión al ejecutar el modelo.',
-                            confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
+                mostrarResultadosConsulta(sel);
+                return;
             }
-        });
+
+            var idModelo = cola.shift();
+            var indice   = totalCola - cola.length;
+            var $c       = $('.mc-modelo-pick[value="' + idModelo + '"]');
+
+            $('#btnTexto').text(
+                totalCola > 1
+                    ? _modelo.textos.ejecutandoMultiFmt.replace('{0}', indice).replace('{1}', totalCola)
+                    : _modelo.textos.ejecutando
+            );
+
+            $.ajax({
+                url:  _modelo.urlEjecutar,
+                type: 'POST',
+                data: {
+                    __RequestVerificationToken: _modelo.token,
+                    idEmpresa: idEmpresa,
+                    idModelo:  idModelo,
+                    idEscenario: idEscenario
+                },
+                success: function (resp) {
+                    _resultadosMulti[idModelo] = {
+                        nombre:   $c.data('nombre') || '',
+                        icono:    $c.data('icono') || 'fas fa-table',
+                        columnas: resp.exito ? resp.columnas : null,
+                        filas:    resp.exito ? resp.filas : null,
+                        error:    resp.exito ? null : (resp.mensaje || _modelo.textos.error)
+                    };
+                    siguiente();
+                },
+                error: function () {
+                    _resultadosMulti[idModelo] = {
+                        nombre: $c.data('nombre') || '', icono: $c.data('icono') || 'fas fa-table',
+                        columnas: null, filas: null, error: _modelo.textos.errorConexionConsulta
+                    };
+                    siguiente();
+                }
+            });
+        }
+        siguiente();
     }
 
-    // Oculta las herramientas que solo tienen sentido con una tabla de resultados en pantalla.
-    function ocultarHerramientasResultado() {
-        $('#mcSearchWrap').hide();
-        $('#resultadosContador').hide();
-        $('#mcContexto').text('');
-        $('#resultadosTitulo').text(_modelo.textos.resultadosTitulo);
+    // Al terminar la cola: arma las cápsulas (solo si se consultó más de un modelo) y activa
+    // la primera pestaña con datos reales (o la primera de todas, si ninguna tuvo datos).
+    function mostrarResultadosConsulta(ids) {
+        if (ids.length > 1) {
+            var html = ids.map(function (id) {
+                var r = _resultadosMulti[id] || {};
+                var conError = !r.filas || r.error || r.filas.length === 0;
+                return '<button type="button" class="mc-tab' + (conError ? ' has-error' : '') + '" data-id="' + id + '">' +
+                       '<i class="' + (r.icono || 'fas fa-table') + '"></i>' +
+                       '<span>' + $('<span>').text(r.nombre || '').html() + '</span>' +
+                       (conError ? '<i class="fas fa-exclamation-circle"></i>' : '') +
+                       '</button>';
+            }).join('');
+            $('#resultadosTabs').html(html).show();
+        } else {
+            $('#resultadosTabs').hide().empty();
+        }
+
+        var primero = ids.filter(function (id) {
+            var r = _resultadosMulti[id];
+            return r && !r.error && r.filas && r.filas.length > 0;
+        })[0];
+
+        activarResultadoModelo(primero || ids[0]);
+        $('html, body').animate({ scrollTop: $('#resultadosAnchor').offset().top - 90 }, 400);
+    }
+
+    // Pinta en la tarjeta de resultados los datos guardados del modelo elegido (cambia de
+    // cápsula sin volver a consultar el servidor: todo quedó en memoria desde ejecutarModelo()).
+    function activarResultadoModelo(idModelo) {
+        _idModeloActivo = idModelo;
+        $('.mc-tab').removeClass('active').filter('[data-id="' + idModelo + '"]').addClass('active');
+
+        var r = _resultadosMulti[idModelo];
+
+        if (!r || r.error) {
+            $('#resultadosSection').hide();
+            $('#mcFiltroBar').hide();
+            $('#noResultadosIcono').attr('class', 'fas fa-exclamation-triangle');
+            $('#noResultadosTitulo').text(_modelo.textos.error);
+            $('#noResultadosDesc').text((r && r.error) || _modelo.textos.noResultadosDesc);
+            $('#noResultados').show();
+            return;
+        }
+
+        if (!r.columnas || r.columnas.length === 0 || !r.filas || r.filas.length === 0) {
+            $('#resultadosSection').hide();
+            $('#mcFiltroBar').hide();
+            $('#noResultadosIcono').attr('class', 'fas fa-inbox');
+            $('#noResultadosTitulo').text(_modelo.textos.noResultadosTitulo);
+            $('#noResultadosDesc').text(_modelo.textos.noResultadosDesc);
+            $('#noResultados').show();
+            return;
+        }
+
+        $('#noResultados').hide();
+
+        // Guardar estado de paginación
+        _pag.filas      = r.filas;
+        _pag.filasVista = r.filas;
+        _pag.columnas   = r.columnas;
+        _pag.pagina     = 1;
+        _pag.idModelo   = idModelo;
+        _pag.idEmpresa  = $('#idEmpresa').val();
+
+        // Header de la tabla (alinea a la derecha las columnas de valor)
+        var thead = '<tr>';
+        for (var i = 0; i < r.columnas.length; i++) {
+            var esNum = !!_moneyColSet[(r.columnas[i] || '').toLowerCase()];
+            thead += '<th' + (esNum ? ' class="num"' : '') + '>' +
+                     $('<span>').text(r.columnas[i]).html() + '</th>';
+        }
+        thead += '</tr>';
+        $('#resultadosThead').html(thead);
+
+        // Cabecera contextual de la tarjeta de resultados
+        var nomEmpresa = $('#idEmpresa option:selected').data('nombre') ||
+                         $('#idEmpresa option:selected').text();
+        $('#resultadosIcono').attr('class', r.icono + ' mc-table-head-icon');
+        $('#resultadosTitulo').text(r.nombre);
+        $('#mcContexto').text(nomEmpresa || '');   // el separador lo pone .mc-table-head-ctx::before (CSS)
+        $('#resultadosContador')
+            .text(r.filas.length + ' ' + _modelo.textos.registros)
+            .show();
+
+        // La barra de filtros solo tiene sentido con una tabla en pantalla, y sus opciones de
+        // campo dependen de las columnas de ESTE modelo — se reconstruye en cada activación.
+        $('#mcFiltroBar').show();
+        reiniciarFiltrosTabla(r.columnas);
+
+        renderPagina(1);
+        $('#resultadosSection').show();
     }
 
     // ── Paginación ────────────────────────────────────────────────────────
     function renderPagina(pagina) {
         _pag.pagina = pagina;
-        var datos  = _pag.filasVista.length || $('#filtroResultados').val() ? _pag.filasVista : _pag.filas;
+        var datos  = _pag.filasVista;
         var inicio = (pagina - 1) * _pag.porPagina;
         var fin    = Math.min(inicio + _pag.porPagina, datos.length);
         var slice  = datos.slice(inicio, fin);
@@ -774,18 +1106,19 @@
         $ctrl.html(html).show();
     }
 
-    // Botón de exportación: usa la selección del selector unificado.
-    // 1 modelo → ese; varios (no todos) → esos; ninguno o todos → todos.
+    // Botón de exportación: exporta exactamente lo marcado en el panel de modelos.
+    // 1 modelo → ese; varios (no todos) → esos; todos marcados → todos; ninguno → no hace nada
+    // (el botón está deshabilitado en ese caso).
     function exportarModelos() {
         var idEmpresa = $('#idEmpresa').val();
-        if (!idEmpresa) return;
-
         var sel   = modelosSeleccionados();
+        if (!idEmpresa || sel.length === 0) return;
+
         var total = $('.mc-modelo-pick').length;
 
-        if (sel.length === 1)                          exportarExcel('seleccionado', sel);
-        else if (sel.length > 1 && sel.length < total) exportarExcel('multiple', sel);
-        else                                           exportarExcel('todos', sel);
+        if (sel.length === 1)             exportarExcel('seleccionado', sel);
+        else if (sel.length === total)    exportarExcel('todos', sel);
+        else                               exportarExcel('multiple', sel);
     }
 
     // ── Exportar (todos los modelos, una selección múltiple, o un único modelo) ───────────────

@@ -52,43 +52,88 @@
 }
 .mc-sep{width:1px;height:34px;background:#e3e6f0;margin:0 2px}
 
-/* --- Selector de modelos (uno o varios) --- */
-.mc-multiselect{position:relative}
-.mc-ms-toggle{
-  width:100%;min-height:38px;display:flex;align-items:center;justify-content:space-between;gap:8px;
-  padding:.42rem .7rem;font-size:13.5px;font-weight:600;color:#2d3748;
-  border:1px solid #d1d5db;border-radius:8px;background:#fff;cursor:pointer;text-align:left;
+/* --- Selector de modelos: panel de tarjetas (uno, varios o todos) --- */
+.mc-modelos-panel{
+  border:1px solid #e3e6f0;border-radius:8px;background:#fbfaff;padding:12px 14px;
 }
-.mc-ms-toggle:hover{border-color:#a5b4fc}
-.mc-ms-toggle:focus,.mc-multiselect.open .mc-ms-toggle{
-  border-color:#583AFF;box-shadow:0 0 0 2px rgba(88,58,255,.1);outline:none;
+.mc-modelos-panel-head{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  margin-bottom:10px;
 }
-.mc-ms-toggle > span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
-.mc-ms-toggle > span:not(.has-sel){color:#9ca3af;font-weight:500}
-.mc-ms-toggle > i{color:#9ca3af;font-size:11px;flex-shrink:0;transition:transform .18s ease}
-.mc-multiselect.open .mc-ms-toggle > i{transform:rotate(180deg)}
-.mc-ms-panel{
-  position:absolute;z-index:40;top:calc(100% + 4px);left:0;right:0;
-  background:#fff;border:1px solid #d1d5db;border-radius:8px;
-  box-shadow:0 10px 28px rgba(22,9,51,.16);max-height:280px;overflow-y:auto;
+.mc-modelos-panel-title{
+  font-size:11px;font-weight:700;color:#6c757d;letter-spacing:.06em;text-transform:uppercase;
 }
+.mc-modelos-panel-title .required{color:#ef4444}
+.mc-modelos-panel-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.mc-modelos-contador{font-size:12.5px;font-weight:600;color:#9ca3af}
+.mc-modelos-contador.has-sel{color:#583AFF}
 
-/* Lista de casillas de modelos (panel del selector + modal de correo) */
-.mc-modelos-box{
-  border:1px solid #d1d5db;border-radius:.375rem;
-  max-height:210px;overflow-y:auto;background:#fff;
+/* Chip "Seleccionar todos" — checkbox nativo oculto, envuelto en una etiqueta-pastilla */
+.mc-chip-todos{
+  display:inline-flex;align-items:center;gap:0;position:relative;cursor:pointer;user-select:none;
+  padding:.36rem .85rem;border-radius:1.2rem;border:1px solid #d1d5db;background:#fff;
+  font-size:12px;font-weight:700;color:#6c757d;transition:all .15s ease;
 }
-.mc-modelo-item{
-  display:flex;align-items:center;gap:.55rem;padding:.4rem .8rem;margin:0;
-  font-weight:500;font-size:.85rem;color:#2d3748;cursor:pointer;
-  border-bottom:1px solid #f1f1f4;
+.mc-chip-todos i{color:inherit}
+.mc-chip-todos:hover{border-color:#a5b4fc;color:#583AFF}
+.mc-chip-todos input{position:absolute;opacity:0;width:0;height:0}
+.mc-chip-todos:has(input:checked),
+.mc-chip-todos.is-partial{
+  background:var(--content-gradient);border-color:transparent;color:#fff;
 }
-.mc-modelo-item:last-child{border-bottom:none}
-.mc-modelo-item:hover{background:#f8f9fc}
-.mc-modelo-item input{cursor:pointer;margin:0}
-.mc-modelo-all{
-  background:#f8f9fc;font-weight:600;color:#1e1b4b;
-  position:sticky;top:0;border-bottom:1px solid #e3e6f0;z-index:1;
+.mc-chip-todos:has(input:focus-visible){box-shadow:0 0 0 2px rgba(88,58,255,.25)}
+.mc-chip-todos:has(input:disabled){opacity:.5;cursor:not-allowed;pointer-events:none}
+
+/* Grid de tarjetas de modelo */
+.mc-modelos-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;
+  max-height:290px;overflow-y:auto;padding:2px;
+}
+.mc-modelos-grid.is-disabled{opacity:.55;pointer-events:none}
+.mc-modelo-card{
+  position:relative;display:flex;align-items:flex-start;gap:10px;
+  padding:.65rem .8rem;border:1px solid #d1d5db;border-radius:10px;background:#fff;
+  cursor:pointer;transition:all .15s ease;
+}
+.mc-modelo-card:hover{border-color:#a5b4fc;box-shadow:0 2px 8px rgba(22,9,51,.08);transform:translateY(-1px)}
+.mc-modelo-card input{position:absolute;opacity:0;width:0;height:0}
+.mc-modelo-card.is-selected{
+  border-color:#583AFF;background:rgba(88,58,255,.05);
+  box-shadow:0 0 0 1px rgba(88,58,255,.25),0 2px 10px rgba(22,9,51,.1);
+}
+.mc-modelo-card-icon{
+  flex:0 0 auto;width:32px;height:32px;border-radius:8px;background:#f0f0ff;
+  display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s ease;
+}
+.mc-modelo-card-icon i{color:#583AFF}
+.mc-modelo-card.is-selected .mc-modelo-card-icon{background:var(--content-gradient)}
+.mc-modelo-card.is-selected .mc-modelo-card-icon i{color:#fff}
+.mc-modelo-card-texto{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.mc-modelo-card-nombre{font-size:13px;font-weight:700;color:#2d3748}
+.mc-modelo-card.is-selected .mc-modelo-card-nombre{color:#160933}
+.mc-modelo-card-desc{
+  font-size:11.5px;color:#9ca3af;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;line-height:1.3;
+}
+/* Solo aparece (con un pequeño fade + zoom) cuando la tarjeta está marcada — sin chulito
+   ni círculo de ningún tipo mientras no esté seleccionada. */
+.mc-modelo-card-check{
+  position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;
+  background:var(--content-gradient);font-size:10px;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transform:scale(.5);transition:all .15s ease;
+}
+.mc-modelo-card-check i{color:#fff}
+.mc-modelo-card.is-selected .mc-modelo-card-check{opacity:1;transform:scale(1)}
+
+/* Resumen de solo lectura de los modelos ya marcados arriba (modal "Enviar por correo") */
+.mc-correo-modelos-resumen{
+  display:flex;flex-wrap:wrap;gap:6px;padding:.6rem;
+  border:1px solid #e3e6f0;border-radius:.5rem;background:#fbfaff;min-height:40px;
+}
+.mc-chip-modelo{
+  display:inline-flex;align-items:center;gap:6px;padding:.3rem .7rem;
+  border-radius:1rem;background:#f0f0ff;color:#4c3fae;font-size:12px;font-weight:600;
 }
 
 /* Botón primario: ÚNICO degradado de la pantalla (aparte del banner del header) */
@@ -147,11 +192,77 @@
 }
 .mc-search input::placeholder{color:#9ca3af}
 
-/* Panel de descripción del modelo */
-.mc-modelo-info{
-  width:100%;margin-top:2px;padding:7px 12px;background:#f0f0ff;border-radius:8px;
-  border-left:3px solid #583AFF;font-size:12.5px;color:#4b5563;
+/* Barra de filtros de la tabla de resultados — colapsada por defecto (solo el botón),
+   el panel se despliega bajo demanda para no ocupar espacio permanente. */
+.mc-filtro-bar{position:relative;display:flex;justify-content:flex-end;margin-bottom:10px}
+.mc-filtro-toggle{
+  display:inline-flex;align-items:center;gap:7px;padding:.45rem .9rem;border-radius:8px;
+  border:1px solid #d1d5db;background:#fff;font-size:12.5px;font-weight:700;color:#6c757d;
+  cursor:pointer;transition:all .15s ease;
 }
+.mc-filtro-toggle:hover{border-color:#a5b4fc;color:#583AFF}
+.mc-filtro-toggle.has-filtros{border-color:#583AFF;color:#583AFF;background:rgba(88,58,255,.06)}
+.mc-filtro-caret{font-size:10px;color:#9ca3af;transition:transform .18s ease}
+.mc-filtro-toggle.is-open .mc-filtro-caret{transform:rotate(180deg)}
+.mc-filtro-badge{
+  background:var(--content-gradient);color:#fff;min-width:18px;height:18px;border-radius:9px;
+  font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;
+}
+.mc-filtro-panel{
+  position:absolute;z-index:30;top:calc(100% + 6px);right:0;width:360px;max-width:calc(100vw - 40px);
+  background:#fff;border:1px solid #d1d5db;border-radius:10px;box-shadow:0 10px 30px rgba(22,9,51,.18);
+  padding:14px;text-align:left;
+}
+.mc-filtro-seccion label{
+  font-size:11px;font-weight:700;color:#6c757d;text-transform:uppercase;letter-spacing:.04em;
+  margin-bottom:6px;display:block;
+}
+.mc-filtro-seccion .mc-search{margin-left:0;width:100%;min-width:0}
+.mc-filtro-sep{height:1px;background:#eef0f5;margin:12px 0}
+.mc-filtro-builder{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.mc-filtro-builder select{flex:1 1 118px;min-width:0}
+.mc-filtro-builder input{flex:1 1 90px;min-width:0}
+.mc-filtro-add{
+  flex:0 0 auto;width:34px;height:31px;border-radius:6px;border:none;
+  background:var(--content-gradient);color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:filter .15s ease;
+}
+.mc-filtro-add:hover{filter:brightness(1.1)}
+.mc-filtro-chips{display:flex;flex-wrap:wrap;gap:6px}
+.mc-filtro-chip{
+  display:inline-flex;align-items:center;gap:6px;padding:.3rem .5rem .3rem .7rem;
+  background:#f0f0ff;color:#4c3fae;border-radius:1rem;font-size:11.5px;font-weight:600;
+}
+.mc-filtro-chip-x{
+  border:none;background:rgba(76,63,174,.12);color:#4c3fae;width:16px;height:16px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:9px;cursor:pointer;padding:0;
+}
+.mc-filtro-chip-x:hover{background:rgba(76,63,174,.25)}
+.mc-filtro-foot{display:flex;justify-content:flex-end;margin-top:10px;padding-top:10px;border-top:1px solid #eef0f5}
+.mc-filtro-limpiar{border:none;background:none;color:#6c757d;font-size:12px;font-weight:600;cursor:pointer}
+.mc-filtro-limpiar:hover{color:#ef4444}
+
+/* Estado de error de un modelo consultado (icono en tono rojo dentro de .no-data-message) */
+#noResultados i.fa-exclamation-triangle{color:#ef4444}
+
+/* Cápsulas de navegación entre resultados de varios modelos consultados a la vez */
+.mc-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.mc-tab{
+  display:inline-flex;align-items:center;gap:7px;padding:.45rem .9rem;border-radius:1.3rem;
+  border:1px solid #d1d5db;background:#fff;font-size:12.5px;font-weight:700;color:#6c757d;
+  cursor:pointer;transition:all .15s ease;
+}
+.mc-tab:hover{border-color:#a5b4fc;color:#583AFF}
+.mc-tab.active{
+  background:var(--content-gradient);border-color:transparent;color:#fff;
+  box-shadow:0 3px 10px rgba(22,9,51,.28);
+}
+.mc-tab.has-error{border-color:#fca5a5;color:#ef4444}
+.mc-tab.has-error i:last-child{color:#ef4444}
+.mc-tab.has-error.active{
+  background:linear-gradient(110deg,#ef4444,#dc2626);color:#fff;border-color:transparent;
+}
+.mc-tab.has-error.active i:last-child{color:#fff}
 
 /* --- Tarjeta de resultados --- */
 .mc-table-card{
@@ -217,4 +328,6 @@ table.mc-table tbody td.key{
   .mc-toolbar-acciones > .mc-btn-primary,
   .mc-toolbar-acciones > .mc-btn-solid{flex-basis:100%}
   .mc-table-head-count{margin-left:0}
+  .mc-filtro-panel{left:0;right:0;width:auto;max-width:none}
+  .mc-filtro-builder select,.mc-filtro-builder input{flex-basis:100%}
 }
