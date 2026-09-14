@@ -42,7 +42,7 @@
                         {
                             <tr>
                                 <td colspan="6" class="text-center text-muted py-3">
-                                    @Resources.Strings.Grupo_NoGrupos
+                                    @(ViewBag.EsSuperAdmin ? Resources.Strings.Grupo_NoGrupos : Resources.Strings.Grupo_NoPerteneceGrupo)
                                 </td>
                             </tr>
                         }
@@ -69,10 +69,13 @@
                                 </td>
                                 <td class="col-acciones">
                                     <div class="btn-group" role="group">
-                                        <a class="btn btn-primary btn-sm" title="@Resources.Strings.Grupo_TitleGestionarEmpresas"
-                                           href="@Url.Action("Gestionar", "GruposEmpresariales", new { id = g.Id })">
-                                            <i class="fas fa-building"></i>
-                                        </a>
+                                        @if (ViewBag.EsSuperAdmin)
+                                        {
+                                            <a class="btn btn-primary btn-sm" title="@Resources.Strings.Grupo_TitleGestionarEmpresas"
+                                               href="@Url.Action("Gestionar", "GruposEmpresariales", new { id = g.Id })">
+                                                <i class="fas fa-building"></i>
+                                            </a>
+                                        }
                                         <button type="button" class="btn btn-primary btn-sm btn-editar-grupo" title="@Resources.Strings.Grupo_TitleEditar"
                                                 data-toggle="modal" data-target="#editarModal"
                                                 data-id="@g.Id"
@@ -81,12 +84,15 @@
                                                 data-activo="@(g.Activo ? "true" : "false")">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button type="button" class="btn btn-danger btn-sm btn-eliminar-grupo" title="@Resources.Strings.Grupo_TitleEliminar"
-                                                data-toggle="modal" data-target="#eliminarModal"
-                                                data-id="@g.Id"
-                                                data-nombre="@Html.AttributeEncode(g.Nombre)">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
+                                        @if (ViewBag.EsSuperAdmin)
+                                        {
+                                            <button type="button" class="btn btn-danger btn-sm btn-eliminar-grupo" title="@Resources.Strings.Grupo_TitleEliminar"
+                                                    data-toggle="modal" data-target="#eliminarModal"
+                                                    data-id="@g.Id"
+                                                    data-nombre="@Html.AttributeEncode(g.Nombre)">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -95,13 +101,18 @@
                 </table>
             </div>
         </div>
-        <div class="card-footer">
-            <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#crearModal">
-                <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Grupo_BtnCrear
-            </button>
-        </div>
+        @if (ViewBag.EsSuperAdmin)
+        {
+            <div class="card-footer">
+                <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#crearModal">
+                    <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Grupo_BtnCrear
+                </button>
+            </div>
+        }
     </div>
 
+    @if (ViewBag.EsSuperAdmin)
+    {
     <!-- ═══════════════════ MODAL CREAR ═══════════════════ -->
     <div class="modal fade" id="crearModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -143,6 +154,7 @@
             </div>
         </div>
     </div>
+    }
 
     <!-- ═══════════════════ MODAL EDITAR ═══════════════════ -->
     <div class="modal fade" id="editarModal" tabindex="-1" aria-hidden="true">
@@ -194,6 +206,8 @@
         </div>
     </div>
 
+    @if (ViewBag.EsSuperAdmin)
+    {
     <!-- ═══════════════════ MODAL ELIMINAR ═══════════════════ -->
     <div class="modal fade modal-confirm" id="eliminarModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -226,6 +240,7 @@
             </div>
         </div>
     </div>
+    }
 
     @if (TempData["ErrorMessage"] != null)
     {

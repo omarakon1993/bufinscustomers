@@ -9,21 +9,49 @@ using System.Web.Mvc;
 
 namespace bufinscustomers.Controllers
 {
-    // Gestión de grupos empresariales y asignación de empresas — Super Admin únicamente.
-    // Solo controla a qué grupo pertenece cada empresa; el acceso de lectura que ese
-    // grupo habilita entre empresas hermanas se resuelve en EmpresaAccesoHelper.
+    // Gestión de grupos empresariales y asignación de empresas.
+    // Crear/Eliminar y la asignación de empresas al grupo (Gestionar/GuardarEmpresas) son
+    // exclusivos de Super Admin. Un Admin de Empresa con el permiso ADMIN_CONFIG_GRUPOS_EMPRESARIALES
+    // puede ver y editar (solo Nombre/Descripción/Activo) el único grupo al que pertenece su empresa.
+    // El acceso de lectura que ese grupo habilita entre empresas hermanas se resuelve en EmpresaAccesoHelper.
     [ValidarSesion]
     public class GruposEmpresarialesController : BaseController
     {
+        private const string PERMISO = "ADMIN_CONFIG_GRUPOS_EMPRESARIALES";
+
         private readonly GrupoEmpresarialService _service = new GrupoEmpresarialService();
         private readonly EmpresaService _empresaService = new EmpresaService();
 
+        private static int? ObtenerIdGrupoDelUsuario(Usuarios usuario)
+        {
+            if (usuario?.IdEmpresa == null) return null;
+            return EmpresaCacheHelper.ObtenerEmpresasCacheadas()
+                .FirstOrDefault(e => e.Id == usuario.IdEmpresa.Value)?.IdGrupoEmpresarial;
+        }
+
+        private bool PuedeVerSuGrupo() =>
+            UsuarioSesionHelper.EsAdminEmpresa() && UsuarioSesionHelper.TienePermiso(PERMISO);
+
         public ActionResult Index()
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
+            bool esSuperAdmin = UsuarioSesionHelper.EsSuperAdmin();
+            if (!esSuperAdmin && !PuedeVerSuGrupo())
                 return RedirectToAction("Index", "Home");
 
-            var grupos = _service.ObtenerTodos();
+            ViewBag.EsSuperAdmin = esSuperAdmin;
+
+            List<GrupoEmpresarial> grupos;
+            if (esSuperAdmin)
+            {
+                grupos = _service.ObtenerTodos();
+            }
+            else
+            {
+                var idGrupo = ObtenerIdGrupoDelUsuario(UsuarioSesionHelper.UsuarioActual);
+                var grupo = idGrupo.HasValue ? _service.ObtenerPorId(idGrupo.Value) : null;
+                grupos = grupo != null ? new List<GrupoEmpresarial> { grupo } : new List<GrupoEmpresarial>();
+            }
+
             return View("~/Views/Configuracion/GruposEmpresariales.cshtml", grupos);
         }
 
@@ -65,7 +93,11 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Editar(GrupoEmpresarial grupo)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin())
+            bool esSuperAdmin = UsuarioSesionHelper.EsSuperAdmin();
+            bool puedeEditarPropio = PuedeVerSuGrupo()
+                && ObtenerIdGrupoDelUsuario(UsuarioSesionHelper.UsuarioActual) == grupo.Id;
+
+            if (!esSuperAdmin && !puedeEditarPropio)
                 return RedirectToAction("Index", "Home");
 
             try

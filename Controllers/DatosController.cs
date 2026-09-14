@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 namespace bufinscustomers.Controllers
@@ -1022,10 +1023,14 @@ namespace bufinscustomers.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult CargarExcel(HttpPostedFileBase archivoExcel, int idEmpresaSeleccionada, int anioSeleccionado, string modoSeleccionado, int idEscenarioSeleccionado = 1)
+        public async Task<ActionResult> CargarExcel(HttpPostedFileBase archivoExcel, int idEmpresaSeleccionada, int anioSeleccionado, string modoSeleccionado, int idEscenarioSeleccionado = 1)
         {
             var resultado = new ResultadoCargaExcel();
             string nombreArchivoOriginal = "";
+
+            // Se limpia cualquier "undo" pendiente de un cargue anterior de esta sesión: una vez se
+            // inicia un nuevo intento de cargue, el de antes ya no debe poder deshacerse desde aquí.
+            Session["Cargue_UltimoIdHistorial"] = null;
 
             // Validar empresa
             if (idEmpresaSeleccionada == 0)
@@ -1092,6 +1097,7 @@ namespace bufinscustomers.Controllers
             nombreArchivoOriginal = Path.GetFileName(archivoExcel.FileName);
             var usuarioActual = UsuarioSesionHelper.UsuarioActual;
             int idUsuario = usuarioActual?.Id ?? 0;
+            int idHistorialCargue = 0; // Id de la versión que crea este cargue (para poder deshacerlo si dispara advertencias)
 
             try
             {
@@ -1134,7 +1140,7 @@ namespace bufinscustomers.Controllers
                                             string _snapEmpresa = _empresaService.ObtenerEmpresas()
                                                 .Find(e => e.Id == idEmpresaSeleccionada)?.Nombre ?? "Desconocida";
                                             string _snapUsuario = ((usuarioActual?.Nombre ?? "") + " " + (usuarioActual?.Apellidos ?? "")).Trim();
-                                            _historialService.CrearSnapshotEnTransaccion(
+                                            idHistorialCargue = _historialService.CrearSnapshotEnTransaccion(
                                                 conn, tx, idEmpresaSeleccionada, _snapEmpresa,
                                                 anioSeleccionado, 0, idUsuario, _snapUsuario, nombreArchivoOriginal, idEscenarioSeleccionado);
                                         }
@@ -1252,7 +1258,7 @@ namespace bufinscustomers.Controllers
                                             string _snapEmpresa = _empresaService.ObtenerEmpresas()
                                                 .Find(e => e.Id == idEmpresaSeleccionada)?.Nombre ?? "Desconocida";
                                             string _snapUsuario = ((usuarioActual?.Nombre ?? "") + " " + (usuarioActual?.Apellidos ?? "")).Trim();
-                                            _historialService.CrearSnapshotEnTransaccion(
+                                            idHistorialCargue = _historialService.CrearSnapshotEnTransaccion(
                                                 conn, tx, idEmpresaSeleccionada, _snapEmpresa,
                                                 anioSeleccionado, 1, idUsuario, _snapUsuario, nombreArchivoOriginal, idEscenarioSeleccionado);
                                         }
@@ -1346,6 +1352,45 @@ namespace bufinscustomers.Controllers
                         }
 
                         GuardarLogEnSession();
+
+                        // Widgets de Advertencia con Subtipo="plantilla": se evalúan contra la empresa
+                        // recién cargada solo si el cargue fue exitoso. Un error aquí nunca debe tumbar
+                        // un cargue que ya se guardó correctamente.
+                        if (resultado.Exito)
+                        {
+                            try
+                            {
+                                var widgetsSvc = new WidgetsService();
+                                var widgetsActivos = await widgetsSvc.ObtenerActivasAsync().ConfigureAwait(false);
+                                var widgetsPlantilla = widgetsActivos.Where(w => w.Tipo == 3 &&
+                                    string.Equals(w.Subtipo, "plantilla", StringComparison.OrdinalIgnoreCase));
+
+                                foreach (var w in widgetsPlantilla)
+                                {
+                                    var filas = await widgetsSvc.EjecutarAdvertenciaAsync(w, idEmpresaSeleccionada).ConfigureAwait(false);
+                                    foreach (var f in filas)
+                                    {
+                                        resultado.Advertencias.Add(new AdvertenciaCargueViewModel
+                                        {
+                                            Titulo = f.Titulo,
+                                            Mensaje = f.Mensaje,
+                                            Severidad = f.Severidad
+                                        });
+                                    }
+                                }
+
+                                if (resultado.Advertencias.Any() && idHistorialCargue > 0)
+                                {
+                                    Session["Cargue_UltimoIdHistorial"] = idHistorialCargue;
+                                    resultado.PuedeDeshacerCargue = true;
+                                }
+                            }
+                            catch (Exception advEx)
+                            {
+                                AppLogger.Error(advEx, "CargarExcel: evaluando advertencias de plantilla");
+                            }
+                        }
+
                         TempData["ResultadoCarga"] = resultado;
                         TempData["NombreArchivo"] = nombreArchivoOriginal;
 
@@ -1372,6 +1417,35 @@ namespace bufinscustomers.Controllers
                 TempData["NombreArchivo"] = nombreArchivoOriginal;
                 SetErrorMessage(resultado.Mensaje);
             }
+
+            return RedirectToAction("CargueExcel");
+        }
+
+        // Deshace el cargue que la propia sesión acaba de hacer, cuando el usuario decide no continuar
+        // tras ver las advertencias de los widgets "plantilla". El Id de la versión a revertir nunca
+        // viaja desde el cliente (evita que alguien deshaga el cargue de otra persona manipulando el
+        // formulario) — sale de Session, donde CargarExcel lo dejó.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult DeshacerCargue()
+        {
+            var idHistorial = Session["Cargue_UltimoIdHistorial"] as int?;
+            Session["Cargue_UltimoIdHistorial"] = null; // un solo uso
+
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            var version = idHistorial.HasValue ? _historialService.ObtenerPorId(idHistorial.Value) : null;
+
+            if (version == null || !EmpresaAccesoHelper.TieneAcceso(usuario, version.IdEmpresa))
+            {
+                SetErrorMessage(R("Datos_ErrorRevertirCargue"));
+                return RedirectToAction("CargueExcel");
+            }
+
+            string nombreUsuario = ((usuario?.Nombre ?? "") + " " + (usuario?.Apellidos ?? "")).Trim();
+            bool ok = _historialService.EjecutarRollback(idHistorial.Value, usuario.Id, nombreUsuario);
+
+            if (ok) SetInfoMessage(R("Datos_CargueRevertido"));
+            else    SetErrorMessage(R("Datos_ErrorRevertirCargue"));
 
             return RedirectToAction("CargueExcel");
         }

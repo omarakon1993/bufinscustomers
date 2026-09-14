@@ -170,6 +170,10 @@
   <data name="Datos_SinResultadosHoja" xml:space="preserve"><value>No sheets match your search.</value></data>
   <data name="Datos_BtnPlantilla" xml:space="preserve"><value>Template</value></data>
   <data name="Datos_BtnDescargarLog" xml:space="preserve"><value>Download Log</value></data>
+  <data name="Datos_AdvertenciasTitulo" xml:space="preserve"><value>Warnings detected</value></data>
+  <data name="Datos_AdvertenciasPanelDesc" xml:space="preserve"><value>This upload was saved, but the following warnings were detected:</value></data>
+  <data name="Datos_CargueRevertido" xml:space="preserve"><value>The upload was reverted. The data returned to its previous state.</value></data>
+  <data name="Datos_ErrorRevertirCargue" xml:space="preserve"><value>Could not revert the upload. Please try again or contact support.</value></data>
   <data name="Datos_BtnQuitarArchivo" xml:space="preserve"><value>Remove file</value></data>
   <data name="Datos_ResultTitle" xml:space="preserve"><value>Upload Result</value></data>
   <data name="Datos_StatusExitoso" xml:space="preserve"><value>Successful</value></data>
@@ -236,6 +240,12 @@
   <data name="Datos_JS_ConfirmarPregunta" xml:space="preserve"><value>Do you want to continue?</value></data>
   <data name="Datos_JS_SiCargar" xml:space="preserve"><value>Yes, upload data</value></data>
   <data name="Datos_JS_Procesando" xml:space="preserve"><value>Processing file.</value></data>
+  <data name="Datos_JS_AdvertenciasTitulo" xml:space="preserve"><value>Warnings detected</value></data>
+  <data name="Datos_JS_AdvertenciasPregunta" xml:space="preserve"><value>Do you want to continue anyway?</value></data>
+  <data name="Datos_JS_SiContinuar" xml:space="preserve"><value>Yes, continue</value></data>
+  <data name="Datos_JS_NoDeshacer" xml:space="preserve"><value>No, undo upload</value></data>
+  <data name="Datos_JS_SinDeshacer" xml:space="preserve"><value>This upload cannot be undone automatically.</value></data>
+  <data name="Datos_JS_Entendido" xml:space="preserve"><value>Got it</value></data>
   <data name="Datos_OverlayNoCierre" xml:space="preserve"><value>Please wait, do not close this window.</value></data>
   <data name="Datos_AnioLabel" xml:space="preserve"><value>Upload year:</value></data>
   <data name="Datos_CargandoAnios" xml:space="preserve"><value>Loading available years.</value></data>
@@ -781,9 +791,10 @@
 
   <!-- BUSINESS GROUPS -->
   <data name="Grupo_PageTitle" xml:space="preserve"><value>Business Groups</value></data>
-  <data name="Grupo_InfoAcceso" xml:space="preserve"><value>Users from a company that belongs to a group have full access (just like their own) to the other companies in the same group: reports, statements, dashboards, users, configuration and permissions. Only creating/deleting companies and managing business groups remain exclusive to the Super Administrator.</value></data>
+  <data name="Grupo_InfoAcceso" xml:space="preserve"><value>Users from a company that belongs to a group have full access (just like their own) to the other companies in the same group: reports, statements, dashboards, users, configuration and permissions. Creating/deleting companies and business groups, and assigning companies to a group, remain exclusive to the Super Administrator. A Company Admin with the corresponding permission can view and edit the name/description of the group their company belongs to.</value></data>
   <data name="Grupo_ThEmpresas" xml:space="preserve"><value>Companies</value></data>
   <data name="Grupo_NoGrupos" xml:space="preserve"><value>No business groups registered.</value></data>
+  <data name="Grupo_NoPerteneceGrupo" xml:space="preserve"><value>Your company does not belong to any business group.</value></data>
   <data name="Grupo_TitleGestionarEmpresas" xml:space="preserve"><value>Manage group companies</value></data>
   <data name="Grupo_TitleEditar" xml:space="preserve"><value>Edit group</value></data>
   <data name="Grupo_TitleEliminar" xml:space="preserve"><value>Delete group</value></data>
