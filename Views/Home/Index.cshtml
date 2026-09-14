@@ -21,9 +21,17 @@
         }
     }
 
+    // Los widgets se configuran/consultan en español; si el usuario tiene el sitio en inglés y la
+    // consulta del widget trae la columna "_En" correspondiente (EtiquetaEn/SerieEn/TituloEn/MensajeEn),
+    // se usa esa versión. Si no la trae, se muestra el texto en español tal cual (fallback silencioso).
+    bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.Name.Equals("en-US", StringComparison.OrdinalIgnoreCase);
+    Func<string, string, string> Bilingue = (es, en) => (esIngles && !string.IsNullOrWhiteSpace(en)) ? en : es;
+
     // Item1=Config  Item2=Valor  Item3=Etiqueta  Item4=EmpNombre  Item5=EsVacio
     var kpiRows      = new List<Tuple<bufinscustomers.Models.WidgetTarjeta, string, string, string, bool>>();
     var graficoCards = new List<bufinscustomers.Models.WidgetTarjetaViewModel>();
+    var advertencias = new List<bufinscustomers.Models.WidgetAdvertenciaResultado>();
+    bool hayWidgetsAdvertencia = false;
 
     if (Model != null)
     {
@@ -44,13 +52,30 @@
                         {
                             empN = empMap[kpi.IdEmpresa];
                         }
-                        kpiRows.Add(Tuple.Create(tv.Config, kpi.Valor, kpi.Etiqueta, empN, false));
+                        kpiRows.Add(Tuple.Create(tv.Config, kpi.Valor, Bilingue(kpi.Etiqueta, kpi.EtiquetaEn), empN, false));
                     }
                 }
             }
             else if (tv.Config.Tipo == 2)
             {
                 graficoCards.Add(tv);
+            }
+            else if (tv.Config.Tipo == 3)
+            {
+                hayWidgetsAdvertencia = true;
+                if (tv.AdvertenciaResultados != null)
+                {
+                    foreach (var adv in tv.AdvertenciaResultados)
+                    {
+                        if (string.IsNullOrEmpty(adv.NombreEmpresa) && adv.IdEmpresa != 0 && empMap.ContainsKey(adv.IdEmpresa))
+                        {
+                            adv.NombreEmpresa = empMap[adv.IdEmpresa];
+                        }
+                        adv.Titulo  = Bilingue(adv.Titulo, adv.TituloEn);
+                        adv.Mensaje = Bilingue(adv.Mensaje, adv.MensajeEn);
+                        advertencias.Add(adv);
+                    }
+                }
             }
         }
     }
@@ -82,15 +107,15 @@
     var jss = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
     var graficosJson = jss.Serialize(graficoCards.Select(g => new {
         id          = g.Config.Id,
-        nombre      = g.Config.Nombre,
+        nombre      = Bilingue(g.Config.Nombre, g.Config.NombreEn),
         tipo        = string.IsNullOrWhiteSpace(g.Config.TipoGrafico) ? "bar" : g.Config.TipoGrafico.ToLower(),
         fondoOscuro = g.Config.FondoOscuro,
         color       = string.IsNullOrWhiteSpace(g.Config.ColorIcono) ? "#583AFF" : g.Config.ColorIcono,
         datos       = g.GraficoResultados.Select(d => new {
             idEmpresa     = d.IdEmpresa,
             nombreEmpresa = string.IsNullOrEmpty(d.NombreEmpresa) && empMap.ContainsKey(d.IdEmpresa) ? empMap[d.IdEmpresa] : d.NombreEmpresa,
-            etiqueta      = d.Etiqueta,
-            serie         = d.Serie,
+            etiqueta      = Bilingue(d.Etiqueta, d.EtiquetaEn),
+            serie         = Bilingue(d.Serie, d.SerieEn),
             valor         = d.Valor
         })
     }));
@@ -119,7 +144,7 @@
                     {
                         <span class="dash-empresa-chip">@abrevEmpresaActual</span>
                     }
-                    <span class="dash-empresa-nombre">@nombreEmpresaActual</span>
+                    <span class="dash-empresa-nombre"><i class="fas fa-building"></i>@nombreEmpresaActual</span>
                 </div>
 
                 if (empresasGrupo.Any())
@@ -148,49 +173,53 @@
         <img src="~/Assets/img/Bufins_LogoLogin.png" alt="Bufins" class="dash-greeting-logo">
     </div>
 
-    <div class="dash-section" id="resumenia-section" style="position:relative;z-index:1;margin-bottom:1.75rem;">
-        <div class="dash-section-label dash-section-toggle" data-target="sec-resumenia-body" title="@Resources.Strings.Home_TooltipColapsar">
-            <i class="fas fa-robot"></i> @Resources.Strings.Home_IA_SectionTitle
-            <i class="fas fa-chevron-down dash-section-chevron" style="font-size:.62rem;margin-left:.3rem;"></i>
-        </div>
-        <div id="sec-resumenia-body">
-            <div class="dash-resumenia-card">
-                <div class="dash-resumenia-controls">
-                    @if (UsuarioSesionHelper.EsSuperAdmin())
+    @if (hayWidgetsAdvertencia)
+    {
+        <div class="dash-section" id="advertencias-section" data-hay-advertencias="@(advertencias.Any() ? "1" : "0")" style="position:relative;z-index:1;margin-bottom:1.75rem;">
+            <div class="dash-section-label dash-section-toggle" data-target="sec-advertencias-body" title="@Resources.Strings.Home_TooltipColapsar">
+                <i class="fas fa-shield-alt"></i> @Resources.Strings.Home_SectionAdvertencias
+                @if (advertencias.Any())
+                {
+                    <span class="dash-adv-count-badge">@advertencias.Count</span>
+                }
+                <i class="fas fa-chevron-down dash-section-chevron" style="font-size:.62rem;margin-left:.3rem;"></i>
+            </div>
+            <div id="sec-advertencias-body">
+                <div class="dash-adv-grid">
+                    @if (advertencias.Any())
                     {
-                        <select id="resumenia-empresa" class="dash-resumenia-select">
-                            <option value="">@Resources.Strings.Common_Seleccione</option>
-                            @if (empresas != null)
-                            {
-                                foreach (var e in empresas)
-                                {
-                                    <option value="@e.Id">@e.Nombre</option>
-                                }
-                            }
-                        </select>
+                        foreach (var adv in advertencias)
+                        {
+                            var icono = adv.Severidad == "success" ? "fa-check-circle" : (adv.Severidad == "error" ? "fa-times-circle" : "fa-exclamation-triangle");
+                            <div class="dash-adv-card dash-adv-@adv.Severidad">
+                                <div class="dash-adv-icon"><i class="fas @icono"></i></div>
+                                <div class="dash-adv-body">
+                                    @if (!string.IsNullOrEmpty(adv.NombreEmpresa))
+                                    {
+                                        <div class="dash-adv-empresa"><i class="fas fa-building"></i>@adv.NombreEmpresa</div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(adv.Titulo))
+                                    {
+                                        <div class="dash-adv-title">@adv.Titulo</div>
+                                    }
+                                    <div class="dash-adv-msg">@adv.Mensaje</div>
+                                </div>
+                            </div>
+                        }
                     }
-                    <button type="button" id="btn-resumenia-generar" class="dash-resumenia-btn">
-                        <i class="fas fa-magic"></i> @Resources.Strings.Home_IA_BtnGenerar
-                    </button>
+                    else
+                    {
+                        <div class="dash-adv-card dash-adv-success">
+                            <div class="dash-adv-icon"><i class="fas fa-check-circle"></i></div>
+                            <div class="dash-adv-body">
+                                <div class="dash-adv-msg">@Resources.Strings.Home_Advertencias_SinDatos</div>
+                            </div>
+                        </div>
+                    }
                 </div>
-
-                <div id="resumenia-tablas-info" class="dash-resumenia-tablas-info" style="display:none;">
-                    <span class="dash-resumenia-tablas-label">
-                        <i class="fas fa-table"></i> @Resources.Strings.Home_IA_TablasConfiguradas
-                    </span>
-                    <span id="resumenia-tablas-chips" class="dash-resumenia-chips"></span>
-                </div>
-
-                <div id="resumenia-loading" style="display:none;font-size:.78rem;color:#A0A0B8;align-items:center;gap:.5rem;padding:.6rem 0;">
-                    <i class="fas fa-spinner fa-spin"></i> @Resources.Strings.Home_IA_Cargando
-                </div>
-
-                <div id="resumenia-content" class="dash-resumenia-content" style="display:none;"></div>
-
-                <div id="resumenia-error" class="dash-resumenia-error" style="display:none;"></div>
             </div>
         </div>
-    </div>
+    }
 
     <div class="dash-section" id="indic-section" style="position:relative;z-index:1;margin-bottom:1.75rem;">
         <div class="dash-section-label dash-section-toggle" data-target="sec-indic-body" title="@Resources.Strings.Home_TooltipColapsar">
@@ -263,7 +292,7 @@
                                     <span class="dash-kpi-unit">@row.Item1.UnidadValor</span>
                                 }
                             </div>
-                            <div class="dash-kpi-label">@row.Item1.Nombre</div>
+                            <div class="dash-kpi-label">@Bilingue(row.Item1.Nombre, row.Item1.NombreEn)</div>
                             @if (!string.IsNullOrEmpty(row.Item3))
                             {
                                 <div class="dash-kpi-etiqueta">@row.Item3</div>
@@ -286,7 +315,7 @@
                                 <i class="@cfg.Icono"></i>
                             </div>
                             <div class="dash-graf-titles">
-                                <div class="dash-graf-title">@cfg.Nombre</div>
+                                <div class="dash-graf-title">@Bilingue(cfg.Nombre, cfg.NombreEn)</div>
                                 <div class="dash-graf-sub">@TipoGraficoLabel(cfg.TipoGrafico)</div>
                             </div>
                         </div>
@@ -342,20 +371,27 @@
     }
     .dash-header-main { flex:1; min-width:0; }
 
-    .dash-empresa-row { display:flex; align-items:center; gap:.55rem; margin-bottom:.5rem; }
+    .dash-empresa-row {
+        display:flex; align-items:center; gap:.6rem; margin-bottom:.7rem;
+        background:linear-gradient(90deg,rgba(88,58,255,.06),rgba(1,225,215,.06));
+        border:1px solid rgba(88,58,255,.12);
+        border-radius:10px; padding:.45rem .7rem; width:fit-content; max-width:100%;
+    }
     .dash-empresa-chip {
         display:inline-flex; align-items:center; flex-shrink:0;
-        font-size:.66rem; font-weight:800; letter-spacing:.05em;
+        font-size:.68rem; font-weight:800; letter-spacing:.05em;
         color:#fff; text-transform:uppercase;
         background:linear-gradient(135deg,#583AFF,#01E1D7);
-        padding:.22rem .5rem; border-radius:6px;
+        padding:.25rem .55rem; border-radius:6px;
         box-shadow:0 2px 6px rgba(88,58,255,.35);
     }
     .dash-empresa-nombre {
-        font-size:.86rem; font-weight:700; color:#1E1B4B;
-        letter-spacing:.01em;
-        overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+        font-size:1.05rem; font-weight:800; color:#160933;
+        letter-spacing:-.01em;
+        display:inline-flex; align-items:center; gap:.45rem;
+        overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;
     }
+    .dash-empresa-nombre i { font-size:.85rem; color:#583AFF; flex-shrink:0; }
 
     .dash-empresa-row-multi { flex-wrap:wrap; row-gap:.35rem; }
     .dash-empresa-chip-light {
@@ -550,7 +586,8 @@
         .dash-header-divider { display:none; }
         .dash-greeting-logo { height:22px; margin-left:auto; }
         .dash-hello { font-size:1.1rem; }
-        .dash-empresa-nombre { max-width:150px; }
+        .dash-empresa-row { padding:.35rem .55rem; }
+        .dash-empresa-nombre { font-size:.92rem; max-width:150px; }
     }
 
     /* ---------- Indicadores de Mercado ---------- */
@@ -669,53 +706,35 @@
         .dash-indic-grid { grid-template-columns:1fr; }
     }
 
-    /* ---------- Resumen Ejecutivo IA — franja compacta ---------- */
-    .dash-resumenia-card {
-        background:#fff;
-        border:1px solid rgba(88,58,255,.12);
-        border-radius:9px;
+    /* ---------- Advertencias Bufins ---------- */
+    .dash-adv-count-badge {
+        background:#ef4444; color:#fff; font-size:.62rem; font-weight:700;
+        border-radius:99px; padding:.05rem .48rem; margin-left:.35rem;
+    }
+    .dash-adv-grid { display:flex; flex-direction:column; gap:.6rem; }
+    .dash-adv-card {
+        display:flex; align-items:flex-start; gap:.7rem;
+        background:#fff; border-radius:10px; padding:.7rem .9rem;
+        border:1px solid rgba(22,9,51,.08); border-left:4px solid #A0A0B8;
         box-shadow:0 2px 8px rgba(22,9,51,.05);
-        padding:10px 13px;
     }
-    .dash-resumenia-controls { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
-    .dash-resumenia-select {
-        border:1px solid rgba(88,58,255,.25); border-radius:7px;
-        padding:.35rem .6rem; font-size:.72rem; color:#160933;
-        min-width:200px; background:#fff;
+    .dash-adv-icon { font-size:1.05rem; line-height:1; margin-top:.1rem; }
+    .dash-adv-body { flex:1; min-width:0; }
+    .dash-adv-empresa {
+        display:inline-flex; align-items:center; gap:.35rem;
+        font-size:.68rem; font-weight:800; color:#583AFF;
+        text-transform:uppercase; letter-spacing:.03em;
+        margin-bottom:.3rem;
     }
-    .dash-resumenia-btn {
-        background:linear-gradient(90deg,#583AFF,#01E1D7);
-        border:none; color:#fff; font-weight:600;
-        font-size:.72rem; padding:.4rem .9rem; border-radius:7px;
-        display:inline-flex; align-items:center; gap:.4rem;
-        transition:transform .15s ease, box-shadow .15s ease;
-    }
-    .dash-resumenia-btn:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(88,58,255,.35); color:#fff; }
-    .dash-resumenia-btn:disabled { opacity:.6; transform:none; box-shadow:none; cursor:not-allowed; }
-    .dash-resumenia-content {
-        margin-top:.7rem; font-size:.79rem; color:#393F45; line-height:1.5;
-        border-top:1px solid rgba(88,58,255,.08); padding-top:.7rem;
-    }
-    .dash-resumenia-error {
-        margin-top:.7rem; font-size:.75rem; color:#e02424;
-        background:#fef2f2; border:1px solid #fecaca; border-radius:7px; padding:.5rem .7rem;
-    }
-    .dash-resumenia-tablas-info {
-        margin-top:.45rem; display:flex; align-items:center; flex-wrap:wrap; gap:.4rem;
-    }
-    .dash-resumenia-tablas-label {
-        font-size:.62rem; font-weight:700; color:#A0A0B8;
-        text-transform:uppercase; letter-spacing:.5px; white-space:nowrap;
-    }
-    .dash-resumenia-chips { display:flex; flex-wrap:wrap; gap:.3rem; }
-    .dash-resumenia-chip {
-        background:rgba(88,58,255,.08); color:#583AFF;
-        border-radius:99px; padding:.15rem .6rem;
-        font-size:.66rem; font-weight:600;
-    }
-    .dash-resumenia-chip-vacio {
-        font-size:.68rem; color:#FCA311; font-style:italic; font-weight:500;
-    }
+    .dash-adv-empresa i { font-size:.62rem; }
+    .dash-adv-title { font-size:.82rem; font-weight:700; color:#160933; margin-bottom:.15rem; }
+    .dash-adv-msg { font-size:.79rem; color:#393F45; line-height:1.45; }
+    .dash-adv-success { border-left-color:#22c55e; }
+    .dash-adv-success .dash-adv-icon { color:#22c55e; }
+    .dash-adv-warning { border-left-color:#f59e0b; }
+    .dash-adv-warning .dash-adv-icon { color:#f59e0b; }
+    .dash-adv-error { border-left-color:#ef4444; }
+    .dash-adv-error .dash-adv-icon { color:#ef4444; }
 </style>
 
 @if (graficoCards.Any())
@@ -1089,129 +1108,32 @@
     }
 
     function initSecciones() {
-        // Estado inicial fijo en cada carga: Indicadores y Widgets abiertos, Resumen IA colapsado
-        var $iaToggle = $('#resumenia-section .dash-section-toggle');
-        $('#' + $iaToggle.data('target')).hide();
-        $iaToggle.find('.dash-section-chevron').addClass('rotado');
-        $iaToggle.attr('title', _s.expandir);
-
-        function colapsar($lbl) {
-            var $body = $('#' + $lbl.data('target'));
-            if (!$body.is(':visible')) return;
-            $body.slideUp(180);
-            $lbl.find('.dash-section-chevron').addClass('rotado');
-            $lbl.attr('title', _s.expandir);
+        // Advertencias Bufins: colapsada por defecto salvo que existan advertencias activas
+        // (en cuyo caso arranca expandida). Es independiente de las demás secciones.
+        var $advSection = $('#advertencias-section');
+        if ($advSection.length && $advSection.data('hay-advertencias') != 1) {
+            var $advToggle = $advSection.find('.dash-section-toggle');
+            $('#' + $advToggle.data('target')).hide();
+            $advToggle.find('.dash-section-chevron').addClass('rotado');
+            $advToggle.attr('title', _s.expandir);
         }
 
-        // Toggle al hacer clic en el label (excluye el botón de refresh).
-        // Resumen IA es excluyente con las otras dos: al expandir IA se colapsan Indicadores
-        // y Widgets; al expandir Indicadores o Widgets solo se colapsa IA (esas dos pueden
-        // convivir abiertas entre sí).
+        // Cada sección se expande/colapsa de forma independiente (excluye el botón de refresh).
         $(document).on('click', '.dash-section-toggle', function (e) {
             if ($(e.target).closest('#btn-indic-refresh').length) return;
             var $lbl  = $(this);
             var $body = $('#' + $lbl.data('target'));
             var $chev = $lbl.find('.dash-section-chevron');
             var abierto = $body.is(':visible');
-            var esIA = $lbl.data('target') === 'sec-resumenia-body';
 
             if (abierto) {
-                colapsar($lbl);
+                $body.slideUp(180);
+                $chev.addClass('rotado');
+                $lbl.attr('title', _s.expandir);
             } else {
                 $body.slideDown(180);
                 $chev.removeClass('rotado');
                 $lbl.attr('title', _s.colapsar);
-
-                if (esIA) {
-                    $('.dash-section-toggle').not($lbl).each(function () { colapsar($(this)); });
-                } else {
-                    colapsar($('#resumenia-section .dash-section-toggle'));
-                }
-            }
-        });
-    }
-
-    // ── Resumen Ejecutivo IA ──────────────────────────────────
-    var _ia = {
-        seleccioneEmpresa: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_IA_SeleccioneEmpresa))',
-        errorConexion:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_IA_ErrorConexion))',
-        sinTablas:         '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_IA_SinConfigurar))'
-    };
-    var _urlResumenIA = '@Url.Action("ObtenerResumenIA", "Home")';
-    var _urlTablasConfiguradasIA = '@Url.Action("ObtenerTablasConfiguradasIA", "Home")';
-
-    function cargarTablasConfiguradasIA(idEmpresa) {
-        var $info  = $('#resumenia-tablas-info');
-        var $chips = $('#resumenia-tablas-chips');
-        $chips.empty();
-        $info.hide();
-
-        var data = {};
-        if (idEmpresa) data.idEmpresa = idEmpresa;
-
-        $.get(_urlTablasConfiguradasIA, data, function (resp) {
-            if (!resp.success) return;
-            if (resp.tablas && resp.tablas.length > 0) {
-                resp.tablas.forEach(function (nombre) {
-                    $chips.append($('<span class="dash-resumenia-chip"></span>').text(nombre));
-                });
-            } else {
-                $chips.append($('<span class="dash-resumenia-chip-vacio"></span>').text(_ia.sinTablas));
-            }
-            $info.show();
-        });
-    }
-
-    function renderMarkdownIA(text) {
-        if (!text) return '';
-        return text
-            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-            .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-            .replace(/\*(.+?)\*/g,'<em>$1</em>')
-            .replace(/^### (.+)$/gm,'<h6 style="color:#583AFF;font-weight:700;margin-top:12px;">$1</h6>')
-            .replace(/^## (.+)$/gm, '<h5 style="color:#583AFF;font-weight:700;margin-top:14px;">$1</h5>')
-            .replace(/^# (.+)$/gm,  '<h4 style="color:#160933;font-weight:700;margin-top:16px;">$1</h4>')
-            .replace(/^[-*] (.+)$/gm,'<li>$1</li>')
-            .replace(/(<li>[\s\S]+?<\/li>)/g,'<ul style="padding-left:18px;margin-bottom:8px;">$1</ul>')
-            .replace(/\n\n/g,'</p><p style="margin-bottom:8px;">')
-            .replace(/\n/g,'<br>');
-    }
-
-    function generarResumenIA() {
-        var $btn     = $('#btn-resumenia-generar');
-        var $loading = $('#resumenia-loading');
-        var $content = $('#resumenia-content');
-        var $error   = $('#resumenia-error');
-        var idEmpresa = $('#resumenia-empresa').length ? $('#resumenia-empresa').val() : null;
-
-        if ($('#resumenia-empresa').length && !idEmpresa) {
-            $error.text(_ia.seleccioneEmpresa).show();
-            $content.hide();
-            return;
-        }
-
-        $btn.prop('disabled', true);
-        $error.hide();
-        $content.hide();
-        $loading.show().css('display', 'flex');
-
-        $.ajax({
-            url: _urlResumenIA,
-            type: 'POST',
-            data: { idEmpresa: idEmpresa },
-            success: function (resp) {
-                $loading.hide();
-                $btn.prop('disabled', false);
-                if (resp.Exitoso) {
-                    $content.html(renderMarkdownIA(resp.Respuesta)).show();
-                } else {
-                    $error.text(resp.Error || _ia.errorConexion).show();
-                }
-            },
-            error: function () {
-                $loading.hide();
-                $btn.prop('disabled', false);
-                $error.text(_ia.errorConexion).show();
             }
         });
     }
@@ -1220,23 +1142,6 @@
         initSecciones();
         cargar(false);
         $('#btn-indic-refresh').on('click', function () { cargar(true); });
-        $('#btn-resumenia-generar').on('click', generarResumenIA);
-
-        var $resumeniaEmpresa = $('#resumenia-empresa');
-        if ($resumeniaEmpresa.length) {
-            $resumeniaEmpresa.on('change', function () {
-                var idEmpresa = $(this).val();
-                $('#resumenia-content').hide();
-                $('#resumenia-error').hide();
-                if (idEmpresa) {
-                    cargarTablasConfiguradasIA(idEmpresa);
-                } else {
-                    $('#resumenia-tablas-info').hide();
-                }
-            });
-        } else {
-            cargarTablasConfiguradasIA(null);
-        }
     });
 })();
 </script>

@@ -135,6 +135,10 @@
   <data name="Home_IA_ErrorConexion" xml:space="preserve"><value>No se pudo generar el resumen. Intente nuevamente.</value></data>
   <data name="Home_IA_TablasConfiguradas" xml:space="preserve"><value>Tablas analizadas:</value></data>
   <data name="Home_TooltipExpandir" xml:space="preserve"><value>Expandir sección</value></data>
+
+  <!-- HOME / ADVERTENCIAS -->
+  <data name="Home_SectionAdvertencias" xml:space="preserve"><value>Advertencias Bufins</value></data>
+  <data name="Home_Advertencias_SinDatos" xml:space="preserve"><value>Todo en orden, no se detectaron advertencias.</value></data>
   <data name="Home_TooltipNoticia" xml:space="preserve"><value>Ir a la noticia</value></data>
   <data name="Home_GrupoLabel" xml:space="preserve"><value>Grupo empresarial</value></data>
   <data name="Home_GrupoAcceso" xml:space="preserve"><value>Empresas del grupo a las que también tienes acceso ({0}):</value></data>
@@ -1044,6 +1048,52 @@
   <data name="Wid_LabelTipoGrafico" xml:space="preserve"><value>Tipo de gráfico</value></data>
   <data name="Wid_JS_ElimTitle" xml:space="preserve"><value>¿Eliminar widget?</value></data>
   <data name="Wid_JS_ElimSuffix" xml:space="preserve"><value>se eliminará permanentemente.</value></data>
+  <data name="Wid_TipoAdvertencia" xml:space="preserve"><value>Advertencia</value></data>
+  <data name="Wid_CfgAdvertencia" xml:space="preserve"><value>Configuración de Advertencia</value></data>
+  <data name="Wid_HintAdvertencia" xml:space="preserve"><value>Columnas requeridas: Mensaje. Opcionales: Titulo, IdEmpresa, NombreEmpresa, TituloEn, MensajeEn (versión en inglés; se muestra automáticamente a los usuarios con el sitio en inglés, si la incluyes). La severidad de todas las filas es la que se configura arriba, no viene de la consulta. Cada fila del resultado es una advertencia independiente; la consulta puede devolver 0, 1 o varias filas.</value></data>
+  <data name="Wid_LabelFuente" xml:space="preserve"><value>Fuente de datos</value></data>
+  <data name="Wid_FuenteSQL" xml:space="preserve"><value>Consulta SQL</value></data>
+  <data name="Wid_FuenteSP" xml:space="preserve"><value>Procedimiento almacenado</value></data>
+  <data name="Wid_LabelNombreSP" xml:space="preserve"><value>Nombre del procedimiento almacenado</value></data>
+  <data name="Wid_HintNombreSP" xml:space="preserve"><value>El procedimiento debe declarar el parámetro @IdEmpresa INT (puede ignorarlo) y devolver un único result set con las mismas columnas que exige el modo Consulta SQL para el tipo de widget seleccionado.</value></data>
+  <data name="Wid_LabelSeveridad" xml:space="preserve"><value>Severidad de esta advertencia</value></data>
+  <data name="Wid_SeveridadSuccess" xml:space="preserve"><value>Positiva (verde)</value></data>
+  <data name="Wid_SeveridadWarning" xml:space="preserve"><value>Advertencia (amarillo)</value></data>
+  <data name="Wid_SeveridadError" xml:space="preserve"><value>Error (rojo)</value></data>
+  <data name="Wid_Err_NombreSPRequerido" xml:space="preserve"><value>Debe indicar el nombre del procedimiento almacenado.</value></data>
+  <data name="Wid_Err_ConsultaRequerida" xml:space="preserve"><value>Debe indicar la consulta SQL.</value></data>
+  <data name="Wid_HintArrastrar" xml:space="preserve"><value>Arrastra las filas usando el icono ⣿ para reordenar. El orden es una secuencia única sobre todos los widgets; al soltar se recalcula automáticamente.</value></data>
+  <data name="Wid_OrdenActualizado" xml:space="preserve"><value>Orden actualizado correctamente.</value></data>
+  <data name="Wid_ErrorActualizarOrden" xml:space="preserve"><value>No se pudo actualizar el orden. Intente nuevamente.</value></data>
+  <data name="Wid_ColFuente" xml:space="preserve"><value>Fuente</value></data>
+  <data name="Wid_NoWidgetsDesc" xml:space="preserve"><value>Crea el primero con el botón de abajo.</value></data>
+  <data name="Wid_SeccionIdentificacion" xml:space="preserve"><value>Identificación</value></data>
+  <data name="Wid_SeccionTipo" xml:space="preserve"><value>Tipo de widget</value></data>
+  <data name="Wid_SeccionApariencia" xml:space="preserve"><value>Apariencia</value></data>
+  <data name="Wid_LabelNombre" xml:space="preserve"><value>Nombre</value></data>
+  <data name="Wid_LabelOrden" xml:space="preserve"><value>Orden</value></data>
+  <data name="Wid_LabelActivo" xml:space="preserve"><value>Activo</value></data>
+  <data name="Wid_LabelIcono" xml:space="preserve"><value>Icono (FontAwesome)</value></data>
+  <data name="Wid_LabelColorIcono" xml:space="preserve"><value>Color del icono</value></data>
+  <data name="Wid_TipoKpiNombre" xml:space="preserve"><value>KPI / Valor</value></data>
+  <data name="Wid_TipoKpiDesc" xml:space="preserve"><value>Un número o valor puntual por empresa.</value></data>
+  <data name="Wid_TipoGraficoDesc" xml:space="preserve"><value>Una serie de datos en un gráfico (barras, líneas, etc.).</value></data>
+  <data name="Wid_TipoAdvertenciaDesc" xml:space="preserve"><value>Alertas o mensajes generados por una consulta, con severidad configurable.</value></data>
+  <data name="Wid_ColRequeridas" xml:space="preserve"><value>Columnas requeridas</value></data>
+  <data name="Wid_ColOpcionales" xml:space="preserve"><value>Opcionales</value></data>
+  <data name="Wid_BtnUsarEjemplo" xml:space="preserve"><value>Usar este ejemplo</value></data>
+  <data name="Wid_EjemploTitulo" xml:space="preserve"><value>Ejemplo</value></data>
+  <data name="Wid_PlaceholderSQL" xml:space="preserve"><value>Escribe tu consulta SELECT aquí…</value></data>
+  <data name="Wid_ModalDeleteBody" xml:space="preserve"><value>¿Estás seguro de que deseas eliminar el widget</value></data>
+  <data name="Wid_ModalDeleteNote" xml:space="preserve"><value>Esta acción eliminará el widget de forma permanente y no podrá recuperarse. Si solo deseas ocultarlo, puedes desactivarlo desde Editar.</value></data>
+  <data name="Wid_SevChipSuccess" xml:space="preserve"><value>OK</value></data>
+  <data name="Wid_SevChipWarning" xml:space="preserve"><value>Advertencia</value></data>
+  <data name="Wid_SevChipError" xml:space="preserve"><value>Error</value></data>
+  <data name="Wid_LabelNombreEn" xml:space="preserve"><value>Nombre (inglés) — opcional</value></data>
+  <data name="Wid_HintNombreEn" xml:space="preserve"><value>Se muestra en vez del Nombre a los usuarios con el sitio en inglés. Si lo dejas vacío, siempre se ve el Nombre en español.</value></data>
+  <data name="Wid_LabelSubtipo" xml:space="preserve"><value>Subtipo</value></data>
+  <data name="Wid_SubtipoPlantilla" xml:space="preserve"><value>Plantilla</value></data>
+  <data name="Wid_SubtipoModelo" xml:space="preserve"><value>Modelo</value></data>
 
   <!-- GESTOR DE CATEGORÍAS -->
   <data name="Cat_PageTitle" xml:space="preserve"><value>Gestor de Categorías</value></data>

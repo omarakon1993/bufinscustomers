@@ -35,23 +35,37 @@ namespace bufinscustomers.Controllers
             {
                 var item = new WidgetTarjetaViewModel { Config = t };
 
-                if (!string.IsNullOrWhiteSpace(t.ConsultaSQL))
+                bool tieneFuente = t.TipoFuente == 2
+                    ? !string.IsNullOrWhiteSpace(t.NombreSP)
+                    : !string.IsNullOrWhiteSpace(t.ConsultaSQL);
+
+                if (tieneFuente)
                 {
+                    var claveFuente = t.TipoFuente == 2 ? "sp:" + t.NombreSP : "sql:" + t.ConsultaSQL;
+
                     if (t.Tipo == 1)
                     {
-                        var resultados = await WidgetCacheadoAsync("wk:" + t.ConsultaSQL,
-                            () => svc.EjecutarKpiAsync(t.ConsultaSQL, null));
+                        var resultados = await WidgetCacheadoAsync("wk:" + claveFuente,
+                            () => svc.EjecutarKpiAsync(t, null));
                         item.KpiResultados = (idsPermitidos == null || resultados == null)
                             ? resultados
                             : resultados.Where(r => idsPermitidos.Contains(r.IdEmpresa)).ToList();
                     }
                     else if (t.Tipo == 2)
                     {
-                        var resultados = await WidgetCacheadoAsync("wg:" + t.ConsultaSQL,
-                            () => svc.EjecutarGraficoAsync(t.ConsultaSQL, null));
+                        var resultados = await WidgetCacheadoAsync("wg:" + claveFuente,
+                            () => svc.EjecutarGraficoAsync(t, null));
                         item.GraficoResultados = (idsPermitidos == null || resultados == null)
                             ? resultados
                             : resultados.Where(r => idsPermitidos.Contains(r.IdEmpresa)).ToList();
+                    }
+                    else if (t.Tipo == 3)
+                    {
+                        var resultados = await WidgetCacheadoAsync("wa:" + claveFuente,
+                            () => svc.EjecutarAdvertenciaAsync(t, null));
+                        item.AdvertenciaResultados = (idsPermitidos == null || resultados == null)
+                            ? resultados
+                            : resultados.Where(r => r.IdEmpresa == 0 || idsPermitidos.Contains(r.IdEmpresa)).ToList();
                     }
                 }
                 return item;
