@@ -8,7 +8,9 @@
     var nombreArchivo = TempData["NombreArchivo"] as string;
 
     var advertenciasCargue = resultado?.Advertencias ?? new List<AdvertenciaCargueViewModel>();
-    var advertenciasJson = new JavaScriptSerializer().Serialize(advertenciasCargue.Select(a => new { titulo = a.Titulo, mensaje = a.Mensaje, severidad = a.Severidad }));
+    // Reemplaza '<' por su escape unicode: si el Titulo/Mensaje de un widget de Advertencia trae
+    // una comparación "<"/"<>" o cualquier "</script", el navegador cortaría el <script> a la mitad.
+    var advertenciasJson = new JavaScriptSerializer().Serialize(advertenciasCargue.Select(a => new { titulo = a.Titulo, mensaje = a.Mensaje, severidad = a.Severidad })).Replace("<", "\\u003c");
 }
 
 <link href="~/Assets/css/informe-relacionamientos.css" rel="stylesheet" />

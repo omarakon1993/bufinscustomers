@@ -1365,6 +1365,8 @@ namespace bufinscustomers.Controllers
                                 var widgetsPlantilla = widgetsActivos.Where(w => w.Tipo == 3 &&
                                     string.Equals(w.Subtipo, "plantilla", StringComparison.OrdinalIgnoreCase));
 
+                                bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+
                                 foreach (var w in widgetsPlantilla)
                                 {
                                     var filas = await widgetsSvc.EjecutarAdvertenciaAsync(w, idEmpresaSeleccionada).ConfigureAwait(false);
@@ -1372,8 +1374,8 @@ namespace bufinscustomers.Controllers
                                     {
                                         resultado.Advertencias.Add(new AdvertenciaCargueViewModel
                                         {
-                                            Titulo = f.Titulo,
-                                            Mensaje = f.Mensaje,
+                                            Titulo = (esIngles && !string.IsNullOrWhiteSpace(f.TituloEn)) ? f.TituloEn : f.Titulo,
+                                            Mensaje = (esIngles && !string.IsNullOrWhiteSpace(f.MensajeEn)) ? f.MensajeEn : f.Mensaje,
                                             Severidad = f.Severidad
                                         });
                                     }

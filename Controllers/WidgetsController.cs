@@ -77,11 +77,17 @@ namespace bufinscustomers.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Eliminar(int id)
+        public async Task<ActionResult> Eliminar(int? id)
         {
+            if (!id.HasValue)
+            {
+                SetErrorMessage("No se identificó la tarjeta a eliminar.");
+                return RedirectToAction("Index");
+            }
+
             try
             {
-                bool ok = await _svc.EliminarAsync(id);
+                bool ok = await _svc.EliminarAsync(id.Value);
                 if (ok) SetSuccessMessage("Tarjeta eliminada.");
                 else    SetErrorMessage("No se pudo eliminar la tarjeta.");
             }

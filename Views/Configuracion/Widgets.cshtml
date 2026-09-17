@@ -6,6 +6,13 @@
 <html>
 <head>
     <title>@Resources.Strings.Wid_PageTitle</title>
+    @* Esta vista es una página HTML autónoma (no usa _Layout.cshtml), así que necesita traer su
+       propio jQuery/Bootstrap JS — sin esto, cualquier "$(...)" de más abajo (los modales, el
+       drag&drop de reordenar) lanza "$ is not defined" y ningún handler llega a registrarse.
+       Se traen solo jQuery + Bootstrap (no todo "~/bundles/js-global"): sb-admin-2.min.js y
+       modern-sidebar.js asumen el sidebar/topbar del _Layout completo, que esta página no tiene. *@
+    <script src="~/Assets/Bootstrap/jquery/jquery.min.js"></script>
+    <script src="~/Assets/Bootstrap/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="~/Assets/css/configuracion-admin.css" rel="stylesheet" />
@@ -129,11 +136,15 @@
     var successMsg = TempData["SuccessMessage"] as string;
     var errorMsg   = TempData["ErrorMessage"]   as string;
     var jss        = new JavaScriptSerializer();
+    // Reemplaza '<' por su escape unicode: si el ConsultaSQL de algún widget (típicamente uno de
+    // Advertencia, cuyo texto suele traer comparaciones "<"/"<>" o mensajes libres) contuviera la
+    // secuencia "</script", el navegador cerraría este <script> a la mitad y ningún JS de más abajo
+    // (incluido el handler de #eliminarModal) llegaría a registrarse.
     var jsonData   = jss.Serialize(Model.Select(t => new {
         t.Id, t.Nombre, t.NombreEn, t.Tipo, t.Icono, t.ColorIcono, t.Orden, t.Activo,
         t.ConsultaSQL, t.UnidadValor, t.TipoGrafico, t.FondoOscuro,
         t.TipoFuente, t.NombreSP, t.Severidad, t.Subtipo
-    }));
+    })).Replace("<", "\\u003c");
 
     string ejemploKpi  = "SELECT e.Id AS IdEmpresa, e.Nombre AS NombreEmpresa,\n       FORMAT(COUNT(*), 'N0') AS Valor, 'cargues' AS Etiqueta, 'loads' AS EtiquetaEn\nFROM Empresas e\nLEFT JOIN Cargues c ON c.IdEmpresa = e.Id\nGROUP BY e.Id, e.Nombre";
     string ejemploGraf = "SELECT e.Id AS IdEmpresa, e.Nombre AS NombreEmpresa,\n       MONTH(c.Fecha) AS Etiqueta, DATENAME(MONTH, c.Fecha) AS EtiquetaEn, SUM(c.Total) AS Valor\nFROM Cargues c\nJOIN Empresas e ON e.Id = c.IdEmpresa\nGROUP BY e.Id, e.Nombre, MONTH(c.Fecha), DATENAME(MONTH, c.Fecha)";
