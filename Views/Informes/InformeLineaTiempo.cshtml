@@ -1,0 +1,805 @@
+@model dynamic
+@using System.Web
+@using bufinscustomers.Models
+@{
+    ViewBag.Title = Resources.Strings.LineaTiempo_PageTitle;
+    var tablas   = ViewBag.Tablas as List<TablaDatos>;
+    var empresas = ViewBag.Empresas as List<Empresas>;
+    var esAdmin  = (bool)ViewBag.EsAdmin;
+    var culturaJs = System.Globalization.CultureInfo.CurrentUICulture.Name;
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
+
+<style>
+    .lt-app {
+        --lt-bg: #F4F4FA;
+        --lt-surface: #FFFFFF;
+        --lt-surface-2: #F4F3FB;
+        --lt-text: #16121F;
+        --lt-text-2: #5B5570;
+        --lt-text-muted: #8B85A0;
+        --lt-line: #E4E1F0;
+        --lt-brand-gradient: linear-gradient(90deg,#6366F1 0%,#3B82F6 35%,#06B6D4 70%,#01E1D7 100%);
+        --lt-series-1: #6366F1;
+        --lt-series-2: #D97706;
+        --lt-good: #16A34A;
+        --lt-good-bg: #ECFDF3;
+        --lt-bad: #DC2626;
+        --lt-bad-bg: #FEF2F2;
+        --lt-shadow: 0 1px 2px rgba(22,9,51,.05), 0 10px 28px -10px rgba(22,9,51,.14);
+        max-width: 1080px;
+        margin: 0 0 40px;
+        color: var(--lt-text);
+        font-size: 15px;
+    }
+
+
+    .lt-card { background: var(--lt-surface); border: 1px solid var(--lt-line); border-radius: 14px; padding: 16px 20px; margin-bottom: 16px; box-shadow: var(--lt-shadow); }
+
+    .lt-kicker { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--lt-text-muted); margin: 0 0 8px; }
+    .lt-kicker.mt { margin-top: 16px; }
+
+    .lt-grid { display: grid; gap: 12px 16px; }
+    .lt-grid-1 { grid-template-columns: repeat(4, 1fr); }
+    .lt-grid-1.has-campo { grid-template-columns: repeat(5, 1fr); }
+    .lt-grid-2 { grid-template-columns: minmax(180px, 1.2fr) 1fr 1fr; align-items: end; }
+    .lt-grid label { display: flex; flex-direction: column; gap: 5px; }
+    .lt-label-text { font-size: 11px; font-weight: 700; color: var(--lt-text-2); text-transform: uppercase; letter-spacing: .03em; }
+    .lt-grid select {
+        font-family: inherit; font-size: 13px; font-weight: 500; color: var(--lt-text);
+        background: var(--lt-surface-2); border: 1px solid var(--lt-line); border-radius: 8px;
+        padding: 8px 10px; width: 100%;
+    }
+    .lt-grid select:disabled { opacity: .5; cursor: not-allowed; }
+    .lt-grid .lt-seg { align-self: stretch; }
+    .lt-grid .lt-seg button { flex: 1; padding: 7px 10px; }
+
+    /* Select2 restyled to match the plain .lt-grid select look above */
+    .lt-app .select2-container { width: 100% !important; }
+    .lt-app .select2-container--default .select2-selection--single {
+        background: var(--lt-surface-2); border: 1px solid var(--lt-line); border-radius: 8px;
+        height: auto; padding: 8px 28px 8px 10px;
+    }
+    .lt-app .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: var(--lt-text); font-size: 13px; font-weight: 500; line-height: normal; padding: 0;
+    }
+    .lt-app .select2-container--default .select2-selection--single .select2-selection__placeholder { color: var(--lt-text-muted); }
+    .lt-app .select2-container--default .select2-selection--single .select2-selection__arrow { height: 100%; top: 0; right: 6px; }
+    .lt-app .select2-container--default.select2-container--disabled .select2-selection--single { opacity: .5; cursor: not-allowed; background: var(--lt-surface-2); }
+    .lt-app .select2-dropdown { border-color: var(--lt-line); }
+    .lt-app .select2-search--dropdown .select2-search__field { border: 1px solid var(--lt-line); border-radius: 6px; padding: 5px 8px; font-size: 13px; }
+    .lt-app .select2-results__option--highlighted[aria-selected] { background: var(--lt-series-1) !important; }
+
+    @@media (max-width: 900px) {
+        .lt-grid-1, .lt-grid-1.has-campo { grid-template-columns: repeat(2, 1fr); }
+        .lt-grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .lt-tabla-desc {
+        display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 8px 12px;
+        background: var(--lt-surface-2); border: 1px solid var(--lt-line); border-radius: 8px;
+        font-size: 12px; color: var(--lt-text-2); line-height: 1.4;
+    }
+    .lt-tabla-desc .ic { font-size: 16px; color: var(--lt-series-1); flex-shrink: 0; }
+    .lt-tabla-desc b { color: var(--lt-text); }
+
+    .lt-comparar-toggle {
+        display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
+        background: none; border: none; padding: 4px 0; cursor: pointer;
+        font-size: 12px; font-weight: 700; color: var(--lt-series-1);
+    }
+    .lt-comparar-toggle .chev { transition: transform .15s ease; font-size: 10px; }
+    .lt-comparar-toggle.open .chev { transform: rotate(90deg); }
+    .lt-comparar-panel {
+        display: grid; grid-template-columns: minmax(160px, 280px); gap: 4px;
+        margin-top: 6px; padding: 10px 11px; background: var(--lt-surface-2); border: 1px solid var(--lt-line); border-radius: 9px;
+    }
+    .lt-comparar-panel label { display: flex; flex-direction: column; gap: 3px; }
+    .lt-comparar-panel .lt-label-text { font-size: 10.5px; }
+
+    .lt-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .lt-btn { font-size: 12.5px; font-weight: 700; border-radius: 8px; padding: 8px 16px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .lt-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .lt-btn-primary { background: var(--lt-brand-gradient); color: #fff; }
+    .lt-btn-ghost { background: var(--lt-surface-2); color: var(--lt-text-2); border: 1px solid var(--lt-line); }
+    .lt-btn-excel { background: #217346; color: #fff; }
+
+    .lt-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
+    .lt-stat-tile { background: var(--lt-surface); border: 1px solid var(--lt-line); border-radius: 14px; padding: 16px 18px; box-shadow: var(--lt-shadow); }
+    .lt-stat-label { font-size: 12px; font-weight: 600; color: var(--lt-text-muted); text-transform: uppercase; letter-spacing: .03em; }
+    .lt-stat-value { font-size: 26px; font-weight: 800; margin: 6px 0 4px; letter-spacing: -.01em; }
+    .lt-stat-delta { font-size: 12.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; }
+    .lt-stat-delta.up { color: var(--lt-good); background: var(--lt-good-bg); }
+    .lt-stat-delta.down { color: var(--lt-bad); background: var(--lt-bad-bg); }
+
+    .lt-letterhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid var(--lt-line); }
+    .lt-brand-mark { display: inline-flex; align-items: center; gap: 6px; }
+    .lt-brand-mark .bm-icon { width: 20px; height: 20px; border-radius: 6px; background: var(--lt-brand-gradient); color: #fff; font-weight: 800; font-size: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .lt-brand-mark .bm-text { font-size: 12.5px; font-weight: 800; letter-spacing: .01em; background: var(--lt-brand-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .lt-letterhead .fecha { font-size: 11px; color: var(--lt-text-muted); }
+
+    .lt-chart-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
+    .lt-chart-head h2 { margin: 0; font-size: 16.5px; font-weight: 800; }
+    .lt-muted { color: var(--lt-text-muted); font-size: 12.5px; margin: 3px 0 0; }
+    .lt-toggles { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+
+    .lt-seg { display: flex; background: var(--lt-surface-2); border: 1px solid var(--lt-line); border-radius: 9px; padding: 3px; }
+    .lt-seg button { font-size: 12.5px; font-weight: 700; color: var(--lt-text-2); background: transparent; border: none; border-radius: 7px; padding: 6px 13px; cursor: pointer; }
+    .lt-seg button.active { background: var(--lt-brand-gradient); color: #fff; }
+    .lt-seg button:disabled { opacity: .4; cursor: not-allowed; }
+
+    .lt-table-actions { display: flex; justify-content: flex-end; margin: 10px 0 8px; }
+    .lt-table-wrap { overflow-x: auto; border: 1px solid var(--lt-line); border-radius: 10px; }
+    .lt-table-wrap table { width: 100%; border-collapse: collapse; min-width: 480px; }
+    .lt-table-wrap thead th { background: var(--lt-brand-gradient); color: #fff; text-align: left; font-size: 12px; font-weight: 700; padding: 10px 14px; white-space: nowrap; }
+    .lt-table-wrap tbody td { padding: 9px 14px; font-size: 13px; border-top: 1px solid var(--lt-line); font-variant-numeric: tabular-nums; }
+    .lt-table-wrap tbody tr:nth-child(even) { background: var(--lt-surface-2); }
+    .lt-table-wrap td.num { text-align: right; }
+    .lt-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+    .lt-chip.up { color: var(--lt-good); background: var(--lt-good-bg); }
+    .lt-chip.down { color: var(--lt-bad); background: var(--lt-bad-bg); }
+
+    .lt-empty { text-align: center; padding: 3rem 1.5rem; color: var(--lt-text-muted); }
+    .lt-empty .lt-empty-icon {
+        width: 64px; height: 64px; margin: 0 auto 1.1rem; border-radius: 50%;
+        background: linear-gradient(135deg, rgba(99,102,241,.14), rgba(1,225,215,.14));
+        display: flex; align-items: center; justify-content: center;
+    }
+    .lt-empty .lt-empty-icon i { font-size: 1.7rem; background: var(--lt-brand-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .lt-empty h4 { color: var(--lt-text); font-size: 16px; font-weight: 800; margin: 0 0 .4rem; }
+    .lt-empty p { font-size: 13px; max-width: 420px; margin: 0 auto; line-height: 1.5; }
+
+    @@media (max-width: 640px) {
+        .lt-kpis { grid-template-columns: 1fr; }
+        .lt-chart-head { flex-direction: column; }
+    }
+</style>
+
+<div class="container-fluid px-4">
+<div class="lt-app">
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-chart-line powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.LineaTiempo_PageTitle</h1>
+        </div>
+    </div>
+
+    @Html.AntiForgeryToken()
+
+    <section class="lt-card">
+        <p class="lt-kicker">@Resources.Strings.LineaTiempo_FilaQueVer</p>
+        <div class="lt-grid lt-grid-1" id="ltGridRow1">
+            <label><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelEmpresa</span>
+                <select id="ltEmpresa">
+                    @if (esAdmin) { <option value="">@Resources.Strings.Common_Seleccione</option> }
+                    @if (empresas != null)
+                    {
+                        foreach (var e in empresas)
+                        {
+                            <option value="@e.Id">@e.Nombre</option>
+                        }
+                    }
+                </select>
+            </label>
+            <label><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelTabla</span>
+                <select id="ltTabla">
+                    <option value="">@Resources.Strings.Common_Seleccione</option>
+                    @if (tablas != null)
+                    {
+                        foreach (var t in tablas)
+                        {
+                            <option value="@t.NombreTabla">@t.NombreAmigable</option>
+                        }
+                    }
+                </select>
+            </label>
+            <label><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelIndicador</span>
+                <select id="ltIndicador" disabled>
+                    <option value="">@Resources.Strings.Common_Seleccione</option>
+                </select>
+            </label>
+            <label id="ltCampoWrap" style="display:none;"><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelCampo</span>
+                <select id="ltCampo"></select>
+            </label>
+            <label><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelEscenario</span>
+                <select id="ltEscenario">
+                    @if (ViewBag.Escenarios != null)
+                    {
+                        foreach (var esc in ViewBag.Escenarios)
+                        {
+                            <option value="@esc.Id">@esc.Nombre</option>
+                        }
+                    }
+                </select>
+            </label>
+        </div>
+
+        <div class="lt-tabla-desc" id="ltTablaDescBox" style="display:none;">
+            <i class="ic" id="ltTablaDescIcon"></i>
+            <div><b id="ltTablaDescNombre"></b> &mdash; <span id="ltTablaDescTexto"></span></div>
+        </div>
+
+        <p class="lt-kicker mt">@Resources.Strings.LineaTiempo_FilaCuando &mdash; @Resources.Strings.LineaTiempo_FilaCuandoHint</p>
+        <div class="lt-grid lt-grid-2">
+            <label><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelVerPor</span>
+                <div class="lt-seg" id="ltSegVerPor">
+                    <button type="button" class="active" data-modo="Mes">@Resources.Strings.LineaTiempo_VerPorMes</button>
+                    <button type="button" data-modo="Trimestre">@Resources.Strings.LineaTiempo_VerPorTrimestre</button>
+                    <button type="button" data-modo="Anio">@Resources.Strings.LineaTiempo_VerPorAnio</button>
+                </div>
+            </label>
+            <label><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelDesde</span>
+                <select id="ltDesde" disabled></select>
+            </label>
+            <label><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelHasta</span>
+                <select id="ltHasta" disabled></select>
+            </label>
+        </div>
+
+        <button type="button" class="lt-comparar-toggle" id="ltBtnToggleComparar">
+            <i class="fas fa-chevron-right chev"></i>
+            @Resources.Strings.LineaTiempo_ComparaEscenario
+        </button>
+        <div class="lt-comparar-panel" id="ltCompararPanel" hidden>
+            <label><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelEscenarioComparar</span>
+                <select id="ltEscenarioComparar">
+                    <option value="">@Resources.Strings.LineaTiempo_CompararNinguna</option>
+                    @if (ViewBag.Escenarios != null)
+                    {
+                        foreach (var esc in ViewBag.Escenarios)
+                        {
+                            <option value="@esc.Id">@esc.Nombre</option>
+                        }
+                    }
+                </select>
+            </label>
+        </div>
+
+        <div class="lt-actions">
+            <button type="button" id="btnGenerarLT" class="lt-btn lt-btn-primary" disabled>
+                <i class="fas fa-arrow-right"></i>@Resources.Strings.LineaTiempo_BtnGenerar
+            </button>
+            <button type="button" id="btnLimpiarLT" class="lt-btn lt-btn-ghost">@Resources.Strings.Common_Limpiar</button>
+        </div>
+    </section>
+
+    <div id="ltEstadoInicial" class="lt-card lt-empty">
+        <div class="lt-empty-icon"><i class="fas fa-chart-line"></i></div>
+        <h4>@Resources.Strings.LineaTiempo_EstadoInicialTitulo</h4>
+        <p>@Resources.Strings.LineaTiempo_EstadoInicialDesc</p>
+    </div>
+
+    <div id="ltLoading" class="lt-card lt-empty" style="display:none;">
+        <div class="spinner-border text-primary" style="width:2.5rem;height:2.5rem;" role="status"></div>
+        <p class="mt-3">@Resources.Strings.LineaTiempo_JS_Consultando</p>
+    </div>
+
+    <div id="ltSinDatos" class="lt-card lt-empty" style="display:none;">
+        <div class="lt-empty-icon"><i class="fas fa-inbox"></i></div>
+        <h4>@Resources.Strings.LineaTiempo_SinDatosTitulo</h4>
+        <p>@Resources.Strings.LineaTiempo_SinDatosDesc</p>
+    </div>
+
+    <div id="ltResultado" style="display:none;">
+
+        <section class="lt-kpis" id="ltKpiRow"></section>
+
+        <section class="lt-card">
+            <div class="lt-letterhead">
+                <div class="lt-brand-mark"><span class="bm-icon">B</span><span class="bm-text">@Resources.Strings.LineaTiempo_BrandMark</span></div>
+                <span class="fecha" id="ltFechaGenerado"></span>
+            </div>
+            <div class="lt-chart-head">
+                <div>
+                    <h2 id="ltChartTitle">&mdash;</h2>
+                    <p class="lt-muted" id="ltChartSubtitle">&mdash;</p>
+                </div>
+                <div class="lt-toggles">
+                    <div class="lt-seg" id="ltSegUnidad" title="@Resources.Strings.LineaTiempo_LabelUnidad">
+                        <button type="button" class="active" data-unidad="pesos">@Resources.Strings.LineaTiempo_UnidadPesos</button>
+                        <button type="button" data-unidad="miles">@Resources.Strings.LineaTiempo_UnidadMiles</button>
+                        <button type="button" data-unidad="millones">@Resources.Strings.LineaTiempo_UnidadMillones</button>
+                    </div>
+                    <div class="lt-seg" id="ltSegTipoGrafico">
+                        <button type="button" class="active" data-tipo="line">@Resources.Strings.LineaTiempo_SegLineas</button>
+                        <button type="button" data-tipo="bar">@Resources.Strings.LineaTiempo_SegBarras</button>
+                    </div>
+                    <div class="lt-seg" id="ltSegVista">
+                        <button type="button" class="active" data-view="chart">@Resources.Strings.LineaTiempo_SegGrafico</button>
+                        <button type="button" data-view="table">@Resources.Strings.LineaTiempo_SegTabla</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ltViewChart"><canvas id="ltChart" height="90"></canvas></div>
+
+            <div id="ltViewTable" hidden>
+                <div class="lt-table-actions">
+                    <button type="button" id="btnExportarLT" class="lt-btn lt-btn-excel">
+                        <i class="fas fa-file-excel"></i>@Resources.Strings.Common_ExportarExcel
+                    </button>
+                </div>
+                <div class="lt-table-wrap">
+                    <table><thead><tr id="ltTablaHead"></tr></thead><tbody id="ltTablaBody"></tbody></table>
+                </div>
+            </div>
+        </section>
+    </div>
+
+</div>
+</div>
+
+@section scripts {
+<script src="~/Assets/js/chart.umd.min.js"></script>
+<script src="~/Assets/js/select2/select2.min.js"></script>
+<script>
+(function () {
+    var CATALOGO_TABLAS = {
+@if (tablas != null)
+{
+    for (int i = 0; i < tablas.Count; i++)
+    {
+        var t = tablas[i];
+        <text>'@t.NombreTabla': { nombre: '@Html.Raw(HttpUtility.JavaScriptStringEncode(t.NombreAmigable))', icono: '@Html.Raw(HttpUtility.JavaScriptStringEncode(t.Icono ?? "fas fa-table"))', descripcion: '@Html.Raw(HttpUtility.JavaScriptStringEncode(t.Descripcion ?? ""))' }@(i < tablas.Count - 1 ? "," : "")</text>
+    }
+}
+    };
+
+    var _lt = {
+        urls: {
+            indicadores: '@Url.Action("ObtenerIndicadores", "InformeLineaTiempo")',
+            campos:      '@Url.Action("ObtenerCampos", "InformeLineaTiempo")',
+            meses:       '@Url.Action("ObtenerRangoMeses", "InformeLineaTiempo")',
+            serie:       '@Url.Action("ObtenerSerie", "InformeLineaTiempo")',
+            exportar:    '@Url.Action("ExportarExcel", "InformeLineaTiempo")'
+        },
+        token: $('input[name="__RequestVerificationToken"]').val(),
+        textos: {
+            colValor:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_ColValor))',
+            colComparacion: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_ColComparacion))',
+            colPeriodo:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_ColPeriodo))',
+            colVariacion:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_ColVariacion))',
+            kpiUltimo:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_KpiUltimo))',
+            kpiPromedio:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_KpiPromedio))',
+            kpiPeriodos:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_KpiPeriodos))',
+            statDeltaSufijo:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_StatDeltaSufijo))',
+            generadoElFmt:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_GeneradoElFmt))',
+            unidadSufijoMiles:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_UnidadSufijoMiles))',
+            unidadSufijoMillones: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_UnidadSufijoMillones))'
+        },
+        cultura: '@Html.Raw(HttpUtility.JavaScriptStringEncode(culturaJs))',
+        esAdmin: @Html.Raw(esAdmin.ToString().ToLowerInvariant()),
+        campoUnico: null,
+        agrupar: 'Mes',
+        unidad: 'pesos',
+        tipoGrafico: 'line',
+        chart: null,
+        ultimaRespuesta: null
+    };
+
+    var elEmpresa = $('#ltEmpresa'), elTabla = $('#ltTabla'), elIndicador = $('#ltIndicador'),
+        elCampo = $('#ltCampo'), elEscenario = $('#ltEscenario'), elDesde = $('#ltDesde'), elHasta = $('#ltHasta'),
+        elEscenarioComparar = $('#ltEscenarioComparar');
+
+    // Construidos con fromCharCode (no como literales en el archivo) para no depender de
+    // como el compilador de Razor decida leer bytes no-ASCII en este .cshtml.
+    var CH_UP = String.fromCharCode(0x25B2), CH_DOWN = String.fromCharCode(0x25BC),
+        CH_MDASH = String.fromCharCode(0x2014), CH_NDASH = String.fromCharCode(0x2013),
+        CH_MIDDOT = String.fromCharCode(0xB7);
+
+    // Chart.js no trae etiquetas de dato por defecto (habría que sumar el plugin oficial
+    // chartjs-plugin-datalabels, no vendorizado en el proyecto) — este plugin liviano dibuja
+    // el valor encima de cada barra/punto usando el mismo formato compacto del resto de la vista.
+    var ltDataLabelsPlugin = {
+        id: 'ltDataLabels',
+        afterDatasetsDraw: function (chart) {
+            var ctx = chart.ctx;
+            ctx.save();
+            ctx.font = '600 10.5px ' + (ctx.font.split(' ').pop() || 'sans-serif');
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            chart.data.datasets.forEach(function (dataset, i) {
+                var meta = chart.getDatasetMeta(i);
+                if (!meta || meta.hidden) return;
+                ctx.fillStyle = dataset.borderColor || '#333';
+                meta.data.forEach(function (el, idx) {
+                    var valor = dataset.data[idx];
+                    if (valor === null || valor === undefined) return;
+                    var pos = el.tooltipPosition ? el.tooltipPosition() : { x: el.x, y: el.y };
+                    ctx.fillText(fmtCompacto(valor), pos.x, pos.y - 6);
+                });
+            });
+            ctx.restore();
+        }
+    };
+
+    var s2lang = {
+        noResults: function () { return '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Select2NoResults))'; },
+        searching: function () { return '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Select2Searching))'; }
+    };
+
+    $(document).ready(function () {
+        $('#ltEmpresa, #ltTabla, #ltIndicador, #ltCampo, #ltEscenario, #ltEscenarioComparar, #ltDesde, #ltHasta')
+            .select2({ width: '100%', language: s2lang, dropdownAutoWidth: false });
+
+        $('#ltEmpresa, #ltTabla, #ltEscenario').on('change', recargarCascada);
+        $('#ltTabla').on('change', actualizarDescripcionTabla);
+
+        $('#ltSegVerPor button').on('click', function () {
+            $('#ltSegVerPor button').removeClass('active');
+            $(this).addClass('active');
+            _lt.agrupar = $(this).data('modo');
+        });
+
+        $('#ltBtnToggleComparar').on('click', function () {
+            var abierto = !$('#ltCompararPanel').prop('hidden');
+            $('#ltCompararPanel').prop('hidden', abierto);
+            $(this).toggleClass('open', !abierto);
+        });
+
+        $('#ltIndicador, #ltDesde, #ltHasta').on('change', actualizarBotonGenerar);
+        $('#btnGenerarLT').on('click', generar);
+        $('#btnLimpiarLT').on('click', limpiar);
+        $('#btnExportarLT').on('click', exportar);
+
+        $('#ltSegUnidad button').on('click', function () {
+            $('#ltSegUnidad button').removeClass('active');
+            $(this).addClass('active');
+            _lt.unidad = $(this).data('unidad');
+            if (_lt.ultimaRespuesta) {
+                pintarKpis(_lt.ultimaRespuesta);
+                pintarGrafico(_lt.ultimaRespuesta);
+                pintarTabla(_lt.ultimaRespuesta);
+            }
+        });
+
+        $('#ltSegTipoGrafico button').on('click', function () {
+            $('#ltSegTipoGrafico button').removeClass('active');
+            $(this).addClass('active');
+            _lt.tipoGrafico = $(this).data('tipo');
+            if (_lt.ultimaRespuesta) pintarGrafico(_lt.ultimaRespuesta);
+        });
+
+        $('#ltSegVista button').on('click', function () {
+            $('#ltSegVista button').removeClass('active');
+            $(this).addClass('active');
+            var vista = $(this).data('view');
+            $('#ltViewChart').prop('hidden', vista !== 'chart');
+            $('#ltViewTable').prop('hidden', vista !== 'table');
+        });
+
+        actualizarDescripcionTabla();
+        recargarCascada();
+    });
+
+    function empresaSeleccionada() {
+        var v = elEmpresa.val();
+        return v ? parseInt(v, 10) : null;
+    }
+
+    function actualizarDescripcionTabla() {
+        var t = CATALOGO_TABLAS[elTabla.val()];
+        if (!t) { $('#ltTablaDescBox').hide(); return; }
+        $('#ltTablaDescIcon').attr('class', 'ic ' + t.icono);
+        $('#ltTablaDescNombre').text(t.nombre);
+        $('#ltTablaDescTexto').text(t.descripcion || '');
+        $('#ltTablaDescBox').toggle(!!t.descripcion);
+    }
+
+    function actualizarBotonGenerar() {
+        var listo = !!elTabla.val() && !!elIndicador.val() && !!elDesde.val() && !!elHasta.val()
+            && (!_lt.esAdmin || !!empresaSeleccionada());
+        $('#btnGenerarLT').prop('disabled', !listo);
+    }
+
+    function recargarCascada() {
+        var nombreTabla = elTabla.val();
+        var idEmpresa   = empresaSeleccionada();
+        var idEscenario = elEscenario.val();
+
+        elIndicador.empty().append('<option value="">@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))</option>').val('').prop('disabled', true).trigger('change.select2');
+        elDesde.empty().val('').prop('disabled', true).trigger('change.select2');
+        elHasta.empty().val('').prop('disabled', true).trigger('change.select2');
+        $('#ltCampoWrap').hide();
+        $('#ltGridRow1').removeClass('has-campo');
+        $('#ltResultado, #ltSinDatos').hide();
+        $('#ltEstadoInicial').show();
+        actualizarBotonGenerar();
+
+        if (!nombreTabla || (_lt.esAdmin && !idEmpresa)) return;
+
+        $.post(_lt.urls.indicadores, { nombreTabla: nombreTabla, idEmpresa: idEmpresa, idEscenario: idEscenario, __RequestVerificationToken: _lt.token }, function (resp) {
+            if (!resp.success) return;
+            var indicadores = resp.indicadores || [];
+            indicadores.forEach(function (v) {
+                elIndicador.append($('<option>').val(v).text(v));
+            });
+            if (indicadores.length > 0) elIndicador.val(indicadores[0]);
+            elIndicador.prop('disabled', false).trigger('change.select2');
+            actualizarBotonGenerar();
+        });
+
+        $.post(_lt.urls.campos, { nombreTabla: nombreTabla, __RequestVerificationToken: _lt.token }, function (resp) {
+            if (!resp.success) return;
+            var campos = resp.campos || [];
+            if (campos.length > 1) {
+                elCampo.empty();
+                campos.forEach(function (c) { elCampo.append($('<option>').val(c.nombreTecnico).text(c.nombreAmigable)); });
+                elCampo.val(campos[0].nombreTecnico).trigger('change.select2');
+                _lt.campoUnico = null;
+                $('#ltCampoWrap').show();
+                $('#ltGridRow1').addClass('has-campo');
+            } else {
+                _lt.campoUnico = campos.length === 1 ? campos[0].nombreTecnico : null;
+                $('#ltCampoWrap').hide();
+                $('#ltGridRow1').removeClass('has-campo');
+            }
+        });
+
+        $.post(_lt.urls.meses, { nombreTabla: nombreTabla, idEmpresa: idEmpresa, idEscenario: idEscenario, __RequestVerificationToken: _lt.token }, function (resp) {
+            if (!resp.success) return;
+            var meses = resp.meses || [];
+            meses.forEach(function (m) {
+                var valor = m.anio + '-' + m.mes;
+                elDesde.append($('<option>').val(valor).text(m.etiqueta));
+                elHasta.append($('<option>').val(valor).text(m.etiqueta));
+            });
+            if (meses.length > 0) {
+                elDesde.val(meses[0].anio + '-' + meses[0].mes);
+                elHasta.val(meses[meses.length - 1].anio + '-' + meses[meses.length - 1].mes);
+            }
+            elDesde.prop('disabled', meses.length === 0).trigger('change.select2');
+            elHasta.prop('disabled', meses.length === 0).trigger('change.select2');
+            actualizarBotonGenerar();
+        });
+    }
+
+    function campoSeleccionado() {
+        return $('#ltCampoWrap').is(':visible') ? elCampo.val() : _lt.campoUnico;
+    }
+
+    function armarFiltros() {
+        var desde = (elDesde.val() || '').split('-');
+        var hasta = (elHasta.val() || '').split('-');
+
+        return {
+            NombreTabla: elTabla.val(),
+            IdEmpresa: empresaSeleccionada(),
+            IdEscenario: elEscenario.val(),
+            IdEscenarioComparar: $('#ltEscenarioComparar').val() || null,
+            Indicador: elIndicador.val(),
+            Campo: campoSeleccionado(),
+            AnioDesde: parseInt(desde[0], 10),
+            MesDesde: parseInt(desde[1], 10),
+            AnioHasta: parseInt(hasta[0], 10),
+            MesHasta: parseInt(hasta[1], 10),
+            Agrupar: _lt.agrupar,
+            __RequestVerificationToken: _lt.token
+        };
+    }
+
+    function generar() {
+        var filtros = armarFiltros();
+        if (!filtros.Campo) return;
+
+        $('#ltEstadoInicial, #ltSinDatos, #ltResultado').hide();
+        $('#ltLoading').show();
+
+        $.post(_lt.urls.serie, filtros, function (resp) {
+            $('#ltLoading').hide();
+            if (!resp.success || !resp.principal || resp.principal.length === 0) {
+                $('#ltSinDatos').show();
+                return;
+            }
+            _lt.ultimaRespuesta = resp;
+            pintarKpis(resp);
+            pintarLetterhead(resp);
+            pintarGrafico(resp);
+            pintarTabla(resp);
+            $('#ltResultado').show();
+        }).fail(function () {
+            $('#ltLoading').hide();
+            $('#ltSinDatos').show();
+        });
+    }
+
+    function limpiar() {
+        elTabla.val('').trigger('change.select2');
+        if (_lt.esAdmin) elEmpresa.prop('selectedIndex', 0).trigger('change.select2');
+        elEscenario.prop('selectedIndex', 0).trigger('change.select2');
+        elEscenarioComparar.val('').trigger('change.select2');
+        $('#ltCompararPanel').prop('hidden', true);
+        $('#ltBtnToggleComparar').removeClass('open');
+        _lt.agrupar = 'Mes';
+        $('#ltSegVerPor button').removeClass('active');
+        $('#ltSegVerPor button[data-modo="Mes"]').addClass('active');
+        _lt.unidad = 'pesos';
+        $('#ltSegUnidad button').removeClass('active');
+        $('#ltSegUnidad button[data-unidad="pesos"]').addClass('active');
+        actualizarDescripcionTabla();
+        recargarCascada();
+    }
+
+    function escalarValor(v) {
+        if (_lt.unidad === 'miles') return v / 1000;
+        if (_lt.unidad === 'millones') return v / 1000000;
+        return v;
+    }
+
+    function sufijoUnidad() {
+        if (_lt.unidad === 'miles') return ' ' + _lt.textos.unidadSufijoMiles;
+        if (_lt.unidad === 'millones') return ' ' + _lt.textos.unidadSufijoMillones;
+        return '';
+    }
+
+    function fmtCompacto(v) {
+        var escalado = escalarValor(v);
+        var decimales = _lt.unidad === 'pesos' ? 0 : 1;
+        try { return new Intl.NumberFormat(_lt.cultura, { minimumFractionDigits: decimales, maximumFractionDigits: decimales }).format(escalado) + sufijoUnidad(); }
+        catch (e) { return escalado + sufijoUnidad(); }
+    }
+
+    function fmtDecimal(v) {
+        var escalado = escalarValor(v);
+        var decimales = _lt.unidad === 'pesos' ? 2 : 1;
+        try { return new Intl.NumberFormat(_lt.cultura, { minimumFractionDigits: decimales, maximumFractionDigits: decimales }).format(escalado) + sufijoUnidad(); }
+        catch (e) { return escalado + sufijoUnidad(); }
+    }
+
+    function statTile(label, value, delta) {
+        var deltaHtml = '';
+        if (delta !== null && delta !== undefined && !isNaN(delta)) {
+            var cls = delta >= 0 ? 'up' : 'down', flecha = delta >= 0 ? CH_UP : CH_DOWN;
+            deltaHtml = '<span class="lt-stat-delta ' + cls + '">' + flecha + ' ' + Math.abs(delta).toFixed(1) + '% ' + _lt.textos.statDeltaSufijo + '</span>';
+        }
+        return '<div class="lt-stat-tile"><div class="lt-stat-label">' + $('<span>').text(label).html() + '</div>' +
+            '<div class="lt-stat-value">' + $('<span>').text(value).html() + '</div>' + deltaHtml + '</div>';
+    }
+
+    function pintarKpis(resp) {
+        var pts = resp.principal;
+        var ultimo = pts[pts.length - 1].valor;
+        var previo = pts.length > 1 ? pts[pts.length - 2].valor : ultimo;
+        var variacion = previo ? ((ultimo - previo) / Math.abs(previo)) * 100 : null;
+        var promedio = pts.reduce(function (a, p) { return a + p.valor; }, 0) / pts.length;
+
+        $('#ltKpiRow').html(
+            statTile(_lt.textos.kpiUltimo, fmtCompacto(ultimo), pts.length > 1 ? variacion : null) +
+            statTile(_lt.textos.kpiPromedio, fmtCompacto(promedio), null) +
+            statTile(_lt.textos.kpiPeriodos, String(pts.length), null)
+        );
+    }
+
+    function pintarLetterhead(resp) {
+        var titulo = elIndicador.val();
+        var tablaInfo = CATALOGO_TABLAS[elTabla.val()] || {};
+        var empresaTexto = elEmpresa.find(':selected').text();
+        var escenarioTexto = resp.nombreEscenarioPrincipal || elEscenario.find(':selected').text();
+        var rango = resp.principal.length ? (resp.principal[0].etiqueta + (resp.principal.length > 1 ? (' ' + CH_NDASH + ' ' + resp.principal[resp.principal.length - 1].etiqueta) : '')) : '';
+        var subtitulo = (tablaInfo.nombre || '') + ' ' + CH_MIDDOT + ' ' + empresaTexto + ' ' + CH_MIDDOT + ' ' + escenarioTexto +
+            (resp.comparacion && resp.comparacion.length ? (' vs. ' + (resp.nombreEscenarioComparacion || '')) : '') +
+            (rango ? (' ' + CH_MIDDOT + ' ' + rango) : '');
+
+        $('#ltChartTitle').text(titulo);
+        $('#ltChartSubtitle').text(subtitulo);
+
+        try {
+            $('#ltFechaGenerado').text(_lt.textos.generadoElFmt.replace('{0}',
+                new Date().toLocaleDateString(_lt.cultura, { day: 'numeric', month: 'long', year: 'numeric' })));
+        } catch (e) { $('#ltFechaGenerado').text(''); }
+    }
+
+    function pintarGrafico(resp) {
+        var labels = resp.principal.map(function (p) { return p.etiqueta; });
+        var esBarra = _lt.tipoGrafico === 'bar';
+
+        var datasets = [{
+            label: resp.nombreEscenarioPrincipal || _lt.textos.colValor,
+            data: resp.principal.map(function (p) { return p.valor; }),
+            borderColor: '#6366F1',
+            backgroundColor: esBarra ? 'rgba(99,102,241,.85)' : 'rgba(99,102,241,.16)',
+            borderWidth: esBarra ? 0 : 2.5,
+            borderRadius: esBarra ? 6 : 0,
+            maxBarThickness: 38,
+            minBarLength: esBarra ? 30 : undefined,
+            tension: 0.35,
+            fill: !esBarra,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#6366F1'
+        }];
+
+        if (resp.comparacion && resp.comparacion.length > 0) {
+            datasets.push({
+                label: resp.nombreEscenarioComparacion || _lt.textos.colComparacion,
+                data: resp.comparacion.map(function (p) { return p.valor; }),
+                borderColor: '#D97706',
+                backgroundColor: esBarra ? 'rgba(217,119,6,.85)' : 'rgba(217,119,6,.16)',
+                borderWidth: esBarra ? 0 : 2.5,
+                borderRadius: esBarra ? 6 : 0,
+                maxBarThickness: 38,
+                minBarLength: esBarra ? 30 : undefined,
+                tension: 0.35,
+                fill: !esBarra,
+                pointRadius: 3,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#D97706'
+            });
+        }
+
+        if (_lt.chart) { _lt.chart.destroy(); }
+        _lt.chart = new Chart(document.getElementById('ltChart').getContext('2d'), {
+            type: esBarra ? 'bar' : 'line',
+            data: { labels: labels, datasets: datasets },
+            plugins: [ltDataLabelsPlugin],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { top: 20 } },
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: datasets.length > 1, position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 12, boxHeight: 12 } },
+                    tooltip: { mode: 'index', intersect: false, callbacks: { label: function (ctx) { return ctx.dataset.label + ': ' + fmtCompacto(ctx.parsed.y); } } }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { beginAtZero: false, ticks: { callback: function (v) { return fmtCompacto(v); } } }
+                }
+            }
+        });
+    }
+
+    function pintarTabla(resp) {
+        var conComparacion = resp.comparacion && resp.comparacion.length > 0;
+        var head = '<th>' + _lt.textos.colPeriodo + '</th><th style="text-align:right;">' + $('<span>').text(resp.nombreEscenarioPrincipal || _lt.textos.colValor).html() + '</th>';
+        if (conComparacion) head += '<th style="text-align:right;">' + $('<span>').text(resp.nombreEscenarioComparacion || _lt.textos.colComparacion).html() + '</th><th style="text-align:right;">' + _lt.textos.colVariacion + '</th>';
+        $('#ltTablaHead').html(head);
+
+        var comparacionPorClave = {};
+        if (conComparacion) {
+            resp.comparacion.forEach(function (p) { comparacionPorClave[p.anio + '-' + p.mes] = p.valor; });
+        }
+
+        var filas = resp.principal.map(function (p) {
+            var fila = '<tr><td>' + $('<span>').text(p.etiqueta).html() + '</td><td class="num">' + fmtDecimal(p.valor) + '</td>';
+            if (conComparacion) {
+                var b = comparacionPorClave[p.anio + '-' + p.mes];
+                if (b !== undefined) {
+                    var delta = b ? ((p.valor - b) / Math.abs(b)) * 100 : 0;
+                    var cls = delta >= 0 ? 'up' : 'down', flecha = delta >= 0 ? CH_UP : CH_DOWN;
+                    fila += '<td class="num">' + fmtDecimal(b) + '</td><td class="num"><span class="lt-chip ' + cls + '">' + flecha + ' ' + Math.abs(delta).toFixed(1) + '%</span></td>';
+                } else {
+                    fila += '<td class="num">' + CH_MDASH + '</td><td class="num">' + CH_MDASH + '</td>';
+                }
+            }
+            return fila + '</tr>';
+        }).join('');
+        $('#ltTablaBody').html(filas);
+    }
+
+    function exportar() {
+        var filtros = armarFiltros();
+        if (!filtros.Campo) return;
+
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = _lt.urls.exportar;
+
+        Object.keys(filtros).forEach(function (k) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = k;
+            input.value = filtros[k] == null ? '' : filtros[k];
+            form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    }
+})();
+</script>
+}
