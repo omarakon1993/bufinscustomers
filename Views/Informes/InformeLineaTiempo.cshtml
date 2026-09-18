@@ -165,6 +165,11 @@
             <div><b id="ltTablaDescNombre"></b> &mdash; <span id="ltTablaDescTexto"></span></div>
         </div>
 
+        <div class="lt-tabla-banner warning" id="ltSinDatosModeloBox" style="display:none;" title="@Resources.Strings.LineaTiempo_SinDatosModelo">
+            <i class="ic fas fa-exclamation-triangle"></i>
+            <div>@Resources.Strings.LineaTiempo_SinDatosModelo</div>
+        </div>
+
         <div class="lt-section-title mt"><span>@Resources.Strings.LineaTiempo_FilaCuando</span></div>
         <div class="lt-grid-rango">
             <div>
@@ -441,7 +446,6 @@
             .select2({ width: '100%', language: s2lang, dropdownAutoWidth: false });
 
         $('#ltEmpresa, #ltTabla, #ltEscenario').on('change', recargarCascada);
-        $('#ltTabla').on('change', actualizarDescripcionTabla);
 
         $('#ltSegVerPor button').on('click', function () {
             var modo = $(this).data('modo');
@@ -497,22 +501,12 @@
             $('#ltViewTable').prop('hidden', vista !== 'table');
         });
 
-        actualizarDescripcionTabla();
         recargarCascada();
     });
 
     function empresaSeleccionada() {
         var v = elEmpresa.val();
         return v ? parseInt(v, 10) : null;
-    }
-
-    function actualizarDescripcionTabla() {
-        var t = CATALOGO_TABLAS[elTabla.val()];
-        if (!t) { $('#ltTablaDescBox').hide(); return; }
-        $('#ltTablaDescIcon').attr('class', 'ic ' + t.icono);
-        $('#ltTablaDescNombre').text(t.nombre);
-        $('#ltTablaDescTexto').text(t.descripcion || '');
-        $('#ltTablaDescBox').toggle(!!t.descripcion);
     }
 
     function actualizarBotonGenerar() {
@@ -534,6 +528,7 @@
         $('#ltCampoWrap').hide();
         $('#ltResultado, #ltSinDatos').hide();
         $('#ltEstadoInicial').show();
+        ocultarBanners();
         actualizarBotonGenerar();
 
         if (!nombreTabla || (_lt.esAdmin && !idEmpresa)) return;
@@ -545,7 +540,8 @@
                 elIndicador.append($('<option>').val(v).text(v));
             });
             if (indicadores.length > 0) elIndicador.val(indicadores[0]);
-            elIndicador.prop('disabled', false).trigger('change.select2');
+            elIndicador.prop('disabled', indicadores.length === 0).trigger('change.select2');
+            actualizarBannerTabla(indicadores.length > 0);
             actualizarBotonGenerar();
         });
 
@@ -574,6 +570,24 @@
             if (meses.length > 0) aplicarPresetRango('12m'); else pintarRango();
             actualizarBotonGenerar();
         });
+    }
+
+    function ocultarBanners() {
+        $('#ltTablaDescBox, #ltSinDatosModeloBox').hide();
+    }
+
+    function actualizarBannerTabla(hayDatos) {
+        var t = CATALOGO_TABLAS[elTabla.val()];
+        $('#ltSinDatosModeloBox').toggle(!hayDatos);
+        $('#ltSegVerPor button').prop('disabled', !hayDatos);
+        if (hayDatos && t && t.descripcion) {
+            $('#ltTablaDescIcon').attr('class', 'ic ' + t.icono);
+            $('#ltTablaDescNombre').text(t.nombre);
+            $('#ltTablaDescTexto').text(t.descripcion);
+            $('#ltTablaDescBox').show();
+        } else {
+            $('#ltTablaDescBox').hide();
+        }
     }
 
     // ===== Slider de rango de meses =====
@@ -759,7 +773,6 @@
         _lt.unidad = 'pesos';
         $('#ltSegUnidad button').removeClass('active');
         $('#ltSegUnidad button[data-unidad="pesos"]').addClass('active');
-        actualizarDescripcionTabla();
         recargarCascada();
     }
 
