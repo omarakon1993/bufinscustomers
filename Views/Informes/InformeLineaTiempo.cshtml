@@ -39,6 +39,8 @@
 
     .lt-card { background: var(--lt-surface); border: 1px solid var(--lt-line); border-radius: 14px; padding: 16px 20px; margin-bottom: 16px; box-shadow: var(--lt-shadow); }
 
+    .lt-header-tag { font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,.65); background: rgba(255,255,255,.12); padding: 2px 9px; border-radius: 999px; letter-spacing: .02em; white-space: nowrap; margin-left: 2px; }
+
     .lt-btn { font-size: 12.5px; font-weight: 700; border-radius: 8px; padding: 8px 16px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
     .lt-btn:disabled { opacity: .5; cursor: not-allowed; }
     .lt-btn-excel { background: #217346; color: #fff; }
@@ -64,8 +66,9 @@
     .lt-muted { color: var(--lt-text-muted); font-size: 12.5px; margin: 3px 0 0; }
     .lt-toggles { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
 
-    .lt-seg-toggle { display: flex; background: var(--lt-surface-2); border: 1px solid var(--lt-line); border-radius: 9px; padding: 3px; }
-    .lt-seg-toggle button { font-size: 12.5px; font-weight: 700; color: var(--lt-text-2); background: transparent; border: none; border-radius: 7px; padding: 6px 13px; cursor: pointer; }
+    .lt-seg-toggle { display: flex; background: var(--lt-surface-2); border: 1px solid var(--lt-line); border-radius: 9px; padding: 3px; overflow: hidden; max-width: 220px; transition: opacity .18s ease, max-width .18s ease, padding .18s ease, border-width .18s ease, margin .18s ease; }
+    .lt-seg-toggle.lt-hide { opacity: 0; max-width: 0; padding: 0; border-width: 0; margin: 0; pointer-events: none; }
+    .lt-seg-toggle button { font-size: 12.5px; font-weight: 700; color: var(--lt-text-2); background: transparent; border: none; border-radius: 7px; padding: 6px 13px; cursor: pointer; white-space: nowrap; }
     .lt-seg-toggle button.active { background: var(--lt-brand-gradient); color: #fff; }
     .lt-seg-toggle button:disabled { opacity: .4; cursor: not-allowed; }
 
@@ -107,6 +110,7 @@
         <div class="powerbi-header-content">
             <i class="fas fa-chart-line powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@Resources.Strings.LineaTiempo_PageTitle</h1>
+            <span class="lt-header-tag" title="@Resources.Strings.LineaTiempo_HeaderTagTooltip">@Resources.Strings.LineaTiempo_HeaderTag</span>
         </div>
     </div>
 
@@ -379,6 +383,7 @@
             pdfGenerando:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_PdfGenerando))',
             pdfErrorGeneral:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_JS_ErrorPdf))',
             pdfFooter:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_PdfFooter))',
+            pdfUnidadPrefijo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_PdfUnidadPrefijo))',
             badgeMes:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_BadgeMes))',
             badgeMeses:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_BadgeMeses))',
             agruparAyuda: {
@@ -499,6 +504,7 @@
             var vista = $(this).data('view');
             $('#ltViewChart').prop('hidden', vista !== 'chart');
             $('#ltViewTable').prop('hidden', vista !== 'table');
+            $('#ltSegTipoGrafico').toggleClass('lt-hide', vista !== 'chart');
         });
 
         recargarCascada();
@@ -1034,6 +1040,15 @@
                 pdf.setFont(undefined, 'normal');
             });
             y += 24;
+
+            // Unidad en la que se exportaron las cifras (el toggle Pesos/Miles/Millones no queda
+            // capturado en la imagen del gráfico, así que se deja explícito como texto aparte)
+            var unidadTexto = $('#ltSegUnidad button.active').text().trim();
+            pdf.setFontSize(8.5);
+            pdf.setTextColor(140, 135, 160);
+            pdf.text(_lt.textos.pdfUnidadPrefijo + ' ' + unidadTexto, margin, y);
+            pdf.setTextColor(30, 20, 50);
+            y += 7;
 
             // Gráfico (imagen nativa de Chart.js, sin html2canvas)
             var imgData = _lt.chart.toBase64Image('image/png', 1.0);
