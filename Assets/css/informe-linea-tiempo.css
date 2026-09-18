@@ -1,0 +1,98 @@
+/* ===== Informe Dinámico Líneas de Tiempo — panel de filtros (spec "opción 1a") ===== */
+/* Construido sobre los tokens de marca ya usados en bufins-components.css (--content-gradient, #583AFF, #01E1D7, bordes #e3e6f0, radios) */
+
+/* Títulos de sección dentro de .filter-card ("QUÉ VER" / "RANGO Y AGRUPACIÓN") */
+.lt-section-title{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#583AFF;margin:0 0 14px}
+.lt-section-title::after{content:'';flex:1;height:1px;background:#e3e6f0}
+.lt-section-title.mt{margin-top:22px}
+
+/* "Qué ver": grilla de 5 campos */
+.lt-grid-5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.lt-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.lt-field-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:#6b7280;text-align:left}
+
+.lt-field-select{font-family:'Nunito',inherit;font-size:14px;font-weight:600;color:#2d3748;width:100%;border:1px solid #e3e6f0;border-radius:10px;padding:9px 30px 9px 12px;background-color:#fff;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23583AFF' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:10px 6px;transition:border-color .15s ease,box-shadow .15s ease}
+.lt-field-select:focus{outline:none;border-color:#583AFF;box-shadow:0 0 0 3px rgba(88,58,255,.12)}
+.lt-field-select:disabled{opacity:.5;cursor:not-allowed}
+
+/* Select2 restyled para que se vea idéntico al select plano de arriba (se conserva Select2 por la búsqueda en Empresa/Tabla con muchos registros) */
+.lt-field .select2-container{width:100% !important}
+.lt-field .select2-container--default .select2-selection--single{border:1px solid #e3e6f0;border-radius:10px;height:auto;padding:9px 30px 9px 12px;background-color:#fff;transition:border-color .15s ease,box-shadow .15s ease}
+.lt-field .select2-container--default .select2-selection--single .select2-selection__rendered{padding:0;font-family:'Nunito',inherit;font-size:14px;font-weight:600;color:#2d3748;line-height:normal}
+.lt-field .select2-container--default .select2-selection--single .select2-selection__placeholder{color:#9ca3af}
+.lt-field .select2-container--default .select2-selection--single .select2-selection__arrow{height:100%;top:0;right:8px;width:16px}
+.lt-field .select2-container--default .select2-selection--single .select2-selection__arrow b{display:none}
+.lt-field .select2-container--default .select2-selection--single .select2-selection__arrow::after{content:'';position:absolute;right:0;top:50%;width:10px;height:6px;margin-top:-3px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23583AFF' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center/contain}
+.lt-field .select2-container--default.select2-container--open .select2-selection--single,
+.lt-field .select2-container--default .select2-selection--single:focus{border-color:#583AFF;box-shadow:0 0 0 3px rgba(88,58,255,.12)}
+.lt-field .select2-container--default.select2-container--disabled .select2-selection--single{opacity:.5;cursor:not-allowed;background:#fff}
+.lt-field .select2-dropdown{border-color:#e3e6f0;border-radius:10px;overflow:hidden}
+.lt-field .select2-search--dropdown .select2-search__field{border:1px solid #e3e6f0;border-radius:6px;padding:6px 8px;font-size:13px}
+.lt-field .select2-results__option--highlighted[aria-selected]{background:#583AFF !important}
+
+/* Banner de descripción de la tabla seleccionada */
+.lt-tabla-banner{display:flex;align-items:center;gap:10px;margin-top:14px;padding:9px 14px;background:#f8f9fc;border:1px solid #e3e6f0;border-left:3px solid #583AFF;border-radius:8px;font-size:12px;color:#6b7280;line-height:1.4}
+.lt-tabla-banner .ic{font-size:15px;color:#583AFF;flex-shrink:0}
+.lt-tabla-banner b{color:#2d3748}
+
+/* "Rango y agrupación": Agrupar por (izq) + Rango de fechas (der) */
+.lt-grid-rango{display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px;align-items:start}
+
+/* Agrupar por — segmentado de 3 columnas iguales, icono arriba + texto debajo */
+.lt-seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:#f8f9fc;border:1px solid #e3e6f0;border-radius:12px;padding:4px;gap:4px}
+.lt-seg button{border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0 8px;border-radius:9px;font-family:inherit;font-size:12.5px;font-weight:700;color:#6b7280;white-space:nowrap;transition:all .15s ease}
+.lt-seg button i{font-size:12px;opacity:.6}
+.lt-seg button:hover{color:#583AFF}
+.lt-seg button.active{background:var(--content-gradient);color:#fff;box-shadow:0 2px 8px rgba(22,9,51,.25)}
+.lt-seg button.active i{opacity:1}
+.lt-seg-hint{font-size:12px;color:#9ca3af;margin:8px 0 0}
+
+/* Rango de fechas — atajos + slider de rango de meses */
+.lt-rango-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.lt-atajos{display:flex;gap:6px;flex-wrap:wrap}
+.lt-chip{border:1px solid #e3e6f0;background:#fff;color:#4b5563;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;white-space:nowrap;transition:all .15s ease}
+.lt-chip:hover{border-color:#a5b4fc;color:#583AFF}
+.lt-chip.active{background:#eef2ff;border-color:#583AFF;color:#583AFF}
+.lt-chip:disabled{opacity:.5;cursor:not-allowed}
+
+.lt-range-card{border:1px solid #e3e6f0;border-radius:12px;padding:14px 16px 10px;background:#fff}
+.lt-range-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px}
+.lt-range-head .lbl{font-size:17px;font-weight:800;color:#2d3748;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lt-range-head .lbl i{color:#9ca3af;font-size:13px;margin:0 8px}
+.lt-range-badge{font-size:12px;font-weight:700;color:#583AFF;background:#eef2ff;padding:4px 11px;border-radius:999px;white-space:nowrap;flex-shrink:0}
+.lt-range-track{position:relative;height:26px;cursor:pointer;touch-action:none}
+.lt-range-track .bg{position:absolute;top:11px;left:0;right:0;height:5px;border-radius:999px;background:#eef0f6}
+.lt-range-track .sel{position:absolute;top:11px;height:5px;border-radius:999px;background:linear-gradient(90deg,#6366F1,#01E1D7)}
+.lt-range-track .knob{position:absolute;top:2px;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(22,9,51,.25);cursor:grab;touch-action:none}
+.lt-range-track .knob:active{cursor:grabbing}
+.lt-range-track .knob.from{border:3px solid #583AFF}
+.lt-range-track .knob.to{border:3px solid #01E1D7}
+.lt-range-track .knob:focus-visible{outline:2px solid #583AFF;outline-offset:2px}
+.lt-range-track .knob,.lt-range-track .sel{transition:left .12s ease,width .12s ease}
+.lt-range-track.dragging .knob,.lt-range-track.dragging .sel{transition:none}
+.lt-range-track.disabled{opacity:.5;pointer-events:none}
+.lt-range-years{display:flex;justify-content:space-between;margin-top:2px}
+.lt-range-years span{font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:.04em}
+
+.lt-help{font-size:12.5px;color:#9ca3af;margin:8px 0 0}
+
+/* Barra de acciones final (comparar escenario + botones) */
+.lt-actions-bar{border-top:1px solid #e3e6f0;padding-top:16px;margin-top:20px}
+.lt-comparar-toggle{display:inline-flex;align-items:center;gap:6px;margin:0 0 12px;background:none;border:none;padding:0;cursor:pointer;font-size:12px;font-weight:700;color:#583AFF}
+.lt-comparar-toggle .chev{transition:transform .15s ease;font-size:10px}
+.lt-comparar-toggle.open .chev{transform:rotate(90deg)}
+.lt-comparar-panel{display:grid;grid-template-columns:minmax(160px,280px);gap:4px;margin:0 0 14px;padding:10px 11px;background:#f8f9fc;border:1px solid #e3e6f0;border-radius:9px}
+.lt-comparar-panel .lt-field-label{font-size:10.5px}
+
+@media (prefers-reduced-motion:reduce){
+    .lt-range-track .knob,.lt-range-track .sel,.lt-seg button,.lt-chip{transition:none}
+}
+
+@media (max-width:992px){
+    .lt-grid-5{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .lt-grid-rango{grid-template-columns:1fr}
+}
+
+@media (max-width:640px){
+    .lt-rango-head-row{flex-direction:column;align-items:flex-start}
+}

@@ -10,6 +10,7 @@
 }
 
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
 
 <style>
@@ -38,73 +39,11 @@
 
     .lt-card { background: var(--lt-surface); border: 1px solid var(--lt-line); border-radius: 14px; padding: 16px 20px; margin-bottom: 16px; box-shadow: var(--lt-shadow); }
 
-    .lt-kicker { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--lt-text-muted); margin: 0 0 8px; }
-    .lt-kicker.mt { margin-top: 16px; }
-
-    .lt-grid { display: grid; gap: 12px 16px; }
-    .lt-grid-1 { grid-template-columns: repeat(4, 1fr); }
-    .lt-grid-1.has-campo { grid-template-columns: repeat(5, 1fr); }
-    .lt-grid-2 { grid-template-columns: minmax(180px, 1.2fr) 1fr 1fr; align-items: end; }
-    .lt-grid label { display: flex; flex-direction: column; gap: 5px; }
-    .lt-label-text { font-size: 11px; font-weight: 700; color: var(--lt-text-2); text-transform: uppercase; letter-spacing: .03em; }
-    .lt-grid select {
-        font-family: inherit; font-size: 13px; font-weight: 500; color: var(--lt-text);
-        background: var(--lt-surface-2); border: 1px solid var(--lt-line); border-radius: 8px;
-        padding: 8px 10px; width: 100%;
-    }
-    .lt-grid select:disabled { opacity: .5; cursor: not-allowed; }
-    .lt-grid .lt-seg { align-self: stretch; }
-    .lt-grid .lt-seg button { flex: 1; padding: 7px 10px; }
-
-    /* Select2 restyled to match the plain .lt-grid select look above */
-    .lt-app .select2-container { width: 100% !important; }
-    .lt-app .select2-container--default .select2-selection--single {
-        background: var(--lt-surface-2); border: 1px solid var(--lt-line); border-radius: 8px;
-        height: auto; padding: 8px 28px 8px 10px;
-    }
-    .lt-app .select2-container--default .select2-selection--single .select2-selection__rendered {
-        color: var(--lt-text); font-size: 13px; font-weight: 500; line-height: normal; padding: 0;
-    }
-    .lt-app .select2-container--default .select2-selection--single .select2-selection__placeholder { color: var(--lt-text-muted); }
-    .lt-app .select2-container--default .select2-selection--single .select2-selection__arrow { height: 100%; top: 0; right: 6px; }
-    .lt-app .select2-container--default.select2-container--disabled .select2-selection--single { opacity: .5; cursor: not-allowed; background: var(--lt-surface-2); }
-    .lt-app .select2-dropdown { border-color: var(--lt-line); }
-    .lt-app .select2-search--dropdown .select2-search__field { border: 1px solid var(--lt-line); border-radius: 6px; padding: 5px 8px; font-size: 13px; }
-    .lt-app .select2-results__option--highlighted[aria-selected] { background: var(--lt-series-1) !important; }
-
-    @@media (max-width: 900px) {
-        .lt-grid-1, .lt-grid-1.has-campo { grid-template-columns: repeat(2, 1fr); }
-        .lt-grid-2 { grid-template-columns: 1fr; }
-    }
-
-    .lt-tabla-desc {
-        display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 8px 12px;
-        background: var(--lt-surface-2); border: 1px solid var(--lt-line); border-radius: 8px;
-        font-size: 12px; color: var(--lt-text-2); line-height: 1.4;
-    }
-    .lt-tabla-desc .ic { font-size: 16px; color: var(--lt-series-1); flex-shrink: 0; }
-    .lt-tabla-desc b { color: var(--lt-text); }
-
-    .lt-comparar-toggle {
-        display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
-        background: none; border: none; padding: 4px 0; cursor: pointer;
-        font-size: 12px; font-weight: 700; color: var(--lt-series-1);
-    }
-    .lt-comparar-toggle .chev { transition: transform .15s ease; font-size: 10px; }
-    .lt-comparar-toggle.open .chev { transform: rotate(90deg); }
-    .lt-comparar-panel {
-        display: grid; grid-template-columns: minmax(160px, 280px); gap: 4px;
-        margin-top: 6px; padding: 10px 11px; background: var(--lt-surface-2); border: 1px solid var(--lt-line); border-radius: 9px;
-    }
-    .lt-comparar-panel label { display: flex; flex-direction: column; gap: 3px; }
-    .lt-comparar-panel .lt-label-text { font-size: 10.5px; }
-
-    .lt-actions { display: flex; gap: 8px; margin-top: 14px; }
     .lt-btn { font-size: 12.5px; font-weight: 700; border-radius: 8px; padding: 8px 16px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
     .lt-btn:disabled { opacity: .5; cursor: not-allowed; }
-    .lt-btn-primary { background: var(--lt-brand-gradient); color: #fff; }
-    .lt-btn-ghost { background: var(--lt-surface-2); color: var(--lt-text-2); border: 1px solid var(--lt-line); }
     .lt-btn-excel { background: #217346; color: #fff; }
+    .lt-btn-pdf { background: #B91C1C; color: #fff; }
+    .lt-btn-icon { padding: 9px 11px; font-size: 13px; }
 
     .lt-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
     .lt-stat-tile { background: var(--lt-surface); border: 1px solid var(--lt-line); border-radius: 14px; padding: 16px 18px; box-shadow: var(--lt-shadow); }
@@ -125,21 +64,25 @@
     .lt-muted { color: var(--lt-text-muted); font-size: 12.5px; margin: 3px 0 0; }
     .lt-toggles { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
 
-    .lt-seg { display: flex; background: var(--lt-surface-2); border: 1px solid var(--lt-line); border-radius: 9px; padding: 3px; }
-    .lt-seg button { font-size: 12.5px; font-weight: 700; color: var(--lt-text-2); background: transparent; border: none; border-radius: 7px; padding: 6px 13px; cursor: pointer; }
-    .lt-seg button.active { background: var(--lt-brand-gradient); color: #fff; }
-    .lt-seg button:disabled { opacity: .4; cursor: not-allowed; }
+    .lt-seg-toggle { display: flex; background: var(--lt-surface-2); border: 1px solid var(--lt-line); border-radius: 9px; padding: 3px; }
+    .lt-seg-toggle button { font-size: 12.5px; font-weight: 700; color: var(--lt-text-2); background: transparent; border: none; border-radius: 7px; padding: 6px 13px; cursor: pointer; }
+    .lt-seg-toggle button.active { background: var(--lt-brand-gradient); color: #fff; }
+    .lt-seg-toggle button:disabled { opacity: .4; cursor: not-allowed; }
 
-    .lt-table-actions { display: flex; justify-content: flex-end; margin: 10px 0 8px; }
+    /* Altura fija: evita que el gráfico "colapse" al cambiar entre línea/barra o unidad */
+    .lt-chart-canvas-wrap { position: relative; height: 380px; }
+    .lt-chart-canvas-wrap canvas { width: 100% !important; height: 100% !important; }
+    @@media (max-width: 640px) { .lt-chart-canvas-wrap { height: 300px; } }
+
     .lt-table-wrap { overflow-x: auto; border: 1px solid var(--lt-line); border-radius: 10px; }
     .lt-table-wrap table { width: 100%; border-collapse: collapse; min-width: 480px; }
     .lt-table-wrap thead th { background: var(--lt-brand-gradient); color: #fff; text-align: left; font-size: 12px; font-weight: 700; padding: 10px 14px; white-space: nowrap; }
     .lt-table-wrap tbody td { padding: 9px 14px; font-size: 13px; border-top: 1px solid var(--lt-line); font-variant-numeric: tabular-nums; }
     .lt-table-wrap tbody tr:nth-child(even) { background: var(--lt-surface-2); }
     .lt-table-wrap td.num { text-align: right; }
-    .lt-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
-    .lt-chip.up { color: var(--lt-good); background: var(--lt-good-bg); }
-    .lt-chip.down { color: var(--lt-bad); background: var(--lt-bad-bg); }
+    .lt-var-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+    .lt-var-chip.up { color: var(--lt-good); background: var(--lt-good-bg); }
+    .lt-var-chip.down { color: var(--lt-bad); background: var(--lt-bad-bg); }
 
     .lt-empty { text-align: center; padding: 3rem 1.5rem; color: var(--lt-text-muted); }
     .lt-empty .lt-empty-icon {
@@ -169,11 +112,11 @@
 
     @Html.AntiForgeryToken()
 
-    <section class="lt-card">
-        <p class="lt-kicker">@Resources.Strings.LineaTiempo_FilaQueVer</p>
-        <div class="lt-grid lt-grid-1" id="ltGridRow1">
-            <label><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelEmpresa</span>
-                <select id="ltEmpresa">
+    <div class="filter-card">
+        <div class="lt-section-title"><span>@Resources.Strings.LineaTiempo_FilaQueVer</span></div>
+        <div class="lt-grid-5" id="ltGridRow1">
+            <div class="lt-field"><label class="lt-field-label" for="ltEmpresa">@Resources.Strings.LineaTiempo_LabelEmpresa</label>
+                <select id="ltEmpresa" class="lt-field-select">
                     @if (esAdmin) { <option value="">@Resources.Strings.Common_Seleccione</option> }
                     @if (empresas != null)
                     {
@@ -183,9 +126,9 @@
                         }
                     }
                 </select>
-            </label>
-            <label><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelTabla</span>
-                <select id="ltTabla">
+            </div>
+            <div class="lt-field"><label class="lt-field-label" for="ltTabla">@Resources.Strings.LineaTiempo_LabelTabla</label>
+                <select id="ltTabla" class="lt-field-select">
                     <option value="">@Resources.Strings.Common_Seleccione</option>
                     @if (tablas != null)
                     {
@@ -195,17 +138,17 @@
                         }
                     }
                 </select>
-            </label>
-            <label><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelIndicador</span>
-                <select id="ltIndicador" disabled>
+            </div>
+            <div class="lt-field"><label class="lt-field-label" for="ltIndicador">@Resources.Strings.LineaTiempo_LabelIndicador</label>
+                <select id="ltIndicador" class="lt-field-select" disabled>
                     <option value="">@Resources.Strings.Common_Seleccione</option>
                 </select>
-            </label>
-            <label id="ltCampoWrap" style="display:none;"><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelCampo</span>
-                <select id="ltCampo"></select>
-            </label>
-            <label><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelEscenario</span>
-                <select id="ltEscenario">
+            </div>
+            <div class="lt-field" id="ltCampoWrap" style="display:none;"><label class="lt-field-label" for="ltCampo">@Resources.Strings.LineaTiempo_LabelCampo</label>
+                <select id="ltCampo" class="lt-field-select"></select>
+            </div>
+            <div class="lt-field"><label class="lt-field-label" for="ltEscenario">@Resources.Strings.LineaTiempo_LabelEscenario</label>
+                <select id="ltEscenario" class="lt-field-select">
                     @if (ViewBag.Escenarios != null)
                     {
                         foreach (var esc in ViewBag.Escenarios)
@@ -214,57 +157,85 @@
                         }
                     }
                 </select>
-            </label>
+            </div>
         </div>
 
-        <div class="lt-tabla-desc" id="ltTablaDescBox" style="display:none;">
+        <div class="lt-tabla-banner" id="ltTablaDescBox" style="display:none;">
             <i class="ic" id="ltTablaDescIcon"></i>
             <div><b id="ltTablaDescNombre"></b> &mdash; <span id="ltTablaDescTexto"></span></div>
         </div>
 
-        <p class="lt-kicker mt">@Resources.Strings.LineaTiempo_FilaCuando &mdash; @Resources.Strings.LineaTiempo_FilaCuandoHint</p>
-        <div class="lt-grid lt-grid-2">
-            <label><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelVerPor</span>
+        <div class="lt-section-title mt"><span>@Resources.Strings.LineaTiempo_FilaCuando</span></div>
+        <div class="lt-grid-rango">
+            <div>
+                <label class="lt-field-label">@Resources.Strings.LineaTiempo_LabelVerPor</label>
                 <div class="lt-seg" id="ltSegVerPor">
-                    <button type="button" class="active" data-modo="Mes">@Resources.Strings.LineaTiempo_VerPorMes</button>
-                    <button type="button" data-modo="Trimestre">@Resources.Strings.LineaTiempo_VerPorTrimestre</button>
-                    <button type="button" data-modo="Anio">@Resources.Strings.LineaTiempo_VerPorAnio</button>
+                    <button type="button" class="active" data-modo="Mes" title="@Resources.Strings.LineaTiempo_Agrupar_MesAyuda" aria-pressed="true">
+                        <i class="fas fa-calendar-day"></i><span>@Resources.Strings.LineaTiempo_VerPorMes</span>
+                    </button>
+                    <button type="button" data-modo="Trimestre" title="@Resources.Strings.LineaTiempo_Agrupar_TrimestreAyuda" aria-pressed="false">
+                        <i class="fas fa-calendar-week"></i><span>@Resources.Strings.LineaTiempo_VerPorTrimestre</span>
+                    </button>
+                    <button type="button" data-modo="Anio" title="@Resources.Strings.LineaTiempo_Agrupar_AnioAyuda" aria-pressed="false">
+                        <i class="fas fa-calendar"></i><span>@Resources.Strings.LineaTiempo_VerPorAnio</span>
+                    </button>
                 </div>
-            </label>
-            <label><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelDesde</span>
-                <select id="ltDesde" disabled></select>
-            </label>
-            <label><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelHasta</span>
-                <select id="ltHasta" disabled></select>
-            </label>
+                <p class="lt-seg-hint" id="ltAgruparHint">@Resources.Strings.LineaTiempo_Agrupar_MesAyuda</p>
+            </div>
+            <div>
+                <div class="lt-rango-head-row">
+                    <label class="lt-field-label">@Resources.Strings.LineaTiempo_LabelRango</label>
+                    <div class="lt-atajos" id="ltAtajos">
+                        <button type="button" class="lt-chip" data-preset="todo">@Resources.Strings.LineaTiempo_RangoTodo</button>
+                        <button type="button" class="lt-chip" data-preset="12m">@Resources.Strings.LineaTiempo_RangoUltimoAnio</button>
+                        <button type="button" class="lt-chip" data-preset="6m">@Resources.Strings.LineaTiempo_RangoUltimos6Meses</button>
+                    </div>
+                </div>
+                <div class="lt-range-card">
+                    <div class="lt-range-head">
+                        <span class="lbl"><span id="ltRangoDesdeLbl">&mdash;</span><i class="fas fa-long-arrow-alt-right"></i><span id="ltRangoHastaLbl">&mdash;</span></span>
+                        <span class="lt-range-badge" id="ltRangoBadge">&mdash;</span>
+                    </div>
+                    <div class="lt-range-track disabled" id="ltRangoTrack">
+                        <div class="bg"></div>
+                        <div class="sel" id="ltRangoSel"></div>
+                        <div class="knob from" id="ltKnobFrom" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-label="@Resources.Strings.LineaTiempo_RangoTodo"></div>
+                        <div class="knob to" id="ltKnobTo" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-label="@Resources.Strings.LineaTiempo_RangoTodo"></div>
+                    </div>
+                    <div class="lt-range-years" id="ltRangoYears"></div>
+                </div>
+                <p class="lt-help">@Resources.Strings.LineaTiempo_FilaCuandoHint</p>
+            </div>
         </div>
 
-        <button type="button" class="lt-comparar-toggle" id="ltBtnToggleComparar">
-            <i class="fas fa-chevron-right chev"></i>
-            @Resources.Strings.LineaTiempo_ComparaEscenario
-        </button>
-        <div class="lt-comparar-panel" id="ltCompararPanel" hidden>
-            <label><span class="lt-label-text">@Resources.Strings.LineaTiempo_LabelEscenarioComparar</span>
-                <select id="ltEscenarioComparar">
-                    <option value="">@Resources.Strings.LineaTiempo_CompararNinguna</option>
-                    @if (ViewBag.Escenarios != null)
-                    {
-                        foreach (var esc in ViewBag.Escenarios)
-                        {
-                            <option value="@esc.Id">@esc.Nombre</option>
-                        }
-                    }
-                </select>
-            </label>
-        </div>
-
-        <div class="lt-actions">
-            <button type="button" id="btnGenerarLT" class="lt-btn lt-btn-primary" disabled>
-                <i class="fas fa-arrow-right"></i>@Resources.Strings.LineaTiempo_BtnGenerar
+        <div class="lt-actions-bar">
+            <button type="button" class="lt-comparar-toggle" id="ltBtnToggleComparar">
+                <i class="fas fa-chevron-right chev"></i>
+                @Resources.Strings.LineaTiempo_ComparaEscenario
             </button>
-            <button type="button" id="btnLimpiarLT" class="lt-btn lt-btn-ghost">@Resources.Strings.Common_Limpiar</button>
+            <div class="lt-comparar-panel" id="ltCompararPanel" hidden>
+                <div class="lt-field"><label class="lt-field-label" for="ltEscenarioComparar">@Resources.Strings.LineaTiempo_LabelEscenarioComparar</label>
+                    <select id="ltEscenarioComparar" class="lt-field-select">
+                        <option value="">@Resources.Strings.LineaTiempo_CompararNinguna</option>
+                        @if (ViewBag.Escenarios != null)
+                        {
+                            foreach (var esc in ViewBag.Escenarios)
+                            {
+                                <option value="@esc.Id">@esc.Nombre</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="btn-group-actions">
+                <button type="button" id="btnGenerarLT" class="btn btn-modern-gradient" disabled>
+                    <i class="fas fa-arrow-right mr-1"></i>@Resources.Strings.LineaTiempo_BtnGenerar
+                </button>
+                <button type="button" id="btnLimpiarLT" class="btn btn-modern-secondary">@Resources.Strings.Common_Limpiar</button>
+            </div>
         </div>
-    </section>
+    </div>
 
     <div id="ltEstadoInicial" class="lt-card lt-empty">
         <div class="lt-empty-icon"><i class="fas fa-chart-line"></i></div>
@@ -298,35 +269,65 @@
                     <p class="lt-muted" id="ltChartSubtitle">&mdash;</p>
                 </div>
                 <div class="lt-toggles">
-                    <div class="lt-seg" id="ltSegUnidad" title="@Resources.Strings.LineaTiempo_LabelUnidad">
+                    <div class="lt-seg-toggle" id="ltSegUnidad" title="@Resources.Strings.LineaTiempo_LabelUnidad">
                         <button type="button" class="active" data-unidad="pesos">@Resources.Strings.LineaTiempo_UnidadPesos</button>
                         <button type="button" data-unidad="miles">@Resources.Strings.LineaTiempo_UnidadMiles</button>
                         <button type="button" data-unidad="millones">@Resources.Strings.LineaTiempo_UnidadMillones</button>
                     </div>
-                    <div class="lt-seg" id="ltSegTipoGrafico">
+                    <div class="lt-seg-toggle" id="ltSegTipoGrafico">
                         <button type="button" class="active" data-tipo="line">@Resources.Strings.LineaTiempo_SegLineas</button>
                         <button type="button" data-tipo="bar">@Resources.Strings.LineaTiempo_SegBarras</button>
                     </div>
-                    <div class="lt-seg" id="ltSegVista">
+                    <div class="lt-seg-toggle" id="ltSegVista">
                         <button type="button" class="active" data-view="chart">@Resources.Strings.LineaTiempo_SegGrafico</button>
                         <button type="button" data-view="table">@Resources.Strings.LineaTiempo_SegTabla</button>
                     </div>
+                    <button type="button" id="btnExportarLT" class="lt-btn lt-btn-excel lt-btn-icon" title="@Resources.Strings.Common_ExportarExcel">
+                        <i class="fas fa-file-excel"></i>
+                    </button>
+                    <button type="button" id="btnExportarPDF" class="lt-btn lt-btn-pdf lt-btn-icon" data-toggle="modal" data-target="#ltPdfModal" title="@Resources.Strings.LineaTiempo_BtnExportarPdf">
+                        <i class="fas fa-file-pdf"></i>
+                    </button>
                 </div>
             </div>
 
-            <div id="ltViewChart"><canvas id="ltChart" height="90"></canvas></div>
+            <div id="ltViewChart" class="lt-chart-canvas-wrap"><canvas id="ltChart"></canvas></div>
 
             <div id="ltViewTable" hidden>
-                <div class="lt-table-actions">
-                    <button type="button" id="btnExportarLT" class="lt-btn lt-btn-excel">
-                        <i class="fas fa-file-excel"></i>@Resources.Strings.Common_ExportarExcel
-                    </button>
-                </div>
                 <div class="lt-table-wrap">
                     <table><thead><tr id="ltTablaHead"></tr></thead><tbody id="ltTablaBody"></tbody></table>
                 </div>
             </div>
         </section>
+    </div>
+
+    <div class="modal fade modal-confirm" id="ltPdfModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-file-pdf mr-2"></i>@Resources.Strings.LineaTiempo_PdfModalTitulo</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body d-flex flex-column" style="gap:10px;">
+                    <button type="button" class="opt primary" id="ltPdfOpcionGrafico" data-modo="grafico">
+                        <div class="ic"><i class="fas fa-chart-line"></i></div>
+                        <div class="txt">
+                            <span class="t">@Resources.Strings.LineaTiempo_PdfSoloGrafico</span>
+                            <span class="s">@Resources.Strings.LineaTiempo_PdfSoloGraficoDesc</span>
+                        </div>
+                        <i class="fas fa-arrow-right go"></i>
+                    </button>
+                    <button type="button" class="opt secondary" id="ltPdfOpcionDatos" data-modo="datos">
+                        <div class="ic"><i class="fas fa-table"></i></div>
+                        <div class="txt">
+                            <span class="t">@Resources.Strings.LineaTiempo_PdfGraficoDatos</span>
+                            <span class="s">@Resources.Strings.LineaTiempo_PdfGraficoDatosDesc</span>
+                        </div>
+                        <i class="fas fa-arrow-right go"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
 </div>
@@ -335,6 +336,7 @@
 @section scripts {
 <script src="~/Assets/js/chart.umd.min.js"></script>
 <script src="~/Assets/js/select2/select2.min.js"></script>
+<script src="~/Assets/js/jspdf.umd.min.js"></script>
 <script>
 (function () {
     var CATALOGO_TABLAS = {
@@ -368,7 +370,17 @@
             statDeltaSufijo:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_StatDeltaSufijo))',
             generadoElFmt:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_GeneradoElFmt))',
             unidadSufijoMiles:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_UnidadSufijoMiles))',
-            unidadSufijoMillones: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_UnidadSufijoMillones))'
+            unidadSufijoMillones: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_UnidadSufijoMillones))',
+            pdfGenerando:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_PdfGenerando))',
+            pdfErrorGeneral:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_JS_ErrorPdf))',
+            pdfFooter:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_PdfFooter))',
+            badgeMes:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_BadgeMes))',
+            badgeMeses:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_BadgeMeses))',
+            agruparAyuda: {
+                Mes:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_Agrupar_MesAyuda))',
+                Trimestre: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_Agrupar_TrimestreAyuda))',
+                Anio:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_Agrupar_AnioAyuda))'
+            }
         },
         cultura: '@Html.Raw(HttpUtility.JavaScriptStringEncode(culturaJs))',
         esAdmin: @Html.Raw(esAdmin.ToString().ToLowerInvariant()),
@@ -377,11 +389,14 @@
         unidad: 'pesos',
         tipoGrafico: 'line',
         chart: null,
-        ultimaRespuesta: null
+        ultimaRespuesta: null,
+        mesesCache: [],
+        iDesde: 0,
+        iHasta: 0
     };
 
     var elEmpresa = $('#ltEmpresa'), elTabla = $('#ltTabla'), elIndicador = $('#ltIndicador'),
-        elCampo = $('#ltCampo'), elEscenario = $('#ltEscenario'), elDesde = $('#ltDesde'), elHasta = $('#ltHasta'),
+        elCampo = $('#ltCampo'), elEscenario = $('#ltEscenario'),
         elEscenarioComparar = $('#ltEscenarioComparar');
 
     // Construidos con fromCharCode (no como literales en el archivo) para no depender de
@@ -422,16 +437,18 @@
     };
 
     $(document).ready(function () {
-        $('#ltEmpresa, #ltTabla, #ltIndicador, #ltCampo, #ltEscenario, #ltEscenarioComparar, #ltDesde, #ltHasta')
+        $('#ltEmpresa, #ltTabla, #ltIndicador, #ltCampo, #ltEscenario, #ltEscenarioComparar')
             .select2({ width: '100%', language: s2lang, dropdownAutoWidth: false });
 
         $('#ltEmpresa, #ltTabla, #ltEscenario').on('change', recargarCascada);
         $('#ltTabla').on('change', actualizarDescripcionTabla);
 
         $('#ltSegVerPor button').on('click', function () {
-            $('#ltSegVerPor button').removeClass('active');
-            $(this).addClass('active');
-            _lt.agrupar = $(this).data('modo');
+            var modo = $(this).data('modo');
+            $('#ltSegVerPor button').removeClass('active').attr('aria-pressed', 'false');
+            $(this).addClass('active').attr('aria-pressed', 'true');
+            _lt.agrupar = modo;
+            $('#ltAgruparHint').text(_lt.textos.agruparAyuda[modo] || '');
         });
 
         $('#ltBtnToggleComparar').on('click', function () {
@@ -440,10 +457,19 @@
             $(this).toggleClass('open', !abierto);
         });
 
-        $('#ltIndicador, #ltDesde, #ltHasta').on('change', actualizarBotonGenerar);
+        $('#ltIndicador').on('change', actualizarBotonGenerar);
+        $('#ltAtajos button').on('click', function () { aplicarPresetRango($(this).data('preset')); });
+        $('#ltKnobFrom').on('pointerdown', function (e) { e.stopPropagation(); iniciarArrastreSlider(e, 'from'); });
+        $('#ltKnobTo').on('pointerdown', function (e) { e.stopPropagation(); iniciarArrastreSlider(e, 'to'); });
+        $('#ltRangoTrack').on('pointerdown', function (e) { clicEnPista(e); });
+        $('#ltKnobFrom, #ltKnobTo').on('keydown', function (e) { moverKnobConTeclado(e, this.id === 'ltKnobFrom' ? 'from' : 'to'); });
         $('#btnGenerarLT').on('click', generar);
         $('#btnLimpiarLT').on('click', limpiar);
         $('#btnExportarLT').on('click', exportar);
+        $('#ltPdfOpcionGrafico, #ltPdfOpcionDatos').on('click', function () {
+            $('#ltPdfModal').modal('hide');
+            generarPdf($(this).data('modo'));
+        });
 
         $('#ltSegUnidad button').on('click', function () {
             $('#ltSegUnidad button').removeClass('active');
@@ -490,7 +516,7 @@
     }
 
     function actualizarBotonGenerar() {
-        var listo = !!elTabla.val() && !!elIndicador.val() && !!elDesde.val() && !!elHasta.val()
+        var listo = !!elTabla.val() && !!elIndicador.val() && _lt.mesesCache.length > 0
             && (!_lt.esAdmin || !!empresaSeleccionada());
         $('#btnGenerarLT').prop('disabled', !listo);
     }
@@ -501,10 +527,11 @@
         var idEscenario = elEscenario.val();
 
         elIndicador.empty().append('<option value="">@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))</option>').val('').prop('disabled', true).trigger('change.select2');
-        elDesde.empty().val('').prop('disabled', true).trigger('change.select2');
-        elHasta.empty().val('').prop('disabled', true).trigger('change.select2');
+        _lt.mesesCache = [];
+        _lt.iDesde = 0;
+        _lt.iHasta = 0;
+        pintarRango();
         $('#ltCampoWrap').hide();
-        $('#ltGridRow1').removeClass('has-campo');
         $('#ltResultado, #ltSinDatos').hide();
         $('#ltEstadoInicial').show();
         actualizarBotonGenerar();
@@ -531,30 +558,141 @@
                 elCampo.val(campos[0].nombreTecnico).trigger('change.select2');
                 _lt.campoUnico = null;
                 $('#ltCampoWrap').show();
-                $('#ltGridRow1').addClass('has-campo');
             } else {
                 _lt.campoUnico = campos.length === 1 ? campos[0].nombreTecnico : null;
                 $('#ltCampoWrap').hide();
-                $('#ltGridRow1').removeClass('has-campo');
             }
         });
+
+        $('#ltAtajos button').prop('disabled', true);
 
         $.post(_lt.urls.meses, { nombreTabla: nombreTabla, idEmpresa: idEmpresa, idEscenario: idEscenario, __RequestVerificationToken: _lt.token }, function (resp) {
             if (!resp.success) return;
             var meses = resp.meses || [];
-            meses.forEach(function (m) {
-                var valor = m.anio + '-' + m.mes;
-                elDesde.append($('<option>').val(valor).text(m.etiqueta));
-                elHasta.append($('<option>').val(valor).text(m.etiqueta));
-            });
-            if (meses.length > 0) {
-                elDesde.val(meses[0].anio + '-' + meses[0].mes);
-                elHasta.val(meses[meses.length - 1].anio + '-' + meses[meses.length - 1].mes);
-            }
-            elDesde.prop('disabled', meses.length === 0).trigger('change.select2');
-            elHasta.prop('disabled', meses.length === 0).trigger('change.select2');
+            _lt.mesesCache = meses;
+            $('#ltAtajos button').prop('disabled', meses.length === 0);
+            if (meses.length > 0) aplicarPresetRango('12m'); else pintarRango();
             actualizarBotonGenerar();
         });
+    }
+
+    // ===== Slider de rango de meses =====
+
+    function aplicarPresetRango(preset) {
+        var n = _lt.mesesCache.length;
+        if (!n) return;
+        var desdeIdx = 0;
+        if (preset === '12m') desdeIdx = Math.max(0, n - 12);
+        else if (preset === '6m') desdeIdx = Math.max(0, n - 6);
+        _lt.iDesde = desdeIdx;
+        _lt.iHasta = n - 1;
+        pintarRango();
+    }
+
+    function pctIndice(i, n) {
+        return n > 1 ? (i / (n - 1) * 100) : 0;
+    }
+
+    function pintarRango() {
+        var meses = _lt.mesesCache, n = meses.length;
+        var track = $('#ltRangoTrack');
+
+        if (n === 0) {
+            track.addClass('disabled');
+            $('#ltRangoDesdeLbl, #ltRangoHastaLbl').text(CH_MDASH);
+            $('#ltRangoBadge').text(CH_MDASH);
+            $('#ltRangoYears').empty();
+            $('#ltAtajos button').removeClass('active');
+            return;
+        }
+
+        track.removeClass('disabled');
+        var pctDesde = pctIndice(_lt.iDesde, n), pctHasta = pctIndice(_lt.iHasta, n);
+
+        $('#ltKnobFrom').css('left', pctDesde + '%')
+            .attr({ 'aria-valuemin': 0, 'aria-valuemax': n - 1, 'aria-valuenow': _lt.iDesde, 'aria-valuetext': meses[_lt.iDesde].etiqueta });
+        $('#ltKnobTo').css('left', pctHasta + '%')
+            .attr({ 'aria-valuemin': 0, 'aria-valuemax': n - 1, 'aria-valuenow': _lt.iHasta, 'aria-valuetext': meses[_lt.iHasta].etiqueta });
+        $('#ltRangoSel').css({ left: pctDesde + '%', width: (pctHasta - pctDesde) + '%' });
+
+        $('#ltRangoDesdeLbl').text(meses[_lt.iDesde].etiqueta);
+        $('#ltRangoHastaLbl').text(meses[_lt.iHasta].etiqueta);
+
+        var totalMeses = _lt.iHasta - _lt.iDesde + 1;
+        $('#ltRangoBadge').text(totalMeses + ' ' + (totalMeses === 1 ? _lt.textos.badgeMes : _lt.textos.badgeMeses));
+
+        var anios = [];
+        meses.forEach(function (m) { if (anios.indexOf(m.anio) === -1) anios.push(m.anio); });
+        $('#ltRangoYears').html(anios.map(function (a) { return '<span>' + a + '</span>'; }).join(''));
+
+        actualizarAtajoActivo();
+        actualizarBotonGenerar();
+    }
+
+    function actualizarAtajoActivo() {
+        var n = _lt.mesesCache.length;
+        $('#ltAtajos button').removeClass('active');
+        if (!n) return;
+        if (_lt.iDesde === 0 && _lt.iHasta === n - 1) $('#ltAtajos button[data-preset="todo"]').addClass('active');
+        else if (_lt.iDesde === Math.max(0, n - 12) && _lt.iHasta === n - 1) $('#ltAtajos button[data-preset="12m"]').addClass('active');
+        else if (_lt.iDesde === Math.max(0, n - 6) && _lt.iHasta === n - 1) $('#ltAtajos button[data-preset="6m"]').addClass('active');
+    }
+
+    function indiceDesdeClientX(clientX) {
+        var track = document.getElementById('ltRangoTrack');
+        var rect = track.getBoundingClientRect();
+        var n = _lt.mesesCache.length;
+        var frac = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+        return Math.round(frac * (n - 1));
+    }
+
+    function moverExtremo(cual, idx) {
+        var n = _lt.mesesCache.length;
+        idx = Math.min(n - 1, Math.max(0, idx));
+        if (cual === 'from') {
+            _lt.iDesde = idx;
+            if (_lt.iDesde > _lt.iHasta) _lt.iHasta = _lt.iDesde;
+        } else {
+            _lt.iHasta = idx;
+            if (_lt.iHasta < _lt.iDesde) _lt.iDesde = _lt.iHasta;
+        }
+        pintarRango();
+    }
+
+    function iniciarArrastreSlider(e, cual) {
+        if (_lt.mesesCache.length < 2) return;
+        e.preventDefault();
+        var track = $('#ltRangoTrack').addClass('dragging');
+
+        function onMove(ev) { moverExtremo(cual, indiceDesdeClientX(ev.clientX)); }
+        function onUp() {
+            track.removeClass('dragging');
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+        }
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+    }
+
+    function clicEnPista(e) {
+        if ($(e.target).hasClass('knob') || _lt.mesesCache.length < 2) return;
+        var idx = indiceDesdeClientX(e.clientX);
+        var cual = Math.abs(idx - _lt.iDesde) <= Math.abs(idx - _lt.iHasta) ? 'from' : 'to';
+        moverExtremo(cual, idx);
+        iniciarArrastreSlider(e, cual);
+    }
+
+    function moverKnobConTeclado(e, cual) {
+        var n = _lt.mesesCache.length;
+        if (n < 2) return;
+        var idx = cual === 'from' ? _lt.iDesde : _lt.iHasta;
+        if (e.key === 'ArrowLeft') idx -= 1;
+        else if (e.key === 'ArrowRight') idx += 1;
+        else if (e.key === 'Home') idx = 0;
+        else if (e.key === 'End') idx = n - 1;
+        else return;
+        e.preventDefault();
+        moverExtremo(cual, idx);
     }
 
     function campoSeleccionado() {
@@ -562,8 +700,9 @@
     }
 
     function armarFiltros() {
-        var desde = (elDesde.val() || '').split('-');
-        var hasta = (elHasta.val() || '').split('-');
+        var n = _lt.mesesCache.length;
+        var desde = n ? _lt.mesesCache[_lt.iDesde] : null;
+        var hasta = n ? _lt.mesesCache[_lt.iHasta] : null;
 
         return {
             NombreTabla: elTabla.val(),
@@ -572,10 +711,10 @@
             IdEscenarioComparar: $('#ltEscenarioComparar').val() || null,
             Indicador: elIndicador.val(),
             Campo: campoSeleccionado(),
-            AnioDesde: parseInt(desde[0], 10),
-            MesDesde: parseInt(desde[1], 10),
-            AnioHasta: parseInt(hasta[0], 10),
-            MesHasta: parseInt(hasta[1], 10),
+            AnioDesde: desde ? desde.anio : null,
+            MesDesde: desde ? desde.mes : null,
+            AnioHasta: hasta ? hasta.anio : null,
+            MesHasta: hasta ? hasta.mes : null,
             Agrupar: _lt.agrupar,
             __RequestVerificationToken: _lt.token
         };
@@ -614,8 +753,9 @@
         $('#ltCompararPanel').prop('hidden', true);
         $('#ltBtnToggleComparar').removeClass('open');
         _lt.agrupar = 'Mes';
-        $('#ltSegVerPor button').removeClass('active');
-        $('#ltSegVerPor button[data-modo="Mes"]').addClass('active');
+        $('#ltSegVerPor button').removeClass('active').attr('aria-pressed', 'false');
+        $('#ltSegVerPor button[data-modo="Mes"]').addClass('active').attr('aria-pressed', 'true');
+        $('#ltAgruparHint').text(_lt.textos.agruparAyuda.Mes);
         _lt.unidad = 'pesos';
         $('#ltSegUnidad button').removeClass('active');
         $('#ltSegUnidad button[data-unidad="pesos"]').addClass('active');
@@ -770,7 +910,7 @@
                 if (b !== undefined) {
                     var delta = b ? ((p.valor - b) / Math.abs(b)) * 100 : 0;
                     var cls = delta >= 0 ? 'up' : 'down', flecha = delta >= 0 ? CH_UP : CH_DOWN;
-                    fila += '<td class="num">' + fmtDecimal(b) + '</td><td class="num"><span class="lt-chip ' + cls + '">' + flecha + ' ' + Math.abs(delta).toFixed(1) + '%</span></td>';
+                    fila += '<td class="num">' + fmtDecimal(b) + '</td><td class="num"><span class="lt-var-chip ' + cls + '">' + flecha + ' ' + Math.abs(delta).toFixed(1) + '%</span></td>';
                 } else {
                     fila += '<td class="num">' + CH_MDASH + '</td><td class="num">' + CH_MDASH + '</td>';
                 }
@@ -799,6 +939,160 @@
         document.body.appendChild(form);
         form.submit();
         document.body.removeChild(form);
+    }
+
+    function generarPdf(modo) {
+        if (!_lt.ultimaRespuesta || !_lt.chart) return;
+        var btn = document.getElementById('btnExportarPDF');
+        var htmlOriginal = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + _lt.textos.pdfGenerando;
+
+        try {
+            var resp = _lt.ultimaRespuesta;
+            var jsPDFCtor = window.jspdf.jsPDF;
+            var pdf = new jsPDFCtor('p', 'mm', 'a4');
+            var pageW = pdf.internal.pageSize.getWidth();
+            var pageH = pdf.internal.pageSize.getHeight();
+            var margin = 14;
+            var y;
+
+            function dibujarPiePagina() {
+                var num = pdf.internal.getNumberOfPages();
+                pdf.setFontSize(7.5);
+                pdf.setTextColor(150, 145, 165);
+                pdf.text(_lt.textos.pdfFooter, margin, pageH - 8);
+                pdf.text(String(num), pageW - margin, pageH - 8, { align: 'right' });
+            }
+
+            function nuevaPagina() {
+                pdf.addPage();
+                y = margin;
+                dibujarPiePagina();
+            }
+
+            // Encabezado tipo carta
+            pdf.setFillColor(99, 102, 241);
+            pdf.rect(0, 0, pageW, 24, 'F');
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFont(undefined, 'bold');
+            pdf.setFontSize(15);
+            pdf.text('BUFINS', margin, 15);
+
+            var titulo = elIndicador.val() || '';
+            var tablaInfo = CATALOGO_TABLAS[elTabla.val()] || {};
+            var empresaTexto = elEmpresa.find(':selected').text();
+            var escenarioTexto = resp.nombreEscenarioPrincipal || elEscenario.find(':selected').text();
+            var subtitulo = (tablaInfo.nombre || '') + '  ' + CH_MIDDOT + '  ' + empresaTexto + '  ' + CH_MIDDOT + '  ' + escenarioTexto;
+
+            pdf.setFont(undefined, 'normal');
+            pdf.setFontSize(9);
+            pdf.text(titulo, pageW - margin, 10, { align: 'right' });
+            pdf.setFontSize(8);
+            pdf.text(subtitulo, pageW - margin, 16, { align: 'right' });
+
+            y = 32;
+            pdf.setTextColor(30, 20, 50);
+
+            // KPIs (mismos que en pantalla)
+            var pts = resp.principal;
+            var ultimo = pts[pts.length - 1].valor;
+            var previo = pts.length > 1 ? pts[pts.length - 2].valor : ultimo;
+            var promedio = pts.reduce(function (a, p) { return a + p.valor; }, 0) / pts.length;
+
+            var kpis = [
+                { label: _lt.textos.kpiUltimo, valor: fmtCompacto(ultimo) },
+                { label: _lt.textos.kpiPromedio, valor: fmtCompacto(promedio) },
+                { label: _lt.textos.kpiPeriodos, valor: String(pts.length) }
+            ];
+            var kpiW = (pageW - margin * 2 - 12) / 3;
+            kpis.forEach(function (k, i) {
+                var x = margin + i * (kpiW + 6);
+                pdf.setDrawColor(228, 225, 240);
+                pdf.setFillColor(244, 243, 251);
+                pdf.roundedRect(x, y, kpiW, 18, 2, 2, 'FD');
+                pdf.setFontSize(7.5);
+                pdf.setTextColor(120, 115, 140);
+                pdf.text(k.label, x + 4, y + 7);
+                pdf.setFontSize(12);
+                pdf.setFont(undefined, 'bold');
+                pdf.setTextColor(30, 20, 50);
+                pdf.text(k.valor, x + 4, y + 14);
+                pdf.setFont(undefined, 'normal');
+            });
+            y += 24;
+
+            // Gráfico (imagen nativa de Chart.js, sin html2canvas)
+            var imgData = _lt.chart.toBase64Image('image/png', 1.0);
+            var imgProps = pdf.getImageProperties(imgData);
+            var imgW = pageW - margin * 2;
+            var imgH = Math.min(imgW * imgProps.height / imgProps.width, 110);
+            pdf.addImage(imgData, 'PNG', margin, y, imgW, imgH);
+            y += imgH + 10;
+
+            if (modo === 'datos') {
+                var conComparacion = resp.comparacion && resp.comparacion.length > 0;
+                var headers = [_lt.textos.colPeriodo, resp.nombreEscenarioPrincipal || _lt.textos.colValor];
+                if (conComparacion) headers.push(resp.nombreEscenarioComparacion || _lt.textos.colComparacion, _lt.textos.colVariacion);
+
+                var comparacionPorClave = {};
+                if (conComparacion) resp.comparacion.forEach(function (p) { comparacionPorClave[p.anio + '-' + p.mes] = p.valor; });
+
+                var filas = pts.map(function (p) {
+                    var fila = [p.etiqueta, fmtDecimal(p.valor)];
+                    if (conComparacion) {
+                        var b = comparacionPorClave[p.anio + '-' + p.mes];
+                        if (b !== undefined) {
+                            var delta = b ? ((p.valor - b) / Math.abs(b)) * 100 : 0;
+                            fila.push(fmtDecimal(b), (delta >= 0 ? '+' : '') + delta.toFixed(1) + '%');
+                        } else {
+                            fila.push(CH_MDASH, CH_MDASH);
+                        }
+                    }
+                    return fila;
+                });
+
+                var colW = (pageW - margin * 2) / headers.length;
+                var rowH = 7;
+
+                if (y + rowH * 2 > pageH - margin - 10) nuevaPagina();
+
+                var cabeceraTabla = function () {
+                    pdf.setFillColor(99, 102, 241);
+                    pdf.setTextColor(255, 255, 255);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.setFontSize(8.5);
+                    headers.forEach(function (h, i) {
+                        pdf.rect(margin + i * colW, y, colW, rowH, 'F');
+                        pdf.text(String(h), margin + i * colW + 3, y + 4.8);
+                    });
+                    y += rowH;
+                    pdf.setFont(undefined, 'normal');
+                    pdf.setTextColor(30, 20, 50);
+                    pdf.setFontSize(8);
+                };
+                cabeceraTabla();
+
+                filas.forEach(function (fila, idx) {
+                    if (y + rowH > pageH - margin - 10) { nuevaPagina(); cabeceraTabla(); }
+                    if (idx % 2 === 1) { pdf.setFillColor(244, 243, 251); pdf.rect(margin, y, pageW - margin * 2, rowH, 'F'); }
+                    fila.forEach(function (val, i) { pdf.text(String(val), margin + i * colW + 3, y + 4.8); });
+                    y += rowH;
+                });
+            }
+
+            dibujarPiePagina();
+
+            var fecha = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            var nombreArchivo = ('LineaTiempo_' + (titulo || 'Indicador')).replace(/[^a-zA-Z0-9_\-]+/g, '_') + '_' + fecha + '.pdf';
+            pdf.save(nombreArchivo);
+        } catch (e) {
+            console.error(e);
+            Swal.fire({ icon: 'error', title: _lt.textos.pdfErrorGeneral });
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = htmlOriginal;
+        }
     }
 })();
 </script>
