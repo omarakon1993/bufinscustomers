@@ -12,9 +12,10 @@ namespace bufinscustomers.Helpers
     ///   • <see cref="bufinscustomers.Controllers.DatosController"/> — resolución de hoja, borrado previo y limpieza en error.
     ///   • <see cref="bufinscustomers.Services.HistorialVersionesCarguesService"/> — snapshot, conteo de filas y rollback.
     ///   • <see cref="bufinscustomers.Controllers.ConfiguracionEmpresaController"/> — cierre de año (ejecución → histórico).
+    ///   • <see cref="bufinscustomers.Services.CargueStagingService"/> — validación en dos pasos (dbo.Staging_Ini_*).
     ///
-    /// Para AGREGAR o QUITAR una tabla del cargue, edítese SOLO este diccionario: los tres
-    /// puntos anteriores quedan sincronizados automáticamente.
+    /// Para AGREGAR o QUITAR una tabla del cargue, edítese SOLO este diccionario: los puntos
+    /// anteriores quedan sincronizados automáticamente.
     /// </summary>
     public static class TablasCargueHelper
     {
@@ -38,5 +39,8 @@ namespace bufinscustomers.Helpers
 
         /// <summary>Tablas <c>Ini_</c> destino, sin duplicados (valores del mapeo).</summary>
         public static string[] TablasIni => MapeoZaIni.Values.Distinct().ToArray();
+
+        /// <summary>Nombre de la tabla de staging (dbo.Staging_Ini_*) para una tabla <c>Ini_</c> destino.</summary>
+        public static string NombreStaging(string nombreTablaIni) => "Staging_" + nombreTablaIni;
     }
 }

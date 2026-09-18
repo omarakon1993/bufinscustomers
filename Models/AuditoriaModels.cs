@@ -85,6 +85,8 @@ namespace bufinscustomers.Models
         public const string Login        = "Login";
         public const string LoginFallido = "LoginFallido";
         public const string Bloqueo      = "Bloqueo";
+        public const string Confirmar    = "Confirmar";
+        public const string Descartar    = "Descartar";
     }
 
     /// <summary>Nivel de una fila de auditoría, para resaltar en el visor.</summary>

@@ -1,0 +1,184 @@
+@using bufinscustomers.Models
+@model RevisarCargueViewModel
+@{
+    ViewBag.Title = Resources.Strings.RevisarCargue_PageTitle;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+    bool hayErrores = Model.Lote.TotalErrores > 0;
+    bool puedeConfirmar = Model.Lote.PuedeConfirmar;
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+
+<style>
+    .rc-meta-item { margin-bottom: .5rem; }
+    .rc-meta-label { font-size: .75rem; color: #6c757d; text-transform: uppercase; letter-spacing: .03em; }
+    .rc-meta-value { font-weight: 600; }
+    .rc-meta-value.rc-break { word-break: break-all; }
+
+    .rc-badge-error { background: #fee2e2; color: #b91c1c; margin-right: .4rem; }
+    .rc-badge-warning { background: #fef3c7; color: #92400e; }
+
+    .rc-sev { font-weight: 600; }
+    .rc-sev-error { color: #ef4444; }
+    .rc-sev-warning { color: #f59e0b; }
+
+    .rc-alert-info { border-left: 4px solid #3B82F6; }
+    .rc-alert-danger { border-left: 4px solid #ef4444; }
+
+    .rc-actions { margin-top: 1.25rem; }
+    .no-data-message .fa-check-circle { color: #22c55e; }
+</style>
+
+<div class="container-fluid px-4">
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-clipboard-check powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.RevisarCargue_HeaderTitle</h1>
+        </div>
+    </div>
+
+    <div class="alert alert-info rc-alert-info">
+        <i class="fas fa-info-circle mr-2"></i>@Resources.Strings.RevisarCargue_Intro
+    </div>
+
+    <div class="filter-card">
+        <div class="row">
+            <div class="col-md-3 col-6 rc-meta-item">
+                <div class="rc-meta-label">@Resources.Strings.RevisarCargue_Empresa</div>
+                <div class="rc-meta-value">@Model.Lote.NombreEmpresa</div>
+            </div>
+            <div class="col-md-2 col-6 rc-meta-item">
+                <div class="rc-meta-label">@Resources.Strings.RevisarCargue_Anio</div>
+                <div class="rc-meta-value">@Model.Lote.Anio</div>
+            </div>
+            <div class="col-md-2 col-6 rc-meta-item">
+                <div class="rc-meta-label">@Resources.Strings.RevisarCargue_Modo</div>
+                <div class="rc-meta-value">@(Model.Lote.Modo == 0 ? Resources.Strings.RevisarCargue_ModoEjecucion : Resources.Strings.RevisarCargue_ModoHistorico)</div>
+            </div>
+            <div class="col-md-2 col-6 rc-meta-item">
+                <div class="rc-meta-label">@Resources.Strings.RevisarCargue_Escenario</div>
+                <div class="rc-meta-value">@Model.Lote.IdEscenario</div>
+            </div>
+            <div class="col-md-3 col-12 rc-meta-item">
+                <div class="rc-meta-label">@Resources.Strings.RevisarCargue_Archivo</div>
+                <div class="rc-meta-value rc-break">@Model.NombreArchivo</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <div class="table-header">
+            <h5><i class="fas fa-list mr-2"></i>@Resources.Strings.Common_Resultados</h5>
+            <span>
+                @if (Model.Lote.TotalErrores > 0)
+                {
+                    <span class="info-badge rc-badge-error">
+                        <i class="fas fa-times-circle mr-1"></i>@Model.Lote.TotalErrores @Resources.Strings.RevisarCargue_ResumenErrores
+                    </span>
+                }
+                @if (Model.Lote.TotalAdvertencias > 0)
+                {
+                    <span class="info-badge rc-badge-warning">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>@Model.Lote.TotalAdvertencias @Resources.Strings.RevisarCargue_ResumenAdvertencias
+                    </span>
+                }
+            </span>
+        </div>
+
+        @if (!Model.Hallazgos.Any())
+        {
+            <div class="no-data-message">
+                <i class="fas fa-check-circle"></i>
+                <h4>@Resources.Strings.RevisarCargue_SinHallazgos</h4>
+            </div>
+        }
+        else
+        {
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>@Resources.Strings.RevisarCargue_TablaSeveridad</th>
+                            <th>@Resources.Strings.RevisarCargue_TablaHoja</th>
+                            <th>@Resources.Strings.RevisarCargue_TablaFila</th>
+                            <th>@Resources.Strings.RevisarCargue_TablaColumna</th>
+                            <th>@Resources.Strings.RevisarCargue_TablaMensaje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var h in Model.Hallazgos)
+                        {
+                            bool esError = h.Severidad == CargueLoteSeveridad.Error;
+                            <tr>
+                                <td>
+                                    @if (esError)
+                                    {
+                                        <span class="rc-sev rc-sev-error"><i class="fas fa-times-circle mr-1"></i>@Resources.Strings.RevisarCargue_SeveridadError</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="rc-sev rc-sev-warning"><i class="fas fa-exclamation-triangle mr-1"></i>@Resources.Strings.RevisarCargue_SeveridadAdvertencia</span>
+                                    }
+                                </td>
+                                <td>@h.NombreHoja</td>
+                                <td>@(h.NumeroFilaExcel?.ToString() ?? "-")</td>
+                                <td>@(h.Columna ?? "-")</td>
+                                <td>@(esIngles && !string.IsNullOrWhiteSpace(h.MensajeEn) ? h.MensajeEn : h.Mensaje)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <div class="btn-group-actions rc-actions">
+        @using (Html.BeginForm("ConfirmarCargue", "Datos", FormMethod.Post, new { id = "frmConfirmarCargue" }))
+        {
+            @Html.AntiForgeryToken()
+            @Html.Hidden("idLote", Model.Lote.IdLote)
+            <button type="submit" class="btn btn-modern-gradient" @(puedeConfirmar ? "" : "disabled")>
+                <i class="fas fa-check mr-1"></i>@Resources.Strings.RevisarCargue_BtnConfirmar
+            </button>
+        }
+        <button type="button" class="btn btn-modern-secondary" data-toggle="modal" data-target="#descartarCargueModal">
+            <i class="fas fa-trash-alt mr-1"></i>@Resources.Strings.RevisarCargue_BtnDescartar
+        </button>
+    </div>
+
+    @if (hayErrores)
+    {
+        <div class="alert alert-danger rc-alert-danger mt-3">
+            <i class="fas fa-exclamation-circle mr-2"></i>@Resources.Strings.RevisarCargue_ConErroresNoPuedeConfirmar
+        </div>
+    }
+
+</div>
+
+<!-- Modal: descartar cargue (tema oscuro obligatorio en modales de confirmación) -->
+<div class="modal fade modal-confirm" id="descartarCargueModal" tabindex="-1" role="dialog" aria-labelledby="descartarCargueModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="descartarCargueModalLabel">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>@Resources.Strings.RevisarCargue_ModalDescartarTitulo
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p>@Resources.Strings.RevisarCargue_ModalDescartarTexto</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@Resources.Strings.RevisarCargue_ModalDescartarCancelar</button>
+                @using (Html.BeginForm("DescartarCargue", "Datos", FormMethod.Post, new { id = "frmDescartarCargue" }))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.Hidden("idLote", Model.Lote.IdLote)
+                    <button type="submit" class="btn btn-danger">@Resources.Strings.RevisarCargue_ModalDescartarConfirmar</button>
+                }
+            </div>
+        </div>
+    </div>
+</div>

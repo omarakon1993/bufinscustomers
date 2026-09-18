@@ -26,6 +26,7 @@ namespace bufinscustomers.Controllers
         private readonly ModeloService _modeloService = new ModeloService();
         private readonly HistorialVersionesCarguesService _historialService = new HistorialVersionesCarguesService();
         private readonly PlantillaConDatosService _plantillaConDatosService = new PlantillaConDatosService();
+        private readonly CargueStagingService _stagingService = new CargueStagingService();
         private StringBuilder _logBuilder = new StringBuilder();
 
         // Mapeo hoja Z_ → tabla Ini_. Fuente única: Helpers/TablasCargueHelper.cs
@@ -1023,8 +1024,15 @@ namespace bufinscustomers.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> CargarExcel(HttpPostedFileBase archivoExcel, int idEmpresaSeleccionada, int anioSeleccionado, string modoSeleccionado, int idEscenarioSeleccionado = 1)
+        public ActionResult CargarExcel(HttpPostedFileBase archivoExcel, int idEmpresaSeleccionada, int anioSeleccionado, string modoSeleccionado, int idEscenarioSeleccionado = 1)
         {
+            // ── Validación en dos pasos ──────────────────────────────────────────────────
+            // Esta acción YA NO escribe en las tablas Ini_* reales: parsea el Excel y lo
+            // escribe en su espejo de staging (dbo.Staging_Ini_*, ver
+            // Sql/007_CarguesStaging_CreateTables.sql), corre dbo.sp_ValidarCargueStaging
+            // (Services/CargueStagingService.cs) y redirige a RevisarCargue, donde el usuario
+            // ve el informe de validación y decide Confirmar (ConfirmarCargue, que recién ahí
+            // hace el snapshot + delete-e-inserta real de siempre) o Descartar.
             var resultado = new ResultadoCargaExcel();
             string nombreArchivoOriginal = "";
 
@@ -1097,336 +1105,361 @@ namespace bufinscustomers.Controllers
             nombreArchivoOriginal = Path.GetFileName(archivoExcel.FileName);
             var usuarioActual = UsuarioSesionHelper.UsuarioActual;
             int idUsuario = usuarioActual?.Id ?? 0;
-            int idHistorialCargue = 0; // Id de la versión que crea este cargue (para poder deshacerlo si dispara advertencias)
+            byte modo = modoEjecucion ? (byte)0 : (byte)1;
+            long idLote = 0;
+
+            // Purga oportunista de lotes de staging abandonados (nunca confirmados). No bloquea el cargue.
+            _stagingService.PurgarLotesVencidosSiToca();
 
             try
             {
                 using (var package = new XLWorkbook(archivoExcel.InputStream))
+                {
+                    // La plantilla debe traer las hojas Z_ esperadas. Se permiten hojas
+                    // adicionales no reconocidas (p. ej. la hoja auxiliar "Datos" que solo
+                    // alimenta las listas de validación del Excel): se ignoran más abajo.
+                    var hojasLibro = package.Worksheets
+                        .Select(w => NormalizarNombre(w.Name))
+                        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                    var hojasFaltantes = _mapeoHistorico.Keys
+                        .Where(z => !hojasLibro.Contains(NormalizarNombre(z)))
+                        .ToList();
+
+                    if (hojasFaltantes.Any())
                     {
-                        // La plantilla debe traer las hojas Z_ esperadas. Se permiten hojas
-                        // adicionales no reconocidas (p. ej. la hoja auxiliar "Datos" que solo
-                        // alimenta las listas de validación del Excel): se ignoran más abajo.
-                        var hojasLibro = package.Worksheets
-                            .Select(w => NormalizarNombre(w.Name))
-                            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                        resultado.Exito = false;
+                        resultado.Mensaje = $"La plantilla no contiene todas las hojas requeridas. Faltan: {string.Join(", ", hojasFaltantes)}.";
+                        TempData["ResultadoCarga"] = resultado;
+                        TempData["NombreArchivo"] = nombreArchivoOriginal;
+                        SetErrorMessage(resultado.Mensaje);
+                        return RedirectToAction("CargueExcel");
+                    }
 
-                        var hojasFaltantes = _mapeoHistorico.Keys
-                            .Where(z => !hojasLibro.Contains(NormalizarNombre(z)))
-                            .ToList();
+                    string nombreEmpresaLote = _empresaService.ObtenerEmpresas()
+                        .Find(e => e.Id == idEmpresaSeleccionada)?.Nombre ?? "Desconocida";
+                    string nombreUsuarioLote = ((usuarioActual?.Nombre ?? "") + " " + (usuarioActual?.Apellidos ?? "")).Trim();
 
-                        if (hojasFaltantes.Any())
-                        {
-                            resultado.Exito = false;
-                            resultado.Mensaje = $"La plantilla no contiene todas las hojas requeridas. Faltan: {string.Join(", ", hojasFaltantes)}.";
-                            TempData["ResultadoCarga"] = resultado;
-                            TempData["NombreArchivo"] = nombreArchivoOriginal;
-                            SetErrorMessage(resultado.Mensaje);
-                            return RedirectToAction("CargueExcel");
-                        }
+                    var (loteCreado, idLoteCreado, mensajeLote) = _stagingService.CrearLote(idEmpresaSeleccionada, nombreEmpresaLote, anioSeleccionado, modo,
+                        idEscenarioSeleccionado, idUsuario, nombreUsuarioLote, nombreArchivoOriginal);
 
-                        if (modoEjecucion)
-                        {
-                            bool errorEnCargaEjecucion = false;
+                    if (!loteCreado)
+                    {
+                        // Ya hay un cargue en revisión pendiente para esta misma empresa/año/modo/escenario:
+                        // se manda directo a revisarlo en vez de dejar subir uno nuevo encima.
+                        SetInfoMessage(mensajeLote);
+                        return RedirectToAction("RevisarCargue", new { idLote = idLoteCreado });
+                    }
+                    idLote = idLoteCreado;
 
-                            using (var conn = new SqlConnection(CadenaConexion))
-                            {
-                                conn.Open();
-                                using (var tx = conn.BeginTransaction())
-                                {
-                                    try
-                                    {
-                                        try
-                                        {
-                                            string _snapEmpresa = _empresaService.ObtenerEmpresas()
-                                                .Find(e => e.Id == idEmpresaSeleccionada)?.Nombre ?? "Desconocida";
-                                            string _snapUsuario = ((usuarioActual?.Nombre ?? "") + " " + (usuarioActual?.Apellidos ?? "")).Trim();
-                                            idHistorialCargue = _historialService.CrearSnapshotEnTransaccion(
-                                                conn, tx, idEmpresaSeleccionada, _snapEmpresa,
-                                                anioSeleccionado, 0, idUsuario, _snapUsuario, nombreArchivoOriginal, idEscenarioSeleccionado);
-                                        }
-                                        catch (Exception snapEx) { LogToFile($"Advertencia snapshot ejecucion: {snapEx.Message}"); }
+                    bool errorEnStaging = false;
 
-                                        EliminarEjecucionDeIni(conn, anioSeleccionado, idEmpresaSeleccionada, idEscenarioSeleccionado, tx);
-
-                                        foreach (var hoja in package.Worksheets)
-                                        {
-                                            var nombreNorm = NormalizarNombre(hoja.Name);
-
-                                            // Hoja auxiliar de la plantilla (listas de validación, etc.): se omite.
-                                            if (!_hojasCargueReconocidas.Contains(nombreNorm))
-                                                continue;
-
-                                            var detalle = new DetalleCargaHojaExcel { NombreHoja = hoja.Name };
-                                            var dt = LeerHojaEnDataTable(hoja, detalle, anioSeleccionado.ToString());
-
-                                            if (dt == null)
-                                            {
-                                                resultado.DetalleHojas.Add(detalle);
-                                                resultado.TotalHojasIgnoradas++;
-                                                continue;
-                                            }
-
-                                            bool exitoHoja;
-                                            if (_mapeoHistorico.TryGetValue(nombreNorm, out string nombreTablaIni))
-                                            {
-                                                detalle.NombreTabla = nombreTablaIni;
-                                                exitoHoja = GuardarEnIni(conn, dt, nombreTablaIni, idEmpresaSeleccionada, idUsuario, idEscenarioSeleccionado, historicoLog: 0, tx: tx);
-                                            }
-                                            else
-                                            {
-                                                exitoHoja = GuardarEnSQLServer(dt, idEmpresaSeleccionada, idUsuario);
-                                            }
-
-                                            if (!exitoHoja)
-                                            {
-                                                detalle.Estado = "Error";
-                                                detalle.MensajeError = TempData["Mensaje"]?.ToString() ?? "Error al guardar";
-                                                resultado.DetalleHojas.Add(detalle);
-
-                                                foreach (var d in resultado.DetalleHojas.Where(x => x.Estado == "Exitoso"))
-                                                {
-                                                    d.Estado = "Revertido";
-                                                    d.MensajeError = "Revertido por error en otra tabla";
-                                                }
-
-                                                resultado.Exito = false;
-                                                resultado.Mensaje = $"Error al procesar '{hoja.Name}'. Se revirtio toda la carga.";
-                                                resultado.MostrarDescargaLog = TempData["MostrarDescargaLog"] != null && (bool)TempData["MostrarDescargaLog"];
-
-                                                tx.Rollback();
-                                                LimpiarTablasEnError(conn, idEmpresaSeleccionada);
-                                                errorEnCargaEjecucion = true;
-                                                break;
-                                            }
-
-                                            detalle.FilasInsertadas = dt.Rows.Count;
-                                            detalle.Estado = "Exitoso";
-                                            resultado.DetalleHojas.Add(detalle);
-                                            resultado.TotalHojasProcesadas++;
-                                            resultado.TotalFilasInsertadas += dt.Rows.Count;
-                                        }
-
-                                        if (!errorEnCargaEjecucion)
-                                        {
-                                            RegistrarAuditoria(conn, nombreArchivoOriginal, idEmpresaSeleccionada, idEscenarioSeleccionado, tx);
-                                            tx.Commit();
-                                        }
-                                    }
-                                    catch (Exception txEx)
-                                    {
-                                        try { tx.Rollback(); } catch { }
-                                        LogToFile($"Error inesperado en transaccion de ejecucion: {txEx.Message}");
-                                        throw;
-                                    }
-                                }
-                            }
-
-                            if (errorEnCargaEjecucion)
-                            {
-                                TempData["ResultadoCarga"] = resultado;
-                                TempData["NombreArchivo"] = nombreArchivoOriginal;
-                                SetErrorMessage(resultado.Mensaje);
-                                return RedirectToAction("CargueExcel");
-                            }
-
-                            var resultadoValidacion = EjecutarValidacionDatos(idUsuario);
-                            if (resultadoValidacion.esExitoso)
-                            {
-                                resultado.Exito = true;
-                                resultado.Mensaje = $"Carga exitosa (Escenario {idEscenarioSeleccionado}): {resultado.TotalHojasProcesadas} tabla(s) con {resultado.TotalFilasInsertadas:N0} registros. {resultadoValidacion.mensaje}";
-                            }
-                            else
-                            {
-                                resultado.Exito = false;
-                                resultado.Mensaje = resultadoValidacion.mensaje;
-                                resultado.MostrarDescargaLog = true;
-                            }
-                        }
-                        else // modoHistorico
-                        {
-                            bool errorEnCargaHistorico = false;
-
-                            using (var conn = new SqlConnection(CadenaConexion))
-                            {
-                                conn.Open();
-                                using (var tx = conn.BeginTransaction())
-                                {
-                                    try
-                                    {
-                                        try
-                                        {
-                                            string _snapEmpresa = _empresaService.ObtenerEmpresas()
-                                                .Find(e => e.Id == idEmpresaSeleccionada)?.Nombre ?? "Desconocida";
-                                            string _snapUsuario = ((usuarioActual?.Nombre ?? "") + " " + (usuarioActual?.Apellidos ?? "")).Trim();
-                                            idHistorialCargue = _historialService.CrearSnapshotEnTransaccion(
-                                                conn, tx, idEmpresaSeleccionada, _snapEmpresa,
-                                                anioSeleccionado, 1, idUsuario, _snapUsuario, nombreArchivoOriginal, idEscenarioSeleccionado);
-                                        }
-                                        catch (Exception snapEx) { LogToFile($"Advertencia snapshot historico: {snapEx.Message}"); }
-
-                                        EliminarAnosHistoricosDeIni(conn, anioSeleccionado, idEmpresaSeleccionada, idEscenarioSeleccionado, tx);
-
-                                        foreach (var hoja in package.Worksheets)
-                                        {
-                                            var nombreNormalizado = NormalizarNombre(hoja.Name);
-
-                                            // Hoja auxiliar de la plantilla (listas de validación, etc.): se omite.
-                                            if (!_hojasCargueReconocidas.Contains(nombreNormalizado))
-                                                continue;
-
-                                            var detalle = new DetalleCargaHojaExcel { NombreHoja = hoja.Name };
-
-                                            if (!_mapeoHistorico.TryGetValue(nombreNormalizado, out string nombreTablaIni))
-                                            {
-                                                detalle.NombreTabla = "-";
-                                                detalle.Estado = "Ignorada";
-                                                detalle.MensajeError = "Sin tabla historica correspondiente";
-                                                resultado.DetalleHojas.Add(detalle);
-                                                resultado.TotalHojasIgnoradas++;
-                                                continue;
-                                            }
-
-                                            detalle.NombreTabla = nombreTablaIni;
-                                            var dt = LeerHojaEnDataTable(hoja, detalle, anioSeleccionado.ToString());
-
-                                            if (dt == null)
-                                            {
-                                                resultado.DetalleHojas.Add(detalle);
-                                                resultado.TotalHojasIgnoradas++;
-                                                continue;
-                                            }
-
-                                            if (!GuardarEnIni(conn, dt, nombreTablaIni, idEmpresaSeleccionada, idUsuario, idEscenarioSeleccionado, tx: tx))
-                                            {
-                                                detalle.Estado = "Error";
-                                                detalle.MensajeError = TempData["Mensaje"]?.ToString() ?? "Error al guardar en tabla historica";
-                                                resultado.DetalleHojas.Add(detalle);
-
-                                                foreach (var d in resultado.DetalleHojas.Where(x => x.Estado == "Exitoso"))
-                                                {
-                                                    d.Estado = "Revertido";
-                                                    d.MensajeError = "Revertido por error en otra tabla";
-                                                }
-
-                                                resultado.Exito = false;
-                                                resultado.Mensaje = $"Error al procesar '{hoja.Name}'. Se revirtio toda la carga historica.";
-                                                resultado.MostrarDescargaLog = true;
-
-                                                tx.Rollback();
-                                                errorEnCargaHistorico = true;
-                                                break;
-                                            }
-
-                                            detalle.FilasInsertadas = dt.Rows.Count;
-                                            detalle.Estado = "Exitoso";
-                                            resultado.DetalleHojas.Add(detalle);
-                                            resultado.TotalHojasProcesadas++;
-                                            resultado.TotalFilasInsertadas += dt.Rows.Count;
-                                        }
-
-                                        if (!errorEnCargaHistorico)
-                                        {
-                                            RegistrarAuditoria(conn, nombreArchivoOriginal, idEmpresaSeleccionada, idEscenarioSeleccionado, tx);
-                                            tx.Commit();
-                                        }
-                                    }
-                                    catch (Exception txEx)
-                                    {
-                                        try { tx.Rollback(); } catch { }
-                                        LogToFile($"Error inesperado en transaccion historica: {txEx.Message}");
-                                        throw;
-                                    }
-                                }
-                            }
-
-                            if (errorEnCargaHistorico)
-                            {
-                                TempData["ResultadoCarga"] = resultado;
-                                TempData["NombreArchivo"] = nombreArchivoOriginal;
-                                SetErrorMessage(resultado.Mensaje);
-                                return RedirectToAction("CargueExcel");
-                            }
-
-                            resultado.Exito = true;
-                            resultado.Mensaje = $"Carga historica exitosa (Escenario {idEscenarioSeleccionado}): {resultado.TotalHojasProcesadas} tabla(s) con {resultado.TotalFilasInsertadas:N0} registros.";
-                        }
-
-                        GuardarLogEnSession();
-
-                        // Widgets de Advertencia con Subtipo="plantilla": se evalúan contra la empresa
-                        // recién cargada solo si el cargue fue exitoso. Un error aquí nunca debe tumbar
-                        // un cargue que ya se guardó correctamente.
-                        if (resultado.Exito)
+                    using (var conn = new SqlConnection(CadenaConexion))
+                    {
+                        conn.Open();
+                        using (var tx = conn.BeginTransaction())
                         {
                             try
                             {
-                                var widgetsSvc = new WidgetsService();
-                                var widgetsActivos = await widgetsSvc.ObtenerActivasAsync().ConfigureAwait(false);
-                                var widgetsPlantilla = widgetsActivos.Where(w => w.Tipo == 3 &&
-                                    string.Equals(w.Subtipo, "plantilla", StringComparison.OrdinalIgnoreCase));
-
-                                bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
-
-                                foreach (var w in widgetsPlantilla)
+                                foreach (var hoja in package.Worksheets)
                                 {
-                                    var filas = await widgetsSvc.EjecutarAdvertenciaAsync(w, idEmpresaSeleccionada).ConfigureAwait(false);
-                                    foreach (var f in filas)
+                                    var nombreNorm = NormalizarNombre(hoja.Name);
+
+                                    // Hoja auxiliar de la plantilla (listas de validación, etc.): se omite.
+                                    if (!_hojasCargueReconocidas.Contains(nombreNorm))
+                                        continue;
+
+                                    var detalle = new DetalleCargaHojaExcel { NombreHoja = hoja.Name };
+                                    var dt = LeerHojaEnDataTable(hoja, detalle, anioSeleccionado.ToString());
+
+                                    if (dt == null)
                                     {
-                                        resultado.Advertencias.Add(new AdvertenciaCargueViewModel
-                                        {
-                                            Titulo = (esIngles && !string.IsNullOrWhiteSpace(f.TituloEn)) ? f.TituloEn : f.Titulo,
-                                            Mensaje = (esIngles && !string.IsNullOrWhiteSpace(f.MensajeEn)) ? f.MensajeEn : f.Mensaje,
-                                            Severidad = f.Severidad
-                                        });
+                                        resultado.DetalleHojas.Add(detalle);
+                                        resultado.TotalHojasIgnoradas++;
+                                        continue;
                                     }
+
+                                    bool exitoHoja;
+                                    if (_mapeoHistorico.TryGetValue(nombreNorm, out string nombreTablaIni))
+                                    {
+                                        detalle.NombreTabla = nombreTablaIni;
+                                        string nombreStaging = TablasCargueHelper.NombreStaging(nombreTablaIni);
+                                        exitoHoja = GuardarEnIni(conn, dt, nombreStaging, idEmpresaSeleccionada, idUsuario, idEscenarioSeleccionado, historicoLog: modo, tx: tx, idLote: idLote);
+                                    }
+                                    else
+                                    {
+                                        // Z_TablaPUC no tiene tabla Ini_/Staging_Ini_ asociada (es un catálogo,
+                                        // no participa en las reglas de negocio de sp_ValidarCargueStaging):
+                                        // sigue guardándose igual que hoy, fuera de este flujo de staging.
+                                        exitoHoja = GuardarEnSQLServer(dt, idEmpresaSeleccionada, idUsuario);
+                                    }
+
+                                    if (!exitoHoja)
+                                    {
+                                        detalle.Estado = "Error";
+                                        // "Staging_Ini_X" solo es el nombre físico de la tabla de staging — al
+                                        // usuario se le muestra "Ini_X" para que el mensaje no confunda.
+                                        detalle.MensajeError = (TempData["Mensaje"]?.ToString() ?? "Error al leer la hoja").Replace("Staging_Ini_", "Ini_");
+                                        resultado.DetalleHojas.Add(detalle);
+
+                                        foreach (var d in resultado.DetalleHojas.Where(x => x.Estado == "Exitoso"))
+                                        {
+                                            d.Estado = "Revertido";
+                                            d.MensajeError = "Revertido por error en otra hoja";
+                                        }
+
+                                        resultado.Exito = false;
+                                        resultado.Mensaje = $"Error al procesar '{hoja.Name}'.";
+                                        resultado.MostrarDescargaLog = TempData["MostrarDescargaLog"] != null && (bool)TempData["MostrarDescargaLog"];
+
+                                        tx.Rollback();
+                                        errorEnStaging = true;
+                                        break;
+                                    }
+
+                                    detalle.FilasInsertadas = dt.Rows.Count;
+                                    detalle.Estado = "Exitoso";
+                                    resultado.DetalleHojas.Add(detalle);
+                                    resultado.TotalHojasProcesadas++;
+                                    resultado.TotalFilasInsertadas += dt.Rows.Count;
                                 }
 
-                                if (resultado.Advertencias.Any() && idHistorialCargue > 0)
-                                {
-                                    Session["Cargue_UltimoIdHistorial"] = idHistorialCargue;
-                                    resultado.PuedeDeshacerCargue = true;
-                                }
+                                if (!errorEnStaging)
+                                    tx.Commit();
                             }
-                            catch (Exception advEx)
+                            catch (Exception txEx)
                             {
-                                AppLogger.Error(advEx, "CargarExcel: evaluando advertencias de plantilla");
+                                try { tx.Rollback(); } catch { }
+                                LogToFile($"Error inesperado escribiendo en staging: {txEx.Message}");
+                                throw;
                             }
-                        }
-
-                        TempData["ResultadoCarga"] = resultado;
-                        TempData["NombreArchivo"] = nombreArchivoOriginal;
-
-                        if (resultado.Exito)
-                        {
-                            SetSuccessMessage(resultado.Mensaje);
-                            if (usuarioValidacion != null)
-                                new NotificacionesService().Crear(usuarioValidacion.Id, R("Notif_CargueCompletado"), resultado.Mensaje, "success", "/Datos/CargueExcel");
-                        }
-                        else
-                        {
-                            SetErrorMessage(resultado.Mensaje);
-                            if (usuarioValidacion != null)
-                                new NotificacionesService().Crear(usuarioValidacion.Id, R("Notif_ErrorCargue"), resultado.Mensaje, "error", "/Datos/CargueExcel");
                         }
                     }
+
+                    GuardarLogEnSession();
+
+                    if (errorEnStaging)
+                    {
+                        _stagingService.DescartarLote(idLote);
+                        TempData["ResultadoCarga"] = resultado;
+                        TempData["NombreArchivo"] = nombreArchivoOriginal;
+                        SetErrorMessage(resultado.Mensaje);
+                        return RedirectToAction("CargueExcel");
+                    }
+
+                    _stagingService.ActualizarTotalFilas(idLote, resultado.TotalFilasInsertadas);
+
+                    var (exitoValidacion, mensajeValidacion, _, _) = _stagingService.ValidarLote(idLote);
+                    if (!exitoValidacion)
+                    {
+                        _stagingService.DescartarLote(idLote);
+                        AppLogger.Error($"sp_ValidarCargueStaging falló para el lote {idLote}: {mensajeValidacion}", contexto: "CargarExcel");
+                        SetErrorMessage($"No se pudo validar el cargue: {mensajeValidacion}");
+                        return RedirectToAction("CargueExcel");
+                    }
+                }
             }
             catch (Exception ex)
             {
                 resultado.Exito = false;
                 resultado.Mensaje = $"Error al procesar el archivo: {ex.Message}";
                 GuardarLogEnSession();
+                if (idLote > 0) { try { _stagingService.DescartarLote(idLote); } catch { } }
                 TempData["ResultadoCarga"] = resultado;
                 TempData["NombreArchivo"] = nombreArchivoOriginal;
                 SetErrorMessage(resultado.Mensaje);
+                return RedirectToAction("CargueExcel");
+            }
+
+            return RedirectToAction("RevisarCargue", new { idLote });
+        }
+
+        /// <summary>Informe de validación de un lote en staging — antes de confirmar el cargue.</summary>
+        [HttpGet]
+        public ActionResult RevisarCargue(long idLote)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            var lote = _stagingService.ObtenerLote(idLote);
+
+            if (lote == null || !EmpresaAccesoHelper.TieneAcceso(usuario, lote.IdEmpresa))
+            {
+                SetErrorMessage("El cargue en revisión indicado no existe o no tiene acceso a él.");
+                return RedirectToAction("CargueExcel");
+            }
+
+            var vm = new RevisarCargueViewModel
+            {
+                Lote = lote,
+                Hallazgos = _stagingService.ObtenerHallazgos(idLote),
+                NombreArchivo = lote.NombreArchivo
+            };
+            return View("~/Views/Datos/RevisarCargue.cshtml", vm);
+        }
+
+        /// <summary>
+        /// Confirma un lote ya validado (Estado ValidadoOk/ConAdvertencias): recién aquí se hace
+        /// el snapshot para "Deshacer", el delete-e-inserta real de siempre, y sp_ConfirmarCargueStaging
+        /// mueve el staging a las tablas Ini_* — todo dentro de la misma transacción.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ConfirmarCargue(long idLote)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            var lote = _stagingService.ObtenerLote(idLote);
+
+            if (lote == null || !EmpresaAccesoHelper.TieneAcceso(usuario, lote.IdEmpresa))
+            {
+                SetErrorMessage("El cargue en revisión indicado no existe o no tiene acceso a él.");
+                return RedirectToAction("CargueExcel");
+            }
+
+            if (!lote.PuedeConfirmar)
+            {
+                SetErrorMessage("Este cargue tiene errores pendientes y no se puede confirmar. Corrija el Excel y vuelva a subirlo.");
+                return RedirectToAction("RevisarCargue", new { idLote });
+            }
+
+            int idUsuario = usuario?.Id ?? 0;
+            var resultado = new ResultadoCargaExcel { TotalHojasProcesadas = 0, TotalFilasInsertadas = lote.TotalFilas };
+            int idHistorialCargue = 0;
+            bool errorEnConfirmacion = false;
+            string mensajeError = null;
+
+            using (var conn = new SqlConnection(CadenaConexion))
+            {
+                conn.Open();
+                using (var tx = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        try
+                        {
+                            idHistorialCargue = _historialService.CrearSnapshotEnTransaccion(
+                                conn, tx, lote.IdEmpresa, lote.NombreEmpresa,
+                                lote.Anio, lote.Modo, idUsuario, lote.NombreUsuario, lote.NombreArchivo, lote.IdEscenario);
+                        }
+                        catch (Exception snapEx) { LogToFile($"Advertencia snapshot al confirmar lote {idLote}: {snapEx.Message}"); }
+
+                        if (lote.Modo == 0)
+                            EliminarEjecucionDeIni(conn, lote.Anio, lote.IdEmpresa, lote.IdEscenario, tx);
+                        else
+                            EliminarAnosHistoricosDeIni(conn, lote.Anio, lote.IdEmpresa, lote.IdEscenario, tx);
+
+                        var (exito, mensaje) = _stagingService.ConfirmarLote(conn, tx, idLote, idHistorialCargue > 0 ? idHistorialCargue : (int?)null);
+                        if (!exito)
+                        {
+                            errorEnConfirmacion = true;
+                            mensajeError = mensaje;
+                            tx.Rollback();
+                        }
+                        else
+                        {
+                            RegistrarAuditoria(conn, lote.NombreArchivo, lote.IdEmpresa, lote.IdEscenario, tx);
+                            tx.Commit();
+                        }
+                    }
+                    catch (Exception txEx)
+                    {
+                        try { tx.Rollback(); } catch { }
+                        LogToFile($"Error inesperado confirmando el lote {idLote}: {txEx.Message}");
+                        errorEnConfirmacion = true;
+                        mensajeError = txEx.Message;
+                    }
+                }
+            }
+
+            if (errorEnConfirmacion)
+            {
+                AppLogger.Error($"ConfirmarCargue: fallo confirmando el lote {idLote}: {mensajeError}", contexto: "ConfirmarCargue");
+                SetErrorMessage($"No se pudo confirmar el cargue: {mensajeError}");
+                return RedirectToAction("RevisarCargue", new { idLote });
+            }
+
+            // El staging de este lote ya se copió a las tablas reales: se libera el espacio.
+            try { _stagingService.LimpiarStagingDeLote(idLote); } catch { }
+
+            new AuditoriaService().RegistrarCambio(
+                AuditoriaTipo.Cargues, AuditoriaAccion.Confirmar, "CargueLote", idLote.ToString(),
+                $"Confirmó el cargue de '{lote.NombreEmpresa}' — año {lote.Anio}, {(lote.Modo == 0 ? "ejecución" : "histórico")}, escenario {lote.IdEscenario}, {lote.TotalFilas:N0} fila(s), archivo '{lote.NombreArchivo}'.",
+                null,
+                new { empresa = lote.NombreEmpresa, anio = lote.Anio, modo = lote.Modo, escenario = lote.IdEscenario, totalFilas = lote.TotalFilas, archivo = lote.NombreArchivo },
+                lote.IdEmpresa, entidadNombre: lote.NombreEmpresa);
+
+            resultado.Exito = true;
+            resultado.TotalFilasInsertadas = lote.TotalFilas;
+
+            // Red de seguridad adicional post-commit (solo modo ejecución), como ya existía.
+            if (lote.Modo == 0)
+            {
+                var resultadoValidacion = EjecutarValidacionDatos(idUsuario);
+                resultado.Mensaje = resultadoValidacion.esExitoso
+                    ? $"Carga exitosa (Escenario {lote.IdEscenario}): {lote.TotalFilas:N0} registros. {resultadoValidacion.mensaje}"
+                    : resultadoValidacion.mensaje;
+                if (!resultadoValidacion.esExitoso)
+                {
+                    resultado.Exito = false;
+                    resultado.MostrarDescargaLog = true;
+                }
+            }
+            else
+            {
+                resultado.Mensaje = $"Carga histórica exitosa (Escenario {lote.IdEscenario}): {lote.TotalFilas:N0} registros.";
+            }
+
+            if (resultado.Exito && idHistorialCargue > 0)
+            {
+                Session["Cargue_UltimoIdHistorial"] = idHistorialCargue;
+                resultado.PuedeDeshacerCargue = true;
+            }
+
+            TempData["ResultadoCarga"] = resultado;
+            TempData["NombreArchivo"] = lote.NombreArchivo;
+
+            if (resultado.Exito)
+            {
+                SetSuccessMessage(resultado.Mensaje);
+                if (usuario != null)
+                    new NotificacionesService().Crear(usuario.Id, R("Notif_CargueCompletado"), resultado.Mensaje, "success", "/Datos/CargueExcel");
+            }
+            else
+            {
+                SetErrorMessage(resultado.Mensaje);
+                if (usuario != null)
+                    new NotificacionesService().Crear(usuario.Id, R("Notif_ErrorCargue"), resultado.Mensaje, "error", "/Datos/CargueExcel");
             }
 
             return RedirectToAction("CargueExcel");
         }
 
-        // Deshace el cargue que la propia sesión acaba de hacer, cuando el usuario decide no continuar
-        // tras ver las advertencias de los widgets "plantilla". El Id de la versión a revertir nunca
-        // viaja desde el cliente (evita que alguien deshaga el cargue de otra persona manipulando el
-        // formulario) — sale de Session, donde CargarExcel lo dejó.
+        /// <summary>Descarta un lote en revisión sin tocar ninguna tabla real.</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult DescartarCargue(long idLote)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            var lote = _stagingService.ObtenerLote(idLote);
+
+            if (lote != null && EmpresaAccesoHelper.TieneAcceso(usuario, lote.IdEmpresa))
+            {
+                _stagingService.DescartarLote(idLote);
+
+                new AuditoriaService().RegistrarCambio(
+                    AuditoriaTipo.Cargues, AuditoriaAccion.Descartar, "CargueLote", idLote.ToString(),
+                    $"Descartó el cargue en revisión de '{lote.NombreEmpresa}' — año {lote.Anio}, {(lote.Modo == 0 ? "ejecución" : "histórico")}, escenario {lote.IdEscenario}, archivo '{lote.NombreArchivo}'.",
+                    null,
+                    new { empresa = lote.NombreEmpresa, anio = lote.Anio, modo = lote.Modo, escenario = lote.IdEscenario, archivo = lote.NombreArchivo, totalErrores = lote.TotalErrores, totalAdvertencias = lote.TotalAdvertencias },
+                    lote.IdEmpresa, entidadNombre: lote.NombreEmpresa, severidad: AuditoriaSeveridad.Advertencia);
+            }
+
+            SetInfoMessage("Se descartó el cargue en revisión.");
+            return RedirectToAction("CargueExcel");
+        }
+
+        // Deshace el cargue que la propia sesión acaba de confirmar (ConfirmarCargue), por si el
+        // usuario decide no continuar. El Id de la versión a revertir nunca viaja desde el cliente
+        // (evita que alguien deshaga el cargue de otra persona manipulando el formulario) — sale de
+        // Session, donde ConfirmarCargue lo dejó.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult DeshacerCargue()
@@ -1931,7 +1964,15 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        private bool GuardarEnIni(SqlConnection conn, DataTable dtExcel, string nombreTablaIni, int idEmpresa, int idUsuario, int idEscenario, byte historicoLog = 1, SqlTransaction tx = null)
+        /// <summary>
+        /// Copia un DataTable leído del Excel a la tabla destino indicada (esquema resuelto
+        /// dinámicamente vía INFORMATION_SCHEMA.COLUMNS, así que sirve tanto para las tablas
+        /// Ini_* reales como para su espejo Staging_Ini_* — ver validación en dos pasos en
+        /// <see cref="bufinscustomers.Services.CargueStagingService"/>). Cuando <paramref name="idLote"/>
+        /// tiene valor y la tabla destino tiene columna IdLote/NumeroFilaExcel (solo las de staging
+        /// las tienen), se completan también esas dos columnas.
+        /// </summary>
+        private bool GuardarEnIni(SqlConnection conn, DataTable dtExcel, string nombreTablaIni, int idEmpresa, int idUsuario, int idEscenario, byte historicoLog = 1, SqlTransaction tx = null, long? idLote = null)
         {
             try
             {
@@ -1984,6 +2025,7 @@ namespace bufinscustomers.Controllers
                 foreach (DataRow srcRow in dtExcel.Rows)
                 {
                     var destRow = dtDest.NewRow();
+                    int filaExcelActual = dtExcel.Rows.IndexOf(srcRow) + 2;
 
                     // Valores de referencia para la Llave
                     string cuenta  = colsExcel.ContainsKey("Cuenta")  ? srcRow[colsExcel["Cuenta"]].ToString()  : "";
@@ -2013,6 +2055,12 @@ namespace bufinscustomers.Controllers
                                 break;
                             case "Historico_Log":
                                 destRow[colIni] = historicoLog;
+                                break;
+                            case "IdLote":
+                                destRow[colIni] = idLote.HasValue ? (object)idLote.Value : DBNull.Value;
+                                break;
+                            case "NumeroFilaExcel":
+                                destRow[colIni] = filaExcelActual;
                                 break;
                             case "IdUsuarioEjecucion_Log":
                             case "FechaEjecucion_Log":
