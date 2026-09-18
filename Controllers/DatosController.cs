@@ -1376,6 +1376,13 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("RevisarCargue", new { idLote });
             }
 
+            // Detalle por hoja para el resumen (cuenta lo que hay en staging ANTES de borrarlo).
+            var conteoPorHoja = _stagingService.ObtenerConteoPorHoja(idLote);
+            resultado.DetalleHojas = conteoPorHoja
+                .Select(c => new DetalleCargaHojaExcel { NombreHoja = c.NombreHoja, NombreTabla = c.NombreTabla, FilasInsertadas = c.Filas, Estado = "Exitoso" })
+                .ToList();
+            resultado.TotalHojasProcesadas = resultado.DetalleHojas.Count;
+
             // El staging de este lote ya se copió a las tablas reales: se libera el espacio.
             try { _stagingService.LimpiarStagingDeLote(idLote); } catch { }
 
@@ -1389,12 +1396,22 @@ namespace bufinscustomers.Controllers
             resultado.Exito = true;
             resultado.TotalFilasInsertadas = lote.TotalFilas;
 
+            string modoTexto = lote.Modo == 0 ? R("RevisarCargue_ModoEjecucion") : R("RevisarCargue_ModoHistorico");
+            string resumen = string.Format(R("Datos_ResumenCargueConfirmado"),
+                lote.NombreEmpresa, lote.Anio, modoTexto, lote.IdEscenario, lote.TotalFilas.ToString("N0"), resultado.TotalHojasProcesadas);
+
+            resultado.NombreEmpresa = lote.NombreEmpresa;
+            resultado.Anio = lote.Anio;
+            resultado.ModoTexto = modoTexto;
+            resultado.IdEscenario = lote.IdEscenario;
+
             // Red de seguridad adicional post-commit (solo modo ejecución), como ya existía.
             if (lote.Modo == 0)
             {
                 var resultadoValidacion = EjecutarValidacionDatos(idUsuario);
+                resultado.NotaExtra = resultadoValidacion.esExitoso ? resultadoValidacion.mensaje : null;
                 resultado.Mensaje = resultadoValidacion.esExitoso
-                    ? $"Carga exitosa (Escenario {lote.IdEscenario}): {lote.TotalFilas:N0} registros. {resultadoValidacion.mensaje}"
+                    ? $"{resumen} {resultadoValidacion.mensaje}"
                     : resultadoValidacion.mensaje;
                 if (!resultadoValidacion.esExitoso)
                 {
@@ -1404,7 +1421,7 @@ namespace bufinscustomers.Controllers
             }
             else
             {
-                resultado.Mensaje = $"Carga histórica exitosa (Escenario {lote.IdEscenario}): {lote.TotalFilas:N0} registros.";
+                resultado.Mensaje = resumen;
             }
 
             if (resultado.Exito && idHistorialCargue > 0)

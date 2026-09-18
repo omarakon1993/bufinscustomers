@@ -1,3 +1,4 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
@@ -154,6 +155,35 @@ namespace bufinscustomers.Services
                 }
             }
             return list;
+        }
+
+        /// <summary>
+        /// Cuenta cuántas filas de staging tiene el lote en cada tabla Ini_/Staging_Ini_ — para
+        /// mostrar el detalle "por hoja" en el resumen de un cargue ya confirmado. Debe llamarse
+        /// ANTES de <see cref="LimpiarStagingDeLote"/> (que borra el staging).
+        /// </summary>
+        public List<(string NombreHoja, string NombreTabla, int Filas)> ObtenerConteoPorHoja(long idLote)
+        {
+            var resultado = new List<(string, string, int)>();
+            using (var cn = new SqlConnection(CadenaConexion))
+            {
+                cn.Open();
+                foreach (var kv in TablasCargueHelper.MapeoZaIni)
+                {
+                    string nombreStaging = TablasCargueHelper.NombreStaging(kv.Value);
+                    try
+                    {
+                        using (var cmd = new SqlCommand($"SELECT COUNT(*) FROM dbo.[{nombreStaging}] WHERE IdLote = @IdLote", cn))
+                        {
+                            cmd.Parameters.AddWithValue("@IdLote", idLote);
+                            int filas = (int)cmd.ExecuteScalar();
+                            if (filas > 0) resultado.Add((kv.Key, kv.Value, filas));
+                        }
+                    }
+                    catch (SqlException) { /* tabla de staging no existe en esta BD: se omite */ }
+                }
+            }
+            return resultado;
         }
 
         // ── Validación ──────────────────────────────────────────────────────────────────

@@ -15,6 +15,15 @@ namespace bufinscustomers.Models
         public bool MostrarDescargaLog { get; set; }
         public List<AdvertenciaCargueViewModel> Advertencias { get; set; } = new List<AdvertenciaCargueViewModel>();
         public bool PuedeDeshacerCargue { get; set; }
+
+        // Datos estructurados del lote confirmado (solo se llenan en DatosController.ConfirmarCargue),
+        // para el modal-resumen de resultado en CargueExcel.cshtml — evita tener que parsear Mensaje.
+        public string NombreEmpresa { get; set; }
+        public int? Anio { get; set; }
+        public string ModoTexto { get; set; }
+        public int? IdEscenario { get; set; }
+        /// <summary>Nota corta adicional (ej. el mensaje de SP_ValidarPlantillaInicial) — Mensaje sigue llevando la frase completa para el banner/notificación.</summary>
+        public string NotaExtra { get; set; }
     }
 
     [Serializable]

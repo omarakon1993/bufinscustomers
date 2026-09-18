@@ -5,12 +5,31 @@
     ViewBag.Title = Resources.Strings.Datos_PageTitle;
     Layout = "~/Views/Shared/_Layout.cshtml";
     var resultado = TempData["ResultadoCarga"] as ResultadoCargaExcel;
-    var nombreArchivo = TempData["NombreArchivo"] as string;
 
     var advertenciasCargue = resultado?.Advertencias ?? new List<AdvertenciaCargueViewModel>();
     // Reemplaza '<' por su escape unicode: si el Titulo/Mensaje de un widget de Advertencia trae
     // una comparación "<"/"<>" o cualquier "</script", el navegador cortaría el <script> a la mitad.
     var advertenciasJson = new JavaScriptSerializer().Serialize(advertenciasCargue.Select(a => new { titulo = a.Titulo, mensaje = a.Mensaje, severidad = a.Severidad })).Replace("<", "\\u003c");
+
+    // Resultado del cargue (éxito o error) — es la ÚNICA forma en que se muestra ahora (ya no hay
+    // tabla de detalle aparte más abajo en la página): un modal con el detalle estructurado
+    // (empresa/año/modo/escenario, totales, y el detalle por hoja con su estado) apenas carga la
+    // página, en vez de un párrafo largo o una tabla que pasaba desapercibida.
+    var resultadoCargueJson = resultado == null
+        ? "null"
+        : new JavaScriptSerializer().Serialize(new
+        {
+            exito = resultado.Exito,
+            mensaje = resultado.Mensaje,
+            nota = resultado.NotaExtra,
+            empresa = resultado.NombreEmpresa,
+            anio = resultado.Anio,
+            modo = resultado.ModoTexto,
+            escenario = resultado.IdEscenario,
+            totalFilas = resultado.TotalFilasInsertadas,
+            totalHojas = resultado.TotalHojasProcesadas,
+            hojas = resultado.DetalleHojas.Select(d => new { hoja = d.NombreHoja, estado = d.Estado, filas = d.FilasInsertadas, mensajeError = d.MensajeError })
+        }).Replace("<", "\\u003c");
 }
 
 <link href="~/Assets/css/informe-relacionamientos.css" rel="stylesheet" />
@@ -98,6 +117,53 @@
     .swal-adv-item-titulo { font-size: 0.8rem; font-weight: 700; margin-bottom: 0.1rem; }
     .swal-adv-item-msg { font-size: 0.76rem; line-height: 1.4; opacity: 0.9; }
     .swal-adv-pregunta { margin: 0.75rem 0 0; font-size: 0.82rem; font-weight: 600; text-align: center; }
+
+    /* Modal de resultado del cargue (única forma en que se muestra el resultado ahora — ya no hay
+       tabla de detalle aparte en la página): resumen compacto de chips + stats + hojas. */
+    .swal-res-compact { width: 520px !important; max-width: 92vw !important; padding: 1.2rem 1.3rem 1.5rem !important; }
+    .swal-res-compact .swal2-html-container { margin: 0; text-align: left; max-height: 70vh; }
+    /* El ícono de éxito/error de SweetAlert2 se dibuja con líneas SVG posicionadas en em fijos
+       relativos a su tamaño original (5em) — achicarlo con width/height desalinea el checkmark
+       (se corta). transform:scale() reescala todo el dibujo proporcionalmente sin ese problema. */
+    .swal-res-compact .swal2-icon { transform: scale(0.72); margin: 0.7em auto -0.6em; }
+    .swal-res-compact .swal2-title { font-size: 1.2rem; margin-top: 0.2em; }
+
+    .swal-res-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; margin-bottom: 1rem; }
+    .swal-res-chip {
+        display: inline-flex; align-items: center; gap: 0.35rem;
+        background: rgba(255, 255, 255, 0.06); border-radius: 99px;
+        padding: 0.3rem 0.7rem; font-size: 0.76rem; font-weight: 600; opacity: 0.9;
+    }
+    .swal-res-chip i { font-size: 0.7rem; opacity: 0.75; }
+
+    .swal-res-stats { display: flex; gap: 0.7rem; margin-bottom: 1rem; }
+    .swal-res-stat { flex: 1; text-align: center; background: rgba(255, 255, 255, 0.045); border-radius: 10px; padding: 0.7rem 0.4rem; }
+    .swal-res-stat-num { display: block; font-size: 1.55rem; font-weight: 800; color: #22c55e; line-height: 1.1; }
+    .swal-res-stat-label { display: block; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.7; margin-top: 0.2rem; }
+
+    .swal-res-msg-error { margin: 0 0 0.9rem; font-size: 0.85rem; line-height: 1.45; text-align: center; }
+
+    .swal-res-lista-titulo {
+        font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+        opacity: 0.6; margin: 0 0 0.4rem 0.1rem;
+    }
+    .swal-res-lista { max-height: 260px; overflow-y: auto; padding-right: 4px; margin-bottom: 0.8rem; }
+    .swal-res-row {
+        background: rgba(255, 255, 255, 0.045); border-left: 3px solid #A0A0B8; border-radius: 6px;
+        padding: 0.5rem 0.7rem; margin-bottom: 0.4rem; font-size: 0.8rem;
+    }
+    .swal-res-row.is-ok      { border-left-color: #22c55e; }
+    .swal-res-row.is-error   { border-left-color: #ef4444; }
+    .swal-res-row.is-warning { border-left-color: #f59e0b; }
+    .swal-res-row:last-child { margin-bottom: 0; }
+    .swal-res-row-main { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+    .swal-res-row-hoja { display: flex; align-items: center; gap: 0.45rem; min-width: 0; font-weight: 600; }
+    .swal-res-row-hoja span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .swal-res-row-hoja i { font-size: 0.8rem; flex-shrink: 0; }
+    .swal-res-row-filas { font-weight: 700; opacity: 0.85; flex-shrink: 0; font-size: 0.78rem; }
+    .swal-res-row-error { margin: 0.25rem 0 0; font-size: 0.74rem; line-height: 1.4; opacity: 0.85; }
+
+    .swal-res-nota { margin: 0; font-size: 0.76rem; opacity: 0.75; text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.35rem; }
 </style>
 
 <div class="container-fluid px-4">
@@ -258,127 +324,6 @@
         </form>
     </div>
 
-    <!-- Resultados de la carga -->
-    @if (resultado != null && resultado.DetalleHojas != null && resultado.DetalleHojas.Count > 0)
-    {
-        <div class="filter-card">
-            <h3 class="filter-card-title">
-                <i class="fas fa-clipboard-check"></i>
-                @Resources.Strings.Datos_ResultTitle
-                @if (!string.IsNullOrEmpty(nombreArchivo))
-                {
-                    <span style="font-size: 0.8rem; font-weight: 400; color: #6c757d; margin-left: 0.5rem;">
-                        &mdash; @nombreArchivo
-                    </span>
-                }
-            </h3>
-
-            <!-- Resumen -->
-            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
-                <div style="background: @(resultado.Exito ? "linear-gradient(135deg, #10b981, #059669)" : "linear-gradient(135deg, #ef4444, #dc2626)"); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
-                    <i class="fas @(resultado.Exito ? "fa-check-circle" : "fa-times-circle")" style="margin-right: 4px;"></i>
-                    @(resultado.Exito ? Resources.Strings.Datos_StatusExitoso : Resources.Strings.Datos_StatusFallido)
-                </div>
-                @if (resultado.TotalHojasProcesadas > 0)
-                {
-                    <div style="background: var(--app-btn-gradient); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
-                        <i class="fas fa-table" style="margin-right: 4px;"></i>
-                        @resultado.TotalHojasProcesadas @Resources.Strings.Datos_Tablas
-                    </div>
-                    <div style="background: var(--app-btn-gradient); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
-                        <i class="fas fa-database" style="margin-right: 4px;"></i>
-                        @resultado.TotalFilasInsertadas.ToString("N0") @Resources.Strings.Datos_Registros
-                    </div>
-                }
-                @if (resultado.TotalHojasIgnoradas > 0)
-                {
-                    <div style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;">
-                        <i class="fas fa-forward" style="margin-right: 4px;"></i>
-                        @resultado.TotalHojasIgnoradas @Resources.Strings.Datos_Ignoradas
-                    </div>
-                }
-            </div>
-
-            <!-- Detalle por hoja -->
-            <div class="table-wrapper" style="max-height: 400px;">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>@Resources.Strings.Datos_ThHoja</th>
-                            <th>@Resources.Strings.Datos_ThTabla</th>
-                            <th>@Resources.Strings.Datos_ThEstado</th>
-                            <th>@Resources.Strings.Datos_ThFilas</th>
-                            <th>@Resources.Strings.Datos_ThColumnas</th>
-                            <th>@Resources.Strings.Datos_ThDetalle</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var detalle in resultado.DetalleHojas)
-                        {
-                            string rowColor;
-                            string iconClass;
-                            switch (detalle.Estado)
-                            {
-                                case "Exitoso":
-                                    rowColor = "#f0fdf4";
-                                    iconClass = "fa-check-circle";
-                                    break;
-                                case "Error":
-                                case "Revertido":
-                                    rowColor = "#fef2f2";
-                                    iconClass = "fa-times-circle";
-                                    break;
-                                default:
-                                    rowColor = "#fefce8";
-                                    iconClass = "fa-forward";
-                                    break;
-                            }
-                            <tr style="background-color: @rowColor;">
-                                <td><strong>@detalle.NombreHoja</strong></td>
-                                <td>@detalle.NombreTabla</td>
-                                <td>
-                                    <i class="fas @iconClass" style="margin-right: 4px;
-                                       color: @(detalle.Estado == "Exitoso" ? "#10b981" : detalle.Estado == "Ignorada" ? "#f59e0b" : "#ef4444");"></i>
-                                    @(detalle.Estado == "Exitoso" ? Resources.Strings.Datos_StatusExitoso :
-                                      detalle.Estado == "Ignorada" ? Resources.Strings.Datos_StatusIgnorada :
-                                      detalle.Estado == "Revertido" ? Resources.Strings.Datos_StatusRevertido :
-                                      Resources.Strings.Datos_StatusFallido)
-                                </td>
-                                <td>@(detalle.FilasInsertadas > 0 ? detalle.FilasInsertadas.ToString("N0") : "-")</td>
-                                <td>@(detalle.TotalColumnas > 0 ? detalle.TotalColumnas.ToString() : "-")</td>
-                                <td style="font-size: 0.8rem; color: #6c757d;">@(detalle.MensajeError ?? "")</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-
-            @if (advertenciasCargue.Any())
-            {
-                <div class="carga-advertencias-panel">
-                    <div class="carga-advertencias-titulo">
-                        <i class="fas fa-exclamation-triangle"></i> @Resources.Strings.Datos_AdvertenciasTitulo
-                    </div>
-                    <p class="carga-advertencias-desc">@Resources.Strings.Datos_AdvertenciasPanelDesc</p>
-                    @foreach (var adv in advertenciasCargue)
-                    {
-                        var sev = string.IsNullOrEmpty(adv.Severidad) ? "warning" : adv.Severidad;
-                        var icono = sev == "success" ? "fa-check-circle" : (sev == "error" ? "fa-times-circle" : "fa-exclamation-triangle");
-                        <div class="carga-advertencia-item carga-adv-@sev">
-                            <i class="fas @icono"></i>
-                            <div>
-                                @if (!string.IsNullOrEmpty(adv.Titulo))
-                                {
-                                    <strong>@adv.Titulo</strong><br />
-                                }
-                                @adv.Mensaje
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
-    }
 </div>
 
 <!-- Formulario oculto: deshacer el cargue recién hecho si el usuario decide no continuar -->
@@ -906,10 +851,16 @@
             siContinuar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SiContinuar))',
             noDeshacer: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_NoDeshacer))',
             sinDeshacer: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SinDeshacer))',
-            entendido: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_Entendido))'
+            entendido: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_Entendido))',
+            tituloExito: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Exito))',
+            tituloError: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error))',
+            registrosLabel: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_RegistrosLabel))',
+            hojasLabel: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_HojasLabel))',
+            detalleHojasLabel: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_DetalleHojasLabel))'
         };
 
         var _advertenciasCargue = @Html.Raw(advertenciasJson);
+        var _resultadoCargue = @Html.Raw(resultadoCargueJson);
         var _puedeDeshacerCargue = @((resultado != null && resultado.PuedeDeshacerCargue) ? "true" : "false");
 
         var _pcdUrls = {
@@ -985,7 +936,71 @@
             }
         }
 
+        // ── Resultado del cargue (éxito/error) en modal — es la ÚNICA forma en que se muestra
+        // ahora (ya no hay banner ni tabla de detalle aparte en la página). Éxito: resumen
+        // compacto (chips de empresa/año/modo/escenario, stats grandes de total registros/hojas,
+        // y el detalle por hoja) — al cerrar el modal se recarga la página en limpio (TempData ya
+        // se consumió en este render, así que la recarga deja el formulario tal cual estaba antes
+        // de subir nada). Error: el mensaje principal + el mismo detalle por hoja (marcando cuál
+        // falló y por qué), SIN recargar — así el botón "Descargar log" sigue disponible.
+        var _coloresEstadoHoja = { Exitoso: 'is-ok', Error: 'is-error', Revertido: 'is-error', Ignorada: 'is-warning' };
+        var _iconosEstadoHoja  = { Exitoso: 'fa-check-circle', Error: 'fa-times-circle', Revertido: 'fa-times-circle', Ignorada: 'fa-forward' };
+
+        function mostrarResultadoCargueSiHay() {
+            if (!_resultadoCargue) return;
+            var r = _resultadoCargue;
+            var hojas = r.hojas || [];
+
+            var meta = r.empresa ?
+                '<div class="swal-res-meta">' +
+                    '<span class="swal-res-chip"><i class="fas fa-building"></i>' + r.empresa + '</span>' +
+                    '<span class="swal-res-chip"><i class="fas fa-calendar-alt"></i>' + r.anio + '</span>' +
+                    '<span class="swal-res-chip"><i class="fas fa-cog"></i>' + r.modo + '</span>' +
+                    '<span class="swal-res-chip"><i class="fas fa-layer-group"></i>Esc. ' + r.escenario + '</span>' +
+                '</div>' : '';
+
+            var stats = r.exito ?
+                '<div class="swal-res-stats">' +
+                    '<div class="swal-res-stat"><span class="swal-res-stat-num">' + Number(r.totalFilas).toLocaleString() + '</span><span class="swal-res-stat-label">' + _datosMsg.registrosLabel + '</span></div>' +
+                    '<div class="swal-res-stat"><span class="swal-res-stat-num">' + r.totalHojas + '</span><span class="swal-res-stat-label">' + _datosMsg.hojasLabel + '</span></div>' +
+                '</div>' : '';
+
+            var mensajePrincipal = !r.exito ? '<p class="swal-res-msg-error">' + r.mensaje + '</p>' : '';
+
+            var filasHojas = hojas.map(function (h) {
+                var clase = _coloresEstadoHoja[h.estado] || '';
+                var icono = _iconosEstadoHoja[h.estado] || 'fa-circle';
+                var detalleError = (!r.exito && h.mensajeError) ? '<div class="swal-res-row-error">' + h.mensajeError + '</div>' : '';
+                var filasTxt = r.exito ? '<span class="swal-res-row-filas">' + Number(h.filas).toLocaleString() + '</span>' : '';
+                return '<div class="swal-res-row ' + clase + '">' +
+                           '<div class="swal-res-row-main">' +
+                               '<span class="swal-res-row-hoja"><i class="fas ' + icono + '"></i><span>' + h.hoja + '</span></span>' +
+                               filasTxt +
+                           '</div>' +
+                           detalleError +
+                       '</div>';
+            }).join('');
+            var lista = hojas.length
+                ? '<div class="swal-res-lista-titulo">' + _datosMsg.detalleHojasLabel + '</div><div class="swal-res-lista">' + filasHojas + '</div>'
+                : '';
+
+            var nota = r.nota ? '<p class="swal-res-nota"><i class="fas fa-info-circle"></i>' + r.nota + '</p>' : '';
+
+            Swal.fire({
+                icon: r.exito ? 'success' : 'error',
+                title: r.exito ? _datosMsg.tituloExito : _datosMsg.tituloError,
+                html: meta + stats + mensajePrincipal + lista + nota,
+                customClass: { popup: 'swal-res-compact' },
+                confirmButtonText: _datosMsg.entendido
+            }).then(function () {
+                if (r.exito) {
+                    window.location.href = '@Url.Action("CargueExcel", "Datos")';
+                }
+            });
+        }
+
         $(document).ready(function () {
+            mostrarResultadoCargueSiHay();
             mostrarAdvertenciasCargueSiHay();
 
             var dropZone = $('#dropZone');
