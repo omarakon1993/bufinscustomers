@@ -39,6 +39,11 @@ namespace bufinscustomers.Services
             "decimal", "numeric", "float", "real", "money", "smallmoney", "int", "bigint", "smallint", "tinyint"
         };
 
+        // Debe mantenerse igual al array LT_PALETTE del JS (InformeLineaTiempo.cshtml) y al
+        // maximumSelectionLength del select2 de #ltIndicador — es el tope de colores distintos
+        // que la paleta de la gráfica puede asignar sin repetir.
+        private const int MaxVariables = 8;
+
         private bool ValidarTabla(string nombreTabla)
         {
             return !string.IsNullOrWhiteSpace(nombreTabla)
@@ -194,7 +199,7 @@ namespace bufinscustomers.Services
             return resultado;
         }
 
-        private List<PuntoLineaTiempo> ConsultarSerieMensual(SqlConnection cn, FiltrosLineaTiempo filtros, int idEscenario)
+        private List<PuntoLineaTiempo> ConsultarSerieMensual(SqlConnection cn, FiltrosLineaTiempo filtros, int idEscenario, string indicador)
         {
             // filtros.Campo ya fue validado contra ObtenerCamposNumericos en ObtenerSerieTiempo
             // antes de llegar aquí, así que es seguro interpolarlo (con EscapeIdentifier igual).
@@ -213,7 +218,7 @@ namespace bufinscustomers.Services
             SqlCommand cmd = new SqlCommand(query, cn);
             cmd.Parameters.AddWithValue("@IdEmpresa", filtros.IdEmpresa ?? 0);
             cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
-            cmd.Parameters.AddWithValue("@Indicador", filtros.Indicador ?? string.Empty);
+            cmd.Parameters.AddWithValue("@Indicador", indicador ?? string.Empty);
             cmd.Parameters.AddWithValue("@AnioDesde", filtros.AnioDesde);
             cmd.Parameters.AddWithValue("@MesDesde", filtros.MesDesde);
             cmd.Parameters.AddWithValue("@AnioHasta", filtros.AnioHasta);
@@ -276,7 +281,13 @@ namespace bufinscustomers.Services
         {
             var resultado = new SerieLineaTiempoResultado();
 
-            if (!ValidarTabla(filtros.NombreTabla) || string.IsNullOrWhiteSpace(filtros.Indicador))
+            var indicadores = (filtros.Indicadores ?? new List<string>())
+                .Where(i => !string.IsNullOrWhiteSpace(i))
+                .Distinct()
+                .Take(MaxVariables)
+                .ToList();
+
+            if (!ValidarTabla(filtros.NombreTabla) || indicadores.Count == 0)
                 return resultado;
 
             if (!idEmpresaConsulta.HasValue)
@@ -296,13 +307,18 @@ namespace bufinscustomers.Services
                 cn.Open();
 
                 int idEscenarioPrincipal = filtros.IdEscenario ?? 1;
-                var mensualPrincipal = ConsultarSerieMensual(cn, filtros, idEscenarioPrincipal);
-                resultado.Principal = Agregar(mensualPrincipal, filtros.Agrupar);
+                foreach (var indicador in indicadores)
+                {
+                    var mensual = ConsultarSerieMensual(cn, filtros, idEscenarioPrincipal, indicador);
+                    resultado.Series.Add(new SerieVariable { Indicador = indicador, Puntos = Agregar(mensual, filtros.Agrupar) });
+                }
                 resultado.NombreEscenarioPrincipal = escenarios.FirstOrDefault(e => e.Id == idEscenarioPrincipal)?.Nombre;
 
-                if (filtros.IdEscenarioComparar.HasValue && filtros.IdEscenarioComparar.Value != idEscenarioPrincipal)
+                // Comparar contra otro escenario solo tiene sentido con una única variable en pantalla
+                // (con varias, el frente ya oculta el panel) — esta es la validación de respaldo en servidor.
+                if (indicadores.Count == 1 && filtros.IdEscenarioComparar.HasValue && filtros.IdEscenarioComparar.Value != idEscenarioPrincipal)
                 {
-                    var mensualComparacion = ConsultarSerieMensual(cn, filtros, filtros.IdEscenarioComparar.Value);
+                    var mensualComparacion = ConsultarSerieMensual(cn, filtros, filtros.IdEscenarioComparar.Value, indicadores[0]);
                     resultado.Comparacion = Agregar(mensualComparacion, filtros.Agrupar);
                     resultado.NombreEscenarioComparacion = escenarios.FirstOrDefault(e => e.Id == filtros.IdEscenarioComparar.Value)?.Nombre;
                 }

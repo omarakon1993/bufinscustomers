@@ -151,6 +151,10 @@
   <data name="Common_TablaNoValida" xml:space="preserve"><value>Tabla no válida.</value></data>
   <data name="Common_Informacion" xml:space="preserve"><value>Información</value></data>
   <data name="Common_Aceptar" xml:space="preserve"><value>Aceptar</value></data>
+  <data name="Common_Aplicar" xml:space="preserve"><value>Aplicar</value></data>
+  <data name="Common_Cerrar" xml:space="preserve"><value>Cerrar</value></data>
+  <data name="Common_Exportar" xml:space="preserve"><value>Exportar</value></data>
+  <data name="Common_PantallaCompleta" xml:space="preserve"><value>Pantalla completa</value></data>
   <data name="Common_SinPermisos" xml:space="preserve"><value>No tiene permisos para realizar esta acción.</value></data>
 
   <!-- DATOS / CARGUE EXCEL - UI -->
@@ -394,7 +398,7 @@
   <data name="InformeModelos_NoResultadosDesc" xml:space="preserve"><value>No hay datos cargados con los filtros seleccionados.</value></data>
 
   <!-- LÍNEA DE TIEMPO FINANCIERA -->
-  <data name="LineaTiempo_PageTitle" xml:space="preserve"><value>Informe Dinámico Líneas de Tiempo</value></data>
+  <data name="LineaTiempo_PageTitle" xml:space="preserve"><value>Informe dinámico líneas de tiempo</value></data>
   <data name="LineaTiempo_SinDatosModelo" xml:space="preserve"><value>Esta tabla todavía no tiene datos cargados en el modelo para esta empresa y escenario.</value></data>
   <data name="LineaTiempo_HeaderTag" xml:space="preserve"><value>Información modelo Bufins</value></data>
   <data name="LineaTiempo_HeaderTagTooltip" xml:space="preserve"><value>Estos datos solo están disponibles después de ejecutar el modelo Bufins.</value></data>
@@ -404,7 +408,16 @@
   <data name="LineaTiempo_FilaCuandoHint" xml:space="preserve"><value>Arrastra los extremos para ajustar el período. Si ambos coinciden, se muestra un solo mes.</value></data>
   <data name="LineaTiempo_LabelEmpresa" xml:space="preserve"><value>Empresa</value></data>
   <data name="LineaTiempo_LabelTabla" xml:space="preserve"><value>Tabla a analizar</value></data>
-  <data name="LineaTiempo_LabelIndicador" xml:space="preserve"><value>Descripción / Indicador</value></data>
+  <data name="LineaTiempo_LabelIndicador" xml:space="preserve"><value>Descripción / Indicador(es)</value></data>
+  <data name="LineaTiempo_IndElegir" xml:space="preserve"><value>Elegir variables</value></data>
+  <data name="LineaTiempo_IndModalTitulo" xml:space="preserve"><value>Elegir variables</value></data>
+  <data name="LineaTiempo_IndBuscar" xml:space="preserve"><value>Buscar indicador…</value></data>
+  <data name="LineaTiempo_IndCombinaciones" xml:space="preserve"><value>Combinaciones guardadas</value></data>
+  <data name="LineaTiempo_EnLaGrafica" xml:space="preserve"><value>En la gráfica</value></data>
+  <data name="LineaTiempo_IndSeleccionadas" xml:space="preserve"><value>{0} seleccionadas</value></data>
+  <data name="LineaTiempo_IndMax" xml:space="preserve"><value>hasta 8 en la misma gráfica</value></data>
+  <data name="LineaTiempo_TituloMultiplesVariables" xml:space="preserve"><value>{0} variables comparadas</value></data>
+  <data name="LineaTiempo_CompararDeshabilitadoMulti" xml:space="preserve"><value>Disponible solo al elegir una única variable.</value></data>
   <data name="LineaTiempo_LabelCampo" xml:space="preserve"><value>Campo</value></data>
   <data name="LineaTiempo_LabelEscenario" xml:space="preserve"><value>Escenario</value></data>
   <data name="LineaTiempo_LabelVerPor" xml:space="preserve"><value>Agrupar por</value></data>
@@ -447,14 +460,23 @@
   <data name="LineaTiempo_JS_Consultando" xml:space="preserve"><value>Consultando…</value></data>
   <data name="LineaTiempo_JS_ErrorConexion" xml:space="preserve"><value>Error de conexión al consultar la serie.</value></data>
   <data name="LineaTiempo_JS_SeleccionaIndicador" xml:space="preserve"><value>Selecciona un indicador</value></data>
-  <data name="LineaTiempo_KpiUltimo" xml:space="preserve"><value>Último período</value></data>
+  <data name="LineaTiempo_KpiUltimo" xml:space="preserve"><value>Variación último período</value></data>
   <data name="LineaTiempo_KpiPromedio" xml:space="preserve"><value>Promedio del rango</value></data>
   <data name="LineaTiempo_KpiPeriodos" xml:space="preserve"><value>Períodos incluidos</value></data>
-  <data name="LineaTiempo_StatDeltaSufijo" xml:space="preserve"><value>vs. período anterior</value></data>
+  <data name="LineaTiempo_StatDeltaVsFmt" xml:space="preserve"><value>vs. {0}</value></data>
   <data name="LineaTiempo_SegLineas" xml:space="preserve"><value>Líneas</value></data>
   <data name="LineaTiempo_SegBarras" xml:space="preserve"><value>Barras</value></data>
   <data name="LineaTiempo_SegGrafico" xml:space="preserve"><value>Gráfico</value></data>
   <data name="LineaTiempo_SegTabla" xml:space="preserve"><value>Tabla</value></data>
+  <data name="LineaTiempo_Etiquetas" xml:space="preserve"><value>Etiquetas de valor</value></data>
+  <data name="LineaTiempo_CopiarImagen" xml:space="preserve"><value>Copiar imagen</value></data>
+  <data name="LineaTiempo_EscalasDistintas" xml:space="preserve"><value>Las series tienen escalas muy distintas. Elige cómo compararlas:</value></data>
+  <data name="LineaTiempo_EscalaReal" xml:space="preserve"><value>Escala real</value></data>
+  <data name="LineaTiempo_EscalaPaneles" xml:space="preserve"><value>Paneles</value></data>
+  <data name="LineaTiempo_HintReal" xml:space="preserve"><value>Un solo eje: fiel a la magnitud, pero las series pequeñas quedan pegadas al cero.</value></data>
+  <data name="LineaTiempo_HintPaneles" xml:space="preserve"><value>Una franja por variable con su propia escala: cada serie se lee completa y el orden de magnitud queda escrito al lado.</value></data>
+  <data name="LineaTiempo_TodasOcultas" xml:space="preserve"><value>Todas las series están ocultas — toca una tarjeta para mostrarla.</value></data>
+  <data name="LineaTiempo_PorAgrupacion" xml:space="preserve"><value>por {0}</value></data>
   <data name="LineaTiempo_GeneradoElFmt" xml:space="preserve"><value>Generado el {0}</value></data>
   <data name="LineaTiempo_BrandMark" xml:space="preserve"><value>Bufins</value></data>
   <data name="LineaTiempo_LabelUnidad" xml:space="preserve"><value>Unidad</value></data>

@@ -151,6 +151,10 @@
   <data name="Common_TablaNoValida" xml:space="preserve"><value>Invalid table.</value></data>
   <data name="Common_Informacion" xml:space="preserve"><value>Information</value></data>
   <data name="Common_Aceptar" xml:space="preserve"><value>Accept</value></data>
+  <data name="Common_Aplicar" xml:space="preserve"><value>Apply</value></data>
+  <data name="Common_Cerrar" xml:space="preserve"><value>Close</value></data>
+  <data name="Common_Exportar" xml:space="preserve"><value>Export</value></data>
+  <data name="Common_PantallaCompleta" xml:space="preserve"><value>Fullscreen</value></data>
   <data name="Common_SinPermisos" xml:space="preserve"><value>You do not have permission to perform this action.</value></data>
 
   <!-- DATOS / EXCEL UPLOAD - UI -->
@@ -402,7 +406,16 @@
   <data name="LineaTiempo_FilaCuandoHint" xml:space="preserve"><value>Drag the handles to adjust the period. If both match, a single month is shown.</value></data>
   <data name="LineaTiempo_LabelEmpresa" xml:space="preserve"><value>Company</value></data>
   <data name="LineaTiempo_LabelTabla" xml:space="preserve"><value>Table to analyze</value></data>
-  <data name="LineaTiempo_LabelIndicador" xml:space="preserve"><value>Description / Indicator</value></data>
+  <data name="LineaTiempo_LabelIndicador" xml:space="preserve"><value>Description / Indicator(s)</value></data>
+  <data name="LineaTiempo_IndElegir" xml:space="preserve"><value>Choose variables</value></data>
+  <data name="LineaTiempo_IndModalTitulo" xml:space="preserve"><value>Choose variables</value></data>
+  <data name="LineaTiempo_IndBuscar" xml:space="preserve"><value>Search indicator…</value></data>
+  <data name="LineaTiempo_IndCombinaciones" xml:space="preserve"><value>Saved combinations</value></data>
+  <data name="LineaTiempo_EnLaGrafica" xml:space="preserve"><value>On the chart</value></data>
+  <data name="LineaTiempo_IndSeleccionadas" xml:space="preserve"><value>{0} selected</value></data>
+  <data name="LineaTiempo_IndMax" xml:space="preserve"><value>up to 8 on one chart</value></data>
+  <data name="LineaTiempo_TituloMultiplesVariables" xml:space="preserve"><value>{0} variables compared</value></data>
+  <data name="LineaTiempo_CompararDeshabilitadoMulti" xml:space="preserve"><value>Available only when a single variable is selected.</value></data>
   <data name="LineaTiempo_LabelCampo" xml:space="preserve"><value>Field</value></data>
   <data name="LineaTiempo_LabelEscenario" xml:space="preserve"><value>Scenario</value></data>
   <data name="LineaTiempo_LabelVerPor" xml:space="preserve"><value>Group by</value></data>
@@ -445,14 +458,23 @@
   <data name="LineaTiempo_JS_Consultando" xml:space="preserve"><value>Querying…</value></data>
   <data name="LineaTiempo_JS_ErrorConexion" xml:space="preserve"><value>Connection error while querying the series.</value></data>
   <data name="LineaTiempo_JS_SeleccionaIndicador" xml:space="preserve"><value>Select an indicator</value></data>
-  <data name="LineaTiempo_KpiUltimo" xml:space="preserve"><value>Latest period</value></data>
+  <data name="LineaTiempo_KpiUltimo" xml:space="preserve"><value>Latest period change</value></data>
   <data name="LineaTiempo_KpiPromedio" xml:space="preserve"><value>Range average</value></data>
   <data name="LineaTiempo_KpiPeriodos" xml:space="preserve"><value>Periods included</value></data>
-  <data name="LineaTiempo_StatDeltaSufijo" xml:space="preserve"><value>vs. previous period</value></data>
+  <data name="LineaTiempo_StatDeltaVsFmt" xml:space="preserve"><value>vs. {0}</value></data>
   <data name="LineaTiempo_SegLineas" xml:space="preserve"><value>Lines</value></data>
   <data name="LineaTiempo_SegBarras" xml:space="preserve"><value>Bars</value></data>
   <data name="LineaTiempo_SegGrafico" xml:space="preserve"><value>Chart</value></data>
   <data name="LineaTiempo_SegTabla" xml:space="preserve"><value>Table</value></data>
+  <data name="LineaTiempo_Etiquetas" xml:space="preserve"><value>Value labels</value></data>
+  <data name="LineaTiempo_CopiarImagen" xml:space="preserve"><value>Copy image</value></data>
+  <data name="LineaTiempo_EscalasDistintas" xml:space="preserve"><value>The series have very different scales. Choose how to compare them:</value></data>
+  <data name="LineaTiempo_EscalaReal" xml:space="preserve"><value>Real scale</value></data>
+  <data name="LineaTiempo_EscalaPaneles" xml:space="preserve"><value>Panels</value></data>
+  <data name="LineaTiempo_HintReal" xml:space="preserve"><value>A single axis: true to scale, but small series stay pinned near zero.</value></data>
+  <data name="LineaTiempo_HintPaneles" xml:space="preserve"><value>One strip per variable with its own scale: each series reads in full, with its order of magnitude written alongside.</value></data>
+  <data name="LineaTiempo_TodasOcultas" xml:space="preserve"><value>All series are hidden — tap a card above to show it.</value></data>
+  <data name="LineaTiempo_PorAgrupacion" xml:space="preserve"><value>by {0}</value></data>
   <data name="LineaTiempo_GeneradoElFmt" xml:space="preserve"><value>Generated on {0}</value></data>
   <data name="LineaTiempo_BrandMark" xml:space="preserve"><value>Bufins</value></data>
   <data name="LineaTiempo_LabelUnidad" xml:space="preserve"><value>Unit</value></data>

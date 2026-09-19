@@ -41,41 +41,26 @@
 
     .lt-header-tag { font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,.65); background: rgba(255,255,255,.12); padding: 2px 9px; border-radius: 999px; letter-spacing: .02em; white-space: nowrap; margin-left: 2px; }
 
-    .lt-btn { font-size: 12.5px; font-weight: 700; border-radius: 8px; padding: 8px 16px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
-    .lt-btn:disabled { opacity: .5; cursor: not-allowed; }
-    .lt-btn-excel { background: #217346; color: #fff; }
-    .lt-btn-pdf { background: #B91C1C; color: #fff; }
-    .lt-btn-icon { padding: 9px 11px; font-size: 13px; }
+    /* Pantalla completa del panel de gráfico/tabla: se aplica al propio <section class="lt-card">
+       vía la Fullscreen API — se le quita el "envoltorio" de tarjeta (borde/sombra/radio) para que
+       ocupe el viewport de borde a borde, y el área de gráfico/tabla crece para aprovechar el alto. */
+    #ltPanelResultado:fullscreen,
+    #ltPanelResultado:-webkit-full-screen {
+        border-radius: 0; border: none; box-shadow: none; margin: 0;
+        padding: 20px clamp(16px, 4vw, 56px); background: var(--lt-surface); overflow-y: auto;
+    }
+    #ltPanelResultado:fullscreen .lt-chart-canvas-wrap,
+    #ltPanelResultado:-webkit-full-screen .lt-chart-canvas-wrap { height: calc(100vh - 220px); }
+    #ltPanelResultado:fullscreen .lt-table-wrap,
+    #ltPanelResultado:-webkit-full-screen .lt-table-wrap { max-height: calc(100vh - 220px); overflow-y: auto; }
 
-    .lt-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
-    .lt-stat-tile { background: var(--lt-surface); border: 1px solid var(--lt-line); border-radius: 14px; padding: 16px 18px; box-shadow: var(--lt-shadow); }
-    .lt-stat-label { font-size: 12px; font-weight: 600; color: var(--lt-text-muted); text-transform: uppercase; letter-spacing: .03em; }
-    .lt-stat-value { font-size: 26px; font-weight: 800; margin: 6px 0 4px; letter-spacing: -.01em; }
-    .lt-stat-delta { font-size: 12.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; }
-    .lt-stat-delta.up { color: var(--lt-good); background: var(--lt-good-bg); }
-    .lt-stat-delta.down { color: var(--lt-bad); background: var(--lt-bad-bg); }
+    .lt-th-swatch { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
 
     .lt-letterhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid var(--lt-line); }
     .lt-brand-mark { display: inline-flex; align-items: center; gap: 6px; }
     .lt-brand-mark .bm-icon { width: 20px; height: 20px; border-radius: 6px; background: var(--lt-brand-gradient); color: #fff; font-weight: 800; font-size: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .lt-brand-mark .bm-text { font-size: 12.5px; font-weight: 800; letter-spacing: .01em; background: var(--lt-brand-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
     .lt-letterhead .fecha { font-size: 11px; color: var(--lt-text-muted); }
-
-    .lt-chart-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
-    .lt-chart-head h2 { margin: 0; font-size: 16.5px; font-weight: 800; }
-    .lt-muted { color: var(--lt-text-muted); font-size: 12.5px; margin: 3px 0 0; }
-    .lt-toggles { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
-
-    .lt-seg-toggle { display: flex; background: var(--lt-surface-2); border: 1px solid var(--lt-line); border-radius: 9px; padding: 3px; overflow: hidden; max-width: 220px; transition: opacity .18s ease, max-width .18s ease, padding .18s ease, border-width .18s ease, margin .18s ease; }
-    .lt-seg-toggle.lt-hide { opacity: 0; max-width: 0; padding: 0; border-width: 0; margin: 0; pointer-events: none; }
-    .lt-seg-toggle button { font-size: 12.5px; font-weight: 700; color: var(--lt-text-2); background: transparent; border: none; border-radius: 7px; padding: 6px 13px; cursor: pointer; white-space: nowrap; }
-    .lt-seg-toggle button.active { background: var(--lt-brand-gradient); color: #fff; }
-    .lt-seg-toggle button:disabled { opacity: .4; cursor: not-allowed; }
-
-    /* Altura fija: evita que el gráfico "colapse" al cambiar entre línea/barra o unidad */
-    .lt-chart-canvas-wrap { position: relative; height: 380px; }
-    .lt-chart-canvas-wrap canvas { width: 100% !important; height: 100% !important; }
-    @@media (max-width: 640px) { .lt-chart-canvas-wrap { height: 300px; } }
 
     .lt-table-wrap { overflow-x: auto; border: 1px solid var(--lt-line); border-radius: 10px; }
     .lt-table-wrap table { width: 100%; border-collapse: collapse; min-width: 480px; }
@@ -96,11 +81,6 @@
     .lt-empty .lt-empty-icon i { font-size: 1.7rem; background: var(--lt-brand-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
     .lt-empty h4 { color: var(--lt-text); font-size: 16px; font-weight: 800; margin: 0 0 .4rem; }
     .lt-empty p { font-size: 13px; max-width: 420px; margin: 0 auto; line-height: 1.5; }
-
-    @@media (max-width: 640px) {
-        .lt-kpis { grid-template-columns: 1fr; }
-        .lt-chart-head { flex-direction: column; }
-    }
 </style>
 
 <div class="container-fluid px-4">
@@ -118,7 +98,7 @@
 
     <div class="filter-card">
         <div class="lt-section-title"><span>@Resources.Strings.LineaTiempo_FilaQueVer</span></div>
-        <div class="lt-grid-5" id="ltGridRow1">
+        <div class="lt-grid-quever" id="ltGridRow1">
             <div class="lt-field"><label class="lt-field-label" for="ltEmpresa">@Resources.Strings.LineaTiempo_LabelEmpresa</label>
                 <select id="ltEmpresa" class="lt-field-select">
                     @if (esAdmin) { <option value="">@Resources.Strings.Common_Seleccione</option> }
@@ -127,6 +107,17 @@
                         foreach (var e in empresas)
                         {
                             <option value="@e.Id">@e.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="lt-field"><label class="lt-field-label" for="ltEscenario">@Resources.Strings.LineaTiempo_LabelEscenario</label>
+                <select id="ltEscenario" class="lt-field-select">
+                    @if (ViewBag.Escenarios != null)
+                    {
+                        foreach (var esc in ViewBag.Escenarios)
+                        {
+                            <option value="@esc.Id">@esc.Nombre</option>
                         }
                     }
                 </select>
@@ -143,25 +134,23 @@
                     }
                 </select>
             </div>
-            <div class="lt-field"><label class="lt-field-label" for="ltIndicador">@Resources.Strings.LineaTiempo_LabelIndicador</label>
-                <select id="ltIndicador" class="lt-field-select" disabled>
-                    <option value="">@Resources.Strings.Common_Seleccione</option>
-                </select>
+            <div class="lt-field lt-field-span2">
+                <label class="lt-field-label" for="ltIndicadorBtn">@Resources.Strings.LineaTiempo_LabelIndicador</label>
+                <button type="button" id="ltIndicadorBtn" class="lt-ind-trigger vacio" disabled
+                        aria-haspopup="dialog" aria-expanded="false">
+                    <span class="txt">@Resources.Strings.LineaTiempo_IndElegir</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
             </div>
             <div class="lt-field" id="ltCampoWrap" style="display:none;"><label class="lt-field-label" for="ltCampo">@Resources.Strings.LineaTiempo_LabelCampo</label>
                 <select id="ltCampo" class="lt-field-select"></select>
             </div>
-            <div class="lt-field"><label class="lt-field-label" for="ltEscenario">@Resources.Strings.LineaTiempo_LabelEscenario</label>
-                <select id="ltEscenario" class="lt-field-select">
-                    @if (ViewBag.Escenarios != null)
-                    {
-                        foreach (var esc in ViewBag.Escenarios)
-                        {
-                            <option value="@esc.Id">@esc.Nombre</option>
-                        }
-                    }
-                </select>
-            </div>
+        </div>
+
+        <div class="lt-series-bar" id="ltSeriesBar" style="display:none;">
+            <span class="cap">@Resources.Strings.LineaTiempo_EnLaGrafica</span>
+            <span id="ltSeriesChips" style="display:contents;"></span>
+            <button type="button" class="lt-series-clear" id="ltSeriesClear">@Resources.Strings.Common_Limpiar</button>
         </div>
 
         <div class="lt-tabla-banner" id="ltTablaDescBox" style="display:none;">
@@ -222,6 +211,7 @@
                 <i class="fas fa-chevron-right chev"></i>
                 @Resources.Strings.LineaTiempo_ComparaEscenario
             </button>
+            <span class="lt-comparar-hint-multi" id="ltCompararHintMulti" hidden>@Resources.Strings.LineaTiempo_CompararDeshabilitadoMulti</span>
             <div class="lt-comparar-panel" id="ltCompararPanel" hidden>
                 <div class="lt-field"><label class="lt-field-label" for="ltEscenarioComparar">@Resources.Strings.LineaTiempo_LabelEscenarioComparar</label>
                     <select id="ltEscenarioComparar" class="lt-field-select">
@@ -265,42 +255,59 @@
 
     <div id="ltResultado" style="display:none;">
 
-        <section class="lt-kpis" id="ltKpiRow"></section>
-
-        <section class="lt-card">
+        <section class="lt-card" id="ltPanelResultado">
             <div class="lt-letterhead">
                 <div class="lt-brand-mark"><span class="bm-icon">B</span><span class="bm-text">@Resources.Strings.LineaTiempo_BrandMark</span></div>
                 <span class="fecha" id="ltFechaGenerado"></span>
             </div>
-            <div class="lt-chart-head">
+
+            <div class="lt-head-row">
                 <div>
                     <h2 id="ltChartTitle">&mdash;</h2>
-                    <p class="lt-muted" id="ltChartSubtitle">&mdash;</p>
+                    <p class="sub" id="ltChartSubtitle">&mdash;</p>
                 </div>
-                <div class="lt-toggles">
-                    <div class="lt-seg-toggle" id="ltSegUnidad" title="@Resources.Strings.LineaTiempo_LabelUnidad">
-                        <button type="button" class="active" data-unidad="pesos">@Resources.Strings.LineaTiempo_UnidadPesos</button>
-                        <button type="button" data-unidad="miles">@Resources.Strings.LineaTiempo_UnidadMiles</button>
-                        <button type="button" data-unidad="millones">@Resources.Strings.LineaTiempo_UnidadMillones</button>
-                    </div>
-                    <div class="lt-seg-toggle" id="ltSegTipoGrafico">
-                        <button type="button" class="active" data-tipo="line">@Resources.Strings.LineaTiempo_SegLineas</button>
-                        <button type="button" data-tipo="bar">@Resources.Strings.LineaTiempo_SegBarras</button>
-                    </div>
-                    <div class="lt-seg-toggle" id="ltSegVista">
+                <div class="lt-tools">
+                    <div class="lt-seg2" id="ltSegVista">
                         <button type="button" class="active" data-view="chart">@Resources.Strings.LineaTiempo_SegGrafico</button>
                         <button type="button" data-view="table">@Resources.Strings.LineaTiempo_SegTabla</button>
                     </div>
-                    <button type="button" id="btnExportarLT" class="lt-btn lt-btn-excel lt-btn-icon" title="@Resources.Strings.Common_ExportarExcel">
-                        <i class="fas fa-file-excel"></i>
+                    <div class="lt-seg2" id="ltSegTipoGrafico">
+                        <button type="button" class="icon active" data-tipo="line" title="@Resources.Strings.LineaTiempo_SegLineas"><i class="fas fa-chart-line"></i></button>
+                        <button type="button" class="icon" data-tipo="bar" title="@Resources.Strings.LineaTiempo_SegBarras"><i class="fas fa-chart-bar"></i></button>
+                    </div>
+                    <button type="button" class="lt-tool-btn" id="ltBtnUnidad" title="@Resources.Strings.LineaTiempo_LabelUnidad">
+                        <span id="ltUnidadLbl">@Resources.Strings.LineaTiempo_UnidadPesos</span><i class="fas fa-chevron-down chev"></i>
                     </button>
-                    <button type="button" id="btnExportarPDF" class="lt-btn lt-btn-pdf lt-btn-icon" data-toggle="modal" data-target="#ltPdfModal" title="@Resources.Strings.LineaTiempo_BtnExportarPdf">
-                        <i class="fas fa-file-pdf"></i>
+                    <button type="button" class="lt-tool-btn square on" id="ltBtnEtiquetas" title="@Resources.Strings.LineaTiempo_Etiquetas"><i class="fas fa-tag"></i></button>
+                    <button type="button" class="lt-tool-btn square" id="ltBtnFullscreen" title="@Resources.Strings.Common_PantallaCompleta"><i class="fas fa-expand"></i></button>
+                    <button type="button" class="lt-tool-btn export" id="ltBtnExportar">
+                        <i class="fas fa-download"></i>@Resources.Strings.Common_Exportar<i class="fas fa-chevron-down chev"></i>
                     </button>
+                    <div class="lt-menu" id="ltExportMenu">
+                        <button type="button" id="btnExportarLT"><i class="fas fa-file-excel" style="color:#217346"></i>@Resources.Strings.Common_ExportarExcel</button>
+                        <button type="button" id="btnExportarPDF" data-toggle="modal" data-target="#ltPdfModal"><i class="fas fa-file-pdf" style="color:#B91C1C"></i>@Resources.Strings.LineaTiempo_BtnExportarPdf</button>
+                        <button type="button" id="btnCopiarImagen"><i class="fas fa-copy" style="color:#8B85A0"></i>@Resources.Strings.LineaTiempo_CopiarImagen</button>
+                    </div>
                 </div>
             </div>
 
-            <div id="ltViewChart" class="lt-chart-canvas-wrap"><canvas id="ltChart"></canvas></div>
+            <div class="lt-series-strip" id="ltSeriesStrip"></div>
+
+            <div class="lt-scale-bar" id="ltScaleBar" style="display:none;">
+                <i class="fas fa-info-circle ic"></i>
+                <span class="tx">@Resources.Strings.LineaTiempo_EscalasDistintas</span>
+                <div class="lt-scale-seg" id="ltScaleSeg">
+                    <button type="button" class="active" data-scale="real">@Resources.Strings.LineaTiempo_EscalaReal</button>
+                    <button type="button" data-scale="panel">@Resources.Strings.LineaTiempo_EscalaPaneles</button>
+                </div>
+            </div>
+            <p class="lt-scale-hint" id="ltScaleHint" style="display:none;"></p>
+
+            <div id="ltViewChart">
+                <div class="lt-chart-canvas-wrap" id="ltChartWrap"><canvas id="ltChart"></canvas></div>
+                <div class="lt-panels" id="ltPanels" style="display:none;"></div>
+                <div class="lt-chart-empty" id="ltChartEmpty" style="display:none;">@Resources.Strings.LineaTiempo_TodasOcultas</div>
+            </div>
 
             <div id="ltViewTable" hidden>
                 <div class="lt-table-wrap">
@@ -308,6 +315,35 @@
                 </div>
             </div>
         </section>
+    </div>
+
+    <div class="lt-modal" id="ltIndModal" role="dialog" aria-modal="true" aria-labelledby="ltIndModalTitle">
+        <div class="lt-modal-card">
+            <div class="lt-modal-rule"></div>
+            <div class="lt-modal-head">
+                <div>
+                    <h5 id="ltIndModalTitle">@Resources.Strings.LineaTiempo_IndModalTitulo</h5>
+                    <p id="ltIndModalSub"></p>
+                </div>
+                <button type="button" class="lt-modal-close" id="ltIndModalClose" aria-label="@Resources.Strings.Common_Cerrar"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="lt-modal-tools">
+                <div class="lt-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="ltIndBuscar" placeholder="@Resources.Strings.LineaTiempo_IndBuscar" autocomplete="off">
+                    <span class="cnt" id="ltIndContador">0</span>
+                </div>
+                <div class="lt-favs" id="ltIndFavs">
+                    <span class="cap">@Resources.Strings.LineaTiempo_IndCombinaciones</span>
+                </div>
+            </div>
+            <div class="lt-modal-list" id="ltIndLista"></div>
+            <div class="lt-modal-foot">
+                <span class="n" id="ltIndFootN"></span>
+                <button type="button" class="clear" id="ltIndLimpiar">@Resources.Strings.Common_Limpiar</button>
+                <button type="button" class="apply" id="ltIndAplicar">@Resources.Strings.Common_Aplicar</button>
+            </div>
+        </div>
     </div>
 
     <div class="modal fade modal-confirm" id="ltPdfModal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -359,6 +395,24 @@
 }
     };
 
+    // Paleta para distinguir variables cuando se seleccionan varias a la vez (mismo orden que el
+    // handoff de diseño "Selector de variables — opción 1d") — debe mantenerse igual a MaxVariables
+    // en InformeLineaTiempoService.cs y al tope de selección del modal (LT_MAX_VARIABLES).
+    var LT_PALETTE = ['#6366F1', '#D97706', '#06B6D4', '#16A34A', '#DC2626', '#8B5CF6', '#0EA5E9', '#F59E0B'];
+    var LT_MAX_VARIABLES = LT_PALETTE.length;
+
+    function ltColorSerie(i) { return LT_PALETTE[i % LT_PALETTE.length]; }
+
+    function ltHexARgb(hex) {
+        var h = hex.replace('#', '');
+        return { r: parseInt(h.substring(0, 2), 16), g: parseInt(h.substring(2, 4), 16), b: parseInt(h.substring(4, 6), 16) };
+    }
+
+    function ltColorConAlfa(hex, alfa) {
+        var rgb = ltHexARgb(hex);
+        return 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + alfa + ')';
+    }
+
     var _lt = {
         urls: {
             indicadores: '@Url.Action("ObtenerIndicadores", "InformeLineaTiempo")',
@@ -376,7 +430,15 @@
             kpiUltimo:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_KpiUltimo))',
             kpiPromedio:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_KpiPromedio))',
             kpiPeriodos:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_KpiPeriodos))',
-            statDeltaSufijo:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_StatDeltaSufijo))',
+            statDeltaVsFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_StatDeltaVsFmt))',
+            porAgrupacion:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_PorAgrupacion))',
+            hintReal:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_HintReal))',
+            hintPaneles:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_HintPaneles))',
+            unidades: {
+                pesos:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_UnidadPesos))',
+                miles:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_UnidadMiles))',
+                millones: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_UnidadMillones))'
+            },
             generadoElFmt:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_GeneradoElFmt))',
             unidadSufijoMiles:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_UnidadSufijoMiles))',
             unidadSufijoMillones: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_UnidadSufijoMillones))',
@@ -386,6 +448,10 @@
             pdfUnidadPrefijo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_PdfUnidadPrefijo))',
             badgeMes:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_BadgeMes))',
             badgeMeses:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_BadgeMeses))',
+            tituloMultiplesVariables: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_TituloMultiplesVariables))',
+            indElegir:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_IndElegir))',
+            indSeleccionadas: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_IndSeleccionadas))',
+            indMax:           '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_IndMax))',
             agruparAyuda: {
                 Mes:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_Agrupar_MesAyuda))',
                 Trimestre: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_Agrupar_TrimestreAyuda))',
@@ -398,14 +464,21 @@
         agrupar: 'Mes',
         unidad: 'pesos',
         tipoGrafico: 'line',
+        etiquetas: true,
         chart: null,
         ultimaRespuesta: null,
         mesesCache: [],
         iDesde: 0,
-        iHasta: 0
+        iHasta: 0,
+        indicadores: [],  // catálogo [{nombre, grupo}] de la tabla/empresa/escenario actuales
+        seleccion: [],    // nombres elegidos en el modal, máx LT_MAX_VARIABLES, en orden de selección
+        favoritos: [],    // [{nombre, items:[...]}] combinaciones guardadas — vacío por ahora (ver IMPLEMENTACION.md, sección 5)
+        escala: 'real',   // 'real' | 'panel' — ver "Resultados: cabecera consolidada (opción 3a)"
+        ocultas: {},      // { 'Ingresos': true } — series ocultadas desde la tira de series
+        panelCharts: []   // instancias Chart.js de la vista "Paneles" (una por serie visible)
     };
 
-    var elEmpresa = $('#ltEmpresa'), elTabla = $('#ltTabla'), elIndicador = $('#ltIndicador'),
+    var elEmpresa = $('#ltEmpresa'), elTabla = $('#ltTabla'),
         elCampo = $('#ltCampo'), elEscenario = $('#ltEscenario'),
         elEscenarioComparar = $('#ltEscenarioComparar');
 
@@ -447,7 +520,7 @@
     };
 
     $(document).ready(function () {
-        $('#ltEmpresa, #ltTabla, #ltIndicador, #ltCampo, #ltEscenario, #ltEscenarioComparar')
+        $('#ltEmpresa, #ltTabla, #ltCampo, #ltEscenario, #ltEscenarioComparar')
             .select2({ width: '100%', language: s2lang, dropdownAutoWidth: false });
 
         $('#ltEmpresa, #ltTabla, #ltEscenario').on('change', recargarCascada);
@@ -466,7 +539,15 @@
             $(this).toggleClass('open', !abierto);
         });
 
-        $('#ltIndicador').on('change', actualizarBotonGenerar);
+        $('#ltIndicadorBtn').on('click', ltAbrirModal);
+        $('#ltIndModalClose, #ltIndAplicar').on('click', ltCerrarModal);
+        $('#ltIndModal').on('click', function (e) { if (e.target === this) ltCerrarModal(); });
+        $(document).on('keydown', function (e) { if (e.key === 'Escape' && $('#ltIndModal').hasClass('open')) ltCerrarModal(); });
+        $('#ltIndBuscar').on('input', ltPintarLista);
+        $('#ltIndLista').on('click', '.lt-opt', function () { ltToggleIndicador($(this).data('ind')); });
+        $('#ltIndLimpiar, #ltSeriesClear').on('click', function () { _lt.seleccion = []; ltPintarLista(); ltPintarSeleccion(); });
+        $('#ltSeriesChips').on('click', '.x', function () { ltToggleIndicador($(this).data('ind')); });
+
         $('#ltAtajos button').on('click', function () { aplicarPresetRango($(this).data('preset')); });
         $('#ltKnobFrom').on('pointerdown', function (e) { e.stopPropagation(); iniciarArrastreSlider(e, 'from'); });
         $('#ltKnobTo').on('pointerdown', function (e) { e.stopPropagation(); iniciarArrastreSlider(e, 'to'); });
@@ -480,22 +561,11 @@
             generarPdf($(this).data('modo'));
         });
 
-        $('#ltSegUnidad button').on('click', function () {
-            $('#ltSegUnidad button').removeClass('active');
-            $(this).addClass('active');
-            _lt.unidad = $(this).data('unidad');
-            if (_lt.ultimaRespuesta) {
-                pintarKpis(_lt.ultimaRespuesta);
-                pintarGrafico(_lt.ultimaRespuesta);
-                pintarTabla(_lt.ultimaRespuesta);
-            }
-        });
-
         $('#ltSegTipoGrafico button').on('click', function () {
             $('#ltSegTipoGrafico button').removeClass('active');
             $(this).addClass('active');
             _lt.tipoGrafico = $(this).data('tipo');
-            if (_lt.ultimaRespuesta) pintarGrafico(_lt.ultimaRespuesta);
+            if (_lt.ultimaRespuesta) { pintarGrafico(_lt.ultimaRespuesta); ltAplicarVisibilidad(); }
         });
 
         $('#ltSegVista button').on('click', function () {
@@ -504,21 +574,283 @@
             var vista = $(this).data('view');
             $('#ltViewChart').prop('hidden', vista !== 'chart');
             $('#ltViewTable').prop('hidden', vista !== 'table');
-            $('#ltSegTipoGrafico').toggleClass('lt-hide', vista !== 'chart');
+        });
+
+        $('#ltBtnUnidad').on('click', function () {
+            var orden = ['pesos', 'miles', 'millones'], i = (orden.indexOf(_lt.unidad) + 1) % orden.length;
+            _lt.unidad = orden[i];
+            $('#ltUnidadLbl').text(_lt.textos.unidades[_lt.unidad]);
+            if (_lt.ultimaRespuesta) {
+                ltPintarStrip(_lt.ultimaRespuesta);
+                pintarGrafico(_lt.ultimaRespuesta);
+                pintarTabla(_lt.ultimaRespuesta);
+                ltAplicarVisibilidad();
+            }
+        });
+
+        $('#ltBtnEtiquetas').on('click', function () {
+            _lt.etiquetas = !_lt.etiquetas;
+            $(this).toggleClass('on', _lt.etiquetas);
+            if (!_lt.ultimaRespuesta) return;
+            if (_lt.escala === 'panel') pintarPaneles(_lt.ultimaRespuesta); else pintarGrafico(_lt.ultimaRespuesta);
+            ltAplicarVisibilidad();
+        });
+
+        $('#ltBtnFullscreen').on('click', function () {
+            var el = document.getElementById('ltPanelResultado');
+            if (document.fullscreenElement) document.exitFullscreen();
+            else if (el.requestFullscreen) el.requestFullscreen();
+        });
+
+        $('#ltBtnExportar').on('click', function (e) { e.stopPropagation(); $('#ltExportMenu').toggleClass('open'); });
+        $(document).on('click', function () { $('#ltExportMenu').removeClass('open'); });
+        $(document).on('keydown', function (e) { if (e.key === 'Escape') $('#ltExportMenu').removeClass('open'); });
+        $('#ltExportMenu button').on('click', function () { $('#ltExportMenu').removeClass('open'); });
+
+        $('#btnCopiarImagen').on('click', function () {
+            var cv = document.getElementById('ltChart');
+            if (!cv || !cv.toBlob || !navigator.clipboard || !window.ClipboardItem) return;
+            cv.toBlob(function (b) { navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]); });
+        });
+
+        $('#ltSeriesStrip').on('click', '.lt-serie-cell', function () {
+            var ind = $(this).data('ind');
+            _lt.ocultas[ind] = !_lt.ocultas[ind];
+            $(this).toggleClass('off', !!_lt.ocultas[ind]);
+            ltAplicarVisibilidad();
+        });
+
+        $('#ltScaleSeg button').on('click', function () {
+            $('#ltScaleSeg button').removeClass('active');
+            $(this).addClass('active');
+            _lt.escala = $(this).data('scale');
+            $('#ltScaleHint').text(_lt.escala === 'panel' ? _lt.textos.hintPaneles : _lt.textos.hintReal);
+            if (!_lt.ultimaRespuesta) return;
+            if (_lt.escala === 'panel') pintarPaneles(_lt.ultimaRespuesta); else { destruirPaneles(); pintarGrafico(_lt.ultimaRespuesta); }
+            ltAplicarVisibilidad();
         });
 
         recargarCascada();
     });
+
+    // ===== Selector de variables (opción 1d): campo compacto + modal claro + barra de series =====
+
+    function ltAbrirModal() {
+        if (!_lt.indicadores.length) return;
+        var t = CATALOGO_TABLAS[elTabla.val()] || {};
+        $('#ltIndModalSub').text((t.nombre || '') + ' — ' + (t.descripcion || '') + ' · ' + _lt.textos.indMax);
+        $('#ltIndBuscar').val('');
+        ltPintarFavoritos();
+        ltPintarLista();
+        $('#ltIndModal').addClass('open');
+        $('#ltIndicadorBtn').attr('aria-expanded', 'true');
+        setTimeout(function () { $('#ltIndBuscar').focus(); }, 30);
+    }
+
+    function ltCerrarModal() {
+        $('#ltIndModal').removeClass('open');
+        $('#ltIndicadorBtn').attr('aria-expanded', 'false').focus();
+    }
+
+    function ltPintarLista() {
+        var q = ($('#ltIndBuscar').val() || '').toLowerCase().trim();
+        var lleno = _lt.seleccion.length >= LT_MAX_VARIABLES;
+        var grupos = [];
+        _lt.indicadores.forEach(function (ind) {
+            if (q && ind.nombre.toLowerCase().indexOf(q) === -1) return;
+            var g = null;
+            grupos.forEach(function (x) { if (x.nombre === (ind.grupo || '')) g = x; });
+            if (!g) { g = { nombre: ind.grupo || '', items: [] }; grupos.push(g); }
+            g.items.push(ind);
+        });
+
+        var html = grupos.map(function (g) {
+            var items = g.items.map(function (ind) {
+                var on = _lt.seleccion.indexOf(ind.nombre) !== -1;
+                return '<button type="button" class="lt-opt' + (on ? ' on' : (lleno ? ' bloqueado' : '')) +
+                       '" data-ind="' + $('<span>').text(ind.nombre).html() + '" role="checkbox" aria-checked="' + on + '">' +
+                       '<span class="box"><i class="fas fa-check"></i></span>' +
+                       '<span class="nm">' + $('<span>').text(ind.nombre).html() + '</span></button>';
+            }).join('');
+            return '<div class="lt-group">' + (g.nombre ? '<div class="gt">' + $('<span>').text(g.nombre).html() + '</div>' : '') +
+                   '<div class="items">' + items + '</div></div>';
+        }).join('');
+
+        $('#ltIndLista').html(html);
+        $('#ltIndContador').text(_lt.seleccion.length + ' de ' + LT_MAX_VARIABLES);
+        $('#ltIndFootN').text(_lt.textos.indSeleccionadas.replace('{0}', _lt.seleccion.length));
+    }
+
+    function ltPintarFavoritos() {
+        var $c = $('#ltIndFavs').find('.lt-fav').remove().end();
+        _lt.favoritos.forEach(function (f) {
+            $c.append($('<button type="button" class="lt-fav">')
+                .append('<i class="fas fa-star"></i>')
+                .append($('<span>').text(f.nombre))
+                .on('click', function () {
+                    _lt.seleccion = f.items.slice(0, LT_MAX_VARIABLES);
+                    ltPintarLista(); ltPintarSeleccion();
+                }));
+        });
+    }
+
+    function ltPintarSeleccion() {
+        var n = _lt.seleccion.length;
+        $('#ltIndicadorBtn').toggleClass('vacio', n === 0)
+            .find('.txt').text(n ? _lt.textos.indSeleccionadas.replace('{0}', n) : _lt.textos.indElegir);
+
+        var chips = _lt.seleccion.map(function (nombre, i) {
+            return '<span class="lt-series-chip"><span class="dot" style="background:' +
+                   ltColorSerie(i) + '"></span>' +
+                   $('<span>').text(nombre).html() +
+                   '<i class="fas fa-times x" data-ind="' + $('<span>').text(nombre).html() + '"></i></span>';
+        }).join('');
+        $('#ltSeriesChips').html(chips);
+        $('#ltSeriesBar').toggle(n > 0);
+        actualizarBotonGenerar();
+        actualizarDisponibilidadComparar();
+    }
+
+    function ltToggleIndicador(nombre) {
+        var i = _lt.seleccion.indexOf(nombre);
+        if (i !== -1) _lt.seleccion.splice(i, 1);
+        else if (_lt.seleccion.length < LT_MAX_VARIABLES) _lt.seleccion.push(nombre);
+        ltPintarLista(); ltPintarSeleccion();
+    }
+
+    // ===== Resultados: cabecera consolidada (opción 3a) — tira de series, escala real/paneles =====
+
+    // Tira de series: reemplaza las tarjetas KPI sueltas y la leyenda de Chart.js — cada celda es
+    // a la vez la leyenda (color + nombre) y el interruptor para ocultar/mostrar esa serie.
+    function ltPintarStrip(resp) {
+        var series = resp.series || [];
+        var $s = $('#ltSeriesStrip').css('--n', Math.min(series.length, 4)).empty();
+
+        series.forEach(function (s, i) {
+            var uv = ultimoYVariacion(s.puntos);
+            var off = !!_lt.ocultas[s.indicador];
+            var $c = $('<button type="button" class="lt-serie-cell">').toggleClass('off', off).attr('data-ind', s.indicador);
+            $c.append($('<span class="top">')
+                .append($('<span class="dot">').css('background', ltColorSerie(i)))
+                .append($('<span class="nm">').text(s.indicador))
+                .append('<span class="eye"><i class="fas fa-eye-slash"></i></span>'));
+            $c.append($('<span class="val">').text(fmtCompacto(uv.ultimo)));
+            if (uv.variacion !== null) {
+                var cls = uv.variacion >= 0 ? 'up' : 'down', flecha = uv.variacion >= 0 ? CH_UP : CH_DOWN;
+                $c.append($('<span class="delta">').addClass(cls)
+                    .append($('<span>').text(flecha + ' ' + Math.abs(uv.variacion).toFixed(1) + '%'))
+                    .append($('<span class="ref">').text(_lt.textos.statDeltaVsFmt.replace('{0}', uv.etiquetaAnterior))));
+            }
+            $s.append($c);
+        });
+    }
+
+    // Aplica el estado de _lt.ocultas al gráfico activo (real u paneles) sin volver a pedir datos.
+    function ltAplicarVisibilidad() {
+        if (!_lt.ultimaRespuesta) return;
+        var visibles = (_lt.ultimaRespuesta.series || []).filter(function (s) { return !_lt.ocultas[s.indicador]; });
+        $('#ltChartEmpty').toggle(visibles.length === 0);
+        $('#ltChartWrap').toggle(visibles.length > 0 && _lt.escala === 'real');
+        $('#ltPanels').toggle(visibles.length > 0 && _lt.escala === 'panel');
+        if (!visibles.length) return;
+        if (_lt.escala === 'panel') { pintarPaneles(_lt.ultimaRespuesta); return; }
+        (_lt.ultimaRespuesta.series || []).forEach(function (s, i) {
+            if (_lt.chart) _lt.chart.setDatasetVisibility(i, !_lt.ocultas[s.indicador]);
+        });
+        if (_lt.chart) _lt.chart.update();
+    }
+
+    // Conmutador de escala: solo aparece cuando la serie más grande supera 20x a la más chica
+    // (con esa diferencia, en un solo eje las series pequeñas quedan pegadas al cero).
+    function ltEvaluarEscala(resp) {
+        var maxs = (resp.series || []).map(function (s) {
+            return Math.max.apply(null, s.puntos.map(function (p) { return Math.abs(p.valor) || 0; }));
+        }).filter(function (v) { return v > 0; });
+        var dispar = maxs.length > 1 && (Math.max.apply(null, maxs) / Math.min.apply(null, maxs)) > 20;
+        $('#ltScaleBar').toggle(dispar);
+        $('#ltScaleHint').toggle(dispar).text(_lt.escala === 'panel' ? _lt.textos.hintPaneles : _lt.textos.hintReal);
+        if (!dispar && _lt.escala === 'panel') { _lt.escala = 'real'; $('#ltScaleSeg button').removeClass('active'); $('#ltScaleSeg button[data-scale="real"]').addClass('active'); }
+    }
+
+    function destruirPaneles() {
+        _lt.panelCharts.forEach(function (c) { c.destroy(); });
+        _lt.panelCharts = [];
+        $('#ltPanels').empty();
+    }
+
+    // Vista "Paneles": una mini-gráfica por serie visible, cada una con su propia escala — para que
+    // una variable chica (ej. 602) no quede pegada al cero al lado de una grande (ej. 644.616).
+    function pintarPaneles(resp) {
+        destruirPaneles();
+        var todasLasSeries = resp.series || [];
+        var visibles = todasLasSeries.filter(function (s) { return !_lt.ocultas[s.indicador]; });
+        visibles.forEach(function (s) {
+            var i = todasLasSeries.indexOf(s);
+            var color = ltColorSerie(i);
+            var max = Math.max.apply(null, s.puntos.map(function (p) { return p.valor; }));
+            var $row = $('<div class="lt-panel">')
+                .append($('<div class="meta">')
+                    .append($('<span class="nm">').text(s.indicador))
+                    .append($('<span class="mx">').text('máx ' + fmtCompacto(max))))
+                .append($('<div class="cv">').append('<canvas></canvas>'));
+            $('#ltPanels').append($row);
+            var ctx = $row.find('canvas')[0].getContext('2d');
+            var esUltimo = visibles.indexOf(s) === visibles.length - 1;
+            _lt.panelCharts.push(new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: s.puntos.map(function (p) { return p.etiqueta; }),
+                    datasets: [{
+                        data: s.puntos.map(function (p) { return p.valor; }),
+                        borderColor: color, backgroundColor: ltColorConAlfa(color, .09), borderWidth: 2.5,
+                        fill: true, tension: .35, pointRadius: 3.5,
+                        pointBackgroundColor: '#fff', pointBorderColor: color, pointBorderWidth: 2.2
+                    }]
+                },
+                plugins: _lt.etiquetas ? [ltDataLabelsPlugin] : [],
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 14, bottom: 2 } },
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (c) { return fmtCompacto(c.parsed.y); } } } },
+                    scales: {
+                        y: { display: false, beginAtZero: true, suggestedMax: max * 1.15 },
+                        x: {
+                            display: esUltimo, grid: { display: false },
+                            ticks: { font: { size: 11, weight: '700' }, color: '#5B5570' }
+                        }
+                    }
+                }
+            }));
+        });
+    }
 
     function empresaSeleccionada() {
         var v = elEmpresa.val();
         return v ? parseInt(v, 10) : null;
     }
 
+    function indicadoresSeleccionados() {
+        return _lt.seleccion;
+    }
+
     function actualizarBotonGenerar() {
-        var listo = !!elTabla.val() && !!elIndicador.val() && _lt.mesesCache.length > 0
+        var listo = !!elTabla.val() && indicadoresSeleccionados().length > 0 && _lt.mesesCache.length > 0
             && (!_lt.esAdmin || !!empresaSeleccionada());
         $('#btnGenerarLT').prop('disabled', !listo);
+    }
+
+    // Comparar contra otro escenario solo tiene sentido con una única variable en pantalla
+    // (con varias, la gráfica ya distingue cada una por color/leyenda) — se deshabilita el panel
+    // y se limpia la selección para que no viaje "fantasma" en el siguiente Generar.
+    function actualizarDisponibilidadComparar() {
+        var multi = indicadoresSeleccionados().length > 1;
+        $('#ltBtnToggleComparar').prop('disabled', multi);
+        $('#ltCompararHintMulti').prop('hidden', !multi);
+        if (multi) {
+            $('#ltCompararPanel').prop('hidden', true);
+            $('#ltBtnToggleComparar').removeClass('open');
+            elEscenarioComparar.val('').trigger('change.select2');
+        }
     }
 
     function recargarCascada() {
@@ -526,7 +858,10 @@
         var idEmpresa   = empresaSeleccionada();
         var idEscenario = elEscenario.val();
 
-        elIndicador.empty().append('<option value="">@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))</option>').val('').prop('disabled', true).trigger('change.select2');
+        _lt.indicadores = [];
+        _lt.seleccion = [];
+        $('#ltIndicadorBtn').prop('disabled', true);
+        ltPintarSeleccion();
         _lt.mesesCache = [];
         _lt.iDesde = 0;
         _lt.iHasta = 0;
@@ -541,14 +876,12 @@
 
         $.post(_lt.urls.indicadores, { nombreTabla: nombreTabla, idEmpresa: idEmpresa, idEscenario: idEscenario, __RequestVerificationToken: _lt.token }, function (resp) {
             if (!resp.success) return;
-            var indicadores = resp.indicadores || [];
-            indicadores.forEach(function (v) {
-                elIndicador.append($('<option>').val(v).text(v));
+            _lt.indicadores = (resp.indicadores || []).map(function (v) {
+                return typeof v === 'string' ? { nombre: v, grupo: '' } : v;
             });
-            if (indicadores.length > 0) elIndicador.val(indicadores[0]);
-            elIndicador.prop('disabled', indicadores.length === 0).trigger('change.select2');
-            actualizarBannerTabla(indicadores.length > 0);
-            actualizarBotonGenerar();
+            $('#ltIndicadorBtn').prop('disabled', _lt.indicadores.length === 0);
+            actualizarBannerTabla(_lt.indicadores.length > 0);
+            ltPintarSeleccion();
         });
 
         $.post(_lt.urls.campos, { nombreTabla: nombreTabla, __RequestVerificationToken: _lt.token }, function (resp) {
@@ -723,13 +1056,13 @@
         var n = _lt.mesesCache.length;
         var desde = n ? _lt.mesesCache[_lt.iDesde] : null;
         var hasta = n ? _lt.mesesCache[_lt.iHasta] : null;
+        var indicadores = indicadoresSeleccionados();
 
-        return {
+        var filtros = {
             NombreTabla: elTabla.val(),
             IdEmpresa: empresaSeleccionada(),
             IdEscenario: elEscenario.val(),
-            IdEscenarioComparar: $('#ltEscenarioComparar').val() || null,
-            Indicador: elIndicador.val(),
+            Indicadores: indicadores,
             Campo: campoSeleccionado(),
             AnioDesde: desde ? desde.anio : null,
             MesDesde: desde ? desde.mes : null,
@@ -738,31 +1071,44 @@
             Agrupar: _lt.agrupar,
             __RequestVerificationToken: _lt.token
         };
+        // Comparar escenario solo aplica con una única variable seleccionada (ver actualizarDisponibilidadComparar)
+        if (indicadores.length === 1) {
+            filtros.IdEscenarioComparar = $('#ltEscenarioComparar').val() || null;
+        }
+        return filtros;
     }
 
     function generar() {
         var filtros = armarFiltros();
-        if (!filtros.Campo) return;
+        if (!filtros.Indicadores.length || !filtros.Campo) return;
 
         $('#ltEstadoInicial, #ltSinDatos, #ltResultado').hide();
         $('#ltLoading').show();
 
-        $.post(_lt.urls.serie, filtros, function (resp) {
-            $('#ltLoading').hide();
-            if (!resp.success || !resp.principal || resp.principal.length === 0) {
+        // traditional:true para que jQuery serialice Indicadores como "Indicadores=A&Indicadores=B"
+        // (lo que el model binder de MVC espera para List<string>), en vez del formato "Indicadores[]=A".
+        $.ajax({ url: _lt.urls.serie, type: 'POST', data: filtros, traditional: true })
+            .done(function (resp) {
+                $('#ltLoading').hide();
+                var totalPuntos = (resp.series || []).reduce(function (a, s) { return a + s.puntos.length; }, 0);
+                if (!resp.success || totalPuntos === 0) {
+                    $('#ltSinDatos').show();
+                    return;
+                }
+                _lt.ultimaRespuesta = resp;
+                _lt.ocultas = {}; // cada "Generar" nuevo arranca con todas las series visibles
+                ltPintarStrip(resp);
+                ltEvaluarEscala(resp);
+                pintarLetterhead(resp);
+                pintarGrafico(resp);
+                pintarTabla(resp);
+                ltAplicarVisibilidad();
+                $('#ltResultado').show();
+            })
+            .fail(function () {
+                $('#ltLoading').hide();
                 $('#ltSinDatos').show();
-                return;
-            }
-            _lt.ultimaRespuesta = resp;
-            pintarKpis(resp);
-            pintarLetterhead(resp);
-            pintarGrafico(resp);
-            pintarTabla(resp);
-            $('#ltResultado').show();
-        }).fail(function () {
-            $('#ltLoading').hide();
-            $('#ltSinDatos').show();
-        });
+            });
     }
 
     function limpiar() {
@@ -777,8 +1123,15 @@
         $('#ltSegVerPor button[data-modo="Mes"]').addClass('active').attr('aria-pressed', 'true');
         $('#ltAgruparHint').text(_lt.textos.agruparAyuda.Mes);
         _lt.unidad = 'pesos';
-        $('#ltSegUnidad button').removeClass('active');
-        $('#ltSegUnidad button[data-unidad="pesos"]').addClass('active');
+        $('#ltUnidadLbl').text(_lt.textos.unidades.pesos);
+        _lt.etiquetas = true;
+        $('#ltBtnEtiquetas').addClass('on');
+        _lt.escala = 'real';
+        $('#ltScaleSeg button').removeClass('active');
+        $('#ltScaleSeg button[data-scale="real"]').addClass('active');
+        $('#ltScaleBar, #ltScaleHint').hide();
+        _lt.ocultas = {};
+        destruirPaneles();
         recargarCascada();
     }
 
@@ -808,39 +1161,36 @@
         catch (e) { return escalado + sufijoUnidad(); }
     }
 
-    function statTile(label, value, delta) {
-        var deltaHtml = '';
-        if (delta !== null && delta !== undefined && !isNaN(delta)) {
-            var cls = delta >= 0 ? 'up' : 'down', flecha = delta >= 0 ? CH_UP : CH_DOWN;
-            deltaHtml = '<span class="lt-stat-delta ' + cls + '">' + flecha + ' ' + Math.abs(delta).toFixed(1) + '% ' + _lt.textos.statDeltaSufijo + '</span>';
-        }
-        return '<div class="lt-stat-tile"><div class="lt-stat-label">' + $('<span>').text(label).html() + '</div>' +
-            '<div class="lt-stat-value">' + $('<span>').text(value).html() + '</div>' + deltaHtml + '</div>';
-    }
-
-    function pintarKpis(resp) {
-        var pts = resp.principal;
+    function ultimoYVariacion(pts) {
+        if (!pts.length) return { ultimo: null, variacion: null, etiquetaAnterior: null };
         var ultimo = pts[pts.length - 1].valor;
         var previo = pts.length > 1 ? pts[pts.length - 2].valor : ultimo;
-        var variacion = previo ? ((ultimo - previo) / Math.abs(previo)) * 100 : null;
-        var promedio = pts.reduce(function (a, p) { return a + p.valor; }, 0) / pts.length;
-
-        $('#ltKpiRow').html(
-            statTile(_lt.textos.kpiUltimo, fmtCompacto(ultimo), pts.length > 1 ? variacion : null) +
-            statTile(_lt.textos.kpiPromedio, fmtCompacto(promedio), null) +
-            statTile(_lt.textos.kpiPeriodos, String(pts.length), null)
-        );
+        var etiquetaAnterior = pts.length > 1 ? pts[pts.length - 2].etiqueta : null;
+        var variacion = (pts.length > 1 && previo) ? ((ultimo - previo) / Math.abs(previo)) * 100 : null;
+        return { ultimo: ultimo, variacion: variacion, etiquetaAnterior: etiquetaAnterior };
     }
 
+    // Cabecera consolidada: el título lleva la tabla + la(s) variable(s) ("PYG · Ingresos" o
+    // "PYG · 3 variables comparadas"); el resto de contexto (empresa, escenario, rango, agrupación)
+    // vive en el subtítulo.
     function pintarLetterhead(resp) {
-        var titulo = elIndicador.val();
+        var series = resp.series || [];
         var tablaInfo = CATALOGO_TABLAS[elTabla.val()] || {};
+        var tituloVariable = series.length === 1
+            ? (series[0].indicador || '')
+            : _lt.textos.tituloMultiplesVariables.replace('{0}', series.length);
+        var titulo = (tablaInfo.nombre || '') + (tituloVariable ? (' ' + CH_MIDDOT + ' ' + tituloVariable) : '');
+
         var empresaTexto = elEmpresa.find(':selected').text();
         var escenarioTexto = resp.nombreEscenarioPrincipal || elEscenario.find(':selected').text();
-        var rango = resp.principal.length ? (resp.principal[0].etiqueta + (resp.principal.length > 1 ? (' ' + CH_NDASH + ' ' + resp.principal[resp.principal.length - 1].etiqueta) : '')) : '';
-        var subtitulo = (tablaInfo.nombre || '') + ' ' + CH_MIDDOT + ' ' + empresaTexto + ' ' + CH_MIDDOT + ' ' + escenarioTexto +
+        var puntosRango = series.length ? series[0].puntos : [];
+        var rango = puntosRango.length ? (puntosRango[0].etiqueta + (puntosRango.length > 1 ? (' ' + CH_NDASH + ' ' + puntosRango[puntosRango.length - 1].etiqueta) : '')) : '';
+        var agruparTexto = $('#ltSegVerPor button.active span').text().toLowerCase();
+
+        var subtitulo = empresaTexto + ' ' + CH_MIDDOT + ' ' + escenarioTexto +
             (resp.comparacion && resp.comparacion.length ? (' vs. ' + (resp.nombreEscenarioComparacion || '')) : '') +
-            (rango ? (' ' + CH_MIDDOT + ' ' + rango) : '');
+            (rango ? (' ' + CH_MIDDOT + ' ' + rango) : '') +
+            (agruparTexto ? (' ' + CH_MIDDOT + ' ' + _lt.textos.porAgrupacion.replace('{0}', agruparTexto)) : '');
 
         $('#ltChartTitle').text(titulo);
         $('#ltChartSubtitle').text(subtitulo);
@@ -851,88 +1201,127 @@
         } catch (e) { $('#ltFechaGenerado').text(''); }
     }
 
-    function pintarGrafico(resp) {
-        var labels = resp.principal.map(function (p) { return p.etiqueta; });
-        var esBarra = _lt.tipoGrafico === 'bar';
-
-        var datasets = [{
-            label: resp.nombreEscenarioPrincipal || _lt.textos.colValor,
-            data: resp.principal.map(function (p) { return p.valor; }),
-            borderColor: '#6366F1',
-            backgroundColor: esBarra ? 'rgba(99,102,241,.85)' : 'rgba(99,102,241,.16)',
+    function datasetSerie(label, puntos, color, esBarra, conRelleno) {
+        return {
+            label: label,
+            data: puntos.map(function (p) { return p.valor; }),
+            borderColor: color,
+            backgroundColor: esBarra ? ltColorConAlfa(color, .85) : ltColorConAlfa(color, .16),
             borderWidth: esBarra ? 0 : 2.5,
             borderRadius: esBarra ? 6 : 0,
-            maxBarThickness: 38,
+            maxBarThickness: 34,
             minBarLength: esBarra ? 30 : undefined,
             tension: 0.35,
-            fill: !esBarra,
-            pointRadius: 3,
+            fill: !esBarra && conRelleno,
+            pointRadius: 4,
             pointHoverRadius: 6,
-            pointBackgroundColor: '#6366F1'
-        }];
+            pointBackgroundColor: color
+        };
+    }
 
-        if (resp.comparacion && resp.comparacion.length > 0) {
-            datasets.push({
-                label: resp.nombreEscenarioComparacion || _lt.textos.colComparacion,
-                data: resp.comparacion.map(function (p) { return p.valor; }),
-                borderColor: '#D97706',
-                backgroundColor: esBarra ? 'rgba(217,119,6,.85)' : 'rgba(217,119,6,.16)',
-                borderWidth: esBarra ? 0 : 2.5,
-                borderRadius: esBarra ? 6 : 0,
-                maxBarThickness: 38,
-                minBarLength: esBarra ? 30 : undefined,
-                tension: 0.35,
-                fill: !esBarra,
-                pointRadius: 3,
-                pointHoverRadius: 6,
-                pointBackgroundColor: '#D97706'
-            });
+    function pintarGrafico(resp) {
+        var series = resp.series || [];
+        var esBarra = _lt.tipoGrafico === 'bar';
+        var labels = series.length ? series[0].puntos.map(function (p) { return p.etiqueta; }) : [];
+
+        // Con una sola variable: comportamiento clásico (línea/barra índigo, +opcional comparación
+        // de escenario en ámbar). Con varias variables: una serie por variable, cada una con su
+        // propio color de LT_PALETTE — sin relleno de área para que no se solapen entre sí.
+        var datasets = series.length === 1
+            ? [datasetSerie(resp.nombreEscenarioPrincipal || series[0].indicador, series[0].puntos, ltColorSerie(0), esBarra, true)]
+            : series.map(function (s, i) { return datasetSerie(s.indicador, s.puntos, ltColorSerie(i), esBarra, false); });
+
+        if (series.length === 1 && resp.comparacion && resp.comparacion.length > 0) {
+            datasets.push(datasetSerie(resp.nombreEscenarioComparacion || _lt.textos.colComparacion, resp.comparacion, '#D97706', esBarra, true));
         }
+
+        // El interruptor "Etiquetas" decide si se dibuja el valor encima de cada punto/barra. La
+        // leyenda de Chart.js queda siempre apagada — la tira de series (#ltSeriesStrip) cumple esa
+        // función (color + nombre + interruptor de visibilidad, todo en una sola pieza).
+        var plugins = _lt.etiquetas ? [ltDataLabelsPlugin] : [];
 
         if (_lt.chart) { _lt.chart.destroy(); }
         _lt.chart = new Chart(document.getElementById('ltChart').getContext('2d'), {
             type: esBarra ? 'bar' : 'line',
             data: { labels: labels, datasets: datasets },
-            plugins: [ltDataLabelsPlugin],
+            plugins: plugins,
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 layout: { padding: { top: 20 } },
                 interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    legend: { display: datasets.length > 1, position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 12, boxHeight: 12 } },
+                    legend: { display: false },
                     tooltip: { mode: 'index', intersect: false, callbacks: { label: function (ctx) { return ctx.dataset.label + ': ' + fmtCompacto(ctx.parsed.y); } } }
                 },
                 scales: {
-                    x: { grid: { display: false } },
-                    y: { beginAtZero: false, ticks: { callback: function (v) { return fmtCompacto(v); } } }
+                    x: { grid: { display: false }, ticks: { font: { weight: '700' }, color: '#5B5570' } },
+                    y: { beginAtZero: false, grid: { color: '#EEF0F6' }, ticks: { color: '#b9b4c9', font: { weight: '600' }, callback: function (v) { return fmtCompacto(v); } } }
                 }
             }
         });
     }
 
+    // Unión ordenada de todos los períodos presentes en cualquiera de las series (normalmente
+    // coinciden, pero cada serie se consulta por separado) — clave "anio-mes" -> {anio, mes, etiqueta}.
+    function ltClavesPeriodo(series) {
+        var vistos = {}, claves = [];
+        series.forEach(function (s) {
+            s.puntos.forEach(function (p) {
+                var k = p.anio + '-' + p.mes;
+                if (!vistos[k]) { vistos[k] = { anio: p.anio, mes: p.mes, etiqueta: p.etiqueta }; claves.push(k); }
+            });
+        });
+        claves.sort(function (a, b) { return vistos[a].anio - vistos[b].anio || vistos[a].mes - vistos[b].mes; });
+        return { claves: claves, porClave: vistos };
+    }
+
+    function ltMapaValores(puntos) {
+        var m = {};
+        puntos.forEach(function (p) { m[p.anio + '-' + p.mes] = p.valor; });
+        return m;
+    }
+
     function pintarTabla(resp) {
-        var conComparacion = resp.comparacion && resp.comparacion.length > 0;
-        var head = '<th>' + _lt.textos.colPeriodo + '</th><th style="text-align:right;">' + $('<span>').text(resp.nombreEscenarioPrincipal || _lt.textos.colValor).html() + '</th>';
-        if (conComparacion) head += '<th style="text-align:right;">' + $('<span>').text(resp.nombreEscenarioComparacion || _lt.textos.colComparacion).html() + '</th><th style="text-align:right;">' + _lt.textos.colVariacion + '</th>';
+        var series = resp.series || [];
+        var conComparacion = series.length === 1 && resp.comparacion && resp.comparacion.length > 0;
+
+        var head = '<th>' + _lt.textos.colPeriodo + '</th>';
+        if (series.length === 1) {
+            head += '<th style="text-align:right;">' + $('<span>').text(resp.nombreEscenarioPrincipal || series[0].indicador || _lt.textos.colValor).html() + '</th>';
+            if (conComparacion) head += '<th style="text-align:right;">' + $('<span>').text(resp.nombreEscenarioComparacion || _lt.textos.colComparacion).html() + '</th><th style="text-align:right;">' + _lt.textos.colVariacion + '</th>';
+        } else {
+            series.forEach(function (s, i) {
+                head += '<th style="text-align:right;"><span class="lt-th-swatch" style="background:' + ltColorSerie(i) + '"></span>' + $('<span>').text(s.indicador).html() + '</th>';
+            });
+        }
         $('#ltTablaHead').html(head);
 
-        var comparacionPorClave = {};
-        if (conComparacion) {
-            resp.comparacion.forEach(function (p) { comparacionPorClave[p.anio + '-' + p.mes] = p.valor; });
-        }
+        var periodos = ltClavesPeriodo(series);
+        var mapasPorSerie = series.map(function (s) { return ltMapaValores(s.puntos); });
+        var comparacionPorClave = conComparacion ? ltMapaValores(resp.comparacion) : {};
 
-        var filas = resp.principal.map(function (p) {
-            var fila = '<tr><td>' + $('<span>').text(p.etiqueta).html() + '</td><td class="num">' + fmtDecimal(p.valor) + '</td>';
-            if (conComparacion) {
-                var b = comparacionPorClave[p.anio + '-' + p.mes];
-                if (b !== undefined) {
-                    var delta = b ? ((p.valor - b) / Math.abs(b)) * 100 : 0;
-                    var cls = delta >= 0 ? 'up' : 'down', flecha = delta >= 0 ? CH_UP : CH_DOWN;
-                    fila += '<td class="num">' + fmtDecimal(b) + '</td><td class="num"><span class="lt-var-chip ' + cls + '">' + flecha + ' ' + Math.abs(delta).toFixed(1) + '%</span></td>';
-                } else {
-                    fila += '<td class="num">' + CH_MDASH + '</td><td class="num">' + CH_MDASH + '</td>';
+        var filas = periodos.claves.map(function (k) {
+            var periodo = periodos.porClave[k];
+            var fila = '<tr><td>' + $('<span>').text(periodo.etiqueta).html() + '</td>';
+            if (series.length === 1) {
+                var v = mapasPorSerie[0][k];
+                fila += '<td class="num">' + (v !== undefined ? fmtDecimal(v) : CH_MDASH) + '</td>';
+                if (conComparacion) {
+                    var b = comparacionPorClave[k];
+                    if (b !== undefined) {
+                        var delta = b ? (((v || 0) - b) / Math.abs(b)) * 100 : 0;
+                        var cls = delta >= 0 ? 'up' : 'down', flecha = delta >= 0 ? CH_UP : CH_DOWN;
+                        fila += '<td class="num">' + fmtDecimal(b) + '</td><td class="num"><span class="lt-var-chip ' + cls + '">' + flecha + ' ' + Math.abs(delta).toFixed(1) + '%</span></td>';
+                    } else {
+                        fila += '<td class="num">' + CH_MDASH + '</td><td class="num">' + CH_MDASH + '</td>';
+                    }
                 }
+            } else {
+                mapasPorSerie.forEach(function (mapa) {
+                    var v = mapa[k];
+                    fila += '<td class="num">' + (v !== undefined ? fmtDecimal(v) : CH_MDASH) + '</td>';
+                });
             }
             return fila + '</tr>';
         }).join('');
@@ -941,18 +1330,24 @@
 
     function exportar() {
         var filtros = armarFiltros();
-        if (!filtros.Campo) return;
+        if (!filtros.Indicadores.length || !filtros.Campo) return;
 
         var form = document.createElement('form');
         form.method = 'POST';
         form.action = _lt.urls.exportar;
 
-        Object.keys(filtros).forEach(function (k) {
+        function addInput(nombre, valor) {
             var input = document.createElement('input');
             input.type = 'hidden';
-            input.name = k;
-            input.value = filtros[k] == null ? '' : filtros[k];
+            input.name = nombre;
+            input.value = valor == null ? '' : valor;
             form.appendChild(input);
+        }
+
+        Object.keys(filtros).forEach(function (k) {
+            var val = filtros[k];
+            if (Array.isArray(val)) { val.forEach(function (item) { addInput(k, item); }); return; }
+            addInput(k, val);
         });
 
         document.body.appendChild(form);
@@ -998,7 +1393,10 @@
             pdf.setFontSize(15);
             pdf.text('BUFINS', margin, 15);
 
-            var titulo = elIndicador.val() || '';
+            var series = resp.series || [];
+            // En el encabezado (una sola línea, ancho limitado) se muestra el conteo cuando hay
+            // varias variables — los nombres completos igual quedan en las tarjetas KPI y la tabla.
+            var titulo = series.length === 1 ? (series[0].indicador || '') : _lt.textos.tituloMultiplesVariables.replace('{0}', series.length);
             var tablaInfo = CATALOGO_TABLAS[elTabla.val()] || {};
             var empresaTexto = elEmpresa.find(':selected').text();
             var escenarioTexto = resp.nombreEscenarioPrincipal || elEscenario.find(':selected').text();
@@ -1013,37 +1411,55 @@
             y = 32;
             pdf.setTextColor(30, 20, 50);
 
-            // KPIs (mismos que en pantalla)
-            var pts = resp.principal;
-            var ultimo = pts[pts.length - 1].valor;
-            var previo = pts.length > 1 ? pts[pts.length - 2].valor : ultimo;
-            var promedio = pts.reduce(function (a, p) { return a + p.valor; }, 0) / pts.length;
+            // Resumen del PDF (propio de esta exportación, independiente de la tira de series en
+            // pantalla): con 1 variable, Último/Promedio/Períodos; con varias, una tarjeta por
+            // variable (mismo color que su línea/barra) con su último valor.
+            var kpis;
+            if (series.length <= 1) {
+                var pts = series.length ? series[0].puntos : [];
+                var ultimo = pts.length ? pts[pts.length - 1].valor : 0;
+                var promedio = pts.length ? pts.reduce(function (a, p) { return a + p.valor; }, 0) / pts.length : 0;
+                kpis = [
+                    { label: _lt.textos.kpiUltimo, valor: fmtCompacto(ultimo) },
+                    { label: _lt.textos.kpiPromedio, valor: fmtCompacto(promedio) },
+                    { label: _lt.textos.kpiPeriodos, valor: String(pts.length) }
+                ];
+            } else {
+                kpis = series.map(function (s, i) {
+                    var pts = s.puntos;
+                    var ultimo = pts.length ? pts[pts.length - 1].valor : 0;
+                    return { label: s.indicador, valor: fmtCompacto(ultimo), color: ltColorSerie(i) };
+                });
+            }
 
-            var kpis = [
-                { label: _lt.textos.kpiUltimo, valor: fmtCompacto(ultimo) },
-                { label: _lt.textos.kpiPromedio, valor: fmtCompacto(promedio) },
-                { label: _lt.textos.kpiPeriodos, valor: String(pts.length) }
-            ];
-            var kpiW = (pageW - margin * 2 - 12) / 3;
+            var columnas = Math.min(kpis.length, 4) || 1;
+            var kpiW = (pageW - margin * 2 - (columnas - 1) * 6) / columnas;
             kpis.forEach(function (k, i) {
-                var x = margin + i * (kpiW + 6);
+                var col = i % columnas, filaKpi = Math.floor(i / columnas);
+                var x = margin + col * (kpiW + 6);
+                var yBox = y + filaKpi * 24;
                 pdf.setDrawColor(228, 225, 240);
                 pdf.setFillColor(244, 243, 251);
-                pdf.roundedRect(x, y, kpiW, 18, 2, 2, 'FD');
+                pdf.roundedRect(x, yBox, kpiW, 18, 2, 2, 'FD');
+                if (k.color) {
+                    var rgb = ltHexARgb(k.color);
+                    pdf.setFillColor(rgb.r, rgb.g, rgb.b);
+                    pdf.circle(x + 5, yBox + 5.2, 1.3, 'F');
+                }
                 pdf.setFontSize(7.5);
                 pdf.setTextColor(120, 115, 140);
-                pdf.text(k.label, x + 4, y + 7);
+                pdf.text(String(k.label), x + (k.color ? 8 : 4), yBox + 7, { maxWidth: kpiW - (k.color ? 12 : 8) });
                 pdf.setFontSize(12);
                 pdf.setFont(undefined, 'bold');
                 pdf.setTextColor(30, 20, 50);
-                pdf.text(k.valor, x + 4, y + 14);
+                pdf.text(k.valor, x + 4, yBox + 14);
                 pdf.setFont(undefined, 'normal');
             });
-            y += 24;
+            y += Math.ceil(kpis.length / columnas) * 24;
 
             // Unidad en la que se exportaron las cifras (el toggle Pesos/Miles/Millones no queda
             // capturado en la imagen del gráfico, así que se deja explícito como texto aparte)
-            var unidadTexto = $('#ltSegUnidad button.active').text().trim();
+            var unidadTexto = $('#ltUnidadLbl').text().trim();
             pdf.setFontSize(8.5);
             pdf.setTextColor(140, 135, 160);
             pdf.text(_lt.textos.pdfUnidadPrefijo + ' ' + unidadTexto, margin, y);
@@ -1059,23 +1475,39 @@
             y += imgH + 10;
 
             if (modo === 'datos') {
-                var conComparacion = resp.comparacion && resp.comparacion.length > 0;
-                var headers = [_lt.textos.colPeriodo, resp.nombreEscenarioPrincipal || _lt.textos.colValor];
-                if (conComparacion) headers.push(resp.nombreEscenarioComparacion || _lt.textos.colComparacion, _lt.textos.colVariacion);
+                var conComparacionPdf = series.length === 1 && resp.comparacion && resp.comparacion.length > 0;
+                var headers = [_lt.textos.colPeriodo];
+                if (series.length === 1) {
+                    headers.push(resp.nombreEscenarioPrincipal || series[0].indicador || _lt.textos.colValor);
+                    if (conComparacionPdf) headers.push(resp.nombreEscenarioComparacion || _lt.textos.colComparacion, _lt.textos.colVariacion);
+                } else {
+                    series.forEach(function (s) { headers.push(s.indicador); });
+                }
 
-                var comparacionPorClave = {};
-                if (conComparacion) resp.comparacion.forEach(function (p) { comparacionPorClave[p.anio + '-' + p.mes] = p.valor; });
+                var periodosPdf = ltClavesPeriodo(series);
+                var mapasPorSeriePdf = series.map(function (s) { return ltMapaValores(s.puntos); });
+                var comparacionPorClave = conComparacionPdf ? ltMapaValores(resp.comparacion) : {};
 
-                var filas = pts.map(function (p) {
-                    var fila = [p.etiqueta, fmtDecimal(p.valor)];
-                    if (conComparacion) {
-                        var b = comparacionPorClave[p.anio + '-' + p.mes];
-                        if (b !== undefined) {
-                            var delta = b ? ((p.valor - b) / Math.abs(b)) * 100 : 0;
-                            fila.push(fmtDecimal(b), (delta >= 0 ? '+' : '') + delta.toFixed(1) + '%');
-                        } else {
-                            fila.push(CH_MDASH, CH_MDASH);
+                var filas = periodosPdf.claves.map(function (k) {
+                    var periodo = periodosPdf.porClave[k];
+                    var fila = [periodo.etiqueta];
+                    if (series.length === 1) {
+                        var v = mapasPorSeriePdf[0][k];
+                        fila.push(v !== undefined ? fmtDecimal(v) : CH_MDASH);
+                        if (conComparacionPdf) {
+                            var b = comparacionPorClave[k];
+                            if (b !== undefined) {
+                                var delta = b ? (((v || 0) - b) / Math.abs(b)) * 100 : 0;
+                                fila.push(fmtDecimal(b), (delta >= 0 ? '+' : '') + delta.toFixed(1) + '%');
+                            } else {
+                                fila.push(CH_MDASH, CH_MDASH);
+                            }
                         }
+                    } else {
+                        mapasPorSeriePdf.forEach(function (mapa) {
+                            var v = mapa[k];
+                            fila.push(v !== undefined ? fmtDecimal(v) : CH_MDASH);
+                        });
                     }
                     return fila;
                 });

@@ -9,11 +9,11 @@ namespace bufinscustomers.Models
         public int? IdEmpresa { get; set; }
         public int? IdEscenario { get; set; }
 
-        /// <summary>Escenario a comparar contra el principal. Null = no comparar.</summary>
+        /// <summary>Escenario a comparar contra el principal. Solo se aplica cuando Indicadores tiene un único valor. Null = no comparar.</summary>
         public int? IdEscenarioComparar { get; set; }
 
-        /// <summary>Valor de la columna Descripcion de la tabla elegida.</summary>
-        public string Indicador { get; set; }
+        /// <summary>Valores de la columna Descripcion de la tabla elegida — una o varias, cada una se pinta como su propia serie/color.</summary>
+        public List<string> Indicadores { get; set; }
 
         /// <summary>Columna numérica a graficar (Valor, ValorPresupuesto, ValorAcumulado, etc.).</summary>
         public string Campo { get; set; }
@@ -50,9 +50,19 @@ namespace bufinscustomers.Models
         public string NombreAmigable { get; set; }
     }
 
+    /// <summary>Serie de tiempo de un indicador (escenario principal), ya agregada.</summary>
+    public class SerieVariable
+    {
+        public string Indicador { get; set; }
+        public List<PuntoLineaTiempo> Puntos { get; set; } = new List<PuntoLineaTiempo>();
+    }
+
     public class SerieLineaTiempoResultado
     {
-        public List<PuntoLineaTiempo> Principal { get; set; } = new List<PuntoLineaTiempo>();
+        /// <summary>Una entrada por cada indicador seleccionado (escenario principal).</summary>
+        public List<SerieVariable> Series { get; set; } = new List<SerieVariable>();
+
+        /// <summary>Solo se llena cuando Series tiene exactamente 1 elemento e IdEscenarioComparar fue enviado.</summary>
         public List<PuntoLineaTiempo> Comparacion { get; set; }
         public string NombreEscenarioPrincipal { get; set; }
         public string NombreEscenarioComparacion { get; set; }

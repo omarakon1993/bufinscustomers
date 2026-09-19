@@ -135,7 +135,11 @@ namespace bufinscustomers.Controllers
                 return Json(new
                 {
                     success = true,
-                    principal = resultado.Principal.Select(p => new { anio = p.Anio, mes = p.Mes, etiqueta = p.Etiqueta, valor = p.Valor }),
+                    series = resultado.Series.Select(s => new
+                    {
+                        indicador = s.Indicador,
+                        puntos = s.Puntos.Select(p => new { anio = p.Anio, mes = p.Mes, etiqueta = p.Etiqueta, valor = p.Valor })
+                    }),
                     comparacion = resultado.Comparacion?.Select(p => new { anio = p.Anio, mes = p.Mes, etiqueta = p.Etiqueta, valor = p.Valor }),
                     nombreEscenarioPrincipal = resultado.NombreEscenarioPrincipal,
                     nombreEscenarioComparacion = resultado.NombreEscenarioComparacion
@@ -170,7 +174,7 @@ namespace bufinscustomers.Controllers
                 }
 
                 var resultado = _service.ObtenerSerieTiempo(filtros, idEmpresaConsulta);
-                if (resultado.Principal.Count == 0)
+                if (resultado.Series.Count == 0 || resultado.Series.All(s => s.Puntos.Count == 0))
                 {
                     TempData["InfoMessage"] = R("LineaTiempo_SinDatosExportar");
                     return RedirectToAction("Index");
@@ -179,31 +183,65 @@ namespace bufinscustomers.Controllers
                 using (var package = new XLWorkbook())
                 {
                     var worksheet = package.Worksheets.Add("LineaTiempo");
-                    bool tieneComparacion = resultado.Comparacion != null && resultado.Comparacion.Count > 0;
+                    bool unaVariable = resultado.Series.Count == 1;
+                    bool tieneComparacion = unaVariable && resultado.Comparacion != null && resultado.Comparacion.Count > 0;
 
                     worksheet.Cell(1, 1).Value = R("LineaTiempo_ColPeriodo");
-                    worksheet.Cell(1, 2).Value = !string.IsNullOrWhiteSpace(resultado.NombreEscenarioPrincipal)
-                        ? resultado.NombreEscenarioPrincipal
-                        : R("LineaTiempo_ColValor");
-                    if (tieneComparacion)
-                        worksheet.Cell(1, 3).Value = resultado.NombreEscenarioComparacion ?? R("LineaTiempo_ColComparacion");
+                    if (unaVariable)
+                    {
+                        worksheet.Cell(1, 2).Value = !string.IsNullOrWhiteSpace(resultado.NombreEscenarioPrincipal)
+                            ? resultado.NombreEscenarioPrincipal
+                            : (resultado.Series[0].Indicador ?? R("LineaTiempo_ColValor"));
+                        if (tieneComparacion)
+                            worksheet.Cell(1, 3).Value = resultado.NombreEscenarioComparacion ?? R("LineaTiempo_ColComparacion");
+                    }
+                    else
+                    {
+                        for (int i = 0; i < resultado.Series.Count; i++)
+                            worksheet.Cell(1, i + 2).Value = resultado.Series[i].Indicador;
+                    }
 
-                    var headerRange = worksheet.Range(1, 1, 1, tieneComparacion ? 3 : 2);
+                    int totalColumnas = unaVariable ? (tieneComparacion ? 3 : 2) : (resultado.Series.Count + 1);
+                    var headerRange = worksheet.Range(1, 1, 1, totalColumnas);
                     headerRange.Style.Font.Bold = true;
                     headerRange.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
                     headerRange.Style.Font.FontColor = XLColor.White;
 
-                    int fila = 2;
-                    foreach (var punto in resultado.Principal)
-                    {
-                        worksheet.Cell(fila, 1).Value = punto.Etiqueta;
-                        ExcelCellHelper.SetValue(worksheet.Cell(fila, 2), punto.Valor);
+                    // Unión ordenada de todos los períodos presentes en cualquiera de las series
+                    // (normalmente coinciden, pero cada serie se consulta por separado).
+                    var periodos = resultado.Series
+                        .SelectMany(s => s.Puntos)
+                        .Select(p => new { p.Anio, p.Mes, p.Etiqueta })
+                        .Distinct()
+                        .OrderBy(p => p.Anio).ThenBy(p => p.Mes)
+                        .ToList();
 
-                        if (tieneComparacion)
+                    int fila = 2;
+                    foreach (var periodo in periodos)
+                    {
+                        worksheet.Cell(fila, 1).Value = periodo.Etiqueta;
+
+                        if (unaVariable)
                         {
-                            var comparado = resultado.Comparacion.FirstOrDefault(c => c.Anio == punto.Anio && c.Mes == punto.Mes);
-                            if (comparado != null)
-                                ExcelCellHelper.SetValue(worksheet.Cell(fila, 3), comparado.Valor);
+                            var punto = resultado.Series[0].Puntos.FirstOrDefault(p => p.Anio == periodo.Anio && p.Mes == periodo.Mes);
+                            if (punto != null)
+                                ExcelCellHelper.SetValue(worksheet.Cell(fila, 2), punto.Valor);
+
+                            if (tieneComparacion)
+                            {
+                                var comparado = resultado.Comparacion.FirstOrDefault(c => c.Anio == periodo.Anio && c.Mes == periodo.Mes);
+                                if (comparado != null)
+                                    ExcelCellHelper.SetValue(worksheet.Cell(fila, 3), comparado.Valor);
+                            }
+                        }
+                        else
+                        {
+                            for (int i = 0; i < resultado.Series.Count; i++)
+                            {
+                                var punto = resultado.Series[i].Puntos.FirstOrDefault(p => p.Anio == periodo.Anio && p.Mes == periodo.Mes);
+                                if (punto != null)
+                                    ExcelCellHelper.SetValue(worksheet.Cell(fila, i + 2), punto.Valor);
+                            }
                         }
 
                         fila++;
