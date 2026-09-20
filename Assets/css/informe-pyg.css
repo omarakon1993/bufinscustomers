@@ -15,7 +15,8 @@
 .pyg-kpi-row + .pyg-kpi-row{border-top:1px dashed #E4E1F0}
 .pyg-kpi-per{font-size:11px;font-weight:700;color:#8B85A0;width:60px;flex:none}
 .pyg-kpi-val{font-size:19px;font-weight:800;letter-spacing:-.01em;color:#16121F;font-variant-numeric:tabular-nums}
-.pyg-kpi-delta{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;margin-left:auto}
+.pyg-kpi-deltas{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-left:auto}
+.pyg-kpi-delta{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700}
 .pyg-kpi-delta.up{color:#16A34A}
 .pyg-kpi-delta.down{color:#DC2626}
 .pyg-kpi-delta .ref{font-weight:600;color:#a7a1b8}
@@ -39,6 +40,22 @@
 
 @media (max-width:900px){.pyg-charts{grid-template-columns:1fr}}
 
+/* ---- Cascada (waterfall) Ingresos -> Utilidad Neta del período ---- */
+.pyg-waterfall-card{margin-top:16px}
+.pyg-waterfall-canvas-wrap{position:relative;height:220px}
+.pyg-waterfall-canvas-wrap canvas{width:100% !important;height:100% !important}
+
+/* ---- "Lo más relevante del período" (top movimientos por impacto $, no por % ) ---- */
+.pyg-highlights-card{margin-top:12px}
+.pyg-highlights-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 24px}
+.pyg-highlight-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed #E4E1F0;font-size:12.5px}
+.pyg-highlight-item:nth-last-child(-n+2){border-bottom:none}
+.pyg-highlight-nm{color:#4b5563;font-weight:600}
+.pyg-highlight-val{display:inline-flex;align-items:center;gap:4px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pyg-highlight-val.up{color:#16A34A}
+.pyg-highlight-val.down{color:#DC2626}
+@media (max-width:640px){.pyg-highlights-list{grid-template-columns:1fr}.pyg-highlight-item:nth-last-child(-n+2){border-bottom:1px dashed #E4E1F0}.pyg-highlight-item:last-child{border-bottom:none}}
+
 /* ---- Tabla financiera: encabezado agrupado (Mes / Acumulado) + filas subtotal ---- */
 /* .data-table pega la cabecera con position:sticky;top:0 pensando en una sola fila — con 2 filas de
    thead hay que bajar la segunda para que no se monte sobre la primera al hacer scroll vertical. */
@@ -53,6 +70,8 @@
 .pyg-v-good{color:#16A34A}
 .pyg-v-bad{color:#DC2626}
 .pyg-v-neu{color:#9ca3af}
+.pyg-v-critical{font-weight:800}
+.pyg-v-crit-ic{font-size:9px;margin-right:3px;vertical-align:1px}
 
 /* ---- Insights gerenciales (IA) ---- */
 .pyg-insights-card{background:#fff;border:1px solid #E4E1F0;border-radius:14px;padding:18px 20px;margin-top:16px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(22,9,51,.05), 0 10px 28px -10px rgba(22,9,51,.14)}

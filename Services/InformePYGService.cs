@@ -176,34 +176,60 @@ namespace bufinscustomers.Services
                 return resultado;
             }
 
+            // Año-1, mismo rango de meses — para la comparación interanual (YoY). Si ese año no tiene
+            // datos cargados (empresa nueva, primer año de operación), queda simplemente sin comparación
+            // (todos los campos *AnioAnterior/YoY salen null), nunca rompe el resto del reporte.
+            var filasAnterior = ObtenerFilas(idEmpresa, idEscenario, año - 1);
+            var filasAntDelRango = filasAnterior.Where(f => f.Mes >= mesDesde && f.Mes <= mesHasta).ToList();
+            var filasAntHasta = filasAnterior.Where(f => f.Mes == mesHasta).OrderBy(f => f.Ord).ToList();
+            bool hayAnterior = filasAntDelRango.Count > 0 && filasAntHasta.Count > 0;
+            resultado.HayAnioAnterior = hayAnterior;
+            resultado.AnioAnterior = año - 1;
+
             var ingresos = ValoresLinea(filasDelRango, filasHasta, new[] { DescIngresos });
+            var ingresosAnt = hayAnterior ? ValoresLinea(filasAntDelRango, filasAntHasta, new[] { DescIngresos }) : ValoresVacias;
 
             foreach (var f in filasHasta)
             {
                 var v = ValoresLinea(filasDelRango, filasHasta, new[] { f.Descripcion });
+                var vAnt = hayAnterior ? ValoresLinea(filasAntDelRango, filasAntHasta, new[] { f.Descripcion }) : ValoresVacias;
                 resultado.Filas.Add(ArmarFilaReporte(f.Ord, f.Descripcion, f.EsSubtotal,
                     v.periodoReal, v.periodoPpto, v.acumReal, v.acumPpto,
-                    ingresos.periodoReal, ingresos.acumReal));
+                    ingresos.periodoReal, ingresos.acumReal,
+                    hayAnterior ? (decimal?)vAnt.periodoReal : null, hayAnterior ? (decimal?)vAnt.acumReal : null));
 
                 // EBITDA no es una línea real de Rel_PYG — se inserta calculada justo después de
                 // "Utilidad operacional" (Utilidad operacional + Depreciación/Amortización costo+gasto).
                 if (string.Equals(f.Descripcion, DescUtilidadOperacional, StringComparison.OrdinalIgnoreCase))
                 {
                     var e = ValoresLinea(filasDelRango, filasHasta, DescComponentesEbitda);
+                    var eAnt = hayAnterior ? ValoresLinea(filasAntDelRango, filasAntHasta, DescComponentesEbitda) : ValoresVacias;
                     resultado.Filas.Add(ArmarFilaReporte(f.Ord, DescEbitdaSintetico, true,
                         e.periodoReal, e.periodoPpto, e.acumReal, e.acumPpto,
-                        ingresos.periodoReal, ingresos.acumReal));
+                        ingresos.periodoReal, ingresos.acumReal,
+                        hayAnterior ? (decimal?)eAnt.periodoReal : null, hayAnterior ? (decimal?)eAnt.acumReal : null));
                 }
             }
 
             var bruta = ValoresLinea(filasDelRango, filasHasta, new[] { DescUtilidadBruta });
-            resultado.Kpis.Add(ArmarKpiDesdeValores("MargenBruto", bruta, ingresos));
+            var brutaAnt = hayAnterior ? ValoresLinea(filasAntDelRango, filasAntHasta, new[] { DescUtilidadBruta }) : ValoresVacias;
+            resultado.Kpis.Add(ArmarKpiDesdeValores("MargenBruto", bruta, ingresos, hayAnterior, brutaAnt, ingresosAnt));
 
             var ebitdaKpi = ValoresLinea(filasDelRango, filasHasta, DescComponentesEbitda);
-            resultado.Kpis.Add(ArmarKpiDesdeValores("Ebitda", ebitdaKpi, ingresos));
+            var ebitdaAnt = hayAnterior ? ValoresLinea(filasAntDelRango, filasAntHasta, DescComponentesEbitda) : ValoresVacias;
+            resultado.Kpis.Add(ArmarKpiDesdeValores("Ebitda", ebitdaKpi, ingresos, hayAnterior, ebitdaAnt, ingresosAnt));
 
+            var operacional = ValoresLinea(filasDelRango, filasHasta, new[] { DescUtilidadOperacional });
             var neta = ValoresLinea(filasDelRango, filasHasta, new[] { DescUtilidadNeta });
-            resultado.Kpis.Add(ArmarKpiDesdeValores("MargenNeto", neta, ingresos));
+            var netaAnt = hayAnterior ? ValoresLinea(filasAntDelRango, filasAntHasta, new[] { DescUtilidadNeta }) : ValoresVacias;
+            resultado.Kpis.Add(ArmarKpiDesdeValores("MargenNeto", neta, ingresos, hayAnterior, netaAnt, ingresosAnt));
+
+            // Cascada (waterfall) Ingresos → Utilidad Neta del período seleccionado, con los 4 subtotales
+            // que ya vienen calculados por sp_ModeloPYG (Ingresos/Utilidad bruta/Utilidad operacional/
+            // Utilidad neta) como puntos de apoyo — así la suma de los tramos SIEMPRE cuadra exacto con
+            // Ingresos-Utilidad Neta reales, sin depender de reconstruir el detalle línea a línea.
+            resultado.CascadaPeriodo = ArmarCascada(ingresos.periodoReal, bruta.periodoReal, operacional.periodoReal, neta.periodoReal);
+            resultado.CascadaPresupuestoUtilidadNeta = neta.periodoPpto;
 
             resultado.TendenciaIngresos = ArmarTendencia(todasLasFilas, new[] { DescIngresos }, año);
             resultado.TendenciaEbitda = ArmarTendencia(todasLasFilas, DescComponentesEbitda, año);
@@ -212,9 +238,42 @@ namespace bufinscustomers.Services
             return resultado;
         }
 
+        /// <summary>Arma los 5 tramos de la cascada Ingresos → Utilidad Neta (2 barras "total" en los
+        /// extremos + 3 tramos intermedios cuyo delta es, por construcción, la diferencia exacta entre
+        /// dos subtotales consecutivos ya calculados por el modelo — generico para cualquier empresa,
+        /// no depende de qué cuentas puntuales componen cada bloque.</summary>
+        private static List<PygCascadaBarra> ArmarCascada(decimal ingresos, decimal utilidadBruta, decimal utilidadOperacional, decimal utilidadNeta)
+        {
+            var barras = new List<PygCascadaBarra>
+            {
+                new PygCascadaBarra { Etiqueta = "Ingresos", Tipo = "total", Desde = 0, Hasta = ingresos }
+            };
+
+            barras.Add(TramoCascada("CostoVentas", ingresos, utilidadBruta));
+            barras.Add(TramoCascada("GastosOperacionales", utilidadBruta, utilidadOperacional));
+            barras.Add(TramoCascada("OtrosEImpuestos", utilidadOperacional, utilidadNeta));
+
+            barras.Add(new PygCascadaBarra { Etiqueta = "UtilidadNeta", Tipo = "total", Desde = 0, Hasta = utilidadNeta });
+            return barras;
+        }
+
+        private static PygCascadaBarra TramoCascada(string etiqueta, decimal desde, decimal hasta)
+        {
+            decimal delta = hasta - desde;
+            return new PygCascadaBarra
+            {
+                Etiqueta = etiqueta,
+                Tipo = delta >= 0 ? "positivo" : "negativo",
+                Desde = Math.Min(desde, hasta),
+                Hasta = Math.Max(desde, hasta),
+                Delta = delta
+            };
+        }
+
         private static PygFilaReporte ArmarFilaReporte(int orden, string descripcion, bool esSubtotal,
             decimal periodoReal, decimal periodoPpto, decimal acumReal, decimal acumPpto,
-            decimal ingresosPeriodoReal, decimal ingresosAcumReal)
+            decimal ingresosPeriodoReal, decimal ingresosAcumReal,
+            decimal? periodoRealAnterior, decimal? acumRealAnterior)
         {
             var fila = new PygFilaReporte
             {
@@ -233,8 +292,17 @@ namespace bufinscustomers.Services
             fila.PeriodoMargen = ingresosPeriodoReal != 0 ? periodoReal / ingresosPeriodoReal : (decimal?)null;
             fila.AcumMargen = ingresosAcumReal != 0 ? acumReal / ingresosAcumReal : (decimal?)null;
 
+            fila.PeriodoRealAnioAnterior = periodoRealAnterior;
+            fila.PeriodoVariacionYoYPorcentual = (periodoRealAnterior.HasValue && periodoRealAnterior.Value != 0)
+                ? (periodoReal - periodoRealAnterior.Value) / Math.Abs(periodoRealAnterior.Value) : (decimal?)null;
+            fila.AcumRealAnioAnterior = acumRealAnterior;
+            fila.AcumVariacionYoYPorcentual = (acumRealAnterior.HasValue && acumRealAnterior.Value != 0)
+                ? (acumReal - acumRealAnterior.Value) / Math.Abs(acumRealAnterior.Value) : (decimal?)null;
+
             return fila;
         }
+
+        private static readonly (decimal periodoReal, decimal periodoPpto, decimal acumReal, decimal acumPpto) ValoresVacias = (0m, 0m, 0m, 0m);
 
         /// <summary>Real/Presupuesto de una línea (o suma de varias, para EBITDA), sumado en el rango
         /// elegido para el bloque "Periodo" y tomado en mesHasta para el bloque "Acumulado".</summary>
@@ -258,9 +326,12 @@ namespace bufinscustomers.Services
 
         private static PygKpiMargen ArmarKpiDesdeValores(string codigo,
             (decimal periodoReal, decimal periodoPpto, decimal acumReal, decimal acumPpto) valores,
-            (decimal periodoReal, decimal periodoPpto, decimal acumReal, decimal acumPpto) ingresos)
+            (decimal periodoReal, decimal periodoPpto, decimal acumReal, decimal acumPpto) ingresos,
+            bool hayAnterior,
+            (decimal periodoReal, decimal periodoPpto, decimal acumReal, decimal acumPpto) valoresAnt,
+            (decimal periodoReal, decimal periodoPpto, decimal acumReal, decimal acumPpto) ingresosAnt)
         {
-            return new PygKpiMargen
+            var kpi = new PygKpiMargen
             {
                 Codigo = codigo,
                 PeriodoRealPct = ingresos.periodoReal != 0 ? valores.periodoReal / ingresos.periodoReal : 0m,
@@ -268,6 +339,14 @@ namespace bufinscustomers.Services
                 AcumRealPct = ingresos.acumReal != 0 ? valores.acumReal / ingresos.acumReal : 0m,
                 AcumPresupuestoPct = ingresos.acumPpto != 0 ? valores.acumPpto / ingresos.acumPpto : 0m
             };
+
+            if (hayAnterior)
+            {
+                kpi.PeriodoRealPctAnioAnterior = ingresosAnt.periodoReal != 0 ? valoresAnt.periodoReal / ingresosAnt.periodoReal : (decimal?)null;
+                kpi.AcumRealPctAnioAnterior = ingresosAnt.acumReal != 0 ? valoresAnt.acumReal / ingresosAnt.acumReal : (decimal?)null;
+            }
+
+            return kpi;
         }
 
         /// <summary>Serie de tendencia sumando, mes a mes, una o varias descripciones (EBITDA es la

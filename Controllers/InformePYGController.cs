@@ -211,21 +211,21 @@ namespace bufinscustomers.Controllers
                     string[] encabezados =
                     {
                         R("PYG_ColEstructura"),
-                        R("PYG_ColReal"), R("PYG_ColPresupuesto"), R("PYG_ColVarAbs"), R("PYG_ColVarPct"), R("PYG_ColMargen"),
-                        R("PYG_ColReal"), R("PYG_ColPresupuesto"), R("PYG_ColVarAbs"), R("PYG_ColVarPct"), R("PYG_ColMargen")
+                        R("PYG_ColReal"), R("PYG_ColPresupuesto"), R("PYG_ColVarAbs"), R("PYG_ColVarPct"), R("PYG_ColMargen"), R("PYG_ColVarYoY"),
+                        R("PYG_ColReal"), R("PYG_ColPresupuesto"), R("PYG_ColVarAbs"), R("PYG_ColVarPct"), R("PYG_ColMargen"), R("PYG_ColVarYoY")
                     };
 
                     ws.Cell(1, 1).Value = R("PYG_ColEstructura");
                     ws.Range(1, 1, 2, 1).Merge();
                     ws.Cell(1, 2).Value = string.Format(R("PYG_ColMesGrupoFmt"), nombrePeriodo);
-                    ws.Range(1, 2, 1, 6).Merge();
-                    ws.Cell(1, 7).Value = string.Format(R("PYG_ColAcumGrupoFmt"), nombreMesHastaConAnio);
-                    ws.Range(1, 7, 1, 11).Merge();
+                    ws.Range(1, 2, 1, 7).Merge();
+                    ws.Cell(1, 8).Value = string.Format(R("PYG_ColAcumGrupoFmt"), nombreMesHastaConAnio);
+                    ws.Range(1, 8, 1, 13).Merge();
 
-                    for (int col = 2; col <= 11; col++)
+                    for (int col = 2; col <= 13; col++)
                         ws.Cell(2, col).Value = encabezados[col - 1];
 
-                    var headerRange = ws.Range(1, 1, 2, 11);
+                    var headerRange = ws.Range(1, 1, 2, 13);
                     headerRange.Style.Font.Bold = true;
                     headerRange.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
                     headerRange.Style.Font.FontColor = XLColor.White;
@@ -244,13 +244,15 @@ namespace bufinscustomers.Controllers
                         ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.PeriodoVariacionAbsoluta);
                         ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.PeriodoVariacionPorcentual);
                         ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.PeriodoMargen);
+                        ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.PeriodoVariacionYoYPorcentual);
                         ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.AcumReal);
                         ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.AcumPresupuesto);
                         ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.AcumVariacionAbsoluta);
                         ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.AcumVariacionPorcentual);
-                        ExcelCellHelper.SetValue(ws.Cell(fila, col), f.AcumMargen);
+                        ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.AcumMargen);
+                        ExcelCellHelper.SetValue(ws.Cell(fila, col), f.AcumVariacionYoYPorcentual);
 
-                        var filaRange = ws.Range(fila, 1, fila, 11);
+                        var filaRange = ws.Range(fila, 1, fila, 13);
                         filaRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
                         filaRange.Style.Border.OutsideBorderColor = XLColor.FromColor(Color.LightGray);
                         filaRange.Style.NumberFormat.Format = "#,##0.0";
@@ -269,7 +271,7 @@ namespace bufinscustomers.Controllers
                     }
 
                     ws.Columns().AdjustToContents();
-                    ws.Range(2, 1, fila - 1, 11).SetAutoFilter();
+                    ws.Range(2, 1, fila - 1, 13).SetAutoFilter();
                     ws.SheetView.Freeze(2, 1);
 
                     string nombreArchivo = $"PYG_{nombreEmpresa}_{anio}_{reporte.MesDesde:00}-{reporte.MesHasta:00}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";

@@ -124,6 +124,26 @@
 
             <div class="pyg-kpi-strip" id="pygKpiStrip"></div>
 
+            <div class="pyg-chart-card pyg-waterfall-card">
+                <div class="pyg-chart-head">
+                    <span class="pyg-chart-nm">@Resources.Strings.PYG_ChartCascada</span>
+                    <span class="pyg-chart-legend">
+                        <span><i style="background:#6366F1"></i>@Resources.Strings.PYG_LeyendaTotal</span>
+                        <span><i style="background:#16A34A"></i>@Resources.Strings.PYG_LeyendaFavorable</span>
+                        <span><i style="background:#DC2626"></i>@Resources.Strings.PYG_LeyendaDesfavorable</span>
+                        <span><i style="background:#D97706;height:2px;"></i>@Resources.Strings.PYG_LeyendaMetaPresupuesto</span>
+                    </span>
+                </div>
+                <div class="pyg-waterfall-canvas-wrap"><canvas id="pygChartCascada"></canvas></div>
+            </div>
+
+            <div class="pyg-chart-card pyg-highlights-card" id="pygHighlights" style="display:none;">
+                <div class="pyg-chart-head">
+                    <span class="pyg-chart-nm"><i class="fas fa-bolt mr-1"></i>@Resources.Strings.PYG_DestacadosTitulo</span>
+                </div>
+                <div class="pyg-highlights-list" id="pygHighlightsList"></div>
+            </div>
+
             <div class="pyg-charts" id="pygCharts">
                 <div class="pyg-chart-card">
                     <div class="pyg-chart-head">
@@ -170,6 +190,7 @@
                 </table>
             </div>
         </div>
+        <p class="lt-help" id="pygNotaSinAnterior" style="display:none;"></p>
 
         <div class="pyg-insights-card">
             <div class="pyg-insights-head">
@@ -253,12 +274,17 @@
             colMargen: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColMargen))',
             colMesGrupoFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColMesGrupoFmt))',
             colAcumGrupoFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColAcumGrupoFmt))',
+            colVarYoy: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColVarYoY))',
+            colVarYoyTooltip: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColVarYoYTooltip))',
             kpiMargenBruto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_KpiMargenBruto))',
             kpiEbitda: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_KpiEbitda))',
             kpiMargenNeto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_KpiMargenNeto))',
             kpiPeriodoMes: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_KpiPeriodoMes))',
             kpiPeriodoAcum: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_KpiPeriodoAcum))',
             kpiVsPresupuesto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_KpiVsPresupuesto))',
+            kpiVsAnioAnterior: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_KpiVsAnioAnterior))',
+            cascadaPresupuestoNeta: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_LeyendaMetaPresupuesto))',
+            sinAnioAnteriorNota: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_SinAnioAnteriorNota))',
             insightsMetaFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_InsightsMetaFmt))',
             insightsSinGenerar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_InsightsSinGenerar))',
             pdfFooter: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_PdfFooter))',
@@ -293,6 +319,14 @@
         MargenBruto: _pyg.textos.kpiMargenBruto,
         Ebitda: _pyg.textos.kpiEbitda,
         MargenNeto: _pyg.textos.kpiMargenNeto
+    };
+    // Códigos fijos que arma InformePYGService.ArmarCascada — la vista traduce, el servicio no (no lee resx).
+    _pyg.cascadaNombres = {
+        Ingresos: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_CascadaLblIngresos))',
+        CostoVentas: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_CascadaLblCostoVentas))',
+        GastosOperacionales: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_CascadaLblGastosOperacionales))',
+        OtrosEImpuestos: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_CascadaLblOtrosImpuestos))',
+        UtilidadNeta: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_CascadaLblUtilidadNeta))'
     };
     _pyg.mesesCache = _pyg.mesesNombres.map(function (nombre, idx) {
         return { mes: idx + 1, nombre: nombre, abrev: nombre.substring(0, 3) };
@@ -570,6 +604,13 @@
         pintarKpis(reporte.Kpis || []);
         pintarCharts(reporte);
         pintarTabla(reporte, periodo, anio, mesHasta);
+        pintarDestacados(reporte);
+
+        if (reporte.HayAnioAnterior) {
+            $('#pygNotaSinAnterior').hide();
+        } else {
+            $('#pygNotaSinAnterior').text(_pyg.textos.sinAnioAnteriorNota.replace('{0}', anio - 1)).show();
+        }
 
         $('#pygEstadoInicial, #pygSinDatos').hide();
         $('#pygResultado').show();
@@ -584,6 +625,7 @@
         pintarKpis(_pyg.reporteActual.Kpis || []);
         pintarCharts(_pyg.reporteActual);
         pintarTabla(_pyg.reporteActual, periodo, anio, _pyg.reporteActual.MesHasta);
+        pintarDestacados(_pyg.reporteActual);
     }
 
     function pintarKpis(kpis) {
@@ -593,27 +635,37 @@
             var icono = _pyg.kpiIconos[k.Codigo] || 'fa-chart-pie';
             var deltaPeriodo = k.PeriodoRealPct - k.PeriodoPresupuestoPct;
             var deltaAcum = k.AcumRealPct - k.AcumPresupuestoPct;
+            var deltaYoYPeriodo = (k.PeriodoRealPctAnioAnterior === null || k.PeriodoRealPctAnioAnterior === undefined) ? null : (k.PeriodoRealPct - k.PeriodoRealPctAnioAnterior);
+            var deltaYoYAcum = (k.AcumRealPctAnioAnterior === null || k.AcumRealPctAnioAnterior === undefined) ? null : (k.AcumRealPct - k.AcumRealPctAnioAnterior);
 
             var $card = $('<div class="pyg-kpi-card">');
             $card.append($('<div class="pyg-kpi-head">')
                 .append($('<span class="pyg-kpi-ic">').append($('<i class="fas ' + icono + '">')))
                 .append($('<span class="pyg-kpi-nm">').text(nombre)));
-            $card.append(filaKpi(_pyg.textos.kpiPeriodoMes, k.PeriodoRealPct, deltaPeriodo));
-            $card.append(filaKpi(_pyg.textos.kpiPeriodoAcum, k.AcumRealPct, deltaAcum));
+            $card.append(filaKpi(_pyg.textos.kpiPeriodoMes, k.PeriodoRealPct, deltaPeriodo, deltaYoYPeriodo));
+            $card.append(filaKpi(_pyg.textos.kpiPeriodoAcum, k.AcumRealPct, deltaAcum, deltaYoYAcum));
             $s.append($card);
         });
     }
 
-    function filaKpi(etiquetaPeriodo, valorPct, delta) {
+    function deltaChip(delta, etiquetaRef) {
         var cls = delta >= 0 ? 'up' : 'down';
         var icon = delta >= 0 ? 'fa-caret-up' : 'fa-caret-down';
+        return $('<span class="pyg-kpi-delta ' + cls + '">')
+            .append($('<i class="fas ' + icon + '">'))
+            .append(document.createTextNode(' ' + fmtPuntos(delta) + ' pp '))
+            .append($('<span class="ref">').text(etiquetaRef));
+    }
+
+    function filaKpi(etiquetaPeriodo, valorPct, deltaPpto, deltaYoY) {
+        var $deltas = $('<span class="pyg-kpi-deltas">').append(deltaChip(deltaPpto, _pyg.textos.kpiVsPresupuesto));
+        if (deltaYoY !== null && deltaYoY !== undefined) {
+            $deltas.append(deltaChip(deltaYoY, _pyg.textos.kpiVsAnioAnterior));
+        }
         return $('<div class="pyg-kpi-row">')
             .append($('<span class="pyg-kpi-per">').text(etiquetaPeriodo))
             .append($('<span class="pyg-kpi-val">').text(fmtPct(valorPct)))
-            .append($('<span class="pyg-kpi-delta ' + cls + '">')
-                .append($('<i class="fas ' + icon + '">'))
-                .append(document.createTextNode(' ' + fmtPuntos(delta) + ' pp '))
-                .append($('<span class="ref">').text(_pyg.textos.kpiVsPresupuesto)));
+            .append($deltas);
     }
 
     function destruirCharts() {
@@ -623,9 +675,83 @@
 
     function pintarCharts(reporte) {
         destruirCharts();
+        pintarCascada(reporte);
         pintarUnChart('pygChartIngresos', reporte.TendenciaIngresos || []);
         pintarUnChart('pygChartEbitda', reporte.TendenciaEbitda || []);
         pintarUnChart('pygChartUtilidadNeta', reporte.TendenciaUtilidadNeta || []);
+    }
+
+    // Waterfall Ingresos -> Utilidad Neta (Real) del período seleccionado. Cada tramo intermedio ya
+    // viene calculado por el servicio como la diferencia exacta entre dos subtotales consecutivos del
+    // modelo, así que las barras SIEMPRE cuadran con Ingresos-Utilidad Neta reales (ver ArmarCascada).
+    function pintarCascada(reporte) {
+        var barras = reporte.CascadaPeriodo || [];
+        if (!barras.length) return;
+        var ctx = document.getElementById('pygChartCascada').getContext('2d');
+        var etiquetas = barras.map(function (b) { return _pyg.cascadaNombres[b.Etiqueta] || b.Etiqueta; });
+        var datos = barras.map(function (b) { return [escalarValor(b.Desde), escalarValor(b.Hasta)]; });
+        var colores = barras.map(function (b) {
+            if (b.Tipo === 'total') return '#6366F1';
+            return b.Tipo === 'positivo' ? '#16A34A' : '#DC2626';
+        });
+        var presupuestoNeta = escalarValor(reporte.CascadaPresupuestoUtilidadNeta || 0);
+
+        _pyg.charts['pygChartCascada'] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: etiquetas,
+                datasets: [
+                    { label: _pyg.textos.colReal, data: datos, backgroundColor: colores, borderRadius: 4, barPercentage: 0.55, maxBarThickness: 70 },
+                    {
+                        type: 'line', label: _pyg.textos.cascadaPresupuestoNeta,
+                        data: etiquetas.map(function () { return presupuestoNeta; }),
+                        borderColor: '#D97706', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function (c) {
+                                if (c.dataset.type === 'line') return c.dataset.label + ': ' + fmtNum(reporte.CascadaPresupuestoUtilidadNeta || 0);
+                                var b = barras[c.dataIndex];
+                                return b.Tipo === 'total' ? (_pyg.textos.colReal + ': ' + fmtNum(b.Hasta)) : (etiquetas[c.dataIndex] + ': ' + fmtNumVar(b.Delta));
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: { display: false },
+                    x: { grid: { display: false }, ticks: { font: { size: 10.5, weight: '700' }, color: '#8B85A0' } }
+                }
+            }
+        });
+    }
+
+    // Top movimientos del período por impacto absoluto en pesos (materialidad), no por variación % —
+    // una línea pequeña con un swing % enorme no debería dominar el resumen ejecutivo.
+    function pintarDestacados(reporte) {
+        var candidatas = (reporte.Filas || []).filter(function (f) {
+            return !f.EsSubtotal && f.PeriodoVariacionAbsoluta !== 0 &&
+                f.PeriodoVariacionPorcentual !== null && f.PeriodoVariacionPorcentual !== undefined;
+        });
+        candidatas.sort(function (a, b) { return Math.abs(b.PeriodoVariacionAbsoluta) - Math.abs(a.PeriodoVariacionAbsoluta); });
+        var top = candidatas.slice(0, 4);
+        var $list = $('#pygHighlightsList').empty();
+        if (!top.length) { $('#pygHighlights').hide(); return; }
+        top.forEach(function (f) {
+            var cls = claseVariacion(f.EsGastoOCosto, f.PeriodoVariacionAbsoluta, false);
+            var favorable = cls.indexOf('pyg-v-good') >= 0;
+            $list.append($('<div class="pyg-highlight-item">')
+                .append($('<span class="pyg-highlight-nm">').text(f.Descripcion))
+                .append($('<span class="pyg-highlight-val ' + (favorable ? 'up' : 'down') + '">')
+                    .append($('<i class="fas ' + (favorable ? 'fa-caret-up' : 'fa-caret-down') + '">'))
+                    .append(document.createTextNode(' ' + fmtNumVar(f.PeriodoVariacionAbsoluta) + ' (' + fmtPctVar(f.PeriodoVariacionPorcentual) + ')'))));
+        });
+        $('#pygHighlights').show();
     }
 
     function pintarUnChart(canvasId, puntos) {
@@ -658,6 +784,27 @@
         });
     }
 
+    // Umbral a partir del cual una variación % se marca como "crítica" (negrita + ícono) para que el
+    // ojo vaya directo a lo que más importa, sin perder el detalle de las demás líneas.
+    var PYG_UMBRAL_CRITICO = 0.15;
+
+    // En líneas de costo/gasto/impuesto (valores en magnitud positiva) gastar/crecer más de lo
+    // comparado es DESFAVORABLE aunque el número sea positivo — se invierte el color. esPorcentaje
+    // controla si aplica el resaltado de "crítico" (solo tiene sentido sobre valores %, no sobre $).
+    function claseVariacion(esGastoOCosto, valor, esPorcentaje) {
+        if (valor === null || valor === undefined) return '';
+        var favorable = esGastoOCosto ? valor <= 0 : valor >= 0;
+        var cls = favorable ? 'pyg-v-good' : 'pyg-v-bad';
+        if (esPorcentaje && Math.abs(valor) >= PYG_UMBRAL_CRITICO) cls += ' pyg-v-critical';
+        return cls;
+    }
+
+    function celdaVariacion(valor, esGastoOCosto, formateador, esPorcentaje, claseExtra) {
+        var cls = claseVariacion(esGastoOCosto, valor, esPorcentaje);
+        var icono = cls.indexOf('pyg-v-critical') >= 0 ? '<i class="fas fa-circle-exclamation pyg-v-crit-ic"></i>' : '';
+        return '<td class="pyg-num ' + cls + (claseExtra ? ' ' + claseExtra : '') + '">' + icono + formateador(valor) + '</td>';
+    }
+
     function pintarTabla(reporte, periodo, anio, mesHasta) {
         var nombreMesHasta = _pyg.mesesCache[mesHasta - 1] ? _pyg.mesesCache[mesHasta - 1].nombre : '';
         var tituloPeriodo = _pyg.textos.colMesGrupoFmt.replace('{0}', periodo);
@@ -665,38 +812,36 @@
 
         var head = '<tr>' +
             '<th rowspan="2" style="vertical-align:bottom;">' + _pyg.textos.colEstructura + '</th>' +
-            '<th colspan="5" class="pyg-th-grupo">' + tituloPeriodo + '</th>' +
-            '<th colspan="5" class="pyg-th-grupo pyg-col-sep">' + tituloAcum + '</th>' +
+            '<th colspan="6" class="pyg-th-grupo">' + tituloPeriodo + '</th>' +
+            '<th colspan="6" class="pyg-th-grupo pyg-col-sep">' + tituloAcum + '</th>' +
             '</tr><tr>' +
             '<th>' + _pyg.textos.colReal + '</th><th>' + _pyg.textos.colPresupuesto + '</th>' +
             '<th>' + _pyg.textos.colVarAbs + '</th><th>' + _pyg.textos.colVarPct + '</th><th>' + _pyg.textos.colMargen + '</th>' +
+            '<th title="' + _pyg.textos.colVarYoyTooltip + '">' + _pyg.textos.colVarYoy + '</th>' +
             '<th class="pyg-col-sep">' + _pyg.textos.colReal + '</th><th>' + _pyg.textos.colPresupuesto + '</th>' +
             '<th>' + _pyg.textos.colVarAbs + '</th><th>' + _pyg.textos.colVarPct + '</th><th>' + _pyg.textos.colMargen + '</th>' +
+            '<th title="' + _pyg.textos.colVarYoyTooltip + '">' + _pyg.textos.colVarYoy + '</th>' +
             '</tr>';
         $('#pygTablaHead').html(head);
 
         var body = '';
         (reporte.Filas || []).forEach(function (f) {
             var claseFila = f.EsSubtotal ? ' class="pyg-row-subtotal"' : '';
-            // En líneas de costo/gasto/impuesto (valores en magnitud positiva), gastar más de lo
-            // presupuestado es DESFAVORABLE aunque la variación sea positiva — se invierte el color.
-            var favorablePeriodo = f.EsGastoOCosto ? f.PeriodoVariacionAbsoluta <= 0 : f.PeriodoVariacionAbsoluta >= 0;
-            var favorableAcum = f.EsGastoOCosto ? f.AcumVariacionAbsoluta <= 0 : f.AcumVariacionAbsoluta >= 0;
-            var claseVarPeriodo = favorablePeriodo ? 'pyg-v-good' : 'pyg-v-bad';
-            var claseVarAcum = favorableAcum ? 'pyg-v-good' : 'pyg-v-bad';
 
             body += '<tr' + claseFila + '>' +
                 '<td class="pyg-lbl">' + $('<span>').text(f.Descripcion).html() + '</td>' +
                 '<td class="pyg-num">' + fmtNum(f.PeriodoReal) + '</td>' +
                 '<td class="pyg-num">' + fmtNum(f.PeriodoPresupuesto) + '</td>' +
-                '<td class="pyg-num ' + claseVarPeriodo + '">' + fmtNumVar(f.PeriodoVariacionAbsoluta) + '</td>' +
-                '<td class="pyg-num ' + claseVarPeriodo + '">' + fmtPctVar(f.PeriodoVariacionPorcentual) + '</td>' +
+                celdaVariacion(f.PeriodoVariacionAbsoluta, f.EsGastoOCosto, fmtNumVar, false) +
+                celdaVariacion(f.PeriodoVariacionPorcentual, f.EsGastoOCosto, fmtPctVar, true) +
                 '<td class="pyg-num">' + fmtPct(f.PeriodoMargen) + '</td>' +
+                celdaVariacion(f.PeriodoVariacionYoYPorcentual, f.EsGastoOCosto, fmtPctVar, true) +
                 '<td class="pyg-num pyg-col-sep">' + fmtNum(f.AcumReal) + '</td>' +
                 '<td class="pyg-num">' + fmtNum(f.AcumPresupuesto) + '</td>' +
-                '<td class="pyg-num ' + claseVarAcum + '">' + fmtNumVar(f.AcumVariacionAbsoluta) + '</td>' +
-                '<td class="pyg-num ' + claseVarAcum + '">' + fmtPctVar(f.AcumVariacionPorcentual) + '</td>' +
+                celdaVariacion(f.AcumVariacionAbsoluta, f.EsGastoOCosto, fmtNumVar, false) +
+                celdaVariacion(f.AcumVariacionPorcentual, f.EsGastoOCosto, fmtPctVar, true) +
                 '<td class="pyg-num">' + fmtPct(f.AcumMargen) + '</td>' +
+                celdaVariacion(f.AcumVariacionYoYPorcentual, f.EsGastoOCosto, fmtPctVar, true) +
                 '</tr>';
         });
         $('#pygTablaBody').html(body);
@@ -813,6 +958,16 @@
             });
             y += 24;
 
+            // Cascada (waterfall) Ingresos -> Utilidad Neta — imagen nativa de Chart.js, ancho completo
+            if (_pyg.charts['pygChartCascada']) {
+                var chartCascada = _pyg.charts['pygChartCascada'];
+                var imgDataC = chartCascada.toBase64Image('image/png', 1.0);
+                var imgWC = pageW - margin * 2;
+                var imgHC = imgWC * chartCascada.height / chartCascada.width;
+                pdf.addImage(imgDataC, 'PNG', margin, y, imgWC, imgHC);
+                y += imgHC + 6;
+            }
+
             // Gráficas de tendencia — imagen nativa de Chart.js, sin html2canvas
             ['pygChartIngresos', 'pygChartEbitda', 'pygChartUtilidadNeta'].forEach(function (id) {
                 var chart = _pyg.charts[id];
@@ -828,11 +983,11 @@
             // Tabla financiera completa (Periodo + Acumulado)
             var headers = [
                 _pyg.textos.colEstructura,
-                _pyg.textos.colReal, _pyg.textos.colPresupuesto, _pyg.textos.colVarAbs, _pyg.textos.colVarPct, _pyg.textos.colMargen,
-                _pyg.textos.colReal, _pyg.textos.colPresupuesto, _pyg.textos.colVarAbs, _pyg.textos.colVarPct, _pyg.textos.colMargen
+                _pyg.textos.colReal, _pyg.textos.colPresupuesto, _pyg.textos.colVarAbs, _pyg.textos.colVarPct, _pyg.textos.colMargen, _pyg.textos.colVarYoy,
+                _pyg.textos.colReal, _pyg.textos.colPresupuesto, _pyg.textos.colVarAbs, _pyg.textos.colVarPct, _pyg.textos.colMargen, _pyg.textos.colVarYoy
             ];
-            var anchoLabel = 62;
-            var colW = (pageW - margin * 2 - anchoLabel) / 10;
+            var anchoLabel = 54;
+            var colW = (pageW - margin * 2 - anchoLabel) / 12;
             var rowH = 6.5;
 
             var cabeceraTabla = function () {
@@ -860,9 +1015,9 @@
                 if (y + rowH > pageH - margin - 8) { nuevaPagina(); cabeceraTabla(); }
                 var valores = [
                     fmtNum(f.PeriodoReal), fmtNum(f.PeriodoPresupuesto),
-                    fmtNumVar(f.PeriodoVariacionAbsoluta), fmtPctVar(f.PeriodoVariacionPorcentual), fmtPct(f.PeriodoMargen),
+                    fmtNumVar(f.PeriodoVariacionAbsoluta), fmtPctVar(f.PeriodoVariacionPorcentual), fmtPct(f.PeriodoMargen), fmtPctVar(f.PeriodoVariacionYoYPorcentual),
                     fmtNum(f.AcumReal), fmtNum(f.AcumPresupuesto),
-                    fmtNumVar(f.AcumVariacionAbsoluta), fmtPctVar(f.AcumVariacionPorcentual), fmtPct(f.AcumMargen)
+                    fmtNumVar(f.AcumVariacionAbsoluta), fmtPctVar(f.AcumVariacionPorcentual), fmtPct(f.AcumMargen), fmtPctVar(f.AcumVariacionYoYPorcentual)
                 ];
                 if (f.EsSubtotal) { pdf.setFont(undefined, 'bold'); pdf.setFillColor(244, 243, 251); pdf.rect(margin, y, pageW - margin * 2, rowH, 'F'); }
                 var x = margin;

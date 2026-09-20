@@ -46,6 +46,29 @@ namespace bufinscustomers.Models
         public decimal AcumVariacionAbsoluta => AcumReal - AcumPresupuesto;
         public decimal? AcumVariacionPorcentual { get; set; }
         public decimal? AcumMargen { get; set; }
+
+        /// <summary>Comparación interanual (año contra año) — null cuando el año anterior no tiene datos
+        /// cargados para esta empresa/escenario, o cuando el valor base del año anterior es cero.</summary>
+        public decimal? PeriodoRealAnioAnterior { get; set; }
+        public decimal? PeriodoVariacionYoYPorcentual { get; set; }
+        public decimal? AcumRealAnioAnterior { get; set; }
+        public decimal? AcumVariacionYoYPorcentual { get; set; }
+    }
+
+    /// <summary>Un tramo de la cascada (waterfall) Ingresos → Utilidad Neta del período seleccionado
+    /// (valores Real). "Etiqueta" es un código fijo (no texto traducido — la vista lo traduce, mismo
+    /// patrón que PygKpiMargen.Codigo) de la lista: Ingresos, CostoVentas, GastosOperacionales,
+    /// OtrosEImpuestos, UtilidadNeta.</summary>
+    public class PygCascadaBarra
+    {
+        public string Etiqueta { get; set; }
+        /// <summary>"total" (barra de piso, Ingresos/Utilidad Neta) | "positivo" | "negativo".</summary>
+        public string Tipo { get; set; }
+        public decimal Desde { get; set; }
+        public decimal Hasta { get; set; }
+        /// <summary>Solo para tramos intermedios (Tipo positivo/negativo): Hasta - Desde con signo real
+        /// (antes de tomar Math.Min/Max para las coordenadas de la barra flotante).</summary>
+        public decimal? Delta { get; set; }
     }
 
     /// <summary>Un punto de la serie de tendencia (Ingresos/EBITDA/Utilidad Neta, Real vs Presupuesto).</summary>
@@ -66,6 +89,10 @@ namespace bufinscustomers.Models
         public decimal PeriodoPresupuestoPct { get; set; }
         public decimal AcumRealPct { get; set; }
         public decimal AcumPresupuestoPct { get; set; }
+
+        /// <summary>Margen del mismo período del año anterior — null si ese año no tiene datos.</summary>
+        public decimal? PeriodoRealPctAnioAnterior { get; set; }
+        public decimal? AcumRealPctAnioAnterior { get; set; }
     }
 
     /// <summary>Resultado completo consumido por el controlador/vista del Estado de Resultados PYG.</summary>
@@ -83,6 +110,17 @@ namespace bufinscustomers.Models
         public List<PygPuntoTendencia> TendenciaIngresos { get; set; } = new List<PygPuntoTendencia>();
         public List<PygPuntoTendencia> TendenciaEbitda { get; set; } = new List<PygPuntoTendencia>();
         public List<PygPuntoTendencia> TendenciaUtilidadNeta { get; set; } = new List<PygPuntoTendencia>();
+
+        /// <summary>Cascada Ingresos → Utilidad Neta (Real) del período seleccionado — ver PygCascadaBarra.</summary>
+        public List<PygCascadaBarra> CascadaPeriodo { get; set; } = new List<PygCascadaBarra>();
+        /// <summary>Utilidad Neta presupuestada del mismo período, para la línea de referencia del waterfall.</summary>
+        public decimal CascadaPresupuestoUtilidadNeta { get; set; }
+
+        /// <summary>true si el año anterior (Año-1) tiene datos cargados para esta empresa/escenario —
+        /// controla si la comparación interanual (YoY) se puede mostrar.</summary>
+        public bool HayAnioAnterior { get; set; }
+        public int AnioAnterior { get; set; }
+
         public bool SinDatos { get; set; }
         public string Mensaje { get; set; }
         // EXTENSIÓN FUTURA: agregar aquí un List<PygLineaNegocioDesglose> alimentado por

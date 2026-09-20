@@ -249,6 +249,36 @@ tendencia (Chart.js) y una sección de insights generados por IA.
   en `PygReporteViewModel`).
 - **Pendiente manual**: crear la opción de menú `INFORMES_PYG_GERENCIAL` vía `/MenuOpciones` (Super
   Admin) para que aparezca en el sidebar — no requiere script SQL.
+- **FASE 2 (mejoras gerenciales, generic para cualquier empresa)**:
+  - **Comparación interanual (YoY)**: `ConstruirReporte` trae también `ObtenerFilas(..., año - 1)` con el
+    mismo rango de meses y agrega `PeriodoVariacionYoYPorcentual`/`AcumVariacionYoYPorcentual` a cada
+    `PygFilaReporte` (columna extra "Var. A/A" en tabla/Excel/PDF) y `PeriodoRealPctAnioAnterior`/
+    `AcumRealPctAnioAnterior` a cada `PygKpiMargen` (segundo chip "vs. año ant." en las tarjetas KPI,
+    junto al ya existente "vs. Ppto."). Si el año-1 no tiene datos cargados (empresa nueva), todos los
+    campos *AnioAnterior/YoY quedan `null` (se muestran como "—") y `PygReporteViewModel.HayAnioAnterior`
+    queda en `false` — la vista pinta una nota (`PYG_SinAnioAnteriorNota`) en vez de romper el reporte.
+  - **Cascada (waterfall) Ingresos → Utilidad Neta**: `InformePYGService.ArmarCascada` arma 5 barras
+    (`PygCascadaBarra`, expuestas en `PygReporteViewModel.CascadaPeriodo`) usando los 4 subtotales que
+    YA calcula `sp_ModeloPYG` (Ingresos/Utilidad bruta/Utilidad operacional/Utilidad neta) como puntos de
+    apoyo — cada tramo intermedio es la diferencia exacta entre dos subtotales consecutivos, así que la
+    suma de los tramos SIEMPRE cuadra con Ingresos-Utilidad Neta reales sin depender de reconstruir el
+    detalle línea a línea (ni de asumir qué cuentas puntuales componen cada bloque — por eso es genérico
+    para cualquier empresa). `Etiqueta` es un código fijo (`Ingresos`/`CostoVentas`/
+    `GastosOperacionales`/`OtrosEImpuestos`/`UtilidadNeta`, mismo patrón que `PygKpiMargen.Codigo` — el
+    servicio no traduce, la vista sí vía `_pyg.cascadaNombres`). Se dibuja con Chart.js v4 nativo (barras
+    flotantes `data:[desde,hasta]` + línea punteada de referencia con la Utilidad Neta presupuestada),
+    sin librería adicional. Incluida también como imagen en el PDF (ancho completo, antes de las 3
+    mini-tendencias).
+  - **Destacados del período** (`pintarDestacados` en la vista, sin cambio de backend): top 4 líneas NO
+    subtotal rankeadas por **impacto absoluto en pesos** de `PeriodoVariacionAbsoluta` (no por
+    variación %, a propósito — una línea pequeña con un swing % enorme no debe dominar el resumen
+    ejecutivo; regla estándar de materialidad).
+  - **Resaltado de variaciones críticas**: `claseVariacion()`/`celdaVariacion()` en la vista marcan en
+    negrita + ícono cualquier celda de variación **%** (Var. % o Var. A/A, periodo o acumulado) cuyo
+    valor absoluto supere `PYG_UMBRAL_CRITICO = 0.15` (15%) — constante de solo-JS, sin exponerse en el
+    backend. No aplica a columnas en pesos (Var. $), solo a porcentuales.
+  - Encabezado renombrado de "Estado de Resultados — PYG Gerencial" a **"Informe de estado de resultados
+    (PYG)"** (`PYG_PageTitle`) — mismo contenido, título más corto y genérico.
 
 ### Excel Import Logging
 
