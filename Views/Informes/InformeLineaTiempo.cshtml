@@ -452,6 +452,9 @@
             indElegir:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_IndElegir))',
             indSeleccionadas: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_IndSeleccionadas))',
             indMax:           '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_IndMax))',
+            maxAbrev:         '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_MaxAbrev))',
+            ocultarSerie:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_OcultarSerie))',
+            mostrarSerie:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_MostrarSerie))',
             agruparAyuda: {
                 Mes:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_Agrupar_MesAyuda))',
                 Trimestre: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_Agrupar_TrimestreAyuda))',
@@ -461,6 +464,7 @@
         cultura: '@Html.Raw(HttpUtility.JavaScriptStringEncode(culturaJs))',
         esAdmin: @Html.Raw(esAdmin.ToString().ToLowerInvariant()),
         campoUnico: null,
+        campoUnicoTexto: null, // nombre amigable del Campo cuando el selector #ltCampoWrap está oculto (una sola opción)
         agrupar: 'Mes',
         unidad: 'pesos',
         tipoGrafico: 'line',
@@ -475,7 +479,8 @@
         favoritos: [],    // [{nombre, items:[...]}] combinaciones guardadas — vacío por ahora (ver IMPLEMENTACION.md, sección 5)
         escala: 'real',   // 'real' | 'panel' — ver "Resultados: cabecera consolidada (opción 3a)"
         ocultas: {},      // { 'Ingresos': true } — series ocultadas desde la tira de series
-        panelCharts: []   // instancias Chart.js de la vista "Paneles" (una por serie visible)
+        panelCharts: [],  // instancias Chart.js de la vista "Paneles" (una por serie visible)
+        panelMeta: []     // [{nombre, max}] paralelo a panelCharts — usado por PDF/copiar imagen
     };
 
     var elEmpresa = $('#ltEmpresa'), elTabla = $('#ltTabla'),
@@ -608,15 +613,19 @@
         $('#ltExportMenu button').on('click', function () { $('#ltExportMenu').removeClass('open'); });
 
         $('#btnCopiarImagen').on('click', function () {
-            var cv = document.getElementById('ltChart');
-            if (!cv || !cv.toBlob || !navigator.clipboard || !window.ClipboardItem) return;
+            if (!navigator.clipboard || !window.ClipboardItem) return;
+            var cv = (_lt.escala === 'panel' && _lt.panelCharts.length)
+                ? ltComponerCanvasPaneles()
+                : document.getElementById('ltChart');
+            if (!cv || !cv.toBlob) return;
             cv.toBlob(function (b) { navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]); });
         });
 
         $('#ltSeriesStrip').on('click', '.lt-serie-cell', function () {
             var ind = $(this).data('ind');
             _lt.ocultas[ind] = !_lt.ocultas[ind];
-            $(this).toggleClass('off', !!_lt.ocultas[ind]);
+            var off = !!_lt.ocultas[ind];
+            $(this).toggleClass('off', off).attr('title', off ? _lt.textos.mostrarSerie : _lt.textos.ocultarSerie);
             ltAplicarVisibilidad();
         });
 
@@ -729,11 +738,14 @@
         series.forEach(function (s, i) {
             var uv = ultimoYVariacion(s.puntos);
             var off = !!_lt.ocultas[s.indicador];
-            var $c = $('<button type="button" class="lt-serie-cell">').toggleClass('off', off).attr('data-ind', s.indicador);
+            var $c = $('<button type="button" class="lt-serie-cell">').toggleClass('off', off).attr('data-ind', s.indicador)
+                .attr('title', off ? _lt.textos.mostrarSerie : _lt.textos.ocultarSerie);
             $c.append($('<span class="top">')
                 .append($('<span class="dot">').css('background', ltColorSerie(i)))
                 .append($('<span class="nm">').text(s.indicador))
-                .append('<span class="eye"><i class="fas fa-eye-slash"></i></span>'));
+                .append($('<span class="eye">')
+                    .append($('<i class="fas fa-eye eye-on">').attr('title', _lt.textos.ocultarSerie))
+                    .append($('<i class="fas fa-eye-slash eye-off">').attr('title', _lt.textos.mostrarSerie))));
             $c.append($('<span class="val">').text(fmtCompacto(uv.ultimo)));
             if (uv.variacion !== null) {
                 var cls = uv.variacion >= 0 ? 'up' : 'down', flecha = uv.variacion >= 0 ? CH_UP : CH_DOWN;
@@ -760,21 +772,19 @@
         if (_lt.chart) _lt.chart.update();
     }
 
-    // Conmutador de escala: solo aparece cuando la serie más grande supera 20x a la más chica
-    // (con esa diferencia, en un solo eje las series pequeñas quedan pegadas al cero).
+    // Conmutador de escala: visible siempre que haya más de una variable, sin importar qué tan
+    // parecidas sean sus magnitudes (antes solo aparecía si la más grande superaba 20x a la más chica).
     function ltEvaluarEscala(resp) {
-        var maxs = (resp.series || []).map(function (s) {
-            return Math.max.apply(null, s.puntos.map(function (p) { return Math.abs(p.valor) || 0; }));
-        }).filter(function (v) { return v > 0; });
-        var dispar = maxs.length > 1 && (Math.max.apply(null, maxs) / Math.min.apply(null, maxs)) > 20;
-        $('#ltScaleBar').toggle(dispar);
-        $('#ltScaleHint').toggle(dispar).text(_lt.escala === 'panel' ? _lt.textos.hintPaneles : _lt.textos.hintReal);
-        if (!dispar && _lt.escala === 'panel') { _lt.escala = 'real'; $('#ltScaleSeg button').removeClass('active'); $('#ltScaleSeg button[data-scale="real"]').addClass('active'); }
+        var masDeUnaVariable = (resp.series || []).length > 1;
+        $('#ltScaleBar').toggle(masDeUnaVariable);
+        $('#ltScaleHint').toggle(masDeUnaVariable).text(_lt.escala === 'panel' ? _lt.textos.hintPaneles : _lt.textos.hintReal);
+        if (!masDeUnaVariable && _lt.escala === 'panel') { _lt.escala = 'real'; $('#ltScaleSeg button').removeClass('active'); $('#ltScaleSeg button[data-scale="real"]').addClass('active'); }
     }
 
     function destruirPaneles() {
         _lt.panelCharts.forEach(function (c) { c.destroy(); });
         _lt.panelCharts = [];
+        _lt.panelMeta = [];
         $('#ltPanels').empty();
     }
 
@@ -791,11 +801,12 @@
             var $row = $('<div class="lt-panel">')
                 .append($('<div class="meta">')
                     .append($('<span class="nm">').text(s.indicador))
-                    .append($('<span class="mx">').text('máx ' + fmtCompacto(max))))
+                    .append($('<span class="mx">').text(_lt.textos.maxAbrev + ' ' + fmtCompacto(max))))
                 .append($('<div class="cv">').append('<canvas></canvas>'));
             $('#ltPanels').append($row);
             var ctx = $row.find('canvas')[0].getContext('2d');
             var esUltimo = visibles.indexOf(s) === visibles.length - 1;
+            _lt.panelMeta.push({ nombre: s.indicador, max: max });
             _lt.panelCharts.push(new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -822,6 +833,58 @@
                 }
             }));
         });
+    }
+
+    // Imagen del gráfico activo para "Copiar imagen"/PDF, respetando la escala elegida (real o
+    // paneles) en vez de asumir siempre el gráfico real. En 'panel' devuelve una imagen por serie
+    // (cada canvas ya trae su propia escala); en 'real' devuelve la única imagen de siempre.
+    function ltCapturarImagenGrafico() {
+        if (_lt.escala === 'panel' && _lt.panelCharts.length) {
+            return {
+                tipo: 'panel',
+                paneles: _lt.panelCharts.map(function (c, i) {
+                    return {
+                        nombre: _lt.panelMeta[i].nombre,
+                        max: _lt.panelMeta[i].max,
+                        dataUrl: c.toBase64Image('image/png', 1.0),
+                        width: c.width,
+                        height: c.height
+                    };
+                })
+            };
+        }
+        if (!_lt.chart) return null;
+        return { tipo: 'real', dataUrl: _lt.chart.toBase64Image('image/png', 1.0), width: _lt.chart.width, height: _lt.chart.height };
+    }
+
+    // Junta los canvases de la vista "Paneles" en uno solo (con su etiqueta y "máx" a la izquierda,
+    // igual que en pantalla) para que "Copiar imagen" pueda copiar un único PNG al portapapeles.
+    function ltComponerCanvasPaneles() {
+        if (!_lt.panelCharts.length) return null;
+        var dpr = window.devicePixelRatio || 1;
+        var metaW = Math.round(150 * dpr), gap = Math.round(10 * dpr);
+        var canvases = _lt.panelCharts.map(function (c) { return c.canvas; });
+        var chartW = Math.max.apply(null, canvases.map(function (c) { return c.width; }));
+        var totalH = canvases.reduce(function (acc, c) { return acc + c.height; }, 0) + gap * (canvases.length - 1);
+        var out = document.createElement('canvas');
+        out.width = metaW + gap + chartW;
+        out.height = totalH;
+        var ctx = out.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, out.width, out.height);
+        var y = 0;
+        canvases.forEach(function (c, i) {
+            var meta = _lt.panelMeta[i];
+            ctx.fillStyle = '#2d3748';
+            ctx.font = '700 ' + Math.round(12 * dpr) + 'px Arial, sans-serif';
+            ctx.fillText(meta.nombre, Math.round(14 * dpr), y + Math.round(20 * dpr));
+            ctx.fillStyle = '#b9b4c9';
+            ctx.font = '700 ' + Math.round(10.5 * dpr) + 'px Arial, sans-serif';
+            ctx.fillText(_lt.textos.maxAbrev + ' ' + fmtCompacto(meta.max), Math.round(14 * dpr), y + Math.round(36 * dpr));
+            ctx.drawImage(c, metaW + gap, y);
+            y += c.height + gap;
+        });
+        return out;
     }
 
     function empresaSeleccionada() {
@@ -895,6 +958,7 @@
                 $('#ltCampoWrap').show();
             } else {
                 _lt.campoUnico = campos.length === 1 ? campos[0].nombreTecnico : null;
+                _lt.campoUnicoTexto = campos.length === 1 ? campos[0].nombreAmigable : null;
                 $('#ltCampoWrap').hide();
             }
         });
@@ -1050,6 +1114,18 @@
 
     function campoSeleccionado() {
         return $('#ltCampoWrap').is(':visible') ? elCampo.val() : _lt.campoUnico;
+    }
+
+    // Nombre amigable del Campo activo (Valor, Valor Presupuesto, Valor Futuro, etc.) — usado como
+    // encabezado dinámico de la columna de valor en la tabla y en el PDF.
+    function campoSeleccionadoTexto() {
+        return $('#ltCampoWrap').is(':visible') ? elCampo.find(':selected').text() : (_lt.campoUnicoTexto || '');
+    }
+
+    // Encabezado de la columna de valor (tabla en pantalla y PDF): prioriza el nombre amigable del
+    // Campo elegido; si no hay ninguno (no debería pasar), cae al nombre del escenario o del indicador.
+    function ltEtiquetaColumnaValor(resp, indicadorUnico) {
+        return campoSeleccionadoTexto() || resp.nombreEscenarioPrincipal || indicadorUnico || _lt.textos.colValor;
     }
 
     function armarFiltros() {
@@ -1288,7 +1364,7 @@
 
         var head = '<th>' + _lt.textos.colPeriodo + '</th>';
         if (series.length === 1) {
-            head += '<th style="text-align:right;">' + $('<span>').text(resp.nombreEscenarioPrincipal || series[0].indicador || _lt.textos.colValor).html() + '</th>';
+            head += '<th style="text-align:right;">' + $('<span>').text(ltEtiquetaColumnaValor(resp, series[0].indicador)).html() + '</th>';
             if (conComparacion) head += '<th style="text-align:right;">' + $('<span>').text(resp.nombreEscenarioComparacion || _lt.textos.colComparacion).html() + '</th><th style="text-align:right;">' + _lt.textos.colVariacion + '</th>';
         } else {
             series.forEach(function (s, i) {
@@ -1458,27 +1534,50 @@
             y += Math.ceil(kpis.length / columnas) * 24;
 
             // Unidad en la que se exportaron las cifras (el toggle Pesos/Miles/Millones no queda
-            // capturado en la imagen del gráfico, así que se deja explícito como texto aparte)
+            // capturado en la imagen del gráfico, así que se deja explícito como texto aparte) +
+            // Campo consultado (Valor, Valor Presupuesto, Valor Futuro, etc.) — aplica a todas las
+            // series del PDF, así que se muestra una sola vez aquí en vez de repetirlo por columna.
             var unidadTexto = $('#ltUnidadLbl').text().trim();
+            var campoTextoPdf = campoSeleccionadoTexto();
             pdf.setFontSize(8.5);
             pdf.setTextColor(140, 135, 160);
-            pdf.text(_lt.textos.pdfUnidadPrefijo + ' ' + unidadTexto, margin, y);
+            pdf.text(_lt.textos.pdfUnidadPrefijo + ' ' + unidadTexto + (campoTextoPdf ? ('  ' + CH_MIDDOT + '  ' + campoTextoPdf) : ''), margin, y);
             pdf.setTextColor(30, 20, 50);
             y += 7;
 
-            // Gráfico (imagen nativa de Chart.js, sin html2canvas)
-            var imgData = _lt.chart.toBase64Image('image/png', 1.0);
-            var imgProps = pdf.getImageProperties(imgData);
-            var imgW = pageW - margin * 2;
-            var imgH = Math.min(imgW * imgProps.height / imgProps.width, 110);
-            pdf.addImage(imgData, 'PNG', margin, y, imgW, imgH);
-            y += imgH + 10;
+            // Gráfico (imagen nativa de Chart.js, sin html2canvas) — respeta la escala activa
+            // (real: una sola imagen; paneles: una imagen por serie, cada una con su etiqueta)
+            var imagenGrafico = ltCapturarImagenGrafico();
+            if (imagenGrafico && imagenGrafico.tipo === 'panel') {
+                imagenGrafico.paneles.forEach(function (p) {
+                    var imgWp = pageW - margin * 2;
+                    var imgHp = Math.min(imgWp * p.height / p.width, 55);
+                    if (y + 6 + imgHp > pageH - margin - 10) nuevaPagina();
+                    pdf.setFontSize(8.5);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.setTextColor(30, 20, 50);
+                    pdf.text(p.nombre, margin, y + 4);
+                    pdf.setFont(undefined, 'normal');
+                    pdf.setTextColor(140, 135, 160);
+                    pdf.text(_lt.textos.maxAbrev + ' ' + fmtCompacto(p.max), pageW - margin, y + 4, { align: 'right' });
+                    pdf.setTextColor(30, 20, 50);
+                    y += 7;
+                    pdf.addImage(p.dataUrl, 'PNG', margin, y, imgWp, imgHp);
+                    y += imgHp + 6;
+                });
+                y += 4;
+            } else if (imagenGrafico) {
+                var imgW = pageW - margin * 2;
+                var imgH = Math.min(imgW * imagenGrafico.height / imagenGrafico.width, 110);
+                pdf.addImage(imagenGrafico.dataUrl, 'PNG', margin, y, imgW, imgH);
+                y += imgH + 10;
+            }
 
             if (modo === 'datos') {
                 var conComparacionPdf = series.length === 1 && resp.comparacion && resp.comparacion.length > 0;
                 var headers = [_lt.textos.colPeriodo];
                 if (series.length === 1) {
-                    headers.push(resp.nombreEscenarioPrincipal || series[0].indicador || _lt.textos.colValor);
+                    headers.push(ltEtiquetaColumnaValor(resp, series[0].indicador));
                     if (conComparacionPdf) headers.push(resp.nombreEscenarioComparacion || _lt.textos.colComparacion, _lt.textos.colVariacion);
                 } else {
                     series.forEach(function (s) { headers.push(s.indicador); });

@@ -225,14 +225,23 @@
 .lt-serie-cell .top{display:flex;align-items:center;gap:6px;min-width:0}
 .lt-serie-cell .dot{width:8px;height:8px;border-radius:50%;flex:none}
 .lt-serie-cell .nm{font-size:11px;font-weight:700;color:#5B5570;text-transform:uppercase;letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lt-serie-cell .eye{margin-left:auto;font-size:9.5px;color:#c4bfd4;display:none}
+.lt-serie-cell .eye{margin-left:auto;font-size:13px;color:#583AFF;display:inline-flex;align-items:center;transition:color .15s}
+.lt-serie-cell .eye .eye-off{display:none}
+.lt-serie-cell:hover .eye{color:#3B2FBF}
 .lt-serie-cell .val{font-size:22px;font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:#16121F}
 .lt-serie-cell .delta{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700}
 .lt-serie-cell .delta.up{color:#16A34A}
 .lt-serie-cell .delta.down{color:#DC2626}
 .lt-serie-cell .delta .ref{font-weight:600;color:#a7a1b8}
-.lt-serie-cell.off{opacity:.42;background:#F4F3FB}
-.lt-serie-cell.off .eye{display:inline}
+/* Estado oculto: solo se atenúan el punto de color, el nombre, el valor y la variación —
+   el ojito se deja siempre a opacidad plena para que la acción de mostrar/ocultar sea clara */
+.lt-serie-cell.off{background:#F4F3FB}
+.lt-serie-cell.off .top .dot,
+.lt-serie-cell.off .top .nm,
+.lt-serie-cell.off .val,
+.lt-serie-cell.off .delta{opacity:.42}
+.lt-serie-cell.off .eye .eye-on{display:none}
+.lt-serie-cell.off .eye .eye-off{display:inline}
 
 /* Conmutador de escala */
 .lt-scale-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px;padding:9px 12px;background:#F4F3FB;border:1px solid #E0DDF0;border-radius:10px}
