@@ -134,7 +134,7 @@ Permissions are managed through the `MenuOpciones` table and `MenuOpcionesServic
 
 Known permission codes (BD codes, used in sidebar and controllers):
 - `DATOS_PLANTILLA_CARGUE`, `DATOS_MODELO_EJECUCION` (Datos)
-- `INFORMES_REPORTES_PBI`, `INFORMES_AUDITORIA_CARGUES`, `INFORMES_TABLAS_DATOS`, `INFORMES_RELACIONAMIENTOS`, `INFORMES_AUDITORIA_GENERAL` (Informes — `INFORMES_AUDITORIA_GENERAL` is SoloSuperAdmin, visor de la tabla `Auditoria`)
+- `INFORMES_REPORTES_PBI`, `INFORMES_AUDITORIA_CARGUES`, `INFORMES_TABLAS_DATOS`, `INFORMES_RELACIONAMIENTOS`, `INFORMES_AUDITORIA_GENERAL`, `INFORMES_PYG_GERENCIAL` (Informes — `INFORMES_AUDITORIA_GENERAL` is SoloSuperAdmin, visor de la tabla `Auditoria`; `INFORMES_PYG_GERENCIAL` → `InformePYGController`, no SoloSuperAdmin/SoloAdminEmpresa, aún pendiente de crear como fila en `MenuOpciones` vía `/MenuOpciones`)
 - `ADMIN_USUARIOS_GESTOR`, `ADMIN_EMPRESAS_GESTOR`, `ADMIN_REPORTES_GESTOR` (Administración)
 - `ADMIN_CONFIG_EMPRESAS`, `ADMIN_CONFIG_RELACIONAMIENTOS`, `ADMIN_CONFIG_MENU`, `ADMIN_CONFIG_PROMPTS`, `ADMIN_CONFIG_GRUPOS_EMPRESARIALES`, `ADMIN_CONFIG_ESCENARIOS` (Configuración - `ADMIN_CONFIG_MENU`, `ADMIN_CONFIG_PROMPTS`, `ADMIN_CONFIG_GRUPOS_EMPRESARIALES` and `ADMIN_CONFIG_ESCENARIOS` are SoloSuperAdmin)
 
@@ -168,6 +168,7 @@ Views are organized by **functional area**, not by controller name. Controllers 
 | InformeTablasDatosController | `~/Views/Informes/InformeTablasDatos.cshtml` |
 | AnalisisIAController | `~/Views/Informes/AnalisisIA.cshtml` |
 | InformeRelacionamientosController | `~/Views/Informes/InformeRelacionamientos.cshtml` |
+| InformePYGController | `~/Views/Informes/InformePYG.cshtml` |
 | AuditoriaCarguesController | `~/Views/Informes/AuditoriaCargues.cshtml` |
 | AuditoriaConsultasIAController | `~/Views/Informes/AuditoriaConsultasIA.cshtml` |
 | AuditoriaController | `~/Views/Informes/Auditoria.cshtml` |
@@ -199,6 +200,7 @@ When creating new controllers, use explicit view paths with `~/Views/{area}/{vie
 - **DatosController** - Excel data import/export (`[ValidarSesion]`). `CargarExcel` only stages+validates (see "Validación en dos pasos del cargue de Excel"); `ConfirmarCargue`/`DescartarCargue`/`RevisarCargue` complete the flow
 - **InformeTablasDatosController** - Data tables report with AI analysis via OpenAI (`[ValidarSesion]`). Endpoints: `InformeTablasDatos` (view), `ObtenerAnios`, `ObtenerVariables`, `ConsultarDatos`, `ConsultarConIA` (async), `ExportarExcel`
 - **InformeRelacionamientosController** - Relationships report (`[ValidarSesion]`)
+- **InformePYGController** - Estado de Resultados (PYG) gerencial: Real vs Presupuesto, mes + acumulado del año, KPIs, tendencia e insights de IA (`[ValidarSesion]`). Lee de `dbo.ModeloPYG` (+ `JOIN dbo.Rel_PYG` para el flag de subtotal) vía `InformePYGService` — no ejecuta `sp_ModeloPYG` en vivo. Endpoints: `Index` (view), `ObtenerAnios`, `ConsultarReporte`, `GenerarInsightsIA` (async, reutiliza el patrón de cupo/prompts/auditoría de `HomeController.ObtenerResumenIA` con el código `RESUMEN_PYG_GERENCIAL` en `GestorPrompts`), `ExportarExcel`. Ver "Estado de Resultados (PYG) Gerencial" más abajo
 - **ModeloController** - Financial model execution (Datos area, `[ValidarSesion]`)
 - **ModelosEjecucionController** - Model execution management/configuration (`[ValidarSesion]`)
 - **GestorEscenariosController** - CRUD for the `Escenarios` data-scenario catalog, Super Admin only (`[ValidarSesion][SoloSuperAdmin]`). `Eliminar`-equivalent (`Desactivar`) is always a soft-delete. See "Escenarios de datos"
@@ -208,6 +210,45 @@ When creating new controllers, use explicit view paths with `~/Views/{area}/{vie
 - **AuditoriaCarguesController** - Upload audit trail (no `[ValidarSesion]`, manual checks)
 - **InformeNavegacionController** - Página-visitas por usuario (`[ValidarSesion]`, gate `EsSuperAdmin() || EsAdminEmpresa()`). Endpoints: `Index`, `Detalle`, `ResumenUsuarios`, `ResumenPaginas`, `ExportarExcel`. Ver "Informe de navegación (páginas visitadas)"
 - **AuditoriaHubController** - Módulo unificado de auditoría, `Index` renderiza `~/Views/Informes/AuditoriaHub.cshtml`: una sola pantalla con pestañas **Cambios / Navegación / Cargues / IA**, cada una cargada en línea con `$.load()` (`?embed=1`, layout `_LayoutFragment`). `[ValidarSesion]` + gate `EsSuperAdmin() || EsAdminEmpresa()`. Ver "Módulo unificado de auditoría (hub)"
+
+### Estado de Resultados (PYG) Gerencial
+
+Primer informe de una serie de "informes gerenciales" listos para presentar a dirección (basado
+visualmente en `InformeLineaTiempo`: mismos `.lt-*` classes de `Assets/css/informe-linea-tiempo.css`
+para filtros/tarjetas, mismo patrón de PDF con jsPDF puro sin html2canvas). Muestra la estructura de
+P&G (Ingresos → Costo de Ventas → Utilidad Bruta → Gastos → EBITDA → Utilidad Neta) con **Real,
+Presupuesto, Variación $, Variación % y Margen %**, en dos bloques lado a lado — **mes seleccionado** y
+**acumulado del año** — más 3 tarjetas KPI (Margen Bruto/EBITDA/Margen Neto), 3 mini-gráficas de
+tendencia (Chart.js) y una sección de insights generados por IA.
+
+- **Fuente de datos**: `dbo.ModeloPYG` (tabla ya materializada, la misma que hoy navega
+  `InformeModelosController` de forma genérica) — **no** ejecuta `sp_ModeloPYG` en vivo.
+  `Services/InformePYGService.ObtenerFilas` hace `SELECT ... FROM dbo.ModeloPYG m LEFT JOIN
+  dbo.Rel_PYG r ON r.Id = m.Ord WHERE m.IdEmpresa=@e AND m.IdEscenario=@esc AND m.Año=@a` (sin filtro de
+  mes — trae el año completo de una vez y filtra/agrega en C#).
+- **`Mes` se guarda como abreviatura de 3 letras en español** (`'Ene'..'Dic'`), igual que las demás
+  tablas de Ejecución de Modelos (ver `InformeTablasDatosService.ConvertirNumeroAMes`) — el servicio
+  convierte a entero 1-12 al leer el `SqlDataReader` y **ordena en C#**, no en SQL (un `ORDER BY Mes`
+  alfabético sobre esas abreviaturas quedaría en orden incorrecto).
+- **Filas subtotal** (Utilidad Bruta, EBITDA, Utilidad Neta, etc.) se detectan vía
+  `dbo.Rel_PYG.Tipo = 'CALCULO'` (traído por el `LEFT JOIN`), no por si `CuentaPUC` viene vacío.
+- Las tarjetas KPI y las 3 series de tendencia buscan filas por **`Descripcion` literal**
+  (`"Ingresos"`, `"Utilidad Bruta"`, `"EBITDA"`, `"Utilidad Neta"` — constantes en
+  `InformePYGService`). ⚠️ Estos literales no están 100% confirmados contra `dbo.Rel_PYG` en vivo; si no
+  calzan exacto, la tabla completa se sigue mostrando bien (viene de `Ord`/`Descripcion` reales) — solo
+  las tarjetas KPI y las mini-gráficas de tendencia quedarían en cero hasta ajustar esas constantes.
+- Usa `ValorPresupuesto`/`ValorPresupuestoAcumulado` (no `ValorPresupuestoConAjuste`, que queda
+  disponible en `PygFilaModelo` para un futuro toggle "con ajuste").
+- **Insights IA**: nuevo código `RESUMEN_PYG_GERENCIAL` en `GestorPrompts` (crear vía `/GestorPrompts`,
+  aún no tiene una fila por defecto) — pide 2-3 bullets fijos "Logro del periodo:"/"Alerta de
+  costos:"/"Eficiencia de gastos:". Reutiliza el cupo diario (`Usuarios.LimiteConsultasIA`) y el
+  registro en `AuditoriaAnalisisIA` (`NombreTabla = "PYG Gerencial"`) del mismo patrón que
+  `HomeController.ObtenerResumenIA`.
+- **Fuera de alcance (a propósito) en esta primera versión**: desglose por Líneas de Negocio (quedaría
+  alimentado por `dbo.ModeloLineasNegocio`/`sp_ModeloLineasNegocio` — ver punto de extensión comentado
+  en `PygReporteViewModel`).
+- **Pendiente manual**: crear la opción de menú `INFORMES_PYG_GERENCIAL` vía `/MenuOpciones` (Super
+  Admin) para que aparezca en el sidebar — no requiere script SQL.
 
 ### Excel Import Logging
 

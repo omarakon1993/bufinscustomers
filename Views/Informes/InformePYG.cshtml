@@ -1,0 +1,948 @@
+@using System.Web
+@using bufinscustomers.Models
+@{
+    ViewBag.Title = Resources.Strings.PYG_PageTitle;
+    var empresas = ViewBag.Empresas as List<Empresas>;
+    var esAdmin = (bool)(ViewBag.EsAdmin ?? false);
+    var culturaJs = System.Globalization.CultureInfo.CurrentUICulture.Name;
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
+<link href="~/Assets/css/informe-pyg.css" rel="stylesheet" />
+<link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
+
+<div class="container-fluid px-4">
+<div class="lt-app">
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-chart-line powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.PYG_PageTitle</h1>
+        </div>
+    </div>
+
+    @Html.AntiForgeryToken()
+
+    <div class="filter-card">
+        <div class="lt-section-title"><span>@Resources.Strings.Common_FiltrosConsulta</span></div>
+        <div class="lt-grid-quever">
+            <div class="lt-field">
+                <label class="lt-field-label" for="pygEmpresa">@Resources.Strings.Common_LabelEmpresa</label>
+                <select id="pygEmpresa" class="lt-field-select">
+                    @if (esAdmin) { <option value="">@Resources.Strings.Common_Seleccione</option> }
+                    @if (empresas != null)
+                    {
+                        foreach (var e in empresas)
+                        {
+                            <option value="@e.Id">@e.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="lt-field">
+                <label class="lt-field-label" for="pygEscenario">@Resources.Strings.Common_LabelEscenario</label>
+                <select id="pygEscenario" class="lt-field-select">
+                    @if (ViewBag.Escenarios != null)
+                    {
+                        foreach (var esc in ViewBag.Escenarios)
+                        {
+                            <option value="@esc.Id">@esc.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="lt-field">
+                <label class="lt-field-label" for="pygAnio">@Resources.Strings.Common_LabelAnio</label>
+                <select id="pygAnio" class="lt-field-select" disabled>
+                    <option value="">@Resources.Strings.Common_Seleccione</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="lt-section-title mt"><span>@Resources.Strings.PYG_LabelPeriodo</span></div>
+        <div class="lt-rango-head-row">
+            <label class="lt-field-label">@Resources.Strings.LineaTiempo_LabelRango</label>
+            <div class="lt-atajos" id="pygAtajos">
+                <button type="button" class="lt-chip" data-preset="todo">@Resources.Strings.LineaTiempo_RangoTodo</button>
+                <button type="button" class="lt-chip" data-preset="6m">@Resources.Strings.LineaTiempo_RangoUltimos6Meses</button>
+                <button type="button" class="lt-chip" data-preset="3m">@Resources.Strings.PYG_RangoUltimoTrimestre</button>
+            </div>
+        </div>
+        <div class="lt-range-card">
+            <div class="lt-range-head">
+                <span class="lbl"><span id="pygRangoDesdeLbl">&mdash;</span><i class="fas fa-long-arrow-alt-right"></i><span id="pygRangoHastaLbl">&mdash;</span></span>
+                <span class="lt-range-badge" id="pygRangoBadge">&mdash;</span>
+            </div>
+            <div class="lt-range-track disabled" id="pygRangoTrack">
+                <div class="bg"></div>
+                <div class="sel" id="pygRangoSel"></div>
+                <div class="knob from" id="pygKnobFrom" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="11" aria-valuenow="0" aria-label="@Resources.Strings.LineaTiempo_LabelRango"></div>
+                <div class="knob to" id="pygKnobTo" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="11" aria-valuenow="11" aria-label="@Resources.Strings.LineaTiempo_LabelRango"></div>
+            </div>
+        </div>
+        <p class="lt-help">@Resources.Strings.LineaTiempo_FilaCuandoHint</p>
+
+        <div class="btn-group-actions">
+            <button type="button" id="btnConsultarPYG" class="btn btn-modern-gradient" disabled>
+                <i class="fas fa-search mr-1"></i>@Resources.Strings.Common_Consultar
+            </button>
+            <button type="button" id="btnLimpiarPYG" class="btn btn-modern-secondary">@Resources.Strings.Common_Limpiar</button>
+        </div>
+    </div>
+
+    <div id="pygEstadoInicial" class="lt-card lt-empty">
+        <div class="lt-empty-icon"><i class="fas fa-chart-line"></i></div>
+        <h4>@Resources.Strings.PYG_EstadoInicialTitulo</h4>
+        <p>@Resources.Strings.PYG_EstadoInicialDesc</p>
+    </div>
+
+    <div id="pygSinDatos" class="lt-card lt-empty" style="display:none;">
+        <div class="lt-empty-icon"><i class="fas fa-inbox"></i></div>
+        <h4>@Resources.Strings.PYG_SinDatosTitulo</h4>
+        <p id="pygSinDatosDesc">@Resources.Strings.PYG_SinDatosDesc</p>
+    </div>
+
+    <div id="pygResultado" style="display:none;">
+
+        <div class="lt-card" id="pygPanelResultado">
+            <div class="lt-letterhead">
+                <div class="lt-brand-mark"><span class="bm-text">@Resources.Strings.LineaTiempo_BrandMark</span></div>
+                <span class="fecha" id="pygFechaGenerado">&mdash;</span>
+            </div>
+            <div class="lt-head-row">
+                <div>
+                    <h2 id="pygTituloEmpresa">&mdash;</h2>
+                    <p class="sub" id="pygSubtitulo">&mdash;</p>
+                </div>
+                <div class="lt-tools">
+                    <button type="button" class="lt-tool-btn" id="pygBtnUnidad" title="@Resources.Strings.LineaTiempo_LabelUnidad">
+                        <span id="pygUnidadLbl">@Resources.Strings.LineaTiempo_UnidadMillones</span><i class="fas fa-chevron-down chev"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="pyg-kpi-strip" id="pygKpiStrip"></div>
+
+            <div class="pyg-charts" id="pygCharts">
+                <div class="pyg-chart-card">
+                    <div class="pyg-chart-head">
+                        <span class="pyg-chart-nm">@Resources.Strings.PYG_ChartIngresos</span>
+                        <span class="pyg-chart-legend">
+                            <span><i style="background:#6366F1"></i>@Resources.Strings.PYG_LeyendaReal</span>
+                            <span><i style="background:#D97706"></i>@Resources.Strings.PYG_LeyendaPresupuesto</span>
+                        </span>
+                    </div>
+                    <div class="pyg-chart-canvas-wrap"><canvas id="pygChartIngresos"></canvas></div>
+                </div>
+                <div class="pyg-chart-card">
+                    <div class="pyg-chart-head">
+                        <span class="pyg-chart-nm">@Resources.Strings.PYG_ChartEbitda</span>
+                        <span class="pyg-chart-legend">
+                            <span><i style="background:#6366F1"></i>@Resources.Strings.PYG_LeyendaReal</span>
+                            <span><i style="background:#D97706"></i>@Resources.Strings.PYG_LeyendaPresupuesto</span>
+                        </span>
+                    </div>
+                    <div class="pyg-chart-canvas-wrap"><canvas id="pygChartEbitda"></canvas></div>
+                </div>
+                <div class="pyg-chart-card">
+                    <div class="pyg-chart-head">
+                        <span class="pyg-chart-nm">@Resources.Strings.PYG_ChartUtilidadNeta</span>
+                        <span class="pyg-chart-legend">
+                            <span><i style="background:#6366F1"></i>@Resources.Strings.PYG_LeyendaReal</span>
+                            <span><i style="background:#D97706"></i>@Resources.Strings.PYG_LeyendaPresupuesto</span>
+                        </span>
+                    </div>
+                    <div class="pyg-chart-canvas-wrap"><canvas id="pygChartUtilidadNeta"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h5><i class="fas fa-list mr-2"></i>@Resources.Strings.PYG_TablaTitulo</h5>
+                <span class="info-badge" id="pygInfoBadge">@Resources.Strings.PYG_UnidadMillones</span>
+            </div>
+            <div class="table-wrapper">
+                <table class="data-table" id="pygTabla">
+                    <thead id="pygTablaHead"></thead>
+                    <tbody id="pygTablaBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="pyg-insights-card">
+            <div class="pyg-insights-head">
+                <span class="pyg-insights-title"><i class="fas fa-wand-magic-sparkles"></i> @Resources.Strings.PYG_InsightsTitulo</span>
+                <span class="pyg-insights-meta" id="pygInsightsMeta"></span>
+            </div>
+            <div id="pygInsightsBody" class="pyg-insights-body">
+                <p class="pyg-insights-empty">@Resources.Strings.PYG_InsightsSinGenerar</p>
+            </div>
+            <div id="pygInsightsLoading" style="display:none;text-align:center;padding:10px 0 2px;">
+                @Html.Partial("_LoaderDots", "dark")
+                <p style="margin-top:8px;font-size:12.5px;color:#8B85A0;">@Resources.Strings.PYG_InsightsGenerando</p>
+            </div>
+            <div class="btn-group-actions" style="margin-top:14px;padding-top:14px;">
+                <button type="button" id="btnGenerarInsightsPYG" class="btn btn-modern-gradient">
+                    <i class="fas fa-wand-magic-sparkles mr-1"></i>@Resources.Strings.PYG_BtnGenerarInsights
+                </button>
+            </div>
+        </div>
+
+        <div class="pyg-exports-row">
+            <form id="frmExportarExcelPYG" method="post" action="@Url.Action("ExportarExcel", "InformePYG")">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="idEmpresa" id="pygExpEmpresa" />
+                <input type="hidden" name="idEscenario" id="pygExpEscenario" />
+                <input type="hidden" name="anio" id="pygExpAnio" />
+                <input type="hidden" name="mesDesde" id="pygExpMesDesde" />
+                <input type="hidden" name="mesHasta" id="pygExpMesHasta" />
+                <button type="submit" class="btn btn-modern-excel"><i class="fas fa-file-excel mr-1"></i>@Resources.Strings.Common_ExportarExcel</button>
+            </form>
+            <button type="button" id="btnExportarPdfPYG" class="btn btn-modern-secondary"><i class="fas fa-file-pdf mr-1"></i>@Resources.Strings.PYG_BtnExportarPdf</button>
+        </div>
+    </div>
+
+</div>
+</div>
+
+<div id="overlayConsultandoPYG" class="overlay-cargando" style="display:none;">
+    <div class="overlay-cargando-card">
+        @Html.Partial("_LoaderDots", "aqua")
+        <h5 class="overlay-cargando-title">@Resources.Strings.PYG_JS_Consultando</h5>
+    </div>
+</div>
+
+@section scripts {
+<script src="~/Assets/js/select2/select2.min.js"></script>
+<script src="~/Assets/js/chart.umd.min.js"></script>
+<script src="~/Assets/js/jspdf.umd.min.js"></script>
+<script src="~/Assets/js/bufins-markdown.js"></script>
+
+<script>
+    var _pyg = {
+        urls: {
+            años: '@Url.Action("ObtenerAnios", "InformePYG")',
+            reporte: '@Url.Action("ConsultarReporte", "InformePYG")',
+            insights: '@Url.Action("GenerarInsightsIA", "InformePYG")'
+        },
+        token: $('input[name="__RequestVerificationToken"]').first().val(),
+        cultura: '@Html.Raw(HttpUtility.JavaScriptStringEncode(culturaJs))',
+        esAdmin: @Html.Raw(esAdmin.ToString().ToLowerInvariant()),
+        mesesNombres: [
+            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Mes1))',
+            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Mes2))',
+            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Mes3))',
+            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Mes4))',
+            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Mes5))',
+            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Mes6))',
+            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Mes7))',
+            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Mes8))',
+            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Mes9))',
+            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Mes10))',
+            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Mes11))',
+            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Mes12))'
+        ],
+        textos: {
+            colEstructura: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColEstructura))',
+            colReal: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColReal))',
+            colPresupuesto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColPresupuesto))',
+            colVarAbs: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColVarAbs))',
+            colVarPct: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColVarPct))',
+            colMargen: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColMargen))',
+            colMesGrupoFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColMesGrupoFmt))',
+            colAcumGrupoFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColAcumGrupoFmt))',
+            kpiMargenBruto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_KpiMargenBruto))',
+            kpiEbitda: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_KpiEbitda))',
+            kpiMargenNeto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_KpiMargenNeto))',
+            kpiPeriodoMes: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_KpiPeriodoMes))',
+            kpiPeriodoAcum: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_KpiPeriodoAcum))',
+            kpiVsPresupuesto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_KpiVsPresupuesto))',
+            insightsMetaFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_InsightsMetaFmt))',
+            insightsSinGenerar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_InsightsSinGenerar))',
+            pdfFooter: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_PdfFooter))',
+            pdfGenerando: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_PdfGenerando))',
+            errorServidor: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ErrorServidor))',
+            badgeMes: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_BadgeMes))',
+            badgeMeses: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_BadgeMeses))',
+            unidades: {
+                pesos: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_UnidadPesos))',
+                miles: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_UnidadMiles))',
+                millones: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_UnidadMillones))'
+            },
+            unidadSufijoMiles: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_UnidadSufijoMiles))',
+            unidadSufijoMillones: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_UnidadSufijoMillones))',
+            unidadBadge: {
+                pesos: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_UnidadPesosCop))',
+                miles: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_UnidadMilesCop))',
+                millones: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_UnidadMillones))'
+            }
+        },
+        reporteActual: null,
+        insightsTexto: null,
+        kpiIconos: { MargenBruto: 'fa-layer-group', Ebitda: 'fa-bolt', MargenNeto: 'fa-coins' },
+        kpiNombres: {},
+        charts: {},
+        unidad: 'millones',
+        mesesCache: [],   // 12 items fijos {mes:1..12, abrev:'Ene'}
+        iDesde: 0,
+        iHasta: 11
+    };
+    _pyg.kpiNombres = {
+        MargenBruto: _pyg.textos.kpiMargenBruto,
+        Ebitda: _pyg.textos.kpiEbitda,
+        MargenNeto: _pyg.textos.kpiMargenNeto
+    };
+    _pyg.mesesCache = _pyg.mesesNombres.map(function (nombre, idx) {
+        return { mes: idx + 1, nombre: nombre, abrev: nombre.substring(0, 3) };
+    });
+
+    var elEmpresa = $('#pygEmpresa'), elEscenario = $('#pygEscenario'), elAnio = $('#pygAnio');
+
+    var CH_MDASH = String.fromCharCode(0x2014);
+
+    var s2lang = {
+        noResults: function () { return '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Select2NoResults))'; },
+        searching: function () { return '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Select2Searching))'; }
+    };
+
+    function empresaSeleccionada() {
+        var v = elEmpresa.val();
+        return v ? parseInt(v, 10) : null;
+    }
+
+    function escenarioSeleccionado() {
+        var v = elEscenario.val();
+        return v ? parseInt(v, 10) : 1;
+    }
+
+    // ===== Unidad (Pesos/Miles/Millones) — mismo patrón que InformeLineaTiempo =====
+    function escalarValor(v) {
+        if (_pyg.unidad === 'miles') return v / 1000;
+        if (_pyg.unidad === 'millones') return v / 1000000;
+        return v;
+    }
+    function sufijoUnidad() {
+        if (_pyg.unidad === 'miles') return ' ' + _pyg.textos.unidadSufijoMiles;
+        if (_pyg.unidad === 'millones') return ' ' + _pyg.textos.unidadSufijoMillones;
+        return '';
+    }
+    function fmtNum(v) {
+        var escalado = escalarValor(v);
+        var decimales = _pyg.unidad === 'pesos' ? 0 : 1;
+        try { return new Intl.NumberFormat(_pyg.cultura, { minimumFractionDigits: decimales, maximumFractionDigits: decimales }).format(escalado) + sufijoUnidad(); }
+        catch (e) { return escalado + sufijoUnidad(); }
+    }
+    function fmtNumVar(v) {
+        var escalado = escalarValor(v);
+        var decimales = _pyg.unidad === 'pesos' ? 0 : 1;
+        try { return new Intl.NumberFormat(_pyg.cultura, { minimumFractionDigits: decimales, maximumFractionDigits: decimales, signDisplay: 'exceptZero' }).format(escalado) + sufijoUnidad(); }
+        catch (e) { var n = escalado; return (n >= 0 ? '+' : '') + n + sufijoUnidad(); }
+    }
+    function fmtPct(v) {
+        if (v === null || v === undefined) return CH_MDASH;
+        try { return new Intl.NumberFormat(_pyg.cultura, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v * 100) + '%'; }
+        catch (e) { return (Math.round(v * 1000) / 10) + '%'; }
+    }
+    function fmtPctVar(v) {
+        if (v === null || v === undefined) return CH_MDASH;
+        try { return new Intl.NumberFormat(_pyg.cultura, { minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: 'exceptZero' }).format(v * 100) + '%'; }
+        catch (e) { var n = Math.round(v * 1000) / 10; return (n >= 0 ? '+' : '') + n + '%'; }
+    }
+    function fmtPuntos(v) {
+        try { return new Intl.NumberFormat(_pyg.cultura, { minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: 'exceptZero' }).format(v * 100); }
+        catch (e) { var n = Math.round(v * 1000) / 10; return (n >= 0 ? '+' : '') + n; }
+    }
+
+    // Muestra un error visible (antes fallaba en silencio: si el POST devolvía success:false o el
+    // servidor tiraba una excepción/anti-forgery inválido, el usuario no veía nada).
+    function mostrarErrorPYG(mensaje) {
+        console.error('[InformePYG]', mensaje);
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'error', title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error))', text: mensaje });
+        } else {
+            alert(mensaje);
+        }
+    }
+
+    function actualizarBotonConsultar() {
+        var listo = (!_pyg.esAdmin || !!empresaSeleccionada()) && !!elEscenario.val() && !!elAnio.val();
+        $('#btnConsultarPYG').prop('disabled', !listo);
+    }
+
+    function ocultarResultados() {
+        $('#pygResultado, #pygSinDatos').hide();
+        $('#pygEstadoInicial').show();
+    }
+
+    function cargarAños() {
+        elAnio.empty().prop('disabled', true).trigger('change.select2');
+        ocultarResultados();
+        actualizarBotonConsultar();
+        pintarRangoPYG();
+
+        var idEmpresa = empresaSeleccionada();
+        if (_pyg.esAdmin && !idEmpresa) return;
+
+        $.post(_pyg.urls.años, {
+            idEmpresa: idEmpresa,
+            idEscenario: escenarioSeleccionado(),
+            __RequestVerificationToken: _pyg.token
+        }, function (resp) {
+            if (!resp || !resp.success) {
+                mostrarErrorPYG((resp && resp.message) || _pyg.textos.errorServidor);
+                return;
+            }
+            var años = resp.años || [];
+            elAnio.empty();
+            if (!años.length) {
+                elAnio.append($('<option>').val('').text('@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))'));
+                actualizarBotonConsultar();
+                return;
+            }
+            años.forEach(function (a) { elAnio.append($('<option>').val(a).text(a)); });
+            elAnio.prop('disabled', false).trigger('change.select2');
+            actualizarBotonConsultar();
+        }).fail(function (xhr) {
+            mostrarErrorPYG(_pyg.textos.errorServidor + ' (HTTP ' + xhr.status + ')');
+        });
+    }
+
+    // ===== Slider de rango de meses (adaptado del slicer de InformeLineaTiempo, acotado a 1 año) =====
+
+    function pctIndicePYG(i) { return i / 11 * 100; }
+
+    function pintarRangoPYG() {
+        var track = $('#pygRangoTrack');
+        var habilitado = !!elAnio.val();
+        track.toggleClass('disabled', !habilitado);
+
+        var pctDesde = pctIndicePYG(_pyg.iDesde), pctHasta = pctIndicePYG(_pyg.iHasta);
+        var meses = _pyg.mesesCache;
+
+        $('#pygKnobFrom').css('left', pctDesde + '%')
+            .attr({ 'aria-valuenow': _pyg.iDesde, 'aria-valuetext': meses[_pyg.iDesde].nombre });
+        $('#pygKnobTo').css('left', pctHasta + '%')
+            .attr({ 'aria-valuenow': _pyg.iHasta, 'aria-valuetext': meses[_pyg.iHasta].nombre });
+        $('#pygRangoSel').css({ left: pctDesde + '%', width: (pctHasta - pctDesde) + '%' });
+
+        $('#pygRangoDesdeLbl').text(meses[_pyg.iDesde].abrev);
+        $('#pygRangoHastaLbl').text(meses[_pyg.iHasta].abrev);
+
+        var totalMeses = _pyg.iHasta - _pyg.iDesde + 1;
+        $('#pygRangoBadge').text(totalMeses + ' ' + (totalMeses === 1 ? _pyg.textos.badgeMes : _pyg.textos.badgeMeses));
+
+        actualizarAtajoActivoPYG();
+    }
+
+    function actualizarAtajoActivoPYG() {
+        $('#pygAtajos button').removeClass('active');
+        if (_pyg.iDesde === 0 && _pyg.iHasta === 11) $('#pygAtajos button[data-preset="todo"]').addClass('active');
+        else if (_pyg.iDesde === 6 && _pyg.iHasta === 11) $('#pygAtajos button[data-preset="6m"]').addClass('active');
+        else if (_pyg.iDesde === 9 && _pyg.iHasta === 11) $('#pygAtajos button[data-preset="3m"]').addClass('active');
+    }
+
+    function aplicarPresetRangoPYG(preset) {
+        if (!elAnio.val()) return;
+        if (preset === 'todo') { _pyg.iDesde = 0; _pyg.iHasta = 11; }
+        else if (preset === '6m') { _pyg.iDesde = 6; _pyg.iHasta = 11; }
+        else if (preset === '3m') { _pyg.iDesde = 9; _pyg.iHasta = 11; }
+        pintarRangoPYG();
+    }
+
+    function indiceDesdeClientXPYG(clientX) {
+        var track = document.getElementById('pygRangoTrack');
+        var rect = track.getBoundingClientRect();
+        var frac = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+        return Math.round(frac * 11);
+    }
+
+    function moverExtremoPYG(cual, idx) {
+        idx = Math.min(11, Math.max(0, idx));
+        if (cual === 'from') {
+            _pyg.iDesde = idx;
+            if (_pyg.iDesde > _pyg.iHasta) _pyg.iHasta = _pyg.iDesde;
+        } else {
+            _pyg.iHasta = idx;
+            if (_pyg.iHasta < _pyg.iDesde) _pyg.iDesde = _pyg.iHasta;
+        }
+        pintarRangoPYG();
+    }
+
+    function iniciarArrastreSliderPYG(e, cual) {
+        if (!elAnio.val()) return;
+        e.preventDefault();
+        var track = $('#pygRangoTrack').addClass('dragging');
+
+        function onMove(ev) { moverExtremoPYG(cual, indiceDesdeClientXPYG(ev.clientX)); }
+        function onUp() {
+            track.removeClass('dragging');
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+        }
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+    }
+
+    function clicEnPistaPYG(e) {
+        if ($(e.target).hasClass('knob') || !elAnio.val()) return;
+        var idx = indiceDesdeClientXPYG(e.clientX);
+        var cual = Math.abs(idx - _pyg.iDesde) <= Math.abs(idx - _pyg.iHasta) ? 'from' : 'to';
+        moverExtremoPYG(cual, idx);
+        iniciarArrastreSliderPYG(e, cual);
+    }
+
+    function moverKnobConTecladoPYG(e, cual) {
+        if (!elAnio.val()) return;
+        var idx = cual === 'from' ? _pyg.iDesde : _pyg.iHasta;
+        if (e.key === 'ArrowLeft') idx -= 1;
+        else if (e.key === 'ArrowRight') idx += 1;
+        else if (e.key === 'Home') idx = 0;
+        else if (e.key === 'End') idx = 11;
+        else return;
+        e.preventDefault();
+        moverExtremoPYG(cual, idx);
+    }
+
+    // Etiqueta combinada del periodo elegido, p. ej. "Marzo 2025" o "Mar - Jun 2025".
+    function etiquetaPeriodo(anio) {
+        if (_pyg.iDesde === _pyg.iHasta) return _pyg.mesesCache[_pyg.iDesde].nombre + ' ' + anio;
+        return _pyg.mesesCache[_pyg.iDesde].abrev + ' - ' + _pyg.mesesCache[_pyg.iHasta].abrev + ' ' + anio;
+    }
+
+    function consultarReporte() {
+        var idEmpresa = empresaSeleccionada();
+        var idEscenario = escenarioSeleccionado();
+        var anio = parseInt(elAnio.val(), 10);
+        var mesDesde = _pyg.iDesde + 1, mesHasta = _pyg.iHasta + 1;
+        if (!idEscenario || !anio) return;
+
+        $('#overlayConsultandoPYG').css('display', 'flex');
+
+        $.post(_pyg.urls.reporte, {
+            idEmpresa: idEmpresa, idEscenario: idEscenario, anio: anio, mesDesde: mesDesde, mesHasta: mesHasta,
+            __RequestVerificationToken: _pyg.token
+        }, function (resp) {
+            $('#overlayConsultandoPYG').hide();
+            if (!resp || !resp.success) {
+                mostrarErrorPYG((resp && resp.message) || _pyg.textos.errorServidor);
+                return;
+            }
+            var reporte = resp.reporte;
+            if (!reporte || reporte.SinDatos) {
+                $('#pygEstadoInicial, #pygResultado').hide();
+                $('#pygSinDatos').show();
+                return;
+            }
+            pintarReporte(reporte, idEmpresa, idEscenario, anio, mesDesde, mesHasta);
+        }).fail(function (xhr) {
+            $('#overlayConsultandoPYG').hide();
+            mostrarErrorPYG(_pyg.textos.errorServidor + ' (HTTP ' + xhr.status + ')');
+        });
+    }
+
+    function pintarReporte(reporte, idEmpresa, idEscenario, anio, mesDesde, mesHasta) {
+        _pyg.reporteActual = reporte;
+        _pyg.insightsTexto = null;
+        $('#pygInsightsBody').html('<p class="pyg-insights-empty">' + _pyg.textos.insightsSinGenerar + '</p>');
+        $('#pygInsightsMeta').text('');
+
+        $('#pygExpEmpresa').val(idEmpresa || '');
+        $('#pygExpEscenario').val(idEscenario);
+        $('#pygExpAnio').val(anio);
+        $('#pygExpMesDesde').val(mesDesde);
+        $('#pygExpMesHasta').val(mesHasta);
+
+        var nombreEmpresa = elEmpresa.find(':selected').text() || '';
+        var nombreEscenario = elEscenario.find(':selected').text() || '';
+        var periodo = etiquetaPeriodo(anio);
+
+        $('#pygTituloEmpresa').text(nombreEmpresa);
+        $('#pygSubtitulo').text(nombreEscenario + ' · ' + periodo);
+        try {
+            $('#pygFechaGenerado').text(new Date().toLocaleDateString(_pyg.cultura, { day: 'numeric', month: 'long', year: 'numeric' }));
+        } catch (e) { $('#pygFechaGenerado').text(''); }
+
+        $('#pygUnidadLbl').text(_pyg.textos.unidades[_pyg.unidad]);
+        $('#pygInfoBadge').text(_pyg.textos.unidadBadge[_pyg.unidad]);
+
+        pintarKpis(reporte.Kpis || []);
+        pintarCharts(reporte);
+        pintarTabla(reporte, periodo, anio, mesHasta);
+
+        $('#pygEstadoInicial, #pygSinDatos').hide();
+        $('#pygResultado').show();
+    }
+
+    function repintarConUnidadActual() {
+        if (!_pyg.reporteActual) return;
+        var anio = parseInt(elAnio.val(), 10);
+        var periodo = etiquetaPeriodo(anio);
+        $('#pygUnidadLbl').text(_pyg.textos.unidades[_pyg.unidad]);
+        $('#pygInfoBadge').text(_pyg.textos.unidadBadge[_pyg.unidad]);
+        pintarKpis(_pyg.reporteActual.Kpis || []);
+        pintarCharts(_pyg.reporteActual);
+        pintarTabla(_pyg.reporteActual, periodo, anio, _pyg.reporteActual.MesHasta);
+    }
+
+    function pintarKpis(kpis) {
+        var $s = $('#pygKpiStrip').empty();
+        kpis.forEach(function (k) {
+            var nombre = _pyg.kpiNombres[k.Codigo] || k.Codigo;
+            var icono = _pyg.kpiIconos[k.Codigo] || 'fa-chart-pie';
+            var deltaPeriodo = k.PeriodoRealPct - k.PeriodoPresupuestoPct;
+            var deltaAcum = k.AcumRealPct - k.AcumPresupuestoPct;
+
+            var $card = $('<div class="pyg-kpi-card">');
+            $card.append($('<div class="pyg-kpi-head">')
+                .append($('<span class="pyg-kpi-ic">').append($('<i class="fas ' + icono + '">')))
+                .append($('<span class="pyg-kpi-nm">').text(nombre)));
+            $card.append(filaKpi(_pyg.textos.kpiPeriodoMes, k.PeriodoRealPct, deltaPeriodo));
+            $card.append(filaKpi(_pyg.textos.kpiPeriodoAcum, k.AcumRealPct, deltaAcum));
+            $s.append($card);
+        });
+    }
+
+    function filaKpi(etiquetaPeriodo, valorPct, delta) {
+        var cls = delta >= 0 ? 'up' : 'down';
+        var icon = delta >= 0 ? 'fa-caret-up' : 'fa-caret-down';
+        return $('<div class="pyg-kpi-row">')
+            .append($('<span class="pyg-kpi-per">').text(etiquetaPeriodo))
+            .append($('<span class="pyg-kpi-val">').text(fmtPct(valorPct)))
+            .append($('<span class="pyg-kpi-delta ' + cls + '">')
+                .append($('<i class="fas ' + icon + '">'))
+                .append(document.createTextNode(' ' + fmtPuntos(delta) + ' pp '))
+                .append($('<span class="ref">').text(_pyg.textos.kpiVsPresupuesto)));
+    }
+
+    function destruirCharts() {
+        Object.keys(_pyg.charts).forEach(function (k) { if (_pyg.charts[k]) _pyg.charts[k].destroy(); });
+        _pyg.charts = {};
+    }
+
+    function pintarCharts(reporte) {
+        destruirCharts();
+        pintarUnChart('pygChartIngresos', reporte.TendenciaIngresos || []);
+        pintarUnChart('pygChartEbitda', reporte.TendenciaEbitda || []);
+        pintarUnChart('pygChartUtilidadNeta', reporte.TendenciaUtilidadNeta || []);
+    }
+
+    function pintarUnChart(canvasId, puntos) {
+        var ctx = document.getElementById(canvasId).getContext('2d');
+        _pyg.charts[canvasId] = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: puntos.map(function (p) { return p.Etiqueta; }),
+                datasets: [
+                    {
+                        label: _pyg.textos.colReal, data: puntos.map(function (p) { return p.Real; }),
+                        borderColor: '#6366F1', backgroundColor: 'rgba(99,102,241,.12)', borderWidth: 2.5,
+                        tension: .35, fill: true, pointRadius: 3
+                    },
+                    {
+                        label: _pyg.textos.colPresupuesto, data: puntos.map(function (p) { return p.Presupuesto; }),
+                        borderColor: '#D97706', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 4],
+                        tension: .35, fill: false, pointRadius: 2.5
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + fmtNum(c.parsed.y); } } } },
+                scales: {
+                    y: { display: false },
+                    x: { grid: { display: false }, ticks: { font: { size: 10, weight: '700' }, color: '#8B85A0' } }
+                }
+            }
+        });
+    }
+
+    function pintarTabla(reporte, periodo, anio, mesHasta) {
+        var nombreMesHasta = _pyg.mesesCache[mesHasta - 1] ? _pyg.mesesCache[mesHasta - 1].nombre : '';
+        var tituloPeriodo = _pyg.textos.colMesGrupoFmt.replace('{0}', periodo);
+        var tituloAcum = _pyg.textos.colAcumGrupoFmt.replace('{0}', nombreMesHasta + ' ' + anio);
+
+        var head = '<tr>' +
+            '<th rowspan="2" style="vertical-align:bottom;">' + _pyg.textos.colEstructura + '</th>' +
+            '<th colspan="5" class="pyg-th-grupo">' + tituloPeriodo + '</th>' +
+            '<th colspan="5" class="pyg-th-grupo pyg-col-sep">' + tituloAcum + '</th>' +
+            '</tr><tr>' +
+            '<th>' + _pyg.textos.colReal + '</th><th>' + _pyg.textos.colPresupuesto + '</th>' +
+            '<th>' + _pyg.textos.colVarAbs + '</th><th>' + _pyg.textos.colVarPct + '</th><th>' + _pyg.textos.colMargen + '</th>' +
+            '<th class="pyg-col-sep">' + _pyg.textos.colReal + '</th><th>' + _pyg.textos.colPresupuesto + '</th>' +
+            '<th>' + _pyg.textos.colVarAbs + '</th><th>' + _pyg.textos.colVarPct + '</th><th>' + _pyg.textos.colMargen + '</th>' +
+            '</tr>';
+        $('#pygTablaHead').html(head);
+
+        var body = '';
+        (reporte.Filas || []).forEach(function (f) {
+            var claseFila = f.EsSubtotal ? ' class="pyg-row-subtotal"' : '';
+            // En líneas de costo/gasto/impuesto (valores en magnitud positiva), gastar más de lo
+            // presupuestado es DESFAVORABLE aunque la variación sea positiva — se invierte el color.
+            var favorablePeriodo = f.EsGastoOCosto ? f.PeriodoVariacionAbsoluta <= 0 : f.PeriodoVariacionAbsoluta >= 0;
+            var favorableAcum = f.EsGastoOCosto ? f.AcumVariacionAbsoluta <= 0 : f.AcumVariacionAbsoluta >= 0;
+            var claseVarPeriodo = favorablePeriodo ? 'pyg-v-good' : 'pyg-v-bad';
+            var claseVarAcum = favorableAcum ? 'pyg-v-good' : 'pyg-v-bad';
+
+            body += '<tr' + claseFila + '>' +
+                '<td class="pyg-lbl">' + $('<span>').text(f.Descripcion).html() + '</td>' +
+                '<td class="pyg-num">' + fmtNum(f.PeriodoReal) + '</td>' +
+                '<td class="pyg-num">' + fmtNum(f.PeriodoPresupuesto) + '</td>' +
+                '<td class="pyg-num ' + claseVarPeriodo + '">' + fmtNumVar(f.PeriodoVariacionAbsoluta) + '</td>' +
+                '<td class="pyg-num ' + claseVarPeriodo + '">' + fmtPctVar(f.PeriodoVariacionPorcentual) + '</td>' +
+                '<td class="pyg-num">' + fmtPct(f.PeriodoMargen) + '</td>' +
+                '<td class="pyg-num pyg-col-sep">' + fmtNum(f.AcumReal) + '</td>' +
+                '<td class="pyg-num">' + fmtNum(f.AcumPresupuesto) + '</td>' +
+                '<td class="pyg-num ' + claseVarAcum + '">' + fmtNumVar(f.AcumVariacionAbsoluta) + '</td>' +
+                '<td class="pyg-num ' + claseVarAcum + '">' + fmtPctVar(f.AcumVariacionPorcentual) + '</td>' +
+                '<td class="pyg-num">' + fmtPct(f.AcumMargen) + '</td>' +
+                '</tr>';
+        });
+        $('#pygTablaBody').html(body);
+    }
+
+    function generarInsights() {
+        if (!_pyg.reporteActual) return;
+        var idEmpresa = empresaSeleccionada();
+        var idEscenario = escenarioSeleccionado();
+        var anio = parseInt(elAnio.val(), 10);
+        var mesDesde = _pyg.iDesde + 1, mesHasta = _pyg.iHasta + 1;
+
+        $('#btnGenerarInsightsPYG').prop('disabled', true);
+        $('#pygInsightsBody').hide();
+        $('#pygInsightsLoading').show();
+
+        $.post(_pyg.urls.insights, {
+            idEmpresa: idEmpresa, idEscenario: idEscenario, anio: anio, mesDesde: mesDesde, mesHasta: mesHasta,
+            __RequestVerificationToken: _pyg.token
+        }, function (resp) {
+            $('#pygInsightsLoading').hide();
+            $('#pygInsightsBody').show();
+            $('#btnGenerarInsightsPYG').prop('disabled', false);
+
+            if (!resp || !resp.Exitoso) {
+                var msg = (resp && resp.Error) ? resp.Error : '';
+                $('#pygInsightsBody').html('<p class="pyg-insights-empty">' + $('<span>').text(msg || _pyg.textos.insightsSinGenerar).html() + '</p>');
+                return;
+            }
+
+            _pyg.insightsTexto = resp.Respuesta || '';
+            var html = (typeof window.bufinsMarkdown === 'function')
+                ? window.bufinsMarkdown(_pyg.insightsTexto)
+                : $('<div>').text(_pyg.insightsTexto).html().replace(/\n/g, '<br>');
+            $('#pygInsightsBody').html(html);
+
+            try {
+                var fecha = new Date().toLocaleDateString(_pyg.cultura, { day: 'numeric', month: 'long', year: 'numeric' });
+                $('#pygInsightsMeta').text(_pyg.textos.insightsMetaFmt.replace('{0}', fecha));
+            } catch (e) { }
+        }).fail(function (xhr) {
+            $('#pygInsightsLoading').hide();
+            $('#pygInsightsBody').show();
+            $('#btnGenerarInsightsPYG').prop('disabled', false);
+            $('#pygInsightsBody').html('<p class="pyg-insights-empty">' + $('<span>').text(_pyg.textos.errorServidor + ' (HTTP ' + xhr.status + ')').html() + '</p>');
+        });
+    }
+
+    function generarPdf() {
+        var reporte = _pyg.reporteActual;
+        if (!reporte) return;
+
+        var btn = document.getElementById('btnExportarPdfPYG');
+        var htmlOriginal = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + _pyg.textos.pdfGenerando;
+
+        try {
+            var jsPDFCtor = window.jspdf.jsPDF;
+            var pdf = new jsPDFCtor('l', 'mm', 'a4');
+            var pageW = pdf.internal.pageSize.getWidth();
+            var pageH = pdf.internal.pageSize.getHeight();
+            var margin = 12;
+            var y;
+
+            function dibujarPiePagina() {
+                var num = pdf.internal.getNumberOfPages();
+                pdf.setFontSize(7.5);
+                pdf.setTextColor(150, 145, 165);
+                pdf.text(_pyg.textos.pdfFooter, margin, pageH - 7);
+                pdf.text(String(num), pageW - margin, pageH - 7, { align: 'right' });
+            }
+
+            function nuevaPagina() {
+                pdf.addPage();
+                y = margin;
+                dibujarPiePagina();
+            }
+
+            pdf.setFillColor(99, 102, 241);
+            pdf.rect(0, 0, pageW, 20, 'F');
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFont(undefined, 'bold');
+            pdf.setFontSize(14);
+            pdf.text('BUFINS', margin, 13);
+
+            var titulo = $('#pygTituloEmpresa').text();
+            var subtitulo = $('#pygSubtitulo').text();
+            pdf.setFont(undefined, 'normal');
+            pdf.setFontSize(9);
+            pdf.text(titulo, pageW - margin, 9, { align: 'right' });
+            pdf.setFontSize(8);
+            pdf.text(subtitulo, pageW - margin, 15, { align: 'right' });
+
+            y = 27;
+            pdf.setTextColor(30, 20, 50);
+
+            // KPIs (periodo) como tarjetas — igual patrón que InformeLineaTiempo.generarPdf
+            var kpis = reporte.Kpis || [];
+            var kpiW = (pageW - margin * 2 - (kpis.length - 1) * 6) / (kpis.length || 1);
+            kpis.forEach(function (k, i) {
+                var x = margin + i * (kpiW + 6);
+                pdf.setDrawColor(228, 225, 240);
+                pdf.setFillColor(244, 243, 251);
+                pdf.roundedRect(x, y, kpiW, 18, 2, 2, 'FD');
+                pdf.setFontSize(7.5);
+                pdf.setTextColor(120, 115, 140);
+                pdf.text(_pyg.kpiNombres[k.Codigo] || k.Codigo, x + 4, y + 7);
+                pdf.setFontSize(12);
+                pdf.setFont(undefined, 'bold');
+                pdf.setTextColor(30, 20, 50);
+                pdf.text(fmtPct(k.PeriodoRealPct) + '  (' + fmtPct(k.AcumRealPct) + ' acum.)', x + 4, y + 14);
+                pdf.setFont(undefined, 'normal');
+            });
+            y += 24;
+
+            // Gráficas de tendencia — imagen nativa de Chart.js, sin html2canvas
+            ['pygChartIngresos', 'pygChartEbitda', 'pygChartUtilidadNeta'].forEach(function (id) {
+                var chart = _pyg.charts[id];
+                if (!chart) return;
+                var imgData = chart.toBase64Image('image/png', 1.0);
+                var imgW = (pageW - margin * 2 - 12) / 3;
+                var imgH = imgW * chart.height / chart.width;
+                var idx = ['pygChartIngresos', 'pygChartEbitda', 'pygChartUtilidadNeta'].indexOf(id);
+                pdf.addImage(imgData, 'PNG', margin + idx * (imgW + 6), y, imgW, imgH);
+            });
+            y += 42;
+
+            // Tabla financiera completa (Periodo + Acumulado)
+            var headers = [
+                _pyg.textos.colEstructura,
+                _pyg.textos.colReal, _pyg.textos.colPresupuesto, _pyg.textos.colVarAbs, _pyg.textos.colVarPct, _pyg.textos.colMargen,
+                _pyg.textos.colReal, _pyg.textos.colPresupuesto, _pyg.textos.colVarAbs, _pyg.textos.colVarPct, _pyg.textos.colMargen
+            ];
+            var anchoLabel = 62;
+            var colW = (pageW - margin * 2 - anchoLabel) / 10;
+            var rowH = 6.5;
+
+            var cabeceraTabla = function () {
+                pdf.setFillColor(99, 102, 241);
+                pdf.setTextColor(255, 255, 255);
+                pdf.setFont(undefined, 'bold');
+                pdf.setFontSize(7);
+                var x = margin;
+                pdf.rect(x, y, anchoLabel, rowH, 'F');
+                pdf.text(headers[0], x + 2, y + 4.5);
+                x += anchoLabel;
+                for (var i = 1; i < headers.length; i++) {
+                    pdf.rect(x, y, colW, rowH, 'F');
+                    pdf.text(String(headers[i]), x + colW - 1.5, y + 4.5, { align: 'right' });
+                    x += colW;
+                }
+                y += rowH;
+                pdf.setFont(undefined, 'normal');
+                pdf.setTextColor(30, 20, 50);
+                pdf.setFontSize(7);
+            };
+            cabeceraTabla();
+
+            (reporte.Filas || []).forEach(function (f) {
+                if (y + rowH > pageH - margin - 8) { nuevaPagina(); cabeceraTabla(); }
+                var valores = [
+                    fmtNum(f.PeriodoReal), fmtNum(f.PeriodoPresupuesto),
+                    fmtNumVar(f.PeriodoVariacionAbsoluta), fmtPctVar(f.PeriodoVariacionPorcentual), fmtPct(f.PeriodoMargen),
+                    fmtNum(f.AcumReal), fmtNum(f.AcumPresupuesto),
+                    fmtNumVar(f.AcumVariacionAbsoluta), fmtPctVar(f.AcumVariacionPorcentual), fmtPct(f.AcumMargen)
+                ];
+                if (f.EsSubtotal) { pdf.setFont(undefined, 'bold'); pdf.setFillColor(244, 243, 251); pdf.rect(margin, y, pageW - margin * 2, rowH, 'F'); }
+                var x = margin;
+                pdf.text(String(f.Descripcion), x + 2, y + 4.5, { maxWidth: anchoLabel - 4 });
+                x += anchoLabel;
+                for (var i = 0; i < valores.length; i++) {
+                    pdf.text(String(valores[i]), x + colW - 1.5, y + 4.5, { align: 'right' });
+                    x += colW;
+                }
+                if (f.EsSubtotal) pdf.setFont(undefined, 'normal');
+                y += rowH;
+            });
+
+            // Insights gerenciales (texto plano, sin markdown — jsPDF no lo interpreta)
+            if (_pyg.insightsTexto) {
+                y += 8;
+                if (y + 20 > pageH - margin - 8) nuevaPagina();
+                pdf.setFont(undefined, 'bold');
+                pdf.setFontSize(10);
+                pdf.text('Insights gerenciales', margin, y);
+                y += 6;
+                pdf.setFont(undefined, 'normal');
+                pdf.setFontSize(8.5);
+                var textoPlano = _pyg.insightsTexto.replace(/\*\*/g, '').replace(/[#>*_`]/g, '');
+                var lineas = pdf.splitTextToSize(textoPlano, pageW - margin * 2);
+                lineas.forEach(function (linea) {
+                    if (y + 5 > pageH - margin - 8) { nuevaPagina(); }
+                    pdf.text(linea, margin, y);
+                    y += 4.5;
+                });
+            }
+
+            dibujarPiePagina();
+
+            var nombreArchivo = 'PYG_' + $('#pygTituloEmpresa').text().replace(/[^a-z0-9]+/gi, '_') + '_' +
+                elAnio.val() + '_' + (_pyg.iDesde + 1) + '-' + (_pyg.iHasta + 1) + '.pdf';
+            pdf.save(nombreArchivo);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = htmlOriginal;
+        }
+    }
+
+    $(document).ready(function () {
+        $('#pygEmpresa, #pygEscenario, #pygAnio').select2({ width: '100%', language: s2lang, dropdownAutoWidth: false });
+
+        $('#pygEmpresa, #pygEscenario').on('change', cargarAños);
+        $('#pygAnio').on('change', function () {
+            _pyg.iDesde = 0; _pyg.iHasta = 11;
+            pintarRangoPYG();
+            actualizarBotonConsultar();
+        });
+
+        $('#pygAtajos button').on('click', function () { aplicarPresetRangoPYG($(this).data('preset')); });
+        $('#pygKnobFrom').on('pointerdown', function (e) { e.stopPropagation(); iniciarArrastreSliderPYG(e, 'from'); });
+        $('#pygKnobTo').on('pointerdown', function (e) { e.stopPropagation(); iniciarArrastreSliderPYG(e, 'to'); });
+        $('#pygRangoTrack').on('pointerdown', function (e) { clicEnPistaPYG(e); });
+        $('#pygKnobFrom, #pygKnobTo').on('keydown', function (e) { moverKnobConTecladoPYG(e, this.id === 'pygKnobFrom' ? 'from' : 'to'); });
+
+        $('#pygBtnUnidad').on('click', function () {
+            var orden = ['pesos', 'miles', 'millones'], i = (orden.indexOf(_pyg.unidad) + 1) % orden.length;
+            _pyg.unidad = orden[i];
+            repintarConUnidadActual();
+        });
+
+        $('#btnConsultarPYG').on('click', consultarReporte);
+        $('#btnLimpiarPYG').on('click', function () {
+            if (!_pyg.esAdmin) { cargarAños(); return; }
+            elEmpresa.val('').trigger('change.select2');
+            elAnio.empty().prop('disabled', true).trigger('change.select2');
+            ocultarResultados();
+            actualizarBotonConsultar();
+            pintarRangoPYG();
+        });
+
+        $('#btnGenerarInsightsPYG').on('click', generarInsights);
+        $('#btnExportarPdfPYG').on('click', generarPdf);
+
+        pintarRangoPYG();
+        cargarAños();
+    });
+</script>
+}
