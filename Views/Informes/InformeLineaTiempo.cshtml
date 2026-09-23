@@ -1426,6 +1426,17 @@
             addInput(k, val);
         });
 
+        // Estado visual de la pantalla, para que el Excel (tabla + gráfico nativo) salga igual a lo
+        // que el usuario está viendo: tipo de gráfico, unidad, series ocultas y títulos.
+        addInput('TipoGrafico', _lt.tipoGrafico);
+        addInput('Unidad', _lt.unidad);
+        addInput('Titulo', $('#ltChartTitle').text());
+        addInput('Subtitulo', $('#ltChartSubtitle').text());
+        addInput('CampoTexto', campoSeleccionadoTexto());
+        Object.keys(_lt.ocultas).forEach(function (nombre) {
+            if (_lt.ocultas[nombre]) addInput('SeriesOcultas', nombre);
+        });
+
         document.body.appendChild(form);
         form.submit();
         document.body.removeChild(form);

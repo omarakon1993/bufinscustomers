@@ -27,6 +27,29 @@ namespace bufinscustomers.Models
         public string Agrupar { get; set; }
     }
 
+    /// <summary>
+    /// Estado visual de la pantalla al exportar a Excel, para que el archivo refleje lo que el usuario
+    /// ve (tipo de gráfico, unidad, series ocultas, títulos). Todo opcional: si falta, se exporta
+    /// como línea, en pesos, con todas las series.
+    /// </summary>
+    public class OpcionesExportLineaTiempo
+    {
+        /// <summary>"line" | "bar".</summary>
+        public string TipoGrafico { get; set; }
+
+        /// <summary>"pesos" | "miles" | "millones".</summary>
+        public string Unidad { get; set; }
+
+        /// <summary>Indicadores ocultados desde la tira de series.</summary>
+        public List<string> SeriesOcultas { get; set; }
+
+        public string Titulo { get; set; }
+        public string Subtitulo { get; set; }
+
+        /// <summary>Nombre amigable del Campo graficado (encabezado de la columna de valor).</summary>
+        public string CampoTexto { get; set; }
+    }
+
     /// <summary>Un punto de la serie de tiempo, ya agregado al nivel pedido en "Agrupar".</summary>
     public class PuntoLineaTiempo
     {
