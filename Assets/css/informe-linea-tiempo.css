@@ -124,10 +124,22 @@
 .lt-ind-trigger{display:flex;align-items:center;gap:8px;width:100%;border:1px solid #e3e6f0;border-radius:10px;padding:9px 12px;background:#fff;cursor:pointer;font-family:inherit;font-size:13.5px;font-weight:700;color:#2d3748;text-align:left;transition:border-color .15s ease,box-shadow .15s ease}
 .lt-ind-trigger:hover{border-color:#a5b4fc}
 .lt-ind-trigger:focus-visible{outline:none;border-color:#583AFF;box-shadow:0 0 0 3px rgba(88,58,255,.12)}
-.lt-ind-trigger[disabled]{opacity:.5;cursor:not-allowed}
+.lt-ind-trigger[disabled]{opacity:.55;background:#f8f9fc;cursor:not-allowed}
 .lt-ind-trigger .txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lt-ind-trigger.vacio .txt{color:#9ca3af;font-weight:600}
 .lt-ind-trigger .fa-chevron-down{font-size:9px;color:#583AFF;margin-left:auto}
+.lt-ind-trigger .ic{flex-shrink:0;width:24px;height:24px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;background:rgba(88,58,255,.1);color:#583AFF;font-size:11px}
+/* Habilitado y sin variables: es el paso que falta para generar el informe, así que se destaca
+   (borde punteado índigo + fondo suave + pulso) en vez de verse más tenue que los demás filtros. */
+.lt-ind-trigger.vacio:not([disabled]){border:1.5px dashed #818cf8;background:#f5f3ff;animation:ltIndPulso 2.2s ease-in-out infinite}
+.lt-ind-trigger.vacio:not([disabled]) .txt{color:#4f46e5;font-weight:700}
+.lt-ind-trigger.vacio:not([disabled]) .ic{background:#583AFF;color:#fff}
+.lt-ind-trigger.vacio:not([disabled]) .fa-chevron-down{font-size:10px}
+.lt-ind-trigger.vacio:not([disabled]):hover{border-style:solid;background:#ede9fe;animation:none}
+/* Con variables elegidas: acento índigo a la izquierda para que se lea como filtro "activo". */
+.lt-ind-trigger:not(.vacio):not([disabled]){border-color:#c7d2fe;box-shadow:inset 3px 0 0 #6366F1}
+@keyframes ltIndPulso{0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.35)}50%{box-shadow:0 0 0 5px rgba(99,102,241,0)}}
+@media (prefers-reduced-motion:reduce){.lt-ind-trigger.vacio:not([disabled]){animation:none}}
 
 /* Barra de series */
 .lt-series-bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:10px;padding:8px 10px;background:#f8f9fc;border:1px dashed #e0ddf0;border-radius:10px}
