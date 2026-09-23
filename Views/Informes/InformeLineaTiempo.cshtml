@@ -496,24 +496,77 @@
     // Chart.js no trae etiquetas de dato por defecto (habría que sumar el plugin oficial
     // chartjs-plugin-datalabels, no vendorizado en el proyecto) — este plugin liviano dibuja
     // el valor encima de cada barra/punto usando el mismo formato compacto del resto de la vista.
+    //
+    // Anti-superposición: con muchos períodos o varias series, dibujar todas las etiquetas las
+    // monta unas sobre otras. Se colocan en orden de importancia (último período, máximo y mínimo
+    // de cada serie, primer período, luego el resto) y cada una prueba arriba y, en líneas, abajo
+    // del punto; si en ninguna de las dos posiciones cabe sin chocar con una ya dibujada, se omite
+    // (el valor sigue disponible en el tooltip y en la vista Tabla). Un halo blanco las separa de
+    // las líneas y la grilla.
+    var LT_ETQ_ALTO = 12, LT_ETQ_SEP = 6, LT_ETQ_PAD = 3;
+
+    function ltCajasSeCruzan(a, b) {
+        return a.x1 < b.x2 && a.x2 > b.x1 && a.y1 < b.y2 && a.y2 > b.y1;
+    }
+
     var ltDataLabelsPlugin = {
         id: 'ltDataLabels',
         afterDatasetsDraw: function (chart) {
-            var ctx = chart.ctx;
+            var ctx = chart.ctx, area = chart.chartArea;
+            var esBarra = chart.config.type === 'bar';
             ctx.save();
             ctx.font = '600 10.5px ' + (ctx.font.split(' ').pop() || 'sans-serif');
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'bottom';
+
+            var candidatos = [];
             chart.data.datasets.forEach(function (dataset, i) {
                 var meta = chart.getDatasetMeta(i);
-                if (!meta || meta.hidden) return;
-                ctx.fillStyle = dataset.borderColor || '#333';
+                if (!meta || !chart.isDatasetVisible(i)) return;
+                var valores = dataset.data, n = meta.data.length, iMax = -1, iMin = -1;
+                valores.forEach(function (v, k) {
+                    if (v === null || v === undefined) return;
+                    if (iMax < 0 || v > valores[iMax]) iMax = k;
+                    if (iMin < 0 || v < valores[iMin]) iMin = k;
+                });
                 meta.data.forEach(function (el, idx) {
-                    var valor = dataset.data[idx];
+                    var valor = valores[idx];
                     if (valor === null || valor === undefined) return;
                     var pos = el.tooltipPosition ? el.tooltipPosition() : { x: el.x, y: el.y };
-                    ctx.fillText(fmtCompacto(valor), pos.x, pos.y - 6);
+                    var texto = fmtCompacto(valor);
+                    candidatos.push({
+                        x: pos.x, y: pos.y, texto: texto, ancho: ctx.measureText(texto).width,
+                        color: dataset.borderColor || '#333', negativo: valor < 0,
+                        prioridad: idx === n - 1 ? 0 : (idx === iMax || idx === iMin) ? 1 : idx === 0 ? 2 : 3,
+                        orden: candidatos.length
+                    });
                 });
+            });
+            candidatos.sort(function (a, b) { return a.prioridad - b.prioridad || a.orden - b.orden; });
+
+            var colocadas = [];
+            candidatos.forEach(function (c) {
+                var medio = c.ancho / 2 + LT_ETQ_PAD;
+                // Se corre en horizontal para no salirse del área del gráfico en los extremos.
+                var cx = Math.min(Math.max(c.x, area.left + medio), area.right - medio);
+                var arriba = c.y - LT_ETQ_SEP - LT_ETQ_ALTO, abajo = c.y + LT_ETQ_SEP;
+                var opciones = esBarra ? [c.negativo ? abajo : arriba] : (c.negativo ? [abajo, arriba] : [arriba, abajo]);
+                for (var k = 0; k < opciones.length; k++) {
+                    var caja = { x1: cx - medio, x2: cx + medio, y1: opciones[k], y2: opciones[k] + LT_ETQ_ALTO, cx: cx, c: c };
+                    if (caja.y1 < 0 || caja.y2 > area.bottom) continue;
+                    if (colocadas.some(function (o) { return ltCajasSeCruzan(caja, o); })) continue;
+                    colocadas.push(caja);
+                    return;
+                }
+            });
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = 'rgba(255,255,255,.92)';
+            colocadas.forEach(function (caja) {
+                ctx.strokeText(caja.c.texto, caja.cx, caja.y1);
+                ctx.fillStyle = caja.c.color;
+                ctx.fillText(caja.c.texto, caja.cx, caja.y1);
             });
             ctx.restore();
         }
