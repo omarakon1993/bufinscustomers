@@ -200,7 +200,7 @@ When creating new controllers, use explicit view paths with `~/Views/{area}/{vie
 - **DatosController** - Excel data import/export (`[ValidarSesion]`). `CargarExcel` only stages+validates (see "Validación en dos pasos del cargue de Excel"); `ConfirmarCargue`/`DescartarCargue`/`RevisarCargue` complete the flow
 - **InformeTablasDatosController** - Data tables report with AI analysis via OpenAI (`[ValidarSesion]`). Endpoints: `InformeTablasDatos` (view), `ObtenerAnios`, `ObtenerVariables`, `ConsultarDatos`, `ConsultarConIA` (async), `ExportarExcel`
 - **InformeRelacionamientosController** - Relationships report (`[ValidarSesion]`)
-- **InformePYGController** - Estado de Resultados (PYG) gerencial: Real vs Presupuesto, mes + acumulado del año, KPIs, tendencia e insights de IA (`[ValidarSesion]`). Lee de `dbo.ModeloPYG` (+ `JOIN dbo.Rel_PYG` para el flag de subtotal) vía `InformePYGService` — no ejecuta `sp_ModeloPYG` en vivo. Endpoints: `Index` (view), `ObtenerAnios`, `ConsultarReporte`, `GenerarInsightsIA` (async, reutiliza el patrón de cupo/prompts/auditoría de `HomeController.ObtenerResumenIA` con el código `RESUMEN_PYG_GERENCIAL` en `GestorPrompts`), `ExportarExcel`. Ver "Estado de Resultados (PYG) Gerencial" más abajo
+- **InformePYGController** - Estado de Resultados (PYG) gerencial: Real vs Presupuesto, mes + acumulado del año, KPIs, tendencia e insights de IA (`[ValidarSesion]`). Lee de `dbo.ModeloPYG` (+ `JOIN dbo.Rel_PYG` para el flag de subtotal) vía `InformePYGService` — no ejecuta `sp_ModeloPYG` en vivo. Endpoints: `Index` (view), `ObtenerMeses`, `ConsultarReporte`, `GenerarInsightsIA` (async, reutiliza el patrón de cupo/prompts/auditoría de `HomeController.ObtenerResumenIA` con el código `RESUMEN_PYG_GERENCIAL` en `GestorPrompts`), `ExportarExcel` — los 3 últimos reciben el mismo `FiltrosPYG`. Ver "Estado de Resultados (PYG) Gerencial" más abajo
 - **ModeloController** - Financial model execution (Datos area, `[ValidarSesion]`)
 - **ModelosEjecucionController** - Model execution management/configuration (`[ValidarSesion]`)
 - **GestorEscenariosController** - CRUD for the `Escenarios` data-scenario catalog, Super Admin only (`[ValidarSesion][SoloSuperAdmin]`). `Eliminar`-equivalent (`Desactivar`) is always a soft-delete. See "Escenarios de datos"
@@ -224,8 +224,30 @@ tendencia (Chart.js) y una sección de insights generados por IA.
 - **Fuente de datos**: `dbo.ModeloPYG` (tabla ya materializada, la misma que hoy navega
   `InformeModelosController` de forma genérica) — **no** ejecuta `sp_ModeloPYG` en vivo.
   `Services/InformePYGService.ObtenerFilas` hace `SELECT ... FROM dbo.ModeloPYG m LEFT JOIN
-  dbo.Rel_PYG r ON r.Id = m.Ord WHERE m.IdEmpresa=@e AND m.IdEscenario=@esc AND m.Año=@a` (sin filtro de
-  mes — trae el año completo de una vez y filtra/agrega en C#).
+  dbo.Rel_PYG r ON r.Id = m.Ord WHERE m.IdEmpresa=@e AND m.IdEscenario=@esc AND m.Año BETWEEN @d AND @h`
+  (sin filtro de mes — trae los años completos de una vez y filtra/agrega en C#).
+- **Filtros (`FiltrosPYG`, v3)** — el panel replica el de `InformeLineaTiempo`: **rango continuo** de meses
+  con datos (`ObtenerMeses` → slider con los años debajo, puede cruzar años; atajos COMPARTIDOS
+  con Línea de Tiempo — ver "Atajos del rango de fechas (compartido)") + **Agrupar por** Mes/Trimestre/Año (solo afecta las tendencias). El botón
+  del panel dice "Generar informe" (`LineaTiempo_BtnGenerar`), igual que en Línea de Tiempo. Semántica con rango multi-año: **Período** = suma de los meses del rango;
+  **Acumulado** = acumulado del año final hasta el mes final; **YoY** = mismo rango desplazado 12 meses
+  (el servicio lee también `AnioDesde-1`). Filtros nuevos:
+  - **Comparar contra** (`PygComparar`: `ppto` = `ValorPresupuesto`/`ValorPresupuestoAcumulado`;
+    `pptoAjuste` = `ValorPresupuestoConAjuste`; `forecast` = `ValorForecast`). Para los dos últimos el
+    acumulado se calcula sumando sus meses ene..mes final (no tienen columna acumulada) — ⚠️ se asume que
+    ambas columnas son mensuales, como `ValorPresupuesto`; si alguna resultara ser ya acumulada, ajustar
+    `InformePYGService.ValoresLinea`. Todo lo que dice "Presupuesto" en la vista/Excel/PDF toma el nombre del
+    comparativo elegido; las propiedades `*Presupuesto*` del modelo guardan el comparativo.
+  - **Comparar con escenario** (default "Ninguno"; la lista la arma JS sin el escenario principal, y los
+    escenarios sin filas en `ModeloPYG` para la empresa — `ObtenerMeses` devuelve `escenariosConDatos` —
+    quedan deshabilitados como "Escenario X (sin datos)" + tooltip — texto plano en la opción, sin plantilla ni CSS de Select2): agrega `*RealEscenario`/`*VariacionEscenarioPorcentual` (filas),
+    `*RealPctEscenario` (KPIs) y `RealEscenario` (tendencias → 3ª línea cian). Si ese escenario no tiene
+    datos en el rango, `HayEscenarioComparar=false` y la vista muestra `PYG_EscenarioSinDatosNota`.
+  - **Detalle de la tabla** (Todas las cuentas / Solo subtotales): solo cliente (no reconsulta); se respeta
+    en PDF y Excel (`ExportarExcel(filtros, soloSubtotales)`).
+  - `PygReporteViewModel` expone `EbitdaFila`/`UtilidadNetaFila` (además de `IngresosFila`) para los
+    encabezados de tendencia, y `PygPuntoTendencia.EnRango` (calculado en el servidor) para el sombreado.
+  - El Excel ahora formatea las columnas % como porcentaje (antes todas iban con `#,##0.0` y los % salían 0,0).
 - **`Mes` se guarda como abreviatura de 3 letras en español** (`'Ene'..'Dic'`), igual que las demás
   tablas de Ejecución de Modelos (ver `InformeTablasDatosService.ConvertirNumeroAMes`) — el servicio
   convierte a entero 1-12 al leer el `SqlDataReader` y **ordena en C#**, no en SQL (un `ORDER BY Mes`
@@ -279,6 +301,57 @@ tendencia (Chart.js) y una sección de insights generados por IA.
     backend. No aplica a columnas en pesos (Var. $), solo a porcentuales.
   - Encabezado renombrado de "Estado de Resultados — PYG Gerencial" a **"Informe de estado de resultados
     (PYG)"** (`PYG_PageTitle`) — mismo contenido, título más corto y genérico.
+- **Rediseño v2 del contenido de resultados** (handoff de diseño "opción 1b"; el panel de filtros no cambió).
+  Clases `.pyg2-*` en `Assets/css/informe-pyg.css` (que ahora también define `.lt-card`/`.lt-empty`, antes
+  solo existentes en el `<style>` de `InformeLineaTiempo.cshtml`), textos en claves `PYG_V2_*`. Estructura:
+  encabezado con chips (período · escenario · acumulado · comparado) + menú de Unidad + botones Excel/PDF
+  (el `<form id="frmExportarExcelPYG">` quedó oculto y lo dispara el botón) → 4 KPIs (Ingresos + 3 márgenes,
+  conmutador Período/Acumulado) → cascada con valores/conectores dibujados por plugin inline + "Lo más
+  relevante" → 3 tendencias con el rango consultado sombreado → tabla `.pyg2-table` con vistas
+  Período/Acumulado/Ambos y columna "vs {año ant.}" opcional → insights en 3 tarjetas.
+  - `PygReporteViewModel.IngresosFila` (nuevo, armado en `InformePYGService.ConstruirReporte`) alimenta la
+    tarjeta KPI de Ingresos — la vista no busca la fila de ingresos por texto dentro de `Filas`.
+  - Preferencias de vista (`kpiVista`, `vistaTabla`, `mostrarYoY`, `unidad`) se recuerdan por navegador en
+    `localStorage['pyg.prefs']`. Todo el pintado usa `reporte.MesDesde/MesHasta` (no el slider, que el
+    usuario pudo mover después de consultar).
+  - **PDF gerencial** (`generarPdf` → `construirPdfPYG`, jsPDF puro, A4 horizontal, textos en `_pyg.textos.pdf`
+    / claves `PYG_Pdf_*`): **pág. 1 resumen ejecutivo** (banda con degradado de marca, empresa, chips de
+    contexto, 4 KPIs con deltas, insights en 3 tarjetas —o nota si no se generaron— y "Lo más relevante" en 4
+    tarjetas); **pág. 2 análisis** (cascada a ancho completo + 3 tendencias con leyenda de líneas);
+    **pág. 3+ tabla** (misma vista Período/Acumulado/Ambos, columna YoY/escenario y nivel de detalle que en
+    pantalla; encabezado repetido; subtotales/total resaltados; variaciones en verde/rojo y punto en las
+    críticas). Pie en todas: empresa · período · confidencial · "Página X de Y". Las KPIs y los destacados
+    salen de `datosKpisPYG()`/`datosDestacadosPYG()`, compartidos con la pantalla. Las gráficas se
+    re-renderizan a 3x y a la proporción exacta de su caja (`capturarChartPdf(chart, anchoPx, altoPx)`) y se
+    exportan como **JPEG sobre blanco** — jsPDF incrusta PNG sin comprimir (el PDF pasaba de 10 MB; así ~0,4 MB).
+  - **Prompt de insights**: si no existe (o está inactivo) `RESUMEN_PYG_GERENCIAL` en `GestorPrompts` —
+    caso actual en la BD — se usa `InformePYGController.PromptResumenPygPorDefecto` (pide exactamente 3 líneas
+    "Logro:", "Alerta:", "Eficiencia:" con la cifra clave en **negrita**), NO el genérico de
+    `IAService.ConstruirPrompt` ("3 a 5 párrafos"), que era por lo que antes salía texto corrido sin tarjetas.
+  - **Insights sin tocar el prompt**: `separarInsights()` corta la respuesta por las palabras clave
+    Logro/Alerta/Eficiencia al inicio de línea (tolera viñetas, negritas, `#`); si falta alguna de las 3,
+    se muestra el markdown completo como antes. Si un Super Admin cambia el prompt `RESUMEN_PYG_GERENCIAL`,
+    debe mantener esas 3 etiquetas para conservar las tarjetas.
+
+### Atajos del rango de fechas (compartido: Línea de Tiempo + PYG)
+
+Los dos informes con slider de rango continuo (`InformeLineaTiempo`, `InformePYG`) usan EXACTAMENTE los
+mismos atajos, con una sola implementación:
+- **Lógica**: `Assets/js/rango-atajos.js` (`window.RangoAtajos`: `indices`, `etiquetaVentana`,
+  `pintarBotones`, `porDefecto`), sin dependencias; cada vista solo delega en él.
+- **Markup/estilo**: `.rango-atajos` > 2 `.rango-atajos-grupo` (en `informe-linea-tiempo.css`), barra
+  segmentada compacta en su propia fila bajo "Rango de fechas" — cabe en una línea en pantallas de 14"
+  (~1100 px útiles). Columna "Agrupar por" de `.lt-grid-rango` = 170 px.
+- **Grupos**: `[Todo]` (todos los meses con datos) | `[Año en curso ·
+  Últimos 6 meses · Último trimestre · Mes anterior · Mes actual]`, todos **relativos a la fecha de HOY del servidor** (`hoy` =
+  `DateTime.Now` al renderizar, equivalente a GETDATE(); NO el reloj del navegador ni el último mes
+  cargado). Ventanas terminando en el mes de hoy (Último trimestre = últimos 3 meses; Mes anterior en
+  enero = diciembre del año anterior), intersectadas con los meses que tienen datos. Si ningún mes de la
+  ventana tiene datos, el atajo queda `.no-disponible` (clase + `aria-disabled`, NO el atributo `disabled`,
+  que en Chrome impide ver el tooltip); el tooltip muestra la ventana exacta o el motivo.
+- **Default** al cargar meses: "Año en curso"; si el año de hoy no tiene datos, "Todo".
+- Textos en claves genéricas `Rango_*` (ambos `.resx`). Un solo mes seleccionado se muestra como "Ago 2026"
+  (sin "Ago 2026 → Ago 2026").
 
 ### Excel Import Logging
 

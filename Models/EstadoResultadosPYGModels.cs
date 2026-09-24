@@ -2,6 +2,50 @@ using System.Collections.Generic;
 
 namespace bufinscustomers.Models
 {
+    /// <summary>Filtros del informe PYG (consulta, insights IA y exportación a Excel usan los mismos).
+    /// El rango es continuo y puede cruzar años (mismo modelo que el Informe de Línea de Tiempo).</summary>
+    public class FiltrosPYG
+    {
+        public int IdEmpresa { get; set; }
+        public byte IdEscenario { get; set; } = 1;
+        public int AnioDesde { get; set; }
+        public int MesDesde { get; set; }
+        public int AnioHasta { get; set; }
+        public int MesHasta { get; set; }
+
+        /// <summary>Contra qué se compara el Real — ver PygComparar. Por defecto el presupuesto.</summary>
+        public string Comparar { get; set; } = PygComparar.Presupuesto;
+
+        /// <summary>Segundo escenario a comparar contra el principal (columna extra). null = no comparar.</summary>
+        public byte? IdEscenarioComparar { get; set; }
+
+        /// <summary>"Mes" | "Trimestre" | "Anio" — agrupación de las gráficas de tendencia.</summary>
+        public string Agrupar { get; set; } = "Mes";
+    }
+
+    /// <summary>Códigos de "Comparar contra" (la vista los traduce; el servicio no lee resx).</summary>
+    public static class PygComparar
+    {
+        public const string Presupuesto = "ppto";
+        public const string PresupuestoAjuste = "pptoAjuste";
+        public const string Forecast = "forecast";
+
+        public static string Normalizar(string valor)
+        {
+            if (string.Equals(valor, PresupuestoAjuste, System.StringComparison.OrdinalIgnoreCase)) return PresupuestoAjuste;
+            if (string.Equals(valor, Forecast, System.StringComparison.OrdinalIgnoreCase)) return Forecast;
+            return Presupuesto;
+        }
+    }
+
+    /// <summary>Un mes con datos en dbo.ModeloPYG, para poblar el slider de rango.</summary>
+    public class PygMesDisponible
+    {
+        public int Anio { get; set; }
+        public int Mes { get; set; }
+        public string Etiqueta { get; set; }
+    }
+
     /// <summary>Una fila cruda de dbo.ModeloPYG (resultado materializado de sp_ModeloPYG), ya con el
     /// flag de subtotal resuelto vía JOIN a dbo.Rel_PYG.</summary>
     public class PygFilaModelo
@@ -53,6 +97,13 @@ namespace bufinscustomers.Models
         public decimal? PeriodoVariacionYoYPorcentual { get; set; }
         public decimal? AcumRealAnioAnterior { get; set; }
         public decimal? AcumVariacionYoYPorcentual { get; set; }
+
+        /// <summary>Real del escenario de comparación (FiltrosPYG.IdEscenarioComparar) y la variación del
+        /// escenario principal contra él — null cuando no se pidió comparar escenarios.</summary>
+        public decimal? PeriodoRealEscenario { get; set; }
+        public decimal? PeriodoVariacionEscenarioPorcentual { get; set; }
+        public decimal? AcumRealEscenario { get; set; }
+        public decimal? AcumVariacionEscenarioPorcentual { get; set; }
     }
 
     /// <summary>Un tramo de la cascada (waterfall) Ingresos → Utilidad Neta del período seleccionado
@@ -71,14 +122,21 @@ namespace bufinscustomers.Models
         public decimal? Delta { get; set; }
     }
 
-    /// <summary>Un punto de la serie de tendencia (Ingresos/EBITDA/Utilidad Neta, Real vs Presupuesto).</summary>
+    /// <summary>Un punto de la serie de tendencia (Ingresos/EBITDA/Utilidad Neta, Real vs comparativo),
+    /// ya agregado al nivel pedido en FiltrosPYG.Agrupar (mes, trimestre o año).</summary>
     public class PygPuntoTendencia
     {
         public int Año { get; set; }
+        /// <summary>Mes 1-12 (agrupado por Mes), trimestre 1-4 (por Trimestre) o 0 (por Año).</summary>
         public int Mes { get; set; }
         public string Etiqueta { get; set; }
         public decimal Real { get; set; }
+        /// <summary>Valor comparativo elegido en "Comparar contra" (presupuesto, presupuesto con ajuste o forecast).</summary>
         public decimal Presupuesto { get; set; }
+        /// <summary>Real del escenario de comparación — null si no se pidió comparar escenarios.</summary>
+        public decimal? RealEscenario { get; set; }
+        /// <summary>true si el punto (mes/trimestre/año) toca el rango consultado — la vista lo sombrea.</summary>
+        public bool EnRango { get; set; }
     }
 
     /// <summary>KPI de margen (Bruto/EBITDA/Neto) para las tarjetas superiores, Periodo y Acumulado.</summary>
@@ -93,6 +151,10 @@ namespace bufinscustomers.Models
         /// <summary>Margen del mismo período del año anterior — null si ese año no tiene datos.</summary>
         public decimal? PeriodoRealPctAnioAnterior { get; set; }
         public decimal? AcumRealPctAnioAnterior { get; set; }
+
+        /// <summary>Margen del escenario de comparación — null si no se pidió comparar escenarios.</summary>
+        public decimal? PeriodoRealPctEscenario { get; set; }
+        public decimal? AcumRealPctEscenario { get; set; }
     }
 
     /// <summary>Resultado completo consumido por el controlador/vista del Estado de Resultados PYG.</summary>
@@ -100,13 +162,31 @@ namespace bufinscustomers.Models
     {
         public int IdEmpresa { get; set; }
         public byte IdEscenario { get; set; }
+        /// <summary>= AnioHasta (año del bloque "Acumulado"); se conserva por compatibilidad.</summary>
         public int Año { get; set; }
-        /// <summary>Rango de meses elegido en el slider (ambos inclusive, 1-12). El bloque "Acumulado"
-        /// siempre se toma en MesHasta (ValorAcumulado ya es un acumulado corrido hasta ese mes).</summary>
+        /// <summary>Rango elegido en el slider (ambos inclusive), puede cruzar años. El bloque "Acumulado"
+        /// es el acumulado del año AnioHasta hasta MesHasta (ValorAcumulado ya es un corrido hasta ese mes).</summary>
+        public int AnioDesde { get; set; }
         public int MesDesde { get; set; }
+        public int AnioHasta { get; set; }
         public int MesHasta { get; set; }
+
+        /// <summary>Código PygComparar efectivamente usado para las columnas "Presupuesto"/variación.</summary>
+        public string Comparar { get; set; }
+        public string Agrupar { get; set; }
+        /// <summary>true si se pidió comparar contra otro escenario y ese escenario tiene datos en el rango.</summary>
+        public bool HayEscenarioComparar { get; set; }
+        public byte? IdEscenarioComparar { get; set; }
+
+        /// <summary>Líneas clave para KPIs y encabezados de tendencia (la vista no las busca por texto).</summary>
+        public PygFilaReporte EbitdaFila { get; set; }
+        public PygFilaReporte UtilidadNetaFila { get; set; }
         public List<PygFilaReporte> Filas { get; set; } = new List<PygFilaReporte>();
         public List<PygKpiMargen> Kpis { get; set; } = new List<PygKpiMargen>();
+        /// <summary>Línea de Ingresos (Real/Ppto/año anterior del período y acumulado) para la tarjeta KPI
+        /// "Ingresos" — se expone aparte porque su Descripcion puede variar entre empresas y la vista no
+        /// debe buscarla por texto dentro de Filas.</summary>
+        public PygFilaReporte IngresosFila { get; set; }
         public List<PygPuntoTendencia> TendenciaIngresos { get; set; } = new List<PygPuntoTendencia>();
         public List<PygPuntoTendencia> TendenciaEbitda { get; set; } = new List<PygPuntoTendencia>();
         public List<PygPuntoTendencia> TendenciaUtilidadNeta { get; set; } = new List<PygPuntoTendencia>();

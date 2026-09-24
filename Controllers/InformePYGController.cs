@@ -25,6 +25,24 @@ namespace bufinscustomers.Controllers
     public class InformePYGController : BaseController
     {
         private readonly InformePYGService _service = new InformePYGService();
+
+        /// <summary>Prompt por defecto de los insights del PYG (cuando no existe RESUMEN_PYG_GERENCIAL en
+        /// GestorPrompts). La vista corta la respuesta por las etiquetas "Logro:", "Alerta:" y "Eficiencia:"
+        /// para pintar 3 tarjetas — cualquier prompt personalizado debe conservar esas 3 etiquetas.</summary>
+        private const string PromptResumenPygPorDefecto =
+            "Prepara el resumen ejecutivo del Estado de Resultados (P&G) para la gerencia.\n" +
+            "Cómo leer los datos: los campos \"Periodo*\" son el período consultado y \"Acum*\" el acumulado del año; " +
+            "los campos \"*Presupuesto*\" contienen el valor comparativo indicado en los filtros (presupuesto, presupuesto " +
+            "con ajuste o forecast); \"*YoY*\" es la variación contra el mismo período del año anterior y \"*Escenario*\" " +
+            "la variación contra el escenario de comparación, si existe. Los porcentajes vienen como fracción (0,05 = 5%). " +
+            "En líneas con EsGastoOCosto = true, un valor real MAYOR al comparativo es DESFAVORABLE.\n\n" +
+            "Responde EXACTAMENTE con estas 3 líneas, en este orden, sin títulos, viñetas, introducción ni conclusión:\n" +
+            "Logro: <el resultado más positivo del período, con cifras>\n" +
+            "Alerta: <el desvío desfavorable más importante: costos o gastos por encima de lo esperado, caída de ingresos o de márgenes, con cifras>\n" +
+            "Eficiencia: <una oportunidad concreta para mejorar costos, gastos o márgenes, apoyada en los datos>\n\n" +
+            "Reglas: cada línea tiene 1 o 2 frases y máximo 45 palabras; menciona la cuenta o el indicador y su variación " +
+            "en % y/o en millones de pesos con formato colombiano (por ejemplo 170,0 M); pon en **negrita** la cifra " +
+            "principal de cada línea; usa solo cifras presentes en los datos y nunca inventes valores.";
         private readonly InformeTablasDatosService _empresaService = new InformeTablasDatosService();
 
         public ActionResult Index()
@@ -46,35 +64,40 @@ namespace bufinscustomers.Controllers
             return View("~/Views/Informes/InformePYG.cshtml");
         }
 
+        /// <summary>Meses con datos (año+mes, en orden cronológico) para el slider de rango continuo.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public JsonResult ObtenerAnios(int idEmpresa, byte idEscenario)
+        public JsonResult ObtenerMeses(int idEmpresa, byte idEscenario)
         {
             try
             {
                 if (!TieneAccesoEmpresa(idEmpresa))
                     return Json(new { success = false, message = R("Common_SinPermisos") });
 
-                var años = _service.ObtenerAñosDisponibles(idEmpresa, idEscenario);
-                return Json(new { success = true, años });
+                // camelCase explícito: MVC 5 serializa el PascalCase de C# tal cual (mismo criterio que
+                // InformeLineaTiempoController.ObtenerRangoMeses, cuyo slider se reutiliza aquí).
+                var meses = _service.ObtenerMesesDisponibles(idEmpresa, idEscenario)
+                    .Select(m => new { anio = m.Anio, mes = m.Mes, etiqueta = m.Etiqueta });
+                var escenariosConDatos = _service.ObtenerEscenariosConDatos(idEmpresa);
+                return Json(new { success = true, meses, escenariosConDatos });
             }
             catch (Exception ex)
             {
-                AppLogger.Error(ex, "InformePYGController.ObtenerAnios");
+                AppLogger.Error(ex, "InformePYGController.ObtenerMeses");
                 return Json(new { success = false, message = ex.Message });
             }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public JsonResult ConsultarReporte(int idEmpresa, byte idEscenario, int anio, int mesDesde, int mesHasta)
+        public JsonResult ConsultarReporte(FiltrosPYG filtros)
         {
             try
             {
-                if (!TieneAccesoEmpresa(idEmpresa))
+                if (filtros == null || !TieneAccesoEmpresa(filtros.IdEmpresa))
                     return Json(new { success = false, message = R("Common_SinPermisos") });
 
-                var reporte = _service.ConstruirReporte(idEmpresa, idEscenario, anio, mesDesde, mesHasta);
+                var reporte = _service.ConstruirReporte(filtros);
                 var jsonResult = Json(new { success = true, reporte });
                 jsonResult.MaxJsonLength = int.MaxValue;
                 return jsonResult;
@@ -90,14 +113,15 @@ namespace bufinscustomers.Controllers
         /// calculado, replicando el patrón de cupo/prompts/auditoría de HomeController.ObtenerResumenIA.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<JsonResult> GenerarInsightsIA(int idEmpresa, byte idEscenario, int anio, int mesDesde, int mesHasta)
+        public async Task<JsonResult> GenerarInsightsIA(FiltrosPYG filtros)
         {
             try
             {
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
+                int idEmpresa = filtros?.IdEmpresa ?? 0;
 
-                if (!TieneAccesoEmpresa(idEmpresa))
+                if (filtros == null || !TieneAccesoEmpresa(idEmpresa))
                     return Json(new IAConsultaResponse { Exitoso = false, Error = R("Common_SinPermisos") });
 
                 if (!esAdmin)
@@ -111,7 +135,7 @@ namespace bufinscustomers.Controllers
                         return Json(new IAConsultaResponse { Exitoso = false, Error = R("IA_LimiteConsultasMensaje") });
                 }
 
-                var reporte = _service.ConstruirReporte(idEmpresa, idEscenario, anio, mesDesde, mesHasta);
+                var reporte = _service.ConstruirReporte(filtros);
                 if (reporte.SinDatos)
                     return Json(new IAConsultaResponse { Exitoso = false, Error = R("PYG_SinDatosDesc") });
 
@@ -131,13 +155,20 @@ namespace bufinscustomers.Controllers
 
                 var iaService = new IAService(apiKey);
 
+                // Si un Super Admin crea el prompt RESUMEN_PYG_GERENCIAL en el Gestor de Prompts, ese manda;
+                // si no existe (o está inactivo) se usa el prompt por defecto del informe, no el genérico de IAService.
                 string instrucciones = new GestorPromptsService().ObtenerPorCodigo("RESUMEN_PYG_GERENCIAL")?.TextoPrompt;
+                if (string.IsNullOrWhiteSpace(instrucciones))
+                    instrucciones = PromptResumenPygPorDefecto;
                 string guardrail = new GestorPromptsService().ObtenerPorCodigo("GUARDRAIL_SISTEMA")?.TextoPrompt;
                 string contextoNegocio = new GestorPromptsService().ObtenerPorCodigo("CONTEXTO_NEGOCIO_BUFINS")?.TextoPrompt;
 
                 var empresaInfo = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
                 string nombreEmpresa = empresaInfo?.Nombre ?? "—";
-                string filtrosDescripcion = $"Empresa {nombreEmpresa}, año {anio}, meses {mesDesde}-{mesHasta}, escenario {idEscenario}";
+                // Descripción en texto fijo (va al prompt y a AuditoriaAnalisisIA, no a la UI).
+                string filtrosDescripcion = $"Empresa {nombreEmpresa}, periodo {reporte.MesDesde:00}/{reporte.AnioDesde} a {reporte.MesHasta:00}/{reporte.AnioHasta}, " +
+                    $"escenario {reporte.IdEscenario}, comparado contra {reporte.Comparar}" +
+                    (reporte.HayEscenarioComparar ? $", escenario de comparacion {reporte.IdEscenarioComparar}" : "");
 
                 var request = new IAConsultaRequest
                 {
@@ -178,54 +209,74 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        public ActionResult ExportarExcel(int idEmpresa, byte idEscenario, int anio, int mesDesde, int mesHasta)
+        public ActionResult ExportarExcel(FiltrosPYG filtros, bool soloSubtotales = false)
         {
             try
             {
-                if (!TieneAccesoEmpresa(idEmpresa))
+                if (filtros == null || !TieneAccesoEmpresa(filtros.IdEmpresa))
                 {
                     TempData["ErrorMessage"] = R("Common_SinPermisos");
                     return RedirectToAction("Index");
                 }
 
-                var reporte = _service.ConstruirReporte(idEmpresa, idEscenario, anio, mesDesde, mesHasta);
+                var reporte = _service.ConstruirReporte(filtros);
                 if (reporte.SinDatos || reporte.Filas.Count == 0)
                 {
                     TempData["InfoMessage"] = R("PYG_SinDatosDesc");
                     return RedirectToAction("Index");
                 }
 
-                var empresaInfo = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+                var empresaInfo = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa);
                 string nombreEmpresa = empresaInfo?.Nombre ?? "Empresa";
-                string nombreMesDesde = reporte.MesDesde >= 1 && reporte.MesDesde <= 12 ? R("Common_Mes" + reporte.MesDesde) : reporte.MesDesde.ToString();
-                string nombreMesHasta = reporte.MesHasta >= 1 && reporte.MesHasta <= 12 ? R("Common_Mes" + reporte.MesHasta) : reporte.MesHasta.ToString();
-                string nombrePeriodo = reporte.MesDesde == reporte.MesHasta
-                    ? nombreMesDesde + " " + anio
-                    : nombreMesDesde + "-" + nombreMesHasta + " " + anio;
-                string nombreMesHastaConAnio = nombreMesHasta + " " + anio;
+                string nombrePeriodo = (reporte.AnioDesde == reporte.AnioHasta && reporte.MesDesde == reporte.MesHasta)
+                    ? NombreMes(reporte.MesDesde) + " " + reporte.AnioDesde
+                    : (reporte.AnioDesde == reporte.AnioHasta
+                        ? NombreMes(reporte.MesDesde) + " - " + NombreMes(reporte.MesHasta) + " " + reporte.AnioHasta
+                        : NombreMes(reporte.MesDesde) + " " + reporte.AnioDesde + " - " + NombreMes(reporte.MesHasta) + " " + reporte.AnioHasta);
+                string nombreMesHastaConAnio = NombreMes(reporte.MesHasta) + " " + reporte.AnioHasta;
+
+                string nombreEscenarioComp = null;
+                if (reporte.HayEscenarioComparar)
+                {
+                    nombreEscenarioComp = EscenarioCacheHelper.ObtenerEscenariosCacheados()
+                        .FirstOrDefault(e => e.Id == reporte.IdEscenarioComparar)?.Nombre ?? ("#" + reporte.IdEscenarioComparar);
+                }
+
+                // Columnas de cada bloque (Periodo / Acumulado): encabezado, valor y formato — los % van
+                // como fracción con formato de porcentaje (antes salían con formato numérico y se veían 0,0).
+                const string fmtNum = "#,##0.0", fmtPct = "0.0%";
+                var columnas = new List<Tuple<string, Func<PygFilaReporte, bool, decimal?>, string>>
+                {
+                    Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_ColReal"), (f, p) => p ? f.PeriodoReal : f.AcumReal, fmtNum),
+                    Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_CompCorto_" + reporte.Comparar), (f, p) => p ? f.PeriodoPresupuesto : f.AcumPresupuesto, fmtNum),
+                    Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_ColVarAbs"), (f, p) => p ? f.PeriodoVariacionAbsoluta : f.AcumVariacionAbsoluta, fmtNum),
+                    Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_ColVarPct"), (f, p) => p ? f.PeriodoVariacionPorcentual : f.AcumVariacionPorcentual, fmtPct),
+                    Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_ColMargen"), (f, p) => p ? f.PeriodoMargen : f.AcumMargen, fmtPct)
+                };
+                if (reporte.HayAnioAnterior)
+                    columnas.Add(Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_ColVarYoY"), (f, p) => p ? f.PeriodoVariacionYoYPorcentual : f.AcumVariacionYoYPorcentual, fmtPct));
+                if (reporte.HayEscenarioComparar)
+                    columnas.Add(Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(string.Format(R("PYG_ColVsEscenarioFmt"), nombreEscenarioComp), (f, p) => p ? f.PeriodoVariacionEscenarioPorcentual : f.AcumVariacionEscenarioPorcentual, fmtPct));
+
+                int n = columnas.Count, totalCols = 1 + n * 2;
+                var filas = reporte.Filas.Where((f, i) => !soloSubtotales || f.EsSubtotal || i == reporte.Filas.Count - 1).ToList();
 
                 using (var package = new XLWorkbook())
                 {
                     var ws = package.Worksheets.Add("PYG");
 
-                    string[] encabezados =
-                    {
-                        R("PYG_ColEstructura"),
-                        R("PYG_ColReal"), R("PYG_ColPresupuesto"), R("PYG_ColVarAbs"), R("PYG_ColVarPct"), R("PYG_ColMargen"), R("PYG_ColVarYoY"),
-                        R("PYG_ColReal"), R("PYG_ColPresupuesto"), R("PYG_ColVarAbs"), R("PYG_ColVarPct"), R("PYG_ColMargen"), R("PYG_ColVarYoY")
-                    };
-
                     ws.Cell(1, 1).Value = R("PYG_ColEstructura");
                     ws.Range(1, 1, 2, 1).Merge();
                     ws.Cell(1, 2).Value = string.Format(R("PYG_ColMesGrupoFmt"), nombrePeriodo);
-                    ws.Range(1, 2, 1, 7).Merge();
-                    ws.Cell(1, 8).Value = string.Format(R("PYG_ColAcumGrupoFmt"), nombreMesHastaConAnio);
-                    ws.Range(1, 8, 1, 13).Merge();
+                    ws.Range(1, 2, 1, 1 + n).Merge();
+                    ws.Cell(1, 2 + n).Value = string.Format(R("PYG_ColAcumGrupoFmt"), nombreMesHastaConAnio);
+                    ws.Range(1, 2 + n, 1, totalCols).Merge();
 
-                    for (int col = 2; col <= 13; col++)
-                        ws.Cell(2, col).Value = encabezados[col - 1];
+                    for (int b = 0; b < 2; b++)
+                        for (int c = 0; c < n; c++)
+                            ws.Cell(2, 2 + b * n + c).Value = columnas[c].Item1;
 
-                    var headerRange = ws.Range(1, 1, 2, 13);
+                    var headerRange = ws.Range(1, 1, 2, totalCols);
                     headerRange.Style.Font.Bold = true;
                     headerRange.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
                     headerRange.Style.Font.FontColor = XLColor.White;
@@ -235,27 +286,22 @@ namespace bufinscustomers.Controllers
                     headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
                     int fila = 3;
-                    foreach (var f in reporte.Filas)
+                    foreach (var f in filas)
                     {
-                        int col = 1;
-                        ws.Cell(fila, col++).Value = f.Descripcion;
-                        ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.PeriodoReal);
-                        ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.PeriodoPresupuesto);
-                        ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.PeriodoVariacionAbsoluta);
-                        ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.PeriodoVariacionPorcentual);
-                        ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.PeriodoMargen);
-                        ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.PeriodoVariacionYoYPorcentual);
-                        ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.AcumReal);
-                        ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.AcumPresupuesto);
-                        ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.AcumVariacionAbsoluta);
-                        ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.AcumVariacionPorcentual);
-                        ExcelCellHelper.SetValue(ws.Cell(fila, col++), f.AcumMargen);
-                        ExcelCellHelper.SetValue(ws.Cell(fila, col), f.AcumVariacionYoYPorcentual);
+                        ws.Cell(fila, 1).Value = f.Descripcion;
+                        for (int b = 0; b < 2; b++)
+                        {
+                            for (int c = 0; c < n; c++)
+                            {
+                                var celda = ws.Cell(fila, 2 + b * n + c);
+                                ExcelCellHelper.SetValue(celda, columnas[c].Item2(f, b == 0));
+                                celda.Style.NumberFormat.Format = columnas[c].Item3;
+                            }
+                        }
 
-                        var filaRange = ws.Range(fila, 1, fila, 13);
+                        var filaRange = ws.Range(fila, 1, fila, totalCols);
                         filaRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
                         filaRange.Style.Border.OutsideBorderColor = XLColor.FromColor(Color.LightGray);
-                        filaRange.Style.NumberFormat.Format = "#,##0.0";
 
                         if (f.EsSubtotal)
                         {
@@ -271,10 +317,10 @@ namespace bufinscustomers.Controllers
                     }
 
                     ws.Columns().AdjustToContents();
-                    ws.Range(2, 1, fila - 1, 13).SetAutoFilter();
+                    ws.Range(2, 1, fila - 1, totalCols).SetAutoFilter();
                     ws.SheetView.Freeze(2, 1);
 
-                    string nombreArchivo = $"PYG_{nombreEmpresa}_{anio}_{reporte.MesDesde:00}-{reporte.MesHasta:00}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                    string nombreArchivo = $"PYG_{nombreEmpresa}_{reporte.AnioDesde}{reporte.MesDesde:00}-{reporte.AnioHasta}{reporte.MesHasta:00}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
                     nombreArchivo = string.Join("_", nombreArchivo.Split(Path.GetInvalidFileNameChars()));
 
                     byte[] fileBytes;
@@ -292,6 +338,11 @@ namespace bufinscustomers.Controllers
                 TempData["ErrorMessage"] = "Error al exportar a Excel: " + ex.Message;
                 return RedirectToAction("Index");
             }
+        }
+
+        private string NombreMes(int mes)
+        {
+            return mes >= 1 && mes <= 12 ? R("Common_Mes" + mes) : mes.ToString();
         }
 
         private bool TieneAccesoEmpresa(int idEmpresa)

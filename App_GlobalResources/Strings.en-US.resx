@@ -430,8 +430,15 @@
   <data name="LineaTiempo_Agrupar_AnioAyuda" xml:space="preserve"><value>Sum by year</value></data>
   <data name="LineaTiempo_LabelRango" xml:space="preserve"><value>Date range</value></data>
   <data name="LineaTiempo_RangoTodo" xml:space="preserve"><value>All</value></data>
-  <data name="LineaTiempo_RangoUltimoAnio" xml:space="preserve"><value>Last year</value></data>
-  <data name="LineaTiempo_RangoUltimos6Meses" xml:space="preserve"><value>Last 6 months</value></data>
+  <!-- RANGO DE FECHAS — atajos compartidos (Línea de Tiempo + PYG, Assets/js/rango-atajos.js) -->
+  <data name="Rango_Todo" xml:space="preserve"><value>All</value></data>
+  <data name="Rango_AnioEnCurso" xml:space="preserve"><value>Year to date</value></data>
+  <data name="Rango_Ultimos6Meses" xml:space="preserve"><value>Last 6 months</value></data>
+  <data name="Rango_UltimoTrimestre" xml:space="preserve"><value>Last quarter</value></data>
+  <data name="Rango_MesAnterior" xml:space="preserve"><value>Previous month</value></data>
+  <data name="Rango_MesActual" xml:space="preserve"><value>Current month</value></data>
+  <data name="Rango_TooltipFmt" xml:space="preserve"><value>Based on today's date: {0}</value></data>
+  <data name="Rango_SinDatosFmt" xml:space="preserve"><value>{0}: no data loaded yet</value></data>
   <data name="LineaTiempo_BadgeMes" xml:space="preserve"><value>month</value></data>
   <data name="LineaTiempo_BadgeMeses" xml:space="preserve"><value>months</value></data>
   <data name="LineaTiempo_ComparaEscenario" xml:space="preserve"><value>Compare with another scenario (optional)</value></data>
@@ -1779,14 +1786,13 @@
 
   <!-- PYG MANAGEMENT REPORT (INCOME STATEMENT) -->
   <data name="PYG_PageTitle" xml:space="preserve"><value>Income Statement Report (P&amp;L)</value></data>
-  <data name="PYG_EstadoInicialTitulo" xml:space="preserve"><value>Choose company, scenario, year and month</value></data>
-  <data name="PYG_EstadoInicialDesc" xml:space="preserve"><value>Select the filters and click Search to generate the Income Statement.</value></data>
+  <data name="PYG_EstadoInicialTitulo" xml:space="preserve"><value>Choose company, scenario and period</value></data>
+  <data name="PYG_EstadoInicialDesc" xml:space="preserve"><value>Select the filters and click Generate report to see the Income Statement.</value></data>
   <data name="PYG_SinDatosTitulo" xml:space="preserve"><value>No data for this selection</value></data>
   <data name="PYG_SinDatosDesc" xml:space="preserve"><value>This company doesn't have PYG model results for the selected year yet. Run the model from Data &gt; Model Execution and search again.</value></data>
   <data name="PYG_JS_Consultando" xml:space="preserve"><value>Loading the Income Statement…</value></data>
   <data name="PYG_ErrorServidor" xml:space="preserve"><value>A connection error occurred with the server. Please try again.</value></data>
   <data name="PYG_LabelPeriodo" xml:space="preserve"><value>Period</value></data>
-  <data name="PYG_RangoUltimoTrimestre" xml:space="preserve"><value>Last quarter</value></data>
   <data name="PYG_TablaTitulo" xml:space="preserve"><value>Income Statement</value></data>
   <data name="PYG_UnidadMillones" xml:space="preserve"><value>Figures in millions of pesos (COP)</value></data>
   <data name="PYG_UnidadMilesCop" xml:space="preserve"><value>Figures in thousands of pesos (COP)</value></data>
@@ -1833,4 +1839,94 @@
   <data name="PYG_BtnExportarPdf" xml:space="preserve"><value>Export to PDF</value></data>
   <data name="PYG_PdfGenerando" xml:space="preserve"><value>Generating PDF…</value></data>
   <data name="PYG_PdfFooter" xml:space="preserve"><value>Bufins · Income Statement (P&amp;L) Management Report</value></data>
+  <!-- PYG — PDF gerencial -->
+  <data name="PYG_Pdf_PaginaFmt" xml:space="preserve"><value>Page {0} of {1}</value></data>
+  <data name="PYG_Pdf_Confidencial" xml:space="preserve"><value>Internal use · Confidential</value></data>
+  <data name="PYG_Pdf_SinInsights" xml:space="preserve"><value>AI insights were not generated for this query. Click “Generate analysis” on screen before exporting to include them in the report.</value></data>
+  <data name="PYG_Pdf_Error" xml:space="preserve"><value>The PDF could not be generated. Please try again.</value></data>
+  <data name="PYG_Pdf_Resumen" xml:space="preserve"><value>Executive summary</value></data>
+  <data name="PYG_Pdf_Analisis" xml:space="preserve"><value>Period analysis</value></data>
+  <!-- PYG — rediseño contenido de resultados (v2) -->
+  <data name="PYG_V2_Subtitulo" xml:space="preserve"><value>Management income statement</value></data>
+  <data name="PYG_V2_GeneradoEl" xml:space="preserve"><value>Generated on</value></data>
+  <data name="PYG_V2_Unidad" xml:space="preserve"><value>Unit</value></data>
+  <data name="PYG_V2_Excel" xml:space="preserve"><value>Excel</value></data>
+  <data name="PYG_V2_Pdf" xml:space="preserve"><value>PDF</value></data>
+  <data name="PYG_V2_IndicadoresClave" xml:space="preserve"><value>Key indicators</value></data>
+  <data name="PYG_V2_Periodo" xml:space="preserve"><value>Period</value></data>
+  <data name="PYG_V2_Acumulado" xml:space="preserve"><value>Year to date</value></data>
+  <data name="PYG_V2_Ambos" xml:space="preserve"><value>Both</value></data>
+  <data name="PYG_V2_Ingresos" xml:space="preserve"><value>Revenue</value></data>
+  <data name="PYG_V2_MargenBruto" xml:space="preserve"><value>Gross margin</value></data>
+  <data name="PYG_V2_MargenEbitda" xml:space="preserve"><value>EBITDA margin</value></data>
+  <data name="PYG_V2_MargenNeto" xml:space="preserve"><value>Net margin</value></data>
+  <data name="PYG_V2_PresupuestoFmt" xml:space="preserve"><value>Budget {0}</value></data>
+  <data name="PYG_V2_VsPresupuesto" xml:space="preserve"><value>vs budget</value></data>
+  <data name="PYG_V2_VsAnioFmt" xml:space="preserve"><value>vs {0}</value></data>
+  <data name="PYG_V2_AcumuladoAFmt" xml:space="preserve"><value>Year to date through {0}</value></data>
+  <data name="PYG_V2_ComparadoPpto" xml:space="preserve"><value>Compared with budget</value></data>
+  <data name="PYG_V2_ComparadoPptoAnioFmt" xml:space="preserve"><value>Compared with budget and {0}</value></data>
+  <data name="PYG_V2_CascadaTitulo" xml:space="preserve"><value>From revenue to net income</value></data>
+  <data name="PYG_V2_CascadaSubFmt" xml:space="preserve"><value>Actual for the period · {0}</value></data>
+  <data name="PYG_V2_Total" xml:space="preserve"><value>Total</value></data>
+  <data name="PYG_V2_Resta" xml:space="preserve"><value>Deduction</value></data>
+  <data name="PYG_V2_Suma" xml:space="preserve"><value>Addition</value></data>
+  <data name="PYG_V2_MetaPpto" xml:space="preserve"><value>Budget target</value></data>
+  <data name="PYG_V2_RelevanteTitulo" xml:space="preserve"><value>Key highlights</value></data>
+  <data name="PYG_V2_RelevanteSub" xml:space="preserve"><value>Largest deviations vs budget, by impact in pesos</value></data>
+  <data name="PYG_V2_SinDestacados" xml:space="preserve"><value>There are no deviations from budget in this period.</value></data>
+  <data name="PYG_V2_Favorable" xml:space="preserve"><value>Favorable</value></data>
+  <data name="PYG_V2_DesfavorableCorto" xml:space="preserve"><value>Unfav.</value></data>
+  <data name="PYG_V2_TendenciaTitulo" xml:space="preserve"><value>Monthly trend</value></data>
+  <data name="PYG_V2_TendenciaTrimestral" xml:space="preserve"><value>Quarterly trend</value></data>
+  <data name="PYG_V2_TendenciaAnual" xml:space="preserve"><value>Annual trend</value></data>
+  <data name="PYG_V2_Real" xml:space="preserve"><value>Actual</value></data>
+  <data name="PYG_V2_Presupuesto" xml:space="preserve"><value>Budget</value></data>
+  <data name="PYG_V2_PeriodoSeleccionado" xml:space="preserve"><value>Selected period</value></data>
+  <data name="PYG_V2_VsPptoFmt" xml:space="preserve"><value>{0} vs budget</value></data>
+  <data name="PYG_V2_UtilidadNeta" xml:space="preserve"><value>Net income</value></data>
+  <data name="PYG_V2_TablaTitulo" xml:space="preserve"><value>Detailed income statement</value></data>
+  <data name="PYG_V2_ColCuenta" xml:space="preserve"><value>Account</value></data>
+  <data name="PYG_V2_GrupoPeriodoFmt" xml:space="preserve"><value>Period · {0}</value></data>
+  <data name="PYG_V2_GrupoAcumFmt" xml:space="preserve"><value>Year to date · {0}</value></data>
+  <data name="PYG_V2_ColPresup" xml:space="preserve"><value>Budget</value></data>
+  <data name="PYG_V2_ColMargen" xml:space="preserve"><value>Margin</value></data>
+  <data name="PYG_V2_VsAnioAnterior" xml:space="preserve"><value>vs prior year</value></data>
+  <data name="PYG_V2_LeyendaDesfavorable" xml:space="preserve"><value>Unfavorable (for costs and expenses, spending more is unfavorable)</value></data>
+  <data name="PYG_V2_LeyendaCritico" xml:space="preserve"><value>Variation of 15% or more</value></data>
+  <data name="PYG_V2_InsightsSub" xml:space="preserve"><value>Automatic summary of the selected period</value></data>
+  <data name="PYG_V2_InsightsVacio" xml:space="preserve"><value>Generate an AI summary of the period's figures: one achievement, one alert and one efficiency opportunity.</value></data>
+  <data name="PYG_V2_Generar" xml:space="preserve"><value>Generate analysis</value></data>
+  <data name="PYG_V2_Regenerar" xml:space="preserve"><value>Regenerate</value></data>
+  <data name="PYG_V2_Analizando" xml:space="preserve"><value>Analyzing the income statement…</value></data>
+  <data name="PYG_V2_Logro" xml:space="preserve"><value>Achievement</value></data>
+  <data name="PYG_V2_Alerta" xml:space="preserve"><value>Alert</value></data>
+  <data name="PYG_V2_Eficiencia" xml:space="preserve"><value>Efficiency</value></data>
+  <data name="PYG_V2_InsightsMetaFmt" xml:space="preserve"><value>Generated today, {0} · based on {1} accounts</value></data>
+  <!-- PYG — filtros v2 (rango continuo, comparar contra, escenario, detalle) -->
+  <data name="PYG_SeccionComparaciones" xml:space="preserve"><value>Comparisons</value></data>
+  <data name="PYG_Comparar_Label" xml:space="preserve"><value>Compare against</value></data>
+  <data name="PYG_Comp_ppto" xml:space="preserve"><value>Budget</value></data>
+  <data name="PYG_Comp_pptoAjuste" xml:space="preserve"><value>Adjusted budget</value></data>
+  <data name="PYG_Comp_forecast" xml:space="preserve"><value>Forecast</value></data>
+  <data name="PYG_CompCorto_ppto" xml:space="preserve"><value>Budget</value></data>
+  <data name="PYG_CompCorto_pptoAjuste" xml:space="preserve"><value>Adj. budget</value></data>
+  <data name="PYG_CompCorto_forecast" xml:space="preserve"><value>Forecast</value></data>
+  <data name="PYG_EscenarioComparar" xml:space="preserve"><value>Compare with scenario</value></data>
+  <data name="PYG_EscenarioCompararNinguno" xml:space="preserve"><value>None</value></data>
+  <data name="PYG_EscenarioSinDatosNota" xml:space="preserve"><value>The comparison scenario has no data for the selected period; the report is shown without that comparison.</value></data>
+  <data name="PYG_EscenarioSinDatosEtiqueta" xml:space="preserve"><value>no data</value></data>
+  <data name="PYG_EscenarioSinDatosTooltip" xml:space="preserve"><value>This scenario has no PYG model results for the selected company.</value></data>
+  <data name="PYG_EscenarioSinDatosHint" xml:space="preserve"><value>Scenarios without data for this company are disabled.</value></data>
+  <data name="PYG_ColVsEscenarioFmt" xml:space="preserve"><value>vs {0}</value></data>
+  <data name="PYG_NivelDetalle" xml:space="preserve"><value>Table detail</value></data>
+  <data name="PYG_NivelTodas" xml:space="preserve"><value>All accounts</value></data>
+  <data name="PYG_NivelSubtotales" xml:space="preserve"><value>Subtotals only</value></data>
+  <data name="PYG_AgruparNota" xml:space="preserve"><value>Applies to the trend charts</value></data>
+  <data name="PYG_SinMesesDatos" xml:space="preserve"><value>This company and scenario have no months with PYG model results.</value></data>
+  <data name="PYG_V2_ComparadoConFmt" xml:space="preserve"><value>Compared with {0}</value></data>
+  <data name="PYG_V2_AnioAnteriorCorto" xml:space="preserve"><value>prior year</value></data>
+  <data name="PYG_V2_MetaFmt" xml:space="preserve"><value>{0} target</value></data>
+  <data name="PYG_V2_RelevanteSubFmt" xml:space="preserve"><value>Largest deviations vs {0}, by impact in pesos</value></data>
+  <data name="PYG_V2_VsCompFmt" xml:space="preserve"><value>{0} vs {1}</value></data>
 </root>

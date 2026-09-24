@@ -53,39 +53,91 @@
                 </select>
             </div>
             <div class="lt-field">
-                <label class="lt-field-label" for="pygAnio">@Resources.Strings.Common_LabelAnio</label>
-                <select id="pygAnio" class="lt-field-select" disabled>
-                    <option value="">@Resources.Strings.Common_Seleccione</option>
+                <label class="lt-field-label" for="pygNivelDetalle">@Resources.Strings.PYG_NivelDetalle</label>
+                <select id="pygNivelDetalle" class="lt-field-select">
+                    <option value="todas">@Resources.Strings.PYG_NivelTodas</option>
+                    <option value="subtotales">@Resources.Strings.PYG_NivelSubtotales</option>
                 </select>
             </div>
         </div>
 
-        <div class="lt-section-title mt"><span>@Resources.Strings.PYG_LabelPeriodo</span></div>
-        <div class="lt-rango-head-row">
-            <label class="lt-field-label">@Resources.Strings.LineaTiempo_LabelRango</label>
-            <div class="lt-atajos" id="pygAtajos">
-                <button type="button" class="lt-chip" data-preset="todo">@Resources.Strings.LineaTiempo_RangoTodo</button>
-                <button type="button" class="lt-chip" data-preset="6m">@Resources.Strings.LineaTiempo_RangoUltimos6Meses</button>
-                <button type="button" class="lt-chip" data-preset="3m">@Resources.Strings.PYG_RangoUltimoTrimestre</button>
+        <div class="lt-section-title mt"><span>@Resources.Strings.PYG_SeccionComparaciones</span></div>
+        <div class="lt-grid-quever">
+            <div class="lt-field">
+                <label class="lt-field-label" for="pygComparar">@Resources.Strings.PYG_Comparar_Label</label>
+                <select id="pygComparar" class="lt-field-select">
+                    <option value="ppto">@Resources.Strings.PYG_Comp_ppto</option>
+                    <option value="pptoAjuste">@Resources.Strings.PYG_Comp_pptoAjuste</option>
+                    <option value="forecast">@Resources.Strings.PYG_Comp_forecast</option>
+                </select>
+            </div>
+            <div class="lt-field">
+                <label class="lt-field-label" for="pygEscenarioComparar">@Resources.Strings.PYG_EscenarioComparar</label>
+                @* Opciones armadas por JS (actualizarOpcionesEscenarioComparar): todos los escenarios menos
+                   el principal; los que no tienen datos para la empresa quedan deshabilitados con tooltip. *@
+                <select id="pygEscenarioComparar" class="lt-field-select">
+                    <option value="">@Resources.Strings.PYG_EscenarioCompararNinguno</option>
+                </select>
+                <p class="lt-seg-hint" id="pygEscenarioSinDatosHint" style="display:none;"><i class="fas fa-circle-info mr-1"></i>@Resources.Strings.PYG_EscenarioSinDatosHint</p>
             </div>
         </div>
-        <div class="lt-range-card">
-            <div class="lt-range-head">
-                <span class="lbl"><span id="pygRangoDesdeLbl">&mdash;</span><i class="fas fa-long-arrow-alt-right"></i><span id="pygRangoHastaLbl">&mdash;</span></span>
-                <span class="lt-range-badge" id="pygRangoBadge">&mdash;</span>
+
+        @* Rango y agrupación: mismo control que el Informe de Línea de Tiempo (rango continuo que puede
+           cruzar años, con los años debajo del slider). "Agrupar por" solo afecta las tendencias. *@
+        <div class="lt-section-title mt"><span>@Resources.Strings.LineaTiempo_FilaCuando</span></div>
+        <div class="lt-grid-rango">
+            <div>
+                <label class="lt-field-label">@Resources.Strings.LineaTiempo_LabelVerPor</label>
+                <div class="lt-seg" id="pygSegVerPor">
+                    <button type="button" class="active" data-modo="Mes" title="@Resources.Strings.LineaTiempo_Agrupar_MesAyuda" aria-pressed="true">
+                        <i class="fas fa-calendar-day"></i><span>@Resources.Strings.LineaTiempo_VerPorMes</span>
+                    </button>
+                    <button type="button" data-modo="Trimestre" title="@Resources.Strings.LineaTiempo_Agrupar_TrimestreAyuda" aria-pressed="false">
+                        <i class="fas fa-calendar-week"></i><span>@Resources.Strings.LineaTiempo_VerPorTrimestre</span>
+                    </button>
+                    <button type="button" data-modo="Anio" title="@Resources.Strings.LineaTiempo_Agrupar_AnioAyuda" aria-pressed="false">
+                        <i class="fas fa-calendar"></i><span>@Resources.Strings.LineaTiempo_VerPorAnio</span>
+                    </button>
+                </div>
+                <p class="lt-seg-hint"><span id="pygAgruparHint">@Resources.Strings.LineaTiempo_Agrupar_MesAyuda</span>. @Resources.Strings.PYG_AgruparNota.</p>
             </div>
-            <div class="lt-range-track disabled" id="pygRangoTrack">
-                <div class="bg"></div>
-                <div class="sel" id="pygRangoSel"></div>
-                <div class="knob from" id="pygKnobFrom" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="11" aria-valuenow="0" aria-label="@Resources.Strings.LineaTiempo_LabelRango"></div>
-                <div class="knob to" id="pygKnobTo" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="11" aria-valuenow="11" aria-label="@Resources.Strings.LineaTiempo_LabelRango"></div>
+            <div>
+                @* Atajos compartidos con Línea de Tiempo (Assets/js/rango-atajos.js): [Todo] | [relativos a
+                   la fecha de hoy del servidor]. Barra compacta en su propia fila, cabe en pantallas de 14". *@
+                <label class="lt-field-label">@Resources.Strings.LineaTiempo_LabelRango</label>
+                <div class="rango-atajos" id="pygAtajos">
+                    <div class="rango-atajos-grupo">
+                        <button type="button" data-preset="todo">@Resources.Strings.Rango_Todo</button>
+                    </div>
+                    <div class="rango-atajos-grupo">
+                        <button type="button" data-preset="ytd">@Resources.Strings.Rango_AnioEnCurso</button>
+                        <button type="button" data-preset="6m">@Resources.Strings.Rango_Ultimos6Meses</button>
+                        <button type="button" data-preset="3m">@Resources.Strings.Rango_UltimoTrimestre</button>
+                        <button type="button" data-preset="mesAnterior">@Resources.Strings.Rango_MesAnterior</button>
+                        <button type="button" data-preset="mesActual">@Resources.Strings.Rango_MesActual</button>
+                    </div>
+                </div>
+                <div class="lt-range-card">
+                    <div class="lt-range-head">
+                        <span class="lbl"><span id="pygRangoDesdeLbl">&mdash;</span><i class="fas fa-long-arrow-alt-right"></i><span id="pygRangoHastaLbl">&mdash;</span></span>
+                        <span class="lt-range-badge" id="pygRangoBadge">&mdash;</span>
+                    </div>
+                    <div class="lt-range-track disabled" id="pygRangoTrack">
+                        <div class="bg"></div>
+                        <div class="sel" id="pygRangoSel"></div>
+                        <div class="knob from" id="pygKnobFrom" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-label="@Resources.Strings.LineaTiempo_LabelRango"></div>
+                        <div class="knob to" id="pygKnobTo" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-label="@Resources.Strings.LineaTiempo_LabelRango"></div>
+                    </div>
+                    <div class="lt-range-years" id="pygRangoYears"></div>
+                </div>
+                <p class="lt-help">@Resources.Strings.LineaTiempo_FilaCuandoHint</p>
+                <p class="lt-help" id="pygSinMeses" style="display:none;">@Resources.Strings.PYG_SinMesesDatos</p>
             </div>
         </div>
-        <p class="lt-help">@Resources.Strings.LineaTiempo_FilaCuandoHint</p>
 
         <div class="btn-group-actions">
             <button type="button" id="btnConsultarPYG" class="btn btn-modern-gradient" disabled>
-                <i class="fas fa-search mr-1"></i>@Resources.Strings.Common_Consultar
+                <i class="fas fa-arrow-right mr-1"></i>@Resources.Strings.LineaTiempo_BtnGenerar
             </button>
             <button type="button" id="btnLimpiarPYG" class="btn btn-modern-secondary">@Resources.Strings.Common_Limpiar</button>
         </div>
@@ -105,123 +157,158 @@
 
     <div id="pygResultado" style="display:none;">
 
+        @* 1. Encabezado: marca + empresa + chips de contexto + unidad/exportaciones *@
         <div class="lt-card" id="pygPanelResultado">
-            <div class="lt-letterhead">
-                <div class="lt-brand-mark"><span class="bm-text">@Resources.Strings.LineaTiempo_BrandMark</span></div>
-                <span class="fecha" id="pygFechaGenerado">&mdash;</span>
+            <div class="pyg2-letterhead">
+                <span class="pyg2-brand"><span class="bm-text">@Resources.Strings.LineaTiempo_BrandMark</span><span class="bm-sub">@Resources.Strings.PYG_V2_Subtitulo</span></span>
+                <span class="fecha"><span>@Resources.Strings.PYG_V2_GeneradoEl</span> <span id="pygFechaGenerado">&mdash;</span></span>
             </div>
-            <div class="lt-head-row">
-                <div>
+            <div class="pyg2-head">
+                <div class="pyg2-head-l">
                     <h2 id="pygTituloEmpresa">&mdash;</h2>
-                    <p class="sub" id="pygSubtitulo">&mdash;</p>
+                    <div class="pyg2-chips">
+                        <span class="pyg2-chip primary"><i class="fas fa-calendar"></i><span id="pygChipPeriodo">&mdash;</span></span>
+                        <span class="pyg2-chip" id="pygChipEscenario">&mdash;</span>
+                        <span class="pyg2-chip" id="pygChipAcum">&mdash;</span>
+                        <span class="pyg2-chip" id="pygChipComparado">&mdash;</span>
+                    </div>
                 </div>
-                <div class="lt-tools">
-                    <button type="button" class="lt-tool-btn" id="pygBtnUnidad" title="@Resources.Strings.LineaTiempo_LabelUnidad">
-                        <span id="pygUnidadLbl">@Resources.Strings.LineaTiempo_UnidadMillones</span><i class="fas fa-chevron-down chev"></i>
+                <div class="pyg2-tools">
+                    <button type="button" class="lt-tool-btn" id="pygBtnUnidad" aria-haspopup="menu" aria-expanded="false">
+                        <span class="lbl-muted">@Resources.Strings.PYG_V2_Unidad</span><span id="pygUnidadLbl">@Resources.Strings.LineaTiempo_UnidadMillones</span><i class="fas fa-chevron-down chev"></i>
                     </button>
+                    <div class="lt-menu" id="pygMenuUnidad" role="menu">
+                        <button type="button" data-unidad="pesos" role="menuitemradio">@Resources.Strings.LineaTiempo_UnidadPesos<i class="fas fa-check"></i></button>
+                        <button type="button" data-unidad="miles" role="menuitemradio">@Resources.Strings.LineaTiempo_UnidadMiles<i class="fas fa-check"></i></button>
+                        <button type="button" data-unidad="millones" role="menuitemradio">@Resources.Strings.LineaTiempo_UnidadMillones<i class="fas fa-check"></i></button>
+                    </div>
+                    <span class="sep"></span>
+                    <button type="button" class="lt-tool-btn" id="btnExportarExcelPYG" title="@Resources.Strings.Common_ExportarExcel"><i class="fas fa-file-excel"></i>@Resources.Strings.PYG_V2_Excel</button>
+                    <button type="button" class="lt-tool-btn" id="btnExportarPdfPYG" title="@Resources.Strings.PYG_BtnExportarPdf"><i class="fas fa-file-pdf"></i>@Resources.Strings.PYG_V2_Pdf</button>
                 </div>
             </div>
+        </div>
+        <form id="frmExportarExcelPYG" method="post" action="@Url.Action("ExportarExcel", "InformePYG")">
+            @Html.AntiForgeryToken()
+            <div id="pygExpCampos"></div>@* los llena el botón Excel con los filtros del reporte consultado *@
+        </form>
 
-            <div class="pyg-kpi-strip" id="pygKpiStrip"></div>
+        @* 2. KPIs *@
+        <div class="pyg2-section">
+            <div class="pyg2-section-title">
+                <span class="t">@Resources.Strings.PYG_V2_IndicadoresClave</span><span class="line"></span>
+                <div class="pyg2-seg" id="pygSegKpi">
+                    <button type="button" data-v="periodo" class="active">@Resources.Strings.PYG_V2_Periodo</button>
+                    <button type="button" data-v="acum">@Resources.Strings.PYG_V2_Acumulado</button>
+                </div>
+            </div>
+            <div class="pyg2-kpis" id="pygKpiStrip"></div>
+        </div>
 
-            <div class="pyg-chart-card pyg-waterfall-card">
-                <div class="pyg-chart-head">
-                    <span class="pyg-chart-nm">@Resources.Strings.PYG_ChartCascada</span>
-                    <span class="pyg-chart-legend">
-                        <span><i style="background:#6366F1"></i>@Resources.Strings.PYG_LeyendaTotal</span>
-                        <span><i style="background:#16A34A"></i>@Resources.Strings.PYG_LeyendaFavorable</span>
-                        <span><i style="background:#DC2626"></i>@Resources.Strings.PYG_LeyendaDesfavorable</span>
-                        <span><i style="background:#D97706;height:2px;"></i>@Resources.Strings.PYG_LeyendaMetaPresupuesto</span>
+        @* 3. Cascada + Lo más relevante *@
+        <div class="pyg2-analysis">
+            <div class="pyg2-card">
+                <div class="pyg2-card-head">
+                    <div>
+                        <div class="pyg2-card-title">@Resources.Strings.PYG_V2_CascadaTitulo</div>
+                        <div class="pyg2-card-sub" id="pygCascadaSub">&mdash;</div>
+                    </div>
+                    <span class="pyg2-legend">
+                        <span><i class="sq" style="background:#6366F1"></i>@Resources.Strings.PYG_V2_Total</span>
+                        <span><i class="sq" style="background:#F87171"></i>@Resources.Strings.PYG_V2_Resta</span>
+                        <span id="pygLeyendaSuma" style="display:none;"><i class="sq pos"></i>@Resources.Strings.PYG_V2_Suma</span>
+                        <span><i class="dash"></i><span id="pygMetaLbl">@Resources.Strings.PYG_V2_MetaPpto</span> <b id="pygMetaPpto" style="font-weight:700">&mdash;</b></span>
                     </span>
                 </div>
-                <div class="pyg-waterfall-canvas-wrap"><canvas id="pygChartCascada"></canvas></div>
+                <div class="pyg2-waterfall-wrap"><canvas id="pygChartCascada"></canvas></div>
             </div>
-
-            <div class="pyg-chart-card pyg-highlights-card" id="pygHighlights" style="display:none;">
-                <div class="pyg-chart-head">
-                    <span class="pyg-chart-nm"><i class="fas fa-bolt mr-1"></i>@Resources.Strings.PYG_DestacadosTitulo</span>
+            <div class="pyg2-card" id="pygHighlights" style="gap:12px">
+                <div>
+                    <div class="pyg2-card-title"><i class="fas fa-bolt"></i>@Resources.Strings.PYG_V2_RelevanteTitulo</div>
+                    <div class="pyg2-card-sub" id="pygRelevanteSub">@Resources.Strings.PYG_V2_RelevanteSub</div>
                 </div>
-                <div class="pyg-highlights-list" id="pygHighlightsList"></div>
+                <div class="pyg2-hl-list" id="pygHighlightsList"></div>
             </div>
+        </div>
 
-            <div class="pyg-charts" id="pygCharts">
-                <div class="pyg-chart-card">
-                    <div class="pyg-chart-head">
-                        <span class="pyg-chart-nm">@Resources.Strings.PYG_ChartIngresos</span>
-                        <span class="pyg-chart-legend">
-                            <span><i style="background:#6366F1"></i>@Resources.Strings.PYG_LeyendaReal</span>
-                            <span><i style="background:#D97706"></i>@Resources.Strings.PYG_LeyendaPresupuesto</span>
-                        </span>
+        @* 4. Tendencias *@
+        <div class="pyg2-section">
+            <div class="pyg2-section-title">
+                <span class="t"><span id="pygTendTitulo">@Resources.Strings.PYG_V2_TendenciaTitulo</span> <span id="pygTendAnio"></span></span><span class="line"></span>
+                <span class="pyg2-legend">
+                    <span><i class="sw" style="background:#6366F1"></i>@Resources.Strings.PYG_V2_Real</span>
+                    <span><i class="dash"></i><span id="pygLeyendaComp">@Resources.Strings.PYG_V2_Presupuesto</span></span>
+                    <span id="pygLeyendaEsc" style="display:none;"><i class="sw" style="background:#0EA5E9"></i><span id="pygLeyendaEscNombre"></span></span>
+                    <span><i class="sq" style="background:#EEF2FF;width:10px;height:10px;border-radius:2px"></i>@Resources.Strings.PYG_V2_PeriodoSeleccionado</span>
+                </span>
+            </div>
+            <div class="pyg2-trends">
+                <div class="pyg2-trend">
+                    <div class="pyg2-trend-head">
+                        <div><div class="nm">@Resources.Strings.PYG_V2_Ingresos</div><div class="v" id="pygTrendValIngresos">&mdash;</div></div>
+                        <span class="pyg2-dchip" id="pygTrendChipIngresos"></span>
                     </div>
-                    <div class="pyg-chart-canvas-wrap"><canvas id="pygChartIngresos"></canvas></div>
+                    <div class="pyg2-trend-canvas"><canvas id="pygChartIngresos"></canvas></div>
                 </div>
-                <div class="pyg-chart-card">
-                    <div class="pyg-chart-head">
-                        <span class="pyg-chart-nm">@Resources.Strings.PYG_ChartEbitda</span>
-                        <span class="pyg-chart-legend">
-                            <span><i style="background:#6366F1"></i>@Resources.Strings.PYG_LeyendaReal</span>
-                            <span><i style="background:#D97706"></i>@Resources.Strings.PYG_LeyendaPresupuesto</span>
-                        </span>
+                <div class="pyg2-trend">
+                    <div class="pyg2-trend-head">
+                        <div><div class="nm">@Resources.Strings.PYG_KpiEbitda</div><div class="v" id="pygTrendValEbitda">&mdash;</div></div>
+                        <span class="pyg2-dchip" id="pygTrendChipEbitda"></span>
                     </div>
-                    <div class="pyg-chart-canvas-wrap"><canvas id="pygChartEbitda"></canvas></div>
+                    <div class="pyg2-trend-canvas"><canvas id="pygChartEbitda"></canvas></div>
                 </div>
-                <div class="pyg-chart-card">
-                    <div class="pyg-chart-head">
-                        <span class="pyg-chart-nm">@Resources.Strings.PYG_ChartUtilidadNeta</span>
-                        <span class="pyg-chart-legend">
-                            <span><i style="background:#6366F1"></i>@Resources.Strings.PYG_LeyendaReal</span>
-                            <span><i style="background:#D97706"></i>@Resources.Strings.PYG_LeyendaPresupuesto</span>
-                        </span>
+                <div class="pyg2-trend">
+                    <div class="pyg2-trend-head">
+                        <div><div class="nm">@Resources.Strings.PYG_V2_UtilidadNeta</div><div class="v" id="pygTrendValUtilidadNeta">&mdash;</div></div>
+                        <span class="pyg2-dchip" id="pygTrendChipUtilidadNeta"></span>
                     </div>
-                    <div class="pyg-chart-canvas-wrap"><canvas id="pygChartUtilidadNeta"></canvas></div>
+                    <div class="pyg2-trend-canvas"><canvas id="pygChartUtilidadNeta"></canvas></div>
                 </div>
             </div>
         </div>
 
-        <div class="table-container">
-            <div class="table-header">
-                <h5><i class="fas fa-list mr-2"></i>@Resources.Strings.PYG_TablaTitulo</h5>
-                <span class="info-badge" id="pygInfoBadge">@Resources.Strings.PYG_UnidadMillones</span>
+        @* 5. Tabla detallada *@
+        <div class="pyg2-table-card">
+            <div class="pyg2-card-head" style="align-items:center">
+                <div>
+                    <div class="pyg2-card-title">@Resources.Strings.PYG_V2_TablaTitulo</div>
+                    <div class="pyg2-card-sub" id="pygInfoBadge">@Resources.Strings.PYG_UnidadMillones</div>
+                </div>
+                <div class="pyg2-table-tools">
+                    <div class="pyg2-seg soft" id="pygSegTabla">
+                        <button type="button" data-v="periodo">@Resources.Strings.PYG_V2_Periodo</button>
+                        <button type="button" data-v="acum">@Resources.Strings.PYG_V2_Acumulado</button>
+                        <button type="button" data-v="ambos" class="active">@Resources.Strings.PYG_V2_Ambos</button>
+                    </div>
+                    <button type="button" class="pyg2-yoy-btn on" id="pygBtnYoY" aria-pressed="true"><i class="fas fa-square-check"></i>@Resources.Strings.PYG_V2_VsAnioAnterior</button>
+                </div>
             </div>
-            <div class="table-wrapper">
-                <table class="data-table" id="pygTabla">
-                    <thead id="pygTablaHead"></thead>
-                    <tbody id="pygTablaBody"></tbody>
-                </table>
+            <div class="pyg2-table-wrap">
+                <table class="pyg2-table" id="pygTabla"><thead id="pygTablaHead"></thead><tbody id="pygTablaBody"></tbody></table>
+            </div>
+            <div class="pyg2-table-legend">
+                <span><i class="dot" style="background:#16A34A"></i>@Resources.Strings.PYG_V2_Favorable</span>
+                <span><i class="dot" style="background:#DC2626"></i>@Resources.Strings.PYG_V2_LeyendaDesfavorable</span>
+                <span><i class="fas fa-circle-exclamation"></i>@Resources.Strings.PYG_V2_LeyendaCritico</span>
             </div>
         </div>
         <p class="lt-help" id="pygNotaSinAnterior" style="display:none;"></p>
+        <p class="lt-help" id="pygNotaEscenario" style="display:none;"></p>
 
+        @* 6. Insights gerenciales (IA) *@
         <div class="pyg-insights-card">
             <div class="pyg-insights-head">
-                <span class="pyg-insights-title"><i class="fas fa-wand-magic-sparkles"></i> @Resources.Strings.PYG_InsightsTitulo</span>
-                <span class="pyg-insights-meta" id="pygInsightsMeta"></span>
+                <div>
+                    <span class="pyg-insights-title"><i class="fas fa-wand-magic-sparkles"></i>@Resources.Strings.PYG_InsightsTitulo</span>
+                    <div class="pyg-insights-meta" id="pygInsightsMeta">@Resources.Strings.PYG_V2_InsightsSub</div>
+                </div>
+                <button type="button" id="btnGenerarInsightsPYG" class="pyg2-ins-btn"><i class="fas fa-wand-magic-sparkles"></i><span>@Resources.Strings.PYG_V2_Generar</span></button>
             </div>
-            <div id="pygInsightsBody" class="pyg-insights-body">
-                <p class="pyg-insights-empty">@Resources.Strings.PYG_InsightsSinGenerar</p>
-            </div>
-            <div id="pygInsightsLoading" style="display:none;text-align:center;padding:10px 0 2px;">
+            <div id="pygInsightsBody"></div>
+            <div id="pygInsightsLoading" style="display:none;text-align:center;padding:14px 0;">
                 @Html.Partial("_LoaderDots", "dark")
-                <p style="margin-top:8px;font-size:12.5px;color:#8B85A0;">@Resources.Strings.PYG_InsightsGenerando</p>
+                <p style="margin-top:8px;font-size:12.5px;color:#8B85A0;">@Resources.Strings.PYG_V2_Analizando</p>
             </div>
-            <div class="btn-group-actions" style="margin-top:14px;padding-top:14px;">
-                <button type="button" id="btnGenerarInsightsPYG" class="btn btn-modern-gradient">
-                    <i class="fas fa-wand-magic-sparkles mr-1"></i>@Resources.Strings.PYG_BtnGenerarInsights
-                </button>
-            </div>
-        </div>
-
-        <div class="pyg-exports-row">
-            <form id="frmExportarExcelPYG" method="post" action="@Url.Action("ExportarExcel", "InformePYG")">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="idEmpresa" id="pygExpEmpresa" />
-                <input type="hidden" name="idEscenario" id="pygExpEscenario" />
-                <input type="hidden" name="anio" id="pygExpAnio" />
-                <input type="hidden" name="mesDesde" id="pygExpMesDesde" />
-                <input type="hidden" name="mesHasta" id="pygExpMesHasta" />
-                <button type="submit" class="btn btn-modern-excel"><i class="fas fa-file-excel mr-1"></i>@Resources.Strings.Common_ExportarExcel</button>
-            </form>
-            <button type="button" id="btnExportarPdfPYG" class="btn btn-modern-secondary"><i class="fas fa-file-pdf mr-1"></i>@Resources.Strings.PYG_BtnExportarPdf</button>
         </div>
     </div>
 
@@ -240,11 +327,12 @@
 <script src="~/Assets/js/chart.umd.min.js"></script>
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
 <script src="~/Assets/js/bufins-markdown.js"></script>
+<script src="~/Assets/js/rango-atajos.js"></script>
 
 <script>
     var _pyg = {
         urls: {
-            años: '@Url.Action("ObtenerAnios", "InformePYG")',
+            meses: '@Url.Action("ObtenerMeses", "InformePYG")',
             reporte: '@Url.Action("ConsultarReporte", "InformePYG")',
             insights: '@Url.Action("GenerarInsightsIA", "InformePYG")'
         },
@@ -303,22 +391,116 @@
                 pesos: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_UnidadPesosCop))',
                 miles: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_UnidadMilesCop))',
                 millones: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_UnidadMillones))'
+            },
+            v2: {
+                ingresos: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_Ingresos))',
+                presupuestoFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_PresupuestoFmt))',
+                vsPresupuesto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_VsPresupuesto))',
+                vsAnioFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_VsAnioFmt))',
+                acumuladoAFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_AcumuladoAFmt))',
+                comparadoPpto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_ComparadoPpto))',
+                comparadoPptoAnioFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_ComparadoPptoAnioFmt))',
+                cascadaSubFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_CascadaSubFmt))',
+                sinDestacados: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_SinDestacados))',
+                favorable: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_Favorable))',
+                desfavorableCorto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_DesfavorableCorto))',
+                vsPptoFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_VsPptoFmt))',
+                real: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_Real))',
+                presupuesto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_Presupuesto))',
+                colCuenta: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_ColCuenta))',
+                grupoPeriodoFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_GrupoPeriodoFmt))',
+                grupoAcumFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_GrupoAcumFmt))',
+                colPresup: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_ColPresup))',
+                colMargen: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_ColMargen))',
+                insightsVacio: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_InsightsVacio))',
+                insightsSub: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_InsightsSub))',
+                insightsMetaFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_InsightsMetaFmt))',
+                generar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_Generar))',
+                regenerar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_Regenerar))',
+                logro: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_Logro))',
+                alerta: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_Alerta))',
+                eficiencia: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_Eficiencia))',
+                comparadoConFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_ComparadoConFmt))',
+                anioAnteriorCorto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_AnioAnteriorCorto))',
+                metaFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_MetaFmt))',
+                relevanteSubFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_RelevanteSubFmt))',
+                vsCompFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_VsCompFmt))',
+                escenarioSinDatosNota: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_EscenarioSinDatosNota))'
+            },
+            // Etiquetas de "Comparar contra" por código (PygComparar en el backend).
+            comp: {
+                ppto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_Comp_ppto))',
+                pptoAjuste: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_Comp_pptoAjuste))',
+                forecast: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_Comp_forecast))'
+            },
+            compCorto: {
+                ppto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_CompCorto_ppto))',
+                pptoAjuste: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_CompCorto_pptoAjuste))',
+                forecast: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_CompCorto_forecast))'
+            },
+            pdf: {
+                marca: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_BrandMark))',
+                titulo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_PageTitle))',
+                subtitulo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_Subtitulo))',
+                generadoEl: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_GeneradoEl))',
+                confidencial: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_Pdf_Confidencial))',
+                paginaFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_Pdf_PaginaFmt))',
+                sinInsights: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_Pdf_SinInsights))',
+                error: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_Pdf_Error))',
+                resumen: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_Pdf_Resumen))',
+                analisis: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_Pdf_Analisis))',
+                indicadores: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_IndicadoresClave))',
+                periodo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_Periodo))',
+                acumulado: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_Acumulado))',
+                cascadaTitulo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_CascadaTitulo))',
+                relevanteTitulo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_RelevanteTitulo))',
+                tablaTitulo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_TablaTitulo))',
+                insightsTitulo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_InsightsTitulo))',
+                total: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_Total))',
+                resta: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_Resta))',
+                suma: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_Suma))',
+                leyendaDesfavorable: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_LeyendaDesfavorable))',
+                leyendaCritico: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_LeyendaCritico))'
+            },
+            rangoTooltipFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rango_TooltipFmt))',
+            rangoSinDatosFmt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Rango_SinDatosFmt))',
+            escenarioSinDatosEtiqueta:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_EscenarioSinDatosEtiqueta))',
+            escenarioSinDatosTooltip: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_EscenarioSinDatosTooltip))',
+            tendenciaTitulos: {
+                Mes: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_TendenciaTitulo))',
+                Trimestre: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_TendenciaTrimestral))',
+                Anio: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_TendenciaAnual))'
+            },
+            agruparAyuda: {
+                Mes: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_Agrupar_MesAyuda))',
+                Trimestre: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_Agrupar_TrimestreAyuda))',
+                Anio: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LineaTiempo_Agrupar_AnioAyuda))'
             }
         },
         reporteActual: null,
         insightsTexto: null,
+        // Preferencias de visualización de la v2 (se recuerdan por navegador en localStorage 'pyg.prefs').
+        kpiVista: 'periodo',     // 'periodo' | 'acum' — tarjetas KPI
+        vistaTabla: 'ambos',     // 'periodo' | 'acum' | 'ambos' — bloques de columnas de la tabla
+        mostrarYoY: true,        // columna "vs {AñoAnterior}" en la tabla
         kpiIconos: { MargenBruto: 'fa-layer-group', Ebitda: 'fa-bolt', MargenNeto: 'fa-coins' },
         kpiNombres: {},
         charts: {},
         unidad: 'millones',
-        mesesCache: [],   // 12 items fijos {mes:1..12, abrev:'Ene'}
-        iDesde: 0,
-        iHasta: 11
+        mesesCache: [],   // 12 items fijos {mes:1..12, nombre:'Enero', abrev:'Ene'} — solo para etiquetas
+        rango: [],        // meses con datos [{anio, mes, etiqueta}] cronológicos — alimentan el slider
+        iDesde: 0,        // índices dentro de _pyg.rango
+        iHasta: 0,
+        agrupar: 'Mes',   // 'Mes' | 'Trimestre' | 'Anio' — agrupación de las tendencias
+        // Fecha de hoy del SERVIDOR (no del navegador) para los atajos "Mes actual" / "Mes anterior".
+        hoy: { anio: @DateTime.Now.Year, mes: @DateTime.Now.Month },
+        escenarios: [],   // [{id, nombre}] catálogo (se toma del selector principal)
+        escenariosConDatos: null   // ids con datos para la empresa elegida (null = aún no cargado)
     };
     _pyg.kpiNombres = {
-        MargenBruto: _pyg.textos.kpiMargenBruto,
-        Ebitda: _pyg.textos.kpiEbitda,
-        MargenNeto: _pyg.textos.kpiMargenNeto
+        MargenBruto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_MargenBruto))',
+        Ebitda: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_MargenEbitda))',
+        MargenNeto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_V2_MargenNeto))'
     };
     // Códigos fijos que arma InformePYGService.ArmarCascada — la vista traduce, el servicio no (no lee resx).
     _pyg.cascadaNombres = {
@@ -332,9 +514,27 @@
         return { mes: idx + 1, nombre: nombre, abrev: nombre.substring(0, 3) };
     });
 
-    var elEmpresa = $('#pygEmpresa'), elEscenario = $('#pygEscenario'), elAnio = $('#pygAnio');
+    var elEmpresa = $('#pygEmpresa'), elEscenario = $('#pygEscenario');
 
-    var CH_MDASH = String.fromCharCode(0x2014);
+    var CH_MDASH = String.fromCharCode(0x2014), CH_NDASH = String.fromCharCode(0x2013), CH_MIDDOT = String.fromCharCode(0xB7);
+
+    function cargarPrefsPYG() {
+        try {
+            var p = JSON.parse(localStorage.getItem('pyg.prefs') || '{}');
+            if (p.kpiVista === 'periodo' || p.kpiVista === 'acum') _pyg.kpiVista = p.kpiVista;
+            if (['periodo', 'acum', 'ambos'].indexOf(p.vistaTabla) >= 0) _pyg.vistaTabla = p.vistaTabla;
+            if (typeof p.mostrarYoY === 'boolean') _pyg.mostrarYoY = p.mostrarYoY;
+            if (['pesos', 'miles', 'millones'].indexOf(p.unidad) >= 0) _pyg.unidad = p.unidad;
+        } catch (e) { }
+    }
+    function guardarPrefsPYG() {
+        try {
+            localStorage.setItem('pyg.prefs', JSON.stringify({
+                kpiVista: _pyg.kpiVista, vistaTabla: _pyg.vistaTabla, mostrarYoY: _pyg.mostrarYoY, unidad: _pyg.unidad
+            }));
+        } catch (e) { }
+    }
+    function escHtml(t) { return $('<span>').text(t == null ? '' : String(t)).html(); }
 
     var s2lang = {
         noResults: function () { return '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Select2NoResults))'; },
@@ -401,7 +601,7 @@
     }
 
     function actualizarBotonConsultar() {
-        var listo = (!_pyg.esAdmin || !!empresaSeleccionada()) && !!elEscenario.val() && !!elAnio.val();
+        var listo = (!_pyg.esAdmin || !!empresaSeleccionada()) && !!elEscenario.val() && _pyg.rango.length > 0;
         $('#btnConsultarPYG').prop('disabled', !listo);
     }
 
@@ -410,16 +610,49 @@
         $('#pygEstadoInicial').show();
     }
 
-    function cargarAños() {
-        elAnio.empty().prop('disabled', true).trigger('change.select2');
+    // "Comparar con escenario": todos los escenarios MENOS el principal (no tiene sentido compararlo
+    // consigo mismo). Los que no tienen datos para la empresa (_pyg.escenariosConDatos, que llega con
+    // ObtenerMeses) quedan deshabilitados con etiqueta "Sin datos" y tooltip. Por defecto: Ninguno.
+    function actualizarOpcionesEscenarioComparar() {
+        var principal = String(elEscenario.val() || '');
+        var conDatos = _pyg.escenariosConDatos;   // null = aún no se sabe (se habilitan todos)
+        var $sel = $('#pygEscenarioComparar');
+        var actual = String($sel.val() || '');
+        var hayDeshabilitados = false;
+
+        $sel.find('option[value!=""]').remove();
+        _pyg.escenarios.forEach(function (e) {
+            if (String(e.id) === principal) return;
+            var tieneDatos = !conDatos || conDatos.indexOf(e.id) >= 0;
+            if (!tieneDatos) hayDeshabilitados = true;
+            var texto = tieneDatos ? e.nombre : (e.nombre + ' (' + _pyg.textos.escenarioSinDatosEtiqueta + ')');
+            $sel.append($('<option>').val(e.id).text(texto).prop('disabled', !tieneDatos)
+                .attr('title', tieneDatos ? '' : _pyg.textos.escenarioSinDatosTooltip));
+        });
+
+        var opcionActual = $sel.find('option[value="' + actual + '"]');
+        if (!actual || !opcionActual.length || opcionActual.prop('disabled')) $sel.val('');
+        $sel.trigger('change.select2');
+        $('#pygEscenarioSinDatosHint').toggle(hayDeshabilitados);
+    }
+
+    // Meses con datos (año+mes, cronológicos) de la empresa/escenario: alimentan el slider continuo,
+    // igual que el Informe de Línea de Tiempo (el rango puede cruzar años).
+    function cargarMeses() {
+        _pyg.rango = [];
+        _pyg.iDesde = 0;
+        _pyg.iHasta = 0;
+        _pyg.escenariosConDatos = null;
+        $('#pygSinMeses').hide();
         ocultarResultados();
-        actualizarBotonConsultar();
+        actualizarOpcionesEscenarioComparar();
         pintarRangoPYG();
+        actualizarBotonConsultar();
 
         var idEmpresa = empresaSeleccionada();
         if (_pyg.esAdmin && !idEmpresa) return;
 
-        $.post(_pyg.urls.años, {
+        $.post(_pyg.urls.meses, {
             idEmpresa: idEmpresa,
             idEscenario: escenarioSeleccionado(),
             __RequestVerificationToken: _pyg.token
@@ -428,72 +661,93 @@
                 mostrarErrorPYG((resp && resp.message) || _pyg.textos.errorServidor);
                 return;
             }
-            var años = resp.años || [];
-            elAnio.empty();
-            if (!años.length) {
-                elAnio.append($('<option>').val('').text('@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Seleccione))'));
-                actualizarBotonConsultar();
-                return;
-            }
-            años.forEach(function (a) { elAnio.append($('<option>').val(a).text(a)); });
-            elAnio.prop('disabled', false).trigger('change.select2');
+            _pyg.rango = resp.meses || [];
+            _pyg.escenariosConDatos = (resp.escenariosConDatos || []).map(Number);
+            actualizarOpcionesEscenarioComparar();
+            $('#pygSinMeses').toggle(!_pyg.rango.length);
+            // Por defecto el año en curso (enero hasta el último mes cargado), como antes el año completo.
+            // Por defecto "Año en curso" (según la fecha de hoy); si el año de hoy no tiene datos, "Todo".
+            var inicial = RangoAtajos.porDefecto('ytd', _pyg.rango, _pyg.hoy);
+            if (inicial) { _pyg.iDesde = inicial.d; _pyg.iHasta = inicial.h; }
+            pintarRangoPYG();
             actualizarBotonConsultar();
         }).fail(function (xhr) {
             mostrarErrorPYG(_pyg.textos.errorServidor + ' (HTTP ' + xhr.status + ')');
         });
     }
 
-    // ===== Slider de rango de meses (adaptado del slicer de InformeLineaTiempo, acotado a 1 año) =====
+    // ===== Slider de rango continuo (mismo control que InformeLineaTiempo) =====
 
-    function pctIndicePYG(i) { return i / 11 * 100; }
+    function pctIndicePYG(i) {
+        var n = _pyg.rango.length;
+        return n > 1 ? (i / (n - 1) * 100) : 0;
+    }
 
     function pintarRangoPYG() {
+        var meses = _pyg.rango, n = meses.length;
         var track = $('#pygRangoTrack');
-        var habilitado = !!elAnio.val();
-        track.toggleClass('disabled', !habilitado);
 
+        if (n === 0) {
+            track.addClass('disabled');
+            $('#pygRangoDesdeLbl, #pygRangoHastaLbl, #pygRangoBadge').text(CH_MDASH);
+            $('#pygRangoHastaLbl').show();
+            $('#pygRangoDesdeLbl').next('i').show();
+            $('#pygRangoYears').empty();
+            $('#pygAtajos button').removeClass('active no-disponible').prop('disabled', true).attr('title', '');
+            return;
+        }
+
+        track.removeClass('disabled');
         var pctDesde = pctIndicePYG(_pyg.iDesde), pctHasta = pctIndicePYG(_pyg.iHasta);
-        var meses = _pyg.mesesCache;
 
         $('#pygKnobFrom').css('left', pctDesde + '%')
-            .attr({ 'aria-valuenow': _pyg.iDesde, 'aria-valuetext': meses[_pyg.iDesde].nombre });
+            .attr({ 'aria-valuemin': 0, 'aria-valuemax': n - 1, 'aria-valuenow': _pyg.iDesde, 'aria-valuetext': meses[_pyg.iDesde].etiqueta });
         $('#pygKnobTo').css('left', pctHasta + '%')
-            .attr({ 'aria-valuenow': _pyg.iHasta, 'aria-valuetext': meses[_pyg.iHasta].nombre });
+            .attr({ 'aria-valuemin': 0, 'aria-valuemax': n - 1, 'aria-valuenow': _pyg.iHasta, 'aria-valuetext': meses[_pyg.iHasta].etiqueta });
         $('#pygRangoSel').css({ left: pctDesde + '%', width: (pctHasta - pctDesde) + '%' });
 
-        $('#pygRangoDesdeLbl').text(meses[_pyg.iDesde].abrev);
-        $('#pygRangoHastaLbl').text(meses[_pyg.iHasta].abrev);
+        // Un solo mes (p. ej. "Mes actual"): se muestra "Ago 2026" en vez de "Ago 2026 → Ago 2026".
+        var unMes = _pyg.iDesde === _pyg.iHasta;
+        $('#pygRangoDesdeLbl').text(meses[_pyg.iDesde].etiqueta);
+        $('#pygRangoHastaLbl').text(unMes ? '' : meses[_pyg.iHasta].etiqueta).toggle(!unMes);
+        $('#pygRangoDesdeLbl').next('i').toggle(!unMes);
 
         var totalMeses = _pyg.iHasta - _pyg.iDesde + 1;
         $('#pygRangoBadge').text(totalMeses + ' ' + (totalMeses === 1 ? _pyg.textos.badgeMes : _pyg.textos.badgeMeses));
 
+        var anios = [];
+        meses.forEach(function (m) { if (anios.indexOf(m.anio) === -1) anios.push(m.anio); });
+        $('#pygRangoYears').html(anios.map(function (a) { return '<span>' + a + '</span>'; }).join(''));
+
         actualizarAtajoActivoPYG();
     }
 
+    // ===== Atajos del rango: lógica compartida con Línea de Tiempo (Assets/js/rango-atajos.js) =====
+    // Relativos a la fecha de hoy del SERVIDOR (_pyg.hoy); cada ventana se intersecta con los meses
+    // que tienen datos. "Todo" = todos los meses con datos.
+    function abrevsMesesPYG() { return _pyg.mesesCache.map(function (m) { return m.abrev; }); }
+
     function actualizarAtajoActivoPYG() {
-        $('#pygAtajos button').removeClass('active');
-        if (_pyg.iDesde === 0 && _pyg.iHasta === 11) $('#pygAtajos button[data-preset="todo"]').addClass('active');
-        else if (_pyg.iDesde === 6 && _pyg.iHasta === 11) $('#pygAtajos button[data-preset="6m"]').addClass('active');
-        else if (_pyg.iDesde === 9 && _pyg.iHasta === 11) $('#pygAtajos button[data-preset="3m"]').addClass('active');
+        RangoAtajos.pintarBotones($('#pygAtajos button'), _pyg.rango, _pyg.hoy, _pyg.iDesde, _pyg.iHasta,
+            abrevsMesesPYG(), { tooltipFmt: _pyg.textos.rangoTooltipFmt, sinDatosFmt: _pyg.textos.rangoSinDatosFmt });
     }
 
     function aplicarPresetRangoPYG(preset) {
-        if (!elAnio.val()) return;
-        if (preset === 'todo') { _pyg.iDesde = 0; _pyg.iHasta = 11; }
-        else if (preset === '6m') { _pyg.iDesde = 6; _pyg.iHasta = 11; }
-        else if (preset === '3m') { _pyg.iDesde = 9; _pyg.iHasta = 11; }
+        var p = RangoAtajos.indices(preset, _pyg.rango, _pyg.hoy);
+        if (!p) return;   // atajo sin datos (.no-disponible): el clic no hace nada, el tooltip explica
+        _pyg.iDesde = p.d;
+        _pyg.iHasta = p.h;
         pintarRangoPYG();
     }
 
     function indiceDesdeClientXPYG(clientX) {
-        var track = document.getElementById('pygRangoTrack');
-        var rect = track.getBoundingClientRect();
+        var rect = document.getElementById('pygRangoTrack').getBoundingClientRect();
         var frac = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-        return Math.round(frac * 11);
+        return Math.round(frac * (_pyg.rango.length - 1));
     }
 
     function moverExtremoPYG(cual, idx) {
-        idx = Math.min(11, Math.max(0, idx));
+        idx = Math.min(_pyg.rango.length - 1, Math.max(0, idx));
         if (cual === 'from') {
             _pyg.iDesde = idx;
             if (_pyg.iDesde > _pyg.iHasta) _pyg.iHasta = _pyg.iDesde;
@@ -505,7 +759,7 @@
     }
 
     function iniciarArrastreSliderPYG(e, cual) {
-        if (!elAnio.val()) return;
+        if (_pyg.rango.length < 2) return;
         e.preventDefault();
         var track = $('#pygRangoTrack').addClass('dragging');
 
@@ -520,7 +774,7 @@
     }
 
     function clicEnPistaPYG(e) {
-        if ($(e.target).hasClass('knob') || !elAnio.val()) return;
+        if ($(e.target).hasClass('knob') || _pyg.rango.length < 2) return;
         var idx = indiceDesdeClientXPYG(e.clientX);
         var cual = Math.abs(idx - _pyg.iDesde) <= Math.abs(idx - _pyg.iHasta) ? 'from' : 'to';
         moverExtremoPYG(cual, idx);
@@ -528,36 +782,69 @@
     }
 
     function moverKnobConTecladoPYG(e, cual) {
-        if (!elAnio.val()) return;
+        var n = _pyg.rango.length;
+        if (n < 2) return;
         var idx = cual === 'from' ? _pyg.iDesde : _pyg.iHasta;
         if (e.key === 'ArrowLeft') idx -= 1;
         else if (e.key === 'ArrowRight') idx += 1;
         else if (e.key === 'Home') idx = 0;
-        else if (e.key === 'End') idx = 11;
+        else if (e.key === 'End') idx = n - 1;
         else return;
         e.preventDefault();
         moverExtremoPYG(cual, idx);
     }
 
-    // Etiqueta combinada del periodo elegido, p. ej. "Marzo 2025" o "Mar - Jun 2025".
-    function etiquetaPeriodo(anio) {
-        if (_pyg.iDesde === _pyg.iHasta) return _pyg.mesesCache[_pyg.iDesde].nombre + ' ' + anio;
-        return _pyg.mesesCache[_pyg.iDesde].abrev + ' - ' + _pyg.mesesCache[_pyg.iHasta].abrev + ' ' + anio;
+    // ===== Etiquetas de período (siempre a partir del reporte consultado, no del slider) =====
+
+    // "Marzo 2026" · "Jul – Sep 2026" · "Oct 2025 – Mar 2026".
+    function etiquetaRango(aD, mD, aH, mH) {
+        var M = _pyg.mesesCache;
+        if (aD === aH && mD === mH) return M[mD - 1].nombre + ' ' + aH;
+        if (aD === aH) return M[mD - 1].abrev + ' ' + CH_NDASH + ' ' + M[mH - 1].abrev + ' ' + aH;
+        return M[mD - 1].abrev + ' ' + aD + ' ' + CH_NDASH + ' ' + M[mH - 1].abrev + ' ' + aH;
+    }
+    function etiquetaPeriodo(r) { return etiquetaRango(r.AnioDesde, r.MesDesde, r.AnioHasta, r.MesHasta); }
+    function mesesDelReporte(r) { return (r.AnioHasta * 12 + r.MesHasta) - (r.AnioDesde * 12 + r.MesDesde) + 1; }
+
+    // Chip del encabezado: "Jul – Sep 2026 · 3 meses" / "Marzo 2026 · 1 mes".
+    function etiquetaPeriodoChip(r) {
+        var n = mesesDelReporte(r);
+        return etiquetaPeriodo(r) + ' ' + CH_MIDDOT + ' ' + n + ' ' + (n === 1 ? _pyg.textos.badgeMes : _pyg.textos.badgeMeses);
+    }
+
+    // ===== Nombres de las comparaciones del reporte consultado =====
+    function esCulturaEs() { return _pyg.cultura.toLowerCase().indexOf('es') === 0; }
+    function compNombre(r) { return _pyg.textos.comp[r.Comparar] || _pyg.textos.comp.ppto; }
+    function compNombreFrase(r) { var t = compNombre(r); return esCulturaEs() ? t.toLowerCase() : t; }
+    function compCorto(r) { return _pyg.textos.compCorto[r.Comparar] || _pyg.textos.compCorto.ppto; }
+    function escenarioCompNombre(r) {
+        if (!r.HayEscenarioComparar) return '';
+        var e = _pyg.escenarios.filter(function (x) { return x.id === r.IdEscenarioComparar; })[0];
+        return e ? e.nombre : ('#' + r.IdEscenarioComparar);
+    }
+    // "2025" si el rango es de un solo año; "año anterior" si cruza años (el YoY es el rango -12 meses).
+    function anioAnteriorTexto(r) { return r.AnioDesde === r.AnioHasta ? String(r.AnioAnterior) : _pyg.textos.v2.anioAnteriorCorto; }
+
+    function filtrosDelSlider() {
+        var d = _pyg.rango[_pyg.iDesde], h = _pyg.rango[_pyg.iHasta];
+        return {
+            IdEmpresa: empresaSeleccionada() || '',
+            IdEscenario: escenarioSeleccionado(),
+            AnioDesde: d.anio, MesDesde: d.mes,
+            AnioHasta: h.anio, MesHasta: h.mes,
+            Comparar: $('#pygComparar').val() || 'ppto',
+            IdEscenarioComparar: $('#pygEscenarioComparar').val() || '',
+            Agrupar: _pyg.agrupar
+        };
     }
 
     function consultarReporte() {
-        var idEmpresa = empresaSeleccionada();
-        var idEscenario = escenarioSeleccionado();
-        var anio = parseInt(elAnio.val(), 10);
-        var mesDesde = _pyg.iDesde + 1, mesHasta = _pyg.iHasta + 1;
-        if (!idEscenario || !anio) return;
+        if (!_pyg.rango.length) return;
+        var filtros = filtrosDelSlider();
 
         $('#overlayConsultandoPYG').css('display', 'flex');
 
-        $.post(_pyg.urls.reporte, {
-            idEmpresa: idEmpresa, idEscenario: idEscenario, anio: anio, mesDesde: mesDesde, mesHasta: mesHasta,
-            __RequestVerificationToken: _pyg.token
-        }, function (resp) {
+        $.post(_pyg.urls.reporte, $.extend({ __RequestVerificationToken: _pyg.token }, filtros), function (resp) {
             $('#overlayConsultandoPYG').hide();
             if (!resp || !resp.success) {
                 mostrarErrorPYG((resp && resp.message) || _pyg.textos.errorServidor);
@@ -569,103 +856,208 @@
                 $('#pygSinDatos').show();
                 return;
             }
-            pintarReporte(reporte, idEmpresa, idEscenario, anio, mesDesde, mesHasta);
+            pintarReporte(reporte, filtros);
         }).fail(function (xhr) {
             $('#overlayConsultandoPYG').hide();
             mostrarErrorPYG(_pyg.textos.errorServidor + ' (HTTP ' + xhr.status + ')');
         });
     }
 
-    function pintarReporte(reporte, idEmpresa, idEscenario, anio, mesDesde, mesHasta) {
+    function pintarReporte(reporte, filtros) {
         _pyg.reporteActual = reporte;
-        _pyg.insightsTexto = null;
-        $('#pygInsightsBody').html('<p class="pyg-insights-empty">' + _pyg.textos.insightsSinGenerar + '</p>');
-        $('#pygInsightsMeta').text('');
+        _pyg.filtrosConsultados = filtros;   // Excel / insights usan exactamente estos filtros
+        reiniciarInsights();
 
-        $('#pygExpEmpresa').val(idEmpresa || '');
-        $('#pygExpEscenario').val(idEscenario);
-        $('#pygExpAnio').val(anio);
-        $('#pygExpMesDesde').val(mesDesde);
-        $('#pygExpMesHasta').val(mesHasta);
+        // Encabezado: empresa + chips de contexto (período, escenario, acumulado, comparaciones)
+        var v2 = _pyg.textos.v2;
+        var variosAnios = reporte.AnioDesde !== reporte.AnioHasta;
+        var mesHastaNombre = (_pyg.mesesCache[reporte.MesHasta - 1] || {}).nombre || '';
+        if (esCulturaEs()) mesHastaNombre = mesHastaNombre.toLowerCase();
+        if (variosAnios) mesHastaNombre += ' ' + reporte.AnioHasta;
 
-        var nombreEmpresa = elEmpresa.find(':selected').text() || '';
-        var nombreEscenario = elEscenario.find(':selected').text() || '';
-        var periodo = etiquetaPeriodo(anio);
+        var comparados = [compNombreFrase(reporte)];
+        if (reporte.HayAnioAnterior) comparados.push(anioAnteriorTexto(reporte));
+        if (reporte.HayEscenarioComparar) comparados.push(escenarioCompNombre(reporte));
 
-        $('#pygTituloEmpresa').text(nombreEmpresa);
-        $('#pygSubtitulo').text(nombreEscenario + ' · ' + periodo);
+        $('#pygTituloEmpresa').text(elEmpresa.find(':selected').text() || '');
+        $('#pygChipPeriodo').text(etiquetaPeriodoChip(reporte));
+        $('#pygChipEscenario').text(elEscenario.find(':selected').text() || '');
+        $('#pygChipAcum').text(v2.acumuladoAFmt.replace('{0}', mesHastaNombre));
+        $('#pygChipComparado').text(v2.comparadoConFmt.replace('{0}', comparados.join(', ')));
         try {
             $('#pygFechaGenerado').text(new Date().toLocaleDateString(_pyg.cultura, { day: 'numeric', month: 'long', year: 'numeric' }));
         } catch (e) { $('#pygFechaGenerado').text(''); }
+        $('#pygTendAnio').text(variosAnios ? (reporte.AnioDesde + ' ' + CH_NDASH + ' ' + reporte.AnioHasta) : reporte.AnioHasta);
+        $('#pygTendTitulo').text(_pyg.textos.tendenciaTitulos[reporte.Agrupar] || _pyg.textos.tendenciaTitulos.Mes);
+        $('#pygCascadaSub').text(v2.cascadaSubFmt.replace('{0}', etiquetaPeriodo(reporte)));
 
-        $('#pygUnidadLbl').text(_pyg.textos.unidades[_pyg.unidad]);
-        $('#pygInfoBadge').text(_pyg.textos.unidadBadge[_pyg.unidad]);
-
-        pintarKpis(reporte.Kpis || []);
-        pintarCharts(reporte);
-        pintarTabla(reporte, periodo, anio, mesHasta);
-        pintarDestacados(reporte);
+        // Etiquetas que dependen de "Comparar contra" / escenario de comparación
+        $('#pygMetaLbl').text(v2.metaFmt.replace('{0}', compCorto(reporte)));
+        $('#pygRelevanteSub').text(v2.relevanteSubFmt.replace('{0}', compNombreFrase(reporte)));
+        $('#pygLeyendaComp').text(compNombre(reporte));
+        $('#pygLeyendaEscNombre').text(escenarioCompNombre(reporte));
+        $('#pygLeyendaEsc').toggle(!!reporte.HayEscenarioComparar);
 
         if (reporte.HayAnioAnterior) {
             $('#pygNotaSinAnterior').hide();
         } else {
-            $('#pygNotaSinAnterior').text(_pyg.textos.sinAnioAnteriorNota.replace('{0}', anio - 1)).show();
+            var anioAnt = variosAnios ? ((reporte.AnioDesde - 1) + ' ' + CH_NDASH + ' ' + (reporte.AnioHasta - 1)) : (reporte.AnioHasta - 1);
+            $('#pygNotaSinAnterior').text(_pyg.textos.sinAnioAnteriorNota.replace('{0}', anioAnt)).show();
         }
+        $('#pygNotaEscenario').text(v2.escenarioSinDatosNota).toggle(!!reporte.IdEscenarioComparar && !reporte.HayEscenarioComparar);
 
         $('#pygEstadoInicial, #pygSinDatos').hide();
-        $('#pygResultado').show();
+        $('#pygResultado').show();   // visible ANTES de crear los charts: Chart.js mide el contenedor
+        repintarConUnidadActual();
     }
 
+    // Repinta todo lo que depende de la unidad / de las vistas elegidas, sin volver a consultar.
     function repintarConUnidadActual() {
-        if (!_pyg.reporteActual) return;
-        var anio = parseInt(elAnio.val(), 10);
-        var periodo = etiquetaPeriodo(anio);
+        var r = _pyg.reporteActual;
+        if (!r) return;
         $('#pygUnidadLbl').text(_pyg.textos.unidades[_pyg.unidad]);
+        $('#pygMenuUnidad button').each(function () {
+            var on = $(this).data('unidad') === _pyg.unidad;
+            $(this).toggleClass('on', on).attr('aria-checked', on ? 'true' : 'false');
+        });
         $('#pygInfoBadge').text(_pyg.textos.unidadBadge[_pyg.unidad]);
-        pintarKpis(_pyg.reporteActual.Kpis || []);
-        pintarCharts(_pyg.reporteActual);
-        pintarTabla(_pyg.reporteActual, periodo, anio, _pyg.reporteActual.MesHasta);
-        pintarDestacados(_pyg.reporteActual);
+        $('#pygMetaPpto').text(fmtNum(r.CascadaPresupuestoUtilidadNeta || 0));
+        $('#pygSegKpi button').each(function () { $(this).toggleClass('active', $(this).data('v') === _pyg.kpiVista); });
+        $('#pygSegTabla button').each(function () { $(this).toggleClass('active', $(this).data('v') === _pyg.vistaTabla); });
+        actualizarBotonYoY();
+
+        pintarKpis(r);
+        pintarCharts(r);
+        pintarTabla(r);
+        pintarDestacados(r);
     }
 
-    function pintarKpis(kpis) {
-        var $s = $('#pygKpiStrip').empty();
-        kpis.forEach(function (k) {
-            var nombre = _pyg.kpiNombres[k.Codigo] || k.Codigo;
-            var icono = _pyg.kpiIconos[k.Codigo] || 'fa-chart-pie';
-            var deltaPeriodo = k.PeriodoRealPct - k.PeriodoPresupuestoPct;
-            var deltaAcum = k.AcumRealPct - k.AcumPresupuestoPct;
-            var deltaYoYPeriodo = (k.PeriodoRealPctAnioAnterior === null || k.PeriodoRealPctAnioAnterior === undefined) ? null : (k.PeriodoRealPct - k.PeriodoRealPctAnioAnterior);
-            var deltaYoYAcum = (k.AcumRealPctAnioAnterior === null || k.AcumRealPctAnioAnterior === undefined) ? null : (k.AcumRealPct - k.AcumRealPctAnioAnterior);
+    // ===== Utilidades comunes de la v2 =====
 
-            var $card = $('<div class="pyg-kpi-card">');
-            $card.append($('<div class="pyg-kpi-head">')
-                .append($('<span class="pyg-kpi-ic">').append($('<i class="fas ' + icono + '">')))
-                .append($('<span class="pyg-kpi-nm">').text(nombre)));
-            $card.append(filaKpi(_pyg.textos.kpiPeriodoMes, k.PeriodoRealPct, deltaPeriodo, deltaYoYPeriodo));
-            $card.append(filaKpi(_pyg.textos.kpiPeriodoAcum, k.AcumRealPct, deltaAcum, deltaYoYAcum));
-            $s.append($card);
+    // En líneas de costo/gasto/impuesto (valores en magnitud positiva) gastar/crecer más de lo
+    // comparado es DESFAVORABLE aunque el número sea positivo — se invierte el color.
+    function esFavorable(esGastoOCosto, valor) {
+        return esGastoOCosto ? valor <= 0 : valor >= 0;
+    }
+
+    // 'good' | 'bad' | 'neu' (cero o sin dato).
+    function claseVariacion(esGastoOCosto, valor) {
+        if (valor === null || valor === undefined || valor === 0) return 'neu';
+        return esFavorable(esGastoOCosto, valor) ? 'good' : 'bad';
+    }
+
+    // Umbral a partir del cual una variación % se marca como "crítica" (ícono) para que el ojo vaya
+    // directo a lo que más importa, sin perder el detalle de las demás líneas.
+    var PYG_UMBRAL_CRITICO = 0.15;
+
+    // Chip de variación (KPIs / tendencias / tabla). "favorable" decide el color (verde/rojo) y el
+    // caret sigue el signo real del número.
+    function chipVariacion(texto, valor, favorable, conCritico) {
+        if (valor === null || valor === undefined || isNaN(valor)) return '<span class="pyg2-dchip">' + CH_MDASH + '</span>';
+        var icono = (conCritico && Math.abs(valor) >= PYG_UMBRAL_CRITICO)
+            ? '<i class="fas fa-circle-exclamation"></i>'
+            : '<i class="fas fa-caret-' + (valor >= 0 ? 'up' : 'down') + '"></i>';
+        return '<span class="pyg2-dchip ' + (favorable ? 'up' : 'down') + '">' + icono + escHtml(texto) + '</span>';
+    }
+
+    function variacionRelativa(real, base) {
+        if (base === null || base === undefined || base === 0) return null;
+        return (real - base) / Math.abs(base);
+    }
+
+    // Etiqueta de subtotal en formato oración ("UTILIDAD BRUTA" / "Utilidad Bruta" → "Utilidad bruta"),
+    // respetando acrónimos (EBITDA…).
+    var PYG_ACRONIMOS = ['EBITDA', 'EBIT', 'EBT', 'PUC', 'IVA', 'ICA', 'COP', 'AIU', 'GMF'];
+    function etiquetaCuenta(desc, esSubtotal) {
+        if (!esSubtotal || !desc) return desc || '';
+        return desc.split(' ').map(function (w, i) {
+            if (PYG_ACRONIMOS.indexOf(w.toUpperCase()) >= 0) return w.toUpperCase();
+            var min = w.toLowerCase();
+            return i === 0 ? min.charAt(0).toUpperCase() + min.slice(1) : min;
+        }).join(' ');
+    }
+
+    // ===== KPIs: Ingresos + 3 márgenes, en vista Período o Acumulado =====
+    function pintarKpis(r) {
+        var $s = $('#pygKpiStrip').empty();
+        var datos = datosKpisPYG(r, _pyg.kpiVista === 'acum');
+        datos.tarjetas.forEach(function (t) {
+            $s.append(tarjetaKpi(t.icono, t.nombre, t.valorTxt, t.pptoTxt, t.real, t.ppto, datos.refs, t.deltas));
         });
     }
 
-    function deltaChip(delta, etiquetaRef) {
-        var cls = delta >= 0 ? 'up' : 'down';
-        var icon = delta >= 0 ? 'fa-caret-up' : 'fa-caret-down';
-        return $('<span class="pyg-kpi-delta ' + cls + '">')
-            .append($('<i class="fas ' + icon + '">'))
-            .append(document.createTextNode(' ' + fmtPuntos(delta) + ' pp '))
-            .append($('<span class="ref">').text(etiquetaRef));
+    // Datos de las 4 tarjetas KPI (Ingresos + 3 márgenes) en vista Período o Acumulado — los usan tanto
+    // la pantalla (pintarKpis) como el PDF (generarPdf), para que muestren exactamente las mismas cifras.
+    // deltas: [{ref, d, txt}] con d === undefined → la comparación no aplica; d === null → sin base ("—").
+    function datosKpisPYG(r, acum) {
+        var v2 = _pyg.textos.v2, tarjetas = [];
+        var refs = {
+            comp: compNombre(r),
+            vsComp: v2.vsAnioFmt.replace('{0}', compNombreFrase(r)),
+            vsAnt: v2.vsAnioFmt.replace('{0}', anioAnteriorTexto(r)),
+            vsEsc: v2.vsAnioFmt.replace('{0}', escenarioCompNombre(r))
+        };
+
+        var ing = r.IngresosFila;
+        if (ing) {
+            var real = acum ? ing.AcumReal : ing.PeriodoReal;
+            var ppto = acum ? ing.AcumPresupuesto : ing.PeriodoPresupuesto;
+            var ant = acum ? ing.AcumRealAnioAnterior : ing.PeriodoRealAnioAnterior;
+            var esc = acum ? ing.AcumRealEscenario : ing.PeriodoRealEscenario;
+            var dPpto = variacionRelativa(real, ppto);
+            var dAnt = r.HayAnioAnterior ? variacionRelativa(real, ant) : undefined;
+            var dEsc = r.HayEscenarioComparar ? variacionRelativa(real, esc) : undefined;
+            var fmtRel = function (d) { return (d === null || d === undefined) ? null : fmtPctVar(d); };
+            tarjetas.push({
+                icono: 'fa-sack-dollar', nombre: v2.ingresos, valorTxt: fmtNum(real), pptoTxt: fmtNum(ppto), real: real, ppto: ppto,
+                deltas: [
+                    { ref: refs.vsComp, d: dPpto, txt: fmtRel(dPpto) },
+                    { ref: refs.vsAnt, d: dAnt, txt: fmtRel(dAnt) },
+                    { ref: refs.vsEsc, d: dEsc, txt: fmtRel(dEsc) }
+                ]
+            });
+        }
+
+        (r.Kpis || []).forEach(function (k) {
+            var real = acum ? k.AcumRealPct : k.PeriodoRealPct;
+            var ppto = acum ? k.AcumPresupuestoPct : k.PeriodoPresupuestoPct;
+            var ant = acum ? k.AcumRealPctAnioAnterior : k.PeriodoRealPctAnioAnterior;
+            var esc = acum ? k.AcumRealPctEscenario : k.PeriodoRealPctEscenario;
+            var pp = function (base, hay) {
+                if (!hay) return { d: undefined, txt: null };
+                if (base === null || base === undefined) return { d: null, txt: null };
+                return { d: real - base, txt: fmtPuntos(real - base) + ' pp' };
+            };
+            var vAnt = pp(ant, r.HayAnioAnterior), vEsc = pp(esc, r.HayEscenarioComparar);
+            tarjetas.push({
+                icono: _pyg.kpiIconos[k.Codigo] || 'fa-chart-pie', nombre: _pyg.kpiNombres[k.Codigo] || k.Codigo,
+                valorTxt: fmtPct(real), pptoTxt: fmtPct(ppto), real: real, ppto: ppto,
+                deltas: [
+                    { ref: refs.vsComp, d: real - ppto, txt: fmtPuntos(real - ppto) + ' pp' },
+                    { ref: refs.vsAnt, d: vAnt.d, txt: vAnt.txt },
+                    { ref: refs.vsEsc, d: vEsc.d, txt: vEsc.txt }
+                ]
+            });
+        });
+
+        return { refs: refs, tarjetas: tarjetas };
     }
 
-    function filaKpi(etiquetaPeriodo, valorPct, deltaPpto, deltaYoY) {
-        var $deltas = $('<span class="pyg-kpi-deltas">').append(deltaChip(deltaPpto, _pyg.textos.kpiVsPresupuesto));
-        if (deltaYoY !== null && deltaYoY !== undefined) {
-            $deltas.append(deltaChip(deltaYoY, _pyg.textos.kpiVsAnioAnterior));
-        }
-        return $('<div class="pyg-kpi-row">')
-            .append($('<span class="pyg-kpi-per">').text(etiquetaPeriodo))
-            .append($('<span class="pyg-kpi-val">').text(fmtPct(valorPct)))
-            .append($deltas);
+    // deltas: [{ref, d, txt}] — d === undefined → esa comparación no aplica (no se pinta la fila);
+    // d === null → aplica pero no hay base (se pinta "—").
+    function tarjetaKpi(icono, nombre, valorTxt, pptoTxt, real, ppto, refs, deltas) {
+        var ancho = ppto > 0 ? Math.max(0, Math.min(100, real / ppto * 100)) : (real >= ppto ? 100 : 0);
+        var filas = deltas.filter(function (x) { return x.d !== undefined; }).map(function (x) {
+            return '<div class="row"><span class="ref">' + escHtml(x.ref) + '</span>' + chipVariacion(x.txt, x.d, x.d >= 0, false) + '</div>';
+        }).join('');
+        var html =
+            '<div class="pyg2-kpi">' +
+                '<div class="pyg2-kpi-head"><span class="ic"><i class="fas ' + icono + '"></i></span><span class="nm">' + escHtml(nombre) + '</span></div>' +
+                '<div class="pyg2-kpi-val"><span class="v">' + escHtml(valorTxt) + '</span><span class="p">' + escHtml(refs.comp + ' ' + pptoTxt) + '</span></div>' +
+                '<div class="pyg2-kpi-bar"><i class="' + (real >= ppto ? 'good' : '') + '" style="width:' + ancho.toFixed(1) + '%"></i></div>' +
+                '<div class="pyg2-kpi-deltas">' + filas + '</div>' +
+            '</div>';
+        return $(html);
     }
 
     function destruirCharts() {
@@ -673,59 +1065,105 @@
         _pyg.charts = {};
     }
 
-    function pintarCharts(reporte) {
+    function pintarCharts(r) {
         destruirCharts();
-        pintarCascada(reporte);
-        pintarUnChart('pygChartIngresos', reporte.TendenciaIngresos || []);
-        pintarUnChart('pygChartEbitda', reporte.TendenciaEbitda || []);
-        pintarUnChart('pygChartUtilidadNeta', reporte.TendenciaUtilidadNeta || []);
+        pintarCascada(r);
+        pintarUnChart('Ingresos', r.TendenciaIngresos || [], r);
+        pintarUnChart('Ebitda', r.TendenciaEbitda || [], r);
+        pintarUnChart('UtilidadNeta', r.TendenciaUtilidadNeta || [], r);
     }
 
     // Waterfall Ingresos -> Utilidad Neta (Real) del período seleccionado. Cada tramo intermedio ya
     // viene calculado por el servicio como la diferencia exacta entre dos subtotales consecutivos del
     // modelo, así que las barras SIEMPRE cuadran con Ingresos-Utilidad Neta reales (ver ArmarCascada).
-    function pintarCascada(reporte) {
-        var barras = reporte.CascadaPeriodo || [];
+    function pintarCascada(r) {
+        var barras = r.CascadaPeriodo || [];
         if (!barras.length) return;
-        var ctx = document.getElementById('pygChartCascada').getContext('2d');
         var etiquetas = barras.map(function (b) { return _pyg.cascadaNombres[b.Etiqueta] || b.Etiqueta; });
         var datos = barras.map(function (b) { return [escalarValor(b.Desde), escalarValor(b.Hasta)]; });
         var colores = barras.map(function (b) {
             if (b.Tipo === 'total') return '#6366F1';
-            return b.Tipo === 'positivo' ? '#16A34A' : '#DC2626';
+            return b.Tipo === 'positivo' ? '#16A34A' : '#F87171';
         });
-        var presupuestoNeta = escalarValor(reporte.CascadaPresupuestoUtilidadNeta || 0);
+        $('#pygLeyendaSuma').toggle(barras.some(function (b) { return b.Tipo === 'positivo'; }));
+        var meta = escalarValor(r.CascadaPresupuestoUtilidadNeta || 0);
+        var maxBarras = Math.max.apply(null, barras.map(function (b) { return escalarValor(b.Hasta); }).concat([meta, 0]));
 
-        _pyg.charts['pygChartCascada'] = new Chart(ctx, {
+        // Valor sobre cada barra + conectores punteados entre tramos (sin librerías de etiquetas).
+        var etiquetasPlugin = {
+            id: 'pygCascadaEtiquetas',
+            afterDatasetsDraw: function (chart) {
+                var ctx = chart.ctx, metaBarras = chart.getDatasetMeta(0), escalaY = chart.scales.y;
+                if (!metaBarras || !metaBarras.data.length) return;
+                var yMeta = escalaY.getPixelForValue(meta);
+                ctx.save();
+                ctx.font = '800 12px Nunito, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                metaBarras.data.forEach(function (el, i) {
+                    var b = barras[i], tope = Math.min(el.y, el.base);
+                    var y = (i === barras.length - 1 ? Math.min(tope, yMeta) : tope) - 7;
+                    ctx.fillStyle = b.Tipo === 'total' ? '#16121F' : (b.Tipo === 'positivo' ? '#16A34A' : '#DC2626');
+                    ctx.fillText(b.Tipo === 'total' ? fmtNum(b.Hasta) : fmtNumVar(b.Delta || 0), el.x, y);
+                });
+                ctx.strokeStyle = '#C7C2E6';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([3, 3]);
+                for (var i = 0; i < metaBarras.data.length - 1; i++) {
+                    var el = metaBarras.data[i], sig = metaBarras.data[i + 1], b = barras[i];
+                    // Nivel donde termina el tramo: totales y sumas en "Hasta"; restas en "Desde" (su valor bajo).
+                    var nivel = b.Tipo === 'negativo' ? b.Desde : b.Hasta;
+                    var y = Math.round(escalaY.getPixelForValue(escalarValor(nivel))) + 0.5;
+                    ctx.beginPath();
+                    ctx.moveTo(el.x + el.width / 2, y);
+                    ctx.lineTo(sig.x - sig.width / 2, y);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+        };
+
+        _pyg.charts['pygChartCascada'] = new Chart(document.getElementById('pygChartCascada').getContext('2d'), {
             type: 'bar',
             data: {
                 labels: etiquetas,
                 datasets: [
-                    { label: _pyg.textos.colReal, data: datos, backgroundColor: colores, borderRadius: 4, barPercentage: 0.55, maxBarThickness: 70 },
+                    {
+                        label: _pyg.textos.colReal, data: datos, backgroundColor: colores,
+                        borderRadius: 6, borderSkipped: false, barPercentage: 0.7, categoryPercentage: 0.8, maxBarThickness: 78
+                    },
                     {
                         type: 'line', label: _pyg.textos.cascadaPresupuestoNeta,
-                        data: etiquetas.map(function () { return presupuestoNeta; }),
-                        borderColor: '#D97706', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, fill: false
+                        data: etiquetas.map(function () { return meta; }),
+                        borderColor: '#D97706', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, pointHoverRadius: 0, fill: false
                     }
                 ]
             },
+            plugins: [etiquetasPlugin],
             options: {
                 responsive: true, maintainAspectRatio: false,
+                layout: { padding: { top: 22 } },
                 plugins: {
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
                             label: function (c) {
-                                if (c.dataset.type === 'line') return c.dataset.label + ': ' + fmtNum(reporte.CascadaPresupuestoUtilidadNeta || 0);
+                                if (c.dataset.type === 'line') return c.dataset.label + ': ' + fmtNum(r.CascadaPresupuestoUtilidadNeta || 0);
                                 var b = barras[c.dataIndex];
-                                return b.Tipo === 'total' ? (_pyg.textos.colReal + ': ' + fmtNum(b.Hasta)) : (etiquetas[c.dataIndex] + ': ' + fmtNumVar(b.Delta));
+                                return b.Tipo === 'total' ? (_pyg.textos.colReal + ': ' + fmtNum(b.Hasta)) : (etiquetas[c.dataIndex] + ': ' + fmtNumVar(b.Delta || 0));
                             }
                         }
                     }
                 },
                 scales: {
-                    y: { display: false },
-                    x: { grid: { display: false }, ticks: { font: { size: 10.5, weight: '700' }, color: '#8B85A0' } }
+                    y: {
+                        display: true, beginAtZero: true, suggestedMax: maxBarras * 1.08,
+                        ticks: { display: false }, border: { display: false }, grid: { color: '#F1F0F7' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { family: "'Nunito', sans-serif", size: 11.5, weight: '700' }, color: '#8B85A0' }
+                    }
                 }
             }
         });
@@ -733,342 +1171,832 @@
 
     // Top movimientos del período por impacto absoluto en pesos (materialidad), no por variación % —
     // una línea pequeña con un swing % enorme no debería dominar el resumen ejecutivo.
-    function pintarDestacados(reporte) {
-        var candidatas = (reporte.Filas || []).filter(function (f) {
+    // Top 4 líneas (no subtotal) por |variación en pesos| del período — compartido por pantalla y PDF.
+    function datosDestacadosPYG(r) {
+        var candidatas = (r.Filas || []).filter(function (f) {
             return !f.EsSubtotal && f.PeriodoVariacionAbsoluta !== 0 &&
                 f.PeriodoVariacionPorcentual !== null && f.PeriodoVariacionPorcentual !== undefined;
         });
         candidatas.sort(function (a, b) { return Math.abs(b.PeriodoVariacionAbsoluta) - Math.abs(a.PeriodoVariacionAbsoluta); });
-        var top = candidatas.slice(0, 4);
-        var $list = $('#pygHighlightsList').empty();
-        if (!top.length) { $('#pygHighlights').hide(); return; }
-        top.forEach(function (f) {
-            var cls = claseVariacion(f.EsGastoOCosto, f.PeriodoVariacionAbsoluta, false);
-            var favorable = cls.indexOf('pyg-v-good') >= 0;
-            $list.append($('<div class="pyg-highlight-item">')
-                .append($('<span class="pyg-highlight-nm">').text(f.Descripcion))
-                .append($('<span class="pyg-highlight-val ' + (favorable ? 'up' : 'down') + '">')
-                    .append($('<i class="fas ' + (favorable ? 'fa-caret-up' : 'fa-caret-down') + '">'))
-                    .append(document.createTextNode(' ' + fmtNumVar(f.PeriodoVariacionAbsoluta) + ' (' + fmtPctVar(f.PeriodoVariacionPorcentual) + ')'))));
-        });
-        $('#pygHighlights').show();
+        return candidatas.slice(0, 4);
     }
 
-    function pintarUnChart(canvasId, puntos) {
-        var ctx = document.getElementById(canvasId).getContext('2d');
-        _pyg.charts[canvasId] = new Chart(ctx, {
+    function pintarDestacados(r) {
+        var v2 = _pyg.textos.v2;
+        var top = datosDestacadosPYG(r);
+        var $list = $('#pygHighlightsList').empty();
+        if (!top.length) {
+            $list.append($('<div class="pyg2-hl-empty">').text(v2.sinDestacados));
+            return;
+        }
+        var base = Math.abs(top[0].PeriodoVariacionAbsoluta) || 1;
+        top.forEach(function (f) {
+            var fav = esFavorable(f.EsGastoOCosto, f.PeriodoVariacionAbsoluta);
+            var ancho = Math.abs(f.PeriodoVariacionAbsoluta) / base * 100;
+            var tag = (fav ? v2.favorable : v2.desfavorableCorto) + ' ' + CH_MIDDOT + ' ' + fmtPctVar(f.PeriodoVariacionPorcentual);
+            $list.append(
+                '<div class="pyg2-hl ' + (fav ? 'up' : 'down') + '">' +
+                    '<div class="pyg2-hl-top"><span class="nm">' + escHtml(f.Descripcion) + '</span><span class="val">' + escHtml(fmtNumVar(f.PeriodoVariacionAbsoluta)) + '</span></div>' +
+                    '<div class="pyg2-hl-bot"><div class="pyg2-hl-track"><i style="width:' + ancho.toFixed(1) + '%"></i></div><span class="tag">' + escHtml(tag) + '</span></div>' +
+                '</div>');
+        });
+    }
+
+    // Mini-tendencia (Real vs comparativo, + escenario de comparación si aplica), agrupada por mes,
+    // trimestre o año según "Agrupar por", con los puntos del rango consultado sombreados detrás
+    // (EnRango lo marca el servidor). El encabezado muestra el Real del período y su desvío.
+    function pintarUnChart(clave, puntos, r) {
+        var canvasId = 'pygChart' + clave, v2 = _pyg.textos.v2;
+        var enRango = function (p) { return !!p.EnRango; };
+
+        var fila = { Ingresos: r.IngresosFila, Ebitda: r.EbitdaFila, UtilidadNeta: r.UtilidadNetaFila }[clave];
+        var realPeriodo = fila ? fila.PeriodoReal : 0, compPeriodo = fila ? fila.PeriodoPresupuesto : 0;
+        $('#pygTrendVal' + clave).text(fmtNum(realPeriodo));
+        var d = variacionRelativa(realPeriodo, compPeriodo);
+        var $chip = $('#pygTrendChip' + clave).removeClass('up down');
+        if (d === null) {
+            $chip.hide();
+        } else {
+            var corto = esCulturaEs() ? compCorto(r).toLowerCase() : compCorto(r);
+            $chip.addClass(d >= 0 ? 'up' : 'down').show()
+                .html('<i class="fas fa-caret-' + (d >= 0 ? 'up' : 'down') + '"></i>' + escHtml(v2.vsCompFmt.replace('{0}', fmtPctVar(d)).replace('{1}', corto)));
+        }
+        var campos = ['Real', 'Presupuesto', 'RealEscenario'];
+
+        var n = puntos.length;
+        var radios = puntos.map(function (p, i) { return i === n - 1 ? 3.5 : 0; });
+
+        var sombreadoPlugin = {
+            id: 'pygPeriodoSombreado',
+            beforeDatasetsDraw: function (chart) {
+                var idx = [];
+                puntos.forEach(function (p, i) { if (enRango(p)) idx.push(i); });
+                if (!idx.length) return;
+                var x = chart.scales.x, area = chart.chartArea;
+                var paso = n > 1 ? (x.getPixelForValue(1) - x.getPixelForValue(0)) : area.width;
+                var x0 = Math.max(area.left, x.getPixelForValue(idx[0]) - paso / 2);
+                var x1 = Math.min(area.right, x.getPixelForValue(idx[idx.length - 1]) + paso / 2);
+                var ctx = chart.ctx;
+                ctx.save();
+                ctx.fillStyle = '#EEF2FF';
+                ctx.beginPath();
+                if (ctx.roundRect) ctx.roundRect(x0, area.top, x1 - x0, area.bottom - area.top, 6);
+                else ctx.rect(x0, area.top, x1 - x0, area.bottom - area.top);
+                ctx.fill();
+                ctx.restore();
+            }
+        };
+
+        _pyg.charts[canvasId] = new Chart(document.getElementById(canvasId).getContext('2d'), {
             type: 'line',
             data: {
                 labels: puntos.map(function (p) { return p.Etiqueta; }),
                 datasets: [
                     {
-                        label: _pyg.textos.colReal, data: puntos.map(function (p) { return p.Real; }),
-                        borderColor: '#6366F1', backgroundColor: 'rgba(99,102,241,.12)', borderWidth: 2.5,
-                        tension: .35, fill: true, pointRadius: 3
+                        label: v2.real, data: puntos.map(function (p) { return escalarValor(p.Real); }),
+                        borderColor: '#6366F1', backgroundColor: 'rgba(99,102,241,.08)', borderWidth: 2.5,
+                        tension: .35, fill: true, pointRadius: radios, pointHoverRadius: 4,
+                        pointBackgroundColor: '#fff', pointBorderColor: '#6366F1', pointBorderWidth: 2
                     },
                     {
-                        label: _pyg.textos.colPresupuesto, data: puntos.map(function (p) { return p.Presupuesto; }),
+                        label: compNombre(r), data: puntos.map(function (p) { return escalarValor(p.Presupuesto); }),
                         borderColor: '#D97706', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 4],
-                        tension: .35, fill: false, pointRadius: 2.5
+                        tension: .35, fill: false, pointRadius: 0, pointHoverRadius: 3
                     }
-                ]
+                ].concat(r.HayEscenarioComparar ? [{
+                    label: escenarioCompNombre(r), data: puntos.map(function (p) { return escalarValor(p.RealEscenario || 0); }),
+                    borderColor: '#0EA5E9', backgroundColor: 'transparent', borderWidth: 2,
+                    tension: .35, fill: false, pointRadius: 0, pointHoverRadius: 3
+                }] : [])
             },
+            plugins: [sombreadoPlugin],
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + fmtNum(c.parsed.y); } } } },
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + fmtNum(puntos[c.dataIndex][campos[c.datasetIndex]] || 0); } } }
+                },
                 scales: {
                     y: { display: false },
-                    x: { grid: { display: false }, ticks: { font: { size: 10, weight: '700' }, color: '#8B85A0' } }
+                    x: {
+                        grid: { display: false }, border: { display: false },
+                        ticks: {
+                            font: { family: "'Nunito', sans-serif", size: 10, weight: '700' },
+                            color: function (c) { var p = puntos[c.index]; return p && enRango(p) ? '#583AFF' : '#8B85A0'; }
+                        }
+                    }
                 }
             }
         });
     }
 
-    // Umbral a partir del cual una variación % se marca como "crítica" (negrita + ícono) para que el
-    // ojo vaya directo a lo que más importa, sin perder el detalle de las demás líneas.
-    var PYG_UMBRAL_CRITICO = 0.15;
-
-    // En líneas de costo/gasto/impuesto (valores en magnitud positiva) gastar/crecer más de lo
-    // comparado es DESFAVORABLE aunque el número sea positivo — se invierte el color. esPorcentaje
-    // controla si aplica el resaltado de "crítico" (solo tiene sentido sobre valores %, no sobre $).
-    function claseVariacion(esGastoOCosto, valor, esPorcentaje) {
-        if (valor === null || valor === undefined) return '';
-        var favorable = esGastoOCosto ? valor <= 0 : valor >= 0;
-        var cls = favorable ? 'pyg-v-good' : 'pyg-v-bad';
-        if (esPorcentaje && Math.abs(valor) >= PYG_UMBRAL_CRITICO) cls += ' pyg-v-critical';
-        return cls;
+    // ===== Tabla detallada: bloques Período / Acumulado / Ambos + columna opcional vs año anterior =====
+    function yoyVisible() {
+        return !!(_pyg.reporteActual && _pyg.reporteActual.HayAnioAnterior && _pyg.mostrarYoY);
     }
 
-    function celdaVariacion(valor, esGastoOCosto, formateador, esPorcentaje, claseExtra) {
-        var cls = claseVariacion(esGastoOCosto, valor, esPorcentaje);
-        var icono = cls.indexOf('pyg-v-critical') >= 0 ? '<i class="fas fa-circle-exclamation pyg-v-crit-ic"></i>' : '';
-        return '<td class="pyg-num ' + cls + (claseExtra ? ' ' + claseExtra : '') + '">' + icono + formateador(valor) + '</td>';
+    function actualizarBotonYoY() {
+        var hay = !!(_pyg.reporteActual && _pyg.reporteActual.HayAnioAnterior);
+        var on = hay && _pyg.mostrarYoY;
+        $('#pygBtnYoY').prop('disabled', !hay).toggleClass('on', on).attr('aria-pressed', on ? 'true' : 'false')
+            .find('i').attr('class', on ? 'fas fa-square-check' : 'far fa-square');
     }
 
-    function pintarTabla(reporte, periodo, anio, mesHasta) {
-        var nombreMesHasta = _pyg.mesesCache[mesHasta - 1] ? _pyg.mesesCache[mesHasta - 1].nombre : '';
-        var tituloPeriodo = _pyg.textos.colMesGrupoFmt.replace('{0}', periodo);
-        var tituloAcum = _pyg.textos.colAcumGrupoFmt.replace('{0}', nombreMesHasta + ' ' + anio);
+    function pintarTabla(r) {
+        var v2 = _pyg.textos.v2, yoy = yoyVisible(), conEsc = !!r.HayEscenarioComparar;
+        var bloques = _pyg.vistaTabla === 'ambos' ? ['Periodo', 'Acum'] : [_pyg.vistaTabla === 'acum' ? 'Acum' : 'Periodo'];
+        var nCols = 5 + (yoy ? 1 : 0) + (conEsc ? 1 : 0);
+        var meses = _pyg.mesesCache;
+        var tituloPeriodo = v2.grupoPeriodoFmt.replace('{0}', etiquetaPeriodo(r));
+        var rangoAcum = r.MesHasta === 1 ? meses[0].abrev : (meses[0].abrev + ' ' + CH_NDASH + ' ' + meses[r.MesHasta - 1].abrev);
+        var tituloAcum = v2.grupoAcumFmt.replace('{0}', rangoAcum + ' ' + r.AnioHasta);
+        var colYoY = v2.vsAnioFmt.replace('{0}', anioAnteriorTexto(r));
+        var colEsc = v2.vsAnioFmt.replace('{0}', escenarioCompNombre(r));
 
-        var head = '<tr>' +
-            '<th rowspan="2" style="vertical-align:bottom;">' + _pyg.textos.colEstructura + '</th>' +
-            '<th colspan="6" class="pyg-th-grupo">' + tituloPeriodo + '</th>' +
-            '<th colspan="6" class="pyg-th-grupo pyg-col-sep">' + tituloAcum + '</th>' +
-            '</tr><tr>' +
-            '<th>' + _pyg.textos.colReal + '</th><th>' + _pyg.textos.colPresupuesto + '</th>' +
-            '<th>' + _pyg.textos.colVarAbs + '</th><th>' + _pyg.textos.colVarPct + '</th><th>' + _pyg.textos.colMargen + '</th>' +
-            '<th title="' + _pyg.textos.colVarYoyTooltip + '">' + _pyg.textos.colVarYoy + '</th>' +
-            '<th class="pyg-col-sep">' + _pyg.textos.colReal + '</th><th>' + _pyg.textos.colPresupuesto + '</th>' +
-            '<th>' + _pyg.textos.colVarAbs + '</th><th>' + _pyg.textos.colVarPct + '</th><th>' + _pyg.textos.colMargen + '</th>' +
-            '<th title="' + _pyg.textos.colVarYoyTooltip + '">' + _pyg.textos.colVarYoy + '</th>' +
-            '</tr>';
-        $('#pygTablaHead').html(head);
-
-        var body = '';
-        (reporte.Filas || []).forEach(function (f) {
-            var claseFila = f.EsSubtotal ? ' class="pyg-row-subtotal"' : '';
-
-            body += '<tr' + claseFila + '>' +
-                '<td class="pyg-lbl">' + $('<span>').text(f.Descripcion).html() + '</td>' +
-                '<td class="pyg-num">' + fmtNum(f.PeriodoReal) + '</td>' +
-                '<td class="pyg-num">' + fmtNum(f.PeriodoPresupuesto) + '</td>' +
-                celdaVariacion(f.PeriodoVariacionAbsoluta, f.EsGastoOCosto, fmtNumVar, false) +
-                celdaVariacion(f.PeriodoVariacionPorcentual, f.EsGastoOCosto, fmtPctVar, true) +
-                '<td class="pyg-num">' + fmtPct(f.PeriodoMargen) + '</td>' +
-                celdaVariacion(f.PeriodoVariacionYoYPorcentual, f.EsGastoOCosto, fmtPctVar, true) +
-                '<td class="pyg-num pyg-col-sep">' + fmtNum(f.AcumReal) + '</td>' +
-                '<td class="pyg-num">' + fmtNum(f.AcumPresupuesto) + '</td>' +
-                celdaVariacion(f.AcumVariacionAbsoluta, f.EsGastoOCosto, fmtNumVar, false) +
-                celdaVariacion(f.AcumVariacionPorcentual, f.EsGastoOCosto, fmtPctVar, true) +
-                '<td class="pyg-num">' + fmtPct(f.AcumMargen) + '</td>' +
-                celdaVariacion(f.AcumVariacionYoYPorcentual, f.EsGastoOCosto, fmtPctVar, true) +
-                '</tr>';
+        var fila1 = '<th rowspan="2" class="col-cuenta">' + escHtml(v2.colCuenta) + '</th>';
+        var fila2 = '';
+        bloques.forEach(function (b, i) {
+            var sep = i > 0 ? ' class="sep"' : '';
+            fila1 += '<th colspan="' + nCols + '"' + sep + '>' + escHtml(b === 'Periodo' ? tituloPeriodo : tituloAcum) + '</th>';
+            fila2 += '<th' + sep + '>' + escHtml(_pyg.textos.colReal) + '</th>' +
+                '<th>' + escHtml(compCorto(r)) + '</th>' +
+                '<th>' + escHtml(_pyg.textos.colVarAbs) + '</th>' +
+                '<th>' + escHtml(_pyg.textos.colVarPct) + '</th>' +
+                '<th>' + escHtml(v2.colMargen) + '</th>' +
+                (yoy ? '<th title="' + escHtml(_pyg.textos.colVarYoyTooltip) + '">' + escHtml(colYoY) + '</th>' : '') +
+                (conEsc ? '<th>' + escHtml(colEsc) + '</th>' : '');
         });
+        $('#pygTablaHead').html('<tr>' + fila1 + '</tr><tr>' + fila2 + '</tr>');
+
+        // "Detalle de la tabla": solo subtotales conserva las líneas de cálculo (Ingresos, Utilidad
+        // bruta, EBITDA, …) y siempre la última (Utilidad neta), que se pinta como fila total.
+        var todas = r.Filas || [];
+        var soloSubtotales = $('#pygNivelDetalle').val() === 'subtotales';
+        var filas = todas.filter(function (f, i) { return !soloSubtotales || f.EsSubtotal || i === todas.length - 1; });
+        var body = filas.map(function (f, idx) {
+            var claseFila = idx === filas.length - 1 ? ' class="total"' : (f.EsSubtotal ? ' class="sub"' : '');
+            var html = '<tr' + claseFila + '><td class="lbl">' + escHtml(etiquetaCuenta(f.Descripcion, f.EsSubtotal || idx === filas.length - 1)) + '</td>';
+            bloques.forEach(function (b, i) {
+                var real = f[b + 'Real'], ppto = f[b + 'Presupuesto'], va = f[b + 'VariacionAbsoluta'];
+                var vp = f[b + 'VariacionPorcentual'], mar = f[b + 'Margen'], yy = f[b + 'VariacionYoYPorcentual'];
+                var ve = f[b + 'VariacionEscenarioPorcentual'];
+                html += '<td class="real' + (i > 0 ? ' sep' : '') + '">' + escHtml(fmtNum(real)) + '</td>' +
+                    '<td class="ppto">' + escHtml(fmtNum(ppto)) + '</td>' +
+                    '<td class="var ' + claseVariacion(f.EsGastoOCosto, va) + '">' + escHtml(fmtNumVar(va)) + '</td>' +
+                    '<td class="chip">' + (vp === null || vp === undefined
+                        ? '<span class="pyg2-dchip">' + CH_MDASH + '</span>'
+                        : chipVariacion(fmtPctVar(vp), vp, esFavorable(f.EsGastoOCosto, vp), true)) + '</td>' +
+                    '<td class="mar">' + escHtml(fmtPct(mar)) + '</td>' +
+                    (yoy ? '<td class="var ' + claseVariacion(f.EsGastoOCosto, yy) + '">' + escHtml(fmtPctVar(yy)) + '</td>' : '') +
+                    (conEsc ? '<td class="var ' + claseVariacion(f.EsGastoOCosto, ve) + '">' + escHtml(fmtPctVar(ve)) + '</td>' : '');
+            });
+            return html + '</tr>';
+        }).join('');
         $('#pygTablaBody').html(body);
     }
 
-    function generarInsights() {
-        if (!_pyg.reporteActual) return;
-        var idEmpresa = empresaSeleccionada();
-        var idEscenario = escenarioSeleccionado();
-        var anio = parseInt(elAnio.val(), 10);
-        var mesDesde = _pyg.iDesde + 1, mesHasta = _pyg.iHasta + 1;
+    // ===== Insights gerenciales (IA) =====
+    function reiniciarInsights() {
+        var v2 = _pyg.textos.v2;
+        _pyg.insightsTexto = null;
+        $('#pygInsightsLoading').hide();
+        $('#pygInsightsBody').show().html(
+            '<div class="pyg2-ins-empty"><i class="fas fa-circle-info"></i><span>' + escHtml(v2.insightsVacio) + '</span></div>');
+        $('#pygInsightsMeta').text(v2.insightsSub);
+        $('#btnGenerarInsightsPYG').prop('disabled', false)
+            .html('<i class="fas fa-wand-magic-sparkles"></i><span>' + escHtml(v2.generar) + '</span>');
+    }
 
-        $('#btnGenerarInsightsPYG').prop('disabled', true);
+    // El prompt del PYG (RESUMEN_PYG_GERENCIAL en GestorPrompts, o PromptResumenPygPorDefecto en el
+    // controlador) pide 3 líneas fijas "Logro:", "Alerta:" y "Eficiencia:". Se separan por esas palabras
+    // clave al inicio de línea (tolerando viñetas, encabezados markdown y la etiqueta en negrita, p. ej.
+    // "- **Logro del periodo:** …") para pintarlas como 3 tarjetas; las **negritas** del contenido se
+    // conservan (resaltan la cifra clave). Si falta alguna, null → se muestra el markdown completo.
+    function separarInsights(texto) {
+        var claves = { logro: /^(logro|achievement)/i, alerta: /^(alerta|alert)/i, eficiencia: /^(eficiencia|efficiency)/i };
+        var etiqueta = /^(\*\*|__)?\s*(logro|alerta|eficiencia|achievement|alert|efficiency)[^:]*:\s*(\*\*|__)?\s*/i;
+        var partes = { logro: [], alerta: [], eficiencia: [] }, actual = null;
+        (texto || '').split(/\r?\n/).forEach(function (linea) {
+            var conFormato = linea.replace(/^\s*(?:[-•>#]+|\*(?=\s)|\d+[.)])\s*/, '').trim();
+            var plano = conFormato.replace(/\*\*|__/g, '').trim();
+            if (!plano) return;
+            var encontrada = null;
+            Object.keys(claves).forEach(function (k) { if (!encontrada && claves[k].test(plano)) encontrada = k; });
+            if (encontrada) {
+                actual = encontrada;
+                // Sin ":" la línea es solo un título ("### Logro") y el contenido viene en las siguientes.
+                var resto = plano.indexOf(':') >= 0 ? conFormato.replace(etiqueta, '').trim() : '';
+                if (resto) partes[actual].push(resto);
+                return;
+            }
+            if (actual) partes[actual].push(conFormato);
+        });
+        if (!partes.logro.length || !partes.alerta.length || !partes.eficiencia.length) return null;
+        return { logro: partes.logro.join(' '), alerta: partes.alerta.join(' '), eficiencia: partes.eficiencia.join(' ') };
+    }
+
+    function pintarInsights(texto) {
+        var v2 = _pyg.textos.v2;
+        var secciones = separarInsights(texto);
+        if (!secciones) {
+            var md = (typeof window.bufinsMarkdown === 'function') ? window.bufinsMarkdown(texto) : escHtml(texto).replace(/\n/g, '<br>');
+            $('#pygInsightsBody').html('<div class="pyg-insights-body">' + md + '</div>');
+            return;
+        }
+        var tiles = [
+            { cls: 'logro', icono: 'fa-trophy', titulo: v2.logro, texto: secciones.logro },
+            { cls: 'alerta', icono: 'fa-triangle-exclamation', titulo: v2.alerta, texto: secciones.alerta },
+            { cls: 'eficiencia', icono: 'fa-gauge-high', titulo: v2.eficiencia, texto: secciones.eficiencia }
+        ];
+        $('#pygInsightsBody').html('<div class="pyg2-ins-grid">' + tiles.map(function (t) {
+            return '<div class="pyg2-ins-tile ' + t.cls + '">' +
+                '<div class="h"><span class="ic"><i class="fas ' + t.icono + '"></i></span><span class="t">' + escHtml(t.titulo) + '</span></div>' +
+                '<p>' + textoConNegritas(t.texto) + '</p></div>';
+        }).join('') + '</div>');
+    }
+
+    // Escapa el texto y solo convierte **negrita** / __negrita__ en <strong> (nada más de HTML/markdown).
+    function textoConNegritas(t) {
+        return escHtml(t)
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/__(.+?)__/g, '<strong>$1</strong>')
+            .replace(/\*\*|__/g, '');
+    }
+
+    function mostrarErrorInsights(mensaje) {
+        $('#pygInsightsBody').html('<div class="pyg2-ins-empty"><i class="fas fa-circle-exclamation"></i><span>' + escHtml(mensaje) + '</span></div>');
+    }
+
+    function generarInsights() {
+        var r = _pyg.reporteActual;
+        if (!r) return;
+        var v2 = _pyg.textos.v2;
+        var $btn = $('#btnGenerarInsightsPYG');
+        var htmlBtn = $btn.html();
+
+        $btn.prop('disabled', true);
         $('#pygInsightsBody').hide();
         $('#pygInsightsLoading').show();
 
-        $.post(_pyg.urls.insights, {
-            idEmpresa: idEmpresa, idEscenario: idEscenario, anio: anio, mesDesde: mesDesde, mesHasta: mesHasta,
-            __RequestVerificationToken: _pyg.token
-        }, function (resp) {
+        // Mismos parámetros del reporte en pantalla (no los del slider, que pudo cambiar después).
+        $.post(_pyg.urls.insights, $.extend({ __RequestVerificationToken: _pyg.token }, _pyg.filtrosConsultados), function (resp) {
             $('#pygInsightsLoading').hide();
             $('#pygInsightsBody').show();
-            $('#btnGenerarInsightsPYG').prop('disabled', false);
+            $btn.prop('disabled', false);
 
             if (!resp || !resp.Exitoso) {
-                var msg = (resp && resp.Error) ? resp.Error : '';
-                $('#pygInsightsBody').html('<p class="pyg-insights-empty">' + $('<span>').text(msg || _pyg.textos.insightsSinGenerar).html() + '</p>');
+                $btn.html(htmlBtn);
+                mostrarErrorInsights((resp && resp.Error) || _pyg.textos.insightsSinGenerar);
                 return;
             }
 
             _pyg.insightsTexto = resp.Respuesta || '';
-            var html = (typeof window.bufinsMarkdown === 'function')
-                ? window.bufinsMarkdown(_pyg.insightsTexto)
-                : $('<div>').text(_pyg.insightsTexto).html().replace(/\n/g, '<br>');
-            $('#pygInsightsBody').html(html);
-
+            pintarInsights(_pyg.insightsTexto);
+            $btn.html('<i class="fas fa-rotate"></i><span>' + escHtml(v2.regenerar) + '</span>');
             try {
                 var fecha = new Date().toLocaleDateString(_pyg.cultura, { day: 'numeric', month: 'long', year: 'numeric' });
-                $('#pygInsightsMeta').text(_pyg.textos.insightsMetaFmt.replace('{0}', fecha));
+                var cuentas = (r.Filas || []).filter(function (f) { return !f.EsSubtotal; }).length;
+                $('#pygInsightsMeta').text(v2.insightsMetaFmt.replace('{0}', fecha).replace('{1}', cuentas));
             } catch (e) { }
         }).fail(function (xhr) {
             $('#pygInsightsLoading').hide();
             $('#pygInsightsBody').show();
-            $('#btnGenerarInsightsPYG').prop('disabled', false);
-            $('#pygInsightsBody').html('<p class="pyg-insights-empty">' + $('<span>').text(_pyg.textos.errorServidor + ' (HTTP ' + xhr.status + ')').html() + '</p>');
+            $btn.prop('disabled', false).html(htmlBtn);
+            mostrarErrorInsights(_pyg.textos.errorServidor + ' (HTTP ' + xhr.status + ')');
         });
     }
 
-    function generarPdf() {
-        var reporte = _pyg.reporteActual;
-        if (!reporte) return;
+    // ===== PDF gerencial (A4 horizontal, jsPDF puro — sin html2canvas) =====
+    //  Pág. 1  Resumen ejecutivo: banda de marca, contexto (chips), 4 KPIs e insights de IA en 3 tarjetas.
+    //  Pág. 2  Análisis del período: cascada + "Lo más relevante" + 3 tendencias (gráficas nativas de
+    //          Chart.js re-renderizadas a 3x para que salgan nítidas).
+    //  Pág. 3+ Estado de resultados detallado: misma vista/columnas/nivel de detalle que la tabla en
+    //          pantalla, con encabezado repetido en cada página.
+    //  Pie en todas: empresa · período · confidencialidad · "Página X de Y".
+    var PDF_COL = {
+        marca: [99, 102, 241], morado: [88, 58, 255], texto: [22, 18, 31], texto2: [91, 85, 112], muted: [139, 133, 160],
+        linea: [228, 225, 240], lineaSuave: [238, 240, 246], suave: [244, 243, 251], suave2: [248, 247, 253], zebra: [252, 252, 254],
+        totalBg: [238, 242, 255], totalTx: [59, 47, 191], bueno: [22, 163, 74], buenoBg: [236, 253, 243],
+        malo: [220, 38, 38], maloBg: [254, 242, 242], restaBar: [248, 113, 113], ambar: [217, 119, 6], cian: [14, 165, 233], blanco: [255, 255, 255]
+    };
+    var PDF_DEGRADADO = [[99, 102, 241], [59, 130, 246], [6, 182, 212], [1, 225, 215]];
 
+    function generarPdf() {
+        var r = _pyg.reporteActual;
+        if (!r) return;
         var btn = document.getElementById('btnExportarPdfPYG');
         var htmlOriginal = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + _pyg.textos.pdfGenerando;
 
-        try {
-            var jsPDFCtor = window.jspdf.jsPDF;
-            var pdf = new jsPDFCtor('l', 'mm', 'a4');
-            var pageW = pdf.internal.pageSize.getWidth();
-            var pageH = pdf.internal.pageSize.getHeight();
-            var margin = 12;
-            var y;
-
-            function dibujarPiePagina() {
-                var num = pdf.internal.getNumberOfPages();
-                pdf.setFontSize(7.5);
-                pdf.setTextColor(150, 145, 165);
-                pdf.text(_pyg.textos.pdfFooter, margin, pageH - 7);
-                pdf.text(String(num), pageW - margin, pageH - 7, { align: 'right' });
+        // Se cede un instante para que se pinte el spinner antes del trabajo pesado (capturas + PDF).
+        setTimeout(function () {
+            try {
+                construirPdfPYG(r);
+            } catch (e) {
+                console.error('[InformePYG] PDF', e);
+                mostrarErrorPYG(_pyg.textos.pdf.error);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = htmlOriginal;
             }
+        }, 30);
+    }
 
-            function nuevaPagina() {
-                pdf.addPage();
-                y = margin;
-                dibujarPiePagina();
+    // Imagen nítida de una gráfica: se re-renderiza temporalmente a 3x — y, si se pide, a la proporción
+    // exacta de su caja en el PDF (anchoPx x altoPx CSS) para que no queden huecos — y se exporta como
+    // JPEG sobre fondo blanco (jsPDF incrusta los PNG sin comprimir: con PNG a 3x el PDF pasaba de 10 MB).
+    // Al final se restaura el tamaño/resolución de pantalla.
+    function capturarChartPdf(chart, anchoPx, altoPx) {
+        if (!chart) return null;
+        var dprOriginal = chart.options.devicePixelRatio;
+        chart.options.devicePixelRatio = 3;
+        if (anchoPx && altoPx) chart.resize(anchoPx, altoPx); else chart.resize();
+        chart.update('none');
+        var lienzo = document.createElement('canvas');
+        lienzo.width = chart.canvas.width;
+        lienzo.height = chart.canvas.height;
+        var ctx = lienzo.getContext('2d');
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, lienzo.width, lienzo.height);
+        ctx.drawImage(chart.canvas, 0, 0);
+        var img = { data: lienzo.toDataURL('image/jpeg', 0.9), w: chart.width, h: chart.height };
+        chart.options.devicePixelRatio = dprOriginal;
+        chart.resize();
+        chart.update('none');
+        return img;
+    }
+
+    function construirPdfPYG(r) {
+        var T = _pyg.textos, v2 = T.v2, P = T.pdf, C = PDF_COL;
+        var pdf = new window.jspdf.jsPDF('l', 'mm', 'a4');
+        var W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight();
+        var M = 12, ANCHO = W - M * 2, LIMITE_Y = H - 15;
+        var empresa = $('#pygTituloEmpresa').text() || '';
+        var periodo = etiquetaPeriodo(r);
+        var y = 0;
+
+        // ---------- utilidades de dibujo ----------
+        function rgb(fn, c) { pdf[fn](c[0], c[1], c[2]); }
+        function fuente(estilo, tam, c) { pdf.setFont('helvetica', estilo); pdf.setFontSize(tam); rgb('setTextColor', c || C.texto); }
+        function limpiar(t) { return String(t == null ? '' : t).replace(/\*\*|__/g, '').replace(/\s+/g, ' ').trim(); }
+        function ancho(t) { return pdf.getTextWidth(String(t)); }
+
+        // Degradado horizontal de marca (jsPDF no tiene gradientes: franjas finas interpoladas).
+        function degradado(x, yy, w, h) {
+            var pasos = 90, n = PDF_DEGRADADO.length - 1;
+            for (var i = 0; i < pasos; i++) {
+                var t = i / (pasos - 1), seg = Math.min(n - 1, Math.floor(t * n)), f = t * n - seg;
+                var a = PDF_DEGRADADO[seg], b = PDF_DEGRADADO[seg + 1];
+                pdf.setFillColor(Math.round(a[0] + (b[0] - a[0]) * f), Math.round(a[1] + (b[1] - a[1]) * f), Math.round(a[2] + (b[2] - a[2]) * f));
+                pdf.rect(x + (w * i) / pasos, yy, w / pasos + 0.15, h, 'F');
             }
-
-            pdf.setFillColor(99, 102, 241);
-            pdf.rect(0, 0, pageW, 20, 'F');
-            pdf.setTextColor(255, 255, 255);
-            pdf.setFont(undefined, 'bold');
-            pdf.setFontSize(14);
-            pdf.text('BUFINS', margin, 13);
-
-            var titulo = $('#pygTituloEmpresa').text();
-            var subtitulo = $('#pygSubtitulo').text();
-            pdf.setFont(undefined, 'normal');
-            pdf.setFontSize(9);
-            pdf.text(titulo, pageW - margin, 9, { align: 'right' });
-            pdf.setFontSize(8);
-            pdf.text(subtitulo, pageW - margin, 15, { align: 'right' });
-
-            y = 27;
-            pdf.setTextColor(30, 20, 50);
-
-            // KPIs (periodo) como tarjetas — igual patrón que InformeLineaTiempo.generarPdf
-            var kpis = reporte.Kpis || [];
-            var kpiW = (pageW - margin * 2 - (kpis.length - 1) * 6) / (kpis.length || 1);
-            kpis.forEach(function (k, i) {
-                var x = margin + i * (kpiW + 6);
-                pdf.setDrawColor(228, 225, 240);
-                pdf.setFillColor(244, 243, 251);
-                pdf.roundedRect(x, y, kpiW, 18, 2, 2, 'FD');
-                pdf.setFontSize(7.5);
-                pdf.setTextColor(120, 115, 140);
-                pdf.text(_pyg.kpiNombres[k.Codigo] || k.Codigo, x + 4, y + 7);
-                pdf.setFontSize(12);
-                pdf.setFont(undefined, 'bold');
-                pdf.setTextColor(30, 20, 50);
-                pdf.text(fmtPct(k.PeriodoRealPct) + '  (' + fmtPct(k.AcumRealPct) + ' acum.)', x + 4, y + 14);
-                pdf.setFont(undefined, 'normal');
-            });
-            y += 24;
-
-            // Cascada (waterfall) Ingresos -> Utilidad Neta — imagen nativa de Chart.js, ancho completo
-            if (_pyg.charts['pygChartCascada']) {
-                var chartCascada = _pyg.charts['pygChartCascada'];
-                var imgDataC = chartCascada.toBase64Image('image/png', 1.0);
-                var imgWC = pageW - margin * 2;
-                var imgHC = imgWC * chartCascada.height / chartCascada.width;
-                pdf.addImage(imgDataC, 'PNG', margin, y, imgWC, imgHC);
-                y += imgHC + 6;
-            }
-
-            // Gráficas de tendencia — imagen nativa de Chart.js, sin html2canvas
-            ['pygChartIngresos', 'pygChartEbitda', 'pygChartUtilidadNeta'].forEach(function (id) {
-                var chart = _pyg.charts[id];
-                if (!chart) return;
-                var imgData = chart.toBase64Image('image/png', 1.0);
-                var imgW = (pageW - margin * 2 - 12) / 3;
-                var imgH = imgW * chart.height / chart.width;
-                var idx = ['pygChartIngresos', 'pygChartEbitda', 'pygChartUtilidadNeta'].indexOf(id);
-                pdf.addImage(imgData, 'PNG', margin + idx * (imgW + 6), y, imgW, imgH);
-            });
-            y += 42;
-
-            // Tabla financiera completa (Periodo + Acumulado)
-            var headers = [
-                _pyg.textos.colEstructura,
-                _pyg.textos.colReal, _pyg.textos.colPresupuesto, _pyg.textos.colVarAbs, _pyg.textos.colVarPct, _pyg.textos.colMargen, _pyg.textos.colVarYoy,
-                _pyg.textos.colReal, _pyg.textos.colPresupuesto, _pyg.textos.colVarAbs, _pyg.textos.colVarPct, _pyg.textos.colMargen, _pyg.textos.colVarYoy
-            ];
-            var anchoLabel = 54;
-            var colW = (pageW - margin * 2 - anchoLabel) / 12;
-            var rowH = 6.5;
-
-            var cabeceraTabla = function () {
-                pdf.setFillColor(99, 102, 241);
-                pdf.setTextColor(255, 255, 255);
-                pdf.setFont(undefined, 'bold');
-                pdf.setFontSize(7);
-                var x = margin;
-                pdf.rect(x, y, anchoLabel, rowH, 'F');
-                pdf.text(headers[0], x + 2, y + 4.5);
-                x += anchoLabel;
-                for (var i = 1; i < headers.length; i++) {
-                    pdf.rect(x, y, colW, rowH, 'F');
-                    pdf.text(String(headers[i]), x + colW - 1.5, y + 4.5, { align: 'right' });
-                    x += colW;
-                }
-                y += rowH;
-                pdf.setFont(undefined, 'normal');
-                pdf.setTextColor(30, 20, 50);
-                pdf.setFontSize(7);
-            };
-            cabeceraTabla();
-
-            (reporte.Filas || []).forEach(function (f) {
-                if (y + rowH > pageH - margin - 8) { nuevaPagina(); cabeceraTabla(); }
-                var valores = [
-                    fmtNum(f.PeriodoReal), fmtNum(f.PeriodoPresupuesto),
-                    fmtNumVar(f.PeriodoVariacionAbsoluta), fmtPctVar(f.PeriodoVariacionPorcentual), fmtPct(f.PeriodoMargen), fmtPctVar(f.PeriodoVariacionYoYPorcentual),
-                    fmtNum(f.AcumReal), fmtNum(f.AcumPresupuesto),
-                    fmtNumVar(f.AcumVariacionAbsoluta), fmtPctVar(f.AcumVariacionPorcentual), fmtPct(f.AcumMargen), fmtPctVar(f.AcumVariacionYoYPorcentual)
-                ];
-                if (f.EsSubtotal) { pdf.setFont(undefined, 'bold'); pdf.setFillColor(244, 243, 251); pdf.rect(margin, y, pageW - margin * 2, rowH, 'F'); }
-                var x = margin;
-                pdf.text(String(f.Descripcion), x + 2, y + 4.5, { maxWidth: anchoLabel - 4 });
-                x += anchoLabel;
-                for (var i = 0; i < valores.length; i++) {
-                    pdf.text(String(valores[i]), x + colW - 1.5, y + 4.5, { align: 'right' });
-                    x += colW;
-                }
-                if (f.EsSubtotal) pdf.setFont(undefined, 'normal');
-                y += rowH;
-            });
-
-            // Insights gerenciales (texto plano, sin markdown — jsPDF no lo interpreta)
-            if (_pyg.insightsTexto) {
-                y += 8;
-                if (y + 20 > pageH - margin - 8) nuevaPagina();
-                pdf.setFont(undefined, 'bold');
-                pdf.setFontSize(10);
-                pdf.text('Insights gerenciales', margin, y);
-                y += 6;
-                pdf.setFont(undefined, 'normal');
-                pdf.setFontSize(8.5);
-                var textoPlano = _pyg.insightsTexto.replace(/\*\*/g, '').replace(/[#>*_`]/g, '');
-                var lineas = pdf.splitTextToSize(textoPlano, pageW - margin * 2);
-                lineas.forEach(function (linea) {
-                    if (y + 5 > pageH - margin - 8) { nuevaPagina(); }
-                    pdf.text(linea, margin, y);
-                    y += 4.5;
-                });
-            }
-
-            dibujarPiePagina();
-
-            var nombreArchivo = 'PYG_' + $('#pygTituloEmpresa').text().replace(/[^a-z0-9]+/gi, '_') + '_' +
-                elAnio.val() + '_' + (_pyg.iDesde + 1) + '-' + (_pyg.iHasta + 1) + '.pdf';
-            pdf.save(nombreArchivo);
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = htmlOriginal;
         }
+
+        // Píldora con texto; devuelve el ancho usado.
+        function pildora(texto, x, yy, fg, bg, negrita, tam, alinearDerecha) {
+            fuente(negrita ? 'bold' : 'normal', tam || 7.5, fg);
+            var w = ancho(texto) + 5, h = (tam || 7.5) * 0.62 + 1;
+            var x0 = alinearDerecha ? x - w : x;
+            rgb('setFillColor', bg);
+            pdf.roundedRect(x0, yy - h + 1.4, w, h, h / 2, h / 2, 'F');
+            pdf.text(texto, x0 + 2.5, yy);
+            return w;
+        }
+
+        // Título de sección: "TEXTO ——————— derecha". `derecha` puede ser texto o una leyenda
+        // [{t, c, punteada}] dibujada con muestras de línea de color.
+        function tituloSeccion(texto, yy, derecha) {
+            var t = String(texto).toUpperCase(), wDer = 0;
+            if (Array.isArray(derecha)) {
+                wDer = leyendaLineas(derecha, W - M, yy) + 4;
+            } else if (derecha) {
+                fuente('normal', 7.5, C.muted);
+                wDer = ancho(derecha) + 4;
+                pdf.text(derecha, W - M, yy, { align: 'right' });
+            }
+            fuente('bold', 8.5, C.morado);
+            pdf.text(t, M, yy);
+            rgb('setDrawColor', C.linea);
+            pdf.setLineWidth(0.3);
+            pdf.line(M + ancho(t) + 3, yy - 1.1, W - M - wDer, yy - 1.1);
+        }
+
+        // Leyenda alineada a la derecha terminando en xDer; devuelve el ancho total dibujado.
+        function leyendaLineas(items, xDer, yy) {
+            var x = xDer;
+            for (var i = items.length - 1; i >= 0; i--) {
+                var it = items[i];
+                fuente('bold', 7, C.muted);
+                x -= ancho(it.t);
+                pdf.text(it.t, x, yy);
+                rgb('setDrawColor', it.c);
+                pdf.setLineWidth(0.7);
+                if (it.punteada) pdf.setLineDashPattern([0.9, 0.7], 0);
+                pdf.line(x - 6, yy - 1.1, x - 1.5, yy - 1.1);
+                pdf.setLineDashPattern([], 0);
+                x -= 6 + (i > 0 ? 5 : 0);
+            }
+            return xDer - x;
+        }
+
+        function tarjeta(x, yy, w, h) {
+            rgb('setDrawColor', C.linea);
+            rgb('setFillColor', C.blanco);
+            pdf.setLineWidth(0.3);
+            pdf.roundedRect(x, yy, w, h, 2.5, 2.5, 'FD');
+        }
+
+        function imagenAjustada(img, x, yy, wMax, hMax) {
+            if (!img) return;
+            var ratio = img.w / img.h, w = wMax, h = w / ratio;
+            if (h > hMax) { h = hMax; w = h * ratio; }
+            pdf.addImage(img.data, 'JPEG', x + (wMax - w) / 2, yy, w, h);
+        }
+
+        function encabezadoPagina(seccion) {
+            degradado(0, 0, W, 2.4);
+            fuente('bold', 10, C.texto);
+            pdf.text(empresa, M, 11);
+            fuente('normal', 8, C.muted);
+            pdf.text(P.titulo + '  ' + CH_MIDDOT + '  ' + periodo, W - M, 11, { align: 'right' });
+            if (seccion) { fuente('bold', 13, C.texto); pdf.text(seccion, M, 21); }
+            y = seccion ? 29 : 18;
+        }
+        function nuevaPagina(seccion) { pdf.addPage(); encabezadoPagina(seccion); }
+
+        // =====================================================================
+        // PÁGINA 1 — Resumen ejecutivo
+        // =====================================================================
+        degradado(0, 0, W, 34);
+        fuente('bold', 10, C.blanco);
+        pdf.text(P.marca, M, 10);
+        var wMarca = ancho(P.marca);
+        fuente('normal', 8.5, C.blanco);
+        pdf.text(CH_MIDDOT + '  ' + P.subtitulo, M + wMarca + 2.5, 10);
+        fuente('bold', 19, C.blanco);
+        pdf.text(empresa, M, 22);
+        fuente('normal', 9.5, C.blanco);
+        pdf.text(P.titulo, M, 29);
+        fuente('normal', 8, C.blanco);
+        pdf.text(P.generadoEl + ' ' + ($('#pygFechaGenerado').text() || ''), W - M, 10, { align: 'right' });
+        fuente('bold', 8, C.blanco);
+        pdf.text(P.confidencial.toUpperCase(), W - M, 29, { align: 'right' });
+
+        // Chips de contexto (período, escenario, acumulado, comparaciones, unidad)
+        y = 43;
+        var chips = [
+            { t: $('#pygChipPeriodo').text(), fg: C.morado, bg: C.totalBg, b: true },
+            { t: $('#pygChipEscenario').text() }, { t: $('#pygChipAcum').text() }, { t: $('#pygChipComparado').text() },
+            { t: T.unidadBadge[_pyg.unidad] }
+        ];
+        var xc = M;
+        chips.forEach(function (c) {
+            if (!c.t) return;
+            fuente(c.b ? 'bold' : 'normal', 7.5, C.texto2);
+            if (xc + ancho(c.t) + 5 > W - M) { xc = M; y += 7; }
+            xc += pildora(c.t, xc, y, c.fg || C.texto2, c.bg || C.suave, !!c.b) + 3;
+        });
+
+        // KPIs
+        y += 12;
+        var vistaKpi = _pyg.kpiVista === 'acum' ? P.acumulado : P.periodo;
+        tituloSeccion(P.indicadores + '  ' + CH_MIDDOT + '  ' + vistaKpi, y);
+        y += 4;
+        var datosKpi = datosKpisPYG(r, _pyg.kpiVista === 'acum');
+        var nK = datosKpi.tarjetas.length || 1, gapK = 5, wK = (ANCHO - gapK * (nK - 1)) / nK;
+        var maxDeltas = Math.max.apply(null, datosKpi.tarjetas.map(function (t) {
+            return t.deltas.filter(function (d) { return d.d !== undefined; }).length;
+        }).concat([1]));
+        var hK = 30 + maxDeltas * 5.4;
+        datosKpi.tarjetas.forEach(function (t, i) {
+            var x = M + i * (wK + gapK);
+            tarjeta(x, y, wK, hK);
+            degradado(x + 3, y, wK - 6, 1);
+            fuente('bold', 7.5, C.texto2);
+            pdf.text(t.nombre.toUpperCase(), x + 4.5, y + 8);
+            fuente('bold', 18, C.texto);
+            pdf.text(t.valorTxt, x + 4.5, y + 17.5);
+            fuente('normal', 7.5, C.muted);
+            pdf.text(datosKpi.refs.comp + ' ' + t.pptoTxt, x + 4.5, y + 22.5);
+            var bw = wK - 9;
+            rgb('setFillColor', C.lineaSuave);
+            pdf.roundedRect(x + 4.5, y + 25, bw, 1.6, 0.8, 0.8, 'F');
+            var pct = t.ppto > 0 ? Math.max(0, Math.min(1, t.real / t.ppto)) : (t.real >= t.ppto ? 1 : 0);
+            if (pct > 0) {
+                rgb('setFillColor', t.real >= t.ppto ? C.bueno : C.marca);
+                pdf.roundedRect(x + 4.5, y + 25, Math.max(1.6, bw * pct), 1.6, 0.8, 0.8, 'F');
+            }
+            var yd = y + 32.5;
+            t.deltas.filter(function (d) { return d.d !== undefined; }).forEach(function (d) {
+                fuente('normal', 7, C.muted);
+                pdf.text(d.ref, x + 4.5, yd);
+                var sinBase = d.d === null || isNaN(d.d), fav = !sinBase && d.d >= 0;
+                pildora(sinBase ? CH_MDASH : d.txt, x + wK - 4.5, yd, sinBase ? C.muted : (fav ? C.bueno : C.malo),
+                    sinBase ? C.suave : (fav ? C.buenoBg : C.maloBg), true, 7, true);
+                yd += 5.4;
+            });
+        });
+        y += hK + 11;
+
+        // Insights gerenciales (IA)
+        var metaInsights = _pyg.insightsTexto ? $('#pygInsightsMeta').text() : '';
+        tituloSeccion(P.insightsTitulo, y, metaInsights);
+        y += 4;
+        var secciones = _pyg.insightsTexto ? separarInsights(_pyg.insightsTexto) : null;
+        if (secciones) {
+            var tiles = [
+                { titulo: v2.logro, texto: secciones.logro, c: C.bueno, bg: C.buenoBg },
+                { titulo: v2.alerta, texto: secciones.alerta, c: C.malo, bg: C.maloBg },
+                { titulo: v2.eficiencia, texto: secciones.eficiencia, c: C.morado, bg: C.totalBg }
+            ];
+            var gapT = 5, wT = (ANCHO - gapT * 2) / 3;
+            fuente('normal', 8.8, C.texto2);
+            var lineasT = tiles.map(function (t) { return pdf.splitTextToSize(limpiar(t.texto), wT - 9); });
+            var hT = 14 + Math.max.apply(null, lineasT.map(function (l) { return l.length; })) * 4.2 + 3;
+            if (y + hT > LIMITE_Y) nuevaPagina(P.resumen);
+            tiles.forEach(function (t, i) {
+                var x = M + i * (wT + gapT);
+                tarjeta(x, y, wT, hT);
+                rgb('setFillColor', t.c);
+                pdf.rect(x + 2.5, y, wT - 5, 1.1, 'F');
+                rgb('setFillColor', t.bg);
+                pdf.roundedRect(x + 4.5, y + 4.5, 5, 5, 1.2, 1.2, 'F');
+                rgb('setFillColor', t.c);
+                pdf.circle(x + 7, y + 7, 1.1, 'F');
+                fuente('bold', 7.5, t.c);
+                pdf.text(t.titulo.toUpperCase(), x + 11.5, y + 8.3);
+                fuente('normal', 8.8, C.texto2);
+                pdf.text(lineasT[i], x + 4.5, y + 15.5, { lineHeightFactor: 1.35 });
+            });
+            y += hT;
+        } else if (_pyg.insightsTexto) {
+            // Respuesta sin las 3 secciones: texto completo en un recuadro.
+            fuente('normal', 8.8, C.texto2);
+            var lineas = pdf.splitTextToSize(limpiar(_pyg.insightsTexto.replace(/^[\s#>*\-•]+/gm, '')), ANCHO - 10);
+            var hTx = lineas.length * 4.2 + 8;
+            if (y + hTx > LIMITE_Y) nuevaPagina(P.resumen);
+            tarjeta(M, y, ANCHO, hTx);
+            pdf.text(lineas, M + 5, y + 7, { lineHeightFactor: 1.35 });
+            y += hTx;
+        } else {
+            rgb('setFillColor', C.suave2);
+            rgb('setDrawColor', C.linea);
+            pdf.setLineDashPattern([1.2, 1], 0);
+            pdf.roundedRect(M, y, ANCHO, 12, 2, 2, 'FD');
+            pdf.setLineDashPattern([], 0);
+            fuente('italic', 8.5, C.texto2);
+            pdf.text(pdf.splitTextToSize(P.sinInsights, ANCHO - 10), M + 5, y + 7.5);
+            y += 12;
+        }
+
+        // Lo más relevante (en la página 1 para completar el resumen ejecutivo): 4 tarjetas en una fila.
+        var top = datosDestacadosPYG(r);
+        if (top.length) {
+            var hRel = 27;
+            if (y + 15 + hRel > LIMITE_Y) nuevaPagina(P.resumen); else y += 11;
+            tituloSeccion(P.relevanteTitulo, y, $('#pygRelevanteSub').text());
+            y += 4;
+            var baseAbs = Math.abs(top[0].PeriodoVariacionAbsoluta) || 1, gapR = 5, wR = (ANCHO - gapR * 3) / 4;
+            top.forEach(function (f, i) {
+                var fav = esFavorable(f.EsGastoOCosto, f.PeriodoVariacionAbsoluta), col = fav ? C.bueno : C.malo;
+                var x = M + i * (wR + gapR);
+                tarjeta(x, y, wR, hRel);
+                rgb('setFillColor', col);
+                pdf.rect(x, y + 4, 1.1, hRel - 8, 'F');
+                fuente('bold', 8.5, C.texto);
+                pdf.text(pdf.splitTextToSize(f.Descripcion, wR - 10)[0], x + 5, y + 7.5);
+                fuente('bold', 13, col);
+                pdf.text(fmtNumVar(f.PeriodoVariacionAbsoluta), x + 5, y + 15);
+                var wTrack = wR - 10;
+                rgb('setFillColor', C.suave);
+                pdf.roundedRect(x + 5, y + 18, wTrack, 1.6, 0.8, 0.8, 'F');
+                rgb('setFillColor', col);
+                pdf.roundedRect(x + 5, y + 18, Math.max(1.6, wTrack * Math.abs(f.PeriodoVariacionAbsoluta) / baseAbs), 1.6, 0.8, 0.8, 'F');
+                fuente('bold', 7, col);
+                pdf.text((fav ? v2.favorable : v2.desfavorableCorto) + ' ' + CH_MIDDOT + ' ' + fmtPctVar(f.PeriodoVariacionPorcentual), x + 5, y + 24);
+            });
+            y += hRel;
+        }
+
+        // =====================================================================
+        // PÁGINA 2 — Análisis del período: cascada (ancho completo) + tendencias
+        // =====================================================================
+        nuevaPagina(P.analisis);
+        var hA = 94, MM_A_PX = 4;   // las gráficas se re-renderizan a la proporción exacta de su caja
+
+        tarjeta(M, y, ANCHO, hA);
+        fuente('bold', 10, C.texto);
+        pdf.text(P.cascadaTitulo, M + 5, y + 8);
+        fuente('normal', 7.5, C.muted);
+        pdf.text($('#pygCascadaSub').text(), M + 5, y + 12.5);
+        var leyenda = [
+            { t: P.total, c: C.marca }, { t: P.resta, c: C.restaBar },
+            { t: $('#pygMetaLbl').text() + ' ' + $('#pygMetaPpto').text(), c: C.ambar, linea: true }
+        ];
+        if ($('#pygLeyendaSuma').is(':visible')) leyenda.splice(2, 0, { t: P.suma, c: C.bueno });
+        var xl = M + ANCHO - 5;
+        fuente('bold', 7, C.muted);
+        for (var li = leyenda.length - 1; li >= 0; li--) {
+            var it = leyenda[li];
+            xl -= ancho(it.t);
+            pdf.text(it.t, xl, y + 8);
+            rgb('setFillColor', it.c);
+            if (it.linea) pdf.rect(xl - 4.2, y + 7, 3.2, 0.7, 'F'); else pdf.roundedRect(xl - 3.6, y + 5.6, 2.6, 2.6, 0.6, 0.6, 'F');
+            xl -= 7.5;
+        }
+        var wImgC = ANCHO - 10, hImgC = hA - 21;
+        imagenAjustada(capturarChartPdf(_pyg.charts['pygChartCascada'], wImgC * MM_A_PX, hImgC * MM_A_PX), M + 5, y + 17, wImgC, hImgC);
+        y += hA + 11;
+
+        // Tendencias (leyenda con muestras de línea de color)
+        var leyTend = [{ t: v2.real, c: C.marca }, { t: $('#pygLeyendaComp').text(), c: C.ambar, punteada: true }];
+        if (r.HayEscenarioComparar) leyTend.push({ t: $('#pygLeyendaEscNombre').text(), c: C.cian });
+        tituloSeccion($('#pygTendTitulo').text() + ' ' + $('#pygTendAnio').text(), y, leyTend);
+        y += 4;
+        var gapTd = 5, wTd = (ANCHO - gapTd * 2) / 3, wImgT = wTd - 6;
+        var hImgT = Math.max(24, Math.min(36, LIMITE_Y - y - 22)), hTd = 17 + hImgT + 4;
+        ['Ingresos', 'Ebitda', 'UtilidadNeta'].forEach(function (clave, i) {
+            var x = M + i * (wTd + gapTd);
+            tarjeta(x, y, wTd, hTd);
+            fuente('bold', 7.5, C.texto2);
+            pdf.text($('#pygTrendVal' + clave).closest('.pyg2-trend-head').find('.nm').text().toUpperCase(), x + 4.5, y + 7);
+            fuente('bold', 12, C.texto);
+            pdf.text($('#pygTrendVal' + clave).text(), x + 4.5, y + 13.5);
+            var $chip = $('#pygTrendChip' + clave);
+            if ($chip.is(':visible') && $chip.text()) {
+                var up = $chip.hasClass('up');
+                pildora($chip.text(), x + wTd - 4.5, y + 7.5, up ? C.bueno : C.malo, up ? C.buenoBg : C.maloBg, true, 7, true);
+            }
+            imagenAjustada(capturarChartPdf(_pyg.charts['pygChart' + clave], wImgT * MM_A_PX, hImgT * MM_A_PX), x + 3, y + 17, wImgT, hImgT);
+        });
+
+        // =====================================================================
+        // PÁGINA 3+ — Estado de resultados detallado (misma vista que en pantalla)
+        // =====================================================================
+        nuevaPagina(P.tablaTitulo);
+        fuente('normal', 7.5, C.muted);
+        pdf.text(T.unidadBadge[_pyg.unidad], W - M, 21, { align: 'right' });
+
+        var yoy = yoyVisible(), conEsc = !!r.HayEscenarioComparar;
+        var bloques = _pyg.vistaTabla === 'ambos' ? ['Periodo', 'Acum'] : [_pyg.vistaTabla === 'acum' ? 'Acum' : 'Periodo'];
+        var meses = _pyg.mesesCache;
+        var rangoAcum = r.MesHasta === 1 ? meses[0].abrev : (meses[0].abrev + ' ' + CH_NDASH + ' ' + meses[r.MesHasta - 1].abrev);
+        var titulosGrupo = {
+            Periodo: v2.grupoPeriodoFmt.replace('{0}', periodo),
+            Acum: v2.grupoAcumFmt.replace('{0}', rangoAcum + ' ' + r.AnioHasta)
+        };
+        var cols = [
+            { h: T.colReal, k: 'Real' }, { h: compCorto(r), k: 'Presupuesto' }, { h: T.colVarAbs, k: 'VariacionAbsoluta' },
+            { h: T.colVarPct, k: 'VariacionPorcentual' }, { h: v2.colMargen, k: 'Margen' }
+        ];
+        if (yoy) cols.push({ h: v2.vsAnioFmt.replace('{0}', anioAnteriorTexto(r)), k: 'VariacionYoYPorcentual' });
+        if (conEsc) cols.push({ h: v2.vsAnioFmt.replace('{0}', escenarioCompNombre(r)), k: 'VariacionEscenarioPorcentual' });
+        var totalCols = cols.length * bloques.length;
+        var wLbl = bloques.length > 1 ? 56 : 70;
+        var wCol = (ANCHO - wLbl) / totalCols;
+        var tamFuente = totalCols > 10 ? 6.8 : 7.8;
+        // Encabezados de columna en hasta 2 líneas (p. ej. "VS ESCENARIO OPTIMISTA" en columnas angostas).
+        fuente('bold', tamFuente - 0.8, C.texto2);
+        cols.forEach(function (c) { c.lineas = pdf.splitTextToSize(c.h.toUpperCase(), wCol - 2.5).slice(0, 2); });
+        var dosLineas = cols.some(function (c) { return c.lineas.length > 1; });
+        var hG = 6.5, hS = dosLineas ? 8.5 : 6, hF = 6.3;
+
+        function cabeceraTabla() {
+            rgb('setFillColor', C.marca);
+            pdf.rect(M, y, ANCHO, hG, 'F');
+            rgb('setFillColor', C.suave);
+            pdf.rect(M + wLbl, y + hG, ANCHO - wLbl, hS, 'F');
+            rgb('setFillColor', C.marca);
+            pdf.rect(M, y + hG, wLbl, hS, 'F');
+            fuente('bold', 7.5, C.blanco);
+            pdf.text(v2.colCuenta.toUpperCase(), M + 3, y + hG + hS - 2);
+            bloques.forEach(function (b, bi) {
+                var x0 = M + wLbl + bi * cols.length * wCol, wB = cols.length * wCol;
+                fuente('bold', 7.8, C.blanco);
+                pdf.text(titulosGrupo[b], x0 + wB / 2, y + 4.4, { align: 'center' });
+                fuente('bold', tamFuente - 0.8, C.texto2);
+                cols.forEach(function (c, ci) {
+                    var xr = x0 + (ci + 1) * wCol - 1.5;
+                    if (c.lineas.length > 1) {
+                        pdf.text(c.lineas[0], xr, y + hG + 3.4, { align: 'right' });
+                        pdf.text(c.lineas[1], xr, y + hG + hS - 1.8, { align: 'right' });
+                    } else {
+                        pdf.text(c.lineas[0], xr, y + hG + hS - 2, { align: 'right' });
+                    }
+                });
+                if (bi > 0) {
+                    rgb('setDrawColor', C.blanco);
+                    pdf.setLineWidth(0.6);
+                    pdf.line(x0, y, x0, y + hG);
+                }
+            });
+            y += hG + hS;
+        }
+
+        var todas = r.Filas || [];
+        var soloSubtotales = $('#pygNivelDetalle').val() === 'subtotales';
+        var filas = todas.filter(function (f, i) { return !soloSubtotales || f.EsSubtotal || i === todas.length - 1; });
+        cabeceraTabla();
+        filas.forEach(function (f, idx) {
+            if (y + hF > LIMITE_Y - 8) { nuevaPagina(P.tablaTitulo); cabeceraTabla(); }
+            var esTotal = idx === filas.length - 1, esSub = f.EsSubtotal && !esTotal;
+            rgb('setFillColor', esTotal ? C.totalBg : (esSub ? C.suave2 : (idx % 2 ? C.zebra : C.blanco)));
+            pdf.rect(M, y, ANCHO, hF, 'F');
+            if (esTotal) { rgb('setDrawColor', [199, 210, 254]); pdf.setLineWidth(0.5); pdf.line(M, y, M + ANCHO, y); }
+            else if (esSub) { rgb('setDrawColor', C.linea); pdf.setLineWidth(0.3); pdf.line(M, y, M + ANCHO, y); }
+
+            var etiqueta = etiquetaCuenta(f.Descripcion, f.EsSubtotal || esTotal);
+            fuente(esSub || esTotal ? 'bold' : 'normal', tamFuente + 0.2, esTotal ? C.totalTx : (esSub ? C.texto : C.texto2));
+            pdf.text(pdf.splitTextToSize(etiqueta, wLbl - (esSub || esTotal ? 4 : 8))[0], M + (esSub || esTotal ? 3 : 6), y + 4.3);
+
+            bloques.forEach(function (b, bi) {
+                var x0 = M + wLbl + bi * cols.length * wCol;
+                cols.forEach(function (c, ci) {
+                    var v = f[b + c.k], xr = x0 + (ci + 1) * wCol - 1.5, txt, col = C.texto2, estilo = 'normal';
+                    switch (c.k) {
+                        case 'Real': txt = fmtNum(v); col = (esSub || esTotal) ? C.texto : C.texto2; estilo = (esSub || esTotal) ? 'bold' : 'normal'; break;
+                        case 'Presupuesto': txt = fmtNum(v); col = C.muted; break;
+                        case 'VariacionAbsoluta': txt = fmtNumVar(v); estilo = 'bold'; col = claseVariacion(f.EsGastoOCosto, v) === 'good' ? C.bueno : (claseVariacion(f.EsGastoOCosto, v) === 'bad' ? C.malo : C.muted); break;
+                        case 'Margen': txt = fmtPct(v); break;
+                        default:
+                            txt = fmtPctVar(v); estilo = 'bold';
+                            var cl = claseVariacion(f.EsGastoOCosto, v);
+                            col = cl === 'good' ? C.bueno : (cl === 'bad' ? C.malo : C.muted);
+                            if (c.k === 'VariacionPorcentual' && v !== null && v !== undefined && Math.abs(v) >= PYG_UMBRAL_CRITICO) {
+                                fuente('bold', tamFuente, col);
+                                rgb('setFillColor', C.malo);
+                                pdf.circle(xr - ancho(txt) - 1.8, y + 3.2, 0.8, 'F');
+                            }
+                    }
+                    fuente(estilo, tamFuente, col);
+                    pdf.text(String(txt), xr, y + 4.3, { align: 'right' });
+                });
+                if (bi > 0) {
+                    rgb('setDrawColor', C.linea);
+                    pdf.setLineWidth(0.5);
+                    pdf.line(x0, y, x0, y + hF);
+                }
+            });
+            rgb('setDrawColor', C.lineaSuave);
+            pdf.setLineWidth(0.15);
+            pdf.line(M, y + hF, M + ANCHO, y + hF);
+            y += hF;
+        });
+
+        // Leyenda de la tabla
+        y += 5;
+        if (y > LIMITE_Y - 2) nuevaPagina(P.tablaTitulo);
+        var xLey = M;
+        [{ t: v2.favorable, c: C.bueno }, { t: P.leyendaDesfavorable, c: C.malo }, { t: P.leyendaCritico, c: C.malo }].forEach(function (l) {
+            rgb('setFillColor', l.c);
+            pdf.circle(xLey + 1, y - 1, 0.9, 'F');
+            fuente('bold', 7, C.muted);
+            pdf.text(l.t, xLey + 3, y);
+            xLey += ancho(l.t) + 9;
+        });
+
+        // Pie de página en todas las páginas (se agrega al final para conocer el total)
+        var totalPags = pdf.internal.getNumberOfPages();
+        for (var p = 1; p <= totalPags; p++) {
+            pdf.setPage(p);
+            rgb('setDrawColor', C.linea);
+            pdf.setLineWidth(0.3);
+            pdf.line(M, H - 10, W - M, H - 10);
+            fuente('normal', 7, C.muted);
+            pdf.text(T.pdfFooter + '  ' + CH_MIDDOT + '  ' + empresa + '  ' + CH_MIDDOT + '  ' + periodo, M, H - 6);
+            pdf.text(P.confidencial, W / 2, H - 6, { align: 'center' });
+            fuente('bold', 7, C.texto2);
+            pdf.text(P.paginaFmt.replace('{0}', p).replace('{1}', totalPags), W - M, H - 6, { align: 'right' });
+        }
+
+        var nombreArchivo = 'PYG_' + empresa.replace(/[^a-z0-9]+/gi, '_') + '_' +
+            r.AnioDesde + ('0' + r.MesDesde).slice(-2) + '-' + r.AnioHasta + ('0' + r.MesHasta).slice(-2) + '.pdf';
+        pdf.save(nombreArchivo);
     }
 
     $(document).ready(function () {
-        $('#pygEmpresa, #pygEscenario, #pygAnio').select2({ width: '100%', language: s2lang, dropdownAutoWidth: false });
+        _pyg.escenarios = $('#pygEscenario option').map(function () {
+            return { id: Number(this.value), nombre: $(this).text() };
+        }).get().filter(function (e) { return e.id > 0; });
 
-        $('#pygEmpresa, #pygEscenario').on('change', cargarAños);
-        $('#pygAnio').on('change', function () {
-            _pyg.iDesde = 0; _pyg.iHasta = 11;
-            pintarRangoPYG();
-            actualizarBotonConsultar();
+        $('#pygEmpresa, #pygEscenario, #pygComparar, #pygEscenarioComparar, #pygNivelDetalle')
+            .select2({ width: '100%', language: s2lang, dropdownAutoWidth: false, minimumResultsForSearch: 10 });
+
+        $('#pygEmpresa, #pygEscenario').on('change', cargarMeses);
+
+        // "Detalle de la tabla" no requiere volver a consultar: solo filtra las filas ya cargadas.
+        $('#pygNivelDetalle').on('change', function () {
+            if (_pyg.reporteActual) pintarTabla(_pyg.reporteActual);
+        });
+
+        $('#pygSegVerPor button').on('click', function () {
+            var modo = $(this).data('modo');
+            $('#pygSegVerPor button').removeClass('active').attr('aria-pressed', 'false');
+            $(this).addClass('active').attr('aria-pressed', 'true');
+            _pyg.agrupar = modo;
+            $('#pygAgruparHint').text(_pyg.textos.agruparAyuda[modo] || '');
         });
 
         $('#pygAtajos button').on('click', function () { aplicarPresetRangoPYG($(this).data('preset')); });
@@ -1077,27 +2005,72 @@
         $('#pygRangoTrack').on('pointerdown', function (e) { clicEnPistaPYG(e); });
         $('#pygKnobFrom, #pygKnobTo').on('keydown', function (e) { moverKnobConTecladoPYG(e, this.id === 'pygKnobFrom' ? 'from' : 'to'); });
 
-        $('#pygBtnUnidad').on('click', function () {
-            var orden = ['pesos', 'miles', 'millones'], i = (orden.indexOf(_pyg.unidad) + 1) % orden.length;
-            _pyg.unidad = orden[i];
+        // Menú de unidad (Pesos/Miles/Millones): abre con el botón, se cierra al elegir o con clic afuera.
+        $('#pygBtnUnidad').on('click', function (e) {
+            e.stopPropagation();
+            var abierto = $('#pygMenuUnidad').toggleClass('open').hasClass('open');
+            $(this).attr('aria-expanded', abierto ? 'true' : 'false');
+        });
+        $('#pygMenuUnidad button').on('click', function (e) {
+            e.stopPropagation();
+            _pyg.unidad = $(this).data('unidad');
+            $('#pygMenuUnidad').removeClass('open');
+            $('#pygBtnUnidad').attr('aria-expanded', 'false');
+            guardarPrefsPYG();
             repintarConUnidadActual();
+        });
+        $(document).on('click', function () {
+            $('#pygMenuUnidad').removeClass('open');
+            $('#pygBtnUnidad').attr('aria-expanded', 'false');
+        });
+
+        $('#pygSegKpi button').on('click', function () {
+            _pyg.kpiVista = $(this).data('v');
+            $('#pygSegKpi button').removeClass('active');
+            $(this).addClass('active');
+            guardarPrefsPYG();
+            if (_pyg.reporteActual) pintarKpis(_pyg.reporteActual);
+        });
+        $('#pygSegTabla button').on('click', function () {
+            _pyg.vistaTabla = $(this).data('v');
+            $('#pygSegTabla button').removeClass('active');
+            $(this).addClass('active');
+            guardarPrefsPYG();
+            if (_pyg.reporteActual) pintarTabla(_pyg.reporteActual);
+        });
+        $('#pygBtnYoY').on('click', function () {
+            _pyg.mostrarYoY = !_pyg.mostrarYoY;
+            guardarPrefsPYG();
+            actualizarBotonYoY();
+            if (_pyg.reporteActual) pintarTabla(_pyg.reporteActual);
+        });
+        // Excel con los mismos filtros del reporte en pantalla (no los del panel, que pudieron cambiar).
+        $('#btnExportarExcelPYG').on('click', function () {
+            if (!_pyg.filtrosConsultados) return;
+            var campos = $.extend({}, _pyg.filtrosConsultados, { soloSubtotales: $('#pygNivelDetalle').val() === 'subtotales' });
+            var $c = $('#pygExpCampos').empty();
+            Object.keys(campos).forEach(function (k) {
+                $c.append($('<input type="hidden">').attr('name', k).val(campos[k] == null ? '' : campos[k]));
+            });
+            $('#frmExportarExcelPYG').submit();
         });
 
         $('#btnConsultarPYG').on('click', consultarReporte);
         $('#btnLimpiarPYG').on('click', function () {
-            if (!_pyg.esAdmin) { cargarAños(); return; }
-            elEmpresa.val('').trigger('change.select2');
-            elAnio.empty().prop('disabled', true).trigger('change.select2');
-            ocultarResultados();
-            actualizarBotonConsultar();
-            pintarRangoPYG();
+            $('#pygComparar').val('ppto').trigger('change.select2');
+            $('#pygEscenarioComparar').val('').trigger('change.select2');
+            $('#pygNivelDetalle').val('todas').trigger('change.select2');
+            $('#pygSegVerPor button[data-modo="Mes"]').trigger('click');
+            if (_pyg.esAdmin) elEmpresa.val('').trigger('change.select2');
+            cargarMeses();
         });
 
         $('#btnGenerarInsightsPYG').on('click', generarInsights);
         $('#btnExportarPdfPYG').on('click', generarPdf);
 
+        cargarPrefsPYG();
         pintarRangoPYG();
-        cargarAños();
+        cargarMeses();
     });
 </script>
 }

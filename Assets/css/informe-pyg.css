@@ -1,90 +1,216 @@
 /* ===== Estado de Resultados (PYG) Gerencial =====
    Construido sobre los mismos tokens de marca y clases ya usadas por el Informe Dinámico de Líneas
    de Tiempo (bufins-components.css + informe-linea-tiempo.css, ambos incluidos por la vista antes que
-   este archivo) — aquí solo se agrega lo que ese CSS no cubre: tarjetas KPI, encabezado agrupado de
-   la tabla (Mes/Acumulado), filas subtotal, mini-gráficas de tendencia y la tarjeta de insights IA. */
+   este archivo). Contenido de resultados rediseñado ("v2" / opción 1b del handoff de diseño):
+   encabezado con chips, 4 KPIs, cascada + destacados, tendencias, tabla con vistas y tiles de insights. */
 
-/* ---- Tira de KPIs (mismo lenguaje visual que .lt-serie-cell, pero con bloque Mes + Acumulado) ---- */
-.pyg-kpi-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid #E4E1F0;border-radius:12px;background:#F8F9FC;overflow:hidden;margin-bottom:16px}
-.pyg-kpi-card{padding:14px 16px;border-left:1px solid #E4E1F0}
-.pyg-kpi-card:first-child{border-left:none}
-.pyg-kpi-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.pyg-kpi-ic{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--content-gradient);color:#fff;font-size:12px;flex:none}
-.pyg-kpi-nm{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#5B5570}
-.pyg-kpi-row{display:flex;align-items:baseline;gap:8px;padding:5px 0}
-.pyg-kpi-row + .pyg-kpi-row{border-top:1px dashed #E4E1F0}
-.pyg-kpi-per{font-size:11px;font-weight:700;color:#8B85A0;width:60px;flex:none}
-.pyg-kpi-val{font-size:19px;font-weight:800;letter-spacing:-.01em;color:#16121F;font-variant-numeric:tabular-nums}
-.pyg-kpi-deltas{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-left:auto}
-.pyg-kpi-delta{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700}
-.pyg-kpi-delta.up{color:#16A34A}
-.pyg-kpi-delta.down{color:#DC2626}
-.pyg-kpi-delta .ref{font-weight:600;color:#a7a1b8}
-
-@media (max-width:900px){
-    .pyg-kpi-strip{grid-template-columns:1fr}
-    .pyg-kpi-card{border-left:none;border-top:1px solid #E4E1F0}
-    .pyg-kpi-card:first-child{border-top:none}
-}
-
-/* ---- Mini-gráficas de tendencia (Ingresos/EBITDA/Utilidad Neta, Real vs Presupuesto) ---- */
-.pyg-charts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
-.pyg-chart-card{background:#fff;border:1px solid #E4E1F0;border-radius:12px;padding:12px 14px 8px}
-.pyg-chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:8px;flex-wrap:wrap}
-.pyg-chart-nm{font-size:12px;font-weight:800;color:#2d3748}
-.pyg-chart-legend{display:flex;gap:9px;font-size:10.5px;font-weight:700;color:#8B85A0}
-.pyg-chart-legend span{display:inline-flex;align-items:center;gap:4px}
-.pyg-chart-legend i{width:10px;height:3px;border-radius:2px;display:inline-block}
-.pyg-chart-canvas-wrap{position:relative;height:120px}
-.pyg-chart-canvas-wrap canvas{width:100% !important;height:100% !important}
-
-@media (max-width:900px){.pyg-charts{grid-template-columns:1fr}}
-
-/* ---- Cascada (waterfall) Ingresos -> Utilidad Neta del período ---- */
-.pyg-waterfall-card{margin-top:16px}
-.pyg-waterfall-canvas-wrap{position:relative;height:220px}
-.pyg-waterfall-canvas-wrap canvas{width:100% !important;height:100% !important}
-
-/* ---- "Lo más relevante del período" (top movimientos por impacto $, no por % ) ---- */
-.pyg-highlights-card{margin-top:12px}
-.pyg-highlights-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 24px}
-.pyg-highlight-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed #E4E1F0;font-size:12.5px}
-.pyg-highlight-item:nth-last-child(-n+2){border-bottom:none}
-.pyg-highlight-nm{color:#4b5563;font-weight:600}
-.pyg-highlight-val{display:inline-flex;align-items:center;gap:4px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
-.pyg-highlight-val.up{color:#16A34A}
-.pyg-highlight-val.down{color:#DC2626}
-@media (max-width:640px){.pyg-highlights-list{grid-template-columns:1fr}.pyg-highlight-item:nth-last-child(-n+2){border-bottom:1px dashed #E4E1F0}.pyg-highlight-item:last-child{border-bottom:none}}
-
-/* ---- Tabla financiera: encabezado agrupado (Mes / Acumulado) + filas subtotal ---- */
-/* .data-table pega la cabecera con position:sticky;top:0 pensando en una sola fila — con 2 filas de
-   thead hay que bajar la segunda para que no se monte sobre la primera al hacer scroll vertical. */
-.data-table thead tr:nth-child(2) th{top:33px}
-.pyg-th-grupo{text-align:center !important}
-.pyg-col-sep{border-left:2px solid rgba(255,255,255,.45) !important}
-.data-table tbody td.pyg-col-sep{border-left:2px solid #c7c2e6 !important}
-.data-table tbody td.pyg-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-.data-table tbody td.pyg-lbl{text-align:left;white-space:normal}
-.data-table tbody tr.pyg-row-subtotal{background:#F4F3FB;font-weight:800;color:#16121F}
-.data-table tbody tr.pyg-row-subtotal td{border-top:1.5px solid #c7c2e6;border-bottom:1.5px solid #c7c2e6}
-.pyg-v-good{color:#16A34A}
-.pyg-v-bad{color:#DC2626}
-.pyg-v-neu{color:#9ca3af}
-.pyg-v-critical{font-weight:800}
-.pyg-v-crit-ic{font-size:9px;margin-right:3px;vertical-align:1px}
-
-/* ---- Insights gerenciales (IA) ---- */
+/* ---- Insights gerenciales (IA) — base; la v2 de abajo ajusta encabezado/botón/tiles ---- */
 .pyg-insights-card{background:#fff;border:1px solid #E4E1F0;border-radius:14px;padding:18px 20px;margin-top:16px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(22,9,51,.05), 0 10px 28px -10px rgba(22,9,51,.14)}
 .pyg-insights-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--content-gradient)}
 .pyg-insights-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .pyg-insights-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:#2d3748}
 .pyg-insights-title i{color:#583AFF}
 .pyg-insights-meta{font-size:11.5px;color:#8B85A0}
+/* Respaldo cuando la respuesta de la IA no trae las 3 secciones (Logro/Alerta/Eficiencia): markdown completo */
 .pyg-insights-body{font-size:13.5px;line-height:1.6;color:#4b5563}
 .pyg-insights-body p{margin:0 0 8px}
 .pyg-insights-body p:last-child{margin-bottom:0}
-.pyg-insights-empty{color:#9ca3af;font-style:italic}
 
-/* ---- Fila de exportación ---- */
-.pyg-exports-row{display:flex;gap:.75rem;flex-wrap:wrap;justify-content:flex-end;margin-top:16px}
-.pyg-exports-row form{display:inline-block;margin:0}
+
+/* ---- 0. Estilos que la vista PYG usa pero NO tenía (vivían solo en el <style>
+        de InformeLineaTiempo.cshtml) ---- */
+.lt-app{--lt-bg:#F4F4FA;--lt-surface:#FFFFFF;--lt-surface-2:#F4F3FB;--lt-text:#16121F;--lt-text-2:#5B5570;--lt-text-muted:#8B85A0;--lt-line:#E4E1F0;--lt-good:#16A34A;--lt-good-bg:#ECFDF3;--lt-bad:#DC2626;--lt-bad-bg:#FEF2F2;--lt-shadow:0 1px 2px rgba(22,9,51,.05),0 10px 28px -10px rgba(22,9,51,.14);color:var(--lt-text);font-size:15px}
+.lt-card{background:#fff;border:1px solid #E4E1F0;border-radius:14px;padding:16px 22px 18px;margin-bottom:16px;box-shadow:var(--lt-shadow)}
+.lt-empty{text-align:center;padding:3rem 1.5rem;color:#8B85A0}
+.lt-empty .lt-empty-icon{width:64px;height:64px;margin:0 auto 1.1rem;border-radius:50%;background:linear-gradient(135deg,rgba(99,102,241,.14),rgba(1,225,215,.14));display:flex;align-items:center;justify-content:center}
+.lt-empty .lt-empty-icon i{font-size:1.7rem;background:var(--content-gradient);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lt-empty h4{color:#16121F;font-size:16px;font-weight:800;margin:0 0 .4rem}
+.lt-empty p{font-size:13px;max-width:420px;margin:0 auto;line-height:1.5}
+
+/* ---- 1. Encabezado del informe ---- */
+.pyg2-letterhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:10px;margin-bottom:14px;border-bottom:1px solid #E4E1F0}
+.pyg2-brand{display:inline-flex;align-items:center;gap:8px}
+.pyg2-brand .bm-text{font-size:12.5px;font-weight:800;letter-spacing:.01em;background:var(--content-gradient);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pyg2-brand .bm-sub{font-size:11px;font-weight:700;color:#8B85A0}
+.pyg2-letterhead .fecha{font-size:11px;color:#8B85A0}
+.pyg2-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.pyg2-head-l{display:flex;flex-direction:column;gap:10px;min-width:0}
+.pyg2-head h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.015em;color:#16121F}
+.pyg2-chips{display:flex;flex-wrap:wrap;gap:6px}
+.pyg2-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#5B5570;background:#F4F3FB;border:1px solid #E4E1F0;padding:3px 11px;border-radius:999px}
+.pyg2-chip.primary{font-weight:800;color:#583AFF;background:#EEF2FF;border-color:#EEF2FF;padding:4px 11px}
+.pyg2-chip.primary i{font-size:10px}
+.pyg2-tools{display:flex;align-items:center;gap:8px;position:relative}
+.pyg2-tools .sep{width:1px;height:22px;background:#E4E1F0;margin:0 2px}
+.pyg2-tools .lt-tool-btn .lbl-muted{color:#8B85A0;font-weight:600}
+.pyg2-tools .lt-tool-btn .fa-file-excel{color:#217346}
+.pyg2-tools .lt-tool-btn .fa-file-pdf{color:#DC2626}
+.pyg2-tools .lt-menu{left:0;right:auto;width:160px}
+.pyg2-tools .lt-menu button{justify-content:space-between}
+.pyg2-tools .lt-menu button.on{color:#583AFF}
+
+/* ---- 2. Título de sección (mismo lenguaje que .lt-section-title de filtros) ---- */
+.pyg2-section{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+.pyg2-section-title{display:flex;align-items:center;gap:12px}
+.pyg2-section-title .t{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#583AFF;white-space:nowrap}
+.pyg2-section-title .line{flex:1;height:1px;background:#E4E1F0}
+.pyg2-legend{display:flex;gap:12px;font-size:11px;font-weight:700;color:#8B85A0;flex-wrap:wrap}
+.pyg2-legend span{display:inline-flex;align-items:center;gap:5px}
+.pyg2-legend .sw{width:12px;height:3px;border-radius:2px;display:inline-block}
+.pyg2-legend .sq{width:9px;height:9px;border-radius:3px;display:inline-block}
+.pyg2-legend .dash{width:12px;height:0;border-top:2px dashed #D97706;display:inline-block}
+
+/* Segmented (Período / Acumulado / Ambos) — variante blanca de .lt-seg2 */
+.pyg2-seg{display:flex;background:#fff;border:1px solid #E4E1F0;border-radius:9px;padding:3px}
+.pyg2-seg.soft{background:#F4F3FB}
+.pyg2-seg button{border:none;background:transparent;font-family:inherit;font-size:12px;font-weight:700;color:#5B5570;padding:6px 14px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.pyg2-seg button.active{background:var(--content-gradient);color:#fff}
+
+/* ---- 3. KPIs (4 tarjetas) ---- */
+.pyg2-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.pyg2-kpi{background:#fff;border:1px solid #E4E1F0;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 1px 2px rgba(22,9,51,.04)}
+.pyg2-kpi-head{display:flex;align-items:center;gap:8px}
+.pyg2-kpi-head .ic{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--content-gradient);color:#fff;font-size:12px;flex:none}
+.pyg2-kpi-head .nm{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#5B5570}
+.pyg2-kpi-val{display:flex;flex-direction:column;gap:2px}
+.pyg2-kpi-val .v{font-size:28px;font-weight:800;letter-spacing:-.02em;color:#16121F;font-variant-numeric:tabular-nums;line-height:1.1}
+.pyg2-kpi-val .p{font-size:12px;font-weight:600;color:#8B85A0}
+.pyg2-kpi-bar{height:6px;border-radius:999px;background:#EEF0F6;position:relative;overflow:hidden}
+.pyg2-kpi-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:#6366F1}
+.pyg2-kpi-bar i.good{background:#16A34A}
+.pyg2-kpi-deltas{display:flex;flex-direction:column;gap:6px;padding-top:2px}
+.pyg2-kpi-deltas .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pyg2-kpi-deltas .ref{font-size:11.5px;font-weight:700;color:#8B85A0}
+
+/* Chip de variación reutilizable (KPIs, tendencias, tabla) */
+.pyg2-dchip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:999px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pyg2-dchip.up{color:#16A34A;background:#ECFDF3}
+.pyg2-dchip.down{color:#DC2626;background:#FEF2F2}
+.pyg2-dchip .fa-circle-exclamation{font-size:9px}
+
+@media (max-width:1100px){.pyg2-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.pyg2-kpis{grid-template-columns:1fr}}
+
+/* ---- 4. Cascada + Lo más relevante ---- */
+.pyg2-analysis{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;margin-bottom:16px}
+.pyg2-card{background:#fff;border:1px solid #E4E1F0;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.pyg2-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.pyg2-card-title{font-size:14px;font-weight:800;color:#16121F;display:flex;align-items:center;gap:7px}
+.pyg2-card-title i{color:#583AFF;font-size:12px}
+.pyg2-card-sub{font-size:12px;color:#8B85A0;margin-top:2px}
+.pyg2-waterfall-wrap{position:relative;height:260px}
+.pyg2-waterfall-wrap canvas{width:100% !important;height:100% !important}
+
+.pyg2-hl-list{display:flex;flex-direction:column;gap:4px}
+.pyg2-hl{display:flex;flex-direction:column;gap:6px;padding:10px 0}
+.pyg2-hl + .pyg2-hl{border-top:1px solid #F1F0F7}
+.pyg2-hl-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.pyg2-hl-top .nm{font-size:13px;font-weight:700;color:#2d3748}
+.pyg2-hl-top .val{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pyg2-hl-bot{display:flex;align-items:center;gap:10px}
+.pyg2-hl-track{flex:1;height:5px;border-radius:999px;background:#F4F3FB;overflow:hidden}
+.pyg2-hl-track i{display:block;height:100%;border-radius:999px;opacity:.85}
+.pyg2-hl-bot .tag{font-size:11px;font-weight:700;width:92px;text-align:right}
+.pyg2-hl.up .val,.pyg2-hl.up .tag{color:#16A34A}
+.pyg2-hl.up .pyg2-hl-track i{background:#16A34A}
+.pyg2-hl.down .val,.pyg2-hl.down .tag{color:#DC2626}
+.pyg2-hl.down .pyg2-hl-track i{background:#DC2626}
+
+@media (max-width:992px){.pyg2-analysis{grid-template-columns:1fr}}
+
+/* ---- 5. Tendencias ---- */
+.pyg2-trends{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.pyg2-trend{background:#fff;border:1px solid #E4E1F0;border-radius:12px;padding:14px 16px 8px;display:flex;flex-direction:column;gap:6px}
+.pyg2-trend-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.pyg2-trend-head .nm{font-size:12px;font-weight:800;color:#5B5570;text-transform:uppercase;letter-spacing:.03em}
+.pyg2-trend-head .v{font-size:18px;font-weight:800;color:#16121F;font-variant-numeric:tabular-nums;margin-top:2px}
+.pyg2-trend-head .pyg2-dchip{margin-top:2px}
+.pyg2-trend-canvas{position:relative;height:130px}
+.pyg2-trend-canvas canvas{width:100% !important;height:100% !important}
+@media (max-width:900px){.pyg2-trends{grid-template-columns:1fr}}
+
+/* ---- 6. Tabla financiera ---- */
+.pyg2-table-card{background:#fff;border:1px solid #E4E1F0;border-radius:14px;padding:16px 18px 14px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--lt-shadow);margin-bottom:16px}
+.pyg2-table-tools{display:flex;align-items:center;gap:8px}
+.pyg2-yoy-btn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border:1px solid #E4E1F0;background:#fff;border-radius:9px;font-family:inherit;font-size:12.5px;font-weight:700;color:#5B5570;cursor:pointer}
+.pyg2-yoy-btn.on{border-color:#583AFF;background:#EEF2FF;color:#583AFF}
+.pyg2-table-wrap{overflow:auto;border:1px solid #E4E1F0;border-radius:10px;max-height:620px}
+.pyg2-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+.pyg2-table th{position:sticky;top:0;z-index:2;background:#F8F9FC;color:#8B85A0;white-space:nowrap}
+.pyg2-table thead tr:first-child th{padding:9px 12px 4px;font-size:12px;font-weight:800;color:#583AFF;text-align:center}
+.pyg2-table thead tr:nth-child(2) th{top:31px;padding:4px 12px 9px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;text-align:right;border-bottom:1px solid #E4E1F0}
+.pyg2-table thead th.col-cuenta{left:0;z-index:3;text-align:left !important;vertical-align:bottom;padding:10px 16px !important;font-size:11px !important;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#8B85A0 !important;border-bottom:1px solid #E4E1F0;min-width:250px}
+.pyg2-table .sep{border-left:2px solid #E4E1F0}
+.pyg2-table td{background:#fff;padding:10px 12px;border-bottom:1px solid #EEF0F6;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pyg2-table.compacta td{padding-top:6px;padding-bottom:6px}
+.pyg2-table td.lbl{position:sticky;left:0;z-index:1;text-align:left;padding-left:32px;color:#4b5563;font-weight:600}
+.pyg2-table td.real{color:#2d3748;font-weight:600}
+.pyg2-table td.ppto{color:#8B85A0;font-weight:600}
+.pyg2-table td.mar{color:#5B5570;font-weight:600}
+.pyg2-table td.var{font-weight:700}
+.pyg2-table td.good{color:#16A34A}
+.pyg2-table td.bad{color:#DC2626}
+.pyg2-table td.neu{color:#9ca3af}
+/* Subtotales */
+.pyg2-table tr.sub td{background:#F8F7FD;border-top:1px solid #E4E1F0}
+.pyg2-table tr.sub td.lbl{padding-left:16px;color:#16121F;font-weight:800}
+.pyg2-table tr.sub td.real{color:#16121F;font-weight:800}
+/* Última fila (Utilidad neta) */
+.pyg2-table tr.total td{background:#EEF2FF;border-top:2px solid #C7D2FE}
+.pyg2-table tr.total td.lbl{padding-left:16px;color:#3B2FBF;font-weight:800}
+.pyg2-table tr.total td.real{color:#16121F;font-weight:800}
+
+/* Variante opcional: encabezado con degradado de marca */
+.pyg2-table.head-degradado th{background:#5a78ee;color:#fff !important}
+
+.pyg2-table-legend{display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:11.5px;font-weight:700;color:#8B85A0}
+.pyg2-table-legend span{display:inline-flex;align-items:center;gap:6px}
+.pyg2-table-legend .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.pyg2-table-legend .fa-circle-exclamation{color:#DC2626;font-size:10px}
+
+/* ---- 7. Insights IA ---- */
+.pyg-insights-card{display:flex;flex-direction:column;gap:14px}
+.pyg-insights-head{margin-bottom:0}
+.pyg-insights-title{font-size:14px;color:#16121F}
+.pyg2-ins-btn{display:inline-flex;align-items:center;gap:7px;background:var(--content-gradient);color:#fff;border:none;padding:9px 18px;border-radius:9px;font-weight:700;font-size:13px;box-shadow:0 2px 8px rgba(22,9,51,.3);font-family:inherit;cursor:pointer}
+.pyg2-ins-btn:hover{background:var(--content-gradient-hover)}
+.pyg2-ins-btn:disabled{opacity:.5;cursor:not-allowed}
+.pyg2-ins-empty{display:flex;align-items:center;gap:12px;padding:14px 16px;background:#F8F9FC;border:1px dashed #E0DDF0;border-radius:10px;font-size:13px;color:#5B5570}
+.pyg2-ins-empty i{color:#583AFF}
+.pyg2-ins-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.pyg2-ins-tile{border:1px solid #E4E1F0;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;background:#fff}
+.pyg2-ins-tile .h{display:flex;align-items:center;gap:8px}
+.pyg2-ins-tile .ic{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px}
+.pyg2-ins-tile .t{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.pyg2-ins-tile p{margin:0;font-size:13.5px;line-height:1.55;color:#4b5563;text-wrap:pretty}
+.pyg2-ins-tile.logro .ic{background:#ECFDF3;color:#16A34A}.pyg2-ins-tile.logro .t{color:#16A34A}
+.pyg2-ins-tile.alerta .ic{background:#FEF2F2;color:#DC2626}.pyg2-ins-tile.alerta .t{color:#DC2626}
+.pyg2-ins-tile.eficiencia .ic{background:#EEF2FF;color:#583AFF}.pyg2-ins-tile.eficiencia .t{color:#583AFF}
+@media (max-width:900px){.pyg2-ins-grid{grid-template-columns:1fr}}
+
+/* ---- Ajustes de integración (no venían en el handoff) ---- */
+/* Menú de unidad: solo la opción activa muestra el check */
+.pyg2-tools .lt-menu button .fa-check{visibility:hidden;font-size:11px}
+.pyg2-tools .lt-menu button.on .fa-check{visibility:visible}
+/* El form de exportación a Excel queda oculto: lo dispara el botón "Excel" del encabezado */
+#frmExportarExcelPYG{display:none}
+/* Ícono de "variación crítica" dentro del chip de la tabla */
+.pyg2-dchip .fa-circle-exclamation{margin-right:1px}
+.pyg2-table td.chip{text-align:right}
+.pyg2-legend .sq.pos{background:#16A34A}
+.pyg2-hl-empty{font-size:12.5px;color:#8B85A0;padding:10px 0}
+@media (max-width:768px){.pyg2-tools{flex-wrap:wrap}.pyg2-table-tools{flex-wrap:wrap}}
+.select2-results__option[aria-disabled=true]{cursor:not-allowed}
+/* Insights: cifra clave resaltada dentro de cada tarjeta */
+.pyg2-ins-tile p strong{color:#16121F;font-weight:800;font-variant-numeric:tabular-nums}
+.pyg2-ins-tile.logro{border-top:3px solid #16A34A}
+.pyg2-ins-tile.alerta{border-top:3px solid #DC2626}
+.pyg2-ins-tile.eficiencia{border-top:3px solid #583AFF}
+/* Respaldo en markdown (si la respuesta no trae las 3 secciones): títulos, listas y negritas con estilo */
+.pyg-insights-body{background:#F8F9FC;border:1px solid #E4E1F0;border-radius:12px;padding:14px 18px}
+.pyg-insights-body h1,.pyg-insights-body h2,.pyg-insights-body h3,.pyg-insights-body h4{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#583AFF;margin:12px 0 6px}
+.pyg-insights-body h1:first-child,.pyg-insights-body h2:first-child,.pyg-insights-body h3:first-child,.pyg-insights-body h4:first-child{margin-top:0}
+.pyg-insights-body ul,.pyg-insights-body ol{margin:0 0 8px;padding-left:20px}
+.pyg-insights-body li{margin:4px 0}
+.pyg-insights-body li::marker{color:#583AFF}
+.pyg-insights-body strong{color:#16121F;font-weight:800}

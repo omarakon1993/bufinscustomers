@@ -43,7 +43,7 @@
 .lt-tabla-banner.warning{color:#92400e}
 
 /* "Rango y agrupación": Agrupar por (izq) + Rango de fechas (der) */
-.lt-grid-rango{display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px;align-items:start}
+.lt-grid-rango{display:grid;grid-template-columns:170px minmax(0,1fr);gap:20px;align-items:start}
 
 /* Agrupar por — lista vertical de 3 filas (antes: 3 columnas con un ícono cada una, que competían
    visualmente con el texto). Ahora cada fila es solo texto, alineado a la izquierda; el único ícono
@@ -61,12 +61,6 @@
 .lt-seg-hint{font-size:12px;color:#9ca3af;margin:6px 0 0}
 
 /* Rango de fechas — atajos + slider de rango de meses */
-.lt-rango-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px}
-.lt-atajos{display:flex;gap:6px;flex-wrap:wrap}
-.lt-chip{border:1px solid #e3e6f0;background:#fff;color:#4b5563;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;white-space:nowrap;transition:all .15s ease}
-.lt-chip:hover{border-color:#a5b4fc;color:#583AFF}
-.lt-chip.active{background:#eef2ff;border-color:#583AFF;color:#583AFF}
-.lt-chip:disabled{opacity:.5;cursor:not-allowed}
 
 .lt-range-card{border:1px solid #e3e6f0;border-radius:12px;padding:10px 14px 8px;background:#fff}
 .lt-range-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;gap:10px}
@@ -100,7 +94,7 @@
 .lt-comparar-panel .lt-field-label{font-size:10.5px}
 
 @media (prefers-reduced-motion:reduce){
-    .lt-range-track .knob,.lt-range-track .sel,.lt-seg button,.lt-chip{transition:none}
+    .lt-range-track .knob,.lt-range-track .sel,.lt-seg button{transition:none}
 }
 
 @media (max-width:992px){
@@ -114,9 +108,6 @@
     .lt-field-span2{grid-column:auto}
 }
 
-@media (max-width:640px){
-    .lt-rango-head-row{flex-direction:column;align-items:flex-start}
-}
 
 /* ===== Selector de indicadores: campo compacto + modal claro + barra de series ===== */
 
@@ -277,3 +268,17 @@
 
 @media (max-width:900px){.lt-series-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.lt-serie-cell{border-left:1px solid #E4E1F0;border-top:1px solid #E4E1F0}}
 @media (max-width:640px){.lt-series-strip{grid-template-columns:1fr}.lt-chart-canvas-wrap{height:300px}.lt-panel{grid-template-columns:1fr}}
+
+/* ===== Atajos del rango de fechas (compartido: Línea de Tiempo + PYG, lógica en Assets/js/rango-atajos.js) =====
+   Barra segmentada compacta en su propia fila bajo "Rango de fechas", en dos grupos:
+   [Todo] | [Año en curso · Últimos 6 meses · Último trimestre · Mes anterior · Mes actual] (relativos a hoy).
+   Cabe en una línea en pantallas de 14" (~1100 px útiles). */
+.rango-atajos{display:flex;flex-wrap:wrap;gap:6px 8px;margin:4px 0 8px}
+.rango-atajos-grupo{display:inline-flex;flex-wrap:wrap;background:#F4F3FB;border:1px solid #E4E1F0;border-radius:9px;padding:2px}
+.rango-atajos-grupo button{display:inline-flex;align-items:center;gap:5px;border:none;background:transparent;font-family:inherit;font-size:11.5px;font-weight:700;color:#5B5570;padding:5px 11px;border-radius:7px;cursor:pointer;white-space:nowrap;transition:background .15s ease,color .15s ease}
+.rango-atajos-grupo button:hover:not(:disabled){color:#583AFF}
+.rango-atajos-grupo button.active,.rango-atajos-grupo button.active:hover:not(:disabled){background:var(--content-gradient);color:#fff;box-shadow:0 2px 6px rgba(22,9,51,.18)}
+/* Sin datos en la ventana: clase (no atributo disabled) para que el tooltip explique el motivo */
+.rango-atajos-grupo button:disabled,.rango-atajos-grupo button.no-disponible{opacity:.45;cursor:not-allowed}
+.rango-atajos-grupo button.no-disponible:hover{color:#5B5570}
+@media (prefers-reduced-motion:reduce){.rango-atajos-grupo button{transition:none}}
