@@ -134,7 +134,7 @@ Permissions are managed through the `MenuOpciones` table and `MenuOpcionesServic
 
 Known permission codes (BD codes, used in sidebar and controllers):
 - `DATOS_PLANTILLA_CARGUE`, `DATOS_MODELO_EJECUCION` (Datos)
-- `INFORMES_REPORTES_PBI`, `INFORMES_AUDITORIA_CARGUES`, `INFORMES_TABLAS_DATOS`, `INFORMES_RELACIONAMIENTOS`, `INFORMES_AUDITORIA_GENERAL`, `INFORMES_PYG_GERENCIAL` (Informes — `INFORMES_AUDITORIA_GENERAL` is SoloSuperAdmin, visor de la tabla `Auditoria`; `INFORMES_PYG_GERENCIAL` → `InformePYGController`, no SoloSuperAdmin/SoloAdminEmpresa, aún pendiente de crear como fila en `MenuOpciones` vía `/MenuOpciones`)
+- `INFORMES_REPORTES_PBI`, `INFORMES_AUDITORIA_CARGUES`, `INFORMES_TABLAS_DATOS`, `INFORMES_RELACIONAMIENTOS`, `INFORMES_AUDITORIA_GENERAL`, `INFORMES_PYG_GERENCIAL`, `INFORMES_BALANCE_GERENCIAL` (Informes — `INFORMES_AUDITORIA_GENERAL` is SoloSuperAdmin, visor de la tabla `Auditoria`; `INFORMES_PYG_GERENCIAL` → `InformePYGController` and `INFORMES_BALANCE_GERENCIAL` → `InformeBalanceController`, neither SoloSuperAdmin/SoloAdminEmpresa, both still pending creation as a row in `MenuOpciones` vía `/MenuOpciones`)
 - `ADMIN_USUARIOS_GESTOR`, `ADMIN_EMPRESAS_GESTOR`, `ADMIN_REPORTES_GESTOR` (Administración)
 - `ADMIN_CONFIG_EMPRESAS`, `ADMIN_CONFIG_RELACIONAMIENTOS`, `ADMIN_CONFIG_MENU`, `ADMIN_CONFIG_PROMPTS`, `ADMIN_CONFIG_GRUPOS_EMPRESARIALES`, `ADMIN_CONFIG_ESCENARIOS` (Configuración - `ADMIN_CONFIG_MENU`, `ADMIN_CONFIG_PROMPTS`, `ADMIN_CONFIG_GRUPOS_EMPRESARIALES` and `ADMIN_CONFIG_ESCENARIOS` are SoloSuperAdmin)
 
@@ -169,6 +169,7 @@ Views are organized by **functional area**, not by controller name. Controllers 
 | AnalisisIAController | `~/Views/Informes/AnalisisIA.cshtml` |
 | InformeRelacionamientosController | `~/Views/Informes/InformeRelacionamientos.cshtml` |
 | InformePYGController | `~/Views/Informes/InformePYG.cshtml` |
+| InformeBalanceController | `~/Views/Informes/InformeBalance.cshtml` |
 | AuditoriaCarguesController | `~/Views/Informes/AuditoriaCargues.cshtml` |
 | AuditoriaConsultasIAController | `~/Views/Informes/AuditoriaConsultasIA.cshtml` |
 | AuditoriaController | `~/Views/Informes/Auditoria.cshtml` |
@@ -201,6 +202,7 @@ When creating new controllers, use explicit view paths with `~/Views/{area}/{vie
 - **InformeTablasDatosController** - Data tables report with AI analysis via OpenAI (`[ValidarSesion]`). Endpoints: `InformeTablasDatos` (view), `ObtenerAnios`, `ObtenerVariables`, `ConsultarDatos`, `ConsultarConIA` (async), `ExportarExcel`
 - **InformeRelacionamientosController** - Relationships report (`[ValidarSesion]`)
 - **InformePYGController** - Estado de Resultados (PYG) gerencial: Real vs Presupuesto, mes + acumulado del año, KPIs, tendencia e insights de IA (`[ValidarSesion]`). Lee de `dbo.ModeloPYG` (+ `JOIN dbo.Rel_PYG` para el flag de subtotal) vía `InformePYGService` — no ejecuta `sp_ModeloPYG` en vivo. Endpoints: `Index` (view), `ObtenerMeses`, `ConsultarReporte`, `GenerarInsightsIA` (async, reutiliza el patrón de cupo/prompts/auditoría de `HomeController.ObtenerResumenIA` con el código `RESUMEN_PYG_GERENCIAL` en `GestorPrompts`), `ExportarExcel` — los 3 últimos reciben el mismo `FiltrosPYG`. Ver "Estado de Resultados (PYG) Gerencial" más abajo
+- **InformeBalanceController** - Balance General gerencial: saldo al mes de corte (foto, no acumula meses), comparativo (cierre año anterior/mes anterior/mismo mes año anterior), chequeo de cuadre, KPIs de liquidez/solvencia, estructura y tendencia, insights de IA (`[ValidarSesion]`). Lee de `dbo.ModeloBalance` (+ `JOIN dbo.REL_Balance` para el flag de subtotal) vía `InformeBalanceService` — no ejecuta `sp_ModeloBalance` en vivo. Mismo esqueleto de endpoints que `InformePYGController` (`Index`, `ObtenerMeses`, `ConsultarReporte`, `GenerarInsightsIA` con código `RESUMEN_BALANCE_GERENCIAL`, `ExportarExcel`), recibiendo `FiltrosBalance`. Ver "Balance General Gerencial" más abajo
 - **ModeloController** - Financial model execution (Datos area, `[ValidarSesion]`)
 - **ModelosEjecucionController** - Model execution management/configuration (`[ValidarSesion]`)
 - **GestorEscenariosController** - CRUD for the `Escenarios` data-scenario catalog, Super Admin only (`[ValidarSesion][SoloSuperAdmin]`). `Eliminar`-equivalent (`Desactivar`) is always a soft-delete. See "Escenarios de datos"
@@ -332,6 +334,77 @@ tendencia (Chart.js) y una sección de insights generados por IA.
     Logro/Alerta/Eficiencia al inicio de línea (tolera viñetas, negritas, `#`); si falta alguna de las 3,
     se muestra el markdown completo como antes. Si un Super Admin cambia el prompt `RESUMEN_PYG_GERENCIAL`,
     debe mantener esas 3 etiquetas para conservar las tarjetas.
+
+### Balance General Gerencial
+
+Segundo informe de la serie de "informes gerenciales" (mismo estilo visual y clases `.pyg2-*`/`.lt-*`
+que el PYG — `Assets/css/informe-pyg.css` se incluye tal cual en la vista; `Assets/css/informe-balance.css`
+solo agrega el badge de cuadre). Muestra la estructura del balance (Activo Corriente/No Corriente,
+Pasivo Corriente/No Corriente, Patrimonio) con **Saldo al corte, % vertical (sobre activo total),
+comparativo elegido, Variación $ y Variación %**, más 4 KPIs (Activo total, Capital de trabajo, Razón
+corriente, Endeudamiento total), un chequeo de cuadre, 2 barras apiladas de estructura, 3 mini-tendencias
+y una sección de insights de IA.
+
+- **Diferencia de fondo con el PYG: el balance es una FOTO, no un flujo.** No existe "Período" ni
+  "Acumulado" — el valor de cada cuenta es su saldo en el **mes de corte**, que es siempre el extremo
+  derecho (`AnioHasta`/`MesHasta`) del mismo slider de rango continuo que usan PYG/Línea de Tiempo. El
+  rango completo (incluido su extremo izquierdo) solo alimenta las 3 tendencias mensuales; no se suman
+  meses en ningún punto del informe.
+- **Fuente de datos**: `dbo.ModeloBalance` (tabla ya materializada por `sp_ModeloBalance`) — **no**
+  ejecuta el SP en vivo. `Services/InformeBalanceService.ObtenerFilas` hace `SELECT ... FROM
+  dbo.ModeloBalance m LEFT JOIN dbo.REL_Balance r ON r.Id = m.Ord WHERE m.IdEmpresa=@e
+  AND m.IdEscenario=@esc AND m.Año BETWEEN @d AND @h`. A diferencia de `dbo.ModeloPYG`, `ModeloBalance`
+  **no tiene columnas de presupuesto/forecast** — solo el saldo real por Año/Mes/Cuenta — por lo que el
+  v1 de este informe **no compara contra presupuesto** (`dbo.ModeloBalancePpto` existe y es correcto, pero
+  es un SP grande y compuesto; queda para una fase futura si se necesita esa comparación).
+- **Comparativo por defecto: cierre del año anterior** (31-dic), el estándar de NIC1/NIIF Pymes para
+  balance. `FiltrosBalance.Comparar` (`BalanceComparar`: `cierreAnterior` (default) | `mesAnterior` |
+  `mismoMesAnioAnterior`). El servicio arma una "foto" (`Foto`/`FotoDe`, saldo de todas las cuentas en un
+  mes exacto) tanto para el corte como para el comparativo elegido; si el comparativo no tiene datos
+  cargados (`HayComparativo = false`), la tabla/KPIs muestran el saldo al corte sin variación ("—") en
+  vez de comparar contra cero.
+- **Literales de línea sin confirmar contra la BD en vivo** (mismo riesgo ya documentado para
+  `Rel_PYG`/PYG): `DescActivoTotal`, `DescActivoCorriente`, `DescActivoNoCorriente`, `DescPasivoTotal`,
+  `DescPasivoCorriente`, `DescPasivoNoCorriente`, `DescPatrimonioTotal` en `InformeBalanceService` — si no
+  calzan con `dbo.REL_Balance.Descripcion` (`Tipo = 'CALCULO'`) real, la tabla completa sigue mostrándose
+  bien (viene de `Ord`/`Descripcion` reales); solo los KPIs, el badge de cuadre, la estructura (2 barras) y
+  las 3 tendencias quedarían en 0/"No aplica" hasta ajustar esas constantes.
+- **Chequeo de cuadre** (nuevo respecto al PYG, no tiene equivalente allí): badge "Activo = Pasivo +
+  Patrimonio" o "Descuadre de $X" (`BalanceReporteViewModel.CuadraBalance`/`DiferenciaCuadre`, tolerancia
+  1 peso). Segundo badge opcional cruzando con `dbo.ModeloPYG`: utilidad neta acumulada del PYG a la misma
+  fecha de corte vs. una línea candidata `DescResultadoEjercicio = "Resultado del Ejercicio"` del balance
+  — solo se muestra si esa línea existe en el balance de la empresa (`HayComparacionPYG`); si no, se omite
+  sin romper el resto del informe.
+- **Clasificación Pasivo vs. Activo/Patrimonio para el color de las variaciones**
+  (`BalanceFilaReporte.EsPasivo`, análogo a `PygFilaReporte.EsGastoOCosto`): por el primer dígito del PUC
+  (`CuentaPUC` empieza en `"2"`) cuando la línea tiene cuenta propia; para subtotales sin cuenta propia
+  (`Total Pasivo`, `Pasivo Corriente`…) cae a buscar "pasivo" en la descripción sin que contenga
+  "patrimonio". Aumentar un pasivo es desfavorable (más deuda); aumentar activo o patrimonio es favorable
+  — controla el rojo/verde de "Var. %"/"Var. $" y el criterio de "Lo más relevante" (top 4 por impacto
+  absoluto en pesos, igual que PYG).
+- **KPIs** (`BalanceKpi`, sin bloque Período/Acumulado): Activo total (moneda), Capital de trabajo
+  (Activo corriente − Pasivo corriente, moneda), Razón corriente (Activo corriente / Pasivo corriente,
+  formato `"1,8x"`, `NoAplica` si el pasivo corriente es 0) y Endeudamiento total (Pasivo total / Activo
+  total, %, `NoAplica` si el activo total es 0). El sentido de "favorable" es específico por KPI
+  (`_bal.kpiFavorableSiSube` en la vista): sube es favorable para los 3 primeros, desfavorable para
+  Endeudamiento.
+- **Estructura** (reemplazo de la cascada del PYG — el balance no tiene una secuencia causal
+  Ingresos→Utilidad Neta): 2 barras apiladas Chart.js, Activo (corriente + no corriente) junto a
+  Pasivo + Patrimonio (pasivo corriente + pasivo no corriente + patrimonio).
+- **Tendencias**: 3 series mensuales (Capital de trabajo, Razón corriente, Endeudamiento) a través de
+  todo el rango del slider. A diferencia de PYG (que SUMA los meses del grupo al agrupar por
+  Trimestre/Año), cada punto de Balance es la **foto del último mes con datos dentro del grupo**
+  (`InformeBalanceService.ArmarTendencia`) — un balance no se puede sumar mes a mes.
+- **Insights IA**: código `RESUMEN_BALANCE_GERENCIAL` en `GestorPrompts` (aún no tiene una fila por
+  defecto, igual que pasó con `RESUMEN_PYG_GERENCIAL`) — pide 3 líneas fijas "Liquidez:"/"Solvencia:"/
+  "Capital de trabajo:". Mismo cupo diario y registro en `AuditoriaAnalisisIA` (`NombreTabla =
+  "Balance Gerencial"`) que el PYG.
+- **Pendiente manual**: crear la opción de menú `INFORMES_BALANCE_GERENCIAL` vía `/MenuOpciones` (Super
+  Admin) para que aparezca en el sidebar.
+- **Fuera de alcance a propósito en v1**: comparación contra presupuesto (`dbo.ModeloBalancePpto`),
+  indicadores de actividad/rentabilidad cruzados 12 meses móviles con el PYG (días de cartera/inventario/
+  proveedores, ROE/ROA), semáforos configurables por sector y vista consolidada de grupo sin
+  eliminaciones — quedarían para una fase 2, siguiendo el mismo patrón incremental que tuvo el PYG.
 
 ### Atajos del rango de fechas (compartido: Línea de Tiempo + PYG)
 
