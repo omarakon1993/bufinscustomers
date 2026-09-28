@@ -62,26 +62,30 @@
             </div>
         </div>
 
-        <div class="lt-section-title mt"><span>@Resources.Strings.BAL_SeccionComparaciones</span></div>
-        <div class="lt-grid-quever">
-            <div class="lt-field">
-                <label class="lt-field-label" for="balComparar">@Resources.Strings.BAL_Comparar_Label</label>
-                <select id="balComparar" class="lt-field-select">
-                    <option value="cierreAnterior">@Resources.Strings.BAL_Comp_cierreAnterior</option>
-                    <option value="mesAnterior">@Resources.Strings.BAL_Comp_mesAnterior</option>
-                    <option value="mismoMesAnioAnterior">@Resources.Strings.BAL_Comp_mismoMesAnioAnterior</option>
-                </select>
+        <details class="rpt-adv">
+            <summary><span>@Resources.Strings.BAL_SeccionComparaciones</span><span class="line"></span></summary>
+            <div class="rpt-adv-body">
+                <div class="lt-grid-quever">
+                    <div class="lt-field">
+                        <label class="lt-field-label" for="balComparar">@Resources.Strings.BAL_Comparar_Label</label>
+                        <select id="balComparar" class="lt-field-select">
+                            <option value="cierreAnterior">@Resources.Strings.BAL_Comp_cierreAnterior</option>
+                            <option value="mesAnterior">@Resources.Strings.BAL_Comp_mesAnterior</option>
+                            <option value="mismoMesAnioAnterior">@Resources.Strings.BAL_Comp_mismoMesAnioAnterior</option>
+                        </select>
+                    </div>
+                    <div class="lt-field">
+                        <label class="lt-field-label" for="balEscenarioComparar">@Resources.Strings.BAL_EscenarioComparar</label>
+                        @* Opciones armadas por JS (actualizarOpcionesEscenarioComparar): todos los escenarios menos
+                           el principal; los que no tienen datos para la empresa quedan deshabilitados con tooltip. *@
+                        <select id="balEscenarioComparar" class="lt-field-select">
+                            <option value="">@Resources.Strings.BAL_EscenarioCompararNinguno</option>
+                        </select>
+                        <p class="lt-seg-hint" id="balEscenarioSinDatosHint" style="display:none;"><i class="fas fa-circle-info mr-1"></i>@Resources.Strings.BAL_EscenarioSinDatosHint</p>
+                    </div>
+                </div>
             </div>
-            <div class="lt-field">
-                <label class="lt-field-label" for="balEscenarioComparar">@Resources.Strings.BAL_EscenarioComparar</label>
-                @* Opciones armadas por JS (actualizarOpcionesEscenarioComparar): todos los escenarios menos
-                   el principal; los que no tienen datos para la empresa quedan deshabilitados con tooltip. *@
-                <select id="balEscenarioComparar" class="lt-field-select">
-                    <option value="">@Resources.Strings.BAL_EscenarioCompararNinguno</option>
-                </select>
-                <p class="lt-seg-hint" id="balEscenarioSinDatosHint" style="display:none;"><i class="fas fa-circle-info mr-1"></i>@Resources.Strings.BAL_EscenarioSinDatosHint</p>
-            </div>
-        </div>
+        </details>
 
         @* Rango: mismo control que PYG/Línea de Tiempo, pero el balance no acumula meses — el corte para
            KPIs/tabla/cuadre es siempre el extremo derecho (Hasta); el rango completo solo alimenta las

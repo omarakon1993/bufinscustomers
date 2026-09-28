@@ -61,26 +61,30 @@
             </div>
         </div>
 
-        <div class="lt-section-title mt"><span>@Resources.Strings.PYG_SeccionComparaciones</span></div>
-        <div class="lt-grid-quever">
-            <div class="lt-field">
-                <label class="lt-field-label" for="pygComparar">@Resources.Strings.PYG_Comparar_Label</label>
-                <select id="pygComparar" class="lt-field-select">
-                    <option value="ppto">@Resources.Strings.PYG_Comp_ppto</option>
-                    <option value="pptoAjuste">@Resources.Strings.PYG_Comp_pptoAjuste</option>
-                    <option value="forecast">@Resources.Strings.PYG_Comp_forecast</option>
-                </select>
+        <details class="rpt-adv">
+            <summary><span>@Resources.Strings.PYG_SeccionComparaciones</span><span class="line"></span></summary>
+            <div class="rpt-adv-body">
+                <div class="lt-grid-quever">
+                    <div class="lt-field">
+                        <label class="lt-field-label" for="pygComparar">@Resources.Strings.PYG_Comparar_Label</label>
+                        <select id="pygComparar" class="lt-field-select">
+                            <option value="ppto">@Resources.Strings.PYG_Comp_ppto</option>
+                            <option value="pptoAjuste">@Resources.Strings.PYG_Comp_pptoAjuste</option>
+                            <option value="forecast">@Resources.Strings.PYG_Comp_forecast</option>
+                        </select>
+                    </div>
+                    <div class="lt-field">
+                        <label class="lt-field-label" for="pygEscenarioComparar">@Resources.Strings.PYG_EscenarioComparar</label>
+                        @* Opciones armadas por JS (actualizarOpcionesEscenarioComparar): todos los escenarios menos
+                           el principal; los que no tienen datos para la empresa quedan deshabilitados con tooltip. *@
+                        <select id="pygEscenarioComparar" class="lt-field-select">
+                            <option value="">@Resources.Strings.PYG_EscenarioCompararNinguno</option>
+                        </select>
+                        <p class="lt-seg-hint" id="pygEscenarioSinDatosHint" style="display:none;"><i class="fas fa-circle-info mr-1"></i>@Resources.Strings.PYG_EscenarioSinDatosHint</p>
+                    </div>
+                </div>
             </div>
-            <div class="lt-field">
-                <label class="lt-field-label" for="pygEscenarioComparar">@Resources.Strings.PYG_EscenarioComparar</label>
-                @* Opciones armadas por JS (actualizarOpcionesEscenarioComparar): todos los escenarios menos
-                   el principal; los que no tienen datos para la empresa quedan deshabilitados con tooltip. *@
-                <select id="pygEscenarioComparar" class="lt-field-select">
-                    <option value="">@Resources.Strings.PYG_EscenarioCompararNinguno</option>
-                </select>
-                <p class="lt-seg-hint" id="pygEscenarioSinDatosHint" style="display:none;"><i class="fas fa-circle-info mr-1"></i>@Resources.Strings.PYG_EscenarioSinDatosHint</p>
-            </div>
-        </div>
+        </details>
 
         @* Rango y agrupación: mismo control que el Informe de Línea de Tiempo (rango continuo que puede
            cruzar años, con los años debajo del slider). "Agrupar por" solo afecta las tendencias. *@

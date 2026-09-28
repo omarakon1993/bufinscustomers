@@ -16,22 +16,25 @@ namespace bufinscustomers.Services
     /// </summary>
     public class InformeBalanceService : BaseService
     {
-        // Literales candidatos de dbo.REL_Balance.Descripcion con Tipo='CALCULO', SIN CONFIRMAR contra la
-        // BD en vivo (mismo riesgo ya documentado en InformePYGService para Rel_PYG): si no calzan
-        // exacto, la tabla completa sigue mostrándose bien (viene de Ord/Descripcion reales) — solo los
-        // KPIs, la estructura (2 barras) y las tendencias quedarían en 0/"No aplica" hasta ajustar estas
-        // constantes tras ver el primer reporte con datos reales.
+        // Literales de dbo.REL_Balance.Descripcion con Tipo='CALCULO', CONFIRMADOS contra la BD real
+        // (SELECT Id, CuentaPUC, Descripcion, Tipo, Corriente, Formula FROM dbo.REL_Balance WHERE
+        // Tipo = 'CALCULO' ORDER BY Id) — Ids 61/165/166/257/349/350/361 respectivamente. La comparación
+        // es case-insensitive (OrdinalIgnoreCase), pero el texto exacto (con "Total" al inicio de los
+        // corrientes/no corrientes, algo que el nombre inicial no tenía) sí importa.
         private const string DescActivoTotal = "Total Activo";
-        private const string DescActivoCorriente = "Activo Corriente";
-        private const string DescActivoNoCorriente = "Activo No Corriente";
-        private const string DescPasivoTotal = "Total Pasivo";
-        private const string DescPasivoCorriente = "Pasivo Corriente";
-        private const string DescPasivoNoCorriente = "Pasivo No Corriente";
-        private const string DescPatrimonioTotal = "Total Patrimonio";
+        private const string DescActivoCorriente = "Total activo corriente";
+        private const string DescActivoNoCorriente = "Total activo no corriente";
+        private const string DescPasivoTotal = "Total pasivo";
+        private const string DescPasivoCorriente = "Total pasivo corriente";
+        private const string DescPasivoNoCorriente = "Total pasivo no corriente";
+        private const string DescPatrimonioTotal = "Total patrimonio";
         // Para el cruce opcional con dbo.ModeloPYG (utilidad neta acumulada vs. resultado del ejercicio
-        // del balance) — igualmente sin confirmar; si no se encuentra, HayComparacionPYG queda en false
-        // y el badge de cuadre cruzado simplemente no se muestra (no rompe el resto del informe).
-        private const string DescResultadoEjercicio = "Resultado del Ejercicio";
+        // del balance). "Resultados del ejercicio" (plural) confirmado como componente de la fórmula de
+        // "Total patrimonio" (Id 361) — es una línea de detalle (Tabla='Z_BalancePrueba'), no un
+        // Tipo='CALCULO', por lo que no aparece en el SELECT anterior; si el nombre exacto de esa línea
+        // varía entre empresas, HayComparacionPYG queda en false y el badge de cuadre cruzado simplemente
+        // no se muestra (no rompe el resto del informe).
+        private const string DescResultadoEjercicio = "Resultados del ejercicio";
         private const string DescUtilidadNetaPYG = "Utilidad neta";
 
         // Tolerancia para el chequeo de cuadre (Activo = Pasivo + Patrimonio) y el cruce con el PYG:

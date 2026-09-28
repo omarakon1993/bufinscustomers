@@ -363,12 +363,19 @@ y una sección de insights de IA.
   mes exacto) tanto para el corte como para el comparativo elegido; si el comparativo no tiene datos
   cargados (`HayComparativo = false`), la tabla/KPIs muestran el saldo al corte sin variación ("—") en
   vez de comparar contra cero.
-- **Literales de línea sin confirmar contra la BD en vivo** (mismo riesgo ya documentado para
-  `Rel_PYG`/PYG): `DescActivoTotal`, `DescActivoCorriente`, `DescActivoNoCorriente`, `DescPasivoTotal`,
-  `DescPasivoCorriente`, `DescPasivoNoCorriente`, `DescPatrimonioTotal` en `InformeBalanceService` — si no
-  calzan con `dbo.REL_Balance.Descripcion` (`Tipo = 'CALCULO'`) real, la tabla completa sigue mostrándose
-  bien (viene de `Ord`/`Descripcion` reales); solo los KPIs, el badge de cuadre, la estructura (2 barras) y
-  las 3 tendencias quedarían en 0/"No aplica" hasta ajustar esas constantes.
+- **Literales de línea CONFIRMADOS contra la BD real** (`SELECT Id, CuentaPUC, Descripcion, Tipo,
+  Corriente, Formula FROM dbo.REL_Balance WHERE Tipo = 'CALCULO' ORDER BY Id`): `DescActivoTotal =
+  "Total Activo"`, `DescActivoCorriente = "Total activo corriente"`, `DescActivoNoCorriente = "Total
+  activo no corriente"`, `DescPasivoTotal = "Total pasivo"`, `DescPasivoCorriente = "Total pasivo
+  corriente"`, `DescPasivoNoCorriente = "Total pasivo no corriente"`, `DescPatrimonioTotal = "Total
+  patrimonio"` en `InformeBalanceService` — nótese el prefijo `"Total "` en corriente/no corriente, que
+  la primera versión no tenía. `DescResultadoEjercicio = "Resultados del ejercicio"` (plural, cruce
+  opcional con el PYG) se confirmó como componente de la fórmula de `Total patrimonio` (Id 361), pero es
+  una línea de detalle (no `Tipo='CALCULO'`) — si su nombre exacto varía entre empresas,
+  `HayComparacionPYG` queda en `false` sin romper el resto del informe. `REL_Balance` también trae ya
+  calculada `"Total pasivo + patrimonio"` (Id 362, suma de `Total pasivo` + `Total patrimonio`) — el
+  servicio no la usa (calcula la suma él mismo a partir de las dos partes ya confirmadas), pero es una
+  vía alterna si se quisiera simplificar el chequeo de cuadre en el futuro.
 - **Chequeo de cuadre** (nuevo respecto al PYG, no tiene equivalente allí): badge "Activo = Pasivo +
   Patrimonio" o "Descuadre de $X" (`BalanceReporteViewModel.CuadraBalance`/`DiferenciaCuadre`, tolerancia
   1 peso). Segundo badge opcional cruzando con `dbo.ModeloPYG`: utilidad neta acumulada del PYG a la misma

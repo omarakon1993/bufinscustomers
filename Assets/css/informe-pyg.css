@@ -17,6 +17,17 @@
 .pyg-insights-body p:last-child{margin-bottom:0}
 
 
+/* ---- 0b. Sección de filtros colapsable (p. ej. "Comparaciones") — mismo patrón <details>/<summary>
+        que "Filtros avanzados" en Auditoria.cshtml, con el look de .lt-section-title (línea + texto
+        morado en mayúsculas) pero clicable para expandir/contraer. Colapsada por defecto (sin "open"). */
+details.rpt-adv{margin:22px 0 14px}
+details.rpt-adv>summary{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#583AFF;cursor:pointer;list-style:none;user-select:none}
+details.rpt-adv>summary::-webkit-details-marker{display:none}
+details.rpt-adv>summary::before{content:'\25B8';font-size:.85em;transition:transform .15s;flex:none}
+details.rpt-adv[open]>summary::before{transform:rotate(90deg)}
+details.rpt-adv>summary .line{flex:1;height:1px;background:#e3e6f0}
+details.rpt-adv>.rpt-adv-body{margin-top:14px}
+
 /* ---- 0. Estilos que la vista PYG usa pero NO tenía (vivían solo en el <style>
         de InformeLineaTiempo.cshtml) ---- */
 .lt-app{--lt-bg:#F4F4FA;--lt-surface:#FFFFFF;--lt-surface-2:#F4F3FB;--lt-text:#16121F;--lt-text-2:#5B5570;--lt-text-muted:#8B85A0;--lt-line:#E4E1F0;--lt-good:#16A34A;--lt-good-bg:#ECFDF3;--lt-bad:#DC2626;--lt-bad-bg:#FEF2F2;--lt-shadow:0 1px 2px rgba(22,9,51,.05),0 10px 28px -10px rgba(22,9,51,.14);color:var(--lt-text);font-size:15px}
