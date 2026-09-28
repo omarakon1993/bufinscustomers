@@ -113,6 +113,39 @@ namespace bufinscustomers.Controllers
             }
         }
 
+        // Otorga esta opción de menú a TODOS los usuarios que aún no la tengan (excepto Super Admin,
+        // que ya tiene acceso total). Solo aplica a opciones que no sean SoloSuperAdmin — el botón ya
+        // queda oculto para esas en la vista, pero se revalida aquí como defensa en profundidad.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult HabilitarParaTodos(int id)
+        {
+            try
+            {
+                var opcion = _menuOpcionesService.ObtenerTodas().FirstOrDefault(o => o.Id == id);
+                if (opcion == null)
+                    return Json(new { success = false, message = R("Menu_ErrorHabilitarTodos") });
+
+                if (opcion.SoloSuperAdmin)
+                    return Json(new { success = false, message = R("Menu_ErrorHabilitarTodosSuperAdmin") });
+
+                int usuarioAsigno = UsuarioSesionHelper.UsuarioActual?.Id ?? 0;
+                int cantidad = _menuOpcionesService.HabilitarOpcionParaTodosLosUsuarios(opcion.Id, opcion.SoloAdminEmpresa, usuarioAsigno);
+
+                UsuarioSesionHelper.InvalidarCachePermisos();
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Permisos, AuditoriaAccion.Asignar,
+                    "UsuarioMenuPermisos", opcion.Id.ToString(),
+                    $"Opción de menú '{opcion.Nombre}' ({opcion.Codigo}) habilitada para todos los usuarios ({cantidad} usuario(s) nuevo(s))",
+                    null, new { IdMenuOpcion = opcion.Id, opcion.Codigo, CantidadAfectados = cantidad });
+
+                return Json(new { success = true, message = string.Format(R("Menu_HabilitarTodosOkFmt"), cantidad) });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = R("Menu_ErrorHabilitarTodos") + ": " + ex.Message });
+            }
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Eliminar(int id)

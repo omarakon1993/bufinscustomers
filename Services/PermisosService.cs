@@ -443,5 +443,34 @@ namespace bufinscustomers.Services
                 }
             }
         }
+
+        /// <summary>
+        /// Otorga una opción de menú a TODOS los usuarios elegibles que aún no la tengan, sin tocar el
+        /// resto de sus permisos — a diferencia de GuardarOpcionesUsuario, que reemplaza el set completo
+        /// de un usuario. Excluye Super Admin (Admin=2), que ya tiene acceso total sin necesitar fila
+        /// en UsuarioMenuPermisos; si la opción es SoloAdminEmpresa, también excluye a Usuario Normal
+        /// (Admin=0) — misma regla de elegibilidad que UsuarioController.AsignarPermisosPorDefecto y
+        /// PermisosController.FiltrarOpcionesParaAsignacion. Devuelve cuántos usuarios recibieron el permiso.
+        /// </summary>
+        public int HabilitarOpcionParaTodosLosUsuarios(int idMenuOpcion, bool soloAdminEmpresa, int usuarioAsigno)
+        {
+            using (SqlConnection cn = new SqlConnection(CadenaConexion))
+            {
+                var cmd = new SqlCommand(@"
+                    INSERT INTO UsuarioMenuPermisos (IdUsuario, IdMenuOpcion, UsuarioAsigno)
+                    SELECT u.Id, @IdMenuOpcion, @UsuarioAsigno
+                    FROM Usuarios u
+                    WHERE (u.Admin IS NULL OR u.Admin <> 2)
+                      AND (@SoloAdminEmpresa = 0 OR u.Admin = 1)
+                      AND NOT EXISTS (
+                          SELECT 1 FROM UsuarioMenuPermisos p
+                          WHERE p.IdUsuario = u.Id AND p.IdMenuOpcion = @IdMenuOpcion)", cn);
+                cmd.Parameters.AddWithValue("@IdMenuOpcion", idMenuOpcion);
+                cmd.Parameters.AddWithValue("@UsuarioAsigno", usuarioAsigno);
+                cmd.Parameters.AddWithValue("@SoloAdminEmpresa", soloAdminEmpresa);
+                cn.Open();
+                return cmd.ExecuteNonQuery();
+            }
+        }
     }
 }

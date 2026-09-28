@@ -69,17 +69,17 @@
     .table-compact thead th { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; color: #fff; padding: 0.5rem 0.4rem; white-space: nowrap; border-bottom: 2px solid #dee2e6; background: var(--content-gradient); position: sticky; top: 0; z-index: 1; }
     .table-compact tbody td { font-size: 0.8rem; padding: 0.35rem 0.4rem; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .table-compact tbody tr:hover { background-color: #f0edff; }
-    .table-compact .col-handle    { width: 3%;  text-align: center; cursor: grab; color: #9ca3af; }
-    .table-compact .col-codigo    { width: 12%; }
-    .table-compact .col-nombre    { width: 11%; }
-    .table-compact .col-nombre-en { width: 11%; }
-    .table-compact .col-categoria { width: 10%; }
-    .table-compact .col-grupo     { width: 10%; }
-    .table-compact .col-ruta      { width: 12%; }
-    .table-compact .col-orden     { width: 4%;  text-align: center; }
-    .table-compact .col-acceso    { width: 9%;  text-align: center; }
-    .table-compact .col-destacado { width: 6%;  text-align: center; }
-    .table-compact .col-acciones  { width: 12%; text-align: center; white-space: nowrap; }
+    .table-compact .col-handle    { width: 2%;  text-align: center; cursor: grab; color: #9ca3af; }
+    .table-compact .col-codigo    { width: 9%; }
+    .table-compact .col-nombre    { width: 18%; white-space: normal; line-height: 1.3; }
+    .table-compact .col-nombre-en { width: 17%; white-space: normal; line-height: 1.3; }
+    .table-compact .col-categoria { width: 8%; }
+    .table-compact .col-grupo     { width: 8%; }
+    .table-compact .col-ruta      { width: 10%; }
+    .table-compact .col-orden     { width: 3%;  text-align: center; }
+    .table-compact .col-acceso    { width: 8%;  text-align: center; }
+    .table-compact .col-destacado { width: 4%;  text-align: center; }
+    .table-compact .col-acciones  { width: 13%; text-align: center; white-space: nowrap; }
     .badge-super      { background-color: #583AFF; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
     .badge-normal     { background-color: #6c757d; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
     .badge-admin-emp  { background-color: #f59e0b; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
@@ -188,6 +188,14 @@
                                             onclick="cargarEditar(@opcion.Id)">
                                         <i class="fas fa-edit"></i>
                                     </button>
+                                    @if (!opcion.SoloSuperAdmin)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-success" title="@Resources.Strings.Menu_TitleHabilitarTodos"
+                                                data-toggle="modal" data-target="#habilitarTodosModal"
+                                                data-id="@opcion.Id" data-nombre="@Html.AttributeEncode(opcion.Nombre)">
+                                            <i class="fas fa-users"></i>
+                                        </button>
+                                    }
                                     <button type="button" class="btn btn-sm btn-danger" title="@Resources.Strings.Menu_TitleEliminar"
                                             onclick="confirmarEliminar(@opcion.Id)">
                                         <i class="fas fa-trash-alt"></i>
@@ -460,6 +468,33 @@
     <input type="hidden" name="id" id="elimId" />
 </form>
 
+<!-- ═══════════════════ MODAL HABILITAR PARA TODOS LOS USUARIOS ═══════════════════ -->
+<div class="modal fade modal-confirm" id="habilitarTodosModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-users mr-2"></i>@Resources.Strings.Menu_ModalHabilitarTodosTitle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">
+                    <i class="fas fa-question-circle text-warning mr-2"></i>
+                    @Resources.Strings.Menu_ModalHabilitarTodosBody <strong id="habilitarTodosNombre"></strong>?
+                </p>
+                <p class="text-muted small mt-2 mb-0">@Resources.Strings.Menu_ModalHabilitarTodosNote</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
+                </button>
+                <button type="button" class="btn btn-success btn-sm" id="btnConfirmarHabilitarTodos">
+                    <i class="fas fa-check mr-1"></i>@Resources.Strings.Menu_BtnHabilitarTodos
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     var _opciones   = @Html.Raw(opcionesJson);
     var _grupos     = @Html.Raw(gruposJson);
@@ -570,6 +605,14 @@
             }
         });
     }
+
+    // ===== Habilitar para todos los usuarios =====
+    // Los bindings de jQuery se registran dentro de DOMContentLoaded (más abajo), no aquí arriba: el
+    // bundle de jQuery/Bootstrap se renderiza en _Layout DESPUÉS del cuerpo de esta vista, así que un
+    // $(...) a nivel superior del script (ejecutado de inmediato al parsear la etiqueta) falla con
+    // jQuery aún sin cargar. Las funciones (como confirmarEliminar) no tienen este problema porque su
+    // cuerpo no corre hasta que se invocan (ya con la página totalmente cargada).
+    var _habilitarTodosId = null;
 
     function actualizarEstiloDestacado(labelId, activo) {
         var lbl = document.getElementById(labelId);
@@ -713,6 +756,37 @@
                     actualizarEstiloDestacado(lbl.id || lblId, chk.checked);
                 });
             }
+        });
+
+        // Habilitar para todos los usuarios (ver declaración de _habilitarTodosId más arriba)
+        $('#habilitarTodosModal').on('show.bs.modal', function (event) {
+            var btn = event.relatedTarget;
+            _habilitarTodosId = parseInt(btn.dataset.id, 10);
+            document.getElementById('habilitarTodosNombre').textContent = '"' + btn.dataset.nombre + '"';
+        });
+        $('#btnConfirmarHabilitarTodos').on('click', function () {
+            if (!_habilitarTodosId) return;
+            var $btn = $(this).prop('disabled', true);
+            $.post('@Url.Action("HabilitarParaTodos", "MenuOpciones")', {
+                id: _habilitarTodosId,
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val()
+            }, function (response) {
+                $('#habilitarTodosModal').modal('hide');
+                $btn.prop('disabled', false);
+                Swal.fire({
+                    toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end',
+                    icon: response.success ? 'success' : 'error', title: response.message,
+                    showConfirmButton: false, timer: 3000, timerProgressBar: true
+                });
+            }).fail(function () {
+                $('#habilitarTodosModal').modal('hide');
+                $btn.prop('disabled', false);
+                Swal.fire({
+                    toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end',
+                    icon: 'error', title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_ErrorHabilitarTodos))',
+                    showConfirmButton: false, timer: 3000, timerProgressBar: true
+                });
+            });
         });
     });
 </script>
