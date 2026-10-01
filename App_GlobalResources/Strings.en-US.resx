@@ -860,7 +860,6 @@
   <data name="Usr_PlaceholderCorreo" xml:space="preserve"><value>E.g.: jgomez@company.com</value></data>
   <data name="Usr_HintCorreo" xml:space="preserve"><value>Used for notifications and account recovery</value></data>
   <data name="Usr_HintEmpresa" xml:space="preserve"><value>Company this user belongs to</value></data>
-  <data name="Usr_HintLimiteConsultasIA" xml:space="preserve"><value>0 = no access · maximum 10 queries per day</value></data>
 
   <!-- COMMON ADDITIONAL -->
   <data name="Common_ModalDeleteTitle" xml:space="preserve"><value>Confirm deletion</value></data>
@@ -1727,9 +1726,7 @@
   <data name="Notif_ModoDefensivoMsg" xml:space="preserve"><value>A spike of failed sign-in attempts was detected system-wide. The per-IP limit was automatically tightened. Review the security audit log.</value></data>
   <!-- IA IMPROVEMENTS -->
   <data name="IA_BtnExportarExcel" xml:space="preserve"><value>Export Excel with AI</value></data>
-  <data name="IA_LimiteConsultas" xml:space="preserve"><value>Daily limit reached</value></data>
-  <data name="IA_LimiteConsultasMensaje" xml:space="preserve"><value>You have reached the daily AI query limit configured by the administrator.</value></data>
-  <data name="IA_SinAccesoMensaje" xml:space="preserve"><value>You don't have access to AI Analysis. Ask an administrator to assign you a daily query limit.</value></data>
+  <data name="IA_SinAccesoMensaje" xml:space="preserve"><value>You don't have access to AI Analysis. Ask an administrator to enable your access from AI Settings.</value></data>
   <data name="IA_HistorialGrandeMensaje" xml:space="preserve"><value>The conversation history is too large. Please start a new query.</value></data>
   <data name="IA_PresupuestoAgotadoMensaje" xml:space="preserve"><value>This company has reached its monthly AI usage budget. Try again next month or ask an administrator to raise the limit.</value></data>
   <data name="IA_PreguntasSugeridas" xml:space="preserve"><value>Suggestions</value></data>
@@ -1791,6 +1788,30 @@
   <data name="CfgIA_JS_ApiKeyVacia" xml:space="preserve"><value>First save a valid API Key in the configuration.</value></data>
   <data name="CfgIA_ModalDeleteBody" xml:space="preserve"><value>Delete parameter</value></data>
   <data name="CfgIA_NoItems" xml:space="preserve"><value>No parameters configured.</value></data>
+  <!-- AI SETTINGS — PER COMPANY -->
+  <data name="CfgIA_TabGeneral" xml:space="preserve"><value>General</value></data>
+  <data name="CfgIA_TabPorEmpresa" xml:space="preserve"><value>Per company</value></data>
+  <data name="CfgIA_Emp_SelLabel" xml:space="preserve"><value>Company</value></data>
+  <data name="CfgIA_Emp_SelPlaceholder" xml:space="preserve"><value>-- Select a company --</value></data>
+  <data name="CfgIA_Emp_SeleccionaEmpresaMsg" xml:space="preserve"><value>Select a company to view and edit its AI settings.</value></data>
+  <data name="CfgIA_Emp_ConsumoTitulo" xml:space="preserve"><value>Current month usage</value></data>
+  <data name="CfgIA_Emp_Ilimitado" xml:space="preserve"><value>Unlimited</value></data>
+  <data name="CfgIA_Emp_TokensUsados" xml:space="preserve"><value>{0} of {1} tokens this month ({2}%)</value></data>
+  <data name="CfgIA_Emp_TokensUsadosIlimitado" xml:space="preserve"><value>{0} tokens used this month</value></data>
+  <data name="CfgIA_Emp_PresupuestoTitulo" xml:space="preserve"><value>Monthly token budget</value></data>
+  <data name="CfgIA_Emp_PresupuestoPlaceholder" xml:space="preserve"><value>Use the global value ({0})</value></data>
+  <data name="CfgIA_Emp_PresupuestoHint" xml:space="preserve"><value>Empty = use the global value. 0 = unlimited for this company. Any other number = this company's own monthly cap.</value></data>
+  <data name="CfgIA_Emp_BtnGuardarPresupuesto" xml:space="preserve"><value>Save budget</value></data>
+  <data name="CfgIA_Emp_UsuariosTitulo" xml:space="preserve"><value>User access to AI Analysis</value></data>
+  <data name="CfgIA_Emp_UsuariosDesc" xml:space="preserve"><value>Control which users of this company can run AI queries. Actual spend is controlled by the budget above, not by a query count.</value></data>
+  <data name="CfgIA_Emp_SinUsuarios" xml:space="preserve"><value>This company has no users configured (besides Super Admins).</value></data>
+  <data name="CfgIA_Emp_ColUsuario" xml:space="preserve"><value>User</value></data>
+  <data name="CfgIA_Emp_ColAcceso" xml:space="preserve"><value>AI access</value></data>
+  <data name="CfgIA_Emp_AccesoPermitido" xml:space="preserve"><value>Allowed</value></data>
+  <data name="CfgIA_Emp_AccesoBloqueado" xml:space="preserve"><value>Blocked</value></data>
+  <data name="CfgIA_Emp_MsgGuardadoOk" xml:space="preserve"><value>Change saved successfully.</value></data>
+  <data name="CfgIA_Emp_MsgErrorGuardar" xml:space="preserve"><value>Could not save the change.</value></data>
+  <data name="CfgIA_Emp_MsgErrorCargar" xml:space="preserve"><value>Could not load this company's settings.</value></data>
 
   <!-- PYG MANAGEMENT REPORT (INCOME STATEMENT) -->
   <data name="PYG_PageTitle" xml:space="preserve"><value>Income Statement Report P&amp;L</value></data>

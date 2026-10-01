@@ -79,8 +79,7 @@ namespace bufinscustomers.Controllers
                     SELECT u.Id, u.Usuario, u.Clave, u.Nombre, u.Apellidos, u.Correo,
                            u.Telefono, u.Admin, u.IdEmpresa,
                            CASE WHEN EXISTS (SELECT 1 FROM UsuarioImagenes WHERE UsuarioId = u.Id)
-                                THEN 1 ELSE NULL END AS ImagenBase64,
-                           ISNULL(u.LimiteConsultasIA, 0) AS LimiteConsultasIA
+                                THEN 1 ELSE NULL END AS ImagenBase64
                     FROM Usuarios u
                     WHERE u.IdEmpresa IN (" + string.Join(",", nombresParametros) + @")
                       AND (u.Admin IS NULL OR u.Admin <> 2)
@@ -104,10 +103,7 @@ namespace bufinscustomers.Controllers
                             IdEmpresa = reader["IdEmpresa"] != DBNull.Value ? (int?)reader["IdEmpresa"] : null,
                             Imagen    = reader["ImagenBase64"] != DBNull.Value
                                             ? new ImagenUsuario { UsuarioId = Convert.ToInt32(reader["Id"]) }
-                                            : null,
-                            LimiteConsultasIA = reader["LimiteConsultasIA"] != DBNull.Value
-                                            ? (int?)Convert.ToInt32(reader["LimiteConsultasIA"])
-                                            : 0
+                                            : null
                         });
                     }
                 }
@@ -153,17 +149,6 @@ namespace bufinscustomers.Controllers
                             catch (IndexOutOfRangeException)
                             {
                                 usuario.Imagen = null;
-                            }
-
-                            try
-                            {
-                                reader.GetOrdinal("LimiteConsultasIA");
-                                usuario.LimiteConsultasIA = reader["LimiteConsultasIA"] != DBNull.Value
-                                    ? (int?)Convert.ToInt32(reader["LimiteConsultasIA"]) : 0;
-                            }
-                            catch (IndexOutOfRangeException)
-                            {
-                                usuario.LimiteConsultasIA = 0;
                             }
 
                             usuarios.Add(usuario);
@@ -313,20 +298,6 @@ namespace bufinscustomers.Controllers
                             "/Usuario/Usuarios");
                     }
 
-                    // Actualizar límite de consultas IA (solo admins pueden setearlo, max 10)
-                    if (oUsuario.LimiteConsultasIA.HasValue &&
-                        (UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.EsAdminEmpresa()))
-                    {
-                        int limite = Math.Min(10, Math.Max(0, oUsuario.LimiteConsultasIA.Value));
-                        using (SqlCommand cmdLimite = new SqlCommand(
-                            "UPDATE Usuarios SET LimiteConsultasIA = @Limite WHERE Id = @Id", connection))
-                        {
-                            cmdLimite.Parameters.AddWithValue("@Limite", limite);
-                            cmdLimite.Parameters.AddWithValue("@Id", oUsuario.Id);
-                            cmdLimite.ExecuteNonQuery();
-                        }
-                    }
-
                     // Procesar imagen si se cargó una
                     if (ImagenUsuario != null && ImagenUsuario.ContentLength > 0)
                     {
@@ -457,20 +428,6 @@ namespace bufinscustomers.Controllers
                         var idResult = cmdGetId.ExecuteScalar();
                         if (idResult != null && idResult != DBNull.Value)
                             usuarioId = Convert.ToInt32(idResult);
-                    }
-
-                    // Asignar límite de consultas IA al usuario recién creado
-                    if (usuarioId > 0 && oUsuario.LimiteConsultasIA.HasValue &&
-                        (UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.EsAdminEmpresa()))
-                    {
-                        int limite = Math.Min(10, Math.Max(0, oUsuario.LimiteConsultasIA.Value));
-                        using (SqlCommand cmdLimite = new SqlCommand(
-                            "UPDATE Usuarios SET LimiteConsultasIA = @Limite WHERE Id = @Id", cn))
-                        {
-                            cmdLimite.Parameters.AddWithValue("@Limite", limite);
-                            cmdLimite.Parameters.AddWithValue("@Id", usuarioId);
-                            cmdLimite.ExecuteNonQuery();
-                        }
                     }
                 }
             }

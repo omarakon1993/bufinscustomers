@@ -10,6 +10,8 @@
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="~/Assets/css/configuracion-admin.css" rel="stylesheet" />
+    <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+    <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
     <style>
         /* ── Panel de configuración ── */
         .cfg-ia-grid {
@@ -136,6 +138,38 @@
         .cfg-nueva-section {
             padding: 0 20px 20px;
         }
+        /* ── Tabs General / Por Empresa — segmented control con "thumb" deslizante (mismo lenguaje visual que AuditoriaHub) ── */
+        .cfgia-seg {
+            position: relative; display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
+            padding: 6px; background: #eef0f4; border: 1px solid #e3e6eb; border-radius: 999px;
+            max-width: 360px; margin: 18px 20px 0;
+        }
+        .cfgia-seg-thumb {
+            position: absolute; left: 0; top: 0; width: 0; height: 0; border-radius: 999px;
+            background: var(--content-gradient); box-shadow: 0 8px 20px -8px rgba(59,130,246,.6);
+            transform: translate(0, 0);
+            transition: transform .42s cubic-bezier(.32,.72,0,1), width .42s cubic-bezier(.32,.72,0,1), height .42s cubic-bezier(.32,.72,0,1);
+            will-change: transform, width, height; pointer-events: none; z-index: 0;
+        }
+        .cfgia-seg-thumb.no-anim { transition: none; }
+        .cfgia-seg-btn {
+            position: relative; z-index: 1; border: 0; background: transparent; color: #5b6472;
+            font-size: .85rem; font-weight: 600; padding: .6rem .6rem; border-radius: 999px; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+            white-space: nowrap; transition: color .34s ease;
+        }
+        .cfgia-seg-btn:hover:not(.is-active) { color: #3b3f66; }
+        .cfgia-seg-btn.is-active { color: #fff; }
+        @@media (prefers-reduced-motion: reduce) { .cfgia-seg-thumb { transition: none; } }
+
+        .cfg-ia-emp-panel { padding:20px; }
+        .cfg-ia-emp-barra-track { background:#ede9fe; border-radius:999px; height:10px; overflow:hidden; }
+        .cfg-ia-emp-barra-fill { height:100%; background:var(--content-gradient); width:0%; transition:width .4s ease; }
+        .cfg-ia-emp-barra-fill.agotado { background:linear-gradient(135deg,#ef4444,#b91c1c); }
+        .cfg-ia-emp-acceso-btn { min-width:120px; border-radius: 999px !important; font-weight:600; }
+        .cfg-ia-emp-presupuesto-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        .cfg-ia-emp-presupuesto-row input[type="number"] { max-width:260px; }
+        #empUsuariosBody td { vertical-align: middle; }
     </style>
 </head>
 <body>
@@ -148,6 +182,19 @@
         </div>
         <small style="font-weight:400;opacity:.85;color:#fff;">@Resources.Strings.CfgIA_HeaderDesc</small>
     </div>
+
+    <!-- ── Tabs ── -->
+    <div class="cfgia-seg" id="cfgiaTabs" role="tablist">
+        <span class="cfgia-seg-thumb no-anim" aria-hidden="true"></span>
+        <button type="button" class="cfgia-seg-btn is-active" data-tab="general">
+            <i class="fas fa-sliders-h"></i>@Resources.Strings.CfgIA_TabGeneral
+        </button>
+        <button type="button" class="cfgia-seg-btn" data-tab="empresa">
+            <i class="fas fa-building"></i>@Resources.Strings.CfgIA_TabPorEmpresa
+        </button>
+    </div>
+
+    <div id="panelGeneral">
 
     <!-- ── Grid de tarjetas ── -->
     @if (!Model.Any())
@@ -220,6 +267,92 @@
                 onclick="abrirNuevo()">
             <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.CfgIA_BtnCrear
         </button>
+    </div>
+
+    </div><!-- /panelGeneral -->
+
+    <!-- ══════════════════════════════════════
+         TAB: POR EMPRESA
+    ══════════════════════════════════════ -->
+    <div id="panelPorEmpresa" class="cfg-ia-emp-panel" style="display:none;">
+
+        <div class="filter-card" style="margin-bottom:18px;">
+            <div class="form-group" style="max-width:420px;margin-bottom:0;">
+                <label class="form-label" style="font-weight:600;">
+                    <i class="fas fa-building mr-1" style="color:#583AFF;"></i>@Resources.Strings.CfgIA_Emp_SelLabel
+                </label>
+                <select id="selEmpresaIA" class="form-control select2" style="width:100%;">
+                    <option value="">@Resources.Strings.CfgIA_Emp_SelPlaceholder</option>
+                    @foreach (var empresa in ViewBag.Empresas)
+                    {
+                        <option value="@empresa.Id">@empresa.Nombre</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div id="empresaIAVacio" class="no-data-message">
+            <i class="fas fa-building"></i>
+            <h4>@Resources.Strings.CfgIA_Emp_SeleccionaEmpresaMsg</h4>
+        </div>
+
+        <div id="empresaIACargando" style="display:none;text-align:center;padding:30px;color:#6b7280;">
+            <i class="fas fa-circle-notch fa-spin fa-2x"></i>
+        </div>
+
+        <div id="empresaIAContenido" style="display:none;">
+
+            <div class="cfg-ia-card" style="margin-bottom:18px;">
+                <div class="cfg-ia-card-header">
+                    <div class="cfg-ia-card-icon"><i class="fas fa-chart-pie"></i></div>
+                    <div class="cfg-ia-card-title">@Resources.Strings.CfgIA_Emp_ConsumoTitulo</div>
+                </div>
+                <div class="cfg-ia-card-body">
+                    <div id="empConsumoTexto" style="font-size:.92rem;font-weight:600;color:#374151;margin-bottom:8px;"></div>
+                    <div class="cfg-ia-emp-barra-track">
+                        <div id="empConsumoBarra" class="cfg-ia-emp-barra-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cfg-ia-card" style="margin-bottom:18px;">
+                <div class="cfg-ia-card-header">
+                    <div class="cfg-ia-card-icon"><i class="fas fa-coins"></i></div>
+                    <div class="cfg-ia-card-title">@Resources.Strings.CfgIA_Emp_PresupuestoTitulo</div>
+                </div>
+                <div class="cfg-ia-card-body">
+                    <div class="cfg-ia-emp-presupuesto-row">
+                        <input type="number" min="0" step="1000" class="form-control"
+                               id="empPresupuestoInput" />
+                        <button type="button" class="btn-modern-gradient" onclick="guardarPresupuestoEmpresaIA()">
+                            <i class="fas fa-save mr-1"></i>@Resources.Strings.CfgIA_Emp_BtnGuardarPresupuesto
+                        </button>
+                    </div>
+                    <small class="text-muted d-block mt-2">@Resources.Strings.CfgIA_Emp_PresupuestoHint</small>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <h5><i class="fas fa-users mr-2"></i>@Resources.Strings.CfgIA_Emp_UsuariosTitulo</h5>
+                </div>
+                <div style="padding:10px 16px 0;">
+                    <small class="text-muted">@Resources.Strings.CfgIA_Emp_UsuariosDesc</small>
+                </div>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>@Resources.Strings.CfgIA_Emp_ColUsuario</th>
+                                <th>@Resources.Strings.CfgIA_Emp_ColAcceso</th>
+                            </tr>
+                        </thead>
+                        <tbody id="empUsuariosBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
     </div>
 
     <!-- ══════════════════════════════════════
@@ -411,6 +544,7 @@
     }
 
     @section scripts {
+    <script src="~/Assets/js/select2/select2.min.js"></script>
     <script>
     var _cfgMsg = {
         cargando:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos))',
@@ -685,6 +819,194 @@
     document.getElementById('editClave').addEventListener('input', function() {
         if (_modoCrear) configurarWrap(this.value.trim(), '');
     });
+
+    // ══════════════════════════════════════
+    // TAB: POR EMPRESA
+    // ══════════════════════════════════════
+    var _empIAMsg = {
+        ilimitado:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_Ilimitado))',
+        tokensUsados:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_TokensUsados))',
+        tokensUsadosIlim: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_TokensUsadosIlimitado))',
+        presupuestoPlaceholder: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_PresupuestoPlaceholder))',
+        sinUsuarios:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_SinUsuarios))',
+        accesoPermitido:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_AccesoPermitido))',
+        accesoBloqueado:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_AccesoBloqueado))',
+        guardadoOk:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_MsgGuardadoOk))',
+        errorGuardar:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_MsgErrorGuardar))',
+        errorCargar:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_MsgErrorCargar))',
+        urlResumen:       '@Url.Action("ObtenerResumenEmpresaIA", "ConfiguracionGlobalIA")',
+        urlGuardarPresupuesto: '@Url.Action("GuardarPresupuestoEmpresaIA", "ConfiguracionGlobalIA")',
+        urlGuardarAcceso: '@Url.Action("GuardarAccesoUsuarioIA", "ConfiguracionGlobalIA")'
+    };
+    var _empIAActual = null;
+
+    // ── Segmented tabs General / Por Empresa, con "thumb" deslizante (mismo patrón que AuditoriaHub) ──
+    (function () {
+        var $seg   = $('#cfgiaTabs');
+        var $tabs  = $seg.find('.cfgia-seg-btn');
+        var $thumb = $seg.find('.cfgia-seg-thumb');
+
+        function moverThumb(btn, sinAnim) {
+            if (!btn) return;
+            var cont = $seg[0];
+            var cr = cont.getBoundingClientRect();
+            var br = btn.getBoundingClientRect();
+            var x = br.left - cr.left - cont.clientLeft;
+            var y = br.top - cr.top - cont.clientTop;
+            if (sinAnim) $thumb.addClass('no-anim');
+            $thumb.css({ width: br.width + 'px', height: br.height + 'px', transform: 'translate(' + x + 'px,' + y + 'px)' });
+            if (sinAnim) { void $thumb[0].offsetWidth; $thumb.removeClass('no-anim'); }
+        }
+
+        function activar($btn) {
+            var tab = $btn.data('tab');
+            $tabs.removeClass('is-active');
+            $btn.addClass('is-active');
+            moverThumb($btn[0]);
+            document.getElementById('panelGeneral').style.display = (tab === 'general') ? '' : 'none';
+            document.getElementById('panelPorEmpresa').style.display = (tab === 'empresa') ? '' : 'none';
+        }
+
+        $tabs.on('click', function () { activar($(this)); });
+        $(window).on('resize', function () {
+            var a = $tabs.filter('.is-active')[0];
+            if (a) moverThumb(a, true);
+        });
+
+        moverThumb($tabs.filter('.is-active')[0], true);
+    })();
+
+    $('#selEmpresaIA').select2({ width: '100%', allowClear: false });
+    $('#selEmpresaIA').on('change', function () {
+        var idEmpresa = $(this).val();
+        if (!idEmpresa) {
+            document.getElementById('empresaIAVacio').style.display = '';
+            document.getElementById('empresaIAContenido').style.display = 'none';
+            return;
+        }
+        cargarResumenEmpresaIA(idEmpresa);
+    });
+
+    function cargarResumenEmpresaIA(idEmpresa) {
+        document.getElementById('empresaIAVacio').style.display = 'none';
+        document.getElementById('empresaIAContenido').style.display = 'none';
+        document.getElementById('empresaIACargando').style.display = '';
+
+        $.ajax({
+            url: _empIAMsg.urlResumen,
+            type: 'GET',
+            data: { idEmpresa: idEmpresa },
+            success: function (r) {
+                document.getElementById('empresaIACargando').style.display = 'none';
+                if (!r || !r.ok) {
+                    Swal.fire({ icon:'error', title:'Error', text:(r && r.mensaje) || _empIAMsg.errorCargar,
+                        toast:true, position:'top-end', showConfirmButton:false, timer:3500 });
+                    return;
+                }
+                _empIAActual = r.resumen;
+                pintarResumenEmpresaIA(r.resumen);
+                document.getElementById('empresaIAContenido').style.display = '';
+            },
+            error: function () {
+                document.getElementById('empresaIACargando').style.display = 'none';
+                Swal.fire({ icon:'error', title:'Error', text: _empIAMsg.errorCargar,
+                    toast:true, position:'top-end', showConfirmButton:false, timer:3500 });
+            }
+        });
+    }
+
+    function pintarResumenEmpresaIA(resumen) {
+        var textoConsumo = resumen.Ilimitado
+            ? _empIAMsg.tokensUsadosIlim.replace('{0}', resumen.ConsumidoMes.toLocaleString())
+            : _empIAMsg.tokensUsados
+                .replace('{0}', resumen.ConsumidoMes.toLocaleString())
+                .replace('{1}', resumen.PresupuestoEfectivo.toLocaleString())
+                .replace('{2}', resumen.PorcentajeConsumido);
+        document.getElementById('empConsumoTexto').textContent = textoConsumo;
+
+        var barra = document.getElementById('empConsumoBarra');
+        barra.style.width = resumen.Ilimitado ? '0%' : Math.min(100, resumen.PorcentajeConsumido) + '%';
+        barra.classList.toggle('agotado', !resumen.Ilimitado && resumen.PorcentajeConsumido >= 100);
+
+        var inputPresupuesto = document.getElementById('empPresupuestoInput');
+        inputPresupuesto.value = (resumen.PresupuestoOverride === null || resumen.PresupuestoOverride === undefined)
+            ? '' : resumen.PresupuestoOverride;
+        inputPresupuesto.placeholder = _empIAMsg.presupuestoPlaceholder
+            .replace('{0}', resumen.PresupuestoGlobalDefault > 0
+                ? resumen.PresupuestoGlobalDefault.toLocaleString()
+                : _empIAMsg.ilimitado);
+
+        var tbody = document.getElementById('empUsuariosBody');
+        tbody.innerHTML = '';
+        if (!resumen.Usuarios || resumen.Usuarios.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="2" class="text-muted text-center">' + _empIAMsg.sinUsuarios + '</td></tr>';
+            return;
+        }
+        resumen.Usuarios.forEach(function (u) {
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td>' + u.NombreCompleto + '<br><small class="text-muted">' + u.Correo + '</small></td>' +
+                '<td><button type="button" class="btn btn-sm cfg-ia-emp-acceso-btn ' +
+                    (u.AccesoEfectivo ? 'btn-success' : 'btn-danger') + '" data-id="' + u.Id + '" data-acceso="' + (u.AccesoEfectivo ? '1' : '0') + '">' +
+                    '<i class="fas ' + (u.AccesoEfectivo ? 'fa-check-circle' : 'fa-ban') + ' mr-1"></i>' +
+                    (u.AccesoEfectivo ? _empIAMsg.accesoPermitido : _empIAMsg.accesoBloqueado) +
+                '</button></td>';
+            tbody.appendChild(tr);
+        });
+
+        $(tbody).off('click', 'button').on('click', 'button', function () {
+            var btn = $(this);
+            var idUsuario = btn.data('id');
+            var nuevoAcceso = btn.data('acceso') == '1' ? false : true;
+            guardarAccesoUsuarioIA(idUsuario, nuevoAcceso, btn);
+        });
+    }
+
+    function guardarPresupuestoEmpresaIA() {
+        if (!_empIAActual) return;
+        var valor = document.getElementById('empPresupuestoInput').value.trim();
+        var token = $('input[name="__RequestVerificationToken"]').val();
+
+        $.ajax({
+            url: _empIAMsg.urlGuardarPresupuesto,
+            type: 'POST',
+            data: { idEmpresa: _empIAActual.IdEmpresa, presupuesto: valor, __RequestVerificationToken: token },
+            success: function (r) {
+                Swal.fire({ toast:true, position:'top-end', icon: (r && r.ok) ? 'success' : 'error',
+                    title: (r && r.mensaje) || _empIAMsg.errorGuardar, showConfirmButton:false, timer:3000 });
+                if (r && r.ok) cargarResumenEmpresaIA(_empIAActual.IdEmpresa);
+            },
+            error: function () {
+                Swal.fire({ toast:true, position:'top-end', icon:'error', title:_empIAMsg.errorGuardar, showConfirmButton:false, timer:3000 });
+            }
+        });
+    }
+
+    function guardarAccesoUsuarioIA(idUsuario, nuevoAcceso, btn) {
+        var token = $('input[name="__RequestVerificationToken"]').val();
+        btn.prop('disabled', true);
+
+        $.ajax({
+            url: _empIAMsg.urlGuardarAcceso,
+            type: 'POST',
+            data: { idUsuario: idUsuario, acceso: nuevoAcceso, __RequestVerificationToken: token },
+            success: function (r) {
+                btn.prop('disabled', false);
+                if (r && r.ok) {
+                    btn.data('acceso', nuevoAcceso ? '1' : '0');
+                    btn.removeClass('btn-success btn-danger').addClass(nuevoAcceso ? 'btn-success' : 'btn-danger');
+                    btn.html('<i class="fas ' + (nuevoAcceso ? 'fa-check-circle' : 'fa-ban') + ' mr-1"></i>' +
+                        (nuevoAcceso ? _empIAMsg.accesoPermitido : _empIAMsg.accesoBloqueado));
+                } else {
+                    Swal.fire({ toast:true, position:'top-end', icon:'error', title:(r && r.mensaje) || _empIAMsg.errorGuardar, showConfirmButton:false, timer:3000 });
+                }
+            },
+            error: function () {
+                btn.prop('disabled', false);
+                Swal.fire({ toast:true, position:'top-end', icon:'error', title:_empIAMsg.errorGuardar, showConfirmButton:false, timer:3000 });
+            }
+        });
+    }
     </script>
     }
 

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
@@ -180,16 +179,18 @@ namespace bufinscustomers.Controllers
                 if (tablasAsignadas == null || tablasAsignadas.Count == 0)
                     return Json(new IAConsultaResponse { Exitoso = false, Error = R("Home_IA_SinConfigurar") });
 
-                // Cuota diaria por usuario (Super Admin exento) — misma regla que InformeTablasDatosController.ConsultarConIA
-                if (!esAdmin)
+                // Acceso del usuario + presupuesto mensual de tokens de la empresa — control único
+                // centralizado en IAUsoService (Configuración IA → Por Empresa). Super Admin exento.
+                var iaUso = new IAUsoService();
+                var acceso = iaUso.EvaluarAcceso(usuario, esAdmin, idEmpresaObjetivo);
+                if (acceso.DebeAvisarAgotado || acceso.DebeAvisarCercaDelLimite)
+                    AvisarPresupuestoIA(iaUso, idEmpresaObjetivo, acceso);
+                if (!acceso.Permitido)
                 {
-                    int limiteDiario = ObtenerLimiteConsultasIA(usuario.Id);
-                    if (limiteDiario <= 0)
-                        return Json(new IAConsultaResponse { Exitoso = false, Error = R("IA_LimiteConsultasMensaje") });
-
-                    int consultasHoy = new AuditoriaAnalisisIAService().ContarConsultasHoy(usuario.Id);
-                    if (consultasHoy >= limiteDiario)
-                        return Json(new IAConsultaResponse { Exitoso = false, Error = R("IA_LimiteConsultasMensaje") });
+                    string errorAcceso = acceso.CodigoError == "PRESUPUESTO_AGOTADO"
+                        ? R("IA_PresupuestoAgotadoMensaje")
+                        : R("IA_SinAccesoMensaje");
+                    return Json(new IAConsultaResponse { Exitoso = false, Error = errorAcceso });
                 }
 
                 var tablasService = new InformeTablasDatosService();
@@ -292,20 +293,16 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        private int ObtenerLimiteConsultasIA(int idUsuario)
+        /// <summary>Resuelve en español/inglés (R) el aviso de presupuesto que decidió
+        /// IAUsoService.EvaluarAcceso y lo reparte a los Super Admin.</summary>
+        private void AvisarPresupuestoIA(IAUsoService iaUso, int idEmpresa, IAUsoService.ResultadoAcceso acceso)
         {
-            try
-            {
-                using (var cn = new SqlConnection(CadenaConexion))
-                {
-                    var cmd = new SqlCommand("SELECT LimiteConsultasIA FROM Usuarios WHERE Id = @Id", cn);
-                    cmd.Parameters.AddWithValue("@Id", idUsuario);
-                    cn.Open();
-                    var result = cmd.ExecuteScalar();
-                    return result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
-                }
-            }
-            catch { return 0; }
+            bool agotado = acceso.DebeAvisarAgotado;
+            string nombreEmpresa = new EmpresaService().ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? ("#" + idEmpresa);
+            string titulo = R(agotado ? "Notif_IAPresupuestoAgotadoTitulo" : "Notif_IAPresupuestoAvisoTitulo");
+            string msg = string.Format(R(agotado ? "Notif_IAPresupuestoAgotadoMsg" : "Notif_IAPresupuestoAvisoMsg"),
+                nombreEmpresa, acceso.ConsumidoMes.ToString("N0"), acceso.PresupuestoEfectivo.ToString("N0"), acceso.PorcentajeConsumido);
+            iaUso.EnviarAvisoPresupuestoATodosSuperAdmin(titulo, msg, agotado);
         }
 
         public ActionResult CerrarSesion()

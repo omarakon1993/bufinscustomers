@@ -170,37 +170,18 @@ namespace bufinscustomers.Controllers
                     historial = SanearHistorial(historial);
                 }
 
-                // Quota diaria por usuario (super admin queda exento).
-                // limiteDiario: valor de Usuarios.LimiteConsultasIA si está definido; si es NULL o
-                // hay error de BD se usa el default global (IA_LimiteConsultasDefault, 20 si tampoco
-                // está); un 0 explícito en la columna significa "sin acceso al Análisis IA".
-                if (!esAdmin)
+                // Acceso del usuario + presupuesto mensual de tokens de la empresa — control único
+                // centralizado en IAUsoService (Configuración IA → Por Empresa). Super Admin exento.
+                var iaUso = new IAUsoService();
+                var acceso = iaUso.EvaluarAcceso(usuario, esAdmin, idEmpresaConsulta.GetValueOrDefault());
+                if (acceso.DebeAvisarAgotado || acceso.DebeAvisarCercaDelLimite)
+                    AvisarPresupuestoIA(iaUso, idEmpresaConsulta.GetValueOrDefault(), acceso);
+                if (!acceso.Permitido)
                 {
-                    int limiteDiario = ObtenerLimiteConsultasIA(usuario.Id);
-                    if (limiteDiario <= 0)
-                        return Json(new IAConsultaResponse { Exitoso = false, Error = R("IA_SinAccesoMensaje") });
-
-                    int consultasHoy = new AuditoriaAnalisisIAService().ContarConsultasHoy(usuario.Id);
-                    if (consultasHoy >= limiteDiario)
-                        return Json(new IAConsultaResponse { Exitoso = false, Error = R("IA_LimiteConsultasMensaje") });
-                }
-
-                // Presupuesto mensual de tokens por empresa (S03). 0 = ilimitado. Al agotarse se
-                // bloquea a los usuarios no-Super y se avisa a los Super Admin; al 80 % solo se avisa.
-                long presupuestoTokens = ObtenerPresupuestoTokensMensual();
-                if (presupuestoTokens > 0 && filtros.IdEmpresa.HasValue && filtros.IdEmpresa.Value > 0)
-                {
-                    long consumidosMes = new AuditoriaAnalisisIAService().SumarTokensMes(filtros.IdEmpresa.Value);
-                    if (consumidosMes >= presupuestoTokens)
-                    {
-                        NotificarPresupuestoIA(filtros.IdEmpresa.Value, consumidosMes, presupuestoTokens, agotado: true);
-                        if (!esAdmin)
-                            return Json(new IAConsultaResponse { Exitoso = false, Error = R("IA_PresupuestoAgotadoMensaje") });
-                    }
-                    else if (consumidosMes >= (long)(presupuestoTokens * 0.8))
-                    {
-                        NotificarPresupuestoIA(filtros.IdEmpresa.Value, consumidosMes, presupuestoTokens, agotado: false);
-                    }
+                    string errorAcceso = acceso.CodigoError == "PRESUPUESTO_AGOTADO"
+                        ? R("IA_PresupuestoAgotadoMensaje")
+                        : R("IA_SinAccesoMensaje");
+                    return Json(new IAConsultaResponse { Exitoso = false, Error = errorAcceso });
                 }
 
                 // Leer configuración en paralelo
@@ -583,110 +564,16 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        /// <summary>
-        /// Límite diario de consultas IA del usuario. Si <c>Usuarios.LimiteConsultasIA</c> tiene un
-        /// valor se devuelve tal cual (incluido <c>0</c> = sin acceso). Si es <c>NULL</c> —o hay un
-        /// error de BD— se cae al default global <c>IA_LimiteConsultasDefault</c> de
-        /// <c>ConfiguracionSistema</c> (20 si tampoco está configurado).
-        /// </summary>
-        private int ObtenerLimiteConsultasIA(int idUsuario)
+        /// <summary>Resuelve en español/inglés (R) el aviso de presupuesto que decidió
+        /// IAUsoService.EvaluarAcceso y lo reparte a los Super Admin.</summary>
+        private void AvisarPresupuestoIA(IAUsoService iaUso, int idEmpresa, IAUsoService.ResultadoAcceso acceso)
         {
-            try
-            {
-                using (var cn = new System.Data.SqlClient.SqlConnection(CadenaConexion))
-                {
-                    var cmd = new System.Data.SqlClient.SqlCommand(
-                        "SELECT LimiteConsultasIA FROM Usuarios WHERE Id = @Id", cn);
-                    cmd.Parameters.AddWithValue("@Id", idUsuario);
-                    cn.Open();
-                    var result = cmd.ExecuteScalar();
-                    if (result != null && result != DBNull.Value)
-                        return Convert.ToInt32(result);   // valor explícito (incl. 0 = sin acceso)
-                }
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Error(ex, "InformeTablasDatosController.ObtenerLimiteConsultasIA");
-            }
-            return ObtenerLimiteConsultasIADefault();
-        }
-
-        /// <summary>Límite diario por defecto cuando el usuario no tiene uno propio configurado.</summary>
-        private int ObtenerLimiteConsultasIADefault()
-        {
-            try
-            {
-                var v = new ConfiguracionSistemaService().ObtenerValor("IA_LimiteConsultasDefault");
-                if (int.TryParse(v, out int d) && d >= 0)
-                    return d;
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Error(ex, "InformeTablasDatosController.ObtenerLimiteConsultasIADefault");
-            }
-            return 20;
-        }
-
-        /// <summary>Presupuesto mensual de tokens IA por empresa (clave <c>IA_TokensMensualesPorEmpresa</c>). 0 = ilimitado.</summary>
-        private long ObtenerPresupuestoTokensMensual()
-        {
-            try
-            {
-                var v = new ConfiguracionSistemaService().ObtenerValor("IA_TokensMensualesPorEmpresa");
-                if (long.TryParse(v, out long t) && t >= 0) return t;
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Error(ex, "InformeTablasDatosController.ObtenerPresupuestoTokensMensual");
-            }
-            return 0;
-        }
-
-        /// <summary>Avisa a los Super Admin del consumo de tokens de una empresa. Throttle: ≤ 1 aviso
-        /// por empresa y tipo (aviso/agotado) cada 24 h, vía <c>HttpRuntime.Cache</c>.</summary>
-        private void NotificarPresupuestoIA(int idEmpresa, long consumidos, long presupuesto, bool agotado)
-        {
-            string ck = "ia_presup_" + idEmpresa + "_" + (agotado ? "full" : "warn");
-            if (System.Web.HttpRuntime.Cache[ck] != null) return;
-            System.Web.HttpRuntime.Cache.Insert(ck, 1, null, DateTime.Now.AddHours(24),
-                System.Web.Caching.Cache.NoSlidingExpiration);
-
-            try
-            {
-                string nombreEmpresa = _service.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? ("#" + idEmpresa);
-                int pct = presupuesto > 0 ? (int)Math.Min(100, consumidos * 100 / presupuesto) : 0;
-                string titulo = R(agotado ? "Notif_IAPresupuestoAgotadoTitulo" : "Notif_IAPresupuestoAvisoTitulo");
-                string msg = string.Format(R(agotado ? "Notif_IAPresupuestoAgotadoMsg" : "Notif_IAPresupuestoAvisoMsg"),
-                    nombreEmpresa, consumidos.ToString("N0"), presupuesto.ToString("N0"), pct);
-
-                var notif = new NotificacionesService();
-                foreach (int idAdmin in ObtenerIdsSuperAdmin())
-                    notif.Crear(idAdmin, titulo, msg, agotado ? "error" : "warning", "/AuditoriaHub");
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Error(ex, "InformeTablasDatosController.NotificarPresupuestoIA");
-            }
-        }
-
-        private List<int> ObtenerIdsSuperAdmin()
-        {
-            var ids = new List<int>();
-            try
-            {
-                using (var cn = new System.Data.SqlClient.SqlConnection(CadenaConexion))
-                using (var cmd = new System.Data.SqlClient.SqlCommand("SELECT Id FROM Usuarios WHERE Admin = 2", cn))
-                {
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read()) ids.Add(Convert.ToInt32(r["Id"]));
-                }
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Error(ex, "InformeTablasDatosController.ObtenerIdsSuperAdmin");
-            }
-            return ids;
+            bool agotado = acceso.DebeAvisarAgotado;
+            string nombreEmpresa = _service.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? ("#" + idEmpresa);
+            string titulo = R(agotado ? "Notif_IAPresupuestoAgotadoTitulo" : "Notif_IAPresupuestoAvisoTitulo");
+            string msg = string.Format(R(agotado ? "Notif_IAPresupuestoAgotadoMsg" : "Notif_IAPresupuestoAvisoMsg"),
+                nombreEmpresa, acceso.ConsumidoMes.ToString("N0"), acceso.PresupuestoEfectivo.ToString("N0"), acceso.PorcentajeConsumido);
+            iaUso.EnviarAvisoPresupuestoATodosSuperAdmin(titulo, msg, agotado);
         }
 
         /// <summary>

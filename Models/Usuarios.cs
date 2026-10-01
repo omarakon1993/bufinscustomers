@@ -18,7 +18,8 @@ namespace bufinscustomers.Models
         public byte? Admin { get; set; }
         public int?   IdEmpresa  {get; set;}
         public ImagenUsuario Imagen { get; set; }
-        public int?  LimiteConsultasIA { get; set; }
+        /// <summary>Acceso a consultas de IA: null = permitido por defecto, false = sin acceso, true = acceso explícito.</summary>
+        public bool? AccesoConsultasIA { get; set; }
 
     }
 }

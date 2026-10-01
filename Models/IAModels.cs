@@ -40,4 +40,33 @@ namespace bufinscustomers.Models
         public decimal CostoEstimadoUSD { get; set; }
         public int IdAuditoria { get; set; }
     }
+
+    /// <summary>Resumen de uso/configuración de IA de una empresa para la pantalla Configuración IA → Por Empresa.</summary>
+    public class ResumenIAEmpresaViewModel
+    {
+        public int IdEmpresa { get; set; }
+        public string NombreEmpresa { get; set; }
+        /// <summary>Override explícito de esta empresa, o null si usa el valor global.</summary>
+        public long? PresupuestoOverride { get; set; }
+        public long PresupuestoGlobalDefault { get; set; }
+        /// <summary>Override ?? valor global — el que realmente se aplica.</summary>
+        public long PresupuestoEfectivo { get; set; }
+        public bool Ilimitado { get; set; }
+        public long ConsumidoMes { get; set; }
+        public int PorcentajeConsumido { get; set; }
+        public List<UsuarioAccesoIAViewModel> Usuarios { get; set; } = new List<UsuarioAccesoIAViewModel>();
+    }
+
+    /// <summary>Acceso de un usuario a las consultas de IA, visto desde Configuración IA → Por Empresa.</summary>
+    public class UsuarioAccesoIAViewModel
+    {
+        public int Id { get; set; }
+        public string NombreCompleto { get; set; }
+        public string Correo { get; set; }
+        public byte? Admin { get; set; }
+        /// <summary>Valor crudo de Usuarios.AccesoConsultasIA: null = usa el valor por defecto (permitido).</summary>
+        public bool? AccesoExplicito { get; set; }
+        /// <summary>AccesoExplicito ?? true — el que realmente se aplica.</summary>
+        public bool AccesoEfectivo { get; set; }
+    }
 }

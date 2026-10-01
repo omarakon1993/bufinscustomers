@@ -862,7 +862,6 @@
   <data name="Usr_PlaceholderCorreo" xml:space="preserve"><value>Ej: jgomez@empresa.com</value></data>
   <data name="Usr_HintCorreo" xml:space="preserve"><value>Se usará para notificaciones y recuperación de acceso</value></data>
   <data name="Usr_HintEmpresa" xml:space="preserve"><value>Empresa a la que pertenece el usuario</value></data>
-  <data name="Usr_HintLimiteConsultasIA" xml:space="preserve"><value>0 = sin acceso · máximo 10 consultas diarias</value></data>
 
   <!-- COMMON ADDITIONAL -->
   <data name="Common_ModalDeleteTitle" xml:space="preserve"><value>Confirmar eliminación</value></data>
@@ -1729,9 +1728,7 @@
   <data name="Notif_ModoDefensivoMsg" xml:space="preserve"><value>Se detectó un pico de intentos de inicio de sesión fallidos en todo el sistema. El límite por IP se endureció automáticamente. Revisa la auditoría de seguridad.</value></data>
   <!-- IA MEJORAS -->
   <data name="IA_BtnExportarExcel" xml:space="preserve"><value>Exportar Excel con IA</value></data>
-  <data name="IA_LimiteConsultas" xml:space="preserve"><value>Límite diario alcanzado</value></data>
-  <data name="IA_LimiteConsultasMensaje" xml:space="preserve"><value>Ha alcanzado el límite diario de consultas de inteligencia artificial configurado por el administrador.</value></data>
-  <data name="IA_SinAccesoMensaje" xml:space="preserve"><value>No tienes acceso al Análisis IA. Solicita al administrador que te asigne un límite diario de consultas.</value></data>
+  <data name="IA_SinAccesoMensaje" xml:space="preserve"><value>No tienes acceso al Análisis IA. Solicita al administrador que te habilite el acceso desde Configuración IA.</value></data>
   <data name="IA_HistorialGrandeMensaje" xml:space="preserve"><value>El historial de la conversación es demasiado grande. Inicia una consulta nueva.</value></data>
   <data name="IA_PresupuestoAgotadoMensaje" xml:space="preserve"><value>Esta empresa alcanzó su presupuesto mensual de consultas de IA. Inténtalo el próximo mes o solicita al administrador que amplíe el límite.</value></data>
   <data name="IA_PreguntasSugeridas" xml:space="preserve"><value>Sugerencias</value></data>
@@ -1793,6 +1790,30 @@
   <data name="CfgIA_JS_ApiKeyVacia" xml:space="preserve"><value>Primero guarda una API Key válida en la configuración.</value></data>
   <data name="CfgIA_ModalDeleteBody" xml:space="preserve"><value>¿Eliminar el parámetro</value></data>
   <data name="CfgIA_NoItems" xml:space="preserve"><value>No hay parámetros configurados.</value></data>
+  <!-- CONFIGURACIÓN IA — POR EMPRESA -->
+  <data name="CfgIA_TabGeneral" xml:space="preserve"><value>General</value></data>
+  <data name="CfgIA_TabPorEmpresa" xml:space="preserve"><value>Por empresa</value></data>
+  <data name="CfgIA_Emp_SelLabel" xml:space="preserve"><value>Empresa</value></data>
+  <data name="CfgIA_Emp_SelPlaceholder" xml:space="preserve"><value>-- Selecciona una empresa --</value></data>
+  <data name="CfgIA_Emp_SeleccionaEmpresaMsg" xml:space="preserve"><value>Selecciona una empresa para ver y editar su configuración de IA.</value></data>
+  <data name="CfgIA_Emp_ConsumoTitulo" xml:space="preserve"><value>Consumo del mes en curso</value></data>
+  <data name="CfgIA_Emp_Ilimitado" xml:space="preserve"><value>Ilimitado</value></data>
+  <data name="CfgIA_Emp_TokensUsados" xml:space="preserve"><value>{0} de {1} tokens este mes ({2}%)</value></data>
+  <data name="CfgIA_Emp_TokensUsadosIlimitado" xml:space="preserve"><value>{0} tokens usados este mes</value></data>
+  <data name="CfgIA_Emp_PresupuestoTitulo" xml:space="preserve"><value>Presupuesto mensual de tokens</value></data>
+  <data name="CfgIA_Emp_PresupuestoPlaceholder" xml:space="preserve"><value>Usar el valor global ({0})</value></data>
+  <data name="CfgIA_Emp_PresupuestoHint" xml:space="preserve"><value>Vacío = usa el valor global. 0 = ilimitado para esta empresa. Cualquier otro número = tope mensual propio.</value></data>
+  <data name="CfgIA_Emp_BtnGuardarPresupuesto" xml:space="preserve"><value>Guardar presupuesto</value></data>
+  <data name="CfgIA_Emp_UsuariosTitulo" xml:space="preserve"><value>Acceso de usuarios a Análisis IA</value></data>
+  <data name="CfgIA_Emp_UsuariosDesc" xml:space="preserve"><value>Controla qué usuarios de esta empresa pueden hacer consultas de IA. El gasto real se controla con el presupuesto de arriba, no con un número de consultas.</value></data>
+  <data name="CfgIA_Emp_SinUsuarios" xml:space="preserve"><value>Esta empresa no tiene usuarios configurados (fuera de los Super Admin).</value></data>
+  <data name="CfgIA_Emp_ColUsuario" xml:space="preserve"><value>Usuario</value></data>
+  <data name="CfgIA_Emp_ColAcceso" xml:space="preserve"><value>Acceso a IA</value></data>
+  <data name="CfgIA_Emp_AccesoPermitido" xml:space="preserve"><value>Permitido</value></data>
+  <data name="CfgIA_Emp_AccesoBloqueado" xml:space="preserve"><value>Bloqueado</value></data>
+  <data name="CfgIA_Emp_MsgGuardadoOk" xml:space="preserve"><value>Cambio guardado correctamente.</value></data>
+  <data name="CfgIA_Emp_MsgErrorGuardar" xml:space="preserve"><value>No se pudo guardar el cambio.</value></data>
+  <data name="CfgIA_Emp_MsgErrorCargar" xml:space="preserve"><value>No se pudo cargar la configuración de la empresa.</value></data>
 
   <!-- PYG GERENCIAL (ESTADO DE RESULTADOS) -->
   <data name="PYG_PageTitle" xml:space="preserve"><value>Informe de estado de resultados PYG</value></data>

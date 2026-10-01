@@ -372,19 +372,13 @@
                                     {
                                         <span class="badge badge-role-usuario">@Resources.Strings.Usr_BadgeUsuario</span>
                                     }
-                                    @if (usuario.Admin != 2 && (ViewBag.EsSuperAdmin == true || ViewBag.EsAdminEmpresa == true))
-                                    {
-                                        <br /><small class="text-muted" title="Consultas IA diarias asignadas">
-                                            <i class="fas fa-robot" style="font-size:.62rem;"></i>&nbsp;@(usuario.LimiteConsultasIA ?? 0)
-                                        </small>
-                                    }
                                 </td>
                                 <td class="col-acciones" data-label="@Resources.Strings.Common_ThAcciones">
                                     <div class="btn-group" role="group" aria-label="@Resources.Strings.Common_ThAcciones">
                                         @if (ViewBag.PuedeEditar == true)
                                         {
                                             <button type="button" class="btn btn-sm btn-primary" title="@Resources.Strings.Usr_TitleEditar" data-toggle="modal" data-target="#editUserModal"
-                                                    onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa', '@usuario.Usuario', '@usuario.Clave', '@(imagenUsuario != null ? Url.Action("Imagen", "Usuario", new { id = usuario.Id }) : "")', @(usuario.LimiteConsultasIA ?? 0))">
+                                                    onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa', '@usuario.Usuario', '@usuario.Clave', '@(imagenUsuario != null ? Url.Action("Imagen", "Usuario", new { id = usuario.Id }) : "")')">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                         }
@@ -621,17 +615,6 @@
                                             <i class="fas fa-exclamation-triangle mr-1"></i>@Resources.Strings.Usr_AvisoCambioRol
                                         </small>
                                     </div>
-                                    @if (ViewBag.EsSuperAdmin == true || ViewBag.EsAdminEmpresa == true)
-                                    {
-                                        <div class="col-md-4 mb-3">
-                                            <label for="editLimiteConsultasIA" class="form-label">
-                                                <i class="fas fa-robot mr-2" style="color: #583AFF;"></i>Consultas IA diarias
-                                            </label>
-                                            <input type="number" class="form-control" id="editLimiteConsultasIA"
-                                                   name="LimiteConsultasIA" min="0" max="10" value="0" />
-                                            <small class="form-text text-muted">@Resources.Strings.Usr_HintLimiteConsultasIA</small>
-                                        </div>
-                                    }
                                     <div class="col-md-4 mb-3 d-flex align-items-end pb-1">
                                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#cambiarClaveModal"
                                                 onclick="setCambioClaveData()">
@@ -817,19 +800,6 @@
                                         }
                                     </div>
                                 </div>
-                                @if (ViewBag.EsSuperAdmin == true || ViewBag.EsAdminEmpresa == true)
-                                {
-                                    <div class="row">
-                                        <div class="col-md-4 mb-3">
-                                            <label for="crearLimiteConsultasIA" class="form-label">
-                                                <i class="fas fa-robot mr-2" style="color: #583AFF;"></i>Consultas IA diarias
-                                            </label>
-                                            <input type="number" class="form-control" id="crearLimiteConsultasIA"
-                                                   name="LimiteConsultasIA" min="0" max="10" value="0" />
-                                            <small class="form-text text-muted">@Resources.Strings.Usr_HintLimiteConsultasIA</small>
-                                        </div>
-                                    </div>
-                                }
                             </div>
 
                             <!-- Pestaña de Imagen -->
@@ -1282,7 +1252,7 @@
                 actualizarCoincidenciaClave('nuevaClave', 'confirmarNuevaClave', 'nuevaClaveMatchFeedback');
             });
 
-            function setEditUser(id, nombre, apellidos, telefono, Correo, admin, idEmpresa, usuario, clave, imagenUrl, limiteConsultasIA) {
+            function setEditUser(id, nombre, apellidos, telefono, Correo, admin, idEmpresa, usuario, clave, imagenUrl) {
 
                 document.getElementById("editIdUsuario").value = id;
                 document.getElementById("editNombre").value = nombre;
@@ -1295,9 +1265,6 @@
                 document.getElementById("editAdmin").value = adminValue.toString();
                 _editAdminOriginal = adminValue.toString();
                 document.getElementById("editAdminRolWarning").style.display = 'none';
-
-                var limiteEl = document.getElementById("editLimiteConsultasIA");
-                if (limiteEl) limiteEl.value = limiteConsultasIA || 0;
 
                 document.getElementById("editIdEmpresa").value = idEmpresa;
                 document.getElementById("editUsuario").value = usuario;

@@ -5,6 +5,7 @@ using bufinscustomers.Services;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
@@ -129,6 +130,89 @@ namespace bufinscustomers.Controllers
             {
                 return Json(new { ok = false, mensaje = "Error: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
+        }
+
+        // ── Por Empresa: presupuesto de tokens + acceso de usuarios a IA ──────────────────
+
+        [HttpGet]
+        public JsonResult ObtenerResumenEmpresaIA(int idEmpresa)
+        {
+            try
+            {
+                var empresa = new EmpresaService().ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+                if (empresa == null)
+                    return Json(new { ok = false, mensaje = R("Common_SinPermisos") }, JsonRequestBehavior.AllowGet);
+
+                var iaUso = new IAUsoService();
+                var cfgEmpresa = new ConfiguracionIAEmpresaService();
+
+                long? over = cfgEmpresa.ObtenerOverride(idEmpresa);
+                long global = iaUso.ObtenerPresupuestoGlobalDefault();
+                long efectivo = over ?? global;
+                long consumido = new AuditoriaAnalisisIAService().SumarTokensMes(idEmpresa);
+                int pct = efectivo > 0 ? (int)Math.Min(100, consumido * 100 / efectivo) : 0;
+
+                var resumen = new ResumenIAEmpresaViewModel
+                {
+                    IdEmpresa = idEmpresa,
+                    NombreEmpresa = empresa.Nombre,
+                    PresupuestoOverride = over,
+                    PresupuestoGlobalDefault = global,
+                    PresupuestoEfectivo = efectivo,
+                    Ilimitado = efectivo <= 0,
+                    ConsumidoMes = consumido,
+                    PorcentajeConsumido = pct,
+                    Usuarios = cfgEmpresa.ObtenerUsuariosDeEmpresa(idEmpresa)
+                };
+
+                return Json(new { ok = true, resumen }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "ConfiguracionGlobalIAController.ObtenerResumenEmpresaIA");
+                return Json(new { ok = false, mensaje = R("CfgIA_Emp_MsgErrorCargar") }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        /// <summary><paramref name="presupuesto"/> null = quitar el override (usar el valor global);
+        /// 0 = ilimitado explícito para esta empresa; N = tope mensual propio.</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult GuardarPresupuestoEmpresaIA(int idEmpresa, long? presupuesto)
+        {
+            if (presupuesto.HasValue && presupuesto.Value < 0)
+                return Json(new { ok = false, mensaje = R("CfgIA_Emp_MsgErrorGuardar") });
+
+            var usuarioActual = UsuarioSesionHelper.UsuarioActual;
+            bool ok = new ConfiguracionIAEmpresaService().Guardar(idEmpresa, presupuesto, usuarioActual?.Id);
+            if (ok)
+            {
+                string nombreEmpresa = new EmpresaService().ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? ("#" + idEmpresa);
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Editar,
+                    "ConfiguracionIAEmpresa", idEmpresa.ToString(),
+                    $"Presupuesto mensual de tokens de IA actualizado para {nombreEmpresa}",
+                    null, new { idEmpresa, presupuesto }, idEmpresa);
+            }
+
+            return Json(new { ok, mensaje = ok ? R("CfgIA_Emp_MsgGuardadoOk") : R("CfgIA_Emp_MsgErrorGuardar") });
+        }
+
+        /// <summary><paramref name="acceso"/> null = volver al valor por defecto (permitido);
+        /// true/false = acceso explícito.</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult GuardarAccesoUsuarioIA(int idUsuario, bool? acceso)
+        {
+            bool ok = new ConfiguracionIAEmpresaService().GuardarAccesoUsuario(idUsuario, acceso);
+            if (ok)
+            {
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Editar,
+                    "Usuarios", idUsuario.ToString(),
+                    $"Acceso a consultas de IA actualizado (Id {idUsuario})",
+                    null, new { idUsuario, acceso });
+            }
+
+            return Json(new { ok, mensaje = ok ? R("CfgIA_Emp_MsgGuardadoOk") : R("CfgIA_Emp_MsgErrorGuardar") });
         }
 
         private static bool EsModeloChat(string id)

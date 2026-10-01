@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Net.Http;
 using System.Runtime.Caching;
 using System.Security.Cryptography;
@@ -55,6 +56,10 @@ namespace bufinscustomers.Services
         private const int  BreakerUmbralFallos  = 3;   // fallos 429/5xx consecutivos para abrir
         private const int  BreakerAperturaMin   = 5;   // minutos que permanece abierto
         private const int  ReintentosMax        = 2;   // reintentos extra ante 429/503 (transitorios)
+
+        // Tope del reintento automático cuando un modelo de razonamiento (o-series, gpt-5.x) agota
+        // max_completion_tokens "pensando" y deja la respuesta final vacía (ver ConsultarAsync).
+        private const int MaxTokensReintentoVacio = 16000;
         private static int      _fallosConsecutivos;
         private static DateTime _breakerHasta = DateTime.MinValue;
         private static readonly object _breakerLock = new object();
@@ -170,37 +175,43 @@ namespace bufinscustomers.Services
                 // Construir body dinámicamente — temperature solo se incluye si está configurada.
                 // Modelos nuevos (o1, o3, gpt-5.x) no aceptan temperature != 1; si el campo está
                 // vacío en ConfiguracionSistema el parámetro se omite y el modelo usa su default.
-                var bodyDict = new System.Collections.Generic.Dictionary<string, object>
+                async Task<(HttpResponseMessage resp, string text)> EnviarAsync(int tokens)
                 {
-                    ["model"]                 = modeloFinal,
-                    ["messages"]              = messages.ToArray(),
-                    ["max_completion_tokens"] = tokensFinal,
-                };
-                if (temperature.HasValue)
-                    bodyDict["temperature"] = temperature.Value;
-
-                string jsonBody = JsonConvert.SerializeObject(bodyDict);
-
-                HttpResponseMessage httpResponse = null;
-                string responseText = null;
-                for (int intento = 0; ; intento++)
-                {
-                    using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, OpenAIEndpoint))
+                    var bodyDict = new System.Collections.Generic.Dictionary<string, object>
                     {
-                        httpRequest.Headers.Add("Authorization", "Bearer " + _apiKey);
-                        httpRequest.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
-                        httpResponse = await _httpClient.SendAsync(httpRequest);
+                        ["model"]                 = modeloFinal,
+                        ["messages"]              = messages.ToArray(),
+                        ["max_completion_tokens"] = tokens,
+                    };
+                    if (temperature.HasValue)
+                        bodyDict["temperature"] = temperature.Value;
+
+                    string body = JsonConvert.SerializeObject(bodyDict);
+
+                    HttpResponseMessage resp = null;
+                    string text = null;
+                    for (int intento = 0; ; intento++)
+                    {
+                        using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, OpenAIEndpoint))
+                        {
+                            httpRequest.Headers.Add("Authorization", "Bearer " + _apiKey);
+                            httpRequest.Content = new StringContent(body, Encoding.UTF8, "application/json");
+                            resp = await _httpClient.SendAsync(httpRequest);
+                        }
+                        text = await resp.Content.ReadAsStringAsync();
+
+                        int code = (int)resp.StatusCode;
+                        bool transitorio = code == 429 || code == 503;
+                        if (resp.IsSuccessStatusCode || !transitorio || intento >= ReintentosMax)
+                            break;
+
+                        // Backoff exponencial con jitter antes de reintentar (≈1s, 2s + hasta 400 ms)
+                        await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, intento) * 1000 + _rnd.Next(0, 400)));
                     }
-                    responseText = await httpResponse.Content.ReadAsStringAsync();
-
-                    int code = (int)httpResponse.StatusCode;
-                    bool transitorio = code == 429 || code == 503;
-                    if (httpResponse.IsSuccessStatusCode || !transitorio || intento >= ReintentosMax)
-                        break;
-
-                    // Backoff exponencial con jitter antes de reintentar (≈1s, 2s + hasta 400 ms)
-                    await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, intento) * 1000 + _rnd.Next(0, 400)));
+                    return (resp, text);
                 }
+
+                var (httpResponse, responseText) = await EnviarAsync(tokensFinal);
 
                 if (!httpResponse.IsSuccessStatusCode)
                 {
@@ -216,6 +227,26 @@ namespace bufinscustomers.Services
                 }
 
                 RegistrarResultadoBreaker(exito: true);
+
+                // Modelos de razonamiento (o-series, gpt-5.x) pueden gastar TODO max_completion_tokens
+                // "pensando" (reasoning_tokens) y dejar la respuesta final vacía — finish_reason "length"
+                // con content "". Subir el límite para TODAS las llamadas encarecería cada consulta, así
+                // que en vez de eso se reintenta una sola vez con mucho más presupuesto solo cuando esto
+                // ocurre de verdad.
+                if (EsContenidoVacioPorLongitud(responseText) && tokensFinal < MaxTokensReintentoVacio)
+                {
+                    int tokensReintento = Math.Min(Math.Max(tokensFinal * 3, tokensFinal + 4000), MaxTokensReintentoVacio);
+                    System.Diagnostics.Trace.TraceWarning(
+                        "[IAService] Respuesta vacía por longitud con {0} max_completion_tokens (modelo {1}); reintentando con {2}.",
+                        tokensFinal, modeloFinal, tokensReintento);
+
+                    var (httpResponse2, responseText2) = await EnviarAsync(tokensReintento);
+                    if (httpResponse2.IsSuccessStatusCode)
+                    {
+                        httpResponse  = httpResponse2;
+                        responseText  = responseText2;
+                    }
+                }
 
                 string respuesta = ExtraerTextoRespuesta(responseText);
                 var uso = ExtraerUso(responseText);
@@ -540,6 +571,33 @@ namespace bufinscustomers.Services
             {
                 return $"Error al procesar la respuesta de OpenAI: {ex.Message}";
             }
+        }
+
+        /// <summary>
+        /// true si la respuesta terminó por <c>finish_reason: "length"</c> sin contenido de texto
+        /// real — la señal de que un modelo de razonamiento agotó <c>max_completion_tokens</c>
+        /// pensando antes de escribir la respuesta (ver <c>ConsultarAsync</c>).
+        /// </summary>
+        private static bool EsContenidoVacioPorLongitud(string jsonResponse)
+        {
+            try
+            {
+                var choice = JObject.Parse(jsonResponse)["choices"]?[0];
+                string finishReason = choice?["finish_reason"]?.ToString();
+                if (!string.Equals(finishReason, "length", StringComparison.OrdinalIgnoreCase))
+                    return false;
+
+                var content = choice["message"]?["content"];
+                if (content == null || content.Type == JTokenType.Null)
+                    return true;
+                if (content.Type == JTokenType.String)
+                    return string.IsNullOrWhiteSpace(content.ToString());
+                if (content.Type == JTokenType.Array)
+                    return !content.Any(b => !string.IsNullOrWhiteSpace(b["text"]?.ToString()));
+
+                return false;
+            }
+            catch { return false; }
         }
 
         private string ExtraerMensajeError(string jsonResponse)

@@ -213,23 +213,6 @@ namespace bufinscustomers.Services
             }
         }
 
-        public int ContarConsultasHoy(int idUsuario)
-        {
-            try
-            {
-                using (var cn = new SqlConnection(CadenaConexion))
-                {
-                    var cmd = new SqlCommand(
-                        "SELECT COUNT(*) FROM AuditoriaAnalisisIA WHERE IdUsuario = @IdUsuario AND CAST(FechaPregunta AS DATE) = CAST(GETDATE() AS DATE)",
-                        cn);
-                    cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
-                    cn.Open();
-                    return (int)cmd.ExecuteScalar();
-                }
-            }
-            catch { return 0; }
-        }
-
         public List<UsuarioAuditoriaDto> ObtenerUsuariosDeEmpresa(List<int> idsEmpresa)
         {
             var lista = new List<UsuarioAuditoriaDto>();
