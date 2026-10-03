@@ -48,7 +48,20 @@ namespace bufinscustomers.Services
 
                 long? idLoteActivo = BuscarLoteActivo(cn, null, idEmpresa, anio, modo, idEscenario);
                 if (idLoteActivo.HasValue)
-                    return (false, idLoteActivo.Value, MensajeLoteActivoExistente);
+                {
+                    // Subir de nuevo reemplaza el lote pendiente (su staging y hallazgos se borran) cuando no hay
+                    // nada que proteger: es del mismo usuario (típico "subir archivo corregido") o ya estaba
+                    // bloqueado por errores y no se podía confirmar. Si es un lote de OTRO usuario que sí se puede
+                    // confirmar, se respeta su revisión y se avisa como antes.
+                    var previo = ObtenerLote(idLoteActivo.Value);
+                    bool reemplazable = previo == null
+                        || previo.IdUsuario == idUsuario
+                        || previo.Estado == CargueLoteEstado.ConErrores;
+                    if (!reemplazable)
+                        return (false, idLoteActivo.Value, MensajeLoteActivoExistente);
+
+                    if (previo != null) DescartarLote(previo.IdLote);
+                }
 
                 try
                 {
@@ -138,7 +151,7 @@ namespace bufinscustomers.Services
                 {
                     while (r.Read())
                     {
-                        list.Add(new CargueLoteHallazgo
+                        var h = new CargueLoteHallazgo
                         {
                             Id = Convert.ToInt64(r["Id"]),
                             IdLote = Convert.ToInt64(r["IdLote"]),
@@ -150,7 +163,11 @@ namespace bufinscustomers.Services
                             CodigoRegla = r["CodigoRegla"] as string,
                             Mensaje = r["Mensaje"] as string,
                             MensajeEn = r["MensajeEn"] as string
-                        });
+                        };
+                        // Titulo/TituloEn los escribe sp_ValidarCargueStaging; columnas incrementales (Sql/011).
+                        try { h.Titulo = r["Titulo"] as string; } catch (IndexOutOfRangeException) { }
+                        try { h.TituloEn = r["TituloEn"] as string; } catch (IndexOutOfRangeException) { }
+                        list.Add(h);
                     }
                 }
             }

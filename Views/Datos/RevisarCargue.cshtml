@@ -6,28 +6,94 @@
     bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
     bool hayErrores = Model.Lote.TotalErrores > 0;
     bool puedeConfirmar = Model.Lote.PuedeConfirmar;
+    int nErr = Model.Lote.TotalErrores;
+    int nAdv = Model.Lote.TotalAdvertencias;
+    string estado = nErr > 0 ? "err" : (nAdv > 0 ? "adv" : "ok");
+    var hallazgos = Model.Hallazgos.OrderBy(x => x.Severidad == CargueLoteSeveridad.Error ? 0 : 1).ToList();
+
 }
 
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
 
 <style>
-    .rc-meta-item { margin-bottom: .5rem; }
-    .rc-meta-label { font-size: .75rem; color: #6c757d; text-transform: uppercase; letter-spacing: .03em; }
-    .rc-meta-value { font-weight: 600; }
-    .rc-meta-value.rc-break { word-break: break-all; }
+    .rc-steps { display: flex; align-items: center; gap: 6px; margin-left: auto; font-size: 12.5px; font-weight: 700; color: #fff; }
+    .rc-step { opacity: .8; display: inline-flex; align-items: center; gap: 6px; }
+    .rc-step.active { opacity: 1; background: rgba(255,255,255,.22); padding: 4px 10px; border-radius: 20px; }
+    .rc-step-sep { width: 18px; height: 1px; background: rgba(255,255,255,.6); }
 
-    .rc-badge-error { background: #fee2e2; color: #b91c1c; margin-right: .4rem; }
-    .rc-badge-warning { background: #fef3c7; color: #92400e; }
+    .rc-stack > * + * { margin-top: 20px; }
+    .rc-card { background: #fff; border: 1px solid #e3e6f0; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.06); overflow: hidden; }
 
-    .rc-sev { font-weight: 600; }
-    .rc-sev-error { color: #ef4444; }
-    .rc-sev-warning { color: #f59e0b; }
+    .rc-status { display: flex; align-items: center; gap: 20px; padding: 22px 24px; }
+    .rc-status-icon { width: 52px; height: 52px; border-radius: 14px; font-size: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .rc-status-icon.err { background: #fee2e2; color: #b91c1c; }
+    .rc-status-icon.adv { background: #fef3c7; color: #92400e; }
+    .rc-status-icon.ok { background: #d1fae5; color: #047857; }
+    .rc-status-text { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .rc-status-title { font-size: 19px; font-weight: 800; color: #2d3748; letter-spacing: -.2px; margin: 0; }
+    .rc-status-desc { font-size: 14.5px; color: #5B5570; line-height: 1.5; margin: 0; }
+    .rc-counters { display: flex; gap: 10px; }
+    .rc-counter { min-width: 104px; padding: 10px 14px; border-radius: 10px; border: 1px solid; }
+    .rc-counter-num { font-size: 24px; font-weight: 800; line-height: 1; }
+    .rc-counter-lbl { font-size: 12px; font-weight: 700; }
+    .rc-counter.err { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+    .rc-counter.adv { background: #fffbeb; border-color: #fde68a; color: #92400e; }
 
-    .rc-alert-info { border-left: 4px solid #3B82F6; }
-    .rc-alert-danger { border-left: 4px solid #ef4444; }
+    .rc-meta { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; padding: 12px 24px; background: #f8f9fc; border-top: 1px solid #e3e6f0; }
+    .rc-file { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; font-size: 13.5px; font-weight: 700; color: #2d3748; }
+    .rc-file i { color: #217346; font-size: 17px; }
+    .rc-file span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rc-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .rc-pill { font-size: 12.5px; color: #5B5570; background: #fff; border: 1px solid #e3e6f0; padding: 4px 10px; border-radius: 999px; }
+    .rc-pill b { color: #2d3748; }
 
-    .rc-actions { margin-top: 1.25rem; }
-    .no-data-message .fa-check-circle { color: #22c55e; }
+    .rc-hall { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
+    .rc-hall-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    .rc-hall-title { font-size: 17px; font-weight: 700; margin: 0; color: #2d3748; }
+    .rc-hall-title i { color: #583AFF; font-size: 15px; margin-right: 8px; }
+    .rc-seg { display: inline-flex; gap: 2px; padding: 3px; background: #f4f3fb; border: 1px solid #e0ddf0; border-radius: 9px; }
+    .rc-seg button { border: 0; background: transparent; color: #5B5570; font-size: 12.5px; font-weight: 700; padding: 6px 13px; border-radius: 7px; cursor: pointer; }
+    .rc-seg button .rc-cnt { font-size: 11px; padding: 1px 7px; border-radius: 10px; background: #e8e6f2; margin-left: 6px; }
+    .rc-seg button.active { background: #fff; color: #583AFF; box-shadow: 0 1px 3px rgba(22,9,51,.12); }
+    .rc-seg button.active .rc-cnt { background: rgba(88,58,255,.1); }
+
+    .rc-list { border: 1px solid #e3e6f0; border-radius: 8px; overflow: hidden; }
+    .rc-item { display: flex; gap: 14px; padding: 14px 16px; }
+    .rc-item + .rc-item { border-top: 1px solid #e3e6f0; }
+    .rc-item-bar { width: 4px; border-radius: 4px; flex-shrink: 0; }
+    .rc-item.err .rc-item-bar { background: #ef4444; }
+    .rc-item.adv .rc-item-bar { background: #f59e0b; }
+    .rc-item-icon { font-size: 16px; padding-top: 1px; }
+    .rc-item.err .rc-item-icon, .rc-item.err .rc-item-sev { color: #b91c1c; }
+    .rc-item.adv .rc-item-icon, .rc-item.adv .rc-item-sev { color: #92400e; }
+    .rc-item-body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .rc-item-sev { font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; margin-right: 10px; }
+    .rc-item-title { font-size: 14.5px; font-weight: 700; color: #2d3748; }
+    .rc-item-msg { font-size: 13.5px; color: #5B5570; line-height: 1.5; }
+
+    .rc-empty { text-align: center; padding: 36px 20px; }
+    .rc-empty-icon { width: 64px; height: 64px; border-radius: 50%; background: rgba(16,185,129,.1); color: #10b981; font-size: 28px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+    .rc-empty h4 { font-size: 17px; font-weight: 700; margin: 0 0 4px; }
+    .rc-empty p { font-size: 14.5px; color: #6c757d; margin: 0; }
+
+    /* Botonera igual a CargueExcel: compacta, alineada a la izquierda, mismo tamaño */
+    .rc-actions { padding-top: 16px; border-top: 1px solid #e3e6f0; }
+    .rc-actions .btn-group-actions { gap: 0.5rem; }
+    .rc-actions .btn-group-actions form { margin: 0; }
+    .rc-actions .btn-group-actions .btn { padding: 0.45rem 0.9rem; font-size: 0.8rem; }
+    .rc-actions .btn-group-actions .btn i { margin-right: 0.4rem; }
+    .rc-help { margin-top: 0.75rem; font-size: 0.78rem; color: #5B5570; }
+    .rc-help i { margin-right: 6px; }
+    .rc-help i.lock { color: #a39cc0; }
+    .rc-help i.shield { color: #583AFF; }
+    .rc-btn-subir, .rc-btn-subir:hover { color: #fff; }
+
+    @@media (max-width: 767.98px) {
+        .rc-steps { display: none; }
+        .rc-status { flex-direction: column; align-items: flex-start; }
+        .rc-counters { width: 100%; }
+        .rc-actions .btn-group-actions .btn, .rc-actions .btn-group-actions form { width: 100%; }
+    }
 </style>
 
 <div class="container-fluid px-4">
@@ -36,125 +102,151 @@
         <div class="powerbi-header-content">
             <i class="fas fa-clipboard-check powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@Resources.Strings.RevisarCargue_HeaderTitle</h1>
-        </div>
-    </div>
-
-    <div class="alert alert-info rc-alert-info">
-        <i class="fas fa-info-circle mr-2"></i>@Resources.Strings.RevisarCargue_Intro
-    </div>
-
-    <div class="filter-card">
-        <div class="row">
-            <div class="col-md-3 col-6 rc-meta-item">
-                <div class="rc-meta-label">@Resources.Strings.RevisarCargue_Empresa</div>
-                <div class="rc-meta-value">@Model.Lote.NombreEmpresa</div>
-            </div>
-            <div class="col-md-2 col-6 rc-meta-item">
-                <div class="rc-meta-label">@Resources.Strings.RevisarCargue_Anio</div>
-                <div class="rc-meta-value">@Model.Lote.Anio</div>
-            </div>
-            <div class="col-md-2 col-6 rc-meta-item">
-                <div class="rc-meta-label">@Resources.Strings.RevisarCargue_Modo</div>
-                <div class="rc-meta-value">@(Model.Lote.Modo == 0 ? Resources.Strings.RevisarCargue_ModoEjecucion : Resources.Strings.RevisarCargue_ModoHistorico)</div>
-            </div>
-            <div class="col-md-2 col-6 rc-meta-item">
-                <div class="rc-meta-label">@Resources.Strings.RevisarCargue_Escenario</div>
-                <div class="rc-meta-value">@Model.Lote.IdEscenario</div>
-            </div>
-            <div class="col-md-3 col-12 rc-meta-item">
-                <div class="rc-meta-label">@Resources.Strings.RevisarCargue_Archivo</div>
-                <div class="rc-meta-value rc-break">@Model.NombreArchivo</div>
+            <div class="rc-steps">
+                <span class="rc-step"><i class="fas fa-check-circle"></i>@Resources.Strings.RevisarCargue_Paso_Subir</span>
+                <span class="rc-step-sep"></span>
+                <span class="rc-step active"><i class="fas fa-search"></i>@Resources.Strings.RevisarCargue_Paso_Revisar</span>
+                <span class="rc-step-sep"></span>
+                <span class="rc-step"><i class="far fa-circle"></i>@Resources.Strings.RevisarCargue_Paso_Confirmar</span>
             </div>
         </div>
     </div>
 
-    <div class="table-container">
-        <div class="table-header">
-            <h5><i class="fas fa-list mr-2"></i>@Resources.Strings.Common_Resultados</h5>
-            <span>
-                @if (Model.Lote.TotalErrores > 0)
+    <div class="rc-stack mt-3">
+
+        <!-- Tarjeta de estado -->
+        <div class="rc-card">
+            <div class="rc-status">
+                <div class="rc-status-icon @estado">
+                    <i class="fas @(estado == "err" ? "fa-times-circle" : estado == "adv" ? "fa-exclamation-triangle" : "fa-check-circle")"></i>
+                </div>
+                <div class="rc-status-text">
+                    @if (estado == "err")
+                    {
+                        <h2 class="rc-status-title">@Resources.Strings.RevisarCargue_EstadoErrores_Titulo</h2>
+                        <p class="rc-status-desc">@(nErr == 1 ? Resources.Strings.RevisarCargue_EstadoErrores_Texto1 : string.Format(Resources.Strings.RevisarCargue_EstadoErrores_Texto, nErr))</p>
+                    }
+                    else if (estado == "adv")
+                    {
+                        <h2 class="rc-status-title">@Resources.Strings.RevisarCargue_EstadoAdvertencias_Titulo</h2>
+                        <p class="rc-status-desc">@Resources.Strings.RevisarCargue_EstadoAdvertencias_Texto</p>
+                    }
+                    else
+                    {
+                        <h2 class="rc-status-title">@Resources.Strings.RevisarCargue_EstadoOk_Titulo</h2>
+                        <p class="rc-status-desc">@Resources.Strings.RevisarCargue_EstadoOk_Texto</p>
+                    }
+                </div>
+                <div class="rc-counters">
+                    @if (nErr > 0)
+                    {
+                        <div class="rc-counter err">
+                            <div class="rc-counter-num">@nErr</div>
+                            <div class="rc-counter-lbl">@(nErr == 1 ? Resources.Strings.RevisarCargue_Contador_Error : Resources.Strings.RevisarCargue_Contador_Errores)</div>
+                        </div>
+                    }
+                    @if (nAdv > 0)
+                    {
+                        <div class="rc-counter adv">
+                            <div class="rc-counter-num">@nAdv</div>
+                            <div class="rc-counter-lbl">@(nAdv == 1 ? Resources.Strings.RevisarCargue_Contador_Advertencia : Resources.Strings.RevisarCargue_Contador_Advertencias)</div>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="rc-meta">
+                <div class="rc-file"><i class="fas fa-file-excel"></i><span title="@Model.NombreArchivo">@Model.NombreArchivo</span></div>
+                <div class="rc-pills">
+                    <span class="rc-pill">@Resources.Strings.RevisarCargue_Empresa <b>@Model.Lote.NombreEmpresa</b></span>
+                    <span class="rc-pill">@Resources.Strings.RevisarCargue_Anio <b>@Model.Lote.Anio</b></span>
+                    <span class="rc-pill">@Resources.Strings.RevisarCargue_Modo <b>@(Model.Lote.Modo == 0 ? Resources.Strings.RevisarCargue_ModoEjecucion : Resources.Strings.RevisarCargue_ModoHistorico)</b></span>
+                    <span class="rc-pill">@Resources.Strings.RevisarCargue_Escenario <b>@Model.Lote.IdEscenario</b></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta de hallazgos -->
+        <div class="rc-card rc-hall">
+            <div class="rc-hall-head">
+                <h3 class="rc-hall-title"><i class="fas fa-list"></i>@Resources.Strings.RevisarCargue_Hallazgos</h3>
+                @if (hallazgos.Any())
                 {
-                    <span class="info-badge rc-badge-error">
-                        <i class="fas fa-times-circle mr-1"></i>@Model.Lote.TotalErrores @Resources.Strings.RevisarCargue_ResumenErrores
-                    </span>
+                    <div class="rc-seg" id="rcFiltro">
+                        <button type="button" class="active" data-filtro="all">@Resources.Strings.RevisarCargue_Filtro_Todos<span class="rc-cnt">@hallazgos.Count</span></button>
+                        <button type="button" data-filtro="err">@Resources.Strings.RevisarCargue_Filtro_Errores<span class="rc-cnt">@hallazgos.Count(x => x.Severidad == CargueLoteSeveridad.Error)</span></button>
+                        <button type="button" data-filtro="adv">@Resources.Strings.RevisarCargue_Filtro_Advertencias<span class="rc-cnt">@hallazgos.Count(x => x.Severidad != CargueLoteSeveridad.Error)</span></button>
+                    </div>
                 }
-                @if (Model.Lote.TotalAdvertencias > 0)
+            </div>
+
+            @if (!hallazgos.Any())
+            {
+                <div class="rc-empty">
+                    <div class="rc-empty-icon"><i class="fas fa-check-circle"></i></div>
+                    <h4>@Resources.Strings.RevisarCargue_SinHallazgosTitulo</h4>
+                    <p>@Resources.Strings.RevisarCargue_SinHallazgosTexto</p>
+                </div>
+            }
+            else
+            {
+                <div class="rc-list">
+                    @foreach (var h in hallazgos)
+                    {
+                        bool esError = h.Severidad == CargueLoteSeveridad.Error;
+                        string titulo = esIngles && !string.IsNullOrWhiteSpace(h.TituloEn) ? h.TituloEn : h.Titulo;
+                        <div class="rc-item @(esError ? "err" : "adv")" data-sev="@(esError ? "err" : "adv")">
+                            <div class="rc-item-bar"></div>
+                            <i class="fas @(esError ? "fa-times-circle" : "fa-exclamation-triangle") rc-item-icon"></i>
+                            <div class="rc-item-body">
+                                <div>
+                                    <span class="rc-item-sev">@(esError ? Resources.Strings.RevisarCargue_SeveridadError : Resources.Strings.RevisarCargue_SeveridadAdvertencia)</span>
+                                    @if (!string.IsNullOrEmpty(titulo))
+                                    {
+                                        <span class="rc-item-title">@titulo</span>
+                                    }
+                                </div>
+                                <div class="rc-item-msg">@(esIngles && !string.IsNullOrWhiteSpace(h.MensajeEn) ? h.MensajeEn : h.Mensaje)</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Acciones -->
+        <div class="rc-actions">
+            <div class="btn-group-actions">
+                @using (Html.BeginForm("ConfirmarCargue", "Datos", FormMethod.Post, new { id = "frmConfirmarCargue" }))
                 {
-                    <span class="info-badge rc-badge-warning">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>@Model.Lote.TotalAdvertencias @Resources.Strings.RevisarCargue_ResumenAdvertencias
-                    </span>
+                    @Html.AntiForgeryToken()
+                    @Html.Hidden("idLote", Model.Lote.IdLote)
+                    <button type="submit" class="btn btn-modern-gradient" @(puedeConfirmar ? "" : "disabled")>
+                        <i class="fas fa-check"></i>@(nAdv > 0 && !hayErrores ? Resources.Strings.RevisarCargue_BtnConfirmarConAdvertencias : Resources.Strings.RevisarCargue_BtnConfirmar)
+                    </button>
                 }
-            </span>
+                @if (hayErrores)
+                {
+                    <a href="@Url.Action("CargueExcel", "Datos", new { idEmpresa = Model.Lote.IdEmpresa, anio = Model.Lote.Anio, idEscenario = Model.Lote.IdEscenario })" class="btn btn-modern-gradient rc-btn-subir">
+                        <i class="fas fa-file-upload"></i>@Resources.Strings.RevisarCargue_BtnSubirCorregido
+                    </a>
+                }
+                <button type="button" class="btn btn-modern-secondary" data-toggle="modal" data-target="#descartarCargueModal">
+                    <i class="fas fa-trash-alt"></i>@Resources.Strings.RevisarCargue_BtnDescartar
+                </button>
+            </div>
+            <div class="rc-help">
+                @if (hayErrores)
+                {
+                    <i class="fas fa-lock lock"></i>@Resources.Strings.RevisarCargue_AyudaBloqueado
+                }
+                else
+                {
+                    <i class="fas fa-shield-alt shield"></i>@Resources.Strings.RevisarCargue_AyudaSeguro
+                }
+            </div>
         </div>
 
-        @if (!Model.Hallazgos.Any())
-        {
-            <div class="no-data-message">
-                <i class="fas fa-check-circle"></i>
-                <h4>@Resources.Strings.RevisarCargue_SinHallazgos</h4>
-            </div>
-        }
-        else
-        {
-            <div class="table-wrapper">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>@Resources.Strings.RevisarCargue_TablaSeveridad</th>
-                            <th>@Resources.Strings.RevisarCargue_TablaHoja</th>
-                            <th>@Resources.Strings.RevisarCargue_TablaFila</th>
-                            <th>@Resources.Strings.RevisarCargue_TablaColumna</th>
-                            <th>@Resources.Strings.RevisarCargue_TablaMensaje</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var h in Model.Hallazgos)
-                        {
-                            bool esError = h.Severidad == CargueLoteSeveridad.Error;
-                            <tr>
-                                <td>
-                                    @if (esError)
-                                    {
-                                        <span class="rc-sev rc-sev-error"><i class="fas fa-times-circle mr-1"></i>@Resources.Strings.RevisarCargue_SeveridadError</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="rc-sev rc-sev-warning"><i class="fas fa-exclamation-triangle mr-1"></i>@Resources.Strings.RevisarCargue_SeveridadAdvertencia</span>
-                                    }
-                                </td>
-                                <td>@h.NombreHoja</td>
-                                <td>@(h.NumeroFilaExcel?.ToString() ?? "-")</td>
-                                <td>@(h.Columna ?? "-")</td>
-                                <td>@(esIngles && !string.IsNullOrWhiteSpace(h.MensajeEn) ? h.MensajeEn : h.Mensaje)</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
     </div>
-
-    <div class="btn-group-actions rc-actions">
-        @using (Html.BeginForm("ConfirmarCargue", "Datos", FormMethod.Post, new { id = "frmConfirmarCargue" }))
-        {
-            @Html.AntiForgeryToken()
-            @Html.Hidden("idLote", Model.Lote.IdLote)
-            <button type="submit" class="btn btn-modern-gradient" @(puedeConfirmar ? "" : "disabled")>
-                <i class="fas fa-check mr-1"></i>@Resources.Strings.RevisarCargue_BtnConfirmar
-            </button>
-        }
-        <button type="button" class="btn btn-modern-secondary" data-toggle="modal" data-target="#descartarCargueModal">
-            <i class="fas fa-trash-alt mr-1"></i>@Resources.Strings.RevisarCargue_BtnDescartar
-        </button>
-    </div>
-
-    @if (hayErrores)
-    {
-        <div class="alert alert-danger rc-alert-danger mt-3">
-            <i class="fas fa-exclamation-circle mr-2"></i>@Resources.Strings.RevisarCargue_ConErroresNoPuedeConfirmar
-        </div>
-    }
-
 </div>
 
 <!-- Modal: descartar cargue (tema oscuro obligatorio en modales de confirmación) -->
@@ -182,3 +274,18 @@
         </div>
     </div>
 </div>
+
+@section scripts {
+    <script>
+        $(function () {
+            $('#rcFiltro button').on('click', function () {
+                var f = $(this).data('filtro');
+                $('#rcFiltro button').removeClass('active');
+                $(this).addClass('active');
+                $('.rc-item').each(function () {
+                    $(this).toggle(f === 'all' || $(this).data('sev') === f);
+                });
+            });
+        });
+    </script>
+}

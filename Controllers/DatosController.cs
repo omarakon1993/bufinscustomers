@@ -1000,7 +1000,17 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        public ActionResult CargueExcel()
+        // Los parámetros opcionales preseleccionan empresa/año/escenario (los usa "Subir archivo corregido"
+        // en RevisarCargue). Son solo preselección de UI: el acceso real se valida al cargar el archivo.
+        public ActionResult CargueExcel(int? idEmpresa = null, int? anio = null, int? idEscenario = null)
+        {
+            ViewBag.PrefillEmpresa = idEmpresa;
+            ViewBag.PrefillAnio = anio;
+            ViewBag.PrefillEscenario = idEscenario;
+            return CargueExcelView();
+        }
+
+        private ActionResult CargueExcelView()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             int idEmpresa = usuario?.IdEmpresa ?? 0;
@@ -1035,10 +1045,6 @@ namespace bufinscustomers.Controllers
             // hace el snapshot + delete-e-inserta real de siempre) o Descartar.
             var resultado = new ResultadoCargaExcel();
             string nombreArchivoOriginal = "";
-
-            // Se limpia cualquier "undo" pendiente de un cargue anterior de esta sesión: una vez se
-            // inicia un nuevo intento de cargue, el de antes ya no debe poder deshacerse desde aquí.
-            Session["Cargue_UltimoIdHistorial"] = null;
 
             // Validar empresa
             if (idEmpresaSeleccionada == 0)
@@ -1175,7 +1181,6 @@ namespace bufinscustomers.Controllers
                                     if (dt == null)
                                     {
                                         resultado.DetalleHojas.Add(detalle);
-                                        resultado.TotalHojasIgnoradas++;
                                         continue;
                                     }
 
@@ -1298,7 +1303,7 @@ namespace bufinscustomers.Controllers
 
         /// <summary>
         /// Confirma un lote ya validado (Estado ValidadoOk/ConAdvertencias): recién aquí se hace
-        /// el snapshot para "Deshacer", el delete-e-inserta real de siempre, y sp_ConfirmarCargueStaging
+        /// el snapshot (versión para rollback), el delete-e-inserta real de siempre, y sp_ConfirmarCargueStaging
         /// mueve el staging a las tablas Ini_* — todo dentro de la misma transacción.
         /// </summary>
         [HttpPost]
@@ -1424,12 +1429,6 @@ namespace bufinscustomers.Controllers
                 resultado.Mensaje = resumen;
             }
 
-            if (resultado.Exito && idHistorialCargue > 0)
-            {
-                Session["Cargue_UltimoIdHistorial"] = idHistorialCargue;
-                resultado.PuedeDeshacerCargue = true;
-            }
-
             TempData["ResultadoCarga"] = resultado;
             TempData["NombreArchivo"] = lote.NombreArchivo;
 
@@ -1470,35 +1469,6 @@ namespace bufinscustomers.Controllers
             }
 
             SetInfoMessage("Se descartó el cargue en revisión.");
-            return RedirectToAction("CargueExcel");
-        }
-
-        // Deshace el cargue que la propia sesión acaba de confirmar (ConfirmarCargue), por si el
-        // usuario decide no continuar. El Id de la versión a revertir nunca viaja desde el cliente
-        // (evita que alguien deshaga el cargue de otra persona manipulando el formulario) — sale de
-        // Session, donde ConfirmarCargue lo dejó.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult DeshacerCargue()
-        {
-            var idHistorial = Session["Cargue_UltimoIdHistorial"] as int?;
-            Session["Cargue_UltimoIdHistorial"] = null; // un solo uso
-
-            var usuario = UsuarioSesionHelper.UsuarioActual;
-            var version = idHistorial.HasValue ? _historialService.ObtenerPorId(idHistorial.Value) : null;
-
-            if (version == null || !EmpresaAccesoHelper.TieneAcceso(usuario, version.IdEmpresa))
-            {
-                SetErrorMessage(R("Datos_ErrorRevertirCargue"));
-                return RedirectToAction("CargueExcel");
-            }
-
-            string nombreUsuario = ((usuario?.Nombre ?? "") + " " + (usuario?.Apellidos ?? "")).Trim();
-            bool ok = _historialService.EjecutarRollback(idHistorial.Value, usuario.Id, nombreUsuario);
-
-            if (ok) SetInfoMessage(R("Datos_CargueRevertido"));
-            else    SetErrorMessage(R("Datos_ErrorRevertirCargue"));
-
             return RedirectToAction("CargueExcel");
         }
 
@@ -1880,7 +1850,6 @@ namespace bufinscustomers.Controllers
             string nombreTabla = NormalizarNombre(hoja.Name);
             if (string.IsNullOrEmpty(detalle.NombreTabla))
                 detalle.NombreTabla = nombreTabla;
-            detalle.TotalColumnas = columnasValidas;
 
             var dt = new DataTable(nombreTabla);
             for (int col = 1; col <= columnasValidas; col++)

@@ -63,6 +63,9 @@ namespace bufinscustomers.Models
         public string CodigoRegla { get; set; }
         public string Mensaje { get; set; }
         public string MensajeEn { get; set; }
+        /// <summary>Título corto de la regla (lo escribe sp_ValidarCargueStaging); null si el hallazgo no tiene título.</summary>
+        public string Titulo { get; set; }
+        public string TituloEn { get; set; }
     }
 
     /// <summary>ViewModel de la pantalla "Revisar cargue" (informe de validación antes de confirmar).</summary>

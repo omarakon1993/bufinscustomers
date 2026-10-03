@@ -6,11 +6,6 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
     var resultado = TempData["ResultadoCarga"] as ResultadoCargaExcel;
 
-    var advertenciasCargue = resultado?.Advertencias ?? new List<AdvertenciaCargueViewModel>();
-    // Reemplaza '<' por su escape unicode: si el Titulo/Mensaje de un widget de Advertencia trae
-    // una comparación "<"/"<>" o cualquier "</script", el navegador cortaría el <script> a la mitad.
-    var advertenciasJson = new JavaScriptSerializer().Serialize(advertenciasCargue.Select(a => new { titulo = a.Titulo, mensaje = a.Mensaje, severidad = a.Severidad })).Replace("<", "\\u003c");
-
     // Resultado del cargue (éxito o error) — es la ÚNICA forma en que se muestra ahora (ya no hay
     // tabla de detalle aparte más abajo en la página): un modal con el detalle estructurado
     // (empresa/año/modo/escenario, totales, y el detalle por hoja con su estado) apenas carga la
@@ -59,21 +54,6 @@
     .carga-inline-hint.show { display: flex; }
     .carga-inline-hint i { color: #d97706; }
 
-    /* Panel permanente de advertencias (widgets Tipo=Advertencia, Subtipo=Plantilla) */
-    .carga-advertencias-panel { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; }
-    .carga-advertencias-titulo { font-size: 0.85rem; font-weight: 700; color: #92400e; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem; }
-    .carga-advertencias-titulo i { color: #f59e0b; }
-    .carga-advertencias-desc { font-size: 0.78rem; color: #6c757d; margin-bottom: 0.6rem; }
-    .carga-advertencia-item {
-        display: flex; align-items: flex-start; gap: 0.6rem;
-        background: #fff; border: 1px solid rgba(22,9,51,.08); border-left: 4px solid #A0A0B8;
-        border-radius: 8px; padding: 0.55rem 0.8rem; margin-bottom: 0.5rem; font-size: 0.82rem; color: #393F45;
-    }
-    .carga-advertencia-item:last-child { margin-bottom: 0; }
-    .carga-adv-success { border-left-color: #22c55e; } .carga-adv-success i { color: #22c55e; }
-    .carga-adv-warning { border-left-color: #f59e0b; } .carga-adv-warning i { color: #f59e0b; }
-    .carga-adv-error   { border-left-color: #ef4444; } .carga-adv-error i   { color: #ef4444; }
-
     /* Alerta "Confirmar carga": icono y título un poco más pequeños */
     .swal-carga-compact .swal2-icon {
         width: 3.4em;
@@ -82,41 +62,6 @@
     }
     .swal-carga-compact .swal2-icon .swal2-icon-content { font-size: 2.4em; }
     .swal-carga-compact .swal2-title { font-size: 1.2rem; }
-
-    /* Modal de advertencias del cargue: compacto, sin el icono circular grande de SweetAlert2 */
-    .swal-adv-compact { width: 440px !important; padding: 1.1rem 1.1rem 1.4rem !important; }
-    .swal-adv-compact .swal2-html-container { margin: 0; text-align: left; }
-    .swal-adv-compact .swal2-actions { margin-top: 1rem; }
-    .swal-adv-compact .swal2-confirm,
-    .swal-adv-compact .swal2-cancel {
-        font-size: 0.8rem !important;
-        padding: 0.45em 1.1em !important;
-    }
-
-    .swal-adv-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.65rem; }
-    .swal-adv-header-icon {
-        width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
-        background: rgba(245, 158, 11, 0.15); color: #f59e0b;
-        display: flex; align-items: center; justify-content: center; font-size: 0.85rem;
-    }
-    .swal-adv-header-titulo { font-size: 0.95rem; font-weight: 700; }
-    .swal-adv-count {
-        display: inline-block; background: #f59e0b; color: #1a1240; font-size: 0.68rem; font-weight: 700;
-        border-radius: 99px; padding: 0.05rem 0.5rem; margin-left: 0.3rem; vertical-align: middle;
-    }
-
-    .swal-adv-lista { max-height: 220px; overflow-y: auto; padding-right: 4px; }
-    .swal-adv-item {
-        display: flex; align-items: flex-start; gap: 0.5rem;
-        background: rgba(255, 255, 255, 0.04); border-left: 3px solid #A0A0B8;
-        border-radius: 6px; padding: 0.5rem 0.65rem; margin-bottom: 0.4rem;
-    }
-    .swal-adv-item:last-child { margin-bottom: 0; }
-    .swal-adv-item i { font-size: 0.8rem; margin-top: 0.15rem; flex-shrink: 0; }
-    .swal-adv-item-body { min-width: 0; }
-    .swal-adv-item-titulo { font-size: 0.8rem; font-weight: 700; margin-bottom: 0.1rem; }
-    .swal-adv-item-msg { font-size: 0.76rem; line-height: 1.4; opacity: 0.9; }
-    .swal-adv-pregunta { margin: 0.75rem 0 0; font-size: 0.82rem; font-weight: 600; text-align: center; }
 
     /* Modal de resultado del cargue (única forma en que se muestra el resultado ahora — ya no hay
        tabla de detalle aparte en la página): resumen compacto de chips + stats + hojas. */
@@ -325,11 +270,6 @@
     </div>
 
 </div>
-
-<!-- Formulario oculto: deshacer el cargue recién hecho si el usuario decide no continuar -->
-<form id="frmDeshacerCargue" method="post" action="@Url.Action("DeshacerCargue", "Datos")" style="display:none">
-    @Html.AntiForgeryToken()
-</form>
 
 <!-- Overlay de procesamiento -->
 <div id="overlayProcesando" class="overlay-cargando" style="display:none;">
@@ -846,11 +786,6 @@
             faltaEmpresa: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_FaltaEmpresa))',
             faltaAnio: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_FaltaAnio))',
             faltaArchivo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_FaltaArchivo))',
-            advertenciasTitulo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_AdvertenciasTitulo))',
-            advertenciasPregunta: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_AdvertenciasPregunta))',
-            siContinuar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SiContinuar))',
-            noDeshacer: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_NoDeshacer))',
-            sinDeshacer: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_SinDeshacer))',
             entendido: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_Entendido))',
             tituloExito: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Exito))',
             tituloError: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error))',
@@ -859,9 +794,7 @@
             detalleHojasLabel: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Datos_JS_DetalleHojasLabel))'
         };
 
-        var _advertenciasCargue = @Html.Raw(advertenciasJson);
         var _resultadoCargue = @Html.Raw(resultadoCargueJson);
-        var _puedeDeshacerCargue = @((resultado != null && resultado.PuedeDeshacerCargue) ? "true" : "false");
 
         var _pcdUrls = {
             anios: '@Url.Action("ObtenerAniosConDatos", "Datos")',
@@ -884,55 +817,6 @@
             if (btn) {
                 btn.setAttribute('title', txt);
                 btn.style.pointerEvents = habilitado ? 'auto' : 'none';
-            }
-        }
-
-        // ── Advertencias del cargue (widgets Tipo=Advertencia, Subtipo=Plantilla) ──
-        function mostrarAdvertenciasCargueSiHay() {
-            if (!_advertenciasCargue || !_advertenciasCargue.length) return;
-
-            var colores = { success: '#22c55e', warning: '#f59e0b', error: '#ef4444' };
-            var iconos  = { success: 'fa-check-circle', warning: 'fa-exclamation-triangle', error: 'fa-times-circle' };
-            var n = _advertenciasCargue.length;
-
-            var items = _advertenciasCargue.map(function (a) {
-                var sev = a.severidad || 'warning';
-                var titulo = a.titulo ? '<div class="swal-adv-item-titulo">' + a.titulo + '</div>' : '';
-                return '<div class="swal-adv-item" style="border-left-color:' + colores[sev] + ';">' +
-                       '<i class="fas ' + iconos[sev] + '" style="color:' + colores[sev] + ';"></i>' +
-                       '<div class="swal-adv-item-body">' + titulo + '<div class="swal-adv-item-msg">' + a.mensaje + '</div></div>' +
-                       '</div>';
-            }).join('');
-
-            var contador = n > 1 ? ' <span class="swal-adv-count">' + n + '</span>' : '';
-            var header =
-                '<div class="swal-adv-header">' +
-                    '<span class="swal-adv-header-icon"><i class="fas fa-exclamation-triangle"></i></span>' +
-                    '<span class="swal-adv-header-titulo">' + _datosMsg.advertenciasTitulo + contador + '</span>' +
-                '</div>';
-
-            var lista = '<div class="swal-adv-lista">' + items + '</div>';
-
-            if (_puedeDeshacerCargue) {
-                Swal.fire({
-                    html: header + lista + '<p class="swal-adv-pregunta">' + _datosMsg.advertenciasPregunta + '</p>',
-                    customClass: { popup: 'swal-adv-compact' },
-                    showCancelButton: true,
-                    reverseButtons: true,
-                    focusCancel: true,
-                    confirmButtonText: _datosMsg.siContinuar,
-                    cancelButtonText: _datosMsg.noDeshacer
-                }).then(function (result) {
-                    if (!result.isConfirmed) {
-                        document.getElementById('frmDeshacerCargue').submit();
-                    }
-                });
-            } else {
-                Swal.fire({
-                    html: header + lista + '<p class="swal-adv-pregunta">' + _datosMsg.sinDeshacer + '</p>',
-                    customClass: { popup: 'swal-adv-compact' },
-                    confirmButtonText: _datosMsg.entendido
-                });
             }
         }
 
@@ -999,9 +883,12 @@
             });
         }
 
+        var _prefillCargue = @(ViewBag.PrefillEmpresa != null && ViewBag.PrefillAnio != null
+            ? Html.Raw("{ empresa: " + (int)ViewBag.PrefillEmpresa + ", anio: " + (int)ViewBag.PrefillAnio + ", escenario: " + (ViewBag.PrefillEscenario != null ? ((int)ViewBag.PrefillEscenario).ToString() : "null") + " }")
+            : Html.Raw("null"));
+
         $(document).ready(function () {
             mostrarResultadoCargueSiHay();
-            mostrarAdvertenciasCargueSiHay();
 
             var dropZone = $('#dropZone');
             var fileInput = $('#archivoExcel');
@@ -1066,6 +953,18 @@
                             }
                             selectAnio.html(html);
                             divEscenario.show();
+
+                            // Preselección (viene de "Subir archivo corregido" en Revisar cargue); se aplica una sola vez
+                            if (_prefillCargue) {
+                                var pf = _prefillCargue;
+                                _prefillCargue = null;
+                                if (selectAnio.find('option[value="' + pf.anio + '"]').length) {
+                                    selectAnio.val(String(pf.anio)).trigger('change');
+                                }
+                                if (pf.escenario && $('#selectEscenario option[value="' + pf.escenario + '"]').length) {
+                                    $('#selectEscenario').val(String(pf.escenario));
+                                }
+                            }
                         } else {
                             divAnio.hide();
                             divEscenario.hide();
@@ -1084,6 +983,13 @@
                 $('#modoSeleccionado').val(modo);
                 estadoBotonCargar();
             });
+
+            // Dispara la preselección si la página se abrió con ?idEmpresa=&anio=&idEscenario=
+            if (_prefillCargue && $('#idEmpresaSeleccionada option[value="' + _prefillCargue.empresa + '"]').length) {
+                $('#idEmpresaSeleccionada').val(String(_prefillCargue.empresa)).trigger('change');
+            } else {
+                _prefillCargue = null;
+            }
 
             // ── Drop Zone ────────────────────────────────────────────────────────
             // Click en zona de drop abre selector de archivos
