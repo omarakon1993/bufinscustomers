@@ -252,6 +252,12 @@ namespace bufinscustomers.Services
             return variables;
         }
 
+        private static bool EsTipoNumerico(Type tipo)
+        {
+            return tipo == typeof(int) || tipo == typeof(short) || tipo == typeof(byte) || tipo == typeof(long)
+                || tipo == typeof(decimal) || tipo == typeof(double) || tipo == typeof(float);
+        }
+
         /// <summary>
         /// Convierte número de mes a abreviatura en español
         /// </summary>
@@ -285,6 +291,7 @@ namespace bufinscustomers.Services
 
                     // Primero verificar qué columnas tiene la tabla
                     List<string> columnasTabla = new List<string>();
+                    Type tipoColumnaMes = null; // el mes se guarda como abreviatura ('Ene') en unas tablas y como número (1-12) en otras
                     string querySchema = string.Format("SELECT TOP 0 * FROM dbo.{0}",
                         SqlHelper.EscapeIdentifier(filtros.NombreTabla));
 
@@ -294,6 +301,8 @@ namespace bufinscustomers.Services
                         for (int i = 0; i < schemaReader.FieldCount; i++)
                         {
                             columnasTabla.Add(schemaReader.GetName(i));
+                            if (schemaReader.GetName(i).Equals("Mes", StringComparison.OrdinalIgnoreCase))
+                                tipoColumnaMes = schemaReader.GetFieldType(i);
                         }
                     }
 
@@ -408,14 +417,26 @@ namespace bufinscustomers.Services
                         parametros.Add(new SqlParameter("@Año", filtros.Año.Value));
                     }
 
-                    // Filtro de mes - convertir número a abreviatura
+                    // Filtro de mes: si la columna es numérica (p. ej. ModeloBalance) se compara con el número 1-12;
+                    // si es texto se convierte a la abreviatura en español ('Ene'..'Dic').
                     if (filtros.Mes.HasValue && columnasTabla.Any(c => c.Equals("Mes", StringComparison.OrdinalIgnoreCase)))
                     {
-                        string mesAbrev = ConvertirNumeroAMes(filtros.Mes.Value);
-                        if (!string.IsNullOrEmpty(mesAbrev))
+                        if (EsTipoNumerico(tipoColumnaMes))
                         {
-                            query += $" AND {prefijo}[Mes] = @Mes";
-                            parametros.Add(new SqlParameter("@Mes", mesAbrev));
+                            if (filtros.Mes.Value >= 1 && filtros.Mes.Value <= 12)
+                            {
+                                query += $" AND {prefijo}[Mes] = @Mes";
+                                parametros.Add(new SqlParameter("@Mes", filtros.Mes.Value));
+                            }
+                        }
+                        else
+                        {
+                            string mesAbrev = ConvertirNumeroAMes(filtros.Mes.Value);
+                            if (!string.IsNullOrEmpty(mesAbrev))
+                            {
+                                query += $" AND {prefijo}[Mes] = @Mes";
+                                parametros.Add(new SqlParameter("@Mes", mesAbrev));
+                            }
                         }
                     }
 
