@@ -106,6 +106,11 @@ textarea.ia-text-input { resize:none; overflow-y:auto; max-height:130px; line-he
     </div>
 
     <!-- Filtros -->
+    @if (esAdmin || esAdminEmpresa)
+    {
+        @Html.Partial("_IAConsumoCard")
+    }
+
     <div class="filter-card">
         <h3 class="filter-card-title">
             <i class="fas fa-filter"></i> @Resources.Strings.IA_FilterTitle

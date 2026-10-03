@@ -13,120 +13,29 @@
     <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
     <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
     <style>
-        /* ── Panel de configuración ── */
-        .cfg-ia-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 18px;
-            padding: 20px;
-        }
-        .cfg-ia-card {
-            background: #fff;
-            border-radius: 14px;
-            border: 1px solid #ede9fe;
-            box-shadow: 0 2px 12px rgba(22,9,51,.08);
-            overflow: hidden;
-            transition: box-shadow .2s;
-        }
-        .cfg-ia-card:hover { box-shadow: 0 4px 20px rgba(22,9,51,.15); }
-        .cfg-ia-card-header {
-            background: var(--content-gradient);
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .cfg-ia-card-icon {
-            width: 34px; height: 34px;
-            background: rgba(255,255,255,.18);
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            color: #fff; font-size: 1rem;
-        }
-        .cfg-ia-card-title {
-            font-size: .82rem; font-weight: 700; color: #fff;
-            font-family: 'Courier New', monospace; letter-spacing: .3px;
-        }
-        .cfg-ia-card-body { padding: 16px; }
-        .cfg-ia-desc {
-            font-size: .75rem; color: #6b7280; margin-bottom: 10px;
-            min-height: 18px;
-        }
-        .cfg-ia-valor-row {
-            display: flex; align-items: center; gap: 8px;
-            background: #f9f8ff; border: 1px solid #e0e7ff;
-            border-radius: 8px; padding: 8px 12px;
-        }
-        .cfg-ia-valor-text {
-            flex: 1; font-size: .82rem; color: #374151;
-            font-family: 'Courier New', monospace;
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-        }
-        .cfg-ia-valor-text.masked { color: #9ca3af; font-style: italic; }
-        .cfg-ia-actions { display: flex; gap: 6px; margin-top: 12px; }
-        /* Botón "Cargar modelos" */
-        .btn-load-models {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 14px; font-size: .78rem; font-weight: 600;
-            border: 1.5px solid #583AFF; border-radius: 8px;
-            background: #fff; color: #583AFF; cursor: pointer;
-            transition: all .2s; white-space: nowrap;
-        }
-        .btn-load-models:hover { background: #583AFF; color: #fff; }
-        .btn-load-models:disabled { opacity: .6; cursor: not-allowed; }
-        /* Hint badge verde OK */
-        .modelos-badge {
-            display: inline-flex; align-items: center; gap: 4px;
-            font-size: .72rem; color: #065f46; background: #d1fae5;
-            border: 1px solid #6ee7b7; border-radius: 999px;
-            padding: 2px 10px; margin-top: 4px;
-        }
-        /* Custom modelo dropdown */
+        /* ── Selector de modelos (OpenAI): campo único, claro, con la lista desplegable integrada ── */
         .modelo-select-wrap { position: relative; }
-        .modelos-dropdown {
-            position: absolute;
-            top: calc(100% + 2px); left: 0; right: 0;
-            background: #fff;
-            border: 1.5px solid #583AFF;
-            border-radius: 10px;
-            box-shadow: 0 8px 28px rgba(22,9,51,.18);
-            z-index: 1060;
-            overflow: hidden;
-        }
-        .modelos-search-wrap {
-            padding: 8px 10px 6px;
-            border-bottom: 1px solid #ede9fe;
-            background: #f9f8ff;
-        }
-        .modelos-search-wrap input {
-            width: 100%; border: 1px solid #c4b5fd; border-radius: 6px;
-            padding: 4px 10px; font-size: .78rem; outline: none;
-            background: #fff; color: #374151;
-        }
-        .modelos-search-wrap input:focus { border-color: #583AFF; }
-        .modelos-lista {
-            max-height: 200px;
-            overflow-y: auto;
-            padding: 4px 0;
-        }
-        .modelos-lista::-webkit-scrollbar { width: 5px; }
-        .modelos-lista::-webkit-scrollbar-track { background: #f3f0ff; }
-        .modelos-lista::-webkit-scrollbar-thumb { background: #a5b4fc; border-radius: 4px; }
-        .modelo-item {
-            padding: 7px 14px; font-size: .82rem;
-            font-family: 'Courier New', monospace;
-            cursor: pointer; color: #374151;
-            border-bottom: 1px solid #f5f3ff;
-            transition: background .1s;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .modelo-item:last-child { border-bottom: none; }
-        .modelo-item:hover { background: #ede9fe; color: #583AFF; }
-        .modelo-item.activo { background: #583AFF; color: #fff; font-weight: 600; }
-        .modelo-item strong { color: inherit; text-decoration: underline; }
-        .modelo-item-empty {
-            padding: 12px 14px; font-size: .78rem; color: #9ca3af; text-align: center;
-        }
+        .mp-field { display: flex; align-items: center; background: #fff; border: 1px solid #d9dce6; border-radius: 8px; transition: border-color .15s, box-shadow .15s; }
+        .mp-field:focus-within { border-color: #583AFF; box-shadow: 0 0 0 3px rgba(88,58,255,.14); }
+        .mp-input { flex: 1; min-width: 0; border: 0; background: transparent; outline: 0; padding: 6px 4px 6px 10px; font-size: .84rem; color: #2d3748; }
+        .mp-input::placeholder { color: #9ca3af; }
+        .mp-btn { width: 30px; height: 30px; border: 0; background: transparent; color: #8b90a0; border-radius: 6px; margin-right: 2px; display: inline-flex; align-items: center; justify-content: center; font-size: .75rem; cursor: pointer; transition: background .15s, color .15s; }
+        .mp-btn:hover { background: #f1effc; color: #583AFF; }
+        .mp-btn:focus-visible { outline: 2px solid #583AFF; outline-offset: -2px; }
+        .mp-btn + .mp-btn { margin-left: 0; }
+        .mp-field .mp-sep { width: 1px; height: 18px; background: #e5e7ee; margin: 0 2px; }
+        .modelos-dropdown { position: absolute; top: calc(100% + 6px); left: 0; right: 0; min-width: 220px; background: #fff; border: 1px solid #e3e6f0; border-radius: 10px; box-shadow: 0 12px 32px rgba(22,9,51,.14); z-index: 1060; overflow: hidden; }
+        .modelos-lista { max-height: 220px; overflow-y: auto; padding: 4px; }
+        .modelos-lista::-webkit-scrollbar { width: 6px; }
+        .modelos-lista::-webkit-scrollbar-thumb { background: #d6d3ee; border-radius: 4px; }
+        .modelo-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: 7px; font-size: .82rem; color: #374151; cursor: pointer; white-space: nowrap; }
+        .modelo-item:hover, .modelo-item.hl { background: #f4f3fb; color: #2d3748; }
+        .modelo-item.activo { background: rgba(88,58,255,.09); color: #583AFF; font-weight: 700; }
+        .modelo-item.activo i { color: #583AFF; font-size: .72rem; }
+        .modelo-item.mp-vacio { color: #6b7280; font-style: italic; border-bottom: 1px solid #f0eef8; border-radius: 7px 7px 0 0; margin-bottom: 2px; }
+        .modelo-item-empty { padding: 12px; font-size: .78rem; color: #9ca3af; text-align: center; }
+        .mp-foot { padding: 6px 12px; font-size: .72rem; color: #6b7280; border-top: 1px solid #f0eef8; background: #fbfaff; }
+        .mp-foot.err { color: #b91c1c; }
         /* Input password toggle */
         .input-pass-wrap { position: relative; }
         .input-pass-wrap .btn-eye {
@@ -134,15 +43,137 @@
             background: none; border: none; color: #9ca3af; cursor: pointer; padding: 0;
         }
         .input-pass-wrap .btn-eye:hover { color: #583AFF; }
-        /* Separador nueva cfg */
-        .cfg-nueva-section {
-            padding: 0 20px 20px;
+        /* ── Pestaña General: parámetros agrupados, en filas compactas ── */
+        .cfgg-wrap { padding: 16px 20px 24px; }
+        .cfgg-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+        .cfgg-search { position: relative; flex: 1; min-width: 220px; max-width: 420px; }
+        .cfgg-search i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: .8rem; }
+        .cfgg-search input { width: 100%; padding: 7px 12px 7px 32px; border: 1px solid #e3e6f0; border-radius: 999px; font-size: .84rem; background: #fff; outline: none; }
+        .cfgg-search input:focus { border-color: #583AFF; box-shadow: 0 0 0 3px rgba(88,58,255,.12); }
+        .cfgg-toolbar .btn-modern-success { margin-left: auto; padding: 7px 16px; font-size: .82rem; }
+        .cfgg-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .cfgg-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; font-size: .76rem; font-weight: 600; background: #f4f3fb; color: #3b3f66; border: 1px solid #e0ddf0; }
+        .cfgg-chip b { font-family: 'Courier New', monospace; font-weight: 700; color: #160933; }
+        .cfgg-chip.ok { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
+        .cfgg-chip.bad { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+        .cfgg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 16px; align-items: start; }
+        .cfgg-group { background: #fff; border: 1px solid #e3e6f0; border-radius: 12px; box-shadow: 0 2px 8px rgba(22,9,51,.05); overflow: hidden; }
+        .cfgg-group > header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #f8f9fc; border-bottom: 1px solid #e3e6f0; }
+        .cfgg-group > header .ic { width: 28px; height: 28px; border-radius: 8px; background: var(--content-gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-size: .8rem; }
+        .cfgg-group > header h3 { margin: 0; font-size: .9rem; font-weight: 800; color: #2d3748; flex: 1; }
+        .cfgg-count { font-size: .7rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: rgba(88,58,255,.1); color: #583AFF; }
+        .cfgg-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 9px 14px; border-top: 1px solid #f0eef8; }
+        .cfgg-row:first-of-type { border-top: 0; }
+        .cfgg-row:hover { background: #fbfaff; }
+        .cfgg-key { font-family: 'Courier New', monospace; font-size: .78rem; font-weight: 700; color: #160933; }
+        .cfgg-desc { font-size: .74rem; color: #6b7280; line-height: 1.35; margin-top: 1px; }
+        .cfgg-val { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'Courier New', monospace; font-size: .78rem; padding: 3px 10px; border-radius: 6px; background: #f4f3fb; color: #374151; border: 1px solid #e8e5f5; }
+        .cfgg-val.masked { color: #9ca3af; font-style: italic; }
+        .cfgg-act { display: flex; gap: 4px; }
+        .cfgg-ico { width: 28px; height: 28px; border-radius: 8px; border: 1px solid #e3e6f0; background: #fff; color: #5b6472; font-size: .78rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all .15s; }
+        .cfgg-ico:hover { border-color: #583AFF; color: #583AFF; background: #f4f3fb; }
+        .cfgg-ico.danger:hover { border-color: #ef4444; color: #b91c1c; background: #fef2f2; }
+        .cfgg-vacio { text-align: center; color: #9ca3af; padding: 24px; display: none; }
+        @@media (max-width: 768px) {
+            .cfgg-wrap { padding: 12px; }
+            .cfgg-grid { grid-template-columns: 1fr; }
+            .cfgg-row { grid-template-columns: minmax(0, 1fr) auto; }
+            .cfgg-val { grid-column: 1; max-width: 100%; }
+            .cfgg-act { grid-column: 2; grid-row: 1; }
         }
+
+        /* ── Pestañas Por Empresa y Uso y costos (mismo lenguaje que General: cfgg-*) ── */
+        .cfge-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+        .cfge-pick { flex: 1; min-width: 240px; max-width: 440px; }
+        .cfge-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+        .cfge-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+        .cfge-card { background: #fff; border: 1px solid #e3e6f0; border-radius: 12px; box-shadow: 0 2px 8px rgba(22,9,51,.05); overflow: hidden; }
+        .cfge-card > header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #f8f9fc; border-bottom: 1px solid #e3e6f0; }
+        .cfge-card > header .ic { width: 28px; height: 28px; border-radius: 8px; background: var(--content-gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-size: .8rem; flex-shrink: 0; }
+        .cfge-card > header h3 { margin: 0; font-size: .9rem; font-weight: 800; color: #2d3748; flex: 1; }
+        .cfge-body { padding: 14px 16px; }
+        /* El formulario aloja el desplegable de modelos: no puede recortarlo (overflow visible) */
+        #cfgeForm { overflow: visible; }
+        #cfgeForm > header { border-radius: 12px 12px 0 0; }
+        #cfgeForm .cfge-foot { border-radius: 0 0 12px 12px; }
+        .cfge-hero { padding: 16px 18px; }
+        .cfge-hero-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+        .cfge-big { font-size: 2rem; font-weight: 800; line-height: 1; color: #160933; letter-spacing: -.5px; }
+        .cfge-de { font-size: .85rem; color: #6b7280; margin-left: 6px; }
+        .cfge-pct { font-size: .8rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: rgba(88,58,255,.1); color: #583AFF; }
+        .cfge-pct.warn { background: #fef3c7; color: #92400e; }
+        .cfge-pct.bad { background: #fee2e2; color: #b91c1c; }
+        .cfge-track { height: 10px; border-radius: 999px; background: #ede9fe; overflow: hidden; margin: 12px 0 10px; }
+        .cfge-fill { height: 100%; width: 0; background: var(--content-gradient); border-radius: 999px; transition: width .4s ease; }
+        .cfge-fill.agotado { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+        .cfge-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+        .cfge-sec { font-size: .78rem; font-weight: 800; color: #2d3748; margin: 18px 0 8px; padding-bottom: 6px; border-bottom: 1px solid #f0eef8; display: flex; align-items: center; gap: 6px; }
+        .cfge-sec:first-child { margin-top: 0; }
+        .cfge-sec i { color: #583AFF; }
+        .cfge-grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+        .cfge-field label { font-size: .78rem; font-weight: 700; color: #374151; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .cfge-field .form-control { font-size: .84rem; }
+        .cfge-info { color: #9ca3af; font-size: .72rem; cursor: help; }
+        .cfge-switchrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid #e3e6f0; border-radius: 10px; background: #fbfaff; }
+        .cfge-switchrow b { font-size: .84rem; color: #2d3748; }
+        .cfge-switchrow small { display: block; color: #6b7280; font-size: .74rem; }
+        .cfge-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+        .cfge-pill { position: relative; margin: 0; }
+        .cfge-pill input { position: absolute; opacity: 0; pointer-events: none; }
+        .cfge-pill span { display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 999px; border: 1px solid #e0ddf0; background: #fff; font-size: .8rem; font-weight: 600; color: #5b6472; cursor: pointer; transition: all .15s; }
+        .cfge-pill input:checked + span { background: var(--content-gradient); border-color: transparent; color: #fff; }
+        .cfge-pill input:focus-visible + span { outline: 2px solid #583AFF; outline-offset: 2px; }
+        .cfge-foot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 10px 16px; border-top: 1px solid #e3e6f0; background: #f8f9fc; }
+        .cfge-dirty { font-size: .78rem; color: #6b7280; margin-right: auto; }
+        .cfge-dirty.on { color: #92400e; font-weight: 700; }
+        .cfge-desc { font-size: .76rem; color: #6b7280; padding: 10px 14px 6px; margin: 0; }
+        .cfge-users { max-height: 520px; overflow-y: auto; }
+        .cfge-user { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-top: 1px solid #f0eef8; }
+        .cfge-avatar { width: 30px; height: 30px; border-radius: 50%; background: #ede9fe; color: #583AFF; font-size: .72rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .cfge-uinfo { flex: 1; min-width: 0; }
+        .cfge-uinfo .n, .cfge-uinfo .m { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cfge-uinfo .n { font-size: .84rem; font-weight: 700; color: #2d3748; }
+        .cfge-uinfo .m { font-size: .72rem; color: #6b7280; }
+        .cfge-user.off .cfge-uinfo .n { color: #9ca3af; text-decoration: line-through; }
+
+        .cfgu-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+        .cfgu-seg { display: inline-flex; gap: 2px; padding: 3px; background: #f4f3fb; border: 1px solid #e0ddf0; border-radius: 9px; }
+        .cfgu-seg button { border: 0; background: transparent; font-size: .78rem; font-weight: 700; color: #5B5570; padding: 5px 12px; border-radius: 7px; cursor: pointer; }
+        .cfgu-seg button.active { background: #fff; color: #583AFF; box-shadow: 0 1px 3px rgba(22,9,51,.12); }
+        .cfgu-dates { display: flex; align-items: center; gap: 6px; }
+        .cfgu-dates input { width: auto; padding: 4px 8px; font-size: .8rem; }
+        .cfgu-clear { margin-left: auto; }
+        .cfgu-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .cfgu-kpi { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #fff; border: 1px solid #e3e6f0; border-radius: 12px; }
+        .cfgu-kpi .ic { width: 34px; height: 34px; border-radius: 10px; background: rgba(88,58,255,.1); color: #583AFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .cfgu-kpi .v { font-size: 1.15rem; font-weight: 800; line-height: 1.1; color: #160933; }
+        .cfgu-kpi .l { font-size: .72rem; color: #6b7280; }
+        .cfgu-chart { display: flex; align-items: flex-end; gap: 2px; height: 140px; padding: 14px 16px 0; }
+        .cfgu-bar { flex: 1; min-width: 2px; background: var(--content-gradient); border-radius: 3px 3px 0 0; opacity: .85; }
+        .cfgu-bar:hover { opacity: 1; }
+        .cfgu-bar.vacia { background: #e5e7eb; opacity: 1; height: 2px !important; }
+        .cfgu-axis { display: flex; justify-content: space-between; padding: 4px 16px 12px; font-size: .7rem; color: #9ca3af; }
+        .cfgu-ranks { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin: 16px 0; align-items: start; }
+        .cfgu-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; padding: 8px 14px; border-top: 1px solid #f0eef8; align-items: center; }
+        .cfgu-row .n { font-size: .82rem; font-weight: 700; color: #2d3748; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cfgu-row .v { font-size: .76rem; color: #374151; text-align: right; white-space: nowrap; }
+        .cfgu-row .e { color: #b91c1c; font-weight: 800; margin-left: 6px; }
+        .cfgu-row .bar { grid-column: 1 / -1; height: 5px; border-radius: 999px; background: #f0eef8; overflow: hidden; }
+        .cfgu-row .bar i { display: block; height: 100%; background: var(--content-gradient); }
+        .cfgu-vacio { padding: 18px; text-align: center; color: #9ca3af; font-size: .82rem; }
+        .cfgu-err summary { cursor: pointer; padding: 10px 14px; font-size: .88rem; font-weight: 800; color: #2d3748; list-style: none; }
+        .cfgu-err summary::-webkit-details-marker { display: none; }
+        .cfgu-err summary i { color: #b91c1c; margin-right: 6px; }
+        @@media (max-width: 992px) {
+            .cfge-layout { grid-template-columns: 1fr; }
+            .cfgu-clear { margin-left: 0; }
+        }
+
         /* ── Tabs General / Por Empresa — segmented control con "thumb" deslizante (mismo lenguaje visual que AuditoriaHub) ── */
         .cfgia-seg {
-            position: relative; display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
+            position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
             padding: 6px; background: #eef0f4; border: 1px solid #e3e6eb; border-radius: 999px;
-            max-width: 360px; margin: 18px 20px 0;
+            max-width: 540px; margin: 18px 20px 0;
         }
         .cfgia-seg-thumb {
             position: absolute; left: 0; top: 0; width: 0; height: 0; border-radius: 999px;
@@ -163,13 +194,6 @@
         @@media (prefers-reduced-motion: reduce) { .cfgia-seg-thumb { transition: none; } }
 
         .cfg-ia-emp-panel { padding:20px; }
-        .cfg-ia-emp-barra-track { background:#ede9fe; border-radius:999px; height:10px; overflow:hidden; }
-        .cfg-ia-emp-barra-fill { height:100%; background:var(--content-gradient); width:0%; transition:width .4s ease; }
-        .cfg-ia-emp-barra-fill.agotado { background:linear-gradient(135deg,#ef4444,#b91c1c); }
-        .cfg-ia-emp-acceso-btn { min-width:120px; border-radius: 999px !important; font-weight:600; }
-        .cfg-ia-emp-presupuesto-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-        .cfg-ia-emp-presupuesto-row input[type="number"] { max-width:260px; }
-        #empUsuariosBody td { vertical-align: middle; }
     </style>
 </head>
 <body>
@@ -192,82 +216,107 @@
         <button type="button" class="cfgia-seg-btn" data-tab="empresa">
             <i class="fas fa-building"></i>@Resources.Strings.CfgIA_TabPorEmpresa
         </button>
+        <button type="button" class="cfgia-seg-btn" data-tab="uso">
+            <i class="fas fa-chart-line"></i>@Resources.Strings.CfgIA_TabUso
+        </button>
     </div>
 
     <div id="panelGeneral">
 
-    <!-- ── Grid de tarjetas ── -->
-    @if (!Model.Any())
-    {
-        <div class="card shadow mb-4">
-            <div class="card-body text-center text-muted py-4">
-                <i class="fas fa-cog fa-2x mb-2"></i>
-                <p>@Resources.Strings.CfgIA_NoItems</p>
-            </div>
-        </div>
+    @{
+        Func<string, string> valorDe = k => Model.FirstOrDefault(i => i.Clave == k)?.Valor;
+        bool hayClave = !string.IsNullOrWhiteSpace(valorDe("OpenAIApiKey"));
+        var gruposCfg = new[]
+        {
+            new { Icono = "fas fa-plug", Titulo = Resources.Strings.CfgIA_G_Proveedor,
+                  Claves = new[] { "OpenAIApiKey", "OpenAIModel", "IA_ModeloEconomico", "OpenAIMaxTokens", "OpenAITemperature" } },
+            new { Icono = "fas fa-coins", Titulo = Resources.Strings.CfgIA_G_Presupuesto,
+                  Claves = new[] { "IA_TokensMensualesPorEmpresa", "IA_CostoPor1kTokensPrompt", "IA_CostoPor1kTokensRespuesta" } },
+            new { Icono = "fas fa-bolt", Titulo = Resources.Strings.CfgIA_G_Cache,
+                  Claves = new[] { "IA_CacheHoras", "IA_MaxCaracteresPregunta" } }
+        };
+        var clavesAgrupadas = gruposCfg.SelectMany(g => g.Claves).ToList();
+        var otrosCfg = Model.Where(i => !clavesAgrupadas.Contains(i.Clave)).ToList();
+        string modeloCfg = valorDe("OpenAIModel");
+        string tokensCfg = valorDe("OpenAIMaxTokens");
+        string cacheCfg = valorDe("IA_CacheHoras");
     }
-    else
+
+    <div class="cfgg-wrap">
+        <div class="cfgg-toolbar">
+            <div class="cfgg-search">
+                <i class="fas fa-search"></i>
+                <input type="text" id="cfggBuscar" placeholder="@Resources.Strings.CfgIA_G_Buscar" autocomplete="off" />
+            </div>
+            <button type="button" class="btn-modern-success" onclick="abrirNuevo()">
+                <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.CfgIA_BtnCrear
+            </button>
+        </div>
+
+        <div class="cfgg-chips">
+            <span class="cfgg-chip @(hayClave ? "ok" : "bad")"><i class="fas @(hayClave ? "fa-check-circle" : "fa-exclamation-circle")"></i>@(hayClave ? Resources.Strings.CfgIA_G_ChipClaveOk : Resources.Strings.CfgIA_G_ChipClaveNo)</span>
+            @if (!string.IsNullOrWhiteSpace(modeloCfg)) { <span class="cfgg-chip">@Resources.Strings.CfgIA_G_ChipModelo <b>@modeloCfg</b></span> }
+            @if (!string.IsNullOrWhiteSpace(tokensCfg)) { <span class="cfgg-chip">@Resources.Strings.CfgIA_G_ChipTokens <b>@tokensCfg</b></span> }
+            @if (!string.IsNullOrWhiteSpace(cacheCfg)) { <span class="cfgg-chip">@Resources.Strings.CfgIA_G_ChipCache <b>@cacheCfg @Resources.Strings.CfgIA_G_Horas</b></span> }
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="no-data-message">
+                <i class="fas fa-cog"></i>
+                <h4>@Resources.Strings.CfgIA_NoItems</h4>
+            </div>
+        }
+        else
+        {
+            <div class="cfgg-grid" id="cfggGrid">
+                @foreach (var g in gruposCfg)
+                {
+                    var items = g.Claves.Select(k => Model.FirstOrDefault(i => i.Clave == k)).Where(i => i != null).ToList();
+                    if (!items.Any()) { continue; }
+                    @RenderGrupo(g.Icono, g.Titulo, items)
+                }
+                @if (otrosCfg.Any())
+                {
+                    @RenderGrupo("fas fa-cog", Resources.Strings.CfgIA_G_Otros, otrosCfg)
+                }
+            </div>
+            <div class="cfgg-vacio" id="cfggVacio"><i class="fas fa-search mr-1"></i>@Resources.Strings.CfgIA_G_SinResultados</div>
+        }
+    </div>
+
+    @helper RenderGrupo(string icono, string titulo, List<bufinscustomers.Models.ConfiguracionSistemaItem> items)
     {
-        <div class="cfg-ia-grid">
-            @foreach (var item in Model)
+        <section class="cfgg-group">
+            <header>
+                <span class="ic"><i class="@icono"></i></span>
+                <h3>@titulo</h3>
+                <span class="cfgg-count">@items.Count</span>
+            </header>
+            @foreach (var item in items)
             {
-                bool esApiKey  = item.Clave == "OpenAIApiKey";
-                bool esModelo  = item.Clave == "OpenAIModel";
-                bool esTokens  = item.Clave == "OpenAIMaxTokens";
-
-                string iconoCls = esApiKey  ? "fas fa-key"
-                                : esModelo  ? "fas fa-robot"
-                                : esTokens  ? "fas fa-tachometer-alt"
-                                :             "fas fa-cog";
-
-                // Los secretos ya llegan enmascarados desde el servicio; el resto se muestra tal cual.
-                string valorVisible = item.EsSecreta
-                    ? (string.IsNullOrEmpty(item.Valor) ? "—" : item.Valor)
-                    : (item.Valor ?? "—");
-
-                <div class="cfg-ia-card">
-                    <div class="cfg-ia-card-header">
-                        <div class="cfg-ia-card-icon"><i class="@iconoCls"></i></div>
-                        <div class="cfg-ia-card-title">@item.Clave</div>
+                string valorVisible = string.IsNullOrEmpty(item.Valor) ? "—" : item.Valor;
+                <div class="cfgg-row" data-buscar="@((item.Clave + " " + item.Descripcion + " " + (item.EsSecreta ? "" : item.Valor)).ToLowerInvariant())">
+                    <div>
+                        <div class="cfgg-key">@item.Clave</div>
+                        <div class="cfgg-desc">@(string.IsNullOrWhiteSpace(item.Descripcion) ? "—" : item.Descripcion)</div>
                     </div>
-                    <div class="cfg-ia-card-body">
-                        <div class="cfg-ia-desc">
-                            @(string.IsNullOrWhiteSpace(item.Descripcion) ? "—" : item.Descripcion)
-                        </div>
-                        <div class="cfg-ia-valor-row">
-                            <span class="cfg-ia-valor-text @(item.EsSecreta ? "masked" : "")">@valorVisible</span>
-                            @if (item.EsSecreta)
-                            {
-                                <small class="text-muted" style="font-size:.68rem;white-space:nowrap;">
-                                    <i class="fas fa-lock"></i> @Resources.Strings.CfgIA_LabelMasked
-                                </small>
-                            }
-                        </div>
-                        <div class="cfg-ia-actions">
-                            <button type="button" class="btn btn-primary btn-sm"
-                                    title="@Resources.Strings.CfgIA_TitleEditar"
-                                    onclick="abrirEditar('@Html.Raw(item.Clave)', '@Html.Raw(item.EsSecreta ? "" : (item.Valor ?? "").Replace("'", "\\'"))', '@Html.Raw((item.Descripcion ?? "").Replace("'", "\\'"))')">
-                                <i class="fas fa-edit mr-1"></i>@Resources.Strings.CfgIA_TitleEditar
-                            </button>
-                            <button type="button" class="btn btn-danger btn-sm"
-                                    title="@Resources.Strings.CfgIA_TitleEliminar"
-                                    onclick="abrirEliminar('@Html.Raw(item.Clave)')">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </div>
+                    <span class="cfgg-val @(item.EsSecreta ? "masked" : "")" title="@(item.EsSecreta ? "" : valorVisible)">
+                        @if (item.EsSecreta) { <i class="fas fa-lock mr-1"></i> }@valorVisible
+                    </span>
+                    <div class="cfgg-act">
+                        <button type="button" class="cfgg-ico cfgg-editar" title="@Resources.Strings.CfgIA_TitleEditar"
+                                data-clave="@item.Clave" data-valor="@(item.EsSecreta ? "" : (item.Valor ?? ""))" data-desc="@(item.Descripcion ?? "")">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                        <button type="button" class="cfgg-ico danger cfgg-eliminar" title="@Resources.Strings.CfgIA_TitleEliminar" data-clave="@item.Clave">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
                 </div>
             }
-        </div>
+        </section>
     }
-
-    <!-- ── Botón Nueva configuración ── -->
-    <div class="cfg-nueva-section">
-        <button type="button" class="btn-modern-success"
-                onclick="abrirNuevo()">
-            <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.CfgIA_BtnCrear
-        </button>
-    </div>
 
     </div><!-- /panelGeneral -->
 
@@ -276,12 +325,9 @@
     ══════════════════════════════════════ -->
     <div id="panelPorEmpresa" class="cfg-ia-emp-panel" style="display:none;">
 
-        <div class="filter-card" style="margin-bottom:18px;">
-            <div class="form-group" style="max-width:420px;margin-bottom:0;">
-                <label class="form-label" style="font-weight:600;">
-                    <i class="fas fa-building mr-1" style="color:#583AFF;"></i>@Resources.Strings.CfgIA_Emp_SelLabel
-                </label>
-                <select id="selEmpresaIA" class="form-control select2" style="width:100%;">
+        <div class="cfge-toolbar">
+            <div class="cfge-pick">
+                <select id="selEmpresaIA" class="form-control select2" style="width:100%;" aria-label="@Resources.Strings.CfgIA_Emp_SelLabel">
                     <option value="">@Resources.Strings.CfgIA_Emp_SelPlaceholder</option>
                     @foreach (var empresa in ViewBag.Empresas)
                     {
@@ -289,6 +335,7 @@
                     }
                 </select>
             </div>
+            <span id="empEstado" class="cfgg-chip" style="display:none;"></span>
         </div>
 
         <div id="empresaIAVacio" class="no-data-message">
@@ -301,57 +348,180 @@
         </div>
 
         <div id="empresaIAContenido" style="display:none;">
+            <div class="cfge-layout">
 
-            <div class="cfg-ia-card" style="margin-bottom:18px;">
-                <div class="cfg-ia-card-header">
-                    <div class="cfg-ia-card-icon"><i class="fas fa-chart-pie"></i></div>
-                    <div class="cfg-ia-card-title">@Resources.Strings.CfgIA_Emp_ConsumoTitulo</div>
+                <div class="cfge-main">
+                    <!-- Consumo del periodo -->
+                    <section class="cfge-card cfge-hero" aria-label="@Resources.Strings.CfgIA_Emp_ConsumoTitulo">
+                        <div class="cfge-hero-top">
+                            <div><span class="cfge-big" id="empConsumoNum">0</span><span class="cfge-de" id="empConsumoDe"></span></div>
+                            <span class="cfge-pct" id="empConsumoPct"></span>
+                        </div>
+                        <div class="cfge-track"><div class="cfge-fill" id="empConsumoBarra"></div></div>
+                        <div class="cfge-meta" id="empConsumoMeta"></div>
+                    </section>
+
+                    <!-- Control de uso -->
+                    <section class="cfge-card" id="cfgeForm">
+                        <header>
+                            <span class="ic"><i class="fas fa-sliders-h"></i></span>
+                            <h3>@Resources.Strings.CfgIA_Emp_ControlTitulo</h3>
+                        </header>
+                        <div class="cfge-body">
+
+                            <div class="cfge-switchrow">
+                                <div>
+                                    <b>@Resources.Strings.CfgIA_Emp_Habilitada</b>
+                                    <small>@Resources.Strings.CfgIA_Emp_HabilitadaHint</small>
+                                </div>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="empHabilitada" />
+                                    <label class="custom-control-label" for="empHabilitada"><span class="sr-only">@Resources.Strings.CfgIA_Emp_Habilitada</span></label>
+                                </div>
+                            </div>
+
+                            <h4 class="cfge-sec"><i class="fas fa-coins"></i>@Resources.Strings.CfgIA_Emp_SecPresupuesto</h4>
+                            <div class="cfge-grid3">
+                                <div class="cfge-field">
+                                    <label for="empPresupuestoInput">@Resources.Strings.CfgIA_Emp_PresupuestoTitulo <i class="fas fa-info-circle cfge-info" title="@Resources.Strings.CfgIA_Emp_PresupuestoHint"></i></label>
+                                    <input type="number" min="0" step="1000" class="form-control" id="empPresupuestoInput" />
+                                </div>
+                                <div class="cfge-field">
+                                    <label for="empPolitica">@Resources.Strings.CfgIA_Emp_Politica <i class="fas fa-info-circle cfge-info" title="@Resources.Strings.CfgIA_Emp_PoliticaHint"></i></label>
+                                    <select id="empPolitica" class="form-control">
+                                        <option value="Bloquear">@Resources.Strings.CfgIA_Emp_PoliticaBloquear</option>
+                                        <option value="Degradar">@Resources.Strings.CfgIA_Emp_PoliticaDegradar</option>
+                                        <option value="Sobreconsumo">@Resources.Strings.CfgIA_Emp_PoliticaSobreconsumo</option>
+                                    </select>
+                                </div>
+                                <div class="cfge-field">
+                                    <label for="empDiaCorte">@Resources.Strings.CfgIA_Emp_DiaCorte <i class="fas fa-info-circle cfge-info" title="@Resources.Strings.CfgIA_Emp_DiaCorteHint"></i></label>
+                                    <input type="number" min="1" max="28" step="1" class="form-control" id="empDiaCorte" />
+                                </div>
+                            </div>
+
+                            <h4 class="cfge-sec"><i class="fas fa-shield-alt"></i>@Resources.Strings.CfgIA_Emp_SecLimites</h4>
+                            <div class="cfge-grid3">
+                                <div class="cfge-field">
+                                    <label for="empTopeUsuario">@Resources.Strings.CfgIA_Emp_TopeUsuario <i class="fas fa-info-circle cfge-info" title="@Resources.Strings.CfgIA_Emp_TopeUsuarioHint"></i></label>
+                                    <input type="number" min="0" step="1000" class="form-control" id="empTopeUsuario" />
+                                </div>
+                                <div class="cfge-field">
+                                    <label for="empModelo">@Resources.Strings.CfgIA_Emp_Modelo <i class="fas fa-info-circle cfge-info" title="@Resources.Strings.CfgIA_Emp_ModeloHint"></i></label>
+                                    <div id="empModeloHost"></div>
+                                </div>
+                                <div class="cfge-field">
+                                    <label>@Resources.Strings.CfgIA_Emp_Pool <i class="fas fa-info-circle cfge-info" id="empPoolHint" title=""></i></label>
+                                    <div class="custom-control custom-switch" style="padding-top:6px;">
+                                        <input type="checkbox" class="custom-control-input" id="empPool" />
+                                        <label class="custom-control-label" for="empPool"><span class="sr-only">@Resources.Strings.CfgIA_Emp_Pool</span></label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h4 class="cfge-sec"><i class="fas fa-puzzle-piece"></i>@Resources.Strings.CfgIA_Emp_Funciones <i class="fas fa-info-circle cfge-info" title="@Resources.Strings.CfgIA_Emp_FuncionesHint"></i></h4>
+                            <div class="cfge-pills">
+                                <label class="cfge-pill"><input type="checkbox" class="emp-func" id="empFuncChat" value="Chat" /><span>@Resources.Strings.CfgIA_Emp_Func_Chat</span></label>
+                                <label class="cfge-pill"><input type="checkbox" class="emp-func" id="empFuncHome" value="ResumenHome" /><span>@Resources.Strings.CfgIA_Emp_Func_ResumenHome</span></label>
+                                <label class="cfge-pill"><input type="checkbox" class="emp-func" id="empFuncPyg" value="InsightsPYG" /><span>@Resources.Strings.CfgIA_Emp_Func_InsightsPYG</span></label>
+                                <label class="cfge-pill"><input type="checkbox" class="emp-func" id="empFuncBal" value="InsightsBalance" /><span>@Resources.Strings.CfgIA_Emp_Func_InsightsBalance</span></label>
+                            </div>
+
+                            <h4 class="cfge-sec"><i class="fas fa-book-open"></i>@Resources.Strings.CfgIA_Emp_Contexto</h4>
+                            <textarea id="empContexto" class="form-control" rows="4" maxlength="4000" placeholder="@Resources.Strings.CfgIA_Emp_ContextoPlaceholder"></textarea>
+                            <div class="d-flex justify-content-between align-items-center flex-wrap mt-1" style="gap:6px;">
+                                <small class="text-muted">@Resources.Strings.CfgIA_Emp_ContextoHint</small>
+                                <button type="button" class="btn btn-sm btn-modern-secondary" id="btnContextoPlantilla"><i class="fas fa-magic mr-1"></i>@Resources.Strings.CfgIA_Emp_ContextoPlantilla</button>
+                            </div>
+                        </div>
+                        <div class="cfge-foot">
+                            <span class="cfge-dirty" id="empDirty" role="status"></span>
+                            <button type="button" class="btn btn-modern-gradient" id="btnGuardarControl" onclick="guardarConfigEmpresaIA()" disabled>
+                                <i class="fas fa-save mr-1"></i>@Resources.Strings.CfgIA_Emp_BtnGuardarControl
+                            </button>
+                        </div>
+                    </section>
                 </div>
-                <div class="cfg-ia-card-body">
-                    <div id="empConsumoTexto" style="font-size:.92rem;font-weight:600;color:#374151;margin-bottom:8px;"></div>
-                    <div class="cfg-ia-emp-barra-track">
-                        <div id="empConsumoBarra" class="cfg-ia-emp-barra-fill"></div>
-                    </div>
-                </div>
+
+                <!-- Acceso de usuarios -->
+                <aside>
+                    <section class="cfge-card">
+                        <header>
+                            <span class="ic"><i class="fas fa-users"></i></span>
+                            <h3>@Resources.Strings.CfgIA_Emp_UsuariosTitulo</h3>
+                            <span class="cfgg-count" id="empUsuariosCuenta">0</span>
+                        </header>
+                        <p class="cfge-desc">@Resources.Strings.CfgIA_Emp_UsuariosDesc</p>
+                        <div class="cfge-users" id="empUsuariosBody"></div>
+                    </section>
+                </aside>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         PESTAÑA USO Y COSTOS (observabilidad global, sobre IAUsoLog)
+    ══════════════════════════════════════ -->
+    <div id="panelUso" class="cfg-ia-emp-panel" style="display:none;">
+
+        <div class="cfgu-toolbar">
+            <div class="cfgu-seg" id="usoRangos" role="group" aria-label="@Resources.Strings.CfgIA_Uso_Titulo">
+                <button type="button" data-dias="7">@Resources.Strings.CfgIA_Uso_Rango7</button>
+                <button type="button" data-dias="30" class="active">@Resources.Strings.CfgIA_Uso_Rango30</button>
+                <button type="button" data-dias="90">@Resources.Strings.CfgIA_Uso_Rango90</button>
+                <button type="button" data-dias="mes">@Resources.Strings.CfgIA_Uso_RangoMes</button>
+            </div>
+            <div class="cfgu-dates">
+                <input type="date" id="usoDesde" class="form-control" aria-label="@Resources.Strings.IAConsumo_Desde" />
+                <span>–</span>
+                <input type="date" id="usoHasta" class="form-control" aria-label="@Resources.Strings.IAConsumo_Hasta" />
+            </div>
+            <button type="button" class="btn btn-modern-gradient btn-sm" id="btnUsoConsultar"><i class="fas fa-search mr-1"></i>@Resources.Strings.Common_Consultar</button>
+            <button type="button" class="btn btn-modern-secondary btn-sm cfgu-clear" id="btnUsoLimpiar"><i class="fas fa-eraser mr-1"></i>@Resources.Strings.CfgIA_Uso_BtnLimpiar</button>
+        </div>
+
+        <div id="usoNoDisponible" class="no-data-message" style="display:none;">
+            <i class="fas fa-database"></i>
+            <h4>@Resources.Strings.CfgIA_Uso_NoDisponible</h4>
+        </div>
+
+        <div id="usoContenido" style="display:none;">
+            <div class="cfgu-kpis" id="usoKpis"></div>
+
+            <section class="cfge-card">
+                <header>
+                    <span class="ic"><i class="fas fa-calendar-day"></i></span>
+                    <h3>@Resources.Strings.CfgIA_Uso_PorDia</h3>
+                    <span class="cfgg-count" id="usoChartTotal"></span>
+                </header>
+                <div class="cfgu-chart" id="usoChart" role="img" aria-label="@Resources.Strings.CfgIA_Uso_PorDia"></div>
+                <div class="cfgu-axis" id="usoChartEje"></div>
+            </section>
+
+            <div class="cfgu-ranks">
+                <section class="cfge-card">
+                    <header><span class="ic"><i class="fas fa-puzzle-piece"></i></span><h3>@Resources.Strings.CfgIA_Uso_PorFuncion</h3></header>
+                    <div id="usoRankFunc"></div>
+                </section>
+                <section class="cfge-card">
+                    <header><span class="ic"><i class="fas fa-microchip"></i></span><h3>@Resources.Strings.CfgIA_Uso_PorModelo</h3></header>
+                    <div id="usoRankModelo"></div>
+                </section>
+                <section class="cfge-card">
+                    <header><span class="ic"><i class="fas fa-building"></i></span><h3>@Resources.Strings.CfgIA_Uso_PorEmpresa</h3></header>
+                    <div id="usoRankEmpresa"></div>
+                </section>
             </div>
 
-            <div class="cfg-ia-card" style="margin-bottom:18px;">
-                <div class="cfg-ia-card-header">
-                    <div class="cfg-ia-card-icon"><i class="fas fa-coins"></i></div>
-                    <div class="cfg-ia-card-title">@Resources.Strings.CfgIA_Emp_PresupuestoTitulo</div>
-                </div>
-                <div class="cfg-ia-card-body">
-                    <div class="cfg-ia-emp-presupuesto-row">
-                        <input type="number" min="0" step="1000" class="form-control"
-                               id="empPresupuestoInput" />
-                        <button type="button" class="btn-modern-gradient" onclick="guardarPresupuestoEmpresaIA()">
-                            <i class="fas fa-save mr-1"></i>@Resources.Strings.CfgIA_Emp_BtnGuardarPresupuesto
-                        </button>
-                    </div>
-                    <small class="text-muted d-block mt-2">@Resources.Strings.CfgIA_Emp_PresupuestoHint</small>
-                </div>
-            </div>
-
-            <div class="table-container">
-                <div class="table-header">
-                    <h5><i class="fas fa-users mr-2"></i>@Resources.Strings.CfgIA_Emp_UsuariosTitulo</h5>
-                </div>
-                <div style="padding:10px 16px 0;">
-                    <small class="text-muted">@Resources.Strings.CfgIA_Emp_UsuariosDesc</small>
-                </div>
-                <div class="table-wrapper">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>@Resources.Strings.CfgIA_Emp_ColUsuario</th>
-                                <th>@Resources.Strings.CfgIA_Emp_ColAcceso</th>
-                            </tr>
-                        </thead>
-                        <tbody id="empUsuariosBody"></tbody>
-                    </table>
-                </div>
-            </div>
-
+            <section class="cfge-card cfgu-err">
+                <details>
+                    <summary><i class="fas fa-exclamation-triangle"></i>@Resources.Strings.CfgIA_Uso_Errores <span class="cfgg-count" id="usoErroresCuenta">0</span></summary>
+                    <div class="table-wrapper"><table class="data-table"><thead><tr>
+                        <th>@Resources.Strings.IAUso_ColFecha</th><th>@Resources.Strings.CfgIA_Emp_SelLabel</th><th>@Resources.Strings.IAUso_ColFuncion</th><th>@Resources.Strings.CfgIA_Uso_ColDetalle</th>
+                    </tr></thead><tbody id="usoErrores"></tbody></table></div>
+                </details>
+            </section>
         </div>
     </div>
 
@@ -423,44 +593,9 @@
                                 </div>
                             </div>
 
-                            <!-- Modelo: custom dropdown con búsqueda -->
+                            <!-- Modelo (OpenAIModel / IA_ModeloEconomico): desplegable de los modelos de OpenAI -->
                             <div id="wrapModelo" style="display:none;">
-                                <div class="modelo-select-wrap mb-1" id="modeloSelectWrap">
-                                    <div class="input-group input-group-sm">
-                                        <input type="text" class="form-control form-control-sm"
-                                               id="editValorModelo"
-                                               placeholder="Ej: gpt-4o-mini" autocomplete="off"
-                                               oninput="filtrarModelosDesdeInput(this.value)"
-                                               onfocus="mostrarDropdownModelos()" />
-                                        <div class="input-group-append">
-                                            <button type="button" class="btn btn-outline-secondary btn-sm px-2"
-                                                    onclick="toggleDropdownModelos()" tabindex="-1"
-                                                    title="Ver modelos disponibles">
-                                                <i class="fas fa-chevron-down" id="modeloChevron" style="font-size:.75rem;"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <!-- Panel dropdown -->
-                                    <div id="modelosDropdown" class="modelos-dropdown" style="display:none;">
-                                        <div class="modelos-search-wrap">
-                                            <input type="text" id="modelosBuscar"
-                                                   placeholder="Filtrar modelos..."
-                                                   oninput="filtrarModelosPanel(this.value)" />
-                                        </div>
-                                        <div id="modelosLista" class="modelos-lista"></div>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center flex-wrap mt-1" style="gap:8px;">
-                                    <button type="button" class="btn-load-models" id="btnCargarModelos"
-                                            onclick="cargarModelosOpenAI()">
-                                        <i class="fas fa-sync-alt"></i>
-                                        <span id="btnCargarModelosText">@Resources.Strings.CfgIA_BtnCargarModelos</span>
-                                    </button>
-                                    <span id="modelosBadge" style="display:none;" class="modelos-badge">
-                                        <i class="fas fa-check-circle"></i>
-                                        <span id="modelosCount">0</span> @Resources.Strings.CfgIA_JS_ModelosCargados
-                                    </span>
-                                </div>
+                                <div id="modalModeloHost"></div>
                                 <small class="text-muted d-block mt-1" style="font-size:.72rem;">
                                     <i class="fas fa-info-circle mr-1"></i>@Resources.Strings.CfgIA_ModeloHint
                                 </small>
@@ -548,11 +683,16 @@
     <script>
     var _cfgMsg = {
         cargando:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos))',
-        cargados:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos))',
-        errorModelos:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos))',
-        apiKeyVacia:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos))',
-        tituloEditar:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos))',
-        tituloCrear:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos))',
+        cargados:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_ModelosCargados))',
+        errorModelos:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_ErrorModelos))',
+        apiKeyVacia:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_ApiKeyVacia))',
+        tituloEditar:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_ModalEditTitle))',
+        tituloCrear:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_ModalCreateTitle))',
+        mpPlaceholder:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Modelo_Placeholder))',
+        mpGlobal:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Modelo_Global))',
+        mpRecargar:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Modelo_Recargar))',
+        mpAbrir:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Modelo_Abrir))',
+        mpSinResultados:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Modelo_SinResultados))',
         urlCargar:      '@Url.Action("ObtenerModelosOpenAI","ConfiguracionGlobalIA")'
     };
 
@@ -595,12 +735,11 @@
         ['wrapApiKey','wrapModelo','wrapTokens','wrapGenerico'].forEach(function(id) {
             document.getElementById(id).style.display = 'none';
         });
-        document.getElementById('modelosBadge').style.display = 'none';
 
         if (clave === 'OpenAIApiKey') {
             document.getElementById('wrapApiKey').style.display = '';
             document.getElementById('editValorApiKey').value = valor;
-        } else if (clave === 'OpenAIModel') {
+        } else if (esClaveModelo(clave)) {
             document.getElementById('wrapModelo').style.display = '';
             document.getElementById('editValorModelo').value = valor;
         } else if (clave === 'OpenAIMaxTokens') {
@@ -661,7 +800,7 @@
         var valor = '';
         if (clave === 'OpenAIApiKey') {
             valor = document.getElementById('editValorApiKey').value.trim();
-        } else if (clave === 'OpenAIModel') {
+        } else if (esClaveModelo(clave)) {
             valor = document.getElementById('editValorModelo').value.trim();
         } else if (clave === 'OpenAIMaxTokens') {
             valor = document.getElementById('editValorTokens').value.trim();
@@ -683,137 +822,132 @@
         claveInput.closest('form').submit();
     }
 
-    // ── lista global de modelos cargados ──
-    var _modelos = [];
+    // Claves cuyo valor es el nombre de un modelo de OpenAI: usan el mismo desplegable.
+    function esClaveModelo(clave) { return clave === 'OpenAIModel' || clave === 'IA_ModeloEconomico'; }
 
-    // ── renderiza la lista filtrada en el panel ──
-    function renderModelosLista(items, q) {
-        var lista = document.getElementById('modelosLista');
-        var valorActual = document.getElementById('editValorModelo').value;
-        if (!items.length) {
-            lista.innerHTML = '<div class="modelo-item-empty">Sin resultados</div>';
-            return;
+    // ══════════════════════════════════════
+    // SELECTOR DE MODELOS DE OPENAI (reutilizable)
+    //  - Se carga la lista una sola vez (y se comparte entre todos los selectores); botón para recargarla.
+    //  - Se puede elegir de la lista, filtrar escribiendo o escribir un modelo que no aparezca.
+    //  - Teclado: ↑ ↓ Enter Esc.
+    // ══════════════════════════════════════
+    var ModelosOpenAI = { lista: null, cargando: false, error: null, esperando: [] };
+
+    function cargarListaModelos(forzar, cb) {
+        if (ModelosOpenAI.lista && !forzar) { if (cb) cb(); return; }
+        if (cb) ModelosOpenAI.esperando.push(cb);
+        if (ModelosOpenAI.cargando) return;
+        ModelosOpenAI.cargando = true;
+        function terminar() {
+            ModelosOpenAI.cargando = false;
+            var cbs = ModelosOpenAI.esperando.splice(0);
+            cbs.forEach(function (f) { f(); });
         }
-        var re = q ? new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi') : null;
-        lista.innerHTML = items.map(function(m) {
-            var label = re ? m.replace(re, '<strong>$1</strong>') : m;
-            var cls   = (m === valorActual) ? 'modelo-item activo' : 'modelo-item';
-            return '<div class="' + cls + '" data-val="' + m.replace(/"/g, '&quot;') + '">' + label + '</div>';
-        }).join('');
-
-        lista.querySelectorAll('.modelo-item').forEach(function(el) {
-            el.addEventListener('mousedown', function(e) {
-                e.preventDefault();
-                seleccionarModelo(this.getAttribute('data-val'));
-            });
-        });
-
-        // scroll al activo
-        var activo = lista.querySelector('.activo');
-        if (activo) activo.scrollIntoView({ block: 'nearest' });
+        $.ajax({ url: _cfgMsg.urlCargar, type: 'GET' }).done(function (r) {
+            if (r && r.ok) { ModelosOpenAI.lista = r.modelos || []; ModelosOpenAI.error = null; }
+            else { ModelosOpenAI.error = (r && r.mensaje) || _cfgMsg.errorModelos; }
+        }).fail(function () { ModelosOpenAI.error = _cfgMsg.errorModelos; }).always(terminar);
     }
 
-    // ── filtrar desde el input del buscador interno ──
-    function filtrarModelosPanel(q) {
-        var items = q ? _modelos.filter(function(m){ return m.toLowerCase().indexOf(q.toLowerCase()) >= 0; }) : _modelos;
-        renderModelosLista(items, q);
-    }
+    function mpEsc(s) { return $('<div>').text(s == null ? '' : s).html(); }
 
-    // ── filtrar mientras escribe en el input principal ──
-    function filtrarModelosDesdeInput(q) {
-        if (!_modelos.length) return;
-        document.getElementById('modelosBuscar').value = q;
-        filtrarModelosPanel(q);
-        mostrarDropdownModelos();
-    }
+    function ModeloPicker(host, opts) {
+        var id = opts.id, uid = id + '_dd', activo = -1, abierto = false, filtrando = false;
+        var $host = $(host);
+        $host.html(
+            '<div class="modelo-select-wrap">' +
+              '<div class="mp-field">' +
+                '<input type="text" class="mp-input" id="' + id + '" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="' + uid + '" placeholder="' + mpEsc(opts.placeholder || _cfgMsg.mpPlaceholder) + '" />' +
+                '<button type="button" class="mp-btn mp-reload" tabindex="-1" title="' + mpEsc(_cfgMsg.mpRecargar) + '" aria-label="' + mpEsc(_cfgMsg.mpRecargar) + '"><i class="fas fa-sync-alt"></i></button>' +
+                '<span class="mp-sep" aria-hidden="true"></span>' +
+                '<button type="button" class="mp-btn mp-toggle" tabindex="-1" title="' + mpEsc(_cfgMsg.mpAbrir) + '" aria-label="' + mpEsc(_cfgMsg.mpAbrir) + '"><i class="fas fa-chevron-down"></i></button>' +
+              '</div>' +
+              '<div class="modelos-dropdown" id="' + uid + '" style="display:none;"><div class="modelos-lista" role="listbox"></div><div class="mp-foot"></div></div>' +
+            '</div>');
 
-    // ── seleccionar un modelo ──
-    function seleccionarModelo(val) {
-        document.getElementById('editValorModelo').value = val;
-        ocultarDropdownModelos();
-    }
+        var $input = $host.find('#' + id), $dd = $host.find('.modelos-dropdown'), $lista = $dd.find('.modelos-lista'), $foot = $dd.find('.mp-foot');
+        var $chev = $host.find('.mp-toggle i'), $reload = $host.find('.mp-reload i');
 
-    // ── mostrar panel dropdown ──
-    function mostrarDropdownModelos() {
-        if (!_modelos.length) return;
-        var dd = document.getElementById('modelosDropdown');
-        dd.style.display = '';
-        document.getElementById('modeloChevron').className = 'fas fa-chevron-up';
-        var q = document.getElementById('modelosBuscar').value;
-        filtrarModelosPanel(q);
-    }
+        function items() {
+            var q = filtrando ? $.trim($input.val()).toLowerCase() : '';
+            var base = (ModelosOpenAI.lista || []).filter(function (m) { return !q || m.toLowerCase().indexOf(q) >= 0; });
+            var res = base.map(function (m) { return { v: m, t: m }; });
+            if (opts.vacio && !q) res.unshift({ v: '', t: opts.vacio });
+            return res;
+        }
 
-    // ── ocultar panel dropdown ──
-    function ocultarDropdownModelos() {
-        document.getElementById('modelosDropdown').style.display = 'none';
-        document.getElementById('modeloChevron').className = 'fas fa-chevron-down';
-    }
-
-    // ── alternar dropdown ──
-    function toggleDropdownModelos() {
-        var dd = document.getElementById('modelosDropdown');
-        if (dd.style.display === 'none') mostrarDropdownModelos();
-        else ocultarDropdownModelos();
-    }
-
-    // ── cerrar al hacer clic fuera ──
-    document.addEventListener('mousedown', function(e) {
-        var wrap = document.getElementById('modeloSelectWrap');
-        if (wrap && !wrap.contains(e.target)) ocultarDropdownModelos();
-    });
-
-    // ── cargar modelos desde OpenAI ──
-    function cargarModelosOpenAI() {
-        var btn  = document.getElementById('btnCargarModelos');
-        var span = document.getElementById('btnCargarModelosText');
-        btn.disabled  = true;
-        span.textContent = _cfgMsg.cargando;
-
-        $.ajax({
-            url:  _cfgMsg.urlCargar,
-            type: 'GET',
-            success: function (resp) {
-                btn.disabled = false;
-                span.textContent = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos))';
-
-                if (!resp.ok) {
-                    Swal.fire({ icon:'error', title:'Error', text: resp.mensaje || _cfgMsg.errorModelos,
-                        toast:true, position:'top-end', showConfirmButton:false, timer:4000 });
-                    return;
-                }
-
-                _modelos = resp.modelos || [];
-
-                // Badge
-                document.getElementById('modelosCount').textContent = _modelos.length;
-                document.getElementById('modelosBadge').style.display = 'inline-flex';
-
-                // Si el campo está vacío, preseleccionar el primero
-                var inp = document.getElementById('editValorModelo');
-                if (!inp.value && _modelos.length > 0) inp.value = _modelos[0];
-
-                // Limpiar buscador y mostrar lista
-                document.getElementById('modelosBuscar').value = '';
-                renderModelosLista(_modelos, '');
-                mostrarDropdownModelos();
-            },
-            error: function () {
-                btn.disabled = false;
-                span.textContent = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_JS_CargandoModelos))';
-                Swal.fire({ icon:'error', title:'Error', text: _cfgMsg.errorModelos,
-                    toast:true, position:'top-end', showConfirmButton:false, timer:4000 });
+        function pintar() {
+            var lista = items(), actual = $input.val();
+            if (!lista.length) {
+                $lista.html('<div class="modelo-item-empty">' + mpEsc(_cfgMsg.mpSinResultados) + '</div>');
+            } else {
+                $lista.html(lista.map(function (it, i) {
+                    var cls = 'modelo-item' + (it.v === actual ? ' activo' : '') + (i === activo ? ' hl' : '') + (it.v === '' ? ' mp-vacio' : '');
+                    return '<div class="' + cls + '" role="option" data-val="' + mpEsc(it.v) + '"><span>' + mpEsc(it.t) + '</span>' +
+                           (it.v === actual ? '<i class="fas fa-check"></i>' : '') + '</div>';
+                }).join(''));
+                var a = $lista.find('.activo, .hl')[0];
+                if (a) a.scrollIntoView({ block: 'nearest' });
             }
+            if (ModelosOpenAI.cargando) $foot.removeClass('err').html('<i class="fas fa-circle-notch fa-spin mr-1"></i>' + mpEsc(_cfgMsg.cargando));
+            else if (ModelosOpenAI.error) $foot.addClass('err').text(ModelosOpenAI.error);
+            else $foot.removeClass('err').text((ModelosOpenAI.lista || []).length + ' ' + _cfgMsg.cargados);
+        }
+
+        function abrir() {
+            if (abierto) return;
+            abierto = true; filtrando = false; activo = -1;
+            $dd.show(); $input.attr('aria-expanded', 'true'); $chev.attr('class', 'fas fa-chevron-up');
+            pintar();
+            if (!ModelosOpenAI.lista) cargarListaModelos(false, function () { if (abierto) pintar(); });
+        }
+        function cerrar() {
+            if (!abierto) return;
+            abierto = false; $dd.hide(); $input.attr('aria-expanded', 'false'); $chev.attr('class', 'fas fa-chevron-down');
+        }
+        function elegir(v) {
+            $input.val(v).trigger('input'); // 'input' para que el formulario detecte el cambio
+            cerrar();
+        }
+
+        $input.on('focus', abrir);
+        $input.on('input', function () { filtrando = true; activo = -1; if (!abierto) abrir(); else pintar(); });
+        $input.on('keydown', function (e) {
+            var lista = items();
+            if (e.which === 40 || e.which === 38) {
+                e.preventDefault();
+                if (!abierto) { abrir(); return; }
+                activo = e.which === 40 ? Math.min(lista.length - 1, activo + 1) : Math.max(0, activo - 1);
+                pintar();
+            } else if (e.which === 13 && abierto && activo >= 0 && lista[activo]) {
+                e.preventDefault(); elegir(lista[activo].v);
+            } else if (e.which === 13 && abierto) {
+                e.preventDefault(); cerrar(); // Enter sin opción resaltada: conserva lo escrito sin enviar el formulario del modal
+            } else if (e.which === 27) { cerrar(); }
         });
+        $host.find('.mp-toggle').on('click', function () { if (abierto) cerrar(); else { abrir(); $input.focus(); } });
+        $host.find('.mp-reload').on('click', function () {
+            $reload.addClass('fa-spin');
+            if (!abierto) abrir();
+            cargarListaModelos(true, function () { $reload.removeClass('fa-spin'); if (abierto) pintar(); });
+            pintar();
+        });
+        $lista.on('mousedown', '.modelo-item', function (e) { e.preventDefault(); elegir(String($(this).attr('data-val'))); });
+        $(document).on('mousedown', function (e) { if (!$host[0].contains(e.target)) cerrar(); });
+
+        return {
+            getValue: function () { return $.trim($input.val()); },
+            setValue: function (v) { $input.val(v || ''); },
+            close: cerrar
+        };
     }
 
-    // ── limpiar dropdown al cerrar modal ──
-    $('#editarModal').on('hidden.bs.modal', function() {
-        ocultarDropdownModelos();
-        _modelos = [];
-        document.getElementById('modelosBadge').style.display = 'none';
-        document.getElementById('modelosLista').innerHTML = '';
-        document.getElementById('modelosBuscar').value = '';
-    });
+    // Instancias: modal de parámetros (OpenAIModel / IA_ModeloEconomico) y "Modelo fijo de la empresa".
+    var pickModal = ModeloPicker('#modalModeloHost', { id: 'editValorModelo' });
+    var pickEmpresa = ModeloPicker('#empModeloHost', { id: 'empModelo', vacio: _cfgMsg.mpGlobal, placeholder: _cfgMsg.mpGlobal });
+
+    // ── limpiar al cerrar el modal ──
+    $('#editarModal').on('hidden.bs.modal', function () { pickModal.close(); });
 
     // Al cambiar la clave manualmente (modo crear), actualizar los wraps
     document.getElementById('editClave').addEventListener('input', function() {
@@ -835,8 +969,19 @@
         errorGuardar:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_MsgErrorGuardar))',
         errorCargar:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_MsgErrorCargar))',
         urlResumen:       '@Url.Action("ObtenerResumenEmpresaIA", "ConfiguracionGlobalIA")',
-        urlGuardarPresupuesto: '@Url.Action("GuardarPresupuestoEmpresaIA", "ConfiguracionGlobalIA")',
-        urlGuardarAcceso: '@Url.Action("GuardarAccesoUsuarioIA", "ConfiguracionGlobalIA")'
+        periodoDesde:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_PeriodoDesde))',
+        poolActivo:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_PoolActivo))',
+        poolSinGrupo:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_PoolSinGrupo))',
+        poolHint:         '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_PoolHint))',
+        urlGuardarConfig: '@Url.Action("GuardarConfigEmpresaIA", "ConfiguracionGlobalIA")',
+        urlGuardarAcceso: '@Url.Action("GuardarAccesoUsuarioIA", "ConfiguracionGlobalIA")',
+        deTokens:         '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_DeTokens))',
+        sinLimite:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_SinLimite))',
+        usuariosCuenta:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_UsuariosConAcceso))',
+        sinCambios:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_SinCambios))',
+        cambios:          '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_CambiosPendientes))',
+        estadoActiva:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_EstadoActiva))',
+        estadoApagada:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_EstadoApagada))'
     };
     var _empIAActual = null;
 
@@ -865,6 +1010,8 @@
             moverThumb($btn[0]);
             document.getElementById('panelGeneral').style.display = (tab === 'general') ? '' : 'none';
             document.getElementById('panelPorEmpresa').style.display = (tab === 'empresa') ? '' : 'none';
+            document.getElementById('panelUso').style.display = (tab === 'uso') ? '' : 'none';
+            if (tab === 'uso' && !window._usoCargado) { window._usoCargado = true; cargarUsoIA(); }
         }
 
         $tabs.on('click', function () { activar($(this)); });
@@ -915,18 +1062,58 @@
         });
     }
 
+    function empEsc(s) { return $('<div>').text(s == null ? '' : s).html(); }
+
+    function marcarSucio() {
+        $('#btnGuardarControl').prop('disabled', false);
+        $('#empDirty').addClass('on').text(_empIAMsg.cambios);
+    }
+    function limpiarSucio() {
+        $('#btnGuardarControl').prop('disabled', true);
+        $('#empDirty').removeClass('on').text(_empIAMsg.sinCambios);
+    }
+    $('#cfgeForm').on('input change', 'input, select, textarea', marcarSucio);
+
     function pintarResumenEmpresaIA(resumen) {
-        var textoConsumo = resumen.Ilimitado
-            ? _empIAMsg.tokensUsadosIlim.replace('{0}', resumen.ConsumidoMes.toLocaleString())
-            : _empIAMsg.tokensUsados
-                .replace('{0}', resumen.ConsumidoMes.toLocaleString())
-                .replace('{1}', resumen.PresupuestoEfectivo.toLocaleString())
-                .replace('{2}', resumen.PorcentajeConsumido);
-        document.getElementById('empConsumoTexto').textContent = textoConsumo;
+        var consumido = Number(resumen.ConsumidoMes || 0);
+        document.getElementById('empConsumoNum').textContent = consumido.toLocaleString();
+        document.getElementById('empConsumoDe').textContent = resumen.Ilimitado
+            ? _empIAMsg.sinLimite
+            : _empIAMsg.deTokens.replace('{0}', Number(resumen.PresupuestoEfectivo).toLocaleString());
+
+        var pct = resumen.Ilimitado ? null : resumen.PorcentajeConsumido;
+        var $pct = $('#empConsumoPct').removeClass('warn bad');
+        $pct.toggle(pct !== null).text(pct === null ? '' : pct + '%');
+        if (pct !== null && pct >= 100) $pct.addClass('bad'); else if (pct !== null && pct >= 80) $pct.addClass('warn');
 
         var barra = document.getElementById('empConsumoBarra');
-        barra.style.width = resumen.Ilimitado ? '0%' : Math.min(100, resumen.PorcentajeConsumido) + '%';
-        barra.classList.toggle('agotado', !resumen.Ilimitado && resumen.PorcentajeConsumido >= 100);
+        barra.style.width = resumen.Ilimitado ? '0%' : Math.min(100, pct) + '%';
+        barra.classList.toggle('agotado', pct !== null && pct >= 100);
+
+        var meta = '<span class="cfgg-chip"><i class="fas fa-calendar-alt"></i>' + empEsc(_empIAMsg.periodoDesde.replace('{0}', resumen.InicioPeriodo)) + '</span>';
+        if (resumen.EnPool) meta += '<span class="cfgg-chip"><i class="fas fa-layer-group"></i>' +
+            empEsc(_empIAMsg.poolActivo.replace('{0}', resumen.NombreGrupo || '').replace('{1}', resumen.EmpresasEnPool)) + '</span>';
+        document.getElementById('empConsumoMeta').innerHTML = meta;
+
+        var cfg = resumen.Config || {};
+        var activa = cfg.IaHabilitada !== false;
+        $('#empEstado').show().removeClass('ok bad').addClass(activa ? 'ok' : 'bad')
+            .html('<i class="fas ' + (activa ? 'fa-check-circle' : 'fa-ban') + '"></i>' + empEsc(activa ? _empIAMsg.estadoActiva : _empIAMsg.estadoApagada));
+
+        document.getElementById('empHabilitada').checked = activa;
+        document.getElementById('empPolitica').value = cfg.PoliticaAgotado || 'Bloquear';
+        document.getElementById('empDiaCorte').value = (cfg.DiaCorte === null || cfg.DiaCorte === undefined) ? '' : cfg.DiaCorte;
+        document.getElementById('empTopeUsuario').value = (cfg.TopeDiarioUsuario === null || cfg.TopeDiarioUsuario === undefined) ? '' : cfg.TopeDiarioUsuario;
+        document.getElementById('empModelo').value = cfg.ModeloPermitido || '';
+        document.getElementById('empContexto').value = cfg.ContextoNegocio || '';
+        var poolChk = document.getElementById('empPool');
+        poolChk.checked = !!cfg.PoolGrupo && resumen.TieneGrupo;
+        poolChk.disabled = !resumen.TieneGrupo;
+        document.getElementById('empPoolHint').setAttribute('title', resumen.TieneGrupo ? _empIAMsg.poolHint : _empIAMsg.poolSinGrupo);
+        var funciones = cfg.FuncionesPermitidas; // null = todas
+        $('.emp-func').each(function () {
+            this.checked = !funciones || funciones.indexOf(this.value) >= 0;
+        });
 
         var inputPresupuesto = document.getElementById('empPresupuestoInput');
         inputPresupuesto.value = (resumen.PresupuestoOverride === null || resumen.PresupuestoOverride === undefined)
@@ -936,73 +1123,256 @@
                 ? resumen.PresupuestoGlobalDefault.toLocaleString()
                 : _empIAMsg.ilimitado);
 
-        var tbody = document.getElementById('empUsuariosBody');
-        tbody.innerHTML = '';
-        if (!resumen.Usuarios || resumen.Usuarios.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="2" class="text-muted text-center">' + _empIAMsg.sinUsuarios + '</td></tr>';
-            return;
-        }
-        resumen.Usuarios.forEach(function (u) {
-            var tr = document.createElement('tr');
-            tr.innerHTML =
-                '<td>' + u.NombreCompleto + '<br><small class="text-muted">' + u.Correo + '</small></td>' +
-                '<td><button type="button" class="btn btn-sm cfg-ia-emp-acceso-btn ' +
-                    (u.AccesoEfectivo ? 'btn-success' : 'btn-danger') + '" data-id="' + u.Id + '" data-acceso="' + (u.AccesoEfectivo ? '1' : '0') + '">' +
-                    '<i class="fas ' + (u.AccesoEfectivo ? 'fa-check-circle' : 'fa-ban') + ' mr-1"></i>' +
-                    (u.AccesoEfectivo ? _empIAMsg.accesoPermitido : _empIAMsg.accesoBloqueado) +
-                '</button></td>';
-            tbody.appendChild(tr);
-        });
-
-        $(tbody).off('click', 'button').on('click', 'button', function () {
-            var btn = $(this);
-            var idUsuario = btn.data('id');
-            var nuevoAcceso = btn.data('acceso') == '1' ? false : true;
-            guardarAccesoUsuarioIA(idUsuario, nuevoAcceso, btn);
-        });
+        limpiarSucio();
+        pintarUsuariosIA(resumen.Usuarios || []);
     }
 
-    function guardarPresupuestoEmpresaIA() {
+    function pintarUsuariosIA(usuarios) {
+        var cont = document.getElementById('empUsuariosBody');
+        cont.innerHTML = '';
+        if (!usuarios.length) {
+            cont.innerHTML = '<div class="cfgu-vacio">' + empEsc(_empIAMsg.sinUsuarios) + '</div>';
+            document.getElementById('empUsuariosCuenta').textContent = '0';
+            return;
+        }
+        usuarios.forEach(function (u) {
+            var nombre = u.NombreCompleto || '';
+            var iniciales = nombre.split(/\s+/).filter(Boolean).slice(0, 2).map(function (p) { return p.charAt(0).toUpperCase(); }).join('') || '?';
+            var div = document.createElement('div');
+            div.className = 'cfge-user' + (u.AccesoEfectivo ? '' : ' off');
+            div.innerHTML =
+                '<span class="cfge-avatar" aria-hidden="true">' + empEsc(iniciales) + '</span>' +
+                '<div class="cfge-uinfo"><div class="n" title="' + empEsc(nombre) + '">' + empEsc(nombre) + '</div><div class="m" title="' + empEsc(u.Correo) + '">' + empEsc(u.Correo) + '</div></div>' +
+                '<div class="custom-control custom-switch"><input type="checkbox" class="custom-control-input cfge-uacc" id="uacc' + u.Id + '" data-id="' + u.Id + '"' + (u.AccesoEfectivo ? ' checked' : '') + '>' +
+                '<label class="custom-control-label" for="uacc' + u.Id + '"><span class="sr-only">' + empEsc(_empIAMsg.accesoPermitido) + ': ' + empEsc(nombre) + '</span></label></div>';
+            cont.appendChild(div);
+        });
+        actualizarCuentaUsuarios();
+    }
+
+    function actualizarCuentaUsuarios() {
+        var total = $('.cfge-uacc').length, con = $('.cfge-uacc:checked').length;
+        document.getElementById('empUsuariosCuenta').textContent = _empIAMsg.usuariosCuenta.replace('{0}', con).replace('{1}', total);
+    }
+
+    $(document).on('change', '.cfge-uacc', function () {
+        var $chk = $(this);
+        guardarAccesoUsuarioIA($chk.data('id'), $chk.is(':checked'), $chk);
+    });
+
+    function guardarConfigEmpresaIA() {
         if (!_empIAActual) return;
-        var valor = document.getElementById('empPresupuestoInput').value.trim();
         var token = $('input[name="__RequestVerificationToken"]').val();
+        var funciones = $('.emp-func:checked').map(function () { return this.value; }).get().join(',');
+        $('#btnGuardarControl').prop('disabled', true);
 
         $.ajax({
-            url: _empIAMsg.urlGuardarPresupuesto,
+            url: _empIAMsg.urlGuardarConfig,
             type: 'POST',
-            data: { idEmpresa: _empIAActual.IdEmpresa, presupuesto: valor, __RequestVerificationToken: token },
+            data: {
+                idEmpresa: _empIAActual.IdEmpresa,
+                presupuesto: document.getElementById('empPresupuestoInput').value.trim(),
+                iaHabilitada: document.getElementById('empHabilitada').checked,
+                politica: document.getElementById('empPolitica').value,
+                poolGrupo: document.getElementById('empPool').checked,
+                diaCorte: document.getElementById('empDiaCorte').value.trim(),
+                modeloPermitido: document.getElementById('empModelo').value.trim(),
+                funciones: funciones,
+                topeDiarioUsuario: document.getElementById('empTopeUsuario').value.trim(),
+                contextoNegocio: document.getElementById('empContexto').value,
+                __RequestVerificationToken: token
+            },
             success: function (r) {
                 Swal.fire({ toast:true, position:'top-end', icon: (r && r.ok) ? 'success' : 'error',
                     title: (r && r.mensaje) || _empIAMsg.errorGuardar, showConfirmButton:false, timer:3000 });
-                if (r && r.ok) cargarResumenEmpresaIA(_empIAActual.IdEmpresa);
+                if (r && r.ok) cargarResumenEmpresaIA(_empIAActual.IdEmpresa); else marcarSucio();
             },
             error: function () {
+                marcarSucio();
                 Swal.fire({ toast:true, position:'top-end', icon:'error', title:_empIAMsg.errorGuardar, showConfirmButton:false, timer:3000 });
             }
         });
     }
 
-    function guardarAccesoUsuarioIA(idUsuario, nuevoAcceso, btn) {
+
+    // Contexto de la empresa: inserta una plantilla guiada (a qué se dedica, productos, país, etc.)
+    $('#btnContextoPlantilla').on('click', function () {
+        var $t = $('#empContexto');
+        var plantilla = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_ContextoPlantillaTexto))';
+        $t.val($.trim($t.val()) ? ($t.val() + '\n\n' + plantilla) : plantilla).trigger('input').focus();
+    });
+
+    // ══════════════════════════════════════
+    // TAB: GENERAL — búsqueda y acciones por fila
+    // ══════════════════════════════════════
+    $('#cfggBuscar').on('input', function () {
+        var q = $.trim($(this).val()).toLowerCase();
+        $('.cfgg-row').each(function () {
+            $(this).toggle(!q || String($(this).data('buscar')).indexOf(q) >= 0);
+        });
+        $('.cfgg-group').each(function () {
+            var visibles = $(this).find('.cfgg-row:visible').length;
+            $(this).toggle(visibles > 0);
+            $(this).find('.cfgg-count').text(visibles);
+        });
+        $('#cfggVacio').toggle($('.cfgg-group:visible').length === 0);
+    });
+    $(document).on('click', '.cfgg-editar', function () {
+        var $b = $(this);
+        abrirEditar(String($b.data('clave')), String($b.attr('data-valor') || ''), String($b.attr('data-desc') || ''));
+    });
+    $(document).on('click', '.cfgg-eliminar', function () { abrirEliminar(String($(this).data('clave'))); });
+
+    // ══════════════════════════════════════
+    // TAB: USO Y COSTOS
+    // ══════════════════════════════════════
+    var _usoMsg = {
+        url: '@Url.Action("ObtenerObservabilidadIA", "ConfiguracionGlobalIA")',
+        error: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Uso_Error))',
+        sinDatos: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_SinDatos))',
+        kConsultas: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Uso_KConsultas))',
+        kExito: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Uso_KExito))',
+        kTokens: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Uso_KTokens))',
+        kCosto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Uso_KCosto))',
+        kCache: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Uso_KCache))',
+        kLatencia: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Uso_KLatencia))',
+        colConsultas: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAUso_ColConsultas))',
+        colTokens: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAUso_ColTokens))'
+    };
+
+    function usoEsc(s) { return $('<div>').text(s == null ? '' : s).html(); }
+    function usoNum(n) { return Number(n || 0).toLocaleString(); }
+    function usoUsd(n) { return Number(n || 0).toFixed(2); }
+    function usoIso(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+
+    function usoRank(lista) {
+        if (!lista || !lista.length) return '<div class="cfgu-vacio">' + usoEsc(_usoMsg.sinDatos) + '</div>';
+        var max = Math.max.apply(null, [1].concat(lista.map(function (g) { return g.Tokens; })));
+        return lista.map(function (g) {
+            return '<div class="cfgu-row"><div class="n" title="' + usoEsc(g.Clave) + '">' + usoEsc(g.Clave) + '</div>' +
+                   '<div class="v">' + usoNum(g.Tokens) + ' · US$ ' + usoUsd(g.Costo) + (g.Errores ? '<span class="e" title="Errores">' + g.Errores + '</span>' : '') + '</div>' +
+                   '<div class="bar"><i style="width:' + Math.max(2, Math.round(g.Tokens * 100 / max)) + '%"></i></div></div>';
+        }).join('');
+    }
+
+    function usoKpi(icono, titulo, valor) {
+        return '<div class="cfgu-kpi"><span class="ic"><i class="fas ' + icono + '"></i></span><div><div class="v">' + valor + '</div><div class="l">' + usoEsc(titulo) + '</div></div></div>';
+    }
+
+    // Gráfico de barras por día: se completan los días sin consumo para que el eje de tiempo sea continuo.
+    function usoGrafico(porDia, desde, hasta, totalTokens) {
+        var mapa = {};
+        (porDia || []).forEach(function (d) { mapa[d.Dia] = d; });
+        var dias = [], d0 = new Date(desde + 'T00:00:00'), d1 = new Date(hasta + 'T00:00:00');
+        for (var d = new Date(d0); d <= d1 && dias.length < 400; d.setDate(d.getDate() + 1)) dias.push(usoIso(d));
+        var max = Math.max.apply(null, [1].concat((porDia || []).map(function (x) { return x.Tokens; })));
+        $('#usoChart').html(dias.map(function (iso) {
+            var x = mapa[iso];
+            if (!x) return '<div class="cfgu-bar vacia" title="' + iso + '"></div>';
+            return '<div class="cfgu-bar" style="height:' + Math.max(4, Math.round(x.Tokens * 100 / max)) + '%" title="' + iso + ' · ' +
+                   usoEsc(_usoMsg.colConsultas) + ': ' + usoNum(x.Consultas) + ' · ' + usoEsc(_usoMsg.colTokens) + ': ' + usoNum(x.Tokens) + ' · US$ ' + usoUsd(x.Costo) + '"></div>';
+        }).join(''));
+        $('#usoChartEje').html('<span>' + usoEsc(dias[0] || '') + '</span><span>' + usoEsc(dias[dias.length - 1] || '') + '</span>');
+        $('#usoChartTotal').text(usoNum(totalTokens) + ' ' + _usoMsg.colTokens.toLowerCase());
+    }
+
+    function usoSeleccionarRango(valor) {
+        var hoy = new Date(), desde = new Date();
+        if (valor === 'mes') desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        else desde.setDate(hoy.getDate() - (parseInt(valor, 10) - 1));
+        $('#usoDesde').val(usoIso(desde));
+        $('#usoHasta').val(usoIso(hoy));
+        $('#usoRangos button').removeClass('active').filter('[data-dias="' + valor + '"]').addClass('active');
+    }
+    $('#usoRangos').on('click', 'button', function () {
+        usoSeleccionarRango(String($(this).data('dias')));
+        cargarUsoIA();
+    });
+    $('#usoDesde, #usoHasta').on('change', function () { $('#usoRangos button').removeClass('active'); });
+
+    function cargarUsoIA() {
+        $.get(_usoMsg.url, { desde: $('#usoDesde').val(), hasta: $('#usoHasta').val() }).done(function (r) {
+            if (!r || !r.ok) {
+                Swal.fire({ icon:'error', title:'Error', text:(r && r.mensaje) || _usoMsg.error, toast:true, position:'top-end', showConfirmButton:false, timer:3500 });
+                return;
+            }
+            if (!$('#usoDesde').val()) { $('#usoDesde').val(r.desde); $('#usoHasta').val(r.hasta); }
+            $('#usoNoDisponible').toggle(!r.Disponible);
+            $('#usoContenido').toggle(!!r.Disponible);
+            if (!r.Disponible) return;
+
+            var t = r.Totales, n = t.Consultas || 0;
+            var exito = n ? Math.round(t.Exitosas * 100 / n) : 0;
+            var cache = t.Exitosas ? Math.round(t.DesdeCache * 100 / t.Exitosas) : 0;
+            var lat = (t.LatenciaP50 == null) ? '—' : (Math.round(t.LatenciaP50) + ' / ' + Math.round(t.LatenciaP95) + ' ms');
+            $('#usoKpis').html(
+                usoKpi('fa-comments', _usoMsg.kConsultas, usoNum(n)) + usoKpi('fa-check-circle', _usoMsg.kExito, exito + '%') +
+                usoKpi('fa-coins', _usoMsg.kTokens, usoNum(t.Tokens)) + usoKpi('fa-dollar-sign', _usoMsg.kCosto, 'US$ ' + usoUsd(t.Costo)) +
+                usoKpi('fa-bolt', _usoMsg.kCache, cache + '%') + usoKpi('fa-stopwatch', _usoMsg.kLatencia, lat));
+
+            usoGrafico(r.PorDia, r.desde, r.hasta, t.Tokens);
+            $('#usoRankFunc').html(usoRank(r.PorFuncion));
+            $('#usoRankModelo').html(usoRank(r.PorModelo));
+            $('#usoRankEmpresa').html(usoRank(r.PorEmpresa));
+
+            var errores = r.Errores || [];
+            $('#usoErroresCuenta').text(errores.length);
+            $('#usoErrores').html(errores.length ? errores.map(function (e) {
+                return '<tr><td style="white-space:nowrap;">' + usoEsc(e.Fecha) + '</td><td>' + usoEsc(e.Empresa) + '</td><td>' + usoEsc(e.Funcion) + '</td><td>' + usoEsc(e.Detalle) + '</td></tr>';
+            }).join('') : '<tr><td colspan="4" class="text-center text-muted">' + usoEsc(_usoMsg.sinDatos) + '</td></tr>');
+        }).fail(function () {
+            Swal.fire({ icon:'error', title:'Error', text:_usoMsg.error, toast:true, position:'top-end', showConfirmButton:false, timer:3500 });
+        });
+    }
+    $('#btnUsoConsultar').on('click', cargarUsoIA);
+
+    // Limpiar estadísticas (solo Super Admin: el controlador completo lo exige). No toca presupuesto ni auditoría.
+    $('#btnUsoLimpiar').on('click', function () {
+        Swal.fire({
+            icon: 'warning',
+            title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Uso_LimpiarTitulo))',
+            text: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Uso_LimpiarTexto))',
+            showCancelButton: true,
+            confirmButtonText: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Uso_LimpiarConfirmar))',
+            cancelButtonText: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel))',
+            reverseButtons: true, focusCancel: true
+        }).then(function (res) {
+            if (!res.isConfirmed) return;
+            $.post('@Url.Action("LimpiarUsoIA", "ConfiguracionGlobalIA")',
+                { __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val() },
+                function (r) {
+                    Swal.fire({ toast: true, position: 'top-end', icon: (r && r.ok) ? 'success' : 'error',
+                        title: (r && r.mensaje) || _usoMsg.error, showConfirmButton: false, timer: 3500 });
+                    if (r && r.ok) cargarUsoIA();
+                }).fail(function () {
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: _usoMsg.error, showConfirmButton: false, timer: 3500 });
+                });
+        });
+    });
+
+    function guardarAccesoUsuarioIA(idUsuario, nuevoAcceso, $chk) {
         var token = $('input[name="__RequestVerificationToken"]').val();
-        btn.prop('disabled', true);
+        $chk.prop('disabled', true);
+
+        function revertir() { $chk.prop('checked', !nuevoAcceso); }
 
         $.ajax({
             url: _empIAMsg.urlGuardarAcceso,
             type: 'POST',
             data: { idUsuario: idUsuario, acceso: nuevoAcceso, __RequestVerificationToken: token },
             success: function (r) {
-                btn.prop('disabled', false);
+                $chk.prop('disabled', false);
                 if (r && r.ok) {
-                    btn.data('acceso', nuevoAcceso ? '1' : '0');
-                    btn.removeClass('btn-success btn-danger').addClass(nuevoAcceso ? 'btn-success' : 'btn-danger');
-                    btn.html('<i class="fas ' + (nuevoAcceso ? 'fa-check-circle' : 'fa-ban') + ' mr-1"></i>' +
-                        (nuevoAcceso ? _empIAMsg.accesoPermitido : _empIAMsg.accesoBloqueado));
+                    $chk.closest('.cfge-user').toggleClass('off', !nuevoAcceso);
+                    actualizarCuentaUsuarios();
                 } else {
+                    revertir();
                     Swal.fire({ toast:true, position:'top-end', icon:'error', title:(r && r.mensaje) || _empIAMsg.errorGuardar, showConfirmButton:false, timer:3000 });
                 }
             },
             error: function () {
-                btn.prop('disabled', false);
+                $chk.prop('disabled', false);
+                revertir();
                 Swal.fire({ toast:true, position:'top-end', icon:'error', title:_empIAMsg.errorGuardar, showConfirmButton:false, timer:3000 });
             }
         });

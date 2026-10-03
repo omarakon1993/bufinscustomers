@@ -288,6 +288,8 @@
                             <th style="width:110px;">@Resources.Strings.AudIA_ThTipo</th>
                             <th>@Resources.Strings.AudIA_ThPregunta</th>
                             <th style="width:65px;" class="text-center">@Resources.Strings.AudIA_ThFilas</th>
+                            <th style="width:80px;" class="text-center">@Resources.Strings.AudIA_ThTokens</th>
+                            <th style="width:70px;" class="text-center">@Resources.Strings.AudIA_ThValoracion</th>
                             <th style="width:80px;" class="text-center">@Resources.Strings.AudIA_ThVer</th>
                         </tr>
                     </thead>
@@ -689,6 +691,10 @@ $(document).ready(function () {
             tr.append($('<td>').html(tipoBadge));
             tr.append($('<td>').html(preguntaHtml));
             tr.append($('<td class="text-center">').css({ fontWeight: '700', color: '#583AFF' }).text(r.FilasAnalizadas));
+            tr.append($('<td class="text-center">').css({ fontSize: '.8rem', color: '#6b7280' }).text(r.TokensTotal ? Number(r.TokensTotal).toLocaleString() : '—'));
+            tr.append($('<td class="text-center">').html(
+                r.Valoracion === 1 ? '<i class="fas fa-thumbs-up" style="color:#22c55e;"></i>'
+                : (r.Valoracion === 0 ? '<i class="fas fa-thumbs-down" style="color:#ef4444;"></i>' : '<span style="color:#d1d5db;">—</span>')));
             tr.append($('<td class="text-center">').append(btnVer));
             tbody.append(tr);
         });

@@ -6,6 +6,7 @@
     var usuario = UsuarioSesionHelper.UsuarioActual;
     var esAdmin2 = UsuarioSesionHelper.EsSuperAdmin();
     var idEmpresa = usuario != null ? usuario.IdEmpresa ?? 0 : 0;
+    bool iaVisible = IAModuloHelper.Visible(); // oculta Análisis IA si la empresa tiene la IA apagada
     string nombreEmpresa = null;
     if (!esAdmin2)
     {
@@ -37,6 +38,7 @@
                 {
                     foreach (var itemDir in grupo.Items)
                     {
+                        if (!iaVisible && itemDir.Controller == "AnalisisIA") { continue; }
                         bool dirActivo = itemDir.Controller == curCtrl && itemDir.Action == curAction;
                         <div class="sidebar-nav-item">
                             <a class="sidebar-nav-link @(dirActivo ? "active" : "") @(itemDir.EsDestacado ? "destacado" : "")" href="@Url.Action(itemDir.Action, itemDir.Controller)">
@@ -49,6 +51,7 @@
                 else if (grupo.Items.Count == 1)
                 {
                     var soloItem = grupo.Items[0];
+                    if (!iaVisible && soloItem.Controller == "AnalisisIA") { continue; }
                     string linkText = soloItem.Nombre;
                     if (soloItem.Codigo == "INFORMES_REPORTES_PBI" && !esAdmin2 && nombreEmpresa != null)
                     {
@@ -75,6 +78,7 @@
                         <div class="sidebar-submenu @(grupoActivo ? "expanded" : "")">
                             @foreach (var item in grupo.Items)
                             {
+                                if (!iaVisible && item.Controller == "AnalisisIA") { continue; }
                                 bool itemActivo = item.Controller == curCtrl && item.Action == curAction;
                                 <div class="sidebar-submenu-item">
                                     <a class="sidebar-submenu-link @(itemActivo ? "active" : "")" href="@Url.Action(item.Action, item.Controller)">

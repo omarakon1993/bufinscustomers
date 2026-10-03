@@ -25,6 +25,8 @@ namespace bufinscustomers.Models
         public bool Exitoso { get; set; }
         public string Respuesta { get; set; }
         public string Error { get; set; }
+        /// <summary>Código estable del error cuando el llamador debe traducirlo (p. ej. "SIN_CREDITO"); null en el resto.</summary>
+        public string CodigoError { get; set; }
         public int FilasEnviadas { get; set; }
         public int TotalFilas { get; set; }
         public bool DesdeCache { get; set; }
@@ -54,6 +56,17 @@ namespace bufinscustomers.Models
         public bool Ilimitado { get; set; }
         public long ConsumidoMes { get; set; }
         public int PorcentajeConsumido { get; set; }
+
+        // Control por empresa (Fase 2)
+        public ConfigIAEmpresa Config { get; set; }
+        /// <summary>Inicio del periodo de consumo en curso (según el día de corte), "dd/MM/yyyy".</summary>
+        public string InicioPeriodo { get; set; }
+        /// <summary>true si el consumo/presupuesto mostrado es el del pool del grupo.</summary>
+        public bool EnPool { get; set; }
+        public int EmpresasEnPool { get; set; }
+        public string NombreGrupo { get; set; }
+        /// <summary>false si la empresa no pertenece a un Grupo Empresarial (el pool no aplica).</summary>
+        public bool TieneGrupo { get; set; }
         public List<UsuarioAccesoIAViewModel> Usuarios { get; set; } = new List<UsuarioAccesoIAViewModel>();
     }
 

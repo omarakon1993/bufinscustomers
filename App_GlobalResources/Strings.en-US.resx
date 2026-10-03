@@ -1792,6 +1792,11 @@
   <data name="CfgIA_JS_ModelosCargados" xml:space="preserve"><value>available models</value></data>
   <data name="CfgIA_JS_ErrorModelos" xml:space="preserve"><value>Could not load models. Check the API Key.</value></data>
   <data name="CfgIA_JS_ApiKeyVacia" xml:space="preserve"><value>First save a valid API Key in the configuration.</value></data>
+  <data name="CfgIA_Modelo_Placeholder" xml:space="preserve"><value>Choose or type a model (e.g. gpt-4o-mini)</value></data>
+  <data name="CfgIA_Modelo_Global" xml:space="preserve"><value>Use the global model</value></data>
+  <data name="CfgIA_Modelo_Recargar" xml:space="preserve"><value>Reload the OpenAI model list</value></data>
+  <data name="CfgIA_Modelo_Abrir" xml:space="preserve"><value>Show available models</value></data>
+  <data name="CfgIA_Modelo_SinResultados" xml:space="preserve"><value>No matches: what you type will be used.</value></data>
   <data name="CfgIA_ModalDeleteBody" xml:space="preserve"><value>Delete parameter</value></data>
   <data name="CfgIA_NoItems" xml:space="preserve"><value>No parameters configured.</value></data>
   <!-- AI SETTINGS — PER COMPANY -->
@@ -1807,7 +1812,6 @@
   <data name="CfgIA_Emp_PresupuestoTitulo" xml:space="preserve"><value>Monthly token budget</value></data>
   <data name="CfgIA_Emp_PresupuestoPlaceholder" xml:space="preserve"><value>Use the global value ({0})</value></data>
   <data name="CfgIA_Emp_PresupuestoHint" xml:space="preserve"><value>Empty = use the global value. 0 = unlimited for this company. Any other number = this company's own monthly cap.</value></data>
-  <data name="CfgIA_Emp_BtnGuardarPresupuesto" xml:space="preserve"><value>Save budget</value></data>
   <data name="CfgIA_Emp_UsuariosTitulo" xml:space="preserve"><value>User access to AI Analysis</value></data>
   <data name="CfgIA_Emp_UsuariosDesc" xml:space="preserve"><value>Control which users of this company can run AI queries. Actual spend is controlled by the budget above, not by a query count.</value></data>
   <data name="CfgIA_Emp_SinUsuarios" xml:space="preserve"><value>This company has no users configured (besides Super Admins).</value></data>
@@ -1818,6 +1822,138 @@
   <data name="CfgIA_Emp_MsgGuardadoOk" xml:space="preserve"><value>Change saved successfully.</value></data>
   <data name="CfgIA_Emp_MsgErrorGuardar" xml:space="preserve"><value>Could not save the change.</value></data>
   <data name="CfgIA_Emp_MsgErrorCargar" xml:space="preserve"><value>Could not load this company's settings.</value></data>
+  <data name="CfgIA_Emp_ControlTitulo" xml:space="preserve"><value>AI usage control</value></data>
+  <data name="CfgIA_Emp_Habilitada" xml:space="preserve"><value>AI enabled for this company</value></data>
+  <data name="CfgIA_Emp_HabilitadaHint" xml:space="preserve"><value>Off = no user of the company can use AI (Super Admins are not affected).</value></data>
+  <data name="CfgIA_Emp_Politica" xml:space="preserve"><value>When the budget runs out</value></data>
+  <data name="CfgIA_Emp_PoliticaBloquear" xml:space="preserve"><value>Block new queries</value></data>
+  <data name="CfgIA_Emp_PoliticaDegradar" xml:space="preserve"><value>Degrade (economy model and short answers)</value></data>
+  <data name="CfgIA_Emp_PoliticaSobreconsumo" xml:space="preserve"><value>Allow overage (it is recorded)</value></data>
+  <data name="CfgIA_Emp_PoliticaHint" xml:space="preserve"><value>Also applies when an estimated query would exceed what is left of the budget.</value></data>
+  <data name="CfgIA_Emp_DiaCorte" xml:space="preserve"><value>Period cut-off day</value></data>
+  <data name="CfgIA_Emp_DiaCorteHint" xml:space="preserve"><value>Day of the month (1-28) when usage resets. Empty = calendar month.</value></data>
+  <data name="CfgIA_Emp_TopeUsuario" xml:space="preserve"><value>Daily cap per user (tokens)</value></data>
+  <data name="CfgIA_Emp_TopeUsuarioHint" xml:space="preserve"><value>Empty = no cap. Applies to Users and Company Admins.</value></data>
+  <data name="CfgIA_Emp_Modelo" xml:space="preserve"><value>Fixed model for the company</value></data>
+  <data name="CfgIA_Emp_ModeloHint" xml:space="preserve"><value>Empty = the global model (e.g. gpt-4o).</value></data>
+  <data name="CfgIA_Emp_Pool" xml:space="preserve"><value>Share budget with its Business Group</value></data>
+  <data name="CfgIA_Emp_PoolHint" xml:space="preserve"><value>Group companies with this option add up their budgets and usage (an unlimited budget makes the pool unlimited).</value></data>
+  <data name="CfgIA_Emp_PoolSinGrupo" xml:space="preserve"><value>This company does not belong to a Business Group, so the pool does not apply.</value></data>
+  <data name="CfgIA_Emp_Funciones" xml:space="preserve"><value>Enabled features</value></data>
+  <data name="CfgIA_Emp_FuncionesHint" xml:space="preserve"><value>All checked = all enabled.</value></data>
+  <data name="CfgIA_Emp_Func_Chat" xml:space="preserve"><value>AI Analysis (chat)</value></data>
+  <data name="CfgIA_Emp_Func_ResumenHome" xml:space="preserve"><value>Home summary</value></data>
+  <data name="CfgIA_Emp_Func_InsightsPYG" xml:space="preserve"><value>P&amp;L insights</value></data>
+  <data name="CfgIA_Emp_Func_InsightsBalance" xml:space="preserve"><value>Balance Sheet insights</value></data>
+  <data name="CfgIA_Emp_BtnGuardarControl" xml:space="preserve"><value>Save usage control</value></data>
+  <data name="CfgIA_Emp_MsgDatosInvalidos" xml:space="preserve"><value>Check the values: the cut-off day goes from 1 to 28 and caps cannot be negative.</value></data>
+  <data name="CfgIA_Emp_PeriodoDesde" xml:space="preserve"><value>Period since {0}</value></data>
+  <data name="CfgIA_Emp_PoolActivo" xml:space="preserve"><value>group pool {0}: {1} companies</value></data>
+  <data name="CfgIA_Emp_Contexto" xml:space="preserve"><value>Company business context</value></data>
+  <data name="CfgIA_Emp_ContextoPlaceholder" xml:space="preserve"><value>E.g.: Food distributor operating in Colombia and Ecuador. Sells wholesale to supermarkets and stores. The business is seasonal (peaks in November and December).</value></data>
+  <data name="CfgIA_Emp_ContextoPlantilla" xml:space="preserve"><value>Insert template</value></data>
+  <data name="CfgIA_Emp_ContextoPlantillaTexto" xml:space="preserve"><value>Main activity: 
+Products or business lines: 
+Countries and reporting currency: 
+Business seasonality: 
+Accounts or items with special treatment: 
+Indicators management follows closely: </value></data>
+  <data name="CfgIA_Emp_ContextoHint" xml:space="preserve"><value>Tell the AI what this company does and what makes it particular (activity, products, countries, seasonality). It is used in ALL of the company's AI queries (AI Analysis, insights, questions and Home summary). Max. 4,000 characters.</value></data>
+  <data name="IAConsumo_Titulo" xml:space="preserve"><value>My AI usage</value></data>
+  <data name="IAConsumo_Periodo" xml:space="preserve"><value>Period {0} – {1}</value></data>
+  <data name="IAConsumo_Tokens" xml:space="preserve"><value>{0} of {1} tokens ({2}%)</value></data>
+  <data name="IAConsumo_TokensIlim" xml:space="preserve"><value>{0} tokens used (no limit)</value></data>
+  <data name="IAConsumo_Proyeccion" xml:space="preserve"><value>Projection at period end: {0} tokens</value></data>
+  <data name="IAConsumo_Pool" xml:space="preserve"><value>Budget shared with its group ({0} companies)</value></data>
+  <data name="IAConsumo_Apagada" xml:space="preserve"><value>AI is turned off for this company.</value></data>
+  <data name="IAConsumo_PorUsuario" xml:space="preserve"><value>Usage by user</value></data>
+  <data name="IAConsumo_PorFuncion" xml:space="preserve"><value>Usage by feature</value></data>
+  <data name="IAConsumo_SinDatos" xml:space="preserve"><value>No queries in the period.</value></data>
+  <data name="IAConsumo_Desde" xml:space="preserve"><value>From</value></data>
+  <data name="IAConsumo_Hasta" xml:space="preserve"><value>To</value></data>
+  <data name="IAConsumo_BtnExportar" xml:space="preserve"><value>Export usage to Excel</value></data>
+  <data name="IAConsumo_Error" xml:space="preserve"><value>Could not load AI usage.</value></data>
+  <data name="IAInforme_Titulo" xml:space="preserve"><value>Ask this report</value></data>
+  <data name="IAInforme_Placeholder" xml:space="preserve"><value>E.g.: Which account explains the largest variance against the comparison?</value></data>
+  <data name="IAInforme_Btn" xml:space="preserve"><value>Ask</value></data>
+  <data name="IAInforme_Preguntando" xml:space="preserve"><value>Analyzing the report…</value></data>
+  <data name="IAInforme_PreguntaInvalida" xml:space="preserve"><value>Write a question of up to {0} characters.</value></data>
+  <data name="IAInforme_Error" xml:space="preserve"><value>The question could not be answered. Please try again.</value></data>
+  <data name="CfgIA_TabUso" xml:space="preserve"><value>Usage &amp; costs</value></data>
+  <data name="CfgIA_Uso_Titulo" xml:space="preserve"><value>AI usage and costs</value></data>
+  <data name="CfgIA_Uso_NoDisponible" xml:space="preserve"><value>There is no usage log yet (run script Sql/013).</value></data>
+  <data name="CfgIA_Uso_Error" xml:space="preserve"><value>Could not load AI usage.</value></data>
+  <data name="CfgIA_Uso_PorDia" xml:space="preserve"><value>Usage per day</value></data>
+  <data name="CfgIA_Uso_PorFuncion" xml:space="preserve"><value>By feature</value></data>
+  <data name="CfgIA_Uso_PorModelo" xml:space="preserve"><value>By model</value></data>
+  <data name="CfgIA_Uso_PorEmpresa" xml:space="preserve"><value>By company (top 15)</value></data>
+  <data name="CfgIA_Uso_Errores" xml:space="preserve"><value>Recent errors and rejections</value></data>
+  <data name="CfgIA_Uso_ColErrores" xml:space="preserve"><value>Errors</value></data>
+  <data name="CfgIA_Uso_ColDetalle" xml:space="preserve"><value>Detail</value></data>
+  <data name="CfgIA_Uso_KConsultas" xml:space="preserve"><value>Queries</value></data>
+  <data name="CfgIA_Uso_KExito" xml:space="preserve"><value>Served</value></data>
+  <data name="CfgIA_Uso_KTokens" xml:space="preserve"><value>Tokens</value></data>
+  <data name="CfgIA_Uso_KCosto" xml:space="preserve"><value>Estimated cost</value></data>
+  <data name="CfgIA_Uso_KCache" xml:space="preserve"><value>From cache</value></data>
+  <data name="CfgIA_Uso_KLatencia" xml:space="preserve"><value>Latency p50 / p95</value></data>
+  <data name="CfgIA_Emp_SecPresupuesto" xml:space="preserve"><value>Budget and period</value></data>
+  <data name="CfgIA_Emp_SecLimites" xml:space="preserve"><value>Limits and model</value></data>
+  <data name="CfgIA_Emp_DeTokens" xml:space="preserve"><value>of {0} tokens</value></data>
+  <data name="CfgIA_Emp_SinLimite" xml:space="preserve"><value>tokens this period · no limit</value></data>
+  <data name="CfgIA_Emp_UsuariosConAcceso" xml:space="preserve"><value>{0} of {1} with access</value></data>
+  <data name="CfgIA_Emp_SinCambios" xml:space="preserve"><value>No pending changes</value></data>
+  <data name="CfgIA_Emp_CambiosPendientes" xml:space="preserve"><value>You have unsaved changes</value></data>
+  <data name="CfgIA_Emp_EstadoActiva" xml:space="preserve"><value>AI active</value></data>
+  <data name="CfgIA_Emp_EstadoApagada" xml:space="preserve"><value>AI off</value></data>
+  <data name="CfgIA_Uso_Rango7" xml:space="preserve"><value>7 days</value></data>
+  <data name="CfgIA_Uso_Rango30" xml:space="preserve"><value>30 days</value></data>
+  <data name="CfgIA_Uso_Rango90" xml:space="preserve"><value>90 days</value></data>
+  <data name="CfgIA_Uso_RangoMes" xml:space="preserve"><value>This month</value></data>
+  <data name="CfgIA_G_Proveedor" xml:space="preserve"><value>Provider &amp; model</value></data>
+  <data name="CfgIA_G_Presupuesto" xml:space="preserve"><value>Budget &amp; costs</value></data>
+  <data name="CfgIA_G_Cache" xml:space="preserve"><value>Cache &amp; limits</value></data>
+  <data name="CfgIA_G_Otros" xml:space="preserve"><value>Other parameters</value></data>
+  <data name="CfgIA_G_Buscar" xml:space="preserve"><value>Search parameter…</value></data>
+  <data name="CfgIA_G_ChipClaveOk" xml:space="preserve"><value>API key configured</value></data>
+  <data name="CfgIA_G_ChipClaveNo" xml:space="preserve"><value>No API key</value></data>
+  <data name="CfgIA_G_ChipModelo" xml:space="preserve"><value>Model</value></data>
+  <data name="CfgIA_G_ChipTokens" xml:space="preserve"><value>Max tokens</value></data>
+  <data name="CfgIA_G_ChipCache" xml:space="preserve"><value>Cache</value></data>
+  <data name="CfgIA_G_Horas" xml:space="preserve"><value>h</value></data>
+  <data name="CfgIA_G_SinResultados" xml:space="preserve"><value>No parameter matches the search.</value></data>
+  <data name="CfgIA_Uso_BtnLimpiar" xml:space="preserve"><value>Clear statistics</value></data>
+  <data name="CfgIA_Uso_LimpiarTitulo" xml:space="preserve"><value>Delete all usage statistics?</value></data>
+  <data name="CfgIA_Uso_LimpiarTexto" xml:space="preserve"><value>The whole AI usage log behind this tab will be deleted. The companies’ monthly budget and the query audit are not modified. This action cannot be undone.</value></data>
+  <data name="CfgIA_Uso_LimpiarConfirmar" xml:space="preserve"><value>Yes, delete</value></data>
+  <data name="CfgIA_Uso_LimpiarOk" xml:space="preserve"><value>Statistics deleted ({0} records).</value></data>
+  <data name="CfgIA_Uso_LimpiarError" xml:space="preserve"><value>The statistics could not be deleted.</value></data>
+  <data name="IAUso_XlsResumen" xml:space="preserve"><value>Summary</value></data>
+  <data name="IAUso_XlsPorUsuario" xml:space="preserve"><value>By user</value></data>
+  <data name="IAUso_XlsDetalle" xml:space="preserve"><value>Detail</value></data>
+  <data name="IAUso_ColFecha" xml:space="preserve"><value>Date</value></data>
+  <data name="IAUso_ColUsuario" xml:space="preserve"><value>User</value></data>
+  <data name="IAUso_ColFuncion" xml:space="preserve"><value>Feature</value></data>
+  <data name="IAUso_ColModelo" xml:space="preserve"><value>Model</value></data>
+  <data name="IAUso_ColConsultas" xml:space="preserve"><value>Queries</value></data>
+  <data name="IAUso_ColTokens" xml:space="preserve"><value>Tokens</value></data>
+  <data name="IAUso_ColTokPrompt" xml:space="preserve"><value>Prompt tokens</value></data>
+  <data name="IAUso_ColTokResp" xml:space="preserve"><value>Response tokens</value></data>
+  <data name="IAUso_ColCosto" xml:space="preserve"><value>Estimated cost (USD)</value></data>
+  <data name="IAUso_ColCache" xml:space="preserve"><value>From cache</value></data>
+  <data name="IAUso_ColResultado" xml:space="preserve"><value>Result</value></data>
+  <data name="IAUso_ColSobre" xml:space="preserve"><value>Overage</value></data>
+  <data name="IAUso_ColDegr" xml:space="preserve"><value>Degraded</value></data>
+  <data name="IAUso_Si" xml:space="preserve"><value>Yes</value></data>
+  <data name="IAUso_No" xml:space="preserve"><value>No</value></data>
+  <data name="IAUso_Ok" xml:space="preserve"><value>Served</value></data>
+  <data name="IAUso_Error" xml:space="preserve"><value>Error</value></data>
+  <data name="AudIA_ThTokens" xml:space="preserve"><value>Tokens</value></data>
+  <data name="AudIA_ThValoracion" xml:space="preserve"><value>Rating</value></data>
+  <data name="IA_EmpresaSinIAMensaje" xml:space="preserve"><value>AI is not enabled for your company. Contact your administrator.</value></data>
+  <data name="IA_FuncionNoPermitidaMensaje" xml:space="preserve"><value>This AI feature is not enabled for your company.</value></data>
+  <data name="IA_TopeUsuarioMensaje" xml:space="preserve"><value>You reached your daily AI query limit. You can use it again tomorrow.</value></data>
+  <data name="IA_ProveedorSinCreditoMensaje" xml:space="preserve"><value>The AI service is unavailable right now: the AI provider account has no balance. Please contact the Bufins administrator to have it restored.</value></data>
+  <data name="IA_PresupuestoInsuficienteMensaje" xml:space="preserve"><value>This query would exceed the AI budget the company has left for this period. Try a narrower query or contact your administrator.</value></data>
 
   <!-- PYG MANAGEMENT REPORT (INCOME STATEMENT) -->
   <data name="PYG_PageTitle" xml:space="preserve"><value>Income Statement Report P&amp;L</value></data>

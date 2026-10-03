@@ -1,8 +1,11 @@
 using System;
 using System.Configuration;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web.Mvc;
+using bufinscustomers.Models;
+using bufinscustomers.Services;
 using BC = BCrypt.Net.BCrypt;
 
 namespace bufinscustomers.Controllers
@@ -72,5 +75,38 @@ namespace bufinscustomers.Controllers
         // Accede a App_GlobalResources respetando la cultura actual del hilo.
         protected string R(string key) =>
             System.Web.HttpContext.GetGlobalResourceObject("Strings", key)?.ToString() ?? key;
+
+        /// <summary>Idioma de la sesión ("es" | "en") para indicarle al modelo en qué idioma responder.</summary>
+        protected static string IdiomaIA =>
+            System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
+
+        /// <summary>
+        /// Control de acceso y presupuesto de IA común a todos los puntos de IA (ver IAUsoService):
+        /// avisa a los Super Admin al 80 % / 100 % del presupuesto de la empresa y, si la consulta no
+        /// está permitida, devuelve la respuesta JSON de error ya traducida; null si puede continuar.
+        /// </summary>
+        protected JsonResult ValidarAccesoIA(Usuarios usuario, bool esSuperAdmin, int idEmpresa, string funcion = null)
+        {
+            var iaUso = new IAUsoService();
+            var acceso = iaUso.EvaluarAcceso(usuario, esSuperAdmin, idEmpresa, funcion);
+
+            if (acceso.DebeAvisarAgotado || acceso.DebeAvisarCercaDelLimite)
+            {
+                bool agotado = acceso.DebeAvisarAgotado;
+                string nombreEmpresa = new EmpresaService().ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? ("#" + idEmpresa);
+                string titulo = R(agotado ? "Notif_IAPresupuestoAgotadoTitulo" : "Notif_IAPresupuestoAvisoTitulo");
+                string msg = string.Format(R(agotado ? "Notif_IAPresupuestoAgotadoMsg" : "Notif_IAPresupuestoAvisoMsg"),
+                    nombreEmpresa, acceso.ConsumidoMes.ToString("N0"), acceso.PresupuestoEfectivo.ToString("N0"), acceso.PorcentajeConsumido);
+                iaUso.EnviarAvisoPresupuestoATodosSuperAdmin(titulo, msg, agotado, idEmpresa);
+            }
+
+            if (acceso.Permitido) return null;
+
+            return Json(new IAConsultaResponse
+            {
+                Exitoso = false,
+                Error = R(IAUsoService.ClaveMensaje(acceso.CodigoError))
+            });
+        }
     }
 }

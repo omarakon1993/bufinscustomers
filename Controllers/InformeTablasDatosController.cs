@@ -170,61 +170,15 @@ namespace bufinscustomers.Controllers
                     historial = SanearHistorial(historial);
                 }
 
-                // Acceso del usuario + presupuesto mensual de tokens de la empresa — control único
-                // centralizado en IAUsoService (Configuración IA → Por Empresa). Super Admin exento.
-                var iaUso = new IAUsoService();
-                var acceso = iaUso.EvaluarAcceso(usuario, esAdmin, idEmpresaConsulta.GetValueOrDefault());
-                if (acceso.DebeAvisarAgotado || acceso.DebeAvisarCercaDelLimite)
-                    AvisarPresupuestoIA(iaUso, idEmpresaConsulta.GetValueOrDefault(), acceso);
-                if (!acceso.Permitido)
-                {
-                    string errorAcceso = acceso.CodigoError == "PRESUPUESTO_AGOTADO"
-                        ? R("IA_PresupuestoAgotadoMensaje")
-                        : R("IA_SinAccesoMensaje");
-                    return Json(new IAConsultaResponse { Exitoso = false, Error = errorAcceso });
-                }
-
-                // Leer configuración en paralelo
-                var cfgSvc     = new ConfiguracionSistemaService();
-                var tApiKey    = cfgSvc.ObtenerValorAsync("OpenAIApiKey");
-                var tModelo    = cfgSvc.ObtenerValorAsync("OpenAIModel");
-                var tMaxTokens = cfgSvc.ObtenerValorAsync("OpenAIMaxTokens");
-                var tTemp      = cfgSvc.ObtenerValorAsync("OpenAITemperature");
-                await Task.WhenAll(tApiKey, tModelo, tMaxTokens, tTemp);
-
-                string apiKey   = (tApiKey.Result ?? "").Trim();
-                string modeloIA = (tModelo.Result ?? "gpt-4o").Trim();
-                int maxTokensIA = (int.TryParse(tMaxTokens.Result, out int ptk) && ptk > 0) ? ptk : 8000;
-                // Si OpenAITemperature está vacío o no existe → null → no se envía al API
-                double? temperatureIA = double.TryParse(
-                    tTemp.Result,
-                    System.Globalization.NumberStyles.Float,
-                    System.Globalization.CultureInfo.InvariantCulture,
-                    out double tVal) ? (double?)tVal : null;
-
-                var iaService = new IAService(apiKey);
+                // Acceso del usuario + presupuesto mensual de tokens de la empresa (IAUsoService).
+                var denegado = ValidarAccesoIA(usuario, esAdmin, idEmpresaConsulta.GetValueOrDefault(), IAFuncion.Chat);
+                if (denegado != null) return denegado;
 
                 var tablaAmigable = _service.ObtenerTablasDisponibles()
                     .FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla)?.NombreAmigable ?? filtros.NombreTabla;
 
                 // Modo de análisis (N06): elige el prompt y el tope de tokens del resumen inicial.
                 var cfgModo = ConfigModo(modo);
-                var promptConfig = new GestorPromptsService().ObtenerPorCodigo(cfgModo.Codigo);
-                string instrucciones = promptConfig?.TextoPrompt ?? cfgModo.Fallback;
-
-                // Para el resumen inicial se usa el tope del modo (acotado por el configurado si es menor);
-                // para las preguntas de seguimiento se respeta el máximo configurado.
-                int maxTokensLlamada = string.IsNullOrWhiteSpace(pregunta)
-                    ? (maxTokensIA > 0 ? Math.Min(maxTokensIA, cfgModo.MaxTokens) : cfgModo.MaxTokens)
-                    : maxTokensIA;
-
-                var guardrailConfig = new GestorPromptsService().ObtenerPorCodigo("GUARDRAIL_SISTEMA");
-                string guardrail = guardrailConfig?.TextoPrompt;
-
-                // Contexto de negocio de Bufins (Fase A): se aplica siempre, independiente del modo
-                // o de si hay pregunta explícita.
-                var contextoConfig = new GestorPromptsService().ObtenerPorCodigo("CONTEXTO_NEGOCIO_BUFINS");
-                string contextoNegocio = contextoConfig?.TextoPrompt;
 
                 // Datos en CSV compacto (≈ 40 % menos tokens que JSON) acotados por tamaño para no
                 // exceder el contexto del modelo. Solo en la primera llamada (los turnos siguientes
@@ -246,45 +200,25 @@ namespace bufinscustomers.Controllers
                     Historial = historial
                 };
 
-                var response = await iaService.ConsultarAsync(request, instrucciones, guardrail, modeloIA, maxTokensLlamada, temperatureIA, contextoNegocio);
-                response.FilasEnviadas = filasEnviadas;
-                response.TotalFilas = resultado.TotalRegistros;
+                var empresa = _service.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa.GetValueOrDefault());
 
-                // Coste estimado (N14): tarifas USD por 1k tokens desde ConfiguracionSistema (0 = no mostrar).
-                var costos = ObtenerCostosIA();
-                if ((costos.Item1 > 0 || costos.Item2 > 0) && response.TokensTotal > 0)
-                    response.CostoEstimadoUSD = Math.Round(
-                        response.TokensPrompt    / 1000m * costos.Item1 +
-                        response.TokensRespuesta / 1000m * costos.Item2, 4);
-
-                if (response.Exitoso)
+                var response = await new IAGateway().EjecutarAsync(new IASolicitud
                 {
-                    try
-                    {
-                        var empresa = _service.ObtenerEmpresas()
-                            .FirstOrDefault(e => e.Id == filtros.IdEmpresa.GetValueOrDefault());
-                        response.IdAuditoria = new AuditoriaAnalisisIAService().Registrar(new AuditoriaAnalisisIA
-                        {
-                            IdUsuario       = usuario.Id,
-                            NombreUsuario   = $"{usuario.Nombre} {usuario.Apellidos}".Trim(),
-                            IdEmpresa       = filtros.IdEmpresa ?? 0,
-                            NombreEmpresa   = empresa?.Nombre ?? "—",
-                            NombreTabla     = tablaAmigable,
-                            Filtros         = ConstruirDescripcionFiltros(filtros),
-                            Pregunta        = request.Pregunta,
-                            Respuesta       = response.Respuesta,
-                            FechaPregunta   = DateTime.Now,
-                            FilasAnalizadas = response.FilasEnviadas,
-                            TokensTotal     = response.TokensTotal
-                        });
-                    }
-                    catch (Exception exAud)
-                    {
-                        // La cuota diaria se deriva de esta tabla: si el INSERT falla, la consulta
-                        // se atendió pero no queda contabilizada. Se registra para poder detectarlo.
-                        AppLogger.Error(exAud, $"AuditoriaAnalisisIA no registrada (usuario {usuario?.Id}) — la cuota puede quedar descontada de menos");
-                    }
-                }
+                    Funcion = IAFuncion.Chat,
+                    Usuario = usuario,
+                    IdEmpresa = filtros.IdEmpresa ?? 0,
+                    NombreEmpresa = empresa?.Nombre ?? "—",
+                    Request = request,
+                    CodigoPrompt = cfgModo.Codigo,
+                    PromptPorDefecto = cfgModo.Fallback,
+                    MaxTokensResumen = cfgModo.MaxTokens,
+                    Traducir = R,
+                    Idioma = IdiomaIA,
+                    NombreTablaAuditoria = tablaAmigable,
+                    FiltrosDescripcion = request.FiltrosDescripcion,
+                    FilasAnalizadas = filasEnviadas,
+                    TotalFilas = resultado.TotalRegistros
+                });
 
                 return Json(response);
             }
@@ -334,22 +268,6 @@ namespace bufinscustomers.Controllers
                 case "riesgo":    return ("ALERTAS_RIESGO",     1800, FALLBACK_RIESGO);
                 default:          return ("RESUMEN_GERENCIAL",  1800, null); // null → IAService usa su default
             }
-        }
-
-        /// <summary>Tarifas USD por 1.000 tokens (prompt, respuesta) desde ConfiguracionSistema. 0 = no calcular coste.</summary>
-        private (decimal, decimal) ObtenerCostosIA()
-        {
-            decimal p = 0m, s = 0m;
-            try
-            {
-                var cfg = new ConfiguracionSistemaService();
-                decimal.TryParse(cfg.ObtenerValor("IA_CostoPor1kTokensPrompt"),
-                    System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out p);
-                decimal.TryParse(cfg.ObtenerValor("IA_CostoPor1kTokensRespuesta"),
-                    System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out s);
-            }
-            catch (Exception ex) { AppLogger.Error(ex, "InformeTablasDatosController.ObtenerCostosIA"); }
-            return (p < 0 ? 0 : p, s < 0 ? 0 : s);
         }
 
         /// <summary>
@@ -566,15 +484,6 @@ namespace bufinscustomers.Controllers
 
         /// <summary>Resuelve en español/inglés (R) el aviso de presupuesto que decidió
         /// IAUsoService.EvaluarAcceso y lo reparte a los Super Admin.</summary>
-        private void AvisarPresupuestoIA(IAUsoService iaUso, int idEmpresa, IAUsoService.ResultadoAcceso acceso)
-        {
-            bool agotado = acceso.DebeAvisarAgotado;
-            string nombreEmpresa = _service.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? ("#" + idEmpresa);
-            string titulo = R(agotado ? "Notif_IAPresupuestoAgotadoTitulo" : "Notif_IAPresupuestoAvisoTitulo");
-            string msg = string.Format(R(agotado ? "Notif_IAPresupuestoAgotadoMsg" : "Notif_IAPresupuestoAvisoMsg"),
-                nombreEmpresa, acceso.ConsumidoMes.ToString("N0"), acceso.PresupuestoEfectivo.ToString("N0"), acceso.PorcentajeConsumido);
-            iaUso.EnviarAvisoPresupuestoATodosSuperAdmin(titulo, msg, agotado);
-        }
 
         /// <summary>
         /// Acota el historial que llega del cliente (S04): descarta mensajes con forma inválida,

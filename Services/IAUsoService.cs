@@ -3,27 +3,31 @@ using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Linq;
 
 namespace bufinscustomers.Services
 {
     /// <summary>
     /// Punto único de control de acceso a cualquier consulta de IA del sistema (Análisis IA, resumen
-    /// de Home, insights de PYG/Balance). Reemplaza la lógica de cuota que antes estaba duplicada en
-    /// cada controlador. Dos reglas, evaluadas en este orden:
-    /// 1) el usuario debe tener acceso habilitado (<c>Usuarios.AccesoConsultasIA</c>, permitido por
-    ///    defecto si es NULL) — Super Admin siempre pasa;
-    /// 2) la empresa no debe haber agotado su presupuesto mensual de tokens (override en
-    ///    <c>ConfiguracionIAEmpresaService</c> o, si no hay override, la clave global
-    ///    <c>IA_TokensMensualesPorEmpresa</c>; 0 = ilimitado) — Super Admin también exento.
-    /// No lee recursos de idioma (regla del proyecto: eso es responsabilidad del controlador, que
-    /// resuelve <see cref="ResultadoAcceso.CodigoError"/> con <c>R(...)</c>).
+    /// de Home, insights de PYG/Balance). Super Admin queda exento de todas las reglas. Para el resto,
+    /// en este orden (la configuración por empresa vive en <see cref="ConfigIAEmpresa"/>):
+    /// 1) la empresa tiene la IA habilitada (interruptor maestro);
+    /// 2) el usuario tiene acceso (<c>Usuarios.AccesoConsultasIA</c>, permitido por defecto si es NULL);
+    /// 3) la función está habilitada para la empresa;
+    /// 4) el usuario no superó su tope diario de tokens;
+    /// 5) presupuesto de tokens del periodo (propio o global; 0 = ilimitado), opcionalmente compartido
+    ///    por el Grupo Empresarial (pool) y con día de corte propio. Al agotarse (o si la consulta
+    ///    estimada lo excedería) se aplica la política de la empresa: bloquear, degradar o sobreconsumo.
+    /// No lee recursos de idioma (regla del proyecto): <see cref="ResultadoAcceso.CodigoError"/> es un
+    /// código y <see cref="ClaveMensaje"/> da la clave de recurso con que el llamador lo traduce.
     /// </summary>
     public class IAUsoService : BaseService
     {
         public class ResultadoAcceso
         {
             public bool Permitido { get; set; } = true;
-            /// <summary>"SIN_ACCESO" | "PRESUPUESTO_AGOTADO" | null si Permitido.</summary>
+            /// <summary>"EMPRESA_SIN_IA" | "SIN_ACCESO" | "FUNCION_NO_PERMITIDA" | "TOPE_USUARIO" |
+            /// "PRESUPUESTO_AGOTADO" | "PRESUPUESTO_INSUFICIENTE" | null si Permitido.</summary>
             public string CodigoError { get; set; }
             /// <summary>true la primera vez (throttled) que la empresa agota su presupuesto — el
             /// controlador debe notificar a los Super Admin.</summary>
@@ -33,37 +37,91 @@ namespace bufinscustomers.Services
             public long ConsumidoMes { get; set; }
             public long PresupuestoEfectivo { get; set; }
             public int PorcentajeConsumido { get; set; }
+            /// <summary>Política "Degradar" en curso: usar modelo económico y respuestas más cortas.</summary>
+            public bool Degradado { get; set; }
+            /// <summary>Política "Sobreconsumo" en curso: se atiende normal y el exceso queda marcado en IAUsoLog.</summary>
+            public bool Sobreconsumo { get; set; }
+            /// <summary>Modelo fijo configurado para la empresa (null = el global).</summary>
+            public string ModeloEmpresa { get; set; }
+            /// <summary>Contexto de negocio propio de la empresa (null = sin contexto propio).</summary>
+            public string ContextoEmpresa { get; set; }
+        }
+
+        /// <summary>Consumo y presupuesto del periodo en curso de una empresa (o de su pool).</summary>
+        public class EstadoConsumo
+        {
+            public long Consumido { get; set; }
+            /// <summary>0 = ilimitado.</summary>
+            public long Presupuesto { get; set; }
+            public DateTime InicioPeriodo { get; set; }
+            public bool EnPool { get; set; }
+            public int EmpresasEnPool { get; set; } = 1;
         }
 
         private readonly ConfiguracionIAEmpresaService _cfgEmpresa = new ConfiguracionIAEmpresaService();
         private readonly ConfiguracionSistemaService _cfgSistema = new ConfiguracionSistemaService();
         private readonly AuditoriaAnalisisIAService _auditoria = new AuditoriaAnalisisIAService();
 
-        public ResultadoAcceso EvaluarAcceso(Usuarios usuario, bool esSuperAdmin, int idEmpresa)
+        /// <summary>Clave de recurso (Strings.resx) del mensaje para un <see cref="ResultadoAcceso.CodigoError"/>.</summary>
+        public static string ClaveMensaje(string codigoError)
+        {
+            switch (codigoError)
+            {
+                case "PRESUPUESTO_AGOTADO": return "IA_PresupuestoAgotadoMensaje";
+                case "PRESUPUESTO_INSUFICIENTE": return "IA_PresupuestoInsuficienteMensaje";
+                case "EMPRESA_SIN_IA": return "IA_EmpresaSinIAMensaje";
+                case "FUNCION_NO_PERMITIDA": return "IA_FuncionNoPermitidaMensaje";
+                case "TOPE_USUARIO": return "IA_TopeUsuarioMensaje";
+                default: return "IA_SinAccesoMensaje";
+            }
+        }
+
+        /// <param name="funcion">Una de <see cref="IAFuncion"/> (null = no validar funciones).</param>
+        /// <param name="tokensEstimados">Estimación de la consulta que se va a hacer (0 = aún no se conoce).</param>
+        /// <param name="tokensReservados">Tokens de consultas en curso de la misma empresa que aún no se han contabilizado.</param>
+        public ResultadoAcceso EvaluarAcceso(Usuarios usuario, bool esSuperAdmin, int idEmpresa,
+            string funcion = null, long tokensEstimados = 0, long tokensReservados = 0)
         {
             var resultado = new ResultadoAcceso();
+            // Super Admin exento de los controles, pero el contexto de la empresa consultada sí aplica a sus respuestas.
+            var cfg = _cfgEmpresa.ObtenerConfig(idEmpresa);
+            resultado.ContextoEmpresa = cfg.ContextoNegocio;
             if (esSuperAdmin) return resultado;
 
-            if (usuario?.AccesoConsultasIA == false)
-            {
-                resultado.Permitido = false;
-                resultado.CodigoError = "SIN_ACCESO";
-                return resultado;
-            }
+            resultado.ModeloEmpresa = cfg.ModeloPermitido;
 
-            long presupuesto = ObtenerPresupuestoEfectivo(idEmpresa);
-            resultado.PresupuestoEfectivo = presupuesto;
-            if (presupuesto <= 0) return resultado; // ilimitado
+            if (!cfg.IaHabilitada) return Denegar(resultado, "EMPRESA_SIN_IA");
+            if (usuario?.AccesoConsultasIA == false) return Denegar(resultado, "SIN_ACCESO");
 
-            long consumido = _auditoria.SumarTokensMes(idEmpresa);
-            resultado.ConsumidoMes = consumido;
+            if (!string.IsNullOrEmpty(funcion) && cfg.FuncionesPermitidas != null
+                && !cfg.FuncionesPermitidas.Contains(funcion, StringComparer.OrdinalIgnoreCase))
+                return Denegar(resultado, "FUNCION_NO_PERMITIDA");
+
+            if (usuario != null && cfg.TopeDiarioUsuario.GetValueOrDefault() > 0
+                && _auditoria.SumarTokensUsuarioHoy(idEmpresa, usuario.Id) >= cfg.TopeDiarioUsuario.Value)
+                return Denegar(resultado, "TOPE_USUARIO");
+
+            var estado = ObtenerEstadoConsumo(idEmpresa, cfg);
+            resultado.PresupuestoEfectivo = estado.Presupuesto;
+            resultado.ConsumidoMes = estado.Consumido;
+            if (estado.Presupuesto <= 0) return resultado; // ilimitado
+
+            long presupuesto = estado.Presupuesto, consumido = estado.Consumido;
             resultado.PorcentajeConsumido = (int)Math.Min(100, consumido * 100 / presupuesto);
 
-            if (consumido >= presupuesto)
+            bool agotado = consumido >= presupuesto;
+            bool excederia = !agotado && tokensEstimados > 0 && consumido + tokensReservados + tokensEstimados > presupuesto;
+
+            if (agotado || excederia)
             {
-                resultado.Permitido = false;
-                resultado.CodigoError = "PRESUPUESTO_AGOTADO";
-                resultado.DebeAvisarAgotado = IntentarRegistrarAviso(idEmpresa, agotado: true);
+                if (agotado) resultado.DebeAvisarAgotado = IntentarRegistrarAviso(idEmpresa, agotado: true);
+
+                switch (cfg.PoliticaAgotado)
+                {
+                    case IAPoliticaAgotado.Degradar: resultado.Degradado = true; break;
+                    case IAPoliticaAgotado.Sobreconsumo: resultado.Sobreconsumo = true; break;
+                    default: return Denegar(resultado, agotado ? "PRESUPUESTO_AGOTADO" : "PRESUPUESTO_INSUFICIENTE");
+                }
             }
             else if (consumido >= (long)(presupuesto * 0.8))
             {
@@ -71,6 +129,73 @@ namespace bufinscustomers.Services
             }
 
             return resultado;
+        }
+
+        private static ResultadoAcceso Denegar(ResultadoAcceso r, string codigo)
+        {
+            r.Permitido = false;
+            r.CodigoError = codigo;
+            return r;
+        }
+
+        /// <summary>Consumo y presupuesto del periodo en curso de la empresa; si tiene pool de grupo, los del pool.</summary>
+        public EstadoConsumo ObtenerEstadoConsumo(int idEmpresa, ConfigIAEmpresa cfg = null)
+        {
+            cfg = cfg ?? _cfgEmpresa.ObtenerConfig(idEmpresa);
+            var estado = new EstadoConsumo { InicioPeriodo = InicioPeriodo(cfg.DiaCorte, DateTime.Now) };
+
+            List<int> ids = new List<int> { idEmpresa };
+            Dictionary<int, ConfigIAEmpresa> cfgs = null;
+
+            if (cfg.PoolGrupo)
+            {
+                var todas = EmpresaCacheHelper.ObtenerEmpresasCacheadas();
+                int? grupo = todas.FirstOrDefault(e => e.Id == idEmpresa)?.IdGrupoEmpresarial;
+                if (grupo.HasValue)
+                {
+                    var delGrupo = todas.Where(e => e.IdGrupoEmpresarial == grupo).Select(e => e.Id).ToList();
+                    cfgs = _cfgEmpresa.ObtenerConfigs(delGrupo);
+                    cfgs[idEmpresa] = cfg;
+                    var miembros = delGrupo.Where(id => id == idEmpresa || (cfgs.TryGetValue(id, out var c) && c.PoolGrupo)).ToList();
+                    if (miembros.Count > 1)
+                    {
+                        ids = miembros;
+                        estado.EnPool = true;
+                        estado.EmpresasEnPool = miembros.Count;
+                    }
+                }
+            }
+
+            if (estado.EnPool)
+            {
+                // El presupuesto del pool es la suma de los de sus miembros; si alguno es ilimitado, el pool lo es.
+                long total = 0;
+                foreach (int id in ids)
+                {
+                    long p = (cfgs.TryGetValue(id, out var c) ? c.PresupuestoTokensMensual : null) ?? ObtenerPresupuestoGlobalDefault();
+                    if (p <= 0) { total = 0; break; }
+                    total += p;
+                }
+                estado.Presupuesto = total;
+                estado.Consumido = _auditoria.SumarTokensDesde(ids, estado.InicioPeriodo);
+            }
+            else
+            {
+                estado.Presupuesto = cfg.PresupuestoTokensMensual ?? ObtenerPresupuestoGlobalDefault();
+                // Camino rápido (acumulado mensual) solo con mes calendario; con día de corte se suma por fechas.
+                estado.Consumido = cfg.DiaCorte.HasValue
+                    ? _auditoria.SumarTokensDesde(ids, estado.InicioPeriodo)
+                    : _auditoria.SumarTokensMes(idEmpresa);
+            }
+            return estado;
+        }
+
+        /// <summary>Inicio del periodo de consumo: el día de corte más reciente (1-28) o el día 1 del mes.</summary>
+        public static DateTime InicioPeriodo(int? diaCorte, DateTime hoy)
+        {
+            int dia = Math.Max(1, Math.Min(28, diaCorte ?? 1));
+            var inicio = new DateTime(hoy.Year, hoy.Month, dia);
+            return hoy.Date >= inicio ? inicio : inicio.AddMonths(-1);
         }
 
         /// <summary>Presupuesto mensual de tokens aplicable a la empresa: su override si existe, si no
@@ -104,20 +229,42 @@ namespace bufinscustomers.Services
             return true;
         }
 
-        /// <summary>Envía a todos los Super Admin un aviso ya traducido (el controlador resuelve el
-        /// texto con <c>R(...)</c> — este servicio solo reparte el envío).</summary>
-        public void EnviarAvisoPresupuestoATodosSuperAdmin(string titulo, string mensaje, bool agotado)
+        /// <summary>Envía el aviso (ya traducido por el controlador con <c>R(...)</c>) a todos los Super Admin y,
+        /// si se indica la empresa, también a sus Admin de Empresa (que lo abren en "Mi consumo de IA").</summary>
+        public void EnviarAvisoPresupuestoATodosSuperAdmin(string titulo, string mensaje, bool agotado, int? idEmpresa = null)
         {
             try
             {
                 var notif = new NotificacionesService();
+                string tipo = agotado ? "error" : "warning";
                 foreach (int idAdmin in ObtenerIdsSuperAdmin())
-                    notif.Crear(idAdmin, titulo, mensaje, agotado ? "error" : "warning", "/AuditoriaHub");
+                    notif.Crear(idAdmin, titulo, mensaje, tipo, "/AuditoriaHub");
+                if (idEmpresa.HasValue)
+                    foreach (int idAdminEmpresa in ObtenerIdsAdminEmpresa(idEmpresa.Value))
+                        notif.Crear(idAdminEmpresa, titulo, mensaje, tipo, "/AnalisisIA");
             }
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "IAUsoService.EnviarAvisoPresupuestoATodosSuperAdmin");
             }
+        }
+
+        private List<int> ObtenerIdsAdminEmpresa(int idEmpresa)
+        {
+            var ids = new List<int>();
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand("SELECT Id FROM Usuarios WHERE Admin = 1 AND IdEmpresa = @IdEmpresa", cn))
+                {
+                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                    cn.Open();
+                    using (var r = cmd.ExecuteReader())
+                        while (r.Read()) ids.Add(Convert.ToInt32(r["Id"]));
+                }
+            }
+            catch (Exception ex) { AppLogger.Error(ex, "IAUsoService.ObtenerIdsAdminEmpresa"); }
+            return ids;
         }
 
         private List<int> ObtenerIdsSuperAdmin()

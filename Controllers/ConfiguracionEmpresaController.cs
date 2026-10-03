@@ -47,7 +47,7 @@ namespace bufinscustomers.Controllers
 
                 ViewBag.Empresas = empresas;
                 ViewBag.EsAdmin = UsuarioSesionHelper.EsSuperAdmin();
-                ViewBag.TablasDisponibles = _tablasService.ObtenerTablasDisponibles();
+                ViewBag.TablasDisponibles = _tablasService.ObtenerTablasModelos(); // solo se usa para el resumen IA (solo dbo.Modelo*)
 
                 return View("~/Views/Configuracion/ConfiguracionesEmpresas.cshtml");
             }

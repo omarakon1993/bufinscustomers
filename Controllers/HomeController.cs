@@ -129,7 +129,7 @@ namespace bufinscustomers.Controllers
                     return Json(new { success = true, tablas = new string[0] }, JsonRequestBehavior.AllowGet);
 
                 var tablasAsignadas = new EmpresaTablasResumenIAService().ObtenerTablasAsignadas(idEmpresaObjetivo.Value);
-                var tablasDisponibles = new InformeTablasDatosService().ObtenerTablasDisponibles();
+                var tablasDisponibles = new InformeTablasDatosService().ObtenerTablasModelos();
 
                 var nombresAmigables = tablasAsignadas
                     .Select(nombreTabla => tablasDisponibles.FirstOrDefault(t => t.NombreTabla == nombreTabla)?.NombreAmigable)
@@ -179,22 +179,13 @@ namespace bufinscustomers.Controllers
                 if (tablasAsignadas == null || tablasAsignadas.Count == 0)
                     return Json(new IAConsultaResponse { Exitoso = false, Error = R("Home_IA_SinConfigurar") });
 
-                // Acceso del usuario + presupuesto mensual de tokens de la empresa — control único
-                // centralizado en IAUsoService (Configuración IA → Por Empresa). Super Admin exento.
-                var iaUso = new IAUsoService();
-                var acceso = iaUso.EvaluarAcceso(usuario, esAdmin, idEmpresaObjetivo);
-                if (acceso.DebeAvisarAgotado || acceso.DebeAvisarCercaDelLimite)
-                    AvisarPresupuestoIA(iaUso, idEmpresaObjetivo, acceso);
-                if (!acceso.Permitido)
-                {
-                    string errorAcceso = acceso.CodigoError == "PRESUPUESTO_AGOTADO"
-                        ? R("IA_PresupuestoAgotadoMensaje")
-                        : R("IA_SinAccesoMensaje");
-                    return Json(new IAConsultaResponse { Exitoso = false, Error = errorAcceso });
-                }
+                // Acceso del usuario + presupuesto mensual de tokens de la empresa (IAUsoService).
+                var denegado = ValidarAccesoIA(usuario, esAdmin, idEmpresaObjetivo, IAFuncion.ResumenHome);
+                if (denegado != null) return denegado;
 
                 var tablasService = new InformeTablasDatosService();
-                var tablasDisponibles = tablasService.ObtenerTablasDisponibles();
+                // La IA solo toma datos de las tablas dbo.Modelo* (fuera de ellas se ignora, aunque siga asignada).
+                var tablasDisponibles = tablasService.ObtenerTablasModelos();
 
                 const int MaxFilasPorTabla = 300;
                 var datosPorTabla = new Dictionary<string, object>();
@@ -220,34 +211,6 @@ namespace bufinscustomers.Controllers
                 if (datosPorTabla.Count == 0)
                     return Json(new IAConsultaResponse { Exitoso = false, Error = R("Home_IA_SinDatos") });
 
-                var cfgSvc     = new ConfiguracionSistemaService();
-                var tApiKey    = cfgSvc.ObtenerValorAsync("OpenAIApiKey");
-                var tModelo    = cfgSvc.ObtenerValorAsync("OpenAIModel");
-                var tMaxTokens = cfgSvc.ObtenerValorAsync("OpenAIMaxTokens");
-                var tTemp      = cfgSvc.ObtenerValorAsync("OpenAITemperature");
-                await Task.WhenAll(tApiKey, tModelo, tMaxTokens, tTemp);
-
-                string apiKey   = (tApiKey.Result ?? "").Trim();
-                string modeloIA = (tModelo.Result ?? "gpt-4o").Trim();
-                int maxTokensIA = (int.TryParse(tMaxTokens.Result, out int ptk) && ptk > 0) ? ptk : 8000;
-                double? temperatureIA = double.TryParse(
-                    tTemp.Result,
-                    System.Globalization.NumberStyles.Float,
-                    System.Globalization.CultureInfo.InvariantCulture,
-                    out double tVal) ? (double?)tVal : null;
-
-                var iaService = new IAService(apiKey);
-
-                var promptConfig = new GestorPromptsService().ObtenerPorCodigo("RESUMEN_GERENCIAL");
-                string instrucciones = promptConfig?.TextoPrompt;
-
-                var guardrailConfig = new GestorPromptsService().ObtenerPorCodigo("GUARDRAIL_SISTEMA");
-                string guardrail = guardrailConfig?.TextoPrompt;
-
-                // Contexto de negocio de Bufins (Fase A): mismo conocimiento curado que en Análisis IA.
-                var contextoConfig = new GestorPromptsService().ObtenerPorCodigo("CONTEXTO_NEGOCIO_BUFINS");
-                string contextoNegocio = contextoConfig?.TextoPrompt;
-
                 var empresaInfo = tablasService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresaObjetivo);
                 string nombreEmpresa = empresaInfo?.Nombre ?? "—";
                 string nombreTablasEnviadas = string.Join(", ", datosPorTabla.Keys);
@@ -260,30 +223,20 @@ namespace bufinscustomers.Controllers
                     FiltrosDescripcion = $"Empresa {nombreEmpresa}, año más reciente disponible por tabla"
                 };
 
-                var response = await iaService.ConsultarAsync(request, instrucciones, guardrail, modeloIA, maxTokensIA, temperatureIA, contextoNegocio);
-                response.FilasEnviadas = totalFilasEnviadas;
-                response.TotalFilas = totalFilasEnviadas;
-
-                if (response.Exitoso)
+                var response = await new IAGateway().EjecutarAsync(new IASolicitud
                 {
-                    try
-                    {
-                        new AuditoriaAnalisisIAService().Registrar(new AuditoriaAnalisisIA
-                        {
-                            IdUsuario       = usuario.Id,
-                            NombreUsuario   = $"{usuario.Nombre} {usuario.Apellidos}".Trim(),
-                            IdEmpresa       = idEmpresaObjetivo,
-                            NombreEmpresa   = nombreEmpresa,
-                            NombreTabla     = nombreTablasEnviadas,
-                            Filtros         = request.FiltrosDescripcion,
-                            Pregunta        = null,
-                            Respuesta       = response.Respuesta,
-                            FechaPregunta   = DateTime.Now,
-                            FilasAnalizadas = totalFilasEnviadas
-                        });
-                    }
-                    catch { }
-                }
+                    Funcion = IAFuncion.ResumenHome,
+                    Usuario = usuario,
+                    IdEmpresa = idEmpresaObjetivo,
+                    NombreEmpresa = nombreEmpresa,
+                    Request = request,
+                    CodigoPrompt = "RESUMEN_GERENCIAL",
+                    Traducir = R,
+                    Idioma = IdiomaIA,
+                    NombreTablaAuditoria = nombreTablasEnviadas,
+                    FiltrosDescripcion = request.FiltrosDescripcion,
+                    FilasAnalizadas = totalFilasEnviadas
+                });
 
                 return Json(response);
             }
@@ -293,17 +246,6 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        /// <summary>Resuelve en español/inglés (R) el aviso de presupuesto que decidió
-        /// IAUsoService.EvaluarAcceso y lo reparte a los Super Admin.</summary>
-        private void AvisarPresupuestoIA(IAUsoService iaUso, int idEmpresa, IAUsoService.ResultadoAcceso acceso)
-        {
-            bool agotado = acceso.DebeAvisarAgotado;
-            string nombreEmpresa = new EmpresaService().ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? ("#" + idEmpresa);
-            string titulo = R(agotado ? "Notif_IAPresupuestoAgotadoTitulo" : "Notif_IAPresupuestoAvisoTitulo");
-            string msg = string.Format(R(agotado ? "Notif_IAPresupuestoAgotadoMsg" : "Notif_IAPresupuestoAvisoMsg"),
-                nombreEmpresa, acceso.ConsumidoMes.ToString("N0"), acceso.PresupuestoEfectivo.ToString("N0"), acceso.PorcentajeConsumido);
-            iaUso.EnviarAvisoPresupuestoATodosSuperAdmin(titulo, msg, agotado);
-        }
 
         public ActionResult CerrarSesion()
         {

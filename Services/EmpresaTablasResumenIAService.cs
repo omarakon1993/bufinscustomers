@@ -32,7 +32,8 @@ namespace bufinscustomers.Services
         /// </summary>
         public void GuardarTablasEmpresa(int idEmpresa, List<string> tablas, int usuarioAsigno)
         {
-            var tablasValidas = new InformeTablasDatosService().ObtenerTablasDisponibles();
+            // Solo tablas dbo.Modelo*: es la única fuente de datos permitida para la IA.
+            var tablasValidas = new InformeTablasDatosService().ObtenerTablasModelos();
             var nombresValidos = new HashSet<string>();
             foreach (var t in tablasValidas) nombresValidos.Add(t.NombreTabla);
 

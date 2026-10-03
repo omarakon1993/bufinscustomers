@@ -91,24 +91,40 @@ namespace bufinscustomers.Services
         }
 
         /// <summary>
-        /// Suma de <c>TokensTotal</c> de la empresa en el mes en curso (S03). <c>0</c> ante cualquier
-        /// error o si la columna no existe — así un fallo de medición nunca bloquea a la empresa.
+        /// Tokens consumidos por la empresa en el mes en curso (base del presupuesto mensual).
+        /// Lee el acumulado <c>dbo.IAUsoMensual</c> (lo mantiene IAGateway; no depende de que alguien
+        /// limpie la auditoría). Si esa tabla aún no existe cae a sumar <c>AuditoriaAnalisisIA.TokensTotal</c>.
+        /// <c>0</c> ante cualquier otro error — así un fallo de medición nunca bloquea a la empresa.
         /// </summary>
         public long SumarTokensMes(int idEmpresa)
         {
             try
             {
                 using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    @"SELECT ISNULL(SUM(CAST(TokensTotal AS BIGINT)), 0)
-                      FROM AuditoriaAnalisisIA
-                      WHERE IdEmpresa = @IdEmpresa
-                        AND FechaPregunta >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)", cn))
                 {
-                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
                     cn.Open();
-                    var r = cmd.ExecuteScalar();
-                    return r == null || r == DBNull.Value ? 0L : Convert.ToInt64(r);
+                    try
+                    {
+                        using (var cmd = new SqlCommand(
+                            "SELECT ISNULL(SUM(Tokens), 0) FROM dbo.IAUsoMensual WHERE IdEmpresa = @IdEmpresa AND Periodo = @Periodo", cn))
+                        {
+                            cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                            cmd.Parameters.AddWithValue("@Periodo", DateTime.Now.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture));
+                            return Convert.ToInt64(cmd.ExecuteScalar());
+                        }
+                    }
+                    catch (SqlException ex) when (ex.Number == 208) { /* IAUsoMensual aún no existe (Sql/013) */ }
+
+                    using (var cmd = new SqlCommand(
+                        @"SELECT ISNULL(SUM(CAST(TokensTotal AS BIGINT)), 0)
+                          FROM AuditoriaAnalisisIA
+                          WHERE IdEmpresa = @IdEmpresa
+                            AND FechaPregunta >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)", cn))
+                    {
+                        cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                        var r = cmd.ExecuteScalar();
+                        return r == null || r == DBNull.Value ? 0L : Convert.ToInt64(r);
+                    }
                 }
             }
             catch (Exception ex)
@@ -118,14 +134,76 @@ namespace bufinscustomers.Services
             }
         }
 
+        /// <summary>
+        /// Tokens consumidos por un conjunto de empresas desde <paramref name="desde"/> (inclusive) — se usa
+        /// con día de corte propio y con pool de grupo. Suma <c>AuditoriaAnalisisIA.TokensTotal</c> (índice
+        /// por empresa y fecha). <c>0</c> ante cualquier error: un fallo de medición nunca bloquea.
+        /// </summary>
+        public long SumarTokensDesde(List<int> idsEmpresa, DateTime desde)
+        {
+            if (idsEmpresa == null || idsEmpresa.Count == 0) return 0L;
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand())
+                {
+                    var ps = new List<string>();
+                    for (int i = 0; i < idsEmpresa.Count; i++)
+                    {
+                        ps.Add("@e" + i);
+                        cmd.Parameters.AddWithValue("@e" + i, idsEmpresa[i]);
+                    }
+                    cmd.Parameters.AddWithValue("@Desde", desde);
+                    cmd.Connection = cn;
+                    cmd.CommandText = "SELECT ISNULL(SUM(CAST(TokensTotal AS BIGINT)), 0) FROM AuditoriaAnalisisIA " +
+                                      "WHERE IdEmpresa IN (" + string.Join(",", ps) + ") AND FechaPregunta >= @Desde";
+                    cn.Open();
+                    var r = cmd.ExecuteScalar();
+                    return r == null || r == DBNull.Value ? 0L : Convert.ToInt64(r);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceWarning("[AuditoriaAnalisisIAService.SumarTokensDesde] {0}", ex.Message);
+                return 0L;
+            }
+        }
+
+        /// <summary>Tokens consumidos hoy por un usuario dentro de una empresa (tope diario por usuario).</summary>
+        public long SumarTokensUsuarioHoy(int idEmpresa, int idUsuario)
+        {
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand(
+                    @"SELECT ISNULL(SUM(CAST(TokensTotal AS BIGINT)), 0) FROM AuditoriaAnalisisIA
+                      WHERE IdEmpresa = @IdEmpresa AND IdUsuario = @IdUsuario AND FechaPregunta >= CAST(GETDATE() AS DATE)", cn))
+                {
+                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                    cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
+                    cn.Open();
+                    var r = cmd.ExecuteScalar();
+                    return r == null || r == DBNull.Value ? 0L : Convert.ToInt64(r);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceWarning("[AuditoriaAnalisisIAService.SumarTokensUsuarioHoy] {0}", ex.Message);
+                return 0L;
+            }
+        }
+
         public List<AuditoriaAnalisisIA> ObtenerRegistros(int? idUsuario, List<int> idsEmpresa, DateTime? desde, DateTime? hasta)
         {
             var lista = new List<AuditoriaAnalisisIA>();
             using (var cn = new SqlConnection(CadenaConexion))
             {
+                bool conTokens = TieneColumna("TokensTotal");
+                bool conValoracion = TieneColumna("Valoracion");
                 var sql = @"SELECT Id, IdUsuario, NombreUsuario, IdEmpresa, NombreEmpresa,
-                                   NombreTabla, Filtros, Pregunta, Respuesta, FechaPregunta, FilasAnalizadas
-                            FROM AuditoriaAnalisisIA WHERE 1=1";
+                                   NombreTabla, Filtros, Pregunta, Respuesta, FechaPregunta, FilasAnalizadas"
+                          + (conTokens ? ", TokensTotal" : "") + (conValoracion ? ", Valoracion" : "")
+                          + " FROM AuditoriaAnalisisIA WHERE 1=1";
                 var cmd = new SqlCommand();
 
                 if (idUsuario.HasValue)
@@ -180,7 +258,9 @@ namespace bufinscustomers.Services
                             Pregunta        = reader["Pregunta"] == DBNull.Value ? null : reader["Pregunta"].ToString(),
                             Respuesta       = reader["Respuesta"].ToString(),
                             FechaPregunta   = Convert.ToDateTime(reader["FechaPregunta"]),
-                            FilasAnalizadas = Convert.ToInt32(reader["FilasAnalizadas"])
+                            FilasAnalizadas = Convert.ToInt32(reader["FilasAnalizadas"]),
+                            TokensTotal     = conTokens && reader["TokensTotal"] != DBNull.Value ? Convert.ToInt32(reader["TokensTotal"]) : 0,
+                            Valoracion      = conValoracion && reader["Valoracion"] != DBNull.Value ? Convert.ToInt32(reader["Valoracion"]) : (int?)null
                         });
                     }
                 }

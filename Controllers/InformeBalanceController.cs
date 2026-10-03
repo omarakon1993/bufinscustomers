@@ -125,45 +125,12 @@ namespace bufinscustomers.Controllers
                 if (filtros == null || !TieneAccesoEmpresa(idEmpresa))
                     return Json(new IAConsultaResponse { Exitoso = false, Error = R("Common_SinPermisos") });
 
-                var iaUso = new IAUsoService();
-                var acceso = iaUso.EvaluarAcceso(usuario, esAdmin, idEmpresa);
-                if (acceso.DebeAvisarAgotado || acceso.DebeAvisarCercaDelLimite)
-                    AvisarPresupuestoIA(iaUso, idEmpresa, acceso);
-                if (!acceso.Permitido)
-                {
-                    string errorAcceso = acceso.CodigoError == "PRESUPUESTO_AGOTADO"
-                        ? R("IA_PresupuestoAgotadoMensaje")
-                        : R("IA_SinAccesoMensaje");
-                    return Json(new IAConsultaResponse { Exitoso = false, Error = errorAcceso });
-                }
+                var denegado = ValidarAccesoIA(usuario, esAdmin, idEmpresa, IAFuncion.InsightsBalance);
+                if (denegado != null) return denegado;
 
                 var reporte = _service.ConstruirReporte(filtros);
                 if (reporte.SinDatos)
                     return Json(new IAConsultaResponse { Exitoso = false, Error = R("BAL_SinDatosDesc") });
-
-                var cfgSvc = new ConfiguracionSistemaService();
-                var tApiKey = cfgSvc.ObtenerValorAsync("OpenAIApiKey");
-                var tModelo = cfgSvc.ObtenerValorAsync("OpenAIModel");
-                var tMaxTokens = cfgSvc.ObtenerValorAsync("OpenAIMaxTokens");
-                var tTemp = cfgSvc.ObtenerValorAsync("OpenAITemperature");
-                await Task.WhenAll(tApiKey, tModelo, tMaxTokens, tTemp);
-
-                string apiKey = (tApiKey.Result ?? "").Trim();
-                string modeloIA = (tModelo.Result ?? "gpt-4o").Trim();
-                int maxTokensIA = (int.TryParse(tMaxTokens.Result, out int ptk) && ptk > 0) ? ptk : 8000;
-                double? temperatureIA = double.TryParse(
-                    tTemp.Result, NumberStyles.Float, CultureInfo.InvariantCulture, out double tVal)
-                    ? (double?)tVal : null;
-
-                var iaService = new IAService(apiKey);
-
-                // Si un Super Admin crea el prompt RESUMEN_BALANCE_GERENCIAL en el Gestor de Prompts, ese
-                // manda; si no existe (o está inactivo) se usa el prompt por defecto de este informe.
-                string instrucciones = new GestorPromptsService().ObtenerPorCodigo("RESUMEN_BALANCE_GERENCIAL")?.TextoPrompt;
-                if (string.IsNullOrWhiteSpace(instrucciones))
-                    instrucciones = PromptResumenBalancePorDefecto;
-                string guardrail = new GestorPromptsService().ObtenerPorCodigo("GUARDRAIL_SISTEMA")?.TextoPrompt;
-                string contextoNegocio = new GestorPromptsService().ObtenerPorCodigo("CONTEXTO_NEGOCIO_BUFINS")?.TextoPrompt;
 
                 var empresaInfo = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
                 string nombreEmpresa = empresaInfo?.Nombre ?? "—";
@@ -185,34 +152,100 @@ namespace bufinscustomers.Controllers
                     FiltrosDescripcion = filtrosDescripcion
                 };
 
-                var response = await iaService.ConsultarAsync(request, instrucciones, guardrail, modeloIA, maxTokensIA, temperatureIA, contextoNegocio);
-
-                if (response.Exitoso)
+                var response = await new IAGateway().EjecutarAsync(new IASolicitud
                 {
-                    try
-                    {
-                        new AuditoriaAnalisisIAService().Registrar(new AuditoriaAnalisisIA
-                        {
-                            IdUsuario = usuario.Id,
-                            NombreUsuario = $"{usuario.Nombre} {usuario.Apellidos}".Trim(),
-                            IdEmpresa = idEmpresa,
-                            NombreEmpresa = nombreEmpresa,
-                            NombreTabla = "Balance Gerencial",
-                            Filtros = filtrosDescripcion,
-                            Pregunta = null,
-                            Respuesta = response.Respuesta,
-                            FechaPregunta = DateTime.Now,
-                            FilasAnalizadas = reporte.Filas.Count
-                        });
-                    }
-                    catch { }
-                }
+                    Funcion = IAFuncion.InsightsBalance,
+                    Usuario = usuario,
+                    IdEmpresa = idEmpresa,
+                    NombreEmpresa = nombreEmpresa,
+                    Request = request,
+                    CodigoPrompt = "RESUMEN_BALANCE_GERENCIAL",
+                    PromptPorDefecto = PromptResumenBalancePorDefecto,
+                    // La vista separa los insights por etiqueta (acepta español e inglés): en inglés se fijan las etiquetas.
+                    Traducir = R,
+                    Idioma = IdiomaIA,
+                    InstruccionEnIngles = "Respond in English. Start the three lines with exactly these labels, in this order: \"Liquidity:\", \"Solvency:\", \"Working capital:\". Do not translate or change the labels.",
+                    NombreTablaAuditoria = "Balance Gerencial",
+                    FiltrosDescripcion = filtrosDescripcion,
+                    FilasAnalizadas = reporte.Filas.Count
+                });
 
                 return Json(response);
             }
             catch (Exception ex)
             {
                 return Json(new IAConsultaResponse { Exitoso = false, Error = "Error al generar el resumen: " + ex.Message });
+            }
+        }
+
+        /// <summary>"Pregúntale a este informe": responde una pregunta libre sobre el reporte ya calculado (se
+        /// reconstruye en el servidor con los mismos filtros, nunca con datos del cliente). Cada pregunta es una
+        /// consulta independiente y se mide como la función InsightsBalance.</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<JsonResult> PreguntarInforme(FiltrosBalance filtros, string pregunta)
+        {
+            try
+            {
+                var usuario = UsuarioSesionHelper.UsuarioActual;
+                var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
+                int idEmpresa = filtros?.IdEmpresa ?? 0;
+
+                if (filtros == null || !TieneAccesoEmpresa(idEmpresa))
+                    return Json(new IAConsultaResponse { Exitoso = false, Error = R("Common_SinPermisos") });
+
+                pregunta = (pregunta ?? "").Trim();
+                int maxPregunta = IAModuloHelper.MaxCharsPregunta();
+                if (pregunta.Length == 0 || pregunta.Length > maxPregunta)
+                    return Json(new IAConsultaResponse { Exitoso = false, Error = string.Format(R("IAInforme_PreguntaInvalida"), maxPregunta) });
+
+                var denegado = ValidarAccesoIA(usuario, esAdmin, idEmpresa, IAFuncion.InsightsBalance);
+                if (denegado != null) return denegado;
+
+                var reporte = _service.ConstruirReporte(filtros);
+                if (reporte.SinDatos)
+                    return Json(new IAConsultaResponse { Exitoso = false, Error = R("BAL_SinDatosDesc") });
+
+                var empresaInfo = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+                string nombreEmpresa = empresaInfo?.Nombre ?? "—";
+                string filtrosDescripcion = $"Empresa {nombreEmpresa}, corte {reporte.MesHasta:00}/{reporte.AnioHasta}, " +
+                    $"escenario {reporte.IdEscenario}, comparado contra {reporte.Comparar}" +
+                    (reporte.HayEscenarioComparar ? $", escenario de comparacion {reporte.IdEscenarioComparar}" : "");
+
+                var request = new IAConsultaRequest
+                {
+                    Pregunta = pregunta,
+                    DatosJson = JsonConvert.SerializeObject(new
+                    {
+                        filas = reporte.Filas,
+                        kpis = reporte.Kpis,
+                        cuadraBalance = reporte.CuadraBalance,
+                        diferenciaCuadre = reporte.DiferenciaCuadre
+                    }),
+                    NombreTabla = "Balance Gerencial",
+                    FiltrosDescripcion = filtrosDescripcion
+                };
+
+                var response = await new IAGateway().EjecutarAsync(new IASolicitud
+                {
+                    Funcion = IAFuncion.InsightsBalance,
+                    Usuario = usuario,
+                    IdEmpresa = idEmpresa,
+                    NombreEmpresa = nombreEmpresa,
+                    Request = request,
+                    Traducir = R,
+                    Idioma = IdiomaIA,
+                    NombreTablaAuditoria = "Balance Gerencial",
+                    FiltrosDescripcion = filtrosDescripcion,
+                    FilasAnalizadas = reporte.Filas.Count
+                });
+
+                return Json(response);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "InsightsBalance.PreguntarInforme");
+                return Json(new IAConsultaResponse { Exitoso = false, Error = R("IAInforme_Error") });
             }
         }
 
@@ -340,18 +373,6 @@ namespace bufinscustomers.Controllers
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             return UsuarioSesionHelper.EsSuperAdmin() || EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa);
-        }
-
-        /// <summary>Resuelve en español/inglés (R) el aviso de presupuesto que decidió
-        /// IAUsoService.EvaluarAcceso y lo reparte a los Super Admin.</summary>
-        private void AvisarPresupuestoIA(IAUsoService iaUso, int idEmpresa, IAUsoService.ResultadoAcceso acceso)
-        {
-            bool agotado = acceso.DebeAvisarAgotado;
-            string nombreEmpresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? ("#" + idEmpresa);
-            string titulo = R(agotado ? "Notif_IAPresupuestoAgotadoTitulo" : "Notif_IAPresupuestoAvisoTitulo");
-            string msg = string.Format(R(agotado ? "Notif_IAPresupuestoAgotadoMsg" : "Notif_IAPresupuestoAvisoMsg"),
-                nombreEmpresa, acceso.ConsumidoMes.ToString("N0"), acceso.PresupuestoEfectivo.ToString("N0"), acceso.PorcentajeConsumido);
-            iaUso.EnviarAvisoPresupuestoATodosSuperAdmin(titulo, msg, agotado);
         }
     }
 }

@@ -90,7 +90,9 @@ namespace bufinscustomers.Controllers
                 Pregunta      = r.Pregunta ?? "(Resumen Gerencial)",
                 r.Respuesta,
                 FechaPregunta = r.FechaPregunta.ToString("dd/MM/yyyy HH:mm:ss"),
-                r.FilasAnalizadas
+                r.FilasAnalizadas,
+                r.TokensTotal,
+                r.Valoracion
             }), JsonRequestBehavior.AllowGet);
         }
 

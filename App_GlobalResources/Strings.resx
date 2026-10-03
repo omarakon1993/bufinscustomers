@@ -1794,6 +1794,11 @@
   <data name="CfgIA_JS_ModelosCargados" xml:space="preserve"><value>modelos disponibles</value></data>
   <data name="CfgIA_JS_ErrorModelos" xml:space="preserve"><value>No se pudieron cargar los modelos. Verifica la API Key.</value></data>
   <data name="CfgIA_JS_ApiKeyVacia" xml:space="preserve"><value>Primero guarda una API Key válida en la configuración.</value></data>
+  <data name="CfgIA_Modelo_Placeholder" xml:space="preserve"><value>Elige o escribe un modelo (ej.: gpt-4o-mini)</value></data>
+  <data name="CfgIA_Modelo_Global" xml:space="preserve"><value>Usar el modelo global</value></data>
+  <data name="CfgIA_Modelo_Recargar" xml:space="preserve"><value>Recargar la lista de modelos de OpenAI</value></data>
+  <data name="CfgIA_Modelo_Abrir" xml:space="preserve"><value>Ver modelos disponibles</value></data>
+  <data name="CfgIA_Modelo_SinResultados" xml:space="preserve"><value>Sin coincidencias: se usará lo que escribas.</value></data>
   <data name="CfgIA_ModalDeleteBody" xml:space="preserve"><value>¿Eliminar el parámetro</value></data>
   <data name="CfgIA_NoItems" xml:space="preserve"><value>No hay parámetros configurados.</value></data>
   <!-- CONFIGURACIÓN IA — POR EMPRESA -->
@@ -1809,7 +1814,6 @@
   <data name="CfgIA_Emp_PresupuestoTitulo" xml:space="preserve"><value>Presupuesto mensual de tokens</value></data>
   <data name="CfgIA_Emp_PresupuestoPlaceholder" xml:space="preserve"><value>Usar el valor global ({0})</value></data>
   <data name="CfgIA_Emp_PresupuestoHint" xml:space="preserve"><value>Vacío = usa el valor global. 0 = ilimitado para esta empresa. Cualquier otro número = tope mensual propio.</value></data>
-  <data name="CfgIA_Emp_BtnGuardarPresupuesto" xml:space="preserve"><value>Guardar presupuesto</value></data>
   <data name="CfgIA_Emp_UsuariosTitulo" xml:space="preserve"><value>Acceso de usuarios a Análisis IA</value></data>
   <data name="CfgIA_Emp_UsuariosDesc" xml:space="preserve"><value>Controla qué usuarios de esta empresa pueden hacer consultas de IA. El gasto real se controla con el presupuesto de arriba, no con un número de consultas.</value></data>
   <data name="CfgIA_Emp_SinUsuarios" xml:space="preserve"><value>Esta empresa no tiene usuarios configurados (fuera de los Super Admin).</value></data>
@@ -1820,6 +1824,138 @@
   <data name="CfgIA_Emp_MsgGuardadoOk" xml:space="preserve"><value>Cambio guardado correctamente.</value></data>
   <data name="CfgIA_Emp_MsgErrorGuardar" xml:space="preserve"><value>No se pudo guardar el cambio.</value></data>
   <data name="CfgIA_Emp_MsgErrorCargar" xml:space="preserve"><value>No se pudo cargar la configuración de la empresa.</value></data>
+  <data name="CfgIA_Emp_ControlTitulo" xml:space="preserve"><value>Control de uso de IA</value></data>
+  <data name="CfgIA_Emp_Habilitada" xml:space="preserve"><value>IA habilitada para esta empresa</value></data>
+  <data name="CfgIA_Emp_HabilitadaHint" xml:space="preserve"><value>Apagado = ningún usuario de la empresa puede usar la IA (los Super Admin no se ven afectados).</value></data>
+  <data name="CfgIA_Emp_Politica" xml:space="preserve"><value>Al agotar el presupuesto</value></data>
+  <data name="CfgIA_Emp_PoliticaBloquear" xml:space="preserve"><value>Bloquear nuevas consultas</value></data>
+  <data name="CfgIA_Emp_PoliticaDegradar" xml:space="preserve"><value>Degradar (modelo económico y respuestas cortas)</value></data>
+  <data name="CfgIA_Emp_PoliticaSobreconsumo" xml:space="preserve"><value>Permitir sobreconsumo (queda registrado)</value></data>
+  <data name="CfgIA_Emp_PoliticaHint" xml:space="preserve"><value>También se aplica si una consulta estimada superaría lo que queda del presupuesto.</value></data>
+  <data name="CfgIA_Emp_DiaCorte" xml:space="preserve"><value>Día de corte del periodo</value></data>
+  <data name="CfgIA_Emp_DiaCorteHint" xml:space="preserve"><value>Día del mes (1-28) en que se reinicia el consumo. Vacío = mes calendario.</value></data>
+  <data name="CfgIA_Emp_TopeUsuario" xml:space="preserve"><value>Tope diario por usuario (tokens)</value></data>
+  <data name="CfgIA_Emp_TopeUsuarioHint" xml:space="preserve"><value>Vacío = sin tope. Aplica a Usuarios y Admin de Empresa.</value></data>
+  <data name="CfgIA_Emp_Modelo" xml:space="preserve"><value>Modelo fijo de la empresa</value></data>
+  <data name="CfgIA_Emp_ModeloHint" xml:space="preserve"><value>Vacío = el modelo global (p. ej. gpt-4o).</value></data>
+  <data name="CfgIA_Emp_Pool" xml:space="preserve"><value>Compartir presupuesto con su Grupo Empresarial</value></data>
+  <data name="CfgIA_Emp_PoolHint" xml:space="preserve"><value>Las empresas del grupo con esta opción suman sus presupuestos y su consumo (un presupuesto ilimitado hace ilimitado al pool).</value></data>
+  <data name="CfgIA_Emp_PoolSinGrupo" xml:space="preserve"><value>Esta empresa no pertenece a un Grupo Empresarial, el pool no aplica.</value></data>
+  <data name="CfgIA_Emp_Funciones" xml:space="preserve"><value>Funciones habilitadas</value></data>
+  <data name="CfgIA_Emp_FuncionesHint" xml:space="preserve"><value>Todas marcadas = todas habilitadas.</value></data>
+  <data name="CfgIA_Emp_Func_Chat" xml:space="preserve"><value>Análisis IA (chat)</value></data>
+  <data name="CfgIA_Emp_Func_ResumenHome" xml:space="preserve"><value>Resumen del Home</value></data>
+  <data name="CfgIA_Emp_Func_InsightsPYG" xml:space="preserve"><value>Insights de PYG</value></data>
+  <data name="CfgIA_Emp_Func_InsightsBalance" xml:space="preserve"><value>Insights de Balance</value></data>
+  <data name="CfgIA_Emp_BtnGuardarControl" xml:space="preserve"><value>Guardar control de uso</value></data>
+  <data name="CfgIA_Emp_MsgDatosInvalidos" xml:space="preserve"><value>Revisa los valores: el día de corte va de 1 a 28 y los topes no pueden ser negativos.</value></data>
+  <data name="CfgIA_Emp_PeriodoDesde" xml:space="preserve"><value>Periodo desde {0}</value></data>
+  <data name="CfgIA_Emp_PoolActivo" xml:space="preserve"><value>pool del grupo {0}: {1} empresas</value></data>
+  <data name="CfgIA_Emp_Contexto" xml:space="preserve"><value>Contexto de negocio de la empresa</value></data>
+  <data name="CfgIA_Emp_ContextoPlaceholder" xml:space="preserve"><value>Ej.: Distribuidora de alimentos con operación en Colombia y Ecuador. Vende al por mayor a supermercados y tiendas. El negocio es estacional (picos en noviembre y diciembre).</value></data>
+  <data name="CfgIA_Emp_ContextoPlantilla" xml:space="preserve"><value>Insertar plantilla</value></data>
+  <data name="CfgIA_Emp_ContextoPlantillaTexto" xml:space="preserve"><value>Actividad principal: 
+Productos o líneas de negocio: 
+Países y moneda de reporte: 
+Estacionalidad del negocio: 
+Cuentas o conceptos con tratamiento especial: 
+Indicadores que la gerencia sigue de cerca: </value></data>
+  <data name="CfgIA_Emp_ContextoHint" xml:space="preserve"><value>Cuéntale a la IA a qué se dedica esta empresa y qué la hace particular (actividad, productos, países, estacionalidad). Se usa en TODAS las consultas de IA de la empresa (Análisis IA, insights, preguntas y resumen del Home). Máx. 4.000 caracteres.</value></data>
+  <data name="IAConsumo_Titulo" xml:space="preserve"><value>Mi consumo de IA</value></data>
+  <data name="IAConsumo_Periodo" xml:space="preserve"><value>Periodo {0} – {1}</value></data>
+  <data name="IAConsumo_Tokens" xml:space="preserve"><value>{0} de {1} tokens ({2}%)</value></data>
+  <data name="IAConsumo_TokensIlim" xml:space="preserve"><value>{0} tokens usados (sin límite)</value></data>
+  <data name="IAConsumo_Proyeccion" xml:space="preserve"><value>Proyección al cierre del periodo: {0} tokens</value></data>
+  <data name="IAConsumo_Pool" xml:space="preserve"><value>Presupuesto compartido con su grupo ({0} empresas)</value></data>
+  <data name="IAConsumo_Apagada" xml:space="preserve"><value>La IA está apagada para esta empresa.</value></data>
+  <data name="IAConsumo_PorUsuario" xml:space="preserve"><value>Uso por usuario</value></data>
+  <data name="IAConsumo_PorFuncion" xml:space="preserve"><value>Uso por función</value></data>
+  <data name="IAConsumo_SinDatos" xml:space="preserve"><value>Sin consultas en el periodo.</value></data>
+  <data name="IAConsumo_Desde" xml:space="preserve"><value>Desde</value></data>
+  <data name="IAConsumo_Hasta" xml:space="preserve"><value>Hasta</value></data>
+  <data name="IAConsumo_BtnExportar" xml:space="preserve"><value>Exportar uso a Excel</value></data>
+  <data name="IAConsumo_Error" xml:space="preserve"><value>No se pudo cargar el consumo de IA.</value></data>
+  <data name="IAInforme_Titulo" xml:space="preserve"><value>Pregúntale a este informe</value></data>
+  <data name="IAInforme_Placeholder" xml:space="preserve"><value>Ej.: ¿Qué cuenta explica la mayor variación frente al comparativo?</value></data>
+  <data name="IAInforme_Btn" xml:space="preserve"><value>Preguntar</value></data>
+  <data name="IAInforme_Preguntando" xml:space="preserve"><value>Analizando el informe…</value></data>
+  <data name="IAInforme_PreguntaInvalida" xml:space="preserve"><value>Escribe una pregunta de hasta {0} caracteres.</value></data>
+  <data name="IAInforme_Error" xml:space="preserve"><value>No se pudo responder la pregunta. Intenta de nuevo.</value></data>
+  <data name="CfgIA_TabUso" xml:space="preserve"><value>Uso y costos</value></data>
+  <data name="CfgIA_Uso_Titulo" xml:space="preserve"><value>Uso y costos de la IA</value></data>
+  <data name="CfgIA_Uso_NoDisponible" xml:space="preserve"><value>Aún no hay registro de uso (ejecuta el script Sql/013).</value></data>
+  <data name="CfgIA_Uso_Error" xml:space="preserve"><value>No se pudo cargar el uso de la IA.</value></data>
+  <data name="CfgIA_Uso_PorDia" xml:space="preserve"><value>Consumo por día</value></data>
+  <data name="CfgIA_Uso_PorFuncion" xml:space="preserve"><value>Por función</value></data>
+  <data name="CfgIA_Uso_PorModelo" xml:space="preserve"><value>Por modelo</value></data>
+  <data name="CfgIA_Uso_PorEmpresa" xml:space="preserve"><value>Por empresa (top 15)</value></data>
+  <data name="CfgIA_Uso_Errores" xml:space="preserve"><value>Errores y rechazos recientes</value></data>
+  <data name="CfgIA_Uso_ColErrores" xml:space="preserve"><value>Errores</value></data>
+  <data name="CfgIA_Uso_ColDetalle" xml:space="preserve"><value>Detalle</value></data>
+  <data name="CfgIA_Uso_KConsultas" xml:space="preserve"><value>Consultas</value></data>
+  <data name="CfgIA_Uso_KExito" xml:space="preserve"><value>Atendidas</value></data>
+  <data name="CfgIA_Uso_KTokens" xml:space="preserve"><value>Tokens</value></data>
+  <data name="CfgIA_Uso_KCosto" xml:space="preserve"><value>Costo estimado</value></data>
+  <data name="CfgIA_Uso_KCache" xml:space="preserve"><value>Desde caché</value></data>
+  <data name="CfgIA_Uso_KLatencia" xml:space="preserve"><value>Latencia p50 / p95</value></data>
+  <data name="CfgIA_Emp_SecPresupuesto" xml:space="preserve"><value>Presupuesto y periodo</value></data>
+  <data name="CfgIA_Emp_SecLimites" xml:space="preserve"><value>Límites y modelo</value></data>
+  <data name="CfgIA_Emp_DeTokens" xml:space="preserve"><value>de {0} tokens</value></data>
+  <data name="CfgIA_Emp_SinLimite" xml:space="preserve"><value>tokens este periodo · sin límite</value></data>
+  <data name="CfgIA_Emp_UsuariosConAcceso" xml:space="preserve"><value>{0} de {1} con acceso</value></data>
+  <data name="CfgIA_Emp_SinCambios" xml:space="preserve"><value>Sin cambios pendientes</value></data>
+  <data name="CfgIA_Emp_CambiosPendientes" xml:space="preserve"><value>Hay cambios sin guardar</value></data>
+  <data name="CfgIA_Emp_EstadoActiva" xml:space="preserve"><value>IA activa</value></data>
+  <data name="CfgIA_Emp_EstadoApagada" xml:space="preserve"><value>IA apagada</value></data>
+  <data name="CfgIA_Uso_Rango7" xml:space="preserve"><value>7 días</value></data>
+  <data name="CfgIA_Uso_Rango30" xml:space="preserve"><value>30 días</value></data>
+  <data name="CfgIA_Uso_Rango90" xml:space="preserve"><value>90 días</value></data>
+  <data name="CfgIA_Uso_RangoMes" xml:space="preserve"><value>Este mes</value></data>
+  <data name="CfgIA_G_Proveedor" xml:space="preserve"><value>Proveedor y modelo</value></data>
+  <data name="CfgIA_G_Presupuesto" xml:space="preserve"><value>Presupuesto y costos</value></data>
+  <data name="CfgIA_G_Cache" xml:space="preserve"><value>Caché y límites</value></data>
+  <data name="CfgIA_G_Otros" xml:space="preserve"><value>Otros parámetros</value></data>
+  <data name="CfgIA_G_Buscar" xml:space="preserve"><value>Buscar parámetro…</value></data>
+  <data name="CfgIA_G_ChipClaveOk" xml:space="preserve"><value>Clave de API configurada</value></data>
+  <data name="CfgIA_G_ChipClaveNo" xml:space="preserve"><value>Sin clave de API</value></data>
+  <data name="CfgIA_G_ChipModelo" xml:space="preserve"><value>Modelo</value></data>
+  <data name="CfgIA_G_ChipTokens" xml:space="preserve"><value>Máx. tokens</value></data>
+  <data name="CfgIA_G_ChipCache" xml:space="preserve"><value>Caché</value></data>
+  <data name="CfgIA_G_Horas" xml:space="preserve"><value>h</value></data>
+  <data name="CfgIA_G_SinResultados" xml:space="preserve"><value>Ningún parámetro coincide con la búsqueda.</value></data>
+  <data name="CfgIA_Uso_BtnLimpiar" xml:space="preserve"><value>Limpiar estadísticas</value></data>
+  <data name="CfgIA_Uso_LimpiarTitulo" xml:space="preserve"><value>¿Borrar todas las estadísticas de uso?</value></data>
+  <data name="CfgIA_Uso_LimpiarTexto" xml:space="preserve"><value>Se eliminará todo el registro de uso de IA que alimenta esta pestaña. No se modifica el presupuesto mensual de las empresas ni la auditoría de consultas. Esta acción no se puede deshacer.</value></data>
+  <data name="CfgIA_Uso_LimpiarConfirmar" xml:space="preserve"><value>Sí, borrar</value></data>
+  <data name="CfgIA_Uso_LimpiarOk" xml:space="preserve"><value>Estadísticas eliminadas ({0} registros).</value></data>
+  <data name="CfgIA_Uso_LimpiarError" xml:space="preserve"><value>No se pudieron eliminar las estadísticas.</value></data>
+  <data name="IAUso_XlsResumen" xml:space="preserve"><value>Resumen</value></data>
+  <data name="IAUso_XlsPorUsuario" xml:space="preserve"><value>Por usuario</value></data>
+  <data name="IAUso_XlsDetalle" xml:space="preserve"><value>Detalle</value></data>
+  <data name="IAUso_ColFecha" xml:space="preserve"><value>Fecha</value></data>
+  <data name="IAUso_ColUsuario" xml:space="preserve"><value>Usuario</value></data>
+  <data name="IAUso_ColFuncion" xml:space="preserve"><value>Función</value></data>
+  <data name="IAUso_ColModelo" xml:space="preserve"><value>Modelo</value></data>
+  <data name="IAUso_ColConsultas" xml:space="preserve"><value>Consultas</value></data>
+  <data name="IAUso_ColTokens" xml:space="preserve"><value>Tokens</value></data>
+  <data name="IAUso_ColTokPrompt" xml:space="preserve"><value>Tokens prompt</value></data>
+  <data name="IAUso_ColTokResp" xml:space="preserve"><value>Tokens respuesta</value></data>
+  <data name="IAUso_ColCosto" xml:space="preserve"><value>Costo estimado (USD)</value></data>
+  <data name="IAUso_ColCache" xml:space="preserve"><value>Desde caché</value></data>
+  <data name="IAUso_ColResultado" xml:space="preserve"><value>Resultado</value></data>
+  <data name="IAUso_ColSobre" xml:space="preserve"><value>Sobreconsumo</value></data>
+  <data name="IAUso_ColDegr" xml:space="preserve"><value>Degradada</value></data>
+  <data name="IAUso_Si" xml:space="preserve"><value>Sí</value></data>
+  <data name="IAUso_No" xml:space="preserve"><value>No</value></data>
+  <data name="IAUso_Ok" xml:space="preserve"><value>Atendida</value></data>
+  <data name="IAUso_Error" xml:space="preserve"><value>Error</value></data>
+  <data name="AudIA_ThTokens" xml:space="preserve"><value>Tokens</value></data>
+  <data name="AudIA_ThValoracion" xml:space="preserve"><value>Valoración</value></data>
+  <data name="IA_EmpresaSinIAMensaje" xml:space="preserve"><value>La IA no está habilitada para su empresa. Contacte al administrador.</value></data>
+  <data name="IA_FuncionNoPermitidaMensaje" xml:space="preserve"><value>Esta función de IA no está habilitada para su empresa.</value></data>
+  <data name="IA_TopeUsuarioMensaje" xml:space="preserve"><value>Alcanzó su límite diario de consultas de IA. Podrá volver a usarla mañana.</value></data>
+  <data name="IA_ProveedorSinCreditoMensaje" xml:space="preserve"><value>El servicio de IA no está disponible en este momento: la cuenta del proveedor de IA no tiene saldo. Por favor comuníquese con el administrador de Bufins para que lo restablezca.</value></data>
+  <data name="IA_PresupuestoInsuficienteMensaje" xml:space="preserve"><value>Esta consulta superaría el presupuesto de IA que le queda a la empresa este periodo. Intente con una consulta más acotada o contacte al administrador.</value></data>
 
   <!-- PYG GERENCIAL (ESTADO DE RESULTADOS) -->
   <data name="PYG_PageTitle" xml:space="preserve"><value>Informe de estado de resultados PYG</value></data>

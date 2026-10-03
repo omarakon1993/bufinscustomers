@@ -1,0 +1,117 @@
+@* "Mi consumo de IA": consumo del periodo, proyección, uso por usuario/función y exportación a Excel.
+   Solo para Super Admin y Admin de Empresa (el servidor valida igual en AnalisisIAController.MiConsumo/ExportarUso).
+   Sigue la empresa elegida en #selectEmpresa de Análisis IA (o la propia del Admin de Empresa). *@
+
+<style>
+    .iac-bar-track { height: 10px; border-radius: 6px; background: #e5e7eb; overflow: hidden; margin: 6px 0 4px; }
+    .iac-bar-fill { height: 100%; border-radius: 6px; background: var(--content-gradient); width: 0; transition: width .4s ease; }
+    .iac-bar-fill.agotado { background: #ef4444; }
+    .iac-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 12px; }
+    .iac-meta { font-size: .8rem; color: #6c757d; }
+    .iac-export { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-top: 14px; }
+    .iac-export .form-group { margin: 0; }
+</style>
+
+<div class="filter-card" id="iacCard" style="display:none;">
+    <h3 class="filter-card-title"><i class="fas fa-chart-pie"></i> @Resources.Strings.IAConsumo_Titulo <span class="iac-meta" id="iacEmpresa"></span></h3>
+    <div class="filter-section">
+        <div id="iacTexto" style="font-weight:600;"></div>
+        <div class="iac-bar-track"><div class="iac-bar-fill" id="iacBarra"></div></div>
+        <div class="iac-meta" id="iacMeta"></div>
+
+        <div class="iac-cols">
+            <div>
+                <div style="font-weight:700;margin-bottom:4px;">@Resources.Strings.IAConsumo_PorUsuario</div>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead><tr><th>@Resources.Strings.IAUso_ColUsuario</th><th class="text-center">@Resources.Strings.IAUso_ColConsultas</th><th class="text-center">@Resources.Strings.IAUso_ColTokens</th></tr></thead>
+                        <tbody id="iacUsuarios"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div>
+                <div style="font-weight:700;margin-bottom:4px;">@Resources.Strings.IAConsumo_PorFuncion</div>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead><tr><th>@Resources.Strings.IAUso_ColFuncion</th><th class="text-center">@Resources.Strings.IAUso_ColConsultas</th><th class="text-center">@Resources.Strings.IAUso_ColTokens</th></tr></thead>
+                        <tbody id="iacFunciones"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="iac-export">
+            <div class="form-group">
+                <label for="iacDesde">@Resources.Strings.IAConsumo_Desde</label>
+                <input type="date" id="iacDesde" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label for="iacHasta">@Resources.Strings.IAConsumo_Hasta</label>
+                <input type="date" id="iacHasta" class="form-control" />
+            </div>
+            <button type="button" class="btn btn-modern-excel" id="iacExportar">
+                <i class="fas fa-file-excel"></i> @Resources.Strings.IAConsumo_BtnExportar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var msg = {
+        periodo:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Periodo))',
+        tokens:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Tokens))',
+        tokensIlim: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_TokensIlim))',
+        proyeccion: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Proyeccion))',
+        pool:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Pool))',
+        apagada:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Apagada))',
+        sinDatos:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_SinDatos))',
+        urlConsumo: '@Url.Action("MiConsumo", "AnalisisIA")',
+        urlExportar:'@Url.Action("ExportarUso", "AnalisisIA")'
+    };
+    var empresaActual = null;
+
+    function esc(s) { return $('<div>').text(s == null ? '' : s).html(); }
+    function filas(lista, vacio) {
+        if (!lista || !lista.length) return '<tr><td colspan="3" class="text-center text-muted">' + vacio + '</td></tr>';
+        return lista.map(function (x) {
+            return '<tr><td>' + esc(x.Usuario || x.funcion) + '</td><td class="text-center">' + Number(x.Consultas).toLocaleString() +
+                   '</td><td class="text-center">' + Number(x.Tokens).toLocaleString() + '</td></tr>';
+        }).join('');
+    }
+
+    function cargar() {
+        var idEmpresa = $('#selectEmpresa').val() || '';
+        $.get(msg.urlConsumo, { idEmpresa: idEmpresa }).done(function (r) {
+            if (!r || !r.ok) { $('#iacCard').hide(); return; }
+            empresaActual = idEmpresa;
+            $('#iacCard').show();
+            $('#iacEmpresa').text('· ' + r.empresa);
+            $('#iacTexto').text(r.ilimitado
+                ? msg.tokensIlim.replace('{0}', Number(r.consumido).toLocaleString())
+                : msg.tokens.replace('{0}', Number(r.consumido).toLocaleString())
+                            .replace('{1}', Number(r.presupuesto).toLocaleString()).replace('{2}', r.porcentaje));
+            $('#iacBarra').css('width', (r.ilimitado ? 0 : Math.min(100, r.porcentaje)) + '%')
+                          .toggleClass('agotado', !r.ilimitado && r.porcentaje >= 100);
+            var meta = [msg.periodo.replace('{0}', r.inicio).replace('{1}', r.fin),
+                        msg.proyeccion.replace('{0}', Number(r.proyeccion).toLocaleString())];
+            if (r.enPool) meta.push(msg.pool.replace('{0}', r.empresasEnPool));
+            if (!r.habilitada) meta.push(msg.apagada);
+            $('#iacMeta').text(meta.join(' · '));
+            $('#iacUsuarios').html(filas(r.porUsuario, msg.sinDatos));
+            $('#iacFunciones').html(filas(r.porFuncion, msg.sinDatos));
+            if (!$('#iacDesde').val()) { $('#iacDesde').val(r.inicioIso); $('#iacHasta').val(r.hoyIso); }
+        }).fail(function () { $('#iacCard').hide(); });
+    }
+
+    $('#iacExportar').on('click', function () {
+        var q = $.param({ idEmpresa: $('#selectEmpresa').val() || '', desde: $('#iacDesde').val(), hasta: $('#iacHasta').val() });
+        window.location.href = msg.urlExportar + '?' + q;
+    });
+
+    $(function () {
+        cargar();
+        $('#selectEmpresa').on('change', cargar);
+    });
+})();
+</script>

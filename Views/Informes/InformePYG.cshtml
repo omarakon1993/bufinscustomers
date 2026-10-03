@@ -299,7 +299,9 @@
         <p class="lt-help" id="pygNotaSinAnterior" style="display:none;"></p>
         <p class="lt-help" id="pygNotaEscenario" style="display:none;"></p>
 
-        @* 6. Insights gerenciales (IA) *@
+        @* Insights gerenciales (IA): se ocultan si la empresa tiene la IA apagada *@
+        @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
+        {
         <div class="pyg-insights-card">
             <div class="pyg-insights-head">
                 <div>
@@ -313,7 +315,18 @@
                 @Html.Partial("_LoaderDots", "dark")
                 <p style="margin-top:8px;font-size:12.5px;color:#8B85A0;">@Resources.Strings.PYG_V2_Analizando</p>
             </div>
+
+            <div class="mt-3">
+                <label for="pygPregunta" class="mb-1" style="font-weight:700;"><i class="fas fa-comments mr-1"></i>@Resources.Strings.IAInforme_Titulo</label>
+                <div class="d-flex" style="gap:8px;flex-wrap:wrap;">
+                    <input type="text" id="pygPregunta" class="form-control" maxlength="@bufinscustomers.Helpers.IAModuloHelper.MaxCharsPregunta()" style="flex:1;min-width:240px;"
+                           placeholder="@Resources.Strings.IAInforme_Placeholder" />
+                    <button type="button" id="btnPygPreguntar" class="pyg2-ins-btn"><i class="fas fa-paper-plane"></i><span>@Resources.Strings.IAInforme_Btn</span></button>
+                </div>
+                <div id="pygRespuesta" class="mt-2"></div>
+            </div>
         </div>
+        }
     </div>
 
 </div>
@@ -338,7 +351,8 @@
         urls: {
             meses: '@Url.Action("ObtenerMeses", "InformePYG")',
             reporte: '@Url.Action("ConsultarReporte", "InformePYG")',
-            insights: '@Url.Action("GenerarInsightsIA", "InformePYG")'
+            insights: '@Url.Action("GenerarInsightsIA", "InformePYG")',
+            preguntar: '@Url.Action("PreguntarInforme", "InformePYG")'
         },
         token: $('input[name="__RequestVerificationToken"]').first().val(),
         cultura: '@Html.Raw(HttpUtility.JavaScriptStringEncode(culturaJs))',
@@ -1364,6 +1378,7 @@
     function reiniciarInsights() {
         var v2 = _pyg.textos.v2;
         _pyg.insightsTexto = null;
+        $('#pygRespuesta').empty();
         $('#pygInsightsLoading').hide();
         $('#pygInsightsBody').show().html(
             '<div class="pyg2-ins-empty"><i class="fas fa-circle-info"></i><span>' + escHtml(v2.insightsVacio) + '</span></div>');
@@ -1430,6 +1445,29 @@
 
     function mostrarErrorInsights(mensaje) {
         $('#pygInsightsBody').html('<div class="pyg2-ins-empty"><i class="fas fa-circle-exclamation"></i><span>' + escHtml(mensaje) + '</span></div>');
+    }
+
+
+    // "Pregúntale a este informe": una pregunta libre sobre el reporte en pantalla (el servidor lo reconstruye con los mismos filtros).
+    function preguntarInforme_pyg() {
+        var q = $.trim($('#pygPregunta').val());
+        if (!q || !_pyg.reporteActual) return;
+        var $btn = $('#btnPygPreguntar');
+        $btn.prop('disabled', true);
+        $('#pygRespuesta').html('<span class="text-muted"><i class="fas fa-spinner fa-spin mr-1"></i>' + escHtml('@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAInforme_Preguntando))') + '</span>');
+        $.post(_pyg.urls.preguntar, $.extend({ __RequestVerificationToken: _pyg.token, pregunta: q }, _pyg.filtrosConsultados), function (resp) {
+            $btn.prop('disabled', false);
+            if (!resp || !resp.Exitoso) {
+                $('#pygRespuesta').html('<span style="color:#b91c1c;">' + escHtml((resp && resp.Error) || '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAInforme_Error))') + '</span>');
+                return;
+            }
+            var texto = resp.Respuesta || '';
+            var md = (typeof window.bufinsMarkdown === 'function') ? window.bufinsMarkdown(texto) : escHtml(texto).replace(/\n/g, '<br>');
+            $('#pygRespuesta').html('<div class="pyg-insights-body">' + md + '</div>');
+        }).fail(function () {
+            $btn.prop('disabled', false);
+            $('#pygRespuesta').html('<span style="color:#b91c1c;">' + escHtml('@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAInforme_Error))') + '</span>');
+        });
     }
 
     function generarInsights() {
@@ -2070,6 +2108,8 @@
         });
 
         $('#btnGenerarInsightsPYG').on('click', generarInsights);
+        $('#btnPygPreguntar').on('click', preguntarInforme_pyg);
+        $('#pygPregunta').on('keydown', function (e) { if (e.which === 13) { e.preventDefault(); preguntarInforme_pyg(); } });
         $('#btnExportarPdfPYG').on('click', generarPdf);
 
         cargarPrefsPYG();
