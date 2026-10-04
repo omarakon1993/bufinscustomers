@@ -390,18 +390,6 @@
                             </div>
                         </div>
                     </div>
-                    @if ((bool)ViewBag.EsAdmin)
-                    {
-                        <div class="col-6 col-md-3 col-xl mb-2">
-                            <div class="card card-tab" data-section="resumenia">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-robot tab-icon text-info"></i>
-                                    <span class="tab-label">@Resources.Strings.CfgResumenIA_TabLabel</span>
-                                    <span class="badge badge-info badge-custom" id="countResumenIA">0</span>
-                                </div>
-                            </div>
-                        </div>
-                    }
                 </div>
 
                 <!-- Sección de Empresas -->
@@ -532,46 +520,6 @@
                     <div id="listaAnosHistoricos" class="sortable-list"></div>
                 </div>
 
-                @if ((bool)ViewBag.EsAdmin)
-                {
-                    <!-- Sección de Resumen Ejecutivo IA -->
-                    <div id="section-resumenia" class="config-section">
-                        <h5><i class="fas fa-robot"></i> @Resources.Strings.CfgResumenIA_TablasTitle</h5>
-                        <p class="text-muted small">@Resources.Strings.CfgResumenIA_SeleccioneEmpresaTexto</p>
-                        <div class="mb-3">
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="btnSelTodoResumenIA">
-                                <i class="fas fa-check-double"></i> @Resources.Strings.Perm_BtnSelTodo
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnDeselTodoResumenIA">
-                                <i class="fas fa-times"></i> @Resources.Strings.Perm_BtnDeselTodo
-                            </button>
-                        </div>
-                        <div id="listaTablasResumenIA">
-                            @if (ViewBag.TablasDisponibles != null)
-                            {
-                                foreach (var t in (List<TablaDatos>)ViewBag.TablasDisponibles)
-                                {
-                                    <div class="list-item" style="cursor:default;">
-                                        <div>
-                                            <i class="fas fa-table mr-2 text-info"></i>
-                                            <span>@t.NombreAmigable</span>
-                                        </div>
-                                        <div class="custom-control custom-switch">
-                                            <input type="checkbox" class="custom-control-input tabla-resumenia-checkbox"
-                                                   id="tablaIA_@t.NombreTabla" value="@t.NombreTabla">
-                                            <label class="custom-control-label" for="tablaIA_@t.NombreTabla"></label>
-                                        </div>
-                                    </div>
-                                }
-                            }
-                        </div>
-                        <div class="mt-3">
-                            <button type="button" class="btn-modern-gradient" id="btnGuardarTablasResumenIA">
-                                <i class="fas fa-save"></i> @Resources.Strings.Common_GuardarCambios
-                            </button>
-                        </div>
-                    </div>
-                }
             </div>
         </div>
     </div>
@@ -775,38 +723,6 @@
                 if (e.which == 13) { e.preventDefault(); agregarItem('AnoHistorico'); return false; }
             });
 
-            // Resumen Ejecutivo IA — selección de tablas por empresa
-            $(document).on('change', '.tabla-resumenia-checkbox', actualizarContadorResumenIA);
-
-            $('#btnSelTodoResumenIA').click(function () {
-                $('.tabla-resumenia-checkbox').prop('checked', true);
-                actualizarContadorResumenIA();
-            });
-            $('#btnDeselTodoResumenIA').click(function () {
-                $('.tabla-resumenia-checkbox').prop('checked', false);
-                actualizarContadorResumenIA();
-            });
-
-            $('#btnGuardarTablasResumenIA').click(function () {
-                const idEmpresa = $('#idEmpresaConfig').val();
-                if (!idEmpresa) return;
-
-                const tablas = [];
-                $('.tabla-resumenia-checkbox:checked').each(function () { tablas.push($(this).val()); });
-
-                $.ajax({
-                    url: '/ConfiguracionEmpresa/GuardarTablasResumenIA',
-                    type: 'POST',
-                    data: { idEmpresa: idEmpresa, tablas: tablas },
-                    traditional: true,
-                    success: function (response) {
-                        mostrarAlerta(response.success ? 'success' : 'error', response.message);
-                    },
-                    error: function () {
-                        mostrarAlerta('error', '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgResumenIA_ErrorGuardar))');
-                    }
-                });
-            });
         });
 
         function cargarConfiguracion() {
@@ -855,7 +771,6 @@
             cargarLista('Ajuste1', config.Ajuste1 || [], 'NombreAjuste');
             cargarLista('Ajuste2', config.Ajuste2 || [], 'NombreAjuste');
             cargarLista('AnosHistoricos', config.AnosHistoricos || [], 'NombreAno');
-            cargarTablasResumenIA(config.TablasResumenIA || []);
 
             actualizarContadores();
 
@@ -897,18 +812,6 @@
 
             // Hacer la lista ordenable (drag & drop)
             habilitarOrdenamiento(contenedor, tipo);
-        }
-
-        function cargarTablasResumenIA(tablas) {
-            $('.tabla-resumenia-checkbox').prop('checked', false);
-            (tablas || []).forEach(function (nombreTabla) {
-                $('#tablaIA_' + nombreTabla).prop('checked', true);
-            });
-            actualizarContadorResumenIA();
-        }
-
-        function actualizarContadorResumenIA() {
-            $('#countResumenIA').text($('.tabla-resumenia-checkbox:checked').length);
         }
 
         function habilitarOrdenamiento(contenedor, tipo) {

@@ -26,8 +26,8 @@ namespace bufinscustomers.Controllers
         private const int MaxCharsHistorialTotal   = 500_000;   // suma de todos los mensajes
 
         /// <summary>
-        /// true solo para las tablas de resultados de Ejecución de Modelos — Análisis IA ya no
-        /// muestra ni acepta las 10 vistas *_VT (ver InformeTablasDatosService.ObtenerTablasModelos()).
+        /// true solo para las tablas de resultados de Ejecución de Modelos — Análisis IA solo
+        /// muestra y acepta esas (ver InformeTablasDatosService.ObtenerTablasModelos()).
         /// </summary>
         private bool EsTablaDeModelo(string nombreTabla)
         {
@@ -174,7 +174,7 @@ namespace bufinscustomers.Controllers
                 var denegado = ValidarAccesoIA(usuario, esAdmin, idEmpresaConsulta.GetValueOrDefault(), IAFuncion.Chat);
                 if (denegado != null) return denegado;
 
-                var tablaAmigable = _service.ObtenerTablasDisponibles()
+                var tablaAmigable = _service.ObtenerTablasModelos()
                     .FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla)?.NombreAmigable ?? filtros.NombreTabla;
 
                 // Modo de análisis (N06): elige el prompt y el tope de tokens del resumen inicial.
@@ -381,7 +381,7 @@ namespace bufinscustomers.Controllers
                 // Cada exportación es de UNA empresa: la seleccionada (ya validada arriba), no la del usuario.
                 var idEmpresaConsulta = filtros.IdEmpresa ?? idEmpresaUsuario;
                 var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaConsulta);
-                var tablas    = _service.ObtenerTablasDisponibles();
+                var tablas    = _service.ObtenerTablasModelos();
                 string nombreTabla = tablas.FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla)?.NombreAmigable ?? filtros.NombreTabla;
                 string hojaNombre  = nombreTabla.Length > 31 ? nombreTabla.Substring(0, 31) : nombreTabla;
 

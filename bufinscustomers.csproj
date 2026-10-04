@@ -212,7 +212,6 @@
     <Compile Include="Controllers\ErrorController.cs" />
     <Compile Include="Controllers\HealthController.cs" />
     <Compile Include="Controllers\NotificacionesController.cs" />
-    <Compile Include="Controllers\WidgetsController.cs" />
     <Compile Include="Controllers\AnalisisIAController.cs" />
     <Compile Include="Controllers\AuditoriaConsultasIAController.cs" />
     <Compile Include="Controllers\AuditoriaController.cs" />
@@ -281,7 +280,6 @@
     <Compile Include="Models\IndicadoresModels.cs" />
     <Compile Include="Models\NotificacionModels.cs" />
     <Compile Include="Models\TablaPUCModels.cs" />
-    <Compile Include="Models\WidgetModels.cs" />
     <Compile Include="Models\MenuEstructuraModels.cs" />
     <Compile Include="Models\ConfiguracionRelacionamiento.cs" />
     <Compile Include="Models\InformeRelacionamientos.cs" />
@@ -292,6 +290,7 @@
     <Compile Include="Models\BalanceGeneralModels.cs" />
     <Compile Include="Models\PermisosModulos.cs" />
     <Compile Include="Models\SidebarMenuViewModel.cs" />
+    <Compile Include="Models\AlertaHomeModels.cs" />
     <Compile Include="Models\PermisoUsuarioViewModel.cs" />
     <Compile Include="Models\Reportes.cs" />
     <Compile Include="Models\UsuarioPermisos.cs" />
@@ -307,9 +306,9 @@
     </Compile>
     <Compile Include="Services\AuditoriaCarguesService.cs" />
     <Compile Include="Services\BaseService.cs" />
+    <Compile Include="Services\AlertasHomeService.cs" />
     <Compile Include="Services\ConfiguracionEmpresaService.cs" />
     <Compile Include="Services\EmpresaService.cs" />
-    <Compile Include="Services\EmpresaTablasResumenIAService.cs" />
     <Compile Include="Services\ModeloService.cs" />
     <Compile Include="Services\EscenarioService.cs" />
     <Compile Include="Services\ConfiguracionRelacionamientoService.cs" />
@@ -335,7 +334,6 @@
     <Compile Include="Services\CargueStagingService.cs" />
     <Compile Include="Services\PlantillaConDatosService.cs" />
     <Compile Include="Services\TablaPUCService.cs" />
-    <Compile Include="Services\WidgetsService.cs" />
     <Compile Include="Services\MenuEstructuraService.cs" />
     <Compile Include="Services\ConfiguracionSistemaService.cs" />
     <Compile Include="Services\InformeTablasDatosService.cs" />
@@ -6336,7 +6334,6 @@
     <Content Include="Views\Configuracion\GestorPrompts.cshtml" />
     <Content Include="Views\Configuracion\GruposEmpresariales.cshtml" />
     <Content Include="Views\Configuracion\GestionarGrupoEmpresas.cshtml" />
-    <Content Include="Views\Configuracion\Widgets.cshtml" />
     <Content Include="Views\Configuracion\GestorCategorias.cshtml" />
     <Content Include="Views\Configuracion\GestorGrupos.cshtml" />
     <Content Include="secrets.config" />

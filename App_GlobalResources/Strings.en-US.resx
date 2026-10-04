@@ -95,17 +95,18 @@
   <data name="Home_GreetingEvening" xml:space="preserve"><value>Good evening</value></data>
   <data name="Home_DateFormat" xml:space="preserve"><value>dddd, MMMM d, yyyy</value></data>
   <data name="Home_SectionKPI" xml:space="preserve"><value>Indicators</value></data>
-  <data name="Home_SectionWidgets" xml:space="preserve"><value>Bufins Widgets</value></data>
   <data name="Home_SectionCharts" xml:space="preserve"><value>Analysis</value></data>
-  <data name="Home_EmptyChart" xml:space="preserve"><value>No data to display</value></data>
-  <data name="Home_ChartBar" xml:space="preserve"><value>Bar</value></data>
-  <data name="Home_ChartLine" xml:space="preserve"><value>Line</value></data>
-  <data name="Home_ChartArea" xml:space="preserve"><value>Area</value></data>
-  <data name="Home_ChartDoughnut" xml:space="preserve"><value>Doughnut</value></data>
-  <data name="Home_ChartPie" xml:space="preserve"><value>Pie</value></data>
 
   <!-- HOME / FINANCIAL INDICATORS -->
   <data name="Home_SectionIndicadores" xml:space="preserve"><value>Financial Indicators &amp; News</value></data>
+  <data name="Home_SectionAlertas" xml:space="preserve"><value>Bufins Alerts</value></data>
+  <data name="Home_Alertas_SinDatos" xml:space="preserve"><value>Everything looks fine, no alerts detected.</value></data>
+  <data name="Home_Alertas_Error" xml:space="preserve"><value>Alerts could not be loaded.</value></data>
+  <data name="Home_SectionAccesos" xml:space="preserve"><value>Quick access</value></data>
+  <data name="Home_Accesos_Sugeridos" xml:space="preserve"><value>Suggested for you. As you use the system, the options you visit most will appear here.</value></data>
+  <data name="Home_Accesos_Vacio" xml:space="preserve"><value>There are no shortcuts to show yet. Browse the system and your most used options will appear here.</value></data>
+  <data name="Home_ConsumoIA_VerDetalle" xml:space="preserve"><value>View details</value></data>
+  <data name="Home_ConsumoIA_Empresa" xml:space="preserve"><value>Company</value></data>
   <data name="Home_IndicadoresCargando" xml:space="preserve"><value>Loading indicators.</value></data>
   <data name="Home_IndicadoresActualizar" xml:space="preserve"><value>Refresh</value></data>
   <data name="Home_IndicadoresActualizando" xml:space="preserve"><value>Refreshing.</value></data>
@@ -129,19 +130,8 @@
   <data name="Home_GrupoAcceso" xml:space="preserve"><value>Group companies you can also access ({0}):</value></data>
 
   <!-- HOME / RESUMEN IA -->
-  <data name="Home_IA_SectionTitle" xml:space="preserve"><value>AI Executive Summary</value></data>
-  <data name="Home_IA_BtnGenerar" xml:space="preserve"><value>Generate summary</value></data>
-  <data name="Home_IA_Cargando" xml:space="preserve"><value>Analyzing the latest financial data.</value></data>
-  <data name="Home_IA_SeleccioneEmpresa" xml:space="preserve"><value>Select a company to generate the summary.</value></data>
-  <data name="Home_IA_SinEmpresa" xml:space="preserve"><value>Your user has no company assigned.</value></data>
-  <data name="Home_IA_SinConfigurar" xml:space="preserve"><value>The AI executive summary is not configured for this company. Contact an administrator.</value></data>
-  <data name="Home_IA_SinDatos" xml:space="preserve"><value>No financial data available to generate the summary.</value></data>
-  <data name="Home_IA_ErrorConexion" xml:space="preserve"><value>Could not generate the summary. Please try again.</value></data>
-  <data name="Home_IA_TablasConfiguradas" xml:space="preserve"><value>Tables analyzed:</value></data>
 
   <!-- HOME / WARNINGS -->
-  <data name="Home_SectionAdvertencias" xml:space="preserve"><value>Bufins Warnings</value></data>
-  <data name="Home_Advertencias_SinDatos" xml:space="preserve"><value>Everything looks fine, no warnings detected.</value></data>
 
   <!-- COMMON (SweetAlert, reusable buttons) -->
   <data name="Common_Si" xml:space="preserve"><value>Yes</value></data>
@@ -962,11 +952,6 @@
   <data name="Notif_GrupoEmpresasActualizadas" xml:space="preserve"><value>Group companies updated</value></data>
 
   <!-- AI SUMMARY CONFIGURATION PER COMPANY (tab inside Company Configuration) -->
-  <data name="CfgResumenIA_TabLabel" xml:space="preserve"><value>AI Summary</value></data>
-  <data name="CfgResumenIA_TablasTitle" xml:space="preserve"><value>Tables used for the AI executive summary</value></data>
-  <data name="CfgResumenIA_SeleccioneEmpresaTexto" xml:space="preserve"><value>Select which financial tables feed this company's AI executive summary (shown on the Dashboard).</value></data>
-  <data name="CfgResumenIA_Guardado" xml:space="preserve"><value>Tables updated successfully.</value></data>
-  <data name="CfgResumenIA_ErrorGuardar" xml:space="preserve"><value>Error saving the configuration.</value></data>
 
   <!-- REPORTS MASTER -->
   <data name="Rep_PageTitle" xml:space="preserve"><value>Reports Manager</value></data>
@@ -1174,69 +1159,6 @@
   <data name="Rprt_JS_ErrorEnlace" xml:space="preserve"><value>Error fetching the report link.</value></data>
   <data name="Rprt_JS_SinPantallaCompleta" xml:space="preserve"><value>Could not activate full screen.</value></data>
 
-  <!-- WIDGET MANAGER -->
-  <data name="Wid_PageTitle" xml:space="preserve"><value>Widget Manager</value></data>
-  <data name="Wid_ThTipo" xml:space="preserve"><value>Type</value></data>
-  <data name="Wid_NoWidgets" xml:space="preserve"><value>No widgets registered.</value></data>
-  <data name="Wid_TipoGrafico" xml:space="preserve"><value>Chart</value></data>
-  <data name="Wid_BtnNuevo" xml:space="preserve"><value>New widget</value></data>
-  <data name="Wid_ModalCreateTitle" xml:space="preserve"><value>New widget</value></data>
-  <data name="Wid_ModalEditTitle" xml:space="preserve"><value>Edit widget</value></data>
-  <data name="Wid_LabelFondo" xml:space="preserve"><value>Card background</value></data>
-  <data name="Wid_FondoOscuro" xml:space="preserve"><value>Corporate dark</value></data>
-  <data name="Wid_CfgKPI" xml:space="preserve"><value>KPI Configuration</value></data>
-  <data name="Wid_CfgGrafico" xml:space="preserve"><value>Chart Configuration</value></data>
-  <data name="Wid_LabelSQL" xml:space="preserve"><value>SQL Query</value></data>
-  <data name="Wid_LabelUnidad" xml:space="preserve"><value>Unit / suffix</value></data>
-  <data name="Wid_LabelTipoGrafico" xml:space="preserve"><value>Chart type</value></data>
-  <data name="Wid_JS_ElimTitle" xml:space="preserve"><value>Delete widget?</value></data>
-  <data name="Wid_JS_ElimSuffix" xml:space="preserve"><value>will be permanently deleted.</value></data>
-  <data name="Wid_TipoAdvertencia" xml:space="preserve"><value>Warning</value></data>
-  <data name="Wid_CfgAdvertencia" xml:space="preserve"><value>Warning Configuration</value></data>
-  <data name="Wid_HintAdvertencia" xml:space="preserve"><value>Required columns: Mensaje. Optional: Titulo, IdEmpresa, NombreEmpresa, TituloEn, MensajeEn (English version; shown automatically to users with the site in English, if you include it). The severity of every row is the one configured above, not read from the query. Each result row is an independent warning; the query may return 0, 1 or several rows.</value></data>
-  <data name="Wid_LabelFuente" xml:space="preserve"><value>Data source</value></data>
-  <data name="Wid_FuenteSQL" xml:space="preserve"><value>SQL Query</value></data>
-  <data name="Wid_FuenteSP" xml:space="preserve"><value>Stored procedure</value></data>
-  <data name="Wid_LabelNombreSP" xml:space="preserve"><value>Stored procedure name</value></data>
-  <data name="Wid_HintNombreSP" xml:space="preserve"><value>The procedure must declare the @IdEmpresa INT parameter (it may ignore it) and return a single result set with the same columns required by SQL Query mode for the selected widget type.</value></data>
-  <data name="Wid_LabelSeveridad" xml:space="preserve"><value>Severity of this warning</value></data>
-  <data name="Wid_SeveridadSuccess" xml:space="preserve"><value>Positive (green)</value></data>
-  <data name="Wid_SeveridadWarning" xml:space="preserve"><value>Warning (yellow)</value></data>
-  <data name="Wid_SeveridadError" xml:space="preserve"><value>Error (red)</value></data>
-  <data name="Wid_Err_NombreSPRequerido" xml:space="preserve"><value>You must specify the stored procedure name.</value></data>
-  <data name="Wid_Err_ConsultaRequerida" xml:space="preserve"><value>You must specify the SQL query.</value></data>
-  <data name="Wid_HintArrastrar" xml:space="preserve"><value>Drag the rows using the ⣿ icon to reorder them. The order is a single sequence across all widgets; it is recalculated automatically when you drop a row.</value></data>
-  <data name="Wid_OrdenActualizado" xml:space="preserve"><value>Order updated successfully.</value></data>
-  <data name="Wid_ErrorActualizarOrden" xml:space="preserve"><value>Could not update the order. Please try again.</value></data>
-  <data name="Wid_ColFuente" xml:space="preserve"><value>Source</value></data>
-  <data name="Wid_NoWidgetsDesc" xml:space="preserve"><value>Create the first one with the button below.</value></data>
-  <data name="Wid_SeccionIdentificacion" xml:space="preserve"><value>Identification</value></data>
-  <data name="Wid_SeccionTipo" xml:space="preserve"><value>Widget type</value></data>
-  <data name="Wid_SeccionApariencia" xml:space="preserve"><value>Appearance</value></data>
-  <data name="Wid_LabelNombre" xml:space="preserve"><value>Name</value></data>
-  <data name="Wid_LabelOrden" xml:space="preserve"><value>Order</value></data>
-  <data name="Wid_LabelActivo" xml:space="preserve"><value>Active</value></data>
-  <data name="Wid_LabelIcono" xml:space="preserve"><value>Icon (FontAwesome)</value></data>
-  <data name="Wid_LabelColorIcono" xml:space="preserve"><value>Icon color</value></data>
-  <data name="Wid_TipoKpiNombre" xml:space="preserve"><value>KPI / Value</value></data>
-  <data name="Wid_TipoKpiDesc" xml:space="preserve"><value>A single number or value per company.</value></data>
-  <data name="Wid_TipoGraficoDesc" xml:space="preserve"><value>A data series shown as a chart (bar, line, etc.).</value></data>
-  <data name="Wid_TipoAdvertenciaDesc" xml:space="preserve"><value>Alerts or messages generated by a query, with configurable severity.</value></data>
-  <data name="Wid_ColRequeridas" xml:space="preserve"><value>Required columns</value></data>
-  <data name="Wid_ColOpcionales" xml:space="preserve"><value>Optional</value></data>
-  <data name="Wid_BtnUsarEjemplo" xml:space="preserve"><value>Use this example</value></data>
-  <data name="Wid_EjemploTitulo" xml:space="preserve"><value>Example</value></data>
-  <data name="Wid_PlaceholderSQL" xml:space="preserve"><value>Write your SELECT query here…</value></data>
-  <data name="Wid_ModalDeleteBody" xml:space="preserve"><value>Are you sure you want to delete the widget</value></data>
-  <data name="Wid_ModalDeleteNote" xml:space="preserve"><value>This action permanently deletes the widget and cannot be undone. If you only want to hide it, deactivate it from Edit instead.</value></data>
-  <data name="Wid_SevChipSuccess" xml:space="preserve"><value>OK</value></data>
-  <data name="Wid_SevChipWarning" xml:space="preserve"><value>Warning</value></data>
-  <data name="Wid_SevChipError" xml:space="preserve"><value>Error</value></data>
-  <data name="Wid_LabelNombreEn" xml:space="preserve"><value>Name (English) — optional</value></data>
-  <data name="Wid_HintNombreEn" xml:space="preserve"><value>Shown instead of Name to users with the site in English. If left empty, the Spanish Name is always shown.</value></data>
-  <data name="Wid_LabelSubtipo" xml:space="preserve"><value>Subtype</value></data>
-  <data name="Wid_SubtipoPlantilla" xml:space="preserve"><value>Template</value></data>
-  <data name="Wid_SubtipoModelo" xml:space="preserve"><value>Model</value></data>
 
   <!-- CATEGORY MANAGER -->
   <data name="Cat_PageTitle" xml:space="preserve"><value>Category Manager</value></data>

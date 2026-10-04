@@ -10,24 +10,6 @@ namespace bufinscustomers.Services
     public class InformeTablasDatosService : BaseService
     {
         /// <summary>
-        /// Diccionario de tablas disponibles con sus nombres amigables
-        /// IMPORTANTE: Si se agregan o modifican tablas, actualizar este diccionario
-        /// </summary>
-        private static readonly Dictionary<string, TablaDatos> TablasDisponibles = new Dictionary<string, TablaDatos>
-        {
-            { "TableBalance_Datos_VT", new TablaDatos { NombreTabla = "TableBalance_Datos_VT", NombreAmigable = "Balance", Descripcion = "Datos de Balance" } },
-            { "TablePYG_Datos_VT", new TablaDatos { NombreTabla = "TablePYG_Datos_VT", NombreAmigable = "P&G (Pérdidas y Ganancias)", Descripcion = "Datos de Pérdidas y Ganancias" } },
-            { "TableEbitda_Datos_VT", new TablaDatos { NombreTabla = "TableEbitda_Datos_VT", NombreAmigable = "EBITDA", Descripcion = "Datos de EBITDA" } },
-            { "TableFlujoCaja_Datos_VT", new TablaDatos { NombreTabla = "TableFlujoCaja_Datos_VT", NombreAmigable = "Flujo de Caja", Descripcion = "Datos de Flujo de Caja" } },
-            { "TableFlujoTesoreria_Datos_VT", new TablaDatos { NombreTabla = "TableFlujoTesoreria_Datos_VT", NombreAmigable = "Flujo de Tesorería", Descripcion = "Datos de Flujo de Tesorería" } },
-            { "TableGasFijosYVar_Datos_VT", new TablaDatos { NombreTabla = "TableGasFijosYVar_Datos_VT", NombreAmigable = "Gastos Fijos y Variables", Descripcion = "Datos de Gastos Fijos y Variables" } },
-            { "TableTakeRate_Datos_VT", new TablaDatos { NombreTabla = "TableTakeRate_Datos_VT", NombreAmigable = "Take Rate", Descripcion = "Datos de Take Rate" } },
-            { "TableIngCosGas_Datos_VT", new TablaDatos { NombreTabla = "TableIngCosGas_Datos_VT", NombreAmigable = "Ingresos, Costos y Gastos", Descripcion = "Datos de Ingresos, Costos y Gastos" } },
-            { "TableIngLineasVenta_Datos_VT", new TablaDatos { NombreTabla = "TableIngLineasVenta_Datos_VT", NombreAmigable = "Ingresos por Líneas de Venta", Descripcion = "Datos de Ingresos por Líneas de Venta" } },
-            { "TablePYGAjustado_Datos_VT", new TablaDatos { NombreTabla = "TablePYGAjustado_Datos_VT", NombreAmigable = "P&G Ajustado", Descripcion = "Datos de P&G Ajustado" } }
-        };
-
-        /// <summary>
         /// Tablas de resultados de Ejecución de Modelos: una por cada sp_Modelo* (ver
         /// "ModelosEjecucion Framework" en CLAUDE.md). El nombre de tabla = NombreSP sin el
         /// prefijo "sp_" (mismo criterio ya usado para el nombre de hoja en Excel). Solo se
@@ -46,16 +28,6 @@ namespace bufinscustomers.Services
             { "ModeloPYG", ("fas fa-chart-line", "Resultado del modelo de Pérdidas y Ganancias") },
             { "ModeloTesoreriaPpto", ("fas fa-university", "Resultado del modelo de Tesorería Presupuesto") }
         };
-
-        /// <summary>
-        /// Obtiene la lista completa de tablas disponibles (las 10 vistas *_VT + las 8 de modelo).
-        /// </summary>
-        public List<TablaDatos> ObtenerTablasDisponibles()
-        {
-            var lista = TablasDisponibles.Values.ToList();
-            lista.AddRange(ObtenerTablasModelos());
-            return lista.OrderBy(t => t.NombreAmigable).ToList();
-        }
 
         /// <summary>
         /// Solo las 8 tablas de resultados de Ejecución de Modelos — con el mismo nombre e ícono
@@ -97,12 +69,12 @@ namespace bufinscustomers.Services
 
         /// <summary>
         /// Valida que el nombre de tabla sea válido (prevención de SQL injection): debe ser una de
-        /// las *_VT estáticas o una de las 8 de modelo (activas en ModelosEjecucion).
+        /// las 8 tablas de modelo.
         /// </summary>
         private bool ValidarNombreTabla(string nombreTabla)
         {
             return !string.IsNullOrWhiteSpace(nombreTabla)
-                && (TablasDisponibles.ContainsKey(nombreTabla) || TablasModeloBase.ContainsKey(nombreTabla));
+                && TablasModeloBase.ContainsKey(nombreTabla);
         }
 
         /// <summary>true si el nombre corresponde a una de las 8 tablas de modelo (tienen IdEscenario).</summary>
@@ -309,8 +281,8 @@ namespace bufinscustomers.Services
                     // Verificar si tiene columna IdEmpresa para hacer JOIN
                     bool tieneIdEmpresa = columnasTabla.Any(c => c.Equals("IdEmpresa", StringComparison.OrdinalIgnoreCase));
 
-                    // Columna del usuario que ejecutó/generó la fila: "UsuarioEjecucion" en las
-                    // vistas *_VT históricas, "IdUsuario" en las tablas de Ejecución de Modelos
+                    // Columna del usuario que ejecutó/generó la fila: "UsuarioEjecucion" o "IdUsuario"
+                    // (esta última en las tablas de Ejecución de Modelos)
                     // (mismo parámetro @IdUsuario que reciben los sp_Modelo*) — incluye la que exista.
                     string columnaUsuario = columnasTabla.FirstOrDefault(c => c.Equals("UsuarioEjecucion", StringComparison.OrdinalIgnoreCase))
                         ?? columnasTabla.FirstOrDefault(c => c.Equals("IdUsuario", StringComparison.OrdinalIgnoreCase));

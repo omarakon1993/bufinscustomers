@@ -1,7 +1,4 @@
-﻿﻿@using bufinscustomers.Helpers
-@using System.Globalization
-@using System.Web.Script.Serialization
-@model List<bufinscustomers.Models.WidgetTarjetaViewModel>
+﻿@using bufinscustomers.Helpers
 @{
     ViewBag.Title = "Inicio";
 
@@ -21,66 +18,12 @@
         }
     }
 
-    // Los widgets se configuran/consultan en español; si el usuario tiene el sitio en inglés y la
-    // consulta del widget trae la columna "_En" correspondiente (EtiquetaEn/SerieEn/TituloEn/MensajeEn),
-    // se usa esa versión. Si no la trae, se muestra el texto en español tal cual (fallback silencioso).
-    bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.Name.Equals("en-US", StringComparison.OrdinalIgnoreCase);
-    Func<string, string, string> Bilingue = (es, en) => (esIngles && !string.IsNullOrWhiteSpace(en)) ? en : es;
-
-    // Item1=Config  Item2=Valor  Item3=Etiqueta  Item4=EmpNombre  Item5=EsVacio
-    var kpiRows      = new List<Tuple<bufinscustomers.Models.WidgetTarjeta, string, string, string, bool>>();
-    var graficoCards = new List<bufinscustomers.Models.WidgetTarjetaViewModel>();
-    var advertencias = new List<bufinscustomers.Models.WidgetAdvertenciaResultado>();
-    bool hayWidgetsAdvertencia = false;
-
-    if (Model != null)
-    {
-        foreach (var tv in Model)
-        {
-            if (tv.Config.Tipo == 1)
-            {
-                if (tv.KpiResultados == null || tv.KpiResultados.Count == 0)
-                {
-                    kpiRows.Add(Tuple.Create(tv.Config, "—", (string)null, (string)null, true));
-                }
-                else
-                {
-                    foreach (var kpi in tv.KpiResultados)
-                    {
-                        string empN = kpi.NombreEmpresa;
-                        if (string.IsNullOrEmpty(empN) && empMap.ContainsKey(kpi.IdEmpresa))
-                        {
-                            empN = empMap[kpi.IdEmpresa];
-                        }
-                        kpiRows.Add(Tuple.Create(tv.Config, kpi.Valor, Bilingue(kpi.Etiqueta, kpi.EtiquetaEn), empN, false));
-                    }
-                }
-            }
-            else if (tv.Config.Tipo == 2)
-            {
-                graficoCards.Add(tv);
-            }
-            else if (tv.Config.Tipo == 3)
-            {
-                hayWidgetsAdvertencia = true;
-                if (tv.AdvertenciaResultados != null)
-                {
-                    foreach (var adv in tv.AdvertenciaResultados)
-                    {
-                        if (string.IsNullOrEmpty(adv.NombreEmpresa) && adv.IdEmpresa != 0 && empMap.ContainsKey(adv.IdEmpresa))
-                        {
-                            adv.NombreEmpresa = empMap[adv.IdEmpresa];
-                        }
-                        adv.Titulo  = Bilingue(adv.Titulo, adv.TituloEn);
-                        adv.Mensaje = Bilingue(adv.Mensaje, adv.MensajeEn);
-                        advertencias.Add(adv);
-                    }
-                }
-            }
-        }
-    }
-
-    bool hayTarjetas = kpiRows.Any() || graficoCards.Any();
+    // "Mi consumo de IA": solo Super Admin y Admin de Empresa (igual que Análisis IA) y solo si la IA está visible.
+    bool verConsumoIA = (UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.EsAdminEmpresa()) && IAModuloHelper.Visible();
+    var empresasConsumo = (empresas ?? new List<bufinscustomers.Models.Empresas>()).OrderBy(e => e.Nombre).ToList();
+    int empresaConsumoSel = usuario != null && usuario.IdEmpresa.HasValue && empMap.ContainsKey(usuario.IdEmpresa.Value)
+        ? usuario.IdEmpresa.Value
+        : (empresasConsumo.Any() ? empresasConsumo.First().Id : 0);
 
     int hora = DateTime.Now.Hour;
     string saludoHtml = hora >= 5 && hora < 12 ? Resources.Strings.Home_GreetingMorning
@@ -102,24 +45,8 @@
         ? empresas.Where(e => e.IdGrupoEmpresarial == empresaPropia.IdGrupoEmpresarial && e.Id != empresaPropia.Id)
                   .OrderBy(e => e.Nombre).ToList()
         : new List<bufinscustomers.Models.Empresas>();
-
-    // Serialización de datos para Chart.js
-    var jss = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
-    var graficosJson = jss.Serialize(graficoCards.Select(g => new {
-        id          = g.Config.Id,
-        nombre      = Bilingue(g.Config.Nombre, g.Config.NombreEn),
-        tipo        = string.IsNullOrWhiteSpace(g.Config.TipoGrafico) ? "bar" : g.Config.TipoGrafico.ToLower(),
-        fondoOscuro = g.Config.FondoOscuro,
-        color       = string.IsNullOrWhiteSpace(g.Config.ColorIcono) ? "#583AFF" : g.Config.ColorIcono,
-        datos       = g.GraficoResultados.Select(d => new {
-            idEmpresa     = d.IdEmpresa,
-            nombreEmpresa = string.IsNullOrEmpty(d.NombreEmpresa) && empMap.ContainsKey(d.IdEmpresa) ? empMap[d.IdEmpresa] : d.NombreEmpresa,
-            etiqueta      = Bilingue(d.Etiqueta, d.EtiquetaEn),
-            serie         = Bilingue(d.Serie, d.SerieEn),
-            valor         = d.Valor
-        })
-    }));
 }
+
 
 <div class="dash-wrapper">
 
@@ -173,53 +100,17 @@
         <img src="~/Assets/img/Bufins_LogoLogin.png" alt="Bufins" class="dash-greeting-logo">
     </div>
 
-    @if (hayWidgetsAdvertencia)
-    {
-        <div class="dash-section" id="advertencias-section" data-hay-advertencias="@(advertencias.Any() ? "1" : "0")" style="position:relative;z-index:1;margin-bottom:1.75rem;">
-            <div class="dash-section-label dash-section-toggle" data-target="sec-advertencias-body" title="@Resources.Strings.Home_TooltipColapsar">
-                <i class="fas fa-shield-alt"></i> @Resources.Strings.Home_SectionAdvertencias
-                @if (advertencias.Any())
-                {
-                    <span class="dash-adv-count-badge">@advertencias.Count</span>
-                }
-                <i class="fas fa-chevron-down dash-section-chevron" style="font-size:.62rem;margin-left:.3rem;"></i>
-            </div>
-            <div id="sec-advertencias-body">
-                <div class="dash-adv-grid">
-                    @if (advertencias.Any())
-                    {
-                        foreach (var adv in advertencias)
-                        {
-                            var icono = adv.Severidad == "success" ? "fa-check-circle" : (adv.Severidad == "error" ? "fa-times-circle" : "fa-exclamation-triangle");
-                            <div class="dash-adv-card dash-adv-@adv.Severidad">
-                                <div class="dash-adv-icon"><i class="fas @icono"></i></div>
-                                <div class="dash-adv-body">
-                                    @if (!string.IsNullOrEmpty(adv.NombreEmpresa))
-                                    {
-                                        <div class="dash-adv-empresa"><i class="fas fa-building"></i>@adv.NombreEmpresa</div>
-                                    }
-                                    @if (!string.IsNullOrEmpty(adv.Titulo))
-                                    {
-                                        <div class="dash-adv-title">@adv.Titulo</div>
-                                    }
-                                    <div class="dash-adv-msg">@adv.Mensaje</div>
-                                </div>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <div class="dash-adv-card dash-adv-success">
-                            <div class="dash-adv-icon"><i class="fas fa-check-circle"></i></div>
-                            <div class="dash-adv-body">
-                                <div class="dash-adv-msg">@Resources.Strings.Home_Advertencias_SinDatos</div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
+    <!-- Alertas Bufins: las genera sp_ObtenerAlertasHome (se cargan por AJAX) -->
+    <div class="dash-section" id="alertas-section">
+        <div class="dash-section-label dash-section-toggle" data-target="sec-alertas-body" title="@Resources.Strings.Home_TooltipColapsar">
+            <i class="fas fa-shield-alt"></i> @Resources.Strings.Home_SectionAlertas
+            <span class="dash-adv-count-badge" id="alertas-badge" style="display:none;"></span>
+            <i class="fas fa-chevron-down dash-section-chevron" style="font-size:.62rem;margin-left:.3rem;"></i>
         </div>
-    }
+        <div id="sec-alertas-body">
+            <div class="dash-adv-grid" id="alertas-grid"></div>
+        </div>
+    </div>
 
     <div class="dash-section" id="indic-section" style="position:relative;z-index:1;margin-bottom:1.75rem;">
         <div class="dash-section-label dash-section-toggle" data-target="sec-indic-body" title="@Resources.Strings.Home_TooltipColapsar">
@@ -268,90 +159,56 @@
         </div><!-- /sec-indic-body -->
     </div>
 
-    @if (kpiRows.Any() || graficoCards.Any())
-    {
-        <div class="dash-section">
-            <div class="dash-section-label dash-section-toggle" data-target="sec-widgets-body" title="@Resources.Strings.Home_TooltipColapsar">
-                <i class="fas fa-th-large"></i> @Resources.Strings.Home_SectionWidgets
+    <div class="dash-row@(verConsumoIA ? " dash-row-2" : "")">
+
+        <!-- Accesos rápidos -->
+        <div class="dash-section" id="accesos-section">
+            <div class="dash-section-label dash-section-toggle" data-target="sec-accesos-body" title="@Resources.Strings.Home_TooltipColapsar">
+                <i class="fas fa-bolt"></i> @Resources.Strings.Home_SectionAccesos
                 <i class="fas fa-chevron-down dash-section-chevron" style="margin-left:auto;font-size:.62rem;"></i>
             </div>
-            <div id="sec-widgets-body">
-            <div class="dash-widgets-grid">
-
-                @foreach (var row in kpiRows)
-                {
-                    <div class="dash-kpi-card@(row.Item1.FondoOscuro ? " dash-kpi-dark" : "")@(row.Item5 ? " dash-kpi-empty" : "")">
-                        <div class="dash-kpi-icon" style="background:linear-gradient(135deg,@row.Item1.ColorIcono,#01E1D7)">
-                            <i class="@row.Item1.Icono"></i>
-                        </div>
-                        <div class="dash-kpi-body">
-                            <div class="dash-kpi-value">
-                                @row.Item2
-                                @if (!string.IsNullOrEmpty(row.Item1.UnidadValor))
-                                {
-                                    <span class="dash-kpi-unit">@row.Item1.UnidadValor</span>
-                                }
-                            </div>
-                            <div class="dash-kpi-label">@Bilingue(row.Item1.Nombre, row.Item1.NombreEn)</div>
-                            @if (!string.IsNullOrEmpty(row.Item3))
-                            {
-                                <div class="dash-kpi-etiqueta">@row.Item3</div>
-                            }
-                            @if (!string.IsNullOrEmpty(row.Item4))
-                            {
-                                <div class="dash-kpi-empresa"><i class="fas fa-building"></i> @row.Item4</div>
-                            }
-                        </div>
-                    </div>
-                }
-
-                @foreach (var g in graficoCards)
-                {
-                    var cfg   = g.Config;
-                    var vacio = g.GraficoResultados == null || g.GraficoResultados.Count == 0;
-                    <div class="dash-graf-card@(cfg.FondoOscuro ? " dash-graf-dark" : "")@(vacio ? " dash-graf-empty" : "")">
-                        <div class="dash-graf-header">
-                            <div class="dash-graf-icon" style="background:linear-gradient(135deg,@cfg.ColorIcono,#01E1D7)">
-                                <i class="@cfg.Icono"></i>
-                            </div>
-                            <div class="dash-graf-titles">
-                                <div class="dash-graf-title">@Bilingue(cfg.Nombre, cfg.NombreEn)</div>
-                                <div class="dash-graf-sub">@TipoGraficoLabel(cfg.TipoGrafico)</div>
-                            </div>
-                        </div>
-                        <div class="dash-graf-canvas-wrap">
-                            @if (vacio)
-                            {
-                                <div class="dash-graf-empty-msg"><i class="fas fa-chart-line"></i> @Resources.Strings.Home_EmptyChart</div>
-                            }
-                            else
-                            {
-                                <canvas id="dashGraf_@cfg.Id"></canvas>
-                            }
-                        </div>
-                    </div>
-                }
-
+            <div id="sec-accesos-body">
+                <div class="dash-acc-grid" id="accesos-grid"></div>
+                <div class="dash-noticias-hint" id="accesos-hint" style="display:none;"></div>
             </div>
-            </div><!-- /sec-widgets-body -->
         </div>
-    }
+
+        @if (verConsumoIA)
+        {
+            <!-- Consumo de IA -->
+            <div class="dash-section" id="ia-section">
+                <div class="dash-section-label dash-section-toggle" data-target="sec-ia-body" title="@Resources.Strings.Home_TooltipColapsar">
+                    <i class="fas fa-chart-pie"></i> @Resources.Strings.IAConsumo_Titulo
+                    <i class="fas fa-chevron-down dash-section-chevron" style="margin-left:auto;font-size:.62rem;"></i>
+                </div>
+                <div id="sec-ia-body">
+                    <div class="dash-ia-card">
+                        @if (empresasConsumo.Count > 1)
+                        {
+                            <select id="ia-empresa" class="form-control form-control-sm dash-ia-select" aria-label="@Resources.Strings.Home_ConsumoIA_Empresa">
+                                @foreach (var e in empresasConsumo)
+                                {
+                                    <option value="@e.Id" @(e.Id == empresaConsumoSel ? "selected" : "")>@e.Nombre</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <input type="hidden" id="ia-empresa" value="@empresaConsumoSel" />
+                        }
+                        <div class="dash-ia-texto" id="ia-texto"><i class="fas fa-spinner fa-spin"></i></div>
+                        <div class="dash-ia-track"><div class="dash-ia-fill" id="ia-barra"></div></div>
+                        <div class="dash-ia-meta" id="ia-meta"></div>
+                        <a class="dash-ia-link" href="@Url.Action("Index", "AnalisisIA")">@Resources.Strings.Home_ConsumoIA_VerDetalle <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        }
+
+    </div>
+
 
 </div>
-
-@functions {
-    string TipoGraficoLabel(string t) {
-        if (string.IsNullOrEmpty(t)) return Resources.Strings.Home_ChartBar;
-        switch (t.ToLower()) {
-            case "bar":      return Resources.Strings.Home_ChartBar;
-            case "line":     return Resources.Strings.Home_ChartLine;
-            case "area":     return Resources.Strings.Home_ChartArea;
-            case "doughnut": return Resources.Strings.Home_ChartDoughnut;
-            case "pie":      return Resources.Strings.Home_ChartPie;
-            default:         return t;
-        }
-    }
-}
 
 <style>
     .dash-wrapper { position:relative; min-height:70vh; padding:0 0 2rem; }
@@ -449,32 +306,6 @@
     .dash-section-chevron { transition:transform .2s ease; opacity:.6; flex-shrink:0; }
     .dash-section-chevron.rotado { transform:rotate(-90deg); }
 
-    /* ---------- Widgets unificados (KPI + Gráficos en la misma fila) ---------- */
-    .dash-widgets-grid {
-        display:flex; flex-wrap:wrap; gap:9px; align-items:flex-start;
-    }
-    /* KPI cards: ancho fijo compacto */
-    .dash-widgets-grid .dash-kpi-card {
-        flex:0 0 auto; width:182px;
-    }
-    /* Gráficos: crecen para llenar el espacio */
-    .dash-widgets-grid .dash-graf-card {
-        flex:1 1 260px; min-width:260px;
-    }
-
-    /* ---------- KPI ---------- */
-    .dash-kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:9px; }
-    .dash-kpi-card {
-        position:relative; overflow:hidden;
-        background:#fff;
-        border:1px solid rgba(88,58,255,.12);
-        border-radius:9px; padding:11px 11px;
-        display:flex; align-items:center; gap:9px;
-        box-shadow:0 2px 8px rgba(22,9,51,.05);
-        transition:transform .15s ease,box-shadow .15s ease;
-    }
-    .dash-kpi-card:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(22,9,51,.1); }
-    .dash-kpi-empty { opacity:.55; }
     .dash-kpi-icon { width:35px; height:35px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:.85rem; flex-shrink:0; }
     .dash-kpi-body { min-width:0; flex:1; }
     .dash-kpi-value { font-size:1.1rem; font-weight:700; color:#160933; line-height:1.1; display:flex; align-items:baseline; gap:.3rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -483,112 +314,6 @@
     .dash-kpi-etiqueta { font-size:.60rem; color:#A0A0B8; margin-top:2px; }
     .dash-kpi-empresa  { font-size:.58rem; color:#A0A0B8; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .dash-kpi-empresa i { font-size:.50rem; }
-
-    /* KPI - tema oscuro corporativo */
-    .dash-kpi-card.dash-kpi-dark {
-        background:var(--app-glow-bg);
-        border-color:rgba(88,58,255,.45);
-        box-shadow:0 4px 14px rgba(22,9,51,.4);
-    }
-    .dash-kpi-card.dash-kpi-dark::before {
-        content:""; position:absolute; top:0; left:0; right:0; height:3px;
-        background:linear-gradient(90deg,#01E1D7,#583AFF);
-    }
-    .dash-kpi-card.dash-kpi-dark:hover { box-shadow:0 8px 22px rgba(22,9,51,.55); }
-    .dash-kpi-card.dash-kpi-dark .dash-kpi-icon    { box-shadow:0 4px 10px rgba(88,58,255,.35); }
-    .dash-kpi-card.dash-kpi-dark .dash-kpi-value   { color:#FFFFFF; }
-    .dash-kpi-card.dash-kpi-dark .dash-kpi-unit    { color:#01E1D7; }
-    .dash-kpi-card.dash-kpi-dark .dash-kpi-label   { color:#A8A4C7; }
-    .dash-kpi-card.dash-kpi-dark .dash-kpi-etiqueta{ color:rgba(255,255,255,.6); }
-    .dash-kpi-card.dash-kpi-dark .dash-kpi-empresa { color:rgba(255,255,255,.55); }
-
-    /* ---------- Gráficos ---------- */
-    .dash-graf-grid {
-        display:grid;
-        grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
-        gap:8px;
-    }
-    .dash-graf-card {
-        position:relative;
-        background:#fff;
-        border:1px solid rgba(88,58,255,.14);
-        border-radius:10px;
-        padding:9px 10px 7px;
-        box-shadow:0 2px 10px rgba(22,9,51,.06);
-        display:flex; flex-direction:column;
-        min-height:180px;
-        transition:transform .15s ease, box-shadow .15s ease;
-        overflow:hidden;
-    }
-    .dash-graf-card::before {
-        content:""; position:absolute; top:0; left:0; right:0; height:3px;
-        background:linear-gradient(90deg,#583AFF,#01E1D7);
-        opacity:.85;
-    }
-    .dash-graf-card:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(22,9,51,.12); }
-
-    .dash-graf-card.dash-graf-dark {
-        background:var(--app-glow-bg);
-        border-color:rgba(88,58,255,.45);
-        color:#E8E6F4;
-        box-shadow:0 4px 16px rgba(22,9,51,.45);
-    }
-    .dash-graf-card.dash-graf-dark::before {
-        background:linear-gradient(90deg,#01E1D7,#583AFF);
-        opacity:1;
-    }
-
-    .dash-graf-header { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
-    .dash-graf-icon {
-        width:32px; height:32px; border-radius:7px;
-        display:flex; align-items:center; justify-content:center;
-        color:#fff; font-size:.78rem; flex-shrink:0;
-        box-shadow:0 4px 10px rgba(88,58,255,.25);
-    }
-    .dash-graf-titles { min-width:0; }
-    .dash-graf-title  {
-        font-size:.78rem; font-weight:700; color:#160933;
-        line-height:1.2;
-        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .dash-graf-sub {
-        font-size:.56rem; color:#A0A0B8;
-        text-transform:uppercase; letter-spacing:.6px;
-        margin-top:2px; font-weight:600;
-    }
-    .dash-graf-card.dash-graf-dark .dash-graf-title { color:#FFFFFF; }
-    .dash-graf-card.dash-graf-dark .dash-graf-sub   { color:#01E1D7; }
-
-    .dash-graf-canvas-wrap {
-        position:relative; flex:1;
-        min-height:120px;
-        display:flex; align-items:center; justify-content:center;
-    }
-    .dash-graf-canvas-wrap canvas { width:100% !important; height:100% !important; max-height:145px; }
-
-    .dash-graf-empty .dash-graf-canvas-wrap { opacity:.6; }
-    .dash-graf-empty-msg {
-        font-size:.78rem; color:#A0A0B8; font-weight:600;
-        display:flex; align-items:center; gap:.4rem;
-    }
-    .dash-graf-card.dash-graf-dark .dash-graf-empty-msg { color:rgba(255,255,255,.55); }
-
-    /* ---------- Responsive ---------- */
-    @@media (max-width:768px) {
-        .dash-graf-grid { grid-template-columns:1fr; }
-        .dash-graf-card { min-height:200px; }
-    }
-    @@media (max-width:576px) {
-        .dash-kpi-grid { grid-template-columns:1fr; }
-        .dash-graf-card { padding:10px; min-height:180px; }
-        .dash-graf-title { font-size:.82rem; }
-        .dash-header-card { padding:1rem; gap:.5rem; }
-        .dash-header-divider { display:none; }
-        .dash-greeting-logo { height:22px; margin-left:auto; }
-        .dash-hello { font-size:1.1rem; }
-        .dash-empresa-row { padding:.35rem .55rem; }
-        .dash-empresa-nombre { font-size:.92rem; max-width:150px; }
-    }
 
     /* ---------- Indicadores de Mercado ---------- */
     .dash-indic-refreshbtn {
@@ -735,192 +460,67 @@
     .dash-adv-warning .dash-adv-icon { color:#f59e0b; }
     .dash-adv-error { border-left-color:#ef4444; }
     .dash-adv-error .dash-adv-icon { color:#ef4444; }
+
+    /* ---------- Accesos rápidos + Consumo de IA ---------- */
+    .dash-row { position:relative; z-index:1; }
+    .dash-row-2 { display:grid; grid-template-columns:1fr 320px; gap:14px; align-items:start; }
+    .dash-row-2 > .dash-section { min-width:0; }
+
+    .dash-acc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:9px; }
+    .dash-acc-item {
+        display:flex; align-items:center; gap:10px;
+        background:#fff; border:1px solid rgba(88,58,255,.12); border-radius:10px;
+        padding:11px 12px; text-decoration:none !important;
+        box-shadow:0 2px 8px rgba(22,9,51,.05);
+        transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+    .dash-acc-item:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(22,9,51,.1); border-color:rgba(88,58,255,.35); }
+    .dash-acc-icon {
+        width:35px; height:35px; border-radius:8px; flex-shrink:0;
+        display:flex; align-items:center; justify-content:center;
+        color:#fff; font-size:.85rem;
+        background:linear-gradient(135deg,#583AFF,#01E1D7);
+        box-shadow:0 4px 10px rgba(88,58,255,.25);
+    }
+    .dash-acc-nombre {
+        font-size:.78rem; font-weight:700; color:#160933; line-height:1.25;
+        overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+    }
+
+    .dash-ia-card {
+        background:#fff; border:1px solid rgba(88,58,255,.12); border-radius:11px;
+        padding:14px; box-shadow:0 4px 14px rgba(22,9,51,.06);
+        display:flex; flex-direction:column; gap:6px;
+    }
+    .dash-ia-select { margin-bottom:4px; }
+    .dash-ia-texto { font-size:.82rem; font-weight:700; color:#160933; }
+    .dash-ia-track { height:10px; border-radius:6px; background:#e5e7eb; overflow:hidden; }
+    .dash-ia-fill { height:100%; width:0; border-radius:6px; background:var(--content-gradient); transition:width .4s ease; }
+    .dash-ia-fill.agotado { background:#ef4444; }
+    .dash-ia-fill.alto { background:#f59e0b; }
+    .dash-ia-meta { font-size:.68rem; color:#6B6787; line-height:1.4; }
+    .dash-ia-link { align-self:flex-start; margin-top:4px; font-size:.72rem; font-weight:700; color:#583AFF; text-decoration:none; }
+    .dash-ia-link:hover { text-decoration:underline; }
+    .dash-ia-link i { font-size:.6rem; margin-left:.2rem; }
+
+    .dash-adv-info { border-left-color:#3b82f6; }
+    .dash-adv-info .dash-adv-icon { color:#3b82f6; }
+
+    /* ---------- Responsive ---------- */
+    @@media (max-width:900px) {
+        .dash-row-2 { grid-template-columns:1fr; }
+    }
+    @@media (max-width:576px) {
+        .dash-acc-grid { grid-template-columns:1fr 1fr; }
+        .dash-header-card { padding:1rem; gap:.5rem; }
+        .dash-header-divider { display:none; }
+        .dash-greeting-logo { height:22px; margin-left:auto; }
+        .dash-hello { font-size:1.1rem; }
+        .dash-empresa-row { padding:.35rem .55rem; }
+        .dash-empresa-nombre { font-size:.92rem; max-width:150px; }
+    }
+
 </style>
-
-@if (graficoCards.Any())
-{
-    <script src="~/Assets/js/chart.umd.min.js"></script>
-    <script>
-    (function () {
-        var GRAFICOS = @Html.Raw(graficosJson);
-        if (!GRAFICOS || !GRAFICOS.length || typeof Chart === 'undefined') return;
-
-        var PALETA = ['#583AFF', '#01E1D7', '#FF6B9D', '#FFD166', '#06D6A0', '#118AB2', '#9B5DE5', '#F15BB5'];
-
-        function hexToRgba(hex, alpha) {
-            var h = (hex || '#583AFF').replace('#', '');
-            if (h.length === 3) h = h.split('').map(function (c) { return c + c; }).join('');
-            var r = parseInt(h.substring(0, 2), 16);
-            var g = parseInt(h.substring(2, 4), 16);
-            var b = parseInt(h.substring(4, 6), 16);
-            return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
-        }
-
-        function fmtMoneda(v) {
-            if (v === null || v === undefined || isNaN(v)) return v;
-            try { return new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(v); }
-            catch (e) { return v; }
-        }
-
-        // Agrupa filas por (Serie || NombreEmpresa || 'Total') y devuelve labels + datasets
-        function armarSeries(datos, colorBase, esCircular) {
-            var labelsSet = [];
-            var seriesMap = {};
-
-            datos.forEach(function (d) {
-                var et = (d.etiqueta == null ? '' : String(d.etiqueta));
-                if (labelsSet.indexOf(et) === -1) labelsSet.push(et);
-
-                var sk = d.serie && d.serie.length ? d.serie
-                       : (d.nombreEmpresa && d.nombreEmpresa.length ? d.nombreEmpresa : 'Total');
-                if (!seriesMap[sk]) seriesMap[sk] = {};
-                seriesMap[sk][et] = Number(d.valor) || 0;
-            });
-
-            var seriesKeys = Object.keys(seriesMap);
-
-            // Para gráficos circulares: una sola serie con todas las etiquetas
-            if (esCircular) {
-                var valores = labelsSet.map(function (et) {
-                    var total = 0;
-                    seriesKeys.forEach(function (sk) { total += (seriesMap[sk][et] || 0); });
-                    return total;
-                });
-                var colors = labelsSet.map(function (_, i) { return PALETA[i % PALETA.length]; });
-                return {
-                    labels: labelsSet,
-                    datasets: [{
-                        data: valores,
-                        backgroundColor: colors,
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    }]
-                };
-            }
-
-            var datasets = seriesKeys.map(function (sk, idx) {
-                var color = idx === 0 ? colorBase : PALETA[idx % PALETA.length];
-                return {
-                    label: sk,
-                    data: labelsSet.map(function (et) { return seriesMap[sk][et] || 0; }),
-                    borderColor: color,
-                    backgroundColor: color,
-                    _color: color
-                };
-            });
-
-            return { labels: labelsSet, datasets: datasets };
-        }
-
-        GRAFICOS.forEach(function (g) {
-            var canvas = document.getElementById('dashGraf_' + g.id);
-            if (!canvas || !g.datos || !g.datos.length) return;
-
-            var dark = !!g.fondoOscuro;
-            var textColor   = dark ? '#E8E6F4'   : '#160933';
-            var subColor    = dark ? '#A8A4C7'   : '#6B6787';
-            var gridColor   = dark ? 'rgba(255,255,255,.08)' : 'rgba(22,9,51,.07)';
-            var tooltipBg   = dark ? '#0E061F'   : '#FFFFFF';
-            var tooltipFg   = dark ? '#FFFFFF'   : '#160933';
-            var tooltipBd   = dark ? 'rgba(1,225,215,.4)' : 'rgba(88,58,255,.2)';
-
-            var tipo = (g.tipo || 'bar').toLowerCase();
-            var esArea = tipo === 'area';
-            var esCircular = tipo === 'doughnut' || tipo === 'pie';
-            var chartType = esArea ? 'line' : tipo;
-
-            var pack = armarSeries(g.datos, g.color || '#583AFF', esCircular);
-
-            // Estilizado por tipo
-            if (!esCircular) {
-                pack.datasets.forEach(function (ds) {
-                    if (chartType === 'bar') {
-                        ds.backgroundColor = hexToRgba(ds._color, .85);
-                        ds.borderColor     = ds._color;
-                        ds.borderWidth     = 0;
-                        ds.borderRadius    = 6;
-                        ds.maxBarThickness = 38;
-                    } else { // line / area
-                        ds.borderColor = ds._color;
-                        ds.backgroundColor = esArea ? hexToRgba(ds._color, dark ? .35 : .18) : hexToRgba(ds._color, .15);
-                        ds.borderWidth = 2.5;
-                        ds.tension     = 0.35;
-                        ds.fill        = esArea;
-                        ds.pointRadius = 3;
-                        ds.pointHoverRadius = 6;
-                        ds.pointBackgroundColor = ds._color;
-                        ds.pointBorderColor = dark ? '#160933' : '#fff';
-                        ds.pointBorderWidth = 2;
-                    }
-                });
-            }
-
-            var opciones = {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
-                plugins: {
-                    legend: {
-                        display: pack.datasets.length > 1 || esCircular,
-                        position: esCircular ? 'right' : 'top',
-                        labels: {
-                            color: textColor,
-                            font: { size: 11, weight: '600', family: 'Nunito, sans-serif' },
-                            boxWidth: 12, boxHeight: 12, padding: 10, usePointStyle: true
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: tooltipBg,
-                        titleColor: tooltipFg,
-                        bodyColor: tooltipFg,
-                        borderColor: tooltipBd,
-                        borderWidth: 1,
-                        padding: 10,
-                        cornerRadius: 8,
-                        titleFont: { weight: '700', family: 'Nunito, sans-serif' },
-                        bodyFont:  { family: 'Nunito, sans-serif' },
-                        callbacks: {
-                            label: function (ctx) {
-                                var label = ctx.dataset.label ? (ctx.dataset.label + ': ') : '';
-                                return label + fmtMoneda(ctx.parsed.y !== undefined ? ctx.parsed.y : ctx.parsed);
-                            }
-                        }
-                    }
-                }
-            };
-
-            if (!esCircular) {
-                opciones.scales = {
-                    x: {
-                        ticks:  { color: subColor, font: { size: 10.5, family: 'Nunito, sans-serif' } },
-                        grid:   { display: false },
-                        border: { color: gridColor }
-                    },
-                    y: {
-                        ticks:  {
-                            color: subColor, font: { size: 10.5, family: 'Nunito, sans-serif' },
-                            callback: function (v) { return fmtMoneda(v); }
-                        },
-                        grid:   { color: gridColor, drawBorder: false },
-                        border: { display: false },
-                        beginAtZero: true
-                    }
-                };
-            }
-
-            try {
-                new Chart(canvas.getContext('2d'), {
-                    type: chartType,
-                    data: pack,
-                    options: opciones
-                });
-            } catch (err) {
-                console.error('Widget gráfico ' + g.id + ': ' + err.message);
-            }
-        });
-    })();
-    </script>
-}
 
 @section scripts {
 <script>
@@ -934,10 +534,24 @@
         error:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_Error))',
         colapsar:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_Colapsar))',
         expandir:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_Expandir))',
-        irNoticia: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_IrNoticia))'
+        irNoticia: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_IrNoticia))',
+        alertasOk:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Alertas_SinDatos))',
+        alertasError: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Alertas_Error))',
+        accSugeridos: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Accesos_Sugeridos))',
+        accVacio:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Accesos_Vacio))',
+        iaPeriodo:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Periodo))',
+        iaTokens:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Tokens))',
+        iaTokensIlim: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_TokensIlim))',
+        iaProyeccion: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Proyeccion))',
+        iaPool:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Pool))',
+        iaApagada:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Apagada))',
+        iaError:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Error))'
     };
 
-    var _urlNoticias = '@Url.Action("ObtenerNoticias", "Home")';
+    var _urlNoticias   = '@Url.Action("ObtenerNoticias", "Home")';
+    var _urlAlertas    = '@Url.Action("ObtenerAlertas", "Home")';
+    var _urlAccesos    = '@Url.Action("ObtenerAccesosRapidos", "Home")';
+    var _urlConsumoIA  = '@Url.Action("MiConsumo", "AnalisisIA")';
 
     function fmtCOP(v) {
         try { return new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v); }
@@ -1107,17 +721,95 @@
             .always(function () { fin(); });
     }
 
-    function initSecciones() {
-        // Advertencias Bufins: colapsada por defecto salvo que existan advertencias activas
-        // (en cuyo caso arranca expandida). Es independiente de las demás secciones.
-        var $advSection = $('#advertencias-section');
-        if ($advSection.length && $advSection.data('hay-advertencias') != 1) {
-            var $advToggle = $advSection.find('.dash-section-toggle');
-            $('#' + $advToggle.data('target')).hide();
-            $advToggle.find('.dash-section-chevron').addClass('rotado');
-            $advToggle.attr('title', _s.expandir);
+    // ── Alertas (sp_ObtenerAlertasHome) ──
+    function colapsarSeccion(idSeccion) {
+        var $toggle = $('#' + idSeccion).find('.dash-section-toggle').first();
+        $('#' + $toggle.data('target')).hide();
+        $toggle.find('.dash-section-chevron').addClass('rotado');
+        $toggle.attr('title', _s.expandir);
+    }
+
+    function cargarAlertas() {
+        var $grid = $('#alertas-grid');
+        var $badge = $('#alertas-badge');
+
+        function tarjeta(sev, icono, empresa, titulo, mensaje) {
+            return '<div class="dash-adv-card dash-adv-' + sev + '">' +
+                   '<div class="dash-adv-icon"><i class="fas ' + icono + '"></i></div>' +
+                   '<div class="dash-adv-body">' +
+                   (empresa ? '<div class="dash-adv-empresa"><i class="fas fa-building"></i>' + esc(empresa) + '</div>' : '') +
+                   (titulo ? '<div class="dash-adv-title">' + esc(titulo) + '</div>' : '') +
+                   '<div class="dash-adv-msg">' + esc(mensaje) + '</div>' +
+                   '</div></div>';
         }
 
+        $.getJSON(_urlAlertas).done(function (d) {
+            var alertas = (d && d.ok && d.alertas) ? d.alertas : null;
+            if (!alertas) {
+                $grid.html(tarjeta('warning', 'fa-exclamation-triangle', '', '', _s.alertasError));
+                return;
+            }
+            if (!alertas.length) {
+                $grid.html(tarjeta('success', 'fa-check-circle', '', '', _s.alertasOk));
+                colapsarSeccion('alertas-section'); // sin alertas: arranca colapsada
+                return;
+            }
+            var iconos = { Error: ['error', 'fa-times-circle'], Advertencia: ['warning', 'fa-exclamation-triangle'], Info: ['info', 'fa-info-circle'] };
+            $grid.html(alertas.map(function (a) {
+                var m = iconos[a.severidad] || iconos.Info;
+                return tarjeta(m[0], m[1], a.empresa, a.titulo, a.mensaje);
+            }).join(''));
+            $badge.text(alertas.length).show();
+        }).fail(function () {
+            $grid.html(tarjeta('warning', 'fa-exclamation-triangle', '', '', _s.alertasError));
+        });
+    }
+
+    // ── Accesos rápidos (más visitados del usuario) ──
+    function cargarAccesos() {
+        var $grid = $('#accesos-grid');
+        var $hint = $('#accesos-hint');
+        $.getJSON(_urlAccesos).done(function (d) {
+            var items = (d && d.ok && d.items) ? d.items : [];
+            if (!items.length) { $hint.text(_s.accVacio).show(); return; }
+            $grid.html(items.map(function (i) {
+                return '<a class="dash-acc-item" href="' + esc(i.url) + '">' +
+                       '<span class="dash-acc-icon"><i class="' + esc(i.icono || 'fas fa-link') + '"></i></span>' +
+                       '<span class="dash-acc-nombre">' + esc(i.nombre) + '</span></a>';
+            }).join(''));
+            if (d.sugeridos) $hint.text(_s.accSugeridos).show();
+        }).fail(function () { $hint.text(_s.accVacio).show(); });
+    }
+
+    // ── Consumo de IA (reutiliza AnalisisIA/MiConsumo) ──
+    function cargarConsumoIA() {
+        var $sel = $('#ia-empresa');
+        if (!$sel.length) return;
+
+        function pintar() {
+            $('#ia-texto').html('<i class="fas fa-spinner fa-spin"></i>');
+            $.getJSON(_urlConsumoIA, { idEmpresa: $sel.val() }).done(function (r) {
+                if (!r || !r.ok) { $('#ia-texto').text(_s.iaError); $('#ia-barra').css('width', 0); $('#ia-meta').text(''); return; }
+                var consumido = Number(r.consumido).toLocaleString();
+                $('#ia-texto').text(r.ilimitado
+                    ? _s.iaTokensIlim.replace('{0}', consumido)
+                    : _s.iaTokens.replace('{0}', consumido).replace('{1}', Number(r.presupuesto).toLocaleString()).replace('{2}', r.porcentaje));
+                $('#ia-barra').css('width', (r.ilimitado ? 0 : Math.min(100, r.porcentaje)) + '%')
+                              .toggleClass('agotado', !r.ilimitado && r.porcentaje >= 100)
+                              .toggleClass('alto', !r.ilimitado && r.porcentaje >= 80 && r.porcentaje < 100);
+                var meta = [_s.iaPeriodo.replace('{0}', r.inicio).replace('{1}', r.fin),
+                            _s.iaProyeccion.replace('{0}', Number(r.proyeccion).toLocaleString())];
+                if (r.enPool) meta.push(_s.iaPool.replace('{0}', r.empresasEnPool));
+                if (!r.habilitada) meta.push(_s.iaApagada);
+                $('#ia-meta').text(meta.join(' · '));
+            }).fail(function () { $('#ia-texto').text(_s.iaError); });
+        }
+
+        pintar();
+        $sel.on('change', pintar);
+    }
+
+    function initSecciones() {
         // Cada sección se expande/colapsa de forma independiente (excluye el botón de refresh).
         $(document).on('click', '.dash-section-toggle', function (e) {
             if ($(e.target).closest('#btn-indic-refresh').length) return;
@@ -1140,6 +832,9 @@
 
     $(document).ready(function () {
         initSecciones();
+        cargarAlertas();
+        cargarAccesos();
+        cargarConsumoIA();
         cargar(false);
         $('#btn-indic-refresh').on('click', function () { cargar(true); });
     });

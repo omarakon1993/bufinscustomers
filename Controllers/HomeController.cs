@@ -1,96 +1,21 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Mvc;
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
-using Newtonsoft.Json;
 
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
     public class HomeController : BaseController
     {
-        public async Task<ActionResult> Index()
+        public ActionResult Index()
         {
-            var svc      = new WidgetsService();
-            var usuario  = UsuarioSesionHelper.UsuarioActual;
-            bool esAdmin = UsuarioSesionHelper.EsSuperAdmin();
-
-            // Empresa propia y las de su mismo grupo empresarial (solo consulta del dashboard)
-            var idsPermitidos = esAdmin ? null : (EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>());
-
-            var tarjetasConfig = await svc.ObtenerActivasAsync();
-
-            // D1: cada widget se resuelve en paralelo (antes: en serie con await dentro del foreach).
-            // E2: el resultado crudo de cada consulta SQL se cachea 60 s (compartido entre usuarios);
-            //     el filtrado por empresa se aplica por-petición sobre la copia cacheada.
-            var tareas = tarjetasConfig.Select(async t =>
-            {
-                var item = new WidgetTarjetaViewModel { Config = t };
-
-                bool tieneFuente = t.TipoFuente == 2
-                    ? !string.IsNullOrWhiteSpace(t.NombreSP)
-                    : !string.IsNullOrWhiteSpace(t.ConsultaSQL);
-
-                if (tieneFuente)
-                {
-                    var claveFuente = t.TipoFuente == 2 ? "sp:" + t.NombreSP : "sql:" + t.ConsultaSQL;
-
-                    if (t.Tipo == 1)
-                    {
-                        var resultados = await WidgetCacheadoAsync("wk:" + claveFuente,
-                            () => svc.EjecutarKpiAsync(t, null));
-                        item.KpiResultados = (idsPermitidos == null || resultados == null)
-                            ? resultados
-                            : resultados.Where(r => idsPermitidos.Contains(r.IdEmpresa)).ToList();
-                    }
-                    else if (t.Tipo == 2)
-                    {
-                        var resultados = await WidgetCacheadoAsync("wg:" + claveFuente,
-                            () => svc.EjecutarGraficoAsync(t, null));
-                        item.GraficoResultados = (idsPermitidos == null || resultados == null)
-                            ? resultados
-                            : resultados.Where(r => idsPermitidos.Contains(r.IdEmpresa)).ToList();
-                    }
-                    else if (t.Tipo == 3)
-                    {
-                        var resultados = await WidgetCacheadoAsync("wa:" + claveFuente,
-                            () => svc.EjecutarAdvertenciaAsync(t, null));
-                        item.AdvertenciaResultados = (idsPermitidos == null || resultados == null)
-                            ? resultados
-                            : resultados.Where(r => r.IdEmpresa == 0 || idsPermitidos.Contains(r.IdEmpresa)).ToList();
-                    }
-                }
-                return item;
-            });
-
-            var vm = (await Task.WhenAll(tareas)).ToList();
-            return View(vm);
-        }
-
-        // E2 — caché corta (60 s) del resultado crudo de una consulta de widget.
-        private static readonly System.Runtime.Caching.ObjectCache _widgetCache =
-            System.Runtime.Caching.MemoryCache.Default;
-
-        private static async Task<T> WidgetCacheadoAsync<T>(string clave, Func<Task<T>> factory) where T : class
-        {
-            if (_widgetCache.Get(clave) is T hit) return hit;
-
-            var valor = await factory();
-            if (valor != null)
-            {
-                _widgetCache.Set(clave, valor, new System.Runtime.Caching.CacheItemPolicy
-                {
-                    AbsoluteExpiration = DateTimeOffset.Now.AddSeconds(60)
-                });
-            }
-            return valor;
+            return View();
         }
 
         [HttpGet]
@@ -111,159 +36,115 @@ namespace bufinscustomers.Controllers
         }
 
         /// <summary>
-        /// Devuelve los nombres amigables de las tablas financieras configuradas para el resumen IA
-        /// de la empresa indicada (o la del usuario actual si no es Super Admin).
+        /// Alertas del Home, generadas por <c>sp_ObtenerAlertasHome</c> (mismo esquema de hallazgos que
+        /// <c>sp_ValidarCargueStaging</c>). Super Admin ve todas las empresas; el resto, su empresa y las de su grupo.
         /// </summary>
         [HttpGet]
-        public JsonResult ObtenerTablasConfiguradasIA(int? idEmpresa)
+        public JsonResult ObtenerAlertas()
         {
             try
             {
                 var usuario = UsuarioSesionHelper.UsuarioActual;
-                var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
+                var idsPermitidos = UsuarioSesionHelper.EsSuperAdmin()
+                    ? null
+                    : (EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>());
 
-                int? idEmpresaObjetivo = esAdmin
-                    ? idEmpresa
-                    : (idEmpresa.HasValue && EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa.Value) ? idEmpresa : usuario?.IdEmpresa);
-                if (!idEmpresaObjetivo.HasValue)
-                    return Json(new { success = true, tablas = new string[0] }, JsonRequestBehavior.AllowGet);
+                var alertas = new AlertasHomeService().Obtener(idsPermitidos);
+                bool ingles = System.Threading.Thread.CurrentThread.CurrentUICulture.Name
+                                    .Equals("en-US", StringComparison.OrdinalIgnoreCase);
 
-                var tablasAsignadas = new EmpresaTablasResumenIAService().ObtenerTablasAsignadas(idEmpresaObjetivo.Value);
-                var tablasDisponibles = new InformeTablasDatosService().ObtenerTablasModelos();
-
-                var nombresAmigables = tablasAsignadas
-                    .Select(nombreTabla => tablasDisponibles.FirstOrDefault(t => t.NombreTabla == nombreTabla)?.NombreAmigable)
-                    .Where(nombre => nombre != null)
-                    .ToList();
-
-                return Json(new { success = true, tablas = nombresAmigables }, JsonRequestBehavior.AllowGet);
+                return Json(new
+                {
+                    ok = true,
+                    alertas = alertas.Select(a => new
+                    {
+                        idEmpresa = a.IdEmpresa,
+                        empresa = a.NombreEmpresa,
+                        severidad = a.Severidad,
+                        codigo = a.CodigoRegla,
+                        titulo = (ingles && !string.IsNullOrWhiteSpace(a.TituloEn)) ? a.TituloEn : a.Titulo,
+                        mensaje = (ingles && !string.IsNullOrWhiteSpace(a.MensajeEn)) ? a.MensajeEn : a.Mensaje
+                    })
+                }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+                AppLogger.Error(ex, "HomeController.ObtenerAlertas");
+                return Json(new { ok = false }, JsonRequestBehavior.AllowGet);
             }
         }
 
         /// <summary>
-        /// Genera un resumen ejecutivo IA con los datos financieros más recientes de la empresa,
-        /// usando las tablas configuradas en EmpresaTablasResumenIA y el prompt RESUMEN_GERENCIAL.
+        /// Accesos rápidos: las opciones de menú que el usuario más visita (últimos 60 días, según
+        /// <c>AuditoriaNavegacion</c>), cruzadas con su propio sidebar para respetar permisos. Si aún no hay
+        /// historial se completa con las opciones destacadas de su menú.
         /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<JsonResult> ObtenerResumenIA(int? idEmpresa)
+        [HttpGet]
+        public JsonResult ObtenerAccesosRapidos()
         {
+            const int Maximo = 8;
             try
             {
                 var usuario = UsuarioSesionHelper.UsuarioActual;
-                var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
+                bool iaVisible = IAModuloHelper.Visible();
 
-                int idEmpresaObjetivo;
-                if (esAdmin)
+                // Opciones permitidas = las que ya trae su sidebar (filtrado por permisos).
+                var permitidas = (UsuarioSesionHelper.ObtenerMenuSidebar() ?? new List<SidebarCategoriaViewModel>())
+                    .SelectMany(c => c.Grupos ?? new List<SidebarGrupoViewModel>())
+                    .SelectMany(g => g.Items ?? new List<SidebarItemViewModel>())
+                    .Where(i => !string.IsNullOrWhiteSpace(i.Controller) && !string.IsNullOrWhiteSpace(i.Action))
+                    .Where(i => iaVisible || !string.Equals(i.Controller, "AnalisisIA", StringComparison.OrdinalIgnoreCase))
+                    .GroupBy(i => (i.Controller + "/" + i.Action).ToLowerInvariant())
+                    .ToDictionary(g => g.Key, g => g.First());
+
+                var resultado = new List<SidebarItemViewModel>();
+
+                try
                 {
-                    if (!idEmpresa.HasValue)
-                        return Json(new IAConsultaResponse { Exitoso = false, Error = R("Home_IA_SeleccioneEmpresa") });
-                    idEmpresaObjetivo = idEmpresa.Value;
+                    var visitas = new AuditoriaNavegacionService().ResumenPorPagina(
+                        new NavegacionFiltro { IdUsuario = usuario.Id, Desde = DateTime.Today.AddDays(-60) }, 40);
+                    foreach (var v in visitas)
+                    {
+                        var clave = ((v.Controller ?? "") + "/" + (v.Action ?? "")).ToLowerInvariant();
+                        if (permitidas.TryGetValue(clave, out var item) && !resultado.Contains(item))
+                            resultado.Add(item);
+                        if (resultado.Count >= Maximo) break;
+                    }
                 }
-                else if (idEmpresa.HasValue && EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa.Value))
+                catch (Exception ex)
                 {
-                    idEmpresaObjetivo = idEmpresa.Value;
-                }
-                else
-                {
-                    if (!usuario.IdEmpresa.HasValue)
-                        return Json(new IAConsultaResponse { Exitoso = false, Error = R("Home_IA_SinEmpresa") });
-                    idEmpresaObjetivo = usuario.IdEmpresa.Value;
-                }
-
-                var tablasAsignadas = new EmpresaTablasResumenIAService().ObtenerTablasAsignadas(idEmpresaObjetivo);
-                if (tablasAsignadas == null || tablasAsignadas.Count == 0)
-                    return Json(new IAConsultaResponse { Exitoso = false, Error = R("Home_IA_SinConfigurar") });
-
-                // Acceso del usuario + presupuesto mensual de tokens de la empresa (IAUsoService).
-                var denegado = ValidarAccesoIA(usuario, esAdmin, idEmpresaObjetivo, IAFuncion.ResumenHome);
-                if (denegado != null) return denegado;
-
-                var tablasService = new InformeTablasDatosService();
-                // La IA solo toma datos de las tablas dbo.Modelo* (fuera de ellas se ignora, aunque siga asignada).
-                var tablasDisponibles = tablasService.ObtenerTablasModelos();
-
-                const int MaxFilasPorTabla = 300;
-                var datosPorTabla = new Dictionary<string, object>();
-                int totalFilasEnviadas = 0;
-
-                foreach (var nombreTabla in tablasAsignadas)
-                {
-                    var tablaInfo = tablasDisponibles.FirstOrDefault(t => t.NombreTabla == nombreTabla);
-                    if (tablaInfo == null) continue; // fuera del whitelist actual
-
-                    var anios = tablasService.ObtenerAñosDisponibles(nombreTabla, idEmpresaObjetivo);
-                    if (anios == null || anios.Count == 0) continue;
-
-                    var filtros = new FiltrosInformeTablasDatos { NombreTabla = nombreTabla, Año = anios[0], IdEmpresa = idEmpresaObjetivo };
-                    var resultado = await tablasService.ConsultarDatosAsync(filtros, esAdmin, idEmpresaObjetivo);
-                    if (resultado.TotalRegistros == 0) continue;
-
-                    var filas = resultado.Filas.Take(MaxFilasPorTabla).ToList();
-                    datosPorTabla[tablaInfo.NombreAmigable] = filas;
-                    totalFilasEnviadas += filas.Count;
+                    AppLogger.Warn("HomeController.ObtenerAccesosRapidos (sin historial): " + ex.Message);
                 }
 
-                if (datosPorTabla.Count == 0)
-                    return Json(new IAConsultaResponse { Exitoso = false, Error = R("Home_IA_SinDatos") });
-
-                var empresaInfo = tablasService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresaObjetivo);
-                string nombreEmpresa = empresaInfo?.Nombre ?? "—";
-                string nombreTablasEnviadas = string.Join(", ", datosPorTabla.Keys);
-
-                var request = new IAConsultaRequest
+                bool haySugeridos = false;
+                if (resultado.Count < 4)
                 {
-                    Pregunta = null,
-                    DatosJson = JsonConvert.SerializeObject(datosPorTabla),
-                    NombreTabla = nombreTablasEnviadas,
-                    FiltrosDescripcion = $"Empresa {nombreEmpresa}, año más reciente disponible por tabla"
-                };
+                    foreach (var item in permitidas.Values.Where(i => i.EsDestacado))
+                    {
+                        if (resultado.Count >= Maximo) break;
+                        if (resultado.Contains(item)) continue;
+                        resultado.Add(item);
+                        haySugeridos = true;
+                    }
+                }
 
-                var response = await new IAGateway().EjecutarAsync(new IASolicitud
+                return Json(new
                 {
-                    Funcion = IAFuncion.ResumenHome,
-                    Usuario = usuario,
-                    IdEmpresa = idEmpresaObjetivo,
-                    NombreEmpresa = nombreEmpresa,
-                    Request = request,
-                    CodigoPrompt = "RESUMEN_GERENCIAL",
-                    Traducir = R,
-                    Idioma = IdiomaIA,
-                    NombreTablaAuditoria = nombreTablasEnviadas,
-                    FiltrosDescripcion = request.FiltrosDescripcion,
-                    FilasAnalizadas = totalFilasEnviadas
-                });
-
-                return Json(response);
+                    ok = true,
+                    sugeridos = haySugeridos,
+                    items = resultado.Select(i => new
+                    {
+                        nombre = i.Nombre,
+                        icono = i.Icono,
+                        url = Url.Action(i.Action, i.Controller)
+                    })
+                }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
-                return Json(new IAConsultaResponse { Exitoso = false, Error = $"Error al generar el resumen: {ex.Message}" });
+                AppLogger.Error(ex, "HomeController.ObtenerAccesosRapidos");
+                return Json(new { ok = false }, JsonRequestBehavior.AllowGet);
             }
-        }
-
-
-        public ActionResult CerrarSesion()
-        {
-            Session["usuario"] = null;
-            return RedirectToAction("Login", "Acceso");
-        }
-        public ActionResult CargueExcel()
-        {
-            Response.Cache.SetCacheability(HttpCacheability.NoCache);
-            Response.Cache.SetNoStore();
-            Response.Cache.SetExpires(DateTime.UtcNow.AddDays(-1));
-
-            TempData.Keep("Mensaje");
-            TempData.Keep("MensajeTipo");
-
-            var tablas = TempData["TablasExcel"] as List<(string nombre, DataTable tabla)>;
-
-            return View(tablas ?? new List<(string, DataTable)>());
         }
     }
 }
