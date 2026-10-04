@@ -104,7 +104,7 @@ The `Usuarios.Admin` field (byte?) defines access levels:
 
 **Super Admin ↔ empresa principal:** aunque un Super Admin ignora el aislamiento por empresa, se le asocia por defecto a la **empresa principal (Bufins)** para tener un `IdEmpresa` coherente (lo usa, p. ej., la auditoría de seguridad del login). `UsuarioController.Registrar`/`EditarUsuario` rellenan `IdEmpresa` cuando `Admin == 2` y viene vacío, vía `EmpresaService.ObtenerIdEmpresaPrincipal()` (clave de sistema `EmpresaPrincipalId` → empresa llamada "Bufins" → `null`). Para los existentes: `UPDATE Usuarios SET IdEmpresa = (SELECT TOP 1 EmpId FROM Empresas WHERE EmpNombre LIKE 'Bufins%' ORDER BY CASE WHEN EmpNombre='Bufins' THEN 0 ELSE 1 END, EmpId) WHERE Admin = 2 AND (IdEmpresa IS NULL OR IdEmpresa = 0);`
 
-Check with: `EsUsuarioNormal()`, `EsAdminEmpresa()`, `EsSuperAdmin()`, `EsAdministrador()` (returns true for Admin=1)
+Check with: `EsUsuarioNormal()`, `EsAdminEmpresa()`, `EsSuperAdmin()`
 
 ### Multi-Company Group Access (Grupos Empresariales)
 
@@ -202,7 +202,6 @@ When creating new controllers, use explicit view paths with `~/Views/{area}/{vie
 - **InformeRelacionamientosController** - Relationships report (`[ValidarSesion]`)
 - **InformePYGController** - Estado de Resultados (PYG) gerencial: Real vs Presupuesto, mes + acumulado del año, KPIs, tendencia e insights de IA (`[ValidarSesion]`). Lee de `dbo.ModeloPYG` (+ `JOIN dbo.Rel_PYG` para el flag de subtotal) vía `InformePYGService` — no ejecuta `sp_ModeloPYG` en vivo. Endpoints: `Index` (view), `ObtenerMeses`, `ConsultarReporte`, `GenerarInsightsIA` (async, reutiliza el patrón de cupo/prompts/auditoría de `IAGateway` con el código `RESUMEN_PYG_GERENCIAL` en `GestorPrompts`), `ExportarExcel` — los 3 últimos reciben el mismo `FiltrosPYG`. Ver "Estado de Resultados (PYG) Gerencial" más abajo
 - **InformeBalanceController** - Balance General gerencial: saldo al mes de corte (foto, no acumula meses), comparativo (cierre año anterior/mes anterior/mismo mes año anterior), chequeo de cuadre, KPIs de liquidez/solvencia, estructura y tendencia, insights de IA (`[ValidarSesion]`). Lee de `dbo.ModeloBalance` (+ `JOIN dbo.REL_Balance` para el flag de subtotal) vía `InformeBalanceService` — no ejecuta `sp_ModeloBalance` en vivo. Mismo esqueleto de endpoints que `InformePYGController` (`Index`, `ObtenerMeses`, `ConsultarReporte`, `GenerarInsightsIA` con código `RESUMEN_BALANCE_GERENCIAL`, `ExportarExcel`), recibiendo `FiltrosBalance`. Ver "Balance General Gerencial" más abajo
-- **ModeloController** - Financial model execution (Datos area, `[ValidarSesion]`)
 - **ModelosEjecucionController** - Model execution management/configuration (`[ValidarSesion]`)
 - **GestorEscenariosController** - CRUD for the `Escenarios` data-scenario catalog, Super Admin only (`[ValidarSesion][SoloSuperAdmin]`). `Eliminar`-equivalent (`Desactivar`) is always a soft-delete. See "Escenarios de datos"
 - **GestorPromptsController** - IA prompt CRUD, Super Admin only (`[ValidarSesion]`). Actions: `Index`, `Crear`, `Editar`, `Eliminar` (soft-delete)
@@ -515,8 +514,8 @@ shared across all its escenarios.
   try/catch-`IndexOutOfRangeException` pattern used elsewhere for incremental columns.
 - **`PlantillaConDatosService`**: `ObtenerAniosConDatos`/`GenerarExcel` take `idEscenario` and filter by it;
   the exported filename includes `_Esc{n}`.
-- **Ejecución de Modelos** (`DatosController` + `Views/Datos/Modelo.cshtml`): `EjecutarModelo`,
-  `EjecutarModeloAjax`, `EjecutarModeloYEscribirHoja` (shared by `ExportarTodosModelos`/
+- **Ejecución de Modelos** (`DatosController` + `Views/Datos/Modelo.cshtml`): `EjecutarModeloAjax`,
+  `EjecutarModeloYEscribirHoja` (shared by `ExportarTodosModelos`/
   `ExportarModeloIndividual`/`ExportarModelosSeleccionados`/`EnviarModelosPorCorreo`) all take `idEscenario`
   (default 1) and pass `@IdEscenario` to the stored procedure. The 8 model SPs
   (`sp_ModeloBalance`, `sp_ModeloPYG`, `sp_ModeloBalancePpto`, `sp_ModeloLineasNegocio`,
@@ -563,9 +562,8 @@ A configurable financial model execution system. Models are records in the `Mode
 
 **`ModelosEjecucionController`** — CRUD UI for model management. Super Admin only (every action guards with `EsSuperAdmin()`). Uses `[ValidarSesion]` at class level. View: `~/Views/Configuracion/ModelosEjecucion.cshtml`.
 
-**`DatosController.EjecutarModelo(idEmpresa, anio, idModelo)`** — fetches `NombreSP` from DB (never from user input), then calls the SP with `@IdEmpresa`, `@IdUsuario`, `@Año`. The SP may return multiple intermediate result sets; the **final** result set must have `CodMessage` (1 = success) and `ErrorMessage` columns. `CommandTimeout` is 300 seconds.
+**`DatosController.EjecutarModeloAjax`** (la antigua `EjecutarModelo` no AJAX se eliminó por no tener llamadores) — fetches `NombreSP` from DB (never from user input), then calls the SP with `@IdEmpresa`, `@IdUsuario`, `@Año`. The SP may return multiple intermediate result sets; the **final** result set must have `CodMessage` (1 = success) and `ErrorMessage` columns. `CommandTimeout` is 300 seconds.
 
-> **Note:** `Controllers/ModeloController.cs` is an **empty placeholder** — do not confuse it with `ModelosEjecucionController`.
 
 ### IA (AI) Integration
 
@@ -731,6 +729,7 @@ Telemetría de "qué páginas abre cada usuario". **Tabla física separada de `A
 - SweetAlert2 for session notifications and confirmations
 - FontAwesome icons
 - Select2 (`Assets/js/select2/`, `Assets/css/select2/`) for enhanced dropdowns
+- Font Awesome 7 Free: only `Assets/Bootstrap/fontawesome-free/css/all.min.css` + `webfonts/` + `LICENSE.txt` are kept (the SVGs/sprites/js/scss were removed to keep deploys small - don't add them back)
 - ClosedXML 0.105.0 for Excel operations (MIT license, no license call needed — chosen over EPPlus 5+/Polyform Noncommercial specifically to keep the project free of any commercial-license obligation)
 
 ### Layout Structure
@@ -989,22 +988,13 @@ The CSS (scoped under `.modal-confirm`, in `Assets/css/bufins-components.css`) r
 
 **Blocking "cargando/procesando" overlays** (full-screen wait dialogs shown during long operations — Excel upload, relationship config upload, PBI variable processing, model export) use the same dark theme via reusable classes `.overlay-cargando` (outer fixed backdrop) / `.overlay-cargando-card` (inner card) / `.overlay-cargando-title` / `.overlay-cargando-text` / `.overlay-cargando-timer`, instead of the old per-view inline `style="background:white;..."`. The element keeps its own inline `style="display:none;"` untouched — JS toggles it directly (`overlay.style.display = 'flex'/'none'`) and that keeps working unmodified; only the color/shape properties moved into the shared classes. Existing usages: `#overlayProcesando` (CargueExcel, ConfiguracionRelacionamiento, ConfiguracionVariablesPBI), `#overlayExportacion` (Datos/Modelo). The purely in-page (non-overlay) `#loadingEjecucion` spinner in Datos/Modelo is NOT part of this system — it's an inline page state, not a blocking modal, and keeps its original light look.
 
-### Brand loaders (wordmark + gradient) — reusable partials
+### Brand loader (wordmark + gradient) - reusable partial
 
-Three animated loader components, built from the Bufins wordmark images (`Assets/img/Bufins_Wordmark_Aqua.png` for dark backgrounds, `Assets/img/Bufins_Wordmark_Dark.png` — purple `#160933` — for light backgrounds) plus the brand gradient. Pure CSS + image, no JS/library. CSS lives in `Assets/css/bufins-components.css` (classes `.l1-*`/`.l2-*`/`.l3-*`); each is also wrapped as a Razor partial in `Views/Shared/` so it can be dropped into any view:
-
-| Partial | Classes | Use case |
-|---|---|---|
-| `_LoaderRing.cshtml` | `.l1-wrap` / `.l1-ring` / `.l1-ring2` / `.l1-logo` | Full-page loading screens — orbiting gradient ring + pulsing logo |
-| `_LoaderSweep.cshtml` | `.l2-wrap` / `.l2-base` / `.l2-mask` | Buttons or indeterminate progress bars — light sweep across the wordmark |
-| `_LoaderDots.cshtml` | `.l3-wrap` / `.l3-logo` / `.l3-dots` | Small modals or inline states — static logo + 4 bouncing gradient dots (this is the one wired into the `.overlay-cargando` loading overlays above) |
-
-Each partial takes a `string` model — `"aqua"` (default, for dark/purple backgrounds) or `"dark"` (for white/light backgrounds) — to pick the right wordmark automatically:
+Animated loader built from the Bufins wordmark images (`Assets/img/Bufins_Wordmark_Aqua.png` for dark backgrounds, `Assets/img/Bufins_Wordmark_Dark.png` - purple `#160933` - for light backgrounds) plus the brand gradient. Pure CSS + image, no JS/library. CSS lives in `Assets/css/bufins-components.css` (classes `.l3-*`); it is wrapped as the Razor partial `Views/Shared/_LoaderDots.cshtml` (static logo + 4 bouncing gradient dots), the one wired into the `.overlay-cargando` loading overlays above. It takes a `string` model - `"aqua"` (default, dark/purple backgrounds) or `"dark"` (white/light backgrounds):
 ```csharp
 @Html.Partial("_LoaderDots", "aqua")   @* dark modal/card background *@
-@Html.Partial("_LoaderRing", "dark")   @* white/light background *@
 ```
-Use `_LoaderDots` inside any new `.overlay-cargando-card` or `.modal-confirm .modal-body` that needs a lightweight inline loading state; use `_LoaderRing` for full-page/full-screen loading transitions; use `_LoaderSweep` for buttons or progress-bar-style indeterminate loading.
+Use it inside any new `.overlay-cargando-card` or `.modal-confirm .modal-body` that needs a lightweight loading state. (The ring and sweep variants, `_LoaderRing`/`_LoaderSweep`, were removed in the 2026-10 dead-code cleanup because nothing used them.)
 
 For "choice" modals (multiple actions to pick from, e.g. "¿Qué te gustaría hacer?"), use this pattern inside `.modal-body` instead of `.modal-footer` buttons:
 ```html

@@ -369,15 +369,6 @@ namespace bufinscustomers.Services
             return empresas;
         }
 
-        /// <summary>
-        /// Verifica si una empresa ya tiene configuraci�n creada
-        /// </summary>
-        public bool ExisteConfiguracion(int idEmpresa)
-        {
-            var config = ObtenerConfiguracionPorEmpresa(idEmpresa);
-            return config != null;
-        }
-
         #endregion
     }
 }

@@ -125,32 +125,6 @@ namespace bufinscustomers.Services
             }
         }
 
-        public List<Empresas> ObtenerEmpresasDelGrupo(int idGrupo)
-        {
-            var lista = new List<Empresas>();
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    @"SELECT EmpId AS Id, EmpNombre AS Nombre, EmpAbreviatura AS Abreviatura
-                      FROM Empresas WHERE IdGrupoEmpresarial = @IdGrupo ORDER BY EmpNombre", cn);
-                cmd.Parameters.AddWithValue("@IdGrupo", idGrupo);
-                cn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        lista.Add(new Empresas
-                        {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Nombre = reader["Nombre"].ToString(),
-                            Abreviatura = reader["Abreviatura"] == DBNull.Value ? "" : reader["Abreviatura"].ToString()
-                        });
-                    }
-                }
-            }
-            return lista;
-        }
-
         /// <summary>
         /// Reemplazo completo de la asignación de empresas del grupo: las seleccionadas
         /// quedan con IdGrupoEmpresarial = idGrupo, las que estaban y ya no vienen

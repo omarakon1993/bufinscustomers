@@ -198,15 +198,6 @@ namespace bufinscustomers.Services
             return hoy.Date >= inicio ? inicio : inicio.AddMonths(-1);
         }
 
-        /// <summary>Presupuesto mensual de tokens aplicable a la empresa: su override si existe, si no
-        /// el valor global <c>IA_TokensMensualesPorEmpresa</c> (0 = ilimitado en ambos casos).</summary>
-        public long ObtenerPresupuestoEfectivo(int idEmpresa)
-        {
-            var over = _cfgEmpresa.ObtenerOverride(idEmpresa);
-            if (over.HasValue) return over.Value;
-            return ObtenerPresupuestoGlobalDefault();
-        }
-
         public long ObtenerPresupuestoGlobalDefault()
         {
             try

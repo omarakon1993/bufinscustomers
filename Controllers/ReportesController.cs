@@ -197,13 +197,6 @@ namespace bufinscustomers.Controllers
         }
 
  
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public JsonResult ValidarURL(string url)
-        {
-            bool esValida = EsURLValida(url);
-            return Json(new { valida = esValida }, JsonRequestBehavior.AllowGet);
-        }
 
         public static string ObtenerNombreEmpresaPorId(int idEmpresa)
         {

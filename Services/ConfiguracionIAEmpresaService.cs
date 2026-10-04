@@ -16,10 +16,6 @@ namespace bufinscustomers.Services
             ", IaHabilitada, PoliticaAgotado, PoolGrupo, DiaCorte, ModeloPermitido, FuncionesPermitidas, TopeDiarioUsuario";
         private const string ColumnasFase3 = ColumnasFase2 + ", ContextoNegocio";
 
-        /// <summary>Override de presupuesto mensual de tokens para la empresa, o null si no tiene
-        /// (usa el valor global <c>IA_TokensMensualesPorEmpresa</c>).</summary>
-        public long? ObtenerOverride(int idEmpresa) => ObtenerConfig(idEmpresa).PresupuestoTokensMensual;
-
         /// <summary>Configuración de IA de la empresa; sin fila (o antes de ejecutar Sql/015) devuelve los valores por defecto.</summary>
         public ConfigIAEmpresa ObtenerConfig(int idEmpresa)
         {

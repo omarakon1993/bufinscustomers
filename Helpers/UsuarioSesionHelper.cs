@@ -180,32 +180,6 @@ namespace bufinscustomers.Helpers
             return UsuarioActual != null;
         }
 
-        /// <summary>
-        /// Verifica si el usuario actual es administrador
-        /// </summary>
-        public static bool EsAdministrador()
-        {
-            var usuario = UsuarioActual;
-            return usuario?.Admin == 1;
-        }
-
-        /// <summary>
-        /// M�todo de debugging para verificar los datos del usuario en sesi�n
-        /// </summary>
-        public static string ObtenerInfoDebugUsuario()
-        {
-            var context = HttpContext.Current;
-            if (context?.Session == null) return "Sin contexto de sesi�n";
-
-            var usuario = context.Session[USUARIO_SESSION_KEY] as Usuarios;
-            var usuarioCompatible = context.Session[USUARIO_COMPAT_OBJ_KEY] as Usuarios;
-            var idUsuario = context.Session[USUARIO_COMPAT_ID_KEY];
-
-            return $"UsuarioCompleto: {(usuario != null ? $"Id:{usuario.Id}, Nombre:{usuario.Nombre}, Apellidos:{usuario.Apellidos}, Correo:{usuario.Correo}" : "NULL")} | " +
-                   $"UsuarioCompatible: {(usuarioCompatible != null ? $"Id:{usuarioCompatible.Id}, Nombre:{usuarioCompatible.Nombre}, Apellidos:{usuarioCompatible.Apellidos}" : "NULL")} | " +
-                   $"IdUsuario: {idUsuario}";
-        }
-
         private static Usuarios ObtenerUsuarioPorId(int idUsuario)
         {
             Usuarios usuario = null;
@@ -350,23 +324,6 @@ namespace bufinscustomers.Helpers
             context.Session.Remove(MENU_SIDEBAR_EN_KEY);
         }
 
-        /// <summary>
-        /// Obtiene la etiqueta legible del rol del usuario actual
-        /// </summary>
-        public static string ObtenerNombreRol()
-        {
-            var usuario = UsuarioActual;
-            if (usuario == null) return "Sin sesi�n";
-
-            if (usuario.Admin == 0)
-                return "Usuario";
-            else if (usuario.Admin == 1)
-                return "Administrador de Empresa";
-            else if (usuario.Admin == 2)
-                return "Super Administrador";
-            else
-                return "Desconocido";
-        }
     }
 
     /// <summary>
