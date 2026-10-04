@@ -47,145 +47,141 @@
         : new List<bufinscustomers.Models.Empresas>();
 }
 
-
 <div class="dash-wrapper">
 
+    <!-- 1. Header compacto -->
     <div class="dash-header-card">
         <div class="dash-header-main">
+            <span class="dash-hello">@Html.Raw(saludoHtml), <strong>@nombreUsuario</strong></span>
+            <span class="dash-date"><i class="fas fa-calendar-alt"></i>@DateTime.Now.ToString(Resources.Strings.Home_DateFormat, System.Globalization.CultureInfo.CurrentCulture)</span>
+        </div>
+
+        <div class="dash-header-empresas">
             @if (UsuarioSesionHelper.EsSuperAdmin())
             {
                 if (empresas != null && empresas.Any())
                 {
-                    <div class="dash-empresa-row dash-empresa-row-multi">
-                        @foreach (var e in empresas.OrderBy(e => e.Nombre))
-                        {
-                            <span class="dash-empresa-chip-light" title="@e.Nombre">@(empAbrevMap.ContainsKey(e.Id) ? empAbrevMap[e.Id] : e.Nombre)</span>
-                        }
-                    </div>
+                    foreach (var e in empresas.OrderBy(e => e.Nombre))
+                    {
+                        <span class="dash-empresa-chip-light" title="@e.Nombre">@(empAbrevMap.ContainsKey(e.Id) ? empAbrevMap[e.Id] : e.Nombre)</span>
+                    }
                 }
             }
             else if (!string.IsNullOrEmpty(nombreEmpresaActual))
             {
-                <div class="dash-empresa-row">
-                    @if (!string.IsNullOrEmpty(abrevEmpresaActual))
-                    {
-                        <span class="dash-empresa-chip">@abrevEmpresaActual</span>
-                    }
-                    <span class="dash-empresa-nombre"><i class="fas fa-building"></i>@nombreEmpresaActual</span>
-                </div>
+                if (!string.IsNullOrEmpty(abrevEmpresaActual))
+                {
+                    <span class="dash-empresa-chip">@abrevEmpresaActual</span>
+                }
+                <span class="dash-empresa-nombre"><i class="fas fa-building"></i>@nombreEmpresaActual</span>
 
                 if (empresasGrupo.Any())
                 {
-                    <div class="dash-grupo-row">
-                        <span class="dash-grupo-label" title="@nombreGrupoEmpresarial">
-                            <i class="fas fa-sitemap"></i>
-                            @(!string.IsNullOrEmpty(nombreGrupoEmpresarial) ? nombreGrupoEmpresarial : Resources.Strings.Home_GrupoLabel)
-                        </span>
-                        <span class="dash-grupo-acceso">@string.Format(Resources.Strings.Home_GrupoAcceso, empresasGrupo.Count)</span>
-                        <span class="dash-grupo-chips">
-                            @foreach (var eg in empresasGrupo)
-                            {
-                                <span class="dash-empresa-chip-light" title="@eg.Nombre">@(empAbrevMap.ContainsKey(eg.Id) ? empAbrevMap[eg.Id] : eg.Nombre)</span>
-                            }
-                        </span>
-                    </div>
+                    <span class="dash-grupo-label" title="@nombreGrupoEmpresarial">
+                        <i class="fas fa-sitemap"></i>
+                        @(!string.IsNullOrEmpty(nombreGrupoEmpresarial) ? nombreGrupoEmpresarial : Resources.Strings.Home_GrupoLabel)
+                    </span>
+                    foreach (var eg in empresasGrupo)
+                    {
+                        <span class="dash-empresa-chip-light" title="@eg.Nombre">@(empAbrevMap.ContainsKey(eg.Id) ? empAbrevMap[eg.Id] : eg.Nombre)</span>
+                    }
                 }
             }
-            <div class="dash-greeting-text">
-                <span class="dash-hello">@Html.Raw(saludoHtml), <strong>@nombreUsuario</strong></span>
-                <span class="dash-date"><i class="fas fa-calendar-alt"></i>@DateTime.Now.ToString(Resources.Strings.Home_DateFormat, System.Globalization.CultureInfo.CurrentCulture)</span>
-            </div>
         </div>
+
         <div class="dash-header-divider"></div>
         <img src="~/Assets/img/Bufins_LogoLogin.png" alt="Bufins" class="dash-greeting-logo">
     </div>
 
-    <!-- Alertas Bufins: las genera sp_ObtenerAlertasHome (se cargan por AJAX) -->
-    <div class="dash-section" id="alertas-section">
-        <div class="dash-section-label dash-section-toggle" data-target="sec-alertas-body" title="@Resources.Strings.Home_TooltipColapsar">
-            <i class="fas fa-shield-alt"></i> @Resources.Strings.Home_SectionAlertas
-            <span class="dash-adv-count-badge" id="alertas-badge" style="display:none;"></span>
-            <i class="fas fa-chevron-down dash-section-chevron" style="font-size:.62rem;margin-left:.3rem;"></i>
-        </div>
-        <div id="sec-alertas-body">
-            <div class="dash-adv-grid" id="alertas-grid"></div>
-        </div>
-    </div>
+    <div class="dash-main">
 
-    <div class="dash-section" id="indic-section" style="position:relative;z-index:1;margin-bottom:1.75rem;">
-        <div class="dash-section-label dash-section-toggle" data-target="sec-indic-body" title="@Resources.Strings.Home_TooltipColapsar">
-            <i class="fas fa-chart-line"></i> @Resources.Strings.Home_SectionIndicadores
-            <button id="btn-indic-refresh" class="dash-indic-refreshbtn" title="@Resources.Strings.Home_IndicadoresActualizar">
-                <i class="fas fa-sync-alt"></i>
-            </button>
-            <i class="fas fa-chevron-down dash-section-chevron" style="font-size:.62rem;margin-left:.3rem;"></i>
-        </div>
-        <div id="sec-indic-body">
+        <!-- 2. Indicadores y noticias (columna izquierda) -->
+        <div class="dash-card dash-card-indic" id="indic-section">
+            <div class="dash-card-hdr dash-section-toggle" data-target="sec-indic-body" title="@Resources.Strings.Home_TooltipColapsar">
+                <i class="fas fa-chart-line"></i>
+                <span class="dash-section-label">@Resources.Strings.Home_SectionIndicadores</span>
+                <button id="btn-indic-refresh" class="dash-indic-refreshbtn" title="@Resources.Strings.Home_IndicadoresActualizar">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <i class="fas fa-chevron-down dash-section-chevron"></i>
+            </div>
 
-        <div id="indic-loading" style="font-size:.78rem;color:#A0A0B8;display:flex;align-items:center;gap:.5rem;padding:.5rem 0;">
-            <i class="fas fa-spinner fa-spin"></i> @Resources.Strings.Home_IndicadoresCargando
-        </div>
+            <div id="sec-indic-body" class="dash-indic-body">
 
-        <div id="indic-content" style="display:none;">
-            <div class="dash-indic-grid">
-
-                <!-- Tasa de cambio USD/COP -->
-                <div class="dash-indic-trm-card">
-                    <div class="dash-kpi-icon" style="background:linear-gradient(135deg,#28A745,#01E1D7)">
-                        <i class="fas fa-dollar-sign"></i>
-                    </div>
-                    <div class="dash-kpi-value" id="trm-valor">—</div>
-                    <div class="dash-kpi-label">@Resources.Strings.Home_TRM_Titulo</div>
-                    <div class="dash-kpi-etiqueta" id="trm-fecha"></div>
-                    <div class="dash-kpi-etiqueta" id="trm-eur"></div>
-                    <div class="dash-kpi-empresa">
-                        <i class="fas fa-link"></i> @Resources.Strings.Home_TRM_Fuente
-                    </div>
+                <div id="indic-loading" class="dash-indic-loading">
+                    <i class="fas fa-spinner fa-spin"></i> @Resources.Strings.Home_IndicadoresCargando
                 </div>
 
-                <!-- Noticias -->
-                <div class="dash-noticias-card">
-                    <div class="dash-noticias-hdr">
-                        <i class="fas fa-newspaper"></i>
-                        <span>@Resources.Strings.Home_Noticias_Titulo</span>
+                <div id="indic-content" class="dash-indic-content" style="display:none;">
+
+                    <!-- Tasas de cambio (franja) -->
+                    <div class="dash-trm-strip">
+                        <div class="dash-trm-icon"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="dash-trm-bloque">
+                            <div class="dash-trm-valor" id="trm-valor">—</div>
+                            <div class="dash-trm-label">@Resources.Strings.Home_TRM_Titulo</div>
+                        </div>
+                        <span class="dash-trm-sep" id="trm-sep-eur"></span>
+                        <div class="dash-trm-bloque" id="trm-eur-bloque">
+                            <div class="dash-trm-valor dash-trm-valor-sm" id="trm-eur">—</div>
+                            <div class="dash-trm-label">@Resources.Strings.Home_TRM_EUR</div>
+                        </div>
+                        <span class="dash-trm-sep"></span>
+                        <div class="dash-trm-fecha" id="trm-fecha"></div>
+                        <div class="dash-trm-fuente"><i class="fas fa-link"></i> @Resources.Strings.Home_TRM_Fuente</div>
                     </div>
-                    <div id="noticias-leyenda" class="dash-noticias-leyenda" style="display:none;"></div>
+
+                    <!-- Noticias + filtro por portal -->
+                    <div class="dash-news-hdr">
+                        <i class="fas fa-newspaper"></i>
+                        <span class="dash-news-titulo">@Resources.Strings.Home_Noticias_Titulo</span>
+                        <div id="noticias-leyenda" class="dash-news-filtros" style="display:none;"></div>
+                    </div>
                     <div id="noticias-container" style="display:none;"></div>
                     <div class="dash-noticias-hint" id="noticias-hint" style="display:none;"></div>
                 </div>
-
-            </div>
-        </div>
-        </div><!-- /sec-indic-body -->
-    </div>
-
-    <div class="dash-row@(verConsumoIA ? " dash-row-2" : "")">
-
-        <!-- Accesos rápidos -->
-        <div class="dash-section" id="accesos-section">
-            <div class="dash-section-label dash-section-toggle" data-target="sec-accesos-body" title="@Resources.Strings.Home_TooltipColapsar">
-                <i class="fas fa-bolt"></i> @Resources.Strings.Home_SectionAccesos
-                <i class="fas fa-chevron-down dash-section-chevron" style="margin-left:auto;font-size:.62rem;"></i>
-            </div>
-            <div id="sec-accesos-body">
-                <div class="dash-acc-grid" id="accesos-grid"></div>
-                <div class="dash-noticias-hint" id="accesos-hint" style="display:none;"></div>
             </div>
         </div>
 
-        @if (verConsumoIA)
-        {
-            <!-- Consumo de IA -->
-            <div class="dash-section" id="ia-section">
-                <div class="dash-section-label dash-section-toggle" data-target="sec-ia-body" title="@Resources.Strings.Home_TooltipColapsar">
-                    <i class="fas fa-chart-pie"></i> @Resources.Strings.IAConsumo_Titulo
-                    <i class="fas fa-chevron-down dash-section-chevron" style="margin-left:auto;font-size:.62rem;"></i>
+        <!-- Columna derecha -->
+        <div class="dash-side">
+
+            <!-- 3. Alertas Bufins (las genera sp_ObtenerAlertasHome por AJAX) -->
+            <div class="dash-card" id="alertas-section">
+                <div class="dash-card-hdr dash-section-toggle" data-target="sec-alertas-body" title="@Resources.Strings.Home_TooltipColapsar">
+                    <i class="fas fa-shield-alt"></i>
+                    <span class="dash-section-label">@Resources.Strings.Home_SectionAlertas</span>
+                    <span class="dash-adv-count-badge" id="alertas-badge" style="display:none;"></span>
+                    <i class="fas fa-chevron-down dash-section-chevron"></i>
                 </div>
-                <div id="sec-ia-body">
-                    <div class="dash-ia-card">
+                <div id="sec-alertas-body">
+                    <div class="dash-alert-list" id="alertas-grid"></div>
+                </div>
+            </div>
+
+            <!-- 4. Accesos rápidos -->
+            <div class="dash-card" id="accesos-section">
+                <div class="dash-card-hdr dash-card-hdr-sm dash-section-toggle" data-target="sec-accesos-body" title="@Resources.Strings.Home_TooltipColapsar">
+                    <i class="fas fa-bolt"></i>
+                    <span class="dash-section-label">@Resources.Strings.Home_SectionAccesos</span>
+                    <i class="fas fa-chevron-down dash-section-chevron"></i>
+                </div>
+                <div id="sec-accesos-body">
+                    <div class="dash-acc-grid" id="accesos-grid"></div>
+                    <div class="dash-acc-hint" id="accesos-hint" style="display:none;"></div>
+                </div>
+            </div>
+
+            @if (verConsumoIA)
+            {
+                <!-- 5. Mi consumo de IA -->
+                <div class="dash-card dash-ia-card" id="ia-section">
+                    <div class="dash-ia-row">
+                        <i class="fas fa-chart-pie"></i>
+                        <span class="dash-section-label">@Resources.Strings.IAConsumo_Titulo</span>
                         @if (empresasConsumo.Count > 1)
                         {
-                            <select id="ia-empresa" class="form-control form-control-sm dash-ia-select" aria-label="@Resources.Strings.Home_ConsumoIA_Empresa">
+                            <select id="ia-empresa" class="dash-ia-select" aria-label="@Resources.Strings.Home_ConsumoIA_Empresa">
                                 @foreach (var e in empresasConsumo)
                                 {
                                     <option value="@e.Id" @(e.Id == empresaConsumoSel ? "selected" : "")>@e.Nombre</option>
@@ -196,29 +192,43 @@
                         {
                             <input type="hidden" id="ia-empresa" value="@empresaConsumoSel" />
                         }
-                        <div class="dash-ia-texto" id="ia-texto"><i class="fas fa-spinner fa-spin"></i></div>
-                        <div class="dash-ia-track"><div class="dash-ia-fill" id="ia-barra"></div></div>
-                        <div class="dash-ia-meta" id="ia-meta"></div>
+                    </div>
+                    <div class="dash-ia-texto" id="ia-texto"><i class="fas fa-spinner fa-spin"></i></div>
+                    <div class="dash-ia-track"><div class="dash-ia-fill" id="ia-barra"></div></div>
+                    <div class="dash-ia-row dash-ia-row-meta">
+                        <span class="dash-ia-meta" id="ia-meta"></span>
                         <a class="dash-ia-link" href="@Url.Action("Index", "AnalisisIA")">@Resources.Strings.Home_ConsumoIA_VerDetalle <i class="fas fa-arrow-right"></i></a>
                     </div>
                 </div>
-            </div>
-        }
+            }
 
+        </div>
     </div>
-
 
 </div>
 
 <style>
-    .dash-wrapper { position:relative; min-height:70vh; padding:0 0 2rem; }
+    /* ================= Layout: todo visible en 1280×800 sin scroll ================= */
+    .dash-wrapper {
+        position:relative; z-index:1;
+        height:calc(100vh - 70px - 2.5rem); min-height:560px;
+        display:flex; flex-direction:column; gap:12px;
+    }
+    .body-content > .dash-wrapper + hr { display:none; }
+    /* Más ancho útil en pantallas grandes (el .container de Bootstrap topa en 1140 px); en 14″ no cambia nada. */
+    .container.body-content { max-width:1560px; width:100%; }
+    @@media (min-width:1500px) { .dash-main { grid-template-columns:minmax(0,1fr) 340px; } }
+    .dash-main {
+        display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:12px;
+        flex:1; min-height:0;
+    }
+    .dash-side { display:flex; flex-direction:column; gap:12px; min-height:0; min-width:0; }
 
+    /* ================= 1. Header compacto ================= */
     .dash-header-card {
-        position:relative; z-index:1; overflow:hidden;
-        display:flex; align-items:center; gap:1.5rem;
-        background:#fff; border-radius:14px;
-        padding:1.15rem 1.5rem;
-        margin-bottom:1.75rem;
+        position:relative; overflow:hidden; flex-shrink:0;
+        display:flex; align-items:center; gap:18px;
+        background:#fff; border-radius:12px; padding:12px 18px;
         border:1px solid rgba(88,58,255,.08);
         box-shadow:0 4px 22px rgba(88,58,255,.07);
     }
@@ -226,300 +236,259 @@
         content:''; position:absolute; top:0; left:0; right:0; height:3px;
         background:linear-gradient(90deg,#583AFF 0%,#01E1D7 100%);
     }
-    .dash-header-main { flex:1; min-width:0; }
+    .dash-header-main { display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .dash-hello { font-size:1.15rem; font-weight:800; color:#160933; letter-spacing:-.2px; }
+    .dash-hello strong { color:#583AFF; }
+    .dash-date {
+        font-size:.74rem; font-weight:600; color:#9691AE; text-transform:capitalize;
+        display:flex; align-items:center; gap:.4rem;
+    }
+    .dash-date i { font-size:.7rem; color:#B9B4D4; }
 
-    .dash-empresa-row {
-        display:flex; align-items:center; gap:.6rem; margin-bottom:.7rem;
-        background:linear-gradient(90deg,rgba(88,58,255,.06),rgba(1,225,215,.06));
-        border:1px solid rgba(88,58,255,.12);
-        border-radius:10px; padding:.45rem .7rem; width:fit-content; max-width:100%;
+    .dash-header-empresas {
+        margin-left:auto; display:flex; flex-wrap:wrap; align-items:center;
+        justify-content:flex-end; gap:5px; max-width:420px;
+    }
+    .dash-empresa-chip-light {
+        display:inline-flex; align-items:center;
+        font-size:.58rem; font-weight:700; letter-spacing:.03em; text-transform:uppercase;
+        color:#583AFF; background:rgba(88,58,255,.07);
+        border:1px solid rgba(88,58,255,.15);
+        padding:.16rem .4rem; border-radius:4px; cursor:default;
     }
     .dash-empresa-chip {
         display:inline-flex; align-items:center; flex-shrink:0;
-        font-size:.68rem; font-weight:800; letter-spacing:.05em;
-        color:#fff; text-transform:uppercase;
-        background:linear-gradient(135deg,#583AFF,#01E1D7);
-        padding:.25rem .55rem; border-radius:6px;
-        box-shadow:0 2px 6px rgba(88,58,255,.35);
+        font-size:.64rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase;
+        color:#fff; background:linear-gradient(135deg,#583AFF,#01E1D7);
+        padding:.22rem .5rem; border-radius:6px;
     }
     .dash-empresa-nombre {
-        font-size:1.05rem; font-weight:800; color:#160933;
-        letter-spacing:-.01em;
-        display:inline-flex; align-items:center; gap:.45rem;
+        font-size:.9rem; font-weight:800; color:#160933; letter-spacing:-.01em;
+        display:inline-flex; align-items:center; gap:.4rem;
         overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;
     }
-    .dash-empresa-nombre i { font-size:.85rem; color:#583AFF; flex-shrink:0; }
-
-    .dash-empresa-row-multi { flex-wrap:wrap; row-gap:.35rem; }
-    .dash-empresa-chip-light {
-        display:inline-flex; align-items:center;
-        font-size:.56rem; font-weight:700; letter-spacing:.03em;
-        color:#583AFF; text-transform:uppercase;
-        background:rgba(88,58,255,.07);
-        border:1px solid rgba(88,58,255,.15);
-        padding:.14rem .35rem; border-radius:4px;
-        cursor:default;
-    }
-
-    /* Grupo empresarial: empresas hermanas a las que el usuario también tiene acceso */
-    .dash-grupo-row {
-        display:flex; align-items:center; flex-wrap:wrap; gap:.4rem;
-        margin-bottom:.5rem;
-    }
+    .dash-empresa-nombre i { font-size:.78rem; color:#583AFF; flex-shrink:0; }
     .dash-grupo-label {
         display:inline-flex; align-items:center; gap:.3rem;
-        font-size:.6rem; font-weight:800; letter-spacing:.03em;
-        color:#583AFF; text-transform:uppercase;
-        background:rgba(88,58,255,.07);
-        border:1px solid rgba(88,58,255,.15);
-        padding:.16rem .45rem; border-radius:5px;
+        font-size:.58rem; font-weight:800; letter-spacing:.03em; text-transform:uppercase;
+        color:#583AFF; background:rgba(88,58,255,.07);
+        border:1px solid rgba(88,58,255,.15); padding:.16rem .45rem; border-radius:5px;
     }
-    .dash-grupo-label i { font-size:.6rem; }
-    .dash-grupo-acceso { font-size:.66rem; font-weight:600; color:#9691AE; }
-    .dash-grupo-chips { display:flex; flex-wrap:wrap; gap:.3rem; }
-
-    .dash-greeting-text { display:flex; flex-direction:column; gap:.2rem; }
-    .dash-hello { font-size:1.3rem; font-weight:800; color:#160933; letter-spacing:-.2px; }
-    .dash-hello strong { color:#583AFF; }
-    .dash-date {
-        font-size:.78rem; font-weight:600; color:#9691AE; text-transform:capitalize;
-        display:flex; align-items:center; gap:.4rem;
-    }
-    .dash-date i { font-size:.72rem; color:#B9B4D4; }
-
+    .dash-grupo-label i { font-size:.58rem; }
     .dash-header-divider {
-        width:1px; align-self:stretch;
+        width:1px; align-self:stretch; flex-shrink:0;
         background:linear-gradient(to bottom, transparent, rgba(88,58,255,.18), transparent);
-        flex-shrink:0;
     }
-    .dash-greeting-logo { height:34px; width:auto; opacity:.55; flex-shrink:0; }
+    .dash-greeting-logo { height:24px; width:auto; opacity:.55; flex-shrink:0; }
 
-    .dash-section { position:relative; z-index:1; margin-bottom:1.75rem; }
+    /* ================= Tarjeta genérica ================= */
+    .dash-card {
+        background:#fff; border:1px solid rgba(88,58,255,.12); border-radius:11px;
+        box-shadow:0 4px 14px rgba(22,9,51,.06);
+        overflow:hidden; display:flex; flex-direction:column; min-height:0;
+    }
+    .dash-card-hdr {
+        display:flex; align-items:center; gap:.5rem; flex-shrink:0;
+        padding:10px 14px; border-bottom:1px solid rgba(88,58,255,.08);
+        color:#583AFF; font-size:.8rem;
+    }
+    .dash-card-hdr-sm { padding:10px 14px 8px; border-bottom:none; }
+    .dash-card-hdr > i:first-child { font-size:.78rem; }
     .dash-section-label {
         font-size:.68rem; font-weight:700; color:#583AFF;
         text-transform:uppercase; letter-spacing:1px;
-        margin-bottom:.65rem;
-        display:flex; align-items:center; gap:.4rem;
     }
     .dash-section-toggle { cursor:pointer; user-select:none; }
-    .dash-section-toggle:hover { opacity:.8; }
-    .dash-section-chevron { transition:transform .2s ease; opacity:.6; flex-shrink:0; }
+    .dash-section-chevron { margin-left:auto; font-size:.62rem; opacity:.6; transition:transform .2s ease; flex-shrink:0; }
     .dash-section-chevron.rotado { transform:rotate(-90deg); }
-
-    .dash-kpi-icon { width:35px; height:35px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:.85rem; flex-shrink:0; }
-    .dash-kpi-body { min-width:0; flex:1; }
-    .dash-kpi-value { font-size:1.1rem; font-weight:700; color:#160933; line-height:1.1; display:flex; align-items:baseline; gap:.3rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .dash-kpi-unit  { font-size:.58rem; font-weight:600; color:#583AFF; }
-    .dash-kpi-label { font-size:.60rem; font-weight:600; color:#393F45; text-transform:uppercase; letter-spacing:.5px; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .dash-kpi-etiqueta { font-size:.60rem; color:#A0A0B8; margin-top:2px; }
-    .dash-kpi-empresa  { font-size:.58rem; color:#A0A0B8; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .dash-kpi-empresa i { font-size:.50rem; }
-
-    /* ---------- Indicadores de Mercado ---------- */
-    .dash-indic-refreshbtn {
-        margin-left:auto; background:none; border:none; cursor:pointer;
-        color:#A0A0B8; font-size:.75rem; padding:2px 4px;
-        transition:color .15s;
-    }
-    .dash-indic-refreshbtn:hover { color:#583AFF; }
-
-    .dash-indic-grid {
-        display:grid;
-        grid-template-columns:190px 1fr;
-        gap:12px;
-        align-items:stretch;
-    }
-
-    /* TRM — tarjeta oscura destacada, la sección ahora es la protagonista */
-    .dash-indic-trm-card {
-        min-width:0; background:var(--app-glow-bg);
-        border-radius:11px; padding:16px 14px;
-        display:flex; flex-direction:column; justify-content:center; gap:4px;
-        box-shadow:0 6px 16px rgba(22,9,51,.22);
-    }
-    .dash-indic-trm-card .dash-kpi-icon {
-        width:32px; height:32px; margin-bottom:4px;
-    }
-    .dash-indic-trm-card .dash-kpi-value    { color:#fff; font-size:1.25rem; }
-    .dash-indic-trm-card .dash-kpi-label    { font-size:.64rem; color:rgba(255,255,255,.55); text-transform:uppercase; letter-spacing:.5px; }
-    .dash-indic-trm-card .dash-kpi-etiqueta { font-size:.6rem; color:rgba(255,255,255,.4); }
-    .dash-indic-trm-card .dash-kpi-empresa  { font-size:.58rem; color:#01E1D7; margin-top:6px; }
-
-    /* Noticias */
-    .dash-noticias-card {
-        background:#fff;
-        border:1px solid rgba(88,58,255,.12);
-        border-radius:11px;
-        box-shadow:0 4px 14px rgba(22,9,51,.06);
-        overflow:hidden;
-        display:flex; flex-direction:column;
-    }
-    .dash-noticias-hdr {
-        display:flex; align-items:center; gap:.5rem;
-        padding:10px 14px;
-        font-size:.78rem; font-weight:800; color:#160933;
-        border-bottom:1px solid rgba(88,58,255,.08);
-    }
-    .dash-noticias-hdr i { color:#583AFF; }
-
-    /* Leyenda de portales — se conserva, tratamiento sutil */
-    .dash-noticias-leyenda {
-        display:flex; flex-wrap:wrap; gap:.4rem;
-        padding:7px 12px;
-        background:#FAFAFA;
-        border-bottom:1px solid rgba(88,58,255,.07);
-    }
-    .feed-leyenda-item {
-        display:flex; align-items:center; gap:.3rem;
-        font-size:.62rem; font-weight:700;
-        color:#8A86A8; text-transform:uppercase; letter-spacing:.4px;
-        background:#fff; border:1px solid rgba(88,58,255,.08);
-        border-radius:99px; padding:2px 8px;
-    }
-    .feed-leyenda-dot {
-        width:7px; height:7px; border-radius:50%; flex-shrink:0;
-    }
-
-    /* Lista de noticias — más compacta y con scroll para caber más titulares */
-    #noticias-container { max-height:280px; overflow-y:auto; }
-
-    .dash-feed-grupo {
-        margin:4px 6px 3px;
-        border-left:3px solid #583AFF;
-        border-radius:0 7px 7px 0;
-        overflow:hidden;
-    }
-    .dash-feed-grupo:last-child { margin-bottom:6px; }
-
-    .dash-feed-grupo-hdr {
-        display:flex; align-items:center; gap:.4rem;
-        padding:3px 8px;
-        font-size:.62rem; font-weight:800;
-        text-transform:uppercase; letter-spacing:.5px;
-    }
-    .dash-feed-grupo-hdr i { font-size:.56rem; }
-
-    .dash-noticias-list { list-style:none; margin:0; padding:0; }
-    .dash-noticia-item { border-bottom:1px solid rgba(88,58,255,.06); }
-    .dash-noticia-item:last-child { border-bottom:none; }
-    .dash-noticia-item a {
-        display:flex; align-items:flex-start; gap:7px;
-        padding:5px 10px 5px 8px;
-        text-decoration:none;
-        transition:background .12s;
-    }
-    .dash-noticia-item a:hover { background:rgba(88,58,255,.04); }
-    .dash-noticia-titulo {
-        font-size:.76rem; color:#160933; font-weight:500;
-        line-height:1.3; flex:1; min-width:0;
-        overflow:hidden; display:-webkit-box;
-        -webkit-line-clamp:1; -webkit-box-orient:vertical;
-    }
-    .dash-noticia-fecha {
-        font-size:.62rem; color:#6B6787;
-        white-space:nowrap; flex-shrink:0; padding-top:1px;
-    }
-    .dash-noticias-hint {
-        padding:12px 13px;
-        font-size:.80rem; color:#A0A0B8; line-height:1.4;
-    }
-    .dash-trm-nodisp {
-        font-size:.80rem; color:#FCA311; font-weight:600;
-    }
-
-    @@media (max-width:768px) {
-        .dash-indic-grid { grid-template-columns:1fr; }
-    }
-
-    /* ---------- Advertencias Bufins ---------- */
     .dash-adv-count-badge {
         background:#ef4444; color:#fff; font-size:.62rem; font-weight:700;
-        border-radius:99px; padding:.05rem .48rem; margin-left:.35rem;
+        border-radius:99px; padding:.05rem .48rem;
     }
-    .dash-adv-grid { display:flex; flex-direction:column; gap:.6rem; }
-    .dash-adv-card {
-        display:flex; align-items:flex-start; gap:.7rem;
-        background:#fff; border-radius:10px; padding:.7rem .9rem;
-        border:1px solid rgba(22,9,51,.08); border-left:4px solid #A0A0B8;
-        box-shadow:0 2px 8px rgba(22,9,51,.05);
+    .dash-indic-refreshbtn {
+        margin-left:auto; background:none; border:none; cursor:pointer;
+        color:#A0A0B8; font-size:.75rem; padding:2px 4px; transition:color .15s;
     }
-    .dash-adv-icon { font-size:1.05rem; line-height:1; margin-top:.1rem; }
-    .dash-adv-body { flex:1; min-width:0; }
-    .dash-adv-empresa {
-        display:inline-flex; align-items:center; gap:.35rem;
-        font-size:.68rem; font-weight:800; color:#583AFF;
-        text-transform:uppercase; letter-spacing:.03em;
-        margin-bottom:.3rem;
-    }
-    .dash-adv-empresa i { font-size:.62rem; }
-    .dash-adv-title { font-size:.82rem; font-weight:700; color:#160933; margin-bottom:.15rem; }
-    .dash-adv-msg { font-size:.79rem; color:#393F45; line-height:1.45; }
-    .dash-adv-success { border-left-color:#22c55e; }
-    .dash-adv-success .dash-adv-icon { color:#22c55e; }
-    .dash-adv-warning { border-left-color:#f59e0b; }
-    .dash-adv-warning .dash-adv-icon { color:#f59e0b; }
-    .dash-adv-error { border-left-color:#ef4444; }
-    .dash-adv-error .dash-adv-icon { color:#ef4444; }
+    .dash-indic-refreshbtn:hover { color:#583AFF; }
+    .dash-indic-refreshbtn + .dash-section-chevron { margin-left:.2rem; }
 
-    /* ---------- Accesos rápidos + Consumo de IA ---------- */
-    .dash-row { position:relative; z-index:1; }
-    .dash-row-2 { display:grid; grid-template-columns:1fr 320px; gap:14px; align-items:start; }
-    .dash-row-2 > .dash-section { min-width:0; }
-
-    .dash-acc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:9px; }
-    .dash-acc-item {
-        display:flex; align-items:center; gap:10px;
-        background:#fff; border:1px solid rgba(88,58,255,.12); border-radius:10px;
-        padding:11px 12px; text-decoration:none !important;
-        box-shadow:0 2px 8px rgba(22,9,51,.05);
-        transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    /* ================= 2. Indicadores y noticias ================= */
+    .dash-card-indic { min-height:0; }
+    .dash-indic-body { display:flex; flex-direction:column; flex:1; min-height:0; }
+    .dash-indic-loading {
+        font-size:.78rem; color:#A0A0B8; display:flex; align-items:center; gap:.5rem; padding:14px;
     }
-    .dash-acc-item:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(22,9,51,.1); border-color:rgba(88,58,255,.35); }
-    .dash-acc-icon {
-        width:35px; height:35px; border-radius:8px; flex-shrink:0;
+    .dash-indic-content { display:flex; flex-direction:column; flex:1; min-height:0; }
+
+    .dash-trm-strip {
+        flex-shrink:0; margin:10px 12px 0; padding:10px 14px; border-radius:10px;
+        display:flex; align-items:center; gap:16px;
+        background:var(--app-glow-bg); box-shadow:0 6px 16px rgba(22,9,51,.22);
+    }
+    .dash-trm-icon {
+        width:32px; height:32px; border-radius:8px; flex-shrink:0;
         display:flex; align-items:center; justify-content:center;
-        color:#fff; font-size:.85rem;
-        background:linear-gradient(135deg,#583AFF,#01E1D7);
-        box-shadow:0 4px 10px rgba(88,58,255,.25);
+        background:linear-gradient(135deg,#28A745,#01E1D7); color:#fff; font-size:.85rem;
     }
-    .dash-acc-nombre {
-        font-size:.78rem; font-weight:700; color:#160933; line-height:1.25;
-        overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+    .dash-trm-valor { font-size:1.25rem; font-weight:700; color:#fff; line-height:1.1; white-space:nowrap; }
+    .dash-trm-valor-sm { font-size:.9rem; }
+    .dash-trm-label {
+        font-size:.6rem; font-weight:600; color:rgba(255,255,255,.55);
+        text-transform:uppercase; letter-spacing:.5px;
     }
+    .dash-trm-sep { width:1px; height:30px; background:rgba(255,255,255,.12); flex-shrink:0; }
+    .dash-trm-fecha { font-size:.66rem; color:rgba(255,255,255,.5); }
+    .dash-trm-fuente {
+        margin-left:auto; display:flex; align-items:center; gap:4px;
+        font-size:.62rem; color:#01E1D7; white-space:nowrap;
+    }
+    .dash-trm-nodisp { font-size:.8rem; color:#FCA311; font-weight:600; }
 
-    .dash-ia-card {
-        background:#fff; border:1px solid rgba(88,58,255,.12); border-radius:11px;
-        padding:14px; box-shadow:0 4px 14px rgba(22,9,51,.06);
+    .dash-news-hdr {
+        flex-shrink:0; display:flex; align-items:center; gap:.5rem; padding:10px 14px 6px;
+        color:#583AFF; font-size:.8rem;
+    }
+    .dash-news-titulo { font-size:.78rem; font-weight:800; color:#160933; white-space:nowrap; }
+    .dash-news-filtros { margin-left:auto; display:flex; flex-wrap:nowrap; gap:.3rem; min-width:0; }
+    .feed-leyenda-item {
+        display:flex; align-items:center; gap:.3rem; white-space:nowrap;
+        font-size:.58rem; font-weight:700; text-transform:uppercase; letter-spacing:.4px;
+        border-radius:99px; padding:2px 8px; cursor:pointer; user-select:none;
+        background:#fff; color:#8A86A8; border:1px solid rgba(88,58,255,.08);
+        transition:all .15s;
+    }
+    .feed-leyenda-item .feed-n { opacity:.6; }
+    .feed-leyenda-item.atenuado { opacity:.6; }
+    .feed-leyenda-item.atenuado:hover { opacity:1; }
+    .feed-leyenda-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+
+    #noticias-container { flex:1; min-height:0; overflow-y:auto; padding-bottom:6px; }
+    .dash-feed-grupo {
+        margin:4px 8px; border-left:3px solid #583AFF; border-radius:0 7px 7px 0; overflow:hidden;
+    }
+    .dash-feed-grupo-hdr {
+        display:flex; align-items:center; gap:.4rem; padding:4px 8px;
+        font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.5px;
+    }
+    .dash-feed-grupo-hdr i { font-size:.4rem; opacity:.7; }
+    .dash-feed-vermas {
+        margin-left:auto; display:inline-flex; align-items:center; gap:4px;
+        font-size:.58rem; font-weight:700; letter-spacing:.3px; text-decoration:none;
+        color:inherit; opacity:.7; transition:opacity .15s;
+    }
+    .dash-feed-vermas:hover { opacity:1; text-decoration:underline; color:inherit; }
+    .dash-feed-vermas i { font-size:.52rem; opacity:1; }
+    .dash-noticias-list { list-style:none; margin:0; padding:0; }
+    .dash-noticia-item { border-top:1px solid rgba(88,58,255,.06); }
+    .dash-noticia-item a {
+        display:flex; align-items:flex-start; gap:7px; padding:5px 10px 5px 8px;
+        text-decoration:none; transition:background .12s;
+    }
+    .dash-noticia-item a:hover { background:rgba(88,58,255,.07); }
+    .dash-noticia-item a:hover .dash-noticia-titulo { color:#583AFF; text-decoration:underline; }
+    .dash-noticia-item a:focus-visible { outline:2px solid #583AFF; outline-offset:-2px; }
+    /* Indicador de que la fila abre la noticia en el portal (siempre visible, se resalta al pasar el mouse) */
+    .dash-noticia-ext {
+        flex-shrink:0; align-self:center; font-size:.6rem; color:#B9B4D4;
+        transition:color .15s, transform .15s;
+    }
+    .dash-noticia-item a:hover .dash-noticia-ext { color:#583AFF; transform:translate(1px,-1px); }
+    .dash-noticia-titulo {
+        font-size:.76rem; color:#160933; font-weight:500; line-height:1.3; flex:1; min-width:0;
+        overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    .dash-noticia-fecha { font-size:.62rem; color:#6B6787; white-space:nowrap; flex-shrink:0; padding-top:1px; }
+    .dash-noticias-hint { padding:12px 14px; font-size:.8rem; color:#A0A0B8; line-height:1.4; }
+
+    /* ================= 3. Alertas ================= */
+    .dash-alert-list {
+        max-height:200px; overflow-y:auto; padding:8px;
         display:flex; flex-direction:column; gap:6px;
     }
-    .dash-ia-select { margin-bottom:4px; }
-    .dash-ia-texto { font-size:.82rem; font-weight:700; color:#160933; }
-    .dash-ia-track { height:10px; border-radius:6px; background:#e5e7eb; overflow:hidden; }
-    .dash-ia-fill { height:100%; width:0; border-radius:6px; background:var(--content-gradient); transition:width .4s ease; }
-    .dash-ia-fill.agotado { background:#ef4444; }
+    .dash-alert-item {
+        display:flex; gap:8px; padding:7px 9px; border-radius:8px;
+        border-left:3px solid #A0A0B8; background:rgba(160,160,184,.06);
+    }
+    .dash-alert-icon { font-size:.8rem; line-height:1.3; flex-shrink:0; }
+    .dash-alert-body { min-width:0; flex:1; }
+    .dash-alert-line1 { display:flex; align-items:baseline; gap:6px; min-width:0; }
+    .dash-alert-empresa {
+        font-size:.56rem; font-weight:800; color:#583AFF; text-transform:uppercase;
+        letter-spacing:.04em; flex-shrink:0;
+    }
+    .dash-alert-titulo {
+        font-size:.73rem; font-weight:700; color:#160933;
+        overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    .dash-alert-msg { font-size:.68rem; color:#393F45; line-height:1.35; }
+    .dash-alert-error   { border-left-color:#ef4444; background:rgba(239,68,68,.05); }
+    .dash-alert-error .dash-alert-icon   { color:#ef4444; }
+    .dash-alert-warning { border-left-color:#f59e0b; background:rgba(245,158,11,.06); }
+    .dash-alert-warning .dash-alert-icon { color:#f59e0b; }
+    .dash-alert-info    { border-left-color:#3b82f6; background:rgba(59,130,246,.05); }
+    .dash-alert-info .dash-alert-icon    { color:#3b82f6; }
+    .dash-alert-ok {
+        display:flex; align-items:center; gap:8px; padding:10px 14px;
+        font-size:.74rem; color:#393F45;
+    }
+    .dash-alert-ok i { color:#22c55e; }
+
+    /* ================= 4. Accesos rápidos ================= */
+    .dash-acc-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:0 10px 10px; }
+    .dash-acc-item {
+        display:flex; align-items:center; gap:7px; padding:5px 7px; min-width:0;
+        border:1px solid rgba(88,58,255,.1); border-radius:8px; text-decoration:none !important;
+        transition:all .15s;
+    }
+    .dash-acc-item:hover { background:rgba(88,58,255,.04); border-color:rgba(88,58,255,.25); }
+    .dash-acc-icon {
+        width:24px; height:24px; border-radius:6px; flex-shrink:0;
+        display:flex; align-items:center; justify-content:center;
+        background:var(--app-btn-gradient); color:#fff; font-size:.62rem;
+    }
+    .dash-acc-nombre {
+        font-size:.68rem; font-weight:700; color:#160933;
+        overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;
+    }
+    .dash-acc-hint { padding:0 12px 10px; font-size:.62rem; color:#9691AE; line-height:1.35; }
+
+    /* ================= 5. Mi consumo de IA ================= */
+    .dash-ia-card { padding:10px 14px; gap:6px; flex-shrink:0; }
+    .dash-ia-row { display:flex; align-items:center; gap:.5rem; color:#583AFF; font-size:.78rem; }
+    .dash-ia-row .dash-section-label { white-space:nowrap; }
+    .dash-ia-select {
+        margin-left:auto; max-width:130px; font-size:.68rem; font-weight:700; color:#393F45;
+        border:1px solid #E4E1F0; border-radius:6px; padding:2px 6px; background:#fff;
+    }
+    .dash-ia-texto { font-size:.76rem; font-weight:700; color:#160933; }
+    .dash-ia-texto .muted { color:#9691AE; font-weight:600; }
+    .dash-ia-track { height:6px; border-radius:99px; background:#ECEAF4; overflow:hidden; }
+    .dash-ia-fill { height:100%; width:0; border-radius:99px; background:var(--app-btn-gradient); transition:width .4s ease; }
     .dash-ia-fill.alto { background:#f59e0b; }
-    .dash-ia-meta { font-size:.68rem; color:#6B6787; line-height:1.4; }
-    .dash-ia-link { align-self:flex-start; margin-top:4px; font-size:.72rem; font-weight:700; color:#583AFF; text-decoration:none; }
+    .dash-ia-fill.agotado { background:#ef4444; }
+    .dash-ia-row-meta { justify-content:space-between; }
+    .dash-ia-meta { font-size:.6rem; color:#9691AE; }
+    .dash-ia-link { font-size:.66rem; font-weight:700; color:#583AFF; text-decoration:none; white-space:nowrap; }
     .dash-ia-link:hover { text-decoration:underline; }
-    .dash-ia-link i { font-size:.6rem; margin-left:.2rem; }
+    .dash-ia-link i { font-size:.55rem; margin-left:.15rem; }
 
-    .dash-adv-info { border-left-color:#3b82f6; }
-    .dash-adv-info .dash-adv-icon { color:#3b82f6; }
-
-    /* ---------- Responsive ---------- */
-    @@media (max-width:900px) {
-        .dash-row-2 { grid-template-columns:1fr; }
+    /* ================= Responsive ================= */
+    @@media (max-width:991px) {
+        .dash-wrapper { height:auto; min-height:0; }
+        .dash-main { grid-template-columns:1fr; }
+        #noticias-container { flex:none; max-height:280px; }
+        .dash-news-hdr { flex-wrap:wrap; }
+        .dash-news-filtros { margin-left:0; flex-wrap:wrap; }
+        .dash-trm-strip { flex-wrap:wrap; gap:10px 16px; }
+        .dash-trm-fuente { margin-left:0; }
     }
     @@media (max-width:576px) {
-        .dash-acc-grid { grid-template-columns:1fr 1fr; }
-        .dash-header-card { padding:1rem; gap:.5rem; }
+        .dash-header-card { padding:10px 12px; gap:10px; flex-wrap:wrap; }
+        .dash-header-empresas { margin-left:0; max-width:100%; justify-content:flex-start; }
         .dash-header-divider { display:none; }
-        .dash-greeting-logo { height:22px; margin-left:auto; }
-        .dash-hello { font-size:1.1rem; }
-        .dash-empresa-row { padding:.35rem .55rem; }
-        .dash-empresa-nombre { font-size:.92rem; max-width:150px; }
+        .dash-greeting-logo { height:20px; margin-left:auto; }
+        .dash-hello { font-size:1.05rem; }
     }
-
 </style>
 
 @section scripts {
@@ -528,21 +497,21 @@
     var _s = {
         vigente:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_Vigente))',
         noDisp:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_NoDisponible))',
-        eurLabel:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_TRM_EUR))',
         vacias:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_Vacias))',
         noConfig:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_NoConfig))',
         error:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_Error))',
         colapsar:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_Colapsar))',
         expandir:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_Expandir))',
         irNoticia: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_IrNoticia))',
+        verMas:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_VerMas))',
+        todas:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Noticias_Todas))',
         alertasOk:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Alertas_SinDatos))',
         alertasError: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Alertas_Error))',
         accSugeridos: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Accesos_Sugeridos))',
         accVacio:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_Accesos_Vacio))',
-        iaPeriodo:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Periodo))',
         iaTokens:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Tokens))',
         iaTokensIlim: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_TokensIlim))',
-        iaProyeccion: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Proyeccion))',
+        iaProyeccion: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_ConsumoIA_Proyeccion))',
         iaPool:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Pool))',
         iaApagada:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Apagada))',
         iaError:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Error))'
@@ -573,75 +542,103 @@
     var TRM_KEY = 'bufins_trm';
     var TRM_TTL = 7200000;
 
+    // Filtro de portal de noticias: 'all' o el nombre del feed. Se recuerda en la sesión del navegador.
+    var FILTRO_KEY = 'bufins_noticias_filtro';
+    var filtroPortal = 'all';
+    try { filtroPortal = sessionStorage.getItem(FILTRO_KEY) || 'all'; } catch (e) {}
+    var _feeds = [];
+    var MAX_NOTICIAS_POR_PORTAL = 6;   // el servidor ya limita a 6; se vuelve a acotar por seguridad
+
+    // ── TRM ──
     function mostrarTRM(cop, fecha, eur) {
         $('#trm-valor').html('$' + fmtCOP(cop));
         $('#trm-fecha').text(_s.vigente + ' ' + fecha);
-        $('#trm-eur').text(eur && eur > 0 ? (_s.eurLabel + ' $' + fmtCOP(eur)) : '');
+        var hayEur = eur && eur > 0;
+        $('#trm-eur').text(hayEur ? '$' + fmtCOP(eur) : '');
+        $('#trm-eur-bloque, #trm-sep-eur').toggle(!!hayEur);
     }
 
     function mostrarTRMNoDisp() {
         $('#trm-valor').html('<span class="dash-trm-nodisp">' + esc(_s.noDisp) + '</span>');
         $('#trm-fecha').text('');
         $('#trm-eur').text('');
+        $('#trm-eur-bloque, #trm-sep-eur').hide();
     }
 
-    function renderNoticias(d) {
+    // ── Noticias ──
+    // "es.investing.com" → "investing", "larepublica.co" → "larepublica" (para que la fila de filtros no haga wrap)
+    function etiquetaPortal(nombre) {
+        return String(nombre || '').replace(/^es\./i, '').replace(/\.(com|co)(\.[a-z]{2})?$/i, '').toLowerCase();
+    }
+
+    function guardarFiltro() {
+        try { sessionStorage.setItem(FILTRO_KEY, filtroPortal); } catch (e) {}
+    }
+
+    function pintarNoticias() {
         var $ley  = $('#noticias-leyenda');
         var $cont = $('#noticias-container');
-        var $hint = $('#noticias-hint');
         $ley.empty(); $cont.empty();
 
-        if (!d.rssConfigurado) {
-            $ley.hide(); $cont.hide(); $hint.text(_s.noConfig).show();
-            return;
-        }
-        var feeds = d.feeds || [];
-        if (!feeds.length) {
-            $ley.hide(); $cont.hide(); $hint.text(_s.vacias).show();
-            return;
+        var feeds = _feeds;
+        // Si el portal recordado ya no existe, se vuelve a "Todas".
+        if (filtroPortal !== 'all' && !feeds.some(function (f) { return f.Fuente === filtroPortal; })) filtroPortal = 'all';
+
+        function noticiasDe(f) { return (f.Noticias || []).slice(0, MAX_NOTICIAS_POR_PORTAL); }
+        var total = feeds.reduce(function (a, f) { return a + noticiasDe(f).length; }, 0);
+        var hayFiltro = filtroPortal !== 'all';
+
+        // — Chips de filtro —
+        function chip(clave, etiqueta, titulo, n, color, bgActivo) {
+            var activo = clave === 'all' ? !hayFiltro : filtroPortal === clave;
+            var estilo = activo ? ' style="background:' + bgActivo + ';color:' + color + ';border-color:' + color + '"' : '';
+            var punto = clave === 'all'
+                ? 'linear-gradient(135deg,#583AFF,#01E1D7)'
+                : color;
+            return '<span class="feed-leyenda-item' + (hayFiltro && !activo ? ' atenuado' : '') + '" data-feed="' + esc(clave) + '" title="' + esc(titulo) + '"' + estilo + '>' +
+                   '<span class="feed-leyenda-dot" style="background:' + punto + '"></span>' +
+                   esc(etiqueta) + ' <span class="feed-n">' + n + '</span></span>';
         }
 
-        // — Leyenda —
+        $ley.append(chip('all', _s.todas, _s.todas, total, '#583AFF', 'rgba(88,58,255,.08)'));
         feeds.forEach(function (f, i) {
             var color = FEED_COLORS[i % FEED_COLORS.length];
-            $ley.append(
-                '<span class="feed-leyenda-item">' +
-                '<span class="feed-leyenda-dot" style="background:' + color + '"></span>' +
-                esc(f.Fuente) +
-                '</span>'
-            );
+            $ley.append(chip(f.Fuente, etiquetaPortal(f.Fuente), f.Fuente, noticiasDe(f).length,
+                             color, hexA(color, .1)));
         });
         $ley.show();
 
-        // — Grupos por feed —
+        // — Grupos por feed (solo el filtrado, o todos) —
         feeds.forEach(function (f, i) {
-            if (!f.Noticias || !f.Noticias.length) return;
+            var noticias = noticiasDe(f);
+            if (!noticias.length) return;
+            if (hayFiltro && f.Fuente !== filtroPortal) return;
             var color = FEED_COLORS[i % FEED_COLORS.length];
             var bg    = FEED_BGS[i % FEED_BGS.length];
 
-            var $grp = $('<div class="dash-feed-grupo"></div>').css({
+            var $grp = $('<div class="dash-feed-grupo"></div>').attr('data-feed', f.Fuente).css({
                 'border-left-color': color,
                 'background': bg
             });
-
-            // cabecera del grupo
+            // "Ver más" → portada del portal (origen del enlace de la primera noticia)
+            var origen = '';
+            try { origen = new URL(noticias[0].Enlace).origin; } catch (e) {}
             $grp.append(
                 '<div class="dash-feed-grupo-hdr" style="color:' + color + '">' +
-                '<i class="fas fa-circle" style="font-size:.4rem;opacity:.7"></i>' +
-                esc(f.Fuente) + '</div>'
+                '<i class="fas fa-circle"></i>' + esc(f.Fuente) +
+                (origen ? '<a class="dash-feed-vermas" href="' + esc(origen) + '" target="_blank" rel="noopener noreferrer" title="' + esc(_s.verMas) + '">' +
+                          esc(_s.verMas) + ' <i class="fas fa-arrow-up-right-from-square"></i></a>' : '') +
+                '</div>'
             );
 
-            // ítems
             var $ul = $('<ul class="dash-noticias-list"></ul>');
-            f.Noticias.forEach(function (n) {
-                var fec = n.FechaTexto
-                    ? '<span class="dash-noticia-fecha">' + esc(n.FechaTexto) + '</span>'
-                    : '';
+            noticias.forEach(function (n) {
+                var fec = n.FechaTexto ? '<span class="dash-noticia-fecha">' + esc(n.FechaTexto) + '</span>' : '';
                 $ul.append(
                     $('<li class="dash-noticia-item"></li>').html(
                         '<a href="' + esc(n.Enlace) + '" target="_blank" rel="noopener noreferrer" title="' + esc(_s.irNoticia) + '">' +
-                        '<span class="dash-noticia-titulo">' + esc(n.Titulo) + '</span>' +
-                        fec + '</a>'
+                        '<span class="dash-noticia-titulo">' + esc(n.Titulo) + '</span>' + fec +
+                        '<i class="fas fa-arrow-up-right-from-square dash-noticia-ext" aria-hidden="true"></i></a>'
                     )
                 );
             });
@@ -649,8 +646,40 @@
             $cont.append($grp);
         });
 
-        $cont.show(); $hint.hide();
+        $cont.show();
+        $('#noticias-hint').hide();
     }
+
+    // "#583AFF" + .1 → "rgba(88,58,255,.1)"
+    function hexA(hex, a) {
+        var h = hex.replace('#', '');
+        return 'rgba(' + parseInt(h.substr(0, 2), 16) + ',' + parseInt(h.substr(2, 2), 16) + ',' + parseInt(h.substr(4, 2), 16) + ',' + a + ')';
+    }
+
+    function renderNoticias(d) {
+        var $ley  = $('#noticias-leyenda');
+        var $cont = $('#noticias-container');
+        var $hint = $('#noticias-hint');
+
+        if (!d.rssConfigurado) {
+            $ley.hide().empty(); $cont.hide().empty(); $hint.text(_s.noConfig).show();
+            return;
+        }
+        _feeds = d.feeds || [];
+        if (!_feeds.length) {
+            $ley.hide().empty(); $cont.hide().empty(); $hint.text(_s.vacias).show();
+            return;
+        }
+        pintarNoticias();
+    }
+
+    // Clic en un chip: filtra; clic en el activo (o en "Todas") → todas. Sin recargar ni volver al servidor.
+    $(document).on('click', '#noticias-leyenda .feed-leyenda-item', function () {
+        var clave = $(this).attr('data-feed');
+        filtroPortal = (clave === 'all' || clave === filtroPortal) ? 'all' : clave;
+        guardarFiltro();
+        pintarNoticias();
+    });
 
     function cargar(refresh) {
         var $load = $('#indic-loading');
@@ -711,57 +740,48 @@
                 .catch(function () { mostrarTRMNoDisp(); fin(); });
         })();
 
-        // ── Noticias: desde el servidor (parseo RSS server-side) ──
+        // ── Noticias: desde el servidor (parseo RSS server-side); el filtro activo se conserva ──
         $.getJSON(_urlNoticias + (refresh ? '?refresh=true' : ''))
             .done(function (d) { renderNoticias(d); })
             .fail(function () {
+                $('#noticias-leyenda').hide().empty();
+                $('#noticias-container').hide().empty();
                 $('#noticias-hint').text(_s.error).show();
-                $('#noticias-list').hide();
             })
             .always(function () { fin(); });
     }
 
     // ── Alertas (sp_ObtenerAlertasHome) ──
-    function colapsarSeccion(idSeccion) {
-        var $toggle = $('#' + idSeccion).find('.dash-section-toggle').first();
-        $('#' + $toggle.data('target')).hide();
-        $toggle.find('.dash-section-chevron').addClass('rotado');
-        $toggle.attr('title', _s.expandir);
-    }
-
     function cargarAlertas() {
         var $grid = $('#alertas-grid');
         var $badge = $('#alertas-badge');
 
-        function tarjeta(sev, icono, empresa, titulo, mensaje) {
-            return '<div class="dash-adv-card dash-adv-' + sev + '">' +
-                   '<div class="dash-adv-icon"><i class="fas ' + icono + '"></i></div>' +
-                   '<div class="dash-adv-body">' +
-                   (empresa ? '<div class="dash-adv-empresa"><i class="fas fa-building"></i>' + esc(empresa) + '</div>' : '') +
-                   (titulo ? '<div class="dash-adv-title">' + esc(titulo) + '</div>' : '') +
-                   '<div class="dash-adv-msg">' + esc(mensaje) + '</div>' +
-                   '</div></div>';
+        function aviso(icono, texto) {
+            return '<div class="dash-alert-ok"><i class="fas ' + icono + '"></i><span>' + esc(texto) + '</span></div>';
         }
 
         $.getJSON(_urlAlertas).done(function (d) {
             var alertas = (d && d.ok && d.alertas) ? d.alertas : null;
-            if (!alertas) {
-                $grid.html(tarjeta('warning', 'fa-exclamation-triangle', '', '', _s.alertasError));
-                return;
-            }
-            if (!alertas.length) {
-                $grid.html(tarjeta('success', 'fa-check-circle', '', '', _s.alertasOk));
-                colapsarSeccion('alertas-section'); // sin alertas: arranca colapsada
-                return;
-            }
+            if (!alertas) { $grid.html(aviso('fa-exclamation-triangle', _s.alertasError)); return; }
+            if (!alertas.length) { $badge.hide(); $grid.html(aviso('fa-check-circle', _s.alertasOk)); return; }
+
             var iconos = { Error: ['error', 'fa-times-circle'], Advertencia: ['warning', 'fa-exclamation-triangle'], Info: ['info', 'fa-info-circle'] };
             $grid.html(alertas.map(function (a) {
                 var m = iconos[a.severidad] || iconos.Info;
-                return tarjeta(m[0], m[1], a.empresa, a.titulo, a.mensaje);
+                return '<div class="dash-alert-item dash-alert-' + m[0] + '">' +
+                       '<i class="fas ' + m[1] + ' dash-alert-icon"></i>' +
+                       '<div class="dash-alert-body">' +
+                       '<div class="dash-alert-line1">' +
+                       (a.empresa ? '<span class="dash-alert-empresa">' + esc(a.empresa) + '</span>' : '') +
+                       (a.titulo ? '<span class="dash-alert-titulo">' + esc(a.titulo) + '</span>' : '') +
+                       '</div>' +
+                       '<div class="dash-alert-msg">' + esc(a.mensaje) + '</div>' +
+                       '</div></div>';
             }).join(''));
+            $grid.scrollTop(0);
             $badge.text(alertas.length).show();
         }).fail(function () {
-            $grid.html(tarjeta('warning', 'fa-exclamation-triangle', '', '', _s.alertasError));
+            $grid.html(aviso('fa-exclamation-triangle', _s.alertasError));
         });
     }
 
@@ -773,7 +793,7 @@
             var items = (d && d.ok && d.items) ? d.items : [];
             if (!items.length) { $hint.text(_s.accVacio).show(); return; }
             $grid.html(items.map(function (i) {
-                return '<a class="dash-acc-item" href="' + esc(i.url) + '">' +
+                return '<a class="dash-acc-item" href="' + esc(i.url) + '" title="' + esc(i.nombre) + '">' +
                        '<span class="dash-acc-icon"><i class="' + esc(i.icono || 'fas fa-link') + '"></i></span>' +
                        '<span class="dash-acc-nombre">' + esc(i.nombre) + '</span></a>';
             }).join(''));
@@ -791,17 +811,18 @@
             $.getJSON(_urlConsumoIA, { idEmpresa: $sel.val() }).done(function (r) {
                 if (!r || !r.ok) { $('#ia-texto').text(_s.iaError); $('#ia-barra').css('width', 0); $('#ia-meta').text(''); return; }
                 var consumido = Number(r.consumido).toLocaleString();
-                $('#ia-texto').text(r.ilimitado
+                var texto = r.ilimitado
                     ? _s.iaTokensIlim.replace('{0}', consumido)
-                    : _s.iaTokens.replace('{0}', consumido).replace('{1}', Number(r.presupuesto).toLocaleString()).replace('{2}', r.porcentaje));
+                    : _s.iaTokens.replace('{0}', consumido).replace('{1}', Number(r.presupuesto).toLocaleString()).replace('{2}', r.porcentaje);
+                // El texto entre paréntesis final, atenuado: "0 tokens usados (sin límite)"
+                $('#ia-texto').html(esc(texto).replace(/(\([^)]*\))\s*$/, '<span class="muted">$1</span>'));
                 $('#ia-barra').css('width', (r.ilimitado ? 0 : Math.min(100, r.porcentaje)) + '%')
                               .toggleClass('agotado', !r.ilimitado && r.porcentaje >= 100)
                               .toggleClass('alto', !r.ilimitado && r.porcentaje >= 80 && r.porcentaje < 100);
-                var meta = [_s.iaPeriodo.replace('{0}', r.inicio).replace('{1}', r.fin),
-                            _s.iaProyeccion.replace('{0}', Number(r.proyeccion).toLocaleString())];
-                if (r.enPool) meta.push(_s.iaPool.replace('{0}', r.empresasEnPool));
-                if (!r.habilitada) meta.push(_s.iaApagada);
-                $('#ia-meta').text(meta.join(' · '));
+                var meta = r.inicio + ' – ' + r.fin + ' · ' + _s.iaProyeccion.replace('{0}', Number(r.proyeccion).toLocaleString());
+                if (r.enPool) meta += ' · ' + _s.iaPool.replace('{0}', r.empresasEnPool);
+                if (!r.habilitada) meta += ' · ' + _s.iaApagada;
+                $('#ia-meta').text(meta).attr('title', meta);
             }).fail(function () { $('#ia-texto').text(_s.iaError); });
         }
 
@@ -810,7 +831,7 @@
     }
 
     function initSecciones() {
-        // Cada sección se expande/colapsa de forma independiente (excluye el botón de refresh).
+        // Cada tarjeta se expande/colapsa de forma independiente (excluye el botón de refresh).
         $(document).on('click', '.dash-section-toggle', function (e) {
             if ($(e.target).closest('#btn-indic-refresh').length) return;
             var $lbl  = $(this);
