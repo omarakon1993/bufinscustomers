@@ -39,7 +39,6 @@
 
     .lt-card { background: var(--lt-surface); border: 1px solid var(--lt-line); border-radius: 14px; padding: 16px 20px; margin-bottom: 16px; box-shadow: var(--lt-shadow); }
 
-    .lt-header-tag { font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,.65); background: rgba(255,255,255,.12); padding: 2px 9px; border-radius: 999px; letter-spacing: .02em; white-space: nowrap; margin-left: 2px; }
 
     /* Pantalla completa del panel de gráfico/tabla: se aplica al propio <section class="lt-card">
        vía la Fullscreen API — se le quita el "envoltorio" de tarjeta (borde/sombra/radio) para que
@@ -90,7 +89,7 @@
         <div class="powerbi-header-content">
             <i class="fas fa-chart-line powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@Resources.Strings.LineaTiempo_PageTitle</h1>
-            <span class="lt-header-tag" title="@Resources.Strings.LineaTiempo_HeaderTagTooltip">@Resources.Strings.LineaTiempo_HeaderTag</span>
+            @Html.Partial("_ModeloBufinsTag")
         </div>
     </div>
 

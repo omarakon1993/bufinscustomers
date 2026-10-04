@@ -102,6 +102,7 @@ textarea.ia-text-input { resize:none; overflow-y:auto; max-height:130px; line-he
                     <i class="fas fa-circle" style="font-size:6px;"></i> @(ViewBag.ModeloIA ?? "OpenAI")
                 </span>
             </h1>
+            @Html.Partial("_ModeloBufinsTag")
         </div>
     </div>
 
@@ -116,23 +117,9 @@ textarea.ia-text-input { resize:none; overflow-y:auto; max-height:130px; line-he
             <i class="fas fa-filter"></i> @Resources.Strings.IA_FilterTitle
         </h3>
         <div class="filter-section">
-            <!-- Fila 1: contexto (qué tabla, de qué empresa, qué escenario) — los tres obligatorios -->
+            <!-- Fila 1: contexto, en el orden en que se eligen — Empresa, Escenario y Tabla (los tres obligatorios;
+                 la empresa solo es obligatoria para Super Admin) -->
             <div class="row">
-                <div class="col-md-5">
-                    <div class="form-group">
-                        <label for="selectTabla"><i class="fas fa-table"></i> @Resources.Strings.Common_LabelTabla <span class="required">*</span></label>
-                        <select id="selectTabla" class="form-control" required>
-                            <option value="">@Resources.Strings.Common_Seleccione</option>
-                            @if (tablas != null)
-                            {
-                                foreach (var t in tablas)
-                                {
-                                    <option value="@t.NombreTabla" data-nombre="@t.NombreAmigable">@t.NombreAmigable</option>
-                                }
-                            }
-                        </select>
-                    </div>
-                </div>
                 <div class="col-md-4">
                     <div class="form-group">
                         <label for="selectEmpresa">
@@ -151,7 +138,7 @@ textarea.ia-text-input { resize:none; overflow-y:auto; max-height:130px; line-he
                         </select>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label for="selectEscenario"><i class="fas fa-layer-group"></i> @Resources.Strings.Common_LabelEscenario <span class="required">*</span></label>
                         <select id="selectEscenario" class="form-control" required>
@@ -165,8 +152,23 @@ textarea.ia-text-input { resize:none; overflow-y:auto; max-height:130px; line-he
                         </select>
                     </div>
                 </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="selectTabla"><i class="fas fa-table"></i> @Resources.Strings.Common_LabelTabla <span class="required">*</span></label>
+                        <select id="selectTabla" class="form-control" required>
+                            <option value="">@Resources.Strings.Common_Seleccione</option>
+                            @if (tablas != null)
+                            {
+                                foreach (var t in tablas)
+                                {
+                                    <option value="@t.NombreTabla" data-nombre="@t.NombreAmigable">@t.NombreAmigable</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
             </div>
-            <!-- Fila 2: alcance de datos dentro de ese escenario (año, mes y variable opcionales —
+            <!-- Fila 2: alcance de datos de esa tabla (año, mes y variable opcionales —
                  dejar el año en blanco trae varios años a la vez para pedirle a la IA comparaciones
                  año a año en la pregunta/prompt). -->
             <div class="row">
@@ -423,14 +425,14 @@ $(document).ready(function () {
         searching: function () { return _iaMsg.buscando; }
     };
 
-    // ── Habilita "Analizar" solo con tabla + (empresa si es admin) + escenario ──
+    // ── Habilita "Analizar" solo con (empresa si es admin) + escenario + tabla ──
     // Año queda fuera a propósito: dejarlo en blanco es válido (trae varios años a la vez para
     // que la IA pueda comparar entre ellos si se le pregunta).
     function estadoBotonAnalizar() {
         var faltan = [];
-        if (!$('#selectTabla').val())                    faltan.push(_iaMsg.labelTabla);
         if (esAdminJS && !$('#selectEmpresa').val())      faltan.push(_iaMsg.labelEmpresa);
         if (!$('#selectEscenario').val())                 faltan.push(_iaMsg.labelEscenario);
+        if (!$('#selectTabla').val())                    faltan.push(_iaMsg.labelTabla);
         var ok = faltan.length === 0;
         $('#btnAnalizar').prop('disabled', !ok);
         if (ok) { $('#analizarHint').removeClass('show'); }

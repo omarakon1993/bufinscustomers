@@ -869,6 +869,17 @@ There are two distinct gradient variables (both defined in `Assets/css/modern-si
 
 `.btn-modern-success` (green) stays reserved for create/activate/confirm actions only — never for downloads or neutral actions (those use `.btn-modern-secondary`, which is intentionally styled with the dark chrome gradient, not gray or white).
 
+### Opciones que consumen de las tablas `Modelo*` — cápsula "Información modelo Bufins" (OBLIGATORIO)
+
+> **MANDATORY:** toda opción (informe, análisis, consulta, exportación) que **lea datos de las tablas `dbo.Modelo*`** (`ModeloBalance`, `ModeloPYG`, `ModeloBalancePpto`, `ModeloBalanceDiff`, `ModeloFlujoCaja`, `ModeloFlujoEfectivo`, `ModeloLineasNegocio`, `ModeloTesoreriaPpto`) debe llevar en su título la cápsula **"Información modelo Bufins"**, igual que Línea de Tiempo. Avisa al usuario de que esos datos solo existen después de ejecutar el modelo.
+
+Cómo ponerla: dentro de `.powerbi-header-content`, justo después del `<h1 class="powerbi-header-title">`, una sola línea:
+```html
+<h1 class="powerbi-header-title">@Resources.Strings.X_PageTitle</h1>
+@Html.Partial("_ModeloBufinsTag")
+```
+El partial `Views/Shared/_ModeloBufinsTag.cshtml` usa la clase compartida `.header-tag-modelo` (en `bufins-components.css`) y los textos `Common_ModeloBufinsTag` / `Common_ModeloBufinsTagTooltip` (ya en ambos `.resx`) — no se duplica markup, CSS ni textos por vista. Hoy la llevan: Análisis IA, Informe de Modelos, Línea de Tiempo, Estado de Resultados (PYG) y Balance General. **Ejecución de Modelos (`Datos/Modelo.cshtml`) NO la lleva**: esa pantalla *genera* las tablas, no las consume. Al crear una opción nueva que lea de `Modelo*`, añadir la cápsula y agregarla a esta lista.
+
 ### Required stylesheet
 
 Every view that renders a content page must include:
