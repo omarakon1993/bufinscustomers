@@ -8,6 +8,30 @@ namespace bufinscustomers.Services
 {
     public class AuditoriaCarguesService : BaseService
     {
+        /// <summary>
+        /// El SP no devuelve el escenario: se completa con una lectura aparte de <c>AuditoriaCargues.IdEscenario</c>
+        /// (columna incremental de Sql/004). Si la columna aún no existe, los cargues quedan sin escenario.
+        /// </summary>
+        private static void CompletarEscenario(SqlConnection connection, List<AuditoriaCargues> auditorias)
+        {
+            if (auditorias.Count == 0) return;
+            try
+            {
+                var mapa = new Dictionary<int, int>();
+                using (var cmd = new SqlCommand("SELECT Id, IdEscenario FROM dbo.AuditoriaCargues WHERE IdEscenario IS NOT NULL", connection))
+                using (var r = cmd.ExecuteReader())
+                    while (r.Read())
+                        mapa[Convert.ToInt32(r["Id"])] = Convert.ToInt32(r["IdEscenario"]);
+
+                foreach (var a in auditorias)
+                    if (mapa.TryGetValue(a.Id, out int esc)) a.IdEscenario = esc;
+            }
+            catch (SqlException)
+            {
+                // Columna IdEscenario inexistente (BD sin Sql/004): se muestra sin escenario.
+            }
+        }
+
         public List<AuditoriaCargues> ObtenerAuditoriaCargues()
         {
             return ObtenerAuditoriaCargues(null);
@@ -41,6 +65,8 @@ namespace bufinscustomers.Services
                         }
                     }
                 }
+
+                CompletarEscenario(connection, auditorias);
             }
 
             return auditorias;

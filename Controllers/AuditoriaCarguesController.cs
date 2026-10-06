@@ -1,4 +1,4 @@
-﻿using System.Web.Mvc;
+using System.Web.Mvc;
 using bufinscustomers.Models;
 using bufinscustomers.Services;
 using bufinscustomers.Helpers;
@@ -8,7 +8,6 @@ using System.Linq;
 using ClosedXML.Excel;
 using System.IO;
 using System;
-using System.Drawing;
 
 namespace bufinscustomers.Controllers
 {
@@ -17,72 +16,105 @@ namespace bufinscustomers.Controllers
     {
         private AuditoriaCarguesService _auditoriaCarguesService = new AuditoriaCarguesService();
 
-        // Listar auditorias de cargues
+        /// <summary>
+        /// Cargues visibles para el usuario: Super Admin todos; el resto su empresa y las de su mismo grupo empresarial.
+        /// </summary>
+        private List<AuditoriaCargues> ObtenerSegunAlcance()
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            var todas = _auditoriaCarguesService.ObtenerAuditoriaCargues();
+            if (UsuarioSesionHelper.EsSuperAdmin()) return todas;
+
+            var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
+            return todas.Where(a => idsPermitidos.Contains(a.IdEmpresa)).ToList();
+        }
+
+        /// <summary>Aplica los filtros de la pantalla (los mismos para la grilla y para el Excel).</summary>
+        private static List<AuditoriaCargues> Filtrar(List<AuditoriaCargues> auditorias, int? idEmpresa, int? idUsuario,
+            int? escenario, string texto, string fechaDesde, string fechaHasta)
+        {
+            if (idEmpresa.HasValue)
+                auditorias = auditorias.Where(a => a.IdEmpresa == idEmpresa.Value).ToList();
+
+            if (idUsuario.HasValue)
+                auditorias = auditorias.Where(a => a.IdUsuario == idUsuario.Value).ToList();
+
+            if (escenario.HasValue)
+                auditorias = auditorias.Where(a => a.IdEscenario == escenario.Value).ToList();
+
+            if (!string.IsNullOrWhiteSpace(texto))
+            {
+                var t = texto.Trim();
+                auditorias = auditorias.Where(a =>
+                    (a.NombreArchivo ?? "").IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    (a.Usuario ?? "").IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    (a.NombreEmpresa ?? "").IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+            }
+
+            if (DateTime.TryParse(fechaDesde, out var desde))
+                auditorias = auditorias.Where(a => a.FechaCargue.Date >= desde.Date).ToList();
+
+            if (DateTime.TryParse(fechaHasta, out var hasta))
+                auditorias = auditorias.Where(a => a.FechaCargue.Date <= hasta.Date).ToList();
+
+            return auditorias;
+        }
+
+        // Pantalla: solo trae lo necesario para armar los selectores; la grilla se llena al pulsar «Consultar».
         public ActionResult AuditoriaCargues()
         {
             ViewBag.Embed = string.Equals(Request.QueryString["embed"], "1");
-            var usuario = UsuarioSesionHelper.UsuarioActual;
-            var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
-            
-            List<AuditoriaCargues> auditorias;
-            
-            if (esAdmin)
-            {
-                // Si es admin, obtener todos los registros
-                auditorias = _auditoriaCarguesService.ObtenerAuditoriaCargues();
-            }
-            else
-            {
-                // Si no es admin, mostrar su empresa y las de su mismo grupo empresarial
-                var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
-                auditorias = _auditoriaCarguesService.ObtenerAuditoriaCargues()
-                    .Where(a => idsPermitidos.Contains(a.IdEmpresa)).ToList();
-            }
-
-            return View("~/Views/Informes/AuditoriaCargues.cshtml", auditorias);
+            return View("~/Views/Informes/AuditoriaCargues.cshtml", ObtenerSegunAlcance());
         }
 
-        // Exportar auditor�a a Excel
+        // Datos de la grilla (solo al pulsar «Consultar»)
+        [HttpGet]
+        public JsonResult ObtenerCargues(int? idEmpresa, int? idUsuario, int? escenario, string texto = "",
+            string fechaDesde = "", string fechaHasta = "")
+        {
+            var filas = Filtrar(ObtenerSegunAlcance(), idEmpresa, idUsuario, escenario, texto, fechaDesde, fechaHasta)
+                .OrderByDescending(a => a.FechaCargue)
+                .ToList();
+
+            var nombresEscenario = EscenarioCacheHelper.ObtenerEscenariosCacheados().ToDictionary(e => e.Id, e => e.Nombre);
+
+            return Json(new
+            {
+                success = true,
+                items = filas.Select(a => new
+                {
+                    a.Id,
+                    Fecha   = a.FechaCargue.ToString("dd/MM/yyyy HH:mm:ss"),
+                    a.IdEmpresa,
+                    Empresa = a.NombreEmpresa,
+                    a.IdUsuario,
+                    Usuario = a.Usuario,
+                    Archivo = a.NombreArchivo,
+                    Escenario = a.IdEscenario.HasValue
+                        ? (nombresEscenario.TryGetValue(a.IdEscenario.Value, out var n) ? n : "#" + a.IdEscenario.Value)
+                        : ""
+                })
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        // Exportar auditoría a Excel (mismos filtros que la pantalla)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult ExportarAuditoriaExcel(string empresa = "", string usuario = "", string fechaDesde = "", string fechaHasta = "")
+        public ActionResult ExportarAuditoriaExcel(int? idEmpresa, int? idUsuario, int? escenario, string texto = "",
+            string fechaDesde = "", string fechaHasta = "")
         {
             try
             {
-                var usuarioActual = UsuarioSesionHelper.UsuarioActual;
-                var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
+                var auditorias = Filtrar(ObtenerSegunAlcance(), idEmpresa, idUsuario, escenario, texto, fechaDesde, fechaHasta);
 
-                // Obtener datos seg�n permisos
-                List<AuditoriaCargues> auditorias;
-
-                if (esAdmin)
-                {
-                    auditorias = _auditoriaCarguesService.ObtenerAuditoriaCargues();
-                }
-                else
-                {
-                    var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuarioActual) ?? new List<int>();
-                    auditorias = _auditoriaCarguesService.ObtenerAuditoriaCargues()
-                        .Where(a => idsPermitidos.Contains(a.IdEmpresa)).ToList();
-                }
-
-                // Aplicar filtros
-                if (!string.IsNullOrEmpty(empresa))
-                    auditorias = auditorias.Where(a => a.NombreEmpresa == empresa).ToList();
-
-                if (!string.IsNullOrEmpty(usuario))
-                    auditorias = auditorias.Where(a => a.Usuario.IndexOf(usuario, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
-
-                if (DateTime.TryParse(fechaDesde, out var desde))
-                    auditorias = auditorias.Where(a => a.FechaCargue.Date >= desde.Date).ToList();
-
-                if (DateTime.TryParse(fechaHasta, out var hasta))
-                    auditorias = auditorias.Where(a => a.FechaCargue.Date <= hasta.Date).ToList();
+                var nombresEscenario = EscenarioCacheHelper.ObtenerEscenariosCacheados()
+                    .ToDictionary(e => e.Id, e => e.Nombre);
+                bool conEscenario = auditorias.Any(a => a.IdEscenario.HasValue);
 
                 // Generar archivo Excel
                 using (var package = new XLWorkbook())
                 {
-                    var worksheet = package.Worksheets.Add("Auditor�a Cargues");
+                    var worksheet = package.Worksheets.Add("Auditoría Cargues");
 
                     // Configurar encabezados
                     Func<string, string> R = key => HttpContext.GetGlobalResourceObject("Strings", key)?.ToString() ?? key;
@@ -94,6 +126,7 @@ namespace bufinscustomers.Controllers
                         R("Audit_ThUsuario"),
                         R("Audit_ThArchivo")
                     };
+                    if (conEscenario) headers.Add(R("Ax_Escenario"));
 
                     // Aplicar encabezados
                     for (int i = 0; i < headers.Count; i++)
@@ -116,6 +149,13 @@ namespace bufinscustomers.Controllers
                         worksheet.Cell(row, col++).Value = auditoria.NombreEmpresa;
                         worksheet.Cell(row, col++).Value = auditoria.Usuario;
                         worksheet.Cell(row, col++).Value = auditoria.NombreArchivo;
+                        if (conEscenario)
+                        {
+                            string nombreEsc = "";
+                            if (auditoria.IdEscenario.HasValue)
+                                nombreEsc = nombresEscenario.TryGetValue(auditoria.IdEscenario.Value, out var n) ? n : "#" + auditoria.IdEscenario.Value;
+                            worksheet.Cell(row, col++).Value = nombreEsc;
+                        }
                         row++;
                     }
 
@@ -137,7 +177,8 @@ namespace bufinscustomers.Controllers
                     dataRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
 
                     // Generar nombre de archivo
-                    var hayFiltros = !string.IsNullOrEmpty(empresa) || !string.IsNullOrEmpty(usuario)
+                    var hayFiltros = idEmpresa.HasValue || idUsuario.HasValue || escenario.HasValue
+                                  || !string.IsNullOrWhiteSpace(texto)
                                   || !string.IsNullOrEmpty(fechaDesde) || !string.IsNullOrEmpty(fechaHasta);
                     var nombreArchivo = $"Auditoria_Cargues_{DateTime.Now:yyyyMMdd_HHmmss}{(hayFiltros ? "_Filtrado" : "")}.xlsx";
 

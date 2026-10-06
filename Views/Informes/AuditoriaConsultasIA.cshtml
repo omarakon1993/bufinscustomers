@@ -1,5 +1,7 @@
-﻿﻿@model dynamic
+@model dynamic
 @using bufinscustomers.Models
+@using System.Linq
+@using System.Web.Mvc
 
 @{
     ViewBag.Title = Resources.Strings.AudIA_PageTitle;
@@ -11,54 +13,59 @@
     // Se muestra la empresa (filtro + columna) al Super Admin y al Admin de Empresa cuyo grupo
     // tenga más de una empresa (el controlador solo puebla empresasFiltro en ese caso).
     var verEmpresa     = esAdmin || (empresasFiltro != null && empresasFiltro.Count > 1);
+
+    // Panel de filtros UNIFORME (mismo orden en las 4 pestañas): Empresa · Usuario · campos propios (Tabla, Tipo) · avanzados.
+    var vm = new AudFiltrosVM { PlaceholderBusqueda = Resources.Strings.AudIA_BuscarPlaceholder, PeriodoDefecto = "30" };
+    if (verEmpresa)
+    {
+        vm.Campos.Add(new AudCampo
+        {
+            Id = "fEmpresa", Etiqueta = Resources.Strings.AudIA_LabelEmpresa, Icono = "fa-building",
+            TextoTodos = Resources.Strings.AudIA_TodasEmpresas,
+            Opciones = (empresasFiltro ?? new List<Empresas>()).Select(e => new SelectListItem { Value = e.Id.ToString(), Text = e.Nombre }).ToList()
+        });
+    }
+    if (esAdmin || esAdminEmpresa)
+    {
+        // Las opciones las carga el JS (dependen de la empresa elegida).
+        vm.Campos.Add(new AudCampo
+        {
+            Id = "fUsuario", Etiqueta = Resources.Strings.AudIA_LabelUsuario, Icono = "fa-user",
+            TextoTodos = Resources.Strings.AudIA_TodosUsuarios
+        });
+    }
+    vm.Campos.Add(new AudCampo
+    {
+        Id = "fTabla", Propio = true, Etiqueta = Resources.Strings.Ax_Tabla, Icono = "fa-table",
+        TextoTodos = Resources.Strings.Ax_TodasTablas   // las opciones salen de los registros consultados
+    });
+    vm.Campos.Add(new AudCampo
+    {
+        Id = "fTipo", Propio = true, Etiqueta = Resources.Strings.AudIA_LabelTipo, Icono = "fa-tag",
+        TextoTodos = Resources.Strings.AudIA_TodosTipos,
+        Opciones = new List<SelectListItem>
+        {
+            new SelectListItem { Value = "resumen", Text = Resources.Strings.AudIA_TipoResumen },
+            new SelectListItem { Value = "pregunta", Text = Resources.Strings.AudIA_TipoPregunta }
+        }
+    });
+    vm.Avanzados.Add(new AudCampo
+    {
+        Id = "fValoracion", Propio = true, Etiqueta = Resources.Strings.Ax_Valoracion, Icono = "fa-thumbs-up",
+        TextoTodos = Resources.Strings.Ax_TodasValoraciones,
+        Opciones = new List<SelectListItem>
+        {
+            new SelectListItem { Value = "1", Text = Resources.Strings.Ax_Val_Util },
+            new SelectListItem { Value = "0", Text = Resources.Strings.Ax_Val_NoUtil },
+            new SelectListItem { Value = "sin", Text = Resources.Strings.Ax_Val_Sin }
+        }
+    });
 }
 
-<link href="~/Assets/css/informe-relacionamientos.css" rel="stylesheet" />
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/auditoria-shared.css" rel="stylesheet" />
 
 <style>
-/* Chips de fecha rápida */
-.aud-date-chip {
-    background: #fff;
-    border: 1px solid #d1d5db;
-    color: #6b7280;
-    border-radius: 99px;
-    padding: 4px 14px;
-    font-size: .78rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all .15s;
-    white-space: nowrap;
-}
-.aud-date-chip:hover  { border-color: #583AFF; color: #583AFF; background: #eef2ff; }
-.aud-date-chip.active { background: #583AFF; border-color: #583AFF; color: #fff; }
-
-/* Badges tipo */
-.aud-tipo-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: .72rem; font-weight: 700;
-    padding: 3px 10px; border-radius: 99px; white-space: nowrap;
-}
-.aud-tipo-resumen  { background: #ede9fe; color: #583AFF; }
-.aud-tipo-pregunta { background: #fce7f3; color: #be185d; }
-
-/* Celda pregunta truncada */
-.aud-pregunta-cell {
-    max-width: 260px; white-space: nowrap;
-    overflow: hidden; text-overflow: ellipsis;
-    cursor: default; color: #4b5563; display: block;
-}
-
-/* Botón header */
-.audit-btn-header {
-    background:rgba(255,255,255,.18); border:1.5px solid rgba(255,255,255,.55);
-    color:#fff; border-radius:8px; padding:6px 16px; font-size:.87rem;
-    font-weight:600; cursor:pointer; transition:background .2s; white-space:nowrap;
-    text-decoration:none; display:inline-flex; align-items:center; gap:6px;
-}
-.audit-btn-header:hover { background:rgba(255,255,255,.30); color:#fff; text-decoration:none; }
-.audit-btn-header.audit-btn-danger { background:rgba(220,53,69,.28); border-color:rgba(255,255,255,.55); }
-.audit-btn-header.audit-btn-danger:hover { background:rgba(220,53,69,.48); }
-
 /* Contenido del modal "Limpiar auditoría" (dentro de SweetAlert, tema oscuro) */
 .aud-limp-wrap { text-align:left; }
 .aud-limp-desc {
@@ -89,6 +96,22 @@
 .aud-limp-meses-input:focus { outline:none; border-color:#8b7dff; }
 .aud-limp-meses-input:disabled { opacity:.4; cursor:not-allowed; }
 
+/* Badges tipo */
+.aud-tipo-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: .72rem; font-weight: 700;
+    padding: 3px 10px; border-radius: 99px; white-space: nowrap;
+}
+.aud-tipo-resumen  { background: #ede9fe; color: #583AFF; }
+.aud-tipo-pregunta { background: #fce7f3; color: #be185d; }
+
+/* Celda pregunta truncada */
+.aud-pregunta-cell {
+    max-width: 260px; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+    cursor: default; color: #4b5563; display: block;
+}
+
 /* Botón ver */
 .aud-btn-ver {
     background: #eef2ff; border: 1px solid #c7d2fe;
@@ -98,16 +121,49 @@
 }
 .aud-btn-ver:hover { background: #e0e7ff; }
 
-/* Bloque pregunta en SweetAlert */
-.ia-pregunta-block {
-    background: #eef2ff; border-left: 4px solid #583AFF;
-    border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;
+/* ===== Modal "Respuesta del Asistente IA" (SweetAlert2, compacto) ===== */
+.ia-resp-popup.swal2-popup { padding: 1rem 1.15rem 1.1rem; border-radius: 16px; }
+.ia-resp-popup .swal2-title { font-size: 1rem; font-weight: 700; padding: 0 2rem .1rem 0; margin: 0; text-align: left; }
+.ia-resp-popup .swal2-html-container { margin: .7rem 0 0; padding: 0; font-size: .85rem; overflow: visible; }
+.ia-resp-popup .swal2-close { top: .5rem; right: .55rem; font-size: 1.5rem; }
+
+.ia-dt { text-align: left; color: #E9E7F6; }
+.ia-dt-meta { display: flex; flex-wrap: wrap; gap: .35rem; }
+.ia-dt-chip {
+    display: inline-flex; align-items: center; gap: .35rem; max-width: 100%;
+    font: 500 .72rem/1 -apple-system, "Segoe UI", system-ui, sans-serif; padding: .3rem .6rem; border-radius: 999px;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); color: #cfcbe6;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.ia-pregunta-block .ia-pregunta-label {
-    font-size: .75rem; font-weight: 700; letter-spacing: .07em;
-    text-transform: uppercase; color: #583AFF; margin-bottom: 4px;
+.ia-dt-chip i { font-size: .72rem; opacity: .8; }
+.ia-dt-chip.tipo-resumen  { color: #c6bfff; border-color: rgba(139,125,255,.45); background: rgba(139,125,255,.16); font-weight: 700; }
+.ia-dt-chip.tipo-pregunta { color: #f9a8d4; border-color: rgba(244,114,182,.45); background: rgba(244,114,182,.14); font-weight: 700; }
+
+.ia-dt-sec { margin-top: .75rem; }
+.ia-dt-lbl { font: 700 .66rem/1 inherit; letter-spacing: .07em; text-transform: uppercase; color: #9993bd; margin-bottom: .35rem; display: flex; align-items: center; gap: .4rem; }
+.ia-dt-q {
+    background: rgba(88,58,255,.14); border-left: 3px solid #8b7dff; border-radius: 0 8px 8px 0;
+    padding: .5rem .75rem; color: #fff; font-weight: 500; font-size: .86rem; line-height: 1.45;
+    max-height: 4.9rem; overflow: auto; word-break: break-word;
 }
-.ia-pregunta-block .ia-pregunta-texto { color: #1e1b4b; font-weight: 500; font-size: .97rem; }
+.ia-dt-filtros { margin-top: .5rem; font-size: .74rem; color: #9993bd; display: flex; gap: .4rem; align-items: flex-start; }
+.ia-dt-filtros i { margin-top: .15rem; }
+
+.ia-dt-resp {
+    background: #fff; color: #374151; border-radius: 10px; padding: .75rem .95rem;
+    max-height: 46vh; overflow-y: auto; font-size: .84rem; line-height: 1.55;
+}
+.ia-dt-resp h3, .ia-dt-resp h4, .ia-dt-resp h5, .ia-dt-resp h6 { font-size: .92rem; margin: .7rem 0 .25rem !important; }
+.ia-dt-resp h3:first-child, .ia-dt-resp h4:first-child { margin-top: 0 !important; }
+.ia-dt-resp p { margin-bottom: .5rem !important; }
+.ia-dt-resp strong { color: #1e1b4b; }
+.ia-dt-resp table { font-size: .8rem !important; }
+.ia-dt-foot { margin-top: .7rem; display: flex; justify-content: flex-end; }
+.ia-dt-btn {
+    display: inline-flex; align-items: center; gap: .4rem; font: 600 .74rem/1 inherit; padding: .42rem .8rem; border-radius: 7px; cursor: pointer;
+    background: rgba(139,125,255,.14); border: 1px solid rgba(139,125,255,.4); color: #c6bfff; transition: background .15s;
+}
+.ia-dt-btn:hover { background: rgba(139,125,255,.26); }
 </style>
 
 <div class="container-fluid px-4">
@@ -117,164 +173,42 @@
     @if (!embed)
     {
         <!-- Header -->
-        <div class="powerbi-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div class="powerbi-header">
             <div class="powerbi-header-content">
                 <i class="fas fa-history powerbi-header-icon"></i>
                 <h1 class="powerbi-header-title">@Resources.Strings.AudIA_PageTitle</h1>
             </div>
-            <div class="d-flex align-items-center" style="gap:8px;flex-wrap:wrap;">
-                @if (esAdmin)
-                {
-                    <button type="button" id="btnLimpiarAuditoria" class="audit-btn-header audit-btn-danger">
-                        <i class="fas fa-trash-alt"></i> @Resources.Strings.AudIA_BtnLimpiarAuditoria
-                    </button>
-                }
-            </div>
-        </div>
-    }
-    else if (esAdmin)
-    {
-        <div class="d-flex justify-content-end" style="margin-bottom:.9rem;">
-            <button type="button" id="btnLimpiarAuditoria" class="btn btn-sm btn-danger">
-                <i class="fas fa-trash-alt mr-1"></i>@Resources.Strings.AudIA_BtnLimpiarAuditoria
-            </button>
         </div>
     }
 
-    <!-- Card de filtros -->
-    <div class="filter-card">
-        <h3 class="filter-card-title">
-            <i class="fas fa-filter"></i>
-            @Resources.Strings.Common_FiltrosConsulta
-        </h3>
+    <div id="axKpis" class="ax-kpis" hidden></div>
 
-        <div class="filter-section">
-            <div class="row">
+    @Html.Partial("_AudFiltros", vm)
 
-                @if (verEmpresa)
-                {
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="audEmpresa">
-                                <i class="fas fa-building"></i>
-                                @Resources.Strings.AudIA_LabelEmpresa
-                            </label>
-                            <select id="audEmpresa" class="form-control">
-                                <option value="">@Resources.Strings.AudIA_TodasEmpresas</option>
-                                @if (empresasFiltro != null)
-                                {
-                                    foreach (var e in empresasFiltro)
-                                    {
-                                        <option value="@e.Id">@e.Nombre</option>
-                                    }
-                                }
-                            </select>
-                        </div>
-                    </div>
-                }
-
-                @if (esAdmin || esAdminEmpresa)
-                {
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="audUsuario">
-                                <i class="fas fa-user"></i>
-                                @Resources.Strings.AudIA_LabelUsuario
-                            </label>
-                            <select id="audUsuario" class="form-control">
-                                <option value="">@Resources.Strings.AudIA_TodosUsuarios</option>
-                            </select>
-                        </div>
-                    </div>
-                }
-
-                <div class="@(esAdmin ? "col-md-4" : (esAdminEmpresa ? "col-md-4" : "col-md-6"))">
-                    <div class="form-group">
-                        <label for="audTipo">
-                            <i class="fas fa-tag"></i>
-                            @Resources.Strings.AudIA_LabelTipo
-                        </label>
-                        <select id="audTipo" class="form-control">
-                            <option value="">@Resources.Strings.AudIA_TodosTipos</option>
-                            <option value="resumen">&#x2728; @Resources.Strings.AudIA_TipoResumen</option>
-                            <option value="pregunta">&#x2753; @Resources.Strings.AudIA_TipoPregunta</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="@(esAdmin || esAdminEmpresa ? "col-md-12" : "col-md-6")">
-                    <div class="form-group">
-                        <label for="audBusquedaTexto">
-                            <i class="fas fa-search"></i>
-                            @Resources.Strings.AudIA_LabelBuscar
-                        </label>
-                        <input type="text" id="audBusquedaTexto" class="form-control"
-                               placeholder="@Resources.Strings.AudIA_BuscarPlaceholder" />
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-sm-auto">
-                    <div class="form-group">
-                        <label for="audDesde">
-                            <i class="fas fa-calendar-alt"></i>
-                            @Resources.Strings.AudIA_LabelDesde
-                        </label>
-                        <input type="date" id="audDesde" class="form-control" style="width:170px;" />
-                    </div>
-                </div>
-                <div class="col-sm-auto">
-                    <div class="form-group">
-                        <label for="audHasta">
-                            <i class="fas fa-calendar-alt"></i>
-                            @Resources.Strings.AudIA_LabelHasta
-                        </label>
-                        <input type="date" id="audHasta" class="form-control" style="width:170px;" />
-                    </div>
-                </div>
-                <div class="col d-flex align-items-end pb-2">
-                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <span style="font-size:.75rem;color:#9ca3af;white-space:nowrap;">
-                            <i class="fas fa-bolt" style="font-size:.65rem;"></i> @Resources.Strings.AudIA_AccesoRapido
-                        </span>
-                        <button class="aud-date-chip" data-days="0">@Resources.Strings.AudIA_ChipHoy</button>
-                        <button class="aud-date-chip" data-days="7">@Resources.Strings.AudIA_Chip7Dias</button>
-                        <button class="aud-date-chip" data-days="30">@Resources.Strings.AudIA_Chip30Dias</button>
-                        <button class="aud-date-chip" data-month="1">@Resources.Strings.AudIA_ChipEsteMes</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="btn-group-actions">
-            <button type="button" id="btnFiltrarAuditoria" class="btn btn-modern-gradient">
-                <i class="fas fa-search mr-2"></i>@Resources.Strings.AudIA_BtnBuscar
-            </button>
-            <button type="button" id="btnLimpiarFiltros" class="btn btn-modern-secondary">
-                <i class="fas fa-eraser mr-2"></i>@Resources.Strings.AudIA_BtnLimpiar
-            </button>
-        </div>
+    <div id="axInicial" class="no-data-message">
+        <i class="fas fa-robot"></i>
+        <h4>@Resources.Strings.Ax_EstadoInicialTit</h4>
+        <p>@Resources.Strings.Ax_EstadoInicialDesc</p>
     </div>
 
     <!-- Tabla de resultados -->
     <div id="audResultadosContainer" style="display:none;">
         <div class="table-container">
             <div class="table-header">
-                <h5>
-                    <i class="fas fa-list mr-2"></i>@Resources.Strings.AudIA_TitleHistorial
-                </h5>
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span id="audStatTotal"   class="info-badge" style="background:var(--app-btn-gradient);display:none;">
-                        <i class="fas fa-list-ul mr-1"></i><span>0</span> total
-                    </span>
-                    <span id="audStatResumenes" class="info-badge" style="background:linear-gradient(135deg,#583AFF,#4a2de0);display:none;">
-                        <i class="fas fa-magic mr-1"></i><span>0</span> res&uacute;menes
-                    </span>
-                    <span id="audStatPreguntas" class="info-badge" style="background:linear-gradient(135deg,#be185d,#e879a4);display:none;">
-                        <i class="fas fa-question-circle mr-1"></i><span>0</span> preguntas
-                    </span>
-                    <span id="audPaginaInfo" style="font-size:.77rem;color:#6c757d;"></span>
+                <h5><i class="fas fa-list mr-2"></i>@Resources.Strings.AudIA_TitleHistorial</h5>
+                <div class="d-flex align-items-center" style="gap:.6rem;flex-wrap:wrap;">
+                    <span id="audStatTotal" class="info-badge">0</span>
+                    <span id="audPaginaInfo" class="ax-info"></span>
+                </div>
+                <div class="ax-toolbar">
+                    <button type="button" id="btnExportar" class="btn btn-modern-excel"><i class="fas fa-file-excel mr-1"></i>@Resources.Strings.Audit_BtnExportar</button>
+                    <button type="button" id="btnImprimir" class="btn btn-modern-secondary"><i class="fas fa-print mr-1"></i>@Resources.Strings.Audit_BtnImprimir</button>
+                    @if (esAdmin)
+                    {
+                        <button type="button" id="btnLimpiarAuditoria" class="btn btn-danger">
+                            <i class="fas fa-trash-alt mr-1"></i>@Resources.Strings.AudIA_BtnLimpiarAuditoria
+                        </button>
+                    }
                 </div>
             </div>
             <div class="table-wrapper">
@@ -311,21 +245,20 @@
 
 @section scripts {
 <script src="~/Assets/js/bufins-markdown.js"></script>
+<script src="~/Assets/js/auditoria-shared.js"></script>
 <script>
 $(document).ready(function () {
 
     var esAdminJS        = @(esAdmin ? "true" : "false");
     var esAdminEmpresaJS = @(esAdminEmpresa ? "true" : "false");
     var verEmpresaJS     = @(verEmpresa ? "true" : "false");
-    var PAGE_SIZE        = 20;
+    var PAGE_SIZE        = 25;
+    var RESUMEN          = '(Resumen Gerencial)';
     var _todosRegistros  = [];
     var _filtrados       = [];
-    var _paginaActual    = 1;
 
     var _strTodosUsuarios  = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_TodosUsuarios))';
     var _strErrorHistorial = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_JS_ErrorHistorial))';
-    var _strMostrando      = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_Mostrando))';
-    var _strDe             = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_De))';
     var _strBadgeResumen   = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_BadgeResumen))';
     var _strBadgePregunta  = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_BadgePregunta))';
     var _strResumenAuto    = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_ResumenAuto))';
@@ -335,6 +268,22 @@ $(document).ready(function () {
     var _strVer            = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_ThVer))';
     var _strError          = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error))';
     var _strExito          = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Exito))';
+    var _strTotal          = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_TotalRegistros))';
+    var _strTipo           = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LabelTipo))';
+    var _strTabla          = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Ax_Tabla))';
+    var _strThFecha        = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_ThFecha))';
+    var _strThUsuario      = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_ThUsuario))';
+    var _strThEmpresa      = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_ThEmpresa))';
+    var _strThTokens       = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_ThTokens))';
+    var _strThFilas        = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_ThFilas))';
+    var _strCopiar         = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Copiar))';
+    var _strCopiado        = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Copiado))';
+    var _strFiltros        = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Ax_Filtros))';
+    var _strKConsultas     = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Ax_K_Consultas))';
+    var _strKUsuarios      = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Ax_K_Usuarios))';
+    var _strKTokens        = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Ax_K_Tokens))';
+    var _strKUtiles        = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Ax_K_Utiles))';
+    var _strTodasTablas    = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Ax_TodasTablas))';
 
     var _limp = {
         titulo:          '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LimpiarTitulo))',
@@ -353,21 +302,44 @@ $(document).ready(function () {
         errorMsg:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudIA_LimpiarError))'
     };
 
-    /* ── Carga inicial ── */
-    consultarServidor();
-    if (esAdminEmpresaJS && !esAdminJS) cargarUsuarios(null);
+    function esc(s) { return $('<div>').text(s == null ? '' : s).html(); }
 
-    /* ── Botones ── */
-    $('#btnFiltrarAuditoria').on('click', consultarServidor);
-    $('#btnLimpiarFiltros').on('click', function () {
-        $('#audEmpresa').val('');
-        $('#audUsuario').html('<option value="">' + _strTodosUsuarios + '</option>');
-        $('#audTipo').val('');
-        $('#audDesde,#audHasta').val('');
-        $('#audBusquedaTexto').val('');
-        $('.aud-date-chip').removeClass('active');
+    /* ── Controles ── */
+    AudKit.periodo.init();
+    AudKit.masFiltros();
+    AudKit.enter(consultarServidor);
+
+    /* ── Estado inicial: no se consulta ni se muestra nada hasta pulsar «Consultar» ──
+       (solo se cargan las opciones del selector de usuarios; no son datos de auditoría). */
+    estadoInicial();
+    if (esAdminEmpresaJS || esAdminJS) cargarUsuarios(null);
+
+    // Excepción: el enlace permanente ?ia=<id> (p. ej. desde una notificación) abre esa consulta. Puede ser anterior al
+    // período por defecto, así que se busca sin límite de fechas.
+    if (/[?&]ia=(\d+)/.test(location.search)) {
+        $('#fPeriodo .ax-chip-per[data-range="custom"]').trigger('click');
         consultarServidor();
+    }
+
+    $('#btnConsultar').on('click', consultarServidor);
+    $('#btnLimpiar').on('click', function () {
+        AudKit.filtros.limpiar();
+        if (esAdminJS || esAdminEmpresaJS) cargarUsuarios(null);
+        estadoInicial();
     });
+    $('#btnImprimir').on('click', function () { AudKit.imprimir('#audResultadosContainer .table-container', document.title); });
+    $('#btnExportar').on('click', function () {
+        var r = AudKit.periodo.rango();
+        window.location = '@Url.Action("ExportarExcel", "AuditoriaConsultasIA")' + '?' + $.param({
+            idEmpresa: $('#fEmpresa').val() || '', idUsuario: $('#fUsuario').val() || '',
+            desde: r.desde, hasta: r.hasta,
+            tipo: $('#fTipo').val() || '', tabla: $('#fTabla').val() || '',
+            valoracion: $('#fValoracion').val() || '', texto: $.trim($('#fTexto').val())
+        });
+    });
+
+    /* ── Empresa cambia → recargar usuarios ── */
+    $('#fEmpresa').on('change', function () { cargarUsuarios($(this).val() || null); });
 
     /* ── Limpiar auditoría (solo Super Admin) ── */
     $('#btnLimpiarAuditoria').on('click', function () {
@@ -471,7 +443,7 @@ $(document).ready(function () {
                                 title: _strExito,
                                 text: _limp.exito.replace('{0}', r.eliminados)
                             });
-                            consultarServidor();
+                            estadoInicial();
                         } else {
                             Swal.fire({ icon: 'error', title: _strError, text: (r && r.message) || _limp.errorMsg });
                         }
@@ -484,65 +456,26 @@ $(document).ready(function () {
         });
     });
 
-    /* ── Filtros locales ── */
-    $('#audTipo').on('change', aplicarFiltrosLocales);
-    $('#audBusquedaTexto').on('input', aplicarFiltrosLocales);
-
-    /* ── Empresa cambia → recargar usuarios ── */
-    $('#audEmpresa').on('change', function () { cargarUsuarios($(this).val() || null); });
-
-    /* ── Chips de acceso rápido ── */
-    $(document).on('click', '.aud-date-chip', function () {
-        var $chip = $(this);
-        if ($chip.hasClass('active')) {
-            $chip.removeClass('active');
-            $('#audDesde,#audHasta').val('');
-            return;
-        }
-        $('.aud-date-chip').removeClass('active');
-        $chip.addClass('active');
-
-        var today = new Date();
-        var pad   = function (n) { return n < 10 ? '0' + n : '' + n; };
-        var fmt   = function (d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
-        var hasta = fmt(today);
-        var days  = $chip.data('days');
-        var month = $chip.data('month');
-        var desde;
-
-        if (days !== undefined) {
-            var d = new Date(today);
-            d.setDate(d.getDate() - parseInt(days, 10));
-            desde = fmt(d);
-        } else if (month) {
-            desde = fmt(new Date(today.getFullYear(), today.getMonth(), 1));
-        }
-
-        $('#audDesde').val(desde);
-        $('#audHasta').val(hasta);
-    });
-
     /* ── Cargar usuarios ── */
     function cargarUsuarios(idEmpresa) {
         var params = {};
         if (idEmpresa) params.idEmpresa = idEmpresa;
         $.get('@Url.Action("ObtenerUsuariosAuditoria","AuditoriaConsultasIA")', params, function (lista) {
-            var sel = $('#audUsuario').html('<option value="">' + _strTodosUsuarios + '</option>');
+            var sel = $('#fUsuario').html('<option value="">' + _strTodosUsuarios + '</option>');
             $.each(lista, function (i, u) { sel.append($('<option>').val(u.Id).text(u.Nombre)); });
         });
     }
 
-    /* ── Consulta al servidor ── */
+    /* ── Consulta al servidor (empresa, usuario, período) + filtros locales (tabla, tipo, valoración, texto) ── */
     function consultarServidor() {
         var params  = {};
-        var empresa = $('#audEmpresa').val();
-        var usuario = $('#audUsuario').val();
-        var desde   = $('#audDesde').val();
-        var hasta   = $('#audHasta').val();
+        var empresa = $('#fEmpresa').val();
+        var usuario = $('#fUsuario').val();
+        var r       = AudKit.periodo.rango();
         if (empresa) params.idEmpresa = empresa;
         if (usuario) params.idUsuario = usuario;
-        if (desde)   params.desde    = desde;
-        if (hasta)   params.hasta    = hasta;
+        if (r.desde) params.desde     = r.desde;
+        if (r.hasta) params.hasta     = r.hasta;
 
         mostrarEsqueleto();
 
@@ -552,6 +485,7 @@ $(document).ready(function () {
             data : params,
             success: function (registros) {
                 _todosRegistros = registros || [];
+                poblarTablas();
                 aplicarFiltrosLocales();
                 abrirDeepLinkIA();
             },
@@ -560,6 +494,17 @@ $(document).ready(function () {
                 Swal.fire({ icon: 'error', title: _strError, text: _strErrorHistorial });
             }
         });
+    }
+
+    /* Las tablas analizadas disponibles salen de los registros consultados; se conserva la selección si sigue existiendo. */
+    function poblarTablas() {
+        var $s = $('#fTabla');
+        var actual = $s.val() || '';
+        var nombres = {};
+        _todosRegistros.forEach(function (r) { if (r.NombreTabla) nombres[r.NombreTabla] = 1; });
+        $s.empty().append($('<option value="">').text(_strTodasTablas));
+        Object.keys(nombres).sort().forEach(function (n) { $s.append($('<option>').val(n).text(n)); });
+        if (actual && nombres[actual]) $s.val(actual);
     }
 
     /* ── Enlace permanente: ?ia=<id> abre esa consulta al cargar ── */
@@ -571,42 +516,49 @@ $(document).ready(function () {
         _deepLinkIAHecho = true;
         for (var i = 0; i < _todosRegistros.length; i++) {
             if (String(_todosRegistros[i].Id) === m[1]) {
-                verRespuesta(_todosRegistros[i].Pregunta, _todosRegistros[i].Respuesta, _todosRegistros[i].Filtros);
+                verRespuesta(_todosRegistros[i]);
                 return;
             }
         }
     }
 
+    function estadoInicial() {
+        _todosRegistros = []; _filtrados = [];
+        $('#audTbody').empty();
+        $('#audPaginacion').empty();
+        $('#audPaginaInfo').text('');
+        $('#audResultadosContainer').hide();
+        $('#audSinResultados').hide();
+        AudKit.kpis.render($('#axKpis'), []);
+        AudKit.chips.render($('#axChips'), []);
+        $('#axInicial').show();
+    }
+
     /* ── Filas "esqueleto" mientras se consulta ── */
     function mostrarEsqueleto() {
-        var columnas = @(esAdmin ? 8 : 7);
-        var tbody = $('#audTbody').empty();
-
-        for (var r = 0; r < 6; r++) {
-            var row = $('<tr>').addClass('skeleton-row');
-            for (var c = 0; c < columnas; c++) {
-                var ancho = 45 + Math.floor(Math.random() * 45);
-                row.append($('<td>').append($('<div>').addClass('skeleton-bar').css('width', ancho + '%')));
-            }
-            tbody.append(row);
-        }
-
+        AudKit.esqueleto($('#audTbody'), @(verEmpresa ? 10 : 9), 6);
+        $('#axInicial').hide();
         $('#audSinResultados').hide();
-        $('#audStatTotal,#audStatResumenes,#audStatPreguntas').hide();
         $('#audPaginaInfo').text('');
         $('#audPaginacion').empty();
         $('#audResultadosContainer').show();
     }
 
-    /* ── Filtros locales: tipo + búsqueda ── */
+    /* ── Filtros locales ── */
     function aplicarFiltrosLocales() {
-        var tipo  = $('#audTipo').val();
-        var texto = ($('#audBusquedaTexto').val() || '').toLowerCase().trim();
+        var tipo  = $('#fTipo').val();
+        var tabla = $('#fTabla').val();
+        var val   = $('#fValoracion').val();
+        var texto = ($.trim($('#fTexto').val()) || '').toLowerCase();
 
         _filtrados = _todosRegistros.filter(function (r) {
-            var esResumen = r.Pregunta === '(Resumen Gerencial)';
+            var esResumen = r.Pregunta === RESUMEN;
             if (tipo === 'resumen'  && !esResumen) return false;
             if (tipo === 'pregunta' &&  esResumen) return false;
+            if (tabla && r.NombreTabla !== tabla) return false;
+            if (val === '1'   && r.Valoracion !== 1) return false;
+            if (val === '0'   && r.Valoracion !== 0) return false;
+            if (val === 'sin' && r.Valoracion !== null && r.Valoracion !== undefined) return false;
             if (texto) {
                 var match =
                     (r.Pregunta      || '').toLowerCase().indexOf(texto) >= 0 ||
@@ -619,37 +571,37 @@ $(document).ready(function () {
             return true;
         });
 
-        actualizarStats();
-        _paginaActual = 1;
+        AudKit.filtros.chips(consultarServidor);
+        pintarKpis();
         renderPagina(1);
     }
 
-    /* ── Stats ── */
-    function actualizarStats() {
-        if (_todosRegistros.length === 0) return;
-        var total     = _filtrados.length;
-        var resumenes = _filtrados.filter(function (r) { return r.Pregunta === '(Resumen Gerencial)'; }).length;
-        var preguntas = total - resumenes;
-
-        $('#audStatTotal span').text(total);
-        $('#audStatResumenes span').text(resumenes);
-        $('#audStatPreguntas span').text(preguntas);
-        $('#audStatTotal,#audStatResumenes,#audStatPreguntas').show();
+    /* ── Tarjetas de resumen ── */
+    function pintarKpis() {
+        var usuarios = {}, tokens = 0, valoradas = 0, utiles = 0;
+        _filtrados.forEach(function (r) {
+            usuarios[r.NombreUsuario] = 1;
+            tokens += Number(r.TokensTotal || 0);
+            if (r.Valoracion === 1 || r.Valoracion === 0) { valoradas++; if (r.Valoracion === 1) utiles++; }
+        });
+        AudKit.kpis.render($('#axKpis'), [
+            { label: _strKConsultas, valor: AudKit.num(_filtrados.length) },
+            { label: _strKUsuarios,  valor: AudKit.num(Object.keys(usuarios).length) },
+            { label: _strKTokens,    valor: AudKit.num(tokens) },
+            { label: _strKUtiles,    valor: valoradas ? Math.round(utiles * 100 / valoradas) + ' %' : '—' }
+        ]);
     }
 
     /* ── Render tabla paginada ── */
     function renderPagina(pagina) {
         var totalPags = Math.max(1, Math.ceil(_filtrados.length / PAGE_SIZE));
         pagina = Math.min(Math.max(1, pagina), totalPags);
-        _paginaActual = pagina;
 
         var inicio = (pagina - 1) * PAGE_SIZE;
         var slice  = _filtrados.slice(inicio, inicio + PAGE_SIZE);
 
-        $('#audPaginaInfo').text(
-            _filtrados.length === 0 ? '' :
-            _strMostrando + ' ' + (inicio + 1) + '-' + Math.min(inicio + PAGE_SIZE, _filtrados.length) + ' ' + _strDe + ' ' + _filtrados.length
-        );
+        $('#audStatTotal').text(AudKit.num(_filtrados.length) + ' ' + _strTotal);
+        $('#audPaginaInfo').text(AudKit.pager.info(pagina, PAGE_SIZE, _filtrados.length));
 
         var tbody = $('#audTbody').empty();
 
@@ -664,29 +616,27 @@ $(document).ready(function () {
         $('#audResultadosContainer').show();
 
         $.each(slice, function (i, r) {
-            var esResumen = r.Pregunta === '(Resumen Gerencial)';
+            var esResumen = r.Pregunta === RESUMEN;
 
             var tipoBadge = esResumen
                 ? '<span class="aud-tipo-badge aud-tipo-resumen"><i class="fas fa-magic"></i> ' + _strBadgeResumen + '</span>'
                 : '<span class="aud-tipo-badge aud-tipo-pregunta"><i class="fas fa-question-circle"></i> ' + _strBadgePregunta + '</span>';
 
             var preguntaHtml = esResumen
-                ? '<em style="color:#9ca3af;font-size:.8rem;">' + _strResumenAuto + '</em>'
-                : '<span class="aud-pregunta-cell" title="' + $('<div>').text(r.Pregunta).html() + '">'
-                    + $('<div>').text(r.Pregunta).html()
-                  + '</span>';
+                ? '<em style="color:#6b7280;font-size:.8rem;">' + _strResumenAuto + '</em>'
+                : '<span class="aud-pregunta-cell" title="' + esc(r.Pregunta) + '">' + esc(r.Pregunta) + '</span>';
 
-            var btnVer = $('<button class="aud-btn-ver">')
+            var btnVer = $('<button type="button" class="aud-btn-ver">')
                 .html('<i class="fas fa-eye mr-1"></i>' + _strVer)
-                .on('click', function () { verRespuesta(r.Pregunta, r.Respuesta, r.Filtros); });
+                .on('click', function () { verRespuesta(r); });
 
             var tr = $('<tr>');
             tr.append($('<td>').css({ whiteSpace: 'nowrap', fontSize: '.8rem', color: '#6b7280' }).text(r.FechaPregunta));
             tr.append($('<td>').css('font-weight', '600').text(r.NombreUsuario));
             if (verEmpresaJS) tr.append($('<td>').text(r.NombreEmpresa));
             tr.append($('<td>').html(
-                '<span style="font-weight:600;">' + $('<div>').text(r.NombreTabla).html() + '</span>'
-                + (r.Filtros ? '<br><small style="color:#9ca3af;font-size:.74rem;">' + $('<div>').text(r.Filtros).html() + '</small>' : '')
+                '<span style="font-weight:600;">' + esc(r.NombreTabla) + '</span>'
+                + (r.Filtros ? '<br><small style="color:#6b7280;font-size:.74rem;">' + esc(r.Filtros) + '</small>' : '')
             ));
             tr.append($('<td>').html(tipoBadge));
             tr.append($('<td>').html(preguntaHtml));
@@ -694,78 +644,75 @@ $(document).ready(function () {
             tr.append($('<td class="text-center">').css({ fontSize: '.8rem', color: '#6b7280' }).text(r.TokensTotal ? Number(r.TokensTotal).toLocaleString() : '—'));
             tr.append($('<td class="text-center">').html(
                 r.Valoracion === 1 ? '<i class="fas fa-thumbs-up" style="color:#22c55e;"></i>'
-                : (r.Valoracion === 0 ? '<i class="fas fa-thumbs-down" style="color:#ef4444;"></i>' : '<span style="color:#d1d5db;">—</span>')));
+                : (r.Valoracion === 0 ? '<i class="fas fa-thumbs-down" style="color:#ef4444;"></i>' : '<span style="color:#9ca3af;">—</span>')));
             tr.append($('<td class="text-center">').append(btnVer));
             tbody.append(tr);
         });
 
-        renderPaginacion(totalPags, pagina);
+        AudKit.pager.render($('#audPaginacion'), pagina, totalPags, renderPagina);
     }
 
-    /* ── Paginación ── */
-    function renderPaginacion(totalPags, actual) {
-        var $pag = $('#audPaginacion').empty();
-        if (totalPags <= 1) return;
+    /* ── Ver respuesta completa (modal compacto) ── */
+    function verRespuesta(r) {
+        var esResumen = r.Pregunta === RESUMEN;
 
-        function btn(label, dest, activo, disabled) {
-            return $('<button>')
-                .addClass('btn-pagination' + (activo ? ' active' : ''))
-                .prop('disabled', disabled)
-                .html(label)
-                .on('click', function () { renderPagina(dest); });
+        function chip(ico, txt, titulo, cls) {
+            return txt ? '<span class="ia-dt-chip ' + (cls || '') + '" title="' + esc(titulo || '') + '"><i class="fas ' + ico + '"></i>' + esc(txt) + '</span>' : '';
         }
+        var val = r.Valoracion === 1 ? '<span class="ia-dt-chip" style="color:#86efac;border-color:rgba(134,239,172,.4);"><i class="fas fa-thumbs-up"></i></span>'
+                : (r.Valoracion === 0 ? '<span class="ia-dt-chip" style="color:#fca5a5;border-color:rgba(252,165,165,.4);"><i class="fas fa-thumbs-down"></i></span>' : '');
 
-        $pag.append(btn('<i class="fas fa-chevron-left"></i>', actual - 1, false, actual === 1));
-
-        var desde = Math.max(1, actual - 2);
-        var hasta = Math.min(totalPags, actual + 2);
-        if (desde > 1) {
-            $pag.append(btn('1', 1, false, false));
-            if (desde > 2) $pag.append($('<span class="pagination-dots">').text('...'));
-        }
-        for (var p = desde; p <= hasta; p++) { $pag.append(btn(p, p, p === actual, false)); }
-        if (hasta < totalPags) {
-            if (hasta < totalPags - 1) $pag.append($('<span class="pagination-dots">').text('...'));
-            $pag.append(btn(totalPags, totalPags, false, false));
-        }
-
-        $pag.append(btn('<i class="fas fa-chevron-right"></i>', actual + 1, false, actual === totalPags));
-    }
-
-    /* ── Ver respuesta completa ── */
-    function verRespuesta(pregunta, respuesta, filtros) {
-        var esResumen = pregunta === '(Resumen Gerencial)';
-        var html = '';
+        var html = '<div class="ia-dt">'
+            + '<div class="ia-dt-meta">'
+            +   (esResumen ? chip('fa-magic', _strBadgeResumen, _strTipo, 'tipo-resumen') : chip('fa-question-circle', _strBadgePregunta, _strTipo, 'tipo-pregunta'))
+            +   chip('fa-table', r.NombreTabla, _strTabla)
+            +   chip('fa-user', r.NombreUsuario, _strThUsuario)
+            +   (verEmpresaJS ? chip('fa-building', r.NombreEmpresa, _strThEmpresa) : '')
+            +   chip('fa-calendar-alt', r.FechaPregunta, _strThFecha)
+            +   (r.TokensTotal ? chip('fa-coins', Number(r.TokensTotal).toLocaleString(), _strThTokens) : '')
+            +   (r.FilasAnalizadas ? chip('fa-stream', Number(r.FilasAnalizadas).toLocaleString(), _strThFilas) : '')
+            +   val
+            + '</div>';
 
         if (!esResumen) {
-            html += '<div class="ia-pregunta-block">'
-                  + '<div class="ia-pregunta-label"><i class="fas fa-question-circle mr-1"></i>' + _strPreguntaRealiz + '</div>'
-                  + '<div class="ia-pregunta-texto">' + $('<div>').text(pregunta).html() + '</div>'
-                  + '</div>';
-        } else {
-            html += '<div class="ia-pregunta-block" style="background:#f8f9fc;border-left-color:#9ca3af;">'
-                  + '<div class="ia-pregunta-label" style="color:#6b7280;"><i class="fas fa-magic mr-1"></i>Tipo</div>'
-                  + '<div style="color:#2d3748;font-weight:600;">' + _strTipoRG + '</div>'
-                  + '</div>';
+            html += '<div class="ia-dt-sec"><div class="ia-dt-lbl"><i class="fas fa-question-circle"></i>' + _strPreguntaRealiz + '</div>'
+                  + '<div class="ia-dt-q">' + esc(r.Pregunta) + '</div></div>';
+        }
+        if (r.Filtros) {
+            html += '<div class="ia-dt-filtros"><i class="fas fa-filter"></i><span>' + esc(r.Filtros) + '</span></div>';
         }
 
-        if (filtros) {
-            html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:8px 12px;margin-bottom:14px;font-size:.8rem;color:#166534;">'
-                  + '<i class="fas fa-filter mr-1"></i><strong>Filtros:</strong> ' + $('<div>').text(filtros).html()
-                  + '</div>';
-        }
-
-        html += '<div class="ia-response-body" style="max-height:55vh;overflow-y:auto;text-align:left;">'
-              + renderMarkdown(respuesta)
+        html += '<div class="ia-dt-sec"><div class="ia-dt-resp">' + renderMarkdown(r.Respuesta) + '</div></div>'
+              + '<div class="ia-dt-foot"><button type="button" class="ia-dt-btn" id="iaCopiarResp"><i class="far fa-copy"></i>' + _strCopiar + '</button></div>'
               + '</div>';
 
         Swal.fire({
             title            : _strTitleRespuesta,
             html             : html,
-            width            : '820px',
+            width            : '640px',
             showCloseButton  : true,
             showConfirmButton: false,
-            customClass      : { popup: 'text-start' }
+            customClass      : { popup: 'ia-resp-popup' },
+            didOpen          : function (popup) {
+                var btn = popup.querySelector('#iaCopiarResp');
+                if (!btn) return;
+                btn.addEventListener('click', function () {
+                    var texto = r.Respuesta || '';
+                    var ok = function () {
+                        var prev = btn.innerHTML;
+                        btn.innerHTML = '<i class="fas fa-check"></i>' + _strCopiado;
+                        setTimeout(function () { btn.innerHTML = prev; }, 1300);
+                    };
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(texto).then(ok, function () {});
+                    } else {
+                        var ta = document.createElement('textarea');
+                        ta.value = texto; document.body.appendChild(ta); ta.select();
+                        try { document.execCommand('copy'); ok(); } catch (e) {}
+                        document.body.removeChild(ta);
+                    }
+                });
+            }
         });
     }
 

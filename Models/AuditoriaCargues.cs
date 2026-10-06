@@ -11,5 +11,7 @@ namespace bufinscustomers.Models
         public int IdEmpresa { get; set; }
         public string NombreEmpresa { get; set; }
         public string NombreArchivo { get; set; }
+        /// <summary>Escenario del cargue (Sql/004). null si la BD aún no tiene la columna o la fila es anterior.</summary>
+        public int? IdEscenario { get; set; }
     }
 }

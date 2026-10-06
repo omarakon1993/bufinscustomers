@@ -1,77 +1,57 @@
-﻿@using bufinscustomers.Models
+@using bufinscustomers.Models
 @using System.Linq
+@using System.Web.Mvc
 @{
     ViewBag.Title = Resources.Strings.Nav_PageTitle;
     if ((bool)(ViewBag.Embed ?? false)) { Layout = "~/Views/Shared/_LayoutFragment.cshtml"; }
     var empresas = ViewBag.Empresas as System.Collections.Generic.List<Empresas> ?? new System.Collections.Generic.List<Empresas>();
-    var usuarios = ViewBag.Usuarios as System.Collections.Generic.List<System.Web.Mvc.SelectListItem> ?? new System.Collections.Generic.List<System.Web.Mvc.SelectListItem>();
-    var opcionesMenu = ViewBag.OpcionesMenu as System.Collections.Generic.List<System.Web.Mvc.SelectListItem> ?? new System.Collections.Generic.List<System.Web.Mvc.SelectListItem>();
+    var usuarios = ViewBag.Usuarios as System.Collections.Generic.List<SelectListItem> ?? new System.Collections.Generic.List<SelectListItem>();
+    var opcionesMenu = ViewBag.OpcionesMenu as System.Collections.Generic.List<SelectListItem> ?? new System.Collections.Generic.List<SelectListItem>();
     var esSuper = (bool)(ViewBag.EsSuperAdmin ?? false);
+
+    // Panel de filtros UNIFORME (mismo orden en las 4 pestañas): Empresa · Usuario · campos propios (Página, Rol).
+    var vm = new AudFiltrosVM { PlaceholderBusqueda = Resources.Strings.Nav_BuscarPlaceholder, PeriodoDefecto = "30" };
+    // El filtro de empresa se muestra al Super Admin y también al Admin de Empresa cuyo grupo tenga más de una
+    // empresa (acotado a su grupo por el controlador).
+    if (esSuper || empresas.Count > 1)
+    {
+        vm.Campos.Add(new AudCampo
+        {
+            Id = "fEmpresa", Etiqueta = Resources.Strings.Nav_LabelEmpresa, Icono = "fa-building",
+            TextoTodos = Resources.Strings.Audit_TodasEmpresas,
+            Opciones = empresas.Select(e => new SelectListItem { Value = e.Id.ToString(), Text = e.Nombre }).ToList()
+        });
+    }
+    vm.Campos.Add(new AudCampo
+    {
+        Id = "fUsuario", Etiqueta = Resources.Strings.Nav_LabelUsuario, Icono = "fa-user",
+        TextoTodos = Resources.Strings.Audit_TodosUsuarios, Opciones = usuarios
+    });
+    vm.Campos.Add(new AudCampo
+    {
+        Id = "fOpcion", Propio = true, Etiqueta = Resources.Strings.Nav_LabelOpcion, Icono = "fa-bars",
+        TextoTodos = Resources.Strings.Common_Todos, Opciones = opcionesMenu
+    });
+    if (esSuper)
+    {
+        vm.Campos.Add(new AudCampo
+        {
+            Id = "fRol", Propio = true, Etiqueta = Resources.Strings.Nav_LabelRol, Icono = "fa-user-shield",
+            TextoTodos = Resources.Strings.Common_Todos,
+            Opciones = new System.Collections.Generic.List<SelectListItem>
+            {
+                new SelectListItem { Value = "0", Text = Resources.Strings.Nav_Rol0 },
+                new SelectListItem { Value = "1", Text = Resources.Strings.Nav_Rol1 },
+                new SelectListItem { Value = "2", Text = Resources.Strings.Nav_Rol2 }
+            }
+        });
+    }
 }
 
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/auditoria-shared.css" rel="stylesheet" />
 
 <style>
-    /* ---- Control segmentado con "thumb" deslizante (misma pastilla que se desplaza) ----
-       Mismo lenguaje visual que la cápsula de pestañas de AuditoriaHub (.audhub-seg). */
-    .nav-seg {
-        position: relative;
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 6px;
-        padding: 6px;
-        background: #eef0f4;
-        border: 1px solid #e3e6eb;
-        border-radius: 999px;
-        margin: 0 0 1.15rem;
-    }
-    .nav-seg-thumb {
-        position: absolute;
-        left: 0; top: 0;
-        width: 0; height: 0;
-        border-radius: 999px;
-        background: linear-gradient(90deg,#6366F1 0%,#3B82F6 35%,#06B6D4 70%,#01E1D7 100%);
-        box-shadow: 0 8px 20px -8px rgba(59,130,246,.6);
-        transform: translate(0, 0);
-        transition: transform .42s cubic-bezier(.32,.72,0,1),
-                    width     .42s cubic-bezier(.32,.72,0,1),
-                    height    .42s cubic-bezier(.32,.72,0,1);
-        will-change: transform, width, height;
-        pointer-events: none;
-        z-index: 0;
-    }
-    .nav-seg-thumb.no-anim { transition: none; }
-    .nav-seg-btn {
-        position: relative;
-        z-index: 1;
-        border: 0;
-        background: transparent;
-        color: #5b6472;
-        font-size: .9rem;
-        font-weight: 600;
-        padding: .62rem .6rem;
-        border-radius: 999px;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: .5rem;
-        white-space: nowrap;
-        transition: color .34s ease;
-        -webkit-tap-highlight-color: transparent;
-    }
-    .nav-seg-btn:hover:not(.is-active) { color: #3b3f66; }
-    .nav-seg-btn.is-active { color: #fff; }
-    .nav-seg-btn i { font-size: .9em; }
-
-    @@media (max-width: 820px) {
-        .nav-seg { grid-template-columns: repeat(2, 1fr); border-radius: 22px; }
-        .nav-seg-btn { border-radius: 18px; font-size: .84rem; }
-    }
-    @@media (prefers-reduced-motion: reduce) {
-        .nav-seg-thumb { transition: none; }
-    }
-
     .rol-badge { font-size: .72rem; padding: .2em .55em; border-radius: 999px; background: #eef0f4; color: #4f5a6d; white-space: nowrap; }
     .rol-badge.r2 { background: #e6e0f7; color: #5b3aa6; }
     .rol-badge.r1 { background: #e0eef0; color: #0c6f79; }
@@ -94,108 +74,22 @@
         </div>
     }
 
-    <div class="filter-card">
-        <h3 class="filter-card-title"><i class="fas fa-filter"></i> @Resources.Strings.Common_FiltrosConsulta</h3>
-        <div class="filter-section">
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label><i class="fas fa-user mr-1"></i>@Resources.Strings.Nav_LabelUsuario</label>
-                        <select id="fUsuario" class="form-control">
-                            <option value="">@Resources.Strings.Common_Todos</option>
-                            @foreach (var u in usuarios)
-                            {
-                                <option value="@u.Value">@u.Text</option>
-                            }
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label><i class="fas fa-bars mr-1"></i>@Resources.Strings.Nav_LabelOpcion</label>
-                        <select id="fOpcion" class="form-control">
-                            <option value="">@Resources.Strings.Common_Todos</option>
-                            @foreach (var o in opcionesMenu)
-                            {
-                                <option value="@o.Value">@o.Text</option>
-                            }
-                        </select>
-                    </div>
-                </div>
-                @* El filtro de empresa se muestra al Super Admin y también al Admin de Empresa
-                   cuyo grupo tenga más de una empresa (acotado a su grupo por el controlador). *@
-                @if (esSuper || empresas.Count > 1)
-                {
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label><i class="fas fa-building mr-1"></i>@Resources.Strings.Nav_LabelEmpresa</label>
-                            <select id="fEmpresa" class="form-control">
-                                <option value="">@Resources.Strings.Common_Todos</option>
-                                @foreach (var e in empresas)
-                                {
-                                    <option value="@e.Id">@e.Nombre</option>
-                                }
-                            </select>
-                        </div>
-                    </div>
-                }
-                @if (esSuper)
-                {
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label><i class="fas fa-user-shield mr-1"></i>@Resources.Strings.Nav_LabelRol</label>
-                            <select id="fRol" class="form-control">
-                                <option value="">@Resources.Strings.Common_Todos</option>
-                                <option value="0">@Resources.Strings.Nav_Rol0</option>
-                                <option value="1">@Resources.Strings.Nav_Rol1</option>
-                                <option value="2">@Resources.Strings.Nav_Rol2</option>
-                            </select>
-                        </div>
-                    </div>
-                }
-            </div>
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label><i class="fas fa-calendar mr-1"></i>@Resources.Strings.Nav_LabelDesde</label>
-                        <input type="date" id="fDesde" class="form-control" />
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label><i class="fas fa-calendar mr-1"></i>@Resources.Strings.Nav_LabelHasta</label>
-                        <input type="date" id="fHasta" class="form-control" />
-                    </div>
-                </div>
-            </div>
-            <div class="btn-group-actions">
-                <button type="button" id="btnConsultar" class="btn btn-modern-gradient">
-                    <i class="fas fa-search mr-1"></i>@Resources.Strings.Common_Consultar
-                </button>
-                <button type="button" id="btnLimpiar" class="btn btn-modern-secondary">
-                    <i class="fas fa-eraser mr-2"></i>@Resources.Strings.Common_Limpiar
-                </button>
-                <button type="button" id="btnExportar" class="btn btn-modern-excel">
-                    <i class="fas fa-file-excel mr-1"></i>@Resources.Strings.Nav_BtnExportar
-                </button>
-            </div>
-        </div>
+    @* Vista de la grilla (misma barra segmentada que el modo de la pestaña Cambios). *@
+    <div class="ax-vista ax-modo" id="navSeg" role="group">
+        <button type="button" class="is-active" data-modo="detalle"><i class="fas fa-list"></i>@Resources.Strings.Nav_TabDetalle</button>
+        <button type="button" data-modo="usuarios"><i class="fas fa-users"></i>@Resources.Strings.Nav_TabResumenUsuarios</button>
+        <button type="button" data-modo="paginas"><i class="fas fa-file-alt"></i>@Resources.Strings.Nav_TabResumenPaginas</button>
+        <button type="button" data-modo="usuariopagina"><i class="fas fa-table"></i>@Resources.Strings.Nav_TabResumenUsuarioPagina</button>
     </div>
 
-    <div class="nav-seg" id="navSeg" role="tablist">
-        <span class="nav-seg-thumb no-anim" aria-hidden="true"></span>
-        <button type="button" class="nav-seg-btn is-active" data-modo="detalle">
-            <i class="fas fa-list"></i>@Resources.Strings.Nav_TabDetalle
-        </button>
-        <button type="button" class="nav-seg-btn" data-modo="usuarios">
-            <i class="fas fa-users"></i>@Resources.Strings.Nav_TabResumenUsuarios
-        </button>
-        <button type="button" class="nav-seg-btn" data-modo="paginas">
-            <i class="fas fa-file-alt"></i>@Resources.Strings.Nav_TabResumenPaginas
-        </button>
-        <button type="button" class="nav-seg-btn" data-modo="usuariopagina">
-            <i class="fas fa-table"></i>@Resources.Strings.Nav_TabResumenUsuarioPagina
-        </button>
+    <div id="axKpis" class="ax-kpis" hidden></div>
+
+    @Html.Partial("_AudFiltros", vm)
+
+    <div id="axInicial" class="no-data-message">
+        <i class="fas fa-route"></i>
+        <h4>@Resources.Strings.Ax_EstadoInicialTit</h4>
+        <p>@Resources.Strings.Ax_EstadoInicialDesc</p>
     </div>
 
     <div id="resultadosContainer" style="display:none;">
@@ -204,7 +98,11 @@
                 <h5><i class="fas fa-list mr-2"></i>@Resources.Strings.Common_Resultados</h5>
                 <div class="d-flex align-items-center" style="gap:.6rem;flex-wrap:wrap;">
                     <span id="totalBadge" class="info-badge">0</span>
-                    <span id="paginaInfo" style="font-size:.77rem;color:#6c757d;"></span>
+                    <span id="paginaInfo" class="ax-info"></span>
+                </div>
+                <div class="ax-toolbar">
+                    <button type="button" id="btnExportar" class="btn btn-modern-excel"><i class="fas fa-file-excel mr-1"></i>@Resources.Strings.Nav_BtnExportar</button>
+                    <button type="button" id="btnImprimir" class="btn btn-modern-secondary"><i class="fas fa-print mr-1"></i>@Resources.Strings.Audit_BtnImprimir</button>
                 </div>
             </div>
             <div class="table-wrapper">
@@ -226,18 +124,18 @@
 </div>
 
 @section scripts {
+<script src="~/Assets/js/auditoria-shared.js"></script>
 <script>
 $(function () {
     var PAGE_SIZE = 25;
     var _pagina = 1;
     var _modo = 'detalle';
+    var _consultado = false;   // true tras la primera consulta: cambiar de vista vuelve a consultar solo
 
     var S = {
         error:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Nav_JS_Error))',
         errTit:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error))',
         total:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Nav_TotalRegistros))',
-        mostrando: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Mostrando))',
-        de:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_De))',
         thFecha:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Nav_ThFecha))',
         thUsuario: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Nav_ThUsuario))',
         thEmpresa: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Nav_ThEmpresa))',
@@ -249,7 +147,11 @@ $(function () {
         thPagsDist:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Nav_ThPaginasDistintas))',
         thUsrsDist:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Nav_ThUsuariosDistintos))',
         thPrimera: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Nav_ThPrimera))',
-        thUltima:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Nav_ThUltima))'
+        thUltima:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Nav_ThUltima))',
+        kVisitas:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Ax_K_Visitas))',
+        kUsuarios: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Ax_K_Usuarios))',
+        kPaginas:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Ax_K_PaginasDistintas))',
+        kTop:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Ax_K_PaginaTop))'
     };
 
     function esc(s) { return $('<div>').text(s == null ? '' : s).html(); }
@@ -260,13 +162,15 @@ $(function () {
     }
 
     function filtros() {
+        var r = AudKit.periodo.rango();
         return {
             idUsuario:  $('#fUsuario').val() || '',
             codigoMenu: $('#fOpcion').val() || '',
             idEmpresa:  $('#fEmpresa').val() || '',
             rol:        $('#fRol').val() || '',
-            desde:      $('#fDesde').val(),
-            hasta:      $('#fHasta').val()
+            texto:      $.trim($('#fTexto').val()),
+            desde:      r.desde,
+            hasta:      r.hasta
         };
     }
 
@@ -274,13 +178,29 @@ $(function () {
         detalle:       '@Url.Action("Detalle", "InformeNavegacion")',
         usuarios:      '@Url.Action("ResumenUsuarios", "InformeNavegacion")',
         paginas:       '@Url.Action("ResumenPaginas", "InformeNavegacion")',
-        usuariopagina: '@Url.Action("ResumenUsuarioPagina", "InformeNavegacion")'
+        usuariopagina: '@Url.Action("ResumenUsuarioPagina", "InformeNavegacion")',
+        resumen:       '@Url.Action("ResumenGeneral", "InformeNavegacion")'
     };
+
+    function cargarKpis() {
+        $.getJSON(URLS.resumen, filtros()).done(function (r) {
+            if (!r || !r.success) return;
+            AudKit.kpis.render($('#axKpis'), [
+                { label: S.kVisitas, valor: AudKit.num(r.visitas) },
+                { label: S.kUsuarios, valor: AudKit.num(r.usuarios) },
+                { label: S.kPaginas, valor: AudKit.num(r.paginasDistintas) },
+                { label: S.kTop, valor: r.paginaTop || '—', texto: true }
+            ]);
+        });
+    }
 
     function consultar(pagina) {
         _pagina = pagina || 1;
+        _consultado = true;
+        AudKit.filtros.chips(function () { consultar(1); });
         var data = filtros();
         if (_modo === 'detalle') { data.pagina = _pagina; data.tam = PAGE_SIZE; }
+        if (_pagina === 1) cargarKpis();
         $.getJSON(URLS[_modo], data).done(function (r) {
             if (_modo === 'detalle') renderDetalle(r);
             else if (_modo === 'usuarios') renderUsuarios(r);
@@ -293,6 +213,7 @@ $(function () {
 
     function prep(r) {
         if (!r || !r.success) { Swal.fire({ icon: 'error', title: S.errTit, text: S.error }); return false; }
+        $('#axInicial').hide();
         $('#tbody').empty();
         $('#paginacion').empty();
         if (!r.items || !r.items.length) {
@@ -317,9 +238,7 @@ $(function () {
         if (!prep(r)) return;
         head([S.thFecha, S.thUsuario, S.thEmpresa, S.thRol, S.thPagina, S.thIp, S.thNav]);
         $('#totalBadge').text(r.total.toLocaleString() + ' ' + S.total);
-        var ini = (r.pagina - 1) * PAGE_SIZE + 1;
-        var fin = Math.min(r.pagina * PAGE_SIZE, r.total);
-        $('#paginaInfo').text(S.mostrando + ' ' + ini + '–' + fin + ' ' + S.de + ' ' + r.total.toLocaleString());
+        $('#paginaInfo').text(AudKit.pager.info(r.pagina, PAGE_SIZE, r.total));
 
         var tb = $('#tbody');
         r.items.forEach(function (n) {
@@ -333,7 +252,7 @@ $(function () {
             tr.append($('<td>').text(n.Navegador || ''));
             tb.append(tr);
         });
-        renderPaginacion(r.pagina, r.totalPaginas);
+        AudKit.pager.render($('#paginacion'), r.pagina, r.totalPaginas, consultar);
     }
 
     function renderUsuarios(r) {
@@ -388,70 +307,32 @@ $(function () {
         });
     }
 
-    function renderPaginacion(actual, totalPags) {
-        var $p = $('#paginacion').empty();
-        if (totalPags <= 1) return;
-        function btn(label, dest, disabled, activo) {
-            return $('<button>')
-                .addClass('btn-pagination' + (activo ? ' active' : ''))
-                .prop('disabled', !!disabled).html(label)
-                .on('click', function () { consultar(dest); });
-        }
-        $p.append(btn('<i class="fas fa-chevron-left"></i>', actual - 1, actual === 1));
-        var desde = Math.max(1, actual - 2), hasta = Math.min(totalPags, actual + 2);
-        if (desde > 1) { $p.append(btn('1', 1, false, false)); if (desde > 2) $p.append($('<span class="pagination-dots">').text('…')); }
-        for (var i = desde; i <= hasta; i++) $p.append(btn(i, i, false, i === actual));
-        if (hasta < totalPags) { if (hasta < totalPags - 1) $p.append($('<span class="pagination-dots">').text('…')); $p.append(btn(totalPags, totalPags, false, false)); }
-        $p.append(btn('<i class="fas fa-chevron-right"></i>', actual + 1, actual === totalPags));
-    }
-
     function estadoInicial() {
+        _consultado = false;
         $('#tbody').empty(); $('#thead').empty(); $('#paginacion').empty();
         $('#paginaInfo').text(''); $('#totalBadge').text('0');
-        $('#resultadosContainer').hide(); $('#sinResultados').show();
+        $('#resultadosContainer').hide(); $('#sinResultados').hide();
+        AudKit.kpis.render($('#axKpis'), []);
+        AudKit.chips.render($('#axChips'), []);
+        $('#axInicial').show();
     }
 
-    // ── Cápsula segmentada con "thumb" deslizante ──────────────────────────
-    var $seg   = $('#navSeg');
-    var $segBtns = $seg.find('.nav-seg-btn');
-    var $thumb  = $seg.find('.nav-seg-thumb');
-
-    function moverThumb(btn, sinAnim) {
-        if (!btn) return;
-        var cont = $seg[0];
-        var cr = cont.getBoundingClientRect();
-        var br = btn.getBoundingClientRect();
-        var x = br.left - cr.left - cont.clientLeft;
-        var y = br.top  - cr.top  - cont.clientTop;
-        if (sinAnim) $thumb.addClass('no-anim');
-        $thumb.css({
-            width:  br.width + 'px',
-            height: br.height + 'px',
-            transform: 'translate(' + x + 'px,' + y + 'px)'
-        });
-        if (sinAnim) { void $thumb[0].offsetWidth; $thumb.removeClass('no-anim'); }
-    }
-
-    $segBtns.on('click', function () {
+    // ── Vista de la grilla ──
+    $('#navSeg button').on('click', function () {
         if ($(this).hasClass('is-active')) return;
-        $segBtns.removeClass('is-active');
+        $('#navSeg button').removeClass('is-active');
         $(this).addClass('is-active');
-        moverThumb(this, false);
-        _modo = $(this).data('modo');
-        estadoInicial();
+        _modo = $(this).attr('data-modo');
+        if (_consultado) consultar(1); else estadoInicial();
     });
 
-    var _rz;
-    $(window).on('resize', function () {
-        clearTimeout(_rz);
-        _rz = setTimeout(function () { moverThumb($segBtns.filter('.is-active')[0], true); }, 120);
-    });
-    $(window).on('load', function () { moverThumb($segBtns.filter('.is-active')[0], true); });
+    AudKit.periodo.init();
+    AudKit.masFiltros();
+    AudKit.enter(function () { consultar(1); });
 
     $('#btnConsultar').on('click', function () { consultar(1); });
     $('#btnLimpiar').on('click', function () {
-        $('#fUsuario, #fOpcion, #fEmpresa, #fRol').val('');
-        $('#fDesde, #fHasta').val('');
+        AudKit.filtros.limpiar();
         estadoInicial();
     });
     $('#btnExportar').on('click', function () {
@@ -460,10 +341,9 @@ $(function () {
         data.modo = validos[_modo] ? _modo : 'detalle';
         window.location = '@Url.Action("ExportarExcel", "InformeNavegacion")' + '?' + $.param(data);
     });
+    $('#btnImprimir').on('click', function () { AudKit.imprimir('#resultadosContainer .table-container', document.title); });
 
     estadoInicial();
-    moverThumb($segBtns.filter('.is-active')[0], true);
-    requestAnimationFrame(function () { moverThumb($segBtns.filter('.is-active')[0], true); });
 });
 </script>
 }

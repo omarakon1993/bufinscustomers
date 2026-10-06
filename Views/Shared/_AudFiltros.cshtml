@@ -1,0 +1,97 @@
+@model bufinscustomers.Models.AudFiltrosVM
+@*
+    Panel de filtros UNIFORME de Auditoría (las 4 pestañas lo usan).
+    Orden fijo: Período · Búsqueda · [Empresa · Usuario · campos propios] · Más filtros · chips de filtros activos · botones.
+    ids fijos que lee ~/Assets/js/auditoria-shared.js: fPeriodo, fDesde, fHasta, fTexto, axMas, axAvanzados, axChips,
+    btnConsultar, btnLimpiar. Los selectores usan el id que traiga cada AudCampo.
+*@
+@{
+    var def = string.IsNullOrWhiteSpace(Model.PeriodoDefecto) ? "30" : Model.PeriodoDefecto;
+    Func<string, string> on = r => r == def ? "on" : "";
+}
+
+<div class="filter-card ax-filtros" data-t-activos="@Resources.Strings.Ax_FiltrosActivos" data-t-quitar="@Resources.Strings.Ax_Quitar"
+     data-t-buscar="@Resources.Strings.Ax_Buscar" data-t-mostrando="@Resources.Strings.Audit_Mostrando" data-t-de="@Resources.Strings.Audit_De"
+     data-t-cerrar="@Resources.Strings.Ax_Cerrar">
+
+    <div class="ax-top">
+        <div class="ax-periodo" id="fPeriodo" role="group" aria-label="@Resources.Strings.Audit_LabelPeriodo"
+             data-meses="@Resources.Strings.Audit_Meses" data-dia="@Resources.Strings.Audit_Dia"
+             data-dias="@Resources.Strings.Audit_Dias" data-defecto="@def">
+            <span class="ax-periodo-lbl"><i class="fas fa-calendar-alt"></i>@Resources.Strings.Audit_LabelPeriodo</span>
+            <button type="button" class="ax-chip-per @(on("hoy"))" data-range="hoy">@Resources.Strings.Audit_Per_Hoy</button>
+            <button type="button" class="ax-chip-per @(on("7"))" data-range="7">@Resources.Strings.Audit_Per_7</button>
+            <button type="button" class="ax-chip-per @(on("30"))" data-range="30">@Resources.Strings.Audit_Per_30</button>
+            <button type="button" class="ax-chip-per @(on("mes"))" data-range="mes">@Resources.Strings.Audit_Per_Mes</button>
+            <button type="button" class="ax-chip-per" data-range="custom" title="@Resources.Strings.Audit_Per_Custom"
+                    aria-label="@Resources.Strings.Audit_Per_Custom"><i class="fas fa-sliders-h"></i></button>
+            <div class="ax-periodo-fechas" id="wrapFechas" hidden>
+                <input type="date" id="fDesde" aria-label="@Resources.Strings.Audit_LabelDesde" />
+                <span>&ndash;</span>
+                <input type="date" id="fHasta" aria-label="@Resources.Strings.Audit_LabelHasta" />
+            </div>
+            <div class="ax-periodo-rango" id="audRango" hidden>
+                <span class="ax-periodo-rango-txt" id="audRangoTxt"></span>
+                <span class="ax-periodo-rango-badge" id="audRangoDias"></span>
+            </div>
+        </div>
+
+        <label class="ax-buscar">
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <input type="text" id="fTexto" autocomplete="off" placeholder="@Model.PlaceholderBusqueda"
+                   aria-label="@Resources.Strings.Ax_Buscar" />
+        </label>
+    </div>
+
+    @if (Model.Campos.Count > 0)
+    {
+        <div class="ax-grid">
+            @foreach (var c in Model.Campos)
+            {
+                <div class="ax-field @(c.Propio ? "is-propio" : "")" id="@c.WrapId">
+                    <label for="@c.Id"><i class="fas @c.Icono"></i>@c.Etiqueta</label>
+                    <select id="@c.Id" class="form-control">
+                        <option value="">@c.TextoTodos</option>
+                        @foreach (var o in c.Opciones)
+                        {
+                            <option value="@o.Value">@o.Text</option>
+                        }
+                    </select>
+                </div>
+            }
+        </div>
+    }
+
+    @if (Model.Avanzados.Count > 0)
+    {
+        <button type="button" id="axMas" class="ax-mas" aria-expanded="false" aria-controls="axAvanzados">
+            <i class="fas fa-chevron-right" aria-hidden="true"></i>@Resources.Strings.Ax_MasFiltros
+        </button>
+        <div id="axAvanzados" class="ax-grid ax-avanzados" hidden>
+            @foreach (var c in Model.Avanzados)
+            {
+                <div class="ax-field @(c.Propio ? "is-propio" : "")" id="@c.WrapId">
+                    <label for="@c.Id"><i class="fas @c.Icono"></i>@c.Etiqueta</label>
+                    <select id="@c.Id" class="form-control">
+                        <option value="">@c.TextoTodos</option>
+                        @foreach (var o in c.Opciones)
+                        {
+                            <option value="@o.Value">@o.Text</option>
+                        }
+                    </select>
+                </div>
+            }
+        </div>
+    }
+
+    <div id="axChips" class="ax-chips" hidden></div>
+
+    <div class="btn-group-actions">
+        <button type="button" id="btnConsultar" class="btn btn-modern-gradient">
+            <i class="fas fa-search mr-2"></i>@Resources.Strings.Common_Consultar
+        </button>
+        <button type="button" id="btnLimpiar" class="btn btn-modern-secondary">
+            <i class="fas fa-eraser mr-2"></i>@Resources.Strings.Ax_LimpiarFiltros
+        </button>
+    </div>
+</div>

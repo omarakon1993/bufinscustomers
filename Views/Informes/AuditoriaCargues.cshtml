@@ -1,15 +1,56 @@
-﻿﻿@model IEnumerable<bufinscustomers.Models.AuditoriaCargues>
+@model IEnumerable<bufinscustomers.Models.AuditoriaCargues>
 @using bufinscustomers.Helpers
+@using bufinscustomers.Models
+@using System.Linq
+@using System.Web.Mvc
+@using Newtonsoft.Json
 
 @{
     ViewBag.Title = Resources.Strings.Audit_PageTitle;
     if ((bool)(ViewBag.Embed ?? false)) { Layout = "~/Views/Shared/_LayoutFragment.cshtml"; }
     var esSuperAdmin = UsuarioSesionHelper.EsSuperAdmin();
-    var totalCargues = Model.Count();
-    var empresas = Model.Select(x => x.NombreEmpresa).Distinct().OrderBy(x => x).ToList();
+
+    var lista = Model.OrderByDescending(x => x.FechaCargue).ToList();
+    var nomEsc = EscenarioCacheHelper.ObtenerEscenariosCacheados().ToDictionary(e => e.Id, e => e.Nombre);
+
+    var empresasDist = lista.GroupBy(x => x.IdEmpresa).Select(g => new { Id = g.Key, Nombre = g.First().NombreEmpresa })
+                            .OrderBy(x => x.Nombre).ToList();
+    var usuariosDist = lista.GroupBy(x => x.IdUsuario).Select(g => new { Id = g.Key, Nombre = g.First().Usuario })
+                            .OrderBy(x => x.Nombre).ToList();
+    var escDist = lista.Where(x => x.IdEscenario.HasValue).Select(x => x.IdEscenario.Value).Distinct().OrderBy(x => x).ToList();
+    bool verEmpresa = esSuperAdmin || empresasDist.Count > 1;
+    bool verEscenario = escDist.Count > 0;
+
+    // Panel de filtros UNIFORME (mismo orden en las 4 pestañas): Empresa · Usuario · campos propios (Escenario).
+    var vm = new AudFiltrosVM { PlaceholderBusqueda = Resources.Strings.Ax_BuscarCarguesPlaceholder, PeriodoDefecto = "30" };
+    if (verEmpresa)
+    {
+        vm.Campos.Add(new AudCampo
+        {
+            Id = "fEmpresa", Etiqueta = Resources.Strings.Audit_ThEmpresa, Icono = "fa-building",
+            TextoTodos = Resources.Strings.Audit_TodasEmpresas,
+            Opciones = empresasDist.Select(x => new SelectListItem { Value = x.Id.ToString(), Text = x.Nombre }).ToList()
+        });
+    }
+    vm.Campos.Add(new AudCampo
+    {
+        Id = "fUsuario", Etiqueta = Resources.Strings.Audit_ThUsuario, Icono = "fa-user",
+        TextoTodos = Resources.Strings.Audit_TodosUsuarios,
+        Opciones = usuariosDist.Select(x => new SelectListItem { Value = x.Id.ToString(), Text = x.Nombre }).ToList()
+    });
+    if (verEscenario)
+    {
+        vm.Campos.Add(new AudCampo
+        {
+            Id = "fEscenario", Propio = true, Etiqueta = Resources.Strings.Ax_Escenario, Icono = "fa-layer-group",
+            TextoTodos = Resources.Strings.Ax_TodosEscenarios,
+            Opciones = escDist.Select(id => new SelectListItem { Value = id.ToString(), Text = nomEsc.ContainsKey(id) ? nomEsc[id] : "#" + id }).ToList()
+        });
+    }
 }
 
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/auditoria-shared.css" rel="stylesheet" />
 
 <div class="container-fluid px-4">
     <!-- Header Power BI -->
@@ -42,309 +83,210 @@
         </div>
     }
 
-    <!-- Card de filtros -->
-    <div class="filter-card">
-        <h3 class="filter-card-title">
-            <i class="fas fa-filter"></i>
-            @Resources.Strings.Common_FiltrosConsulta
-        </h3>
+    <div id="axKpis" class="ax-kpis" hidden></div>
 
-        <form id="formFiltros">
-            <div class="filter-section">
-                <div class="row">
-                    <!-- Empresa (dropdown) -->
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="filterEmpresa">
-                                <i class="fas fa-building"></i>
-                                @Resources.Strings.Audit_ThEmpresa
-                            </label>
-                            <select id="filterEmpresa" class="form-control">
-                                <option value="">@Resources.Strings.Common_Todos</option>
-                                @foreach (var emp in empresas)
-                                {
-                                    <option value="@emp">@emp</option>
-                                }
-                            </select>
-                        </div>
-                    </div>
-                    <!-- Fecha -->
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label>
-                                <i class="fas fa-calendar-alt"></i>
-                                @Resources.Strings.Audit_ThFecha
-                            </label>
-                            <div class="d-flex gap-2">
-                                <input type="date" id="filterDesde" class="form-control"
-                                       title="@Resources.Strings.Audit_FilterDesde" />
-                                <input type="date" id="filterHasta" class="form-control"
-                                       title="@Resources.Strings.Audit_FilterHasta" />
-                            </div>
-                            <small class="text-muted">
-                                @Resources.Strings.Audit_FilterDesde &ndash; @Resources.Strings.Audit_FilterHasta
-                            </small>
-                        </div>
-                    </div>
-                    <!-- Usuario (texto) -->
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="filterUsuario">
-                                <i class="fas fa-user"></i>
-                                @Resources.Strings.Audit_ThUsuario
-                            </label>
-                            <input type="text" id="filterUsuario" class="form-control"
-                                   placeholder="@Resources.Strings.Audit_SearchPlaceholder" autocomplete="off" />
-                        </div>
-                    </div>
-                </div>
-            </div>
+    @Html.Partial("_AudFiltros", vm)
 
-            <!-- Botones de accion -->
-            <div class="btn-group-actions">
-                <button type="button" id="btnFiltrar" class="btn btn-modern-gradient">
-                    <i class="fas fa-search mr-2"></i>@Resources.Strings.Common_Consultar
-                </button>
-                <button type="button" id="btnLimpiar" class="btn btn-modern-secondary">
-                    <i class="fas fa-eraser mr-2"></i>@Resources.Strings.Common_Limpiar
-                </button>
-                <button type="button" id="btnExportar" class="btn btn-modern-excel">
-                    <i class="fas fa-file-excel mr-2"></i>@Resources.Strings.Common_ExportarExcel
-                </button>
-            </div>
-        </form>
+    @Html.AntiForgeryToken()
+
+    <div id="axInicial" class="no-data-message">
+        <i class="fas fa-clipboard-list"></i>
+        <h4>@Resources.Strings.Ax_EstadoInicialTit</h4>
+        <p>@Resources.Strings.Ax_EstadoInicialDesc</p>
     </div>
 
     <!-- Tabla de resultados -->
-    @if (totalCargues > 0)
-    {
-        <div id="resultadosContainer">
-            <div class="table-container">
-                <div class="table-header">
-                    <h5>
-                        <i class="fas fa-list mr-2"></i>@Resources.Strings.Common_Resultados
-                    </h5>
-                    <div class="d-flex align-items-center" style="gap:.6rem;flex-wrap:wrap;">
-                        <span id="totalRegistros" class="info-badge">@totalCargues @Resources.Strings.Audit_TotalCargues</span>
-                        <span id="paginaInfoCargues" style="font-size:.77rem;color:#6c757d;"></span>
-                    </div>
+    <div id="resultadosContainer" style="display:none;">
+        <div class="table-container">
+            <div class="table-header">
+                <h5><i class="fas fa-list mr-2"></i>@Resources.Strings.Common_Resultados</h5>
+                <div class="d-flex align-items-center" style="gap:.6rem;flex-wrap:wrap;">
+                    <span id="totalRegistros" class="info-badge">0 @Resources.Strings.Audit_TotalCargues</span>
+                    <span id="paginaInfoCargues" class="ax-info"></span>
                 </div>
-                <div class="table-wrapper">
-                    <table id="auditoriaTable" class="data-table">
-                        <thead>
-                            <tr>
-                                <th>@Resources.Strings.Audit_ThFecha</th>
-                                <th>@Resources.Strings.Audit_ThEmpresa</th>
-                                <th>@Resources.Strings.Audit_ThUsuario</th>
-                                <th>@Resources.Strings.Audit_ThArchivo</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var auditoria in Model.OrderByDescending(x => x.FechaCargue))
-                            {
-                                <tr data-fecha="@auditoria.FechaCargue.ToString("yyyy-MM-dd")">
-                                    <td>
-                                        <strong>@auditoria.FechaCargue.ToString("dd/MM/yyyy")</strong><br />
-                                        <small class="text-muted">@auditoria.FechaCargue.ToString("HH:mm:ss")</small>
-                                    </td>
-                                    <td>@auditoria.NombreEmpresa</td>
-                                    <td>@auditoria.Usuario</td>
-                                    <td>@auditoria.NombreArchivo</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                <div class="ax-toolbar">
+                    <button type="button" id="btnExportar" class="btn btn-modern-excel"><i class="fas fa-file-excel mr-1"></i>@Resources.Strings.Audit_BtnExportar</button>
+                    <button type="button" id="btnImprimir" class="btn btn-modern-secondary"><i class="fas fa-print mr-1"></i>@Resources.Strings.Audit_BtnImprimir</button>
                 </div>
-                <div id="paginacionCargues" class="pagination-controls"></div>
             </div>
+            <div class="table-wrapper">
+                <table id="auditoriaTable" class="data-table">
+                    <thead>
+                        <tr>
+                            <th>@Resources.Strings.Audit_ThFecha</th>
+                            @if (verEmpresa) { <th>@Resources.Strings.Audit_ThEmpresa</th> }
+                            <th>@Resources.Strings.Audit_ThUsuario</th>
+                            <th>@Resources.Strings.Audit_ThArchivo</th>
+                            @if (verEscenario) { <th>@Resources.Strings.Ax_Escenario</th> }
+                        </tr>
+                    </thead>
+                    <tbody id="tbody"></tbody>
+                </table>
+            </div>
+            <div id="paginacionCargues" class="pagination-controls"></div>
         </div>
+    </div>
 
-        <div id="noDataMessage" class="no-data-message" style="display:none">
-            <i class="fas fa-inbox"></i>
-            <h4>@Resources.Strings.Audit_NoData</h4>
-            <p>@Resources.Strings.Audit_NoDataAdmin</p>
-        </div>
-    }
-    else
-    {
-        <div id="resultadosContainer" style="display:none"></div>
-        <div id="noDataMessage" class="no-data-message">
-            <i class="fas fa-inbox"></i>
-            <h4>@Resources.Strings.Audit_NoData</h4>
-            <p>
-                @if (esSuperAdmin)
-                {
-                    @Resources.Strings.Audit_NoDataAdmin
-                }
-                else
-                {
-                    @Resources.Strings.Audit_NoDataUser
-                }
-            </p>
-        </div>
-    }
+    <div id="noDataMessage" class="no-data-message" style="display:none">
+        <i class="fas fa-inbox"></i>
+        <h4>@Resources.Strings.Audit_NoData</h4>
+        <p>
+            @if (esSuperAdmin)
+            {
+                @Resources.Strings.Audit_NoDataAdmin
+            }
+            else
+            {
+                @Resources.Strings.Audit_NoDataUser
+            }
+        </p>
+    </div>
 </div>
 
 @section scripts {
-    <script>
-        var _auditTotal = @totalCargues;
-        var PAGE_SIZE = 25;
-        var _auditMsg = {
-            totalCargues:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_TotalCargues))',
-            exportSuccess: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_ExportSuccess))',
-            mostrando:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Mostrando))',
-            de:            '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_De))'
+<script src="~/Assets/js/auditoria-shared.js"></script>
+<script>
+$(function () {
+    var PAGE_SIZE = 25;
+    var VER_EMPRESA = @(verEmpresa ? "true" : "false");
+    var VER_ESC = @(verEscenario ? "true" : "false");
+    var _filtradas = [];
+
+    var S = {
+        total:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_TotalCargues))',
+        kCargues:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Ax_K_Cargues))',
+        kUsuarios: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Ax_K_Usuarios))',
+        kEmpresas: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Ax_K_Empresas))',
+        kUltimo:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Ax_K_UltimoCargue))',
+        exportOk:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_ExportSuccess))',
+        errTit:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error))',
+        error:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_JS_Error))'
+    };
+
+    function valores() {
+        return {
+            empresa: $('#fEmpresa').val() || '',
+            usuario: $('#fUsuario').val() || '',
+            esc:     $('#fEscenario').val() || '',
+            texto:   $.trim($('#fTexto').val()),
+            rango:   AudKit.periodo.rango()
         };
+    }
 
-        $(document).ready(function () {
+    function distintos(campo) {
+        var m = {};
+        _filtradas.forEach(function (r) { m[r[campo]] = 1; });
+        return Object.keys(m).length;
+    }
 
-            // Todas las filas se guardan en memoria; el <tbody> solo contiene la página actual.
-            var $todasFilas   = $('#auditoriaTable tbody tr').detach();
-            var $filtradas    = $todasFilas;
-            var _paginaActual = 1;
+    function pintarKpis() {
+        AudKit.kpis.render($('#axKpis'), [
+            { label: S.kCargues,  valor: AudKit.num(_filtradas.length) },
+            { label: S.kUsuarios, valor: AudKit.num(distintos('IdUsuario')) },
+            { label: S.kEmpresas, valor: AudKit.num(distintos('IdEmpresa')) },
+            { label: S.kUltimo,   valor: _filtradas.length ? _filtradas[0].Fecha : '—', texto: true }
+        ]);
+    }
 
-            function aplicarFiltro() {
-                var empresa = $('#filterEmpresa').val();
-                var usuario = $('#filterUsuario').val().toLowerCase().trim();
-                var desde   = $('#filterDesde').val();
-                var hasta   = $('#filterHasta').val();
+    function renderPagina(pagina) {
+        var total = _filtradas.length;
+        $('#totalRegistros').text(AudKit.num(total) + ' ' + S.total);
 
-                $filtradas = $todasFilas.filter(function () {
-                    var $tr       = $(this);
-                    var tdEmpresa = $tr.find('td:eq(1)').text().trim();
-                    var tdUsuario = $tr.find('td:eq(2)').text().toLowerCase();
-                    var fechaFila = $tr.attr('data-fecha'); // yyyy-MM-dd
+        if (total === 0) {
+            $('#axInicial').hide();
+            $('#resultadosContainer').hide();
+            $('#noDataMessage').show();
+            $('#paginacionCargues').empty();
+            $('#paginaInfoCargues').text('');
+            return;
+        }
+        $('#noDataMessage').hide();
+        $('#axInicial').hide();
+        $('#resultadosContainer').show();
 
-                    var matchEmpresa = !empresa || tdEmpresa === empresa;
-                    var matchUsuario = !usuario || tdUsuario.indexOf(usuario) > -1;
-                    var matchDesde   = !desde   || fechaFila >= desde;
-                    var matchHasta   = !hasta   || fechaFila <= hasta;
+        var totalPags = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        pagina = Math.min(Math.max(1, pagina), totalPags);
+        var ini = (pagina - 1) * PAGE_SIZE;
 
-                    return matchEmpresa && matchUsuario && matchDesde && matchHasta;
-                });
-
-                _paginaActual = 1;
-                renderPagina(1);
-            }
-
-            function renderPagina(pagina) {
-                var total     = $filtradas.length;
-                var totalPags = Math.max(1, Math.ceil(total / PAGE_SIZE));
-                pagina = Math.min(Math.max(1, pagina), totalPags);
-                _paginaActual = pagina;
-
-                $('#totalRegistros').text(total + ' ' + _auditMsg.totalCargues);
-
-                var $tbody = $('#auditoriaTable tbody');
-                $todasFilas.detach();
-                $tbody.empty();
-
-                if (total === 0) {
-                    $('#resultadosContainer').hide();
-                    $('#noDataMessage').show();
-                    $('#paginacionCargues').empty();
-                    $('#paginaInfoCargues').text('');
-                    return;
-                }
-
-                $('#resultadosContainer').show();
-                $('#noDataMessage').hide();
-
-                var inicio = (pagina - 1) * PAGE_SIZE;
-                var fin    = Math.min(inicio + PAGE_SIZE, total);
-                $tbody.append($filtradas.slice(inicio, fin));
-
-                $('#paginaInfoCargues').text(
-                    _auditMsg.mostrando + ' ' + (inicio + 1) + '–' + fin + ' ' + _auditMsg.de + ' ' + total
-                );
-
-                renderPaginacion(totalPags, pagina);
-            }
-
-            function renderPaginacion(totalPags, actual) {
-                var $pag = $('#paginacionCargues').empty();
-                if (totalPags <= 1) return;
-
-                function btn(label, dest, activo, disabled) {
-                    return $('<button>')
-                        .addClass('btn-pagination' + (activo ? ' active' : ''))
-                        .prop('disabled', !!disabled)
-                        .html(label)
-                        .on('click', function () { renderPagina(dest); });
-                }
-
-                $pag.append(btn('<i class="fas fa-chevron-left"></i>', actual - 1, false, actual === 1));
-
-                var desde = Math.max(1, actual - 2);
-                var hasta = Math.min(totalPags, actual + 2);
-                if (desde > 1) {
-                    $pag.append(btn('1', 1, false, false));
-                    if (desde > 2) $pag.append($('<span class="pagination-dots">').text('…'));
-                }
-                for (var p = desde; p <= hasta; p++) { $pag.append(btn(p, p, p === actual, false)); }
-                if (hasta < totalPags) {
-                    if (hasta < totalPags - 1) $pag.append($('<span class="pagination-dots">').text('…'));
-                    $pag.append(btn(totalPags, totalPags, false, false));
-                }
-
-                $pag.append(btn('<i class="fas fa-chevron-right"></i>', actual + 1, false, actual === totalPags));
-            }
-
-            // Render inicial (primera página con todas las filas)
-            if (_auditTotal > 0) renderPagina(1);
-
-            // Filtro en tiempo real
-            $('#filterEmpresa, #filterUsuario, #filterDesde, #filterHasta').on('change keyup', function () {
-                aplicarFiltro();
-            });
-
-            // Boton Consultar
-            $('#btnFiltrar').on('click', function () {
-                aplicarFiltro();
-            });
-
-            // Boton Limpiar
-            $('#btnLimpiar').on('click', function () {
-                $('#filterEmpresa').val('');
-                $('#filterUsuario').val('');
-                $('#filterDesde').val('');
-                $('#filterHasta').val('');
-                $filtradas = $todasFilas;
-                _paginaActual = 1;
-                renderPagina(1);
-            });
-
-            // Boton Exportar
-            $('#btnExportar').on('click', function () {
-                var form = $('<form>', {
-                    'method': 'POST',
-                    'action': '@Url.Action("ExportarAuditoriaExcel", "AuditoriaCargues")',
-                    'style': 'display:none'
-                });
-                form.append($('<input>', { type: 'hidden', name: 'empresa', value: $('#filterEmpresa').val() }));
-                form.append($('<input>', { type: 'hidden', name: 'usuario', value: $('#filterUsuario').val() }));
-                form.append($('<input>', { type: 'hidden', name: 'fechaDesde', value: $('#filterDesde').val() }));
-                form.append($('<input>', { type: 'hidden', name: 'fechaHasta', value: $('#filterHasta').val() }));
-                var token = $('input[name="__RequestVerificationToken"]').val();
-                if (token) form.append($('<input>', { type: 'hidden', name: '__RequestVerificationToken', value: token }));
-                $('body').append(form);
-                form.submit();
-                form.remove();
-
-                Swal.fire({
-                    toast: true,
-                    position: window.innerWidth <= 768 ? 'top' : 'top-end',
-                    icon: 'success',
-                    title: _auditMsg.exportSuccess,
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true,
-                    didOpen: (toast) => {
-                        toast.addEventListener('mouseenter', Swal.stopTimer);
-                        toast.addEventListener('mouseleave', Swal.resumeTimer);
-                    }
-                });
-            });
+        var $tb = $('#tbody').empty();
+        _filtradas.slice(ini, ini + PAGE_SIZE).forEach(function (r) {
+            var p = r.Fecha.split(' ');
+            var $tr = $('<tr>');
+            $tr.append($('<td>').append($('<strong>').text(p[0]), $('<br>'), $('<small class="text-muted">').text(p[1])));
+            if (VER_EMPRESA) $tr.append($('<td>').text(r.Empresa || ''));
+            $tr.append($('<td>').text(r.Usuario || ''));
+            $tr.append($('<td>').text(r.Archivo || ''));
+            if (VER_ESC) $tr.append($('<td>').text(r.Escenario || '—'));
+            $tb.append($tr);
         });
-    </script>
+
+        $('#paginaInfoCargues').text(AudKit.pager.info(pagina, PAGE_SIZE, total));
+        AudKit.pager.render($('#paginacionCargues'), pagina, totalPags, renderPagina);
+    }
+
+    // Nada se carga ni se muestra hasta pulsar «Consultar»: los datos se piden al servidor con los filtros elegidos.
+    function consultar() {
+        var v = valores();
+        AudKit.filtros.chips(consultar);
+        $.getJSON('@Url.Action("ObtenerCargues", "AuditoriaCargues")', {
+            idEmpresa: v.empresa, idUsuario: v.usuario, escenario: v.esc, texto: v.texto,
+            fechaDesde: v.rango.desde, fechaHasta: v.rango.hasta
+        }).done(function (r) {
+            if (!r || !r.success) { Swal.fire({ icon: 'error', title: S.errTit, text: S.error }); return; }
+            _filtradas = r.items || [];
+            pintarKpis();
+            renderPagina(1);
+        }).fail(function () {
+            Swal.fire({ icon: 'error', title: S.errTit, text: S.error });
+        });
+    }
+
+    function estadoInicial() {
+        _filtradas = [];
+        $('#tbody').empty();
+        $('#paginacionCargues').empty();
+        $('#paginaInfoCargues').text('');
+        $('#resultadosContainer').hide();
+        $('#noDataMessage').hide();
+        AudKit.kpis.render($('#axKpis'), []);
+        AudKit.chips.render($('#axChips'), []);
+        $('#axInicial').show();
+    }
+
+    AudKit.periodo.init();
+    AudKit.masFiltros();
+    AudKit.enter(consultar);
+
+    $('#btnConsultar').on('click', consultar);
+    $('#btnLimpiar').on('click', function () {
+        AudKit.filtros.limpiar();
+        estadoInicial();
+    });
+    $('#btnImprimir').on('click', function () { AudKit.imprimir('#resultadosContainer .table-container', document.title); });
+
+    // Exportar: mismos filtros que la pantalla
+    $('#btnExportar').on('click', function () {
+        var v = valores();
+        var form = $('<form>', { method: 'POST', action: '@Url.Action("ExportarAuditoriaExcel", "AuditoriaCargues")', style: 'display:none' });
+        form.append($('<input>', { type: 'hidden', name: 'idEmpresa', value: v.empresa }));
+        form.append($('<input>', { type: 'hidden', name: 'idUsuario', value: v.usuario }));
+        form.append($('<input>', { type: 'hidden', name: 'escenario', value: v.esc }));
+        form.append($('<input>', { type: 'hidden', name: 'texto', value: v.texto }));
+        form.append($('<input>', { type: 'hidden', name: 'fechaDesde', value: v.rango.desde }));
+        form.append($('<input>', { type: 'hidden', name: 'fechaHasta', value: v.rango.hasta }));
+        var token = $('input[name="__RequestVerificationToken"]').val();
+        if (token) form.append($('<input>', { type: 'hidden', name: '__RequestVerificationToken', value: token }));
+        $('body').append(form);
+        form.submit();
+        form.remove();
+
+        Swal.fire({
+            toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'success',
+            title: S.exportOk, showConfirmButton: false, timer: 3000, timerProgressBar: true
+        });
+    });
+
+    estadoInicial();
+});
+</script>
 }

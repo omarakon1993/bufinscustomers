@@ -153,4 +153,13 @@ namespace bufinscustomers.Models
         public int TamanoPagina { get; set; }
         public int TotalPaginas => TamanoPagina > 0 ? (int)Math.Ceiling(Total / (double)TamanoPagina) : 0;
     }
+
+    /// <summary>Totales del conjunto filtrado (no de la página) para las tarjetas de resumen del visor.</summary>
+    public class AuditoriaResumen
+    {
+        public int Usuarios { get; set; }
+        /// <summary>Eventos de relevancia alta (Severidad = Critico). 0 si la BD aún no tiene la columna Severidad.</summary>
+        public int RelevanciaAlta { get; set; }
+        public DateTime? Ultimo { get; set; }
+    }
 }

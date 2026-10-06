@@ -9,6 +9,8 @@ namespace bufinscustomers.Models
         public string Telefono { get; set; }
         public string Correo { get; set; }
         public string Abreviatura { get; set; }
+        /// <summary>Sitio web de la empresa (URL http/https validada por <c>UrlWebHelper</c>). Opcional; columna <c>Empresas.EmpPaginaWeb</c> (Sql/019).</summary>
+        public string PaginaWeb { get; set; }
 
         public int? IdGrupoEmpresarial { get; set; }
 

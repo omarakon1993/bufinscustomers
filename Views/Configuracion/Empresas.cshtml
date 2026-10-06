@@ -62,21 +62,24 @@
         }
 
         /* Anchos de columna */
-        .table-compact .col-id { width: 5%; text-align: center; }
-        .table-compact .col-abreviatura { width: 10%; text-align: center; }
-        .table-compact .col-nombre { width: 15%; }
-        .table-compact .col-nit { width: 10%; }
-        .table-compact .col-direccion { width: 13%; }
-        .table-compact .col-telefono { width: 9%; }
-        .table-compact .col-correo { width: 16%; }
+        .table-compact .col-id { width: 4%; text-align: center; }
+        .table-compact .col-abreviatura { width: 8%; text-align: center; }
+        .table-compact .col-nombre { width: 13%; }
+        .table-compact .col-nit { width: 8%; }
+        .table-compact .col-direccion { width: 11%; }
+        .table-compact .col-telefono { width: 8%; }
+        .table-compact .col-correo { width: 13%; }
+        .table-compact .col-web { width: 13%; }
+        .table-compact .col-web a { color: #583AFF; text-decoration: none; }
+        .table-compact .col-web a:hover { text-decoration: underline; }
         .table-compact .col-grupo {
-            width: 14%;
+            width: 11%;
             text-align: center;
             white-space: normal;
             overflow: visible;
             text-overflow: clip;
         }
-        .table-compact .col-acciones { width: 12%; text-align: center; white-space: nowrap; }
+        .table-compact .col-acciones { width: 11%; text-align: center; white-space: nowrap; }
 
         /* === BOTONES DE ACCIONES === */
         .btn-group {
@@ -138,6 +141,7 @@
                             <th class="col-direccion">@Resources.Strings.Emp_ThDireccion</th>
                             <th class="col-telefono">@Resources.Strings.Emp_ThTelefono</th>
                             <th class="col-correo">@Resources.Strings.Emp_ThCorreo</th>
+                            <th class="col-web">@Resources.Strings.Emp_ThPaginaWeb</th>
                             <th class="col-grupo">@Resources.Strings.Emp_ThGrupo</th>
                             <th class="col-acciones">@Resources.Strings.Common_ThAcciones</th>
                         </tr>
@@ -158,6 +162,13 @@
                                 <td class="col-direccion" title="@empresa.Direccion">@empresa.Direccion</td>
                                 <td class="col-telefono">@empresa.Telefono</td>
                                 <td class="col-correo" title="@empresa.Correo">@empresa.Correo</td>
+                                <td class="col-web" title="@empresa.PaginaWeb">
+                                    @* Solo se enlaza si es http/https (el dato pudo editarse a mano en la BD) *@
+                                    @if (!string.IsNullOrEmpty(empresa.PaginaWeb) && (empresa.PaginaWeb.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || empresa.PaginaWeb.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+                                    {
+                                        <a href="@empresa.PaginaWeb" target="_blank" rel="noopener noreferrer">@(empresa.PaginaWeb.Replace("https://", "").Replace("http://", "").TrimEnd('/'))</a>
+                                    }
+                                </td>
                                 <td class="col-grupo">
                                     @if (!string.IsNullOrEmpty(empresa.NombreGrupoEmpresarial))
                                     {
@@ -173,7 +184,7 @@
                                 <td class="col-acciones">
                                     <div class="btn-group" role="group" aria-label="@Resources.Strings.Common_ThAcciones">
                                         <button type="button" class="btn btn-sm btn-primary" title="@Resources.Strings.Emp_TitleEditar" data-toggle="modal" data-target="#editEmpresaModal"
-                                                onclick="setEditEmpresa(@empresa.Id, '@empresa.Nombre', '@empresa.Nit', '@empresa.Direccion', '@empresa.Telefono', '@empresa.Correo', '@empresa.Abreviatura')">
+                                                onclick="setEditEmpresa(@empresa.Id, '@empresa.Nombre', '@empresa.Nit', '@empresa.Direccion', '@empresa.Telefono', '@empresa.Correo', '@empresa.Abreviatura', '@empresa.PaginaWeb')">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         @if (UsuarioSesionHelper.EsSuperAdmin())
@@ -357,6 +368,16 @@
                                 <small class="form-text text-muted">@Resources.Strings.Emp_HintCorreo</small>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="editPaginaWeb" class="form-label">
+                                    <i class="fas fa-globe mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelPaginaWeb
+                                </label>
+                                <input type="text" inputmode="url" autocomplete="url" class="form-control form-control-sm" id="editPaginaWeb" name="PaginaWeb" maxlength="300"
+                                       data-url-web="1" placeholder="@Resources.Strings.Emp_PlaceholderPaginaWeb" />
+                                <small class="form-text text-muted">@Resources.Strings.Emp_HintPaginaWeb</small>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
@@ -442,6 +463,16 @@
                                 <small class="form-text text-muted">@Resources.Strings.Emp_HintCorreo</small>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="crearPaginaWeb" class="form-label">
+                                    <i class="fas fa-globe mr-2" style="color: #583AFF;"></i>@Resources.Strings.Emp_LabelPaginaWeb
+                                </label>
+                                <input type="text" inputmode="url" autocomplete="url" class="form-control form-control-sm" id="crearPaginaWeb" name="PaginaWeb" maxlength="300"
+                                       data-url-web="1" placeholder="@Resources.Strings.Emp_PlaceholderPaginaWeb" />
+                                <small class="form-text text-muted">@Resources.Strings.Emp_HintPaginaWeb</small>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
@@ -521,7 +552,7 @@
             document.getElementById("idEmpresa").value = id;
         }
 
-        function setEditEmpresa(id, nombre, nit, direccion, telefono, correo, abreviatura) {
+        function setEditEmpresa(id, nombre, nit, direccion, telefono, correo, abreviatura, paginaWeb) {
             document.getElementById("editIdEmpresa").value = id;
             document.getElementById("editNombre").value = nombre;
             document.getElementById("editNit").value = nit;
@@ -529,7 +560,52 @@
             document.getElementById("editTelefono").value = telefono;
             document.getElementById("editCorreo").value = correo;
             document.getElementById("editAbreviatura").value = abreviatura || '';
+            var web = document.getElementById("editPaginaWeb");
+            web.value = paginaWeb || '';
+            web.setCustomValidity('');
         }
+
+        // Página web: opcional, pero si se escribe debe ser una URL http/https válida (misma regla que UrlWebHelper en el servidor).
+        (function () {
+            var MSG = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Emp_ErrorPaginaWeb))';
+
+            function normalizar(v) {
+                var t = (v || '').trim();
+                if (!t) return '';
+                if (t.indexOf('://') < 0) t = 'https://' + t;
+                return t;
+            }
+            function valida(v) {
+                var t = normalizar(v);
+                if (!t) return true;
+                if (t.length > 300 || /[\s'"<>\\]/.test(t)) return false;
+                var u;
+                try { u = new URL(t); } catch (e) { return false; }
+                if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+                if (u.username || u.password) return false;
+                var h = u.hostname;
+                var esIp = /^\d{1,3}(\.\d{1,3}){3}$/.test(h) || h.indexOf(':') >= 0;
+                if (!esIp) {
+                    var p = h.split('.');
+                    if (p.length < 2) return false;
+                    for (var i = 0; i < p.length; i++) {
+                        if (!p[i] || p[i].charAt(0) === '-' || p[i].charAt(p[i].length - 1) === '-') return false;
+                    }
+                    if (p[p.length - 1].length < 2) return false;
+                }
+                return true;
+            }
+
+            document.querySelectorAll('input[data-url-web]').forEach(function (inp) {
+                function revisar() { inp.setCustomValidity(valida(inp.value) ? '' : MSG); }
+                inp.addEventListener('input', revisar);
+                inp.addEventListener('blur', function () {
+                    revisar();
+                    // Si es válida y no trae esquema, se muestra ya con https:// (así se guarda).
+                    if (inp.value.trim() && inp.validity.valid) inp.value = normalizar(inp.value);
+                });
+            });
+        })();
     </script>
 </body>
 </html>

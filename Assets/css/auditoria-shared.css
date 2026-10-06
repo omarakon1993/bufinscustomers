@@ -1,0 +1,124 @@
+/* =====================================================================================
+   Auditoría — estilos compartidos por las 4 pestañas (Cambios / Navegación / Cargues / Consultas IA).
+   Prefijo ax-. Se apoya en bufins-components.css (.filter-card, .table-container, .data-table,
+   .info-badge, .btn-modern-*, .pagination-controls, .no-data-message).
+   ===================================================================================== */
+
+/* ---- Tarjetas de resumen (KPIs) ---- */
+.ax-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .75rem; margin-bottom: 1rem; }
+.ax-kpi {
+    background: #fff; border: 1px solid #e3e6f0; border-radius: 12px; padding: .7rem 1rem;
+    box-shadow: 0 1px 4px rgba(22, 9, 51, .05); min-width: 0;
+}
+.ax-kpi small {
+    display: block; color: #5B5570; font-weight: 700; font-size: .66rem; letter-spacing: .07em; text-transform: uppercase;
+}
+.ax-kpi b { display: block; font-size: 1.5rem; line-height: 1.25; color: #160933; font-weight: 800; word-break: break-word; }
+.ax-kpi b.is-texto { font-size: 1.02rem; padding-top: .35rem; line-height: 1.3; }
+.ax-kpi.is-alerta b { color: #b91c1c; }
+
+/* ---- Panel de filtros ---- */
+.ax-filtros { --ax-h: 38px; }
+.ax-top { display: flex; gap: .75rem; align-items: stretch; flex-wrap: wrap; margin-bottom: .9rem; }
+
+.ax-periodo {
+    display: inline-flex; align-items: stretch; flex-wrap: nowrap; min-height: var(--ax-h); max-width: 100%;
+    background: #fff; border: 1px solid #d8d4ea; border-radius: 8px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(22, 9, 51, .06);
+}
+.ax-periodo-lbl {
+    display: flex; align-items: center; gap: 6px; padding: 0 11px;
+    background: #f4f2fd; border-right: 1px solid #e6e2f5;
+    color: #583AFF; font-size: .64rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; white-space: nowrap;
+}
+.ax-chip-per {
+    border: 0; background: transparent; color: #556074; padding: 0 13px; font-size: .78rem; font-weight: 600;
+    cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center;
+    transition: background .15s, color .15s, box-shadow .15s;
+}
+.ax-chip-per:hover:not(.on) { background: #f8f9fc; color: #583AFF; }
+.ax-chip-per.on { background: #ede9fe; color: #583AFF; font-weight: 800; box-shadow: inset 0 -2px 0 #583AFF; }
+.ax-chip-per[data-range="custom"] { padding: 0 11px; font-size: .8rem; }
+.ax-periodo-fechas, .ax-periodo-rango {
+    display: flex; align-items: center; gap: 6px; padding: 0 10px; border-left: 1px solid #e6e2f5; background: #fbfbfe;
+}
+.ax-periodo-fechas input { font-size: .74rem; padding: 3px 6px; border: 1px solid #d1d5db; border-radius: 5px; color: #2d3748; }
+.ax-periodo-fechas span { color: #8890a0; font-size: .74rem; }
+.ax-periodo-rango-txt { font-size: .78rem; font-weight: 700; color: #2d3748; white-space: nowrap; }
+.ax-periodo-rango-badge {
+    font-size: .66rem; font-weight: 700; color: #01A79F; background: rgba(1, 225, 215, .14);
+    border-radius: 99px; padding: 2px 8px; white-space: nowrap;
+}
+
+.ax-buscar {
+    flex: 1 1 280px; min-width: 240px; margin: 0; display: flex; align-items: center; gap: .45rem; height: var(--ax-h);
+    border: 1px solid #d1d5db; border-radius: 8px; padding: 0 .7rem; background: #fff;
+}
+.ax-buscar:focus-within { border-color: #583AFF; box-shadow: 0 0 0 2px rgba(88, 58, 255, .12); }
+.ax-buscar i { color: #9aa1b4; font-size: .8rem; }
+.ax-buscar input {
+    flex: 1; border: 0; outline: 0; padding: 0; height: 100%; font-size: .84rem; background: transparent; color: #2d3748; min-width: 0;
+}
+
+.ax-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: .75rem .9rem; margin-bottom: .8rem;
+}
+.ax-field label {
+    display: flex; align-items: center; gap: .35rem; font-size: .72rem; font-weight: 700; color: #556074; margin-bottom: .25rem;
+}
+.ax-field label i { font-size: .72rem; }
+.ax-field.is-propio label { color: #4338ca; }
+.ax-field .form-control { height: var(--ax-h); font-size: .84rem; padding: 0 .6rem; }
+.ax-field select.form-control { padding-right: 1.9rem; }
+
+.ax-mas {
+    display: inline-flex; align-items: center; gap: .4rem; background: none; border: 0; padding: 0; margin: 0 0 .7rem;
+    color: #4338ca; font-weight: 700; font-size: .78rem; cursor: pointer;
+}
+.ax-mas i { font-size: .7rem; transition: transform .15s; }
+.ax-mas[aria-expanded="true"] i { transform: rotate(90deg); }
+.ax-avanzados { padding-top: .2rem; }
+
+.ax-chips {
+    display: flex; flex-wrap: wrap; gap: .5rem; align-items: center;
+    padding-top: .7rem; margin-bottom: .8rem; border-top: 1px dashed #e3e6f0;
+}
+.ax-chips-t { font-size: .72rem; font-weight: 800; color: #5B5570; letter-spacing: .03em; }
+.ax-chip {
+    display: inline-flex; align-items: center; gap: .4rem; padding: .22rem .3rem .22rem .75rem;
+    background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 999px; font-size: .78rem; font-weight: 600; color: #3730a3;
+}
+.ax-chip button {
+    border: 0; background: #c7d2fe; color: #312e81; border-radius: 50%; width: 18px; height: 18px;
+    display: grid; place-items: center; cursor: pointer; padding: 0; font-size: .9rem; line-height: 1;
+}
+.ax-chip button:hover { background: #a5b4fc; }
+
+/* ---- Cabecera de resultados: título + contador + (vistas) + acciones a la derecha ---- */
+.ax-toolbar { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-left: auto; }
+.ax-toolbar .btn { padding: .32rem .8rem; font-size: .78rem; }
+.ax-info { font-size: .77rem; color: #6c757d; }
+
+/* Conmutador de vista / modo (segmentado). Una sola implementación para todas las pestañas. */
+.ax-vista { display: inline-flex; border: 1px solid #d1d5db; border-radius: 8px; overflow: hidden; background: #fff; }
+.ax-vista button {
+    appearance: none; border: 0; background: #fff; color: #556074; font-size: .78rem; font-weight: 600;
+    padding: .38rem .85rem; cursor: pointer; display: inline-flex; align-items: center; gap: .35rem;
+}
+.ax-vista button + button { border-left: 1px solid #d1d5db; }
+.ax-vista button.is-active { background: linear-gradient(90deg, #6366F1, #3B82F6, #06B6D4, #01E1D7); color: #fff; }
+.ax-vista.ax-modo { margin-bottom: .9rem; }
+
+/* Estado inicial / vacío */
+.ax-vacio { text-align: center; padding: 2.4rem 1rem; color: #5B5570; }
+.ax-vacio i { font-size: 2.2rem; color: #b7b2d4; margin-bottom: .6rem; }
+.ax-vacio h4 { font-size: 1.05rem; font-weight: 700; color: #160933; }
+
+@media (max-width: 767px) {
+    .ax-periodo { width: 100%; flex-wrap: wrap; }
+    .ax-periodo-fechas, .ax-periodo-rango { flex: 1 1 100%; border-left: 0; border-top: 1px solid #e6e2f5; padding: 6px 10px; }
+    .ax-toolbar { margin-left: 0; width: 100%; }
+}
+
+/* [hidden] siempre gana frente a display:flex/grid de los componentes (por si el reset del tema no lo fuerza) */
+.ax-kpis[hidden], .ax-chips[hidden], .ax-grid[hidden], .ax-periodo-fechas[hidden], .ax-periodo-rango[hidden] { display: none !important; }

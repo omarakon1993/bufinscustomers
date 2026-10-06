@@ -194,6 +194,37 @@ namespace bufinscustomers.Services
             return lista;
         }
 
+        /// <summary>Totales del conjunto filtrado: visitas, usuarios y páginas distintas, página más visitada y última visita.</summary>
+        public NavegacionResumenGeneral ResumenGeneral(NavegacionFiltro f)
+        {
+            var res = new NavegacionResumenGeneral();
+            var (where, pars) = ConstruirFiltro(f ?? new NavegacionFiltro());
+
+            using (var cn = new SqlConnection(CadenaConexion))
+            using (var cmd = new SqlCommand(@"
+                SELECT COUNT(*) AS Visitas,
+                       COUNT(DISTINCT n.IdUsuario) AS Usuarios,
+                       COUNT(DISTINCT COALESCE(n.CodigoMenu, n.Controller + '/' + n.[Action])) AS Paginas,
+                       MAX(n.Fecha) AS Ultima
+                FROM dbo.AuditoriaNavegacion n" + where, cn))
+            {
+                foreach (var p in pars) cmd.Parameters.Add(Clonar(p));
+                cn.Open();
+                using (var r = cmd.ExecuteReader())
+                    if (r.Read())
+                    {
+                        res.Visitas = Convert.ToInt32(r["Visitas"]);
+                        res.Usuarios = Convert.ToInt32(r["Usuarios"]);
+                        res.PaginasDistintas = Convert.ToInt32(r["Paginas"]);
+                        res.Ultima = r["Ultima"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(r["Ultima"]);
+                    }
+            }
+
+            var top = ResumenPorPagina(f, 1);
+            if (top.Count > 0) res.PaginaTop = top[0].Titulo ?? top[0].Clave;
+            return res;
+        }
+
         public List<NavegacionResumenUsuario> ResumenPorUsuario(NavegacionFiltro f, int top = 500)
         {
             var lista = new List<NavegacionResumenUsuario>();
@@ -333,6 +364,9 @@ namespace bufinscustomers.Services
             if (f.IdEmpresa.HasValue)                     Add(" AND n.IdEmpresa = @IdEmpresa", "@IdEmpresa", f.IdEmpresa.Value);
             if (!string.IsNullOrWhiteSpace(f.CodigoMenu)) Add(" AND n.CodigoMenu = @CodigoMenu", "@CodigoMenu", f.CodigoMenu.Trim());
             if (f.Rol.HasValue)                           Add(" AND n.RolUsuario = @Rol", "@Rol", f.Rol.Value);
+            if (!string.IsNullOrWhiteSpace(f.Texto))
+                Add(" AND (n.TituloPagina LIKE @Texto OR n.NombreUsuario LIKE @Texto OR n.Controller LIKE @Texto OR n.[Action] LIKE @Texto)",
+                    "@Texto", "%" + f.Texto.Trim() + "%");
             if (f.Desde.HasValue)                         Add(" AND n.Fecha >= @Desde", "@Desde", f.Desde.Value.Date);
             if (f.Hasta.HasValue)                         Add(" AND n.Fecha < @Hasta", "@Hasta", f.Hasta.Value.Date.AddDays(1));
 

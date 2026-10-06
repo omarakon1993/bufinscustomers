@@ -40,12 +40,21 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Empresas");
             }
 
-            string mensaje;
-            bool registrado = _empresaService.CrearEmpresa(empresa, out mensaje);
+            // Página web: opcional, pero si viene debe ser una URL válida (se normaliza: sin esquema → https://).
+            if (!UrlWebHelper.TryNormalizar(empresa.PaginaWeb, out string webNormalizada))
+            {
+                SetErrorMessage(R("Emp_ErrorPaginaWeb"));
+                return RedirectToAction("Empresas");
+            }
+            empresa.PaginaWeb = webNormalizada;
+
+            string mensaje, advertencia;
+            bool registrado = _empresaService.CrearEmpresa(empresa, out mensaje, out advertencia);
 
             if (registrado)
             {
                 EmpresasViewBagFilter.Invalidar();
+                if (advertencia == "WEB_SIN_COLUMNA") SetInfoMessage(R("Emp_PaginaWebSinColumna"));
                 SetSuccessMessage(R("Emp_Creada"));
                 new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_EmpresaCreada"), empresa.Nombre, "success", "/Empresa/Empresas");
                 new AuditoriaService().RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Crear,
@@ -71,12 +80,20 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Empresas");
             }
 
-            string mensaje;
-            bool actualizado = _empresaService.EditarEmpresa(empresa, out mensaje);
+            if (!UrlWebHelper.TryNormalizar(empresa.PaginaWeb, out string webNormalizada))
+            {
+                SetErrorMessage(R("Emp_ErrorPaginaWeb"));
+                return RedirectToAction("Empresas");
+            }
+            empresa.PaginaWeb = webNormalizada;
+
+            string mensaje, advertencia;
+            bool actualizado = _empresaService.EditarEmpresa(empresa, out mensaje, out advertencia);
 
             if (actualizado)
             {
                 EmpresasViewBagFilter.Invalidar();
+                if (advertencia == "WEB_SIN_COLUMNA") SetInfoMessage(R("Emp_PaginaWebSinColumna"));
                 SetSuccessMessage(mensaje);
                 new AuditoriaService().RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Editar,
                     "Empresas", empresa.Id.ToString(), $"Empresa editada: {empresa.Nombre}", null, empresa, idEmpresa: empresa.Id);

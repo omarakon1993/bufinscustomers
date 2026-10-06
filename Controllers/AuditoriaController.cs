@@ -118,6 +118,7 @@ namespace bufinscustomers.Controllers
             AplicarAlcance(filtro, esSuper, esNormal);
 
             var res = _svc.Consultar(filtro);
+            var resumen = _svc.Resumen(filtro);
 
             return Json(new
             {
@@ -125,6 +126,12 @@ namespace bufinscustomers.Controllers
                 total        = res.Total,
                 pagina       = res.Pagina,
                 totalPaginas = res.TotalPaginas,
+                resumen = new
+                {
+                    usuarios       = resumen.Usuarios,
+                    relevanciaAlta = resumen.RelevanciaAlta,
+                    ultimo         = resumen.Ultimo?.ToString("dd/MM/yyyy HH:mm:ss")
+                },
                 items = res.Items.Select(a => new
                 {
                     a.Id,

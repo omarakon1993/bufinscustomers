@@ -77,11 +77,11 @@ namespace bufinscustomers.Controllers
 
         [HttpGet]
         public JsonResult Detalle(int? idUsuario, int? idEmpresa, string codigoMenu, int? rol,
-            string desde, string hasta, int pagina = 1, int tam = 25)
+            string desde, string hasta, string texto = null, int pagina = 1, int tam = 25)
         {
             if (!PuedeAcceder(out bool esSuper)) return Prohibido();
 
-            var f = ConstruirFiltro(idUsuario, idEmpresa, codigoMenu, rol, desde, hasta);
+            var f = ConstruirFiltro(idUsuario, idEmpresa, codigoMenu, rol, desde, hasta, texto);
             f.Pagina = pagina; f.TamanoPagina = tam;
             AplicarAlcance(f, esSuper);
 
@@ -107,13 +107,35 @@ namespace bufinscustomers.Controllers
             }, JsonRequestBehavior.AllowGet);
         }
 
+        /// <summary>Totales del conjunto filtrado para las tarjetas de resumen (independiente del modo de la grilla).</summary>
         [HttpGet]
-        public JsonResult ResumenUsuarios(int? idUsuario, int? idEmpresa, string codigoMenu, int? rol,
-            string desde, string hasta)
+        public JsonResult ResumenGeneral(int? idUsuario, int? idEmpresa, string codigoMenu, int? rol,
+            string desde, string hasta, string texto = null)
         {
             if (!PuedeAcceder(out bool esSuper)) return Prohibido();
 
-            var f = ConstruirFiltro(idUsuario, idEmpresa, codigoMenu, rol, desde, hasta);
+            var f = ConstruirFiltro(idUsuario, idEmpresa, codigoMenu, rol, desde, hasta, texto);
+            AplicarAlcance(f, esSuper);
+
+            var r = _svc.ResumenGeneral(f);
+            return Json(new
+            {
+                success = true,
+                visitas          = r.Visitas,
+                usuarios         = r.Usuarios,
+                paginasDistintas = r.PaginasDistintas,
+                paginaTop        = r.PaginaTop,
+                ultima           = r.Ultima?.ToString("dd/MM/yyyy HH:mm")
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public JsonResult ResumenUsuarios(int? idUsuario, int? idEmpresa, string codigoMenu, int? rol,
+            string desde, string hasta, string texto = null)
+        {
+            if (!PuedeAcceder(out bool esSuper)) return Prohibido();
+
+            var f = ConstruirFiltro(idUsuario, idEmpresa, codigoMenu, rol, desde, hasta, texto);
             AplicarAlcance(f, esSuper);
 
             var filas = _svc.ResumenPorUsuario(f);
@@ -134,11 +156,11 @@ namespace bufinscustomers.Controllers
 
         [HttpGet]
         public JsonResult ResumenPaginas(int? idUsuario, int? idEmpresa, string codigoMenu, int? rol,
-            string desde, string hasta)
+            string desde, string hasta, string texto = null)
         {
             if (!PuedeAcceder(out bool esSuper)) return Prohibido();
 
-            var f = ConstruirFiltro(idUsuario, idEmpresa, codigoMenu, rol, desde, hasta);
+            var f = ConstruirFiltro(idUsuario, idEmpresa, codigoMenu, rol, desde, hasta, texto);
             AplicarAlcance(f, esSuper);
 
             var filas = _svc.ResumenPorPagina(f);
@@ -158,11 +180,11 @@ namespace bufinscustomers.Controllers
 
         [HttpGet]
         public JsonResult ResumenUsuarioPagina(int? idUsuario, int? idEmpresa, string codigoMenu, int? rol,
-            string desde, string hasta)
+            string desde, string hasta, string texto = null)
         {
             if (!PuedeAcceder(out bool esSuper)) return Prohibido();
 
-            var f = ConstruirFiltro(idUsuario, idEmpresa, codigoMenu, rol, desde, hasta);
+            var f = ConstruirFiltro(idUsuario, idEmpresa, codigoMenu, rol, desde, hasta, texto);
             AplicarAlcance(f, esSuper);
 
             var filas = _svc.ResumenPorUsuarioPagina(f);
@@ -184,12 +206,12 @@ namespace bufinscustomers.Controllers
 
         [HttpGet]
         public ActionResult ExportarExcel(string modo, int? idUsuario, int? idEmpresa, string codigoMenu,
-            int? rol, string desde, string hasta)
+            int? rol, string desde, string hasta, string texto = null)
         {
             if (!PuedeAcceder(out bool esSuper))
                 return new RedirectResult("~/Error/Forbidden");
 
-            var f = ConstruirFiltro(idUsuario, idEmpresa, codigoMenu, rol, desde, hasta);
+            var f = ConstruirFiltro(idUsuario, idEmpresa, codigoMenu, rol, desde, hasta, texto);
             AplicarAlcance(f, esSuper);
 
             using (var wb = new XLWorkbook())
@@ -290,7 +312,7 @@ namespace bufinscustomers.Controllers
         // ── Helpers ────────────────────────────────────────────────────────
 
         private static NavegacionFiltro ConstruirFiltro(int? idUsuario, int? idEmpresa, string codigoMenu,
-            int? rol, string desde, string hasta)
+            int? rol, string desde, string hasta, string texto = null)
         {
             DateTime? d = null, h = null;
             if (DateTime.TryParse(desde, out var dd)) d = dd;
@@ -301,6 +323,7 @@ namespace bufinscustomers.Controllers
                 IdEmpresa  = idEmpresa.HasValue && idEmpresa.Value > 0 ? idEmpresa : null,
                 CodigoMenu = string.IsNullOrWhiteSpace(codigoMenu) ? null : codigoMenu.Trim(),
                 Rol        = rol.HasValue && rol.Value >= 0 && rol.Value <= 2 ? (byte?)rol.Value : null,
+                Texto      = string.IsNullOrWhiteSpace(texto) ? null : texto.Trim(),
                 Desde      = d,
                 Hasta      = h
             };

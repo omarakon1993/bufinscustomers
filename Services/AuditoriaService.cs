@@ -218,6 +218,32 @@ namespace bufinscustomers.Services
             return res;
         }
 
+        /// <summary>Totales del conjunto filtrado (usuarios distintos, relevancia alta, último evento) para las tarjetas de resumen.</summary>
+        public AuditoriaResumen Resumen(AuditoriaFiltro f)
+        {
+            var res = new AuditoriaResumen();
+            var (filtro, parametros) = ConstruirFiltro(f ?? new AuditoriaFiltro());
+            string alta = TieneColumnasFase23()
+                ? "SUM(CASE WHEN a.Severidad = 'Critico' THEN 1 ELSE 0 END)"
+                : "CAST(0 AS INT)";
+
+            using (var cn = new SqlConnection(CadenaConexion))
+            using (var cmd = new SqlCommand(
+                "SELECT COUNT(DISTINCT a.IdUsuario) AS Usuarios, " + alta + " AS Alta, MAX(a.Fecha) AS Ultimo FROM dbo.Auditoria a" + filtro, cn))
+            {
+                foreach (var p in parametros) cmd.Parameters.Add(Clonar(p));
+                cn.Open();
+                using (var r = cmd.ExecuteReader())
+                    if (r.Read())
+                    {
+                        res.Usuarios = r["Usuarios"] == DBNull.Value ? 0 : Convert.ToInt32(r["Usuarios"]);
+                        res.RelevanciaAlta = r["Alta"] == DBNull.Value ? 0 : Convert.ToInt32(r["Alta"]);
+                        res.Ultimo = r["Ultimo"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(r["Ultimo"]);
+                    }
+            }
+            return res;
+        }
+
         /// <summary>Mismos filtros que <see cref="Consultar"/> pero sin paginar, con tope de filas (para exportar).</summary>
         public List<RegistroAuditoria> ConsultarParaExport(AuditoriaFiltro f, int maxFilas = 20000)
         {

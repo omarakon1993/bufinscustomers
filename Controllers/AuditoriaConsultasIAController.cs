@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
+using ClosedXML.Excel;
+using System.IO;
 
 namespace bufinscustomers.Controllers
 {
@@ -44,8 +46,8 @@ namespace bufinscustomers.Controllers
             return View("~/Views/Informes/AuditoriaConsultasIA.cshtml");
         }
 
-        [HttpGet]
-        public JsonResult ObtenerAuditoria(int? idEmpresa, int? idUsuario, string desde, string hasta)
+        /// <summary>Registros visibles para el usuario según su rol (Usuario Normal: solo los propios; Admin de Empresa: su empresa/grupo; Super Admin: todo).</summary>
+        private List<Models.AuditoriaAnalisisIA> ObtenerSegunAlcance(int? idEmpresa, int? idUsuario, string desde, string hasta)
         {
             var usuario        = UsuarioSesionHelper.UsuarioActual;
             var esSuperAdmin   = UsuarioSesionHelper.EsSuperAdmin();
@@ -77,8 +79,16 @@ namespace bufinscustomers.Controllers
             if (!string.IsNullOrWhiteSpace(desde) && DateTime.TryParse(desde, out var d)) fechaDesde = d;
             if (!string.IsNullOrWhiteSpace(hasta) && DateTime.TryParse(hasta, out var h)) fechaHasta = h;
 
-            var registros = new AuditoriaAnalisisIAService()
+            return new AuditoriaAnalisisIAService()
                 .ObtenerRegistros(filtroIdUsuario, filtroIdsEmpresa, fechaDesde, fechaHasta);
+        }
+
+        private const string ResumenAuto = "(Resumen Gerencial)";
+
+        [HttpGet]
+        public JsonResult ObtenerAuditoria(int? idEmpresa, int? idUsuario, string desde, string hasta)
+        {
+            var registros = ObtenerSegunAlcance(idEmpresa, idUsuario, desde, hasta);
 
             return Json(registros.Select(r => new
             {
@@ -87,13 +97,91 @@ namespace bufinscustomers.Controllers
                 r.NombreEmpresa,
                 r.NombreTabla,
                 r.Filtros,
-                Pregunta      = r.Pregunta ?? "(Resumen Gerencial)",
+                Pregunta      = r.Pregunta ?? ResumenAuto,
                 r.Respuesta,
                 FechaPregunta = r.FechaPregunta.ToString("dd/MM/yyyy HH:mm:ss"),
                 r.FilasAnalizadas,
                 r.TokensTotal,
                 r.Valoracion
             }), JsonRequestBehavior.AllowGet);
+        }
+
+        /// <summary>
+        /// Exporta a Excel con los mismos filtros de la pantalla: los de servidor (empresa, usuario, período) y los
+        /// que la vista aplica en el navegador (tipo, tabla analizada, valoración, texto).
+        /// </summary>
+        [HttpGet]
+        public ActionResult ExportarExcel(int? idEmpresa, int? idUsuario, string desde, string hasta,
+            string tipo = null, string tabla = null, string valoracion = null, string texto = null)
+        {
+            if (!UsuarioSesionHelper.EsSuperAdmin() && !UsuarioSesionHelper.EsAdminEmpresa())
+                return new RedirectResult("~/Error/Forbidden");
+
+            var filas = ObtenerSegunAlcance(idEmpresa, idUsuario, desde, hasta)
+                .Where(r =>
+                {
+                    bool esResumen = string.IsNullOrEmpty(r.Pregunta);
+                    if (tipo == "resumen" && !esResumen) return false;
+                    if (tipo == "pregunta" && esResumen) return false;
+                    if (!string.IsNullOrEmpty(tabla) && !string.Equals(r.NombreTabla, tabla, StringComparison.Ordinal)) return false;
+                    if (valoracion == "1" && r.Valoracion != 1) return false;
+                    if (valoracion == "0" && r.Valoracion != 0) return false;
+                    if (valoracion == "sin" && r.Valoracion.HasValue) return false;
+                    if (!string.IsNullOrWhiteSpace(texto))
+                    {
+                        var t = texto.Trim();
+                        bool ok = (r.Pregunta ?? "").IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0
+                               || (r.NombreTabla ?? "").IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0
+                               || (r.NombreUsuario ?? "").IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0
+                               || (r.NombreEmpresa ?? "").IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0
+                               || (r.Filtros ?? "").IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0;
+                        if (!ok) return false;
+                    }
+                    return true;
+                })
+                .OrderByDescending(r => r.FechaPregunta)
+                .Take(20000)
+                .ToList();
+
+            using (var wb = new XLWorkbook())
+            {
+                var ws = wb.Worksheets.Add("Consultas IA");
+                string[] cab = { "Fecha", "Usuario", "Empresa", "Tabla", "Filtros", "Tipo", "Pregunta", "Respuesta", "Filas", "Tokens", "Valoracion" };
+                for (int i = 0; i < cab.Length; i++) ws.Cell(1, i + 1).Value = cab[i];
+                ws.Row(1).Style.Font.Bold = true;
+
+                int fila = 2;
+                foreach (var r in filas)
+                {
+                    ws.Cell(fila, 1).Value = r.FechaPregunta;
+                    ws.Cell(fila, 1).Style.DateFormat.Format = "yyyy-mm-dd hh:mm:ss";
+                    ws.Cell(fila, 2).Value = r.NombreUsuario ?? "";
+                    ws.Cell(fila, 3).Value = r.NombreEmpresa ?? "";
+                    ws.Cell(fila, 4).Value = r.NombreTabla ?? "";
+                    ws.Cell(fila, 5).Value = r.Filtros ?? "";
+                    ws.Cell(fila, 6).Value = string.IsNullOrEmpty(r.Pregunta) ? "Resumen" : "Pregunta";
+                    ws.Cell(fila, 7).Value = r.Pregunta ?? "";
+                    ws.Cell(fila, 8).Value = r.Respuesta ?? "";
+                    ws.Cell(fila, 9).Value = r.FilasAnalizadas;
+                    ws.Cell(fila, 10).Value = r.TokensTotal;
+                    ws.Cell(fila, 11).Value = r.Valoracion == 1 ? "Util" : (r.Valoracion == 0 ? "No util" : "");
+                    fila++;
+                }
+
+                ws.Columns().AdjustToContents();
+                // La respuesta puede ser larga: se limita el ancho para que la hoja siga siendo legible.
+                ws.Column(8).Width = 80;
+                ws.Column(8).Style.Alignment.WrapText = true;
+                ws.SheetView.Freeze(1, 0);
+
+                using (var ms = new MemoryStream())
+                {
+                    wb.SaveAs(ms);
+                    return File(ms.ToArray(),
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        $"Auditoria_ConsultasIA_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+                }
+            }
         }
 
         [HttpPost]

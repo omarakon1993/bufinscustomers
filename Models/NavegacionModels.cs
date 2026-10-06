@@ -38,6 +38,8 @@ namespace bufinscustomers.Models
         public int? IdEmpresa { get; set; }
         public string CodigoMenu { get; set; }
         public byte? Rol { get; set; }
+        /// <summary>Búsqueda libre: título de la página, usuario o ruta (controller/action).</summary>
+        public string Texto { get; set; }
         public DateTime? Desde { get; set; }
         public DateTime? Hasta { get; set; }
         public int Pagina { get; set; } = 1;
@@ -48,6 +50,16 @@ namespace bufinscustomers.Models
         /// lista vacía = no ve nada; con valores = solo esas empresas.
         /// </summary>
         public List<int> IdsEmpresaPermitidas { get; set; }
+    }
+
+    /// <summary>Totales del conjunto filtrado para las tarjetas de resumen del informe.</summary>
+    public class NavegacionResumenGeneral
+    {
+        public int Visitas { get; set; }
+        public int Usuarios { get; set; }
+        public int PaginasDistintas { get; set; }
+        public string PaginaTop { get; set; }
+        public DateTime? Ultima { get; set; }
     }
 
     public class NavegacionResultado

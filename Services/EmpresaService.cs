@@ -71,8 +71,68 @@ namespace bufinscustomers.Services
             }
 
             AsignarGrupoEmpresarial(empresas);
+            AsignarPaginaWeb(empresas);
 
             return empresas.OrderBy(e => e.Id).ToList();
+        }
+
+        /// <summary>
+        /// sp_ObtenerEmpresas no conoce la columna EmpPaginaWeb (Sql/019): se completa con una consulta inline
+        /// separada. Si la columna aún no existe en esa BD, las empresas simplemente quedan sin página web.
+        /// </summary>
+        private void AsignarPaginaWeb(List<Empresas> empresas)
+        {
+            if (empresas.Count == 0) return;
+            try
+            {
+                var webs = new Dictionary<int, string>();
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand("SELECT EmpId, EmpPaginaWeb FROM dbo.Empresas WHERE EmpPaginaWeb IS NOT NULL", cn))
+                {
+                    cn.Open();
+                    using (var r = cmd.ExecuteReader())
+                        while (r.Read())
+                            webs[(int)r["EmpId"]] = (string)r["EmpPaginaWeb"];
+                }
+                foreach (var e in empresas)
+                    if (webs.TryGetValue(e.Id, out var w)) e.PaginaWeb = w;
+            }
+            catch (SqlException ex) when (ex.Number == 207) { /* columna EmpPaginaWeb inexistente (BD sin Sql/019) */ }
+        }
+
+        /// <summary>
+        /// Guarda la página web (ya validada/normalizada). Devuelve false si la columna aún no existe en la BD
+        /// (Sql/019) para que el llamador avise en vez de dar por guardado un dato que no se almacenó.
+        /// </summary>
+        private bool GuardarPaginaWeb(int idEmpresa, string paginaWeb)
+        {
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand("UPDATE dbo.Empresas SET EmpPaginaWeb = @w WHERE EmpId = @id", cn))
+                {
+                    cmd.Parameters.AddWithValue("@w", string.IsNullOrWhiteSpace(paginaWeb) ? (object)DBNull.Value : paginaWeb);
+                    cmd.Parameters.AddWithValue("@id", idEmpresa);
+                    cn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+                return true;
+            }
+            catch (SqlException ex) when (ex.Number == 207) { return false; }
+        }
+
+        /// <summary>Id de la empresa recién creada (el SP no lo devuelve): la última con ese NIT y nombre.</summary>
+        private int? BuscarIdEmpresa(string nit, string nombre)
+        {
+            using (var cn = new SqlConnection(CadenaConexion))
+            using (var cmd = new SqlCommand("SELECT TOP 1 EmpId FROM dbo.Empresas WHERE EmpNit = @nit AND EmpNombre = @nombre ORDER BY EmpId DESC", cn))
+            {
+                cmd.Parameters.AddWithValue("@nit", nit ?? "");
+                cmd.Parameters.AddWithValue("@nombre", nombre ?? "");
+                cn.Open();
+                var o = cmd.ExecuteScalar();
+                return (o != null && o != DBNull.Value) ? (int?)Convert.ToInt32(o) : null;
+            }
         }
 
         /// <summary>
@@ -116,10 +176,11 @@ namespace bufinscustomers.Services
         }
 
         // Crear empresa
-        public bool CrearEmpresa(Empresas empresa, out string mensaje)
+        public bool CrearEmpresa(Empresas empresa, out string mensaje, out string advertencia)
         {
             bool registrado = false;
             mensaje = "";
+            advertencia = null;
 
             using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
@@ -139,14 +200,27 @@ namespace bufinscustomers.Services
                 mensaje = cmd.Parameters["@Mensaje"].Value.ToString();
             }
 
+            if (registrado)
+            {
+                // El SP no devuelve el Id: se busca para poder guardar la página web (y para que la auditoría lo registre).
+                int? id = BuscarIdEmpresa(empresa.Nit, empresa.Nombre);
+                if (id.HasValue)
+                {
+                    empresa.Id = id.Value;
+                    if (!string.IsNullOrWhiteSpace(empresa.PaginaWeb) && !GuardarPaginaWeb(id.Value, empresa.PaginaWeb))
+                        advertencia = "WEB_SIN_COLUMNA";
+                }
+            }
+
             return registrado;
         }
 
         // Editar empresa
-        public bool EditarEmpresa(Empresas empresa, out string mensaje)
+        public bool EditarEmpresa(Empresas empresa, out string mensaje, out string advertencia)
         {
             bool actualizado = false;
             mensaje = "";
+            advertencia = null;
 
             using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
@@ -166,6 +240,10 @@ namespace bufinscustomers.Services
                 actualizado = Convert.ToBoolean(cmd.Parameters["@Actualizado"].Value);
                 mensaje = cmd.Parameters["@Mensaje"].Value.ToString();
             }
+
+            // Se guarda también vacío (borrar la web). Solo avisa si la columna no existe y había algo que guardar.
+            if (actualizado && !GuardarPaginaWeb(empresa.Id, empresa.PaginaWeb) && !string.IsNullOrWhiteSpace(empresa.PaginaWeb))
+                advertencia = "WEB_SIN_COLUMNA";
 
             return actualizado;
         }
