@@ -140,7 +140,7 @@ namespace bufinscustomers.Controllers
                 var request = new IAConsultaRequest
                 {
                     Pregunta = null,
-                    DatosJson = JsonConvert.SerializeObject(new { filas = reporte.Filas, kpis = reporte.Kpis }),
+                    DatosJson = JsonConvert.SerializeObject(new { filas = reporte.Filas, kpis = reporte.Kpis }, JsonIASinNulos), // sin nulos: menos tokens
                     NombreTabla = "PYG Gerencial",
                     FiltrosDescripcion = filtrosDescripcion
                 };
@@ -208,7 +208,7 @@ namespace bufinscustomers.Controllers
                 var request = new IAConsultaRequest
                 {
                     Pregunta = pregunta,
-                    DatosJson = JsonConvert.SerializeObject(new { filas = reporte.Filas, kpis = reporte.Kpis }),
+                    DatosJson = JsonConvert.SerializeObject(new { filas = reporte.Filas, kpis = reporte.Kpis }, JsonIASinNulos), // sin nulos: menos tokens
                     NombreTabla = "PYG Gerencial",
                     FiltrosDescripcion = filtrosDescripcion
                 };

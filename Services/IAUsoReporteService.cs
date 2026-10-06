@@ -193,6 +193,9 @@ namespace bufinscustomers.Services
             public int DesdeCache { get; set; }
             public long Tokens { get; set; }
             public decimal Costo { get; set; }
+            /// <summary>Tokens de entrada de las llamadas reales al modelo y la parte servida por la caché de prompts de OpenAI (Sql/018); 0 si la columna aún no existe.</summary>
+            public long TokensEntrada { get; set; }
+            public long TokensCacheados { get; set; }
             public double? LatenciaP50 { get; set; }
             public double? LatenciaP95 { get; set; }
         }
@@ -269,6 +272,20 @@ namespace bufinscustomers.Services
                             o.Totales.Tokens = r["Tokens"] == DBNull.Value ? 0 : Convert.ToInt64(r["Tokens"]);
                             o.Totales.Costo = r["Costo"] == DBNull.Value ? 0 : Convert.ToDecimal(r["Costo"]);
                         }
+
+                    // Caché de prompts de OpenAI (columna de Sql/018: si aún no existe, se omite sin afectar lo demás).
+                    try
+                    {
+                        using (var c = cmd($@"SELECT SUM(CAST(TokensPrompt AS BIGINT)) AS Entrada, SUM(CAST(ISNULL(TokensCacheados, 0) AS BIGINT)) AS Cacheados
+                                {rango} AND Exitoso = 1 AND DesdeCache = 0"))
+                        using (var r = c.ExecuteReader())
+                            if (r.Read())
+                            {
+                                o.Totales.TokensEntrada = r["Entrada"] == DBNull.Value ? 0 : Convert.ToInt64(r["Entrada"]);
+                                o.Totales.TokensCacheados = r["Cacheados"] == DBNull.Value ? 0 : Convert.ToInt64(r["Cacheados"]);
+                            }
+                    }
+                    catch (SqlException ex) when (ex.Number == 207) { /* TokensCacheados aún no existe (Sql/018) */ }
 
                     // Latencia solo de llamadas reales al modelo (sin caché ni rechazos).
                     using (var c = cmd($@"SELECT TOP 1

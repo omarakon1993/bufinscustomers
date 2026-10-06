@@ -15,6 +15,10 @@ namespace bufinscustomers.Controllers
         protected static readonly string CadenaConexion =
             ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
 
+        /// <summary>Serialización de los datos que se envían a la IA: omite los campos nulos (menos tokens, mismo contenido).</summary>
+        protected static readonly Newtonsoft.Json.JsonSerializerSettings JsonIASinNulos =
+            new Newtonsoft.Json.JsonSerializerSettings { NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore };
+
         // Kept for reading legacy SHA256 hashes during migration — do NOT use for new passwords
         protected static string ConvertirSha256(string texto)
         {

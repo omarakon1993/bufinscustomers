@@ -147,7 +147,7 @@ namespace bufinscustomers.Controllers
                         kpis = reporte.Kpis,
                         cuadraBalance = reporte.CuadraBalance,
                         diferenciaCuadre = reporte.DiferenciaCuadre
-                    }),
+                    }, JsonIASinNulos), // sin nulos: menos tokens
                     NombreTabla = "Balance Gerencial",
                     FiltrosDescripcion = filtrosDescripcion
                 };
@@ -221,7 +221,7 @@ namespace bufinscustomers.Controllers
                         kpis = reporte.Kpis,
                         cuadraBalance = reporte.CuadraBalance,
                         diferenciaCuadre = reporte.DiferenciaCuadre
-                    }),
+                    }, JsonIASinNulos), // sin nulos: menos tokens
                     NombreTabla = "Balance Gerencial",
                     FiltrosDescripcion = filtrosDescripcion
                 };

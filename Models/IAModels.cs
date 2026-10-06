@@ -17,6 +17,8 @@ namespace bufinscustomers.Models
         public string FormatoDatos { get; set; }
         public string NombreTabla { get; set; }
         public string FiltrosDescripcion { get; set; }
+        /// <summary>Nota breve sobre los datos (p. ej. columnas constantes omitidas del CSV); se imprime justo antes del bloque de datos.</summary>
+        public string NotaDatos { get; set; }
         public List<MensajeChatIA> Historial { get; set; }
     }
 
@@ -36,6 +38,8 @@ namespace bufinscustomers.Models
         public int TokensPrompt { get; set; }
         public int TokensRespuesta { get; set; }
         public int TokensTotal { get; set; }
+        /// <summary>Parte de <see cref="TokensPrompt"/> servida desde la caché de prompts de OpenAI (se factura con descuento).</summary>
+        public int TokensCacheados { get; set; }
 
         // Metadatos para la UI (N14): modelo usado, coste estimado y fila de auditoría (para valorar).
         public string Modelo { get; set; }

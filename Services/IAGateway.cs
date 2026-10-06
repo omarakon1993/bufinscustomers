@@ -77,6 +77,13 @@ namespace bufinscustomers.Services
 
             // Modelo: el fijo de la empresa (si lo tiene); en modo "Degradar" uno económico y respuestas más cortas.
             if (!string.IsNullOrWhiteSpace(acceso.ModeloEmpresa)) modelo = acceso.ModeloEmpresa.Trim();
+            else
+            {
+                // Enrutamiento por tipo de tarea: las de plantilla fija (resumen sin pregunta, cifras, insights
+                // PYG/Balance) no necesitan el modelo grande. Opt-in: sin IA_ModeloSimple el modelo no cambia.
+                string simple = (cfg.ObtenerValor("IA_ModeloSimple") ?? "").Trim();
+                if (simple.Length > 0 && EsTareaSimple(s, esResumen)) modelo = simple;
+            }
             if (acceso.Degradado)
             {
                 string economico = cfg.ObtenerValor("IA_ModeloEconomico");
@@ -138,6 +145,19 @@ namespace bufinscustomers.Services
             return response;
         }
 
+        /// <summary>
+        /// true si la consulta es una tarea de plantilla fija que un modelo económico resuelve bien:
+        /// insights de PYG/Balance y, en Análisis IA, el resumen gerencial y "solo cifras". Las preguntas
+        /// libres, el análisis detallado y el de riesgo siguen con el modelo principal.
+        /// </summary>
+        private static bool EsTareaSimple(IASolicitud s, bool esResumen)
+        {
+            if (!esResumen) return false; // cualquier pregunta libre → modelo principal
+            if (s.Funcion == IAFuncion.InsightsPYG || s.Funcion == IAFuncion.InsightsBalance) return true;
+            return s.Funcion == IAFuncion.Chat
+                && (s.CodigoPrompt == "RESUMEN_GERENCIAL" || s.CodigoPrompt == "SOLO_CIFRAS");
+        }
+
         /// <summary>Estimación gruesa de los tokens de la consulta: caracteres/4 de lo que se envía + una salida típica.</summary>
         private static long EstimarTokens(IAConsultaRequest r, int maxTokensSalida)
         {
@@ -152,10 +172,26 @@ namespace bufinscustomers.Services
             if (r.TokensTotal <= 0) return null;
             try
             {
-                decimal.TryParse(cfg.ObtenerValor("IA_CostoPor1kTokensPrompt"), NumberStyles.Float, CultureInfo.InvariantCulture, out decimal p);
-                decimal.TryParse(cfg.ObtenerValor("IA_CostoPor1kTokensRespuesta"), NumberStyles.Float, CultureInfo.InvariantCulture, out decimal rs);
+                // Tarifa propia del modelo si existe ("IA_CostoPor1kTokensPrompt:gpt-4o-mini"); si no, la global.
+                // Así el costo es correcto aunque el enrutamiento use dos modelos de precio distinto.
+                string m = (r.Modelo ?? "").Trim();
+                Func<string, string> valor = clave =>
+                {
+                    string v = m.Length > 0 ? cfg.ObtenerValor(clave + ":" + m) : null;
+                    return string.IsNullOrWhiteSpace(v) ? cfg.ObtenerValor(clave) : v;
+                };
+                decimal.TryParse(valor("IA_CostoPor1kTokensPrompt"), NumberStyles.Float, CultureInfo.InvariantCulture, out decimal p);
+                decimal.TryParse(valor("IA_CostoPor1kTokensRespuesta"), NumberStyles.Float, CultureInfo.InvariantCulture, out decimal rs);
                 if (p <= 0 && rs <= 0) return null;
-                return Math.Round(r.TokensPrompt / 1000m * p + r.TokensRespuesta / 1000m * rs, 4);
+                // Los tokens de entrada servidos desde la caché de prompts se facturan con descuento
+                // (IA_FactorCostoCache, def. 0.5 = gpt-4o/4o-mini; los gpt-5.x cobran ≈0.1; también por modelo).
+                decimal factor = 0.5m;
+                if (decimal.TryParse(valor("IA_FactorCostoCache"), NumberStyles.Float, CultureInfo.InvariantCulture, out decimal f)
+                    && f >= 0m && f <= 1m)
+                    factor = f;
+                int cacheados = Math.Min(Math.Max(r.TokensCacheados, 0), r.TokensPrompt);
+                decimal promptEquivalente = (r.TokensPrompt - cacheados) + cacheados * factor;
+                return Math.Round(promptEquivalente / 1000m * p + r.TokensRespuesta / 1000m * rs, 4);
             }
             catch (Exception ex)
             {
@@ -233,17 +269,22 @@ namespace bufinscustomers.Services
             }
         }
 
+        // Nivel de esquema detectado de IAUsoLog: 2 = con TokensCacheados (Sql/018), 1 = con Sobreconsumo/Degradado
+        // (Sql/015), 0 = base. Baja solo si la BD aún no tiene las columnas, para no fallar un INSERT en cada llamada.
+        private static int _nivelLog = 2;
+
         private static void InsertarLog(SqlConnection cn, IASolicitud s, IAConsultaResponse r, decimal? costo, int latenciaMs,
             string error, IAUsoService.ResultadoAcceso acceso)
         {
             const string baseCols = "IdEmpresa, IdUsuario, Funcion, Modelo, TokensPrompt, TokensRespuesta, CostoUSD, LatenciaMs, DesdeCache, Exitoso, Error, IdAuditoria";
             const string baseVals = "@IdEmpresa, @IdUsuario, @Funcion, @Modelo, @TP, @TR, @Costo, @Lat, @Cache, @Ok, @Error, @IdAud";
 
-            Func<bool, SqlCommand> crear = conFase2 =>
+            Func<int, SqlCommand> crear = nivel =>
             {
-                var cmd = new SqlCommand(conFase2
-                    ? $"INSERT INTO dbo.IAUsoLog ({baseCols}, Sobreconsumo, Degradado) VALUES ({baseVals}, @Sobre, @Degr);"
-                    : $"INSERT INTO dbo.IAUsoLog ({baseCols}) VALUES ({baseVals});", cn);
+                string cols = baseCols, vals = baseVals;
+                if (nivel >= 1) { cols += ", Sobreconsumo, Degradado"; vals += ", @Sobre, @Degr"; }
+                if (nivel >= 2) { cols += ", TokensCacheados"; vals += ", @TC"; }
+                var cmd = new SqlCommand($"INSERT INTO dbo.IAUsoLog ({cols}) VALUES ({vals});", cn);
                 cmd.Parameters.AddWithValue("@IdEmpresa", s.IdEmpresa);
                 cmd.Parameters.AddWithValue("@IdUsuario", s.Usuario?.Id ?? 0);
                 cmd.Parameters.AddWithValue("@Funcion", s.Funcion ?? "");
@@ -256,21 +297,27 @@ namespace bufinscustomers.Services
                 cmd.Parameters.AddWithValue("@Ok", r.Exitoso);
                 cmd.Parameters.AddWithValue("@Error", (object)error ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@IdAud", r.IdAuditoria > 0 ? (object)r.IdAuditoria : DBNull.Value);
-                if (conFase2)
+                if (nivel >= 1)
                 {
                     cmd.Parameters.AddWithValue("@Sobre", acceso != null && acceso.Sobreconsumo && r.Exitoso);
                     cmd.Parameters.AddWithValue("@Degr", acceso != null && acceso.Degradado && r.Exitoso);
                 }
+                if (nivel >= 2)
+                    cmd.Parameters.AddWithValue("@TC", r.TokensCacheados);
                 return cmd;
             };
 
-            try
+            for (int nivel = _nivelLog; ; nivel--)
             {
-                using (var cmd = crear(true)) cmd.ExecuteNonQuery();
-            }
-            catch (SqlException ex) when (ex.Number == 207) // columnas de Sql/015 aún no existen
-            {
-                using (var cmd = crear(false)) cmd.ExecuteNonQuery();
+                try
+                {
+                    using (var cmd = crear(nivel)) cmd.ExecuteNonQuery();
+                    return;
+                }
+                catch (SqlException ex) when (ex.Number == 207 && nivel > 0) // columna aún inexistente: bajar de nivel
+                {
+                    _nivelLog = nivel - 1;
+                }
             }
         }
     }

@@ -21,7 +21,8 @@ namespace bufinscustomers.Controllers
 
         // ── Límites del historial de conversación que envía el cliente (S04) ──
         private const int MaxCharsHistorialJson    = 2_000_000; // ~2 MB de JSON crudo antes de parsear
-        private const int MaxMensajesHistorial     = 13;        // 1 mensaje de contexto + 6 pares Q&A
+        private const int MaxMensajesHistorial     = 7;         // 1 mensaje de contexto + 3 pares Q&A
+        private const int MaxCharsRespuestaPrevia  = 3_000;     // respuestas previas del asistente (salvo la última) se abrevian a esto
         private const int MaxCharsMensajeHistorial = 60_000;    // por mensaje (salvo el de contexto)
         private const int MaxCharsHistorialTotal   = 500_000;   // suma de todos los mensajes
 
@@ -185,15 +186,17 @@ namespace bufinscustomers.Controllers
                 // reutilizan el contexto ya enviado).
                 const int MaxCharsData = 200_000;
                 string datosCsv = null;
+                string notaDatos = null;
                 int filasEnviadas = resultado.TotalRegistros;
 
                 if (historial == null || historial.Count == 0)
-                    datosCsv = ConstruirCsv(resultado.Columnas, resultado.Filas, MaxCharsData, out filasEnviadas);
+                    datosCsv = ConstruirCsv(resultado.Columnas, resultado.Filas, MaxCharsData, out filasEnviadas, out notaDatos);
 
                 var request = new IAConsultaRequest
                 {
                     Pregunta = string.IsNullOrWhiteSpace(pregunta) ? null : pregunta.Trim(),
                     DatosJson = datosCsv,
+                    NotaDatos = notaDatos,
                     FormatoDatos = "csv",
                     NombreTabla = tablaAmigable,
                     FiltrosDescripcion = ConstruirDescripcionFiltros(filtros),
@@ -276,26 +279,60 @@ namespace bufinscustomers.Controllers
         /// <paramref name="maxChars"/> y devuelve por <paramref name="filasEscritas"/> cuántas cupieron.
         /// </summary>
         private string ConstruirCsv(List<string> columnas, List<Dictionary<string, object>> filas,
-            int maxChars, out int filasEscritas)
+            int maxChars, out int filasEscritas, out string notaDatos)
         {
             var inv = System.Globalization.CultureInfo.InvariantCulture;
+
+            Func<Dictionary<string, object>, string, string> valorTexto = (fila, c) =>
+            {
+                object v = (fila != null && fila.TryGetValue(c, out var val)) ? val : null;
+                if (v == null || v == DBNull.Value)                 return "";
+                if (v is DateTime dt)                               return dt.ToString("yyyy-MM-dd");
+                // Normalize: 1234.5000 → 1234.5 (los decimales de SQL arrastran ceros de escala que cuestan tokens).
+                if (v is decimal || v is double || v is float)      return (Convert.ToDecimal(v, inv) / 1.0000000000000000000000000000m).ToString(inv);
+                if (v is int || v is long || v is short || v is byte) return Convert.ToInt64(v).ToString(inv);
+                return v.ToString();
+            };
+
+            // Reducción SIN pérdida de información: las columnas vacías en todas las filas y las que
+            // valen lo mismo en todas (IdEscenario, IdEmpresa, Año si se filtró uno…) no se repiten
+            // en cada renglón; se declaran una sola vez en la nota que acompaña los datos.
+            var columnasOmitidas = new List<string>();
+            var constantes = new List<string>();
+            var columnasUsadas = columnas;
+            if (filas.Count >= 2)
+            {
+                columnasUsadas = new List<string>();
+                foreach (var c in columnas)
+                {
+                    string primero = valorTexto(filas[0], c);
+                    bool constante = true;
+                    for (int i = 1; i < filas.Count && constante; i++)
+                        constante = string.Equals(valorTexto(filas[i], c), primero, StringComparison.Ordinal);
+
+                    if (!constante) { columnasUsadas.Add(c); continue; }
+
+                    string nombre = _service.ObtenerNombreAmigableColumna(c);
+                    if (primero.Length == 0) columnasOmitidas.Add(nombre);
+                    else constantes.Add(nombre + "=" + primero);
+                }
+                if (columnasUsadas.Count == 0) { columnasUsadas = columnas; constantes.Clear(); columnasOmitidas.Clear(); }
+            }
+
+            var partesNota = new List<string>();
+            if (constantes.Count > 0)
+                partesNota.Add("Valores iguales en TODAS las filas (omitidos de la tabla CSV): " + string.Join("; ", constantes) + ".");
+            if (columnasOmitidas.Count > 0)
+                partesNota.Add("Columnas sin datos (omitidas): " + string.Join(", ", columnasOmitidas) + ".");
+            notaDatos = partesNota.Count > 0 ? string.Join(" ", partesNota) : null;
+
             var sb = new System.Text.StringBuilder();
-            sb.Append(string.Join(";", columnas.Select(c => CsvCampo(_service.ObtenerNombreAmigableColumna(c))))).Append('\n');
+            sb.Append(string.Join(";", columnasUsadas.Select(c => CsvCampo(_service.ObtenerNombreAmigableColumna(c))))).Append('\n');
 
             int n = 0;
             foreach (var fila in filas)
             {
-                var linea = string.Join(";", columnas.Select(c =>
-                {
-                    object v = (fila != null && fila.TryGetValue(c, out var val)) ? val : null;
-                    string s;
-                    if (v == null || v == DBNull.Value)                 s = "";
-                    else if (v is DateTime dt)                          s = dt.ToString("yyyy-MM-dd");
-                    else if (v is decimal || v is double || v is float) s = Convert.ToDecimal(v, inv).ToString(inv);
-                    else if (v is int || v is long || v is short || v is byte) s = Convert.ToInt64(v).ToString(inv);
-                    else                                               s = v.ToString();
-                    return CsvCampo(s);
-                }));
+                var linea = string.Join(";", columnasUsadas.Select(c => CsvCampo(valorTexto(fila, c))));
                 if (sb.Length + linea.Length + 1 > maxChars) break;
                 sb.Append(linea).Append('\n');
                 n++;
@@ -511,6 +548,19 @@ namespace bufinscustomers.Controllers
                 var recortado = new List<MensajeChatIA> { limpio[0] };
                 recortado.AddRange(limpio.Skip(limpio.Count - (MaxMensajesHistorial - 1)));
                 limpio = recortado;
+            }
+
+            // Cada turno de seguimiento reenvía TODO el historial: las respuestas previas largas (un
+            // análisis detallado son ~4.000 tokens) se pagan en cada pregunta. Se abrevian las respuestas
+            // del asistente que no son la última; el contexto con los datos (índice 0) y la última
+            // respuesta quedan intactos. El recorte es determinista, así que el prefijo sigue siendo
+            // idéntico entre turnos y la caché de prompts de OpenAI lo sigue aprovechando.
+            int ultimaAsistente = limpio.FindLastIndex(m => m.Rol == "assistant");
+            for (int i = 1; i < limpio.Count; i++)
+            {
+                if (i == ultimaAsistente || limpio[i].Rol != "assistant") continue;
+                if (limpio[i].Contenido.Length > MaxCharsRespuestaPrevia)
+                    limpio[i].Contenido = limpio[i].Contenido.Substring(0, MaxCharsRespuestaPrevia) + " […]";
             }
 
             while (limpio.Count > 2 && limpio.Sum(m => (long)m.Contenido.Length) > MaxCharsHistorialTotal)

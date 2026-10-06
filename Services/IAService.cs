@@ -47,10 +47,11 @@ namespace bufinscustomers.Services
         private static DateTime _ultimaPurgaCacheDb = DateTime.MinValue;
         private static readonly object _purgaCacheDbLock = new object();
 
-        // TTL leído de ConfiguracionSistema, cacheado 5 min para no consultar la BD en cada llamada.
-        private static int _ttlHorasCache = -1;
-        private static DateTime _ttlHorasLeidoEn = DateTime.MinValue;
-        private static readonly object _ttlHorasLock = new object();
+        private const int CacheTtlHorasModeloDefault = 720; // IA_CacheHorasModelo: resúmenes/insights atados a la huella de los datos
+
+        // TTL leídos de ConfiguracionSistema, cacheados 5 min para no consultar la BD en cada llamada.
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int Horas, DateTime LeidoEn)> _ttlConfig =
+            new System.Collections.Concurrent.ConcurrentDictionary<string, (int Horas, DateTime LeidoEn)>();
 
         // ── Cortacircuitos ante errores repetidos de OpenAI (S03) ──
         private const int  BreakerUmbralFallos  = 3;   // fallos 429/5xx consecutivos para abrir
@@ -64,6 +65,7 @@ namespace bufinscustomers.Services
         private static DateTime _breakerHasta = DateTime.MinValue;
         private static readonly object _breakerLock = new object();
         private static readonly Random _rnd = new Random();
+        private static volatile bool _sinPromptCacheKey; // true si el proveedor rechazó prompt_cache_key (se deja de enviar)
 
         private readonly string _apiKey;
 
@@ -100,12 +102,31 @@ namespace bufinscustomers.Services
                 int  ttlHoras    = ObtenerTtlHoras();
                 bool cacheActiva = ttlHoras > 0;
 
+                // Resúmenes/insights (sin pregunta libre): la clave de caché ya incluye la huella (hash) de
+                // los datos, así que la respuesta sigue siendo válida mientras los datos del modelo no
+                // cambien. Cuando se vuelve a ejecutar el modelo —completo o solo algunas tablas— los datos
+                // de las tablas afectadas cambian, su huella cambia y la clave deja de coincidir sola: no
+                // hace falta invalidar nada a mano. Por eso a estas consultas se les da una vida larga
+                // (IA_CacheHorasModelo, def. 30 días); las preguntas libres siguen con IA_CacheHoras.
+                bool esResumenCache = string.IsNullOrWhiteSpace(request.Pregunta)
+                                      && (request.Historial == null || request.Historial.Count == 0);
+                if (cacheActiva && esResumenCache)
+                    ttlHoras = Math.Max(ttlHoras, ObtenerTtlConfig("IA_CacheHorasModelo", CacheTtlHorasModeloDefault));
+
                 string cacheKey = GenerarCacheKey(request, instruccionesPersonalizadas, guardrailSistema, modeloFinal, tokensFinal, contextoNegocio, ingles);
                 if (cacheActiva && _cache.Contains(cacheKey))
                 {
                     var cached = (IAConsultaResponse)_cache.Get(cacheKey);
-                    cached.DesdeCache = true;
-                    return cached;
+                    // Copia propia: no se muta el objeto compartido de la caché y, como no hubo llamada al
+                    // modelo, no arrastra tokens (de lo contrario se descontarían otra vez del presupuesto).
+                    return new IAConsultaResponse
+                    {
+                        Exitoso               = true,
+                        Respuesta             = cached.Respuesta,
+                        PromptContextoInicial = cached.PromptContextoInicial,
+                        Modelo                = cached.Modelo,
+                        DesdeCache            = true
+                    };
                 }
 
                 // Caché persistente en BD: sobrevive a los reciclajes del app pool y se comparte
@@ -193,27 +214,49 @@ namespace bufinscustomers.Services
                     if (temperature.HasValue)
                         bodyDict["temperature"] = temperature.Value;
 
-                    string body = JsonConvert.SerializeObject(bodyDict);
+                    // prompt_cache_key: agrupa en el mismo servidor las consultas con el mismo prefijo
+                    // (misma tabla), lo que sube los aciertos de la caché de prompts de OpenAI. Solo en
+                    // modelos gpt-*; si el proveedor lo rechazara se reintenta sin él (ver abajo).
+                    bool usaCacheKey = modeloFinal.StartsWith("gpt-", StringComparison.OrdinalIgnoreCase)
+                                       && !_sinPromptCacheKey
+                                       && !string.IsNullOrWhiteSpace(request.NombreTabla);
+                    if (usaCacheKey)
+                        bodyDict["prompt_cache_key"] = "bufins:" + request.NombreTabla;
 
                     HttpResponseMessage resp = null;
                     string text = null;
-                    for (int intento = 0; ; intento++)
+                    for (int pasada = 0; pasada < 2; pasada++)
                     {
-                        using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, OpenAIEndpoint))
+                        string body = JsonConvert.SerializeObject(bodyDict);
+
+                        for (int intento = 0; ; intento++)
                         {
-                            httpRequest.Headers.Add("Authorization", "Bearer " + _apiKey);
-                            httpRequest.Content = new StringContent(body, Encoding.UTF8, "application/json");
-                            resp = await _httpClient.SendAsync(httpRequest);
+                            using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, OpenAIEndpoint))
+                            {
+                                httpRequest.Headers.Add("Authorization", "Bearer " + _apiKey);
+                                httpRequest.Content = new StringContent(body, Encoding.UTF8, "application/json");
+                                resp = await _httpClient.SendAsync(httpRequest);
+                            }
+                            text = await resp.Content.ReadAsStringAsync();
+
+                            int code = (int)resp.StatusCode;
+                            bool transitorio = (code == 429 || code == 503) && !EsSinCredito(text);
+                            if (resp.IsSuccessStatusCode || !transitorio || intento >= ReintentosMax)
+                                break;
+
+                            // Backoff exponencial con jitter antes de reintentar (≈1s, 2s + hasta 400 ms)
+                            await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, intento) * 1000 + _rnd.Next(0, 400)));
                         }
-                        text = await resp.Content.ReadAsStringAsync();
 
-                        int code = (int)resp.StatusCode;
-                        bool transitorio = (code == 429 || code == 503) && !EsSinCredito(text);
-                        if (resp.IsSuccessStatusCode || !transitorio || intento >= ReintentosMax)
-                            break;
-
-                        // Backoff exponencial con jitter antes de reintentar (≈1s, 2s + hasta 400 ms)
-                        await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, intento) * 1000 + _rnd.Next(0, 400)));
+                        // El proveedor/modelo no acepta prompt_cache_key: se recuerda y se repite sin él.
+                        if (pasada == 0 && usaCacheKey && (int)resp.StatusCode == 400
+                            && text != null && text.IndexOf("prompt_cache_key", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            _sinPromptCacheKey = true;
+                            bodyDict.Remove("prompt_cache_key");
+                            continue;
+                        }
+                        break;
                     }
                     return (resp, text);
                 }
@@ -282,7 +325,8 @@ namespace bufinscustomers.Services
                     Modelo                = modeloFinal,
                     TokensPrompt          = uso.Item1,
                     TokensRespuesta       = uso.Item2,
-                    TokensTotal           = uso.Item3
+                    TokensTotal           = uso.Item3,
+                    TokensCacheados       = ExtraerTokensCacheados(responseText)
                 };
 
                 // Solo cachear si hay contenido real (no la respuesta de diagnóstico) y si la caché está activa.
@@ -346,32 +390,28 @@ namespace bufinscustomers.Services
         /// si no está configurada se usan <see cref="CacheTtlHorasDefault"/>. Se cachea 5 minutos
         /// en memoria para no consultar la BD en cada llamada.
         /// </summary>
-        private int ObtenerTtlHoras()
+        private int ObtenerTtlHoras() => ObtenerTtlConfig("IA_CacheHoras", CacheTtlHorasDefault);
+
+        /// <summary>Lee una clave de horas de <c>ConfiguracionSistema</c> (0..<see cref="CacheTtlHorasMax"/>) cacheada 5 min en memoria.</summary>
+        private int ObtenerTtlConfig(string clave, int defecto)
         {
-            if (_ttlHorasCache >= 0 && (DateTime.Now - _ttlHorasLeidoEn).TotalMinutes < 5)
-                return _ttlHorasCache;
+            if (_ttlConfig.TryGetValue(clave, out var hit) && (DateTime.Now - hit.LeidoEn).TotalMinutes < 5)
+                return hit.Horas;
 
-            lock (_ttlHorasLock)
+            int horas = defecto;
+            try
             {
-                if (_ttlHorasCache >= 0 && (DateTime.Now - _ttlHorasLeidoEn).TotalMinutes < 5)
-                    return _ttlHorasCache;
-
-                int horas = CacheTtlHorasDefault;
-                try
-                {
-                    var v = new ConfiguracionSistemaService().ObtenerValor("IA_CacheHoras");
-                    if (int.TryParse(v, out int h) && h >= 0 && h <= CacheTtlHorasMax)
-                        horas = h;
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Trace.TraceWarning("[IAService.ObtenerTtlHoras] {0}", ex.Message);
-                }
-
-                _ttlHorasCache   = horas;
-                _ttlHorasLeidoEn = DateTime.Now;
-                return horas;
+                var v = new ConfiguracionSistemaService().ObtenerValor(clave);
+                if (int.TryParse(v, out int h) && h >= 0 && h <= CacheTtlHorasMax)
+                    horas = h;
             }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceWarning("[IAService.ObtenerTtlConfig:{0}] {1}", clave, ex.Message);
+            }
+
+            _ttlConfig[clave] = (horas, DateTime.Now);
+            return horas;
         }
 
         // ── Caché persistente en BD (dbo.CacheRespuestasIA) ─────────────────
@@ -469,11 +509,10 @@ namespace bufinscustomers.Services
         private string ConstruirPrompt(IAConsultaRequest request, string instruccionesPersonalizadas, string contextoNegocio = null, bool ingles = false)
         {
             var sb = new StringBuilder();
+            // ORDEN PENSADO PARA LA CACHÉ DE PROMPTS DE OPENAI (descuento automático sobre el prefijo
+            // idéntico, ≥1024 tokens): primero lo más estable (rol + contexto de negocio), luego lo que
+            // cambia por consulta (tabla/filtros, datos) y al final la pregunta/instrucción.
             sb.AppendLine("Eres un analista financiero experto en finanzas corporativas colombianas.");
-            sb.AppendLine($"Tienes acceso a datos reales de la tabla financiera \"{request.NombreTabla}\".");
-
-            if (!string.IsNullOrWhiteSpace(request.FiltrosDescripcion))
-                sb.AppendLine($"Filtros aplicados: {request.FiltrosDescripcion}.");
 
             // Conocimiento/contexto de negocio de Bufins (Fase A): reglas, glosario y aclaraciones
             // curadas por Super Admin en GestorPrompts (código CONTEXTO_NEGOCIO_BUFINS). Se envía
@@ -487,6 +526,15 @@ namespace bufinscustomers.Services
                 sb.AppendLine(contextoNegocio);
                 sb.AppendLine("[FIN_CONTEXTO_NEGOCIO_BUFINS]");
             }
+
+            sb.AppendLine();
+            sb.AppendLine($"Tienes acceso a datos reales de la tabla financiera \"{request.NombreTabla}\".");
+
+            if (!string.IsNullOrWhiteSpace(request.FiltrosDescripcion))
+                sb.AppendLine($"Filtros aplicados: {request.FiltrosDescripcion}.");
+
+            if (!string.IsNullOrWhiteSpace(request.NotaDatos))
+                sb.AppendLine(request.NotaDatos);
 
             bool esCsv = string.Equals(request.FormatoDatos, "csv", StringComparison.OrdinalIgnoreCase);
             sb.AppendLine();
@@ -670,6 +718,13 @@ namespace bufinscustomers.Services
             }
             catch { }
             return Tuple.Create(0, 0, 0);
+        }
+
+        /// <summary>Tokens de entrada servidos desde la caché de prompts de OpenAI (<c>usage.prompt_tokens_details.cached_tokens</c>); 0 si no vino.</summary>
+        private static int ExtraerTokensCacheados(string jsonResponse)
+        {
+            try { return (int?)JObject.Parse(jsonResponse)["usage"]?["prompt_tokens_details"]?["cached_tokens"] ?? 0; }
+            catch { return 0; }
         }
 
         /// <summary>

@@ -229,11 +229,11 @@
         var gruposCfg = new[]
         {
             new { Icono = "fas fa-plug", Titulo = Resources.Strings.CfgIA_G_Proveedor,
-                  Claves = new[] { "OpenAIApiKey", "OpenAIModel", "IA_ModeloEconomico", "OpenAIMaxTokens", "OpenAITemperature" } },
+                  Claves = new[] { "OpenAIApiKey", "OpenAIModel", "IA_ModeloEconomico", "IA_ModeloSimple", "OpenAIMaxTokens", "OpenAITemperature" } },
             new { Icono = "fas fa-coins", Titulo = Resources.Strings.CfgIA_G_Presupuesto,
                   Claves = new[] { "IA_TokensMensualesPorEmpresa", "IA_CostoPor1kTokensPrompt", "IA_CostoPor1kTokensRespuesta" } },
             new { Icono = "fas fa-bolt", Titulo = Resources.Strings.CfgIA_G_Cache,
-                  Claves = new[] { "IA_CacheHoras", "IA_MaxCaracteresPregunta" } }
+                  Claves = new[] { "IA_CacheHoras", "IA_CacheHorasModelo", "IA_MaxCaracteresPregunta" } }
         };
         var clavesAgrupadas = gruposCfg.SelectMany(g => g.Claves).ToList();
         var otrosCfg = Model.Where(i => !clavesAgrupadas.Contains(i.Clave)).ToList();
@@ -823,7 +823,7 @@
     }
 
     // Claves cuyo valor es el nombre de un modelo de OpenAI: usan el mismo desplegable.
-    function esClaveModelo(clave) { return clave === 'OpenAIModel' || clave === 'IA_ModeloEconomico'; }
+    function esClaveModelo(clave) { return clave === 'OpenAIModel' || clave === 'IA_ModeloEconomico' || clave === 'IA_ModeloSimple'; }
 
     // ══════════════════════════════════════
     // SELECTOR DE MODELOS DE OPENAI (reutilizable)
@@ -1235,6 +1235,7 @@
         kTokens: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Uso_KTokens))',
         kCosto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Uso_KCosto))',
         kCache: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Uso_KCache))',
+        kCachePrompt: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Uso_KCachePrompt))',
         kLatencia: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Uso_KLatencia))',
         colConsultas: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAUso_ColConsultas))',
         colTokens: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAUso_ColTokens))'
@@ -1304,11 +1305,12 @@
             var t = r.Totales, n = t.Consultas || 0;
             var exito = n ? Math.round(t.Exitosas * 100 / n) : 0;
             var cache = t.Exitosas ? Math.round(t.DesdeCache * 100 / t.Exitosas) : 0;
+            var cachePrompt = t.TokensEntrada ? Math.round(t.TokensCacheados * 100 / t.TokensEntrada) + '%' : '—';
             var lat = (t.LatenciaP50 == null) ? '—' : (Math.round(t.LatenciaP50) + ' / ' + Math.round(t.LatenciaP95) + ' ms');
             $('#usoKpis').html(
                 usoKpi('fa-comments', _usoMsg.kConsultas, usoNum(n)) + usoKpi('fa-check-circle', _usoMsg.kExito, exito + '%') +
                 usoKpi('fa-coins', _usoMsg.kTokens, usoNum(t.Tokens)) + usoKpi('fa-dollar-sign', _usoMsg.kCosto, 'US$ ' + usoUsd(t.Costo)) +
-                usoKpi('fa-bolt', _usoMsg.kCache, cache + '%') + usoKpi('fa-stopwatch', _usoMsg.kLatencia, lat));
+                usoKpi('fa-bolt', _usoMsg.kCache, cache + '%') + usoKpi('fa-layer-group', _usoMsg.kCachePrompt, cachePrompt) + usoKpi('fa-stopwatch', _usoMsg.kLatencia, lat));
 
             usoGrafico(r.PorDia, r.desde, r.hasta, t.Tokens);
             $('#usoRankFunc').html(usoRank(r.PorFuncion));
