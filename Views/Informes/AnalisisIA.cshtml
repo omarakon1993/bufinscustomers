@@ -93,18 +93,9 @@ textarea.ia-text-input { resize:none; overflow-y:auto; max-height:130px; line-he
 <div class="container-fluid px-4">
 
     <!-- Header -->
-    <div class="powerbi-header">
-        <div class="powerbi-header-content">
-            <i class="fas fa-robot powerbi-header-icon"></i>
-            <h1 class="powerbi-header-title">
-                @Resources.Strings.IA_PageTitle
-                <span class="ia-header-badge">
-                    <i class="fas fa-circle" style="font-size:6px;"></i> @(ViewBag.ModeloIA ?? "OpenAI")
-                </span>
-            </h1>
-            @Html.Partial("_ModeloBufinsTag")
-        </div>
-    </div>
+    @Html.Partial("_PageHeader", new ViewDataDictionary {
+        { "Icon", "fas fa-robot" }, { "Title", Resources.Strings.IA_PageTitle },
+        { "Model", (ViewBag.ModeloIA ?? "OpenAI").ToString() }, { "Source", Resources.Strings.Common_ModeloBufinsTag } })
 
     <!-- Filtros -->
     @if (esAdmin || esAdminEmpresa)

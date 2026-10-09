@@ -11,6 +11,7 @@ namespace bufinscustomers
                 "~/Assets/css/responsive-custom.css",
                 "~/Assets/css/modern-sidebar.css",
                 "~/Assets/css/bufins-components.css",
+                "~/Assets/css/page-header.css",
                 "~/Assets/css/layout.css",
                 "~/Assets/css/modelo-consola.css"));
 

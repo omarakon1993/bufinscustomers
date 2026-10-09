@@ -85,13 +85,9 @@
 <div class="container-fluid px-4">
 <div class="lt-app">
 
-    <div class="powerbi-header">
-        <div class="powerbi-header-content">
-            <i class="fas fa-chart-line powerbi-header-icon"></i>
-            <h1 class="powerbi-header-title">@Resources.Strings.LineaTiempo_PageTitle</h1>
-            @Html.Partial("_ModeloBufinsTag")
-        </div>
-    </div>
+    @Html.Partial("_PageHeader", new ViewDataDictionary {
+        { "Icon", "fas fa-chart-line" }, { "Title", Resources.Strings.LineaTiempo_PageTitle },
+        { "Source", Resources.Strings.Common_ModeloBufinsTag } })
 
     @Html.AntiForgeryToken()
 

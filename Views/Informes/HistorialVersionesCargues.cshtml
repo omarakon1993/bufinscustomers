@@ -35,15 +35,9 @@
 
 <div class="container-fluid px-4 hv-page">
 
-    <div class="powerbi-header">
-        <div class="powerbi-header-content">
-            <i class="fas fa-history powerbi-header-icon"></i>
-            <div class="powerbi-header-text">
-                <h1 class="powerbi-header-title">@Resources.Strings.Hist_HeaderTitle</h1>
-                <p class="powerbi-header-sub">@string.Format(Resources.Strings.Hist_HeaderSub, Model.MaxVersiones)</p>
-            </div>
-        </div>
-    </div>
+    @Html.Partial("_PageHeader", new ViewDataDictionary {
+        { "Icon", "fas fa-history" }, { "Title", Resources.Strings.Hist_HeaderTitle },
+        { "Subtitle", string.Format(Resources.Strings.Hist_HeaderSub, Model.MaxVersiones) } })
 
     @if (TempData["ErrorMessage"] != null)
     {

@@ -50,7 +50,8 @@
 <div class="dash-wrapper">
 
     <!-- 1. Header compacto -->
-    <div class="dash-header-card">
+    <div class="dash-header-card page-hdr">
+        <span class="page-hdr-icon"><i class="fas fa-home"></i></span>
         <div class="dash-header-main">
             <span class="dash-hello">@Html.Raw(saludoHtml), <strong>@nombreUsuario</strong></span>
             <span class="dash-date"><i class="fas fa-calendar-alt"></i>@DateTime.Now.ToString(Resources.Strings.Home_DateFormat, System.Globalization.CultureInfo.CurrentCulture)</span>
@@ -225,17 +226,8 @@
     .dash-side { display:flex; flex-direction:column; gap:12px; min-height:0; min-width:0; }
 
     /* ================= 1. Header compacto ================= */
-    .dash-header-card {
-        position:relative; overflow:hidden; flex-shrink:0;
-        display:flex; align-items:center; gap:18px;
-        background:#fff; border-radius:12px; padding:12px 18px;
-        border:1px solid rgba(88,58,255,.08);
-        box-shadow:0 4px 22px rgba(88,58,255,.07);
-    }
-    .dash-header-card::before {
-        content:''; position:absolute; top:0; left:0; right:0; height:3px;
-        background:linear-gradient(90deg,#583AFF 0%,#01E1D7 100%);
-    }
+    /* Mismo encabezado que el resto de opciones (.page-hdr en page-header.css) */
+    .dash-header-card { flex-shrink:0; gap:18px; }
     .dash-header-main { display:flex; flex-direction:column; gap:2px; min-width:0; }
     .dash-hello { font-size:1.19rem; font-weight:800; color:#160933; letter-spacing:-.2px; }
     .dash-hello strong { color:#583AFF; }

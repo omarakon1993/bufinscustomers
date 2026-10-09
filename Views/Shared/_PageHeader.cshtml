@@ -1,0 +1,40 @@
+@* Views/Shared/_PageHeader.cshtml
+   Uso:
+   @Html.Partial("_PageHeader", new ViewDataDictionary {
+       { "Icon", "fas fa-robot" }, { "Title", "Análisis IA" },
+       { "Subtitle", null }, { "Model", "gpt-5.5" }, { "Source", "Información modelo Bufins" } })
+*@
+@{
+    var icon = ViewData["Icon"] as string ?? "fas fa-file-alt";
+    var title = ViewData["Title"] as string;
+    var subtitle = ViewData["Subtitle"] as string;
+    var modelo = ViewData["Model"] as string;
+    var source = ViewData["Source"] as string;
+}
+<div class="page-hdr">
+    <span class="page-hdr-icon"><i class="@icon"></i></span>
+    @if (!string.IsNullOrEmpty(subtitle))
+    {
+        <div class="page-hdr-text">
+            <h1>@title</h1>
+            <p>@subtitle</p>
+        </div>
+    }
+    else
+    {
+        <h1>@title</h1>
+    }
+    @if (!string.IsNullOrEmpty(modelo) || !string.IsNullOrEmpty(source))
+    {
+        <div class="page-hdr-pills">
+            @if (!string.IsNullOrEmpty(modelo))
+            {
+                <span class="hdr-pill hdr-pill-model"><span class="hdr-pill-dot"></span>@modelo</span>
+            }
+            @if (!string.IsNullOrEmpty(source))
+            {
+                <span class="hdr-pill"><i class="fas fa-database"></i>@source</span>
+            }
+        </div>
+    }
+</div>

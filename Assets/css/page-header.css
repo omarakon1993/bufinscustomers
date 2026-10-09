@@ -1,0 +1,123 @@
+/* Encabezados de página Bufins: opciones 3a y 3c (variantes de 2c).
+   Elige la opción con una clase en <body>: "hdr-3a" (por defecto) o "hdr-3c".
+   Requiere Nunito y Font Awesome 5. Cárgalo después de bufins-components.css. */
+
+/* ---------- Base común (2c) ---------- */
+.page-hdr {
+  position: relative; overflow: hidden; box-sizing: border-box;
+  min-height: 72px; padding: 18px 20px 14px; margin: 0 0 20px; border-radius: 10px;
+  display: flex; align-items: center; gap: 14px;
+  background: #fff; border: 1px solid #e3e6f0; box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+.page-hdr::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; z-index: 1;
+  background: linear-gradient(90deg, #6366F1 0%, #3B82F6 35%, #06B6D4 70%, #01E1D7 100%);
+}
+.page-hdr-icon {
+  width: 38px; height: 38px; border-radius: 9px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #583AFF, #3B82F6);
+  box-shadow: 0 4px 10px -4px rgba(88,58,255,.5);
+}
+.page-hdr-icon i { color: #fff; font-size: 16px; }
+.page-hdr-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.page-hdr h1 { font-size: 18px; font-weight: 800; color: #160933; margin: 0; letter-spacing: -.2px; line-height: 1.3; }
+.page-hdr p { font-size: 13px; color: #6b7280; margin: 0; text-wrap: pretty; }
+.page-hdr-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.hdr-pill {
+  display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px;
+  border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; line-height: 1;
+  background: rgba(88,58,255,.08); color: #583AFF;
+}
+.hdr-pill i { font-size: 10px; }
+.hdr-pill-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.hdr-pill-model { background: rgba(16,185,129,.1); color: #047857; }
+.hdr-pill-model .hdr-pill-dot { background: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,.18); }
+
+/* ---------- 3a: barra gruesa con brillo (por defecto) ---------- */
+.page-hdr,
+.hdr-3a .page-hdr { padding-top: 20px; }
+.page-hdr::before,
+.hdr-3a .page-hdr::before { height: 6px; }
+.page-hdr::after,
+.hdr-3a .page-hdr::after {
+  content: ""; position: absolute; left: 0; right: 0; top: -4px; height: 12px; z-index: 0;
+  background: linear-gradient(90deg, #6366F1 0%, #3B82F6 35%, #06B6D4 70%, #01E1D7 100%);
+  filter: blur(10px); opacity: .55; pointer-events: none;
+}
+.page-hdr > * { position: relative; z-index: 2; }
+
+/* ---------- 3c: borde completo en degradado ---------- */
+.hdr-3c .page-hdr {
+  padding-top: 18px;
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(90deg, #6366F1 0%, #3B82F6 35%, #06B6D4 70%, #01E1D7 100%) border-box;
+  box-shadow: 0 6px 16px -10px rgba(88,58,255,.5);
+}
+.hdr-3c .page-hdr::before { height: 5px; }
+.hdr-3c .page-hdr::after { display: none; }
+
+/* ---------- Puente temporal: banners antiguos (.powerbi-header) con el mismo look ----------
+   Mientras las vistas se migran al parcial _PageHeader, las que aún usan .powerbi-header
+   se ven igual (3a / 3c). Se elimina cuando todas usen el parcial. */
+body .powerbi-header {
+  position: relative; overflow: hidden; box-sizing: border-box; display: flex; align-items: center;
+  min-height: 72px; padding: 20px 20px 14px !important; margin: 0 0 20px !important; border-radius: 10px !important;
+  background: #fff !important; border: 1px solid #e3e6f0 !important; box-shadow: 0 2px 8px rgba(0,0,0,.04) !important;
+}
+body .powerbi-header::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 6px; z-index: 1;
+  background: linear-gradient(90deg, #6366F1 0%, #3B82F6 35%, #06B6D4 70%, #01E1D7 100%);
+}
+body .powerbi-header::after {
+  content: ""; position: absolute; left: 0; right: 0; top: -4px; height: 12px; z-index: 0;
+  background: linear-gradient(90deg, #6366F1 0%, #3B82F6 35%, #06B6D4 70%, #01E1D7 100%);
+  filter: blur(10px); opacity: .55; pointer-events: none;
+}
+body .powerbi-header > * { position: relative; z-index: 2; }
+.hdr-3c .powerbi-header {
+  padding-top: 18px !important; border: 1.5px solid transparent !important;
+  background: linear-gradient(#fff, #fff) padding-box, linear-gradient(90deg, #6366F1 0%, #3B82F6 35%, #06B6D4 70%, #01E1D7 100%) border-box !important;
+  box-shadow: 0 6px 16px -10px rgba(88,58,255,.5) !important;
+}
+.hdr-3c .powerbi-header::before { height: 5px; }
+.hdr-3c .powerbi-header::after { display: none; }
+body .powerbi-header-content { gap: 14px !important; }
+body .powerbi-header-icon {
+  width: 38px; height: 38px; border-radius: 9px; flex: none; display: inline-flex !important;
+  align-items: center; justify-content: center; font-size: 16px !important; color: #fff !important;
+  background: linear-gradient(135deg, #583AFF, #3B82F6); box-shadow: 0 4px 10px -4px rgba(88,58,255,.5);
+}
+body .powerbi-header-title { font-size: 18px !important; font-weight: 800 !important; color: #160933 !important; line-height: 1.3 !important; }
+body .powerbi-header-sub { color: #6b7280 !important; font-size: 13px !important; }
+body .powerbi-header .header-tag-modelo {
+  display: inline-flex; align-items: center; height: 24px; padding: 0 10px; font-size: 12px; font-weight: 700;
+  background: rgba(88,58,255,.08); color: #583AFF; border: 0;
+}
+body .powerbi-header .btn-modern-secondary { background: var(--app-glow-bg) !important; border: 0 !important; box-shadow: 0 2px 8px rgba(22,9,51,.3) !important; }
+body .powerbi-header .rc-steps { color: #6b7280; }
+body .powerbi-header .rc-step.active { background: rgba(88,58,255,.08) !important; color: #583AFF !important; border: 0; }
+body .powerbi-header .rc-step-sep { background: #d1d5db; }
+
+/* ---------- Barra superior animada: el degradado fluye hacia la derecha ----------
+   Degradado "de ida y vuelta" (palíndromo) a 200 % de ancho para que el bucle no tenga salto. */
+@keyframes hdrFlow { from { background-position: 200% 0; } to { background-position: 0 0; } }
+.page-hdr::before, .page-hdr::after,
+body .powerbi-header::before, body .powerbi-header::after,
+.hdr-3c .page-hdr::before, .hdr-3c .powerbi-header::before {
+  background-image: linear-gradient(90deg, #6366F1 0%, #3B82F6 17%, #06B6D4 34%, #01E1D7 50%, #06B6D4 66%, #3B82F6 83%, #6366F1 100%);
+  background-size: 200% 100%;
+  animation: hdrFlow 7s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-hdr::before, .page-hdr::after, .powerbi-header::before, .powerbi-header::after { animation: none; }
+}
+
+/* ---------- Correcciones de texto dentro del banner (nada blanco sobre fondo blanco) ---------- */
+body .powerbi-header small,
+body .powerbi-header .powerbi-header-title span:not(.badge):not(.ia-header-badge):not(.header-tag-modelo) { color: #6b7280 !important; opacity: 1 !important; }
+body .powerbi-header, body .powerbi-header .powerbi-header-content { color: #160933; }
+body .powerbi-header .pbi-logo-badge { border: 1px solid #e3e6f0; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
