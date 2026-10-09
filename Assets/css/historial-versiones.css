@@ -4,17 +4,6 @@
 
 .hv-page { color: #2d3748; }
 
-/* Encabezado: reutiliza la barra con degradado existente y le agrega subtítulo */
-.hv-header {
-  background: linear-gradient(90deg, #6366F1 0%, #3B82F6 35%, #06B6D4 70%, #01E1D7 100%);
-  padding: 18px 28px; margin: 0 -16px 20px; border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(22,9,51,.3);
-  display: flex; align-items: center; gap: 14px;
-}
-.hv-header > i { font-size: 20px; color: #fff; opacity: .95; }
-.hv-header h1 { font-size: 18px; font-weight: 700; color: #fff; margin: 0; letter-spacing: -.2px; }
-.hv-header p { font-size: 13px; color: #fff; opacity: .92; margin: 2px 0 0; text-wrap: pretty; }
-
 /* Tarjetas */
 .hv-card {
   background: #fff; border: 1px solid #e3e6f0; border-radius: 10px;
@@ -160,11 +149,9 @@
 }
 
 /* Ocupa la pantalla como el Home: sin scroll de página, la tabla scrollea por dentro */
-.container.body-content { max-width: 1560px; width: 100%; }
 .body-content > .hv-page + hr { display: none; }
 .hv-page { height: calc(100vh - 70px - 2.5rem); min-height: 560px; display: flex; flex-direction: column; padding-left: 0 !important; padding-right: 0 !important; }
 .hv-page > * { flex-shrink: 0; }
-.hv-page .hv-header { margin: 0 0 12px; }
 .hv-page .hv-filters { margin-bottom: 12px; }
 .hv-page .hv-card.hv-results { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .hv-page .hv-results .hv-table-wrap { flex: 1 1 auto; min-height: 0; max-height: none; }
