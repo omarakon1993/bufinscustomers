@@ -1425,10 +1425,12 @@ namespace bufinscustomers.Controllers
         /// Descarte silencioso cuando el usuario sale de RevisarCargue sin confirmar ni descartar
         /// (otra opción del menú, "Subir archivo corregido", cerrar la pestaña…). Lo dispara la vista con
         /// navigator.sendBeacon en 'pagehide'. Solo descarta lotes del propio usuario y no confirmados.
+        /// Con <paramref name="porRecarga"/> (la vista detectó que se recargó la página) además redirige a
+        /// Cargue de Excel con el aviso, en vez de responder 204 al beacon.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult AbandonarCargue(long idLote)
+        public ActionResult AbandonarCargue(long idLote, bool porRecarga = false)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             var lote = _stagingService.ObtenerLote(idLote);
@@ -1451,6 +1453,11 @@ namespace bufinscustomers.Controllers
                 catch (Exception ex) { AppLogger.Error(ex, $"AbandonarCargue: lote {idLote}"); }
             }
 
+            if (porRecarga)
+            {
+                SetInfoMessage(R("RevisarCargue_DescartadoPorRecarga"));
+                return RedirectToAction("CargueExcel");
+            }
             return new HttpStatusCodeResult(204);
         }
 

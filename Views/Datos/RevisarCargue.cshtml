@@ -275,6 +275,14 @@
     </div>
 </div>
 
+@* Descarte ordenado al recargar la página (ver script). *@
+@using (Html.BeginForm("AbandonarCargue", "Datos", FormMethod.Post, new { id = "frmAbandonarCargue", @class = "d-none" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.Hidden("idLote", Model.Lote.IdLote)
+    @Html.Hidden("porRecarga", true)
+}
+
 @section scripts {
     <script>
         $(function () {
@@ -287,17 +295,22 @@
                 });
             });
 
-            // Salir de la pantalla sin Confirmar/Descartar (otra opción, "Subir archivo corregido",
-            // cerrar la pestaña…) descarta el lote para que no quede pegado bloqueando el próximo cargue.
-            // Recargar la página (F5 / Ctrl+R) no cuenta como salir.
+            // Salir de la pantalla o recargarla (de cualquier forma) sin Confirmar/Descartar descarta el
+            // lote, para que no quede pegado bloqueando el próximo cargue.
             var rcSaliendoPorFormulario = false;
-            var rcRecargando = false;
-            $('#frmConfirmarCargue, #frmDescartarCargue').on('submit', function () { rcSaliendoPorFormulario = true; });
-            $(document).on('keydown', function (e) {
-                if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R'))) rcRecargando = true;
-            });
+            $('#frmConfirmarCargue, #frmDescartarCargue, #frmAbandonarCargue').on('submit', function () { rcSaliendoPorFormulario = true; });
+
+            // Página recargada: el aviso de 'pagehide' pudo no haber llegado aún al servidor, así que aquí
+            // se descarta de forma ordenada y se vuelve a Cargue de Excel con el aviso correspondiente.
+            var nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || null;
+            var esRecarga = nav ? nav.type === 'reload' : (performance.navigation && performance.navigation.type === 1);
+            if (esRecarga) {
+                $('#frmAbandonarCargue').trigger('submit');
+                return;
+            }
+
             window.addEventListener('pagehide', function () {
-                if (rcSaliendoPorFormulario || rcRecargando || !navigator.sendBeacon) return;
+                if (rcSaliendoPorFormulario || !navigator.sendBeacon) return;
                 var fd = new FormData();
                 fd.append('idLote', '@Model.Lote.IdLote');
                 fd.append('__RequestVerificationToken', $('#frmDescartarCargue input[name="__RequestVerificationToken"]').val());
