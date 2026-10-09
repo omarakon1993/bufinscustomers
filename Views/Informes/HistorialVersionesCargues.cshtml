@@ -1,39 +1,48 @@
-﻿﻿@model bufinscustomers.Models.HistorialVersionesPageViewModel
+﻿@model bufinscustomers.Models.HistorialVersionesPageViewModel
 @using bufinscustomers.Helpers
 @using System.Linq
 
 @{
     ViewBag.Title = Resources.Strings.Hist_PageTitle;
-    var puedeRollback = UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.EsAdminEmpresa();
-    var totalVersiones = Model.Versiones.Count;
+    var esSuper = UsuarioSesionHelper.EsSuperAdmin();
+    var puedeRollback = esSuper || UsuarioSesionHelper.EsAdminEmpresa();
     var anios = Model.Versiones.Select(v => v.Anio).Distinct().OrderByDescending(a => a).ToList();
+
+    // Datos para el render en cliente (agrupado / lista). Los textos de presentación van como recursos.
+    var filas = Model.Versiones.Select(v => new
+    {
+        id = v.Id,
+        empresa = v.NombreEmpresa,
+        anio = v.Anio,
+        modo = (int)v.Modo,
+        modoTexto = v.Modo == 0 ? Resources.Strings.Hist_ModoEjecucion : Resources.Strings.Hist_ModoHistorico,
+        esc = v.IdEscenario,
+        version = v.VersionDisplay,
+        fecha = v.FechaCargue.ToString("dd/MM/yyyy"),
+        hora = v.FechaCargue.ToString("HH:mm"),
+        ts = v.FechaCargue.Ticks,
+        usuario = v.NombreUsuario,
+        archivo = v.NombreArchivo,
+        filas = v.TotalFilas.ToString("N0"),
+        cero = v.TotalFilas == 0,
+        estado = v.EstadoDisplay,
+        actual = v.EsVersionActual
+    }).ToList();
 }
 
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/historial-versiones.css" rel="stylesheet" />
 
-<div class="container-fluid px-4">
-    <div class="powerbi-header">
-        <div class="powerbi-header-content">
-            <i class="fas fa-history powerbi-header-icon"></i>
-            <h1 class="powerbi-header-title">@Resources.Strings.Hist_HeaderTitle</h1>
-        </div>
-    </div>
+<div class="container-fluid px-4 hv-page">
 
-    <div class="alert alert-warning d-flex align-items-center" role="alert" style="border-left: 4px solid #f6c23e;">
-        <i class="fas fa-exclamation-triangle mr-3" style="font-size:1.2rem;"></i>
+    <div class="hv-header">
+        <i class="fas fa-history"></i>
         <div>
-            <strong>@Resources.Strings.Hist_BadgeLimite:</strong>
-            @Html.Raw(string.Format(Resources.Strings.Hist_BadgeTexto, $"<strong>{Model.MaxVersiones}</strong>"))
+            <h1>@Resources.Strings.Hist_HeaderTitle</h1>
+            <p>@string.Format(Resources.Strings.Hist_HeaderSub, Model.MaxVersiones)</p>
         </div>
     </div>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle mr-2"></i>@TempData["SuccessMessage"]
-            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
-        </div>
-    }
     @if (TempData["ErrorMessage"] != null)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -42,196 +51,96 @@
         </div>
     }
 
-    <!-- Filtros -->
-    <div class="filter-card">
-        <h3 class="filter-card-title">
-            <i class="fas fa-filter"></i> @Resources.Strings.Common_FiltrosConsulta
-        </h3>
-        @{ var colEscala = UsuarioSesionHelper.EsSuperAdmin() ? "col-md-3" : "col-md-4"; }
-        <div class="filter-section">
-            <div class="row">
-                @if (UsuarioSesionHelper.EsSuperAdmin())
+    <!-- Filtros: se aplican al cambiar -->
+    <div class="hv-card hv-filters" @Html.Raw(esSuper ? "" : "style=\"grid-template-columns:repeat(3,minmax(0,1fr)) auto\"")>
+        @if (esSuper)
+        {
+            <div class="hv-field">
+                <label><i class="fas fa-building"></i>@Resources.Strings.Common_LabelEmpresa</label>
+                <select id="filterEmpresa" class="hv-select">
+                    <option value="">@Resources.Strings.Common_Todos</option>
+                    @foreach (var emp in Model.Empresas)
+                    {
+                        <option value="@emp.Nombre" @(Model.IdEmpresaFiltro == emp.Id ? "selected" : "")>@emp.Nombre</option>
+                    }
+                </select>
+            </div>
+        }
+        <div class="hv-field">
+            <label><i class="fas fa-calendar"></i>@Resources.Strings.Common_LabelAnio</label>
+            <select id="filterAnio" class="hv-select">
+                <option value="">@Resources.Strings.Common_Todos</option>
+                @foreach (var a in anios)
                 {
-                    <div class="@colEscala">
-                        <div class="form-group">
-                            <label><i class="fas fa-building mr-1"></i>@Resources.Strings.Common_LabelEmpresa</label>
-                            <select id="filterEmpresa" class="form-control">
-                                <option value="">@Resources.Strings.Common_Todos</option>
-                                @foreach (var emp in Model.Empresas)
-                                {
-                                    <option value="@emp.Nombre" @(Model.IdEmpresaFiltro == emp.Id ? "selected" : "")>@emp.Nombre</option>
-                                }
-                            </select>
-                        </div>
-                    </div>
+                    <option value="@a" @(Model.AnioFiltro == a ? "selected" : "")>@a</option>
                 }
-                <div class="@colEscala">
-                    <div class="form-group">
-                        <label><i class="fas fa-calendar mr-1"></i>@Resources.Strings.Common_LabelAnio</label>
-                        <select id="filterAnio" class="form-control">
-                            <option value="">@Resources.Strings.Common_Todos</option>
-                            @foreach (var a in anios)
-                            {
-                                <option value="@a" @(Model.AnioFiltro == a ? "selected" : "")>@a</option>
-                            }
-                        </select>
-                    </div>
-                </div>
-                <div class="@colEscala">
-                    <div class="form-group">
-                        <label><i class="fas fa-layer-group mr-1"></i>@Resources.Strings.Hist_LabelModo</label>
-                        <select id="filterModo" class="form-control">
-                            <option value="">@Resources.Strings.Common_Todos</option>
-                            <option value="@Resources.Strings.Hist_ModoEjecucion" @(Model.ModoFiltro == 0 ? "selected" : "")>@Resources.Strings.Hist_ModoEjecucion</option>
-                            <option value="@Resources.Strings.Hist_ModoHistorico" @(Model.ModoFiltro == 1 ? "selected" : "")>@Resources.Strings.Hist_ModoHistorico</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="@colEscala">
-                    <div class="form-group">
-                        <label><i class="fas fa-database mr-1"></i>@Resources.Strings.Hist_LabelEscenario</label>
-                        <select id="filterEscenario" class="form-control">
-                            <option value="">@Resources.Strings.Common_Todos</option>
-                            @if (ViewBag.Escenarios != null)
-                            {
-                                foreach (var escenario in ViewBag.Escenarios)
-                                {
-                                    <option value="@escenario.Id" @(Model.EscenarioFiltro == (int)escenario.Id ? "selected" : "")>@escenario.Nombre</option>
-                                }
-                            }
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="btn-group-actions">
-                <button type="button" id="btnFiltrar" class="btn btn-modern-gradient">
-                    <i class="fas fa-search mr-1"></i>@Resources.Strings.Common_Consultar
-                </button>
-                <button type="button" id="btnLimpiar" class="btn btn-modern-secondary">
-                    <i class="fas fa-eraser mr-2"></i>@Resources.Strings.Common_Limpiar
-                </button>
-            </div>
+            </select>
         </div>
+        <div class="hv-field">
+            <label><i class="fas fa-layer-group"></i>@Resources.Strings.Hist_LabelModo</label>
+            <select id="filterModo" class="hv-select">
+                <option value="">@Resources.Strings.Common_Todos</option>
+                <option value="0" @(Model.ModoFiltro == 0 ? "selected" : "")>@Resources.Strings.Hist_ModoEjecucion</option>
+                <option value="1" @(Model.ModoFiltro == 1 ? "selected" : "")>@Resources.Strings.Hist_ModoHistorico</option>
+            </select>
+        </div>
+        <div class="hv-field">
+            <label><i class="fas fa-database"></i>@Resources.Strings.Hist_LabelEscenario</label>
+            <select id="filterEscenario" class="hv-select">
+                <option value="">@Resources.Strings.Common_Todos</option>
+                @if (ViewBag.Escenarios != null)
+                {
+                    foreach (var escenario in ViewBag.Escenarios)
+                    {
+                        <option value="@escenario.Id" @(Model.EscenarioFiltro == (int)escenario.Id ? "selected" : "")>@escenario.Nombre</option>
+                    }
+                }
+            </select>
+        </div>
+        <button type="button" id="btnLimpiar" class="hv-btn-ghost">
+            <i class="fas fa-eraser"></i>@Resources.Strings.Common_Limpiar
+        </button>
     </div>
 
-    @if (totalVersiones > 0)
-    {
-        <div id="resultadosContainer">
-            <div class="table-container">
-                <div class="table-header">
-                    <h5><i class="fas fa-list mr-2"></i>@Resources.Strings.Common_Resultados</h5>
-                    <span id="totalRegistros" class="info-badge">@totalVersiones @Resources.Strings.Hist_TotalVersiones</span>
-                </div>
-                <div class="table-wrapper">
-                    <table id="historialTable" class="data-table">
-                        <thead>
-                            <tr>
-                                <th>@Resources.Strings.Hist_ThVersion</th>
-                                @if (UsuarioSesionHelper.EsSuperAdmin())
-                                {
-                                    <th>@Resources.Strings.Hist_ThEmpresa</th>
-                                }
-                                <th>@Resources.Strings.Hist_ThAnio</th>
-                                <th>@Resources.Strings.Hist_ThModo</th>
-                                <th>@Resources.Strings.Hist_ThEscenario</th>
-                                <th>@Resources.Strings.Hist_ThFecha</th>
-                                <th>@Resources.Strings.Hist_ThUsuario</th>
-                                <th>@Resources.Strings.Hist_ThArchivo</th>
-                                <th>@Resources.Strings.Hist_ThFilas</th>
-                                <th>@Resources.Strings.Hist_ThEstado</th>
-                                @if (puedeRollback)
-                                {
-                                    <th>@Resources.Strings.Common_ThAcciones</th>
-                                }
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var v in Model.Versiones)
-                            {
-                                <tr data-empresa="@v.NombreEmpresa"
-                                    data-anio="@v.Anio"
-                                    data-modo="@v.ModoTexto"
-                                    data-escenario="@v.IdEscenario">
-                                    <td>
-                                        <strong class="text-primary">@v.VersionDisplay</strong>
-                                    </td>
-                                    @if (UsuarioSesionHelper.EsSuperAdmin())
-                                    {
-                                        <td>@v.NombreEmpresa</td>
-                                    }
-                                    <td>@v.Anio</td>
-                                    <td>
-                                        <span class="badge @(v.Modo == 0 ? "badge-info" : "badge-secondary")">
-                                            @v.ModoTexto
-                                        </span>
-                                    </td>
-                                    <td>@Resources.Strings.Hist_Escenario @v.IdEscenario</td>
-                                    <td>
-                                        <strong>@v.FechaCargue.ToString("dd/MM/yyyy")</strong><br />
-                                        <small class="text-muted">@v.FechaCargue.ToString("HH:mm:ss")</small>
-                                    </td>
-                                    <td>@v.NombreUsuario</td>
-                                    <td title="@v.NombreArchivo">
-                                        <i class="fas fa-file-excel text-success mr-1"></i>
-                                        @(v.NombreArchivo.Length > 35 ? v.NombreArchivo.Substring(0, 32) + "…" : v.NombreArchivo)
-                                    </td>
-                                    <td>@v.TotalFilas.ToString("N0")</td>
-                                    <td>
-                                        @{
-                                            string badgeClass = v.EstadoDisplay == "Actual"    ? "badge-success"
-                                                              : v.EstadoDisplay == "Revertido" ? "badge-warning"
-                                                              : "badge-secondary";
-                                        }
-                                        <span class="badge @badgeClass">@v.EstadoDisplay</span>
-                                        @if (v.FechaReversion.HasValue)
-                                        {
-                                            <br /><small class="text-muted">@v.FechaReversion.Value.ToString("dd/MM/yyyy HH:mm")</small>
-                                        }
-                                    </td>
-                                    @if (puedeRollback)
-                                    {
-                                        <td>
-                                            @if (!v.EsVersionActual)
-                                            {
-                                                <button type="button" class="btn btn-sm btn-warning btn-restaurar"
-                                                        data-id="@v.Id"
-                                                        data-version="@v.VersionDisplay"
-                                                        data-empresa="@v.NombreEmpresa"
-                                                        data-anio="@v.Anio"
-                                                        data-fecha="@v.FechaCargue.ToString("dd/MM/yyyy HH:mm")">
-                                                    <i class="fas fa-undo mr-1"></i>@Resources.Strings.Hist_BtnRestaurar
-                                                </button>
-                                            }
-                                            else
-                                            {
-                                                <small class="text-muted">@Resources.Strings.Hist_EsActual</small>
-                                            }
-                                        </td>
-                                    }
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+    <!-- Resultados -->
+    <div class="hv-card hv-results" style="overflow:hidden">
+        <div class="hv-results-head">
+            <div>
+                <h5 style="display:inline">@Resources.Strings.Common_Resultados</h5>
+                <span class="hv-count" id="hvCount"></span>
+            </div>
+            <div class="hv-segmented" id="hvVista">
+                <button type="button" data-vista="grupo" class="active"><i class="fas fa-layer-group"></i>@Resources.Strings.Hist_VistaGrupo</button>
+                <button type="button" data-vista="lista"><i class="fas fa-list"></i>@Resources.Strings.Hist_VistaLista</button>
             </div>
         </div>
-
-        <div id="noDataMessage" class="no-data-message" style="display:none">
-            <i class="fas fa-inbox"></i>
+        <div class="hv-table-wrap" id="hvTablaWrap">
+            <table class="hv-table" id="historialTable"></table>
+        </div>
+        <div class="hv-empty" id="hvEmpty" style="display:none">
+            <div class="hv-empty-icon"><i class="fas fa-inbox"></i></div>
             <h4>@Resources.Strings.Hist_NoData</h4>
             <p>@Resources.Strings.Hist_NoDataDesc</p>
         </div>
-    }
-    else
-    {
-        <div id="resultadosContainer" style="display:none"></div>
-        <div id="noDataMessage" class="no-data-message">
-            <i class="fas fa-inbox"></i>
-            <h4>@Resources.Strings.Hist_NoData</h4>
-            <p>@Resources.Strings.Hist_NoDataDesc</p>
-        </div>
-    }
+    </div>
 </div>
+
+<!-- Modal de confirmación -->
+<div class="hv-modal-backdrop" id="hvModalBackdrop">
+    <div class="hv-modal" role="dialog" aria-modal="true">
+        <div class="hv-modal-title"><i class="fas fa-undo"></i>@Resources.Strings.Hist_JS_ConfirmTitle</div>
+        <div class="hv-modal-body">
+            <div id="hvModalCuerpo"></div>
+            <div class="hv-modal-warn"><i class="fas fa-exclamation-triangle"></i><span>@Resources.Strings.Hist_ModalAviso</span></div>
+        </div>
+        <div class="hv-modal-foot">
+            <button type="button" class="hv-modal-cancel" id="hvModalCancel">@Resources.Strings.Hist_JS_CancelBtn</button>
+            <button type="button" class="hv-modal-ok" id="hvModalOk">@Resources.Strings.Hist_JS_ConfirmBtn</button>
+        </div>
+    </div>
+</div>
+
+<div class="hv-toast" id="hvToast"><i class="fas fa-check-circle"></i><span id="hvToastMsg"></span></div>
 
 @using (Html.BeginForm("Restaurar", "HistorialVersionesCargues", FormMethod.Post,
     new { id = "formRestaurar", style = "display:none" }))
@@ -246,97 +155,171 @@
 
 @section scripts {
 <script>
-    var _histTotal = @totalVersiones;
-    var _histMsg = {
-        totalVersiones: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_TotalVersiones))',
-        confirmTitle:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_JS_ConfirmTitle))',
-        confirmBtn:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_JS_ConfirmBtn))',
-        cancelBtn:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_JS_CancelBtn))',
-        confirmTextTpl: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_JS_ConfirmText))'
+    var _hv = {
+        datos: @Html.Raw(Json.Encode(filas)),
+        max: @Model.MaxVersiones,
+        esSuper: @(esSuper ? "true" : "false"),
+        puedeRollback: @(puedeRollback ? "true" : "false"),
+        okMsg: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Convert.ToString(TempData["SuccessMessage"] ?? "")))',
+        t: {
+            versiones:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_FilasCount))',
+            version:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_ThVersion))',
+            empresa:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_ThEmpresa))',
+            anio:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_ThAnio))',
+            modo:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_ThModo))',
+            escenario:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_ThEscenario))',
+            escCorto:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_EscCorto))',
+            fecha:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_ThFecha))',
+            usuario:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_ThUsuario))',
+            archivo:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_ThArchivo))',
+            filas:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_ThFilas))',
+            estado:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_ThEstado))',
+            restaurar:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_BtnRestaurar))',
+            vigente:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_Vigente))',
+            slotsDe:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_SlotsDe))',
+            slotsLleno: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_SlotsLleno))',
+            slotsLibre: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_SlotsLibre))',
+            modalCuerpo:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Hist_ModalCuerpo))'
+        }
     };
 
-    $(document).ready(function () {
+    $(function () {
+        var vista = 'grupo';
+        try { vista = localStorage.getItem('hv.vista') === 'lista' ? 'lista' : 'grupo'; } catch (e) { }
+        var pendiente = null;
 
-        function aplicarFiltro() {
-            var empresa   = $('#filterEmpresa').val();
-            var anio      = $('#filterAnio').val();
-            var modo      = $('#filterModo').val();
-            var escenario = $('#filterEscenario').val();
-            var visibles = 0;
-
-            $('#historialTable tbody tr').each(function () {
-                var $tr = $(this);
-                var matchEmpresa   = !empresa   || $tr.data('empresa') === empresa;
-                var matchAnio      = !anio      || String($tr.data('anio')) === anio;
-                var matchModo      = !modo      || $tr.data('modo') === modo;
-                var matchEscenario = !escenario || String($tr.data('escenario')) === escenario;
-
-                if (matchEmpresa && matchAnio && matchModo && matchEscenario) {
-                    $tr.show();
-                    visibles++;
-                } else {
-                    $tr.hide();
-                }
+        function esc(s) { return $('<div>').text(s == null ? '' : s).html(); }
+        function iniciales(n) {
+            var p = String(n || '').trim().split(/\s+/);
+            return ((p[0] || '').charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : '')).toUpperCase() || '?';
+        }
+        function claseEstado(e) {
+            e = String(e || '').toLowerCase();
+            return e === 'actual' ? 'actual' : (e === 'revertido' ? 'revertido' : 'anterior');
+        }
+        function pillModo(f) {
+            return '<span class="hv-pill hv-modo-' + (f.modo === 0 ? 'ejecucion' : 'historico') + '">' + esc(f.modoTexto) + '</span>';
+        }
+        function filtrados() {
+            var emp = $('#filterEmpresa').val() || '', anio = $('#filterAnio').val() || '',
+                modo = $('#filterModo').val() || '', e = $('#filterEscenario').val() || '';
+            return _hv.datos.filter(function (f) {
+                return (!emp || f.empresa === emp) && (!anio || String(f.anio) === anio) &&
+                       (modo === '' || String(f.modo) === modo) && (!e || String(f.esc) === e);
             });
+        }
+        function clave(f) { return f.empresa + '|' + f.anio + '|' + f.modo + '|' + f.esc; }
 
-            $('#totalRegistros').text(visibles + ' ' + _histMsg.totalVersiones);
-
-            if (visibles > 0) {
-                $('#resultadosContainer').show();
-                $('#noDataMessage').hide();
-            } else {
-                $('#resultadosContainer').hide();
-                $('#noDataMessage').show();
+        function filaHtml(f, plana) {
+            var h = '<tr class="hv-row">';
+            h += '<td><span class="hv-version' + (f.actual ? ' actual' : '') + '">' + esc(f.version) + '</span></td>';
+            if (plana) {
+                if (_hv.esSuper) h += '<td>' + esc(f.empresa) + '</td>';
+                h += '<td>' + f.anio + '</td><td>' + pillModo(f) + '</td><td>' + esc(_hv.t.escCorto) + ' ' + f.esc + '</td>';
             }
+            h += '<td><span class="hv-date">' + f.fecha + '</span><span class="hv-time">' + f.hora + '</span></td>';
+            h += '<td><div class="hv-user"><span class="hv-avatar">' + esc(iniciales(f.usuario)) + '</span>' + esc(f.usuario) + '</div></td>';
+            h += '<td><div class="hv-file" title="' + esc(f.archivo) + '"><i class="fas fa-file-excel"></i><span>' + esc(f.archivo) + '</span></div></td>';
+            h += '<td class="num' + (f.cero ? ' zero' : '') + '">' + esc(f.filas) + '</td>';
+            h += '<td><span class="hv-pill hv-estado hv-estado-' + claseEstado(f.estado) + '">' + esc(f.estado) + '</span></td>';
+            if (_hv.puedeRollback) {
+                h += '<td class="hv-actions">' + (f.actual
+                    ? '<span class="hv-vigente">' + esc(_hv.t.vigente) + '</span>'
+                    : '<button type="button" class="hv-btn-ghost hv-restore" data-id="' + f.id + '"><i class="fas fa-undo"></i>' + esc(_hv.t.restaurar) + '</button>') + '</td>';
+            }
+            return h + '</tr>';
         }
 
-        $('#filterEmpresa, #filterAnio, #filterModo, #filterEscenario').on('change', function () {
-            aplicarFiltro();
-        });
+        function render() {
+            var rows = filtrados();
+            var cols = (vista === 'lista' ? (_hv.esSuper ? 10 : 9) : 7) + (_hv.puedeRollback ? 1 : 0);
+            $('#hvCount').text(rows.length + ' ' + _hv.t.versiones);
+            $('#hvVista button').removeClass('active').filter('[data-vista="' + vista + '"]').addClass('active');
+            $('#historialTable').toggleClass('hv-flat', vista === 'lista');
 
-        $('#btnFiltrar').on('click', function () {
-            aplicarFiltro();
-        });
+            if (!rows.length) { $('#hvTablaWrap').hide(); $('#hvEmpty').show(); return; }
+            $('#hvEmpty').hide(); $('#hvTablaWrap').show();
 
+            var th = function (t, c) { return '<th' + (c ? ' class="' + c + '"' : '') + '>' + esc(t) + '</th>'; };
+            var head = '<thead><tr>' + th(_hv.t.version);
+            if (vista === 'lista') {
+                if (_hv.esSuper) head += th(_hv.t.empresa);
+                head += th(_hv.t.anio) + th(_hv.t.modo) + th(_hv.t.escenario);
+            }
+            head += th(_hv.t.fecha) + th(_hv.t.usuario) + th(_hv.t.archivo) + th(_hv.t.filas, 'num') + th(_hv.t.estado);
+            if (_hv.puedeRollback) head += '<th></th>';
+            head += '</tr></thead>';
+            // Alinea a la derecha el encabezado de "Filas"
+            head = head.replace('<th class="num">', '<th style="text-align:right">');
+
+            var body = '';
+            if (vista === 'lista') {
+                body = '<tbody>' + rows.slice().sort(function (a, b) { return b.ts - a.ts; })
+                    .map(function (f) { return filaHtml(f, true); }).join('') + '</tbody>';
+            } else {
+                var grupos = {}, orden = [];
+                rows.forEach(function (f) { var k = clave(f); if (!grupos[k]) { grupos[k] = []; orden.push(k); } grupos[k].push(f); });
+                orden.sort(function (a, b) {
+                    var x = grupos[a][0], y = grupos[b][0];
+                    return x.empresa.localeCompare(y.empresa) || (y.anio - x.anio) || (x.modo - y.modo) || (x.esc - y.esc);
+                });
+                orden.forEach(function (k) {
+                    var items = grupos[k].slice().sort(function (a, b) { return b.ts - a.ts; }), g = items[0];
+                    var total = _hv.datos.filter(function (f) { return clave(f) === k; }).length;
+                    var lleno = total >= _hv.max, barras = '';
+                    for (var i = 0; i < _hv.max; i++) barras += '<span class="hv-slot' + (i < total ? ' on' : '') + '"></span>';
+                    body += '<tbody><tr class="hv-group"><td colspan="' + cols + '"><div class="hv-group-inner">' +
+                        '<span class="hv-group-emp">' + esc(g.empresa) + '</span><span class="hv-group-sep">·</span>' +
+                        '<span class="hv-group-anio">' + g.anio + '</span>' + pillModo(g) +
+                        '<span class="hv-group-esc"><i class="fas fa-database"></i>' + esc(_hv.t.escenario) + ' ' + g.esc + '</span>' +
+                        '<span class="hv-slots' + (lleno ? ' full' : '') + '" title="' + esc(lleno ? _hv.t.slotsLleno : _hv.t.slotsLibre) + '">' +
+                        '<span class="hv-slots-bars">' + barras + '</span>' +
+                        esc(_hv.t.slotsDe.replace('{0}', Math.min(total, _hv.max)).replace('{1}', _hv.max)) +
+                        '</span></div></td></tr>' +
+                        items.map(function (f) { return filaHtml(f, false); }).join('') + '</tbody>';
+                });
+            }
+            $('#historialTable').html(head + body);
+        }
+
+        function toast(msg) {
+            $('#hvToastMsg').text(msg); $('#hvToast').addClass('show');
+            setTimeout(function () { $('#hvToast').removeClass('show'); }, 2800);
+        }
+        function cerrarModal() { $('#hvModalBackdrop').removeClass('open'); pendiente = null; }
+
+        $('#filterEmpresa, #filterAnio, #filterModo, #filterEscenario').on('change', render);
         $('#btnLimpiar').on('click', function () {
             $('#filterEmpresa, #filterAnio, #filterModo, #filterEscenario').val('');
-            $('#historialTable tbody tr').show();
-            $('#totalRegistros').text(_histTotal + ' ' + _histMsg.totalVersiones);
-            if (_histTotal > 0) {
-                $('#resultadosContainer').show();
-                $('#noDataMessage').hide();
-            }
+            render();
+        });
+        $('#hvVista').on('click', 'button', function () {
+            vista = $(this).data('vista');
+            try { localStorage.setItem('hv.vista', vista); } catch (e) { }
+            render();
         });
 
-        $(document).on('click', '.btn-restaurar', function () {
-            var id      = $(this).data('id');
-            var version = $(this).data('version');
-            var empresa = $(this).data('empresa');
-            var anio    = $(this).data('anio');
-            var fecha   = $(this).data('fecha');
-
-            var texto = _histMsg.confirmTextTpl
-                .replace('{empresa}', empresa)
-                .replace('{anio}', anio)
-                .replace('{version}', version)
-                .replace('{fecha}', fecha);
-
-            Swal.fire({
-                title:              _histMsg.confirmTitle,
-                html:               texto,
-                icon:               'warning',
-                showCancelButton:   true,
-                confirmButtonText:  _histMsg.confirmBtn,
-                cancelButtonText:   _histMsg.cancelBtn,
-                confirmButtonColor: '#e74c3c',
-                reverseButtons:     true
-            }).then(function (result) {
-                if (result.isConfirmed) {
-                    $('#inp_idHistorial').val(id);
-                    $('#formRestaurar').submit();
-                }
-            });
+        $('#historialTable').on('click', '.hv-restore', function () {
+            var id = $(this).data('id');
+            pendiente = _hv.datos.filter(function (f) { return f.id === id; })[0];
+            if (!pendiente) return;
+            var html = _hv.t.modalCuerpo
+                .replace('{empresa}', esc(pendiente.empresa)).replace('{anio}', pendiente.anio)
+                .replace('{version}', esc(pendiente.version)).replace('{fecha}', pendiente.fecha + ' ' + pendiente.hora);
+            $('#hvModalCuerpo').html(html);
+            $('#hvModalBackdrop').addClass('open');
         });
+        $('#hvModalCancel').on('click', cerrarModal);
+        $('#hvModalBackdrop').on('click', function (e) { if (e.target === this) cerrarModal(); });
+        $(document).on('keydown', function (e) { if (e.key === 'Escape') cerrarModal(); });
+        $('#hvModalOk').on('click', function () {
+            if (!pendiente) return;
+            $('#inp_idHistorial').val(pendiente.id);
+            $('#formRestaurar').submit();   // acción de rollback existente (POST + redirect con TempData)
+        });
+
+        render();
+        if (_hv.okMsg) toast(_hv.okMsg);
     });
 </script>
 }
