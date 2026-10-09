@@ -34,6 +34,13 @@ namespace bufinscustomers
             bufinscustomers.Helpers.AppLogger.Error(ex, "Application_Error");
         }
 
+        // Solo se dispara con sessionState InProc (el modo configurado): expiración por inactividad o
+        // Session.Abandon. Descarta los cargues en revisión que esta sesión dejó abiertos.
+        protected void Session_End(object sender, EventArgs e)
+        {
+            bufinscustomers.Helpers.CargueLoteSesionHelper.DescartarAbiertos(Session);
+        }
+
         protected void Application_AcquireRequestState(object sender, EventArgs e)
         {
             string lang = "es-CO";

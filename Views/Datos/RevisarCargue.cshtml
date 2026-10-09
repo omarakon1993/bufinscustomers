@@ -286,6 +286,26 @@
                     $(this).toggle(f === 'all' || $(this).data('sev') === f);
                 });
             });
+
+            // Salir de la pantalla sin Confirmar/Descartar (otra opción, "Subir archivo corregido",
+            // cerrar la pestaña…) descarta el lote para que no quede pegado bloqueando el próximo cargue.
+            // Recargar la página (F5 / Ctrl+R) no cuenta como salir.
+            var rcSaliendoPorFormulario = false;
+            var rcRecargando = false;
+            $('#frmConfirmarCargue, #frmDescartarCargue').on('submit', function () { rcSaliendoPorFormulario = true; });
+            $(document).on('keydown', function (e) {
+                if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R'))) rcRecargando = true;
+            });
+            window.addEventListener('pagehide', function () {
+                if (rcSaliendoPorFormulario || rcRecargando || !navigator.sendBeacon) return;
+                var fd = new FormData();
+                fd.append('idLote', '@Model.Lote.IdLote');
+                fd.append('__RequestVerificationToken', $('#frmDescartarCargue input[name="__RequestVerificationToken"]').val());
+                navigator.sendBeacon('@Url.Action("AbandonarCargue", "Datos")', fd);
+            });
+            // Si el navegador restaura la página desde su caché (botón Atrás), el lote ya pudo descartarse:
+            // se recarga para que el servidor decida.
+            window.addEventListener('pageshow', function (e) { if (e.persisted) window.location.reload(); });
         });
     </script>
 }

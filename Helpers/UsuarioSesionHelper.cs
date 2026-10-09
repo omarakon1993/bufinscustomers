@@ -167,6 +167,8 @@ namespace bufinscustomers.Helpers
             var context = HttpContext.Current;
             if (context?.Session != null)
             {
+                // Antes del Clear (después Session_End ya no los vería): cargues en revisión de esta sesión.
+                CargueLoteSesionHelper.DescartarAbiertos(context.Session);
                 context.Session.Clear();
                 context.Session.Abandon();
             }

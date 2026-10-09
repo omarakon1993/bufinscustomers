@@ -919,6 +919,7 @@ namespace bufinscustomers.Controllers
             ViewBag.PrefillEmpresa = idEmpresa;
             ViewBag.PrefillAnio = anio;
             ViewBag.PrefillEscenario = idEscenario;
+            _stagingService.PurgarLotesVencidosSiToca();
             return CargueExcelView();
         }
 
@@ -1029,6 +1030,12 @@ namespace bufinscustomers.Controllers
             // Purga oportunista de lotes de staging abandonados (nunca confirmados). No bloquea el cargue.
             _stagingService.PurgarLotesVencidosSiToca();
 
+            // Subir un archivo (p. ej. el corregido) reemplaza cualquier cargue que este usuario hubiera
+            // dejado en revisión para ESTA empresa (aunque sea de otro año/modo/escenario): así no queda
+            // pegado. Los lotes de otras empresas nunca se tocan desde aquí.
+            try { _stagingService.DescartarLotesPendientesDeUsuario(idUsuario, idEmpresaSeleccionada); }
+            catch (Exception exDesc) { AppLogger.Error(exDesc, "CargarExcel.DescartarLotesPendientesDeUsuario"); }
+
             try
             {
                 using (var package = new XLWorkbook(archivoExcel.InputStream))
@@ -1069,6 +1076,7 @@ namespace bufinscustomers.Controllers
                         return RedirectToAction("RevisarCargue", new { idLote = idLoteCreado });
                     }
                     idLote = idLoteCreado;
+                    CargueLoteSesionHelper.Registrar(idLote);
 
                     bool errorEnStaging = false;
 
@@ -1181,7 +1189,11 @@ namespace bufinscustomers.Controllers
                 resultado.Exito = false;
                 resultado.Mensaje = $"Error al procesar el archivo: {ex.Message}";
                 GuardarLogEnSession();
-                if (idLote > 0) { try { _stagingService.DescartarLote(idLote); } catch { } }
+                if (idLote > 0)
+                {
+                    try { _stagingService.DescartarLote(idLote); }
+                    catch (Exception exDesc) { AppLogger.Error(exDesc, $"CargarExcel: no se pudo descartar el lote {idLote}"); }
+                }
                 TempData["ResultadoCarga"] = resultado;
                 TempData["NombreArchivo"] = nombreArchivoOriginal;
                 SetErrorMessage(resultado.Mensaje);
@@ -1203,6 +1215,11 @@ namespace bufinscustomers.Controllers
                 SetErrorMessage("El cargue en revisión indicado no existe o no tiene acceso a él.");
                 return RedirectToAction("CargueExcel");
             }
+
+            // Si esta sesión es la dueña, el lote queda atado a ella: al cerrar/expirar la sesión se descarta.
+            if (usuario != null && lote.IdUsuario == usuario.Id)
+                CargueLoteSesionHelper.Registrar(idLote);
+            _stagingService.PurgarLotesVencidosSiToca();
 
             var vm = new RevisarCargueViewModel
             {
@@ -1240,6 +1257,7 @@ namespace bufinscustomers.Controllers
             int idUsuario = usuario?.Id ?? 0;
             var resultado = new ResultadoCargaExcel { TotalHojasProcesadas = 0, TotalFilasInsertadas = lote.TotalFilas };
             int idHistorialCargue = 0;
+            var conteoPorHoja = new List<(string NombreHoja, string NombreTabla, int Filas)>();
             bool errorEnConfirmacion = false;
             string mensajeError = null;
 
@@ -1250,6 +1268,17 @@ namespace bufinscustomers.Controllers
                 {
                     try
                     {
+                        // Candado sobre el lote ANTES de tocar nada real: ningún descarte/purga concurrente
+                        // puede vaciar su staging mientras se confirma (y si ya lo vació, se aborta aquí).
+                        var (loteOk, mensajeLoteBloqueo) = _stagingService.BloquearLoteParaConfirmar(conn, tx, idLote, lote.IdEmpresa);
+                        if (!loteOk)
+                        {
+                            tx.Rollback();
+                            CargueLoteSesionHelper.Quitar(idLote);
+                            SetErrorMessage(mensajeLoteBloqueo);
+                            return RedirectToAction("CargueExcel");
+                        }
+
                         try
                         {
                             idHistorialCargue = _historialService.CrearSnapshotEnTransaccion(
@@ -1273,7 +1302,14 @@ namespace bufinscustomers.Controllers
                         else
                         {
                             RegistrarAuditoria(conn, lote.NombreArchivo, lote.IdEmpresa, lote.IdEscenario, tx);
+
+                            // Detalle por hoja para el resumen (cuenta el staging ANTES de borrarlo) y limpieza del
+                            // lote en la MISMA transacción: o queda confirmado y limpio, o no cambia nada.
+                            conteoPorHoja = _stagingService.ObtenerConteoPorHoja(conn, tx, idLote);
+                            _stagingService.LimpiarLoteEnTransaccion(conn, tx, idLote);
+
                             tx.Commit();
+                            CargueLoteSesionHelper.Quitar(idLote);
                         }
                     }
                     catch (Exception txEx)
@@ -1293,15 +1329,10 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("RevisarCargue", new { idLote });
             }
 
-            // Detalle por hoja para el resumen (cuenta lo que hay en staging ANTES de borrarlo).
-            var conteoPorHoja = _stagingService.ObtenerConteoPorHoja(idLote);
             resultado.DetalleHojas = conteoPorHoja
                 .Select(c => new DetalleCargaHojaExcel { NombreHoja = c.NombreHoja, NombreTabla = c.NombreTabla, FilasInsertadas = c.Filas, Estado = "Exitoso" })
                 .ToList();
             resultado.TotalHojasProcesadas = resultado.DetalleHojas.Count;
-
-            // El staging de este lote ya se copió a las tablas reales: se libera el espacio.
-            try { _stagingService.LimpiarStagingDeLote(idLote); } catch { }
 
             new AuditoriaService().RegistrarCambio(
                 AuditoriaTipo.Cargues, AuditoriaAccion.Confirmar, "CargueLote", idLote.ToString(),
@@ -1370,7 +1401,13 @@ namespace bufinscustomers.Controllers
 
             if (lote != null && EmpresaAccesoHelper.TieneAcceso(usuario, lote.IdEmpresa))
             {
-                _stagingService.DescartarLote(idLote);
+                try { _stagingService.DescartarLote(idLote); CargueLoteSesionHelper.Quitar(idLote); }
+                catch (Exception ex)
+                {
+                    AppLogger.Error(ex, $"DescartarCargue: lote {idLote}");
+                    SetErrorMessage(R("RevisarCargue_ErrorDescartar"));
+                    return RedirectToAction("RevisarCargue", new { idLote });
+                }
 
                 new AuditoriaService().RegistrarCambio(
                     AuditoriaTipo.Cargues, AuditoriaAccion.Descartar, "CargueLote", idLote.ToString(),
@@ -1382,6 +1419,39 @@ namespace bufinscustomers.Controllers
 
             SetInfoMessage("Se descartó el cargue en revisión.");
             return RedirectToAction("CargueExcel");
+        }
+
+        /// <summary>
+        /// Descarte silencioso cuando el usuario sale de RevisarCargue sin confirmar ni descartar
+        /// (otra opción del menú, "Subir archivo corregido", cerrar la pestaña…). Lo dispara la vista con
+        /// navigator.sendBeacon en 'pagehide'. Solo descarta lotes del propio usuario y no confirmados.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult AbandonarCargue(long idLote)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            var lote = _stagingService.ObtenerLote(idLote);
+
+            if (usuario != null && lote != null && lote.IdUsuario == usuario.Id
+                && lote.Estado != CargueLoteEstado.Confirmado
+                && EmpresaAccesoHelper.TieneAcceso(usuario, lote.IdEmpresa))
+            {
+                try
+                {
+                    _stagingService.DescartarLote(idLote);
+                    CargueLoteSesionHelper.Quitar(idLote);
+                    new AuditoriaService().RegistrarCambio(
+                        AuditoriaTipo.Cargues, AuditoriaAccion.Descartar, "CargueLote", idLote.ToString(),
+                        $"Cargue en revisión descartado automáticamente al salir de la pantalla: '{lote.NombreEmpresa}' — año {lote.Anio}, {(lote.Modo == 0 ? "ejecución" : "histórico")}, escenario {lote.IdEscenario}, archivo '{lote.NombreArchivo}'.",
+                        null,
+                        new { empresa = lote.NombreEmpresa, anio = lote.Anio, modo = lote.Modo, escenario = lote.IdEscenario, archivo = lote.NombreArchivo, automatico = true },
+                        lote.IdEmpresa, entidadNombre: lote.NombreEmpresa);
+                }
+                catch (Exception ex) { AppLogger.Error(ex, $"AbandonarCargue: lote {idLote}"); }
+            }
+
+            return new HttpStatusCodeResult(204);
         }
 
         private (bool esExitoso, string mensaje) EjecutarValidacionDatos(int idUsuario)
@@ -2009,7 +2079,9 @@ namespace bufinscustomers.Controllers
                     dtDest.Rows.Add(destRow);
                 }
 
-                using (var bulk = new SqlBulkCopy(conn, SqlBulkCopyOptions.Default, tx))
+                // En staging (idLote) se verifican las FK: ninguna fila puede apuntar a un lote inexistente.
+                var opcionesBulk = idLote.HasValue ? SqlBulkCopyOptions.CheckConstraints : SqlBulkCopyOptions.Default;
+                using (var bulk = new SqlBulkCopy(conn, opcionesBulk, tx))
                 {
                     bulk.DestinationTableName = $"[dbo].[{nombreTablaIni}]";
                     bulk.BulkCopyTimeout = 120;
