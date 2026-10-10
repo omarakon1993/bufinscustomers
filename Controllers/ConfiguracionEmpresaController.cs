@@ -355,7 +355,8 @@ namespace bufinscustomers.Controllers
                 return Json(new { success = false, message = $"El año {nuevoAnio} ya está registrado como año histórico." });
 
             // Fuente única: Helpers/TablasCargueHelper.cs (compartida con el cargue y el historial).
-            var tablasIni = TablasCargueHelper.TablasIni;
+            // Incluye las tablas personalizadas de la empresa (p. ej. Ini_HistPrecios_Churido).
+            var tablasIni = TablasCargueHelper.TablasIniParaEmpresa(idEmpresa);
             var tablasZ = TablasCargueHelper.TablasZ;
 
             try

@@ -184,6 +184,11 @@
                                 }
                             }
                         </select>
+                        <!-- Solo para empresas con paquete de personalización (ver PersonalizacionesEmpresaHelper) -->
+                        <div id="hintPlantillaPersonalizada" style="display: none; font-size: 0.8rem; color: #583AFF; margin-top: 0.35rem;">
+                            <i class="fas fa-puzzle-piece mr-1"></i>@Resources.Strings.Datos_PlantillaPersonalizadaHint
+                            <strong id="hintPlantillaHojas"></strong>
+                        </div>
                     </div>
 
                     <!-- Selector de Año -->
@@ -241,7 +246,7 @@
                 <button type="button" id="btnInstructivo" class="btn btn-modern-secondary">
                     <i class="fas fa-book mr-2"></i>@Resources.Strings.Datos_BtnInstructivo
                 </button>
-                <a href="~/Assets/Plantillas/PlantillaBufins.xlsx" download class="btn btn-modern-excel">
+                <a id="lnkPlantilla" href="@Url.Action("DescargarPlantilla", "Datos")" data-base="@Url.Action("DescargarPlantilla", "Datos")" download class="btn btn-modern-excel">
                     <i class="fas fa-file-download mr-2"></i>@Resources.Strings.Datos_BtnPlantilla
                 </a>
                 <span id="wrapPlantillaConDatos" class="d-inline-block" tabindex="0"
@@ -696,6 +701,59 @@
     </div>
 </div>
 
+@{
+    // Solo Super Admin elige qué plantilla descargar (modal de "Plantilla" + selector en el de "Plantilla con datos").
+    // Al resto se le entrega siempre la de su empresa: el servidor ignora el parámetro "plantilla" si no es Super Admin.
+    bool esSuperAdminPlantilla = bufinscustomers.Helpers.UsuarioSesionHelper.EsSuperAdmin();
+}
+
+@helper OpcionesPlantilla()
+{
+    <option value="ESTANDAR">@Resources.Strings.Datos_PlantillaOpcionEstandar</option>
+    foreach (var paquete in bufinscustomers.Helpers.PersonalizacionesEmpresaHelper.Catalogo.Values)
+    {
+        <option value="@paquete.Codigo">@(System.Web.HttpContext.GetGlobalResourceObject("Strings", paquete.ClaveNombre) ?? paquete.Codigo)</option>
+    }
+}
+
+@if (esSuperAdminPlantilla)
+{
+    <!-- Modal (solo Super Admin): elegir qué plantilla vacía descargar -->
+    <div class="modal fade" id="modalPlantilla" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-file-download mr-2" style="color: #583AFF;"></i>@Resources.Strings.Datos_ModalPlantilla_Titulo
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3" style="font-size: 0.85rem;">@Resources.Strings.Datos_ModalPlantilla_Intro</p>
+                    <div class="form-group mb-0">
+                        <label for="mpPlantilla" class="form-label" style="font-size: 0.85rem;">
+                            <i class="fas fa-file-excel mr-1" style="color: #583AFF;"></i>@Resources.Strings.Datos_PlantillaSelectorLabel
+                        </label>
+                        <select class="form-control form-control-sm" id="mpPlantilla">
+                            @OpcionesPlantilla()
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
+                    </button>
+                    <button type="button" id="btnMpDescargar" class="btn btn-primary btn-sm">
+                        <i class="fas fa-file-download mr-1"></i>@Resources.Strings.Datos_ModalPlantillaConDatos_Descargar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <!-- Modal: descargar plantilla con los datos actuales -->
 <div class="modal fade" id="modalPlantillaConDatos" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
@@ -710,6 +768,18 @@
             </div>
             <div class="modal-body">
                 <p class="text-muted mb-3" style="font-size: 0.85rem;">@Resources.Strings.Datos_ModalPlantillaConDatos_Intro</p>
+
+                @if (esSuperAdminPlantilla)
+                {
+                    <div class="form-group mb-3">
+                        <label for="pcdPlantilla" class="form-label" style="font-size: 0.85rem;">
+                            <i class="fas fa-file-excel mr-1" style="color: #583AFF;"></i>@Resources.Strings.Datos_PlantillaSelectorLabel
+                        </label>
+                        <select class="form-control form-control-sm" id="pcdPlantilla">
+                            @OpcionesPlantilla()
+                        </select>
+                    </div>
+                }
 
                 <div class="form-group mb-3">
                     <label for="pcdEscenario" class="form-label" style="font-size: 0.85rem;">
@@ -914,6 +984,37 @@
             }
             estadoBotonCargar();
 
+            // ── Botón "Plantilla" ────────────────────────────────────────────────
+            // Usuarios normales: enlace directo a la plantilla de la empresa seleccionada.
+            // Super Admin: abre un modal para elegir qué plantilla descargar (preseleccionada con la de la empresa).
+            var _esSuperAdminPlantilla = @(esSuperAdminPlantilla ? "true" : "false");
+            var _plantillaEmpresa = 'ESTANDAR';   // la que corresponde a la empresa elegida (la da ObtenerAnosDisponibles)
+
+            function urlPlantilla(plantilla) {
+                var idEmp = $('#idEmpresaSeleccionada').val();
+                var params = [];
+                if (idEmp && idEmp !== '0') params.push('idEmpresa=' + encodeURIComponent(idEmp));
+                if (plantilla) params.push('plantilla=' + encodeURIComponent(plantilla));
+                return $('#lnkPlantilla').data('base') + (params.length ? '?' + params.join('&') : '');
+            }
+            function actualizarLinkPlantilla() {
+                $('#lnkPlantilla').attr('href', urlPlantilla(null));
+            }
+            actualizarLinkPlantilla();
+
+            if (_esSuperAdminPlantilla) {
+                $('#lnkPlantilla').on('click', function (e) {
+                    e.preventDefault();
+                    $('#mpPlantilla').val(_plantillaEmpresa);
+                    $('#modalPlantilla').modal('show');
+                });
+                $('#btnMpDescargar').on('click', function () {
+                    var url = urlPlantilla($('#mpPlantilla').val());
+                    $('#modalPlantilla').modal('hide');
+                    window.location.href = url;
+                });
+            }
+
             // ── Selector de año ──────────────────────────────────────────────────
             $('#idEmpresaSeleccionada').on('change', function () {
                 var idEmpresa = $(this).val();
@@ -927,6 +1028,11 @@
                 divAnio.hide();
                 divEscenario.hide();
                 var empresaOk = !!idEmpresa && idEmpresa !== '0';
+                // La plantilla depende de la empresa (algunas tienen plantilla personalizada con hojas extra).
+                // La preselección de los modales de Super Admin vuelve a "Estándar" hasta que el servidor diga la de la empresa.
+                _plantillaEmpresa = 'ESTANDAR';
+                actualizarLinkPlantilla();
+                $('#hintPlantillaPersonalizada').hide();
                 $('#btnPlantillaConDatos').prop('disabled', !empresaOk);
                 actualizarTipPlantillaDatos(empresaOk);
                 estadoBotonCargar();
@@ -953,6 +1059,12 @@
                             }
                             selectAnio.html(html);
                             divEscenario.show();
+
+                            if (data.hojasPersonalizadas && data.hojasPersonalizadas.length > 0) {
+                                $('#hintPlantillaHojas').text(data.hojasPersonalizadas.join(', '));
+                                $('#hintPlantillaPersonalizada').show();
+                            }
+                            _plantillaEmpresa = data.plantillaCodigo || 'ESTANDAR';
 
                             // Preselección (viene de "Subir archivo corregido" en Revisar cargue); se aplica una sola vez
                             if (_prefillCargue) {
@@ -1184,7 +1296,7 @@
                 $('#pcdTodos').prop('checked', false).prop('disabled', true);
                 $('#btnPcdDescargar').prop('disabled', true);
 
-                $.get(_pcdUrls.anios, { idEmpresa: idEmpresa, idEscenario: idEscenario })
+                $.get(_pcdUrls.anios, { idEmpresa: idEmpresa, idEscenario: idEscenario, plantilla: $('#pcdPlantilla').val() || '' })
                     .done(function (data) {
                         if (!data.success || !data.anios || data.anios.length === 0) {
                             $('#pcdListaAnios').empty();
@@ -1220,12 +1332,15 @@
                 // Precarga con el escenario actualmente elegido en la página (si lo hay), sin atarse a él.
                 var idEscenarioActual = $('#selectEscenario').val();
                 if (idEscenarioActual) $('#pcdEscenario').val(idEscenarioActual);
+                // Super Admin: el selector de plantilla del modal arranca con la de la empresa.
+                $('#pcdPlantilla').val(_plantillaEmpresa);
 
                 $modalPcd.modal('show');
                 cargarAniosPcd();
             });
 
             $('#pcdEscenario').on('change', cargarAniosPcd);
+            $('#pcdPlantilla').on('change', cargarAniosPcd);   // el conteo de registros depende de las hojas de la plantilla
 
             $('#pcdTodos').on('change', function () {
                 $('#pcdListaAnios .pcd-anio').prop('checked', this.checked);
@@ -1266,7 +1381,9 @@
 
                 var url = _pcdUrls.descargar + '?idEmpresa=' + encodeURIComponent(idEmpresa) +
                           '&anios=' + encodeURIComponent(anios.join(',')) +
-                          '&idEscenario=' + encodeURIComponent(idEscenario);
+                          '&idEscenario=' + encodeURIComponent(idEscenario) +
+                          // Solo lo respeta el servidor si el usuario es Super Admin.
+                          '&plantilla=' + encodeURIComponent($('#pcdPlantilla').val() || '');
 
                 fetch(url)
                     .then(function (r) {

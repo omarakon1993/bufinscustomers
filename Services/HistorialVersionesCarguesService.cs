@@ -22,9 +22,9 @@ namespace bufinscustomers.Services
         // "la combinación empresa+año+modo", no tiene relación con Models.Escenario.)
         public const int MaxVersionesPorLlaveCargue = 2;
 
-        // Tablas Ini_ versionadas por el historial. Fuente única: Helpers/TablasCargueHelper.cs
-        // (la misma lista que usa el cargue en DatosController), para que agregar/quitar una
-        // tabla del cargue no deje el snapshot ni el rollback desincronizados.
+        // Tablas Ini_ ESTÁNDAR versionadas por el historial (las que toda versión debe traer para poder
+        // hacer rollback). Fuente única: Helpers/TablasCargueHelper.cs. El snapshot y el conteo usan
+        // TablasCargueHelper.TablasIniParaEmpresa, que suma las hojas personalizadas de la empresa.
         private static string[] _tablasIni => TablasCargueHelper.TablasIni;
 
         /// <summary>
@@ -167,7 +167,7 @@ namespace bufinscustomers.Services
 
             string whereClause = ConstruirWhere(modo);
 
-            foreach (var tabla in _tablasIni)
+            foreach (var tabla in TablasCargueHelper.TablasIniParaEmpresa(idEmpresa))
             {
                 string json;
                 try
@@ -296,7 +296,14 @@ namespace bufinscustomers.Services
 
                         string deleteWhere = ConstruirWhere(version.Modo);
 
-                        foreach (var tabla in _tablasIni)
+                        // Tablas personalizadas de la empresa: solo se restauran si la versión trae su
+                        // snapshot. Una versión anterior a la personalización no la tiene y esa tabla se
+                        // deja como está (no hay un estado previo que restaurar).
+                        var tablasARestaurar = TablasCargueHelper.TablasIniParaEmpresa(version.IdEmpresa)
+                            .Where(snapshots.ContainsKey)
+                            .ToList();
+
+                        foreach (var tabla in tablasARestaurar)
                         {
                             using (var cmd = new SqlCommand(
                                 $"DELETE FROM dbo.[{tabla}] {deleteWhere}", conn, tx))
@@ -357,7 +364,7 @@ namespace bufinscustomers.Services
             int total = 0;
             string where = ConstruirWhere(modo);
 
-            foreach (var tabla in _tablasIni)
+            foreach (var tabla in TablasCargueHelper.TablasIniParaEmpresa(idEmpresa))
             {
                 using (var cmd = new SqlCommand($"SELECT COUNT(*) FROM dbo.[{tabla}] {where}", conn, tx))
                 {

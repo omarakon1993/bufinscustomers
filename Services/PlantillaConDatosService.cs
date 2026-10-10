@@ -23,7 +23,8 @@ namespace bufinscustomers.Services
     /// </summary>
     public class PlantillaConDatosService : BaseService
     {
-        private const string RutaPlantilla = "~/Assets/Plantillas/PlantillaBUFINS.xlsx";
+        // La plantilla y las hojas personalizadas salen de los paquetes que pasa el controlador (los que el
+        // usuario puede ver, o los que eligió un Super Admin) — el servicio nunca decide visibilidad.
 
         /// <summary>Columnas de bookkeeping de las tablas Ini_ que nunca se exportan.</summary>
         private static readonly HashSet<string> _columnasExcluidas =
@@ -55,7 +56,7 @@ namespace bufinscustomers.Services
         /// Años con datos cargados para la empresa, con el total de filas (suma de las 9 tablas Ini_),
         /// ordenados de más reciente a más antiguo.
         /// </summary>
-        public List<AnioConDatos> ObtenerAniosConDatos(int idEmpresa, int idEscenario = 1)
+        public List<AnioConDatos> ObtenerAniosConDatos(int idEmpresa, int idEscenario, IReadOnlyList<PersonalizacionCargue> paquetes)
         {
             var acumulado = new Dictionary<int, int>();
 
@@ -63,7 +64,7 @@ namespace bufinscustomers.Services
             {
                 cn.Open();
 
-                foreach (var tabla in TablasCargueHelper.TablasIni)
+                foreach (var tabla in TablasCargueHelper.MapeoParaPaquetes(paquetes).Values.Distinct())
                 {
                     using (var cmd = new SqlCommand(
                         $"SELECT [Año] AS Anio, COUNT(*) AS Total FROM dbo.[{tabla}] " +
@@ -96,16 +97,17 @@ namespace bufinscustomers.Services
         /// para la empresa y los años indicados. <paramref name="totalFilas"/> devuelve el total de
         /// filas escritas (0 = no había datos para esos años).
         /// </summary>
-        public byte[] GenerarExcel(int idEmpresa, List<int> anios, int idEscenario, out int totalFilas)
+        public byte[] GenerarExcel(int idEmpresa, List<int> anios, int idEscenario, IReadOnlyList<PersonalizacionCargue> paquetes, out int totalFilas)
         {
             totalFilas = 0;
 
             if (anios == null || anios.Count == 0)
                 throw new ArgumentException("Debe indicar al menos un año.", nameof(anios));
 
-            string rutaFisica = HostingEnvironment.MapPath(RutaPlantilla);
+            string rutaPlantilla = TablasCargueHelper.PlantillaParaPaquetes(paquetes);
+            string rutaFisica = HostingEnvironment.MapPath(rutaPlantilla);
             if (string.IsNullOrEmpty(rutaFisica) || !File.Exists(rutaFisica))
-                throw new FileNotFoundException("No se encontró la plantilla BUFINS.", RutaPlantilla);
+                throw new FileNotFoundException("No se encontró la plantilla BUFINS.", rutaPlantilla);
 
             string inAnios = string.Join(",", anios.Select((_, i) => "@a" + i));
 
@@ -115,7 +117,7 @@ namespace bufinscustomers.Services
             {
                 cn.Open();
 
-                foreach (var par in TablasCargueHelper.MapeoZaIni)
+                foreach (var par in TablasCargueHelper.MapeoParaPaquetes(paquetes))
                 {
                     string hoja = par.Key;        // Z_...
                     string tablaIni = par.Value;  // Ini_...

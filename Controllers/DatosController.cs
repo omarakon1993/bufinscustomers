@@ -29,10 +29,8 @@ namespace bufinscustomers.Controllers
         private readonly CargueStagingService _stagingService = new CargueStagingService();
         private StringBuilder _logBuilder = new StringBuilder();
 
-        // Mapeo hoja Z_ → tabla Ini_. Fuente única: Helpers/TablasCargueHelper.cs
-        // (compartida con HistorialVersionesCarguesService y ConfiguracionEmpresaController).
-        private static readonly IReadOnlyDictionary<string, string> _mapeoHistorico =
-            TablasCargueHelper.MapeoZaIni;
+        // Mapeo hoja Z_ → tabla Ini_: Helpers/TablasCargueHelper.cs. Se resuelve POR EMPRESA
+        // (TablasCargueHelper.MapeoParaEmpresa) porque algunas empresas tienen hojas personalizadas.
 
         private void LogToFile(string mensaje)
         {
@@ -129,11 +127,19 @@ namespace bufinscustomers.Controllers
                     .Where(a => !string.IsNullOrWhiteSpace(a))
                     .ToList() ?? new List<string>();
 
+                // Solo los paquetes que ESTE usuario puede ver (Super Admin: todos los de la empresa;
+                // resto: solo si su propia empresa también los tiene — el acceso por grupo no basta).
+                var visibles = PersonalizacionesEmpresaHelper.VisiblesPara(usuario, idEmpresa);
+
                 return Json(new
                 {
                     success = true,
                     anioEjecucion = config.AnioEjecucion,
-                    anosHistoricos = anosHistoricos
+                    anosHistoricos = anosHistoricos,
+                    // Hojas adicionales visibles para el usuario (vacío = plantilla estándar).
+                    hojasPersonalizadas = visibles.SelectMany(p => p.HojasExtra.Keys).Distinct().ToArray(),
+                    // Preselección del selector de plantilla del Super Admin.
+                    plantillaCodigo = visibles.Select(p => p.Codigo).FirstOrDefault() ?? PlantillaCodigoEstandar
                 }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
@@ -142,10 +148,56 @@ namespace bufinscustomers.Controllers
             }
         }
 
+        /// <summary>Valor del selector de plantilla (Super Admin) que fuerza la plantilla estándar.</summary>
+        private const string PlantillaCodigoEstandar = "ESTANDAR";
+
+        /// <summary>
+        /// Paquetes de personalización a incluir en una descarga (plantilla vacía o con datos).
+        ///   • Super Admin con <paramref name="plantilla"/>: lo que eligió ("ESTANDAR" o un código del catálogo).
+        ///   • Cualquier otro caso: los paquetes de la empresa VISIBLES para el usuario (nunca el parámetro:
+        ///     un usuario que no es Super Admin no puede pedir una plantilla ajena manipulando la URL).
+        /// </summary>
+        private List<PersonalizacionCargue> PaquetesParaDescarga(int idEmpresa, string plantilla)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (usuario == null) return new List<PersonalizacionCargue>();
+
+            if (UsuarioSesionHelper.EsSuperAdmin() && !string.IsNullOrWhiteSpace(plantilla))
+            {
+                if (string.Equals(plantilla, PlantillaCodigoEstandar, StringComparison.OrdinalIgnoreCase))
+                    return new List<PersonalizacionCargue>();
+                if (PersonalizacionesEmpresaHelper.Catalogo.TryGetValue(plantilla.Trim(), out var elegido))
+                    return new List<PersonalizacionCargue> { elegido };
+            }
+
+            if (idEmpresa <= 0 || !EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
+                return new List<PersonalizacionCargue>();
+            return PersonalizacionesEmpresaHelper.VisiblesPara(usuario, idEmpresa);
+        }
+
+        /// <summary>
+        /// Plantilla de cargue vacía: la personalizada si el usuario la puede ver (ver
+        /// <see cref="PaquetesParaDescarga"/>) o la estándar. Las personalizadas viven en App_Data
+        /// (no accesibles por URL directa): esta acción es la única forma de bajarlas.
+        /// </summary>
+        [HttpGet]
+        public ActionResult DescargarPlantilla(int? idEmpresa = null, string plantilla = null)
+        {
+            string rutaVirtual = TablasCargueHelper.PlantillaParaPaquetes(PaquetesParaDescarga(idEmpresa ?? 0, plantilla));
+            string rutaFisica = Server.MapPath(rutaVirtual);
+            if (!System.IO.File.Exists(rutaFisica))
+            {
+                AppLogger.Error($"No se encontró la plantilla de cargue '{rutaVirtual}' (empresa {idEmpresa}).", contexto: "DescargarPlantilla");
+                rutaFisica = Server.MapPath(TablasCargueHelper.PlantillaEstandar);
+            }
+
+            return File(rutaFisica, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", Path.GetFileName(rutaFisica));
+        }
+
         // ── Descargar la plantilla BUFINS rellena con los datos actuales ─────────
 
         [HttpGet]
-        public ActionResult ObtenerAniosConDatos(int idEmpresa, int idEscenario = 1)
+        public ActionResult ObtenerAniosConDatos(int idEmpresa, int idEscenario = 1, string plantilla = null)
         {
             try
             {
@@ -156,7 +208,7 @@ namespace bufinscustomers.Controllers
                 if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
                     return Json(new { success = false, message = "No tiene permisos para consultar esta empresa." }, JsonRequestBehavior.AllowGet);
 
-                var anios = _plantillaConDatosService.ObtenerAniosConDatos(idEmpresa, idEscenario)
+                var anios = _plantillaConDatosService.ObtenerAniosConDatos(idEmpresa, idEscenario, PaquetesParaDescarga(idEmpresa, plantilla))
                     .Select(a => new { anio = a.Anio, registros = a.Registros });
 
                 return Json(new { success = true, anios }, JsonRequestBehavior.AllowGet);
@@ -169,7 +221,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpGet]
-        public ActionResult DescargarPlantillaConDatos(int idEmpresa, string anios, int idEscenario = 1)
+        public ActionResult DescargarPlantillaConDatos(int idEmpresa, string anios, int idEscenario = 1, string plantilla = null)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null || !EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
@@ -189,7 +241,7 @@ namespace bufinscustomers.Controllers
             int totalFilas;
             try
             {
-                bytes = _plantillaConDatosService.GenerarExcel(idEmpresa, listaAnios, idEscenario, out totalFilas);
+                bytes = _plantillaConDatosService.GenerarExcel(idEmpresa, listaAnios, idEscenario, PaquetesParaDescarga(idEmpresa, plantilla), out totalFilas);
             }
             catch (Exception ex)
             {
@@ -973,6 +1025,14 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("CargueExcel");
             }
 
+            // Empresa con plantilla personalizada que este usuario no puede ver (p. ej. acceso solo por grupo):
+            // no se le deja cargar — se le exigirían hojas que no conoce. El mensaje no nombra las hojas.
+            if (!PersonalizacionesEmpresaHelper.PuedeOperarCargue(usuarioValidacion, idEmpresaSeleccionada))
+            {
+                SetErrorMessage(R("Datos_PlantillaPersonalizadaSinPermiso"));
+                return RedirectToAction("CargueExcel");
+            }
+
             var config = _configuracionService.ObtenerConfiguracionPorEmpresa(idEmpresaSeleccionada);
             if (config == null)
             {
@@ -1047,7 +1107,12 @@ namespace bufinscustomers.Controllers
                         .Select(w => NormalizarNombre(w.Name))
                         .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-                    var hojasFaltantes = _mapeoHistorico.Keys
+                    // Hojas exigidas = las estándar + las personalizadas de ESTA empresa (si tiene paquete).
+                    // Una hoja personalizada de otra empresa que venga en el libro no se reconoce: se ignora.
+                    var mapeoEmpresa = TablasCargueHelper.MapeoParaEmpresa(idEmpresaSeleccionada);
+                    var hojasReconocidas = HojasCargueReconocidas(mapeoEmpresa);
+
+                    var hojasFaltantes = mapeoEmpresa.Keys
                         .Where(z => !hojasLibro.Contains(NormalizarNombre(z)))
                         .ToList();
 
@@ -1055,6 +1120,8 @@ namespace bufinscustomers.Controllers
                     {
                         resultado.Exito = false;
                         resultado.Mensaje = $"La plantilla no contiene todas las hojas requeridas. Faltan: {string.Join(", ", hojasFaltantes)}.";
+                        if (TablasCargueHelper.HojasPersonalizadasParaEmpresa(idEmpresaSeleccionada).Length > 0)
+                            resultado.Mensaje += " " + R("Datos_PlantillaPersonalizadaFaltan");
                         TempData["ResultadoCarga"] = resultado;
                         TempData["NombreArchivo"] = nombreArchivoOriginal;
                         SetErrorMessage(resultado.Mensaje);
@@ -1092,7 +1159,7 @@ namespace bufinscustomers.Controllers
                                     var nombreNorm = NormalizarNombre(hoja.Name);
 
                                     // Hoja auxiliar de la plantilla (listas de validación, etc.): se omite.
-                                    if (!_hojasCargueReconocidas.Contains(nombreNorm))
+                                    if (!hojasReconocidas.Contains(nombreNorm))
                                         continue;
 
                                     var detalle = new DetalleCargaHojaExcel { NombreHoja = hoja.Name };
@@ -1105,7 +1172,7 @@ namespace bufinscustomers.Controllers
                                     }
 
                                     bool exitoHoja;
-                                    if (_mapeoHistorico.TryGetValue(nombreNorm, out string nombreTablaIni))
+                                    if (mapeoEmpresa.TryGetValue(nombreNorm, out string nombreTablaIni))
                                     {
                                         detalle.NombreTabla = nombreTablaIni;
                                         string nombreStaging = TablasCargueHelper.NombreStaging(nombreTablaIni);
@@ -1216,6 +1283,12 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("CargueExcel");
             }
 
+            if (!PersonalizacionesEmpresaHelper.PuedeOperarCargue(usuario, lote.IdEmpresa))
+            {
+                SetErrorMessage(R("Datos_PlantillaPersonalizadaSinPermiso"));
+                return RedirectToAction("CargueExcel");
+            }
+
             // Si esta sesión es la dueña, el lote queda atado a ella: al cerrar/expirar la sesión se descarta.
             if (usuario != null && lote.IdUsuario == usuario.Id)
                 CargueLoteSesionHelper.Registrar(idLote);
@@ -1245,6 +1318,12 @@ namespace bufinscustomers.Controllers
             if (lote == null || !EmpresaAccesoHelper.TieneAcceso(usuario, lote.IdEmpresa))
             {
                 SetErrorMessage("El cargue en revisión indicado no existe o no tiene acceso a él.");
+                return RedirectToAction("CargueExcel");
+            }
+
+            if (!PersonalizacionesEmpresaHelper.PuedeOperarCargue(usuario, lote.IdEmpresa))
+            {
+                SetErrorMessage(R("Datos_PlantillaPersonalizadaSinPermiso"));
                 return RedirectToAction("CargueExcel");
             }
 
@@ -1737,24 +1816,22 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        // Tablas Z_ que se usan en GuardarEnSQLServer pero no tienen mapeo en _mapeoHistorico
+        // Tablas Z_ que se usan en GuardarEnSQLServer pero no tienen mapeo Z_ → Ini_
         private static readonly string[] _tablasZSinMapeo = { "Z_TablaPUC" };
 
-        // Nombres (normalizados) de las hojas que el cargue reconoce y procesa: las del
-        // mapeo Z_ → Ini_ más las Z_ que van directo a SQL. Cualquier otra hoja del libro
-        // (p. ej. la hoja auxiliar "Datos" con las listas de validación de la plantilla)
-        // se ignora por completo: no se valida ni se carga.
-        private static readonly HashSet<string> _hojasCargueReconocidas =
-            new HashSet<string>(
-                _mapeoHistorico.Keys.Concat(_tablasZSinMapeo),
-                StringComparer.OrdinalIgnoreCase);
+        // Nombres (normalizados) de las hojas que el cargue reconoce y procesa para una empresa:
+        // las de su mapeo Z_ → Ini_ (estándar + personalizadas) más las Z_ que van directo a SQL.
+        // Cualquier otra hoja del libro (p. ej. la hoja auxiliar "Datos" con las listas de
+        // validación de la plantilla) se ignora por completo: no se valida ni se carga.
+        private static HashSet<string> HojasCargueReconocidas(IReadOnlyDictionary<string, string> mapeoEmpresa) =>
+            new HashSet<string>(mapeoEmpresa.Keys.Concat(_tablasZSinMapeo), StringComparer.OrdinalIgnoreCase);
 
         private void LimpiarTablasEnError(SqlConnection conn, int idEmpresa)
         {
             if (conn == null || conn.State != ConnectionState.Open) return;
 
             // Limpiar todas las tablas Z_: las del mapeo Ini_ + las que no tienen mapeo
-            var tablasALimpiar = _mapeoHistorico.Keys.Concat(_tablasZSinMapeo);
+            var tablasALimpiar = TablasCargueHelper.TablasZ.Concat(_tablasZSinMapeo);
 
             foreach (var tabla in tablasALimpiar)
             {
@@ -1909,7 +1986,7 @@ namespace bufinscustomers.Controllers
 
         private void EliminarAnosHistoricosDeIni(SqlConnection conn, int anio, int idEmpresa, int idEscenario, SqlTransaction tx = null)
         {
-            foreach (var tablaIni in _mapeoHistorico.Values.Distinct())
+            foreach (var tablaIni in TablasCargueHelper.TablasIniParaEmpresa(idEmpresa))
             {
                 using (var cmd = new SqlCommand(
                     $"DELETE FROM [dbo].[{tablaIni}] WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Ano AND ISNULL(IdEscenario,1) = @IdEscenario", conn, tx))
@@ -1925,7 +2002,7 @@ namespace bufinscustomers.Controllers
 
         private void EliminarEjecucionDeIni(SqlConnection conn, int anio, int idEmpresa, int idEscenario, SqlTransaction tx = null)
         {
-            foreach (var tablaIni in _mapeoHistorico.Values.Distinct())
+            foreach (var tablaIni in TablasCargueHelper.TablasIniParaEmpresa(idEmpresa))
             {
                 using (var cmd = new SqlCommand(
                     $"DELETE FROM [dbo].[{tablaIni}] WHERE IdEmpresa_Log = @IdEmpresa AND Año = @Ano AND Historico_Log = 0 AND ISNULL(IdEscenario,1) = @IdEscenario", conn, tx))

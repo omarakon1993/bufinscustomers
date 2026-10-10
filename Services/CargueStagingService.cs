@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 
 namespace bufinscustomers.Services
 {
@@ -16,12 +17,20 @@ namespace bufinscustomers.Services
     /// </summary>
     public class CargueStagingService : BaseService
     {
+        /// <summary>
+        /// Todas las Staging_Ini_* del cargue: las estándar + las de TODOS los paquetes de personalización
+        /// (TablasCargueHelper.MapeoCompleto). Es seguro incluirlas siempre porque toda operación sobre ellas
+        /// va filtrada por IdLote. Los nombres salen del código, nunca del usuario.
+        /// </summary>
         private static readonly string[] TablasStaging =
-        {
-            "Staging_Ini_BalancePrueba", "Staging_Ini_CteYnoCte", "Staging_Ini_EjecPCH", "Staging_Ini_PCH",
-            "Staging_Ini_PptoPYG", "Staging_Ini_PptoPYGConAjuste", "Staging_Ini_PresupuestoBalance",
-            "Staging_Ini_PYG", "Staging_Ini_PYGDetalladoConAjuste"
-        };
+            TablasCargueHelper.MapeoCompleto.Values.Distinct().Select(TablasCargueHelper.NombreStaging).ToArray();
+
+        /// <summary>
+        /// Envuelve una sentencia sobre una tabla de staging para que no falle si la tabla aún no existe
+        /// (p. ej. la de una hoja personalizada cuyo script todavía no se ejecutó en esa BD).
+        /// </summary>
+        private static string SiExiste(string tabla, string sentencia, string siNo = null) =>
+            $"IF OBJECT_ID(N'dbo.{tabla}', N'U') IS NOT NULL {sentencia}" + (siNo != null ? $" ELSE {siNo}" : "");
 
         private static DateTime _ultimaPurga = DateTime.MinValue;
         private static readonly object _purgaLock = new object();
@@ -214,11 +223,11 @@ namespace bufinscustomers.Services
         public List<(string NombreHoja, string NombreTabla, int Filas)> ObtenerConteoPorHoja(SqlConnection conn, SqlTransaction tx, long idLote)
         {
             var resultado = new List<(string, string, int)>();
-            foreach (var kv in TablasCargueHelper.MapeoZaIni)
+            foreach (var kv in TablasCargueHelper.MapeoCompleto)
             {
                 string nombreStaging = TablasCargueHelper.NombreStaging(kv.Value);
                 if (Array.IndexOf(TablasStaging, nombreStaging) < 0) continue;
-                using (var cmd = new SqlCommand($"SELECT COUNT(*) FROM dbo.[{nombreStaging}] WHERE IdLote = @IdLote", conn, tx))
+                using (var cmd = new SqlCommand(SiExiste(nombreStaging, $"SELECT COUNT(*) FROM dbo.[{nombreStaging}] WHERE IdLote = @IdLote", "SELECT 0"), conn, tx))
                 {
                     cmd.Parameters.AddWithValue("@IdLote", idLote);
                     int filas = (int)cmd.ExecuteScalar();
@@ -238,7 +247,7 @@ namespace bufinscustomers.Services
         {
             var sb = new System.Text.StringBuilder();
             foreach (var t in TablasStaging)
-                sb.AppendLine($"DELETE FROM dbo.{t} WHERE IdLote = @IdLote;");
+                sb.AppendLine(SiExiste(t, $"DELETE FROM dbo.{t} WHERE IdLote = @IdLote;"));
             sb.AppendLine("DELETE FROM dbo.CarguesLotesErrores WHERE IdLote = @IdLote;");
             sb.AppendLine("DELETE FROM dbo.CarguesLotes WHERE IdLote = @IdLote;");
             using (var cmd = new SqlCommand(sb.ToString(), conn, tx) { CommandTimeout = 120 })
@@ -367,7 +376,7 @@ namespace bufinscustomers.Services
                 int filasStaging = 0;
                 foreach (var t in TablasStaging)
                 {
-                    using (var cmd = new SqlCommand($"SELECT COUNT(*) FROM dbo.{t} WHERE IdLote = @IdLote", conn, tx))
+                    using (var cmd = new SqlCommand(SiExiste(t, $"SELECT COUNT(*) FROM dbo.{t} WHERE IdLote = @IdLote", "SELECT 0"), conn, tx))
                     {
                         cmd.Parameters.AddWithValue("@IdLote", idLote);
                         filasStaging += (int)cmd.ExecuteScalar();
@@ -398,7 +407,7 @@ namespace bufinscustomers.Services
                 SELECT IdLote FROM dbo.CarguesLotes WITH (UPDLOCK, ROWLOCK) WHERE ");
             sb.AppendLine(whereLotes + ";");
             foreach (var t in TablasStaging)
-                sb.AppendLine($"DELETE FROM dbo.{t} WHERE IdLote IN (SELECT IdLote FROM @Lotes);");
+                sb.AppendLine(SiExiste(t, $"DELETE FROM dbo.{t} WHERE IdLote IN (SELECT IdLote FROM @Lotes);"));
             sb.AppendLine("DELETE FROM dbo.CarguesLotesErrores WHERE IdLote IN (SELECT IdLote FROM @Lotes);");
             sb.AppendLine("DELETE FROM dbo.CarguesLotes WHERE IdLote IN (SELECT IdLote FROM @Lotes);");
             sb.AppendLine("COMMIT TRANSACTION;");
@@ -462,7 +471,7 @@ namespace bufinscustomers.Services
                 // validación) haría ver su staging como huérfano y lo borraría.
                 var sb = new System.Text.StringBuilder("SET NOCOUNT ON; DECLARE @n INT = 0;\n");
                 foreach (var t in TablasStaging)
-                    sb.AppendLine($"DELETE s FROM dbo.{t} s WITH (READPAST) WHERE NOT EXISTS (SELECT 1 FROM dbo.CarguesLotes l WHERE l.IdLote = s.IdLote); SET @n += @@ROWCOUNT;");
+                    sb.AppendLine(SiExiste(t, $"BEGIN DELETE s FROM dbo.{t} s WITH (READPAST) WHERE NOT EXISTS (SELECT 1 FROM dbo.CarguesLotes l WHERE l.IdLote = s.IdLote); SET @n += @@ROWCOUNT; END"));
                 sb.AppendLine("DELETE e FROM dbo.CarguesLotesErrores e WITH (READPAST) WHERE NOT EXISTS (SELECT 1 FROM dbo.CarguesLotes l WHERE l.IdLote = e.IdLote); SET @n += @@ROWCOUNT;");
                 sb.AppendLine("SELECT @n;");
                 int huerfanas;
