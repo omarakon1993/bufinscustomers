@@ -134,6 +134,112 @@ namespace bufinscustomers.Services
                 adjuntos);
         }
 
+        /// <summary>
+        /// Env&iacute;a el informe de validaci&oacute;n de un cargue en revisi&oacute;n (staging): resumen de
+        /// errores/advertencias en el cuerpo y los adjuntos que arma el controlador (Excel y, si viene, PDF).
+        /// </summary>
+        public void EnviarHallazgosCargue(string destinatarios, string empresa, int anio, string modo, int escenario,
+            string nombreArchivo, int totalErrores, int totalAdvertencias,
+            List<(bool esError, string titulo, string mensaje)> hallazgos,
+            string mensajePersonal, string nombreQuienEnvia,
+            List<(string nombre, byte[] datos, string mime)> adjuntos, bool esIngles)
+        {
+            string asunto = esIngles
+                ? $"Upload validation - {empresa} {anio} ({totalErrores} errors, {totalAdvertencias} warnings)"
+                : $"Validación de cargue - {empresa} {anio} ({totalErrores} errores, {totalAdvertencias} advertencias)";
+
+            EnviarConAdjuntos(destinatarios, asunto,
+                ConstruirEmailHallazgosHtml(empresa, anio, modo, escenario, nombreArchivo, totalErrores, totalAdvertencias,
+                    hallazgos, mensajePersonal, nombreQuienEnvia, esIngles),
+                adjuntos);
+        }
+
+        private static string ConstruirEmailHallazgosHtml(string empresa, int anio, string modo, int escenario,
+            string nombreArchivo, int totalErrores, int totalAdvertencias,
+            List<(bool esError, string titulo, string mensaje)> hallazgos,
+            string mensajePersonal, string nombreQuienEnvia, bool esIngles)
+        {
+            const int maxEnCuerpo = 30;
+            var lista = hallazgos ?? new List<(bool esError, string titulo, string mensaje)>();
+
+            string titulo   = esIngles ? "Upload validation report" : "Informe de validaci&oacute;n del cargue";
+            string intro    = esIngles
+                ? $"These are the findings of the validation of the file uploaded for <strong>{HttpUtility.HtmlEncode(empresa)}</strong>. The data has <strong>not</strong> been saved yet: it is waiting for review."
+                : $"Estos son los hallazgos de la validaci&oacute;n del archivo cargado para <strong>{HttpUtility.HtmlEncode(empresa)}</strong>. Los datos <strong>a&uacute;n no</strong> se han guardado: est&aacute;n pendientes de revisi&oacute;n.";
+            string lblErr   = esIngles ? (totalErrores == 1 ? "error" : "errors") : (totalErrores == 1 ? "error" : "errores");
+            string lblAdv   = esIngles ? (totalAdvertencias == 1 ? "warning" : "warnings") : (totalAdvertencias == 1 ? "advertencia" : "advertencias");
+            string lblSevE  = esIngles ? "ERROR" : "ERROR";
+            string lblSevA  = esIngles ? "WARNING" : "ADVERTENCIA";
+            string lblArch  = esIngles ? "File" : "Archivo";
+            string lblAnio  = esIngles ? "Year" : "A&ntilde;o";
+            string lblModo  = esIngles ? "Mode" : "Modo";
+            string lblEsc   = esIngles ? "Scenario" : "Escenario";
+            string lblDe    = esIngles ? "Sent by" : "Enviado por";
+            string lblMas   = esIngles
+                ? $"And {lista.Count - maxEnCuerpo} more finding(s): see the attached file."
+                : $"Y {lista.Count - maxEnCuerpo} hallazgo(s) m&aacute;s: consulta el archivo adjunto.";
+            string lblAdj   = esIngles ? "The full detail is attached (Excel / PDF)." : "El detalle completo va adjunto (Excel / PDF).";
+
+            string filas = string.Join("", lista.Take(maxEnCuerpo).Select(h =>
+            {
+                string color = h.esError ? "#b91c1c" : "#92400e";
+                string fondo = h.esError ? "#fef2f2" : "#fffbeb";
+                string borde = h.esError ? "#ef4444" : "#f59e0b";
+                string tit = string.IsNullOrWhiteSpace(h.titulo) ? "" :
+                    $@"<span style=""font-size:14px;font-weight:700;color:#1e1b4b;"">{HttpUtility.HtmlEncode(h.titulo)}</span>";
+                return $@"<tr><td style=""padding:0 0 8px;"">
+                  <div style=""background:{fondo};border-left:4px solid {borde};border-radius:8px;padding:10px 14px;"">
+                    <span style=""font-size:11px;font-weight:800;color:{color};letter-spacing:.5px;margin-right:8px;"">{(h.esError ? lblSevE : lblSevA)}</span>{tit}
+                    <div style=""font-size:13px;color:#4b5563;line-height:1.5;margin-top:4px;"">{HttpUtility.HtmlEncode(h.mensaje ?? "")}</div>
+                  </div></td></tr>";
+            }));
+            if (lista.Count > maxEnCuerpo)
+                filas += $@"<tr><td style=""font-size:13px;color:#6b7280;padding:4px 0 0;"">{lblMas}</td></tr>";
+
+            string bloqueMensaje = string.IsNullOrWhiteSpace(mensajePersonal) ? "" : $@"
+    <div style=""background:#f8f9ff;border-left:4px solid #6366f1;padding:14px 18px;font-size:14px;color:#4b5563;line-height:1.6;margin:0 0 22px;white-space:pre-wrap;"">{HttpUtility.HtmlEncode(mensajePersonal)}</div>";
+
+            string bloqueDe = string.IsNullOrWhiteSpace(nombreQuienEnvia) ? "" :
+                $@"<p style=""font-size:13px;color:#9ca3af;margin:14px 0 0;"">{lblDe}: {HttpUtility.HtmlEncode(nombreQuienEnvia)}</p>";
+
+            string Chip(string etiqueta, string valor) =>
+                $@"<span style=""display:inline-block;font-size:12px;color:#5B5570;background:#fff;border:1px solid #e3e6f0;border-radius:999px;padding:4px 10px;margin:0 6px 6px 0;"">{etiqueta} <strong style=""color:#1e1b4b;"">{HttpUtility.HtmlEncode(valor ?? "")}</strong></span>";
+
+            return $@"<!DOCTYPE html>
+<html lang=""{(esIngles ? "en" : "es")}"">
+<head><meta charset=""UTF-8""><meta name=""viewport"" content=""width=device-width,initial-scale=1""></head>
+<body style=""margin:0;padding:0;background:#f0f2f8;font-family:'Segoe UI',Arial,sans-serif;"">
+<table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background:#f0f2f8;padding:32px 16px;"">
+ <tr><td align=""center"">
+ <table width=""640"" cellpadding=""0"" cellspacing=""0"" style=""max-width:640px;width:100%;background:#fff;border-radius:16px;overflow:hidden;"">
+  <tr><td style=""background:linear-gradient(135deg,#1e1b4b,#312e81,#4338ca);padding:36px 40px 28px;text-align:center;"">
+    <div style=""font-size:28px;font-weight:900;color:#fff;letter-spacing:3px;"">bufins</div>
+    <div style=""font-size:9px;color:rgba(255,255,255,0.6);letter-spacing:2px;text-transform:uppercase;"">Business Finance Always Everywhere</div>
+  </td></tr>
+  <tr><td style=""padding:36px 40px;"">
+    <p style=""font-size:18px;font-weight:700;color:#1e1b4b;margin:0 0 12px;"">{titulo}</p>
+    <p style=""font-size:15px;color:#4b5563;line-height:1.7;margin:0 0 18px;"">{intro}</p>
+    <div style=""margin:0 0 14px;"">
+      <span style=""display:inline-block;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:8px 14px;margin:0 8px 8px 0;font-size:14px;""><strong style=""font-size:20px;"">{totalErrores}</strong> {lblErr}</span>
+      <span style=""display:inline-block;background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:10px;padding:8px 14px;margin:0 8px 8px 0;font-size:14px;""><strong style=""font-size:20px;"">{totalAdvertencias}</strong> {lblAdv}</span>
+    </div>
+    <div style=""background:#f8f9fc;border-radius:10px;padding:10px 12px 4px;margin:0 0 22px;"">
+      {Chip(lblArch, nombreArchivo)}{Chip(lblAnio, anio.ToString())}{Chip(lblModo, modo)}{Chip(lblEsc, escenario.ToString())}
+    </div>
+    {bloqueMensaje}
+    <table width=""100%"" cellpadding=""0"" cellspacing=""0"">{filas}</table>
+    <p style=""font-size:13px;color:#6b7280;margin:14px 0 0;"">&#128206; {lblAdj}</p>
+    {bloqueDe}
+  </td></tr>
+  <tr><td style=""background:#f8f9ff;padding:20px;text-align:center;font-size:12px;color:#9ca3af;border-top:1px solid #e5e7eb;"">
+    &copy; Bufins &mdash; Business Finance Always Everywhere
+  </td></tr>
+ </table>
+ </td></tr>
+</table>
+</body></html>";
+        }
+
         private enum ModoCorreoCuenta { Creacion, Reenvio, Actualizacion }
 
         private void Enviar(string destinatario, string asunto, string htmlBody)

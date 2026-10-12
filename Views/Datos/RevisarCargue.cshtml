@@ -10,7 +10,9 @@
     int nAdv = Model.Lote.TotalAdvertencias;
     string estado = nErr > 0 ? "err" : (nAdv > 0 ? "adv" : "ok");
     var hallazgos = Model.Hallazgos.OrderBy(x => x.Severidad == CargueLoteSeveridad.Error ? 0 : 1).ToList();
-
+    // El botón Exportar (Excel / PDF / imagen / correo) solo aparece si hay al menos un error o advertencia.
+    bool hayHallazgos = hallazgos.Any();
+    string correoUsuario = (bufinscustomers.Helpers.UsuarioSesionHelper.UsuarioActual?.Correo ?? "").Trim();
 }
 
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
@@ -88,6 +90,58 @@
     .rc-help i.shield { color: #583AFF; }
     .rc-btn-subir, .rc-btn-subir:hover { color: #fff; }
 
+    /* ── Exportar hallazgos: botón destacado + menú de formatos ── */
+    .rc-card.rc-hall { overflow: visible; } /* el menú Exportar sobresale de la tarjeta */
+    .rc-hall-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .rc-exp { position: relative; }
+    .rc-exp-btn { position: relative; display: inline-flex; align-items: center; gap: 10px; height: 36px; min-width: 210px; padding: 0 14px 0 6px; border: 0; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 500; letter-spacing: .1px; cursor: pointer; background: linear-gradient(90deg,#6366F1 0%,#3B82F6 25%,#06B6D4 50%,#01E1D7 65%,#3B82F6 85%,#6366F1 100%); background-size: 220% 100%; animation: rcExpFondo 7s ease-in-out infinite alternate; box-shadow: 0 4px 14px rgba(59,130,246,.35); transition: transform .15s, box-shadow .15s; }
+    @@keyframes rcExpFondo { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
+    .rc-exp-icono { width: 26px; height: 26px; border-radius: 7px; background: rgba(255,255,255,.22); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+    .rc-exp-btn:hover .rc-exp-icono i:not(.fa-spin) { animation: rcExpSube .5s ease; }
+    @@keyframes rcExpSube { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-3px); } }
+    .rc-exp-btn #rcExpTexto { flex: 1; text-align: left; }
+    .rc-exp-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(59,130,246,.45); }
+    .rc-exp-btn:focus-visible { outline: 2px solid #583AFF; outline-offset: 2px; }
+    .rc-exp-btn::after { content: ''; position: absolute; inset: -3px; border-radius: 12px; border: 2px solid rgba(99,102,241,.6); opacity: 0; pointer-events: none; animation: rcExpPulso 1.8s ease-out .6s 3; }
+    @@keyframes rcExpPulso { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.14); } }
+    .rc-exp-fmt { display: inline-flex; gap: 3px; padding-left: 8px; border-left: 1px solid rgba(255,255,255,.4); }
+    .rc-exp-fmt span { width: 20px; height: 20px; border-radius: 5px; background: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
+    .rc-exp-fmt .xls { color: #217346; }
+    .rc-exp-fmt .pdf { color: #D93025; }
+    .rc-exp-fmt .mail { color: #0284C7; }
+    .rc-exp-caret { font-size: 10px; transition: transform .15s; }
+    .rc-exp.open .rc-exp-caret { transform: rotate(180deg); }
+    .rc-exp.busy .rc-exp-btn { pointer-events: none; opacity: .85; }
+    .rc-exp-menu { position: absolute; right: 0; top: calc(100% + 8px); width: 300px; max-width: calc(100vw - 32px); background: #fff; border: 1px solid #e3e6f0; border-radius: 12px; box-shadow: 0 12px 32px rgba(22,9,51,.18); padding: 6px; z-index: 1050; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .15s, transform .15s, visibility .15s; }
+    .rc-exp.open .rc-exp-menu { opacity: 1; visibility: visible; transform: none; }
+    .rc-exp-menu-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: #a39cc0; padding: 8px 10px 6px; }
+    .rc-exp-opt { display: flex; align-items: center; gap: 12px; width: 100%; border: 0; background: transparent; padding: 9px 10px; border-radius: 9px; text-align: left; cursor: pointer; }
+    .rc-exp-opt:hover, .rc-exp-opt:focus-visible { background: #f6f5fd; outline: none; }
+    .rc-exp-ic { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .rc-exp-opt.xls .rc-exp-ic { background: #e8f3ec; color: #217346; }
+    .rc-exp-opt.pdf .rc-exp-ic { background: #fdecea; color: #D93025; }
+    .rc-exp-opt.img .rc-exp-ic { background: rgba(88,58,255,.1); color: #583AFF; }
+    .rc-exp-opt.mail .rc-exp-ic { background: #e0f2fe; color: #0284C7; }
+    .rc-exp-txt { display: flex; flex-direction: column; min-width: 0; }
+    .rc-exp-t { font-size: 13.5px; font-weight: 700; color: #2d3748; }
+    .rc-exp-s { font-size: 12px; color: #5B5570; }
+    .rc-exp-sep { height: 1px; background: #eceaf5; margin: 4px 6px; }
+
+    /* Modal de correo (formulario: look claro de Bootstrap) */
+    .rc-mail-ctx { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .rc-mail-yo { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid #e3e6f0; border-radius: 10px; background: #f8f9fc; margin-bottom: 14px; cursor: pointer; }
+    .rc-mail-yo input { width: 16px; height: 16px; margin: 0; flex-shrink: 0; accent-color: #583AFF; }
+    .rc-mail-yo-t { font-size: 13.5px; font-weight: 700; color: #2d3748; display: block; }
+    .rc-mail-yo-s { font-size: 12.5px; color: #5B5570; word-break: break-all; }
+    .rc-mail-yo.disabled { cursor: default; opacity: .7; }
+    .rc-mail-adj { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #5B5570; margin-top: 12px; }
+    .rc-mail-adj .fa-file-excel { color: #217346; font-size: 15px; }
+    .rc-mail-adj .fa-file-pdf { color: #D93025; font-size: 15px; }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .rc-exp-btn, .rc-exp-btn::after, .rc-exp-btn:hover .rc-exp-icono i { animation: none; }
+    }
+
     @@media (max-width: 767.98px) {
         .rc-steps { display: none; }
         .rc-status { flex-direction: column; align-items: flex-start; }
@@ -113,6 +167,9 @@
     </div>
 
     <div class="rc-stack mt-3">
+
+      @* #rcCaptura = lo que se copia como imagen (estado + hallazgos, sin el botón Exportar). *@
+      <div class="rc-stack" id="rcCaptura">
 
         <!-- Tarjeta de estado -->
         <div class="rc-card">
@@ -169,12 +226,46 @@
         <div class="rc-card rc-hall">
             <div class="rc-hall-head">
                 <h3 class="rc-hall-title"><i class="fas fa-list"></i>@Resources.Strings.RevisarCargue_Hallazgos</h3>
-                @if (hallazgos.Any())
+                @if (hayHallazgos)
                 {
-                    <div class="rc-seg" id="rcFiltro">
-                        <button type="button" class="active" data-filtro="all">@Resources.Strings.RevisarCargue_Filtro_Todos<span class="rc-cnt">@hallazgos.Count</span></button>
-                        <button type="button" data-filtro="err">@Resources.Strings.RevisarCargue_Filtro_Errores<span class="rc-cnt">@hallazgos.Count(x => x.Severidad == CargueLoteSeveridad.Error)</span></button>
-                        <button type="button" data-filtro="adv">@Resources.Strings.RevisarCargue_Filtro_Advertencias<span class="rc-cnt">@hallazgos.Count(x => x.Severidad != CargueLoteSeveridad.Error)</span></button>
+                    <div class="rc-hall-tools">
+                        <div class="rc-seg" id="rcFiltro">
+                            <button type="button" class="active" data-filtro="all">@Resources.Strings.RevisarCargue_Filtro_Todos<span class="rc-cnt">@hallazgos.Count</span></button>
+                            <button type="button" data-filtro="err">@Resources.Strings.RevisarCargue_Filtro_Errores<span class="rc-cnt">@hallazgos.Count(x => x.Severidad == CargueLoteSeveridad.Error)</span></button>
+                            <button type="button" data-filtro="adv">@Resources.Strings.RevisarCargue_Filtro_Advertencias<span class="rc-cnt">@hallazgos.Count(x => x.Severidad != CargueLoteSeveridad.Error)</span></button>
+                        </div>
+
+                        <div class="rc-exp" id="rcExp">
+                            <button type="button" class="rc-exp-btn" id="rcExpBtn" aria-haspopup="true" aria-expanded="false" title="@Resources.Strings.RevisarCargue_Exp_BtnTooltip">
+                                <span class="rc-exp-icono"><i class="fas fa-arrow-up-from-bracket" id="rcExpIcono"></i></span><span id="rcExpTexto">@Resources.Strings.RevisarCargue_Exp_Btn</span>
+                                <span class="rc-exp-fmt" aria-hidden="true">
+                                    <span class="xls"><i class="fas fa-file-excel"></i></span>
+                                    <span class="pdf"><i class="fas fa-file-pdf"></i></span>
+                                    <span class="mail"><i class="fas fa-envelope"></i></span>
+                                </span>
+                                <i class="fas fa-chevron-down rc-exp-caret"></i>
+                            </button>
+                            <div class="rc-exp-menu" role="menu" aria-labelledby="rcExpBtn">
+                                <div class="rc-exp-menu-title">@Resources.Strings.RevisarCargue_Exp_MenuTitulo</div>
+                                <button type="button" class="rc-exp-opt xls" role="menuitem" data-accion="excel">
+                                    <span class="rc-exp-ic"><i class="fas fa-file-excel"></i></span>
+                                    <span class="rc-exp-txt"><span class="rc-exp-t">@Resources.Strings.RevisarCargue_Exp_Excel</span><span class="rc-exp-s">@Resources.Strings.RevisarCargue_Exp_ExcelDesc</span></span>
+                                </button>
+                                <button type="button" class="rc-exp-opt pdf" role="menuitem" data-accion="pdf">
+                                    <span class="rc-exp-ic"><i class="fas fa-file-pdf"></i></span>
+                                    <span class="rc-exp-txt"><span class="rc-exp-t">@Resources.Strings.RevisarCargue_Exp_Pdf</span><span class="rc-exp-s">@Resources.Strings.RevisarCargue_Exp_PdfDesc</span></span>
+                                </button>
+                                <button type="button" class="rc-exp-opt img" role="menuitem" data-accion="imagen">
+                                    <span class="rc-exp-ic"><i class="fas fa-image"></i></span>
+                                    <span class="rc-exp-txt"><span class="rc-exp-t">@Resources.Strings.RevisarCargue_Exp_Imagen</span><span class="rc-exp-s">@Resources.Strings.RevisarCargue_Exp_ImagenDesc</span></span>
+                                </button>
+                                <div class="rc-exp-sep"></div>
+                                <button type="button" class="rc-exp-opt mail" role="menuitem" data-accion="correo">
+                                    <span class="rc-exp-ic"><i class="fas fa-envelope"></i></span>
+                                    <span class="rc-exp-txt"><span class="rc-exp-t">@Resources.Strings.RevisarCargue_Exp_Correo</span><span class="rc-exp-s">@Resources.Strings.RevisarCargue_Exp_CorreoDesc</span></span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 }
             </div>
@@ -212,6 +303,8 @@
                 </div>
             }
         </div>
+
+      </div>
 
         <!-- Acciones -->
         <div class="rc-actions">
@@ -275,6 +368,60 @@
     </div>
 </div>
 
+@if (hayHallazgos)
+{
+    <!-- Modal: enviar hallazgos por correo (formulario → look claro de Bootstrap) -->
+    <div class="modal fade" id="rcModalCorreo" tabindex="-1" role="dialog" aria-labelledby="rcModalCorreoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rcModalCorreoLabel">
+                        <i class="fas fa-envelope mr-2"></i>@Resources.Strings.RevisarCargue_Correo_ModalTitulo
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <div class="rc-mail-ctx">
+                        <span class="rc-pill">@Resources.Strings.RevisarCargue_Empresa <b>@Model.Lote.NombreEmpresa</b></span>
+                        <span class="rc-pill">@Resources.Strings.RevisarCargue_Anio <b>@Model.Lote.Anio</b></span>
+                        <span class="rc-pill">@Resources.Strings.RevisarCargue_Escenario <b>@Model.Lote.IdEscenario</b></span>
+                    </div>
+
+                    <label class="rc-mail-yo @(string.IsNullOrEmpty(correoUsuario) ? "disabled" : "")" for="rcCorreoYo">
+                        <input type="checkbox" id="rcCorreoYo" @(string.IsNullOrEmpty(correoUsuario) ? "disabled" : "checked") />
+                        <span>
+                            <span class="rc-mail-yo-t">@Resources.Strings.RevisarCargue_Correo_Incluirme</span>
+                            <span class="rc-mail-yo-s">@(string.IsNullOrEmpty(correoUsuario) ? Resources.Strings.RevisarCargue_Correo_SinRegistrado : correoUsuario)</span>
+                        </span>
+                    </label>
+
+                    <div class="form-group">
+                        <label for="rcCorreoOtros"><i class="fas fa-at mr-1"></i>@Resources.Strings.RevisarCargue_Correo_LabelOtros</label>
+                        <input type="text" class="form-control" id="rcCorreoOtros" autocomplete="off" placeholder="@Resources.Strings.Modelo_Correo_PlaceholderDestino" />
+                        <small class="form-text text-muted">@Resources.Strings.RevisarCargue_Correo_HintOtros</small>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label for="rcCorreoMensaje"><i class="fas fa-align-left mr-1"></i>@Resources.Strings.Modelo_Correo_LabelMensaje</label>
+                        <textarea class="form-control" id="rcCorreoMensaje" rows="2" maxlength="1000" placeholder="@Resources.Strings.Modelo_Correo_PlaceholderMensaje"></textarea>
+                    </div>
+
+                    <div class="rc-mail-adj"><i class="fas fa-file-excel"></i><i class="fas fa-file-pdf"></i>@Resources.Strings.RevisarCargue_Correo_Adjuntos</div>
+                    <div class="alert alert-danger py-2 px-3 mt-3 mb-0 small d-none" id="rcCorreoError" role="alert"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-modern-secondary btn-sm" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
+                    </button>
+                    <button type="button" class="btn btn-modern-gradient btn-sm" id="rcCorreoEnviar">
+                        <i class="fas fa-paper-plane mr-1"></i><span>@Resources.Strings.Modelo_Correo_BtnEnviar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @* Descarte ordenado al recargar la página (ver script). *@
 @using (Html.BeginForm("AbandonarCargue", "Datos", FormMethod.Post, new { id = "frmAbandonarCargue", @class = "d-none" }))
 {
@@ -284,6 +431,333 @@
 }
 
 @section scripts {
+    @if (hayHallazgos)
+    {
+        var rcDatos = new
+        {
+            urlExcel = Url.Action("ExportarHallazgosExcel", "Datos", new { idLote = Model.Lote.IdLote }),
+            urlCorreo = Url.Action("EnviarHallazgosPorCorreo", "Datos"),
+            idLote = Model.Lote.IdLote,
+            correoUsuario = correoUsuario,
+            ctx = new
+            {
+                empresa = Model.Lote.NombreEmpresa ?? "",
+                anio = Model.Lote.Anio,
+                modo = Model.Lote.Modo == 0 ? Resources.Strings.RevisarCargue_ModoEjecucion : Resources.Strings.RevisarCargue_ModoHistorico,
+                escenario = Model.Lote.IdEscenario,
+                archivo = Model.NombreArchivo ?? "",
+                nErr = nErr,
+                nAdv = nAdv
+            },
+            hallazgos = hallazgos.Select(h => new
+            {
+                err = h.Severidad == CargueLoteSeveridad.Error,
+                t = esIngles && !string.IsNullOrWhiteSpace(h.TituloEn) ? h.TituloEn : (h.Titulo ?? ""),
+                m = esIngles && !string.IsNullOrWhiteSpace(h.MensajeEn) ? h.MensajeEn : (h.Mensaje ?? ""),
+                hoja = h.NombreHoja ?? "",
+                fila = h.NumeroFilaExcel,
+                col = h.Columna ?? ""
+            }).ToList(),
+            t = new
+            {
+                generando = Resources.Strings.RevisarCargue_Exp_Generando,
+                listo = Resources.Strings.RevisarCargue_Exp_Listo,
+                errorGenerar = Resources.Strings.RevisarCargue_Exp_ErrorGenerar,
+                imagenCopiada = Resources.Strings.RevisarCargue_Exp_ImagenCopiada,
+                imagenDescargada = Resources.Strings.RevisarCargue_Exp_ImagenDescargada,
+                titulo = Resources.Strings.RevisarCargue_Exp_TituloInforme,
+                hallazgos = Resources.Strings.RevisarCargue_Hallazgos,
+                pendiente = Resources.Strings.RevisarCargue_Pdf_Pendiente,
+                generado = Resources.Strings.RevisarCargue_Pdf_Generado,
+                pagina = Resources.Strings.RevisarCargue_Pdf_Pagina,
+                lblEmpresa = Resources.Strings.RevisarCargue_Empresa,
+                lblAnio = Resources.Strings.RevisarCargue_Anio,
+                lblModo = Resources.Strings.RevisarCargue_Modo,
+                lblEscenario = Resources.Strings.RevisarCargue_Escenario,
+                lblArchivo = Resources.Strings.RevisarCargue_Exp_Archivo,
+                lblErrores = Resources.Strings.RevisarCargue_Filtro_Errores,
+                lblAdvertencias = Resources.Strings.RevisarCargue_Filtro_Advertencias,
+                sevError = Resources.Strings.RevisarCargue_SeveridadError,
+                sevAdv = Resources.Strings.RevisarCargue_SeveridadAdvertencia,
+                colHoja = Resources.Strings.RevisarCargue_Exp_ColHoja,
+                colFila = Resources.Strings.RevisarCargue_Exp_ColFila,
+                colColumna = Resources.Strings.RevisarCargue_Exp_ColColumna,
+                correoValDestino = Resources.Strings.RevisarCargue_Correo_ValDestino,
+                correoValMaximo = Resources.Strings.RevisarCargue_Correo_ValMaximo,
+                correoEnviando = Resources.Strings.RevisarCargue_Correo_Enviando,
+                correoError = Resources.Strings.RevisarCargue_Correo_Error,
+                correoExitoTitulo = Resources.Strings.Modelo_Correo_ExitoTitulo,
+                aceptar = Resources.Strings.Common_Aceptar
+            }
+        };
+        <script src="~/Assets/js/html2canvas.min.js"></script>
+        <script src="~/Assets/js/jspdf.umd.min.js"></script>
+        <script>
+            (function () {
+                var D = @Html.Raw(Json.Encode(rcDatos));
+                var T = D.t;
+                var $exp = $('#rcExp'), $btn = $('#rcExpBtn');
+
+                // ── Menú ──────────────────────────────────────────────────
+                function abrirMenu(abrir) {
+                    $exp.toggleClass('open', abrir);
+                    $btn.attr('aria-expanded', abrir ? 'true' : 'false');
+                    if (abrir) setTimeout(function () { $exp.find('.rc-exp-opt').first().trigger('focus'); }, 30);
+                }
+                $btn.on('click', function (e) { e.stopPropagation(); abrirMenu(!$exp.hasClass('open')); });
+                $(document).on('click', function (e) { if (!$(e.target).closest('#rcExp').length) abrirMenu(false); });
+                $(document).on('keydown', function (e) {
+                    if (!$exp.hasClass('open')) return;
+                    var $opts = $exp.find('.rc-exp-opt'), i = $opts.index(document.activeElement);
+                    if (e.key === 'Escape') { abrirMenu(false); $btn.trigger('focus'); }
+                    else if (e.key === 'ArrowDown') { e.preventDefault(); $opts.eq((i + 1) % $opts.length).trigger('focus'); }
+                    else if (e.key === 'ArrowUp') { e.preventDefault(); $opts.eq((i - 1 + $opts.length) % $opts.length).trigger('focus'); }
+                });
+
+                // Estado "generando" en el propio botón (el menú se cierra al elegir una opción).
+                var textoBtn = $('#rcExpTexto').text();
+                function ocupado(si) {
+                    $exp.toggleClass('busy', si);
+                    $('#rcExpIcono').attr('class', si ? 'fas fa-spinner fa-spin' : 'fas fa-arrow-up-from-bracket');
+                    $('#rcExpTexto').text(si ? T.generando : textoBtn);
+                }
+                function aviso(icono, titulo) {
+                    Swal.fire({ toast: true, position: 'top-end', icon: icono, title: titulo, showConfirmButton: false, timer: 3200, timerProgressBar: true });
+                }
+                function descargarBlob(blob, nombre) {
+                    var url = URL.createObjectURL(blob), a = document.createElement('a');
+                    a.href = url; a.download = nombre; document.body.appendChild(a); a.click();
+                    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1500);
+                }
+                function nombreArchivo(ext) {
+                    var emp = (D.ctx.empresa || 'Empresa').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+                    var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; };
+                    return 'Validacion_Cargue_' + emp + '_' + D.ctx.anio + '_Esc' + D.ctx.escenario + '_' +
+                        d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes()) + '.' + ext;
+                }
+
+                // ── Excel (servidor; con fetch para no salir de la página, lo que descartaría el lote) ──
+                function exportarExcel() {
+                    return fetch(D.urlExcel, { credentials: 'same-origin' }).then(function (r) {
+                        var tipo = r.headers.get('Content-Type') || '';
+                        if (!r.ok || tipo.indexOf('spreadsheet') < 0) throw new Error('excel');
+                        var cd = r.headers.get('Content-Disposition') || '';
+                        var m = /filename\*=UTF-8''([^;]+)/i.exec(cd) || /filename="?([^";]+)"?/i.exec(cd);
+                        return r.blob().then(function (b) {
+                            descargarBlob(b, m ? decodeURIComponent(m[1]) : nombreArchivo('xlsx'));
+                            aviso('success', T.listo);
+                        });
+                    });
+                }
+
+                // ── PDF (jsPDF puro, A4 vertical) ─────────────────────────
+                function txt(s) {
+                    // Helvetica de jsPDF solo cubre Latin-1: se normalizan comillas/guiones tipográficos.
+                    return String(s == null ? '' : s)
+                        .replace(/[‘’]/g, "'").replace(/[“”]/g, '"')
+                        .replace(/[–—]/g, '-').replace(/…/g, '...')
+                        .replace(/[^\x00-\xFF]/g, '?');
+                }
+                function construirPdf() {
+                    var doc = new window.jspdf.jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+                    var W = 210, H = 297, M = 14, ancho = W - 2 * M;
+                    var lh = function (pt) { return pt * 0.3528 * 1.2; };
+
+                    // Banda con el degradado de marca
+                    var stops = [[99, 102, 241], [59, 130, 246], [6, 182, 212], [1, 225, 215]], pos = [0, .35, .7, 1];
+                    for (var i = 0, n = 140; i < n; i++) {
+                        var f = i / (n - 1), k = 0;
+                        while (k < pos.length - 2 && f > pos[k + 1]) k++;
+                        var u = (f - pos[k]) / (pos[k + 1] - pos[k]);
+                        doc.setFillColor.apply(doc, [0, 1, 2].map(function (c) { return Math.round(stops[k][c] + (stops[k + 1][c] - stops[k][c]) * u); }));
+                        doc.rect(W * i / n, 0, W / n + 0.4, 30, 'F');
+                    }
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.text(txt(T.titulo), M, 13);
+                    doc.setFontSize(15); doc.text('bufins', W - M, 13, { align: 'right' });
+                    doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.text(txt(D.ctx.empresa), M, 20.5);
+                    doc.setFontSize(8.5); doc.text(txt(T.generado.replace('{0}', new Date().toLocaleString())), M, 26);
+
+                    // Contadores + contexto
+                    var y = 37;
+                    function contador(x, num, etiqueta, fondo, borde, color) {
+                        doc.setFillColor.apply(doc, fondo); doc.setDrawColor.apply(doc, borde);
+                        doc.roundedRect(x, y, 38, 17, 2.5, 2.5, 'FD');
+                        doc.setTextColor.apply(doc, color);
+                        doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.text(String(num), x + 4, y + 8.5);
+                        doc.setFontSize(8.5); doc.text(txt(etiqueta), x + 4, y + 13.8);
+                    }
+                    contador(M, D.ctx.nErr, T.lblErrores, [254, 242, 242], [254, 202, 202], [185, 28, 28]);
+                    contador(M + 42, D.ctx.nAdv, T.lblAdvertencias, [255, 251, 235], [253, 230, 138], [146, 64, 14]);
+
+                    var xc = M + 88, filasCtx = [
+                        [T.lblArchivo, D.ctx.archivo], [T.lblAnio, String(D.ctx.anio)],
+                        [T.lblModo, D.ctx.modo], [T.lblEscenario, String(D.ctx.escenario)]];
+                    doc.setFontSize(9);
+                    filasCtx.forEach(function (c, j) {
+                        var yy = y + 3.6 + j * 4.3;
+                        doc.setFont('helvetica', 'bold'); doc.setTextColor(91, 85, 112); doc.text(txt(c[0]) + ':', xc, yy);
+                        doc.setFont('helvetica', 'normal'); doc.setTextColor(45, 55, 72);
+                        var v = doc.splitTextToSize(txt(c[1]), W - M - xc - 22)[0] || '';
+                        doc.text(v, xc + 22, yy);
+                    });
+                    y += 23;
+
+                    doc.setFillColor(248, 249, 252); doc.roundedRect(M, y, ancho, 9, 2, 2, 'F');
+                    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(91, 85, 112);
+                    doc.text(txt(T.pendiente), M + 4, y + 5.9);
+                    y += 16;
+
+                    doc.setFont('helvetica', 'bold'); doc.setFontSize(12.5); doc.setTextColor(45, 55, 72);
+                    doc.text(txt(T.hallazgos) + ' (' + D.hallazgos.length + ')', M, y);
+                    y += 5;
+
+                    // Hallazgos como tarjetas con barra de severidad
+                    var interior = ancho - 10;
+                    D.hallazgos.forEach(function (h) {
+                        doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5);
+                        var tit = h.t ? doc.splitTextToSize(txt(h.t), interior) : [];
+                        doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5);
+                        var msg = h.m ? doc.splitTextToSize(txt(h.m), interior) : [];
+                        var meta = [];
+                        if (h.hoja) meta.push(T.colHoja + ': ' + h.hoja);
+                        if (h.fila) meta.push(T.colFila + ': ' + h.fila);
+                        if (h.col) meta.push(T.colColumna + ': ' + h.col);
+                        var alto = 4 + lh(8) + 1 + tit.length * lh(10.5) + msg.length * lh(9.5) + (meta.length ? lh(8.5) + 0.5 : 0) + 3;
+
+                        if (y + alto > H - 16) { doc.addPage(); y = 16; }
+
+                        doc.setFillColor.apply(doc, h.err ? [254, 242, 242] : [255, 251, 235]);
+                        doc.roundedRect(M, y, ancho, alto, 2, 2, 'F');
+                        doc.setFillColor.apply(doc, h.err ? [239, 68, 68] : [245, 158, 11]);
+                        doc.rect(M, y, 1.6, alto, 'F');
+
+                        var yy = y + 4 + lh(8) - 1;
+                        doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor.apply(doc, h.err ? [185, 28, 28] : [146, 64, 14]);
+                        doc.text(txt((h.err ? T.sevError : T.sevAdv).toUpperCase()), M + 5, yy);
+                        yy += 1;
+                        if (tit.length) {
+                            doc.setFontSize(10.5); doc.setTextColor(45, 55, 72);
+                            tit.forEach(function (l) { yy += lh(10.5); doc.text(l, M + 5, yy - 1); });
+                        }
+                        if (msg.length) {
+                            doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(91, 85, 112);
+                            msg.forEach(function (l) { yy += lh(9.5); doc.text(l, M + 5, yy - 1); });
+                        }
+                        if (meta.length) {
+                            doc.setFontSize(8.5); doc.setTextColor(130, 125, 150);
+                            yy += lh(8.5) + 0.5; doc.text(txt(meta.join('   ·   ')), M + 5, yy - 1);
+                        }
+                        y += alto + 3;
+                    });
+
+                    // Pie en todas las páginas
+                    var total = doc.getNumberOfPages();
+                    for (var p = 1; p <= total; p++) {
+                        doc.setPage(p);
+                        doc.setDrawColor(227, 230, 240); doc.line(M, H - 11, W - M, H - 11);
+                        doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(140, 135, 160);
+                        doc.text(txt('Bufins  ·  ' + D.ctx.empresa + '  ·  ' + T.titulo), M, H - 6.5);
+                        doc.text(txt(T.pagina.replace('{0}', p).replace('{1}', total)), W - M, H - 6.5, { align: 'right' });
+                    }
+                    return doc;
+                }
+                function exportarPdf() {
+                    return new Promise(function (ok) {
+                        construirPdf().save(nombreArchivo('pdf'));
+                        aviso('success', T.listo);
+                        ok();
+                    });
+                }
+
+                // ── Copiar como imagen (estado + hallazgos, tal como se ven) ──
+                function capturar() {
+                    var el = document.getElementById('rcCaptura');
+                    var escala = Math.min(2, 14000 / Math.max(el.scrollHeight, 1));
+                    return html2canvas(el, {
+                        backgroundColor: '#ffffff', scale: escala, logging: false, useCORS: true,
+                        ignoreElements: function (n) { return n.classList && n.classList.contains('rc-exp'); }
+                    }).then(function (c) { return new Promise(function (ok) { c.toBlob(ok, 'image/png'); }); });
+                }
+                function copiarImagen() {
+                    var blobP = capturar();
+                    var respaldo = function () {
+                        return blobP.then(function (b) { descargarBlob(b, nombreArchivo('png')); aviso('info', T.imagenDescargada); });
+                    };
+                    // ClipboardItem recibe la promesa en el mismo gesto del clic (requisito de Safari).
+                    if (window.isSecureContext && navigator.clipboard && navigator.clipboard.write && window.ClipboardItem) {
+                        try {
+                            return navigator.clipboard.write([new ClipboardItem({ 'image/png': blobP })])
+                                .then(function () { aviso('success', T.imagenCopiada); }, respaldo);
+                        } catch (e) { return respaldo(); }
+                    }
+                    return respaldo();
+                }
+
+                // ── Correo ────────────────────────────────────────────────
+                var rxCorreo = /^[^@@\s]+@@[^@@\s]+\.[^@@\s]+$/;
+                function errorCorreo(msg) { $('#rcCorreoError').text(msg || '').toggleClass('d-none', !msg); }
+                function abrirCorreo() {
+                    errorCorreo('');
+                    $('#rcModalCorreo').modal('show');
+                }
+                $('#rcModalCorreo').on('shown.bs.modal', function () {
+                    if (!$('#rcCorreoYo').is(':checked')) $('#rcCorreoOtros').trigger('focus');
+                });
+                $('#rcCorreoEnviar').on('click', function () {
+                    var $b = $(this);
+                    var incluirme = $('#rcCorreoYo').is(':checked');
+                    var otros = ($('#rcCorreoOtros').val() || '').split(/[,;\s]+/).filter(function (c) { return c; });
+                    var invalidos = otros.filter(function (c) { return !rxCorreo.test(c); });
+                    if ((!incluirme && otros.length === 0) || invalidos.length) {
+                        errorCorreo(T.correoValDestino + (invalidos.length ? ' (' + invalidos.join(', ') + ')' : ''));
+                        return;
+                    }
+                    if (otros.length + (incluirme ? 1 : 0) > 10) { errorCorreo(T.correoValMaximo); return; }
+                    errorCorreo('');
+
+                    var htmlBtn = $b.html();
+                    $b.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>' + $('<span>').text(T.correoEnviando).html());
+                    var pdf = '';
+                    try { pdf = construirPdf().output('datauristring'); } catch (e) { pdf = ''; }
+
+                    $.ajax({
+                        url: D.urlCorreo, type: 'POST',
+                        data: {
+                            __RequestVerificationToken: $('#frmDescartarCargue input[name="__RequestVerificationToken"]').val(),
+                            idLote: D.idLote, correos: otros.join(','), incluirmeAMi: incluirme,
+                            mensaje: $('#rcCorreoMensaje').val() || '', pdfBase64: pdf
+                        }
+                    }).done(function (r) {
+                        if (r && r.exito) {
+                            $('#rcModalCorreo').modal('hide');
+                            Swal.fire({ icon: 'success', title: T.correoExitoTitulo, text: r.mensaje, confirmButtonText: T.aceptar });
+                        } else {
+                            errorCorreo((r && r.mensaje) || T.correoError);
+                        }
+                    }).fail(function () {
+                        errorCorreo(T.correoError);
+                    }).always(function () {
+                        $b.prop('disabled', false).html(htmlBtn);
+                    });
+                });
+
+                // ── Despacho de opciones ──────────────────────────────────
+                var acciones = { excel: exportarExcel, pdf: exportarPdf, imagen: copiarImagen };
+                $exp.on('click', '.rc-exp-opt', function () {
+                    var accion = $(this).data('accion');
+                    abrirMenu(false);
+                    if (accion === 'correo') { abrirCorreo(); return; }
+                    if ($exp.hasClass('busy')) return;
+                    ocupado(true);
+                    var p;
+                    try { p = Promise.resolve(acciones[accion]()); } catch (e) { p = Promise.reject(e); }
+                    p.catch(function () { aviso('error', T.errorGenerar); })
+                     .then(function () { ocupado(false); });
+                });
+            })();
+        </script>
+    }
     <script>
         $(function () {
             $('#rcFiltro button').on('click', function () {
