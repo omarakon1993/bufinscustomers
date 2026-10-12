@@ -88,11 +88,11 @@
                     <button type="button" class="hc-chip-f" data-f="per">@Resources.Strings.HojasCargue_FiltroPersonalizadas<span class="n"></span></button>
                     <button type="button" class="hc-chip-f" data-f="off">@Resources.Strings.HojasCargue_FiltroInactivas<span class="n"></span></button>
                 </div>
-                <div class="hc-orden-ayuda" id="hcOrdenAyuda"></div>
             </div>
             <div class="hc-lista-body" id="hcLista">
                 <div class="hc-lista-vacia"><i class="fas fa-spinner fa-spin"></i></div>
             </div>
+            <div class="hc-orden-ayuda" id="hcOrdenAyuda"></div>
         </aside>
 
         <section class="hc-panel" id="hcDetalle">
@@ -377,20 +377,25 @@
     function pintarLista() {
         st.hojas.sort(function (a, b) { return a.orden - b.orden || a.hoja.localeCompare(b.hoja); });
         var arrastrable = puedeOrdenar();
-        $('#hcOrdenAyuda').html(st.desdeBD && st.hojas.length > 1
-            ? '<i class="fas ' + (arrastrable ? 'fa-arrows-alt-v' : 'fa-info-circle') + '"></i>' + esc(arrastrable ? T.ArrastrarAyuda : T.ArrastrarSoloTodas)
-            : '');
+        $('#hcOrdenAyuda')
+            .toggleClass('activa', arrastrable)
+            .html(st.desdeBD && st.hojas.length > 1
+                ? '<i class="fas ' + (arrastrable ? 'fa-arrows-alt-v' : 'fa-filter') + '"></i><span>' + esc(arrastrable ? T.ArrastrarAyuda : T.ArrastrarSoloTodas) + '</span>'
+                : '');
         var items = st.hojas.filter(pasaFiltro);
         if (!items.length) { $('#hcLista').html('<div class="hc-lista-vacia"><i class="fas fa-search mb-2 d-block"></i>' + esc(T.ListaVacia) + '</div>'); return; }
         $('#hcLista').html(items.map(function (h) {
-            var meta = tagAlcance(h);
-            if (h.alcance === 'PERSONALIZADA') meta += ' <span class="hc-tag neutro"><i class="fas fa-building"></i>' + esc(fmt(T.TagEmpresas, h.empresas.length)) + '</span>';
+            var per = h.alcance === 'PERSONALIZADA';
+            // Alcance como ícono compacto a la derecha (el detalle completo está en el panel de la derecha).
+            var alcance = '<span class="hc-alc ' + (per ? 'per' : 'std') + '" title="' + esc(per ? T.TagPersonalizada + ' · ' + fmt(T.TagEmpresas, h.empresas.length) : T.TagEstandar) + '">' +
+                '<i class="fas ' + (per ? 'fa-puzzle-piece' : 'fa-globe') + '"></i>' + (per ? '<b>' + h.empresas.length + '</b>' : '') + '</span>';
             var pos = st.hojas.indexOf(h) + 1;
             return '<div class="hc-item' + (arrastrable ? ' arrastrable' : '') + (st.sel && st.sel.id === h.id ? ' sel' : '') + (h.activo ? '' : ' inactiva') + '" data-id="' + h.id + '" role="button" tabindex="0"' + (arrastrable ? ' draggable="true"' : '') + '>' +
                 (arrastrable ? '<span class="hc-grip" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span>' : '') +
-                '<div class="hc-item-top"><span class="hc-pos">' + pos + '</span><span class="hc-item-nombre">' + esc(h.hoja) + '</span></div>' +
-                '<div class="hc-item-tabla">→ ' + esc(h.tabla) + '</div>' +
-                '<div class="hc-item-meta">' + meta + '</div></div>';
+                '<span class="hc-pos">' + pos + '</span>' +
+                '<span class="hc-item-txt"><span class="hc-item-nombre">' + esc(h.hoja) + '</span>' +
+                  '<span class="hc-item-tabla">' + esc(h.tabla) + (h.activo ? '' : ' · ' + esc(T.TagInactiva)) + '</span></span>' +
+                alcance + '</div>';
         }).join(''));
     }
 
