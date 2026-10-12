@@ -137,9 +137,7 @@ namespace bufinscustomers.Controllers
                     anioEjecucion = config.AnioEjecucion,
                     anosHistoricos = anosHistoricos,
                     // Hojas adicionales visibles para el usuario (vacío = plantilla estándar).
-                    hojasPersonalizadas = visibles.Select(h => h.NombreHoja).ToArray(),
-                    // Preselección del selector de plantilla del Super Admin.
-                    plantillaCodigo = visibles.Count > 0 ? PlantillaCodigoEmpresa : PlantillaCodigoEstandar
+                    hojasPersonalizadas = visibles.Select(h => h.NombreHoja).ToArray()
                 }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
@@ -148,79 +146,48 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        /// <summary>Valores del selector de plantilla (Super Admin): solo hojas estándar / hojas de la empresa
-        /// elegida / estándar + una hoja personalizada concreta ("HOJA:{IdHoja}").</summary>
-        private const string PlantillaCodigoEstandar = "ESTANDAR";
-        private const string PlantillaCodigoEmpresa = "EMPRESA";
-        private const string PlantillaPrefijoHoja = "HOJA:";
-
         /// <summary>
-        /// Hojas a incluir en una descarga (plantilla vacía o con datos).
-        ///   • Super Admin con <paramref name="plantilla"/>: lo que eligió (ver constantes de arriba).
-        ///   • Cualquier otro caso: estándar + personalizadas de la empresa VISIBLES para el usuario (nunca el
-        ///     parámetro: un usuario que no es Super Admin no puede pedir hojas ajenas manipulando la URL).
+        /// Hojas que van en la plantilla de la empresa (vacía o con datos): estándar + personalizadas que el
+        /// usuario puede ver (Super Admin: todas las de la empresa; resto: solo las que también tiene su propia
+        /// empresa). Ya no hay selección manual de plantilla: cada empresa recibe la que le corresponde.
         /// </summary>
-        private List<HojaCargue> HojasParaDescarga(int idEmpresa, string plantilla)
-        {
-            var usuario = UsuarioSesionHelper.UsuarioActual;
-            var estandar = CargueHojasCacheHelper.Estandar();
-            if (usuario == null) return estandar;
-
-            if (UsuarioSesionHelper.EsSuperAdmin() && !string.IsNullOrWhiteSpace(plantilla))
-            {
-                plantilla = plantilla.Trim();
-                if (string.Equals(plantilla, PlantillaCodigoEstandar, StringComparison.OrdinalIgnoreCase))
-                    return estandar;
-                if (plantilla.StartsWith(PlantillaPrefijoHoja, StringComparison.OrdinalIgnoreCase)
-                    && int.TryParse(plantilla.Substring(PlantillaPrefijoHoja.Length), out int idHoja))
-                {
-                    var hoja = CargueHojasCacheHelper.PorId(idHoja);
-                    if (hoja != null && hoja.Activo && hoja.EsPersonalizada)
-                        return estandar.Concat(new[] { hoja }).OrderBy(h => h.Orden).ToList();
-                    return estandar;
-                }
-                if (string.Equals(plantilla, PlantillaCodigoEmpresa, StringComparison.OrdinalIgnoreCase) && idEmpresa > 0)
-                    return TablasCargueHelper.HojasParaEmpresa(idEmpresa);
-            }
-
-            if (idEmpresa <= 0 || !EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
-                return estandar;
-            return PersonalizacionesEmpresaHelper.HojasPlantillaPara(usuario, idEmpresa);
-        }
+        private List<HojaCargue> HojasParaDescarga(int idEmpresa) =>
+            PersonalizacionesEmpresaHelper.HojasPlantillaPara(UsuarioSesionHelper.UsuarioActual, idEmpresa);
 
         /// <summary>
-        /// Plantilla de cargue vacía, generada con las hojas que le corresponden al usuario (ver
-        /// <see cref="HojasParaDescarga"/>): base PlantillaBUFINS.xlsx + hojas personalizadas visibles.
-        /// Si la generación falla se entrega la plantilla base tal cual.
+        /// Plantilla de cargue vacía de la empresa (obligatoria), generada con el catálogo de hojas:
+        /// base PlantillaBUFINS.xlsx + sus hojas personalizadas visibles para el usuario.
         /// </summary>
         [HttpGet]
-        public ActionResult DescargarPlantilla(int? idEmpresa = null, string plantilla = null)
+        public ActionResult DescargarPlantilla(int? idEmpresa = null)
         {
-            const string tipoXlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-            var hojas = HojasParaDescarga(idEmpresa ?? 0, plantilla);
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            int id = idEmpresa ?? 0;
+            if (usuario == null || id <= 0 || !EmpresaAccesoHelper.TieneAcceso(usuario, id))
+            {
+                SetErrorMessage(R("Datos_PlantillaSinEmpresa"));
+                return RedirectToAction("CargueExcel");
+            }
+
             try
             {
-                byte[] bytes = new PlantillaCargueService().GenerarBytes(hojas);
-                string nombre = "PlantillaBUFINS.xlsx";
-                if (hojas.Any(h => h.EsPersonalizada) && (idEmpresa ?? 0) > 0)
-                {
-                    var empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
-                    string sufijo = Regex.Replace(!string.IsNullOrWhiteSpace(empresa?.Abreviatura) ? empresa.Abreviatura : (empresa?.Nombre ?? "Empresa"), "[^A-Za-z0-9]", "_");
-                    nombre = $"PlantillaBUFINS_{sufijo}.xlsx";
-                }
-                return File(bytes, tipoXlsx, nombre);
+                byte[] bytes = new PlantillaCargueService().GenerarBytes(HojasParaDescarga(id));
+                var empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == id);
+                string sufijo = Regex.Replace(!string.IsNullOrWhiteSpace(empresa?.Abreviatura) ? empresa.Abreviatura : (empresa?.Nombre ?? "Empresa"), "[^A-Za-z0-9]", "_");
+                return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"PlantillaBUFINS_{sufijo}.xlsx");
             }
             catch (Exception ex)
             {
-                AppLogger.Error(ex, $"DescargarPlantilla: no se pudo generar la plantilla (empresa {idEmpresa}); se entrega la base.");
-                return File(Server.MapPath(TablasCargueHelper.PlantillaEstandar), tipoXlsx, "PlantillaBUFINS.xlsx");
+                // No se entrega la base como respaldo: a una empresa con hojas personalizadas le faltarían.
+                AppLogger.Error(ex, $"DescargarPlantilla: no se pudo generar la plantilla de la empresa {id}.");
+                SetErrorMessage(R("Datos_PlantillaError"));
+                return RedirectToAction("CargueExcel");
             }
         }
-
         // ── Descargar la plantilla BUFINS rellena con los datos actuales ─────────
 
         [HttpGet]
-        public ActionResult ObtenerAniosConDatos(int idEmpresa, int idEscenario = 1, string plantilla = null)
+        public ActionResult ObtenerAniosConDatos(int idEmpresa, int idEscenario = 1)
         {
             try
             {
@@ -231,7 +198,7 @@ namespace bufinscustomers.Controllers
                 if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
                     return Json(new { success = false, message = "No tiene permisos para consultar esta empresa." }, JsonRequestBehavior.AllowGet);
 
-                var anios = _plantillaConDatosService.ObtenerAniosConDatos(idEmpresa, idEscenario, HojasParaDescarga(idEmpresa, plantilla))
+                var anios = _plantillaConDatosService.ObtenerAniosConDatos(idEmpresa, idEscenario, HojasParaDescarga(idEmpresa))
                     .Select(a => new { anio = a.Anio, registros = a.Registros });
 
                 return Json(new { success = true, anios }, JsonRequestBehavior.AllowGet);
@@ -244,7 +211,7 @@ namespace bufinscustomers.Controllers
         }
 
         [HttpGet]
-        public ActionResult DescargarPlantillaConDatos(int idEmpresa, string anios, int idEscenario = 1, string plantilla = null)
+        public ActionResult DescargarPlantillaConDatos(int idEmpresa, string anios, int idEscenario = 1)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null || !EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
@@ -264,7 +231,7 @@ namespace bufinscustomers.Controllers
             int totalFilas;
             try
             {
-                bytes = _plantillaConDatosService.GenerarExcel(idEmpresa, listaAnios, idEscenario, HojasParaDescarga(idEmpresa, plantilla), out totalFilas);
+                bytes = _plantillaConDatosService.GenerarExcel(idEmpresa, listaAnios, idEscenario, HojasParaDescarga(idEmpresa), out totalFilas);
             }
             catch (Exception ex)
             {
