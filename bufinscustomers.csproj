@@ -202,6 +202,7 @@
     <Compile Include="Controllers\MenuOpcionesController.cs" />
     <Compile Include="Controllers\ModelosEjecucionController.cs" />
     <Compile Include="Controllers\GestorEscenariosController.cs" />
+    <Compile Include="Controllers\GestorHojasCargueController.cs" />
     <Compile Include="Controllers\ConfiguracionGlobalIAController.cs" />
     <Compile Include="Controllers\GestorPromptsController.cs" />
     <Compile Include="Controllers\GruposEmpresarialesController.cs" />
@@ -252,6 +253,7 @@
     <Compile Include="Helpers\ExcelChartHelper.cs" />
     <Compile Include="Helpers\TablasCargueHelper.cs" />
     <Compile Include="Helpers\PersonalizacionesEmpresaHelper.cs" />
+    <Compile Include="Helpers\CargueHojasCacheHelper.cs" />
     <Compile Include="Helpers\SecretosProtegidos.cs" />
     <Compile Include="Models\AuditoriaCargues.cs" />
     <Compile Include="Models\AuditoriaUIModels.cs" />
@@ -270,6 +272,7 @@
     <Compile Include="Models\GrupoEmpresarial.cs" />
     <Compile Include="Models\ModeloEjecucion.cs" />
     <Compile Include="Models\Escenario.cs" />
+    <Compile Include="Models\CargueHojasModels.cs" />
     <Compile Include="Models\ImagenUsuario.cs" />
     <Compile Include="Models\CargueExcelModels.cs" />
     <Compile Include="Models\CargueLoteModels.cs" />
@@ -336,7 +339,8 @@
     <Compile Include="Services\HistorialVersionesCarguesService.cs" />
     <Compile Include="Services\CargueStagingService.cs" />
     <Compile Include="Services\PlantillaConDatosService.cs" />
-    <Compile Include="Services\PersonalizacionEmpresaService.cs" />
+    <Compile Include="Services\CargueHojasService.cs" />
+    <Compile Include="Services\PlantillaCargueService.cs" />
     <Compile Include="Services\TablaPUCService.cs" />
     <Compile Include="Services\MenuEstructuraService.cs" />
     <Compile Include="Services\ConfiguracionSistemaService.cs" />
@@ -384,6 +388,7 @@
     <Content Include="Assets\css\bufins-components.css" />
     <Content Include="Assets\css\page-header.css" />
     <Content Include="Assets\css\historial-versiones.css" />
+    <Content Include="Assets\css\gestor-hojas-cargue.css" />
     <Content Include="Assets\css\configuracion-admin.css" />
     <Content Include="Assets\css\informe-linea-tiempo.css" />
     <Content Include="Assets\css\informe-pyg.css" />
@@ -441,7 +446,6 @@
     <Content Include="Assets\Plantillas\InstructivoPlantillaCargue.xlsx" />
     <Content Include="Assets\css\bootstrap-icons.woff" />
     <Content Include="Assets\css\bootstrap-icons.woff2" />
-    <Content Include="App_Data\PlantillasEmpresa\PlantillaBUFINS_Churido.xlsx" />
     <None Include="packages.config" />
     <Content Include="favicon.ico" />
     <None Include="Properties\PublishProfiles\NO EJECUTAR.pubxml" />
@@ -508,6 +512,7 @@
     <Content Include="Views\Configuracion\GestionarGrupoEmpresas.cshtml" />
     <Content Include="Views\Configuracion\GestorCategorias.cshtml" />
     <Content Include="Views\Configuracion\GestorEscenarios.cshtml" />
+    <Content Include="Views\Configuracion\GestorHojasCargue.cshtml" />
     <Content Include="Views\Configuracion\GestorGrupos.cshtml" />
     <Content Include="secrets.config" />
     <Content Include="secrets.config.example" />

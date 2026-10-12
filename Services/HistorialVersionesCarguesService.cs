@@ -22,10 +22,9 @@ namespace bufinscustomers.Services
         // "la combinación empresa+año+modo", no tiene relación con Models.Escenario.)
         public const int MaxVersionesPorLlaveCargue = 2;
 
-        // Tablas Ini_ ESTÁNDAR versionadas por el historial (las que toda versión debe traer para poder
-        // hacer rollback). Fuente única: Helpers/TablasCargueHelper.cs. El snapshot y el conteo usan
-        // TablasCargueHelper.TablasIniParaEmpresa, que suma las hojas personalizadas de la empresa.
-        private static string[] _tablasIni => TablasCargueHelper.TablasIni;
+        // Tablas versionadas: las de las hojas de la empresa (Helpers/TablasCargueHelper.cs →
+        // TablasIniParaEmpresa, catálogo del Gestor de hojas de cargue). El rollback exige el snapshot
+        // de cada hoja vigente desde antes de la versión (HojaCargue.VigenteDesdePara).
 
         /// <summary>
         /// Predicado único de lectura/borrado sobre una tabla Ini_ para (empresa, año, modo,
@@ -284,10 +283,17 @@ namespace bufinscustomers.Services
                                 }
                         }
 
-                        // Versión incompleta: faltan snapshots de tablas que hoy forman parte
-                        // del cargue. Restaurar parcialmente dejaría los estados financieros
-                        // inconsistentes — se aborta sin tocar ninguna tabla.
-                        var tablasFaltantes = _tablasIni.Where(t => !snapshots.ContainsKey(t)).ToList();
+                        // Versión incompleta: faltan snapshots de tablas que ya formaban parte del
+                        // cargue de la empresa cuando se cargó la versión (hoja vigente desde antes).
+                        // Restaurar parcialmente dejaría los estados financieros inconsistentes — se
+                        // aborta sin tocar ninguna tabla. Una hoja que empezó a aplicar DESPUÉS de la
+                        // versión (nueva, recién asignada o reactivada) no tiene estado previo que
+                        // restaurar: esa tabla se deja como está.
+                        var tablasFaltantes = TablasCargueHelper.HojasParaEmpresa(version.IdEmpresa)
+                            .Where(h => h.VigenteDesdePara(version.IdEmpresa) <= version.FechaCargue)
+                            .Select(h => h.TablaIni)
+                            .Where(t => !snapshots.ContainsKey(t))
+                            .ToList();
                         if (tablasFaltantes.Count > 0)
                         {
                             try { tx.Rollback(); } catch { }
@@ -296,11 +302,13 @@ namespace bufinscustomers.Services
 
                         string deleteWhere = ConstruirWhere(version.Modo);
 
-                        // Tablas personalizadas de la empresa: solo se restauran si la versión trae su
-                        // snapshot. Una versión anterior a la personalización no la tiene y esa tabla se
-                        // deja como está (no hay un estado previo que restaurar).
-                        var tablasARestaurar = TablasCargueHelper.TablasIniParaEmpresa(version.IdEmpresa)
-                            .Where(snapshots.ContainsKey)
+                        // Se restaura todo lo que la versión trae en su snapshot, siempre que la tabla
+                        // siga en el catálogo de hojas (lista blanca: el nombre viene de la BD) —
+                        // incluso si hoy la hoja está inactiva o dejó de aplicar a la empresa: el
+                        // rollback devuelve los datos exactamente al estado de esa versión.
+                        var catalogo = new HashSet<string>(TablasCargueHelper.MapeoCompleto.Values, StringComparer.OrdinalIgnoreCase);
+                        var tablasARestaurar = snapshots.Keys
+                            .Where(catalogo.Contains)
                             .ToList();
 
                         foreach (var tabla in tablasARestaurar)

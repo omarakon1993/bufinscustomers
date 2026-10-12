@@ -18,11 +18,12 @@ namespace bufinscustomers.Services
     public class CargueStagingService : BaseService
     {
         /// <summary>
-        /// Todas las Staging_Ini_* del cargue: las estándar + las de TODOS los paquetes de personalización
-        /// (TablasCargueHelper.MapeoCompleto). Es seguro incluirlas siempre porque toda operación sobre ellas
-        /// va filtrada por IdLote. Los nombres salen del código, nunca del usuario.
+        /// Todas las Staging_Ini_* del catálogo de hojas (TablasCargueHelper.MapeoCompleto: estándar,
+        /// personalizadas e inactivas). Es seguro incluirlas siempre porque toda operación sobre ellas va
+        /// filtrada por IdLote. Se lee en cada uso (no al arrancar) para recoger las hojas que se creen desde
+        /// el Gestor de hojas de cargue. Los nombres salen del catálogo validado, nunca del usuario.
         /// </summary>
-        private static readonly string[] TablasStaging =
+        private static string[] TablasStaging =>
             TablasCargueHelper.MapeoCompleto.Values.Distinct().Select(TablasCargueHelper.NombreStaging).ToArray();
 
         /// <summary>

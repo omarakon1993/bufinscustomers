@@ -1,4 +1,5 @@
 using bufinscustomers.Helpers;
+using bufinscustomers.Models;
 using ClosedXML.Excel;
 using System;
 using System.Collections.Generic;
@@ -14,17 +15,17 @@ namespace bufinscustomers.Services
     /// Genera la plantilla de cargue BUFINS (las mismas 9 hojas Z_) pero rellena con los
     /// datos que hoy están en las tablas Ini_ para una empresa y uno o varios años.
     ///
-    /// - Los encabezados se leen de la plantilla real
-    ///   (Assets/Plantillas/PlantillaBUFINS.xlsx) para que nombre / orden / mayúsculas calcen exactos.
+    /// - Los encabezados se leen de la plantilla generada (<see cref="PlantillaCargueService"/>: base
+    ///   PlantillaBUFINS.xlsx + hojas personalizadas) para que nombre / orden / mayúsculas calcen exactos.
     /// - Los valores se emparejan POR NOMBRE de columna contra la tabla Ini_ destino
-    ///   (mapa hoja↔tabla en <see cref="TablasCargueHelper.MapeoZaIni"/>).
+    ///   (hojas del catálogo del Gestor de hojas de cargue, ver <see cref="TablasCargueHelper"/>).
     /// - Predicado de lectura idéntico al de HistorialVersionesCarguesService, sin distinguir
     ///   modo: se trae todo lo del año (WHERE IdEmpresa_Log = @e AND [Año] IN (...)).
     /// </summary>
     public class PlantillaConDatosService : BaseService
     {
-        // La plantilla y las hojas personalizadas salen de los paquetes que pasa el controlador (los que el
-        // usuario puede ver, o los que eligió un Super Admin) — el servicio nunca decide visibilidad.
+        // Las hojas las pasa el controlador (las que el usuario puede ver, o las que eligió un Super Admin):
+        // el servicio nunca decide visibilidad.
 
         /// <summary>Columnas de bookkeeping de las tablas Ini_ que nunca se exportan.</summary>
         private static readonly HashSet<string> _columnasExcluidas =
@@ -56,7 +57,7 @@ namespace bufinscustomers.Services
         /// Años con datos cargados para la empresa, con el total de filas (suma de las 9 tablas Ini_),
         /// ordenados de más reciente a más antiguo.
         /// </summary>
-        public List<AnioConDatos> ObtenerAniosConDatos(int idEmpresa, int idEscenario, IReadOnlyList<PersonalizacionCargue> paquetes)
+        public List<AnioConDatos> ObtenerAniosConDatos(int idEmpresa, int idEscenario, IReadOnlyList<HojaCargue> hojas)
         {
             var acumulado = new Dictionary<int, int>();
 
@@ -64,7 +65,7 @@ namespace bufinscustomers.Services
             {
                 cn.Open();
 
-                foreach (var tabla in TablasCargueHelper.MapeoParaPaquetes(paquetes).Values.Distinct())
+                foreach (var tabla in TablasCargueHelper.MapeoParaHojas(hojas).Values.Distinct())
                 {
                     using (var cmd = new SqlCommand(
                         $"SELECT [Año] AS Anio, COUNT(*) AS Total FROM dbo.[{tabla}] " +
@@ -97,27 +98,22 @@ namespace bufinscustomers.Services
         /// para la empresa y los años indicados. <paramref name="totalFilas"/> devuelve el total de
         /// filas escritas (0 = no había datos para esos años).
         /// </summary>
-        public byte[] GenerarExcel(int idEmpresa, List<int> anios, int idEscenario, IReadOnlyList<PersonalizacionCargue> paquetes, out int totalFilas)
+        public byte[] GenerarExcel(int idEmpresa, List<int> anios, int idEscenario, IReadOnlyList<HojaCargue> hojas, out int totalFilas)
         {
             totalFilas = 0;
 
             if (anios == null || anios.Count == 0)
                 throw new ArgumentException("Debe indicar al menos un año.", nameof(anios));
 
-            string rutaPlantilla = TablasCargueHelper.PlantillaParaPaquetes(paquetes);
-            string rutaFisica = HostingEnvironment.MapPath(rutaPlantilla);
-            if (string.IsNullOrEmpty(rutaFisica) || !File.Exists(rutaFisica))
-                throw new FileNotFoundException("No se encontró la plantilla BUFINS.", rutaPlantilla);
-
             string inAnios = string.Join(",", anios.Select((_, i) => "@a" + i));
 
-            using (var plantilla = new XLWorkbook(rutaFisica))
+            using (var plantilla = new PlantillaCargueService().GenerarLibro(hojas))
             using (var wb = new XLWorkbook())
             using (var cn = new SqlConnection(CadenaConexion))
             {
                 cn.Open();
 
-                foreach (var par in TablasCargueHelper.MapeoParaPaquetes(paquetes))
+                foreach (var par in TablasCargueHelper.MapeoParaHojas(hojas))
                 {
                     string hoja = par.Key;        // Z_...
                     string tablaIni = par.Value;  // Ini_...

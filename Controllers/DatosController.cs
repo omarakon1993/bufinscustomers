@@ -127,8 +127,8 @@ namespace bufinscustomers.Controllers
                     .Where(a => !string.IsNullOrWhiteSpace(a))
                     .ToList() ?? new List<string>();
 
-                // Solo los paquetes que ESTE usuario puede ver (Super Admin: todos los de la empresa;
-                // resto: solo si su propia empresa también los tiene — el acceso por grupo no basta).
+                // Solo las hojas personalizadas que ESTE usuario puede ver (Super Admin: todas las de la
+                // empresa; resto: solo si su propia empresa también las tiene — el acceso por grupo no basta).
                 var visibles = PersonalizacionesEmpresaHelper.VisiblesPara(usuario, idEmpresa);
 
                 return Json(new
@@ -137,9 +137,9 @@ namespace bufinscustomers.Controllers
                     anioEjecucion = config.AnioEjecucion,
                     anosHistoricos = anosHistoricos,
                     // Hojas adicionales visibles para el usuario (vacío = plantilla estándar).
-                    hojasPersonalizadas = visibles.SelectMany(p => p.HojasExtra.Keys).Distinct().ToArray(),
+                    hojasPersonalizadas = visibles.Select(h => h.NombreHoja).ToArray(),
                     // Preselección del selector de plantilla del Super Admin.
-                    plantillaCodigo = visibles.Select(p => p.Codigo).FirstOrDefault() ?? PlantillaCodigoEstandar
+                    plantillaCodigo = visibles.Count > 0 ? PlantillaCodigoEmpresa : PlantillaCodigoEstandar
                 }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
@@ -148,50 +148,73 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        /// <summary>Valor del selector de plantilla (Super Admin) que fuerza la plantilla estándar.</summary>
+        /// <summary>Valores del selector de plantilla (Super Admin): solo hojas estándar / hojas de la empresa
+        /// elegida / estándar + una hoja personalizada concreta ("HOJA:{IdHoja}").</summary>
         private const string PlantillaCodigoEstandar = "ESTANDAR";
+        private const string PlantillaCodigoEmpresa = "EMPRESA";
+        private const string PlantillaPrefijoHoja = "HOJA:";
 
         /// <summary>
-        /// Paquetes de personalización a incluir en una descarga (plantilla vacía o con datos).
-        ///   • Super Admin con <paramref name="plantilla"/>: lo que eligió ("ESTANDAR" o un código del catálogo).
-        ///   • Cualquier otro caso: los paquetes de la empresa VISIBLES para el usuario (nunca el parámetro:
-        ///     un usuario que no es Super Admin no puede pedir una plantilla ajena manipulando la URL).
+        /// Hojas a incluir en una descarga (plantilla vacía o con datos).
+        ///   • Super Admin con <paramref name="plantilla"/>: lo que eligió (ver constantes de arriba).
+        ///   • Cualquier otro caso: estándar + personalizadas de la empresa VISIBLES para el usuario (nunca el
+        ///     parámetro: un usuario que no es Super Admin no puede pedir hojas ajenas manipulando la URL).
         /// </summary>
-        private List<PersonalizacionCargue> PaquetesParaDescarga(int idEmpresa, string plantilla)
+        private List<HojaCargue> HojasParaDescarga(int idEmpresa, string plantilla)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            if (usuario == null) return new List<PersonalizacionCargue>();
+            var estandar = CargueHojasCacheHelper.Estandar();
+            if (usuario == null) return estandar;
 
             if (UsuarioSesionHelper.EsSuperAdmin() && !string.IsNullOrWhiteSpace(plantilla))
             {
+                plantilla = plantilla.Trim();
                 if (string.Equals(plantilla, PlantillaCodigoEstandar, StringComparison.OrdinalIgnoreCase))
-                    return new List<PersonalizacionCargue>();
-                if (PersonalizacionesEmpresaHelper.Catalogo.TryGetValue(plantilla.Trim(), out var elegido))
-                    return new List<PersonalizacionCargue> { elegido };
+                    return estandar;
+                if (plantilla.StartsWith(PlantillaPrefijoHoja, StringComparison.OrdinalIgnoreCase)
+                    && int.TryParse(plantilla.Substring(PlantillaPrefijoHoja.Length), out int idHoja))
+                {
+                    var hoja = CargueHojasCacheHelper.PorId(idHoja);
+                    if (hoja != null && hoja.Activo && hoja.EsPersonalizada)
+                        return estandar.Concat(new[] { hoja }).OrderBy(h => h.Orden).ToList();
+                    return estandar;
+                }
+                if (string.Equals(plantilla, PlantillaCodigoEmpresa, StringComparison.OrdinalIgnoreCase) && idEmpresa > 0)
+                    return TablasCargueHelper.HojasParaEmpresa(idEmpresa);
             }
 
             if (idEmpresa <= 0 || !EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
-                return new List<PersonalizacionCargue>();
-            return PersonalizacionesEmpresaHelper.VisiblesPara(usuario, idEmpresa);
+                return estandar;
+            return PersonalizacionesEmpresaHelper.HojasPlantillaPara(usuario, idEmpresa);
         }
 
         /// <summary>
-        /// Plantilla de cargue vacía: la personalizada si el usuario la puede ver (ver
-        /// <see cref="PaquetesParaDescarga"/>) o la estándar. Las personalizadas viven en App_Data
-        /// (no accesibles por URL directa): esta acción es la única forma de bajarlas.
+        /// Plantilla de cargue vacía, generada con las hojas que le corresponden al usuario (ver
+        /// <see cref="HojasParaDescarga"/>): base PlantillaBUFINS.xlsx + hojas personalizadas visibles.
+        /// Si la generación falla se entrega la plantilla base tal cual.
         /// </summary>
         [HttpGet]
         public ActionResult DescargarPlantilla(int? idEmpresa = null, string plantilla = null)
         {
-            string rutaVirtual = TablasCargueHelper.PlantillaParaPaquetes(PaquetesParaDescarga(idEmpresa ?? 0, plantilla));
-            string rutaFisica = Server.MapPath(rutaVirtual);
-            if (!System.IO.File.Exists(rutaFisica))
+            const string tipoXlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            var hojas = HojasParaDescarga(idEmpresa ?? 0, plantilla);
+            try
             {
-                AppLogger.Error($"No se encontró la plantilla de cargue '{rutaVirtual}' (empresa {idEmpresa}).", contexto: "DescargarPlantilla");
-                rutaFisica = Server.MapPath(TablasCargueHelper.PlantillaEstandar);
+                byte[] bytes = new PlantillaCargueService().GenerarBytes(hojas);
+                string nombre = "PlantillaBUFINS.xlsx";
+                if (hojas.Any(h => h.EsPersonalizada) && (idEmpresa ?? 0) > 0)
+                {
+                    var empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+                    string sufijo = Regex.Replace(!string.IsNullOrWhiteSpace(empresa?.Abreviatura) ? empresa.Abreviatura : (empresa?.Nombre ?? "Empresa"), "[^A-Za-z0-9]", "_");
+                    nombre = $"PlantillaBUFINS_{sufijo}.xlsx";
+                }
+                return File(bytes, tipoXlsx, nombre);
             }
-
-            return File(rutaFisica, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", Path.GetFileName(rutaFisica));
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, $"DescargarPlantilla: no se pudo generar la plantilla (empresa {idEmpresa}); se entrega la base.");
+                return File(Server.MapPath(TablasCargueHelper.PlantillaEstandar), tipoXlsx, "PlantillaBUFINS.xlsx");
+            }
         }
 
         // ── Descargar la plantilla BUFINS rellena con los datos actuales ─────────
@@ -208,7 +231,7 @@ namespace bufinscustomers.Controllers
                 if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
                     return Json(new { success = false, message = "No tiene permisos para consultar esta empresa." }, JsonRequestBehavior.AllowGet);
 
-                var anios = _plantillaConDatosService.ObtenerAniosConDatos(idEmpresa, idEscenario, PaquetesParaDescarga(idEmpresa, plantilla))
+                var anios = _plantillaConDatosService.ObtenerAniosConDatos(idEmpresa, idEscenario, HojasParaDescarga(idEmpresa, plantilla))
                     .Select(a => new { anio = a.Anio, registros = a.Registros });
 
                 return Json(new { success = true, anios }, JsonRequestBehavior.AllowGet);
@@ -241,7 +264,7 @@ namespace bufinscustomers.Controllers
             int totalFilas;
             try
             {
-                bytes = _plantillaConDatosService.GenerarExcel(idEmpresa, listaAnios, idEscenario, PaquetesParaDescarga(idEmpresa, plantilla), out totalFilas);
+                bytes = _plantillaConDatosService.GenerarExcel(idEmpresa, listaAnios, idEscenario, HojasParaDescarga(idEmpresa, plantilla), out totalFilas);
             }
             catch (Exception ex)
             {
@@ -2034,6 +2057,11 @@ namespace bufinscustomers.Controllers
                 // Obtener esquema de la tabla Ini_ (nombre y tipo)
                 var columnasIni = new List<string>();
                 var columnasNumericas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                // Fecha / Sí-No: solo existen en hojas diseñadas en el Gestor de hojas de cargue (las
+                // tablas anteriores no tienen columnas de negocio de estos tipos). Se convierten
+                // explícitamente para no depender de la conversión implícita de texto de SqlBulkCopy.
+                var columnasFecha = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var columnasBit = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 using (var cmd = new SqlCommand(
                     "SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @t ORDER BY ORDINAL_POSITION",
                     conn, tx))
@@ -2050,6 +2078,10 @@ namespace bufinscustomers.Controllers
                                 tipo == "numeric" || tipo == "float" || tipo == "real" ||
                                 tipo == "int" || tipo == "bigint" || tipo == "smallint" || tipo == "tinyint")
                                 columnasNumericas.Add(col);
+                            else if (tipo == "date" || tipo == "datetime" || tipo == "datetime2" || tipo == "smalldatetime")
+                                columnasFecha.Add(col);
+                            else if (tipo == "bit")
+                                columnasBit.Add(col);
                         }
                     }
                 }
@@ -2146,6 +2178,24 @@ namespace bufinscustomers.Controllers
                                         }
                                         destRow[colIni] = (object)ExtraerDecimal(cellValue);
                                     }
+                                    else if (columnasFecha.Contains(colIni) || columnasBit.Contains(colIni))
+                                    {
+                                        bool esFecha = columnasFecha.Contains(colIni);
+                                        object convertido = esFecha ? ConvertirCeldaFecha(cellValue) : ConvertirCeldaBit(cellValue);
+                                        if (convertido == null)
+                                        {
+                                            int filaExcel = dtExcel.Rows.IndexOf(srcRow) + 2;
+                                            string razon = esFecha
+                                                ? "no es una fecha válida (use el formato de fecha de Excel o AAAA-MM-DD)"
+                                                : "no es un valor Sí/No válido (use 1/0, Sí/No o Verdadero/Falso)";
+                                            LogToFile($"ERROR DE FORMATO en {nombreTablaIni}: Fila {filaExcel}, Columna '{colIni}', valor '{cellValue}'");
+                                            GuardarLogEnSession();
+                                            TempData["Mensaje"] = $"ERROR DE FORMATO en '{nombreTablaIni}':\n\nFila {filaExcel}, Columna '{colIni}': el valor '{cellValue}' {razon}.";
+                                            TempData["MostrarDescargaLog"] = true;
+                                            return false;
+                                        }
+                                        destRow[colIni] = convertido;
+                                    }
                                     else
                                     {
                                         var rawVal = cellValue?.ToString()?.Trim() ?? "";
@@ -2190,6 +2240,50 @@ namespace bufinscustomers.Controllers
         }
 
         // ─── Existing helper methods ──────────────────────────────────────────────
+
+        /// <summary>
+        /// Celda → fecha para una columna DATE/DATETIME (hojas del Gestor de hojas de cargue).
+        /// Vacía → DBNull; número → fecha serial de Excel; texto → cultura actual o AAAA-MM-DD.
+        /// Devuelve <c>null</c> si el valor no es una fecha.
+        /// </summary>
+        private static object ConvertirCeldaFecha(object cellValue)
+        {
+            if (cellValue == null || cellValue == DBNull.Value) return DBNull.Value;
+            if (cellValue is DateTime dtv) return dtv;
+            if (cellValue is double d)
+            {
+                try { return DateTime.FromOADate(d); } catch { return null; }
+            }
+            string s = cellValue.ToString().Trim();
+            if (s.Length == 0) return DBNull.Value;
+            if (DateTime.TryParseExact(s, new[] { "yyyy-MM-dd", "yyyy-MM-dd HH:mm", "yyyy-MM-dd HH:mm:ss", "yyyy/MM/dd" },
+                    System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime iso))
+                return iso;
+            if (DateTime.TryParse(s, System.Globalization.CultureInfo.CurrentCulture, System.Globalization.DateTimeStyles.None, out DateTime local))
+                return local;
+            return null;
+        }
+
+        /// <summary>
+        /// Celda → Sí/No para una columna BIT (hojas del Gestor de hojas de cargue).
+        /// Vacía → DBNull; acepta 1/0, Sí/No, Si, Verdadero/Falso, True/False, X. Devuelve <c>null</c> si no es válido.
+        /// </summary>
+        private static object ConvertirCeldaBit(object cellValue)
+        {
+            if (cellValue == null || cellValue == DBNull.Value) return DBNull.Value;
+            if (cellValue is double d) return d != 0;
+            string s = cellValue.ToString().Trim().ToLowerInvariant();
+            if (s.Length == 0) return DBNull.Value;
+            switch (s)
+            {
+                case "1": case "si": case "sí": case "s": case "x": case "true": case "verdadero": case "yes": case "y":
+                    return true;
+                case "0": case "no": case "n": case "false": case "falso":
+                    return false;
+                default:
+                    return null;
+            }
+        }
 
         /// <summary>
         /// Convierte cualquier valor de celda de Excel a decimal exacto para SqlBulkCopy.

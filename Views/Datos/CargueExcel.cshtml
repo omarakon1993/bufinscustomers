@@ -710,9 +710,10 @@
 @helper OpcionesPlantilla()
 {
     <option value="ESTANDAR">@Resources.Strings.Datos_PlantillaOpcionEstandar</option>
-    foreach (var paquete in bufinscustomers.Helpers.PersonalizacionesEmpresaHelper.Catalogo.Values)
+    <option value="EMPRESA">@Resources.Strings.Datos_PlantillaOpcionEmpresa</option>
+    foreach (var hoja in bufinscustomers.Helpers.CargueHojasCacheHelper.Todas().Where(h => h.Activo && h.EsPersonalizada))
     {
-        <option value="@paquete.Codigo">@(System.Web.HttpContext.GetGlobalResourceObject("Strings", paquete.ClaveNombre) ?? paquete.Codigo)</option>
+        <option value="HOJA:@hoja.IdHoja">@string.Format(Resources.Strings.Datos_PlantillaOpcionHoja, hoja.NombreHoja)</option>
     }
 }
 

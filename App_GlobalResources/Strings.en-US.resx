@@ -158,7 +158,8 @@
   <data name="Datos_ModalPlantilla_Titulo" xml:space="preserve"><value>Download template</value></data>
   <data name="Datos_ModalPlantilla_Intro" xml:space="preserve"><value>Choose the upload template you want to download. The selected company's template is suggested by default.</value></data>
   <data name="Datos_PlantillaOpcionEstandar" xml:space="preserve"><value>Standard</value></data>
-  <data name="Datos_PlantillaPers_CHURIDO_HIST_PRECIOS" xml:space="preserve"><value>Churido / Ucrania — with Price history (Z_HistPrecios_Churido)</value></data>
+  <data name="Datos_PlantillaOpcionEmpresa" xml:space="preserve"><value>Sheets of the selected company</value></data>
+  <data name="Datos_PlantillaOpcionHoja" xml:space="preserve"><value>Standard + {0}</value></data>
   <data name="Datos_PlantillaPersonalizadaSinPermiso" xml:space="preserve"><value>This company uses a custom template: only its own users or a Super Admin can upload or review its data.</value></data>
   <data name="Datos_PlantillaPersonalizadaFaltan" xml:space="preserve"><value>This company uses a custom template: select it and download it with the «Template» button.</value></data>
   <data name="Datos_BtnDescargarLog" xml:space="preserve"><value>Download Log</value></data>
@@ -901,6 +902,12 @@
   <data name="Notif_GrupoCreado" xml:space="preserve"><value>Business group created</value></data>
   <data name="Notif_GrupoEliminado" xml:space="preserve"><value>Business group deleted</value></data>
   <data name="Notif_GrupoEmpresasActualizadas" xml:space="preserve"><value>Group companies updated</value></data>
+  <data name="Notif_HojaCargueCreada" xml:space="preserve"><value>Upload sheet created</value></data>
+  <data name="Notif_HojaCargueCreadaMsg" xml:space="preserve"><value>{0} → {1} ({2}) — by {3}</value></data>
+  <data name="Notif_HojaCargueEliminada" xml:space="preserve"><value>Upload sheet deleted</value></data>
+  <data name="Notif_HojaCargueEliminadaMsg" xml:space="preserve"><value>{0} → {1} — by {2}. {3}</value></data>
+  <data name="Notif_HojaCargueTablasBorradas" xml:space="preserve"><value>Its tables were dropped from the database.</value></data>
+  <data name="Notif_HojaCargueTablasConservadas" xml:space="preserve"><value>Its tables and data are kept in the database.</value></data>
 
 
   <!-- REPORTS MASTER -->
@@ -1346,7 +1353,7 @@
   <data name="Audit_TR_Ayer" xml:space="preserve"><value>yesterday {0}</value></data>
   <data name="Audit_TR_Hoy" xml:space="preserve"><value>today {0}</value></data>
   <data name="Audit_Meses" xml:space="preserve"><value>Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec</value></data>
-  <data name="Audit_AreasMap" xml:space="preserve"><value>SEGURIDAD=Access|PERMISOS=Permissions &amp; access|MENU=System menu|MODELOS=Models|USUARIOS=Users|EMPRESAS=Companies|GRUPOS_EMPRESARIALES=Business groups|CONFIGURACION=Financial configuration|CARGUES=Data upload|ESCENARIOS=Scenarios</value></data>
+  <data name="Audit_AreasMap" xml:space="preserve"><value>SEGURIDAD=Access|PERMISOS=Permissions &amp; access|MENU=System menu|MODELOS=Models|USUARIOS=Users|EMPRESAS=Companies|GRUPOS_EMPRESARIALES=Business groups|CONFIGURACION=Financial configuration|CARGUES=Data upload|ESCENARIOS=Scenarios|HOJAS_CARGUE=Upload sheets</value></data>
   <data name="Audit_AccFraseMap" xml:space="preserve"><value>Crear=Created|Editar=Modified|Eliminar=Deleted|Asignar=Updated permissions|Enviar=Sent by email|Login=Signed in|LoginFallido=Failed sign-in attempt|Bloqueo=Account locked</value></data>
   <data name="Audit_AccOptMap" xml:space="preserve"><value>Crear=Created|Editar=Modified|Eliminar=Deleted|Asignar=Assigned|Enviar=Sent</value></data>
   <data name="Audit_CamposMap" xml:space="preserve"><value>empresa=Company|modelos=Models sent|destinatarios=Recipients|archivo=File|Nombre=Name|Apellidos=Last name|Correo=Email|Telefono=Phone|Usuario=Username|Admin=Role|Activo=Active|IdEmpresa=Company|EmpNombre=Name|EmpNit=Tax ID|EmpDireccion=Address|EmpTelefono=Phone|EmpCorreo=Email|Abreviatura=Abbreviation|IdGrupoEmpresarial=Business group|NombreSP=Stored procedure|Descripcion=Description|Icono=Icon|Orden=Order|Codigo=Code|idUsuario=User|permisos=Menu options</value></data>
@@ -2067,4 +2074,200 @@ Indicators management follows closely: </value></data>
   <data name="Emp_HintPaginaWeb" xml:space="preserve"><value>Optional. The company website address; https:// is added if you omit it.</value></data>
   <data name="Emp_ErrorPaginaWeb" xml:space="preserve"><value>The website is not a valid URL. Example: https://www.company.com</value></data>
   <data name="Emp_PaginaWebSinColumna" xml:space="preserve"><value>The company was saved, but the website could not be stored: the database column is missing (run Sql/019_Empresas_PaginaWeb.sql).</value></data>
+  <!-- UPLOAD SHEETS MANAGER -->
+  <data name="HojasCargue_PageTitle" xml:space="preserve"><value>Upload sheets manager</value></data>
+  <data name="HojasCargue_PageSub" xml:space="preserve"><value>Define which sheets the upload Excel contains, which table they go to and which companies they apply to.</value></data>
+  <data name="HojasCargue_BtnNueva" xml:space="preserve"><value>New sheet</value></data>
+  <data name="HojasCargue_BtnPlantillaPrueba" xml:space="preserve"><value>Test template</value></data>
+  <data name="HojasCargue_AvisoSinScript" xml:space="preserve"><value>The sheet catalog is not in the database yet: the current sheets are shown read-only. Run the script {0} to manage them.</value></data>
+  <data name="HojasCargue_KpiActivas" xml:space="preserve"><value>Active sheets</value></data>
+  <data name="HojasCargue_KpiEstandar" xml:space="preserve"><value>Standard</value></data>
+  <data name="HojasCargue_KpiPersonalizadas" xml:space="preserve"><value>Custom</value></data>
+  <data name="HojasCargue_KpiEmpresas" xml:space="preserve"><value>Companies with own sheets</value></data>
+  <data name="HojasCargue_Flujo1T" xml:space="preserve"><value>Excel sheet</value></data>
+  <data name="HojasCargue_Flujo2T" xml:space="preserve"><value>Staging · validation</value></data>
+  <data name="HojasCargue_Flujo3T" xml:space="preserve"><value>Target table</value></data>
+  <data name="HojasCargue_Buscar" xml:space="preserve"><value>Search sheet or table…</value></data>
+  <data name="HojasCargue_FiltroTodas" xml:space="preserve"><value>All</value></data>
+  <data name="HojasCargue_FiltroEstandar" xml:space="preserve"><value>Standard</value></data>
+  <data name="HojasCargue_FiltroPersonalizadas" xml:space="preserve"><value>Custom</value></data>
+  <data name="HojasCargue_FiltroInactivas" xml:space="preserve"><value>Inactive</value></data>
+  <data name="HojasCargue_ListaVacia" xml:space="preserve"><value>No sheets match the filter.</value></data>
+  <data name="HojasCargue_ArrastrarAyuda" xml:space="preserve"><value>Drag the sheets to change their order in the template; it is saved automatically.</value></data>
+  <data name="HojasCargue_ArrastrarSoloTodas" xml:space="preserve"><value>To reorder by dragging, show «All» and leave the search empty.</value></data>
+  <data name="HojasCargue_OrdenActualizado" xml:space="preserve"><value>Sheet order updated.</value></data>
+  <data name="HojasCargue_Err_Orden" xml:space="preserve"><value>The sheet order could not be updated.</value></data>
+  <data name="HojasCargue_TagEstandar" xml:space="preserve"><value>Standard</value></data>
+  <data name="HojasCargue_TagPersonalizada" xml:space="preserve"><value>Custom</value></data>
+  <data name="HojasCargue_TagInactiva" xml:space="preserve"><value>Inactive</value></data>
+  <data name="HojasCargue_TagEmpresas" xml:space="preserve"><value>{0} company(ies)</value></data>
+  <data name="HojasCargue_DetalleVacioTitulo" xml:space="preserve"><value>Select a sheet</value></data>
+  <data name="HojasCargue_DetalleVacioTexto" xml:space="preserve"><value>Pick a sheet from the list to see its structure, who it applies to and its status, or create a new one.</value></data>
+  <data name="HojasCargue_Cargando" xml:space="preserve"><value>Processing…</value></data>
+  <data name="HojasCargue_TabGeneral" xml:space="preserve"><value>General</value></data>
+  <data name="HojasCargue_TabColumnas" xml:space="preserve"><value>Columns</value></data>
+  <data name="HojasCargue_TabAlcance" xml:space="preserve"><value>Scope</value></data>
+  <data name="HojasCargue_TabUso" xml:space="preserve"><value>Usage &amp; diagnostics</value></data>
+  <data name="HojasCargue_BtnEliminar" xml:space="preserve"><value>Delete sheet</value></data>
+  <data name="HojasCargue_LblHoja" xml:space="preserve"><value>Sheet name in Excel</value></data>
+  <data name="HojasCargue_AyudaHoja" xml:space="preserve"><value>Must start with Z_. Only letters, numbers and underscore; max. 31 characters (Excel limit).</value></data>
+  <data name="HojasCargue_LblTabla" xml:space="preserve"><value>Target table</value></data>
+  <data name="HojasCargue_AyudaTablaFija" xml:space="preserve"><value>The table cannot be renamed: processes and models use it by name.</value></data>
+  <data name="HojasCargue_LblDescripcion" xml:space="preserve"><value>Description</value></data>
+  <data name="HojasCargue_PhDescripcion" xml:space="preserve"><value>What data does this sheet contain?</value></data>
+  <data name="HojasCargue_LblOrden" xml:space="preserve"><value>Order in the template</value></data>
+  <data name="HojasCargue_LblActiva" xml:space="preserve"><value>Active sheet</value></data>
+  <data name="HojasCargue_AyudaActiva" xml:space="preserve"><value>An inactive sheet is neither required nor processed in uploads; its data is kept.</value></data>
+  <data name="HojasCargue_BtnGuardar" xml:space="preserve"><value>Save changes</value></data>
+  <data name="HojasCargue_SinCambios" xml:space="preserve"><value>No pending changes</value></data>
+  <data name="HojasCargue_CambiosPendientes" xml:space="preserve"><value>You have unsaved changes</value></data>
+  <data name="HojasCargue_ColsNotaEditable" xml:space="preserve"><value>You can add, modify or delete columns: the table is empty and no database process uses it.</value></data>
+  <data name="HojasCargue_ColsNotaDatos" xml:space="preserve"><value>The table already has data: you can add columns, but not modify or delete the existing ones.</value></data>
+  <data name="HojasCargue_ColsNotaUsada" xml:space="preserve"><value>The table is used by database processes ({0}): you can add columns, but not modify or delete the existing ones.</value></data>
+  <data name="HojasCargue_ThColumna" xml:space="preserve"><value>Column (Excel header)</value></data>
+  <data name="HojasCargue_ThTipo" xml:space="preserve"><value>Type</value></data>
+  <data name="HojasCargue_ThNulos" xml:space="preserve"><value>Allows empty</value></data>
+  <data name="HojasCargue_ThDefecto" xml:space="preserve"><value>Default</value></data>
+  <data name="HojasCargue_Si" xml:space="preserve"><value>Yes</value></data>
+  <data name="HojasCargue_No" xml:space="preserve"><value>No</value></data>
+  <data name="HojasCargue_BtnAgregarColumna" xml:space="preserve"><value>Add column</value></data>
+  <data name="HojasCargue_Sistema" xml:space="preserve"><value>System columns ({0}) — filled automatically by the upload</value></data>
+  <data name="HojasCargue_SinTabla" xml:space="preserve"><value>Table {0} does not exist in the database.</value></data>
+  <data name="HojasCargue_OpcEstandarT" xml:space="preserve"><value>Standard</value></data>
+  <data name="HojasCargue_OpcEstandarS" xml:space="preserve"><value>Applies to every company. Required in every upload.</value></data>
+  <data name="HojasCargue_OpcPersT" xml:space="preserve"><value>Custom</value></data>
+  <data name="HojasCargue_OpcPersS" xml:space="preserve"><value>Only for the companies you choose. The rest neither see nor upload it.</value></data>
+  <data name="HojasCargue_EmpBuscar" xml:space="preserve"><value>Search company…</value></data>
+  <data name="HojasCargue_EmpSeleccionadas" xml:space="preserve"><value>{0} selected</value></data>
+  <data name="HojasCargue_EmpFilas" xml:space="preserve"><value>{0} rows</value></data>
+  <data name="HojasCargue_AvisoPierden" xml:space="preserve"><value>These companies have data in the table and will stop uploading it: {0}. Their data is kept, but will no longer be updated.</value></data>
+  <data name="HojasCargue_BtnGuardarAlcance" xml:space="preserve"><value>Save scope</value></data>
+  <data name="HojasCargue_AlcanceNota" xml:space="preserve"><value>Companies with custom sheets get their template with those sheets added automatically.</value></data>
+  <data name="HojasCargue_StatFilas" xml:space="preserve"><value>Rows in {0}</value></data>
+  <data name="HojasCargue_StatStaging" xml:space="preserve"><value>Rows under review (staging)</value></data>
+  <data name="HojasCargue_StatEmpresas" xml:space="preserve"><value>Companies with data</value></data>
+  <data name="HojasCargue_SubFilasEmpresa" xml:space="preserve"><value>Data by company</value></data>
+  <data name="HojasCargue_SinDatos" xml:space="preserve"><value>The table has no data.</value></data>
+  <data name="HojasCargue_ThEmpresa" xml:space="preserve"><value>Company</value></data>
+  <data name="HojasCargue_ThFilas" xml:space="preserve"><value>Rows</value></data>
+  <data name="HojasCargue_SubUsadaPor" xml:space="preserve"><value>Used by (database)</value></data>
+  <data name="HojasCargue_NoUsada" xml:space="preserve"><value>No procedure, view or function mentions this table.</value></data>
+  <data name="HojasCargue_SubDiagnostico" xml:space="preserve"><value>Structure diagnostics</value></data>
+  <data name="HojasCargue_SubPrueba" xml:space="preserve"><value>Test the template</value></data>
+  <data name="HojasCargue_PruebaTexto" xml:space="preserve"><value>Download the exact template a company will receive.</value></data>
+  <data name="HojasCargue_PruebaEstandar" xml:space="preserve"><value>Standard sheets only</value></data>
+  <data name="HojasCargue_LblEmpresaPrueba" xml:space="preserve"><value>Company template</value></data>
+  <data name="HojasCargue_PruebaHojasIncluidas" xml:space="preserve"><value>Sheets it will include ({0})</value></data>
+  <data name="HojasCargue_BtnDescargar" xml:space="preserve"><value>Download</value></data>
+  <data name="HojasCargue_Diag_Ok" xml:space="preserve"><value>Structure OK: the table and its staging match and have the system columns.</value></data>
+  <data name="HojasCargue_Diag_IniNoExiste" xml:space="preserve"><value>The Ini_ table does not exist in the database.</value></data>
+  <data name="HojasCargue_Diag_StagingNoExiste" xml:space="preserve"><value>The staging table (Staging_Ini_) does not exist.</value></data>
+  <data name="HojasCargue_Diag_SistemaFaltaIni" xml:space="preserve"><value>A system column is missing in the Ini_ table:</value></data>
+  <data name="HojasCargue_Diag_SistemaFaltaStaging" xml:space="preserve"><value>A system column is missing in the staging table:</value></data>
+  <data name="HojasCargue_Diag_SinColumnas" xml:space="preserve"><value>The table has no data columns.</value></data>
+  <data name="HojasCargue_Diag_SinAnio" xml:space="preserve"><value>The Año (year) column is missing (uploads delete, version and export by year).</value></data>
+  <data name="HojasCargue_Diag_SinMes" xml:space="preserve"><value>It has no Mes (month) column: the empty year/month validation will not apply to this sheet.</value></data>
+  <data name="HojasCargue_Diag_ColumnaFaltaStaging" xml:space="preserve"><value>The column does not exist in the staging table:</value></data>
+  <data name="HojasCargue_Diag_TipoDistinto" xml:space="preserve"><value>The type differs between the table and its staging:</value></data>
+  <data name="HojasCargue_Diag_ColumnaSoloStaging" xml:space="preserve"><value>The column only exists in staging:</value></data>
+  <data name="HojasCargue_WizTitulo" xml:space="preserve"><value>New upload sheet</value></data>
+  <data name="HojasCargue_Paso1" xml:space="preserve"><value>Identification</value></data>
+  <data name="HojasCargue_Paso2" xml:space="preserve"><value>Columns</value></data>
+  <data name="HojasCargue_Paso3" xml:space="preserve"><value>Scope</value></data>
+  <data name="HojasCargue_Paso4" xml:space="preserve"><value>Review &amp; create</value></data>
+  <data name="HojasCargue_TablaSugerida" xml:space="preserve"><value>Suggested from the sheet name. Must start with Ini_; its staging table has the same name with the Staging_ prefix.</value></data>
+  <data name="HojasCargue_EstadoNueva" xml:space="preserve"><value>New table: it will be created together with its staging table.</value></data>
+  <data name="HojasCargue_EstadoExistente" xml:space="preserve"><value>The table already exists: it will be registered with its current structure ({0} columns).</value></data>
+  <data name="HojasCargue_EstadoExistenteSinAnio" xml:space="preserve"><value>The table exists but has no Año column: it cannot be registered.</value></data>
+  <data name="HojasCargue_EstadoInvalida" xml:space="preserve"><value>Invalid table name.</value></data>
+  <data name="HojasCargue_EstadoVerificando" xml:space="preserve"><value>Checking table…</value></data>
+  <data name="HojasCargue_ColsAyuda" xml:space="preserve"><value>Each column is a header of the Excel sheet, in this order. Año is mandatory. If you include Año, Mes and Empresa, the upload validates them automatically.</value></data>
+  <data name="HojasCargue_ColsExistentes" xml:space="preserve"><value>Columns of the existing table (not modified when registering it):</value></data>
+  <data name="HojasCargue_ThLongitud" xml:space="preserve"><value>Length / Prec.</value></data>
+  <data name="HojasCargue_ThEscala" xml:space="preserve"><value>Decimals</value></data>
+  <data name="HojasCargue_PhColumna" xml:space="preserve"><value>ColumnName</value></data>
+  <data name="HojasCargue_PhDefecto" xml:space="preserve"><value>(none)</value></data>
+  <data name="HojasCargue_Tipo_varchar" xml:space="preserve"><value>Text</value></data>
+  <data name="HojasCargue_Tipo_nvarchar" xml:space="preserve"><value>Unicode text</value></data>
+  <data name="HojasCargue_Tipo_int" xml:space="preserve"><value>Integer</value></data>
+  <data name="HojasCargue_Tipo_bigint" xml:space="preserve"><value>Big integer</value></data>
+  <data name="HojasCargue_Tipo_decimal" xml:space="preserve"><value>Decimal</value></data>
+  <data name="HojasCargue_Tipo_money" xml:space="preserve"><value>Money</value></data>
+  <data name="HojasCargue_Tipo_date" xml:space="preserve"><value>Date</value></data>
+  <data name="HojasCargue_Tipo_datetime" xml:space="preserve"><value>Date and time</value></data>
+  <data name="HojasCargue_Tipo_bit" xml:space="preserve"><value>Yes / No</value></data>
+  <data name="HojasCargue_AyudaLongitud" xml:space="preserve"><value>Length: 1–8000 (Text), 1–4000 (Unicode) or -1 for MAX. Decimal precision: 1–38.</value></data>
+  <data name="HojasCargue_AyudaDefecto" xml:space="preserve"><value>Default: number, text, date YYYY-MM-DD, GETDATE() or 1/0 for Yes/No. A column that does not allow empty values needs a default.</value></data>
+  <data name="HojasCargue_Res_Hoja" xml:space="preserve"><value>Sheet</value></data>
+  <data name="HojasCargue_Res_Tabla" xml:space="preserve"><value>Table</value></data>
+  <data name="HojasCargue_Res_Alcance" xml:space="preserve"><value>Scope</value></data>
+  <data name="HojasCargue_Res_Columnas" xml:space="preserve"><value>Columns</value></data>
+  <data name="HojasCargue_Res_Empresas" xml:space="preserve"><value>Companies</value></data>
+  <data name="HojasCargue_SqlTitulo" xml:space="preserve"><value>SQL to be executed</value></data>
+  <data name="HojasCargue_SqlRegistrar" xml:space="preserve"><value>No table is created: the existing table is only registered in the catalog (if its staging table were missing, it is created with the same columns).</value></data>
+  <data name="HojasCargue_BtnAnterior" xml:space="preserve"><value>Back</value></data>
+  <data name="HojasCargue_BtnSiguiente" xml:space="preserve"><value>Next</value></data>
+  <data name="HojasCargue_BtnCrear" xml:space="preserve"><value>Create sheet</value></data>
+  <data name="HojasCargue_BtnCancelar" xml:space="preserve"><value>Cancel</value></data>
+  <data name="HojasCargue_Creando" xml:space="preserve"><value>Applying changes to the database…</value></data>
+  <data name="HojasCargue_ColModalNueva" xml:space="preserve"><value>Add column</value></data>
+  <data name="HojasCargue_ColModalEditar" xml:space="preserve"><value>Modify column</value></data>
+  <data name="HojasCargue_ColAgregarNota" xml:space="preserve"><value>The column is added at the end, in the table and its staging. If the table already has data, existing rows stay empty or get the default value.</value></data>
+  <data name="HojasCargue_LblNombreCol" xml:space="preserve"><value>Name (Excel header)</value></data>
+  <data name="HojasCargue_LblTipo" xml:space="preserve"><value>Data type</value></data>
+  <data name="HojasCargue_LblLongitud" xml:space="preserve"><value>Length</value></data>
+  <data name="HojasCargue_LblPrecision" xml:space="preserve"><value>Precision</value></data>
+  <data name="HojasCargue_LblEscala" xml:space="preserve"><value>Decimals</value></data>
+  <data name="HojasCargue_LblNulos" xml:space="preserve"><value>Allows empty cells</value></data>
+  <data name="HojasCargue_LblDefecto" xml:space="preserve"><value>Default value</value></data>
+  <data name="HojasCargue_ConfColTitulo" xml:space="preserve"><value>Apply the structure change?</value></data>
+  <data name="HojasCargue_ConfColTexto" xml:space="preserve"><value>The structure of {0} and its staging table will be modified in the database.</value></data>
+  <data name="HojasCargue_ConfEliminarColTitulo" xml:space="preserve"><value>Delete column {0}?</value></data>
+  <data name="HojasCargue_ConfEliminarTitulo" xml:space="preserve"><value>Delete sheet {0}?</value></data>
+  <data name="HojasCargue_ConfEliminarTexto" xml:space="preserve"><value>It is removed from the catalog: it will no longer be required or processed in any upload.</value></data>
+  <data name="HojasCargue_ConfEliminarBorrarTablas" xml:space="preserve"><value>Also drop table {0} and its staging (they are empty and no process uses them).</value></data>
+  <data name="HojasCargue_ConfEliminarConserva" xml:space="preserve"><value>The tables and their data are kept in the database.</value></data>
+  <data name="HojasCargue_ConfAlcanceTitulo" xml:space="preserve"><value>Save the new scope?</value></data>
+  <data name="HojasCargue_ConfAlcanceTexto" xml:space="preserve"><value>The change applies from each company&apos;s next upload and to the templates downloaded.</value></data>
+  <data name="HojasCargue_ConfDesactivarTitulo" xml:space="preserve"><value>Deactivate the sheet?</value></data>
+  <data name="HojasCargue_ConfDesactivarTexto" xml:space="preserve"><value>It will no longer be required or processed in uploads. The data is kept.</value></data>
+  <data name="HojasCargue_ConfCrearTitulo" xml:space="preserve"><value>Create the sheet?</value></data>
+  <data name="HojasCargue_ConfCrearTexto" xml:space="preserve"><value>The sheet will be registered and the SQL shown will be applied to {0}.</value></data>
+  <data name="HojasCargue_BtnConfirmar" xml:space="preserve"><value>Yes, continue</value></data>
+  <data name="HojasCargue_BtnEliminarConfirmar" xml:space="preserve"><value>Yes, delete</value></data>
+  <data name="HojasCargue_ErrorRed" xml:space="preserve"><value>The operation could not be completed. Please try again.</value></data>
+  <data name="HojasCargue_Creada" xml:space="preserve"><value>Sheet {0} created.</value></data>
+  <data name="HojasCargue_Guardada" xml:space="preserve"><value>Changes saved.</value></data>
+  <data name="HojasCargue_AlcanceGuardado" xml:space="preserve"><value>Scope saved.</value></data>
+  <data name="HojasCargue_ColumnaAgregada" xml:space="preserve"><value>Column added.</value></data>
+  <data name="HojasCargue_ColumnaModificada" xml:space="preserve"><value>Column modified.</value></data>
+  <data name="HojasCargue_ColumnaEliminada" xml:space="preserve"><value>Column deleted.</value></data>
+  <data name="HojasCargue_Eliminada" xml:space="preserve"><value>Sheet {0} deleted.</value></data>
+  <data name="HojasCargue_Err_Cargar" xml:space="preserve"><value>The sheet information could not be loaded.</value></data>
+  <data name="HojasCargue_Err_Datos" xml:space="preserve"><value>The data sent is not valid or the operation could not be completed.</value></data>
+  <data name="HojasCargue_Err_NoExiste" xml:space="preserve"><value>The sheet does not exist.</value></data>
+  <data name="HojasCargue_Err_SinScript" xml:space="preserve"><value>Run the script Sql/021_GestorHojasCargue.sql first: the sheet catalog does not exist in the database yet.</value></data>
+  <data name="HojasCargue_Err_Sql" xml:space="preserve"><value>The database rejected the change:</value></data>
+  <data name="HojasCargue_Err_Plantilla" xml:space="preserve"><value>The template could not be generated.</value></data>
+  <data name="HojasCargue_Err_NombreHoja" xml:space="preserve"><value>The sheet name must start with Z_ and use only letters, numbers and underscore (max. 31 characters).</value></data>
+  <data name="HojasCargue_Err_NombreTabla" xml:space="preserve"><value>The table must start with Ini_ and use only letters, numbers and underscore (max. 100 characters).</value></data>
+  <data name="HojasCargue_Err_HojaDuplicada" xml:space="preserve"><value>A sheet with that name already exists</value></data>
+  <data name="HojasCargue_Err_TablaDuplicada" xml:space="preserve"><value>Another sheet already uses that table</value></data>
+  <data name="HojasCargue_Err_SinEmpresas" xml:space="preserve"><value>A custom sheet needs at least one company.</value></data>
+  <data name="HojasCargue_Err_SinColumnas" xml:space="preserve"><value>The sheet needs at least one data column.</value></data>
+  <data name="HojasCargue_Err_ColumnaDuplicada" xml:space="preserve"><value>Duplicated column</value></data>
+  <data name="HojasCargue_Err_ColumnaSistema" xml:space="preserve"><value>That name is reserved for a system column</value></data>
+  <data name="HojasCargue_Err_ColumnaNombre" xml:space="preserve"><value>Invalid column name (letters, numbers and underscore; cannot start with a number)</value></data>
+  <data name="HojasCargue_Err_Tipo" xml:space="preserve"><value>Data type not allowed</value></data>
+  <data name="HojasCargue_Err_Longitud" xml:space="preserve"><value>Invalid length</value></data>
+  <data name="HojasCargue_Err_Precision" xml:space="preserve"><value>Invalid precision or decimals</value></data>
+  <data name="HojasCargue_Err_Defecto" xml:space="preserve"><value>The default value does not match the column type</value></data>
+  <data name="HojasCargue_Err_NoNuloSinDefecto" xml:space="preserve"><value>A column that does not allow empty values needs a default</value></data>
+  <data name="HojasCargue_Err_SinAnio" xml:space="preserve"><value>The sheet must have the Año column: uploads delete, version and export by year.</value></data>
+  <data name="HojasCargue_Err_AnioObligatorio" xml:space="preserve"><value>The Año column is mandatory: it cannot be removed or renamed.</value></data>
+  <data name="HojasCargue_Err_ColumnaNoExiste" xml:space="preserve"><value>The column does not exist</value></data>
+  <data name="HojasCargue_Err_TieneDatos" xml:space="preserve"><value>The table has data (or an upload under review): its existing structure cannot be modified.</value></data>
+  <data name="HojasCargue_Err_UsadaPorModulos" xml:space="preserve"><value>The table is used by database processes; its existing structure cannot be modified</value></data>
+  <data name="HojasCargue_Err_StagingHuerfana" xml:space="preserve"><value>A staging table with that name already exists without its Ini_ table; check it in the database</value></data>
+  <data name="HojasCargue_Err_DiagnosticoConErrores" xml:space="preserve"><value>The sheet structure has errors (see Usage &amp; diagnostics): fix them before activating it.</value></data>
 </root>

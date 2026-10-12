@@ -1,0 +1,998 @@
+@{
+    ViewBag.Title = Resources.Strings.HojasCargue_PageTitle;
+
+    // Textos para el JS (claves HojasCargue_*, sin el prefijo). Todos existen en ambos .resx.
+    var clavesJs = new[] {
+        "TagEstandar","TagPersonalizada","TagInactiva","TagEmpresas","ListaVacia","Cargando","BtnPlantillaPrueba","PruebaHojasIncluidas",
+        "ArrastrarAyuda","ArrastrarSoloTodas","OrdenActualizado","Err_Orden",
+        "TabGeneral","TabColumnas","TabAlcance","TabUso","BtnEliminar",
+        "LblHoja","AyudaHoja","LblTabla","AyudaTablaFija","LblDescripcion","PhDescripcion","LblOrden","LblActiva","AyudaActiva",
+        "BtnGuardar","SinCambios","CambiosPendientes",
+        "ColsNotaEditable","ColsNotaDatos","ColsNotaUsada","ThColumna","ThTipo","ThNulos","ThDefecto","Si","No","BtnAgregarColumna","Sistema","SinTabla",
+        "OpcEstandarT","OpcEstandarS","OpcPersT","OpcPersS","EmpBuscar","EmpSeleccionadas","EmpFilas","AvisoPierden","BtnGuardarAlcance","AlcanceNota",
+        "StatFilas","StatStaging","StatEmpresas","SubFilasEmpresa","SinDatos","ThEmpresa","ThFilas","SubUsadaPor","NoUsada","SubDiagnostico",
+        "SubPrueba","PruebaTexto","PruebaEstandar","BtnDescargar",
+        "Diag_Ok","Diag_IniNoExiste","Diag_StagingNoExiste","Diag_SistemaFaltaIni","Diag_SistemaFaltaStaging","Diag_SinColumnas","Diag_SinAnio","Diag_SinMes",
+        "Diag_ColumnaFaltaStaging","Diag_TipoDistinto","Diag_ColumnaSoloStaging",
+        "Paso1","Paso2","Paso3","Paso4","TablaSugerida","EstadoNueva","EstadoExistente","EstadoExistenteSinAnio","EstadoInvalida","EstadoVerificando",
+        "ColsAyuda","ColsExistentes","ThLongitud","ThEscala","PhColumna","PhDefecto",
+        "Tipo_varchar","Tipo_nvarchar","Tipo_int","Tipo_bigint","Tipo_decimal","Tipo_money","Tipo_date","Tipo_datetime","Tipo_bit",
+        "Res_Hoja","Res_Tabla","Res_Alcance","Res_Columnas","Res_Empresas","SqlTitulo","SqlRegistrar","BtnAnterior","BtnSiguiente","BtnCrear","Creando",
+        "ColModalNueva","ColModalEditar",
+        "ConfColTitulo","ConfColTexto","ConfEliminarColTitulo","ConfEliminarTitulo","ConfEliminarTexto","ConfEliminarBorrarTablas","ConfEliminarConserva",
+        "ConfAlcanceTitulo","ConfAlcanceTexto","ConfDesactivarTitulo","ConfDesactivarTexto","ConfCrearTitulo","ConfCrearTexto",
+        "BtnConfirmar","BtnEliminarConfirmar","BtnCancelar","ErrorRed",
+        "Err_NombreHoja","Err_NombreTabla","Err_SinColumnas","Err_SinEmpresas","Err_SinAnio","Err_ColumnaNombre","Err_ColumnaDuplicada"
+    };
+    var textosJs = new System.Collections.Generic.Dictionary<string, string>();
+    foreach (var k in clavesJs)
+    {
+        textosJs[k] = (System.Web.HttpContext.GetGlobalResourceObject("Strings", "HojasCargue_" + k) as string) ?? k;
+    }
+}
+
+<link href="~/Assets/css/gestor-hojas-cargue.css" rel="stylesheet" />
+
+<div class="container-fluid px-4 hc-root">
+
+    <!-- ═══════════ Cabecera ═══════════ -->
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-file-excel powerbi-header-icon"></i>
+            <div class="powerbi-header-text">
+                <h1 class="powerbi-header-title">@Resources.Strings.HojasCargue_PageTitle</h1>
+                <p class="powerbi-header-sub">@Resources.Strings.HojasCargue_PageSub</p>
+            </div>
+            <div class="hc-header-actions">
+                <button type="button" class="btn btn-modern-secondary" id="hcBtnPrueba">
+                    <i class="fas fa-file-download mr-1"></i>@Resources.Strings.HojasCargue_BtnPlantillaPrueba
+                </button>
+                <button type="button" class="btn btn-modern-success" id="hcBtnNueva">
+                    <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.HojasCargue_BtnNueva
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="hc-aviso" id="hcAvisoScript" style="display:none;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div>@Html.Raw(string.Format(HttpUtility.HtmlEncode(Resources.Strings.HojasCargue_AvisoSinScript), "<code>Sql/021_GestorHojasCargue.sql</code>"))</div>
+    </div>
+
+    <!-- ═══════════ KPIs + flujo ═══════════ -->
+    <div class="hc-top">
+        <div class="hc-kpi"><div class="hc-kpi-ic"><i class="fas fa-layer-group"></i></div><div><div class="hc-kpi-v" id="kpiActivas">–</div><div class="hc-kpi-l">@Resources.Strings.HojasCargue_KpiActivas</div></div></div>
+        <div class="hc-kpi"><div class="hc-kpi-ic slate"><i class="fas fa-globe"></i></div><div><div class="hc-kpi-v" id="kpiEstandar">–</div><div class="hc-kpi-l">@Resources.Strings.HojasCargue_KpiEstandar</div></div></div>
+        <div class="hc-kpi"><div class="hc-kpi-ic aqua"><i class="fas fa-puzzle-piece"></i></div><div><div class="hc-kpi-v" id="kpiPersonalizadas">–</div><div class="hc-kpi-l">@Resources.Strings.HojasCargue_KpiPersonalizadas</div></div></div>
+        <div class="hc-kpi"><div class="hc-kpi-ic amber"><i class="fas fa-building"></i></div><div><div class="hc-kpi-v" id="kpiEmpresas">–</div><div class="hc-kpi-l">@Resources.Strings.HojasCargue_KpiEmpresas</div></div></div>
+        <div class="hc-flujo" aria-hidden="true">
+            <div class="hc-flujo-paso"><i class="fas fa-file-excel"></i><b>@Resources.Strings.HojasCargue_Flujo1T</b><span>Z_…</span></div>
+            <i class="fas fa-chevron-right hc-flujo-flecha"></i>
+            <div class="hc-flujo-paso"><i class="fas fa-clipboard-check"></i><b>@Resources.Strings.HojasCargue_Flujo2T</b><span>Staging_Ini_…</span></div>
+            <i class="fas fa-chevron-right hc-flujo-flecha"></i>
+            <div class="hc-flujo-paso"><i class="fas fa-database"></i><b>@Resources.Strings.HojasCargue_Flujo3T</b><span>Ini_…</span></div>
+        </div>
+    </div>
+
+    <!-- ═══════════ Lista + detalle ═══════════ -->
+    <div class="hc-main">
+        <aside class="hc-panel hc-lista">
+            <div class="hc-lista-head">
+                <div class="hc-buscar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="form-control" id="hcBuscar" placeholder="@Resources.Strings.HojasCargue_Buscar" autocomplete="off" />
+                </div>
+                <div class="hc-filtros" id="hcFiltros">
+                    <button type="button" class="hc-chip-f on" data-f="todas">@Resources.Strings.HojasCargue_FiltroTodas<span class="n"></span></button>
+                    <button type="button" class="hc-chip-f" data-f="std">@Resources.Strings.HojasCargue_FiltroEstandar<span class="n"></span></button>
+                    <button type="button" class="hc-chip-f" data-f="per">@Resources.Strings.HojasCargue_FiltroPersonalizadas<span class="n"></span></button>
+                    <button type="button" class="hc-chip-f" data-f="off">@Resources.Strings.HojasCargue_FiltroInactivas<span class="n"></span></button>
+                </div>
+                <div class="hc-orden-ayuda" id="hcOrdenAyuda"></div>
+            </div>
+            <div class="hc-lista-body" id="hcLista">
+                <div class="hc-lista-vacia"><i class="fas fa-spinner fa-spin"></i></div>
+            </div>
+        </aside>
+
+        <section class="hc-panel" id="hcDetalle">
+            <div class="hc-detalle-vacio">
+                <div class="empty-state-initial-icon"><i class="fas fa-mouse-pointer"></i></div>
+                <h4 style="font-size:1.05rem;font-weight:700;color:#2d3748;">@Resources.Strings.HojasCargue_DetalleVacioTitulo</h4>
+                <p class="mb-0" style="max-width:420px;margin:0 auto;">@Resources.Strings.HojasCargue_DetalleVacioTexto</p>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- ═══════════ Asistente: nueva hoja (modal de creación → look claro) ═══════════ -->
+<div class="modal fade hc-modal" id="hcModalNueva" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus-circle"></i>@Resources.Strings.HojasCargue_WizTitulo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="hc-pasos" id="wzPasos">
+                    <div class="hc-paso" data-p="1"><span class="n">1</span><span class="txt">@Resources.Strings.HojasCargue_Paso1</span></div>
+                    <div class="hc-paso" data-p="2"><span class="n">2</span><span class="txt">@Resources.Strings.HojasCargue_Paso2</span></div>
+                    <div class="hc-paso" data-p="3"><span class="n">3</span><span class="txt">@Resources.Strings.HojasCargue_Paso3</span></div>
+                    <div class="hc-paso" data-p="4"><span class="n">4</span><span class="txt">@Resources.Strings.HojasCargue_Paso4</span></div>
+                </div>
+
+                <!-- Paso 1 -->
+                <div class="wz-paso" data-p="1">
+                    <div class="hc-grid2">
+                        <div class="hc-campo">
+                            <label for="wzHoja"><i class="fas fa-file-excel"></i>@Resources.Strings.HojasCargue_LblHoja <span class="required">*</span></label>
+                            <div class="hc-prefijo"><span class="pre">Z_</span><input type="text" class="form-control" id="wzHoja" maxlength="29" autocomplete="off" /></div>
+                            <div class="hc-ayuda">@Resources.Strings.HojasCargue_AyudaHoja</div>
+                        </div>
+                        <div class="hc-campo">
+                            <label for="wzTabla"><i class="fas fa-database"></i>@Resources.Strings.HojasCargue_LblTabla <span class="required">*</span></label>
+                            <div class="hc-prefijo"><span class="pre">Ini_</span><input type="text" class="form-control" id="wzTabla" maxlength="96" autocomplete="off" /></div>
+                            <div class="hc-ayuda">@Resources.Strings.HojasCargue_TablaSugerida</div>
+                            <div class="hc-estado-tabla" id="wzEstadoTabla"></div>
+                        </div>
+                        <div class="hc-campo full">
+                            <label for="wzDesc"><i class="fas fa-align-left"></i>@Resources.Strings.HojasCargue_LblDescripcion</label>
+                            <input type="text" class="form-control" id="wzDesc" maxlength="500" placeholder="@Resources.Strings.HojasCargue_PhDescripcion" />
+                        </div>
+                        <div class="hc-campo">
+                            <label for="wzOrden"><i class="fas fa-sort-numeric-down"></i>@Resources.Strings.HojasCargue_LblOrden</label>
+                            <input type="number" class="form-control" id="wzOrden" min="0" max="9999" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paso 2 -->
+                <div class="wz-paso" data-p="2">
+                    <div id="wzColsNuevas">
+                        <div class="hc-nota info"><i class="fas fa-info-circle"></i><div>@Resources.Strings.HojasCargue_ColsAyuda</div></div>
+                        <div class="table-responsive">
+                            <table class="hc-cols-editor">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>@Resources.Strings.HojasCargue_ThColumna</th>
+                                        <th>@Resources.Strings.HojasCargue_ThTipo</th>
+                                        <th>@Resources.Strings.HojasCargue_ThLongitud</th>
+                                        <th>@Resources.Strings.HojasCargue_ThEscala</th>
+                                        <th class="chk">@Resources.Strings.HojasCargue_ThNulos</th>
+                                        <th>@Resources.Strings.HojasCargue_ThDefecto</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="wzColsBody"></tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="wzAgregarCol"><i class="fas fa-plus mr-1"></i>@Resources.Strings.HojasCargue_BtnAgregarColumna</button>
+                        <div class="hc-ayuda mt-2">@Resources.Strings.HojasCargue_AyudaLongitud<br />@Resources.Strings.HojasCargue_AyudaDefecto</div>
+                    </div>
+                    <div id="wzColsExistentes" style="display:none;">
+                        <div class="hc-nota info"><i class="fas fa-link"></i><div>@Resources.Strings.HojasCargue_ColsExistentes</div></div>
+                        <div class="table-wrapper"><table class="data-table"><thead><tr><th>@Resources.Strings.HojasCargue_ThColumna</th><th>@Resources.Strings.HojasCargue_ThTipo</th><th>@Resources.Strings.HojasCargue_ThNulos</th><th>@Resources.Strings.HojasCargue_ThDefecto</th></tr></thead><tbody id="wzColsExistBody"></tbody></table></div>
+                    </div>
+                </div>
+
+                <!-- Paso 3 -->
+                <div class="wz-paso" data-p="3">
+                    <div id="wzAlcance"></div>
+                </div>
+
+                <!-- Paso 4 -->
+                <div class="wz-paso" data-p="4">
+                    <div class="hc-resumen" id="wzResumen"></div>
+                    <div class="hc-subtitulo"><i class="fas fa-code"></i>@Resources.Strings.HojasCargue_SqlTitulo</div>
+                    <div id="wzSql"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal"><i class="fas fa-times mr-1"></i>@Resources.Strings.HojasCargue_BtnCancelar</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="wzAnterior"><i class="fas fa-arrow-left mr-1"></i>@Resources.Strings.HojasCargue_BtnAnterior</button>
+                <button type="button" class="btn btn-modern-gradient btn-sm" id="wzSiguiente">@Resources.Strings.HojasCargue_BtnSiguiente<i class="fas fa-arrow-right ml-1"></i></button>
+                <button type="button" class="btn btn-modern-success btn-sm" id="wzCrear" style="display:none;"><i class="fas fa-check mr-1"></i>@Resources.Strings.HojasCargue_BtnCrear</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════ Modal: agregar / modificar columna (edición → look claro) ═══════════ -->
+<div class="modal fade hc-modal hc-modal-sm" id="hcModalCol" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-columns"></i><span id="mcTitulo"></span></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="hc-nota info" id="mcNotaAgregar"><i class="fas fa-info-circle"></i><div>@Resources.Strings.HojasCargue_ColAgregarNota</div></div>
+                <div class="hc-grid2">
+                    <div class="hc-campo full">
+                        <label for="mcNombre"><i class="fas fa-heading"></i>@Resources.Strings.HojasCargue_LblNombreCol <span class="required">*</span></label>
+                        <input type="text" class="form-control hc-mono" id="mcNombre" maxlength="64" autocomplete="off" />
+                    </div>
+                    <div class="hc-campo">
+                        <label for="mcTipo"><i class="fas fa-shapes"></i>@Resources.Strings.HojasCargue_LblTipo</label>
+                        <select class="form-control" id="mcTipo"></select>
+                    </div>
+                    <div class="hc-campo" id="mcWrapLong">
+                        <label for="mcLong"><i class="fas fa-ruler-horizontal"></i><span id="mcLblLong">@Resources.Strings.HojasCargue_LblLongitud</span></label>
+                        <input type="number" class="form-control" id="mcLong" />
+                    </div>
+                    <div class="hc-campo" id="mcWrapEsc">
+                        <label for="mcEsc"><i class="fas fa-sliders-h"></i>@Resources.Strings.HojasCargue_LblEscala</label>
+                        <input type="number" class="form-control" id="mcEsc" min="0" max="38" />
+                    </div>
+                    <div class="hc-campo">
+                        <label for="mcDef"><i class="fas fa-magic"></i>@Resources.Strings.HojasCargue_LblDefecto</label>
+                        <input type="text" class="form-control" id="mcDef" placeholder="@Resources.Strings.HojasCargue_PhDefecto" />
+                    </div>
+                    <div class="hc-campo full">
+                        <label class="hc-switch"><input type="checkbox" id="mcNulos" checked /><span class="trk"></span>@Resources.Strings.HojasCargue_LblNulos</label>
+                        <div class="hc-ayuda">@Resources.Strings.HojasCargue_AyudaDefecto</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal"><i class="fas fa-times mr-1"></i>@Resources.Strings.HojasCargue_BtnCancelar</button>
+                <button type="button" class="btn btn-primary btn-sm" id="mcGuardar"><i class="fas fa-save mr-1"></i>@Resources.Strings.HojasCargue_BtnGuardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════ Modal: plantilla de prueba (look claro) ═══════════ -->
+<div class="modal fade hc-modal hc-modal-sm" id="hcModalPrueba" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-vial"></i>@Resources.Strings.HojasCargue_SubPrueba</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p class="hc-ayuda mt-0 mb-3" style="font-size:.85rem;">@Resources.Strings.HojasCargue_PruebaTexto</p>
+                <div class="hc-campo">
+                    <label for="mpEmpresa"><i class="fas fa-building"></i>@Resources.Strings.HojasCargue_LblEmpresaPrueba</label>
+                    <select class="form-control" id="mpEmpresa"></select>
+                </div>
+                <div class="hc-subtitulo"><i class="fas fa-layer-group"></i><span id="mpHojasTitulo"></span></div>
+                <ol class="hc-prev-hojas" id="mpHojas"></ol>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal"><i class="fas fa-times mr-1"></i>@Resources.Strings.HojasCargue_BtnCancelar</button>
+                <button type="button" class="btn btn-modern-excel btn-sm" id="mpDescargar"><i class="fas fa-file-download mr-1"></i>@Resources.Strings.HojasCargue_BtnDescargar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overlay de procesamiento (DDL) — versión clara del overlay estándar -->
+<div class="overlay-cargando hc-overlay-claro" id="hcOverlay" style="display:none;">
+    <div class="overlay-cargando-card">
+        @Html.Partial("_LoaderDots", "dark")
+        <div class="overlay-cargando-title" id="hcOverlayTxt">@Resources.Strings.HojasCargue_Creando</div>
+    </div>
+</div>
+
+@section scripts {
+<script>
+(function () {
+    'use strict';
+
+    var T = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(textosJs));
+    var URL = {
+        listar: '@Url.Action("Listar", "GestorHojasCargue")',
+        detalle: '@Url.Action("Detalle", "GestorHojasCargue")',
+        verificar: '@Url.Action("VerificarTabla", "GestorHojasCargue")',
+        preview: '@Url.Action("VistaPreviaSql", "GestorHojasCargue")',
+        crear: '@Url.Action("Crear", "GestorHojasCargue")',
+        general: '@Url.Action("GuardarGeneral", "GestorHojasCargue")',
+        alcance: '@Url.Action("GuardarAlcance", "GestorHojasCargue")',
+        addCol: '@Url.Action("AgregarColumna", "GestorHojasCargue")',
+        modCol: '@Url.Action("ModificarColumna", "GestorHojasCargue")',
+        delCol: '@Url.Action("EliminarColumna", "GestorHojasCargue")',
+        eliminar: '@Url.Action("Eliminar", "GestorHojasCargue")',
+        prueba: '@Url.Action("DescargarPlantillaPrueba", "GestorHojasCargue")',
+        orden: '@Url.Action("ActualizarOrden", "GestorHojasCargue")'
+    };
+    var TIPOS = ['varchar', 'nvarchar', 'int', 'bigint', 'decimal', 'money', 'date', 'datetime', 'bit'];
+    var ANIO = 'Año';
+
+    var st = { hojas: [], empresas: [], desdeBD: true, filtro: 'todas', q: '', sel: null, det: null, tab: 'general' };
+
+    // ── Utilidades ─────────────────────────────────────────────────────────────────
+    function esc(s) { return $('<div/>').text(s == null ? '' : String(s)).html(); }
+    function fmt(s) { var a = arguments; return String(s).replace(/\{(\d+)\}/g, function (m, i) { return a[+i + 1] !== undefined ? a[+i + 1] : m; }); }
+    function num(n) { return (n || 0).toLocaleString(); }
+    function nombreEmpresa(id) { var e = st.empresas.filter(function (x) { return x.id === id; })[0]; return e ? e.nombre : ('#' + id); }
+    // SweetAlert con el tema CLARO de este gestor (el global de la app es oscuro).
+    function sw(opts) {
+        var o = $.extend({ buttonsStyling: false }, opts);
+        o.customClass = $.extend({ popup: 'hc-swal' + (opts.toast ? ' hc-swal-toast' : ''), confirmButton: 'hc-swal-ok', cancelButton: 'hc-swal-cancel' }, opts.customClass || {});
+        return Swal.fire(o);
+    }
+    function toast(icon, title) {
+        sw({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: icon, title: title, showConfirmButton: false, timer: 3200, timerProgressBar: true });
+    }
+    function error(msg) { sw({ icon: 'error', title: msg || T.ErrorRed }); }
+    function overlay(on, txt) { $('#hcOverlayTxt').text(txt || T.Creando); document.getElementById('hcOverlay').style.display = on ? 'flex' : 'none'; }
+    function post(url, data) {
+        overlay(true, T.Cargando);
+        return $.post(url, data).always(function () { overlay(false); }).fail(function () { error(T.ErrorRed); });
+    }
+    function tagAlcance(h) {
+        var t = h.alcance === 'PERSONALIZADA'
+            ? '<span class="hc-tag per"><i class="fas fa-puzzle-piece"></i>' + esc(T.TagPersonalizada) + '</span>'
+            : '<span class="hc-tag std"><i class="fas fa-globe"></i>' + esc(T.TagEstandar) + '</span>';
+        if (!h.activo) t += ' <span class="hc-tag off"><i class="fas fa-pause"></i>' + esc(T.TagInactiva) + '</span>';
+        return t;
+    }
+    function opcionesTipo(sel) {
+        return TIPOS.map(function (t) { return '<option value="' + t + '"' + (t === sel ? ' selected' : '') + '>' + esc(T['Tipo_' + t]) + ' · ' + t.toUpperCase() + '</option>'; }).join('');
+    }
+    function usaLongitud(t) { return t === 'varchar' || t === 'nvarchar'; }
+    function usaPrecision(t) { return t === 'decimal'; }
+
+    // ── Carga y lista ──────────────────────────────────────────────────────────────
+    function cargar(idSeleccion) {
+        return $.get(URL.listar).done(function (r) {
+            if (!r.success) { error(r.message); return; }
+            st.hojas = r.hojas; st.empresas = r.empresas; st.desdeBD = r.desdeBD;
+            $('#hcAvisoScript').toggle(!r.desdeBD);
+            $('#hcBtnNueva').prop('disabled', !r.desdeBD);
+            pintarKpis(); pintarLista();
+            var id = idSeleccion !== undefined ? idSeleccion : (st.sel ? st.sel.id : null);
+            if (id !== null && id !== undefined) seleccionar(id, true);
+        }).fail(function () { error(T.ErrorRed); });
+    }
+
+    function pintarKpis() {
+        var act = st.hojas.filter(function (h) { return h.activo; });
+        var per = act.filter(function (h) { return h.alcance === 'PERSONALIZADA'; });
+        var emp = {}; per.forEach(function (h) { h.empresas.forEach(function (e) { emp[e] = 1; }); });
+        $('#kpiActivas').text(act.length);
+        $('#kpiEstandar').text(act.length - per.length);
+        $('#kpiPersonalizadas').text(per.length);
+        $('#kpiEmpresas').text(Object.keys(emp).length);
+        var c = { todas: st.hojas.length, std: 0, per: 0, off: 0 };
+        st.hojas.forEach(function (h) { if (!h.activo) c.off++; else if (h.alcance === 'PERSONALIZADA') c.per++; else c.std++; });
+        $('#hcFiltros .hc-chip-f').each(function () { $(this).find('.n').text(c[$(this).data('f')]); });
+    }
+
+    function pasaFiltro(h) {
+        if (st.filtro === 'std' && !(h.activo && h.alcance === 'ESTANDAR')) return false;
+        if (st.filtro === 'per' && !(h.activo && h.alcance === 'PERSONALIZADA')) return false;
+        if (st.filtro === 'off' && h.activo) return false;
+        if (!st.q) return true;
+        var q = st.q.toLowerCase();
+        return (h.hoja + ' ' + h.tabla + ' ' + (h.descripcion || '')).toLowerCase().indexOf(q) >= 0;
+    }
+
+    // Se puede arrastrar solo con la lista completa (sin filtro ni búsqueda): así el orden que se guarda
+    // es el de TODAS las hojas y no el de un subconjunto.
+    function puedeOrdenar() { return st.desdeBD && st.filtro === 'todas' && !st.q && st.hojas.length > 1; }
+
+    function pintarLista() {
+        st.hojas.sort(function (a, b) { return a.orden - b.orden || a.hoja.localeCompare(b.hoja); });
+        var arrastrable = puedeOrdenar();
+        $('#hcOrdenAyuda').html(st.desdeBD && st.hojas.length > 1
+            ? '<i class="fas ' + (arrastrable ? 'fa-arrows-alt-v' : 'fa-info-circle') + '"></i>' + esc(arrastrable ? T.ArrastrarAyuda : T.ArrastrarSoloTodas)
+            : '');
+        var items = st.hojas.filter(pasaFiltro);
+        if (!items.length) { $('#hcLista').html('<div class="hc-lista-vacia"><i class="fas fa-search mb-2 d-block"></i>' + esc(T.ListaVacia) + '</div>'); return; }
+        $('#hcLista').html(items.map(function (h) {
+            var meta = tagAlcance(h);
+            if (h.alcance === 'PERSONALIZADA') meta += ' <span class="hc-tag neutro"><i class="fas fa-building"></i>' + esc(fmt(T.TagEmpresas, h.empresas.length)) + '</span>';
+            var pos = st.hojas.indexOf(h) + 1;
+            return '<div class="hc-item' + (arrastrable ? ' arrastrable' : '') + (st.sel && st.sel.id === h.id ? ' sel' : '') + (h.activo ? '' : ' inactiva') + '" data-id="' + h.id + '" role="button" tabindex="0"' + (arrastrable ? ' draggable="true"' : '') + '>' +
+                (arrastrable ? '<span class="hc-grip" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span>' : '') +
+                '<div class="hc-item-top"><span class="hc-pos">' + pos + '</span><span class="hc-item-nombre">' + esc(h.hoja) + '</span></div>' +
+                '<div class="hc-item-tabla">→ ' + esc(h.tabla) + '</div>' +
+                '<div class="hc-item-meta">' + meta + '</div></div>';
+        }).join(''));
+    }
+
+    // ── Reordenar arrastrando (mismo patrón que el gestor de menús) ──
+    var drag = { src: null, timer: null, guardando: false, pendiente: false };
+    $('#hcLista')
+        .on('dragstart', '.hc-item.arrastrable', function (e) {
+            drag.src = this; this.classList.add('arrastrando');
+            if (e.originalEvent && e.originalEvent.dataTransfer) { e.originalEvent.dataTransfer.effectAllowed = 'move'; e.originalEvent.dataTransfer.setData('text/plain', $(this).data('id')); }
+        })
+        .on('dragend', '.hc-item.arrastrable', function () {
+            this.classList.remove('arrastrando');
+            $('#hcLista .drag-sobre').removeClass('drag-sobre');
+        })
+        .on('dragover', '.hc-item.arrastrable', function (e) {
+            e.preventDefault();
+            if (!drag.src || drag.src === this) return;
+            $('#hcLista .drag-sobre').removeClass('drag-sobre'); this.classList.add('drag-sobre');
+            var r = this.getBoundingClientRect();
+            if (e.originalEvent.clientY - r.top > r.height / 2) this.parentNode.insertBefore(drag.src, this.nextSibling);
+            else this.parentNode.insertBefore(drag.src, this);
+        })
+        .on('drop', '.hc-item.arrastrable', function (e) {
+            e.preventDefault();
+            this.classList.remove('drag-sobre');
+            solicitarGuardarOrden();
+        });
+
+    // Debounce + guarda: varias suelta seguidas = UNA petición con el estado final.
+    function solicitarGuardarOrden() {
+        clearTimeout(drag.timer);
+        drag.timer = setTimeout(function () {
+            if (drag.guardando) { drag.pendiente = true; return; }
+            guardarOrden();
+        }, 300);
+    }
+    function guardarOrden() {
+        var ids = $('#hcLista .hc-item').map(function () { return +$(this).data('id'); }).get();
+        if (!ids.length) return;
+        var ordenes = ids.map(function (id, i) { return (i + 1) * 10; });
+        // Se aplica ya en pantalla (posición y orden) y se revierte si el servidor falla.
+        var previo = {}; st.hojas.forEach(function (h) { previo[h.id] = h.orden; });
+        ids.forEach(function (id, i) { var h = st.hojas.filter(function (x) { return x.id === id; })[0]; if (h) h.orden = ordenes[i]; });
+        $('#hcLista .hc-item').each(function (i) { $(this).find('.hc-pos').text(i + 1); });
+        if (st.sel && st.tab === 'general') $('#gOrden').val(st.sel.orden);
+
+        drag.guardando = true;
+        $.ajax({ url: URL.orden, type: 'POST', data: { ids: ids, ordenes: ordenes }, traditional: true })
+            .done(function (r) {
+                if (r.success) toast('success', r.message);
+                else { st.hojas.forEach(function (h) { h.orden = previo[h.id]; }); pintarLista(); error(r.message); }
+            })
+            .fail(function () { st.hojas.forEach(function (h) { h.orden = previo[h.id]; }); pintarLista(); error(T.Err_Orden); })
+            .always(function () {
+                drag.guardando = false;
+                if (drag.pendiente) { drag.pendiente = false; guardarOrden(); }
+            });
+    }
+
+    // ── Detalle ────────────────────────────────────────────────────────────────────
+    function seleccionar(id, conservarTab) {
+        var h = st.hojas.filter(function (x) { return x.id === id; })[0];
+        if (!h) { st.sel = null; $('#hcDetalle').html(vacioHtml); return; }
+        st.sel = h; st.det = null;
+        if (!conservarTab) st.tab = 'general';
+        pintarLista();
+        pintarDetalleBase();
+        $.get(URL.detalle, { id: id }).done(function (r) {
+            if (!st.sel || st.sel.id !== id) return;
+            if (!r.success) { error(r.message); return; }
+            st.det = r;
+            pintarDetalleBase();
+        });
+    }
+
+    function nivelDiag() {
+        if (!st.det) return null;
+        var n = st.det.diagnostico.map(function (d) { return d.nivel; });
+        return n.indexOf('error') >= 0 ? 'err' : (n.indexOf('warn') >= 0 ? 'warn' : 'ok');
+    }
+
+    function pintarDetalleBase() {
+        var h = st.sel, d = st.det;
+        var nCols = d ? d.columnas.length : '…';
+        var dot = nivelDiag();
+        var html =
+            '<div class="hc-det-head">' +
+              '<div style="min-width:0;">' +
+                '<h2 class="hc-det-titulo">' + esc(h.hoja) + ' ' + tagAlcance(h) + '</h2>' +
+                '<div class="hc-det-ruta"><span class="seg z"><i class="fas fa-file-excel" style="color:#217346"></i> ' + esc(h.hoja) + '</span><i class="fas fa-arrow-right"></i>' +
+                  '<span class="seg">Staging_' + esc(h.tabla) + '</span><i class="fas fa-arrow-right"></i><span class="seg ini">' + esc(h.tabla) + '</span></div>' +
+                (h.descripcion ? '<div class="hc-ayuda" style="margin-top:.5rem;font-size:.82rem;">' + esc(h.descripcion) + '</div>' : '') +
+              '</div>' +
+              (st.desdeBD ? '<div class="hc-det-acciones"><button type="button" class="hc-btn-icono danger" id="hcEliminar" title="' + esc(T.BtnEliminar) + '"><i class="fas fa-trash-alt"></i></button></div>' : '') +
+            '</div>' +
+            '<div class="hc-tabs" role="tablist">' +
+              tabBtn('general', 'fa-sliders-h', T.TabGeneral, '') +
+              tabBtn('columnas', 'fa-columns', T.TabColumnas, '<span class="cnt">' + nCols + '</span>') +
+              tabBtn('alcance', 'fa-building', T.TabAlcance, '') +
+              tabBtn('uso', 'fa-stethoscope', T.TabUso, dot ? '<span class="dot ' + dot + '"></span>' : '') +
+            '</div>' +
+            '<div class="hc-tab-body" id="hcTabBody"></div>';
+        $('#hcDetalle').html(html);
+        pintarTab();
+    }
+    function tabBtn(k, ic, txt, extra) {
+        return '<button type="button" class="hc-tab' + (st.tab === k ? ' on' : '') + '" data-tab="' + k + '"><i class="fas ' + ic + '"></i>' + esc(txt) + extra + '</button>';
+    }
+
+    function pintarTab() {
+        var $b = $('#hcTabBody');
+        if (st.tab === 'general') return pintarGeneral($b);
+        if (!st.det) { $b.html('<div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin mr-2"></i>' + esc(T.Cargando) + '</div>'); return; }
+        if (st.tab === 'columnas') return pintarColumnas($b);
+        if (st.tab === 'alcance') return pintarAlcanceTab($b);
+        if (st.tab === 'uso') return pintarUso($b);
+    }
+
+    // ── Pestaña General ──
+    function pintarGeneral($b) {
+        var h = st.sel, ro = !st.desdeBD;
+        $b.html(
+            '<div class="hc-grid2">' +
+              '<div class="hc-campo"><label for="gHoja"><i class="fas fa-file-excel"></i>' + esc(T.LblHoja) + '</label>' +
+                '<input type="text" class="form-control hc-mono" id="gHoja" maxlength="31" value="' + esc(h.hoja) + '"' + (ro ? ' disabled' : '') + ' />' +
+                '<div class="hc-ayuda">' + esc(T.AyudaHoja) + '</div></div>' +
+              '<div class="hc-campo"><label><i class="fas fa-database"></i>' + esc(T.LblTabla) + '</label>' +
+                '<input type="text" class="form-control hc-mono hc-bloqueado" value="' + esc(h.tabla) + '" disabled />' +
+                '<div class="hc-ayuda"><i class="fas fa-lock mr-1"></i>' + esc(T.AyudaTablaFija) + '</div></div>' +
+              '<div class="hc-campo full"><label for="gDesc"><i class="fas fa-align-left"></i>' + esc(T.LblDescripcion) + '</label>' +
+                '<textarea class="form-control" id="gDesc" rows="2" maxlength="500" placeholder="' + esc(T.PhDescripcion) + '"' + (ro ? ' disabled' : '') + '>' + esc(h.descripcion || '') + '</textarea></div>' +
+              '<div class="hc-campo"><label for="gOrden"><i class="fas fa-sort-numeric-down"></i>' + esc(T.LblOrden) + '</label>' +
+                '<input type="number" class="form-control" id="gOrden" min="0" max="9999" value="' + h.orden + '"' + (ro ? ' disabled' : '') + ' /></div>' +
+              '<div class="hc-campo"><label>&nbsp;</label>' +
+                '<label class="hc-switch"><input type="checkbox" id="gActivo"' + (h.activo ? ' checked' : '') + (ro ? ' disabled' : '') + ' /><span class="trk"></span>' + esc(T.LblActiva) + '</label>' +
+                '<div class="hc-ayuda">' + esc(T.AyudaActiva) + '</div></div>' +
+            '</div>' +
+            (ro ? '' : '<div class="hc-acciones"><span class="hc-estado" id="gEstado">' + esc(T.SinCambios) + '</span>' +
+              '<button type="button" class="btn btn-modern-gradient" id="gGuardar" disabled><i class="fas fa-save mr-1"></i>' + esc(T.BtnGuardar) + '</button></div>'));
+    }
+    function generalSucio() {
+        var h = st.sel;
+        return $('#gHoja').val().trim() !== h.hoja || ($('#gDesc').val().trim() || '') !== (h.descripcion || '') ||
+            parseInt($('#gOrden').val(), 10) !== h.orden || $('#gActivo').is(':checked') !== h.activo;
+    }
+    function guardarGeneral() {
+        var h = st.sel, activo = $('#gActivo').is(':checked');
+        var enviar = function () {
+            post(URL.general, { id: h.id, nombreHoja: $('#gHoja').val().trim(), descripcion: $('#gDesc').val().trim(), orden: parseInt($('#gOrden').val(), 10) || 0, activo: activo })
+                .done(function (r) { if (r.success) { toast('success', r.message); cargar(h.id); } else error(r.message); });
+        };
+        if (h.activo && !activo) {
+            sw({ icon: 'warning', title: T.ConfDesactivarTitulo, text: T.ConfDesactivarTexto, showCancelButton: true, confirmButtonText: T.BtnConfirmar, cancelButtonText: T.BtnCancelar })
+                .then(function (x) { if (x.isConfirmed) enviar(); });
+        } else enviar();
+    }
+
+    // ── Pestaña Columnas ──
+    function pintarColumnas($b) {
+        var d = st.det, h = st.sel;
+        if (!d.existeIni) { $b.html('<div class="hc-nota err"><i class="fas fa-times-circle"></i><div>' + esc(fmt(T.SinTabla, h.tabla)) + '</div></div>'); return; }
+        var nota;
+        if (d.estructuraEditable) nota = '<div class="hc-nota info"><i class="fas fa-unlock"></i><div>' + esc(T.ColsNotaEditable) + '</div></div>';
+        else if (d.usadaPor.length) nota = '<div class="hc-nota warn"><i class="fas fa-lock"></i><div>' + esc(fmt(T.ColsNotaUsada, d.usadaPor.join(', '))) + '</div></div>';
+        else nota = '<div class="hc-nota warn"><i class="fas fa-lock"></i><div>' + esc(T.ColsNotaDatos) + '</div></div>';
+
+        var filas = d.columnas.map(function (c, i) {
+            var acc = '';
+            if (st.desdeBD && d.estructuraEditable) {
+                acc = '<button type="button" class="hc-mini" data-editcol="' + i + '" title="' + esc(T.ColModalEditar) + '"><i class="fas fa-pen"></i></button> ' +
+                      (c.nombre === ANIO ? '' : '<button type="button" class="hc-mini danger" data-delcol="' + i + '"><i class="fas fa-trash-alt"></i></button>');
+            }
+            return '<tr><td class="text-muted" style="width:1%;">' + (i + 1) + '</td><td><strong class="hc-mono">' + esc(c.nombre) + '</strong>' +
+                (c.nombre === ANIO ? '<i class="fas fa-lock hc-candado"></i>' : '') + '</td>' +
+                '<td><span class="hc-tipo">' + esc(c.tipoCompleto) + '</span></td>' +
+                '<td>' + (c.nulos ? esc(T.Si) : '<strong>' + esc(T.No) + '</strong>') + '</td>' +
+                '<td class="hc-mono">' + (c.defecto != null ? esc(c.defecto) : '<span class="text-muted">—</span>') + '</td>' +
+                '<td class="acc">' + acc + '</td></tr>';
+        }).join('');
+
+        var sistema = d.columnasSistema.map(function (c) { return '<span class="hc-tag neutro hc-mono">' + esc(c.nombre) + ' · ' + esc(c.tipoCompleto) + '</span>'; }).join('');
+
+        $b.html(nota +
+            '<div class="table-wrapper hc-tabla-cols"><table class="data-table"><thead><tr><th>#</th><th>' + esc(T.ThColumna) + '</th><th>' + esc(T.ThTipo) + '</th><th>' + esc(T.ThNulos) + '</th><th>' + esc(T.ThDefecto) + '</th><th></th></tr></thead><tbody>' + filas + '</tbody></table></div>' +
+            (st.desdeBD ? '<button type="button" class="btn btn-modern-gradient btn-sm mt-3" id="cAgregar"><i class="fas fa-plus mr-1"></i>' + esc(T.BtnAgregarColumna) + '</button>' : '') +
+            '<details class="hc-sistema"><summary><i class="fas fa-chevron-right"></i><i class="fas fa-cog"></i>' + esc(fmt(T.Sistema, d.columnasSistema.length)) + '</summary><div class="hc-sistema-lista">' + sistema + '</div></details>');
+    }
+
+    // Modal de columna (agregar / modificar)
+    var mc = { modo: 'nueva', original: null };
+    function abrirModalColumna(col) {
+        mc.modo = col ? 'editar' : 'nueva'; mc.original = col ? col.nombre : null;
+        $('#mcTitulo').text(col ? T.ColModalEditar : T.ColModalNueva);
+        $('#mcNotaAgregar').toggle(!col);
+        $('#mcTipo').html(opcionesTipo(col ? col.tipo : 'varchar'));
+        $('#mcNombre').val(col ? col.nombre : '').prop('disabled', !!col && col.nombre === ANIO);
+        $('#mcLong').val(col ? (usaPrecision(col.tipo) ? col.precision : col.longitud) : 100);
+        $('#mcEsc').val(col && col.escala != null ? col.escala : 2);
+        $('#mcDef').val(col && col.defecto != null ? col.defecto : '');
+        $('#mcNulos').prop('checked', col ? col.nulos : true);
+        ajustarModalTipo();
+        $('#hcModalCol').modal('show');
+    }
+    function ajustarModalTipo() {
+        var t = $('#mcTipo').val();
+        $('#mcWrapLong').toggle(usaLongitud(t) || usaPrecision(t));
+        $('#mcWrapEsc').toggle(usaPrecision(t));
+        $('#mcLblLong').text(usaPrecision(t) ? '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.HojasCargue_LblPrecision))' : '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.HojasCargue_LblLongitud))');
+        if (usaPrecision(t) && (!$('#mcLong').val() || +$('#mcLong').val() > 38)) $('#mcLong').val(18);
+    }
+    function leerColumna(nombre, tipo, longPrec, escala, nulos, defecto) {
+        var c = { Nombre: (nombre || '').trim(), Tipo: tipo, PermiteNulos: !!nulos, ValorDefecto: (defecto || '').trim() || null };
+        if (usaLongitud(tipo)) c.Longitud = parseInt(longPrec, 10);
+        if (usaPrecision(tipo)) { c.Precision = parseInt(longPrec, 10); c.Escala = parseInt(escala, 10) || 0; }
+        return c;
+    }
+    function guardarModalColumna() {
+        var col = leerColumna(mc.original === ANIO ? ANIO : $('#mcNombre').val(), $('#mcTipo').val(), $('#mcLong').val(), $('#mcEsc').val(), $('#mcNulos').is(':checked'), $('#mcDef').val());
+        if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü_][A-Za-z0-9ÁÉÍÓÚáéíóúÑñÜü_]{0,63}$/.test(col.Nombre)) { error(T.Err_ColumnaNombre); return; }
+        var h = st.sel;
+        sw({ icon: 'question', title: T.ConfColTitulo, text: fmt(T.ConfColTexto, h.tabla), showCancelButton: true, confirmButtonText: T.BtnConfirmar, cancelButtonText: T.BtnCancelar })
+            .then(function (x) {
+                if (!x.isConfirmed) return;
+                var data = { id: h.id, columna: JSON.stringify(col) };
+                if (mc.modo === 'editar') data.nombreOriginal = mc.original;
+                post(mc.modo === 'editar' ? URL.modCol : URL.addCol, data).done(function (r) {
+                    if (r.success) { $('#hcModalCol').modal('hide'); toast('success', r.message); cargar(h.id); } else error(r.message);
+                });
+            });
+    }
+    function eliminarColumna(col) {
+        var h = st.sel;
+        sw({ icon: 'warning', title: fmt(T.ConfEliminarColTitulo, col.nombre), text: fmt(T.ConfColTexto, h.tabla), showCancelButton: true, confirmButtonText: T.BtnEliminarConfirmar, cancelButtonText: T.BtnCancelar })
+            .then(function (x) {
+                if (!x.isConfirmed) return;
+                post(URL.delCol, { id: h.id, nombre: col.nombre }).done(function (r) { if (r.success) { toast('success', r.message); cargar(h.id); } else error(r.message); });
+            });
+    }
+
+    // ── Selector de alcance (compartido: pestaña Alcance y asistente) ──
+    function htmlAlcance(prefijo, alcance, seleccion, filasPorEmpresa, ro) {
+        var filas = {}; (filasPorEmpresa || []).forEach(function (f) { filas[f.idEmpresa] = f.filas; });
+        var lista = st.empresas.map(function (e) {
+            var chk = seleccion.indexOf(e.id) >= 0;
+            return '<label class="hc-emp" data-nombre="' + esc(e.nombre.toLowerCase()) + '"><input type="checkbox" class="' + prefijo + 'Emp" value="' + e.id + '"' + (chk ? ' checked' : '') + (ro ? ' disabled' : '') + ' />' +
+                esc(e.nombre) + (filas[e.id] ? '<span class="filas">' + esc(fmt(T.EmpFilas, num(filas[e.id]))) + '</span>' : '') + '</label>';
+        }).join('');
+        return '<div class="hc-opciones">' +
+              opcionAlcance(prefijo, 'ESTANDAR', 'fa-globe', T.OpcEstandarT, T.OpcEstandarS, alcance, ro) +
+              opcionAlcance(prefijo, 'PERSONALIZADA', 'fa-puzzle-piece', T.OpcPersT, T.OpcPersS, alcance, ro) +
+            '</div>' +
+            '<div id="' + prefijo + 'EmpWrap"' + (alcance === 'PERSONALIZADA' ? '' : ' style="display:none;"') + '>' +
+              '<div class="hc-empresas"><div class="hc-empresas-head"><div class="hc-buscar"><i class="fas fa-search"></i><input type="text" class="form-control form-control-sm" id="' + prefijo + 'EmpQ" placeholder="' + esc(T.EmpBuscar) + '" /></div>' +
+                '<span class="cuenta" id="' + prefijo + 'EmpCuenta"></span></div>' +
+                '<div class="hc-empresas-lista">' + lista + '</div></div>' +
+              '<div class="hc-emp-sel" id="' + prefijo + 'EmpSel"></div>' +
+            '</div>';
+    }
+    function opcionAlcance(prefijo, valor, ic, t, s, actual, ro) {
+        return '<label class="hc-opcion' + (actual === valor ? ' on' : '') + '"><input type="radio" name="' + prefijo + 'Alcance" value="' + valor + '"' + (actual === valor ? ' checked' : '') + (ro ? ' disabled' : '') + ' />' +
+            '<span class="ic"><i class="fas ' + ic + '"></i></span><span><span class="t">' + esc(t) + '</span><span class="s">' + esc(s) + '</span></span></label>';
+    }
+    function leerAlcance(prefijo) {
+        return {
+            alcance: $('input[name="' + prefijo + 'Alcance"]:checked').val(),
+            empresas: $('.' + prefijo + 'Emp:checked').map(function () { return +this.value; }).get()
+        };
+    }
+    function refrescarAlcance(prefijo) {
+        var a = leerAlcance(prefijo);
+        $('input[name="' + prefijo + 'Alcance"]').each(function () { $(this).closest('.hc-opcion').toggleClass('on', this.checked); });
+        $('#' + prefijo + 'EmpWrap').toggle(a.alcance === 'PERSONALIZADA');
+        $('#' + prefijo + 'EmpCuenta').text(fmt(T.EmpSeleccionadas, a.empresas.length));
+        $('#' + prefijo + 'EmpSel').html(a.empresas.map(function (id) {
+            return '<span class="hc-emp-chip">' + esc(nombreEmpresa(id)) + '<button type="button" data-quitar="' + id + '" data-pref="' + prefijo + '">&times;</button></span>';
+        }).join(''));
+    }
+    $(document).on('change', 'input[type=radio][name$="Alcance"], .aEmp, .wEmp', function () {
+        var pref = this.name && /Alcance$/.test(this.name) ? this.name.replace('Alcance', '') : ($(this).hasClass('aEmp') ? 'a' : 'w');
+        refrescarAlcance(pref);
+        if (pref === 'a') estadoAlcanceTab();
+    });
+    $(document).on('input', '#aEmpQ, #wEmpQ', function () {
+        var q = this.value.toLowerCase(), pref = this.id.charAt(0);
+        $('.' + pref + 'Emp').closest('.hc-emp').each(function () { $(this).toggle($(this).data('nombre').indexOf(q) >= 0); });
+    });
+    $(document).on('click', '.hc-emp-chip button', function () {
+        var pref = $(this).data('pref');
+        $('.' + pref + 'Emp[value="' + $(this).data('quitar') + '"]').prop('checked', false).trigger('change');
+    });
+
+    // ── Pestaña Alcance ──
+    function pintarAlcanceTab($b) {
+        var h = st.sel, ro = !st.desdeBD;
+        $b.html('<div class="hc-nota info"><i class="fas fa-info-circle"></i><div>' + esc(T.AlcanceNota) + '</div></div>' +
+            htmlAlcance('a', h.alcance, h.empresas.slice(), st.det.filasPorEmpresa, ro) +
+            '<div id="aAviso"></div>' +
+            (ro ? '' : '<div class="hc-acciones"><span class="hc-estado" id="aEstado">' + esc(T.SinCambios) + '</span><button type="button" class="btn btn-modern-gradient" id="aGuardar" disabled><i class="fas fa-save mr-1"></i>' + esc(T.BtnGuardarAlcance) + '</button></div>'));
+        refrescarAlcance('a');
+    }
+    function estadoAlcanceTab() {
+        var h = st.sel, a = leerAlcance('a');
+        var antes = h.empresas.slice().sort().join(','), ahora = a.empresas.slice().sort().join(',');
+        var sucio = a.alcance !== h.alcance || (a.alcance === 'PERSONALIZADA' && antes !== ahora);
+        $('#aGuardar').prop('disabled', !sucio);
+        $('#aEstado').text(sucio ? T.CambiosPendientes : T.SinCambios);
+        // Empresas con datos que dejarían de cargar esta hoja
+        var pierden = [];
+        if (a.alcance === 'PERSONALIZADA') {
+            st.det.filasPorEmpresa.forEach(function (f) { if (a.empresas.indexOf(f.idEmpresa) < 0) pierden.push(nombreEmpresa(f.idEmpresa)); });
+        }
+        $('#aAviso').html(pierden.length ? '<div class="hc-nota warn mt-3"><i class="fas fa-exclamation-triangle"></i><div>' + esc(fmt(T.AvisoPierden, pierden.join(', '))) + '</div></div>' : '');
+    }
+    function guardarAlcanceTab() {
+        var h = st.sel, a = leerAlcance('a');
+        if (a.alcance === 'PERSONALIZADA' && !a.empresas.length) { error(T.Err_SinEmpresas); return; }
+        sw({ icon: 'question', title: T.ConfAlcanceTitulo, text: T.ConfAlcanceTexto, showCancelButton: true, confirmButtonText: T.BtnConfirmar, cancelButtonText: T.BtnCancelar })
+            .then(function (x) {
+                if (!x.isConfirmed) return;
+                post(URL.alcance, { id: h.id, alcance: a.alcance, empresas: a.empresas.join(',') })
+                    .done(function (r) { if (r.success) { toast('success', r.message); cargar(h.id); } else error(r.message); });
+            });
+    }
+
+    // ── Pestaña Uso y diagnóstico ──
+    function pintarUso($b) {
+        var d = st.det, h = st.sel;
+        var porEmp = d.filasPorEmpresa.slice().sort(function (a, b) { return b.filas - a.filas; });
+        var tablaEmp = porEmp.length
+            ? '<div class="table-wrapper" style="max-height:240px;"><table class="data-table"><thead><tr><th>' + esc(T.ThEmpresa) + '</th><th style="text-align:right;">' + esc(T.ThFilas) + '</th></tr></thead><tbody>' +
+              porEmp.map(function (f) { return '<tr><td>' + esc(nombreEmpresa(f.idEmpresa)) + '</td><td style="text-align:right;">' + num(f.filas) + '</td></tr>'; }).join('') + '</tbody></table></div>'
+            : '<div class="text-muted" style="font-size:.85rem;">' + esc(T.SinDatos) + '</div>';
+        var usada = d.usadaPor.length
+            ? '<div class="hc-usado">' + d.usadaPor.map(function (u) { return '<code>' + esc(u) + '</code>'; }).join('') + '</div>'
+            : '<div class="text-muted" style="font-size:.85rem;">' + esc(T.NoUsada) + '</div>';
+        var iconos = { ok: 'fa-check-circle', warn: 'fa-exclamation-triangle', error: 'fa-times-circle' };
+        var diag = '<ul class="hc-diag">' + d.diagnostico.map(function (x) {
+            return '<li class="' + x.nivel + '"><i class="fas ' + iconos[x.nivel] + '"></i><span>' + esc(T['Diag_' + x.codigo] || x.codigo) + (x.detalle ? ' <code>' + esc(x.detalle) + '</code>' : '') + '</span></li>';
+        }).join('') + '</ul>';
+        $b.html('<div class="hc-stats">' +
+                '<div class="hc-stat"><div class="v">' + num(d.filasIni) + '</div><div class="l">' + esc(fmt(T.StatFilas, h.tabla)) + '</div></div>' +
+                '<div class="hc-stat"><div class="v">' + num(d.filasStaging) + '</div><div class="l">' + esc(T.StatStaging) + '</div></div>' +
+                '<div class="hc-stat"><div class="v">' + porEmp.length + '</div><div class="l">' + esc(T.StatEmpresas) + '</div></div>' +
+            '</div>' +
+            '<div class="hc-subtitulo"><i class="fas fa-stethoscope"></i>' + esc(T.SubDiagnostico) + '</div>' + diag +
+            '<div class="hc-subtitulo"><i class="fas fa-building"></i>' + esc(T.SubFilasEmpresa) + '</div>' + tablaEmp +
+            '<div class="hc-subtitulo"><i class="fas fa-project-diagram"></i>' + esc(T.SubUsadaPor) + '</div>' + usada +
+            '<div class="hc-subtitulo"><i class="fas fa-vial"></i>' + esc(T.SubPrueba) + '</div>' +
+            '<div class="hc-prueba"><span class="text-muted" style="font-size:.82rem;">' + esc(T.PruebaTexto) + '</span>' +
+              '<button type="button" class="btn btn-modern-excel btn-sm" id="uProbar"><i class="fas fa-vial mr-1"></i>' + esc(T.BtnPlantillaPrueba) + '</button></div>');
+    }
+
+    // ── Eliminar hoja ──
+    function eliminarHoja() {
+        var h = st.sel, d = st.det;
+        var puedeBorrar = d && d.estructuraEditable && d.existeIni;
+        sw({
+            icon: 'warning',
+            title: fmt(T.ConfEliminarTitulo, h.hoja),
+            html: '<p>' + esc(T.ConfEliminarTexto) + '</p>' + (puedeBorrar
+                ? '<label class="hc-swal-check"><input type="checkbox" id="swBorrarTablas" /> ' + esc(fmt(T.ConfEliminarBorrarTablas, h.tabla)) + '</label>'
+                : '<p class="hc-swal-nota">' + esc(T.ConfEliminarConserva) + '</p>'),
+            showCancelButton: true, confirmButtonText: T.BtnEliminarConfirmar, cancelButtonText: T.BtnCancelar,
+            preConfirm: function () { return { borrar: !!(document.getElementById('swBorrarTablas') || {}).checked }; }
+        }).then(function (x) {
+            if (!x.isConfirmed) return;
+            post(URL.eliminar, { id: h.id, borrarTablas: x.value.borrar }).done(function (r) {
+                if (r.success) { toast('success', r.message); st.sel = null; $('#hcDetalle').html(vacioHtml); cargar(null); } else error(r.message);
+            });
+        });
+    }
+
+    // ── Eventos del panel ──
+    var vacioHtml = $('#hcDetalle').html();
+    $('#hcLista')
+        .on('click', '.hc-item', function () { seleccionar(+$(this).data('id')); })
+        .on('keydown', '.hc-item', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); seleccionar(+$(this).data('id')); } });
+    $('#hcFiltros').on('click', '.hc-chip-f', function () { st.filtro = $(this).data('f'); $('#hcFiltros .hc-chip-f').removeClass('on'); $(this).addClass('on'); pintarLista(); });
+    $('#hcBuscar').on('input', function () { st.q = this.value.trim(); pintarLista(); });
+    $('#hcDetalle')
+        .on('click', '.hc-tab', function () { st.tab = $(this).data('tab'); $('.hc-tab').removeClass('on'); $(this).addClass('on'); pintarTab(); })
+        .on('input change', '#gHoja, #gDesc, #gOrden, #gActivo', function () { var s = generalSucio(); $('#gGuardar').prop('disabled', !s); $('#gEstado').text(s ? T.CambiosPendientes : T.SinCambios); })
+        .on('click', '#gGuardar', guardarGeneral)
+        .on('click', '#cAgregar', function () { abrirModalColumna(null); })
+        .on('click', '[data-editcol]', function () { abrirModalColumna(st.det.columnas[+$(this).data('editcol')]); })
+        .on('click', '[data-delcol]', function () { eliminarColumna(st.det.columnas[+$(this).data('delcol')]); })
+        .on('click', '#aGuardar', guardarAlcanceTab)
+        .on('click', '#hcEliminar', eliminarHoja)
+        .on('click', '#uProbar', function () { abrirPrueba(st.sel.alcance === 'PERSONALIZADA' ? st.sel.empresas[0] : 0); });
+    $('#mcTipo').on('change', ajustarModalTipo);
+    $('#mcGuardar').on('click', guardarModalColumna);
+    // ── Plantilla de prueba: modal claro con la lista de hojas que tendrá el Excel ──
+    function abrirPrueba(idEmpresa) {
+        $('#mpEmpresa').html('<option value="0">' + esc(T.PruebaEstandar) + '</option>' +
+            st.empresas.map(function (e) { return '<option value="' + e.id + '">' + esc(e.nombre) + '</option>'; }).join(''))
+            .val(String(idEmpresa || 0));
+        pintarPrevPrueba();
+        $('#hcModalPrueba').modal('show');
+    }
+    function pintarPrevPrueba() {
+        var id = +$('#mpEmpresa').val();
+        var hojas = st.hojas.filter(function (h) { return h.activo && (h.alcance === 'ESTANDAR' || (id > 0 && h.empresas.indexOf(id) >= 0)); })
+            .sort(function (a, b) { return a.orden - b.orden; });
+        $('#mpHojasTitulo').text(fmt(T.PruebaHojasIncluidas, hojas.length));
+        $('#mpHojas').html(hojas.map(function (h) {
+            return '<li><span class="hc-mono">' + esc(h.hoja) + '</span>' +
+                (h.alcance === 'PERSONALIZADA' ? '<span class="hc-tag per"><i class="fas fa-puzzle-piece"></i>' + esc(T.TagPersonalizada) + '</span>' : '') + '</li>';
+        }).join(''));
+    }
+    $('#mpEmpresa').on('change', pintarPrevPrueba);
+    $('#mpDescargar').on('click', function () {
+        window.location.href = URL.prueba + '?idEmpresa=' + encodeURIComponent($('#mpEmpresa').val());
+        $('#hcModalPrueba').modal('hide');
+    });
+    $('#hcBtnPrueba').on('click', function () { abrirPrueba(0); });
+
+    // ══════════════════ Asistente "Nueva hoja" ══════════════════
+    var wz = { paso: 1, tablaManual: false, existe: false, tieneAnio: true, colsExistentes: [], verif: null, cols: [] };
+
+    function colsIniciales() {
+        return [
+            { n: 'Empresa', t: 'varchar', l: 100, e: null, nul: true, d: '' },
+            { n: ANIO, t: 'varchar', l: 10, e: null, nul: true, d: '' },
+            { n: 'Mes', t: 'varchar', l: 10, e: null, nul: true, d: '' },
+            { n: 'Valor', t: 'money', l: null, e: null, nul: true, d: '' }
+        ];
+    }
+    function abrirAsistente() {
+        var maxOrden = st.hojas.reduce(function (m, h) { return Math.max(m, h.orden); }, 0);
+        wz = { paso: 1, tablaManual: false, existe: false, tieneAnio: true, colsExistentes: [], verif: null, cols: colsIniciales() };
+        $('#wzHoja, #wzTabla, #wzDesc').val('');
+        $('#wzOrden').val(maxOrden + 10);
+        $('#wzEstadoTabla').empty();
+        $('#wzAlcance').html(htmlAlcance('w', 'ESTANDAR', [], [], false));
+        refrescarAlcance('w');
+        pintarColsEditor();
+        irPaso(1);
+        $('#hcModalNueva').modal('show');
+        setTimeout(function () { $('#wzHoja').trigger('focus'); }, 350);
+    }
+    function irPaso(p) {
+        wz.paso = p;
+        $('.wz-paso').hide().filter('[data-p="' + p + '"]').show();
+        $('#wzPasos .hc-paso').each(function () { var n = +$(this).data('p'); $(this).toggleClass('on', n === p).toggleClass('hecho', n < p); });
+        $('#wzAnterior').toggle(p > 1);
+        $('#wzSiguiente').toggle(p < 4);
+        $('#wzCrear').toggle(p === 4);
+        if (p === 2) { $('#wzColsNuevas').toggle(!wz.existe); $('#wzColsExistentes').toggle(wz.existe); }
+        if (p === 4) pintarResumen();
+    }
+    function nombreHojaWz() { return 'Z_' + $('#wzHoja').val().trim(); }
+    function nombreTablaWz() { return 'Ini_' + $('#wzTabla').val().trim(); }
+
+    var timerVerif = null;
+    function verificarTabla() {
+        clearTimeout(timerVerif);
+        var tabla = nombreTablaWz();
+        if (!/^Ini_[A-Za-z0-9_]{1,96}$/.test(tabla)) { wz.verif = null; $('#wzEstadoTabla').html($('#wzTabla').val() ? '<span class="hc-tag err"><i class="fas fa-times"></i>' + esc(T.EstadoInvalida) + '</span>' : ''); return; }
+        $('#wzEstadoTabla').html('<span class="text-muted"><i class="fas fa-spinner fa-spin mr-1"></i>' + esc(T.EstadoVerificando) + '</span>');
+        timerVerif = setTimeout(function () {
+            wz.verif = $.get(URL.verificar, { tabla: tabla }).done(function (r) {
+                if (!r.success || nombreTablaWz() !== tabla) return;
+                wz.existe = !!r.existe; wz.tieneAnio = r.tieneAnio !== false; wz.colsExistentes = r.columnas || [];
+                var html;
+                if (!r.existe) html = '<span class="hc-tag ok"><i class="fas fa-plus"></i>' + esc(T.EstadoNueva) + '</span>';
+                else if (!wz.tieneAnio) html = '<span class="hc-tag err"><i class="fas fa-times"></i>' + esc(T.EstadoExistenteSinAnio) + '</span>';
+                else html = '<span class="hc-tag warn"><i class="fas fa-link"></i>' + esc(fmt(T.EstadoExistente, wz.colsExistentes.length)) + '</span>';
+                $('#wzEstadoTabla').html(html);
+                $('#wzColsExistBody').html(wz.colsExistentes.map(function (c) {
+                    return '<tr><td class="hc-mono"><strong>' + esc(c.nombre) + '</strong></td><td><span class="hc-tipo">' + esc(c.tipoCompleto) + '</span></td><td>' + (c.nulos ? esc(T.Si) : esc(T.No)) + '</td><td class="hc-mono">' + (c.defecto != null ? esc(c.defecto) : '—') + '</td></tr>';
+                }).join(''));
+            });
+        }, 400);
+    }
+
+    function pintarColsEditor() {
+        $('#wzColsBody').html(wz.cols.map(function (c, i) {
+            var esAnio = c.n === ANIO;
+            var lp = usaLongitud(c.t) ? (c.l == null ? 100 : c.l) : (usaPrecision(c.t) ? (c.l == null ? 18 : c.l) : '');
+            return '<tr data-i="' + i + '">' +
+                '<td class="mov"><button type="button" class="hc-mini" data-mv="-1"' + (i === 0 ? ' disabled' : '') + '><i class="fas fa-arrow-up"></i></button> ' +
+                    '<button type="button" class="hc-mini" data-mv="1"' + (i === wz.cols.length - 1 ? ' disabled' : '') + '><i class="fas fa-arrow-down"></i></button></td>' +
+                '<td><input type="text" class="form-control hc-mono" data-k="n" value="' + esc(c.n) + '" placeholder="' + esc(T.PhColumna) + '" maxlength="64"' + (esAnio ? ' disabled' : '') + ' />' + '</td>' +
+                '<td><select class="form-control" data-k="t">' + opcionesTipo(c.t) + '</select></td>' +
+                '<td><input type="number" class="form-control num" data-k="l" value="' + lp + '"' + (usaLongitud(c.t) || usaPrecision(c.t) ? '' : ' disabled') + ' /></td>' +
+                '<td><input type="number" class="form-control num" data-k="e" value="' + (usaPrecision(c.t) ? (c.e == null ? 2 : c.e) : '') + '"' + (usaPrecision(c.t) ? '' : ' disabled') + ' /></td>' +
+                '<td class="chk"><input type="checkbox" data-k="nul"' + (c.nul ? ' checked' : '') + ' /></td>' +
+                '<td><input type="text" class="form-control" data-k="d" value="' + esc(c.d || '') + '" placeholder="' + esc(T.PhDefecto) + '" /></td>' +
+                '<td>' + (esAnio ? '<i class="fas fa-lock hc-candado" title="' + esc(T.Err_SinAnio) + '"></i>' : '<button type="button" class="hc-mini danger" data-del="1"><i class="fas fa-trash-alt"></i></button>') + '</td>' +
+            '</tr>';
+        }).join(''));
+    }
+    $('#wzColsBody')
+        .on('input change', '[data-k]', function () {
+            var i = +$(this).closest('tr').data('i'), k = $(this).data('k'), c = wz.cols[i];
+            if (k === 'nul') c.nul = this.checked;
+            else if (k === 't') { c.t = this.value; c.l = usaLongitud(c.t) ? 100 : (usaPrecision(c.t) ? 18 : null); c.e = usaPrecision(c.t) ? 2 : null; pintarColsEditor(); }
+            else if (k === 'l' || k === 'e') c[k] = this.value === '' ? null : parseInt(this.value, 10);
+            else c[k] = this.value;
+        })
+        .on('click', '[data-mv]', function () {
+            var i = +$(this).closest('tr').data('i'), j = i + (+$(this).data('mv'));
+            var tmp = wz.cols[i]; wz.cols[i] = wz.cols[j]; wz.cols[j] = tmp; pintarColsEditor();
+        })
+        .on('click', '[data-del]', function () { wz.cols.splice(+$(this).closest('tr').data('i'), 1); pintarColsEditor(); });
+    $('#wzAgregarCol').on('click', function () { wz.cols.push({ n: '', t: 'varchar', l: 100, e: null, nul: true, d: '' }); pintarColsEditor(); $('#wzColsBody tr:last [data-k="n"]').trigger('focus'); });
+
+    function columnasWz() {
+        return wz.cols.map(function (c) { return leerColumna(c.n, c.t, c.l, c.e, c.nul, c.d); });
+    }
+    function datosWz() {
+        var a = leerAlcance('w');
+        return {
+            NombreHoja: nombreHojaWz(), TablaIni: nombreTablaWz(), Descripcion: $('#wzDesc').val().trim(),
+            Orden: parseInt($('#wzOrden').val(), 10) || 0, Alcance: a.alcance,
+            Empresas: a.alcance === 'PERSONALIZADA' ? a.empresas : [],
+            Columnas: wz.existe ? [] : columnasWz()
+        };
+    }
+    function validarPaso(p) {
+        if (p === 1) {
+            if (!/^Z_[A-Za-z0-9_]{1,29}$/.test(nombreHojaWz())) return T.Err_NombreHoja;
+            if (!/^Ini_[A-Za-z0-9_]{1,96}$/.test(nombreTablaWz())) return T.Err_NombreTabla;
+            if (wz.existe && !wz.tieneAnio) return T.Err_SinAnio;
+        }
+        if (p === 2 && !wz.existe) {
+            var cols = columnasWz(), vistos = {};
+            if (!cols.length) return T.Err_SinColumnas;
+            for (var i = 0; i < cols.length; i++) {
+                if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü_][A-Za-z0-9ÁÉÍÓÚáéíóúÑñÜü_]{0,63}$/.test(cols[i].Nombre)) return T.Err_ColumnaNombre + ' (' + (cols[i].Nombre || '#' + (i + 1)) + ')';
+                var k = cols[i].Nombre.toLowerCase();
+                if (vistos[k]) return T.Err_ColumnaDuplicada + ' (' + cols[i].Nombre + ')';
+                vistos[k] = 1;
+            }
+            if (!vistos[ANIO.toLowerCase()]) return T.Err_SinAnio;
+        }
+        if (p === 3) {
+            var a = leerAlcance('w');
+            if (a.alcance === 'PERSONALIZADA' && !a.empresas.length) return T.Err_SinEmpresas;
+        }
+        return null;
+    }
+    function siguiente() {
+        var avanzar = function () {
+            var e = validarPaso(wz.paso);
+            if (e) { error(e); return; }
+            irPaso(wz.paso + 1);
+        };
+        // En el paso 1 se espera a que termine la verificación de la tabla (existe / nueva).
+        if (wz.paso === 1 && wz.verif && wz.verif.state && wz.verif.state() === 'pending') wz.verif.always(avanzar); else avanzar();
+    }
+    function pintarResumen() {
+        var d = datosWz();
+        var alc = d.Alcance === 'PERSONALIZADA' ? T.OpcPersT : T.OpcEstandarT;
+        $('#wzResumen').html(
+            '<div><span>' + esc(T.Res_Hoja) + '</span><strong class="hc-mono">' + esc(d.NombreHoja) + '</strong></div>' +
+            '<div><span>' + esc(T.Res_Tabla) + '</span><strong class="hc-mono">' + esc(d.TablaIni) + '</strong></div>' +
+            '<div><span>' + esc(T.Res_Alcance) + '</span><strong>' + esc(alc) + '</strong>' + (d.Empresas.length ? ' · ' + esc(d.Empresas.map(nombreEmpresa).join(', ')) : '') + '</div>' +
+            '<div><span>' + esc(T.Res_Columnas) + '</span><strong>' + (wz.existe ? wz.colsExistentes.length : d.Columnas.length) + '</strong></div>');
+        $('#wzSql').html('<div class="text-muted"><i class="fas fa-spinner fa-spin mr-1"></i>' + esc(T.Cargando) + '</div>');
+        $.post(URL.preview, { datos: JSON.stringify(d) }).done(function (r) {
+            if (!r.success) { $('#wzSql').html('<div class="hc-nota err"><i class="fas fa-times-circle"></i><div>' + esc(r.message) + '</div></div>'); $('#wzCrear').prop('disabled', true); return; }
+            $('#wzCrear').prop('disabled', false);
+            $('#wzSql').html(r.sql ? '<pre class="hc-sql">' + esc(r.sql) + '</pre>' : '<div class="hc-nota info"><i class="fas fa-link"></i><div>' + esc(T.SqlRegistrar) + '</div></div>');
+        }).fail(function () { $('#wzSql').html('<div class="hc-nota err"><i class="fas fa-times-circle"></i><div>' + esc(T.ErrorRed) + '</div></div>'); });
+    }
+    function crear() {
+        var d = datosWz();
+        sw({ icon: 'question', title: T.ConfCrearTitulo, text: fmt(T.ConfCrearTexto, d.TablaIni), showCancelButton: true, confirmButtonText: T.BtnConfirmar, cancelButtonText: T.BtnCancelar })
+            .then(function (x) {
+                if (!x.isConfirmed) return;
+                overlay(true, T.Creando);
+                $.post(URL.crear, { datos: JSON.stringify(d) })
+                    .always(function () { overlay(false); })
+                    .done(function (r) {
+                        if (!r.success) { error(r.message); return; }
+                        $('#hcModalNueva').modal('hide');
+                        toast('success', r.message);
+                        st.filtro = 'todas'; $('#hcFiltros .hc-chip-f').removeClass('on').filter('[data-f="todas"]').addClass('on');
+                        st.tab = 'columnas';   // al abrir la hoja nueva se muestra su estructura
+                        cargar(r.id);
+                    })
+                    .fail(function () { error(T.ErrorRed); });
+            });
+    }
+
+    $('#hcBtnNueva').on('click', abrirAsistente);
+    $('#wzSiguiente').on('click', siguiente);
+    $('#wzAnterior').on('click', function () { irPaso(wz.paso - 1); });
+    $('#wzCrear').on('click', crear);
+    $('#wzHoja').on('input', function () {
+        // Sugerencia de tabla: Ini_ + nombre de la hoja sin Z_, hasta que el usuario la edite a mano.
+        this.value = this.value.replace(/^Z_/i, '').replace(/[^A-Za-z0-9_]/g, '');
+        if (!wz.tablaManual) { $('#wzTabla').val(this.value); verificarTabla(); }
+    });
+    $('#wzTabla').on('input', function () {
+        this.value = this.value.replace(/^Ini_/i, '').replace(/[^A-Za-z0-9_]/g, '');
+        wz.tablaManual = this.value !== $('#wzHoja').val();
+        verificarTabla();
+    });
+
+    cargar(null);
+})();
+</script>
+}
