@@ -21,8 +21,12 @@
     var opcionesJson = jss.Serialize(Model.Select(o => new {
         o.Id, o.Codigo, o.Nombre, o.NombreEN, o.Descripcion, o.Icono, o.Orden,
         o.Controller, o.Action, o.IdGrupo, o.IdCategoria, o.NombreGrupo, o.Categoria,
-        o.SoloSuperAdmin, o.SoloAdminEmpresa, o.EsDestacado
+        o.SoloSuperAdmin, o.SoloAdminEmpresa, o.EsDestacado, o.IdsEmpresas
     }));
+
+    var empresasMenu = (ViewBag.Empresas as List<bufinscustomers.Models.Empresas> ?? new List<bufinscustomers.Models.Empresas>())
+        .OrderBy(e => e.Nombre).ToList();
+    var nombresEmpresa = empresasMenu.ToDictionary(e => e.Id, e => e.Nombre);
 
     var grupos     = ViewBag.Grupos     as List<bufinscustomers.Models.GrupoMenu>     ?? new List<bufinscustomers.Models.GrupoMenu>();
     var categorias = ViewBag.Categorias as List<bufinscustomers.Models.CategoriaMenu> ?? new List<bufinscustomers.Models.CategoriaMenu>();
@@ -82,6 +86,9 @@
     .table-compact .col-acciones  { width: 13%; text-align: center; white-space: nowrap; }
     .badge-super      { background-color: #583AFF; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
     .badge-normal     { background-color: #6c757d; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
+    .badge-personalizada { background-color: #583AFF; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; display: inline-block; margin-top: 2px; }
+    .emp-check-list { max-height: 150px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px; padding: 6px 10px; background: #fff; }
+    .emp-check-list .form-check { margin: 2px 0; }
     .badge-admin-emp  { background-color: #f59e0b; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
     .badge-destacado  { background: linear-gradient(135deg,#583AFF,#01E1D7); color: white; padding: 2px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
     .check-dest-label { display:flex;align-items:center;gap:.4rem;padding:.55rem .85rem;border-radius:8px;border:1px solid rgba(88,58,255,.25);background:linear-gradient(90deg,rgba(88,58,255,.06),rgba(1,225,215,.04));cursor:pointer;transition:border-color .15s,background .15s }
@@ -173,6 +180,10 @@
                                 else
                                 {
                                     <span class="badge-normal">@Resources.Strings.Menu_BadgeTodos</span>
+                                }
+                                @if (opcion.IdsEmpresas != null && opcion.IdsEmpresas.Count > 0)
+                                {
+                                    <br /><span class="badge-personalizada" title="@string.Join(", ", opcion.IdsEmpresas.Select(i => nombresEmpresa.ContainsKey(i) ? nombresEmpresa[i] : ("#" + i)))"><i class="fas fa-building mr-1"></i>@Resources.Strings.Menu_BadgePersonalizada</span>
                                 }
                             </td>
                             <td class="col-destacado">
@@ -324,6 +335,20 @@
                             </label>
                         </div>
                     </div>
+                    <!-- Fila 8: Menú personalizado por empresa -->
+                    <div class="mt-3">
+                        <label><i class="fas fa-building mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelEmpresas</label>
+                        <div class="emp-check-list" id="crearEmpresasLista">
+                            @foreach (var emp in empresasMenu)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input emp-chk-crear" type="checkbox" name="IdsEmpresas" value="@emp.Id" id="crearEmpresa_@emp.Id" />
+                                    <label class="form-check-label" for="crearEmpresa_@emp.Id">@emp.Nombre</label>
+                                </div>
+                            }
+                        </div>
+                        <small class="form-text text-muted">@Resources.Strings.Menu_HintEmpresas</small>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
@@ -448,6 +473,20 @@
                             </label>
                         </div>
                     </div>
+                    <!-- Fila 8: Menú personalizado por empresa -->
+                    <div class="mt-3">
+                        <label><i class="fas fa-building mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelEmpresas</label>
+                        <div class="emp-check-list" id="editEmpresasLista">
+                            @foreach (var emp in empresasMenu)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input emp-chk-edit" type="checkbox" name="IdsEmpresas" value="@emp.Id" id="editEmpresa_@emp.Id" />
+                                    <label class="form-check-label" for="editEmpresa_@emp.Id">@emp.Nombre</label>
+                                </div>
+                            }
+                        </div>
+                        <small class="form-text text-muted">@Resources.Strings.Menu_HintEmpresas</small>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
@@ -561,6 +600,10 @@
         document.getElementById('editSoloSuperAdmin').checked   = o.SoloSuperAdmin;
         document.getElementById('editSoloAdminEmpresa').checked = o.SoloAdminEmpresa;
         document.getElementById('editEsDestacado').checked      = o.EsDestacado;
+        var empSel = o.IdsEmpresas || [];
+        document.querySelectorAll('.emp-chk-edit').forEach(function (chk) {
+            chk.checked = empSel.indexOf(parseInt(chk.value, 10)) !== -1;
+        });
         actualizarEstiloDestacado('editDestacadoLabel', o.EsDestacado);
 
         var idCat = o.IdCategoria || 0;

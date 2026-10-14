@@ -317,7 +317,7 @@ namespace bufinscustomers.Services
             var negocioIni = colsIni.Where(c => !c.EsSistema).ToList();
             if (negocioIni.Count == 0) Add("error", "SinColumnas");
             if (!nombresIni.Contains(ColumnaAnio)) Add("error", "SinAnio");
-            if (!nombresIni.Contains("Mes")) Add("warn", "SinMes");
+            if (!nombresIni.Contains("Mes") && !nombresIni.Contains("Semestre")) Add("warn", "SinMes");
 
             var stgPorNombre = colsStg.ToDictionary(c => c.Nombre, StringComparer.OrdinalIgnoreCase);
             foreach (var c in negocioIni)

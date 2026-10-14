@@ -72,6 +72,7 @@ namespace bufinscustomers.Models
         public const string Cargues       = "CARGUES";
         public const string Escenarios    = "ESCENARIOS";
         public const string HojasCargue   = "HOJAS_CARGUE";
+        public const string Informes      = "INFORMES";
     }
 
     public static class AuditoriaAccion
@@ -88,6 +89,7 @@ namespace bufinscustomers.Models
         public const string Bloqueo      = "Bloqueo";
         public const string Confirmar    = "Confirmar";
         public const string Descartar    = "Descartar";
+        public const string Ver          = "Ver";
     }
 
     /// <summary>Nivel de una fila de auditoría, para resaltar en el visor.</summary>

@@ -185,87 +185,8 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                using (var package = new XLWorkbook())
-                {
-                    var tablas = _service.ObtenerTablasModelos();
-                    var tablaSeleccionada = tablas.FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla);
-                    string nombreHoja = tablaSeleccionada?.NombreAmigable ?? filtros.NombreTabla;
-
-                    if (nombreHoja.Length > 31)
-                        nombreHoja = nombreHoja.Substring(0, 31);
-
-                    var worksheet = package.Worksheets.Add(nombreHoja);
-
-                    int col = 1;
-                    foreach (var nombreColumna in resultado.Columnas)
-                    {
-                        var cell = worksheet.Cell(1, col);
-                        cell.Value = _service.ObtenerNombreAmigableColumna(nombreColumna);
-
-                        cell.Style.Font.Bold = true;
-                        cell.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
-                        cell.Style.Font.FontColor = XLColor.White;
-                        cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                        cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                        cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-
-                        col++;
-                    }
-
-                    int fila = 2;
-                    foreach (var registro in resultado.Filas)
-                    {
-                        col = 1;
-                        foreach (var nombreColumna in resultado.Columnas)
-                        {
-                            var cell = worksheet.Cell(fila, col);
-                            var valor = registro.ContainsKey(nombreColumna) ? registro[nombreColumna] : null;
-
-                            if (valor != null)
-                            {
-                                if (valor is DateTime)
-                                {
-                                    cell.Value = (DateTime)valor;
-                                    cell.Style.NumberFormat.Format = "dd/mm/yyyy";
-                                }
-                                else if (valor is decimal || valor is double || valor is float)
-                                {
-                                    ExcelCellHelper.SetValue(cell, valor);
-                                    cell.Style.NumberFormat.Format = "#,##0.00";
-                                }
-                                else if (valor is int || valor is long)
-                                {
-                                    ExcelCellHelper.SetValue(cell, valor);
-                                    cell.Style.NumberFormat.Format = "#,##0";
-                                }
-                                else
-                                {
-                                    cell.Value = valor.ToString();
-                                }
-                            }
-
-                            cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-                            cell.Style.Border.OutsideBorderColor = XLColor.FromColor(Color.LightGray);
-
-                            col++;
-                        }
-                        fila++;
-                    }
-
-                    worksheet.Columns().AdjustToContents();
-                    worksheet.Range(1, 1, 1, resultado.Columnas.Count).SetAutoFilter();
-                    worksheet.SheetView.Freeze(1, 0);
-
-                    string nombreArchivo = $"InformeModelos_{nombreHoja}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-
-                    byte[] fileBytes;
-                    using (var ms = new MemoryStream())
-                    {
-                        package.SaveAs(ms);
-                        fileBytes = ms.ToArray();
-                    }
-                    return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
-                }
+                var bytes = GenerarExcel(filtros, resultado, out string nombreArchivo);
+                return File(bytes, InformeCorreoHelper.MimeExcel, nombreArchivo);
             }
             catch (Exception ex)
             {
@@ -273,6 +194,168 @@ namespace bufinscustomers.Controllers
                 TempData["ErrorMessage"] = $"Error al exportar a Excel: {ex.Message}";
                 return RedirectToAction("Index");
             }
+        }
+
+        /// <summary>
+        /// Envía por correo el Excel de la tabla consultada desde el botón Exportar (componente estándar). Este informe es una
+        /// grilla de datos: no tiene PDF ni gráficos, así que el correo lleva solo el Excel y un resumen de los filtros. Se
+        /// aplican las mismas reglas de acceso por empresa que la descarga.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult EnviarPorCorreo(FiltrosInformeTablasDatos filtros, string correos = null, bool incluirmeAMi = false, string mensaje = null)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (usuario == null || !EsTablaDeModelo(filtros?.NombreTabla))
+                return Json(new { exito = false, mensaje = R("Common_TablaNoValida") });
+            if (!InformeCorreoHelper.TryDestinatarios(usuario, correos, incluirmeAMi, R, out var lista, out var error))
+                return Json(new { exito = false, mensaje = error });
+
+            try
+            {
+                var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
+                if (!esAdmin)
+                {
+                    if (filtros.IdEmpresa.HasValue)
+                    {
+                        if (!EmpresaAccesoHelper.TieneAcceso(usuario, filtros.IdEmpresa.Value))
+                            return Json(new { exito = false, mensaje = R("Common_SinPermisos") });
+                    }
+                    else
+                    {
+                        filtros.IdEmpresa = usuario.IdEmpresa;
+                    }
+                }
+
+                var idEmpresaConsulta = filtros.IdEmpresa ?? usuario.IdEmpresa;
+                var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaConsulta);
+                if (resultado.TotalRegistros == 0)
+                    return Json(new { exito = false, mensaje = R("InformeModelos_Correo_SinDatos") });
+
+                var bytes = GenerarExcel(filtros, resultado, out string nombreArchivo);
+                if (bytes.Length > 15 * 1024 * 1024)
+                    return Json(new { exito = false, mensaje = R("Common_ExpCorreo_Grande") });
+                var adjuntos = InformeCorreoHelper.Adjuntos(nombreArchivo, bytes, null);
+
+                bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+                var tabla = _service.ObtenerTablasModelos().FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla);
+                string nombreTabla = tabla?.NombreAmigable ?? filtros.NombreTabla;
+                string empresa = idEmpresaConsulta.HasValue
+                    ? (_service.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresaConsulta.Value)?.Nombre ?? "")
+                    : R("Common_ExpCorreo_TodasEmpresas");
+
+                var contexto = new List<(string etiqueta, string valor)>
+                {
+                    (R("Common_ExpCorreo_Tabla"), nombreTabla),
+                    (R("Common_ExpCorreo_Registros"), resultado.TotalRegistros.ToString("N0"))
+                };
+                if (filtros.Año.HasValue) contexto.Add((R("Common_ExpCorreo_Anio"), filtros.Año.Value.ToString()));
+                if (!string.IsNullOrWhiteSpace(filtros.Variable)) contexto.Add((R("Common_ExpCorreo_Variable"), filtros.Variable));
+
+                string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
+                new EmailService().EnviarInforme(string.Join(", ", lista), R("InformeModelos_PageTitle"), empresa, false, contexto, null,
+                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles);
+
+                new AuditoriaService().RegistrarCambio(
+                    AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeModelos", (idEmpresaConsulta ?? 0).ToString(),
+                    $"Informe de modelos enviado por correo a {string.Join(", ", lista)}: '{empresa}' — {nombreTabla} ({resultado.TotalRegistros} registros).",
+                    null,
+                    new { empresa, tabla = filtros.NombreTabla, registros = resultado.TotalRegistros, destinatarios = lista },
+                    idEmpresaConsulta, entidadNombre: empresa, severidad: AuditoriaSeveridad.Advertencia);
+
+                return Json(new { exito = true, mensaje = string.Format(R("Common_ExpCorreo_Exito"), string.Join(", ", lista)) });
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "InformeModelosController.EnviarPorCorreo");
+                return Json(new { exito = false, mensaje = R("Common_ExpCorreo_Error") });
+            }
+        }
+
+        /// <summary>Libro de Excel del informe (lo usan la descarga y el envío por correo del botón Exportar).</summary>
+        private byte[] GenerarExcel(FiltrosInformeTablasDatos filtros, ResultadoInformeTablasDatos resultado, out string nombreArchivo)
+        {
+        using (var package = new XLWorkbook())
+        {
+            var tablas = _service.ObtenerTablasModelos();
+            var tablaSeleccionada = tablas.FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla);
+            string nombreHoja = tablaSeleccionada?.NombreAmigable ?? filtros.NombreTabla;
+
+            if (nombreHoja.Length > 31)
+                nombreHoja = nombreHoja.Substring(0, 31);
+
+            var worksheet = package.Worksheets.Add(nombreHoja);
+
+            int col = 1;
+            foreach (var nombreColumna in resultado.Columnas)
+            {
+                var cell = worksheet.Cell(1, col);
+                cell.Value = _service.ObtenerNombreAmigableColumna(nombreColumna);
+
+                cell.Style.Font.Bold = true;
+                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
+                cell.Style.Font.FontColor = XLColor.White;
+                cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+
+                col++;
+            }
+
+            int fila = 2;
+            foreach (var registro in resultado.Filas)
+            {
+                col = 1;
+                foreach (var nombreColumna in resultado.Columnas)
+                {
+                    var cell = worksheet.Cell(fila, col);
+                    var valor = registro.ContainsKey(nombreColumna) ? registro[nombreColumna] : null;
+
+                    if (valor != null)
+                    {
+                        if (valor is DateTime)
+                        {
+                            cell.Value = (DateTime)valor;
+                            cell.Style.NumberFormat.Format = "dd/mm/yyyy";
+                        }
+                        else if (valor is decimal || valor is double || valor is float)
+                        {
+                            ExcelCellHelper.SetValue(cell, valor);
+                            cell.Style.NumberFormat.Format = "#,##0.00";
+                        }
+                        else if (valor is int || valor is long)
+                        {
+                            ExcelCellHelper.SetValue(cell, valor);
+                            cell.Style.NumberFormat.Format = "#,##0";
+                        }
+                        else
+                        {
+                            cell.Value = valor.ToString();
+                        }
+                    }
+
+                    cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                    cell.Style.Border.OutsideBorderColor = XLColor.FromColor(Color.LightGray);
+
+                    col++;
+                }
+                fila++;
+            }
+
+            worksheet.Columns().AdjustToContents();
+            worksheet.Range(1, 1, 1, resultado.Columnas.Count).SetAutoFilter();
+            worksheet.SheetView.Freeze(1, 0);
+
+            nombreArchivo = $"InformeModelos_{nombreHoja}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+            byte[] fileBytes;
+            using (var ms = new MemoryStream())
+            {
+                package.SaveAs(ms);
+                fileBytes = ms.ToArray();
+            }
+            return fileBytes;
+        }
         }
     }
 }

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace bufinscustomers.Models
 {
     /// <summary>
@@ -19,6 +21,10 @@ namespace bufinscustomers.Models
         public bool SoloSuperAdmin { get; set; }
         public bool SoloAdminEmpresa { get; set; }
         public bool EsDestacado { get; set; }
+
+        /// <summary>Menú personalizado: empresas para las que existe la opción (tabla MenuOpcionesEmpresas,
+        /// Sql/023). Null/vacío = opción global, visible para todas las empresas.</summary>
+        public List<int> IdsEmpresas { get; set; }
 
         // Propiedades de solo lectura para renderizado, pobladas via JOIN
         public string Categoria { get; set; }

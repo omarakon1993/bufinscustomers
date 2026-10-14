@@ -193,192 +193,8 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                opciones = opciones ?? new OpcionesExportLineaTiempo();
-                bool barras = string.Equals(opciones.TipoGrafico, "bar", StringComparison.OrdinalIgnoreCase);
-                string unidad = (opciones.Unidad ?? "pesos").ToLowerInvariant();
-
-                // Series visibles en pantalla (la tira de series permite ocultarlas). Se conserva el
-                // índice original de cada una para que el color coincida con el de pantalla. Si el
-                // usuario ocultó todas, se exportan todas (un Excel vacío no le sirve a nadie).
-                var ocultas = new HashSet<string>(opciones.SeriesOcultas ?? new List<string>());
-                var visibles = resultado.Series
-                    .Select((s, i) => new { Serie = s, Indice = i })
-                    .Where(x => !ocultas.Contains(x.Serie.Indicador ?? ""))
-                    .ToList();
-                if (visibles.Count == 0)
-                    visibles = resultado.Series.Select((s, i) => new { Serie = s, Indice = i }).ToList();
-
-                bool unaVariable = visibles.Count == 1;
-                bool tieneComparacion = resultado.Series.Count == 1 && resultado.Comparacion != null && resultado.Comparacion.Count > 0;
-
-                // Los valores se guardan completos y solo el FORMATO los muestra en la unidad elegida
-                // (la coma final de un formato de Excel divide entre 1.000): el dato real no se pierde.
-                string formatoCelda, formatoEje, unidadTexto;
-                switch (unidad)
-                {
-                    case "miles":
-                        formatoCelda = "#,##0.0,";
-                        formatoEje = "#,##0.0,\" " + R("LineaTiempo_UnidadSufijoMiles") + "\"";
-                        unidadTexto = R("LineaTiempo_UnidadMiles");
-                        break;
-                    case "millones":
-                        formatoCelda = "#,##0.0,,";
-                        formatoEje = "#,##0.0,,\" " + R("LineaTiempo_UnidadSufijoMillones") + "\"";
-                        unidadTexto = R("LineaTiempo_UnidadMillones");
-                        break;
-                    default:
-                        formatoCelda = "#,##0.00";
-                        formatoEje = "#,##0";
-                        unidadTexto = R("LineaTiempo_UnidadPesos");
-                        break;
-                }
-
-                const string nombreHoja = "LineaTiempo";
-                const int filaEncabezado = 5;
-                const int filaInicio = filaEncabezado + 1;
-                var colorPrincipal = XLColor.FromArgb(99, 102, 241);
-
-                using (var package = new XLWorkbook())
-                {
-                    var worksheet = package.Worksheets.Add(nombreHoja);
-
-                    // Cabecera: mismo título/subtítulo que la pantalla (los arma pintarLetterhead en la vista).
-                    string titulo = Recortar(opciones.Titulo, 300);
-                    worksheet.Cell(1, 1).Value = titulo;
-                    worksheet.Cell(1, 1).Style.Font.Bold = true;
-                    worksheet.Cell(1, 1).Style.Font.FontSize = 14;
-                    worksheet.Cell(1, 1).Style.Font.FontColor = colorPrincipal;
-                    worksheet.Cell(2, 1).Value = Recortar(opciones.Subtitulo, 500);
-                    worksheet.Cell(2, 1).Style.Font.FontColor = XLColor.FromArgb(91, 85, 112);
-                    worksheet.Cell(3, 1).Value = R("LineaTiempo_PdfUnidadPrefijo") + " " + unidadTexto.ToLower(CultureInfo.CurrentCulture)
-                        + "  ·  " + string.Format(R("LineaTiempo_GeneradoElFmt"), DateTime.Now.ToString("D", CultureInfo.CurrentCulture));
-                    worksheet.Cell(3, 1).Style.Font.Italic = true;
-                    worksheet.Cell(3, 1).Style.Font.FontColor = XLColor.FromArgb(139, 133, 160);
-
-                    // Columnas de valor: (columna, serie, color) — las mismas que la tabla en pantalla.
-                    var columnasValor = new List<Tuple<int, List<PuntoLineaTiempo>, string>>();
-                    worksheet.Cell(filaEncabezado, 1).Value = R("LineaTiempo_ColPeriodo");
-                    int totalColumnas;
-                    if (unaVariable)
-                    {
-                        var serie = visibles[0];
-                        string encabezado = tieneComparacion
-                            ? (resultado.NombreEscenarioPrincipal ?? serie.Serie.Indicador)
-                            : (!string.IsNullOrWhiteSpace(opciones.CampoTexto) ? opciones.CampoTexto : serie.Serie.Indicador);
-                        worksheet.Cell(filaEncabezado, 2).Value = encabezado ?? R("LineaTiempo_ColValor");
-                        columnasValor.Add(Tuple.Create(2, serie.Serie.Puntos, ColoresSerie[serie.Indice % ColoresSerie.Length]));
-                        totalColumnas = 2;
-
-                        if (tieneComparacion)
-                        {
-                            worksheet.Cell(filaEncabezado, 3).Value = resultado.NombreEscenarioComparacion ?? R("LineaTiempo_ColComparacion");
-                            worksheet.Cell(filaEncabezado, 4).Value = R("LineaTiempo_ColVariacion");
-                            columnasValor.Add(Tuple.Create(3, resultado.Comparacion, ColorComparacion));
-                            totalColumnas = 4;
-                        }
-                    }
-                    else
-                    {
-                        for (int i = 0; i < visibles.Count; i++)
-                        {
-                            worksheet.Cell(filaEncabezado, i + 2).Value = visibles[i].Serie.Indicador;
-                            columnasValor.Add(Tuple.Create(i + 2, visibles[i].Serie.Puntos, ColoresSerie[visibles[i].Indice % ColoresSerie.Length]));
-                        }
-                        totalColumnas = visibles.Count + 1;
-                    }
-
-                    var headerRange = worksheet.Range(filaEncabezado, 1, filaEncabezado, totalColumnas);
-                    headerRange.Style.Font.Bold = true;
-                    headerRange.Style.Fill.BackgroundColor = colorPrincipal;
-                    headerRange.Style.Font.FontColor = XLColor.White;
-                    headerRange.Style.Alignment.WrapText = true;
-                    worksheet.Range(filaEncabezado, 2, filaEncabezado, totalColumnas).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
-
-                    // Unión ordenada de todos los períodos presentes en cualquiera de las series
-                    // (normalmente coinciden, pero cada serie se consulta por separado).
-                    var periodos = columnasValor
-                        .SelectMany(c => c.Item2)
-                        .Select(p => new { p.Anio, p.Mes, p.Etiqueta })
-                        .Distinct()
-                        .OrderBy(p => p.Anio).ThenBy(p => p.Mes)
-                        .ToList();
-
-                    var valoresGrafico = columnasValor.Select(c => new List<double?>()).ToList();
-                    int fila = filaInicio;
-                    foreach (var periodo in periodos)
-                    {
-                        worksheet.Cell(fila, 1).Value = periodo.Etiqueta;
-
-                        for (int c = 0; c < columnasValor.Count; c++)
-                        {
-                            var punto = columnasValor[c].Item2.FirstOrDefault(p => p.Anio == periodo.Anio && p.Mes == periodo.Mes);
-                            if (punto != null)
-                                ExcelCellHelper.SetValue(worksheet.Cell(fila, columnasValor[c].Item1), punto.Valor);
-                            valoresGrafico[c].Add(punto != null ? (double?)punto.Valor : null);
-                        }
-
-                        // Variación como FÓRMULA (misma cuenta que la tabla en pantalla: (principal - comparación) / |comparación|),
-                        // así sigue siendo correcta si el usuario edita los valores.
-                        if (tieneComparacion)
-                        {
-                            var celdaVar = worksheet.Cell(fila, 4);
-                            celdaVar.FormulaA1 = $"IF(C{fila}=0,\"\",(B{fila}-C{fila})/ABS(C{fila}))";
-                            celdaVar.Style.NumberFormat.Format = "0.0%;[Red]-0.0%";
-                        }
-
-                        fila++;
-                    }
-
-                    int filaFin = Math.Max(filaInicio, fila - 1);
-                    var cuerpo = worksheet.Range(filaEncabezado, 1, filaFin, totalColumnas);
-                    cuerpo.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-                    cuerpo.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
-                    cuerpo.Style.Border.OutsideBorderColor = XLColor.FromArgb(226, 223, 236);
-                    cuerpo.Style.Border.InsideBorderColor = XLColor.FromArgb(226, 223, 236);
-                    foreach (var col in columnasValor)
-                        worksheet.Range(filaInicio, col.Item1, filaFin, col.Item1).Style.NumberFormat.Format = formatoCelda;
-                    worksheet.Range(filaInicio, 1, filaFin, 1).Style.Font.Bold = true;
-
-                    worksheet.Column(1).Width = 16;
-                    for (int c = 2; c <= totalColumnas; c++)
-                        worksheet.Column(c).Width = 20;
-                    worksheet.SheetView.Freeze(filaEncabezado, 0);
-
-                    string nombreArchivo = $"LineaTiempoFinanciera_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-
-                    byte[] fileBytes;
-                    using (var ms = new MemoryStream())
-                    {
-                        package.SaveAs(ms);
-                        fileBytes = ms.ToArray();
-                    }
-
-                    // Gráfico nativo de Excel conectado a la tabla. Si algo falla se entrega el Excel
-                    // sin gráfico: la descarga de los datos nunca se pierde por culpa del gráfico.
-                    if (periodos.Count > 0)
-                    {
-                        try
-                        {
-                            var seriesGrafico = columnasValor.Select((c, i) => new SerieGraficoExcel
-                            {
-                                Nombre = worksheet.Cell(filaEncabezado, c.Item1).GetString(),
-                                Columna = c.Item1,
-                                ColorHex = c.Item3,
-                                Valores = valoresGrafico[i]
-                            }).ToList();
-
-                            fileBytes = ExcelChartHelper.AgregarGrafico(fileBytes, nombreHoja, titulo, barras,
-                                filaEncabezado, filaInicio, filaFin, 1, periodos.Select(p => p.Etiqueta).ToList(),
-                                seriesGrafico, formatoEje, totalColumnas + 1, filaEncabezado - 1);
-                        }
-                        catch (Exception exGrafico)
-                        {
-                            AppLogger.Error(exGrafico, "InformeLineaTiempoController.ExportarExcel (gráfico)");
-                        }
-                    }
-
-                    return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
-                }
+                var bytes = GenerarExcel(filtros, resultado, opciones, out string nombreArchivo);
+                return File(bytes, InformeCorreoHelper.MimeExcel, nombreArchivo);
             }
             catch (Exception ex)
             {
@@ -386,6 +202,266 @@ namespace bufinscustomers.Controllers
                 TempData["ErrorMessage"] = $"Error al exportar a Excel: {ex.Message}";
                 return RedirectToAction("Index");
             }
+        }
+
+        /// <summary>
+        /// Envía el informe por correo desde el botón Exportar (componente estándar): Excel (el mismo de la descarga, con su
+        /// gráfico nativo) y PDF (el que arma el navegador) como adjuntos y, en el cuerpo, el último valor de cada variable
+        /// visible. La serie se reconstruye en el servidor con los filtros recibidos (nunca se confía en cifras del navegador).
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult EnviarPorCorreo(FiltrosLineaTiempo filtros, OpcionesExportLineaTiempo opciones, string correos = null,
+            bool incluirmeAMi = false, string mensaje = null, string pdfBase64 = null)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (usuario == null || filtros == null || !EsTablaDeModelo(filtros.NombreTabla))
+                return Json(new { exito = false, mensaje = R("Common_TablaNoValida") });
+            var idEmpresaConsulta = ResolverEmpresaConsulta(filtros.IdEmpresa, UsuarioSesionHelper.EsSuperAdmin(), usuario.IdEmpresa);
+            if (!idEmpresaConsulta.HasValue)
+                return Json(new { exito = false, mensaje = R("Common_SinPermisos") });
+            if (!InformeCorreoHelper.TryDestinatarios(usuario, correos, incluirmeAMi, R, out var lista, out var error))
+                return Json(new { exito = false, mensaje = error });
+
+            try
+            {
+                var resultado = _service.ObtenerSerieTiempo(filtros, idEmpresaConsulta);
+                if (resultado.Series.Count == 0 || resultado.Series.All(s => s.Puntos.Count == 0))
+                    return Json(new { exito = false, mensaje = R("LineaTiempo_SinDatosExportar") });
+
+                opciones = opciones ?? new OpcionesExportLineaTiempo();
+                bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+                string empresa = _catalogo.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresaConsulta.Value)?.Nombre ?? "";
+
+                var bytes = GenerarExcel(filtros, resultado, opciones, out string nombreArchivo);
+                var adjuntos = InformeCorreoHelper.Adjuntos(nombreArchivo, bytes, InformeCorreoHelper.PdfDesdeBase64(pdfBase64));
+
+                var contexto = new List<(string etiqueta, string valor)>();
+                if (!string.IsNullOrWhiteSpace(opciones.Titulo)) contexto.Add((R("Common_ExpCorreo_Serie"), Recortar(opciones.Titulo, 200)));
+                if (!string.IsNullOrWhiteSpace(opciones.Subtitulo)) contexto.Add((R("Common_ExpCorreo_Filtros"), Recortar(opciones.Subtitulo, 300)));
+
+                // Último valor de cada variable visible (en la unidad elegida en pantalla).
+                string unidad = (opciones.Unidad ?? "pesos").ToLowerInvariant();
+                var ocultas = new HashSet<string>(opciones.SeriesOcultas ?? new List<string>());
+                var kpis = new List<(string etiqueta, string valor, string detalle, int signo)>();
+                foreach (var s in resultado.Series.Where(x => x.Puntos.Count > 0 && !ocultas.Contains(x.Indicador ?? "")).Take(6))
+                {
+                    var u = s.Puntos[s.Puntos.Count - 1];
+                    string valor = unidad == "millones" ? (u.Valor / 1000000m).ToString("N1") + " M"
+                                 : unidad == "miles" ? (u.Valor / 1000m).ToString("N1") + " K"
+                                 : u.Valor.ToString("N0");
+                    kpis.Add((s.Indicador, valor, u.Etiqueta, 0));
+                }
+
+                string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
+                new EmailService().EnviarInforme(string.Join(", ", lista), R("LineaTiempo_PageTitle"), empresa, false, contexto, kpis,
+                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles);
+
+                new AuditoriaService().RegistrarCambio(
+                    AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeLineaTiempo", idEmpresaConsulta.Value.ToString(),
+                    $"Informe dinámico de líneas de tiempo enviado por correo a {string.Join(", ", lista)}: '{empresa}' — {Recortar(opciones.Titulo, 120)}.",
+                    null,
+                    new { empresa, tabla = filtros.NombreTabla, indicadores = filtros.Indicadores, destinatarios = lista, conPdf = adjuntos.Count > 1 },
+                    idEmpresaConsulta.Value, entidadNombre: empresa, severidad: AuditoriaSeveridad.Advertencia);
+
+                return Json(new { exito = true, mensaje = string.Format(R("Common_ExpCorreo_Exito"), string.Join(", ", lista)) });
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "InformeLineaTiempoController.EnviarPorCorreo");
+                return Json(new { exito = false, mensaje = R("Common_ExpCorreo_Error") });
+            }
+        }
+
+        /// <summary>Libro de Excel del informe (lo usan la descarga y el envío por correo del botón Exportar).</summary>
+        private byte[] GenerarExcel(FiltrosLineaTiempo filtros, SerieLineaTiempoResultado resultado, OpcionesExportLineaTiempo opciones, out string nombreArchivo)
+        {
+        opciones = opciones ?? new OpcionesExportLineaTiempo();
+        bool barras = string.Equals(opciones.TipoGrafico, "bar", StringComparison.OrdinalIgnoreCase);
+        string unidad = (opciones.Unidad ?? "pesos").ToLowerInvariant();
+
+        // Series visibles en pantalla (la tira de series permite ocultarlas). Se conserva el
+        // índice original de cada una para que el color coincida con el de pantalla. Si el
+        // usuario ocultó todas, se exportan todas (un Excel vacío no le sirve a nadie).
+        var ocultas = new HashSet<string>(opciones.SeriesOcultas ?? new List<string>());
+        var visibles = resultado.Series
+            .Select((s, i) => new { Serie = s, Indice = i })
+            .Where(x => !ocultas.Contains(x.Serie.Indicador ?? ""))
+            .ToList();
+        if (visibles.Count == 0)
+            visibles = resultado.Series.Select((s, i) => new { Serie = s, Indice = i }).ToList();
+
+        bool unaVariable = visibles.Count == 1;
+        bool tieneComparacion = resultado.Series.Count == 1 && resultado.Comparacion != null && resultado.Comparacion.Count > 0;
+
+        // Los valores se guardan completos y solo el FORMATO los muestra en la unidad elegida
+        // (la coma final de un formato de Excel divide entre 1.000): el dato real no se pierde.
+        string formatoCelda, formatoEje, unidadTexto;
+        switch (unidad)
+        {
+            case "miles":
+                formatoCelda = "#,##0.0,";
+                formatoEje = "#,##0.0,\" " + R("LineaTiempo_UnidadSufijoMiles") + "\"";
+                unidadTexto = R("LineaTiempo_UnidadMiles");
+                break;
+            case "millones":
+                formatoCelda = "#,##0.0,,";
+                formatoEje = "#,##0.0,,\" " + R("LineaTiempo_UnidadSufijoMillones") + "\"";
+                unidadTexto = R("LineaTiempo_UnidadMillones");
+                break;
+            default:
+                formatoCelda = "#,##0.00";
+                formatoEje = "#,##0";
+                unidadTexto = R("LineaTiempo_UnidadPesos");
+                break;
+        }
+
+        const string nombreHoja = "LineaTiempo";
+        const int filaEncabezado = 5;
+        const int filaInicio = filaEncabezado + 1;
+        var colorPrincipal = XLColor.FromArgb(99, 102, 241);
+
+        using (var package = new XLWorkbook())
+        {
+            var worksheet = package.Worksheets.Add(nombreHoja);
+
+            // Cabecera: mismo título/subtítulo que la pantalla (los arma pintarLetterhead en la vista).
+            string titulo = Recortar(opciones.Titulo, 300);
+            worksheet.Cell(1, 1).Value = titulo;
+            worksheet.Cell(1, 1).Style.Font.Bold = true;
+            worksheet.Cell(1, 1).Style.Font.FontSize = 14;
+            worksheet.Cell(1, 1).Style.Font.FontColor = colorPrincipal;
+            worksheet.Cell(2, 1).Value = Recortar(opciones.Subtitulo, 500);
+            worksheet.Cell(2, 1).Style.Font.FontColor = XLColor.FromArgb(91, 85, 112);
+            worksheet.Cell(3, 1).Value = R("LineaTiempo_PdfUnidadPrefijo") + " " + unidadTexto.ToLower(CultureInfo.CurrentCulture)
+                + "  ·  " + string.Format(R("LineaTiempo_GeneradoElFmt"), DateTime.Now.ToString("D", CultureInfo.CurrentCulture));
+            worksheet.Cell(3, 1).Style.Font.Italic = true;
+            worksheet.Cell(3, 1).Style.Font.FontColor = XLColor.FromArgb(139, 133, 160);
+
+            // Columnas de valor: (columna, serie, color) — las mismas que la tabla en pantalla.
+            var columnasValor = new List<Tuple<int, List<PuntoLineaTiempo>, string>>();
+            worksheet.Cell(filaEncabezado, 1).Value = R("LineaTiempo_ColPeriodo");
+            int totalColumnas;
+            if (unaVariable)
+            {
+                var serie = visibles[0];
+                string encabezado = tieneComparacion
+                    ? (resultado.NombreEscenarioPrincipal ?? serie.Serie.Indicador)
+                    : (!string.IsNullOrWhiteSpace(opciones.CampoTexto) ? opciones.CampoTexto : serie.Serie.Indicador);
+                worksheet.Cell(filaEncabezado, 2).Value = encabezado ?? R("LineaTiempo_ColValor");
+                columnasValor.Add(Tuple.Create(2, serie.Serie.Puntos, ColoresSerie[serie.Indice % ColoresSerie.Length]));
+                totalColumnas = 2;
+
+                if (tieneComparacion)
+                {
+                    worksheet.Cell(filaEncabezado, 3).Value = resultado.NombreEscenarioComparacion ?? R("LineaTiempo_ColComparacion");
+                    worksheet.Cell(filaEncabezado, 4).Value = R("LineaTiempo_ColVariacion");
+                    columnasValor.Add(Tuple.Create(3, resultado.Comparacion, ColorComparacion));
+                    totalColumnas = 4;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < visibles.Count; i++)
+                {
+                    worksheet.Cell(filaEncabezado, i + 2).Value = visibles[i].Serie.Indicador;
+                    columnasValor.Add(Tuple.Create(i + 2, visibles[i].Serie.Puntos, ColoresSerie[visibles[i].Indice % ColoresSerie.Length]));
+                }
+                totalColumnas = visibles.Count + 1;
+            }
+
+            var headerRange = worksheet.Range(filaEncabezado, 1, filaEncabezado, totalColumnas);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = colorPrincipal;
+            headerRange.Style.Font.FontColor = XLColor.White;
+            headerRange.Style.Alignment.WrapText = true;
+            worksheet.Range(filaEncabezado, 2, filaEncabezado, totalColumnas).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
+            // Unión ordenada de todos los períodos presentes en cualquiera de las series
+            // (normalmente coinciden, pero cada serie se consulta por separado).
+            var periodos = columnasValor
+                .SelectMany(c => c.Item2)
+                .Select(p => new { p.Anio, p.Mes, p.Etiqueta })
+                .Distinct()
+                .OrderBy(p => p.Anio).ThenBy(p => p.Mes)
+                .ToList();
+
+            var valoresGrafico = columnasValor.Select(c => new List<double?>()).ToList();
+            int fila = filaInicio;
+            foreach (var periodo in periodos)
+            {
+                worksheet.Cell(fila, 1).Value = periodo.Etiqueta;
+
+                for (int c = 0; c < columnasValor.Count; c++)
+                {
+                    var punto = columnasValor[c].Item2.FirstOrDefault(p => p.Anio == periodo.Anio && p.Mes == periodo.Mes);
+                    if (punto != null)
+                        ExcelCellHelper.SetValue(worksheet.Cell(fila, columnasValor[c].Item1), punto.Valor);
+                    valoresGrafico[c].Add(punto != null ? (double?)punto.Valor : null);
+                }
+
+                // Variación como FÓRMULA (misma cuenta que la tabla en pantalla: (principal - comparación) / |comparación|),
+                // así sigue siendo correcta si el usuario edita los valores.
+                if (tieneComparacion)
+                {
+                    var celdaVar = worksheet.Cell(fila, 4);
+                    celdaVar.FormulaA1 = $"IF(C{fila}=0,\"\",(B{fila}-C{fila})/ABS(C{fila}))";
+                    celdaVar.Style.NumberFormat.Format = "0.0%;[Red]-0.0%";
+                }
+
+                fila++;
+            }
+
+            int filaFin = Math.Max(filaInicio, fila - 1);
+            var cuerpo = worksheet.Range(filaEncabezado, 1, filaFin, totalColumnas);
+            cuerpo.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            cuerpo.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+            cuerpo.Style.Border.OutsideBorderColor = XLColor.FromArgb(226, 223, 236);
+            cuerpo.Style.Border.InsideBorderColor = XLColor.FromArgb(226, 223, 236);
+            foreach (var col in columnasValor)
+                worksheet.Range(filaInicio, col.Item1, filaFin, col.Item1).Style.NumberFormat.Format = formatoCelda;
+            worksheet.Range(filaInicio, 1, filaFin, 1).Style.Font.Bold = true;
+
+            worksheet.Column(1).Width = 16;
+            for (int c = 2; c <= totalColumnas; c++)
+                worksheet.Column(c).Width = 20;
+            worksheet.SheetView.Freeze(filaEncabezado, 0);
+
+            nombreArchivo = $"LineaTiempoFinanciera_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+            byte[] fileBytes;
+            using (var ms = new MemoryStream())
+            {
+                package.SaveAs(ms);
+                fileBytes = ms.ToArray();
+            }
+
+            // Gráfico nativo de Excel conectado a la tabla. Si algo falla se entrega el Excel
+            // sin gráfico: la descarga de los datos nunca se pierde por culpa del gráfico.
+            if (periodos.Count > 0)
+            {
+                try
+                {
+                    var seriesGrafico = columnasValor.Select((c, i) => new SerieGraficoExcel
+                    {
+                        Nombre = worksheet.Cell(filaEncabezado, c.Item1).GetString(),
+                        Columna = c.Item1,
+                        ColorHex = c.Item3,
+                        Valores = valoresGrafico[i]
+                    }).ToList();
+
+                    fileBytes = ExcelChartHelper.AgregarGrafico(fileBytes, nombreHoja, titulo, barras,
+                        filaEncabezado, filaInicio, filaFin, 1, periodos.Select(p => p.Etiqueta).ToList(),
+                        seriesGrafico, formatoEje, totalColumnas + 1, filaEncabezado - 1);
+                }
+                catch (Exception exGrafico)
+                {
+                    AppLogger.Error(exGrafico, "InformeLineaTiempoController.ExportarExcel (gráfico)");
+                }
+            }
+
+            return fileBytes;
+        }
         }
     }
 }

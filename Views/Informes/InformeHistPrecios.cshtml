@@ -1,0 +1,1184 @@
+@using System.Web
+@using System.Web.Script.Serialization
+@using bufinscustomers.Models
+@{
+    ViewBag.Title = Resources.Strings.HP_PageTitle;
+    var empresas = ViewBag.Empresas as List<Empresas> ?? new List<Empresas>();
+    var culturaJs = System.Globalization.CultureInfo.CurrentUICulture.Name;
+
+    // Textos que usa el JS (nunca hardcodeados en el script): se inyectan como un solo objeto.
+    var textos = new Dictionary<string, string>
+    {
+        { "errorServidor", Resources.Strings.HP_ErrorServidor },
+        { "errorPdf", Resources.Strings.HP_ErrorPdf },
+        { "seleccioneEmpresa", Resources.Strings.HP_SeleccioneEmpresa },
+        { "sinAniosDatos", Resources.Strings.HP_SinAniosDatos },
+        { "elegirTipos", Resources.Strings.HP_ElegirTipos },
+        { "tipoTriggerTodosFmt", Resources.Strings.HP_TiposTriggerTodosFmt },
+        { "tipoTriggerFmt", Resources.Strings.HP_TiposTriggerFmt },
+        { "tiposSeleccionadosFmt", Resources.Strings.HP_TiposSeleccionadosFmt },
+        { "rangoTooltipFmt", Resources.Strings.Rango_TooltipFmt },
+        { "anioEnCursoLbl", Resources.Strings.Rango_AnioEnCurso },
+        { "rangoSinDatosFmt", Resources.Strings.Rango_SinDatosFmt },
+        { "badgeSem", Resources.Strings.HP_BadgeSemestre },
+        { "badgeSems", Resources.Strings.HP_BadgeSemestres },
+        { "seleccioneTipos", Resources.Strings.HP_SeleccioneTipos },
+        { "kpiPromedio", Resources.Strings.HP_KpiPromedio },
+        { "kpiMasCaro", Resources.Strings.HP_KpiMasCaro },
+        { "kpiMayorAlza", Resources.Strings.HP_KpiMayorAlza },
+        { "kpiMayorBaja", Resources.Strings.HP_KpiMayorBaja },
+        { "kpiCagr", Resources.Strings.HP_KpiCagr },
+        { "vsFmt", Resources.Strings.HP_VsFmt },
+        { "enFmt", Resources.Strings.HP_EnFmt },
+        { "cagrSubFmt", Resources.Strings.HP_CagrSubFmt },
+        { "cagrSinDato", Resources.Strings.HP_CagrSinDato },
+        { "sinComparable", Resources.Strings.HP_SinComparable },
+        { "chipRangoFmt", Resources.Strings.HP_ChipRangoFmt },
+        { "chipTiposFmt", Resources.Strings.HP_ChipTiposFmt },
+        { "relevanteSubFmt", Resources.Strings.HP_RelevanteSubFmt },
+        { "relevantePreciosSubFmt", Resources.Strings.HP_RelevantePreciosSubFmt },
+        { "promedioGeneral", Resources.Strings.HP_PromedioGeneral },
+        { "totalGeneral", Resources.Strings.HP_TotalGeneral },
+        { "colTipo", Resources.Strings.HP_ColTipo },
+        { "colPromedio", Resources.Strings.HP_ColPromedio },
+        { "variacion", Resources.Strings.HP_ColVariacion },
+        { "notaSinComparable", Resources.Strings.HP_NotaSinComparable },
+        { "notaAnioParcialFmt", Resources.Strings.HP_NotaAnioParcialFmt },
+        { "periodoSemestreFmt", Resources.Strings.HP_PeriodoSemestreFmt },
+        { "agr_Anio", Resources.Strings.HP_Agrupar_Anio },
+        { "agr_Semestre", Resources.Strings.HP_Agrupar_Semestre },
+        { "tablaPreciosTitulo", Resources.Strings.HP_TablaPreciosTitulo },
+        { "tablaVariacionTitulo", Resources.Strings.HP_TablaVariacionTitulo },
+        { "pdfConfidencial", Resources.Strings.HP_PdfConfidencial },
+        { "pdfPaginaFmt", Resources.Strings.HP_PdfPaginaFmt },
+        { "pdfGenerado", Resources.Strings.HP_GeneradoEl },
+        { "graficoEvolucionTitulo", Resources.Strings.HP_GraficoEvolucionTitulo },
+        { "promedioTitulo", Resources.Strings.HP_PromedioTitulo },
+        { "variacionChartTitulo", Resources.Strings.HP_VariacionChartTitulo },
+        { "pageTitle", Resources.Strings.HP_PageTitle },
+        { "tag", Resources.Strings.Common_InformePersonalizadoTag },
+        { "correoValDestino", Resources.Strings.RevisarCargue_Correo_ValDestino },
+        { "correoValMaximo", Resources.Strings.RevisarCargue_Correo_ValMaximo },
+        { "correoEnviando", Resources.Strings.RevisarCargue_Correo_Enviando },
+        { "correoError", Resources.Strings.Common_ExpCorreo_Error },
+        { "correoExitoTitulo", Resources.Strings.Modelo_Correo_ExitoTitulo },
+        { "aceptar", Resources.Strings.Common_Aceptar },
+        { "expGenerando", Resources.Strings.Common_Exp_Generando },
+        { "expListo", Resources.Strings.Common_Exp_Listo },
+        { "expImagenCopiada", Resources.Strings.Common_Exp_ImagenCopiada },
+        { "expImagenDescargada", Resources.Strings.Common_Exp_ImagenDescargada },
+        { "expErrorGenerar", Resources.Strings.Common_Exp_ErrorGenerar }
+    };
+    var jss = new JavaScriptSerializer();
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
+<link href="~/Assets/css/informe-pyg.css" rel="stylesheet" />
+<link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="~/Assets/css/informe-histprecios.css" rel="stylesheet" />
+<link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
+
+<div class="container-fluid px-4">
+<div class="lt-app">
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-tags powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.HP_PageTitle</h1>
+            @Html.Partial("_InformePersonalizadoTag")
+            <button type="button" class="header-tag-doc" id="hpDocBtn" title="@Resources.Strings.HP_DocumentacionTooltip"><i class="fas fa-book"></i>@Resources.Strings.Common_DocumentacionTag</button>
+        </div>
+    </div>
+
+    @Html.AntiForgeryToken()
+
+    <div class="filter-card">
+        <div class="lt-section-title"><span>@Resources.Strings.Common_FiltrosConsulta</span></div>
+        <div class="lt-grid-quever">
+            <div class="lt-field">
+                <label class="lt-field-label" for="hpEmpresa">@Resources.Strings.Common_LabelEmpresa</label>
+                <select id="hpEmpresa" class="lt-field-select">
+                    @if (empresas.Count != 1) { <option value="">@Resources.Strings.Common_Seleccione</option> }
+                    @foreach (var e in empresas)
+                    {
+                        <option value="@e.Id">@e.Nombre</option>
+                    }
+                </select>
+            </div>
+            <div class="lt-field">
+                <label class="lt-field-label" for="hpEscenario">@Resources.Strings.Common_LabelEscenario</label>
+                <select id="hpEscenario" class="lt-field-select">
+                    @if (ViewBag.Escenarios != null)
+                    {
+                        foreach (var esc in ViewBag.Escenarios)
+                        {
+                            <option value="@esc.Id">@esc.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="lt-field">
+                @* Mismo selector que "Elegir variables" de Línea de Tiempo: campo compacto + modal claro + barra de chips *@
+                <label class="lt-field-label" for="hpTiposBtn">@Resources.Strings.HP_LabelTipos</label>
+                <button type="button" id="hpTiposBtn" class="lt-ind-trigger vacio" disabled aria-haspopup="dialog" aria-expanded="false">
+                    <span class="ic"><i class="fas fa-layer-group"></i></span>
+                    <span class="txt">@Resources.Strings.HP_ElegirTipos</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="lt-series-bar" id="hpTiposBar" style="display:none;">
+            <span class="cap">@Resources.Strings.HP_TiposEnInforme</span>
+            <span id="hpTiposChips" style="display:contents;"></span>
+            <button type="button" class="lt-series-clear" id="hpTiposClear">@Resources.Strings.Common_Limpiar</button>
+        </div>
+
+        <div class="lt-section-title mt"><span>@Resources.Strings.HP_SeccionPeriodo</span></div>
+        <div>
+            @* Mismas cápsulas y slider que Línea de Tiempo, pero por SEMESTRES (la cadencia de este informe): [Todo] | [años] |
+               [semestres relativos a hoy] | [Ver por: Semestre · Año]. *@
+            <label class="lt-field-label">@Resources.Strings.LineaTiempo_LabelRango</label>
+            <div class="rango-atajos" id="hpAtajos">
+                <div class="rango-atajos-grupo">
+                    <button type="button" data-preset="todo">@Resources.Strings.Rango_Todo</button>
+                </div>
+                <div class="rango-atajos-grupo">
+                    <button type="button" data-preset="ytd">@Resources.Strings.Rango_AnioEnCurso</button>
+                    <button type="button" data-preset="anioAnt">@Resources.Strings.HP_Atajo_AnioAnterior</button>
+                    <button type="button" data-preset="ult3">@Resources.Strings.HP_Atajo_Ultimos3Anios</button>
+                </div>
+                <div class="rango-atajos-grupo">
+                    <button type="button" data-preset="semActual">@Resources.Strings.HP_Atajo_SemestreActual</button>
+                    <button type="button" data-preset="semAnterior">@Resources.Strings.HP_Atajo_SemestreAnterior</button>
+                </div>
+                <div class="rango-atajos-grupo" id="hpVerPor" role="group" aria-label="@Resources.Strings.HP_LabelVerPor">
+                    <span class="rango-atajos-cap">@Resources.Strings.HP_LabelVerPor</span>
+                    <button type="button" data-modo="Semestre" aria-pressed="false">@Resources.Strings.HP_VerPor_Semestre</button>
+                    <button type="button" class="active" data-modo="Anio" aria-pressed="true">@Resources.Strings.HP_VerPor_Anio</button>
+                </div>
+            </div>
+            <div class="lt-range-card">
+                <div class="lt-range-head">
+                    <span class="lbl"><span id="hpRangoDesdeLbl">&mdash;</span><i class="fas fa-long-arrow-alt-right"></i><span id="hpRangoHastaLbl">&mdash;</span></span>
+                    <span class="lt-range-badge" id="hpRangoBadge">&mdash;</span>
+                </div>
+                <div class="lt-range-track disabled" id="hpRangoTrack">
+                    <div class="bg"></div>
+                    <div class="sel" id="hpRangoSel"></div>
+                    <div class="knob from" id="hpKnobFrom" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-label="@Resources.Strings.LineaTiempo_LabelRango"></div>
+                    <div class="knob to" id="hpKnobTo" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-label="@Resources.Strings.LineaTiempo_LabelRango"></div>
+                </div>
+                <div class="lt-range-years" id="hpRangoYears"></div>
+            </div>
+            <p class="lt-help">@Resources.Strings.HP_VerPorHint</p>
+            <p class="lt-help" id="hpSinAnios" style="display:none;">@Resources.Strings.HP_SinAniosDatos</p>
+        </div>
+
+        <div class="btn-group-actions">
+            <button type="button" id="btnConsultarHP" class="btn btn-modern-gradient" disabled>
+                <i class="fas fa-arrow-right mr-1"></i>@Resources.Strings.LineaTiempo_BtnGenerar
+            </button>
+            <button type="button" id="btnLimpiarHP" class="btn btn-modern-secondary">@Resources.Strings.Common_Limpiar</button>
+        </div>
+    </div>
+
+    <div id="hpEstadoInicial" class="lt-card lt-empty">
+        <div class="lt-empty-icon"><i class="fas fa-tags"></i></div>
+        <h4>@Resources.Strings.HP_EstadoInicialTitulo</h4>
+        <p>@Resources.Strings.HP_EstadoInicialDesc</p>
+    </div>
+
+    <div id="hpSinDatos" class="lt-card lt-empty" style="display:none;">
+        <div class="lt-empty-icon"><i class="fas fa-inbox"></i></div>
+        <h4>@Resources.Strings.HP_SinDatosTitulo</h4>
+        <p>@Resources.Strings.HP_SinDatosDesc</p>
+    </div>
+
+    <div id="hpResultado" style="display:none;">
+
+        @* 1. Encabezado *@
+        <div class="lt-card" id="hpPanelResultado">
+            <div class="pyg2-letterhead">
+                <span class="pyg2-brand"><span class="bm-text">@Resources.Strings.LineaTiempo_BrandMark</span><span class="bm-sub">@Resources.Strings.HP_Subtitulo</span></span>
+                <span class="fecha"><span>@Resources.Strings.HP_GeneradoEl</span> <span id="hpFechaGenerado">&mdash;</span></span>
+            </div>
+            <div class="pyg2-head">
+                <div class="pyg2-head-l">
+                    <h2 id="hpTituloEmpresa">&mdash;</h2>
+                    <div class="pyg2-chips">
+                        <span class="pyg2-chip primary"><i class="fas fa-calendar"></i><span id="hpChipRango">&mdash;</span></span>
+                        <span class="pyg2-chip" id="hpChipAgrupar">&mdash;</span>
+                        <span class="pyg2-chip" id="hpChipTipos">&mdash;</span>
+                        <span class="pyg2-chip" id="hpChipEscenario">&mdash;</span>
+                    </div>
+                </div>
+                <div class="pyg2-tools">
+                    @Html.Partial("_ExportMenu", new bufinscustomers.Models.ExportMenuVM
+                    {
+                        Id = "hpExp",
+                        BtnTooltip = Resources.Strings.HP_Exp_BtnTooltip,
+                        ExcelDesc = Resources.Strings.HP_Exp_ExcelDesc
+                    })
+                </div>
+            </div>
+        </div>
+        <form id="frmExportarExcelHP" method="post" action="@Url.Action("ExportarExcel", "InformeHistPrecios")">
+            @Html.AntiForgeryToken()
+            <div id="hpExpCampos"></div>@* lo llena el botón Excel con los filtros del reporte consultado *@
+        </form>
+
+        @* 2. KPIs *@
+        <div class="pyg2-section">
+            <div class="pyg2-section-title"><span class="t">@Resources.Strings.HP_IndicadoresClave</span><span class="line"></span></div>
+            <div class="pyg2-kpis" id="hpKpiStrip"></div>
+        </div>
+
+        @* 3. Evolución por tipo + variación por tipo *@
+        <div class="pyg2-analysis">
+            <div class="pyg2-card">
+                <div class="pyg2-card-head">
+                    <div>
+                        <div class="pyg2-card-title">@Resources.Strings.HP_GraficoEvolucionTitulo</div>
+                        <div class="pyg2-card-sub">@Resources.Strings.HP_UnidadPrecio</div>
+                    </div>
+                </div>
+                <div class="hp-chart-lg"><canvas id="hpChartEvolucion"></canvas></div>
+            </div>
+            <div class="pyg2-card" style="gap:12px">
+                <div>
+                    <div class="pyg2-card-title"><i class="fas fa-bolt"></i>@Resources.Strings.HP_RelevanteTitulo</div>
+                    <div class="pyg2-card-sub" id="hpRelevanteSub">&mdash;</div>
+                </div>
+                <div class="pyg2-hl-list" id="hpRelevanteLista"></div>
+            </div>
+        </div>
+
+        @* 4. Promedio general + variación del promedio general *@
+        <div class="hp-two">
+            <div class="pyg2-card">
+                <div class="pyg2-card-head"><div>
+                    <div class="pyg2-card-title">@Resources.Strings.HP_PromedioTitulo</div>
+                    <div class="pyg2-card-sub">@Resources.Strings.HP_UnidadPrecio</div>
+                </div></div>
+                <div class="hp-chart-md"><canvas id="hpChartPromedio"></canvas></div>
+            </div>
+            <div class="pyg2-card">
+                <div class="pyg2-card-head"><div>
+                    <div class="pyg2-card-title">@Resources.Strings.HP_VariacionChartTitulo</div>
+                    <div class="pyg2-card-sub" id="hpVariacionChartSub">&mdash;</div>
+                </div></div>
+                <div class="hp-chart-md"><canvas id="hpChartVariacion"></canvas></div>
+            </div>
+        </div>
+
+        @* 5. Tabla de precios *@
+        <div class="pyg2-table-card">
+            <div class="pyg2-card-head" style="align-items:center">
+                <div>
+                    <div class="pyg2-card-title">@Resources.Strings.HP_TablaPreciosTitulo</div>
+                    <div class="pyg2-card-sub">@Resources.Strings.HP_UnidadPrecio</div>
+                </div>
+            </div>
+            <div class="pyg2-table-wrap">
+                <table class="pyg2-table hp-table" id="hpTablaPrecios"><thead></thead><tbody></tbody></table>
+            </div>
+        </div>
+
+        @* 6. Tabla de variación *@
+        <div class="pyg2-table-card">
+            <div class="pyg2-card-head" style="align-items:center">
+                <div>
+                    <div class="pyg2-card-title">@Resources.Strings.HP_TablaVariacionTitulo</div>
+                    <div class="pyg2-card-sub" id="hpTablaVariacionSub">&mdash;</div>
+                </div>
+            </div>
+            <div class="pyg2-table-wrap">
+                <table class="pyg2-table hp-table" id="hpTablaVariacion"><thead></thead><tbody></tbody></table>
+            </div>
+            <div class="pyg2-table-legend">
+                <span><i class="dot" style="background:#16A34A"></i>@Resources.Strings.HP_LeyendaAlza</span>
+                <span><i class="dot" style="background:#DC2626"></i>@Resources.Strings.HP_LeyendaBaja</span>
+                <span><i class="fas fa-circle-exclamation"></i>@Resources.Strings.HP_LeyendaFuerte</span>
+            </div>
+        </div>
+        <p class="lt-help" id="hpNotaSinComparable" style="display:none;"></p>
+        <p class="lt-help" id="hpNotaAnioParcial" style="display:none;"></p>
+    </div>
+
+</div>
+</div>
+
+<div id="overlayConsultandoHP" class="overlay-cargando" style="display:none;">
+    <div class="overlay-cargando-card">
+        @Html.Partial("_LoaderDots", "aqua")
+        <h5 class="overlay-cargando-title">@Resources.Strings.HP_JS_Consultando</h5>
+    </div>
+</div>
+
+@* Visor de la documentación: modal casi a pantalla completa con la página dentro de un iframe en sandbox (solo lectura:
+   sin descarga, sin imprimir; ver InformeHistPreciosController.Documentacion). Se carga al abrirlo. *@
+<div class="hp-doc" id="hpDocModal" role="dialog" aria-modal="true" aria-labelledby="hpDocTitulo">
+    <div class="hp-doc-card">
+        <div class="hp-doc-rule"></div>
+        <div class="hp-doc-head">
+            <h5 id="hpDocTitulo"><i class="fas fa-book"></i>@Resources.Strings.HP_Doc_ModalTitulo</h5>
+            <div class="hp-doc-tools">
+                <button type="button" id="hpDocFull" title="@Resources.Strings.Common_PantallaCompleta"><i class="fas fa-expand"></i></button>
+                <button type="button" id="hpDocCerrar" title="@Resources.Strings.Common_Cerrar" aria-label="@Resources.Strings.Common_Cerrar"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+        <iframe id="hpDocFrame" title="@Resources.Strings.HP_Doc_ModalTitulo" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe>
+    </div>
+</div>
+
+@* Modal de tipos de fruta: mismo componente (.lt-modal) que "Elegir variables" de Línea de Tiempo *@
+<div class="lt-modal" id="hpTiposModal" role="dialog" aria-modal="true" aria-labelledby="hpTiposModalTitle">
+    <div class="lt-modal-card">
+        <div class="lt-modal-rule"></div>
+        <div class="lt-modal-head">
+            <div>
+                <h5 id="hpTiposModalTitle">@Resources.Strings.HP_TiposModalTitulo</h5>
+                <p>@Resources.Strings.HP_TiposModalSub</p>
+            </div>
+            <button type="button" class="lt-modal-close" id="hpTiposModalClose" aria-label="@Resources.Strings.Common_Cerrar"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="lt-modal-tools">
+            <div class="lt-search">
+                <i class="fas fa-search"></i>
+                <input type="text" id="hpTiposBuscar" placeholder="@Resources.Strings.HP_TiposBuscar" autocomplete="off">
+                <span class="cnt" id="hpTiposContador">0</span>
+            </div>
+            <div class="lt-favs">
+                <button type="button" class="lt-fav" id="hpTiposTodosBtn"><i class="fas fa-check-double"></i><span>@Resources.Strings.HP_TiposSeleccionarTodos</span></button>
+            </div>
+        </div>
+        <div class="lt-modal-list" id="hpTiposLista"></div>
+        <div class="lt-modal-foot">
+            <span class="n" id="hpTiposFootN"></span>
+            <button type="button" class="clear" id="hpTiposLimpiar">@Resources.Strings.Common_Limpiar</button>
+            <button type="button" class="apply" id="hpTiposAplicar">@Resources.Strings.Common_Aplicar</button>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+
+@section scripts {
+<script src="~/Assets/js/select2/select2.min.js"></script>
+<script src="~/Assets/js/chart.umd.min.js"></script>
+<script src="~/Assets/js/jspdf.umd.min.js"></script>
+<script src="~/Assets/js/html2canvas.min.js"></script>
+<script src="~/Assets/js/export-menu.js"></script>
+
+<script>
+    var _hp = {
+        urls: {
+            opciones: '@Url.Action("ObtenerOpciones", "InformeHistPrecios")',
+            reporte: '@Url.Action("ConsultarReporte", "InformeHistPrecios")',
+            correo: '@Url.Action("EnviarPorCorreo", "InformeHistPrecios")',
+            documentacion: '@Url.Action("Documentacion", "InformeHistPrecios")'
+        },
+        token: $('input[name="__RequestVerificationToken"]').first().val(),
+        cultura: '@Html.Raw(HttpUtility.JavaScriptStringEncode(culturaJs))',
+        t: @Html.Raw(jss.Serialize(textos)),
+        paleta: ['#6366F1', '#0EA5E9', '#16A34A', '#F59E0B', '#EC4899', '#8B5CF6', '#14B8A6', '#EF4444', '#64748B'],
+        umbralFuerte: 0.10,
+        reporte: null,
+        filtros: null,        // filtros del reporte consultado (para Excel/PDF)
+        nombreEmpresa: '',
+        nombreEscenario: '',
+        // Fecha de hoy del SERVIDOR (no del navegador) para los atajos del rango (Año en curso, Mes actual…).
+        hoy: { anio: @DateTime.Now.Year, sem: @(DateTime.Now.Month <= 6 ? 1 : 2) },
+        mesesCache: [],       // semestres con datos [{anio, sem}] — eje del slider
+        iDesde: 0, iHasta: 0,
+        agrupar: 'Anio',
+        tiposDisponibles: [], // todos los tipos con datos
+        seleccion: [],        // tipos elegidos en el modal
+        charts: {}
+    };
+
+    var HP_MDASH = '—';
+    var elEmpresa = $('#hpEmpresa'), elEscenario = $('#hpEscenario');
+
+    var s2lang = {
+        noResults: function () { return '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Select2NoResults))'; },
+        searching: function () { return '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Select2Searching))'; }
+    };
+
+    // ---------- utilidades ----------
+    function esc(t) { return $('<span>').text(t == null ? '' : String(t)).html(); }
+    function fmt(plantilla) {
+        var args = Array.prototype.slice.call(arguments, 1);
+        return plantilla.replace(/\{(\d+)\}/g, function (m, i) { return args[i] !== undefined ? args[i] : m; });
+    }
+    function fmtPrecio(v) {
+        if (v === null || v === undefined) return HP_MDASH;
+        try { return new Intl.NumberFormat(_hp.cultura, { minimumFractionDigits: 2, maximumFractionDigits: 3 }).format(v); }
+        catch (e) { return (Math.round(v * 1000) / 1000).toFixed(2); }
+    }
+    function fmtPct(v) {
+        if (v === null || v === undefined) return HP_MDASH;
+        try { return new Intl.NumberFormat(_hp.cultura, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v * 100) + '%'; }
+        catch (e) { return (Math.round(v * 1000) / 10) + '%'; }
+    }
+    function fmtPctVar(v) {
+        if (v === null || v === undefined) return HP_MDASH;
+        try { return new Intl.NumberFormat(_hp.cultura, { minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: 'exceptZero' }).format(v * 100) + '%'; }
+        catch (e) { var n = Math.round(v * 1000) / 10; return (n >= 0 ? '+' : '') + n + '%'; }
+    }
+    function colorSerie(i) { return _hp.paleta[i % _hp.paleta.length]; }
+
+    function etiquetaPeriodo(p, agrupar) {
+        switch (agrupar) {
+            case 'Semestre': return fmt(_hp.t.periodoSemestreFmt, p.Sub, p.Anio);
+            default: return String(p.Anio);
+        }
+    }
+    function etiquetasPeriodos(r) { return r.Periodos.map(function (p) { return etiquetaPeriodo(p, r.Agrupar); }); }
+
+    function empresaSeleccionada() { var v = elEmpresa.val(); return v ? parseInt(v, 10) : null; }
+    function escenarioSeleccionado() { var v = elEscenario.val(); return v ? parseInt(v, 10) : 1; }
+
+    function chipVariacion(v, conFuerte) {
+        if (v === null || v === undefined || isNaN(v)) return '<span class="pyg2-dchip">' + HP_MDASH + '</span>';
+        var icono = (conFuerte && Math.abs(v) >= _hp.umbralFuerte)
+            ? '<i class="fas fa-circle-exclamation"></i>'
+            : '<i class="fas fa-caret-' + (v >= 0 ? 'up' : 'down') + '"></i>';
+        return '<span class="pyg2-dchip ' + (v >= 0 ? 'up' : 'down') + '">' + icono + esc(fmtPctVar(v)) + '</span>';
+    }
+
+    // ---------- filtros ----------
+    function etiquetaSem(anio, sem) { return fmt(_hp.t.periodoSemestreFmt, sem, anio); }
+    function claveSem(anio, sem) { return anio * 2 + (sem - 1); }
+
+    function cargarOpciones() {
+        var idEmp = empresaSeleccionada();
+        _hp.mesesCache = []; _hp.tiposDisponibles = []; _hp.seleccion = [];
+        $('#btnConsultarHP').prop('disabled', true);
+        $('#hpTiposBtn').prop('disabled', true);
+        $('#hpAtajos button[data-preset]').prop('disabled', true);
+        $('#hpSinAnios').hide();
+        pintarTiposSeleccion();
+        pintarRango();
+        if (!idEmp) return;
+
+        $.post(_hp.urls.opciones, { idEmpresa: idEmp, idEscenario: escenarioSeleccionado(), __RequestVerificationToken: _hp.token }, function (resp) {
+            if (!resp || !resp.success) { Swal.fire({ icon: 'error', text: (resp && resp.message) || _hp.t.errorServidor }); return; }
+            if (!resp.hayDatos) { $('#hpSinAnios').show(); return; }
+            _hp.mesesCache = resp.semestres;
+            _hp.tiposDisponibles = resp.tipos;
+            _hp.seleccion = resp.tipos.slice();          // por defecto, todos los tipos
+            $('#hpTiposBtn').prop('disabled', false);
+            // Para un histórico de varios años lo natural es ver todo el rango, por años.
+            _hp.iDesde = 0; _hp.iHasta = _hp.mesesCache.length - 1;
+            pintarTiposSeleccion();
+            pintarRango();
+        }).fail(function () { Swal.fire({ icon: 'error', text: _hp.t.errorServidor }); });
+    }
+
+    function filtrosActuales() {
+        var n = _hp.mesesCache.length;
+        var d = n ? _hp.mesesCache[_hp.iDesde] : null, h = n ? _hp.mesesCache[_hp.iHasta] : null;
+        return {
+            IdEmpresa: empresaSeleccionada(),
+            IdEscenario: escenarioSeleccionado(),
+            AnioDesde: d ? d.anio : 0, SemDesde: d ? d.sem : 1,
+            AnioHasta: h ? h.anio : 0, SemHasta: h ? h.sem : 2,
+            Agrupar: _hp.agrupar,
+            // Todos seleccionados = sin filtro (así un tipo nuevo cargado después entra solo).
+            Tipos: (_hp.seleccion.length === _hp.tiposDisponibles.length) ? [] : _hp.seleccion.slice()
+        };
+    }
+
+    function actualizarBotonConsultar() {
+        $('#btnConsultarHP').prop('disabled', !(_hp.mesesCache.length && _hp.seleccion.length));
+    }
+
+    // ===== Selector de tipos de fruta (mismo patrón que "Elegir variables" de Línea de Tiempo) =====
+    function pintarTiposSeleccion() {
+        var n = _hp.seleccion.length, total = _hp.tiposDisponibles.length;
+        var txt = n === 0 ? _hp.t.elegirTipos
+            : (n === total ? fmt(_hp.t.tipoTriggerTodosFmt, total) : fmt(_hp.t.tipoTriggerFmt, n, total));
+        $('#hpTiposBtn').toggleClass('vacio', n === 0).find('.txt').text(txt);
+
+        $('#hpTiposChips').html(_hp.seleccion.map(function (t) {
+            return '<span class="lt-series-chip">' + esc(t) + '<i class="fas fa-times x" data-tipo="' + esc(t) + '"></i></span>';
+        }).join(''));
+        $('#hpTiposBar').toggle(n > 0);
+        actualizarBotonConsultar();
+    }
+
+    function pintarListaTipos() {
+        var q = ($('#hpTiposBuscar').val() || '').toLowerCase().trim();
+        var html = _hp.tiposDisponibles.filter(function (t) { return !q || t.toLowerCase().indexOf(q) !== -1; }).map(function (t) {
+            var on = _hp.seleccion.indexOf(t) !== -1;
+            return '<button type="button" class="lt-opt' + (on ? ' on' : '') + '" data-tipo="' + esc(t) + '" role="checkbox" aria-checked="' + on + '">' +
+                   '<span class="box"><i class="fas fa-check"></i></span><span class="nm">' + esc(t) + '</span></button>';
+        }).join('');
+        $('#hpTiposLista').html('<div class="lt-group"><div class="items">' + html + '</div></div>');
+        $('#hpTiposContador').text(_hp.seleccion.length + ' / ' + _hp.tiposDisponibles.length);
+        $('#hpTiposFootN').text(fmt(_hp.t.tiposSeleccionadosFmt, _hp.seleccion.length));
+    }
+
+    function abrirModalTipos() {
+        if (!_hp.tiposDisponibles.length) return;
+        $('#hpTiposBuscar').val('');
+        pintarListaTipos();
+        $('#hpTiposModal').addClass('open');
+        $('#hpTiposBtn').attr('aria-expanded', 'true');
+        setTimeout(function () { $('#hpTiposBuscar').focus(); }, 30);
+    }
+    function cerrarModalTipos() {
+        $('#hpTiposModal').removeClass('open');
+        $('#hpTiposBtn').attr('aria-expanded', 'false').focus();
+    }
+    function alternarTipo(tipo) {
+        var i = _hp.seleccion.indexOf(tipo);
+        if (i !== -1) _hp.seleccion.splice(i, 1);
+        else _hp.seleccion.push(tipo);
+        // Mantiene el orden del catálogo para que chips y gráficos no cambien según el orden de clic.
+        _hp.seleccion = _hp.tiposDisponibles.filter(function (t) { return _hp.seleccion.indexOf(t) !== -1; });
+        pintarListaTipos(); pintarTiposSeleccion();
+    }
+
+    // ===== Atajos del rango (por semestres, relativos a la fecha de HOY del servidor) =====
+    // Cada ventana se intersecta con los semestres que tienen datos; sin datos, el atajo queda .no-disponible.
+    function ventanaPreset(preset) {
+        var a = _hp.hoy.anio, kHoy = claveSem(a, _hp.hoy.sem);
+        switch (preset) {
+            case 'ytd': return [claveSem(a, 1), claveSem(a, 2)];
+            case 'anioAnt': return [claveSem(a - 1, 1), claveSem(a - 1, 2)];
+            case 'ult3': return [claveSem(a - 2, 1), claveSem(a, 2)];
+            case 'semActual': return [kHoy, kHoy];
+            case 'semAnterior': return [kHoy - 1, kHoy - 1];
+            default: return null;
+        }
+    }
+    function textoVentana(preset) {
+        var v = ventanaPreset(preset);
+        if (!v) return '';
+        var a = _hp.hoy.anio;
+        if (preset === 'ytd') return String(a);
+        if (preset === 'anioAnt') return String(a - 1);
+        if (preset === 'ult3') return (a - 2) + ' – ' + a;
+        var f = function (k) { return etiquetaSem(Math.floor(k / 2), (k % 2) + 1); };
+        return f(v[0]);
+    }
+    function indicesPreset(preset) {
+        var n = _hp.mesesCache.length;
+        if (!n) return null;
+        if (preset === 'todo') return { d: 0, h: n - 1 };
+        var v = ventanaPreset(preset);
+        if (!v) return null;
+        var d = -1, h = -1;
+        for (var i = 0; i < n; i++) {
+            var k = claveSem(_hp.mesesCache[i].anio, _hp.mesesCache[i].sem);
+            if (k >= v[0] && k <= v[1]) { if (d < 0) d = i; h = i; }
+        }
+        return d < 0 ? null : { d: d, h: h };
+    }
+    function pintarAtajos() {
+        $('#hpAtajos button[data-preset]').each(function () {
+            var preset = String($(this).data('preset'));
+            var p = indicesPreset(preset), ventana = textoVentana(preset);
+            $(this).prop('disabled', !_hp.mesesCache.length)
+                .toggleClass('no-disponible', _hp.mesesCache.length > 0 && !p)
+                .attr('aria-disabled', p ? 'false' : 'true')
+                .attr('title', !ventana ? '' : fmt(p ? _hp.t.rangoTooltipFmt : _hp.t.rangoSinDatosFmt, ventana))
+                .toggleClass('active', !!p && p.d === _hp.iDesde && p.h === _hp.iHasta);
+        });
+    }
+
+    // ===== Rango de semestres (slider continuo, mismo comportamiento que Línea de Tiempo) =====
+    function pctIndice(i, n) { return n > 1 ? (i / (n - 1) * 100) : 0; }
+
+    function pintarRango() {
+        var per = _hp.mesesCache, n = per.length, track = $('#hpRangoTrack');
+        if (n === 0) {
+            track.addClass('disabled');
+            $('#hpRangoDesdeLbl, #hpRangoHastaLbl').text(HP_MDASH);
+            $('#hpRangoHastaLbl').show(); $('#hpRangoDesdeLbl').next('i').show();
+            $('#hpRangoBadge').text(HP_MDASH);
+            $('#hpRangoYears').empty();
+            $('#hpAtajos button[data-preset]').removeClass('active no-disponible').attr('title', '');
+            actualizarBotonConsultar();
+            return;
+        }
+        track.removeClass('disabled');
+        var pDesde = pctIndice(_hp.iDesde, n), pHasta = pctIndice(_hp.iHasta, n);
+        var lbl = function (m) { return etiquetaSem(m.anio, m.sem); };
+        $('#hpKnobFrom').css('left', pDesde + '%').attr({ 'aria-valuemin': 0, 'aria-valuemax': n - 1, 'aria-valuenow': _hp.iDesde, 'aria-valuetext': lbl(per[_hp.iDesde]) });
+        $('#hpKnobTo').css('left', pHasta + '%').attr({ 'aria-valuemin': 0, 'aria-valuemax': n - 1, 'aria-valuenow': _hp.iHasta, 'aria-valuetext': lbl(per[_hp.iHasta]) });
+        $('#hpRangoSel').css({ left: pDesde + '%', width: (pHasta - pDesde) + '%' });
+
+        var uno = _hp.iDesde === _hp.iHasta;
+        $('#hpRangoDesdeLbl').text(lbl(per[_hp.iDesde]));
+        $('#hpRangoHastaLbl').text(uno ? '' : lbl(per[_hp.iHasta])).toggle(!uno);
+        $('#hpRangoDesdeLbl').next('i').toggle(!uno);
+        var total = _hp.iHasta - _hp.iDesde + 1;
+        $('#hpRangoBadge').text(total + ' ' + (total === 1 ? _hp.t.badgeSem : _hp.t.badgeSems));
+
+        var anios = [];
+        per.forEach(function (m) { if (anios.indexOf(m.anio) === -1) anios.push(m.anio); });
+        $('#hpRangoYears').html(anios.map(function (a) { return '<span>' + a + '</span>'; }).join(''));
+
+        pintarAtajos();
+        actualizarBotonConsultar();
+    }
+
+    function aplicarPresetRango(preset) {
+        var p = indicesPreset(preset);
+        if (!p) return;   // atajo sin datos (.no-disponible): el tooltip explica por qué
+        _hp.iDesde = p.d; _hp.iHasta = p.h;
+        pintarRango();
+    }
+
+    function indiceDesdeClientX(clientX) {
+        var rect = document.getElementById('hpRangoTrack').getBoundingClientRect();
+        var n = _hp.mesesCache.length;
+        var frac = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+        return Math.round(frac * (n - 1));
+    }
+    function moverExtremo(cual, idx) {
+        var n = _hp.mesesCache.length;
+        idx = Math.min(n - 1, Math.max(0, idx));
+        if (cual === 'from') { _hp.iDesde = idx; if (_hp.iDesde > _hp.iHasta) _hp.iHasta = _hp.iDesde; }
+        else { _hp.iHasta = idx; if (_hp.iHasta < _hp.iDesde) _hp.iDesde = _hp.iHasta; }
+        pintarRango();
+    }
+    function iniciarArrastreSlider(e, cual) {
+        if (_hp.mesesCache.length < 2) return;
+        e.preventDefault();
+        var track = $('#hpRangoTrack').addClass('dragging');
+        function onMove(ev) { moverExtremo(cual, indiceDesdeClientX(ev.clientX)); }
+        function onUp() {
+            track.removeClass('dragging');
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+        }
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+    }
+    function clicEnPista(e) {
+        if ($(e.target).hasClass('knob') || _hp.mesesCache.length < 2) return;
+        var idx = indiceDesdeClientX(e.clientX);
+        var cual = Math.abs(idx - _hp.iDesde) <= Math.abs(idx - _hp.iHasta) ? 'from' : 'to';
+        moverExtremo(cual, idx);
+        iniciarArrastreSlider(e, cual);
+    }
+    function moverKnobConTeclado(e, cual) {
+        var n = _hp.mesesCache.length;
+        if (n < 2) return;
+        var idx = cual === 'from' ? _hp.iDesde : _hp.iHasta;
+        if (e.key === 'ArrowLeft') idx -= 1;
+        else if (e.key === 'ArrowRight') idx += 1;
+        else if (e.key === 'Home') idx = 0;
+        else if (e.key === 'End') idx = n - 1;
+        else return;
+        e.preventDefault();
+        moverExtremo(cual, idx);
+    }
+
+    function consultar() {
+        var f = filtrosActuales();
+        if (!f.IdEmpresa) { Swal.fire({ icon: 'info', text: _hp.t.seleccioneEmpresa }); return; }
+        if (_hp.seleccion.length === 0) { Swal.fire({ icon: 'warning', text: _hp.t.seleccioneTipos }); return; }
+
+        $('#overlayConsultandoHP').css('display', 'flex');
+        $.ajax({
+            url: _hp.urls.reporte, type: 'POST', traditional: true,
+            data: $.extend({ __RequestVerificationToken: _hp.token }, f)
+        }).done(function (resp) {
+            if (!resp || !resp.success) { Swal.fire({ icon: 'error', text: (resp && resp.message) || _hp.t.errorServidor }); return; }
+            $('#hpEstadoInicial').hide();
+            if (resp.reporte.SinDatos) { $('#hpResultado').hide(); $('#hpSinDatos').show(); return; }
+            $('#hpSinDatos').hide();
+            _hp.reporte = resp.reporte;
+            _hp.filtros = f;
+            _hp.nombreEmpresa = elEmpresa.find('option:selected').text();
+            _hp.nombreEscenario = elEscenario.find('option:selected').text();
+            $('#hpResultado').show();
+            pintar(resp.reporte);
+        }).fail(function () {
+            Swal.fire({ icon: 'error', text: _hp.t.errorServidor });
+        }).always(function () { $('#overlayConsultandoHP').hide(); });
+    }
+
+    // ---------- pintado ----------
+    function pintar(r) {
+        pintarEncabezado(r);
+        pintarKpis(r);
+        pintarRelevante(r);
+        pintarCharts(r);
+        pintarTablas(r);
+        pintarNotas(r);
+    }
+
+    function pintarEncabezado(r) {
+        $('#hpTituloEmpresa').text(_hp.nombreEmpresa);
+        $('#hpFechaGenerado').text(new Date().toLocaleDateString(_hp.cultura, { day: '2-digit', month: 'short', year: 'numeric' }));
+        $('#hpChipRango').text(fmt(_hp.t.chipRangoFmt, etiquetaSem(r.AnioDesde, r.SemDesde), etiquetaSem(r.AnioHasta, r.SemHasta)));
+        $('#hpChipAgrupar').text(_hp.t['agr_' + r.Agrupar]);
+        $('#hpChipTipos').text(fmt(_hp.t.chipTiposFmt, r.Series.length));
+        $('#hpChipEscenario').text(_hp.nombreEscenario);
+    }
+
+    function etiquetaComparable(r, idx) {
+        var p = r.Periodos[idx];
+        return etiquetaPeriodo({ Anio: p.Anio - 1, Sub: p.Sub }, r.Agrupar);
+    }
+
+    function datosKpis(r) {
+        var u = r.IdxUltimo, kpis = [];
+        var etUlt = u >= 0 ? etiquetasPeriodos(r)[u] : '';
+        var varTotal = u >= 0 ? r.Total.Variaciones[u] : null;
+
+        kpis.push({
+            icono: 'fa-tags', nombre: _hp.t.kpiPromedio,
+            valor: u >= 0 ? fmtPrecio(r.Total.Valores[u]) : HP_MDASH,
+            ref: u >= 0 ? fmt(_hp.t.enFmt, etUlt) : '',
+            delta: varTotal, deltaRef: (u >= 0 && varTotal !== null) ? fmt(_hp.t.vsFmt, etiquetaComparable(r, u)) : ''
+        });
+        kpis.push({
+            icono: 'fa-crown', nombre: _hp.t.kpiMasCaro,
+            valor: r.MasCaro ? fmtPrecio(r.MasCaro.Valor) : HP_MDASH,
+            ref: r.MasCaro ? r.MasCaro.Tipo : '', delta: null
+        });
+        var alza = r.MayorAlza && r.MayorAlza.Valor >= 0;
+        var mv = alza ? r.MayorAlza : (r.MenorVariacion || r.MayorAlza);
+        kpis.push({
+            icono: alza ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down', nombre: alza ? _hp.t.kpiMayorAlza : _hp.t.kpiMayorBaja,
+            valor: mv ? fmtPctVar(mv.Valor) : HP_MDASH,
+            ref: mv ? mv.Tipo : '', delta: null, valorNum: mv ? mv.Valor : null
+        });
+        kpis.push({
+            icono: 'fa-chart-line', nombre: _hp.t.kpiCagr,
+            valor: r.Cagr !== null && r.Cagr !== undefined ? fmtPctVar(r.Cagr) : HP_MDASH,
+            ref: r.Cagr !== null && r.Cagr !== undefined ? fmt(_hp.t.cagrSubFmt, r.CagrAnioInicial, r.CagrAnioFinal) : _hp.t.cagrSinDato,
+            delta: null, valorNum: r.Cagr
+        });
+        return kpis;
+    }
+
+    function pintarKpis(r) {
+        var $s = $('#hpKpiStrip').empty();
+        datosKpis(r).forEach(function (k) {
+            var colorValor = '';
+            if (k.valorNum !== undefined && k.valorNum !== null) colorValor = k.valorNum >= 0 ? ' hp-up' : ' hp-down';
+            var fila = '';
+            if (k.delta !== null && k.delta !== undefined)
+                fila = '<div class="row"><span class="ref">' + esc(k.deltaRef) + '</span>' + chipVariacion(k.delta, false) + '</div>';
+            else if (k.ref)
+                fila = '<div class="row"><span class="ref hp-ref-strong">' + esc(k.ref) + '</span></div>';
+            $s.append(
+                '<div class="pyg2-kpi">' +
+                    '<div class="pyg2-kpi-head"><span class="ic"><i class="fas ' + k.icono + '"></i></span><span class="nm">' + esc(k.nombre) + '</span></div>' +
+                    '<div class="pyg2-kpi-val"><span class="v' + colorValor + '">' + esc(k.valor) + '</span></div>' +
+                    '<div class="pyg2-kpi-deltas">' + fila + '</div>' +
+                '</div>');
+        });
+    }
+
+    // "Lo más relevante": variación de cada tipo en el último periodo; sin comparable, ranking de precios.
+    function pintarRelevante(r) {
+        var u = r.IdxUltimo, $l = $('#hpRelevanteLista').empty();
+        if (u < 0) { $('#hpRelevanteSub').text(HP_MDASH); return; }
+        var etUlt = etiquetasPeriodos(r)[u];
+        var conVar = r.Series.filter(function (s) { return s.Variaciones[u] !== null; });
+
+        if (conVar.length > 0) {
+            $('#hpRelevanteSub').text(fmt(_hp.t.relevanteSubFmt, etUlt, etiquetaComparable(r, u)));
+            conVar.sort(function (a, b) { return b.Variaciones[u] - a.Variaciones[u]; });
+            var max = Math.max.apply(null, conVar.map(function (s) { return Math.abs(s.Variaciones[u]); })) || 1;
+            conVar.forEach(function (s) {
+                var v = s.Variaciones[u];
+                $l.append(
+                    '<div class="pyg2-hl ' + (v >= 0 ? 'up' : 'down') + '">' +
+                        '<div class="pyg2-hl-top"><span class="nm">' + esc(s.Tipo) + '</span>' +
+                        '<span class="val ' + (v >= 0 ? 'hp-up' : 'hp-down') + '">' + esc(fmtPctVar(v)) + '</span></div>' +
+                        '<div class="pyg2-hl-bot"><span class="pyg2-hl-track"><i style="width:' + Math.max(4, Math.abs(v) / max * 100) + '%"></i></span>' +
+                        '<span class="tag hp-tag-precio">' + esc(fmtPrecio(s.Valores[u])) + '</span></div>' +
+                    '</div>');
+            });
+        } else {
+            $('#hpRelevanteSub').text(fmt(_hp.t.relevantePreciosSubFmt, etUlt));
+            var conPrecio = r.Series.filter(function (s) { return s.Valores[u] !== null; })
+                .sort(function (a, b) { return b.Valores[u] - a.Valores[u]; });
+            var maxP = conPrecio.length ? conPrecio[0].Valores[u] : 1;
+            conPrecio.forEach(function (s) {
+                $l.append(
+                    '<div class="pyg2-hl up">' +
+                        '<div class="pyg2-hl-top"><span class="nm">' + esc(s.Tipo) + '</span><span class="val">' + esc(fmtPrecio(s.Valores[u])) + '</span></div>' +
+                        '<div class="pyg2-hl-bot"><span class="pyg2-hl-track"><i style="width:' + Math.max(4, s.Valores[u] / maxP * 100) + '%"></i></span></div>' +
+                    '</div>');
+            });
+        }
+    }
+
+    // ---------- gráficos ----------
+    // Fondo blanco al exportar a imagen (el PDF usa JPEG y un canvas transparente saldría negro).
+    var hpFondoBlanco = {
+        id: 'hpFondoBlanco',
+        beforeDraw: function (chart) {
+            var ctx = chart.ctx; ctx.save(); ctx.globalCompositeOperation = 'destination-over';
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, chart.width, chart.height); ctx.restore();
+        }
+    };
+
+    function destruirCharts() {
+        Object.keys(_hp.charts).forEach(function (k) { if (_hp.charts[k]) _hp.charts[k].destroy(); });
+        _hp.charts = {};
+    }
+
+    function opcionesBase(formatoY) {
+        return {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { display: false }, tooltip: { callbacks: {} } },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 14 } },
+                y: { ticks: { font: { size: 11 }, callback: formatoY }, grid: { color: '#EEF0F6' } }
+            }
+        };
+    }
+
+    function pintarCharts(r) {
+        destruirCharts();
+        var etiquetas = etiquetasPeriodos(r);
+        var pocos = etiquetas.length <= 24;
+
+        // 1) Evolución por tipo
+        var optE = opcionesBase(function (v) { return fmtPrecio(v); });
+        optE.plugins.legend = { display: true, position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } };
+        optE.plugins.tooltip.callbacks.label = function (c) { return ' ' + c.dataset.label + ': ' + fmtPrecio(c.parsed.y); };
+        _hp.charts.evolucion = new Chart(document.getElementById('hpChartEvolucion'), {
+            type: 'line',
+            data: {
+                labels: etiquetas,
+                datasets: r.Series.map(function (s, i) {
+                    return {
+                        label: s.Tipo, data: s.Valores, borderColor: colorSerie(i), backgroundColor: colorSerie(i),
+                        borderWidth: 2, tension: 0.25, pointRadius: pocos ? 3 : 0, pointHoverRadius: 5, spanGaps: true
+                    };
+                })
+            },
+            options: optE, plugins: [hpFondoBlanco]
+        });
+
+        // 2) Promedio general (línea con relleno)
+        var optP = opcionesBase(function (v) { return fmtPrecio(v); });
+        optP.plugins.tooltip.callbacks.label = function (c) { return ' ' + _hp.t.promedioGeneral + ': ' + fmtPrecio(c.parsed.y); };
+        _hp.charts.promedio = new Chart(document.getElementById('hpChartPromedio'), {
+            type: 'line',
+            data: {
+                labels: etiquetas,
+                datasets: [{
+                    label: _hp.t.promedioGeneral, data: r.Total.Valores, borderColor: '#583AFF', backgroundColor: 'rgba(88,58,255,.10)',
+                    fill: true, borderWidth: 2.5, tension: 0.25, pointRadius: pocos ? 3 : 0, pointHoverRadius: 5, spanGaps: true
+                }]
+            },
+            options: optP, plugins: [hpFondoBlanco]
+        });
+
+        // 3) Variación del promedio general (barras verde/rojo)
+        var optV = opcionesBase(function (v) { return fmtPct(v); });
+        optV.plugins.tooltip.callbacks.label = function (c) { return ' ' + fmtPctVar(c.parsed.y); };
+        var vars = r.Total.Variaciones;
+        _hp.charts.variacion = new Chart(document.getElementById('hpChartVariacion'), {
+            type: 'bar',
+            data: {
+                labels: etiquetas,
+                datasets: [{
+                    label: _hp.t.variacion, data: vars, borderRadius: 4,
+                    backgroundColor: vars.map(function (v) { return v === null ? 'rgba(0,0,0,0)' : (v >= 0 ? '#16A34A' : '#DC2626'); })
+                }]
+            },
+            options: optV, plugins: [hpFondoBlanco]
+        });
+        $('#hpVariacionChartSub').text(r.HayComparable ? _hp.t.variacion : _hp.t.sinComparable);
+    }
+
+    // ---------- tablas ----------
+    function pintarTablas(r) {
+        var et = etiquetasPeriodos(r);
+
+        // Precios: mapa de calor suave por fila (min→max de la propia serie).
+        var $th = $('#hpTablaPrecios thead').empty(), $tb = $('#hpTablaPrecios tbody').empty();
+        $th.append('<tr><th class="col-cuenta">' + esc(_hp.t.colTipo) + '</th>' +
+            et.map(function (e) { return '<th>' + esc(e) + '</th>'; }).join('') +
+            '<th class="sep">' + esc(_hp.t.colPromedio) + '</th></tr>');
+        r.Series.forEach(function (s, i) {
+            var vals = s.Valores.filter(function (v) { return v !== null; });
+            var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals), rango = (max - min) || 1;
+            var celdas = s.Valores.map(function (v) {
+                if (v === null) return '<td>' + HP_MDASH + '</td>';
+                var a = (0.05 + 0.20 * ((v - min) / rango)).toFixed(3);
+                return '<td style="background:rgba(99,102,241,' + a + ')">' + esc(fmtPrecio(v)) + '</td>';
+            }).join('');
+            $tb.append('<tr><td class="col-cuenta"><i class="hp-dot" style="background:' + colorSerie(i) + '"></i>' + esc(s.Tipo) + '</td>' + celdas +
+                '<td class="sep hp-strong">' + esc(fmtPrecio(s.Promedio)) + '</td></tr>');
+        });
+        $tb.append('<tr class="subtotal"><td class="col-cuenta">' + esc(_hp.t.totalGeneral) + '</td>' +
+            r.Total.Valores.map(function (v) { return '<td class="hp-strong">' + esc(fmtPrecio(v)) + '</td>'; }).join('') +
+            '<td class="sep hp-strong">' + esc(fmtPrecio(r.Total.Promedio)) + '</td></tr>');
+
+        // Variación %
+        var $vh = $('#hpTablaVariacion thead').empty(), $vb = $('#hpTablaVariacion tbody').empty();
+        $vh.append('<tr><th class="col-cuenta">' + esc(_hp.t.colTipo) + '</th>' + et.map(function (e) { return '<th>' + esc(e) + '</th>'; }).join('') + '</tr>');
+        function celdaVar(v) {
+            if (v === null || v === undefined) return '<td class="hp-muted">' + HP_MDASH + '</td>';
+            var fuerte = Math.abs(v) >= _hp.umbralFuerte;
+            return '<td class="' + (v >= 0 ? 'hp-up' : 'hp-down') + (fuerte ? ' hp-fuerte' : '') + '">' +
+                (fuerte ? '<i class="fas fa-circle-exclamation"></i> ' : '') + esc(fmtPctVar(v)) + '</td>';
+        }
+        r.Series.forEach(function (s, i) {
+            $vb.append('<tr><td class="col-cuenta"><i class="hp-dot" style="background:' + colorSerie(i) + '"></i>' + esc(s.Tipo) + '</td>' + s.Variaciones.map(celdaVar).join('') + '</tr>');
+        });
+        $vb.append('<tr class="subtotal"><td class="col-cuenta">' + esc(_hp.t.totalGeneral) + '</td>' + r.Total.Variaciones.map(celdaVar).join('') + '</tr>');
+        $('#hpTablaVariacionSub').text(r.Agrupar === 'Anio' ? _hp.t.variacion : _hp.t.variacion + ' (' + _hp.t.agr_Anio.toLowerCase() + ')');
+    }
+
+    function pintarNotas(r) {
+        $('#hpNotaSinComparable').toggle(!r.HayComparable).text(_hp.t.notaSinComparable);
+        var parcial = r.SemestresUltimoAnio > 0 && r.SemestresUltimoAnio < 2;
+        $('#hpNotaAnioParcial').toggle(parcial).text(parcial ? fmt(_hp.t.notaAnioParcialFmt, r.AnioHasta, r.SemestresUltimoAnio) : '');
+    }
+
+    // ---------- exportaciones ----------
+    function exportarExcel() {
+        if (!_hp.filtros) return;
+        var $c = $('#hpExpCampos').empty();
+        function add(n, v) { $c.append($('<input type="hidden">').attr('name', n).val(v)); }
+        var f = _hp.filtros;
+        add('IdEmpresa', f.IdEmpresa); add('IdEscenario', f.IdEscenario);
+        add('AnioDesde', f.AnioDesde); add('SemDesde', f.SemDesde); add('AnioHasta', f.AnioHasta); add('SemHasta', f.SemHasta); add('Agrupar', f.Agrupar);
+        (f.Tipos || []).forEach(function (t) { add('Tipos', t); });
+        $('#frmExportarExcelHP').trigger('submit');
+    }
+
+    function imagenChart(chart) { return chart.toBase64Image('image/jpeg', 0.92); }
+
+    // Construye el PDF (jsPDF) y lo devuelve; lo usan la descarga y el envío por correo. null si falla.
+    function construirPdf() {
+        var r = _hp.reporte;
+        if (!r || !window.jspdf) return null;
+        try {
+            var doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            var W = 297, H = 210, M = 12, y;
+            var et = etiquetasPeriodos(r);
+            var paginas = [];
+
+            function hex(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16), parseInt(c.substr(5, 2), 16)]; }
+            function banda() {
+                doc.setFillColor.apply(doc, hex('#583AFF')); doc.rect(0, 0, W, 22, 'F');
+                doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+                doc.text(_hp.t.pageTitle, M, 11);
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+                doc.text(_hp.nombreEmpresa + '  ·  ' + fmt(_hp.t.chipRangoFmt, etiquetaSem(r.AnioDesde, r.SemDesde), etiquetaSem(r.AnioHasta, r.SemHasta)) + '  ·  ' + _hp.t['agr_' + r.Agrupar] + '  ·  ' + _hp.nombreEscenario, M, 17.5);
+                doc.setFontSize(8); doc.text(_hp.t.tag, W - M, 11, { align: 'right' });
+                doc.setTextColor(30, 30, 40);
+            }
+            function nuevaPagina(conBanda) { doc.addPage(); if (conBanda) banda(); }
+
+            // Página 1: resumen
+            banda(); y = 30;
+            var kpis = datosKpis(r), cw = (W - 2 * M - 3 * 6) / 4;
+            kpis.forEach(function (k, i) {
+                var x = M + i * (cw + 6);
+                doc.setDrawColor(228, 225, 240); doc.setFillColor(255, 255, 255); doc.roundedRect(x, y, cw, 26, 2, 2, 'FD');
+                doc.setFontSize(7.5); doc.setTextColor(91, 85, 112); doc.setFont('helvetica', 'bold'); doc.text(k.nombre.toUpperCase(), x + 4, y + 6.5);
+                doc.setFontSize(17); doc.setTextColor(22, 18, 31); doc.text(String(k.valor), x + 4, y + 16);
+                doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(91, 85, 112);
+                var sub = (k.delta !== null && k.delta !== undefined) ? (fmtPctVar(k.delta) + '  ' + (k.deltaRef || '')) : (k.ref || '');
+                doc.text(sub, x + 4, y + 22);
+            });
+            y += 32;
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(88, 58, 255); doc.text(_hp.t.graficoEvolucionTitulo, M, y); y += 3;
+            var c1 = _hp.charts.evolucion, anchoMax = W - 2 * M, altoMax = H - y - 14;
+            var prop = c1.height / c1.width, w1 = anchoMax, h1 = w1 * prop;
+            if (h1 > altoMax) { h1 = altoMax; w1 = h1 / prop; }
+            doc.addImage(imagenChart(c1), 'JPEG', M, y, w1, h1);
+
+            // Página 2: promedio + variación
+            nuevaPagina(true); y = 30;
+            var half = (W - 2 * M - 8) / 2;
+            [['promedio', _hp.t.promedioTitulo], ['variacion', _hp.t.variacionChartTitulo]].forEach(function (par, i) {
+                var ch = _hp.charts[par[0]], x = M + i * (half + 8);
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(88, 58, 255); doc.text(par[1], x, y);
+                var hh = half * (ch.height / ch.width);
+                doc.addImage(imagenChart(ch), 'JPEG', x, y + 3, half, hh);
+            });
+
+            // Tablas (se parten en bloques de columnas para que quepan)
+            function tablaPdf(titulo, filas, conPromedio, formateador, colorear) {
+                var porPagina = 10, totalCols = et.length;
+                for (var ini = 0; ini < totalCols; ini += porPagina) {
+                    var fin = Math.min(totalCols, ini + porPagina);
+                    nuevaPagina(true); y = 30;
+                    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(88, 58, 255); doc.text(titulo, M, y); y += 5;
+                    var nCols = (fin - ini) + (conPromedio && fin === totalCols ? 1 : 0);
+                    var wTipo = 52, wCol = Math.min(24, (W - 2 * M - wTipo) / Math.max(nCols, 1)), rh = 7;
+                    // encabezado
+                    doc.setFillColor(99, 102, 241); doc.rect(M, y, wTipo + wCol * nCols, rh, 'F');
+                    doc.setTextColor(255, 255, 255); doc.setFontSize(8);
+                    doc.text(_hp.t.colTipo, M + 2, y + 4.7);
+                    for (var c = ini; c < fin; c++) doc.text(et[c], M + wTipo + (c - ini) * wCol + wCol - 2, y + 4.7, { align: 'right' });
+                    if (conPromedio && fin === totalCols) doc.text(_hp.t.colPromedio, M + wTipo + (fin - ini) * wCol + wCol - 2, y + 4.7, { align: 'right' });
+                    y += rh;
+                    filas.forEach(function (f, idx) {
+                        if (y + rh > H - 12) { nuevaPagina(true); y = 30; }
+                        var esTotal = f.total;
+                        doc.setFillColor.apply(doc, esTotal ? [244, 243, 251] : (idx % 2 ? [248, 250, 252] : [255, 255, 255]));
+                        doc.rect(M, y, wTipo + wCol * nCols, rh, 'F');
+                        doc.setFont('helvetica', esTotal ? 'bold' : 'normal'); doc.setFontSize(8); doc.setTextColor(30, 30, 40);
+                        doc.text(String(f.nombre), M + 2, y + 4.7, { maxWidth: wTipo - 3 });
+                        for (var c2 = ini; c2 < fin; c2++) {
+                            var v = f.valores[c2];
+                            if (colorear && v !== null && v !== undefined) doc.setTextColor.apply(doc, v >= 0 ? [22, 163, 74] : [220, 38, 38]); else doc.setTextColor(30, 30, 40);
+                            doc.text(formateador(v), M + wTipo + (c2 - ini) * wCol + wCol - 2, y + 4.7, { align: 'right' });
+                        }
+                        doc.setTextColor(30, 30, 40);
+                        if (conPromedio && fin === totalCols) doc.text(formateador(f.promedio), M + wTipo + (fin - ini) * wCol + wCol - 2, y + 4.7, { align: 'right' });
+                        y += rh;
+                    });
+                }
+            }
+            var filasPrecios = r.Series.map(function (s) { return { nombre: s.Tipo, valores: s.Valores, promedio: s.Promedio }; })
+                .concat([{ nombre: _hp.t.totalGeneral, valores: r.Total.Valores, promedio: r.Total.Promedio, total: true }]);
+            tablaPdf(_hp.t.tablaPreciosTitulo, filasPrecios, true, fmtPrecio, false);
+            var filasVar = r.Series.map(function (s) { return { nombre: s.Tipo, valores: s.Variaciones }; })
+                .concat([{ nombre: _hp.t.totalGeneral, valores: r.Total.Variaciones, total: true }]);
+            tablaPdf(_hp.t.tablaVariacionTitulo, filasVar, false, fmtPctVar, true);
+
+            // Pie en todas las páginas
+            var n = doc.getNumberOfPages();
+            for (var p = 1; p <= n; p++) {
+                doc.setPage(p); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(139, 133, 160);
+                doc.text(_hp.nombreEmpresa + '  ·  ' + _hp.t.pdfConfidencial, M, H - 6);
+                doc.text(fmt(_hp.t.pdfPaginaFmt, p, n), W - M, H - 6, { align: 'right' });
+            }
+
+            return doc;
+        } catch (e) {
+            if (window.console) console.error(e);
+            return null;
+        }
+    }
+
+    function nombreArchivoHP(ext) {
+        return ('HistoricoPrecios_' + _hp.nombreEmpresa + '_' + new Date().toISOString().slice(0, 10) + '.' + ext).replace(/[\\/:*?"<>|]+/g, '_');
+    }
+
+    function exportarPdf() {
+        var doc = construirPdf();
+        if (!doc) throw new Error('pdf');
+        doc.save(nombreArchivoHP('pdf'));
+        ExportMenu.aviso('success', _hp.t.expListo);
+    }
+
+    // Captura todo el informe (encabezado, indicadores, gráficos y tablas) tal como se ve.
+    function copiarImagen() {
+        return ExportMenu.copiarImagen(document.getElementById('hpResultado'), nombreArchivoHP('png'),
+            { imagenCopiada: _hp.t.expImagenCopiada, imagenDescargada: _hp.t.expImagenDescargada });
+    }
+
+    // ---------- enviar por correo (modal compartido: ExportMenu.correo) ----------
+    var correoHP = null;   // se crea en el init
+    function abrirCorreo() { if (_hp.reporte && correoHP) correoHP.abrir(); }
+
+    // ---------- documentación (visor de solo lectura) ----------
+    function abrirDocumentacion() {
+        var $f = $('#hpDocFrame');
+        if (!$f.attr('src')) $f.attr('src', _hp.urls.documentacion);   // se carga una sola vez, al abrir
+        $('#hpDocModal').addClass('open');
+        document.body.style.overflow = 'hidden';
+        $('#hpDocCerrar').trigger('focus');
+    }
+    function cerrarDocumentacion() {
+        if (document.fullscreenElement) document.exitFullscreen();
+        $('#hpDocModal').removeClass('open');
+        document.body.style.overflow = '';
+        $('#hpDocBtn').trigger('focus');
+    }
+
+    // ---------- init ----------
+    function limpiar() {
+        _hp.reporte = null; _hp.filtros = null; destruirCharts();
+        $('#hpResultado, #hpSinDatos').hide(); $('#hpEstadoInicial').show();
+        _hp.agrupar = 'Anio';
+        pintarVerPor();
+        if (elEmpresa.find('option').length > 1) elEmpresa.val('').trigger('change.select2');
+        cargarOpciones();
+    }
+
+    function pintarVerPor() {
+        $('#hpVerPor button').removeClass('active').attr('aria-pressed', 'false');
+        $('#hpVerPor button[data-modo="' + _hp.agrupar + '"]').addClass('active').attr('aria-pressed', 'true');
+    }
+
+    $(function () {
+        elEmpresa.select2({ width: '100%', language: s2lang, minimumResultsForSearch: 10 });
+        elEscenario.select2({ width: '100%', language: s2lang, minimumResultsForSearch: 10 });
+
+        elEmpresa.on('change', cargarOpciones);
+        elEscenario.on('change', cargarOpciones);
+
+        // Tipos de fruta
+        $('#hpTiposBtn').on('click', abrirModalTipos);
+        $('#hpTiposModalClose, #hpTiposAplicar').on('click', cerrarModalTipos);
+        $('#hpTiposModal').on('click', function (e) { if (e.target === this) cerrarModalTipos(); });
+        $(document).on('keydown', function (e) { if (e.key === 'Escape' && $('#hpTiposModal').hasClass('open')) cerrarModalTipos(); });
+        $('#hpTiposBuscar').on('input', pintarListaTipos);
+        $('#hpTiposLista').on('click', '.lt-opt', function () { alternarTipo($(this).attr('data-tipo')); });
+        $('#hpTiposTodosBtn').on('click', function () { _hp.seleccion = _hp.tiposDisponibles.slice(); pintarListaTipos(); pintarTiposSeleccion(); });
+        $('#hpTiposLimpiar, #hpTiposClear').on('click', function () { _hp.seleccion = []; pintarListaTipos(); pintarTiposSeleccion(); });
+        $('#hpTiposChips').on('click', '.x', function () { alternarTipo($(this).attr('data-tipo')); });
+
+        // Rango y "Ver por"
+        $('#hpAtajos button[data-preset]').on('click', function () { aplicarPresetRango($(this).data('preset')); });
+        $('#hpVerPor button').on('click', function () { _hp.agrupar = $(this).data('modo'); pintarVerPor(); });
+        $('#hpKnobFrom').on('pointerdown', function (e) { e.stopPropagation(); iniciarArrastreSlider(e, 'from'); });
+        $('#hpKnobTo').on('pointerdown', function (e) { e.stopPropagation(); iniciarArrastreSlider(e, 'to'); });
+        $('#hpRangoTrack').on('pointerdown', function (e) { clicEnPista(e); });
+        $('#hpKnobFrom, #hpKnobTo').on('keydown', function (e) { moverKnobConTeclado(e, this.id === 'hpKnobFrom' ? 'from' : 'to'); });
+
+        // Documentación
+        $('#hpDocBtn').on('click', abrirDocumentacion);
+        $('#hpDocCerrar').on('click', cerrarDocumentacion);
+        $('#hpDocModal').on('click', function (e) { if (e.target === this) cerrarDocumentacion(); });
+        $(document).on('keydown', function (e) { if (e.key === 'Escape' && $('#hpDocModal').hasClass('open') && !document.fullscreenElement) cerrarDocumentacion(); });
+        $('#hpDocFull').on('click', function () {
+            var card = document.querySelector('#hpDocModal .hp-doc-card');
+            if (document.fullscreenElement) document.exitFullscreen(); else if (card.requestFullscreen) card.requestFullscreen();
+        });
+
+        $('#btnConsultarHP').on('click', consultar);
+        $('#btnLimpiarHP').on('click', limpiar);
+        // Botón "Exportar" desplegable (componente estándar _ExportMenu / export-menu.js)
+        correoHP = ExportMenu.correo({
+            url: _hp.urls.correo,
+            token: function () { return _hp.token; },
+            // Filtros del informe consultado: el servidor reconstruye el reporte (no confía en cifras del navegador).
+            datos: function () { return _hp.filtros; },
+            pdf: function () { var doc = construirPdf(); return doc ? doc.output('datauristring') : ''; },
+            pills: function () {
+                var r = _hp.reporte;
+                return [_hp.nombreEmpresa, fmt(_hp.t.chipRangoFmt, etiquetaSem(r.AnioDesde, r.SemDesde), etiquetaSem(r.AnioHasta, r.SemHasta)), _hp.t['agr_' + r.Agrupar]];
+            },
+            textos: { valDestino: _hp.t.correoValDestino, valMaximo: _hp.t.correoValMaximo, enviando: _hp.t.correoEnviando,
+                      error: _hp.t.correoError, exitoTitulo: _hp.t.correoExitoTitulo, aceptar: _hp.t.aceptar }
+        });
+        ExportMenu.init('hpExp', {
+            acciones: { excel: exportarExcel, pdf: exportarPdf, imagen: copiarImagen, correo: abrirCorreo },
+            textos: { generando: _hp.t.expGenerando, errorGenerar: _hp.t.expErrorGenerar }
+        });
+
+        // Una sola empresa disponible (usuario de Churido o de Ucrania): ya viene elegida.
+        if (elEmpresa.find('option').length === 1) { elEmpresa.val(elEmpresa.find('option').first().val()).trigger('change.select2'); }
+        pintarRango();
+        if (empresaSeleccionada()) cargarOpciones();
+    });
+</script>
+}

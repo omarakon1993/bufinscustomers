@@ -10,6 +10,7 @@
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
 <link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
 <link href="~/Assets/css/informe-pyg.css" rel="stylesheet" />
+<link href="~/Assets/css/export-menu.css" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
 
 <div class="container-fluid px-4">
@@ -188,8 +189,11 @@
                         <button type="button" data-unidad="millones" role="menuitemradio">@Resources.Strings.LineaTiempo_UnidadMillones<i class="fas fa-check"></i></button>
                     </div>
                     <span class="sep"></span>
-                    <button type="button" class="lt-tool-btn" id="btnExportarExcelPYG" title="@Resources.Strings.Common_ExportarExcel"><i class="fas fa-file-excel"></i>@Resources.Strings.PYG_V2_Excel</button>
-                    <button type="button" class="lt-tool-btn" id="btnExportarPdfPYG" title="@Resources.Strings.PYG_BtnExportarPdf"><i class="fas fa-file-pdf"></i>@Resources.Strings.PYG_V2_Pdf</button>
+                    @Html.Partial("_ExportMenu", new bufinscustomers.Models.ExportMenuVM
+                    {
+                        Id = "pygExp",
+                        ExcelDesc = Resources.Strings.PYG_Exp_ExcelDesc
+                    })
                 </div>
             </div>
         </div>
@@ -340,14 +344,33 @@
     </div>
 </div>
 
+@Html.Partial("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+
 @section scripts {
 <script src="~/Assets/js/select2/select2.min.js"></script>
 <script src="~/Assets/js/chart.umd.min.js"></script>
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
+<script src="~/Assets/js/html2canvas.min.js"></script>
+<script src="~/Assets/js/export-menu.js"></script>
 <script src="~/Assets/js/bufins-markdown.js"></script>
 <script src="~/Assets/js/rango-atajos.js"></script>
 
 <script>
+    // Textos del botón Exportar estándar (ExportMenu) — ver CLAUDE.md, "Botón Exportar desplegable".
+    var EXP_T = {
+        generando: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Exp_Generando))',
+        errorGenerar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Exp_ErrorGenerar))',
+        listo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Exp_Listo))',
+        imagenCopiada: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Exp_ImagenCopiada))',
+        imagenDescargada: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Exp_ImagenDescargada))',
+        valDestino: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.RevisarCargue_Correo_ValDestino))',
+        valMaximo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.RevisarCargue_Correo_ValMaximo))',
+        enviando: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.RevisarCargue_Correo_Enviando))',
+        error: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_ExpCorreo_Error))',
+        exitoTitulo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Modelo_Correo_ExitoTitulo))',
+        aceptar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Aceptar))'
+    };
+
     var _pyg = {
         urls: {
             meses: '@Url.Action("ObtenerMeses", "InformePYG")',
@@ -1527,24 +1550,21 @@
 
     function generarPdf() {
         var r = _pyg.reporteActual;
-        if (!r) return;
-        var btn = document.getElementById('btnExportarPdfPYG');
-        var htmlOriginal = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + _pyg.textos.pdfGenerando;
+        if (!r) return Promise.resolve();
+        // Se cede un instante para que se pinte el estado "Generando…" antes del trabajo pesado (capturas + PDF).
+        return new Promise(function (ok, ko) {
+            setTimeout(function () {
+                try { var doc = construirPdfPYG(r); doc.save(doc.__nombre); ExportMenu.aviso('success', EXP_T.listo); ok(); }
+                catch (e) { console.error('[InformePYG] PDF', e); ko(e); }
+            }, 30);
+        });
+    }
 
-        // Se cede un instante para que se pinte el spinner antes del trabajo pesado (capturas + PDF).
-        setTimeout(function () {
-            try {
-                construirPdfPYG(r);
-            } catch (e) {
-                console.error('[InformePYG] PDF', e);
-                mostrarErrorPYG(_pyg.textos.pdf.error);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = htmlOriginal;
-            }
-        }, 30);
+    // Copiar como imagen: captura todo el informe tal como se ve (encabezado, indicadores, gráficos y tablas).
+    function copiarImagenPYG() {
+        var empresa = ($('#pygTituloEmpresa').text() || 'InformePYG').replace(/[^A-Za-z0-9]+/g, '_');
+        return ExportMenu.copiarImagen(document.getElementById('pygResultado'), 'InformePYG_' + empresa + '_' + new Date().toISOString().slice(0, 10) + '.png',
+            { imagenCopiada: EXP_T.imagenCopiada, imagenDescargada: EXP_T.imagenDescargada });
     }
 
     // Imagen nítida de una gráfica: se re-renderiza temporalmente a 3x — y, si se pide, a la proporción
@@ -2016,7 +2036,8 @@
 
         var nombreArchivo = 'PYG_' + empresa.replace(/[^a-z0-9]+/gi, '_') + '_' +
             r.AnioDesde + ('0' + r.MesDesde).slice(-2) + '-' + r.AnioHasta + ('0' + r.MesHasta).slice(-2) + '.pdf';
-        pdf.save(nombreArchivo);
+        pdf.__nombre = nombreArchivo;
+        return pdf;
     }
 
     $(document).ready(function () {
@@ -2088,7 +2109,7 @@
             if (_pyg.reporteActual) pintarTabla(_pyg.reporteActual);
         });
         // Excel con los mismos filtros del reporte en pantalla (no los del panel, que pudieron cambiar).
-        $('#btnExportarExcelPYG').on('click', function () {
+        function exportarExcelPYG() {
             if (!_pyg.filtrosConsultados) return;
             var campos = $.extend({}, _pyg.filtrosConsultados, { soloSubtotales: $('#pygNivelDetalle').val() === 'subtotales' });
             var $c = $('#pygExpCampos').empty();
@@ -2096,7 +2117,7 @@
                 $c.append($('<input type="hidden">').attr('name', k).val(campos[k] == null ? '' : campos[k]));
             });
             $('#frmExportarExcelPYG').submit();
-        });
+        }
 
         $('#btnConsultarPYG').on('click', consultarReporte);
         $('#btnLimpiarPYG').on('click', function () {
@@ -2111,7 +2132,23 @@
         $('#btnGenerarInsightsPYG').on('click', generarInsights);
         $('#btnPygPreguntar').on('click', preguntarInforme_pyg);
         $('#pygPregunta').on('keydown', function (e) { if (e.which === 13) { e.preventDefault(); preguntarInforme_pyg(); } });
-        $('#btnExportarPdfPYG').on('click', generarPdf);
+        // Botón Exportar estándar: Excel · PDF · Copiar como imagen · Enviar por correo
+        var correoPYG = ExportMenu.correo({
+            url: '@Url.Action("EnviarPorCorreo", "InformePYG")',
+            token: function () { return _pyg.token; },
+            // Mismos filtros que el Excel: el servidor reconstruye el informe (no confía en cifras del navegador).
+            datos: function () { return $.extend({}, _pyg.filtrosConsultados, { soloSubtotales: $('#pygNivelDetalle').val() === 'subtotales' }); },
+            pdf: function () { var d = construirPdfPYG(_pyg.reporteActual); return d ? d.output('datauristring') : ''; },
+            pills: function () { return [$('#pygTituloEmpresa').text()].concat($('#pygPanelResultado .pyg2-chip').map(function () { return $(this).text(); }).get()); },
+            textos: EXP_T
+        });
+        ExportMenu.init('pygExp', {
+            acciones: {
+                excel: exportarExcelPYG, pdf: generarPdf, imagen: copiarImagenPYG,
+                correo: function () { if (_pyg.reporteActual) correoPYG.abrir(); }
+            },
+            textos: EXP_T
+        });
 
         cargarPrefsPYG();
         pintarRangoPYG();

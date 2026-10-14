@@ -229,6 +229,7 @@
     <Compile Include="Controllers\InformeLineaTiempoController.cs" />
     <Compile Include="Controllers\InformePYGController.cs" />
     <Compile Include="Controllers\InformeBalanceController.cs" />
+    <Compile Include="Controllers\InformeHistPreciosController.cs" />
     <Compile Include="Controllers\PermisosController.cs" />
     <Compile Include="Controllers\ReportesController.cs" />
     <Compile Include="Controllers\UsuarioController.cs" />
@@ -348,6 +349,10 @@
     <Compile Include="Services\InformeLineaTiempoService.cs" />
     <Compile Include="Services\InformePYGService.cs" />
     <Compile Include="Services\InformeBalanceService.cs" />
+    <Compile Include="Services\InformeHistPreciosService.cs" />
+    <Compile Include="Models\InformeHistPreciosModels.cs" />
+    <Compile Include="Models\ExportMenuVM.cs" />
+    <Compile Include="Helpers\InformeCorreoHelper.cs" />
     <Compile Include="Services\PermisosService.cs" />
     <Compile Include="Services\ReportesService.cs" />
     <Compile Include="Services\UsuarioService.cs" />
@@ -393,6 +398,9 @@
     <Content Include="Assets\css\informe-linea-tiempo.css" />
     <Content Include="Assets\css\informe-pyg.css" />
     <Content Include="Assets\css\informe-balance.css" />
+    <Content Include="Assets\css\informe-histprecios.css" />
+    <Content Include="Assets\css\export-menu.css" />
+    <Content Include="Assets\js\export-menu.js" />
     <Content Include="Assets\css\informe-relacionamientos.css" />
     <Content Include="Assets\css\informe-tablas-datos.css" />
     <Content Include="Assets\css\jquery-ui.min.css" />
@@ -469,6 +477,10 @@
     <Content Include="Views\Shared\_AudFiltros.cshtml" />
     <Content Include="Views\Shared\_LoaderDots.cshtml" />
     <Content Include="Views\Shared\_ModeloBufinsTag.cshtml" />
+    <Content Include="Views\Shared\_InformePersonalizadoTag.cshtml" />
+    <Content Include="Views\Shared\_ExportMenu.cshtml" />
+    <Content Include="Views\Shared\_ExportCorreoModal.cshtml" />
+    <Content Include="App_Data\Documentacion\Informe_HistPrecios_vs_Excel.html" />
     <Content Include="Views\Shared\_IAConsumoCard.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Error\_ErrorLayout.cshtml" />
@@ -494,6 +506,7 @@
     <Content Include="Views\Informes\InformeLineaTiempo.cshtml" />
     <Content Include="Views\Informes\InformePYG.cshtml" />
     <Content Include="Views\Informes\InformeBalance.cshtml" />
+    <Content Include="Views\Informes\InformeHistPrecios.cshtml" />
     <Content Include="Views\Informes\AnalisisIA.cshtml" />
     <Content Include="Views\Informes\AuditoriaConsultasIA.cshtml" />
     <Content Include="Views\Informes\Auditoria.cshtml" />

@@ -1395,9 +1395,9 @@
   <data name="Audit_TR_Ayer" xml:space="preserve"><value>ayer {0}</value></data>
   <data name="Audit_TR_Hoy" xml:space="preserve"><value>hoy {0}</value></data>
   <data name="Audit_Meses" xml:space="preserve"><value>ene,feb,mar,abr,may,jun,jul,ago,sep,oct,nov,dic</value></data>
-  <data name="Audit_AreasMap" xml:space="preserve"><value>SEGURIDAD=Acceso|PERMISOS=Permisos y accesos|MENU=Menú del sistema|MODELOS=Modelos|USUARIOS=Usuarios|EMPRESAS=Empresas|GRUPOS_EMPRESARIALES=Grupos empresariales|CONFIGURACION=Configuración financiera|CARGUES=Cargue de datos|ESCENARIOS=Escenarios|HOJAS_CARGUE=Hojas de cargue</value></data>
-  <data name="Audit_AccFraseMap" xml:space="preserve"><value>Crear=Creó|Editar=Modificó|Eliminar=Eliminó|Asignar=Actualizó permisos|Enviar=Envió por correo|Login=Inició sesión|LoginFallido=Intento de acceso fallido|Bloqueo=Cuenta bloqueada</value></data>
-  <data name="Audit_AccOptMap" xml:space="preserve"><value>Crear=Se creó|Editar=Se modificó|Eliminar=Se eliminó|Asignar=Se asignó|Enviar=Se envió</value></data>
+  <data name="Audit_AreasMap" xml:space="preserve"><value>SEGURIDAD=Acceso|PERMISOS=Permisos y accesos|MENU=Menú del sistema|MODELOS=Modelos|USUARIOS=Usuarios|EMPRESAS=Empresas|GRUPOS_EMPRESARIALES=Grupos empresariales|CONFIGURACION=Configuración financiera|CARGUES=Cargue de datos|ESCENARIOS=Escenarios|HOJAS_CARGUE=Hojas de cargue|INFORMES=Informes</value></data>
+  <data name="Audit_AccFraseMap" xml:space="preserve"><value>Crear=Creó|Editar=Modificó|Eliminar=Eliminó|Asignar=Actualizó permisos|Enviar=Envió por correo|Login=Inició sesión|LoginFallido=Intento de acceso fallido|Bloqueo=Cuenta bloqueada|Ver=Consultó</value></data>
+  <data name="Audit_AccOptMap" xml:space="preserve"><value>Crear=Se creó|Editar=Se modificó|Eliminar=Se eliminó|Asignar=Se asignó|Enviar=Se envió|Ver=Se consultó</value></data>
   <data name="Audit_CamposMap" xml:space="preserve"><value>empresa=Empresa|modelos=Modelos enviados|destinatarios=Destinatarios|archivo=Archivo|Nombre=Nombre|Apellidos=Apellidos|Correo=Correo|Telefono=Teléfono|Usuario=Usuario|Admin=Rol|Activo=Activo|IdEmpresa=Empresa|EmpNombre=Nombre|EmpNit=NIT|EmpDireccion=Dirección|EmpTelefono=Teléfono|EmpCorreo=Correo|Abreviatura=Abreviatura|IdGrupoEmpresarial=Grupo empresarial|NombreSP=Procedimiento|Descripcion=Descripción|Icono=Icono|Orden=Orden|Codigo=Código|idUsuario=Usuario|permisos=Opciones de menú</value></data>
 
   <!-- CONFIGURACIÓN VARIABLES PBI -->
@@ -2208,7 +2208,7 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="HojasCargue_Diag_SistemaFaltaStaging" xml:space="preserve"><value>Falta una columna de sistema en la tabla de staging:</value></data>
   <data name="HojasCargue_Diag_SinColumnas" xml:space="preserve"><value>La tabla no tiene columnas de datos.</value></data>
   <data name="HojasCargue_Diag_SinAnio" xml:space="preserve"><value>Falta la columna Año (el cargue borra, versiona y exporta por año).</value></data>
-  <data name="HojasCargue_Diag_SinMes" xml:space="preserve"><value>No tiene columna Mes: la validación de año/mes vacío no aplicará a esta hoja.</value></data>
+  <data name="HojasCargue_Diag_SinMes" xml:space="preserve"><value>No tiene columna Mes ni Semestre: la validación de periodo vacío no aplicará a esta hoja.</value></data>
   <data name="HojasCargue_Diag_ColumnaFaltaStaging" xml:space="preserve"><value>La columna no existe en la tabla de staging:</value></data>
   <data name="HojasCargue_Diag_TipoDistinto" xml:space="preserve"><value>El tipo difiere entre la tabla y su staging:</value></data>
   <data name="HojasCargue_Diag_ColumnaSoloStaging" xml:space="preserve"><value>La columna existe solo en staging:</value></data>
@@ -2312,4 +2312,142 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="HojasCargue_Err_UsadaPorModulos" xml:space="preserve"><value>La tabla la usan procesos de la base de datos; no se puede modificar su estructura existente</value></data>
   <data name="HojasCargue_Err_StagingHuerfana" xml:space="preserve"><value>Ya existe una tabla de staging con ese nombre sin su tabla Ini_; revísala en la base de datos</value></data>
   <data name="HojasCargue_Err_DiagnosticoConErrores" xml:space="preserve"><value>La estructura de la hoja tiene errores (ver Uso y diagnóstico): corrígelos antes de activarla.</value></data>
+
+  <!-- INFORME HISTORICO DE PRECIOS / MENU PERSONALIZADO -->
+  <data name="HP_Doc_MarcaLeyenda" xml:space="preserve"><value>BUFINS  ·  CONFIDENCIAL  ·  PROPIEDAD DE BUFINS</value></data>
+  <data name="HP_Doc_Aviso" xml:space="preserve"><value>Documento confidencial, propiedad de Bufins. Uso exclusivo de los usuarios autorizados: prohibida su copia, captura o distribución.</value></data>
+  <data name="HP_Doc_ModalTitulo" xml:space="preserve"><value>Documentación: informe histórico de precios</value></data>
+  <data name="Common_DocumentacionTag" xml:space="preserve"><value>Documentación</value></data>
+  <data name="HP_DocumentacionTooltip" xml:space="preserve"><value>Cómo este informe reemplaza al Excel original (con capturas de ambos lados)</value></data>
+  <!-- ENVIAR POR CORREO DESDE EL BOTON EXPORTAR (INFORMES) -->
+  <data name="Common_ExpCorreo_Titulo" xml:space="preserve"><value>Enviar informe por correo</value></data>
+  <data name="Common_ExpCorreo_Adjuntos" xml:space="preserve"><value>Se adjuntan el Excel y el PDF del informe.</value></data>
+  <data name="Common_ExpCorreo_AdjuntoExcel" xml:space="preserve"><value>Se adjunta el Excel de la tabla.</value></data>
+  <data name="Common_ExpCorreo_Exito" xml:space="preserve"><value>Informe enviado a {0}.</value></data>
+  <data name="Common_ExpCorreo_Error" xml:space="preserve"><value>No se pudo enviar el correo. Inténtalo de nuevo más tarde.</value></data>
+  <data name="Common_ExpCorreo_Grande" xml:space="preserve"><value>El archivo es demasiado grande para enviarlo por correo: descárgalo con la opción Excel.</value></data>
+  <data name="Common_ExpCorreo_Periodo" xml:space="preserve"><value>Periodo</value></data>
+  <data name="Common_ExpCorreo_Comparado" xml:space="preserve"><value>Comparado con</value></data>
+  <data name="Common_ExpCorreo_VsFmt" xml:space="preserve"><value>vs {0}</value></data>
+  <data name="Common_ExpCorreo_Serie" xml:space="preserve"><value>Serie</value></data>
+  <data name="Common_ExpCorreo_Filtros" xml:space="preserve"><value>Filtros</value></data>
+  <data name="Common_ExpCorreo_Tabla" xml:space="preserve"><value>Tabla</value></data>
+  <data name="Common_ExpCorreo_Registros" xml:space="preserve"><value>Registros</value></data>
+  <data name="Common_ExpCorreo_Anio" xml:space="preserve"><value>Año</value></data>
+  <data name="Common_ExpCorreo_Variable" xml:space="preserve"><value>Variable</value></data>
+  <data name="Common_ExpCorreo_TodasEmpresas" xml:space="preserve"><value>Todas las empresas</value></data>
+  <data name="BAL_CorreoCorte" xml:space="preserve"><value>Corte</value></data>
+  <data name="HP_Correo_Periodo" xml:space="preserve"><value>Periodo</value></data>
+  <data name="HP_Correo_Vista" xml:space="preserve"><value>Vista</value></data>
+  <data name="HP_Correo_TablaTitulo" xml:space="preserve"><value>Precios en {0} (USD por caja)</value></data>
+  <data name="HP_Correo_ColPrecio" xml:space="preserve"><value>Precio</value></data>
+  <data name="HP_Correo_ColVsAnterior" xml:space="preserve"><value>vs mismo periodo año anterior</value></data>
+  <data name="PYG_Exp_ExcelDesc" xml:space="preserve"><value>Estado de resultados: Periodo y Acumulado</value></data>
+  <data name="BAL_Exp_ExcelDesc" xml:space="preserve"><value>Balance con saldos, comparativo y variación</value></data>
+  <data name="LineaTiempo_Exp_ExcelDesc" xml:space="preserve"><value>Tabla y gráfico editable</value></data>
+  <data name="LineaTiempo_Exp_PdfDesc" xml:space="preserve"><value>Gráfico o datos, a tu elección</value></data>
+  <data name="InformeModelos_Exp_ExcelDesc" xml:space="preserve"><value>La tabla consultada, con sus filtros</value></data>
+  <data name="InformeModelos_Exp_CorreoDesc" xml:space="preserve"><value>A ti y/o a otros, con el Excel adjunto</value></data>
+  <data name="InformeModelos_Correo_SinDatos" xml:space="preserve"><value>No hay datos para enviar con los filtros seleccionados.</value></data>
+  <!-- EXPORTAR (COMPONENTE COMPARTIDO _ExportMenu) -->
+  <data name="Common_Exp_Btn" xml:space="preserve"><value>Exportar</value></data>
+  <data name="Common_Exp_BtnTooltip" xml:space="preserve"><value>Descarga o comparte este informe</value></data>
+  <data name="Common_Exp_MenuTitulo" xml:space="preserve"><value>Compartir informe</value></data>
+  <data name="Common_Exp_Excel" xml:space="preserve"><value>Excel</value></data>
+  <data name="Common_Exp_ExcelDesc" xml:space="preserve"><value>Descarga los datos en un archivo de Excel</value></data>
+  <data name="Common_Exp_Pdf" xml:space="preserve"><value>PDF</value></data>
+  <data name="Common_Exp_PdfDesc" xml:space="preserve"><value>Informe listo para presentar o archivar</value></data>
+  <data name="Common_Exp_Imagen" xml:space="preserve"><value>Copiar como imagen</value></data>
+  <data name="Common_Exp_ImagenDesc" xml:space="preserve"><value>Pégala en un chat, correo o documento</value></data>
+  <data name="Common_Exp_Correo" xml:space="preserve"><value>Enviar por correo</value></data>
+  <data name="Common_Exp_CorreoDesc" xml:space="preserve"><value>A ti y/o a otros, con Excel y PDF adjuntos</value></data>
+  <data name="Common_Exp_Generando" xml:space="preserve"><value>Generando…</value></data>
+  <data name="Common_Exp_ImagenCopiada" xml:space="preserve"><value>Imagen copiada. Ya puedes pegarla (Ctrl+V).</value></data>
+  <data name="Common_Exp_ImagenDescargada" xml:space="preserve"><value>Tu navegador no permite copiar imágenes: se descargó como PNG.</value></data>
+  <data name="Common_Exp_Listo" xml:space="preserve"><value>Descarga lista</value></data>
+  <data name="Common_Exp_ErrorGenerar" xml:space="preserve"><value>No se pudo generar el archivo. Inténtalo de nuevo.</value></data>
+  <data name="HP_Exp_BtnTooltip" xml:space="preserve"><value>Descarga o comparte este informe con los filtros actuales</value></data>
+  <data name="HP_Exp_ExcelDesc" xml:space="preserve"><value>3 hojas con gráficos editables</value></data>
+  <data name="HP_Atajo_AnioAnterior" xml:space="preserve"><value>Año anterior</value></data>
+  <data name="HP_Atajo_Ultimos3Anios" xml:space="preserve"><value>Últimos 3 años</value></data>
+  <data name="HP_Atajo_SemestreActual" xml:space="preserve"><value>Semestre actual</value></data>
+  <data name="HP_Atajo_SemestreAnterior" xml:space="preserve"><value>Semestre anterior</value></data>
+  <data name="HP_BadgeSemestre" xml:space="preserve"><value>semestre</value></data>
+  <data name="HP_BadgeSemestres" xml:space="preserve"><value>semestres</value></data>
+  <data name="HP_ElegirTipos" xml:space="preserve"><value>Elegir tipos de fruta</value></data>
+  <data name="HP_TiposModalTitulo" xml:space="preserve"><value>Elegir tipos de fruta</value></data>
+  <data name="HP_TiposModalSub" xml:space="preserve"><value>Marca los tipos que quieres ver en el informe</value></data>
+  <data name="HP_TiposBuscar" xml:space="preserve"><value>Buscar tipo de fruta…</value></data>
+  <data name="HP_TiposSeleccionarTodos" xml:space="preserve"><value>Seleccionar todos</value></data>
+  <data name="HP_TiposEnInforme" xml:space="preserve"><value>En el informe</value></data>
+  <data name="HP_TiposTriggerTodosFmt" xml:space="preserve"><value>Todos los tipos ({0})</value></data>
+  <data name="HP_TiposTriggerFmt" xml:space="preserve"><value>{0} de {1} tipos</value></data>
+  <data name="HP_TiposSeleccionadosFmt" xml:space="preserve"><value>{0} seleccionados</value></data>
+  <data name="Common_InformePersonalizadoTag" xml:space="preserve"><value>Informe personalizado</value></data>
+  <data name="Common_InformePersonalizadoTagTooltip" xml:space="preserve"><value>Informe hecho a la medida de esta empresa: solo lo ven los usuarios de las empresas para las que fue creado.</value></data>
+  <data name="Menu_BadgePersonalizada" xml:space="preserve"><value>Personalizada</value></data>
+  <data name="Menu_LabelEmpresas" xml:space="preserve"><value>Personalizada para empresas (opcional)</value></data>
+  <data name="Menu_HintEmpresas" xml:space="preserve"><value>Sin marcar = visible para todas las empresas. Si marcas una o más, la opción solo aparece a los usuarios de esas empresas (y al Super Admin).</value></data>
+  <data name="HP_PageTitle" xml:space="preserve"><value>Informe histórico de precios (Churido &amp; Ucrania)</value></data>
+  <data name="HP_Subtitulo" xml:space="preserve"><value>Histórico de precios de venta</value></data>
+  <data name="HP_GeneradoEl" xml:space="preserve"><value>Generado el</value></data>
+  <data name="HP_LabelTipos" xml:space="preserve"><value>Tipos de fruta</value></data>
+  <data name="HP_SeleccioneTipos" xml:space="preserve"><value>Selecciona al menos un tipo de fruta.</value></data>
+  <data name="HP_SeccionPeriodo" xml:space="preserve"><value>Periodo y detalle</value></data>
+  <data name="HP_LabelVerPor" xml:space="preserve"><value>Ver por</value></data>
+  <data name="HP_VerPor_Anio" xml:space="preserve"><value>Año</value></data>
+  <data name="HP_VerPor_Semestre" xml:space="preserve"><value>Semestre</value></data>
+  <data name="HP_VerPorHint" xml:space="preserve"><value>Los precios se cargan por semestre (S1 = ene-jun, S2 = jul-dic). «Ver por» define el eje: cada punto es el precio promedio del periodo y la variación compara contra el mismo periodo del año anterior.</value></data>
+  <data name="HP_SinAniosDatos" xml:space="preserve"><value>No hay precios cargados para esta empresa y escenario.</value></data>
+  <data name="HP_EstadoInicialTitulo" xml:space="preserve"><value>Define los filtros y genera el informe</value></data>
+  <data name="HP_EstadoInicialDesc" xml:space="preserve"><value>Elige la empresa, los tipos de fruta y el rango de fechas; luego pulsa «Generar informe».</value></data>
+  <data name="HP_SinDatosTitulo" xml:space="preserve"><value>Sin datos para los filtros elegidos</value></data>
+  <data name="HP_SinDatosDesc" xml:space="preserve"><value>No hay precios cargados en ese rango. Revisa el rango y los tipos de fruta, o carga la hoja Z_HistPrecios_Churido (columna Semestre = 1 o 2) en Cargue de Excel.</value></data>
+  <data name="HP_SeleccioneEmpresa" xml:space="preserve"><value>Selecciona una empresa.</value></data>
+  <data name="HP_JS_Consultando" xml:space="preserve"><value>Consultando precios...</value></data>
+  <data name="HP_ErrorServidor" xml:space="preserve"><value>No se pudo consultar el informe. Intenta de nuevo.</value></data>
+  <data name="HP_ErrorExcel" xml:space="preserve"><value>No se pudo exportar a Excel.</value></data>
+  <data name="HP_ErrorPdf" xml:space="preserve"><value>No se pudo generar el PDF.</value></data>
+  <data name="HP_IndicadoresClave" xml:space="preserve"><value>Indicadores clave</value></data>
+  <data name="HP_KpiPromedio" xml:space="preserve"><value>Precio promedio general</value></data>
+  <data name="HP_KpiMasCaro" xml:space="preserve"><value>Tipo de mayor precio</value></data>
+  <data name="HP_KpiMayorAlza" xml:space="preserve"><value>Mayor alza</value></data>
+  <data name="HP_KpiMayorBaja" xml:space="preserve"><value>Mayor baja</value></data>
+  <data name="HP_KpiCagr" xml:space="preserve"><value>Crecimiento anual compuesto</value></data>
+  <data name="HP_VsFmt" xml:space="preserve"><value>vs {0}</value></data>
+  <data name="HP_EnFmt" xml:space="preserve"><value>en {0}</value></data>
+  <data name="HP_CagrSubFmt" xml:space="preserve"><value>{0} → {1}</value></data>
+  <data name="HP_CagrSinDato" xml:space="preserve"><value>Requiere al menos 2 años</value></data>
+  <data name="HP_SinComparable" xml:space="preserve"><value>Sin comparable del año anterior</value></data>
+  <data name="HP_ChipRangoFmt" xml:space="preserve"><value>{0} – {1}</value></data>
+  <data name="HP_ChipTiposFmt" xml:space="preserve"><value>{0} tipos de fruta</value></data>
+  <data name="HP_Agrupar_Anio" xml:space="preserve"><value>Por año</value></data>
+  <data name="HP_Agrupar_Semestre" xml:space="preserve"><value>Por semestre</value></data>
+  <data name="HP_PeriodoSemestreFmt" xml:space="preserve"><value>S{0} {1}</value></data>
+  <data name="HP_RelevanteTitulo" xml:space="preserve"><value>Variación por tipo de fruta</value></data>
+  <data name="HP_RelevanteSubFmt" xml:space="preserve"><value>{0} vs {1}</value></data>
+  <data name="HP_RelevantePreciosSubFmt" xml:space="preserve"><value>Precio en {0}</value></data>
+  <data name="HP_GraficoEvolucionTitulo" xml:space="preserve"><value>Evolución del precio por tipo de fruta</value></data>
+  <data name="HP_UnidadPrecio" xml:space="preserve"><value>Precio promedio por caja (USD)</value></data>
+  <data name="HP_PromedioTitulo" xml:space="preserve"><value>Precio promedio general</value></data>
+  <data name="HP_PromedioGeneral" xml:space="preserve"><value>Promedio general</value></data>
+  <data name="HP_VariacionChartTitulo" xml:space="preserve"><value>Variación del promedio general</value></data>
+  <data name="HP_TablaPreciosTitulo" xml:space="preserve"><value>Precio promedio por tipo de fruta</value></data>
+  <data name="HP_TablaVariacionTitulo" xml:space="preserve"><value>Variación frente al mismo periodo del año anterior</value></data>
+  <data name="HP_ColTipo" xml:space="preserve"><value>Tipo de fruta</value></data>
+  <data name="HP_ColPromedio" xml:space="preserve"><value>Promedio</value></data>
+  <data name="HP_ColVariacion" xml:space="preserve"><value>Variación</value></data>
+  <data name="HP_TotalGeneral" xml:space="preserve"><value>Total general</value></data>
+  <data name="HP_LeyendaAlza" xml:space="preserve"><value>Alza de precio</value></data>
+  <data name="HP_LeyendaBaja" xml:space="preserve"><value>Baja de precio</value></data>
+  <data name="HP_LeyendaFuerte" xml:space="preserve"><value>Variación de 10 % o más</value></data>
+  <data name="HP_NotaSinComparable" xml:space="preserve"><value>No hay datos del año anterior para calcular variaciones en el rango elegido: amplía «Desde (año)» para compararlas.</value></data>
+  <data name="HP_NotaAnioParcialFmt" xml:space="preserve"><value>{0} tiene datos de {1} semestre(s): su promedio es provisional hasta completar el año.</value></data>
+  <data name="HP_XlsHojaPrecios" xml:space="preserve"><value>Precios</value></data>
+  <data name="HP_XlsHojaVariacion" xml:space="preserve"><value>Variación %</value></data>
+  <data name="HP_XlsHojaPromedio" xml:space="preserve"><value>Promedio general</value></data>
+  <data name="HP_XlsColPeriodo" xml:space="preserve"><value>Periodo</value></data>
+  <data name="HP_XlsSubtituloFmt" xml:space="preserve"><value>{0} – {1} · {2} · Generado {3}</value></data>
+  <data name="HP_PdfConfidencial" xml:space="preserve"><value>Confidencial</value></data>
+  <data name="HP_PdfPaginaFmt" xml:space="preserve"><value>Página {0} de {1}</value></data>
 </root>

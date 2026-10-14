@@ -253,111 +253,8 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                var empresaInfo = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa);
-                string nombreEmpresa = empresaInfo?.Nombre ?? "Empresa";
-                string nombrePeriodo = (reporte.AnioDesde == reporte.AnioHasta && reporte.MesDesde == reporte.MesHasta)
-                    ? NombreMes(reporte.MesDesde) + " " + reporte.AnioDesde
-                    : (reporte.AnioDesde == reporte.AnioHasta
-                        ? NombreMes(reporte.MesDesde) + " - " + NombreMes(reporte.MesHasta) + " " + reporte.AnioHasta
-                        : NombreMes(reporte.MesDesde) + " " + reporte.AnioDesde + " - " + NombreMes(reporte.MesHasta) + " " + reporte.AnioHasta);
-                string nombreMesHastaConAnio = NombreMes(reporte.MesHasta) + " " + reporte.AnioHasta;
-
-                string nombreEscenarioComp = null;
-                if (reporte.HayEscenarioComparar)
-                {
-                    nombreEscenarioComp = EscenarioCacheHelper.ObtenerEscenariosCacheados()
-                        .FirstOrDefault(e => e.Id == reporte.IdEscenarioComparar)?.Nombre ?? ("#" + reporte.IdEscenarioComparar);
-                }
-
-                // Columnas de cada bloque (Periodo / Acumulado): encabezado, valor y formato — los % van
-                // como fracción con formato de porcentaje (antes salían con formato numérico y se veían 0,0).
-                const string fmtNum = "#,##0.0", fmtPct = "0.0%";
-                var columnas = new List<Tuple<string, Func<PygFilaReporte, bool, decimal?>, string>>
-                {
-                    Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_ColReal"), (f, p) => p ? f.PeriodoReal : f.AcumReal, fmtNum),
-                    Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_CompCorto_" + reporte.Comparar), (f, p) => p ? f.PeriodoPresupuesto : f.AcumPresupuesto, fmtNum),
-                    Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_ColVarAbs"), (f, p) => p ? f.PeriodoVariacionAbsoluta : f.AcumVariacionAbsoluta, fmtNum),
-                    Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_ColVarPct"), (f, p) => p ? f.PeriodoVariacionPorcentual : f.AcumVariacionPorcentual, fmtPct),
-                    Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_ColMargen"), (f, p) => p ? f.PeriodoMargen : f.AcumMargen, fmtPct)
-                };
-                if (reporte.HayAnioAnterior)
-                    columnas.Add(Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_ColVarYoY"), (f, p) => p ? f.PeriodoVariacionYoYPorcentual : f.AcumVariacionYoYPorcentual, fmtPct));
-                if (reporte.HayEscenarioComparar)
-                    columnas.Add(Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(string.Format(R("PYG_ColVsEscenarioFmt"), nombreEscenarioComp), (f, p) => p ? f.PeriodoVariacionEscenarioPorcentual : f.AcumVariacionEscenarioPorcentual, fmtPct));
-
-                int n = columnas.Count, totalCols = 1 + n * 2;
-                var filas = reporte.Filas.Where((f, i) => !soloSubtotales || f.EsSubtotal || i == reporte.Filas.Count - 1).ToList();
-
-                using (var package = new XLWorkbook())
-                {
-                    var ws = package.Worksheets.Add("PYG");
-
-                    ws.Cell(1, 1).Value = R("PYG_ColEstructura");
-                    ws.Range(1, 1, 2, 1).Merge();
-                    ws.Cell(1, 2).Value = string.Format(R("PYG_ColMesGrupoFmt"), nombrePeriodo);
-                    ws.Range(1, 2, 1, 1 + n).Merge();
-                    ws.Cell(1, 2 + n).Value = string.Format(R("PYG_ColAcumGrupoFmt"), nombreMesHastaConAnio);
-                    ws.Range(1, 2 + n, 1, totalCols).Merge();
-
-                    for (int b = 0; b < 2; b++)
-                        for (int c = 0; c < n; c++)
-                            ws.Cell(2, 2 + b * n + c).Value = columnas[c].Item1;
-
-                    var headerRange = ws.Range(1, 1, 2, totalCols);
-                    headerRange.Style.Font.Bold = true;
-                    headerRange.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
-                    headerRange.Style.Font.FontColor = XLColor.White;
-                    headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                    headerRange.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                    headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-                    headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
-
-                    int fila = 3;
-                    foreach (var f in filas)
-                    {
-                        ws.Cell(fila, 1).Value = f.Descripcion;
-                        for (int b = 0; b < 2; b++)
-                        {
-                            for (int c = 0; c < n; c++)
-                            {
-                                var celda = ws.Cell(fila, 2 + b * n + c);
-                                ExcelCellHelper.SetValue(celda, columnas[c].Item2(f, b == 0));
-                                celda.Style.NumberFormat.Format = columnas[c].Item3;
-                            }
-                        }
-
-                        var filaRange = ws.Range(fila, 1, fila, totalCols);
-                        filaRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-                        filaRange.Style.Border.OutsideBorderColor = XLColor.FromColor(Color.LightGray);
-
-                        if (f.EsSubtotal)
-                        {
-                            filaRange.Style.Font.Bold = true;
-                            filaRange.Style.Fill.BackgroundColor = XLColor.FromArgb(244, 243, 251);
-                        }
-                        else if ((fila - 3) % 2 == 1)
-                        {
-                            filaRange.Style.Fill.BackgroundColor = XLColor.FromArgb(248, 250, 252);
-                        }
-
-                        fila++;
-                    }
-
-                    ws.Columns().AdjustToContents();
-                    ws.Range(2, 1, fila - 1, totalCols).SetAutoFilter();
-                    ws.SheetView.Freeze(2, 1);
-
-                    string nombreArchivo = $"PYG_{nombreEmpresa}_{reporte.AnioDesde}{reporte.MesDesde:00}-{reporte.AnioHasta}{reporte.MesHasta:00}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-                    nombreArchivo = string.Join("_", nombreArchivo.Split(Path.GetInvalidFileNameChars()));
-
-                    byte[] fileBytes;
-                    using (var ms = new MemoryStream())
-                    {
-                        package.SaveAs(ms);
-                        fileBytes = ms.ToArray();
-                    }
-                    return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
-                }
+                var bytes = GenerarExcel(filtros, reporte, soloSubtotales, out string nombreArchivo);
+                return File(bytes, InformeCorreoHelper.MimeExcel, nombreArchivo);
             }
             catch (Exception ex)
             {
@@ -365,6 +262,193 @@ namespace bufinscustomers.Controllers
                 TempData["ErrorMessage"] = "Error al exportar a Excel: " + ex.Message;
                 return RedirectToAction("Index");
             }
+        }
+
+        /// <summary>
+        /// Envía el informe por correo desde el botón Exportar (componente estándar): Excel (el mismo de la descarga) y PDF
+        /// (el que arma el navegador) como adjuntos y, en el cuerpo, Ingresos/EBITDA/Utilidad neta del periodo. El reporte
+        /// se reconstruye en el servidor con los filtros recibidos (nunca se confía en cifras del navegador).
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult EnviarPorCorreo(FiltrosPYG filtros, bool soloSubtotales = false, string correos = null,
+            bool incluirmeAMi = false, string mensaje = null, string pdfBase64 = null)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (usuario == null || filtros == null || !TieneAccesoEmpresa(filtros.IdEmpresa))
+                return Json(new { exito = false, mensaje = R("Common_SinPermisos") });
+            if (!InformeCorreoHelper.TryDestinatarios(usuario, correos, incluirmeAMi, R, out var lista, out var error))
+                return Json(new { exito = false, mensaje = error });
+
+            try
+            {
+                var reporte = _service.ConstruirReporte(filtros);
+                if (reporte.SinDatos || reporte.Filas.Count == 0)
+                    return Json(new { exito = false, mensaje = R("PYG_SinDatosDesc") });
+
+                bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+                string empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
+                string escenario = EscenarioCacheHelper.ObtenerEscenariosCacheados()
+                    .FirstOrDefault(e => e.Id == filtros.IdEscenario)?.Nombre ?? ("#" + filtros.IdEscenario);
+
+                var bytes = GenerarExcel(filtros, reporte, soloSubtotales, out string nombreArchivo);
+                var adjuntos = InformeCorreoHelper.Adjuntos(nombreArchivo, bytes, InformeCorreoHelper.PdfDesdeBase64(pdfBase64));
+
+                string periodo = NombrePeriodo(reporte);
+                string comparado = R("PYG_CompCorto_" + reporte.Comparar);
+                var contexto = new List<(string etiqueta, string valor)>
+                {
+                    (R("Common_ExpCorreo_Periodo"), periodo), (R("Common_LabelEscenario"), escenario), (R("Common_ExpCorreo_Comparado"), comparado)
+                };
+
+                // Líneas clave del periodo (la descripción sale de los datos; ingresos/EBITDA/utilidad: subir es favorable).
+                var kpis = new List<(string etiqueta, string valor, string detalle, int signo)>();
+                foreach (var f in new[] { reporte.IngresosFila, reporte.EbitdaFila, reporte.UtilidadNetaFila })
+                {
+                    if (f == null) continue;
+                    var v = f.PeriodoVariacionPorcentual;
+                    kpis.Add((f.Descripcion, (f.PeriodoReal / 1000000m).ToString("N1") + " M",
+                        v.HasValue ? (v.Value * 100m).ToString("+0.0;-0.0;0.0") + " % " + string.Format(R("Common_ExpCorreo_VsFmt"), comparado) : "",
+                        v.HasValue ? Math.Sign(v.Value) : 0));
+                }
+
+                string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
+                new EmailService().EnviarInforme(string.Join(", ", lista), R("PYG_PageTitle"), empresa, false, contexto, kpis,
+                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles);
+
+                new AuditoriaService().RegistrarCambio(
+                    AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformePYG", filtros.IdEmpresa.ToString(),
+                    $"Informe PYG enviado por correo a {string.Join(", ", lista)}: '{empresa}' — {periodo}, escenario {filtros.IdEscenario}.",
+                    null,
+                    new { empresa, periodo, escenario = filtros.IdEscenario, comparar = reporte.Comparar, destinatarios = lista, conPdf = adjuntos.Count > 1 },
+                    filtros.IdEmpresa, entidadNombre: empresa, severidad: AuditoriaSeveridad.Advertencia);
+
+                return Json(new { exito = true, mensaje = string.Format(R("Common_ExpCorreo_Exito"), string.Join(", ", lista)) });
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "InformePYGController.EnviarPorCorreo");
+                return Json(new { exito = false, mensaje = R("Common_ExpCorreo_Error") });
+            }
+        }
+
+        private string NombrePeriodo(PygReporteViewModel r)
+        {
+            return (r.AnioDesde == r.AnioHasta && r.MesDesde == r.MesHasta)
+                ? NombreMes(r.MesDesde) + " " + r.AnioDesde
+                : (r.AnioDesde == r.AnioHasta
+                    ? NombreMes(r.MesDesde) + " - " + NombreMes(r.MesHasta) + " " + r.AnioHasta
+                    : NombreMes(r.MesDesde) + " " + r.AnioDesde + " - " + NombreMes(r.MesHasta) + " " + r.AnioHasta);
+        }
+
+        /// <summary>Libro de Excel del informe (lo usan la descarga y el envío por correo del botón Exportar).</summary>
+        private byte[] GenerarExcel(FiltrosPYG filtros, PygReporteViewModel reporte, bool soloSubtotales, out string nombreArchivo)
+        {
+        var empresaInfo = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa);
+        string nombreEmpresa = empresaInfo?.Nombre ?? "Empresa";
+        string nombrePeriodo = (reporte.AnioDesde == reporte.AnioHasta && reporte.MesDesde == reporte.MesHasta)
+            ? NombreMes(reporte.MesDesde) + " " + reporte.AnioDesde
+            : (reporte.AnioDesde == reporte.AnioHasta
+                ? NombreMes(reporte.MesDesde) + " - " + NombreMes(reporte.MesHasta) + " " + reporte.AnioHasta
+                : NombreMes(reporte.MesDesde) + " " + reporte.AnioDesde + " - " + NombreMes(reporte.MesHasta) + " " + reporte.AnioHasta);
+        string nombreMesHastaConAnio = NombreMes(reporte.MesHasta) + " " + reporte.AnioHasta;
+
+        string nombreEscenarioComp = null;
+        if (reporte.HayEscenarioComparar)
+        {
+            nombreEscenarioComp = EscenarioCacheHelper.ObtenerEscenariosCacheados()
+                .FirstOrDefault(e => e.Id == reporte.IdEscenarioComparar)?.Nombre ?? ("#" + reporte.IdEscenarioComparar);
+        }
+
+        // Columnas de cada bloque (Periodo / Acumulado): encabezado, valor y formato — los % van
+        // como fracción con formato de porcentaje (antes salían con formato numérico y se veían 0,0).
+        const string fmtNum = "#,##0.0", fmtPct = "0.0%";
+        var columnas = new List<Tuple<string, Func<PygFilaReporte, bool, decimal?>, string>>
+        {
+            Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_ColReal"), (f, p) => p ? f.PeriodoReal : f.AcumReal, fmtNum),
+            Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_CompCorto_" + reporte.Comparar), (f, p) => p ? f.PeriodoPresupuesto : f.AcumPresupuesto, fmtNum),
+            Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_ColVarAbs"), (f, p) => p ? f.PeriodoVariacionAbsoluta : f.AcumVariacionAbsoluta, fmtNum),
+            Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_ColVarPct"), (f, p) => p ? f.PeriodoVariacionPorcentual : f.AcumVariacionPorcentual, fmtPct),
+            Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_ColMargen"), (f, p) => p ? f.PeriodoMargen : f.AcumMargen, fmtPct)
+        };
+        if (reporte.HayAnioAnterior)
+            columnas.Add(Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(R("PYG_ColVarYoY"), (f, p) => p ? f.PeriodoVariacionYoYPorcentual : f.AcumVariacionYoYPorcentual, fmtPct));
+        if (reporte.HayEscenarioComparar)
+            columnas.Add(Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(string.Format(R("PYG_ColVsEscenarioFmt"), nombreEscenarioComp), (f, p) => p ? f.PeriodoVariacionEscenarioPorcentual : f.AcumVariacionEscenarioPorcentual, fmtPct));
+
+        int n = columnas.Count, totalCols = 1 + n * 2;
+        var filas = reporte.Filas.Where((f, i) => !soloSubtotales || f.EsSubtotal || i == reporte.Filas.Count - 1).ToList();
+
+        using (var package = new XLWorkbook())
+        {
+            var ws = package.Worksheets.Add("PYG");
+
+            ws.Cell(1, 1).Value = R("PYG_ColEstructura");
+            ws.Range(1, 1, 2, 1).Merge();
+            ws.Cell(1, 2).Value = string.Format(R("PYG_ColMesGrupoFmt"), nombrePeriodo);
+            ws.Range(1, 2, 1, 1 + n).Merge();
+            ws.Cell(1, 2 + n).Value = string.Format(R("PYG_ColAcumGrupoFmt"), nombreMesHastaConAnio);
+            ws.Range(1, 2 + n, 1, totalCols).Merge();
+
+            for (int b = 0; b < 2; b++)
+                for (int c = 0; c < n; c++)
+                    ws.Cell(2, 2 + b * n + c).Value = columnas[c].Item1;
+
+            var headerRange = ws.Range(1, 1, 2, totalCols);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
+            headerRange.Style.Font.FontColor = XLColor.White;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            headerRange.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+            int fila = 3;
+            foreach (var f in filas)
+            {
+                ws.Cell(fila, 1).Value = f.Descripcion;
+                for (int b = 0; b < 2; b++)
+                {
+                    for (int c = 0; c < n; c++)
+                    {
+                        var celda = ws.Cell(fila, 2 + b * n + c);
+                        ExcelCellHelper.SetValue(celda, columnas[c].Item2(f, b == 0));
+                        celda.Style.NumberFormat.Format = columnas[c].Item3;
+                    }
+                }
+
+                var filaRange = ws.Range(fila, 1, fila, totalCols);
+                filaRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                filaRange.Style.Border.OutsideBorderColor = XLColor.FromColor(Color.LightGray);
+
+                if (f.EsSubtotal)
+                {
+                    filaRange.Style.Font.Bold = true;
+                    filaRange.Style.Fill.BackgroundColor = XLColor.FromArgb(244, 243, 251);
+                }
+                else if ((fila - 3) % 2 == 1)
+                {
+                    filaRange.Style.Fill.BackgroundColor = XLColor.FromArgb(248, 250, 252);
+                }
+
+                fila++;
+            }
+
+            ws.Columns().AdjustToContents();
+            ws.Range(2, 1, fila - 1, totalCols).SetAutoFilter();
+            ws.SheetView.Freeze(2, 1);
+
+            nombreArchivo = $"PYG_{nombreEmpresa}_{reporte.AnioDesde}{reporte.MesDesde:00}-{reporte.AnioHasta}{reporte.MesHasta:00}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            nombreArchivo = string.Join("_", nombreArchivo.Split(Path.GetInvalidFileNameChars()));
+
+            byte[] fileBytes;
+            using (var ms = new MemoryStream())
+            {
+                package.SaveAs(ms);
+                fileBytes = ms.ToArray();
+            }
+            return fileBytes;
+        }
         }
 
         private string NombreMes(int mes)

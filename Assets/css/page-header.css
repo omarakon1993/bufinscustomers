@@ -93,7 +93,9 @@ body .powerbi-header-icon {
 }
 body .powerbi-header-title { font-size: 18px !important; font-weight: 800 !important; color: #160933 !important; line-height: 1.3 !important; }
 body .powerbi-header-sub { color: #6b7280 !important; font-size: 13px !important; }
-body .powerbi-header .header-tag-modelo {
+body .powerbi-header .header-tag-modelo,
+body .powerbi-header .header-tag-personalizado,
+body .powerbi-header .header-tag-doc {
   display: inline-flex; align-items: center; height: 24px; padding: 0 10px; font-size: 12px; font-weight: 700;
   background: rgba(88,58,255,.08); color: #583AFF; border: 0;
 }
@@ -118,6 +120,9 @@ body .powerbi-header::before, body .powerbi-header::after,
 
 /* ---------- Correcciones de texto dentro del banner (nada blanco sobre fondo blanco) ---------- */
 body .powerbi-header small,
-body .powerbi-header .powerbi-header-title span:not(.badge):not(.ia-header-badge):not(.header-tag-modelo) { color: #6b7280 !important; opacity: 1 !important; }
+body .powerbi-header .powerbi-header-title span:not(.badge):not(.ia-header-badge):not(.header-tag-modelo):not(.header-tag-personalizado):not(.header-tag-doc) { color: #6b7280 !important; opacity: 1 !important; }
 body .powerbi-header, body .powerbi-header .powerbi-header-content { color: #160933; }
 body .powerbi-header .pbi-logo-badge { border: 1px solid #e3e6f0; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+/* Cápsula "Documentación" (enlace): mismo tono que las demás, con realce al pasar el mouse */
+body .powerbi-header .header-tag-doc { text-decoration: none; transition: background .15s; }
+body .powerbi-header .header-tag-doc:hover, body .powerbi-header .header-tag-doc:focus-visible { background: rgba(88,58,255,.16); color: #4a2de0; text-decoration: none; }

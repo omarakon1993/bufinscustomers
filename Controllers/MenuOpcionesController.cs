@@ -19,6 +19,9 @@ namespace bufinscustomers.Controllers
         public ActionResult Index()
         {
             var opciones = _menuOpcionesService.ObtenerTodas();
+            var empresasPorOpcion = _menuOpcionesService.ObtenerEmpresasPorOpcion();
+            foreach (var o in opciones)
+                o.IdsEmpresas = empresasPorOpcion.TryGetValue(o.Id, out var ids) ? ids : new List<int>();
             ViewBag.Grupos = _menuEstructuraService.ObtenerGrupos();
             ViewBag.Categorias = _menuEstructuraService.ObtenerCategorias();
             return View("~/Views/Configuracion/MenuOpciones.cshtml", opciones);
@@ -38,7 +41,7 @@ namespace bufinscustomers.Controllers
                     MenuRutaCacheHelper.Invalidar();
                     SetSuccessMessage("Opción de menú creada correctamente.");
                     new AuditoriaService().RegistrarCambio(AuditoriaTipo.Menu, AuditoriaAccion.Crear,
-                        "MenuOpciones", opcion.Id.ToString(), $"Opción de menú creada: {opcion.Nombre} ({opcion.Codigo})", null, opcion);
+                        "MenuOpciones", opcion.Id.ToString(), $"Opción de menú creada: {opcion.Nombre} ({opcion.Codigo})" + DescripcionEmpresas(opcion), null, opcion);
                 }
                 else
                 {
@@ -67,7 +70,7 @@ namespace bufinscustomers.Controllers
                     MenuRutaCacheHelper.Invalidar();
                     SetSuccessMessage("Opción de menú actualizada correctamente.");
                     new AuditoriaService().RegistrarCambio(AuditoriaTipo.Menu, AuditoriaAccion.Editar,
-                        "MenuOpciones", opcion.Id.ToString(), $"Opción de menú editada: {opcion.Nombre} ({opcion.Codigo})", null, opcion);
+                        "MenuOpciones", opcion.Id.ToString(), $"Opción de menú editada: {opcion.Nombre} ({opcion.Codigo})" + DescripcionEmpresas(opcion), null, opcion);
                 }
                 else
                 {
@@ -80,6 +83,15 @@ namespace bufinscustomers.Controllers
             }
 
             return RedirectToAction("Index");
+        }
+
+        // Sufijo de auditoría: a qué empresas se restringió la opción (vacío = global).
+        private static string DescripcionEmpresas(MenuOpciones opcion)
+        {
+            if (opcion.IdsEmpresas == null || opcion.IdsEmpresas.Count == 0) return "";
+            var nombres = EmpresaCacheHelper.ObtenerEmpresasCacheadas()
+                .Where(e => opcion.IdsEmpresas.Contains(e.Id)).Select(e => e.Nombre);
+            return " — personalizada para: " + string.Join(", ", nombres);
         }
 
         // Actualiza el Orden de varias opciones a la vez (drag & drop en la pantalla principal del gestor)

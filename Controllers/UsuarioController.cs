@@ -585,7 +585,9 @@ namespace bufinscustomers.Controllers
             if (nivelAdmin == 2) return;
 
             var menuService = new MenuOpcionesService();
-            var todasLasOpciones = menuService.ObtenerTodas();
+            // Menús personalizados por empresa: solo las que aplican a la empresa de este usuario.
+            var noAplican = menuService.ObtenerIdsOpcionesNoAplicables(idUsuario);
+            var todasLasOpciones = menuService.ObtenerTodas().Where(o => !noAplican.Contains(o.Id)).ToList();
 
             List<int> idsOpcionesPorDefecto = (nivelAdmin == 1)
                 // Admin de Empresa: todas las opciones excepto las exclusivas de Super Admin

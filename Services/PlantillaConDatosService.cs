@@ -43,7 +43,7 @@ namespace bufinscustomers.Services
             };
 
         /// <summary>Orden preferido de las filas exportadas; se aplican solo las columnas que existan en cada tabla Ini_.</summary>
-        private static readonly string[] _ordenPreferido = { "Año", "Mes", "Cuenta", "Empresa", "Pais" };
+        private static readonly string[] _ordenPreferido = { "Año", "Mes", "Semestre", "Cuenta", "Empresa", "Pais" };
 
         private const string FormatoNumero = "#,##0.00";
 
@@ -149,7 +149,7 @@ namespace bufinscustomers.Services
 
                         var colsOrden = _ordenPreferido
                             .Where(columnasIni.Contains)
-                            .Select(c => (c == "Año" || c == "Mes")
+                            .Select(c => (c == "Año" || c == "Mes" || c == "Semestre")
                                 ? $"TRY_CONVERT(int, [{c}])"   // ordena numéricamente aunque la columna sea texto
                                 : "[" + c + "]")
                             .ToList();

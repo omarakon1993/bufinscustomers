@@ -240,6 +240,129 @@ namespace bufinscustomers.Services
 </body></html>";
         }
 
+        /// <summary>
+        /// Env&iacute;a un informe por correo (&uacute;nico formato para todos los informes; ver el bot&oacute;n Exportar
+        /// est&aacute;ndar). El cuerpo trae un resumen opcional (chips de contexto, tarjetas de indicadores y una tabla
+        /// corta) y el detalle completo va en los adjuntos que arma el controlador (Excel y, si viene, PDF).
+        /// <paramref name="kpis"/> y <paramref name="filas"/> pueden ir vac&iacute;os. El signo (1 = sube, -1 = baja,
+        /// 0 = neutro) solo decide el color de un indicador o de la &uacute;ltima celda de una fila.
+        /// </summary>
+        public void EnviarInforme(string destinatarios, string tituloInforme, string empresa, bool personalizado,
+            List<(string etiqueta, string valor)> contexto,
+            List<(string etiqueta, string valor, string detalle, int signo)> kpis,
+            string tablaTitulo, string[] columnas, List<(string[] celdas, int signo)> filas,
+            string mensajePersonal, string nombreQuienEnvia,
+            List<(string nombre, byte[] datos, string mime)> adjuntos, bool esIngles)
+        {
+            string primero = contexto != null && contexto.Count > 0 ? contexto[0].valor : null;
+            string asunto = string.IsNullOrWhiteSpace(primero) ? $"{tituloInforme} - {empresa}" : $"{tituloInforme} - {empresa} ({primero})";
+
+            EnviarConAdjuntos(destinatarios, asunto,
+                ConstruirEmailInformeHtml(tituloInforme, empresa, personalizado, contexto, kpis, tablaTitulo, columnas, filas,
+                    mensajePersonal, nombreQuienEnvia, adjuntos, esIngles),
+                adjuntos);
+        }
+
+        private static string ConstruirEmailInformeHtml(string tituloInforme, string empresa, bool personalizado,
+            List<(string etiqueta, string valor)> contexto,
+            List<(string etiqueta, string valor, string detalle, int signo)> kpis,
+            string tablaTitulo, string[] columnas, List<(string[] celdas, int signo)> filas,
+            string mensajePersonal, string nombreQuienEnvia,
+            List<(string nombre, byte[] datos, string mime)> adjuntos, bool esIngles)
+        {
+            contexto = contexto ?? new List<(string etiqueta, string valor)>();
+            kpis = kpis ?? new List<(string etiqueta, string valor, string detalle, int signo)>();
+            filas = filas ?? new List<(string[] celdas, int signo)>();
+            columnas = columnas ?? new string[0];
+
+            string intro = esIngles
+                ? $"Here is the <strong>{HttpUtility.HtmlEncode(tituloInforme)}</strong> report for <strong>{HttpUtility.HtmlEncode(empresa)}</strong>. " +
+                  (kpis.Count > 0 || filas.Count > 0 ? "The key figures are below; the full detail is attached." : "The full detail is attached.")
+                : $"Compartimos el informe <strong>{HttpUtility.HtmlEncode(tituloInforme)}</strong> de <strong>{HttpUtility.HtmlEncode(empresa)}</strong>. " +
+                  (kpis.Count > 0 || filas.Count > 0 ? "Abajo van las cifras clave; el detalle completo va adjunto." : "El detalle completo va adjunto.");
+            string lblDe   = esIngles ? "Sent by" : "Enviado por";
+            string lblPers = esIngles ? "Custom report" : "Informe personalizado";
+
+            bool hayExcel = adjuntos != null && adjuntos.Any(a => a.mime == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            bool hayPdf   = adjuntos != null && adjuntos.Any(a => a.mime == "application/pdf");
+            string quePdfExcel = hayExcel && hayPdf ? "Excel + PDF" : (hayExcel ? "Excel" : (hayPdf ? "PDF" : ""));
+            string lblAdj = string.IsNullOrEmpty(quePdfExcel) ? ""
+                : (esIngles ? $"Attached: {quePdfExcel}." : $"Adjuntos: {quePdfExcel}.");
+
+            string Color(int signo) => signo > 0 ? "#16a34a" : (signo < 0 ? "#dc2626" : "#6b7280");
+
+            string Chip(string etiqueta, string valor) =>
+                $@"<span style=""display:inline-block;font-size:12px;color:#5B5570;background:#fff;border:1px solid #e3e6f0;border-radius:999px;padding:4px 10px;margin:0 6px 6px 0;"">{HttpUtility.HtmlEncode(etiqueta)} <strong style=""color:#1e1b4b;"">{HttpUtility.HtmlEncode(valor ?? "")}</strong></span>";
+
+            string bloqueContexto = contexto.Count == 0 ? "" : $@"
+    <div style=""background:#f8f9fc;border-radius:10px;padding:10px 12px 4px;margin:0 0 18px;"">{string.Concat(contexto.Select(c => Chip(c.etiqueta, c.valor)))}</div>";
+
+            // Indicadores: tarjetas de dos en dos (las tablas anidadas son lo que mejor soportan los clientes de correo).
+            var celdas = kpis.Select(k => $@"<td width=""50%"" valign=""top"" style=""padding:0 6px 12px 0;"">
+                <div style=""background:#f8f9fc;border:1px solid #e3e6f0;border-radius:12px;padding:12px 14px;"">
+                  <div style=""font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;"">{HttpUtility.HtmlEncode(k.etiqueta)}</div>
+                  <div style=""font-size:24px;font-weight:800;color:{(k.signo != 0 ? Color(k.signo) : "#1e1b4b")};margin:4px 0 2px;"">{HttpUtility.HtmlEncode(k.valor)}</div>
+                  <div style=""font-size:12px;color:#6b7280;"">{HttpUtility.HtmlEncode(k.detalle ?? "")}</div>
+                </div></td>").ToList();
+            var filasKpi = new StringBuilder();
+            for (int i = 0; i < celdas.Count; i += 2)
+                filasKpi.Append("<tr>").Append(celdas[i]).Append(i + 1 < celdas.Count ? celdas[i + 1] : "<td width=\"50%\"></td>").Append("</tr>");
+            string bloqueKpis = kpis.Count == 0 ? "" : $@"<table width=""100%"" cellpadding=""0"" cellspacing=""0"">{filasKpi}</table>";
+
+            string bloqueTabla = "";
+            if (filas.Count > 0 && columnas.Length > 0)
+            {
+                string encabezado = string.Concat(columnas.Select((c, i) =>
+                    $@"<th align=""{(i == 0 ? "left" : "right")}"" style=""padding:8px 12px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;"">{HttpUtility.HtmlEncode(c)}</th>"));
+                string cuerpo = string.Concat(filas.Select((f, r) => $@"<tr style=""background:{(r % 2 == 0 ? "#ffffff" : "#f8f9fc")};"">" +
+                    string.Concat(f.celdas.Select((c, i) =>
+                        $@"<td style=""padding:8px 12px;font-size:13px;{(i == 0 ? "color:#1e1b4b;" : "text-align:right;color:#1e1b4b;")}{(i == f.celdas.Length - 1 && i > 0 && f.signo != 0 ? $"font-weight:700;color:{Color(f.signo)};" : "")}border-bottom:1px solid #eef0f6;"">{HttpUtility.HtmlEncode(c ?? "")}</td>")) +
+                    "</tr>"));
+                bloqueTabla = $@"
+    {(string.IsNullOrWhiteSpace(tablaTitulo) ? "" : $@"<p style=""font-size:14px;font-weight:700;color:#1e1b4b;margin:6px 0 8px;"">{HttpUtility.HtmlEncode(tablaTitulo)}</p>")}
+    <table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""border:1px solid #e3e6f0;border-radius:10px;border-collapse:separate;overflow:hidden;"">
+      <tr style=""background:#f4f3fb;"">{encabezado}</tr>{cuerpo}
+    </table>";
+            }
+
+            string bloqueMensaje = string.IsNullOrWhiteSpace(mensajePersonal) ? "" : $@"
+    <div style=""background:#f8f9ff;border-left:4px solid #6366f1;padding:14px 18px;font-size:14px;color:#4b5563;line-height:1.6;margin:0 0 22px;white-space:pre-wrap;"">{HttpUtility.HtmlEncode(mensajePersonal)}</div>";
+            string bloqueAdj = string.IsNullOrEmpty(lblAdj) ? "" : $@"<p style=""font-size:13px;color:#6b7280;margin:16px 0 0;"">&#128206; {lblAdj}</p>";
+            string bloqueDe = string.IsNullOrWhiteSpace(nombreQuienEnvia) ? "" :
+                $@"<p style=""font-size:13px;color:#9ca3af;margin:14px 0 0;"">{lblDe}: {HttpUtility.HtmlEncode(nombreQuienEnvia)}</p>";
+            string bloquePers = personalizado ? $@"<p style=""font-size:12px;font-weight:700;color:#583AFF;margin:0 0 12px;"">{lblPers}</p>" : "";
+
+            return $@"<!DOCTYPE html>
+<html lang=""{(esIngles ? "en" : "es")}"">
+<head><meta charset=""UTF-8""><meta name=""viewport"" content=""width=device-width,initial-scale=1""></head>
+<body style=""margin:0;padding:0;background:#f0f2f8;font-family:'Segoe UI',Arial,sans-serif;"">
+<table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background:#f0f2f8;padding:32px 16px;"">
+ <tr><td align=""center"">
+ <table width=""640"" cellpadding=""0"" cellspacing=""0"" style=""max-width:640px;width:100%;background:#fff;border-radius:16px;overflow:hidden;"">
+  <tr><td style=""background:linear-gradient(135deg,#1e1b4b,#312e81,#4338ca);padding:36px 40px 28px;text-align:center;"">
+    <div style=""font-size:28px;font-weight:900;color:#fff;letter-spacing:3px;"">bufins</div>
+    <div style=""font-size:9px;color:rgba(255,255,255,0.6);letter-spacing:2px;text-transform:uppercase;"">Business Finance Always Everywhere</div>
+  </td></tr>
+  <tr><td style=""padding:36px 40px;"">
+    <p style=""font-size:18px;font-weight:700;color:#1e1b4b;margin:0 0 4px;"">{HttpUtility.HtmlEncode(tituloInforme)}</p>
+    {bloquePers}
+    <p style=""font-size:15px;color:#4b5563;line-height:1.7;margin:0 0 18px;"">{intro}</p>
+    {bloqueContexto}
+    {bloqueMensaje}
+    {bloqueKpis}
+    {bloqueTabla}
+    {bloqueAdj}
+    {bloqueDe}
+  </td></tr>
+  <tr><td style=""background:#f8f9ff;padding:20px;text-align:center;font-size:12px;color:#9ca3af;border-top:1px solid #e5e7eb;"">
+    &copy; Bufins &mdash; Business Finance Always Everywhere
+  </td></tr>
+ </table>
+ </td></tr>
+</table>
+</body></html>";
+        }
+
         private enum ModoCorreoCuenta { Creacion, Reenvio, Actualizacion }
 
         private void Enviar(string destinatario, string asunto, string htmlBody)

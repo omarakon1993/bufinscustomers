@@ -1,0 +1,44 @@
+/* ===== Informe histórico de precios (Churido & Ucrania) =====
+   Informe personalizado construido sobre las mismas clases del PYG/Balance (.lt-*, .pyg2-*; la vista incluye
+   bufins-components.css + informe-linea-tiempo.css + informe-pyg.css antes de este archivo). Aquí solo lo propio:
+   alturas de gráficos, rejilla de dos gráficos, colores de variación y detalles de tabla. */
+
+.hp-chart-lg{position:relative;height:340px}
+.hp-chart-md{position:relative;height:230px}
+.hp-chart-lg canvas,.hp-chart-md canvas{width:100% !important;height:100% !important}
+.hp-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.hp-up{color:#16A34A}
+.hp-down{color:#DC2626}
+.hp-muted{color:#B7B2C9}
+.hp-strong{font-weight:800}
+.hp-fuerte{font-weight:800}
+.hp-fuerte .fa-circle-exclamation{font-size:9px}
+.hp-ref-strong{font-weight:700;color:#2d3748}
+.hp-tag-precio{font-variant-numeric:tabular-nums;color:#5B5570}
+.hp-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:middle}
+.hp-table td.col-cuenta{text-align:left;font-weight:700;color:#2d3748;position:sticky;left:0;z-index:1;background:#fff;min-width:170px}
+.hp-table tr.subtotal td{background:#F4F3FB;font-weight:800}
+.hp-table tr.subtotal td.col-cuenta{background:#F4F3FB}
+
+@media (max-width:992px){
+    .hp-two{grid-template-columns:1fr}
+    .hp-chart-lg{height:280px}
+}
+
+/* Cápsulas del rango: el grupo "Ver por" lleva un rótulo pequeño antes de los botones */
+.rango-atajos-grupo .rango-atajos-cap{display:inline-flex;align-items:center;padding:0 8px 0 10px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#8B85A0;white-space:nowrap}
+
+/* Visor de la documentación (solo lectura): modal casi a pantalla completa con un iframe en sandbox */
+.hp-doc{position:fixed;inset:0;z-index:1080;background:rgba(22,9,51,.74);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:2vh 2vw}
+.hp-doc.open{display:flex}
+.hp-doc-card{background:#fff;border-radius:14px;width:100%;max-width:1560px;height:100%;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 40px 90px -30px rgba(22,9,51,.6)}
+.hp-doc-card:fullscreen{max-width:none;border-radius:0}
+.hp-doc-rule{height:3px;background:var(--content-gradient);flex:none}
+.hp-doc-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;border-bottom:1px solid #E4E1F0;flex:none}
+.hp-doc-head h5{margin:0;font-size:15px;font-weight:800;color:#2d3748;display:flex;align-items:center;gap:8px}
+.hp-doc-head h5 i{color:#583AFF}
+.hp-doc-tools{display:flex;gap:6px}
+.hp-doc-tools button{width:32px;height:32px;border-radius:9px;border:1px solid #e3e6f0;background:#f8f9fc;color:#8B85A0;font-size:13px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.hp-doc-tools button:hover{background:#eef0f6;color:#2d3748}
+.hp-doc iframe{flex:1;width:100%;border:0;background:#F6F5FB}
+@media (max-width:768px){.hp-doc{padding:0}.hp-doc-card{border-radius:0}}

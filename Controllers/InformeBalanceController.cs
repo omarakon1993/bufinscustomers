@@ -266,95 +266,8 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                var empresaInfo = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa);
-                string nombreEmpresa = empresaInfo?.Nombre ?? "Empresa";
-                string nombreCorte = NombreMes(reporte.MesHasta) + " " + reporte.AnioHasta;
-
-                string nombreEscenarioComp = null;
-                if (reporte.HayEscenarioComparar)
-                {
-                    nombreEscenarioComp = EscenarioCacheHelper.ObtenerEscenariosCacheados()
-                        .FirstOrDefault(e => e.Id == reporte.IdEscenarioComparar)?.Nombre ?? ("#" + reporte.IdEscenarioComparar);
-                }
-
-                const string fmtNum = "#,##0.0", fmtPct = "0.0%";
-                var columnas = new List<Tuple<string, Func<BalanceFilaReporte, decimal?>, string>>
-                {
-                    Tuple.Create<string, Func<BalanceFilaReporte, decimal?>, string>(R("BAL_ColSaldoCorte"), f => f.SaldoCorte, fmtNum),
-                    Tuple.Create<string, Func<BalanceFilaReporte, decimal?>, string>(R("BAL_ColPctVertical"), f => f.PctVertical, fmtPct),
-                    Tuple.Create<string, Func<BalanceFilaReporte, decimal?>, string>(R("BAL_CompCorto_" + reporte.Comparar), f => f.SaldoComparativo, fmtNum),
-                    Tuple.Create<string, Func<BalanceFilaReporte, decimal?>, string>(R("BAL_ColVarAbs"), f => f.VariacionAbsoluta, fmtNum),
-                    Tuple.Create<string, Func<BalanceFilaReporte, decimal?>, string>(R("BAL_ColVarPct"), f => f.VariacionPorcentual, fmtPct)
-                };
-                if (reporte.HayEscenarioComparar)
-                    columnas.Add(Tuple.Create<string, Func<BalanceFilaReporte, decimal?>, string>(string.Format(R("BAL_ColVsEscenarioFmt"), nombreEscenarioComp), f => f.VariacionEscenarioPorcentual, fmtPct));
-
-                int totalCols = 1 + columnas.Count;
-                var filas = reporte.Filas.Where((f, i) => !soloSubtotales || f.EsSubtotal || i == reporte.Filas.Count - 1).ToList();
-
-                using (var package = new XLWorkbook())
-                {
-                    var ws = package.Worksheets.Add("Balance");
-
-                    ws.Cell(1, 1).Value = R("BAL_ColCuenta");
-                    ws.Cell(1, 2).Value = string.Format(R("BAL_ColCorteGrupoFmt"), nombreCorte);
-                    ws.Range(1, 2, 1, totalCols).Merge();
-                    for (int c = 0; c < columnas.Count; c++)
-                        ws.Cell(2, 2 + c).Value = columnas[c].Item1;
-
-                    var headerRange = ws.Range(1, 1, 2, totalCols);
-                    headerRange.Style.Font.Bold = true;
-                    headerRange.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
-                    headerRange.Style.Font.FontColor = XLColor.White;
-                    headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                    headerRange.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                    headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-                    headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
-                    ws.Range(1, 1, 2, 1).Merge();
-
-                    int fila = 3;
-                    foreach (var f in filas)
-                    {
-                        ws.Cell(fila, 1).Value = f.Descripcion;
-                        for (int c = 0; c < columnas.Count; c++)
-                        {
-                            var celda = ws.Cell(fila, 2 + c);
-                            ExcelCellHelper.SetValue(celda, columnas[c].Item2(f));
-                            celda.Style.NumberFormat.Format = columnas[c].Item3;
-                        }
-
-                        var filaRange = ws.Range(fila, 1, fila, totalCols);
-                        filaRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-                        filaRange.Style.Border.OutsideBorderColor = XLColor.FromColor(Color.LightGray);
-
-                        if (f.EsSubtotal)
-                        {
-                            filaRange.Style.Font.Bold = true;
-                            filaRange.Style.Fill.BackgroundColor = XLColor.FromArgb(244, 243, 251);
-                        }
-                        else if ((fila - 3) % 2 == 1)
-                        {
-                            filaRange.Style.Fill.BackgroundColor = XLColor.FromArgb(248, 250, 252);
-                        }
-
-                        fila++;
-                    }
-
-                    ws.Columns().AdjustToContents();
-                    ws.Range(2, 1, fila - 1, totalCols).SetAutoFilter();
-                    ws.SheetView.Freeze(2, 1);
-
-                    string nombreArchivo = $"Balance_{nombreEmpresa}_{reporte.AnioHasta}{reporte.MesHasta:00}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-                    nombreArchivo = string.Join("_", nombreArchivo.Split(Path.GetInvalidFileNameChars()));
-
-                    byte[] fileBytes;
-                    using (var ms = new MemoryStream())
-                    {
-                        package.SaveAs(ms);
-                        fileBytes = ms.ToArray();
-                    }
-                    return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
-                }
+                var bytes = GenerarExcel(filtros, reporte, soloSubtotales, out string nombreArchivo);
+                return File(bytes, InformeCorreoHelper.MimeExcel, nombreArchivo);
             }
             catch (Exception ex)
             {
@@ -362,6 +275,173 @@ namespace bufinscustomers.Controllers
                 TempData["ErrorMessage"] = "Error al exportar a Excel: " + ex.Message;
                 return RedirectToAction("Index");
             }
+        }
+
+        /// <summary>
+        /// Envía el informe por correo desde el botón Exportar (componente estándar): Excel (el mismo de la descarga) y PDF
+        /// (el que arma el navegador) como adjuntos y, en el cuerpo, los indicadores del corte (activo total, capital de
+        /// trabajo, razón corriente y endeudamiento). El reporte se reconstruye en el servidor con los filtros recibidos.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult EnviarPorCorreo(FiltrosBalance filtros, bool soloSubtotales = false, string correos = null,
+            bool incluirmeAMi = false, string mensaje = null, string pdfBase64 = null)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (usuario == null || filtros == null || !TieneAccesoEmpresa(filtros.IdEmpresa))
+                return Json(new { exito = false, mensaje = R("Common_SinPermisos") });
+            if (!InformeCorreoHelper.TryDestinatarios(usuario, correos, incluirmeAMi, R, out var lista, out var error))
+                return Json(new { exito = false, mensaje = error });
+
+            try
+            {
+                var reporte = _service.ConstruirReporte(filtros);
+                if (reporte.SinDatos || reporte.Filas.Count == 0)
+                    return Json(new { exito = false, mensaje = R("BAL_SinDatosDesc") });
+
+                bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+                string empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
+                string escenario = EscenarioCacheHelper.ObtenerEscenariosCacheados()
+                    .FirstOrDefault(e => e.Id == filtros.IdEscenario)?.Nombre ?? ("#" + filtros.IdEscenario);
+
+                var bytes = GenerarExcel(filtros, reporte, soloSubtotales, out string nombreArchivo);
+                var adjuntos = InformeCorreoHelper.Adjuntos(nombreArchivo, bytes, InformeCorreoHelper.PdfDesdeBase64(pdfBase64));
+
+                string corte = NombreMes(reporte.MesHasta) + " " + reporte.AnioHasta;
+                string comparado = R("BAL_CompCorto_" + reporte.Comparar);
+                var contexto = new List<(string etiqueta, string valor)>
+                {
+                    (R("BAL_CorreoCorte"), corte), (R("Common_LabelEscenario"), escenario), (R("Common_ExpCorreo_Comparado"), comparado)
+                };
+
+                // Indicadores del corte: moneda en millones, razón en "x", endeudamiento en %; el color depende de si subir es bueno.
+                var kpis = new List<(string etiqueta, string valor, string detalle, int signo)>();
+                foreach (var k in reporte.Kpis)
+                {
+                    string etiqueta = R("BAL_Kpi" + k.Codigo);
+                    string valor = k.NoAplica ? R("BAL_KpiNoAplica")
+                        : (k.Codigo == "RazonCorriente" ? k.Valor.ToString("0.00") + "x"
+                        : (k.Codigo == "Endeudamiento" ? (k.Valor * 100m).ToString("0.0") + " %"
+                        : (k.Valor / 1000000m).ToString("N1") + " M"));
+                    bool subeEsBueno = k.Codigo != "Endeudamiento";
+                    var d = k.NoAplica ? null : k.VariacionPorcentual;
+                    string detalle = d.HasValue ? (d.Value * 100m).ToString("+0.0;-0.0;0.0") + " % " + string.Format(R("Common_ExpCorreo_VsFmt"), comparado) : "";
+                    int signo = d.HasValue && d.Value != 0m ? ((d.Value > 0m) == subeEsBueno ? 1 : -1) : 0;
+                    kpis.Add((etiqueta, valor, detalle, signo));
+                }
+
+                string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
+                new EmailService().EnviarInforme(string.Join(", ", lista), R("BAL_PageTitle"), empresa, false, contexto, kpis,
+                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles);
+
+                new AuditoriaService().RegistrarCambio(
+                    AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeBalance", filtros.IdEmpresa.ToString(),
+                    $"Informe de balance general enviado por correo a {string.Join(", ", lista)}: '{empresa}' — corte {corte}, escenario {filtros.IdEscenario}.",
+                    null,
+                    new { empresa, corte, escenario = filtros.IdEscenario, comparar = reporte.Comparar, destinatarios = lista, conPdf = adjuntos.Count > 1 },
+                    filtros.IdEmpresa, entidadNombre: empresa, severidad: AuditoriaSeveridad.Advertencia);
+
+                return Json(new { exito = true, mensaje = string.Format(R("Common_ExpCorreo_Exito"), string.Join(", ", lista)) });
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "InformeBalanceController.EnviarPorCorreo");
+                return Json(new { exito = false, mensaje = R("Common_ExpCorreo_Error") });
+            }
+        }
+
+        /// <summary>Libro de Excel del informe (lo usan la descarga y el envío por correo del botón Exportar).</summary>
+        private byte[] GenerarExcel(FiltrosBalance filtros, BalanceReporteViewModel reporte, bool soloSubtotales, out string nombreArchivo)
+        {
+        var empresaInfo = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa);
+        string nombreEmpresa = empresaInfo?.Nombre ?? "Empresa";
+        string nombreCorte = NombreMes(reporte.MesHasta) + " " + reporte.AnioHasta;
+
+        string nombreEscenarioComp = null;
+        if (reporte.HayEscenarioComparar)
+        {
+            nombreEscenarioComp = EscenarioCacheHelper.ObtenerEscenariosCacheados()
+                .FirstOrDefault(e => e.Id == reporte.IdEscenarioComparar)?.Nombre ?? ("#" + reporte.IdEscenarioComparar);
+        }
+
+        const string fmtNum = "#,##0.0", fmtPct = "0.0%";
+        var columnas = new List<Tuple<string, Func<BalanceFilaReporte, decimal?>, string>>
+        {
+            Tuple.Create<string, Func<BalanceFilaReporte, decimal?>, string>(R("BAL_ColSaldoCorte"), f => f.SaldoCorte, fmtNum),
+            Tuple.Create<string, Func<BalanceFilaReporte, decimal?>, string>(R("BAL_ColPctVertical"), f => f.PctVertical, fmtPct),
+            Tuple.Create<string, Func<BalanceFilaReporte, decimal?>, string>(R("BAL_CompCorto_" + reporte.Comparar), f => f.SaldoComparativo, fmtNum),
+            Tuple.Create<string, Func<BalanceFilaReporte, decimal?>, string>(R("BAL_ColVarAbs"), f => f.VariacionAbsoluta, fmtNum),
+            Tuple.Create<string, Func<BalanceFilaReporte, decimal?>, string>(R("BAL_ColVarPct"), f => f.VariacionPorcentual, fmtPct)
+        };
+        if (reporte.HayEscenarioComparar)
+            columnas.Add(Tuple.Create<string, Func<BalanceFilaReporte, decimal?>, string>(string.Format(R("BAL_ColVsEscenarioFmt"), nombreEscenarioComp), f => f.VariacionEscenarioPorcentual, fmtPct));
+
+        int totalCols = 1 + columnas.Count;
+        var filas = reporte.Filas.Where((f, i) => !soloSubtotales || f.EsSubtotal || i == reporte.Filas.Count - 1).ToList();
+
+        using (var package = new XLWorkbook())
+        {
+            var ws = package.Worksheets.Add("Balance");
+
+            ws.Cell(1, 1).Value = R("BAL_ColCuenta");
+            ws.Cell(1, 2).Value = string.Format(R("BAL_ColCorteGrupoFmt"), nombreCorte);
+            ws.Range(1, 2, 1, totalCols).Merge();
+            for (int c = 0; c < columnas.Count; c++)
+                ws.Cell(2, 2 + c).Value = columnas[c].Item1;
+
+            var headerRange = ws.Range(1, 1, 2, totalCols);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
+            headerRange.Style.Font.FontColor = XLColor.White;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            headerRange.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+            ws.Range(1, 1, 2, 1).Merge();
+
+            int fila = 3;
+            foreach (var f in filas)
+            {
+                ws.Cell(fila, 1).Value = f.Descripcion;
+                for (int c = 0; c < columnas.Count; c++)
+                {
+                    var celda = ws.Cell(fila, 2 + c);
+                    ExcelCellHelper.SetValue(celda, columnas[c].Item2(f));
+                    celda.Style.NumberFormat.Format = columnas[c].Item3;
+                }
+
+                var filaRange = ws.Range(fila, 1, fila, totalCols);
+                filaRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                filaRange.Style.Border.OutsideBorderColor = XLColor.FromColor(Color.LightGray);
+
+                if (f.EsSubtotal)
+                {
+                    filaRange.Style.Font.Bold = true;
+                    filaRange.Style.Fill.BackgroundColor = XLColor.FromArgb(244, 243, 251);
+                }
+                else if ((fila - 3) % 2 == 1)
+                {
+                    filaRange.Style.Fill.BackgroundColor = XLColor.FromArgb(248, 250, 252);
+                }
+
+                fila++;
+            }
+
+            ws.Columns().AdjustToContents();
+            ws.Range(2, 1, fila - 1, totalCols).SetAutoFilter();
+            ws.SheetView.Freeze(2, 1);
+
+            nombreArchivo = $"Balance_{nombreEmpresa}_{reporte.AnioHasta}{reporte.MesHasta:00}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            nombreArchivo = string.Join("_", nombreArchivo.Split(Path.GetInvalidFileNameChars()));
+
+            byte[] fileBytes;
+            using (var ms = new MemoryStream())
+            {
+                package.SaveAs(ms);
+                fileBytes = ms.ToArray();
+            }
+            return fileBytes;
+        }
         }
 
         private string NombreMes(int mes)

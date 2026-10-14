@@ -1,0 +1,37 @@
+@model bufinscustomers.Models.ExportMenuVM
+@* Botón "Exportar" desplegable — ESTÁNDAR para informes (mismo diseño que Revisar cargue).
+   Uso:  <link href="~/Assets/css/export-menu.css" rel="stylesheet" />  +  <script src="~/Assets/js/export-menu.js"></script>
+         @Html.Partial("_ExportMenu", new bufinscustomers.Models.ExportMenuVM { Id = "miExp", Opciones = "excel,pdf,imagen,correo" })
+         ExportMenu.init('miExp', { acciones: { excel: ..., pdf: ..., imagen: ..., correo: ... }, textos: { ... } })
+   Si el menú queda recortado, la tarjeta que lo contiene debe tener overflow: visible. *@
+<div class="exp" id="@Model.Id" data-opciones="@(Model.Opciones ?? "excel,pdf,imagen,correo")">
+    <button type="button" class="exp-btn" aria-haspopup="true" aria-expanded="false" title="@(Model.BtnTooltip ?? Resources.Strings.Common_Exp_BtnTooltip)">
+        <span class="exp-icono"><i class="fas fa-arrow-up-from-bracket"></i></span><span class="exp-texto">@(Model.BtnTexto ?? Resources.Strings.Common_Exp_Btn)</span>
+        <span class="exp-fmt" aria-hidden="true">
+            <span class="xls"><i class="fas fa-file-excel"></i></span>
+            <span class="pdf"><i class="fas fa-file-pdf"></i></span>
+            <span class="mail"><i class="fas fa-envelope"></i></span>
+        </span>
+        <i class="fas fa-chevron-down exp-caret"></i>
+    </button>
+    <div class="exp-menu" role="menu">
+        <div class="exp-menu-title">@(Model.MenuTitulo ?? Resources.Strings.Common_Exp_MenuTitulo)</div>
+        <button type="button" class="exp-opt xls" role="menuitem" data-accion="excel">
+            <span class="exp-ic"><i class="fas fa-file-excel"></i></span>
+            <span class="exp-txt"><span class="exp-t">@Resources.Strings.Common_Exp_Excel</span><span class="exp-s">@(Model.ExcelDesc ?? Resources.Strings.Common_Exp_ExcelDesc)</span></span>
+        </button>
+        <button type="button" class="exp-opt pdf" role="menuitem" data-accion="pdf">
+            <span class="exp-ic"><i class="fas fa-file-pdf"></i></span>
+            <span class="exp-txt"><span class="exp-t">@Resources.Strings.Common_Exp_Pdf</span><span class="exp-s">@(Model.PdfDesc ?? Resources.Strings.Common_Exp_PdfDesc)</span></span>
+        </button>
+        <button type="button" class="exp-opt img" role="menuitem" data-accion="imagen">
+            <span class="exp-ic"><i class="fas fa-image"></i></span>
+            <span class="exp-txt"><span class="exp-t">@Resources.Strings.Common_Exp_Imagen</span><span class="exp-s">@(Model.ImagenDesc ?? Resources.Strings.Common_Exp_ImagenDesc)</span></span>
+        </button>
+        <div class="exp-sep"></div>
+        <button type="button" class="exp-opt mail" role="menuitem" data-accion="correo">
+            <span class="exp-ic"><i class="fas fa-envelope"></i></span>
+            <span class="exp-txt"><span class="exp-t">@Resources.Strings.Common_Exp_Correo</span><span class="exp-s">@(Model.CorreoDesc ?? Resources.Strings.Common_Exp_CorreoDesc)</span></span>
+        </button>
+    </div>
+</div>

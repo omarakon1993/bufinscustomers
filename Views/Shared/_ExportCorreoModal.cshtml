@@ -1,0 +1,46 @@
+@model bufinscustomers.Models.ExportCorreoVM
+@{
+    string correoUsuario = (bufinscustomers.Helpers.UsuarioSesionHelper.UsuarioActual?.Correo ?? "").Trim();
+}
+@* Modal "Enviar por correo" del botón Exportar — ESTÁNDAR para informes (formulario => look claro de Bootstrap).
+   Uso:  @Html.Partial("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+         ExportMenu.correo({ url, datos: fn, pdf: fn, pills: fn, textos: {...} }).abrir()  (ver Assets/js/export-menu.js) *@
+<div class="modal fade" id="expCorreoModal" tabindex="-1" role="dialog" aria-labelledby="expCorreoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="expCorreoLabel"><i class="fas fa-envelope mr-2"></i>@(Model.Titulo ?? Resources.Strings.Common_ExpCorreo_Titulo)</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="exp-mail-ctx" id="expCorreoPills"></div>
+
+                <label class="exp-mail-yo @(string.IsNullOrEmpty(correoUsuario) ? "disabled" : "")" for="expCorreoYo">
+                    <input type="checkbox" id="expCorreoYo" @(string.IsNullOrEmpty(correoUsuario) ? "disabled" : "checked") />
+                    <span>
+                        <span class="exp-mail-yo-t">@Resources.Strings.RevisarCargue_Correo_Incluirme</span>
+                        <span class="exp-mail-yo-s">@(string.IsNullOrEmpty(correoUsuario) ? Resources.Strings.RevisarCargue_Correo_SinRegistrado : correoUsuario)</span>
+                    </span>
+                </label>
+
+                <div class="form-group">
+                    <label for="expCorreoOtros"><i class="fas fa-at mr-1"></i>@Resources.Strings.RevisarCargue_Correo_LabelOtros</label>
+                    <input type="text" class="form-control" id="expCorreoOtros" autocomplete="off" placeholder="@Resources.Strings.Modelo_Correo_PlaceholderDestino" />
+                    <small class="form-text text-muted">@Resources.Strings.RevisarCargue_Correo_HintOtros</small>
+                </div>
+
+                <div class="form-group mb-0">
+                    <label for="expCorreoMensaje"><i class="fas fa-align-left mr-1"></i>@Resources.Strings.Modelo_Correo_LabelMensaje</label>
+                    <textarea class="form-control" id="expCorreoMensaje" rows="2" maxlength="1000" placeholder="@Resources.Strings.Modelo_Correo_PlaceholderMensaje"></textarea>
+                </div>
+
+                <div class="exp-mail-adj @(Model.SoloExcel ? "solo-excel" : "")"><i class="fas fa-file-excel"></i><i class="fas fa-file-pdf"></i>@(Model.Adjuntos ?? (Model.SoloExcel ? Resources.Strings.Common_ExpCorreo_AdjuntoExcel : Resources.Strings.Common_ExpCorreo_Adjuntos))</div>
+                <div class="alert alert-danger py-2 px-3 mt-3 mb-0 small d-none" id="expCorreoError" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-modern-secondary btn-sm" data-dismiss="modal"><i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel</button>
+                <button type="button" class="btn btn-modern-gradient btn-sm" id="expCorreoEnviar"><i class="fas fa-paper-plane mr-1"></i><span>@Resources.Strings.Modelo_Correo_BtnEnviar</span></button>
+            </div>
+        </div>
+    </div>
+</div>
