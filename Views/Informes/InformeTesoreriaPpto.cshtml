@@ -1,0 +1,1628 @@
+@using System.Web
+@using bufinscustomers.Models
+@{
+    ViewBag.Title = Resources.Strings.TesPpto_PageTitle;
+    var empresas = ViewBag.Empresas as List<Empresas>;
+    var esAdmin = (bool)(ViewBag.EsAdmin ?? false);
+    var culturaJs = System.Globalization.CultureInfo.CurrentUICulture.Name;
+    // T = texto para HTML (Razor lo codifica); J = texto para JS (escapado). Ambos leen de App_GlobalResources/Strings(.en-US).resx.
+    Func<string, string> T = k => (System.Web.HttpContext.GetGlobalResourceObject("Strings", k) as string) ?? k;
+    Func<string, string> J = k => HttpUtility.JavaScriptStringEncode(T(k));
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
+<link href="~/Assets/css/informe-pyg.css" rel="stylesheet" />
+<link href="~/Assets/css/informe-tesoreria.css" rel="stylesheet" />
+<link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
+
+<div class="container-fluid px-4">
+<div class="lt-app">
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-vault powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@T("TesPpto_PageTitle")</h1>
+            @Html.Partial("_ModeloBufinsTag")
+        </div>
+    </div>
+
+    @Html.AntiForgeryToken()
+
+    <div class="filter-card">
+        <div class="lt-section-title"><span>@T("Common_FiltrosConsulta")</span></div>
+        <div class="lt-grid-quever tes-grid-4">
+            <div class="lt-field">
+                <label class="lt-field-label" for="tesEmpresa">@T("Common_LabelEmpresa")</label>
+                <select id="tesEmpresa" class="lt-field-select">
+                    @if (esAdmin) { <option value="">@T("Common_Seleccione")</option> }
+                    @if (empresas != null)
+                    {
+                        foreach (var e in empresas)
+                        {
+                            <option value="@e.Id">@e.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="lt-field">
+                <label class="lt-field-label" for="tesEscenario">@T("Common_LabelEscenario")</label>
+                <select id="tesEscenario" class="lt-field-select">
+                    @if (ViewBag.Escenarios != null)
+                    {
+                        foreach (var esc in ViewBag.Escenarios)
+                        {
+                            <option value="@esc.Id">@esc.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="lt-field">
+                <label class="lt-field-label" for="tesMedida">@T("TesPpto_LabelMedida") <i class="fas fa-circle-info tes-info" tabindex="0" title="@T("TesPpto_MedidaHint")" aria-label="@T("TesPpto_MedidaHint")"></i></label>
+                <select id="tesMedida" class="lt-field-select">
+                    <option value="ppto">@T("TesPpto_Medida_ppto")</option>
+                    <option value="proy">@T("TesPpto_Medida_proy")</option>
+                </select>
+            </div>
+            <div class="lt-field">
+                <label class="lt-field-label" for="tesNivelDetalle">@T("TesPpto_NivelDetalle")</label>
+                <select id="tesNivelDetalle" class="lt-field-select">
+                    <option value="todas">@T("TesPpto_NivelTodas")</option>
+                    <option value="subtotales">@T("TesPpto_NivelSubtotales")</option>
+                </select>
+            </div>
+        </div>
+
+        <details class="rpt-adv">
+            <summary><span>@T("TesPpto_SeccionComparaciones")</span><span class="line"></span></summary>
+            <div class="rpt-adv-body">
+                <div class="lt-grid-quever">
+                    <div class="lt-field">
+                        <label class="lt-field-label" for="tesComparar">@T("TesPpto_CompararLabel")</label>
+                        <select id="tesComparar" class="lt-field-select">
+                            <option value="medida">@T("TesPpto_Comp_medida")</option>
+                            <option value="ninguno">@T("TesPpto_Comp_ninguno")</option>
+                        </select>
+                    </div>
+                    <div class="lt-field">
+                        <label class="lt-field-label" for="tesEscenarioComparar">@T("TesPpto_EscenarioComparar")</label>
+                        @* Opciones armadas por JS (actualizarOpcionesEscenarioComparar): todos los escenarios menos el
+                           principal; los que no tienen datos para la empresa quedan deshabilitados con tooltip. *@
+                        <select id="tesEscenarioComparar" class="lt-field-select">
+                            <option value="">@T("TesPpto_EscenarioCompararNinguno")</option>
+                        </select>
+                        <p class="lt-seg-hint" id="tesEscenarioSinDatosHint" style="display:none;"><i class="fas fa-circle-info mr-1"></i>@T("TesPpto_EscenarioSinDatosHint")</p>
+                    </div>
+                </div>
+            </div>
+        </details>
+
+        @* Rango: mismo control que PYG/Balance/Línea de Tiempo (slider continuo + atajos compartidos de rango-atajos.js). *@
+        <div class="lt-section-title mt"><span>@T("TesPpto_FilaCuando")</span></div>
+        <div>
+            <div class="rango-atajos" id="tesAtajos">
+                <div class="rango-atajos-grupo">
+                    <button type="button" data-preset="todo">@T("Rango_Todo")</button>
+                </div>
+                <div class="rango-atajos-grupo">
+                    <button type="button" data-preset="ytd">@T("Rango_AnioEnCurso")</button>
+                    <button type="button" data-preset="6m">@T("Rango_Ultimos6Meses")</button>
+                    <button type="button" data-preset="3m">@T("Rango_UltimoTrimestre")</button>
+                    <button type="button" data-preset="mesAnterior">@T("Rango_MesAnterior")</button>
+                    <button type="button" data-preset="mesActual">@T("Rango_MesActual")</button>
+                </div>
+            </div>
+            <div class="lt-range-card">
+                <div class="lt-range-head">
+                    <span class="lbl"><span id="tesRangoDesdeLbl">&mdash;</span><i class="fas fa-long-arrow-alt-right"></i><span id="tesRangoHastaLbl">&mdash;</span></span>
+                    <span class="lt-range-badge" id="tesRangoBadge">&mdash;</span>
+                </div>
+                <div class="lt-range-track disabled" id="tesRangoTrack">
+                    <div class="bg"></div>
+                    <div class="sel" id="tesRangoSel"></div>
+                    <div class="knob from" id="tesKnobFrom" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-label="@T("LineaTiempo_LabelRango")"></div>
+                    <div class="knob to" id="tesKnobTo" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-label="@T("LineaTiempo_LabelRango")"></div>
+                </div>
+                <div class="lt-range-years" id="tesRangoYears"></div>
+            </div>
+            <p class="lt-help">@T("TesPpto_RangoHint")</p>
+            <p class="lt-help" id="tesSinMeses" style="display:none;">@T("TesPpto_SinMesesDatos")</p>
+        </div>
+
+        <div class="btn-group-actions">
+            <button type="button" id="btnConsultarTes" class="btn btn-modern-gradient" disabled>
+                <i class="fas fa-arrow-right mr-1"></i>@T("LineaTiempo_BtnGenerar")
+            </button>
+            <button type="button" id="btnLimpiarTes" class="btn btn-modern-secondary">@T("Common_Limpiar")</button>
+        </div>
+    </div>
+
+    <div id="tesEstadoInicial" class="lt-card lt-empty">
+        <div class="lt-empty-icon"><i class="fas fa-vault"></i></div>
+        <h4>@T("TesPpto_EstadoInicialTitulo")</h4>
+        <p>@T("TesPpto_EstadoInicialDesc")</p>
+    </div>
+
+    <div id="tesSinDatos" class="lt-card lt-empty" style="display:none;">
+        <div class="lt-empty-icon"><i class="fas fa-inbox"></i></div>
+        <h4>@T("TesPpto_SinDatosTitulo")</h4>
+        <p id="tesSinDatosDesc">@T("TesPpto_SinDatosDesc")</p>
+    </div>
+
+    <div id="tesResultado" style="display:none;">
+
+        @* 1. Encabezado: marca + empresa + chips de contexto + unidad/exportaciones *@
+        <div class="lt-card" id="tesPanelResultado">
+            <div class="pyg2-letterhead">
+                <span class="pyg2-brand"><span class="bm-text">@T("LineaTiempo_BrandMark")</span><span class="bm-sub">@T("TesPpto_Subtitulo")</span></span>
+                <span class="fecha"><span>@T("TesPpto_GeneradoEl")</span> <span id="tesFechaGenerado">&mdash;</span></span>
+            </div>
+            <div class="pyg2-head">
+                <div class="pyg2-head-l">
+                    <h2 id="tesTituloEmpresa">&mdash;</h2>
+                    <div class="pyg2-chips">
+                        <span class="pyg2-chip primary"><i class="fas fa-calendar"></i><span id="tesChipPeriodo">&mdash;</span></span>
+                        <span class="pyg2-chip" id="tesChipEscenario">&mdash;</span>
+                        <span class="pyg2-chip" id="tesChipMedida">&mdash;</span>
+                        <span class="pyg2-chip" id="tesChipComparado">&mdash;</span>
+                    </div>
+                </div>
+                <div class="pyg2-tools">
+                    <button type="button" class="lt-tool-btn" id="tesBtnUnidad" aria-haspopup="menu" aria-expanded="false">
+                        <span class="lbl-muted">@T("TesPpto_Unidad")</span><span id="tesUnidadLbl">@T("LineaTiempo_UnidadMillones")</span><i class="fas fa-chevron-down chev"></i>
+                    </button>
+                    <div class="lt-menu" id="tesMenuUnidad" role="menu">
+                        <button type="button" data-unidad="pesos" role="menuitemradio">@T("LineaTiempo_UnidadPesos")<i class="fas fa-check"></i></button>
+                        <button type="button" data-unidad="miles" role="menuitemradio">@T("LineaTiempo_UnidadMiles")<i class="fas fa-check"></i></button>
+                        <button type="button" data-unidad="millones" role="menuitemradio">@T("LineaTiempo_UnidadMillones")<i class="fas fa-check"></i></button>
+                    </div>
+                    <span class="sep"></span>
+                    @Html.Partial("_ExportMenu", new bufinscustomers.Models.ExportMenuVM
+                    {
+                        Id = "tesExp",
+                        ExcelDesc = T("TesPpto_Exp_ExcelDesc")
+                    })
+                </div>
+            </div>
+        </div>
+        <form id="frmExportarExcelTes" method="post" action="@Url.Action("ExportarExcel", "InformeTesoreriaPpto")">
+            @Html.AntiForgeryToken()
+            <div id="tesExpCampos"></div>@* los llena el botón Excel con los filtros del reporte consultado *@
+        </form>
+
+        @* 2. Estado de la caja + KPIs *@
+        <div class="tes-estado" id="tesEstado">
+            <span class="ic"><i class="fas fa-circle-check"></i></span>
+            <div class="tx"><span class="t" id="tesEstadoTitulo">&mdash;</span><span class="s" id="tesEstadoDesc">&mdash;</span></div>
+        </div>
+
+        <div class="pyg2-section">
+            <div class="pyg2-section-title">
+                <span class="t">@T("TesPpto_IndicadoresClave")</span><span class="line"></span>
+            </div>
+            <div class="tes-kpis" id="tesKpiStrip"></div>
+        </div>
+
+        @* 3. Caja mensual (barras + acumulada) + Lo más relevante *@
+        <div class="pyg2-analysis">
+            <div class="pyg2-card">
+                <div class="pyg2-card-head">
+                    <div>
+                        <div class="pyg2-card-title">@T("TesPpto_GraficoTitulo")</div>
+                        <div class="pyg2-card-sub" id="tesGraficoSub">&mdash;</div>
+                    </div>
+                    <span class="pyg2-legend">
+                        <span><i class="sq" style="background:#16A34A"></i>@T("TesPpto_LeyendaCajaPositiva")</span>
+                        <span><i class="sq" style="background:#F87171"></i>@T("TesPpto_LeyendaCajaNegativa")</span>
+                        <span><i class="sw" style="background:#6366F1"></i>@T("TesPpto_CajaNetaAcum")</span>
+                        <span id="tesLeyendaComp"><i class="dash"></i><span id="tesLeyendaCompNombre"></span></span>
+                        <span id="tesLeyendaEsc" style="display:none;"><i class="sw" style="background:#0EA5E9"></i><span id="tesLeyendaEscNombre"></span></span>
+                    </span>
+                    <button type="button" class="lt-tool-btn square on tes-btn-etq" data-chart="principal" title="@T("LineaTiempo_Etiquetas")" aria-label="@T("LineaTiempo_Etiquetas")"><i class="fas fa-tag"></i></button>
+                </div>
+                <div class="tes-chart-lg"><canvas id="tesChartPrincipal"></canvas></div>
+            </div>
+            <div class="pyg2-card" style="gap:12px">
+                <div>
+                    <div class="pyg2-card-title"><i class="fas fa-bolt"></i>@T("TesPpto_RelevanteTitulo")</div>
+                    <div class="pyg2-card-sub" id="tesRelevanteSub">&mdash;</div>
+                </div>
+                <div class="pyg2-hl-list" id="tesHighlightsList"></div>
+            </div>
+        </div>
+
+        @* 4. Puente de caja *@
+        <div class="pyg2-card" style="margin-bottom:16px">
+            <div class="pyg2-card-head">
+                <div>
+                    <div class="pyg2-card-title">@T("TesPpto_CascadaTitulo")</div>
+                    <div class="pyg2-card-sub" id="tesCascadaSub">&mdash;</div>
+                </div>
+                <span class="pyg2-legend">
+                    <span><i class="sq" style="background:#6366F1"></i>@T("TesPpto_LeyendaTotal")</span>
+                    <span><i class="sq" style="background:#F87171"></i>@T("TesPpto_LeyendaResta")</span>
+                    <span><i class="sq" style="background:#16A34A"></i>@T("TesPpto_LeyendaSuma")</span>
+                </span>
+                <button type="button" class="lt-tool-btn square on tes-btn-etq" data-chart="cascada" title="@T("LineaTiempo_Etiquetas")" aria-label="@T("LineaTiempo_Etiquetas")"><i class="fas fa-tag"></i></button>
+            </div>
+            <div class="tes-chart-md"><canvas id="tesChartCascada"></canvas></div>
+        </div>
+
+        @* 5. Mapa de caja mensual *@
+        <div class="pyg2-card" style="margin-bottom:16px">
+            <div class="pyg2-card-head">
+                <div>
+                    <div class="pyg2-card-title">@T("TesPpto_HeatTitulo")</div>
+                    <div class="pyg2-card-sub" id="tesHeatSub">&mdash;</div>
+                </div>
+            </div>
+            <div class="tes-heat" id="tesHeat"></div>
+            <div class="tes-heat-leyenda">
+                <span><i style="background:#BBF7D0"></i>@T("TesPpto_HeatSuperavit")</span>
+                <span><i style="background:#FECACA"></i>@T("TesPpto_HeatDeficit")</span>
+                <span><i style="background:#F4F3FB"></i>@T("TesPpto_HeatSinMovimiento")</span>
+            </div>
+        </div>
+
+        @* 6. Tabla por mes *@
+        <div class="pyg2-table-card">
+            <div class="pyg2-card-head" style="align-items:center">
+                <div>
+                    <div class="pyg2-card-title">@T("TesPpto_TablaTitulo")</div>
+                    <div class="pyg2-card-sub" id="tesInfoBadge">&mdash;</div>
+                </div>
+                <div class="pyg2-table-tools">
+                    <div class="pyg2-seg soft" id="tesSegTabla">
+                        <button type="button" data-v="mensual" class="active">@T("TesPpto_VistaMensual")</button>
+                        <button type="button" data-v="acum">@T("TesPpto_VistaAcumulada")</button>
+                    </div>
+                </div>
+            </div>
+            <div class="pyg2-table-wrap">
+                <table class="pyg2-table tes-table" id="tesTabla"><thead id="tesTablaHead"></thead><tbody id="tesTablaBody"></tbody></table>
+            </div>
+            <div class="pyg2-table-legend">
+                <span><i class="dot" style="background:#16A34A"></i>@T("TesPpto_Favorable")</span>
+                <span><i class="dot" style="background:#DC2626"></i>@T("TesPpto_Desfavorable")</span>
+                <span><i class="fas fa-circle-exclamation"></i>@T("TesPpto_LeyendaCritico")</span>
+            </div>
+        </div>
+        <p class="lt-help" id="tesNotaProyeccion" style="display:none;"></p>
+        <p class="lt-help" id="tesNotaEscenario" style="display:none;"></p>
+
+        @* Insights gerenciales (IA): se ocultan si la empresa tiene la IA apagada *@
+        @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
+        {
+        <div class="pyg-insights-card">
+            <div class="pyg-insights-head">
+                <div>
+                    <span class="pyg-insights-title"><i class="fas fa-wand-magic-sparkles"></i>@T("TesPpto_InsightsTitulo")</span>
+                    <div class="pyg-insights-meta" id="tesInsightsMeta">@T("TesPpto_InsightsSub")</div>
+                </div>
+                <button type="button" id="btnGenerarInsightsTes" class="pyg2-ins-btn"><i class="fas fa-wand-magic-sparkles"></i><span>@T("TesPpto_Generar")</span></button>
+            </div>
+            <div id="tesInsightsBody"></div>
+            <div id="tesInsightsLoading" style="display:none;text-align:center;padding:14px 0;">
+                @Html.Partial("_LoaderDots", "dark")
+                <p style="margin-top:8px;font-size:12.5px;color:#8B85A0;">@T("TesPpto_Analizando")</p>
+            </div>
+
+            <div class="mt-3">
+                <label for="tesPregunta" class="mb-1" style="font-weight:700;"><i class="fas fa-comments mr-1"></i>@T("IAInforme_Titulo")</label>
+                <div class="d-flex" style="gap:8px;flex-wrap:wrap;">
+                    <input type="text" id="tesPregunta" class="form-control" maxlength="@bufinscustomers.Helpers.IAModuloHelper.MaxCharsPregunta()" style="flex:1;min-width:240px;"
+                           placeholder="@T("IAInforme_Placeholder")" />
+                    <button type="button" id="btnTesPreguntar" class="pyg2-ins-btn"><i class="fas fa-paper-plane"></i><span>@T("IAInforme_Btn")</span></button>
+                </div>
+                <div id="tesRespuesta" class="mt-2"></div>
+            </div>
+        </div>
+        }
+    </div>
+
+</div>
+</div>
+
+<div id="overlayConsultandoTes" class="overlay-cargando" style="display:none;">
+    <div class="overlay-cargando-card">
+        @Html.Partial("_LoaderDots", "aqua")
+        <h5 class="overlay-cargando-title">@T("TesPpto_JS_Consultando")</h5>
+    </div>
+</div>
+
+@Html.Partial("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+
+@section scripts {
+<script src="~/Assets/js/select2/select2.min.js"></script>
+<script src="~/Assets/js/chart.umd.min.js"></script>
+<script src="~/Assets/js/jspdf.umd.min.js"></script>
+<script src="~/Assets/js/html2canvas.min.js"></script>
+<script src="~/Assets/js/export-menu.js"></script>
+<script src="~/Assets/js/bufins-markdown.js"></script>
+<script src="~/Assets/js/rango-atajos.js"></script>
+
+<script>
+    // Textos del botón Exportar estándar (ExportMenu) — ver CLAUDE.md, "Botón Exportar desplegable".
+    var EXP_T = {
+        generando: '@Html.Raw(J("Common_Exp_Generando"))',
+        errorGenerar: '@Html.Raw(J("Common_Exp_ErrorGenerar"))',
+        listo: '@Html.Raw(J("Common_Exp_Listo"))',
+        imagenCopiada: '@Html.Raw(J("Common_Exp_ImagenCopiada"))',
+        imagenDescargada: '@Html.Raw(J("Common_Exp_ImagenDescargada"))',
+        valDestino: '@Html.Raw(J("RevisarCargue_Correo_ValDestino"))',
+        valMaximo: '@Html.Raw(J("RevisarCargue_Correo_ValMaximo"))',
+        enviando: '@Html.Raw(J("RevisarCargue_Correo_Enviando"))',
+        error: '@Html.Raw(J("Common_ExpCorreo_Error"))',
+        exitoTitulo: '@Html.Raw(J("Modelo_Correo_ExitoTitulo"))',
+        aceptar: '@Html.Raw(J("Common_Aceptar"))'
+    };
+
+    var _tes = {
+        urls: {
+            meses: '@Url.Action("ObtenerMeses", "InformeTesoreriaPpto")',
+            reporte: '@Url.Action("ConsultarReporte", "InformeTesoreriaPpto")',
+            insights: '@Url.Action("GenerarInsightsIA", "InformeTesoreriaPpto")',
+            preguntar: '@Url.Action("PreguntarInforme", "InformeTesoreriaPpto")',
+            correo: '@Url.Action("EnviarPorCorreo", "InformeTesoreriaPpto")'
+        },
+        token: $('input[name="__RequestVerificationToken"]').first().val(),
+        cultura: '@Html.Raw(HttpUtility.JavaScriptStringEncode(culturaJs))',
+        esAdmin: @Html.Raw(esAdmin.ToString().ToLowerInvariant()),
+        mesesNombres: [
+            '@Html.Raw(J("Common_Mes1"))', '@Html.Raw(J("Common_Mes2"))', '@Html.Raw(J("Common_Mes3"))', '@Html.Raw(J("Common_Mes4"))',
+            '@Html.Raw(J("Common_Mes5"))', '@Html.Raw(J("Common_Mes6"))', '@Html.Raw(J("Common_Mes7"))', '@Html.Raw(J("Common_Mes8"))',
+            '@Html.Raw(J("Common_Mes9"))', '@Html.Raw(J("Common_Mes10"))', '@Html.Raw(J("Common_Mes11"))', '@Html.Raw(J("Common_Mes12"))'
+        ],
+        t: {
+            kpi: {
+                CajaNetaPeriodo: '@Html.Raw(J("TesPpto_Kpi_CajaNetaPeriodo"))',
+                CajaAcumFinal: '@Html.Raw(J("TesPpto_Kpi_CajaAcumFinal"))',
+                SaldoMinimo: '@Html.Raw(J("TesPpto_Kpi_SaldoMinimo"))',
+                MesesDeficit: '@Html.Raw(J("TesPpto_Kpi_MesesDeficit"))',
+                DeudaNueva: '@Html.Raw(J("TesPpto_Kpi_DeudaNueva"))'
+            },
+            casc: {
+                CajaBruta: '@Html.Raw(J("TesPpto_Casc_CajaBruta"))',
+                GastosOperacionales: '@Html.Raw(J("TesPpto_Casc_GastosOperacionales"))',
+                FinancierosOtros: '@Html.Raw(J("TesPpto_Casc_FinancierosOtros"))',
+                Impuestos: '@Html.Raw(J("TesPpto_Casc_Impuestos"))',
+                Inversiones: '@Html.Raw(J("TesPpto_Casc_Inversiones"))',
+                CapitalTrabajo: '@Html.Raw(J("TesPpto_Casc_CapitalTrabajo"))',
+                OtrosMovimientos: '@Html.Raw(J("TesPpto_Casc_OtrosMovimientos"))',
+                CajaNeta: '@Html.Raw(J("TesPpto_Casc_CajaNeta"))'
+            },
+            medida: { ppto: '@Html.Raw(J("TesPpto_Medida_ppto"))', proy: '@Html.Raw(J("TesPpto_Medida_proy"))' },
+            medidaCorta: { ppto: '@Html.Raw(J("TesPpto_MedidaCorta_ppto"))', proy: '@Html.Raw(J("TesPpto_MedidaCorta_proy"))' },
+            cajaNeta: '@Html.Raw(J("TesPpto_CajaNeta"))',
+            cajaNetaAcum: '@Html.Raw(J("TesPpto_CajaNetaAcum"))',
+            colLinea: '@Html.Raw(J("TesPpto_ColLinea"))',
+            colTotal: '@Html.Raw(J("TesPpto_ColTotal"))',
+            colSaldoFin: '@Html.Raw(J("TesPpto_ColSaldoFin"))',
+            colVarAbs: '@Html.Raw(J("TesPpto_ColVarAbs"))',
+            colVarPct: '@Html.Raw(J("TesPpto_ColVarPct"))',
+            colVsEscenarioFmt: '@Html.Raw(J("TesPpto_ColVsEscenarioFmt"))',
+            estadoOkTitulo: '@Html.Raw(J("TesPpto_EstadoOkTitulo"))',
+            estadoOkFmt: '@Html.Raw(J("TesPpto_EstadoOkFmt"))',
+            estadoMalTitulo: '@Html.Raw(J("TesPpto_EstadoMalTitulo"))',
+            estadoMalFmt: '@Html.Raw(J("TesPpto_EstadoMalFmt"))',
+            estadoAvisoTitulo: '@Html.Raw(J("TesPpto_EstadoAvisoTitulo"))',
+            estadoAvisoFmt: '@Html.Raw(J("TesPpto_EstadoAvisoFmt"))',
+            graficoSubFmt: '@Html.Raw(J("TesPpto_GraficoSubFmt"))',
+            cascadaSubFmt: '@Html.Raw(J("TesPpto_CascadaSubFmt"))',
+            heatSubFmt: '@Html.Raw(J("TesPpto_HeatSubFmt"))',
+            heatNeta: '@Html.Raw(J("TesPpto_HeatNeta"))',
+            heatAcum: '@Html.Raw(J("TesPpto_HeatAcum"))',
+            relevanteSubComp: '@Html.Raw(J("TesPpto_RelevanteSubComp"))',
+            relevanteSubPeso: '@Html.Raw(J("TesPpto_RelevanteSubPeso"))',
+            sinDestacados: '@Html.Raw(J("TesPpto_SinDestacados"))',
+            favorable: '@Html.Raw(J("TesPpto_Favorable"))',
+            desfavorableCorto: '@Html.Raw(J("TesPpto_DesfavorableCorto"))',
+            mayorPeso: '@Html.Raw(J("TesPpto_MayorPeso"))',
+            vsFmt: '@Html.Raw(J("TesPpto_VsFmt"))',
+            deMesesFmt: '@Html.Raw(J("TesPpto_DeMesesFmt"))',
+            chipComparadoFmt: '@Html.Raw(J("TesPpto_ChipComparadoFmt"))',
+            chipSinComparar: '@Html.Raw(J("TesPpto_ChipSinComparar"))',
+            notaSinProyeccion: '@Html.Raw(J("TesPpto_NotaSinProyeccion"))',
+            escenarioSinDatosNota: '@Html.Raw(J("TesPpto_EscenarioSinDatosNota"))',
+            insightsVacio: '@Html.Raw(J("TesPpto_InsightsVacio"))',
+            insightsSub: '@Html.Raw(J("TesPpto_InsightsSub"))',
+            insightsMetaFmt: '@Html.Raw(J("TesPpto_InsightsMetaFmt"))',
+            insightsSinGenerar: '@Html.Raw(J("TesPpto_InsightsSinGenerar"))',
+            generar: '@Html.Raw(J("TesPpto_Generar"))',
+            regenerar: '@Html.Raw(J("TesPpto_Regenerar"))',
+            posicion: '@Html.Raw(J("TesPpto_InsPosicion"))',
+            financiacion: '@Html.Raw(J("TesPpto_InsFinanciacion"))',
+            accion: '@Html.Raw(J("TesPpto_InsAccion"))',
+            errorServidor: '@Html.Raw(J("TesPpto_ErrorServidor"))',
+            badgeMes: '@Html.Raw(J("LineaTiempo_BadgeMes"))',
+            badgeMeses: '@Html.Raw(J("LineaTiempo_BadgeMeses"))',
+            unidades: { pesos: '@Html.Raw(J("LineaTiempo_UnidadPesos"))', miles: '@Html.Raw(J("LineaTiempo_UnidadMiles"))', millones: '@Html.Raw(J("LineaTiempo_UnidadMillones"))' },
+            unidadSufijoMiles: '@Html.Raw(J("LineaTiempo_UnidadSufijoMiles"))',
+            unidadSufijoMillones: '@Html.Raw(J("LineaTiempo_UnidadSufijoMillones"))',
+            unidadBadge: { pesos: '@Html.Raw(J("TesPpto_UnidadPesosCop"))', miles: '@Html.Raw(J("TesPpto_UnidadMilesCop"))', millones: '@Html.Raw(J("TesPpto_UnidadMillonesCop"))' },
+            rangoTooltipFmt: '@Html.Raw(J("Rango_TooltipFmt"))',
+            rangoSinDatosFmt: '@Html.Raw(J("Rango_SinDatosFmt"))',
+            escenarioSinDatosEtiqueta: '@Html.Raw(J("TesPpto_EscenarioSinDatosEtiqueta"))',
+            escenarioSinDatosTooltip: '@Html.Raw(J("TesPpto_EscenarioSinDatosTooltip"))',
+            pdf: {
+                marca: '@Html.Raw(J("LineaTiempo_BrandMark"))',
+                titulo: '@Html.Raw(J("TesPpto_PageTitle"))',
+                subtitulo: '@Html.Raw(J("TesPpto_Subtitulo"))',
+                generadoEl: '@Html.Raw(J("TesPpto_GeneradoEl"))',
+                confidencial: '@Html.Raw(J("TesPpto_Pdf_Confidencial"))',
+                paginaFmt: '@Html.Raw(J("TesPpto_Pdf_PaginaFmt"))',
+                footer: '@Html.Raw(J("TesPpto_Pdf_Footer"))',
+                sinInsights: '@Html.Raw(J("TesPpto_Pdf_SinInsights"))',
+                resumen: '@Html.Raw(J("TesPpto_Pdf_Resumen"))',
+                analisis: '@Html.Raw(J("TesPpto_Pdf_Analisis"))',
+                indicadores: '@Html.Raw(J("TesPpto_IndicadoresClave"))',
+                insightsTitulo: '@Html.Raw(J("TesPpto_InsightsTitulo"))',
+                relevanteTitulo: '@Html.Raw(J("TesPpto_RelevanteTitulo"))',
+                tablaTitulo: '@Html.Raw(J("TesPpto_TablaTitulo"))'
+            }
+        },
+        reporteActual: null,
+        filtrosConsultados: null,
+        insightsTexto: null,
+        vistaTabla: 'mensual',      // 'mensual' | 'acum'
+        unidad: 'millones',
+        etiquetas: { principal: true, cascada: true },   // etiquetas de valor, una por gráfico
+        charts: {},
+        mesesCache: [],
+        rango: [],
+        iDesde: 0,
+        iHasta: 0,
+        hoy: { anio: @DateTime.Now.Year, mes: @DateTime.Now.Month },   // fecha de hoy del SERVIDOR (atajos)
+        escenarios: [],
+        escenariosConDatos: null
+    };
+    _tes.mesesCache = _tes.mesesNombres.map(function (nombre, idx) {
+        return { mes: idx + 1, nombre: nombre, abrev: nombre.substring(0, 3) };
+    });
+
+    var elEmpresa = $('#tesEmpresa'), elEscenario = $('#tesEscenario');
+    var CH_MDASH = String.fromCharCode(0x2014), CH_NDASH = String.fromCharCode(0x2013), CH_MIDDOT = String.fromCharCode(0xB7);
+
+    function cargarPrefs() {
+        try {
+            var p = JSON.parse(localStorage.getItem('tes.prefs') || '{}');
+            if (p.vistaTabla === 'mensual' || p.vistaTabla === 'acum') _tes.vistaTabla = p.vistaTabla;
+            if (['pesos', 'miles', 'millones'].indexOf(p.unidad) >= 0) _tes.unidad = p.unidad;
+        } catch (e) { }
+    }
+    function guardarPrefs() {
+        try { localStorage.setItem('tes.prefs', JSON.stringify({ vistaTabla: _tes.vistaTabla, unidad: _tes.unidad })); } catch (e) { }
+    }
+    function escHtml(t) { return $('<span>').text(t == null ? '' : String(t)).html(); }
+
+    var s2lang = {
+        noResults: function () { return '@Html.Raw(J("Common_Select2NoResults"))'; },
+        searching: function () { return '@Html.Raw(J("Common_Select2Searching"))'; }
+    };
+
+    function empresaSeleccionada() { var v = elEmpresa.val(); return v ? parseInt(v, 10) : null; }
+    function escenarioSeleccionado() { var v = elEscenario.val(); return v ? parseInt(v, 10) : 1; }
+
+    // ===== Unidad (Pesos/Miles/Millones) — mismo patrón que PYG/Línea de Tiempo =====
+    function escalarValor(v) {
+        if (_tes.unidad === 'miles') return v / 1000;
+        if (_tes.unidad === 'millones') return v / 1000000;
+        return v;
+    }
+    function sufijoUnidad() {
+        if (_tes.unidad === 'miles') return ' ' + _tes.t.unidadSufijoMiles;
+        if (_tes.unidad === 'millones') return ' ' + _tes.t.unidadSufijoMillones;
+        return '';
+    }
+    // Los gráficos trabajan con valores ya escalados a la unidad elegida: esto los devuelve a pesos para formatear/etiquetar.
+    function aPesos(v) { return _tes.unidad === 'miles' ? v * 1000 : (_tes.unidad === 'millones' ? v * 1000000 : v); }
+    // Millones con 2 decimales (las líneas pequeñas de la caja no se pierden como "0,0"); pesos y miles sin decimales.
+    function decimalesUnidad() { return _tes.unidad === 'millones' ? 2 : 0; }
+    function fmtNumSolo(v) {
+        var d = decimalesUnidad();
+        try { return new Intl.NumberFormat(_tes.cultura, { minimumFractionDigits: d, maximumFractionDigits: d }).format(escalarValor(v)); }
+        catch (e) { return String(escalarValor(v)); }
+    }
+    function fmtNum(v) { return fmtNumSolo(v) + sufijoUnidad(); }
+    function fmtNumVar(v) {
+        var d = decimalesUnidad(), n = escalarValor(v);
+        try { return new Intl.NumberFormat(_tes.cultura, { minimumFractionDigits: d, maximumFractionDigits: d, signDisplay: 'exceptZero' }).format(n) + sufijoUnidad(); }
+        catch (e) { return (n >= 0 ? '+' : '') + n + sufijoUnidad(); }
+    }
+    function fmtPctVar(v) {
+        if (v === null || v === undefined) return CH_MDASH;
+        try { return new Intl.NumberFormat(_tes.cultura, { minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: 'exceptZero' }).format(v * 100) + '%'; }
+        catch (e) { var n = Math.round(v * 1000) / 10; return (n >= 0 ? '+' : '') + n + '%'; }
+    }
+    function esCulturaEs() { return _tes.cultura.toLowerCase().indexOf('es') === 0; }
+
+    function mostrarError(mensaje) {
+        console.error('[InformeTesoreriaPpto]', mensaje);
+        if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: '@Html.Raw(J("Common_Error"))', text: mensaje });
+        else alert(mensaje);
+    }
+
+    function actualizarBotonConsultar() {
+        var listo = (!_tes.esAdmin || !!empresaSeleccionada()) && !!elEscenario.val() && _tes.rango.length > 0;
+        $('#btnConsultarTes').prop('disabled', !listo);
+    }
+    function ocultarResultados() { $('#tesResultado, #tesSinDatos').hide(); $('#tesEstadoInicial').show(); }
+
+    // "Comparar con escenario": todos los escenarios MENOS el principal; los que no tienen datos quedan deshabilitados.
+    function actualizarOpcionesEscenarioComparar() {
+        var principal = String(elEscenario.val() || ''), conDatos = _tes.escenariosConDatos;
+        var $sel = $('#tesEscenarioComparar'), actual = String($sel.val() || ''), hayDeshabilitados = false;
+        $sel.find('option[value!=""]').remove();
+        _tes.escenarios.forEach(function (e) {
+            if (String(e.id) === principal) return;
+            var tieneDatos = !conDatos || conDatos.indexOf(e.id) >= 0;
+            if (!tieneDatos) hayDeshabilitados = true;
+            var texto = tieneDatos ? e.nombre : (e.nombre + ' (' + _tes.t.escenarioSinDatosEtiqueta + ')');
+            $sel.append($('<option>').val(e.id).text(texto).prop('disabled', !tieneDatos).attr('title', tieneDatos ? '' : _tes.t.escenarioSinDatosTooltip));
+        });
+        var opcionActual = $sel.find('option[value="' + actual + '"]');
+        if (!actual || !opcionActual.length || opcionActual.prop('disabled')) $sel.val('');
+        $sel.trigger('change.select2');
+        $('#tesEscenarioSinDatosHint').toggle(hayDeshabilitados);
+    }
+
+    function cargarMeses() {
+        _tes.rango = []; _tes.iDesde = 0; _tes.iHasta = 0; _tes.escenariosConDatos = null;
+        $('#tesSinMeses').hide();
+        ocultarResultados();
+        actualizarOpcionesEscenarioComparar();
+        pintarRango();
+        actualizarBotonConsultar();
+
+        var idEmpresa = empresaSeleccionada();
+        if (_tes.esAdmin && !idEmpresa) return;
+
+        $.post(_tes.urls.meses, { idEmpresa: idEmpresa, idEscenario: escenarioSeleccionado(), __RequestVerificationToken: _tes.token }, function (resp) {
+            if (!resp || !resp.success) { mostrarError((resp && resp.message) || _tes.t.errorServidor); return; }
+            _tes.rango = resp.meses || [];
+            _tes.escenariosConDatos = (resp.escenariosConDatos || []).map(Number);
+            actualizarOpcionesEscenarioComparar();
+            $('#tesSinMeses').toggle(!_tes.rango.length);
+            // Por defecto "Todo": el presupuesto cubre el año de ejecución completo, y la caja acumulada se lee mejor así.
+            var inicial = RangoAtajos.porDefecto('todo', _tes.rango, _tes.hoy);
+            if (inicial) { _tes.iDesde = inicial.d; _tes.iHasta = inicial.h; }
+            pintarRango();
+            actualizarBotonConsultar();
+        }).fail(function (xhr) { mostrarError(_tes.t.errorServidor + ' (HTTP ' + xhr.status + ')'); });
+    }
+
+    // ===== Slider de rango continuo (mismo control que PYG/Línea de Tiempo) =====
+    function pctIndice(i) { var n = _tes.rango.length; return n > 1 ? (i / (n - 1) * 100) : 0; }
+
+    function pintarRango() {
+        var meses = _tes.rango, n = meses.length, track = $('#tesRangoTrack');
+        if (n === 0) {
+            track.addClass('disabled');
+            $('#tesRangoDesdeLbl, #tesRangoHastaLbl, #tesRangoBadge').text(CH_MDASH);
+            $('#tesRangoHastaLbl').show(); $('#tesRangoDesdeLbl').next('i').show();
+            $('#tesRangoYears').empty();
+            $('#tesAtajos button').removeClass('active no-disponible').prop('disabled', true).attr('title', '');
+            return;
+        }
+        track.removeClass('disabled');
+        var pD = pctIndice(_tes.iDesde), pH = pctIndice(_tes.iHasta);
+        $('#tesKnobFrom').css('left', pD + '%').attr({ 'aria-valuemin': 0, 'aria-valuemax': n - 1, 'aria-valuenow': _tes.iDesde, 'aria-valuetext': meses[_tes.iDesde].etiqueta });
+        $('#tesKnobTo').css('left', pH + '%').attr({ 'aria-valuemin': 0, 'aria-valuemax': n - 1, 'aria-valuenow': _tes.iHasta, 'aria-valuetext': meses[_tes.iHasta].etiqueta });
+        $('#tesRangoSel').css({ left: pD + '%', width: (pH - pD) + '%' });
+
+        var unMes = _tes.iDesde === _tes.iHasta;
+        $('#tesRangoDesdeLbl').text(meses[_tes.iDesde].etiqueta);
+        $('#tesRangoHastaLbl').text(unMes ? '' : meses[_tes.iHasta].etiqueta).toggle(!unMes);
+        $('#tesRangoDesdeLbl').next('i').toggle(!unMes);
+        var total = _tes.iHasta - _tes.iDesde + 1;
+        $('#tesRangoBadge').text(total + ' ' + (total === 1 ? _tes.t.badgeMes : _tes.t.badgeMeses));
+
+        var anios = [];
+        meses.forEach(function (m) { if (anios.indexOf(m.anio) === -1) anios.push(m.anio); });
+        $('#tesRangoYears').html(anios.map(function (a) { return '<span>' + a + '</span>'; }).join(''));
+        RangoAtajos.pintarBotones($('#tesAtajos button'), _tes.rango, _tes.hoy, _tes.iDesde, _tes.iHasta,
+            _tes.mesesCache.map(function (m) { return m.abrev; }), { tooltipFmt: _tes.t.rangoTooltipFmt, sinDatosFmt: _tes.t.rangoSinDatosFmt });
+    }
+
+    function aplicarPresetRango(preset) {
+        var p = RangoAtajos.indices(preset, _tes.rango, _tes.hoy);
+        if (!p) return;   // atajo sin datos (.no-disponible)
+        _tes.iDesde = p.d; _tes.iHasta = p.h;
+        pintarRango();
+    }
+    function indiceDesdeClientX(clientX) {
+        var rect = document.getElementById('tesRangoTrack').getBoundingClientRect();
+        var frac = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+        return Math.round(frac * (_tes.rango.length - 1));
+    }
+    function moverExtremo(cual, idx) {
+        idx = Math.min(_tes.rango.length - 1, Math.max(0, idx));
+        if (cual === 'from') { _tes.iDesde = idx; if (_tes.iDesde > _tes.iHasta) _tes.iHasta = _tes.iDesde; }
+        else { _tes.iHasta = idx; if (_tes.iHasta < _tes.iDesde) _tes.iDesde = _tes.iHasta; }
+        pintarRango();
+    }
+    function iniciarArrastreSlider(e, cual) {
+        if (_tes.rango.length < 2) return;
+        e.preventDefault();
+        var track = $('#tesRangoTrack').addClass('dragging');
+        function onMove(ev) { moverExtremo(cual, indiceDesdeClientX(ev.clientX)); }
+        function onUp() { track.removeClass('dragging'); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); }
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+    }
+    function clicEnPista(e) {
+        if ($(e.target).hasClass('knob') || _tes.rango.length < 2) return;
+        var idx = indiceDesdeClientX(e.clientX);
+        var cual = Math.abs(idx - _tes.iDesde) <= Math.abs(idx - _tes.iHasta) ? 'from' : 'to';
+        moverExtremo(cual, idx);
+        iniciarArrastreSlider(e, cual);
+    }
+    function moverKnobConTeclado(e, cual) {
+        var n = _tes.rango.length;
+        if (n < 2) return;
+        var idx = cual === 'from' ? _tes.iDesde : _tes.iHasta;
+        if (e.key === 'ArrowLeft') idx -= 1; else if (e.key === 'ArrowRight') idx += 1;
+        else if (e.key === 'Home') idx = 0; else if (e.key === 'End') idx = n - 1; else return;
+        e.preventDefault();
+        moverExtremo(cual, idx);
+    }
+
+    // ===== Etiquetas de período (siempre a partir del reporte consultado, no del slider) =====
+    function etiquetaRango(aD, mD, aH, mH) {
+        var M = _tes.mesesCache;
+        if (aD === aH && mD === mH) return M[mD - 1].nombre + ' ' + aH;
+        if (aD === aH) return M[mD - 1].abrev + ' ' + CH_NDASH + ' ' + M[mH - 1].abrev + ' ' + aH;
+        return M[mD - 1].abrev + ' ' + aD + ' ' + CH_NDASH + ' ' + M[mH - 1].abrev + ' ' + aH;
+    }
+    function etiquetaPeriodo(r) { return etiquetaRango(r.AnioDesde, r.MesDesde, r.AnioHasta, r.MesHasta); }
+    function mesesDelReporte(r) { return r.MesesRango.length; }
+    function etiquetaPeriodoChip(r) {
+        var n = mesesDelReporte(r);
+        return etiquetaPeriodo(r) + ' ' + CH_MIDDOT + ' ' + n + ' ' + (n === 1 ? _tes.t.badgeMes : _tes.t.badgeMeses);
+    }
+    function nombreMedida(m) { return _tes.t.medida[m] || m; }
+    function nombreMedidaCorta(m) { return _tes.t.medidaCorta[m] || m; }
+    function otraMedida(m) { return m === 'proy' ? 'ppto' : 'proy'; }
+    function nombreEscenarioComp(r) {
+        if (!r.HayEscenarioComparar) return '';
+        var e = _tes.escenarios.filter(function (x) { return x.id === r.IdEscenarioComparar; })[0];
+        return e ? e.nombre : ('#' + r.IdEscenarioComparar);
+    }
+    function abrevMes(mes, anio, conAnio) { var a = _tes.mesesCache[mes - 1].abrev; return conAnio ? (a + ' ' + String(anio).slice(-2)) : a; }
+
+    function filtrosDelSlider() {
+        var d = _tes.rango[_tes.iDesde], h = _tes.rango[_tes.iHasta];
+        return {
+            IdEmpresa: empresaSeleccionada() || '',
+            IdEscenario: escenarioSeleccionado(),
+            AnioDesde: d.anio, MesDesde: d.mes, AnioHasta: h.anio, MesHasta: h.mes,
+            Medida: $('#tesMedida').val() || 'ppto',
+            Comparar: $('#tesComparar').val() || 'medida',
+            IdEscenarioComparar: $('#tesEscenarioComparar').val() || ''
+        };
+    }
+
+    function consultarReporte() {
+        if (!_tes.rango.length) return;
+        var filtros = filtrosDelSlider();
+        $('#overlayConsultandoTes').css('display', 'flex');
+        $.post(_tes.urls.reporte, $.extend({ __RequestVerificationToken: _tes.token }, filtros), function (resp) {
+            $('#overlayConsultandoTes').hide();
+            if (!resp || !resp.success) { mostrarError((resp && resp.message) || _tes.t.errorServidor); return; }
+            var reporte = resp.reporte;
+            if (!reporte || reporte.SinDatos) { $('#tesEstadoInicial, #tesResultado').hide(); $('#tesSinDatos').show(); return; }
+            pintarReporte(reporte, filtros);
+        }).fail(function (xhr) { $('#overlayConsultandoTes').hide(); mostrarError(_tes.t.errorServidor + ' (HTTP ' + xhr.status + ')'); });
+    }
+
+    function pintarReporte(r, filtros) {
+        _tes.reporteActual = r;
+        _tes.filtrosConsultados = filtros;   // Excel / insights / correo usan exactamente estos filtros
+        reiniciarInsights();
+
+        var comparados = [];
+        if (r.HayComparativo) comparados.push(nombreMedida(otraMedida(r.Medida)));
+        if (r.HayEscenarioComparar) comparados.push(nombreEscenarioComp(r));
+
+        $('#tesTituloEmpresa').text(elEmpresa.find(':selected').text() || '');
+        $('#tesChipPeriodo').text(etiquetaPeriodoChip(r));
+        $('#tesChipEscenario').text(elEscenario.find(':selected').text() || '');
+        $('#tesChipMedida').text(nombreMedida(r.Medida));
+        $('#tesChipComparado').text(comparados.length ? _tes.t.chipComparadoFmt.replace('{0}', comparados.join(', ')) : _tes.t.chipSinComparar);
+        try { $('#tesFechaGenerado').text(new Date().toLocaleDateString(_tes.cultura, { day: 'numeric', month: 'long', year: 'numeric' })); }
+        catch (e) { $('#tesFechaGenerado').text(''); }
+
+        $('#tesLeyendaComp').toggle(!!r.HayComparativo);
+        $('#tesLeyendaCompNombre').text(nombreMedida(otraMedida(r.Medida)) + ' (' + _tes.t.cajaNetaAcum.toLowerCase() + ')');
+        $('#tesLeyendaEsc').toggle(!!r.HayEscenarioComparar);
+        $('#tesLeyendaEscNombre').text(nombreEscenarioComp(r));
+
+        var notaProy = (r.Medida === 'proy' || r.HayComparativo) && !r.HayProyeccion;
+        $('#tesNotaProyeccion').text(_tes.t.notaSinProyeccion).toggle(notaProy);
+        $('#tesNotaEscenario').text(_tes.t.escenarioSinDatosNota).toggle(!!r.IdEscenarioComparar && !r.HayEscenarioComparar);
+
+        $('#tesEstadoInicial, #tesSinDatos').hide();
+        $('#tesResultado').show();   // visible ANTES de crear los charts: Chart.js mide el contenedor
+        repintar();
+    }
+
+    // Repinta lo que depende de la unidad / de la vista de la tabla, sin volver a consultar.
+    function repintar() {
+        var r = _tes.reporteActual;
+        if (!r) return;
+        $('#tesUnidadLbl').text(_tes.t.unidades[_tes.unidad]);
+        $('#tesMenuUnidad button').each(function () {
+            var on = $(this).data('unidad') === _tes.unidad;
+            $(this).toggleClass('on', on).attr('aria-checked', on ? 'true' : 'false');
+        });
+        $('#tesInfoBadge').text(_tes.t.unidadBadge[_tes.unidad]);
+        $('#tesSegTabla button').each(function () { $(this).toggleClass('active', $(this).data('v') === _tes.vistaTabla); });
+        $('.tes-btn-etq').each(function () { $(this).toggleClass('on', !!_tes.etiquetas[$(this).data('chart')]); });
+
+        pintarEstado(r);
+        pintarKpis(r);
+        pintarCharts(r);
+        pintarDestacados(r);
+        pintarHeat(r);
+        pintarTabla(r);
+    }
+
+    // ===== Utilidades =====
+    function variacionRelativa(real, base) {
+        if (base === null || base === undefined || base === 0) return null;
+        return (real - base) / Math.abs(base);
+    }
+    var TES_UMBRAL_CRITICO = 0.15;
+    function esFavorable(esGastoOCosto, valor) { return esGastoOCosto ? valor <= 0 : valor >= 0; }
+    function claseVariacion(esGastoOCosto, valor) {
+        if (valor === null || valor === undefined || valor === 0) return 'neu';
+        return esFavorable(esGastoOCosto, valor) ? 'good' : 'bad';
+    }
+    function chipVariacion(texto, valor, favorable, conCritico) {
+        if (valor === null || valor === undefined || isNaN(valor)) return '<span class="pyg2-dchip">' + CH_MDASH + '</span>';
+        var icono = (conCritico && Math.abs(valor) >= TES_UMBRAL_CRITICO)
+            ? '<i class="fas fa-circle-exclamation"></i>' : '<i class="fas fa-caret-' + (valor >= 0 ? 'up' : 'down') + '"></i>';
+        return '<span class="pyg2-dchip ' + (favorable ? 'up' : 'down') + '">' + icono + escHtml(texto) + '</span>';
+    }
+    function kpiDe(r, codigo) { return (r.Kpis || []).filter(function (k) { return k.Codigo === codigo; })[0]; }
+    function nombreMes(mes) { return _tes.mesesCache[mes - 1].nombre; }
+
+    // ===== Estado de la caja (semáforo simple) =====
+    function datosEstado(r) {
+        var deuda = kpiDe(r, 'DeudaNueva'), meses = kpiDe(r, 'MesesDeficit'), minimo = kpiDe(r, 'SaldoMinimo'), fin = kpiDe(r, 'CajaAcumFinal');
+        if (!deuda || !meses || !minimo || !fin) return null;
+        var t = _tes.t;
+        var mesMin = nombreMes(minimo.Mes) + ' ' + minimo.Anio;
+        if (deuda.Valor > 0) {
+            return { cls: 'mal', icono: 'fa-triangle-exclamation', titulo: t.estadoMalTitulo,
+                desc: t.estadoMalFmt.replace('{0}', fmtNum(deuda.Valor)).replace('{1}', meses.Valor).replace('{2}', meses.Total).replace('{3}', mesMin) };
+        }
+        if (minimo.Valor === 0) {   // la caja llega exactamente a cero: sin colchón
+            return { cls: 'aviso', icono: 'fa-circle-exclamation', titulo: t.estadoAvisoTitulo, desc: t.estadoAvisoFmt.replace('{0}', fmtNum(minimo.Valor)).replace('{1}', mesMin) };
+        }
+        return { cls: 'ok', icono: 'fa-circle-check', titulo: t.estadoOkTitulo, desc: t.estadoOkFmt.replace('{0}', fmtNum(minimo.Valor)).replace('{1}', mesMin).replace('{2}', fmtNum(fin.Valor)) };
+    }
+    function pintarEstado(r) {
+        var d = datosEstado(r);
+        var $e = $('#tesEstado');
+        if (!d) { $e.hide(); return; }
+        $e.show().removeClass('ok mal aviso').addClass(d.cls);
+        $e.find('.ic i').attr('class', 'fas ' + d.icono);
+        $('#tesEstadoTitulo').text(d.titulo);
+        $('#tesEstadoDesc').text(d.desc);
+    }
+
+    // ===== KPIs =====
+    var KPI_ICONOS = { CajaNetaPeriodo: 'fa-money-bill-transfer', CajaAcumFinal: 'fa-vault', SaldoMinimo: 'fa-arrow-down-short-wide', MesesDeficit: 'fa-calendar-xmark', DeudaNueva: 'fa-hand-holding-dollar' };
+
+    // Datos de las tarjetas (pantalla y PDF muestran exactamente lo mismo).
+    function datosKpis(r) {
+        var t = _tes.t, medComp = nombreMedidaCorta(otraMedida(r.Medida));
+        return (r.Kpis || []).map(function (k) {
+            var esMeses = k.Codigo === 'MesesDeficit';
+            var valorTxt = esMeses ? t.deMesesFmt.replace('{0}', k.Valor).replace('{1}', k.Total) : fmtNum(k.Valor);
+            var sano = esMeses || k.Codigo === 'DeudaNueva' ? k.Valor === 0 : k.Valor >= 0;
+            var nota = (k.Codigo === 'SaldoMinimo' && k.Mes) ? (nombreMes(k.Mes) + ' ' + k.Anio) : '';
+            var refs = [];
+            if (r.HayComparativo) {
+                var compTxt = esMeses ? t.deMesesFmt.replace('{0}', k.ValorComp).replace('{1}', k.Total) : fmtNum(k.ValorComp);
+                var d = esMeses ? (k.Valor - k.ValorComp) : k.VariacionPorcentual;
+                var malo = esMeses || k.Codigo === 'DeudaNueva' ? (k.Valor > k.ValorComp) : (k.Valor < k.ValorComp);
+                refs.push({ ref: t.vsFmt.replace('{0}', medComp), val: compTxt, chip: esMeses ? (k.Valor - k.ValorComp === 0 ? null : fmtNumVarEntero(k.Valor - k.ValorComp)) : (d === null || d === undefined ? null : fmtPctVar(d)), malo: malo });
+            }
+            if (r.HayEscenarioComparar) {
+                var escTxt = esMeses ? t.deMesesFmt.replace('{0}', k.ValorEsc).replace('{1}', k.Total) : fmtNum(k.ValorEsc);
+                refs.push({ ref: t.vsFmt.replace('{0}', nombreEscenarioComp(r)), val: escTxt, chip: null, malo: false });
+            }
+            return { codigo: k.Codigo, icono: KPI_ICONOS[k.Codigo] || 'fa-chart-pie', nombre: t.kpi[k.Codigo] || k.Codigo, valorTxt: valorTxt, sano: sano, nota: nota, refs: refs };
+        });
+    }
+    function fmtNumVarEntero(n) { return (n > 0 ? '+' : '') + n; }
+
+    function pintarKpis(r) {
+        var $s = $('#tesKpiStrip').empty();
+        datosKpis(r).forEach(function (k) {
+            var filas = k.refs.map(function (x) {
+                var chip = x.chip ? '<span class="pyg2-dchip ' + (x.malo ? 'down' : 'up') + '">' + escHtml(x.chip) + '</span>' : '';
+                return '<div class="row"><span class="ref">' + escHtml(x.ref) + '</span><span class="tes-kpi-nota">' + escHtml(x.val) + '</span>' + chip + '</div>';
+            }).join('');
+            $s.append(
+                '<div class="pyg2-kpi ' + (k.sano ? 'tes-kpi-bueno' : 'tes-kpi-malo') + '">' +
+                    '<div class="pyg2-kpi-head"><span class="ic"><i class="fas ' + k.icono + '"></i></span><span class="nm">' + escHtml(k.nombre) + '</span></div>' +
+                    '<div class="pyg2-kpi-val"><span class="v">' + escHtml(k.valorTxt) + '</span><span class="p">' + escHtml(k.nota || ' ') + '</span></div>' +
+                    '<div class="pyg2-kpi-deltas">' + filas + '</div>' +
+                '</div>');
+        });
+    }
+
+    // ===== Gráficos =====
+    function destruirCharts() {
+        Object.keys(_tes.charts).forEach(function (k) { if (_tes.charts[k]) _tes.charts[k].destroy(); });
+        _tes.charts = {};
+    }
+
+    // Etiquetas de valor: Chart.js no las trae. Plugin liviano con anti-superposición (se ordenan por importancia: último,
+    // máx./mín., primero, resto; las que chocan con una ya dibujada se omiten — el valor sigue en el tooltip y en la tabla).
+    // El formateador va FUERA de las opciones de Chart.js (una función ahí se trataría como opción "scriptable").
+    var ETQ_ALTO = 12, ETQ_SEP = 6, ETQ_PAD = 3;
+    var tesEtiquetas = {
+        id: 'tesEtiquetas',
+        afterDatasetsDraw: function (chart) {
+            var cfg = (chart.options.plugins && chart.options.plugins.tesEtiquetas) || {};
+            if (!_tes.etiquetas[cfg.clave]) return;
+            var ctx = chart.ctx, area = chart.chartArea, cand = [];
+            ctx.save();
+            ctx.font = '600 10.5px ' + (ctx.font.split(' ').pop() || 'sans-serif');
+            chart.data.datasets.forEach(function (ds, i) {
+                if (ds.sinEtiqueta) return;
+                var meta = chart.getDatasetMeta(i);
+                if (!meta || !chart.isDatasetVisible(i)) return;
+                var vals = ds.data, n = meta.data.length, iMax = -1, iMin = -1, esBarra = meta.type === 'bar';
+                vals.forEach(function (v, k) {
+                    if (v === null || v === undefined) return;
+                    if (iMax < 0 || v > vals[iMax]) iMax = k;
+                    if (iMin < 0 || v < vals[iMin]) iMin = k;
+                });
+                meta.data.forEach(function (el, idx) {
+                    var v = vals[idx];
+                    if (v === null || v === undefined || isNaN(el.x) || isNaN(el.y)) return;
+                    var txt = fmtNumSolo(aPesos(v));
+                    cand.push({ x: el.x, y: el.y, txt: txt, w: ctx.measureText(txt).width, neg: v < 0, barra: esBarra,
+                        color: ds.etqColor || '#334155',
+                        prio: idx === n - 1 ? 0 : (idx === iMax || idx === iMin) ? 1 : idx === 0 ? 2 : 3, ord: cand.length });
+                });
+            });
+            cand.sort(function (a, b) { return a.prio - b.prio || a.ord - b.ord; });
+            var puestas = [];
+            cand.forEach(function (c) {
+                var m = c.w / 2 + ETQ_PAD, cx = Math.min(Math.max(c.x, area.left + m), area.right - m);
+                var arriba = c.y - ETQ_SEP - ETQ_ALTO, abajo = c.y + ETQ_SEP;
+                var ops = c.barra ? [c.neg ? abajo : arriba] : (c.neg ? [abajo, arriba] : [arriba, abajo]);
+                for (var k = 0; k < ops.length; k++) {
+                    var b = { x1: cx - m, x2: cx + m, y1: ops[k], y2: ops[k] + ETQ_ALTO, cx: cx, c: c };
+                    if (b.y1 < 0 || b.y2 > chart.height) continue;
+                    if (puestas.some(function (o) { return b.x1 < o.x2 && b.x2 > o.x1 && b.y1 < o.y2 && b.y2 > o.y1; })) continue;
+                    puestas.push(b); return;
+                }
+            });
+            ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.lineJoin = 'round'; ctx.lineWidth = 3;
+            ctx.strokeStyle = 'rgba(255,255,255,.92)';
+            puestas.forEach(function (b) {
+                ctx.strokeText(b.c.txt, b.cx, b.y1 + 1);
+                ctx.fillStyle = b.c.color; ctx.fillText(b.c.txt, b.cx, b.y1 + 1);
+            });
+            ctx.restore();
+        }
+    };
+
+    // Fondo blanco (el PDF/imagen exporta el canvas como JPEG) y línea de cero resaltada.
+    var tesFondo = {
+        id: 'tesFondo',
+        beforeDraw: function (chart) {
+            var ctx = chart.ctx; ctx.save(); ctx.globalCompositeOperation = 'destination-over';
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, chart.width, chart.height); ctx.restore();
+        }
+    };
+
+    function pintarCharts(r) {
+        destruirCharts();
+        pintarPrincipal(r);
+        pintarCascada(r);
+        $('#tesGraficoSub').text(_tes.t.graficoSubFmt.replace('{0}', nombreMedida(r.Medida)));
+        $('#tesCascadaSub').text(_tes.t.cascadaSubFmt.replace('{0}', etiquetaPeriodo(r)));
+    }
+
+    // Caja neta mensual (barras verde/rojo) + caja neta acumulada (línea); la otra medida y el escenario, como líneas.
+    function pintarPrincipal(r) {
+        var meses = r.Meses || [], variosAnios = meses.length && meses[0].Anio !== meses[meses.length - 1].Anio;
+        var etiquetas = meses.map(function (m) { return abrevMes(m.Mes, m.Anio, variosAnios); });
+        var alfa = function (hex, enRango) { return enRango ? hex : hex + '55'; };
+        var datasets = [
+            { type: 'bar', label: _tes.t.cajaNeta, data: meses.map(function (m) { return escalarValor(m.CajaNeta); }), order: 3,
+              backgroundColor: meses.map(function (m) { return alfa(m.CajaNeta >= 0 ? '#16A34A' : '#F87171', m.EnRango); }), borderRadius: 4, maxBarThickness: 36 },
+            { type: 'line', label: _tes.t.cajaNetaAcum, data: meses.map(function (m) { return escalarValor(m.CajaNetaAcum); }), order: 1,
+              borderColor: '#6366F1', backgroundColor: '#6366F1', borderWidth: 2.5, tension: .25, pointRadius: 3, pointHoverRadius: 5, etqColor: '#4338CA' }
+        ];
+        if (r.HayComparativo) datasets.push({ type: 'line', label: nombreMedida(otraMedida(r.Medida)) + ' (' + _tes.t.cajaNetaAcum.toLowerCase() + ')', sinEtiqueta: true, order: 2,
+            data: meses.map(function (m) { return escalarValor(m.CajaNetaAcumComp); }), borderColor: '#D97706', backgroundColor: 'transparent',
+            borderWidth: 2, borderDash: [6, 4], tension: .25, pointRadius: 0, pointHoverRadius: 4 });
+        if (r.HayEscenarioComparar) datasets.push({ type: 'line', label: nombreEscenarioComp(r), sinEtiqueta: true, order: 2,
+            data: meses.map(function (m) { return escalarValor(m.CajaNetaAcumEsc); }), borderColor: '#0EA5E9', backgroundColor: 'transparent',
+            borderWidth: 2, tension: .25, pointRadius: 0, pointHoverRadius: 4 });
+
+        _tes.charts.principal = new Chart(document.getElementById('tesChartPrincipal').getContext('2d'), {
+            type: 'bar',
+            data: { labels: etiquetas, datasets: datasets },
+            plugins: [tesFondo, tesEtiquetas],
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                layout: { padding: { top: 14 } },
+                plugins: {
+                    legend: { display: false },
+                    tesEtiquetas: { clave: 'principal' },
+                    tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + fmtNum(aPesos(c.parsed.y)); } } }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                    y: { ticks: { font: { size: 11 } }, grid: { color: function (c) { return c.tick && c.tick.value === 0 ? '#94A3B8' : '#EEF0F6'; } } }
+                }
+            }
+        });
+    }
+
+    // Puente de caja: cada tramo ya viene del servidor como diferencia exacta entre subtotales del modelo, así que SIEMPRE
+    // cuadra con la caja neta del rango.
+    function pintarCascada(r) {
+        var barras = r.Cascada || [];
+        if (!barras.length) return;
+        var etiquetas = barras.map(function (b) { return _tes.t.casc[b.Etiqueta] || b.Etiqueta; });
+        var datos = barras.map(function (b) { return [escalarValor(b.Desde), escalarValor(b.Hasta)]; });
+        var colores = barras.map(function (b) { return b.Tipo === 'total' ? '#6366F1' : (b.Tipo === 'positivo' ? '#16A34A' : '#F87171'); });
+
+        var etiquetasPlugin = {
+            id: 'tesCascadaEtiquetas',
+            afterDatasetsDraw: function (chart) {
+                if (!_tes.etiquetas.cascada) return;
+                var ctx = chart.ctx, meta = chart.getDatasetMeta(0), escalaY = chart.scales.y;
+                if (!meta || !meta.data.length) return;
+                ctx.save();
+                ctx.font = '800 12px Nunito, sans-serif';
+                ctx.textAlign = 'center';
+                meta.data.forEach(function (el, i) {
+                    var b = barras[i], arriba = Math.min(el.y, el.base), abajoDe = Math.max(el.y, el.base);
+                    var negativoTotal = b.Tipo === 'total' && b.Hasta < 0;
+                    ctx.fillStyle = b.Tipo === 'total' ? '#16121F' : (b.Tipo === 'positivo' ? '#16A34A' : '#DC2626');
+                    ctx.textBaseline = negativoTotal ? 'top' : 'bottom';
+                    ctx.fillText(b.Tipo === 'total' ? fmtNum(b.Hasta) : fmtNumVar(b.Delta || 0), el.x, negativoTotal ? abajoDe + 6 : arriba - 6);
+                });
+                ctx.strokeStyle = '#C7C2E6'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+                for (var i = 0; i < meta.data.length - 1; i++) {
+                    var el = meta.data[i], sig = meta.data[i + 1], b = barras[i];
+                    var nivel = b.Tipo === 'negativo' ? b.Desde : b.Hasta;
+                    var y = Math.round(escalaY.getPixelForValue(escalarValor(nivel))) + 0.5;
+                    ctx.beginPath(); ctx.moveTo(el.x + el.width / 2, y); ctx.lineTo(sig.x - sig.width / 2, y); ctx.stroke();
+                }
+                ctx.restore();
+            }
+        };
+        var niveles = [0];
+        barras.forEach(function (b) { niveles.push(escalarValor(b.Desde), escalarValor(b.Hasta)); });
+        var maxN = Math.max.apply(null, niveles), minN = Math.min.apply(null, niveles), margen = (maxN - minN) * 0.12 || 1;
+
+        _tes.charts.cascada = new Chart(document.getElementById('tesChartCascada').getContext('2d'), {
+            type: 'bar',
+            data: { labels: etiquetas, datasets: [{ label: _tes.t.cajaNeta, data: datos, backgroundColor: colores, borderRadius: 6, borderSkipped: false, barPercentage: 0.7, categoryPercentage: 0.8, maxBarThickness: 78 }] },
+            plugins: [tesFondo, etiquetasPlugin],
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                layout: { padding: { top: 22, bottom: 14 } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: function (c) { var b = barras[c.dataIndex]; return b.Tipo === 'total' ? fmtNum(b.Hasta) : (etiquetas[c.dataIndex] + ': ' + fmtNumVar(b.Delta || 0)); } } }
+                },
+                scales: {
+                    y: { display: true, suggestedMax: maxN + margen, suggestedMin: Math.min(0, minN - margen), ticks: { display: false }, border: { display: false },
+                         grid: { color: function (c) { return c.tick && c.tick.value === 0 ? '#94A3B8' : '#F1F0F7'; } } },
+                    x: { grid: { display: false }, ticks: { font: { family: "'Nunito', sans-serif", size: 11.5, weight: '700' }, color: '#8B85A0' } }
+                }
+            }
+        });
+    }
+
+    // ===== Lo más relevante =====
+    // Top 4 líneas (no subtotal ni saldo) por |variación en pesos| contra la otra medida; sin comparación, por peso del rango.
+    function datosDestacados(r) {
+        var cand = (r.Filas || []).filter(function (f) { return !f.EsSubtotal && !f.EsSaldo; });
+        if (r.HayComparativo) {
+            cand = cand.filter(function (f) { return f.VariacionAbsoluta !== 0; });
+            cand.sort(function (a, b) { return Math.abs(b.VariacionAbsoluta) - Math.abs(a.VariacionAbsoluta); });
+        } else {
+            cand = cand.filter(function (f) { return f.Total !== 0; });
+            cand.sort(function (a, b) { return Math.abs(b.Total) - Math.abs(a.Total); });
+        }
+        return cand.slice(0, 4);
+    }
+    function pintarDestacados(r) {
+        var t = _tes.t, top = datosDestacados(r), $list = $('#tesHighlightsList').empty();
+        $('#tesRelevanteSub').text(r.HayComparativo ? t.relevanteSubComp.replace('{0}', nombreMedida(otraMedida(r.Medida))) : t.relevanteSubPeso);
+        if (!top.length) { $list.append($('<div class="pyg2-hl-empty">').text(t.sinDestacados)); return; }
+        var valor = function (f) { return r.HayComparativo ? f.VariacionAbsoluta : f.Total; };
+        var base = Math.abs(valor(top[0])) || 1;
+        top.forEach(function (f) {
+            var v = valor(f), fav = r.HayComparativo ? esFavorable(f.EsGastoOCosto, v) : !f.EsGastoOCosto;
+            var ancho = Math.abs(v) / base * 100;
+            var tag = r.HayComparativo ? ((fav ? t.favorable : t.desfavorableCorto) + ' ' + CH_MIDDOT + ' ' + fmtPctVar(f.VariacionPorcentual)) : t.mayorPeso;
+            $list.append(
+                '<div class="pyg2-hl ' + (fav ? 'up' : 'down') + '">' +
+                    '<div class="pyg2-hl-top"><span class="nm">' + escHtml(f.Descripcion) + '</span><span class="val">' + escHtml(r.HayComparativo ? fmtNumVar(v) : fmtNum(v)) + '</span></div>' +
+                    '<div class="pyg2-hl-bot"><div class="pyg2-hl-track"><i style="width:' + ancho.toFixed(1) + '%"></i></div><span class="tag">' + escHtml(tag) + '</span></div>' +
+                '</div>');
+        });
+    }
+
+    // ===== Mapa de caja mensual =====
+    function colorHeat(v, max) {
+        if (!v) return null;
+        var a = Math.min(1, Math.abs(v) / (max || 1)), base = v > 0 ? [187, 247, 208] : [254, 202, 202], fin = v > 0 ? [74, 222, 128] : [248, 113, 113];
+        var mix = function (i) { return Math.round(base[i] + (fin[i] - base[i]) * a * 0.75); };
+        return 'rgb(' + mix(0) + ',' + mix(1) + ',' + mix(2) + ')';
+    }
+    function pintarHeat(r) {
+        var meses = r.Meses || [], variosAnios = meses.length && meses[0].Anio !== meses[meses.length - 1].Anio;
+        var maxNeta = Math.max.apply(null, meses.map(function (m) { return Math.abs(m.CajaNeta); }).concat([1]));
+        var maxAcum = Math.max.apply(null, meses.map(function (m) { return Math.abs(m.CajaNetaAcum); }).concat([1]));
+        var $h = $('#tesHeat').css('grid-template-columns', 'minmax(120px,auto) repeat(' + meses.length + ', minmax(64px, 1fr))').empty();
+        $h.append('<div></div>');
+        meses.forEach(function (m) { $h.append('<div class="h' + (m.EnRango ? '' : ' fuera') + '">' + escHtml(abrevMes(m.Mes, m.Anio, variosAnios)) + '</div>'); });
+        [{ lbl: _tes.t.heatNeta, k: 'CajaNeta', max: maxNeta }, { lbl: _tes.t.heatAcum, k: 'CajaNetaAcum', max: maxAcum }].forEach(function (fila) {
+            $h.append('<div class="rl">' + escHtml(fila.lbl) + '</div>');
+            meses.forEach(function (m) {
+                var v = m[fila.k], bg = colorHeat(v, fila.max);
+                var estilo = bg ? ' style="background:' + bg + ';color:' + (v > 0 ? '#14532D' : '#7F1D1D') + '"' : '';
+                $h.append('<div class="c' + (bg ? '' : ' cero') + (m.EnRango ? '' : ' fuera') + '"' + estilo + ' title="' + escHtml(fmtNum(v)) + '">' + escHtml(fmtNumSolo(v)) + '</div>');
+            });
+        });
+        $('#tesHeatSub').text(_tes.t.heatSubFmt.replace('{0}', nombreMedida(r.Medida)).replace('{1}', _tes.t.unidades[_tes.unidad].toLowerCase()));
+    }
+
+    // ===== Tabla por mes (vista mensual o acumulada dentro del rango) =====
+    function valoresVista(f, lista) {
+        if (_tes.vistaTabla !== 'acum' || f.EsSaldo) return lista;
+        var acc = 0; return lista.map(function (v) { acc += v; return acc; });
+    }
+    function filasVisibles(r) {
+        var soloSub = $('#tesNivelDetalle').val() === 'subtotales';
+        return (r.Filas || []).filter(function (f) { return !soloSub || f.EsSubtotal; });
+    }
+    function encabezadosTabla(r) {
+        var t = _tes.t, variosAnios = r.AnioDesde !== r.AnioHasta;
+        var meses = r.MesesRango.map(function (m) { return abrevMes(m.Mes, m.Anio, variosAnios); });
+        var cols = meses.slice();
+        cols.push(_tes.vistaTabla === 'acum' ? t.colSaldoFin : t.colTotal);
+        if (r.HayComparativo) { cols.push(nombreMedidaCorta(otraMedida(r.Medida))); cols.push(t.colVarAbs); cols.push(t.colVarPct); }
+        if (r.HayEscenarioComparar) cols.push(t.colVsEscenarioFmt.replace('{0}', nombreEscenarioComp(r)));
+        return cols;
+    }
+    function pintarTabla(r) {
+        var cols = encabezadosTabla(r), nMes = r.MesesRango.length;
+        var head = '<tr><th class="col-cuenta">' + escHtml(_tes.t.colLinea) + '</th>' + cols.map(function (c, i) { return '<th' + (i === nMes ? ' class="tot"' : '') + '>' + escHtml(c) + '</th>'; }).join('') + '</tr>';
+        $('#tesTablaHead').html(head);
+        var body = filasVisibles(r).map(function (f) {
+            var vals = valoresVista(f, f.Valores);
+            var html = '<tr' + (f.EsSubtotal ? ' class="sub"' : '') + '><td class="lbl">' + escHtml(f.Descripcion) + '</td>';
+            vals.forEach(function (v) { html += '<td class="mes' + (v < 0 ? ' neg' : '') + '">' + escHtml(fmtNumSolo(v)) + '</td>'; });
+            var totalV = _tes.vistaTabla === 'acum' && !f.EsSaldo ? vals[vals.length - 1] : f.Total;
+            html += '<td class="tot mes' + (totalV < 0 ? ' neg' : '') + '">' + escHtml(fmtNumSolo(totalV)) + '</td>';
+            if (r.HayComparativo) {
+                html += '<td class="comp">' + escHtml(fmtNumSolo(f.TotalComp)) + '</td>' +
+                    '<td class="var ' + claseVariacion(f.EsGastoOCosto, f.VariacionAbsoluta) + '">' + escHtml(fmtNumVar(f.VariacionAbsoluta)) + '</td>' +
+                    '<td class="chip">' + (f.VariacionPorcentual === null || f.VariacionPorcentual === undefined ? '<span class="pyg2-dchip">' + CH_MDASH + '</span>'
+                        : chipVariacion(fmtPctVar(f.VariacionPorcentual), f.VariacionPorcentual, esFavorable(f.EsGastoOCosto, f.VariacionPorcentual), true)) + '</td>';
+            }
+            if (r.HayEscenarioComparar) html += '<td class="var ' + claseVariacion(f.EsGastoOCosto, f.VariacionEscenarioPorcentual) + '">' + escHtml(fmtPctVar(f.VariacionEscenarioPorcentual)) + '</td>';
+            return html + '</tr>';
+        }).join('');
+        $('#tesTablaBody').html(body);
+    }
+
+    // ===== Insights gerenciales (IA) =====
+    function reiniciarInsights() {
+        var t = _tes.t;
+        _tes.insightsTexto = null;
+        $('#tesRespuesta').empty();
+        $('#tesInsightsLoading').hide();
+        $('#tesInsightsBody').show().html('<div class="pyg2-ins-empty"><i class="fas fa-circle-info"></i><span>' + escHtml(t.insightsVacio) + '</span></div>');
+        $('#tesInsightsMeta').text(t.insightsSub);
+        $('#btnGenerarInsightsTes').prop('disabled', false).html('<i class="fas fa-wand-magic-sparkles"></i><span>' + escHtml(t.generar) + '</span>');
+    }
+
+    // El prompt (RESUMEN_TESORERIA_PPTO en GestorPrompts, o el por defecto del controlador) pide 3 líneas con etiquetas fijas
+    // "Posición de caja:", "Financiación:" y "Acción recomendada:" (o sus equivalentes en inglés). Se separan por esas palabras
+    // clave al inicio de línea (tolerando viñetas, encabezados markdown y negritas). Si falta alguna, null → markdown completo.
+    function separarInsights(texto) {
+        var claves = { posicion: /^(posici[oó]n|cash position)/i, financiacion: /^(financiaci[oó]n|funding)/i, accion: /^(acci[oó]n|recommended action)/i };
+        var etiqueta = /^(\*\*|__)?\s*(posici[oó]n|financiaci[oó]n|acci[oó]n|cash position|funding|recommended action)[^:]*:\s*(\*\*|__)?\s*/i;
+        var partes = { posicion: [], financiacion: [], accion: [] }, actual = null;
+        (texto || '').split(/\r?\n/).forEach(function (linea) {
+            var conFormato = linea.replace(/^\s*(?:[-•>#]+|\*(?=\s)|\d+[.)])\s*/, '').trim();
+            var plano = conFormato.replace(/\*\*|__/g, '').trim();
+            if (!plano) return;
+            var encontrada = null;
+            Object.keys(claves).forEach(function (k) { if (!encontrada && claves[k].test(plano)) encontrada = k; });
+            if (encontrada) {
+                actual = encontrada;
+                var resto = plano.indexOf(':') >= 0 ? conFormato.replace(etiqueta, '').trim() : '';
+                if (resto) partes[actual].push(resto);
+                return;
+            }
+            if (actual) partes[actual].push(conFormato);
+        });
+        if (!partes.posicion.length || !partes.financiacion.length || !partes.accion.length) return null;
+        return { posicion: partes.posicion.join(' '), financiacion: partes.financiacion.join(' '), accion: partes.accion.join(' ') };
+    }
+    function textoConNegritas(t) {
+        return escHtml(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/__(.+?)__/g, '<strong>$1</strong>').replace(/\*\*|__/g, '');
+    }
+    function pintarInsights(texto) {
+        var t = _tes.t, secciones = separarInsights(texto);
+        if (!secciones) {
+            var md = (typeof window.bufinsMarkdown === 'function') ? window.bufinsMarkdown(texto) : escHtml(texto).replace(/\n/g, '<br>');
+            $('#tesInsightsBody').html('<div class="pyg-insights-body">' + md + '</div>');
+            return;
+        }
+        // Clases de color de las tarjetas (compartidas con PYG): eficiencia = info, alerta = rojo, logro = verde.
+        var tiles = [
+            { cls: 'eficiencia', icono: 'fa-vault', titulo: t.posicion, texto: secciones.posicion },
+            { cls: 'alerta', icono: 'fa-hand-holding-dollar', titulo: t.financiacion, texto: secciones.financiacion },
+            { cls: 'logro', icono: 'fa-bullseye', titulo: t.accion, texto: secciones.accion }
+        ];
+        $('#tesInsightsBody').html('<div class="pyg2-ins-grid">' + tiles.map(function (x) {
+            return '<div class="pyg2-ins-tile ' + x.cls + '"><div class="h"><span class="ic"><i class="fas ' + x.icono + '"></i></span><span class="t">' + escHtml(x.titulo) + '</span></div><p>' + textoConNegritas(x.texto) + '</p></div>';
+        }).join('') + '</div>');
+    }
+    function mostrarErrorInsights(mensaje) {
+        $('#tesInsightsBody').html('<div class="pyg2-ins-empty"><i class="fas fa-circle-exclamation"></i><span>' + escHtml(mensaje) + '</span></div>');
+    }
+
+    function generarInsights() {
+        var r = _tes.reporteActual;
+        if (!r) return;
+        var t = _tes.t, $btn = $('#btnGenerarInsightsTes'), htmlBtn = $btn.html();
+        $btn.prop('disabled', true);
+        $('#tesInsightsBody').hide();
+        $('#tesInsightsLoading').show();
+        $.post(_tes.urls.insights, $.extend({ __RequestVerificationToken: _tes.token }, _tes.filtrosConsultados), function (resp) {
+            $('#tesInsightsLoading').hide();
+            $('#tesInsightsBody').show();
+            $btn.prop('disabled', false);
+            if (!resp || !resp.Exitoso) { $btn.html(htmlBtn); mostrarErrorInsights((resp && resp.Error) || t.insightsSinGenerar); return; }
+            _tes.insightsTexto = resp.Respuesta || '';
+            pintarInsights(_tes.insightsTexto);
+            $btn.html('<i class="fas fa-rotate"></i><span>' + escHtml(t.regenerar) + '</span>');
+            try {
+                var fecha = new Date().toLocaleDateString(_tes.cultura, { day: 'numeric', month: 'long', year: 'numeric' });
+                $('#tesInsightsMeta').text(t.insightsMetaFmt.replace('{0}', fecha).replace('{1}', (r.Filas || []).length));
+            } catch (e) { }
+        }).fail(function (xhr) {
+            $('#tesInsightsLoading').hide();
+            $('#tesInsightsBody').show();
+            $btn.prop('disabled', false).html(htmlBtn);
+            mostrarErrorInsights(t.errorServidor + ' (HTTP ' + xhr.status + ')');
+        });
+    }
+
+    function preguntarInforme() {
+        var q = $.trim($('#tesPregunta').val());
+        if (!q || !_tes.reporteActual) return;
+        var $btn = $('#btnTesPreguntar');
+        $btn.prop('disabled', true);
+        $('#tesRespuesta').html('<span class="text-muted"><i class="fas fa-spinner fa-spin mr-1"></i>' + escHtml('@Html.Raw(J("IAInforme_Preguntando"))') + '</span>');
+        $.post(_tes.urls.preguntar, $.extend({ __RequestVerificationToken: _tes.token, pregunta: q }, _tes.filtrosConsultados), function (resp) {
+            $btn.prop('disabled', false);
+            if (!resp || !resp.Exitoso) {
+                $('#tesRespuesta').html('<span style="color:#b91c1c;">' + escHtml((resp && resp.Error) || '@Html.Raw(J("IAInforme_Error"))') + '</span>');
+                return;
+            }
+            var texto = resp.Respuesta || '';
+            var md = (typeof window.bufinsMarkdown === 'function') ? window.bufinsMarkdown(texto) : escHtml(texto).replace(/\n/g, '<br>');
+            $('#tesRespuesta').html('<div class="pyg-insights-body">' + md + '</div>');
+        }).fail(function () {
+            $btn.prop('disabled', false);
+            $('#tesRespuesta').html('<span style="color:#b91c1c;">' + escHtml('@Html.Raw(J("IAInforme_Error"))') + '</span>');
+        });
+    }
+
+    // ===== Exportar: Excel / PDF / imagen / correo =====
+    function datosExportacion() {
+        return $.extend({}, _tes.filtrosConsultados, { soloSubtotales: $('#tesNivelDetalle').val() === 'subtotales' });
+    }
+    function exportarExcel() {
+        if (!_tes.filtrosConsultados) return;
+        var campos = datosExportacion(), $c = $('#tesExpCampos').empty();
+        Object.keys(campos).forEach(function (k) { $c.append($('<input type="hidden">').attr('name', k).val(campos[k] == null ? '' : campos[k])); });
+        $('#frmExportarExcelTes').submit();
+    }
+    function copiarImagen() {
+        var empresa = ($('#tesTituloEmpresa').text() || 'Tesoreria').replace(/[^A-Za-z0-9]+/g, '_');
+        return ExportMenu.copiarImagen(document.getElementById('tesResultado'), 'TesoreriaPpto_' + empresa + '_' + new Date().toISOString().slice(0, 10) + '.png',
+            { imagenCopiada: EXP_T.imagenCopiada, imagenDescargada: EXP_T.imagenDescargada });
+    }
+    function generarPdf() {
+        var r = _tes.reporteActual;
+        if (!r) return Promise.resolve();
+        return new Promise(function (ok, ko) {
+            setTimeout(function () {
+                try { var doc = construirPdf(r); doc.save(doc.__nombre); ExportMenu.aviso('success', EXP_T.listo); ok(); }
+                catch (e) { console.error('[InformeTesoreriaPpto] PDF', e); ko(e); }
+            }, 30);
+        });
+    }
+
+    // Imagen nítida de una gráfica: se re-renderiza temporalmente a 3x (y a la proporción exacta de su caja en el PDF) y se
+    // exporta como JPEG sobre blanco (jsPDF incrusta los PNG sin comprimir). Al final se restaura el tamaño de pantalla.
+    function capturarChartPdf(chart, anchoPx, altoPx) {
+        if (!chart) return null;
+        var dprOriginal = chart.options.devicePixelRatio;
+        chart.options.devicePixelRatio = 3;
+        if (anchoPx && altoPx) chart.resize(anchoPx, altoPx); else chart.resize();
+        chart.update('none');
+        var lienzo = document.createElement('canvas');
+        lienzo.width = chart.canvas.width; lienzo.height = chart.canvas.height;
+        var ctx = lienzo.getContext('2d');
+        ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, lienzo.width, lienzo.height);
+        ctx.drawImage(chart.canvas, 0, 0);
+        var img = { data: lienzo.toDataURL('image/jpeg', 0.9), w: chart.width, h: chart.height };
+        chart.options.devicePixelRatio = dprOriginal;
+        chart.resize();
+        chart.update('none');
+        return img;
+    }
+
+    var PDF_COL = {
+        marca: [99, 102, 241], morado: [88, 58, 255], texto: [22, 18, 31], texto2: [91, 85, 112], muted: [139, 133, 160],
+        linea: [228, 225, 240], lineaSuave: [238, 240, 246], suave: [244, 243, 251], suave2: [248, 247, 253], zebra: [252, 252, 254],
+        totalBg: [238, 242, 255], totalTx: [59, 47, 191], bueno: [22, 163, 74], buenoBg: [236, 253, 243],
+        malo: [220, 38, 38], maloBg: [254, 242, 242], ambar: [217, 119, 6], blanco: [255, 255, 255]
+    };
+    var PDF_DEGRADADO = [[99, 102, 241], [59, 130, 246], [6, 182, 212], [1, 225, 215]];
+
+    // PDF gerencial (A4 horizontal, jsPDF puro): pág. 1 resumen (estado, KPIs, insights, lo más relevante); pág. 2 gráficos
+    // (caja mensual + puente); pág. 3+ tabla por mes. Devuelve el documento (con __nombre) para descarga y para el correo.
+    function construirPdf(r) {
+        var T = _tes.t, P = T.pdf, C = PDF_COL;
+        var pdf = new window.jspdf.jsPDF('l', 'mm', 'a4');
+        var W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight();
+        var M = 12, ANCHO = W - M * 2, LIMITE_Y = H - 15;
+        var empresa = $('#tesTituloEmpresa').text() || '', periodo = etiquetaPeriodo(r), y = 0;
+
+        function rgb(fn, c) { pdf[fn](c[0], c[1], c[2]); }
+        function fuente(estilo, tam, c) { pdf.setFont('helvetica', estilo); pdf.setFontSize(tam); rgb('setTextColor', c || C.texto); }
+        function limpiar(t) { return String(t == null ? '' : t).replace(/\*\*|__/g, '').replace(/\s+/g, ' ').trim(); }
+        function ancho(t) { return pdf.getTextWidth(String(t)); }
+        function degradado(x, yy, w, h) {
+            var pasos = 90, n = PDF_DEGRADADO.length - 1;
+            for (var i = 0; i < pasos; i++) {
+                var tt = i / (pasos - 1), seg = Math.min(n - 1, Math.floor(tt * n)), f = tt * n - seg, a = PDF_DEGRADADO[seg], b = PDF_DEGRADADO[seg + 1];
+                pdf.setFillColor(Math.round(a[0] + (b[0] - a[0]) * f), Math.round(a[1] + (b[1] - a[1]) * f), Math.round(a[2] + (b[2] - a[2]) * f));
+                pdf.rect(x + (w * i) / pasos, yy, w / pasos + 0.15, h, 'F');
+            }
+        }
+        function pildora(texto, x, yy, fg, bg, negrita, tam, alinearDerecha) {
+            fuente(negrita ? 'bold' : 'normal', tam || 7.5, fg);
+            var w = ancho(texto) + 5, h = (tam || 7.5) * 0.62 + 1, x0 = alinearDerecha ? x - w : x;
+            rgb('setFillColor', bg);
+            pdf.roundedRect(x0, yy - h + 1.4, w, h, h / 2, h / 2, 'F');
+            pdf.text(texto, x0 + 2.5, yy);
+            return w;
+        }
+        function tituloSeccion(texto, yy, derecha) {
+            var tt = String(texto).toUpperCase(), wDer = 0;
+            if (derecha) { fuente('normal', 7.5, C.muted); wDer = ancho(derecha) + 4; pdf.text(derecha, W - M, yy, { align: 'right' }); }
+            fuente('bold', 8.5, C.morado);
+            pdf.text(tt, M, yy);
+            rgb('setDrawColor', C.linea); pdf.setLineWidth(0.3);
+            pdf.line(M + ancho(tt) + 3, yy - 1.1, W - M - wDer, yy - 1.1);
+        }
+        function tarjeta(x, yy, w, h) {
+            rgb('setDrawColor', C.linea); rgb('setFillColor', C.blanco); pdf.setLineWidth(0.3);
+            pdf.roundedRect(x, yy, w, h, 2.5, 2.5, 'FD');
+        }
+        function imagenAjustada(img, x, yy, wMax, hMax) {
+            if (!img) return;
+            var ratio = img.w / img.h, w = wMax, h = w / ratio;
+            if (h > hMax) { h = hMax; w = h * ratio; }
+            pdf.addImage(img.data, 'JPEG', x + (wMax - w) / 2, yy, w, h);
+        }
+        function encabezadoPagina(seccion) {
+            degradado(0, 0, W, 2.4);
+            fuente('bold', 10, C.texto); pdf.text(empresa, M, 11);
+            fuente('normal', 8, C.muted); pdf.text(P.titulo + '  ' + CH_MIDDOT + '  ' + periodo, W - M, 11, { align: 'right' });
+            if (seccion) { fuente('bold', 13, C.texto); pdf.text(seccion, M, 21); }
+            y = seccion ? 29 : 18;
+        }
+        function nuevaPagina(seccion) { pdf.addPage(); encabezadoPagina(seccion); }
+
+        // ===== Página 1: resumen ejecutivo =====
+        degradado(0, 0, W, 34);
+        fuente('bold', 10, C.blanco); pdf.text(P.marca, M, 10);
+        var wMarca = ancho(P.marca);
+        fuente('normal', 8.5, C.blanco); pdf.text(CH_MIDDOT + '  ' + P.subtitulo, M + wMarca + 2.5, 10);
+        fuente('bold', 19, C.blanco); pdf.text(empresa, M, 22);
+        fuente('normal', 9.5, C.blanco); pdf.text(P.titulo, M, 29);
+        fuente('normal', 8, C.blanco); pdf.text(P.generadoEl + ' ' + ($('#tesFechaGenerado').text() || ''), W - M, 10, { align: 'right' });
+        fuente('bold', 8, C.blanco); pdf.text(P.confidencial.toUpperCase(), W - M, 29, { align: 'right' });
+
+        y = 43;
+        var chips = [{ t: $('#tesChipPeriodo').text(), fg: C.morado, bg: C.totalBg, b: true }, { t: $('#tesChipEscenario').text() },
+            { t: $('#tesChipMedida').text() }, { t: $('#tesChipComparado').text() }, { t: T.unidadBadge[_tes.unidad] }];
+        var xc = M;
+        chips.forEach(function (c) {
+            if (!c.t) return;
+            fuente(c.b ? 'bold' : 'normal', 7.5, C.texto2);
+            if (xc + ancho(c.t) + 5 > W - M) { xc = M; y += 7; }
+            xc += pildora(c.t, xc, y, c.fg || C.texto2, c.bg || C.suave, !!c.b) + 3;
+        });
+
+        // Estado de la caja
+        var est = datosEstado(r);
+        if (est) {
+            y += 8;
+            var col = est.cls === 'mal' ? C.malo : (est.cls === 'aviso' ? C.ambar : C.bueno), bg = est.cls === 'mal' ? C.maloBg : (est.cls === 'aviso' ? [255, 251, 235] : C.buenoBg);
+            fuente('normal', 8.5, C.texto2);
+            var lineasE = pdf.splitTextToSize(limpiar(est.desc), ANCHO - 12), hE = 11 + lineasE.length * 4;
+            rgb('setFillColor', bg); rgb('setDrawColor', col); pdf.setLineWidth(0.3);
+            pdf.roundedRect(M, y, ANCHO, hE, 2.5, 2.5, 'FD');
+            rgb('setFillColor', col); pdf.rect(M, y + 3, 1.4, hE - 6, 'F');
+            fuente('bold', 10, C.texto); pdf.text(est.titulo, M + 6, y + 6.5);
+            fuente('normal', 8.5, C.texto2); pdf.text(lineasE, M + 6, y + 11.2, { lineHeightFactor: 1.35 });
+            y += hE;
+        }
+
+        // KPIs
+        y += 10;
+        tituloSeccion(P.indicadores, y);
+        y += 4;
+        var kpis = datosKpis(r), nK = kpis.length || 1, gapK = 4, wK = (ANCHO - gapK * (nK - 1)) / nK;
+        var maxRefs = Math.max.apply(null, kpis.map(function (k) { return k.refs.length; }).concat([0]));
+        var hK = 27 + maxRefs * 5.6;
+        kpis.forEach(function (k, i) {
+            var x = M + i * (wK + gapK);
+            tarjeta(x, y, wK, hK);
+            degradado(x + 3, y, wK - 6, 1);
+            fuente('bold', 6.8, C.texto2);
+            pdf.text(pdf.splitTextToSize(k.nombre.toUpperCase(), wK - 8)[0], x + 4, y + 8);
+            fuente('bold', 14.5, k.sano ? C.bueno : C.malo);
+            pdf.text(k.valorTxt, x + 4, y + 17);
+            fuente('normal', 7, C.muted);
+            pdf.text(k.nota || ' ', x + 4, y + 22);
+            var yd = y + 27.5;
+            k.refs.forEach(function (rf) {
+                fuente('normal', 6.6, C.muted);
+                pdf.text(pdf.splitTextToSize(rf.ref, wK - 8)[0], x + 4, yd);
+                fuente('bold', 7.2, C.texto2);
+                pdf.text(rf.val, x + 4, yd + 3.7);
+                yd += 7.6;
+            });
+        });
+        y += hK + 3 + maxRefs * 2.2 + 8;
+
+        // Insights (IA)
+        tituloSeccion(P.insightsTitulo, y, _tes.insightsTexto ? $('#tesInsightsMeta').text() : '');
+        y += 4;
+        var secciones = _tes.insightsTexto ? separarInsights(_tes.insightsTexto) : null;
+        if (secciones) {
+            var tiles = [
+                { titulo: T.posicion, texto: secciones.posicion, c: C.morado, bg: C.totalBg },
+                { titulo: T.financiacion, texto: secciones.financiacion, c: C.malo, bg: C.maloBg },
+                { titulo: T.accion, texto: secciones.accion, c: C.bueno, bg: C.buenoBg }
+            ];
+            var gapT = 5, wT = (ANCHO - gapT * 2) / 3;
+            fuente('normal', 8.8, C.texto2);
+            var lineasT = tiles.map(function (x) { return pdf.splitTextToSize(limpiar(x.texto), wT - 9); });
+            var hT = 14 + Math.max.apply(null, lineasT.map(function (l) { return l.length; })) * 4.2 + 3;
+            if (y + hT > LIMITE_Y) nuevaPagina(P.resumen);
+            tiles.forEach(function (x, i) {
+                var xx = M + i * (wT + gapT);
+                tarjeta(xx, y, wT, hT);
+                rgb('setFillColor', x.c); pdf.rect(xx + 2.5, y, wT - 5, 1.1, 'F');
+                fuente('bold', 7.5, x.c); pdf.text(x.titulo.toUpperCase(), xx + 4.5, y + 8.3);
+                fuente('normal', 8.8, C.texto2); pdf.text(lineasT[i], xx + 4.5, y + 14.5, { lineHeightFactor: 1.35 });
+            });
+            y += hT;
+        } else if (_tes.insightsTexto) {
+            fuente('normal', 8.8, C.texto2);
+            var lineas = pdf.splitTextToSize(limpiar(_tes.insightsTexto.replace(/^[\s#>*\-•]+/gm, '')), ANCHO - 10), hTx = lineas.length * 4.2 + 8;
+            if (y + hTx > LIMITE_Y) nuevaPagina(P.resumen);
+            tarjeta(M, y, ANCHO, hTx);
+            pdf.text(lineas, M + 5, y + 7, { lineHeightFactor: 1.35 });
+            y += hTx;
+        } else {
+            rgb('setFillColor', C.suave2); rgb('setDrawColor', C.linea); pdf.setLineDashPattern([1.2, 1], 0);
+            pdf.roundedRect(M, y, ANCHO, 12, 2, 2, 'FD'); pdf.setLineDashPattern([], 0);
+            fuente('italic', 8.5, C.texto2); pdf.text(pdf.splitTextToSize(P.sinInsights, ANCHO - 10), M + 5, y + 7.5);
+            y += 12;
+        }
+
+        // Lo más relevante
+        var top = datosDestacados(r);
+        if (top.length) {
+            var hRel = 24;
+            if (y + 15 + hRel > LIMITE_Y) nuevaPagina(P.resumen); else y += 10;
+            tituloSeccion(P.relevanteTitulo, y, $('#tesRelevanteSub').text());
+            y += 4;
+            var gapR = 5, wR = (ANCHO - gapR * 3) / 4;
+            top.forEach(function (f, i) {
+                var v = r.HayComparativo ? f.VariacionAbsoluta : f.Total;
+                var fav = r.HayComparativo ? esFavorable(f.EsGastoOCosto, v) : !f.EsGastoOCosto, colr = fav ? C.bueno : C.malo;
+                var x = M + i * (wR + gapR);
+                tarjeta(x, y, wR, hRel);
+                rgb('setFillColor', colr); pdf.rect(x, y + 4, 1.1, hRel - 8, 'F');
+                fuente('bold', 8.5, C.texto); pdf.text(pdf.splitTextToSize(f.Descripcion, wR - 10)[0], x + 5, y + 7.5);
+                fuente('bold', 13, colr); pdf.text(r.HayComparativo ? fmtNumVar(v) : fmtNum(v), x + 5, y + 15);
+                fuente('bold', 7, colr);
+                pdf.text(r.HayComparativo ? ((fav ? T.favorable : T.desfavorableCorto) + ' ' + CH_MIDDOT + ' ' + fmtPctVar(f.VariacionPorcentual)) : T.mayorPeso, x + 5, y + 20.5);
+            });
+            y += hRel;
+        }
+
+        // ===== Página 2: gráficos (caja mensual + puente) =====
+        nuevaPagina(P.analisis);
+        var hA = 80, MM_A_PX = 4;
+        [{ chart: 'principal', titulo: $('#tesChartPrincipal').closest('.pyg2-card').find('.pyg2-card-title').first().text(), sub: $('#tesGraficoSub').text() },
+         { chart: 'cascada', titulo: $('#tesChartCascada').closest('.pyg2-card').find('.pyg2-card-title').first().text(), sub: $('#tesCascadaSub').text() }].forEach(function (g, i) {
+            tarjeta(M, y, ANCHO, hA);
+            fuente('bold', 10, C.texto); pdf.text(g.titulo, M + 5, y + 8);
+            fuente('normal', 7.5, C.muted); pdf.text(g.sub, M + 5, y + 12.5);
+            var wImg = ANCHO - 10, hImg = hA - 18;
+            imagenAjustada(capturarChartPdf(_tes.charts[g.chart], wImg * MM_A_PX, hImg * MM_A_PX), M + 5, y + 15, wImg, hImg);
+            y += hA + 8;
+        });
+
+        // ===== Página 3+: tabla por mes =====
+        nuevaPagina(P.tablaTitulo);
+        fuente('normal', 7.5, C.muted); pdf.text(T.unidadBadge[_tes.unidad], W - M, 21, { align: 'right' });
+        var cols = encabezadosTabla(r), nMes = r.MesesRango.length, nCols = cols.length;
+        var wLbl = nCols > 16 ? 44 : 56, wCol = (ANCHO - wLbl) / nCols, tam = nCols > 16 ? 6.2 : (nCols > 12 ? 6.8 : 7.6), hF = 6.2, hG = 7.5;
+
+        function cabeceraTabla() {
+            rgb('setFillColor', C.marca); pdf.rect(M, y, ANCHO, hG, 'F');
+            fuente('bold', 7.2, C.blanco); pdf.text(T.colLinea.toUpperCase(), M + 3, y + 5);
+            cols.forEach(function (c, i) {
+                var xr = M + wLbl + (i + 1) * wCol - 1.5;
+                fuente('bold', tam - 0.6, C.blanco);
+                pdf.text(pdf.splitTextToSize(c.toUpperCase(), wCol - 1.5)[0], xr, y + 5, { align: 'right' });
+            });
+            y += hG;
+        }
+        var filas = filasVisibles(r);
+        cabeceraTabla();
+        filas.forEach(function (f, idx) {
+            if (y + hF > LIMITE_Y - 6) { nuevaPagina(P.tablaTitulo); cabeceraTabla(); }
+            rgb('setFillColor', f.EsSubtotal ? C.suave2 : (idx % 2 ? C.zebra : C.blanco));
+            pdf.rect(M, y, ANCHO, hF, 'F');
+            if (f.EsSubtotal) { rgb('setDrawColor', C.linea); pdf.setLineWidth(0.3); pdf.line(M, y, M + ANCHO, y); }
+            fuente(f.EsSubtotal ? 'bold' : 'normal', tam + 0.2, f.EsSubtotal ? C.texto : C.texto2);
+            pdf.text(pdf.splitTextToSize(f.Descripcion, wLbl - 5)[0], M + (f.EsSubtotal ? 3 : 5), y + 4.2);
+
+            var vals = valoresVista(f, f.Valores).slice();
+            vals.push(_tes.vistaTabla === 'acum' && !f.EsSaldo ? vals[vals.length - 1] : f.Total);
+            var celdas = vals.map(function (v) { return { t: fmtNumSolo(v), col: v < 0 ? C.malo : (f.EsSubtotal ? C.texto : C.texto2) }; });
+            if (r.HayComparativo) {
+                var cl = claseVariacion(f.EsGastoOCosto, f.VariacionAbsoluta), cc = cl === 'good' ? C.bueno : (cl === 'bad' ? C.malo : C.muted);
+                var vp = f.VariacionPorcentual, cp = claseVariacion(f.EsGastoOCosto, vp);
+                celdas.push({ t: fmtNumSolo(f.TotalComp), col: C.muted }, { t: fmtNumVar(f.VariacionAbsoluta), col: cc, b: true },
+                    { t: fmtPctVar(vp), col: cp === 'good' ? C.bueno : (cp === 'bad' ? C.malo : C.muted), b: true });
+            }
+            if (r.HayEscenarioComparar) {
+                var ce = claseVariacion(f.EsGastoOCosto, f.VariacionEscenarioPorcentual);
+                celdas.push({ t: fmtPctVar(f.VariacionEscenarioPorcentual), col: ce === 'good' ? C.bueno : (ce === 'bad' ? C.malo : C.muted), b: true });
+            }
+            celdas.forEach(function (c, i) {
+                fuente(c.b || f.EsSubtotal ? 'bold' : 'normal', tam, c.col);
+                pdf.text(c.t, M + wLbl + (i + 1) * wCol - 1.5, y + 4.2, { align: 'right' });
+            });
+            rgb('setDrawColor', C.lineaSuave); pdf.setLineWidth(0.15);
+            pdf.line(M, y + hF, M + ANCHO, y + hF);
+            y += hF;
+        });
+
+        // Pie de página en todas las páginas
+        var totalPags = pdf.internal.getNumberOfPages();
+        for (var p = 1; p <= totalPags; p++) {
+            pdf.setPage(p);
+            rgb('setDrawColor', C.linea); pdf.setLineWidth(0.3); pdf.line(M, H - 10, W - M, H - 10);
+            fuente('normal', 7, C.muted);
+            pdf.text(P.footer + '  ' + CH_MIDDOT + '  ' + empresa + '  ' + CH_MIDDOT + '  ' + periodo, M, H - 6);
+            pdf.text(P.confidencial, W / 2, H - 6, { align: 'center' });
+            fuente('bold', 7, C.texto2);
+            pdf.text(P.paginaFmt.replace('{0}', p).replace('{1}', totalPags), W - M, H - 6, { align: 'right' });
+        }
+
+        pdf.__nombre = 'TesoreriaPpto_' + empresa.replace(/[^a-z0-9]+/gi, '_') + '_' +
+            r.AnioDesde + ('0' + r.MesDesde).slice(-2) + '-' + r.AnioHasta + ('0' + r.MesHasta).slice(-2) + '.pdf';
+        return pdf;
+    }
+
+    $(document).ready(function () {
+        _tes.escenarios = $('#tesEscenario option').map(function () { return { id: Number(this.value), nombre: $(this).text() }; }).get().filter(function (e) { return e.id > 0; });
+
+        $('#tesEmpresa, #tesEscenario, #tesMedida, #tesNivelDetalle, #tesComparar, #tesEscenarioComparar')
+            .select2({ width: '100%', language: s2lang, dropdownAutoWidth: false, minimumResultsForSearch: 10 });
+
+        $('#tesEmpresa, #tesEscenario').on('change', cargarMeses);
+        // "Detalle de la tabla" no requiere volver a consultar: solo filtra las filas ya cargadas.
+        $('#tesNivelDetalle').on('change', function () { if (_tes.reporteActual) pintarTabla(_tes.reporteActual); });
+
+        $('#tesAtajos button').on('click', function () { aplicarPresetRango($(this).data('preset')); });
+        $('#tesKnobFrom').on('pointerdown', function (e) { e.stopPropagation(); iniciarArrastreSlider(e, 'from'); });
+        $('#tesKnobTo').on('pointerdown', function (e) { e.stopPropagation(); iniciarArrastreSlider(e, 'to'); });
+        $('#tesRangoTrack').on('pointerdown', function (e) { clicEnPista(e); });
+        $('#tesKnobFrom, #tesKnobTo').on('keydown', function (e) { moverKnobConTeclado(e, this.id === 'tesKnobFrom' ? 'from' : 'to'); });
+
+        // Menú de unidad: abre con el botón, se cierra al elegir o con clic afuera.
+        $('#tesBtnUnidad').on('click', function (e) {
+            e.stopPropagation();
+            var abierto = $('#tesMenuUnidad').toggleClass('open').hasClass('open');
+            $(this).attr('aria-expanded', abierto ? 'true' : 'false');
+        });
+        $('#tesMenuUnidad button').on('click', function (e) {
+            e.stopPropagation();
+            _tes.unidad = $(this).data('unidad');
+            $('#tesMenuUnidad').removeClass('open');
+            $('#tesBtnUnidad').attr('aria-expanded', 'false');
+            guardarPrefs();
+            repintar();
+        });
+        $(document).on('click', function () { $('#tesMenuUnidad').removeClass('open'); $('#tesBtnUnidad').attr('aria-expanded', 'false'); });
+
+        $('#tesSegTabla button').on('click', function () {
+            _tes.vistaTabla = $(this).data('v');
+            $('#tesSegTabla button').removeClass('active'); $(this).addClass('active');
+            guardarPrefs();
+            if (_tes.reporteActual) pintarTabla(_tes.reporteActual);
+        });
+
+        // Etiquetas de valor: un botón independiente por gráfico
+        $('#tesResultado').on('click', '.tes-btn-etq', function () {
+            var k = $(this).data('chart');
+            _tes.etiquetas[k] = !_tes.etiquetas[k];
+            $(this).toggleClass('on', _tes.etiquetas[k]);
+            if (_tes.charts[k]) _tes.charts[k].update('none');
+        });
+
+        $('#btnConsultarTes').on('click', consultarReporte);
+        $('#btnLimpiarTes').on('click', function () {
+            $('#tesMedida').val('ppto').trigger('change.select2');
+            $('#tesComparar').val('medida').trigger('change.select2');
+            $('#tesEscenarioComparar').val('').trigger('change.select2');
+            $('#tesNivelDetalle').val('todas').trigger('change.select2');
+            if (_tes.esAdmin) elEmpresa.val('').trigger('change.select2');
+            cargarMeses();
+        });
+
+        $('#btnGenerarInsightsTes').on('click', generarInsights);
+        $('#btnTesPreguntar').on('click', preguntarInforme);
+        $('#tesPregunta').on('keydown', function (e) { if (e.which === 13) { e.preventDefault(); preguntarInforme(); } });
+
+        // Botón Exportar estándar: Excel · PDF · Copiar como imagen · Enviar por correo
+        var correo = ExportMenu.correo({
+            url: _tes.urls.correo,
+            token: function () { return _tes.token; },
+            datos: datosExportacion,   // mismos filtros que el Excel: el servidor reconstruye el informe
+            pdf: function () { var d = construirPdf(_tes.reporteActual); return d ? d.output('datauristring') : ''; },
+            pills: function () { return [$('#tesTituloEmpresa').text()].concat($('#tesPanelResultado .pyg2-chip').map(function () { return $(this).text(); }).get()); },
+            textos: EXP_T
+        });
+        ExportMenu.init('tesExp', {
+            acciones: { excel: exportarExcel, pdf: generarPdf, imagen: copiarImagen, correo: function () { if (_tes.reporteActual) correo.abrir(); } },
+            textos: EXP_T
+        });
+
+        cargarPrefs();
+        pintarRango();
+        cargarMeses();
+    });
+</script>
+}

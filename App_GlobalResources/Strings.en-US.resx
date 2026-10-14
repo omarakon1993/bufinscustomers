@@ -2448,4 +2448,131 @@ Indicators management follows closely: </value></data>
   <data name="HP_XlsSubtituloFmt" xml:space="preserve"><value>{0} – {1} · {2} · Generated {3}</value></data>
   <data name="HP_PdfConfidencial" xml:space="preserve"><value>Confidential</value></data>
   <data name="HP_PdfPaginaFmt" xml:space="preserve"><value>Page {0} of {1}</value></data>
+
+  <!-- BUDGET TREASURY REPORT -->
+  <data name="TesPpto_PageTitle" xml:space="preserve"><value>Budget treasury report</value></data>
+  <data name="TesPpto_FilaCuando" xml:space="preserve"><value>Date range</value></data>
+  <data name="TesPpto_Subtitulo" xml:space="preserve"><value>Budget treasury</value></data>
+  <data name="TesPpto_GeneradoEl" xml:space="preserve"><value>Generated on</value></data>
+  <data name="TesPpto_LabelMedida" xml:space="preserve"><value>Figures</value></data>
+  <data name="TesPpto_Medida_ppto" xml:space="preserve"><value>Budget</value></data>
+  <data name="TesPpto_Medida_proy" xml:space="preserve"><value>Projection</value></data>
+  <data name="TesPpto_MedidaCorta_ppto" xml:space="preserve"><value>Budget</value></data>
+  <data name="TesPpto_MedidaCorta_proy" xml:space="preserve"><value>Proj.</value></data>
+  <data name="TesPpto_MedidaHint" xml:space="preserve"><value>Budget: what was planned. Projection: the model's updated estimate for each month (actuals plus remaining budget).</value></data>
+  <data name="TesPpto_NivelDetalle" xml:space="preserve"><value>Table detail</value></data>
+  <data name="TesPpto_NivelTodas" xml:space="preserve"><value>All lines</value></data>
+  <data name="TesPpto_NivelSubtotales" xml:space="preserve"><value>Subtotals and cash only</value></data>
+  <data name="TesPpto_SeccionComparaciones" xml:space="preserve"><value>Comparisons</value></data>
+  <data name="TesPpto_CompararLabel" xml:space="preserve"><value>Compare against</value></data>
+  <data name="TesPpto_Comp_medida" xml:space="preserve"><value>The other measure (budget ↔ projection)</value></data>
+  <data name="TesPpto_Comp_ninguno" xml:space="preserve"><value>No comparison</value></data>
+  <data name="TesPpto_EscenarioComparar" xml:space="preserve"><value>Compare with scenario</value></data>
+  <data name="TesPpto_EscenarioCompararNinguno" xml:space="preserve"><value>None</value></data>
+  <data name="TesPpto_EscenarioSinDatosEtiqueta" xml:space="preserve"><value>no data</value></data>
+  <data name="TesPpto_EscenarioSinDatosTooltip" xml:space="preserve"><value>This scenario has no treasury data for the company</value></data>
+  <data name="TesPpto_EscenarioSinDatosHint" xml:space="preserve"><value>Scenarios without treasury data for this company appear disabled.</value></data>
+  <data name="TesPpto_EscenarioSinDatosNota" xml:space="preserve"><value>The scenario selected for comparison has no data in the queried range, so its comparison is not shown.</value></data>
+  <data name="TesPpto_RangoHint" xml:space="preserve"><value>Choose the range of months of the execution year. Accumulated cash is always counted from January.</value></data>
+  <data name="TesPpto_SinMesesDatos" xml:space="preserve"><value>There are no months with treasury data for this company and scenario. Run the Budget Treasury model first.</value></data>
+  <data name="TesPpto_EstadoInicialTitulo" xml:space="preserve"><value>Set the filters and generate the report</value></data>
+  <data name="TesPpto_EstadoInicialDesc" xml:space="preserve"><value>You will see whether the budget's cash is enough, in which months it falls short and how much new debt is needed.</value></data>
+  <data name="TesPpto_SinDatosTitulo" xml:space="preserve"><value>No treasury data</value></data>
+  <data name="TesPpto_SinDatosDesc" xml:space="preserve"><value>There are no treasury figures for these filters. Check that the Budget Treasury model has been run and the budget is loaded, or try the other measure (budget ↔ projection).</value></data>
+  <data name="TesPpto_JS_Consultando" xml:space="preserve"><value>Querying treasury…</value></data>
+  <data name="TesPpto_ErrorServidor" xml:space="preserve"><value>The report could not be queried. Please try again.</value></data>
+  <data name="TesPpto_Unidad" xml:space="preserve"><value>Unit</value></data>
+  <data name="TesPpto_UnidadPesosCop" xml:space="preserve"><value>Figures in pesos (COP)</value></data>
+  <data name="TesPpto_UnidadMilesCop" xml:space="preserve"><value>Figures in thousands of pesos (COP)</value></data>
+  <data name="TesPpto_UnidadMillonesCop" xml:space="preserve"><value>Figures in millions of pesos (COP)</value></data>
+  <data name="TesPpto_ChipComparadoFmt" xml:space="preserve"><value>Compared with {0}</value></data>
+  <data name="TesPpto_ChipSinComparar" xml:space="preserve"><value>No comparison</value></data>
+  <data name="TesPpto_NotaSinProyeccion" xml:space="preserve"><value>The projection has no figures for this company and scenario (the model does not calculate actuals yet), so it shows zero.</value></data>
+  <data name="TesPpto_EstadoOkTitulo" xml:space="preserve"><value>Cash is sufficient for the period</value></data>
+  <data name="TesPpto_EstadoOkFmt" xml:space="preserve"><value>The lowest point of accumulated cash is {0} ({1}) and the range closes at {2}.</value></data>
+  <data name="TesPpto_EstadoAvisoTitulo" xml:space="preserve"><value>Cash is tight</value></data>
+  <data name="TesPpto_EstadoAvisoFmt" xml:space="preserve"><value>Accumulated cash reaches {0} in {1}: there is no safety cushion.</value></data>
+  <data name="TesPpto_EstadoMalTitulo" xml:space="preserve"><value>Funding is required</value></data>
+  <data name="TesPpto_EstadoMalFmt" xml:space="preserve"><value>{0} of new debt is needed. {1} of {2} months end with negative accumulated cash; the lowest point is in {3}.</value></data>
+  <data name="TesPpto_IndicadoresClave" xml:space="preserve"><value>Cash indicators</value></data>
+  <data name="TesPpto_Kpi_CajaNetaPeriodo" xml:space="preserve"><value>Net cash for the period</value></data>
+  <data name="TesPpto_Kpi_CajaAcumFinal" xml:space="preserve"><value>Accumulated cash at close</value></data>
+  <data name="TesPpto_Kpi_SaldoMinimo" xml:space="preserve"><value>Minimum cash balance</value></data>
+  <data name="TesPpto_Kpi_MesesDeficit" xml:space="preserve"><value>Months with negative cash</value></data>
+  <data name="TesPpto_Kpi_DeudaNueva" xml:space="preserve"><value>New debt required</value></data>
+  <data name="TesPpto_VsFmt" xml:space="preserve"><value>vs {0}</value></data>
+  <data name="TesPpto_DeMesesFmt" xml:space="preserve"><value>{0} of {1}</value></data>
+  <data name="TesPpto_CajaNeta" xml:space="preserve"><value>Net cash</value></data>
+  <data name="TesPpto_CajaNetaAcum" xml:space="preserve"><value>Accumulated net cash</value></data>
+  <data name="TesPpto_GraficoTitulo" xml:space="preserve"><value>Monthly and accumulated cash</value></data>
+  <data name="TesPpto_GraficoSubFmt" xml:space="preserve"><value>Bars: each month's net cash · Line: cash accumulated since January · {0}</value></data>
+  <data name="TesPpto_LeyendaCajaPositiva" xml:space="preserve"><value>Positive cash</value></data>
+  <data name="TesPpto_LeyendaCajaNegativa" xml:space="preserve"><value>Negative cash</value></data>
+  <data name="TesPpto_RelevanteTitulo" xml:space="preserve"><value>Most relevant</value></data>
+  <data name="TesPpto_RelevanteSubComp" xml:space="preserve"><value>Items with the largest difference against {0}</value></data>
+  <data name="TesPpto_RelevanteSubPeso" xml:space="preserve"><value>Items that weigh most on the period's cash</value></data>
+  <data name="TesPpto_SinDestacados" xml:space="preserve"><value>No notable movements in the range.</value></data>
+  <data name="TesPpto_Favorable" xml:space="preserve"><value>Favorable</value></data>
+  <data name="TesPpto_Desfavorable" xml:space="preserve"><value>Unfavorable</value></data>
+  <data name="TesPpto_DesfavorableCorto" xml:space="preserve"><value>Unfav.</value></data>
+  <data name="TesPpto_MayorPeso" xml:space="preserve"><value>Largest weight</value></data>
+  <data name="TesPpto_LeyendaCritico" xml:space="preserve"><value>Variation of 15% or more</value></data>
+  <data name="TesPpto_CascadaTitulo" xml:space="preserve"><value>Cash bridge</value></data>
+  <data name="TesPpto_CascadaSubFmt" xml:space="preserve"><value>From gross cash to net cash · {0}</value></data>
+  <data name="TesPpto_LeyendaTotal" xml:space="preserve"><value>Total</value></data>
+  <data name="TesPpto_LeyendaResta" xml:space="preserve"><value>Decrease</value></data>
+  <data name="TesPpto_LeyendaSuma" xml:space="preserve"><value>Increase</value></data>
+  <data name="TesPpto_Casc_CajaBruta" xml:space="preserve"><value>Gross cash</value></data>
+  <data name="TesPpto_Casc_GastosOperacionales" xml:space="preserve"><value>Operating exp.</value></data>
+  <data name="TesPpto_Casc_FinancierosOtros" xml:space="preserve"><value>Financial &amp; other</value></data>
+  <data name="TesPpto_Casc_Impuestos" xml:space="preserve"><value>Taxes</value></data>
+  <data name="TesPpto_Casc_Inversiones" xml:space="preserve"><value>Investments</value></data>
+  <data name="TesPpto_Casc_CapitalTrabajo" xml:space="preserve"><value>Working capital</value></data>
+  <data name="TesPpto_Casc_OtrosMovimientos" xml:space="preserve"><value>Other movements</value></data>
+  <data name="TesPpto_Casc_CajaNeta" xml:space="preserve"><value>Net cash</value></data>
+  <data name="TesPpto_HeatTitulo" xml:space="preserve"><value>Monthly cash map</value></data>
+  <data name="TesPpto_HeatSubFmt" xml:space="preserve"><value>Net and accumulated cash per month · {0} · figures in {1}</value></data>
+  <data name="TesPpto_HeatNeta" xml:space="preserve"><value>Net cash</value></data>
+  <data name="TesPpto_HeatAcum" xml:space="preserve"><value>Accumulated cash</value></data>
+  <data name="TesPpto_HeatSuperavit" xml:space="preserve"><value>Surplus</value></data>
+  <data name="TesPpto_HeatDeficit" xml:space="preserve"><value>Deficit</value></data>
+  <data name="TesPpto_HeatSinMovimiento" xml:space="preserve"><value>No movement</value></data>
+  <data name="TesPpto_TablaTitulo" xml:space="preserve"><value>Treasury by month</value></data>
+  <data name="TesPpto_VistaMensual" xml:space="preserve"><value>Monthly</value></data>
+  <data name="TesPpto_VistaAcumulada" xml:space="preserve"><value>Accumulated</value></data>
+  <data name="TesPpto_ColLinea" xml:space="preserve"><value>Line</value></data>
+  <data name="TesPpto_ColTotal" xml:space="preserve"><value>Range total</value></data>
+  <data name="TesPpto_ColSaldoFin" xml:space="preserve"><value>At close</value></data>
+  <data name="TesPpto_ColVarAbs" xml:space="preserve"><value>Var. $</value></data>
+  <data name="TesPpto_ColVarPct" xml:space="preserve"><value>Var. %</value></data>
+  <data name="TesPpto_ColVsEscenarioFmt" xml:space="preserve"><value>vs {0}</value></data>
+  <data name="TesPpto_InsightsTitulo" xml:space="preserve"><value>AI management summary</value></data>
+  <data name="TesPpto_InsightsSub" xml:space="preserve"><value>Cash position, funding and recommended action</value></data>
+  <data name="TesPpto_InsightsVacio" xml:space="preserve"><value>Press Generate to get the AI reading of the cash position.</value></data>
+  <data name="TesPpto_InsightsSinGenerar" xml:space="preserve"><value>The summary could not be generated.</value></data>
+  <data name="TesPpto_InsightsMetaFmt" xml:space="preserve"><value>Generated on {0} · {1} lines analyzed</value></data>
+  <data name="TesPpto_Generar" xml:space="preserve"><value>Generate</value></data>
+  <data name="TesPpto_Regenerar" xml:space="preserve"><value>Regenerate</value></data>
+  <data name="TesPpto_Analizando" xml:space="preserve"><value>Analyzing treasury…</value></data>
+  <data name="TesPpto_InsPosicion" xml:space="preserve"><value>Cash position</value></data>
+  <data name="TesPpto_InsFinanciacion" xml:space="preserve"><value>Funding</value></data>
+  <data name="TesPpto_InsAccion" xml:space="preserve"><value>Recommended action</value></data>
+  <data name="TesPpto_Exp_ExcelDesc" xml:space="preserve"><value>Workbook with indicators, monthly cash, detail and bridge</value></data>
+  <data name="TesPpto_ExcelHojaResumen" xml:space="preserve"><value>Summary</value></data>
+  <data name="TesPpto_ExcelHojaCajaMensual" xml:space="preserve"><value>Monthly cash</value></data>
+  <data name="TesPpto_ExcelHojaDetalle" xml:space="preserve"><value>Detail by month</value></data>
+  <data name="TesPpto_ExcelHojaPuente" xml:space="preserve"><value>Cash bridge</value></data>
+  <data name="TesPpto_ColIndicador" xml:space="preserve"><value>Indicator</value></data>
+  <data name="TesPpto_ColMes" xml:space="preserve"><value>Month</value></data>
+  <data name="TesPpto_ColConcepto" xml:space="preserve"><value>Item</value></data>
+  <data name="TesPpto_ColMovimiento" xml:space="preserve"><value>Movement</value></data>
+  <data name="TesPpto_ColNivel" xml:space="preserve"><value>Cash level</value></data>
+  <data name="TesPpto_CorreoPeriodo" xml:space="preserve"><value>Period</value></data>
+  <data name="TesPpto_Pdf_Confidencial" xml:space="preserve"><value>Confidential</value></data>
+  <data name="TesPpto_Pdf_PaginaFmt" xml:space="preserve"><value>Page {0} of {1}</value></data>
+  <data name="TesPpto_Pdf_Footer" xml:space="preserve"><value>Budget treasury</value></data>
+  <data name="TesPpto_Pdf_SinInsights" xml:space="preserve"><value>AI insights were not generated for this report.</value></data>
+  <data name="TesPpto_Pdf_Resumen" xml:space="preserve"><value>Executive summary</value></data>
+  <data name="TesPpto_Pdf_Analisis" xml:space="preserve"><value>Cash analysis</value></data>
+  <data name="CfgIA_Emp_Func_InsightsTesoreria" xml:space="preserve"><value>Treasury insights</value></data>
 </root>

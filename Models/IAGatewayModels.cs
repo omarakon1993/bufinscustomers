@@ -7,6 +7,7 @@ namespace bufinscustomers.Models
         public const string ResumenHome = "ResumenHome";       // Resumen ejecutivo del dashboard
         public const string InsightsPYG = "InsightsPYG";       // Insights del Estado de Resultados gerencial
         public const string InsightsBalance = "InsightsBalance"; // Insights del Balance General gerencial
+        public const string InsightsTesoreria = "InsightsTesoreria"; // Insights de la tesorería del presupuesto
     }
 
     /// <summary>Qué hace el sistema cuando una empresa agota su presupuesto mensual de tokens.</summary>
