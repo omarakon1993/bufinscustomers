@@ -31,10 +31,33 @@ window.ExportMenu = (function () {
     function copiarImagen(elemento, nombreArchivo, textos) {
         var t = textos || {};
         var escala = Math.min(2, 14000 / Math.max(elemento.scrollHeight, 1));
+        // Los canvas (gráficos Chart.js) se leen AHORA y se pasan al clon como imágenes: así el contenido sale aunque
+        // html2canvas no pueda dibujar el canvas clonado. También se compensa el scroll de la página.
+        var imgs = Array.prototype.map.call(elemento.querySelectorAll('canvas'), function (c) {
+            try { return c.toDataURL('image/png'); } catch (e) { return null; }
+        });
         var blobP = html2canvas(elemento, {
             backgroundColor: '#ffffff', scale: escala, logging: false, useCORS: true,
-            ignoreElements: function (n) { return n.classList && n.classList.contains('exp'); }
+            scrollX: -window.scrollX, scrollY: -window.scrollY,
+            ignoreElements: function (n) { return n.classList && n.classList.contains('exp'); },
+            onclone: function (doc, clon) {
+                // html2canvas no soporta texto con degradado (background-clip:text): saldría un rectángulo de color.
+                Array.prototype.forEach.call(clon.querySelectorAll('.bm-text'), function (n) {
+                    n.style.background = 'none'; n.style.webkitBackgroundClip = 'border-box'; n.style.color = '#583AFF';
+                });
+                var cs = clon.querySelectorAll('canvas');
+                Array.prototype.forEach.call(cs, function (c, i) {
+                    if (!imgs[i]) return;
+                    var im = doc.createElement('img');
+                    im.src = imgs[i];
+                    im.style.width = c.style.width || (c.clientWidth ? c.clientWidth + 'px' : '100%');
+                    im.style.height = c.style.height || (c.clientHeight ? c.clientHeight + 'px' : 'auto');
+                    im.style.display = 'block';
+                    c.parentNode.replaceChild(im, c);
+                });
+            }
         }).then(function (c) { return new Promise(function (ok) { c.toBlob(ok, 'image/png'); }); });
+        blobP.catch(function (e) { if (window.console) console.error('Copiar imagen:', e); aviso('error', t.imagenError || 'No se pudo generar la imagen'); });
 
         var respaldo = function () {
             return blobP.then(function (b) { descargarBlob(b, nombreArchivo); aviso('info', t.imagenDescargada); });

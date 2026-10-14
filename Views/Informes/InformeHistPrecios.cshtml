@@ -243,6 +243,7 @@
                         <div class="pyg2-card-title">@Resources.Strings.HP_GraficoEvolucionTitulo</div>
                         <div class="pyg2-card-sub">@Resources.Strings.HP_UnidadPrecio</div>
                     </div>
+                    <button type="button" class="lt-tool-btn square on hp-btn-etq" data-chart="evolucion" title="@Resources.Strings.LineaTiempo_Etiquetas" aria-label="@Resources.Strings.LineaTiempo_Etiquetas"><i class="fas fa-tag"></i></button>
                 </div>
                 <div class="hp-chart-lg"><canvas id="hpChartEvolucion"></canvas></div>
             </div>
@@ -261,14 +262,16 @@
                 <div class="pyg2-card-head"><div>
                     <div class="pyg2-card-title">@Resources.Strings.HP_PromedioTitulo</div>
                     <div class="pyg2-card-sub">@Resources.Strings.HP_UnidadPrecio</div>
-                </div></div>
+                </div>
+                <button type="button" class="lt-tool-btn square on hp-btn-etq" data-chart="promedio" title="@Resources.Strings.LineaTiempo_Etiquetas" aria-label="@Resources.Strings.LineaTiempo_Etiquetas"><i class="fas fa-tag"></i></button></div>
                 <div class="hp-chart-md"><canvas id="hpChartPromedio"></canvas></div>
             </div>
             <div class="pyg2-card">
                 <div class="pyg2-card-head"><div>
                     <div class="pyg2-card-title">@Resources.Strings.HP_VariacionChartTitulo</div>
                     <div class="pyg2-card-sub" id="hpVariacionChartSub">&mdash;</div>
-                </div></div>
+                </div>
+                <button type="button" class="lt-tool-btn square on hp-btn-etq" data-chart="variacion" title="@Resources.Strings.LineaTiempo_Etiquetas" aria-label="@Resources.Strings.LineaTiempo_Etiquetas"><i class="fas fa-tag"></i></button></div>
                 <div class="hp-chart-md"><canvas id="hpChartVariacion"></canvas></div>
             </div>
         </div>
@@ -386,6 +389,7 @@
         paleta: ['#6366F1', '#0EA5E9', '#16A34A', '#F59E0B', '#EC4899', '#8B5CF6', '#14B8A6', '#EF4444', '#64748B'],
         umbralFuerte: 0.10,
         reporte: null,
+        etiquetas: { evolucion: true, promedio: true, variacion: true },   // etiquetas de valor, una por gráfico (botón con el icono de etiqueta)
         filtros: null,        // filtros del reporte consultado (para Excel/PDF)
         nombreEmpresa: '',
         nombreEscenario: '',
@@ -827,6 +831,61 @@
         }
     };
 
+    // Etiquetas de valor (mismo criterio que Línea de Tiempo): Chart.js no las trae, así que este plugin liviano las
+    // dibuja encima de cada punto/barra. Anti-superposición: se ordenan por importancia (último, máx./mín., primero,
+    // resto) y las que chocan con una ya dibujada se omiten (el valor sigue en el tooltip y en las tablas).
+    var HP_ETQ_ALTO = 12, HP_ETQ_SEP = 6, HP_ETQ_PAD = 3;
+    var hpEtiquetas = {
+        id: 'hpEtiquetas',
+        afterDatasetsDraw: function (chart) {
+            var cfg = (chart.options.plugins && chart.options.plugins.hpEtiquetas) || {};
+            if (!_hp.etiquetas[cfg.clave]) return;
+            // (el formateador va fuera de las opciones: Chart.js trataría una función ahí como opción "scriptable")
+            var fmtV = cfg.clave === 'variacion' ? fmtPctVar : fmtPrecio, ctx = chart.ctx, area = chart.chartArea, esBarra = chart.config.type === 'bar';
+            var cand = [];
+            ctx.save();
+            ctx.font = '600 10.5px ' + (ctx.font.split(' ').pop() || 'sans-serif');
+            chart.data.datasets.forEach(function (ds, i) {
+                var meta = chart.getDatasetMeta(i);
+                if (!meta || !chart.isDatasetVisible(i)) return;
+                var vals = ds.data, n = meta.data.length, iMax = -1, iMin = -1;
+                vals.forEach(function (v, k) {
+                    if (v === null || v === undefined) return;
+                    if (iMax < 0 || v > vals[iMax]) iMax = k;
+                    if (iMin < 0 || v < vals[iMin]) iMin = k;
+                });
+                meta.data.forEach(function (el, idx) {
+                    var v = vals[idx];
+                    if (v === null || v === undefined || isNaN(el.x) || isNaN(el.y)) return;
+                    var txt = fmtV(v);
+                    cand.push({ x: el.x, y: el.y, txt: txt, w: ctx.measureText(txt).width, neg: v < 0,
+                        color: typeof ds.borderColor === 'string' ? ds.borderColor : '#334155',
+                        prio: idx === n - 1 ? 0 : (idx === iMax || idx === iMin) ? 1 : idx === 0 ? 2 : 3, ord: cand.length });
+                });
+            });
+            cand.sort(function (a, b) { return a.prio - b.prio || a.ord - b.ord; });
+            var puestas = [];
+            cand.forEach(function (c) {
+                var m = c.w / 2 + HP_ETQ_PAD, cx = Math.min(Math.max(c.x, area.left + m), area.right - m);
+                var arriba = c.y - HP_ETQ_SEP - HP_ETQ_ALTO, abajo = c.y + HP_ETQ_SEP;
+                var ops = esBarra ? [c.neg ? abajo : arriba] : (c.neg ? [abajo, arriba] : [arriba, abajo]);
+                for (var k = 0; k < ops.length; k++) {
+                    var b = { x1: cx - m, x2: cx + m, y1: ops[k], y2: ops[k] + HP_ETQ_ALTO, cx: cx, c: c };
+                    if (b.y1 < 0 || b.y2 > area.bottom + 14) continue;
+                    if (puestas.some(function (o) { return b.x1 < o.x2 && b.x2 > o.x1 && b.y1 < o.y2 && b.y2 > o.y1; })) continue;
+                    puestas.push(b); return;
+                }
+            });
+            ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.lineJoin = 'round'; ctx.lineWidth = 3;
+            ctx.strokeStyle = 'rgba(255,255,255,.92)';
+            puestas.forEach(function (b) {
+                ctx.strokeText(b.c.txt, b.cx, b.y1 + 1);
+                ctx.fillStyle = b.c.color; ctx.fillText(b.c.txt, b.cx, b.y1 + 1);
+            });
+            ctx.restore();
+        }
+    };
+
     function destruirCharts() {
         Object.keys(_hp.charts).forEach(function (k) { if (_hp.charts[k]) _hp.charts[k].destroy(); });
         _hp.charts = {};
@@ -852,6 +911,7 @@
         // 1) Evolución por tipo
         var optE = opcionesBase(function (v) { return fmtPrecio(v); });
         optE.plugins.legend = { display: true, position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } };
+        optE.plugins.hpEtiquetas = { clave: 'evolucion' };
         optE.plugins.tooltip.callbacks.label = function (c) { return ' ' + c.dataset.label + ': ' + fmtPrecio(c.parsed.y); };
         _hp.charts.evolucion = new Chart(document.getElementById('hpChartEvolucion'), {
             type: 'line',
@@ -864,11 +924,12 @@
                     };
                 })
             },
-            options: optE, plugins: [hpFondoBlanco]
+            options: optE, plugins: [hpFondoBlanco, hpEtiquetas]
         });
 
         // 2) Promedio general (línea con relleno)
         var optP = opcionesBase(function (v) { return fmtPrecio(v); });
+        optP.plugins.hpEtiquetas = { clave: 'promedio' };
         optP.plugins.tooltip.callbacks.label = function (c) { return ' ' + _hp.t.promedioGeneral + ': ' + fmtPrecio(c.parsed.y); };
         _hp.charts.promedio = new Chart(document.getElementById('hpChartPromedio'), {
             type: 'line',
@@ -879,11 +940,12 @@
                     fill: true, borderWidth: 2.5, tension: 0.25, pointRadius: pocos ? 3 : 0, pointHoverRadius: 5, spanGaps: true
                 }]
             },
-            options: optP, plugins: [hpFondoBlanco]
+            options: optP, plugins: [hpFondoBlanco, hpEtiquetas]
         });
 
         // 3) Variación del promedio general (barras verde/rojo)
         var optV = opcionesBase(function (v) { return fmtPct(v); });
+        optV.plugins.hpEtiquetas = { clave: 'variacion' };
         optV.plugins.tooltip.callbacks.label = function (c) { return ' ' + fmtPctVar(c.parsed.y); };
         var vars = r.Total.Variaciones;
         _hp.charts.variacion = new Chart(document.getElementById('hpChartVariacion'), {
@@ -895,7 +957,7 @@
                     backgroundColor: vars.map(function (v) { return v === null ? 'rgba(0,0,0,0)' : (v >= 0 ? '#16A34A' : '#DC2626'); })
                 }]
             },
-            options: optV, plugins: [hpFondoBlanco]
+            options: optV, plugins: [hpFondoBlanco, hpEtiquetas]
         });
         $('#hpVariacionChartSub').text(r.HayComparable ? _hp.t.variacion : _hp.t.sinComparable);
     }
@@ -1143,6 +1205,14 @@
         $('#hpKnobTo').on('pointerdown', function (e) { e.stopPropagation(); iniciarArrastreSlider(e, 'to'); });
         $('#hpRangoTrack').on('pointerdown', function (e) { clicEnPista(e); });
         $('#hpKnobFrom, #hpKnobTo').on('keydown', function (e) { moverKnobConTeclado(e, this.id === 'hpKnobFrom' ? 'from' : 'to'); });
+
+        // Etiquetas de valor: un botón independiente por gráfico
+        $('#hpResultado').on('click', '.hp-btn-etq', function () {
+            var k = $(this).data('chart');
+            _hp.etiquetas[k] = !_hp.etiquetas[k];
+            $(this).toggleClass('on', _hp.etiquetas[k]);
+            if (_hp.charts[k]) _hp.charts[k].update('none');
+        });
 
         // Documentación
         $('#hpDocBtn').on('click', abrirDocumentacion);
