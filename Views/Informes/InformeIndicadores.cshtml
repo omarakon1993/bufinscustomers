@@ -1,0 +1,1175 @@
+@using System.Web
+@using System.Web.Script.Serialization
+@using bufinscustomers.Models
+@using bufinscustomers.Services
+@{
+    // Informe de indicadores con semáforo (dbo.ModeloPYG + dbo.ModeloBalance + dbo.ModeloFlujoCaja). Cada indicador tiene una ficha
+    // con textos en los .resx (Ind_{Codigo}_Nombre/_Pregunta/_Que/_Formula/_Mejorar/_Regla); los rangos del semáforo salen del catálogo
+    // del servidor (IndicadoresCatalogo) a través del reporte, así no se duplican aquí.
+    var empresas = ViewBag.Empresas as List<Empresas>;
+    var esAdmin = (bool)(ViewBag.EsAdmin ?? false);
+    var culturaJs = System.Globalization.CultureInfo.CurrentUICulture.Name;
+    // T = texto para HTML (Razor lo codifica); J = texto para JS (escapado). Ambos leen de App_GlobalResources/Strings(.en-US).resx.
+    Func<string, string> T = k => (System.Web.HttpContext.GetGlobalResourceObject("Strings", k) as string) ?? k;
+    Func<string, string> J = k => HttpUtility.JavaScriptStringEncode(T(k));
+    ViewBag.Title = T("Ind_PageTitle");
+
+    var jss = new JavaScriptSerializer();
+    var fichas = IndicadoresCatalogo.Todos.ToDictionary(d => d.Codigo, d => new Dictionary<string, string>
+    {
+        { "n", T("Ind_" + d.Codigo + "_Nombre") }, { "p", T("Ind_" + d.Codigo + "_Pregunta") }, { "q", T("Ind_" + d.Codigo + "_Que") },
+        { "f", T("Ind_" + d.Codigo + "_Formula") }, { "m", T("Ind_" + d.Codigo + "_Mejorar") }, { "r", T("Ind_" + d.Codigo + "_Regla") }
+    });
+    var familias = IndicadoresCatalogo.Familias.ToDictionary(f => f, f => T("Ind_Fam_" + f));
+    var motivos = new[] { "sin_dato", "ltm_parcial", "divisor_cero", "ebitda_no_positivo", "sin_intereses", "sin_comparativo" }.ToDictionary(m => m, m => T("Ind_Motivo_" + m));
+    var niveles = new[] { "verde", "amarillo", "naranja", "rojo", "gris" }.ToDictionary(n => n, n => T("Ind_Nivel_" + n));
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
+<link href="~/Assets/css/informe-pyg.css" rel="stylesheet" />
+<link href="~/Assets/css/informe-tesoreria.css" rel="stylesheet" />
+<link href="~/Assets/css/informe-indicadores.css" rel="stylesheet" />
+<link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
+<link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
+
+<div class="container-fluid px-4">
+<div class="lt-app">
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-tachometer-alt powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@T("Ind_PageTitle")</h1>
+            @Html.Partial("_ModeloBufinsTag")
+            <button type="button" class="header-tag-doc" id="indDocBtn" title="@T("Ind_DocumentacionTooltip")"><i class="fas fa-book"></i>@T("Common_DocumentacionTag")</button>
+        </div>
+    </div>
+
+    @Html.AntiForgeryToken()
+
+    <div class="filter-card">
+        <div class="lt-section-title"><span>@T("Common_FiltrosConsulta")</span></div>
+        <div class="lt-grid-quever tes-grid-4">
+            <div class="lt-field">
+                <label class="lt-field-label" for="indEmpresa">@T("Common_LabelEmpresa")</label>
+                <select id="indEmpresa" class="lt-field-select">
+                    @if (esAdmin) { <option value="">@T("Common_Seleccione")</option> }
+                    @if (empresas != null)
+                    {
+                        foreach (var e in empresas)
+                        {
+                            <option value="@e.Id">@e.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="lt-field">
+                <label class="lt-field-label" for="indEscenario">@T("Common_LabelEscenario")</label>
+                <select id="indEscenario" class="lt-field-select">
+                    @if (ViewBag.Escenarios != null)
+                    {
+                        foreach (var esc in ViewBag.Escenarios)
+                        {
+                            <option value="@esc.Id">@esc.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="lt-field">
+                <label class="lt-field-label" for="indComparar">@T("Ind_LabelComparar") <i class="fas fa-circle-info tes-info" tabindex="0" title="@T("Ind_CompararHint")" aria-label="@T("Ind_CompararHint")"></i></label>
+                <select id="indComparar" class="lt-field-select">
+                    <option value="cierreAnterior">@T("Ind_Comparar_cierreAnterior")</option>
+                    <option value="mesAnterior">@T("Ind_Comparar_mesAnterior")</option>
+                    <option value="mismoMesAnioAnterior">@T("Ind_Comparar_mismoMesAnioAnterior")</option>
+                </select>
+            </div>
+            <div class="lt-field">
+                <label class="lt-field-label" for="indDetalle">@T("Ind_LabelDetalle")</label>
+                <select id="indDetalle" class="lt-field-select">
+                    <option value="todos">@T("Ind_DetalleTodos")</option>
+                    <option value="alertas">@T("Ind_DetalleAlertas")</option>
+                </select>
+            </div>
+        </div>
+
+        @* Rango: mismo control que PYG/Balance/Flujos (slider continuo + atajos compartidos). El extremo derecho es el mes de corte. *@
+        <div class="lt-section-title mt"><span>@T("Ind_FilaCorte")</span></div>
+        <div>
+            <div class="rango-atajos" id="indAtajos">
+                <div class="rango-atajos-grupo">
+                    <button type="button" data-preset="todo">@T("Rango_Todo")</button>
+                </div>
+                <div class="rango-atajos-grupo">
+                    <button type="button" data-preset="ytd">@T("Rango_AnioEnCurso")</button>
+                    <button type="button" data-preset="6m">@T("Rango_Ultimos6Meses")</button>
+                    <button type="button" data-preset="3m">@T("Rango_UltimoTrimestre")</button>
+                    <button type="button" data-preset="mesAnterior">@T("Rango_MesAnterior")</button>
+                    <button type="button" data-preset="mesActual">@T("Rango_MesActual")</button>
+                </div>
+            </div>
+            <div class="lt-range-card">
+                <div class="lt-range-head">
+                    <span class="lbl"><span id="indRangoDesdeLbl">&mdash;</span><i class="fas fa-long-arrow-alt-right"></i><span id="indRangoHastaLbl">&mdash;</span></span>
+                    <span class="lt-range-badge" id="indRangoBadge">&mdash;</span>
+                </div>
+                <div class="lt-range-track disabled" id="indRangoTrack">
+                    <div class="bg"></div>
+                    <div class="sel" id="indRangoSel"></div>
+                    <div class="knob from" id="indKnobFrom" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-label="@T("LineaTiempo_LabelRango")"></div>
+                    <div class="knob to" id="indKnobTo" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-label="@T("LineaTiempo_LabelRango")"></div>
+                </div>
+                <div class="lt-range-years" id="indRangoYears"></div>
+            </div>
+            <p class="lt-help">@T("Ind_RangoHint")</p>
+            <p class="lt-help" id="indSinMeses" style="display:none;">@T("Ind_SinMesesDatos")</p>
+        </div>
+
+        <div class="btn-group-actions">
+            <button type="button" id="btnConsultarInd" class="btn btn-modern-gradient" disabled>
+                <i class="fas fa-arrow-right mr-1"></i>@T("LineaTiempo_BtnGenerar")
+            </button>
+            <button type="button" id="btnLimpiarInd" class="btn btn-modern-secondary">@T("Common_Limpiar")</button>
+        </div>
+    </div>
+
+    <div id="indEstadoInicial" class="lt-card lt-empty">
+        <div class="lt-empty-icon"><i class="fas fa-tachometer-alt"></i></div>
+        <h4>@T("Ind_EstadoInicialTitulo")</h4>
+        <p>@T("Ind_EstadoInicialDesc")</p>
+    </div>
+
+    <div id="indSinDatos" class="lt-card lt-empty" style="display:none;">
+        <div class="lt-empty-icon"><i class="fas fa-inbox"></i></div>
+        <h4>@T("Ind_SinDatosTitulo")</h4>
+        <p id="indSinDatosDesc">@T("Ind_SinDatosDesc")</p>
+    </div>
+
+    <div id="indResultado" style="display:none;">
+
+        @* 1. Encabezado: marca + empresa + chips de contexto + exportaciones *@
+        <div class="lt-card" id="indPanelResultado">
+            <div class="pyg2-letterhead">
+                <span class="pyg2-brand"><span class="bm-text">@T("LineaTiempo_BrandMark")</span><span class="bm-sub">@T("Ind_Subtitulo")</span></span>
+                <span class="fecha"><span>@T("Flujo_GeneradoEl")</span> <span id="indFechaGenerado">&mdash;</span></span>
+            </div>
+            <div class="pyg2-head">
+                <div class="pyg2-head-l">
+                    <h2 id="indTituloEmpresa">&mdash;</h2>
+                    <div class="pyg2-chips">
+                        <span class="pyg2-chip primary"><i class="fas fa-calendar"></i><span id="indChipCorte">&mdash;</span></span>
+                        <span class="pyg2-chip" id="indChipEscenario">&mdash;</span>
+                        <span class="pyg2-chip" id="indChipComparado">&mdash;</span>
+                    </div>
+                </div>
+                <div class="pyg2-tools">
+                    <button type="button" class="lt-tool-btn ind-btn-glosario" id="indBtnGlosario"><i class="fas fa-book-open"></i><span>@T("Ind_BtnGlosario")</span></button>
+                    <span class="sep"></span>
+                    @Html.Partial("_ExportMenu", new bufinscustomers.Models.ExportMenuVM
+                    {
+                        Id = "indExp",
+                        ExcelDesc = T("Ind_Exp_ExcelDesc")
+                    })
+                </div>
+            </div>
+        </div>
+        <form id="frmExportarExcelInd" method="post" action="@Url.Action("ExportarExcel", "InformeIndicadores")">
+            @Html.AntiForgeryToken()
+            <div id="indExpCampos"></div>@* los llena el botón Excel con los filtros del reporte consultado *@
+        </form>
+
+        @* 2. Resumen del semáforo + los que requieren atención *@
+        <div class="ind-sem">
+            <div class="ind-sem-card">
+                <div class="ind-sem-title"><span>@T("Ind_ResumenTitulo")</span><span class="line"></span></div>
+                <div class="ind-counts" id="indCounts"></div>
+            </div>
+            <div class="ind-sem-card">
+                <div class="ind-sem-title"><span>@T("Ind_AtencionTitulo")</span><span class="line"></span></div>
+                <div class="ind-atencion" id="indAtencion"></div>
+            </div>
+        </div>
+        <p class="lt-help" id="indNotaParcial" style="display:none;"></p>
+        <p class="lt-help" id="indNotaSinComp" style="display:none;"></p>
+        <p class="lt-help" id="indNotaSinBalance" style="display:none;"></p>
+
+        @* 3. Tarjetas por familia *@
+        <div id="indFamilias"></div>
+
+        @* 4. Tabla completa *@
+        <div class="pyg2-table-card">
+            <div class="pyg2-card-head" style="align-items:center">
+                <div>
+                    <div class="pyg2-card-title">@T("Ind_TablaTitulo")</div>
+                    <div class="pyg2-card-sub" id="indInfoBadge">&mdash;</div>
+                </div>
+            </div>
+            <div class="pyg2-table-wrap">
+                <table class="pyg2-table ind-tabla" id="indTabla"><thead id="indTablaHead"></thead><tbody id="indTablaBody"></tbody></table>
+            </div>
+            <div class="pyg2-table-legend">
+                <span><i class="dot" style="background:#16A34A"></i>@T("Ind_LeyendaFavorable")</span>
+                <span><i class="dot" style="background:#DC2626"></i>@T("Ind_LeyendaDesfavorable")</span>
+                <span><i class="fas fa-circle-info"></i>@T("Ind_NotaReferencia")</span>
+            </div>
+        </div>
+
+        @* Insights gerenciales (IA): se ocultan si la empresa tiene la IA apagada *@
+        @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
+        {
+        <div class="pyg-insights-card" style="margin-top:16px">
+            <div class="pyg-insights-head">
+                <div>
+                    <span class="pyg-insights-title"><i class="fas fa-wand-magic-sparkles"></i>@T("Ind_InsightsTitulo")</span>
+                    <div class="pyg-insights-meta" id="indInsightsMeta">@T("Ind_InsightsSub")</div>
+                </div>
+                <button type="button" id="btnGenerarInsightsInd" class="pyg2-ins-btn"><i class="fas fa-wand-magic-sparkles"></i><span>@T("Ind_Generar")</span></button>
+            </div>
+            <div id="indInsightsBody"></div>
+            <div id="indInsightsLoading" style="display:none;text-align:center;padding:14px 0;">
+                @Html.Partial("_LoaderDots", "dark")
+                <p style="margin-top:8px;font-size:12.5px;color:#8B85A0;">@T("Ind_Analizando")</p>
+            </div>
+
+            <div class="mt-3">
+                <label for="indPregunta" class="mb-1" style="font-weight:700;"><i class="fas fa-comments mr-1"></i>@T("IAInforme_Titulo")</label>
+                <div class="d-flex" style="gap:8px;flex-wrap:wrap;">
+                    <input type="text" id="indPregunta" class="form-control" maxlength="@bufinscustomers.Helpers.IAModuloHelper.MaxCharsPregunta()" style="flex:1;min-width:240px;"
+                           placeholder="@T("IAInforme_Placeholder")" />
+                    <button type="button" id="btnIndPreguntar" class="pyg2-ins-btn"><i class="fas fa-paper-plane"></i><span>@T("IAInforme_Btn")</span></button>
+                </div>
+                <div id="indRespuesta" class="mt-2"></div>
+            </div>
+        </div>
+        }
+    </div>
+
+</div>
+</div>
+
+@* Ficha / glosario: modal centrado, claro y compacto. Se llena desde JS con los textos del catálogo. *@
+<div class="ind-ficha-ov" id="indFichaOv">
+    <div class="ind-ficha" id="indFicha" role="dialog" aria-modal="true" aria-labelledby="indFichaTitulo">
+        <div class="ind-ficha-rule"></div>
+        <div class="ind-ficha-head">
+            <h5 id="indFichaTitulo"><i class="fas fa-book-open"></i><span class="tt">@T("Ind_Ficha_Titulo")</span><span class="ind-ficha-fam" id="indFichaFam"></span></h5>
+            <button type="button" class="ind-ficha-x" id="indFichaCerrar" title="@T("Common_Cerrar")" aria-label="@T("Common_Cerrar")"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="ind-ficha-body" id="indFichaBody"></div>
+    </div>
+</div>
+
+<div id="overlayConsultandoInd" class="overlay-cargando" style="display:none;">
+    <div class="overlay-cargando-card">
+        @Html.Partial("_LoaderDots", "aqua")
+        <h5 class="overlay-cargando-title">@T("Ind_JS_Consultando")</h5>
+    </div>
+</div>
+
+@Html.Partial("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+@Html.Partial("_DocumentacionVisor", T("Ind_Doc_ModalTitulo"))
+
+@section scripts {
+<script src="~/Assets/js/select2/select2.min.js"></script>
+<script src="~/Assets/js/jspdf.umd.min.js"></script>
+<script src="~/Assets/js/html2canvas.min.js"></script>
+<script src="~/Assets/js/export-menu.js"></script>
+<script src="~/Assets/js/doc-visor.js"></script>
+<script src="~/Assets/js/bufins-markdown.js"></script>
+<script src="~/Assets/js/rango-atajos.js"></script>
+
+<script>
+    // Textos del botón Exportar estándar (ExportMenu) — ver CLAUDE.md, "Botón Exportar desplegable".
+    var EXP_T = {
+        generando: '@Html.Raw(J("Common_Exp_Generando"))',
+        errorGenerar: '@Html.Raw(J("Common_Exp_ErrorGenerar"))',
+        listo: '@Html.Raw(J("Common_Exp_Listo"))',
+        imagenCopiada: '@Html.Raw(J("Common_Exp_ImagenCopiada"))',
+        imagenDescargada: '@Html.Raw(J("Common_Exp_ImagenDescargada"))',
+        valDestino: '@Html.Raw(J("RevisarCargue_Correo_ValDestino"))',
+        valMaximo: '@Html.Raw(J("RevisarCargue_Correo_ValMaximo"))',
+        enviando: '@Html.Raw(J("RevisarCargue_Correo_Enviando"))',
+        error: '@Html.Raw(J("Common_ExpCorreo_Error"))',
+        exitoTitulo: '@Html.Raw(J("Modelo_Correo_ExitoTitulo"))',
+        aceptar: '@Html.Raw(J("Common_Aceptar"))'
+    };
+
+    var _ind = {
+        urls: {
+            meses: '@Url.Action("ObtenerMeses", "InformeIndicadores")',
+            reporte: '@Url.Action("ConsultarReporte", "InformeIndicadores")',
+            insights: '@Url.Action("GenerarInsightsIA", "InformeIndicadores")',
+            preguntar: '@Url.Action("PreguntarInforme", "InformeIndicadores")',
+            correo: '@Url.Action("EnviarPorCorreo", "InformeIndicadores")',
+            documentacion: '@Url.Action("Ver", "Documentacion", new { clave = "indicadores" })'
+        },
+        token: $('input[name="__RequestVerificationToken"]').first().val(),
+        cultura: '@Html.Raw(HttpUtility.JavaScriptStringEncode(culturaJs))',
+        esAdmin: @Html.Raw(esAdmin.ToString().ToLowerInvariant()),
+        mesesNombres: [
+            '@Html.Raw(J("Common_Mes1"))', '@Html.Raw(J("Common_Mes2"))', '@Html.Raw(J("Common_Mes3"))', '@Html.Raw(J("Common_Mes4"))',
+            '@Html.Raw(J("Common_Mes5"))', '@Html.Raw(J("Common_Mes6"))', '@Html.Raw(J("Common_Mes7"))', '@Html.Raw(J("Common_Mes8"))',
+            '@Html.Raw(J("Common_Mes9"))', '@Html.Raw(J("Common_Mes10"))', '@Html.Raw(J("Common_Mes11"))', '@Html.Raw(J("Common_Mes12"))'
+        ],
+        familiasOrden: @Html.Raw(jss.Serialize(IndicadoresCatalogo.Familias)),
+        t: {
+            fichas: @Html.Raw(jss.Serialize(fichas)),
+            familias: @Html.Raw(jss.Serialize(familias)),
+            motivos: @Html.Raw(jss.Serialize(motivos)),
+            niveles: @Html.Raw(jss.Serialize(niveles)),
+            dias: '@Html.Raw(J("Ind_UnidadDias"))',
+            sinValor: '@Html.Raw(J("Ind_SinValor"))',
+            parcialFmt: '@Html.Raw(J("Ind_ParcialFmt"))',
+            motivoParcialFmt: '@Html.Raw(J("Ind_MotivoParcialFmt"))',
+            vsFmt: '@Html.Raw(J("Ind_VsFmt"))',
+            chipCorteFmt: '@Html.Raw(J("Ind_ChipCorteFmt"))',
+            chipComparadoFmt: '@Html.Raw(J("Ind_ChipComparadoFmt"))',
+            chipSinComparar: '@Html.Raw(J("Ind_ChipSinComparar"))',
+            atencionVacio: '@Html.Raw(J("Ind_AtencionVacio"))',
+            notaParcialFmt: '@Html.Raw(J("Ind_NotaParcialFmt"))',
+            notaSinComparativo: '@Html.Raw(J("Ind_NotaSinComparativo"))',
+            notaSinBalance: '@Html.Raw(J("Ind_NotaSinBalance"))',
+            countsAria: '@Html.Raw(J("Ind_CountsAria"))',
+            infoBadgeFmt: '@Html.Raw(J("Ind_InfoBadgeFmt"))',
+            colFamilia: '@Html.Raw(J("Ind_ColFamilia"))',
+            colIndicador: '@Html.Raw(J("Ind_ColIndicador"))',
+            colValor: '@Html.Raw(J("Ind_ColValor"))',
+            colComparativo: '@Html.Raw(J("Ind_ColComparativo"))',
+            colVariacion: '@Html.Raw(J("Ind_ColVariacion"))',
+            colSemaforo: '@Html.Raw(J("Ind_ColSemaforo"))',
+            colReferencia: '@Html.Raw(J("Ind_ColReferencia"))',
+            rangoPositivo: '@Html.Raw(J("Ind_RangoPositivo"))',
+            rangoVerde: '@Html.Raw(J("Ind_Rango_Verde"))',
+            rangoAmarillo: '@Html.Raw(J("Ind_Rango_Amarillo"))',
+            rangoNaranja: '@Html.Raw(J("Ind_Rango_Naranja"))',
+            rangoRojo: '@Html.Raw(J("Ind_Rango_Rojo"))',
+            fichaPregunta: '@Html.Raw(J("Ind_Ficha_Pregunta"))',
+            fichaQue: '@Html.Raw(J("Ind_Ficha_Que"))',
+            fichaFormula: '@Html.Raw(J("Ind_Ficha_Formula"))',
+            fichaRangos: '@Html.Raw(J("Ind_Ficha_Rangos"))',
+            fichaMejorar: '@Html.Raw(J("Ind_Ficha_Mejorar"))',
+            fichaRegla: '@Html.Raw(J("Ind_Ficha_Regla"))',
+            fichaAhora: '@Html.Raw(J("Ind_Ficha_Ahora"))',
+            fichaComparado: '@Html.Raw(J("Ind_Ficha_Comparado"))',
+            fichaAviso: '@Html.Raw(J("Ind_NotaReferencia"))',
+            fichaTitulo: '@Html.Raw(J("Ind_Ficha_Titulo"))',
+            glosarioTitulo: '@Html.Raw(J("Ind_Glosario_Titulo"))',
+            favorable: '@Html.Raw(J("Ind_LeyendaFavorable"))',
+            desfavorable: '@Html.Raw(J("Ind_LeyendaDesfavorable"))',
+            verFicha: '@Html.Raw(J("Ind_VerFicha"))',
+            insightsVacio: '@Html.Raw(J("Ind_InsightsVacio"))',
+            insightsSub: '@Html.Raw(J("Ind_InsightsSub"))',
+            insightsMetaFmt: '@Html.Raw(J("Ind_InsightsMetaFmt"))',
+            insightsSinGenerar: '@Html.Raw(J("Ind_InsightsSinGenerar"))',
+            generar: '@Html.Raw(J("Ind_Generar"))',
+            regenerar: '@Html.Raw(J("Ind_Regenerar"))',
+            insFortaleza: '@Html.Raw(J("Ind_InsFortaleza"))',
+            insRiesgo: '@Html.Raw(J("Ind_InsRiesgo"))',
+            insPrioridad: '@Html.Raw(J("Ind_InsPrioridad"))',
+            errorServidor: '@Html.Raw(J("Ind_ErrorServidor"))',
+            badgeMes: '@Html.Raw(J("LineaTiempo_BadgeMes"))',
+            badgeMeses: '@Html.Raw(J("LineaTiempo_BadgeMeses"))',
+            rangoTooltipFmt: '@Html.Raw(J("Rango_TooltipFmt"))',
+            rangoSinDatosFmt: '@Html.Raw(J("Rango_SinDatosFmt"))',
+            pdf: {
+                marca: '@Html.Raw(J("LineaTiempo_BrandMark"))',
+                titulo: '@Html.Raw(J("Ind_PageTitle"))',
+                subtitulo: '@Html.Raw(J("Ind_Subtitulo"))',
+                generadoEl: '@Html.Raw(J("Flujo_GeneradoEl"))',
+                confidencial: '@Html.Raw(J("Flujo_Pdf_Confidencial"))',
+                paginaFmt: '@Html.Raw(J("Flujo_Pdf_PaginaFmt"))',
+                sinInsights: '@Html.Raw(J("Ind_Pdf_SinInsights"))',
+                resumen: '@Html.Raw(J("Ind_ResumenTitulo"))',
+                atencion: '@Html.Raw(J("Ind_AtencionTitulo"))',
+                insightsTitulo: '@Html.Raw(J("Ind_InsightsTitulo"))',
+                tablaTitulo: '@Html.Raw(J("Ind_TablaTitulo"))'
+            }
+        },
+        reporteActual: null,
+        filtrosConsultados: null,
+        insightsTexto: null,
+        mesesCache: [],
+        rango: [],
+        iDesde: 0,
+        iHasta: 0,
+        hoy: { anio: @DateTime.Now.Year, mes: @DateTime.Now.Month }   // fecha de hoy del SERVIDOR (atajos)
+    };
+    _ind.mesesCache = _ind.mesesNombres.map(function (nombre, idx) {
+        return { mes: idx + 1, nombre: nombre, abrev: nombre.substring(0, 3) };
+    });
+
+    var COLOR_NIVEL = { verde: '#16A34A', amarillo: '#EAB308', naranja: '#F97316', rojo: '#DC2626', gris: '#94A3B8' };
+    var elEmpresa = $('#indEmpresa'), elEscenario = $('#indEscenario');
+    var CH_MDASH = String.fromCharCode(0x2014), CH_NDASH = String.fromCharCode(0x2013), CH_MIDDOT = String.fromCharCode(0xB7);
+
+    function escHtml(t) { return $('<span>').text(t == null ? '' : String(t)).html(); }
+    var s2lang = {
+        noResults: function () { return '@Html.Raw(J("Common_Select2NoResults"))'; },
+        searching: function () { return '@Html.Raw(J("Common_Select2Searching"))'; }
+    };
+    function empresaSeleccionada() { var v = elEmpresa.val(); return v ? parseInt(v, 10) : null; }
+    function escenarioSeleccionado() { var v = elEscenario.val(); return v ? parseInt(v, 10) : 1; }
+    function mostrarError(mensaje) {
+        console.error('[InformeIndicadores]', mensaje);
+        if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: '@Html.Raw(J("Common_Error"))', text: mensaje });
+        else alert(mensaje);
+    }
+
+    // ===== Formato de valores por tipo de indicador =====
+    function nf(v, dec, signo) {
+        var op = { minimumFractionDigits: dec, maximumFractionDigits: dec };
+        if (signo) op.signDisplay = 'exceptZero';
+        try { return new Intl.NumberFormat(_ind.cultura, op).format(v); }
+        catch (e) { return (signo && v > 0 ? '+' : '') + v.toFixed(dec); }
+    }
+    function fmtValor(f, v) {
+        if (v === null || v === undefined) return CH_MDASH;
+        if (f === 'pct') return nf(v * 100, 1) + '%';
+        if (f === 'x') return nf(v, 2) + 'x';
+        if (f === 'dias') return nf(v, 0) + ' ' + _ind.t.dias;
+        return nf(v / 1000000, 2) + ' M';     // moneda: millones
+    }
+    function fmtVariacion(f, v) {
+        if (v === null || v === undefined) return CH_MDASH;
+        if (f === 'pct') return nf(v * 100, 1, true) + ' pp';
+        if (f === 'x') return nf(v, 2, true) + 'x';
+        if (f === 'dias') return nf(v, 0, true) + ' ' + _ind.t.dias;
+        return nf(v / 1000000, 2, true) + ' M';
+    }
+    function nombreInd(i) { return (_ind.t.fichas[i.Codigo] || {}).n || i.Codigo; }
+    function nombreNivel(n) { return _ind.t.niveles[n] || n; }
+    function claseVar(i) { return i.Favorable === true ? 'good' : (i.Favorable === false ? 'bad' : 'neu'); }
+
+    // Texto del valor de una tarjeta: el número o el motivo por el que no hay número.
+    function textoSinValor(i) {
+        if (i.Motivo === 'ltm_parcial') return _ind.t.motivoParcialFmt.replace('{0}', i.MesesLtm);
+        return _ind.t.motivos[i.Motivo] || _ind.t.sinValor;
+    }
+
+    // ascii = true para el PDF: la fuente estándar de jsPDF no trae los signos ≥ y ≤.
+    function rangosTexto(i, ascii) {
+        var t = _ind.t;
+        if (i.Formato === 'moneda') return t.rangoPositivo;
+        if (i.MasEsMejor === null || !i.Cortes) return '';
+        var s = ascii ? (i.MasEsMejor ? '>= ' : '<= ') : (i.MasEsMejor ? '≥ ' : '≤ '), c = i.Cortes;
+        return t.rangoVerde + ' ' + s + fmtValor(i.Formato, c[0]) + ' ' + CH_MIDDOT + ' ' + t.rangoAmarillo + ' ' + s + fmtValor(i.Formato, c[1]) +
+            ' ' + CH_MIDDOT + ' ' + t.rangoNaranja + ' ' + s + fmtValor(i.Formato, c[2]) + ' ' + CH_MIDDOT + ' ' + t.rangoRojo;
+    }
+
+    // ===== Rango / meses =====
+    function actualizarBotonConsultar() {
+        var listo = (!_ind.esAdmin || !!empresaSeleccionada()) && !!elEscenario.val() && _ind.rango.length > 0;
+        $('#btnConsultarInd').prop('disabled', !listo);
+    }
+    function ocultarResultados() { $('#indResultado, #indSinDatos').hide(); $('#indEstadoInicial').show(); }
+
+    // Rango por defecto: los últimos 24 meses con datos; el corte es el último mes.
+    function rangoPorDefecto() {
+        var n = _ind.rango.length;
+        if (!n) return null;
+        return { d: Math.max(0, n - 24), h: n - 1 };
+    }
+
+    function cargarMeses() {
+        _ind.rango = []; _ind.iDesde = 0; _ind.iHasta = 0;
+        $('#indSinMeses').hide();
+        ocultarResultados();
+        pintarRango();
+        actualizarBotonConsultar();
+
+        var idEmpresa = empresaSeleccionada();
+        if (_ind.esAdmin && !idEmpresa) return;
+
+        $.post(_ind.urls.meses, { idEmpresa: idEmpresa, idEscenario: escenarioSeleccionado(), __RequestVerificationToken: _ind.token }, function (resp) {
+            if (!resp || !resp.success) { mostrarError((resp && resp.message) || _ind.t.errorServidor); return; }
+            _ind.rango = resp.meses || [];
+            $('#indSinMeses').toggle(!_ind.rango.length);
+            var inicial = rangoPorDefecto();
+            if (inicial) { _ind.iDesde = inicial.d; _ind.iHasta = inicial.h; }
+            pintarRango();
+            actualizarBotonConsultar();
+        }).fail(function (xhr) { mostrarError(_ind.t.errorServidor + ' (HTTP ' + xhr.status + ')'); });
+    }
+
+    // ===== Slider de rango continuo (mismo control que PYG/Línea de Tiempo) =====
+    function pctIndice(i) { var n = _ind.rango.length; return n > 1 ? (i / (n - 1) * 100) : 0; }
+
+    function pintarRango() {
+        var meses = _ind.rango, n = meses.length, track = $('#indRangoTrack');
+        if (n === 0) {
+            track.addClass('disabled');
+            $('#indRangoDesdeLbl, #indRangoHastaLbl, #indRangoBadge').text(CH_MDASH);
+            $('#indRangoHastaLbl').show(); $('#indRangoDesdeLbl').next('i').show();
+            $('#indRangoYears').empty();
+            $('#indAtajos button').removeClass('active no-disponible').prop('disabled', true).attr('title', '');
+            return;
+        }
+        track.removeClass('disabled');
+        var pD = pctIndice(_ind.iDesde), pH = pctIndice(_ind.iHasta);
+        $('#indKnobFrom').css('left', pD + '%').attr({ 'aria-valuemin': 0, 'aria-valuemax': n - 1, 'aria-valuenow': _ind.iDesde, 'aria-valuetext': meses[_ind.iDesde].etiqueta });
+        $('#indKnobTo').css('left', pH + '%').attr({ 'aria-valuemin': 0, 'aria-valuemax': n - 1, 'aria-valuenow': _ind.iHasta, 'aria-valuetext': meses[_ind.iHasta].etiqueta });
+        $('#indRangoSel').css({ left: pD + '%', width: (pH - pD) + '%' });
+
+        var unMes = _ind.iDesde === _ind.iHasta;
+        $('#indRangoDesdeLbl').text(meses[_ind.iDesde].etiqueta);
+        $('#indRangoHastaLbl').text(unMes ? '' : meses[_ind.iHasta].etiqueta).toggle(!unMes);
+        $('#indRangoDesdeLbl').next('i').toggle(!unMes);
+        var total = _ind.iHasta - _ind.iDesde + 1;
+        $('#indRangoBadge').text(total + ' ' + (total === 1 ? _ind.t.badgeMes : _ind.t.badgeMeses));
+
+        var anios = [];
+        meses.forEach(function (m) { if (anios.indexOf(m.anio) === -1) anios.push(m.anio); });
+        $('#indRangoYears').html(anios.map(function (a) { return '<span>' + a + '</span>'; }).join(''));
+        RangoAtajos.pintarBotones($('#indAtajos button'), _ind.rango, _ind.hoy, _ind.iDesde, _ind.iHasta,
+            _ind.mesesCache.map(function (m) { return m.abrev; }), { tooltipFmt: _ind.t.rangoTooltipFmt, sinDatosFmt: _ind.t.rangoSinDatosFmt });
+    }
+    function aplicarPresetRango(preset) {
+        var p = RangoAtajos.indices(preset, _ind.rango, _ind.hoy);
+        if (!p) return;   // atajo sin datos (.no-disponible)
+        _ind.iDesde = p.d; _ind.iHasta = p.h;
+        pintarRango();
+    }
+    function indiceDesdeClientX(clientX) {
+        var rect = document.getElementById('indRangoTrack').getBoundingClientRect();
+        var frac = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+        return Math.round(frac * (_ind.rango.length - 1));
+    }
+    function moverExtremo(cual, idx) {
+        idx = Math.min(_ind.rango.length - 1, Math.max(0, idx));
+        if (cual === 'from') { _ind.iDesde = idx; if (_ind.iDesde > _ind.iHasta) _ind.iHasta = _ind.iDesde; }
+        else { _ind.iHasta = idx; if (_ind.iHasta < _ind.iDesde) _ind.iDesde = _ind.iHasta; }
+        pintarRango();
+    }
+    function iniciarArrastreSlider(e, cual) {
+        if (_ind.rango.length < 2) return;
+        e.preventDefault();
+        var track = $('#indRangoTrack').addClass('dragging');
+        function onMove(ev) { moverExtremo(cual, indiceDesdeClientX(ev.clientX)); }
+        function onUp() { track.removeClass('dragging'); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); }
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+    }
+    function clicEnPista(e) {
+        if ($(e.target).hasClass('knob') || _ind.rango.length < 2) return;
+        var idx = indiceDesdeClientX(e.clientX);
+        var cual = Math.abs(idx - _ind.iDesde) <= Math.abs(idx - _ind.iHasta) ? 'from' : 'to';
+        moverExtremo(cual, idx);
+        iniciarArrastreSlider(e, cual);
+    }
+    function moverKnobConTeclado(e, cual) {
+        var n = _ind.rango.length;
+        if (n < 2) return;
+        var idx = cual === 'from' ? _ind.iDesde : _ind.iHasta;
+        if (e.key === 'ArrowLeft') idx -= 1; else if (e.key === 'ArrowRight') idx += 1;
+        else if (e.key === 'Home') idx = 0; else if (e.key === 'End') idx = n - 1; else return;
+        e.preventDefault();
+        moverExtremo(cual, idx);
+    }
+
+    function etiquetaMes(anio, mes) { return _ind.mesesCache[mes - 1].nombre + ' ' + anio; }
+
+    function filtrosDelSlider() {
+        var d = _ind.rango[_ind.iDesde], h = _ind.rango[_ind.iHasta];
+        return {
+            IdEmpresa: empresaSeleccionada() || '',
+            IdEscenario: escenarioSeleccionado(),
+            AnioDesde: d.anio, MesDesde: d.mes, AnioHasta: h.anio, MesHasta: h.mes,
+            Comparar: $('#indComparar').val() || 'cierreAnterior'
+        };
+    }
+
+    function consultarReporte() {
+        if (!_ind.rango.length) return;
+        var filtros = filtrosDelSlider();
+        $('#overlayConsultandoInd').css('display', 'flex');
+        $.post(_ind.urls.reporte, $.extend({ __RequestVerificationToken: _ind.token }, filtros), function (resp) {
+            $('#overlayConsultandoInd').hide();
+            if (!resp || !resp.success) { mostrarError((resp && resp.message) || _ind.t.errorServidor); return; }
+            var reporte = resp.reporte;
+            if (!reporte || reporte.SinDatos) { $('#indEstadoInicial, #indResultado').hide(); $('#indSinDatos').show(); return; }
+            pintarReporte(reporte, filtros);
+        }).fail(function (xhr) { $('#overlayConsultandoInd').hide(); mostrarError(_ind.t.errorServidor + ' (HTTP ' + xhr.status + ')'); });
+    }
+
+    function pintarReporte(r, filtros) {
+        _ind.reporteActual = r;
+        _ind.filtrosConsultados = filtros;   // Excel / insights / correo usan exactamente estos filtros
+        reiniciarInsights();
+
+        $('#indTituloEmpresa').text(elEmpresa.find(':selected').text() || '');
+        $('#indChipCorte').text(_ind.t.chipCorteFmt.replace('{0}', etiquetaMes(r.AnioHasta, r.MesHasta)));
+        $('#indChipEscenario').text(elEscenario.find(':selected').text() || '');
+        $('#indChipComparado').text(r.HayComparativo ? _ind.t.chipComparadoFmt.replace('{0}', etiquetaMes(r.AnioComp, r.MesComp)) : _ind.t.chipSinComparar);
+        try { $('#indFechaGenerado').text(new Date().toLocaleDateString(_ind.cultura, { day: 'numeric', month: 'long', year: 'numeric' })); } catch (e) { $('#indFechaGenerado').text(new Date().toISOString().slice(0, 10)); }
+
+        pintarResumen(r);
+        pintarFamilias(r);
+        pintarTabla(r);
+        $('#indExp .exp-btn').prop('disabled', false);
+        $('#indEstadoInicial, #indSinDatos').hide();
+        $('#indResultado').show();
+    }
+
+    function visibles(r) {
+        var soloAlertas = $('#indDetalle').val() === 'alertas';
+        return (r.Indicadores || []).filter(function (i) { return !soloAlertas || i.Nivel === 'rojo' || i.Nivel === 'naranja'; });
+    }
+
+    function pintarResumen(r) {
+        var t = _ind.t;
+        var cnt = [['verde', r.TotalVerde], ['amarillo', r.TotalAmarillo], ['naranja', r.TotalNaranja], ['rojo', r.TotalRojo], ['gris', r.TotalGris]];
+        $('#indCounts').attr('aria-label', t.countsAria).html(cnt.map(function (c) {
+            return '<div class="ind-count ' + c[0] + '"><span class="n">' + c[1] + '</span><span class="l">' + escHtml(nombreNivel(c[0])) + '</span></div>';
+        }).join(''));
+
+        var $a = $('#indAtencion').empty();
+        var porCod = {}; (r.Indicadores || []).forEach(function (i) { porCod[i.Codigo] = i; });
+        if (!r.Atencion || !r.Atencion.length) $a.append($('<div class="ind-aten-vacio">').text(t.atencionVacio));
+        (r.Atencion || []).forEach(function (cod) {
+            var i = porCod[cod]; if (!i) return;
+            $a.append('<button type="button" class="ind-aten" data-ficha="' + escHtml(cod) + '"><span class="ind-dot ' + i.Nivel + '"></span><span class="nm">' + escHtml(nombreInd(i)) +
+                '</span><span class="vl ind-c-' + i.Nivel + '">' + escHtml(i.Valor === null ? textoSinValor(i) : fmtValor(i.Formato, i.Valor)) + '</span></button>');
+        });
+
+        $('#indNotaParcial').toggle(r.MesesLtm < 12).text(t.notaParcialFmt.replace('{0}', r.MesesLtm));
+        $('#indNotaSinComp').toggle(!r.HayComparativo).text(t.notaSinComparativo);
+        $('#indNotaSinBalance').toggle(!r.HayBalance).text(t.notaSinBalance);
+    }
+
+    // Mini-tendencia (SVG): valor del indicador en cada mes del rango; el último punto lleva el color del semáforo.
+    function sparkline(i) {
+        var pts = (i.Tendencia || []).filter(function (p) { return p.Valor !== null && p.Valor !== undefined; });
+        if (pts.length < 2) return '';
+        var vals = pts.map(function (p) { return p.Valor; }), mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals), rg = (mx - mn) || 1;
+        var W = 100, H = 28, pad = 3;
+        var xy = vals.map(function (v, k) { return [pad + k * (W - pad * 2) / (vals.length - 1), H - pad - (v - mn) / rg * (H - pad * 2)]; });
+        var d = xy.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ');
+        var ult = xy[xy.length - 1];
+        return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true"><polyline points="' + d + '" fill="none" stroke="#C7C2E8" stroke-width="1.6" vector-effect="non-scaling-stroke"/>' +
+            '<circle cx="' + ult[0].toFixed(1) + '" cy="' + ult[1].toFixed(1) + '" r="2.2" fill="' + COLOR_NIVEL[i.Nivel] + '"/></svg>';
+    }
+
+    function tarjeta(r, i) {
+        var t = _ind.t, tieneValor = i.Valor !== null && i.Valor !== undefined;
+        var h = '<div class="ind-card ' + i.Nivel + '"><div class="ind-card-top"><span class="ind-card-name">' + escHtml(nombreInd(i)) + '</span>' +
+            '<button type="button" class="ind-info" data-ficha="' + escHtml(i.Codigo) + '" data-tip="' + escHtml(t.verFicha) + '" aria-label="' + escHtml(t.verFicha) + '"><i class="fas fa-info"></i></button></div>';
+        h += tieneValor ? '<div class="ind-card-val">' + escHtml(fmtValor(i.Formato, i.Valor)) + '</div>' : '<div class="ind-card-val na">' + escHtml(textoSinValor(i)) + '</div>';
+        h += '<div class="ind-card-nivel ind-c-' + i.Nivel + '"><span class="ind-dot ' + i.Nivel + '"></span>' + escHtml(nombreNivel(i.Nivel)) +
+            (i.Parcial && tieneValor ? ' <span class="ind-tag-parcial">' + escHtml(t.parcialFmt.replace('{0}', i.MesesLtm)) + '</span>' : '') + '</div>';
+        if (r.HayComparativo && tieneValor && i.Variacion !== null && i.Variacion !== undefined) {
+            h += '<div class="ind-card-comp"><span class="ind-var ' + claseVar(i) + '">' + escHtml(fmtVariacion(i.Formato, i.Variacion)) + '</span><span>' +
+                escHtml(t.vsFmt.replace('{0}', fmtValor(i.Formato, i.ValorComp))) + '</span></div>';
+        }
+        h += '<div class="ind-card-spark">' + sparkline(i) + '</div></div>';
+        return h;
+    }
+
+    function pintarFamilias(r) {
+        var porFam = {};
+        visibles(r).forEach(function (i) { (porFam[i.Familia] = porFam[i.Familia] || []).push(i); });
+        var html = '';
+        _ind.familiasOrden.forEach(function (fam) {
+            var lista = porFam[fam];
+            if (!lista || !lista.length) return;
+            html += '<div class="ind-fam pyg2-section"><div class="pyg2-section-title"><span class="t">' + escHtml(_ind.t.familias[fam] || fam) + '</span><span class="line"></span></div><div class="ind-grid">' +
+                lista.map(function (i) { return tarjeta(r, i); }).join('') + '</div></div>';
+        });
+        $('#indFamilias').html(html || '<div class="lt-card lt-empty"><p>' + escHtml(_ind.t.atencionVacio) + '</p></div>');
+    }
+
+    function pintarTabla(r) {
+        var t = _ind.t, lista = visibles(r);
+        $('#indInfoBadge').text(t.infoBadgeFmt.replace('{0}', lista.length));
+        $('#indTablaHead').html('<tr><th>' + escHtml(t.colIndicador) + '</th><th class="num">' + escHtml(t.colValor) + '</th><th class="num">' + escHtml(t.colComparativo) + '</th><th class="num">' +
+            escHtml(t.colVariacion) + '</th><th>' + escHtml(t.colSemaforo) + '</th><th>' + escHtml(t.colReferencia) + '</th></tr>');
+        var body = '', famActual = null;
+        _ind.familiasOrden.forEach(function (fam) {
+            lista.filter(function (i) { return i.Familia === fam; }).forEach(function (i) {
+                if (famActual !== fam) { famActual = fam; body += '<tr><td class="fam-row" colspan="6">' + escHtml(t.familias[fam] || fam) + '</td></tr>'; }
+                var tv = i.Valor !== null && i.Valor !== undefined;
+                body += '<tr><td class="lbl"><button type="button" class="nm-btn" data-ficha="' + escHtml(i.Codigo) + '">' + escHtml(nombreInd(i)) + '</button></td>' +
+                    '<td class="val">' + escHtml(tv ? fmtValor(i.Formato, i.Valor) : textoSinValor(i)) + '</td>' +
+                    '<td class="num">' + escHtml(r.HayComparativo ? fmtValor(i.Formato, i.ValorComp) : CH_MDASH) + '</td>' +
+                    '<td class="num ind-var ' + claseVar(i) + '">' + escHtml(fmtVariacion(i.Formato, i.Variacion)) + '</td>' +
+                    '<td><span class="ind-dot ' + i.Nivel + '"></span> <span class="ind-c-' + i.Nivel + '" style="font-weight:800">' + escHtml(nombreNivel(i.Nivel)) + '</span></td>' +
+                    '<td class="ref">' + escHtml(rangosTexto(i)) + '</td></tr>';
+            });
+        });
+        $('#indTablaBody').html(body);
+    }
+
+    // ===== Ficha / glosario (panel lateral) =====
+    function indicadorPorCodigo(cod) {
+        var r = _ind.reporteActual;
+        return r ? (r.Indicadores || []).filter(function (i) { return i.Codigo === cod; })[0] : null;
+    }
+    function icono(c) { return '<span class="ic"><i class="fas ' + c + '"></i></span>'; }
+    function bloqueFicha(cod, conAhora) {
+        var t = _ind.t, f = t.fichas[cod] || {}, i = indicadorPorCodigo(cod), r = _ind.reporteActual, h = '';
+        h += '<p class="ind-fx-pregunta">' + escHtml(f.p) + '</p>';
+
+        if (conAhora && i) {
+            var tv = i.Valor !== null && i.Valor !== undefined, hayVar = r && r.HayComparativo && tv && i.Variacion !== null && i.Variacion !== undefined;
+            h += '<div class="ind-fx-stats">' +
+                '<div class="st ' + i.Nivel + '"><div class="k">' + escHtml(t.fichaAhora) + '</div><div class="v big ind-c-' + i.Nivel + '">' + escHtml(tv ? fmtValor(i.Formato, i.Valor) : textoSinValor(i)) + '</div>' +
+                '<span class="nv ind-c-' + i.Nivel + '"><span class="ind-dot ' + i.Nivel + '"></span>' + escHtml(nombreNivel(i.Nivel)) + '</span></div>';
+            if (r && r.HayComparativo) {
+                h += '<div class="st"><div class="k">' + escHtml(t.fichaComparado) + '</div><div class="v sm">' + escHtml(fmtValor(i.Formato, i.ValorComp)) + '</div></div>' +
+                    '<div class="st"><div class="k">' + escHtml(t.colVariacion) + '</div><div class="v ind-var ' + claseVar(i) + '">' + escHtml(hayVar ? fmtVariacion(i.Formato, i.Variacion) : CH_MDASH) + '</div></div>';
+            }
+            h += '</div>';
+        }
+
+        // Rangos del semáforo (escala vertical, con el nivel actual resaltado)
+        var rangos = '';
+        if (i) {
+            var niv = ['verde', 'amarillo', 'naranja', 'rojo'];
+            if (i.Formato === 'moneda') rangos = '<div class="ind-rango-solo"><span class="ind-dot verde"></span>' + escHtml(t.rangoPositivo) + '</div>';
+            else if (i.MasEsMejor !== null && i.Cortes) {
+                var s = i.MasEsMejor ? '\u2265 ' : '\u2264 ', c = i.Cortes, txt = [s + fmtValor(i.Formato, c[0]), s + fmtValor(i.Formato, c[1]), s + fmtValor(i.Formato, c[2]), (i.MasEsMejor ? '< ' : '> ') + fmtValor(i.Formato, c[2])];
+                rangos = '<div class="ind-rangos">' + niv.map(function (n, k) {
+                    return '<div class="ind-rango ' + n + (conAhora && i.Nivel === n ? ' actual' : '') + '"><span class="nv"><span class="ind-dot ' + n + '"></span>' + escHtml(nombreNivel(n)) + '</span><span class="vl">' + escHtml(txt[k]) + '</span></div>';
+                }).join('') + '</div>';
+            }
+        }
+
+        h += '<div class="ind-fx-cols"><div>' +
+            '<div class="ind-fx-card"><div class="hd">' + icono('fa-circle-question') + escHtml(t.fichaQue) + '</div><div class="tx">' + escHtml(f.q) + '</div></div>' +
+            '<div class="ind-fx-card"><div class="hd">' + icono('fa-calculator') + escHtml(t.fichaFormula) + '</div><div class="ind-fx-formula">' + escHtml(f.f) + '</div></div>' +
+            '</div><div>' +
+            '<div class="ind-fx-card"><div class="hd">' + icono('fa-traffic-light') + escHtml(t.fichaRangos) + '</div>' + (rangos || '<div class="tx">' + CH_MDASH + '</div>') +
+            (rangos ? '<div class="ind-fx-aviso">' + escHtml(t.fichaAviso) + '</div>' : '') + '</div></div></div>';
+
+        h += '<div class="ind-fx-cols" style="margin-bottom:0"><div class="ind-fx-card mejora" style="margin:0"><div class="hd">' + icono('fa-lightbulb') + escHtml(t.fichaMejorar) + '</div><div class="tx">' + escHtml(f.m) + '</div></div>' +
+            '<div class="ind-fx-card regla" style="margin:0"><div class="hd">' + icono('fa-bookmark') + escHtml(t.fichaRegla) + '</div><div class="tx">' + escHtml(f.r) + '</div></div></div>';
+        return h;
+    }
+    function abrirFicha(cod) {
+        var f = _ind.t.fichas[cod]; if (!f) return;
+        var iv = indicadorPorCodigo(cod);
+        $('#indFichaTitulo .tt').text(f.n);
+        $('#indFichaFam').text(iv ? (_ind.t.familias[iv.Familia] || iv.Familia) : '');
+        $('#indFichaBody').html(bloqueFicha(cod, true));
+        abrirPanel();
+    }
+    function abrirGlosario() {
+        var t = _ind.t, h = '';
+        _ind.familiasOrden.forEach(function (fam) {
+            var cods = Object.keys(t.fichas).filter(function (c) { return (indicadorPorCodigo(c) || {}).Familia === fam; });
+            if (!cods.length) return;
+            h += '<div class="ind-gl-fam">' + escHtml(t.familias[fam] || fam) + '</div>';
+            cods.forEach(function (c) {
+                var i = indicadorPorCodigo(c);
+                h += '<div class="ind-gl-item"><button type="button" data-gl="' + escHtml(c) + '"><span class="ind-dot ' + (i ? i.Nivel : 'gris') + '"></span>' + escHtml(t.fichas[c].n) + '<i class="fas fa-chevron-down chev"></i></button><div class="cuerpo">' + bloqueFicha(c, false) + '</div></div>';
+            });
+        });
+        $('#indFichaTitulo .tt').text(t.glosarioTitulo);
+        $('#indFichaFam').text('');
+        $('#indFichaBody').html(h);
+        abrirPanel(true);
+    }
+    function abrirPanel(glosario) { $('#indFicha').toggleClass('glosario', !!glosario); $('#indFichaOv').addClass('open'); document.body.style.overflow = 'hidden'; $('#indFichaCerrar').trigger('focus'); }
+    function cerrarPanel() { $('#indFichaOv').removeClass('open'); document.body.style.overflow = ''; }
+
+    // ===== Insights gerenciales (IA) =====
+    function reiniciarInsights() {
+        var t = _ind.t;
+        _ind.insightsTexto = null;
+        $('#indRespuesta').empty();
+        $('#indInsightsLoading').hide();
+        $('#indInsightsBody').show().html('<div class="pyg2-ins-empty"><i class="fas fa-circle-info"></i><span>' + escHtml(t.insightsVacio) + '</span></div>');
+        $('#indInsightsMeta').text(t.insightsSub);
+        $('#btnGenerarInsightsInd').prop('disabled', false).html('<i class="fas fa-wand-magic-sparkles"></i><span>' + escHtml(t.generar) + '</span>');
+    }
+
+    // El prompt pide 3 líneas con etiquetas fijas "Fortaleza:", "Riesgo:" y "Prioridad:" (o "Strength:", "Risk:", "Priority:"). Se separan por esas
+    // palabras clave al inicio de línea (tolerando viñetas, encabezados markdown y negritas). Si falta alguna, null → markdown completo.
+    function separarInsights(texto) {
+        var claves = { fortaleza: /^(fortaleza|strength)/i, riesgo: /^(riesgo|risk)/i, prioridad: /^(prioridad|priority)/i };
+        var etiqueta = /^(\*\*|__)?\s*(fortaleza|riesgo|prioridad|strength|risk|priority)[^:]*:\s*(\*\*|__)?\s*/i;
+        var partes = { fortaleza: [], riesgo: [], prioridad: [] }, actual = null;
+        (texto || '').split(/\r?\n/).forEach(function (linea) {
+            var conFormato = linea.replace(/^\s*(?:[-•>#]+|\*(?=\s)|\d+[.)])\s*/, '').trim();
+            var plano = conFormato.replace(/\*\*|__/g, '').trim();
+            if (!plano) return;
+            var encontrada = null;
+            Object.keys(claves).forEach(function (k) { if (!encontrada && claves[k].test(plano)) encontrada = k; });
+            if (encontrada) {
+                actual = encontrada;
+                var resto = plano.indexOf(':') >= 0 ? conFormato.replace(etiqueta, '').trim() : '';
+                if (resto) partes[actual].push(resto);
+                return;
+            }
+            if (actual) partes[actual].push(conFormato);
+        });
+        if (!partes.fortaleza.length || !partes.riesgo.length || !partes.prioridad.length) return null;
+        return { fortaleza: partes.fortaleza.join(' '), riesgo: partes.riesgo.join(' '), prioridad: partes.prioridad.join(' ') };
+    }
+    function textoConNegritas(t) {
+        return escHtml(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/__(.+?)__/g, '<strong>$1</strong>').replace(/\*\*|__/g, '');
+    }
+    function pintarInsights(texto) {
+        var t = _ind.t, secciones = separarInsights(texto);
+        if (!secciones) {
+            var md = (typeof window.bufinsMarkdown === 'function') ? window.bufinsMarkdown(texto) : escHtml(texto).replace(/\n/g, '<br>');
+            $('#indInsightsBody').html('<div class="pyg-insights-body">' + md + '</div>');
+            return;
+        }
+        // Clases de color de las tarjetas (compartidas con PYG): logro = verde, alerta = rojo, eficiencia = info.
+        var tiles = [
+            { cls: 'logro', icono: 'fa-shield-halved', titulo: t.insFortaleza, texto: secciones.fortaleza },
+            { cls: 'alerta', icono: 'fa-triangle-exclamation', titulo: t.insRiesgo, texto: secciones.riesgo },
+            { cls: 'eficiencia', icono: 'fa-bullseye', titulo: t.insPrioridad, texto: secciones.prioridad }
+        ];
+        $('#indInsightsBody').html('<div class="pyg2-ins-grid">' + tiles.map(function (x) {
+            return '<div class="pyg2-ins-tile ' + x.cls + '"><div class="h"><span class="ic"><i class="fas ' + x.icono + '"></i></span><span class="t">' + escHtml(x.titulo) + '</span></div><p>' + textoConNegritas(x.texto) + '</p></div>';
+        }).join('') + '</div>');
+    }
+    function mostrarErrorInsights(mensaje) {
+        $('#indInsightsBody').html('<div class="pyg2-ins-empty"><i class="fas fa-circle-exclamation"></i><span>' + escHtml(mensaje) + '</span></div>');
+    }
+
+    function generarInsights() {
+        var r = _ind.reporteActual;
+        if (!r) return;
+        var t = _ind.t, $btn = $('#btnGenerarInsightsInd'), htmlBtn = $btn.html();
+        $btn.prop('disabled', true);
+        $('#indInsightsBody').hide();
+        $('#indInsightsLoading').show();
+        $.post(_ind.urls.insights, $.extend({ __RequestVerificationToken: _ind.token }, _ind.filtrosConsultados), function (resp) {
+            $('#indInsightsLoading').hide();
+            $('#indInsightsBody').show();
+            $btn.prop('disabled', false);
+            if (!resp || !resp.Exitoso) { $btn.html(htmlBtn); mostrarErrorInsights((resp && resp.Error) || t.insightsSinGenerar); return; }
+            _ind.insightsTexto = resp.Respuesta || '';
+            pintarInsights(_ind.insightsTexto);
+            $btn.html('<i class="fas fa-rotate"></i><span>' + escHtml(t.regenerar) + '</span>');
+            try {
+                var fecha = new Date().toLocaleDateString(_ind.cultura, { day: 'numeric', month: 'long', year: 'numeric' });
+                $('#indInsightsMeta').text(t.insightsMetaFmt.replace('{0}', fecha).replace('{1}', (r.Indicadores || []).length));
+            } catch (e) { }
+        }).fail(function (xhr) {
+            $('#indInsightsLoading').hide();
+            $('#indInsightsBody').show();
+            $btn.prop('disabled', false).html(htmlBtn);
+            mostrarErrorInsights(t.errorServidor + ' (HTTP ' + xhr.status + ')');
+        });
+    }
+
+    function preguntarInforme() {
+        var q = $.trim($('#indPregunta').val());
+        if (!q || !_ind.reporteActual) return;
+        var $btn = $('#btnIndPreguntar');
+        $btn.prop('disabled', true);
+        $('#indRespuesta').html('<span class="text-muted"><i class="fas fa-spinner fa-spin mr-1"></i>' + escHtml('@Html.Raw(J("IAInforme_Preguntando"))') + '</span>');
+        $.post(_ind.urls.preguntar, $.extend({ __RequestVerificationToken: _ind.token, pregunta: q }, _ind.filtrosConsultados), function (resp) {
+            $btn.prop('disabled', false);
+            if (!resp || !resp.Exitoso) {
+                $('#indRespuesta').html('<span style="color:#b91c1c;">' + escHtml((resp && resp.Error) || '@Html.Raw(J("IAInforme_Error"))') + '</span>');
+                return;
+            }
+            var texto = resp.Respuesta || '';
+            var md = (typeof window.bufinsMarkdown === 'function') ? window.bufinsMarkdown(texto) : escHtml(texto).replace(/\n/g, '<br>');
+            $('#indRespuesta').html('<div class="pyg-insights-body">' + md + '</div>');
+        }).fail(function () {
+            $btn.prop('disabled', false);
+            $('#indRespuesta').html('<span style="color:#b91c1c;">' + escHtml('@Html.Raw(J("IAInforme_Error"))') + '</span>');
+        });
+    }
+
+    // ===== Exportar: Excel / PDF / imagen / correo =====
+    function datosExportacion() { return $.extend({}, _ind.filtrosConsultados); }
+    function exportarExcel() {
+        if (!_ind.filtrosConsultados) return;
+        var campos = datosExportacion(), $c = $('#indExpCampos').empty();
+        Object.keys(campos).forEach(function (k) { $c.append($('<input type="hidden">').attr('name', k).val(campos[k] == null ? '' : campos[k])); });
+        $('#frmExportarExcelInd').submit();
+    }
+    function copiarImagen() {
+        var empresa = ($('#indTituloEmpresa').text() || 'Indicadores').replace(/[^A-Za-z0-9]+/g, '_');
+        return ExportMenu.copiarImagen(document.getElementById('indResultado'), 'Indicadores_' + empresa + '_' + new Date().toISOString().slice(0, 10) + '.png',
+            { imagenCopiada: EXP_T.imagenCopiada, imagenDescargada: EXP_T.imagenDescargada });
+    }
+    function generarPdf() {
+        var r = _ind.reporteActual;
+        if (!r) return Promise.resolve();
+        return new Promise(function (ok, ko) {
+            setTimeout(function () {
+                try { var doc = construirPdf(r); doc.save(doc.__nombre); ExportMenu.aviso('success', EXP_T.listo); ok(); }
+                catch (e) { console.error('[InformeIndicadores] PDF', e); ko(e); }
+            }, 30);
+        });
+    }
+
+    var PDF_COL = {
+        marca: [99, 102, 241], morado: [88, 58, 255], texto: [22, 18, 31], texto2: [91, 85, 112], muted: [139, 133, 160],
+        linea: [228, 225, 240], lineaSuave: [238, 240, 246], suave: [244, 243, 251], suave2: [248, 247, 253], zebra: [252, 252, 254],
+        totalBg: [238, 242, 255], bueno: [22, 163, 74], malo: [220, 38, 38], ambar: [217, 119, 6], blanco: [255, 255, 255]
+    };
+    var PDF_NIVEL = { verde: [22, 163, 74], amarillo: [202, 138, 4], naranja: [234, 88, 12], rojo: [220, 38, 38], gris: [100, 116, 139] };
+    var PDF_NIVEL_BG = { verde: [236, 253, 243], amarillo: [254, 252, 232], naranja: [255, 247, 237], rojo: [254, 242, 242], gris: [241, 245, 249] };
+    var PDF_DEGRADADO = [[99, 102, 241], [59, 130, 246], [6, 182, 212], [1, 225, 215]];
+
+    // PDF gerencial (A4 horizontal, jsPDF puro): pág. 1 resumen (semáforo, indicadores que requieren atención, insights); pág. 2+ tabla de
+    // indicadores por familia. Devuelve el documento (con __nombre) para descarga y para el correo.
+    function construirPdf(r) {
+        var T = _ind.t, P = T.pdf, C = PDF_COL;
+        var pdf = new window.jspdf.jsPDF('l', 'mm', 'a4');
+        var W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight();
+        var M = 12, ANCHO = W - M * 2, LIMITE_Y = H - 15;
+        var empresa = $('#indTituloEmpresa').text() || '', corte = etiquetaMes(r.AnioHasta, r.MesHasta), y = 0;
+
+        function rgb(fn, c) { pdf[fn](c[0], c[1], c[2]); }
+        function fuente(estilo, tam, c) { pdf.setFont('helvetica', estilo); pdf.setFontSize(tam); rgb('setTextColor', c || C.texto); }
+        function limpiar(t) { return String(t == null ? '' : t).replace(/\*\*|__/g, '').replace(/\s+/g, ' ').trim(); }
+        function ancho(t) { return pdf.getTextWidth(String(t)); }
+        function degradado(x, yy, w, h) {
+            var pasos = 90, n = PDF_DEGRADADO.length - 1;
+            for (var i = 0; i < pasos; i++) {
+                var tt = i / (pasos - 1), seg = Math.min(n - 1, Math.floor(tt * n)), f = tt * n - seg, a = PDF_DEGRADADO[seg], b = PDF_DEGRADADO[seg + 1];
+                pdf.setFillColor(Math.round(a[0] + (b[0] - a[0]) * f), Math.round(a[1] + (b[1] - a[1]) * f), Math.round(a[2] + (b[2] - a[2]) * f));
+                pdf.rect(x + (w * i) / pasos, yy, w / pasos + 0.15, h, 'F');
+            }
+        }
+        function pildora(texto, x, yy, fg, bg, negrita, tam) {
+            fuente(negrita ? 'bold' : 'normal', tam || 7.5, fg);
+            var w = ancho(texto) + 5, h = (tam || 7.5) * 0.62 + 1;
+            rgb('setFillColor', bg);
+            pdf.roundedRect(x, yy - h + 1.4, w, h, h / 2, h / 2, 'F');
+            pdf.text(texto, x + 2.5, yy);
+            return w;
+        }
+        function tituloSeccion(texto, yy, derecha) {
+            var tt = String(texto).toUpperCase(), wDer = 0;
+            if (derecha) { fuente('normal', 7.5, C.muted); wDer = ancho(derecha) + 4; pdf.text(derecha, W - M, yy, { align: 'right' }); }
+            fuente('bold', 8.5, C.morado);
+            pdf.text(tt, M, yy);
+            rgb('setDrawColor', C.linea); pdf.setLineWidth(0.3);
+            pdf.line(M + ancho(tt) + 3, yy - 1.1, W - M - wDer, yy - 1.1);
+        }
+        function tarjetaPdf(x, yy, w, h) {
+            rgb('setDrawColor', C.linea); rgb('setFillColor', C.blanco); pdf.setLineWidth(0.3);
+            pdf.roundedRect(x, yy, w, h, 2.5, 2.5, 'FD');
+        }
+        function encabezadoPagina(seccion) {
+            degradado(0, 0, W, 2.4);
+            fuente('bold', 10, C.texto); pdf.text(empresa, M, 11);
+            fuente('normal', 8, C.muted); pdf.text(P.titulo + '  ' + CH_MIDDOT + '  ' + corte, W - M, 11, { align: 'right' });
+            if (seccion) { fuente('bold', 13, C.texto); pdf.text(seccion, M, 21); }
+            y = seccion ? 29 : 18;
+        }
+        function nuevaPagina(seccion) { pdf.addPage(); encabezadoPagina(seccion); }
+
+        // ===== Página 1: resumen =====
+        degradado(0, 0, W, 34);
+        fuente('bold', 10, C.blanco); pdf.text(P.marca, M, 10);
+        var wMarca = ancho(P.marca);
+        fuente('normal', 8.5, C.blanco); pdf.text(CH_MIDDOT + '  ' + P.subtitulo, M + wMarca + 2.5, 10);
+        fuente('bold', 19, C.blanco); pdf.text(empresa, M, 22);
+        fuente('normal', 9.5, C.blanco); pdf.text(P.titulo, M, 29);
+        fuente('normal', 8, C.blanco); pdf.text(P.generadoEl + ' ' + ($('#indFechaGenerado').text() || ''), W - M, 10, { align: 'right' });
+        fuente('bold', 8, C.blanco); pdf.text(P.confidencial.toUpperCase(), W - M, 29, { align: 'right' });
+
+        y = 43;
+        var chips = [{ t: $('#indChipCorte').text(), fg: C.morado, bg: C.totalBg, b: true }, { t: $('#indChipEscenario').text() }, { t: $('#indChipComparado').text() }];
+        var xc = M;
+        chips.forEach(function (c) {
+            if (!c.t) return;
+            if (xc + ancho(c.t) + 5 > W - M) { xc = M; y += 7; }
+            xc += pildora(c.t, xc, y, c.fg || C.texto2, c.bg || C.suave, !!c.b) + 3;
+        });
+
+        // Semáforo: cinco contadores
+        y += 10;
+        tituloSeccion(P.resumen, y);
+        y += 4;
+        var cnt = [['verde', r.TotalVerde], ['amarillo', r.TotalAmarillo], ['naranja', r.TotalNaranja], ['rojo', r.TotalRojo], ['gris', r.TotalGris]];
+        var gapC = 4, wC = (ANCHO - gapC * 4) / 5, hC = 20;
+        cnt.forEach(function (c, i) {
+            var x = M + i * (wC + gapC);
+            rgb('setFillColor', PDF_NIVEL_BG[c[0]]); rgb('setDrawColor', C.linea); pdf.setLineWidth(0.3);
+            pdf.roundedRect(x, y, wC, hC, 2.5, 2.5, 'FD');
+            fuente('bold', 18, PDF_NIVEL[c[0]]); pdf.text(String(c[1]), x + wC / 2, y + 10.5, { align: 'center' });
+            fuente('bold', 7.5, C.texto2); pdf.text(nombreNivel(c[0]).toUpperCase(), x + wC / 2, y + 16, { align: 'center' });
+        });
+        y += hC + 10;
+
+        // Requieren atención
+        var porCod = {}; (r.Indicadores || []).forEach(function (i) { porCod[i.Codigo] = i; });
+        var aten = (r.Atencion || []).map(function (c) { return porCod[c]; }).filter(Boolean);
+        tituloSeccion(P.atencion, y);
+        y += 4;
+        if (aten.length) {
+            var gapA = 5, wA = (ANCHO - gapA * (aten.length - 1)) / aten.length, hA = 27;
+            aten.forEach(function (i, k) {
+                var x = M + k * (wA + gapA), colr = PDF_NIVEL[i.Nivel];
+                tarjetaPdf(x, y, wA, hA);
+                rgb('setFillColor', colr); pdf.rect(x, y + 4, 1.1, hA - 8, 'F');
+                fuente('bold', 8.2, C.texto);
+                pdf.splitTextToSize(nombreInd(i), wA - 10).slice(0, 2).forEach(function (ln, li) { pdf.text(ln, x + 5, y + 7 + li * 3.8); });
+                fuente('bold', 14, colr); pdf.text(i.Valor === null ? textoSinValor(i) : fmtValor(i.Formato, i.Valor), x + 5, y + 18);
+                fuente('bold', 7, colr); pdf.text(nombreNivel(i.Nivel) + (r.HayComparativo && i.Variacion !== null ? '  ' + CH_MIDDOT + '  ' + fmtVariacion(i.Formato, i.Variacion) : ''), x + 5, y + 23.5);
+            });
+            y += hA + 10;
+        } else {
+            fuente('italic', 8.5, C.texto2); pdf.text(T.atencionVacio, M, y + 4); y += 12;
+        }
+
+        // Insights (IA)
+        tituloSeccion(P.insightsTitulo, y, _ind.insightsTexto ? $('#indInsightsMeta').text() : '');
+        y += 4;
+        var secciones = _ind.insightsTexto ? separarInsights(_ind.insightsTexto) : null;
+        if (secciones) {
+            var tiles = [
+                { titulo: T.insFortaleza, texto: secciones.fortaleza, c: C.bueno },
+                { titulo: T.insRiesgo, texto: secciones.riesgo, c: C.malo },
+                { titulo: T.insPrioridad, texto: secciones.prioridad, c: C.morado }
+            ];
+            var gapT = 5, wT = (ANCHO - gapT * 2) / 3;
+            fuente('normal', 8.8, C.texto2);
+            var lineasT = tiles.map(function (x) { return pdf.splitTextToSize(limpiar(x.texto), wT - 9); });
+            var hT = 14 + Math.max.apply(null, lineasT.map(function (l) { return l.length; })) * 4.2 + 3;
+            if (y + hT > LIMITE_Y) nuevaPagina(P.resumen);
+            tiles.forEach(function (x, i) {
+                var xx = M + i * (wT + gapT);
+                tarjetaPdf(xx, y, wT, hT);
+                rgb('setFillColor', x.c); pdf.rect(xx + 2.5, y, wT - 5, 1.1, 'F');
+                fuente('bold', 7.5, x.c); pdf.text(x.titulo.toUpperCase(), xx + 4.5, y + 8.3);
+                fuente('normal', 8.8, C.texto2); pdf.text(lineasT[i], xx + 4.5, y + 14.5, { lineHeightFactor: 1.35 });
+            });
+            y += hT;
+        } else if (_ind.insightsTexto) {
+            fuente('normal', 8.8, C.texto2);
+            var lineas = pdf.splitTextToSize(limpiar(_ind.insightsTexto.replace(/^[\s#>*\-•]+/gm, '')), ANCHO - 10), hTx = lineas.length * 4.2 + 8;
+            if (y + hTx > LIMITE_Y) nuevaPagina(P.resumen);
+            tarjetaPdf(M, y, ANCHO, hTx);
+            pdf.text(lineas, M + 5, y + 7, { lineHeightFactor: 1.35 });
+            y += hTx;
+        } else {
+            rgb('setFillColor', C.suave2); rgb('setDrawColor', C.linea); pdf.setLineDashPattern([1.2, 1], 0);
+            pdf.roundedRect(M, y, ANCHO, 12, 2, 2, 'FD'); pdf.setLineDashPattern([], 0);
+            fuente('italic', 8.5, C.texto2); pdf.text(pdf.splitTextToSize(P.sinInsights, ANCHO - 10), M + 5, y + 7.5);
+            y += 12;
+        }
+
+        // ===== Página 2+: tabla de indicadores =====
+        nuevaPagina(P.tablaTitulo);
+        var cols = [
+            { t: T.colIndicador, w: 62, a: 'left' }, { t: T.colValor, w: 26, a: 'right' }, { t: T.colComparativo, w: 26, a: 'right' },
+            { t: T.colVariacion, w: 24, a: 'right' }, { t: T.colSemaforo, w: 24, a: 'left' }, { t: T.colReferencia, w: ANCHO - 162, a: 'left' }
+        ];
+        var hF = 6.4, hG = 8;
+        function cabeceraTabla() {
+            rgb('setFillColor', C.marca); pdf.rect(M, y, ANCHO, hG, 'F');
+            fuente('bold', 7.2, C.blanco);
+            var x = M;
+            cols.forEach(function (c) { pdf.text(c.t.toUpperCase(), c.a === 'right' ? x + c.w - 2 : x + 2.5, y + 5.3, { align: c.a === 'right' ? 'right' : 'left' }); x += c.w; });
+            y += hG;
+        }
+        cabeceraTabla();
+        var lista = visibles(r), idx = 0;
+        _ind.familiasOrden.forEach(function (fam) {
+            var deFam = lista.filter(function (i) { return i.Familia === fam; });
+            if (!deFam.length) return;
+            if (y + hF * 2 > LIMITE_Y - 6) { nuevaPagina(P.tablaTitulo); cabeceraTabla(); }
+            rgb('setFillColor', C.suave); pdf.rect(M, y, ANCHO, hF, 'F');
+            fuente('bold', 7.2, C.morado); pdf.text((T.familias[fam] || fam).toUpperCase(), M + 2.5, y + 4.4);
+            y += hF;
+            deFam.forEach(function (i) {
+                if (y + hF > LIMITE_Y - 6) { nuevaPagina(P.tablaTitulo); cabeceraTabla(); }
+                rgb('setFillColor', idx++ % 2 ? C.zebra : C.blanco); pdf.rect(M, y, ANCHO, hF, 'F');
+                var x = M, tv = i.Valor !== null && i.Valor !== undefined;
+                var celdas = [
+                    { t: nombreInd(i), f: 'bold', col: C.texto },
+                    { t: tv ? fmtValor(i.Formato, i.Valor) : textoSinValor(i), f: 'bold', col: tv ? PDF_NIVEL[i.Nivel] : C.muted },
+                    { t: r.HayComparativo ? fmtValor(i.Formato, i.ValorComp) : CH_MDASH, f: 'normal', col: C.muted },
+                    { t: fmtVariacion(i.Formato, i.Variacion), f: 'bold', col: i.Favorable === true ? C.bueno : (i.Favorable === false ? C.malo : C.muted) },
+                    { t: nombreNivel(i.Nivel), f: 'bold', col: PDF_NIVEL[i.Nivel] },
+                    { t: rangosTexto(i, true), f: 'normal', col: C.muted, tam: 6 }
+                ];
+                celdas.forEach(function (c, k) {
+                    var cw = cols[k].w, tam = c.tam || 7.4;
+                    fuente(c.f, tam, c.col);
+                    while (tam > 5 && ancho(c.t) > cw - 4) { tam -= 0.3; pdf.setFontSize(tam); }
+                    var texto = ancho(c.t) > cw - 4 ? pdf.splitTextToSize(c.t, cw - 4)[0] : c.t;
+                    if (k === 4) { rgb('setFillColor', PDF_NIVEL[i.Nivel]); pdf.circle(x + 3, y + 3.2, 1.2, 'F'); pdf.text(texto, x + 6, y + 4.4); }
+                    else pdf.text(texto, cols[k].a === 'right' ? x + cw - 2 : x + 2.5, y + 4.4, { align: cols[k].a === 'right' ? 'right' : 'left' });
+                    x += cw;
+                });
+                rgb('setDrawColor', C.lineaSuave); pdf.setLineWidth(0.15); pdf.line(M, y + hF, M + ANCHO, y + hF);
+                y += hF;
+            });
+        });
+        y += 5; fuente('italic', 7, C.muted); pdf.text(T.fichaAviso, M, y);
+
+        // Pie de página en todas las páginas
+        var totalPags = pdf.internal.getNumberOfPages();
+        for (var p = 1; p <= totalPags; p++) {
+            pdf.setPage(p);
+            rgb('setDrawColor', C.linea); pdf.setLineWidth(0.3); pdf.line(M, H - 10, W - M, H - 10);
+            fuente('normal', 7, C.muted);
+            pdf.text(P.titulo + '  ' + CH_MIDDOT + '  ' + empresa + '  ' + CH_MIDDOT + '  ' + corte, M, H - 6);
+            pdf.text(P.confidencial, W / 2, H - 6, { align: 'center' });
+            fuente('bold', 7, C.texto2);
+            pdf.text(P.paginaFmt.replace('{0}', p).replace('{1}', totalPags), W - M, H - 6, { align: 'right' });
+        }
+
+        pdf.__nombre = 'Indicadores_' + empresa.replace(/[^a-z0-9]+/gi, '_') + '_' + r.AnioHasta + ('0' + r.MesHasta).slice(-2) + '.pdf';
+        return pdf;
+    }
+
+    $(document).ready(function () {
+        $('#indEmpresa, #indEscenario, #indComparar, #indDetalle')
+            .select2({ width: '100%', language: s2lang, dropdownAutoWidth: false, minimumResultsForSearch: 10 });
+
+        $('#indEmpresa, #indEscenario').on('change', cargarMeses);
+        // "Detalle" no requiere volver a consultar: solo filtra lo ya cargado.
+        $('#indDetalle').on('change', function () { if (_ind.reporteActual) { pintarFamilias(_ind.reporteActual); pintarTabla(_ind.reporteActual); } });
+
+        $('#indAtajos button').on('click', function () { aplicarPresetRango($(this).data('preset')); });
+        $('#indKnobFrom').on('pointerdown', function (e) { e.stopPropagation(); iniciarArrastreSlider(e, 'from'); });
+        $('#indKnobTo').on('pointerdown', function (e) { e.stopPropagation(); iniciarArrastreSlider(e, 'to'); });
+        $('#indRangoTrack').on('pointerdown', function (e) { clicEnPista(e); });
+        $('#indKnobFrom, #indKnobTo').on('keydown', function (e) { moverKnobConTeclado(e, this.id === 'indKnobFrom' ? 'from' : 'to'); });
+
+        // Ficha y glosario
+        $('#indResultado').on('click', '[data-ficha]', function () { abrirFicha($(this).data('ficha')); });
+        $('#indBtnGlosario').on('click', abrirGlosario);
+        $('#indFichaBody').on('click', '[data-gl]', function () { $(this).closest('.ind-gl-item').toggleClass('open'); });
+        $('#indFichaCerrar').on('click', cerrarPanel);
+        $('#indFichaOv').on('click', function (e) { if (e.target === this) cerrarPanel(); });
+        $(document).on('keydown', function (e) { if (e.key === 'Escape' && $('#indFichaOv').hasClass('open')) cerrarPanel(); });
+
+        DocVisor.init({ boton: '#indDocBtn', url: _ind.urls.documentacion });
+
+        $('#btnConsultarInd').on('click', consultarReporte);
+        $('#btnLimpiarInd').on('click', function () {
+            $('#indComparar').val('cierreAnterior').trigger('change.select2');
+            $('#indDetalle').val('todos').trigger('change.select2');
+            if (_ind.esAdmin) elEmpresa.val('').trigger('change.select2');
+            cargarMeses();
+        });
+
+        $('#btnGenerarInsightsInd').on('click', generarInsights);
+        $('#btnIndPreguntar').on('click', preguntarInforme);
+        $('#indPregunta').on('keydown', function (e) { if (e.which === 13) { e.preventDefault(); preguntarInforme(); } });
+
+        // Botón Exportar estándar: Excel · PDF · Copiar como imagen · Enviar por correo
+        var correo = ExportMenu.correo({
+            url: _ind.urls.correo,
+            token: function () { return _ind.token; },
+            datos: datosExportacion,   // mismos filtros que el Excel: el servidor reconstruye el informe
+            pdf: function () { var d = construirPdf(_ind.reporteActual); return d ? d.output('datauristring') : ''; },
+            pills: function () { return [$('#indTituloEmpresa').text()].concat($('#indPanelResultado .pyg2-chip').map(function () { return $(this).text(); }).get()); },
+            textos: EXP_T
+        });
+        ExportMenu.init('indExp', {
+            acciones: { excel: exportarExcel, pdf: generarPdf, imagen: copiarImagen, correo: function () { if (_ind.reporteActual) correo.abrir(); } },
+            textos: EXP_T
+        });
+
+        pintarRango();
+        cargarMeses();
+    });
+</script>
+}

@@ -77,6 +77,7 @@
 <link href="~/Assets/css/informe-pyg.css" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
 <link href="~/Assets/css/informe-histprecios.css" rel="stylesheet" />
+<link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
 
 <div class="container-fluid px-4">
@@ -320,21 +321,7 @@
     </div>
 </div>
 
-@* Visor de la documentación: modal casi a pantalla completa con la página dentro de un iframe en sandbox (solo lectura:
-   sin descarga, sin imprimir; ver InformeHistPreciosController.Documentacion). Se carga al abrirlo. *@
-<div class="hp-doc" id="hpDocModal" role="dialog" aria-modal="true" aria-labelledby="hpDocTitulo">
-    <div class="hp-doc-card">
-        <div class="hp-doc-rule"></div>
-        <div class="hp-doc-head">
-            <h5 id="hpDocTitulo"><i class="fas fa-book"></i>@Resources.Strings.HP_Doc_ModalTitulo</h5>
-            <div class="hp-doc-tools">
-                <button type="button" id="hpDocFull" title="@Resources.Strings.Common_PantallaCompleta"><i class="fas fa-expand"></i></button>
-                <button type="button" id="hpDocCerrar" title="@Resources.Strings.Common_Cerrar" aria-label="@Resources.Strings.Common_Cerrar"><i class="fas fa-times"></i></button>
-            </div>
-        </div>
-        <iframe id="hpDocFrame" title="@Resources.Strings.HP_Doc_ModalTitulo" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe>
-    </div>
-</div>
+@Html.Partial("_DocumentacionVisor", Resources.Strings.HP_Doc_ModalTitulo)
 
 @* Modal de tipos de fruta: mismo componente (.lt-modal) que "Elegir variables" de Línea de Tiempo *@
 <div class="lt-modal" id="hpTiposModal" role="dialog" aria-modal="true" aria-labelledby="hpTiposModalTitle">
@@ -374,6 +361,7 @@
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
 <script src="~/Assets/js/html2canvas.min.js"></script>
 <script src="~/Assets/js/export-menu.js"></script>
+<script src="~/Assets/js/doc-visor.js"></script>
 
 <script>
     var _hp = {
@@ -381,7 +369,7 @@
             opciones: '@Url.Action("ObtenerOpciones", "InformeHistPrecios")',
             reporte: '@Url.Action("ConsultarReporte", "InformeHistPrecios")',
             correo: '@Url.Action("EnviarPorCorreo", "InformeHistPrecios")',
-            documentacion: '@Url.Action("Documentacion", "InformeHistPrecios")'
+            documentacion: '@Url.Action("Ver", "Documentacion", new { clave = "hist-precios" })'
         },
         token: $('input[name="__RequestVerificationToken"]').first().val(),
         cultura: '@Html.Raw(HttpUtility.JavaScriptStringEncode(culturaJs))',
@@ -1150,21 +1138,6 @@
     var correoHP = null;   // se crea en el init
     function abrirCorreo() { if (_hp.reporte && correoHP) correoHP.abrir(); }
 
-    // ---------- documentación (visor de solo lectura) ----------
-    function abrirDocumentacion() {
-        var $f = $('#hpDocFrame');
-        if (!$f.attr('src')) $f.attr('src', _hp.urls.documentacion);   // se carga una sola vez, al abrir
-        $('#hpDocModal').addClass('open');
-        document.body.style.overflow = 'hidden';
-        $('#hpDocCerrar').trigger('focus');
-    }
-    function cerrarDocumentacion() {
-        if (document.fullscreenElement) document.exitFullscreen();
-        $('#hpDocModal').removeClass('open');
-        document.body.style.overflow = '';
-        $('#hpDocBtn').trigger('focus');
-    }
-
     // ---------- init ----------
     function limpiar() {
         _hp.reporte = null; _hp.filtros = null; destruirCharts();
@@ -1214,15 +1187,8 @@
             if (_hp.charts[k]) _hp.charts[k].update('none');
         });
 
-        // Documentación
-        $('#hpDocBtn').on('click', abrirDocumentacion);
-        $('#hpDocCerrar').on('click', cerrarDocumentacion);
-        $('#hpDocModal').on('click', function (e) { if (e.target === this) cerrarDocumentacion(); });
-        $(document).on('keydown', function (e) { if (e.key === 'Escape' && $('#hpDocModal').hasClass('open') && !document.fullscreenElement) cerrarDocumentacion(); });
-        $('#hpDocFull').on('click', function () {
-            var card = document.querySelector('#hpDocModal .hp-doc-card');
-            if (document.fullscreenElement) document.exitFullscreen(); else if (card.requestFullscreen) card.requestFullscreen();
-        });
+        // Documentación (visor compartido: DocVisor)
+        DocVisor.init({ boton: '#hpDocBtn', url: _hp.urls.documentacion });
 
         $('#btnConsultarHP').on('click', consultar);
         $('#btnLimpiarHP').on('click', limpiar);

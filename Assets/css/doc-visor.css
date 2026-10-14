@@ -1,0 +1,15 @@
+/* Visor de documentación (solo lectura): modal casi a pantalla completa con la página dentro de un iframe en sandbox.
+   Mismas reglas que .hp-doc* del Informe histórico de precios; lo usan los informes nuevos (_DocumentacionVisor). */
+.docv{position:fixed;inset:0;z-index:1080;background:rgba(22,9,51,.74);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:2vh 2vw}
+.docv.open{display:flex}
+.docv-card{background:#fff;border-radius:14px;width:100%;max-width:1560px;height:100%;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 40px 90px -30px rgba(22,9,51,.6)}
+.docv-card:fullscreen{max-width:none;border-radius:0}
+.docv-rule{height:3px;background:var(--content-gradient);flex:none}
+.docv-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;border-bottom:1px solid #E4E1F0;flex:none}
+.docv-head h5{margin:0;font-size:15px;font-weight:800;color:#2d3748;display:flex;align-items:center;gap:8px}
+.docv-head h5 i{color:#583AFF}
+.docv-tools{display:flex;gap:6px}
+.docv-tools button{width:32px;height:32px;border-radius:9px;border:1px solid #e3e6f0;background:#f8f9fc;color:#8B85A0;font-size:13px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.docv-tools button:hover{background:#eef0f6;color:#2d3748}
+.docv iframe{flex:1;width:100%;border:0;background:#F6F5FB}
+@media (max-width:768px){.docv{padding:0}.docv-card{border-radius:0}}

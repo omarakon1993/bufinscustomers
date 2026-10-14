@@ -2323,8 +2323,6 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="HojasCargue_Err_DiagnosticoConErrores" xml:space="preserve"><value>La estructura de la hoja tiene errores (ver Uso y diagnóstico): corrígelos antes de activarla.</value></data>
 
   <!-- INFORME HISTORICO DE PRECIOS / MENU PERSONALIZADO -->
-  <data name="HP_Doc_MarcaLeyenda" xml:space="preserve"><value>BUFINS  ·  CONFIDENCIAL  ·  PROPIEDAD DE BUFINS</value></data>
-  <data name="HP_Doc_Aviso" xml:space="preserve"><value>Documento confidencial, propiedad de Bufins. Uso exclusivo de los usuarios autorizados: prohibida su copia, captura o distribución.</value></data>
   <data name="HP_Doc_ModalTitulo" xml:space="preserve"><value>Documentación: informe histórico de precios</value></data>
   <data name="Common_DocumentacionTag" xml:space="preserve"><value>Documentación</value></data>
   <data name="HP_DocumentacionTooltip" xml:space="preserve"><value>Cómo este informe reemplaza al Excel original (con capturas de ambos lados)</value></data>
@@ -2748,4 +2746,273 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="Menu_ModalHabilitarTodasNote" xml:space="preserve"><value>Cada usuario recibirá los menús que aún no tenga. No incluye los exclusivos de Super Admin, respeta los de solo Admin de Empresa y los personalizados por empresa, y no quita ni cambia ningún otro permiso.</value></data>
   <data name="Menu_HabilitarTodasOkFmt" xml:space="preserve"><value>Listo: se otorgaron {0} acceso(s) nuevo(s) en {1} menú(s).</value></data>
   <data name="Menu_ErrorHabilitarTodas" xml:space="preserve"><value>No se pudieron habilitar todas las opciones. Intente nuevamente.</value></data>
+  <!-- INFORME DE INDICADORES -->
+  <data name="Ind_PageTitle" xml:space="preserve"><value>Informe de indicadores</value></data>
+  <data name="Ind_Subtitulo" xml:space="preserve"><value>Indicadores con semáforo</value></data>
+  <data name="Ind_DocumentacionTooltip" xml:space="preserve"><value>Qué mide cada indicador, de dónde salen las cifras y cómo se lee el semáforo</value></data>
+  <data name="Ind_Doc_ModalTitulo" xml:space="preserve"><value>Documentación: informe de indicadores</value></data>
+  <data name="Ind_LabelComparar" xml:space="preserve"><value>Comparar con</value></data>
+  <data name="Ind_CompararHint" xml:space="preserve"><value>Contra qué mes se calcula la variación de cada indicador. Ese mes se evalúa igual que el corte, con sus propios 12 meses.</value></data>
+  <data name="Ind_Comparar_cierreAnterior" xml:space="preserve"><value>Cierre del año anterior (diciembre)</value></data>
+  <data name="Ind_Comparar_mesAnterior" xml:space="preserve"><value>Mes anterior</value></data>
+  <data name="Ind_Comparar_mismoMesAnioAnterior" xml:space="preserve"><value>Mismo mes del año anterior</value></data>
+  <data name="Ind_LabelDetalle" xml:space="preserve"><value>Mostrar</value></data>
+  <data name="Ind_DetalleTodos" xml:space="preserve"><value>Todos los indicadores</value></data>
+  <data name="Ind_DetalleAlertas" xml:space="preserve"><value>Solo alertas (naranja y rojo)</value></data>
+  <data name="Ind_FilaCorte" xml:space="preserve"><value>Mes de corte y tendencia</value></data>
+  <data name="Ind_RangoHint" xml:space="preserve"><value>El extremo derecho es el mes de corte: los flujos se miden en los 12 meses que terminan ahí y los saldos son los de ese mes. El resto del rango alimenta las tendencias.</value></data>
+  <data name="Ind_SinMesesDatos" xml:space="preserve"><value>No hay meses con datos de PYG o Balance para esta empresa y escenario. Ejecuta el modelo en Ejecución de Modelos.</value></data>
+  <data name="Ind_EstadoInicialTitulo" xml:space="preserve"><value>Define el mes de corte y genera el informe</value></data>
+  <data name="Ind_EstadoInicialDesc" xml:space="preserve"><value>Verás los indicadores de rentabilidad, eficiencia, liquidez, solvencia y crecimiento con su semáforo, y una ficha que explica cada uno.</value></data>
+  <data name="Ind_SinDatosTitulo" xml:space="preserve"><value>Sin datos para este corte</value></data>
+  <data name="Ind_SinDatosDesc" xml:space="preserve"><value>No hay cifras del PYG ni del Balance en el mes de corte elegido. Ejecuta el modelo o elige otro mes.</value></data>
+  <data name="Ind_JS_Consultando" xml:space="preserve"><value>Calculando indicadores...</value></data>
+  <data name="Ind_BtnGlosario" xml:space="preserve"><value>Glosario</value></data>
+  <data name="Ind_Exp_ExcelDesc" xml:space="preserve"><value>Resumen, tendencia mensual y fichas</value></data>
+  <data name="Ind_ResumenTitulo" xml:space="preserve"><value>Resumen del semáforo</value></data>
+  <data name="Ind_AtencionTitulo" xml:space="preserve"><value>Requieren atención</value></data>
+  <data name="Ind_AtencionVacio" xml:space="preserve"><value>Ningún indicador está en naranja o rojo.</value></data>
+  <data name="Ind_TablaTitulo" xml:space="preserve"><value>Todos los indicadores</value></data>
+  <data name="Ind_LeyendaFavorable" xml:space="preserve"><value>Variación favorable</value></data>
+  <data name="Ind_LeyendaDesfavorable" xml:space="preserve"><value>Variación desfavorable</value></data>
+  <data name="Ind_NotaReferencia" xml:space="preserve"><value>Los rangos del semáforo son referencias generales: dependen de la industria y del país.</value></data>
+  <data name="Ind_InsightsTitulo" xml:space="preserve"><value>Lectura gerencial con IA</value></data>
+  <data name="Ind_InsightsSub" xml:space="preserve"><value>Fortaleza, riesgo y prioridad a partir de los indicadores</value></data>
+  <data name="Ind_Generar" xml:space="preserve"><value>Generar resumen</value></data>
+  <data name="Ind_Regenerar" xml:space="preserve"><value>Regenerar</value></data>
+  <data name="Ind_Analizando" xml:space="preserve"><value>Analizando los indicadores...</value></data>
+  <data name="Ind_InsightsVacio" xml:space="preserve"><value>Genera un resumen para ver la fortaleza, el riesgo y la prioridad de este corte.</value></data>
+  <data name="Ind_InsightsMetaFmt" xml:space="preserve"><value>Generado el {0} · {1} indicadores</value></data>
+  <data name="Ind_InsightsSinGenerar" xml:space="preserve"><value>No se pudo generar el resumen.</value></data>
+  <data name="Ind_InsFortaleza" xml:space="preserve"><value>Fortaleza</value></data>
+  <data name="Ind_InsRiesgo" xml:space="preserve"><value>Riesgo</value></data>
+  <data name="Ind_InsPrioridad" xml:space="preserve"><value>Prioridad</value></data>
+  <data name="Ind_ErrorServidor" xml:space="preserve"><value>Error al consultar el servidor.</value></data>
+  <data name="Ind_Pdf_SinInsights" xml:space="preserve"><value>El resumen de IA no se generó para este informe.</value></data>
+  <data name="Ind_Fam_Rentabilidad" xml:space="preserve"><value>Rentabilidad</value></data>
+  <data name="Ind_Fam_Retornos" xml:space="preserve"><value>Retornos</value></data>
+  <data name="Ind_Fam_Eficiencia" xml:space="preserve"><value>Eficiencia</value></data>
+  <data name="Ind_Fam_Liquidez" xml:space="preserve"><value>Liquidez</value></data>
+  <data name="Ind_Fam_Solvencia" xml:space="preserve"><value>Solvencia</value></data>
+  <data name="Ind_Fam_Crecimiento" xml:space="preserve"><value>Crecimiento</value></data>
+  <data name="Ind_Nivel_verde" xml:space="preserve"><value>Saludable</value></data>
+  <data name="Ind_Nivel_amarillo" xml:space="preserve"><value>Atención</value></data>
+  <data name="Ind_Nivel_naranja" xml:space="preserve"><value>Riesgo</value></data>
+  <data name="Ind_Nivel_rojo" xml:space="preserve"><value>Crítico</value></data>
+  <data name="Ind_Nivel_gris" xml:space="preserve"><value>Sin dato</value></data>
+  <data name="Ind_Motivo_sin_dato" xml:space="preserve"><value>Sin datos del modelo</value></data>
+  <data name="Ind_Motivo_ltm_parcial" xml:space="preserve"><value>Requiere 12 meses de datos</value></data>
+  <data name="Ind_Motivo_divisor_cero" xml:space="preserve"><value>No aplica</value></data>
+  <data name="Ind_Motivo_ebitda_no_positivo" xml:space="preserve"><value>EBITDA no positivo</value></data>
+  <data name="Ind_Motivo_sin_intereses" xml:space="preserve"><value>Sin gastos financieros</value></data>
+  <data name="Ind_Motivo_sin_comparativo" xml:space="preserve"><value>Sin 12 meses anteriores</value></data>
+  <data name="Ind_SinValor" xml:space="preserve"><value>No aplica</value></data>
+  <data name="Ind_ParcialFmt" xml:space="preserve"><value>{0} meses</value></data>
+  <data name="Ind_MotivoParcialFmt" xml:space="preserve"><value>Requiere 12 meses (hay {0})</value></data>
+  <data name="Ind_VsFmt" xml:space="preserve"><value>vs {0}</value></data>
+  <data name="Ind_ChipCorteFmt" xml:space="preserve"><value>Corte: {0}</value></data>
+  <data name="Ind_ChipComparadoFmt" xml:space="preserve"><value>vs {0}</value></data>
+  <data name="Ind_ChipSinComparar" xml:space="preserve"><value>Sin comparativo</value></data>
+  <data name="Ind_NotaParcialFmt" xml:space="preserve"><value>Solo hay {0} de los 12 meses de datos del PYG que terminan en el corte: los indicadores que anualizan (días, rotaciones, retornos y crecimiento) no se calculan y los márgenes se muestran sin semáforo.</value></data>
+  <data name="Ind_NotaSinComparativo" xml:space="preserve"><value>El mes de comparación no tiene datos: se muestran los valores del corte sin variación.</value></data>
+  <data name="Ind_NotaSinBalance" xml:space="preserve"><value>El mes de corte no tiene datos de Balance: los indicadores de liquidez, endeudamiento y rotaciones no están disponibles.</value></data>
+  <data name="Ind_CountsAria" xml:space="preserve"><value>Cantidad de indicadores por color del semáforo</value></data>
+  <data name="Ind_InfoBadgeFmt" xml:space="preserve"><value>{0} indicadores</value></data>
+  <data name="Ind_UnidadDias" xml:space="preserve"><value>d</value></data>
+  <data name="Ind_ColFamilia" xml:space="preserve"><value>Familia</value></data>
+  <data name="Ind_ColIndicador" xml:space="preserve"><value>Indicador</value></data>
+  <data name="Ind_ColValor" xml:space="preserve"><value>Valor</value></data>
+  <data name="Ind_ColComparativo" xml:space="preserve"><value>Comparativo</value></data>
+  <data name="Ind_ColVariacion" xml:space="preserve"><value>Variación</value></data>
+  <data name="Ind_ColSemaforo" xml:space="preserve"><value>Semáforo</value></data>
+  <data name="Ind_ColReferencia" xml:space="preserve"><value>Referencia</value></data>
+  <data name="Ind_ColMes" xml:space="preserve"><value>Mes</value></data>
+  <data name="Ind_RangoPositivo" xml:space="preserve"><value>Verde si es positivo; rojo si es cero o negativo</value></data>
+  <data name="Ind_Rango_Verde" xml:space="preserve"><value>Verde</value></data>
+  <data name="Ind_Rango_Amarillo" xml:space="preserve"><value>Amarillo</value></data>
+  <data name="Ind_Rango_Naranja" xml:space="preserve"><value>Naranja</value></data>
+  <data name="Ind_Rango_Rojo" xml:space="preserve"><value>Rojo</value></data>
+  <data name="Ind_Ficha_Titulo" xml:space="preserve"><value>Ficha del indicador</value></data>
+  <data name="Ind_Ficha_Pregunta" xml:space="preserve"><value>La pregunta</value></data>
+  <data name="Ind_Ficha_Que" xml:space="preserve"><value>Qué mide</value></data>
+  <data name="Ind_Ficha_Formula" xml:space="preserve"><value>Cómo se calcula</value></data>
+  <data name="Ind_Ficha_Rangos" xml:space="preserve"><value>Rangos del semáforo</value></data>
+  <data name="Ind_Ficha_Mejorar" xml:space="preserve"><value>Cómo mejorarlo</value></data>
+  <data name="Ind_Ficha_Regla" xml:space="preserve"><value>Para recordar</value></data>
+  <data name="Ind_Ficha_Ahora" xml:space="preserve"><value>Valor actual</value></data>
+  <data name="Ind_Ficha_Comparado" xml:space="preserve"><value>Comparado con</value></data>
+  <data name="Ind_Glosario_Titulo" xml:space="preserve"><value>Glosario de indicadores</value></data>
+  <data name="Ind_VerFicha" xml:space="preserve"><value>Ver detalle</value></data>
+  <data name="Ind_ExcelHojaResumen" xml:space="preserve"><value>Resumen</value></data>
+  <data name="Ind_ExcelHojaTendencia" xml:space="preserve"><value>Tendencia mensual</value></data>
+  <data name="Ind_ExcelHojaFichas" xml:space="preserve"><value>Fichas</value></data>
+  <data name="Ind_GraficoMargenesTitulo" xml:space="preserve"><value>Márgenes (12 meses móviles)</value></data>
+  <data name="Ind_CorreoCorte" xml:space="preserve"><value>Corte</value></data>
+  <data name="Ind_CorreoComparado" xml:space="preserve"><value>Comparado con</value></data>
+  <data name="Ind_CorreoAtencion" xml:space="preserve"><value>Indicadores que requieren atención</value></data>
+  <data name="CfgIA_Emp_Func_InsightsIndicadores" xml:space="preserve"><value>Insights de Indicadores</value></data>
+  <data name="Ind_MargenBruto_Nombre" xml:space="preserve"><value>Margen bruto</value></data>
+  <data name="Ind_MargenBruto_Pregunta" xml:space="preserve"><value>¿Cuánto nos queda de cada peso vendido después del costo de lo vendido?</value></data>
+  <data name="Ind_MargenBruto_Que" xml:space="preserve"><value>Qué parte de los ingresos queda después de cubrir el costo de ventas (CMV y su depreciación). Muestra la capacidad de fijar precios y controlar los costos directos.</value></data>
+  <data name="Ind_MargenBruto_Formula" xml:space="preserve"><value>Utilidad bruta ÷ Ingresos (últimos 12 meses)</value></data>
+  <data name="Ind_MargenBruto_Mejorar" xml:space="preserve"><value>Revisar precios y descuentos, renegociar con proveedores, reducir mermas y desperdicios y vender más de lo que deja mejor margen.</value></data>
+  <data name="Ind_MargenBruto_Regla" xml:space="preserve"><value>Un margen bruto que baja mientras las ventas suben suele indicar que se está regalando precio o que el costo directo se salió de control.</value></data>
+  <data name="Ind_MargenEbitda_Nombre" xml:space="preserve"><value>Margen EBITDA</value></data>
+  <data name="Ind_MargenEbitda_Pregunta" xml:space="preserve"><value>¿Es rentable la operación antes de intereses, impuestos y depreciaciones?</value></data>
+  <data name="Ind_MargenEbitda_Que" xml:space="preserve"><value>Utilidad operativa más depreciaciones y amortizaciones sobre los ingresos: una aproximación a lo que genera el negocio antes de financiarse y pagar impuestos.</value></data>
+  <data name="Ind_MargenEbitda_Formula" xml:space="preserve"><value>(Utilidad operacional + depreciaciones y amortizaciones) ÷ Ingresos (12 meses)</value></data>
+  <data name="Ind_MargenEbitda_Mejorar" xml:space="preserve"><value>Mejorar el margen bruto, controlar los gastos de administración y ventas y crecer sin que los gastos fijos suban al mismo ritmo.</value></data>
+  <data name="Ind_MargenEbitda_Regla" xml:space="preserve"><value>El EBITDA no es caja: no descuenta inversiones, capital de trabajo, intereses ni impuestos.</value></data>
+  <data name="Ind_MargenOperacional_Nombre" xml:space="preserve"><value>Margen operacional</value></data>
+  <data name="Ind_MargenOperacional_Pregunta" xml:space="preserve"><value>¿Es rentable la operación después de depreciaciones?</value></data>
+  <data name="Ind_MargenOperacional_Que" xml:space="preserve"><value>Utilidad operacional sobre ingresos: lo que deja la actividad principal luego de todos los costos y gastos operativos, incluida la depreciación.</value></data>
+  <data name="Ind_MargenOperacional_Formula" xml:space="preserve"><value>Utilidad operacional ÷ Ingresos (12 meses)</value></data>
+  <data name="Ind_MargenOperacional_Mejorar" xml:space="preserve"><value>Mejorar el margen bruto, eliminar gastos que no generan ventas y revisar la productividad de la estructura administrativa.</value></data>
+  <data name="Ind_MargenOperacional_Regla" xml:space="preserve"><value>Si el margen operacional es bajo y el neto es alto, la utilidad probablemente viene de ingresos no operacionales que no se repiten.</value></data>
+  <data name="Ind_MargenNeto_Nombre" xml:space="preserve"><value>Margen neto</value></data>
+  <data name="Ind_MargenNeto_Pregunta" xml:space="preserve"><value>¿Cuánto queda para los dueños de cada peso vendido?</value></data>
+  <data name="Ind_MargenNeto_Que" xml:space="preserve"><value>Utilidad neta sobre ingresos, después de gastos financieros, otros ingresos y gastos no operacionales e impuestos.</value></data>
+  <data name="Ind_MargenNeto_Formula" xml:space="preserve"><value>Utilidad neta ÷ Ingresos (12 meses)</value></data>
+  <data name="Ind_MargenNeto_Mejorar" xml:space="preserve"><value>Reducir el costo financiero, depurar gastos no operacionales y mejorar los márgenes operacionales.</value></data>
+  <data name="Ind_MargenNeto_Regla" xml:space="preserve"><value>Compara siempre el margen neto con el operacional: la diferencia es lo que consumen intereses, impuestos y otros conceptos.</value></data>
+  <data name="Ind_MargenFlujoLibre_Nombre" xml:space="preserve"><value>Margen de flujo libre operativo</value></data>
+  <data name="Ind_MargenFlujoLibre_Pregunta" xml:space="preserve"><value>¿Cuánto efectivo libre deja el negocio por cada peso vendido?</value></data>
+  <data name="Ind_MargenFlujoLibre_Que" xml:space="preserve"><value>Flujo de caja libre operativo (después de impuestos, capital de trabajo e inversiones operativas) sobre los ingresos. Sale del modelo de Flujo de caja.</value></data>
+  <data name="Ind_MargenFlujoLibre_Formula" xml:space="preserve"><value>Flujo de caja libre operativo ÷ Ingresos (12 meses)</value></data>
+  <data name="Ind_MargenFlujoLibre_Mejorar" xml:space="preserve"><value>Liberar capital de trabajo (cartera e inventarios), aplazar inversiones que no aumentan la caja y mejorar la rentabilidad operativa.</value></data>
+  <data name="Ind_MargenFlujoLibre_Regla" xml:space="preserve"><value>Una empresa puede mostrar utilidades y aun así tener flujo libre negativo si invierte mucho o financia a sus clientes.</value></data>
+  <data name="Ind_ConversionCaja_Nombre" xml:space="preserve"><value>Conversión de EBITDA a caja</value></data>
+  <data name="Ind_ConversionCaja_Pregunta" xml:space="preserve"><value>¿Cuánto de lo que gana la operación se convierte en caja disponible?</value></data>
+  <data name="Ind_ConversionCaja_Que" xml:space="preserve"><value>Relación entre el flujo de caja libre operativo y el EBITDA. Cerca de 100 % significa que casi todo el EBITDA llega a caja; muy baja o negativa, que se queda en cartera, inventarios o inversiones.</value></data>
+  <data name="Ind_ConversionCaja_Formula" xml:space="preserve"><value>Flujo de caja libre operativo ÷ EBITDA (12 meses)</value></data>
+  <data name="Ind_ConversionCaja_Mejorar" xml:space="preserve"><value>Acortar el ciclo de cobro, bajar inventarios, negociar plazos con proveedores y priorizar las inversiones de mayor retorno.</value></data>
+  <data name="Ind_ConversionCaja_Regla" xml:space="preserve"><value>Si el EBITDA es positivo pero la conversión es baja, el problema no está en el margen sino en el capital de trabajo o en las inversiones.</value></data>
+  <data name="Ind_Roa_Nombre" xml:space="preserve"><value>Retorno sobre activos (ROA)</value></data>
+  <data name="Ind_Roa_Pregunta" xml:space="preserve"><value>¿Qué tan bien usamos los activos para generar utilidad?</value></data>
+  <data name="Ind_Roa_Que" xml:space="preserve"><value>Utilidad neta de los últimos 12 meses sobre el activo total al corte.</value></data>
+  <data name="Ind_Roa_Formula" xml:space="preserve"><value>Utilidad neta (12 meses) ÷ Activo total</value></data>
+  <data name="Ind_Roa_Mejorar" xml:space="preserve"><value>Aumentar la utilidad con los mismos activos, vender activos improductivos y mejorar la rotación de inventarios y cartera.</value></data>
+  <data name="Ind_Roa_Regla" xml:space="preserve"><value>Un ROA bajo en una empresa con muchos activos fijos es normal: compáralo con empresas del mismo sector.</value></data>
+  <data name="Ind_Roe_Nombre" xml:space="preserve"><value>Retorno sobre patrimonio (ROE)</value></data>
+  <data name="Ind_Roe_Pregunta" xml:space="preserve"><value>¿Qué rentabilidad obtienen los dueños sobre su inversión?</value></data>
+  <data name="Ind_Roe_Que" xml:space="preserve"><value>Utilidad neta de 12 meses sobre el patrimonio al corte. Se infla si la empresa se endeuda mucho: léelo junto con el endeudamiento.</value></data>
+  <data name="Ind_Roe_Formula" xml:space="preserve"><value>Utilidad neta (12 meses) ÷ Patrimonio</value></data>
+  <data name="Ind_Roe_Mejorar" xml:space="preserve"><value>Mejorar el margen neto, rotar mejor los activos y usar deuda solo cuando el retorno supere su costo.</value></data>
+  <data name="Ind_Roe_Regla" xml:space="preserve"><value>Un ROE alto con endeudamiento muy alto no es fortaleza: es riesgo.</value></data>
+  <data name="Ind_Dso_Nombre" xml:space="preserve"><value>Días de cartera (DSO)</value></data>
+  <data name="Ind_Dso_Pregunta" xml:space="preserve"><value>¿Cuántos días tardamos en cobrar?</value></data>
+  <data name="Ind_Dso_Que" xml:space="preserve"><value>Días promedio que tardan los clientes en pagar, estimados con el saldo de cuentas por cobrar y las ventas de 12 meses.</value></data>
+  <data name="Ind_Dso_Formula" xml:space="preserve"><value>Cuentas por cobrar ÷ Ingresos (12 meses) × 365</value></data>
+  <data name="Ind_Dso_Mejorar" xml:space="preserve"><value>Facturar a tiempo, fijar plazos claros, hacer seguimiento a la cobranza y ofrecer descuentos por pronto pago.</value></data>
+  <data name="Ind_Dso_Regla" xml:space="preserve"><value>Cada día que se acorta el cobro libera caja sin vender un peso más.</value></data>
+  <data name="Ind_Dio_Nombre" xml:space="preserve"><value>Días de inventario (DIO)</value></data>
+  <data name="Ind_Dio_Pregunta" xml:space="preserve"><value>¿Cuántos días tardamos en vender lo que tenemos en bodega?</value></data>
+  <data name="Ind_Dio_Que" xml:space="preserve"><value>Días que, en promedio, permanece el inventario antes de venderse, con el saldo de inventarios y el costo de ventas de 12 meses.</value></data>
+  <data name="Ind_Dio_Formula" xml:space="preserve"><value>Inventarios ÷ CMV (12 meses) × 365</value></data>
+  <data name="Ind_Dio_Mejorar" xml:space="preserve"><value>Ajustar las compras a la demanda, liquidar referencias de baja rotación y planear mejor la producción.</value></data>
+  <data name="Ind_Dio_Regla" xml:space="preserve"><value>Inventario que no rota es caja detenida y riesgo de obsolescencia.</value></data>
+  <data name="Ind_Dpo_Nombre" xml:space="preserve"><value>Días de proveedores (DPO)</value></data>
+  <data name="Ind_Dpo_Pregunta" xml:space="preserve"><value>¿Cuántos días tardamos en pagar a proveedores?</value></data>
+  <data name="Ind_Dpo_Que" xml:space="preserve"><value>Días promedio de pago a proveedores corrientes, con su saldo y el costo de ventas de 12 meses. Más días financian la operación, pero pagar muy tarde daña la relación.</value></data>
+  <data name="Ind_Dpo_Formula" xml:space="preserve"><value>Proveedores corrientes ÷ CMV (12 meses) × 365</value></data>
+  <data name="Ind_Dpo_Mejorar" xml:space="preserve"><value>Negociar plazos más largos sin perder descuentos ni poner en riesgo el suministro.</value></data>
+  <data name="Ind_Dpo_Regla" xml:space="preserve"><value>Los proveedores son financiación gratuita solo mientras se respeten los plazos acordados.</value></data>
+  <data name="Ind_CicloEfectivo_Nombre" xml:space="preserve"><value>Ciclo de conversión de efectivo</value></data>
+  <data name="Ind_CicloEfectivo_Pregunta" xml:space="preserve"><value>¿Cuántos días pasan desde que pagamos hasta que cobramos?</value></data>
+  <data name="Ind_CicloEfectivo_Que" xml:space="preserve"><value>Suma los días de cartera y de inventario y resta los días de proveedores: los días que la empresa debe financiar con su propia caja.</value></data>
+  <data name="Ind_CicloEfectivo_Formula" xml:space="preserve"><value>Días de cartera + Días de inventario − Días de proveedores</value></data>
+  <data name="Ind_CicloEfectivo_Mejorar" xml:space="preserve"><value>Acortar el cobro y el inventario y alargar el pago a proveedores dentro de lo razonable.</value></data>
+  <data name="Ind_CicloEfectivo_Regla" xml:space="preserve"><value>Un ciclo largo exige capital de trabajo: si no hay caja, se paga con deuda.</value></data>
+  <data name="Ind_RotacionActivos_Nombre" xml:space="preserve"><value>Rotación de activos</value></data>
+  <data name="Ind_RotacionActivos_Pregunta" xml:space="preserve"><value>¿Cuántas veces vendemos el valor de nuestros activos en un año?</value></data>
+  <data name="Ind_RotacionActivos_Que" xml:space="preserve"><value>Ingresos de 12 meses sobre el activo total: cuánta venta genera cada peso invertido en activos.</value></data>
+  <data name="Ind_RotacionActivos_Formula" xml:space="preserve"><value>Ingresos (12 meses) ÷ Activo total</value></data>
+  <data name="Ind_RotacionActivos_Mejorar" xml:space="preserve"><value>Vender más con la misma estructura, deshacerse de activos ociosos y evitar inversiones que no aumentan las ventas.</value></data>
+  <data name="Ind_RotacionActivos_Regla" xml:space="preserve"><value>Los negocios de margen bajo necesitan rotar mucho; los de margen alto pueden rotar menos.</value></data>
+  <data name="Ind_RotacionInventario_Nombre" xml:space="preserve"><value>Rotación de inventario</value></data>
+  <data name="Ind_RotacionInventario_Pregunta" xml:space="preserve"><value>¿Cuántas veces al año se renueva el inventario?</value></data>
+  <data name="Ind_RotacionInventario_Que" xml:space="preserve"><value>Costo de ventas de 12 meses sobre el inventario al corte: las veces que el inventario se vende y se repone en el año.</value></data>
+  <data name="Ind_RotacionInventario_Formula" xml:space="preserve"><value>CMV (12 meses) ÷ Inventarios</value></data>
+  <data name="Ind_RotacionInventario_Mejorar" xml:space="preserve"><value>Reducir referencias lentas, comprar en lotes más pequeños y alinear producción y ventas.</value></data>
+  <data name="Ind_RotacionInventario_Regla" xml:space="preserve"><value>Una rotación que cae suele avisar antes que las ventas que algo no se está vendiendo.</value></data>
+  <data name="Ind_GastosOperacionales_Nombre" xml:space="preserve"><value>Gastos operacionales / Ingresos</value></data>
+  <data name="Ind_GastosOperacionales_Pregunta" xml:space="preserve"><value>¿Cuánto de lo que vendemos se va en gastos de administración y ventas?</value></data>
+  <data name="Ind_GastosOperacionales_Que" xml:space="preserve"><value>Peso de los gastos operacionales (administración y ventas) sobre los ingresos de 12 meses.</value></data>
+  <data name="Ind_GastosOperacionales_Formula" xml:space="preserve"><value>Gastos operacionales ÷ Ingresos (12 meses)</value></data>
+  <data name="Ind_GastosOperacionales_Mejorar" xml:space="preserve"><value>Congelar gastos fijos, automatizar procesos y crecer ventas sin aumentar la estructura.</value></data>
+  <data name="Ind_GastosOperacionales_Regla" xml:space="preserve"><value>Si los gastos crecen más rápido que las ventas, el margen se está comiendo a sí mismo.</value></data>
+  <data name="Ind_CapitalTrabajoIngresos_Nombre" xml:space="preserve"><value>Capital de trabajo / Ingresos</value></data>
+  <data name="Ind_CapitalTrabajoIngresos_Pregunta" xml:space="preserve"><value>¿Cuánto capital necesita el negocio por cada peso que vende?</value></data>
+  <data name="Ind_CapitalTrabajoIngresos_Que" xml:space="preserve"><value>Capital de trabajo (activo corriente menos pasivo corriente) sobre los ingresos de 12 meses. Indica cuánta inversión operativa exige crecer. Si es negativo, el corto plazo no está cubierto y se marca en rojo.</value></data>
+  <data name="Ind_CapitalTrabajoIngresos_Formula" xml:space="preserve"><value>(Activo corriente − Pasivo corriente) ÷ Ingresos (12 meses)</value></data>
+  <data name="Ind_CapitalTrabajoIngresos_Mejorar" xml:space="preserve"><value>Reducir cartera e inventarios y negociar plazos con proveedores.</value></data>
+  <data name="Ind_CapitalTrabajoIngresos_Regla" xml:space="preserve"><value>Crecer consume capital de trabajo: cuanto más alto este indicador, más caja pide cada nuevo peso de ventas.</value></data>
+  <data name="Ind_RazonCorriente_Nombre" xml:space="preserve"><value>Razón corriente</value></data>
+  <data name="Ind_RazonCorriente_Pregunta" xml:space="preserve"><value>¿Podemos pagar lo que vence en el corto plazo con lo que tenemos disponible?</value></data>
+  <data name="Ind_RazonCorriente_Que" xml:space="preserve"><value>Activo corriente entre pasivo corriente: cuántos pesos de activos de corto plazo hay por cada peso de deuda de corto plazo.</value></data>
+  <data name="Ind_RazonCorriente_Formula" xml:space="preserve"><value>Activo corriente ÷ Pasivo corriente</value></data>
+  <data name="Ind_RazonCorriente_Mejorar" xml:space="preserve"><value>Pasar deuda de corto a largo plazo, cobrar la cartera y evitar inmovilizar caja en activos de lenta conversión.</value></data>
+  <data name="Ind_RazonCorriente_Regla" xml:space="preserve"><value>Por debajo de 1,0 la empresa debe más a corto plazo de lo que tiene a corto plazo.</value></data>
+  <data name="Ind_PruebaAcida_Nombre" xml:space="preserve"><value>Prueba ácida</value></data>
+  <data name="Ind_PruebaAcida_Pregunta" xml:space="preserve"><value>¿Podemos pagar el corto plazo sin vender el inventario?</value></data>
+  <data name="Ind_PruebaAcida_Que" xml:space="preserve"><value>Como la razón corriente pero sin inventarios, que son el activo corriente más difícil de convertir en efectivo.</value></data>
+  <data name="Ind_PruebaAcida_Formula" xml:space="preserve"><value>(Activo corriente − Inventarios) ÷ Pasivo corriente</value></data>
+  <data name="Ind_PruebaAcida_Mejorar" xml:space="preserve"><value>Acelerar el cobro, reducir inventario y renegociar vencimientos cercanos.</value></data>
+  <data name="Ind_PruebaAcida_Regla" xml:space="preserve"><value>Si la razón corriente es buena pero la prueba ácida es débil, la liquidez depende de vender el inventario.</value></data>
+  <data name="Ind_RazonEfectivo_Nombre" xml:space="preserve"><value>Razón de efectivo</value></data>
+  <data name="Ind_RazonEfectivo_Pregunta" xml:space="preserve"><value>¿Podemos pagar el corto plazo solo con el efectivo?</value></data>
+  <data name="Ind_RazonEfectivo_Que" xml:space="preserve"><value>Caja y bancos entre pasivo corriente: la medida más estricta de liquidez.</value></data>
+  <data name="Ind_RazonEfectivo_Formula" xml:space="preserve"><value>Caja y bancos ÷ Pasivo corriente</value></data>
+  <data name="Ind_RazonEfectivo_Mejorar" xml:space="preserve"><value>Mantener un colchón de caja, programar mejor los pagos y negociar líneas de crédito disponibles.</value></data>
+  <data name="Ind_RazonEfectivo_Regla" xml:space="preserve"><value>Una razón de efectivo muy baja deja a la empresa a un mal mes de una crisis de caja.</value></data>
+  <data name="Ind_CapitalTrabajo_Nombre" xml:space="preserve"><value>Capital de trabajo</value></data>
+  <data name="Ind_CapitalTrabajo_Pregunta" xml:space="preserve"><value>¿Cuánto nos sobra (o falta) después de cubrir el corto plazo?</value></data>
+  <data name="Ind_CapitalTrabajo_Que" xml:space="preserve"><value>Diferencia entre el activo corriente y el pasivo corriente. Positivo: el corto plazo está cubierto; negativo: hay más deuda de corto plazo que activos de corto plazo.</value></data>
+  <data name="Ind_CapitalTrabajo_Formula" xml:space="preserve"><value>Activo corriente − Pasivo corriente</value></data>
+  <data name="Ind_CapitalTrabajo_Mejorar" xml:space="preserve"><value>Generar caja operativa, alargar vencimientos de la deuda y reducir cartera e inventarios innecesarios.</value></data>
+  <data name="Ind_CapitalTrabajo_Regla" xml:space="preserve"><value>Un capital de trabajo negativo no siempre es malo (hay negocios que cobran antes de pagar), pero exige vigilancia.</value></data>
+  <data name="Ind_Endeudamiento_Nombre" xml:space="preserve"><value>Endeudamiento total</value></data>
+  <data name="Ind_Endeudamiento_Pregunta" xml:space="preserve"><value>¿Qué parte de lo que tenemos está financiada por terceros?</value></data>
+  <data name="Ind_Endeudamiento_Que" xml:space="preserve"><value>Pasivo total entre activo total: el porcentaje de los activos financiado con deudas y obligaciones.</value></data>
+  <data name="Ind_Endeudamiento_Formula" xml:space="preserve"><value>Pasivo total ÷ Activo total</value></data>
+  <data name="Ind_Endeudamiento_Mejorar" xml:space="preserve"><value>Capitalizar utilidades, pagar deuda con el flujo libre y evitar financiar activos con deuda de corto plazo.</value></data>
+  <data name="Ind_Endeudamiento_Regla" xml:space="preserve"><value>Cuanto más alto el endeudamiento, menos margen de error tiene la empresa ante una mala racha.</value></data>
+  <data name="Ind_DeudaNetaEbitda_Nombre" xml:space="preserve"><value>Deuda neta / EBITDA</value></data>
+  <data name="Ind_DeudaNetaEbitda_Pregunta" xml:space="preserve"><value>¿En cuántos años pagaríamos la deuda con lo que genera la operación?</value></data>
+  <data name="Ind_DeudaNetaEbitda_Que" xml:space="preserve"><value>Deuda financiera menos caja, dividida por el EBITDA de 12 meses. Es la medida que más usan los bancos para dimensionar la capacidad de pago.</value></data>
+  <data name="Ind_DeudaNetaEbitda_Formula" xml:space="preserve"><value>(Obligaciones financieras − Caja y bancos) ÷ EBITDA (12 meses)</value></data>
+  <data name="Ind_DeudaNetaEbitda_Mejorar" xml:space="preserve"><value>Aumentar el EBITDA, usar el flujo libre para amortizar deuda y evitar nueva deuda que no genere retorno.</value></data>
+  <data name="Ind_DeudaNetaEbitda_Regla" xml:space="preserve"><value>Con deuda neta positiva y EBITDA negativo no hay forma de pagar con la operación: es una alerta, no un número.</value></data>
+  <data name="Ind_CoberturaIntereses_Nombre" xml:space="preserve"><value>Cobertura de intereses</value></data>
+  <data name="Ind_CoberturaIntereses_Pregunta" xml:space="preserve"><value>¿Cuántas veces alcanza la operación para pagar los intereses?</value></data>
+  <data name="Ind_CoberturaIntereses_Que" xml:space="preserve"><value>EBITDA de 12 meses entre los gastos financieros del mismo período.</value></data>
+  <data name="Ind_CoberturaIntereses_Formula" xml:space="preserve"><value>EBITDA (12 meses) ÷ Gastos financieros (12 meses)</value></data>
+  <data name="Ind_CoberturaIntereses_Mejorar" xml:space="preserve"><value>Refinanciar a menor tasa, reducir deuda cara y aumentar el EBITDA.</value></data>
+  <data name="Ind_CoberturaIntereses_Regla" xml:space="preserve"><value>Cuando la cobertura se acerca a 1,0, casi toda la utilidad operativa se va en intereses.</value></data>
+  <data name="Ind_CostoDeuda_Nombre" xml:space="preserve"><value>Costo de la deuda</value></data>
+  <data name="Ind_CostoDeuda_Pregunta" xml:space="preserve"><value>¿Cuánto nos cuesta, en promedio, la deuda?</value></data>
+  <data name="Ind_CostoDeuda_Que" xml:space="preserve"><value>Gastos financieros de 12 meses sobre la deuda financiera al corte. Es una estimación: los gastos financieros pueden incluir otros conceptos y la deuda cambia durante el año.</value></data>
+  <data name="Ind_CostoDeuda_Formula" xml:space="preserve"><value>Gastos financieros (12 meses) ÷ Obligaciones financieras</value></data>
+  <data name="Ind_CostoDeuda_Mejorar" xml:space="preserve"><value>Renegociar tasas, sustituir deuda cara por deuda barata y ajustar los plazos de los créditos.</value></data>
+  <data name="Ind_CostoDeuda_Regla" xml:space="preserve"><value>Si el costo de la deuda supera el retorno de lo que se financia con ella, endeudarse destruye valor.</value></data>
+  <data name="Ind_ApalancamientoFinanciero_Nombre" xml:space="preserve"><value>Apalancamiento financiero</value></data>
+  <data name="Ind_ApalancamientoFinanciero_Pregunta" xml:space="preserve"><value>¿Cuántos pesos de activos sostiene cada peso de patrimonio?</value></data>
+  <data name="Ind_ApalancamientoFinanciero_Que" xml:space="preserve"><value>Activo total entre patrimonio: cuánto amplifica la deuda los resultados, para bien y para mal.</value></data>
+  <data name="Ind_ApalancamientoFinanciero_Formula" xml:space="preserve"><value>Activo total ÷ Patrimonio</value></data>
+  <data name="Ind_ApalancamientoFinanciero_Mejorar" xml:space="preserve"><value>Retener utilidades para fortalecer el patrimonio y moderar el uso de deuda.</value></data>
+  <data name="Ind_ApalancamientoFinanciero_Regla" xml:space="preserve"><value>El apalancamiento multiplica las ganancias en las buenas épocas y las pérdidas en las malas.</value></data>
+  <data name="Ind_CrecimientoIngresos_Nombre" xml:space="preserve"><value>Crecimiento de ingresos</value></data>
+  <data name="Ind_CrecimientoIngresos_Pregunta" xml:space="preserve"><value>¿Estamos vendiendo más que hace un año?</value></data>
+  <data name="Ind_CrecimientoIngresos_Que" xml:space="preserve"><value>Variación de los ingresos de los últimos 12 meses contra los 12 meses anteriores. Necesita 24 meses de historia.</value></data>
+  <data name="Ind_CrecimientoIngresos_Formula" xml:space="preserve"><value>Ingresos (12 meses) ÷ Ingresos (12 meses anteriores) − 1</value></data>
+  <data name="Ind_CrecimientoIngresos_Mejorar" xml:space="preserve"><value>Ampliar clientes y canales, ajustar precios y proteger el servicio a los clientes actuales.</value></data>
+  <data name="Ind_CrecimientoIngresos_Regla" xml:space="preserve"><value>Crecer sin sostener el margen y el flujo de caja no es crecer bien.</value></data>
+  <data name="Ind_CrecimientoEbitda_Nombre" xml:space="preserve"><value>Crecimiento del EBITDA</value></data>
+  <data name="Ind_CrecimientoEbitda_Pregunta" xml:space="preserve"><value>¿Está creciendo la utilidad operativa?</value></data>
+  <data name="Ind_CrecimientoEbitda_Que" xml:space="preserve"><value>Variación del EBITDA de 12 meses contra el de los 12 meses anteriores. Necesita 24 meses de historia.</value></data>
+  <data name="Ind_CrecimientoEbitda_Formula" xml:space="preserve"><value>EBITDA (12 meses) ÷ EBITDA (12 meses anteriores) − 1</value></data>
+  <data name="Ind_CrecimientoEbitda_Mejorar" xml:space="preserve"><value>Crecer ventas con control de gastos y proteger los márgenes.</value></data>
+  <data name="Ind_CrecimientoEbitda_Regla" xml:space="preserve"><value>Si el EBITDA crece más rápido que los ingresos, el negocio está ganando escala.</value></data>
+  <data name="Doc_MarcaLeyenda" xml:space="preserve"><value>BUFINS  ·  CONFIDENCIAL  ·  PROPIEDAD DE BUFINS</value></data>
+  <data name="Doc_Aviso" xml:space="preserve"><value>Documento confidencial, propiedad de Bufins. Uso exclusivo de los usuarios autorizados: prohibida su copia, captura o distribución.</value></data>
 </root>

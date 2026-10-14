@@ -2321,8 +2321,6 @@ Indicators management follows closely: </value></data>
   <data name="HojasCargue_Err_DiagnosticoConErrores" xml:space="preserve"><value>The sheet structure has errors (see Usage &amp; diagnostics): fix them before activating it.</value></data>
 
   <!-- INFORME HISTORICO DE PRECIOS / MENU PERSONALIZADO -->
-  <data name="HP_Doc_MarcaLeyenda" xml:space="preserve"><value>BUFINS  ·  CONFIDENTIAL  ·  PROPERTY OF BUFINS</value></data>
-  <data name="HP_Doc_Aviso" xml:space="preserve"><value>Confidential document, property of Bufins. For authorized users only: copying, capturing or distributing it is prohibited.</value></data>
   <data name="HP_Doc_ModalTitulo" xml:space="preserve"><value>Documentation: price history report</value></data>
   <data name="Common_DocumentacionTag" xml:space="preserve"><value>Documentation</value></data>
   <data name="HP_DocumentacionTooltip" xml:space="preserve"><value>How this report replaces the original Excel (with screenshots of both)</value></data>
@@ -2746,4 +2744,273 @@ Indicators management follows closely: </value></data>
   <data name="Menu_ModalHabilitarTodasNote" xml:space="preserve"><value>Each user will get the menus they do not have yet. Super Admin-only menus are excluded; Company Admin-only and company-specific menus are respected; no other permission is removed or changed.</value></data>
   <data name="Menu_HabilitarTodasOkFmt" xml:space="preserve"><value>Done: {0} new access(es) granted across {1} menu(s).</value></data>
   <data name="Menu_ErrorHabilitarTodas" xml:space="preserve"><value>Could not enable all options. Please try again.</value></data>
+  <!-- INDICATORS REPORT -->
+  <data name="Ind_PageTitle" xml:space="preserve"><value>Indicators report</value></data>
+  <data name="Ind_Subtitulo" xml:space="preserve"><value>Indicators with traffic lights</value></data>
+  <data name="Ind_DocumentacionTooltip" xml:space="preserve"><value>What each indicator measures, where the figures come from and how to read the traffic light</value></data>
+  <data name="Ind_Doc_ModalTitulo" xml:space="preserve"><value>Documentation: indicators report</value></data>
+  <data name="Ind_LabelComparar" xml:space="preserve"><value>Compare with</value></data>
+  <data name="Ind_CompararHint" xml:space="preserve"><value>Which month each indicator's change is measured against. That month is evaluated like the cutoff, with its own 12 months.</value></data>
+  <data name="Ind_Comparar_cierreAnterior" xml:space="preserve"><value>Previous year-end (December)</value></data>
+  <data name="Ind_Comparar_mesAnterior" xml:space="preserve"><value>Previous month</value></data>
+  <data name="Ind_Comparar_mismoMesAnioAnterior" xml:space="preserve"><value>Same month last year</value></data>
+  <data name="Ind_LabelDetalle" xml:space="preserve"><value>Show</value></data>
+  <data name="Ind_DetalleTodos" xml:space="preserve"><value>All indicators</value></data>
+  <data name="Ind_DetalleAlertas" xml:space="preserve"><value>Alerts only (orange and red)</value></data>
+  <data name="Ind_FilaCorte" xml:space="preserve"><value>Cutoff month and trend</value></data>
+  <data name="Ind_RangoHint" xml:space="preserve"><value>The right end is the cutoff month: flows are measured over the 12 months ending there and balances are that month's. The rest of the range feeds the trends.</value></data>
+  <data name="Ind_SinMesesDatos" xml:space="preserve"><value>There are no months with P&amp;L or Balance Sheet data for this company and scenario. Run the model in Model Execution.</value></data>
+  <data name="Ind_EstadoInicialTitulo" xml:space="preserve"><value>Set the cutoff month and generate the report</value></data>
+  <data name="Ind_EstadoInicialDesc" xml:space="preserve"><value>You will see the profitability, efficiency, liquidity, solvency and growth indicators with their traffic light, and a card explaining each one.</value></data>
+  <data name="Ind_SinDatosTitulo" xml:space="preserve"><value>No data for this cutoff</value></data>
+  <data name="Ind_SinDatosDesc" xml:space="preserve"><value>There are no P&amp;L or Balance Sheet figures in the chosen cutoff month. Run the model or choose another month.</value></data>
+  <data name="Ind_JS_Consultando" xml:space="preserve"><value>Calculating indicators...</value></data>
+  <data name="Ind_BtnGlosario" xml:space="preserve"><value>Glossary</value></data>
+  <data name="Ind_Exp_ExcelDesc" xml:space="preserve"><value>Summary, monthly trend and indicator cards</value></data>
+  <data name="Ind_ResumenTitulo" xml:space="preserve"><value>Traffic light summary</value></data>
+  <data name="Ind_AtencionTitulo" xml:space="preserve"><value>Need attention</value></data>
+  <data name="Ind_AtencionVacio" xml:space="preserve"><value>No indicator is orange or red.</value></data>
+  <data name="Ind_TablaTitulo" xml:space="preserve"><value>All indicators</value></data>
+  <data name="Ind_LeyendaFavorable" xml:space="preserve"><value>Favorable change</value></data>
+  <data name="Ind_LeyendaDesfavorable" xml:space="preserve"><value>Unfavorable change</value></data>
+  <data name="Ind_NotaReferencia" xml:space="preserve"><value>The traffic light ranges are general references: they depend on the industry and the country.</value></data>
+  <data name="Ind_InsightsTitulo" xml:space="preserve"><value>Management reading with AI</value></data>
+  <data name="Ind_InsightsSub" xml:space="preserve"><value>Strength, risk and priority drawn from the indicators</value></data>
+  <data name="Ind_Generar" xml:space="preserve"><value>Generate summary</value></data>
+  <data name="Ind_Regenerar" xml:space="preserve"><value>Regenerate</value></data>
+  <data name="Ind_Analizando" xml:space="preserve"><value>Analyzing the indicators...</value></data>
+  <data name="Ind_InsightsVacio" xml:space="preserve"><value>Generate a summary to see the strength, risk and priority of this cutoff.</value></data>
+  <data name="Ind_InsightsMetaFmt" xml:space="preserve"><value>Generated on {0} · {1} indicators</value></data>
+  <data name="Ind_InsightsSinGenerar" xml:space="preserve"><value>The summary could not be generated.</value></data>
+  <data name="Ind_InsFortaleza" xml:space="preserve"><value>Strength</value></data>
+  <data name="Ind_InsRiesgo" xml:space="preserve"><value>Risk</value></data>
+  <data name="Ind_InsPrioridad" xml:space="preserve"><value>Priority</value></data>
+  <data name="Ind_ErrorServidor" xml:space="preserve"><value>Server error.</value></data>
+  <data name="Ind_Pdf_SinInsights" xml:space="preserve"><value>The AI summary was not generated for this report.</value></data>
+  <data name="Ind_Fam_Rentabilidad" xml:space="preserve"><value>Profitability</value></data>
+  <data name="Ind_Fam_Retornos" xml:space="preserve"><value>Returns</value></data>
+  <data name="Ind_Fam_Eficiencia" xml:space="preserve"><value>Efficiency</value></data>
+  <data name="Ind_Fam_Liquidez" xml:space="preserve"><value>Liquidity</value></data>
+  <data name="Ind_Fam_Solvencia" xml:space="preserve"><value>Solvency</value></data>
+  <data name="Ind_Fam_Crecimiento" xml:space="preserve"><value>Growth</value></data>
+  <data name="Ind_Nivel_verde" xml:space="preserve"><value>Healthy</value></data>
+  <data name="Ind_Nivel_amarillo" xml:space="preserve"><value>Watch</value></data>
+  <data name="Ind_Nivel_naranja" xml:space="preserve"><value>At risk</value></data>
+  <data name="Ind_Nivel_rojo" xml:space="preserve"><value>Critical</value></data>
+  <data name="Ind_Nivel_gris" xml:space="preserve"><value>No data</value></data>
+  <data name="Ind_Motivo_sin_dato" xml:space="preserve"><value>No model data</value></data>
+  <data name="Ind_Motivo_ltm_parcial" xml:space="preserve"><value>Needs 12 months of data</value></data>
+  <data name="Ind_Motivo_divisor_cero" xml:space="preserve"><value>Not applicable</value></data>
+  <data name="Ind_Motivo_ebitda_no_positivo" xml:space="preserve"><value>Non-positive EBITDA</value></data>
+  <data name="Ind_Motivo_sin_intereses" xml:space="preserve"><value>No financial expenses</value></data>
+  <data name="Ind_Motivo_sin_comparativo" xml:space="preserve"><value>No prior 12 months</value></data>
+  <data name="Ind_SinValor" xml:space="preserve"><value>Not applicable</value></data>
+  <data name="Ind_ParcialFmt" xml:space="preserve"><value>{0} months</value></data>
+  <data name="Ind_MotivoParcialFmt" xml:space="preserve"><value>Needs 12 months ({0} available)</value></data>
+  <data name="Ind_VsFmt" xml:space="preserve"><value>vs {0}</value></data>
+  <data name="Ind_ChipCorteFmt" xml:space="preserve"><value>Cutoff: {0}</value></data>
+  <data name="Ind_ChipComparadoFmt" xml:space="preserve"><value>vs {0}</value></data>
+  <data name="Ind_ChipSinComparar" xml:space="preserve"><value>No comparison</value></data>
+  <data name="Ind_NotaParcialFmt" xml:space="preserve"><value>Only {0} of the 12 months of P&amp;L data ending at the cutoff are available: indicators that annualize (days, turnovers, returns and growth) are not calculated and margins are shown without a traffic light.</value></data>
+  <data name="Ind_NotaSinComparativo" xml:space="preserve"><value>The comparison month has no data: cutoff values are shown without a change.</value></data>
+  <data name="Ind_NotaSinBalance" xml:space="preserve"><value>The cutoff month has no Balance Sheet data: liquidity, debt and turnover indicators are not available.</value></data>
+  <data name="Ind_CountsAria" xml:space="preserve"><value>Number of indicators by traffic light color</value></data>
+  <data name="Ind_InfoBadgeFmt" xml:space="preserve"><value>{0} indicators</value></data>
+  <data name="Ind_UnidadDias" xml:space="preserve"><value>d</value></data>
+  <data name="Ind_ColFamilia" xml:space="preserve"><value>Family</value></data>
+  <data name="Ind_ColIndicador" xml:space="preserve"><value>Indicator</value></data>
+  <data name="Ind_ColValor" xml:space="preserve"><value>Value</value></data>
+  <data name="Ind_ColComparativo" xml:space="preserve"><value>Comparison</value></data>
+  <data name="Ind_ColVariacion" xml:space="preserve"><value>Change</value></data>
+  <data name="Ind_ColSemaforo" xml:space="preserve"><value>Traffic light</value></data>
+  <data name="Ind_ColReferencia" xml:space="preserve"><value>Reference</value></data>
+  <data name="Ind_ColMes" xml:space="preserve"><value>Month</value></data>
+  <data name="Ind_RangoPositivo" xml:space="preserve"><value>Green if positive; red if zero or negative</value></data>
+  <data name="Ind_Rango_Verde" xml:space="preserve"><value>Green</value></data>
+  <data name="Ind_Rango_Amarillo" xml:space="preserve"><value>Yellow</value></data>
+  <data name="Ind_Rango_Naranja" xml:space="preserve"><value>Orange</value></data>
+  <data name="Ind_Rango_Rojo" xml:space="preserve"><value>Red</value></data>
+  <data name="Ind_Ficha_Titulo" xml:space="preserve"><value>Indicator card</value></data>
+  <data name="Ind_Ficha_Pregunta" xml:space="preserve"><value>The question</value></data>
+  <data name="Ind_Ficha_Que" xml:space="preserve"><value>What it measures</value></data>
+  <data name="Ind_Ficha_Formula" xml:space="preserve"><value>How it is calculated</value></data>
+  <data name="Ind_Ficha_Rangos" xml:space="preserve"><value>Traffic light ranges</value></data>
+  <data name="Ind_Ficha_Mejorar" xml:space="preserve"><value>How to improve it</value></data>
+  <data name="Ind_Ficha_Regla" xml:space="preserve"><value>To remember</value></data>
+  <data name="Ind_Ficha_Ahora" xml:space="preserve"><value>Current value</value></data>
+  <data name="Ind_Ficha_Comparado" xml:space="preserve"><value>Compared with</value></data>
+  <data name="Ind_Glosario_Titulo" xml:space="preserve"><value>Indicators glossary</value></data>
+  <data name="Ind_VerFicha" xml:space="preserve"><value>View details</value></data>
+  <data name="Ind_ExcelHojaResumen" xml:space="preserve"><value>Summary</value></data>
+  <data name="Ind_ExcelHojaTendencia" xml:space="preserve"><value>Monthly trend</value></data>
+  <data name="Ind_ExcelHojaFichas" xml:space="preserve"><value>Cards</value></data>
+  <data name="Ind_GraficoMargenesTitulo" xml:space="preserve"><value>Margins (rolling 12 months)</value></data>
+  <data name="Ind_CorreoCorte" xml:space="preserve"><value>Cutoff</value></data>
+  <data name="Ind_CorreoComparado" xml:space="preserve"><value>Compared with</value></data>
+  <data name="Ind_CorreoAtencion" xml:space="preserve"><value>Indicators that need attention</value></data>
+  <data name="CfgIA_Emp_Func_InsightsIndicadores" xml:space="preserve"><value>Indicators insights</value></data>
+  <data name="Ind_MargenBruto_Nombre" xml:space="preserve"><value>Gross margin</value></data>
+  <data name="Ind_MargenBruto_Pregunta" xml:space="preserve"><value>How much of every peso sold is left after the cost of what was sold?</value></data>
+  <data name="Ind_MargenBruto_Que" xml:space="preserve"><value>The share of revenue left after covering the cost of sales (COGS and its depreciation). It shows pricing power and control over direct costs.</value></data>
+  <data name="Ind_MargenBruto_Formula" xml:space="preserve"><value>Gross profit ÷ Revenue (last 12 months)</value></data>
+  <data name="Ind_MargenBruto_Mejorar" xml:space="preserve"><value>Review prices and discounts, renegotiate with suppliers, cut waste and sell more of what carries the best margin.</value></data>
+  <data name="Ind_MargenBruto_Regla" xml:space="preserve"><value>A gross margin that falls while sales rise usually means price is being given away or direct costs got out of hand.</value></data>
+  <data name="Ind_MargenEbitda_Nombre" xml:space="preserve"><value>EBITDA margin</value></data>
+  <data name="Ind_MargenEbitda_Pregunta" xml:space="preserve"><value>Is the operation profitable before interest, taxes and depreciation?</value></data>
+  <data name="Ind_MargenEbitda_Que" xml:space="preserve"><value>Operating profit plus depreciation and amortization over revenue: an approximation of what the business generates before financing and taxes.</value></data>
+  <data name="Ind_MargenEbitda_Formula" xml:space="preserve"><value>(Operating profit + depreciation and amortization) ÷ Revenue (12 months)</value></data>
+  <data name="Ind_MargenEbitda_Mejorar" xml:space="preserve"><value>Improve gross margin, control administrative and selling expenses and grow without fixed costs rising at the same pace.</value></data>
+  <data name="Ind_MargenEbitda_Regla" xml:space="preserve"><value>EBITDA is not cash: it does not deduct investments, working capital, interest or taxes.</value></data>
+  <data name="Ind_MargenOperacional_Nombre" xml:space="preserve"><value>Operating margin</value></data>
+  <data name="Ind_MargenOperacional_Pregunta" xml:space="preserve"><value>Is the operation profitable after depreciation?</value></data>
+  <data name="Ind_MargenOperacional_Que" xml:space="preserve"><value>Operating profit over revenue: what the core activity leaves after all operating costs and expenses, including depreciation.</value></data>
+  <data name="Ind_MargenOperacional_Formula" xml:space="preserve"><value>Operating profit ÷ Revenue (12 months)</value></data>
+  <data name="Ind_MargenOperacional_Mejorar" xml:space="preserve"><value>Improve gross margin, remove expenses that do not generate sales and review the productivity of the administrative structure.</value></data>
+  <data name="Ind_MargenOperacional_Regla" xml:space="preserve"><value>If the operating margin is low and the net margin is high, profit probably comes from non-operating income that will not repeat.</value></data>
+  <data name="Ind_MargenNeto_Nombre" xml:space="preserve"><value>Net margin</value></data>
+  <data name="Ind_MargenNeto_Pregunta" xml:space="preserve"><value>How much of every peso sold is left for the owners?</value></data>
+  <data name="Ind_MargenNeto_Que" xml:space="preserve"><value>Net profit over revenue, after financial expenses, other non-operating income and expenses, and taxes.</value></data>
+  <data name="Ind_MargenNeto_Formula" xml:space="preserve"><value>Net profit ÷ Revenue (12 months)</value></data>
+  <data name="Ind_MargenNeto_Mejorar" xml:space="preserve"><value>Reduce financial cost, clean up non-operating expenses and improve operating margins.</value></data>
+  <data name="Ind_MargenNeto_Regla" xml:space="preserve"><value>Always compare net margin with operating margin: the gap is what interest, taxes and other items consume.</value></data>
+  <data name="Ind_MargenFlujoLibre_Nombre" xml:space="preserve"><value>Operating free cash flow margin</value></data>
+  <data name="Ind_MargenFlujoLibre_Pregunta" xml:space="preserve"><value>How much free cash does the business leave per peso sold?</value></data>
+  <data name="Ind_MargenFlujoLibre_Que" xml:space="preserve"><value>Operating free cash flow (after taxes, working capital and operating investments) over revenue. It comes from the Cash flow model.</value></data>
+  <data name="Ind_MargenFlujoLibre_Formula" xml:space="preserve"><value>Operating free cash flow ÷ Revenue (12 months)</value></data>
+  <data name="Ind_MargenFlujoLibre_Mejorar" xml:space="preserve"><value>Release working capital (receivables and inventory), postpone investments that do not add cash and improve operating profitability.</value></data>
+  <data name="Ind_MargenFlujoLibre_Regla" xml:space="preserve"><value>A company can show profits and still have negative free cash flow if it invests heavily or finances its customers.</value></data>
+  <data name="Ind_ConversionCaja_Nombre" xml:space="preserve"><value>EBITDA-to-cash conversion</value></data>
+  <data name="Ind_ConversionCaja_Pregunta" xml:space="preserve"><value>How much of what the operation earns becomes available cash?</value></data>
+  <data name="Ind_ConversionCaja_Que" xml:space="preserve"><value>Ratio of operating free cash flow to EBITDA. Close to 100% means almost all EBITDA reaches cash; very low or negative means it stays in receivables, inventory or investments.</value></data>
+  <data name="Ind_ConversionCaja_Formula" xml:space="preserve"><value>Operating free cash flow ÷ EBITDA (12 months)</value></data>
+  <data name="Ind_ConversionCaja_Mejorar" xml:space="preserve"><value>Shorten the collection cycle, lower inventory, negotiate supplier terms and prioritize the highest-return investments.</value></data>
+  <data name="Ind_ConversionCaja_Regla" xml:space="preserve"><value>If EBITDA is positive but conversion is low, the problem is not margin but working capital or investments.</value></data>
+  <data name="Ind_Roa_Nombre" xml:space="preserve"><value>Return on assets (ROA)</value></data>
+  <data name="Ind_Roa_Pregunta" xml:space="preserve"><value>How well do we use our assets to generate profit?</value></data>
+  <data name="Ind_Roa_Que" xml:space="preserve"><value>Net profit of the last 12 months over total assets at the cutoff.</value></data>
+  <data name="Ind_Roa_Formula" xml:space="preserve"><value>Net profit (12 months) ÷ Total assets</value></data>
+  <data name="Ind_Roa_Mejorar" xml:space="preserve"><value>Raise profit with the same assets, sell unproductive assets and improve inventory and receivables turnover.</value></data>
+  <data name="Ind_Roa_Regla" xml:space="preserve"><value>A low ROA in an asset-heavy company is normal: compare it with companies in the same sector.</value></data>
+  <data name="Ind_Roe_Nombre" xml:space="preserve"><value>Return on equity (ROE)</value></data>
+  <data name="Ind_Roe_Pregunta" xml:space="preserve"><value>What return do the owners earn on their investment?</value></data>
+  <data name="Ind_Roe_Que" xml:space="preserve"><value>Net profit over 12 months relative to equity at the cutoff. It is inflated when the company borrows heavily: read it together with leverage.</value></data>
+  <data name="Ind_Roe_Formula" xml:space="preserve"><value>Net profit (12 months) ÷ Equity</value></data>
+  <data name="Ind_Roe_Mejorar" xml:space="preserve"><value>Improve net margin, turn assets over better and use debt only when the return exceeds its cost.</value></data>
+  <data name="Ind_Roe_Regla" xml:space="preserve"><value>A high ROE with very high debt is not strength: it is risk.</value></data>
+  <data name="Ind_Dso_Nombre" xml:space="preserve"><value>Days sales outstanding (DSO)</value></data>
+  <data name="Ind_Dso_Pregunta" xml:space="preserve"><value>How many days do we take to collect?</value></data>
+  <data name="Ind_Dso_Que" xml:space="preserve"><value>Average days customers take to pay, estimated from the receivables balance and 12-month sales.</value></data>
+  <data name="Ind_Dso_Formula" xml:space="preserve"><value>Accounts receivable ÷ Revenue (12 months) × 365</value></data>
+  <data name="Ind_Dso_Mejorar" xml:space="preserve"><value>Invoice on time, set clear terms, follow up on collections and offer early-payment discounts.</value></data>
+  <data name="Ind_Dso_Regla" xml:space="preserve"><value>Every day the collection period shrinks frees up cash without selling another peso.</value></data>
+  <data name="Ind_Dio_Nombre" xml:space="preserve"><value>Days inventory outstanding (DIO)</value></data>
+  <data name="Ind_Dio_Pregunta" xml:space="preserve"><value>How many days do we take to sell what we hold in stock?</value></data>
+  <data name="Ind_Dio_Que" xml:space="preserve"><value>Average days inventory stays before it is sold, from the inventory balance and 12-month cost of sales.</value></data>
+  <data name="Ind_Dio_Formula" xml:space="preserve"><value>Inventory ÷ COGS (12 months) × 365</value></data>
+  <data name="Ind_Dio_Mejorar" xml:space="preserve"><value>Match purchases to demand, clear slow-moving items and plan production better.</value></data>
+  <data name="Ind_Dio_Regla" xml:space="preserve"><value>Inventory that does not turn is idle cash and an obsolescence risk.</value></data>
+  <data name="Ind_Dpo_Nombre" xml:space="preserve"><value>Days payables outstanding (DPO)</value></data>
+  <data name="Ind_Dpo_Pregunta" xml:space="preserve"><value>How many days do we take to pay suppliers?</value></data>
+  <data name="Ind_Dpo_Que" xml:space="preserve"><value>Average days to pay current suppliers, from their balance and 12-month cost of sales. More days finance the operation, but paying too late harms the relationship.</value></data>
+  <data name="Ind_Dpo_Formula" xml:space="preserve"><value>Current suppliers ÷ COGS (12 months) × 365</value></data>
+  <data name="Ind_Dpo_Mejorar" xml:space="preserve"><value>Negotiate longer terms without losing discounts or risking supply.</value></data>
+  <data name="Ind_Dpo_Regla" xml:space="preserve"><value>Suppliers are free financing only as long as agreed terms are respected.</value></data>
+  <data name="Ind_CicloEfectivo_Nombre" xml:space="preserve"><value>Cash conversion cycle</value></data>
+  <data name="Ind_CicloEfectivo_Pregunta" xml:space="preserve"><value>How many days pass from when we pay until we collect?</value></data>
+  <data name="Ind_CicloEfectivo_Que" xml:space="preserve"><value>Adds receivable days and inventory days and subtracts payable days: the days the company must finance with its own cash.</value></data>
+  <data name="Ind_CicloEfectivo_Formula" xml:space="preserve"><value>Receivable days + Inventory days − Payable days</value></data>
+  <data name="Ind_CicloEfectivo_Mejorar" xml:space="preserve"><value>Shorten collection and inventory and lengthen supplier payment within reason.</value></data>
+  <data name="Ind_CicloEfectivo_Regla" xml:space="preserve"><value>A long cycle demands working capital: without cash, it is paid with debt.</value></data>
+  <data name="Ind_RotacionActivos_Nombre" xml:space="preserve"><value>Asset turnover</value></data>
+  <data name="Ind_RotacionActivos_Pregunta" xml:space="preserve"><value>How many times a year do we sell the value of our assets?</value></data>
+  <data name="Ind_RotacionActivos_Que" xml:space="preserve"><value>12-month revenue over total assets: how much sales each peso invested in assets generates.</value></data>
+  <data name="Ind_RotacionActivos_Formula" xml:space="preserve"><value>Revenue (12 months) ÷ Total assets</value></data>
+  <data name="Ind_RotacionActivos_Mejorar" xml:space="preserve"><value>Sell more with the same structure, dispose of idle assets and avoid investments that do not raise sales.</value></data>
+  <data name="Ind_RotacionActivos_Regla" xml:space="preserve"><value>Low-margin businesses need to turn over a lot; high-margin ones can turn over less.</value></data>
+  <data name="Ind_RotacionInventario_Nombre" xml:space="preserve"><value>Inventory turnover</value></data>
+  <data name="Ind_RotacionInventario_Pregunta" xml:space="preserve"><value>How many times a year is inventory renewed?</value></data>
+  <data name="Ind_RotacionInventario_Que" xml:space="preserve"><value>12-month cost of sales over inventory at the cutoff: how many times inventory is sold and replenished in the year.</value></data>
+  <data name="Ind_RotacionInventario_Formula" xml:space="preserve"><value>COGS (12 months) ÷ Inventory</value></data>
+  <data name="Ind_RotacionInventario_Mejorar" xml:space="preserve"><value>Cut slow items, buy in smaller lots and align production with sales.</value></data>
+  <data name="Ind_RotacionInventario_Regla" xml:space="preserve"><value>A falling turnover often warns before sales do that something is not selling.</value></data>
+  <data name="Ind_GastosOperacionales_Nombre" xml:space="preserve"><value>Operating expenses / Revenue</value></data>
+  <data name="Ind_GastosOperacionales_Pregunta" xml:space="preserve"><value>How much of what we sell goes to administrative and selling expenses?</value></data>
+  <data name="Ind_GastosOperacionales_Que" xml:space="preserve"><value>Weight of operating expenses (administrative and selling) over 12-month revenue.</value></data>
+  <data name="Ind_GastosOperacionales_Formula" xml:space="preserve"><value>Operating expenses ÷ Revenue (12 months)</value></data>
+  <data name="Ind_GastosOperacionales_Mejorar" xml:space="preserve"><value>Freeze fixed costs, automate processes and grow sales without growing the structure.</value></data>
+  <data name="Ind_GastosOperacionales_Regla" xml:space="preserve"><value>If expenses grow faster than sales, the margin is eating itself.</value></data>
+  <data name="Ind_CapitalTrabajoIngresos_Nombre" xml:space="preserve"><value>Working capital / Revenue</value></data>
+  <data name="Ind_CapitalTrabajoIngresos_Pregunta" xml:space="preserve"><value>How much capital does the business need per peso it sells?</value></data>
+  <data name="Ind_CapitalTrabajoIngresos_Que" xml:space="preserve"><value>Working capital (current assets minus current liabilities) over 12-month revenue. It shows how much operating investment growth requires. If negative, the short term is not covered and it is flagged red.</value></data>
+  <data name="Ind_CapitalTrabajoIngresos_Formula" xml:space="preserve"><value>(Current assets − Current liabilities) ÷ Revenue (12 months)</value></data>
+  <data name="Ind_CapitalTrabajoIngresos_Mejorar" xml:space="preserve"><value>Reduce receivables and inventory and negotiate supplier terms.</value></data>
+  <data name="Ind_CapitalTrabajoIngresos_Regla" xml:space="preserve"><value>Growing consumes working capital: the higher this indicator, the more cash each new peso of sales asks for.</value></data>
+  <data name="Ind_RazonCorriente_Nombre" xml:space="preserve"><value>Current ratio</value></data>
+  <data name="Ind_RazonCorriente_Pregunta" xml:space="preserve"><value>Can we pay what falls due in the short term with what we have available?</value></data>
+  <data name="Ind_RazonCorriente_Que" xml:space="preserve"><value>Current assets over current liabilities: how many pesos of short-term assets there are per peso of short-term debt.</value></data>
+  <data name="Ind_RazonCorriente_Formula" xml:space="preserve"><value>Current assets ÷ Current liabilities</value></data>
+  <data name="Ind_RazonCorriente_Mejorar" xml:space="preserve"><value>Move debt from short to long term, collect receivables and avoid tying up cash in slow-to-convert assets.</value></data>
+  <data name="Ind_RazonCorriente_Regla" xml:space="preserve"><value>Below 1.0 the company owes more in the short term than it holds in the short term.</value></data>
+  <data name="Ind_PruebaAcida_Nombre" xml:space="preserve"><value>Quick ratio</value></data>
+  <data name="Ind_PruebaAcida_Pregunta" xml:space="preserve"><value>Can we cover the short term without selling inventory?</value></data>
+  <data name="Ind_PruebaAcida_Que" xml:space="preserve"><value>Like the current ratio but without inventory, the current asset hardest to turn into cash.</value></data>
+  <data name="Ind_PruebaAcida_Formula" xml:space="preserve"><value>(Current assets − Inventory) ÷ Current liabilities</value></data>
+  <data name="Ind_PruebaAcida_Mejorar" xml:space="preserve"><value>Speed up collection, reduce inventory and renegotiate near-term maturities.</value></data>
+  <data name="Ind_PruebaAcida_Regla" xml:space="preserve"><value>If the current ratio is good but the quick ratio is weak, liquidity depends on selling inventory.</value></data>
+  <data name="Ind_RazonEfectivo_Nombre" xml:space="preserve"><value>Cash ratio</value></data>
+  <data name="Ind_RazonEfectivo_Pregunta" xml:space="preserve"><value>Can we cover the short term with cash alone?</value></data>
+  <data name="Ind_RazonEfectivo_Que" xml:space="preserve"><value>Cash and banks over current liabilities: the strictest liquidity measure.</value></data>
+  <data name="Ind_RazonEfectivo_Formula" xml:space="preserve"><value>Cash and banks ÷ Current liabilities</value></data>
+  <data name="Ind_RazonEfectivo_Mejorar" xml:space="preserve"><value>Keep a cash cushion, schedule payments better and negotiate available credit lines.</value></data>
+  <data name="Ind_RazonEfectivo_Regla" xml:space="preserve"><value>A very low cash ratio leaves the company one bad month away from a cash crisis.</value></data>
+  <data name="Ind_CapitalTrabajo_Nombre" xml:space="preserve"><value>Working capital</value></data>
+  <data name="Ind_CapitalTrabajo_Pregunta" xml:space="preserve"><value>How much do we have left (or short) after covering the short term?</value></data>
+  <data name="Ind_CapitalTrabajo_Que" xml:space="preserve"><value>Difference between current assets and current liabilities. Positive: the short term is covered; negative: there is more short-term debt than short-term assets.</value></data>
+  <data name="Ind_CapitalTrabajo_Formula" xml:space="preserve"><value>Current assets − Current liabilities</value></data>
+  <data name="Ind_CapitalTrabajo_Mejorar" xml:space="preserve"><value>Generate operating cash, lengthen debt maturities and reduce unnecessary receivables and inventory.</value></data>
+  <data name="Ind_CapitalTrabajo_Regla" xml:space="preserve"><value>Negative working capital is not always bad (some businesses collect before they pay), but it needs watching.</value></data>
+  <data name="Ind_Endeudamiento_Nombre" xml:space="preserve"><value>Total debt ratio</value></data>
+  <data name="Ind_Endeudamiento_Pregunta" xml:space="preserve"><value>How much of what we own is financed by third parties?</value></data>
+  <data name="Ind_Endeudamiento_Que" xml:space="preserve"><value>Total liabilities over total assets: the percentage of assets financed with debts and obligations.</value></data>
+  <data name="Ind_Endeudamiento_Formula" xml:space="preserve"><value>Total liabilities ÷ Total assets</value></data>
+  <data name="Ind_Endeudamiento_Mejorar" xml:space="preserve"><value>Capitalize profits, pay down debt with free cash flow and avoid financing assets with short-term debt.</value></data>
+  <data name="Ind_Endeudamiento_Regla" xml:space="preserve"><value>The higher the debt ratio, the less room for error the company has in a bad streak.</value></data>
+  <data name="Ind_DeudaNetaEbitda_Nombre" xml:space="preserve"><value>Net debt / EBITDA</value></data>
+  <data name="Ind_DeudaNetaEbitda_Pregunta" xml:space="preserve"><value>In how many years would we repay the debt with what the operation generates?</value></data>
+  <data name="Ind_DeudaNetaEbitda_Que" xml:space="preserve"><value>Financial debt minus cash, divided by 12-month EBITDA. It is the measure banks use most to size repayment capacity.</value></data>
+  <data name="Ind_DeudaNetaEbitda_Formula" xml:space="preserve"><value>(Financial obligations − Cash and banks) ÷ EBITDA (12 months)</value></data>
+  <data name="Ind_DeudaNetaEbitda_Mejorar" xml:space="preserve"><value>Raise EBITDA, use free cash flow to pay down debt and avoid new debt that does not generate a return.</value></data>
+  <data name="Ind_DeudaNetaEbitda_Regla" xml:space="preserve"><value>With positive net debt and negative EBITDA there is no way to repay from operations: it is an alert, not a number.</value></data>
+  <data name="Ind_CoberturaIntereses_Nombre" xml:space="preserve"><value>Interest coverage</value></data>
+  <data name="Ind_CoberturaIntereses_Pregunta" xml:space="preserve"><value>How many times does the operation cover the interest?</value></data>
+  <data name="Ind_CoberturaIntereses_Que" xml:space="preserve"><value>12-month EBITDA over financial expenses for the same period.</value></data>
+  <data name="Ind_CoberturaIntereses_Formula" xml:space="preserve"><value>EBITDA (12 months) ÷ Financial expenses (12 months)</value></data>
+  <data name="Ind_CoberturaIntereses_Mejorar" xml:space="preserve"><value>Refinance at a lower rate, reduce expensive debt and raise EBITDA.</value></data>
+  <data name="Ind_CoberturaIntereses_Regla" xml:space="preserve"><value>When coverage nears 1.0, almost all operating profit goes to interest.</value></data>
+  <data name="Ind_CostoDeuda_Nombre" xml:space="preserve"><value>Cost of debt</value></data>
+  <data name="Ind_CostoDeuda_Pregunta" xml:space="preserve"><value>What does debt cost us, on average?</value></data>
+  <data name="Ind_CostoDeuda_Que" xml:space="preserve"><value>12-month financial expenses over financial debt at the cutoff. It is an estimate: financial expenses may include other items and debt changes during the year.</value></data>
+  <data name="Ind_CostoDeuda_Formula" xml:space="preserve"><value>Financial expenses (12 months) ÷ Financial obligations</value></data>
+  <data name="Ind_CostoDeuda_Mejorar" xml:space="preserve"><value>Renegotiate rates, replace expensive debt with cheaper debt and adjust loan terms.</value></data>
+  <data name="Ind_CostoDeuda_Regla" xml:space="preserve"><value>If the cost of debt exceeds the return on what it finances, borrowing destroys value.</value></data>
+  <data name="Ind_ApalancamientoFinanciero_Nombre" xml:space="preserve"><value>Financial leverage</value></data>
+  <data name="Ind_ApalancamientoFinanciero_Pregunta" xml:space="preserve"><value>How many pesos of assets does each peso of equity support?</value></data>
+  <data name="Ind_ApalancamientoFinanciero_Que" xml:space="preserve"><value>Total assets over equity: how much debt amplifies results, for better and for worse.</value></data>
+  <data name="Ind_ApalancamientoFinanciero_Formula" xml:space="preserve"><value>Total assets ÷ Equity</value></data>
+  <data name="Ind_ApalancamientoFinanciero_Mejorar" xml:space="preserve"><value>Retain profits to strengthen equity and moderate the use of debt.</value></data>
+  <data name="Ind_ApalancamientoFinanciero_Regla" xml:space="preserve"><value>Leverage multiplies gains in good times and losses in bad times.</value></data>
+  <data name="Ind_CrecimientoIngresos_Nombre" xml:space="preserve"><value>Revenue growth</value></data>
+  <data name="Ind_CrecimientoIngresos_Pregunta" xml:space="preserve"><value>Are we selling more than a year ago?</value></data>
+  <data name="Ind_CrecimientoIngresos_Que" xml:space="preserve"><value>Change in revenue over the last 12 months versus the previous 12 months. It needs 24 months of history.</value></data>
+  <data name="Ind_CrecimientoIngresos_Formula" xml:space="preserve"><value>Revenue (12 months) ÷ Revenue (previous 12 months) − 1</value></data>
+  <data name="Ind_CrecimientoIngresos_Mejorar" xml:space="preserve"><value>Add customers and channels, adjust prices and protect service to current customers.</value></data>
+  <data name="Ind_CrecimientoIngresos_Regla" xml:space="preserve"><value>Growing without sustaining margin and cash flow is not growing well.</value></data>
+  <data name="Ind_CrecimientoEbitda_Nombre" xml:space="preserve"><value>EBITDA growth</value></data>
+  <data name="Ind_CrecimientoEbitda_Pregunta" xml:space="preserve"><value>Is operating profit growing?</value></data>
+  <data name="Ind_CrecimientoEbitda_Que" xml:space="preserve"><value>Change in 12-month EBITDA versus the previous 12 months. It needs 24 months of history.</value></data>
+  <data name="Ind_CrecimientoEbitda_Formula" xml:space="preserve"><value>EBITDA (12 months) ÷ EBITDA (previous 12 months) − 1</value></data>
+  <data name="Ind_CrecimientoEbitda_Mejorar" xml:space="preserve"><value>Grow sales while controlling expenses and protect margins.</value></data>
+  <data name="Ind_CrecimientoEbitda_Regla" xml:space="preserve"><value>If EBITDA grows faster than revenue, the business is gaining scale.</value></data>
+  <data name="Doc_MarcaLeyenda" xml:space="preserve"><value>BUFINS  ·  CONFIDENTIAL  ·  PROPERTY OF BUFINS</value></data>
+  <data name="Doc_Aviso" xml:space="preserve"><value>Confidential document, property of Bufins. For authorized users only: copying, capturing or distributing it is prohibited.</value></data>
 </root>

@@ -154,7 +154,8 @@ namespace bufinscustomers.Services
         {
             if (!esResumen) return false; // cualquier pregunta libre → modelo principal
             if (s.Funcion == IAFuncion.InsightsPYG || s.Funcion == IAFuncion.InsightsBalance || s.Funcion == IAFuncion.InsightsTesoreria
-                || s.Funcion == IAFuncion.InsightsFlujoCaja || s.Funcion == IAFuncion.InsightsFlujoEfectivo) return true;
+                || s.Funcion == IAFuncion.InsightsFlujoCaja || s.Funcion == IAFuncion.InsightsFlujoEfectivo
+                || s.Funcion == IAFuncion.InsightsIndicadores) return true;
             return s.Funcion == IAFuncion.Chat
                 && (s.CodigoPrompt == "RESUMEN_GERENCIAL" || s.CodigoPrompt == "SOLO_CIFRAS");
         }

@@ -1,0 +1,16 @@
+@model string
+@* Visor de documentación (solo lectura): el modelo es el título. Markup + estilos (doc-visor.css) + comportamiento (doc-visor.js)
+   compartidos; la acción del controlador que sirve el documento aplica la protección (ver Helpers/DocumentacionProtegidaHelper). *@
+<div class="docv" id="docvModal" role="dialog" aria-modal="true" aria-labelledby="docvTitulo">
+    <div class="docv-card">
+        <div class="docv-rule"></div>
+        <div class="docv-head">
+            <h5 id="docvTitulo"><i class="fas fa-book"></i>@Model</h5>
+            <div class="docv-tools">
+                <button type="button" id="docvFull" title="@Resources.Strings.Common_PantallaCompleta"><i class="fas fa-expand"></i></button>
+                <button type="button" id="docvCerrar" title="@Resources.Strings.Common_Cerrar" aria-label="@Resources.Strings.Common_Cerrar"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+        <iframe id="docvFrame" title="@Model" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe>
+    </div>
+</div>
