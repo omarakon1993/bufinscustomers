@@ -133,6 +133,35 @@ namespace bufinscustomers.Services
             }
         }
 
+        /// <summary>
+        /// Borrado manual (solo Super Admin). <paramref name="mesesConservar"/> null/&lt;=0 = todo; si no,
+        /// conserva los últimos N meses. <paramref name="idEmpresa"/> null = todas las empresas.
+        /// Borra en lotes para no inflar el log de transacciones. Devuelve las filas eliminadas.
+        /// </summary>
+        public int Limpiar(int? mesesConservar, int? idEmpresa)
+        {
+            var where = new StringBuilder("1 = 1");
+            if (idEmpresa.HasValue) where.Append(" AND IdEmpresa = @IdEmpresa");
+            if (mesesConservar.HasValue && mesesConservar.Value > 0)
+                where.Append(" AND Fecha < DATEADD(MONTH, -@Meses, GETDATE())");
+
+            int total = 0;
+            using (var cn = new SqlConnection(CadenaConexion))
+            using (var cmd = new SqlCommand(
+                "DELETE TOP (@Batch) FROM dbo.AuditoriaNavegacion WHERE " + where, cn))
+            {
+                cmd.CommandTimeout = 300;
+                cmd.Parameters.AddWithValue("@Batch", PURGA_BATCH);
+                if (idEmpresa.HasValue) cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa.Value);
+                if (mesesConservar.HasValue && mesesConservar.Value > 0)
+                    cmd.Parameters.AddWithValue("@Meses", mesesConservar.Value);
+                cn.Open();
+                int n;
+                do { n = cmd.ExecuteNonQuery(); total += n; } while (n > 0);
+            }
+            return total;
+        }
+
         // ── Lectura ─────────────────────────────────────────────────────────
 
         private const string SelectDetalle = @"

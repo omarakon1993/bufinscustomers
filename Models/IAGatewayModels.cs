@@ -8,6 +8,8 @@ namespace bufinscustomers.Models
         public const string InsightsPYG = "InsightsPYG";       // Insights del Estado de Resultados gerencial
         public const string InsightsBalance = "InsightsBalance"; // Insights del Balance General gerencial
         public const string InsightsTesoreria = "InsightsTesoreria"; // Insights de la tesorería del presupuesto
+        public const string InsightsFlujoCaja = "InsightsFlujoCaja"; // Insights del Flujo de caja gerencial
+        public const string InsightsFlujoEfectivo = "InsightsFlujoEfectivo"; // Insights del Flujo de efectivo gerencial
     }
 
     /// <summary>Qué hace el sistema cuando una empresa agota su presupuesto mensual de tokens.</summary>

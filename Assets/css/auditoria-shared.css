@@ -122,3 +122,24 @@
 
 /* [hidden] siempre gana frente a display:flex/grid de los componentes (por si el reset del tema no lo fuerza) */
 .ax-kpis[hidden], .ax-chips[hidden], .ax-grid[hidden], .ax-periodo-fechas[hidden], .ax-periodo-rango[hidden] { display: none !important; }
+
+/* Modal "Limpiar auditoría" (SweetAlert, tema oscuro) — usado por Navegación; Cambios lo trae inline */
+.aud-limp-wrap { text-align:left; }
+.aud-limp-desc { font-size:.85rem; line-height:1.5; color:#9ca3af; margin:0 0 16px; padding-bottom:12px; border-bottom:1px solid rgba(255,255,255,.12); }
+.aud-limp-opt { display:flex; align-items:flex-start; gap:10px; padding:12px 14px; margin-bottom:10px; border:1.5px solid rgba(255,255,255,.16); border-radius:10px; cursor:pointer; transition:border-color .15s, background .15s; }
+.aud-limp-opt:last-child { margin-bottom:0; }
+.aud-limp-opt:hover { border-color:rgba(139,125,255,.7); }
+.aud-limp-opt.is-active { border-color:#8b7dff; background:rgba(88,58,255,.16); }
+.aud-limp-opt > input[type=radio] { margin:3px 0 0; accent-color:#8b7dff; flex:0 0 auto; }
+.aud-limp-opt-body { flex:1; min-width:0; }
+.aud-limp-opt-title { display:block; font-weight:600; font-size:.92rem; color:#f3f4f6; }
+.aud-limp-opt-hint { display:block; font-size:.78rem; color:#9ca3af; margin-top:3px; }
+.aud-limp-meses-row { display:flex; align-items:center; gap:8px; margin-top:10px; }
+.aud-limp-meses-row label { margin:0; font-size:.8rem; color:#cbd5e1; }
+.aud-limp-meses-input { width:88px; padding:6px 10px; font-size:.9rem; text-align:center; border:1.5px solid rgba(255,255,255,.25); border-radius:8px; background:rgba(255,255,255,.06); color:#f3f4f6; }
+.aud-limp-meses-input:focus { outline:none; border-color:#8b7dff; }
+.aud-limp-meses-input:disabled { opacity:.4; cursor:not-allowed; }
+.aud-limp-sep { margin:14px 0 10px; font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#9ca3af; }
+.aud-limp-emp-select { margin-top:8px; width:100%; padding:7px 10px; font-size:.88rem; border:1.5px solid rgba(255,255,255,.25); border-radius:8px; background:rgba(255,255,255,.06); color:#f3f4f6; }
+.aud-limp-emp-select:focus { outline:none; border-color:#8b7dff; }
+.aud-limp-emp-select:disabled { opacity:.4; cursor:not-allowed; }

@@ -1349,6 +1349,15 @@
   <data name="Audit_LimpiarSinPermiso" xml:space="preserve"><value>Solo un Super Administrador puede limpiar la auditoría.</value></data>
   <data name="Audit_NotifMsgTodo" xml:space="preserve"><value>Se eliminó el historial de auditoría general: {0} registro(s).</value></data>
   <data name="Audit_NotifMsgConservar" xml:space="preserve"><value>Se eliminaron {0} registro(s) de auditoría general con más de {1} mes(es) de antigüedad.</value></data>
+  <data name="Nav_LimpiarTitulo" xml:space="preserve"><value>Limpiar auditoría de navegación</value></data>
+  <data name="Nav_LimpiarOpcionTodoHint" xml:space="preserve"><value>Borra por completo el registro de páginas visitadas.</value></data>
+  <data name="Nav_LimpiarConfirmTodo" xml:space="preserve"><value>Se eliminarán TODOS los registros de navegación{0}. Esta acción no se puede deshacer.</value></data>
+  <data name="Nav_LimpiarExito" xml:space="preserve"><value>Navegación depurada: {0} registro(s) eliminado(s).</value></data>
+  <data name="Nav_LimpiarError" xml:space="preserve"><value>No se pudo limpiar la auditoría de navegación.</value></data>
+  <data name="Nav_LimpiarSinPermiso" xml:space="preserve"><value>Solo un Super Administrador puede limpiar la auditoría de navegación.</value></data>
+  <data name="Nav_NotifMsgTodo" xml:space="preserve"><value>Se eliminó el historial de navegación: {0} registro(s).</value></data>
+  <data name="Nav_NotifMsgConservar" xml:space="preserve"><value>Se eliminaron {0} registro(s) de navegación con más de {1} mes(es) de antigüedad.</value></data>
+  <data name="Notif_NavegacionLimpiada" xml:space="preserve"><value>Auditoría de navegación limpiada</value></data>
   <data name="Audit_JS_Error" xml:space="preserve"><value>No se pudo cargar la auditoría.</value></data>
   <data name="Audit_Acc_Crear" xml:space="preserve"><value>Crear</value></data>
   <data name="Audit_Acc_Editar" xml:space="preserve"><value>Editar</value></data>
@@ -2577,4 +2586,166 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="TesPpto_Pdf_Resumen" xml:space="preserve"><value>Resumen ejecutivo</value></data>
   <data name="TesPpto_Pdf_Analisis" xml:space="preserve"><value>Análisis de caja</value></data>
   <data name="CfgIA_Emp_Func_InsightsTesoreria" xml:space="preserve"><value>Insights de Tesorería</value></data>
+
+  <!-- INFORMES DE FLUJO DE CAJA Y FLUJO DE EFECTIVO -->
+  <data name="Flujo_GeneradoEl" xml:space="preserve"><value>Generado el</value></data>
+  <data name="Flujo_LabelMedida" xml:space="preserve"><value>Cifras</value></data>
+  <data name="Flujo_Medida_real" xml:space="preserve"><value>Real (ejecutado)</value></data>
+  <data name="Flujo_Medida_proy" xml:space="preserve"><value>Cierre proyectado</value></data>
+  <data name="Flujo_Medida_ppto" xml:space="preserve"><value>Presupuesto</value></data>
+  <data name="Flujo_MedidaHint" xml:space="preserve"><value>Real: lo ejecutado hasta el último mes cerrado. Cierre proyectado: lo real más la proyección del modelo para los meses que faltan.</value></data>
+  <data name="Flujo_NivelDetalle" xml:space="preserve"><value>Detalle de la tabla</value></data>
+  <data name="Flujo_NivelTodas" xml:space="preserve"><value>Todas las líneas</value></data>
+  <data name="Flujo_NivelSubtotales" xml:space="preserve"><value>Solo subtotales</value></data>
+  <data name="Flujo_SeccionComparaciones" xml:space="preserve"><value>Comparaciones</value></data>
+  <data name="Flujo_EscenarioComparar" xml:space="preserve"><value>Comparar con escenario</value></data>
+  <data name="Flujo_EscenarioCompararNinguno" xml:space="preserve"><value>Ninguno</value></data>
+  <data name="Flujo_EscenarioSinDatosEtiqueta" xml:space="preserve"><value>sin datos</value></data>
+  <data name="Flujo_EscenarioSinDatosTooltip" xml:space="preserve"><value>Este escenario no tiene datos para la empresa</value></data>
+  <data name="Flujo_EscenarioSinDatosHint" xml:space="preserve"><value>Los escenarios sin datos para esta empresa aparecen deshabilitados.</value></data>
+  <data name="Flujo_EscenarioSinDatosNota" xml:space="preserve"><value>El escenario elegido para comparar no tiene datos en el rango consultado, así que no se muestra su comparación.</value></data>
+  <data name="Flujo_ComparacionesNota" xml:space="preserve"><value>Contra el presupuesto y contra el mismo rango del año anterior se compara automáticamente cuando hay cifras.</value></data>
+  <data name="Flujo_RangoHint" xml:space="preserve"><value>Elige el rango de meses. El flujo de cada mes se suma; el acumulado se cuenta desde el inicio del rango.</value></data>
+  <data name="Flujo_JS_Consultando" xml:space="preserve"><value>Consultando el flujo…</value></data>
+  <data name="Flujo_ErrorServidor" xml:space="preserve"><value>No se pudo consultar el informe. Intenta de nuevo.</value></data>
+  <data name="Flujo_Unidad" xml:space="preserve"><value>Unidad</value></data>
+  <data name="Flujo_UnidadPesosCop" xml:space="preserve"><value>Cifras en pesos (COP)</value></data>
+  <data name="Flujo_UnidadMilesCop" xml:space="preserve"><value>Cifras en miles de pesos (COP)</value></data>
+  <data name="Flujo_UnidadMillonesCop" xml:space="preserve"><value>Cifras en millones de pesos (COP)</value></data>
+  <data name="Flujo_ChipComparadoFmt" xml:space="preserve"><value>Comparado con {0}</value></data>
+  <data name="Flujo_ChipSinComparar" xml:space="preserve"><value>Sin comparación</value></data>
+  <data name="Flujo_ChipPresupuesto" xml:space="preserve"><value>presupuesto</value></data>
+  <data name="Flujo_NotaSinPresupuesto" xml:space="preserve"><value>No hay presupuesto cargado para este rango (el modelo solo trae presupuesto del año de ejecución), por eso no se muestra la comparación contra presupuesto.</value></data>
+  <data name="Flujo_NotaProyectadoFmt" xml:space="preserve"><value>Los meses marcados con * son proyección del modelo: el real llega hasta {0}.</value></data>
+  <data name="Flujo_NotaMesProyectado" xml:space="preserve"><value>Mes proyectado (después del último mes ejecutado)</value></data>
+  <data name="Flujo_IndicadoresClave" xml:space="preserve"><value>Indicadores clave</value></data>
+  <data name="Flujo_KpiNoAplica" xml:space="preserve"><value>No aplica</value></data>
+  <data name="Flujo_VsPpto" xml:space="preserve"><value>vs presupuesto</value></data>
+  <data name="Flujo_VsAnioAnterior" xml:space="preserve"><value>vs año anterior</value></data>
+  <data name="Flujo_VsFmt" xml:space="preserve"><value>vs {0}</value></data>
+  <data name="Flujo_NetoAcumulado" xml:space="preserve"><value>Flujo neto acumulado</value></data>
+  <data name="Flujo_GraficoTitulo" xml:space="preserve"><value>Flujo neto mensual y acumulado</value></data>
+  <data name="Flujo_GraficoSubFmt" xml:space="preserve"><value>Barras: flujo neto de cada mes · Línea: acumulado del rango · {0}</value></data>
+  <data name="Flujo_LeyendaPositivo" xml:space="preserve"><value>Genera caja</value></data>
+  <data name="Flujo_LeyendaNegativo" xml:space="preserve"><value>Consume caja</value></data>
+  <data name="Flujo_LeyendaPptoAcum" xml:space="preserve"><value>Presupuesto (acum.)</value></data>
+  <data name="Flujo_LeyendaAnioAnteriorAcum" xml:space="preserve"><value>Año anterior (acum.)</value></data>
+  <data name="Flujo_RelevanteTitulo" xml:space="preserve"><value>Lo más relevante</value></data>
+  <data name="Flujo_RelevanteSubPpto" xml:space="preserve"><value>Rubros con mayor diferencia contra el presupuesto</value></data>
+  <data name="Flujo_RelevanteSubAnio" xml:space="preserve"><value>Rubros con mayor cambio contra el año anterior</value></data>
+  <data name="Flujo_RelevanteSubPeso" xml:space="preserve"><value>Rubros que más pesan en el flujo del período</value></data>
+  <data name="Flujo_SinDestacados" xml:space="preserve"><value>Sin movimientos para destacar en el rango.</value></data>
+  <data name="Flujo_Favorable" xml:space="preserve"><value>Favorable</value></data>
+  <data name="Flujo_Desfavorable" xml:space="preserve"><value>Desfavorable</value></data>
+  <data name="Flujo_DesfavorableCorto" xml:space="preserve"><value>Desfav.</value></data>
+  <data name="Flujo_MayorPeso" xml:space="preserve"><value>Mayor peso</value></data>
+  <data name="Flujo_LeyendaCritico" xml:space="preserve"><value>Variación de 15 % o más</value></data>
+  <data name="Flujo_LeyendaTotal" xml:space="preserve"><value>Total</value></data>
+  <data name="Flujo_LeyendaResta" xml:space="preserve"><value>Resta</value></data>
+  <data name="Flujo_LeyendaSuma" xml:space="preserve"><value>Suma</value></data>
+  <data name="Flujo_CascadaSubFmt" xml:space="preserve"><value>Del resultado al flujo neto · {0}</value></data>
+  <data name="Flujo_VistaMensual" xml:space="preserve"><value>Mensual</value></data>
+  <data name="Flujo_VistaAcumulada" xml:space="preserve"><value>Acumulada</value></data>
+  <data name="Flujo_ColLinea" xml:space="preserve"><value>Línea</value></data>
+  <data name="Flujo_ColTotal" xml:space="preserve"><value>Total del rango</value></data>
+  <data name="Flujo_ColSaldoFin" xml:space="preserve"><value>Al cierre</value></data>
+  <data name="Flujo_ColVarAbs" xml:space="preserve"><value>Var. $</value></data>
+  <data name="Flujo_ColVarPct" xml:space="preserve"><value>Var. %</value></data>
+  <data name="Flujo_ColVarPpto" xml:space="preserve"><value>Var. vs ppto.</value></data>
+  <data name="Flujo_ColVarAnio" xml:space="preserve"><value>Var. vs año ant.</value></data>
+  <data name="Flujo_ColAnioAnterior" xml:space="preserve"><value>Año anterior</value></data>
+  <data name="Flujo_ColVsEscenarioFmt" xml:space="preserve"><value>vs {0}</value></data>
+  <data name="Flujo_ColIndicador" xml:space="preserve"><value>Indicador</value></data>
+  <data name="Flujo_ColMes" xml:space="preserve"><value>Mes</value></data>
+  <data name="Flujo_ColConcepto" xml:space="preserve"><value>Concepto</value></data>
+  <data name="Flujo_ColMovimiento" xml:space="preserve"><value>Movimiento</value></data>
+  <data name="Flujo_ColNivel" xml:space="preserve"><value>Nivel acumulado</value></data>
+  <data name="Flujo_EstadoOkFmt" xml:space="preserve"><value>{0}: {1}. El flujo neto del período cierra en {3}.</value></data>
+  <data name="Flujo_EstadoAvisoFmt" xml:space="preserve"><value>{0}: {1}, pero {2} cierra en {3}: lo que sale por inversión, financiación u otros conceptos supera lo que genera la operación.</value></data>
+  <data name="Flujo_EstadoMalFmt" xml:space="preserve"><value>{0} es {1} y {2} cierra en {3}: la operación no alcanza a financiar sus necesidades de capital de trabajo e inversión.</value></data>
+  <data name="Flujo_InsightsTitulo" xml:space="preserve"><value>Resumen gerencial con IA</value></data>
+  <data name="Flujo_InsightsSub" xml:space="preserve"><value>Generación de caja, uso del efectivo y acción recomendada</value></data>
+  <data name="Flujo_InsightsVacio" xml:space="preserve"><value>Pulsa Generar para obtener la lectura del flujo con IA.</value></data>
+  <data name="Flujo_InsightsSinGenerar" xml:space="preserve"><value>No se pudo generar el resumen.</value></data>
+  <data name="Flujo_InsightsMetaFmt" xml:space="preserve"><value>Generado el {0} · {1} líneas analizadas</value></data>
+  <data name="Flujo_Generar" xml:space="preserve"><value>Generar</value></data>
+  <data name="Flujo_Regenerar" xml:space="preserve"><value>Regenerar</value></data>
+  <data name="Flujo_Analizando" xml:space="preserve"><value>Analizando el flujo…</value></data>
+  <data name="Flujo_InsGeneracion" xml:space="preserve"><value>Generación de caja</value></data>
+  <data name="Flujo_InsUso" xml:space="preserve"><value>Uso del efectivo</value></data>
+  <data name="Flujo_InsAccion" xml:space="preserve"><value>Acción recomendada</value></data>
+  <data name="Flujo_ExcelHojaResumen" xml:space="preserve"><value>Resumen</value></data>
+  <data name="Flujo_ExcelHojaFlujoMensual" xml:space="preserve"><value>Flujo mensual</value></data>
+  <data name="Flujo_ExcelHojaDetalle" xml:space="preserve"><value>Detalle por mes</value></data>
+  <data name="Flujo_ExcelHojaPuente" xml:space="preserve"><value>Puente</value></data>
+  <data name="Flujo_CorreoPeriodo" xml:space="preserve"><value>Período</value></data>
+  <data name="Flujo_CorreoVsPpto" xml:space="preserve"><value>vs presupuesto</value></data>
+  <data name="Flujo_Pdf_Confidencial" xml:space="preserve"><value>Confidencial</value></data>
+  <data name="Flujo_Pdf_PaginaFmt" xml:space="preserve"><value>Página {0} de {1}</value></data>
+  <data name="Flujo_Pdf_SinInsights" xml:space="preserve"><value>Los insights de IA no se generaron para este informe.</value></data>
+  <data name="Flujo_Pdf_Resumen" xml:space="preserve"><value>Resumen ejecutivo</value></data>
+  <data name="Flujo_Pdf_Analisis" xml:space="preserve"><value>Análisis del flujo</value></data>
+  <data name="FlujoCaja_PageTitle" xml:space="preserve"><value>Informe de flujo de caja</value></data>
+  <data name="FlujoCaja_Subtitulo" xml:space="preserve"><value>Flujo de caja</value></data>
+  <data name="FlujoCaja_SinMesesDatos" xml:space="preserve"><value>No hay meses con datos de flujo de caja para esta empresa y escenario. Ejecuta primero el modelo Flujo de Caja.</value></data>
+  <data name="FlujoCaja_EstadoInicialTitulo" xml:space="preserve"><value>Define los filtros y genera el informe</value></data>
+  <data name="FlujoCaja_EstadoInicialDesc" xml:space="preserve"><value>Verás cuánta caja genera la operación, cuánto se va en capital de trabajo e inversión y cuánto queda como flujo neto.</value></data>
+  <data name="FlujoCaja_SinDatosTitulo" xml:space="preserve"><value>Sin datos de flujo de caja</value></data>
+  <data name="FlujoCaja_SinDatosDesc" xml:space="preserve"><value>No hay cifras de flujo de caja para estos filtros. Verifica que el modelo Flujo de Caja se haya ejecutado, o prueba con el cierre proyectado si el rango incluye meses aún no ejecutados.</value></data>
+  <data name="FlujoCaja_Exp_ExcelDesc" xml:space="preserve"><value>Libro con indicadores, flujo mensual, detalle y puente</value></data>
+  <data name="FlujoCaja_CascadaTitulo" xml:space="preserve"><value>Puente de caja</value></data>
+  <data name="FlujoCaja_TablaTitulo" xml:space="preserve"><value>Flujo de caja por mes</value></data>
+  <data name="FlujoCaja_FlujoNeto" xml:space="preserve"><value>Flujo neto de caja</value></data>
+  <data name="FlujoCaja_Fila_FlujoNeto" xml:space="preserve"><value>Flujo neto de caja</value></data>
+  <data name="FlujoCaja_EstadoOkTitulo" xml:space="preserve"><value>La operación genera caja</value></data>
+  <data name="FlujoCaja_EstadoAvisoTitulo" xml:space="preserve"><value>La operación genera caja, pero el flujo neto es negativo</value></data>
+  <data name="FlujoCaja_EstadoMalTitulo" xml:space="preserve"><value>La operación consume caja</value></data>
+  <data name="FlujoCaja_Kpi_BrutoDespuesImpuestos" xml:space="preserve"><value>Caja bruta después de impuestos</value></data>
+  <data name="FlujoCaja_Kpi_CapitalTrabajo" xml:space="preserve"><value>Efecto del capital de trabajo</value></data>
+  <data name="FlujoCaja_Kpi_FclOperativo" xml:space="preserve"><value>Flujo de caja libre operativo</value></data>
+  <data name="FlujoCaja_Kpi_FlujoNeto" xml:space="preserve"><value>Flujo neto de caja</value></data>
+  <data name="FlujoCaja_Kpi_ConversionCaja" xml:space="preserve"><value>Conversión a caja</value></data>
+  <data name="FlujoCaja_Casc_Inicio" xml:space="preserve"><value>Utilidad operacional</value></data>
+  <data name="FlujoCaja_Casc_AjustesNoMonetarios" xml:space="preserve"><value>Ajustes no monetarios</value></data>
+  <data name="FlujoCaja_Casc_Impuestos" xml:space="preserve"><value>Impuestos</value></data>
+  <data name="FlujoCaja_Casc_CapitalTrabajo" xml:space="preserve"><value>Capital de trabajo</value></data>
+  <data name="FlujoCaja_Casc_Inversion" xml:space="preserve"><value>Inversión</value></data>
+  <data name="FlujoCaja_Casc_Financiero" xml:space="preserve"><value>Flujo financiero</value></data>
+  <data name="FlujoCaja_Casc_NoOperacional" xml:space="preserve"><value>No operacional</value></data>
+  <data name="FlujoCaja_Casc_Final" xml:space="preserve"><value>Flujo neto</value></data>
+  <data name="FlujoEfectivo_PageTitle" xml:space="preserve"><value>Informe de flujo de efectivo</value></data>
+  <data name="FlujoEfectivo_Subtitulo" xml:space="preserve"><value>Flujo de efectivo</value></data>
+  <data name="FlujoEfectivo_SinMesesDatos" xml:space="preserve"><value>No hay meses con datos de flujo de efectivo para esta empresa y escenario. Ejecuta primero el modelo Flujo de Efectivo.</value></data>
+  <data name="FlujoEfectivo_EstadoInicialTitulo" xml:space="preserve"><value>Define los filtros y genera el informe</value></data>
+  <data name="FlujoEfectivo_EstadoInicialDesc" xml:space="preserve"><value>Verás cómo se pasa de la utilidad neta al aumento (o disminución) del efectivo: operación, inversión y deuda neta.</value></data>
+  <data name="FlujoEfectivo_SinDatosTitulo" xml:space="preserve"><value>Sin datos de flujo de efectivo</value></data>
+  <data name="FlujoEfectivo_SinDatosDesc" xml:space="preserve"><value>No hay cifras de flujo de efectivo para estos filtros. Verifica que el modelo Flujo de Efectivo se haya ejecutado, o prueba con el cierre proyectado si el rango incluye meses aún no ejecutados.</value></data>
+  <data name="FlujoEfectivo_Exp_ExcelDesc" xml:space="preserve"><value>Libro con indicadores, flujo mensual, detalle y puente</value></data>
+  <data name="FlujoEfectivo_CascadaTitulo" xml:space="preserve"><value>De la utilidad neta al efectivo</value></data>
+  <data name="FlujoEfectivo_TablaTitulo" xml:space="preserve"><value>Estado de flujos de efectivo por mes</value></data>
+  <data name="FlujoEfectivo_FlujoNeto" xml:space="preserve"><value>Aumento neto del efectivo</value></data>
+  <data name="FlujoEfectivo_Fila_FlujoNeto" xml:space="preserve"><value>Aumento neto del efectivo</value></data>
+  <data name="FlujoEfectivo_EstadoOkTitulo" xml:space="preserve"><value>La operación genera efectivo</value></data>
+  <data name="FlujoEfectivo_EstadoAvisoTitulo" xml:space="preserve"><value>La operación genera efectivo, pero el efectivo disminuye</value></data>
+  <data name="FlujoEfectivo_EstadoMalTitulo" xml:space="preserve"><value>La operación consume efectivo</value></data>
+  <data name="FlujoEfectivo_Kpi_EfectivoOperacion" xml:space="preserve"><value>Efectivo generado en operación</value></data>
+  <data name="FlujoEfectivo_Kpi_FlujoOperacion" xml:space="preserve"><value>Flujo de efectivo de operación</value></data>
+  <data name="FlujoEfectivo_Kpi_FlujoInversion" xml:space="preserve"><value>Flujo de inversión</value></data>
+  <data name="FlujoEfectivo_Kpi_DeudaNeta" xml:space="preserve"><value>Cambio en deuda neta</value></data>
+  <data name="FlujoEfectivo_Kpi_AumentoNeto" xml:space="preserve"><value>Aumento neto del efectivo</value></data>
+  <data name="FlujoEfectivo_Casc_Inicio" xml:space="preserve"><value>Utilidad neta</value></data>
+  <data name="FlujoEfectivo_Casc_AjustesNoMonetarios" xml:space="preserve"><value>Partidas no monetarias</value></data>
+  <data name="FlujoEfectivo_Casc_CapitalTrabajo" xml:space="preserve"><value>Capital de trabajo</value></data>
+  <data name="FlujoEfectivo_Casc_Inversion" xml:space="preserve"><value>Inversión</value></data>
+  <data name="FlujoEfectivo_Casc_DeudaNeta" xml:space="preserve"><value>Deuda neta</value></data>
+  <data name="FlujoEfectivo_Casc_Final" xml:space="preserve"><value>Aumento neto</value></data>
+  <data name="CfgIA_Emp_Func_InsightsFlujoCaja" xml:space="preserve"><value>Insights de Flujo de caja</value></data>
+  <data name="CfgIA_Emp_Func_InsightsFlujoEfectivo" xml:space="preserve"><value>Insights de Flujo de efectivo</value></data>
+  <data name="Menu_BtnHabilitarTodas" xml:space="preserve"><value>Habilitar todas para todos</value></data>
+  <data name="Menu_TitleHabilitarTodas" xml:space="preserve"><value>Habilitar todas las opciones (menos las exclusivas de Super Admin) para todos los usuarios</value></data>
+  <data name="Menu_ModalHabilitarTodasTitle" xml:space="preserve"><value>Habilitar todas las opciones para todos los usuarios</value></data>
+  <data name="Menu_ModalHabilitarTodasBody" xml:space="preserve"><value>¿Deseas habilitar TODAS las opciones de menú para todos los usuarios?</value></data>
+  <data name="Menu_ModalHabilitarTodasNote" xml:space="preserve"><value>Se otorgará cada opción a los usuarios que aún no la tengan. No incluye las opciones exclusivas de Super Admin, respeta las que son solo para Admin de Empresa y las personalizadas por empresa, y no cambia ningún otro permiso ni afecta a los Super Admin.</value></data>
+  <data name="Menu_HabilitarTodasOkFmt" xml:space="preserve"><value>Listo: {0} permiso(s) nuevo(s) otorgado(s) en {1} opción(es).</value></data>
+  <data name="Menu_ErrorHabilitarTodas" xml:space="preserve"><value>No se pudieron habilitar todas las opciones. Intente nuevamente.</value></data>
 </root>

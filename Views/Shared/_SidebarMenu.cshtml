@@ -48,23 +48,6 @@
                         </div>
                     }
                 }
-                else if (grupo.Items.Count == 1)
-                {
-                    var soloItem = grupo.Items[0];
-                    if (!iaVisible && soloItem.Controller == "AnalisisIA") { continue; }
-                    string linkText = soloItem.Nombre;
-                    if (soloItem.Codigo == "INFORMES_REPORTES_PBI" && !esAdmin2 && nombreEmpresa != null)
-                    {
-                        linkText = soloItem.Nombre + " " + nombreEmpresa;
-                    }
-                    bool soloActivo = soloItem.Controller == curCtrl && soloItem.Action == curAction;
-                    <div class="sidebar-nav-item">
-                        <a class="sidebar-nav-link @(soloActivo ? "active" : "") @(soloItem.EsDestacado ? "destacado" : "")" href="@Url.Action(soloItem.Action, soloItem.Controller)">
-                            <i class="@grupo.Icono sidebar-nav-icon"></i>
-                            <span class="sidebar-nav-text">@linkText</span>
-                        </a>
-                    </div>
-                }
                 else
                 {
                     bool grupoActivo = grupo.Items.Any(it => it.Controller == curCtrl && it.Action == curAction);
@@ -80,9 +63,11 @@
                             {
                                 if (!iaVisible && item.Controller == "AnalisisIA") { continue; }
                                 bool itemActivo = item.Controller == curCtrl && item.Action == curAction;
+                                string textoItem = item.Nombre;
+                                if (item.Codigo == "INFORMES_REPORTES_PBI" && !esAdmin2 && nombreEmpresa != null) { textoItem = item.Nombre + " " + nombreEmpresa; }
                                 <div class="sidebar-submenu-item">
                                     <a class="sidebar-submenu-link @(itemActivo ? "active" : "")" href="@Url.Action(item.Action, item.Controller)">
-                                        @item.Nombre
+                                        @textoItem
                                     </a>
                                 </div>
                             }

@@ -103,6 +103,10 @@
                 <div class="ax-toolbar">
                     <button type="button" id="btnExportar" class="btn btn-modern-excel"><i class="fas fa-file-excel mr-1"></i>@Resources.Strings.Nav_BtnExportar</button>
                     <button type="button" id="btnImprimir" class="btn btn-modern-secondary"><i class="fas fa-print mr-1"></i>@Resources.Strings.Audit_BtnImprimir</button>
+                    @if (esSuper)
+                    {
+                        <button type="button" id="btnLimpiarAuditoria" class="btn btn-danger"><i class="fas fa-trash-alt mr-1"></i>@Resources.Strings.Audit_BtnLimpiarAuditoria</button>
+                    }
                 </div>
             </div>
             <div class="table-wrapper">
@@ -342,6 +346,167 @@ $(function () {
         window.location = '@Url.Action("ExportarExcel", "InformeNavegacion")' + '?' + $.param(data);
     });
     $('#btnImprimir').on('click', function () { AudKit.imprimir('#resultadosContainer .table-container', document.title); });
+
+    @if (esSuper)
+    {
+        <text>
+    var _empresasLimp = [
+        @Html.Raw(string.Join(",", empresas.Select(e =>
+            "{id:" + e.Id + ",n:'" + HttpUtility.JavaScriptStringEncode(e.Nombre ?? "") + "'}")))
+    ];
+    var _limp = {
+        titulo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Nav_LimpiarTitulo))',
+        desc: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LimpiarDesc))',
+        opcionTodo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LimpiarOpcionTodo))',
+        opcionTodoHint: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Nav_LimpiarOpcionTodoHint))',
+        opcionConservar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LimpiarOpcionConservar))',
+        opcionConservarHint: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LimpiarOpcionConservarHint))',
+        mesesLabel: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LimpiarMesesLabel))',
+        alcanceTodas: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LimpiarAlcanceTodas))',
+        alcanceUna: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LimpiarAlcanceUna))',
+        alcanceUnaHint: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LimpiarAlcanceUnaHint))',
+        confirmarBtn: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LimpiarConfirmarBtn))',
+        cancelarBtn: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LimpiarCancelarBtn))',
+        mesesInvalido: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LimpiarMesesInvalido))',
+        empresaInvalida: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LimpiarEmpresaInvalida))',
+        confirmTodo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Nav_LimpiarConfirmTodo))',
+        confirmConservar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LimpiarConfirmConservar))',
+        scopeEmpresa: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LimpiarConfirmScopeEmpresa))',
+        exito: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Nav_LimpiarExito))',
+        errorMsg: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Nav_LimpiarError))'
+    };
+    var _limpExitoTit = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Exito))';
+    $('#btnLimpiarAuditoria').on('click', function () {
+        var opciones =
+            _empresasLimp.map(function (e) {
+                return '<option value="' + e.id + '">' + esc(e.n) + '</option>';
+            }).join('');
+
+        Swal.fire({
+            title: _limp.titulo,
+            html:
+                '<div class="aud-limp-wrap">' +
+                  '<p class="aud-limp-desc">' + _limp.desc + '</p>' +
+                  '<label class="aud-limp-opt is-active" data-modo="todo">' +
+                    '<input type="radio" name="audLimpModo" value="todo" checked>' +
+                    '<span class="aud-limp-opt-body">' +
+                      '<span class="aud-limp-opt-title">' + _limp.opcionTodo + '</span>' +
+                      '<span class="aud-limp-opt-hint">' + _limp.opcionTodoHint + '</span>' +
+                    '</span>' +
+                  '</label>' +
+                  '<label class="aud-limp-opt" data-modo="conservar">' +
+                    '<input type="radio" name="audLimpModo" value="conservar">' +
+                    '<span class="aud-limp-opt-body">' +
+                      '<span class="aud-limp-opt-title">' + _limp.opcionConservar + '</span>' +
+                      '<span class="aud-limp-opt-hint">' + _limp.opcionConservarHint + '</span>' +
+                      '<span class="aud-limp-meses-row">' +
+                        '<label for="audLimpMeses">' + _limp.mesesLabel + '</label>' +
+                        '<input type="number" id="audLimpMeses" class="aud-limp-meses-input" min="1" max="120" value="6" disabled>' +
+                      '</span>' +
+                    '</span>' +
+                  '</label>' +
+                  '<div class="aud-limp-sep">' + _limp.alcanceTodas.toUpperCase() + ' / ' + _limp.alcanceUna.toUpperCase() + '</div>' +
+                  '<label class="aud-limp-opt is-active" data-alc="todas">' +
+                    '<input type="radio" name="audLimpAlc" value="todas" checked>' +
+                    '<span class="aud-limp-opt-body">' +
+                      '<span class="aud-limp-opt-title">' + _limp.alcanceTodas + '</span>' +
+                    '</span>' +
+                  '</label>' +
+                  '<label class="aud-limp-opt" data-alc="una">' +
+                    '<input type="radio" name="audLimpAlc" value="una">' +
+                    '<span class="aud-limp-opt-body">' +
+                      '<span class="aud-limp-opt-title">' + _limp.alcanceUna + '</span>' +
+                      '<span class="aud-limp-opt-hint">' + _limp.alcanceUnaHint + '</span>' +
+                      '<select id="audLimpEmpresa" class="aud-limp-emp-select" disabled>' +
+                        '<option value="">—</option>' + opciones +
+                      '</select>' +
+                    '</span>' +
+                  '</label>' +
+                '</div>',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: _limp.confirmarBtn,
+            cancelButtonText: _limp.cancelarBtn,
+            confirmButtonColor: '#e74c3c',
+            reverseButtons: true,
+            didOpen: function () {
+                var popup    = Swal.getPopup();
+                var meses    = popup.querySelector('#audLimpMeses');
+                var emp      = popup.querySelector('#audLimpEmpresa');
+                var optsModo = popup.querySelectorAll('.aud-limp-opt[data-modo]');
+                var optsAlc  = popup.querySelectorAll('.aud-limp-opt[data-alc]');
+
+                function sinc() {
+                    var m = (popup.querySelector('input[name="audLimpModo"]:checked') || {}).value || 'todo';
+                    var a = (popup.querySelector('input[name="audLimpAlc"]:checked') || {}).value || 'todas';
+                    optsModo.forEach(function (o) { o.classList.toggle('is-active', o.getAttribute('data-modo') === m); });
+                    optsAlc.forEach(function (o) { o.classList.toggle('is-active', o.getAttribute('data-alc') === a); });
+                    meses.disabled = (m !== 'conservar');
+                    emp.disabled   = (a !== 'una');
+                }
+                popup.querySelectorAll('input[name="audLimpModo"],input[name="audLimpAlc"]')
+                     .forEach(function (r) { r.addEventListener('change', sinc); });
+                meses.addEventListener('focus', function () {
+                    popup.querySelector('input[name="audLimpModo"][value="conservar"]').checked = true; sinc();
+                });
+                emp.addEventListener('focus', function () {
+                    popup.querySelector('input[name="audLimpAlc"][value="una"]').checked = true; sinc();
+                });
+                sinc();
+            },
+            preConfirm: function () {
+                var m = (document.querySelector('input[name="audLimpModo"]:checked') || {}).value || 'todo';
+                var a = (document.querySelector('input[name="audLimpAlc"]:checked') || {}).value || 'todas';
+                var out = { completo: m !== 'conservar', meses: null, idEmpresa: null };
+
+                if (m === 'conservar') {
+                    var n = parseInt(document.getElementById('audLimpMeses').value, 10);
+                    if (isNaN(n) || n < 1 || n > 120) { Swal.showValidationMessage(_limp.mesesInvalido); return false; }
+                    out.meses = n;
+                }
+                if (a === 'una') {
+                    var ide = parseInt(document.getElementById('audLimpEmpresa').value, 10);
+                    if (isNaN(ide) || ide <= 0) { Swal.showValidationMessage(_limp.empresaInvalida); return false; }
+                    out.idEmpresa = ide;
+                }
+                return out;
+            }
+        }).then(function (res) {
+            if (!res.isConfirmed) return;
+            var o = res.value;
+            var scope = o.idEmpresa ? _limp.scopeEmpresa : '';
+            var texto = o.completo
+                ? _limp.confirmTodo.replace('{0}', scope)
+                : _limp.confirmConservar.replace('{0}', scope).replace('{1}', o.meses);
+
+            Swal.fire({
+                title: _limp.titulo, text: texto, icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: _limp.confirmarBtn, cancelButtonText: _limp.cancelarBtn,
+                confirmButtonColor: '#e74c3c', reverseButtons: true
+            }).then(function (c) {
+                if (!c.isConfirmed) return;
+                var token = $('input[name="__RequestVerificationToken"]').val();
+                $.ajax({
+                    url: '@Url.Action("Limpiar", "InformeNavegacion")',
+                    type: 'POST',
+                    data: { completo: o.completo, meses: o.meses, idEmpresa: o.idEmpresa, __RequestVerificationToken: token },
+                    success: function (r) {
+                        if (r && r.success) {
+                            Swal.fire({ icon: 'success', title: _limpExitoTit,
+                                text: _limp.exito.replace('{0}', r.eliminados) });
+                            estadoInicial();
+                        } else {
+                            Swal.fire({ icon: 'error', title: S.errTit, text: (r && r.message) || _limp.errorMsg });
+                        }
+                    },
+                    error: function () { Swal.fire({ icon: 'error', title: S.errTit, text: _limp.errorMsg }); }
+                });
+            });
+        });
+    });
+        </text>
+    }
 
     estadoInicial();
 });

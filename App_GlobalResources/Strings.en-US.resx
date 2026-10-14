@@ -1347,6 +1347,15 @@
   <data name="Audit_LimpiarSinPermiso" xml:space="preserve"><value>Only a Super Administrator can clear the audit log.</value></data>
   <data name="Audit_NotifMsgTodo" xml:space="preserve"><value>The general audit history was deleted: {0} record(s).</value></data>
   <data name="Audit_NotifMsgConservar" xml:space="preserve"><value>Deleted {0} general audit record(s) older than {1} month(s).</value></data>
+  <data name="Nav_LimpiarTitulo" xml:space="preserve"><value>Clear navigation audit log</value></data>
+  <data name="Nav_LimpiarOpcionTodoHint" xml:space="preserve"><value>Completely wipes the page-visit log.</value></data>
+  <data name="Nav_LimpiarConfirmTodo" xml:space="preserve"><value>ALL navigation records{0} will be deleted. This action cannot be undone.</value></data>
+  <data name="Nav_LimpiarExito" xml:space="preserve"><value>Navigation log purged: {0} record(s) deleted.</value></data>
+  <data name="Nav_LimpiarError" xml:space="preserve"><value>Could not clear the navigation audit log.</value></data>
+  <data name="Nav_LimpiarSinPermiso" xml:space="preserve"><value>Only a Super Administrator can clear the navigation audit log.</value></data>
+  <data name="Nav_NotifMsgTodo" xml:space="preserve"><value>The navigation history was deleted: {0} record(s).</value></data>
+  <data name="Nav_NotifMsgConservar" xml:space="preserve"><value>Deleted {0} navigation record(s) older than {1} month(s).</value></data>
+  <data name="Notif_NavegacionLimpiada" xml:space="preserve"><value>Navigation audit log cleared</value></data>
   <data name="Audit_JS_Error" xml:space="preserve"><value>Could not load the audit log.</value></data>
   <data name="Audit_Acc_Crear" xml:space="preserve"><value>Create</value></data>
   <data name="Audit_Acc_Editar" xml:space="preserve"><value>Edit</value></data>
@@ -2575,4 +2584,166 @@ Indicators management follows closely: </value></data>
   <data name="TesPpto_Pdf_Resumen" xml:space="preserve"><value>Executive summary</value></data>
   <data name="TesPpto_Pdf_Analisis" xml:space="preserve"><value>Cash analysis</value></data>
   <data name="CfgIA_Emp_Func_InsightsTesoreria" xml:space="preserve"><value>Treasury insights</value></data>
+
+  <!-- CASH FLOW AND CASH FLOW STATEMENT REPORTS -->
+  <data name="Flujo_GeneradoEl" xml:space="preserve"><value>Generated on</value></data>
+  <data name="Flujo_LabelMedida" xml:space="preserve"><value>Figures</value></data>
+  <data name="Flujo_Medida_real" xml:space="preserve"><value>Actual (executed)</value></data>
+  <data name="Flujo_Medida_proy" xml:space="preserve"><value>Projected close</value></data>
+  <data name="Flujo_Medida_ppto" xml:space="preserve"><value>Budget</value></data>
+  <data name="Flujo_MedidaHint" xml:space="preserve"><value>Actual: what has been executed up to the last closed month. Projected close: actuals plus the model's projection for the remaining months.</value></data>
+  <data name="Flujo_NivelDetalle" xml:space="preserve"><value>Table detail</value></data>
+  <data name="Flujo_NivelTodas" xml:space="preserve"><value>All lines</value></data>
+  <data name="Flujo_NivelSubtotales" xml:space="preserve"><value>Subtotals only</value></data>
+  <data name="Flujo_SeccionComparaciones" xml:space="preserve"><value>Comparisons</value></data>
+  <data name="Flujo_EscenarioComparar" xml:space="preserve"><value>Compare with scenario</value></data>
+  <data name="Flujo_EscenarioCompararNinguno" xml:space="preserve"><value>None</value></data>
+  <data name="Flujo_EscenarioSinDatosEtiqueta" xml:space="preserve"><value>no data</value></data>
+  <data name="Flujo_EscenarioSinDatosTooltip" xml:space="preserve"><value>This scenario has no data for the company</value></data>
+  <data name="Flujo_EscenarioSinDatosHint" xml:space="preserve"><value>Scenarios without data for this company appear disabled.</value></data>
+  <data name="Flujo_EscenarioSinDatosNota" xml:space="preserve"><value>The scenario selected for comparison has no data in the queried range, so its comparison is not shown.</value></data>
+  <data name="Flujo_ComparacionesNota" xml:space="preserve"><value>Budget and the same range of the previous year are compared automatically when figures exist.</value></data>
+  <data name="Flujo_RangoHint" xml:space="preserve"><value>Choose the range of months. Each month's flow is added up; the accumulated figure counts from the start of the range.</value></data>
+  <data name="Flujo_JS_Consultando" xml:space="preserve"><value>Querying the flow…</value></data>
+  <data name="Flujo_ErrorServidor" xml:space="preserve"><value>The report could not be queried. Please try again.</value></data>
+  <data name="Flujo_Unidad" xml:space="preserve"><value>Unit</value></data>
+  <data name="Flujo_UnidadPesosCop" xml:space="preserve"><value>Figures in pesos (COP)</value></data>
+  <data name="Flujo_UnidadMilesCop" xml:space="preserve"><value>Figures in thousands of pesos (COP)</value></data>
+  <data name="Flujo_UnidadMillonesCop" xml:space="preserve"><value>Figures in millions of pesos (COP)</value></data>
+  <data name="Flujo_ChipComparadoFmt" xml:space="preserve"><value>Compared with {0}</value></data>
+  <data name="Flujo_ChipSinComparar" xml:space="preserve"><value>No comparison</value></data>
+  <data name="Flujo_ChipPresupuesto" xml:space="preserve"><value>budget</value></data>
+  <data name="Flujo_NotaSinPresupuesto" xml:space="preserve"><value>There is no budget loaded for this range (the model only carries the execution year's budget), so the budget comparison is not shown.</value></data>
+  <data name="Flujo_NotaProyectadoFmt" xml:space="preserve"><value>Months marked with * are model projections: actuals run through {0}.</value></data>
+  <data name="Flujo_NotaMesProyectado" xml:space="preserve"><value>Projected month (after the last executed month)</value></data>
+  <data name="Flujo_IndicadoresClave" xml:space="preserve"><value>Key indicators</value></data>
+  <data name="Flujo_KpiNoAplica" xml:space="preserve"><value>N/A</value></data>
+  <data name="Flujo_VsPpto" xml:space="preserve"><value>vs budget</value></data>
+  <data name="Flujo_VsAnioAnterior" xml:space="preserve"><value>vs previous year</value></data>
+  <data name="Flujo_VsFmt" xml:space="preserve"><value>vs {0}</value></data>
+  <data name="Flujo_NetoAcumulado" xml:space="preserve"><value>Accumulated net flow</value></data>
+  <data name="Flujo_GraficoTitulo" xml:space="preserve"><value>Monthly and accumulated net flow</value></data>
+  <data name="Flujo_GraficoSubFmt" xml:space="preserve"><value>Bars: each month's net flow · Line: accumulated over the range · {0}</value></data>
+  <data name="Flujo_LeyendaPositivo" xml:space="preserve"><value>Generates cash</value></data>
+  <data name="Flujo_LeyendaNegativo" xml:space="preserve"><value>Uses cash</value></data>
+  <data name="Flujo_LeyendaPptoAcum" xml:space="preserve"><value>Budget (accum.)</value></data>
+  <data name="Flujo_LeyendaAnioAnteriorAcum" xml:space="preserve"><value>Previous year (accum.)</value></data>
+  <data name="Flujo_RelevanteTitulo" xml:space="preserve"><value>Most relevant</value></data>
+  <data name="Flujo_RelevanteSubPpto" xml:space="preserve"><value>Items with the largest difference against budget</value></data>
+  <data name="Flujo_RelevanteSubAnio" xml:space="preserve"><value>Items with the largest change against the previous year</value></data>
+  <data name="Flujo_RelevanteSubPeso" xml:space="preserve"><value>Items that weigh most on the period's flow</value></data>
+  <data name="Flujo_SinDestacados" xml:space="preserve"><value>No notable movements in the range.</value></data>
+  <data name="Flujo_Favorable" xml:space="preserve"><value>Favorable</value></data>
+  <data name="Flujo_Desfavorable" xml:space="preserve"><value>Unfavorable</value></data>
+  <data name="Flujo_DesfavorableCorto" xml:space="preserve"><value>Unfav.</value></data>
+  <data name="Flujo_MayorPeso" xml:space="preserve"><value>Largest weight</value></data>
+  <data name="Flujo_LeyendaCritico" xml:space="preserve"><value>Variation of 15% or more</value></data>
+  <data name="Flujo_LeyendaTotal" xml:space="preserve"><value>Total</value></data>
+  <data name="Flujo_LeyendaResta" xml:space="preserve"><value>Decrease</value></data>
+  <data name="Flujo_LeyendaSuma" xml:space="preserve"><value>Increase</value></data>
+  <data name="Flujo_CascadaSubFmt" xml:space="preserve"><value>From earnings to net flow · {0}</value></data>
+  <data name="Flujo_VistaMensual" xml:space="preserve"><value>Monthly</value></data>
+  <data name="Flujo_VistaAcumulada" xml:space="preserve"><value>Accumulated</value></data>
+  <data name="Flujo_ColLinea" xml:space="preserve"><value>Line</value></data>
+  <data name="Flujo_ColTotal" xml:space="preserve"><value>Range total</value></data>
+  <data name="Flujo_ColSaldoFin" xml:space="preserve"><value>At close</value></data>
+  <data name="Flujo_ColVarAbs" xml:space="preserve"><value>Var. $</value></data>
+  <data name="Flujo_ColVarPct" xml:space="preserve"><value>Var. %</value></data>
+  <data name="Flujo_ColVarPpto" xml:space="preserve"><value>Var. vs budget</value></data>
+  <data name="Flujo_ColVarAnio" xml:space="preserve"><value>Var. vs prev. year</value></data>
+  <data name="Flujo_ColAnioAnterior" xml:space="preserve"><value>Previous year</value></data>
+  <data name="Flujo_ColVsEscenarioFmt" xml:space="preserve"><value>vs {0}</value></data>
+  <data name="Flujo_ColIndicador" xml:space="preserve"><value>Indicator</value></data>
+  <data name="Flujo_ColMes" xml:space="preserve"><value>Month</value></data>
+  <data name="Flujo_ColConcepto" xml:space="preserve"><value>Item</value></data>
+  <data name="Flujo_ColMovimiento" xml:space="preserve"><value>Movement</value></data>
+  <data name="Flujo_ColNivel" xml:space="preserve"><value>Accumulated level</value></data>
+  <data name="Flujo_EstadoOkFmt" xml:space="preserve"><value>{0}: {1}. The period's net flow closes at {3}.</value></data>
+  <data name="Flujo_EstadoAvisoFmt" xml:space="preserve"><value>{0}: {1}, but {2} closes at {3}: outflows for investment, financing or other items exceed what operations generate.</value></data>
+  <data name="Flujo_EstadoMalFmt" xml:space="preserve"><value>{0} is {1} and {2} closes at {3}: operations fall short of funding their working capital and investment needs.</value></data>
+  <data name="Flujo_InsightsTitulo" xml:space="preserve"><value>AI management summary</value></data>
+  <data name="Flujo_InsightsSub" xml:space="preserve"><value>Cash generation, use of cash and recommended action</value></data>
+  <data name="Flujo_InsightsVacio" xml:space="preserve"><value>Press Generate to get the AI reading of the flow.</value></data>
+  <data name="Flujo_InsightsSinGenerar" xml:space="preserve"><value>The summary could not be generated.</value></data>
+  <data name="Flujo_InsightsMetaFmt" xml:space="preserve"><value>Generated on {0} · {1} lines analyzed</value></data>
+  <data name="Flujo_Generar" xml:space="preserve"><value>Generate</value></data>
+  <data name="Flujo_Regenerar" xml:space="preserve"><value>Regenerate</value></data>
+  <data name="Flujo_Analizando" xml:space="preserve"><value>Analyzing the flow…</value></data>
+  <data name="Flujo_InsGeneracion" xml:space="preserve"><value>Cash generation</value></data>
+  <data name="Flujo_InsUso" xml:space="preserve"><value>Use of cash</value></data>
+  <data name="Flujo_InsAccion" xml:space="preserve"><value>Recommended action</value></data>
+  <data name="Flujo_ExcelHojaResumen" xml:space="preserve"><value>Summary</value></data>
+  <data name="Flujo_ExcelHojaFlujoMensual" xml:space="preserve"><value>Monthly flow</value></data>
+  <data name="Flujo_ExcelHojaDetalle" xml:space="preserve"><value>Detail by month</value></data>
+  <data name="Flujo_ExcelHojaPuente" xml:space="preserve"><value>Bridge</value></data>
+  <data name="Flujo_CorreoPeriodo" xml:space="preserve"><value>Period</value></data>
+  <data name="Flujo_CorreoVsPpto" xml:space="preserve"><value>vs budget</value></data>
+  <data name="Flujo_Pdf_Confidencial" xml:space="preserve"><value>Confidential</value></data>
+  <data name="Flujo_Pdf_PaginaFmt" xml:space="preserve"><value>Page {0} of {1}</value></data>
+  <data name="Flujo_Pdf_SinInsights" xml:space="preserve"><value>AI insights were not generated for this report.</value></data>
+  <data name="Flujo_Pdf_Resumen" xml:space="preserve"><value>Executive summary</value></data>
+  <data name="Flujo_Pdf_Analisis" xml:space="preserve"><value>Flow analysis</value></data>
+  <data name="FlujoCaja_PageTitle" xml:space="preserve"><value>Cash flow report</value></data>
+  <data name="FlujoCaja_Subtitulo" xml:space="preserve"><value>Cash flow</value></data>
+  <data name="FlujoCaja_SinMesesDatos" xml:space="preserve"><value>There are no months with cash flow data for this company and scenario. Run the Cash Flow model first.</value></data>
+  <data name="FlujoCaja_EstadoInicialTitulo" xml:space="preserve"><value>Set the filters and generate the report</value></data>
+  <data name="FlujoCaja_EstadoInicialDesc" xml:space="preserve"><value>You will see how much cash operations generate, how much goes to working capital and investment, and how much is left as net flow.</value></data>
+  <data name="FlujoCaja_SinDatosTitulo" xml:space="preserve"><value>No cash flow data</value></data>
+  <data name="FlujoCaja_SinDatosDesc" xml:space="preserve"><value>There are no cash flow figures for these filters. Check that the Cash Flow model has been run, or try the projected close if the range includes months not yet executed.</value></data>
+  <data name="FlujoCaja_Exp_ExcelDesc" xml:space="preserve"><value>Workbook with indicators, monthly flow, detail and bridge</value></data>
+  <data name="FlujoCaja_CascadaTitulo" xml:space="preserve"><value>Cash bridge</value></data>
+  <data name="FlujoCaja_TablaTitulo" xml:space="preserve"><value>Cash flow by month</value></data>
+  <data name="FlujoCaja_FlujoNeto" xml:space="preserve"><value>Net cash flow</value></data>
+  <data name="FlujoCaja_Fila_FlujoNeto" xml:space="preserve"><value>Net cash flow</value></data>
+  <data name="FlujoCaja_EstadoOkTitulo" xml:space="preserve"><value>Operations generate cash</value></data>
+  <data name="FlujoCaja_EstadoAvisoTitulo" xml:space="preserve"><value>Operations generate cash, but net flow is negative</value></data>
+  <data name="FlujoCaja_EstadoMalTitulo" xml:space="preserve"><value>Operations consume cash</value></data>
+  <data name="FlujoCaja_Kpi_BrutoDespuesImpuestos" xml:space="preserve"><value>Gross cash after taxes</value></data>
+  <data name="FlujoCaja_Kpi_CapitalTrabajo" xml:space="preserve"><value>Working capital effect</value></data>
+  <data name="FlujoCaja_Kpi_FclOperativo" xml:space="preserve"><value>Operating free cash flow</value></data>
+  <data name="FlujoCaja_Kpi_FlujoNeto" xml:space="preserve"><value>Net cash flow</value></data>
+  <data name="FlujoCaja_Kpi_ConversionCaja" xml:space="preserve"><value>Cash conversion</value></data>
+  <data name="FlujoCaja_Casc_Inicio" xml:space="preserve"><value>Operating income</value></data>
+  <data name="FlujoCaja_Casc_AjustesNoMonetarios" xml:space="preserve"><value>Non-cash adjustments</value></data>
+  <data name="FlujoCaja_Casc_Impuestos" xml:space="preserve"><value>Taxes</value></data>
+  <data name="FlujoCaja_Casc_CapitalTrabajo" xml:space="preserve"><value>Working capital</value></data>
+  <data name="FlujoCaja_Casc_Inversion" xml:space="preserve"><value>Investment</value></data>
+  <data name="FlujoCaja_Casc_Financiero" xml:space="preserve"><value>Financing flow</value></data>
+  <data name="FlujoCaja_Casc_NoOperacional" xml:space="preserve"><value>Non-operating</value></data>
+  <data name="FlujoCaja_Casc_Final" xml:space="preserve"><value>Net flow</value></data>
+  <data name="FlujoEfectivo_PageTitle" xml:space="preserve"><value>Cash flow statement report</value></data>
+  <data name="FlujoEfectivo_Subtitulo" xml:space="preserve"><value>Statement of cash flows</value></data>
+  <data name="FlujoEfectivo_SinMesesDatos" xml:space="preserve"><value>There are no months with cash flow statement data for this company and scenario. Run the Cash Flow Statement model first.</value></data>
+  <data name="FlujoEfectivo_EstadoInicialTitulo" xml:space="preserve"><value>Set the filters and generate the report</value></data>
+  <data name="FlujoEfectivo_EstadoInicialDesc" xml:space="preserve"><value>You will see how net income becomes the increase (or decrease) in cash: operations, investment and net debt.</value></data>
+  <data name="FlujoEfectivo_SinDatosTitulo" xml:space="preserve"><value>No cash flow statement data</value></data>
+  <data name="FlujoEfectivo_SinDatosDesc" xml:space="preserve"><value>There are no cash flow statement figures for these filters. Check that the Cash Flow Statement model has been run, or try the projected close if the range includes months not yet executed.</value></data>
+  <data name="FlujoEfectivo_Exp_ExcelDesc" xml:space="preserve"><value>Workbook with indicators, monthly flow, detail and bridge</value></data>
+  <data name="FlujoEfectivo_CascadaTitulo" xml:space="preserve"><value>From net income to cash</value></data>
+  <data name="FlujoEfectivo_TablaTitulo" xml:space="preserve"><value>Statement of cash flows by month</value></data>
+  <data name="FlujoEfectivo_FlujoNeto" xml:space="preserve"><value>Net increase in cash</value></data>
+  <data name="FlujoEfectivo_Fila_FlujoNeto" xml:space="preserve"><value>Net increase in cash</value></data>
+  <data name="FlujoEfectivo_EstadoOkTitulo" xml:space="preserve"><value>Operations generate cash</value></data>
+  <data name="FlujoEfectivo_EstadoAvisoTitulo" xml:space="preserve"><value>Operations generate cash, but cash decreases</value></data>
+  <data name="FlujoEfectivo_EstadoMalTitulo" xml:space="preserve"><value>Operations consume cash</value></data>
+  <data name="FlujoEfectivo_Kpi_EfectivoOperacion" xml:space="preserve"><value>Cash generated by operations</value></data>
+  <data name="FlujoEfectivo_Kpi_FlujoOperacion" xml:space="preserve"><value>Operating cash flow</value></data>
+  <data name="FlujoEfectivo_Kpi_FlujoInversion" xml:space="preserve"><value>Investing cash flow</value></data>
+  <data name="FlujoEfectivo_Kpi_DeudaNeta" xml:space="preserve"><value>Change in net debt</value></data>
+  <data name="FlujoEfectivo_Kpi_AumentoNeto" xml:space="preserve"><value>Net increase in cash</value></data>
+  <data name="FlujoEfectivo_Casc_Inicio" xml:space="preserve"><value>Net income</value></data>
+  <data name="FlujoEfectivo_Casc_AjustesNoMonetarios" xml:space="preserve"><value>Non-cash items</value></data>
+  <data name="FlujoEfectivo_Casc_CapitalTrabajo" xml:space="preserve"><value>Working capital</value></data>
+  <data name="FlujoEfectivo_Casc_Inversion" xml:space="preserve"><value>Investing</value></data>
+  <data name="FlujoEfectivo_Casc_DeudaNeta" xml:space="preserve"><value>Net debt</value></data>
+  <data name="FlujoEfectivo_Casc_Final" xml:space="preserve"><value>Net increase</value></data>
+  <data name="CfgIA_Emp_Func_InsightsFlujoCaja" xml:space="preserve"><value>Cash flow insights</value></data>
+  <data name="CfgIA_Emp_Func_InsightsFlujoEfectivo" xml:space="preserve"><value>Cash flow statement insights</value></data>
+  <data name="Menu_BtnHabilitarTodas" xml:space="preserve"><value>Enable all for everyone</value></data>
+  <data name="Menu_TitleHabilitarTodas" xml:space="preserve"><value>Enable all options (except Super Admin-only ones) for all users</value></data>
+  <data name="Menu_ModalHabilitarTodasTitle" xml:space="preserve"><value>Enable all options for all users</value></data>
+  <data name="Menu_ModalHabilitarTodasBody" xml:space="preserve"><value>Do you want to enable ALL menu options for all users?</value></data>
+  <data name="Menu_ModalHabilitarTodasNote" xml:space="preserve"><value>Each option will be granted to users who do not have it yet. It excludes Super Admin-only options, respects Company Admin-only and company-specific options, and changes no other permission nor affects Super Admins.</value></data>
+  <data name="Menu_HabilitarTodasOkFmt" xml:space="preserve"><value>Done: {0} new permission(s) granted across {1} option(s).</value></data>
+  <data name="Menu_ErrorHabilitarTodas" xml:space="preserve"><value>Could not enable all options. Please try again.</value></data>
 </root>

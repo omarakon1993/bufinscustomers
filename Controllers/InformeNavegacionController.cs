@@ -309,6 +309,41 @@ namespace bufinscustomers.Controllers
             }
         }
 
+        /// <summary>Depuración manual de la telemetría de navegación — exclusivo de Super Admin.</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult Limpiar(bool completo, int? meses, int? idEmpresa)
+        {
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+                return Json(new { success = false, message = R("Nav_LimpiarSinPermiso") });
+
+            try
+            {
+                int? mesesConservar = completo ? (int?)null : meses;
+
+                if (!completo && (!mesesConservar.HasValue || mesesConservar.Value < 1 || mesesConservar.Value > 120))
+                    return Json(new { success = false, message = R("Audit_LimpiarMesesInvalido") });
+
+                int eliminados = _svc.Limpiar(mesesConservar, idEmpresa);
+
+                var usuario = UsuarioSesionHelper.UsuarioActual;
+                if (usuario != null)
+                {
+                    string mensaje = completo
+                        ? string.Format(R("Nav_NotifMsgTodo"), eliminados)
+                        : string.Format(R("Nav_NotifMsgConservar"), eliminados, mesesConservar.Value);
+                    new NotificacionesService().Crear(usuario.Id, R("Notif_NavegacionLimpiada"), mensaje, "warning", "/AuditoriaHub");
+                }
+
+                return Json(new { success = true, eliminados });
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "InformeNavegacion.Limpiar");
+                return Json(new { success = false, message = R("Nav_LimpiarError") });
+            }
+        }
+
         // ── Helpers ────────────────────────────────────────────────────────
 
         private static NavegacionFiltro ConstruirFiltro(int? idUsuario, int? idEmpresa, string codigoMenu,

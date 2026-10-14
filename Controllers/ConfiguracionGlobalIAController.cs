@@ -232,7 +232,8 @@ namespace bufinscustomers.Controllers
         }
 
         private static readonly string[] FuncionesIA =
-            { IAFuncion.Chat, IAFuncion.ResumenHome, IAFuncion.InsightsPYG, IAFuncion.InsightsBalance, IAFuncion.InsightsTesoreria };
+            { IAFuncion.Chat, IAFuncion.ResumenHome, IAFuncion.InsightsPYG, IAFuncion.InsightsBalance, IAFuncion.InsightsTesoreria,
+              IAFuncion.InsightsFlujoCaja, IAFuncion.InsightsFlujoEfectivo };
 
         [HttpGet]
         public JsonResult ObtenerResumenEmpresaIA(int idEmpresa)

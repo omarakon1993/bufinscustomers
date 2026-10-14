@@ -223,6 +223,9 @@
         <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#crearModal">
             <i class="fas fa-plus-circle mr-1"></i> @Resources.Strings.Menu_BtnCrear
         </button>
+        <button type="button" class="btn-modern-secondary ml-2" data-toggle="modal" data-target="#habilitarTodasModal" title="@Resources.Strings.Menu_TitleHabilitarTodas">
+            <i class="fas fa-users mr-1"></i> @Resources.Strings.Menu_BtnHabilitarTodas
+        </button>
     </div>
 </div>
 
@@ -506,6 +509,30 @@
     @Html.AntiForgeryToken()
     <input type="hidden" name="id" id="elimId" />
 </form>
+
+<!-- ═══════════════════ MODAL HABILITAR TODAS LAS OPCIONES PARA TODOS LOS USUARIOS ═══════════════════ -->
+<div class="modal fade modal-confirm" id="habilitarTodasModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-users mr-2"></i>@Resources.Strings.Menu_ModalHabilitarTodasTitle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0"><i class="fas fa-question-circle text-warning mr-2"></i>@Resources.Strings.Menu_ModalHabilitarTodasBody</p>
+                <p class="text-muted small mt-2 mb-0">@Resources.Strings.Menu_ModalHabilitarTodasNote</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
+                </button>
+                <button type="button" class="btn btn-success btn-sm" id="btnConfirmarHabilitarTodas">
+                    <i class="fas fa-check mr-1"></i>@Resources.Strings.Menu_BtnHabilitarTodas
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- ═══════════════════ MODAL HABILITAR PARA TODOS LOS USUARIOS ═══════════════════ -->
 <div class="modal fade modal-confirm" id="habilitarTodosModal" tabindex="-1" aria-hidden="true">
@@ -806,6 +833,29 @@
             var btn = event.relatedTarget;
             _habilitarTodosId = parseInt(btn.dataset.id, 10);
             document.getElementById('habilitarTodosNombre').textContent = '"' + btn.dataset.nombre + '"';
+        });
+        // Habilitar TODAS las opciones para todos los usuarios (un solo clic)
+        $('#btnConfirmarHabilitarTodas').on('click', function () {
+            var $btn = $(this).prop('disabled', true);
+            $.post('@Url.Action("HabilitarTodasParaTodos", "MenuOpciones")', {
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val()
+            }, function (response) {
+                $('#habilitarTodasModal').modal('hide');
+                $btn.prop('disabled', false);
+                Swal.fire({
+                    toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end',
+                    icon: response.success ? 'success' : 'error', title: response.message,
+                    showConfirmButton: false, timer: 4000, timerProgressBar: true
+                });
+            }).fail(function () {
+                $('#habilitarTodasModal').modal('hide');
+                $btn.prop('disabled', false);
+                Swal.fire({
+                    toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end',
+                    icon: 'error', title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Menu_ErrorHabilitarTodas))',
+                    showConfirmButton: false, timer: 3000, timerProgressBar: true
+                });
+            });
         });
         $('#btnConfirmarHabilitarTodos').on('click', function () {
             if (!_habilitarTodosId) return;

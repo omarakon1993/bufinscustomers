@@ -621,6 +621,27 @@ namespace bufinscustomers.Services
         /// </summary>
         public int HabilitarOpcionParaTodosLosUsuarios(int idMenuOpcion, bool soloAdminEmpresa, int usuarioAsigno)
         {
+            return HabilitarOpcionParaTodosLosUsuariosInterno(idMenuOpcion, soloAdminEmpresa, usuarioAsigno);
+        }
+
+        /// <summary>
+        /// Habilita TODAS las opciones de menú activas que no sean SoloSuperAdmin para todos los usuarios elegibles que aún no las
+        /// tengan (misma regla por opción que HabilitarOpcionParaTodosLosUsuarios: respeta SoloAdminEmpresa y la restricción por
+        /// empresa de las opciones personalizadas, no toca el resto de permisos del usuario ni a los Super Admin). Devuelve cuántas
+        /// opciones se procesaron y el total de permisos nuevos otorgados.
+        /// </summary>
+        public void HabilitarTodasLasOpcionesParaTodosLosUsuarios(int usuarioAsigno, out int opciones, out int permisosNuevos)
+        {
+            opciones = 0; permisosNuevos = 0;
+            foreach (var o in ObtenerTodas().Where(x => !x.SoloSuperAdmin))
+            {
+                permisosNuevos += HabilitarOpcionParaTodosLosUsuariosInterno(o.Id, o.SoloAdminEmpresa, usuarioAsigno);
+                opciones++;
+            }
+        }
+
+        private int HabilitarOpcionParaTodosLosUsuariosInterno(int idMenuOpcion, bool soloAdminEmpresa, int usuarioAsigno)
+        {
             using (SqlConnection cn = new SqlConnection(CadenaConexion))
             {
                 // Si la opción es personalizada por empresa (MenuOpcionesEmpresas), solo la reciben los

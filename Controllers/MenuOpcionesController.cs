@@ -125,6 +125,32 @@ namespace bufinscustomers.Controllers
             }
         }
 
+        // Otorga TODAS las opciones de menú (salvo las exclusivas de Super Admin) a todos los usuarios que aún no las tengan: el
+        // mismo efecto que el botón de cada fila, de una sola vez. Respeta SoloAdminEmpresa y las opciones personalizadas por empresa.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult HabilitarTodasParaTodos()
+        {
+            try
+            {
+                int usuarioAsigno = UsuarioSesionHelper.UsuarioActual?.Id ?? 0;
+                _menuOpcionesService.HabilitarTodasLasOpcionesParaTodosLosUsuarios(usuarioAsigno, out int opciones, out int permisosNuevos);
+
+                UsuarioSesionHelper.InvalidarCachePermisos();
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Permisos, AuditoriaAccion.Asignar,
+                    "UsuarioMenuPermisos", "TODAS",
+                    $"Todas las opciones de menú habilitadas para todos los usuarios ({opciones} opción(es) procesada(s), {permisosNuevos} permiso(s) nuevo(s))",
+                    null, new { Opciones = opciones, PermisosNuevos = permisosNuevos });
+
+                return Json(new { success = true, message = string.Format(R("Menu_HabilitarTodasOkFmt"), permisosNuevos, opciones) });
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "MenuOpcionesController.HabilitarTodasParaTodos");
+                return Json(new { success = false, message = R("Menu_ErrorHabilitarTodas") + ": " + ex.Message });
+            }
+        }
+
         // Otorga esta opción de menú a TODOS los usuarios que aún no la tengan (excepto Super Admin,
         // que ya tiene acceso total). Solo aplica a opciones que no sean SoloSuperAdmin — el botón ya
         // queda oculto para esas en la vista, pero se revalida aquí como defensa en profundidad.
