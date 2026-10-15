@@ -15,14 +15,16 @@ namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
     [SoloSuperAdmin]
-    public class ConfiguracionGlobalIAController : BaseController
+    public class ConfiguracionGlobalController : BaseController
     {
         private readonly ConfiguracionSistemaService _svc = new ConfiguracionSistemaService();
 
         public ActionResult Index()
         {
             var items = _svc.ObtenerTodos();
-            return View("~/Views/Configuracion/ConfiguracionGlobalIA.cshtml", items);
+            ViewBag.Tipos = _svc.ObtenerTipos(out bool tiposDisponibles);
+            ViewBag.TiposDisponibles = tiposDisponibles;
+            return View("~/Views/Configuracion/ConfiguracionGlobal.cshtml", items);
         }
 
         [HttpPost]
@@ -46,12 +48,54 @@ namespace bufinscustomers.Controllers
             }
 
             bool ok = _svc.Guardar(item.Clave, item.Valor ?? "", item.Descripcion ?? "");
+            // Tipo (categoría): solo si el formulario lo trae (script 028 ejecutado).
+            if (ok && Request.Form.AllKeys.Contains("IdTipo"))
+                _svc.AsignarTipo(item.Clave, item.IdTipo);
             if (ok)
                 SetSuccessMessage(R("CfgIA_MsgGuardadoOk") ?? "Configuración guardada correctamente.");
             else
                 SetErrorMessage(R("CfgIA_MsgErrorGuardar") ?? "Error al guardar la configuración.");
 
             return RedirectToAction("Index");
+        }
+
+        // ───────── Tipos (categorías) de configuración ─────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult GuardarTipo(int id, string nombre, string nombreEN, string icono, int orden)
+        {
+            nombre = (nombre ?? "").Trim();
+            if (nombre.Length == 0 || nombre.Length > 100)
+                return Json(new { ok = false, mensaje = R("CfgIA_Tipo_ErrorNombre") });
+
+            _svc.ObtenerTipos(out bool disponible);
+            if (!disponible)
+                return Json(new { ok = false, mensaje = R("CfgIA_Tipo_SinScript") });
+
+            int nuevoId = _svc.GuardarTipo(id, nombre, nombreEN, icono, orden);
+            if (nuevoId <= 0)
+                return Json(new { ok = false, mensaje = R("CfgIA_Tipo_ErrorGuardar") });
+
+            new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion,
+                id > 0 ? AuditoriaAccion.Editar : AuditoriaAccion.Crear,
+                "ConfiguracionSistemaTipos", nuevoId.ToString(),
+                (id > 0 ? "Tipo de configuración editado: " : "Tipo de configuración creado: ") + nombre,
+                null, new { Id = nuevoId, Nombre = nombre, NombreEN = nombreEN, Icono = icono, Orden = orden },
+                UsuarioSesionHelper.UsuarioActual?.IdEmpresa);
+            return Json(new { ok = true, id = nuevoId, mensaje = R("CfgIA_Tipo_Guardado") });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult EliminarTipo(int id)
+        {
+            if (!_svc.EliminarTipo(id))
+                return Json(new { ok = false, mensaje = R("CfgIA_Tipo_ErrorEliminar") });
+
+            new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Eliminar,
+                "ConfiguracionSistemaTipos", id.ToString(), "Tipo de configuración eliminado (Id " + id + ")",
+                null, null, UsuarioSesionHelper.UsuarioActual?.IdEmpresa);
+            return Json(new { ok = true, mensaje = R("CfgIA_Tipo_Eliminado") });
         }
 
         [HttpPost]
@@ -180,7 +224,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                AppLogger.Error(ex, "ConfiguracionGlobalIAController.ObtenerObservabilidadIA");
+                AppLogger.Error(ex, "ConfiguracionGlobalController.ObtenerObservabilidadIA");
                 return Json(new { ok = false, mensaje = R("CfgIA_Uso_Error") }, JsonRequestBehavior.AllowGet);
             }
         }
@@ -206,7 +250,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                AppLogger.Error(ex, "ConfiguracionGlobalIAController.LimpiarUsoIA");
+                AppLogger.Error(ex, "ConfiguracionGlobalController.LimpiarUsoIA");
                 return Json(new { ok = false, mensaje = R("CfgIA_Uso_LimpiarError") });
             }
         }
@@ -275,7 +319,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                AppLogger.Error(ex, "ConfiguracionGlobalIAController.ObtenerResumenEmpresaIA");
+                AppLogger.Error(ex, "ConfiguracionGlobalController.ObtenerResumenEmpresaIA");
                 return Json(new { ok = false, mensaje = R("CfgIA_Emp_MsgErrorCargar") }, JsonRequestBehavior.AllowGet);
             }
         }

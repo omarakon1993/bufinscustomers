@@ -1639,7 +1639,7 @@
   <data name="Notif_ModoDefensivoMsg" xml:space="preserve"><value>A spike of failed sign-in attempts was detected system-wide. The per-IP limit was automatically tightened. Review the security audit log.</value></data>
   <!-- IA IMPROVEMENTS -->
   <data name="IA_BtnExportarExcel" xml:space="preserve"><value>Export Excel with AI</value></data>
-  <data name="IA_SinAccesoMensaje" xml:space="preserve"><value>You don't have access to AI Analysis. Ask an administrator to enable your access from AI Settings.</value></data>
+  <data name="IA_SinAccesoMensaje" xml:space="preserve"><value>You don't have access to AI Analysis. Ask an administrator to enable your access from BUFINS general settings → AI per company.</value></data>
   <data name="IA_HistorialGrandeMensaje" xml:space="preserve"><value>The conversation history is too large. Please start a new query.</value></data>
   <data name="IA_PresupuestoAgotadoMensaje" xml:space="preserve"><value>This company has reached its monthly AI usage budget. Try again next month or ask an administrator to raise the limit.</value></data>
   <data name="IA_Excel_HojaAnalisis" xml:space="preserve"><value>AI Analysis</value></data>
@@ -1670,7 +1670,7 @@
   <data name="IA_MetaTokens" xml:space="preserve"><value>tokens</value></data>
   <data name="IA_MetaFilas" xml:space="preserve"><value>rows</value></data>
   <!-- GLOBAL AI CONFIGURATION -->
-  <data name="CfgIA_PageTitle" xml:space="preserve"><value>Global AI configuration</value></data>
+  <data name="CfgIA_PageTitle" xml:space="preserve"><value>BUFINS general settings</value></data>
   <data name="CfgIA_HeaderDesc" xml:space="preserve"><value>Global parameters for the artificial intelligence module</value></data>
   <data name="CfgIA_TitleEditar" xml:space="preserve"><value>Edit parameter</value></data>
   <data name="CfgIA_TitleEliminar" xml:space="preserve"><value>Delete parameter</value></data>
@@ -1702,7 +1702,7 @@
   <data name="CfgIA_NoItems" xml:space="preserve"><value>No parameters configured.</value></data>
   <!-- AI SETTINGS — PER COMPANY -->
   <data name="CfgIA_TabGeneral" xml:space="preserve"><value>General</value></data>
-  <data name="CfgIA_TabPorEmpresa" xml:space="preserve"><value>Per company</value></data>
+  <data name="CfgIA_TabPorEmpresa" xml:space="preserve"><value>AI per company</value></data>
   <data name="CfgIA_Emp_SelLabel" xml:space="preserve"><value>Company</value></data>
   <data name="CfgIA_Emp_SelPlaceholder" xml:space="preserve"><value>-- Select a company --</value></data>
   <data name="CfgIA_Emp_SeleccionaEmpresaMsg" xml:space="preserve"><value>Select a company to view and edit its AI settings.</value></data>
@@ -1778,7 +1778,7 @@ Indicators management follows closely: </value></data>
   <data name="IAInforme_Preguntando" xml:space="preserve"><value>Analyzing the report…</value></data>
   <data name="IAInforme_PreguntaInvalida" xml:space="preserve"><value>Write a question of up to {0} characters.</value></data>
   <data name="IAInforme_Error" xml:space="preserve"><value>The question could not be answered. Please try again.</value></data>
-  <data name="CfgIA_TabUso" xml:space="preserve"><value>Usage &amp; costs</value></data>
+  <data name="CfgIA_TabUso" xml:space="preserve"><value>AI usage &amp; costs</value></data>
   <data name="CfgIA_Uso_Titulo" xml:space="preserve"><value>AI usage and costs</value></data>
   <data name="CfgIA_Uso_NoDisponible" xml:space="preserve"><value>There is no usage log yet (run script Sql/013).</value></data>
   <data name="CfgIA_Uso_Error" xml:space="preserve"><value>Could not load AI usage.</value></data>
@@ -3027,4 +3027,62 @@ Indicators management follows closely: </value></data>
   <data name="Usr_LabelExigirCambioClave" xml:space="preserve"><value>Require password change at first sign-in</value></data>
   <data name="Usr_HintExigirCambioClave" xml:space="preserve"><value>The user must set a new password the first time they sign in.</value></data>
   <data name="Usr_ExigirCambioClaveNoAplicado" xml:space="preserve"><value>The user was created, but the mandatory password change could not be enabled (script Sql/025 has not been run).</value></data>
+  <!-- DOBLE FACTOR (2FA) -->
+  <data name="Login2FA_PageTitle" xml:space="preserve"><value>Two-step verification</value></data>
+  <data name="Login2FA_VerificarHeading" xml:space="preserve"><value>Two-step verification</value></data>
+  <data name="Login2FA_VerificarInstrucciones" xml:space="preserve"><value>Open your authenticator app and enter the 6-digit Bufins code.</value></data>
+  <data name="Login2FA_CodigoLabel" xml:space="preserve"><value>Verification code</value></data>
+  <data name="Login2FA_BtnVerificar" xml:space="preserve"><value>Verify</value></data>
+  <data name="Login2FA_HintRecuperacion" xml:space="preserve"><value>No access to your app? Enter one of your recovery codes instead of the 6-digit code.</value></data>
+  <data name="Login2FA_Volver" xml:space="preserve"><value>Back to sign in</value></data>
+  <data name="Login2FA_ErrorVacio" xml:space="preserve"><value>Enter the verification code.</value></data>
+  <data name="Login2FA_ErrorCodigo" xml:space="preserve"><value>Incorrect or expired code. Please try again.</value></data>
+  <data name="Login2FA_ErrorSecreto" xml:space="preserve"><value>Your two-step verification could not be validated. Contact the Bufins administrator.</value></data>
+  <data name="Login2FA_ErrorDemasiadosIntentos" xml:space="preserve"><value>Too many incorrect codes. Please sign in again.</value></data>
+  <data name="Login2FA_ErrorGuardar" xml:space="preserve"><value>Two-step verification could not be enabled. Please try again.</value></data>
+  <data name="Login2FA_ConfigHeading" xml:space="preserve"><value>Enable two-step verification</value></data>
+  <data name="Login2FA_ConfigAviso" xml:space="preserve"><value>For your security, every Bufins account uses a second verification step when signing in.</value></data>
+  <data name="Login2FA_ConfigPaso1" xml:space="preserve"><value>Install an authenticator app on your phone (Google Authenticator, Microsoft Authenticator, Authy…).</value></data>
+  <data name="Login2FA_ConfigPaso2" xml:space="preserve"><value>Scan this QR code with the app (or type the key manually).</value></data>
+  <data name="Login2FA_ConfigPaso3" xml:space="preserve"><value>Enter the 6-digit code shown by the app to confirm.</value></data>
+  <data name="Login2FA_ConfigClaveManual" xml:space="preserve"><value>Can't scan? Enter this key in the app:</value></data>
+  <data name="Login2FA_BtnActivar" xml:space="preserve"><value>Enable and continue</value></data>
+  <data name="Login2FA_CodigosHeading" xml:space="preserve"><value>Recovery codes</value></data>
+  <data name="Login2FA_CodigosInstrucciones" xml:space="preserve"><value>Save these 10 codes somewhere safe. Each works once if you lose your phone. They will not be shown again.</value></data>
+  <data name="Login2FA_CodigosConfirmar" xml:space="preserve"><value>I have saved my recovery codes.</value></data>
+  <data name="Login2FA_BtnCopiar" xml:space="preserve"><value>Copy</value></data>
+  <data name="Login2FA_BtnDescargar" xml:space="preserve"><value>Download</value></data>
+  <data name="Login2FA_Copiado" xml:space="preserve"><value>Codes copied</value></data>
+  <data name="Login2FA_BtnContinuar" xml:space="preserve"><value>Continue</value></data>
+  <data name="Notif_2FA_ActivadoTitulo" xml:space="preserve"><value>Two-step verification enabled</value></data>
+  <data name="Notif_2FA_ActivadoMsg" xml:space="preserve"><value>You enabled two-step verification on your account. If this wasn't you, contact the administrator immediately.</value></data>
+  <data name="Notif_2FA_RecuperacionTitulo" xml:space="preserve"><value>Signed in with a recovery code</value></data>
+  <data name="Notif_2FA_RecuperacionMsg" xml:space="preserve"><value>You signed in with a recovery code. You have {0} unused codes left. If this wasn't you, contact the administrator.</value></data>
+  <data name="Notif_2FA_ReiniciadoTitulo" xml:space="preserve"><value>Two-step verification reset</value></data>
+  <data name="Notif_2FA_ReiniciadoMsg" xml:space="preserve"><value>An administrator reset your two-step verification. You will set up a new authenticator at your next sign-in.</value></data>
+  <data name="Usr_TitleReiniciar2FA" xml:space="preserve"><value>Reset two-step verification (lost phone)</value></data>
+  <data name="Usr_ConfirmReiniciar2FA" xml:space="preserve"><value>Reset this user's two-step verification? They will set up a new authenticator at their next sign-in.</value></data>
+  <data name="Usr_BtnReiniciar2FA" xml:space="preserve"><value>Reset</value></data>
+  <data name="Usr_2FA_Reiniciado" xml:space="preserve"><value>Two-step verification reset successfully.</value></data>
+  <data name="Usr_2FA_ErrorReiniciar" xml:space="preserve"><value>Could not reset two-step verification (was script Sql/026 run?).</value></data>
+  <!-- TIPOS DE CONFIGURACION -->
+  <data name="CfgIA_Tipo_BtnGestionar" xml:space="preserve"><value>Types</value></data>
+  <data name="CfgIA_Tipo_Label" xml:space="preserve"><value>Type</value></data>
+  <data name="CfgIA_Tipo_Titulo" xml:space="preserve"><value>Setting types</value></data>
+  <data name="CfgIA_Tipo_Desc" xml:space="preserve"><value>Types group the parameters in the General tab. Create the ones you need and assign them when editing each parameter.</value></data>
+  <data name="CfgIA_Tipo_Parametros" xml:space="preserve"><value>Parameters with this type</value></data>
+  <data name="CfgIA_Tipo_Nuevo" xml:space="preserve"><value>New type</value></data>
+  <data name="CfgIA_Tipo_Editar" xml:space="preserve"><value>Edit type</value></data>
+  <data name="CfgIA_Tipo_NuevoBtn" xml:space="preserve"><value>New</value></data>
+  <data name="CfgIA_Tipo_NombreEs" xml:space="preserve"><value>Name (Spanish)</value></data>
+  <data name="CfgIA_Tipo_NombreEn" xml:space="preserve"><value>Name (English)</value></data>
+  <data name="CfgIA_Tipo_Orden" xml:space="preserve"><value>Order</value></data>
+  <data name="CfgIA_Tipo_Icono" xml:space="preserve"><value>Icon</value></data>
+  <data name="CfgIA_Tipo_ErrorNombre" xml:space="preserve"><value>The type name is required (max. 100 characters).</value></data>
+  <data name="CfgIA_Tipo_SinScript" xml:space="preserve"><value>Script Sql/028 must be run to manage setting types.</value></data>
+  <data name="CfgIA_Tipo_ErrorGuardar" xml:space="preserve"><value>The type could not be saved.</value></data>
+  <data name="CfgIA_Tipo_ErrorEliminar" xml:space="preserve"><value>The type could not be deleted.</value></data>
+  <data name="CfgIA_Tipo_Guardado" xml:space="preserve"><value>Type saved.</value></data>
+  <data name="CfgIA_Tipo_Eliminado" xml:space="preserve"><value>Type deleted. Its parameters moved to "Other parameters".</value></data>
+  <data name="CfgIA_Tipo_ConfirmEliminar" xml:space="preserve"><value>Delete the type "{0}"? Its {1} parameters will move to "Other parameters".</value></data>
 </root>

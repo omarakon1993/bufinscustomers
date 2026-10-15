@@ -50,7 +50,24 @@
         .cfgg-search i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: .8rem; }
         .cfgg-search input { width: 100%; padding: 7px 12px 7px 32px; border: 1px solid #e3e6f0; border-radius: 999px; font-size: .84rem; background: #fff; outline: none; }
         .cfgg-search input:focus { border-color: #583AFF; box-shadow: 0 0 0 3px rgba(88,58,255,.12); }
-        .cfgg-toolbar .btn-modern-success { margin-left: auto; padding: 7px 16px; font-size: .82rem; }
+        .cfgg-toolbar .btn-modern-success, .cfgg-toolbar .btn-modern-secondary { padding: 7px 16px; font-size: .82rem; }
+        .cfgg-toolbar .cfgg-btn-tipos { margin-left: auto; }
+        /* ── Gestión de tipos (categorías) ── */
+        .tp-list { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; margin-bottom: 14px; }
+        .tp-row { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid #e3e6f0; border-radius: 10px; background: #fff; }
+        .tp-row .ic { width: 28px; height: 28px; border-radius: 8px; background: var(--content-gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-size: .78rem; flex-shrink: 0; }
+        .tp-row .nm { flex: 1; font-size: .84rem; font-weight: 600; color: #2d3748; min-width: 0; }
+        .tp-row .nm small { display: block; font-weight: 400; color: #8a8fa8; font-size: .72rem; }
+        .tp-row .cnt { font-size: .72rem; color: #6b7280; background: #f4f3fb; border-radius: 999px; padding: 2px 9px; }
+        .tp-form { border-top: 1px dashed #d9dcec; padding-top: 12px; }
+        .tp-form h6 { font-size: .82rem; font-weight: 700; color: #2d3748; margin-bottom: 8px; }
+        .tp-form .tp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
+        .tp-form .tp-grid .full { grid-column: 1 / -1; }
+        .tp-iconos { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tp-iconos label { margin: 0; cursor: pointer; }
+        .tp-iconos input { display: none; }
+        .tp-iconos span { width: 34px; height: 34px; border: 1px solid #e3e6f0; border-radius: 9px; display: flex; align-items: center; justify-content: center; color: #583AFF; background: #fff; }
+        .tp-iconos input:checked + span { background: var(--content-gradient); color: #fff; border-color: transparent; }
         .cfgg-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
         .cfgg-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; font-size: .76rem; font-weight: 600; background: #f4f3fb; color: #3b3f66; border: 1px solid #e0ddf0; }
         .cfgg-chip b { font-family: 'Courier New', monospace; font-weight: 700; color: #160933; }
@@ -235,7 +252,15 @@
             new { Icono = "fas fa-bolt", Titulo = Resources.Strings.CfgIA_G_Cache,
                   Claves = new[] { "IA_CacheHoras", "IA_CacheHorasModelo", "IA_MaxCaracteresPregunta" } }
         };
-        var clavesAgrupadas = gruposCfg.SelectMany(g => g.Claves).ToList();
+        // Tipos (categorías) de la BD (script 028). Si aún no existen, se usan las agrupaciones fijas de arriba.
+        bool tiposDisponibles = ViewBag.TiposDisponibles == true;
+        var tiposCfg = (ViewBag.Tipos as List<bufinscustomers.Models.ConfiguracionSistemaTipo>) ?? new List<bufinscustomers.Models.ConfiguracionSistemaTipo>();
+        bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+        Func<bufinscustomers.Models.ConfiguracionSistemaTipo, string> nombreTipo =
+            t => esIngles && !string.IsNullOrWhiteSpace(t.NombreEN) ? t.NombreEN : t.Nombre;
+        var clavesAgrupadas = tiposDisponibles
+            ? Model.Where(i => i.IdTipo.HasValue && tiposCfg.Any(t => t.Id == i.IdTipo.Value)).Select(i => i.Clave).ToList()
+            : gruposCfg.SelectMany(g => g.Claves).ToList();
         var otrosCfg = Model.Where(i => !clavesAgrupadas.Contains(i.Clave)).ToList();
         string modeloCfg = valorDe("OpenAIModel");
         string tokensCfg = valorDe("OpenAIMaxTokens");
@@ -248,7 +273,10 @@
                 <i class="fas fa-search"></i>
                 <input type="text" id="cfggBuscar" placeholder="@Resources.Strings.CfgIA_G_Buscar" autocomplete="off" />
             </div>
-            <button type="button" class="btn-modern-success" onclick="abrirNuevo()">
+            <button type="button" class="btn-modern-secondary cfgg-btn-tipos" onclick="abrirTipos()">
+                <i class="fas fa-tags mr-1"></i>@Resources.Strings.CfgIA_Tipo_BtnGestionar
+            </button>
+            <button type="button" class="btn-modern-success cfgg-btn-nuevo" onclick="abrirNuevo()">
                 <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.CfgIA_BtnCrear
             </button>
         </div>
@@ -270,11 +298,23 @@
         else
         {
             <div class="cfgg-grid" id="cfggGrid">
-                @foreach (var g in gruposCfg)
+                @if (tiposDisponibles)
                 {
-                    var items = g.Claves.Select(k => Model.FirstOrDefault(i => i.Clave == k)).Where(i => i != null).ToList();
-                    if (!items.Any()) { continue; }
-                    @RenderGrupo(g.Icono, g.Titulo, items)
+                    foreach (var tp in tiposCfg.Where(t => t.Activo))
+                    {
+                        var itemsTipo = Model.Where(i => i.IdTipo == tp.Id).ToList();
+                        if (!itemsTipo.Any()) { continue; }
+                        @RenderGrupo(tp.Icono, nombreTipo(tp), itemsTipo)
+                    }
+                }
+                else
+                {
+                    foreach (var g in gruposCfg)
+                    {
+                        var items = g.Claves.Select(k => Model.FirstOrDefault(i => i.Clave == k)).Where(i => i != null).ToList();
+                        if (!items.Any()) { continue; }
+                        @RenderGrupo(g.Icono, g.Titulo, items)
+                    }
                 }
                 @if (otrosCfg.Any())
                 {
@@ -306,7 +346,7 @@
                     </span>
                     <div class="cfgg-act">
                         <button type="button" class="cfgg-ico cfgg-editar" title="@Resources.Strings.CfgIA_TitleEditar"
-                                data-clave="@item.Clave" data-valor="@(item.EsSecreta ? "" : (item.Valor ?? ""))" data-desc="@(item.Descripcion ?? "")">
+                                data-clave="@item.Clave" data-valor="@(item.EsSecreta ? "" : (item.Valor ?? ""))" data-desc="@(item.Descripcion ?? "")" data-tipo="@(item.IdTipo.HasValue ? item.IdTipo.Value.ToString() : "")">
                             <i class="fas fa-pen"></i>
                         </button>
                         <button type="button" class="cfgg-ico danger cfgg-eliminar" title="@Resources.Strings.CfgIA_TitleEliminar" data-clave="@item.Clave">
@@ -542,7 +582,7 @@
                     </h5>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
-                <form method="post" action="@Url.Action("Guardar","ConfiguracionGlobalIA")">
+                <form method="post" action="@Url.Action("Guardar","ConfiguracionGlobal")">
                     @Html.AntiForgeryToken()
                     <div class="modal-body">
 
@@ -569,6 +609,23 @@
                             <input type="text" class="form-control form-control-sm"
                                    id="editDescripcion" name="Descripcion" maxlength="300" />
                         </div>
+
+                        @if (tiposDisponibles)
+                        {
+                            <!-- Tipo (categoría) -->
+                            <div class="mb-3">
+                                <label class="form-label" style="font-size:.82rem;font-weight:600;">
+                                    <i class="fas fa-tags mr-1" style="color:#583AFF;"></i>@Resources.Strings.CfgIA_Tipo_Label
+                                </label>
+                                <select class="form-control form-control-sm" id="editTipo" name="IdTipo">
+                                    <option value="">@Resources.Strings.CfgIA_G_Otros</option>
+                                    @foreach (var tp in tiposCfg.Where(t => t.Activo))
+                                    {
+                                        <option value="@tp.Id">@nombreTipo(tp)</option>
+                                    }
+                                </select>
+                            </div>
+                        }
 
                         <!-- Valor — cambia según la clave -->
                         <div class="mb-3">
@@ -639,6 +696,83 @@
     </div>
 
     <!-- ══════════════════════════════════════
+         MODAL TIPOS (categorías de configuración)
+    ══════════════════════════════════════ -->
+    <div class="modal fade" id="tiposModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:560px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-tags" style="color:#583AFF;"></i> @Resources.Strings.CfgIA_Tipo_Titulo</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    @if (!tiposDisponibles)
+                    {
+                        <div class="alert alert-warning mb-0"><i class="fas fa-database mr-1"></i>@Resources.Strings.CfgIA_Tipo_SinScript</div>
+                    }
+                    else
+                    {
+                        <p class="text-muted" style="font-size:.8rem;">@Resources.Strings.CfgIA_Tipo_Desc</p>
+                        <div class="tp-list">
+                            @foreach (var tp in tiposCfg)
+                            {
+                                <div class="tp-row">
+                                    <span class="ic"><i class="@tp.Icono"></i></span>
+                                    <div class="nm">@tp.Nombre<small>@(string.IsNullOrWhiteSpace(tp.NombreEN) ? "—" : tp.NombreEN)</small></div>
+                                    <span class="cnt" title="@Resources.Strings.CfgIA_Tipo_Parametros">@tp.Cantidad</span>
+                                    <button type="button" class="cfgg-ico tp-editar" title="@Resources.Strings.CfgIA_TitleEditar"
+                                            data-id="@tp.Id" data-nombre="@tp.Nombre" data-en="@tp.NombreEN" data-icono="@tp.Icono" data-orden="@tp.Orden">
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                    <button type="button" class="cfgg-ico danger tp-eliminar" title="@Resources.Strings.CfgIA_TitleEliminar"
+                                            data-id="@tp.Id" data-nombre="@tp.Nombre" data-cant="@tp.Cantidad">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="tp-form">
+                            <h6 id="tpFormTitulo"><i class="fas fa-plus-circle mr-1" style="color:#10b981;"></i>@Resources.Strings.CfgIA_Tipo_Nuevo</h6>
+                            <input type="hidden" id="tpId" value="0" />
+                            <div class="tp-grid">
+                                <div>
+                                    <label class="form-label" style="font-size:.78rem;font-weight:600;">@Resources.Strings.CfgIA_Tipo_NombreEs <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-sm" id="tpNombre" maxlength="100" />
+                                </div>
+                                <div>
+                                    <label class="form-label" style="font-size:.78rem;font-weight:600;">@Resources.Strings.CfgIA_Tipo_NombreEn</label>
+                                    <input type="text" class="form-control form-control-sm" id="tpNombreEN" maxlength="100" />
+                                </div>
+                                <div>
+                                    <label class="form-label" style="font-size:.78rem;font-weight:600;">@Resources.Strings.CfgIA_Tipo_Orden</label>
+                                    <input type="number" class="form-control form-control-sm" id="tpOrden" value="100" step="10" />
+                                </div>
+                                <div class="full">
+                                    <label class="form-label" style="font-size:.78rem;font-weight:600;">@Resources.Strings.CfgIA_Tipo_Icono</label>
+                                    <div class="tp-iconos" id="tpIconos">
+                                        @foreach (var ic in new[] { "fas fa-cog", "fas fa-plug", "fas fa-coins", "fas fa-bolt", "fas fa-shield-alt", "fas fa-envelope", "fas fa-database", "fas fa-bell", "fas fa-globe", "fas fa-key", "fas fa-chart-line", "fas fa-file-excel", "fas fa-lock", "fas fa-users" })
+                                        {
+                                            <label><input type="radio" name="tpIcono" value="@ic" /><span><i class="@ic"></i></span></label>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                @if (tiposDisponibles)
+                {
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" id="tpLimpiar"><i class="fas fa-eraser mr-1"></i>@Resources.Strings.CfgIA_Tipo_NuevoBtn</button>
+                        <button type="button" class="btn btn-primary btn-sm" id="tpGuardar"><i class="fas fa-save mr-1"></i>@Resources.Strings.CfgIA_BtnGuardar</button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
          MODAL ELIMINAR
     ══════════════════════════════════════ -->
     <div class="modal fade modal-confirm" id="eliminarModal" tabindex="-1" aria-hidden="true">
@@ -661,7 +795,7 @@
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
                         <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                     </button>
-                    <form method="post" action="@Url.Action("Eliminar","ConfiguracionGlobalIA")" style="display:inline;">
+                    <form method="post" action="@Url.Action("Eliminar","ConfiguracionGlobal")" style="display:inline;">
                         @Html.AntiForgeryToken()
                         <input type="hidden" id="eliminarClave" name="clave" />
                         <button type="submit" class="btn btn-danger btn-sm">
@@ -697,14 +831,14 @@
         mpRecargar:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Modelo_Recargar))',
         mpAbrir:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Modelo_Abrir))',
         mpSinResultados:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Modelo_SinResultados))',
-        urlCargar:      '@Url.Action("ObtenerModelosOpenAI","ConfiguracionGlobalIA")'
+        urlCargar:      '@Url.Action("ObtenerModelosOpenAI","ConfiguracionGlobal")'
     };
 
     // ── clave activa en el modal ──
     var _claveActiva = '';
     var _modoCrear   = false;
 
-    function abrirEditar(clave, valor, desc) {
+    function abrirEditar(clave, valor, desc, tipo) {
         _claveActiva = clave;
         _modoCrear   = false;
         document.getElementById('editarModalTitleText').textContent = _cfgMsg.tituloEditar;
@@ -712,6 +846,7 @@
         document.getElementById('editClave').readOnly    = true;
         document.getElementById('editDescripcion').value = desc;
         document.getElementById('claveReadonlyNote').style.display = 'block';
+        var selTipo = document.getElementById('editTipo'); if (selTipo) selTipo.value = tipo || '';
         configurarWrap(clave, valor);
         $('#editarModal').modal('show');
     }
@@ -724,6 +859,7 @@
         document.getElementById('editClave').readOnly    = false;
         document.getElementById('editDescripcion').value = '';
         document.getElementById('claveReadonlyNote').style.display = 'none';
+        var selTipo = document.getElementById('editTipo'); if (selTipo) selTipo.value = '';
         configurarWrap('', '');
         $('#editarModal').modal('show');
     }
@@ -772,7 +908,7 @@
     function revelarApiKey() {
         var token = $('input[name="__RequestVerificationToken"]').val();
         $.ajax({
-            url: '@Url.Action("Revelar", "ConfiguracionGlobalIA")',
+            url: '@Url.Action("Revelar", "ConfiguracionGlobal")',
             type: 'POST',
             data: { clave: 'OpenAIApiKey', __RequestVerificationToken: token },
             success: function (r) {
@@ -972,13 +1108,13 @@
         guardadoOk:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_MsgGuardadoOk))',
         errorGuardar:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_MsgErrorGuardar))',
         errorCargar:      '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_MsgErrorCargar))',
-        urlResumen:       '@Url.Action("ObtenerResumenEmpresaIA", "ConfiguracionGlobalIA")',
+        urlResumen:       '@Url.Action("ObtenerResumenEmpresaIA", "ConfiguracionGlobal")',
         periodoDesde:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_PeriodoDesde))',
         poolActivo:       '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_PoolActivo))',
         poolSinGrupo:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_PoolSinGrupo))',
         poolHint:         '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_PoolHint))',
-        urlGuardarConfig: '@Url.Action("GuardarConfigEmpresaIA", "ConfiguracionGlobalIA")',
-        urlGuardarAcceso: '@Url.Action("GuardarAccesoUsuarioIA", "ConfiguracionGlobalIA")',
+        urlGuardarConfig: '@Url.Action("GuardarConfigEmpresaIA", "ConfiguracionGlobal")',
+        urlGuardarAcceso: '@Url.Action("GuardarAccesoUsuarioIA", "ConfiguracionGlobal")',
         deTokens:         '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_DeTokens))',
         sinLimite:        '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_SinLimite))',
         usuariosCuenta:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Emp_UsuariosConAcceso))',
@@ -1206,6 +1342,68 @@
         $t.val($.trim($t.val()) ? ($t.val() + '\n\n' + plantilla) : plantilla).trigger('input').focus();
     });
 
+
+    // ══════════════════════════════════════
+    // TIPOS (categorías) de configuración
+    // ══════════════════════════════════════
+    var _tpMsg = {
+        nombreReq: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Tipo_ErrorNombre))',
+        nuevo:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Tipo_Nuevo))',
+        editar:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Tipo_Editar))',
+        confirmar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Tipo_ConfirmEliminar))',
+        eliminar:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_BtnEliminar))',
+        cancelar:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel))',
+        error:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Tipo_ErrorGuardar))',
+        urlGuardar:  '@Url.Action("GuardarTipo","ConfiguracionGlobal")',
+        urlEliminar: '@Url.Action("EliminarTipo","ConfiguracionGlobal")'
+    };
+    function tpToken() { return $('input[name="__RequestVerificationToken"]').first().val(); }
+    function tpToast(ok, msg) {
+        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: ok ? 'success' : 'error', title: msg, showConfirmButton: false, timer: 2500, timerProgressBar: true });
+    }
+    function tpLimpiar() {
+        $('#tpId').val('0'); $('#tpNombre').val(''); $('#tpNombreEN').val(''); $('#tpOrden').val('100');
+        $('#tpIconos input[value="fas fa-cog"]').prop('checked', true);
+        $('#tpFormTitulo').html('<i class="fas fa-plus-circle mr-1" style="color:#10b981;"></i>' + _tpMsg.nuevo);
+    }
+    function abrirTipos() { tpLimpiar(); $('#tiposModal').modal('show'); }
+    $('#tpLimpiar').on('click', tpLimpiar);
+    $(document).on('click', '.tp-editar', function () {
+        var $b = $(this);
+        $('#tpId').val($b.data('id')); $('#tpNombre').val($b.attr('data-nombre') || ''); $('#tpNombreEN').val($b.attr('data-en') || '');
+        $('#tpOrden').val($b.attr('data-orden') || '100');
+        var ic = $b.attr('data-icono') || 'fas fa-cog';
+        $('#tpIconos input').each(function () { $(this).prop('checked', $(this).val() === ic); });
+        $('#tpFormTitulo').html('<i class="fas fa-pen mr-1" style="color:#583AFF;"></i>' + _tpMsg.editar);
+        $('#tpNombre').focus();
+    });
+    $('#tpGuardar').on('click', function () {
+        var nombre = $.trim($('#tpNombre').val());
+        if (!nombre) { tpToast(false, _tpMsg.nombreReq); return; }
+        var $btn = $(this).prop('disabled', true);
+        $.post(_tpMsg.urlGuardar, {
+            __RequestVerificationToken: tpToken(),
+            id: $('#tpId').val(), nombre: nombre, nombreEN: $.trim($('#tpNombreEN').val()),
+            icono: $('#tpIconos input:checked').val() || 'fas fa-cog', orden: $('#tpOrden').val() || 100
+        }).done(function (r) {
+            tpToast(r.ok, r.mensaje);
+            if (r.ok) setTimeout(function () { location.reload(); }, 600);
+        }).fail(function () { tpToast(false, _tpMsg.error); }).always(function () { $btn.prop('disabled', false); });
+    });
+    $(document).on('click', '.tp-eliminar', function () {
+        var $b = $(this), id = $b.data('id'), cant = parseInt($b.attr('data-cant') || '0', 10);
+        Swal.fire({
+            icon: 'warning', text: _tpMsg.confirmar.replace('{0}', $b.attr('data-nombre')).replace('{1}', cant),
+            showCancelButton: true, cancelButtonText: _tpMsg.cancelar, confirmButtonText: _tpMsg.eliminar
+        }).then(function (res) {
+            if (!res.isConfirmed) return;
+            $.post(_tpMsg.urlEliminar, { __RequestVerificationToken: tpToken(), id: id }).done(function (r) {
+                tpToast(r.ok, r.mensaje);
+                if (r.ok) setTimeout(function () { location.reload(); }, 600);
+            }).fail(function () { tpToast(false, _tpMsg.error); });
+        });
+    });
+
     // ══════════════════════════════════════
     // TAB: GENERAL — búsqueda y acciones por fila
     // ══════════════════════════════════════
@@ -1223,7 +1421,7 @@
     });
     $(document).on('click', '.cfgg-editar', function () {
         var $b = $(this);
-        abrirEditar(String($b.data('clave')), String($b.attr('data-valor') || ''), String($b.attr('data-desc') || ''));
+        abrirEditar(String($b.data('clave')), String($b.attr('data-valor') || ''), String($b.attr('data-desc') || ''), String($b.attr('data-tipo') || ''));
     });
     $(document).on('click', '.cfgg-eliminar', function () { abrirEliminar(String($(this).data('clave'))); });
 
@@ -1231,7 +1429,7 @@
     // TAB: USO Y COSTOS
     // ══════════════════════════════════════
     var _usoMsg = {
-        url: '@Url.Action("ObtenerObservabilidadIA", "ConfiguracionGlobalIA")',
+        url: '@Url.Action("ObtenerObservabilidadIA", "ConfiguracionGlobal")',
         error: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Uso_Error))',
         sinDatos: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_SinDatos))',
         kConsultas: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgIA_Uso_KConsultas))',
@@ -1344,7 +1542,7 @@
             reverseButtons: true, focusCancel: true
         }).then(function (res) {
             if (!res.isConfirmed) return;
-            $.post('@Url.Action("LimpiarUsoIA", "ConfiguracionGlobalIA")',
+            $.post('@Url.Action("LimpiarUsoIA", "ConfiguracionGlobal")',
                 { __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val() },
                 function (r) {
                     Swal.fire({ toast: true, position: 'top-end', icon: (r && r.ok) ? 'success' : 'error',

@@ -23,11 +23,20 @@ namespace bufinscustomers.Services
             {
                 using (var cn = new SqlConnection(CadenaConexion))
                 {
-                    var cmd = new SqlCommand(
-                        "SELECT Clave, Valor, ISNULL(Descripcion,'') AS Descripcion FROM ConfiguracionSistema ORDER BY Clave",
-                        cn);
                     cn.Open();
-                    using (var r = cmd.ExecuteReader())
+                    bool conTipo = true;
+                    SqlCommand cmd = new SqlCommand(
+                        "SELECT Clave, Valor, ISNULL(Descripcion,'') AS Descripcion, IdTipo FROM ConfiguracionSistema ORDER BY Clave", cn);
+                    SqlDataReader probe = null;
+                    try { probe = cmd.ExecuteReader(); }
+                    catch (SqlException ex) when (ex.Number == 207)
+                    {
+                        // Sin la columna IdTipo (script 028 sin ejecutar): consulta de siempre.
+                        conTipo = false;
+                        cmd = new SqlCommand(
+                            "SELECT Clave, Valor, ISNULL(Descripcion,'') AS Descripcion FROM ConfiguracionSistema ORDER BY Clave", cn);
+                    }
+                    using (var r = probe ?? cmd.ExecuteReader())
                         while (r.Read())
                         {
                             var clave    = r["Clave"].ToString();
@@ -41,6 +50,7 @@ namespace bufinscustomers.Services
                                                 ? SecretosProtegidos.Enmascarar(SecretosProtegidos.Descifrar(valorRaw))
                                                 : valorRaw,
                                 Descripcion = r["Descripcion"].ToString(),
+                                IdTipo      = conTipo && r["IdTipo"] != DBNull.Value ? (int?)Convert.ToInt32(r["IdTipo"]) : null,
                                 EsSecreta   = secreta
                             });
                         }
@@ -120,6 +130,122 @@ namespace bufinscustomers.Services
             }
             catch { return false; }
         }
+        // ───────────── Tipos (categorías) de configuración — Sql/028 ─────────────
+
+        private static bool EsEsquemaFaltante(SqlException ex) { return ex.Number == 207 || ex.Number == 208; }
+
+        /// <summary>Tipos con su cantidad de parámetros. disponible=false si el script 028 no se ha ejecutado.</summary>
+        public List<ConfiguracionSistemaTipo> ObtenerTipos(out bool disponible)
+        {
+            var lista = new List<ConfiguracionSistemaTipo>();
+            disponible = true;
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand(@"
+                    SELECT t.Id, t.Nombre, t.NombreEN, t.Icono, t.Orden, t.Activo, COUNT(c.Clave) AS Cantidad
+                      FROM ConfiguracionSistemaTipos t
+                      LEFT JOIN ConfiguracionSistema c ON c.IdTipo = t.Id
+                     GROUP BY t.Id, t.Nombre, t.NombreEN, t.Icono, t.Orden, t.Activo
+                     ORDER BY t.Orden, t.Nombre", cn))
+                {
+                    cn.Open();
+                    using (var r = cmd.ExecuteReader())
+                        while (r.Read())
+                            lista.Add(new ConfiguracionSistemaTipo
+                            {
+                                Id       = Convert.ToInt32(r["Id"]),
+                                Nombre   = r["Nombre"].ToString(),
+                                NombreEN = r["NombreEN"] == DBNull.Value ? null : r["NombreEN"].ToString(),
+                                Icono    = r["Icono"].ToString(),
+                                Orden    = Convert.ToInt32(r["Orden"]),
+                                Activo   = Convert.ToBoolean(r["Activo"]),
+                                Cantidad = Convert.ToInt32(r["Cantidad"])
+                            });
+                }
+            }
+            catch (SqlException ex)
+            {
+                if (EsEsquemaFaltante(ex)) disponible = false;
+                else AppLogger.Error(ex, "ConfiguracionSistemaService.ObtenerTipos");
+            }
+            return lista;
+        }
+
+        /// <summary>Crea (id=0) o edita un tipo. Devuelve el Id, o 0 si falló.</summary>
+        public int GuardarTipo(int id, string nombre, string nombreEN, string icono, int orden)
+        {
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand(id > 0
+                    ? "UPDATE ConfiguracionSistemaTipos SET Nombre=@N, NombreEN=@E, Icono=@I, Orden=@O WHERE Id=@Id; SELECT @Id;"
+                    : "INSERT INTO ConfiguracionSistemaTipos (Nombre, NombreEN, Icono, Orden) VALUES (@N, @E, @I, @O); SELECT CAST(SCOPE_IDENTITY() AS INT);", cn))
+                {
+                    cmd.Parameters.AddWithValue("@Id", id);
+                    cmd.Parameters.AddWithValue("@N", nombre.Trim());
+                    cmd.Parameters.AddWithValue("@E", string.IsNullOrWhiteSpace(nombreEN) ? (object)DBNull.Value : nombreEN.Trim());
+                    cmd.Parameters.AddWithValue("@I", string.IsNullOrWhiteSpace(icono) ? "fas fa-cog" : icono.Trim());
+                    cmd.Parameters.AddWithValue("@O", orden);
+                    cn.Open();
+                    return Convert.ToInt32(cmd.ExecuteScalar());
+                }
+            }
+            catch (SqlException ex)
+            {
+                AppLogger.Error(ex, "ConfiguracionSistemaService.GuardarTipo");
+                return 0;
+            }
+        }
+
+        /// <summary>Elimina un tipo; sus parámetros quedan sin tipo ("Otros"). En una sola transacción.</summary>
+        public bool EliminarTipo(int id)
+        {
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                {
+                    cn.Open();
+                    using (var tx = cn.BeginTransaction())
+                    {
+                        using (var a = new SqlCommand("UPDATE ConfiguracionSistema SET IdTipo = NULL WHERE IdTipo = @Id", cn, tx))
+                        { a.Parameters.AddWithValue("@Id", id); a.ExecuteNonQuery(); }
+                        int filas;
+                        using (var b = new SqlCommand("DELETE FROM ConfiguracionSistemaTipos WHERE Id = @Id", cn, tx))
+                        { b.Parameters.AddWithValue("@Id", id); filas = b.ExecuteNonQuery(); }
+                        tx.Commit();
+                        return filas > 0;
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                AppLogger.Error(ex, "ConfiguracionSistemaService.EliminarTipo");
+                return false;
+            }
+        }
+
+        /// <summary>Asigna el tipo a un parámetro (null = sin tipo). false si el script 028 no existe.</summary>
+        public bool AsignarTipo(string clave, int? idTipo)
+        {
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand("UPDATE ConfiguracionSistema SET IdTipo = @T WHERE Clave = @C", cn))
+                {
+                    cmd.Parameters.AddWithValue("@T", (object)idTipo ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@C", clave.Trim());
+                    cn.Open();
+                    return cmd.ExecuteNonQuery() > 0;
+                }
+            }
+            catch (SqlException ex)
+            {
+                if (!EsEsquemaFaltante(ex)) AppLogger.Error(ex, "ConfiguracionSistemaService.AsignarTipo");
+                return false;
+            }
+        }
+
         public string ObtenerValor(string clave)
         {
             try

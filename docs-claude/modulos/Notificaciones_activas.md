@@ -34,3 +34,6 @@
 | AI query audit log cleared (full or keep-last-N-months) | `warning` | `AuditoriaConsultasIAController` | `Notif_AuditoriaLimpiada` |
 | General audit log cleared (full / keep-N-months, all or one company) | `warning` | `AuditoriaController` | `Notif_AuditoriaLimpiada` |
 | Navigation audit log cleared (full / keep-N-months, all or one company; Super Admin only) | `warning` | `InformeNavegacionController` | `Notif_NavegacionLimpiada` |
+| 2FA activated by the user (notifies the user) | `success` | `AccesoController.ConfigurarDobleFactor` | `Notif_2FA_ActivadoTitulo` |
+| Signed in with a 2FA recovery code (notifies the user, remaining codes) | `warning` | `AccesoController.VerificarDobleFactor` | `Notif_2FA_RecuperacionTitulo` |
+| 2FA reset by a Super Admin (notifies the affected user) | `warning` | `UsuarioController.ReiniciarDobleFactor` | `Notif_2FA_ReiniciadoTitulo` |

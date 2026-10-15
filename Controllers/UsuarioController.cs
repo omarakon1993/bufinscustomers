@@ -579,6 +579,32 @@ namespace bufinscustomers.Controllers
             });
         }
 
+        // Doble factor: el usuario perdió su autenticador y sus códigos de recuperación. SOLO Super Admin.
+        // Al reiniciar, en su siguiente inicio de sesión configura un autenticador nuevo.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
+        public JsonResult ReiniciarDobleFactor(int idUsuario)
+        {
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+                return Json(new { success = false, message = R("Usr_ErrorSinPermiso") });
+
+            var usuarioDestino = new UsuarioService().ObtenerUsuarioPorId(idUsuario);
+            if (usuarioDestino == null)
+                return Json(new { success = false, message = R("Usr_ErrorNoEncontrado") });
+
+            if (!new DobleFactorService().Reiniciar(idUsuario))
+                return Json(new { success = false, message = R("Usr_2FA_ErrorReiniciar") });
+
+            var actual = UsuarioSesionHelper.UsuarioActual;
+            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Editar,
+                $"Doble factor reiniciado por el Super Admin {actual?.Usuario} para el usuario {usuarioDestino.Usuario} (Id {idUsuario})",
+                idUsuario, ((usuarioDestino.Nombre ?? "") + " " + (usuarioDestino.Apellidos ?? "")).Trim(), usuarioDestino.IdEmpresa);
+            new NotificacionesService().Crear(idUsuario, R("Notif_2FA_ReiniciadoTitulo"), R("Notif_2FA_ReiniciadoMsg"), "warning");
+
+            return Json(new { success = true, message = R("Usr_2FA_Reiniciado") });
+        }
+
         /// <summary>
         /// Asigna al usuario todas las opciones de menú que le apliquen por defecto según su rol.
         /// Reemplaza cualquier asignación previa (usado tanto en creación como al cambiar de rol).

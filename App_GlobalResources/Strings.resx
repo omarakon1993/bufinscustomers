@@ -1641,7 +1641,7 @@
   <data name="Notif_ModoDefensivoMsg" xml:space="preserve"><value>Se detectó un pico de intentos de inicio de sesión fallidos en todo el sistema. El límite por IP se endureció automáticamente. Revisa la auditoría de seguridad.</value></data>
   <!-- IA MEJORAS -->
   <data name="IA_BtnExportarExcel" xml:space="preserve"><value>Exportar Excel con IA</value></data>
-  <data name="IA_SinAccesoMensaje" xml:space="preserve"><value>No tienes acceso al Análisis IA. Solicita al administrador que te habilite el acceso desde Configuración IA.</value></data>
+  <data name="IA_SinAccesoMensaje" xml:space="preserve"><value>No tienes acceso al Análisis IA. Solicita al administrador que te habilite el acceso desde Configuraciones generales BUFINS → IA por empresa.</value></data>
   <data name="IA_HistorialGrandeMensaje" xml:space="preserve"><value>El historial de la conversación es demasiado grande. Inicia una consulta nueva.</value></data>
   <data name="IA_PresupuestoAgotadoMensaje" xml:space="preserve"><value>Esta empresa alcanzó su presupuesto mensual de consultas de IA. Inténtalo el próximo mes o solicita al administrador que amplíe el límite.</value></data>
   <data name="IA_Excel_HojaAnalisis" xml:space="preserve"><value>Análisis IA</value></data>
@@ -1672,7 +1672,7 @@
   <data name="IA_MetaTokens" xml:space="preserve"><value>tokens</value></data>
   <data name="IA_MetaFilas" xml:space="preserve"><value>filas</value></data>
   <!-- CONFIGURACIÓN GLOBAL IA -->
-  <data name="CfgIA_PageTitle" xml:space="preserve"><value>Configuración global IA</value></data>
+  <data name="CfgIA_PageTitle" xml:space="preserve"><value>Configuraciones generales BUFINS</value></data>
   <data name="CfgIA_HeaderDesc" xml:space="preserve"><value>Parámetros globales del módulo de inteligencia artificial</value></data>
   <data name="CfgIA_TitleEditar" xml:space="preserve"><value>Editar parámetro</value></data>
   <data name="CfgIA_TitleEliminar" xml:space="preserve"><value>Eliminar parámetro</value></data>
@@ -1704,7 +1704,7 @@
   <data name="CfgIA_NoItems" xml:space="preserve"><value>No hay parámetros configurados.</value></data>
   <!-- CONFIGURACIÓN IA — POR EMPRESA -->
   <data name="CfgIA_TabGeneral" xml:space="preserve"><value>General</value></data>
-  <data name="CfgIA_TabPorEmpresa" xml:space="preserve"><value>Por empresa</value></data>
+  <data name="CfgIA_TabPorEmpresa" xml:space="preserve"><value>IA por empresa</value></data>
   <data name="CfgIA_Emp_SelLabel" xml:space="preserve"><value>Empresa</value></data>
   <data name="CfgIA_Emp_SelPlaceholder" xml:space="preserve"><value>-- Selecciona una empresa --</value></data>
   <data name="CfgIA_Emp_SeleccionaEmpresaMsg" xml:space="preserve"><value>Selecciona una empresa para ver y editar su configuración de IA.</value></data>
@@ -1780,7 +1780,7 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="IAInforme_Preguntando" xml:space="preserve"><value>Analizando el informe…</value></data>
   <data name="IAInforme_PreguntaInvalida" xml:space="preserve"><value>Escribe una pregunta de hasta {0} caracteres.</value></data>
   <data name="IAInforme_Error" xml:space="preserve"><value>No se pudo responder la pregunta. Intenta de nuevo.</value></data>
-  <data name="CfgIA_TabUso" xml:space="preserve"><value>Uso y costos</value></data>
+  <data name="CfgIA_TabUso" xml:space="preserve"><value>Uso y costos IA</value></data>
   <data name="CfgIA_Uso_Titulo" xml:space="preserve"><value>Uso y costos de la IA</value></data>
   <data name="CfgIA_Uso_NoDisponible" xml:space="preserve"><value>Aún no hay registro de uso (ejecuta el script Sql/013).</value></data>
   <data name="CfgIA_Uso_Error" xml:space="preserve"><value>No se pudo cargar el uso de la IA.</value></data>
@@ -3029,4 +3029,62 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="Usr_LabelExigirCambioClave" xml:space="preserve"><value>Exigir cambio de contraseña al primer inicio de sesión</value></data>
   <data name="Usr_HintExigirCambioClave" xml:space="preserve"><value>El usuario deberá definir una contraseña nueva la primera vez que ingrese.</value></data>
   <data name="Usr_ExigirCambioClaveNoAplicado" xml:space="preserve"><value>El usuario se creó, pero no se pudo activar el cambio de contraseña obligatorio (falta ejecutar el script Sql/025).</value></data>
+  <!-- DOBLE FACTOR (2FA) -->
+  <data name="Login2FA_PageTitle" xml:space="preserve"><value>Verificación en dos pasos</value></data>
+  <data name="Login2FA_VerificarHeading" xml:space="preserve"><value>Verificación en dos pasos</value></data>
+  <data name="Login2FA_VerificarInstrucciones" xml:space="preserve"><value>Abre tu app autenticadora e ingresa el código de 6 dígitos de Bufins.</value></data>
+  <data name="Login2FA_CodigoLabel" xml:space="preserve"><value>Código de verificación</value></data>
+  <data name="Login2FA_BtnVerificar" xml:space="preserve"><value>Verificar</value></data>
+  <data name="Login2FA_HintRecuperacion" xml:space="preserve"><value>¿Sin acceso a tu app? Escribe uno de tus códigos de recuperación en lugar del código de 6 dígitos.</value></data>
+  <data name="Login2FA_Volver" xml:space="preserve"><value>Volver al inicio de sesión</value></data>
+  <data name="Login2FA_ErrorVacio" xml:space="preserve"><value>Ingresa el código de verificación.</value></data>
+  <data name="Login2FA_ErrorCodigo" xml:space="preserve"><value>Código incorrecto o vencido. Inténtalo de nuevo.</value></data>
+  <data name="Login2FA_ErrorSecreto" xml:space="preserve"><value>No se pudo validar tu doble factor. Contacta al administrador de Bufins.</value></data>
+  <data name="Login2FA_ErrorDemasiadosIntentos" xml:space="preserve"><value>Demasiados intentos con código incorrecto. Inicia sesión de nuevo.</value></data>
+  <data name="Login2FA_ErrorGuardar" xml:space="preserve"><value>No se pudo activar el doble factor. Inténtalo de nuevo.</value></data>
+  <data name="Login2FA_ConfigHeading" xml:space="preserve"><value>Activa el doble factor</value></data>
+  <data name="Login2FA_ConfigAviso" xml:space="preserve"><value>Por seguridad, todas las cuentas de Bufins usan una segunda verificación al iniciar sesión.</value></data>
+  <data name="Login2FA_ConfigPaso1" xml:space="preserve"><value>Instala una app autenticadora en tu celular (Google Authenticator, Microsoft Authenticator, Authy…).</value></data>
+  <data name="Login2FA_ConfigPaso2" xml:space="preserve"><value>Escanea este código QR con la app (o escribe la clave manualmente).</value></data>
+  <data name="Login2FA_ConfigPaso3" xml:space="preserve"><value>Escribe aquí el código de 6 dígitos que muestra la app para confirmar.</value></data>
+  <data name="Login2FA_ConfigClaveManual" xml:space="preserve"><value>¿No puedes escanear? Ingresa esta clave en la app:</value></data>
+  <data name="Login2FA_BtnActivar" xml:space="preserve"><value>Activar y continuar</value></data>
+  <data name="Login2FA_CodigosHeading" xml:space="preserve"><value>Códigos de recuperación</value></data>
+  <data name="Login2FA_CodigosInstrucciones" xml:space="preserve"><value>Guarda estos 10 códigos en un lugar seguro. Cada uno sirve una sola vez si pierdes tu celular. No volverán a mostrarse.</value></data>
+  <data name="Login2FA_CodigosConfirmar" xml:space="preserve"><value>Ya guardé mis códigos de recuperación.</value></data>
+  <data name="Login2FA_BtnCopiar" xml:space="preserve"><value>Copiar</value></data>
+  <data name="Login2FA_BtnDescargar" xml:space="preserve"><value>Descargar</value></data>
+  <data name="Login2FA_Copiado" xml:space="preserve"><value>Códigos copiados</value></data>
+  <data name="Login2FA_BtnContinuar" xml:space="preserve"><value>Continuar</value></data>
+  <data name="Notif_2FA_ActivadoTitulo" xml:space="preserve"><value>Doble factor activado</value></data>
+  <data name="Notif_2FA_ActivadoMsg" xml:space="preserve"><value>Activaste la verificación en dos pasos en tu cuenta. Si no fuiste tú, contacta al administrador de inmediato.</value></data>
+  <data name="Notif_2FA_RecuperacionTitulo" xml:space="preserve"><value>Inicio de sesión con código de recuperación</value></data>
+  <data name="Notif_2FA_RecuperacionMsg" xml:space="preserve"><value>Ingresaste con un código de recuperación. Te quedan {0} códigos sin usar. Si no fuiste tú, contacta al administrador.</value></data>
+  <data name="Notif_2FA_ReiniciadoTitulo" xml:space="preserve"><value>Doble factor reiniciado</value></data>
+  <data name="Notif_2FA_ReiniciadoMsg" xml:space="preserve"><value>Un administrador reinició tu doble factor. Configurarás un autenticador nuevo en tu próximo inicio de sesión.</value></data>
+  <data name="Usr_TitleReiniciar2FA" xml:space="preserve"><value>Reiniciar doble factor (perdió su celular)</value></data>
+  <data name="Usr_ConfirmReiniciar2FA" xml:space="preserve"><value>¿Reiniciar el doble factor de este usuario? Deberá configurar un autenticador nuevo en su próximo inicio de sesión.</value></data>
+  <data name="Usr_BtnReiniciar2FA" xml:space="preserve"><value>Reiniciar</value></data>
+  <data name="Usr_2FA_Reiniciado" xml:space="preserve"><value>Doble factor reiniciado correctamente.</value></data>
+  <data name="Usr_2FA_ErrorReiniciar" xml:space="preserve"><value>No se pudo reiniciar el doble factor (¿se ejecutó el script Sql/026?).</value></data>
+  <!-- TIPOS DE CONFIGURACION -->
+  <data name="CfgIA_Tipo_BtnGestionar" xml:space="preserve"><value>Tipos</value></data>
+  <data name="CfgIA_Tipo_Label" xml:space="preserve"><value>Tipo</value></data>
+  <data name="CfgIA_Tipo_Titulo" xml:space="preserve"><value>Tipos de configuración</value></data>
+  <data name="CfgIA_Tipo_Desc" xml:space="preserve"><value>Los tipos agrupan los parámetros en la pestaña General. Crea los que necesites y asígnalos al editar cada parámetro.</value></data>
+  <data name="CfgIA_Tipo_Parametros" xml:space="preserve"><value>Parámetros con este tipo</value></data>
+  <data name="CfgIA_Tipo_Nuevo" xml:space="preserve"><value>Nuevo tipo</value></data>
+  <data name="CfgIA_Tipo_Editar" xml:space="preserve"><value>Editar tipo</value></data>
+  <data name="CfgIA_Tipo_NuevoBtn" xml:space="preserve"><value>Nuevo</value></data>
+  <data name="CfgIA_Tipo_NombreEs" xml:space="preserve"><value>Nombre (español)</value></data>
+  <data name="CfgIA_Tipo_NombreEn" xml:space="preserve"><value>Nombre (inglés)</value></data>
+  <data name="CfgIA_Tipo_Orden" xml:space="preserve"><value>Orden</value></data>
+  <data name="CfgIA_Tipo_Icono" xml:space="preserve"><value>Ícono</value></data>
+  <data name="CfgIA_Tipo_ErrorNombre" xml:space="preserve"><value>El nombre del tipo es obligatorio (máx. 100 caracteres).</value></data>
+  <data name="CfgIA_Tipo_SinScript" xml:space="preserve"><value>Falta ejecutar el script Sql/028 para administrar los tipos de configuración.</value></data>
+  <data name="CfgIA_Tipo_ErrorGuardar" xml:space="preserve"><value>No se pudo guardar el tipo.</value></data>
+  <data name="CfgIA_Tipo_ErrorEliminar" xml:space="preserve"><value>No se pudo eliminar el tipo.</value></data>
+  <data name="CfgIA_Tipo_Guardado" xml:space="preserve"><value>Tipo guardado.</value></data>
+  <data name="CfgIA_Tipo_Eliminado" xml:space="preserve"><value>Tipo eliminado. Sus parámetros quedaron en «Otros parámetros».</value></data>
+  <data name="CfgIA_Tipo_ConfirmEliminar" xml:space="preserve"><value>¿Eliminar el tipo «{0}»? Sus {1} parámetros quedarán en «Otros parámetros».</value></data>
 </root>

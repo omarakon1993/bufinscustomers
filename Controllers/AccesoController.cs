@@ -77,6 +77,11 @@ namespace bufinscustomers.Controllers
             {
                 ViewData["Mensaje"] = R("Login_ErrorTokenExpirado");
             }
+            else if (TempData["ErrorMessage"] != null)
+            {
+                // Mensajes desde el flujo de doble factor (demasiados intentos, IP bloqueada…).
+                ViewData["Mensaje"] = TempData["ErrorMessage"];
+            }
             return View();
         }
 
@@ -282,21 +287,25 @@ namespace bufinscustomers.Controllers
 
                 if (usuarioCompleto != null)
                 {
-                    new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Login,
-                        "Inicio de sesión exitoso",
-                        usuarioCompleto.Id,
-                        ((usuarioCompleto.Nombre ?? "") + " " + (usuarioCompleto.Apellidos ?? "")).Trim(),
-                        usuarioCompleto.IdEmpresa ?? idEmpresaLogin);
+                    // 2FA: con credenciales correctas todavía NO se abre sesión; se exige el segundo factor.
+                    if (DobleFactorService.Habilitado && DobleFactorService.AplicaA(usuarioCompleto))
+                    {
+                        var df = new DobleFactorService().Obtener(usuarioCompleto.Id);
+                        if (df.Disponible)
+                        {
+                            if (df.Activo && df.Secreto == null)
+                            {
+                                // Secreto ilegible (p. ej. cambió la machineKey): nunca re-enrolar solo con la clave.
+                                Helpers.AppLogger.Error("2FA: secreto no legible para usuarioId=" + usuarioCompleto.Id, null, "Acceso.Login");
+                                ViewData["Mensaje"] = R("Login2FA_ErrorSecreto");
+                                return View();
+                            }
+                            return IniciarDobleFactor(usuarioCompleto, df.Activo, clientIp);
+                        }
+                        Helpers.AppLogger.Warn("TwoFactorHabilitado=true pero falta el script Sql/026: el login NO exige 2FA.", "Acceso.Login");
+                    }
 
-                    // A6: Regenerar SessionID para prevenir session fixation
-                    string loginToken = Guid.NewGuid().ToString("N");
-                    System.Web.HttpRuntime.Cache.Insert(
-                        "_lt_" + loginToken, usuarioCompleto.Id, null,
-                        DateTime.Now.AddSeconds(60), System.Web.Caching.Cache.NoSlidingExpiration);
-                    Session.Abandon();
-                    Response.Cookies.Add(new HttpCookie("_lt", loginToken)
-                        { HttpOnly = true, Secure = Request.IsSecureConnection, Path = "/" });
-                    return RedirectToAction("FinalizarLogin");
+                    return CompletarInicioDeSesion(usuarioCompleto);
                 }
                 else
                 {
@@ -330,6 +339,260 @@ namespace bufinscustomers.Controllers
             }
         }
 
+
+        /// <summary>
+        /// Último paso del login (credenciales y, si aplica, segundo factor ya validados): audita el
+        /// acceso y entrega el token de un solo uso que abre la sesión nueva en FinalizarLogin.
+        /// </summary>
+        private ActionResult CompletarInicioDeSesion(Usuarios usuarioCompleto)
+        {
+            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Login,
+                "Inicio de sesión exitoso",
+                usuarioCompleto.Id,
+                ((usuarioCompleto.Nombre ?? "") + " " + (usuarioCompleto.Apellidos ?? "")).Trim(),
+                usuarioCompleto.IdEmpresa);
+
+            // A6: Regenerar SessionID para prevenir session fixation
+            string loginToken = Guid.NewGuid().ToString("N");
+            System.Web.HttpRuntime.Cache.Insert(
+                "_lt_" + loginToken, usuarioCompleto.Id, null,
+                DateTime.Now.AddSeconds(60), System.Web.Caching.Cache.NoSlidingExpiration);
+            Session.Abandon();
+            Response.Cookies.Add(new HttpCookie("_lt", loginToken)
+                { HttpOnly = true, Secure = Request.IsSecureConnection, Path = "/" });
+            return RedirectToAction("FinalizarLogin");
+        }
+
+        // ====== Doble factor (TOTP) ======
+        // Tras validar usuario+clave se guarda un "pendiente 2FA" en caché (5 min, cookie _2fa HttpOnly)
+        // y NO existe sesión hasta que el código es correcto. Mismo patrón que el token _lt.
+        private const string COOKIE_2FA = "_2fa";
+        private const int MAX_INTENTOS_2FA = 5;
+
+        private class PendienteDobleFactor
+        {
+            public int IdUsuario;
+            public bool Enrolar;                 // true = aún no tiene autenticador (alta obligatoria)
+            public int Intentos;
+            public byte[] SecretoNuevo;          // solo durante el alta; se guarda en BD al confirmar
+            public List<string> CodigosMostrar;  // códigos de recuperación recién generados (se muestran una vez)
+        }
+
+        private ActionResult IniciarDobleFactor(Usuarios usuario, bool yaActivo, string ip)
+        {
+            string token = Guid.NewGuid().ToString("N");
+            System.Web.HttpRuntime.Cache.Insert(
+                "_2fa_" + token, new PendienteDobleFactor { IdUsuario = usuario.Id, Enrolar = !yaActivo }, null,
+                DateTime.Now.AddMinutes(5), System.Web.Caching.Cache.NoSlidingExpiration);
+            Session.Abandon();
+            Response.Cookies.Add(new HttpCookie(COOKIE_2FA, token)
+                { HttpOnly = true, Secure = Request.IsSecureConnection, Path = "/" });
+            return RedirectToAction(yaActivo ? "VerificarDobleFactor" : "ConfigurarDobleFactor");
+        }
+
+        private PendienteDobleFactor ObtenerPendiente2FA(out string cacheKey)
+        {
+            cacheKey = null;
+            var c = Request.Cookies[COOKIE_2FA];
+            if (c == null || string.IsNullOrEmpty(c.Value)) return null;
+            cacheKey = "_2fa_" + c.Value;
+            return System.Web.HttpRuntime.Cache[cacheKey] as PendienteDobleFactor;
+        }
+
+        private void LimpiarPendiente2FA(string cacheKey)
+        {
+            if (cacheKey != null) System.Web.HttpRuntime.Cache.Remove(cacheKey);
+            Response.Cookies.Add(new HttpCookie(COOKIE_2FA)
+                { Expires = DateTime.Now.AddDays(-1), HttpOnly = true, Secure = Request.IsSecureConnection, Path = "/" });
+        }
+
+        private string NombreCompleto(Usuarios u)
+        {
+            return ((u.Nombre ?? "") + " " + (u.Apellidos ?? "")).Trim();
+        }
+
+        [HttpGet]
+        public ActionResult VerificarDobleFactor()
+        {
+            var p = ObtenerPendiente2FA(out _);
+            if (p == null || p.Enrolar) return RedirectToAction("Login");
+            return View("~/Views/Acceso/VerificarDobleFactor.cshtml");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult VerificarDobleFactor(string codigo)
+        {
+            var p = ObtenerPendiente2FA(out string key);
+            if (p == null || p.Enrolar)
+                return RedirectToAction("Login", new { tokenExpirado = true });
+
+            string ip = GetClientIp();
+            var estadoIp = new RateLimitLoginService().Comprobar(ip);
+            if (estadoIp.Bloqueada)
+            {
+                LimpiarPendiente2FA(key);
+                TempData["ErrorMessage"] = string.Format(R("Login_ErrorRateLimitIP"), Math.Max(1, estadoIp.MinutosRestantes));
+                return RedirectToAction("Login");
+            }
+
+            var servicio = new DobleFactorService();
+            var estado = servicio.Obtener(p.IdUsuario);
+            var usuario = ObtenerUsuarioCompletoPorId(p.IdUsuario);
+            if (!estado.Disponible || !estado.Activo || estado.Secreto == null || usuario == null)
+            {
+                LimpiarPendiente2FA(key);
+                return RedirectToAction("Login");
+            }
+
+            string limpio = (codigo ?? "").Replace(" ", "").Replace("-", "").Trim();
+            bool esTotp = limpio.Length == TotpHelper.Digitos && limpio.All(char.IsDigit);
+            bool ok = false, usoRecuperacion = false;
+
+            if (esTotp)
+            {
+                long paso = TotpHelper.Validar(estado.Secreto, limpio, estado.UltimoPaso);
+                ok = paso >= 0 && servicio.RegistrarPaso(p.IdUsuario, paso);
+            }
+            else if (DobleFactorService.PareceCodigoRecuperacion(codigo))
+            {
+                ok = servicio.ConsumirCodigoRecuperacion(p.IdUsuario, codigo);
+                usoRecuperacion = ok;
+            }
+
+            if (ok)
+            {
+                LimpiarPendiente2FA(key);
+                if (usoRecuperacion)
+                {
+                    int quedan = servicio.CodigosRestantes(p.IdUsuario);
+                    new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Login,
+                        $"Inicio de sesión con código de recuperación del doble factor (quedan {quedan})",
+                        usuario.Id, NombreCompleto(usuario), usuario.IdEmpresa);
+                    new NotificacionesService().Crear(usuario.Id, R("Notif_2FA_RecuperacionTitulo"),
+                        string.Format(R("Notif_2FA_RecuperacionMsg"), quedan), "warning");
+                }
+                return CompletarInicioDeSesion(usuario);
+            }
+
+            // Código incorrecto
+            p.Intentos++;
+            var rl = new RateLimitLoginService().RegistrarFallo(ip);
+            if (rl.ModoDefensivoActivado) NotificarModoDefensivo();
+            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.LoginFallido,
+                $"Código de doble factor incorrecto ({usuario.Correo}), intento {p.Intentos} de {MAX_INTENTOS_2FA}",
+                usuario.Id, NombreCompleto(usuario), usuario.IdEmpresa);
+
+            if (p.Intentos >= MAX_INTENTOS_2FA)
+            {
+                LimpiarPendiente2FA(key);
+                TempData["ErrorMessage"] = R("Login2FA_ErrorDemasiadosIntentos");
+                return RedirectToAction("Login");
+            }
+
+            ViewData["Error"] = R("Login2FA_ErrorCodigo");
+            return View("~/Views/Acceso/VerificarDobleFactor.cshtml");
+        }
+
+        [HttpGet]
+        public ActionResult ConfigurarDobleFactor()
+        {
+            var p = ObtenerPendiente2FA(out _);
+            if (p == null || !p.Enrolar) return RedirectToAction("Login");
+            var usuario = ObtenerUsuarioCompletoPorId(p.IdUsuario);
+            if (usuario == null) return RedirectToAction("Login");
+
+            if (p.SecretoNuevo == null) p.SecretoNuevo = TotpHelper.GenerarSecreto();
+            string secreto = TotpHelper.ABase32(p.SecretoNuevo);
+            ViewBag.SecretoBase32 = secreto;
+            ViewBag.UriOtp = TotpHelper.UriOtpAuth("Bufins", usuario.Correo ?? usuario.Usuario, secreto);
+            return View("~/Views/Acceso/ConfigurarDobleFactor.cshtml");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ConfigurarDobleFactor(string codigo)
+        {
+            var p = ObtenerPendiente2FA(out string key);
+            if (p == null || !p.Enrolar || p.SecretoNuevo == null)
+                return RedirectToAction("Login", new { tokenExpirado = true });
+
+            var usuario = ObtenerUsuarioCompletoPorId(p.IdUsuario);
+            if (usuario == null) { LimpiarPendiente2FA(key); return RedirectToAction("Login"); }
+
+            string ip = GetClientIp();
+            var estadoIp = new RateLimitLoginService().Comprobar(ip);
+            if (estadoIp.Bloqueada)
+            {
+                LimpiarPendiente2FA(key);
+                TempData["ErrorMessage"] = string.Format(R("Login_ErrorRateLimitIP"), Math.Max(1, estadoIp.MinutosRestantes));
+                return RedirectToAction("Login");
+            }
+
+            long paso = TotpHelper.Validar(p.SecretoNuevo, codigo);
+            if (paso < 0)
+            {
+                p.Intentos++;
+                var rl = new RateLimitLoginService().RegistrarFallo(ip);
+                if (rl.ModoDefensivoActivado) NotificarModoDefensivo();
+                if (p.Intentos >= MAX_INTENTOS_2FA)
+                {
+                    LimpiarPendiente2FA(key);
+                    TempData["ErrorMessage"] = R("Login2FA_ErrorDemasiadosIntentos");
+                    return RedirectToAction("Login");
+                }
+                ViewData["Error"] = R("Login2FA_ErrorCodigo");
+                string secreto = TotpHelper.ABase32(p.SecretoNuevo);
+                ViewBag.SecretoBase32 = secreto;
+                ViewBag.UriOtp = TotpHelper.UriOtpAuth("Bufins", usuario.Correo ?? usuario.Usuario, secreto);
+                return View("~/Views/Acceso/ConfigurarDobleFactor.cshtml");
+            }
+
+            var servicio = new DobleFactorService();
+            var codigos = servicio.GenerarCodigosRecuperacion();
+            if (!servicio.Activar(p.IdUsuario, p.SecretoNuevo, paso, codigos))
+            {
+                ViewData["Error"] = R("Login2FA_ErrorGuardar");
+                string secreto = TotpHelper.ABase32(p.SecretoNuevo);
+                ViewBag.SecretoBase32 = secreto;
+                ViewBag.UriOtp = TotpHelper.UriOtpAuth("Bufins", usuario.Correo ?? usuario.Usuario, secreto);
+                return View("~/Views/Acceso/ConfigurarDobleFactor.cshtml");
+            }
+
+            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Editar,
+                "Doble factor de autenticación activado",
+                usuario.Id, NombreCompleto(usuario), usuario.IdEmpresa);
+            new NotificacionesService().Crear(usuario.Id, R("Notif_2FA_ActivadoTitulo"), R("Notif_2FA_ActivadoMsg"), "success");
+
+            // Pasa a la pantalla (una sola vez) con los códigos de recuperación.
+            p.Enrolar = false;
+            p.SecretoNuevo = null;
+            p.CodigosMostrar = codigos;
+            System.Web.HttpRuntime.Cache.Insert(key, p, null, DateTime.Now.AddMinutes(15),
+                System.Web.Caching.Cache.NoSlidingExpiration);
+            return RedirectToAction("CodigosRecuperacion");
+        }
+
+        [HttpGet]
+        public ActionResult CodigosRecuperacion()
+        {
+            var p = ObtenerPendiente2FA(out _);
+            if (p == null || p.CodigosMostrar == null) return RedirectToAction("Login");
+            ViewBag.Codigos = p.CodigosMostrar;
+            return View("~/Views/Acceso/CodigosRecuperacion.cshtml");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult CodigosRecuperacionContinuar()
+        {
+            var p = ObtenerPendiente2FA(out string key);
+            if (p == null || p.CodigosMostrar == null) return RedirectToAction("Login");
+            var usuario = ObtenerUsuarioCompletoPorId(p.IdUsuario);
+            LimpiarPendiente2FA(key);
+            if (usuario == null) return RedirectToAction("Login");
+            return CompletarInicioDeSesion(usuario);
+        }
 
         private void RegistrarIntentoFallido(int usuarioId, int intentosActuales,
             out int nuevosIntentos, out DateTime? nuevoBloqueadoHasta)

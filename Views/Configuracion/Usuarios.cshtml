@@ -400,6 +400,12 @@
                                                 <i class="fas fa-paper-plane"></i>
                                             </button>
                                         }
+                                        @if (ViewBag.EsSuperAdmin == true)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-warning" title="@Resources.Strings.Usr_TitleReiniciar2FA" onclick="reiniciar2FA(@usuario.Id, this)">
+                                                <i class="fas fa-mobile-alt"></i>
+                                            </button>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -1065,6 +1071,41 @@
                 enviar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_BtnEnviarInfoCorreo))',
                 errorGenerico: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_ErrorInfoCorreo))'
             };
+
+            var _tfMsg = {
+                confirmar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_ConfirmReiniciar2FA))',
+                cancelar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel))',
+                boton: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_BtnReiniciar2FA))',
+                error: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Usr_2FA_ErrorReiniciar))'
+            };
+
+            function reiniciar2FA(idUsuario, btn) {
+                Swal.fire({
+                    icon: 'warning',
+                    text: _tfMsg.confirmar,
+                    showCancelButton: true,
+                    cancelButtonText: _tfMsg.cancelar,
+                    confirmButtonText: _tfMsg.boton
+                }).then(function (result) {
+                    if (!result.isConfirmed) return;
+                    btn.disabled = true;
+                    $.ajax({
+                        url: '@Url.Action("ReiniciarDobleFactor", "Usuario")',
+                        type: 'POST',
+                        data: {
+                            idUsuario: idUsuario,
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val()
+                        },
+                        success: function (response) {
+                            Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: response.success ? 'success' : 'error', title: response.message, showConfirmButton: false, timer: 3500, timerProgressBar: true });
+                        },
+                        error: function () {
+                            Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'error', title: _tfMsg.error, showConfirmButton: false, timer: 3500, timerProgressBar: true });
+                        },
+                        complete: function () { btn.disabled = false; }
+                    });
+                });
+            }
 
             function enviarInfoCorreo(idUsuario, btn) {
                 Swal.fire({

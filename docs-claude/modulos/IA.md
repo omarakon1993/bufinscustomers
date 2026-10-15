@@ -66,8 +66,8 @@ configura directamente sobre cada empresa.
 - **`ConfiguracionIAEmpresaService`** — `ObtenerConfig`/`ObtenerConfigs`/`GuardarConfig` sobre
   `dbo.ConfiguracionIAEmpresa` (modelo `ConfigIAEmpresa`; sin fila = valores por defecto; lectura compatible
   con esquemas sin las columnas de `Sql/015`) y el acceso por usuario (`ObtenerUsuariosDeEmpresa`/`GuardarAccesoUsuario`).
-- **UI centralizada en Configuración IA** (`ConfiguracionGlobalIAController` +
-  `~/Views/Configuracion/ConfiguracionGlobalIA.cshtml`, Super Admin only), pestaña "Por Empresa": consumo del
+- **UI centralizada en Configuraciones generales BUFINS** (`ConfiguracionGlobalController` +
+  `~/Views/Configuracion/ConfiguracionGlobal.cshtml`, Super Admin only), pestaña "Por Empresa": consumo del
   periodo (barra, desde cuándo, pool), tarjeta "Control de uso de IA" (habilitada, presupuesto, política al agotarse,
   día de corte, tope por usuario, modelo fijo, pool, funciones) y lista de usuarios con su acceso. Endpoints AJAX:
   `ObtenerResumenEmpresaIA`, `GuardarConfigEmpresaIA` (registra en `AuditoriaService`, `AuditoriaTipo.Configuracion`),
@@ -82,10 +82,10 @@ configura directamente sobre cada empresa.
   desde `IAUsoLog`, vía `Services/IAUsoReporteService`). Los avisos de presupuesto 80 %/100 % llegan también a los
   Admin de Empresa (`IAUsoService.EnviarAvisoPresupuestoATodosSuperAdmin(..., idEmpresa)` → `/AnalisisIA`). El visor
   de Auditoría IA muestra tokens y valoración 👍/👎. **Contexto de negocio por empresa**
-  (`ConfigIAEmpresa.ContextoNegocio`, editable en Configuración IA → Por Empresa, máx. 4.000 caracteres): el gateway
+  (`ConfigIAEmpresa.ContextoNegocio`, editable en Configuraciones generales BUFINS → IA por empresa, máx. 4.000 caracteres): el gateway
   lo suma al `CONTEXTO_NEGOCIO_BUFINS` global en todos los prompts de esa empresa.
-- **Observabilidad (Fase 4)**: pestaña "Uso y costos" en Configuración IA (Super Admin):
-  `ConfiguracionGlobalIAController.ObtenerObservabilidadIA(desde, hasta)` → `IAUsoReporteService.Observabilidad`
+- **Observabilidad (Fase 4)**: pestaña "Uso y costos" en Configuraciones generales BUFINS (Super Admin):
+  `ConfiguracionGlobalController.ObtenerObservabilidadIA(desde, hasta)` → `IAUsoReporteService.Observabilidad`
   sobre `IAUsoLog` (consultas, % atendidas, tokens, costo estimado, % caché, latencia p50/p95 de llamadas reales,
   consumo por día/función/modelo/empresa y errores/rechazos recientes con el código traducido).
   La pestaña tiene el botón **Limpiar estadísticas** (`LimpiarUsoIA`, Super Admin; borra solo `IAUsoLog` — NO toca
@@ -110,7 +110,7 @@ configura directamente sobre cada empresa.
   (sin historial); máx. 500 caracteres. El informe del mes bajo demanda ya existe: PDF y Excel en PYG y Balance.
 - **Límite de pregunta único**: `IAModuloHelper.MaxCharsPregunta()` (parámetro `IA_MaxCaracteresPregunta`, 50–4000,
   por defecto 500) gobierna Análisis IA y "Pregúntale a este informe" (maxlength de la caja y validación del servidor).
-- **Contexto "a qué se dedica la empresa"**: `ConfigIAEmpresa.ContextoNegocio` (Configuración IA → Por Empresa, con
+- **Contexto "a qué se dedica la empresa"**: `ConfigIAEmpresa.ContextoNegocio` (Configuraciones generales BUFINS → IA por empresa, con
   plantilla guiada). `IAGateway` lo rotula como "Contexto de la empresa consultada…" y lo suma al global en TODAS las
   funciones de IA (incluido Super Admin consultando esa empresa). Ya no existe `IA_LimiteConsultasDefault` (obsoleto);
   `Sql/017` (opcional) lo elimina y crea `IA_ModeloEconomico`.

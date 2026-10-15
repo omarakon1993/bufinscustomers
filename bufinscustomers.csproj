@@ -134,7 +134,7 @@
     <Compile Include="Controllers\ModelosEjecucionController.cs" />
     <Compile Include="Controllers\GestorEscenariosController.cs" />
     <Compile Include="Controllers\GestorHojasCargueController.cs" />
-    <Compile Include="Controllers\ConfiguracionGlobalIAController.cs" />
+    <Compile Include="Controllers\ConfiguracionGlobalController.cs" />
     <Compile Include="Controllers\GestorPromptsController.cs" />
     <Compile Include="Controllers\GruposEmpresarialesController.cs" />
     <Compile Include="Controllers\HistorialVersionesCarguesController.cs" />
@@ -182,6 +182,7 @@
     <Compile Include="Helpers\EmpresaCacheHelper.cs" />
     <Compile Include="Helpers\EscenarioCacheHelper.cs" />
     <Compile Include="Helpers\EmpresaAccesoHelper.cs" />
+    <Compile Include="Helpers\TotpHelper.cs" />
     <Compile Include="Helpers\AppLogger.cs" />
     <Compile Include="Helpers\CargueLoteSesionHelper.cs" />
     <Compile Include="Helpers\UrlWebHelper.cs" />
@@ -303,6 +304,7 @@
     <Compile Include="Services\PermisosService.cs" />
     <Compile Include="Services\ReportesService.cs" />
     <Compile Include="Services\ClaveInicialService.cs" />
+    <Compile Include="Services\DobleFactorService.cs" />
     <Compile Include="Services\UsuarioService.cs" />
     <Compile Include="Services\EmailService.cs" />
     <Compile Include="Models\CuentaCorreoModels.cs" />
@@ -444,6 +446,11 @@
     <Content Include="Views\Acceso\SolicitarReset.cshtml" />
     <Content Include="Views\Acceso\RestablecerClave.cshtml" />
     <Content Include="Views\Acceso\CambiarClaveInicial.cshtml" />
+    <Content Include="Views\Acceso\_Layout2FA.cshtml" />
+    <Content Include="Views\Acceso\VerificarDobleFactor.cshtml" />
+    <Content Include="Views\Acceso\ConfigurarDobleFactor.cshtml" />
+    <Content Include="Views\Acceso\CodigosRecuperacion.cshtml" />
+    <Content Include="Assets\js\qrcode-generator.js" />
     <Content Include="Views\Configuracion\CuentasCorreo.cshtml" />
     <Content Include="Views\Configuracion\_CuentaCorreoFormFields.cshtml" />
     <Content Include="Views\Datos\CargueExcel.cshtml" />
@@ -476,7 +483,7 @@
     <Content Include="Views\Configuracion\ConfiguracionVariablesPBI.cshtml" />
     <Content Include="Views\Configuracion\MenuOpciones.cshtml" />
     <Content Include="Views\Configuracion\ModelosEjecucion.cshtml" />
-    <Content Include="Views\Configuracion\ConfiguracionGlobalIA.cshtml" />
+    <Content Include="Views\Configuracion\ConfiguracionGlobal.cshtml" />
     <Content Include="Views\Configuracion\GestorPrompts.cshtml" />
     <Content Include="Views\Configuracion\GruposEmpresariales.cshtml" />
     <Content Include="Views\Configuracion\GestionarGrupoEmpresas.cshtml" />

@@ -1,0 +1,44 @@
+@{
+    Layout = "~/Views/Acceso/_Layout2FA.cshtml";
+    ViewBag.Heading = Resources.Strings.Login2FA_VerificarHeading;
+}
+
+<form id="tfForm" action="@Url.Action("VerificarDobleFactor","Acceso")" method="post">
+    @Html.AntiForgeryToken()
+
+    <p class="tf-info">
+        <i class="fas fa-mobile-alt"></i>@Resources.Strings.Login2FA_VerificarInstrucciones
+    </p>
+
+    <div class="input-group">
+        <div class="input-icon"><i class="fas fa-shield-alt"></i></div>
+        <div class="input-wrapper">
+            <label for="codigo">@Resources.Strings.Login2FA_CodigoLabel</label>
+            <input type="text" name="codigo" id="codigo" class="input-field tf-code" maxlength="12"
+                   placeholder="000000" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" autofocus />
+        </div>
+    </div>
+
+    <button type="submit" id="btnVerificar" class="btn btn-primary">
+        <span class="btn-text">@Resources.Strings.Login2FA_BtnVerificar</span>
+        <i class="fas fa-check" style="margin-left:8px;"></i>
+    </button>
+
+    <p class="tf-info" style="margin-top:1rem; margin-bottom:0; font-size:.78rem;">@Resources.Strings.Login2FA_HintRecuperacion</p>
+
+    <div style="text-align:center; margin-top:1rem;">
+        <a href="@Url.Action("Login","Acceso")" style="color:#583AFF; font-size:.8rem; text-decoration:none;">
+            <i class="fas fa-arrow-left" style="margin-right:4px;"></i>@Resources.Strings.Login2FA_Volver
+        </a>
+    </div>
+</form>
+
+@section scripts {
+    <script>
+        document.getElementById('tfForm').addEventListener('submit', function (e) {
+            var v = document.getElementById('codigo').value.trim();
+            if (!v) { e.preventDefault(); aviso('info', '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Login2FA_ErrorVacio))'); return; }
+            document.getElementById('btnVerificar').classList.add('loading');
+        });
+    </script>
+}
