@@ -147,6 +147,34 @@
         <!-- Columna derecha -->
         <div class="dash-side">
 
+            @if (UsuarioSesionHelper.EsSuperAdmin())
+            {
+                <!-- 2b. Solicitudes de seguridad pendientes (solo Super Admin; visible solo si hay pendientes) -->
+                <a class="dash-sol-card" id="sol-seg-card" href="@Url.Action("Index", "SolicitudesSeguridad")" style="display:none;">
+                    <span class="dash-sol-icon"><i class="fas fa-user-shield"></i></span>
+                    <span class="dash-sol-texto">
+                        <span class="dash-sol-titulo" id="sol-seg-titulo"></span>
+                        <span class="dash-sol-desc">@Resources.Strings.Home_SolSeg_Desc</span>
+                    </span>
+                    <span class="dash-sol-ir">@Resources.Strings.Home_SolSeg_Revisar <i class="fas fa-arrow-right"></i></span>
+                </a>
+            }
+
+            <!-- 2c. Invitación a configurar una passkey (solo si le aplica el 2FA y aún no tiene una) -->
+            <div class="dash-pk-card" id="pk-aviso-card" style="display:none;">
+                @Html.AntiForgeryToken()
+                <span class="dash-pk-icon"><i class="fas fa-fingerprint"></i></span>
+                <span class="dash-pk-texto">
+                    <span class="dash-pk-titulo">@Resources.Strings.Home_Pk_Titulo</span>
+                    <span class="dash-pk-desc">@Resources.Strings.Home_Pk_Desc</span>
+                    <span class="dash-pk-acc">
+                        <a class="dash-pk-btn" href="@Url.Action("Index", "Seguridad", new { agregar = true })">@Resources.Strings.Home_Pk_Config</a>
+                        <button type="button" class="dash-pk-link" data-definitivo="false">@Resources.Strings.Home_Pk_Despues</button>
+                        <button type="button" class="dash-pk-link" data-definitivo="true">@Resources.Strings.Home_Pk_NoMas</button>
+                    </span>
+                </span>
+            </div>
+
             <!-- 3. Alertas Bufins (las genera sp_ObtenerAlertasHome por AJAX) -->
             <div class="dash-card" id="alertas-section">
                 <div class="dash-card-hdr dash-section-toggle" data-target="sec-alertas-body" title="@Resources.Strings.Home_TooltipColapsar">
@@ -392,6 +420,44 @@
     .dash-noticia-fecha { font-size:.66rem; color:#6B6787; white-space:nowrap; flex-shrink:0; padding-top:1px; }
     .dash-noticias-hint { padding:12px 14px; font-size:.84rem; color:#A0A0B8; line-height:1.4; }
 
+    /* ================= 2b. Solicitudes de seguridad (Super Admin) ================= */
+    .dash-sol-card {
+        display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px;
+        background:linear-gradient(90deg, rgba(245,158,11,.14), rgba(245,158,11,.05));
+        border:1px solid rgba(245,158,11,.45); border-left:4px solid #f59e0b;
+        text-decoration:none !important; transition:all .15s;
+    }
+    .dash-sol-card:hover { box-shadow:0 4px 14px rgba(245,158,11,.25); transform:translateY(-1px); }
+    .dash-sol-icon {
+        width:32px; height:32px; border-radius:9px; flex-shrink:0; background:#f59e0b; color:#fff;
+        display:flex; align-items:center; justify-content:center; font-size:.9rem;
+    }
+    .dash-sol-texto { display:flex; flex-direction:column; min-width:0; flex:1; }
+    .dash-sol-titulo { font-size:.82rem; font-weight:800; color:#160933; }
+    .dash-sol-desc { font-size:.7rem; color:#5b4a1a; line-height:1.3; }
+    .dash-sol-ir { font-size:.72rem; font-weight:700; color:#b45309; white-space:nowrap; }
+    .dash-sol-ir i { margin-left:3px; font-size:.65rem; }
+
+    /* ================= 2c. Invitación a configurar una passkey ================= */
+    .dash-pk-card {
+        display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border-radius:12px;
+        background:linear-gradient(90deg, rgba(88,58,255,.10), rgba(1,225,215,.06));
+        border:1px solid rgba(88,58,255,.28); border-left:4px solid #583AFF;
+    }
+    .dash-pk-icon {
+        width:32px; height:32px; border-radius:9px; flex-shrink:0; background:var(--app-btn-gradient); color:#fff;
+        display:flex; align-items:center; justify-content:center; font-size:.9rem;
+    }
+    .dash-pk-texto { display:flex; flex-direction:column; min-width:0; flex:1; }
+    .dash-pk-titulo { font-size:.82rem; font-weight:800; color:#160933; }
+    .dash-pk-desc { font-size:.72rem; color:#393F45; line-height:1.35; margin:2px 0 6px; }
+    .dash-pk-acc { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .dash-pk-btn {
+        background:var(--app-btn-gradient); color:#fff !important; border-radius:7px; padding:4px 12px;
+        font-size:.72rem; font-weight:700; text-decoration:none !important;
+    }
+    .dash-pk-link { background:none; border:0; padding:0; font-size:.7rem; color:#583AFF; cursor:pointer; text-decoration:underline; }
+
     /* ================= 3. Alertas ================= */
     .dash-alert-list {
         max-height:200px; overflow-y:auto; padding:8px;
@@ -511,6 +577,13 @@
 
     var _urlNoticias   = '@Url.Action("ObtenerNoticias", "Home")';
     var _urlAlertas    = '@Url.Action("ObtenerAlertas", "Home")';
+    var _urlSolSeg     = '@Url.Action("ObtenerSolicitudesSeguridad", "Home")';
+    var _urlAvisoPk    = '@Url.Action("ObtenerAvisoPasskey", "Home")';
+    var _urlPosponerPk = '@Url.Action("PosponerAvisoPasskey", "Seguridad")';
+    var _sSolSeg = {
+        una:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_SolSeg_UnaPend))',
+        varias: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Home_SolSeg_NPend))'
+    };
     var _urlAccesos    = '@Url.Action("ObtenerAccesosRapidos", "Home")';
     var _urlConsumoIA  = '@Url.Action("MiConsumo", "AnalisisIA")';
 
@@ -750,6 +823,31 @@
             .always(function () { fin(); });
     }
 
+    // ── Solicitudes de seguridad pendientes (solo Super Admin; la tarjeta solo aparece si hay pendientes) ──
+    function cargarSolicitudesSeguridad() {
+        var $c = $('#sol-seg-card');
+        if (!$c.length) return;
+        $.getJSON(_urlSolSeg).done(function (d) {
+            if (!d || !d.ok || !d.pendientes) { $c.hide(); return; }
+            $('#sol-seg-titulo').text(d.pendientes === 1 ? _sSolSeg.una : _sSolSeg.varias.replace('{0}', d.pendientes));
+            $c.css('display', 'flex');
+        }).fail(function () { $c.hide(); });
+    }
+
+    // ── Invitación a configurar una passkey ──
+    function cargarAvisoPasskey() {
+        var $c = $('#pk-aviso-card');
+        if (!$c.length) return;
+        $.getJSON(_urlAvisoPk).done(function (d) { if (d && d.ok && d.mostrar) $c.css('display', 'flex'); });
+        $c.on('click', '.dash-pk-link', function () {
+            $.post(_urlPosponerPk, {
+                __RequestVerificationToken: $c.find('input[name="__RequestVerificationToken"]').val(),
+                definitivo: $(this).data('definitivo')
+            });
+            $c.hide();
+        });
+    }
+
     // ── Alertas (sp_ObtenerAlertasHome) ──
     function cargarAlertas() {
         var $grid = $('#alertas-grid');
@@ -852,6 +950,8 @@
 
     $(document).ready(function () {
         initSecciones();
+        cargarSolicitudesSeguridad();
+        cargarAvisoPasskey();
         cargarAlertas();
         cargarAccesos();
         cargarConsumoIA();

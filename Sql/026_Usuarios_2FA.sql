@@ -6,7 +6,7 @@
    pruebas esten OK. Sin este script el login funciona como siempre.
 
    Contenido:
-     PARTE 1 - Estructura (columnas y tabla). No cambia el comportamiento.
+     PARTE 1 - Estructura (columnas). No cambia el comportamiento.
      PARTE 2 - Configuracion: aqui se enciende o apaga el 2FA. EDITA LOS VALORES
                de las dos lineas marcadas "<-- EDITAR" y ejecuta.
    ============================================================================ */
@@ -28,19 +28,10 @@ IF COL_LENGTH('dbo.Usuarios', 'TotpUltimoPaso') IS NULL
     ALTER TABLE dbo.Usuarios ADD TotpUltimoPaso BIGINT NULL;              -- evita reutilizar un mismo codigo
 GO
 
--- Codigos de recuperacion (10 por usuario, un solo uso, guardados con hash)
-IF OBJECT_ID('dbo.UsuarioCodigosRecuperacion', 'U') IS NULL
-BEGIN
-    CREATE TABLE dbo.UsuarioCodigosRecuperacion
-    (
-        Id            INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_UsuarioCodigosRecuperacion PRIMARY KEY,
-        IdUsuario     INT         NOT NULL,
-        HashCodigo    VARCHAR(64) NOT NULL,
-        UsadoEn       DATETIME    NULL,
-        FechaCreacion DATETIME    NOT NULL CONSTRAINT DF_UsuarioCodigosRecuperacion_Fecha DEFAULT (GETDATE())
-    );
-    CREATE INDEX IX_UsuarioCodigosRecuperacion_Usuario ON dbo.UsuarioCodigosRecuperacion (IdUsuario, HashCodigo);
-END
+-- Los codigos de recuperacion se ELIMINARON del diseno: si un usuario pierde sus metodos, un Super Admin
+-- reinicia su verificacion desde el gestor de usuarios. Se limpia la tabla si una version anterior la creo.
+IF OBJECT_ID('dbo.UsuarioCodigosRecuperacion', 'U') IS NOT NULL
+    DROP TABLE dbo.UsuarioCodigosRecuperacion;
 GO
 
 

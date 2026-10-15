@@ -37,27 +37,47 @@
         .tf-actions { display:flex; gap:8px; justify-content:center; margin:.75rem 0; }
         .tf-link { background:none; border:1px solid #e3e6f0; color:#583AFF; border-radius:8px; padding:6px 12px; font-size:.8rem; cursor:pointer; }
         .tf-link:hover { background:#f5f3ff; }
-        .tf-ancha { max-width:800px; padding:26px 36px 18px; }
-        .tf-ancha .login-header { margin-bottom:12px; }
-        .tf-ancha .logo-bufins { height:40px; margin-bottom:6px; animation:none; }
-        .tf-ancha .login-title { font-size:1.3rem; letter-spacing:2px; margin-bottom:0; }
-        .tf-ancha .login-subtitle { display:none; }
-        .tf-ancha .login-lang { margin-top:8px; }
-        .tf-ancha .footer-text { margin-top:12px; }
+        /* Tarjeta compacta para todas las pantallas del segundo factor: cabe en laptops de 14" sin recortarse */
+        body { overflow-y:auto; }
+        .container { height:auto; min-height:100vh; }
+        .tf-compacto { padding:24px 34px 16px; max-width:430px; }
+        .tf-compacto .login-header { margin-bottom:12px; }
+        .tf-compacto .logo-bufins { height:38px; margin-bottom:6px; animation:none; }
+        .tf-compacto .login-title { font-size:1.25rem; letter-spacing:2px; margin-bottom:0; }
+        .tf-compacto .login-subtitle { display:none; }
+        .tf-compacto .login-lang { margin-top:8px; }
+        .tf-compacto .lang-switcher-wrapper { padding:2px 8px 2px 9px; }
+        .tf-compacto .lang-btn { padding:1px 9px; font-size:.78rem; }
+        .tf-compacto .footer-text { margin-top:10px; font-size:.68rem; }
+        .tf-compacto .input-group { margin-bottom:12px; }
+        .tf-compacto .input-icon { width:42px; height:42px; font-size:1.05rem; }
+        .tf-compacto .input-wrapper label { font-size:.7rem; }
+        .tf-compacto .input-field { font-size:.92rem; }
+        .tf-compacto .btn { height:44px; margin-top:2px; font-size:.92rem; }
+        .tf-compacto .tf-info { font-size:.8rem; line-height:1.5; margin-bottom:.75rem; }
+        .tf-compacto .tf-code { font-size:1.1rem; letter-spacing:.3em; }
+        .tf-compacto .tf-or { margin:10px 0 8px; }
+        .tf-compacto .tf-passkey-btn { padding:8px 12px; font-size:.84rem; }
+        .tf-ancha { max-width:800px; padding:22px 34px 14px; }
         .tf-grid { display:grid; grid-template-columns:200px 1fr; gap:26px; align-items:start; }
         .tf-grid .tf-qr { margin:0 0 8px; }
         .tf-grid .tf-qr img { width:190px; height:190px; }
         .tf-grid .tf-info { text-align:left; margin-bottom:.6rem; }
         .tf-grid .input-group { margin-bottom:12px; }
         .tf-grid .btn { height:46px; margin-top:0; }
+        @@media (max-height:760px) { .tf-compacto { padding:16px 30px 12px; } .tf-compacto .logo-bufins { display:none; } .tf-compacto .login-header { margin-bottom:8px; } .tf-compacto .login-lang { margin-top:6px; } .tf-compacto .input-group { margin-bottom:9px; } .tf-compacto .tf-info { margin-bottom:.5rem; } .tf-compacto .footer-text { margin-top:6px; } }
         @@media (max-width:720px) { .tf-grid { grid-template-columns:1fr; gap:10px; } .tf-ancha { padding:22px 20px 16px; } body { overflow:auto; } .container { height:auto; min-height:100vh; } }
+        .tf-or { display:flex; align-items:center; gap:10px; color:#9ca3af; font-size:.75rem; margin:14px 0 10px; }
+        .tf-or::before, .tf-or::after { content:""; flex:1; height:1px; background:#e3e6f0; }
+        .tf-passkey-btn { width:100%; padding:10px 12px; font-size:.88rem; font-weight:600; }
+        .tf-passkey-btn:disabled { opacity:.6; cursor:wait; }
         .tf-check { display:flex; gap:8px; align-items:flex-start; font-size:.82rem; color:#4b5563; margin:.75rem 0; }
     </style>
 
     <div class="background-overlay"></div>
 
     <div class="container">
-        <div class="login-card@(ViewBag.Ancha == true ? " tf-ancha" : "")">
+        <div class="login-card tf-compacto@(ViewBag.Ancha == true ? " tf-ancha" : "")">
             <div class="card-glow"></div>
             <div class="login-header">
                 <img class="logo-bufins" src="~/Assets/img/Bufins_LogoLogin.png" alt="Bufins Logo">

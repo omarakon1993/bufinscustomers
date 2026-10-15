@@ -1,0 +1,215 @@
+@model System.Collections.Generic.List<bufinscustomers.Services.PasskeyInfo>
+@{
+    ViewBag.Title = Resources.Strings.Seg_PageTitle;
+    bool totpActivo = ViewBag.TotpActivo == true;
+    bool passkeysOn = ViewBag.PasskeysHabilitadas == true;
+    int maxPk = ViewBag.PasskeysMax;
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/swal-claro.css")" rel="stylesheet" />
+<style>
+    .seg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; align-items: start; margin-top: 16px; }
+    .seg-card { background: #fff; border: 1px solid #e3e6f0; border-radius: 12px; box-shadow: 0 2px 8px rgba(22,9,51,.05); overflow: hidden; }
+    .seg-card > header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #f8f9fc; border-bottom: 1px solid #e3e6f0; }
+    .seg-card > header .ic { width: 30px; height: 30px; border-radius: 8px; background: var(--content-gradient); color: #fff; display: flex; align-items: center; justify-content: center; }
+    .seg-card > header h3 { margin: 0; font-size: .95rem; font-weight: 800; color: #2d3748; flex: 1; }
+    .seg-body { padding: 16px; font-size: .86rem; color: #4b5563; }
+    .seg-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: .76rem; font-weight: 700; }
+    .seg-badge.ok { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+    .seg-badge.bad { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .seg-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #eef0f6; }
+    .seg-row:last-child { border-bottom: 0; }
+    .seg-row .nm { flex: 1; font-weight: 600; color: #2d3748; min-width: 0; }
+    .seg-row .nm small { display: block; font-weight: 400; color: #8a8fa8; font-size: .73rem; }
+    .seg-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+</style>
+
+<div class="container-fluid px-4">
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-user-shield powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.Seg_PageTitle</h1>
+        </div>
+    </div>
+
+    <p class="text-muted mt-3 mb-0" style="font-size:.88rem;"><i class="fas fa-info-circle mr-1"></i>@Resources.Strings.Seg_Hint</p>
+
+    <form id="segToken">@Html.AntiForgeryToken()</form>
+
+    <div class="seg-grid">
+
+        <!-- App autenticadora (método base, obligatorio) -->
+        <section class="seg-card">
+            <header>
+                <span class="ic"><i class="fas fa-mobile-alt"></i></span>
+                <h3>@Resources.Strings.Seg_Totp_Titulo</h3>
+                <span class="seg-badge @(totpActivo ? "ok" : "bad")"><i class="fas @(totpActivo ? "fa-check-circle" : "fa-exclamation-circle")"></i>@(totpActivo ? Resources.Strings.Seg_Totp_Activa : Resources.Strings.Seg_Totp_Inactiva)</span>
+            </header>
+            <div class="seg-body">
+                <p>@Resources.Strings.Seg_Totp_Desc</p>
+                <p class="text-muted mb-0"><i class="fas fa-life-ring mr-1"></i>@Resources.Strings.Seg_Perdida</p>
+            </div>
+        </section>
+
+        <!-- Passkeys -->
+        <section class="seg-card">
+            <header>
+                <span class="ic"><i class="fas fa-fingerprint"></i></span>
+                <h3>@Resources.Strings.Seg_Pk_Titulo</h3>
+                <span class="seg-badge @(Model.Count > 0 ? "ok" : "bad")">@Model.Count / @maxPk</span>
+            </header>
+            <div class="seg-body">
+                <p>@Resources.Strings.Seg_Pk_Desc</p>
+
+                @if (!passkeysOn)
+                {
+                    <div class="alert alert-warning mb-0"><i class="fas fa-info-circle mr-1"></i>@Resources.Strings.Seg_Pk_Apagadas</div>
+                }
+                else
+                {
+                    if (!Model.Any())
+                    {
+                        <p class="text-muted mb-2"><i class="fas fa-inbox mr-1"></i>@Resources.Strings.Seg_Pk_Vacio</p>
+                    }
+                    foreach (var pk in Model)
+                    {
+                        <div class="seg-row">
+                            <i class="fas fa-key" style="color:#583AFF;"></i>
+                            <div class="nm">@pk.Nombre<small>@string.Format(Resources.Strings.Seg_Pk_Detalle, pk.FechaCreacion.ToString("dd/MM/yyyy"), pk.UltimoUso.HasValue ? pk.UltimoUso.Value.ToString("dd/MM/yyyy HH:mm") : Resources.Strings.Seg_Pk_NuncaUsada)</small></div>
+                            <button type="button" class="btn btn-sm btn-danger seg-pk-eliminar" data-id="@pk.Id" data-nombre="@pk.Nombre" title="@Resources.Strings.CfgIA_TitleEliminar"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    }
+                    <div class="seg-actions">
+                        <button type="button" class="btn btn-modern-gradient btn-sm" id="btnAgregarPasskey"><i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.Seg_Pk_Agregar</button>
+                    </div>
+                    <small class="text-muted d-block mt-2" id="segPkNoSoportado" style="display:none;">@Resources.Strings.Seg_Pk_NoSoportado</small>
+                }
+            </div>
+        </section>
+    </div>
+</div>
+
+@section scripts {
+    <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/webauthn-bufins.js")"></script>
+    <script>
+        (function () {
+            var M = {
+                nombreDefecto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Seg_Pk_NombreDefecto))',
+                cancelar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel))',
+                cancelada: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Login2FA_PasskeyCancelada))',
+                errorGen: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Seg_Pk_ErrorRegistro))',
+                confirmElim: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Seg_Pk_ConfirmEliminar))',
+                eliminar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_BtnEliminar))',
+                addTitulo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Seg_Mod_AddTitulo))',
+                addAviso: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Seg_Mod_AddAviso))',
+                addNombreLabel: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Seg_Mod_AddNombreLabel))',
+                addNombreHint: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Seg_Mod_AddNombreHint))',
+                addContinuar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Seg_Mod_AddContinuar))',
+                delTitulo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Seg_Mod_DelTitulo))',
+                stepLabel: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Seg_Mod_StepUpLabel))',
+                stepHint: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Seg_Mod_StepUpHint))',
+                codigoInvalido: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Login2FA_ErrorVacio))'
+            };
+            var U = {
+                opciones: '@Url.Action("PasskeyRegistroOpciones","Seguridad")',
+                completar: '@Url.Action("PasskeyRegistroCompletar","Seguridad")',
+                eliminar: '@Url.Action("EliminarPasskey","Seguridad")'
+            };
+            function token() { return document.querySelector('#segToken [name=__RequestVerificationToken]').value; }
+            // Ventanas claras y consistentes (clases .seg-swal* definidas arriba).
+            var SW = { popup: 'seg-swal', confirmButton: 'seg-swal-ok', cancelButton: 'seg-swal-cancel' };
+            function modal(opts) {
+                return Swal.fire(Object.assign({ buttonsStyling: false, reverseButtons: true, customClass: SW }, opts));
+            }
+            function ttl(icono, texto, tono) {
+                return '<span class="seg-ttl-ic ' + (tono || '') + '"><i class="fas ' + icono + '"></i></span><span>' + texto + '</span>';
+            }
+            function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+            function toast(ok, msg) {
+                Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: ok ? 'success' : 'error', title: msg, showConfirmButton: false, timer: 3000, timerProgressBar: true, customClass: { popup: 'seg-swal seg-swal-toast' } });
+            }
+            function post(url, datos) {
+                var b = new URLSearchParams(); b.append('__RequestVerificationToken', token());
+                Object.keys(datos || {}).forEach(function (k) { b.append(k, datos[k]); });
+                return fetch(url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' }, body: b.toString() }).then(function (r) { return r.json(); });
+            }
+
+            // Campo de reconfirmación (código vigente de la app) reutilizado en agregar y eliminar.
+            function campoCodigo() {
+                return '<div class="seg-fld" style="margin-top:.85rem;"><label for="segCodigo">' + M.stepLabel + '</label>' +
+                       '<input id="segCodigo" class="codigo" type="text" maxlength="7" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" />' +
+                       '<small>' + M.stepHint + '</small></div>';
+            }
+            function leerCodigo() {
+                var v = (document.getElementById('segCodigo').value || '').replace(/\s/g, '');
+                if (!/^\d{6}$/.test(v)) { Swal.showValidationMessage(M.codigoInvalido); return null; }
+                return v;
+            }
+
+            // ── Agregar passkey (pide nombre + código de la app) ──
+            var btnAdd = document.getElementById('btnAgregarPasskey');
+            if (btnAdd) {
+                if (!WebAuthnBufins.soportado()) { btnAdd.disabled = true; var n = document.getElementById('segPkNoSoportado'); if (n) n.style.display = 'block'; }
+                btnAdd.addEventListener('click', function () {
+                    modal({
+                        title: ttl('fa-fingerprint', M.addTitulo),
+                        html: '<div class="seg-note info"><i class="fas fa-info-circle mt-1"></i><span>' + M.addAviso + '</span></div>' +
+                              '<div class="seg-fld"><label for="segPkNombre">' + M.addNombreLabel + '</label>' +
+                              '<input id="segPkNombre" type="text" maxlength="100" value="' + esc(M.nombreDefecto) + '" autocomplete="off" />' +
+                              '<small>' + M.addNombreHint + '</small></div>' + campoCodigo(),
+                        showCancelButton: true, cancelButtonText: M.cancelar, confirmButtonText: M.addContinuar,
+                        didOpen: function () { var i = document.getElementById('segPkNombre'); i.focus(); i.select(); },
+                        preConfirm: function () {
+                            var codigo = leerCodigo();
+                            if (!codigo) return false;
+                            return { nombre: (document.getElementById('segPkNombre').value || '').trim(), codigo: codigo };
+                        }
+                    }).then(function (res) {
+                        if (!res.isConfirmed) return;
+                        btnAdd.disabled = true;
+                        WebAuthnBufins.registrar(U.opciones, U.completar, token(), res.value.nombre, { codigo: res.value.codigo })
+                            .then(function (r) {
+                                if (r.cancelado) { btnAdd.disabled = false; toast(false, M.cancelada); return; }
+                                toast(r.ok, r.mensaje || M.errorGen);
+                                if (r.ok) setTimeout(function () { location.reload(); }, 900); else btnAdd.disabled = false;
+                            })
+                            .catch(function () { btnAdd.disabled = false; toast(false, M.errorGen); });
+                    });
+                });
+            }
+
+            // Llegó desde la oferta tras activar el 2FA: abre directamente el alta de la passkey.
+            if (@(ViewBag.AutoAgregar == true ? "true" : "false") && btnAdd) {
+                setTimeout(function () { if (!btnAdd.disabled) btnAdd.click(); }, 450);
+            }
+
+            // ── Eliminar passkey (pide código de la app) ──
+            document.querySelectorAll('.seg-pk-eliminar').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    var id = b.getAttribute('data-id'), nombre = b.getAttribute('data-nombre');
+                    modal({
+                        title: ttl('fa-trash-alt', M.delTitulo, 'danger'),
+                        html: '<p style="margin:0;">' + M.confirmElim.replace('{0}', '<span class="seg-del-nombre">' + esc(nombre) + '</span>') + '</p>' + campoCodigo(),
+                        showCancelButton: true, cancelButtonText: M.cancelar, confirmButtonText: M.eliminar,
+                        customClass: Object.assign({}, SW, { confirmButton: 'seg-swal-danger' }),
+                        didOpen: function () { document.getElementById('segCodigo').focus(); },
+                        preConfirm: function () {
+                            var codigo = leerCodigo();
+                            if (!codigo) return false;
+                            return post(U.eliminar, { id: id, codigo: codigo }).then(function (r) {
+                                if (!r.ok) { Swal.showValidationMessage(r.mensaje); return false; }
+                                return r;
+                            }).catch(function () { Swal.showValidationMessage(M.errorGen); return false; });
+                        }
+                    }).then(function (res) {
+                        if (!res.isConfirmed || !res.value) return;
+                        toast(true, res.value.mensaje);
+                        setTimeout(function () { location.reload(); }, 800);
+                    });
+                });
+            });
+        })();
+    </script>
+}

@@ -3033,7 +3033,7 @@ Indicators management follows closely: </value></data>
   <data name="Login2FA_VerificarInstrucciones" xml:space="preserve"><value>Open your authenticator app and enter the 6-digit Bufins code.</value></data>
   <data name="Login2FA_CodigoLabel" xml:space="preserve"><value>Verification code</value></data>
   <data name="Login2FA_BtnVerificar" xml:space="preserve"><value>Verify</value></data>
-  <data name="Login2FA_HintRecuperacion" xml:space="preserve"><value>No access to your app? Enter one of your recovery codes instead of the 6-digit code.</value></data>
+  <data name="Login2FA_HintRecuperacion" xml:space="preserve"><value>Lost access to your app and your passkeys? Contact the Bufins administrator to reset your verification.</value></data>
   <data name="Login2FA_Volver" xml:space="preserve"><value>Back to sign in</value></data>
   <data name="Login2FA_ErrorVacio" xml:space="preserve"><value>Enter the verification code.</value></data>
   <data name="Login2FA_ErrorCodigo" xml:space="preserve"><value>Incorrect or expired code. Please try again.</value></data>
@@ -3047,23 +3047,15 @@ Indicators management follows closely: </value></data>
   <data name="Login2FA_ConfigPaso3" xml:space="preserve"><value>Enter the 6-digit code shown by the app to confirm.</value></data>
   <data name="Login2FA_ConfigClaveManual" xml:space="preserve"><value>Can't scan? Enter this key in the app:</value></data>
   <data name="Login2FA_BtnActivar" xml:space="preserve"><value>Enable and continue</value></data>
-  <data name="Login2FA_CodigosHeading" xml:space="preserve"><value>Recovery codes</value></data>
-  <data name="Login2FA_CodigosInstrucciones" xml:space="preserve"><value>Save these 10 codes somewhere safe. Each works once if you lose your phone. They will not be shown again.</value></data>
-  <data name="Login2FA_CodigosConfirmar" xml:space="preserve"><value>I have saved my recovery codes.</value></data>
-  <data name="Login2FA_BtnCopiar" xml:space="preserve"><value>Copy</value></data>
-  <data name="Login2FA_BtnDescargar" xml:space="preserve"><value>Download</value></data>
-  <data name="Login2FA_Copiado" xml:space="preserve"><value>Codes copied</value></data>
   <data name="Login2FA_BtnContinuar" xml:space="preserve"><value>Continue</value></data>
   <data name="Notif_2FA_ActivadoTitulo" xml:space="preserve"><value>Two-step verification enabled</value></data>
   <data name="Notif_2FA_ActivadoMsg" xml:space="preserve"><value>You enabled two-step verification on your account. If this wasn't you, contact the administrator immediately.</value></data>
-  <data name="Notif_2FA_RecuperacionTitulo" xml:space="preserve"><value>Signed in with a recovery code</value></data>
-  <data name="Notif_2FA_RecuperacionMsg" xml:space="preserve"><value>You signed in with a recovery code. You have {0} unused codes left. If this wasn't you, contact the administrator.</value></data>
-  <data name="Notif_2FA_ReiniciadoTitulo" xml:space="preserve"><value>Two-step verification reset</value></data>
-  <data name="Notif_2FA_ReiniciadoMsg" xml:space="preserve"><value>An administrator reset your two-step verification. You will set up a new authenticator at your next sign-in.</value></data>
-  <data name="Usr_TitleReiniciar2FA" xml:space="preserve"><value>Reset two-step verification (lost phone)</value></data>
-  <data name="Usr_ConfirmReiniciar2FA" xml:space="preserve"><value>Reset this user's two-step verification? They will set up a new authenticator at their next sign-in.</value></data>
+  <data name="Notif_2FA_ReiniciadoTitulo" xml:space="preserve"><value>Authentication methods reset</value></data>
+  <data name="Notif_2FA_ReiniciadoMsg" xml:space="preserve"><value>An administrator reset your authentication methods (app, passkeys and codes). You will set up a new authenticator at your next sign-in.</value></data>
+  <data name="Usr_TitleReiniciar2FA" xml:space="preserve"><value>Reset authentication methods (app, passkeys and codes)</value></data>
+  <data name="Usr_ConfirmReiniciar2FA" xml:space="preserve"><value>Reset this user's authentication methods? Their authenticator app and passkeys will be deleted, and they must set everything up again at their next sign-in. Before continuing, verify their identity through another channel (phone or video call).</value></data>
   <data name="Usr_BtnReiniciar2FA" xml:space="preserve"><value>Reset</value></data>
-  <data name="Usr_2FA_Reiniciado" xml:space="preserve"><value>Two-step verification reset successfully.</value></data>
+  <data name="Usr_2FA_Reiniciado" xml:space="preserve"><value>Authentication methods reset successfully.</value></data>
   <data name="Usr_2FA_ErrorReiniciar" xml:space="preserve"><value>Could not reset two-step verification (was script Sql/026 run?).</value></data>
   <!-- TIPOS DE CONFIGURACION -->
   <data name="CfgIA_Tipo_BtnGestionar" xml:space="preserve"><value>Types</value></data>
@@ -3085,4 +3077,115 @@ Indicators management follows closely: </value></data>
   <data name="CfgIA_Tipo_Guardado" xml:space="preserve"><value>Type saved.</value></data>
   <data name="CfgIA_Tipo_Eliminado" xml:space="preserve"><value>Type deleted. Its parameters moved to "Other parameters".</value></data>
   <data name="CfgIA_Tipo_ConfirmEliminar" xml:space="preserve"><value>Delete the type "{0}"? Its {1} parameters will move to "Other parameters".</value></data>
+  <!-- PASSKEYS / SEGURIDAD -->
+  <data name="Login2FA_O" xml:space="preserve"><value>or</value></data>
+  <data name="Login2FA_UsarPasskey" xml:space="preserve"><value>Use passkey (fingerprint, face or key)</value></data>
+  <data name="Login2FA_ErrorPasskey" xml:space="preserve"><value>The passkey could not be validated. Try again or use the code from your app.</value></data>
+  <data name="Login2FA_PasskeyCancelada" xml:space="preserve"><value>Operation cancelled.</value></data>
+  <data name="Seg_Menu" xml:space="preserve"><value>Security</value></data>
+  <data name="Seg_PageTitle" xml:space="preserve"><value>My account security</value></data>
+  <data name="Seg_Hint" xml:space="preserve"><value>To sign in you need your password and a second step. You can use any active method; the authenticator app is the base method.</value></data>
+  <data name="Seg_Totp_Titulo" xml:space="preserve"><value>Authenticator app</value></data>
+  <data name="Seg_Totp_Activa" xml:space="preserve"><value>Active</value></data>
+  <data name="Seg_Totp_Inactiva" xml:space="preserve"><value>Not set up</value></data>
+  <data name="Seg_Totp_Desc" xml:space="preserve"><value>6-digit code from Google Authenticator, Microsoft Authenticator, Authy or another app. It is the base method and cannot be removed.</value></data>
+  <data name="Seg_Pk_Titulo" xml:space="preserve"><value>Passkeys</value></data>
+  <data name="Seg_Pk_Desc" xml:space="preserve"><value>Sign in with your device fingerprint, face or PIN, or with a USB security key. It is an optional additional method.</value></data>
+  <data name="Seg_Pk_Apagadas" xml:space="preserve"><value>Passkeys are not enabled in the system yet.</value></data>
+  <data name="Seg_Pk_Vacio" xml:space="preserve"><value>You have no passkeys registered yet.</value></data>
+  <data name="Seg_Pk_Detalle" xml:space="preserve"><value>Created {0} · Last used: {1}</value></data>
+  <data name="Seg_Pk_NuncaUsada" xml:space="preserve"><value>never</value></data>
+  <data name="Seg_Pk_Agregar" xml:space="preserve"><value>Add passkey</value></data>
+  <data name="Seg_Pk_NoSoportado" xml:space="preserve"><value>This browser or device does not support passkeys.</value></data>
+  <data name="Seg_Pk_NombrePrompt" xml:space="preserve"><value>Give this passkey a name (for example, My laptop)</value></data>
+  <data name="Seg_Pk_NombreDefecto" xml:space="preserve"><value>My device</value></data>
+  <data name="Seg_Pk_ConfirmEliminar" xml:space="preserve"><value>Delete the passkey "{0}"? You will no longer be able to sign in with it.</value></data>
+  <data name="Seg_Pk_Agregada" xml:space="preserve"><value>Passkey added.</value></data>
+  <data name="Seg_Pk_Eliminada" xml:space="preserve"><value>Passkey deleted.</value></data>
+  <data name="Seg_Pk_ErrorEliminar" xml:space="preserve"><value>The passkey could not be deleted.</value></data>
+  <data name="Seg_Pk_ErrorRegistro" xml:space="preserve"><value>The passkey could not be registered. Please try again.</value></data>
+  <data name="Seg_Pk_ErrorGuardar" xml:space="preserve"><value>The passkey could not be saved (was it already registered?).</value></data>
+  <data name="Seg_Pk_NoDisponible" xml:space="preserve"><value>Passkeys are not available.</value></data>
+  <data name="Seg_Pk_Maximo" xml:space="preserve"><value>You reached the maximum of {0} passkeys.</value></data>
+  <data name="Notif_Pk_AgregadaTitulo" xml:space="preserve"><value>Passkey added</value></data>
+  <data name="Notif_Pk_AgregadaMsg" xml:space="preserve"><value>The passkey "{0}" was added to your account. If this wasn't you, contact the administrator.</value></data>
+  <data name="Notif_Pk_EliminadaTitulo" xml:space="preserve"><value>Passkey deleted</value></data>
+  <data name="Notif_Pk_EliminadaMsg" xml:space="preserve"><value>The passkey "{0}" was removed from your account.</value></data>
+  <data name="Seg_Mod_AddTitulo" xml:space="preserve"><value>Add passkey</value></data>
+  <data name="Seg_Mod_AddAviso" xml:space="preserve"><value>Your device will ask for your fingerprint, face or PIN to create the passkey.</value></data>
+  <data name="Seg_Mod_AddNombreLabel" xml:space="preserve"><value>Passkey name</value></data>
+  <data name="Seg_Mod_AddNombreHint" xml:space="preserve"><value>A name that helps you recognize it, for example "My laptop" or "USB key".</value></data>
+  <data name="Seg_Mod_AddContinuar" xml:space="preserve"><value>Continue</value></data>
+  <data name="Seg_Mod_DelTitulo" xml:space="preserve"><value>Delete passkey</value></data>
+  <data name="Seg_Perdida" xml:space="preserve"><value>If you lose your phone and your passkeys, contact the Bufins administrator to reset your verification.</value></data>
+  <data name="Seg_Mod_StepUpLabel" xml:space="preserve"><value>Code from your authenticator app</value></data>
+  <data name="Seg_Mod_StepUpHint" xml:space="preserve"><value>For your security, confirm with the 6-digit code your app shows right now.</value></data>
+  <!-- SOLICITUDES DE SEGURIDAD -->
+  <data name="SolSeg_Link" xml:space="preserve"><value>I can't access my authentication methods</value></data>
+  <data name="SolSeg_Titulo" xml:space="preserve"><value>Request verification reset</value></data>
+  <data name="SolSeg_Intro" xml:space="preserve"><value>If you lost your phone and your passkeys, send a request to the Bufins administrator. They will contact you through another channel to verify your identity before resetting your methods.</value></data>
+  <data name="SolSeg_Telefono" xml:space="preserve"><value>Contact phone (optional)</value></data>
+  <data name="SolSeg_Mensaje" xml:space="preserve"><value>Message (optional)</value></data>
+  <data name="SolSeg_MensajePH" xml:space="preserve"><value>Briefly tell us what happened</value></data>
+  <data name="SolSeg_BtnEnviar" xml:space="preserve"><value>Send request</value></data>
+  <data name="SolSeg_VolverVerificar" xml:space="preserve"><value>Back to verification</value></data>
+  <data name="SolSeg_Enviada" xml:space="preserve"><value>Request sent</value></data>
+  <data name="SolSeg_YaPendiente" xml:space="preserve"><value>You already have a pending request</value></data>
+  <data name="SolSeg_EnviadaMsg" xml:space="preserve"><value>We notified the Bufins administrators. They will contact you to verify your identity. Once your methods are reset you will receive an email and can sign in to set them up again.</value></data>
+  <data name="SolSeg_ErrorTelefono" xml:space="preserve"><value>The phone can only contain numbers, spaces and the symbols + - ( ) .</value></data>
+  <data name="SolSeg_NoDisponible" xml:space="preserve"><value>The request could not be registered right now. Contact the Bufins administrator directly.</value></data>
+  <data name="Notif_SolSeg_NuevaTitulo" xml:space="preserve"><value>Authentication reset request</value></data>
+  <data name="Notif_SolSeg_NuevaMsg" xml:space="preserve"><value>{0} ({1}) is asking to reset their authentication methods. Verify their identity through another channel before approving.</value></data>
+  <data name="Notif_SolSeg_AprobadaTitulo" xml:space="preserve"><value>Request approved</value></data>
+  <data name="Notif_SolSeg_AprobadaMsg" xml:space="preserve"><value>An administrator reset your authentication methods. Sign in to set up a new authenticator.</value></data>
+  <data name="Notif_SolSeg_RechazadaTitulo" xml:space="preserve"><value>Request not approved</value></data>
+  <data name="Notif_SolSeg_RechazadaMsg" xml:space="preserve"><value>Your authentication reset request was not approved. If you think this is a mistake, contact the Bufins administrator.</value></data>
+  <data name="SolSeg_Adm_Titulo" xml:space="preserve"><value>Security requests</value></data>
+  <data name="SolSeg_Adm_Hint" xml:space="preserve"><value>Users who lost their authentication methods. Before approving, verify their identity through another channel (phone or video call).</value></data>
+  <data name="SolSeg_Adm_Pendientes" xml:space="preserve"><value>Pending</value></data>
+  <data name="SolSeg_Adm_Aprobadas" xml:space="preserve"><value>Approved</value></data>
+  <data name="SolSeg_Adm_Rechazadas" xml:space="preserve"><value>Rejected</value></data>
+  <data name="SolSeg_Adm_Todas" xml:space="preserve"><value>All</value></data>
+  <data name="SolSeg_Adm_ColFecha" xml:space="preserve"><value>Date</value></data>
+  <data name="SolSeg_Adm_ColUsuario" xml:space="preserve"><value>User</value></data>
+  <data name="SolSeg_Adm_ColEmpresa" xml:space="preserve"><value>Company</value></data>
+  <data name="SolSeg_Adm_ColContacto" xml:space="preserve"><value>Phone</value></data>
+  <data name="SolSeg_Adm_ColMensaje" xml:space="preserve"><value>Message</value></data>
+  <data name="SolSeg_Adm_ColOrigen" xml:space="preserve"><value>Origin (IP)</value></data>
+  <data name="SolSeg_Adm_ColEstado" xml:space="preserve"><value>Status</value></data>
+  <data name="SolSeg_Adm_Vacio" xml:space="preserve"><value>There are no requests in this view.</value></data>
+  <data name="SolSeg_Adm_BtnAprobar" xml:space="preserve"><value>Approve and reset</value></data>
+  <data name="SolSeg_Adm_BtnRechazar" xml:space="preserve"><value>Reject</value></data>
+  <data name="SolSeg_Adm_ApTitulo" xml:space="preserve"><value>Approve and reset methods</value></data>
+  <data name="SolSeg_Adm_ApAviso" xml:space="preserve"><value>{0}'s authenticator app and passkeys will be deleted; they must set everything up again at their next sign-in.</value></data>
+  <data name="SolSeg_Adm_ApVerificado" xml:space="preserve"><value>I verified the user's identity through another channel (phone or video call).</value></data>
+  <data name="SolSeg_Adm_ReTitulo" xml:space="preserve"><value>Reject request</value></data>
+  <data name="SolSeg_Adm_Nota" xml:space="preserve"><value>Internal note (optional)</value></data>
+  <data name="SolSeg_Adm_NotaHint" xml:space="preserve"><value>It is saved together with the request.</value></data>
+  <data name="SolSeg_Adm_ErrorVerificar" xml:space="preserve"><value>Confirm that you verified the user's identity.</value></data>
+  <data name="SolSeg_Adm_ErrorGen" xml:space="preserve"><value>The operation could not be completed.</value></data>
+  <data name="SolSeg_Adm_YaResuelta" xml:space="preserve"><value>The request was already resolved or does not exist.</value></data>
+  <data name="SolSeg_Adm_Propia" xml:space="preserve"><value>You cannot resolve your own request; ask another Super Admin.</value></data>
+  <data name="SolSeg_Adm_Aprobada" xml:space="preserve"><value>Request approved: methods reset.</value></data>
+  <data name="SolSeg_Adm_Rechazada" xml:space="preserve"><value>Request rejected.</value></data>
+  <data name="SolSeg_Adm_EstPendiente" xml:space="preserve"><value>Pending</value></data>
+  <data name="SolSeg_Adm_EstAprobada" xml:space="preserve"><value>Approved</value></data>
+  <data name="SolSeg_Adm_EstRechazada" xml:space="preserve"><value>Rejected</value></data>
+  <data name="SolSeg_Adm_ResueltaPor" xml:space="preserve"><value>By</value></data>
+  <data name="Seg_Err_SinTotp" xml:space="preserve"><value>Your authenticator app is not set up on this account. Sign out and sign in again to set it up.</value></data>
+  <data name="Home_SolSeg_UnaPend" xml:space="preserve"><value>1 pending security request</value></data>
+  <data name="Home_SolSeg_NPend" xml:space="preserve"><value>{0} pending security requests</value></data>
+  <data name="Home_SolSeg_Desc" xml:space="preserve"><value>Users asking to reset their authentication methods</value></data>
+  <data name="Home_SolSeg_Revisar" xml:space="preserve"><value>Review</value></data>
+  <data name="Seg_Nuevo" xml:space="preserve"><value>New</value></data>
+  <data name="Home_Pk_Titulo" xml:space="preserve"><value>Sign in faster and more securely with a passkey</value></data>
+  <data name="Home_Pk_Desc" xml:space="preserve"><value>Use your device's fingerprint, face or PIN instead of the app code.</value></data>
+  <data name="Home_Pk_Config" xml:space="preserve"><value>Set up now</value></data>
+  <data name="Home_Pk_Despues" xml:space="preserve"><value>Later</value></data>
+  <data name="Home_Pk_NoMas" xml:space="preserve"><value>Don't show again</value></data>
+  <data name="Pk_Oferta_Heading" xml:space="preserve"><value>Your verification is ready!</value></data>
+  <data name="Pk_Oferta_Msg" xml:space="preserve"><value>Your authenticator app is now active. Would you also like to add a passkey? You will be able to sign in with your device's fingerprint, face or PIN.</value></data>
+  <data name="Pk_Oferta_Agregar" xml:space="preserve"><value>Add passkey now</value></data>
+  <data name="Pk_Oferta_Omitir" xml:space="preserve"><value>Not now</value></data>
+  <data name="Pk_Oferta_Hint" xml:space="preserve"><value>You can do it any time in Security, inside your user menu.</value></data>
 </root>

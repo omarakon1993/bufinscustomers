@@ -26,15 +26,15 @@ namespace bufinscustomers.Services
     /// </summary>
     public class DobleFactorService : BaseService
     {
-        public const int CantidadCodigosRecuperacion = 10;
         private const string PropositoProteccion = "Bufins.Totp.Secreto.v1";
-        private const string AlfabetoRecuperacion = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
         private static bool? _habilitadoCache;
         private static string _alcanceCache;
+        private static bool _passkeysCache;
+        private static int _passkeysMaxCache = 5;
         private static DateTime _cacheHasta = DateTime.MinValue;
 
-        private static string LeerConfig(string clave)
+        internal static string LeerConfig(string clave)
         {
             string v = null;
             try { v = new ConfiguracionSistemaService().ObtenerValor(clave); } catch { }
@@ -47,6 +47,9 @@ namespace bufinscustomers.Services
             if (_habilitadoCache.HasValue && DateTime.Now < _cacheHasta) return;
             _habilitadoCache = string.Equals(LeerConfig("TwoFactorHabilitado"), "true", StringComparison.OrdinalIgnoreCase);
             _alcanceCache = LeerConfig("TwoFactorAlcance").ToLowerInvariant();
+            _passkeysCache = string.Equals(LeerConfig("PasskeysHabilitado"), "true", StringComparison.OrdinalIgnoreCase);
+            int max;
+            _passkeysMaxCache = int.TryParse(LeerConfig("PasskeysMaximoPorUsuario"), out max) ? Math.Max(1, Math.Min(max, 20)) : PasskeyService.MaxPorDefecto;
             _cacheHasta = DateTime.Now.AddSeconds(30);
         }
 
@@ -55,6 +58,31 @@ namespace bufinscustomers.Services
         /// (UPDATE sin redesplegar; caché de 30 s); si no existe, cae al appSettings (por defecto "false").
         /// </summary>
         public static bool Habilitado { get { RefrescarCache(); return _habilitadoCache.Value; } }
+
+        /// <summary>
+        /// Passkeys (WebAuthn) permitidas: requiere el 2FA habilitado y la clave <c>PasskeysHabilitado</c>=true
+        /// (ConfiguracionSistema, Sql/029). Apagado por defecto.
+        /// </summary>
+        public static bool PasskeysHabilitadas { get { RefrescarCache(); return _habilitadoCache.Value && _passkeysCache; } }
+
+        /// <summary>
+        /// Máximo de passkeys por usuario: clave <c>PasskeysMaximoPorUsuario</c> de ConfiguracionSistema
+        /// (entre 1 y 20). Si falta o no es un número, vale <see cref="PasskeyService.MaxPorDefecto"/> (5).
+        /// </summary>
+        public static int PasskeysMaximo { get { RefrescarCache(); return _passkeysMaxCache; } }
+
+        /// <summary>Dominio (RP ID) para WebAuthn: clave <c>WebAuthnRpId</c> o, si está vacía, el host de la petición.</summary>
+        public static string RpId(System.Web.HttpRequestBase request)
+        {
+            string v = LeerConfig("WebAuthnRpId");
+            return string.IsNullOrWhiteSpace(v) ? request.Url.Host : v.Trim().ToLowerInvariant();
+        }
+
+        /// <summary>Origen esperado (esquema + host + puerto) tomado de la petición.</summary>
+        public static string Origen(System.Web.HttpRequestBase request)
+        {
+            return request.Url.GetLeftPart(UriPartial.Authority);
+        }
 
         /// <summary>
         /// Alcance (clave <c>TwoFactorAlcance</c>): "todos" = todos los usuarios; cualquier otro valor
@@ -126,78 +154,48 @@ namespace bufinscustomers.Services
             }
         }
 
-        /// <summary>Activa el segundo factor y guarda los códigos de recuperación (hash) en UNA transacción.</summary>
-        public bool Activar(int idUsuario, byte[] secreto, long paso, IList<string> codigosRecuperacion)
-        {
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                cn.Open();
-                using (var tx = cn.BeginTransaction())
-                {
-                    try
-                    {
-                        using (var cmd = new SqlCommand(
-                            "UPDATE Usuarios SET TotpActivo = 1, TotpSecretoCifrado = @S, TotpActivadoEn = GETDATE(), TotpUltimoPaso = @P WHERE Id = @Id", cn, tx))
-                        {
-                            cmd.Parameters.AddWithValue("@S", Proteger(secreto));
-                            cmd.Parameters.AddWithValue("@P", paso);
-                            cmd.Parameters.AddWithValue("@Id", idUsuario);
-                            if (cmd.ExecuteNonQuery() != 1) { tx.Rollback(); return false; }
-                        }
-                        using (var del = new SqlCommand("DELETE FROM UsuarioCodigosRecuperacion WHERE IdUsuario = @Id", cn, tx))
-                        {
-                            del.Parameters.AddWithValue("@Id", idUsuario);
-                            del.ExecuteNonQuery();
-                        }
-                        foreach (var c in codigosRecuperacion)
-                        {
-                            using (var ins = new SqlCommand(
-                                "INSERT INTO UsuarioCodigosRecuperacion (IdUsuario, HashCodigo) VALUES (@Id, @H)", cn, tx))
-                            {
-                                ins.Parameters.AddWithValue("@Id", idUsuario);
-                                ins.Parameters.AddWithValue("@H", HashCodigo(c));
-                                ins.ExecuteNonQuery();
-                            }
-                        }
-                        tx.Commit();
-                        return true;
-                    }
-                    catch (Exception ex)
-                    {
-                        try { tx.Rollback(); } catch { }
-                        AppLogger.Error(ex, "DobleFactorService.Activar");
-                        return false;
-                    }
-                }
-            }
-        }
-
-        /// <summary>Quita el segundo factor y los códigos de recuperación (solo Super Admin, auditado por el llamador).</summary>
-        public bool Reiniciar(int idUsuario)
+        /// <summary>Activa el segundo factor (guarda el secreto protegido y el primer paso aceptado).</summary>
+        public bool Activar(int idUsuario, byte[] secreto, long paso)
         {
             try
             {
                 using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand(
+                    "UPDATE Usuarios SET TotpActivo = 1, TotpSecretoCifrado = @S, TotpActivadoEn = GETDATE(), TotpUltimoPaso = @P WHERE Id = @Id", cn))
                 {
+                    cmd.Parameters.AddWithValue("@S", Proteger(secreto));
+                    cmd.Parameters.AddWithValue("@P", paso);
+                    cmd.Parameters.AddWithValue("@Id", idUsuario);
                     cn.Open();
-                    using (var tx = cn.BeginTransaction())
-                    {
-                        int filas;
-                        using (var cmd = new SqlCommand(
-                            "UPDATE Usuarios SET TotpActivo = 0, TotpSecretoCifrado = NULL, TotpActivadoEn = NULL, TotpUltimoPaso = NULL WHERE Id = @Id", cn, tx))
-                        {
-                            cmd.Parameters.AddWithValue("@Id", idUsuario);
-                            filas = cmd.ExecuteNonQuery();
-                        }
-                        using (var del = new SqlCommand("DELETE FROM UsuarioCodigosRecuperacion WHERE IdUsuario = @Id", cn, tx))
-                        {
-                            del.Parameters.AddWithValue("@Id", idUsuario);
-                            del.ExecuteNonQuery();
-                        }
-                        tx.Commit();
-                        return filas == 1;
-                    }
+                    return cmd.ExecuteNonQuery() == 1;
                 }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "DobleFactorService.Activar");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Reinicia TODOS los métodos del usuario (app autenticadora y passkeys). Solo Super Admin; el
+        /// llamador audita. En su próximo inicio de sesión configurará un autenticador nuevo.
+        /// </summary>
+        public bool Reiniciar(int idUsuario)
+        {
+            try
+            {
+                int filas;
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand(
+                    "UPDATE Usuarios SET TotpActivo = 0, TotpSecretoCifrado = NULL, TotpActivadoEn = NULL, TotpUltimoPaso = NULL WHERE Id = @Id", cn))
+                {
+                    cmd.Parameters.AddWithValue("@Id", idUsuario);
+                    cn.Open();
+                    filas = cmd.ExecuteNonQuery();
+                }
+                new PasskeyService().EliminarTodas(idUsuario);   // tolerante si no existe el script 029
+                return filas == 1;
             }
             catch (SqlException ex)
             {
@@ -206,74 +204,28 @@ namespace bufinscustomers.Services
             }
         }
 
-        /// <summary>Consume un código de recuperación (un solo uso). true = era válido y quedó gastado.</summary>
-        public bool ConsumirCodigoRecuperacion(int idUsuario, string codigo)
+        /// <summary>
+        /// Reconfirmación de acciones sensibles dentro de una sesión ya abierta. A diferencia del inicio de
+        /// sesión, acepta el MISMO código que se usó al entrar (el usuario suele ir directo a Seguridad y la
+        /// app aún muestra ese código), pero nunca uno anterior al login ni uno ya usado en la reconfirmación
+        /// de esta sesión (<paramref name="pasoMinimoSesion"/>, exclusivo). Devuelve el paso aceptado o -1.
+        /// </summary>
+        public long ValidarCodigoReconfirmacion(int idUsuario, string codigo, long? pasoMinimoSesion)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(
-                "UPDATE UsuarioCodigosRecuperacion SET UsadoEn = GETDATE() WHERE IdUsuario = @Id AND HashCodigo = @H AND UsadoEn IS NULL", cn))
-            {
-                cmd.Parameters.AddWithValue("@Id", idUsuario);
-                cmd.Parameters.AddWithValue("@H", HashCodigo(codigo));
-                cn.Open();
-                return cmd.ExecuteNonQuery() == 1;
-            }
+            var e = Obtener(idUsuario);
+            if (!e.Disponible || !e.Activo || e.Secreto == null) return -1;
+            long? minimo = e.UltimoPaso.HasValue ? e.UltimoPaso.Value - 1 : (long?)null;
+            if (pasoMinimoSesion.HasValue) minimo = minimo.HasValue ? Math.Max(minimo.Value, pasoMinimoSesion.Value) : pasoMinimoSesion;
+            return TotpHelper.Validar(e.Secreto, codigo, minimo);
         }
 
-        public int CodigosRestantes(int idUsuario)
+        /// <summary>Valida un código TOTP de 6 dígitos del usuario (con anti-reutilización). Para acciones sensibles.</summary>
+        public bool ValidarCodigoTotp(int idUsuario, string codigo)
         {
-            try
-            {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    "SELECT COUNT(*) FROM UsuarioCodigosRecuperacion WHERE IdUsuario = @Id AND UsadoEn IS NULL", cn))
-                {
-                    cmd.Parameters.AddWithValue("@Id", idUsuario);
-                    cn.Open();
-                    return Convert.ToInt32(cmd.ExecuteScalar());
-                }
-            }
-            catch (SqlException) { return 0; }
-        }
-
-        public List<string> GenerarCodigosRecuperacion()
-        {
-            var lista = new List<string>();
-            var bytes = new byte[CantidadCodigosRecuperacion * 10];
-            using (var rng = RandomNumberGenerator.Create()) rng.GetBytes(bytes);
-            for (int i = 0; i < CantidadCodigosRecuperacion; i++)
-            {
-                var sb = new StringBuilder(11);
-                for (int j = 0; j < 10; j++)
-                {
-                    if (j == 5) sb.Append('-');
-                    sb.Append(AlfabetoRecuperacion[bytes[i * 10 + j] % AlfabetoRecuperacion.Length]);
-                }
-                lista.Add(sb.ToString());
-            }
-            return lista;
-        }
-
-        /// <summary>true si el texto tiene forma de código de recuperación (10 letras/dígitos, con o sin guion).</summary>
-        public static bool PareceCodigoRecuperacion(string texto)
-        {
-            return Normalizar(texto).Length == 10;
-        }
-
-        private static string Normalizar(string codigo)
-        {
-            return (codigo ?? "").Replace("-", "").Replace(" ", "").Trim().ToUpperInvariant();
-        }
-
-        private static string HashCodigo(string codigo)
-        {
-            using (var sha = SHA256.Create())
-            {
-                var h = sha.ComputeHash(Encoding.UTF8.GetBytes(Normalizar(codigo)));
-                var sb = new StringBuilder(64);
-                foreach (var b in h) sb.Append(b.ToString("x2"));
-                return sb.ToString();
-            }
+            var e = Obtener(idUsuario);
+            if (!e.Disponible || !e.Activo || e.Secreto == null) return false;
+            long paso = TotpHelper.Validar(e.Secreto, codigo, e.UltimoPaso);
+            return paso >= 0 && RegistrarPaso(idUsuario, paso);
         }
     }
 }

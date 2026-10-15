@@ -1,0 +1,185 @@
+@{
+    ViewBag.Title = Resources.Strings.SolSeg_Adm_Titulo;
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/swal-claro.css")" rel="stylesheet" />
+<style>
+    .ss-pills { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 14px; }
+    .ss-pill { border: 1px solid #d9dcec; background: #fff; color: #3b3f66; border-radius: 999px; padding: 6px 16px; font-size: .82rem; font-weight: 600; cursor: pointer; }
+    .ss-pill.active { background: var(--content-gradient); color: #fff; border-color: transparent; }
+    .ss-pill .n { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 6px; border-radius: 999px; background: #dc2626; color: #fff; font-size: .7rem; text-align: center; }
+    .ss-est { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: .74rem; font-weight: 700; }
+    .ss-est.Pendiente { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+    .ss-est.Aprobada { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+    .ss-est.Rechazada { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .ss-sub { display: block; color: #8a8fa8; font-size: .74rem; }
+    .ss-msg { max-width: 260px; white-space: normal; }
+    .ss-acc { display: flex; gap: 6px; }
+</style>
+
+<div class="container-fluid px-4">
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-user-shield powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.SolSeg_Adm_Titulo</h1>
+        </div>
+    </div>
+
+    <p class="text-muted mt-3 mb-0" style="font-size:.88rem;"><i class="fas fa-info-circle mr-1"></i>@Resources.Strings.SolSeg_Adm_Hint</p>
+
+    <form id="ssToken">@Html.AntiForgeryToken()</form>
+
+    <div class="ss-pills" id="ssPills">
+        <button type="button" class="ss-pill active" data-estado="Pendiente">@Resources.Strings.SolSeg_Adm_Pendientes<span class="n" id="ssNPend" style="display:none;"></span></button>
+        <button type="button" class="ss-pill" data-estado="Aprobada">@Resources.Strings.SolSeg_Adm_Aprobadas</button>
+        <button type="button" class="ss-pill" data-estado="Rechazada">@Resources.Strings.SolSeg_Adm_Rechazadas</button>
+        <button type="button" class="ss-pill" data-estado="">@Resources.Strings.SolSeg_Adm_Todas</button>
+    </div>
+
+    <div class="table-container">
+        <div class="table-header">
+            <h5><i class="fas fa-list mr-2"></i>@Resources.Strings.Common_Resultados</h5>
+            <span class="info-badge" id="ssTotal">0</span>
+        </div>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>@Resources.Strings.SolSeg_Adm_ColFecha</th>
+                        <th>@Resources.Strings.SolSeg_Adm_ColUsuario</th>
+                        <th>@Resources.Strings.SolSeg_Adm_ColEmpresa</th>
+                        <th>@Resources.Strings.SolSeg_Adm_ColContacto</th>
+                        <th>@Resources.Strings.SolSeg_Adm_ColMensaje</th>
+                        <th>@Resources.Strings.SolSeg_Adm_ColOrigen</th>
+                        <th>@Resources.Strings.SolSeg_Adm_ColEstado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="ssBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="no-data-message" id="ssVacio" style="display:none;">
+        <i class="fas fa-inbox"></i>
+        <h4>@Resources.Strings.SolSeg_Adm_Vacio</h4>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        (function () {
+            var M = {
+                aprobar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SolSeg_Adm_BtnAprobar))',
+                rechazar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SolSeg_Adm_BtnRechazar))',
+                cancelar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel))',
+                apTitulo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SolSeg_Adm_ApTitulo))',
+                apAviso: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SolSeg_Adm_ApAviso))',
+                apVerificado: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SolSeg_Adm_ApVerificado))',
+                reTitulo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SolSeg_Adm_ReTitulo))',
+                nota: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SolSeg_Adm_Nota))',
+                notaHint: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SolSeg_Adm_NotaHint))',
+                errVerificar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SolSeg_Adm_ErrorVerificar))',
+                errGen: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SolSeg_Adm_ErrorGen))',
+                estados: {
+                    Pendiente: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SolSeg_Adm_EstPendiente))',
+                    Aprobada: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SolSeg_Adm_EstAprobada))',
+                    Rechazada: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SolSeg_Adm_EstRechazada))'
+                },
+                por: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SolSeg_Adm_ResueltaPor))'
+            };
+            var U = {
+                listar: '@Url.Action("Listar","SolicitudesSeguridad")',
+                aprobar: '@Url.Action("Aprobar","SolicitudesSeguridad")',
+                rechazar: '@Url.Action("Rechazar","SolicitudesSeguridad")'
+            };
+            var estadoActual = 'Pendiente';
+
+            function token() { return document.querySelector('#ssToken [name=__RequestVerificationToken]').value; }
+            function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+            var SW = { popup: 'seg-swal', confirmButton: 'seg-swal-ok', cancelButton: 'seg-swal-cancel' };
+            function modal(o) { return Swal.fire(Object.assign({ buttonsStyling: false, reverseButtons: true, customClass: SW }, o)); }
+            function ttl(ic, tx, tono) { return '<span class="seg-ttl-ic ' + (tono || '') + '"><i class="fas ' + ic + '"></i></span><span>' + tx + '</span>'; }
+            function toast(ok, msg) {
+                Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: ok ? 'success' : 'error', title: msg, showConfirmButton: false, timer: 3000, timerProgressBar: true, customClass: { popup: 'seg-swal seg-swal-toast' } });
+            }
+            function post(url, datos) {
+                var b = new URLSearchParams(); b.append('__RequestVerificationToken', token());
+                Object.keys(datos).forEach(function (k) { b.append(k, datos[k]); });
+                return fetch(url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' }, body: b.toString() }).then(function (r) { return r.json(); });
+            }
+
+            function pintar(items, pendientes) {
+                var n = document.getElementById('ssNPend');
+                n.textContent = pendientes; n.style.display = pendientes > 0 ? '' : 'none';
+                document.getElementById('ssTotal').textContent = items.length;
+                document.getElementById('ssVacio').style.display = items.length ? 'none' : '';
+                document.getElementById('ssBody').innerHTML = items.map(function (s) {
+                    var acc = s.Estado === 'Pendiente'
+                        ? '<div class="ss-acc"><button type="button" class="btn btn-sm btn-success ss-ap" data-id="' + s.Id + '" data-usuario="' + esc(s.nombre || s.Usuario) + '" title="' + esc(M.aprobar) + '"><i class="fas fa-check"></i></button>' +
+                          '<button type="button" class="btn btn-sm btn-danger ss-re" data-id="' + s.Id + '" data-usuario="' + esc(s.nombre || s.Usuario) + '" title="' + esc(M.rechazar) + '"><i class="fas fa-times"></i></button></div>'
+                        : '<span class="ss-sub">' + esc(M.por) + ' ' + esc(s.ResueltaPor) + '<br>' + esc(s.resuelta) + (s.nota ? '<br><em>' + esc(s.nota) + '</em>' : '') + '</span>';
+                    return '<tr>' +
+                        '<td>' + esc(s.fecha) + '</td>' +
+                        '<td>' + esc(s.nombre || s.Usuario) + '<span class="ss-sub">' + esc(s.Usuario) + ' · ' + esc(s.Correo) + '</span></td>' +
+                        '<td>' + esc(s.Empresa) + '</td>' +
+                        '<td>' + esc(s.Telefono || '—') + '</td>' +
+                        '<td class="ss-msg">' + esc(s.Mensaje || '—') + '</td>' +
+                        '<td>' + esc(s.IP || '—') + '<span class="ss-sub">' + esc(s.navegador) + '</span></td>' +
+                        '<td><span class="ss-est ' + esc(s.Estado) + '">' + esc(M.estados[s.Estado] || s.Estado) + '</span></td>' +
+                        '<td>' + acc + '</td></tr>';
+                }).join('');
+            }
+
+            function cargar() {
+                fetch(U.listar + '?estado=' + encodeURIComponent(estadoActual), { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function (r) { return r.json(); })
+                    .then(function (r) { if (r.ok) pintar(r.items, r.pendientes); })
+                    .catch(function () { toast(false, M.errGen); });
+            }
+
+            document.getElementById('ssPills').addEventListener('click', function (e) {
+                var b = e.target.closest('.ss-pill'); if (!b) return;
+                document.querySelectorAll('.ss-pill').forEach(function (x) { x.classList.remove('active'); });
+                b.classList.add('active'); estadoActual = b.getAttribute('data-estado'); cargar();
+            });
+
+            document.getElementById('ssBody').addEventListener('click', function (e) {
+                var ap = e.target.closest('.ss-ap'), re = e.target.closest('.ss-re');
+                if (ap) {
+                    var id = ap.getAttribute('data-id'), usr = ap.getAttribute('data-usuario');
+                    modal({
+                        title: ttl('fa-user-check', M.apTitulo),
+                        html: '<div class="seg-note"><i class="fas fa-exclamation-triangle mt-1"></i><span>' + M.apAviso.replace('{0}', '<b>' + esc(usr) + '</b>') + '</span></div>' +
+                              '<label style="display:flex;gap:.55rem;align-items:flex-start;font-size:.84rem;color:#374151;margin:0 0 .85rem;cursor:pointer;"><input type="checkbox" id="ssVer" style="margin-top:.2rem;" /><span>' + M.apVerificado + '</span></label>' +
+                              '<div class="seg-fld"><label for="ssNota">' + M.nota + '</label><input id="ssNota" type="text" maxlength="500" /><small>' + M.notaHint + '</small></div>',
+                        showCancelButton: true, cancelButtonText: M.cancelar, confirmButtonText: M.aprobar,
+                        preConfirm: function () {
+                            if (!document.getElementById('ssVer').checked) { Swal.showValidationMessage(M.errVerificar); return false; }
+                            return post(U.aprobar, { id: id, nota: document.getElementById('ssNota').value, verificado: true })
+                                .then(function (r) { if (!r.ok) { Swal.showValidationMessage(r.mensaje); return false; } return r; })
+                                .catch(function () { Swal.showValidationMessage(M.errGen); return false; });
+                        }
+                    }).then(function (res) { if (res.isConfirmed && res.value) { toast(true, res.value.mensaje); cargar(); } });
+                } else if (re) {
+                    var id2 = re.getAttribute('data-id'), usr2 = re.getAttribute('data-usuario');
+                    modal({
+                        title: ttl('fa-user-times', M.reTitulo, 'danger'),
+                        html: '<p style="margin:0 0 .85rem;"><b>' + esc(usr2) + '</b></p><div class="seg-fld"><label for="ssNota">' + M.nota + '</label><input id="ssNota" type="text" maxlength="500" /><small>' + M.notaHint + '</small></div>',
+                        showCancelButton: true, cancelButtonText: M.cancelar, confirmButtonText: M.rechazar,
+                        customClass: Object.assign({}, SW, { confirmButton: 'seg-swal-danger' }),
+                        preConfirm: function () {
+                            return post(U.rechazar, { id: id2, nota: document.getElementById('ssNota').value })
+                                .then(function (r) { if (!r.ok) { Swal.showValidationMessage(r.mensaje); return false; } return r; })
+                                .catch(function () { Swal.showValidationMessage(M.errGen); return false; });
+                        }
+                    }).then(function (res) { if (res.isConfirmed && res.value) { toast(true, res.value.mensaje); cargar(); } });
+                }
+            });
+
+            cargar();
+        })();
+    </script>
+}

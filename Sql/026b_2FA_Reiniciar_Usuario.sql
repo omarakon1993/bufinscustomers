@@ -1,7 +1,7 @@
 /* ============================================================================
-   026b - REINICIAR EL DOBLE FACTOR DE UN USUARIO (emergencia)
+   026b - REINICIAR LOS METODOS DE AUTENTICACION DE UN USUARIO (emergencia)
    ----------------------------------------------------------------------------
-   Usar SOLO si un usuario perdio el celular y sus codigos de recuperacion y
+   Usar SOLO si un usuario perdio el celular y sus passkeys y
    ningun Super Admin puede reiniciarlo desde el gestor de usuarios (por ejemplo,
    si es el unico Super Admin).
    El usuario configurara un autenticador nuevo en su siguiente inicio de sesion.
@@ -14,7 +14,9 @@ BEGIN
        SET TotpActivo = 0, TotpSecretoCifrado = NULL, TotpActivadoEn = NULL, TotpUltimoPaso = NULL
      WHERE Id = @IdUsuario;
 
-    DELETE FROM dbo.UsuarioCodigosRecuperacion WHERE IdUsuario = @IdUsuario;
+    -- Si ya ejecutaste el script 029 (passkeys), tambien se borran las passkeys del usuario.
+    IF OBJECT_ID('dbo.UsuarioPasskeys', 'U') IS NOT NULL
+        DELETE FROM dbo.UsuarioPasskeys WHERE IdUsuario = @IdUsuario;
 
     SELECT Id, Usuario, Correo, TotpActivo FROM dbo.Usuarios WHERE Id = @IdUsuario;
 END

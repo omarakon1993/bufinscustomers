@@ -579,7 +579,7 @@ namespace bufinscustomers.Controllers
             });
         }
 
-        // Doble factor: el usuario perdió su autenticador y sus códigos de recuperación. SOLO Super Admin.
+        // Doble factor: el usuario perdió su autenticador y sus passkeys. SOLO Super Admin.
         // Al reiniciar, en su siguiente inicio de sesión configura un autenticador nuevo.
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -593,14 +593,16 @@ namespace bufinscustomers.Controllers
             if (usuarioDestino == null)
                 return Json(new { success = false, message = R("Usr_ErrorNoEncontrado") });
 
+            int passkeys = new PasskeyService().Listar(idUsuario).Count;
             if (!new DobleFactorService().Reiniciar(idUsuario))
                 return Json(new { success = false, message = R("Usr_2FA_ErrorReiniciar") });
 
             var actual = UsuarioSesionHelper.UsuarioActual;
             new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Editar,
-                $"Doble factor reiniciado por el Super Admin {actual?.Usuario} para el usuario {usuarioDestino.Usuario} (Id {idUsuario})",
+                $"Métodos de autenticación reiniciados por el Super Admin {actual?.Usuario} para el usuario {usuarioDestino.Usuario} (Id {idUsuario}): app autenticadora y {passkeys} passkey(s)",
                 idUsuario, ((usuarioDestino.Nombre ?? "") + " " + (usuarioDestino.Apellidos ?? "")).Trim(), usuarioDestino.IdEmpresa);
             new NotificacionesService().Crear(idUsuario, R("Notif_2FA_ReiniciadoTitulo"), R("Notif_2FA_ReiniciadoMsg"), "warning");
+            AlertaUsuarioCorreo.Enviar(usuarioDestino.Correo, R("Notif_2FA_ReiniciadoTitulo"), R("Notif_2FA_ReiniciadoMsg"));
 
             return Json(new { success = true, message = R("Usr_2FA_Reiniciado") });
         }

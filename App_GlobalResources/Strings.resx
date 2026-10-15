@@ -3035,7 +3035,7 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="Login2FA_VerificarInstrucciones" xml:space="preserve"><value>Abre tu app autenticadora e ingresa el código de 6 dígitos de Bufins.</value></data>
   <data name="Login2FA_CodigoLabel" xml:space="preserve"><value>Código de verificación</value></data>
   <data name="Login2FA_BtnVerificar" xml:space="preserve"><value>Verificar</value></data>
-  <data name="Login2FA_HintRecuperacion" xml:space="preserve"><value>¿Sin acceso a tu app? Escribe uno de tus códigos de recuperación en lugar del código de 6 dígitos.</value></data>
+  <data name="Login2FA_HintRecuperacion" xml:space="preserve"><value>¿Perdiste el acceso a tu app y a tus passkeys? Contacta al administrador de Bufins para reiniciar tu verificación.</value></data>
   <data name="Login2FA_Volver" xml:space="preserve"><value>Volver al inicio de sesión</value></data>
   <data name="Login2FA_ErrorVacio" xml:space="preserve"><value>Ingresa el código de verificación.</value></data>
   <data name="Login2FA_ErrorCodigo" xml:space="preserve"><value>Código incorrecto o vencido. Inténtalo de nuevo.</value></data>
@@ -3049,23 +3049,15 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="Login2FA_ConfigPaso3" xml:space="preserve"><value>Escribe aquí el código de 6 dígitos que muestra la app para confirmar.</value></data>
   <data name="Login2FA_ConfigClaveManual" xml:space="preserve"><value>¿No puedes escanear? Ingresa esta clave en la app:</value></data>
   <data name="Login2FA_BtnActivar" xml:space="preserve"><value>Activar y continuar</value></data>
-  <data name="Login2FA_CodigosHeading" xml:space="preserve"><value>Códigos de recuperación</value></data>
-  <data name="Login2FA_CodigosInstrucciones" xml:space="preserve"><value>Guarda estos 10 códigos en un lugar seguro. Cada uno sirve una sola vez si pierdes tu celular. No volverán a mostrarse.</value></data>
-  <data name="Login2FA_CodigosConfirmar" xml:space="preserve"><value>Ya guardé mis códigos de recuperación.</value></data>
-  <data name="Login2FA_BtnCopiar" xml:space="preserve"><value>Copiar</value></data>
-  <data name="Login2FA_BtnDescargar" xml:space="preserve"><value>Descargar</value></data>
-  <data name="Login2FA_Copiado" xml:space="preserve"><value>Códigos copiados</value></data>
   <data name="Login2FA_BtnContinuar" xml:space="preserve"><value>Continuar</value></data>
   <data name="Notif_2FA_ActivadoTitulo" xml:space="preserve"><value>Doble factor activado</value></data>
   <data name="Notif_2FA_ActivadoMsg" xml:space="preserve"><value>Activaste la verificación en dos pasos en tu cuenta. Si no fuiste tú, contacta al administrador de inmediato.</value></data>
-  <data name="Notif_2FA_RecuperacionTitulo" xml:space="preserve"><value>Inicio de sesión con código de recuperación</value></data>
-  <data name="Notif_2FA_RecuperacionMsg" xml:space="preserve"><value>Ingresaste con un código de recuperación. Te quedan {0} códigos sin usar. Si no fuiste tú, contacta al administrador.</value></data>
-  <data name="Notif_2FA_ReiniciadoTitulo" xml:space="preserve"><value>Doble factor reiniciado</value></data>
-  <data name="Notif_2FA_ReiniciadoMsg" xml:space="preserve"><value>Un administrador reinició tu doble factor. Configurarás un autenticador nuevo en tu próximo inicio de sesión.</value></data>
-  <data name="Usr_TitleReiniciar2FA" xml:space="preserve"><value>Reiniciar doble factor (perdió su celular)</value></data>
-  <data name="Usr_ConfirmReiniciar2FA" xml:space="preserve"><value>¿Reiniciar el doble factor de este usuario? Deberá configurar un autenticador nuevo en su próximo inicio de sesión.</value></data>
+  <data name="Notif_2FA_ReiniciadoTitulo" xml:space="preserve"><value>Métodos de autenticación reiniciados</value></data>
+  <data name="Notif_2FA_ReiniciadoMsg" xml:space="preserve"><value>Un administrador reinició tus métodos de autenticación (app, passkeys y códigos). Configurarás un autenticador nuevo en tu próximo inicio de sesión.</value></data>
+  <data name="Usr_TitleReiniciar2FA" xml:space="preserve"><value>Reiniciar métodos de autenticación (app, passkeys y códigos)</value></data>
+  <data name="Usr_ConfirmReiniciar2FA" xml:space="preserve"><value>¿Reiniciar los métodos de autenticación de este usuario? Se borrarán su app autenticadora y sus passkeys, y deberá configurar todo de nuevo en su próximo inicio de sesión. Antes de continuar, verifica su identidad por otro canal (llamada o videollamada).</value></data>
   <data name="Usr_BtnReiniciar2FA" xml:space="preserve"><value>Reiniciar</value></data>
-  <data name="Usr_2FA_Reiniciado" xml:space="preserve"><value>Doble factor reiniciado correctamente.</value></data>
+  <data name="Usr_2FA_Reiniciado" xml:space="preserve"><value>Métodos de autenticación reiniciados correctamente.</value></data>
   <data name="Usr_2FA_ErrorReiniciar" xml:space="preserve"><value>No se pudo reiniciar el doble factor (¿se ejecutó el script Sql/026?).</value></data>
   <!-- TIPOS DE CONFIGURACION -->
   <data name="CfgIA_Tipo_BtnGestionar" xml:space="preserve"><value>Tipos</value></data>
@@ -3087,4 +3079,115 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="CfgIA_Tipo_Guardado" xml:space="preserve"><value>Tipo guardado.</value></data>
   <data name="CfgIA_Tipo_Eliminado" xml:space="preserve"><value>Tipo eliminado. Sus parámetros quedaron en «Otros parámetros».</value></data>
   <data name="CfgIA_Tipo_ConfirmEliminar" xml:space="preserve"><value>¿Eliminar el tipo «{0}»? Sus {1} parámetros quedarán en «Otros parámetros».</value></data>
+  <!-- PASSKEYS / SEGURIDAD -->
+  <data name="Login2FA_O" xml:space="preserve"><value>o</value></data>
+  <data name="Login2FA_UsarPasskey" xml:space="preserve"><value>Usar passkey (huella, rostro o llave)</value></data>
+  <data name="Login2FA_ErrorPasskey" xml:space="preserve"><value>No se pudo validar la passkey. Inténtalo de nuevo o usa el código de tu app.</value></data>
+  <data name="Login2FA_PasskeyCancelada" xml:space="preserve"><value>Operación cancelada.</value></data>
+  <data name="Seg_Menu" xml:space="preserve"><value>Seguridad</value></data>
+  <data name="Seg_PageTitle" xml:space="preserve"><value>Seguridad de mi cuenta</value></data>
+  <data name="Seg_Hint" xml:space="preserve"><value>Para iniciar sesión necesitas tu contraseña y un segundo paso. Puedes usar cualquiera de los métodos activos; la app autenticadora es el método base.</value></data>
+  <data name="Seg_Totp_Titulo" xml:space="preserve"><value>App autenticadora</value></data>
+  <data name="Seg_Totp_Activa" xml:space="preserve"><value>Activa</value></data>
+  <data name="Seg_Totp_Inactiva" xml:space="preserve"><value>No configurada</value></data>
+  <data name="Seg_Totp_Desc" xml:space="preserve"><value>Código de 6 dígitos de Google Authenticator, Microsoft Authenticator, Authy u otra app. Es el método base y no se puede quitar.</value></data>
+  <data name="Seg_Pk_Titulo" xml:space="preserve"><value>Passkeys</value></data>
+  <data name="Seg_Pk_Desc" xml:space="preserve"><value>Inicia sesión con la huella, el rostro o el PIN de tu dispositivo, o con una llave de seguridad USB. Es un método adicional opcional.</value></data>
+  <data name="Seg_Pk_Apagadas" xml:space="preserve"><value>Las passkeys aún no están habilitadas en el sistema.</value></data>
+  <data name="Seg_Pk_Vacio" xml:space="preserve"><value>Aún no tienes passkeys registradas.</value></data>
+  <data name="Seg_Pk_Detalle" xml:space="preserve"><value>Creada {0} · Último uso: {1}</value></data>
+  <data name="Seg_Pk_NuncaUsada" xml:space="preserve"><value>nunca</value></data>
+  <data name="Seg_Pk_Agregar" xml:space="preserve"><value>Agregar passkey</value></data>
+  <data name="Seg_Pk_NoSoportado" xml:space="preserve"><value>Este navegador o dispositivo no soporta passkeys.</value></data>
+  <data name="Seg_Pk_NombrePrompt" xml:space="preserve"><value>Ponle un nombre a esta passkey (por ejemplo, Mi laptop)</value></data>
+  <data name="Seg_Pk_NombreDefecto" xml:space="preserve"><value>Mi dispositivo</value></data>
+  <data name="Seg_Pk_ConfirmEliminar" xml:space="preserve"><value>¿Eliminar la passkey «{0}»? Ya no podrás iniciar sesión con ella.</value></data>
+  <data name="Seg_Pk_Agregada" xml:space="preserve"><value>Passkey agregada.</value></data>
+  <data name="Seg_Pk_Eliminada" xml:space="preserve"><value>Passkey eliminada.</value></data>
+  <data name="Seg_Pk_ErrorEliminar" xml:space="preserve"><value>No se pudo eliminar la passkey.</value></data>
+  <data name="Seg_Pk_ErrorRegistro" xml:space="preserve"><value>No se pudo registrar la passkey. Inténtalo de nuevo.</value></data>
+  <data name="Seg_Pk_ErrorGuardar" xml:space="preserve"><value>No se pudo guardar la passkey (¿ya estaba registrada?).</value></data>
+  <data name="Seg_Pk_NoDisponible" xml:space="preserve"><value>Las passkeys no están disponibles.</value></data>
+  <data name="Seg_Pk_Maximo" xml:space="preserve"><value>Alcanzaste el máximo de {0} passkeys.</value></data>
+  <data name="Notif_Pk_AgregadaTitulo" xml:space="preserve"><value>Passkey agregada</value></data>
+  <data name="Notif_Pk_AgregadaMsg" xml:space="preserve"><value>Se agregó la passkey «{0}» a tu cuenta. Si no fuiste tú, contacta al administrador.</value></data>
+  <data name="Notif_Pk_EliminadaTitulo" xml:space="preserve"><value>Passkey eliminada</value></data>
+  <data name="Notif_Pk_EliminadaMsg" xml:space="preserve"><value>Se eliminó la passkey «{0}» de tu cuenta.</value></data>
+  <data name="Seg_Mod_AddTitulo" xml:space="preserve"><value>Agregar passkey</value></data>
+  <data name="Seg_Mod_AddAviso" xml:space="preserve"><value>Tu dispositivo te pedirá huella, rostro o PIN para crear la passkey.</value></data>
+  <data name="Seg_Mod_AddNombreLabel" xml:space="preserve"><value>Nombre de la passkey</value></data>
+  <data name="Seg_Mod_AddNombreHint" xml:space="preserve"><value>Un nombre que te ayude a reconocerla, por ejemplo «Mi laptop» o «Llave USB».</value></data>
+  <data name="Seg_Mod_AddContinuar" xml:space="preserve"><value>Continuar</value></data>
+  <data name="Seg_Mod_DelTitulo" xml:space="preserve"><value>Eliminar passkey</value></data>
+  <data name="Seg_Perdida" xml:space="preserve"><value>Si pierdes tu celular y tus passkeys, contacta al administrador de Bufins para reiniciar tu verificación.</value></data>
+  <data name="Seg_Mod_StepUpLabel" xml:space="preserve"><value>Código de tu app autenticadora</value></data>
+  <data name="Seg_Mod_StepUpHint" xml:space="preserve"><value>Por seguridad, confirma con el código de 6 dígitos que muestra tu app en este momento.</value></data>
+  <!-- SOLICITUDES DE SEGURIDAD -->
+  <data name="SolSeg_Link" xml:space="preserve"><value>No puedo acceder a mis métodos de autenticación</value></data>
+  <data name="SolSeg_Titulo" xml:space="preserve"><value>Solicitar reinicio de verificación</value></data>
+  <data name="SolSeg_Intro" xml:space="preserve"><value>Si perdiste tu celular y tus passkeys, envía una solicitud al administrador de Bufins. Se comunicará contigo por otro canal para verificar tu identidad antes de reiniciar tus métodos.</value></data>
+  <data name="SolSeg_Telefono" xml:space="preserve"><value>Teléfono de contacto (opcional)</value></data>
+  <data name="SolSeg_Mensaje" xml:space="preserve"><value>Mensaje (opcional)</value></data>
+  <data name="SolSeg_MensajePH" xml:space="preserve"><value>Cuéntanos brevemente qué pasó</value></data>
+  <data name="SolSeg_BtnEnviar" xml:space="preserve"><value>Enviar solicitud</value></data>
+  <data name="SolSeg_VolverVerificar" xml:space="preserve"><value>Volver a la verificación</value></data>
+  <data name="SolSeg_Enviada" xml:space="preserve"><value>Solicitud enviada</value></data>
+  <data name="SolSeg_YaPendiente" xml:space="preserve"><value>Ya tienes una solicitud pendiente</value></data>
+  <data name="SolSeg_EnviadaMsg" xml:space="preserve"><value>Avisamos a los administradores de Bufins. Se comunicarán contigo para verificar tu identidad. Cuando tus métodos sean reiniciados recibirás un correo y podrás iniciar sesión para configurarlos de nuevo.</value></data>
+  <data name="SolSeg_ErrorTelefono" xml:space="preserve"><value>El teléfono solo puede contener números, espacios y los símbolos + - ( ) .</value></data>
+  <data name="SolSeg_NoDisponible" xml:space="preserve"><value>No se pudo registrar la solicitud en este momento. Contacta directamente al administrador de Bufins.</value></data>
+  <data name="Notif_SolSeg_NuevaTitulo" xml:space="preserve"><value>Solicitud de reinicio de autenticación</value></data>
+  <data name="Notif_SolSeg_NuevaMsg" xml:space="preserve"><value>{0} ({1}) solicita reiniciar sus métodos de autenticación. Verifica su identidad por otro canal antes de aprobar.</value></data>
+  <data name="Notif_SolSeg_AprobadaTitulo" xml:space="preserve"><value>Solicitud aprobada</value></data>
+  <data name="Notif_SolSeg_AprobadaMsg" xml:space="preserve"><value>Un administrador reinició tus métodos de autenticación. Inicia sesión para configurar un autenticador nuevo.</value></data>
+  <data name="Notif_SolSeg_RechazadaTitulo" xml:space="preserve"><value>Solicitud no aprobada</value></data>
+  <data name="Notif_SolSeg_RechazadaMsg" xml:space="preserve"><value>Tu solicitud de reinicio de métodos de autenticación no fue aprobada. Si crees que es un error, contacta al administrador de Bufins.</value></data>
+  <data name="SolSeg_Adm_Titulo" xml:space="preserve"><value>Solicitudes de seguridad</value></data>
+  <data name="SolSeg_Adm_Hint" xml:space="preserve"><value>Usuarios que perdieron sus métodos de autenticación. Antes de aprobar, verifica su identidad por otro canal (llamada o videollamada).</value></data>
+  <data name="SolSeg_Adm_Pendientes" xml:space="preserve"><value>Pendientes</value></data>
+  <data name="SolSeg_Adm_Aprobadas" xml:space="preserve"><value>Aprobadas</value></data>
+  <data name="SolSeg_Adm_Rechazadas" xml:space="preserve"><value>Rechazadas</value></data>
+  <data name="SolSeg_Adm_Todas" xml:space="preserve"><value>Todas</value></data>
+  <data name="SolSeg_Adm_ColFecha" xml:space="preserve"><value>Fecha</value></data>
+  <data name="SolSeg_Adm_ColUsuario" xml:space="preserve"><value>Usuario</value></data>
+  <data name="SolSeg_Adm_ColEmpresa" xml:space="preserve"><value>Empresa</value></data>
+  <data name="SolSeg_Adm_ColContacto" xml:space="preserve"><value>Teléfono</value></data>
+  <data name="SolSeg_Adm_ColMensaje" xml:space="preserve"><value>Mensaje</value></data>
+  <data name="SolSeg_Adm_ColOrigen" xml:space="preserve"><value>Origen (IP)</value></data>
+  <data name="SolSeg_Adm_ColEstado" xml:space="preserve"><value>Estado</value></data>
+  <data name="SolSeg_Adm_Vacio" xml:space="preserve"><value>No hay solicitudes en esta vista.</value></data>
+  <data name="SolSeg_Adm_BtnAprobar" xml:space="preserve"><value>Aprobar y reiniciar</value></data>
+  <data name="SolSeg_Adm_BtnRechazar" xml:space="preserve"><value>Rechazar</value></data>
+  <data name="SolSeg_Adm_ApTitulo" xml:space="preserve"><value>Aprobar y reiniciar métodos</value></data>
+  <data name="SolSeg_Adm_ApAviso" xml:space="preserve"><value>Se borrarán la app autenticadora y las passkeys de {0}; deberá configurar todo de nuevo en su próximo inicio de sesión.</value></data>
+  <data name="SolSeg_Adm_ApVerificado" xml:space="preserve"><value>Verifiqué la identidad del usuario por otro canal (llamada o videollamada).</value></data>
+  <data name="SolSeg_Adm_ReTitulo" xml:space="preserve"><value>Rechazar solicitud</value></data>
+  <data name="SolSeg_Adm_Nota" xml:space="preserve"><value>Nota interna (opcional)</value></data>
+  <data name="SolSeg_Adm_NotaHint" xml:space="preserve"><value>Queda registrada junto con la solicitud.</value></data>
+  <data name="SolSeg_Adm_ErrorVerificar" xml:space="preserve"><value>Confirma que verificaste la identidad del usuario.</value></data>
+  <data name="SolSeg_Adm_ErrorGen" xml:space="preserve"><value>No se pudo completar la operación.</value></data>
+  <data name="SolSeg_Adm_YaResuelta" xml:space="preserve"><value>La solicitud ya fue resuelta o no existe.</value></data>
+  <data name="SolSeg_Adm_Propia" xml:space="preserve"><value>No puedes resolver tu propia solicitud; pídele a otro Super Admin.</value></data>
+  <data name="SolSeg_Adm_Aprobada" xml:space="preserve"><value>Solicitud aprobada: métodos reiniciados.</value></data>
+  <data name="SolSeg_Adm_Rechazada" xml:space="preserve"><value>Solicitud rechazada.</value></data>
+  <data name="SolSeg_Adm_EstPendiente" xml:space="preserve"><value>Pendiente</value></data>
+  <data name="SolSeg_Adm_EstAprobada" xml:space="preserve"><value>Aprobada</value></data>
+  <data name="SolSeg_Adm_EstRechazada" xml:space="preserve"><value>Rechazada</value></data>
+  <data name="SolSeg_Adm_ResueltaPor" xml:space="preserve"><value>Por</value></data>
+  <data name="Seg_Err_SinTotp" xml:space="preserve"><value>Tu app autenticadora no está configurada en esta cuenta. Cierra sesión e inicia de nuevo para configurarla.</value></data>
+  <data name="Home_SolSeg_UnaPend" xml:space="preserve"><value>1 solicitud de seguridad pendiente</value></data>
+  <data name="Home_SolSeg_NPend" xml:space="preserve"><value>{0} solicitudes de seguridad pendientes</value></data>
+  <data name="Home_SolSeg_Desc" xml:space="preserve"><value>Usuarios que piden reiniciar sus métodos de autenticación</value></data>
+  <data name="Home_SolSeg_Revisar" xml:space="preserve"><value>Revisar</value></data>
+  <data name="Seg_Nuevo" xml:space="preserve"><value>Nuevo</value></data>
+  <data name="Home_Pk_Titulo" xml:space="preserve"><value>Entra más rápido y seguro con una passkey</value></data>
+  <data name="Home_Pk_Desc" xml:space="preserve"><value>Usa la huella, el rostro o el PIN de tu dispositivo en lugar del código de la app.</value></data>
+  <data name="Home_Pk_Config" xml:space="preserve"><value>Configurar ahora</value></data>
+  <data name="Home_Pk_Despues" xml:space="preserve"><value>Más tarde</value></data>
+  <data name="Home_Pk_NoMas" xml:space="preserve"><value>No volver a mostrar</value></data>
+  <data name="Pk_Oferta_Heading" xml:space="preserve"><value>¡Tu verificación está lista!</value></data>
+  <data name="Pk_Oferta_Msg" xml:space="preserve"><value>Tu app autenticadora quedó activada. ¿Quieres agregar también una passkey? Podrás entrar con la huella, el rostro o el PIN de tu dispositivo.</value></data>
+  <data name="Pk_Oferta_Agregar" xml:space="preserve"><value>Agregar passkey ahora</value></data>
+  <data name="Pk_Oferta_Omitir" xml:space="preserve"><value>Ahora no</value></data>
+  <data name="Pk_Oferta_Hint" xml:space="preserve"><value>Puedes hacerlo cuando quieras en Seguridad, dentro del menú de tu usuario.</value></data>
 </root>

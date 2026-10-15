@@ -135,6 +135,8 @@
     <Compile Include="Controllers\GestorEscenariosController.cs" />
     <Compile Include="Controllers\GestorHojasCargueController.cs" />
     <Compile Include="Controllers\ConfiguracionGlobalController.cs" />
+    <Compile Include="Controllers\SeguridadController.cs" />
+    <Compile Include="Controllers\SolicitudesSeguridadController.cs" />
     <Compile Include="Controllers\GestorPromptsController.cs" />
     <Compile Include="Controllers\GruposEmpresarialesController.cs" />
     <Compile Include="Controllers\HistorialVersionesCarguesController.cs" />
@@ -183,6 +185,11 @@
     <Compile Include="Helpers\EscenarioCacheHelper.cs" />
     <Compile Include="Helpers\EmpresaAccesoHelper.cs" />
     <Compile Include="Helpers\TotpHelper.cs" />
+    <Compile Include="Helpers\PasskeyAvisoHelper.cs" />
+    <Compile Include="Helpers\AssetVersion.cs" />
+    <Compile Include="Helpers\AlertaUsuarioCorreo.cs" />
+    <Compile Include="Helpers\CborLector.cs" />
+    <Compile Include="Helpers\WebAuthnHelper.cs" />
     <Compile Include="Helpers\AppLogger.cs" />
     <Compile Include="Helpers\CargueLoteSesionHelper.cs" />
     <Compile Include="Helpers\UrlWebHelper.cs" />
@@ -305,6 +312,8 @@
     <Compile Include="Services\ReportesService.cs" />
     <Compile Include="Services\ClaveInicialService.cs" />
     <Compile Include="Services\DobleFactorService.cs" />
+    <Compile Include="Services\PasskeyService.cs" />
+    <Compile Include="Services\SolicitudReinicioAuthService.cs" />
     <Compile Include="Services\UsuarioService.cs" />
     <Compile Include="Services\EmailService.cs" />
     <Compile Include="Models\CuentaCorreoModels.cs" />
@@ -449,8 +458,13 @@
     <Content Include="Views\Acceso\_Layout2FA.cshtml" />
     <Content Include="Views\Acceso\VerificarDobleFactor.cshtml" />
     <Content Include="Views\Acceso\ConfigurarDobleFactor.cshtml" />
-    <Content Include="Views\Acceso\CodigosRecuperacion.cshtml" />
     <Content Include="Assets\js\qrcode-generator.js" />
+    <Content Include="Assets\js\webauthn-bufins.js" />
+    <Content Include="Views\Seguridad\Index.cshtml" />
+    <Content Include="Views\SolicitudesSeguridad\Index.cshtml" />
+    <Content Include="Views\Acceso\SolicitarReinicio.cshtml" />
+    <Content Include="Views\Acceso\OfrecerPasskey.cshtml" />
+    <Content Include="Assets\css\swal-claro.css" />
     <Content Include="Views\Configuracion\CuentasCorreo.cshtml" />
     <Content Include="Views\Configuracion\_CuentaCorreoFormFields.cshtml" />
     <Content Include="Views\Datos\CargueExcel.cshtml" />

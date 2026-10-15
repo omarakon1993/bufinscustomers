@@ -264,6 +264,17 @@
                                     <i class="fas fa-user fa-sm fa-fw"></i>
                                     @Resources.Strings.Layout_Profile
                                 </a>
+                                @if (bufinscustomers.Services.DobleFactorService.Habilitado && bufinscustomers.Services.DobleFactorService.AplicaA(UsuarioSesionHelper.UsuarioActual))
+                                {
+                                    <a class="dropdown-item" href="@Url.Action("Index", "Seguridad")">
+                                        <i class="fas fa-user-shield fa-sm fa-fw"></i>
+                                        @Resources.Strings.Seg_Menu
+                                        @if (bufinscustomers.Helpers.PasskeyAvisoHelper.MostrarEtiquetaNueva())
+                                        {
+                                            <span class="user-dd-nuevo">@Resources.Strings.Seg_Nuevo</span>
+                                        }
+                                    </a>
+                                }
                                 <div class="dropdown-divider"></div>
                                 <div class="user-dd-lang-row">
                                     <span class="user-dd-lang-label">

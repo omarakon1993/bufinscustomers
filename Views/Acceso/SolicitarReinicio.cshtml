@@ -1,0 +1,63 @@
+@{
+    Layout = "~/Views/Acceso/_Layout2FA.cshtml";
+    ViewBag.Heading = Resources.Strings.SolSeg_Titulo;
+    bool enviada = ViewBag.Enviada == true;
+    bool existente = ViewBag.Existente == true;
+}
+
+@if (enviada)
+{
+    <div class="tf-info" style="margin-bottom:1rem;">
+        <i class="fas fa-paper-plane"></i>
+        <strong>@(existente ? Resources.Strings.SolSeg_YaPendiente : Resources.Strings.SolSeg_Enviada)</strong>
+    </div>
+    <p class="tf-info">@Resources.Strings.SolSeg_EnviadaMsg</p>
+    <a href="@Url.Action("Login","Acceso")" class="btn btn-primary" style="text-decoration:none;display:flex;">
+        <span class="btn-text">@Resources.Strings.Login2FA_Volver</span>
+        <i class="fas fa-arrow-left" style="margin-left:8px;"></i>
+    </a>
+}
+else
+{
+    <form id="tfForm" action="@Url.Action("SolicitarReinicio","Acceso")" method="post">
+        @Html.AntiForgeryToken()
+
+        <p class="tf-info"><i class="fas fa-life-ring"></i>@Resources.Strings.SolSeg_Intro</p>
+
+        <div class="input-group">
+            <div class="input-icon"><i class="fas fa-phone"></i></div>
+            <div class="input-wrapper">
+                <label for="telefono">@Resources.Strings.SolSeg_Telefono</label>
+                <input type="text" name="telefono" id="telefono" class="input-field" maxlength="40" autocomplete="tel" placeholder="+57 300 000 0000" />
+            </div>
+        </div>
+
+        <div class="input-group">
+            <div class="input-icon"><i class="fas fa-comment-dots"></i></div>
+            <div class="input-wrapper">
+                <label for="mensaje">@Resources.Strings.SolSeg_Mensaje</label>
+                <input type="text" name="mensaje" id="mensaje" class="input-field" maxlength="500" placeholder="@Resources.Strings.SolSeg_MensajePH" />
+            </div>
+        </div>
+
+        <button type="submit" id="btnEnviar" class="btn btn-primary">
+            <span class="btn-text">@Resources.Strings.SolSeg_BtnEnviar</span>
+            <i class="fas fa-paper-plane" style="margin-left:8px;"></i>
+        </button>
+
+        <div style="text-align:center; margin-top:1rem;">
+            <a href="@Url.Action("VerificarDobleFactor","Acceso")" style="color:#583AFF; font-size:.8rem; text-decoration:none;">
+                <i class="fas fa-arrow-left" style="margin-right:4px;"></i>@Resources.Strings.SolSeg_VolverVerificar
+            </a>
+        </div>
+    </form>
+}
+
+@section scripts {
+    <script>
+        (function () {
+            var f = document.getElementById('tfForm');
+            if (f) f.addEventListener('submit', function () { document.getElementById('btnEnviar').classList.add('loading'); });
+        })();
+    </script>
+}

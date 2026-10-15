@@ -1,0 +1,23 @@
+@{
+    Layout = "~/Views/Acceso/_Layout2FA.cshtml";
+    ViewBag.Heading = Resources.Strings.Pk_Oferta_Heading;
+}
+
+<form id="tfForm" action="@Url.Action("OfrecerPasskey","Acceso")" method="post">
+    @Html.AntiForgeryToken()
+
+    <p class="tf-info"><i class="fas fa-check-circle" style="color:#10b981;"></i>@Resources.Strings.Pk_Oferta_Msg</p>
+
+    <button type="submit" name="accion" value="agregar" class="btn btn-primary" id="btnAgregar">
+        <span class="btn-text">@Resources.Strings.Pk_Oferta_Agregar</span>
+        <i class="fas fa-fingerprint" style="margin-left:8px;"></i>
+    </button>
+
+    <div style="text-align:center; margin-top:.9rem;">
+        <button type="submit" name="accion" value="omitir" class="tf-link" style="width:100%; padding:9px 12px; font-size:.85rem; font-weight:600;">
+            @Resources.Strings.Pk_Oferta_Omitir
+        </button>
+    </div>
+
+    <p class="tf-info" style="margin:.8rem 0 0; font-size:.74rem;">@Resources.Strings.Pk_Oferta_Hint</p>
+</form>

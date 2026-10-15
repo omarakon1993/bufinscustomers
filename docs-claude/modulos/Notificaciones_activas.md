@@ -35,5 +35,9 @@
 | General audit log cleared (full / keep-N-months, all or one company) | `warning` | `AuditoriaController` | `Notif_AuditoriaLimpiada` |
 | Navigation audit log cleared (full / keep-N-months, all or one company; Super Admin only) | `warning` | `InformeNavegacionController` | `Notif_NavegacionLimpiada` |
 | 2FA activated by the user (notifies the user) | `success` | `AccesoController.ConfigurarDobleFactor` | `Notif_2FA_ActivadoTitulo` |
-| Signed in with a 2FA recovery code (notifies the user, remaining codes) | `warning` | `AccesoController.VerificarDobleFactor` | `Notif_2FA_RecuperacionTitulo` |
+| Reset request created by a user (notifies every Super Admin; also emails each Super Admin's registered address) | `warning` | `AccesoController.SolicitarReinicio` | `Notif_SolSeg_NuevaTitulo` |
+| Reset request approved (notifies the user, plus email) | `success` | `SolicitudesSeguridadController.Aprobar` | `Notif_SolSeg_AprobadaTitulo` |
+| Reset request rejected (notifies the user, plus email) | `warning` | `SolicitudesSeguridadController.Rechazar` | `Notif_SolSeg_RechazadaTitulo` |
+| Passkey added by the user (notifies the user) | `success` | `SeguridadController.PasskeyRegistroCompletar` | `Notif_Pk_AgregadaTitulo` |
+| Passkey deleted by the user (notifies the user) | `warning` | `SeguridadController.EliminarPasskey` | `Notif_Pk_EliminadaTitulo` |
 | 2FA reset by a Super Admin (notifies the affected user) | `warning` | `UsuarioController.ReiniciarDobleFactor` | `Notif_2FA_ReiniciadoTitulo` |

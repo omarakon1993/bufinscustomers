@@ -39,6 +39,41 @@ namespace bufinscustomers.Controllers
         /// Alertas del Home, generadas por <c>sp_ObtenerAlertasHome</c> (mismo esquema de hallazgos que
         /// <c>sp_ValidarCargueStaging</c>). Super Admin ve todas las empresas; el resto, su empresa y las de su grupo.
         /// </summary>
+        /// <summary>
+        /// Cantidad de solicitudes de reinicio de métodos de autenticación pendientes (Sql/030). Solo Super Admin:
+        /// el resto recibe ok=false y la tarjeta del Home no se muestra.
+        /// </summary>
+        [HttpGet]
+        public JsonResult ObtenerSolicitudesSeguridad()
+        {
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+                return Json(new { ok = false }, JsonRequestBehavior.AllowGet);
+            try
+            {
+                return Json(new { ok = true, pendientes = new SolicitudReinicioAuthService().ContarPendientes() }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "HomeController.ObtenerSolicitudesSeguridad");
+                return Json(new { ok = false }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        /// <summary>¿Mostrar la franja que invita a configurar una passkey? (ver <see cref="PasskeyAvisoHelper"/>)</summary>
+        [HttpGet]
+        public JsonResult ObtenerAvisoPasskey()
+        {
+            try
+            {
+                return Json(new { ok = true, mostrar = PasskeyAvisoHelper.MostrarAvisoHome(UsuarioSesionHelper.UsuarioActual) }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "HomeController.ObtenerAvisoPasskey");
+                return Json(new { ok = false, mostrar = false }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
         [HttpGet]
         public JsonResult ObtenerAlertas()
         {
