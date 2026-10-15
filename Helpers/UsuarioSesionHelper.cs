@@ -236,6 +236,7 @@ namespace bufinscustomers.Helpers
                 }
             }
 
+            if (usuario != null) usuario.DebeCambiarClave = new bufinscustomers.Services.ClaveInicialService().DebeCambiar(usuario.Id);
             return usuario;
         }
 

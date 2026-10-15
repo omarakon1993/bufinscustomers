@@ -453,6 +453,8 @@ namespace bufinscustomers.Controllers
             if (usuarioCompleto == null) return RedirectToAction("Login");
 
             UsuarioSesionHelper.EstablecerUsuarioEnSesion(usuarioCompleto);
+            if (usuarioCompleto.DebeCambiarClave)
+                return RedirectToAction("CambiarClaveInicial");
             return RedirectToAction("Index", "Home");
         }
 
@@ -696,6 +698,7 @@ namespace bufinscustomers.Controllers
                 }
             }
 
+            if (usuario != null) usuario.DebeCambiarClave = new bufinscustomers.Services.ClaveInicialService().DebeCambiar(usuario.Id);
             return usuario;
         }
 
@@ -879,6 +882,58 @@ namespace bufinscustomers.Controllers
 
             ViewData["Exito"] = true;
             return View("~/Views/Acceso/RestablecerClave.cshtml");
+        }
+
+        // ====== Cambio de contraseña obligatorio (primer inicio de sesión) ======
+        [HttpGet]
+        [bufinscustomers.Permisos.ValidarSesion]
+        public ActionResult CambiarClaveInicial()
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (usuario == null || !usuario.DebeCambiarClave)
+                return RedirectToAction("Index", "Home");
+            return View("~/Views/Acceso/CambiarClaveInicial.cshtml");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [bufinscustomers.Permisos.ValidarSesion]
+        public ActionResult CambiarClaveInicial(string nuevaClave, string confirmarClave)
+        {
+            var usuario = UsuarioSesionHelper.UsuarioActual;
+            if (usuario == null || !usuario.DebeCambiarClave)
+                return RedirectToAction("Index", "Home");
+
+            nuevaClave = (nuevaClave ?? "").Trim();
+            confirmarClave = (confirmarClave ?? "").Trim();
+
+            string error = null;
+            if (nuevaClave.Length == 0) error = R("Reset_NewPwd_ErrorEmpty");
+            else if (nuevaClave != confirmarClave) error = R("Reset_NewPwd_ErrorMatch");
+            else if (!Helpers.PoliticaContrasena.Validar(nuevaClave, usuario.Usuario, out string errClave)) error = R(errClave);
+            else if (VerificarContrasena(nuevaClave, usuario.Clave)) error = R("CambioClaveInicial_ErrorIgual");
+
+            if (error != null)
+            {
+                ViewData["Error"] = error;
+                return View("~/Views/Acceso/CambiarClaveInicial.cshtml");
+            }
+
+            var servicio = new ClaveInicialService();
+            if (!servicio.GuardarClaveYQuitarMarca(usuario.Id, HashearContrasena(nuevaClave)))
+            {
+                ViewData["Error"] = R("CambioClaveInicial_ErrorGuardar");
+                return View("~/Views/Acceso/CambiarClaveInicial.cshtml");
+            }
+
+            usuario.DebeCambiarClave = false;
+            usuario.Clave = HashearContrasena(nuevaClave);
+            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Editar,
+                "Cambio de contraseña obligatorio completado en el primer inicio de sesión",
+                usuario.Id, ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim(), usuario.IdEmpresa);
+
+            SetSuccessMessage(R("CambioClaveInicial_Exito"));
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpGet]

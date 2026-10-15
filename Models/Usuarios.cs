@@ -20,6 +20,8 @@ namespace bufinscustomers.Models
         public ImagenUsuario Imagen { get; set; }
         /// <summary>Acceso a consultas de IA: null = permitido por defecto, false = sin acceso, true = acceso explícito.</summary>
         public bool? AccesoConsultasIA { get; set; }
+        /// <summary>true = debe cambiar la contraseña antes de usar la app (Usuarios.DebeCambiarClave; no se persiste desde el formulario).</summary>
+        public bool DebeCambiarClave { get; set; }
 
     }
 }

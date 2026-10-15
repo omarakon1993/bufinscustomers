@@ -170,6 +170,7 @@
     <Compile Include="Controllers\PermisosController.cs" />
     <Compile Include="Controllers\ReportesController.cs" />
     <Compile Include="Controllers\UsuarioController.cs" />
+    <Compile Include="Filters\CambioClaveObligatorioFilter.cs" />
     <Compile Include="Filters\EmpresasViewBagFilter.cs" />
     <Compile Include="Filters\EscenariosViewBagFilter.cs" />
     <Compile Include="Filters\LoggingHandleErrorAttribute.cs" />
@@ -301,6 +302,7 @@
     <Compile Include="Helpers\InformeCorreoHelper.cs" />
     <Compile Include="Services\PermisosService.cs" />
     <Compile Include="Services\ReportesService.cs" />
+    <Compile Include="Services\ClaveInicialService.cs" />
     <Compile Include="Services\UsuarioService.cs" />
     <Compile Include="Services\EmailService.cs" />
     <Compile Include="Models\CuentaCorreoModels.cs" />
@@ -441,6 +443,7 @@
     <Content Include="Views\Acceso\Login.cshtml" />
     <Content Include="Views\Acceso\SolicitarReset.cshtml" />
     <Content Include="Views\Acceso\RestablecerClave.cshtml" />
+    <Content Include="Views\Acceso\CambiarClaveInicial.cshtml" />
     <Content Include="Views\Configuracion\CuentasCorreo.cshtml" />
     <Content Include="Views\Configuracion\_CuentaCorreoFormFields.cshtml" />
     <Content Include="Views\Datos\CargueExcel.cshtml" />

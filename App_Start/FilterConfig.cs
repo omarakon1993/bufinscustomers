@@ -12,6 +12,7 @@ namespace bufinscustomers
             filters.Add(new LoggingHandleErrorAttribute());
             filters.Add(new EmpresasViewBagFilter()); // <-- Aquí agregas tu filtro
             filters.Add(new EscenariosViewBagFilter()); // puebla ViewBag.Escenarios en cada request
+            filters.Add(new CambioClaveObligatorioFilter()); // fuerza el cambio de clave pendiente (primer inicio de sesión)
             filters.Add(new RegistroNavegacionFilter()); // registra las visitas a páginas (AuditoriaNavegacion)
         }
     }

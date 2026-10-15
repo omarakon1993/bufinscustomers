@@ -324,7 +324,7 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
-        public ActionResult Registrar(Usuarios oUsuario, HttpPostedFileBase ImagenUsuario)
+        public ActionResult Registrar(Usuarios oUsuario, HttpPostedFileBase ImagenUsuario, bool ExigirCambioClave = false)
         {
             bool registrado;
             string mensaje;
@@ -440,6 +440,10 @@ namespace bufinscustomers.Controllers
                     AsignarPermisosPorDefecto(usuarioId, oUsuario.Admin);
                 }
 
+                // Cambio de clave obligatorio en el primer inicio de sesión (opcional)
+                if (ExigirCambioClave && usuarioId > 0 && !new ClaveInicialService().Marcar(usuarioId, true))
+                    SetInfoMessage(R("Usr_ExigirCambioClaveNoAplicado"));
+
                 // Procesar imagen si se cargó una y el usuario se registró correctamente
                 if (ImagenUsuario != null && ImagenUsuario.ContentLength > 0 && usuarioId > 0)
                 {
@@ -457,7 +461,7 @@ namespace bufinscustomers.Controllers
                 new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_UsuarioCreado"), $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim(), "success", "/Usuario/Usuarios");
                 new AuditoriaService().RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Crear,
                     "Usuarios", usuarioId.ToString(),
-                    $"Usuario creado: {oUsuario.Correo} (rol {oUsuario.Admin})", null,
+                    $"Usuario creado: {oUsuario.Correo} (rol {oUsuario.Admin}){(ExigirCambioClave ? ", cambio de clave obligatorio al primer ingreso" : "")}", null,
                     new { Id = usuarioId, oUsuario.Nombre, oUsuario.Apellidos, oUsuario.Correo, oUsuario.Usuario, oUsuario.Admin, oUsuario.IdEmpresa },
                     idEmpresa: oUsuario.IdEmpresa);
                 EnviarCorreoBienvenida(oUsuario);
