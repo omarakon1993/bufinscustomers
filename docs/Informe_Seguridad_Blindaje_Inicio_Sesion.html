@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentación: Blindaje del inicio de sesión · Doble factor</title>
+
+<style>
+:root{--bg:#f6f5fb;--card:#fff;--ink:#1c1738;--ink2:#5b5678;--line:#e3e0f1;--brand:#583aff;--chip:#efecff;--ok:#15803d;--warn:#a16207;--mid:#c2410c;--bad:#b91c1c;--grad:linear-gradient(90deg,#6366F1 0%,#3B82F6 35%,#06B6D4 70%,#01E1D7 100%)}
+@media (prefers-color-scheme:dark){:root{--bg:#120a2b;--card:#1a1240;--ink:#efecff;--ink2:#a9a3cc;--line:#2d2460;--brand:#8f7bff;--chip:#271d5c;--ok:#3ddc97;--warn:#fbbf24;--mid:#fb923c;--bad:#ff7a6b}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "Segoe UI",system-ui,sans-serif}
+header{background:var(--grad);color:#fff;padding:34px 18px 28px}.w{max-width:1040px;margin:0 auto;padding:0 18px}
+header h1{margin:0 0 6px;font-size:27px}header p{margin:0;opacity:.95;max-width:720px}
+nav{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}nav .w{display:flex;gap:6px;overflow-x:auto;padding-top:8px;padding-bottom:8px}
+nav a{white-space:nowrap;text-decoration:none;color:var(--ink2);font-size:13px;padding:5px 10px;border-radius:999px}nav a:hover{background:var(--chip);color:var(--ink)}
+section{margin:34px 0}h2{font-size:21px;margin:0 0 6px}h3{font-size:16px;margin:20px 0 8px;color:var(--brand)}
+.lead{color:var(--ink2);margin:0 0 12px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px}
+.g2{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:760px){.g2{grid-template-columns:1fr}}
+.g3{display:grid;gap:12px;grid-template-columns:repeat(3,minmax(0,1fr))}@media(max-width:860px){.g3{grid-template-columns:1fr}}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{background:var(--grad);color:#fff;text-align:left;padding:8px 10px;white-space:nowrap}td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
+td.n{font-weight:700;white-space:nowrap}td.f{font-family:Consolas,monospace;font-size:12.5px}td.r{color:var(--ink2);font-size:12.5px}
+.note{border-left:4px solid #d97706;background:var(--card);padding:10px 14px;border-radius:8px;color:var(--ink2);margin:14px 0}
+.note.ok{border-left-color:#16a34a}.note.info{border-left-color:var(--brand)}.note.bad{border-left-color:#dc2626}
+.ficha{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 16px;margin:10px 0}.ficha h4{margin:0 0 4px;font-size:15px}.ficha .fam{font-size:11px;color:var(--brand);font-weight:700;margin-left:8px;text-transform:uppercase}
+.ficha p{margin:4px 0;color:var(--ink2);font-size:13.5px}.regla{border-left:3px solid var(--brand);padding-left:10px;color:var(--ink)!important}
+code{background:var(--chip);padding:1px 6px;border-radius:6px;font-size:12.5px}ul{padding-left:20px;color:var(--ink2)}li{margin:3px 0}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 14px;margin:8px 0}summary{cursor:pointer;font-weight:700}
+details p{color:var(--ink2);margin:8px 0}
+/* Complementos del mismo sistema visual (pasos numerados, etiquetas de estado, diagrama de flujo) */
+ol.steps{list-style:none;counter-reset:s;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+ol.steps li{counter-increment:s;position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px 10px 50px;margin:0;color:var(--ink)}
+ol.steps li::before{content:counter(s);position:absolute;left:12px;top:9px;width:26px;height:26px;border-radius:50%;background:var(--brand);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+ol.steps li b{display:block}ol.steps li span{color:var(--ink2);font-size:13.5px}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;vertical-align:middle;background:var(--chip);color:var(--brand)}
+.tag.ok{background:rgba(22,163,74,.14);color:var(--ok)}.tag.warn{background:rgba(217,119,6,.15);color:var(--warn)}.tag.no{background:rgba(220,38,38,.13);color:var(--bad)}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:12px 0 6px}
+.node{flex:1 1 170px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13.5px;text-align:center}
+.node b{display:block;margin-bottom:2px}.node span{color:var(--ink2);font-size:12.5px}
+.node.hi{border-color:var(--brand);background:var(--chip)}.node.go{border-color:#16a34a}
+.arrow{align-self:center;color:var(--ink2);font-weight:700}@media(max-width:560px){.arrow{display:none}}
+.k{font-family:Consolas,monospace;background:var(--chip);padding:1px 6px;border-radius:6px;font-size:12.5px}
+@media print{nav{display:none}header{background:#583aff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.card,.ficha,details,.node,ol.steps li{break-inside:avoid}details>*{display:block}}
+</style></head><body>
+<header><div class="w"><h1>Blindaje del inicio de sesión · Doble factor</h1><p>Cómo se protege el acceso a Bufins Customers: doble factor con app autenticadora y con passkeys, qué pasa si un usuario pierde sus métodos y cómo se administra. Actualizado el 15 de octubre de 2026.</p></div></header>
+<nav><div class="w"><a href="#resumen">Resumen</a><a href="#base">Protecciones base</a><a href="#doblefactor">Doble factor</a><a href="#app">App autenticadora</a><a href="#passkey">Passkeys</a><a href="#login">Cómo se entra</a><a href="#perdida">Si pierdo mis métodos</a><a href="#admin">Administración</a><a href="#decisiones">Decisiones</a><a href="#estado">Estado y pendientes</a><a href="#faq">Preguntas frecuentes</a><a href="#tecnico">Anexo técnico</a></div></nav>
+<main class="w">
+
+<section id="resumen"><h2>1. Resumen</h2>
+<p class="lead">Antes, quien tuviera la contraseña de un usuario podía entrar. Ahora, además de la contraseña, se pide un <b>segundo paso</b> que solo el dueño de la cuenta puede dar.</p>
+<div class="g2">
+<div class="card"><b>Segundo paso al entrar</b><ul><li>Con la contraseña correcta todavía no se abre la sesión.</li><li>Primero hay que confirmar con la app autenticadora o con una passkey.</li></ul></div>
+<div class="card"><b>Dos alternativas que conviven</b><ul><li>La app autenticadora es el método base y obligatorio.</li><li>La passkey (huella, rostro o PIN) es un método adicional opcional; se puede entrar con cualquiera de las dos.</li></ul></div>
+<div class="card"><b>Recuperación controlada</b><ul><li>Sin códigos de recuperación, a propósito.</li><li>Si alguien pierde sus métodos, envía una solicitud y un Super Admin la aprueba tras verificar su identidad.</li></ul></div>
+<div class="card"><b>Se administra desde la configuración</b><ul><li>Se enciende y se amplía (primero Super Admin, luego todos) sin tocar código.</li><li>Todo desde Configuraciones generales BUFINS.</li></ul></div></div>
+<p class="note"><b>Estado actual.</b> El doble factor con app autenticadora está desarrollado y publicado en el repositorio, <b>apagado por defecto</b> hasta que se active en cada entorno. Las passkeys también están desarrolladas y apagadas por defecto; su validación con dispositivos reales (Windows Hello, celular, llave USB) está pendiente de las pruebas del equipo.</p></section>
+
+<section id="base"><h2>2. Protecciones que ya existían</h2>
+<p class="lead">El doble factor se suma a una base sólida que ya estaba funcionando. Estas capas siguen activas.</p>
+<div class="tw"><table><tr><th>Protección</th><th>Cómo funciona</th></tr>
+<tr><td class="n">Contraseñas cifradas</td><td>Se guardan con BCrypt; no se pueden leer aunque alguien acceda a la base de datos.</td></tr>
+<tr><td class="n">Contraseñas exigentes</td><td>Mínimo 12 caracteres con mayúscula, minúscula, número y símbolo; se rechazan las que aparecen en filtraciones conocidas de Internet.</td></tr>
+<tr><td class="n">Cambio de contraseña en el primer ingreso</td><td>Al crear un usuario se puede exigir que defina su propia contraseña la primera vez que entre.</td></tr>
+<tr><td class="n">Bloqueo de cuenta</td><td>5 intentos fallidos bloquean 15 minutos; 10, 1 hora; 15, 24 horas.</td></tr>
+<tr><td class="n">Límite por IP y modo defensivo</td><td>Una IP con demasiados fallos queda bloqueada; si hay un pico de ataques en todo el sistema, el límite se endurece solo y avisa a los administradores.</td></tr>
+<tr><td class="n">Mensaje y tiempo de respuesta uniformes</td><td>Nadie puede averiguar qué correos existen, ni por el texto del error ni por la velocidad de la respuesta.</td></tr>
+<tr><td class="n">HTTPS, cabeceras y cookies protegidas</td><td>Las cookies no son accesibles desde JavaScript y solo viajan cifradas.</td></tr>
+<tr><td class="n">Auditoría de accesos</td><td>Cada inicio de sesión (correcto, fallido o bloqueado) queda registrado con IP y fecha, sin llenar la bitácora de ruido de bots.</td></tr>
+<tr><td class="n">Recuperación de contraseña</td><td>Enlace de un solo uso que caduca en 1 hora y nunca revela si el correo existe.</td></tr>
+<tr><td class="n">Sesión</td><td>Se cierra tras 20 minutos sin actividad y su identificador se renueva al entrar.</td></tr></table></div></section>
+
+<section id="doblefactor"><h2>3. El doble factor, explicado simple</h2>
+<p class="lead">Es pedir <b>dos pruebas distintas</b> de que eres tú: algo que <b>sabes</b> (tu contraseña) y algo que <b>tienes</b> (tu celular o tu dispositivo). Un atacante que robe tu contraseña no tiene tu celular.</p>
+<p class="note info"><b>Por qué importa tanto aquí.</b> Bufins maneja información financiera de empresas. Si roban la contraseña de un administrador, sin el segundo paso no pueden entrar: es la mejora de mayor impacto sobre el acceso.</p>
+<h3>Las dos alternativas</h3>
+<div class="g2">
+<div class="ficha"><h4>App autenticadora <span class="fam">Método base · obligatorio</span></h4>
+<p>Una app en tu celular (Google Authenticator, Microsoft Authenticator, Authy…) que muestra un código de 6 dígitos que cambia cada 30 segundos.</p>
+<ul><li>Funciona sin internet en el celular.</li><li>Es lo primero que se pide al entrar.</li><li>Se configura una sola vez, en el primer ingreso.</li></ul></div>
+<div class="ficha"><h4>Passkey <span class="fam">Método adicional · opcional</span></h4>
+<p>Entras con la huella, el rostro o el PIN de tu dispositivo (o con una llave USB de seguridad), sin escribir ningún código.</p>
+<ul><li>Más rápido: un toque o una mirada.</li><li>Muy resistente a páginas falsas de phishing.</li><li>Se agrega después, desde «Seguridad» en el menú del usuario.</li></ul></div></div>
+<p class="lead" style="margin-top:12px">Un usuario puede tener solo la app, o la app y una o varias passkeys. La app autenticadora no se puede quitar: así siempre queda al menos un método activo.</p></section>
+
+<section id="app"><h2>4. Alternativa 1: app autenticadora</h2>
+<p class="lead">Cómo se configura y cómo se usa día a día.</p>
+<h3>Primera vez (configuración, una sola vez)</h3>
+<ol class="steps">
+<li><b>Entras con tu usuario y contraseña.</b><span>Como siempre. Si es tu primer ingreso con el doble factor activo, el sistema te lleva a configurarlo antes de dejarte pasar.</span></li>
+<li><b>Instalas una app autenticadora en tu celular.</b><span>Cualquiera estándar sirve (Google Authenticator, Microsoft Authenticator, Authy).</span></li>
+<li><b>Escaneas el código QR que muestra la pantalla.</b><span>Si no puedes escanear, la pantalla también muestra una clave para escribirla a mano en la app.</span></li>
+<li><b>Escribes el código de 6 dígitos que muestra la app.</b><span>Así se confirma que quedó bien configurada. Desde ese momento tu cuenta está protegida.</span></li></ol>
+<h3>Cada vez que entras</h3>
+<ol class="steps">
+<li><b>Escribes usuario y contraseña.</b><span>Si son correctos, todavía no se abre tu sesión.</span></li>
+<li><b>Abres la app y escribes el código de 6 dígitos vigente.</b><span>El código cambia cada 30 segundos, así que uno viejo no sirve.</span></li>
+<li><b>Listo, entras.</b><span>El sistema registra el acceso en la auditoría.</span></li></ol>
+<h3>Qué lo hace seguro</h3>
+<div class="tw"><table><tr><th>Control</th><th>Qué significa</th></tr>
+<tr><td class="n">Código de un solo uso</td><td>Aunque alguien lo vea por encima del hombro, ese mismo código no vale una segunda vez.</td></tr>
+<tr><td class="n">Secreto cifrado</td><td>El secreto de tu cuenta se guarda cifrado en el servidor; nunca en texto legible.</td></tr>
+<tr><td class="n">Máximo 5 intentos</td><td>Con 5 códigos incorrectos se cancela el intento y hay que volver a escribir la contraseña. Cada fallo además suma al límite por IP.</td></tr>
+<tr><td class="n">Sin sesión hasta el segundo paso</td><td>La contraseña sola no abre nada: la sesión se crea únicamente después de validar el código.</td></tr>
+<tr><td class="n">Estándar abierto</td><td>TOTP (RFC 6238), implementado sin librerías externas y verificado contra los vectores de prueba oficiales del estándar.</td></tr>
+<tr><td class="n">Aviso al activarlo</td><td>Al activar el doble factor el usuario recibe una notificación y un correo; si no fue él, puede reaccionar de inmediato.</td></tr></table></div></section>
+
+<section id="passkey"><h2>5. Alternativa 2: passkeys</h2>
+<p class="lead">Una passkey es una llave digital guardada en tu dispositivo y protegida por tu huella, tu rostro o tu PIN. Reemplaza el código de 6 dígitos con un gesto que ya haces a diario para desbloquear tu equipo.</p>
+<p class="note ok"><b>Tu huella o tu rostro nunca llegan a Bufins.</b> La verificación se hace dentro de tu dispositivo; el sistema solo recibe una firma que demuestra que tu dispositivo autorizó el ingreso.</p>
+<h3>Cómo agregar una passkey</h3>
+<ol class="steps">
+<li><b>Abres «Seguridad» en el menú de tu usuario.</b><span>También te lo ofrecen justo después de configurar la app, con una franja en el inicio y con una etiqueta «Nuevo» junto a «Seguridad».</span></li>
+<li><b>Pulsas «Agregar passkey» y le pones un nombre.</b><span>Por ejemplo «Mi laptop» o «Llave USB».</span></li>
+<li><b>Confirmas con el código actual de tu app autenticadora.</b><span>Una reconfirmación de seguridad: así una sesión abierta que alguien robe no puede registrar una passkey propia.</span></li>
+<li><b>Tu dispositivo te pide huella, rostro o PIN.</b><span>Al confirmarlo, la passkey queda registrada y recibes una notificación y un correo.</span></li></ol>
+<p class="lead" style="margin-top:10px">Puedes tener hasta 5 passkeys (límite configurable por el administrador): por ejemplo, la de tu laptop, la de tu celular y una llave USB de respaldo.</p>
+<h3>Cómo se usa para entrar</h3>
+<ol class="steps">
+<li><b>Escribes usuario y contraseña.</b><span>Igual que siempre.</span></li>
+<li><b>En la pantalla de verificación pulsas «Usar passkey».</b><span>Aparece debajo del campo del código, como alternativa.</span></li>
+<li><b>Confirmas con huella, rostro o PIN y entras.</b><span>Sin escribir ningún código.</span></li></ol>
+<h3>Qué la hace especialmente segura</h3>
+<div class="tw"><table><tr><th>Control</th><th>Qué significa</th></tr>
+<tr><td class="n">Resistente al phishing</td><td>Una passkey solo funciona en el dominio real de Bufins; una página falsa que imite al login no puede obtener una firma válida.</td></tr>
+<tr><td class="n">Verificación del usuario</td><td>Siempre exige huella, rostro o PIN: no basta con que otra persona tenga el dispositivo desbloqueado.</td></tr>
+<tr><td class="n">Un reto distinto por ingreso</td><td>Cada firma es de un solo uso; una firma capturada no se puede reproducir.</td></tr>
+<tr><td class="n">Cambios con reconfirmación</td><td>Agregar o quitar una passkey exige el código de la app, y el usuario recibe aviso por notificación y correo en ambos casos.</td></tr>
+<tr><td class="n">Dispositivos compatibles</td><td>Windows Hello, Touch ID / Face ID, celulares Android y llaves de seguridad USB (algoritmos ES256 y RS256).</td></tr></table></div>
+<p class="note"><b>Requisitos y cuidados.</b> Las passkeys necesitan que el sitio se sirva por HTTPS y están ligadas al dominio: si algún día cambia la dirección del sitio, las passkeys ya registradas dejan de servir y cada usuario tendría que volver a registrarlas. Por eso el dominio se fija antes de activarlas.</p></section>
+
+<section id="login"><h2>6. Cómo queda el ingreso con las dos alternativas</h2>
+<p class="lead">La app autenticadora es siempre la primera opción en pantalla; la passkey aparece como alternativa.</p>
+<div class="flow">
+<div class="node"><b>1. Usuario y contraseña</b><span>Con límites por IP y bloqueo de cuenta</span></div><div class="arrow">→</div>
+<div class="node hi"><b>2. Segundo paso</b><span>Código de la app<br>o «Usar passkey»</span></div><div class="arrow">→</div>
+<div class="node go"><b>3. Se abre la sesión</b><span>Y queda auditado el acceso</span></div></div>
+<p class="lead">Hasta que el paso 2 se completa, no existe sesión: nadie ve ni una pantalla de la aplicación.</p>
+<div class="tw"><table><tr><th>Situación del usuario</th><th>Qué ve al entrar</th></tr>
+<tr><td class="n">Aún no tiene el doble factor</td><td>Pantalla para configurar la app autenticadora (QR); después, la oferta de agregar una passkey.</td></tr>
+<tr><td class="n">Solo tiene la app</td><td>Campo para el código de 6 dígitos.</td></tr>
+<tr><td class="n">Tiene app y passkey</td><td>Campo para el código y, debajo, el botón «Usar passkey»: elige el que prefiera.</td></tr>
+<tr><td class="n">Perdió sus métodos</td><td>Enlace «No puedo acceder a mis métodos de autenticación» (ver la sección siguiente).</td></tr></table></div></section>
+
+<section id="perdida"><h2>7. Si un usuario pierde sus métodos</h2>
+<p class="lead">Perder el celular o cambiar de equipo es normal. La recuperación está diseñada para ser segura: <b>no hay una puerta trasera que un atacante pueda usar por su cuenta</b>.</p>
+<p class="note info"><b>Decisión de diseño: sin códigos de recuperación.</b> Los códigos de respaldo (que otros sistemas entregan al usuario) son cómodos, pero cualquiera que los obtenga puede saltarse el segundo factor. Preferimos que la recuperación pase siempre por una persona que verifica la identidad.</p>
+<h3>El camino de recuperación</h3>
+<ol class="steps">
+<li><b>El usuario pide ayuda desde la misma pantalla de verificación.</b><span>Pulsa «No puedo acceder a mis métodos de autenticación», deja un teléfono de contacto y un mensaje. Solo se puede pedir después de escribir la contraseña correcta: así nadie puede usarlo para averiguar qué usuarios existen ni para llenar la bandeja de solicitudes.</span></li>
+<li><b>Se avisa a todos los Super Admin.</b><span>Notificación dentro de la aplicación, un correo a la dirección registrada de cada Super Admin y una tarjeta amarilla en el inicio. El correo solo avisa: <u>no trae un botón para aprobar</u>, así un correo falso o robado no puede ejecutar el reinicio.</span></li>
+<li><b>Un Super Admin verifica la identidad por otro canal.</b><span>Una llamada o videollamada. La bandeja «Solicitudes de seguridad» le muestra la evidencia: empresa, teléfono, mensaje, IP y navegador desde donde se pidió.</span></li>
+<li><b>Aprueba y reinicia, o rechaza.</b><span>Para aprobar debe marcar que verificó la identidad. Al aprobar se borran la app autenticadora y las passkeys de ese usuario. Nadie puede resolver su propia solicitud.</span></li>
+<li><b>El usuario recibe un correo y vuelve a configurar todo.</b><span>En su siguiente ingreso configura una app nueva (y, si quiere, passkeys nuevas).</span></li></ol>
+<h3>Otros controles de esta parte</h3>
+<div class="tw"><table><tr><th>Control</th><th>Qué significa</th></tr>
+<tr><td class="n">Una solicitud pendiente por usuario</td><td>Pedir varias veces no genera más avisos.</td></tr>
+<tr><td class="n">Todo auditado</td><td>Quién pidió, quién aprobó o rechazó, cuándo y con qué nota.</td></tr>
+<tr><td class="n">Reinicio directo</td><td>En el gestor de usuarios hay un botón «Reiniciar métodos de autenticación» para casos en que el administrador ya verificó la identidad por su cuenta; también avisa por correo al usuario.</td></tr></table></div>
+<p class="note bad"><b>Recomendación importante: mantener al menos dos Super Admin.</b> Como la recuperación depende de un Super Admin, si el único Super Admin pierde sus métodos no tendría quién lo reinicie. Para ese caso extremo existe un procedimiento de emergencia directamente en la base de datos (script <span class="k">026b</span>), pero la mejor protección es tener dos personas con ese rol.</p></section>
+
+<section id="admin"><h2>8. Cómo se administra</h2>
+<p class="lead">Todo se maneja desde <b>Configuraciones generales BUFINS</b> (pestaña General), sin pedir cambios de código ni reiniciar el sistema. Los cambios se aplican en menos de un minuto.</p>
+<div class="tw"><table><tr><th>Qué quiero hacer</th><th>Parámetro</th><th>Valores</th></tr>
+<tr><td class="n">Encender o apagar el doble factor</td><td class="f">TwoFactorHabilitado</td><td class="f">true / false</td></tr>
+<tr><td class="n">Definir a quién le aplica</td><td class="f">TwoFactorAlcance</td><td class="f">superadmin (hoy) / todos</td></tr>
+<tr><td class="n">Permitir passkeys</td><td class="f">PasskeysHabilitado</td><td class="f">true / false</td></tr>
+<tr><td class="n">Máximo de passkeys por usuario</td><td class="f">PasskeysMaximoPorUsuario</td><td>1 a 20 (por defecto 5)</td></tr>
+<tr><td class="n">Dominio para las passkeys</td><td class="f">WebAuthnRpId</td><td>El dominio del sitio, sin https ni puerto</td></tr></table></div>
+<h3>Despliegue por fases (recomendado)</h3>
+<ol class="steps">
+<li><b>Hoy: solo Super Admin.</b><span>El doble factor se enciende con alcance «superadmin»; los demás usuarios entran como siempre. Sirve para probar con las personas que más cuidado exigen.</span></li>
+<li><b>Probar la recuperación.</b><span>Antes de ampliar, ejecutar una solicitud de reinicio completa y confirmar que el ciclo funciona.</span></li>
+<li><b>Ampliar a todos.</b><span>Cambiar el alcance a «todos». Cada usuario configurará su app en su siguiente ingreso. Conviene avisarles antes y entregarles un instructivo corto.</span></li>
+<li><b>Passkeys.</b><span>Activarlas cuando el dominio definitivo esté fijado y las pruebas con dispositivos reales hayan salido bien.</span></li></ol>
+<h3>Cómo se enteran los usuarios de las passkeys</h3>
+<div class="tw"><table><tr><th>Dónde</th><th>Qué ve el usuario</th></tr>
+<tr><td class="n">Tras configurar la app</td><td>Se les propone agregar una passkey («Agregar ahora» / «Ahora no»).</td></tr>
+<tr><td class="n">Franja en el inicio</td><td>«Entra más rápido y seguro con una passkey», con «Configurar ahora», «Más tarde» (vuelve a aparecer en 7 días) y «No volver a mostrar».</td></tr>
+<tr><td class="n">Menú del usuario</td><td>Etiqueta «Nuevo» junto a «Seguridad» mientras no tenga ninguna passkey.</td></tr></table></div>
+<h3>Rastro y avisos</h3>
+<div class="tw"><table><tr><th>Qué</th><th>Detalle</th></tr>
+<tr><td class="n">Auditoría</td><td>Activación del doble factor, códigos incorrectos, ingresos con passkey, altas y bajas de passkeys, solicitudes de reinicio y su resolución.</td></tr>
+<tr><td class="n">Avisos al usuario</td><td>Notificación y correo cada vez que cambia algo de su seguridad: activa el doble factor, agrega o elimina una passkey, le reinician los métodos o resuelven su solicitud.</td></tr>
+<tr><td class="n">Avisos a los Super Admin</td><td>Por cada solicitud de reinicio nueva, además de la tarjeta en el inicio.</td></tr></table></div></section>
+
+<section id="decisiones"><h2>9. Qué decidimos (y qué descartamos)</h2>
+<p class="lead">Evaluamos otros métodos de segundo factor; esta es la conclusión.</p>
+<div class="tw"><table><tr><th>Método</th><th>Decisión</th><th>Motivo</th></tr>
+<tr><td class="n">App autenticadora (TOTP)</td><td><span class="tag ok">Se usa</span></td><td>Seguro, gratuito, estándar, funciona sin internet en el celular.</td></tr>
+<tr><td class="n">Passkeys (huella, rostro, PIN, llave USB)</td><td><span class="tag ok">Se usa (opcional)</span></td><td>Lo más seguro disponible y el más cómodo; resistente al phishing.</td></tr>
+<tr><td class="n">SMS</td><td><span class="tag no">Descartado</span></td><td>Vulnerable al cambio fraudulento de SIM y a la intercepción; tiene costo por mensaje y depende de un proveedor externo.</td></tr>
+<tr><td class="n">Código por correo</td><td><span class="tag no">Descartado</span></td><td>Es el mismo canal que recupera la contraseña: quien comprometa el correo obtendría ambos factores.</td></tr>
+<tr><td class="n">Códigos de recuperación</td><td><span class="tag no">Descartados</span></td><td>Cualquiera que los obtenga se salta el segundo factor; se reemplazan por la solicitud aprobada por un Super Admin.</td></tr>
+<tr><td class="n">Reconocimiento facial propio</td><td><span class="tag">Vía passkeys</span></td><td>El rostro lo procesa el dispositivo del usuario (Face ID, Windows Hello); Bufins nunca recibe ni guarda datos biométricos.</td></tr></table></div></section>
+
+<section id="estado"><h2>10. Estado y pendientes</h2>
+<div class="tw"><table><tr><th>Componente</th><th>Estado</th></tr>
+<tr><td class="n">Doble factor con app autenticadora</td><td><span class="tag ok">Desarrollado</span> Apagado por defecto; se activa por configuración.</td></tr>
+<tr><td class="n">Configuración y reinicio por Super Admin</td><td><span class="tag ok">Desarrollado</span></td></tr>
+<tr><td class="n">Solicitudes de reinicio (bandeja, avisos, tarjeta en el inicio)</td><td><span class="tag ok">Desarrollado</span> Pendiente probar el ciclo completo con dos Super Admin.</td></tr>
+<tr><td class="n">Passkeys (registro, ingreso, gestión)</td><td><span class="tag warn">Desarrollado · pendiente de validar</span> Probado con un autenticador simulado; falta validar con dispositivos reales.</td></tr>
+<tr><td class="n">Alcance a todos los usuarios</td><td><span class="tag">Listo para activar</span> Se cambia desde la configuración cuando el equipo lo decida.</td></tr></table></div>
+<h3>Pendientes y próximos pasos</h3>
+<ul>
+<li><b>Validar las passkeys en dispositivos reales</b> (Windows Hello, celular, llave USB) antes de activarlas en producción.</li>
+<li><b>Fijar el dominio definitivo del sitio</b> y registrarlo como dominio de las passkeys.</li>
+<li><b>Contar con al menos dos Super Admin</b> y definir quién atiende las solicitudes de seguridad.</li>
+<li><b>Instructivo corto para usuarios</b> antes de ampliar el doble factor a todos.</li>
+<li><b>Opción de exentar usuarios puntuales</b> (por ejemplo, cuentas de servicio) cuando se decida activarlo para todos.</li>
+<li><b>Filtro de entrada (Cloudflare):</b> sigue siendo la recomendación de mayor retorno para frenar el tráfico automatizado antes de que llegue al servidor; no depende del doble factor.</li>
+<li><b>Hosting y versión de .NET:</b> se evaluó migrar a la versión actual de .NET; requiere confirmar con el proveedor de hosting si soporta ASP.NET Core. Las passkeys se construyeron sin dependencias externas para que migren sin cambios.</li></ul></section>
+
+<section id="faq"><h2>11. Preguntas frecuentes</h2>
+<details><summary>¿Y si cambio de celular?</summary><p>Si todavía tienes el celular viejo, puedes agregar una passkey (o configurar la app de nuevo con ayuda del administrador). Si ya no lo tienes, usa «No puedo acceder a mis métodos de autenticación» y un Super Admin te ayudará tras verificar tu identidad.</p></details>
+<details><summary>¿Alguien con mi contraseña puede entrar?</summary><p>No. Sin el segundo paso (el código de tu app o tu passkey) la sesión no se abre. Además, los intentos fallidos se limitan y quedan auditados.</p></details>
+<details><summary>¿Bufins guarda mi huella o mi rostro?</summary><p>No. La huella o el rostro se verifican dentro de tu dispositivo. Bufins solo recibe una firma digital que confirma que tu dispositivo autorizó el ingreso.</p></details>
+<details><summary>¿Puedo usar la app y la passkey a la vez?</summary><p>Sí. Son alternativas: en cada ingreso eliges la que prefieras. La app autenticadora siempre está disponible como método base.</p></details>
+<details><summary>¿Por qué no hay códigos de respaldo?</summary><p>Porque son una llave maestra: quien los consiga puede saltarse el segundo factor. La recuperación pasa por una persona que verifica tu identidad, lo que es más lento pero mucho más seguro.</p></details>
+<details><summary>¿Qué pasa si me piden aprobar algo por correo?</summary><p>Ningún correo de Bufins trae un botón para aprobar reinicios. Los correos solo avisan; la aprobación se hace dentro del sistema, con la sesión de un Super Admin.</p></details>
+<details><summary>¿Quién puede ver mis passkeys?</summary><p>Solo tú, en la sección «Seguridad». Los administradores no ven tus passkeys; solo pueden reiniciar tus métodos si lo solicitas y verifican tu identidad.</p></details></section>
+
+<section id="tecnico"><h2>12. Anexo técnico</h2>
+<p class="lead">Para el equipo que despliega y mantiene la plataforma.</p>
+<h3>Scripts de base de datos (se ejecutan manualmente, en este orden)</h3>
+<div class="tw"><table><tr><th>Script</th><th>Qué hace</th></tr>
+<tr><td class="f">026_Usuarios_2FA</td><td>Columnas del doble factor en <code>Usuarios</code> y el interruptor <code>TwoFactorHabilitado</code> / <code>TwoFactorAlcance</code> (apagado por defecto). Elimina la tabla de códigos de recuperación si una versión anterior la creó.</td></tr>
+<tr><td class="f">026b_2FA_Reiniciar_Usuario</td><td>Reinicio de emergencia por SQL de los métodos de un usuario.</td></tr>
+<tr><td class="f">027_Menu_ConfiguracionesGenerales</td><td>Renombra la opción de menú a «Configuraciones generales BUFINS» (ejecutar junto con el despliegue del código).</td></tr>
+<tr><td class="f">028_ConfiguracionSistema_Tipos</td><td>Tipos (categorías) administrables para los parámetros globales.</td></tr>
+<tr><td class="f">029_UsuarioPasskeys</td><td>Tabla de passkeys y parámetros <code>PasskeysHabilitado</code>, <code>PasskeysMaximoPorUsuario</code> y <code>WebAuthnRpId</code>.</td></tr>
+<tr><td class="f">030_SolicitudesReinicioAuth</td><td>Tabla de solicitudes de reinicio y la opción de menú «Solicitudes de seguridad» (solo Super Admin).</td></tr>
+<tr><td class="f">031_Usuarios_PasskeyAviso</td><td>Columna para recordar «Más tarde / No volver a mostrar» de la franja del inicio.</td></tr>
+<tr><td class="f">032_Menu_DocumentacionBufins</td><td>Opción de menú «Documentación BUFINS» (biblioteca de documentación, solo Super Admin).</td></tr></table></div>
+<p class="lead" style="margin-top:8px">Todos los scripts son compatibles con SQL Server 2012 o superior y se pueden volver a ejecutar sin riesgo. Sin ellos, el sistema sigue funcionando como antes.</p>
+<h3>Detalles de implementación</h3>
+<div class="tw"><table><tr><th>Tema</th><th>Detalle</th></tr>
+<tr><td class="n">TOTP</td><td>RFC 6238 con HMAC-SHA1, 6 dígitos, intervalo de 30 s y tolerancia de ±1 intervalo; implementado con <code>System.Security.Cryptography</code>, sin paquetes externos. El secreto se protege con la clave de máquina del servidor.</td></tr>
+<tr><td class="n">Passkeys (WebAuthn)</td><td>Verificación propia: lector CBOR mínimo + validación de dominio, reto, origen, presencia y verificación del usuario, y firma (ES256 / RS256). Sin validación de marca del autenticador. Sin dependencias NuGet, lo que facilita una futura migración de .NET.</td></tr>
+<tr><td class="n">Estado intermedio del ingreso</td><td>Tras validar la contraseña se guarda un estado pendiente de 5 minutos (cookie protegida, un solo uso); la sesión real solo se crea al completar el segundo paso.</td></tr>
+<tr><td class="n">Reconfirmación</td><td>Agregar o quitar passkeys pide un código TOTP vigente; tras acertar, hay una ventana de 3 minutos para reintentar sin pedir otro.</td></tr>
+<tr><td class="n">Límites</td><td>5 intentos por estado pendiente, límite por IP compartido con el login normal y modo defensivo global.</td></tr>
+<tr><td class="n">Recursos estáticos</td><td>Versionados con <code>?v=fecha</code> para evitar que un script o estilo viejo en la caché del navegador rompa las pantallas nuevas.</td></tr></table></div></section>
+
+</main></body></html>

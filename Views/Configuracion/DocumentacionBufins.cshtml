@@ -1,0 +1,156 @@
+@model System.Collections.Generic.List<bufinscustomers.Helpers.DocumentoBiblioteca>
+@{
+    ViewBag.Title = Resources.Strings.DocBuf_PageTitle;
+    var catList = (System.Collections.Generic.List<bufinscustomers.Controllers.CategoriaDocumentoVM>)ViewBag.Categorias;
+    var disponibles = (System.Collections.Generic.List<string>)ViewBag.Disponibles;
+    bool ingles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
+<style>
+    .dbf-cat { margin-top: 26px; }
+    .dbf-cat > h3 { display: flex; align-items: center; gap: 10px; font-size: 1rem; font-weight: 800; color: #2d3748; margin: 0 0 12px; }
+    .dbf-cat > h3 .ic { width: 30px; height: 30px; border-radius: 8px; background: var(--content-gradient); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: .82rem; }
+    .dbf-cat > h3 .n { font-size: .72rem; font-weight: 700; color: #6b7280; background: #f1f2f8; border-radius: 999px; padding: 2px 10px; }
+    .dbf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+    .dbf-doc { background: #fff; border: 1px solid #e3e6f0; border-radius: 12px; box-shadow: 0 2px 8px rgba(22,9,51,.05); padding: 16px 16px 14px; display: flex; flex-direction: column; transition: box-shadow .15s, border-color .15s; }
+    .dbf-doc:hover { box-shadow: 0 8px 22px rgba(88,58,255,.14); border-color: #cfc8ff; }
+    .dbf-doc h4 { margin: 0 0 6px; font-size: .95rem; font-weight: 800; color: #1f2937; }
+    .dbf-doc p { margin: 0 0 12px; font-size: .82rem; line-height: 1.5; color: #4b5563; flex: 1; }
+    .dbf-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .dbf-badge { display: inline-flex; align-items: center; gap: 5px; font-size: .7rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+    .dbf-badge.gen { background: #eeebff; color: #583AFF; }
+    .dbf-badge.menu { background: #e0f7f6; color: #0b7f79; }
+    .dbf-badge.off { background: #fef2f2; color: #b91c1c; }
+    .dbf-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid #eef0f6; padding-top: 10px; }
+    .dbf-fecha { font-size: .72rem; color: #8a8fa8; }
+    .dbf-vacio { display: none; }
+</style>
+
+<div class="container-fluid px-4">
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-book powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.DocBuf_PageTitle</h1>
+        </div>
+    </div>
+
+    <p class="text-muted mt-3 mb-0" style="font-size:.88rem;"><i class="fas fa-lock mr-1"></i>@Resources.Strings.DocBuf_Hint</p>
+
+    <div class="filter-card mt-3">
+        <h3 class="filter-card-title"><i class="fas fa-filter"></i> @Resources.Strings.Common_FiltrosConsulta</h3>
+        <div class="filter-section">
+            <div class="row">
+                <div class="col-md-5 form-group">
+                    <label><i class="fas fa-search mr-1"></i>@Resources.Strings.DocBuf_Buscar</label>
+                    <input type="text" id="dbfBuscar" class="form-control" placeholder="@Resources.Strings.DocBuf_BuscarPH" autocomplete="off" />
+                </div>
+                <div class="col-md-4 form-group">
+                    <label><i class="fas fa-folder mr-1"></i>@Resources.Strings.DocBuf_Categoria</label>
+                    <select id="dbfCategoria" class="form-control">
+                        <option value="">@Resources.Strings.DocBuf_Todas</option>
+                        @foreach (var c in catList)
+                        {
+                            <option value="@c.Id">@c.Nombre</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3 form-group">
+                    <label><i class="fas fa-sitemap mr-1"></i>@Resources.Strings.DocBuf_Alcance</label>
+                    <select id="dbfAlcance" class="form-control">
+                        <option value="">@Resources.Strings.DocBuf_Todos</option>
+                        <option value="general">@Resources.Strings.DocBuf_AlcanceGeneral</option>
+                        <option value="menu">@Resources.Strings.DocBuf_AlcanceMenu</option>
+                    </select>
+                </div>
+            </div>
+            <div class="btn-group-actions">
+                <button type="button" class="btn btn-modern-secondary" id="dbfLimpiar"><i class="fas fa-eraser mr-2"></i>@Resources.Strings.Common_Limpiar</button>
+                <span class="info-badge" id="dbfTotal">@Model.Count</span>
+            </div>
+        </div>
+    </div>
+
+    @foreach (var c in catList)
+    {
+        var docs = Model.Where(d => d.Categoria == c.Id).OrderBy(d => d.Titulo).ToList();
+        if (!docs.Any()) { continue; }
+        <section class="dbf-cat" data-cat="@c.Id">
+            <h3><span class="ic"><i class="@c.Icono"></i></span>@c.Nombre <span class="n">@docs.Count</span></h3>
+            <div class="dbf-grid">
+                @foreach (var d in docs)
+                {
+                    bool ok = disponibles.Contains(d.Clave);
+                    <article class="dbf-doc" data-cat="@d.Categoria" data-alcance="@(d.EsDeMenu ? "menu" : "general")"
+                             data-buscar="@((d.Titulo + " " + d.Descripcion + " " + d.Menu).ToLowerInvariant())">
+                        <div class="dbf-badges">
+                            @if (d.EsDeMenu)
+                            {
+                                <span class="dbf-badge menu"><i class="fas fa-bars"></i>@Resources.Strings.DocBuf_BadgeMenu: @d.Menu</span>
+                            }
+                            else
+                            {
+                                <span class="dbf-badge gen"><i class="fas fa-globe"></i>@Resources.Strings.DocBuf_BadgeGeneral</span>
+                            }
+                            @if (!ok)
+                            {
+                                <span class="dbf-badge off"><i class="fas fa-exclamation-triangle"></i>@Resources.Strings.DocBuf_NoDisponible</span>
+                            }
+                        </div>
+                        <h4>@d.Titulo</h4>
+                        <p>@d.Descripcion</p>
+                        <div class="dbf-foot">
+                            <span class="dbf-fecha"><i class="far fa-calendar mr-1"></i>@string.Format(Resources.Strings.DocBuf_Actualizado, d.Actualizado.ToString(ingles ? "MMM d, yyyy" : "dd/MM/yyyy"))</span>
+                            <button type="button" class="btn btn-sm btn-modern-gradient dbf-abrir" data-url="@Url.Action("Ver", "DocumentacionBufins", new { clave = d.Clave })" data-titulo="@d.Titulo" @(ok ? "" : "disabled")>
+                                <i class="fas fa-book-open mr-1"></i>@Resources.Strings.DocBuf_Abrir
+                            </button>
+                        </div>
+                    </article>
+                }
+            </div>
+        </section>
+    }
+
+    <div class="no-data-message dbf-vacio" id="dbfVacio">
+        <i class="fas fa-inbox"></i>
+        <h4>@Resources.Strings.DocBuf_SinResultados</h4>
+    </div>
+</div>
+
+@Html.Partial("_DocumentacionVisor", Resources.Strings.DocBuf_PageTitle)
+
+@section scripts {
+    <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/doc-visor.js")"></script>
+    <script>
+        (function () {
+            function filtrar() {
+                var q = $.trim($('#dbfBuscar').val()).toLowerCase(), cat = $('#dbfCategoria').val(), al = $('#dbfAlcance').val(), total = 0;
+                $('.dbf-doc').each(function () {
+                    var $d = $(this);
+                    var ok = (!q || String($d.data('buscar')).indexOf(q) >= 0) && (!cat || $d.data('cat') === cat) && (!al || $d.data('alcance') === al);
+                    $d.toggle(ok);
+                    if (ok) total++;
+                });
+                $('.dbf-cat').each(function () {
+                    var visibles = $(this).find('.dbf-doc:visible').length;
+                    $(this).toggle(visibles > 0);
+                    $(this).find('h3 .n').text(visibles);
+                });
+                $('#dbfTotal').text(total);
+                $('#dbfVacio').toggle(total === 0);
+            }
+            $('#dbfBuscar').on('input', filtrar);
+            $('#dbfCategoria, #dbfAlcance').on('change', filtrar);
+            $('#dbfLimpiar').on('click', function () { $('#dbfBuscar').val(''); $('#dbfCategoria').val(''); $('#dbfAlcance').val(''); filtrar(); });
+
+            // Mismo visor (modal) que la documentación de los informes: se abre el documento elegido.
+            $(document).on('click', '.dbf-abrir', function () {
+                var $b = $(this);
+                if ($b.prop('disabled')) return;
+                DocVisor.abrirUrl($b.data('url'), $b.data('titulo'), $b);
+            });
+        })();
+    </script>
+}
