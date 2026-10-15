@@ -1,0 +1,16 @@
+<!-- Detalle técnico extraído de CLAUDE.md. Si cambias este informe, actualiza este archivo (y la documentación HTML si aplica). -->
+
+# Balance General Gerencial
+
+Segundo informe gerencial (mismos estilos `.pyg2-*`/`.lt-*`; `informe-balance.css` solo agrega el badge de cuadre). Estructura del balance con **Saldo al corte, % vertical (sobre activo total), comparativo, Var. $ y Var. %**, 4 KPIs, chequeo de cuadre, 2 barras apiladas de estructura, 3 tendencias e insights de IA.
+
+- **Es una FOTO, no un flujo**: no hay Período/Acumulado; el valor es el saldo al **mes de corte** (extremo derecho del slider). El resto del rango solo alimenta las 3 tendencias. Nunca se suman meses.
+- **Fuente**: `dbo.ModeloBalance` (no ejecuta `sp_ModeloBalance`) con `LEFT JOIN dbo.REL_Balance r ON r.Id = m.Ord`. No tiene columnas de presupuesto → **no compara contra presupuesto** (`ModeloBalancePpto` queda para una fase futura).
+- **Comparativo** (`FiltrosBalance.Comparar`): `cierreAnterior` (31-dic, default, estándar NIC1/NIIF Pymes) | `mesAnterior` | `mismoMesAnioAnterior`. Sin datos en el comparativo (`HayComparativo=false`) se muestra el saldo sin variación ("—").
+- **Literales confirmados contra la BD** (`REL_Balance` con `Tipo='CALCULO'`): `"Total Activo"`, `"Total activo corriente"`, `"Total activo no corriente"`, `"Total pasivo"`, `"Total pasivo corriente"`, `"Total pasivo no corriente"`, `"Total patrimonio"` (constantes `Desc*` en `InformeBalanceService`). `REL_Balance` también trae `"Total pasivo + patrimonio"` (Id 362), que el servicio no usa (suma las dos partes).
+- **Chequeo de cuadre**: badge "Activo = Pasivo + Patrimonio" o "Descuadre de $X" (`CuadraBalance`/`DiferenciaCuadre`, tolerancia 1 peso). Segundo badge opcional contra la utilidad neta acumulada de `ModeloPYG` vs la línea `DescResultadoEjercicio` del balance; si esa línea no existe (`HayComparacionPYG=false`) se omite sin romper nada.
+- **Color de variaciones** (`BalanceFilaReporte.EsPasivo`): pasivo si `CuentaPUC` empieza en "2"; en subtotales sin cuenta, por "pasivo" sin "patrimonio" en la descripción. Más pasivo = desfavorable; más activo/patrimonio = favorable. Rige también "Lo más relevante" (top 4 por impacto absoluto).
+- **KPIs** (`BalanceKpi`): Activo total, Capital de trabajo (AC − PC), Razón corriente (`"1,8x"`, `NoAplica` si PC = 0) y Endeudamiento total (Pasivo/Activo, `NoAplica` si Activo = 0). Sube es favorable salvo Endeudamiento (`_bal.kpiFavorableSiSube`).
+- **Tendencias**: Capital de trabajo, Razón corriente y Endeudamiento; con Trimestre/Año cada punto es la foto del **último mes con datos del grupo** (`ArmarTendencia`), a diferencia del PYG que suma.
+- **Insights IA**: `RESUMEN_BALANCE_GERENCIAL` (sin fila → por defecto del controlador), 3 líneas "Liquidez:" / "Solvencia:" / "Capital de trabajo:". Registro `NombreTabla = "Balance Gerencial"`.
+- **Pendiente manual**: opción de menú `INFORMES_BALANCE_GERENCIAL` vía `/MenuOpciones`. **Fuera de alcance**: comparación contra presupuesto, indicadores de actividad/rentabilidad (hoy cubiertos por el Informe de indicadores), semáforos por sector y consolidación de grupo.
