@@ -8,3 +8,6 @@ Pantalla **Configuracion > Datos del Observatorio** (`ObservatorioDatosControlle
 - **Despliegue del .exe:** viaja solo en `bin\` al publicar el portal (compilar con el repo `bufinsweb` presente). Si no esta, compilar `bufinsweb\Tools\ObservatorioEtl` y copiar la salida a `App_Data\ObservatorioEtl\` o indicar la ruta en la pantalla.
 - **Seguridad:** POST con anti-forgery, auditado (`AuditoriaTipo.Configuracion` / `AuditoriaAccion.Ejecutar`, entidad `ObservatorioDatos`). Sin tablas ni scripts SQL (no hay fila de menu).
 - **Textos:** claves `ObsDatos_*` en `Strings.resx` y `Strings.en-US.resx`.
+
+## Uso del Observatorio
+Tarjeta "Uso del Observatorio (ultimos 30 dias)": `ObservatorioDatosController.Uso` (GET JSON) -> `ObservatorioActualizacionService.ObtenerUso`, que suma los contadores anonimos de `DatosDir\uso\yyyy-MM.json` (los escribe bufins.com). Sin SQL ni datos personales. Textos `ObsDatos_Uso*` en ambos `.resx`.

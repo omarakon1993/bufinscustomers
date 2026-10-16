@@ -30,6 +30,15 @@ namespace bufinscustomers.Controllers
             return r;
         }
 
+        /// <summary>Uso anónimo del Observatorio (contadores agregados de los últimos 30 días).</summary>
+        [HttpGet]
+        public JsonResult Uso()
+        {
+            var r = Json(_svc.ObtenerUso(30), JsonRequestBehavior.AllowGet);
+            Response.Cache.SetCacheability(System.Web.HttpCacheability.NoCache);
+            return r;
+        }
+
         /// <summary>Guarda las rutas del .exe y de la carpeta de datos en dbo.ConfiguracionSistema (vacío = autodetectar).</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]

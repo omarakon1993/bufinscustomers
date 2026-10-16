@@ -248,5 +248,49 @@ namespace bufinscustomers.Services
                 return new ResultadoInicio { Ok = false, Codigo = "ErrorInicio", Detalle = ex.GetBaseException().Message };
             }
         }
+
+        /// <summary>
+        /// Uso del Observatorio de los últimos N días, leído de DatosDir\uso\yyyy-MM.json (contadores anónimos que escribe bufins.com:
+        /// "día|tipo|clave" -> cantidad). No contiene IP, cookies ni datos personales.
+        /// </summary>
+        public object ObtenerUso(int dias)
+        {
+            dias = Math.Max(1, Math.Min(dias, 90));
+            var datos = DatosDir;
+            var carpeta = string.IsNullOrEmpty(datos) ? null : Path.Combine(datos, "uso");
+            if (carpeta == null || !Directory.Exists(carpeta))
+                return new { disponible = false, dias };
+
+            var desde = DateTime.Today.AddDays(-(dias - 1));
+            var totales = new Dictionary<string, long>();
+            var claves = new Dictionary<string, Dictionary<string, long>>();
+            var porDia = new SortedDictionary<string, long>();
+            foreach (var archivo in Directory.GetFiles(carpeta, "*.json"))
+            {
+                JObject j;
+                try { j = JObject.Parse(File.ReadAllText(archivo, Encoding.UTF8)); } catch (Exception) { continue; }
+                foreach (var kv in j)
+                {
+                    var partes = kv.Key.Split('|');
+                    DateTime dia;
+                    if (partes.Length != 3 || !DateTime.TryParseExact(partes[0], "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out dia) || dia < desde) continue;
+                    var n = (long)kv.Value;
+                    long t; totales.TryGetValue(partes[1], out t); totales[partes[1]] = t + n;
+                    if (partes[1].StartsWith("vista_")) { long d0; porDia.TryGetValue(partes[0], out d0); porDia[partes[0]] = d0 + n; }
+                    if (partes[2].Length == 0) continue;
+                    Dictionary<string, long> m;
+                    if (!claves.TryGetValue(partes[1], out m)) claves[partes[1]] = m = new Dictionary<string, long>();
+                    long c; m.TryGetValue(partes[2], out c); m[partes[2]] = c + n;
+                }
+            }
+            return new
+            {
+                disponible = true,
+                dias,
+                totales,
+                porDia = porDia.Select(x => new { dia = x.Key, n = x.Value }).ToList(),
+                top = claves.ToDictionary(k => k.Key, k => k.Value.OrderByDescending(x => x.Value).Take(8).Select(x => new { clave = x.Key, n = x.Value }).ToList())
+            };
+        }
     }
 }

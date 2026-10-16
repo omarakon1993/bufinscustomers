@@ -74,6 +74,12 @@
                 <div class="obsd-note">@Resources.Strings.ObsDatos_Nota</div>
             </div>
 
+            <div class="obsd-card wide" id="obsdUso">
+                <h3>@Resources.Strings.ObsDatos_UsoTitulo</h3>
+                <div class="obsd-body"></div>
+                <div class="obsd-note">@Resources.Strings.ObsDatos_UsoNota</div>
+            </div>
+
             <div class="obsd-card wide" id="obsdRutas">
                 <h3>@Resources.Strings.ObsDatos_RutasTitulo</h3>
                 <label class="obsd-lbl" for="obsdRutaExe">@Resources.Strings.ObsDatos_RutaExe</label>
@@ -121,6 +127,7 @@
         };
         var urlEstado = '@Url.Action("Estado", "ObservatorioDatos")';
         var urlActualizar = '@Url.Action("Actualizar", "ObservatorioDatos")';
+        var urlUso = '@Url.Action("Uso", "ObservatorioDatos")';
         var urlGuardarRutas = '@Url.Action("GuardarRutas", "ObservatorioDatos")';
         var timer = null, ultimo = null, rutasEditadas = false;
 
@@ -175,6 +182,26 @@
             $('#obsdRutaDatosInfo').html(info(r.datos, r.origenDatos));
         }
 
+        var USO = {
+            vista_home: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_UsoInicio))', vista_empresa: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_UsoFichas))',
+            vista_sector: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_UsoSectores))', vista_ranking: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_UsoRankings))',
+            cta_click: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_UsoCta))', export_xlsx: 'Excel', export_csv: 'CSV', informe_pdf: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_UsoInforme))',
+            filtro_sector: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_UsoFiltros))', busqueda_sel: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_UsoBusquedas))',
+            sinDatos: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_UsoSinDatos))', masVistos: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_UsoMasVistos))'
+        };
+        function cargarUso() {
+            $.getJSON(urlUso).done(function (u) {
+                var b = $('#obsdUso .obsd-body');
+                if (!u.disponible || !u.totales || !Object.keys(u.totales).length) { b.html('<span class="obsd-msg">' + esc(USO.sinDatos) + '</span>'); return; }
+                var orden = ['vista_home', 'vista_sector', 'vista_empresa', 'vista_ranking', 'filtro_sector', 'busqueda_sel', 'cta_click', 'export_xlsx', 'export_csv', 'informe_pdf'];
+                var h = '<dl class="obsd-kv">' + orden.filter(function (k) { return u.totales[k]; }).map(function (k) { return '<dt>' + esc(USO[k]) + '</dt><dd>' + Number(u.totales[k]).toLocaleString() + '</dd>'; }).join('') + '</dl>';
+                var tops = ['vista_sector', 'vista_empresa', 'cta_click'].filter(function (k) { return u.top[k] && u.top[k].length; }).map(function (k) {
+                    return '<div style="margin-top:10px"><strong style="font-size:.82rem">' + esc(USO.masVistos) + ': ' + esc(USO[k]) + '</strong><div class="obsd-msg">' + u.top[k].map(function (x) { return '<code>' + esc(x.clave) + '</code> (' + x.n + ')'; }).join(' · ') + '</div></div>';
+                }).join('');
+                b.html(h + tops);
+            });
+        }
+
         function cargar() {
             $.getJSON(urlEstado).done(function (d) { render(d); }).always(function () {
                 clearTimeout(timer);
@@ -203,6 +230,7 @@
                 cargar();
             });
         });
+        cargarUso();
         $('#obsdBtn').on('click', function () { lanzar(false); });
         $('#obsdBtnForzar').on('click', function () { lanzar(true); });
         cargar();
