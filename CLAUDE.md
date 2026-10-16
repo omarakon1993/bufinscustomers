@@ -103,6 +103,8 @@ Custom session-based auth via `UsuarioSesionHelper` (`Helpers/UsuarioSesionHelpe
 
 **Configuraciones generales BUFINS (`ConfiguracionGlobalController`, Super Admin)**: pestañas General / IA por empresa / Uso y costos IA sobre `dbo.ConfiguracionSistema` (clave/valor). Los parámetros de la pestaña General se agrupan por **tipo** (categoría) administrado en BD: `dbo.ConfiguracionSistemaTipos` (`Nombre`, `NombreEN`, `Icono`, `Orden`, `Activo`) + `ConfiguracionSistema.IdTipo` (`Sql/028_ConfiguracionSistema_Tipos.sql`, manual; siembra IA/Seguridad y clasifica las claves actuales). Botón «Tipos» en la barra de la pestaña (crear/editar/eliminar tipo; eliminar deja sus parámetros en «Otros parámetros»; audita como `AuditoriaTipo.Configuracion`) y selector «Tipo» al crear/editar cada parámetro. Sin el script 028 la pantalla usa las agrupaciones fijas de antes (`ConfiguracionSistemaService.ObtenerTipos(out disponible)`). Un parámetro nuevo sin tipo cae en «Otros parámetros». Claves 2FA: `TwoFactorHabilitado`, `TwoFactorAlcance` (ver Doble factor). El menú se identifica por `MenuOpciones.Controller = 'ConfiguracionGlobal'` (`Sql/027`).
 
+**Datos del Observatorio (`ObservatorioDatosController`, Super Admin)**: pantalla enlazada desde la barra de Configuraciones generales; muestra los datos publicados en bufins.com/observatorio, compara con la fuente (datos.gov.co) y lanza `ObservatorioEtl.exe` como proceso aparte. Rutas autodetectadas o guardadas en `ConfiguracionSistema` (claves `ObservatorioEtlExe` / `ObservatorioDatosDir`), nunca en codigo. Sin SQL. Ver `docs-claude/modulos/ObservatorioDatos.md`.
+
 ### Role Hierarchy (3 levels)
 
 The `Usuarios.Admin` field (byte?) defines access levels:

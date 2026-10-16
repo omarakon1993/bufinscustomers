@@ -3207,4 +3207,55 @@ Indicators management follows closely: </value></data>
   <data name="DocBuf_SinResultados" xml:space="preserve"><value>No document matches the filter.</value></data>
   <data name="DocBuf_Cat_seguridad" xml:space="preserve"><value>Security</value></data>
   <data name="DocBuf_Cat_informes" xml:space="preserve"><value>Reports</value></data>
+  <!-- Observatorio: actualización de datos -->
+  <data name="ObsDatos_PageTitle" xml:space="preserve"><value>Observatory data</value></data>
+  <data name="ObsDatos_HeaderDesc" xml:space="preserve"><value>Update the public bufins.com/observatorio data (Superintendencia de Sociedades financial statements) from here.</value></data>
+  <data name="ObsDatos_BtnAbrir" xml:space="preserve"><value>Observatory data</value></data>
+  <data name="ObsDatos_CardPublicado" xml:space="preserve"><value>Published data</value></data>
+  <data name="ObsDatos_CardFuente" xml:space="preserve"><value>Source (datos.gov.co)</value></data>
+  <data name="ObsDatos_CardProceso" xml:space="preserve"><value>Update</value></data>
+  <data name="ObsDatos_Empresas" xml:space="preserve"><value>Companies</value></data>
+  <data name="ObsDatos_Anios" xml:space="preserve"><value>Years</value></data>
+  <data name="ObsDatos_GeneradoEl" xml:space="preserve"><value>Generated on</value></data>
+  <data name="ObsDatos_FuenteAl" xml:space="preserve"><value>Source as of</value></data>
+  <data name="ObsDatos_NoPublicado" xml:space="preserve"><value>No data has been published yet.</value></data>
+  <data name="ObsDatos_UltimaFuente" xml:space="preserve"><value>Source last updated</value></data>
+  <data name="ObsDatos_HayNuevos" xml:space="preserve"><value>There is new data at the source.</value></data>
+  <data name="ObsDatos_AlDia" xml:space="preserve"><value>Published data is up to date.</value></data>
+  <data name="ObsDatos_FuenteError" xml:space="preserve"><value>The source could not be queried right now.</value></data>
+  <data name="ObsDatos_BtnActualizar" xml:space="preserve"><value>Update now</value></data>
+  <data name="ObsDatos_BtnForzar" xml:space="preserve"><value>Force full update</value></data>
+  <data name="ObsDatos_ConfTitulo" xml:space="preserve"><value>Update the Observatory data?</value></data>
+  <data name="ObsDatos_ConfTexto" xml:space="preserve"><value>Financial statements will be downloaded from datos.gov.co. It takes about 25 to 30 minutes; the site keeps working and switches to the new data when finished.</value></data>
+  <data name="ObsDatos_ConfSi" xml:space="preserve"><value>Yes, update</value></data>
+  <data name="ObsDatos_ConfNo" xml:space="preserve"><value>Cancel</value></data>
+  <data name="ObsDatos_EstadoCorriendo" xml:space="preserve"><value>Running</value></data>
+  <data name="ObsDatos_EstadoOk" xml:space="preserve"><value>Finished</value></data>
+  <data name="ObsDatos_EstadoError" xml:space="preserve"><value>Failed</value></data>
+  <data name="ObsDatos_EstadoSinCambios" xml:space="preserve"><value>No changes</value></data>
+  <data name="ObsDatos_EstadoInterrumpido" xml:space="preserve"><value>Interrupted</value></data>
+  <data name="ObsDatos_EstadoInactivo" xml:space="preserve"><value>No recent runs</value></data>
+  <data name="ObsDatos_Fase" xml:space="preserve"><value>Phase</value></data>
+  <data name="ObsDatos_Inicio" xml:space="preserve"><value>Started</value></data>
+  <data name="ObsDatos_Fin" xml:space="preserve"><value>Finished</value></data>
+  <data name="ObsDatos_Registro" xml:space="preserve"><value>Log</value></data>
+  <data name="ObsDatos_NoConfigTitulo" xml:space="preserve"><value>Server not configured</value></data>
+  <data name="ObsDatos_NoConfigTexto" xml:space="preserve"><value>The update program and the bufins.com data folder were not found. Set them in "Server paths" (below) or publish the portal together with ObservatorioEtl.exe. The application pool identity must be able to run the .exe and write to that folder.</value></data>
+  <data name="ObsDatos_MsgIniciado" xml:space="preserve"><value>Update started. You can close this page: the process keeps running on the server.</value></data>
+  <data name="ObsDatos_MsgYaEnCurso" xml:space="preserve"><value>An update is already running.</value></data>
+  <data name="ObsDatos_MsgNoConfigurado" xml:space="preserve"><value>The server is not configured to update (see the on-screen instructions).</value></data>
+  <data name="ObsDatos_MsgErrorInicio" xml:space="preserve"><value>The update could not be started.</value></data>
+  <data name="ObsDatos_Nota" xml:space="preserve"><value>The Superintendencia de Sociedades publishes financial statements once a year. If there is no new data, the process ends in seconds without changing anything.</value></data>
+  <data name="ObsDatos_VerSitio" xml:space="preserve"><value>Open the Observatory</value></data>
+  <data name="ObsDatos_RutasTitulo" xml:space="preserve"><value>Server paths</value></data>
+  <data name="ObsDatos_RutaExe" xml:space="preserve"><value>Update program (ObservatorioEtl.exe)</value></data>
+  <data name="ObsDatos_RutaDatos" xml:space="preserve"><value>Data folder of the bufins.com site (App_Data\observatorio)</value></data>
+  <data name="ObsDatos_RutaAuto" xml:space="preserve"><value>detected automatically</value></data>
+  <data name="ObsDatos_RutaConfig" xml:space="preserve"><value>configured</value></data>
+  <data name="ObsDatos_RutaNoDetectada" xml:space="preserve"><value>not found</value></data>
+  <data name="ObsDatos_RutasAyuda" xml:space="preserve"><value>Leave them empty to auto-detect (the portal bin folder or the sibling bufinsweb folder). A relative path is counted from the portal root folder. They are stored in the database, not in the code.</value></data>
+  <data name="ObsDatos_BtnGuardarRutas" xml:space="preserve"><value>Save paths</value></data>
+  <data name="ObsDatos_MsgRutasOk" xml:space="preserve"><value>Paths saved.</value></data>
+  <data name="ObsDatos_MsgRutaExeNoExiste" xml:space="preserve"><value>The update program does not exist at that path.</value></data>
+  <data name="ObsDatos_MsgRutaDatosNoExiste" xml:space="preserve"><value>The data folder does not exist.</value></data>
 </root>

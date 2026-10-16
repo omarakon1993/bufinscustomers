@@ -1,0 +1,213 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>@Resources.Strings.ObsDatos_PageTitle</title>
+    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="~/Assets/css/configuracion-admin.css" rel="stylesheet" />
+    <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+    <style>
+        .obsd-wrap { padding: 16px 20px 28px; }
+        .obsd-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+        .obsd-card { background: #fff; border: 1px solid #e3e6f0; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 8px rgba(22,9,51,.04); }
+        .obsd-card h3 { font-size: .8rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; margin: 0 0 12px; }
+        .obsd-card.wide { grid-column: 1 / -1; }
+        .obsd-kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: .88rem; margin: 0; }
+        .obsd-kv dt { color: #6b7280; font-weight: 600; }
+        .obsd-kv dd { margin: 0; color: #2d3748; font-weight: 700; }
+        .obsd-chip { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .74rem; font-weight: 800; background: #eef0f6; color: #4b5563; }
+        .obsd-chip.ok { background: rgba(15,157,120,.12); color: #0b7a5c; }
+        .obsd-chip.warn { background: rgba(245,158,11,.16); color: #a16207; }
+        .obsd-chip.bad { background: rgba(217,56,30,.12); color: #b42a14; }
+        .obsd-chip.run { background: rgba(88,58,255,.12); color: #583AFF; }
+        .obsd-bar { height: 12px; border-radius: 8px; background: #eef0f6; overflow: hidden; margin: 10px 0 6px; }
+        .obsd-bar > span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #583AFF, #01E1D7); transition: width .6s ease; }
+        .obsd-msg { font-size: .84rem; color: #4b5563; min-height: 1.2em; }
+        .obsd-log { background: #1a1033; color: #d9d6f2; border-radius: 8px; padding: 10px 12px; font: 12px/1.5 Consolas, monospace; max-height: 240px; overflow: auto; white-space: pre-wrap; margin: 12px 0 0; }
+        .obsd-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+        .obsd-warn { background: #fff8e6; border: 1px solid #f5d98a; color: #7a5a00; border-radius: 10px; padding: 12px 14px; font-size: .86rem; }
+        .obsd-note { font-size: .78rem; color: #6b7280; margin-top: 10px; }
+        .obsd-lbl { display: block; font-size: .8rem; font-weight: 700; color: #4b5563; margin: 10px 0 4px; }
+        .obsd-input { width: 100%; padding: 7px 10px; border: 1px solid #d9dce6; border-radius: 8px; font-size: .84rem; font-family: Consolas, monospace; outline: none; }
+        .obsd-input:focus { border-color: #583AFF; box-shadow: 0 0 0 3px rgba(88,58,255,.14); }
+        .obsd-msg code { font-size: .78rem; word-break: break-all; }
+    </style>
+</head>
+<body>
+
+    <!-- ── Header ── -->
+    <div class="powerbi-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div class="powerbi-header-content">
+            <i class="fas fa-sync-alt powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.ObsDatos_PageTitle</h1>
+        </div>
+        <small style="font-weight:400;opacity:.85;color:#fff;">@Resources.Strings.ObsDatos_HeaderDesc</small>
+    </div>
+
+    @Html.AntiForgeryToken()
+
+    <div class="obsd-wrap">
+        <div class="obsd-grid">
+            <div class="obsd-card" id="obsdPublicado"><h3>@Resources.Strings.ObsDatos_CardPublicado</h3><div class="obsd-body"></div></div>
+            <div class="obsd-card" id="obsdFuente"><h3>@Resources.Strings.ObsDatos_CardFuente</h3><div class="obsd-body"></div></div>
+            <div class="obsd-card wide" id="obsdProceso">
+                <h3>@Resources.Strings.ObsDatos_CardProceso</h3>
+                <div id="obsdNoConfig" class="obsd-warn" hidden>
+                    <strong>@Resources.Strings.ObsDatos_NoConfigTitulo</strong><br />@Resources.Strings.ObsDatos_NoConfigTexto
+                </div>
+                <div id="obsdJob">
+                    <div><span class="obsd-chip" id="obsdChip">—</span> <span class="obsd-msg" id="obsdFase"></span></div>
+                    <div class="obsd-bar"><span id="obsdProg"></span></div>
+                    <div class="obsd-msg" id="obsdMsg"></div>
+                    <dl class="obsd-kv" id="obsdTiempos" style="margin-top:8px;"></dl>
+                    <pre class="obsd-log" id="obsdLog" hidden></pre>
+                </div>
+                <div class="obsd-actions">
+                    <button type="button" class="btn-modern-gradient" id="obsdBtn"><i class="fas fa-sync-alt mr-1"></i>@Resources.Strings.ObsDatos_BtnActualizar</button>
+                    <button type="button" class="btn-modern-secondary" id="obsdBtnForzar"><i class="fas fa-redo mr-1"></i>@Resources.Strings.ObsDatos_BtnForzar</button>
+                    <a class="btn-modern-secondary" href="https://bufins.com/observatorio" target="_blank" rel="noopener"><i class="fas fa-external-link-alt mr-1"></i>@Resources.Strings.ObsDatos_VerSitio</a>
+                </div>
+                <div class="obsd-note">@Resources.Strings.ObsDatos_Nota</div>
+            </div>
+
+            <div class="obsd-card wide" id="obsdRutas">
+                <h3>@Resources.Strings.ObsDatos_RutasTitulo</h3>
+                <label class="obsd-lbl" for="obsdRutaExe">@Resources.Strings.ObsDatos_RutaExe</label>
+                <input type="text" id="obsdRutaExe" class="obsd-input" autocomplete="off" spellcheck="false" />
+                <div class="obsd-msg" id="obsdRutaExeInfo"></div>
+                <label class="obsd-lbl" for="obsdRutaDatos">@Resources.Strings.ObsDatos_RutaDatos</label>
+                <input type="text" id="obsdRutaDatos" class="obsd-input" autocomplete="off" spellcheck="false" />
+                <div class="obsd-msg" id="obsdRutaDatosInfo"></div>
+                <div class="obsd-actions">
+                    <button type="button" class="btn-modern-secondary" id="obsdBtnRutas"><i class="fas fa-save mr-1"></i>@Resources.Strings.ObsDatos_BtnGuardarRutas</button>
+                </div>
+                <div class="obsd-note">@Resources.Strings.ObsDatos_RutasAyuda</div>
+            </div>
+        </div>
+    </div>
+
+    @section scripts {
+    <script>
+    (function () {
+        var L = {
+            rutaAuto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_RutaAuto))',
+            rutaConfig: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_RutaConfig))',
+            rutaNo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_RutaNoDetectada))',
+            empresas: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_Empresas))',
+            anios: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_Anios))',
+            generado: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_GeneradoEl))',
+            fuenteAl: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_FuenteAl))',
+            noPublicado: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_NoPublicado))',
+            ultimaFuente: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_UltimaFuente))',
+            hayNuevos: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_HayNuevos))',
+            alDia: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_AlDia))',
+            fuenteError: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_FuenteError))',
+            corriendo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_EstadoCorriendo))',
+            ok: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_EstadoOk))',
+            error: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_EstadoError))',
+            sinCambios: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_EstadoSinCambios))',
+            interrumpido: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_EstadoInterrumpido))',
+            inactivo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_EstadoInactivo))',
+            inicio: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_Inicio))',
+            fin: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_Fin))',
+            confTitulo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_ConfTitulo))',
+            confTexto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_ConfTexto))',
+            confSi: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_ConfSi))',
+            confNo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_ConfNo))'
+        };
+        var urlEstado = '@Url.Action("Estado", "ObservatorioDatos")';
+        var urlActualizar = '@Url.Action("Actualizar", "ObservatorioDatos")';
+        var urlGuardarRutas = '@Url.Action("GuardarRutas", "ObservatorioDatos")';
+        var timer = null, ultimo = null, rutasEditadas = false;
+
+        function esc(s) { return $('<div>').text(s == null ? '' : s).html(); }
+        function tok() { return $('input[name="__RequestVerificationToken"]').first().val(); }
+        function chip(cls, txt) { return '<span class="obsd-chip ' + cls + '">' + esc(txt) + '</span>'; }
+        function fmtFecha(s) { return s ? esc(String(s).replace('T', ' ')) : '—'; }
+
+        function render(d) {
+            ultimo = d;
+            // Datos publicados
+            var p = d.publicado, h = '';
+            if (!p) h = '<div class="obsd-msg">' + esc(L.noPublicado) + '</div>';
+            else {
+                var a = p.anios || [];
+                h = '<dl class="obsd-kv"><dt>' + esc(L.empresas) + '</dt><dd>' + Number(p.empresas || 0).toLocaleString() + '</dd>' +
+                    '<dt>' + esc(L.anios) + '</dt><dd>' + (a.length ? esc(a[0] + ' – ' + a[a.length - 1]) : '—') + '</dd>' +
+                    '<dt>' + esc(L.fuenteAl) + '</dt><dd>' + esc(p.fuenteActualizado || '—') + '</dd>' +
+                    '<dt>' + esc(L.generado) + '</dt><dd>' + esc(p.generado || '—') + '</dd></dl>';
+            }
+            $('#obsdPublicado .obsd-body').html(h);
+
+            // Fuente
+            var f = d.fuente || {};
+            if (f.fecha) $('#obsdFuente .obsd-body').html('<dl class="obsd-kv"><dt>' + esc(L.ultimaFuente) + '</dt><dd>' + esc(f.fecha) + '</dd></dl><div style="margin-top:10px">' +
+                (d.hayNuevos ? chip('warn', L.hayNuevos) : chip('ok', L.alDia)) + '</div>');
+            else $('#obsdFuente .obsd-body').html('<div class="obsd-msg">' + esc(L.fuenteError) + '</div>');
+
+            // Proceso
+            $('#obsdNoConfig').prop('hidden', d.configurado);
+            var j = d.job, est = j ? j.estado : null;
+            var map = { corriendo: ['run', L.corriendo], ok: ['ok', L.ok], error: ['bad', L.error], sin_cambios: ['', L.sinCambios], interrumpido: ['warn', L.interrumpido] };
+            var m = est && map[est] ? map[est] : ['', L.inactivo];
+            $('#obsdChip').attr('class', 'obsd-chip ' + m[0]).text(m[1]);
+            $('#obsdFase').text(j ? (j.fase || '') : '');
+            $('#obsdProg').css('width', (j ? Math.min(100, j.progreso || 0) : 0) + '%');
+            $('#obsdMsg').text(j ? (j.mensaje || '') : '');
+            $('#obsdTiempos').html(j ? '<dt>' + esc(L.inicio) + '</dt><dd>' + fmtFecha(j.inicio) + '</dd>' + (j.fin ? '<dt>' + esc(L.fin) + '</dt><dd>' + fmtFecha(j.fin) + '</dd>' : '') : '');
+            var lg = j && j.log ? j.log : [];
+            $('#obsdLog').prop('hidden', !lg.length).text(lg.join('\n'));
+            if (lg.length) { var el = document.getElementById('obsdLog'); el.scrollTop = el.scrollHeight; }
+            var bloquea = !d.configurado || d.enEjecucion;
+            $('#obsdBtn, #obsdBtnForzar').prop('disabled', bloquea);
+
+            // Rutas: el campo muestra solo lo configurado (vacío = autodetectar); debajo, la ruta resuelta y su origen
+            var r = d.rutas || {};
+            if (!$('#obsdRutaExe, #obsdRutaDatos').is(':focus') && !rutasEditadas) {
+                $('#obsdRutaExe').val(r.valorExe || ''); $('#obsdRutaDatos').val(r.valorDatos || '');
+            }
+            function info(ruta, origen) { return ruta ? '<code>' + esc(ruta) + '</code> · ' + esc(origen === 'config' ? L.rutaConfig : L.rutaAuto) : esc(L.rutaNo); }
+            $('#obsdRutaExeInfo').html(info(r.exe, r.origenExe));
+            $('#obsdRutaDatosInfo').html(info(r.datos, r.origenDatos));
+        }
+
+        function cargar() {
+            $.getJSON(urlEstado).done(function (d) { render(d); }).always(function () {
+                clearTimeout(timer);
+                timer = setTimeout(cargar, ultimo && ultimo.enEjecucion ? 4000 : 30000);
+            });
+        }
+
+        function lanzar(forzar) {
+            Swal.fire({
+                title: L.confTitulo, text: L.confTexto, icon: 'question', showCancelButton: true,
+                confirmButtonText: L.confSi, cancelButtonText: L.confNo
+            }).then(function (r) {
+                if (!r.isConfirmed) return;
+                $.post(urlActualizar, { __RequestVerificationToken: tok(), forzar: !!forzar }).done(function (res) {
+                    Swal.fire({ icon: res.ok ? 'success' : 'error', text: res.mensaje, timer: res.ok ? 3500 : undefined });
+                    setTimeout(cargar, 1500);
+                }).fail(function () { Swal.fire({ icon: 'error', text: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_MsgErrorInicio))' }); });
+            });
+        }
+
+        $('#obsdRutaExe, #obsdRutaDatos').on('input', function () { rutasEditadas = true; });
+        $('#obsdBtnRutas').on('click', function () {
+            $.post(urlGuardarRutas, { __RequestVerificationToken: tok(), exe: $('#obsdRutaExe').val(), datos: $('#obsdRutaDatos').val() }).done(function (res) {
+                if (res.ok) rutasEditadas = false;
+                Swal.fire({ icon: res.ok ? 'success' : 'error', text: res.mensaje, timer: res.ok ? 2500 : undefined });
+                cargar();
+            });
+        });
+        $('#obsdBtn').on('click', function () { lanzar(false); });
+        $('#obsdBtnForzar').on('click', function () { lanzar(true); });
+        cargar();
+    })();
+    </script>
+    }
+</body>
+</html>

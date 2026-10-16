@@ -1,0 +1,75 @@
+using bufinscustomers.Helpers;
+using bufinscustomers.Models;
+using bufinscustomers.Permisos;
+using bufinscustomers.Services;
+using System.Web.Mvc;
+
+namespace bufinscustomers.Controllers
+{
+    /// <summary>
+    /// Actualización de los datos del Observatorio público de bufins.com. Solo Super Admin.
+    /// El proceso pesado corre fuera de IIS (ObservatorioEtl.exe); aquí solo se consulta el estado y se lanza.
+    /// </summary>
+    [ValidarSesion]
+    [SoloSuperAdmin]
+    public class ObservatorioDatosController : BaseController
+    {
+        private readonly ObservatorioActualizacionService _svc = new ObservatorioActualizacionService();
+
+        public ActionResult Index()
+        {
+            return View("~/Views/Configuracion/ObservatorioDatos.cshtml");
+        }
+
+        /// <summary>Estado para el sondeo de la pantalla (datos publicados, fuente, avance del proceso).</summary>
+        [HttpGet]
+        public JsonResult Estado()
+        {
+            var r = Json(_svc.ObtenerEstado(), JsonRequestBehavior.AllowGet);
+            Response.Cache.SetCacheability(System.Web.HttpCacheability.NoCache);
+            return r;
+        }
+
+        /// <summary>Guarda las rutas del .exe y de la carpeta de datos en dbo.ConfiguracionSistema (vacío = autodetectar).</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult GuardarRutas(string exe, string datos)
+        {
+            var err = _svc.GuardarRutas(exe, datos);
+            if (err == null)
+            {
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Editar,
+                    "ObservatorioDatos", "rutas", "Rutas de actualización del Observatorio",
+                    null, new { exe, datos }, UsuarioSesionHelper.UsuarioActual?.IdEmpresa);
+                return Json(new { ok = true, mensaje = R("ObsDatos_MsgRutasOk") });
+            }
+            var clave = err == "ExeNoExiste" ? "ObsDatos_MsgRutaExeNoExiste" : err == "CarpetaNoExiste" ? "ObsDatos_MsgRutaDatosNoExiste" : "ObsDatos_MsgErrorInicio";
+            return Json(new { ok = false, mensaje = R(clave) });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult Actualizar(bool forzar = false)
+        {
+            var res = _svc.Iniciar(forzar);
+            if (res.Ok)
+            {
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Ejecutar,
+                    "ObservatorioDatos", "etl", "Actualización de datos del Observatorio (bufins.com)" + (forzar ? " [forzada]" : ""),
+                    null, new { forzar }, UsuarioSesionHelper.UsuarioActual?.IdEmpresa);
+                return Json(new { ok = true, mensaje = R("ObsDatos_MsgIniciado") });
+            }
+
+            string clave;
+            switch (res.Codigo)
+            {
+                case "YaEnCurso": clave = "ObsDatos_MsgYaEnCurso"; break;
+                case "SinConfigurar":
+                case "ExeNoExiste":
+                case "CarpetaNoExiste": clave = "ObsDatos_MsgNoConfigurado"; break;
+                default: clave = "ObsDatos_MsgErrorInicio"; break;
+            }
+            return Json(new { ok = false, mensaje = R(clave) + (string.IsNullOrEmpty(res.Detalle) ? "" : " (" + res.Detalle + ")") });
+        }
+    }
+}
