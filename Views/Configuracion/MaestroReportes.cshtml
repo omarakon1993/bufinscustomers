@@ -162,7 +162,7 @@
                                 <td class="col-ver">
                                     @if (!string.IsNullOrEmpty(reporte.EnlaceHTML))
                                     {
-                                        <a href="#" onclick="abrirEnlaceValidado('@(Html.Raw(reporte.EnlaceHTML))', this); return false;"
+                                        <a href="#" data-url="@reporte.EnlaceHTML" onclick="abrirEnlaceValidado(this.getAttribute('data-url'), this); return false;"
                                            class="enlace-reporte" title="@Resources.Strings.Rep_TitleAbrir">
                                             <i class="fas fa-external-link-alt"></i>
                                         </a>
@@ -178,11 +178,11 @@
                                                 data-toggle="modal" data-target="#editReporteModal"
                                                 data-id="@reporte.Id"
                                                 data-idempresa="@reporte.IdEmpresa"
-                                                data-nombre="@Html.Raw(reporte.Nombre ?? "")"
-                                                data-anioinicial="@Html.Raw(reporte.AnioInicial ?? "")"
-                                                data-aniofinal="@Html.Raw(reporte.AnioFinal ?? "")"
-                                                data-descripcion="@Html.Raw(reporte.Descripcion ?? "")"
-                                                data-enlacehtml="@Html.Raw(reporte.EnlaceHTML ?? "")"
+                                                data-nombre="@(reporte.Nombre ?? "")"
+                                                data-anioinicial="@(reporte.AnioInicial ?? "")"
+                                                data-aniofinal="@(reporte.AnioFinal ?? "")"
+                                                data-descripcion="@(reporte.Descripcion ?? "")"
+                                                data-enlacehtml="@(reporte.EnlaceHTML ?? "")"
                                                 onclick="setEditReporteFromData(this)">
                                             <i class="fas fa-edit mr-1"></i>@Resources.Strings.Rep_BtnEditar
                                         </button>

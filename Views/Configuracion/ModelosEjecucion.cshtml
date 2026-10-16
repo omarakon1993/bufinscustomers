@@ -79,12 +79,12 @@
                                     <div class="btn-group" role="group">
                                         <button type="button" class="btn btn-sm btn-primary" title="@Resources.Strings.Mod_TitleEditar"
                                                 data-toggle="modal" data-target="#editarModal"
-                                                onclick="setEditarModelo(@m.Id, '@Html.Raw(m.Nombre.Replace("'","\\'" ))', '@Html.Raw(m.NombreSP.Replace("'","\\'" ))', '@Html.Raw((m.Descripcion ?? "").Replace("'","\\'" ))', '@Html.Raw((m.Icono ?? "").Replace("'","\\'" ))', @m.Orden, @(m.Activo ? "true" : "false"))">
+                                                onclick="setEditarModelo(@m.Id, '@HttpUtility.JavaScriptStringEncode(m.Nombre)', '@HttpUtility.JavaScriptStringEncode(m.NombreSP)', '@HttpUtility.JavaScriptStringEncode(m.Descripcion)', '@HttpUtility.JavaScriptStringEncode(m.Icono)', @m.Orden, @(m.Activo ? "true" : "false"))">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         <button type="button" class="btn btn-sm btn-danger" title="@Resources.Strings.Mod_TitleEliminar"
                                                 data-toggle="modal" data-target="#eliminarModal"
-                                                onclick="setEliminarModelo(@m.Id, '@Html.Raw(m.Nombre.Replace("'","\\'" ))')">
+                                                onclick="setEliminarModelo(@m.Id, '@HttpUtility.JavaScriptStringEncode(m.Nombre)')">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </div>

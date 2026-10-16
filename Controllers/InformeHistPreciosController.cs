@@ -55,7 +55,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "InformeHistPreciosController.ObtenerOpciones");
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = MensajeError(ex) });
             }
         }
 

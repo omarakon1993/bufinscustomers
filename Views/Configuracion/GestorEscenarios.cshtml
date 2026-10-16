@@ -64,14 +64,14 @@
                                     <div class="btn-group" role="group">
                                         <button type="button" class="btn btn-sm btn-primary" title="@Resources.Strings.Esc_TitleEditar"
                                                 data-toggle="modal" data-target="#editarModal"
-                                                onclick="setEditarEscenario(@e.Id, '@Html.Raw(e.Nombre.Replace("'", "\\'"))', @e.Orden, @(e.Activo ? "true" : "false"))">
+                                                onclick="setEditarEscenario(@e.Id, '@HttpUtility.JavaScriptStringEncode(e.Nombre)', @e.Orden, @(e.Activo ? "true" : "false"))">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         @if (e.Activo)
                                         {
                                             <button type="button" class="btn btn-sm btn-danger" title="@Resources.Strings.Esc_TitleDesactivar"
                                                     data-toggle="modal" data-target="#desactivarModal"
-                                                    onclick="setDesactivarEscenario(@e.Id, '@Html.Raw(e.Nombre.Replace("'", "\\'"))')">
+                                                    onclick="setDesactivarEscenario(@e.Id, '@HttpUtility.JavaScriptStringEncode(e.Nombre)')">
                                                 <i class="fas fa-ban"></i>
                                             </button>
                                         }

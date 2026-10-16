@@ -37,7 +37,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = MensajeError(ex) }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -54,7 +54,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = MensajeError(ex) }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -71,7 +71,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = MensajeError(ex) }, JsonRequestBehavior.AllowGet);
             }
         }
 

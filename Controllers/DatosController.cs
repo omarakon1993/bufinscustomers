@@ -102,7 +102,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Error al obtener el año: " + ex.Message }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = "Error al obtener el año: " + MensajeError(ex) }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -142,7 +142,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Error: " + ex.Message }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = "Error: " + MensajeError(ex) }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -206,7 +206,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "ObtenerAniosConDatos");
-                return Json(new { success = false, message = "Error: " + ex.Message }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = "Error: " + MensajeError(ex) }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -367,7 +367,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { exito = false, mensaje = "Error al ejecutar el modelo: " + ex.Message, columnas = new List<string>(), filas = new List<List<string>>() });
+                return Json(new { exito = false, mensaje = "Error al ejecutar el modelo: " + MensajeError(ex), columnas = new List<string>(), filas = new List<List<string>>() });
             }
         }
 
@@ -950,7 +950,7 @@ namespace bufinscustomers.Controllers
             {
                 AppLogger.Error(ex, "EnviarModelosPorCorreo");
                 new NotificacionesService().Crear(usuario.Id, R("Notif_ErrorEnvioCorreoModelos"), ex.Message, "error", "/Datos/Modelo");
-                return Json(new { exito = false, mensaje = "No se pudo enviar el correo: " + ex.Message });
+                return Json(new { exito = false, mensaje = "No se pudo enviar el correo: " + MensajeError(ex) });
             }
         }
 

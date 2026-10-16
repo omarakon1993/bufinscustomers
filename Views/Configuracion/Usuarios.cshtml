@@ -378,7 +378,7 @@
                                         @if (ViewBag.PuedeEditar == true)
                                         {
                                             <button type="button" class="btn btn-sm btn-primary" title="@Resources.Strings.Usr_TitleEditar" data-toggle="modal" data-target="#editUserModal"
-                                                    onclick="setEditUser(@usuario.Id, '@usuario.Nombre', '@usuario.Apellidos', '@usuario.Telefono', '@usuario.Correo', '@usuario.Admin', '@usuario.IdEmpresa', '@usuario.Usuario', '@usuario.Clave', '@(imagenUsuario != null ? Url.Action("Imagen", "Usuario", new { id = usuario.Id }) : "")')">
+                                                    onclick="setEditUser(@usuario.Id, '@HttpUtility.JavaScriptStringEncode(usuario.Nombre)', '@HttpUtility.JavaScriptStringEncode(usuario.Apellidos)', '@HttpUtility.JavaScriptStringEncode(usuario.Telefono)', '@HttpUtility.JavaScriptStringEncode(usuario.Correo)', '@usuario.Admin', '@usuario.IdEmpresa', '@HttpUtility.JavaScriptStringEncode(usuario.Usuario)', '@HttpUtility.JavaScriptStringEncode(usuario.Clave)', '@(imagenUsuario != null ? Url.Action("Imagen", "Usuario", new { id = usuario.Id }) : "")')">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                         }

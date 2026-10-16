@@ -720,35 +720,59 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        private void GuardarImagenUsuario(int usuarioId, HttpPostedFileBase imagenArchivo)
+        // Tope de la foto de perfil (la vista ya la comprime en el navegador; esto protege el servidor).
+        private const int MaxBytesImagenUsuario = 10 * 1024 * 1024;
+
+        /// <summary>
+        /// Tipo de imagen según la FIRMA real de los bytes (nunca según el ContentType ni la extensión que
+        /// declara el cliente). Solo PNG, JPEG, GIF y WebP; null = no es una imagen permitida (SVG/HTML incluidos).
+        /// </summary>
+        internal static string TipoImagenPorFirma(byte[] b)
         {
-            if (imagenArchivo != null && imagenArchivo.ContentLength > 0)
+            if (b == null || b.Length < 12) return null;
+            if (b[0] == 0x89 && b[1] == 0x50 && b[2] == 0x4E && b[3] == 0x47 && b[4] == 0x0D && b[5] == 0x0A && b[6] == 0x1A && b[7] == 0x0A) return "image/png";
+            if (b[0] == 0xFF && b[1] == 0xD8 && b[2] == 0xFF) return "image/jpeg";
+            if (b[0] == 0x47 && b[1] == 0x49 && b[2] == 0x46 && b[3] == 0x38 && (b[4] == 0x37 || b[4] == 0x39) && b[5] == 0x61) return "image/gif";
+            if (b[0] == 0x52 && b[1] == 0x49 && b[2] == 0x46 && b[3] == 0x46 && b[8] == 0x57 && b[9] == 0x45 && b[10] == 0x42 && b[11] == 0x50) return "image/webp";
+            return null;
+        }
+
+        /// <summary>Guarda la foto de perfil. Devuelve false (sin guardar nada) si el archivo no es una imagen válida.</summary>
+        private bool GuardarImagenUsuario(int usuarioId, HttpPostedFileBase imagenArchivo)
+        {
+            if (imagenArchivo == null || imagenArchivo.ContentLength <= 0) return false;
+            if (imagenArchivo.ContentLength > MaxBytesImagenUsuario) return false;
+
+            byte[] bytes;
+            using (var ms = new MemoryStream())
             {
-                // Convertir la imagen a base64
-                using (var ms = new MemoryStream())
-                {
-                    imagenArchivo.InputStream.CopyTo(ms);
-                    var bytes = ms.ToArray();
-                    var base64 = Convert.ToBase64String(bytes);
-                    var tipoImagen = imagenArchivo.ContentType;
-                    var nombreImagen = Path.GetFileName(imagenArchivo.FileName);
-
-                    using (SqlConnection connection = new SqlConnection(CadenaConexion))
-                    {
-                        using (SqlCommand command = new SqlCommand("sp_GuardarImagenUsuario", connection))
-                        {
-                            command.CommandType = CommandType.StoredProcedure;
-                            command.Parameters.AddWithValue("@UsuarioId", usuarioId);
-                            command.Parameters.AddWithValue("@NombreImagen", nombreImagen);
-                            command.Parameters.AddWithValue("@TipoImagen", tipoImagen);
-                            command.Parameters.AddWithValue("@ImagenBase64", base64);
-
-                            connection.Open();
-                            command.ExecuteNonQuery();
-                        }
-                    }
-                }
+                imagenArchivo.InputStream.CopyTo(ms);
+                bytes = ms.ToArray();
             }
+
+            string tipoImagen = TipoImagenPorFirma(bytes);
+            if (tipoImagen == null)
+            {
+                AppLogger.Warn("Foto de perfil rechazada: firma no válida (ContentType declarado: " + imagenArchivo.ContentType + ")");
+                return false;
+            }
+
+            var base64 = Convert.ToBase64String(bytes);
+            var nombreImagen = Path.GetFileName(imagenArchivo.FileName);
+
+            using (SqlConnection connection = new SqlConnection(CadenaConexion))
+            using (SqlCommand command = new SqlCommand("sp_GuardarImagenUsuario", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.AddWithValue("@UsuarioId", usuarioId);
+                command.Parameters.AddWithValue("@NombreImagen", nombreImagen);
+                command.Parameters.AddWithValue("@TipoImagen", tipoImagen);
+                command.Parameters.AddWithValue("@ImagenBase64", base64);
+
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+            return true;
         }
 
         [HttpPost]
@@ -758,7 +782,8 @@ namespace bufinscustomers.Controllers
             if (ImagenUsuario != null && ImagenUsuario.ContentLength > 0)
             {
                 var usuarioId = UsuarioSesionHelper.UsuarioActual.Id;
-                GuardarImagenUsuario(usuarioId, ImagenUsuario);
+                if (!GuardarImagenUsuario(usuarioId, ImagenUsuario))
+                    return Json(new { success = false, message = R("Usr_ImagenInvalida") });
                 return Json(new { success = true, message = "Imagen de usuario actualizada correctamente.", usuarioId });
             }
             return Json(new { success = false, message = "Por favor, selecciona una imagen válida." });
@@ -767,16 +792,19 @@ namespace bufinscustomers.Controllers
         [HttpGet]
         public ActionResult Imagen(int id)
         {
-            if (UsuarioSesionHelper.UsuarioActual == null)
+            var actual = UsuarioSesionHelper.UsuarioActual;
+            if (actual == null)
                 return new HttpStatusCodeResult(System.Net.HttpStatusCode.Unauthorized);
 
             string base64 = null;
-            string tipoImagen = null;
+            int? empresaDelDueno = null;
 
             using (var cn = new SqlConnection(CadenaConexion))
             {
                 var cmd = new SqlCommand(
-                    "SELECT TOP 1 ImagenBase64, TipoImagen FROM UsuarioImagenes WHERE UsuarioId = @Id ORDER BY Id DESC",
+                    @"SELECT TOP 1 i.ImagenBase64, u.IdEmpresa
+                      FROM UsuarioImagenes i INNER JOIN Usuarios u ON u.Id = i.UsuarioId
+                      WHERE i.UsuarioId = @Id ORDER BY i.Id DESC",
                     cn);
                 cmd.Parameters.AddWithValue("@Id", id);
                 cn.Open();
@@ -785,18 +813,35 @@ namespace bufinscustomers.Controllers
                     if (reader.Read())
                     {
                         base64 = reader["ImagenBase64"] != DBNull.Value ? reader["ImagenBase64"].ToString() : null;
-                        tipoImagen = reader["TipoImagen"] != DBNull.Value ? reader["TipoImagen"].ToString() : null;
+                        if (reader["IdEmpresa"] != DBNull.Value) empresaDelDueno = Convert.ToInt32(reader["IdEmpresa"]);
                     }
                 }
             }
 
-            if (string.IsNullOrEmpty(base64) || string.IsNullOrEmpty(tipoImagen))
+            if (string.IsNullOrEmpty(base64))
                 return HttpNotFound();
 
-            var bytes = Convert.FromBase64String(base64);
+            // Solo la propia foto, o la de usuarios de una empresa a la que se tiene acceso (empresa propia o su grupo).
+            bool permitido = actual.Id == id
+                || actual.Admin == 2
+                || (empresaDelDueno.HasValue && EmpresaAccesoHelper.TieneAcceso(actual, empresaDelDueno.Value));
+            if (!permitido)
+                return HttpNotFound();
+
+            byte[] bytes;
+            try { bytes = Convert.FromBase64String(base64); }
+            catch (FormatException) { return HttpNotFound(); }
+
+            // El tipo sale de la firma de los bytes, no de lo que se guardó: una fila antigua con HTML/SVG no se sirve.
+            string tipo = TipoImagenPorFirma(bytes);
+            if (tipo == null)
+                return HttpNotFound();
+
             Response.Cache.SetCacheability(HttpCacheability.Private);
             Response.Cache.SetMaxAge(TimeSpan.FromHours(1));
-            return File(bytes, tipoImagen);
+            Response.AddHeader("X-Content-Type-Options", "nosniff");
+            Response.AddHeader("Content-Security-Policy", "default-src 'none'; sandbox");
+            return File(bytes, tipo);
         }
     }
 }

@@ -1245,7 +1245,7 @@
     <script>
         $(function () {
             Swal.fire({ icon: 'success', title: _modelo.textos.exito,
-                        text: '@Html.Raw(TempData["SuccessMessage"].ToString().Replace("'", "\\'"))',
+                        text: '@Html.Raw(HttpUtility.JavaScriptStringEncode(TempData["SuccessMessage"].ToString()))',
                         confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
         });
     </script>
@@ -1255,7 +1255,7 @@
     <script>
         $(function () {
             Swal.fire({ icon: 'error', title: _modelo.textos.error,
-                        text: '@Html.Raw(TempData["ErrorMessage"].ToString().Replace("'", "\\'"))',
+                        text: '@Html.Raw(HttpUtility.JavaScriptStringEncode(TempData["ErrorMessage"].ToString()))',
                         confirmButtonText: _modelo.textos.aceptar, confirmButtonColor: '#583AFF' });
         });
     </script>

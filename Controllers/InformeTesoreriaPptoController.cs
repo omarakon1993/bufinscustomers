@@ -84,7 +84,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "InformeTesoreriaPptoController.ObtenerMeses");
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = MensajeError(ex) });
             }
         }
 
@@ -105,7 +105,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "InformeTesoreriaPptoController.ConsultarReporte");
-                return Json(new { success = false, message = "Error al consultar el reporte: " + ex.Message });
+                return Json(new { success = false, message = "Error al consultar el reporte: " + MensajeError(ex) });
             }
         }
 
@@ -184,7 +184,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "InformeTesoreriaPptoController.GenerarInsightsIA");
-                return Json(new IAConsultaResponse { Exitoso = false, Error = "Error al generar el resumen: " + ex.Message });
+                return Json(new IAConsultaResponse { Exitoso = false, Error = "Error al generar el resumen: " + MensajeError(ex) });
             }
         }
 

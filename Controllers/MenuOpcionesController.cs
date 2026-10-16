@@ -121,7 +121,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = R("Menu_ErrorActualizarOrden") + ": " + ex.Message });
+                return Json(new { success = false, message = R("Menu_ErrorActualizarOrden") + ": " + MensajeError(ex) });
             }
         }
 
@@ -147,7 +147,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "MenuOpcionesController.HabilitarTodasParaTodos");
-                return Json(new { success = false, message = R("Menu_ErrorHabilitarTodas") + ": " + ex.Message });
+                return Json(new { success = false, message = R("Menu_ErrorHabilitarTodas") + ": " + MensajeError(ex) });
             }
         }
 
@@ -180,7 +180,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = R("Menu_ErrorHabilitarTodos") + ": " + ex.Message });
+                return Json(new { success = false, message = R("Menu_ErrorHabilitarTodos") + ": " + MensajeError(ex) });
             }
         }
 

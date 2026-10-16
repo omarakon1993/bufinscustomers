@@ -172,7 +172,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { ok = false, mensaje = "Error: " + ex.Message }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false, mensaje = "Error: " + MensajeError(ex) }, JsonRequestBehavior.AllowGet);
             }
         }
 

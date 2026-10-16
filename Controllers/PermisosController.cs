@@ -168,7 +168,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 SetErrorMessage("Error al guardar permisos: " + ex.Message);
-                return Json(new { success = false, message = "Error al guardar permisos: " + ex.Message });
+                return Json(new { success = false, message = "Error al guardar permisos: " + MensajeError(ex) });
             }
         }
     }

@@ -23,13 +23,13 @@
 @if (!string.IsNullOrEmpty(successMsg))
 {
     <script>
-        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'success', title: '@Html.Raw(successMsg.Replace("'", "\\'"))', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'success', title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(successMsg))', showConfirmButton: false, timer: 3000, timerProgressBar: true });
     </script>
 }
 @if (!string.IsNullOrEmpty(errorMsg))
 {
     <script>
-        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'error', title: '@Html.Raw(errorMsg.Replace("'", "\\'"))', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'error', title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(errorMsg))', showConfirmButton: false, timer: 3000, timerProgressBar: true });
     </script>
 }
 
@@ -77,11 +77,11 @@
                                 <div class="btn-group" role="group">
                                     <button type="button" class="btn btn-sm btn-primary" title="@Resources.Strings.Rep_BtnEditar"
                                             data-toggle="modal" data-target="#editModal"
-                                            onclick="setEditar(@c.Id, '@Html.Raw(c.Nombre?.Replace("'","\\'")??"")', '@Html.Raw(c.NombreEN?.Replace("'","\\'")??"")', '@Html.Raw(c.Icono?.Replace("'","\\'")??"")', @c.Orden)">
+                                            onclick="setEditar(@c.Id, '@HttpUtility.JavaScriptStringEncode(c.Nombre)', '@HttpUtility.JavaScriptStringEncode(c.NombreEN)', '@HttpUtility.JavaScriptStringEncode(c.Icono)', @c.Orden)">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <button type="button" class="btn btn-sm btn-danger" title="@Resources.Strings.Common_BtnEliminar"
-                                            onclick="confirmarEliminar(@c.Id, '@Html.Raw(c.Nombre?.Replace("'","\\'")??"")')">
+                                            onclick="confirmarEliminar(@c.Id, '@HttpUtility.JavaScriptStringEncode(c.Nombre)')">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </div>

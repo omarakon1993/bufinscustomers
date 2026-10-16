@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Security.Cryptography;
@@ -79,6 +80,34 @@ namespace bufinscustomers.Controllers
         // Accede a App_GlobalResources respetando la cultura actual del hilo.
         protected string R(string key) =>
             System.Web.HttpContext.GetGlobalResourceObject("Strings", key)?.ToString() ?? key;
+
+        /// <summary>
+        /// Mensaje seguro para devolver al navegador cuando una acción falla (H8). Siempre registra la excepción completa
+        /// en AppLogger con un código de referencia. Si la excepción es TÉCNICA (SQL del sistema, nulos, E/S, tiempos de espera...)
+        /// devuelve un texto genérico traducido con ese código, para no filtrar nombres de tablas, rutas ni versiones; si es una
+        /// excepción de regla de negocio (mensaje escrito por la aplicación, o error de usuario lanzado con THROW/RAISERROR) conserva su mensaje.
+        /// </summary>
+        protected string MensajeError(Exception ex, [System.Runtime.CompilerServices.CallerMemberName] string accion = null)
+        {
+            string codigo = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpperInvariant();
+            try { Helpers.AppLogger.Error(ex, GetType().Name + "." + accion + " ref=" + codigo); } catch { }
+
+            Exception b = ex == null ? null : ex.GetBaseException();
+            var sql = (b as System.Data.SqlClient.SqlException) ?? (ex as System.Data.SqlClient.SqlException);
+            bool tecnica;
+            if (sql != null)
+                tecnica = !(sql.Class <= 16 && sql.Number >= 50000); // 50000+ = THROW/RAISERROR escrito por nosotros (regla de negocio)
+            else
+                tecnica = b is NullReferenceException || b is IndexOutOfRangeException || b is InvalidCastException
+                    || b is KeyNotFoundException || b is FormatException || b is System.IO.IOException
+                    || b is TimeoutException || b is System.Web.HttpException || b is System.ComponentModel.Win32Exception
+                    || b is OutOfMemoryException || b is ArgumentOutOfRangeException || b is OverflowException
+                    || b is DivideByZeroException || b is System.Net.WebException || b is System.Net.Http.HttpRequestException
+                    || b is System.Threading.Tasks.TaskCanceledException || b is UnauthorizedAccessException;
+
+            if (!tecnica && ex != null && !string.IsNullOrWhiteSpace(ex.Message)) return ex.Message;
+            return string.Format(R("Err_InternoRef"), codigo);
+        }
 
         /// <summary>Idioma de la sesión ("es" | "en") para indicarle al modelo en qué idioma responder.</summary>
         protected static string IdiomaIA =>

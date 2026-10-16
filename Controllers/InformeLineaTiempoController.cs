@@ -161,7 +161,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "InformeLineaTiempoController.ObtenerSerie");
-                return Json(new { success = false, message = $"Error al consultar la serie: {ex.Message}" });
+                return Json(new { success = false, message = $"Error al consultar la serie: {MensajeError(ex)}" });
             }
         }
 

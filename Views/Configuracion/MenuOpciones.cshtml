@@ -50,19 +50,19 @@
 @if (!string.IsNullOrEmpty(successMsg))
 {
     <script>
-        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'success', title: '@Html.Raw(successMsg.Replace("'", "\\'"))', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'success', title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(successMsg))', showConfirmButton: false, timer: 3000, timerProgressBar: true });
     </script>
 }
 @if (!string.IsNullOrEmpty(errorMsg))
 {
     <script>
-        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'error', title: '@Html.Raw(errorMsg.Replace("'", "\\'"))', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'error', title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(errorMsg))', showConfirmButton: false, timer: 3000, timerProgressBar: true });
     </script>
 }
 @if (!string.IsNullOrEmpty(infoMsg))
 {
     <script>
-        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'info', title: '@Html.Raw(infoMsg.Replace("'", "\\'"))', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        Swal.fire({ toast: true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: 'info', title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(infoMsg))', showConfirmButton: false, timer: 3000, timerProgressBar: true });
     </script>
 }
 

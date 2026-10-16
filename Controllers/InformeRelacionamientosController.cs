@@ -58,7 +58,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error al obtener tipos: {ex.Message}" }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = $"Error al obtener tipos: {MensajeError(ex)}" }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -80,7 +80,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error al obtener descripciones: {ex.Message}" }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = $"Error al obtener descripciones: {MensajeError(ex)}" }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -154,7 +154,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error al consultar datos: {ex.Message}" });
+                return Json(new { success = false, message = $"Error al consultar datos: {MensajeError(ex)}" });
             }
         }
 

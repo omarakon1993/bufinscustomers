@@ -63,7 +63,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error al consultar: {ex.Message}" });
+                return Json(new { success = false, message = $"Error al consultar: {MensajeError(ex)}" });
             }
         }
 

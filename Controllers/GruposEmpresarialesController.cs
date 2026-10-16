@@ -216,7 +216,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = R("Grupo_ErrorAsignarEmpresas") + ": " + ex.Message });
+                return Json(new { success = false, message = R("Grupo_ErrorAsignarEmpresas") + ": " + MensajeError(ex) });
             }
         }
     }

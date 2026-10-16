@@ -137,7 +137,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "InformeModelosController.ConsultarDatos");
-                return Json(new { success = false, message = $"Error al consultar datos: {ex.Message}" });
+                return Json(new { success = false, message = $"Error al consultar datos: {MensajeError(ex)}" });
             }
         }
 

@@ -14,6 +14,8 @@ namespace bufinscustomers
     {
         protected void Application_Start()
         {
+            // H10: no publicar la versión de MVC en la cabecera X-AspNetMvc-Version.
+            MvcHandler.DisableMvcResponseHeader = true;
             AreaRegistration.RegisterAllAreas();
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);

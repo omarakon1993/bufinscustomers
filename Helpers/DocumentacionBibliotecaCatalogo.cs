@@ -57,6 +57,11 @@ namespace bufinscustomers.Helpers
                 Descripcion = "Cómo se protege el acceso: doble factor con app autenticadora y con passkeys, recuperación por solicitud aprobada por un Super Admin, administración y decisiones de diseño.",
                 EsDeMenu = false, Menu = "", Actualizado = new DateTime(2026, 10, 15) },
 
+            new DocumentoBiblioteca { Clave = "seguridad-ciberseguridad", Ruta = Biblioteca + "Ciberseguridad_BUFINS.html", Categoria = "seguridad",
+                Titulo = "Documentación oficial de ciberseguridad",
+                Descripcion = "Estado de la seguridad de BUFINS: qué controles están implementados, los hallazgos de la revisión con lo ya corregido y lo pendiente, y la hoja de ruta.",
+                EsDeMenu = false, Menu = "", Actualizado = new DateTime(2026, 10, 16) },
+
             new DocumentoBiblioteca { Clave = "informe-indicadores", Ruta = Informes + "Informe_Indicadores.html", Categoria = "informes",
                 Titulo = "Informe de indicadores",
                 Descripcion = "Qué es, de dónde salen las cifras, cómo se calcula cada uno de los 27 indicadores y cómo leer el semáforo.",

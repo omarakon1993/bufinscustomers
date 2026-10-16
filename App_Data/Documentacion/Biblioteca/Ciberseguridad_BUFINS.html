@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BUFINS · Documentación oficial de ciberseguridad</title>
+<style>
+:root{--bg:#f6f5fb;--card:#fff;--ink:#1c1738;--ink2:#5b5678;--line:#e3e0f1;--brand:#583aff;--chip:#efecff;--grad:linear-gradient(90deg,#6366F1 0%,#3B82F6 35%,#06B6D4 70%,#01E1D7 100%);--ok:#1a8a52;--warn:#b7791f;--mid:#d9731a;--bad:#c0392b}
+@media (prefers-color-scheme:dark){:root{--bg:#120a2b;--card:#1a1240;--ink:#efecff;--ink2:#a9a3cc;--line:#2d2460;--brand:#8f7bff;--chip:#271d5c;--ok:#4cc38a;--warn:#e3b341;--mid:#f09a4a;--bad:#ff7b6b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "Segoe UI",system-ui,sans-serif}
+.w{max-width:1040px;margin:0 auto;padding:0 20px}
+header{background:var(--grad);color:#fff;padding:34px 0 28px}
+header h1{margin:0 0 6px;font-size:27px}
+header p{margin:0;opacity:.95}
+nav{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:10px 0}
+nav .w{display:flex;flex-wrap:wrap;gap:8px}
+nav a{color:var(--brand);background:var(--chip);text-decoration:none;padding:4px 12px;border-radius:99px;font-size:13px}
+section{padding:26px 0 6px}
+h2{font-size:21px;margin:0 0 6px}
+h3{color:var(--brand);font-size:16px;margin:18px 0 6px}
+.lead{color:var(--ink2);margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0}
+.g2,.g3,.g4{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}}
+.kpi{text-align:center}.kpi b{display:block;font-size:30px;line-height:1.1}
+.kpi span{color:var(--ink2);font-size:13px}
+.tag{display:inline-block;padding:1px 10px;border-radius:99px;font-size:12px;font-weight:600;color:#fff;vertical-align:middle}
+.t-crit{background:var(--bad)}.t-alta{background:var(--mid)}.t-media{background:var(--warn)}.t-baja{background:#5b7bd5}.t-ok{background:var(--ok)}.t-ver{background:#7a6fa8}
+.tw{overflow-x:auto;margin:10px 0}
+table{border-collapse:collapse;width:100%;font-size:14px;background:var(--card)}
+th{background:var(--grad);color:#fff;text-align:left;padding:8px 10px}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.note{border-left:4px solid var(--brand);background:var(--chip);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.note.ok{border-color:var(--ok)}.note.bad{border-color:var(--bad)}.note.info{border-color:#3B82F6}
+code{background:var(--chip);padding:1px 6px;border-radius:5px;font:13px Consolas,monospace}
+pre{background:var(--chip);padding:12px;border-radius:8px;overflow-x:auto;font:12.5px/1.5 Consolas,monospace}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
+summary{cursor:pointer;font-weight:600}
+.find{border-left:5px solid var(--line)}
+.find.crit{border-left-color:var(--bad)}.find.alta{border-left-color:var(--mid)}.find.media{border-left-color:var(--warn)}.find.baja{border-left-color:#5b7bd5}
+.find h3{margin-top:0;color:var(--ink)}
+.find dl{margin:6px 0 0}.find dt{font-weight:600;color:var(--brand);font-size:13px;margin-top:8px}.find dd{margin:0}
+.bar{height:10px;border-radius:99px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%}
+ol.steps{padding-left:20px}
+footer{padding:26px 0 40px;color:var(--ink2);font-size:13px}
+@media print{nav{display:none}}
+</style>
+</head>
+<body>
+<header><div class="w">
+<h1>Documentación oficial de ciberseguridad de BUFINS</h1>
+<p>Qué está protegido, qué se reforzó y qué sigue pendiente · revisión del 16 de octubre de 2026 (H1, H3 fase 1, H4, H5, H6, H8 y H10 implementados)</p>
+</div></header>
+<nav><div class="w">
+<a href="#resumen">1. Resumen</a><a href="#fortalezas">2. Lo que ya tienes</a><a href="#hecho">3. Implementado y pendiente</a><a href="#hallazgos">3b. Hallazgos</a><a href="#porverificar">4. Por verificar</a><a href="#hoja">5. Hoja de ruta</a><a href="#amenazas">6. Frente a atacantes</a><a href="#alcance">7. Alcance y límites</a>
+</div></nav>
+
+<main class="w">
+
+<section id="resumen">
+<h2>1. Resumen ejecutivo</h2>
+<p class="lead">Postura general: <b>buena para una aplicación de este tamaño</b>. El login, las contraseñas, la inyección SQL y el CSRF están bien resueltos. La brecha grave de la <b>imagen de perfil</b> ya está cerrada; la que queda de peso es la <b>política CSP debilitada</b> por <code>'unsafe-inline'</code> (fase 2, requiere medir antes de tocar). El doble factor <b>sí está encendido</b> (verificado en la base de datos); queda cerrar la adopción.</p>
+<div class="g4">
+<div class="card kpi"><b style="color:var(--ok)">7</b><span>Tratados (H1, H3 fase 1, H4, H5, H6, H8, H10)</span></div>
+<div class="card kpi"><b style="color:var(--mid)">1</b><span>Alto pendiente: quitar unsafe-inline (H3 fase 2)</span></div>
+<div class="card kpi"><b style="color:var(--warn)">3</b><span>Medios pendientes (H7, H9 y adopción del 2FA)</span></div>
+<div class="card kpi"><b style="color:var(--ok)">15</b><span>Controles sólidos verificados</span></div>
+</div>
+<div class="note ok"><b>Estado.</b> H1 (imagen de perfil), H4 (<code>Html.Raw</code> con datos) y H5 (IP real) quedaron resueltos sin cambiar el comportamiento visible; H3 avanzó con su primera fase (medición). Detalle y pendientes en la sección 3.</div>
+<h3>Madurez por área</h3>
+<div class="tw"><table>
+<tr><th>Área</th><th>Estado</th><th>Comentario</th></tr>
+<tr><td>Autenticación y contraseñas</td><td><span class="tag t-ok">Sólido</span></td><td>BCrypt 12, política de 12 caracteres, Have I Been Pwned, tiempo constante, bloqueo progresivo.</td></tr>
+<tr><td>Segundo factor</td><td><span class="tag t-ok">Activo</span></td><td>Verificado en BD: <code>TwoFactorHabilitado=true</code>, alcance <code>todos</code>, passkeys habilitadas. Falta adopción (ver H2).</td></tr>
+<tr><td>Sesión y cookies</td><td><span class="tag t-ok">Sólido</span></td><td>HttpOnly + Secure + regeneración de sesión + <code>SameSite=Lax</code> declarado (H6).</td></tr>
+<tr><td>Autorización y aislamiento entre empresas</td><td><span class="tag t-ok">Sólido</span></td><td>Roles, <code>RequierePermiso</code>, <code>EmpresaAccesoHelper</code>. La lectura de fotos de perfil ahora respeta empresa/grupo (H1).</td></tr>
+<tr><td>Inyección SQL</td><td><span class="tag t-ok">Sólido</span></td><td>Consultas parametrizadas; las concatenaciones halladas solo unen nombres de tabla o listas de parámetros.</td></tr>
+<tr><td>XSS</td><td><span class="tag t-media">Mejorado</span></td><td>Los <code>Html.Raw</code> con datos de usuario fueron reemplazados por codificación. Sigue pendiente la CSP sin <code>unsafe-inline</code> (H3 fase 2).</td></tr>
+<tr><td>CSRF</td><td><span class="tag t-ok">Sólido</span></td><td>Revisión automática: 0 acciones POST sin <code>ValidateAntiForgeryToken</code>.</td></tr>
+<tr><td>Cargas de archivos</td><td><span class="tag t-media">Mejorado</span></td><td>La imagen ya se valida por firma y tamaño y se sirve endurecida. Excel sigue validándose solo por extensión (H7).</td></tr>
+<tr><td>Cabeceras HTTP</td><td><span class="tag t-media">Mejorado</span></td><td>HSTS, nosniff, frame, referrer, permisos; sin cabeceras de versión de ASP.NET/MVC (H10). La CSP sigue con <code>unsafe-inline</code> (H3 fase 2).</td></tr>
+<tr><td>Secretos y configuración</td><td><span class="tag t-ok">Sólido</span></td><td><code>secrets.config</code> y <code>machineKey</code> fuera de git.</td></tr>
+<tr><td>Auditoría y detección</td><td><span class="tag t-ok">Sólido</span></td><td>Auditoría central, alertas de modo defensivo, navegación y registros.</td></tr>
+<tr><td>Infraestructura y operación</td><td><span class="tag t-ver">No verificable desde el código</span></td><td>TLS, WAF, copias de seguridad, permisos de BD, parches del servidor. Ver sección 4.</td></tr>
+</table></div>
+</section>
+
+<section id="fortalezas">
+<h2>2. Lo que ya tienes bien resuelto</h2>
+<p class="lead">Cada punto fue comprobado en el código o la configuración, no asumido.</p>
+<div class="g2">
+<div class="card"><h3>Identidad</h3><ul>
+<li>Contraseñas con BCrypt (factor 12) y migración desde SHA256.</li>
+<li>Política central: 12+ caracteres, complejidad, sin repeticiones, sin claves comunes, sin el usuario, y consulta a Have I Been Pwned (k-anonimato).</li>
+<li>Login con verificación BCrypt siempre (usuario inexistente incluido): no se puede enumerar usuarios por tiempos.</li>
+<li>Bloqueo progresivo de cuenta (15 min, 1 h, 24 h) y límite por IP persistente en base de datos, con <b>modo defensivo</b> automático y aviso a Super Admins.</li>
+<li>Cambio de clave obligatorio en el primer inicio de sesión.</li>
+<li>2FA TOTP propio (RFC 6238, anti-reutilización de código) y passkeys WebAuthn con reconfirmación; reinicio solo por Super Admin con evidencia.</li>
+</ul></div>
+<div class="card"><h3>Sesión y acceso</h3><ul>
+<li>Sesión nueva tras el login (<code>Session.Abandon</code> + token de un solo uso de 60 s): evita fijación de sesión.</li>
+<li>Cookies <code>HttpOnly</code> y <code>requireSSL</code>; sesión de 20 min con renovación silenciosa.</li>
+<li>Tres niveles de rol, permisos por menú en servidor (<code>RequierePermiso</code>, <code>SoloSuperAdmin</code>), aislamiento por empresa y por grupo empresarial.</li>
+<li>Redirecciones validadas con <code>Url.IsLocalUrl</code> (sin open redirect).</li>
+<li>Pantalla de cambio de clave bloquea todo lo demás hasta cumplirse (filtro global).</li>
+</ul></div>
+<div class="card"><h3>Datos y código</h3><ul>
+<li>ADO.NET con parámetros y procedimientos almacenados en todo lo revisado.</li>
+<li>Antifalsificación en todas las acciones POST (revisión automática del repositorio).</li>
+<li>Sin deserialización insegura: 0 usos de <code>BinaryFormatter</code>, <code>LosFormatter</code>, <code>TypeNameHandling</code>.</li>
+<li>Excel con ClosedXML; el nombre de archivo de descarga se sanea con <code>GetInvalidFileNameChars</code>.</li>
+<li>Cargues en dos pasos (staging), con bloqueos y limpieza automática de lotes.</li>
+<li>IA limitada a las tablas <code>Modelo*</code>, con control de acceso, tope y auditoría por empresa.</li>
+</ul></div>
+<div class="card"><h3>Plataforma y operación</h3><ul>
+<li>Cabeceras: HSTS (1 año), <code>nosniff</code>, <code>X-Frame-Options</code>, <code>Referrer-Policy</code>, <code>Permissions-Policy</code>, COOP, <code>object-src 'none'</code>, <code>frame-ancestors 'self'</code>.</li>
+<li><code>machineKey</code> fija y <code>secrets.config</code> fuera del control de versiones (solo el <code>.example</code> está versionado).</li>
+<li>Páginas de error propias; <code>customErrors=RemoteOnly</code>.</li>
+<li>Auditoría central, de navegación, de cargues y de IA; registro de aplicación con rotación.</li>
+<li>Documentación sensible servida con marca de agua, sin caché y auditada.</li>
+</ul></div>
+</div>
+</section>
+
+<section id="hecho">
+<h2>3. Implementado en esta tanda y pendiente</h2>
+<p class="lead">Regla aplicada: ningún cambio altera lo que el usuario ve o hace hoy. La solución compila (MSBuild Debug sin errores). Las vistas Razor se compilan al primer uso, por eso al final hay una lista corta de pruebas manuales.</p>
+<div class="tw"><table>
+<tr><th>Hallazgo</th><th>Estado</th><th>Qué se hizo</th><th>Qué queda pendiente</th></tr>
+<tr><td><b>H1</b> Imagen de perfil</td><td><span class="tag t-ok">Implementado</span></td><td>
+<ul>
+<li>El tipo se detecta por la <b>firma de los bytes</b> (PNG, JPEG, GIF, WebP); se rechaza HTML, SVG y cualquier otra cosa, y lo que declare el navegador se ignora.</li>
+<li>Tope de 10 MB (el mismo que ya anunciaba la pantalla).</li>
+<li>Al servir (<code>Usuario/Imagen/{id}</code>): el tipo sale de la firma, no de lo guardado, así que filas antiguas con HTML/SVG dejan de servirse (404); cabeceras <code>nosniff</code> y <code>CSP: default-src 'none'; sandbox</code>.</li>
+<li>Control de acceso: solo la propia foto, Super Admin, o usuarios de una empresa a la que se tiene acceso (empresa propia o su grupo, vía <code>EmpresaAccesoHelper</code>).</li>
+<li>Mensaje de error traducido (<code>Usr_ImagenInvalida</code>, ambos idiomas) en el modal de subir foto.</li>
+</ul></td><td>
+<ul>
+<li>Revisar en BD si hay filas antiguas no válidas: <code>SELECT UsuarioId, TipoImagen FROM UsuarioImagenes WHERE TipoImagen NOT IN ('image/png','image/jpeg','image/gif','image/webp')</code>.</li>
+<li>Opcional: re-codificar la imagen en el servidor con <code>System.Drawing</code> para descartar cargas ocultas dentro de un archivo válido.</li>
+</ul></td></tr>
+<tr><td><b>H3</b> CSP</td><td><span class="tag t-media">Fase 1 de 2</span></td><td>
+<ul>
+<li>Se quitó <code>https://api.openai.com</code> de <code>connect-src</code>: ningún script del navegador lo usa (la IA se llama desde el servidor), sin cambio funcional.</li>
+<li>Nueva cabecera <code>Content-Security-Policy-Report-Only</code> con la política estricta (scripts sin <code>unsafe-inline</code>). <b>No bloquea nada</b>: solo reporta.</li>
+<li>Nuevo receptor <code>CspReportController</code> (<code>/CspReport/Recibir</code>): cuerpo máximo 8 KB, tope por IP y global por hora; cada violación distinta se registra una vez por hora en <code>App_Data/logs/app-*.log</code> con la etiqueta <code>CSP-REPORT</code>.</li>
+</ul></td><td>
+<ul>
+<li><b>Fase 2 (necesaria para cerrar H3):</b> con el inventario del log, mover los scripts en línea a archivos <code>.js</code> o ponerles nonce, y los <code>onclick=""</code> a <code>addEventListener</code>; luego quitar <code>'unsafe-inline'</code> de la cabecera vigente. No se hizo ahora porque la app tiene cientos de manejadores en línea y quitarlos de golpe rompería pantallas.</li>
+<li><code>frame-src https:</code> se mantiene: el módulo de reportes incrusta enlaces https configurados por empresa. Se puede acotar cuando se conozcan todos los dominios.</li>
+<li>Los <code>Swal.fire</code> con <code>title</code> interpretan HTML; con mensajes del servidor es aceptable, pero texto escrito por usuarios debería ir con <code>text</code>.</li>
+</ul></td></tr>
+<tr><td><b>H4</b> <code>Html.Raw</code> con datos</td><td><span class="tag t-ok">Implementado</span></td><td>
+<ul>
+<li><b>Maestro de reportes</b>: nombre, años, descripción y enlace se imprimen codificados en atributos <code>data-*</code>; el enlace del reporte se lee con <code>getAttribute</code> en vez de ir dentro del <code>onclick</code>.</li>
+<li><b>Gestores</b> (Categorías, Grupos, Escenarios, Modelos de ejecución, Gestor de menús), <b>Configuración global</b> y <b>Ejecución de modelos</b>: los textos que pasan a JavaScript usan <code>HttpUtility.JavaScriptStringEncode</code> (equivale al escape de comilla anterior y además cubre comillas dobles, barra invertida, <code>&lt;</code> y saltos de línea).</li>
+<li><b>Hallazgo adicional corregido</b>: el botón Editar de <b>Usuarios</b> pasaba nombre, apellidos, teléfono, correo y usuario sin codificar a JavaScript. Era un punto de XSS y un apóstrofe en un nombre rompía el botón. Ahora se codifican igual.</li>
+</ul></td><td>
+<ul>
+<li>El botón Editar de Usuarios sigue enviando el <b>hash de la contraseña</b> (<code>usuario.Clave</code>) dentro del HTML. No se modificó porque el formulario podría depender de ese valor; conviene quitarlo en una tarea aparte revisando el JS.</li>
+<li>Los <code>Html.Raw</code> restantes son textos de recursos, JSON serializado o valores ya codificados (<code>JavaScriptStringEncode</code>/<code>J()</code>); se revisaron y no cambian.</li>
+</ul></td></tr>
+<tr><td><b>H5</b> IP real tras proxy</td><td><span class="tag t-ok">Verificado: no aplica</span></td><td>
+<ul>
+<li><code>customers.bufins.com</code> resuelve directo al servidor web y la respuesta viene de IIS/Plesk, sin cabeceras de Cloudflare ni de balanceador. La IP que ve la app ya es la del visitante.</li>
+<li><code>TrustedProxies</code> debe seguir <b>vacío</b>: llenarlo sin proxy no aporta nada.</li>
+</ul></td><td>
+<ul>
+<li>Si algún día se pone Cloudflare u otro proxy delante: cargar sus rangos en <code>TrustedProxies</code>, activar <code>TrustCloudflareHeader</code> y restringir el firewall para que el servidor solo acepte tráfico del proxy.</li>
+</ul></td></tr>
+<tr><td><b>H6</b> Cookies</td><td><span class="tag t-ok">Implementado</span></td><td>
+<ul>
+<li><code>&lt;httpCookies sameSite="Lax"&gt;</code> y <code>&lt;sessionState cookieSameSite="Lax"&gt;</code>: la cookie de sesión, la de antifalsificación y las demás declaran <code>SameSite</code> explícito (segunda barrera contra CSRF, sin depender del navegador).</li>
+<li><code>Secure</code> ya queda forzado en todas las cookies por <code>requireSSL="true"</code>, también en las que se crean a mano (<code>_lt</code>, <code>_2fa</code>, <code>lang</code>); no se necesitó tocar el código.</li>
+<li>Lax permite la navegación normal (enlaces, redirecciones) y bloquea el envío de la cookie en POST desde otros sitios. No hay flujos de inicio de sesión externos que lo impidan.</li>
+</ul></td><td>
+<ul><li>Valorar <code>Strict</code> para la cookie de sesión si en el futuro ningún enlace externo necesita abrir el sistema ya autenticado.</li></ul></td></tr>
+<tr><td><b>H8</b> Errores al navegador</td><td><span class="tag t-ok">Implementado</span></td><td>
+<ul>
+<li>Nuevo <code>BaseController.MensajeError(ex)</code>: registra siempre la excepción completa con un código de referencia y devuelve el mensaje seguro.</li>
+<li>Se aplicó en los 46 puntos que devolvían <code>ex.Message</code> en JSON (informes, configuración, permisos, menús, cargue y otros).</li>
+<li><b>Para no cambiar el comportamiento:</b> si el error es de regla de negocio (mensaje escrito por la aplicación o un <code>THROW/RAISERROR</code> propio, número 50000 o más) el usuario sigue viendo el mismo mensaje de antes. Solo los errores técnicos (SQL del sistema, nulos, E/S, tiempos de espera, red) pasan a un texto genérico traducido con código, p. ej. "Ocurrió un error inesperado. Si continúa, informa este código al soporte: 3F9A12CD" (<code>Err_InternoRef</code>, ambos idiomas).</li>
+<li>Se dejaron sin cambio, a propósito, dos herramientas de diagnóstico solo para Super Admin: la prueba de conexión de cuentas de correo y el gestor de hojas de cargue (muestran el detalle SQL/SMTP porque ahí es lo que se necesita).</li>
+</ul></td><td>
+<ul>
+<li>Los <code>catch</code> que muestran el mensaje con <code>SetErrorMessage(ex.Message)</code> (redirecciones con TempData) no se tocaron en esta tanda; pasarlos a <code>MensajeError</code> es el mismo cambio mecánico.</li>
+<li>Una página de error por código de referencia para soporte (buscar el código en <code>App_Data/logs</code>).</li>
+</ul></td></tr>
+<tr><td><b>H10</b> Cabeceras y detalles</td><td><span class="tag t-media">Parcial</span></td><td>
+<ul>
+<li><code>X-AspNetMvc-Version</code> eliminada (<code>MvcHandler.DisableMvcResponseHeader</code>) y <code>X-AspNet-Version</code> eliminada (<code>enableVersionHeader="false"</code>).</li>
+<li><code>X-XSS-Protection</code> pasó de <code>1; mode=block</code> a <code>0</code> (el filtro del navegador está obsoleto y podía generar fallos).</li>
+<li>Se pide quitar la cabecera <code>X-Powered-By-Plesk</code>; si Plesk la vuelve a agregar a nivel de servidor, se oculta desde su panel.</li>
+</ul></td><td>
+<ul>
+<li><code>Server: Microsoft-IIS/10.0</code> sigue visible: ocultarlo (<code>removeServerHeader</code>) puede estar bloqueado en el alojamiento y provocar un error 500, por eso no se activó sin probar en el servidor.</li>
+<li><code>Cross-Origin-Resource-Policy</code> no se agregó: podría romper recursos que el portal público consuma de este dominio. Evaluar con el equipo del portal.</li>
+<li><code>SetLanguage</code> por GET → POST: exige cambiar todos los enlaces de idioma; queda como mejora menor.</li>
+<li>Sesión <code>InProc</code> y inventario trimestral de librerías de <code>Assets/js</code> siguen como tareas de mediano plazo.</li>
+</ul></td></tr>
+</table></div>
+<h3>Pruebas manuales recomendadas (5 minutos)</h3>
+<ol class="steps">
+<li>Subir una foto PNG/JPG normal desde el menú de usuario: debe guardarse y verse. Renombrar un <code>.html</code> a <code>.png</code> y subirlo: debe rechazarse con el mensaje nuevo.</li>
+<li>Ver la lista de Usuarios (fotos visibles) y editar un usuario con apóstrofe en el nombre: el modal debe abrir con los datos completos.</li>
+<li>Maestro de reportes: abrir un reporte con el icono de enlace, editar uno y comprobar nombre, descripción y enlace.</li>
+<li>Gestores de Categorías, Grupos, Escenarios, Modelos de ejecución y Gestor de menús: editar y eliminar un registro; los avisos tipo toast deben verse igual.</li>
+<li>Cerrar sesión e iniciar de nuevo (cookies con <code>SameSite=Lax</code>): el login, el segundo factor y el cambio de idioma deben funcionar igual.</li>
+<li>Provocar un error técnico (por ejemplo consultar un informe con la base de datos detenida en un ambiente de pruebas): debe verse el mensaje genérico con código y el detalle debe aparecer en <code>App_Data/logs</code>.</li>
+<li>Revisar las cabeceras de la respuesta (herramientas del navegador, pestaña Red): ya no deben aparecer <code>X-AspNetMvc-Version</code> ni <code>X-AspNet-Version</code>.</li>
+<li>Navegar varias pantallas con la consola abierta: aparecerán avisos de la política en modo reporte (esperado); no debe haber errores nuevos. A los pocos días, buscar <code>CSP-REPORT</code> en <code>App_Data/logs</code> para armar la fase 2.</li>
+</ol>
+</section>
+
+<section id="hallazgos">
+<h2>3b. Hallazgos (texto original, con su estado)</h2>
+<p class="lead">Ordenados por prioridad. "Obligatorio" significa que lo haría antes de ampliar el número de clientes o de exponer el sistema más.</p>
+
+<div class="card find crit">
+<h3>H1 · Imagen de perfil: XSS almacenado y lectura sin control de empresa <span class="tag t-ok">Implementado</span></h3>
+<dl>
+<dt>Dónde</dt><dd><code>UsuarioController.GuardarImagenUsuario</code>, <code>CargarImagenUsuario</code> e <code>Imagen</code> (<code>Controllers/UsuarioController.cs</code>, hacia las líneas 722-800).</dd>
+<dt>Qué pasa</dt><dd>No se valida el tipo, el tamaño ni el contenido. Se guarda el <code>ContentType</code> que declara el navegador y luego <code>Imagen(id)</code> devuelve los bytes con ese mismo tipo, desde tu dominio. Un usuario puede subir <code>text/html</code> o <code>image/svg+xml</code> con un script. La CSP actual incluye <code>script-src 'unsafe-inline'</code>, así que el script se ejecuta. Basta enviar el enlace <code>/Usuario/Imagen/{id}</code> a un administrador que tenga la sesión abierta.</dd>
+<dt>Además</dt><dd><code>Imagen(id)</code> solo exige estar autenticado: cualquiera puede pedir la foto de cualquier <code>id</code> de usuario, incluso de otra empresa (fuga menor y enumeración de IDs).</dd>
+<dt>Cómo corregirlo</dt><dd>
+<ol class="steps">
+<li>Lista blanca de tipos: solo <code>image/png</code>, <code>image/jpeg</code>, <code>image/webp</code> (nunca SVG).</li>
+<li>Comprobar la <b>firma real</b> de los bytes (PNG <code>89 50 4E 47</code>, JPEG <code>FF D8 FF</code>, WebP <code>RIFF…WEBP</code>) y no confiar en <code>ContentType</code> ni en la extensión.</li>
+<li>Tope de tamaño (por ejemplo 1 MB) y, mejor, volver a codificar la imagen con <code>System.Drawing</code> a un tamaño fijo (descarta cualquier carga oculta).</li>
+<li>En <code>Imagen</code>: ignorar el tipo guardado y devolver el tipo derivado de la firma, más <code>Content-Disposition: inline</code> y <code>Content-Security-Policy: default-src 'none'; sandbox</code>.</li>
+<li>Limitar quién puede ver qué foto (misma empresa o grupo, vía <code>EmpresaAccesoHelper</code>).</li>
+<li>Limpiar las filas existentes en <code>UsuarioImagenes</code> cuyo <code>TipoImagen</code> no esté en la lista blanca.</li>
+</ol></dd>
+</dl>
+<details><summary>Ejemplo de validación mínima</summary>
+<pre>private static string TipoPorFirma(byte[] b)
+{
+    if (b.Length &gt; 8 &amp;&amp; b[0]==0x89 &amp;&amp; b[1]==0x50 &amp;&amp; b[2]==0x4E &amp;&amp; b[3]==0x47) return "image/png";
+    if (b.Length &gt; 3 &amp;&amp; b[0]==0xFF &amp;&amp; b[1]==0xD8 &amp;&amp; b[2]==0xFF) return "image/jpeg";
+    if (b.Length &gt; 12 &amp;&amp; b[0]==0x52 &amp;&amp; b[1]==0x49 &amp;&amp; b[8]==0x57 &amp;&amp; b[9]==0x45) return "image/webp";
+    return null; // rechazar
+}
+// En GuardarImagenUsuario: si bytes.Length &gt; 1_048_576 o TipoPorFirma(bytes)==null =&gt; rechazar.</pre></details>
+</div>
+
+<div class="card find media">
+<h3>H2 · Doble factor: activo, falta cerrar la adopción <span class="tag t-media">Medio</span> <span class="tag t-ok">2FA activo</span></h3>
+<dl>
+<dt>Estado verificado</dt><dd>El valor de respaldo de <code>Web.config</code> (<code>false</code>) no es el que manda: la clave en <code>dbo.ConfiguracionSistema</code> prevalece y está en <code>TwoFactorHabilitado = true</code>, <code>TwoFactorAlcance = todos</code>, <code>PasskeysHabilitado = true</code>, máximo 5 passkeys por usuario. Las tablas y columnas necesarias existen.</dd>
+<dt>Lo que sí muestran los datos</dt><dd>
+<ul>
+<li>Super Admin: 3 de 4 ya tienen app autenticadora; falta uno de los Super Admin.</li>
+<li>Admin de empresa: solo 1 de 6 con TOTP activo.</li>
+<li>Passkeys registradas: 0 usuarios. Está habilitada pero nadie la usa todavía.</li>
+<li>Falta la columna <code>Usuarios.PasskeyAvisoHasta</code> (script <code>031</code> sin ejecutar): por eso la franja del Home que invita a agregar passkey no aparece.</li>
+<li><code>WebAuthnRpId</code> no está definido: usa el host de la petición. Funciona, pero si cambia el dominio las passkeys dejan de servir; conviene fijarlo.</li>
+</ul>
+Como el código exige alta del autenticador en el siguiente login, quienes no tienen TOTP aún no han vuelto a entrar desde que se activó (o no es el caso y conviene revisarlo). Confirma con el visor de auditoría que los accesos recientes pasan por el segundo factor.</dd>
+<dt>Qué hacer</dt><dd>Ejecutar el script 031, fijar <code>WebAuthnRpId</code> al dominio de producción, promover las passkeys entre administradores y verificar que nadie con rol de gestión conserve acceso sin segundo factor.</dd>
+</dl>
+</div>
+
+<div class="card find alta">
+<h3>H3 · CSP con <code>'unsafe-inline'</code> en scripts <span class="tag t-media">Fase 1 hecha · fase 2 pendiente</span></h3>
+<dl>
+<dt>Qué pasa</dt><dd><code>script-src 'self' 'unsafe-inline'</code> anula la mayor parte de la protección contra XSS: cualquier inyección de HTML se convierte en ejecución de código. Es lo que agrava H1 y H4.</dd>
+<dt>Qué hacer</dt><dd>Migración gradual: (1) generar un <i>nonce</i> por petición y ponerlo en cada <code>&lt;script&gt;</code> de las vistas; (2) mover los <code>onclick="..."</code> a <code>addEventListener</code> o a <code>data-*</code>; (3) publicar primero en modo <code>Content-Security-Policy-Report-Only</code> con un <code>report-uri</code> y medir; (4) quitar <code>'unsafe-inline'</code> de <code>script-src</code>. Es el cambio con mejor retorno a mediano plazo. En el mismo paso: restringir <code>frame-src https:</code> a los dominios que de verdad se incrustan (Power BI, etc.) y quitar de <code>connect-src</code> lo que el navegador ya no llama (<code>api.openai.com</code> se invoca desde el servidor).</dd>
+</dl>
+</div>
+
+<div class="card find alta">
+<h3>H4 · <code>Html.Raw</code> con datos escritos por usuarios <span class="tag t-ok">Implementado</span></h3>
+<dl>
+<dt>Dónde</dt><dd><code>Views/Configuracion/MaestroReportes.cshtml</code> (nombre, descripción y enlace del reporte dentro de atributos <code>data-*</code> y de un <code>onclick</code>); <code>GestorCategorias</code>, <code>GestorGrupos</code>, <code>GestorEscenarios</code>, <code>MenuOpciones</code> y <code>ConfiguracionGlobal</code> (texto en <code>onclick</code> y en <code>Swal.fire</code> escapando solo la comilla simple).</dd>
+<dt>Qué pasa</dt><dd>Un valor con comillas dobles, barra invertida o <code>&lt;/script&gt;</code> sale del atributo o del script. Los gestores de Super Admin tienen riesgo bajo (solo ese rol los escribe). El de reportes es más delicado porque lo editan roles menores y lo ven otros usuarios (XSS almacenado entre usuarios).</dd>
+<dt>Qué hacer</dt><dd>Quitar <code>Html.Raw</code> de datos: usar <code>@reporte.Nombre</code> en atributos y pasar valores a JavaScript con <code>@Html.Raw(Json.Encode(valor))</code> o, mejor, con <code>data-*</code> codificados y lectura desde el manejador. Dejar <code>Html.Raw</code> solo para textos fijos de recursos (<code>Resources.Strings…</code>), que son tuyos. Para los mensajes de <code>TempData</code> en <code>Swal.fire</code>, codificar con <code>HttpUtility.JavaScriptStringEncode</code>.</dd>
+</dl>
+</div>
+
+<div class="card find media">
+<h3>H5 · IP real detrás de proxy: <code>TrustedProxies</code> vacío <span class="tag t-ok">Verificado: no aplica</span></h3>
+<dl>
+<dt>Qué pasa</dt><dd>Si el sitio está detrás de Cloudflare o de un balanceador, <code>UserHostAddress</code> es la IP del proxy. El límite de intentos por IP, el bloqueo y la auditoría verían todo como una sola IP: un atacante podría bloquear a todos tus usuarios, o las alertas perder utilidad.</dd>
+<dt>Qué hacer</dt><dd>Si hay proxy: cargar sus rangos en <code>TrustedProxies</code> y activar <code>TrustCloudflareHeader</code>. Si no hay proxy: nada. Además, acepta tráfico solo desde el proxy a nivel de firewall (si no, alguien podría falsear la cabecera).</dd>
+</dl>
+</div>
+
+<div class="card find media">
+<h3>H6 · Cookies sin <code>SameSite</code> explícito y <code>Secure</code> dependiente de la conexión <span class="tag t-ok">Implementado</span></h3>
+<dl>
+<dt>Qué pasa</dt><dd><code>&lt;httpCookies&gt;</code> no declara <code>sameSite</code>; hoy dependes del valor por defecto del navegador. Las cookies propias (<code>_lt</code>, <code>_2fa</code>, <code>lang</code>) usan <code>Secure = Request.IsSecureConnection</code>: si el TLS se termina en un proxy y la petición llega por HTTP, la cookie sale sin <code>Secure</code>. <code>lang</code> no es <code>Secure</code>.</dd>
+<dt>Qué hacer</dt><dd><code>&lt;httpCookies httpOnlyCookies="true" requireSSL="true" sameSite="Lax" /&gt;</code> (o <code>Strict</code> si ningún flujo necesita llegar desde otro sitio) y forzar <code>Secure = true</code> en las cookies manuales. Es también la segunda barrera contra CSRF.</dd>
+</dl>
+</div>
+
+<div class="card find media">
+<h3>H7 · Cargue de Excel: solo se valida la extensión <span class="tag t-media">Medio</span></h3>
+<dl>
+<dt>Qué pasa</dt><dd>Se acepta cualquier archivo que termine en <code>.xlsx/.xlsm</code> hasta 100 MB. Un <code>.xlsx</code> es un ZIP: un archivo pequeño que se descomprime a gigabytes ("zip bomb") puede agotar memoria del servidor. Se aceptan <code>.xlsm</code> (con macros, aunque ClosedXML no las ejecute). La carga ocurre en tiempo de petición y el límite de 1 hora de ejecución es muy alto.</dd>
+<dt>Qué hacer</dt><dd>Comprobar la firma ZIP (<code>PK</code>), limitar el tamaño real descomprimido y el número de entradas antes de abrir con ClosedXML, valorar aceptar solo <code>.xlsx</code>, y bajar <code>executionTimeout</code> general (dejar el alto solo en las rutas de cargue con <code>&lt;location&gt;</code>). Limitar cargues por usuario y por minuto.</dd>
+</dl>
+</div>
+
+<div class="card find media">
+<h3>H8 · Mensajes de error internos devueltos al navegador <span class="tag t-ok">Implementado</span></h3>
+<dl>
+<dt>Qué pasa</dt><dd>Hay unos 48 puntos que devuelven <code>ex.Message</code> en JSON o texto (por ejemplo <code>"Error: " + ex.Message</code>). Los mensajes de SQL Server o de .NET revelan nombres de tablas, rutas y versiones, útiles para un atacante.</dd>
+<dt>Qué hacer</dt><dd>Registrar la excepción en <code>AppLogger</code> y devolver un mensaje genérico traducido con un código de incidente. Ya tienes <code>AppLogger</code>; es un cambio mecánico.</dd>
+</dl>
+</div>
+
+<div class="card find media">
+<h3>H9 · Privilegios de la base de datos y ejecución de procesos <span class="tag t-media">Medio</span></h3>
+<dl>
+<dt>Qué pasa</dt><dd>La aplicación crea y altera tablas desde el Gestor de hojas de cargue, lo que obliga a que su usuario de BD tenga <code>db_ddladmin</code>. Si algún día hubiera una inyección o una cuenta comprometida, el daño crece con ese permiso. Además, <code>ObservatorioActualizacionService</code> lanza un ejecutable cuya ruta se guarda en <code>ConfiguracionSistema</code>: un Super Admin comprometido puede apuntarla a cualquier programa.</dd>
+<dt>Qué hacer</dt><dd>Separar dos usuarios de BD: uno de lectura/escritura de datos (el de uso diario) y otro con DDL solo para el gestor. En el ejecutable: validar que la ruta esté dentro de una carpeta permitida, comprobar el nombre exacto y, si es posible, su firma o hash, y auditar cada ejecución.</dd>
+</dl>
+</div>
+
+<div class="card find baja">
+<h3>H10 · Cabeceras y detalles de endurecimiento <span class="tag t-media">Parcial</span></h3>
+<ul>
+<li><code>X-XSS-Protection: 1; mode=block</code> es obsoleto y en algunos navegadores antiguos introduce fallos; lo recomendado es <code>0</code> o quitarla.</li>
+<li>No encontré <code>MvcHandler.DisableMvcResponseHeader = true</code> ni <code>enableVersionHeader="false"</code>: se publican <code>X-AspNetMvc-Version</code> y <code>X-AspNet-Version</code>. Quitarlas y ocultar <code>Server</code> (<code>removeServerHeader="true"</code> en <code>requestFiltering</code>).</li>
+<li>Añadir <code>Cross-Origin-Resource-Policy: same-origin</code>, y valorar <code>Cross-Origin-Embedder-Policy</code> si no incrustas recursos de terceros.</li>
+<li><code>SetLanguage</code> cambia estado por GET (inocuo, pero conviene POST).</li>
+<li>Sesión <code>InProc</code>: se pierde al reciclar el pool y no escala a varios servidores; cuando crezcas, mover a SQL Server o Redis.</li>
+<li><code>jQuery.Validation 1.21.0</code> y las librerías de <code>Assets/js</code> (jsPDF, html2canvas, SweetAlert2, Chart.js) no se actualizan solas: llevar un inventario con versión y revisarlo cada trimestre.</li>
+</ul>
+</div>
+</section>
+
+<section id="porverificar">
+<h2>4. Lo que no pude verificar desde el código</h2>
+<p class="lead">Son puntos que dependen del servidor o de configuraciones fuera del repositorio. Conviene confirmarlos tú, porque pueden ser tan importantes como los hallazgos anteriores.</p>
+<div class="tw"><table>
+<tr><th>Punto</th><th>Por qué importa</th><th>Cómo comprobarlo</th></tr>
+<tr><td><b>Publicación en modo Release</b></td><td><code>Web.config</code> trae <code>compilation debug="true"</code>; <code>Web.Release.config</code> lo quita solo al publicar con Release. En debug se desactivan optimizaciones y se exponen más detalles.</td><td>Revisar el <code>Web.config</code> publicado: no debe contener <code>debug="true"</code>.</td></tr>
+<tr><td><b>Carpeta <code>Logs/</code> en la raíz del sitio</b></td><td>Existe <code>Logs/ExcelImport.log</code> junto al código. A diferencia de <code>App_Data</code>, IIS no la bloquea por defecto: si es descargable, filtra datos de cargues.</td><td>Abrir <code>https://tu-sitio/Logs/ExcelImport.log</code>. Si responde, moverla a <code>App_Data/logs</code> o bloquearla con <code>requestFiltering</code>.</td></tr>
+<tr><td><b>Restablecer contraseña (<code>SolicitarReset</code>)</b></td><td>No confirmé que tenga límite de solicitudes por IP/correo; sin él se puede usar para enviar correo masivo a una víctima o probar tokens. La respuesta parece genérica (bien).</td><td>Comprobar que usa <code>RateLimitLoginService</code> o similar y que el token es de un solo uso, aleatorio de 128 bits y caduca (hoy 1 h).</td></tr>
+<tr><td><b>Claves en <code>ConfiguracionSistema</code></b></td><td>La clave de OpenAI en BD no tiene el aspecto de una clave en texto plano (no empieza por <code>sk-</code>), lo cual es buena señal. Falta confirmar la contraseña SMTP en <code>ConfiguracionCuentasCorreo</code>.</td><td>Revisar la tabla de cuentas de correo; cifrar lo que esté en claro con <code>MachineKey.Protect</code> (ya lo usas para el secreto TOTP) o moverlas a un almacén de secretos.</td></tr>
+<tr><td><b>TLS y certificado</b></td><td>HSTS está bien, pero depende de un TLS 1.2+ y de que TLS 1.0/1.1 y cifrados débiles estén desactivados en Windows/IIS.</td><td>Ejecutar un análisis SSL Labs sobre el dominio. Objetivo: A o A+.</td></tr>
+<tr><td><b>Copias de seguridad</b></td><td>Es tu defensa contra ransomware y borrados. Una copia sin prueba de restauración no cuenta.</td><td>Copias cifradas, fuera del servidor, con restauración probada y retención conocida.</td></tr>
+<tr><td><b>Parches del servidor y SQL Server</b></td><td>Windows, IIS, .NET Framework 4.8 y SQL Server reciben correcciones mensuales.</td><td>Política de parches con ventana fija y registro.</td></tr>
+<tr><td><b>Exposición de SQL Server</b></td><td>El puerto 1433 no debe ser accesible desde internet.</td><td>Escaneo de puertos desde fuera y regla de firewall solo desde el servidor web.</td></tr>
+<tr><td><b>Permisos de carpeta en IIS</b></td><td>El usuario del pool solo debería poder escribir en <code>App_Data</code> y la carpeta de datos del Observatorio.</td><td>Revisar ACL del sitio.</td></tr>
+</table></div>
+</section>
+
+<section id="hoja">
+<h2>5. Hoja de ruta sugerida</h2>
+<div class="g3">
+<div class="card"><h3>Esta semana</h3><ol class="steps">
+<li>H1: hecho. Revisar filas antiguas de <code>UsuarioImagenes</code>.</li>
+<li>H6: hecho (<code>SameSite=Lax</code>).</li>
+<li>Sección 4: comprobar <code>/Logs/</code> y que el despliegue sea Release.</li>
+<li>H5: hecho (sin proxy, no se cambia nada).</li>
+<li>H10: hecho en parte; falta ocultar <code>Server</code> (probar en el servidor).</li>
+</ol></div>
+<div class="card"><h3>Este mes</h3><ol class="steps">
+<li>H2: ejecutar script 031, fijar <code>WebAuthnRpId</code> y promover passkeys.</li>
+<li>H4: hecho. Pendiente: quitar el hash de contraseña del botón Editar de Usuarios.</li>
+<li>H8: hecho en los endpoints JSON; falta el mismo cambio en los avisos por TempData.</li>
+<li>H7: validación estructural de Excel y límites por usuario.</li>
+<li>Cifrar claves guardadas en BD (sección 4).</li>
+</ol></div>
+<div class="card"><h3>Próximos 3 meses</h3><ol class="steps">
+<li>H3 fase 2: con el inventario de <code>CSP-REPORT</code>, sacar scripts en línea y quitar <code>'unsafe-inline'</code>.</li>
+<li>H9: separar el usuario de BD de DDL del de uso diario.</li>
+<li>Prueba de intrusión externa (ver abajo) y corrección de lo que encuentre.</li>
+<li>WAF/CDN delante (Cloudflare o equivalente) y alertas centralizadas.</li>
+<li>Inventario de dependencias y revisión trimestral.</li>
+</ol></div>
+</div>
+<h3>Capas que suelen faltar en esta etapa</h3>
+<div class="tw"><table>
+<tr><th>Mejora</th><th>Prioridad</th><th>Detalle</th></tr>
+<tr><td>Prueba de penetración externa</td><td><span class="tag t-alta">Alta</span></td><td>Una revisión independiente al año, y siempre antes de un cliente grande. Este informe es una revisión del código, no la sustituye.</td></tr>
+<tr><td>WAF y protección contra denegación de servicio</td><td><span class="tag t-alta">Alta</span></td><td>Cloudflare u otro. Reduce tráfico malicioso y oculta la IP real del servidor.</td></tr>
+<tr><td>Plan de respuesta a incidentes</td><td><span class="tag t-alta">Alta</span></td><td>Quién decide, a quién se avisa, cómo se revoca todo (claves, sesiones, tokens). Ya tienes el cierre de sesiones y los avisos; falta el documento.</td></tr>
+<tr><td>Cumplimiento de datos personales</td><td><span class="tag t-alta">Alta</span></td><td>Ley 1581 de 2012 (Colombia): política de tratamiento, autorización, registro de bases de datos y aviso de incidentes. Consulta con un abogado; aquí solo se señala el punto.</td></tr>
+<tr><td>Cifrado de datos sensibles en reposo</td><td><span class="tag t-media">Media</span></td><td>TDE en SQL Server y copias cifradas. Las claves de terceros, cifradas a nivel de campo.</td></tr>
+<tr><td>Cierre de sesión global y lista de dispositivos</td><td><span class="tag t-media">Media</span></td><td>Que el usuario vea y cierre sus sesiones activas (la pantalla Seguridad ya existe, es el sitio natural).</td></tr>
+<tr><td>Alertas de inicio de sesión inusual</td><td><span class="tag t-media">Media</span></td><td>Aviso por correo si entra desde otro país o dispositivo nuevo.</td></tr>
+<tr><td>Escaneo automático de dependencias y secretos</td><td><span class="tag t-media">Media</span></td><td>OWASP Dependency-Check o GitHub Dependabot y detección de secretos en commits.</td></tr>
+<tr><td>Política de divulgación (<code>/.well-known/security.txt</code>)</td><td><span class="tag t-baja">Baja</span></td><td>Un correo y una política para quien encuentre un fallo.</td></tr>
+<tr><td>Segregación de ambientes</td><td><span class="tag t-baja">Baja</span></td><td>Desarrollo y pruebas con datos ficticios o anonimizados, nunca copias de producción.</td></tr>
+</table></div>
+</section>
+
+<section id="amenazas">
+<h2>6. Cómo queda frente a los ataques más comunes</h2>
+<div class="tw"><table>
+<tr><th>Ataque</th><th>Cobertura actual</th><th>Brecha</th></tr>
+<tr><td>Fuerza bruta y relleno de credenciales</td><td><span class="tag t-ok">Alta</span></td><td>Límite por IP, bloqueo progresivo, HIBP. Falta H5 si hay proxy y H2 para cerrar el caso de claves filtradas.</td></tr>
+<tr><td>Phishing / robo de contraseña</td><td><span class="tag t-media">Media</span></td><td>El 2FA está activo, pero hay administradores sin autenticador y nadie usa passkeys aún (resistentes al phishing).</td></tr>
+<tr><td>Inyección SQL</td><td><span class="tag t-ok">Alta</span></td><td>Parámetros en todo lo revisado. Mantener la regla en revisiones de código.</td></tr>
+<tr><td>XSS</td><td><span class="tag t-alta">Media-baja</span></td><td>H1 y H4 resueltos; queda H3 fase 2.</td></tr>
+<tr><td>CSRF</td><td><span class="tag t-ok">Alta</span></td><td>Tokens en todos los POST y <code>SameSite=Lax</code> en las cookies (H6).</td></tr>
+<tr><td>Robo o fijación de sesión</td><td><span class="tag t-ok">Alta</span></td><td>HttpOnly, Secure, SameSite, regeneración. El riesgo restante es XSS (H3 fase 2).</td></tr>
+<tr><td>Acceso a datos de otra empresa (IDOR)</td><td><span class="tag t-ok">Alta</span></td><td>Aislamiento por empresa en los informes; excepción: foto de perfil (H1).</td></tr>
+<tr><td>Subida de archivos maliciosos</td><td><span class="tag t-media">Media</span></td><td>H1 y H7.</td></tr>
+<tr><td>Denegación de servicio</td><td><span class="tag t-media">Media</span></td><td>Límite de login, pero cargues grandes y consultas pesadas sin tope por usuario; falta WAF.</td></tr>
+<tr><td>Fuga de información por errores</td><td><span class="tag t-ok">Alta</span></td><td>Errores técnicos con código y sin detalle (H8); cabeceras de versión retiradas (H10). Queda visible la cabecera <code>Server</code>.</td></tr>
+<tr><td>Ransomware / pérdida de datos</td><td><span class="tag t-ver">No verificable</span></td><td>Depende de las copias y del aislamiento del servidor (sección 4).</td></tr>
+<tr><td>Cuenta de Super Admin comprometida</td><td><span class="tag t-alta">Media</span></td><td>Es el escenario de mayor daño: acceso total, ejecución del Observatorio y DDL. Mitigar con el 2FA ya activo (completar el Super Admin sin TOTP), alertas de uso y H9.</td></tr>
+<tr><td>Cadena de suministro (librerías)</td><td><span class="tag t-media">Media</span></td><td>Versiones recientes, pero sin escaneo automático.</td></tr>
+</table></div>
+</section>
+
+<section id="alcance">
+<h2>7. Alcance y límites de este análisis</h2>
+<div class="note info"><b>Qué se hizo:</b> revisión estática del repositorio (configuración, cabeceras, cookies, controladores, servicios, vistas) con comprobaciones automáticas de patrones: acciones POST sin antifalsificación, SQL concatenado, <code>Html.Raw</code>, deserialización, procesos y clientes HTTP. No se ejecutó la aplicación ni se atacó el sitio en vivo.</div>
+<div class="note"><b>Qué no se hizo:</b> pruebas dinámicas, escaneo de dependencias contra bases de vulnerabilidades, revisión de la base de datos real, del servidor, del DNS, del certificado ni de los scripts SQL no ejecutados. Los hallazgos son del código tal como está en master; los scripts manuales (026 a 032) pueden estar o no aplicados en cada entorno.</div>
+<div class="note ok"><b>Cómo mantener este documento:</b> actualizarlo después de cada tanda de cambios de seguridad (qué se implementó y qué queda pendiente), repetir la revisión tras cambios grandes y trabajar la columna "Esta semana" de la hoja de ruta antes que las demás.</div>
+</section>
+
+</main>
+<footer><div class="w">BUFINS · Documentación oficial de ciberseguridad · actualizada el 16 de octubre de 2026 · Documento confidencial, no distribuir fuera de la organización.</div></footer>
+</body>
+</html>

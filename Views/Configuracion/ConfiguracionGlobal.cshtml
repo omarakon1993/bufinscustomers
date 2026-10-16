@@ -814,11 +814,11 @@
 
     @if (TempData["ErrorMessage"] != null)
     {
-        <script>Swal.fire({ toast:true, position: window.innerWidth<=768?'top':'top-end', icon:'error',   title:'@Html.Raw(TempData["ErrorMessage"])', showConfirmButton:false, timer:3500, timerProgressBar:true });</script>
+        <script>Swal.fire({ toast:true, position: window.innerWidth<=768?'top':'top-end', icon:'error',   title:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Convert.ToString(TempData["ErrorMessage"])))', showConfirmButton:false, timer:3500, timerProgressBar:true });</script>
     }
     @if (TempData["SuccessMessage"] != null)
     {
-        <script>Swal.fire({ toast:true, position: window.innerWidth<=768?'top':'top-end', icon:'success', title:'@Html.Raw(TempData["SuccessMessage"])', showConfirmButton:false, timer:3000, timerProgressBar:true });</script>
+        <script>Swal.fire({ toast:true, position: window.innerWidth<=768?'top':'top-end', icon:'success', title:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Convert.ToString(TempData["SuccessMessage"])))', showConfirmButton:false, timer:3000, timerProgressBar:true });</script>
     }
 
     @section scripts {

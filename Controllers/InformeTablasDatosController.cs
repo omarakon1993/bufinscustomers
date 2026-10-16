@@ -64,7 +64,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error al obtener años: {ex.Message}" }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = $"Error al obtener años: {MensajeError(ex)}" }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -96,7 +96,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error al obtener variables: {ex.Message}" }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = $"Error al obtener variables: {MensajeError(ex)}" }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -227,7 +227,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new IAConsultaResponse { Exitoso = false, Error = $"Error al procesar la consulta: {ex.Message}" });
+                return Json(new IAConsultaResponse { Exitoso = false, Error = $"Error al procesar la consulta: {MensajeError(ex)}" });
             }
         }
 

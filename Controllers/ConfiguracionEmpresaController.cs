@@ -113,7 +113,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error: {ex.Message}" }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = $"Error: {MensajeError(ex)}" }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -182,7 +182,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error: {ex.Message}" });
+                return Json(new { success = false, message = $"Error: {MensajeError(ex)}" });
             }
         }
 
@@ -244,7 +244,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error: {ex.Message}" });
+                return Json(new { success = false, message = $"Error: {MensajeError(ex)}" });
             }
         }
 
@@ -279,7 +279,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error: {ex.Message}" });
+                return Json(new { success = false, message = $"Error: {MensajeError(ex)}" });
             }
         }
 
@@ -319,7 +319,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error: {ex.Message}" });
+                return Json(new { success = false, message = $"Error: {MensajeError(ex)}" });
             }
         }
 
@@ -459,7 +459,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error durante la transición: {ex.Message}" });
+                return Json(new { success = false, message = $"Error durante la transición: {MensajeError(ex)}" });
             }
         }
 
@@ -496,7 +496,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error: {ex.Message}" }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = $"Error: {MensajeError(ex)}" }, JsonRequestBehavior.AllowGet);
             }
         }
 
