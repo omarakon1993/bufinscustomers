@@ -1,0 +1,11 @@
+@{
+    var _en = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+}
+@* Logo + selector ES/EN del panel derecho (compartido por Login y _Layout2FA). *@
+<div class="acc-header">
+    <img class="acc-logo" src="~/Assets/img/Bufins_LogoLogin.png" alt="Bufins" />
+    <div class="acc-lang">
+        <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "es-CO", returnUrl = Request.Url.PathAndQuery })" class="@(!_en ? "active" : "")">ES</a>
+        <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "en-US", returnUrl = Request.Url.PathAndQuery })" class="@(_en ? "active" : "")">EN</a>
+    </div>
+</div>

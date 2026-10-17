@@ -1,103 +1,39 @@
-﻿@{
+@{
     Layout = null;
     var _isEnglish = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
-    var _esActiveClass = !_isEnglish ? "active" : "";
-    var _enActiveClass = _isEnglish ? "active" : "";
+    string _tituloPagina = (ViewBag.PageTitle as string) ?? Resources.Strings.Login2FA_PageTitle;
 }
 <!DOCTYPE html>
 <html lang="@(_isEnglish ? "en" : "es")">
 <head>
-    <title>@Resources.Strings.Login2FA_PageTitle &mdash; BUFINS</title>
+    <title>@_tituloPagina &mdash; BUFINS</title>
     <link rel="icon" type="image/x-icon" href="~/favicon.ico?v=2">
     <link rel="stylesheet" type="text/css" href="~/Assets/css/style.css">
+    <link rel="stylesheet" type="text/css" href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/acceso.css")">
     <link href="~/Assets/GoogleApis/Poppins.css" rel="stylesheet">
     <link rel="stylesheet" href="~/Assets/Bootstrap/fontawesome-free/css/all.min.css">
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
-    <style>
-        .lang-switcher-wrapper { display:inline-flex; align-items:center; gap:6px; background:#fff; border:1px solid #e3e6f0; border-radius:18px; padding:4px 10px 4px 11px; box-shadow:0 2px 8px rgba(88,58,255,.07); }
-        .lang-switcher-icon { font-size:1rem; color:#160933; flex-shrink:0; margin-right:3px; display:flex; align-items:center; }
-        .lang-switcher { display:inline-flex; align-items:center; background:transparent; border:none; padding:0; }
-        .lang-btn { display:flex; align-items:center; padding:2px 10px; border-radius:14px; text-decoration:none!important; color:#583AFF; font-size:.85rem; font-weight:400; transition:background .18s,color .18s; background:transparent; border:none; }
-        .lang-btn:hover,.lang-btn:focus { color:#fff; background:#583AFF; text-decoration:none!important; }
-        .lang-btn.active { background:#01E1D7; color:#fff; font-weight:500; }
-        .lang-sep { width:1px; height:16px; background:#e3e6f0; flex-shrink:0; margin:0 3px; align-self:center; border-radius:1px; opacity:.7; }
-        .login-lang { display:flex; justify-content:center; margin-top:1rem; }
-        .btn-primary.loading { opacity:.75; pointer-events:none; }
-        .tf-info { font-size:.85rem; color:#6b7280; text-align:center; margin-bottom:1.25rem; line-height:1.6; }
-        .tf-info i { color:#6366f1; margin-right:5px; }
-        .tf-code { letter-spacing:.35em; text-align:center; font-size:1.25rem; font-weight:600; }
-        .tf-qr { display:flex; justify-content:center; margin:.75rem 0; }
-        .tf-qr img { width:180px; height:180px; image-rendering:pixelated; border:1px solid #e3e6f0; border-radius:8px; padding:6px; background:#fff; }
-        .tf-secret { font-family:Consolas,monospace; font-size:.9rem; word-break:break-all; text-align:center; background:#f3f4f6; border-radius:8px; padding:8px 10px; color:#160933; user-select:all; }
-        .tf-steps { font-size:.83rem; color:#4b5563; padding-left:1.1rem; margin-bottom:1rem; line-height:1.6; }
-        .tf-codes { display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; background:#f3f4f6; border-radius:8px; padding:12px; font-family:Consolas,monospace; font-size:.95rem; color:#160933; text-align:center; user-select:all; }
-        .tf-actions { display:flex; gap:8px; justify-content:center; margin:.75rem 0; }
-        .tf-link { background:none; border:1px solid #e3e6f0; color:#583AFF; border-radius:8px; padding:6px 12px; font-size:.8rem; cursor:pointer; }
-        .tf-link:hover { background:#f5f3ff; }
-        /* Tarjeta compacta para todas las pantallas del segundo factor: cabe en laptops de 14" sin recortarse */
-        body { overflow-y:auto; }
-        .container { height:auto; min-height:100vh; }
-        .tf-compacto { padding:24px 34px 16px; max-width:430px; }
-        .tf-compacto .login-header { margin-bottom:12px; }
-        .tf-compacto .logo-bufins { height:38px; margin-bottom:6px; animation:none; }
-        .tf-compacto .login-title { font-size:1.25rem; letter-spacing:2px; margin-bottom:0; }
-        .tf-compacto .login-subtitle { display:none; }
-        .tf-compacto .login-lang { margin-top:8px; }
-        .tf-compacto .lang-switcher-wrapper { padding:2px 8px 2px 9px; }
-        .tf-compacto .lang-btn { padding:1px 9px; font-size:.78rem; }
-        .tf-compacto .footer-text { margin-top:10px; font-size:.68rem; }
-        .tf-compacto .input-group { margin-bottom:12px; }
-        .tf-compacto .input-icon { width:42px; height:42px; font-size:1.05rem; }
-        .tf-compacto .input-wrapper label { font-size:.7rem; }
-        .tf-compacto .input-field { font-size:.92rem; }
-        .tf-compacto .btn { height:44px; margin-top:2px; font-size:.92rem; }
-        .tf-compacto .tf-info { font-size:.8rem; line-height:1.5; margin-bottom:.75rem; }
-        .tf-compacto .tf-code { font-size:1.1rem; letter-spacing:.3em; }
-        .tf-compacto .tf-or { margin:10px 0 8px; }
-        .tf-compacto .tf-passkey-btn { padding:8px 12px; font-size:.84rem; }
-        .tf-ancha { max-width:800px; padding:22px 34px 14px; }
-        .tf-grid { display:grid; grid-template-columns:200px 1fr; gap:26px; align-items:start; }
-        .tf-grid .tf-qr { margin:0 0 8px; }
-        .tf-grid .tf-qr img { width:190px; height:190px; }
-        .tf-grid .tf-info { text-align:left; margin-bottom:.6rem; }
-        .tf-grid .input-group { margin-bottom:12px; }
-        .tf-grid .btn { height:46px; margin-top:0; }
-        @@media (max-height:760px) { .tf-compacto { padding:16px 30px 12px; } .tf-compacto .logo-bufins { display:none; } .tf-compacto .login-header { margin-bottom:8px; } .tf-compacto .login-lang { margin-top:6px; } .tf-compacto .input-group { margin-bottom:9px; } .tf-compacto .tf-info { margin-bottom:.5rem; } .tf-compacto .footer-text { margin-top:6px; } }
-        @@media (max-width:720px) { .tf-grid { grid-template-columns:1fr; gap:10px; } .tf-ancha { padding:22px 20px 16px; } body { overflow:auto; } .container { height:auto; min-height:100vh; } }
-        .tf-or { display:flex; align-items:center; gap:10px; color:#9ca3af; font-size:.75rem; margin:14px 0 10px; }
-        .tf-or::before, .tf-or::after { content:""; flex:1; height:1px; background:#e3e6f0; }
-        .tf-passkey-btn { width:100%; padding:10px 12px; font-size:.88rem; font-weight:600; }
-        .tf-passkey-btn:disabled { opacity:.6; cursor:wait; }
-        .tf-check { display:flex; gap:8px; align-items:flex-start; font-size:.82rem; color:#4b5563; margin:.75rem 0; }
-    </style>
-
     <div class="background-overlay"></div>
 
     <div class="container">
-        <div class="login-card tf-compacto@(ViewBag.Ancha == true ? " tf-ancha" : "")">
-            <div class="card-glow"></div>
-            <div class="login-header">
-                <img class="logo-bufins" src="~/Assets/img/Bufins_LogoLogin.png" alt="Bufins Logo">
-                <h1 class="login-title">@ViewBag.Heading</h1>
-                <p class="login-subtitle">BUSINESS FINANCE ALWAYS EVERYWHERE</p>
-                <div class="login-lang">
-                    <div class="lang-switcher-wrapper">
-                        <span class="lang-switcher-icon"><i class="fas fa-globe"></i></span>
-                        <div class="lang-switcher">
-                            <a href="@Url.Action("SetLanguage","Acceso", new { lang="es-CO", returnUrl=Request.Url.PathAndQuery })" class="lang-btn @_esActiveClass">Espa&ntilde;ol</a>
-                            <span class="lang-sep"></span>
-                            <a href="@Url.Action("SetLanguage","Acceso", new { lang="en-US", returnUrl=Request.Url.PathAndQuery })" class="lang-btn @_enActiveClass">English</a>
-                        </div>
-                    </div>
+        <div class="acc-card@(ViewBag.Ancha == true ? " acc-card--ancha" : "")">
+            @RenderSection("Panel", required: false)
+
+            <div class="acc-main">
+                @Html.Partial("_AccesoHeader")
+
+                <div class="acc-body">
+                    @RenderBody()
+                </div>
+
+                <div class="acc-footer">
+                    @RenderSection("FooterLeft", required: false)
+                    <div class="acc-copy">ORION WEB - @DateTime.Now.Year</div>
                 </div>
             </div>
-
-            @RenderBody()
-
-            <div class="footer-text">ORION WEB - @DateTime.Now.Year</div>
         </div>
     </div>
 
@@ -106,11 +42,12 @@
             Swal.fire({ toast:true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: icon, title: msg, showConfirmButton:false, timer:5000, timerProgressBar:true });
         }
     </script>
-    @if (ViewData["Error"] != null)
+    @if (ViewData["Error"] != null && ViewBag.ErrorEnLinea != true)
     {
         <script>aviso('warning', '@Html.Raw(HttpUtility.JavaScriptStringEncode(ViewData["Error"].ToString()))');</script>
     }
     <script type="text/javascript" src="~/Assets/js/main.js"></script>
+    <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/acceso.js")"></script>
     @RenderSection("scripts", required: false)
 </body>
 </html>

@@ -1,8 +1,17 @@
-﻿﻿@{
+﻿@{
     Layout = null;
     var _isEnglish = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
-    var _esActiveClass = !_isEnglish ? "active" : "";
-    var _enActiveClass = _isEnglish ? "active" : "";
+    var panel = new bufinscustomers.Models.AccesoPanelVM
+    {
+        Eyebrow = Resources.Strings.Acc_Eyebrow_Login,
+        PieUsuario = false,
+        Pasos = new System.Collections.Generic.List<bufinscustomers.Models.AccesoPasoVM>
+        {
+            new bufinscustomers.Models.AccesoPasoVM(Resources.Strings.Acc_Paso_Credenciales, "active"),
+            new bufinscustomers.Models.AccesoPasoVM(Resources.Strings.Acc_Paso_Verificacion, "todo"),
+            new bufinscustomers.Models.AccesoPasoVM(Resources.Strings.Acc_Paso_AccesoBufins, "todo")
+        }
+    };
 }
 
 <!DOCTYPE html>
@@ -12,11 +21,11 @@
     <title>BUFINS - Login</title>
     <link rel="icon" type="image/x-icon" href="~/favicon.ico?v=2">
     <link rel="stylesheet" type="text/css" href="~/Assets/css/style.css">
+    <link rel="stylesheet" type="text/css" href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/acceso.css")">
     <link href="~/Assets/GoogleApis/Poppins.css" rel="stylesheet">
     <link rel="stylesheet" href="~/Assets/Bootstrap/fontawesome-free/css/all.min.css">
     <script src="~/Assets/js/sweetalert2.all.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
 </head>
 <body>
     <style type="text/css">
@@ -25,232 +34,110 @@
             -webkit-box-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.1) inset !important;
             -webkit-text-fill-color: #333 !important;
         }
-
-        .back-link {
-            text-decoration: none;
-            color: #888;
-            font-size: 0.75rem;
-            display: block;
-            margin-bottom: 0.5rem;
-            transition: color 0.3s ease;
-        }
-
-        .back-link:hover {
-            color: #583AFF;
-        }
-
-        .lang-switcher-wrapper {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: #fff;
-            border: 1px solid #e3e6f0;
-            border-radius: 18px;
-            padding: 4px 10px 4px 11px;
-            box-shadow: 0 2px 8px rgba(88,58,255,0.07);
-            position: relative;
-            min-width: auto;
-        }
-        .lang-switcher-icon {
-            font-size: 1rem;
-            color: #160933;
-            flex-shrink: 0;
-            margin-right: 3px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 18px;
-            min-height: 18px;
-        }
-        .lang-switcher {
-            display: inline-flex;
-            align-items: center;
-            background: transparent;
-            border: none;
-            padding: 0;
-        }
-        .lang-btn {
-            display: flex;
-            align-items: center;
-            padding: 2px 10px;
-            border-radius: 14px;
-            text-decoration: none!important;
-            color: #583AFF;
-            font-size: 0.85rem;
-            font-weight: 400;
-            letter-spacing: .01em;
-            transition: background .18s, color .18s;
-            background: transparent;
-            border: none;
-        }
-        .lang-btn:hover, .lang-btn:focus {
-            color: #fff;
-            background: #583AFF;
-            text-decoration: none!important;
-        }
-        .lang-btn.active {
-            background: #01E1D7;
-            color: #fff;
-            font-weight: 500;
-        }
-        .lang-sep {
-            width: 1px;
-            height: 16px;
-            background: #e3e6f0;
-            flex-shrink: 0;
-            margin: 0 3px;
-            align-self: center;
-            border-radius: 1px;
-            opacity: 0.7;
-        }
-        .login-lang {
-            display: flex;
-            justify-content: center;
-            margin-top: 1rem;
-        }
     </style>
 
     <div class="background-overlay"></div>
 
     <div class="container">
-        <div class="login-card">
-            <div class="card-glow"></div>
-            <div class="login-header">
-                <a href="https://bufins.com/" target="_self" class="back-link">
-                    @Resources.Strings.Login_BackLink
-                </a>
-                <img class="logo-bufins" src="~/Assets/img/Bufins_LogoLogin.png" alt="Bufins Logo">
-                <h1 class="login-title">LOGIN</h1>
-                <p class="login-subtitle">BUSINESS FINANCE ALWAYS EVERYWHERE</p>
-                <div class="login-lang">
-                    <div class="lang-switcher-wrapper">
-                        <span class="lang-switcher-icon">
-                            <i class="fas fa-globe"></i>
-                        </span>
-                        <div class="lang-switcher">
-                            <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "es-CO", returnUrl = Request.Url.PathAndQuery })" class="lang-btn @_esActiveClass">Español</a>
-                            <span class="lang-sep"></span>
-                            <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "en-US", returnUrl = Request.Url.PathAndQuery })" class="lang-btn @_enActiveClass">English</a>
+        <div class="acc-card">
+            @Html.Partial("_AccesoPanel", panel)
+
+            <div class="acc-main">
+                @Html.Partial("_AccesoHeader")
+
+                <div class="acc-body">
+                    <h1 class="acc-title">@Resources.Strings.Acc_Login_Titulo</h1>
+                    <p class="acc-desc">@Resources.Strings.Acc_Login_Desc</p>
+
+                    <form id="loginForm" action="@Url.Action("Login", "Acceso")" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="input-group">
+                            <div class="input-icon">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="input-wrapper">
+                                <label for="Correo">@Resources.Strings.Login_EmailLabel</label>
+                                <input type="text" name="Correo" class="input-field" id="Correo" placeholder="@Resources.Strings.Login_EmailPlaceholder" />
+                            </div>
                         </div>
-                    </div>
+
+                        <div class="input-group">
+                            <div class="input-icon">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <div class="input-wrapper">
+                                <label for="Clave">@Resources.Strings.Login_PasswordLabel</label>
+                                <input type="password" name="Clave" class="input-field" id="Clave" placeholder="@Resources.Strings.Login_PasswordPlaceholder">
+                                <button type="button" class="pwd-toggle" onclick="Acceso.togglePwd('Clave', this)" tabindex="-1"><i class="fas fa-eye"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="acc-forgot">
+                            <a href="@Url.Action("SolicitarReset","Acceso")"><i class="fas fa-key"></i>@Resources.Strings.Login_ForgotPassword</a>
+                        </div>
+
+                        <button type="submit" id="btnLogin" class="btn btn-primary">
+                            <span>@Resources.Strings.Acc_BtnIniciarSesion</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="acc-footer">
+                    <div class="acc-copy">ORION WEB - @DateTime.Now.Year</div>
                 </div>
             </div>
-
-            <form id="loginForm" action="@Url.Action("Login", "Acceso")" method="post">
-                @Html.AntiForgeryToken()
-
-                <div class="input-group">
-                    <div class="input-icon">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="input-wrapper">
-                        <label for="Correo">@Resources.Strings.Login_EmailLabel</label>
-                        <input type="text" name="Correo" class="input-field" id="Correo" placeholder="@Resources.Strings.Login_EmailPlaceholder" />
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <div class="input-icon">
-                        <i class="fas fa-lock"></i>
-                    </div>
-                    <div class="input-wrapper">
-                        <label for="Clave">@Resources.Strings.Login_PasswordLabel</label>
-                        <input type="password" name="Clave" class="input-field" id="Clave" placeholder="@Resources.Strings.Login_PasswordPlaceholder">
-                    </div>
-                </div>
-
-                <button type="button" class="btn btn-primary" onclick="validarFormulario()">
-                    <span>@Resources.Strings.Login_Button</span>
-                    <i class="fas fa-arrow-right"></i>
-                </button>
-
-                <div style="text-align:center; margin-top:1rem;">
-                    <a href="@Url.Action("SolicitarReset","Acceso")"
-                       style="color:#583AFF; font-size:.8rem; text-decoration:none; opacity:.8; transition:opacity .2s;"
-                       onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.8'">
-                        <i class="fas fa-key" style="margin-right:4px;"></i>
-                        @Resources.Strings.Login_ForgotPassword
-                    </a>
-                </div>
-
-                <div class="footer-text">
-                    ORION WEB - @DateTime.Now.Year
-                </div>
-                <script>
-                    var _loginMsg = {
-                        errorEmail: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Login_ErrorEmail))',
-                        errorPassword: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Login_ErrorPassword))'
-                    };
-
-                    function validarFormulario() {
-                        const correo = document.getElementById("Correo").value;
-                        const clave = document.getElementById("Clave").value;
-                        const isMobile = window.innerWidth <= 768;
-
-                        if (!correo) {
-                            Swal.fire({
-                                toast: true,
-                                position: isMobile ? 'top' : 'top-end',
-                                icon: 'info',
-                                title: _loginMsg.errorEmail,
-                                showConfirmButton: false,
-                                timer: 3000,
-                                timerProgressBar: true,
-                                didOpen: (toast) => {
-                                    toast.addEventListener('mouseenter', Swal.stopTimer);
-                                    toast.addEventListener('mouseleave', Swal.resumeTimer);
-                                }
-                            });
-                            return;
-                        }
-
-                        if (!clave) {
-                            Swal.fire({
-                                toast: true,
-                                position: isMobile ? 'top' : 'top-end',
-                                icon: 'info',
-                                title: _loginMsg.errorPassword,
-                                showConfirmButton: false,
-                                timer: 3000,
-                                timerProgressBar: true,
-                                didOpen: (toast) => {
-                                    toast.addEventListener('mouseenter', Swal.stopTimer);
-                                    toast.addEventListener('mouseleave', Swal.resumeTimer);
-                                }
-                            });
-                            return;
-                        }
-
-                        document.getElementById("loginForm").submit();
-                    }
-                </script>
-
-                @if (ViewData["Mensaje"] != null)
-                {
-                    <script>
-                        const isMobile = window.innerWidth <= 768;
-
-                        Swal.fire({
-                            toast: true,
-                            position: isMobile ? 'top' : 'top-end',
-                            icon: 'warning',
-                            title: '@ViewData["Mensaje"]',
-                            showConfirmButton: false,
-                            timer: 7000,
-                            timerProgressBar: true,
-                            didOpen: (toast) => {
-                                toast.addEventListener('mouseenter', Swal.stopTimer);
-                                toast.addEventListener('mouseleave', Swal.resumeTimer);
-                            }
-                        });
-
-                    </script>
-                }
-
-            </form>
         </div>
     </div>
-    <script type="text/javascript" src="~/Assets/js/main.js"></script>
 
+    <script>
+        var _loginMsg = {
+            errorEmail: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Login_ErrorEmail))',
+            errorPassword: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Login_ErrorPassword))'
+        };
+
+        function toastLogin(icon, title, timer) {
+            Swal.fire({
+                toast: true,
+                position: window.innerWidth <= 768 ? 'top' : 'top-end',
+                icon: icon,
+                title: title,
+                showConfirmButton: false,
+                timer: timer,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        }
+
+        function validarFormulario() {
+            const correo = document.getElementById("Correo").value;
+            const clave = document.getElementById("Clave").value;
+
+            if (!correo) { toastLogin('info', _loginMsg.errorEmail, 3000); return; }
+            if (!clave) { toastLogin('info', _loginMsg.errorPassword, 3000); return; }
+
+            document.getElementById("btnLogin").classList.add('loading');
+            document.getElementById("loginForm").submit();
+        }
+
+        // Botón y Enter pasan por la misma validación
+        document.getElementById("loginForm").addEventListener('submit', function (e) {
+            if (!document.getElementById("btnLogin").classList.contains('loading')) { e.preventDefault(); validarFormulario(); }
+        });
+    </script>
+
+    @if (ViewData["Mensaje"] != null)
+    {
+        <script>
+            toastLogin('warning', '@ViewData["Mensaje"]', 7000);
+        </script>
+    }
+
+    <script type="text/javascript" src="~/Assets/js/main.js"></script>
+    <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/acceso.js")"></script>
 </body>
 </html>

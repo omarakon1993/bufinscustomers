@@ -1,23 +1,39 @@
 @{
     Layout = "~/Views/Acceso/_Layout2FA.cshtml";
     ViewBag.Heading = Resources.Strings.Pk_Oferta_Heading;
+    ViewBag.PageTitle = Resources.Strings.Login2FA_PageTitle;
+    bool requiereClave = ViewBag.RequiereCambioClave == true;
+    var panel = new bufinscustomers.Models.AccesoPanelVM
+    {
+        Eyebrow = requiereClave ? Resources.Strings.Acc_Eyebrow_PrimerIngreso : Resources.Strings.Acc_Eyebrow_ConfigVerif,
+        PieUsuario = true,
+        CorreoEnmascarado = ViewBag.CorreoEnmascarado as string,
+        Pasos = new System.Collections.Generic.List<bufinscustomers.Models.AccesoPasoVM>
+        {
+            new bufinscustomers.Models.AccesoPasoVM(Resources.Strings.Acc_Paso_DobleFactor, "done"),
+            new bufinscustomers.Models.AccesoPasoVM(Resources.Strings.Acc_Paso_Passkey, "active", Resources.Strings.Acc_Sub_Opcional),
+            new bufinscustomers.Models.AccesoPasoVM(requiereClave ? Resources.Strings.Acc_Paso_NuevaClave : Resources.Strings.Acc_Paso_AccesoBufins, "todo")
+        }
+    };
 }
+
+@section Panel { @Html.Partial("_AccesoPanel", panel) }
 
 <form id="tfForm" action="@Url.Action("OfrecerPasskey","Acceso")" method="post">
     @Html.AntiForgeryToken()
 
-    <p class="tf-info"><i class="fas fa-check-circle" style="color:#10b981;"></i>@Resources.Strings.Pk_Oferta_Msg</p>
+    <div class="acc-state">
+        <div class="acc-state-icon acc-state-icon--passkey"><i class="fas fa-fingerprint"></i></div>
+        <h1>@Resources.Strings.Pk_Oferta_Heading</h1>
+        <p><i class="fas fa-check-circle"></i>@Resources.Strings.Pk_Oferta_Msg</p>
+    </div>
 
     <button type="submit" name="accion" value="agregar" class="btn btn-primary" id="btnAgregar">
         <span class="btn-text">@Resources.Strings.Pk_Oferta_Agregar</span>
-        <i class="fas fa-fingerprint" style="margin-left:8px;"></i>
+        <i class="fas fa-fingerprint"></i>
     </button>
 
-    <div style="text-align:center; margin-top:.9rem;">
-        <button type="submit" name="accion" value="omitir" class="tf-link" style="width:100%; padding:9px 12px; font-size:.85rem; font-weight:600;">
-            @Resources.Strings.Pk_Oferta_Omitir
-        </button>
-    </div>
+    <button type="submit" name="accion" value="omitir" class="acc-btn-secondary">@Resources.Strings.Pk_Oferta_Omitir</button>
 
-    <p class="tf-info" style="margin:.8rem 0 0; font-size:.74rem;">@Resources.Strings.Pk_Oferta_Hint</p>
+    <p class="acc-note">@Resources.Strings.Pk_Oferta_Hint</p>
 </form>

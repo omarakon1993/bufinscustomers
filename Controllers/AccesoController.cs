@@ -391,6 +391,47 @@ namespace bufinscustomers.Controllers
             return RedirectToAction(yaActivo ? "VerificarDobleFactor" : "ConfigurarDobleFactor");
         }
 
+        // Panel izquierdo de las pantallas de acceso («Ingresando como …»): solo UI, no toca la lógica de cada acción.
+        protected override void OnActionExecuted(ActionExecutedContext filterContext)
+        {
+            base.OnActionExecuted(filterContext);
+            if (!(filterContext.Result is ViewResultBase)) return;
+            string accion = filterContext.ActionDescriptor.ActionName;
+            try
+            {
+                string correo = null;
+                if (accion == "CambiarClaveInicial")
+                {
+                    correo = UsuarioSesionHelper.UsuarioActual?.Correo;
+                }
+                else if (accion == "VerificarDobleFactor" || accion == "ConfigurarDobleFactor"
+                      || accion == "OfrecerPasskey" || accion == "SolicitarReinicio")
+                {
+                    var p = ObtenerPendiente2FA(out _);
+                    if (p != null)
+                    {
+                        var u = ObtenerUsuarioCompletoPorId(p.IdUsuario);
+                        correo = u?.Correo;
+                        // El stepper del alta solo muestra «Nueva contraseña» si aún le falta cambiarla (se pide después del 2FA).
+                        ViewBag.RequiereCambioClave = u != null && u.DebeCambiarClave;
+                    }
+                }
+                ViewBag.CorreoEnmascarado = EnmascararCorreo(correo);
+            }
+            catch (Exception ex) { AppLogger.Warn("Acceso: correo enmascarado del panel: " + ex.Message); }
+        }
+
+        /// <summary>Primeros 2 caracteres + "•••@" + dominio (ej.: om•••@empresa.com).</summary>
+        private static string EnmascararCorreo(string correo)
+        {
+            if (string.IsNullOrWhiteSpace(correo)) return "";
+            correo = correo.Trim();
+            int arroba = correo.IndexOf('@');
+            if (arroba <= 0) return correo.Length <= 2 ? correo : correo.Substring(0, 2) + "•••";
+            string local = correo.Substring(0, arroba);
+            return (local.Length <= 2 ? local : local.Substring(0, 2)) + "•••" + correo.Substring(arroba);
+        }
+
         private PendienteDobleFactor ObtenerPendiente2FA(out string cacheKey)
         {
             cacheKey = null;

@@ -1,0 +1,7 @@
+@* Errores del servidor (ViewData["Error"]) en línea, sobre los campos. Quien lo use marca ViewBag.ErrorEnLinea = true para que el layout no repita el toast. *@
+@if (ViewData["Error"] != null)
+{
+    <ul class="acc-errors" role="alert">
+        <li><i class="fas fa-exclamation-circle"></i>@ViewData["Error"]</li>
+    </ul>
+}

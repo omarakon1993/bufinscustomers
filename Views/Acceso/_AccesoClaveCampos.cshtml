@@ -1,0 +1,29 @@
+@* Campos «nueva contraseña» + «confirmar» con ojo y medidor de fuerza (Restablecer clave y Cambio de clave inicial).
+   Lógica en Assets/js/acceso.js; los textos de fuerza viajan en data-*. *@
+<div class="input-group">
+    <div class="input-icon"><i class="fas fa-lock"></i></div>
+    <div class="input-wrapper">
+        <label for="nuevaClave">@Resources.Strings.Reset_NewPwd_Label</label>
+        <input type="password" name="nuevaClave" id="nuevaClave" class="input-field"
+               placeholder="@Resources.Strings.Reset_NewPwd_Placeholder"
+               autocomplete="new-password" oninput="Acceso.fuerza(this.value)" />
+        <button type="button" class="pwd-toggle" onclick="Acceso.togglePwd('nuevaClave', this)" tabindex="-1"><i class="fas fa-eye"></i></button>
+        <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+        <div class="strength-label" id="strengthLabel"
+             data-weak="@Resources.Strings.CambioClaveInicial_FuerzaDebil"
+             data-fair="@Resources.Strings.CambioClaveInicial_FuerzaRegular"
+             data-good="@Resources.Strings.CambioClaveInicial_FuerzaBuena"
+             data-strong="@Resources.Strings.CambioClaveInicial_FuerzaFuerte"></div>
+    </div>
+</div>
+
+<div class="input-group">
+    <div class="input-icon"><i class="fas fa-lock"></i></div>
+    <div class="input-wrapper">
+        <label for="confirmarClave">@Resources.Strings.Reset_NewPwd_ConfirmLabel</label>
+        <input type="password" name="confirmarClave" id="confirmarClave" class="input-field"
+               placeholder="@Resources.Strings.Reset_NewPwd_ConfirmPlaceholder"
+               autocomplete="new-password" />
+        <button type="button" class="pwd-toggle" onclick="Acceso.togglePwd('confirmarClave', this)" tabindex="-1"><i class="fas fa-eye"></i></button>
+    </div>
+</div>

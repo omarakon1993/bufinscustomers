@@ -1,0 +1,51 @@
+@model bufinscustomers.Models.AccesoPanelVM
+@* Panel izquierdo de las pantallas de acceso: nombre del flujo + progreso + pie (usuario | sitio). *@
+<aside class="acc-side">
+    <div class="acc-eyebrow">@Model.Eyebrow</div>
+
+    <div class="acc-stepper">
+        @for (int i = 0; i < Model.Pasos.Count; i++)
+        {
+            var paso = Model.Pasos[i];
+            string sub = paso.Subtitulo;
+            if (sub == null)
+            {
+                if (paso.Estado == "done") { sub = Resources.Strings.Acc_Sub_Completado; }
+                else if (paso.Estado == "active") { sub = Resources.Strings.Acc_Sub_EnCurso; }
+            }
+            <div class="acc-step acc-step--@paso.Estado">
+                <div class="acc-step-dot">
+                    <div class="acc-step-circle">
+                        @if (paso.Estado == "done") { <i class="fas fa-check"></i> }
+                        else if (paso.Estado == "error") { <i class="fas fa-times"></i> }
+                        else { <text>@(i + 1)</text> }
+                    </div>
+                    @if (i < Model.Pasos.Count - 1) { <div class="acc-step-line"></div> }
+                </div>
+                <div class="acc-step-text">
+                    <div class="acc-step-title">@paso.Titulo</div>
+                    @if (!string.IsNullOrEmpty(sub)) { <div class="acc-step-sub">@sub</div> }
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="acc-side-foot">
+        @if (Model.PieUsuario)
+        {
+            <div class="acc-user">
+                <div class="acc-user-avatar"><i class="fas fa-user"></i></div>
+                <div class="acc-user-txt">
+                    <div class="acc-user-lbl">@Resources.Strings.Acc_IngresandoComo</div>
+                    <div class="acc-user-mail">@Model.CorreoEnmascarado</div>
+                </div>
+            </div>
+            <a class="acc-side-link" href="@(Model.UrlCambiarCuenta ?? Url.Action("Login", "Acceso"))">@Resources.Strings.Acc_NoEresTu</a>
+        }
+        else
+        {
+            <div class="acc-site-tag">BUSINESS FINANCE ALWAYS EVERYWHERE</div>
+            <a class="acc-side-link" href="https://www.bufins.com/">@Resources.Strings.Login_BackLink</a>
+        }
+    </div>
+</aside>

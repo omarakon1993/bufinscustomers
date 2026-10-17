@@ -1,50 +1,59 @@
 @{
     Layout = "~/Views/Acceso/_Layout2FA.cshtml";
     ViewBag.Heading = Resources.Strings.Login2FA_ConfigHeading;
+    ViewBag.PageTitle = Resources.Strings.Login2FA_PageTitle;
     ViewBag.Ancha = true;
+    bool requiereClave = ViewBag.RequiereCambioClave == true;
+    var pasos = new System.Collections.Generic.List<bufinscustomers.Models.AccesoPasoVM>
+    {
+        new bufinscustomers.Models.AccesoPasoVM(Resources.Strings.Acc_Paso_DobleFactor, "active"),
+        new bufinscustomers.Models.AccesoPasoVM(Resources.Strings.Acc_Paso_Passkey, "todo", Resources.Strings.Acc_Sub_Opcional),
+        new bufinscustomers.Models.AccesoPasoVM(requiereClave ? Resources.Strings.Acc_Paso_NuevaClave : Resources.Strings.Acc_Paso_AccesoBufins, "todo")
+    };
+    var panel = new bufinscustomers.Models.AccesoPanelVM
+    {
+        Eyebrow = requiereClave ? Resources.Strings.Acc_Eyebrow_PrimerIngreso : Resources.Strings.Acc_Eyebrow_ConfigVerif,
+        PieUsuario = true,
+        CorreoEnmascarado = ViewBag.CorreoEnmascarado as string,
+        Pasos = pasos
+    };
 }
+
+@section Panel { @Html.Partial("_AccesoPanel", panel) }
+
+<h1 class="acc-title">@Resources.Strings.Login2FA_ConfigHeading</h1>
+<p class="acc-desc">@Resources.Strings.Login2FA_ConfigAviso</p>
 
 <form id="tfForm" action="@Url.Action("ConfigurarDobleFactor","Acceso")" method="post">
     @Html.AntiForgeryToken()
 
-    <div class="tf-grid">
+    <div class="acc-2fa-grid">
         <div>
-            <div class="tf-qr" id="tfQr" data-uri="@ViewBag.UriOtp"></div>
-            <p class="tf-info" style="margin-bottom:.3rem; font-size:.74rem; text-align:center;">@Resources.Strings.Login2FA_ConfigClaveManual</p>
-            <div class="tf-secret" style="font-size:.78rem;">@ViewBag.SecretoBase32</div>
+            <div class="acc-qr" id="tfQr" data-uri="@ViewBag.UriOtp"></div>
+            <p class="acc-qr-hint">@Resources.Strings.Login2FA_ConfigClaveManual</p>
+            <div class="acc-secret">@ViewBag.SecretoBase32</div>
         </div>
 
         <div>
-            <p class="tf-info"><i class="fas fa-lock"></i>@Resources.Strings.Login2FA_ConfigAviso</p>
-
-            <ol class="tf-steps" style="margin-bottom:.8rem;">
-                <li>@Resources.Strings.Login2FA_ConfigPaso1</li>
-                <li>@Resources.Strings.Login2FA_ConfigPaso2</li>
-                <li>@Resources.Strings.Login2FA_ConfigPaso3</li>
+            <ol class="acc-steps">
+                <li><span>1</span>@Resources.Strings.Login2FA_ConfigPaso1</li>
+                <li><span>2</span>@Resources.Strings.Login2FA_ConfigPaso2</li>
+                <li><span>3</span>@Resources.Strings.Login2FA_ConfigPaso3</li>
             </ol>
 
-            <div class="input-group">
-                <div class="input-icon"><i class="fas fa-shield-alt"></i></div>
-                <div class="input-wrapper">
-                    <label for="codigo">@Resources.Strings.Login2FA_CodigoLabel</label>
-                    <input type="text" name="codigo" id="codigo" class="input-field tf-code" maxlength="7"
-                           placeholder="000000" autocomplete="one-time-code" inputmode="numeric" spellcheck="false" autofocus />
-                </div>
-            </div>
+            @Html.Partial("_AccesoOtp")
 
-            <button type="submit" id="btnVerificar" class="btn btn-primary">
+            <button type="submit" id="btnVerificar" class="btn btn-primary acc-off">
                 <span class="btn-text">@Resources.Strings.Login2FA_BtnActivar</span>
-                <i class="fas fa-check" style="margin-left:8px;"></i>
+                <i class="fas fa-check"></i>
             </button>
-
-            <div style="text-align:center; margin-top:.7rem;">
-                <a href="@Url.Action("Login","Acceso")" style="color:#583AFF; font-size:.8rem; text-decoration:none;">
-                    <i class="fas fa-arrow-left" style="margin-right:4px;"></i>@Resources.Strings.Login2FA_Volver
-                </a>
-            </div>
         </div>
     </div>
 </form>
+
+@section FooterLeft {
+    <a class="acc-link" href="@Url.Action("Login","Acceso")"><i class="fas fa-arrow-left"></i>@Resources.Strings.Login2FA_Volver</a>
+}
 
 @section scripts {
     <script src="~/Assets/js/qrcode-generator.js"></script>
@@ -57,6 +66,8 @@
                 qr.make();
                 el.innerHTML = qr.createImgTag(5, 4);
             } catch (e) { /* si falla, queda la clave manual */ }
+            var btn = document.getElementById('btnVerificar');
+            Acceso.otp({ onCambio: function (v) { btn.classList.toggle('acc-off', v.length !== 6); } });
         })();
         document.getElementById('tfForm').addEventListener('submit', function (e) {
             var v = document.getElementById('codigo').value.replace(/\s/g, '');

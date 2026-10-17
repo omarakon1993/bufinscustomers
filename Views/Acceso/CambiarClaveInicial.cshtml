@@ -1,151 +1,50 @@
 @{
-    Layout = null;
-    var _isEnglish = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
-    var _esActiveClass = !_isEnglish ? "active" : "";
-    var _enActiveClass = _isEnglish ? "active" : "";
+    Layout = "~/Views/Acceso/_Layout2FA.cshtml";
+    ViewBag.ErrorEnLinea = true;
+    ViewBag.PageTitle = Resources.Strings.CambioClaveInicial_PageTitle;
+    var panel = new bufinscustomers.Models.AccesoPanelVM
+    {
+        Eyebrow = Resources.Strings.Acc_Eyebrow_PrimerIngreso,
+        PieUsuario = true,
+        CorreoEnmascarado = ViewBag.CorreoEnmascarado as string,
+        UrlCambiarCuenta = Url.Action("CerrarSesion", "Acceso"),
+        Pasos = new System.Collections.Generic.List<bufinscustomers.Models.AccesoPasoVM>
+        {
+            new bufinscustomers.Models.AccesoPasoVM(Resources.Strings.Acc_Paso_Credenciales, "done"),
+            new bufinscustomers.Models.AccesoPasoVM(Resources.Strings.Acc_Paso_NuevaClave, "active"),
+            new bufinscustomers.Models.AccesoPasoVM(Resources.Strings.Acc_Paso_AccesoBufins, "todo")
+        }
+    };
 }
 
-<!DOCTYPE html>
-<html lang="@(_isEnglish ? "en" : "es")">
-<head>
-    <title>@Resources.Strings.CambioClaveInicial_PageTitle &mdash; BUFINS</title>
-    <link rel="icon" type="image/x-icon" href="~/favicon.ico?v=2">
-    <link rel="stylesheet" type="text/css" href="~/Assets/css/style.css">
-    <link href="~/Assets/GoogleApis/Poppins.css" rel="stylesheet">
-    <link rel="stylesheet" href="~/Assets/Bootstrap/fontawesome-free/css/all.min.css">
-    <script src="~/Assets/js/sweetalert2.all.min.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body>
-    <style>
-        .lang-switcher-wrapper { display:inline-flex; align-items:center; gap:6px; background:#fff; border:1px solid #e3e6f0; border-radius:18px; padding:4px 10px 4px 11px; box-shadow:0 2px 8px rgba(88,58,255,.07); }
-        .lang-switcher-icon { font-size:1rem; color:#160933; flex-shrink:0; margin-right:3px; display:flex; align-items:center; }
-        .lang-switcher { display:inline-flex; align-items:center; background:transparent; border:none; padding:0; }
-        .lang-btn { display:flex; align-items:center; padding:2px 10px; border-radius:14px; text-decoration:none!important; color:#583AFF; font-size:.85rem; font-weight:400; transition:background .18s,color .18s; background:transparent; border:none; }
-        .lang-btn:hover,.lang-btn:focus { color:#fff; background:#583AFF; text-decoration:none!important; }
-        .lang-btn.active { background:#01E1D7; color:#fff; font-weight:500; }
-        .lang-sep { width:1px; height:16px; background:#e3e6f0; flex-shrink:0; margin:0 3px; align-self:center; border-radius:1px; opacity:.7; }
-        .login-lang { display:flex; justify-content:center; margin-top:1rem; }
-        .strength-bar { height:4px; background:#e5e7eb; border-radius:4px; margin-top:6px; overflow:hidden; }
-        .strength-fill { height:100%; width:0%; border-radius:4px; transition:width .3s, background .3s; }
-        .strength-label { font-size:.73rem; color:#9ca3af; margin-top:3px; min-height:14px; }
-        .pwd-toggle { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; padding:0; cursor:pointer; color:#9ca3af; font-size:1rem; }
-        .pwd-toggle:hover { color:#583AFF; }
-        .input-group .input-wrapper { position:relative; }
-        .btn-primary.loading { opacity:.75; pointer-events:none; }
-    </style>
+@section Panel { @Html.Partial("_AccesoPanel", panel) }
 
-    <div class="background-overlay"></div>
+<h1 class="acc-title">@Resources.Strings.CambioClaveInicial_Heading</h1>
+<p class="acc-desc">@Resources.Strings.CambioClaveInicial_Instrucciones</p>
 
-    <div class="container">
-        <div class="login-card">
-            <div class="card-glow"></div>
-            <div class="login-header">
-                <img class="logo-bufins" src="~/Assets/img/Bufins_LogoLogin.png" alt="Bufins Logo">
-                <h1 class="login-title">@Resources.Strings.CambioClaveInicial_Heading</h1>
-                <p class="login-subtitle">BUSINESS FINANCE ALWAYS EVERYWHERE</p>
-                <div class="login-lang">
-                    <div class="lang-switcher-wrapper">
-                        <span class="lang-switcher-icon"><i class="fas fa-globe"></i></span>
-                        <div class="lang-switcher">
-                            <a href="@Url.Action("SetLanguage","Acceso", new { lang="es-CO", returnUrl=Request.Url.PathAndQuery })" class="lang-btn @_esActiveClass">Espa&ntilde;ol</a>
-                            <span class="lang-sep"></span>
-                            <a href="@Url.Action("SetLanguage","Acceso", new { lang="en-US", returnUrl=Request.Url.PathAndQuery })" class="lang-btn @_enActiveClass">English</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<form id="cambioForm" action="@Url.Action("CambiarClaveInicial","Acceso")" method="post">
+    @Html.AntiForgeryToken()
+    @Html.Partial("_AccesoErrores")
 
-            <form id="cambioForm" action="@Url.Action("CambiarClaveInicial","Acceso")" method="post">
-                @Html.AntiForgeryToken()
+    @Html.Partial("_AccesoClaveCampos")
 
-                <p style="font-size:.85rem; color:#6b7280; text-align:center; margin-bottom:1.5rem; line-height:1.6;">
-                    <i class="fas fa-shield-alt" style="color:#6366f1; margin-right:5px;"></i>
-                    @Resources.Strings.CambioClaveInicial_Instrucciones
-                </p>
+    <button type="button" id="btnCambiar" class="btn btn-primary" style="margin-top:18px;" onclick="cambiarClave()">
+        <span class="btn-text">@Resources.Strings.Acc_BtnCambiarClave</span>
+        <i class="fas fa-check"></i>
+    </button>
+</form>
 
-                <div class="input-group">
-                    <div class="input-icon"><i class="fas fa-lock"></i></div>
-                    <div class="input-wrapper">
-                        <label for="nuevaClave">@Resources.Strings.Reset_NewPwd_Label</label>
-                        <input type="password" name="nuevaClave" id="nuevaClave" class="input-field"
-                               placeholder="@Resources.Strings.Reset_NewPwd_Placeholder"
-                               autocomplete="new-password" oninput="actualizarFortaleza(this.value)" />
-                        <button type="button" class="pwd-toggle" onclick="togglePwd('nuevaClave', this)" tabindex="-1"><i class="fas fa-eye"></i></button>
-                        <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
-                        <div class="strength-label" id="strengthLabel"></div>
-                    </div>
-                </div>
+@section FooterLeft {
+    <a class="acc-link" href="@Url.Action("CerrarSesion","Acceso")"><i class="fas fa-sign-out-alt"></i>@Resources.Strings.CambioClaveInicial_CerrarSesion</a>
+}
 
-                <div class="input-group">
-                    <div class="input-icon"><i class="fas fa-lock"></i></div>
-                    <div class="input-wrapper">
-                        <label for="confirmarClave">@Resources.Strings.Reset_NewPwd_ConfirmLabel</label>
-                        <input type="password" name="confirmarClave" id="confirmarClave" class="input-field"
-                               placeholder="@Resources.Strings.Reset_NewPwd_ConfirmPlaceholder"
-                               autocomplete="new-password" />
-                        <button type="button" class="pwd-toggle" onclick="togglePwd('confirmarClave', this)" tabindex="-1"><i class="fas fa-eye"></i></button>
-                    </div>
-                </div>
-
-                <button type="button" id="btnCambiar" class="btn btn-primary" onclick="cambiarClave()">
-                    <span class="btn-text">@Resources.Strings.Reset_NewPwd_Btn</span>
-                    <i class="fas fa-check" style="margin-left:8px;"></i>
-                </button>
-
-                <div style="text-align:center; margin-top:1.25rem;">
-                    <a href="@Url.Action("CerrarSesion","Acceso")" style="color:#583AFF; font-size:.8rem; text-decoration:none;">
-                        <i class="fas fa-sign-out-alt" style="margin-right:4px;"></i>
-                        @Resources.Strings.CambioClaveInicial_CerrarSesion
-                    </a>
-                </div>
-
-                <div class="footer-text">ORION WEB - @DateTime.Now.Year</div>
-            </form>
-        </div>
-    </div>
-
+@section scripts {
     <script>
         var _rMsg = {
-            errorEmpty:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_NewPwd_ErrorEmpty))',
-            errorLen:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_NewPwd_ErrorLen))',
-            errorMatch:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_NewPwd_ErrorMatch))',
-            strengthWeak:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CambioClaveInicial_FuerzaDebil))',
-            strengthFair:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CambioClaveInicial_FuerzaRegular))',
-            strengthGood:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CambioClaveInicial_FuerzaBuena))',
-            strengthStrong: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CambioClaveInicial_FuerzaFuerte))'
+            errorEmpty: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_NewPwd_ErrorEmpty))',
+            errorLen:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_NewPwd_ErrorLen))',
+            errorMatch: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Reset_NewPwd_ErrorMatch))'
         };
-
-        function togglePwd(inputId, btn) {
-            var inp = document.getElementById(inputId), ic = btn.querySelector('i');
-            if (inp.type === 'password') { inp.type = 'text'; ic.classList.replace('fa-eye', 'fa-eye-slash'); }
-            else { inp.type = 'password'; ic.classList.replace('fa-eye-slash', 'fa-eye'); }
-        }
-
-        function actualizarFortaleza(pwd) {
-            var fill = document.getElementById('strengthFill'), label = document.getElementById('strengthLabel');
-            if (!pwd) { fill.style.width = '0%'; label.textContent = ''; return; }
-            var score = 0;
-            if (pwd.length >= 12) score++;
-            if (pwd.length >= 16) score++;
-            if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
-            if (/\d/.test(pwd)) score++;
-            if (/[^A-Za-z0-9]/.test(pwd)) score++;
-            var map = [
-                { pct:'20%',  color:'#ef4444', text:_rMsg.strengthWeak },
-                { pct:'40%',  color:'#f97316', text:_rMsg.strengthWeak },
-                { pct:'60%',  color:'#eab308', text:_rMsg.strengthFair },
-                { pct:'80%',  color:'#22c55e', text:_rMsg.strengthGood },
-                { pct:'100%', color:'#059669', text:_rMsg.strengthStrong }
-            ];
-            var s = map[Math.min(score, map.length - 1)];
-            fill.style.width = s.pct; fill.style.background = s.color;
-            label.textContent = s.text; label.style.color = s.color;
-        }
-
-        function aviso(icon, msg) {
-            Swal.fire({ toast:true, position: window.innerWidth <= 768 ? 'top' : 'top-end', icon: icon, title: msg, showConfirmButton:false, timer:5000, timerProgressBar:true });
-        }
 
         function cambiarClave() {
             var nueva = document.getElementById('nuevaClave').value;
@@ -158,12 +57,8 @@
             document.getElementById('btnCambiar').classList.add('loading');
             document.getElementById('cambioForm').submit();
         }
+        document.getElementById('cambioForm').addEventListener('submit', function (e) {
+            if (!document.getElementById('btnCambiar').classList.contains('loading')) { e.preventDefault(); cambiarClave(); }
+        });
     </script>
-
-    @if (ViewData["Error"] != null)
-    {
-        <script>aviso('warning', '@Html.Raw(HttpUtility.JavaScriptStringEncode(ViewData["Error"].ToString()))');</script>
-    }
-    <script type="text/javascript" src="~/Assets/js/main.js"></script>
-</body>
-</html>
+}

@@ -1,28 +1,44 @@
 @{
     Layout = "~/Views/Acceso/_Layout2FA.cshtml";
     ViewBag.Heading = Resources.Strings.SolSeg_Titulo;
+    ViewBag.PageTitle = Resources.Strings.SolSeg_Titulo;
     bool enviada = ViewBag.Enviada == true;
     bool existente = ViewBag.Existente == true;
+    var panel = new bufinscustomers.Models.AccesoPanelVM
+    {
+        Eyebrow = Resources.Strings.Acc_Eyebrow_Soporte,
+        PieUsuario = true,
+        CorreoEnmascarado = ViewBag.CorreoEnmascarado as string,
+        Pasos = new System.Collections.Generic.List<bufinscustomers.Models.AccesoPasoVM>
+        {
+            new bufinscustomers.Models.AccesoPasoVM(Resources.Strings.Acc_Paso_EnviarSolicitud, enviada ? "done" : "active"),
+            new bufinscustomers.Models.AccesoPasoVM(Resources.Strings.Acc_Paso_ValidacionIdentidad, enviada ? "active" : "todo", enviada ? Resources.Strings.Acc_Sub_TeContactaremos : null),
+            new bufinscustomers.Models.AccesoPasoVM(Resources.Strings.Acc_Paso_ReinicioMetodos, "todo")
+        }
+    };
 }
+
+@section Panel { @Html.Partial("_AccesoPanel", panel) }
 
 @if (enviada)
 {
-    <div class="tf-info" style="margin-bottom:1rem;">
-        <i class="fas fa-paper-plane"></i>
-        <strong>@(existente ? Resources.Strings.SolSeg_YaPendiente : Resources.Strings.SolSeg_Enviada)</strong>
+    <div class="acc-state">
+        <div class="acc-state-icon acc-state-icon--info"><i class="fas fa-paper-plane"></i></div>
+        <h1>@(existente ? Resources.Strings.SolSeg_YaPendiente : Resources.Strings.SolSeg_Enviada)</h1>
+        <p>@Resources.Strings.SolSeg_EnviadaMsg</p>
     </div>
-    <p class="tf-info">@Resources.Strings.SolSeg_EnviadaMsg</p>
-    <a href="@Url.Action("Login","Acceso")" class="btn btn-primary" style="text-decoration:none;display:flex;">
+    <a href="@Url.Action("Login","Acceso")" class="btn btn-primary">
+        <i class="fas fa-arrow-left"></i>
         <span class="btn-text">@Resources.Strings.Login2FA_Volver</span>
-        <i class="fas fa-arrow-left" style="margin-left:8px;"></i>
     </a>
 }
 else
 {
+    <h1 class="acc-title">@Resources.Strings.SolSeg_Titulo</h1>
+    <p class="acc-desc">@Resources.Strings.SolSeg_Intro</p>
+
     <form id="tfForm" action="@Url.Action("SolicitarReinicio","Acceso")" method="post">
         @Html.AntiForgeryToken()
-
-        <p class="tf-info"><i class="fas fa-life-ring"></i>@Resources.Strings.SolSeg_Intro</p>
 
         <div class="input-group">
             <div class="input-icon"><i class="fas fa-phone"></i></div>
@@ -40,17 +56,18 @@ else
             </div>
         </div>
 
-        <button type="submit" id="btnEnviar" class="btn btn-primary">
+        <button type="submit" id="btnEnviar" class="btn btn-primary" style="margin-top:18px;">
             <span class="btn-text">@Resources.Strings.SolSeg_BtnEnviar</span>
-            <i class="fas fa-paper-plane" style="margin-left:8px;"></i>
+            <i class="fas fa-paper-plane"></i>
         </button>
-
-        <div style="text-align:center; margin-top:1rem;">
-            <a href="@Url.Action("VerificarDobleFactor","Acceso")" style="color:#583AFF; font-size:.8rem; text-decoration:none;">
-                <i class="fas fa-arrow-left" style="margin-right:4px;"></i>@Resources.Strings.SolSeg_VolverVerificar
-            </a>
-        </div>
     </form>
+}
+
+@section FooterLeft {
+    @if (!enviada)
+    {
+        <a class="acc-link" href="@Url.Action("VerificarDobleFactor","Acceso")"><i class="fas fa-arrow-left"></i>@Resources.Strings.SolSeg_VolverVerificar</a>
+    }
 }
 
 @section scripts {
