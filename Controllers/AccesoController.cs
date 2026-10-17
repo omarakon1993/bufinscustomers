@@ -414,6 +414,8 @@ namespace bufinscustomers.Controllers
                         correo = u?.Correo;
                         // El stepper del alta solo muestra «Nueva contraseña» si aún le falta cambiarla (se pide después del 2FA).
                         ViewBag.RequiereCambioClave = u != null && u.DebeCambiarClave;
+                        if (accion == "VerificarDobleFactor")
+                            ViewBag.PuedeCrearPasskey = DobleFactorService.PasskeysHabilitadas && !TienePasskeyDisponible(p.IdUsuario);
                     }
                 }
                 ViewBag.CorreoEnmascarado = EnmascararCorreo(correo);
@@ -464,7 +466,7 @@ namespace bufinscustomers.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult VerificarDobleFactor(string codigo)
+        public ActionResult VerificarDobleFactor(string codigo, bool agregarPasskey = false)
         {
             var p = ObtenerPendiente2FA(out string key);
             if (p == null || p.Enrolar)
@@ -499,6 +501,10 @@ namespace bufinscustomers.Controllers
             if (ok)
             {
                 LimpiarPendiente2FA(key);
+                // «Agregar una passkey después de verificar»: igual que en OfrecerPasskey, abre Seguridad al entrar.
+                if (agregarPasskey && DobleFactorService.PasskeysHabilitadas)
+                    Response.Cookies.Add(new HttpCookie("_pkoferta", "1")
+                        { HttpOnly = true, Secure = Request.IsSecureConnection, Path = "/", Expires = DateTime.Now.AddMinutes(2) });
                 return CompletarInicioDeSesion(usuario);
             }
 

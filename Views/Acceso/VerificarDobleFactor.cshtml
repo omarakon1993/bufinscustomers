@@ -39,6 +39,15 @@
         <i class="fas fa-check"></i>
     </button>
 
+    @if (ViewBag.PuedeCrearPasskey == true)
+    {
+        <label class="acc-check">
+            <input type="checkbox" name="agregarPasskey" value="true" />
+            <span><i class="fas fa-fingerprint"></i>@Resources.Strings.Acc_AgregarPasskeyAlEntrar
+                <small>@Resources.Strings.Acc_AgregarPasskeyAlEntrarDesc</small></span>
+        </label>
+    }
+
     @if (ViewBag.TienePasskey == true)
     {
         <button type="button" id="btnPasskey" class="acc-btn-secondary" style="display:none;">
