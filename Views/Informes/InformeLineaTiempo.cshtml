@@ -59,6 +59,7 @@
     .lt-letterhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid var(--lt-line); }
     .lt-brand-mark { display: inline-flex; align-items: center; gap: 6px; }
     .lt-brand-mark .bm-icon { width: 20px; height: 20px; border-radius: 6px; background: var(--lt-brand-gradient); color: #fff; font-weight: 800; font-size: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .lt-brand-mark .bm-logo { height: 14px; width: auto; display: block; }
     .lt-brand-mark .bm-text { font-size: 12.5px; font-weight: 800; letter-spacing: .01em; background: var(--lt-brand-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
     .lt-letterhead .fecha { font-size: 11px; color: var(--lt-text-muted); }
 
@@ -261,7 +262,7 @@
 
         <section class="lt-card" id="ltPanelResultado">
             <div class="lt-letterhead">
-                <div class="lt-brand-mark"><span class="bm-icon">B</span><span class="bm-text">@Resources.Strings.LineaTiempo_BrandMark</span></div>
+                <div class="lt-brand-mark"><span class="bm-icon">B</span><img class="bm-logo" src="~/Assets/img/Bufins_Wordmark_Purple.png" alt="Bufins"></div>
                 <span class="fecha" id="ltFechaGenerado"></span>
             </div>
 

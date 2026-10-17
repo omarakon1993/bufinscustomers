@@ -150,7 +150,7 @@
         @* 1. Encabezado: marca + empresa + chips de contexto + exportaciones *@
         <div class="lt-card" id="indPanelResultado">
             <div class="pyg2-letterhead">
-                <span class="pyg2-brand"><span class="bm-text">@T("LineaTiempo_BrandMark")</span><span class="bm-sub">@T("Ind_Subtitulo")</span></span>
+                <span class="pyg2-brand"><img class="bm-logo" src="~/Assets/img/Bufins_Wordmark_Purple.png" alt="Bufins"><span class="bm-sub">@T("Ind_Subtitulo")</span></span>
                 <span class="fecha"><span>@T("Flujo_GeneradoEl")</span> <span id="indFechaGenerado">&mdash;</span></span>
             </div>
             <div class="pyg2-head">
@@ -272,6 +272,7 @@
 @section scripts {
 <script src="~/Assets/js/select2/select2.min.js"></script>
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
+<script src="~/Assets/js/bufins-pdf-marca.js"></script>
 <script src="~/Assets/js/html2canvas.min.js"></script>
 <script src="~/Assets/js/export-menu.js"></script>
 <script src="~/Assets/js/doc-visor.js"></script>
@@ -962,8 +963,8 @@
 
         // ===== Página 1: resumen =====
         degradado(0, 0, W, 34);
-        fuente('bold', 10, C.blanco); pdf.text(P.marca, M, 10);
-        var wMarca = ancho(P.marca);
+        fuente('bold', 10, C.blanco); var wMarca = window.BufinsPdfMarca ? BufinsPdfMarca(pdf, M, 10) : 0;
+        if (!wMarca) { pdf.text(P.marca, M, 10); wMarca = ancho(P.marca); }
         fuente('normal', 8.5, C.blanco); pdf.text(CH_MIDDOT + '  ' + P.subtitulo, M + wMarca + 2.5, 10);
         fuente('bold', 19, C.blanco); pdf.text(empresa, M, 22);
         fuente('normal', 9.5, C.blanco); pdf.text(P.titulo, M, 29);
