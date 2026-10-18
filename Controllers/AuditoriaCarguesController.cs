@@ -97,6 +97,79 @@ namespace bufinscustomers.Controllers
             }, JsonRequestBehavior.AllowGet);
         }
 
+        /// <summary>
+        /// Detalle de un cargue auditado: por tabla, filas que había (y se reemplazaron) y filas que quedaron, más el
+        /// archivo original si se conservó. Respeta el mismo alcance que la grilla.
+        /// </summary>
+        [HttpGet]
+        public JsonResult Detalle(int id)
+        {
+            var fila = ObtenerSegunAlcance().FirstOrDefault(a => a.Id == id);
+            if (fila == null)
+                return Json(new { success = false, message = R("Audit_Det_NoEncontrado") }, JsonRequestBehavior.AllowGet);
+
+            var detalle = new CargueAuditoriaDetalleService().ObtenerPorAuditoria(id);
+            var archivo = new CargueArchivosService().ObtenerInfoPorAuditoria(id);
+
+            return Json(new
+            {
+                success = true,
+                archivoCargue = fila.NombreArchivo,
+                fecha = fila.FechaCargue.ToString("dd/MM/yyyy HH:mm:ss"),
+                usuario = fila.Usuario,
+                empresa = fila.NombreEmpresa,
+                snapshot = detalle.Select(d => d.IdHistorial).FirstOrDefault(h => h.HasValue),
+                filas = detalle.Select(d => new
+                {
+                    hoja = d.NombreHoja,
+                    tabla = d.NombreTabla,
+                    antes = d.FilasAntes,
+                    nuevas = d.FilasNuevas,
+                    nota = d.Nota,
+                    origen = d.Origen,
+                    anio = d.Anio,
+                    modo = d.Modo
+                }),
+                archivo = archivo == null ? null : new
+                {
+                    id = archivo.Id,
+                    nombre = archivo.NombreArchivo,
+                    tamano = archivo.TamanoBytes,
+                    fecha = archivo.FechaCarga.ToString("dd/MM/yyyy HH:mm"),
+                    sha256 = archivo.Sha256
+                },
+                puedeDescargar = UsuarioSesionHelper.EsSuperAdmin()
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        /// <summary>
+        /// Descarga el Excel original de un cargue conservado. SOLO Super Admin (contiene datos financieros completos de la
+        /// empresa) y cada descarga queda auditada.
+        /// </summary>
+        [HttpGet]
+        public ActionResult DescargarArchivo(long id)
+        {
+            if (!UsuarioSesionHelper.EsSuperAdmin())
+                return new HttpStatusCodeResult(403);
+
+            var r = new CargueArchivosService().Obtener(id);
+            if (r == null)
+            {
+                SetErrorMessage(R("Audit_Det_ArchivoNoDisponible"));
+                return RedirectToAction("AuditoriaCargues");
+            }
+
+            var (info, contenido) = r.Value;
+            new AuditoriaService().RegistrarCambio(
+                AuditoriaTipo.Cargues, AuditoriaAccion.Exportar, "CargueArchivo", info.Id.ToString(),
+                $"Descargó el archivo original '{info.NombreArchivo}' del cargue del {info.FechaCarga:dd/MM/yyyy HH:mm}.",
+                null, new { info.Id, info.NombreArchivo, info.Sha256, info.TamanoBytes },
+                info.IdEmpresa, severidad: AuditoriaSeveridad.Advertencia);
+
+            string nombre = string.IsNullOrWhiteSpace(info.NombreArchivo) ? $"cargue_{info.Id}.xlsx" : info.NombreArchivo;
+            return File(contenido, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombre);
+        }
+
         // Exportar auditoría a Excel (mismos filtros que la pantalla)
         [HttpPost]
         [ValidateAntiForgeryToken]

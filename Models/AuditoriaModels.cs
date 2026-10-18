@@ -90,6 +90,7 @@ namespace bufinscustomers.Models
         public const string Confirmar    = "Confirmar";
         public const string Descartar    = "Descartar";
         public const string Ver          = "Ver";
+        public const string Restaurar    = "Restaurar";
     }
 
     /// <summary>Nivel de una fila de auditoría, para resaltar en el visor.</summary>

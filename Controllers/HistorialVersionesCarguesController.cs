@@ -86,6 +86,14 @@ namespace bufinscustomers.Controllers
                 string msg = string.Format(R("Hist_RollbackExitoso"), version.Anio, version.NombreEmpresa);
                 SetSuccessMessage(msg);
                 new NotificacionesService().Crear(usuario.Id, R("Notif_RollbackEjecutado"), msg, "success", "/HistorialVersionesCargues");
+
+                // El rollback reemplaza los datos del año por los de una versión anterior: queda en la auditoría central.
+                new AuditoriaService().RegistrarCambio(
+                    AuditoriaTipo.Cargues, AuditoriaAccion.Restaurar, "HistorialVersionCargue", idHistorial.ToString(),
+                    $"Restauró la versión #{idHistorial} de '{version.NombreEmpresa}' — año {version.Anio}, {(version.Modo == 0 ? "ejecución" : "histórico")}, escenario {version.IdEscenario}, cargada originalmente el {version.FechaCargue:dd/MM/yyyy HH:mm} por {version.NombreUsuario} (archivo '{version.NombreArchivo}', {version.TotalFilas:N0} fila(s)). Los datos actuales de ese año fueron reemplazados por los de esa versión.",
+                    null,
+                    new { idHistorial, empresa = version.NombreEmpresa, anio = version.Anio, modo = version.Modo, escenario = version.IdEscenario, archivoVersion = version.NombreArchivo, usuarioVersion = version.NombreUsuario, totalFilasVersion = version.TotalFilas },
+                    version.IdEmpresa, entidadNombre: version.NombreEmpresa, severidad: AuditoriaSeveridad.Advertencia);
             }
             else
             {

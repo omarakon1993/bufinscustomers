@@ -118,6 +118,7 @@
                             <th>@Resources.Strings.Audit_ThUsuario</th>
                             <th>@Resources.Strings.Audit_ThArchivo</th>
                             @if (verEscenario) { <th>@Resources.Strings.Ax_Escenario</th> }
+                            <th>@Resources.Strings.Audit_Det_ThDetalle</th>
                         </tr>
                     </thead>
                     <tbody id="tbody"></tbody>
@@ -160,8 +161,70 @@ $(function () {
         kUltimo:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Ax_K_UltimoCargue))',
         exportOk:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_ExportSuccess))',
         errTit:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error))',
-        error:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_JS_Error))'
+        error:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_JS_Error))',
+        detVer:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_BtnVer))',
+        detTit:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_Titulo))',
+        detTabla:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_ThTabla))',
+        detAntes:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_ThAntes))',
+        detNuevas: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_ThNuevas))',
+        detNota:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_ThNota))',
+        detTotal:  '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_Total))',
+        detSin:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_SinDetalle))',
+        detArch:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_ArchivoOriginal))',
+        detSinArch:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_ArchivoNoGuardado))',
+        detDesc:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_Descargar))',
+        detSnap:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_Snapshot))',
+        detCerrar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Cerrar))'
     };
+    var URL_DETALLE = '@Url.Action("Detalle", "AuditoriaCargues")';
+    var URL_DESCARGA = '@Url.Action("DescargarArchivo", "AuditoriaCargues")';
+
+    // Detalle de un cargue: por tabla, filas que había (y se reemplazaron) vs. filas que quedaron, y el Excel original.
+    function verDetalle(id) {
+        $.getJSON(URL_DETALLE, { id: id }).done(function (r) {
+            if (!r || !r.success) { Swal.fire({ icon: 'error', title: S.errTit, text: (r && r.message) || S.error }); return; }
+
+            var $w = $('<div class="ax-det">');
+            $w.append($('<p class="ax-det-cab">').append($('<strong>').text(r.empresa + ' · ' + r.archivoCargue), $('<br>'), $('<small>').text(r.fecha + ' · ' + r.usuario)));
+
+            if (!r.filas || !r.filas.length) {
+                $w.append($('<p>').text(S.detSin));
+            } else {
+                var $t = $('<table class="ax-det-tabla">');
+                $t.append($('<thead>').append($('<tr>').append(
+                    $('<th>').text(S.detTabla), $('<th class="num">').text(S.detAntes), $('<th class="num">').text(S.detNuevas), $('<th>').text(S.detNota))));
+                var sa = 0, sn = 0, $tb2 = $('<tbody>');
+                r.filas.forEach(function (f) {
+                    sa += f.antes; sn += f.nuevas;
+                    $tb2.append($('<tr>').append(
+                        $('<td>').text((f.hoja ? f.hoja + ' → ' : '') + f.tabla),
+                        $('<td class="num">').text(AudKit.num(f.antes)),
+                        $('<td class="num">').text(AudKit.num(f.nuevas)),
+                        $('<td>').text(f.nota || '')));
+                });
+                $t.append($tb2).append($('<tfoot>').append($('<tr>').append(
+                    $('<td>').text(S.detTotal), $('<td class="num">').text(AudKit.num(sa)), $('<td class="num">').text(AudKit.num(sn)), $('<td>'))));
+                $w.append($t);
+            }
+
+            if (r.snapshot) $w.append($('<p class="ax-det-nota">').text(S.detSnap.replace('{0}', r.snapshot)));
+
+            var $a = $('<p class="ax-det-arch">').append($('<strong>').text(S.detArch + ': '));
+            if (r.archivo) {
+                $a.append(document.createTextNode(r.archivo.nombre + ' (' + Math.max(1, Math.round(r.archivo.tamano / 1024)) + ' KB · ' + r.archivo.fecha + ')'));
+                if (r.puedeDescargar)
+                    $a.append($('<br>'), $('<a class="btn btn-sm btn-modern-gradient mt-2">').attr('href', URL_DESCARGA + '?id=' + encodeURIComponent(r.archivo.id))
+                        .append('<i class="fas fa-download mr-1"></i>', document.createTextNode(S.detDesc)));
+            } else {
+                $a.append(document.createTextNode(S.detSinArch));
+            }
+            $w.append($a);
+
+            Swal.fire({ title: S.detTit, html: $w.prop('outerHTML'), width: 780, confirmButtonText: S.detCerrar });
+        }).fail(function () {
+            Swal.fire({ icon: 'error', title: S.errTit, text: S.error });
+        });
+    }
 
     function valores() {
         return {
@@ -217,6 +280,10 @@ $(function () {
             $tr.append($('<td>').text(r.Usuario || ''));
             $tr.append($('<td>').text(r.Archivo || ''));
             if (VER_ESC) $tr.append($('<td>').text(r.Escenario || '—'));
+            $tr.append($('<td>').append(
+                $('<button type="button" class="btn btn-sm btn-primary">')
+                    .append('<i class="fas fa-search-plus mr-1"></i>', document.createTextNode(S.detVer))
+                    .on('click', function () { verDetalle(r.Id); })));
             $tb.append($tr);
         });
 

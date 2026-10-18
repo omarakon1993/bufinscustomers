@@ -27,6 +27,9 @@ namespace bufinscustomers.Controllers
         private readonly HistorialVersionesCarguesService _historialService = new HistorialVersionesCarguesService();
         private readonly PlantillaConDatosService _plantillaConDatosService = new PlantillaConDatosService();
         private readonly CargueStagingService _stagingService = new CargueStagingService();
+        private readonly CargueImpactoService _impactoService = new CargueImpactoService();
+        private readonly CargueAuditoriaDetalleService _detalleService = new CargueAuditoriaDetalleService();
+        private readonly CargueArchivosService _archivosService = new CargueArchivosService();
         private StringBuilder _logBuilder = new StringBuilder();
 
         // Mapeo hoja Z_ → tabla Ini_: Helpers/TablasCargueHelper.cs. Se resuelve POR EMPRESA
@@ -1135,6 +1138,24 @@ namespace bufinscustomers.Controllers
                     idLote = idLoteCreado;
                     CargueLoteSesionHelper.Registrar(idLote);
 
+                    // Se conserva el archivo original (últimos N confirmados por empresa) para poder reconstruir
+                    // qué subió el usuario. No bloquea el cargue si falla; el IdLote lo ata hasta la confirmación.
+                    try
+                    {
+                        var stream = archivoExcel.InputStream;
+                        if (stream.CanSeek) stream.Position = 0;
+                        byte[] bytesArchivo;
+                        using (var msArchivo = new MemoryStream()) { stream.CopyTo(msArchivo); bytesArchivo = msArchivo.ToArray(); }
+                        if (stream.CanSeek) stream.Position = 0;
+                        _archivosService.GuardarPendiente(new CargueLote
+                        {
+                            IdLote = idLote, IdEmpresa = idEmpresaSeleccionada, NombreEmpresa = nombreEmpresaLote,
+                            Anio = anioSeleccionado, Modo = modo, IdEscenario = idEscenarioSeleccionado,
+                            IdUsuario = idUsuario, NombreUsuario = nombreUsuarioLote, NombreArchivo = nombreArchivoOriginal
+                        }, bytesArchivo);
+                    }
+                    catch (Exception exArch) { AppLogger.Error(exArch, "CargarExcel.GuardarArchivo"); }
+
                     bool errorEnStaging = false;
 
                     using (var conn = new SqlConnection(CadenaConexion))
@@ -1229,6 +1250,23 @@ namespace bufinscustomers.Controllers
                         return RedirectToAction("CargueExcel");
                     }
 
+                    // Protección: confirmar un cargue sin una sola fila del año solo BORRARÍA los datos de ese año.
+                    // (LeerHojaEnDataTable omite en silencio las filas de otro año, así que un archivo de otro
+                    // año llega aquí «vacío» y, sin esta guarda, se podía confirmar.)
+                    if (resultado.TotalFilasInsertadas == 0)
+                    {
+                        _stagingService.DescartarLote(idLote);
+                        CargueLoteSesionHelper.Quitar(idLote);
+                        string msgVacio = string.Format(R("Datos_CargueSinFilasDelAnio"), anioSeleccionado);
+                        new AuditoriaService().RegistrarCambio(
+                            AuditoriaTipo.Cargues, AuditoriaAccion.Descartar, "CargueLote", idLote.ToString(),
+                            $"Cargue bloqueado: el archivo '{nombreArchivoOriginal}' no trae ninguna fila del año {anioSeleccionado} para '{nombreEmpresaLote}' ({(modo == 0 ? "ejecución" : "histórico")}, escenario {idEscenarioSeleccionado}). No se tocó ningún dato.",
+                            null, new { empresa = nombreEmpresaLote, anio = anioSeleccionado, modo, escenario = idEscenarioSeleccionado, archivo = nombreArchivoOriginal },
+                            idEmpresaSeleccionada, entidadNombre: nombreEmpresaLote, severidad: AuditoriaSeveridad.Advertencia);
+                        SetErrorMessage(msgVacio);
+                        return RedirectToAction("CargueExcel");
+                    }
+
                     _stagingService.ActualizarTotalFilas(idLote, resultado.TotalFilasInsertadas);
 
                     var (exitoValidacion, mensajeValidacion, _, _) = _stagingService.ValidarLote(idLote);
@@ -1290,6 +1328,8 @@ namespace bufinscustomers.Controllers
                 Hallazgos = _stagingService.ObtenerHallazgos(idLote),
                 NombreArchivo = lote.NombreArchivo
             };
+            try { vm.Impacto = _impactoService.Analizar(lote); }
+            catch (Exception exImp) { AppLogger.Error(exImp, "RevisarCargue.Impacto"); }
             return View("~/Views/Datos/RevisarCargue.cshtml", vm);
         }
 
@@ -1300,7 +1340,7 @@ namespace bufinscustomers.Controllers
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult ConfirmarCargue(long idLote)
+        public ActionResult ConfirmarCargue(long idLote, bool confirmarReemplazo = false)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             var lote = _stagingService.ObtenerLote(idLote);
@@ -1323,9 +1363,35 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("RevisarCargue", new { idLote });
             }
 
+            // Impacto sobre los datos actuales, calculado en el servidor (nunca con cifras del navegador):
+            // un cargue sin filas jamás se confirma, y una reducción fuerte exige confirmación reforzada.
+            ImpactoCargue impacto;
+            try { impacto = _impactoService.Analizar(lote); }
+            catch (Exception exImp)
+            {
+                AppLogger.Error(exImp, "ConfirmarCargue.Impacto");
+                SetErrorMessage(R("Datos_CargueImpactoError"));
+                return RedirectToAction("RevisarCargue", new { idLote });
+            }
+
+            if (impacto.CargaVacia)
+            {
+                SetErrorMessage(string.Format(R("Datos_CargueSinFilasDelAnio"), lote.Anio));
+                return RedirectToAction("RevisarCargue", new { idLote });
+            }
+
+            if (impacto.RequiereConfirmacion && !confirmarReemplazo)
+            {
+                SetErrorMessage(string.Format(R("Datos_CargueReemplazoSinConfirmar"), impacto.TotalExistentes.ToString("N0"), impacto.TotalNuevas.ToString("N0")));
+                return RedirectToAction("RevisarCargue", new { idLote });
+            }
+
             int idUsuario = usuario?.Id ?? 0;
             var resultado = new ResultadoCargaExcel { TotalHojasProcesadas = 0, TotalFilasInsertadas = lote.TotalFilas };
             int idHistorialCargue = 0;
+            int? idAuditoriaCargue = null;
+            var existentesAntes = new List<(string Tabla, int Filas)>();
+            List<CargueDetalleFila> detalleAuditoria = null;
             var conteoPorHoja = new List<(string NombreHoja, string NombreTabla, int Filas)>();
             bool errorEnConfirmacion = false;
             string mensajeError = null;
@@ -1356,6 +1422,9 @@ namespace bufinscustomers.Controllers
                         }
                         catch (Exception snapEx) { LogToFile($"Advertencia snapshot al confirmar lote {idLote}: {snapEx.Message}"); }
 
+                        // Lo que de verdad se va a borrar, contado dentro de la transacción y justo antes del DELETE.
+                        existentesAntes = _impactoService.ContarExistentes(conn, tx, lote.IdEmpresa, lote.Anio, lote.Modo, lote.IdEscenario);
+
                         if (lote.Modo == 0)
                             EliminarEjecucionDeIni(conn, lote.Anio, lote.IdEmpresa, lote.IdEscenario, tx);
                         else
@@ -1370,11 +1439,17 @@ namespace bufinscustomers.Controllers
                         }
                         else
                         {
-                            RegistrarAuditoria(conn, lote.NombreArchivo, lote.IdEmpresa, lote.IdEscenario, tx);
+                            idAuditoriaCargue = RegistrarAuditoria(conn, lote.NombreArchivo, lote.IdEmpresa, lote.IdEscenario, tx);
 
                             // Detalle por hoja para el resumen (cuenta el staging ANTES de borrarlo) y limpieza del
                             // lote en la MISMA transacción: o queda confirmado y limpio, o no cambia nada.
                             conteoPorHoja = _stagingService.ObtenerConteoPorHoja(conn, tx, idLote);
+
+                            // Auditoría detallada: por tabla, cuántas filas había (y se reemplazaron) y cuántas quedaron.
+                            detalleAuditoria = ConstruirDetalleCargue(lote, usuario, idAuditoriaCargue, idHistorialCargue, existentesAntes, conteoPorHoja);
+                            _detalleService.Registrar(conn, tx, detalleAuditoria);
+                            _archivosService.MarcarConfirmado(conn, tx, idLote, idAuditoriaCargue);
+
                             _stagingService.LimpiarLoteEnTransaccion(conn, tx, idLote);
 
                             tx.Commit();
@@ -1403,12 +1478,19 @@ namespace bufinscustomers.Controllers
                 .ToList();
             resultado.TotalHojasProcesadas = resultado.DetalleHojas.Count;
 
+            int filasReemplazadas = existentesAntes.Sum(e => e.Filas);
+            var tablasAntes = existentesAntes.Where(e => e.Filas > 0).ToDictionary(e => e.Tabla, e => e.Filas);
             new AuditoriaService().RegistrarCambio(
                 AuditoriaTipo.Cargues, AuditoriaAccion.Confirmar, "CargueLote", idLote.ToString(),
-                $"Confirmó el cargue de '{lote.NombreEmpresa}' — año {lote.Anio}, {(lote.Modo == 0 ? "ejecución" : "histórico")}, escenario {lote.IdEscenario}, {lote.TotalFilas:N0} fila(s), archivo '{lote.NombreArchivo}'.",
-                null,
-                new { empresa = lote.NombreEmpresa, anio = lote.Anio, modo = lote.Modo, escenario = lote.IdEscenario, totalFilas = lote.TotalFilas, archivo = lote.NombreArchivo },
-                lote.IdEmpresa, entidadNombre: lote.NombreEmpresa);
+                $"Confirmó el cargue de '{lote.NombreEmpresa}' — año {lote.Anio}, {(lote.Modo == 0 ? "ejecución" : "histórico")}, escenario {lote.IdEscenario}: reemplazó {filasReemplazadas:N0} fila(s) existentes por {lote.TotalFilas:N0}, archivo '{lote.NombreArchivo}'" +
+                (impacto.RequiereConfirmacion ? " (reducción fuerte confirmada por el usuario)." : "."),
+                new { filasReemplazadas, filasPorTabla = tablasAntes, idHistorialSnapshot = idHistorialCargue > 0 ? idHistorialCargue : (int?)null },
+                new { empresa = lote.NombreEmpresa, anio = lote.Anio, modo = lote.Modo, escenario = lote.IdEscenario, totalFilas = lote.TotalFilas, archivo = lote.NombreArchivo, idAuditoriaCargue, reduccionFuerteConfirmada = impacto.RequiereConfirmacion },
+                lote.IdEmpresa, entidadNombre: lote.NombreEmpresa,
+                severidad: impacto.RequiereConfirmacion ? AuditoriaSeveridad.Advertencia : null);
+
+            // Deja solo los últimos N archivos confirmados de la empresa (parámetro Cargue_ArchivosConservados).
+            _archivosService.Purgar(lote.IdEmpresa);
 
             resultado.Exito = true;
             resultado.TotalFilasInsertadas = lote.TotalFilas;
@@ -2818,10 +2900,41 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        private void RegistrarAuditoria(SqlConnection conn, string nombreArchivo, int idEmpresaArchivo, int idEscenario, SqlTransaction tx = null)
+        /// <summary>
+        /// Arma el detalle de auditoría de un cargue confirmado: una fila por tabla Ini_ con las filas que había
+        /// (y se reemplazaron) y las que quedaron cargadas.
+        /// </summary>
+        private static List<CargueDetalleFila> ConstruirDetalleCargue(CargueLote lote, Usuarios usuario, int? idAuditoriaCargue,
+            int idHistorial, List<(string Tabla, int Filas)> antes, List<(string NombreHoja, string NombreTabla, int Filas)> despues)
+        {
+            var filas = new List<CargueDetalleFila>();
+            var tablas = antes.Select(a => a.Tabla).Union(despues.Select(d => d.NombreTabla), StringComparer.OrdinalIgnoreCase).ToList();
+            foreach (var tabla in tablas)
+            {
+                int nAntes = antes.Where(a => string.Equals(a.Tabla, tabla, StringComparison.OrdinalIgnoreCase)).Sum(a => a.Filas);
+                var nuevas = despues.Where(d => string.Equals(d.NombreTabla, tabla, StringComparison.OrdinalIgnoreCase)).ToList();
+                int nNuevas = nuevas.Sum(d => d.Filas);
+                if (nAntes == 0 && nNuevas == 0) continue;
+                filas.Add(new CargueDetalleFila
+                {
+                    IdAuditoriaCargue = idAuditoriaCargue, Origen = CargueOrigen.Cargue,
+                    IdEmpresa = lote.IdEmpresa, NombreEmpresa = lote.NombreEmpresa,
+                    Anio = lote.Anio, Modo = lote.Modo, IdEscenario = lote.IdEscenario,
+                    IdUsuario = usuario?.Id, NombreUsuario = ((usuario?.Nombre ?? "") + " " + (usuario?.Apellidos ?? "")).Trim(),
+                    NombreArchivo = lote.NombreArchivo, IdLote = lote.IdLote,
+                    IdHistorial = idHistorial > 0 ? idHistorial : (int?)null,
+                    NombreHoja = nuevas.FirstOrDefault().NombreHoja, NombreTabla = tabla,
+                    FilasAntes = nAntes, FilasNuevas = nNuevas
+                });
+            }
+            return filas;
+        }
+
+        /// <summary>Registra el cargue en AuditoriaCargues y devuelve su Id (null si no hay usuario en sesión).</summary>
+        private int? RegistrarAuditoria(SqlConnection conn, string nombreArchivo, int idEmpresaArchivo, int idEscenario, SqlTransaction tx = null)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            if (usuario == null) return;
+            if (usuario == null) return null;
 
             string nombreEmpresa = _empresaService.ObtenerEmpresas()
                                                    .FirstOrDefault(e => e.Id == idEmpresaArchivo)?.Nombre ?? "Desconocida";
@@ -2831,14 +2944,16 @@ namespace bufinscustomers.Controllers
             // columna y, si la BD todavía no la tiene, se cae al INSERT sin ella.
             string sqlConEscenario = @"
         INSERT INTO dbo.AuditoriaCargues (FechaCargue, IdUsuario, Usuario, IdEmpresa, NombreEmpresa, NombreArchivo, IdEscenario)
-        VALUES (@Fecha, @IdUsuario, @Usuario, @IdEmpresa, @NombreEmpresa, @NombreArchivo, @IdEscenario)
+        VALUES (@Fecha, @IdUsuario, @Usuario, @IdEmpresa, @NombreEmpresa, @NombreArchivo, @IdEscenario);
+        SELECT CAST(SCOPE_IDENTITY() AS INT);
     ";
             string sqlSinEscenario = @"
         INSERT INTO dbo.AuditoriaCargues (FechaCargue, IdUsuario, Usuario, IdEmpresa, NombreEmpresa, NombreArchivo)
-        VALUES (@Fecha, @IdUsuario, @Usuario, @IdEmpresa, @NombreEmpresa, @NombreArchivo)
+        VALUES (@Fecha, @IdUsuario, @Usuario, @IdEmpresa, @NombreEmpresa, @NombreArchivo);
+        SELECT CAST(SCOPE_IDENTITY() AS INT);
     ";
 
-            void EjecutarInsert(string sql, bool incluirEscenario)
+            int? EjecutarInsert(string sql, bool incluirEscenario)
             {
                 using (var cmd = new SqlCommand(sql, conn, tx))
                 {
@@ -2851,17 +2966,18 @@ namespace bufinscustomers.Controllers
                     if (incluirEscenario)
                         cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
 
-                    cmd.ExecuteNonQuery();
+                    var id = cmd.ExecuteScalar();
+                    return id == null || id == DBNull.Value ? (int?)null : Convert.ToInt32(id);
                 }
             }
 
             try
             {
-                EjecutarInsert(sqlConEscenario, incluirEscenario: true);
+                return EjecutarInsert(sqlConEscenario, incluirEscenario: true);
             }
             catch (SqlException ex) when (ex.Message.IndexOf("IdEscenario", StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                EjecutarInsert(sqlSinEscenario, incluirEscenario: false);
+                return EjecutarInsert(sqlSinEscenario, incluirEscenario: false);
             }
         }
 

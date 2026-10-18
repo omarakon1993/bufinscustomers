@@ -280,6 +280,39 @@
   <data name="RevisarCargue_AyudaSeguro" xml:space="preserve"><value>Data is written only on confirm.</value></data>
   <data name="RevisarCargue_BtnSubirCorregido" xml:space="preserve"><value>Upload corrected file</value></data>
   <data name="RevisarCargue_BtnConfirmarConAdvertencias" xml:space="preserve"><value>Confirm with warnings</value></data>
+  <!-- REVIEW UPLOAD: IMPACT ON CURRENT DATA -->
+  <data name="RevisarCargue_Imp_Titulo" xml:space="preserve"><value>Impact of this upload on current data</value></data>
+  <data name="RevisarCargue_Imp_Desc" xml:space="preserve"><value>On confirm, the data already saved for {0} for year {1} ({2}, scenario {3}) will be deleted and replaced with the file's data.</value></data>
+  <data name="RevisarCargue_Imp_ThTabla" xml:space="preserve"><value>Table</value></data>
+  <data name="RevisarCargue_Imp_ThActuales" xml:space="preserve"><value>Current rows (will be deleted)</value></data>
+  <data name="RevisarCargue_Imp_ThNuevas" xml:space="preserve"><value>Rows in the file</value></data>
+  <data name="RevisarCargue_Imp_ThEstado" xml:space="preserve"><value>Effect</value></data>
+  <data name="RevisarCargue_Imp_EstadoVacia" xml:space="preserve"><value>Will be empty</value></data>
+  <data name="RevisarCargue_Imp_EstadoReduccion" xml:space="preserve"><value>Sharp reduction</value></data>
+  <data name="RevisarCargue_Imp_EstadoOk" xml:space="preserve"><value>Normal</value></data>
+  <data name="RevisarCargue_Imp_Total" xml:space="preserve"><value>Total</value></data>
+  <data name="RevisarCargue_Imp_AlertaVacio" xml:space="preserve"><value>The file has no rows for year {0}. Confirming it would only delete the existing data, so it cannot be confirmed. Check that you uploaded the right file and year.</value></data>
+  <data name="RevisarCargue_Imp_AlertaRiesgo" xml:space="preserve"><value>Warning: this upload replaces {0} existing rows with only {1} ({2}% of what is there today). The alert threshold is {3}%. Make sure this is the right file and year before continuing.</value></data>
+  <data name="RevisarCargue_Imp_Entiendo" xml:space="preserve"><value>I understand that {0} existing rows will be deleted and only {1} will be loaded. I want to continue.</value></data>
+  <data name="Datos_CargueSinFilasDelAnio" xml:space="preserve"><value>The file has no rows for year {0}, so nothing was loaded and the existing data was not touched. Check that you uploaded the right file and year.</value></data>
+  <data name="Datos_CargueReemplazoSinConfirmar" xml:space="preserve"><value>This upload replaces {0} existing rows with only {1}. Tick the reinforced confirmation checkbox to continue.</value></data>
+  <data name="Datos_CargueImpactoError" xml:space="preserve"><value>The impact of the upload on current data could not be calculated. Try again; if it persists, contact the administrator.</value></data>
+  <!-- UPLOAD AUDIT: DETAIL -->
+  <data name="Audit_Det_ThDetalle" xml:space="preserve"><value>Detail</value></data>
+  <data name="Audit_Det_BtnVer" xml:space="preserve"><value>View</value></data>
+  <data name="Audit_Det_Titulo" xml:space="preserve"><value>Upload detail</value></data>
+  <data name="Audit_Det_ThTabla" xml:space="preserve"><value>Table</value></data>
+  <data name="Audit_Det_ThAntes" xml:space="preserve"><value>Rows before (replaced)</value></data>
+  <data name="Audit_Det_ThNuevas" xml:space="preserve"><value>Rows loaded</value></data>
+  <data name="Audit_Det_ThNota" xml:space="preserve"><value>Note</value></data>
+  <data name="Audit_Det_Total" xml:space="preserve"><value>Total</value></data>
+  <data name="Audit_Det_SinDetalle" xml:space="preserve"><value>This upload has no per-table detail (it predates this feature or script 033 has not been run).</value></data>
+  <data name="Audit_Det_ArchivoOriginal" xml:space="preserve"><value>Original file</value></data>
+  <data name="Audit_Det_ArchivoNoGuardado" xml:space="preserve"><value>not kept (only each company's latest files are stored).</value></data>
+  <data name="Audit_Det_Descargar" xml:space="preserve"><value>Download file</value></data>
+  <data name="Audit_Det_Snapshot" xml:space="preserve"><value>The data from before this upload was saved as version #{0} in the Version history (if still available, it can be restored).</value></data>
+  <data name="Audit_Det_NoEncontrado" xml:space="preserve"><value>The upload was not found or you do not have access to it.</value></data>
+  <data name="Audit_Det_ArchivoNoDisponible" xml:space="preserve"><value>The file is no longer available.</value></data>
   <!-- REVIEW UPLOAD: EXPORT FINDINGS -->
   <data name="RevisarCargue_Exp_Btn" xml:space="preserve"><value>Export</value></data>
   <data name="RevisarCargue_Exp_BtnTooltip" xml:space="preserve"><value>Download or share the findings to fix the file</value></data>

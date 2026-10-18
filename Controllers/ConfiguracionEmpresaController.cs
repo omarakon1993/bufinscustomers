@@ -358,6 +358,7 @@ namespace bufinscustomers.Controllers
             // Incluye las tablas personalizadas de la empresa (p. ej. Ini_HistPrecios_Churido).
             var tablasIni = TablasCargueHelper.TablasIniParaEmpresa(idEmpresa);
             var tablasZ = TablasCargueHelper.TablasZ;
+            int filasConvertidasCierre = 0, filasZBorradasCierre = 0;
 
             try
             {
@@ -368,9 +369,32 @@ namespace bufinscustomers.Controllers
                     {
                         try
                         {
+                            var detalleCierre = new System.Collections.Generic.List<CargueDetalleFila>();
+                            string nombreUsuarioCierre = $"{usuario.Nombre} {usuario.Apellidos}".Trim();
+                            Func<string, string, int> contar = (tabla, condicion) =>
+                            {
+                                using (var cnt = new System.Data.SqlClient.SqlCommand(
+                                    $"IF OBJECT_ID('{tabla}') IS NOT NULL SELECT COUNT(*) FROM [dbo].[{tabla}] WHERE {condicion} ELSE SELECT 0", conn, tx))
+                                {
+                                    cnt.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                                    return Convert.ToInt32(cnt.ExecuteScalar());
+                                }
+                            };
+
                             // 1. Convertir datos de ejecución → histórico en todas las Ini_
                             foreach (var tabla in tablasIni)
                             {
+                                // Cuántas filas de ejecución pasan a histórico (queda en el detalle de auditoría).
+                                int convertidas = contar(tabla, "IdEmpresa_Log = @IdEmpresa AND Historico_Log = 0");
+                                if (convertidas > 0)
+                                    detalleCierre.Add(new CargueDetalleFila
+                                    {
+                                        Origen = CargueOrigen.CierreAnio, IdEmpresa = idEmpresa, NombreEmpresa = config.NombreEmpresa,
+                                        Anio = anioActual, Modo = 0, IdUsuario = usuario.Id, NombreUsuario = nombreUsuarioCierre,
+                                        NombreTabla = tabla, FilasAntes = convertidas, FilasNuevas = 0,
+                                        Nota = $"Pasaron de ejecución a histórico ({anioActual} → año de ejecución {nuevoAnio})"
+                                    });
+
                                 using (var cmd = new System.Data.SqlClient.SqlCommand(
                                     $"IF OBJECT_ID('{tabla}') IS NOT NULL UPDATE [dbo].[{tabla}] SET Historico_Log = 1 WHERE IdEmpresa_Log = @IdEmpresa AND Historico_Log = 0",
                                     conn, tx))
@@ -383,6 +407,16 @@ namespace bufinscustomers.Controllers
                             // 2. Limpiar tablas Z_ de esa empresa
                             foreach (var tabla in tablasZ)
                             {
+                                int zBorradas = contar(tabla, "IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL");
+                                if (zBorradas > 0)
+                                    detalleCierre.Add(new CargueDetalleFila
+                                    {
+                                        Origen = CargueOrigen.CierreAnio, IdEmpresa = idEmpresa, NombreEmpresa = config.NombreEmpresa,
+                                        Anio = anioActual, Modo = 0, IdUsuario = usuario.Id, NombreUsuario = nombreUsuarioCierre,
+                                        NombreTabla = tabla, FilasAntes = zBorradas, FilasNuevas = 0,
+                                        Nota = "Tabla Z_ vaciada por el cierre de año (incluye filas sin empresa)"
+                                    });
+
                                 using (var cmd = new System.Data.SqlClient.SqlCommand(
                                     $"IF OBJECT_ID('{tabla}') IS NOT NULL DELETE FROM [dbo].[{tabla}] WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL",
                                     conn, tx))
@@ -423,7 +457,8 @@ namespace bufinscustomers.Controllers
                             // 5. Registrar en auditoría
                             using (var cmd = new System.Data.SqlClient.SqlCommand(@"
                                 INSERT INTO dbo.AuditoriaCargues (FechaCargue, IdUsuario, Usuario, IdEmpresa, NombreEmpresa, NombreArchivo)
-                                VALUES (@Fecha, @IdUsuario, @Usuario, @IdEmpresa, @NombreEmpresa, @NombreArchivo)",
+                                VALUES (@Fecha, @IdUsuario, @Usuario, @IdEmpresa, @NombreEmpresa, @NombreArchivo);
+                                SELECT CAST(SCOPE_IDENTITY() AS INT);",
                                 conn, tx))
                             {
                                 cmd.Parameters.AddWithValue("@Fecha", DateTime.Now);
@@ -432,8 +467,14 @@ namespace bufinscustomers.Controllers
                                 cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
                                 cmd.Parameters.AddWithValue("@NombreEmpresa", config.NombreEmpresa ?? "");
                                 cmd.Parameters.AddWithValue("@NombreArchivo", $"Cierre año {anioActual} a {nuevoAnio}");
-                                cmd.ExecuteNonQuery();
+                                var idAud = cmd.ExecuteScalar();
+                                int? idAuditoriaCierre = idAud == null || idAud == DBNull.Value ? (int?)null : Convert.ToInt32(idAud);
+                                foreach (var d in detalleCierre) d.IdAuditoriaCargue = idAuditoriaCierre;
+                                filasConvertidasCierre = detalleCierre.Where(d => !d.NombreTabla.StartsWith("Z_", StringComparison.OrdinalIgnoreCase)).Sum(d => d.FilasAntes);
+                                filasZBorradasCierre = detalleCierre.Where(d => d.NombreTabla.StartsWith("Z_", StringComparison.OrdinalIgnoreCase)).Sum(d => d.FilasAntes);
                             }
+
+                            new CargueAuditoriaDetalleService().Registrar(conn, tx, detalleCierre);
 
                             tx.Commit();
                         }
@@ -447,8 +488,10 @@ namespace bufinscustomers.Controllers
 
                 new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Editar,
                     "ConfiguracionEmpresa", idEmpresa.ToString(),
-                    $"Cierre de año: {anioActual} archivado como histórico, nuevo año de ejecución {nuevoAnio}",
-                    null, new { idEmpresa, anioAnterior = anioActual, anioNuevo = nuevoAnio }, idEmpresa: idEmpresa);
+                    $"Cierre de año: {anioActual} archivado como histórico ({filasConvertidasCierre:N0} fila(s) de ejecución pasaron a histórico; {filasZBorradasCierre:N0} fila(s) de tablas Z_ vaciadas), nuevo año de ejecución {nuevoAnio}",
+                    new { anioEjecucion = anioActual },
+                    new { idEmpresa, anioAnterior = anioActual, anioNuevo = nuevoAnio, filasConvertidasAHistorico = filasConvertidasCierre, filasZBorradas = filasZBorradasCierre },
+                    idEmpresa: idEmpresa, severidad: AuditoriaSeveridad.Advertencia);
 
                 return Json(new
                 {

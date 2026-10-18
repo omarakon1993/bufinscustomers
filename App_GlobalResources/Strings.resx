@@ -281,6 +281,39 @@
   <data name="RevisarCargue_AyudaSeguro" xml:space="preserve"><value>Los datos se escriben solo al confirmar.</value></data>
   <data name="RevisarCargue_BtnSubirCorregido" xml:space="preserve"><value>Subir archivo corregido</value></data>
   <data name="RevisarCargue_BtnConfirmarConAdvertencias" xml:space="preserve"><value>Confirmar con advertencias</value></data>
+  <!-- REVISAR CARGUE: IMPACTO SOBRE LOS DATOS ACTUALES -->
+  <data name="RevisarCargue_Imp_Titulo" xml:space="preserve"><value>Impacto de este cargue sobre los datos actuales</value></data>
+  <data name="RevisarCargue_Imp_Desc" xml:space="preserve"><value>Al confirmar, los datos ya guardados de {0} para el año {1} ({2}, escenario {3}) se borrarán y se reemplazarán por los del archivo.</value></data>
+  <data name="RevisarCargue_Imp_ThTabla" xml:space="preserve"><value>Tabla</value></data>
+  <data name="RevisarCargue_Imp_ThActuales" xml:space="preserve"><value>Filas actuales (se borrarán)</value></data>
+  <data name="RevisarCargue_Imp_ThNuevas" xml:space="preserve"><value>Filas del archivo</value></data>
+  <data name="RevisarCargue_Imp_ThEstado" xml:space="preserve"><value>Efecto</value></data>
+  <data name="RevisarCargue_Imp_EstadoVacia" xml:space="preserve"><value>Quedará vacía</value></data>
+  <data name="RevisarCargue_Imp_EstadoReduccion" xml:space="preserve"><value>Reducción fuerte</value></data>
+  <data name="RevisarCargue_Imp_EstadoOk" xml:space="preserve"><value>Normal</value></data>
+  <data name="RevisarCargue_Imp_Total" xml:space="preserve"><value>Total</value></data>
+  <data name="RevisarCargue_Imp_AlertaVacio" xml:space="preserve"><value>El archivo no trae ninguna fila del año {0}. Confirmarlo solo borraría los datos existentes, por eso no se puede confirmar. Revise que subió el archivo y el año correctos.</value></data>
+  <data name="RevisarCargue_Imp_AlertaRiesgo" xml:space="preserve"><value>Atención: este cargue reemplaza {0} filas existentes por solo {1} ({2}% de lo que hay hoy). El umbral de alerta es {3}%. Verifique que es el archivo y el año correctos antes de continuar.</value></data>
+  <data name="RevisarCargue_Imp_Entiendo" xml:space="preserve"><value>Entiendo que se borrarán {0} filas existentes y se cargarán solo {1}. Deseo continuar.</value></data>
+  <data name="Datos_CargueSinFilasDelAnio" xml:space="preserve"><value>El archivo no trae ninguna fila del año {0}, así que no se cargó nada y los datos existentes no se tocaron. Verifique que subió el archivo y el año correctos.</value></data>
+  <data name="Datos_CargueReemplazoSinConfirmar" xml:space="preserve"><value>Este cargue reemplaza {0} filas existentes por solo {1}. Marque la casilla de confirmación reforzada para continuar.</value></data>
+  <data name="Datos_CargueImpactoError" xml:space="preserve"><value>No se pudo calcular el impacto del cargue sobre los datos actuales. Intente de nuevo; si persiste, contacte al administrador.</value></data>
+  <!-- AUDITORIA DE CARGUES: DETALLE -->
+  <data name="Audit_Det_ThDetalle" xml:space="preserve"><value>Detalle</value></data>
+  <data name="Audit_Det_BtnVer" xml:space="preserve"><value>Ver</value></data>
+  <data name="Audit_Det_Titulo" xml:space="preserve"><value>Detalle del cargue</value></data>
+  <data name="Audit_Det_ThTabla" xml:space="preserve"><value>Tabla</value></data>
+  <data name="Audit_Det_ThAntes" xml:space="preserve"><value>Filas antes (reemplazadas)</value></data>
+  <data name="Audit_Det_ThNuevas" xml:space="preserve"><value>Filas cargadas</value></data>
+  <data name="Audit_Det_ThNota" xml:space="preserve"><value>Nota</value></data>
+  <data name="Audit_Det_Total" xml:space="preserve"><value>Total</value></data>
+  <data name="Audit_Det_SinDetalle" xml:space="preserve"><value>Este cargue no tiene detalle por tabla (es anterior a esta función o el script 033 no se ha ejecutado).</value></data>
+  <data name="Audit_Det_ArchivoOriginal" xml:space="preserve"><value>Archivo original</value></data>
+  <data name="Audit_Det_ArchivoNoGuardado" xml:space="preserve"><value>no se conserva (solo se guardan los últimos archivos de cada empresa).</value></data>
+  <data name="Audit_Det_Descargar" xml:space="preserve"><value>Descargar archivo</value></data>
+  <data name="Audit_Det_Snapshot" xml:space="preserve"><value>Los datos anteriores a este cargue quedaron en la versión #{0} del Historial de versiones (si sigue vigente, se puede restaurar).</value></data>
+  <data name="Audit_Det_NoEncontrado" xml:space="preserve"><value>No se encontró el cargue o no tiene acceso a él.</value></data>
+  <data name="Audit_Det_ArchivoNoDisponible" xml:space="preserve"><value>El archivo ya no está disponible.</value></data>
   <!-- REVISAR CARGUE: EXPORTAR HALLAZGOS -->
   <data name="RevisarCargue_Exp_Btn" xml:space="preserve"><value>Exportar</value></data>
   <data name="RevisarCargue_Exp_BtnTooltip" xml:space="preserve"><value>Descarga o comparte los hallazgos para corregir el archivo</value></data>
