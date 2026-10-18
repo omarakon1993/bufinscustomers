@@ -564,6 +564,18 @@
                             @Resources.Strings.CfgEmp_Cierre_NuevoAnioHelp
                         </small>
                     </div>
+
+                    <div class="form-group mt-3 mb-1">
+                        <label class="font-weight-bold" for="inputConfirmarAnio">
+                            <i class="fas fa-keyboard mr-1 text-danger"></i>
+                            @Resources.Strings.CfgEmp_Cierre_ConfirmarAnioLabel
+                        </label>
+                        <input type="number" class="form-control" id="inputConfirmarAnio" autocomplete="off"
+                               min="2000" max="2100" placeholder="@Resources.Strings.CfgEmp_Cierre_ConfirmarAnioPlaceholder" style="max-width:200px;" />
+                        <small class="form-text text-muted">
+                            @Resources.Strings.CfgEmp_Cierre_ConfirmarAnioHelp
+                        </small>
+                    </div>
                 </div>
 
                 <div class="modal-footer">
@@ -1025,6 +1037,7 @@
             }
             $('.lbl-anio-actual').text(anioActual);
             $('#inputNuevoAnio').val(parseInt(anioActual) + 1);
+            $('#inputConfirmarAnio').val('');
             $('#modalCierreAnio').modal('show');
         }
 
@@ -1038,6 +1051,11 @@
             }
             if (nuevoAnio === anioActual) {
                 mostrarAlerta('warning', '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_AnioIgual))');
+                return;
+            }
+
+            if (parseInt($('#inputConfirmarAnio').val()) !== anioActual) {
+                mostrarAlerta('warning', '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_AnioConfirmIncorrecto))');
                 return;
             }
 
@@ -1055,12 +1073,12 @@
                 cancelButtonText: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel))'
             }).then(function (result) {
                 if (result.isConfirmed) {
-                    ejecutarCierreAnio($('#idEmpresaConfig').val(), nuevoAnio);
+                    ejecutarCierreAnio($('#idEmpresaConfig').val(), nuevoAnio, anioActual);
                 }
             });
         }
 
-        function ejecutarCierreAnio(idEmpresa, nuevoAnio) {
+        function ejecutarCierreAnio(idEmpresa, nuevoAnio, anioCerrado) {
             Swal.fire({
                 title: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_ProcTitle))',
                 text: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.CfgEmp_Cierre_JS_ProcText))',
@@ -1072,7 +1090,7 @@
             $.ajax({
                 url: '/ConfiguracionEmpresa/CerrarAnioEjecucion',
                 type: 'POST',
-                data: { idEmpresa: idEmpresa, nuevoAnio: nuevoAnio },
+                data: { idEmpresa: idEmpresa, nuevoAnio: nuevoAnio, confirmacionAnio: anioCerrado },
                 success: function (response) {
                     Swal.close();
                     if (response.success) {

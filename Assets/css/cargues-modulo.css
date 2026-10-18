@@ -1,0 +1,116 @@
+/* =====================================================================================
+   Módulo «Historial de cargues» — piezas COMPARTIDAS por sus dos pestañas (Versiones | Registro).
+   Una sola fuente de verdad para que ambas se vean y se comporten igual:
+     · .cg-tabs / .cg-tab        pestañas con contenido en la misma página (Assets/js/cg-tabs-panel.js)
+     · .cg-panel                 zona donde entra el contenido de la pestaña activa
+     · .cg-intro                 frase de contexto bajo las pestañas
+     · .cg-pill                  cápsulas (modo, escenario, estado)
+     · .cg-btn                   acción secundaria en filas (Deshacer, Ver detalle)
+   Se apoya en bufins-components.css (variables y .powerbi-header). Sin dependencias de página.
+   ===================================================================================== */
+
+/* ---------- Pestañas ---------- */
+.cg-tabs[hidden] { display: none; }
+.cg-tabs { display: flex; gap: 8px; margin: 0 0 12px; flex-wrap: wrap; }
+.cg-tab {
+    position: relative; display: flex; align-items: center; gap: 9px; flex: 0 1 auto; min-width: 190px;
+    padding: 6px 14px 6px 8px; border-radius: 10px; text-decoration: none !important;
+    background: #f1f2f8; border: 1.5px solid transparent; color: #4b5563;
+    transition: background .2s ease, color .2s ease;
+}
+.cg-tab:hover { background: #e9eaf6; color: #2d3748; }
+.cg-tab:focus-visible { outline: 3px solid rgba(88, 58, 255, .35); outline-offset: 2px; }
+.cg-tab > .cg-tab-ic, .cg-tab > .cg-tab-tx { position: relative; z-index: 1; }
+.cg-tab-ic {
+    width: 30px; height: 30px; border-radius: 8px; flex: none; display: grid; place-items: center;
+    background: #fff; color: #6b7280; font-size: 13px; border: 1px solid #e3e6f0;
+    transition: background .2s ease, color .2s ease, border-color .2s ease;
+}
+.cg-tab-tx { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.cg-tab-t { font-size: 13.5px; font-weight: 800; color: inherit; }
+.cg-tab-s { font-size: 11.5px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Pestaña activa: el «marcador» (tarjeta blanca con borde) es un elemento propio que el script desliza de una pestaña a otra. */
+.cg-tab.is-active { background: transparent; color: #160933; }
+.cg-tab-marca {
+    position: absolute; inset: -1.5px; z-index: 0; border-radius: 10px; background: #fff; border: 1.5px solid #583AFF;
+    box-shadow: 0 6px 16px -10px rgba(88, 58, 255, .55);
+}
+.cg-tab.is-active .cg-tab-ic { background: linear-gradient(135deg, #583AFF, #3B82F6); color: #fff; border-color: transparent; }
+.cg-tab.is-active .cg-tab-s { color: #4b5563; }
+
+/* La pestaña es un <button> y el marcador lo desliza el script (cg-tabs-panel.js). */
+button.cg-tab { font-family: inherit; text-align: left; cursor: pointer; }
+.cg-tabs-js { position: relative; }
+.cg-tabs-js .cg-tab-marca {
+    inset: auto; left: 0; top: 0; width: 0; height: 0; pointer-events: none;
+    transform: translate(0, 0); will-change: transform, width, height;
+    transition: transform .34s cubic-bezier(.32, .72, 0, 1), width .34s cubic-bezier(.32, .72, 0, 1), height .34s cubic-bezier(.32, .72, 0, 1);
+}
+.cg-tabs-js .cg-tab-marca.no-anim { transition: none; }
+@media (prefers-reduced-motion: reduce) { .cg-tabs-js .cg-tab-marca { transition: none; } }
+
+/* ---------- Frase de contexto ---------- */
+.cg-intro {
+    display: flex; gap: 10px; align-items: flex-start; margin: 0 0 16px; padding: 10px 14px;
+    background: #f8f9fc; border: 1px solid #e3e6f0; border-left: 4px solid #583AFF; border-radius: 8px;
+    color: #4b5563; font-size: 13.5px; line-height: 1.55;
+}
+.cg-intro > i { color: #583AFF; margin-top: 3px; flex: none; }
+.cg-intro b { color: #2d3748; }
+
+/* ---------- Cápsulas ---------- */
+.cg-pill {
+    display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; line-height: 1; white-space: nowrap; background: #f1f2f6; color: #4b5563;
+}
+.cg-pill > i { font-size: 10px; }
+.cg-pill-ejec { background: rgba(6, 182, 212, .12); color: #0e7490; }
+.cg-pill-hist { background: rgba(88, 58, 255, .10); color: #4c2fe0; }
+.cg-pill-esc  { background: #f1f2f6; color: #4b5563; }
+.cg-pill-estado::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.cg-pill-actual    { background: rgba(16, 185, 129, .12); color: #047857; }
+.cg-pill-anterior  { background: #f1f2f6; color: #4b5563; }
+.cg-pill-revertido { background: rgba(245, 158, 11, .14); color: #b45309; }
+.cg-pill-alerta    { background: rgba(220, 38, 38, .10); color: #b91c1c; }
+
+/* ---------- Botón de acción en filas ---------- */
+.cg-btn {
+    display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px; border-radius: 8px;
+    border: 1px solid #c9c2f5; background: #fff; color: #3f2bd1; font: 700 12.5px/1 inherit; font-family: inherit;
+    cursor: pointer; white-space: nowrap; text-decoration: none !important; transition: background .15s, border-color .15s, color .15s;
+}
+.cg-btn i { font-size: 11px; }
+.cg-btn:hover { background: #f3f0ff; border-color: #583AFF; color: #2f1fb0; }
+.cg-btn:focus-visible { outline: 3px solid rgba(88, 58, 255, .35); outline-offset: 2px; }
+
+/* ---------- Tabla de «Registro»: misma piel clara que la de «Versiones» ---------- */
+body.pg-claro .table-container { border: 1px solid #e3e6f0; border-radius: 12px; box-shadow: none; overflow: hidden; }
+body.pg-claro .data-table thead th {
+    background: #f8f9fc; color: #556074; font-size: 12px; font-weight: 700; text-transform: none; letter-spacing: 0;
+    border-bottom: 1px solid #e3e6f0; border-right: 0;
+}
+body.pg-claro .data-table tbody tr:hover { background: #f7f5ff; }
+body.pg-claro .info-badge { background: rgba(88, 58, 255, .09); color: #4c2fe0; font-weight: 700; box-shadow: none; }
+
+@media (max-width: 640px) {
+    .cg-tab { flex: 1 1 100%; }
+    .cg-tab-s { white-space: normal; }
+}
+
+/* ---------- Zona de contenido de las pestañas (el contenido se reemplaza con un fundido) ---------- */
+.cg-panel-wrap { position: relative; min-height: 340px; }
+.cg-panel { transition: opacity .2s ease, transform .26s cubic-bezier(.32, .72, 0, 1); }
+.cg-panel.is-loading { opacity: 0; pointer-events: none; }
+.cg-panel.is-entering { opacity: 0; transform: translateY(8px); transition: none; }
+.cg-panel > .container-fluid.px-4 { padding-left: 0 !important; padding-right: 0 !important; }
+.cg-panel .powerbi-header { display: none !important; }   /* la página anfitriona ya muestra el título */
+.cg-spin { position: absolute; top: 46px; left: 0; right: 0; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+.cg-spin.on { opacity: 1; }
+.cg-spin .s { width: 26px; height: 26px; border: 2.5px solid #d7dbe2; border-top-color: #3B82F6; border-radius: 50%; animation: cgSpin .7s linear infinite; }
+@keyframes cgSpin { to { transform: rotate(360deg); } }
+.cg-panel-error { padding: 3rem 1rem; text-align: center; color: #b3352e; font-size: .92rem; }
+@media (prefers-reduced-motion: reduce) {
+    .cg-panel, .cg-panel.is-entering { transition: none; transform: none; }
+    .cg-spin .s { animation-duration: 1.6s; }
+}

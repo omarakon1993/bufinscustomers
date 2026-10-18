@@ -7,7 +7,7 @@
 
 @{
     ViewBag.Title = Resources.Strings.Audit_PageTitle;
-    if ((bool)(ViewBag.Embed ?? false)) { Layout = "~/Views/Shared/_LayoutFragment.cshtml"; }
+    Layout = "~/Views/Shared/_LayoutFragment.cshtml";   // siempre embebida en «Historial de cargues» (HistorialCargues.cshtml)
     var esSuperAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
     var lista = Model.OrderByDescending(x => x.FechaCargue).ToList();
@@ -49,18 +49,7 @@
     }
 }
 
-<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
-<link href="~/Assets/css/auditoria-shared.css" rel="stylesheet" />
-
 <div class="container-fluid px-4">
-    <!-- Header Power BI -->
-    <div class="powerbi-header">
-        <div class="powerbi-header-content">
-            <i class="fas fa-clipboard-list powerbi-header-icon"></i>
-            <h1 class="powerbi-header-title">@Resources.Strings.Audit_HeaderTitle</h1>
-        </div>
-    </div>
-
     <!-- Mensajes de exito/error -->
     @if (TempData["SuccessMessage"] != null)
     {
@@ -174,7 +163,11 @@ $(function () {
         detSinArch:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_ArchivoNoGuardado))',
         detDesc:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_Descargar))',
         detSnap:   '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_Snapshot))',
-        detCerrar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Cerrar))'
+        detCerrar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Cerrar))',
+        detDif:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_ThDif))',
+        detStatAntes: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_StatAntes))',
+        detStatNuevas: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_StatNuevas))',
+        detStatDif: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_Det_StatDif))'
     };
     var URL_DETALLE = '@Url.Action("Detalle", "AuditoriaCargues")';
     var URL_DESCARGA = '@Url.Action("DescargarArchivo", "AuditoriaCargues")';
@@ -184,43 +177,70 @@ $(function () {
         $.getJSON(URL_DETALLE, { id: id }).done(function (r) {
             if (!r || !r.success) { Swal.fire({ icon: 'error', title: S.errTit, text: (r && r.message) || S.error }); return; }
 
-            var $w = $('<div class="ax-det">');
-            $w.append($('<p class="ax-det-cab">').append($('<strong>').text(r.empresa + ' · ' + r.archivoCargue), $('<br>'), $('<small>').text(r.fecha + ' · ' + r.usuario)));
+            function chip(icono, texto) {
+                return $('<span class="ax-det-chip">').append($('<i>').addClass('fas ' + icono), document.createTextNode(texto));
+            }
+            function fmtDif(n) { return (n > 0 ? '+' : '') + AudKit.num(n); }
+            function claseDif(n) { return n < 0 ? 'neg' : (n > 0 ? 'pos' : ''); }
 
-            if (!r.filas || !r.filas.length) {
-                $w.append($('<p>').text(S.detSin));
+            var $w = $('<div class="ax-det">');
+            $w.append($('<div class="ax-det-chips">').append(
+                chip('fa-building', r.empresa), chip('fa-calendar-alt', r.fecha), chip('fa-user', r.usuario), chip('fa-file-excel', r.archivoCargue)));
+
+            var filas = r.filas || [];
+            var sa = 0, sn = 0;
+            filas.forEach(function (f) { sa += f.antes; sn += f.nuevas; });
+            var dif = sn - sa;
+
+            if (!filas.length) {
+                $w.append($('<div class="ax-det-info">').append($('<i class="fas fa-info-circle">'), $('<span>').text(S.detSin)));
             } else {
+                $w.append($('<div class="ax-det-stats">').append(
+                    $('<div class="ax-det-stat">').append($('<b>').text(AudKit.num(sa)), $('<span>').text(S.detStatAntes)),
+                    $('<div class="ax-det-stat">').append($('<b>').text(AudKit.num(sn)), $('<span>').text(S.detStatNuevas)),
+                    $('<div class="ax-det-stat ' + claseDif(dif) + '">').append($('<b>').text(fmtDif(dif)), $('<span>').text(S.detStatDif))));
+
                 var $t = $('<table class="ax-det-tabla">');
                 $t.append($('<thead>').append($('<tr>').append(
-                    $('<th>').text(S.detTabla), $('<th class="num">').text(S.detAntes), $('<th class="num">').text(S.detNuevas), $('<th>').text(S.detNota))));
-                var sa = 0, sn = 0, $tb2 = $('<tbody>');
-                r.filas.forEach(function (f) {
-                    sa += f.antes; sn += f.nuevas;
+                    $('<th>').text(S.detTabla), $('<th class="num">').text(S.detAntes), $('<th class="num">').text(S.detNuevas),
+                    $('<th class="num">').text(S.detDif), $('<th>').text(S.detNota))));
+                var $tb2 = $('<tbody>');
+                filas.forEach(function (f) {
+                    var d = f.nuevas - f.antes;
                     $tb2.append($('<tr>').append(
                         $('<td>').text((f.hoja ? f.hoja + ' → ' : '') + f.tabla),
                         $('<td class="num">').text(AudKit.num(f.antes)),
                         $('<td class="num">').text(AudKit.num(f.nuevas)),
-                        $('<td>').text(f.nota || '')));
+                        $('<td class="num ' + claseDif(d) + '">').text(fmtDif(d)),
+                        $('<td class="nota">').text(f.nota || '')));
                 });
                 $t.append($tb2).append($('<tfoot>').append($('<tr>').append(
-                    $('<td>').text(S.detTotal), $('<td class="num">').text(AudKit.num(sa)), $('<td class="num">').text(AudKit.num(sn)), $('<td>'))));
-                $w.append($t);
+                    $('<td>').text(S.detTotal), $('<td class="num">').text(AudKit.num(sa)), $('<td class="num">').text(AudKit.num(sn)),
+                    $('<td class="num ' + claseDif(dif) + '">').text(fmtDif(dif)), $('<td>'))));
+                $w.append($('<div class="ax-det-tablawrap">').append($t));
             }
 
-            if (r.snapshot) $w.append($('<p class="ax-det-nota">').text(S.detSnap.replace('{0}', r.snapshot)));
+            if (r.snapshot)
+                $w.append($('<div class="ax-det-info">').append($('<i class="fas fa-life-ring">'), $('<span>').text(S.detSnap.replace('{0}', r.snapshot))));
 
-            var $a = $('<p class="ax-det-arch">').append($('<strong>').text(S.detArch + ': '));
+            var $a = $('<div class="ax-det-arch">');
             if (r.archivo) {
-                $a.append(document.createTextNode(r.archivo.nombre + ' (' + Math.max(1, Math.round(r.archivo.tamano / 1024)) + ' KB · ' + r.archivo.fecha + ')'));
+                $a.append($('<div class="ax-det-arch-nombre">').append(
+                    $('<i class="fas fa-file-excel">'),
+                    $('<div>').append($('<strong>').text(r.archivo.nombre),
+                        $('<small>').text(Math.max(1, Math.round(r.archivo.tamano / 1024)) + ' KB · ' + r.archivo.fecha))));
                 if (r.puedeDescargar)
-                    $a.append($('<br>'), $('<a class="btn btn-sm btn-modern-gradient mt-2">').attr('href', URL_DESCARGA + '?id=' + encodeURIComponent(r.archivo.id))
+                    $a.append($('<a class="btn btn-sm btn-modern-gradient">').attr('href', URL_DESCARGA + '?id=' + encodeURIComponent(r.archivo.id))
                         .append('<i class="fas fa-download mr-1"></i>', document.createTextNode(S.detDesc)));
             } else {
-                $a.append(document.createTextNode(S.detSinArch));
+                $a.addClass('vacio').append($('<span>').text(S.detArch + ': ' + S.detSinArch));
             }
             $w.append($a);
 
-            Swal.fire({ title: S.detTit, html: $w.prop('outerHTML'), width: 780, confirmButtonText: S.detCerrar });
+            Swal.fire({
+                title: S.detTit, html: $w.prop('outerHTML'), width: 840, showCloseButton: true,
+                confirmButtonText: S.detCerrar, customClass: { popup: 'swal-det' }
+            });
         }).fail(function () {
             Swal.fire({ icon: 'error', title: S.errTit, text: S.error });
         });
@@ -279,10 +299,10 @@ $(function () {
             if (VER_EMPRESA) $tr.append($('<td>').text(r.Empresa || ''));
             $tr.append($('<td>').text(r.Usuario || ''));
             $tr.append($('<td>').text(r.Archivo || ''));
-            if (VER_ESC) $tr.append($('<td>').text(r.Escenario || '—'));
+            if (VER_ESC) $tr.append($('<td>').append(r.Escenario ? $('<span class="cg-pill cg-pill-esc">').append('<i class="fas fa-layer-group"></i>', document.createTextNode(r.Escenario)) : '—'));
             $tr.append($('<td>').append(
-                $('<button type="button" class="btn btn-sm btn-primary">')
-                    .append('<i class="fas fa-search-plus mr-1"></i>', document.createTextNode(S.detVer))
+                $('<button type="button" class="cg-btn">')
+                    .append('<i class="fas fa-search-plus"></i>', document.createTextNode(S.detVer))
                     .on('click', function () { verDetalle(r.Id); })));
             $tb.append($tr);
         });

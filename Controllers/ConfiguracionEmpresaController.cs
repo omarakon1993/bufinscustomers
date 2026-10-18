@@ -329,7 +329,7 @@ namespace bufinscustomers.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public JsonResult CerrarAnioEjecucion(int idEmpresa, int nuevoAnio)
+        public JsonResult CerrarAnioEjecucion(int idEmpresa, int nuevoAnio, int confirmacionAnio = 0)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null)
@@ -343,6 +343,10 @@ namespace bufinscustomers.Controllers
                 return Json(new { success = false, message = "La empresa no tiene configuración creada." });
 
             int anioActual = config.AnioEjecucion;
+
+            // El cierre de año no se puede deshacer desde el Historial de cargues: exige escribir el año que se cierra.
+            if (confirmacionAnio != anioActual)
+                return Json(new { success = false, message = string.Format(R("CfgEmp_Cierre_ErrAnioConfirm"), anioActual) });
 
             if (nuevoAnio < 2000 || nuevoAnio > 2100)
                 return Json(new { success = false, message = "El nuevo año debe estar entre 2000 y 2100." });

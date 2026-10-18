@@ -24,8 +24,10 @@ namespace bufinscustomers.Models
     public class ImpactoCargue
     {
         public List<ImpactoTabla> Tablas { get; set; } = new List<ImpactoTabla>();
-        /// <summary>Porcentaje (1-100) bajo el cual una tabla se considera «reducción fuerte».</summary>
+        /// <summary>Porcentaje (1-100) bajo el cual una tabla se considera «reducción fuerte» (exige confirmación reforzada).</summary>
         public int UmbralPct { get; set; } = 50;
+        /// <summary>Porcentaje bajo el cual una tabla queda «no permitida»: NADIE puede confirmar la operación (ni siquiera un Super Admin).</summary>
+        public int UmbralBloqueoPct { get; set; } = 10;
 
         public int TotalExistentes => Tablas.Sum(t => t.Existentes);
         public int TotalNuevas => Tablas.Sum(t => t.Nuevas);
@@ -39,8 +41,20 @@ namespace bufinscustomers.Models
         /// <summary>Tablas que perderían mucho (o todo) frente a lo que hay hoy.</summary>
         public List<ImpactoTabla> TablasEnRiesgo => Tablas.Where(EsReduccionFuerte).ToList();
 
-        /// <summary>Hay datos que proteger y el cargue los reduce más de lo permitido: exige confirmación reforzada.</summary>
-        public bool RequiereConfirmacion => !CargaVacia && TablasEnRiesgo.Count > 0;
+        /// <summary>La tabla tenía datos y quedaría con menos del umbral de bloqueo (incluye quedar vacía): no se permite.</summary>
+        public bool EsBloqueada(ImpactoTabla t) =>
+            t.Existentes > 0 && (long)t.Nuevas * 100 < (long)t.Existentes * UmbralBloqueoPct;
+
+        public List<ImpactoTabla> TablasBloqueadas => Tablas.Where(EsBloqueada).ToList();
+
+        /// <summary>
+        /// La operación NO se puede confirmar: dejaría el año sin ninguna fila, o dejaría alguna tabla con menos del umbral de
+        /// bloqueo de lo que tiene hoy. No hay forma de forzarla desde la aplicación.
+        /// </summary>
+        public bool Bloqueado => CargaVacia || TablasBloqueadas.Count > 0;
+
+        /// <summary>Hay datos que proteger y la operación los reduce más de lo permitido sin bloquearla: exige confirmación reforzada.</summary>
+        public bool RequiereConfirmacion => !Bloqueado && TablasEnRiesgo.Count > 0;
 
         /// <summary>Porcentaje de lo actual que conserva el cargue (100 si no había nada).</summary>
         public int PorcentajeConservado => TotalExistentes == 0 ? 100 : (int)Math.Min(999, (long)TotalNuevas * 100 / TotalExistentes);

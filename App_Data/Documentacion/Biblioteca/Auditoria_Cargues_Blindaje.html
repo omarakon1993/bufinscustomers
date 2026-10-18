@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía: Historial de cargues y protección de los datos</title>
+
+<style>
+:root{--bg:#f6f5fb;--card:#fff;--ink:#1c1738;--ink2:#5b5678;--line:#e3e0f1;--brand:#583aff;--chip:#efecff;--ok:#15803d;--warn:#a16207;--mid:#c2410c;--bad:#b91c1c;--grad:linear-gradient(90deg,#6366F1 0%,#3B82F6 35%,#06B6D4 70%,#01E1D7 100%)}
+@media (prefers-color-scheme:dark){:root{--bg:#120a2b;--card:#1a1240;--ink:#efecff;--ink2:#a9a3cc;--line:#2d2460;--brand:#8f7bff;--chip:#271d5c;--ok:#3ddc97;--warn:#fbbf24;--mid:#fb923c;--bad:#ff7a6b}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "Segoe UI",system-ui,sans-serif}
+header{background:var(--grad);color:#fff;padding:34px 18px 28px}.w{max-width:1040px;margin:0 auto;padding:0 18px}
+header h1{margin:0 0 6px;font-size:27px}header p{margin:0;opacity:.95;max-width:760px}
+nav{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}nav .w{display:flex;gap:6px;overflow-x:auto;padding-top:8px;padding-bottom:8px}
+nav a{white-space:nowrap;text-decoration:none;color:var(--ink2);font-size:13px;padding:5px 10px;border-radius:999px}nav a:hover{background:var(--chip);color:var(--ink)}
+section{margin:34px 0}h2{font-size:21px;margin:0 0 6px}h3{font-size:16px;margin:20px 0 8px;color:var(--brand)}
+.lead{color:var(--ink2);margin:0 0 12px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px}
+.g2{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:760px){.g2{grid-template-columns:1fr}}
+.g3{display:grid;gap:12px;grid-template-columns:repeat(3,minmax(0,1fr))}@media(max-width:860px){.g3{grid-template-columns:1fr}}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{background:var(--grad);color:#fff;text-align:left;padding:8px 10px;white-space:nowrap}td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
+td.n{font-weight:700;white-space:nowrap}td.f{font-family:Consolas,monospace;font-size:12.5px}td.r{color:var(--ink2);font-size:12.5px}
+.note{border-left:4px solid #d97706;background:var(--card);padding:10px 14px;border-radius:8px;color:var(--ink2);margin:14px 0}
+.note.ok{border-left-color:#16a34a}.note.info{border-left-color:var(--brand)}.note.bad{border-left-color:#dc2626}
+.ficha{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 16px;margin:10px 0}.ficha h4{margin:0 0 4px;font-size:15px}.ficha .fam{font-size:11px;color:var(--brand);font-weight:700;margin-left:8px;text-transform:uppercase}
+.ficha p{margin:4px 0;color:var(--ink2);font-size:13.5px}.regla{border-left:3px solid var(--brand);padding-left:10px;color:var(--ink)!important}
+code{background:var(--chip);padding:1px 6px;border-radius:6px;font-size:12.5px}ul{padding-left:20px;color:var(--ink2)}li{margin:3px 0}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 14px;margin:8px 0}summary{cursor:pointer;font-weight:700}
+details p{color:var(--ink2);margin:8px 0}
+ol.steps{list-style:none;counter-reset:s;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+ol.steps li{counter-increment:s;position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px 10px 50px;margin:0;color:var(--ink)}
+ol.steps li::before{content:counter(s);position:absolute;left:12px;top:9px;width:26px;height:26px;border-radius:50%;background:var(--brand);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+ol.steps li b{display:block}ol.steps li span{color:var(--ink2);font-size:13.5px}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;vertical-align:middle;background:var(--chip);color:var(--brand)}
+.tag.ok{background:rgba(22,163,74,.14);color:var(--ok)}.tag.warn{background:rgba(217,119,6,.15);color:var(--warn)}.tag.no{background:rgba(220,38,38,.13);color:var(--bad)}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:12px 0 6px}
+.node{flex:1 1 170px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13.5px;text-align:center}
+.node b{display:block;margin-bottom:2px}.node span{color:var(--ink2);font-size:12.5px}
+.node.hi{border-color:var(--brand);background:var(--chip)}.node.go{border-color:#16a34a}.node.stop{border-color:#dc2626}
+.arrow{align-self:center;color:var(--ink2);font-weight:700}@media(max-width:560px){.arrow{display:none}}
+.k{font-family:Consolas,monospace;background:var(--chip);padding:1px 6px;border-radius:6px;font-size:12.5px}
+@media print{nav{display:none}header{background:#583aff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.card,.ficha,details,.node,ol.steps li{break-inside:avoid}details>*{display:block}}
+</style></head><body>
+<header><div class="w"><h1>Historial de cargues y protección de los datos</h1><p>Guía para el usuario: cómo funciona la opción, cómo Bufins protege tus datos cuando cargas un Excel y cómo deshacer un cargue si algo sale mal.</p></div></header>
+<nav><div class="w"><a href="#resumen">Para qué sirve</a><a href="#proteccion">Cómo te protege</a><a href="#bloqueos">Lo que no se permite</a><a href="#versiones">Versiones</a><a href="#deshacer">Deshacer un cargue</a><a href="#registro">Registro</a><a href="#quien">Quién ve qué</a><a href="#faq">Preguntas frecuentes</a></div></nav>
+<main class="w">
+
+<section id="resumen"><h2>1. Para qué sirve</h2>
+<p class="lead">Está en el menú <b>Datos → Historial de cargues</b>. Reúne todo lo relacionado con los cargues de Excel en una sola pantalla con dos pestañas.</p>
+<div class="g3">
+<div class="card"><b>Te avisa antes de borrar</b><ul><li>Si un cargue va a reemplazar muchos datos por muy pocos, te lo muestra y te pide confirmar.</li></ul></div>
+<div class="card"><b>Guarda copias</b><ul><li>Cada cargue guarda cómo estaban los datos justo antes, para poder volver atrás.</li></ul></div>
+<div class="card"><b>Deja registro</b><ul><li>Queda anotado quién cargó qué, cuándo y cuántas filas cambiaron.</li></ul></div></div>
+<div class="tw" style="margin-top:12px"><table><tr><th>Pestaña</th><th>Para qué la usas</th></tr>
+<tr><td class="n">Versiones</td><td>Deshacer un cargue y volver los datos a como estaban antes.</td></tr>
+<tr><td class="n">Registro</td><td>Consultar quién cargó qué y cuánto cambió con cada cargue.</td></tr></table></div></section>
+
+<section id="proteccion"><h2>2. Cómo te protege al cargar un Excel</h2>
+<p class="lead">Al cargar un archivo, los datos <b>no cambian hasta que confirmas</b>. Antes de confirmar, Bufins revisa el archivo y te muestra qué pasaría.</p>
+<div class="flow">
+<div class="node"><b>1. Subes el Excel</b><span>Eliges empresa, año, modo y escenario</span></div><div class="arrow">→</div>
+<div class="node hi"><b>2. Revisas</b><span>Bufins valida el archivo y muestra el impacto</span></div><div class="arrow">→</div>
+<div class="node go"><b>3. Confirmas</b><span>Se guarda una copia y se reemplazan los datos</span></div></div>
+
+<h3>Si el archivo no trae filas del año elegido</h3>
+<p>No se carga nada y los datos existentes no se tocan. Verás un aviso para que compruebes que subiste el archivo y el año correctos.</p>
+
+<h3>La tarjeta «Impacto de este cargue sobre los datos actuales»</h3>
+<p>Aparece en la pantalla de revisión, debajo de los hallazgos. Compara, tabla por tabla, las filas que hay hoy (las que se van a reemplazar) con las filas que trae tu archivo.</p>
+<div class="tw"><table><tr><th>Efecto</th><th>Cuándo aparece</th><th>Qué haces</th></tr>
+<tr><td class="n"><span class="tag ok">Normal</span></td><td>La tabla conserva al menos la mitad de sus filas actuales.</td><td>Confirmas con normalidad.</td></tr>
+<tr><td class="n"><span class="tag warn">Reducción fuerte</span></td><td>La tabla quedaría con menos de la mitad (50 %) de sus filas actuales.</td><td>Revisa y marca la casilla de confirmación para poder continuar.</td></tr>
+<tr><td class="n"><span class="tag no">No permitido</span></td><td>La tabla quedaría con menos del 10 % de sus filas actuales, o vacía (en la tarjeta aparece como «No permitido» o «Quedará vacía»).</td><td>No se puede confirmar. Corrige el archivo o el año (ver sección 3).</td></tr></table></div>
+
+<h3>Cuando aparece la alerta de reducción fuerte (entre 10 % y 50 %)</h3>
+<ol class="steps">
+<li><b>Lee el mensaje.</b><span>Dice cuántas filas existentes se reemplazarán y por cuántas.</span></li>
+<li><b>Comprueba que el archivo y el año sean los correctos.</b><span>La causa más común es subir el Excel de otro año o una plantilla vacía.</span></li>
+<li><b>Si es correcto, marca «Entiendo que se borrarán X filas existentes…».</b><span>Solo entonces se habilita el botón Confirmar.</span></li>
+<li><b>Si no es correcto, descarta el cargue.</b><span>No se cambia nada. Puedes subir el archivo corregido.</span></li></ol>
+<p class="note ok"><b>Siempre hay red de seguridad.</b> Al confirmar, Bufins guarda una copia de los datos de antes. Si te equivocas, puedes deshacer el cargue (sección 5).</p></section>
+
+<section id="bloqueos"><h2>3. Lo que Bufins no permite</h2>
+<p class="lead">Hay una regla que ningún usuario puede saltarse, ni siquiera el Super Admin: <b>nunca se deja un año sin datos</b>, y nunca se reduce una tabla a menos del 10 % de lo que tiene hoy. En estos casos la operación se rechaza y <b>no se cambia nada</b>.</p>
+<div class="tw"><table><tr><th>Situación</th><th>¿Se permite?</th><th>Qué ocurre</th></tr>
+<tr><td>Cargar un archivo sin ninguna fila del año elegido</td><td class="n"><span class="tag no">No</span></td><td>Se rechaza al subirlo. No se carga ni se borra nada.</td></tr>
+<tr><td>Cargar un archivo que dejaría el año sin ningún dato</td><td class="n"><span class="tag no">No</span></td><td>El botón Confirmar queda deshabilitado.</td></tr>
+<tr><td>Cargar un archivo que deja alguna tabla con menos del 10 % de sus filas actuales (incluye dejarla vacía)</td><td class="n"><span class="tag no">No</span></td><td>El botón Confirmar queda deshabilitado. Hay que corregir el archivo o el año.</td></tr>
+<tr><td>Deshacer un cargue cuya copia no tiene datos (por ejemplo, el primer cargue del año)</td><td class="n"><span class="tag no">No</span></td><td>Aparece un aviso y los datos siguen como están.</td></tr>
+<tr><td>Deshacer un cargue o recuperar un respaldo que dejaría una tabla con menos del 10 % de sus filas actuales</td><td class="n"><span class="tag no">No</span></td><td>Aparece un aviso y los datos siguen como están.</td></tr>
+<tr><td>Cualquier operación que, al terminar, deje el año sin filas</td><td class="n"><span class="tag no">No</span></td><td>Se cancela sola, sin cambios (segunda barrera de seguridad).</td></tr>
+<tr><td>Cerrar el año sin escribir el año que se va a cerrar</td><td class="n"><span class="tag no">No</span></td><td>No se cierra. Hay que escribir el año para confirmar.</td></tr>
+<tr><td>Cargar un archivo que deja una tabla entre el 10 % y el 50 % de sus filas actuales</td><td class="n"><span class="tag warn">Con confirmación</span></td><td>Hay que marcar la casilla de confirmación.</td></tr>
+<tr><td>Deshacer un cargue siendo usuario normal, o ver el Registro sin ser administrador</td><td class="n"><span class="tag no">No</span></td><td>La opción no aparece o se rechaza.</td></tr>
+<tr><td>Descargar el archivo Excel original sin ser Super Admin</td><td class="n"><span class="tag no">No</span></td><td>El botón no aparece.</td></tr></table></div>
+<p class="note info"><b>Si de verdad necesitas reemplazar un año con muchos menos datos</b> (por ejemplo, porque el cliente corrigió su información), no se puede hacer desde la aplicación. Comunícate con el equipo de soporte de Bufins.</p></section>
+
+<section id="versiones"><h2>4. Pestaña «Versiones»</h2>
+<p class="lead">Muestra las copias guardadas. Úsala para ver qué cargues puedes deshacer.</p>
+<ul>
+<li><b>Una tarjeta por combinación</b> de empresa, año, modo (Ejecución o Histórico) y escenario. Arriba indica cuántas copias hay guardadas, por ejemplo «2 de 2 copias guardadas». Cuando está lleno, el siguiente cargue elimina la copia más antigua.</li>
+<li><b>Una línea de tiempo</b> con el cargue más reciente arriba: fecha y hora, quién lo hizo, el archivo y cuántas filas tiene la copia.</li>
+<li><b>Una etiqueta de estado</b> en cada versión.</li></ul>
+<div class="tw"><table><tr><th>Estado</th><th>Significa</th></tr>
+<tr><td class="n"><span class="tag ok">Vigente</span></td><td>Es la versión más reciente en uso.</td></tr>
+<tr><td class="n"><span class="tag">Anterior</span></td><td>Una versión previa que sigue guardada.</td></tr>
+<tr><td class="n"><span class="tag warn">Restaurada</span></td><td>Una versión a la que ya se volvió antes.</td></tr></table></div>
+<p>Con los filtros de arriba (empresa, año, modo y escenario) acotas la lista. El botón <b>Agrupado / Lista</b> cambia entre las tarjetas y una tabla.</p></section>
+
+<section id="deshacer"><h2>5. Deshacer un cargue</h2>
+<p class="lead">Devuelve los datos de esa empresa, año, modo y escenario a como estaban <b>justo antes</b> de ese cargue.</p>
+<ol class="steps">
+<li><b>Ve a «Versiones» y busca el cargue que quieres deshacer.</b><span>Para deshacer el último cargue, usa la versión marcada «Vigente».</span></li>
+<li><b>Pulsa «Deshacer este cargue».</b><span>Se abre un aviso con el resumen: empresa, año, cargue, archivo y filas de la copia.</span></li>
+<li><b>Confirma con «Sí, deshacer cargue».</b><span>Los datos actuales de ese año se reemplazan por la copia.</span></li>
+<li><b>Verifica los datos y vuelve a ejecutar los modelos.</b><span>Los informes se calculan con los modelos; hay que ejecutarlos de nuevo para que reflejen los datos recuperados.</span></li></ol>
+
+<h3>¿Y si deshice por error? Respaldos automáticos</h3>
+<p>Antes de reemplazar los datos, Bufins guarda una copia de lo que había en ese momento. Aparecen al final de la pestaña, en <b>«Respaldos automáticos antes de restaurar»</b> (desplegable). Pulsa <b>«Recuperar»</b> para volver a ese estado. Recuperar también guarda un respaldo, así que puedes ir y volver.</p>
+<p class="note"><b>Ten en cuenta.</b> El <b>cierre de año</b> no genera copia, así que no se deshace desde aquí. Por eso, para cerrarlo hay que escribir el año que se va a cerrar. Hazlo solo cuando estés seguro.</p></section>
+
+<section id="registro"><h2>6. Pestaña «Registro»</h2>
+<p class="lead">Es la lista de todos los cargues y cierres de año: quién, cuándo, con qué archivo y en qué escenario.</p>
+<ol class="steps">
+<li><b>Elige los filtros</b><span>Empresa, usuario, escenario, fechas o texto, y pulsa «Consultar». La lista no se llena hasta que consultas.</span></li>
+<li><b>Pulsa «Ver» en el cargue que te interesa.</b><span>Se abre el detalle.</span></li></ol>
+<h3>Qué muestra el detalle de un cargue</h3>
+<ul>
+<li><b>Tres cifras:</b> filas reemplazadas, filas cargadas y la diferencia (en rojo si hubo pérdida).</li>
+<li><b>Una tabla</b> con cada tabla de datos afectada y cuánto cambió.</li>
+<li><b>La versión guardada</b> de ese cargue, por si necesitas deshacerlo.</li>
+<li><b>El archivo Excel original</b>, si se conserva. Solo el Super Admin puede descargarlo.</li></ul>
+<p>Puedes exportar la lista a Excel con el botón de exportar.</p></section>
+
+<section id="quien"><h2>7. Quién ve qué</h2>
+<div class="tw"><table><tr><th>Rol</th><th>Qué puede hacer</th></tr>
+<tr><td class="n">Super Admin</td><td>Ve los cargues de todas las empresas, deshace cargues y puede descargar los archivos originales.</td></tr>
+<tr><td class="n">Admin de Empresa</td><td>Ve los cargues de su empresa y de su grupo empresarial, abre el detalle y deshace cargues. No descarga archivos.</td></tr>
+<tr><td class="n">Usuario normal</td><td>Solo ve la pestaña «Versiones», si tiene el permiso de la opción. No ve el Registro ni puede deshacer cargues.</td></tr></table></div></section>
+
+<section id="faq"><h2>8. Preguntas frecuentes</h2>
+<details><summary>El botón Confirmar está deshabilitado y aparece «No permitido». ¿Qué hago?</summary><p>Significa que el cargue dejaría una tabla casi vacía o el año sin datos. Revisa que subiste el archivo y el año correctos y que el Excel incluye todas las hojas con datos. Cuando lo corrijas, sube el archivo de nuevo.</p></details>
+<details><summary>¿Se pierde algo si cancelo en la pantalla de revisión?</summary><p>No. Hasta que confirmas, los datos actuales no cambian. Puedes descartar el cargue y subir uno corregido.</p></details>
+<details><summary>¿Cuántas copias se guardan?</summary><p>Las 2 más recientes de cada empresa, año, modo y escenario. Los respaldos automáticos antes de restaurar son aparte (se guardan los 3 últimos). Los administradores pueden ajustar estos valores y la cantidad de archivos Excel que se conservan (5 por empresa) en la configuración del sistema.</p></details>
+<details><summary>¿A partir de qué cantidad Bufins avisa o bloquea?</summary><p>Avisa (con casilla de confirmación) cuando una tabla queda con menos de la mitad de las filas que tiene hoy, y bloquea cuando queda con menos del 10 %. Los administradores pueden ajustar esos dos porcentajes.</p></details>
+<details><summary>¿Puedo deshacer un cargue de hace mucho tiempo?</summary><p>Solo si su copia sigue guardada. Cuando se llega al máximo, el siguiente cargue elimina la copia más antigua.</p></details>
+<details><summary>Deshice el cargue equivocado, ¿qué hago?</summary><p>Ve al final de «Versiones», abre «Respaldos automáticos antes de restaurar» y pulsa «Recuperar» en el respaldo de ese momento.</p></details>
+<details><summary>¿Por qué no veo la pestaña «Registro»?</summary><p>Solo está disponible para Super Admin y Admin de Empresa.</p></details></section>
+
+</main></body></html>

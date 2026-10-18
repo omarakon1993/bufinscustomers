@@ -26,6 +26,34 @@ namespace bufinscustomers.Services
         /// <summary>Cuántos archivos de cargue confirmados se conservan por empresa (0 = ninguno). Default 5.</summary>
         public static int LeerArchivosConservados() => LeerEntero(ClaveArchivos, ArchivosPorDefecto, 0, ArchivosMaximo);
 
+        public const string ClaveBloqueo = "Cargue_UmbralBloqueoPct";
+        public const int BloqueoPorDefecto = 10;
+
+        /// <summary>
+        /// Porcentaje (1-50) bajo el cual una tabla queda «no permitida» (default 10). Nunca es mayor que el umbral de
+        /// confirmación reforzada, para que los dos niveles tengan sentido.
+        /// </summary>
+        public static int LeerUmbralBloqueoPct() => Math.Min(LeerEntero(ClaveBloqueo, BloqueoPorDefecto, 1, 50), LeerUmbralPct());
+
+        /// <summary>
+        /// Evalúa un reemplazo (cargue, deshacer una versión o recuperar un respaldo) comparando, por tabla, las filas que hay hoy
+        /// con las que quedarían. Es la ÚNICA regla de «nunca dejar un año vacío / reducido en extremo» de toda la aplicación.
+        /// </summary>
+        public static ImpactoCargue Evaluar(IEnumerable<(string Tabla, int Existentes, int Nuevas)> tablas)
+        {
+            var impacto = new ImpactoCargue { UmbralPct = LeerUmbralPct(), UmbralBloqueoPct = LeerUmbralBloqueoPct() };
+            foreach (var t in tablas)
+                if (t.Existentes > 0 || t.Nuevas > 0)
+                    impacto.Tablas.Add(new ImpactoTabla { Tabla = t.Tabla, Existentes = t.Existentes, Nuevas = t.Nuevas });
+            return impacto;
+        }
+
+        public const string ClaveRespaldos = "Cargue_RespaldosRestauracion";
+        public const int RespaldosPorDefecto = 3;
+
+        /// <summary>Respaldos automáticos previos a una restauración que se conservan por llave de cargue (1-10, default 3).</summary>
+        public static int LeerRespaldosRestauracion() => LeerEntero(ClaveRespaldos, RespaldosPorDefecto, 1, 10);
+
         private static int LeerEntero(string clave, int porDefecto, int min, int max)
         {
             try
@@ -69,7 +97,7 @@ namespace bufinscustomers.Services
         /// <summary>Compara lo que hay hoy contra lo que trae el staging del lote, tabla por tabla.</summary>
         public ImpactoCargue Analizar(CargueLote lote)
         {
-            var impacto = new ImpactoCargue { UmbralPct = LeerUmbralPct() };
+            var impacto = new ImpactoCargue { UmbralPct = LeerUmbralPct(), UmbralBloqueoPct = LeerUmbralBloqueoPct() };
 
             using (var conn = new SqlConnection(CadenaConexion))
             {

@@ -28,6 +28,8 @@
 }
 
 <link href="~/Assets/css/informe-relacionamientos.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/cargues-claro.css")" rel="stylesheet" />
+<script>document.body.classList.add('pg-claro');</script>
 
 <style>
     /* Botonera de acciones más compacta (evita el wrap en pantallas de 14") */
@@ -284,7 +286,7 @@
 <!-- Overlay de procesamiento -->
 <div id="overlayProcesando" class="overlay-cargando" style="display:none;">
     <div class="overlay-cargando-card">
-        @Html.Partial("_LoaderDots", "aqua")
+        @Html.Partial("_LoaderDots", "dark")
         <h5 class="overlay-cargando-title" id="overlayTitulo">@Resources.Strings.Datos_JS_Procesando</h5>
         <p class="overlay-cargando-text">@Resources.Strings.Datos_OverlayNoCierre</p>
         <div class="overlay-cargando-timer">
@@ -1149,31 +1151,26 @@
                 var empresaNombre = $('#idEmpresaSeleccionada option:selected').text();
                 var escenarioNombre = $('#selectEscenario option:selected').text();
                 var modoBadge = esEjecucion
-                    ? '<span style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(16,185,129,.16);color:#34d399;border:1px solid rgba(16,185,129,.32);border-radius:999px;padding:.15rem .65rem;font-size:.82rem;font-weight:600;"><i class="fas fa-play-circle"></i>' + _datosMsg.modoEjecucion.replace(':', '') + '</span>'
-                    : '<span style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(245,158,11,.16);color:#fbbf24;border:1px solid rgba(245,158,11,.32);border-radius:999px;padding:.15rem .65rem;font-size:.82rem;font-weight:600;"><i class="fas fa-history"></i>' + _datosMsg.modoHistorico.replace(':', '') + '</span>';
+                    ? '<span class="cg-conf-badge ej"><i class="fas fa-play-circle"></i>' + _datosMsg.modoEjecucion.replace(':', '') + '</span>'
+                    : '<span class="cg-conf-badge hi"><i class="fas fa-history"></i>' + _datosMsg.modoHistorico.replace(':', '') + '</span>';
 
                 var filaResumen = function (icono, etiqueta, valor) {
-                    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.6rem 0;">' +
-                           '<span style="color:rgba(255,255,255,.5);font-size:.85rem;white-space:nowrap;"><i class="fas ' + icono + '" style="width:16px;margin-right:.5rem;opacity:.8;"></i>' + etiqueta + '</span>' +
-                           '<span style="color:#fff;font-size:.9rem;font-weight:600;text-align:right;">' + valor + '</span></div>';
+                    return '<div class="cg-conf-fila">' +
+                           '<span class="cg-conf-et"><i class="fas ' + icono + '"></i>' + etiqueta + '</span>' +
+                           '<span class="cg-conf-val">' + valor + '</span></div>';
                 };
 
                 Swal.fire({
                     icon: 'warning',
                     title: _datosMsg.confirmarCarga,
-                    html: '<p style="color:rgba(255,255,255,.66);font-size:.9rem;line-height:1.5;margin:.25rem 0 1rem;">' +
-                              '<strong style="color:#fbbf24;font-weight:600;">' + _datosMsg.confirmarBold + '</strong> ' + _datosMsg.confirmarRest +
-                          '</p>' +
-                          '<div style="background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:.35rem 1rem;text-align:left;">' +
+                    html: '<p class="cg-conf-aviso"><strong>' + _datosMsg.confirmarBold + '</strong> ' + _datosMsg.confirmarRest + '</p>' +
+                          '<div class="cg-conf-box">' +
                               filaResumen('fa-building', _datosMsg.empresaLabel.replace(':', ''), empresaNombre) +
-                              '<div style="height:1px;background:rgba(255,255,255,.07);"></div>' +
                               filaResumen('fa-calendar-alt', _datosMsg.anioLabel.replace(':', ''), anio) +
-                              '<div style="height:1px;background:rgba(255,255,255,.07);"></div>' +
                               filaResumen('fa-cog', _datosMsg.modo, modoBadge) +
-                              '<div style="height:1px;background:rgba(255,255,255,.07);"></div>' +
                               filaResumen('fa-layer-group', _datosMsg.escenarioLabel.replace(':', ''), escenarioNombre) +
                           '</div>' +
-                          '<p style="color:rgba(255,255,255,.8);font-size:.92rem;font-weight:600;margin:1.1rem 0 0;">' + _datosMsg.confirmarPregunta + '</p>',
+                          '<p class="cg-conf-preg">' + _datosMsg.confirmarPregunta + '</p>',
                     width: 460,
                     customClass: { popup: 'swal-carga-compact' },
                     showCancelButton: true,

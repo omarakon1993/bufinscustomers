@@ -1,0 +1,87 @@
+@using bufinscustomers.Helpers
+@using bufinscustomers.Services
+@* Página anfitriona del módulo «Historial de cargues»: encabezado, pestañas (Versiones | Registro) y la zona donde se carga cada una.
+   El contenido de cada pestaña se pide por AJAX (HistorialVersionesCargues/Index?embed=1 y AuditoriaCargues/AuditoriaCargues?embed=1),
+   así que cambiar de pestaña NO recarga la página: solo cambia el contenido, con fundido, y el marcador se desliza.
+   Una sola pestaña vive en el DOM a la vez, por eso no chocan los ids ni los scripts de cada una. *@
+@{
+    ViewBag.Title = Resources.Strings.Hist_PageTitle;
+    bool verVersiones = UsuarioSesionHelper.TienePermiso("DATOS_HISTORIAL_CARGUES");
+    bool verRegistro = UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.EsAdminEmpresa();
+    string tab = (string)ViewBag.Tab == "registro" ? "registro" : "versiones";
+    if (tab == "registro" && !verRegistro) { tab = "versiones"; }
+    if (tab == "versiones" && !verVersiones) { tab = "registro"; }
+    bool variasPestanas = verVersiones && verRegistro;
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/auditoria-shared.css" rel="stylesheet" />
+<link href="@AssetVersion.Url("~/Assets/css/cargues-modulo.css")" rel="stylesheet" />
+<link href="@AssetVersion.Url("~/Assets/css/historial-versiones.css")" rel="stylesheet" />
+<link href="@AssetVersion.Url("~/Assets/css/cargues-claro.css")" rel="stylesheet" />
+<script>document.body.classList.add('pg-claro');</script>
+
+<div class="container-fluid px-4">
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-history powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.Cg_Modulo_Titulo</h1>
+        </div>
+    </div>
+
+    <nav class="cg-tabs cg-tabs-js" id="cgTabs" aria-label="@Resources.Strings.Cg_Modulo_Titulo" @(variasPestanas ? "" : "hidden")>
+        <span class="cg-tab-marca no-anim" aria-hidden="true"></span>
+        @if (verVersiones)
+        {
+            <button type="button" class="cg-tab" data-key="versiones"
+                    data-intro="@string.Format(Resources.Strings.Cg_Intro_Versiones, HistorialVersionesCarguesService.MaxVersionesPorLlaveCargue)"
+                    data-url="@Url.Action("Index", "HistorialVersionesCargues", new { embed = 1 })"
+                    data-pagina="@Url.Action("Index", "HistorialVersionesCargues")">
+                <span class="cg-tab-ic"><i class="fas fa-history"></i></span>
+                <span class="cg-tab-tx"><span class="cg-tab-t">@Resources.Strings.Cg_Tab_Versiones</span><span class="cg-tab-s">@Resources.Strings.Cg_Tab_VersionesSub</span></span>
+            </button>
+        }
+        @if (verRegistro)
+        {
+            <button type="button" class="cg-tab" data-key="registro"
+                    data-intro="@Resources.Strings.Cg_Intro_Registro"
+                    data-url="@Url.Action("AuditoriaCargues", "AuditoriaCargues", new { embed = 1 })"
+                    data-pagina="@Url.Action("AuditoriaCargues", "AuditoriaCargues")">
+                <span class="cg-tab-ic"><i class="fas fa-clipboard-list"></i></span>
+                <span class="cg-tab-tx"><span class="cg-tab-t">@Resources.Strings.Cg_Tab_Registro</span><span class="cg-tab-s">@Resources.Strings.Cg_Tab_RegistroSub</span></span>
+            </button>
+        }
+    </nav>
+
+    <p class="cg-intro"><i class="fas fa-info-circle"></i><span id="cgIntro"></span></p>
+
+    <div class="cg-panel-wrap">
+        <div id="cgPanel" class="cg-panel"></div>
+        <div class="cg-spin" id="cgSpin"><span class="s"></span></div>
+    </div>
+
+</div>
+
+@section scripts {
+<script src="@AssetVersion.Url("~/Assets/js/cg-tabs-panel.js")"></script>
+<script>
+$(function () {
+    CgTabs.init({
+        nav: '#cgTabs', panel: '#cgPanel', spin: '#cgSpin', intro: '#cgIntro',
+        inicial: '@tab',
+        error: '<div class="cg-panel-error">@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_JS_Error))</div>',
+        // Primera carga: se reenvían los filtros de la dirección (p. ej. ?idEmpresa=6&anio=2026 al volver de «Deshacer»).
+        urlInicial: function ($b) {
+            var q = (location.search || '').replace(/^\?/, '').replace(/(^|&)embed=[^&]*/g, '');
+            return $b.data('url') + (q ? '&' + q : '');
+        },
+        // La dirección sigue a la pestaña (sin recargar y sin llenar el historial del navegador): así se puede recargar o copiar el enlace.
+        alActivar: function ($b, primera) {
+            if (primera) return;
+            try { history.replaceState(null, '', $b.data('pagina')); } catch (e) { }
+        }
+    });
+});
+</script>
+}

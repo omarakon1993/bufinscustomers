@@ -292,9 +292,22 @@
   <data name="RevisarCargue_Imp_EstadoReduccion" xml:space="preserve"><value>Reducción fuerte</value></data>
   <data name="RevisarCargue_Imp_EstadoOk" xml:space="preserve"><value>Normal</value></data>
   <data name="RevisarCargue_Imp_Total" xml:space="preserve"><value>Total</value></data>
+  <data name="RevisarCargue_Imp_Resumen" xml:space="preserve"><value>Filas actuales: {0} → filas del archivo: {1}</value></data>
   <data name="RevisarCargue_Imp_AlertaVacio" xml:space="preserve"><value>El archivo no trae ninguna fila del año {0}. Confirmarlo solo borraría los datos existentes, por eso no se puede confirmar. Revise que subió el archivo y el año correctos.</value></data>
   <data name="RevisarCargue_Imp_AlertaRiesgo" xml:space="preserve"><value>Atención: este cargue reemplaza {0} filas existentes por solo {1} ({2}% de lo que hay hoy). El umbral de alerta es {3}%. Verifique que es el archivo y el año correctos antes de continuar.</value></data>
   <data name="RevisarCargue_Imp_Entiendo" xml:space="preserve"><value>Entiendo que se borrarán {0} filas existentes y se cargarán solo {1}. Deseo continuar.</value></data>
+  <!-- REGLA DE ORO: NUNCA DEJAR UN AÑO VACÍO -->
+  <data name="Datos_CargueBloqueadoReduccion" xml:space="preserve"><value>Este cargue no se puede confirmar: dejaría las tablas {0} con menos del {1} % de las filas que tienen hoy. Revise que el archivo incluya todas las hojas con datos y que el año sea el correcto.</value></data>
+  <data name="Datos_CargueAnioVacioCancelado" xml:space="preserve"><value>La operación se canceló porque habría dejado el año sin datos. No se cambió nada.</value></data>
+  <data name="RevisarCargue_Imp_EstadoBloqueada" xml:space="preserve"><value>No permitido</value></data>
+  <data name="RevisarCargue_Imp_AlertaBloqueo" xml:space="preserve"><value>Este cargue no se puede confirmar: las tablas {0} quedarían con menos del {1} % de las filas que tienen hoy. Revise que el archivo incluya todas las hojas con datos y que el año sea el correcto. Nadie puede forzar este cargue.</value></data>
+  <data name="Hist_Bloqueo_Vacio" xml:space="preserve"><value>No se puede deshacer: la copia no tiene datos y el año {0} quedaría vacío. No se cambió nada.</value></data>
+  <data name="Hist_Bloqueo_Reduccion" xml:space="preserve"><value>No se puede aplicar esta copia: las tablas {0} quedarían con menos del {1} % de las filas que tienen hoy. No se cambió nada.</value></data>
+  <data name="CfgEmp_Cierre_ConfirmarAnioLabel" xml:space="preserve"><value>Para confirmar, escriba el año que va a cerrar</value></data>
+  <data name="CfgEmp_Cierre_ConfirmarAnioPlaceholder" xml:space="preserve"><value>Año a cerrar</value></data>
+  <data name="CfgEmp_Cierre_ConfirmarAnioHelp" xml:space="preserve"><value>Es el año de ejecución actual. El cierre de año no se puede deshacer desde el Historial de cargues.</value></data>
+  <data name="CfgEmp_Cierre_JS_AnioConfirmIncorrecto" xml:space="preserve"><value>Escriba el año que va a cerrar (el año de ejecución actual) para confirmar.</value></data>
+  <data name="CfgEmp_Cierre_ErrAnioConfirm" xml:space="preserve"><value>Debe escribir el año que va a cerrar ({0}) para confirmar el cierre.</value></data>
   <data name="Datos_CargueSinFilasDelAnio" xml:space="preserve"><value>El archivo no trae ninguna fila del año {0}, así que no se cargó nada y los datos existentes no se tocaron. Verifique que subió el archivo y el año correctos.</value></data>
   <data name="Datos_CargueReemplazoSinConfirmar" xml:space="preserve"><value>Este cargue reemplaza {0} filas existentes por solo {1}. Marque la casilla de confirmación reforzada para continuar.</value></data>
   <data name="Datos_CargueImpactoError" xml:space="preserve"><value>No se pudo calcular el impacto del cargue sobre los datos actuales. Intente de nuevo; si persiste, contacte al administrador.</value></data>
@@ -307,13 +320,33 @@
   <data name="Audit_Det_ThNuevas" xml:space="preserve"><value>Filas cargadas</value></data>
   <data name="Audit_Det_ThNota" xml:space="preserve"><value>Nota</value></data>
   <data name="Audit_Det_Total" xml:space="preserve"><value>Total</value></data>
+  <data name="Audit_Det_ThDif" xml:space="preserve"><value>Dif.</value></data>
+  <data name="Audit_Det_StatAntes" xml:space="preserve"><value>Filas reemplazadas</value></data>
+  <data name="Audit_Det_StatNuevas" xml:space="preserve"><value>Filas cargadas</value></data>
+  <data name="Audit_Det_StatDif" xml:space="preserve"><value>Diferencia</value></data>
   <data name="Audit_Det_SinDetalle" xml:space="preserve"><value>Este cargue no tiene detalle por tabla (es anterior a esta función o el script 033 no se ha ejecutado).</value></data>
   <data name="Audit_Det_ArchivoOriginal" xml:space="preserve"><value>Archivo original</value></data>
   <data name="Audit_Det_ArchivoNoGuardado" xml:space="preserve"><value>no se conserva (solo se guardan los últimos archivos de cada empresa).</value></data>
   <data name="Audit_Det_Descargar" xml:space="preserve"><value>Descargar archivo</value></data>
-  <data name="Audit_Det_Snapshot" xml:space="preserve"><value>Los datos anteriores a este cargue quedaron en la versión #{0} del Historial de versiones (si sigue vigente, se puede restaurar).</value></data>
+  <data name="Audit_Det_Snapshot" xml:space="preserve"><value>Los datos de antes de este cargue quedaron guardados en la versión #{0} (pestaña Versiones). Si sigue disponible, puede deshacer este cargue desde allí.</value></data>
   <data name="Audit_Det_NoEncontrado" xml:space="preserve"><value>No se encontró el cargue o no tiene acceso a él.</value></data>
   <data name="Audit_Det_ArchivoNoDisponible" xml:space="preserve"><value>El archivo ya no está disponible.</value></data>
+  <!-- CARGUES: MÓDULO «HISTORIAL DE CARGUES» (pestañas Versiones | Registro) -->
+  <data name="Cg_Modulo_Titulo" xml:space="preserve"><value>Historial de cargues</value></data>
+  <data name="Cg_Tab_Versiones" xml:space="preserve"><value>Versiones</value></data>
+  <data name="Cg_Tab_VersionesSub" xml:space="preserve"><value>Deshacer un cargue</value></data>
+  <data name="Cg_Tab_Registro" xml:space="preserve"><value>Registro</value></data>
+  <data name="Cg_Tab_RegistroSub" xml:space="preserve"><value>Quién cargó qué y cuánto cambió</value></data>
+  <data name="Cg_Intro_Versiones" xml:space="preserve"><value>Cada vez que se confirma un cargue, Bufins guarda una copia de cómo estaban los datos &lt;b&gt;justo antes&lt;/b&gt;. Si un cargue salió mal, puede deshacerlo desde aquí. Se conservan las {0} copias más recientes de cada empresa, año, modo y escenario.</value></data>
+  <data name="Cg_Intro_Registro" xml:space="preserve"><value>Aquí queda anotado cada cargue: &lt;b&gt;quién&lt;/b&gt; lo hizo, &lt;b&gt;cuándo&lt;/b&gt;, con qué archivo y cuántas filas se reemplazaron. Pulse «Ver» para abrir el detalle de un cargue.</value></data>
+  <data name="Cg_Versiones_Titulo" xml:space="preserve"><value>Versiones guardadas</value></data>
+  <data name="Hist_Est_Vigente" xml:space="preserve"><value>Vigente</value></data>
+  <data name="Hist_Est_Anterior" xml:space="preserve"><value>Anterior</value></data>
+  <data name="Hist_Est_Restaurada" xml:space="preserve"><value>Restaurada</value></data>
+  <data name="Hist_FilasCopia" xml:space="preserve"><value>filas en la copia</value></data>
+  <data name="Hist_VersionTip" xml:space="preserve"><value>Número de versión (año.mes.consecutivo)</value></data>
+  <data name="Hist_DeshacerTip" xml:space="preserve"><value>Devuelve los datos a como estaban justo antes de este cargue</value></data>
+  <data name="Hist_ThCargue" xml:space="preserve"><value>Cargue</value></data>
   <!-- REVISAR CARGUE: EXPORTAR HALLAZGOS -->
   <data name="RevisarCargue_Exp_Btn" xml:space="preserve"><value>Exportar</value></data>
   <data name="RevisarCargue_Exp_BtnTooltip" xml:space="preserve"><value>Descarga o comparte los hallazgos para corregir el archivo</value></data>
@@ -1354,12 +1387,13 @@
   <data name="AudHub_HeaderTitle" xml:space="preserve"><value>Auditoría</value></data>
   <data name="AudHub_TabCambios" xml:space="preserve"><value>Cambios</value></data>
   <data name="AudHub_TabNavegacion" xml:space="preserve"><value>Navegación</value></data>
-  <data name="AudHub_TabCargues" xml:space="preserve"><value>Cargues</value></data>
   <data name="AudHub_TabIA" xml:space="preserve"><value>Consultas IA</value></data>
-  <data name="AudHub_TitleCambios" xml:space="preserve"><value>Auditoría de cambios</value></data>
-  <data name="AudHub_TitleNavegacion" xml:space="preserve"><value>Páginas visitadas por usuario</value></data>
-  <data name="AudHub_TitleCargues" xml:space="preserve"><value>Auditoría de cargues</value></data>
-  <data name="AudHub_TitleIA" xml:space="preserve"><value>Auditoría de consultas IA</value></data>
+  <data name="AudHub_SubCambios" xml:space="preserve"><value>Qué se creó, editó o eliminó</value></data>
+  <data name="AudHub_SubNavegacion" xml:space="preserve"><value>Páginas que visita cada usuario</value></data>
+  <data name="AudHub_SubIA" xml:space="preserve"><value>Consultas hechas a la IA</value></data>
+  <data name="AudHub_IntroCambios" xml:space="preserve"><value>Registro de los cambios hechos en el sistema: &lt;b&gt;quién&lt;/b&gt;, &lt;b&gt;cuándo&lt;/b&gt; y &lt;b&gt;qué&lt;/b&gt; se modificó. Pulse «Consultar» para ver los resultados.</value></data>
+  <data name="AudHub_IntroNavegacion" xml:space="preserve"><value>Las páginas que visitó cada usuario y cuándo. Sirve para saber cómo se usa el sistema. Pulse «Consultar» para ver los resultados.</value></data>
+  <data name="AudHub_IntroIA" xml:space="preserve"><value>Las consultas hechas a la IA: &lt;b&gt;quién&lt;/b&gt; las hizo y desde qué función. Pulse «Consultar» para ver los resultados.</value></data>
   <data name="Audit_BtnLimpiarAuditoria" xml:space="preserve"><value>Limpiar auditoría</value></data>
   <data name="Audit_LimpiarTitulo" xml:space="preserve"><value>Limpiar auditoría general</value></data>
   <data name="Audit_LimpiarDesc" xml:space="preserve"><value>Elige cómo depurar los registros. Esta acción no se puede deshacer.</value></data>
@@ -1625,7 +1659,8 @@
   <data name="Hist_ThFilas" xml:space="preserve"><value>Total Filas</value></data>
   <data name="Hist_ThEstado" xml:space="preserve"><value>Estado</value></data>
   <data name="Hist_TotalVersiones" xml:space="preserve"><value>versiones encontradas</value></data>
-  <data name="Hist_BtnRestaurar" xml:space="preserve"><value>Restaurar</value></data>
+  <data name="Hist_BtnRestaurar" xml:space="preserve"><value>Deshacer este cargue</value></data>
+  <data name="Hist_BtnDeshacerCorto" xml:space="preserve"><value>Deshacer</value></data>
   <data name="Hist_EsActual" xml:space="preserve"><value>Versión actual</value></data>
   <data name="Hist_NoData" xml:space="preserve"><value>No hay versiones registradas</value></data>
   <data name="Hist_NoDataDesc" xml:space="preserve"><value>Las versiones aparecerán aquí después del primer cargue de datos.</value></data>
@@ -1634,9 +1669,9 @@
   <data name="Hist_ErrorYaEsActual" xml:space="preserve"><value>Esta versión ya es la versión actual y no puede restaurarse sobre sí misma.</value></data>
   <data name="Hist_ErrorRollback" xml:space="preserve"><value>Ocurrió un error al restaurar la versión. Intente de nuevo.</value></data>
   <data name="Hist_RollbackExitoso" xml:space="preserve"><value>Versión restaurada exitosamente para el año {0} de {1}.</value></data>
-  <data name="Hist_JS_ConfirmTitle" xml:space="preserve"><value>¿Restaurar esta versión?</value></data>
+  <data name="Hist_JS_ConfirmTitle" xml:space="preserve"><value>¿Deshacer este cargue?</value></data>
   <data name="Hist_JS_ConfirmText" xml:space="preserve"><value>Se restaurarán los datos de &lt;strong&gt;{empresa}&lt;/strong&gt;, año &lt;strong&gt;{anio}&lt;/strong&gt;, versión &lt;strong&gt;V{version}&lt;/strong&gt; cargada el {fecha}. Los datos actuales serán reemplazados.</value></data>
-  <data name="Hist_JS_ConfirmBtn" xml:space="preserve"><value>Sí, restaurar</value></data>
+  <data name="Hist_JS_ConfirmBtn" xml:space="preserve"><value>Sí, deshacer cargue</value></data>
   <data name="Hist_JS_CancelBtn" xml:space="preserve"><value>Cancelar</value></data>
   <data name="Notif_RollbackEjecutado" xml:space="preserve"><value>Versión restaurada</value></data>
   <data name="Notif_IAPresupuestoAvisoTitulo" xml:space="preserve"><value>Consumo de IA al {3}%</value></data>
@@ -1647,16 +1682,27 @@
   <data name="Hist_BadgeLimite" xml:space="preserve"><value>Límite de historial</value></data>
   <data name="Hist_BadgeTexto" xml:space="preserve"><value>Se conservan máximo {0} versiones por combinación de empresa + año de datos + modo (ejecución o histórico). Al superar este límite, la versión más antigua se elimina automáticamente.</value></data>
   <data name="Hist_HeaderSub" xml:space="preserve"><value>Se conservan máximo {0} versiones por empresa + año + modo + escenario. Al superar el límite, la más antigua se elimina automáticamente.</value></data>
-  <data name="Hist_VistaGrupo" xml:space="preserve"><value>Por combinación</value></data>
+  <data name="Hist_VistaGrupo" xml:space="preserve"><value>Agrupado</value></data>
   <data name="Hist_VistaLista" xml:space="preserve"><value>Lista</value></data>
   <data name="Hist_Vigente" xml:space="preserve"><value>Vigente</value></data>
   <data name="Hist_EscCorto" xml:space="preserve"><value>Esc.</value></data>
-  <data name="Hist_SlotsDe" xml:space="preserve"><value>{0} de {1} versiones</value></data>
-  <data name="Hist_SlotsLleno" xml:space="preserve"><value>Límite alcanzado: el próximo cargue eliminará la versión más antigua</value></data>
-  <data name="Hist_SlotsLibre" xml:space="preserve"><value>Espacio disponible para más versiones</value></data>
-  <data name="Hist_ModalCuerpo" xml:space="preserve"><value>Los datos de &lt;strong&gt;{empresa} · {anio}&lt;/strong&gt; volverán a la versión &lt;strong&gt;{version}&lt;/strong&gt; cargada el {fecha}.</value></data>
-  <data name="Hist_ModalAviso" xml:space="preserve"><value>La versión vigente quedará como anterior.</value></data>
+  <data name="Hist_SlotsDe" xml:space="preserve"><value>{0} de {1} copias guardadas</value></data>
+  <data name="Hist_SlotsLleno" xml:space="preserve"><value>Límite alcanzado: el próximo cargue eliminará la copia más antigua</value></data>
+  <data name="Hist_SlotsLibre" xml:space="preserve"><value>Hay espacio para guardar más copias</value></data>
+  <data name="Hist_ModalCuerpo" xml:space="preserve"><value>Los datos volverán a como estaban &lt;strong&gt;justo antes&lt;/strong&gt; de este cargue. Es la forma de deshacerlo.</value></data>
+  <data name="Hist_ModalAviso" xml:space="preserve"><value>Los datos actuales de ese año se reemplazarán y esta acción no se puede deshacer. Verifique los conteos de filas después de restaurar.</value></data>
   <data name="Hist_FilasCount" xml:space="preserve"><value>versiones</value></data>
+  <!-- HISTORIAL: RESPALDOS PREVIOS A RESTAURAR -->
+  <data name="Hist_Resp_Titulo" xml:space="preserve"><value>Respaldos automáticos antes de restaurar</value></data>
+  <data name="Hist_Resp_Desc" xml:space="preserve"><value>Cada vez que se restaura una versión, el sistema guarda antes una copia de los datos que va a reemplazar. Si la restauración fue un error, puede recuperarlos desde aquí. Se conservan los últimos respaldos de cada empresa, año, modo y escenario.</value></data>
+  <data name="Hist_Resp_ThFecha" xml:space="preserve"><value>Fecha del respaldo</value></data>
+  <data name="Hist_Resp_BtnRecuperar" xml:space="preserve"><value>Recuperar</value></data>
+  <data name="Hist_Resp_ConfirmTitle" xml:space="preserve"><value>¿Recuperar estos datos?</value></data>
+  <data name="Hist_Resp_ConfirmText" xml:space="preserve"><value>Los datos de &lt;strong&gt;{0} · {1}&lt;/strong&gt; volverán a como estaban el {2}, antes de esa restauración. Los datos actuales se reemplazarán (se guardará antes un respaldo de ellos).</value></data>
+  <data name="Hist_Resp_Ok" xml:space="preserve"><value>Datos recuperados para el año {0} de {1}.</value></data>
+  <data name="Hist_Resp_Error" xml:space="preserve"><value>No se pudo recuperar el respaldo. No se cambió ningún dato. Intente de nuevo.</value></data>
+  <data name="Hist_Resp_NoEncontrado" xml:space="preserve"><value>El respaldo no existe o no tiene acceso a él.</value></data>
+  <data name="Hist_RollbackRespaldo" xml:space="preserve"><value>Se guardó un respaldo de los datos reemplazados; puede recuperarlo en «Respaldos automáticos antes de restaurar».</value></data>
   <!-- POLÍTICA DE CONTRASEÑAS -->
   <data name="Pwd_ErrorLongitud" xml:space="preserve"><value>La contraseña debe tener al menos 12 caracteres.</value></data>
   <data name="Pwd_ErrorMinuscula" xml:space="preserve"><value>La contraseña debe incluir al menos una letra minúscula.</value></data>
@@ -3244,6 +3290,7 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="DocBuf_SinResultados" xml:space="preserve"><value>Ningún documento coincide con el filtro.</value></data>
   <data name="DocBuf_Cat_seguridad" xml:space="preserve"><value>Seguridad</value></data>
   <data name="DocBuf_Cat_informes" xml:space="preserve"><value>Informes</value></data>
+  <data name="DocBuf_Cat_datos" xml:space="preserve"><value>Datos y cargues</value></data>
   <!-- Observatorio: actualización de datos -->
   <data name="ObsDatos_PageTitle" xml:space="preserve"><value>Datos del Observatorio</value></data>
   <data name="ObsDatos_HeaderDesc" xml:space="preserve"><value>Actualiza desde aquí los datos públicos de bufins.com/observatorio (estados financieros de la Supersociedades).</value></data>

@@ -48,6 +48,7 @@ namespace bufinscustomers.Helpers
         {
             new CategoriaDocumento { Id = "seguridad",     Icono = "fas fa-shield-alt" },
             new CategoriaDocumento { Id = "informes",      Icono = "fas fa-chart-line" },
+            new CategoriaDocumento { Id = "datos",         Icono = "fas fa-file-upload" },
         };
 
         public static readonly List<DocumentoBiblioteca> Todos = new List<DocumentoBiblioteca>
@@ -71,6 +72,11 @@ namespace bufinscustomers.Helpers
                 Titulo = "Informe histórico de precios",
                 Descripcion = "Informe personalizado para Churido y Ucrania: de dónde salen los precios, cómo se compara con el Excel y cómo se calculan las variaciones.",
                 EsDeMenu = true, Menu = "Informes → Histórico de precios (personalizado)", Actualizado = new DateTime(2026, 10, 13) },
+
+            new DocumentoBiblioteca { Clave = "cargues-auditoria", Ruta = Biblioteca + "Auditoria_Cargues_Blindaje.html", Categoria = "datos",
+                Titulo = "Historial de cargues y protección de los datos",
+                Descripcion = "Guía de uso: cómo Bufins protege los datos al cargar un Excel, cómo leer las pestañas Versiones y Registro y cómo deshacer un cargue.",
+                EsDeMenu = true, Menu = "Datos → Historial de cargues", Actualizado = new DateTime(2026, 10, 17) },
 
         };
 

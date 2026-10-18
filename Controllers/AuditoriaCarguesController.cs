@@ -16,6 +16,16 @@ namespace bufinscustomers.Controllers
     {
         private AuditoriaCarguesService _auditoriaCarguesService = new AuditoriaCarguesService();
 
+        // La auditoría de cargues (y el detalle/archivo original) es solo para Super Admin y Admin de Empresa;
+        // el alcance por empresa/grupo lo aplica ObtenerSegunAlcance().
+        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            base.OnActionExecuting(filterContext);
+            if (filterContext.Result != null) return;
+            if (!UsuarioSesionHelper.EsSuperAdmin() && !UsuarioSesionHelper.EsAdminEmpresa())
+                filterContext.Result = new HttpStatusCodeResult(403);
+        }
+
         /// <summary>
         /// Cargues visibles para el usuario: Super Admin todos; el resto su empresa y las de su mismo grupo empresarial.
         /// </summary>
@@ -63,7 +73,14 @@ namespace bufinscustomers.Controllers
         // Pantalla: solo trae lo necesario para armar los selectores; la grilla se llena al pulsar «Consultar».
         public ActionResult AuditoriaCargues()
         {
-            ViewBag.Embed = string.Equals(Request.QueryString["embed"], "1");
+            // Sin ?embed=1 se entrega la página anfitriona (encabezado + pestañas); ella pide por AJAX el contenido de «Registro».
+            if (!string.Equals(Request.QueryString["embed"], "1"))
+            {
+                ViewBag.Tab = "registro";
+                return View("~/Views/Informes/HistorialCargues.cshtml");
+            }
+
+            ViewBag.Embed = true;
             return View("~/Views/Informes/AuditoriaCargues.cshtml", ObtenerSegunAlcance());
         }
 

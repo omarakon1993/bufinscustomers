@@ -1,0 +1,90 @@
+/* Tema CLARO para las opciones «Cargue de Excel», «Revisar cargue», «Historial de versiones de cargues» y
+   «Auditoría de cargues». Se activa con la clase body.pg-claro (la agrega cada una de esas vistas). Solo cambia
+   modales, avisos y overlays de esas pantallas; el resto del sitio conserva el tema oscuro de siempre. */
+
+/* ── SweetAlert2 ── */
+body.pg-claro .swal2-popup { background: #fff !important; border: 1px solid #e3e6f0 !important; border-radius: 16px !important; box-shadow: 0 30px 70px -25px rgba(22,9,51,.45) !important; }
+body.pg-claro .swal2-popup::before { border-radius: 16px 16px 0 0; }
+body.pg-claro .swal2-title { color: #2d3748 !important; font-weight: 700; }
+body.pg-claro .swal2-html-container { color: #4b5563 !important; }
+body.pg-claro .swal2-close { color: #9ca3af !important; }
+body.pg-claro .swal2-close:hover { color: #4b5563 !important; background: transparent; }
+body.pg-claro .swal2-confirm { background: var(--content-gradient) !important; color: #fff !important; border-radius: .55rem !important; font-weight: 600 !important; box-shadow: 0 2px 8px rgba(22,9,51,.22) !important; }
+body.pg-claro .swal2-cancel { background: #fff !important; color: #2d3748 !important; border: 1px solid #d1d5db !important; border-radius: .55rem !important; font-weight: 600 !important; }
+body.pg-claro .swal2-cancel:hover { background: #f3f4f6 !important; }
+body.pg-claro .swal2-icon.swal2-success [class^='swal2-success-line'] { background-color: #10b981 !important; }
+body.pg-claro .swal2-icon.swal2-success .swal2-success-ring { border-color: rgba(16,185,129,.3) !important; }
+body.pg-claro .swal2-input, body.pg-claro .swal2-textarea, body.pg-claro .swal2-select { background: #fff !important; color: #2d3748 !important; border: 1px solid #d1d5db !important; }
+body.pg-claro .swal2-validation-message { background: #f3f4f6 !important; color: #2d3748 !important; }
+body.pg-claro .swal2-loader { border-color: #583aff transparent #583aff transparent !important; }
+body.pg-claro .swal2-timer-progress-bar { background: var(--content-gradient) !important; }
+body.pg-claro .swal2-popup.swal2-toast { border-radius: 12px !important; }
+
+/* ── Cargue de Excel: resultado del cargue (swal-res-*) ── */
+body.pg-claro .swal-res-chip { background: #f3f4f6; color: #374151; opacity: 1; }
+body.pg-claro .swal-res-chip i { color: #583aff; opacity: 1; }
+body.pg-claro .swal-res-stat { background: #f8f9fc; border: 1px solid #e3e6f0; }
+body.pg-claro .swal-res-stat-num { color: #059669; }
+body.pg-claro .swal-res-stat-label { color: #6b7280; opacity: 1; }
+body.pg-claro .swal-res-msg-error { color: #991b1b; }
+body.pg-claro .swal-res-lista-titulo { color: #6b7280; opacity: 1; }
+body.pg-claro .swal-res-row { background: #f8f9fc; color: #2d3748; }
+body.pg-claro .swal-res-row-filas { opacity: 1; color: #374151; }
+body.pg-claro .swal-res-row-error { color: #991b1b; opacity: 1; }
+body.pg-claro .swal-res-nota { color: #6b7280; opacity: 1; }
+
+/* ── Cargue de Excel: confirmación antes de cargar (cg-conf-*) ── */
+.cg-conf-aviso { color: #4b5563; font-size: .9rem; line-height: 1.5; margin: .25rem 0 1rem; }
+.cg-conf-aviso strong { color: #b45309; font-weight: 700; }
+.cg-conf-box { background: #f8f9fc; border: 1px solid #e3e6f0; border-radius: 14px; padding: .3rem 1rem; text-align: left; }
+.cg-conf-fila { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .55rem 0; border-top: 1px solid #eceef5; }
+.cg-conf-fila:first-child { border-top: 0; }
+.cg-conf-et { color: #6b7280; font-size: .85rem; white-space: nowrap; }
+.cg-conf-et i { width: 16px; margin-right: .5rem; color: #583aff; opacity: .85; }
+.cg-conf-val { color: #1f2937; font-size: .9rem; font-weight: 600; text-align: right; }
+.cg-conf-badge { display: inline-flex; align-items: center; gap: .35rem; border-radius: 999px; padding: .15rem .65rem; font-size: .82rem; font-weight: 600; border: 1px solid; }
+.cg-conf-badge.ej { background: #d1fae5; color: #047857; border-color: #a7f3d0; }
+.cg-conf-badge.hi { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+.cg-conf-preg { color: #1f2937; font-size: .92rem; font-weight: 600; margin: 1.1rem 0 0; }
+
+/* ── Overlay «procesando» ── */
+body.pg-claro .overlay-cargando { background: rgba(248,249,252,.78); }
+body.pg-claro .overlay-cargando-card { background: #fff; border: 1px solid #e3e6f0; box-shadow: 0 30px 70px -25px rgba(22,9,51,.35); }
+body.pg-claro .overlay-cargando-title { color: #2d3748 !important; }
+body.pg-claro .overlay-cargando-text { color: #6b7280 !important; }
+body.pg-claro .overlay-cargando-timer { background: #f3f4f6; color: #583aff !important; }
+body.pg-claro .overlay-cargando-timer i { color: #583aff; }
+body.pg-claro .overlay-cargando-icon { color: #583aff; }
+body.pg-claro .overlay-cargando-card .spinner-border { color: #583aff !important; }
+
+/* ── Auditoría de cargues: modal «Detalle del cargue» ── */
+body.pg-claro .swal2-popup.swal-det { padding: 1.2rem 1.4rem 1.4rem !important; }
+body.pg-claro .swal-det .swal2-title { font-size: 1.15rem; text-align: left; justify-content: flex-start; padding: 0 1.5rem .1rem 0; margin: 0; }
+body.pg-claro .swal-det .swal2-html-container { margin: .6rem 0 0; text-align: left; max-height: 68vh; overflow: auto; }
+.ax-det { font-size: .85rem; }
+.ax-det-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .9rem; }
+.ax-det-chip { display: inline-flex; align-items: center; gap: .4rem; background: #f3f4f6; color: #374151; border-radius: 999px; padding: .28rem .75rem; font-size: .78rem; font-weight: 600; }
+.ax-det-chip i { color: #583aff; font-size: .72rem; }
+.ax-det-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; margin-bottom: .9rem; }
+.ax-det-stat { background: #f8f9fc; border: 1px solid #e3e6f0; border-radius: 12px; padding: .65rem .5rem; text-align: center; }
+.ax-det-stat b { display: block; font-size: 1.35rem; font-weight: 800; color: #1f2937; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.ax-det-stat span { display: block; font-size: .76rem; color: #6b7280; margin-top: .15rem; }
+.ax-det-stat.neg b { color: #dc2626; }
+.ax-det-stat.pos b { color: #059669; }
+.ax-det-tablawrap { border: 1px solid #e3e6f0; border-radius: 12px; overflow: hidden; margin-bottom: .9rem; }
+.ax-det-tabla { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.ax-det-tabla th { background: #f3f4f6; color: #4b5563; font-size: .74rem; font-weight: 700; padding: .5rem .7rem; text-align: left; }
+.ax-det-tabla td { padding: .45rem .7rem; border-top: 1px solid #eceef5; color: #1f2937; vertical-align: top; }
+.ax-det-tabla tbody tr:nth-child(even) td { background: #fbfbfe; }
+.ax-det-tabla .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ax-det-tabla .neg { color: #dc2626; font-weight: 700; }
+.ax-det-tabla .pos { color: #059669; font-weight: 700; }
+.ax-det-tabla .nota { color: #6b7280; font-size: .75rem; }
+.ax-det-tabla tfoot td { font-weight: 800; background: #f3f4f6; border-top: 2px solid #e3e6f0; }
+.ax-det-info { display: flex; gap: .6rem; align-items: flex-start; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; border-radius: 10px; padding: .55rem .8rem; font-size: .8rem; margin-bottom: .7rem; }
+.ax-det-info i { margin-top: .15rem; }
+.ax-det-arch { display: flex; align-items: center; justify-content: space-between; gap: .8rem; flex-wrap: wrap; background: #f8f9fc; border: 1px solid #e3e6f0; border-radius: 12px; padding: .65rem .9rem; font-size: .82rem; color: #374151; }
+.ax-det-arch-nombre { display: flex; align-items: center; gap: .6rem; min-width: 0; }
+.ax-det-arch-nombre .fa-file-excel { color: #217346; font-size: 1.3rem; }
+.ax-det-arch small { display: block; color: #6b7280; }
+.ax-det-arch.vacio { background: #f9fafb; color: #6b7280; border-style: dashed; }

@@ -1380,6 +1380,21 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("RevisarCargue", new { idLote });
             }
 
+            // Regla de oro: ningún cargue puede dejar un año sin datos ni reducir una tabla por debajo del umbral de bloqueo.
+            // No hay casilla ni rol que lo permita (ni siquiera el Super Admin): hay que corregir el archivo o el año.
+            if (impacto.Bloqueado)
+            {
+                string tablasBloq = string.Join(", ", impacto.TablasBloqueadas.Select(t => t.Tabla));
+                new AuditoriaService().RegistrarCambio(
+                    AuditoriaTipo.Cargues, AuditoriaAccion.Bloqueo, "CargueLote", idLote.ToString(),
+                    $"Confirmación de cargue BLOQUEADA en '{lote.NombreEmpresa}' — año {lote.Anio}, {(lote.Modo == 0 ? "ejecución" : "histórico")}, escenario {lote.IdEscenario}: dejaría {impacto.TotalExistentes:N0} fila(s) existentes en solo {impacto.TotalNuevas:N0}" +
+                    (tablasBloq.Length > 0 ? $" (tablas bajo el {impacto.UmbralBloqueoPct}%: {tablasBloq})" : "") + $", archivo '{lote.NombreArchivo}'. No se cambió ningún dato.",
+                    null, new { empresa = lote.NombreEmpresa, anio = lote.Anio, modo = lote.Modo, escenario = lote.IdEscenario, archivo = lote.NombreArchivo, existentes = impacto.TotalExistentes, nuevas = impacto.TotalNuevas, tablas = tablasBloq },
+                    lote.IdEmpresa, entidadNombre: lote.NombreEmpresa);
+                SetErrorMessage(string.Format(R("Datos_CargueBloqueadoReduccion"), tablasBloq, impacto.UmbralBloqueoPct));
+                return RedirectToAction("RevisarCargue", new { idLote });
+            }
+
             if (impacto.RequiereConfirmacion && !confirmarReemplazo)
             {
                 SetErrorMessage(string.Format(R("Datos_CargueReemplazoSinConfirmar"), impacto.TotalExistentes.ToString("N0"), impacto.TotalNuevas.ToString("N0")));
@@ -1431,6 +1446,13 @@ namespace bufinscustomers.Controllers
                             EliminarAnosHistoricosDeIni(conn, lote.Anio, lote.IdEmpresa, lote.IdEscenario, tx);
 
                         var (exito, mensaje) = _stagingService.ConfirmarLote(conn, tx, idLote, idHistorialCargue > 0 ? idHistorialCargue : (int?)null);
+
+                        // Segunda barrera: tras reemplazar, el año NO puede haber quedado sin filas. Si pasara, se cancela todo.
+                        if (exito && _impactoService.ContarExistentes(conn, tx, lote.IdEmpresa, lote.Anio, lote.Modo, lote.IdEscenario).Sum(e => e.Filas) == 0)
+                        {
+                            exito = false;
+                            mensaje = R("Datos_CargueAnioVacioCancelado");
+                        }
                         if (!exito)
                         {
                             errorEnConfirmacion = true;
