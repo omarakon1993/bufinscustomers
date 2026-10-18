@@ -1,0 +1,75 @@
+@using bufinscustomers.Helpers
+@using bufinscustomers.Models
+@using System.Web.Mvc
+@using System.Linq
+@* Pestaña «Portal público» del hub de Auditoría (solo Super Admin). Se inyecta por AJAX con ?embed=1; una sola pestaña vive en el DOM a la vez.
+   El nombre visible del portal (hoy «Observatorio») sale de la configuración (PortalPublico_Nombre), no del código. Todo es anónimo. *@
+@{
+    Layout = "~/Views/Shared/_LayoutFragment.cshtml";
+    ViewBag.Title = Resources.Strings.AudPortal_X_Titulo;
+    string nombrePortal = (string)ViewBag.NombrePortal;
+
+    var vm = new AudFiltrosVM { PlaceholderBusqueda = Resources.Strings.AudPortal_BuscarPlaceholder, PeriodoDefecto = "30" };
+    vm.Campos.Add(new AudCampo
+    {
+        Id = "fDispositivo", Etiqueta = Resources.Strings.AudPortal_F_Dispositivo, Icono = "fa-mobile-alt", TextoTodos = Resources.Strings.Common_Todos,
+        Opciones = new[] { "m", "t", "d" }.Select(x => new SelectListItem { Value = x, Text = (string)System.Web.HttpContext.GetGlobalResourceObject("Strings", "AudPortal_D_" + x) }).ToList()
+    });
+    vm.Campos.Add(new AudCampo
+    {
+        Id = "fOrigen", Etiqueta = Resources.Strings.AudPortal_F_Origen, Icono = "fa-route", TextoTodos = Resources.Strings.Common_Todos,
+        Opciones = new[] { "directo", "buscador", "red-social", "correo", "otro-sitio", "interno" }.Select(x => new SelectListItem { Value = x, Text = (string)System.Web.HttpContext.GetGlobalResourceObject("Strings", "AudPortal_O_" + x) }).ToList()
+    });
+    vm.Campos.Add(new AudCampo
+    {
+        Id = "fIdioma", Etiqueta = Resources.Strings.AudPortal_F_Idioma, Icono = "fa-language", TextoTodos = Resources.Strings.Common_Todos,
+        Opciones = new[] { new SelectListItem { Value = "es", Text = "Español" }, new SelectListItem { Value = "en", Text = "English" } }.ToList()
+    });
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/auditoria-shared.css" rel="stylesheet" />
+<link href="@AssetVersion.Url("~/Assets/css/auditoria-portal.css")" rel="stylesheet" />
+
+<div class="container-fluid px-4">
+
+    <p class="ap-nota"><i class="fas fa-user-shield"></i><span>@Resources.Strings.AudPortal_Nota</span></p>
+
+    <div id="axKpis" class="ax-kpis" hidden></div>
+
+    @Html.Partial("_AudFiltros", vm)
+
+    @Html.AntiForgeryToken()
+
+    <div id="axInicial" class="no-data-message">
+        <i class="fas fa-globe-americas"></i>
+        <h4>@Resources.Strings.Ax_EstadoInicialTit</h4>
+        <p>@Resources.Strings.Ax_EstadoInicialDesc</p>
+    </div>
+
+    <div id="apAviso" class="no-data-message" style="display:none"><i class="fas fa-inbox"></i><h4></h4><p></p></div>
+
+    <div id="apResultados" style="display:none">
+        <div class="ap-barra-acciones">
+            <span class="ap-ahora" id="apAhora"></span>
+            <button type="button" id="btnExportar" class="btn btn-modern-excel"><i class="fas fa-file-excel mr-1"></i>@Resources.Strings.Audit_BtnExportar</button>
+        </div>
+        <div id="apContenido"></div>
+    </div>
+</div>
+
+@section scripts {
+<script>
+    window._ap = {
+        nombre: '@Html.Raw(HttpUtility.JavaScriptStringEncode(nombrePortal))',
+        urlConsultar: '@Url.Action("Consultar", "AuditoriaPortal")',
+        urlExportar: '@Url.Action("ExportarExcel", "AuditoriaPortal")',
+        errTit: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error))',
+        error: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_JS_Error))',
+        t: @Html.Raw(ViewBag.TextosJson)
+    };
+</script>
+<script src="~/Assets/js/auditoria-shared.js"></script>
+<script src="~/Assets/js/chart.umd.min.js"></script>
+<script src="@AssetVersion.Url("~/Assets/js/auditoria-portal.js")"></script>
+}

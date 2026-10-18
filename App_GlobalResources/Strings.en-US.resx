@@ -1392,6 +1392,155 @@
   <data name="AudHub_IntroCambios" xml:space="preserve"><value>A record of the changes made in the system: &lt;b&gt;who&lt;/b&gt;, &lt;b&gt;when&lt;/b&gt; and &lt;b&gt;what&lt;/b&gt; was modified. Press "Query" to see the results.</value></data>
   <data name="AudHub_IntroNavegacion" xml:space="preserve"><value>The pages each user visited and when. Useful to see how the system is used. Press "Query" to see the results.</value></data>
   <data name="AudHub_IntroIA" xml:space="preserve"><value>The queries made to the AI: &lt;b&gt;who&lt;/b&gt; made them and from which function. Press "Query" to see the results.</value></data>
+  <!-- PUBLIC PORTAL AUDIT -->
+  <data name="AudPortal_X_Titulo" xml:space="preserve"><value>Public portal audit</value></data>
+  <data name="AudPortal_BuscarPlaceholder" xml:space="preserve"><value>Search company, tax ID or sector…</value></data>
+  <data name="AudPortal_F_Dispositivo" xml:space="preserve"><value>Device</value></data>
+  <data name="AudPortal_F_Origen" xml:space="preserve"><value>Visit source</value></data>
+  <data name="AudPortal_F_Idioma" xml:space="preserve"><value>Language</value></data>
+  <data name="AudPortal_Nota" xml:space="preserve"><value>Everything is anonymous: the visitor is a code that changes every day. No IP, name or cookies are stored. "Visitors" counts distinct people per day; the same person coming back another day is counted again.</value></data>
+  <data name="AudPortal_SinDatos" xml:space="preserve"><value>There is no public portal data yet. The site records visits once the version with analytics is published. If it already was, check the path in "Observatory data".</value></data>
+  <data name="AudPortal_SinCarpeta" xml:space="preserve"><value>The public site data folder was not found. Set its path in "Observatory data".</value></data>
+  <data name="AudPortal_SinEventos" xml:space="preserve"><value>There are no recorded visits with these filters in the period.</value></data>
+  <data name="AudPortal_Ahora" xml:space="preserve"><value>In the last 30 minutes: {0} visitors and {1} page views.</value></data>
+  <data name="AudPortal_Desde" xml:space="preserve"><value>Data since {0}.</value></data>
+  <data name="AudPortal_K_Visitantes" xml:space="preserve"><value>Visitors</value></data>
+  <data name="AudPortal_K_VisitantesDia" xml:space="preserve"><value>Visitors per day</value></data>
+  <data name="AudPortal_K_Visitas" xml:space="preserve"><value>Visits</value></data>
+  <data name="AudPortal_K_Vistas" xml:space="preserve"><value>Page views</value></data>
+  <data name="AudPortal_K_PagVisita" xml:space="preserve"><value>Pages per visit</value></data>
+  <data name="AudPortal_K_Duracion" xml:space="preserve"><value>Average duration</value></data>
+  <data name="AudPortal_K_Rebote" xml:space="preserve"><value>Bounce</value></data>
+  <data name="AudPortal_K_Descargas" xml:space="preserve"><value>Downloads and prints</value></data>
+  <data name="AudPortal_K_Contactos" xml:space="preserve"><value>Contacts sent</value></data>
+  <data name="AudPortal_K_Busquedas" xml:space="preserve"><value>Companies searched</value></data>
+  <data name="AudPortal_KH_Visitantes" xml:space="preserve"><value>Distinct people per day, summed</value></data>
+  <data name="AudPortal_KH_Visitas" xml:space="preserve"><value>Sessions: a visit ends after 30 min of inactivity</value></data>
+  <data name="AudPortal_KH_Rebote" xml:space="preserve"><value>Single-page visits with no action</value></data>
+  <data name="AudPortal_S_Tendencia" xml:space="preserve"><value>Daily trend</value></data>
+  <data name="AudPortal_S_Mapa" xml:space="preserve"><value>When they come (page views by day and hour)</value></data>
+  <data name="AudPortal_S_Consultan" xml:space="preserve"><value>What they look up</value></data>
+  <data name="AudPortal_S_Llegan" xml:space="preserve"><value>How they arrive</value></data>
+  <data name="AudPortal_S_Quienes" xml:space="preserve"><value>Who visits (anonymous)</value></data>
+  <data name="AudPortal_S_Hacen" xml:space="preserve"><value>What they do</value></data>
+  <data name="AudPortal_S_Recorridos" xml:space="preserve"><value>Journeys</value></data>
+  <data name="AudPortal_S_Salud" xml:space="preserve"><value>Site health</value></data>
+  <data name="AudPortal_S_Empresas" xml:space="preserve"><value>Most viewed companies</value></data>
+  <data name="AudPortal_S_Sectores" xml:space="preserve"><value>Most viewed sectors</value></data>
+  <data name="AudPortal_S_Paginas" xml:space="preserve"><value>Most viewed pages</value></data>
+  <data name="AudPortal_S_Rankings" xml:space="preserve"><value>Most viewed rankings</value></data>
+  <data name="AudPortal_S_RankSeg" xml:space="preserve"><value>Rankings by segment</value></data>
+  <data name="AudPortal_S_Busquedas" xml:space="preserve"><value>Companies searched</value></data>
+  <data name="AudPortal_S_Comparaciones" xml:space="preserve"><value>Frequent comparisons</value></data>
+  <data name="AudPortal_S_FiltrosSector" xml:space="preserve"><value>Sector filters used</value></data>
+  <data name="AudPortal_S_Origen" xml:space="preserve"><value>Visit sources</value></data>
+  <data name="AudPortal_S_Sitios" xml:space="preserve"><value>Sites sending visits</value></data>
+  <data name="AudPortal_S_Campanas" xml:space="preserve"><value>Campaigns (UTM)</value></data>
+  <data name="AudPortal_S_Dispositivos" xml:space="preserve"><value>Device</value></data>
+  <data name="AudPortal_S_Navegadores" xml:space="preserve"><value>Browser</value></data>
+  <data name="AudPortal_S_Sistemas" xml:space="preserve"><value>Operating system</value></data>
+  <data name="AudPortal_S_Idiomas" xml:space="preserve"><value>Language</value></data>
+  <data name="AudPortal_S_Zonas" xml:space="preserve"><value>Time zone (approximate country)</value></data>
+  <data name="AudPortal_S_Cta" xml:space="preserve"><value>Clicks on calls to action</value></data>
+  <data name="AudPortal_S_Descargas" xml:space="preserve"><value>Downloads and reports</value></data>
+  <data name="AudPortal_S_Otras" xml:space="preserve"><value>Other actions</value></data>
+  <data name="AudPortal_S_Salidas" xml:space="preserve"><value>Exits to other sites</value></data>
+  <data name="AudPortal_S_Entradas" xml:space="preserve"><value>Landing pages</value></data>
+  <data name="AudPortal_S_SalidasPag" xml:space="preserve"><value>Exit pages</value></data>
+  <data name="AudPortal_S_Pasos" xml:space="preserve"><value>Most frequent steps</value></data>
+  <data name="AudPortal_S_Profundidad" xml:space="preserve"><value>Pages per visit</value></data>
+  <data name="AudPortal_S_Embudo" xml:space="preserve"><value>Contact funnel</value></data>
+  <data name="AudPortal_S_Lectura" xml:space="preserve"><value>Reading by page</value></data>
+  <data name="AudPortal_S_Bots" xml:space="preserve"><value>Crawlers and bots</value></data>
+  <data name="AudPortal_S_404" xml:space="preserve"><value>Pages not found (404)</value></data>
+  <data name="AudPortal_S_Limites" xml:space="preserve"><value>IP limits reached</value></data>
+  <data name="AudPortal_S_Acciones" xml:space="preserve"><value>Actions</value></data>
+  <data name="AudPortal_S_Audiencia" xml:space="preserve"><value>Audience</value></data>
+  <data name="AudPortal_X_Resumen" xml:space="preserve"><value>Summary</value></data>
+  <data name="AudPortal_X_Diario" xml:space="preserve"><value>Daily</value></data>
+  <data name="AudPortal_X_Dia" xml:space="preserve"><value>Day</value></data>
+  <data name="AudPortal_X_Dias" xml:space="preserve"><value>days</value></data>
+  <data name="AudPortal_X_Empresa" xml:space="preserve"><value>Company</value></data>
+  <data name="AudPortal_X_Empresas" xml:space="preserve"><value>Companies</value></data>
+  <data name="AudPortal_X_Sector" xml:space="preserve"><value>Sector</value></data>
+  <data name="AudPortal_X_Clave" xml:space="preserve"><value>Key</value></data>
+  <data name="AudPortal_X_Pagina" xml:space="preserve"><value>Page</value></data>
+  <data name="AudPortal_X_Veces" xml:space="preserve"><value>Times</value></data>
+  <data name="AudPortal_X_Tipo" xml:space="preserve"><value>Type</value></data>
+  <data name="AudPortal_X_Descarga" xml:space="preserve"><value>Download</value></data>
+  <data name="AudPortal_X_Otra" xml:space="preserve"><value>Other action</value></data>
+  <data name="AudPortal_X_Salida" xml:space="preserve"><value>Exit</value></data>
+  <data name="AudPortal_X_Categoria" xml:space="preserve"><value>Category</value></data>
+  <data name="AudPortal_X_Sitio" xml:space="preserve"><value>Site</value></data>
+  <data name="AudPortal_X_Dispositivo" xml:space="preserve"><value>Device</value></data>
+  <data name="AudPortal_X_Navegador" xml:space="preserve"><value>Browser</value></data>
+  <data name="AudPortal_X_Sistema" xml:space="preserve"><value>System</value></data>
+  <data name="AudPortal_X_Idioma" xml:space="preserve"><value>Language</value></data>
+  <data name="AudPortal_X_Zona" xml:space="preserve"><value>Time zone</value></data>
+  <data name="AudPortal_X_Entrada" xml:space="preserve"><value>Entry</value></data>
+  <data name="AudPortal_X_Paso" xml:space="preserve"><value>Step</value></data>
+  <data name="AudPortal_X_Profundidad" xml:space="preserve"><value>Depth</value></data>
+  <data name="AudPortal_X_Etapa" xml:space="preserve"><value>Stage</value></data>
+  <data name="AudPortal_X_PermSeg" xml:space="preserve"><value>Average time (s)</value></data>
+  <data name="AudPortal_X_ScrollPct" xml:space="preserve"><value>Average scroll (%)</value></data>
+  <data name="AudPortal_X_Informes" xml:space="preserve"><value>Reports</value></data>
+  <data name="AudPortal_X_Familia" xml:space="preserve"><value>Family</value></data>
+  <data name="AudPortal_E_visitantes" xml:space="preserve"><value>Visitors</value></data>
+  <data name="AudPortal_E_consulta" xml:space="preserve"><value>Looked up companies, rankings or sectors</value></data>
+  <data name="AudPortal_E_cta" xml:space="preserve"><value>Clicked a call to contact</value></data>
+  <data name="AudPortal_E_contacto" xml:space="preserve"><value>Opened "Contact" from the site</value></data>
+  <data name="AudPortal_E_enviado" xml:space="preserve"><value>Submitted the form</value></data>
+  <data name="AudPortal_P_inicio" xml:space="preserve"><value>Home</value></data>
+  <data name="AudPortal_P_home" xml:space="preserve"><value>Home</value></data>
+  <data name="AudPortal_P_empresa" xml:space="preserve"><value>Company profile</value></data>
+  <data name="AudPortal_P_sector" xml:space="preserve"><value>Sector page</value></data>
+  <data name="AudPortal_P_ranking" xml:space="preserve"><value>Rankings</value></data>
+  <data name="AudPortal_P_comparar" xml:space="preserve"><value>Comparison</value></data>
+  <data name="AudPortal_P_comparador" xml:space="preserve"><value>Comparison</value></data>
+  <data name="AudPortal_P_sectores" xml:space="preserve"><value>Sector analysis</value></data>
+  <data name="AudPortal_P_contacto" xml:space="preserve"><value>Contact</value></data>
+  <data name="AudPortal_P_informe" xml:space="preserve"><value>Printable report</value></data>
+  <data name="AudPortal_O_directo" xml:space="preserve"><value>Direct</value></data>
+  <data name="AudPortal_O_buscador" xml:space="preserve"><value>Search engine</value></data>
+  <data name="AudPortal_O_red-social" xml:space="preserve"><value>Social network</value></data>
+  <data name="AudPortal_O_correo" xml:space="preserve"><value>Email</value></data>
+  <data name="AudPortal_O_otro-sitio" xml:space="preserve"><value>Other site</value></data>
+  <data name="AudPortal_O_interno" xml:space="preserve"><value>Internal</value></data>
+  <data name="AudPortal_D_m" xml:space="preserve"><value>Mobile</value></data>
+  <data name="AudPortal_D_t" xml:space="preserve"><value>Tablet</value></data>
+  <data name="AudPortal_D_d" xml:space="preserve"><value>Desktop</value></data>
+  <data name="AudPortal_B_google" xml:space="preserve"><value>Google</value></data>
+  <data name="AudPortal_B_bing" xml:space="preserve"><value>Bing</value></data>
+  <data name="AudPortal_B_ia-openai" xml:space="preserve"><value>OpenAI (AI)</value></data>
+  <data name="AudPortal_B_ia-anthropic" xml:space="preserve"><value>Anthropic (AI)</value></data>
+  <data name="AudPortal_B_ia-perplexity" xml:space="preserve"><value>Perplexity (AI)</value></data>
+  <data name="AudPortal_B_ia-otro" xml:space="preserve"><value>Other AI crawlers</value></data>
+  <data name="AudPortal_B_buscador-otro" xml:space="preserve"><value>Other search engines</value></data>
+  <data name="AudPortal_B_facebook" xml:space="preserve"><value>Facebook</value></data>
+  <data name="AudPortal_B_linkedin" xml:space="preserve"><value>LinkedIn</value></data>
+  <data name="AudPortal_B_x-twitter" xml:space="preserve"><value>X (Twitter)</value></data>
+  <data name="AudPortal_B_mensajeria" xml:space="preserve"><value>Messaging (WhatsApp, Telegram…)</value></data>
+  <data name="AudPortal_B_seo" xml:space="preserve"><value>SEO tools</value></data>
+  <data name="AudPortal_B_monitoreo" xml:space="preserve"><value>Monitoring</value></data>
+  <data name="AudPortal_B_otro" xml:space="preserve"><value>Other</value></data>
+  <data name="AudPortal_A_export_xlsx" xml:space="preserve"><value>Excel</value></data>
+  <data name="AudPortal_A_export_csv" xml:space="preserve"><value>CSV</value></data>
+  <data name="AudPortal_A_informe_pdf" xml:space="preserve"><value>Printable report</value></data>
+  <data name="AudPortal_A_imprimir" xml:space="preserve"><value>Print</value></data>
+  <data name="AudPortal_A_copiar_enlace" xml:space="preserve"><value>Copy link</value></data>
+  <data name="AudPortal_A_unidad" xml:space="preserve"><value>Unit change</value></data>
+  <data name="AudPortal_Dias" xml:space="preserve"><value>M,T,W,T,F,S,S</value></data>
+  <data name="AudPortal_Serie_Vistas" xml:space="preserve"><value>Page views</value></data>
+  <data name="AudPortal_Serie_Visitantes" xml:space="preserve"><value>Visitors</value></data>
+  <data name="AudPortal_Serie_Visitas" xml:space="preserve"><value>Visits</value></data>
+  <data name="AudPortal_Ver_Mas" xml:space="preserve"><value>Show more</value></data>
+  <data name="AudPortal_N_Nada" xml:space="preserve"><value>No data in the period</value></data>
+  <data name="AudPortal_Hdr_Empresa" xml:space="preserve"><value>Company</value></data>
+  <data name="AudPortal_Hdr_Vistas" xml:space="preserve"><value>Views</value></data>
+  <data name="AudPortal_Hdr_Visitantes" xml:space="preserve"><value>Visitors</value></data>
+  <data name="AudPortal_Hdr_Informes" xml:space="preserve"><value>Reports</value></data>
+  <data name="AudHub_SubPortal" xml:space="preserve"><value>What site visitors look up</value></data>
+  <data name="AudHub_IntroPortal" xml:space="preserve"><value>Anonymous visits to the public site ({0}): how many people come in, what they look up, where they arrive from and what they do. Super Admin only. Press "Query" to see the results.</value></data>
   <data name="Audit_BtnLimpiarAuditoria" xml:space="preserve"><value>Clear audit log</value></data>
   <data name="Audit_LimpiarTitulo" xml:space="preserve"><value>Clear general audit log</value></data>
   <data name="Audit_LimpiarDesc" xml:space="preserve"><value>Choose how to purge the records. This action cannot be undone.</value></data>

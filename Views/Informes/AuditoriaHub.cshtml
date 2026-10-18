@@ -35,6 +35,16 @@
                 <span class="cg-tab-ic"><i class="fas fa-route"></i></span>
                 <span class="cg-tab-tx"><span class="cg-tab-t">@Resources.Strings.AudHub_TabNavegacion</span><span class="cg-tab-s">@Resources.Strings.AudHub_SubNavegacion</span></span>
             </button>
+            if (bufinscustomers.Helpers.UsuarioSesionHelper.EsSuperAdmin())
+            {
+                var nombrePortal = bufinscustomers.Services.PortalPublicoConfig.Nombre();
+                <button type="button" class="cg-tab" data-key="portal"
+                        data-intro="@string.Format(Resources.Strings.AudHub_IntroPortal, nombrePortal)"
+                        data-url="@Url.Action("Index", "AuditoriaPortal", new { embed = 1 })">
+                    <span class="cg-tab-ic"><i class="fas fa-globe-americas"></i></span>
+                    <span class="cg-tab-tx"><span class="cg-tab-t">@nombrePortal</span><span class="cg-tab-s">@Resources.Strings.AudHub_SubPortal</span></span>
+                </button>
+            }
             <button type="button" class="cg-tab" data-key="ia"
                     data-intro="@Resources.Strings.AudHub_IntroIA"
                     data-url="@Url.Action("Index", "AuditoriaConsultasIA", new { embed = 1 })">
