@@ -12,7 +12,7 @@
 
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
 <link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
-<link href="~/Assets/css/informe-pyg.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-pyg.css")" rel="stylesheet" />
 <link href="~/Assets/css/informe-tesoreria.css" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
@@ -155,7 +155,7 @@
         @* 1. Encabezado: marca + empresa + chips de contexto + unidad/exportaciones *@
         <div class="lt-card" id="tesPanelResultado">
             <div class="pyg2-letterhead">
-                <span class="pyg2-brand"><img class="bm-logo" src="~/Assets/img/Bufins_Wordmark_Purple.png" alt="Bufins"><span class="bm-sub">@T("TesPpto_Subtitulo")</span></span>
+                <span class="pyg2-brand"><img class="bm-logo" src="~/Assets/img/Bufins_Wordmark_Purple.png" alt="Bufins" height="14"><span class="bm-sub">@T("TesPpto_Subtitulo")</span></span>
                 <span class="fecha"><span>@T("TesPpto_GeneradoEl")</span> <span id="tesFechaGenerado">&mdash;</span></span>
             </div>
             <div class="pyg2-head">

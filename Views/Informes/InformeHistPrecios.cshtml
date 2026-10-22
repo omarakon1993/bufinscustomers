@@ -74,7 +74,7 @@
 
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
 <link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
-<link href="~/Assets/css/informe-pyg.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-pyg.css")" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
 <link href="~/Assets/css/informe-histprecios.css" rel="stylesheet" />
 <link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
@@ -202,7 +202,7 @@
         @* 1. Encabezado *@
         <div class="lt-card" id="hpPanelResultado">
             <div class="pyg2-letterhead">
-                <span class="pyg2-brand"><img class="bm-logo" src="~/Assets/img/Bufins_Wordmark_Purple.png" alt="Bufins"><span class="bm-sub">@Resources.Strings.HP_Subtitulo</span></span>
+                <span class="pyg2-brand"><img class="bm-logo" src="~/Assets/img/Bufins_Wordmark_Purple.png" alt="Bufins" height="14"><span class="bm-sub">@Resources.Strings.HP_Subtitulo</span></span>
                 <span class="fecha"><span>@Resources.Strings.HP_GeneradoEl</span> <span id="hpFechaGenerado">&mdash;</span></span>
             </div>
             <div class="pyg2-head">
