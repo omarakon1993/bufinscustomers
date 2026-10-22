@@ -359,13 +359,21 @@
         }
     };
 
-    var _moneyColSet = { 'valor': true, 'valoracumulado': true, 'valorfuturo': true, 'valorpresupuesto': true, 'valorpresupuestoacumulado': true, 'valorpresupuestoconajuste': true };
+    var _moneyColSet = { 'valor': true, 'valoracumulado': true, 'valorfuturo': true, 'valorfuturoacumulado': true, 'valorforecast': true, 'valorpresupuesto': true, 'valorpresupuestoacumulado': true, 'valorpresupuestoconajuste': true };
+
+    // Columna de valor: la marca el servidor por tipo de dato (decimal/money/float); el nombre
+    // conocido queda como respaldo. Así toda columna de valores sale como 1.236.285.416,35.
+    function esColumnaNumerica(idx) {
+        if (_pag.numericas && _pag.numericas[idx] === true) return true;
+        return !!_moneyColSet[(_pag.columnas[idx] || '').toLowerCase()];
+    }
 
     // ── Estado de paginación ──────────────────────────────────────────────
     var _pag = {
         filas:      [],
         filasVista: [],   // filas tras aplicar los filtros de la tabla (búsqueda general + por campo)
         columnas:   [],
+        numericas:  [],   // bool por columna (del servidor): true = columna de valor
         pagina:     1,
         porPagina:  50,
         idModelo:   null,
@@ -419,7 +427,7 @@
     // Repuebla el <select> de operadores según si la columna elegida es numérica/dinero o texto.
     function poblarOperadoresParaCampo() {
         var idx = $('#mcFiltroCampo').val();
-        var esNum = idx !== '' && !!_moneyColSet[(_pag.columnas[idx] || '').toLowerCase()];
+        var esNum = idx !== '' && esColumnaNumerica(parseInt(idx, 10));
         var ops = operadoresParaColumna(esNum);
         $('#mcFiltroOperador').html(ops.map(function (o) {
             return '<option value="' + o.value + '">' + o.label + '</option>';
@@ -434,7 +442,7 @@
         if (idx === '' || idx == null || !valor) return;
 
         var campoNombre  = _pag.columnas[idx];
-        var esNum        = !!_moneyColSet[(campoNombre || '').toLowerCase()];
+        var esNum        = esColumnaNumerica(parseInt(idx, 10));
         var operador     = $('#mcFiltroOperador').val();
         var operadorLabel = $('#mcFiltroOperador option:selected').text();
 
@@ -928,6 +936,7 @@
                         icono:    $c.data('icono') || 'fas fa-table',
                         columnas: resp.exito ? resp.columnas : null,
                         filas:    resp.exito ? resp.filas : null,
+                        numericas: resp.exito ? (resp.numericas || []) : null,
                         error:    resp.exito ? null : (resp.mensaje || _modelo.textos.error)
                     };
                     siguiente();
@@ -1005,6 +1014,7 @@
         _pag.filas      = r.filas;
         _pag.filasVista = r.filas;
         _pag.columnas   = r.columnas;
+        _pag.numericas  = r.numericas || [];
         _pag.pagina     = 1;
         _pag.idModelo   = idModelo;
         _pag.idEmpresa  = $('#idEmpresa').val();
@@ -1012,7 +1022,7 @@
         // Header de la tabla (alinea a la derecha las columnas de valor)
         var thead = '<tr>';
         for (var i = 0; i < r.columnas.length; i++) {
-            var esNum = !!_moneyColSet[(r.columnas[i] || '').toLowerCase()];
+            var esNum = esColumnaNumerica(i);
             thead += '<th' + (esNum ? ' class="num"' : '') + '>' +
                      $('<span>').text(r.columnas[i]).html() + '</th>';
         }
@@ -1051,7 +1061,7 @@
             tbody += '<tr>';
             for (var c = 0; c < slice[r].length; c++) {
                 var col   = (_pag.columnas[c] || '').toLowerCase();
-                var esNum = !!_moneyColSet[col];
+                var esNum = esColumnaNumerica(c);
                 var esKey = (col === 'cuentapuc' || col === 'codigo');
                 var val   = slice[r][c];
                 if (val !== '' && esNum) {

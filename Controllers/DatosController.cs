@@ -303,6 +303,7 @@ namespace bufinscustomers.Controllers
                         string mensajeResp = "Ejecutado correctamente.";
                         var lastCols = new List<string>();
                         var lastFilas = new List<List<string>>();
+                        var lastNumericas = new List<bool>();
 
                         do
                         {
@@ -312,7 +313,7 @@ namespace bufinscustomers.Controllers
                                 cols.Add(reader.GetName(i));
 
                             bool esStatus = cols.Contains("CodMessage");
-                            var isMoney   = cols.Select(c => _moneyColNames.Contains(c)).ToList();
+                            var isMoney   = MarcarColumnasValor(reader, cols);
                             var filas = new List<List<string>>();
 
                             while (reader.Read())
@@ -345,6 +346,7 @@ namespace bufinscustomers.Controllers
                             {
                                 lastCols = cols;
                                 lastFilas = filas;
+                                lastNumericas = isMoney;
                             }
                         } while (reader.NextResult());
 
@@ -364,7 +366,7 @@ namespace bufinscustomers.Controllers
                             new NotificacionesService().Crear(usuario.Id, R("Notif_ErrorModelo"), mensajeResp, "error", "/Datos/Modelo");
                         }
 
-                        return Json(new { exito = codMessage == 1, mensaje = mensajeResp, columnas = lastCols, filas = lastFilas });
+                        return Json(new { exito = codMessage == 1, mensaje = mensajeResp, columnas = lastCols, filas = lastFilas, numericas = lastNumericas });
                     }
                 }
             }
@@ -513,6 +515,22 @@ namespace bufinscustomers.Controllers
         private static readonly HashSet<string> _moneyColNames =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Valor", "ValorAcumulado", "ValorFuturo", "ValorFuturoAcumulado", "ValorForecast", "ValorPresupuesto", "ValorPresupuestoAcumulado", "ValorPresupuestoConAjuste" };
 
+        // Columna de valor = nombre conocido O tipo decimal/money/float en el result set.
+        // Así cualquier columna nueva de valores de un SP de modelo sale con formato numérico
+        // sin tener que agregarla a la lista; los enteros (Año, Mes, Id, Ord…) no entran.
+        private static List<bool> MarcarColumnasValor(IDataRecord reader, List<string> cols)
+        {
+            var marcas = new List<bool>(cols.Count);
+            for (int i = 0; i < cols.Count; i++)
+            {
+                Type t = null;
+                try { t = reader.GetFieldType(i); } catch { }
+                marcas.Add(_moneyColNames.Contains(cols[i])
+                    || t == typeof(decimal) || t == typeof(double) || t == typeof(float));
+            }
+            return marcas;
+        }
+
         private void EjecutarModeloYEscribirHoja(SqlConnection cn, IXLWorksheet ws, ModeloEjecucion modelo, int idEmpresa, int idUsuario, int idEscenario)
         {
             using (var cmd = new SqlCommand(modelo.NombreSP, cn))
@@ -541,7 +559,7 @@ namespace bufinscustomers.Controllers
                         if (!esStatus && fieldCount > 0)
                         {
                             // Marca qué columnas son dinero — se decide una sola vez por result set
-                            var isMoney = cols.Select(c => _moneyColNames.Contains(c)).ToList();
+                            var isMoney = MarcarColumnasValor(reader, cols);
                             var data    = new List<List<object>>();
 
                             while (reader.Read())

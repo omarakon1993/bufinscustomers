@@ -260,7 +260,14 @@
         }
     };
 
-    var _moneyColSet = { 'valor': true, 'valoracumulado': true, 'valorfuturo': true, 'valorpresupuesto': true, 'valorpresupuestoacumulado': true, 'valorpresupuestoconajuste': true };
+    var _moneyColSet = { 'valor': true, 'valoracumulado': true, 'valorfuturo': true, 'valorfuturoacumulado': true, 'valorforecast': true, 'valorpresupuesto': true, 'valorpresupuestoacumulado': true, 'valorpresupuestoconajuste': true };
+
+    // Columna de valor: la marca el servidor por tipo de dato (col.numerica); el nombre conocido
+    // queda como respaldo. Así toda columna de valores sale como 1.236.285.416,35.
+    function esColumnaNumerica(col) {
+        if (!col) return false;
+        return col.numerica === true || !!_moneyColSet[(col.nombreTecnico || '').toLowerCase()];
+    }
 
     // ── Estado de paginación ──────────────────────────────────────────────
     var _pag = {
@@ -317,7 +324,7 @@
 
     function poblarOperadoresParaCampo() {
         var idx = $('#mcFiltroCampo').val();
-        var esNum = idx !== '' && !!_moneyColSet[(_pag.columnas[idx].nombreTecnico || '').toLowerCase()];
+        var esNum = idx !== '' && esColumnaNumerica(_pag.columnas[idx]);
         var ops = operadoresParaColumna(esNum);
         $('#mcFiltroOperador').html(ops.map(function (o) {
             return '<option value="' + o.value + '">' + o.label + '</option>';
@@ -330,7 +337,7 @@
         if (idx === '' || idx == null || !valor) return;
 
         var col      = _pag.columnas[idx];
-        var esNum    = !!_moneyColSet[(col.nombreTecnico || '').toLowerCase()];
+        var esNum    = esColumnaNumerica(col);
         var operador = $('#mcFiltroOperador').val();
         var operadorLabel = $('#mcFiltroOperador option:selected').text();
 
@@ -685,7 +692,7 @@
 
         var thead = '<tr>';
         for (var i = 0; i < r.columnas.length; i++) {
-            var esNum = !!_moneyColSet[(r.columnas[i].nombreTecnico || '').toLowerCase()];
+            var esNum = esColumnaNumerica(r.columnas[i]);
             thead += '<th' + (esNum ? ' class="num"' : '') + '>' +
                      $('<span>').text(r.columnas[i].nombreAmigable).html() + '</th>';
         }
@@ -720,7 +727,7 @@
             for (var c = 0; c < _pag.columnas.length; c++) {
                 var col      = _pag.columnas[c];
                 var colLower = (col.nombreTecnico || '').toLowerCase();
-                var esNum    = !!_moneyColSet[colLower];
+                var esNum    = esColumnaNumerica(col);
                 var esKey    = (colLower === 'cuentapuc' || colLower === 'codigo');
                 var val      = slice[r][col.nombreTecnico];
                 if (val !== '' && val != null && esNum) {

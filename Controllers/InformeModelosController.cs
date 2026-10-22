@@ -86,10 +86,17 @@ namespace bufinscustomers.Controllers
                 var idEmpresaConsulta = filtros.IdEmpresa ?? idEmpresaUsuario;
                 var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaConsulta);
 
+                // numerica = la columna trae decimal/money/float (el primer valor no nulo manda):
+                // la vista la pinta como 1.236.285.416,35 aunque su nombre no esté en su lista.
                 var columnasAmigables = resultado.Columnas.Select(c => new
                 {
                     nombreTecnico = c,
-                    nombreAmigable = _service.ObtenerNombreAmigableColumna(c)
+                    nombreAmigable = _service.ObtenerNombreAmigableColumna(c),
+                    numerica = resultado.Filas
+                        .Select(f => f.ContainsKey(c) ? f[c] : null)
+                        .Where(v => v != null && v != DBNull.Value)
+                        .Select(v => v is decimal || v is double || v is float)
+                        .FirstOrDefault()
                 }).ToList();
 
                 // Los números se envían SIN formatear (decimal/double crudos, no "N2" en texto):
