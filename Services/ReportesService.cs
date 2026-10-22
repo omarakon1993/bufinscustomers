@@ -8,8 +8,6 @@ namespace bufinscustomers.Services
 {
     public class ReportesService : BaseService
     {
-        //private readonly string cadena = "Data Source=190.90.160.168,1433;Initial Catalog=bufinscustomers;Persist Security Info=True;User ID=oglearni_bufins;Password=Bufins2025**;Encrypt=false";
-
         public List<Reportes> ObtenerReportes()
         {
             List<Reportes> reportes = new List<Reportes>();
