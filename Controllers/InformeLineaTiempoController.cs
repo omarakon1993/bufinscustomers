@@ -255,7 +255,8 @@ namespace bufinscustomers.Controllers
 
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
                 new EmailService().EnviarInforme(string.Join(", ", lista), R("LineaTiempo_PageTitle"), empresa, false, contexto, kpis,
-                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(idEmpresaConsulta));
+                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(idEmpresaConsulta),
+                    ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA));
 
                 new AuditoriaService().RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeLineaTiempo", idEmpresaConsulta.Value.ToString(),
@@ -319,7 +320,8 @@ namespace bufinscustomers.Controllers
         const string nombreHoja = "LineaTiempo";
         const int filaEncabezado = 5;
         const int filaInicio = filaEncabezado + 1;
-        var colorPrincipal = XLColor.FromArgb(99, 102, 241);
+        var tema = ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA);
+        var colorPrincipal = ExcelTemaHelper.Principal(tema);
 
         using (var package = new XLWorkbook())
         {
@@ -349,14 +351,14 @@ namespace bufinscustomers.Controllers
                     ? (resultado.NombreEscenarioPrincipal ?? serie.Serie.Indicador)
                     : (!string.IsNullOrWhiteSpace(opciones.CampoTexto) ? opciones.CampoTexto : serie.Serie.Indicador);
                 worksheet.Cell(filaEncabezado, 2).Value = encabezado ?? R("LineaTiempo_ColValor");
-                columnasValor.Add(Tuple.Create(2, serie.Serie.Puntos, ColoresSerie[serie.Indice % ColoresSerie.Length]));
+                columnasValor.Add(Tuple.Create(2, serie.Serie.Puntos, ExcelTemaHelper.Serie(tema, serie.Indice)));
                 totalColumnas = 2;
 
                 if (tieneComparacion)
                 {
                     worksheet.Cell(filaEncabezado, 3).Value = resultado.NombreEscenarioComparacion ?? R("LineaTiempo_ColComparacion");
                     worksheet.Cell(filaEncabezado, 4).Value = R("LineaTiempo_ColVariacion");
-                    columnasValor.Add(Tuple.Create(3, resultado.Comparacion, ColorComparacion));
+                    columnasValor.Add(Tuple.Create(3, resultado.Comparacion, TemaInforme.SinAlmohadilla(tema.Comp)));
                     totalColumnas = 4;
                 }
             }
@@ -365,7 +367,7 @@ namespace bufinscustomers.Controllers
                 for (int i = 0; i < visibles.Count; i++)
                 {
                     worksheet.Cell(filaEncabezado, i + 2).Value = visibles[i].Serie.Indicador;
-                    columnasValor.Add(Tuple.Create(i + 2, visibles[i].Serie.Puntos, ColoresSerie[visibles[i].Indice % ColoresSerie.Length]));
+                    columnasValor.Add(Tuple.Create(i + 2, visibles[i].Serie.Puntos, ExcelTemaHelper.Serie(tema, visibles[i].Indice)));
                 }
                 totalColumnas = visibles.Count + 1;
             }

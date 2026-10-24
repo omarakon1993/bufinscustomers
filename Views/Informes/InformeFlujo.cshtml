@@ -35,7 +35,8 @@
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-pyg.css")" rel="stylesheet" />
 <link href="~/Assets/css/informe-tesoreria.css" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
-<link href="~/Assets/css/empresa-logo.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
 
 <div class="container-fluid px-4">
@@ -147,6 +148,8 @@
             <p class="lt-help" id="flSinMeses" style="display:none;">@T(P + "SinMesesDatos")</p>
         </div>
 
+        @Html.Partial("_TemaInformeSelector", "flTema")
+
         <div class="btn-group-actions">
             <button type="button" id="btnConsultarFl" class="btn btn-modern-gradient" disabled>
                 <i class="fas fa-arrow-right mr-1"></i>@T("LineaTiempo_BtnGenerar")
@@ -235,9 +238,9 @@
                     <span class="pyg2-legend">
                         <span><i class="sq" style="background:#16A34A"></i>@T("Flujo_LeyendaPositivo")</span>
                         <span><i class="sq" style="background:#F87171"></i>@T("Flujo_LeyendaNegativo")</span>
-                        <span><i class="sw" style="background:#6366F1"></i>@T("Flujo_NetoAcumulado")</span>
+                        <span><i class="sw" style="background:var(--tm-p,#6366F1)"></i>@T("Flujo_NetoAcumulado")</span>
                         <span id="flLeyendaPpto"><i class="dash"></i>@T("Flujo_LeyendaPptoAcum")</span>
-                        <span id="flLeyendaEsc" style="display:none;"><i class="sw" style="background:#0EA5E9"></i><span id="flLeyendaEscNombre"></span></span>
+                        <span id="flLeyendaEsc" style="display:none;"><i class="sw" style="background:var(--tm-c,#0EA5E9)"></i><span id="flLeyendaEscNombre"></span></span>
                     </span>
                     <button type="button" class="lt-tool-btn square on tes-btn-etq" data-chart="principal" title="@T("LineaTiempo_Etiquetas")" aria-label="@T("LineaTiempo_Etiquetas")"><i class="fas fa-tag"></i></button>
                 </div>
@@ -260,7 +263,7 @@
                     <div class="pyg2-card-sub" id="flCascadaSub">&mdash;</div>
                 </div>
                 <span class="pyg2-legend">
-                    <span><i class="sq" style="background:#6366F1"></i>@T("Flujo_LeyendaTotal")</span>
+                    <span><i class="sq" style="background:var(--tm-p,#6366F1)"></i>@T("Flujo_LeyendaTotal")</span>
                     <span><i class="sq" style="background:#F87171"></i>@T("Flujo_LeyendaResta")</span>
                     <span><i class="sq" style="background:#16A34A"></i>@T("Flujo_LeyendaSuma")</span>
                 </span>
@@ -344,7 +347,8 @@
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
 <script src="~/Assets/js/bufins-pdf-marca.js"></script>
 <script src="~/Assets/js/html2canvas.min.js"></script>
-<script src="~/Assets/js/empresa-logo.js"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/empresa-logo.js")"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
 <script src="~/Assets/js/bufins-markdown.js"></script>
 <script src="~/Assets/js/rango-atajos.js"></script>
@@ -730,6 +734,11 @@
     function consultarReporte() {
         if (!_fl.rango.length) return;
         var filtros = filtrosDelSlider();
+
+        InformeTema.preparar().then(function (ok) { if (ok) consultarReporteConTema(filtros); });
+    }
+
+    function consultarReporteConTema(filtros) {
         $('#overlayConsultandoFl').css('display', 'flex');
         $.post(_fl.urls.reporte, $.extend({ __RequestVerificationToken: _fl.token }, filtros), function (resp) {
             $('#overlayConsultandoFl').hide();
@@ -769,6 +778,8 @@
         $('#flNotaEscenario').text(_fl.t.escenarioSinDatosNota).toggle(!!r.IdEscenarioComparar && !r.HayEscenarioComparar);
 
         $('#flEstadoInicial, #flSinDatos').hide();
+        InformeTema.aplicar(document.getElementById('flResultado'));           // variables CSS + colores de gráficos/PDF
+        $.extend(_fl.filtrosConsultados, InformeTema.parametros());      // Excel y correo re-resuelven el tema en el servidor
         $('#flResultado').show();   // visible ANTES de crear los charts: Chart.js mide el contenedor
         repintar();
     }
@@ -961,14 +972,14 @@
             { type: 'bar', label: _fl.t.flujoNeto, data: meses.map(function (m) { return escalarValor(m.Neto); }), order: 4,
               backgroundColor: meses.map(function (m) { return alfa(m.Neto >= 0 ? '#16A34A' : '#F87171', m.Proyectado); }), borderRadius: 4, maxBarThickness: 36 },
             { type: 'line', label: _fl.t.netoAcum, data: meses.map(function (m) { return escalarValor(m.NetoAcum); }), order: 1,
-              borderColor: '#6366F1', backgroundColor: '#6366F1', borderWidth: 2.5, tension: .25, pointRadius: 3, pointHoverRadius: 5, etqColor: '#4338CA' }
+              borderColor: InformeTema.actual.p, backgroundColor: InformeTema.actual.p, borderWidth: 2.5, tension: .25, pointRadius: 3, pointHoverRadius: 5, etqColor: InformeTema.actual.strong }
         ];
         if (r.HayPresupuesto) datasets.push({ type: 'line', label: _fl.t.medida.ppto + ' (' + _fl.t.netoAcum.toLowerCase() + ')', sinEtiqueta: true, order: 2,
-            data: meses.map(function (m) { return escalarValor(m.NetoPptoAcum); }), borderColor: '#D97706', backgroundColor: 'transparent',
+            data: meses.map(function (m) { return escalarValor(m.NetoPptoAcum); }), borderColor: InformeTema.actual.comp, backgroundColor: 'transparent',
             borderWidth: 2, borderDash: [6, 4], tension: .25, pointRadius: 0, pointHoverRadius: 4 });
         // (El año anterior no se dibuja aquí: su escala suele aplastar el año en curso; va en los indicadores y en la tabla.)
         if (r.HayEscenarioComparar) datasets.push({ type: 'line', label: nombreEscenarioComp(r), sinEtiqueta: true, order: 3,
-            data: meses.map(function (m) { return escalarValor(m.NetoEscAcum); }), borderColor: '#0EA5E9', backgroundColor: 'transparent',
+            data: meses.map(function (m) { return escalarValor(m.NetoEscAcum); }), borderColor: InformeTema.actual.tercero, backgroundColor: 'transparent',
             borderWidth: 2, tension: .25, pointRadius: 0, pointHoverRadius: 4 });
 
         _fl.charts.principal = new Chart(document.getElementById('flChartPrincipal').getContext('2d'), {
@@ -999,7 +1010,7 @@
         if (!barras.length) return;
         var etiquetas = barras.map(function (b) { return _fl.t.casc[b.Etiqueta] || b.Etiqueta; });
         var datos = barras.map(function (b) { return [escalarValor(b.Desde), escalarValor(b.Hasta)]; });
-        var colores = barras.map(function (b) { return b.Tipo === 'total' ? '#6366F1' : (b.Tipo === 'positivo' ? '#16A34A' : '#F87171'); });
+        var colores = barras.map(function (b) { return b.Tipo === 'total' ? InformeTema.actual.p : (b.Tipo === 'positivo' ? '#16A34A' : '#F87171'); });
 
         var etiquetasPlugin = {
             id: 'flCascadaEtiquetas',
@@ -1289,7 +1300,7 @@
     // PDF gerencial (A4 horizontal, jsPDF puro): pág. 1 resumen (estado, KPIs, insights, lo más relevante); pág. 2 gráficos (flujo mensual +
     // puente); pág. 3+ tabla por mes. Devuelve el documento (con __nombre) para descarga y para el correo.
     function construirPdf(r) {
-        var T = _fl.t, P = T.pdf, C = PDF_COL;
+        var T = _fl.t, P = T.pdf, C = InformeTema.pdf(PDF_COL), DEG = InformeTema.pdfDegradado();
         var pdf = new window.jspdf.jsPDF('l', 'mm', 'a4');
         var W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight();
         var M = 12, ANCHO = W - M * 2, LIMITE_Y = H - 15;
@@ -1300,9 +1311,9 @@
         function limpiar(t) { return String(t == null ? '' : t).replace(/\*\*|__/g, '').replace(/\s+/g, ' ').trim(); }
         function ancho(t) { return pdf.getTextWidth(String(t)); }
         function degradado(x, yy, w, h) {
-            var pasos = 90, n = PDF_DEGRADADO.length - 1;
+            var pasos = 90, n = DEG.length - 1;
             for (var i = 0; i < pasos; i++) {
-                var tt = i / (pasos - 1), seg = Math.min(n - 1, Math.floor(tt * n)), f = tt * n - seg, a = PDF_DEGRADADO[seg], b = PDF_DEGRADADO[seg + 1];
+                var tt = i / (pasos - 1), seg = Math.min(n - 1, Math.floor(tt * n)), f = tt * n - seg, a = DEG[seg], b = DEG[seg + 1];
                 pdf.setFillColor(Math.round(a[0] + (b[0] - a[0]) * f), Math.round(a[1] + (b[1] - a[1]) * f), Math.round(a[2] + (b[2] - a[2]) * f));
                 pdf.rect(x + (w * i) / pasos, yy, w / pasos + 0.15, h, 'F');
             }
@@ -1590,7 +1601,9 @@
         });
 
         $('#btnConsultarFl').on('click', consultarReporte);
+        InformeTema.montar({ selector: '#flTema', empresa: '#flEmpresa' });
         $('#btnLimpiarFl').on('click', function () {
+            InformeTema.reset();
             $('#flMedida').val('real').trigger('change.select2');
             $('#flEscenarioComparar').val('').trigger('change.select2');
             $('#flNivelDetalle').val('todas').trigger('change.select2');

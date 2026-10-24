@@ -1,0 +1,84 @@
+@* Modal «Colores corporativos» (hasta 2 paletas por empresa). Se usa desde el gestor de Empresas y desde Configuración de empresas.
+   Uso en la página:
+     <link href="~/Assets/css/tema-informe.css" rel="stylesheet" />
+     @Html.Partial("_ColoresCorporativosModal")
+     <script src="~/Assets/js/colores-corporativos.js"></script>
+     ... y para abrirlo: ColoresCorp.abrir(idEmpresa, nombreEmpresa);
+   Ver CLAUDE.md, «Tema de colores de los informes — ESTÁNDAR». *@
+@helper Campo(string campo, string clave, bool obligatorio)
+{
+    var texto = (string)System.Web.HttpContext.GetGlobalResourceObject("Strings", clave);
+    <div class="pc-item">
+        <label>@texto@if (obligatorio) { <span class="required"> *</span> }</label>
+        <div class="pc-color">
+            <input type="color" class="pc-picker" data-campo="@campo" value="#583AFF" aria-label="@texto" />
+            <div class="bf-input"><i class="fas fa-hashtag"></i><input type="text" class="form-control pc-hex" data-campo="@campo" maxlength="7" placeholder="#583AFF" autocomplete="off" spellcheck="false" /></div>
+        </div>
+    </div>
+}
+<div class="modal fade" id="coloresCorpModal" tabindex="-1" aria-labelledby="coloresCorpLabel" aria-hidden="true"
+     data-url-obtener="@Url.Action("Obtener", "EmpresaPaleta")" data-url-guardar="@Url.Action("Guardar", "EmpresaPaleta")"
+     data-url-eliminar="@Url.Action("Eliminar", "EmpresaPaleta")" data-url-resolver="@Url.Action("Resolver", "InformeTema")">
+    <div class="modal-dialog modal-dialog-centered bf-modal-wide">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="coloresCorpLabel">
+                    <i class="fas fa-palette"></i>
+                    <span class="bf-modal-titles">
+                        <span>@Resources.Strings.PaletaCorp_Titulo</span>
+                        <span class="bf-modal-sub" id="coloresCorpSub"></span>
+                    </span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                @Html.AntiForgeryToken()
+                <p class="pc-intro">@Resources.Strings.PaletaCorp_Sub</p>
+                <div class="pc-aviso" id="coloresCorpAviso" hidden></div>
+                <div class="row" id="coloresCorpCuerpo">
+                    @for (int slot = 1; slot <= 2; slot++)
+                    {
+                        <div class="col-md-6 mb-3">
+                            <div class="pc-card" data-slot="@slot">
+                                <div class="pc-card-head">
+                                    <span class="pc-card-tit">@string.Format(Resources.Strings.PaletaCorp_Paleta, slot)</span>
+                                    <span class="pc-estado" data-estado>@Resources.Strings.PaletaCorp_Vacia</span>
+                                    <button type="button" class="bf-btn-icon-danger pc-quitar" hidden title="@Resources.Strings.PaletaCorp_Quitar" aria-label="@Resources.Strings.PaletaCorp_Quitar"><i class="fas fa-trash-alt"></i></button>
+                                </div>
+                                <div class="pc-colores">
+                                    @Campo("primario", "PaletaCorp_Principal", true)
+                                    @Campo("secundario", "PaletaCorp_Secundario", true)
+                                    @Campo("acento", "PaletaCorp_Acento", false)
+                                </div>
+                                <small class="form-text">@Resources.Strings.PaletaCorp_HintPrincipal</small>
+                                <div class="pc-prev" aria-label="@Resources.Strings.PaletaCorp_Muestra">
+                                    <div class="pc-prev-barra"></div>
+                                    <div class="pc-prev-puntos"></div>
+                                    <span class="pc-prev-texto">@Resources.Strings.PaletaCorp_Muestra</span>
+                                </div>
+                                <div class="pc-msg" role="status" aria-live="polite"></div>
+                                <button type="button" class="btn btn-primary pc-guardar"><i class="fas fa-save"></i> @Resources.Strings.PaletaCorp_Guardar</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span class="bf-footer-note"><b>*</b> @Resources.Strings.Common_CamposObligatorios</span>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@Resources.Strings.Common_Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    window.__coloresCorpTextos = {
+        registrada: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PaletaCorp_Registrada))',
+        vacia: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PaletaCorp_Vacia))',
+        confirmarTitulo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PaletaCorp_Quitar))',
+        confirmarTexto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PaletaCorp_ConfirmarQuitar))',
+        cancelar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Layout_Cancel))',
+        sinTabla: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PaletaCorp_SinTabla))',
+        errorGeneral: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Tema_Selector_Error))',
+        faltan: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Tema_Err_Hex))'
+    };
+</script>

@@ -12,7 +12,8 @@
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
 <link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
-<link href="~/Assets/css/empresa-logo.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
 
 <style>
@@ -66,7 +67,7 @@
 
     .lt-table-wrap { overflow-x: auto; border: 1px solid var(--lt-line); border-radius: 10px; }
     .lt-table-wrap table { width: 100%; border-collapse: collapse; min-width: 480px; }
-    .lt-table-wrap thead th { background: var(--lt-brand-gradient); color: #fff; text-align: left; font-size: 12px; font-weight: 700; padding: 10px 14px; white-space: nowrap; }
+    .lt-table-wrap thead th { background: var(--tm-grad, var(--lt-brand-gradient)); color: #fff; text-align: left; font-size: 12px; font-weight: 700; padding: 10px 14px; white-space: nowrap; }
     .lt-table-wrap tbody td { padding: 9px 14px; font-size: 13px; border-top: 1px solid var(--lt-line); font-variant-numeric: tabular-nums; }
     .lt-table-wrap tbody tr:nth-child(even) { background: var(--lt-surface-2); }
     .lt-table-wrap td.num { text-align: right; }
@@ -77,7 +78,7 @@
     .lt-empty { text-align: center; padding: 3rem 1.5rem; color: var(--lt-text-muted); }
     .lt-empty .lt-empty-icon {
         width: 64px; height: 64px; margin: 0 auto 1.1rem; border-radius: 50%;
-        background: linear-gradient(135deg, rgba(99,102,241,.14), rgba(1,225,215,.14));
+        background: var(--tm-wash,linear-gradient(135deg, rgba(var(--tm-p-rgb,99,102,241),.14), rgba(var(--tm-s-rgb,1,225,215),.14)));
         display: flex; align-items: center; justify-content: center;
     }
     .lt-empty .lt-empty-icon i { font-size: 1.7rem; background: var(--lt-brand-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -211,6 +212,8 @@
                 <p class="lt-help">@Resources.Strings.LineaTiempo_FilaCuandoHint</p>
             </div>
         </div>
+
+        @Html.Partial("_TemaInformeSelector", "ltTema")
 
         <div class="lt-actions-bar">
             <button type="button" class="lt-comparar-toggle" id="ltBtnToggleComparar">
@@ -393,7 +396,8 @@
 <script src="~/Assets/js/select2/select2.min.js"></script>
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
 <script src="~/Assets/js/html2canvas.min.js"></script>
-<script src="~/Assets/js/empresa-logo.js"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/empresa-logo.js")"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
 <script src="~/Assets/js/rango-atajos.js"></script>
 <script>
@@ -415,7 +419,7 @@
     var LT_PALETTE = ['#6366F1', '#D97706', '#06B6D4', '#16A34A', '#DC2626', '#8B5CF6', '#0EA5E9', '#F59E0B'];
     var LT_MAX_VARIABLES = LT_PALETTE.length;
 
-    function ltColorSerie(i) { return LT_PALETTE[i % LT_PALETTE.length]; }
+    function ltColorSerie(i) { var sr = InformeTema.actual.serie; return sr[i % sr.length]; }   // Bufins = LT_PALETTE
 
     function ltHexARgb(hex) {
         var h = hex.replace('#', '');
@@ -652,6 +656,7 @@
         $('#ltKnobTo').on('pointerdown', function (e) { e.stopPropagation(); iniciarArrastreSlider(e, 'to'); });
         $('#ltRangoTrack').on('pointerdown', function (e) { clicEnPista(e); });
         $('#ltKnobFrom, #ltKnobTo').on('keydown', function (e) { moverKnobConTeclado(e, this.id === 'ltKnobFrom' ? 'from' : 'to'); });
+        InformeTema.montar({ selector: '#ltTema', empresa: '#ltEmpresa' });
         $('#btnGenerarLT').on('click', generar);
         $('#btnLimpiarLT').on('click', limpiar);
         $('#ltPdfOpcionGrafico, #ltPdfOpcionDatos').on('click', function () {
@@ -1233,6 +1238,10 @@
         var filtros = armarFiltros();
         if (!filtros.Indicadores.length || !filtros.Campo) return;
 
+        InformeTema.preparar().then(function (ok) { if (ok) generarConTema(filtros); });
+    }
+
+    function generarConTema(filtros) {
         $('#ltEstadoInicial, #ltSinDatos, #ltResultado').hide();
         $('#ltLoading').show();
 
@@ -1248,6 +1257,7 @@
                 }
                 _lt.ultimaRespuesta = resp;
                 _lt.ocultas = {}; // cada "Generar" nuevo arranca con todas las series visibles
+                InformeTema.aplicar(document.getElementById('ltResultado'));   // variables CSS + colores de series/PDF
                 ltPintarStrip(resp);
                 ltEvaluarEscala(resp);
                 pintarLetterhead(resp);
@@ -1263,6 +1273,7 @@
     }
 
     function limpiar() {
+        InformeTema.reset();
         elTabla.val('').trigger('change.select2');
         if (_lt.esAdmin) elEmpresa.prop('selectedIndex', 0).trigger('change.select2');
         elEscenario.prop('selectedIndex', 0).trigger('change.select2');
@@ -1494,6 +1505,7 @@
         d.Subtitulo = $('#ltChartSubtitle').data('completo') || $('#ltChartSubtitle').text();
         d.CampoTexto = campoSeleccionadoTexto();
         d.SeriesOcultas = Object.keys(_lt.ocultas).filter(function (nombre) { return _lt.ocultas[nombre]; });
+        $.extend(d, InformeTema.parametros());   // paleta aplicada: el servidor la re-resuelve y valida
         return d;
     }
 
@@ -1567,7 +1579,7 @@
             }
 
             // Encabezado tipo carta
-            pdf.setFillColor(99, 102, 241);
+            pdf.setFillColor.apply(pdf, InformeTema.actual.pdf.marca);
             pdf.rect(0, 0, pageW, 24, 'F');
             pdf.setTextColor(255, 255, 255);
             pdf.setFont(undefined, 'bold');
@@ -1623,7 +1635,7 @@
                 var x = margin + col * (kpiW + 6);
                 var yBox = y + filaKpi * 24;
                 pdf.setDrawColor(228, 225, 240);
-                pdf.setFillColor(244, 243, 251);
+                pdf.setFillColor.apply(pdf, InformeTema.actual.pdf.suave);
                 pdf.roundedRect(x, yBox, kpiW, 18, 2, 2, 'FD');
                 if (k.color) {
                     var rgb = ltHexARgb(k.color);
@@ -1725,7 +1737,7 @@
                 if (y + rowH * 2 > pageH - margin - 10) nuevaPagina();
 
                 var cabeceraTabla = function () {
-                    pdf.setFillColor(99, 102, 241);
+                    pdf.setFillColor.apply(pdf, InformeTema.actual.pdf.marca);
                     pdf.setTextColor(255, 255, 255);
                     pdf.setFont(undefined, 'bold');
                     pdf.setFontSize(8.5);
@@ -1742,7 +1754,7 @@
 
                 filas.forEach(function (fila, idx) {
                     if (y + rowH > pageH - margin - 10) { nuevaPagina(); cabeceraTabla(); }
-                    if (idx % 2 === 1) { pdf.setFillColor(244, 243, 251); pdf.rect(margin, y, pageW - margin * 2, rowH, 'F'); }
+                    if (idx % 2 === 1) { pdf.setFillColor.apply(pdf, InformeTema.actual.pdf.suave); pdf.rect(margin, y, pageW - margin * 2, rowH, 'F'); }
                     fila.forEach(function (val, i) { pdf.text(String(val), margin + i * colW + 3, y + 4.8); });
                     y += rowH;
                 });

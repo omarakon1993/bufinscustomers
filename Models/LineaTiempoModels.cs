@@ -5,6 +5,12 @@ namespace bufinscustomers.Models
     /// <summary>Filtros para el informe "Línea de Tiempo Financiera" (serie de tiempo por indicador).</summary>
     public class FiltrosLineaTiempo
     {
+        // Paleta del informe (ver TemaInforme): el servidor re-resuelve y valida; vacío = Bufins.
+        public string Tema { get; set; }
+        public string TemaP { get; set; }
+        public string TemaS { get; set; }
+        public string TemaA { get; set; }
+
         public string NombreTabla { get; set; }
         public int? IdEmpresa { get; set; }
         public int? IdEscenario { get; set; }

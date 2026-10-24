@@ -264,6 +264,7 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
+                _tema = ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA);
                 var bytes = GenerarExcel(reporte, soloSubtotales, out string nombreArchivo);
                 return File(bytes, InformeCorreoHelper.MimeExcel, nombreArchivo);
             }
@@ -302,6 +303,7 @@ namespace bufinscustomers.Controllers
                 string escenario = EscenarioCacheHelper.ObtenerEscenariosCacheados()
                     .FirstOrDefault(e => e.Id == filtros.IdEscenario)?.Nombre ?? ("#" + filtros.IdEscenario);
 
+                _tema = ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA);
                 var bytes = GenerarExcel(reporte, soloSubtotales, out string nombreArchivo);
                 var adjuntos = InformeCorreoHelper.Adjuntos(nombreArchivo, bytes, InformeCorreoHelper.PdfDesdeBase64(pdfBase64));
 
@@ -326,7 +328,7 @@ namespace bufinscustomers.Controllers
 
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
                 new EmailService().EnviarInforme(string.Join(", ", lista), R("TesPpto_PageTitle"), empresa, false, contexto, kpis,
-                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(filtros.IdEmpresa));
+                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(filtros.IdEmpresa), _tema);
 
                 new AuditoriaService().RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeTesoreriaPpto", filtros.IdEmpresa.ToString(),
@@ -346,7 +348,9 @@ namespace bufinscustomers.Controllers
 
         // ===== Excel =====
 
-        private static readonly string[] PaletaSeries = { "6366F1", "D97706", "0EA5E9" };
+                // Tema de colores de la petición actual (cada petición es una instancia nueva del controlador). Bufins = colores de siempre.
+        private TemaInforme _tema = TemaInforme.Bufins;
+        private string[] PaletaSeries { get { return new[] { ExcelTemaHelper.Serie(_tema, 0), ExcelTemaHelper.Serie(_tema, 1), TemaInforme.SinAlmohadilla(_tema.Tercero) }; } }
 
         /// <summary>Libro de Excel del informe (lo usan la descarga y el envío por correo): Resumen (KPIs), Caja mensual
         /// (con gráfico nativo), Detalle por mes y Puente de caja.</summary>
@@ -458,7 +462,7 @@ namespace bufinscustomers.Controllers
                     {
                         var rg = wsD.Range(fd, 1, fd, colFinD);
                         rg.Style.Font.Bold = true;
-                        rg.Style.Fill.BackgroundColor = XLColor.FromArgb(244, 243, 251);
+                        rg.Style.Fill.BackgroundColor = ExcelTemaHelper.Suave(_tema);
                     }
                     fd++;
                 }
@@ -528,11 +532,11 @@ namespace bufinscustomers.Controllers
             celda.Style.NumberFormat.Format = formato;
         }
 
-        private static void EstiloTabla(IXLWorksheet ws, int filaEnc, int filaFin, int colFin)
+        private void EstiloTabla(IXLWorksheet ws, int filaEnc, int filaFin, int colFin)
         {
             var enc = ws.Range(filaEnc, 1, filaEnc, colFin);
             enc.Style.Font.Bold = true;
-            enc.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
+            enc.Style.Fill.BackgroundColor = ExcelTemaHelper.Principal(_tema);
             enc.Style.Font.FontColor = XLColor.White;
             enc.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             var cuerpo = ws.Range(filaEnc, 1, filaFin, colFin);

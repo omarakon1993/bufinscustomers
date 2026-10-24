@@ -332,7 +332,8 @@ namespace bufinscustomers.Controllers
 
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
                 new EmailService().EnviarInforme(string.Join(", ", lista), R("BAL_PageTitle"), empresa, false, contexto, kpis,
-                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(filtros.IdEmpresa));
+                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(filtros.IdEmpresa),
+                    ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA));
 
                 new AuditoriaService().RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeBalance", filtros.IdEmpresa.ToString(),
@@ -382,6 +383,7 @@ namespace bufinscustomers.Controllers
         using (var package = new XLWorkbook())
         {
             var ws = package.Worksheets.Add("Balance");
+            var tema = ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA);
             // Logo de la empresa (si tiene): se reservan 3 filas arriba con título + logo. Sin logo el libro queda igual que siempre.
             var logo = ExcelLogoHelper.Obtener(filtros.IdEmpresa);
             int o = logo != null ? ExcelLogoHelper.FilasBloque : 0;
@@ -395,7 +397,7 @@ namespace bufinscustomers.Controllers
 
             var headerRange = ws.Range(1 + o, 1, 2 + o, totalCols);
             headerRange.Style.Font.Bold = true;
-            headerRange.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
+            headerRange.Style.Fill.BackgroundColor = ExcelTemaHelper.Principal(tema);
             headerRange.Style.Font.FontColor = XLColor.White;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             headerRange.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
@@ -421,7 +423,7 @@ namespace bufinscustomers.Controllers
                 if (f.EsSubtotal)
                 {
                     filaRange.Style.Font.Bold = true;
-                    filaRange.Style.Fill.BackgroundColor = XLColor.FromArgb(244, 243, 251);
+                    filaRange.Style.Fill.BackgroundColor = ExcelTemaHelper.Suave(tema);
                 }
                 else if ((fila - 3 - o) % 2 == 1)
                 {

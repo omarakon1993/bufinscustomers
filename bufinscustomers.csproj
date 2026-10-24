@@ -131,6 +131,8 @@
     <Compile Include="Controllers\BaseController.cs" />
     <Compile Include="Controllers\EmpresaController.cs" />
     <Compile Include="Controllers\EmpresaLogoController.cs" />
+    <Compile Include="Controllers\EmpresaPaletaController.cs" />
+    <Compile Include="Controllers\InformeTemaController.cs" />
     <Compile Include="Controllers\MenuOpcionesController.cs" />
     <Compile Include="Controllers\ModelosEjecucionController.cs" />
     <Compile Include="Controllers\GestorEscenariosController.cs" />
@@ -188,6 +190,8 @@
     <Compile Include="Helpers\EmpresaCacheHelper.cs" />
     <Compile Include="Helpers\EmpresaLogoHelper.cs" />
     <Compile Include="Helpers\ExcelLogoHelper.cs" />
+    <Compile Include="Helpers\ExcelTemaHelper.cs" />
+    <Compile Include="Helpers\TemaInforme.cs" />
     <Compile Include="Helpers\EscenarioCacheHelper.cs" />
     <Compile Include="Helpers\EmpresaAccesoHelper.cs" />
     <Compile Include="Helpers\TotpHelper.cs" />
@@ -271,6 +275,8 @@
     <Compile Include="Services\ConfiguracionEmpresaService.cs" />
     <Compile Include="Services\EmpresaService.cs" />
     <Compile Include="Services\EmpresaLogoService.cs" />
+    <Compile Include="Services\EmpresaPaletaService.cs" />
+    <Compile Include="Services\TemaInformeService.cs" />
     <Compile Include="Services\ModeloService.cs" />
     <Compile Include="Services\EscenarioService.cs" />
     <Compile Include="Services\ConfiguracionRelacionamientoService.cs" />
@@ -387,10 +393,13 @@
     <Content Include="Assets\css\informe-tesoreria.css" />
     <Content Include="Assets\css\export-menu.css" />
     <Content Include="Assets\css\empresa-logo.css" />
+    <Content Include="Assets\css\tema-informe.css" />
     <Content Include="Assets\css\bufins-modal.css" />
     <Content Include="Assets\js\bufins-pdf-marca.js" />
     <Content Include="Assets\js\export-menu.js" />
     <Content Include="Assets\js\empresa-logo.js" />
+    <Content Include="Assets\js\colores-corporativos.js" />
+    <Content Include="Assets\js\informe-tema.js" />
     <Content Include="Assets\css\informe-indicadores.css" />
     <Content Include="Assets\css\doc-visor.css" />
     <Content Include="Assets\js\doc-visor.js" />
@@ -475,6 +484,8 @@
     <Content Include="Views\Shared\_ModeloBufinsTag.cshtml" />
     <Content Include="Views\Shared\_InformePersonalizadoTag.cshtml" />
     <Content Include="Views\Shared\_ExportMenu.cshtml" />
+    <Content Include="Views\Shared\_ColoresCorporativosModal.cshtml" />
+    <Content Include="Views\Shared\_TemaInformeSelector.cshtml" />
     <Content Include="Views\Shared\_DocumentacionVisor.cshtml" />
     <Content Include="Views\Shared\_ExportCorreoModal.cshtml" />
     <Content Include="App_Data\Documentacion\Informe_HistPrecios_vs_Excel.html" />

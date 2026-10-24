@@ -1,0 +1,35 @@
+@* Sección «Estilos del informe». Va en los filtros, ENCIMA de las comparaciones de escenarios (ver CLAUDE.md,
+   «Tema de colores de los informes — ESTÁNDAR»). El modelo es el id del contenedor (p. ej. "pygTema").
+   Pasos en el informe:
+     <link href="~/Assets/css/tema-informe.css" rel="stylesheet" />  +  <script src="~/Assets/js/informe-tema.js"></script>
+     @Html.Partial("_TemaInformeSelector", "pygTema")
+     InformeTema.montar({ selector: '#pygTema', empresa: '#pygEmpresa' }); … *@
+@model string
+@helper Item(string campo, string clave, bool obligatorio)
+{
+    var texto = (string)System.Web.HttpContext.GetGlobalResourceObject("Strings", clave);
+    <div class="pc-item">
+        <label>@texto@if (obligatorio) { <span class="required"> *</span> }</label>
+        <div class="pc-color">
+            <input type="color" class="pc-picker" data-campo="@campo" value="#583AFF" aria-label="@texto" />
+            <div class="bf-input"><i class="fas fa-hashtag"></i><input type="text" class="form-control pc-hex" data-campo="@campo" maxlength="7" placeholder="#583AFF" autocomplete="off" spellcheck="false" /></div>
+        </div>
+    </div>
+}
+<div class="ti-selector" id="@Model"
+     data-url-opciones="@Url.Action("Opciones", "InformeTema")" data-url-resolver="@Url.Action("Resolver", "InformeTema")"
+     data-txt-personalizada="@Resources.Strings.Tema_Personalizada" data-txt-hex="@Resources.Strings.Tema_Err_Hex" data-txt-error="@Resources.Strings.Tema_Selector_Error"
+     data-txt-sin-registrar="@Resources.Strings.Tema_Corp_SinRegistrar" data-txt-sin-registrar-tip="@Resources.Strings.Tema_Corp_SinRegistrarTip"
+     data-txt-elegir-empresa="@Resources.Strings.Tema_Corp_ElegirEmpresa">
+    <div class="lt-section-title mt"><span>@Resources.Strings.Tema_Selector_Titulo</span></div>
+    <div class="ti-card">
+        <p class="ti-ayuda"><i class="fas fa-palette"></i>@Resources.Strings.Tema_Selector_Ayuda</p>
+        <div class="ti-fichas" data-grupo="todas"></div>
+        <div class="ti-custom" hidden>
+            @Item("primario", "PaletaCorp_Principal", true)
+            @Item("secundario", "PaletaCorp_Secundario", true)
+            @Item("acento", "PaletaCorp_Acento", false)
+            <div class="ti-custom-msg" role="status" aria-live="polite"></div>
+        </div>
+    </div>
+</div>

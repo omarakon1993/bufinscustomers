@@ -21,6 +21,12 @@ namespace bufinscustomers.Models
 
         /// <summary>"Mes" | "Trimestre" | "Anio" — agrupación de las gráficas de tendencia.</summary>
         public string Agrupar { get; set; } = "Mes";
+
+        // Paleta del informe (ver TemaInforme): el servidor re-resuelve y valida; vacío = Bufins.
+        public string Tema { get; set; }
+        public string TemaP { get; set; }
+        public string TemaS { get; set; }
+        public string TemaA { get; set; }
     }
 
     /// <summary>Códigos de "Comparar contra" (la vista los traduce; el servicio no lee resx).</summary>

@@ -10,6 +10,12 @@ namespace bufinscustomers.Models
     /// los mismos). El rango es continuo y puede cruzar años (mismo slider que PYG/Balance).</summary>
     public class FiltrosFlujo
     {
+        // Paleta del informe (ver TemaInforme): el servidor re-resuelve y valida; vacío = Bufins.
+        public string Tema { get; set; }
+        public string TemaP { get; set; }
+        public string TemaS { get; set; }
+        public string TemaA { get; set; }
+
         public int IdEmpresa { get; set; }
         public byte IdEscenario { get; set; } = 1;
         public int AnioDesde { get; set; }

@@ -252,14 +252,14 @@ namespace bufinscustomers.Services
             List<(string etiqueta, string valor, string detalle, int signo)> kpis,
             string tablaTitulo, string[] columnas, List<(string[] celdas, int signo)> filas,
             string mensajePersonal, string nombreQuienEnvia,
-            List<(string nombre, byte[] datos, string mime)> adjuntos, bool esIngles, byte[] logoEmpresa = null)
+            List<(string nombre, byte[] datos, string mime)> adjuntos, bool esIngles, byte[] logoEmpresa = null, bufinscustomers.Helpers.TemaInforme tema = null)
         {
             string primero = contexto != null && contexto.Count > 0 ? contexto[0].valor : null;
             string asunto = string.IsNullOrWhiteSpace(primero) ? $"{tituloInforme} - {empresa}" : $"{tituloInforme} - {empresa} ({primero})";
 
             EnviarConAdjuntos(destinatarios, asunto,
                 ConstruirEmailInformeHtml(tituloInforme, empresa, personalizado, contexto, kpis, tablaTitulo, columnas, filas,
-                    mensajePersonal, nombreQuienEnvia, adjuntos, esIngles, logoEmpresa != null && logoEmpresa.Length > 0),
+                    mensajePersonal, nombreQuienEnvia, adjuntos, esIngles, logoEmpresa != null && logoEmpresa.Length > 0, tema),
                 adjuntos, logoEmpresa);
         }
 
@@ -268,8 +268,9 @@ namespace bufinscustomers.Services
             List<(string etiqueta, string valor, string detalle, int signo)> kpis,
             string tablaTitulo, string[] columnas, List<(string[] celdas, int signo)> filas,
             string mensajePersonal, string nombreQuienEnvia,
-            List<(string nombre, byte[] datos, string mime)> adjuntos, bool esIngles, bool conLogoEmpresa = false)
+            List<(string nombre, byte[] datos, string mime)> adjuntos, bool esIngles, bool conLogoEmpresa = false, bufinscustomers.Helpers.TemaInforme tema = null)
         {
+            tema = tema ?? bufinscustomers.Helpers.TemaInforme.Bufins;   // Bufins reproduce los colores de siempre
             contexto = contexto ?? new List<(string etiqueta, string valor)>();
             kpis = kpis ?? new List<(string etiqueta, string valor, string detalle, int signo)>();
             filas = filas ?? new List<(string[] celdas, int signo)>();
@@ -326,14 +327,14 @@ namespace bufinscustomers.Services
             }
 
             string bloqueMensaje = string.IsNullOrWhiteSpace(mensajePersonal) ? "" : $@"
-    <div style=""background:#f8f9ff;border-left:4px solid #6366f1;padding:14px 18px;font-size:14px;color:#4b5563;line-height:1.6;margin:0 0 22px;white-space:pre-wrap;"">{HttpUtility.HtmlEncode(mensajePersonal)}</div>";
+    <div style=""background:#f8f9ff;border-left:4px solid {tema.Primario};padding:14px 18px;font-size:14px;color:#4b5563;line-height:1.6;margin:0 0 22px;white-space:pre-wrap;"">{HttpUtility.HtmlEncode(mensajePersonal)}</div>";
             string bloqueAdj = string.IsNullOrEmpty(lblAdj) ? "" : $@"<p style=""font-size:13px;color:#6b7280;margin:16px 0 0;"">&#128206; {lblAdj}</p>";
             string bloqueDe = string.IsNullOrWhiteSpace(nombreQuienEnvia) ? "" :
                 $@"<p style=""font-size:13px;color:#9ca3af;margin:14px 0 0;"">{lblDe}: {HttpUtility.HtmlEncode(nombreQuienEnvia)}</p>";
             // Logo de la empresa: placa blanca bajo la marca Bufins (el logo viaja incrustado: cid:logo-empresa).
             string bloqueLogo = !conLogoEmpresa ? "" : $@"
     <div style=""margin-top:18px;""><span style=""display:inline-block;background:#fff;border-radius:10px;padding:8px 14px;""><img src=""cid:logo-empresa"" height=""44"" alt=""{HttpUtility.HtmlEncode(empresa)}"" style=""display:block;height:44px;width:auto;max-width:240px;border:0;""></span></div>";
-            string bloquePers = personalizado ? $@"<p style=""font-size:12px;font-weight:700;color:#583AFF;margin:0 0 12px;"">{lblPers}</p>" : "";
+            string bloquePers = personalizado ? $@"<p style=""font-size:12px;font-weight:700;color:{tema.Strong};margin:0 0 12px;"">{lblPers}</p>" : "";
 
             return $@"<!DOCTYPE html>
 <html lang=""{(esIngles ? "en" : "es")}"">
@@ -342,7 +343,7 @@ namespace bufinscustomers.Services
 <table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background:#f0f2f8;padding:32px 16px;"">
  <tr><td align=""center"">
  <table width=""640"" cellpadding=""0"" cellspacing=""0"" style=""max-width:640px;width:100%;background:#fff;border-radius:16px;overflow:hidden;"">
-  <tr><td style=""background:linear-gradient(135deg,#1e1b4b,#312e81,#4338ca);padding:36px 40px 28px;text-align:center;"">
+  <tr><td style=""background:{tema.CorreoDegradado[0]};background:linear-gradient(135deg,{tema.CorreoDegradado[0]},{tema.CorreoDegradado[1]},{tema.CorreoDegradado[2]});padding:36px 40px 28px;text-align:center;"">
     <div style=""font-size:28px;font-weight:900;color:#fff;letter-spacing:3px;"">bufins</div>
     <div style=""font-size:9px;color:rgba(255,255,255,0.6);letter-spacing:2px;text-transform:uppercase;"">Business Finance Always Everywhere</div>{bloqueLogo}
   </td></tr>

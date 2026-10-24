@@ -7,6 +7,12 @@ namespace bufinscustomers.Models
     /// dbo.ModeloTesoreriaPpto solo guarda el año de ejecución de cada empresa.</summary>
     public class FiltrosTesoreria
     {
+        // Paleta del informe (ver TemaInforme): el servidor re-resuelve y valida; vacío = Bufins.
+        public string Tema { get; set; }
+        public string TemaP { get; set; }
+        public string TemaS { get; set; }
+        public string TemaA { get; set; }
+
         public int IdEmpresa { get; set; }
         public byte IdEscenario { get; set; } = 1;
         public int AnioDesde { get; set; }

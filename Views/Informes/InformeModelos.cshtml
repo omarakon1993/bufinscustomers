@@ -10,7 +10,7 @@
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
 <link href="~/Assets/css/modelo-consola.css" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
-<link href="~/Assets/css/empresa-logo.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 
 <div class="container-fluid px-4 mc-page">
 
@@ -226,7 +226,7 @@
 
 @section scripts {
 
-<script src="~/Assets/js/empresa-logo.js"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/empresa-logo.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
 <script>
     var _im = {

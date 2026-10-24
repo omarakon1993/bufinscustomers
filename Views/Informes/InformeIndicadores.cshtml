@@ -32,7 +32,8 @@
 <link href="~/Assets/css/informe-indicadores.css" rel="stylesheet" />
 <link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
-<link href="~/Assets/css/empresa-logo.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
 
 <div class="container-fluid px-4">
@@ -125,6 +126,8 @@
             <p class="lt-help">@T("Ind_RangoHint")</p>
             <p class="lt-help" id="indSinMeses" style="display:none;">@T("Ind_SinMesesDatos")</p>
         </div>
+
+        @Html.Partial("_TemaInformeSelector", "indTema")
 
         <div class="btn-group-actions">
             <button type="button" id="btnConsultarInd" class="btn btn-modern-gradient" disabled>
@@ -278,7 +281,8 @@
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
 <script src="~/Assets/js/bufins-pdf-marca.js"></script>
 <script src="~/Assets/js/html2canvas.min.js"></script>
-<script src="~/Assets/js/empresa-logo.js"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/empresa-logo.js")"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
 <script src="~/Assets/js/doc-visor.js"></script>
 <script src="~/Assets/js/bufins-markdown.js"></script>
@@ -587,6 +591,11 @@
     function consultarReporte() {
         if (!_ind.rango.length) return;
         var filtros = filtrosDelSlider();
+
+        InformeTema.preparar().then(function (ok) { if (ok) consultarReporteConTema(filtros); });
+    }
+
+    function consultarReporteConTema(filtros) {
         $('#overlayConsultandoInd').css('display', 'flex');
         $.post(_ind.urls.reporte, $.extend({ __RequestVerificationToken: _ind.token }, filtros), function (resp) {
             $('#overlayConsultandoInd').hide();
@@ -609,6 +618,8 @@
         $('#indChipComparado').text(r.HayComparativo ? _ind.t.chipComparadoFmt.replace('{0}', etiquetaMes(r.AnioComp, r.MesComp)) : _ind.t.chipSinComparar);
         try { $('#indFechaGenerado').text(new Date().toLocaleDateString(_ind.cultura, { day: 'numeric', month: 'long', year: 'numeric' })); } catch (e) { $('#indFechaGenerado').text(new Date().toISOString().slice(0, 10)); }
 
+        InformeTema.aplicar(document.getElementById('indResultado'));           // variables CSS + colores de gráficos/PDF
+        $.extend(_ind.filtrosConsultados, InformeTema.parametros());      // Excel y correo re-resuelven el tema en el servidor
         pintarResumen(r);
         pintarFamilias(r);
         pintarTabla(r);
@@ -920,7 +931,7 @@
     // PDF gerencial (A4 horizontal, jsPDF puro): pág. 1 resumen (semáforo, indicadores que requieren atención, insights); pág. 2+ tabla de
     // indicadores por familia. Devuelve el documento (con __nombre) para descarga y para el correo.
     function construirPdf(r) {
-        var T = _ind.t, P = T.pdf, C = PDF_COL;
+        var T = _ind.t, P = T.pdf, C = InformeTema.pdf(PDF_COL), DEG = InformeTema.pdfDegradado();
         var pdf = new window.jspdf.jsPDF('l', 'mm', 'a4');
         var W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight();
         var M = 12, ANCHO = W - M * 2, LIMITE_Y = H - 15;
@@ -931,9 +942,9 @@
         function limpiar(t) { return String(t == null ? '' : t).replace(/\*\*|__/g, '').replace(/\s+/g, ' ').trim(); }
         function ancho(t) { return pdf.getTextWidth(String(t)); }
         function degradado(x, yy, w, h) {
-            var pasos = 90, n = PDF_DEGRADADO.length - 1;
+            var pasos = 90, n = DEG.length - 1;
             for (var i = 0; i < pasos; i++) {
-                var tt = i / (pasos - 1), seg = Math.min(n - 1, Math.floor(tt * n)), f = tt * n - seg, a = PDF_DEGRADADO[seg], b = PDF_DEGRADADO[seg + 1];
+                var tt = i / (pasos - 1), seg = Math.min(n - 1, Math.floor(tt * n)), f = tt * n - seg, a = DEG[seg], b = DEG[seg + 1];
                 pdf.setFillColor(Math.round(a[0] + (b[0] - a[0]) * f), Math.round(a[1] + (b[1] - a[1]) * f), Math.round(a[2] + (b[2] - a[2]) * f));
                 pdf.rect(x + (w * i) / pasos, yy, w / pasos + 0.15, h, 'F');
             }
@@ -1151,7 +1162,9 @@
         DocVisor.init({ boton: '#indDocBtn', url: _ind.urls.documentacion });
 
         $('#btnConsultarInd').on('click', consultarReporte);
+        InformeTema.montar({ selector: '#indTema', empresa: '#indEmpresa' });
         $('#btnLimpiarInd').on('click', function () {
+            InformeTema.reset();
             $('#indComparar').val('cierreAnterior').trigger('change.select2');
             $('#indDetalle').val('todos').trigger('change.select2');
             if (_ind.esAdmin) elEmpresa.val('').trigger('change.select2');

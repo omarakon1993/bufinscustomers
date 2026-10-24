@@ -9,6 +9,12 @@ namespace bufinscustomers.Models
     /// tendencias mensuales.</summary>
     public class FiltrosBalance
     {
+        // Paleta del informe (ver TemaInforme): el servidor re-resuelve y valida; vacío = Bufins.
+        public string Tema { get; set; }
+        public string TemaP { get; set; }
+        public string TemaS { get; set; }
+        public string TemaA { get; set; }
+
         public int IdEmpresa { get; set; }
         public byte IdEscenario { get; set; } = 1;
         public int AnioDesde { get; set; }

@@ -6,10 +6,10 @@
 
 /* ---- Insights gerenciales (IA) — base; la v2 de abajo ajusta encabezado/botón/tiles ---- */
 .pyg-insights-card{background:#fff;border:1px solid #E4E1F0;border-radius:14px;padding:18px 20px;margin-top:16px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(22,9,51,.05), 0 10px 28px -10px rgba(22,9,51,.14)}
-.pyg-insights-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--content-gradient)}
+.pyg-insights-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--tm-grad,var(--content-gradient))}
 .pyg-insights-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .pyg-insights-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:#2d3748}
-.pyg-insights-title i{color:#583AFF}
+.pyg-insights-title i{color:var(--tm-strong,#583AFF)}
 .pyg-insights-meta{font-size:11.5px;color:#8B85A0}
 /* Respaldo cuando la respuesta de la IA no trae las 3 secciones (Logro/Alerta/Eficiencia): markdown completo */
 .pyg-insights-body{font-size:13.5px;line-height:1.6;color:#4b5563}
@@ -21,7 +21,7 @@
         que "Filtros avanzados" en Auditoria.cshtml, con el look de .lt-section-title (línea + texto
         morado en mayúsculas) pero clicable para expandir/contraer. Colapsada por defecto (sin "open"). */
 details.rpt-adv{margin:22px 0 14px}
-details.rpt-adv>summary{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#583AFF;cursor:pointer;list-style:none;user-select:none}
+details.rpt-adv>summary{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--tm-strong,#583AFF);cursor:pointer;list-style:none;user-select:none}
 details.rpt-adv>summary::-webkit-details-marker{display:none}
 details.rpt-adv>summary::before{content:'\25B8';font-size:.85em;transition:transform .15s;flex:none}
 details.rpt-adv[open]>summary::before{transform:rotate(90deg)}
@@ -30,11 +30,11 @@ details.rpt-adv>.rpt-adv-body{margin-top:14px}
 
 /* ---- 0. Estilos que la vista PYG usa pero NO tenía (vivían solo en el <style>
         de InformeLineaTiempo.cshtml) ---- */
-.lt-app{--lt-bg:#F4F4FA;--lt-surface:#FFFFFF;--lt-surface-2:#F4F3FB;--lt-text:#16121F;--lt-text-2:#5B5570;--lt-text-muted:#8B85A0;--lt-line:#E4E1F0;--lt-good:#16A34A;--lt-good-bg:#ECFDF3;--lt-bad:#DC2626;--lt-bad-bg:#FEF2F2;--lt-shadow:0 1px 2px rgba(22,9,51,.05),0 10px 28px -10px rgba(22,9,51,.14);color:var(--lt-text);font-size:15px}
+.lt-app{--lt-bg:#F4F4FA;--lt-surface:#FFFFFF;--lt-surface-2:var(--tm-soft2,#F4F3FB);--lt-text:#16121F;--lt-text-2:#5B5570;--lt-text-muted:#8B85A0;--lt-line:#E4E1F0;--lt-good:#16A34A;--lt-good-bg:#ECFDF3;--lt-bad:#DC2626;--lt-bad-bg:#FEF2F2;--lt-shadow:0 1px 2px rgba(22,9,51,.05),0 10px 28px -10px rgba(22,9,51,.14);color:var(--lt-text);font-size:15px}
 .lt-card{background:#fff;border:1px solid #E4E1F0;border-radius:14px;padding:16px 22px 18px;margin-bottom:16px;box-shadow:var(--lt-shadow)}
 .lt-empty{text-align:center;padding:3rem 1.5rem;color:#8B85A0}
-.lt-empty .lt-empty-icon{width:64px;height:64px;margin:0 auto 1.1rem;border-radius:50%;background:linear-gradient(135deg,rgba(99,102,241,.14),rgba(1,225,215,.14));display:flex;align-items:center;justify-content:center}
-.lt-empty .lt-empty-icon i{font-size:1.7rem;background:var(--content-gradient);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lt-empty .lt-empty-icon{width:64px;height:64px;margin:0 auto 1.1rem;border-radius:50%;background:var(--tm-wash,linear-gradient(135deg,rgba(var(--tm-p-rgb,99,102,241),.14),rgba(var(--tm-s-rgb,1,225,215),.14)));display:flex;align-items:center;justify-content:center}
+.lt-empty .lt-empty-icon i{font-size:1.7rem;background:var(--tm-grad,var(--content-gradient));-webkit-background-clip:text;background-clip:text;color:transparent}
 .lt-empty h4{color:#16121F;font-size:16px;font-weight:800;margin:0 0 .4rem}
 .lt-empty p{font-size:13px;max-width:420px;margin:0 auto;line-height:1.5}
 
@@ -49,8 +49,8 @@ details.rpt-adv>.rpt-adv-body{margin-top:14px}
 .pyg2-head-l{display:flex;flex-direction:column;gap:10px;min-width:0}
 .pyg2-head h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.015em;color:#16121F}
 .pyg2-chips{display:flex;flex-wrap:wrap;gap:6px}
-.pyg2-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#5B5570;background:#F4F3FB;border:1px solid #E4E1F0;padding:3px 11px;border-radius:999px}
-.pyg2-chip.primary{font-weight:800;color:#583AFF;background:#EEF2FF;border-color:#EEF2FF;padding:4px 11px}
+.pyg2-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#5B5570;background:var(--tm-soft2,#F4F3FB);border:1px solid #E4E1F0;padding:3px 11px;border-radius:999px}
+.pyg2-chip.primary{font-weight:800;color:var(--tm-strong,#583AFF);background:var(--tm-soft,#EEF2FF);border-color:var(--tm-soft,#EEF2FF);padding:4px 11px}
 .pyg2-chip.primary i{font-size:10px}
 .pyg2-tools{display:flex;align-items:center;gap:8px;position:relative}
 .pyg2-tools .sep{width:1px;height:22px;background:#E4E1F0;margin:0 2px}
@@ -59,36 +59,36 @@ details.rpt-adv>.rpt-adv-body{margin-top:14px}
 .pyg2-tools .lt-tool-btn .fa-file-pdf{color:#DC2626}
 .pyg2-tools .lt-menu{left:0;right:auto;width:160px}
 .pyg2-tools .lt-menu button{justify-content:space-between}
-.pyg2-tools .lt-menu button.on{color:#583AFF}
+.pyg2-tools .lt-menu button.on{color:var(--tm-strong,#583AFF)}
 
 /* ---- 2. Título de sección (mismo lenguaje que .lt-section-title de filtros) ---- */
 .pyg2-section{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
 .pyg2-section-title{display:flex;align-items:center;gap:12px}
-.pyg2-section-title .t{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#583AFF;white-space:nowrap}
-.pyg2-section-title .line{flex:1;height:1px;background:#E4E1F0}
+.pyg2-section-title .t{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--tm-strong,#583AFF);white-space:nowrap}
+.pyg2-section-title .line{flex:1;height:var(--tm-line-h,1px);border-radius:2px;background:var(--tm-s,#E4E1F0)}
 .pyg2-legend{display:flex;gap:12px;font-size:11px;font-weight:700;color:#8B85A0;flex-wrap:wrap}
 .pyg2-legend span{display:inline-flex;align-items:center;gap:5px}
 .pyg2-legend .sw{width:12px;height:3px;border-radius:2px;display:inline-block}
 .pyg2-legend .sq{width:9px;height:9px;border-radius:3px;display:inline-block}
-.pyg2-legend .dash{width:12px;height:0;border-top:2px dashed #D97706;display:inline-block}
+.pyg2-legend .dash{width:12px;height:0;border-top:2px dashed var(--tm-comp,#D97706);display:inline-block}
 
 /* Segmented (Período / Acumulado / Ambos) — variante blanca de .lt-seg2 */
 .pyg2-seg{display:flex;background:#fff;border:1px solid #E4E1F0;border-radius:9px;padding:3px}
-.pyg2-seg.soft{background:#F4F3FB}
+.pyg2-seg.soft{background:var(--tm-soft2,#F4F3FB)}
 .pyg2-seg button{border:none;background:transparent;font-family:inherit;font-size:12px;font-weight:700;color:#5B5570;padding:6px 14px;border-radius:7px;cursor:pointer;white-space:nowrap}
-.pyg2-seg button.active{background:var(--content-gradient);color:#fff}
+.pyg2-seg button.active{background:var(--tm-grad,var(--content-gradient));color:#fff}
 
 /* ---- 3. KPIs (4 tarjetas) ---- */
 .pyg2-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .pyg2-kpi{background:#fff;border:1px solid #E4E1F0;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 1px 2px rgba(22,9,51,.04)}
 .pyg2-kpi-head{display:flex;align-items:center;gap:8px}
-.pyg2-kpi-head .ic{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--content-gradient);color:#fff;font-size:12px;flex:none}
+.pyg2-kpi-head .ic{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--tm-icon-bg,var(--tm-grad,var(--content-gradient)));color:var(--tm-icon-on,#fff);font-size:12px;flex:none}
 .pyg2-kpi-head .nm{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#5B5570}
 .pyg2-kpi-val{display:flex;flex-direction:column;gap:2px}
 .pyg2-kpi-val .v{font-size:28px;font-weight:800;letter-spacing:-.02em;color:#16121F;font-variant-numeric:tabular-nums;line-height:1.1}
 .pyg2-kpi-val .p{font-size:12px;font-weight:600;color:#8B85A0}
 .pyg2-kpi-bar{height:6px;border-radius:999px;background:#EEF0F6;position:relative;overflow:hidden}
-.pyg2-kpi-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:#6366F1}
+.pyg2-kpi-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--tm-p,#6366F1)}
 .pyg2-kpi-bar i.good{background:#16A34A}
 .pyg2-kpi-deltas{display:flex;flex-direction:column;gap:6px;padding-top:2px}
 .pyg2-kpi-deltas .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -108,7 +108,7 @@ details.rpt-adv>.rpt-adv-body{margin-top:14px}
 .pyg2-card{background:#fff;border:1px solid #E4E1F0;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
 .pyg2-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .pyg2-card-title{font-size:14px;font-weight:800;color:#16121F;display:flex;align-items:center;gap:7px}
-.pyg2-card-title i{color:#583AFF;font-size:12px}
+.pyg2-card-title i{color:var(--tm-s-text,var(--tm-strong,#583AFF));font-size:12px}
 .pyg2-card-sub{font-size:12px;color:#8B85A0;margin-top:2px}
 .pyg2-waterfall-wrap{position:relative;height:260px}
 .pyg2-waterfall-wrap canvas{width:100% !important;height:100% !important}
@@ -120,7 +120,7 @@ details.rpt-adv>.rpt-adv-body{margin-top:14px}
 .pyg2-hl-top .nm{font-size:13px;font-weight:700;color:#2d3748}
 .pyg2-hl-top .val{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
 .pyg2-hl-bot{display:flex;align-items:center;gap:10px}
-.pyg2-hl-track{flex:1;height:5px;border-radius:999px;background:#F4F3FB;overflow:hidden}
+.pyg2-hl-track{flex:1;height:5px;border-radius:999px;background:var(--tm-soft2,#F4F3FB);overflow:hidden}
 .pyg2-hl-track i{display:block;height:100%;border-radius:999px;opacity:.85}
 .pyg2-hl-bot .tag{font-size:11px;font-weight:700;width:92px;text-align:right}
 .pyg2-hl.up .val,.pyg2-hl.up .tag{color:#16A34A}
@@ -145,11 +145,11 @@ details.rpt-adv>.rpt-adv-body{margin-top:14px}
 .pyg2-table-card{background:#fff;border:1px solid #E4E1F0;border-radius:14px;padding:16px 18px 14px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--lt-shadow);margin-bottom:16px}
 .pyg2-table-tools{display:flex;align-items:center;gap:8px}
 .pyg2-yoy-btn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border:1px solid #E4E1F0;background:#fff;border-radius:9px;font-family:inherit;font-size:12.5px;font-weight:700;color:#5B5570;cursor:pointer}
-.pyg2-yoy-btn.on{border-color:#583AFF;background:#EEF2FF;color:#583AFF}
+.pyg2-yoy-btn.on{border-color:var(--tm-strong,#583AFF);background:var(--tm-soft,#EEF2FF);color:var(--tm-strong,#583AFF)}
 .pyg2-table-wrap{overflow:auto;border:1px solid #E4E1F0;border-radius:10px;max-height:620px}
 .pyg2-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
 .pyg2-table th{position:sticky;top:0;z-index:2;background:#F8F9FC;color:#8B85A0;white-space:nowrap}
-.pyg2-table thead tr:first-child th{padding:9px 12px 4px;font-size:12px;font-weight:800;color:#583AFF;text-align:center}
+.pyg2-table thead tr:first-child th{padding:9px 12px 4px;font-size:12px;font-weight:800;color:var(--tm-strong,#583AFF);text-align:center}
 .pyg2-table thead tr:nth-child(2) th{top:31px;padding:4px 12px 9px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;text-align:right;border-bottom:1px solid #E4E1F0}
 .pyg2-table thead th.col-cuenta{left:0;z-index:3;text-align:left !important;vertical-align:bottom;padding:10px 16px !important;font-size:11px !important;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#8B85A0 !important;border-bottom:1px solid #E4E1F0;min-width:250px}
 .pyg2-table .sep{border-left:2px solid #E4E1F0}
@@ -164,16 +164,16 @@ details.rpt-adv>.rpt-adv-body{margin-top:14px}
 .pyg2-table td.bad{color:#DC2626}
 .pyg2-table td.neu{color:#9ca3af}
 /* Subtotales */
-.pyg2-table tr.sub td{background:#F8F7FD;border-top:1px solid #E4E1F0}
+.pyg2-table tr.sub td{background:var(--tm-soft3,#F8F7FD);border-top:1px solid #E4E1F0}
 .pyg2-table tr.sub td.lbl{padding-left:16px;color:#16121F;font-weight:800}
 .pyg2-table tr.sub td.real{color:#16121F;font-weight:800}
 /* Última fila (Utilidad neta) */
-.pyg2-table tr.total td{background:#EEF2FF;border-top:2px solid #C7D2FE}
-.pyg2-table tr.total td.lbl{padding-left:16px;color:#3B2FBF;font-weight:800}
+.pyg2-table tr.total td{background:var(--tm-soft,#EEF2FF);border-top:2px solid var(--tm-t2,#C7D2FE)}
+.pyg2-table tr.total td.lbl{padding-left:16px;color:var(--tm-dk,#3B2FBF);font-weight:800}
 .pyg2-table tr.total td.real{color:#16121F;font-weight:800}
 
 /* Variante opcional: encabezado con degradado de marca */
-.pyg2-table.head-degradado th{background:#5a78ee;color:#fff !important}
+.pyg2-table.head-degradado th{background:var(--tm-t4,#5A78EE);color:#fff !important}
 
 .pyg2-table-legend{display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:11.5px;font-weight:700;color:#8B85A0}
 .pyg2-table-legend span{display:inline-flex;align-items:center;gap:6px}
@@ -184,11 +184,11 @@ details.rpt-adv>.rpt-adv-body{margin-top:14px}
 .pyg-insights-card{display:flex;flex-direction:column;gap:14px}
 .pyg-insights-head{margin-bottom:0}
 .pyg-insights-title{font-size:14px;color:#16121F}
-.pyg2-ins-btn{display:inline-flex;align-items:center;gap:7px;background:var(--content-gradient);color:#fff;border:none;padding:9px 18px;border-radius:9px;font-weight:700;font-size:13px;box-shadow:0 2px 8px rgba(22,9,51,.3);font-family:inherit;cursor:pointer}
+.pyg2-ins-btn{display:inline-flex;align-items:center;gap:7px;background:var(--tm-grad,var(--content-gradient));color:#fff;border:none;padding:9px 18px;border-radius:9px;font-weight:700;font-size:13px;box-shadow:0 2px 8px rgba(22,9,51,.3);font-family:inherit;cursor:pointer}
 .pyg2-ins-btn:hover{background:var(--content-gradient-hover)}
 .pyg2-ins-btn:disabled{opacity:.5;cursor:not-allowed}
 .pyg2-ins-empty{display:flex;align-items:center;gap:12px;padding:14px 16px;background:#F8F9FC;border:1px dashed #E0DDF0;border-radius:10px;font-size:13px;color:#5B5570}
-.pyg2-ins-empty i{color:#583AFF}
+.pyg2-ins-empty i{color:var(--tm-strong,#583AFF)}
 .pyg2-ins-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .pyg2-ins-tile{border:1px solid #E4E1F0;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;background:#fff}
 .pyg2-ins-tile .h{display:flex;align-items:center;gap:8px}
@@ -197,7 +197,7 @@ details.rpt-adv>.rpt-adv-body{margin-top:14px}
 .pyg2-ins-tile p{margin:0;font-size:13.5px;line-height:1.55;color:#4b5563;text-wrap:pretty}
 .pyg2-ins-tile.logro .ic{background:#ECFDF3;color:#16A34A}.pyg2-ins-tile.logro .t{color:#16A34A}
 .pyg2-ins-tile.alerta .ic{background:#FEF2F2;color:#DC2626}.pyg2-ins-tile.alerta .t{color:#DC2626}
-.pyg2-ins-tile.eficiencia .ic{background:#EEF2FF;color:#583AFF}.pyg2-ins-tile.eficiencia .t{color:#583AFF}
+.pyg2-ins-tile.eficiencia .ic{background:var(--tm-soft,#EEF2FF);color:var(--tm-strong,#583AFF)}.pyg2-ins-tile.eficiencia .t{color:var(--tm-strong,#583AFF)}
 @media (max-width:900px){.pyg2-ins-grid{grid-template-columns:1fr}}
 
 /* ---- Ajustes de integración (no venían en el handoff) ---- */
@@ -217,12 +217,12 @@ details.rpt-adv>.rpt-adv-body{margin-top:14px}
 .pyg2-ins-tile p strong{color:#16121F;font-weight:800;font-variant-numeric:tabular-nums}
 .pyg2-ins-tile.logro{border-top:3px solid #16A34A}
 .pyg2-ins-tile.alerta{border-top:3px solid #DC2626}
-.pyg2-ins-tile.eficiencia{border-top:3px solid #583AFF}
+.pyg2-ins-tile.eficiencia{border-top:3px solid var(--tm-strong,#583AFF)}
 /* Respaldo en markdown (si la respuesta no trae las 3 secciones): títulos, listas y negritas con estilo */
 .pyg-insights-body{background:#F8F9FC;border:1px solid #E4E1F0;border-radius:12px;padding:14px 18px}
-.pyg-insights-body h1,.pyg-insights-body h2,.pyg-insights-body h3,.pyg-insights-body h4{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#583AFF;margin:12px 0 6px}
+.pyg-insights-body h1,.pyg-insights-body h2,.pyg-insights-body h3,.pyg-insights-body h4{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--tm-strong,#583AFF);margin:12px 0 6px}
 .pyg-insights-body h1:first-child,.pyg-insights-body h2:first-child,.pyg-insights-body h3:first-child,.pyg-insights-body h4:first-child{margin-top:0}
 .pyg-insights-body ul,.pyg-insights-body ol{margin:0 0 8px;padding-left:20px}
 .pyg-insights-body li{margin:4px 0}
-.pyg-insights-body li::marker{color:#583AFF}
+.pyg-insights-body li::marker{color:var(--tm-strong,#583AFF)}
 .pyg-insights-body strong{color:#16121F;font-weight:800}

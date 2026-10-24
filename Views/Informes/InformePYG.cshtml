@@ -11,7 +11,8 @@
 <link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-pyg.css")" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
-<link href="~/Assets/css/empresa-logo.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
 
 <div class="container-fluid px-4">
@@ -142,6 +143,8 @@
             </div>
         </div>
 
+        @Html.Partial("_TemaInformeSelector", "pygTema")
+
         <div class="btn-group-actions">
             <button type="button" id="btnConsultarPYG" class="btn btn-modern-gradient" disabled>
                 <i class="fas fa-arrow-right mr-1"></i>@Resources.Strings.LineaTiempo_BtnGenerar
@@ -227,7 +230,7 @@
                         <div class="pyg2-card-sub" id="pygCascadaSub">&mdash;</div>
                     </div>
                     <span class="pyg2-legend">
-                        <span><i class="sq" style="background:#6366F1"></i>@Resources.Strings.PYG_V2_Total</span>
+                        <span><i class="sq" style="background:var(--tm-p,#6366F1)"></i>@Resources.Strings.PYG_V2_Total</span>
                         <span><i class="sq" style="background:#F87171"></i>@Resources.Strings.PYG_V2_Resta</span>
                         <span id="pygLeyendaSuma" style="display:none;"><i class="sq pos"></i>@Resources.Strings.PYG_V2_Suma</span>
                         <span><i class="dash"></i><span id="pygMetaLbl">@Resources.Strings.PYG_V2_MetaPpto</span> <b id="pygMetaPpto" style="font-weight:700">&mdash;</b></span>
@@ -249,9 +252,9 @@
             <div class="pyg2-section-title">
                 <span class="t"><span id="pygTendTitulo">@Resources.Strings.PYG_V2_TendenciaTitulo</span> <span id="pygTendAnio"></span></span><span class="line"></span>
                 <span class="pyg2-legend">
-                    <span><i class="sw" style="background:#6366F1"></i>@Resources.Strings.PYG_V2_Real</span>
+                    <span><i class="sw" style="background:var(--tm-p,#6366F1)"></i>@Resources.Strings.PYG_V2_Real</span>
                     <span><i class="dash"></i><span id="pygLeyendaComp">@Resources.Strings.PYG_V2_Presupuesto</span></span>
-                    <span id="pygLeyendaEsc" style="display:none;"><i class="sw" style="background:#0EA5E9"></i><span id="pygLeyendaEscNombre"></span></span>
+                    <span id="pygLeyendaEsc" style="display:none;"><i class="sw" style="background:var(--tm-c,#0EA5E9)"></i><span id="pygLeyendaEscNombre"></span></span>
                     <span><i class="sq" style="background:#EEF2FF;width:10px;height:10px;border-radius:2px"></i>@Resources.Strings.PYG_V2_PeriodoSeleccionado</span>
                 </span>
             </div>
@@ -356,7 +359,8 @@
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
 <script src="~/Assets/js/bufins-pdf-marca.js"></script>
 <script src="~/Assets/js/html2canvas.min.js"></script>
-<script src="~/Assets/js/empresa-logo.js"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/empresa-logo.js")"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
 <script src="~/Assets/js/bufins-markdown.js"></script>
 <script src="~/Assets/js/rango-atajos.js"></script>
@@ -890,6 +894,10 @@
         if (!_pyg.rango.length) return;
         var filtros = filtrosDelSlider();
 
+        InformeTema.preparar().then(function (ok) { if (ok) consultarConTema(filtros); });
+    }
+
+    function consultarConTema(filtros) {
         $('#overlayConsultandoPYG').css('display', 'flex');
 
         $.post(_pyg.urls.reporte, $.extend({ __RequestVerificationToken: _pyg.token }, filtros), function (resp) {
@@ -956,6 +964,8 @@
         $('#pygNotaEscenario').text(v2.escenarioSinDatosNota).toggle(!!reporte.IdEscenarioComparar && !reporte.HayEscenarioComparar);
 
         $('#pygEstadoInicial, #pygSinDatos').hide();
+        InformeTema.aplicar(document.getElementById('pygResultado'));            // variables CSS + colores de gráficos/PDF
+        $.extend(_pyg.filtrosConsultados, InformeTema.parametros());             // Excel y correo re-resuelven el tema en el servidor
         $('#pygResultado').show();   // visible ANTES de crear los charts: Chart.js mide el contenedor
         repintarConUnidadActual();
     }
@@ -1131,7 +1141,7 @@
         var etiquetas = barras.map(function (b) { return _pyg.cascadaNombres[b.Etiqueta] || b.Etiqueta; });
         var datos = barras.map(function (b) { return [escalarValor(b.Desde), escalarValor(b.Hasta)]; });
         var colores = barras.map(function (b) {
-            if (b.Tipo === 'total') return '#6366F1';
+            if (b.Tipo === 'total') return InformeTema.actual.p;
             return b.Tipo === 'positivo' ? '#16A34A' : '#F87171';
         });
         $('#pygLeyendaSuma').toggle(barras.some(function (b) { return b.Tipo === 'positivo'; }));
@@ -1184,7 +1194,7 @@
                     {
                         type: 'line', label: _pyg.textos.cascadaPresupuestoNeta,
                         data: etiquetas.map(function () { return meta; }),
-                        borderColor: '#D97706', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, pointHoverRadius: 0, fill: false
+                        borderColor: InformeTema.actual.comp, borderDash: [6, 4], borderWidth: 2, pointRadius: 0, pointHoverRadius: 0, fill: false
                     }
                 ]
             },
@@ -1303,18 +1313,18 @@
                 datasets: [
                     {
                         label: v2.real, data: puntos.map(function (p) { return escalarValor(p.Real); }),
-                        borderColor: '#6366F1', backgroundColor: 'rgba(99,102,241,.08)', borderWidth: 2.5,
+                        borderColor: InformeTema.actual.p, backgroundColor: InformeTema.alfa(InformeTema.actual.p, .08), borderWidth: 2.5,
                         tension: .35, fill: true, pointRadius: radios, pointHoverRadius: 4,
-                        pointBackgroundColor: '#fff', pointBorderColor: '#6366F1', pointBorderWidth: 2
+                        pointBackgroundColor: '#fff', pointBorderColor: InformeTema.actual.p, pointBorderWidth: 2
                     },
                     {
                         label: compNombre(r), data: puntos.map(function (p) { return escalarValor(p.Presupuesto); }),
-                        borderColor: '#D97706', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 4],
+                        borderColor: InformeTema.actual.comp, backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 4],
                         tension: .35, fill: false, pointRadius: 0, pointHoverRadius: 3
                     }
                 ].concat(r.HayEscenarioComparar ? [{
                     label: escenarioCompNombre(r), data: puntos.map(function (p) { return escalarValor(p.RealEscenario || 0); }),
-                    borderColor: '#0EA5E9', backgroundColor: 'transparent', borderWidth: 2,
+                    borderColor: InformeTema.actual.tercero, backgroundColor: 'transparent', borderWidth: 2,
                     tension: .35, fill: false, pointRadius: 0, pointHoverRadius: 3
                 }] : [])
             },
@@ -1332,7 +1342,7 @@
                         grid: { display: false }, border: { display: false },
                         ticks: {
                             font: { family: "'Nunito', sans-serif", size: 10, weight: '700' },
-                            color: function (c) { var p = puntos[c.index]; return p && enRango(p) ? '#583AFF' : '#8B85A0'; }
+                            color: function (c) { var p = puntos[c.index]; return p && enRango(p) ? InformeTema.actual.strong : '#8B85A0'; }
                         }
                     }
                 }
@@ -1599,7 +1609,7 @@
     }
 
     function construirPdfPYG(r) {
-        var T = _pyg.textos, v2 = T.v2, P = T.pdf, C = PDF_COL;
+        var T = _pyg.textos, v2 = T.v2, P = T.pdf, C = InformeTema.pdf(PDF_COL), DEG = InformeTema.pdfDegradado(PDF_DEGRADADO);
         var pdf = new window.jspdf.jsPDF('l', 'mm', 'a4');
         var W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight();
         var M = 12, ANCHO = W - M * 2, LIMITE_Y = H - 15;
@@ -1615,10 +1625,10 @@
 
         // Degradado horizontal de marca (jsPDF no tiene gradientes: franjas finas interpoladas).
         function degradado(x, yy, w, h) {
-            var pasos = 90, n = PDF_DEGRADADO.length - 1;
+            var pasos = 90, n = DEG.length - 1;
             for (var i = 0; i < pasos; i++) {
                 var t = i / (pasos - 1), seg = Math.min(n - 1, Math.floor(t * n)), f = t * n - seg;
-                var a = PDF_DEGRADADO[seg], b = PDF_DEGRADADO[seg + 1];
+                var a = DEG[seg], b = DEG[seg + 1];
                 pdf.setFillColor(Math.round(a[0] + (b[0] - a[0]) * f), Math.round(a[1] + (b[1] - a[1]) * f), Math.round(a[2] + (b[2] - a[2]) * f));
                 pdf.rect(x + (w * i) / pasos, yy, w / pasos + 0.15, h, 'F');
             }
@@ -2127,8 +2137,10 @@
             $('#frmExportarExcelPYG').submit();
         }
 
+        InformeTema.montar({ selector: '#pygTema', empresa: '#pygEmpresa' });
         $('#btnConsultarPYG').on('click', consultarReporte);
         $('#btnLimpiarPYG').on('click', function () {
+            InformeTema.reset();
             $('#pygComparar').val('ppto').trigger('change.select2');
             $('#pygEscenarioComparar').val('').trigger('change.select2');
             $('#pygNivelDetalle').val('todas').trigger('change.select2');
