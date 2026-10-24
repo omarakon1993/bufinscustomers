@@ -13,21 +13,21 @@ using System.Web.Hosting;
 namespace bufinscustomers.Services
 {
     /// <summary>
-    /// Actualización de los datos del Observatorio público (bufins.com/observatorio) desde el portal.
-    /// El trabajo pesado NO corre dentro de IIS: se lanza ObservatorioEtl.exe como proceso aparte, que escribe los
-    /// archivos de datos en la carpeta App_Data\observatorio del sitio bufins.com y reporta su avance en etl_status.json.
+    /// Actualización de los datos de Pulso Bufins público (bufins.com/pulso-bufins) desde el portal.
+    /// El trabajo pesado NO corre dentro de IIS: se lanza PulsoEtl.exe como proceso aparte, que escribe los
+    /// archivos de datos en la carpeta App_Data\pulso del sitio bufins.com y reporta su avance en etl_status.json.
     ///
     /// Rutas (sin valores "quemados" en el código ni en Web.config), en este orden:
-    ///   1) clave de dbo.ConfiguracionSistema  (ObservatorioEtlExe / ObservatorioDatosDir; editable en la propia pantalla)
+    ///   1) clave de dbo.ConfiguracionSistema  (PulsoEtlExe / PulsoDatosDir; editable en la propia pantalla)
     ///   2) clave de appSettings con el mismo nombre
-    ///   3) autodetección: el .exe en bin\ o App_Data\ObservatorioEtl\ del portal, o en la carpeta hermana bufinsweb\Tools\...;
-    ///      los datos en la carpeta hermana bufinsweb\App_Data\observatorio.
+    ///   3) autodetección: el .exe en bin\ o App_Data\PulsoEtl\ del portal, o en la carpeta hermana bufinsweb\Tools\...;
+    ///      los datos en la carpeta hermana bufinsweb\App_Data\pulso.
     /// Una ruta relativa (o que empiece por ~/) se resuelve desde la carpeta raíz del portal.
     /// </summary>
-    public class ObservatorioActualizacionService
+    public class PulsoActualizacionService
     {
-        public const string ClaveExe = "ObservatorioEtlExe";
-        public const string ClaveDatos = "ObservatorioDatosDir";
+        public const string ClaveExe = "PulsoEtlExe";
+        public const string ClaveDatos = "PulsoDatosDir";
 
         private static readonly string[] Datasets = { "6hqw-m3dm", "pfdp-zks5", "prwj-nzxa", "ctcp-462n" };
         private const string CacheFuente = "obsdatos:fuente";
@@ -72,9 +72,9 @@ namespace bufinscustomers.Services
             {
                 var candidatos = new[]
                 {
-                    Path.Combine(raiz, "bin", "ObservatorioEtl.exe"),
-                    Path.Combine(raiz, "App_Data", "ObservatorioEtl", "ObservatorioEtl.exe"),
-                    Path.GetFullPath(Path.Combine(raiz, "..", "bufinsweb", "Tools", "ObservatorioEtl", "bin", "Release", "net48", "ObservatorioEtl.exe"))
+                    Path.Combine(raiz, "bin", "PulsoEtl.exe"),
+                    Path.Combine(raiz, "App_Data", "PulsoEtl", "PulsoEtl.exe"),
+                    Path.GetFullPath(Path.Combine(raiz, "..", "bufinsweb", "Tools", "PulsoEtl", "bin", "Release", "net48", "PulsoEtl.exe"))
                 };
                 r.Exe = candidatos.FirstOrDefault(File.Exists);
                 if (r.Exe != null) r.OrigenExe = "auto";
@@ -83,7 +83,7 @@ namespace bufinscustomers.Services
             if (r.ValorDatos != null) { r.Datos = Resolver(r.ValorDatos); r.OrigenDatos = "config"; }
             else
             {
-                var hermana = Path.GetFullPath(Path.Combine(raiz, "..", "bufinsweb", "App_Data", "observatorio"));
+                var hermana = Path.GetFullPath(Path.Combine(raiz, "..", "bufinsweb", "App_Data", "pulso"));
                 if (Directory.Exists(hermana)) { r.Datos = hermana; r.OrigenDatos = "auto"; }
             }
             return _rutas = r;
@@ -108,8 +108,8 @@ namespace bufinscustomers.Services
             if (exe.Length > 0 && !File.Exists(Resolver(exe))) return "ExeNoExiste";
             if (datos.Length > 0 && !Directory.Exists(Resolver(datos))) return "CarpetaNoExiste";
             var cfg = new ConfiguracionSistemaService();
-            var ok = cfg.Guardar(ClaveExe, exe, "Observatorio: ruta de ObservatorioEtl.exe (vacio = autodetectar)")
-                  && cfg.Guardar(ClaveDatos, datos, "Observatorio: carpeta App_Data\\observatorio del sitio bufins.com (vacio = autodetectar)");
+            var ok = cfg.Guardar(ClaveExe, exe, "Pulso Bufins: ruta de PulsoEtl.exe (vacio = autodetectar)")
+                  && cfg.Guardar(ClaveDatos, datos, "Pulso Bufins: carpeta App_Data\\pulso del sitio bufins.com (vacio = autodetectar)");
             _rutas = null;
             return ok ? null : "ErrorGuardar";
         }
@@ -250,7 +250,7 @@ namespace bufinscustomers.Services
         }
 
         /// <summary>
-        /// Uso del Observatorio de los últimos N días, leído de DatosDir\uso\yyyy-MM.json (contadores anónimos que escribe bufins.com:
+        /// Uso de Pulso Bufins de los últimos N días, leído de DatosDir\uso\yyyy-MM.json (contadores anónimos que escribe bufins.com:
         /// "día|tipo|clave" -> cantidad). No contiene IP, cookies ni datos personales.
         /// </summary>
         public object ObtenerUso(int dias)

@@ -13,7 +13,7 @@ using System.Web.Mvc;
 namespace bufinscustomers.Controllers
 {
     /// <summary>
-    /// Auditoría del portal público (hoy «Observatorio»): visitas, recorridos, qué consultan, origen, audiencia y salud del sitio.
+    /// Auditoría del portal público (hoy «Pulso Bufins»): visitas, recorridos, qué consultan, origen, audiencia y salud del sitio.
     /// Solo Super Admin. Pestaña del hub de Auditoría (se carga con ?embed=1). Todo es anónimo: ver <see cref="PortalUsoService"/>.
     /// </summary>
     [ValidarSesion]

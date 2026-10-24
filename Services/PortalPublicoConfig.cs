@@ -3,13 +3,13 @@ using System;
 namespace bufinscustomers.Services
 {
     /// <summary>
-    /// Nombre VISIBLE del portal público en la auditoría (hoy «Observatorio»). Cuando el sitio cambie de nombre basta con cambiar
+    /// Nombre VISIBLE del portal público en la auditoría (hoy «Pulso Bufins»). Cuando el sitio cambie de nombre basta con cambiar
     /// la clave <c>PortalPublico_Nombre</c> en Configuraciones generales BUFINS: ningún nombre está escrito en el código.
     /// </summary>
     public static class PortalPublicoConfig
     {
         public const string Clave = "PortalPublico_Nombre";
-        public const string PorDefecto = "Observatorio";
+        public const string PorDefecto = "Pulso Bufins";
 
         private static string _nombre; private static DateTime _hora = DateTime.MinValue;
 

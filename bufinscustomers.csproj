@@ -135,7 +135,7 @@
     <Compile Include="Controllers\GestorEscenariosController.cs" />
     <Compile Include="Controllers\GestorHojasCargueController.cs" />
     <Compile Include="Controllers\ConfiguracionGlobalController.cs" />
-    <Compile Include="Controllers\ObservatorioDatosController.cs" />
+    <Compile Include="Controllers\PulsoDatosController.cs" />
     <Compile Include="Controllers\SeguridadController.cs" />
     <Compile Include="Controllers\SolicitudesSeguridadController.cs" />
     <Compile Include="Controllers\GestorPromptsController.cs" />
@@ -303,7 +303,7 @@
     <Compile Include="Services\TablaPUCService.cs" />
     <Compile Include="Services\MenuEstructuraService.cs" />
     <Compile Include="Services\ConfiguracionSistemaService.cs" />
-    <Compile Include="Services\ObservatorioActualizacionService.cs" />
+    <Compile Include="Services\PulsoActualizacionService.cs" />
     <Compile Include="Services\InformeTablasDatosService.cs" />
     <Compile Include="Services\InformeLineaTiempoService.cs" />
     <Compile Include="Services\InformePYGService.cs" />
@@ -534,7 +534,7 @@
     <Content Include="Views\Configuracion\MenuOpciones.cshtml" />
     <Content Include="Views\Configuracion\ModelosEjecucion.cshtml" />
     <Content Include="Views\Configuracion\ConfiguracionGlobal.cshtml" />
-    <Content Include="Views\Configuracion\ObservatorioDatos.cshtml" />
+    <Content Include="Views\Configuracion\PulsoDatos.cshtml" />
     <Content Include="Views\Configuracion\GestorPrompts.cshtml" />
     <Content Include="Views\Configuracion\GruposEmpresariales.cshtml" />
     <Content Include="Views\Configuracion\GestionarGrupoEmpresas.cshtml" />
@@ -563,12 +563,12 @@
   <PropertyGroup>
     <ApplicationIcon>favicon.ico</ApplicationIcon>
   </PropertyGroup>
-  <!-- Programa de actualización del Observatorio: si el repositorio hermano bufinsweb está presente, se compila junto con el portal y
-       ObservatorioEtl.exe queda en bin\ (y viaja con la publicación). Sin la carpeta hermana, el portal compila igual y la ruta
-       del .exe se indica en Configuración > Datos del Observatorio. -->
-  <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)\..\bufinsweb\Tools\ObservatorioEtl\obj\project.assets.json')">
-    <ProjectReference Include="..\bufinsweb\Tools\ObservatorioEtl\ObservatorioEtl.csproj">
-      <Name>ObservatorioEtl</Name>
+  <!-- Programa de actualización de Pulso Bufins: si el repositorio hermano bufinsweb está presente, se compila junto con el portal y
+       PulsoEtl.exe queda en bin\ (y viaja con la publicación). Sin la carpeta hermana, el portal compila igual y la ruta
+       del .exe se indica en Configuración > Datos de Pulso Bufins. -->
+  <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)\..\bufinsweb\Tools\PulsoEtl\obj\project.assets.json')">
+    <ProjectReference Include="..\bufinsweb\Tools\PulsoEtl\PulsoEtl.csproj">
+      <Name>PulsoEtl</Name>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

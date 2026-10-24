@@ -314,7 +314,7 @@ Como el código exige alta del autenticador en el siguiente login, quienes no ti
 <div class="card find media">
 <h3>H9 · Privilegios de la base de datos y ejecución de procesos <span class="tag t-media">Medio</span></h3>
 <dl>
-<dt>Qué pasa</dt><dd>La aplicación crea y altera tablas desde el Gestor de hojas de cargue, lo que obliga a que su usuario de BD tenga <code>db_ddladmin</code>. Si algún día hubiera una inyección o una cuenta comprometida, el daño crece con ese permiso. Además, <code>ObservatorioActualizacionService</code> lanza un ejecutable cuya ruta se guarda en <code>ConfiguracionSistema</code>: un Super Admin comprometido puede apuntarla a cualquier programa.</dd>
+<dt>Qué pasa</dt><dd>La aplicación crea y altera tablas desde el Gestor de hojas de cargue, lo que obliga a que su usuario de BD tenga <code>db_ddladmin</code>. Si algún día hubiera una inyección o una cuenta comprometida, el daño crece con ese permiso. Además, <code>PulsoActualizacionService</code> lanza un ejecutable cuya ruta se guarda en <code>ConfiguracionSistema</code>: un Super Admin comprometido puede apuntarla a cualquier programa.</dd>
 <dt>Qué hacer</dt><dd>Separar dos usuarios de BD: uno de lectura/escritura de datos (el de uso diario) y otro con DDL solo para el gestor. En el ejecutable: validar que la ruta esté dentro de una carpeta permitida, comprobar el nombre exacto y, si es posible, su firma o hash, y auditar cada ejecución.</dd>
 </dl>
 </div>
@@ -345,7 +345,7 @@ Como el código exige alta del autenticador en el siguiente login, quienes no ti
 <tr><td><b>Copias de seguridad</b></td><td>Es tu defensa contra ransomware y borrados. Una copia sin prueba de restauración no cuenta.</td><td>Copias cifradas, fuera del servidor, con restauración probada y retención conocida.</td></tr>
 <tr><td><b>Parches del servidor y SQL Server</b></td><td>Windows, IIS, .NET Framework 4.8 y SQL Server reciben correcciones mensuales.</td><td>Política de parches con ventana fija y registro.</td></tr>
 <tr><td><b>Exposición de SQL Server</b></td><td>El puerto 1433 no debe ser accesible desde internet.</td><td>Escaneo de puertos desde fuera y regla de firewall solo desde el servidor web.</td></tr>
-<tr><td><b>Permisos de carpeta en IIS</b></td><td>El usuario del pool solo debería poder escribir en <code>App_Data</code> y la carpeta de datos del Observatorio.</td><td>Revisar ACL del sitio.</td></tr>
+<tr><td><b>Permisos de carpeta en IIS</b></td><td>El usuario del pool solo debería poder escribir en <code>App_Data</code> y la carpeta de datos de Pulso Bufins.</td><td>Revisar ACL del sitio.</td></tr>
 </table></div>
 </section>
 
@@ -405,7 +405,7 @@ Como el código exige alta del autenticador en el siguiente login, quienes no ti
 <tr><td>Denegación de servicio</td><td><span class="tag t-media">Media</span></td><td>Límite de login, pero cargues grandes y consultas pesadas sin tope por usuario; falta WAF.</td></tr>
 <tr><td>Fuga de información por errores</td><td><span class="tag t-ok">Alta</span></td><td>Errores técnicos con código y sin detalle (H8); cabeceras de versión retiradas (H10). Queda visible la cabecera <code>Server</code>.</td></tr>
 <tr><td>Ransomware / pérdida de datos</td><td><span class="tag t-ver">No verificable</span></td><td>Depende de las copias y del aislamiento del servidor (sección 4).</td></tr>
-<tr><td>Cuenta de Super Admin comprometida</td><td><span class="tag t-alta">Media</span></td><td>Es el escenario de mayor daño: acceso total, ejecución del Observatorio y DDL. Mitigar con el 2FA ya activo (completar el Super Admin sin TOTP), alertas de uso y H9.</td></tr>
+<tr><td>Cuenta de Super Admin comprometida</td><td><span class="tag t-alta">Media</span></td><td>Es el escenario de mayor daño: acceso total, ejecución de Pulso Bufins y DDL. Mitigar con el 2FA ya activo (completar el Super Admin sin TOTP), alertas de uso y H9.</td></tr>
 <tr><td>Cadena de suministro (librerías)</td><td><span class="tag t-media">Media</span></td><td>Versiones recientes, pero sin escaneo automático.</td></tr>
 </table></div>
 </section>

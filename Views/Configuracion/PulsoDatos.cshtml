@@ -69,7 +69,7 @@
                 <div class="obsd-actions">
                     <button type="button" class="btn-modern-gradient" id="obsdBtn"><i class="fas fa-sync-alt mr-1"></i>@Resources.Strings.ObsDatos_BtnActualizar</button>
                     <button type="button" class="btn-modern-secondary" id="obsdBtnForzar"><i class="fas fa-redo mr-1"></i>@Resources.Strings.ObsDatos_BtnForzar</button>
-                    <a class="btn-modern-secondary" href="https://bufins.com/observatorio" target="_blank" rel="noopener"><i class="fas fa-external-link-alt mr-1"></i>@Resources.Strings.ObsDatos_VerSitio</a>
+                    <a class="btn-modern-secondary" href="https://bufins.com/pulso-bufins" target="_blank" rel="noopener"><i class="fas fa-external-link-alt mr-1"></i>@Resources.Strings.ObsDatos_VerSitio</a>
                 </div>
                 <div class="obsd-note">@Resources.Strings.ObsDatos_Nota</div>
             </div>
@@ -125,10 +125,10 @@
             confSi: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_ConfSi))',
             confNo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.ObsDatos_ConfNo))'
         };
-        var urlEstado = '@Url.Action("Estado", "ObservatorioDatos")';
-        var urlActualizar = '@Url.Action("Actualizar", "ObservatorioDatos")';
-        var urlUso = '@Url.Action("Uso", "ObservatorioDatos")';
-        var urlGuardarRutas = '@Url.Action("GuardarRutas", "ObservatorioDatos")';
+        var urlEstado = '@Url.Action("Estado", "PulsoDatos")';
+        var urlActualizar = '@Url.Action("Actualizar", "PulsoDatos")';
+        var urlUso = '@Url.Action("Uso", "PulsoDatos")';
+        var urlGuardarRutas = '@Url.Action("GuardarRutas", "PulsoDatos")';
         var timer = null, ultimo = null, rutasEditadas = false;
 
         function esc(s) { return $('<div>').text(s == null ? '' : s).html(); }

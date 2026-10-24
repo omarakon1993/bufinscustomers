@@ -13,7 +13,7 @@ using System.Text.RegularExpressions;
 namespace bufinscustomers.Services
 {
     /// <summary>
-    /// Auditoría del portal público (hoy «Observatorio»; el nombre visible es configurable, ver <see cref="PortalPublicoConfig"/>).
+    /// Auditoría del portal público (hoy «Pulso Bufins»; el nombre visible es configurable, ver <see cref="PortalPublicoConfig"/>).
     /// Lee, de la carpeta de datos del sitio público, el registro de eventos ANÓNIMOS (<c>uso\eventos\yyyy-MM-dd.jsonl</c>) y los
     /// contadores mensuales (<c>uso\yyyy-MM.json</c>) que escribe bufins.com, y calcula visitas, recorridos, qué consultan,
     /// origen, audiencia y salud del sitio. No hay datos personales: el visitante es un identificador que se renueva cada día.
@@ -35,12 +35,12 @@ namespace bufinscustomers.Services
 
         private static string _datosDir; private static DateTime _datosDirHora = DateTime.MinValue;
 
-        /// <summary>Carpeta de datos del sitio público (la misma de «Datos del Observatorio»); se relee cada minuto.</summary>
+        /// <summary>Carpeta de datos del sitio público (la misma de «Datos de Pulso Bufins»); se relee cada minuto.</summary>
         private static string DatosDir()
         {
             if (DateTime.UtcNow - _datosDirHora > TimeSpan.FromMinutes(1))
             {
-                try { _datosDir = new ObservatorioActualizacionService().DatosDir; } catch (Exception) { _datosDir = null; }
+                try { _datosDir = new PulsoActualizacionService().DatosDir; } catch (Exception) { _datosDir = null; }
                 _datosDirHora = DateTime.UtcNow;
             }
             return _datosDir;
@@ -361,7 +361,7 @@ namespace bufinscustomers.Services
                 new KeyValuePair<string,int>("visitantes", vis(e => EsVista(e))),
                 new KeyValuePair<string,int>("consulta", vis(e => e.T == "vista_empresa" || e.T == "vista_ranking" || e.T == "vista_sectores" || e.T == "vista_comparar")),
                 new KeyValuePair<string,int>("cta", vis(e => e.T == "cta_click")),
-                new KeyValuePair<string,int>("contacto", vis(e => e.T == "vista_contacto" && e.K == "observatorio")),
+                new KeyValuePair<string,int>("contacto", vis(e => e.T == "vista_contacto" && e.K == "pulso")),
                 new KeyValuePair<string,int>("enviado", vis(e => e.T == "contacto_enviado"))
             };
             res.Embudo = etapas.Select(x => new PortalItem { Clave = x.Key, Nombre = x.Key, N = x.Value,

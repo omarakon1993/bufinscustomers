@@ -7,18 +7,18 @@ using System.Web.Mvc;
 namespace bufinscustomers.Controllers
 {
     /// <summary>
-    /// Actualización de los datos del Observatorio público de bufins.com. Solo Super Admin.
-    /// El proceso pesado corre fuera de IIS (ObservatorioEtl.exe); aquí solo se consulta el estado y se lanza.
+    /// Actualización de los datos de Pulso Bufins público de bufins.com. Solo Super Admin.
+    /// El proceso pesado corre fuera de IIS (PulsoEtl.exe); aquí solo se consulta el estado y se lanza.
     /// </summary>
     [ValidarSesion]
     [SoloSuperAdmin]
-    public class ObservatorioDatosController : BaseController
+    public class PulsoDatosController : BaseController
     {
-        private readonly ObservatorioActualizacionService _svc = new ObservatorioActualizacionService();
+        private readonly PulsoActualizacionService _svc = new PulsoActualizacionService();
 
         public ActionResult Index()
         {
-            return View("~/Views/Configuracion/ObservatorioDatos.cshtml");
+            return View("~/Views/Configuracion/PulsoDatos.cshtml");
         }
 
         /// <summary>Estado para el sondeo de la pantalla (datos publicados, fuente, avance del proceso).</summary>
@@ -30,7 +30,7 @@ namespace bufinscustomers.Controllers
             return r;
         }
 
-        /// <summary>Uso anónimo del Observatorio (contadores agregados de los últimos 30 días).</summary>
+        /// <summary>Uso anónimo de Pulso Bufins (contadores agregados de los últimos 30 días).</summary>
         [HttpGet]
         public JsonResult Uso()
         {
@@ -48,7 +48,7 @@ namespace bufinscustomers.Controllers
             if (err == null)
             {
                 new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Editar,
-                    "ObservatorioDatos", "rutas", "Rutas de actualización del Observatorio",
+                    "PulsoDatos", "rutas", "Rutas de actualización de Pulso Bufins",
                     null, new { exe, datos }, UsuarioSesionHelper.UsuarioActual?.IdEmpresa);
                 return Json(new { ok = true, mensaje = R("ObsDatos_MsgRutasOk") });
             }
@@ -64,7 +64,7 @@ namespace bufinscustomers.Controllers
             if (res.Ok)
             {
                 new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Ejecutar,
-                    "ObservatorioDatos", "etl", "Actualización de datos del Observatorio (bufins.com)" + (forzar ? " [forzada]" : ""),
+                    "PulsoDatos", "etl", "Actualización de datos de Pulso Bufins (bufins.com)" + (forzar ? " [forzada]" : ""),
                     null, new { forzar }, UsuarioSesionHelper.UsuarioActual?.IdEmpresa);
                 return Json(new { ok = true, mensaje = R("ObsDatos_MsgIniciado") });
             }
