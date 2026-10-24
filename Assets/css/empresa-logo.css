@@ -1,0 +1,57 @@
+/* Logo de la empresa — compartido por el gestor de Empresas y los informes.
+   Regla de diseño: el logo siempre va dentro de una "placa" blanca con borde sutil, para que se lea igual
+   sea cual sea su fondo (transparente, blanco o de color) y también en la captura como imagen. */
+
+.emp-logo-plate {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #fff; border: 1px solid #e3e0f1; border-radius: 12px;
+    padding: 6px 12px; box-sizing: border-box; flex: 0 0 auto;
+}
+.emp-logo-plate img { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+.emp-logo-plate[hidden] { display: none !important; }
+
+/* Encabezado de los informes (.pyg2-head): placa a la izquierda del nombre de la empresa */
+.pyg2-head .emp-logo-plate, .lt-head-row .emp-logo-plate { height: 64px; max-width: 190px; margin-right: 16px; align-self: center; }
+.pyg2-head .emp-logo-plate img, .lt-head-row .emp-logo-plate img { max-height: 48px; max-width: 164px; }
+.pyg2-head-l .emp-logo-texto { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.pyg2-head-l.con-logo { flex-direction: row; align-items: center; gap: 0; }
+.pyg2-head-l.con-logo .emp-logo-texto { flex: 1 1 auto; }
+/* Línea de tiempo: el conjunto placa + título */
+.lt-head-row .lt-head-l { min-width: 0; }
+.lt-head-row .lt-head-l.con-logo { display: flex; align-items: center; }
+.lt-head-row .lt-head-l .emp-logo-texto { min-width: 0; }
+@media (max-width: 640px) {
+    .pyg2-head-l.con-logo, .lt-head-row .lt-head-l.con-logo { flex-wrap: wrap; }
+    .pyg2-head .emp-logo-plate, .lt-head-row .emp-logo-plate { height: 52px; max-width: 150px; margin: 0 0 8px 0; }
+    .pyg2-head .emp-logo-plate img, .lt-head-row .emp-logo-plate img { max-height: 38px; max-width: 126px; }
+}
+
+/* Línea de tiempo: el nombre de la empresa va primero y destacado, encima del título del informe */
+.lt-head-row .lt-head-empresa { font-size: 22px; font-weight: 800; letter-spacing: -.015em; line-height: 1.2; color: #16121F; margin: 0 0 4px; overflow-wrap: anywhere; }
+.lt-head-row .lt-head-empresa:empty { display: none; }
+.lt-head-row .lt-head-l .emp-logo-texto h2 { font-size: 15px; color: #583AFF; }
+
+/* Informe de modelos: placa pequeña al inicio del encabezado de la tabla de resultados */
+.mc-table-head .emp-logo-plate { height: 34px; max-width: 130px; padding: 3px 8px; border-radius: 8px; margin-right: 10px; }
+.mc-table-head .emp-logo-plate img { max-height: 26px; max-width: 112px; }
+
+/* Gestor de Empresas: miniatura en la tabla */
+.emp-logo-cell .emp-logo-plate { height: 30px; max-width: 76px; padding: 2px 6px; border-radius: 8px; }
+.emp-logo-cell .emp-logo-plate img { max-height: 24px; max-width: 62px; }
+
+/* Gestor de Empresas: requisitos del logo como panel flotante (no cambia el alto del modal).
+   El resto del modal (cabecera, secciones, campos, caja del logo, botones) lo da Assets/css/bufins-modal.css. */
+.emp-logo-reqs { margin-top: 10px; position: relative; }
+.emp-logo-reqs summary { cursor: pointer; font-size: 12.5px; font-weight: 700; color: #583AFF; list-style: none; display: inline-flex; align-items: center; gap: 6px; }
+.emp-logo-reqs summary::-webkit-details-marker { display: none; }
+.emp-logo-reqs summary::before { content: "0da"; font-family: "Font Awesome 7 Free", "Font Awesome 5 Free", "Font Awesome 6 Free"; font-weight: 900; font-size: 11px; }
+.emp-logo-reqs[open] summary::before { content: "0d7"; }
+.emp-logo-reqs-panel {
+    position: absolute; left: 0; right: 0; bottom: calc(100% + 8px); z-index: 20;
+    background: #fff; border: 1px solid #e3e0f1; border-radius: 10px; padding: 10px 12px;
+    box-shadow: 0 10px 28px rgba(22, 9, 51, .22);
+}
+.emp-logo-box-intro { margin: 0 0 6px; font-size: 11.5px; color: #5b5678; }
+.emp-logo-reqs ul { list-style: none; margin: 0; padding: 0; }
+.emp-logo-reqs li { font-size: 11.5px; color: #5b5678; padding-left: 18px; position: relative; margin-bottom: 3px; line-height: 1.3; }
+.emp-logo-reqs li::before { content: "00c"; font-family: "Font Awesome 7 Free", "Font Awesome 5 Free", "Font Awesome 6 Free"; font-weight: 900; position: absolute; left: 0; top: 1px; font-size: 9px; color: #16a34a; }

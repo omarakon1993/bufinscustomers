@@ -96,7 +96,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="crearModalLabel">
-                        <i class="fas fa-plus-circle" style="color:#583AFF;"></i> @Resources.Strings.Esc_ModalCreateTitle
+                        <i class="fas fa-plus-circle"></i> @Resources.Strings.Esc_ModalCreateTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -105,20 +105,19 @@
                 <form method="post" action="@Url.Action("Crear", "GestorEscenarios")">
                     @Html.AntiForgeryToken()
                     <div class="modal-body">
-                        <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                         <div class="mb-3">
-                            <label for="crearNombre" class="form-label">
-                                <i class="fas fa-tag mr-2" style="color:#583AFF;"></i>@Resources.Strings.Emp_LabelNombre <span class="text-danger">*</span>
+                            <label for="crearNombre" class="form-label">@Resources.Strings.Emp_LabelNombre <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control form-control-sm" id="crearNombre" name="nombre"
-                                   placeholder="Ej: Escenario 3" maxlength="100" required />
+                            <div class="bf-input"><i class="fas fa-tag"></i><input type="text" class="form-control" id="crearNombre" name="nombre"
+                                   placeholder="Ej: Escenario 3" maxlength="100" required /></div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                        <span class="bf-footer-note"><b>*</b> @Resources.Strings.Common_CamposObligatorios</span>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                         </button>
-                        <button type="submit" class="btn btn-primary btn-sm">
+                        <button type="submit" class="btn btn-primary">
                             <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.Common_BtnCrear
                         </button>
                     </div>
@@ -133,7 +132,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editarModalLabel">
-                        <i class="fas fa-edit" style="color:#583AFF;"></i> @Resources.Strings.Esc_ModalEditTitle
+                        <i class="fas fa-edit"></i> @Resources.Strings.Esc_ModalEditTitle
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -143,21 +142,18 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" id="editId" name="id" />
                     <div class="modal-body">
-                        <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                         <div class="row">
                             <div class="col-md-8 mb-3 mt-2">
-                                <label for="editNombre" class="form-label">
-                                    <i class="fas fa-tag mr-2" style="color:#583AFF;"></i>@Resources.Strings.Emp_LabelNombre <span class="text-danger">*</span>
+                                <label for="editNombre" class="form-label">@Resources.Strings.Emp_LabelNombre <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" class="form-control form-control-sm" id="editNombre" name="nombre"
-                                       maxlength="100" required />
+                                <div class="bf-input"><i class="fas fa-tag"></i><input type="text" class="form-control" id="editNombre" name="nombre"
+                                       maxlength="100" required /></div>
                             </div>
                             <div class="col-md-4 mb-3 mt-2">
-                                <label for="editOrden" class="form-label">
-                                    <i class="fas fa-sort-numeric-up mr-2" style="color:#583AFF;"></i>@Resources.Strings.Menu_LabelOrden
+                                <label for="editOrden" class="form-label">@Resources.Strings.Menu_LabelOrden
                                 </label>
-                                <input type="number" class="form-control form-control-sm" id="editOrden" name="orden"
-                                       min="0" max="999" />
+                                <div class="bf-input"><i class="fas fa-sort-numeric-up"></i><input type="number" class="form-control" id="editOrden" name="orden"
+                                       min="0" max="999" /></div>
                             </div>
                         </div>
                         <div class="form-check">
@@ -167,10 +163,11 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                        <span class="bf-footer-note"><b>*</b> @Resources.Strings.Common_CamposObligatorios</span>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                         </button>
-                        <button type="submit" class="btn btn-primary btn-sm">
+                        <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save mr-1"></i>@Resources.Strings.Common_GuardarCambios
                         </button>
                     </div>

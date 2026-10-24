@@ -32,7 +32,7 @@ namespace bufinscustomers.Controllers
         // POST: Crear empresa (solo Super Admin)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult CrearEmpresa(Empresas empresa)
+        public ActionResult CrearEmpresa(Empresas empresa, System.Web.HttpPostedFileBase logo)
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
@@ -48,11 +48,35 @@ namespace bufinscustomers.Controllers
             }
             empresa.PaginaWeb = webNormalizada;
 
+            // Logo (opcional): se valida ANTES de crear, para no dejar la empresa creada con un logo rechazado.
+            ResultadoLogo logoProcesado = null;
+            if (logo != null && logo.ContentLength > 0)
+            {
+                if (logo.ContentLength > EmpresaLogoHelper.MaxBytesArchivo)
+                {
+                    SetErrorMessage(string.Format(R("EmpLogo_Err_Peso"), EmpresaLogoHelper.MaxBytesArchivo / (1024 * 1024)));
+                    return RedirectToAction("Empresas");
+                }
+                byte[] datosLogo;
+                using (var ms = new System.IO.MemoryStream())
+                {
+                    logo.InputStream.CopyTo(ms);
+                    datosLogo = ms.ToArray();
+                }
+                logoProcesado = EmpresaLogoHelper.Procesar(datosLogo);
+                if (!logoProcesado.Ok)
+                {
+                    SetErrorMessage(string.Format(R(logoProcesado.ErrorKey), logoProcesado.ErrorArgs ?? new object[0]));
+                    return RedirectToAction("Empresas");
+                }
+            }
+
             string mensaje, advertencia;
             bool registrado = _empresaService.CrearEmpresa(empresa, out mensaje, out advertencia);
 
             if (registrado)
             {
+                if (logoProcesado != null) GuardarLogoRecienCreada(empresa, logoProcesado, logo.FileName);
                 EmpresasViewBagFilter.Invalidar();
                 if (advertencia == "WEB_SIN_COLUMNA") SetInfoMessage(R("Emp_PaginaWebSinColumna"));
                 SetSuccessMessage(R("Emp_Creada"));
@@ -66,6 +90,29 @@ namespace bufinscustomers.Controllers
             return RedirectToAction("Empresas");
         }
 
+
+        /// <summary>Guarda el logo elegido al crear la empresa. Si no se pudo, la empresa queda creada y se avisa (se agrega luego al editar).</summary>
+        private void GuardarLogoRecienCreada(Empresas empresa, ResultadoLogo r, string nombreArchivo)
+        {
+            try
+            {
+                var servicio = new EmpresaLogoService();
+                if (empresa.Id <= 0 || !servicio.Disponible())
+                {
+                    SetInfoMessage(R("EmpLogo_SinTabla"));
+                    return;
+                }
+                servicio.Guardar(empresa.Id, r.Png, r.Ancho, r.Alto, r.Version, System.IO.Path.GetFileName(nombreArchivo), UsuarioSesionHelper.UsuarioActual?.Id);
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Editar,
+                    "Empresas", empresa.Id.ToString(), $"Logo de la empresa agregado al crearla (Id {empresa.Id})",
+                    null, new { r.Ancho, r.Alto, Bytes = r.Png.Length, r.Version }, idEmpresa: empresa.Id);
+                if (r.AvisoKey != null) SetInfoMessage(R(r.AvisoKey));
+            }
+            catch (System.Exception ex)
+            {
+                SetInfoMessage(MensajeError(ex));
+            }
+        }
 
         // POST: Editar empresa
         [HttpPost]

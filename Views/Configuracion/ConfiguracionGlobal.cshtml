@@ -582,7 +582,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editarModalTitle">
-                        <i class="fas fa-edit" style="color:#583AFF;"></i>
+                        <i class="fas fa-edit"></i>
                         <span id="editarModalTitleText">@Resources.Strings.CfgIA_ModalEditTitle</span>
                     </h5>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
@@ -593,13 +593,12 @@
 
                         <!-- Clave -->
                         <div class="mb-3 mt-2">
-                            <label class="form-label" style="font-size:.82rem;font-weight:600;">
-                                <i class="fas fa-hashtag mr-1" style="color:#583AFF;"></i>@Resources.Strings.CfgIA_LabelClave
+                            <label class="form-label" style="font-size:.82rem;font-weight:600;">@Resources.Strings.CfgIA_LabelClave
                                 <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control form-control-sm"
+                            <div class="bf-input"><i class="fas fa-hashtag"></i><input type="text" class="form-control"
                                    id="editClave" name="Clave" required
-                                   style="font-family:monospace;" />
+                                   style="font-family:monospace;" /></div>
                             <small id="claveReadonlyNote" class="text-muted" style="display:none;">
                                 <i class="fas fa-lock mr-1"></i>La clave de un par&aacute;metro existente no se puede cambiar.
                                 Para cambiar la clave, elimina este y crea uno nuevo.
@@ -608,41 +607,38 @@
 
                         <!-- Descripción -->
                         <div class="mb-3">
-                            <label class="form-label" style="font-size:.82rem;font-weight:600;">
-                                <i class="fas fa-align-left mr-1" style="color:#583AFF;"></i>@Resources.Strings.CfgIA_LabelDescripcion
+                            <label class="form-label" style="font-size:.82rem;font-weight:600;">@Resources.Strings.CfgIA_LabelDescripcion
                             </label>
-                            <input type="text" class="form-control form-control-sm"
-                                   id="editDescripcion" name="Descripcion" maxlength="300" />
+                            <div class="bf-input"><i class="fas fa-align-left"></i><input type="text" class="form-control"
+                                   id="editDescripcion" name="Descripcion" maxlength="300" /></div>
                         </div>
 
                         @if (tiposDisponibles)
                         {
                             <!-- Tipo (categoría) -->
                             <div class="mb-3">
-                                <label class="form-label" style="font-size:.82rem;font-weight:600;">
-                                    <i class="fas fa-tags mr-1" style="color:#583AFF;"></i>@Resources.Strings.CfgIA_Tipo_Label
+                                <label class="form-label" style="font-size:.82rem;font-weight:600;">@Resources.Strings.CfgIA_Tipo_Label
                                 </label>
-                                <select class="form-control form-control-sm" id="editTipo" name="IdTipo">
+                                <div class="bf-input"><i class="fas fa-tags"></i><select class="form-control" id="editTipo" name="IdTipo">
                                     <option value="">@Resources.Strings.CfgIA_G_Otros</option>
                                     @foreach (var tp in tiposCfg.Where(t => t.Activo))
                                     {
                                         <option value="@tp.Id">@nombreTipo(tp)</option>
                                     }
-                                </select>
+                                </select></div>
                             </div>
                         }
 
                         <!-- Valor — cambia según la clave -->
                         <div class="mb-3">
-                            <label class="form-label" style="font-size:.82rem;font-weight:600;">
-                                <i class="fas fa-pencil-alt mr-1" style="color:#583AFF;"></i>@Resources.Strings.CfgIA_LabelValor
+                            <label class="form-label" style="font-size:.82rem;font-weight:600;">@Resources.Strings.CfgIA_LabelValor
                                 <span class="text-danger">*</span>
                             </label>
 
                             <!-- API Key: password con toggle. Empieza vacío; vacío = no cambiar. -->
                             <div id="wrapApiKey" style="display:none;">
                                 <div class="input-pass-wrap">
-                                    <input type="password" class="form-control form-control-sm"
+                                    <input type="password" class="form-control"
                                            id="editValorApiKey" autocomplete="off"
                                            placeholder="@Resources.Strings.CfgIA_ApiKeySinCambios" />
                                     <button type="button" class="btn-eye" onclick="toggleApiKey()">
@@ -669,7 +665,7 @@
 
                             <!-- MaxTokens: número con rango -->
                             <div id="wrapTokens" style="display:none;">
-                                <input type="number" class="form-control form-control-sm"
+                                <input type="number" class="form-control"
                                        id="editValorTokens" min="100" max="32000" step="100" />
                                 <small class="text-muted" style="font-size:.72rem;">
                                     <i class="fas fa-info-circle mr-1"></i>@Resources.Strings.CfgIA_MaxTokensHint
@@ -678,7 +674,7 @@
 
                             <!-- Genérico: texto libre -->
                             <div id="wrapGenerico" style="display:none;">
-                                <input type="text" class="form-control form-control-sm"
+                                <input type="text" class="form-control"
                                        id="editValorGenerico" maxlength="500" />
                             </div>
 
@@ -688,10 +684,10 @@
 
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                         </button>
-                        <button type="button" class="btn btn-primary btn-sm" onclick="submitGuardar()">
+                        <button type="button" class="btn btn-primary" onclick="submitGuardar()">
                             <i class="fas fa-save mr-1"></i>@Resources.Strings.CfgIA_BtnGuardar
                         </button>
                     </div>

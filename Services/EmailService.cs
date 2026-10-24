@@ -252,15 +252,15 @@ namespace bufinscustomers.Services
             List<(string etiqueta, string valor, string detalle, int signo)> kpis,
             string tablaTitulo, string[] columnas, List<(string[] celdas, int signo)> filas,
             string mensajePersonal, string nombreQuienEnvia,
-            List<(string nombre, byte[] datos, string mime)> adjuntos, bool esIngles)
+            List<(string nombre, byte[] datos, string mime)> adjuntos, bool esIngles, byte[] logoEmpresa = null)
         {
             string primero = contexto != null && contexto.Count > 0 ? contexto[0].valor : null;
             string asunto = string.IsNullOrWhiteSpace(primero) ? $"{tituloInforme} - {empresa}" : $"{tituloInforme} - {empresa} ({primero})";
 
             EnviarConAdjuntos(destinatarios, asunto,
                 ConstruirEmailInformeHtml(tituloInforme, empresa, personalizado, contexto, kpis, tablaTitulo, columnas, filas,
-                    mensajePersonal, nombreQuienEnvia, adjuntos, esIngles),
-                adjuntos);
+                    mensajePersonal, nombreQuienEnvia, adjuntos, esIngles, logoEmpresa != null && logoEmpresa.Length > 0),
+                adjuntos, logoEmpresa);
         }
 
         private static string ConstruirEmailInformeHtml(string tituloInforme, string empresa, bool personalizado,
@@ -268,7 +268,7 @@ namespace bufinscustomers.Services
             List<(string etiqueta, string valor, string detalle, int signo)> kpis,
             string tablaTitulo, string[] columnas, List<(string[] celdas, int signo)> filas,
             string mensajePersonal, string nombreQuienEnvia,
-            List<(string nombre, byte[] datos, string mime)> adjuntos, bool esIngles)
+            List<(string nombre, byte[] datos, string mime)> adjuntos, bool esIngles, bool conLogoEmpresa = false)
         {
             contexto = contexto ?? new List<(string etiqueta, string valor)>();
             kpis = kpis ?? new List<(string etiqueta, string valor, string detalle, int signo)>();
@@ -330,6 +330,9 @@ namespace bufinscustomers.Services
             string bloqueAdj = string.IsNullOrEmpty(lblAdj) ? "" : $@"<p style=""font-size:13px;color:#6b7280;margin:16px 0 0;"">&#128206; {lblAdj}</p>";
             string bloqueDe = string.IsNullOrWhiteSpace(nombreQuienEnvia) ? "" :
                 $@"<p style=""font-size:13px;color:#9ca3af;margin:14px 0 0;"">{lblDe}: {HttpUtility.HtmlEncode(nombreQuienEnvia)}</p>";
+            // Logo de la empresa: placa blanca bajo la marca Bufins (el logo viaja incrustado: cid:logo-empresa).
+            string bloqueLogo = !conLogoEmpresa ? "" : $@"
+    <div style=""margin-top:18px;""><span style=""display:inline-block;background:#fff;border-radius:10px;padding:8px 14px;""><img src=""cid:logo-empresa"" height=""44"" alt=""{HttpUtility.HtmlEncode(empresa)}"" style=""display:block;height:44px;width:auto;max-width:240px;border:0;""></span></div>";
             string bloquePers = personalizado ? $@"<p style=""font-size:12px;font-weight:700;color:#583AFF;margin:0 0 12px;"">{lblPers}</p>" : "";
 
             return $@"<!DOCTYPE html>
@@ -341,7 +344,7 @@ namespace bufinscustomers.Services
  <table width=""640"" cellpadding=""0"" cellspacing=""0"" style=""max-width:640px;width:100%;background:#fff;border-radius:16px;overflow:hidden;"">
   <tr><td style=""background:linear-gradient(135deg,#1e1b4b,#312e81,#4338ca);padding:36px 40px 28px;text-align:center;"">
     <div style=""font-size:28px;font-weight:900;color:#fff;letter-spacing:3px;"">bufins</div>
-    <div style=""font-size:9px;color:rgba(255,255,255,0.6);letter-spacing:2px;text-transform:uppercase;"">Business Finance Always Everywhere</div>
+    <div style=""font-size:9px;color:rgba(255,255,255,0.6);letter-spacing:2px;text-transform:uppercase;"">Business Finance Always Everywhere</div>{bloqueLogo}
   </td></tr>
   <tr><td style=""padding:36px 40px;"">
     <p style=""font-size:18px;font-weight:700;color:#1e1b4b;margin:0 0 4px;"">{HttpUtility.HtmlEncode(tituloInforme)}</p>
@@ -403,7 +406,7 @@ namespace bufinscustomers.Services
         /// o punto y coma) y adjuntos binarios.
         /// </summary>
         private void EnviarConAdjuntos(string destinatarios, string asunto, string htmlBody,
-            List<(string nombre, byte[] datos, string mime)> adjuntos)
+            List<(string nombre, byte[] datos, string mime)> adjuntos, byte[] logoIncrustado = null)
         {
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(_nombreRemitente, _remitente));
@@ -425,6 +428,12 @@ namespace bufinscustomers.Services
                     if (a.datos == null || a.datos.Length == 0) continue;
                     builder.Attachments.Add(a.nombre, a.datos, ContentType.Parse(a.mime));
                 }
+            }
+            if (logoIncrustado != null && logoIncrustado.Length > 0)
+            {
+                // Imagen incrustada (cid:logo-empresa): se ve en el cuerpo sin depender de que el cliente descargue imágenes externas.
+                var recurso = builder.LinkedResources.Add("logo-empresa.png", logoIncrustado, ContentType.Parse("image/png"));
+                recurso.ContentId = "logo-empresa";
             }
             message.Body = builder.ToMessageBody();
 

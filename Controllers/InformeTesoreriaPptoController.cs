@@ -326,7 +326,7 @@ namespace bufinscustomers.Controllers
 
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
                 new EmailService().EnviarInforme(string.Join(", ", lista), R("TesPpto_PageTitle"), empresa, false, contexto, kpis,
-                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles);
+                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(filtros.IdEmpresa));
 
                 new AuditoriaService().RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeTesoreriaPpto", filtros.IdEmpresa.ToString(),
@@ -483,6 +483,8 @@ namespace bufinscustomers.Controllers
                 }
                 EstiloTabla(wsP, 4, fp - 1, 3);
 
+                // Logo de la empresa (si tiene) junto al título de cada hoja; sin logo el libro queda igual que siempre.
+                ExcelLogoHelper.ColocarEnTodas(wb, ExcelLogoHelper.Obtener(r.IdEmpresa));
                 using (var ms = new MemoryStream()) { wb.SaveAs(ms); bytes = ms.ToArray(); }
             }
 

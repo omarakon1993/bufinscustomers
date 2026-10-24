@@ -338,7 +338,7 @@ namespace bufinscustomers.Controllers
 
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
                 new EmailService().EnviarInforme(string.Join(", ", lista), R("Ind_PageTitle"), empresa, false, contexto, kpis,
-                    tablaTitulo, atencion.Count > 0 ? columnas : null, atencion.Count > 0 ? filas : null, mensaje, quienEnvia, adjuntos, esIngles);
+                    tablaTitulo, atencion.Count > 0 ? columnas : null, atencion.Count > 0 ? filas : null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(filtros.IdEmpresa));
 
                 new AuditoriaService().RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeIndicadores", filtros.IdEmpresa.ToString(),
@@ -480,6 +480,8 @@ namespace bufinscustomers.Controllers
                 foreach (int col in new[] { 3, 4, 5, 6, 7 }) { wsF.Column(col).Width = 48; wsF.Column(col).Style.Alignment.WrapText = true; }
                 wsF.Range(filaEnc + 1, 1, ff - 1, colsF.Length).Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
 
+                // Logo de la empresa (si tiene) junto al título de cada hoja; sin logo el libro queda igual que siempre.
+                ExcelLogoHelper.ColocarEnTodas(wb, ExcelLogoHelper.Obtener(r.IdEmpresa));
                 using (var ms = new MemoryStream()) { wb.SaveAs(ms); bytes = ms.ToArray(); }
             }
 

@@ -314,7 +314,7 @@ namespace bufinscustomers.Controllers
 
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
                 new EmailService().EnviarInforme(string.Join(", ", lista), R("PYG_PageTitle"), empresa, false, contexto, kpis,
-                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles);
+                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(filtros.IdEmpresa));
 
                 new AuditoriaService().RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformePYG", filtros.IdEmpresa.ToString(),
@@ -382,19 +382,23 @@ namespace bufinscustomers.Controllers
         using (var package = new XLWorkbook())
         {
             var ws = package.Worksheets.Add("PYG");
+            // Logo de la empresa (si tiene): se reservan 3 filas arriba con título + logo. Sin logo el libro queda igual que siempre.
+            var logo = ExcelLogoHelper.Obtener(filtros.IdEmpresa);
+            int o = logo != null ? ExcelLogoHelper.FilasBloque : 0;
+            if (logo != null) ExcelLogoHelper.EscribirTitulo(ws, R("PYG_PageTitle") + " — " + nombreEmpresa, nombrePeriodo + " · " + DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
 
-            ws.Cell(1, 1).Value = R("PYG_ColEstructura");
-            ws.Range(1, 1, 2, 1).Merge();
-            ws.Cell(1, 2).Value = string.Format(R("PYG_ColMesGrupoFmt"), nombrePeriodo);
-            ws.Range(1, 2, 1, 1 + n).Merge();
-            ws.Cell(1, 2 + n).Value = string.Format(R("PYG_ColAcumGrupoFmt"), nombreMesHastaConAnio);
-            ws.Range(1, 2 + n, 1, totalCols).Merge();
+            ws.Cell(1 + o, 1).Value = R("PYG_ColEstructura");
+            ws.Range(1 + o, 1, 2 + o, 1).Merge();
+            ws.Cell(1 + o, 2).Value = string.Format(R("PYG_ColMesGrupoFmt"), nombrePeriodo);
+            ws.Range(1 + o, 2, 1 + o, 1 + n).Merge();
+            ws.Cell(1 + o, 2 + n).Value = string.Format(R("PYG_ColAcumGrupoFmt"), nombreMesHastaConAnio);
+            ws.Range(1 + o, 2 + n, 1 + o, totalCols).Merge();
 
             for (int b = 0; b < 2; b++)
                 for (int c = 0; c < n; c++)
-                    ws.Cell(2, 2 + b * n + c).Value = columnas[c].Item1;
+                    ws.Cell(2 + o, 2 + b * n + c).Value = columnas[c].Item1;
 
-            var headerRange = ws.Range(1, 1, 2, totalCols);
+            var headerRange = ws.Range(1 + o, 1, 2 + o, totalCols);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
             headerRange.Style.Font.FontColor = XLColor.White;
@@ -403,7 +407,7 @@ namespace bufinscustomers.Controllers
             headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
             headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
-            int fila = 3;
+            int fila = 3 + o;
             foreach (var f in filas)
             {
                 ws.Cell(fila, 1).Value = f.Descripcion;
@@ -426,7 +430,7 @@ namespace bufinscustomers.Controllers
                     filaRange.Style.Font.Bold = true;
                     filaRange.Style.Fill.BackgroundColor = XLColor.FromArgb(244, 243, 251);
                 }
-                else if ((fila - 3) % 2 == 1)
+                else if ((fila - 3 - o) % 2 == 1)
                 {
                     filaRange.Style.Fill.BackgroundColor = XLColor.FromArgb(248, 250, 252);
                 }
@@ -435,8 +439,9 @@ namespace bufinscustomers.Controllers
             }
 
             ws.Columns().AdjustToContents();
-            ws.Range(2, 1, fila - 1, totalCols).SetAutoFilter();
-            ws.SheetView.Freeze(2, 1);
+            if (logo != null) ExcelLogoHelper.Colocar(ws, logo);
+            ws.Range(2 + o, 1, fila - 1, totalCols).SetAutoFilter();
+            ws.SheetView.Freeze(2 + o, 1);
 
             nombreArchivo = $"PYG_{nombreEmpresa}_{reporte.AnioDesde}{reporte.MesDesde:00}-{reporte.AnioHasta}{reporte.MesHasta:00}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
             nombreArchivo = string.Join("_", nombreArchivo.Split(Path.GetInvalidFileNameChars()));

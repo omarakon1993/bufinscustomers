@@ -332,7 +332,7 @@ namespace bufinscustomers.Controllers
 
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
                 new EmailService().EnviarInforme(string.Join(", ", lista), R("BAL_PageTitle"), empresa, false, contexto, kpis,
-                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles);
+                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(filtros.IdEmpresa));
 
                 new AuditoriaService().RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeBalance", filtros.IdEmpresa.ToString(),
@@ -382,14 +382,18 @@ namespace bufinscustomers.Controllers
         using (var package = new XLWorkbook())
         {
             var ws = package.Worksheets.Add("Balance");
+            // Logo de la empresa (si tiene): se reservan 3 filas arriba con título + logo. Sin logo el libro queda igual que siempre.
+            var logo = ExcelLogoHelper.Obtener(filtros.IdEmpresa);
+            int o = logo != null ? ExcelLogoHelper.FilasBloque : 0;
+            if (logo != null) ExcelLogoHelper.EscribirTitulo(ws, R("BAL_PageTitle") + " — " + nombreEmpresa, nombreCorte + " · " + DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
 
-            ws.Cell(1, 1).Value = R("BAL_ColCuenta");
-            ws.Cell(1, 2).Value = string.Format(R("BAL_ColCorteGrupoFmt"), nombreCorte);
-            ws.Range(1, 2, 1, totalCols).Merge();
+            ws.Cell(1 + o, 1).Value = R("BAL_ColCuenta");
+            ws.Cell(1 + o, 2).Value = string.Format(R("BAL_ColCorteGrupoFmt"), nombreCorte);
+            ws.Range(1 + o, 2, 1 + o, totalCols).Merge();
             for (int c = 0; c < columnas.Count; c++)
-                ws.Cell(2, 2 + c).Value = columnas[c].Item1;
+                ws.Cell(2 + o, 2 + c).Value = columnas[c].Item1;
 
-            var headerRange = ws.Range(1, 1, 2, totalCols);
+            var headerRange = ws.Range(1 + o, 1, 2 + o, totalCols);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
             headerRange.Style.Font.FontColor = XLColor.White;
@@ -397,9 +401,9 @@ namespace bufinscustomers.Controllers
             headerRange.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
             headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
             headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
-            ws.Range(1, 1, 2, 1).Merge();
+            ws.Range(1 + o, 1, 2 + o, 1).Merge();
 
-            int fila = 3;
+            int fila = 3 + o;
             foreach (var f in filas)
             {
                 ws.Cell(fila, 1).Value = f.Descripcion;
@@ -419,7 +423,7 @@ namespace bufinscustomers.Controllers
                     filaRange.Style.Font.Bold = true;
                     filaRange.Style.Fill.BackgroundColor = XLColor.FromArgb(244, 243, 251);
                 }
-                else if ((fila - 3) % 2 == 1)
+                else if ((fila - 3 - o) % 2 == 1)
                 {
                     filaRange.Style.Fill.BackgroundColor = XLColor.FromArgb(248, 250, 252);
                 }
@@ -428,8 +432,9 @@ namespace bufinscustomers.Controllers
             }
 
             ws.Columns().AdjustToContents();
-            ws.Range(2, 1, fila - 1, totalCols).SetAutoFilter();
-            ws.SheetView.Freeze(2, 1);
+            if (logo != null) ExcelLogoHelper.Colocar(ws, logo);
+            ws.Range(2 + o, 1, fila - 1, totalCols).SetAutoFilter();
+            ws.SheetView.Freeze(2 + o, 1);
 
             nombreArchivo = $"Balance_{nombreEmpresa}_{reporte.AnioHasta}{reporte.MesHasta:00}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
             nombreArchivo = string.Join("_", nombreArchivo.Split(Path.GetInvalidFileNameChars()));

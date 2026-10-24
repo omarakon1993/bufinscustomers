@@ -72,6 +72,7 @@ namespace bufinscustomers.Services
 
             AsignarGrupoEmpresarial(empresas);
             AsignarPaginaWeb(empresas);
+            AsignarLogo(empresas);
 
             return empresas.OrderBy(e => e.Id).ToList();
         }
@@ -98,6 +99,15 @@ namespace bufinscustomers.Services
                     if (webs.TryGetValue(e.Id, out var w)) e.PaginaWeb = w;
             }
             catch (SqlException ex) when (ex.Number == 207) { /* columna EmpPaginaWeb inexistente (BD sin Sql/019) */ }
+        }
+
+        /// <summary>Marca qué empresas tienen logo (tabla EmpresaLogos, Sql/036). Sin la tabla, ninguna lo tiene.</summary>
+        private void AsignarLogo(List<Empresas> empresas)
+        {
+            if (empresas.Count == 0) return;
+            var versiones = new EmpresaLogoService().ObtenerVersiones();
+            foreach (var e in empresas)
+                if (versiones.TryGetValue(e.Id, out var v)) e.LogoVersion = v;
         }
 
         /// <summary>

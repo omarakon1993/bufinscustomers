@@ -12,6 +12,9 @@ namespace bufinscustomers.Models
         /// <summary>Sitio web de la empresa (URL http/https validada por <c>UrlWebHelper</c>). Opcional; columna <c>Empresas.EmpPaginaWeb</c> (Sql/019).</summary>
         public string PaginaWeb { get; set; }
 
+        /// <summary>Versión (hash) del logo guardado en <c>EmpresaLogos</c> (Sql/036); null = la empresa no tiene logo.</summary>
+        public string LogoVersion { get; set; }
+
         public int? IdGrupoEmpresarial { get; set; }
 
         // Solo lectura, poblado via JOIN para mostrar el grupo en el gestor de Empresas

@@ -10,6 +10,7 @@
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
 <link href="~/Assets/css/modelo-consola.css" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="~/Assets/css/empresa-logo.css" rel="stylesheet" />
 
 <div class="container-fluid px-4 mc-page">
 
@@ -191,6 +192,7 @@
     <div id="resultadosSection" style="display:none;">
         <div class="mc-table-card">
             <div class="mc-table-head">
+                <span class="emp-logo-plate" id="imLogo" hidden><img alt="@Resources.Strings.Common_LogoEmpresaAlt"></span>
                 <i id="resultadosIcono" class="fas fa-table mc-table-head-icon"></i>
                 <span id="resultadosTitulo" class="mc-table-head-title">@Resources.Strings.InformeModelos_Resultados</span>
                 <span id="mcContexto" class="mc-table-head-ctx"></span>
@@ -224,6 +226,7 @@
 
 @section scripts {
 
+<script src="~/Assets/js/empresa-logo.js"></script>
 <script src="~/Assets/js/export-menu.js"></script>
 <script>
     var _im = {
@@ -703,6 +706,7 @@
         $('#resultadosIcono').attr('class', r.icono + ' mc-table-head-icon');
         $('#resultadosTitulo').text(r.nombre);
         $('#mcContexto').text(nomEmpresa || '');
+        EmpresaLogo.mostrar($('#idEmpresa').val(), document.getElementById('imLogo'));
         $('#resultadosContador').text(r.filas.length + ' ' + _im.textos.registros).show();
 
         $('#mcFiltroBar').show();

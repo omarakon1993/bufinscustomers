@@ -261,7 +261,7 @@ namespace bufinscustomers.Controllers
 
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
                 new EmailService().EnviarInforme(string.Join(", ", lista), R("InformeModelos_PageTitle"), empresa, false, contexto, null,
-                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles);
+                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(idEmpresaConsulta));
 
                 new AuditoriaService().RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeModelos", (idEmpresaConsulta ?? 0).ToString(),
@@ -293,10 +293,21 @@ namespace bufinscustomers.Controllers
 
             var worksheet = package.Worksheets.Add(nombreHoja);
 
+            // Logo de la empresa (si la consulta es de UNA empresa y esta tiene logo): se reservan 3 filas arriba con título + logo.
+            // Sin logo el libro queda igual que siempre (encabezado en la fila 1).
+            var logo = filtros.IdEmpresa.HasValue ? ExcelLogoHelper.Obtener(filtros.IdEmpresa.Value) : null;
+            int o = logo != null ? ExcelLogoHelper.FilasBloque : 0;
+            if (logo != null)
+            {
+                string nombreEmpresaXls = _service.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa.Value)?.Nombre ?? "";
+                ExcelLogoHelper.EscribirTitulo(worksheet, R("InformeModelos_PageTitle") + " — " + nombreEmpresaXls,
+                    nombreHoja + " · " + DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
+            }
+
             int col = 1;
             foreach (var nombreColumna in resultado.Columnas)
             {
-                var cell = worksheet.Cell(1, col);
+                var cell = worksheet.Cell(1 + o, col);
                 cell.Value = _service.ObtenerNombreAmigableColumna(nombreColumna);
 
                 cell.Style.Font.Bold = true;
@@ -309,7 +320,7 @@ namespace bufinscustomers.Controllers
                 col++;
             }
 
-            int fila = 2;
+            int fila = 2 + o;
             foreach (var registro in resultado.Filas)
             {
                 col = 1;
@@ -350,8 +361,9 @@ namespace bufinscustomers.Controllers
             }
 
             worksheet.Columns().AdjustToContents();
-            worksheet.Range(1, 1, 1, resultado.Columnas.Count).SetAutoFilter();
-            worksheet.SheetView.Freeze(1, 0);
+            if (logo != null) ExcelLogoHelper.Colocar(worksheet, logo);
+            worksheet.Range(1 + o, 1, 1 + o, resultado.Columnas.Count).SetAutoFilter();
+            worksheet.SheetView.Freeze(1 + o, 0);
 
             nombreArchivo = $"InformeModelos_{nombreHoja}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
 

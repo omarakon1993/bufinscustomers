@@ -255,7 +255,7 @@ namespace bufinscustomers.Controllers
 
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
                 new EmailService().EnviarInforme(string.Join(", ", lista), R("LineaTiempo_PageTitle"), empresa, false, contexto, kpis,
-                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles);
+                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(idEmpresaConsulta));
 
                 new AuditoriaService().RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeLineaTiempo", idEmpresaConsulta.Value.ToString(),
@@ -426,6 +426,11 @@ namespace bufinscustomers.Controllers
             for (int c = 2; c <= totalColumnas; c++)
                 worksheet.Column(c).Width = 20;
             worksheet.SheetView.Freeze(filaEncabezado, 0);
+
+            // Logo de la empresa (si tiene) a la derecha del título, en la zona de cabecera; sin logo el libro queda igual.
+            var idEmpLogo = ResolverEmpresaConsulta(filtros.IdEmpresa, UsuarioSesionHelper.EsSuperAdmin(), UsuarioSesionHelper.UsuarioActual?.IdEmpresa);
+            if (idEmpLogo.HasValue)
+                ExcelLogoHelper.Colocar(worksheet, ExcelLogoHelper.Obtener(idEmpLogo.Value), Math.Max(totalColumnas + 1, 5));
 
             nombreArchivo = $"LineaTiempoFinanciera_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
 

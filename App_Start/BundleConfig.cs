@@ -13,7 +13,8 @@ namespace bufinscustomers
                 "~/Assets/css/bufins-components.css",
                 "~/Assets/css/page-header.css",
                 "~/Assets/css/layout.css",
-                "~/Assets/css/modelo-consola.css"));
+                "~/Assets/css/modelo-consola.css",
+                "~/Assets/css/bufins-modal.css"));
 
             // JS global (orden es crítico: jQuery → Bootstrap → plugins → custom)
             bundles.Add(new ScriptBundle("~/bundles/js-global").Include(

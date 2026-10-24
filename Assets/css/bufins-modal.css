@@ -1,0 +1,260 @@
+/* =====================================================================
+   BUFINS · Estilo de modales "Limpio con acento" (propuesta 1a)
+   Cargar DESPUÉS de layout.css y bufins-components.css.
+   Aplica a todos los .modal excepto .modal-confirm (confirmaciones oscuras)
+   y .hc-modal (gestor de hojas, ya usa este patrón).
+   ===================================================================== */
+
+.modal:not(.modal-confirm):not(.hc-modal) {
+  --bf-ink: #160933;
+  --bf-text: #374151;
+  --bf-muted: #6b7280;
+  --bf-placeholder: #a3a9b6;
+  --bf-border: #dfe3ec;
+  --bf-line: #eceef4;
+  --bf-soft: #f8f9fc;
+  --bf-primary: #583AFF;
+  --bf-primary-soft: #f0edff;
+  --bf-danger: #ef4444;
+}
+
+/* ---------- Contenedor ---------- */
+.modal:not(.modal-confirm):not(.hc-modal) .modal-content {
+  border: none;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 30px 70px -25px rgba(22, 9, 51, .55);
+}
+.modal:not(.modal-confirm):not(.hc-modal) .modal-content::before {
+  content: "";
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--content-gradient);
+  z-index: 2;
+}
+
+/* ---------- Header (blanco) ---------- */
+.modal:not(.modal-confirm):not(.hc-modal) .modal-header,
+.modal:not(.modal-confirm):not(.hc-modal) .modal-header.bg-danger {
+  background: #fff !important;
+  color: var(--bf-ink) !important;
+  border-bottom: 1px solid var(--bf-line) !important;
+  border-radius: 0 !important;
+  padding: 20px 24px 18px;
+  align-items: center;
+}
+.modal:not(.modal-confirm):not(.hc-modal) .modal-header .modal-title {
+  display: flex; align-items: center; gap: 14px;
+  font-size: 18px; font-weight: 800; letter-spacing: -.2px;
+  color: var(--bf-ink) !important;
+  line-height: 1.2;
+}
+/* El <i> del título se convierte en el "tile" con degradado — no requiere cambiar markup */
+.modal:not(.modal-confirm):not(.hc-modal) .modal-header .modal-title > i {
+  width: 40px; height: 40px; flex: none;
+  border-radius: 11px;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin: 0 !important;
+  font-size: 17px;
+  color: #fff;
+  background: var(--app-btn-gradient);
+  box-shadow: 0 4px 12px rgba(88, 58, 255, .35);
+}
+.modal:not(.modal-confirm):not(.hc-modal) .modal-header.bg-danger .modal-title > i {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, .35);
+}
+/* Subtítulo opcional: <span class="bf-modal-sub">Ultra • NIT 123456</span> dentro de .bf-modal-titles */
+.bf-modal-titles { display: flex; flex-direction: column; gap: 2px; }
+.bf-modal-sub { font-size: 13px; font-weight: 500; color: var(--bf-muted); letter-spacing: 0; }
+
+/* Botón cerrar */
+.modal:not(.modal-confirm):not(.hc-modal) .modal-header .close {
+  width: 34px; height: 34px; flex: none;
+  margin: 0 0 0 auto; padding: 0;
+  border-radius: 9px;
+  border: 1px solid #e3e6f0;
+  background: #fff !important;
+  color: var(--bf-muted) !important;
+  opacity: 1; text-shadow: none;
+  font-size: 20px; font-weight: 400; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s ease;
+}
+.modal:not(.modal-confirm):not(.hc-modal) .modal-header .close:hover {
+  color: var(--bf-primary) !important;
+  border-color: #a5b4fc;
+  background: #f8f7ff !important;
+  transform: none;
+}
+
+/* ---------- Body ---------- */
+.modal:not(.modal-confirm):not(.hc-modal) .modal-body {
+  padding: 22px 24px 24px;
+  background: #fff;
+}
+
+/* Título de sección: <div class="bf-section">Identificación</div> */
+.bf-section {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0 0 14px;
+  font-size: 11.5px; font-weight: 800;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--bf-primary);
+}
+.bf-section::after { content: ""; flex: 1; height: 1px; background: var(--bf-line); }
+.bf-section + .row, .bf-section + .bf-grid { margin-bottom: 8px; }
+* + .bf-section { margin-top: 8px; }
+
+/* Labels */
+.modal:not(.modal-confirm):not(.hc-modal) label,
+.modal:not(.modal-confirm):not(.hc-modal) .form-label {
+  font-size: 13px; font-weight: 700;
+  color: var(--bf-text);
+  margin-bottom: 6px;
+}
+.modal:not(.modal-confirm):not(.hc-modal) .required,
+.modal:not(.modal-confirm):not(.hc-modal) label .text-danger { color: var(--bf-danger); }
+
+/* Inputs */
+.modal:not(.modal-confirm):not(.hc-modal) .form-control,
+.modal:not(.modal-confirm):not(.hc-modal) .form-select,
+.modal:not(.modal-confirm):not(.hc-modal) select.form-control {
+  height: 38px;
+  border: 1px solid var(--bf-border);
+  border-radius: 8px;
+  font-size: 14px; font-weight: 500;
+  color: #1f2937;
+  box-shadow: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.modal:not(.modal-confirm):not(.hc-modal) textarea.form-control { height: auto; }
+.modal:not(.modal-confirm):not(.hc-modal) .form-control::placeholder { color: var(--bf-placeholder); }
+.modal:not(.modal-confirm):not(.hc-modal) .form-control:focus,
+.modal:not(.modal-confirm):not(.hc-modal) .form-select:focus {
+  border-color: var(--bf-primary);
+  box-shadow: 0 0 0 3px rgba(88, 58, 255, .12);
+}
+.modal:not(.modal-confirm):not(.hc-modal) .form-text { font-size: 11.5px; color: #9ca3af !important; margin-top: 5px; }
+
+/* Input con icono: <div class="bf-input"><i class="fas fa-building"></i><input class="form-control"></div> */
+.bf-input { position: relative; }
+.bf-input > i {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 12px; color: var(--bf-placeholder);
+  pointer-events: none; transition: color .15s;
+}
+.bf-input > .form-control { padding-left: 34px; }
+.bf-input:focus-within > i { color: var(--bf-primary); }
+
+/* ---------- Bloque de logo / imagen ---------- */
+.bf-logo-box {
+  height: 150px;
+  border: 1.5px dashed #c9c2f5;
+  border-radius: 12px;
+  background: #f8f7ff;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.bf-logo-box img { max-width: 85%; max-height: 120px; object-fit: contain; }
+.bf-logo-actions { display: flex; gap: 8px; margin-top: 12px; }
+.bf-btn-outline {
+  flex: 1; height: 36px;
+  border: 1px solid var(--bf-primary); border-radius: 8px;
+  background: #fff; color: var(--bf-primary);
+  font-size: 13px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  cursor: pointer; transition: background .15s;
+}
+.bf-btn-outline:hover { background: var(--bf-primary-soft); }
+.bf-btn-icon-danger {
+  width: 36px; height: 36px; flex: none;
+  border: 1px solid #fecaca; border-radius: 8px;
+  background: #fff; color: var(--bf-danger);
+  font-size: 13px; cursor: pointer; transition: background .15s;
+}
+.bf-btn-icon-danger:hover { background: #fef2f2; }
+.bf-link { font-size: 12.5px; font-weight: 700; color: var(--bf-primary); display: inline-flex; gap: 6px; align-items: center; margin-top: 10px; }
+
+/* ---------- Footer ---------- */
+.modal:not(.modal-confirm):not(.hc-modal) .modal-footer {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 24px;
+  background: var(--bf-soft);
+  border-top: 1px solid var(--bf-line);
+  border-radius: 0;
+}
+.modal:not(.modal-confirm):not(.hc-modal) .modal-footer > * { margin: 0; }
+.bf-footer-note { flex: 1; font-size: 12.5px; color: var(--bf-muted); }
+.bf-footer-note b { color: var(--bf-danger); }
+
+/* Botones del modal */
+.modal:not(.modal-confirm):not(.hc-modal) .btn {
+  height: 40px; padding: 0 20px;
+  border-radius: 9px;
+  font-size: 14px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  transform: none !important;
+}
+.modal:not(.modal-confirm):not(.hc-modal) .btn i { margin: 0 !important; }
+.modal:not(.modal-confirm):not(.hc-modal) .btn-secondary,
+.modal:not(.modal-confirm):not(.hc-modal) .btn-default {
+  background: #fff !important;
+  color: var(--bf-text) !important;
+  border: 1px solid #d1d5db !important;
+  box-shadow: none !important;
+}
+.modal:not(.modal-confirm):not(.hc-modal) .btn-secondary:hover,
+.modal:not(.modal-confirm):not(.hc-modal) .btn-default:hover { background: #f3f4f6 !important; }
+.modal:not(.modal-confirm):not(.hc-modal) .btn-primary,
+.modal:not(.modal-confirm):not(.hc-modal) .btn-success {
+  background: var(--app-btn-gradient) !important;
+  color: #fff !important; border: none !important;
+  box-shadow: 0 4px 12px rgba(88, 58, 255, .3) !important;
+}
+.modal:not(.modal-confirm):not(.hc-modal) .btn-primary:hover,
+.modal:not(.modal-confirm):not(.hc-modal) .btn-success:hover { background: var(--app-btn-gradient-hover) !important; }
+.modal:not(.modal-confirm):not(.hc-modal) .btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: #fff !important; border: none !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, .3) !important;
+}
+
+/* Cerrar con "X" a la derecha del cancel: se oculta el icono de Cancelar */
+.modal:not(.modal-confirm):not(.hc-modal) .modal-footer .btn-secondary i.fa-times { display: none; }
+
+@media (max-width: 576px) {
+  .modal:not(.modal-confirm):not(.hc-modal) .modal-header { padding: 16px 18px; }
+  .modal:not(.modal-confirm):not(.hc-modal) .modal-body { padding: 18px; }
+  .modal:not(.modal-confirm):not(.hc-modal) .modal-footer { padding: 12px 18px; flex-wrap: wrap; }
+  .bf-footer-note { flex-basis: 100%; }
+}
+
+/* =====================================================================
+   Ajustes de integración (proyecto bufinscustomers)
+   ===================================================================== */
+
+/* Botones pequeños dentro de modales (acciones en tablas, chips): no heredan los 40px de alto */
+.modal:not(.modal-confirm):not(.hc-modal) .btn.btn-sm,
+.modal:not(.modal-confirm):not(.hc-modal) .btn.btn-xs { height: 32px; padding: 0 12px; font-size: 13px; border-radius: 8px; }
+
+/* Ancho propio de los modales del gestor (cabe en pantallas de 14": 1366 px) */
+.modal-dialog.bf-modal-wide { max-width: 1040px; width: calc(100% - 1.5rem); }
+.modal-dialog.bf-modal-md { max-width: 760px; width: calc(100% - 1.5rem); }
+/* El cuerpo nunca deja el pie fuera de la pantalla: si no cabe, hace scroll interno */
+.modal:not(.modal-confirm):not(.hc-modal) .modal-body { max-height: calc(100vh - 190px); overflow-y: auto; }
+
+/* Zona del logo (gestor de Empresas): la caja es clicable y acepta arrastrar y soltar */
+.bf-logo-box { cursor: pointer; transition: border-color .15s, background .15s; flex-direction: column; gap: 6px; text-align: center; }
+.bf-logo-box:hover, .bf-logo-box:focus-visible, .bf-logo-box.arrastrando { border-color: var(--bf-primary); background: var(--bf-primary-soft); outline: none; }
+.bf-logo-box .emp-logo-plate { height: auto; max-height: 130px; border: 0; background: transparent; padding: 0; border-radius: 0; }
+.bf-logo-box .emp-logo-plate img { max-width: 85%; max-height: 120px; }
+.bf-logo-vacio { color: var(--bf-muted); font-size: 13px; font-weight: 600; padding: 0 12px; }
+.bf-logo-vacio i { display: block; font-size: 24px; color: var(--bf-primary); margin-bottom: 6px; }
+.bf-logo-msg { font-size: 12.5px; margin-top: 8px; min-height: 1em; }
+.bf-logo-msg.ok { color: #15803d; }
+.bf-logo-msg.err { color: #b91c1c; font-weight: 600; }
+.bf-logo-msg.aviso { color: #b45309; }
+.bf-logo-actions .bf-btn-icon-danger[style*="display: none"] { display: none; }
+.bf-hint-inline { font-size: 11.5px; color: #9ca3af; margin-top: 5px; display: block; }

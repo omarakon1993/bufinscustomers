@@ -115,46 +115,46 @@
             <form method="post" action="/GestorGrupos/Crear">
     @Html.AntiForgeryToken()
                 <div class="modal-body">
-                    <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                     <!-- Fila 1: Nombre ES / Nombre EN -->
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-sm" name="Nombre" required maxlength="100" placeholder="Ej: Plantillas de cargue" />
+                            <label>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span></label>
+                            <div class="bf-input"><i class="fas fa-tag"></i><input type="text" class="form-control" name="Nombre" required maxlength="100" placeholder="Ej: Plantillas de cargue" /></div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-globe mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelNombreEN</label>
-                            <input type="text" class="form-control form-control-sm" name="NombreEN" maxlength="100" placeholder="Ej: Upload Templates" />
+                            <label>@Resources.Strings.Menu_LabelNombreEN</label>
+                            <div class="bf-input"><i class="fas fa-globe"></i><input type="text" class="form-control" name="NombreEN" maxlength="100" placeholder="Ej: Upload Templates" /></div>
                         </div>
                     </div>
                     <!-- Fila 2: Icono / Orden -->
                     <div class="row">
                         <div class="col-md-9 mb-3">
-                            <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono <small class="text-muted">(FontAwesome)</small></label>
-                            <input type="text" class="form-control form-control-sm" name="Icono" placeholder="fas fa-layer-group" maxlength="100" />
+                            <label>@Resources.Strings.Menu_LabelIcono <small class="text-muted">(FontAwesome)</small></label>
+                            <div class="bf-input"><i class="fas fa-icons"></i><input type="text" class="form-control" name="Icono" placeholder="fas fa-layer-group" maxlength="100" /></div>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_ThOrden</label>
-                            <input type="number" class="form-control form-control-sm" name="Orden" value="0" min="0" />
+                            <label>@Resources.Strings.Menu_ThOrden</label>
+                            <div class="bf-input"><i class="fas fa-sort-numeric-up"></i><input type="number" class="form-control" name="Orden" value="0" min="0" /></div>
                         </div>
                     </div>
                     <!-- Fila 3: Categoría -->
                     <div class="mb-3">
-                        <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>@Resources.Strings.Grp_LabelCategoria <span class="text-danger">*</span></label>
-                        <select class="form-control form-control-sm" name="IdCategoria" required>
+                        <label>@Resources.Strings.Grp_LabelCategoria <span class="text-danger">*</span></label>
+                        <div class="bf-input"><i class="fas fa-folder"></i><select class="form-control" name="IdCategoria" required>
                             <option value="">@Resources.Strings.Grp_SelCategoria</option>
                             @foreach (var cat in categorias)
                             {
                                 <option value="@cat.Id">@cat.Nombre</option>
                             }
-                        </select>
+                        </select></div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                    <span class="bf-footer-note"><b>*</b> @Resources.Strings.Common_CamposObligatorios</span>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
                         <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                     </button>
-                    <button type="submit" class="btn btn-primary btn-sm">
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.Common_BtnCrear
                     </button>
                 </div>
@@ -175,46 +175,46 @@
     @Html.AntiForgeryToken()
                 <input type="hidden" name="Id" id="editId" />
                 <div class="modal-body">
-                    <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                     <!-- Fila 1: Nombre ES / Nombre EN -->
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-sm" name="Nombre" id="editNombre" required maxlength="100" />
+                            <label>@Resources.Strings.Rep_LabelNombre <span class="text-danger">*</span></label>
+                            <div class="bf-input"><i class="fas fa-tag"></i><input type="text" class="form-control" name="Nombre" id="editNombre" required maxlength="100" /></div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-globe mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelNombreEN</label>
-                            <input type="text" class="form-control form-control-sm" name="NombreEN" id="editNombreEN" maxlength="100" />
+                            <label>@Resources.Strings.Menu_LabelNombreEN</label>
+                            <div class="bf-input"><i class="fas fa-globe"></i><input type="text" class="form-control" name="NombreEN" id="editNombreEN" maxlength="100" /></div>
                         </div>
                     </div>
                     <!-- Fila 2: Icono / Orden -->
                     <div class="row">
                         <div class="col-md-9 mb-3">
-                            <label><i class="fas fa-icons mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_LabelIcono <small class="text-muted">(FontAwesome)</small></label>
-                            <input type="text" class="form-control form-control-sm" name="Icono" id="editIcono" maxlength="100" />
+                            <label>@Resources.Strings.Menu_LabelIcono <small class="text-muted">(FontAwesome)</small></label>
+                            <div class="bf-input"><i class="fas fa-icons"></i><input type="text" class="form-control" name="Icono" id="editIcono" maxlength="100" /></div>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <label><i class="fas fa-sort-numeric-up mr-1" style="color:#583AFF"></i>@Resources.Strings.Menu_ThOrden</label>
-                            <input type="number" class="form-control form-control-sm" name="Orden" id="editOrden" min="0" />
+                            <label>@Resources.Strings.Menu_ThOrden</label>
+                            <div class="bf-input"><i class="fas fa-sort-numeric-up"></i><input type="number" class="form-control" name="Orden" id="editOrden" min="0" /></div>
                         </div>
                     </div>
                     <!-- Fila 3: Categoría -->
                     <div class="mb-3">
-                        <label><i class="fas fa-folder mr-1" style="color:#583AFF"></i>@Resources.Strings.Grp_LabelCategoria <span class="text-danger">*</span></label>
-                        <select class="form-control form-control-sm" name="IdCategoria" id="editIdCategoria" required>
+                        <label>@Resources.Strings.Grp_LabelCategoria <span class="text-danger">*</span></label>
+                        <div class="bf-input"><i class="fas fa-folder"></i><select class="form-control" name="IdCategoria" id="editIdCategoria" required>
                             <option value="">@Resources.Strings.Grp_SelCategoria</option>
                             @foreach (var cat in categorias)
                             {
                                 <option value="@cat.Id">@cat.Nombre</option>
                             }
-                        </select>
+                        </select></div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                    <span class="bf-footer-note"><b>*</b> @Resources.Strings.Common_CamposObligatorios</span>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
                         <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                     </button>
-                    <button type="submit" class="btn btn-primary btn-sm">
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save mr-1"></i>@Resources.Strings.Common_GuardarCambios
                     </button>
                 </div>

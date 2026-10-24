@@ -76,6 +76,7 @@
 <link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-pyg.css")" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="~/Assets/css/empresa-logo.css" rel="stylesheet" />
 <link href="~/Assets/css/informe-histprecios.css" rel="stylesheet" />
 <link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
@@ -207,12 +208,15 @@
             </div>
             <div class="pyg2-head">
                 <div class="pyg2-head-l">
+                    <span class="emp-logo-plate" id="hpLogo" hidden><img alt="@Resources.Strings.Common_LogoEmpresaAlt"></span>
+                    <div class="emp-logo-texto">
                     <h2 id="hpTituloEmpresa">&mdash;</h2>
                     <div class="pyg2-chips">
                         <span class="pyg2-chip primary"><i class="fas fa-calendar"></i><span id="hpChipRango">&mdash;</span></span>
                         <span class="pyg2-chip" id="hpChipAgrupar">&mdash;</span>
                         <span class="pyg2-chip" id="hpChipTipos">&mdash;</span>
                         <span class="pyg2-chip" id="hpChipEscenario">&mdash;</span>
+                    </div>
                     </div>
                 </div>
                 <div class="pyg2-tools">
@@ -360,6 +364,7 @@
 <script src="~/Assets/js/chart.umd.min.js"></script>
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
 <script src="~/Assets/js/html2canvas.min.js"></script>
+<script src="~/Assets/js/empresa-logo.js"></script>
 <script src="~/Assets/js/export-menu.js"></script>
 <script src="~/Assets/js/doc-visor.js"></script>
 
@@ -691,6 +696,7 @@
             _hp.filtros = f;
             _hp.nombreEmpresa = elEmpresa.find('option:selected').text();
             _hp.nombreEscenario = elEscenario.find('option:selected').text();
+            EmpresaLogo.mostrar(elEmpresa.val(), document.getElementById('hpLogo'));
             $('#hpResultado').show();
             pintar(resp.reporte);
         }).fail(function () {
@@ -1028,6 +1034,8 @@
                 doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
                 doc.text(_hp.nombreEmpresa + '  ·  ' + fmt(_hp.t.chipRangoFmt, etiquetaSem(r.AnioDesde, r.SemDesde), etiquetaSem(r.AnioHasta, r.SemHasta)) + '  ·  ' + _hp.t['agr_' + r.Agrupar] + '  ·  ' + _hp.nombreEscenario, M, 17.5);
                 doc.setFontSize(8); doc.text(_hp.t.tag, W - M, 11, { align: 'right' });
+                // logo de la empresa (si tiene), a la izquierda de la etiqueta de la derecha
+                EmpresaLogo.pdf(doc, { xDerecha: W - M - doc.getTextWidth(_hp.t.tag) - 5, y: 4, alto: 14 });
                 doc.setTextColor(30, 30, 40);
             }
             function nuevaPagina(conBanda) { doc.addPage(); if (conBanda) banda(); }

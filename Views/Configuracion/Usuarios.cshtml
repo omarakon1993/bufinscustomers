@@ -526,7 +526,6 @@
     @Html.AntiForgeryToken()
                     <input type="hidden" id="editIdUsuario" name="Id" />
                     <div class="modal-body">
-                        <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                         <!-- Pestañas de navegación -->
                         <ul class="nav nav-tabs" id="editUserTabs" role="tablist">
                             <li class="nav-item" role="presentation">
@@ -547,72 +546,65 @@
                             <div class="tab-pane fade show active" id="edit-data" role="tabpanel" aria-labelledby="edit-data-tab">
                                 <div class="row">
                                     <div class="col-md-4 mb-3 mt-3">
-                                        <label for="editNombre" class="form-label">
-                                            <i class="fas fa-user mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelNombre <span class="required">*</span>
+                                        <label for="editNombre" class="form-label">@Resources.Strings.Usr_LabelNombre <span class="required">*</span>
                                         </label>
-                                        <input type="text" class="form-control" id="editNombre" name="Nombre" required
-                                               placeholder="@Resources.Strings.Usr_PlaceholderNombre" />
+                                        <div class="bf-input"><i class="fas fa-user"></i><input type="text" class="form-control" id="editNombre" name="Nombre" required
+                                               placeholder="@Resources.Strings.Usr_PlaceholderNombre" /></div>
                                     </div>
                                     <div class="col-md-4 mb-3 mt-3">
-                                        <label for="editApellidos" class="form-label">
-                                            <i class="fas fa-id-card mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelApellidos <span class="required">*</span>
+                                        <label for="editApellidos" class="form-label">@Resources.Strings.Usr_LabelApellidos <span class="required">*</span>
                                         </label>
-                                        <input type="text" class="form-control" id="editApellidos" name="Apellidos" required
-                                               placeholder="@Resources.Strings.Usr_PlaceholderApellidos" />
+                                        <div class="bf-input"><i class="fas fa-id-card"></i><input type="text" class="form-control" id="editApellidos" name="Apellidos" required
+                                               placeholder="@Resources.Strings.Usr_PlaceholderApellidos" /></div>
                                     </div>
                                     <div class="col-md-4 mb-3 mt-3">
-                                        <label for="editUsuario" class="form-label">
-                                            <i class="fas fa-user-tag mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelUsuario
+                                        <label for="editUsuario" class="form-label">@Resources.Strings.Usr_LabelUsuario
                                             <small class="text-muted">(@Resources.Strings.Common_Automatico)</small>
                                         </label>
-                                        <input type="text" class="form-control" id="editUsuario" name="Usuario" required readonly
-                                               placeholder="@Resources.Strings.Usr_PlaceholderUsuario" style="background-color:#f3f4f6;cursor:not-allowed;" />
+                                        <div class="bf-input"><i class="fas fa-user-tag"></i><input type="text" class="form-control" id="editUsuario" name="Usuario" required readonly
+                                               placeholder="@Resources.Strings.Usr_PlaceholderUsuario" style="background-color:#f3f4f6;cursor:not-allowed;" /></div>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-4 mb-3">
-                                        <label for="editTelefono" class="form-label">
-                                            <i class="fas fa-phone mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelTelefono
+                                        <label for="editTelefono" class="form-label">@Resources.Strings.Usr_LabelTelefono
                                         </label>
-                                        <input type="text" class="form-control" id="editTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo números, sin espacios ni guiones"
+                                        <div class="bf-input"><i class="fas fa-phone"></i><input type="text" class="form-control" id="editTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo números, sin espacios ni guiones"
                                                placeholder="@Resources.Strings.Usr_PlaceholderTelefono"
-                                               oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
+                                               oninput="this.value = this.value.replace(/[^0-9]/g, '');" /></div>
                                         <small class="form-text text-muted">@Resources.Strings.Usr_HintTelefono</small>
                                     </div>
                                     <div class="col-md-4 mb-3">
-                                        <label for="editCorreo" class="form-label">
-                                            <i class="fas fa-envelope mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelCorreo <span class="required">*</span>
+                                        <label for="editCorreo" class="form-label">@Resources.Strings.Usr_LabelCorreo <span class="required">*</span>
                                         </label>
-                                        <input type="email" class="form-control" id="editCorreo" name="Correo" required
-                                               placeholder="@Resources.Strings.Usr_PlaceholderCorreo" />
+                                        <div class="bf-input"><i class="fas fa-envelope"></i><input type="email" class="form-control" id="editCorreo" name="Correo" required
+                                               placeholder="@Resources.Strings.Usr_PlaceholderCorreo" /></div>
                                         <small class="form-text text-muted">@Resources.Strings.Usr_HintCorreo</small>
                                     </div>
                                     <div class="col-md-4 mb-3">
-                                        <label for="editIdEmpresa" class="form-label">
-                                            <i class="fas fa-building mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelEmpresa <span class="required">*</span>
+                                        <label for="editIdEmpresa" class="form-label">@Resources.Strings.Usr_LabelEmpresa <span class="required">*</span>
                                         </label>
-                                        <select class="custom-select" id="editIdEmpresa" name="IdEmpresa" required>
+                                        <div class="bf-input"><i class="fas fa-building"></i><select class="custom-select" id="editIdEmpresa" name="IdEmpresa" required>
                                             <option value="" selected disabled>@Resources.Strings.Usr_SelEmpresa</option>
                                             @foreach (var empresa in ViewBag.Empresas)
                                             {
                                                 <option value="@empresa.Id">@empresa.Nombre</option>
                                             }
-                                        </select>
+                                        </select></div>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-4 mb-3">
-                                        <label for="editAdmin" class="form-label">
-                                            <i class="fas fa-shield-alt mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelRol <span class="required">*</span>
+                                        <label for="editAdmin" class="form-label">@Resources.Strings.Usr_LabelRol <span class="required">*</span>
                                         </label>
-                                        <select class="custom-select" id="editAdmin" name="Admin" required>
+                                        <div class="bf-input"><i class="fas fa-shield-alt"></i><select class="custom-select" id="editAdmin" name="Admin" required>
                                             <option value="0">@Resources.Strings.Usr_RolNormal</option>
                                             <option value="1">@Resources.Strings.Usr_RolAdmin</option>
                                             @if (ViewBag.EsSuperAdmin == true)
                                             {
                                                 <option value="2">@Resources.Strings.Usr_RolSuperAdmin</option>
                                             }
-                                        </select>
+                                        </select></div>
                                         @if (ViewBag.EsSuperAdmin != true)
                                         {
                                             <small class="form-text text-muted">@Resources.Strings.Usr_NotaSuperAdmin</small>
@@ -633,8 +625,7 @@
                             <!-- Pestaña de Imagen -->
                             <div class="tab-pane fade" id="edit-user-image" role="tabpanel" aria-labelledby="edit-user-image-tab">
                                 <div class="mb-3 mt-3">
-                                    <label for="editImagenUsuario" class="form-label">
-                                        <i class="fas fa-image mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelImagen
+                                    <label for="editImagenUsuario" class="form-label">@Resources.Strings.Usr_LabelImagen
                                         <small class="text-muted">(@Resources.Strings.Common_Opcional)</small>
                                     </label>
                                     <input type="file" class="form-control" id="editImagenUsuario" name="ImagenUsuario" accept="image/*" onchange="previewImageEdit(this)" />
@@ -656,6 +647,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
+                        <span class="bf-footer-note"><b>*</b> @Resources.Strings.Common_CamposObligatorios</span>
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             <i class="fas fa-times mr-2"></i>@Resources.Strings.Layout_Cancel
                         </button>
@@ -681,7 +673,6 @@
                 <form id="crearUsuarioForm" method="post" action="/Usuario/Registrar" enctype="multipart/form-data">
     @Html.AntiForgeryToken()
                     <div class="modal-body">
-                        <small class="form-text text-muted mb-3 d-block"><span style="color:#ef4444;font-weight:700;">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                         <!-- Pestañas de navegación -->
                         <ul class="nav nav-tabs" id="crearUsuarioTabs" role="tablist">
                             <li class="nav-item" role="presentation">
@@ -702,32 +693,28 @@
                             <div class="tab-pane fade show active" id="user-data" role="tabpanel" aria-labelledby="user-data-tab">
                                 <div class="row">
                                     <div class="col-md-4 mb-3 mt-3">
-                                        <label for="crearNombre" class="form-label">
-                                            <i class="fas fa-user mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelNombre <span class="required">*</span>
+                                        <label for="crearNombre" class="form-label">@Resources.Strings.Usr_LabelNombre <span class="required">*</span>
                                         </label>
-                                        <input type="text" class="form-control" id="crearNombre" name="Nombre" required
-                                               placeholder="@Resources.Strings.Usr_PlaceholderNombre" />
+                                        <div class="bf-input"><i class="fas fa-user"></i><input type="text" class="form-control" id="crearNombre" name="Nombre" required
+                                               placeholder="@Resources.Strings.Usr_PlaceholderNombre" /></div>
                                     </div>
                                     <div class="col-md-4 mb-3 mt-3">
-                                        <label for="crearApellidos" class="form-label">
-                                            <i class="fas fa-id-card mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelApellidos <span class="required">*</span>
+                                        <label for="crearApellidos" class="form-label">@Resources.Strings.Usr_LabelApellidos <span class="required">*</span>
                                         </label>
-                                        <input type="text" class="form-control" id="crearApellidos" name="Apellidos" required
-                                               placeholder="@Resources.Strings.Usr_PlaceholderApellidos" />
+                                        <div class="bf-input"><i class="fas fa-id-card"></i><input type="text" class="form-control" id="crearApellidos" name="Apellidos" required
+                                               placeholder="@Resources.Strings.Usr_PlaceholderApellidos" /></div>
                                     </div>
                                     <div class="col-md-4 mb-3 mt-3">
-                                        <label for="crearUsuario" class="form-label">
-                                            <i class="fas fa-user-tag mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelUsuario
+                                        <label for="crearUsuario" class="form-label">@Resources.Strings.Usr_LabelUsuario
                                             <small class="text-muted">(@Resources.Strings.Common_Automatico)</small>
                                         </label>
-                                        <input type="text" class="form-control" id="crearUsuario" name="Usuario" required readonly
-                                               placeholder="@Resources.Strings.Usr_PlaceholderUsuario" style="background-color:#f3f4f6;cursor:not-allowed;" />
+                                        <div class="bf-input"><i class="fas fa-user-tag"></i><input type="text" class="form-control" id="crearUsuario" name="Usuario" required readonly
+                                               placeholder="@Resources.Strings.Usr_PlaceholderUsuario" style="background-color:#f3f4f6;cursor:not-allowed;" /></div>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-4 mb-3">
-                                        <label for="crearClave" class="form-label">
-                                            <i class="fas fa-lock mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelClave <span class="required">*</span>
+                                        <label for="crearClave" class="form-label">@Resources.Strings.Usr_LabelClave <span class="required">*</span>
                                         </label>
                                         <div class="pwd-input-wrapper">
                                             <input type="password" class="form-control" id="crearClave" name="Clave" required
@@ -746,8 +733,7 @@
                                         </div>
                                     </div>
                                     <div class="col-md-4 mb-3">
-                                        <label for="crearConfirmarClave" class="form-label">
-                                            <i class="fas fa-lock-open mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelConfirmarClave <span class="required">*</span>
+                                        <label for="crearConfirmarClave" class="form-label">@Resources.Strings.Usr_LabelConfirmarClave <span class="required">*</span>
                                         </label>
                                         <div class="pwd-input-wrapper">
                                             <input type="password" class="form-control" id="crearConfirmarClave" name="ConfirmarClave" required />
@@ -758,48 +744,44 @@
                                         <small class="form-text" id="crearClaveMatchFeedback"></small>
                                     </div>
                                     <div class="col-md-4 mb-3">
-                                        <label for="crearTelefono" class="form-label">
-                                            <i class="fas fa-phone mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelTelefono
+                                        <label for="crearTelefono" class="form-label">@Resources.Strings.Usr_LabelTelefono
                                         </label>
-                                        <input type="text" class="form-control" id="crearTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo números, sin espacios ni guiones"
+                                        <div class="bf-input"><i class="fas fa-lock"></i><input type="text" class="form-control" id="crearTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo números, sin espacios ni guiones"
                                                placeholder="@Resources.Strings.Usr_PlaceholderTelefono"
-                                               oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
+                                               oninput="this.value = this.value.replace(/[^0-9]/g, '');" /></div>
                                         <small class="form-text text-muted">@Resources.Strings.Usr_HintTelefono</small>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-4 mb-3">
-                                        <label for="crearCorreo" class="form-label">
-                                            <i class="fas fa-envelope mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelCorreo <span class="required">*</span>
+                                        <label for="crearCorreo" class="form-label">@Resources.Strings.Usr_LabelCorreo <span class="required">*</span>
                                         </label>
-                                        <input type="email" class="form-control" id="crearCorreo" name="Correo" required
-                                               placeholder="@Resources.Strings.Usr_PlaceholderCorreo" />
+                                        <div class="bf-input"><i class="fas fa-envelope"></i><input type="email" class="form-control" id="crearCorreo" name="Correo" required
+                                               placeholder="@Resources.Strings.Usr_PlaceholderCorreo" /></div>
                                         <small class="form-text text-muted">@Resources.Strings.Usr_HintCorreo</small>
                                     </div>
                                     <div class="col-md-4 mb-3">
-                                        <label for="crearIdEmpresa" class="form-label">
-                                            <i class="fas fa-building mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelEmpresa <span class="required">*</span>
+                                        <label for="crearIdEmpresa" class="form-label">@Resources.Strings.Usr_LabelEmpresa <span class="required">*</span>
                                         </label>
-                                        <select class="custom-select" id="crearIdEmpresa" name="IdEmpresa" required>
+                                        <div class="bf-input"><i class="fas fa-building"></i><select class="custom-select" id="crearIdEmpresa" name="IdEmpresa" required>
                                             <option value="" selected disabled>@Resources.Strings.Usr_SelEmpresa</option>
                                             @foreach (var empresa in ViewBag.Empresas)
                                             {
                                                 <option value="@empresa.Id">@empresa.Nombre</option>
                                             }
-                                        </select>
+                                        </select></div>
                                     </div>
                                     <div class="col-md-4 mb-3">
-                                        <label for="crearAdmin" class="form-label">
-                                            <i class="fas fa-shield-alt mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelRol <span class="required">*</span>
+                                        <label for="crearAdmin" class="form-label">@Resources.Strings.Usr_LabelRol <span class="required">*</span>
                                         </label>
-                                        <select class="custom-select" id="crearAdmin" name="Admin" required>
+                                        <div class="bf-input"><i class="fas fa-shield-alt"></i><select class="custom-select" id="crearAdmin" name="Admin" required>
                                             <option value="0" selected>@Resources.Strings.Usr_RolNormal</option>
                                             <option value="1">@Resources.Strings.Usr_RolAdmin</option>
                                             @if (ViewBag.EsSuperAdmin == true)
                                             {
                                                 <option value="2">@Resources.Strings.Usr_RolSuperAdmin</option>
                                             }
-                                        </select>
+                                        </select></div>
                                         @if (ViewBag.EsSuperAdmin != true)
                                         {
                                             <small class="form-text text-muted">@Resources.Strings.Usr_NotaSuperAdmin</small>
@@ -810,7 +792,7 @@
                                     <div class="col-12 mb-3">
                                         <div class="custom-control custom-checkbox">
                                             <input type="checkbox" class="custom-control-input" id="crearExigirCambioClave" name="ExigirCambioClave" value="true" checked />
-                                            <label class="custom-control-label" for="crearExigirCambioClave"><i class="fas fa-key mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelExigirCambioClave</label>
+                                            <label class="custom-control-label" for="crearExigirCambioClave">@Resources.Strings.Usr_LabelExigirCambioClave</label>
                                         </div>
                                         <small class="form-text text-muted">@Resources.Strings.Usr_HintExigirCambioClave</small>
                                     </div>
@@ -820,8 +802,7 @@
                             <!-- Pestaña de Imagen -->
                             <div class="tab-pane fade" id="user-image" role="tabpanel" aria-labelledby="user-image-tab">
                                 <div class="mb-3 mt-3">
-                                    <label for="crearImagenUsuario" class="form-label">
-                                        <i class="fas fa-image mr-2" style="color: #583AFF;"></i>@Resources.Strings.Usr_LabelImagen
+                                    <label for="crearImagenUsuario" class="form-label">@Resources.Strings.Usr_LabelImagen
                                         <small class="text-muted">(@Resources.Strings.Common_Opcional)</small>
                                     </label>
                                     <input type="file" class="form-control" id="crearImagenUsuario" name="ImagenUsuario" accept="image/*" onchange="previewImageCreate(this)" />
@@ -839,6 +820,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
+                        <span class="bf-footer-note"><b>*</b> @Resources.Strings.Common_CamposObligatorios</span>
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             <i class="fas fa-times mr-2"></i>@Resources.Strings.Layout_Cancel
                         </button>
@@ -866,7 +848,7 @@
                     <input type="hidden" id="cambioClaveIdUsuario" name="idUsuario" />
                     <div class="modal-body">
                         <div class="mb-3 mt-3">
-                            <label for="nuevaClave" class="form-label"><i class="fas fa-lock mr-2"></i>@Resources.Strings.Usr_LabelNuevaClave</label>
+                            <label for="nuevaClave" class="form-label">@Resources.Strings.Usr_LabelNuevaClave</label>
                             <div class="pwd-input-wrapper">
                                 <input type="password" class="form-control" id="nuevaClave" name="nuevaClave" required
                                        minlength="10" title="@Resources.Strings.Usr_PwdPatternTitle" />
@@ -884,7 +866,7 @@
                             </div>
                         </div>
                         <div class="mb-3 mt-3">
-                            <label for="confirmarNuevaClave" class="form-label"><i class="fas fa-lock-open mr-2"></i>@Resources.Strings.Usr_LabelConfNuevaClave</label>
+                            <label for="confirmarNuevaClave" class="form-label">@Resources.Strings.Usr_LabelConfNuevaClave</label>
                             <div class="pwd-input-wrapper">
                                 <input type="password" class="form-control" id="confirmarNuevaClave" name="confirmarNuevaClave" required />
                                 <button type="button" class="pwd-toggle-btn" onclick="togglePwd('confirmarNuevaClave', this)" tabindex="-1" title="@Resources.Strings.Usr_PwdMostrar" aria-label="@Resources.Strings.Usr_PwdMostrar">

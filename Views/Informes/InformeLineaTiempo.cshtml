@@ -12,6 +12,7 @@
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
 <link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="~/Assets/css/empresa-logo.css" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
 
 <style>
@@ -267,9 +268,13 @@
             </div>
 
             <div class="lt-head-row">
-                <div>
-                    <h2 id="ltChartTitle">&mdash;</h2>
-                    <p class="sub" id="ltChartSubtitle">&mdash;</p>
+                <div class="lt-head-l">
+                    <span class="emp-logo-plate" id="ltLogo" hidden><img alt="@Resources.Strings.Common_LogoEmpresaAlt"></span>
+                    <div class="emp-logo-texto">
+                        <div class="lt-head-empresa" id="ltEmpresaNombre"></div>
+                        <h2 id="ltChartTitle">&mdash;</h2>
+                        <p class="sub" id="ltChartSubtitle">&mdash;</p>
+                    </div>
                 </div>
                 <div class="lt-tools">
                     <div class="lt-seg2" id="ltSegVista">
@@ -388,6 +393,7 @@
 <script src="~/Assets/js/select2/select2.min.js"></script>
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
 <script src="~/Assets/js/html2canvas.min.js"></script>
+<script src="~/Assets/js/empresa-logo.js"></script>
 <script src="~/Assets/js/export-menu.js"></script>
 <script src="~/Assets/js/rango-atajos.js"></script>
 <script>
@@ -701,7 +707,7 @@
             // Mismos datos que el Excel: el servidor reconstruye la serie (no confía en cifras del navegador).
             datos: datosExportacion,
             pdf: function () { var d = construirPdfLT('datos'); return d ? d.output('datauristring') : ''; },
-            pills: function () { return [$('#ltChartTitle').text(), $('#ltChartSubtitle').text()]; },
+            pills: function () { return [$('#ltChartTitle').text(), $('#ltChartSubtitle').data('completo') || $('#ltChartSubtitle').text()]; },
             textos: EXP_T
         });
         ExportMenu.init('ltExp', {
@@ -1327,6 +1333,7 @@
         var titulo = (tablaInfo.nombre || '') + (tituloVariable ? (' ' + CH_MIDDOT + ' ' + tituloVariable) : '');
 
         var empresaTexto = elEmpresa.find(':selected').text();
+        EmpresaLogo.mostrar(elEmpresa.val(), document.getElementById('ltLogo'));
         var escenarioTexto = resp.nombreEscenarioPrincipal || elEscenario.find(':selected').text();
         var puntosRango = series.length ? series[0].puntos : [];
         var rango = puntosRango.length ? (puntosRango[0].etiqueta + (puntosRango.length > 1 ? (' ' + CH_NDASH + ' ' + puntosRango[puntosRango.length - 1].etiqueta) : '')) : '';
@@ -1337,8 +1344,10 @@
             (rango ? (' ' + CH_MIDDOT + ' ' + rango) : '') +
             (agruparTexto ? (' ' + CH_MIDDOT + ' ' + _lt.textos.porAgrupacion.replace('{0}', agruparTexto)) : '');
 
+        // En pantalla la empresa va aparte, grande, encima del título; las exportaciones usan el subtítulo completo (con empresa).
+        $('#ltEmpresaNombre').text(empresaTexto);
         $('#ltChartTitle').text(titulo);
-        $('#ltChartSubtitle').text(subtitulo);
+        $('#ltChartSubtitle').text(subtitulo.substring(empresaTexto.length + (' ' + CH_MIDDOT + ' ').length)).data('completo', subtitulo);
 
         try {
             $('#ltFechaGenerado').text(_lt.textos.generadoElFmt.replace('{0}',
@@ -1482,7 +1491,7 @@
         d.TipoGrafico = _lt.tipoGrafico;
         d.Unidad = _lt.unidad;
         d.Titulo = $('#ltChartTitle').text();
-        d.Subtitulo = $('#ltChartSubtitle').text();
+        d.Subtitulo = $('#ltChartSubtitle').data('completo') || $('#ltChartSubtitle').text();
         d.CampoTexto = campoSeleccionadoTexto();
         d.SeriesOcultas = Object.keys(_lt.ocultas).filter(function (nombre) { return _lt.ocultas[nombre]; });
         return d;
@@ -1564,6 +1573,9 @@
             pdf.setFont(undefined, 'bold');
             pdf.setFontSize(15);
             pdf.text('BUFINS', margin, 15);
+            // Logo de la empresa (si tiene) a la derecha de la franja; el título y el subtítulo se corren a su izquierda.
+            var wLogoLT = EmpresaLogo.pdf(pdf, { xDerecha: pageW - margin, y: 5, alto: 14 });
+            var xTextoLT = pageW - margin - (wLogoLT ? wLogoLT + 4 : 0);
 
             var series = resp.series || [];
             // En el encabezado (una sola línea, ancho limitado) se muestra el conteo cuando hay
@@ -1576,9 +1588,9 @@
 
             pdf.setFont(undefined, 'normal');
             pdf.setFontSize(9);
-            pdf.text(titulo, pageW - margin, 10, { align: 'right' });
+            pdf.text(titulo, xTextoLT, 10, { align: 'right' });
             pdf.setFontSize(8);
-            pdf.text(subtitulo, pageW - margin, 16, { align: 'right' });
+            pdf.text(subtitulo, xTextoLT, 16, { align: 'right' });
 
             y = 32;
             pdf.setTextColor(30, 20, 50);

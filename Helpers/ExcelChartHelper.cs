@@ -79,7 +79,10 @@ namespace bufinscustomers.Helpers
                         filaFin, columnaCategorias, categorias, series, formatoEjeValores);
                     chartPart.ChartSpace.Save();
 
-                    int idForma = drawingsPart.WorksheetDrawing.Elements<Xdr.TwoCellAnchor>().Count() + 2;
+                    // Id único de la forma: sigue al mayor id ya usado en la hoja (p. ej. el logo de la empresa que ClosedXML
+                    // ya incrustó). Con ids repetidos Excel ofrece "reparar" el archivo.
+                    int idForma = (int)(drawingsPart.WorksheetDrawing.Descendants<Xdr.NonVisualDrawingProperties>()
+                        .Select(n => n.Id != null ? n.Id.Value : 1u).DefaultIfEmpty(1u).Max() + 1);
                     drawingsPart.WorksheetDrawing.Append(ConstruirAncla(drawingsPart.GetIdOfPart(chartPart), idForma,
                         columnaAncla, filaAncla, columnaAncla + 10, filaAncla + 20));
                     drawingsPart.WorksheetDrawing.Save();

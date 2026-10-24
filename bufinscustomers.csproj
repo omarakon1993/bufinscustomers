@@ -130,6 +130,7 @@
     <Compile Include="Controllers\AuditoriaCarguesController.cs" />
     <Compile Include="Controllers\BaseController.cs" />
     <Compile Include="Controllers\EmpresaController.cs" />
+    <Compile Include="Controllers\EmpresaLogoController.cs" />
     <Compile Include="Controllers\MenuOpcionesController.cs" />
     <Compile Include="Controllers\ModelosEjecucionController.cs" />
     <Compile Include="Controllers\GestorEscenariosController.cs" />
@@ -185,6 +186,8 @@
     </Compile>
     <Compile Include="Helpers\UsuarioSesionHelper.cs" />
     <Compile Include="Helpers\EmpresaCacheHelper.cs" />
+    <Compile Include="Helpers\EmpresaLogoHelper.cs" />
+    <Compile Include="Helpers\ExcelLogoHelper.cs" />
     <Compile Include="Helpers\EscenarioCacheHelper.cs" />
     <Compile Include="Helpers\EmpresaAccesoHelper.cs" />
     <Compile Include="Helpers\TotpHelper.cs" />
@@ -267,6 +270,7 @@
     <Compile Include="Services\AlertasHomeService.cs" />
     <Compile Include="Services\ConfiguracionEmpresaService.cs" />
     <Compile Include="Services\EmpresaService.cs" />
+    <Compile Include="Services\EmpresaLogoService.cs" />
     <Compile Include="Services\ModeloService.cs" />
     <Compile Include="Services\EscenarioService.cs" />
     <Compile Include="Services\ConfiguracionRelacionamientoService.cs" />
@@ -382,8 +386,11 @@
     <Content Include="Assets\css\informe-histprecios.css" />
     <Content Include="Assets\css\informe-tesoreria.css" />
     <Content Include="Assets\css\export-menu.css" />
+    <Content Include="Assets\css\empresa-logo.css" />
+    <Content Include="Assets\css\bufins-modal.css" />
     <Content Include="Assets\js\bufins-pdf-marca.js" />
     <Content Include="Assets\js\export-menu.js" />
+    <Content Include="Assets\js\empresa-logo.js" />
     <Content Include="Assets\css\informe-indicadores.css" />
     <Content Include="Assets\css\doc-visor.css" />
     <Content Include="Assets\js\doc-visor.js" />

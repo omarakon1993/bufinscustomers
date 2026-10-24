@@ -35,6 +35,7 @@
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-pyg.css")" rel="stylesheet" />
 <link href="~/Assets/css/informe-tesoreria.css" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="~/Assets/css/empresa-logo.css" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
 
 <div class="container-fluid px-4">
@@ -176,12 +177,15 @@
             </div>
             <div class="pyg2-head">
                 <div class="pyg2-head-l">
+                    <span class="emp-logo-plate" id="flLogo" hidden><img alt="@Resources.Strings.Common_LogoEmpresaAlt"></span>
+                    <div class="emp-logo-texto">
                     <h2 id="flTituloEmpresa">&mdash;</h2>
                     <div class="pyg2-chips">
                         <span class="pyg2-chip primary"><i class="fas fa-calendar"></i><span id="flChipPeriodo">&mdash;</span></span>
                         <span class="pyg2-chip" id="flChipEscenario">&mdash;</span>
                         <span class="pyg2-chip" id="flChipMedida">&mdash;</span>
                         <span class="pyg2-chip" id="flChipComparado">&mdash;</span>
+                    </div>
                     </div>
                 </div>
                 <div class="pyg2-tools">
@@ -340,6 +344,7 @@
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
 <script src="~/Assets/js/bufins-pdf-marca.js"></script>
 <script src="~/Assets/js/html2canvas.min.js"></script>
+<script src="~/Assets/js/empresa-logo.js"></script>
 <script src="~/Assets/js/export-menu.js"></script>
 <script src="~/Assets/js/bufins-markdown.js"></script>
 <script src="~/Assets/js/rango-atajos.js"></script>
@@ -746,6 +751,7 @@
         if (r.HayEscenarioComparar) comparados.push(nombreEscenarioComp(r));
 
         $('#flTituloEmpresa').text(elEmpresa.find(':selected').text() || '');
+        EmpresaLogo.mostrar(elEmpresa.val(), document.getElementById('flLogo'));
         $('#flChipPeriodo').text(etiquetaPeriodoChip(r));
         $('#flChipEscenario').text(elEscenario.find(':selected').text() || '');
         $('#flChipMedida').text(_fl.t.medida[r.Medida] || r.Medida);
@@ -1345,6 +1351,7 @@
         fuente('normal', 9.5, C.blanco); pdf.text(P.titulo, M, 29);
         fuente('normal', 8, C.blanco); pdf.text(P.generadoEl + ' ' + ($('#flFechaGenerado').text() || ''), W - M, 10, { align: 'right' });
         fuente('bold', 8, C.blanco); pdf.text(P.confidencial.toUpperCase(), W - M, 29, { align: 'right' });
+        EmpresaLogo.pdf(pdf, { xDerecha: W - M, y: 12.5, alto: 14 });   // logo de la empresa (si tiene)
 
         y = 43;
         var chips = [{ t: $('#flChipPeriodo').text(), fg: C.morado, bg: C.totalBg, b: true }, { t: $('#flChipEscenario').text() },

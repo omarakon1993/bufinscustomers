@@ -1,0 +1,99 @@
+<!-- Ejemplo de markup (Razor) del modal Editar Empresa con el estilo 1a.
+     Requiere bufins-modal.css. Bootstrap 4 + Font Awesome 5 (ya en el proyecto). -->
+<div class="modal fade" id="editEmpresaModal" tabindex="-1" aria-labelledby="editEmpresaModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="editEmpresaModalLabel">
+          <i class="fas fa-building"></i>
+          <span class="bf-modal-titles">
+            <span>@Resources.Strings.Emp_ModalEditTitle</span>
+            <span class="bf-modal-sub" id="editEmpresaSub"><!-- "Ultra • NIT 123456" vía JS --></span>
+          </span>
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+
+      <form id="editEmpresaForm" method="post" action="/Empresa/EditarEmpresa">
+        @Html.AntiForgeryToken()
+        <input type="hidden" id="editIdEmpresa" name="Id" />
+        <div class="modal-body">
+          <div class="row">
+            <!-- Columna formulario -->
+            <div class="col-lg-8">
+              <div class="bf-section">Identificación</div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="editNombre">Nombre <span class="required">*</span></label>
+                  <div class="bf-input"><i class="fas fa-building"></i>
+                    <input type="text" class="form-control" id="editNombre" name="Nombre" required placeholder="@Resources.Strings.Emp_PlaceholderNombre" />
+                  </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label for="editAbreviatura">Abreviatura <span class="required">*</span></label>
+                  <div class="bf-input"><i class="fas fa-tag"></i>
+                    <input type="text" class="form-control" id="editAbreviatura" name="Abreviatura" maxlength="12" pattern="[A-Za-z]{1,12}" required
+                           oninput="this.value = this.value.replace(/[^A-Za-z]/g, '');" />
+                  </div>
+                  <small class="form-text">Máx. 12 · solo letras</small>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label for="editNit">NIT <span class="required">*</span></label>
+                  <div class="bf-input"><i class="fas fa-id-card"></i>
+                    <input type="text" class="form-control" id="editNit" name="Nit" required />
+                  </div>
+                </div>
+              </div>
+
+              <div class="bf-section">Contacto y ubicación</div>
+              <div class="row">
+                <div class="col-12 mb-3">
+                  <label for="editDireccion">Dirección <span class="required">*</span></label>
+                  <div class="bf-input"><i class="fas fa-map-marker-alt"></i>
+                    <input type="text" class="form-control" id="editDireccion" name="Direccion" required />
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="editTelefono">Teléfono</label>
+                  <div class="bf-input"><i class="fas fa-phone"></i>
+                    <input type="text" class="form-control" id="editTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" placeholder="Ej: 3001234567" />
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="editCorreo">Correo electrónico</label>
+                  <div class="bf-input"><i class="fas fa-envelope"></i>
+                    <input type="email" class="form-control" id="editCorreo" name="Correo" maxlength="150" placeholder="contacto@empresa.com" />
+                  </div>
+                </div>
+                <div class="col-12 mb-1">
+                  <label for="editPaginaWeb">Página web</label>
+                  <div class="bf-input"><i class="fas fa-globe"></i>
+                    <input type="text" inputmode="url" class="form-control" id="editPaginaWeb" name="PaginaWeb" maxlength="300" data-url-web="1" placeholder="https://www.empresa.com" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Columna logo -->
+            <div class="col-lg-4">
+              <div class="bf-section">Logo</div>
+              <div class="bf-logo-box"><img id="editLogoPreview" alt="" /></div>
+              <div class="bf-logo-actions">
+                <button type="button" class="bf-btn-outline"><i class="fas fa-upload"></i> Cambiar logo</button>
+                <button type="button" class="bf-btn-icon-danger" title="Quitar logo"><i class="fas fa-trash-alt"></i></button>
+              </div>
+              <a href="#" class="bf-link"><i class="fas fa-caret-right"></i> Requisitos del logo</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <span class="bf-footer-note"><b>*</b> @Resources.Strings.Common_CamposObligatorios</span>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">@Resources.Strings.Layout_Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> @Resources.Strings.Common_GuardarCambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

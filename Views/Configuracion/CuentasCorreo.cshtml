@@ -176,10 +176,10 @@
                         new ViewDataDictionary { { "esCrear", true } })
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
                         <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                     </button>
-                    <button type="submit" class="btn btn-primary btn-sm">
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save mr-1"></i>@Resources.Strings.Layout_Save
                     </button>
                 </div>
@@ -203,19 +203,19 @@
                     <small class="form-text text-muted mb-3 d-block"><span class="text-danger">*</span> @Resources.Strings.Common_CamposObligatorios</small>
                     <div class="row">
                         <div class="col-md-8 mb-3">
-                            <label><i class="fas fa-tag mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldNombre <span class="text-danger">*</span></label>
-                            <input type="text" name="Nombre" id="editNombre" class="form-control form-control-sm" placeholder="@Resources.Strings.Correo_FieldNombrePh" required/>
+                            <label>@Resources.Strings.Correo_FieldNombre <span class="text-danger">*</span></label>
+                            <div class="bf-input"><i class="fas fa-tag"></i><input type="text" name="Nombre" id="editNombre" class="form-control" placeholder="@Resources.Strings.Correo_FieldNombrePh" required/></div>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label><i class="fas fa-server mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldHost <span class="text-danger">*</span></label>
-                            <input type="text" name="Host" id="editHost" class="form-control form-control-sm" placeholder="@Resources.Strings.Correo_FieldHostPh" required/>
+                            <label>@Resources.Strings.Correo_FieldHost <span class="text-danger">*</span></label>
+                            <div class="bf-input"><i class="fas fa-server"></i><input type="text" name="Host" id="editHost" class="form-control" placeholder="@Resources.Strings.Correo_FieldHostPh" required/></div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-2 mb-3">
-                            <label><i class="fas fa-plug mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldPuerto <span class="text-danger">*</span></label>
-                            <input type="number" name="Puerto" id="editPuerto" class="form-control form-control-sm" min="1" max="65535" required
-                                   placeholder="@Resources.Strings.Correo_FieldPuertoPh"/>
+                            <label>@Resources.Strings.Correo_FieldPuerto <span class="text-danger">*</span></label>
+                            <div class="bf-input"><i class="fas fa-plug"></i><input type="number" name="Puerto" id="editPuerto" class="form-control" min="1" max="65535" required
+                                   placeholder="@Resources.Strings.Correo_FieldPuertoPh"/></div>
                         </div>
                         <div class="col-md-3 mb-3 d-flex align-items-end pb-1">
                             <div class="custom-control custom-switch">
@@ -235,25 +235,25 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-user mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldUsuario <span class="text-danger">*</span></label>
-                            <input type="text" name="Usuario" id="editUsuario" class="form-control form-control-sm" autocomplete="off" required
-                                   placeholder="@Resources.Strings.Correo_FieldUsuarioPh"/>
+                            <label>@Resources.Strings.Correo_FieldUsuario <span class="text-danger">*</span></label>
+                            <div class="bf-input"><i class="fas fa-user"></i><input type="text" name="Usuario" id="editUsuario" class="form-control" autocomplete="off" required
+                                   placeholder="@Resources.Strings.Correo_FieldUsuarioPh"/></div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-key mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldContrasenaEdit</label>
-                            <input type="password" name="Contrasena" id="editContrasena" class="form-control form-control-sm" autocomplete="new-password"/>
+                            <label>@Resources.Strings.Correo_FieldContrasenaEdit</label>
+                            <div class="bf-input"><i class="fas fa-key"></i><input type="password" name="Contrasena" id="editContrasena" class="form-control" autocomplete="new-password"/></div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-at mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldRemitente <span class="text-danger">*</span></label>
-                            <input type="email" name="Remitente" id="editRemitente" class="form-control form-control-sm" required
-                                   placeholder="@Resources.Strings.Correo_FieldRemitentePh"/>
+                            <label>@Resources.Strings.Correo_FieldRemitente <span class="text-danger">*</span></label>
+                            <div class="bf-input"><i class="fas fa-at"></i><input type="email" name="Remitente" id="editRemitente" class="form-control" required
+                                   placeholder="@Resources.Strings.Correo_FieldRemitentePh"/></div>
                             <small class="form-text text-muted">@Resources.Strings.Correo_HintRemitente</small>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label><i class="fas fa-signature mr-1" style="color:#583AFF"></i>@Resources.Strings.Correo_FieldNombreRemitente</label>
-                            <input type="text" name="NombreRemitente" id="editNombreRemitente" class="form-control form-control-sm"/>
+                            <label>@Resources.Strings.Correo_FieldNombreRemitente</label>
+                            <div class="bf-input"><i class="fas fa-signature"></i><input type="text" name="NombreRemitente" id="editNombreRemitente" class="form-control"/></div>
                         </div>
                     </div>
                     <div class="custom-control custom-switch">
@@ -262,10 +262,10 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
                         <i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel
                     </button>
-                    <button type="submit" class="btn btn-primary btn-sm">
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save mr-1"></i>@Resources.Strings.Common_GuardarCambios
                     </button>
                 </div>
