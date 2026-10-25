@@ -30,7 +30,7 @@ namespace bufinscustomers.Services
                                (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS c WHERE c.TABLE_NAME = t.TABLE_NAME) AS TotalColumnas
                         FROM INFORMATION_SCHEMA.TABLES t
                         WHERE t.TABLE_TYPE = 'BASE TABLE'
-                          AND t.TABLE_NAME LIKE 'REL_%'
+                          AND t.TABLE_NAME LIKE 'REL_%' AND t.TABLE_NAME <> 'Rel_BalancePpto'
                         ORDER BY t.TABLE_NAME";
 
                     using (SqlCommand cmd = new SqlCommand(query, cn))
@@ -113,7 +113,7 @@ namespace bufinscustomers.Services
                     var tablasRelBD = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                     string queryTablas = @"
                         SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
-                        WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME LIKE 'REL_%'";
+                        WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME LIKE 'REL_%' AND TABLE_NAME <> 'Rel_BalancePpto'\";
 
                     using (SqlCommand cmd = new SqlCommand(queryTablas, cn))
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -410,7 +410,7 @@ namespace bufinscustomers.Services
                         SELECT t.TABLE_NAME,
                                (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS c WHERE c.TABLE_NAME = t.TABLE_NAME) AS TotalColumnas
                         FROM INFORMATION_SCHEMA.TABLES t
-                        WHERE t.TABLE_TYPE = 'BASE TABLE' AND t.TABLE_NAME LIKE 'REL_%'
+                        WHERE t.TABLE_TYPE = 'BASE TABLE' AND t.TABLE_NAME LIKE 'REL_%' AND t.TABLE_NAME <> 'Rel_BalancePpto'
                         ORDER BY t.TABLE_NAME";
 
                     using (SqlCommand cmd = new SqlCommand(queryTablas, cn))

@@ -78,6 +78,7 @@ namespace bufinscustomers.Controllers
             {
                 if (logoProcesado != null) GuardarLogoRecienCreada(empresa, logoProcesado, logo.FileName);
                 EmpresasViewBagFilter.Invalidar();
+                InicializarSupuestosBalancePpto(empresa);
                 if (advertencia == "WEB_SIN_COLUMNA") SetInfoMessage(R("Emp_PaginaWebSinColumna"));
                 SetSuccessMessage(R("Emp_Creada"));
                 new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_EmpresaCreada"), empresa.Nombre, "success", "/Empresa/Empresas");
@@ -90,6 +91,30 @@ namespace bufinscustomers.Controllers
             return RedirectToAction("Empresas");
         }
 
+
+        /// <summary>
+        /// Toda empresa nueva nace con sus «Supuestos del balance del ppto» (estructura con Valor vacío).
+        /// Si el módulo aún no está instalado (script 038) no hace nada; un fallo no deshace la creación de la empresa.
+        /// </summary>
+        private void InicializarSupuestosBalancePpto(Empresas empresa)
+        {
+            try
+            {
+                var svc = new SupuestosBalancePptoService();
+                if (empresa.Id <= 0 || !svc.Disponible()) return;
+                int filas = svc.Inicializar(empresa.Id, UsuarioSesionHelper.UsuarioActual?.Id);
+                if (filas <= 0) return;
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Crear,
+                    "SupuestosBalancePpto", empresa.Id.ToString(),
+                    $"Supuestos del balance del ppto creados (valores vacíos) al crear la empresa {empresa.Nombre}: {filas} fila(s)",
+                    null, new { filas }, idEmpresa: empresa.Id);
+                TempData["SupuestosCreados"] = empresa.Id;
+            }
+            catch (System.Exception ex)
+            {
+                AppLogger.Error(ex, "EmpresaController.InicializarSupuestosBalancePpto");
+            }
+        }
 
         /// <summary>Guarda el logo elegido al crear la empresa. Si no se pudo, la empresa queda creada y se avisa (se agrega luego al editar).</summary>
         private void GuardarLogoRecienCreada(Empresas empresa, ResultadoLogo r, string nombreArchivo)

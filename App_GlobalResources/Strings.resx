@@ -3613,4 +3613,134 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="Acc_NuevaClave_Titulo" xml:space="preserve"><value>Crea tu nueva contraseña</value></data>
   <data name="Acc_AgregarPasskeyAlEntrar" xml:space="preserve"><value>Agregar una passkey al entrar</value></data>
   <data name="Acc_AgregarPasskeyAlEntrarDesc" xml:space="preserve"><value>Después de verificar tu código te llevaremos a crearla (huella, rostro o llave).</value></data>
+  <!-- SUPUESTOS DEL BALANCE DEL PPTO -->
+  <data name="SBP_PageTitle" xml:space="preserve"><value>Supuestos del balance del ppto</value></data>
+  <data name="SBP_NoDisponible" xml:space="preserve"><value>El módulo aún no está instalado en la base de datos: ejecute los scripts &lt;code&gt;Sql/038_RelBalancePpto_PorEmpresa.sql&lt;/code&gt; y &lt;code&gt;Sql/039_sp_ModeloBalancePpto_PorEmpresa.sql&lt;/code&gt;.</value></data>
+  <data name="SBP_FiltroTitulo" xml:space="preserve"><value>Empresa</value></data>
+  <data name="SBP_Intro" xml:space="preserve"><value>Diligencie los supuestos del balance presupuestado de cada empresa. Solo el campo Valor es editable; las líneas de cálculo se muestran como referencia.</value></data>
+  <data name="SBP_LblEmpresa" xml:space="preserve"><value>Empresa</value></data>
+  <data name="SBP_SelEmpresa" xml:space="preserve"><value>Seleccione una empresa</value></data>
+  <data name="SBP_BtnExcel" xml:space="preserve"><value>Descargar Excel</value></data>
+  <data name="SBP_BtnPlantilla" xml:space="preserve"><value>Plantilla</value></data>
+  <data name="SBP_BtnCargar" xml:space="preserve"><value>Cargar Excel</value></data>
+  <data name="SBP_BtnInicializar" xml:space="preserve"><value>Crear supuestos vacíos</value></data>
+  <data name="SBP_SinEmpresa" xml:space="preserve"><value>Seleccione una empresa para ver sus supuestos.</value></data>
+  <data name="SBP_Completitud" xml:space="preserve"><value>Completitud de los supuestos</value></data>
+  <data name="SBP_Completo" xml:space="preserve"><value>completo</value></data>
+  <data name="SBP_KpiTotal" xml:space="preserve"><value>Por diligenciar</value></data>
+  <data name="SBP_KpiDil" xml:space="preserve"><value>Diligenciados</value></data>
+  <data name="SBP_KpiPend" xml:space="preserve"><value>Pendientes</value></data>
+  <data name="SBP_KpiCalculo" xml:space="preserve"><value>Filas de cálculo (solo lectura)</value></data>
+  <data name="SBP_AtencionTitulo" xml:space="preserve"><value>Qué falta por diligenciar</value></data>
+  <data name="SBP_AtencionOk" xml:space="preserve"><value>Todo diligenciado: los supuestos están completos.</value></data>
+  <data name="SBP_AtencionMeses" xml:space="preserve"><value>{0} de {1} meses sin valor</value></data>
+  <data name="SBP_UltCarga" xml:space="preserve"><value>Última carga</value></data>
+  <data name="SBP_UltMod" xml:space="preserve"><value>Última modificación</value></data>
+  <data name="SBP_Por" xml:space="preserve"><value>por {0}</value></data>
+  <data name="SBP_SinRegistro" xml:space="preserve"><value>Sin registro</value></data>
+  <data name="SBP_GridTitulo" xml:space="preserve"><value>Supuestos por línea y mes</value></data>
+  <data name="SBP_SoloPend" xml:space="preserve"><value>Solo pendientes</value></data>
+  <data name="SBP_BuscarPh" xml:space="preserve"><value>Buscar línea...</value></data>
+  <data name="SBP_TotalLineas" xml:space="preserve"><value>{0} línea(s)</value></data>
+  <data name="SBP_SinResultados" xml:space="preserve"><value>No hay líneas que coincidan.</value></data>
+  <data name="SBP_ThLinea" xml:space="preserve"><value>Línea</value></data>
+  <data name="SBP_ThUnidad" xml:space="preserve"><value>Unidad</value></data>
+  <data name="SBP_DetFormula" xml:space="preserve"><value>Fórmula</value></data>
+  <data name="SBP_DetBase" xml:space="preserve"><value>Descripción base</value></data>
+  <data name="SBP_DetMesBase" xml:space="preserve"><value>Mes base</value></data>
+  <data name="SBP_MesBaseAnterior" xml:space="preserve"><value>Mes anterior</value></data>
+  <data name="SBP_MesBaseMismo" xml:space="preserve"><value>Mismo mes</value></data>
+  <data name="SBP_DetUnidad" xml:space="preserve"><value>Tipo de unidad</value></data>
+  <data name="SBP_SoloLectura" xml:space="preserve"><value>Solo lectura (línea de cálculo)</value></data>
+  <data name="SBP_VerDetalle" xml:space="preserve"><value>Ver fórmula y detalle</value></data>
+  <data name="SBP_AplicarTodos" xml:space="preserve"><value>Aplicar este valor a todos los meses</value></data>
+  <data name="SBP_AplicarTitulo" xml:space="preserve"><value>Aplicar a todos los meses</value></data>
+  <data name="SBP_AplicarTexto" xml:space="preserve"><value>Valor para «{0}»</value></data>
+  <data name="SBP_AplicarSoloVacios" xml:space="preserve"><value>Solo los meses vacíos</value></data>
+  <data name="SBP_AplicarTodosOpt" xml:space="preserve"><value>Todos los meses (reemplaza lo escrito)</value></data>
+  <data name="SBP_AplicarBtn" xml:space="preserve"><value>Aplicar</value></data>
+  <data name="SBP_AplicarSinValor" xml:space="preserve"><value>Escriba un valor numérico válido o déjelo vacío.</value></data>
+  <data name="SBP_Aplicado" xml:space="preserve"><value>Valor copiado. Revise y guarde los cambios.</value></data>
+  <data name="SBP_CambiosN" xml:space="preserve"><value>{0} cambio(s) sin guardar</value></data>
+  <data name="SBP_BtnGuardar" xml:space="preserve"><value>Guardar cambios</value></data>
+  <data name="SBP_BtnDescartar" xml:space="preserve"><value>Descartar</value></data>
+  <data name="SBP_Guardado" xml:space="preserve"><value>Se guardaron {0} valor(es).</value></data>
+  <data name="SBP_ConfCambioEmpresa" xml:space="preserve"><value>Hay cambios sin guardar. ¿Descartarlos y cambiar de empresa?</value></data>
+  <data name="SBP_SalirSinGuardar" xml:space="preserve"><value>Hay cambios sin guardar.</value></data>
+  <data name="SBP_ValorInvalido" xml:space="preserve"><value>Valor numérico no válido</value></data>
+  <data name="SBP_SinFilasTitulo" xml:space="preserve"><value>Esta empresa aún no tiene supuestos</value></data>
+  <data name="SBP_SinFilasTexto" xml:space="preserve"><value>Cree la estructura vacía con «Crear supuestos vacíos» y diligéncielos aquí o por Excel.</value></data>
+  <data name="SBP_ConfInicializarTitulo" xml:space="preserve"><value>¿Crear los supuestos de esta empresa?</value></data>
+  <data name="SBP_ConfInicializarTexto" xml:space="preserve"><value>Se crearán todas las líneas y meses con Valor vacío para que los diligencie.</value></data>
+  <data name="SBP_Inicializado" xml:space="preserve"><value>Se crearon {0} supuestos vacíos.</value></data>
+  <data name="SBP_BtnConfirmar" xml:space="preserve"><value>Confirmar</value></data>
+  <data name="SBP_BtnCancelar" xml:space="preserve"><value>Cancelar</value></data>
+  <data name="SBP_BtnCerrar" xml:space="preserve"><value>Cerrar</value></data>
+  <data name="SBP_ErrorRed" xml:space="preserve"><value>No se pudo completar la operación. Intente de nuevo.</value></data>
+  <data name="SBP_Cargando" xml:space="preserve"><value>Cargando...</value></data>
+  <data name="SBP_Subiendo" xml:space="preserve"><value>Procesando...</value></data>
+  <data name="SBP_CargarTitulo" xml:space="preserve"><value>Cargar supuestos desde Excel</value></data>
+  <data name="SBP_CargarAyuda" xml:space="preserve"><value>Use la hoja Rel_BalancePpto que obtiene con «Descargar Excel» o «Plantilla». Solo se actualiza la columna Valor; las demás son informativas y las celdas vacías no modifican el valor actual. Si hay algún error no se guarda nada.</value></data>
+  <data name="SBP_ElegirArchivo" xml:space="preserve"><value>Elegir o arrastrar archivo .xlsx</value></data>
+  <data name="SBP_SinArchivo" xml:space="preserve"><value>Ningún archivo seleccionado</value></data>
+  <data name="SBP_BtnSubir" xml:space="preserve"><value>Validar y cargar</value></data>
+  <data name="SBP_HallTitulo" xml:space="preserve"><value>Hallazgos</value></data>
+  <data name="SBP_RegistrosN" xml:space="preserve"><value>{0} registro(s)</value></data>
+  <data name="SBP_ThFila" xml:space="preserve"><value>Fila</value></data>
+  <data name="SBP_ThColumna" xml:space="preserve"><value>Columna</value></data>
+  <data name="SBP_ThSeveridad" xml:space="preserve"><value>Tipo</value></data>
+  <data name="SBP_ThMensaje" xml:space="preserve"><value>Detalle</value></data>
+  <data name="SBP_SevError" xml:space="preserve"><value>Error</value></data>
+  <data name="SBP_SevAdv" xml:space="preserve"><value>Advertencia</value></data>
+  <data name="SBP_SinAcceso" xml:space="preserve"><value>No tiene acceso a esta empresa.</value></data>
+  <data name="SBP_SinCambios" xml:space="preserve"><value>No hay cambios para guardar.</value></data>
+  <data name="SBP_YaInicializada" xml:space="preserve"><value>La empresa ya tiene supuestos o no hay una estructura base para copiar.</value></data>
+  <data name="SBP_ArchivoVacio" xml:space="preserve"><value>Seleccione un archivo de Excel.</value></data>
+  <data name="SBP_ArchivoExt" xml:space="preserve"><value>El archivo debe ser .xlsx o .xlsm.</value></data>
+  <data name="SBP_ArchivoIlegible" xml:space="preserve"><value>No se pudo leer el archivo. Verifique que sea un Excel válido.</value></data>
+  <data name="SBP_CargaOk" xml:space="preserve"><value>Carga exitosa: {0} valor(es) actualizado(s).</value></data>
+  <data name="SBP_CargaErrores" xml:space="preserve"><value>El archivo tiene errores: no se guardó nada. Corrija los hallazgos y vuelva a cargarlo.</value></data>
+  <data name="SBP_MenuNombreDefecto" xml:space="preserve"><value>Supuestos del balance del ppto</value></data>
+  <data name="SBP_Hall_SinHoja" xml:space="preserve"><value>No se encontró la hoja «{0}».</value></data>
+  <data name="SBP_Hall_SinColumna" xml:space="preserve"><value>Falta la columna obligatoria «{0}».</value></data>
+  <data name="SBP_Hall_EmpresaSinSupuestos" xml:space="preserve"><value>La empresa aún no tiene supuestos creados. Use «Crear supuestos vacíos» primero.</value></data>
+  <data name="SBP_Hall_IdInvalido" xml:space="preserve"><value>Id no válido: «{0}».</value></data>
+  <data name="SBP_Hall_MesInvalido" xml:space="preserve"><value>Mes no válido (debe ser 1 a 12): «{0}».</value></data>
+  <data name="SBP_Hall_FilaNoExiste" xml:space="preserve"><value>La línea/mes «{0}» no existe en los supuestos de esta empresa.</value></data>
+  <data name="SBP_Hall_Duplicada" xml:space="preserve"><value>Fila duplicada en el archivo (línea/mes «{0}»).</value></data>
+  <data name="SBP_Hall_ValorVacio" xml:space="preserve"><value>Valor vacío en «{0}»: no se modifica.</value></data>
+  <data name="SBP_Hall_ValorNoNumerico" xml:space="preserve"><value>El valor «{0}» no es numérico.</value></data>
+  <data name="SBP_Hall_CalculoIgnorado" xml:space="preserve"><value>«{0}» es una línea de cálculo: su valor se ignora.</value></data>
+  <data name="SBP_ModeloAlertaTitulo" xml:space="preserve"><value>Supuestos del balance del ppto incompletos</value></data>
+  <data name="SBP_ModeloAlertaTexto" xml:space="preserve"><value>Esta empresa tiene {0} supuesto(s) sin diligenciar; el balance presupuestado puede quedar incompleto. Complételos en la opción</value></data>
+  <data name="SBP_ModeloAlertaSinFilas" xml:space="preserve"><value>Esta empresa aún no tiene supuestos del balance del ppto. Créelos y diligéncielos en la opción</value></data>
+  <data name="SBP_ModeloAlertaPend" xml:space="preserve"><value>{0} pendientes</value></data>
+  <data name="SBP_EmpCreadaTitulo" xml:space="preserve"><value>Empresa creada</value></data>
+  <data name="SBP_EmpCreadaSup" xml:space="preserve"><value>También se crearon los supuestos del balance del ppto de la empresa, con valores vacíos por diligenciar.</value></data>
+  <data name="SBP_EmpCreadaIr" xml:space="preserve"><value>Diligenciarlos ahora</value></data>
+  <data name="SBP_EmpCreadaCerrar" xml:space="preserve"><value>Más tarde</value></data>
+  <data name="SBP_M1" xml:space="preserve"><value>Ene</value></data>
+  <data name="SBP_M2" xml:space="preserve"><value>Feb</value></data>
+  <data name="SBP_M3" xml:space="preserve"><value>Mar</value></data>
+  <data name="SBP_M4" xml:space="preserve"><value>Abr</value></data>
+  <data name="SBP_M5" xml:space="preserve"><value>May</value></data>
+  <data name="SBP_M6" xml:space="preserve"><value>Jun</value></data>
+  <data name="SBP_M7" xml:space="preserve"><value>Jul</value></data>
+  <data name="SBP_M8" xml:space="preserve"><value>Ago</value></data>
+  <data name="SBP_M9" xml:space="preserve"><value>Sep</value></data>
+  <data name="SBP_M10" xml:space="preserve"><value>Oct</value></data>
+  <data name="SBP_M11" xml:space="preserve"><value>Nov</value></data>
+  <data name="SBP_M12" xml:space="preserve"><value>Dic</value></data>
+  <data name="SBP_BtnConsultar" xml:space="preserve"><value>Consultar</value></data>
+  <data name="SBP_ConsultaPrimero" xml:space="preserve"><value>Elige una empresa para ver sus supuestos</value></data>
+  <data name="SBP_SoloPendBtn" xml:space="preserve"><value>Solo con pendientes</value></data>
+  <data name="SBP_SoloPendTip" xml:space="preserve"><value>Muestra únicamente las líneas que tienen algún mes sin diligenciar</value></data>
+  <data name="SBP_AtencionFaltan" xml:space="preserve"><value>Faltan: {0}</value></data>
+  <data name="SBP_AtencionTodosMeses" xml:space="preserve"><value>Falta diligenciar los 12 meses</value></data>
+  <data name="SBP_BtnCopiar" xml:space="preserve"><value>Copiar a 12 meses</value></data>
+  <data name="SBP_BtnCopiarTip" xml:space="preserve"><value>Copia un mismo valor a todos los meses de esta línea</value></data>
+  <data name="SBP_AplicarValor" xml:space="preserve"><value>Valor</value></data>
+  <data name="SBP_AplicarComo" xml:space="preserve"><value>Aplicar en</value></data>
+  <data name="SBP_ConsultaPrimeroDesc" xml:space="preserve"><value>Selecciona la empresa y presiona Consultar para ver y editar los supuestos del balance del ppto.</value></data>
+  <data name="SBP_AplicarVaciarAyuda" xml:space="preserve"><value>Para dejar la línea sin valor (NULL), deje el campo vacío y elija «Todos los meses».</value></data>
 </root>

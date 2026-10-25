@@ -3611,4 +3611,134 @@ Indicators management follows closely: </value></data>
   <data name="Acc_NuevaClave_Titulo" xml:space="preserve"><value>Create your new password</value></data>
   <data name="Acc_AgregarPasskeyAlEntrar" xml:space="preserve"><value>Add a passkey when I sign in</value></data>
   <data name="Acc_AgregarPasskeyAlEntrarDesc" xml:space="preserve"><value>After you verify your code we will take you to create it (fingerprint, face or key).</value></data>
+  <!-- BUDGET BALANCE SHEET ASSUMPTIONS -->
+  <data name="SBP_PageTitle" xml:space="preserve"><value>Budget balance sheet assumptions</value></data>
+  <data name="SBP_NoDisponible" xml:space="preserve"><value>The module is not installed in the database yet: run the scripts &lt;code&gt;Sql/038_RelBalancePpto_PorEmpresa.sql&lt;/code&gt; and &lt;code&gt;Sql/039_sp_ModeloBalancePpto_PorEmpresa.sql&lt;/code&gt;.</value></data>
+  <data name="SBP_FiltroTitulo" xml:space="preserve"><value>Company</value></data>
+  <data name="SBP_Intro" xml:space="preserve"><value>Fill in the budgeted balance sheet assumptions for each company. Only the Value field is editable; calculation lines are shown for reference.</value></data>
+  <data name="SBP_LblEmpresa" xml:space="preserve"><value>Company</value></data>
+  <data name="SBP_SelEmpresa" xml:space="preserve"><value>Select a company</value></data>
+  <data name="SBP_BtnExcel" xml:space="preserve"><value>Download Excel</value></data>
+  <data name="SBP_BtnPlantilla" xml:space="preserve"><value>Template</value></data>
+  <data name="SBP_BtnCargar" xml:space="preserve"><value>Upload Excel</value></data>
+  <data name="SBP_BtnInicializar" xml:space="preserve"><value>Create empty assumptions</value></data>
+  <data name="SBP_SinEmpresa" xml:space="preserve"><value>Select a company to see its assumptions.</value></data>
+  <data name="SBP_Completitud" xml:space="preserve"><value>Assumptions completeness</value></data>
+  <data name="SBP_Completo" xml:space="preserve"><value>complete</value></data>
+  <data name="SBP_KpiTotal" xml:space="preserve"><value>To fill in</value></data>
+  <data name="SBP_KpiDil" xml:space="preserve"><value>Filled in</value></data>
+  <data name="SBP_KpiPend" xml:space="preserve"><value>Pending</value></data>
+  <data name="SBP_KpiCalculo" xml:space="preserve"><value>Calculation rows (read-only)</value></data>
+  <data name="SBP_AtencionTitulo" xml:space="preserve"><value>What is still missing</value></data>
+  <data name="SBP_AtencionOk" xml:space="preserve"><value>All filled in: the assumptions are complete.</value></data>
+  <data name="SBP_AtencionMeses" xml:space="preserve"><value>{0} of {1} months without a value</value></data>
+  <data name="SBP_UltCarga" xml:space="preserve"><value>Last upload</value></data>
+  <data name="SBP_UltMod" xml:space="preserve"><value>Last change</value></data>
+  <data name="SBP_Por" xml:space="preserve"><value>by {0}</value></data>
+  <data name="SBP_SinRegistro" xml:space="preserve"><value>No record</value></data>
+  <data name="SBP_GridTitulo" xml:space="preserve"><value>Assumptions by line and month</value></data>
+  <data name="SBP_SoloPend" xml:space="preserve"><value>Pending only</value></data>
+  <data name="SBP_BuscarPh" xml:space="preserve"><value>Search line...</value></data>
+  <data name="SBP_TotalLineas" xml:space="preserve"><value>{0} line(s)</value></data>
+  <data name="SBP_SinResultados" xml:space="preserve"><value>No matching lines.</value></data>
+  <data name="SBP_ThLinea" xml:space="preserve"><value>Line</value></data>
+  <data name="SBP_ThUnidad" xml:space="preserve"><value>Unit</value></data>
+  <data name="SBP_DetFormula" xml:space="preserve"><value>Formula</value></data>
+  <data name="SBP_DetBase" xml:space="preserve"><value>Base description</value></data>
+  <data name="SBP_DetMesBase" xml:space="preserve"><value>Base month</value></data>
+  <data name="SBP_MesBaseAnterior" xml:space="preserve"><value>Previous month</value></data>
+  <data name="SBP_MesBaseMismo" xml:space="preserve"><value>Same month</value></data>
+  <data name="SBP_DetUnidad" xml:space="preserve"><value>Unit type</value></data>
+  <data name="SBP_SoloLectura" xml:space="preserve"><value>Read-only (calculation line)</value></data>
+  <data name="SBP_VerDetalle" xml:space="preserve"><value>See formula and details</value></data>
+  <data name="SBP_AplicarTodos" xml:space="preserve"><value>Apply this value to all months</value></data>
+  <data name="SBP_AplicarTitulo" xml:space="preserve"><value>Apply to all months</value></data>
+  <data name="SBP_AplicarTexto" xml:space="preserve"><value>Value for "{0}"</value></data>
+  <data name="SBP_AplicarSoloVacios" xml:space="preserve"><value>Empty months only</value></data>
+  <data name="SBP_AplicarTodosOpt" xml:space="preserve"><value>All months (replaces what is entered)</value></data>
+  <data name="SBP_AplicarBtn" xml:space="preserve"><value>Apply</value></data>
+  <data name="SBP_AplicarSinValor" xml:space="preserve"><value>Enter a valid numeric value or leave it empty.</value></data>
+  <data name="SBP_Aplicado" xml:space="preserve"><value>Value copied. Review and save the changes.</value></data>
+  <data name="SBP_CambiosN" xml:space="preserve"><value>{0} unsaved change(s)</value></data>
+  <data name="SBP_BtnGuardar" xml:space="preserve"><value>Save changes</value></data>
+  <data name="SBP_BtnDescartar" xml:space="preserve"><value>Discard</value></data>
+  <data name="SBP_Guardado" xml:space="preserve"><value>{0} value(s) saved.</value></data>
+  <data name="SBP_ConfCambioEmpresa" xml:space="preserve"><value>There are unsaved changes. Discard them and switch company?</value></data>
+  <data name="SBP_SalirSinGuardar" xml:space="preserve"><value>There are unsaved changes.</value></data>
+  <data name="SBP_ValorInvalido" xml:space="preserve"><value>Invalid numeric value</value></data>
+  <data name="SBP_SinFilasTitulo" xml:space="preserve"><value>This company has no assumptions yet</value></data>
+  <data name="SBP_SinFilasTexto" xml:space="preserve"><value>Create the empty structure with "Create empty assumptions" and fill it in here or via Excel.</value></data>
+  <data name="SBP_ConfInicializarTitulo" xml:space="preserve"><value>Create this company's assumptions?</value></data>
+  <data name="SBP_ConfInicializarTexto" xml:space="preserve"><value>All lines and months will be created with an empty Value for you to fill in.</value></data>
+  <data name="SBP_Inicializado" xml:space="preserve"><value>{0} empty assumptions created.</value></data>
+  <data name="SBP_BtnConfirmar" xml:space="preserve"><value>Confirm</value></data>
+  <data name="SBP_BtnCancelar" xml:space="preserve"><value>Cancel</value></data>
+  <data name="SBP_BtnCerrar" xml:space="preserve"><value>Close</value></data>
+  <data name="SBP_ErrorRed" xml:space="preserve"><value>The operation could not be completed. Please try again.</value></data>
+  <data name="SBP_Cargando" xml:space="preserve"><value>Loading...</value></data>
+  <data name="SBP_Subiendo" xml:space="preserve"><value>Processing...</value></data>
+  <data name="SBP_CargarTitulo" xml:space="preserve"><value>Upload assumptions from Excel</value></data>
+  <data name="SBP_CargarAyuda" xml:space="preserve"><value>Use the Rel_BalancePpto sheet you get from "Download Excel" or "Template". Only the Value column is updated; the others are informational and empty cells do not change the current value. If there is any error nothing is saved.</value></data>
+  <data name="SBP_ElegirArchivo" xml:space="preserve"><value>Choose or drop an .xlsx file</value></data>
+  <data name="SBP_SinArchivo" xml:space="preserve"><value>No file selected</value></data>
+  <data name="SBP_BtnSubir" xml:space="preserve"><value>Validate and upload</value></data>
+  <data name="SBP_HallTitulo" xml:space="preserve"><value>Findings</value></data>
+  <data name="SBP_RegistrosN" xml:space="preserve"><value>{0} record(s)</value></data>
+  <data name="SBP_ThFila" xml:space="preserve"><value>Row</value></data>
+  <data name="SBP_ThColumna" xml:space="preserve"><value>Column</value></data>
+  <data name="SBP_ThSeveridad" xml:space="preserve"><value>Type</value></data>
+  <data name="SBP_ThMensaje" xml:space="preserve"><value>Detail</value></data>
+  <data name="SBP_SevError" xml:space="preserve"><value>Error</value></data>
+  <data name="SBP_SevAdv" xml:space="preserve"><value>Warning</value></data>
+  <data name="SBP_SinAcceso" xml:space="preserve"><value>You do not have access to this company.</value></data>
+  <data name="SBP_SinCambios" xml:space="preserve"><value>There are no changes to save.</value></data>
+  <data name="SBP_YaInicializada" xml:space="preserve"><value>The company already has assumptions or there is no base structure to copy.</value></data>
+  <data name="SBP_ArchivoVacio" xml:space="preserve"><value>Select an Excel file.</value></data>
+  <data name="SBP_ArchivoExt" xml:space="preserve"><value>The file must be .xlsx or .xlsm.</value></data>
+  <data name="SBP_ArchivoIlegible" xml:space="preserve"><value>The file could not be read. Check that it is a valid Excel file.</value></data>
+  <data name="SBP_CargaOk" xml:space="preserve"><value>Upload successful: {0} value(s) updated.</value></data>
+  <data name="SBP_CargaErrores" xml:space="preserve"><value>The file has errors: nothing was saved. Fix the findings and upload it again.</value></data>
+  <data name="SBP_MenuNombreDefecto" xml:space="preserve"><value>Budget balance sheet assumptions</value></data>
+  <data name="SBP_Hall_SinHoja" xml:space="preserve"><value>Sheet "{0}" was not found.</value></data>
+  <data name="SBP_Hall_SinColumna" xml:space="preserve"><value>Required column "{0}" is missing.</value></data>
+  <data name="SBP_Hall_EmpresaSinSupuestos" xml:space="preserve"><value>The company has no assumptions yet. Use "Create empty assumptions" first.</value></data>
+  <data name="SBP_Hall_IdInvalido" xml:space="preserve"><value>Invalid Id: "{0}".</value></data>
+  <data name="SBP_Hall_MesInvalido" xml:space="preserve"><value>Invalid month (must be 1 to 12): "{0}".</value></data>
+  <data name="SBP_Hall_FilaNoExiste" xml:space="preserve"><value>Line/month "{0}" does not exist in this company's assumptions.</value></data>
+  <data name="SBP_Hall_Duplicada" xml:space="preserve"><value>Duplicate row in the file (line/month "{0}").</value></data>
+  <data name="SBP_Hall_ValorVacio" xml:space="preserve"><value>Empty value in "{0}": not changed.</value></data>
+  <data name="SBP_Hall_ValorNoNumerico" xml:space="preserve"><value>The value "{0}" is not numeric.</value></data>
+  <data name="SBP_Hall_CalculoIgnorado" xml:space="preserve"><value>"{0}" is a calculation line: its value is ignored.</value></data>
+  <data name="SBP_ModeloAlertaTitulo" xml:space="preserve"><value>Budget balance sheet assumptions incomplete</value></data>
+  <data name="SBP_ModeloAlertaTexto" xml:space="preserve"><value>This company has {0} unfilled assumption(s); the budgeted balance sheet may be incomplete. Complete them in the option</value></data>
+  <data name="SBP_ModeloAlertaSinFilas" xml:space="preserve"><value>This company has no budget balance sheet assumptions yet. Create and fill them in in the option</value></data>
+  <data name="SBP_ModeloAlertaPend" xml:space="preserve"><value>{0} pending</value></data>
+  <data name="SBP_EmpCreadaTitulo" xml:space="preserve"><value>Company created</value></data>
+  <data name="SBP_EmpCreadaSup" xml:space="preserve"><value>The company's budget balance sheet assumptions were also created, with empty values to fill in.</value></data>
+  <data name="SBP_EmpCreadaIr" xml:space="preserve"><value>Fill them in now</value></data>
+  <data name="SBP_EmpCreadaCerrar" xml:space="preserve"><value>Later</value></data>
+  <data name="SBP_M1" xml:space="preserve"><value>Jan</value></data>
+  <data name="SBP_M2" xml:space="preserve"><value>Feb</value></data>
+  <data name="SBP_M3" xml:space="preserve"><value>Mar</value></data>
+  <data name="SBP_M4" xml:space="preserve"><value>Apr</value></data>
+  <data name="SBP_M5" xml:space="preserve"><value>May</value></data>
+  <data name="SBP_M6" xml:space="preserve"><value>Jun</value></data>
+  <data name="SBP_M7" xml:space="preserve"><value>Jul</value></data>
+  <data name="SBP_M8" xml:space="preserve"><value>Aug</value></data>
+  <data name="SBP_M9" xml:space="preserve"><value>Sep</value></data>
+  <data name="SBP_M10" xml:space="preserve"><value>Oct</value></data>
+  <data name="SBP_M11" xml:space="preserve"><value>Nov</value></data>
+  <data name="SBP_M12" xml:space="preserve"><value>Dec</value></data>
+  <data name="SBP_BtnConsultar" xml:space="preserve"><value>Search</value></data>
+  <data name="SBP_ConsultaPrimero" xml:space="preserve"><value>Choose a company to see its assumptions</value></data>
+  <data name="SBP_SoloPendBtn" xml:space="preserve"><value>With pending only</value></data>
+  <data name="SBP_SoloPendTip" xml:space="preserve"><value>Shows only the lines with at least one month left blank</value></data>
+  <data name="SBP_AtencionFaltan" xml:space="preserve"><value>Missing: {0}</value></data>
+  <data name="SBP_AtencionTodosMeses" xml:space="preserve"><value>All 12 months are still blank</value></data>
+  <data name="SBP_BtnCopiar" xml:space="preserve"><value>Copy to 12 months</value></data>
+  <data name="SBP_BtnCopiarTip" xml:space="preserve"><value>Copies one value to every month of this line</value></data>
+  <data name="SBP_AplicarValor" xml:space="preserve"><value>Value</value></data>
+  <data name="SBP_AplicarComo" xml:space="preserve"><value>Apply to</value></data>
+  <data name="SBP_ConsultaPrimeroDesc" xml:space="preserve"><value>Select the company and press Search to view and edit the budget balance sheet assumptions.</value></data>
+  <data name="SBP_AplicarVaciarAyuda" xml:space="preserve"><value>To leave the line without a value (NULL), keep the field empty and choose "All months".</value></data>
 </root>

@@ -23,7 +23,7 @@ namespace bufinscustomers.Services
                     string query = @"SELECT TABLE_NAME
                                      FROM INFORMATION_SCHEMA.TABLES
                                      WHERE TABLE_TYPE = 'BASE TABLE'
-                                       AND TABLE_NAME LIKE 'Rel[_]%'
+                                       AND TABLE_NAME LIKE 'Rel[_]%' AND TABLE_NAME <> 'Rel_BalancePpto'
                                      ORDER BY TABLE_NAME";
 
                     SqlCommand cmd = new SqlCommand(query, cn);

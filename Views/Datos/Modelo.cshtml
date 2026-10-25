@@ -9,6 +9,7 @@
 }
 
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/supuestos-balance-ppto.css")" rel="stylesheet" />
 
 <div class="container-fluid px-4 mc-page">
 
@@ -21,6 +22,9 @@
     </div>
 
     @Html.AntiForgeryToken()
+
+    <!-- Aviso: supuestos del balance del ppto incompletos (lo llena el JS al elegir empresa) -->
+    <div id="sbpAlertaModelo" class="sbp-alerta" style="display:none" role="alert"></div>
 
     <!-- Barra de trabajo -->
     <div class="mc-toolbar">
@@ -693,11 +697,36 @@
         if (e.persisted) reiniciarAvisoEscenario();
     });
 
+    // Aviso visible si la empresa no tiene completos los «Supuestos del balance del ppto»
+    // (alguna fila distinta de CALCULO con Valor vacío). El nombre/URL de la opción vienen del menú actual.
+    var _urlSupuestosEstado = '@Url.Action("EstadoPendientes", "SupuestosBalancePpto")';
+    var _sbpTxt = {
+        titulo: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SBP_ModeloAlertaTitulo))',
+        texto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SBP_ModeloAlertaTexto))',
+        sinFilas: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SBP_ModeloAlertaSinFilas))',
+        pend: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.SBP_ModeloAlertaPend))'
+    };
+    function verificarSupuestosBalancePpto() {
+        var $a = $('#sbpAlertaModelo'), id = $('#idEmpresa').val();
+        $a.hide().empty();
+        if (!id) return;
+        $.get(_urlSupuestosEstado, { idEmpresa: id }).done(function (r) {
+            if ($('#idEmpresa').val() !== id || !r || !r.mostrar) return;
+            var esc = function (t) { return $('<div/>').text(t == null ? '' : String(t)).html(); };
+            var nombre = esc(r.menuNombre);
+            var enlace = r.url ? '<a href="' + esc(r.url) + '">' + nombre + '</a>' : '<strong>' + nombre + '</strong>';
+            var msg = (r.sinFilas ? esc(_sbpTxt.sinFilas) : esc(_sbpTxt.texto.replace('{0}', r.pendientes))) + ' ' + enlace + '.';
+            $a.html('<span class="sbp-alerta-ic"><i class="fas fa-exclamation-triangle"></i></span>' +
+                    '<div><span class="sbp-alerta-t">' + esc(_sbpTxt.titulo) + '</span>' + msg + '</div>' +
+                    (r.sinFilas ? '' : '<span class="sbp-alerta-badge">' + esc(_sbpTxt.pend.replace('{0}', r.pendientes)) + '</span>')).css('display', 'flex');
+        });
+    }
+
     $(function () {
 
         reiniciarAvisoEscenario();
 
-        $('#idEmpresa').on('change', function () { actualizarBotones(); verificarDatosEscenario(); });
+        $('#idEmpresa').on('change', function () { actualizarBotones(); verificarDatosEscenario(); verificarSupuestosBalancePpto(); });
         $('#idEscenario').on('change', verificarDatosEscenario);
 
         // ── Selector de modelos (tarjetas) ────────────────────────────────
@@ -721,6 +750,7 @@
         if ($('#idEmpresa option').length === 2) {
             $('#idEmpresa option:last').prop('selected', true);
             actualizarBotones();
+            verificarSupuestosBalancePpto();
         }
 
         onModelosChange();

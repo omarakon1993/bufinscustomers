@@ -1,0 +1,557 @@
+@{
+    ViewBag.Title = Resources.Strings.SBP_PageTitle;
+    var empresas = (System.Collections.Generic.List<bufinscustomers.Models.Empresas>)ViewBag.Empresas;
+    int idEmpresaUsuario = ViewBag.IdEmpresaUsuario;
+    bool disponible = ViewBag.Disponible;
+
+    // Textos para el JS (claves SBP_*, sin el prefijo). Existen en ambos .resx.
+    var clavesJs = new[] {
+        "KpiCalculo","AtencionOk","AtencionFaltan","AtencionTodosMeses","UltCarga","UltMod","Por","SinRegistro",
+        "ThLinea","ThUnidad","DetFormula","DetBase","DetMesBase","MesBaseAnterior","MesBaseMismo","DetUnidad","SoloLectura","VerDetalle",
+        "AplicarTitulo","AplicarTexto","AplicarSoloVacios","AplicarTodosOpt","AplicarSinValor","Aplicado","BtnCopiar","BtnCopiarTip",
+        "CambiosN","Guardado","ConfCambioEmpresa","SalirSinGuardar","ValorInvalido","SinFilasTitulo","SinFilasTexto","SinEmpresa","ConsultaPrimero","ConsultaPrimeroDesc","SinResultados",
+        "ConfInicializarTitulo","ConfInicializarTexto","Inicializado","ErrorRed","Subiendo","BtnSubir",
+        "ThFila","ThColumna","ThSeveridad","ThMensaje","SevError","SevAdv","HallTitulo","TotalLineas",
+        "M1","M2","M3","M4","M5","M6","M7","M8","M9","M10","M11","M12"
+    };
+    var textosJs = new System.Collections.Generic.Dictionary<string, string>();
+    foreach (var k in clavesJs)
+    {
+        textosJs[k] = (System.Web.HttpContext.GetGlobalResourceObject("Strings", "SBP_" + k) as string) ?? k;
+    }
+    var textosJson = new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(textosJs);
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/supuestos-balance-ppto.css")" rel="stylesheet" />
+
+@Html.AntiForgeryToken()
+
+<div class="container-fluid px-4 sbp-root">
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-sliders-h powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.SBP_PageTitle</h1>
+        </div>
+    </div>
+
+    @if (!disponible)
+    {
+        <div class="sbp-aviso">
+            <i class="fas fa-exclamation-triangle mt-1"></i>
+            <div>@Html.Raw(Resources.Strings.SBP_NoDisponible)</div>
+        </div>
+    }
+
+    <!-- Filtro compacto: empresa + consultar + acciones en una sola fila -->
+    <div class="filter-card sbp-filtro">
+        <div class="sbp-filtro-row">
+            <div class="sbp-filtro-emp">
+                <label for="sbpEmpresa"><i class="fas fa-building mr-1"></i>@Resources.Strings.SBP_LblEmpresa <span class="required">*</span></label>
+                <select id="sbpEmpresa" class="form-control select2">
+                    <option value="">@Resources.Strings.SBP_SelEmpresa</option>
+                    @foreach (var e in empresas)
+                    {
+                        <option value="@e.Id">@e.Nombre</option>
+                    }
+                </select>
+            </div>
+            <button type="button" class="btn btn-modern-gradient" id="sbpBtnConsultar" disabled><i class="fas fa-search mr-1"></i>@Resources.Strings.SBP_BtnConsultar</button>
+            <span class="sbp-sep"></span>
+            <div class="sbp-acciones" id="sbpAcciones" style="display:none">
+                <button type="button" class="btn btn-sm btn-modern-excel" id="sbpBtnExcel"><i class="fas fa-file-excel mr-1"></i>@Resources.Strings.SBP_BtnExcel</button>
+                <button type="button" class="btn btn-sm btn-modern-secondary" id="sbpBtnPlantilla"><i class="fas fa-download mr-1"></i>@Resources.Strings.SBP_BtnPlantilla</button>
+                <button type="button" class="btn btn-sm btn-modern-gradient" id="sbpBtnCargar"><i class="fas fa-upload mr-1"></i>@Resources.Strings.SBP_BtnCargar</button>
+                <button type="button" class="btn btn-sm btn-modern-success" id="sbpBtnInicializar" style="display:none"><i class="fas fa-plus mr-1"></i>@Resources.Strings.SBP_BtnInicializar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sbpVacio" class="sbp-vacio">
+        <div class="sbp-vacio-ic"><i class="fas fa-sliders-h"></i></div>
+        <h4>@Resources.Strings.SBP_ConsultaPrimero</h4>
+        <p>@Resources.Strings.SBP_ConsultaPrimeroDesc</p>
+    </div>
+
+    <div id="sbpContenido" style="display:none">
+
+        <!-- Tablero -->
+        <div class="sbp-dash">
+            <div class="sbp-card"><div class="sbp-card-b">
+                <h6 class="sbp-card-t"><i class="fas fa-chart-pie"></i>@Resources.Strings.SBP_Completitud</h6>
+                <div class="sbp-prog">
+                    <div class="sbp-ring" id="sbpRing"><div class="sbp-ring-in"><span class="sbp-ring-v" id="sbpPct">0%</span><span class="sbp-ring-l">@Resources.Strings.SBP_Completo</span></div></div>
+                    <div class="sbp-kpis">
+                        <div class="sbp-kpi"><b id="sbpKTotal">0</b><small>@Resources.Strings.SBP_KpiTotal</small></div>
+                        <div class="sbp-kpi is-ok"><b id="sbpKDil">0</b><small>@Resources.Strings.SBP_KpiDil</small></div>
+                        <div class="sbp-kpi is-pend"><b id="sbpKPend">0</b><small>@Resources.Strings.SBP_KpiPend</small></div>
+                    </div>
+                </div>
+                <div class="sbp-trazas" id="sbpTrazas"></div>
+            </div></div>
+            <div class="sbp-card"><div class="sbp-card-b">
+                <h6 class="sbp-card-t"><i class="fas fa-bell"></i>@Resources.Strings.SBP_AtencionTitulo</h6>
+                <div id="sbpInsights"></div>
+            </div></div>
+        </div>
+
+        <!-- Grilla -->
+        <div class="table-container sbp-tc">
+            <div class="table-header">
+                <h5><i class="fas fa-table mr-2"></i>@Resources.Strings.SBP_GridTitulo</h5>
+                <div class="sbp-tools">
+                    <div class="sbp-savebar" id="sbpSave" role="status">
+                        <span class="sbp-dot"></span>
+                        <span id="sbpSaveTxt"></span>
+                        <button type="button" class="sbp-sv-btn" id="sbpBtnDescartar"><i class="fas fa-undo"></i>@Resources.Strings.SBP_BtnDescartar</button>
+                        <button type="button" class="sbp-sv-btn is-main" id="sbpBtnGuardar"><i class="fas fa-save"></i>@Resources.Strings.SBP_BtnGuardar</button>
+                    </div>
+                    <button type="button" class="sbp-toggle" id="sbpSoloPend" aria-pressed="false" title="@Resources.Strings.SBP_SoloPendTip">
+                        <i class="fas fa-filter"></i><span>@Resources.Strings.SBP_SoloPendBtn</span><i class="fas fa-times sbp-toggle-x"></i>
+                    </button>
+                    <div class="sbp-search"><i class="fas fa-search"></i><input type="text" id="sbpBuscar" class="form-control" placeholder="@Resources.Strings.SBP_BuscarPh" /></div>
+                    <span class="info-badge" id="sbpBadge">0</span>
+                </div>
+            </div>
+            <div class="table-wrapper sbp-wrap">
+                <table class="data-table sbp-table" id="sbpTabla">
+                    <thead><tr id="sbpHead"></tr></thead>
+                    <tbody id="sbpBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: cargar Excel (estilo de los gestores) -->
+<div class="modal fade" id="sbpModalCarga" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered bf-modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-file-upload"></i> @Resources.Strings.SBP_CargarTitulo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <small class="form-text mb-2">@Resources.Strings.SBP_CargarAyuda</small>
+                <label class="sbp-drop" id="sbpDrop" for="sbpArchivo">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <b>@Resources.Strings.SBP_ElegirArchivo</b>
+                    <div id="sbpArchivoNombre" class="sbp-drop-n">@Resources.Strings.SBP_SinArchivo</div>
+                    <input type="file" id="sbpArchivo" accept=".xlsx,.xlsm" style="display:none" />
+                </label>
+                <div id="sbpResultado"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@Resources.Strings.SBP_BtnCerrar</button>
+                <button type="button" class="btn btn-primary" id="sbpBtnSubir" disabled><i class="fas fa-check mr-1"></i>@Resources.Strings.SBP_BtnSubir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: copiar un valor a los 12 meses -->
+<div class="modal fade" id="sbpModalCopiar" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-copy"></i> <span class="bf-modal-titles"><span>@Resources.Strings.SBP_AplicarTitulo</span><span class="bf-modal-sub" id="sbpCopiarLinea"></span></span></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="bf-section">@Resources.Strings.SBP_AplicarValor</div>
+                <div class="form-group">
+                    <div class="bf-input"><i class="fas fa-hashtag"></i><input type="text" id="sbpCopiarValor" class="form-control" inputmode="decimal" autocomplete="off" /></div>
+                    <small class="form-text" id="sbpCopiarErr" style="color:#dc2626;display:none">@Resources.Strings.SBP_AplicarSinValor</small>
+                    <small class="form-text">@Resources.Strings.SBP_AplicarVaciarAyuda</small>
+                </div>
+                <div class="bf-section">@Resources.Strings.SBP_AplicarComo</div>
+                <label class="sbp-radio"><input type="radio" name="sbpCopiarModo" value="vacios" checked /> <span>@Resources.Strings.SBP_AplicarSoloVacios</span></label>
+                <label class="sbp-radio"><input type="radio" name="sbpCopiarModo" value="todos" /> <span>@Resources.Strings.SBP_AplicarTodosOpt</span></label>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@Resources.Strings.SBP_BtnCancelar</button>
+                <button type="button" class="btn btn-primary" id="sbpCopiarOk"><i class="fas fa-check mr-1"></i>@Resources.Strings.SBP_AplicarBtn</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: confirmación genérica (claro, estilo de los gestores) -->
+<div class="modal fade" id="sbpModalConf" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-question"></i> <span id="sbpConfTitulo"></span></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body"><p class="mb-0" id="sbpConfTexto"></p></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@Resources.Strings.SBP_BtnCancelar</button>
+                <button type="button" class="btn btn-primary" id="sbpConfOk">@Resources.Strings.SBP_BtnConfirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+<script>
+(function () {
+    'use strict';
+    var T = @Html.Raw(textosJson);
+    var URL = {
+        obtener:    '@Url.Action("Obtener", "SupuestosBalancePpto")',
+        guardar:    '@Url.Action("Guardar", "SupuestosBalancePpto")',
+        inicializar:'@Url.Action("Inicializar", "SupuestosBalancePpto")',
+        cargar:     '@Url.Action("CargarExcel", "SupuestosBalancePpto")',
+        excel:      '@Url.Action("DescargarExcel", "SupuestosBalancePpto")',
+        plantilla:  '@Url.Action("DescargarPlantilla", "SupuestosBalancePpto")'
+    };
+    var DISPONIBLE = @(disponible ? "true" : "false");
+    var ID_USUARIO_EMPRESA = @idEmpresaUsuario;
+
+    // lineas: una por descripción; cada línea tiene hasta 12 celdas (una por mes) con el Id real de su fila.
+    var st = { idEmpresa: 0, lineas: [], orig: {}, dirty: {}, invalid: {}, resumen: null };
+
+    function esc(s) { return $('<div/>').text(s == null ? '' : String(s)).html(); }
+    function fmt(s) { var a = arguments; return String(s).replace(/\{(\d+)\}/g, function (m, i) { return a[+i + 1] !== undefined ? a[+i + 1] : m; }); }
+    function token() { return $('input[name="__RequestVerificationToken"]').first().val(); }
+    function toast(icon, title) {
+        Swal.fire({ toast: true, position: 'top-end', icon: icon, title: title, showConfirmButton: false, timer: 3200, timerProgressBar: true });
+    }
+    function fmtFecha(s) { return s ? s.replace('T', ' ') : null; }
+    function norm(s) { return String(s || '').trim().toLowerCase(); }
+
+    // Confirmación en modal claro (Promise<bool>)
+    function confirmar(titulo, texto) {
+        return new Promise(function (res) {
+            var ok = false, $m = $('#sbpModalConf');
+            $('#sbpConfTitulo').text(titulo); $('#sbpConfTexto').text(texto || '');
+            $('#sbpConfOk').off('click').on('click', function () { ok = true; $m.modal('hide'); });
+            $m.off('hidden.bs.modal').on('hidden.bs.modal', function () { res(ok); });
+            $m.modal('show');
+        });
+    }
+
+    function fmtNum(n) { return n == null ? '' : Number(n).toLocaleString('es-CO', { maximumFractionDigits: 6 }); }
+    function parseNum(txt) {
+        var t = String(txt == null ? '' : txt).replace(/\s/g, '').replace(/[%$]/g, '');
+        if (t === '') return { vacio: true };
+        var c = t.indexOf(','), p = t.indexOf('.');
+        if (c >= 0 && p >= 0) { t = t.lastIndexOf(',') > t.lastIndexOf('.') ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, ''); }
+        else if (c >= 0) { t = t.replace(',', '.'); }
+        else if (p >= 0 && /^-?\d{1,3}(\.\d{3})+$/.test(t)) { t = t.replace(/\./g, ''); }
+        var n = Number(t);
+        return (isFinite(n) && /^-?\d*\.?\d+$/.test(t)) ? { valor: n } : { invalido: true };
+    }
+    function key(id, mes) { return id + '|' + mes; }
+    function mesesTxt(arr) { return arr.map(function (m) { return T['M' + m]; }).join(', '); }
+
+    // ── Consulta (solo al pulsar «Consultar») ───────────────────────────────────
+    function estadoVacio(icono, titulo, desc) {
+        $('#sbpVacio').html('<div class="sbp-vacio-ic"><i class="fas ' + icono + '"></i></div><h4>' + esc(titulo) + '</h4>' + (desc ? '<p>' + esc(desc) + '</p>' : '')).show();
+    }
+
+    function limpiarPantalla() {
+        st.dirty = {}; st.invalid = {}; st.lineas = [];
+        $('#sbpContenido,#sbpAcciones').hide();
+        estadoVacio('fa-sliders-h', T.ConsultaPrimero, T.ConsultaPrimeroDesc);
+        actualizarGuardado();
+    }
+
+    function consultar() {
+        var id = +$('#sbpEmpresa').val() || 0;
+        if (!id) return;
+        st.idEmpresa = id; st.dirty = {}; st.invalid = {};
+        var $b = $('#sbpBtnConsultar').prop('disabled', true);
+        $.get(URL.obtener, { idEmpresa: id }).done(function (r) {
+            if (!r.success) { toast('error', r.message || T.ErrorRed); return; }
+            $('#sbpVacio').hide();
+            $('#sbpAcciones').show();
+            if (!r.disponible) { $('#sbpContenido').hide(); return; }
+            st.resumen = r.resumen;
+            agrupar(r.filas || []);
+            $('#sbpBtnInicializar').toggle(!r.resumen.tieneFilas);
+            $('#sbpBtnExcel,#sbpBtnPlantilla,#sbpBtnCargar').toggle(r.resumen.tieneFilas);
+            if (!r.resumen.tieneFilas) {
+                $('#sbpContenido').hide();
+                estadoVacio('fa-inbox', T.SinFilasTitulo, T.SinFilasTexto);
+                return;
+            }
+            $('#sbpContenido').show();
+            pintarTablero(); pintarGrilla(); actualizarGuardado();
+        }).fail(function () { toast('error', T.ErrorRed); }).always(function () { $b.prop('disabled', false); });
+    }
+
+    // Una línea por descripción; si la descripción se repite para el mismo mes, abre otra línea.
+    function agrupar(filas) {
+        var grupos = {}, orden = [];
+        st.orig = {};
+        filas.forEach(function (f) {
+            var k = norm(f.descripcion) + '|' + norm(f.tipoUnidad), lista = grupos[k] || (grupos[k] = []), l = null;
+            for (var i = 0; i < lista.length; i++) if (!lista[i].meses[f.mes]) { l = lista[i]; break; }
+            if (!l) {
+                l = { desc: (f.descripcion || '').trim(), base: f.descripcionBase, formula: f.formula, unidad: f.tipoUnidad, calculo: f.calculo, mesBase: f.mesBase, meses: {} };
+                lista.push(l); orden.push(l);
+            }
+            l.meses[f.mes] = { id: f.id, valor: f.valor };
+            st.orig[key(f.id, f.mes)] = f.valor;
+        });
+        st.lineas = orden;
+    }
+
+    // ── Tablero ────────────────────────────────────────────────────────────────
+    function pintarTablero() {
+        var r = st.resumen;
+        $('#sbpPct').text(r.porcentaje + '%');
+        $('#sbpRing').css('--p', r.porcentaje).toggleClass('is-ok', r.pendientes === 0);
+        $('#sbpKTotal').text(r.total.toLocaleString('es-CO'));
+        $('#sbpKDil').text(r.diligenciados.toLocaleString('es-CO'));
+        $('#sbpKPend').text(r.pendientes.toLocaleString('es-CO'));
+        $('#sbpTrazas').html(
+            '<span><i class="fas fa-cloud-upload-alt"></i>' + esc(T.UltCarga) + ': <b>' + esc(fmtFecha(r.ultimaCarga) || T.SinRegistro) + '</b></span>' +
+            '<span><i class="fas fa-user-edit"></i>' + esc(T.UltMod) + ': <b>' + esc(fmtFecha(r.ultimaModificacion) || T.SinRegistro) + '</b>' +
+            (r.ultimoUsuario ? ' ' + esc(fmt(T.Por, r.ultimoUsuario)) : '') + '</span>' +
+            '<span><i class="fas fa-lock"></i>' + esc(T.KpiCalculo) + ': <b>' + r.calculo + '</b></span>');
+
+        var $i = $('#sbpInsights');
+        if (r.pendientes === 0) { $i.html('<div class="sbp-insight-ok"><i class="fas fa-check-circle fa-lg"></i>' + esc(T.AtencionOk) + '</div>'); return; }
+        var h = '<div class="sbp-insight-list">';
+        r.lineas.forEach(function (l) {
+            var detalle = l.pendientes >= 12 || l.pendientes >= l.total ? T.AtencionTodosMeses : fmt(T.AtencionFaltan, mesesTxt(l.meses));
+            h += '<button type="button" class="sbp-insight" data-desc="' + esc(norm(l.descripcion)) + '"><i class="fas fa-exclamation-triangle"></i>' +
+                 '<span><strong>' + esc(l.descripcion) + '</strong><small>' + esc(detalle) + '</small></span><em>' + l.pendientes + '</em></button>';
+        });
+        $i.html(h + '</div>');
+    }
+
+    // ── Grilla ─────────────────────────────────────────────────────────────────
+    function pintarGrilla() {
+        var head = '<th class="sbp-c-line">' + esc(T.ThLinea) + '</th>';
+        for (var m = 1; m <= 12; m++) head += '<th class="sbp-c-mes">' + esc(T['M' + m]) + '</th>';
+        head += '<th class="sbp-c-act">' + esc(T.BtnCopiar) + '</th>';
+        $('#sbpHead').html(head);
+
+        var h = '';
+        st.lineas.forEach(function (l, gi) {
+            h += '<tr class="sbp-line' + (l.calculo ? ' is-calc' : '') + '" data-gi="' + gi + '">' +
+                 '<td class="sbp-c-line"><div class="sbp-line-name">' +
+                 (l.calculo ? '<i class="fas fa-lock sbp-lock" title="' + esc(T.SoloLectura) + '"></i>' : '') +
+                 '<span class="sbp-ln" title="' + esc(l.desc) + '">' + esc(l.desc) + '</span>' +
+                 '<span class="sbp-unit' + (l.calculo ? ' is-calc' : '') + '">' + esc(l.unidad || '—') + '</span>' +
+                 '<button type="button" class="sbp-btn-ic sbp-info" title="' + esc(T.VerDetalle) + '"><i class="fas fa-info"></i></button></div></td>';
+            for (var m = 1; m <= 12; m++) {
+                var c = l.meses[m];
+                if (!c) { h += '<td class="sbp-c-mes"></td>'; continue; }
+                if (l.calculo) h += '<td class="sbp-c-mes"><span class="sbp-ro">' + (c.valor == null ? '—' : esc(fmtNum(c.valor))) + '</span></td>';
+                else h += '<td class="sbp-c-mes"><input type="text" inputmode="decimal" class="sbp-in' + (c.valor == null ? ' is-null' : '') + '" data-id="' + c.id + '" data-mes="' + m + '" value="' + esc(fmtNum(c.valor)) + '" /></td>';
+            }
+            h += '<td class="sbp-c-act">' + (l.calculo ? '' : '<button type="button" class="sbp-copy" title="' + esc(T.BtnCopiarTip) + '"><i class="fas fa-copy"></i><span>' + esc(T.BtnCopiar) + '</span></button>') + '</td></tr>';
+            h += '<tr class="sbp-detail" data-det="' + gi + '" style="display:none"><td colspan="14"><dl>' +
+                 '<div><dt>' + esc(T.DetUnidad) + '</dt><dd>' + esc(l.unidad || '—') + '</dd></div>' +
+                 '<div><dt>' + esc(T.DetBase) + '</dt><dd>' + esc(l.base || '—') + '</dd></div>' +
+                 '<div><dt>' + esc(T.DetMesBase) + '</dt><dd>' + (l.mesBase === -1 ? esc(T.MesBaseAnterior) : esc(T.MesBaseMismo)) + '</dd></div>' +
+                 '<div style="grid-column:1/-1"><dt>' + esc(T.DetFormula) + '</dt><dd><code>' + esc(l.formula || '—') + '</code></dd></div></dl></td></tr>';
+        });
+        $('#sbpBody').html(h);
+        filtrar();
+    }
+
+    function vigente(c) {
+        var k = key(c.id, c.mes);
+        return k in st.dirty ? st.dirty[k].valor : st.orig[k];
+    }
+    function tienePendiente(l) {
+        if (l.calculo) return false;
+        return Object.keys(l.meses).some(function (m) { var c = l.meses[m]; return vigente({ id: c.id, mes: +m }) == null; });
+    }
+    function filtrar() {
+        var q = norm($('#sbpBuscar').val()), soloP = $('#sbpSoloPend').attr('aria-pressed') === 'true', n = 0;
+        st.lineas.forEach(function (l, gi) {
+            var ok = (!q || norm(l.desc).indexOf(q) >= 0) && (!soloP || tienePendiente(l));
+            $('#sbpBody tr[data-gi="' + gi + '"]').toggle(ok);
+            if (!ok) $('#sbpBody tr[data-det="' + gi + '"]').hide();
+            if (ok) n++;
+        });
+        $('#sbpBadge').text(fmt(T.TotalLineas, n));
+        $('#sbpBody .sbp-empty').remove();
+        if (n === 0) $('#sbpBody').append('<tr class="sbp-empty"><td colspan="14" class="text-center text-muted py-4">' + esc(T.SinResultados) + '</td></tr>');
+    }
+
+    function registrarEdicion($in) {
+        var id = +$in.data('id'), mes = +$in.data('mes'), k = key(id, mes), p = parseNum($in.val());
+        $in.removeClass('is-invalid'); delete st.invalid[k];
+        if (p.invalido) { st.invalid[k] = true; $in.addClass('is-invalid').attr('title', T.ValorInvalido); delete st.dirty[k]; }
+        else {
+            var nuevo = p.vacio ? null : p.valor, orig = st.orig[k] == null ? null : Number(st.orig[k]);
+            if (nuevo === orig) delete st.dirty[k]; else st.dirty[k] = { id: id, mes: mes, valor: nuevo };
+            $in.removeAttr('title');
+        }
+        var vacio = (k in st.dirty) ? st.dirty[k].valor == null : st.orig[k] == null;
+        $in.toggleClass('is-dirty', k in st.dirty).toggleClass('is-null', vacio && !st.invalid[k]);
+        actualizarGuardado();
+    }
+
+    function actualizarGuardado() {
+        var n = Object.keys(st.dirty).length;
+        $('#sbpSave').toggleClass('is-on', n > 0);
+        $('#sbpSaveTxt').html(fmt(T.CambiosN, '<b>' + n + '</b>'));
+    }
+
+    // ── Eventos de la grilla ───────────────────────────────────────────────────
+    $(document).on('input', '.sbp-in', function () { registrarEdicion($(this)); });
+    $(document).on('focus', '.sbp-in', function () { var self = this; setTimeout(function () { self.select(); }, 0); });
+    $(document).on('blur', '.sbp-in', function () {
+        var p = parseNum($(this).val());
+        if (p.valor !== undefined) $(this).val(fmtNum(p.valor));
+    });
+    $(document).on('keydown', '.sbp-in', function (e) {
+        if (e.key !== 'Enter' && e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+        e.preventDefault();
+        var $tr = $(this).closest('tr'), dir = e.key === 'ArrowUp' ? 'prevAll' : 'nextAll', idx = $(this).closest('td').index();
+        var $t = $tr[dir]('tr.sbp-line:visible:not(.is-calc)').first();
+        if ($t.length) $t.children().eq(idx).find('.sbp-in').focus();
+    });
+    $(document).on('click', '.sbp-info', function () {
+        var gi = $(this).closest('tr').data('gi'); $(this).toggleClass('is-on');
+        $('#sbpBody tr[data-det="' + gi + '"]').toggle();
+    });
+    $(document).on('click', '.sbp-insight', function () {
+        var d = $(this).data('desc'), gi = -1;
+        st.lineas.forEach(function (l, i) { if (gi < 0 && norm(l.desc) === d) gi = i; });
+        if (gi < 0) return;
+        $('#sbpSoloPend').attr('aria-pressed', 'false').removeClass('is-on'); $('#sbpBuscar').val(''); filtrar();
+        var $r = $('#sbpBody tr[data-gi="' + gi + '"]');
+        $r[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        $r.removeClass('is-flash'); void $r[0].offsetWidth; $r.addClass('is-flash');
+        $r.find('.sbp-in.is-null').first().focus();
+    });
+    $('#sbpBuscar').on('input', filtrar);
+    $('#sbpSoloPend').on('click', function () {
+        var on = $(this).attr('aria-pressed') !== 'true';
+        $(this).attr('aria-pressed', on ? 'true' : 'false').toggleClass('is-on', on); filtrar();
+    });
+
+    // Copiar un valor a los 12 meses de la línea (se revisa y se confirma con «Guardar»)
+    var _copiarGi = -1;
+    $(document).on('click', '.sbp-copy', function () {
+        _copiarGi = +$(this).closest('tr').data('gi');
+        var l = st.lineas[_copiarGi], inicial = '';
+        $('#sbpBody tr[data-gi="' + _copiarGi + '"] .sbp-in').each(function () { if (!inicial && $(this).val()) inicial = $(this).val(); });
+        $('#sbpCopiarLinea').text(l.desc);
+        $('#sbpCopiarValor').val(inicial); $('#sbpCopiarErr').hide();
+        $('input[name=sbpCopiarModo][value=vacios]').prop('checked', true);
+        $('#sbpModalCopiar').modal('show');
+    });
+    $('#sbpModalCopiar').on('shown.bs.modal', function () { $('#sbpCopiarValor').trigger('focus').trigger('select'); });
+    $('#sbpCopiarValor').on('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('#sbpCopiarOk').click(); } });
+    $('#sbpCopiarOk').on('click', function () {
+        var p = parseNum($('#sbpCopiarValor').val());
+        if (p.invalido) { $('#sbpCopiarErr').show(); return; }   // vacío es válido: deja los meses en NULL
+        var soloVacios = $('input[name=sbpCopiarModo]:checked').val() === 'vacios';
+        $('#sbpBody tr[data-gi="' + _copiarGi + '"] .sbp-in').each(function () {
+            if (soloVacios && !parseNum($(this).val()).vacio) return;
+            $(this).val(p.vacio ? '' : fmtNum(p.valor)); registrarEdicion($(this));
+        });
+        $('#sbpModalCopiar').modal('hide');
+        toast('success', T.Aplicado);
+    });
+
+    // ── Guardar / descartar ────────────────────────────────────────────────────
+    $('#sbpBtnGuardar').on('click', function () {
+        if (Object.keys(st.invalid).length) { toast('warning', T.ValorInvalido); return; }
+        var cambios = Object.keys(st.dirty).map(function (k) { return st.dirty[k]; });
+        if (!cambios.length) return;
+        var $b = $(this).prop('disabled', true);
+        $.post(URL.guardar, { idEmpresa: st.idEmpresa, cambiosJson: JSON.stringify(cambios) }).done(function (r) {
+            if (!r.success) { toast('error', r.message || T.ErrorRed); return; }
+            toast('success', fmt(T.Guardado, r.actualizadas));
+            consultar();
+        }).fail(function () { toast('error', T.ErrorRed); }).always(function () { $b.prop('disabled', false); });
+    });
+    $('#sbpBtnDescartar').on('click', consultar);
+
+    // ── Empresa / consultar ────────────────────────────────────────────────────
+    var _empresaPrevia = '';
+    $('#sbpEmpresa').on('change', function () {
+        var nueva = $(this).val(), self = this;
+        $('#sbpBtnConsultar').prop('disabled', !nueva || !DISPONIBLE);
+        var cambiar = function () { _empresaPrevia = nueva; limpiarPantalla(); };
+        if (Object.keys(st.dirty).length) {
+            confirmar(T.ConfCambioEmpresa).then(function (ok) {
+                if (ok) cambiar(); else { $(self).val(_empresaPrevia).trigger('change.select2'); $('#sbpBtnConsultar').prop('disabled', !_empresaPrevia); }
+            });
+            return;
+        }
+        cambiar();
+    });
+    $('#sbpBtnConsultar').on('click', function () {
+        if (Object.keys(st.dirty).length) {
+            confirmar(T.ConfCambioEmpresa).then(function (ok) { if (ok) consultar(); });
+            return;
+        }
+        consultar();
+    });
+
+    $('#sbpBtnInicializar').on('click', function () {
+        confirmar(T.ConfInicializarTitulo, T.ConfInicializarTexto).then(function (ok) {
+            if (!ok) return;
+            $.post(URL.inicializar, { idEmpresa: st.idEmpresa }).done(function (x) {
+                if (!x.success) { toast('error', x.message || T.ErrorRed); return; }
+                toast('success', fmt(T.Inicializado, x.filas)); consultar();
+            }).fail(function () { toast('error', T.ErrorRed); });
+        });
+    });
+
+    $('#sbpBtnExcel').on('click', function () { if (st.idEmpresa) location.href = URL.excel + '?idEmpresa=' + st.idEmpresa; });
+    $('#sbpBtnPlantilla').on('click', function () { if (st.idEmpresa) location.href = URL.plantilla + '?idEmpresa=' + st.idEmpresa; });
+
+    // ── Modal de carga ─────────────────────────────────────────────────────────
+    var archivo = null;
+    $('#sbpBtnCargar').on('click', function () {
+        archivo = null; $('#sbpArchivo').val(''); $('#sbpArchivoNombre').text(@Html.Raw(Json.Encode(Resources.Strings.SBP_SinArchivo)));
+        $('#sbpResultado').empty(); $('#sbpBtnSubir').prop('disabled', true); $('#sbpModalCarga').modal('show');
+    });
+    function elegir(f) { if (!f) return; archivo = f; $('#sbpArchivoNombre').text(f.name); $('#sbpBtnSubir').prop('disabled', false); $('#sbpResultado').empty(); }
+    $('#sbpArchivo').on('change', function () { elegir(this.files[0]); });
+    $('#sbpDrop').on('dragover', function (e) { e.preventDefault(); $(this).addClass('is-over'); })
+                 .on('dragleave drop', function () { $(this).removeClass('is-over'); })
+                 .on('drop', function (e) { e.preventDefault(); elegir(e.originalEvent.dataTransfer.files[0]); });
+    $('#sbpBtnSubir').on('click', function () {
+        if (!archivo) return;
+        var fd = new FormData();
+        fd.append('__RequestVerificationToken', token()); fd.append('idEmpresa', st.idEmpresa); fd.append('archivoExcel', archivo);
+        var $b = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>' + esc(T.Subiendo));
+        $.ajax({ url: URL.cargar, type: 'POST', data: fd, processData: false, contentType: false }).done(function (r) {
+            var h = r.success ? '<div class="sbp-res-ok"><i class="fas fa-check-circle fa-lg"></i>' + esc(r.message) + '</div>'
+                              : '<div class="sbp-res-err"><i class="fas fa-times-circle fa-lg"></i>' + esc(r.message || T.ErrorRed) + '</div>';
+            if (r.hallazgos && r.hallazgos.length) {
+                h += '<div class="sbp-hall"><div class="sbp-hall-t"><i class="fas fa-list-ul"></i>' + esc(T.HallTitulo) + ' (' + r.hallazgos.length + ')</div><div class="sbp-hall-s"><table><thead><tr><th>' +
+                     esc(T.ThFila) + '</th><th>' + esc(T.ThColumna) + '</th><th>' + esc(T.ThSeveridad) + '</th><th>' + esc(T.ThMensaje) + '</th></tr></thead><tbody>';
+                r.hallazgos.forEach(function (x) {
+                    var e = x.severidad === 'Error';
+                    h += '<tr><td>' + (x.fila || '') + '</td><td>' + esc(x.columna || '') + '</td><td><span class="sbp-sev ' + (e ? 'e' : 'a') + '">' + esc(e ? T.SevError : T.SevAdv) + '</span></td><td>' + esc(x.mensaje) + '</td></tr>';
+                });
+                h += '</tbody></table></div></div>';
+            }
+            $('#sbpResultado').html(h);
+            if (r.success) consultar();
+        }).fail(function () { $('#sbpResultado').html('<div class="sbp-res-err"><i class="fas fa-times-circle fa-lg"></i>' + esc(T.ErrorRed) + '</div>'); })
+          .always(function () { $b.html('<i class="fas fa-check mr-1"></i>' + esc(T.BtnSubir)).prop('disabled', false); });
+    });
+
+    // ── Inicio ─────────────────────────────────────────────────────────────────
+    window.addEventListener('beforeunload', function (e) { if (Object.keys(st.dirty).length) { e.preventDefault(); e.returnValue = T.SalirSinGuardar; } });
+    $(function () {
+        if ($.fn.select2) $('#sbpEmpresa').select2({ width: '100%' });
+        var q = new URLSearchParams(location.search).get('idEmpresa');
+        var $o = $('#sbpEmpresa option');
+        var deLink = q && $o.filter('[value="' + q + '"]').length ? q : '';
+        var elegida = deLink || ($o.length === 2 ? $o.last().val() : ($o.filter('[value="' + ID_USUARIO_EMPRESA + '"]').length ? String(ID_USUARIO_EMPRESA) : ''));
+        if (elegida) { _empresaPrevia = elegida; $('#sbpEmpresa').val(elegida).trigger('change'); }
+        // Solo si llegó por el enlace «Diligenciarlos» se consulta sola; en cualquier otro caso espera el botón.
+        if (deLink && DISPONIBLE) consultar();
+    });
+})();
+</script>
+}
