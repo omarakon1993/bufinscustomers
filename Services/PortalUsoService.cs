@@ -411,5 +411,36 @@ namespace bufinscustomers.Services
             foreach (var b in res.Bots) b.Paginas = b.Paginas.OrderByDescending(x => x.N).Take(5).ToList();
             res.Limites = limites.OrderByDescending(x => x.Value).Take(8).Select(x => new PortalItem { Clave = x.Key, Nombre = x.Key, N = x.Value }).ToList();
         }
+
+        // ------------------------------------------------------------------ limpieza
+
+        /// <summary>
+        /// Borra todo el registro de uso del sitio público (eventos diarios y contadores mensuales) para empezar de cero.
+        /// Solo toca <c>uso\eventos\yyyy-MM-dd.jsonl</c> y <c>uso\yyyy-MM.json</c>; deja la sal diaria (<c>.sal</c>) y cualquier otro archivo.
+        /// Devuelve (disponible, archivos borrados, archivos que no se pudieron borrar).
+        /// </summary>
+        public Tuple<bool, int, int> LimpiarTodo()
+        {
+            var carpeta = Carpeta();
+            if (carpeta == null || !Directory.Exists(carpeta)) return Tuple.Create(false, 0, 0);
+
+            int borrados = 0, fallidos = 0;
+            Action<string> borrar = ruta =>
+            {
+                try { File.Delete(ruta); borrados++; }
+                catch (Exception) { fallidos++; }
+            };
+
+            var eventos = Path.Combine(carpeta, "eventos");
+            if (Directory.Exists(eventos))
+                foreach (var f in Directory.GetFiles(eventos, "*.jsonl"))
+                    if (Regex.IsMatch(Path.GetFileName(f), @"^\d{4}-\d{2}-\d{2}\.jsonl$")) borrar(f);
+
+            foreach (var f in Directory.GetFiles(carpeta, "*.json"))
+                if (Regex.IsMatch(Path.GetFileName(f), @"^\d{4}-\d{2}\.json$")) borrar(f);
+
+            Cache.Clear();
+            return Tuple.Create(true, borrados, fallidos);
+        }
     }
 }

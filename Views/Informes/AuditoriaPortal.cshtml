@@ -34,7 +34,8 @@
 <div class="container-fluid px-4">
 
     <p class="ap-nota"><i class="fas fa-user-shield"></i><span>@Resources.Strings.AudPortal_Nota</span></p>
-    <p class="ap-nota ap-aviso"><i class="fas fa-hourglass-half"></i><span>@Resources.Strings.AudPortal_Retencion</span></p>
+    <p class="ap-nota ap-aviso"><i class="fas fa-hourglass-half"></i><span>@Resources.Strings.AudPortal_Retencion</span>
+        <button type="button" id="btnLimpiarPortal" class="ap-btn-limpiar" title="@Resources.Strings.AudPortal_LimpiarTitulo"><i class="fas fa-trash-alt"></i>@Resources.Strings.AudPortal_BtnLimpiar</button></p>
 
     <div id="axKpis" class="ax-kpis" hidden></div>
 
@@ -65,6 +66,11 @@
         nombre: '@Html.Raw(HttpUtility.JavaScriptStringEncode(nombrePortal))',
         urlConsultar: '@Url.Action("Consultar", "AuditoriaPortal")',
         urlExportar: '@Url.Action("ExportarExcel", "AuditoriaPortal")',
+        urlLimpiar: '@Url.Action("Limpiar", "AuditoriaPortal")',
+        limpiarTit: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudPortal_LimpiarTitulo))',
+        limpiarDesc: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudPortal_LimpiarDesc))',
+        limpiarOk: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.AudPortal_LimpiarConfirmar))',
+        limpiarCancelar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_LimpiarCancelarBtn))',
         errTit: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Error))',
         error: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Audit_JS_Error))',
         t: @Html.Raw(ViewBag.TextosJson)

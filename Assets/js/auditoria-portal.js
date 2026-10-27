@@ -235,6 +235,23 @@
     $('#btnConsultar').off('click').on('click', consultar);
     $('#btnLimpiar').off('click').on('click', function () { AudKit.filtros.limpiar(); inicial(); });
 
+    // Limpiar el registro de uso del portal (irreversible): confirma y vuelve al estado inicial
+    $('#btnLimpiarPortal').off('click').on('click', function () {
+        Swal.fire({
+            icon: 'warning', title: A.limpiarTit, text: A.limpiarDesc,
+            showCancelButton: true, confirmButtonText: A.limpiarOk, cancelButtonText: A.limpiarCancelar, reverseButtons: true
+        }).then(function (r) {
+            if (!r.isConfirmed) return;
+            $.ajax({
+                url: A.urlLimpiar, type: 'POST', dataType: 'json',
+                data: { __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val() }
+            }).done(function (d) {
+                Swal.fire({ icon: d.success ? 'success' : 'error', title: d.success ? A.limpiarTit : A.errTit, text: d.message || '' });
+                if (d.success) { ultimo = null; inicial(); }
+            }).fail(function () { Swal.fire({ icon: 'error', title: A.errTit, text: A.error }); });
+        });
+    });
+
     // Exportar a Excel: mismos filtros que la pantalla (POST con token antiforgery)
     $('#btnExportar').off('click').on('click', function () {
         var v = ultimo || valores();

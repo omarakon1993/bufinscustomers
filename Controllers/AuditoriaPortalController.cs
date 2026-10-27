@@ -93,6 +93,32 @@ namespace bufinscustomers.Controllers
             }
         }
 
+        /// <summary>Borra todo el registro de uso del sitio público para empezar de cero (irreversible; solo Super Admin).</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult Limpiar()
+        {
+            try
+            {
+                var r = _servicio.LimpiarTodo();
+                if (!r.Item1) return Json(new { success = false, message = R("AudPortal_SinCarpeta") });
+
+                string nombrePortal = PortalPublicoConfig.Nombre();
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Informes, AuditoriaAccion.Eliminar, "AuditoriaPortal", "limpiar",
+                    $"Limpió la auditoría del portal público ({nombrePortal}): {r.Item2} archivo(s) borrado(s), {r.Item3} sin poder borrar.",
+                    null, new { borrados = r.Item2, fallidos = r.Item3 });
+
+                if (r.Item3 > 0)
+                    return Json(new { success = false, message = string.Format(R("AudPortal_LimpiarParcial"), r.Item2, r.Item3) });
+                return Json(new { success = true, message = string.Format(R("AudPortal_LimpiarExito"), r.Item2) });
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "AuditoriaPortal.Limpiar");
+                return Json(new { success = false, message = MensajeError(ex) });
+            }
+        }
+
         // ------------------------------------------------------------------ Excel
 
         private byte[] ConstruirExcel(PortalResultado r)
