@@ -146,6 +146,45 @@ namespace bufinscustomers.Models
         public decimal Delta { get; set; }
     }
 
+    /// <summary>Una fuente (entra caja, Valor &gt; 0) o un uso (sale caja, Valor &lt; 0) del rango, por actividad. Codigo fijo (la vista
+    /// traduce). Participacion = peso dentro de su grupo (fuentes o usos), 0..1.</summary>
+    public class FlujoFuenteUso
+    {
+        public string Codigo { get; set; }
+        public string Tipo { get; set; }          // "fuente" | "uso"
+        public decimal Valor { get; set; }
+        public decimal Participacion { get; set; }
+    }
+
+    /// <summary>Mes donde el cambio de la caja del balance no coincide con el flujo neto del modelo.</summary>
+    public class FlujoDiferenciaMes
+    {
+        public int Anio { get; set; }
+        public int Mes { get; set; }
+        public decimal Diferencia { get; set; }   // (caja fin − caja inicio del mes, según balance) − flujo neto del modelo
+    }
+
+    /// <summary>Validación de la cascada de caja: caja inicial (balance al cierre del mes anterior al rango) + flujo neto del
+    /// rango = caja final calculada, contrastada con la caja del balance al último mes real del rango.</summary>
+    public class FlujoConciliacion
+    {
+        public bool HayCajaInicial { get; set; }
+        public bool HayCajaFinal { get; set; }
+        public bool HayProyeccion { get; set; }       // el rango incluye meses proyectados: la caja final es proyectada
+        public int AnioInicial { get; set; }         // mes del balance usado como caja inicial (cierre del mes anterior al rango)
+        public int MesInicial { get; set; }
+        public int AnioFinalBalance { get; set; }    // último mes real del rango, cuyo balance se contrasta
+        public int MesFinalBalance { get; set; }
+        public decimal CajaInicial { get; set; }
+        public decimal FlujoNetoReal { get; set; }   // flujo neto de los meses reales del rango
+        public decimal CajaFinalCalculada { get; set; } // CajaInicial + FlujoNetoReal
+        public decimal CajaFinalBalance { get; set; }   // caja del balance al último mes real
+        public decimal Diferencia { get; set; }         // CajaFinalBalance − CajaFinalCalculada
+        public bool Cuadra { get; set; }
+        public decimal FlujoNetoProyectado { get; set; }
+        public List<FlujoDiferenciaMes> MesesConDiferencia { get; set; } = new List<FlujoDiferenciaMes>();
+    }
+
     public class FlujoReporteViewModel
     {
         public string Tipo { get; set; }          // "Caja" | "Efectivo"
@@ -170,5 +209,14 @@ namespace bufinscustomers.Models
         public List<FlujoFilaReporte> Filas { get; set; } = new List<FlujoFilaReporte>();
         public List<FlujoKpi> Kpis { get; set; } = new List<FlujoKpi>();
         public List<FlujoCascadaBarra> Cascada { get; set; } = new List<FlujoCascadaBarra>();
+
+        /// <summary>Fuentes y usos de caja del rango por actividad; su suma es el flujo neto.</summary>
+        public List<FlujoFuenteUso> FuentesUsos { get; set; } = new List<FlujoFuenteUso>();
+        public decimal TotalFuentes { get; set; }
+        public decimal TotalUsos { get; set; }        // negativo
+
+        /// <summary>Caja inicial → fuentes → usos → caja final. Vacía si no hay balance del mes anterior al rango.</summary>
+        public List<FlujoCascadaBarra> CascadaCaja { get; set; } = new List<FlujoCascadaBarra>();
+        public FlujoConciliacion Conciliacion { get; set; } = new FlujoConciliacion();
     }
 }

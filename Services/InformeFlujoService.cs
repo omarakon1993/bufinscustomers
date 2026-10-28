@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 
 namespace bufinscustomers.Services
@@ -377,6 +378,8 @@ namespace bufinscustomers.Services
 
             reporte.Kpis = ArmarKpis(principal, ppto, esc, clavesRango);
             reporte.Cascada = ArmarCascada(principal, clavesRango);
+            ArmarFuentesUsos(reporte, principal, clavesRango);
+            ArmarCascadaCaja(reporte, principal, clavesRango);
             return reporte;
         }
 
@@ -462,6 +465,159 @@ namespace bufinscustomers.Services
                 foreach (var m in kv.Value)
                     corrida.Poner(kv.Key, m.Key + 12, m.Value);   // lo de hace un año "cae" en el mes actual
             return f(corrida);
+        }
+
+        // ===== Fuentes y usos + cascada de caja (caja inicial → caja final) =====
+
+        // Línea del balance (ModeloBalance.Descripcion) con la caja disponible; la misma que usa el Informe de indicadores.
+        private const string DescCajaBalance = "Caja y bancos";
+
+        /// <summary>Flujo del rango por actividad (positivo = fuente de caja, negativo = uso). Cada importe es una diferencia entre
+        /// subtotales del modelo; lo que no quede explicado por ellos se agrega como "Otros" para que la suma sea SIEMPRE el flujo neto.</summary>
+        private List<KeyValuePair<string, decimal>> FlujosPorActividad(Serie s, List<int> claves)
+        {
+            Func<int, decimal> t = ord => s.Suma(ord, claves);
+            var items = new List<KeyValuePair<string, decimal>>();
+            if (_tipo == FlujoTipo.Caja)
+            {
+                items.Add(new KeyValuePair<string, decimal>("GeneracionOperativa", t(CjBrutoDespues)));
+                items.Add(new KeyValuePair<string, decimal>("CapitalTrabajo", t(CjCapTrabajo)));
+                items.Add(new KeyValuePair<string, decimal>("Inversion", t(CjFcl) - t(CjBrutoDespues) - t(CjCapTrabajo)));
+                items.Add(new KeyValuePair<string, decimal>("Financiero", t(CjFinanciero)));
+                items.Add(new KeyValuePair<string, decimal>("NoOperacional", t(CjNoOp)));
+            }
+            else
+            {
+                items.Add(new KeyValuePair<string, decimal>("GeneracionOperativa", t(EfOperacionGenerado)));
+                items.Add(new KeyValuePair<string, decimal>("CapitalTrabajo", t(EfCapTrabajo)));
+                items.Add(new KeyValuePair<string, decimal>("Inversion", t(EfInversion)));
+                items.Add(new KeyValuePair<string, decimal>("DeudaNeta", t(EfDeudaNeta)));
+            }
+            decimal resto = NetoTotal(s, claves) - items.Sum(i => i.Value);
+            if (Math.Abs(resto) > 1m) items.Add(new KeyValuePair<string, decimal>("Otros", resto));
+            return items.Where(i => Math.Abs(i.Value) > 1m).ToList();   // sin ruido de redondeo (±1 peso)
+        }
+
+        private void ArmarFuentesUsos(FlujoReporteViewModel reporte, Serie s, List<int> claves)
+        {
+            var items = FlujosPorActividad(s, claves);
+            decimal totFuentes = items.Where(i => i.Value > 0m).Sum(i => i.Value);
+            decimal totUsos = items.Where(i => i.Value < 0m).Sum(i => i.Value);
+            reporte.TotalFuentes = totFuentes;
+            reporte.TotalUsos = totUsos;
+            foreach (var i in items.OrderByDescending(x => x.Value > 0m).ThenByDescending(x => Math.Abs(x.Value)))
+            {
+                bool fuente = i.Value > 0m;
+                reporte.FuentesUsos.Add(new FlujoFuenteUso
+                {
+                    Codigo = i.Key, Tipo = fuente ? "fuente" : "uso", Valor = i.Value,
+                    Participacion = (fuente ? totFuentes : totUsos) == 0m ? 0m : i.Value / (fuente ? totFuentes : totUsos)
+                });
+            }
+        }
+
+        /// <summary>Caja del balance (línea "Caja y bancos") por mes, o null si no se pudo leer. Clave = Clave(año, mes).</summary>
+        private Dictionary<int, decimal> ObtenerCajaBalance(int idEmpresa, byte idEscenario, int añoDesde, int añoHasta)
+        {
+            try
+            {
+                var d = new Dictionary<int, decimal>();
+                using (var cn = new SqlConnection(CadenaConexion))
+                {
+                    const string query = @"
+                        SELECT Año, Mes, SUM(Valor) AS Valor FROM dbo.ModeloBalance
+                        WHERE IdEmpresa = @IdEmpresa AND IdEscenario = @IdEscenario
+                          AND Año BETWEEN @AñoDesde AND @AñoHasta
+                          AND LTRIM(RTRIM(Descripcion)) = @Descripcion
+                        GROUP BY Año, Mes";
+                    var cmd = new SqlCommand(query, cn);
+                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                    cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
+                    cmd.Parameters.AddWithValue("@AñoDesde", añoDesde);
+                    cmd.Parameters.AddWithValue("@AñoHasta", añoHasta);
+                    cmd.Parameters.AddWithValue("@Descripcion", DescCajaBalance);
+                    cn.Open();
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            int mes = Convert.ToInt32(reader["Mes"]);
+                            if (mes < 1 || mes > 12) continue;
+                            d[Clave(Convert.ToInt32(reader["Año"]), mes)] = LeerDecimal(reader, "Valor");
+                        }
+                    }
+                }
+                return d;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "InformeFlujoService.ObtenerCajaBalance");
+                return null;
+            }
+        }
+
+        /// <summary>Cascada "con cuánta caja arranqué y con cuánta terminé": caja inicial (balance al cierre del mes anterior al rango)
+        /// + fuentes − usos = caja final, y la valida contra la caja del balance al último mes real del rango. Si no cuadra, la barra
+        /// "Sin conciliar" lo hace visible en lugar de esconderlo.</summary>
+        private void ArmarCascadaCaja(FlujoReporteViewModel reporte, Serie s, List<int> claves)
+        {
+            var c = reporte.Conciliacion;
+            int kIni = claves.Min() - 1;
+            var meses = reporte.MesesRango;
+            var clavesReales = new List<int>();
+            for (int i = 0; i < claves.Count; i++) if (!meses[i].Proyectado) clavesReales.Add(claves[i]);
+            c.HayProyeccion = clavesReales.Count < claves.Count;
+            c.AnioInicial = kIni / 12; c.MesInicial = kIni % 12 + 1;
+
+            var caja = ObtenerCajaBalance(reporte.IdEmpresa, reporte.IdEscenario, kIni / 12, claves.Max() / 12);
+            if (caja == null || !caja.ContainsKey(kIni)) return;   // sin balance del mes anterior al rango: no hay desde dónde arrancar
+            c.HayCajaInicial = true;
+            c.CajaInicial = caja[kIni];
+
+            decimal netoTotal = NetoTotal(s, claves);
+            c.FlujoNetoReal = NetoTotal(s, clavesReales);
+            c.FlujoNetoProyectado = netoTotal - c.FlujoNetoReal;
+            c.CajaFinalCalculada = c.CajaInicial + c.FlujoNetoReal;
+
+            decimal sinConciliar = 0m;
+            if (clavesReales.Count > 0 && caja.ContainsKey(clavesReales.Max()))
+            {
+                int kFin = clavesReales.Max();
+                c.HayCajaFinal = true;
+                c.AnioFinalBalance = kFin / 12; c.MesFinalBalance = kFin % 12 + 1;
+                c.CajaFinalBalance = caja[kFin];
+                c.Diferencia = c.CajaFinalBalance - c.CajaFinalCalculada;
+                c.Cuadra = Math.Abs(c.Diferencia) <= Math.Max(5m, 2m * clavesReales.Count);   // ruido de redondeo del modelo: ~2 pesos por mes
+                if (!c.Cuadra) sinConciliar = c.Diferencia;
+
+                // En qué meses se rompe: cambio de la caja según balance vs. flujo neto del modelo (solo meses con ambos balances).
+                foreach (var k in clavesReales)
+                {
+                    if (!caja.ContainsKey(k) || !caja.ContainsKey(k - 1)) continue;
+                    decimal dif = (caja[k] - caja[k - 1]) - Neto(s, k);
+                    if (Math.Abs(dif) > 5m)
+                        c.MesesConDiferencia.Add(new FlujoDiferenciaMes { Anio = k / 12, Mes = k % 12 + 1, Diferencia = dif });
+                }
+                c.MesesConDiferencia = c.MesesConDiferencia.OrderByDescending(m => Math.Abs(m.Diferencia)).Take(5).ToList();
+            }
+
+            var barras = reporte.CascadaCaja;
+            barras.Add(new FlujoCascadaBarra { Etiqueta = "CajaInicial", Tipo = "total", Desde = 0m, Hasta = c.CajaInicial });
+            decimal nivel = c.CajaInicial;
+            foreach (var f in reporte.FuentesUsos) { nivel = AgregarTramo(barras, f.Codigo, f.Valor, nivel); }
+            if (sinConciliar != 0m) nivel = AgregarTramo(barras, "SinConciliar", sinConciliar, nivel);
+            barras.Add(new FlujoCascadaBarra { Etiqueta = c.HayProyeccion ? "CajaFinalProy" : "CajaFinal", Tipo = "total", Desde = 0m, Hasta = nivel });
+        }
+
+        private static decimal AgregarTramo(List<FlujoCascadaBarra> barras, string etiqueta, decimal delta, decimal nivel)
+        {
+            decimal despues = nivel + delta;
+            barras.Add(new FlujoCascadaBarra
+            {
+                Etiqueta = etiqueta, Delta = delta, Tipo = delta >= 0 ? "positivo" : "negativo",
+                Desde = delta >= 0 ? nivel : despues, Hasta = delta >= 0 ? despues : nivel
+            });
+            return despues;
         }
 
         // ===== Puente de caja =====

@@ -110,6 +110,8 @@ namespace bufinscustomers.Controllers
                 kpis = r.Kpis,
                 meses = r.Meses,
                 puente = r.Cascada,
+                fuentesUsos = r.FuentesUsos,
+                cajaConciliacion = r.Conciliacion,
                 filas = r.Filas.Select(f => new
                 {
                     f.Descripcion, f.Codigo, f.EsSubtotal, f.EsTotal, f.Total, f.TotalPpto, f.TotalAnt,
@@ -474,6 +476,63 @@ namespace bufinscustomers.Controllers
                 }
                 EstiloTabla(wsP, 4, fp - 1, 3);
 
+                // --- Fuentes, usos y cascada de caja (caja inicial → caja final, validada contra el balance)
+                var wsC = wb.Worksheets.Add(R("Flujo_ExcelHojaCaja"));
+                EncabezadoHoja(wsC, R("Flujo_ExcelHojaCaja") + " — " + empresa, periodo + " · " + medida);
+                int fc = 4;
+                wsC.Cell(fc, 1).Value = R("Flujo_ColConcepto"); wsC.Cell(fc, 2).Value = R("Flujo_ColTipo");
+                wsC.Cell(fc, 3).Value = R("Flujo_ColMovimiento"); wsC.Cell(fc, 4).Value = R("Flujo_ColParticipacion");
+                fc++;
+                foreach (var fu in r.FuentesUsos)
+                {
+                    wsC.Cell(fc, 1).Value = NombreFuenteUso(fu.Codigo);
+                    wsC.Cell(fc, 2).Value = R(fu.Tipo == "fuente" ? "Flujo_Fuentes" : "Flujo_Usos");
+                    EscribirValor(wsC.Cell(fc, 3), fu.Valor, fmtNum);
+                    EscribirValor(wsC.Cell(fc, 4), fu.Participacion, fmtPct);
+                    fc++;
+                }
+                wsC.Cell(fc, 1).Value = R("Flujo_FuentesUsosNeto");
+                EscribirValor(wsC.Cell(fc, 3), r.TotalFuentes + r.TotalUsos, fmtNum);
+                wsC.Range(fc, 1, fc, 4).Style.Font.Bold = true;
+                EstiloTabla(wsC, 4, fc, 4);
+
+                var conc = r.Conciliacion;
+                if (conc != null && conc.HayCajaInicial)
+                {
+                    fc += 2;
+                    int encCaja = fc;
+                    wsC.Cell(fc, 1).Value = R("Flujo_CajaCascadaTitulo"); wsC.Cell(fc, 2).Value = R("Flujo_ColMovimiento"); wsC.Cell(fc, 3).Value = R("Flujo_ColNivel");
+                    fc++;
+                    decimal nivelCaja = 0m;
+                    foreach (var b in r.CascadaCaja)
+                    {
+                        wsC.Cell(fc, 1).Value = NombreFuenteUso(b.Etiqueta);
+                        if (b.Tipo == "total") { nivelCaja = b.Hasta; EscribirValor(wsC.Cell(fc, 2), b.Hasta, fmtNum); wsC.Range(fc, 1, fc, 3).Style.Font.Bold = true; }
+                        else { nivelCaja += b.Delta; EscribirValor(wsC.Cell(fc, 2), b.Delta, fmtNum); }
+                        EscribirValor(wsC.Cell(fc, 3), nivelCaja, fmtNum);
+                        fc++;
+                    }
+                    EstiloTabla(wsC, encCaja, fc - 1, 3);
+
+                    // Validación contra el balance: lo que dice el informe en pantalla.
+                    fc++;
+                    wsC.Cell(fc, 1).Value = conc.HayCajaFinal ? R(conc.Cuadra ? "Flujo_ConcOkTitulo" : "Flujo_ConcMalTitulo") : R("Flujo_CajaSinFinalTitulo");
+                    wsC.Cell(fc, 1).Style.Font.Bold = true;
+                    if (conc.HayCajaFinal)
+                    {
+                        fc++; wsC.Cell(fc, 1).Value = R("Flujo_CajaCascada_CajaFinal") + " (" + R("Flujo_CajaCascadaTitulo") + ")"; EscribirValor(wsC.Cell(fc, 2), conc.CajaFinalCalculada, fmtNum);
+                        fc++; wsC.Cell(fc, 1).Value = R("Flujo_CajaBalanceLinea"); EscribirValor(wsC.Cell(fc, 2), conc.CajaFinalBalance, fmtNum);
+                        fc++; wsC.Cell(fc, 1).Value = R("Flujo_CajaCascada_SinConciliar"); EscribirValor(wsC.Cell(fc, 2), conc.Diferencia, fmtNum);
+                    }
+                }
+                else
+                {
+                    fc += 2;
+                    wsC.Cell(fc, 1).Value = R("Flujo_CajaSinInicioTitulo");
+                    wsC.Cell(fc, 1).Style.Font.Bold = true;
+                }
+                wsC.Column(1).Width = 44; wsC.Columns(2, 4).Width = 18;
+
                 // Logo de la empresa (si tiene) junto al título de cada hoja; sin logo el libro queda igual que siempre.
                 ExcelLogoHelper.ColocarEnTodas(wb, ExcelLogoHelper.Obtener(r.IdEmpresa));
                 using (var ms = new MemoryStream()) { wb.SaveAs(ms); bytes = ms.ToArray(); }
@@ -501,6 +560,20 @@ namespace bufinscustomers.Controllers
             nombreArchivo = $"{NombreModelo.Replace(" ", "")}_{empresa}_{r.AnioHasta}{r.MesHasta:00}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
             nombreArchivo = string.Join("_", nombreArchivo.Split(Path.GetInvalidFileNameChars()));
             return bytes;
+        }
+
+        /// <summary>Nombre de una barra/fuente/uso de la cascada de caja (códigos fijos del servicio).</summary>
+        private string NombreFuenteUso(string codigo)
+        {
+            switch (codigo)
+            {
+                case "CajaInicial": case "CajaFinal": case "CajaFinalProy": case "SinConciliar": case "Otros":
+                    return R("Flujo_CajaCascada_" + codigo);
+                case "GeneracionOperativa":
+                    return R(Pref + "FU_GeneracionOperativa");
+                default:
+                    return R(Pref + "Casc_" + codigo);
+            }
         }
 
         private string NombreLinea(FlujoFilaReporte f)

@@ -26,6 +26,17 @@
     var kpiNombres = kpiCodigos.ToDictionary(c => c, c => T(P + "Kpi_" + c));
     var cascNombres = cascCodigos.ToDictionary(c => c, c => T(P + "Casc_" + c));
     var filaNombres = new Dictionary<string, string> { { "FlujoNeto", T(P + "Fila_FlujoNeto") } };
+    // Caja inicial → caja final: etiquetas de las barras y de las fuentes/usos (por actividad; GeneracionOperativa es propia de cada informe).
+    var cajaCascNombres = new Dictionary<string, string>
+    {
+        { "CajaInicial", T("Flujo_CajaCascada_CajaInicial") }, { "CajaFinal", T("Flujo_CajaCascada_CajaFinal") },
+        { "CajaFinalProy", T("Flujo_CajaCascada_CajaFinalProy") }, { "SinConciliar", T("Flujo_CajaCascada_SinConciliar") },
+        { "Otros", T("Flujo_CajaCascada_Otros") }, { "GeneracionOperativa", T(P + "FU_GeneracionOperativa") }
+    };
+    foreach (var c in (tipo == "Caja" ? new[] { "CapitalTrabajo", "Inversion", "Financiero", "NoOperacional" } : new[] { "CapitalTrabajo", "Inversion", "DeudaNeta" }))
+    {
+        cajaCascNombres[c] = T(P + "Casc_" + c);
+    }
     string kpiPrimario = tipo == "Caja" ? "FclOperativo" : "FlujoOperacion";
     string kpiNeto = tipo == "Caja" ? "FlujoNeto" : "AumentoNeto";
 }
@@ -33,7 +44,7 @@
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
 <link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-pyg.css")" rel="stylesheet" />
-<link href="~/Assets/css/informe-tesoreria.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-tesoreria.css")" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
@@ -255,6 +266,43 @@
             </div>
         </div>
 
+        @* 3b. Caja: con cuánta se arrancó y con cuánta se terminó (validada contra el balance) + fuentes y usos *@
+        <div class="pyg2-section">
+            <div class="pyg2-section-title">
+                <span class="t">@T("Flujo_CajaSeccion")</span><span class="line"></span>
+            </div>
+        </div>
+        <div class="tes-estado" id="flConc" style="display:none;">
+            <span class="ic"><i class="fas fa-scale-balanced"></i></span>
+            <div class="tx"><span class="t" id="flConcTitulo">&mdash;</span><span class="s" id="flConcDesc">&mdash;</span><span class="fu-conc-meses" id="flConcMeses" style="display:none;"></span></div>
+        </div>
+        <div class="pyg2-analysis">
+            <div class="pyg2-card">
+                <div class="pyg2-card-head">
+                    <div>
+                        <div class="pyg2-card-title">@T("Flujo_CajaCascadaTitulo")</div>
+                        <div class="pyg2-card-sub" id="flCajaSub">&mdash;</div>
+                    </div>
+                    <span class="pyg2-legend">
+                        <span><i class="sq" style="background:var(--tm-p,#6366F1)"></i>@T("Flujo_LeyendaTotal")</span>
+                        <span><i class="sq" style="background:#16A34A"></i>@T("Flujo_Fuentes")</span>
+                        <span><i class="sq" style="background:#F87171"></i>@T("Flujo_Usos")</span>
+                        <span id="flLeyendaSinConc" style="display:none;"><i class="sq" style="background:#D97706"></i>@T("Flujo_LeyendaSinConciliar")</span>
+                    </span>
+                    <button type="button" class="lt-tool-btn square on tes-btn-etq" data-chart="caja" title="@T("LineaTiempo_Etiquetas")" aria-label="@T("LineaTiempo_Etiquetas")"><i class="fas fa-tag"></i></button>
+                </div>
+                <div class="tes-chart-md" id="flCajaWrap"><canvas id="flChartCaja"></canvas></div>
+                <div class="fu-sin-inicio" id="flCajaSinInicio" style="display:none;"></div>
+            </div>
+            <div class="pyg2-card fu-card">
+                <div>
+                    <div class="pyg2-card-title"><i class="fas fa-right-left"></i>@T("Flujo_FuentesUsosTitulo")</div>
+                    <div class="pyg2-card-sub" id="flFuentesUsosSub">&mdash;</div>
+                </div>
+                <div id="flFuentesUsos"></div>
+            </div>
+        </div>
+
         @* 4. Puente *@
         <div class="pyg2-card" style="margin-bottom:16px">
             <div class="pyg2-card-head">
@@ -391,6 +439,26 @@
         t: {
             kpi: @Html.Raw(jss.Serialize(kpiNombres)),
             casc: @Html.Raw(jss.Serialize(cascNombres)),
+            cajaCasc: @Html.Raw(jss.Serialize(cajaCascNombres)),
+            cajaSubFmt: '@Html.Raw(J("Flujo_CajaCascadaSubFmt"))',
+            cajaSinInicioTitulo: '@Html.Raw(J("Flujo_CajaSinInicioTitulo"))',
+            cajaSinInicioFmt: '@Html.Raw(J("Flujo_CajaSinInicioFmt"))',
+            cajaSinFinalTitulo: '@Html.Raw(J("Flujo_CajaSinFinalTitulo"))',
+            cajaSinFinalFmt: '@Html.Raw(J("Flujo_CajaSinFinalFmt"))',
+            concOkTitulo: '@Html.Raw(J("Flujo_ConcOkTitulo"))',
+            concOkFmt: '@Html.Raw(J("Flujo_ConcOkFmt"))',
+            concMalTitulo: '@Html.Raw(J("Flujo_ConcMalTitulo"))',
+            concMalFmt: '@Html.Raw(J("Flujo_ConcMalFmt"))',
+            concMesesFmt: '@Html.Raw(J("Flujo_ConcMesesFmt"))',
+            concProyFmt: '@Html.Raw(J("Flujo_ConcProyFmt"))',
+            concEneroHint: '@Html.Raw(J("Flujo_ConcEneroHint"))',
+            fuSubFmt: '@Html.Raw(J("Flujo_FuentesUsosSubFmt"))',
+            fuFuentes: '@Html.Raw(J("Flujo_Fuentes"))',
+            fuFuentesDesc: '@Html.Raw(J("Flujo_FuentesDesc"))',
+            fuUsos: '@Html.Raw(J("Flujo_Usos"))',
+            fuUsosDesc: '@Html.Raw(J("Flujo_UsosDesc"))',
+            fuNeto: '@Html.Raw(J("Flujo_FuentesUsosNeto"))',
+            fuVacio: '@Html.Raw(J("Flujo_FuentesUsosVacio"))',
             fila: @Html.Raw(jss.Serialize(filaNombres)),
             medida: { real: '@Html.Raw(J("Flujo_Medida_real"))', proy: '@Html.Raw(J("Flujo_Medida_proy"))', ppto: '@Html.Raw(J("Flujo_Medida_ppto"))' },
             netoAcum: '@Html.Raw(J("Flujo_NetoAcumulado"))',
@@ -463,7 +531,10 @@
                 relevanteTitulo: '@Html.Raw(J("Flujo_RelevanteTitulo"))',
                 tablaTitulo: '@Html.Raw(J(P + "TablaTitulo"))',
                 graficoTitulo: '@Html.Raw(J("Flujo_GraficoTitulo"))',
-                cascadaTitulo: '@Html.Raw(J(P + "CascadaTitulo"))'
+                cascadaTitulo: '@Html.Raw(J(P + "CascadaTitulo"))',
+                caja: '@Html.Raw(J("Flujo_Pdf_Caja"))',
+                cajaTitulo: '@Html.Raw(J("Flujo_CajaCascadaTitulo"))',
+                fuTitulo: '@Html.Raw(J("Flujo_FuentesUsosTitulo"))'
             }
         },
         reporteActual: null,
@@ -471,7 +542,7 @@
         insightsTexto: null,
         vistaTabla: 'mensual',      // 'mensual' | 'acum'
         unidad: 'millones',
-        etiquetas: { principal: true, cascada: true },   // etiquetas de valor, una por gráfico
+        etiquetas: { principal: true, cascada: true, caja: true },   // etiquetas de valor, una por gráfico
         charts: {},
         mesesCache: [],
         rango: [],
@@ -800,6 +871,8 @@
         pintarEstado(r);
         pintarKpis(r);
         pintarCharts(r);
+        pintarConciliacion(r);
+        pintarFuentesUsos(r);
         pintarDestacados(r);
         pintarTabla(r);
     }
@@ -957,7 +1030,8 @@
     function pintarCharts(r) {
         destruirCharts();
         pintarPrincipal(r);
-        pintarCascada(r);
+        pintarPuente(r.Cascada || [], 'flChartCascada', 'cascada', _fl.t.casc);
+        pintarCajaCascada(r);
         $('#flGraficoSub').text(_fl.t.graficoSubFmt.replace('{0}', _fl.t.medida[r.Medida] || r.Medida));
         $('#flCascadaSub').text(_fl.t.cascadaSubFmt.replace('{0}', etiquetaPeriodo(r)));
     }
@@ -1005,17 +1079,20 @@
 
     // Puente: cada tramo ya viene del servidor como diferencia exacta entre subtotales del modelo, así que SIEMPRE cuadra con el flujo
     // neto del rango.
-    function pintarCascada(r) {
-        var barras = r.Cascada || [];
+    function colorBarraPuente(b) {
+        if (b.Etiqueta === 'SinConciliar') return '#D97706';
+        return b.Tipo === 'total' ? InformeTema.actual.p : (b.Tipo === 'positivo' ? '#16A34A' : '#F87171');
+    }
+    function pintarPuente(barras, canvasId, claveEtq, nombres) {
         if (!barras.length) return;
-        var etiquetas = barras.map(function (b) { return _fl.t.casc[b.Etiqueta] || b.Etiqueta; });
+        var etiquetas = barras.map(function (b) { return nombres[b.Etiqueta] || b.Etiqueta; });
         var datos = barras.map(function (b) { return [escalarValor(b.Desde), escalarValor(b.Hasta)]; });
-        var colores = barras.map(function (b) { return b.Tipo === 'total' ? InformeTema.actual.p : (b.Tipo === 'positivo' ? '#16A34A' : '#F87171'); });
+        var colores = barras.map(colorBarraPuente);
 
         var etiquetasPlugin = {
-            id: 'flCascadaEtiquetas',
+            id: 'flPuenteEtiquetas_' + claveEtq,
             afterDatasetsDraw: function (chart) {
-                if (!_fl.etiquetas.cascada) return;
+                if (!_fl.etiquetas[claveEtq]) return;
                 var ctx = chart.ctx, meta = chart.getDatasetMeta(0), escalaY = chart.scales.y;
                 if (!meta || !meta.data.length) return;
                 ctx.save();
@@ -1024,7 +1101,7 @@
                 meta.data.forEach(function (el, i) {
                     var b = barras[i], arriba = Math.min(el.y, el.base), abajoDe = Math.max(el.y, el.base);
                     var negativoTotal = b.Tipo === 'total' && b.Hasta < 0;
-                    ctx.fillStyle = b.Tipo === 'total' ? '#16121F' : (b.Tipo === 'positivo' ? '#16A34A' : '#DC2626');
+                    ctx.fillStyle = b.Tipo === 'total' ? '#16121F' : (b.Etiqueta === 'SinConciliar' ? '#B45309' : (b.Tipo === 'positivo' ? '#16A34A' : '#DC2626'));
                     ctx.textBaseline = negativoTotal ? 'top' : 'bottom';
                     ctx.fillText(b.Tipo === 'total' ? fmtNum(b.Hasta) : fmtNumVar(b.Delta || 0), el.x, negativoTotal ? abajoDe + 6 : arriba - 6);
                 });
@@ -1042,7 +1119,7 @@
         barras.forEach(function (b) { niveles.push(escalarValor(b.Desde), escalarValor(b.Hasta)); });
         var maxN = Math.max.apply(null, niveles), minN = Math.min.apply(null, niveles), margen = (maxN - minN) * 0.12 || 1;
 
-        _fl.charts.cascada = new Chart(document.getElementById('flChartCascada').getContext('2d'), {
+        _fl.charts[claveEtq] = new Chart(document.getElementById(canvasId).getContext('2d'), {
             type: 'bar',
             data: { labels: etiquetas, datasets: [{ label: _fl.t.flujoNeto, data: datos, backgroundColor: colores, borderRadius: 6, borderSkipped: false, barPercentage: 0.7, categoryPercentage: 0.8, maxBarThickness: 78 }] },
             plugins: [flFondo, etiquetasPlugin],
@@ -1060,6 +1137,75 @@
                 }
             }
         });
+    }
+
+    // ===== Caja: cascada caja inicial → caja final, conciliación con el balance, fuentes y usos =====
+    function mesAnioTxt(mes, anio) { return mes ? (nombreMes(mes) + ' ' + anio) : CH_MDASH; }
+
+    function pintarCajaCascada(r) {
+        var c = r.Conciliacion || {}, barras = r.CascadaCaja || [], hay = barras.length > 0;
+        $('#flCajaWrap').toggle(hay);
+        $('#flCajaSinInicio').toggle(!hay).text(hay ? '' : _fl.t.cajaSinInicioFmt.replace('{0}', mesAnioTxt(c.MesInicial, c.AnioInicial)));
+        $('#flLeyendaSinConc').toggle(barras.some(function (b) { return b.Etiqueta === 'SinConciliar'; }));
+        $('#flCajaSub').text(hay ? _fl.t.cajaSubFmt.replace('{0}', mesAnioTxt(c.MesInicial, c.AnioInicial)).replace('{1}', etiquetaPeriodo(r)) : CH_MDASH);
+        if (hay) pintarPuente(barras, 'flChartCaja', 'caja', _fl.t.cajaCasc);
+    }
+
+    // Qué dice la validación de la caja (pantalla y PDF muestran exactamente lo mismo).
+    function datosConciliacion(r) {
+        var c = r.Conciliacion, t = _fl.t;
+        if (!c) return null;
+        var mIni = mesAnioTxt(c.MesInicial, c.AnioInicial);
+        if (!c.HayCajaInicial) return { cls: 'aviso', icono: 'fa-circle-exclamation', titulo: t.cajaSinInicioTitulo, desc: t.cajaSinInicioFmt.replace('{0}', mIni), meses: '' };
+        if (!c.HayCajaFinal) return { cls: 'aviso', icono: 'fa-circle-exclamation', titulo: t.cajaSinFinalTitulo, desc: t.cajaSinFinalFmt.replace('{0}', mIni), meses: '' };
+        var mFin = mesAnioTxt(c.MesFinalBalance, c.AnioFinalBalance), d;
+        if (c.Cuadra) d = { cls: 'ok', icono: 'fa-circle-check', titulo: t.concOkTitulo,
+            desc: t.concOkFmt.replace('{0}', fmtNum(c.CajaInicial)).replace('{1}', fmtNumVar(c.FlujoNetoReal)).replace('{2}', fmtNum(c.CajaFinalCalculada)).replace('{3}', mFin) };
+        else d = { cls: 'mal', icono: 'fa-triangle-exclamation', titulo: t.concMalTitulo,
+            desc: t.concMalFmt.replace('{0}', fmtNum(c.CajaInicial)).replace('{1}', fmtNumVar(c.FlujoNetoReal)).replace('{2}', fmtNum(c.CajaFinalCalculada))
+                .replace('{3}', fmtNum(c.CajaFinalBalance)).replace('{4}', mFin).replace('{5}', fmtNumVar(c.Diferencia)) };
+        var extra = [];
+        if (!c.Cuadra && (c.MesesConDiferencia || []).length)
+            extra.push(t.concMesesFmt.replace('{0}', c.MesesConDiferencia.map(function (m) { return abrevMes(m.Mes, m.Anio, true) + ' (' + fmtNumVar(m.Diferencia) + ')'; }).join(', ')));
+        if (!c.Cuadra && (c.MesesConDiferencia || []).some(function (m) { return m.Mes === 1; })) extra.push(t.concEneroHint);
+        if (c.HayProyeccion) extra.push(t.concProyFmt.replace('{0}', fmtNumVar(c.FlujoNetoProyectado)));
+        d.meses = extra.join(' ');
+        return d;
+    }
+    function pintarConciliacion(r) {
+        var d = datosConciliacion(r), $e = $('#flConc');
+        if (!d) { $e.hide(); return; }
+        $e.show().removeClass('ok mal aviso').addClass(d.cls);
+        $e.find('.ic i').attr('class', 'fas ' + d.icono);
+        $('#flConcTitulo').text(d.titulo);
+        $('#flConcDesc').text(d.desc);
+        $('#flConcMeses').text(d.meses).toggle(!!d.meses);
+    }
+
+    function datosFuentesUsos(r) {
+        var todos = r.FuentesUsos || [];
+        return {
+            fuentes: todos.filter(function (f) { return f.Tipo === 'fuente'; }),
+            usos: todos.filter(function (f) { return f.Tipo === 'uso'; }),
+            maxAbs: Math.max.apply(null, todos.map(function (f) { return Math.abs(f.Valor); }).concat([1]))
+        };
+    }
+    function pintarFuentesUsos(r) {
+        var t = _fl.t, d = datosFuentesUsos(r);
+        $('#flFuentesUsosSub').text(t.fuSubFmt.replace('{0}', etiquetaPeriodo(r)));
+        function grupo(clase, icono, titulo, desc, items, total) {
+            var filas = items.length ? items.map(function (f) {
+                return '<div class="fu-fila"><div class="fu-fila-top"><span class="nm">' + escHtml(t.cajaCasc[f.Codigo] || f.Codigo) + '</span><span class="val">' + escHtml(fmtNum(f.Valor)) + '</span></div>' +
+                    '<div class="fu-fila-bot"><div class="fu-track"><i style="width:' + (Math.abs(f.Valor) / d.maxAbs * 100).toFixed(1) + '%"></i></div><span class="pct">' + escHtml(fmtPct(f.Participacion)) + '</span></div></div>';
+            }).join('') : '<div class="fu-vacio">' + escHtml(t.fuVacio) + '</div>';
+            return '<div class="fu-grupo ' + clase + '"><div class="fu-grupo-head"><span class="ic"><i class="fas ' + icono + '"></i></span>' +
+                '<span class="nm">' + escHtml(titulo) + '<small>' + escHtml(desc) + '</small></span><span class="tot">' + escHtml(fmtNum(total)) + '</span></div>' + filas + '</div>';
+        }
+        var neto = (r.TotalFuentes || 0) + (r.TotalUsos || 0);
+        $('#flFuentesUsos').html(
+            grupo('fuente', 'fa-arrow-down', t.fuFuentes, t.fuFuentesDesc, d.fuentes, r.TotalFuentes || 0) +
+            grupo('uso', 'fa-arrow-up', t.fuUsos, t.fuUsosDesc, d.usos, r.TotalUsos || 0) +
+            '<div class="fu-neto"><span class="nm">' + escHtml(t.fuNeto) + '</span><span class="val' + (neto < 0 ? ' neg' : '') + '">' + escHtml(fmtNum(neto)) + '</span></div>');
     }
 
     // ===== Lo más relevante =====
@@ -1488,7 +1634,57 @@
             y += hA + 8;
         });
 
-        // ===== Página 3+: tabla por mes =====
+        // ===== Página 3: caja inicial → caja final (validada contra el balance) + fuentes y usos =====
+        nuevaPagina(P.caja);
+        var conc = datosConciliacion(r);
+        if (conc) {
+            var colC = conc.cls === 'mal' ? C.malo : (conc.cls === 'aviso' ? C.ambar : C.bueno),
+                bgC = conc.cls === 'mal' ? C.maloBg : (conc.cls === 'aviso' ? [255, 251, 235] : C.buenoBg);
+            fuente('normal', 8.5, C.texto2);
+            var lineasC = pdf.splitTextToSize(limpiar(conc.desc + (conc.meses ? ' ' + conc.meses : '')), ANCHO - 12), hC = 11 + lineasC.length * 4;
+            rgb('setFillColor', bgC); rgb('setDrawColor', colC); pdf.setLineWidth(0.3);
+            pdf.roundedRect(M, y, ANCHO, hC, 2.5, 2.5, 'FD');
+            rgb('setFillColor', colC); pdf.rect(M, y + 3, 1.4, hC - 6, 'F');
+            fuente('bold', 10, C.texto); pdf.text(conc.titulo, M + 6, y + 6.5);
+            fuente('normal', 8.5, C.texto2); pdf.text(lineasC, M + 6, y + 11.2, { lineHeightFactor: 1.35 });
+            y += hC + 6;
+        }
+        if (_fl.charts.caja) {
+            var hCaja = 74;
+            tarjeta(M, y, ANCHO, hCaja);
+            fuente('bold', 10, C.texto); pdf.text(P.cajaTitulo, M + 5, y + 8);
+            fuente('normal', 7.5, C.muted); pdf.text($('#flCajaSub').text(), M + 5, y + 12.5);
+            imagenAjustada(capturarChartPdf(_fl.charts.caja, (ANCHO - 10) * MM_A_PX, (hCaja - 18) * MM_A_PX), M + 5, y + 15, ANCHO - 10, hCaja - 18);
+            y += hCaja + 7;
+        }
+        tituloSeccion(P.fuTitulo, y, $('#flFuentesUsosSub').text());
+        y += 6;
+        var fu = datosFuentesUsos(r), gapF = 8, wF = (ANCHO - gapF) / 2, yFu = y, hFu = 0;
+        [{ items: fu.fuentes, titulo: T.fuFuentes + ' (' + T.fuFuentesDesc + ')', total: r.TotalFuentes || 0, col: C.bueno },
+         { items: fu.usos, titulo: T.fuUsos + ' (' + T.fuUsosDesc + ')', total: r.TotalUsos || 0, col: C.malo }].forEach(function (g, gi) {
+            var x = M + gi * (wF + gapF), yy = yFu;
+            fuente('bold', 8.5, g.col); pdf.text(g.titulo.toUpperCase(), x, yy);
+            fuente('bold', 9.5, g.col); pdf.text(fmtNum(g.total), x + wF, yy, { align: 'right' });
+            rgb('setDrawColor', g.col); pdf.setLineWidth(0.5); pdf.line(x, yy + 1.8, x + wF, yy + 1.8);
+            yy += 7;
+            if (!g.items.length) { fuente('italic', 8, C.muted); pdf.text(T.fuVacio, x, yy); yy += 6; }
+            g.items.forEach(function (f) {
+                fuente('normal', 8.3, C.texto2); pdf.text(pdf.splitTextToSize(T.cajaCasc[f.Codigo] || f.Codigo, wF - 48)[0], x, yy);
+                fuente('bold', 8.3, C.texto); pdf.text(fmtNum(f.Valor), x + wF - 14, yy, { align: 'right' });
+                fuente('normal', 7.5, C.muted); pdf.text(fmtPct(f.Participacion), x + wF, yy, { align: 'right' });
+                rgb('setFillColor', C.suave2); pdf.rect(x, yy + 1.4, wF, 1.4, 'F');
+                rgb('setFillColor', g.col); pdf.rect(x, yy + 1.4, Math.max(0.4, wF * Math.abs(f.Valor) / fu.maxAbs), 1.4, 'F');
+                yy += 8.2;
+            });
+            hFu = Math.max(hFu, yy - yFu);
+        });
+        y = yFu + hFu + 2;
+        var netoFu = (r.TotalFuentes || 0) + (r.TotalUsos || 0);
+        rgb('setFillColor', C.totalBg); pdf.roundedRect(M, y, ANCHO, 9, 2, 2, 'F');
+        fuente('bold', 9, C.totalTx); pdf.text(T.fuNeto, M + 4, y + 6);
+        pdf.text(fmtNum(netoFu), W - M - 4, y + 6, { align: 'right' });
+
+        // ===== Página 4+: tabla por mes =====
         nuevaPagina(P.tablaTitulo);
         fuente('normal', 7.5, C.muted); pdf.text(T.unidadBadge[_fl.unidad], W - M, 21, { align: 'right' });
         var cols = encabezadosTabla(r), nCols = cols.length;

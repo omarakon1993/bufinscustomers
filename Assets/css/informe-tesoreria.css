@@ -60,3 +60,32 @@
 .tes-info:hover,.tes-info:focus{color:var(--tm-strong,#583AFF);outline:none}
 @media (max-width:820px){.tes-grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:640px){.tes-grid-4{grid-template-columns:1fr}}
+
+/* ===== Flujos: fuentes y usos de caja + cascada de caja ===== */
+.fu-card{display:flex;flex-direction:column;gap:14px}
+.fu-grupo{border:1px solid #E4E1F0;border-radius:12px;overflow:hidden;background:#fff}
+.fu-grupo-head{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#F0FDF4;border-bottom:1px solid #BBF7D0}
+.fu-grupo.uso .fu-grupo-head{background:#FEF2F2;border-bottom-color:#FECACA}
+.fu-grupo-head .ic{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none;font-size:12px;background:#16A34A;color:#fff}
+.fu-grupo.uso .fu-grupo-head .ic{background:#DC2626}
+.fu-grupo-head .nm{font-size:13px;font-weight:800;color:#16121F;line-height:1.1}
+.fu-grupo-head .nm small{display:block;font-size:11px;font-weight:600;color:#5B5570;margin-top:2px}
+.fu-grupo-head .tot{margin-left:auto;font-size:15px;font-weight:800;color:#15803D;white-space:nowrap}
+.fu-grupo.uso .fu-grupo-head .tot{color:#B91C1C}
+.fu-fila{padding:9px 14px}
+.fu-fila + .fu-fila{border-top:1px solid #F1F0F7}
+.fu-fila-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.fu-fila .nm{font-size:12.5px;font-weight:700;color:#16121F;min-width:0}
+.fu-fila .val{font-size:12.5px;font-weight:800;color:#16121F;white-space:nowrap}
+.fu-fila-bot{display:flex;align-items:center;gap:10px;margin-top:6px}
+.fu-track{flex:1;height:6px;border-radius:999px;background:var(--tm-soft2,#F4F3FB);overflow:hidden}
+.fu-track i{display:block;height:100%;border-radius:999px;background:#16A34A;opacity:.85}
+.fu-grupo.uso .fu-track i{background:#DC2626}
+.fu-fila .pct{font-size:11px;font-weight:700;color:#8B85A0;min-width:42px;text-align:right}
+.fu-vacio{padding:12px 14px;font-size:12px;color:#8B85A0}
+.fu-neto{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;border-radius:12px;background:var(--tm-soft,#EEF2FF);border:1px solid var(--tm-t2,#C7D2FE)}
+.fu-neto .nm{font-size:12.5px;font-weight:800;color:var(--tm-dk,#3B2FBF)}
+.fu-neto .val{font-size:15px;font-weight:800;color:var(--tm-dk,#3B2FBF);white-space:nowrap}
+.fu-neto .val.neg{color:#B91C1C}
+.fu-conc-meses{margin-top:4px;font-size:12px;color:#5B5570}
+.fu-sin-inicio{display:flex;align-items:center;justify-content:center;height:100%;min-height:200px;text-align:center;color:#8B85A0;font-size:13px;padding:0 24px}
