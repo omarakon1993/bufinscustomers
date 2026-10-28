@@ -47,3 +47,6 @@ Marca Bufins del letterhead (`.pyg2-brand`, `.lt-brand-mark`), logo de la empres
 - Informe de modelos (grilla) e Histórico de precios no llevan selector todavía.
 - Las documentaciones HTML de Indicadores e Histórico de precios no mencionan el selector (no se regeneraron).
 - Sin notificaciones internas (edición de configuración); la auditoría sí: `Empresas`/`Editar` (`EmpresaPaletas`).
+
+- **Hoy lo llevan**: Línea de tiempo, PYG, Balance, Tesorería, Flujo de caja y de efectivo, Indicadores, Rentabilidad por línea de negocio, Informe mensual de gerencia, Informe de modelos e Histórico de precios.
+- **Informe de modelos (2026-10)**: el selector está en la barra de trabajo y el tema solo se aplica al resultado (`#resultadosSection`, `#resultadosTabs`, `#mcFiltroBar`: cabecera de la tarjeta, cabecera de la tabla, pestañas activas y botón de filtros). `modelo-consola.css` es compartido con Ejecución de Modelos, así que todo uso va como `var(--tm-…, <valor de siempre>)`. `FiltrosInformeTablasDatos` ganó `Tema/TemaP/TemaS/TemaA`; el Excel pinta la cabecera con el principal y el correo recibe el tema.

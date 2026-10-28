@@ -101,7 +101,7 @@ namespace bufinscustomers.Controllers
                 }
 
                 string empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
-                byte[] bytes = GenerarExcel(reporte, empresa, filtros.IdEmpresa);
+                byte[] bytes = GenerarExcel(reporte, empresa, filtros.IdEmpresa, ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA));
 
                 return File(bytes, MimeExcel, NombreArchivo(empresa, "xlsx"));
             }
@@ -142,7 +142,7 @@ namespace bufinscustomers.Controllers
                 string escenario = EscenarioCacheHelper.ObtenerEscenariosCacheados()
                     .FirstOrDefault(e => e.Id == filtros.IdEscenario)?.Nombre ?? ("#" + filtros.IdEscenario);
 
-                var adjuntos = InformeCorreoHelper.Adjuntos(NombreArchivo(empresa, "xlsx"), GenerarExcel(reporte, empresa, filtros.IdEmpresa),
+                var adjuntos = InformeCorreoHelper.Adjuntos(NombreArchivo(empresa, "xlsx"), GenerarExcel(reporte, empresa, filtros.IdEmpresa, ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA)),
                     InformeCorreoHelper.PdfDesdeBase64(pdfBase64));
 
                 ResumenParaCorreo(reporte, out string periodoUltimo, out var kpis, out var filas);
@@ -158,7 +158,8 @@ namespace bufinscustomers.Controllers
                     string.Join(", ", lista), R("HP_PageTitle"), empresa, true, contexto, kpis,
                     string.Format(R("HP_Correo_TablaTitulo"), periodoUltimo),
                     new[] { R("HP_ColTipo"), R("HP_Correo_ColPrecio"), R("HP_Correo_ColVsAnterior") }, filas,
-                    mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(filtros.IdEmpresa));
+                    mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(filtros.IdEmpresa),
+                    ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA));
 
                 new AuditoriaService().RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeHistPrecios", filtros.IdEmpresa.ToString(),
@@ -244,7 +245,7 @@ namespace bufinscustomers.Controllers
         // ---------- Excel ----------
 
         /// <summary>Libro de Excel del informe (3 hojas, cada una con su gráfico nativo): lo usan la descarga y el correo.</summary>
-        private byte[] GenerarExcel(HpReporte reporte, string empresa, int idEmpresa)
+        private byte[] GenerarExcel(HpReporte reporte, string empresa, int idEmpresa, TemaInforme tema)
         {
             var etiquetas = reporte.Periodos.Select(p => EtiquetaPeriodo(p, reporte.Agrupar)).ToList();
             string hojaPrecios = R("HP_XlsHojaPrecios"), hojaVar = R("HP_XlsHojaVariacion"), hojaProm = R("HP_XlsHojaPromedio");
@@ -272,7 +273,7 @@ namespace bufinscustomers.Controllers
                 ws.Cell(filaPromedio, 1).Value = R("HP_ColPromedio");
                 for (int s = 0; s < reporte.Series.Count; s++) EscribirValor(ws.Cell(filaPromedio, 2 + s), reporte.Series[s].Promedio, "#,##0.000");
                 EscribirValor(ws.Cell(filaPromedio, colTotal), reporte.Total.Promedio, "#,##0.000");
-                EstiloTabla(ws, filaEnc, filaPromedio, colTotal);
+                EstiloTabla(ws, filaEnc, filaPromedio, colTotal, tema);
 
                 // --- Hoja 2: variación %
                 var wv = wb.Worksheets.Add(hojaVar);
@@ -287,7 +288,7 @@ namespace bufinscustomers.Controllers
                         EscribirValor(wv.Cell(filaEnc + 1 + i, 2 + s), reporte.Series[s].Variaciones[i], "0.0%");
                     EscribirValor(wv.Cell(filaEnc + 1 + i, colTotal), reporte.Total.Variaciones[i], "0.0%");
                 }
-                EstiloTabla(wv, filaEnc, filaEnc + etiquetas.Count, colTotal);
+                EstiloTabla(wv, filaEnc, filaEnc + etiquetas.Count, colTotal, tema);
 
                 // --- Hoja 3: promedio general + variación
                 var wp = wb.Worksheets.Add(hojaProm);
@@ -301,7 +302,7 @@ namespace bufinscustomers.Controllers
                     EscribirValor(wp.Cell(filaEnc + 1 + i, 2), reporte.Total.Valores[i], "#,##0.000");
                     EscribirValor(wp.Cell(filaEnc + 1 + i, 3), reporte.Total.Variaciones[i], "0.0%");
                 }
-                EstiloTabla(wp, filaEnc, filaEnc + etiquetas.Count, 3);
+                EstiloTabla(wp, filaEnc, filaEnc + etiquetas.Count, 3, tema);
 
                 // Logo de la empresa (si tiene) junto al título de cada hoja; sin logo el libro queda igual que siempre.
                 ExcelLogoHelper.ColocarEnTodas(wb, ExcelLogoHelper.Obtener(idEmpresa));
@@ -311,19 +312,19 @@ namespace bufinscustomers.Controllers
                 bytes = AgregarGraficoSeguro(bytes, hojaPrecios, R("HP_GraficoEvolucionTitulo"), false, filaEnc, fin, etiquetas,
                     reporte.Series.Select((s, i) => new SerieGraficoExcel
                     {
-                        Nombre = s.Tipo, Columna = 2 + i, ColorHex = PaletaSeries[i % PaletaSeries.Length],
+                        Nombre = s.Tipo, Columna = 2 + i, ColorHex = ColorSerie(tema, i),
                         Valores = s.Valores.Select(v => (double?)v).ToList()
                     }).ToList(), "0.00", colTotal + 1);
                 bytes = AgregarGraficoSeguro(bytes, hojaVar, R("HP_TablaVariacionTitulo"), true, filaEnc, fin, etiquetas,
                     reporte.Series.Select((s, i) => new SerieGraficoExcel
                     {
-                        Nombre = s.Tipo, Columna = 2 + i, ColorHex = PaletaSeries[i % PaletaSeries.Length],
+                        Nombre = s.Tipo, Columna = 2 + i, ColorHex = ColorSerie(tema, i),
                         Valores = s.Variaciones.Select(v => (double?)v).ToList()
                     }).ToList(), "0%", colTotal + 1);
                 bytes = AgregarGraficoSeguro(bytes, hojaProm, R("HP_PromedioTitulo"), false, filaEnc, fin, etiquetas,
                     new List<SerieGraficoExcel>
                     {
-                        new SerieGraficoExcel { Nombre = R("HP_PromedioGeneral"), Columna = 2, ColorHex = PaletaSeries[0],
+                        new SerieGraficoExcel { Nombre = R("HP_PromedioGeneral"), Columna = 2, ColorHex = ColorSerie(tema, 0),
                             Valores = reporte.Total.Valores.Select(v => (double?)v).ToList() }
                     }, "0.00", 5);
             }
@@ -362,11 +363,18 @@ namespace bufinscustomers.Controllers
             celda.Style.NumberFormat.Format = formato;
         }
 
-        private static void EstiloTabla(IXLWorksheet ws, int filaEnc, int filaFin, int colFin)
+        /// <summary>Color de la serie i del gráfico de Excel: con el tema Bufins la paleta de siempre; con otro tema, tonos de su paleta.</summary>
+        private static string ColorSerie(TemaInforme tema, int i)
+        {
+            bool bufins = tema == null || (string.Equals(tema.Primario, "#6366F1", StringComparison.OrdinalIgnoreCase) && string.Equals(tema.Strong, "#583AFF", StringComparison.OrdinalIgnoreCase));
+            return bufins ? PaletaSeries[i % PaletaSeries.Length] : TemaInforme.SinAlmohadilla(tema.Serie[i % tema.Serie.Length]);
+        }
+
+        private static void EstiloTabla(IXLWorksheet ws, int filaEnc, int filaFin, int colFin, TemaInforme tema)
         {
             var enc = ws.Range(filaEnc, 1, filaEnc, colFin);
             enc.Style.Font.Bold = true;
-            enc.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
+            enc.Style.Fill.BackgroundColor = ExcelTemaHelper.Principal(tema);
             enc.Style.Font.FontColor = XLColor.White;
             enc.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             var cuerpo = ws.Range(filaEnc, 1, filaFin, colFin);

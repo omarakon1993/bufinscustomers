@@ -13,6 +13,7 @@
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/comentarios-gestion.css")" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
 
 <div class="container-fluid px-4">
@@ -311,7 +312,26 @@
         <p class="lt-help" id="pygNotaSinAnterior" style="display:none;"></p>
         <p class="lt-help" id="pygNotaEscenario" style="display:none;"></p>
 
+        @* Desglose por línea de negocio del mismo rango (solo si la empresa tiene líneas en dbo.ModeloLineasNegocio) *@
+        <div class="pyg2-table-card" id="pygLineasCard" style="display:none;margin-top:14px">
+            <div class="pyg2-card-head" style="align-items:center">
+                <div>
+                    <div class="pyg2-card-title"><i class="fas fa-sitemap"></i>@Resources.Strings.PYG_LN_Titulo</div>
+                    <div class="pyg2-card-sub">@Resources.Strings.PYG_LN_Sub</div>
+                </div>
+                @if (bufinscustomers.Helpers.UsuarioSesionHelper.TienePermiso("INFORMES_LINEAS_NEGOCIO"))
+                {
+                    <a class="pyg2-ins-btn" href="@Url.Action("Index", "InformeLineasNegocio")"><i class="fas fa-arrow-up-right-from-square"></i><span>@Resources.Strings.PYG_LN_VerInforme</span></a>
+                }
+            </div>
+            <div class="pyg2-table-wrap">
+                <table class="pyg2-table"><thead id="pygLineasHead"></thead><tbody id="pygLineasBody"></tbody></table>
+            </div>
+        </div>
+
         @* Insights gerenciales (IA): se ocultan si la empresa tiene la IA apagada *@
+        @Html.Partial("_ComentariosGestion", "pygComentarios")
+
         @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
         {
         <div class="pyg-insights-card">
@@ -361,6 +381,7 @@
 <script src="~/Assets/js/html2canvas.min.js"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/empresa-logo.js")"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/comentarios-gestion.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
 <script src="~/Assets/js/bufins-markdown.js"></script>
 <script src="~/Assets/js/rango-atajos.js"></script>
@@ -406,7 +427,16 @@
             '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Mes12))'
         ],
         textos: {
-            colEstructura: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColEstructura))',
+            ln: {
+                linea: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LN_Col_Linea))',
+                ingresos: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LN_Col_Ingresos))',
+                pctIngresos: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LN_Col_PctIngresos))',
+                margenBruto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LN_Col_MargenBruto))',
+                margenOperacional: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LN_Col_MargenOperacional))',
+                utilNeta: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LN_Col_UtilNeta))',
+                total: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.LN_Col_Total))'
+            },
+            colEstructura:'@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColEstructura))',
             colReal: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColReal))',
             colPresupuesto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColPresupuesto))',
             colVarAbs: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.PYG_ColVarAbs))',
@@ -913,6 +943,7 @@
                 return;
             }
             pintarReporte(reporte, filtros);
+            if (window.ComentariosGestion) ComentariosGestion.cargar({ idEmpresa: Number(filtros.IdEmpresa), anio: reporte.AnioHasta, mes: reporte.MesHasta, claves: [] });
         }).fail(function (xhr) {
             $('#overlayConsultandoPYG').hide();
             mostrarErrorPYG(_pyg.textos.errorServidor + ' (HTTP ' + xhr.status + ')');
@@ -970,6 +1001,23 @@
         repintarConUnidadActual();
     }
 
+    // Desglose por línea de negocio (ingresos, márgenes y utilidad por línea del mismo rango).
+    function pintarLineasNegocioPYG(r) {
+        var $card = $('#pygLineasCard');
+        $card.toggle(!!r.HayLineasNegocio);
+        if (!r.HayLineasNegocio) return;
+        var X = _pyg.textos.ln;
+        $('#pygLineasHead').html('<tr><th class="col-cuenta">' + escHtml(X.linea) + '</th><th>' + escHtml(X.ingresos) + '</th><th>' + escHtml(X.pctIngresos) + '</th><th>' +
+            escHtml(X.margenBruto) + '</th><th>' + escHtml(X.margenOperacional) + '</th><th>' + escHtml(X.utilNeta) + '</th></tr>');
+        var todas = r.LineasNegocio.concat([r.LineasNegocioTotal]);
+        $('#pygLineasBody').html(todas.map(function (l, i) {
+            var total = i === todas.length - 1;
+            return '<tr' + (total ? ' class="total"' : '') + '><td class="lbl">' + escHtml(total ? X.total : l.Nombre) + '</td><td class="real">' + escHtml(fmtNum(l.Ingresos)) + '</td>' +
+                '<td class="mar">' + escHtml(fmtPct(l.PctIngresos)) + '</td><td class="mar">' + escHtml(fmtPct(l.MargenBruto)) + '</td><td class="mar">' + escHtml(fmtPct(l.MargenOperacional)) + '</td>' +
+                '<td class="real">' + escHtml(fmtNum(l.UtilidadNeta)) + '</td></tr>';
+        }).join(''));
+    }
+
     // Repinta todo lo que depende de la unidad / de las vistas elegidas, sin volver a consultar.
     function repintarConUnidadActual() {
         var r = _pyg.reporteActual;
@@ -980,6 +1028,7 @@
             $(this).toggleClass('on', on).attr('aria-checked', on ? 'true' : 'false');
         });
         $('#pygInfoBadge').text(_pyg.textos.unidadBadge[_pyg.unidad]);
+        pintarLineasNegocioPYG(r);
         $('#pygMetaPpto').text(fmtNum(r.CascadaPresupuestoUtilidadNeta || 0));
         $('#pygSegKpi button').each(function () { $(this).toggleClass('active', $(this).data('v') === _pyg.kpiVista); });
         $('#pygSegTabla button').each(function () { $(this).toggleClass('active', $(this).data('v') === _pyg.vistaTabla); });
@@ -2059,6 +2108,7 @@
     }
 
     $(document).ready(function () {
+        ComentariosGestion.montar({ raiz: '#pygComentarios', informe: 'PYG' });
         _pyg.escenarios = $('#pygEscenario option').map(function () {
             return { id: Number(this.value), nombre: $(this).text() };
         }).get().filter(function (e) { return e.id > 0; });

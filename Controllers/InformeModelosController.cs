@@ -261,7 +261,8 @@ namespace bufinscustomers.Controllers
 
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
                 new EmailService().EnviarInforme(string.Join(", ", lista), R("InformeModelos_PageTitle"), empresa, false, contexto, null,
-                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(idEmpresaConsulta));
+                    null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(idEmpresaConsulta),
+                    ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA));
 
                 new AuditoriaService().RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeModelos", (idEmpresaConsulta ?? 0).ToString(),
@@ -304,6 +305,7 @@ namespace bufinscustomers.Controllers
                     nombreHoja + " · " + DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
             }
 
+            var tema = ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA);
             int col = 1;
             foreach (var nombreColumna in resultado.Columnas)
             {
@@ -311,7 +313,7 @@ namespace bufinscustomers.Controllers
                 cell.Value = _service.ObtenerNombreAmigableColumna(nombreColumna);
 
                 cell.Style.Font.Bold = true;
-                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
+                cell.Style.Fill.BackgroundColor = ExcelTemaHelper.Principal(tema);
                 cell.Style.Font.FontColor = XLColor.White;
                 cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;

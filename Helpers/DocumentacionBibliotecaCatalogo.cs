@@ -66,12 +66,22 @@ namespace bufinscustomers.Helpers
             new DocumentoBiblioteca { Clave = "informe-indicadores", Ruta = Informes + "Informe_Indicadores.html", Categoria = "informes",
                 Titulo = "Informe de indicadores",
                 Descripcion = "Qué es, de dónde salen las cifras, cómo se calcula cada uno de los 27 indicadores y cómo leer el semáforo.",
-                EsDeMenu = true, Menu = "Informes → Informe de indicadores", Actualizado = new DateTime(2026, 10, 14) },
+                EsDeMenu = true, Menu = "Informes → Informe de indicadores", Actualizado = new DateTime(2026, 10, 27) },
 
             new DocumentoBiblioteca { Clave = "informe-hist-precios", Ruta = Informes + "Informe_HistPrecios_vs_Excel.html", Categoria = "informes",
                 Titulo = "Informe histórico de precios",
                 Descripcion = "Informe personalizado para Churido y Ucrania: de dónde salen los precios, cómo se compara con el Excel y cómo se calculan las variaciones.",
-                EsDeMenu = true, Menu = "Informes → Histórico de precios (personalizado)", Actualizado = new DateTime(2026, 10, 13) },
+                EsDeMenu = true, Menu = "Informes → Histórico de precios (personalizado)", Actualizado = new DateTime(2026, 10, 27) },
+
+            new DocumentoBiblioteca { Clave = "informe-lineas-negocio", Ruta = Informes + "Informe_LineasNegocio.html", Categoria = "informes",
+                Titulo = "Rentabilidad por línea de negocio",
+                Descripcion = "Qué es, de dónde salen las cifras por línea, cómo se calcula cada concepto y cómo se valida contra el Estado de resultados.",
+                EsDeMenu = true, Menu = "Informes → Rentabilidad por línea de negocio", Actualizado = new DateTime(2026, 10, 27) },
+
+            new DocumentoBiblioteca { Clave = "informe-gerencia-mensual", Ruta = Informes + "Informe_GerenciaMensual.html", Categoria = "informes",
+                Titulo = "Informe mensual de gerencia",
+                Descripcion = "El cierre del mes en un solo documento: de qué informe sale cada sección, cómo se lee y cómo se exporta.",
+                EsDeMenu = true, Menu = "Informes → Informe mensual de gerencia", Actualizado = new DateTime(2026, 10, 27) },
 
             new DocumentoBiblioteca { Clave = "cargues-auditoria", Ruta = Biblioteca + "Auditoria_Cargues_Blindaje.html", Categoria = "datos",
                 Titulo = "Historial de cargues y protección de los datos",

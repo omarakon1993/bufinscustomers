@@ -19,6 +19,12 @@ namespace bufinscustomers.Models
         public string Agrupar { get; set; } = "Anio";
         /// <summary>Tipos de fruta a incluir (null/vacío = todos).</summary>
         public List<string> Tipos { get; set; }
+
+        // Paleta del informe (ver TemaInforme): el servidor re-resuelve y valida para Excel y correo; vacío = Bufins.
+        public string Tema { get; set; }
+        public string TemaP { get; set; }
+        public string TemaS { get; set; }
+        public string TemaA { get; set; }
     }
 
     /// <summary>Un semestre con datos (eje del slider de rango).</summary>

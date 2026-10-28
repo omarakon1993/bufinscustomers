@@ -196,6 +196,54 @@ namespace bufinscustomers.Services
         /// <summary>Índice absoluto de mes (año*12 + mes-1) — permite rangos que cruzan años.</summary>
         private static int Clave(int año, int mes) => año * 12 + (mes - 1);
 
+        /// <summary>Balance presupuestado (Valor) o proyectado (ValorFuturo) de un mes, desde dbo.ModeloBalancePpto. Ese modelo
+        /// numera las líneas distinto cada mes (el Ord NO es estable), así que luego se cruza por Descripcion. Vacío si la empresa no
+        /// tiene balance presupuestado o la tabla falla (el informe sigue sin comparativo).</summary>
+        public List<BalanceFilaModelo> ObtenerFilasPresupuesto(int idEmpresa, byte idEscenario, int año, int mes, bool usarProyeccion)
+        {
+            var filas = new List<BalanceFilaModelo>();
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                {
+                    var cmd = new SqlCommand(@"
+                        SELECT Ord, CuentaPUC, Descripcion, Valor, ValorFuturo
+                        FROM dbo.ModeloBalancePpto
+                        WHERE IdEmpresa = @IdEmpresa AND IdEscenario = @IdEscenario AND Año = @Año AND Mes = @Mes", cn);
+                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                    cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
+                    cmd.Parameters.AddWithValue("@Año", año);
+                    cmd.Parameters.AddWithValue("@Mes", mes);
+                    cn.Open();
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            filas.Add(new BalanceFilaModelo
+                            {
+                                IdEscenario = idEscenario, Año = año, Mes = mes,
+                                Ord = Convert.ToInt32(reader["Ord"]),
+                                CuentaPUC = reader["CuentaPUC"] as string,
+                                Descripcion = (reader["Descripcion"] as string ?? "").Trim(),
+                                Valor = LeerDecimal(reader, usarProyeccion ? "ValorFuturo" : "Valor")
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                bufinscustomers.Helpers.AppLogger.Error(ex, "InformeBalanceService.ObtenerFilasPresupuesto");
+                filas.Clear();
+            }
+            return filas;
+        }
+
+        private static bool ExisteLinea(List<BalanceFilaModelo> filas, string descripcion)
+        {
+            return filas.Any(f => string.Equals(f.Descripcion, descripcion, StringComparison.OrdinalIgnoreCase));
+        }
+
         private static decimal SumaLinea(List<BalanceFilaModelo> filas, string descripcion)
         {
             return filas.Where(f => string.Equals(f.Descripcion, descripcion, StringComparison.OrdinalIgnoreCase)).Sum(f => f.Valor);
@@ -264,7 +312,9 @@ namespace bufinscustomers.Services
                 IdEscenarioComparar = conEscenario ? filtros.IdEscenarioComparar : null
             };
 
-            var (añoComp, mesComp) = ComparativoAnioMes(comparar, añoH, mesHasta);
+            bool esPresupuestal = BalanceComparar.EsPresupuestal(comparar);
+            // Presupuesto/proyección: el comparativo es el MISMO mes de corte (no un mes anterior).
+            var (añoComp, mesComp) = esPresupuestal ? (añoH, mesHasta) : ComparativoAnioMes(comparar, añoH, mesHasta);
             int añoMinFetch = Math.Min(añoD, añoComp);
 
             var filas = ObtenerFilas(filtros.IdEmpresa, filtros.IdEscenario, añoMinFetch, añoH);
@@ -275,8 +325,11 @@ namespace bufinscustomers.Services
                 return resultado;
             }
 
-            var fotoComp = FotoDe(filas, añoComp, mesComp);
-            resultado.HayComparativo = !fotoComp.Vacio;
+            var fotoComp = esPresupuestal
+                ? new Foto { Filas = ObtenerFilasPresupuesto(filtros.IdEmpresa, filtros.IdEscenario, añoH, mesHasta, comparar == BalanceComparar.Proyeccion) }
+                : FotoDe(filas, añoComp, mesComp);
+            // Un balance presupuestado sin el total del activo no sirve para comparar (otro nombre de línea o sin cargar).
+            resultado.HayComparativo = !fotoComp.Vacio && (!esPresupuestal || ExisteLinea(fotoComp.Filas, DescActivoTotal));
 
             List<BalanceFilaModelo> filasEsc = null;
             Foto fotoEsc = null;
@@ -328,7 +381,7 @@ namespace bufinscustomers.Services
                     PctVertical = activoTotal != 0 ? f.Valor / activoTotal : (decimal?)null
                 };
 
-                if (resultado.HayComparativo)
+                if (resultado.HayComparativo && (!esPresupuestal || ExisteLinea(fotoComp.Filas, f.Descripcion)))
                 {
                     fila.SaldoComparativo = SumaLinea(fotoComp.Filas, f.Descripcion);
                     fila.VariacionPorcentual = Variacion(f.Valor, fila.SaldoComparativo);

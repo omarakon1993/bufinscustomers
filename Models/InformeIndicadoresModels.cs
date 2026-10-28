@@ -22,6 +22,9 @@ namespace bufinscustomers.Models
 
         /// <summary>Contra qué mes se compara el corte — ver IndicadoresComparar.</summary>
         public string Comparar { get; set; } = IndicadoresComparar.CierreAnterior;
+
+        /// <summary>Otro escenario contra el que se compara el mismo corte (null = no comparar).</summary>
+        public byte? IdEscenarioComparar { get; set; }
     }
 
     public static class IndicadoresComparar
@@ -103,6 +106,18 @@ namespace bufinscustomers.Models
         public int MesesLtm { get; set; }
 
         public List<IndicadorPunto> Tendencia { get; set; } = new List<IndicadorPunto>();
+
+        /// <summary>true = la empresa tiene cortes propios para este indicador (dbo.IndicadoresUmbrales); <c>Cortes</c> ya los trae.</summary>
+        public bool UmbralPropio { get; set; }
+
+        /// <summary>Valor y semáforo del mismo corte en el escenario de comparación (null si no se pidió o no hay datos).</summary>
+        public decimal? ValorEsc { get; set; }
+        public string NivelEsc { get; set; }
+
+        /// <summary>Posición frente a su propia historia en el rango consultado: fracción (0-1) de los OTROS meses del rango en los que el
+        /// indicador estuvo peor que en el corte. null si no hay dirección o hay menos de 5 meses con valor para comparar.</summary>
+        public decimal? MejorQueFraccion { get; set; }
+        public int MesesHistoria { get; set; }
     }
 
     public class IndicadoresReporteViewModel
@@ -121,6 +136,11 @@ namespace bufinscustomers.Models
         public bool HayComparativo { get; set; }
         public bool HayBalance { get; set; }
         public bool HayFlujoCaja { get; set; }
+        /// <summary>true si se pidió comparar con otro escenario y ese escenario tiene datos en el mes de corte.</summary>
+        public bool HayEscenarioComparar { get; set; }
+        public byte? IdEscenarioComparar { get; set; }
+        /// <summary>true si la empresa tiene al menos un umbral propio configurado.</summary>
+        public bool HayUmbralesPropios { get; set; }
 
         /// <summary>Meses con datos del PYG dentro de los 12 que terminan en el corte (12 = indicadores de flujo completos).</summary>
         public int MesesLtm { get; set; }

@@ -77,6 +77,7 @@
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-pyg.css")" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
 <link href="~/Assets/css/informe-histprecios.css" rel="stylesheet" />
 <link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
@@ -177,6 +178,8 @@
             <p class="lt-help">@Resources.Strings.HP_VerPorHint</p>
             <p class="lt-help" id="hpSinAnios" style="display:none;">@Resources.Strings.HP_SinAniosDatos</p>
         </div>
+
+        @Html.Partial("_TemaInformeSelector", "hpTema")
 
         <div class="btn-group-actions">
             <button type="button" id="btnConsultarHP" class="btn btn-modern-gradient" disabled>
@@ -365,6 +368,7 @@
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
 <script src="~/Assets/js/html2canvas.min.js"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/empresa-logo.js")"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
 <script src="~/Assets/js/doc-visor.js"></script>
 
@@ -425,7 +429,12 @@
         try { return new Intl.NumberFormat(_hp.cultura, { minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: 'exceptZero' }).format(v * 100) + '%'; }
         catch (e) { var n = Math.round(v * 1000) / 10; return (n >= 0 ? '+' : '') + n + '%'; }
     }
-    function colorSerie(i) { return _hp.paleta[i % _hp.paleta.length]; }
+    // Con el tema Bufins, la paleta de siempre; con otro tema, tonos de su paleta (nunca matices ajenos).
+    function colorSerie(i) {
+        var A = InformeTema.actual;
+        var p = A.id === 'bufins' ? _hp.paleta : A.serie.concat([A.t3, A.t4, A.dk, A.strong]);
+        return p[i % p.length];
+    }
 
     function etiquetaPeriodo(p, agrupar) {
         switch (agrupar) {
@@ -679,6 +688,11 @@
     }
 
     function consultar() {
+        if (!empresaSeleccionada()) { Swal.fire({ icon: 'info', text: _hp.t.seleccioneEmpresa }); return; }
+        InformeTema.preparar().then(function (ok) { if (ok) consultarConTema(); });
+    }
+
+    function consultarConTema() {
         var f = filtrosActuales();
         if (!f.IdEmpresa) { Swal.fire({ icon: 'info', text: _hp.t.seleccioneEmpresa }); return; }
         if (_hp.seleccion.length === 0) { Swal.fire({ icon: 'warning', text: _hp.t.seleccioneTipos }); return; }
@@ -693,10 +707,12 @@
             if (resp.reporte.SinDatos) { $('#hpResultado').hide(); $('#hpSinDatos').show(); return; }
             $('#hpSinDatos').hide();
             _hp.reporte = resp.reporte;
-            _hp.filtros = f;
+            _hp.filtros = $.extend(f, InformeTema.parametros());   // Excel y correo re-resuelven el tema en el servidor
             _hp.nombreEmpresa = elEmpresa.find('option:selected').text();
             _hp.nombreEscenario = elEscenario.find('option:selected').text();
             EmpresaLogo.mostrar(elEmpresa.val(), document.getElementById('hpLogo'));
+            InformeTema.aplicar(document.getElementById('hpResultado'));
+            _hp.filtros = $.extend(f, InformeTema.parametros());
             $('#hpResultado').show();
             pintar(resp.reporte);
         }).fail(function () {
@@ -930,7 +946,7 @@
             data: {
                 labels: etiquetas,
                 datasets: [{
-                    label: _hp.t.promedioGeneral, data: r.Total.Valores, borderColor: '#583AFF', backgroundColor: 'rgba(88,58,255,.10)',
+                    label: _hp.t.promedioGeneral, data: r.Total.Valores, borderColor: InformeTema.actual.strong, backgroundColor: InformeTema.alfa(InformeTema.actual.strong, .10),
                     fill: true, borderWidth: 2.5, tension: 0.25, pointRadius: pocos ? 3 : 0, pointHoverRadius: 5, spanGaps: true
                 }]
             },
@@ -971,7 +987,7 @@
             var celdas = s.Valores.map(function (v) {
                 if (v === null) return '<td>' + HP_MDASH + '</td>';
                 var a = (0.05 + 0.20 * ((v - min) / rango)).toFixed(3);
-                return '<td style="background:rgba(99,102,241,' + a + ')">' + esc(fmtPrecio(v)) + '</td>';
+                return '<td style="background:' + InformeTema.alfa(InformeTema.actual.p, a) + '">' + esc(fmtPrecio(v)) + '</td>';
             }).join('');
             $tb.append('<tr><td class="col-cuenta"><i class="hp-dot" style="background:' + colorSerie(i) + '"></i>' + esc(s.Tipo) + '</td>' + celdas +
                 '<td class="sep hp-strong">' + esc(fmtPrecio(s.Promedio)) + '</td></tr>');
@@ -1011,6 +1027,7 @@
         add('IdEmpresa', f.IdEmpresa); add('IdEscenario', f.IdEscenario);
         add('AnioDesde', f.AnioDesde); add('SemDesde', f.SemDesde); add('AnioHasta', f.AnioHasta); add('SemHasta', f.SemHasta); add('Agrupar', f.Agrupar);
         (f.Tipos || []).forEach(function (t) { add('Tipos', t); });
+        add('Tema', f.Tema || ''); add('TemaP', f.TemaP || ''); add('TemaS', f.TemaS || ''); add('TemaA', f.TemaA || '');
         $('#frmExportarExcelHP').trigger('submit');
     }
 
@@ -1028,7 +1045,7 @@
 
             function hex(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16), parseInt(c.substr(5, 2), 16)]; }
             function banda() {
-                doc.setFillColor.apply(doc, hex('#583AFF')); doc.rect(0, 0, W, 22, 'F');
+                doc.setFillColor.apply(doc, hex(InformeTema.actual.strong)); doc.rect(0, 0, W, 22, 'F');
                 doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
                 doc.text(_hp.t.pageTitle, M, 11);
                 doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
@@ -1148,7 +1165,7 @@
 
     // ---------- init ----------
     function limpiar() {
-        _hp.reporte = null; _hp.filtros = null; destruirCharts();
+        _hp.reporte = null; _hp.filtros = null; destruirCharts(); InformeTema.reset();
         $('#hpResultado, #hpSinDatos').hide(); $('#hpEstadoInicial').show();
         _hp.agrupar = 'Anio';
         pintarVerPor();
@@ -1162,6 +1179,7 @@
     }
 
     $(function () {
+        InformeTema.montar({ selector: '#hpTema', empresa: '#hpEmpresa' });
         elEmpresa.select2({ width: '100%', language: s2lang, minimumResultsForSearch: 10 });
         elEscenario.select2({ width: '100%', language: s2lang, minimumResultsForSearch: 10 });
 

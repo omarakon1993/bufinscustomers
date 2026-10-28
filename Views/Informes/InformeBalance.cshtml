@@ -14,6 +14,7 @@
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/comentarios-gestion.css")" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
 
 <div class="container-fluid px-4">
@@ -76,6 +77,8 @@
                             <option value="cierreAnterior">@Resources.Strings.BAL_Comp_cierreAnterior</option>
                             <option value="mesAnterior">@Resources.Strings.BAL_Comp_mesAnterior</option>
                             <option value="mismoMesAnioAnterior">@Resources.Strings.BAL_Comp_mismoMesAnioAnterior</option>
+                            <option value="ppto">@Resources.Strings.BAL_Comp_ppto</option>
+                            <option value="proy">@Resources.Strings.BAL_Comp_proy</option>
                         </select>
                     </div>
                     <div class="lt-field">
@@ -296,6 +299,8 @@
         <p class="lt-help" id="balNotaEscenario" style="display:none;"></p>
 
         @* Insights gerenciales (IA): se ocultan si la empresa tiene la IA apagada *@
+        @Html.Partial("_ComentariosGestion", "balComentarios")
+
         @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
         {
         <div class="pyg-insights-card">
@@ -345,6 +350,7 @@
 <script src="~/Assets/js/html2canvas.min.js"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/empresa-logo.js")"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/comentarios-gestion.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
 <script src="~/Assets/js/bufins-markdown.js"></script>
 <script src="~/Assets/js/rango-atajos.js"></script>
@@ -435,12 +441,16 @@
             comp: {
                 cierreAnterior: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.BAL_Comp_cierreAnterior))',
                 mesAnterior: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.BAL_Comp_mesAnterior))',
-                mismoMesAnioAnterior: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.BAL_Comp_mismoMesAnioAnterior))'
+                mismoMesAnioAnterior: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.BAL_Comp_mismoMesAnioAnterior))',
+                ppto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.BAL_Comp_ppto))',
+                proy: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.BAL_Comp_proy))'
             },
             compCorto: {
                 cierreAnterior: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.BAL_CompCorto_cierreAnterior))',
                 mesAnterior: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.BAL_CompCorto_mesAnterior))',
-                mismoMesAnioAnterior: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.BAL_CompCorto_mismoMesAnioAnterior))'
+                mismoMesAnioAnterior: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.BAL_CompCorto_mismoMesAnioAnterior))',
+                ppto: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.BAL_CompCorto_ppto))',
+                proy: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.BAL_CompCorto_proy))'
             },
             cuadre: {
                 ok: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.BAL_CuadreOk))',
@@ -835,6 +845,7 @@
                 return;
             }
             pintarReporteBAL(reporte, filtros);
+            if (window.ComentariosGestion) ComentariosGestion.cargar({ idEmpresa: Number(filtros.IdEmpresa), anio: reporte.AnioHasta, mes: reporte.MesHasta, claves: [] });
         }).fail(function (xhr) {
             $('#overlayConsultandoBAL').hide();
             mostrarErrorBAL(_bal.textos.errorServidor + ' (HTTP ' + xhr.status + ')');
@@ -1738,6 +1749,7 @@
     }
 
     $(document).ready(function () {
+        ComentariosGestion.montar({ raiz: '#balComentarios', informe: 'Balance' });
         _bal.escenarios = $('#balEscenario option').map(function () {
             return { id: Number(this.value), nombre: $(this).text() };
         }).get().filter(function (e) { return e.id > 0; });

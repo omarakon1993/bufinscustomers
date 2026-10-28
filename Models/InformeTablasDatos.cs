@@ -15,6 +15,12 @@ namespace bufinscustomers.Models
         public string Variable { get; set; }
         public int? IdEscenario { get; set; }
 
+        // Paleta del informe (ver TemaInforme): Excel y correo del Informe de modelos la re-resuelven en el servidor; vacío = Bufins.
+        public string Tema { get; set; }
+        public string TemaP { get; set; }
+        public string TemaS { get; set; }
+        public string TemaA { get; set; }
+
         // Propiedad alternativa para evitar problemas de encoding en JavaScript
         public int? Anio
         {

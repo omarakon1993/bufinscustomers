@@ -3785,4 +3785,215 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="SBP_AplicarComo" xml:space="preserve"><value>Aplicar en</value></data>
   <data name="SBP_ConsultaPrimeroDesc" xml:space="preserve"><value>Selecciona la empresa y presiona Consultar para ver y editar los supuestos del balance del ppto.</value></data>
   <data name="SBP_AplicarVaciarAyuda" xml:space="preserve"><value>Para dejar la línea sin valor (NULL), deje el campo vacío y elija «Todos los meses».</value></data>
+  <!-- NUEVOS INFORMES (líneas de negocio, gerencia mensual, comentarios) -->
+  <data name="LN_PageTitle" xml:space="preserve"><value>Rentabilidad por línea de negocio</value></data>
+  <data name="LN_V2_Subtitulo" xml:space="preserve"><value>Líneas de negocio</value></data>
+  <data name="LN_RangoHint" xml:space="preserve"><value>Se suman los meses del rango y se compara contra el mismo rango del año anterior.</value></data>
+  <data name="LN_SinMesesDatos" xml:space="preserve"><value>Esta empresa no tiene líneas de negocio en el modelo para el escenario elegido. Ejecute el modelo de Líneas de Negocio.</value></data>
+  <data name="LN_EstadoInicialTitulo" xml:space="preserve"><value>Rentabilidad por línea de negocio</value></data>
+  <data name="LN_EstadoInicialDesc" xml:space="preserve"><value>Elija la empresa, el escenario y el rango, y pulse Generar para ver qué líneas generan el margen y cuáles lo consumen.</value></data>
+  <data name="LN_SinDatosTitulo" xml:space="preserve"><value>Sin datos de líneas de negocio</value></data>
+  <data name="LN_SinDatosDesc" xml:space="preserve"><value>No hay movimiento por línea de negocio en el rango elegido.</value></data>
+  <data name="LN_IndicadoresClave" xml:space="preserve"><value>Indicadores clave</value></data>
+  <data name="LN_Kpi_Ingresos" xml:space="preserve"><value>Ingresos</value></data>
+  <data name="LN_Kpi_UtilOperacional" xml:space="preserve"><value>Utilidad operacional</value></data>
+  <data name="LN_Kpi_MargenOperacional" xml:space="preserve"><value>Margen operacional</value></data>
+  <data name="LN_Kpi_LineaLider" xml:space="preserve"><value>Línea líder</value></data>
+  <data name="LN_VsAnterior" xml:space="preserve"><value>vs año ant.</value></data>
+  <data name="LN_DeLosIngresos" xml:space="preserve"><value>de los ingresos</value></data>
+  <data name="LN_MezclaTitulo" xml:space="preserve"><value>Mezcla de ingresos por línea</value></data>
+  <data name="LN_MezclaSubFmt" xml:space="preserve"><value>Ingresos mensuales por línea · {0}</value></data>
+  <data name="LN_RelevanteTitulo" xml:space="preserve"><value>Aporte a la utilidad operacional</value></data>
+  <data name="LN_RelevanteSub" xml:space="preserve"><value>Líneas ordenadas por utilidad operacional</value></data>
+  <data name="LN_MargenOpCorto" xml:space="preserve"><value>Margen op.</value></data>
+  <data name="LN_MargenesTitulo" xml:space="preserve"><value>Márgenes por línea</value></data>
+  <data name="LN_EstadoTitulo" xml:space="preserve"><value>Estado de resultados por línea</value></data>
+  <data name="LN_ResumenTitulo" xml:space="preserve"><value>Resumen por línea</value></data>
+  <data name="LN_ResumenSubFmt" xml:space="preserve"><value>Participación y variación contra el año anterior · {0}</value></data>
+  <data name="LN_SinAnioAnteriorNota" xml:space="preserve"><value>El mismo rango del año anterior no tiene datos de líneas de negocio: no se muestran variaciones.</value></data>
+  <data name="LN_NotaMetodo" xml:space="preserve"><value>Cada línea se identifica por el sufijo del nombre de la cuenta en el modelo (por ejemplo «Ingresos Exp» pertenece a la línea «Exp»). El costo de ventas incluye el CMV y la depreciación y amortización del costo; los gastos operacionales incluyen administración, ventas, provisiones y la depreciación y amortización del gasto. El resultado debe cuadrar con el Estado de resultados (PYG).</value></data>
+  <data name="LN_CuadreIngresosOk" xml:space="preserve"><value>Ingresos por línea = Ingresos del PYG</value></data>
+  <data name="LN_CuadreIngresosErrorFmt" xml:space="preserve"><value>Los ingresos por línea difieren del PYG en {0}</value></data>
+  <data name="LN_CuadreUtilidadOk" xml:space="preserve"><value>Utilidad neta por línea = Utilidad neta del PYG</value></data>
+  <data name="LN_CuadreUtilidadErrorFmt" xml:space="preserve"><value>La utilidad neta por línea difiere del PYG en {0}</value></data>
+  <data name="LN_InsightsTitulo" xml:space="preserve"><value>Insights de rentabilidad (IA)</value></data>
+  <data name="LN_InsightsSub" xml:space="preserve"><value>Resumen generado con IA a partir de las líneas del rango</value></data>
+  <data name="LN_InsightsVacio" xml:space="preserve"><value>Pulse Generar para obtener la lectura de rentabilidad y concentración.</value></data>
+  <data name="LN_InsightsMetaFmt" xml:space="preserve"><value>Generado el {0} · {1} líneas analizadas</value></data>
+  <data name="LN_InsRentabilidad" xml:space="preserve"><value>Rentabilidad</value></data>
+  <data name="LN_InsConcentracion" xml:space="preserve"><value>Concentración</value></data>
+  <data name="LN_InsAccion" xml:space="preserve"><value>Acción recomendada</value></data>
+  <data name="LN_PeriodoFmt" xml:space="preserve"><value>Período: {0}</value></data>
+  <data name="LN_LineasFmt" xml:space="preserve"><value>{0} líneas</value></data>
+  <data name="LN_Col_Concepto" xml:space="preserve"><value>Concepto</value></data>
+  <data name="LN_Col_Linea" xml:space="preserve"><value>Línea</value></data>
+  <data name="LN_Col_Total" xml:space="preserve"><value>Total</value></data>
+  <data name="LN_Col_Mes" xml:space="preserve"><value>Mes</value></data>
+  <data name="LN_Col_Ingresos" xml:space="preserve"><value>Ingresos</value></data>
+  <data name="LN_Col_PctIngresos" xml:space="preserve"><value>% de ingresos</value></data>
+  <data name="LN_Col_MargenBruto" xml:space="preserve"><value>Margen bruto</value></data>
+  <data name="LN_Col_MargenOperacional" xml:space="preserve"><value>Margen operacional</value></data>
+  <data name="LN_Col_MargenEbitda" xml:space="preserve"><value>Margen EBITDA</value></data>
+  <data name="LN_Col_MargenNeto" xml:space="preserve"><value>Margen neto</value></data>
+  <data name="LN_Col_UtilOperacional" xml:space="preserve"><value>Utilidad operacional</value></data>
+  <data name="LN_Col_PctUtilOperacional" xml:space="preserve"><value>% de la utilidad operacional</value></data>
+  <data name="LN_Col_UtilNeta" xml:space="preserve"><value>Utilidad neta</value></data>
+  <data name="LN_Col_VarIngresos" xml:space="preserve"><value>Var. ingresos</value></data>
+  <data name="LN_Col_VarUtilOperacional" xml:space="preserve"><value>Var. utilidad operacional</value></data>
+  <data name="LN_Fila_Ingresos" xml:space="preserve"><value>Ingresos</value></data>
+  <data name="LN_Fila_CostoVentas" xml:space="preserve"><value>Costo de ventas</value></data>
+  <data name="LN_Fila_UtilidadBruta" xml:space="preserve"><value>Utilidad bruta</value></data>
+  <data name="LN_Fila_GastosOperacionales" xml:space="preserve"><value>Gastos operacionales</value></data>
+  <data name="LN_Fila_UtilidadOperacional" xml:space="preserve"><value>Utilidad operacional</value></data>
+  <data name="LN_Fila_Ebitda" xml:space="preserve"><value>EBITDA</value></data>
+  <data name="LN_Fila_ResultadoNoOperacional" xml:space="preserve"><value>Resultado no operacional</value></data>
+  <data name="LN_Fila_UtilidadAntesImpuestos" xml:space="preserve"><value>Utilidad antes de impuestos</value></data>
+  <data name="LN_Fila_Impuesto" xml:space="preserve"><value>Impuesto de renta</value></data>
+  <data name="LN_Fila_UtilidadNeta" xml:space="preserve"><value>Utilidad neta</value></data>
+  <data name="LN_ExcelHojaResumen" xml:space="preserve"><value>Resumen por línea</value></data>
+  <data name="LN_ExcelHojaEstado" xml:space="preserve"><value>Estado por línea</value></data>
+  <data name="LN_ExcelHojaMezcla" xml:space="preserve"><value>Mezcla mensual</value></data>
+  <data name="LN_Exp_ExcelDesc" xml:space="preserve"><value>Resumen por línea, estado de resultados por línea y mezcla mensual de ingresos</value></data>
+  <data name="LN_CorreoPeriodo" xml:space="preserve"><value>Período</value></data>
+  <data name="LN_TablaCorreoTitulo" xml:space="preserve"><value>Líneas de negocio</value></data>
+  <data name="LN_PdfFooter" xml:space="preserve"><value>Rentabilidad por línea de negocio</value></data>
+  <data name="GM_PageTitle" xml:space="preserve"><value>Informe mensual de gerencia</value></data>
+  <data name="GM_V2_Subtitulo" xml:space="preserve"><value>Cierre del mes</value></data>
+  <data name="GM_MesCierre" xml:space="preserve"><value>Mes de cierre</value></data>
+  <data name="GM_SinMesesDatos" xml:space="preserve"><value>Esta empresa no tiene resultados cargados en el modelo para el escenario elegido. Ejecute los modelos.</value></data>
+  <data name="GM_EstadoInicialTitulo" xml:space="preserve"><value>Informe mensual de gerencia</value></data>
+  <data name="GM_EstadoInicialDesc" xml:space="preserve"><value>Elija la empresa, el escenario y el mes de cierre, y pulse Generar para ver resultados, balance, caja, indicadores y comentarios en un solo documento.</value></data>
+  <data name="GM_SinDatosTitulo" xml:space="preserve"><value>Sin datos para el cierre</value></data>
+  <data name="GM_SinDatosDesc" xml:space="preserve"><value>No hay información en el modelo para el mes de cierre elegido.</value></data>
+  <data name="GM_CierreFmt" xml:space="preserve"><value>Cierre: {0}</value></data>
+  <data name="GM_InsightsTitulo" xml:space="preserve"><value>Resumen del mes (IA)</value></data>
+  <data name="GM_InsightsSub" xml:space="preserve"><value>Resumen generado con IA a partir de las cifras del cierre</value></data>
+  <data name="GM_InsightsVacio" xml:space="preserve"><value>Pulse Generar para obtener el resumen del resultado, la caja y el foco del mes.</value></data>
+  <data name="GM_InsightsMetaFmt" xml:space="preserve"><value>Generado el {0}</value></data>
+  <data name="GM_InsResultado" xml:space="preserve"><value>Resultado</value></data>
+  <data name="GM_InsCaja" xml:space="preserve"><value>Caja y balance</value></data>
+  <data name="GM_InsFoco" xml:space="preserve"><value>Foco del mes</value></data>
+  <data name="GM_SecResultados" xml:space="preserve"><value>Resultados del mes</value></data>
+  <data name="GM_SecBalance" xml:space="preserve"><value>Balance al cierre</value></data>
+  <data name="GM_SecCaja" xml:space="preserve"><value>Caja del mes</value></data>
+  <data name="GM_VsPpto" xml:space="preserve"><value>vs presupuesto</value></data>
+  <data name="GM_VsPptoCorto" xml:space="preserve"><value>vs ppto.</value></data>
+  <data name="GM_VsAnio" xml:space="preserve"><value>vs año anterior</value></data>
+  <data name="GM_Acumulado" xml:space="preserve"><value>Acumulado del año</value></data>
+  <data name="GM_VsCierre" xml:space="preserve"><value>vs cierre del año anterior</value></data>
+  <data name="GM_Res_Ingresos" xml:space="preserve"><value>Ingresos</value></data>
+  <data name="GM_Res_Ebitda" xml:space="preserve"><value>EBITDA</value></data>
+  <data name="GM_Res_UtilidadNeta" xml:space="preserve"><value>Utilidad neta</value></data>
+  <data name="GM_CajaInicial" xml:space="preserve"><value>Caja inicial</value></data>
+  <data name="GM_FlujoNeto" xml:space="preserve"><value>Flujo neto del mes</value></data>
+  <data name="GM_FlujoNetoPpto" xml:space="preserve"><value>Flujo neto presupuestado</value></data>
+  <data name="GM_Fcl" xml:space="preserve"><value>Flujo de caja libre operativo</value></data>
+  <data name="GM_CajaFinal" xml:space="preserve"><value>Caja final</value></data>
+  <data name="GM_CajaCuadra" xml:space="preserve"><value>La caja final cuadra con el balance</value></data>
+  <data name="GM_CajaNoCuadra" xml:space="preserve"><value>La caja final no cuadra con el balance</value></data>
+  <data name="GM_BalanceNoCuadra" xml:space="preserve"><value>El balance no cuadra (Activo ≠ Pasivo + Patrimonio)</value></data>
+  <data name="GM_AtencionTitulo" xml:space="preserve"><value>Indicadores que requieren atención</value></data>
+  <data name="GM_AtencionSub" xml:space="preserve"><value>Semáforo del Informe de indicadores</value></data>
+  <data name="GM_SinAtencion" xml:space="preserve"><value>Ningún indicador está en rojo o naranja.</value></data>
+  <data name="GM_LineasTitulo" xml:space="preserve"><value>Líneas de negocio</value></data>
+  <data name="GM_LineasSub" xml:space="preserve"><value>Ingresos y margen del mes</value></data>
+  <data name="GM_SinSeccion" xml:space="preserve"><value>Sin datos para esta sección en el mes elegido.</value></data>
+  <data name="GM_Col_Real" xml:space="preserve"><value>Real</value></data>
+  <data name="GM_Col_Presupuesto" xml:space="preserve"><value>Presupuesto</value></data>
+  <data name="GM_Col_Indicador" xml:space="preserve"><value>Indicador</value></data>
+  <data name="GM_Col_Valor" xml:space="preserve"><value>Valor</value></data>
+  <data name="GM_Col_Semaforo" xml:space="preserve"><value>Semáforo</value></data>
+  <data name="GM_Col_VarPpto" xml:space="preserve"><value>Var. vs presupuesto</value></data>
+  <data name="GM_Col_VarAnio" xml:space="preserve"><value>Var. vs año anterior</value></data>
+  <data name="GM_Col_VarCierre" xml:space="preserve"><value>Var. vs cierre anterior</value></data>
+  <data name="GM_Col_AcumReal" xml:space="preserve"><value>Acumulado real</value></data>
+  <data name="GM_Col_AcumPpto" xml:space="preserve"><value>Acumulado presupuesto</value></data>
+  <data name="GM_Col_AcumVarPpto" xml:space="preserve"><value>Acumulado var. vs presupuesto</value></data>
+  <data name="GM_Nivel_verde" xml:space="preserve"><value>Verde</value></data>
+  <data name="GM_Nivel_amarillo" xml:space="preserve"><value>Amarillo</value></data>
+  <data name="GM_Nivel_naranja" xml:space="preserve"><value>Naranja</value></data>
+  <data name="GM_Nivel_rojo" xml:space="preserve"><value>Rojo</value></data>
+  <data name="GM_Nivel_gris" xml:space="preserve"><value>Sin dato</value></data>
+  <data name="GM_CorreoCierre" xml:space="preserve"><value>Cierre</value></data>
+  <data name="GM_ExcelHojaResumen" xml:space="preserve"><value>Resumen</value></data>
+  <data name="GM_ExcelHojaFoco" xml:space="preserve"><value>Atención y líneas</value></data>
+  <data name="GM_ExcelHojaComentarios" xml:space="preserve"><value>Comentarios</value></data>
+  <data name="GM_Exp_ExcelDesc" xml:space="preserve"><value>Resultados, balance, caja, indicadores en atención, líneas y comentarios del cierre</value></data>
+  <data name="GM_PdfFooter" xml:space="preserve"><value>Informe mensual de gerencia</value></data>
+  <data name="Com_Titulo" xml:space="preserve"><value>Comentarios de gestión</value></data>
+  <data name="Com_Subtitulo" xml:space="preserve"><value>Notas del equipo sobre este cierre</value></data>
+  <data name="Com_PeriodoFmt" xml:space="preserve"><value>Comentarios del cierre de {0}</value></data>
+  <data name="Com_Sobre" xml:space="preserve"><value>Sobre</value></data>
+  <data name="Com_General" xml:space="preserve"><value>General</value></data>
+  <data name="Com_Placeholder" xml:space="preserve"><value>Escriba un comentario: causa de una desviación, decisión tomada o responsable…</value></data>
+  <data name="Com_Caracteres" xml:space="preserve"><value>caracteres disponibles</value></data>
+  <data name="Com_Publicar" xml:space="preserve"><value>Publicar</value></data>
+  <data name="Com_Vacio" xml:space="preserve"><value>Aún no hay comentarios para este cierre.</value></data>
+  <data name="Com_NoDisponible" xml:space="preserve"><value>Los comentarios todavía no están disponibles en este entorno.</value></data>
+  <data name="Com_Editar" xml:space="preserve"><value>Editar</value></data>
+  <data name="Com_Eliminar" xml:space="preserve"><value>Eliminar</value></data>
+  <data name="Com_Guardar" xml:space="preserve"><value>Guardar</value></data>
+  <data name="Com_Cancelar" xml:space="preserve"><value>Cancelar</value></data>
+  <data name="Com_ConfirmarEliminar" xml:space="preserve"><value>¿Eliminar este comentario?</value></data>
+  <data name="Com_SiEliminar" xml:space="preserve"><value>Sí, eliminar</value></data>
+  <data name="Com_EditadoFmt" xml:space="preserve"><value>editado {0}</value></data>
+  <data name="Com_Error" xml:space="preserve"><value>No se pudo completar la acción.</value></data>
+  <data name="Com_Invalido" xml:space="preserve"><value>Solicitud no válida.</value></data>
+  <data name="Com_TextoInvalido" xml:space="preserve"><value>Escriba un comentario de máximo {0} caracteres.</value></data>
+  <data name="Com_TextoVacio" xml:space="preserve"><value>Escriba un comentario antes de publicar.</value></data>
+  <data name="Com_NoExiste" xml:space="preserve"><value>El comentario ya no existe.</value></data>
+  <data name="Com_ColInforme" xml:space="preserve"><value>Informe</value></data>
+  <data name="Com_ColSobre" xml:space="preserve"><value>Sobre</value></data>
+  <data name="Com_ColComentario" xml:space="preserve"><value>Comentario</value></data>
+  <data name="Com_ColAutor" xml:space="preserve"><value>Autor</value></data>
+  <data name="Com_ColFecha" xml:space="preserve"><value>Fecha</value></data>
+  <data name="Com_Inf_LineasNegocio" xml:space="preserve"><value>Líneas de negocio</value></data>
+  <data name="Com_Inf_PYG" xml:space="preserve"><value>Estado de resultados</value></data>
+  <data name="Com_Inf_Balance" xml:space="preserve"><value>Balance general</value></data>
+  <data name="Com_Inf_Tesoreria" xml:space="preserve"><value>Tesorería del presupuesto</value></data>
+  <data name="Com_Inf_FlujoCaja" xml:space="preserve"><value>Flujo de caja</value></data>
+  <data name="Com_Inf_FlujoEfectivo" xml:space="preserve"><value>Flujo de efectivo</value></data>
+  <data name="Com_Inf_Indicadores" xml:space="preserve"><value>Indicadores</value></data>
+  <data name="Com_Inf_GerenciaMensual" xml:space="preserve"><value>Informe mensual de gerencia</value></data>
+  <data name="PYG_LN_Titulo" xml:space="preserve"><value>Desglose por línea de negocio</value></data>
+  <data name="PYG_LN_Sub" xml:space="preserve"><value>Mismo rango del informe, según las líneas de la empresa en el modelo</value></data>
+  <data name="PYG_LN_VerInforme" xml:space="preserve"><value>Ver informe completo</value></data>
+  <data name="BAL_Comp_ppto" xml:space="preserve"><value>Balance presupuestado del mes</value></data>
+  <data name="BAL_Comp_proy" xml:space="preserve"><value>Balance proyectado del mes</value></data>
+  <data name="BAL_CompCorto_ppto" xml:space="preserve"><value>Ppto.</value></data>
+  <data name="BAL_CompCorto_proy" xml:space="preserve"><value>Proy.</value></data>
+  <data name="CfgIA_Emp_Func_InsightsLineasNegocio" xml:space="preserve"><value>Insights de Líneas de negocio</value></data>
+  <data name="CfgIA_Emp_Func_InsightsGerenciaMensual" xml:space="preserve"><value>Resumen de Gerencia mensual</value></data>
+  <!-- NUEVOS INFORMES (líneas de negocio, gerencia mensual, comentarios) -->
+  <data name="Ind_LabelEscenarioComparar" xml:space="preserve"><value>Comparar con escenario</value></data>
+  <data name="Ind_EscenarioCompararNinguno" xml:space="preserve"><value>Ninguno</value></data>
+  <data name="Ind_ColEscenarioFmt" xml:space="preserve"><value>Escenario: {0}</value></data>
+  <data name="Ind_Ficha_EscenarioFmt" xml:space="preserve"><value>En {0}</value></data>
+  <data name="Ind_Ficha_Posicion" xml:space="preserve"><value>Frente a su historia</value></data>
+  <data name="Ind_Ficha_PosicionFmt" xml:space="preserve"><value>Mejor que el {0} de los {1} meses anteriores del rango</value></data>
+  <data name="Ind_Ficha_UmbralPropio" xml:space="preserve"><value>Esta empresa usa umbrales propios.</value></data>
+  <data name="Ind_BtnUmbrales" xml:space="preserve"><value>Umbrales</value></data>
+  <data name="Ind_UmbTitulo" xml:space="preserve"><value>Umbrales del semáforo</value></data>
+  <data name="Ind_UmbAyuda" xml:space="preserve"><value>Ajuste en qué valor cada indicador pasa de verde a amarillo, naranja o rojo para esta empresa. Los indicadores que no cambie siguen usando los cortes generales.</value></data>
+  <data name="Ind_UmbGuardar" xml:space="preserve"><value>Guardar</value></data>
+  <data name="Ind_UmbRestablecer" xml:space="preserve"><value>Restablecer</value></data>
+  <data name="Ind_UmbGuardado" xml:space="preserve"><value>Umbral guardado</value></data>
+  <data name="Ind_UmbRestablecido" xml:space="preserve"><value>Umbral restablecido</value></data>
+  <data name="Ind_UmbPropio" xml:space="preserve"><value>Propio</value></data>
+  <data name="Ind_UmbMasEsMejor" xml:space="preserve"><value>Más alto es mejor</value></data>
+  <data name="Ind_UmbMenosEsMejor" xml:space="preserve"><value>Más bajo es mejor</value></data>
+  <data name="Ind_UmbSoloLectura" xml:space="preserve"><value>Solo un administrador puede cambiar los umbrales.</value></data>
+  <data name="Ind_Umb_NoDisponible" xml:space="preserve"><value>Los umbrales propios todavía no están disponibles en este entorno.</value></data>
+  <data name="Ind_UmbSinEmpresa" xml:space="preserve"><value>Elija una empresa para ver o editar sus umbrales.</value></data>
+  <data name="Ind_UmbGeneralesFmt" xml:space="preserve"><value>Cortes generales: {0}</value></data>
+  <data name="Ind_UmbCargando" xml:space="preserve"><value>Cargando umbrales…</value></data>
+  <data name="Ind_Umb_Invalido" xml:space="preserve"><value>Escriba los tres cortes con números válidos.</value></data>
+  <data name="Ind_Umb_NoEditable" xml:space="preserve"><value>Este indicador no admite umbrales propios.</value></data>
+  <data name="Ind_Umb_OrdenMas" xml:space="preserve"><value>En este indicador cada corte debe ser menor o igual al anterior (verde ≥ amarillo ≥ naranja).</value></data>
+  <data name="Ind_Umb_OrdenMenos" xml:space="preserve"><value>En este indicador cada corte debe ser mayor o igual al anterior (verde ≤ amarillo ≤ naranja).</value></data>
+  <!-- NUEVOS INFORMES (líneas de negocio, gerencia mensual, comentarios) -->
+  <data name="LN_DocumentacionTooltip" xml:space="preserve"><value>Qué es, de dónde salen las cifras por línea y cómo se calcula cada concepto</value></data>
+  <data name="LN_Doc_ModalTitulo" xml:space="preserve"><value>Documentación: rentabilidad por línea de negocio</value></data>
+  <data name="GM_DocumentacionTooltip" xml:space="preserve"><value>Qué reúne el informe, de qué informe sale cada sección y cómo se lee</value></data>
+  <data name="GM_Doc_ModalTitulo" xml:space="preserve"><value>Documentación: informe mensual de gerencia</value></data>
 </root>

@@ -11,6 +11,7 @@
 <link href="~/Assets/css/modelo-consola.css" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
 
 <div class="container-fluid px-4 mc-page">
 
@@ -104,6 +105,8 @@
                 }
             </div>
         </div>
+
+        @Html.Partial("_TemaInformeSelector", "imTema")
 
         <!-- Fila 2: acciones -->
         <div class="mc-toolbar-row mc-toolbar-acciones">
@@ -227,6 +230,7 @@
 @section scripts {
 
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/empresa-logo.js")"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
 <script>
     var _im = {
@@ -558,6 +562,11 @@
     var _resultadosMulti = {};   // nombreTabla -> { nombre, icono, columnas, filas, error }
 
     function consultarTablas() {
+        if (_consultando) return;
+        InformeTema.preparar().then(function (ok) { if (ok) consultarTablasConTema(); });
+    }
+
+    function consultarTablasConTema() {
         var idEmpresa = $('#idEmpresa').val();
         var sel = tablasSeleccionadas();
         if (!idEmpresa || sel.length === 0 || _consultando) return;
@@ -588,6 +597,7 @@
                 $('#tablaGrid').removeClass('is-disabled');
                 actualizarBotones();
                 mostrarResultadosConsulta(sel);
+                ['#resultadosSection', '#resultadosTabs', '#mcFiltroBar'].forEach(function (id) { InformeTema.aplicar(document.querySelector(id)); });
                 return;
             }
 
@@ -791,12 +801,12 @@
         if (!_pag.nombreTabla) return null;
         var idEmpresa = $('#idEmpresa').val();
         if (!idEmpresa) return null;
-        return {
+        return $.extend({
             NombreTabla: _pag.nombreTabla,
             IdEmpresa:   idEmpresa,
             IdEscenario: $('#idEscenario').val(),
             Anio:        $('#filtroAnio').val() || ''
-        };
+        }, InformeTema.parametros());
     }
 
     function exportarActivo() {
@@ -832,6 +842,7 @@
         aceptar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Common_Aceptar))'
     };
     $(function () {
+        InformeTema.montar({ selector: '#imTema', empresa: '#idEmpresa' });
         var correoIM = ExportMenu.correo({
             url: '@Url.Action("EnviarPorCorreo", "InformeModelos")',
             token: function () { return _im.token; },

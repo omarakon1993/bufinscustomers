@@ -31,6 +31,8 @@ namespace bufinscustomers.Helpers
         {
             new DocumentoInforme { Clave = "hist-precios", Archivo = "Informe_HistPrecios_vs_Excel.html", Permiso = "INFORMES_HIST_PRECIOS", Titulo = "Informe histórico de precios" },
             new DocumentoInforme { Clave = "indicadores", Archivo = "Informe_Indicadores.html", Permiso = "INFORMES_INDICADORES", Titulo = "Informe de indicadores" },
+            new DocumentoInforme { Clave = "lineas-negocio", Archivo = "Informe_LineasNegocio.html", Permiso = "INFORMES_LINEAS_NEGOCIO", Titulo = "Rentabilidad por línea de negocio" },
+            new DocumentoInforme { Clave = "gerencia-mensual", Archivo = "Informe_GerenciaMensual.html", Permiso = "INFORMES_GERENCIA_MENSUAL", Titulo = "Informe mensual de gerencia" },
         };
 
         public static DocumentoInforme Buscar(string clave)

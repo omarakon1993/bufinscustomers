@@ -39,9 +39,17 @@ namespace bufinscustomers.Models
         public const string CierreAnterior = "cierreAnterior";
         public const string MesAnterior = "mesAnterior";
         public const string MismoMesAnioAnterior = "mismoMesAnioAnterior";
+        /// <summary>Balance presupuestado del mes de corte (dbo.ModeloBalancePpto.Valor).</summary>
+        public const string Presupuesto = "ppto";
+        /// <summary>Balance proyectado del mes de corte (dbo.ModeloBalancePpto.ValorFuturo).</summary>
+        public const string Proyeccion = "proy";
+
+        public static bool EsPresupuestal(string comparar) => comparar == Presupuesto || comparar == Proyeccion;
 
         public static string Normalizar(string valor)
         {
+            if (string.Equals(valor, Presupuesto, System.StringComparison.OrdinalIgnoreCase)) return Presupuesto;
+            if (string.Equals(valor, Proyeccion, System.StringComparison.OrdinalIgnoreCase)) return Proyeccion;
             if (string.Equals(valor, MesAnterior, System.StringComparison.OrdinalIgnoreCase)) return MesAnterior;
             if (string.Equals(valor, MismoMesAnioAnterior, System.StringComparison.OrdinalIgnoreCase)) return MismoMesAnioAnterior;
             return CierreAnterior;

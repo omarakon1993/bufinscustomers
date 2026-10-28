@@ -123,3 +123,16 @@
 .ind-gl-item .cuerpo{display:none;padding:12px 14px 14px;border-top:1px dashed #E4E1F0}
 .ind-gl-item.open .cuerpo{display:block}
 .ind-btn-glosario{display:inline-flex;align-items:center;gap:6px}
+
+/* Umbrales propios del semáforo (panel lateral reutilizado de la ficha) */
+.ind-umb-fila { border: 1px solid #E4E1F0; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; background: #fff; }
+.ind-umb-nm { font-size: 13.5px; color: #16121F; }
+.ind-umb-dir { font-size: 11.5px; color: #8B85A0; margin-left: 6px; }
+.ind-umb-tag { font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--tm-soft, #EEF2FF); color: var(--tm-dk, #3B2FBF); margin-left: 6px; }
+.ind-umb-ins { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0 4px; }
+.ind-umb-c { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; margin: 0; }
+.ind-umb-c input { width: 96px; height: 30px; padding: 2px 8px; font-size: 13px; }
+.ind-umb-c em { font-style: normal; color: #8B85A0; }
+.ind-umb-c.verde > span { color: #15803D; } .ind-umb-c.amarillo > span { color: #A16207; } .ind-umb-c.naranja > span { color: #C2410C; }
+.ind-umb-gen { font-size: 11.5px; color: #8B85A0; }
+.ind-umb-acc { margin-top: 8px; display: flex; gap: 6px; }

@@ -1,0 +1,1035 @@
+@using System.Web
+@using bufinscustomers.Models
+@functions {
+    static string J(string s) { return System.Web.HttpUtility.JavaScriptStringEncode(s ?? ""); }
+}
+@{
+    ViewBag.Title = Resources.Strings.LN_PageTitle;
+    var empresas = ViewBag.Empresas as List<Empresas>;
+    var esAdmin = (bool)(ViewBag.EsAdmin ?? false);
+    var culturaJs = System.Globalization.CultureInfo.CurrentUICulture.Name;
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-pyg.css")" rel="stylesheet" />
+<link href="~/Assets/css/informe-balance.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-lineas-negocio.css")" rel="stylesheet" />
+<link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/comentarios-gestion.css")" rel="stylesheet" />
+<link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
+
+<div class="container-fluid px-4">
+<div class="lt-app">
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-sitemap powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.LN_PageTitle</h1>
+            @Html.Partial("_ModeloBufinsTag")
+            <button type="button" class="header-tag-doc" id="lnDocBtn" title="@Resources.Strings.LN_DocumentacionTooltip"><i class="fas fa-book"></i>@Resources.Strings.Common_DocumentacionTag</button>
+        </div>
+    </div>
+
+    @Html.AntiForgeryToken()
+
+    <div class="filter-card">
+        <div class="lt-section-title"><span>@Resources.Strings.Common_FiltrosConsulta</span></div>
+        <div class="lt-grid-quever">
+            <div class="lt-field">
+                <label class="lt-field-label" for="lnEmpresa">@Resources.Strings.Common_LabelEmpresa</label>
+                <select id="lnEmpresa" class="lt-field-select">
+                    @if (esAdmin) { <option value="">@Resources.Strings.Common_Seleccione</option> }
+                    @if (empresas != null)
+                    {
+                        foreach (var e in empresas)
+                        {
+                            <option value="@e.Id">@e.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="lt-field">
+                <label class="lt-field-label" for="lnEscenario">@Resources.Strings.Common_LabelEscenario</label>
+                <select id="lnEscenario" class="lt-field-select">
+                    @if (ViewBag.Escenarios != null)
+                    {
+                        foreach (var esc in ViewBag.Escenarios)
+                        {
+                            <option value="@esc.Id">@esc.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="lt-section-title mt"><span>@Resources.Strings.LineaTiempo_FilaCuando</span></div>
+        <div class="lt-grid-rango" style="grid-template-columns:1fr">
+            <div>
+                <label class="lt-field-label">@Resources.Strings.LineaTiempo_LabelRango</label>
+                <div class="rango-atajos" id="lnAtajos">
+                    <div class="rango-atajos-grupo">
+                        <button type="button" data-preset="todo">@Resources.Strings.Rango_Todo</button>
+                    </div>
+                    <div class="rango-atajos-grupo">
+                        <button type="button" data-preset="ytd">@Resources.Strings.Rango_AnioEnCurso</button>
+                        <button type="button" data-preset="6m">@Resources.Strings.Rango_Ultimos6Meses</button>
+                        <button type="button" data-preset="3m">@Resources.Strings.Rango_UltimoTrimestre</button>
+                        <button type="button" data-preset="mesAnterior">@Resources.Strings.Rango_MesAnterior</button>
+                        <button type="button" data-preset="mesActual">@Resources.Strings.Rango_MesActual</button>
+                    </div>
+                </div>
+                <div class="lt-range-card">
+                    <div class="lt-range-head">
+                        <span class="lbl"><span id="lnRangoDesdeLbl">&mdash;</span><i class="fas fa-long-arrow-alt-right"></i><span id="lnRangoHastaLbl">&mdash;</span></span>
+                        <span class="lt-range-badge" id="lnRangoBadge">&mdash;</span>
+                    </div>
+                    <div class="lt-range-track disabled" id="lnRangoTrack">
+                        <div class="bg"></div>
+                        <div class="sel" id="lnRangoSel"></div>
+                        <div class="knob from" id="lnKnobFrom" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-label="@Resources.Strings.LineaTiempo_LabelRango"></div>
+                        <div class="knob to" id="lnKnobTo" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-label="@Resources.Strings.LineaTiempo_LabelRango"></div>
+                    </div>
+                    <div class="lt-range-years" id="lnRangoYears"></div>
+                </div>
+                <p class="lt-help">@Resources.Strings.LN_RangoHint</p>
+                <p class="lt-help" id="lnSinMeses" style="display:none;">@Resources.Strings.LN_SinMesesDatos</p>
+            </div>
+        </div>
+
+        @Html.Partial("_TemaInformeSelector", "lnTema")
+
+        <div class="btn-group-actions">
+            <button type="button" id="btnConsultarLN" class="btn btn-modern-gradient" disabled>
+                <i class="fas fa-arrow-right mr-1"></i>@Resources.Strings.LineaTiempo_BtnGenerar
+            </button>
+            <button type="button" id="btnLimpiarLN" class="btn btn-modern-secondary">@Resources.Strings.Common_Limpiar</button>
+        </div>
+    </div>
+
+    <div id="lnEstadoInicial" class="lt-card lt-empty">
+        <div class="lt-empty-icon"><i class="fas fa-sitemap"></i></div>
+        <h4>@Resources.Strings.LN_EstadoInicialTitulo</h4>
+        <p>@Resources.Strings.LN_EstadoInicialDesc</p>
+    </div>
+
+    <div id="lnSinDatos" class="lt-card lt-empty" style="display:none;">
+        <div class="lt-empty-icon"><i class="fas fa-inbox"></i></div>
+        <h4>@Resources.Strings.LN_SinDatosTitulo</h4>
+        <p>@Resources.Strings.LN_SinDatosDesc</p>
+    </div>
+
+    <div id="lnResultado" style="display:none;">
+
+        <div class="lt-card" id="lnPanelResultado">
+            <div class="pyg2-letterhead">
+                <span class="pyg2-brand"><img class="bm-logo" src="~/Assets/img/Bufins_Wordmark_Purple.png" alt="Bufins" height="14"><span class="bm-sub">@Resources.Strings.LN_V2_Subtitulo</span></span>
+                <span class="fecha"><span>@Resources.Strings.BAL_V2_GeneradoEl</span> <span id="lnFechaGenerado">&mdash;</span></span>
+            </div>
+            <div class="pyg2-head">
+                <div class="pyg2-head-l">
+                    <span class="emp-logo-plate" id="lnLogo" hidden><img alt="@Resources.Strings.Common_LogoEmpresaAlt"></span>
+                    <div class="emp-logo-texto">
+                        <h2 id="lnTituloEmpresa">&mdash;</h2>
+                        <div class="pyg2-chips">
+                            <span class="pyg2-chip primary"><i class="fas fa-calendar"></i><span id="lnChipPeriodo">&mdash;</span></span>
+                            <span class="pyg2-chip" id="lnChipEscenario">&mdash;</span>
+                            <span class="pyg2-chip" id="lnChipLineas">&mdash;</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pyg2-tools">
+                    <button type="button" class="lt-tool-btn" id="lnBtnUnidad" aria-haspopup="menu" aria-expanded="false">
+                        <span class="lbl-muted">@Resources.Strings.BAL_V2_Unidad</span><span id="lnUnidadLbl">@Resources.Strings.LineaTiempo_UnidadMillones</span><i class="fas fa-chevron-down chev"></i>
+                    </button>
+                    <div class="lt-menu" id="lnMenuUnidad" role="menu">
+                        <button type="button" data-unidad="pesos" role="menuitemradio">@Resources.Strings.LineaTiempo_UnidadPesos<i class="fas fa-check"></i></button>
+                        <button type="button" data-unidad="miles" role="menuitemradio">@Resources.Strings.LineaTiempo_UnidadMiles<i class="fas fa-check"></i></button>
+                        <button type="button" data-unidad="millones" role="menuitemradio">@Resources.Strings.LineaTiempo_UnidadMillones<i class="fas fa-check"></i></button>
+                    </div>
+                    <span class="sep"></span>
+                    @Html.Partial("_ExportMenu", new bufinscustomers.Models.ExportMenuVM { Id = "lnExp", ExcelDesc = Resources.Strings.LN_Exp_ExcelDesc })
+                </div>
+            </div>
+        </div>
+        <form id="frmExportarExcelLN" method="post" action="@Url.Action("ExportarExcel", "InformeLineasNegocio")">
+            @Html.AntiForgeryToken()
+            <div id="lnExpCampos"></div>
+        </form>
+
+        <div class="bal-cuadre-strip" id="lnCuadreStrip"></div>
+
+        <div class="pyg2-section">
+            <div class="pyg2-section-title"><span class="t">@Resources.Strings.LN_IndicadoresClave</span><span class="line"></span></div>
+            <div class="pyg2-kpis" id="lnKpiStrip"></div>
+        </div>
+
+        <div class="pyg2-analysis">
+            <div class="pyg2-card">
+                <div class="pyg2-card-head">
+                    <div>
+                        <div class="pyg2-card-title">@Resources.Strings.LN_MezclaTitulo</div>
+                        <div class="pyg2-card-sub" id="lnMezclaSub">&mdash;</div>
+                    </div>
+                    <span class="pyg2-legend" id="lnMezclaLeyenda"></span>
+                </div>
+                <div class="pyg2-waterfall-wrap"><canvas id="lnChartMezcla"></canvas></div>
+            </div>
+            <div class="pyg2-card" style="gap:12px">
+                <div>
+                    <div class="pyg2-card-title"><i class="fas fa-bolt"></i>@Resources.Strings.LN_RelevanteTitulo</div>
+                    <div class="pyg2-card-sub">@Resources.Strings.LN_RelevanteSub</div>
+                </div>
+                <div class="pyg2-hl-list" id="lnHighlightsList"></div>
+            </div>
+        </div>
+
+        <div class="pyg2-section">
+            <div class="pyg2-section-title"><span class="t">@Resources.Strings.LN_MargenesTitulo</span><span class="line"></span>
+                <span class="pyg2-legend" id="lnMargenesLeyenda"></span>
+            </div>
+            <div class="pyg2-card ln-margenes-card"><div class="ln-margenes-wrap"><canvas id="lnChartMargenes"></canvas></div></div>
+        </div>
+
+        <div class="pyg2-table-card">
+            <div class="pyg2-card-head" style="align-items:center">
+                <div>
+                    <div class="pyg2-card-title">@Resources.Strings.LN_EstadoTitulo</div>
+                    <div class="pyg2-card-sub" id="lnInfoBadge">&mdash;</div>
+                </div>
+            </div>
+            <div class="pyg2-table-wrap">
+                <table class="pyg2-table ln-matriz" id="lnTablaEstado"><thead id="lnEstadoHead"></thead><tbody id="lnEstadoBody"></tbody></table>
+            </div>
+        </div>
+
+        <div class="pyg2-table-card" style="margin-top:14px">
+            <div class="pyg2-card-head" style="align-items:center">
+                <div>
+                    <div class="pyg2-card-title">@Resources.Strings.LN_ResumenTitulo</div>
+                    <div class="pyg2-card-sub" id="lnResumenSub">&mdash;</div>
+                </div>
+            </div>
+            <div class="pyg2-table-wrap">
+                <table class="pyg2-table" id="lnTablaResumen"><thead id="lnResumenHead"></thead><tbody id="lnResumenBody"></tbody></table>
+            </div>
+            <div class="pyg2-table-legend">
+                <span><i class="dot" style="background:#16A34A"></i>@Resources.Strings.BAL_Favorable</span>
+                <span><i class="dot" style="background:#DC2626"></i>@Resources.Strings.BAL_LeyendaDesfavorable</span>
+            </div>
+        </div>
+        <p class="lt-help" id="lnNotaSinAnterior" style="display:none;">@Resources.Strings.LN_SinAnioAnteriorNota</p>
+        <p class="lt-help">@Resources.Strings.LN_NotaMetodo</p>
+
+        @Html.Partial("_ComentariosGestion", "lnComentarios")
+
+        @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
+        {
+        <div class="pyg-insights-card">
+            <div class="pyg-insights-head">
+                <div>
+                    <span class="pyg-insights-title"><i class="fas fa-wand-magic-sparkles"></i>@Resources.Strings.LN_InsightsTitulo</span>
+                    <div class="pyg-insights-meta" id="lnInsightsMeta">@Resources.Strings.LN_InsightsSub</div>
+                </div>
+                <button type="button" id="btnGenerarInsightsLN" class="pyg2-ins-btn"><i class="fas fa-wand-magic-sparkles"></i><span>@Resources.Strings.BAL_Generar</span></button>
+            </div>
+            <div id="lnInsightsBody"></div>
+            <div id="lnInsightsLoading" style="display:none;text-align:center;padding:14px 0;">
+                @Html.Partial("_LoaderDots", "dark")
+                <p style="margin-top:8px;font-size:12.5px;color:#8B85A0;">@Resources.Strings.BAL_Analizando</p>
+            </div>
+            <div class="mt-3">
+                <label for="lnPregunta" class="mb-1" style="font-weight:700;"><i class="fas fa-comments mr-1"></i>@Resources.Strings.IAInforme_Titulo</label>
+                <div class="d-flex" style="gap:8px;flex-wrap:wrap;">
+                    <input type="text" id="lnPregunta" class="form-control" maxlength="@bufinscustomers.Helpers.IAModuloHelper.MaxCharsPregunta()" style="flex:1;min-width:240px;"
+                           placeholder="@Resources.Strings.IAInforme_Placeholder" />
+                    <button type="button" id="btnLnPreguntar" class="pyg2-ins-btn"><i class="fas fa-paper-plane"></i><span>@Resources.Strings.IAInforme_Btn</span></button>
+                </div>
+                <div id="lnRespuesta" class="mt-2"></div>
+            </div>
+        </div>
+        }
+    </div>
+
+</div>
+</div>
+
+<div id="overlayConsultandoLN" class="overlay-cargando" style="display:none;">
+    <div class="overlay-cargando-card">
+        @Html.Partial("_LoaderDots", "aqua")
+        <h5 class="overlay-cargando-title">@Resources.Strings.BAL_JS_Consultando</h5>
+    </div>
+</div>
+
+@Html.Partial("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+@Html.Partial("_DocumentacionVisor", Resources.Strings.LN_Doc_ModalTitulo)
+
+@section scripts {
+<script src="~/Assets/js/select2/select2.min.js"></script>
+<script src="~/Assets/js/chart.umd.min.js"></script>
+<script src="~/Assets/js/jspdf.umd.min.js"></script>
+<script src="~/Assets/js/bufins-pdf-marca.js"></script>
+<script src="~/Assets/js/html2canvas.min.js"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/empresa-logo.js")"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/comentarios-gestion.js")"></script>
+<script src="~/Assets/js/export-menu.js"></script>
+<script src="~/Assets/js/doc-visor.js"></script>
+<script src="~/Assets/js/bufins-markdown.js"></script>
+<script src="~/Assets/js/rango-atajos.js"></script>
+
+<script>
+    var EXP_T = {
+        generando: '@Html.Raw(J(Resources.Strings.Common_Exp_Generando))',
+        errorGenerar: '@Html.Raw(J(Resources.Strings.Common_Exp_ErrorGenerar))',
+        listo: '@Html.Raw(J(Resources.Strings.Common_Exp_Listo))',
+        imagenCopiada: '@Html.Raw(J(Resources.Strings.Common_Exp_ImagenCopiada))',
+        imagenDescargada: '@Html.Raw(J(Resources.Strings.Common_Exp_ImagenDescargada))',
+        valDestino: '@Html.Raw(J(Resources.Strings.RevisarCargue_Correo_ValDestino))',
+        valMaximo: '@Html.Raw(J(Resources.Strings.RevisarCargue_Correo_ValMaximo))',
+        enviando: '@Html.Raw(J(Resources.Strings.RevisarCargue_Correo_Enviando))',
+        error: '@Html.Raw(J(Resources.Strings.Common_ExpCorreo_Error))',
+        exitoTitulo: '@Html.Raw(J(Resources.Strings.Modelo_Correo_ExitoTitulo))',
+        aceptar: '@Html.Raw(J(Resources.Strings.Common_Aceptar))'
+    };
+
+    var _ln = {
+        urls: {
+            meses: '@Url.Action("ObtenerMeses", "InformeLineasNegocio")',
+            reporte: '@Url.Action("ConsultarReporte", "InformeLineasNegocio")',
+            insights: '@Url.Action("GenerarInsightsIA", "InformeLineasNegocio")',
+            preguntar: '@Url.Action("PreguntarInforme", "InformeLineasNegocio")'
+        },
+        token: $('input[name="__RequestVerificationToken"]').first().val(),
+        cultura: '@Html.Raw(J(culturaJs))',
+        esAdmin: @Html.Raw(esAdmin.ToString().ToLowerInvariant()),
+        mesesNombres: [
+            '@Html.Raw(J(Resources.Strings.Common_Mes1))', '@Html.Raw(J(Resources.Strings.Common_Mes2))', '@Html.Raw(J(Resources.Strings.Common_Mes3))',
+            '@Html.Raw(J(Resources.Strings.Common_Mes4))', '@Html.Raw(J(Resources.Strings.Common_Mes5))', '@Html.Raw(J(Resources.Strings.Common_Mes6))',
+            '@Html.Raw(J(Resources.Strings.Common_Mes7))', '@Html.Raw(J(Resources.Strings.Common_Mes8))', '@Html.Raw(J(Resources.Strings.Common_Mes9))',
+            '@Html.Raw(J(Resources.Strings.Common_Mes10))', '@Html.Raw(J(Resources.Strings.Common_Mes11))', '@Html.Raw(J(Resources.Strings.Common_Mes12))'
+        ],
+        t: {
+            errorServidor: '@Html.Raw(J(Resources.Strings.BAL_ErrorServidor))',
+            badgeMes: '@Html.Raw(J(Resources.Strings.LineaTiempo_BadgeMes))',
+            badgeMeses: '@Html.Raw(J(Resources.Strings.LineaTiempo_BadgeMeses))',
+            unidades: { pesos: '@Html.Raw(J(Resources.Strings.LineaTiempo_UnidadPesos))', miles: '@Html.Raw(J(Resources.Strings.LineaTiempo_UnidadMiles))', millones: '@Html.Raw(J(Resources.Strings.LineaTiempo_UnidadMillones))' },
+            unidadSufijoMiles: '@Html.Raw(J(Resources.Strings.LineaTiempo_UnidadSufijoMiles))',
+            unidadSufijoMillones: '@Html.Raw(J(Resources.Strings.LineaTiempo_UnidadSufijoMillones))',
+            unidadBadge: { pesos: '@Html.Raw(J(Resources.Strings.BAL_UnidadPesosCop))', miles: '@Html.Raw(J(Resources.Strings.BAL_UnidadMilesCop))', millones: '@Html.Raw(J(Resources.Strings.BAL_UnidadMillones))' },
+            rangoTooltipFmt: '@Html.Raw(J(Resources.Strings.Rango_TooltipFmt))',
+            rangoSinDatosFmt: '@Html.Raw(J(Resources.Strings.Rango_SinDatosFmt))',
+            generar: '@Html.Raw(J(Resources.Strings.BAL_Generar))',
+            regenerar: '@Html.Raw(J(Resources.Strings.BAL_Regenerar))',
+            insightsVacio: '@Html.Raw(J(Resources.Strings.LN_InsightsVacio))',
+            insightsSub: '@Html.Raw(J(Resources.Strings.LN_InsightsSub))',
+            insightsMetaFmt: '@Html.Raw(J(Resources.Strings.LN_InsightsMetaFmt))',
+            rentabilidad: '@Html.Raw(J(Resources.Strings.LN_InsRentabilidad))',
+            concentracion: '@Html.Raw(J(Resources.Strings.LN_InsConcentracion))',
+            accion: '@Html.Raw(J(Resources.Strings.LN_InsAccion))',
+            periodoFmt: '@Html.Raw(J(Resources.Strings.LN_PeriodoFmt))',
+            lineasFmt: '@Html.Raw(J(Resources.Strings.LN_LineasFmt))',
+            mezclaSubFmt: '@Html.Raw(J(Resources.Strings.LN_MezclaSubFmt))',
+            resumenSubFmt: '@Html.Raw(J(Resources.Strings.LN_ResumenSubFmt))',
+            vsAnterior: '@Html.Raw(J(Resources.Strings.LN_VsAnterior))',
+            deLosIngresos: '@Html.Raw(J(Resources.Strings.LN_DeLosIngresos))',
+            margenOpCorto: '@Html.Raw(J(Resources.Strings.LN_MargenOpCorto))',
+            sinDestacados: '@Html.Raw(J(Resources.Strings.BAL_SinDestacados))',
+            favorable: '@Html.Raw(J(Resources.Strings.BAL_Favorable))',
+            desfavorableCorto: '@Html.Raw(J(Resources.Strings.BAL_DesfavorableCorto))',
+            cuadreIngresosOk: '@Html.Raw(J(Resources.Strings.LN_CuadreIngresosOk))',
+            cuadreIngresosErrorFmt: '@Html.Raw(J(Resources.Strings.LN_CuadreIngresosErrorFmt))',
+            cuadreUtilidadOk: '@Html.Raw(J(Resources.Strings.LN_CuadreUtilidadOk))',
+            cuadreUtilidadErrorFmt: '@Html.Raw(J(Resources.Strings.LN_CuadreUtilidadErrorFmt))',
+            kpi: {
+                Ingresos: '@Html.Raw(J(Resources.Strings.LN_Kpi_Ingresos))', UtilOperacional: '@Html.Raw(J(Resources.Strings.LN_Kpi_UtilOperacional))',
+                MargenOperacional: '@Html.Raw(J(Resources.Strings.LN_Kpi_MargenOperacional))', LineaLider: '@Html.Raw(J(Resources.Strings.LN_Kpi_LineaLider))'
+            },
+            col: {
+                concepto: '@Html.Raw(J(Resources.Strings.LN_Col_Concepto))', linea: '@Html.Raw(J(Resources.Strings.LN_Col_Linea))', total: '@Html.Raw(J(Resources.Strings.LN_Col_Total))',
+                ingresos: '@Html.Raw(J(Resources.Strings.LN_Col_Ingresos))', pctIngresos: '@Html.Raw(J(Resources.Strings.LN_Col_PctIngresos))',
+                margenBruto: '@Html.Raw(J(Resources.Strings.LN_Col_MargenBruto))', margenOperacional: '@Html.Raw(J(Resources.Strings.LN_Col_MargenOperacional))',
+                margenEbitda: '@Html.Raw(J(Resources.Strings.LN_Col_MargenEbitda))', margenNeto: '@Html.Raw(J(Resources.Strings.LN_Col_MargenNeto))',
+                utilOperacional: '@Html.Raw(J(Resources.Strings.LN_Col_UtilOperacional))', pctUtilOperacional: '@Html.Raw(J(Resources.Strings.LN_Col_PctUtilOperacional))',
+                varIngresos: '@Html.Raw(J(Resources.Strings.LN_Col_VarIngresos))', varUtilOperacional: '@Html.Raw(J(Resources.Strings.LN_Col_VarUtilOperacional))'
+            },
+            fila: {
+                Ingresos: '@Html.Raw(J(Resources.Strings.LN_Fila_Ingresos))', CostoVentas: '@Html.Raw(J(Resources.Strings.LN_Fila_CostoVentas))',
+                UtilidadBruta: '@Html.Raw(J(Resources.Strings.LN_Fila_UtilidadBruta))', GastosOperacionales: '@Html.Raw(J(Resources.Strings.LN_Fila_GastosOperacionales))',
+                UtilidadOperacional: '@Html.Raw(J(Resources.Strings.LN_Fila_UtilidadOperacional))', Ebitda: '@Html.Raw(J(Resources.Strings.LN_Fila_Ebitda))',
+                ResultadoNoOperacional: '@Html.Raw(J(Resources.Strings.LN_Fila_ResultadoNoOperacional))', UtilidadAntesImpuestos: '@Html.Raw(J(Resources.Strings.LN_Fila_UtilidadAntesImpuestos))',
+                Impuesto: '@Html.Raw(J(Resources.Strings.LN_Fila_Impuesto))', UtilidadNeta: '@Html.Raw(J(Resources.Strings.LN_Fila_UtilidadNeta))',
+                MargenBruto: '@Html.Raw(J(Resources.Strings.LN_Col_MargenBruto))', MargenOperacional: '@Html.Raw(J(Resources.Strings.LN_Col_MargenOperacional))',
+                MargenEbitda: '@Html.Raw(J(Resources.Strings.LN_Col_MargenEbitda))', MargenNeto: '@Html.Raw(J(Resources.Strings.LN_Col_MargenNeto))'
+            },
+            pdf: {
+                marca: '@Html.Raw(J(Resources.Strings.LineaTiempo_BrandMark))', titulo: '@Html.Raw(J(Resources.Strings.LN_PageTitle))',
+                subtitulo: '@Html.Raw(J(Resources.Strings.LN_V2_Subtitulo))', generadoEl: '@Html.Raw(J(Resources.Strings.BAL_V2_GeneradoEl))',
+                confidencial: '@Html.Raw(J(Resources.Strings.BAL_Pdf_Confidencial))', paginaFmt: '@Html.Raw(J(Resources.Strings.BAL_Pdf_PaginaFmt))',
+                sinInsights: '@Html.Raw(J(Resources.Strings.BAL_Pdf_SinInsights))', resumen: '@Html.Raw(J(Resources.Strings.BAL_Pdf_Resumen))',
+                analisis: '@Html.Raw(J(Resources.Strings.BAL_Pdf_Analisis))', indicadores: '@Html.Raw(J(Resources.Strings.LN_IndicadoresClave))',
+                mezcla: '@Html.Raw(J(Resources.Strings.LN_MezclaTitulo))', margenes: '@Html.Raw(J(Resources.Strings.LN_MargenesTitulo))',
+                estado: '@Html.Raw(J(Resources.Strings.LN_EstadoTitulo))', insights: '@Html.Raw(J(Resources.Strings.LN_InsightsTitulo))',
+                comentarios: '@Html.Raw(J(Resources.Strings.Com_Titulo))', pie: '@Html.Raw(J(Resources.Strings.LN_PdfFooter))'
+            }
+        },
+        reporteActual: null, filtrosConsultados: null, insightsTexto: null,
+        unidad: 'millones', charts: {}, rango: [], iDesde: 0, iHasta: 0,
+        hoy: { anio: @DateTime.Now.Year, mes: @DateTime.Now.Month }
+    };
+
+    var elEmpresaLN = $('#lnEmpresa'), elEscenarioLN = $('#lnEscenario');
+    var CH_MDASH_LN = String.fromCharCode(0x2014), CH_NDASH_LN = String.fromCharCode(0x2013), CH_MIDDOT_LN = String.fromCharCode(0xB7);
+    var s2langLN = {
+        noResults: function () { return '@Html.Raw(J(Resources.Strings.Common_Select2NoResults))'; },
+        searching: function () { return '@Html.Raw(J(Resources.Strings.Common_Select2Searching))'; }
+    };
+
+    function cargarPrefsLN() {
+        try { var p = JSON.parse(localStorage.getItem('ln.prefs') || '{}'); if (['pesos', 'miles', 'millones'].indexOf(p.unidad) >= 0) _ln.unidad = p.unidad; } catch (e) { }
+    }
+    function guardarPrefsLN() { try { localStorage.setItem('ln.prefs', JSON.stringify({ unidad: _ln.unidad })); } catch (e) { } }
+    function escHtmlLN(t) { return $('<span>').text(t == null ? '' : String(t)).html(); }
+    function empresaSeleccionadaLN() { var v = elEmpresaLN.val(); return v ? parseInt(v, 10) : null; }
+    function escenarioSeleccionadoLN() { var v = elEscenarioLN.val(); return v ? parseInt(v, 10) : 1; }
+
+    // ===== Formatos =====
+    function escalarLN(v) { return _ln.unidad === 'miles' ? v / 1000 : (_ln.unidad === 'millones' ? v / 1000000 : v); }
+    function sufijoLN() { return _ln.unidad === 'miles' ? ' ' + _ln.t.unidadSufijoMiles : (_ln.unidad === 'millones' ? ' ' + _ln.t.unidadSufijoMillones : ''); }
+    function decLN() { return _ln.unidad === 'pesos' ? 0 : 1; }
+    function fmtNumLN(v) {
+        if (v === null || v === undefined) return CH_MDASH_LN;
+        try { return new Intl.NumberFormat(_ln.cultura, { minimumFractionDigits: decLN(), maximumFractionDigits: decLN() }).format(escalarLN(v)) + sufijoLN(); }
+        catch (e) { return escalarLN(v) + sufijoLN(); }
+    }
+    function fmtNumVarLN(v) {
+        if (v === null || v === undefined) return CH_MDASH_LN;
+        try { return new Intl.NumberFormat(_ln.cultura, { minimumFractionDigits: decLN(), maximumFractionDigits: decLN(), signDisplay: 'exceptZero' }).format(escalarLN(v)) + sufijoLN(); }
+        catch (e) { var n = escalarLN(v); return (n >= 0 ? '+' : '') + n + sufijoLN(); }
+    }
+    function fmtPctLN(v) {
+        if (v === null || v === undefined) return CH_MDASH_LN;
+        try { return new Intl.NumberFormat(_ln.cultura, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v * 100) + '%'; }
+        catch (e) { return (Math.round(v * 1000) / 10) + '%'; }
+    }
+    function fmtPctVarLN(v) {
+        if (v === null || v === undefined) return CH_MDASH_LN;
+        try { return new Intl.NumberFormat(_ln.cultura, { minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: 'exceptZero' }).format(v * 100) + '%'; }
+        catch (e) { var n = Math.round(v * 1000) / 10; return (n >= 0 ? '+' : '') + n + '%'; }
+    }
+    function chipVarLN(texto, valor) {
+        if (valor === null || valor === undefined || isNaN(valor)) return '<span class="pyg2-dchip">' + CH_MDASH_LN + '</span>';
+        return '<span class="pyg2-dchip ' + (valor >= 0 ? 'up' : 'down') + '"><i class="fas fa-caret-' + (valor >= 0 ? 'up' : 'down') + '"></i>' + escHtmlLN(texto) + '</span>';
+    }
+    function claseVarLN(v) { return (v === null || v === undefined || v === 0) ? 'neu' : (v > 0 ? 'good' : 'bad'); }
+    function mostrarErrorLN(m) {
+        console.error('[InformeLineasNegocio]', m);
+        if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: '@Html.Raw(J(Resources.Strings.Common_Error))', text: m }); else alert(m);
+    }
+
+    function actualizarBotonLN() {
+        $('#btnConsultarLN').prop('disabled', !((!_ln.esAdmin || !!empresaSeleccionadaLN()) && !!elEscenarioLN.val() && _ln.rango.length > 0));
+    }
+    function ocultarResultadosLN() { $('#lnResultado, #lnSinDatos').hide(); $('#lnEstadoInicial').show(); }
+
+    function cargarMesesLN() {
+        _ln.rango = []; _ln.iDesde = 0; _ln.iHasta = 0;
+        $('#lnSinMeses').hide(); ocultarResultadosLN(); pintarRangoLN(); actualizarBotonLN();
+        var idEmpresa = empresaSeleccionadaLN();
+        if (_ln.esAdmin && !idEmpresa) return;
+        $.post(_ln.urls.meses, { idEmpresa: idEmpresa, idEscenario: escenarioSeleccionadoLN(), __RequestVerificationToken: _ln.token }, function (resp) {
+            if (!resp || !resp.success) { mostrarErrorLN((resp && resp.message) || _ln.t.errorServidor); return; }
+            _ln.rango = resp.meses || [];
+            $('#lnSinMeses').toggle(!_ln.rango.length);
+            var inicial = RangoAtajos.porDefecto('ytd', _ln.rango, _ln.hoy);
+            if (inicial) { _ln.iDesde = inicial.d; _ln.iHasta = inicial.h; }
+            pintarRangoLN(); actualizarBotonLN();
+        }).fail(function (xhr) { mostrarErrorLN(_ln.t.errorServidor + ' (HTTP ' + xhr.status + ')'); });
+    }
+
+    // ===== Slider de rango continuo =====
+    function pctIndiceLN(i) { var n = _ln.rango.length; return n > 1 ? (i / (n - 1) * 100) : 0; }
+    function pintarRangoLN() {
+        var meses = _ln.rango, n = meses.length, track = $('#lnRangoTrack');
+        if (n === 0) {
+            track.addClass('disabled');
+            $('#lnRangoDesdeLbl, #lnRangoHastaLbl, #lnRangoBadge').text(CH_MDASH_LN);
+            $('#lnRangoHastaLbl').show(); $('#lnRangoDesdeLbl').next('i').show(); $('#lnRangoYears').empty();
+            $('#lnAtajos button').removeClass('active no-disponible').prop('disabled', true).attr('title', '');
+            return;
+        }
+        track.removeClass('disabled');
+        var pD = pctIndiceLN(_ln.iDesde), pH = pctIndiceLN(_ln.iHasta);
+        $('#lnKnobFrom').css('left', pD + '%').attr({ 'aria-valuemin': 0, 'aria-valuemax': n - 1, 'aria-valuenow': _ln.iDesde, 'aria-valuetext': meses[_ln.iDesde].etiqueta });
+        $('#lnKnobTo').css('left', pH + '%').attr({ 'aria-valuemin': 0, 'aria-valuemax': n - 1, 'aria-valuenow': _ln.iHasta, 'aria-valuetext': meses[_ln.iHasta].etiqueta });
+        $('#lnRangoSel').css({ left: pD + '%', width: (pH - pD) + '%' });
+        var unMes = _ln.iDesde === _ln.iHasta;
+        $('#lnRangoDesdeLbl').text(meses[_ln.iDesde].etiqueta);
+        $('#lnRangoHastaLbl').text(unMes ? '' : meses[_ln.iHasta].etiqueta).toggle(!unMes);
+        $('#lnRangoDesdeLbl').next('i').toggle(!unMes);
+        var total = _ln.iHasta - _ln.iDesde + 1;
+        $('#lnRangoBadge').text(total + ' ' + (total === 1 ? _ln.t.badgeMes : _ln.t.badgeMeses));
+        var anios = [];
+        meses.forEach(function (m) { if (anios.indexOf(m.anio) === -1) anios.push(m.anio); });
+        $('#lnRangoYears').html(anios.map(function (a) { return '<span>' + a + '</span>'; }).join(''));
+        RangoAtajos.pintarBotones($('#lnAtajos button'), _ln.rango, _ln.hoy, _ln.iDesde, _ln.iHasta,
+            _ln.mesesNombres.map(function (x) { return x.substring(0, 3); }), { tooltipFmt: _ln.t.rangoTooltipFmt, sinDatosFmt: _ln.t.rangoSinDatosFmt });
+    }
+    function aplicarPresetLN(preset) {
+        var p = RangoAtajos.indices(preset, _ln.rango, _ln.hoy);
+        if (!p) return;
+        _ln.iDesde = p.d; _ln.iHasta = p.h; pintarRangoLN();
+    }
+    function indiceDesdeXLN(clientX) {
+        var rect = document.getElementById('lnRangoTrack').getBoundingClientRect();
+        return Math.round(Math.min(1, Math.max(0, (clientX - rect.left) / rect.width)) * (_ln.rango.length - 1));
+    }
+    function moverExtremoLN(cual, idx) {
+        idx = Math.min(_ln.rango.length - 1, Math.max(0, idx));
+        if (cual === 'from') { _ln.iDesde = idx; if (_ln.iDesde > _ln.iHasta) _ln.iHasta = _ln.iDesde; }
+        else { _ln.iHasta = idx; if (_ln.iHasta < _ln.iDesde) _ln.iDesde = _ln.iHasta; }
+        pintarRangoLN();
+    }
+    function arrastreLN(e, cual) {
+        if (_ln.rango.length < 2) return;
+        e.preventDefault();
+        var track = $('#lnRangoTrack').addClass('dragging');
+        function onMove(ev) { moverExtremoLN(cual, indiceDesdeXLN(ev.clientX)); }
+        function onUp() { track.removeClass('dragging'); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); }
+        window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp);
+    }
+    function clicPistaLN(e) {
+        if ($(e.target).hasClass('knob') || _ln.rango.length < 2) return;
+        var idx = indiceDesdeXLN(e.clientX);
+        var cual = Math.abs(idx - _ln.iDesde) <= Math.abs(idx - _ln.iHasta) ? 'from' : 'to';
+        moverExtremoLN(cual, idx); arrastreLN(e, cual);
+    }
+    function tecladoKnobLN(e, cual) {
+        var n = _ln.rango.length; if (n < 2) return;
+        var idx = cual === 'from' ? _ln.iDesde : _ln.iHasta;
+        if (e.key === 'ArrowLeft') idx -= 1; else if (e.key === 'ArrowRight') idx += 1; else if (e.key === 'Home') idx = 0; else if (e.key === 'End') idx = n - 1; else return;
+        e.preventDefault(); moverExtremoLN(cual, idx);
+    }
+
+    // ===== Consulta =====
+    function etiquetaPeriodo(r) {
+        var d = _ln.mesesNombres[r.MesDesde - 1] + ' ' + r.AnioDesde, h = _ln.mesesNombres[r.MesHasta - 1] + ' ' + r.AnioHasta;
+        return d === h ? d : d + ' ' + CH_NDASH_LN + ' ' + h;
+    }
+    function filtrosDelSliderLN() {
+        var d = _ln.rango[_ln.iDesde], h = _ln.rango[_ln.iHasta];
+        return { IdEmpresa: empresaSeleccionadaLN() || '', IdEscenario: escenarioSeleccionadoLN(), AnioDesde: d.anio, MesDesde: d.mes, AnioHasta: h.anio, MesHasta: h.mes };
+    }
+    function consultarLN() {
+        if (!_ln.rango.length) return;
+        var filtros = filtrosDelSliderLN();
+        InformeTema.preparar().then(function (ok) { if (ok) consultarConTemaLN(filtros); });
+    }
+    function consultarConTemaLN(filtros) {
+        $('#overlayConsultandoLN').css('display', 'flex');
+        $.post(_ln.urls.reporte, $.extend({ __RequestVerificationToken: _ln.token }, filtros), function (resp) {
+            $('#overlayConsultandoLN').hide();
+            if (!resp || !resp.success) { mostrarErrorLN((resp && resp.message) || _ln.t.errorServidor); return; }
+            var reporte = resp.reporte;
+            if (!reporte || reporte.SinDatos) { $('#lnEstadoInicial, #lnResultado').hide(); $('#lnSinDatos').show(); return; }
+            pintarReporteLN(reporte, filtros);
+        }).fail(function (xhr) { $('#overlayConsultandoLN').hide(); mostrarErrorLN(_ln.t.errorServidor + ' (HTTP ' + xhr.status + ')'); });
+    }
+
+    function pintarReporteLN(r, filtros) {
+        _ln.reporteActual = r; _ln.filtrosConsultados = filtros;
+        reiniciarInsightsLN();
+        $('#lnTituloEmpresa').text(elEmpresaLN.find(':selected').text() || '');
+        EmpresaLogo.mostrar(elEmpresaLN.val(), document.getElementById('lnLogo'));
+        $('#lnChipPeriodo').text(_ln.t.periodoFmt.replace('{0}', etiquetaPeriodo(r)));
+        $('#lnChipEscenario').text(elEscenarioLN.find(':selected').text() || '');
+        $('#lnChipLineas').text(_ln.t.lineasFmt.replace('{0}', r.Lineas.length));
+        try { $('#lnFechaGenerado').text(new Date().toLocaleDateString(_ln.cultura, { day: 'numeric', month: 'long', year: 'numeric' })); } catch (e) { $('#lnFechaGenerado').text(''); }
+        $('#lnMezclaSub').text(_ln.t.mezclaSubFmt.replace('{0}', etiquetaPeriodo(r)));
+        $('#lnResumenSub').text(_ln.t.resumenSubFmt.replace('{0}', etiquetaPeriodo(r)));
+        $('#lnNotaSinAnterior').toggle(!r.HayAnioAnterior);
+        $('#lnEstadoInicial, #lnSinDatos').hide();
+        InformeTema.aplicar(document.getElementById('lnResultado'));
+        $.extend(_ln.filtrosConsultados, InformeTema.parametros());
+        $('#lnResultado').show();
+        repintarLN();
+        if (window.ComentariosGestion) ComentariosGestion.cargar({ idEmpresa: filtros.IdEmpresa || empresaSeleccionadaLN(), anio: r.AnioHasta, mes: r.MesHasta, claves: r.Lineas });
+    }
+
+    function repintarLN() {
+        var r = _ln.reporteActual; if (!r) return;
+        $('#lnUnidadLbl').text(_ln.t.unidades[_ln.unidad]);
+        $('#lnMenuUnidad button').each(function () { var on = $(this).data('unidad') === _ln.unidad; $(this).toggleClass('on', on).attr('aria-checked', on ? 'true' : 'false'); });
+        $('#lnInfoBadge').text(_ln.t.unidadBadge[_ln.unidad]);
+        pintarCuadreLN(r); pintarKpisLN(r); pintarChartsLN(r); pintarDestacadosLN(r); pintarEstadoLN(r); pintarResumenLN(r);
+    }
+
+    function pintarCuadreLN(r) {
+        var T = _ln.t, b = [];
+        function badge(ok, txt) { return '<span class="bal-cuadre-badge ' + (ok ? 'ok' : 'error') + '"><span class="ic"><i class="fas fa-' + (ok ? 'check' : 'triangle-exclamation') + '"></i></span><span class="txt"><span class="t">' + escHtmlLN(txt) + '</span></span></span>'; }
+        if (r.HayComparacionPYG) {
+            b.push(badge(r.CuadraIngresosPYG, r.CuadraIngresosPYG ? T.cuadreIngresosOk : T.cuadreIngresosErrorFmt.replace('{0}', fmtNumVarLN(r.DiferenciaIngresosPYG))));
+            b.push(badge(r.CuadraUtilidadPYG, r.CuadraUtilidadPYG ? T.cuadreUtilidadOk : T.cuadreUtilidadErrorFmt.replace('{0}', fmtNumVarLN(r.DiferenciaUtilidadPYG))));
+        }
+        $('#lnCuadreStrip').html(b.join('')).toggle(b.length > 0);
+    }
+
+    // ===== KPIs =====
+    function datosKpisLN(r) {
+        var t = r.Total, T = _ln.t, lider = r.Resumen[0];
+        function delta(v) { return v === null || v === undefined ? null : { txt: fmtPctVarLN(v), num: v, fav: v >= 0 }; }
+        return [
+            { icono: 'fa-coins', nombre: T.kpi.Ingresos, valor: fmtNumLN(t.Ingresos), d: delta(t.VariacionIngresos) },
+            { icono: 'fa-chart-line', nombre: T.kpi.UtilOperacional, valor: fmtNumLN(t.UtilidadOperacional), d: delta(t.VariacionUtilidadOperacional) },
+            { icono: 'fa-percent', nombre: T.kpi.MargenOperacional, valor: fmtPctLN(t.MargenOperacional), d: null },
+            { icono: 'fa-crown', nombre: T.kpi.LineaLider, valor: lider.Nombre, d: null, ref: lider.PctIngresos != null ? fmtPctLN(lider.PctIngresos) + ' ' + T.deLosIngresos : '' }
+        ];
+    }
+    function pintarKpisLN(r) {
+        var $s = $('#lnKpiStrip').empty();
+        datosKpisLN(r).forEach(function (k) {
+            var fila = k.d ? '<div class="row"><span class="ref">' + escHtmlLN(_ln.t.vsAnterior) + '</span>' + chipVarLN(k.d.txt, k.d.num) + '</div>'
+                         : (k.ref ? '<div class="row"><span class="ref">' + escHtmlLN(k.ref) + '</span></div>' : '');
+            $s.append('<div class="pyg2-kpi"><div class="pyg2-kpi-head"><span class="ic"><i class="fas ' + k.icono + '"></i></span><span class="nm">' + escHtmlLN(k.nombre) + '</span></div>' +
+                '<div class="pyg2-kpi-val"><span class="v">' + escHtmlLN(k.valor) + '</span></div><div class="pyg2-kpi-deltas">' + fila + '</div></div>');
+        });
+    }
+
+    // ===== Gráficos =====
+    function coloresLineasLN() { var A = InformeTema.actual; return [A.p, A.a, A.tercero, A.t4, A.strong, A.s, A.t3, A.dk]; }
+    function destruirChartsLN() { Object.keys(_ln.charts).forEach(function (k) { if (_ln.charts[k]) _ln.charts[k].destroy(); }); _ln.charts = {}; }
+    function pintarChartsLN(r) {
+        destruirChartsLN();
+        var col = coloresLineasLN(), ejeFont = { family: "'Nunito', sans-serif", size: 11, weight: '700' };
+
+        $('#lnMezclaLeyenda').html(r.Lineas.map(function (n, i) { return '<span><i class="sq" style="background:' + col[i % col.length] + '"></i>' + escHtmlLN(n) + '</span>'; }).join(''));
+        _ln.charts.mezcla = new Chart(document.getElementById('lnChartMezcla').getContext('2d'), {
+            type: 'bar',
+            data: { labels: r.Etiquetas, datasets: r.Series.map(function (s, i) {
+                return { label: s.Linea, data: s.Ingresos.map(escalarLN), backgroundColor: col[i % col.length], borderRadius: 2, maxBarThickness: 46 };
+            }) },
+            options: {
+                responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + fmtNumLN(r.Series[c.datasetIndex].Ingresos[c.dataIndex]); } } } },
+                scales: {
+                    x: { stacked: true, grid: { display: false }, ticks: { font: ejeFont, color: '#5B5570' } },
+                    y: { stacked: true, beginAtZero: true, ticks: { display: false }, border: { display: false }, grid: { color: '#F1F0F7' } }
+                }
+            }
+        });
+
+        var A = InformeTema.actual, T = _ln.t;
+        var defs = [{ k: 'MargenBruto', n: T.col.margenBruto, c: A.p }, { k: 'MargenOperacional', n: T.col.margenOperacional, c: A.a }, { k: 'MargenNeto', n: T.col.margenNeto, c: A.tercero }];
+        $('#lnMargenesLeyenda').html(defs.map(function (d) { return '<span><i class="sq" style="background:' + d.c + '"></i>' + escHtmlLN(d.n) + '</span>'; }).join(''));
+        var etiquetas = r.Resumen.map(function (l) { return l.Nombre; }).concat([T.col.total]);
+        var todos = r.Resumen.concat([r.Total]);
+        _ln.charts.margenes = new Chart(document.getElementById('lnChartMargenes').getContext('2d'), {
+            type: 'bar',
+            data: { labels: etiquetas, datasets: defs.map(function (d) {
+                return { label: d.n, data: todos.map(function (l) { return l[d.k] === null || l[d.k] === undefined ? null : l[d.k] * 100; }), backgroundColor: d.c, borderRadius: 3, maxBarThickness: 38 };
+            }) },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + fmtPctLN(c.raw === null ? null : c.raw / 100); } } } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: ejeFont, color: '#5B5570' } },
+                    y: { ticks: { callback: function (v) { return v + '%'; }, font: ejeFont, color: '#8B85A0' }, border: { display: false }, grid: { color: '#F1F0F7' } }
+                }
+            }
+        });
+    }
+
+    // Ranking de líneas por utilidad operacional
+    function pintarDestacadosLN(r) {
+        var $l = $('#lnHighlightsList').empty(), col = coloresLineasLN();
+        var lineas = r.Resumen.slice().sort(function (a, b) { return b.UtilidadOperacional - a.UtilidadOperacional; });
+        if (!lineas.length) { $l.append($('<div class="pyg2-hl-empty">').text(_ln.t.sinDestacados)); return; }
+        var base = Math.max.apply(null, lineas.map(function (x) { return Math.abs(x.UtilidadOperacional); })) || 1;
+        lineas.slice(0, 5).forEach(function (x) {
+            var up = x.UtilidadOperacional >= 0, ancho = Math.abs(x.UtilidadOperacional) / base * 100;
+            var tag = _ln.t.margenOpCorto + ' ' + fmtPctLN(x.MargenOperacional);
+            $l.append('<div class="pyg2-hl ' + (up ? 'up' : 'down') + '"><div class="pyg2-hl-top"><span class="nm">' + escHtmlLN(x.Nombre) + '</span><span class="val">' + escHtmlLN(fmtNumVarLN(x.UtilidadOperacional)) + '</span></div>' +
+                '<div class="pyg2-hl-bot"><div class="pyg2-hl-track"><i style="width:' + ancho.toFixed(1) + '%"></i></div><span class="tag">' + escHtmlLN(tag) + '</span></div></div>');
+        });
+    }
+
+    // ===== Tablas =====
+    function pintarEstadoLN(r) {
+        var T = _ln.t;
+        $('#lnEstadoHead').html('<tr><th class="col-cuenta">' + escHtmlLN(T.col.concepto) + '</th>' +
+            r.Lineas.map(function (n) { return '<th>' + escHtmlLN(n) + '</th>'; }).join('') + '<th>' + escHtmlLN(T.col.total) + '</th></tr>');
+        var filas = r.Filas.map(function (f) {
+            var ultima = f.Codigo === 'UtilidadNeta';
+            return '<tr class="' + (ultima ? 'total' : (f.EsSubtotal ? 'sub' : '')) + '"><td class="lbl">' + escHtmlLN(T.fila[f.Codigo] || f.Codigo) + '</td>' +
+                f.Valores.map(function (v) { return '<td class="real">' + escHtmlLN(fmtNumLN(v)) + '</td>'; }).join('') + '<td class="real"><b>' + escHtmlLN(fmtNumLN(f.Total)) + '</b></td></tr>';
+        });
+        var margenes = [['MargenBruto'], ['MargenOperacional'], ['MargenEbitda'], ['MargenNeto']];
+        margenes.forEach(function (m) {
+            var k = m[0];
+            filas.push('<tr class="ln-margen"><td class="lbl">' + escHtmlLN(T.fila[k]) + '</td>' +
+                r.Resumen.map(function (l) { return '<td class="mar">' + escHtmlLN(fmtPctLN(l[k])) + '</td>'; }).join('') + '<td class="mar"><b>' + escHtmlLN(fmtPctLN(r.Total[k])) + '</b></td></tr>');
+        });
+        $('#lnEstadoBody').html(filas.join(''));
+    }
+
+    function pintarResumenLN(r) {
+        var T = _ln.t, conAnt = r.HayAnioAnterior;
+        $('#lnResumenHead').html('<tr><th class="col-cuenta">' + escHtmlLN(T.col.linea) + '</th><th>' + escHtmlLN(T.col.ingresos) + '</th><th>' + escHtmlLN(T.col.pctIngresos) + '</th><th>' +
+            escHtmlLN(T.col.margenOperacional) + '</th><th>' + escHtmlLN(T.col.utilOperacional) + '</th><th>' + escHtmlLN(T.col.pctUtilOperacional) + '</th>' +
+            (conAnt ? '<th>' + escHtmlLN(T.col.varIngresos) + '</th><th>' + escHtmlLN(T.col.varUtilOperacional) + '</th>' : '') + '</tr>');
+        var todos = r.Resumen.concat([r.Total]);
+        $('#lnResumenBody').html(todos.map(function (l, i) {
+            var esTotal = i === todos.length - 1;
+            return '<tr' + (esTotal ? ' class="total"' : '') + '><td class="lbl">' + escHtmlLN(esTotal ? T.col.total : l.Nombre) + '</td><td class="real">' + escHtmlLN(fmtNumLN(l.Ingresos)) + '</td>' +
+                '<td class="mar">' + escHtmlLN(fmtPctLN(l.PctIngresos)) + '</td><td class="mar">' + escHtmlLN(fmtPctLN(l.MargenOperacional)) + '</td>' +
+                '<td class="real">' + escHtmlLN(fmtNumLN(l.UtilidadOperacional)) + '</td><td class="mar">' + escHtmlLN(fmtPctLN(l.PctUtilidadOperacional)) + '</td>' +
+                (conAnt ? '<td class="chip">' + chipVarLN(fmtPctVarLN(l.VariacionIngresos), l.VariacionIngresos) + '</td><td class="chip">' + chipVarLN(fmtPctVarLN(l.VariacionUtilidadOperacional), l.VariacionUtilidadOperacional) + '</td>' : '') + '</tr>';
+        }).join(''));
+    }
+
+    // ===== Insights (IA) =====
+    function reiniciarInsightsLN() {
+        _ln.insightsTexto = null;
+        $('#lnRespuesta').empty(); $('#lnInsightsLoading').hide();
+        $('#lnInsightsBody').show().html('<div class="pyg2-ins-empty"><i class="fas fa-circle-info"></i><span>' + escHtmlLN(_ln.t.insightsVacio) + '</span></div>');
+        $('#lnInsightsMeta').text(_ln.t.insightsSub);
+        $('#btnGenerarInsightsLN').prop('disabled', false).html('<i class="fas fa-wand-magic-sparkles"></i><span>' + escHtmlLN(_ln.t.generar) + '</span>');
+    }
+    function separarInsightsLN(texto) {
+        var claves = { rentabilidad: /^(rentabilidad|profitability)/i, concentracion: /^(concentraci[oó]n|concentration)/i, accion: /^(acci[oó]n recomendada|recommended action|acci[oó]n)/i };
+        var etiqueta = /^(\*\*|__)?\s*(rentabilidad|concentraci[oó]n|acci[oó]n recomendada|acci[oó]n|profitability|concentration|recommended action)[^:]*:\s*(\*\*|__)?\s*/i;
+        var partes = { rentabilidad: [], concentracion: [], accion: [] }, actual = null;
+        (texto || '').split(/\r?\n/).forEach(function (linea) {
+            var conFormato = linea.replace(/^\s*(?:[-•>#]+|\*(?=\s)|\d+[.)])\s*/, '').trim(), plano = conFormato.replace(/\*\*|__/g, '').trim();
+            if (!plano) return;
+            var enc = null; Object.keys(claves).forEach(function (k) { if (!enc && claves[k].test(plano)) enc = k; });
+            if (enc) { actual = enc; var resto = plano.indexOf(':') >= 0 ? conFormato.replace(etiqueta, '').trim() : ''; if (resto) partes[actual].push(resto); return; }
+            if (actual) partes[actual].push(conFormato);
+        });
+        if (!partes.rentabilidad.length || !partes.concentracion.length || !partes.accion.length) return null;
+        return { rentabilidad: partes.rentabilidad.join(' '), concentracion: partes.concentracion.join(' '), accion: partes.accion.join(' ') };
+    }
+    function negritasLN(t) { return escHtmlLN(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/__(.+?)__/g, '<strong>$1</strong>').replace(/\*\*|__/g, ''); }
+    function pintarInsightsLN(texto) {
+        var s = separarInsightsLN(texto);
+        if (!s) {
+            var md = (typeof window.bufinsMarkdown === 'function') ? window.bufinsMarkdown(texto) : escHtmlLN(texto).replace(/\n/g, '<br>');
+            $('#lnInsightsBody').html('<div class="pyg-insights-body">' + md + '</div>'); return;
+        }
+        var tiles = [
+            { cls: 'logro', icono: 'fa-chart-pie', titulo: _ln.t.rentabilidad, texto: s.rentabilidad },
+            { cls: 'alerta', icono: 'fa-bullseye', titulo: _ln.t.concentracion, texto: s.concentracion },
+            { cls: 'eficiencia', icono: 'fa-list-check', titulo: _ln.t.accion, texto: s.accion }
+        ];
+        $('#lnInsightsBody').html('<div class="pyg2-ins-grid">' + tiles.map(function (t) {
+            return '<div class="pyg2-ins-tile ' + t.cls + '"><div class="h"><span class="ic"><i class="fas ' + t.icono + '"></i></span><span class="t">' + escHtmlLN(t.titulo) + '</span></div><p>' + negritasLN(t.texto) + '</p></div>';
+        }).join('') + '</div>');
+    }
+    function generarInsightsLN() {
+        var r = _ln.reporteActual; if (!r) return;
+        var $btn = $('#btnGenerarInsightsLN'), htmlBtn = $btn.html();
+        $btn.prop('disabled', true); $('#lnInsightsBody').hide(); $('#lnInsightsLoading').show();
+        $.post(_ln.urls.insights, $.extend({ __RequestVerificationToken: _ln.token }, _ln.filtrosConsultados), function (resp) {
+            $('#lnInsightsLoading').hide(); $('#lnInsightsBody').show(); $btn.prop('disabled', false);
+            if (!resp || !resp.Exitoso) { $btn.html(htmlBtn); $('#lnInsightsBody').html('<div class="pyg2-ins-empty"><i class="fas fa-circle-exclamation"></i><span>' + escHtmlLN((resp && resp.Error) || _ln.t.errorServidor) + '</span></div>'); return; }
+            _ln.insightsTexto = resp.Respuesta || '';
+            pintarInsightsLN(_ln.insightsTexto);
+            $btn.html('<i class="fas fa-rotate"></i><span>' + escHtmlLN(_ln.t.regenerar) + '</span>');
+            try { $('#lnInsightsMeta').text(_ln.t.insightsMetaFmt.replace('{0}', new Date().toLocaleDateString(_ln.cultura, { day: 'numeric', month: 'long', year: 'numeric' })).replace('{1}', r.Lineas.length)); } catch (e) { }
+        }).fail(function (xhr) {
+            $('#lnInsightsLoading').hide(); $('#lnInsightsBody').show(); $btn.prop('disabled', false).html(htmlBtn);
+            $('#lnInsightsBody').html('<div class="pyg2-ins-empty"><i class="fas fa-circle-exclamation"></i><span>' + escHtmlLN(_ln.t.errorServidor + ' (HTTP ' + xhr.status + ')') + '</span></div>');
+        });
+    }
+    function preguntarLN() {
+        var q = $.trim($('#lnPregunta').val());
+        if (!q || !_ln.reporteActual) return;
+        var $btn = $('#btnLnPreguntar').prop('disabled', true);
+        $('#lnRespuesta').html('<span class="text-muted"><i class="fas fa-spinner fa-spin mr-1"></i>' + escHtmlLN('@Html.Raw(J(Resources.Strings.IAInforme_Preguntando))') + '</span>');
+        $.post(_ln.urls.preguntar, $.extend({ __RequestVerificationToken: _ln.token, pregunta: q }, _ln.filtrosConsultados), function (resp) {
+            $btn.prop('disabled', false);
+            if (!resp || !resp.Exitoso) { $('#lnRespuesta').html('<span style="color:#b91c1c;">' + escHtmlLN((resp && resp.Error) || '@Html.Raw(J(Resources.Strings.IAInforme_Error))') + '</span>'); return; }
+            var md = (typeof window.bufinsMarkdown === 'function') ? window.bufinsMarkdown(resp.Respuesta || '') : escHtmlLN(resp.Respuesta || '').replace(/\n/g, '<br>');
+            $('#lnRespuesta').html('<div class="pyg-insights-body">' + md + '</div>');
+        }).fail(function () { $btn.prop('disabled', false); $('#lnRespuesta').html('<span style="color:#b91c1c;">' + escHtmlLN('@Html.Raw(J(Resources.Strings.IAInforme_Error))') + '</span>'); });
+    }
+
+    // ===== PDF (A4 horizontal, jsPDF puro) =====
+    var PDF_COL_LN = {
+        marca: [99, 102, 241], morado: [88, 58, 255], texto: [22, 18, 31], texto2: [91, 85, 112], muted: [139, 133, 160],
+        linea: [228, 225, 240], lineaSuave: [238, 240, 246], suave: [244, 243, 251], suave2: [248, 247, 253], zebra: [252, 252, 254],
+        totalBg: [238, 242, 255], totalTx: [59, 47, 191], bueno: [22, 163, 74], buenoBg: [236, 253, 243], malo: [220, 38, 38], maloBg: [254, 242, 242], blanco: [255, 255, 255]
+    };
+    function generarPdfLN() {
+        var r = _ln.reporteActual; if (!r) return Promise.resolve();
+        return new Promise(function (ok, ko) {
+            setTimeout(function () {
+                try { var doc = construirPdfLN(r); doc.save(doc.__nombre); ExportMenu.aviso('success', EXP_T.listo); ok(); }
+                catch (e) { console.error('[InformeLineasNegocio] PDF', e); ko(e); }
+            }, 30);
+        });
+    }
+    function copiarImagenLN() {
+        var empresa = ($('#lnTituloEmpresa').text() || 'LineasNegocio').replace(/[^A-Za-z0-9]+/g, '_');
+        return ExportMenu.copiarImagen(document.getElementById('lnResultado'), 'LineasNegocio_' + empresa + '_' + new Date().toISOString().slice(0, 10) + '.png',
+            { imagenCopiada: EXP_T.imagenCopiada, imagenDescargada: EXP_T.imagenDescargada });
+    }
+    function capturarChartPdfLN(chart, anchoPx, altoPx) {
+        if (!chart) return null;
+        var dpr = chart.options.devicePixelRatio;
+        chart.options.devicePixelRatio = 3;
+        if (anchoPx && altoPx) chart.resize(anchoPx, altoPx); else chart.resize();
+        chart.update('none');
+        var lienzo = document.createElement('canvas');
+        lienzo.width = chart.canvas.width; lienzo.height = chart.canvas.height;
+        var ctx = lienzo.getContext('2d');
+        ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, lienzo.width, lienzo.height); ctx.drawImage(chart.canvas, 0, 0);
+        var img = { data: lienzo.toDataURL('image/jpeg', 0.9), w: chart.width, h: chart.height };
+        chart.options.devicePixelRatio = dpr; chart.resize(); chart.update('none');
+        return img;
+    }
+
+    function construirPdfLN(r) {
+        var T = _ln.t, P = T.pdf, C = InformeTema.pdf(PDF_COL_LN), DEG = InformeTema.pdfDegradado();
+        var pdf = new window.jspdf.jsPDF('l', 'mm', 'a4');
+        var W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight();
+        var M = 12, ANCHO = W - M * 2, LIMITE_Y = H - 15, y = 0;
+        var empresa = $('#lnTituloEmpresa').text() || '', periodo = etiquetaPeriodo(r);
+
+        function rgb(fn, c) { pdf[fn](c[0], c[1], c[2]); }
+        function fuente(est, tam, c) { pdf.setFont('helvetica', est); pdf.setFontSize(tam); rgb('setTextColor', c || C.texto); }
+        function limpiar(t) { return String(t == null ? '' : t).replace(/\*\*|__/g, '').replace(/\s+/g, ' ').trim(); }
+        function ancho(t) { return pdf.getTextWidth(String(t)); }
+        function degradado(x, yy, w, h) {
+            var pasos = 90, n = DEG.length - 1;
+            for (var i = 0; i < pasos; i++) {
+                var t = i / (pasos - 1), seg = Math.min(n - 1, Math.floor(t * n)), f = t * n - seg, a = DEG[seg], b = DEG[seg + 1];
+                pdf.setFillColor(Math.round(a[0] + (b[0] - a[0]) * f), Math.round(a[1] + (b[1] - a[1]) * f), Math.round(a[2] + (b[2] - a[2]) * f));
+                pdf.rect(x + (w * i) / pasos, yy, w / pasos + 0.15, h, 'F');
+            }
+        }
+        function pildora(texto, x, yy, fg, bg, negrita, tam, der) {
+            fuente(negrita ? 'bold' : 'normal', tam || 7.5, fg);
+            var w = ancho(texto) + 5, h = (tam || 7.5) * 0.62 + 1, x0 = der ? x - w : x;
+            rgb('setFillColor', bg); pdf.roundedRect(x0, yy - h + 1.4, w, h, h / 2, h / 2, 'F'); pdf.text(texto, x0 + 2.5, yy); return w;
+        }
+        function tituloSeccion(texto, yy, derecha) {
+            var t = String(texto).toUpperCase(), wDer = 0;
+            if (derecha) { fuente('normal', 7.5, C.muted); wDer = ancho(derecha) + 4; pdf.text(derecha, W - M, yy, { align: 'right' }); }
+            fuente('bold', 8.5, C.morado); pdf.text(t, M, yy);
+            rgb('setDrawColor', C.linea); pdf.setLineWidth(0.3); pdf.line(M + ancho(t) + 3, yy - 1.1, W - M - wDer, yy - 1.1);
+        }
+        function tarjeta(x, yy, w, h) { rgb('setDrawColor', C.linea); rgb('setFillColor', C.blanco); pdf.setLineWidth(0.3); pdf.roundedRect(x, yy, w, h, 2.5, 2.5, 'FD'); }
+        function imagenAjustada(img, x, yy, wMax, hMax) {
+            if (!img) return;
+            var ratio = img.w / img.h, w = wMax, h = w / ratio;
+            if (h > hMax) { h = hMax; w = h * ratio; }
+            pdf.addImage(img.data, 'JPEG', x + (wMax - w) / 2, yy, w, h);
+        }
+        function encabezadoPagina(seccion) {
+            degradado(0, 0, W, 2.4);
+            fuente('bold', 10, C.texto); pdf.text(empresa, M, 11);
+            fuente('normal', 8, C.muted); pdf.text(P.titulo + '  ' + CH_MIDDOT_LN + '  ' + periodo, W - M, 11, { align: 'right' });
+            if (seccion) { fuente('bold', 13, C.texto); pdf.text(seccion, M, 21); }
+            y = seccion ? 29 : 18;
+        }
+        function nuevaPagina(seccion) { pdf.addPage(); encabezadoPagina(seccion); }
+
+        // ===== Página 1: resumen =====
+        degradado(0, 0, W, 34);
+        fuente('bold', 10, C.blanco);
+        var wMarca = window.BufinsPdfMarca ? BufinsPdfMarca(pdf, M, 10) : 0;
+        if (!wMarca) { pdf.text(P.marca, M, 10); wMarca = ancho(P.marca); }
+        fuente('normal', 8.5, C.blanco); pdf.text(CH_MIDDOT_LN + '  ' + P.subtitulo, M + wMarca + 2.5, 10);
+        fuente('bold', 19, C.blanco); pdf.text(empresa, M, 22);
+        fuente('normal', 9.5, C.blanco); pdf.text(P.titulo, M, 29);
+        fuente('normal', 8, C.blanco); pdf.text(P.generadoEl + ' ' + ($('#lnFechaGenerado').text() || ''), W - M, 10, { align: 'right' });
+        fuente('bold', 8, C.blanco); pdf.text(P.confidencial.toUpperCase(), W - M, 29, { align: 'right' });
+        EmpresaLogo.pdf(pdf, { xDerecha: W - M, y: 12.5, alto: 14 });
+
+        y = 43;
+        var xc = M;
+        [{ t: $('#lnChipPeriodo').text(), fg: C.morado, bg: C.totalBg, b: true }, { t: $('#lnChipEscenario').text() }, { t: $('#lnChipLineas').text() }, { t: T.unidadBadge[_ln.unidad] }].forEach(function (c) {
+            if (!c.t) return;
+            fuente(c.b ? 'bold' : 'normal', 7.5, C.texto2);
+            if (xc + ancho(c.t) + 5 > W - M) { xc = M; y += 7; }
+            xc += pildora(c.t, xc, y, c.fg || C.texto2, c.bg || C.suave, !!c.b) + 3;
+        });
+
+        y += 11;
+        if (r.HayComparacionPYG) {
+            var xb = M;
+            [{ ok: r.CuadraIngresosPYG, txt: r.CuadraIngresosPYG ? T.cuadreIngresosOk : T.cuadreIngresosErrorFmt.replace('{0}', fmtNumVarLN(r.DiferenciaIngresosPYG)) },
+             { ok: r.CuadraUtilidadPYG, txt: r.CuadraUtilidadPYG ? T.cuadreUtilidadOk : T.cuadreUtilidadErrorFmt.replace('{0}', fmtNumVarLN(r.DiferenciaUtilidadPYG)) }].forEach(function (b) {
+                xb += pildora(b.txt, xb, y, b.ok ? C.bueno : C.malo, b.ok ? C.buenoBg : C.maloBg, true, 8) + 5;
+            });
+            y += 9;
+        }
+
+        tituloSeccion(P.indicadores, y); y += 4;
+        var kp = datosKpisLN(r), nK = kp.length, gapK = 5, wK = (ANCHO - gapK * (nK - 1)) / nK, hK = 34;
+        kp.forEach(function (k, i) {
+            var x = M + i * (wK + gapK);
+            tarjeta(x, y, wK, hK); degradado(x + 3, y, wK - 6, 1);
+            fuente('bold', 7.5, C.texto2); pdf.text(k.nombre.toUpperCase(), x + 4.5, y + 8);
+            fuente('bold', 15, C.texto); pdf.text(pdf.splitTextToSize(k.valor, wK - 9)[0], x + 4.5, y + 17.5);
+            if (k.d) {
+                fuente('normal', 7, C.muted); pdf.text(T.vsAnterior, x + 4.5, y + 24);
+                pildora(k.d.txt, x + wK - 4.5, y + 24.5, k.d.fav ? C.bueno : C.malo, k.d.fav ? C.buenoBg : C.maloBg, true, 7, true);
+            } else if (k.ref) { fuente('normal', 7, C.muted); pdf.text(k.ref, x + 4.5, y + 24); }
+        });
+        y += hK + 11;
+
+        tituloSeccion(P.insights, y, _ln.insightsTexto ? $('#lnInsightsMeta').text() : ''); y += 4;
+        var sec = _ln.insightsTexto ? separarInsightsLN(_ln.insightsTexto) : null;
+        if (sec) {
+            var tiles = [{ titulo: T.rentabilidad, texto: sec.rentabilidad, c: C.bueno, bg: C.buenoBg }, { titulo: T.concentracion, texto: sec.concentracion, c: C.malo, bg: C.maloBg }, { titulo: T.accion, texto: sec.accion, c: C.morado, bg: C.totalBg }];
+            var gapT = 5, wT = (ANCHO - gapT * 2) / 3;
+            fuente('normal', 8.8, C.texto2);
+            var lin = tiles.map(function (t) { return pdf.splitTextToSize(limpiar(t.texto), wT - 9); });
+            var hT = 14 + Math.max.apply(null, lin.map(function (l) { return l.length; })) * 4.2 + 3;
+            if (y + hT > LIMITE_Y) nuevaPagina(P.resumen);
+            tiles.forEach(function (t, i) {
+                var x = M + i * (wT + gapT);
+                tarjeta(x, y, wT, hT); rgb('setFillColor', t.c); pdf.rect(x + 2.5, y, wT - 5, 1.1, 'F');
+                fuente('bold', 7.5, t.c); pdf.text(t.titulo.toUpperCase(), x + 4.5, y + 8.3);
+                fuente('normal', 8.8, C.texto2); pdf.text(lin[i], x + 4.5, y + 15.5, { lineHeightFactor: 1.35 });
+            });
+            y += hT;
+        } else {
+            rgb('setFillColor', C.suave2); rgb('setDrawColor', C.linea); pdf.setLineDashPattern([1.2, 1], 0); pdf.roundedRect(M, y, ANCHO, 12, 2, 2, 'FD'); pdf.setLineDashPattern([], 0);
+            fuente('italic', 8.5, C.texto2); pdf.text(pdf.splitTextToSize(_ln.insightsTexto ? limpiar(_ln.insightsTexto) : P.sinInsights, ANCHO - 10)[0], M + 5, y + 7.5);
+            y += 12;
+        }
+
+        // Comentarios de gestión del período (si hay)
+        var coms = window.ComentariosGestion ? ComentariosGestion.ultimos() : [];
+        if (coms.length) {
+            y += 9;
+            if (y + 30 > LIMITE_Y) nuevaPagina(P.resumen);
+            tituloSeccion(P.comentarios, y); y += 4;
+            coms.slice(0, 4).forEach(function (c) {
+                fuente('normal', 8.2, C.texto2);
+                var lineas = pdf.splitTextToSize(limpiar((c.Clave ? c.Clave + ': ' : '') + c.Texto) + '  — ' + c.NombreUsuario, ANCHO - 10).slice(0, 3);
+                var hC = lineas.length * 4 + 5;
+                if (y + hC > LIMITE_Y) nuevaPagina(P.resumen);
+                tarjeta(M, y, ANCHO, hC); pdf.text(lineas, M + 5, y + 6, { lineHeightFactor: 1.3 });
+                y += hC + 2;
+            });
+        }
+
+        // ===== Página 2: mezcla y márgenes =====
+        nuevaPagina(P.analisis);
+        var hA = (LIMITE_Y - y - 8) / 2, MMPX = 4;
+        [['mezcla', P.mezcla, $('#lnMezclaSub').text()], ['margenes', P.margenes, '']].forEach(function (g) {
+            tarjeta(M, y, ANCHO, hA);
+            fuente('bold', 10, C.texto); pdf.text(g[1], M + 5, y + 8);
+            if (g[2]) { fuente('normal', 7.5, C.muted); pdf.text(g[2], M + 5, y + 12.5); }
+            var wI = ANCHO - 10, hI = hA - 18;
+            imagenAjustada(capturarChartPdfLN(_ln.charts[g[0]], wI * MMPX, hI * MMPX), M + 5, y + 15, wI, hI);
+            y += hA + 4;
+        });
+
+        // ===== Página 3+: estado de resultados por línea =====
+        nuevaPagina(P.estado);
+        fuente('normal', 7.5, C.muted); pdf.text(T.unidadBadge[_ln.unidad], W - M, 21, { align: 'right' });
+        var nombres = r.Lineas.concat([T.col.total]);
+        var wLbl = 58, wCol = (ANCHO - wLbl) / nombres.length, tam = nombres.length > 7 ? 7 : 7.8, hF = 6.3, hG = 7;
+        function cab() {
+            rgb('setFillColor', C.marca); pdf.rect(M, y, ANCHO, hG, 'F'); fuente('bold', 7.5, C.blanco);
+            pdf.text(T.col.concepto.toUpperCase(), M + 3, y + hG - 2.2);
+            nombres.forEach(function (n, i) { pdf.text(pdf.splitTextToSize(n.toUpperCase(), wCol - 2)[0], M + wLbl + (i + 1) * wCol - 1.5, y + hG - 2.2, { align: 'right' }); });
+            y += hG;
+        }
+        cab();
+        var filasPdf = r.Filas.map(function (f) {
+            return { lbl: T.fila[f.Codigo] || f.Codigo, sub: f.EsSubtotal, ult: f.Codigo === 'UtilidadNeta', celdas: f.Valores.concat([f.Total]).map(fmtNumLN) };
+        });
+        ['MargenBruto', 'MargenOperacional', 'MargenEbitda', 'MargenNeto'].forEach(function (k) {
+            filasPdf.push({ lbl: T.fila[k], sub: false, ult: false, pct: true, celdas: r.Resumen.map(function (l) { return fmtPctLN(l[k]); }).concat([fmtPctLN(r.Total[k])]) });
+        });
+        filasPdf.forEach(function (f, idx) {
+            if (y + hF > LIMITE_Y - 8) { nuevaPagina(P.estado); cab(); }
+            rgb('setFillColor', f.ult ? C.totalBg : (f.sub ? C.suave2 : (idx % 2 ? C.zebra : C.blanco))); pdf.rect(M, y, ANCHO, hF, 'F');
+            fuente(f.sub || f.ult ? 'bold' : 'normal', tam + 0.2, f.ult ? C.totalTx : (f.sub ? C.texto : C.texto2));
+            pdf.text(pdf.splitTextToSize(f.lbl, wLbl - 6)[0], M + (f.sub ? 3 : 6), y + 4.3);
+            fuente(f.sub || f.ult ? 'bold' : 'normal', tam, f.ult ? C.totalTx : C.texto2);
+            f.celdas.forEach(function (c, i) { pdf.text(String(c), M + wLbl + (i + 1) * wCol - 1.5, y + 4.3, { align: 'right' }); });
+            rgb('setDrawColor', C.lineaSuave); pdf.setLineWidth(0.15); pdf.line(M, y + hF, M + ANCHO, y + hF);
+            y += hF;
+        });
+
+        var tot = pdf.internal.getNumberOfPages();
+        for (var p = 1; p <= tot; p++) {
+            pdf.setPage(p); rgb('setDrawColor', C.linea); pdf.setLineWidth(0.3); pdf.line(M, H - 10, W - M, H - 10);
+            fuente('normal', 7, C.muted); pdf.text(P.pie + '  ' + CH_MIDDOT_LN + '  ' + empresa + '  ' + CH_MIDDOT_LN + '  ' + periodo, M, H - 6);
+            pdf.text(P.confidencial, W / 2, H - 6, { align: 'center' });
+            fuente('bold', 7, C.texto2); pdf.text(P.paginaFmt.replace('{0}', p).replace('{1}', tot), W - M, H - 6, { align: 'right' });
+        }
+        pdf.__nombre = 'LineasNegocio_' + empresa.replace(/[^a-z0-9]+/gi, '_') + '_' + r.AnioHasta + ('0' + r.MesHasta).slice(-2) + '.pdf';
+        return pdf;
+    }
+
+    $(document).ready(function () {
+        $('#lnEmpresa, #lnEscenario').select2({ width: '100%', language: s2langLN, dropdownAutoWidth: false, minimumResultsForSearch: 10 });
+        $('#lnEmpresa, #lnEscenario').on('change', cargarMesesLN);
+
+        $('#lnAtajos button').on('click', function () { aplicarPresetLN($(this).data('preset')); });
+        $('#lnKnobFrom').on('pointerdown', function (e) { e.stopPropagation(); arrastreLN(e, 'from'); });
+        $('#lnKnobTo').on('pointerdown', function (e) { e.stopPropagation(); arrastreLN(e, 'to'); });
+        $('#lnRangoTrack').on('pointerdown', clicPistaLN);
+        $('#lnKnobFrom, #lnKnobTo').on('keydown', function (e) { tecladoKnobLN(e, this.id === 'lnKnobFrom' ? 'from' : 'to'); });
+
+        $('#lnBtnUnidad').on('click', function (e) {
+            e.stopPropagation();
+            $(this).attr('aria-expanded', $('#lnMenuUnidad').toggleClass('open').hasClass('open') ? 'true' : 'false');
+        });
+        $('#lnMenuUnidad button').on('click', function (e) {
+            e.stopPropagation();
+            _ln.unidad = $(this).data('unidad');
+            $('#lnMenuUnidad').removeClass('open'); $('#lnBtnUnidad').attr('aria-expanded', 'false');
+            guardarPrefsLN(); repintarLN();
+        });
+        $(document).on('click', function () { $('#lnMenuUnidad').removeClass('open'); $('#lnBtnUnidad').attr('aria-expanded', 'false'); });
+
+        function exportarExcelLN() {
+            if (!_ln.filtrosConsultados) return;
+            var $c = $('#lnExpCampos').empty();
+            Object.keys(_ln.filtrosConsultados).forEach(function (k) { $c.append($('<input type="hidden">').attr('name', k).val(_ln.filtrosConsultados[k] == null ? '' : _ln.filtrosConsultados[k])); });
+            $('#frmExportarExcelLN').submit();
+        }
+
+        $('#btnConsultarLN').on('click', consultarLN);
+        InformeTema.montar({ selector: '#lnTema', empresa: '#lnEmpresa' });
+        $('#btnLimpiarLN').on('click', function () {
+            InformeTema.reset();
+            if (_ln.esAdmin) elEmpresaLN.val('').trigger('change.select2');
+            cargarMesesLN();
+        });
+        $('#btnGenerarInsightsLN').on('click', generarInsightsLN);
+        $('#btnLnPreguntar').on('click', preguntarLN);
+        $('#lnPregunta').on('keydown', function (e) { if (e.which === 13) { e.preventDefault(); preguntarLN(); } });
+
+        ComentariosGestion.montar({ raiz: '#lnComentarios', informe: 'LineasNegocio' });
+
+        var correoLN = ExportMenu.correo({
+            url: '@Url.Action("EnviarPorCorreo", "InformeLineasNegocio")',
+            token: function () { return _ln.token; },
+            datos: function () { return $.extend({}, _ln.filtrosConsultados); },
+            pdf: function () { var d = construirPdfLN(_ln.reporteActual); return d ? d.output('datauristring') : ''; },
+            pills: function () { return [$('#lnTituloEmpresa').text()].concat($('#lnPanelResultado .pyg2-chip').map(function () { return $(this).text(); }).get()); },
+            textos: EXP_T
+        });
+        ExportMenu.init('lnExp', {
+            acciones: { excel: exportarExcelLN, pdf: generarPdfLN, imagen: copiarImagenLN, correo: function () { if (_ln.reporteActual) correoLN.abrir(); } },
+            textos: EXP_T
+        });
+
+        DocVisor.init({ boton: '#lnDocBtn', url: '@Url.Action("Ver", "Documentacion", new { clave = "lineas-negocio" })' });
+        cargarPrefsLN(); pintarRangoLN(); cargarMesesLN();
+    });
+</script>
+}

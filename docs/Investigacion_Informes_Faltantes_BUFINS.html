@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Investigación de informes · BUFINS</title>
+<style>
+:root{--bg:#f6f5fb;--card:#fff;--ink:#1c1738;--ink2:#5b5678;--line:#e3e0f1;--brand:#583aff;--chip:#efecff;--grad:linear-gradient(90deg,#6366F1 0%,#3B82F6 35%,#06B6D4 70%,#01E1D7 100%);--ok:#15803d;--warn:#b45309;--mid:#c2410c;--bad:#b91c1c;--okbg:#e8f6ee;--warnbg:#fdf3dc;--badbg:#fdeaea}
+@media (prefers-color-scheme:dark){:root{--bg:#120a2b;--card:#1a1240;--ink:#efecff;--ink2:#a9a3cc;--line:#2d2460;--brand:#8f7bff;--chip:#271d5c;--ok:#4ade80;--warn:#fbbf24;--mid:#fb923c;--bad:#f87171;--okbg:#12301f;--warnbg:#3a2d0c;--badbg:#3b1616}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "Segoe UI",system-ui,sans-serif}
+.w{max-width:1040px;margin:0 auto;padding:0 20px}
+header{background:var(--grad);color:#fff;padding:34px 0 28px}
+header h1{margin:0 0 6px;font-size:27px}
+header p{margin:0;opacity:.95}
+nav{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+nav .w{display:flex;gap:8px;flex-wrap:wrap;padding:10px 20px}
+nav a{color:var(--brand);background:var(--chip);text-decoration:none;font-size:13px;padding:4px 12px;border-radius:999px}
+section{padding:26px 0 4px}
+h2{font-size:21px;margin:0 0 6px}
+h3{color:var(--brand);font-size:16px;margin:20px 0 6px}
+.lead{color:var(--ink2);margin:0 0 14px}
+.g2,.g3{display:grid;gap:14px}.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:760px){.g2,.g3{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.card h4{margin:0 0 4px;font-size:15px}
+.card p{margin:4px 0;color:var(--ink2);font-size:14px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card);margin:10px 0}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{background:var(--grad);color:#fff;text-align:left;padding:9px 11px;white-space:nowrap}
+td{padding:9px 11px;border-top:1px solid var(--line);vertical-align:top}
+.note{border-left:4px solid var(--brand);background:var(--chip);padding:10px 14px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px}
+.note.ok{border-color:var(--ok);background:var(--okbg)}.note.info{border-color:#06B6D4}.note.bad{border-color:var(--bad);background:var(--badbg)}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:1px 9px;border-radius:999px;background:var(--chip);color:var(--brand);white-space:nowrap}
+.tag.ok{background:var(--okbg);color:var(--ok)}.tag.warn{background:var(--warnbg);color:var(--warn)}.tag.bad{background:var(--badbg);color:var(--bad)}
+code{background:var(--chip);padding:1px 6px;border-radius:5px;font-size:13px}
+ol.steps{padding-left:20px}ul{padding-left:20px}
+a{color:var(--brand)}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 14px;margin:8px 0}
+summary{cursor:pointer;font-weight:600}
+footer{padding:26px 0 40px;color:var(--ink2);font-size:13px}
+@media print{nav{display:none}header{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<header><div class="w">
+<h1>Qué informes le faltan a BUFINS</h1>
+<p>Investigación de mercado cruzada con lo que hoy existe en el sitio y en las tablas <code>Modelo*</code> · Octubre 2026 · actualizado con lo ya implementado (sección 8)</p>
+</div></header>
+<nav><div class="w">
+<a href="#resumen">1. Resumen</a><a href="#hoy">2. Lo que ya tenemos</a><a href="#mercado">3. Qué dice el mercado</a><a href="#nuevos">4. Informes nuevos</a><a href="#mejoras">5. Mejoras a los actuales</a><a href="#transversal">6. Transversales</a><a href="#ruta">7. Ruta sugerida</a><a href="#estado">8. Estado de implementación</a><a href="#limites">9. Límites y fuentes</a>
+</div></nav>
+<main class="w">
+
+<section id="resumen">
+<h2>1. Resumen</h2>
+<p class="lead">BUFINS ya cubre muy bien el "qué pasó" (PYG, Balance, Flujos, Indicadores). Lo que más falta es el "contra qué", el "qué viene" y el "por dónde se fue la plata".</p>
+<div class="g3">
+<div class="card"><h4>Mayor oportunidad</h4><p><b>Rentabilidad por línea de negocio.</b> La tabla <code>ModeloLineasNegocio</code> ya existe y ningún informe gerencial la usa. Es el hueco más grande entre datos y pantalla.</p></div>
+<div class="card"><h4>Mayor valor para el cliente</h4><p><b>Informe mensual de gerencia (board pack)</b> que junte todo en un PDF con comentario de IA, y <b>cierre proyectado del año</b> (real + pronóstico vs presupuesto).</p></div>
+<div class="card"><h4>Diferenciador local</h4><p><b>Benchmark sectorial colombiano</b> con datos públicos de Supersociedades. BUFINS ya sabe leer datos abiertos (Pulso Bufins) y el semáforo de Indicadores hoy usa cortes genéricos.</p></div>
+</div>
+<div class="note ok"><b>Actualización:</b> ya están construidos el informe de Rentabilidad por línea de negocio y el Informe mensual de gerencia, además de varias mejoras y los comentarios de gestión. Ver la sección 8 para el detalle y lo que falta.</div>
+<div class="note info">Orden de prioridad propuesto: (1) Líneas de negocio, (2) Real vs presupuesto con comentarios, (3) Cierre proyectado, (4) Capital de trabajo y ciclo de caja, (5) Informe mensual de gerencia. Detalle en la sección 7.</div>
+<div class="note">Supuesto sobre el público: empresas medianas y pymes colombianas con modelo financiero hecho por BUFINS, varias empresas o grupos empresariales, y un gerente o dueño que lee poco detalle y quiere decisiones. Si el público real es otro, la priorización cambia.</div>
+</section>
+
+<section id="hoy">
+<h2>2. Lo que ya tenemos</h2>
+<p class="lead">Inventario de informes y de qué tabla del modelo alimenta cada uno.</p>
+<div class="tw"><table>
+<tr><th>Informe</th><th>Tabla(s) <code>Modelo*</code></th><th>Cobertura</th></tr>
+<tr><td>Estado de resultados (PYG)</td><td><code>ModeloPYG</code></td><td>Real, presupuesto, forecast, año anterior y otro escenario. <b>Ahora con desglose por línea de negocio.</b></td></tr>
+<tr><td>Balance general</td><td><code>ModeloBalance</code></td><td>Foto al mes de corte, cuadre. <b>Ahora se compara contra el balance presupuestado y proyectado</b> (<code>ModeloBalancePpto</code>).</td></tr>
+<tr><td>Tesorería del presupuesto</td><td><code>ModeloTesoreriaPpto</code></td><td>Solo el año de ejecución; no hay real vs presupuesto mes a mes.</td></tr>
+<tr><td>Flujo de caja / Flujo de efectivo</td><td><code>ModeloFlujoCaja</code>, <code>ModeloFlujoEfectivo</code></td><td>Real, proyectado, presupuesto, fuentes y usos, cascada de caja validada contra balance.</td></tr>
+<tr><td>Indicadores con semáforo</td><td>PYG + Balance + Flujo de caja</td><td>27 indicadores, LTM. <b>Ahora con umbrales propios por empresa, comparación con otro escenario y posición frente a su propia historia.</b></td></tr>
+<tr><td>Histórico de precios</td><td><code>Ini_HistPrecios_Churido</code></td><td>Personalizado para dos empresas. <b>Ahora con paleta de colores.</b></td></tr>
+<tr><td>Línea de tiempo, Informe de modelos, Análisis IA, Tablas de datos</td><td>Varias <code>Modelo*</code></td><td>Exploración libre de las tablas (el Informe de modelos ya tiene paleta de colores).</td></tr>
+<tr><td><b>Rentabilidad por línea de negocio</b> <span class="tag ok">Nuevo</span></td><td><code>ModeloLineasNegocio</code></td><td>Estado de resultados por línea, mezcla de ingresos, márgenes y comparación con el año anterior; se valida contra el PYG.</td></tr>
+<tr><td><b>Informe mensual de gerencia</b> <span class="tag ok">Nuevo</span></td><td>PYG, Balance, Flujo de caja, Indicadores y Líneas</td><td>El cierre de un mes en un solo documento, con resumen de IA y comentarios.</td></tr>
+</table></div>
+<h3>Tablas del modelo y su uso</h3>
+<div class="tw"><table>
+<tr><th>Tabla</th><th>Usada por un informe gerencial</th></tr>
+<tr><td><code>ModeloPYG</code>, <code>ModeloBalance</code>, <code>ModeloFlujoCaja</code>, <code>ModeloFlujoEfectivo</code>, <code>ModeloTesoreriaPpto</code></td><td><span class="tag ok">Sí</span></td></tr>
+<tr><td><code>ModeloLineasNegocio</code></td><td><span class="tag ok">Sí</span> (informe de Rentabilidad por línea y desglose del PYG)</td></tr>
+<tr><td><code>ModeloBalancePpto</code></td><td><span class="tag ok">Sí</span> (comparativo del Balance)</td></tr>
+<tr><td><code>ModeloBalanceDiff</code></td><td><span class="tag bad">No</span> (alimenta la tesorería y los flujos indirectamente; falta confirmar su significado)</td></tr>
+</table></div>
+<div class="note info">Las columnas de las tres tablas ya se confirmaron con datos reales. <code>ModeloLineasNegocio</code> no tiene columna de línea (la línea es el sufijo del nombre de la cuenta) y <code>ModeloBalancePpto</code> numera distinto cada mes, por lo que se cruza por descripción. Solo falta confirmar qué representa <code>ModeloBalanceDiff</code>.</div>
+</section>
+
+<section id="mercado">
+<h2>3. Qué dice el mercado</h2>
+<p class="lead">Lo que encontré, con su nivel de confianza. La mayoría son guías de proveedores, no estudios; los marco como tales.</p>
+<div class="g2">
+<div class="card"><h4>Los tres estados básicos mandan</h4><p>En una encuesta citada por Workday (cerca de 50 profesionales de pymes), flujo de caja, balance y estado de resultados fueron los más valorados. BUFINS ya los tiene. <span class="tag warn">Muestra pequeña</span></p></div>
+<div class="card"><h4>Paquete mensual de gerencia</h4><p>Las guías de "management pack" coinciden en: estados, presupuesto vs real con explicación de desviaciones relevantes, pronóstico a 12 meses y tablero de KPI. <span class="tag warn">Fuente de proveedor</span></p></div>
+<div class="card"><h4>Presupuesto vs real, con responsable</h4><p>Se recomienda que cada desviación diga causa, impacto y responsable. Hoy BUFINS muestra la variación pero no deja anotarla. <span class="tag warn">Fuente de proveedor</span></p></div>
+<div class="card"><h4>Pronóstico móvil</h4><p>Se sugiere extender el pronóstico 12 a 18 meses más allá del presupuesto anual. Gartner lista "mejorar el pronóstico" y "optimizar costos" entre las prioridades de los CFO para 2026. <span class="tag ok">Gartner, comunicado oficial</span></p></div>
+<div class="card"><h4>Ciclo de conversión de efectivo</h4><p>DSO + DIO − DPO es el estándar y los tableros de caja lo muestran como tendencia real vs presupuestada (ejemplo: NetSuite). Deuda neta / EBITDA es una prueba habitual de covenants. <span class="tag warn">Guías técnicas</span></p></div>
+<div class="card"><h4>Benchmark en Colombia</h4><p>Supersociedades publica estados financieros de sociedades del sector real e informes sectoriales (por ejemplo "1.000 Empresas"), y su sistema SIIS tiene consultas de indicadores por año y región. <span class="tag ok">Fuente oficial</span> <span class="tag warn">Estado actual de SIREM/SIIS sin confirmar</span></p></div>
+</div>
+<div class="note">Uso de la información en pymes colombianas: estudios académicos encontrados sugieren que las pymes producen estados financieros comparativos pero los usan poco para decidir (en un estudio de Boyacá, 53 % los presenta y 36 % los usa para decidir). Es un solo estudio regional, no verifiqué la cifra en el documento original. La lectura útil: el valor está en <b>interpretar</b>, no en agregar más tablas.</div>
+<div class="note bad">No encontré en la búsqueda un estudio de mercado colombiano que ordene los informes más usados por pymes. La priorización de abajo combina esa evidencia parcial con lo que ya está en los datos de BUFINS; no es una conclusión de mercado cerrada.</div>
+</section>
+
+<section id="nuevos">
+<h2>4. Informes nuevos propuestos</h2>
+<p class="lead">Ordenados por valor frente al esfuerzo. "Datos" indica si hoy ya hay de dónde leer.</p>
+<div class="tw"><table>
+<tr><th>#</th><th>Informe</th><th>Pregunta que responde</th><th>Fuente</th><th>Datos</th><th>Esfuerzo</th><th>Valor</th></tr>
+<tr><td>1 <span class="tag ok">Hecho</span></td><td><b>Rentabilidad por línea de negocio</b></td><td>¿Qué líneas generan el margen y cuáles lo consumen?</td><td><code>ModeloLineasNegocio</code></td><td><span class="tag warn">Tabla existe; columnas por confirmar</span></td><td>M</td><td><span class="tag ok">Alto</span></td></tr>
+<tr><td>2 <span class="tag warn">Pendiente</span></td><td><b>Real vs presupuesto con comentarios</b></td><td>¿Dónde nos desviamos, por qué y quién responde?</td><td><code>ModeloPYG</code> (<code>ValorPresupuesto</code>), flujos</td><td><span class="tag ok">Listo</span></td><td>M</td><td><span class="tag ok">Alto</span></td></tr>
+<tr><td>3 <span class="tag warn">Pendiente</span></td><td><b>Cierre proyectado del año</b></td><td>¿Dónde vamos a terminar el año frente al presupuesto?</td><td><code>ModeloPYG</code> (<code>ValorForecast</code>), <code>ModeloFlujoCaja</code> (<code>ValorFuturo</code>)</td><td><span class="tag ok">Listo</span></td><td>M</td><td><span class="tag ok">Alto</span></td></tr>
+<tr><td>4 <span class="tag warn">Pendiente</span></td><td><b>Capital de trabajo y ciclo de conversión</b></td><td>¿Cuántos días tarda la plata en volver y cuánta está atrapada?</td><td><code>ModeloBalance</code> + <code>ModeloPYG</code></td><td><span class="tag ok">Listo</span></td><td>S</td><td><span class="tag ok">Alto</span></td></tr>
+<tr><td>5 <span class="tag ok">Hecho</span></td><td><b>Informe mensual de gerencia</b></td><td>¿Cómo cerró el mes, en un solo documento?</td><td>Todos los anteriores</td><td><span class="tag ok">Listo</span></td><td>L</td><td><span class="tag ok">Alto</span></td></tr>
+<tr><td>6</td><td><b>Puente de EBITDA</b></td><td>¿Qué partidas explican el cambio del EBITDA entre dos períodos?</td><td><code>ModeloPYG</code></td><td><span class="tag ok">Listo</span></td><td>S</td><td>Medio</td></tr>
+<tr><td>7</td><td><b>Deuda y covenants</b></td><td>¿Cumplimos las condiciones del banco y con cuánto margen?</td><td><code>ModeloBalance</code>, <code>ModeloPYG</code>, flujos</td><td><span class="tag warn">Falta tabla de umbrales por empresa</span></td><td>M</td><td>Medio</td></tr>
+<tr><td>8</td><td><b>DuPont (rentabilidad del patrimonio)</b></td><td>¿El ROE viene de margen, rotación o apalancamiento?</td><td><code>ModeloPYG</code> + <code>ModeloBalance</code></td><td><span class="tag ok">Listo</span></td><td>S</td><td>Medio</td></tr>
+<tr><td>9</td><td><b>Consolidado de grupo</b></td><td>¿Cómo está el grupo empresarial en conjunto?</td><td>Todas las <code>Modelo*</code> por empresa del grupo</td><td><span class="tag warn">Eliminaciones entre empresas por definir</span></td><td>L</td><td>Medio</td></tr>
+<tr><td>10</td><td><b>Estructura de costos y punto de equilibrio</b></td><td>¿Cuánto hay que vender para no perder?</td><td><code>ModeloPYG</code></td><td><span class="tag warn">Falta clasificar fijo/variable</span></td><td>M</td><td>Medio</td></tr>
+<tr><td>11</td><td><b>Escenarios lado a lado</b></td><td>¿Qué cambia entre Escenario 1 y 2?</td><td>Todas, filtrando <code>IdEscenario</code></td><td><span class="tag ok">Listo</span></td><td>S</td><td>Bajo-medio</td></tr>
+<tr><td>12</td><td><b>Cartera y proveedores por edades</b></td><td>¿Quién nos debe y desde cuándo?</td><td>No existe en <code>Modelo*</code></td><td><span class="tag bad">Requiere hoja de cargue nueva</span></td><td>L</td><td>Alto, pero fuera del modelo</td></tr>
+</table></div>
+
+<h3>Detalle de los cinco primeros</h3>
+<details open><summary>1. Rentabilidad por línea de negocio</summary>
+<ul>
+<li><b>Qué muestra:</b> ingresos, margen bruto y operacional por línea, participación en el total, tendencia y mezcla (cuánto pesa cada línea y cómo cambia).</li>
+<li><b>Por qué:</b> es la pregunta de un gerente multi-línea y es lo único del modelo sin pantalla gerencial. El código del PYG ya tiene un punto de extensión comentado para esto.</li>
+<li><b>Riesgo:</b> las líneas de negocio suelen no repartir bien los costos indirectos; el informe debe decir cómo se asignan.</li>
+</ul></details>
+<details><summary>2. Real vs presupuesto con comentarios</summary>
+<ul>
+<li><b>Qué muestra:</b> desviaciones ordenadas por impacto, con semáforo, y un campo de comentario por línea (causa, impacto, responsable).</li>
+<li><b>Por qué:</b> es la práctica más repetida en las guías de reporte gerencial. El PYG ya compara contra presupuesto; falta convertirlo en una conversación.</li>
+<li><b>Requiere:</b> una tabla pequeña para guardar comentarios por empresa, mes y línea.</li>
+</ul></details>
+<details><summary>3. Cierre proyectado del año</summary>
+<ul>
+<li><b>Qué muestra:</b> real acumulado + pronóstico del resto del año vs presupuesto, para ingresos, EBITDA, utilidad y caja.</li>
+<li><b>Por qué:</b> responde "¿dónde vamos a terminar?", que es lo que Gartner marca como prioridad (mejor pronóstico). Los datos de pronóstico ya están en las tablas.</li>
+<li><b>Cuidado:</b> las notas técnicas ya advierten que <code>ValorFuturo</code> trae basura en enero de años cerrados; reutilizar la regla "real hasta el último mes ejecutado".</li>
+</ul></details>
+<details><summary>4. Capital de trabajo y ciclo de conversión</summary>
+<ul>
+<li><b>Qué muestra:</b> DSO, DIO, DPO y ciclo de conversión mes a mes, caja atrapada en capital de trabajo y cuánto liberaría mejorar un día de cada uno.</li>
+<li><b>Por qué:</b> Indicadores ya calcula los días como cifras sueltas; un informe propio los vuelve tendencia y acción.</li>
+<li><b>Regla heredada:</b> LTM de 12 meses, nunca anualizar.</li>
+</ul></details>
+<details><summary>5. Informe mensual de gerencia</summary>
+<ul>
+<li><b>Qué muestra:</b> portada, resumen en una página, PYG, balance, caja, indicadores en rojo, comentarios de IA y desviaciones comentadas, todo en un PDF con el logo y la paleta de la empresa.</li>
+<li><b>Por qué:</b> es el entregable que un CFO externo manda cada mes. Se arma con piezas que ya existen (exportaciones, logo, tema, IA, correo).</li>
+<li><b>Orden:</b> conviene hacerlo después de los informes 2 y 3, para que tenga qué resumir.</li>
+</ul></details>
+</section>
+
+<section id="mejoras">
+<h2>5. Mejoras a los informes actuales</h2>
+<div class="tw"><table>
+<tr><th>Informe</th><th>Mejora</th><th>Por qué</th><th>Esfuerzo</th></tr>
+<tr><td>Balance</td><td>Comparar contra presupuesto con <code>ModeloBalancePpto</code> y mostrar variación con <code>ModeloBalanceDiff</code> <span class="tag warn">Parcial: falta Diff</span></td><td>Hoy es la única foto sin referencia; las tablas ya existen.</td><td>M</td></tr>
+<tr><td>Tesorería</td><td>Real vs presupuesto mes a mes, colchón de caja configurable y vista semanal (13 semanas)</td><td>Ya listados como fuera de alcance v1. El horizonte corto es lo que más piden en caja.</td><td>M-L</td></tr>
+<tr><td>Indicadores</td><td>Benchmark sectorial colombiano y umbrales editables por empresa o sector <span class="tag warn">Parcial: umbrales por empresa y posición frente a su historia; sin benchmark externo</span></td><td>Los cortes actuales son genéricos; ya está anotado como fase 2.</td><td>L</td></tr>
+<tr><td>Indicadores</td><td>Comparar contra presupuesto y contra otro escenario <span class="tag warn">Parcial: escenario sí, presupuesto no</span></td><td>Hoy solo compara contra períodos anteriores.</td><td>M</td></tr>
+<tr><td>PYG</td><td>Desglose por línea de negocio dentro del mismo informe <span class="tag ok">Hecho</span></td><td>Complementa el informe 1 sin duplicarlo.</td><td>M</td></tr>
+<tr><td>Flujos</td><td>Horizonte de caja ("cuántos meses de caja quedan") con el ritmo de consumo actual</td><td>Se apoya en la cascada recién construida.</td><td>S</td></tr>
+<tr><td>Histórico de precios e Informe de modelos</td><td>Adoptar el tema de colores <span class="tag ok">Hecho</span></td><td>Pendiente conocido en las notas del proyecto; los demás informes ya lo tienen.</td><td>S</td></tr>
+</table></div>
+</section>
+
+<section id="transversal">
+<h2>6. Mejoras transversales</h2>
+<p class="lead">Lo que sube el valor de todos los informes a la vez.</p>
+<div class="g2">
+<div class="card"><h4>Comentarios de gestión <span class="tag ok">Hecho</span></h4><p>Notas por línea y mes, con autor y fecha, que viajen a PDF y correo. Es la base del informe 2 y del informe mensual.</p></div>
+<div class="card"><h4>Envío programado</h4><p>Mandar por correo el informe cada mes a una lista, con auditoría. Hoy el envío es manual.</p></div>
+<div class="card"><h4>Alertas por semáforo</h4><p>Notificación interna y alerta en el Home cuando un indicador pasa a rojo o la caja proyectada queda negativa. Se agrega como un bloque más en el SP de alertas.</p></div>
+<div class="card"><h4>Fotos de cierre</h4><p>Guardar el informe tal como se entregó cada mes, para que no cambie si después se recarga el modelo.</p></div>
+</div>
+<div class="note">Cada informe nuevo debe cumplir los estándares ya definidos: cápsula "Información modelo Bufins", botón <code>_ExportMenu</code>, logo, tema de colores, textos en ambos <code>.resx</code>, auditoría del correo y su archivo en <code>docs-claude/informes/</code>.</div>
+</section>
+
+<section id="ruta">
+<h2>7. Ruta sugerida</h2>
+<ol class="steps">
+<li><b>Ola 1 · Datos que ya están listos</b> (informes 2, 3, 4 y mejora del Balance). Sin cargas nuevas ni tablas nuevas, salvo la de comentarios. <i>La mejora del Balance y los comentarios ya están hechos; los informes 2, 3 y 4 siguen pendientes.</i></li>
+<li><b>Ola 2 · Lo que abre un nuevo tema</b> (informe 1, líneas de negocio, tras confirmar las columnas; informe 6, puente de EBITDA; informe 8, DuPont). <i>El informe 1 ya está hecho.</i></li>
+<li><b>Ola 3 · El paquete</b> (informe 5, informe mensual de gerencia, y envío programado). <i>El informe 5 ya está hecho; el envío programado sigue pendiente.</i></li>
+<li><b>Ola 4 · Diferenciación</b> (benchmark sectorial con datos de Supersociedades; covenants; consolidado de grupo).</li>
+</ol>
+<div class="note ok">Antes de empezar cualquier ola, confirmar con dos o tres clientes reales cuál de los informes de la ola 1 usarían primero. Esta investigación ordena por evidencia y por datos disponibles, no por lo que piden hoy los clientes.</div>
+</section>
+
+<section id="estado">
+<h2>8. Estado de implementación</h2>
+<p class="lead">Lo que se construyó a partir de esta investigación, qué falta y qué debe hacer usted antes de verlo funcionando.</p>
+
+<div class="note ok"><b>Todo compila</b> (proyecto y vistas Razor). Lo que no pude hacer es probarlo contra su base de datos: las cifras reales conviene revisarlas con una empresa conocida (la 6 o la 1 tienen líneas de negocio).</div>
+
+<h3>Lo pedido</h3>
+<div class="tw"><table>
+<tr><th>Pedido</th><th>Estado</th><th>Qué se hizo</th></tr>
+<tr><td>Informe 1 · Rentabilidad por línea de negocio</td><td><span class="tag ok">Hecho</span></td><td>Informe nuevo con estado de resultados por línea, mezcla de ingresos, márgenes, ranking de aporte a la utilidad y comparación con el año anterior. Las líneas se descubren solas por empresa (son el sufijo del nombre de la cuenta en <code>ModeloLineasNegocio</code>) y el total se valida contra el PYG.</td></tr>
+<tr><td>Informe 5 · Informe mensual de gerencia</td><td><span class="tag ok">Hecho</span></td><td>El cierre de un mes en un documento: resumen con IA, resultados vs presupuesto y año anterior, balance, caja, indicadores en atención, líneas de negocio y comentarios. Reutiliza los servicios de los demás informes, por lo que las cifras coinciden con ellos.</td></tr>
+<tr><td>Balance: comparar contra presupuesto</td><td><span class="tag ok">Hecho</span></td><td>Nuevas opciones «Balance presupuestado del mes» y «Balance proyectado del mes» (<code>ModeloBalancePpto</code>).</td></tr>
+<tr><td>Balance: variación con <code>ModeloBalanceDiff</code></td><td><span class="tag warn">Pendiente</span></td><td>No se usó: sus columnas parecen el movimiento mensual, pero no lo pude confirmar y mostrar una cifra mal interpretada es peor que no mostrarla. Se retoma al confirmarlo.</td></tr>
+<tr><td>Indicadores: umbrales editables</td><td><span class="tag ok">Hecho</span></td><td>Botón «Umbrales» (Super Admin y Admin de Empresa): cortes propios por empresa y por indicador, con validación, auditoría y «restablecer».</td></tr>
+<tr><td>Indicadores: comparar con escenario</td><td><span class="tag ok">Hecho</span></td><td>Filtro «Comparar con escenario»: columna en la tabla y dato en la ficha.</td></tr>
+<tr><td>Indicadores: benchmark</td><td><span class="tag warn">Interpretado</span></td><td>Como solo se usan las tablas del modelo, el «benchmark» es la <b>propia historia</b> de la empresa en el rango: «mejor que el X % de los meses anteriores». No hay datos externos ni comparación entre empresas.</td></tr>
+<tr><td>Indicadores: comparar contra presupuesto</td><td><span class="tag bad">No hecho</span></td><td>Exigiría calcular los 27 indicadores con estados presupuestados completos (PYG, balance y flujo), que el modelo no entrega de forma consistente.</td></tr>
+<tr><td>PYG: desglose por línea de negocio</td><td><span class="tag ok">Hecho</span></td><td>Tarjeta dentro del PYG, mismo rango, con enlace al informe completo.</td></tr>
+<tr><td>Histórico de precios e Informe de modelos: tema de colores</td><td><span class="tag ok">Hecho</span></td><td>Selector «Estilos del informe» y tema en pantalla, PDF, imagen, Excel y correo (en el Informe de modelos, que es una grilla, en cabeceras, pestañas, Excel y correo).</td></tr>
+<tr><td>Comentarios de gestión</td><td><span class="tag ok">Hecho</span></td><td>Tarjeta compartida que escriben y leen todos los usuarios de la empresa. La llevan Líneas de negocio, PYG, Balance, Tesorería, Flujos, Indicadores e Informe mensual (que muestra los de todos los informes del cierre).</td></tr>
+<tr><td>SQL de los menús</td><td><span class="tag ok">Hecho</span></td><td>Ver scripts abajo.</td></tr>
+<tr><td>Documentación de los informes</td><td><span class="tag ok">Hecho, sin capturas</span></td><td>Documentos nuevos de Líneas de negocio y Gerencia mensual (con la cápsula «Documentación» y en la biblioteca «Documentación BUFINS»); documentos de Indicadores e Histórico de precios ajustados. Las capturas de pantalla se agregan cuando se pueda correr la aplicación con datos.</td></tr>
+<tr><td>Estilos y estándares</td><td><span class="tag ok">Hecho</span></td><td>Botón Exportar compartido, logo de la empresa, tema, cápsula «Información modelo Bufins», textos en español e inglés, IA por <code>IAGateway</code>, auditoría del correo.</td></tr>
+</table></div>
+
+<h3>Qué debe ejecutar usted (en este orden)</h3>
+<ol class="steps">
+<li><code>Sql/040_ComentariosGestion.sql</code> · crea la tabla de comentarios. Sin ella la tarjeta avisa que no está disponible y el resto funciona.</li>
+<li><code>Sql/041_Menu_LineasNegocio_GerenciaMensual.sql</code> · crea las opciones de menú <code>INFORMES_LINEAS_NEGOCIO</code> e <code>INFORMES_GERENCIA_MENSUAL</code> junto a «Informe de indicadores». Luego asigne el permiso a los usuarios o use «Habilitar para todos» en el Gestor de menús. El Super Admin ya las ve sin esto.</li>
+<li><code>Sql/042_IndicadoresUmbrales.sql</code> · crea la tabla de umbrales propios. Sin ella el informe usa los cortes generales y el botón avisa.</li>
+<li>Publicar la aplicación.</li>
+</ol>
+<div class="note info">Los tres scripts son idempotentes y compatibles con SQL Server 2012. Ninguno modifica datos existentes.</div>
+
+<h3>Qué conviene revisar con datos reales</h3>
+<ul>
+<li><b>Líneas de negocio:</b> que la franja de cuadre contra el PYG salga verde. Si no, la causa probable es la clasificación del costo (qué depreciación y amortización va en costo y cuál en gasto).</li>
+<li><b>Balance presupuestado:</b> que <code>ModeloBalancePpto</code> traiga las mismas descripciones de «Total Activo», «Total pasivo» y demás subtotales; si no, el comparativo se desactiva con una nota.</li>
+<li><b>Informe mensual:</b> que el mes elegido tenga datos de PYG, balance y flujo; cada sección que falte se muestra como «sin datos» sin afectar las demás.</li>
+</ul>
+
+<h3>Pendiente de decisión</h3>
+<ul>
+<li>¿Quiere notificaciones internas cuando alguien deja un comentario de gestión?</li>
+<li>Tomar las capturas de pantalla de los informes nuevos y de las opciones agregadas a Indicadores e Histórico de precios, para incrustarlas en sus documentos.</li>
+<li>Confirmar el significado de <code>ModeloBalanceDiff</code> para cerrar la mejora del Balance.</li>
+</ul>
+</section>
+
+<section id="limites">
+<h2>9. Límites y fuentes</h2>
+<ul>
+<li>Las búsquedas arrojaron sobre todo blogs y glosarios de proveedores. Las cifras de encuestas se tomaron de los resúmenes de búsqueda, no de los documentos completos.</li>
+<li>No hallé estudio sectorial colombiano que ordene los informes por uso. Tampoco confirmé el estado actual de SIREM frente a SIIS.</li>
+<li>No consulté la base de datos. El estado de los datos de cada tabla sale de la documentación del proyecto y del código.</li>
+<li>No revisé a Monthly, Siigo ni Alegra a fondo. Existe una investigación interna previa sobre Monthly en la carpeta de documentación técnica.</li>
+</ul>
+<h3>Fuentes consultadas</h3>
+<ul>
+<li><a href="https://www.gartner.com/en/newsroom/press-releases/2025-08-12-gartner-survey-shows-top-priorities-for-cfos-in-2026-include-cost-optimization">Gartner · prioridades de los CFO para 2026</a></li>
+<li><a href="https://blog.workday.com/en-us/top-7-financial-reports-small-businesses.html">Workday · siete informes financieros para pequeñas empresas</a></li>
+<li><a href="https://www.accountsiq.com/blog/management-reporting-packs-explained-what-cfos-should-include-every-month">AccountsIQ · contenido mensual de un management pack</a></li>
+<li><a href="https://www.apqc.org/resource-library/resource-collection/practices-financial-and-managerial-reporting">APQC · prácticas de reporte financiero y gerencial</a></li>
+<li><a href="https://www.hyperbots.com/glossary/budget-vs-actual-reporting">Hyperbots · presupuesto vs real</a> y <a href="https://www.hyperbots.com/glossary/rolling-forecast-best-practices">pronóstico móvil</a></li>
+<li><a href="https://help.numeric.io/articles/1963067460-financial-metrics-ratios-analytics-inline">Numeric · deuda neta / EBITDA</a></li>
+<li><a href="https://www.supersociedades.gov.co/documents/guest/Prensa/Documentos/2022/1000_Empresas.pdf">Supersociedades · informe 1.000 Empresas</a> y <a href="https://www.valoraanalitik.com/?p=92236">Sistema Integrado de Información Societaria</a></li>
+<li><a href="https://www.redalyc.org/journal/6722/672274958002/672274958002.pdf">Estudio académico sobre uso de información financiera en pymes colombianas</a> (atribución de la cifra de Boyacá sin verificar)</li>
+</ul>
+</section>
+
+</main>
+<footer><div class="w">Documento interno de planeación de BUFINS. No forma parte de la biblioteca de documentación oficial.</div></footer>
+</body>
+</html>

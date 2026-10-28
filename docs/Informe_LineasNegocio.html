@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentación: Rentabilidad por línea de negocio</title>
+<style>
+:root{--bg:#f6f5fb;--card:#fff;--ink:#1c1738;--ink2:#5b5678;--line:#e3e0f1;--brand:#583aff;--chip:#efecff;--ok:#15803d;--warn:#a16207;--mid:#c2410c;--bad:#b91c1c;--grad:linear-gradient(90deg,#6366F1 0%,#3B82F6 35%,#06B6D4 70%,#01E1D7 100%)}
+@media (prefers-color-scheme:dark){:root{--bg:#120a2b;--card:#1a1240;--ink:#efecff;--ink2:#a9a3cc;--line:#2d2460;--brand:#8f7bff;--chip:#271d5c;--ok:#3ddc97;--warn:#fbbf24;--mid:#fb923c;--bad:#ff7a6b}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "Segoe UI",system-ui,sans-serif}
+header{background:var(--grad);color:#fff;padding:34px 18px 28px}.w{max-width:1040px;margin:0 auto;padding:0 18px}
+header h1{margin:0 0 6px;font-size:27px}header p{margin:0;opacity:.95;max-width:720px}
+nav{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}nav .w{display:flex;gap:6px;overflow-x:auto;padding-top:8px;padding-bottom:8px}
+nav a{white-space:nowrap;text-decoration:none;color:var(--ink2);font-size:13px;padding:5px 10px;border-radius:999px}nav a:hover{background:var(--chip);color:var(--ink)}
+section{margin:34px 0}h2{font-size:21px;margin:0 0 6px}h3{font-size:16px;margin:20px 0 8px;color:var(--brand)}
+.lead{color:var(--ink2);margin:0 0 12px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px}
+.g2{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:760px){.g2{grid-template-columns:1fr}}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{background:var(--grad);color:#fff;text-align:left;padding:8px 10px;white-space:nowrap}td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
+td.n{font-weight:700;white-space:nowrap}td.f{font-family:Consolas,monospace;font-size:12.5px}td.r{color:var(--ink2);font-size:12.5px}
+figure{margin:12px 0}figure img{width:100%;border:1px solid var(--line);border-radius:12px;display:block}figcaption{font-size:12.5px;color:var(--ink2);margin-top:5px}
+.note{border-left:4px solid #d97706;background:var(--card);padding:10px 14px;border-radius:8px;color:var(--ink2)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}.dot.v{background:#16a34a}.dot.a{background:#eab308}.dot.o{background:#f97316}.dot.r{background:#dc2626}.dot.gr{background:#94a3b8}
+.ficha{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 16px;margin:10px 0}.ficha h4{margin:0 0 4px;font-size:15px}.ficha .fam{font-size:11px;color:var(--brand);font-weight:700;margin-left:8px;text-transform:uppercase}
+.ficha p{margin:4px 0;color:var(--ink2);font-size:13.5px}.regla{border-left:3px solid var(--brand);padding-left:10px;color:var(--ink)!important}
+code{background:var(--chip);padding:1px 6px;border-radius:6px;font-size:12.5px}ul{padding-left:20px;color:var(--ink2)}li{margin:3px 0}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 14px;margin:8px 0}summary{cursor:pointer;font-weight:700}
+</style></head><body>
+<header><div class="w"><h1>Rentabilidad por línea de negocio</h1><p>Qué es, de dónde salen las cifras, cómo se calcula cada concepto y cómo se valida contra el Estado de resultados.</p></div></header>
+<nav><div class="w"><a href="#para">Para qué sirve</a><a href="#pantalla">La pantalla</a><a href="#datos">De dónde salen las cifras</a><a href="#calculo">Cómo se calcula</a><a href="#cuadre">Cuadre con el PYG</a><a href="#ia">IA</a><a href="#exportar">Exportar</a><a href="#faq">Preguntas frecuentes</a></div></nav>
+<main class="w">
+
+<section id="para"><h2>1. Para qué sirve</h2>
+<p class="lead">Responde: <b>¿qué líneas de negocio generan el margen y cuáles lo consumen?, ¿de cuál depende la empresa?</b> Toma el resultado que Bufins ya calcula por línea y lo muestra como un estado de resultados por línea, con la mezcla de ingresos, los márgenes y la comparación con el año anterior.</p>
+<div class="g2"><div class="card"><b>Para el gerente o dueño</b><ul><li>Qué línea es la líder y cuánto pesa en los ingresos.</li><li>Qué líneas aportan a la utilidad operacional y cuáles no.</li><li>La lectura con IA: rentabilidad, concentración y acción recomendada.</li></ul></div>
+<div class="card"><b>Para el contador o analista financiero</b><ul><li>El estado de resultados completo de cada línea, de ingresos a utilidad neta.</li><li>La validación contra el Estado de resultados (PYG).</li><li>Exportación a Excel, PDF y correo.</li></ul></div></div></section>
+
+<section id="pantalla"><h2>2. La pantalla</h2>
+<p class="lead">Se elige la empresa, el escenario y un <b>rango de meses</b> (con los atajos de siempre: año en curso, últimos 6 meses, etc.). Las cifras del rango se suman y se comparan con el mismo rango del año anterior. También se puede elegir la <b>paleta de colores</b> del informe y de sus exportaciones.</p>
+<div class="tw"><table><tr><th>Bloque</th><th>Qué muestra</th></tr><tr><td><b>Indicadores clave</b></td><td>Ingresos y utilidad operacional (con su variación contra el año anterior), margen operacional y la línea líder con su peso en los ingresos.</td></tr><tr><td><b>Mezcla de ingresos por línea</b></td><td>Barras apiladas mes a mes: cuánto aporta cada línea al ingreso y cómo cambia la mezcla.</td></tr><tr><td><b>Aporte a la utilidad operacional</b></td><td>Las líneas ordenadas por su utilidad operacional, con su margen operacional.</td></tr><tr><td><b>Márgenes por línea</b></td><td>Margen bruto, operacional y neto de cada línea y del total.</td></tr><tr><td><b>Estado de resultados por línea</b></td><td>Ingresos, costo de ventas, utilidad bruta, gastos operacionales, utilidad operacional, EBITDA, resultado no operacional, utilidad antes de impuestos, impuesto y utilidad neta, una columna por línea más el total, y los márgenes.</td></tr><tr><td><b>Resumen por línea</b></td><td>Participación en ingresos y en la utilidad operacional, y variación contra el año anterior.</td></tr><tr><td><b>Comentarios de gestión</b></td><td>Notas del equipo sobre el cierre; se puede indicar a qué línea se refiere cada una.</td></tr></table></div></section>
+
+<section id="datos"><h2>3. De dónde salen las cifras</h2>
+<p class="lead">De la tabla del modelo <code>ModeloLineasNegocio</code>, resultado del modelo de Líneas de Negocio. El informe no ejecuta el modelo: <b>solo hay datos después de ejecutarlo</b> en Ejecución de Modelos (por eso lleva la cápsula «Información modelo Bufins»).</p>
+<ul><li><b>Las líneas son propias de cada empresa.</b> El modelo guarda cada cuenta con el nombre de la línea al final (por ejemplo «Ingresos Exp» pertenece a la línea «Exp»); el informe descubre las líneas solo, sin listas fijas.</li>
+<li>Cada línea trae los mismos 16 conceptos: ingresos, otros ingresos y financieros, gastos de administración y de ventas, depreciación y amortización (de costo y de gasto), provisiones, otros gastos, gastos financieros, diferencia en cambio, impuesto de renta y costo de ventas.</li>
+<li>Solo se muestran las líneas con movimiento en el rango elegido.</li></ul></section>
+
+<section id="calculo"><h2>4. Cómo se calcula</h2>
+<div class="tw"><table><tr><th>Concepto</th><th>Cómo se obtiene</th></tr><tr><td>Costo de ventas</td><td>Costo de ventas (CMV) + depreciación del costo + amortización del costo.</td></tr><tr><td>Utilidad bruta</td><td>Ingresos − costo de ventas.</td></tr><tr><td>Gastos operacionales</td><td>Administración + ventas + depreciación y amortización del gasto + provisiones de cartera e inventarios.</td></tr><tr><td>Utilidad operacional</td><td>Utilidad bruta − gastos operacionales.</td></tr><tr><td>EBITDA</td><td>Utilidad operacional + las cuatro depreciaciones y amortizaciones (costo y gasto). El modelo no trae una línea EBITDA.</td></tr><tr><td>Resultado no operacional</td><td>Otros ingresos + ingresos financieros − otros gastos − gastos financieros − diferencia en cambio.</td></tr><tr><td>Utilidad neta</td><td>Utilidad operacional + resultado no operacional − impuesto de renta.</td></tr><tr><td>Márgenes</td><td>Cada utilidad dividida por los ingresos de la misma línea (sin ingresos no hay margen).</td></tr><tr><td>Comparación</td><td>El mismo rango de meses del año anterior; si ese año no tiene datos de líneas no se muestran variaciones.</td></tr></table></div><p class="note" style="margin-top:12px"><b>Costos y gastos</b> vienen del modelo como valores positivos y el informe los resta; no se interpretan como signos negativos.</p></section>
+
+<section id="cuadre"><h2>5. Cuadre con el Estado de resultados</h2>
+<p class="lead">Una franja verde indica que, para el mismo rango, <b>los ingresos y la utilidad neta sumados de todas las líneas coinciden con el Estado de resultados (PYG)</b> con una tolerancia de un peso. Si no coinciden, la franja se pone en rojo y muestra la diferencia: es una señal para revisar cómo se asignaron los costos entre líneas o si el modelo de Líneas de Negocio y el de PYG se ejecutaron con los mismos datos.</p></section>
+
+<section id="ia"><h2>6. Lectura con IA</h2>
+<ul><li>El botón <b>Generar</b> produce tres líneas: <b>Rentabilidad</b> (qué línea es más y menos rentable), <b>Concentración</b> (cuánto depende el negocio de una sola línea) y <b>Acción recomendada</b>. «Pregúntale a este informe» responde preguntas libres sobre estas cifras.</li>
+<li><b>Qué se envía a la IA:</b> únicamente el resumen ya calculado por línea y el total; no se envían datos contables de detalle ni de otras tablas.</li>
+<li>Cuenta contra el presupuesto de IA de la empresa y respeta el acceso por usuario; si la IA está apagada para la empresa, el bloque no aparece.</li></ul></section>
+
+<section id="exportar"><h2>7. Exportar</h2>
+<p class="lead">Botón <b>Exportar</b>, igual que en los demás informes, con el logo de la empresa y la paleta elegida:</p>
+<ul><li><b>Excel:</b> hojas «Resumen por línea», «Estado por línea» y «Mezcla mensual».</li>
+<li><b>PDF</b> horizontal: resumen con indicadores, lectura con IA y comentarios; mezcla y márgenes; y el estado de resultados por línea.</li>
+<li><b>Copiar como imagen</b> y <b>Enviar por correo</b> (con el Excel y el PDF adjuntos; el envío queda en la auditoría).</li></ul></section>
+
+<section id="faq"><h2>8. Preguntas frecuentes</h2><details><summary>No veo líneas, ¿qué hago?</summary><p>Ejecute el modelo de Líneas de Negocio de la empresa en Ejecución de Modelos y elija un rango con datos. Si la empresa no usa líneas, el informe no tiene qué mostrar.</p></details><details><summary>¿Por qué una línea no aparece?</summary><p>Porque no tuvo movimiento (todo en cero) en el rango elegido.</p></details><details><summary>¿Por qué la franja de cuadre sale en rojo?</summary><p>Los totales de las líneas no coinciden con el PYG. Revise que ambos modelos se hayan ejecutado para el mismo escenario y la misma carga de datos.</p></details><details><summary>¿Por qué un margen aparece vacío?</summary><p>Porque la línea no tuvo ingresos en el rango: sin ingresos no hay margen.</p></details><details><summary>¿Puedo comparar contra el presupuesto?</summary><p>Hoy no: el modelo de líneas no trae presupuesto. Se compara contra el mismo rango del año anterior.</p></details><details><summary>¿Quién puede escribir comentarios?</summary><p>Todos los usuarios con acceso a la empresa; editar o eliminar un comentario solo puede hacerlo su autor o un administrador.</p></details></section>
+
+</main>
+</body></html>

@@ -209,7 +209,11 @@ namespace bufinscustomers.Models
 
         public bool SinDatos { get; set; }
         public string Mensaje { get; set; }
-        // EXTENSIÓN FUTURA: agregar aquí un List<PygLineaNegocioDesglose> alimentado por
-        // dbo.ModeloLineasNegocio cuando se aborde la fase de Líneas de Negocio (fuera de alcance ahora).
+        /// <summary>Desglose por línea de negocio del mismo rango (dbo.ModeloLineasNegocio, vía InformeLineasNegocioService). Solo
+        /// resumen por línea; el detalle completo está en el informe de Rentabilidad por línea de negocio. Vacío si la empresa
+        /// no tiene líneas cargadas.</summary>
+        public bool HayLineasNegocio { get; set; }
+        public List<LnLineaResumen> LineasNegocio { get; set; } = new List<LnLineaResumen>();
+        public LnLineaResumen LineasNegocioTotal { get; set; }
     }
 }

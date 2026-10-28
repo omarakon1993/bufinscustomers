@@ -8,3 +8,5 @@ Referencia para Claude/desarrolladores, extraída de `CLAUDE.md` para mantenerlo
 - [Flujo de caja y Flujo de efectivo](Flujos.md)
 - [Indicadores con semáforo](Indicadores.md)
 - [Histórico de precios (personalizado)](HistPrecios.md)
+- [Rentabilidad por línea de negocio](LineasNegocio.md)
+- [Informe mensual de gerencia](GerenciaMensual.md)

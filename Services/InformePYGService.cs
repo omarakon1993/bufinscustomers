@@ -355,6 +355,23 @@ namespace bufinscustomers.Services
             resultado.TendenciaEbitda = ArmarTendencia(filasTendencia, filasEsc, DescComponentesEbitda, comparar, agrupar, kD, kH, variosAños);
             resultado.TendenciaUtilidadNeta = ArmarTendencia(filasTendencia, filasEsc, descNeta, comparar, agrupar, kD, kH, variosAños);
 
+            // Desglose por línea de negocio del mismo rango (opcional: si falla o la empresa no tiene líneas, el PYG sigue igual).
+            try
+            {
+                var ln = new InformeLineasNegocioService().ConstruirReporte(new FiltrosLineasNegocio
+                {
+                    IdEmpresa = filtros.IdEmpresa, IdEscenario = filtros.IdEscenario,
+                    AnioDesde = añoD, MesDesde = kD % 12 + 1, AnioHasta = añoH, MesHasta = kH % 12 + 1
+                });
+                if (!ln.SinDatos)
+                {
+                    resultado.HayLineasNegocio = true;
+                    resultado.LineasNegocio = ln.Resumen;
+                    resultado.LineasNegocioTotal = ln.Total;
+                }
+            }
+            catch (Exception ex) { bufinscustomers.Helpers.AppLogger.Error(ex, "InformePYGService.LineasNegocio"); }
+
             return resultado;
         }
 

@@ -1,0 +1,17 @@
+/* Informe mensual de gerencia — solo lo que no cubren informe-pyg.css / informe-balance.css. */
+.gm-grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.gm-grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 14px; }
+@media (max-width: 991px) { .gm-grid3, .gm-grid2 { grid-template-columns: 1fr; } }
+.gm-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 2px; border-bottom: 1px solid #F1F0F7; font-size: 13.5px; }
+.gm-fila:last-of-type { border-bottom: 0; }
+.gm-et { color: #5B5570; }
+.gm-val { color: #16121F; display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.gm-nota { margin-top: 10px; font-size: 12.5px; padding: 6px 10px; border-radius: 8px; }
+.gm-nota.ok { background: #ECFDF3; color: #15803D; }
+.gm-nota.error { background: #FEF2F2; color: #B91C1C; }
+.gm-semaforo { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.gm-sem { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: #F1F0F7; color: #5B5570; }
+.gm-sem.verde { background: #ECFDF3; color: #15803D; }
+.gm-sem.amarillo { background: #FEF9C3; color: #A16207; }
+.gm-sem.naranja { background: #FFEDD5; color: #C2410C; }
+.gm-sem.rojo { background: #FEE2E2; color: #B91C1C; }

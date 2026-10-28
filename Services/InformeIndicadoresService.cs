@@ -135,14 +135,37 @@ namespace bufinscustomers.Services
                 if (datos.MesesPyg.Contains(i) || datos.MesesBal.Contains(i)) idxTendencia.Add(i);
             if (idxTendencia.Count > MaxPuntosTendencia) idxTendencia = idxTendencia.Skip(idxTendencia.Count - MaxPuntosTendencia).ToList();
 
-            foreach (var def in IndicadoresCatalogo.Todos)
+            // Umbrales propios de la empresa (si los configuró): reemplazan los cortes generales solo de esos indicadores.
+            var umbrales = new IndicadoresUmbralesService().Obtener(filtros.IdEmpresa, out _);
+
+            // Otro escenario, evaluado en el mismo mes de corte.
+            IndCtx corteEsc = null;
+            if (filtros.IdEscenarioComparar.HasValue && filtros.IdEscenarioComparar.Value != filtros.IdEscenario)
             {
+                var datosEsc = CargarDatos(filtros.IdEmpresa, filtros.IdEscenarioComparar.Value, añoLectura, filtros.AnioHasta);
+                var ctx = new IndCtx(datosEsc, idxCorte);
+                if (ctx.MesesPyg > 0 || ctx.HayBalance) { corteEsc = ctx; r.HayEscenarioComparar = true; r.IdEscenarioComparar = filtros.IdEscenarioComparar; }
+            }
+
+            foreach (var defBase in IndicadoresCatalogo.Todos)
+            {
+                bool propio = umbrales.TryGetValue(defBase.Codigo, out var cortesPropios) && IndicadoresUmbralesService.EsEditable(defBase)
+                    && IndicadoresUmbralesService.Validar(defBase, cortesPropios) == null;
+                var def = propio ? IndicadoresUmbralesService.ConCortes(defBase, cortesPropios) : defBase;
+                if (propio) r.HayUmbralesPropios = true;
+
                 var ev = Evaluar(def, corte);
                 var iv = new IndicadorValor
                 {
-                    Codigo = def.Codigo, Familia = def.Familia, Formato = def.Formato, MasEsMejor = def.MasEsMejor, Cortes = def.Cortes,
+                    Codigo = def.Codigo, Familia = def.Familia, Formato = def.Formato, MasEsMejor = def.MasEsMejor, Cortes = def.Cortes, UmbralPropio = propio,
                     Valor = ev.Valor, Nivel = ev.Nivel, NoAplica = ev.NoAplica, Parcial = ev.Parcial, Motivo = ev.Motivo, MesesLtm = ev.MesesLtm
                 };
+
+                if (corteEsc != null)
+                {
+                    var eve = Evaluar(def, corteEsc);
+                    iv.ValorEsc = eve.Valor; iv.NivelEsc = eve.Nivel;
+                }
 
                 if (r.HayComparativo)
                 {
@@ -161,6 +184,18 @@ namespace bufinscustomers.Services
                 {
                     var evt = Evaluar(def, new IndCtx(datos, i));
                     iv.Tendencia.Add(new IndicadorPunto { Anio = i / 12, Mes = i % 12 + 1, Valor = evt.Valor, Nivel = evt.Nivel });
+                }
+
+                // Posición frente a su propia historia en el rango (sin contar el mes de corte); solo con dirección y ≥ 5 meses con valor.
+                if (def.MasEsMejor.HasValue && ev.Valor.HasValue)
+                {
+                    var otros = iv.Tendencia.Where(p => p.Valor.HasValue && !(p.Anio == filtros.AnioHasta && p.Mes == filtros.MesHasta)).Select(p => p.Valor.Value).ToList();
+                    if (otros.Count >= 5)
+                    {
+                        int peores = otros.Count(v => def.MasEsMejor.Value ? ev.Valor.Value > v : ev.Valor.Value < v);
+                        iv.MejorQueFraccion = (decimal)peores / otros.Count;
+                        iv.MesesHistoria = otros.Count;
+                    }
                 }
 
                 r.Indicadores.Add(iv);

@@ -11,6 +11,8 @@ namespace bufinscustomers.Models
         public const string InsightsFlujoCaja = "InsightsFlujoCaja"; // Insights del Flujo de caja gerencial
         public const string InsightsFlujoEfectivo = "InsightsFlujoEfectivo"; // Insights del Flujo de efectivo gerencial
         public const string InsightsIndicadores = "InsightsIndicadores"; // Insights del Informe de indicadores con semáforo
+        public const string InsightsLineasNegocio = "InsightsLineasNegocio"; // Insights de la rentabilidad por línea de negocio
+        public const string InsightsGerenciaMensual = "InsightsGerenciaMensual"; // Resumen del Informe mensual de gerencia
     }
 
     /// <summary>Qué hace el sistema cuando una empresa agota su presupuesto mensual de tokens.</summary>

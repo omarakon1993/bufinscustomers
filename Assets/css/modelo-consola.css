@@ -200,8 +200,8 @@
   border:1px solid #d1d5db;background:#fff;font-size:12.5px;font-weight:700;color:#6c757d;
   cursor:pointer;transition:all .15s ease;
 }
-.mc-filtro-toggle:hover{border-color:#a5b4fc;color:#583AFF}
-.mc-filtro-toggle.has-filtros{border-color:#583AFF;color:#583AFF;background:rgba(88,58,255,.06)}
+.mc-filtro-toggle:hover{border-color:var(--tm-t3,#a5b4fc);color:var(--tm-strong,#583AFF)}
+.mc-filtro-toggle.has-filtros{border-color:var(--tm-strong,#583AFF);color:var(--tm-strong,#583AFF);background:rgba(var(--tm-strong-rgb,88,58,255),.06)}
 .mc-filtro-caret{font-size:10px;color:#9ca3af;transition:transform .18s ease}
 .mc-filtro-toggle.is-open .mc-filtro-caret{transform:rotate(180deg)}
 .mc-filtro-badge{
@@ -252,9 +252,9 @@
   border:1px solid #d1d5db;background:#fff;font-size:12.5px;font-weight:700;color:#6c757d;
   cursor:pointer;transition:all .15s ease;
 }
-.mc-tab:hover{border-color:#a5b4fc;color:#583AFF}
+.mc-tab:hover{border-color:var(--tm-t3,#a5b4fc);color:var(--tm-strong,#583AFF)}
 .mc-tab.active{
-  background:var(--content-gradient);border-color:transparent;color:#fff;
+  background:var(--tm-grad,var(--content-gradient));border-color:transparent;color:#fff;
   box-shadow:0 3px 10px rgba(22,9,51,.28);
 }
 .mc-tab.has-error{border-color:#fca5a5;color:#ef4444}
@@ -275,7 +275,7 @@
   display:flex;align-items:center;gap:10px;flex-wrap:wrap;
   padding:12px 22px;border-bottom:1px solid #e3e6f0;background:#fff;
 }
-.mc-table-head-icon{color:#583AFF;font-size:14px}
+.mc-table-head-icon{color:var(--tm-strong,#583AFF);font-size:14px}
 .mc-table-head-title{font-size:14px;font-weight:700;color:#160933;letter-spacing:-.2px}
 .mc-table-head-ctx{color:#9ca3af;font-size:12.5px}
 .mc-table-head-ctx:not(:empty)::before{content:"\00B7";margin-right:6px;color:#cbd5e1}
@@ -289,7 +289,7 @@
 table.mc-table{width:100%;border-collapse:collapse;font-size:13px;margin:0}
 /* Mismo fondo que el banner .powerbi-header y que la tabla del resto de opciones */
 table.mc-table thead th{
-  background:var(--content-gradient);color:#fff;
+  background:var(--tm-grad,var(--content-gradient));color:#fff;
   padding:.55rem 1rem;text-align:left;
   font-weight:700;font-size:11px;letter-spacing:.07em;text-transform:uppercase;
   white-space:nowrap;position:sticky;top:0;z-index:10;

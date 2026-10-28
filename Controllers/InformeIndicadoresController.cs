@@ -56,6 +56,7 @@ namespace bufinscustomers.Controllers
             ViewBag.Empresas = empresas;
             ViewBag.EsAdmin = esAdmin;
             ViewBag.IdEmpresaUsuario = usuario?.IdEmpresa ?? 0;
+            ViewBag.PuedeUmbrales = esAdmin || UsuarioSesionHelper.EsAdminEmpresa();
 
             return View("~/Views/Informes/InformeIndicadores.cshtml");
         }
@@ -561,6 +562,99 @@ namespace bufinscustomers.Controllers
         private string NombreMes(int mes)
         {
             return mes >= 1 && mes <= 12 ? R("Common_Mes" + mes) : mes.ToString();
+        }
+
+        // ===== Umbrales propios del semáforo (Super Admin y Admin de Empresa) =====
+
+        private bool PuedeEditarUmbrales(int idEmpresa)
+        {
+            if (UsuarioSesionHelper.EsSuperAdmin()) return true;
+            return UsuarioSesionHelper.EsAdminEmpresa() && TieneAccesoEmpresa(idEmpresa);
+        }
+
+        /// <summary>Indicadores editables con sus cortes generales y los propios de la empresa (para el modal «Umbrales»).</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult ObtenerUmbrales(int idEmpresa)
+        {
+            try
+            {
+                if (!TieneAccesoEmpresa(idEmpresa)) return Json(new { success = false, message = R("Common_SinPermisos") });
+                var propios = new IndicadoresUmbralesService().Obtener(idEmpresa, out bool disponible);
+                var lista = IndicadoresCatalogo.Todos.Where(IndicadoresUmbralesService.EsEditable).Select(d =>
+                {
+                    propios.TryGetValue(d.Codigo, out var p);
+                    bool propio = p != null && IndicadoresUmbralesService.Validar(d, p) == null;
+                    return new
+                    {
+                        d.Codigo, d.Familia, d.Formato, MasEsMejor = d.MasEsMejor.Value,
+                        Generales = d.Cortes, Actuales = propio ? p : d.Cortes, Propio = propio
+                    };
+                });
+                return Json(new { success = true, disponible, puedeEditar = PuedeEditarUmbrales(idEmpresa), indicadores = lista });
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "InformeIndicadoresController.ObtenerUmbrales");
+                return Json(new { success = false, message = MensajeError(ex) });
+            }
+        }
+
+        /// <summary>Guarda los 3 cortes de un indicador para la empresa. Los valores llegan como texto con punto decimal (cultura invariante);
+        /// en los indicadores en % llegan como fracción (0,25 = 25 %).</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult GuardarUmbral(int idEmpresa, string codigo, string corte1, string corte2, string corte3)
+        {
+            try
+            {
+                if (!PuedeEditarUmbrales(idEmpresa)) return Json(new { success = false, message = R("Common_SinPermisos") });
+                var def = IndicadoresCatalogo.Todos.FirstOrDefault(d => d.Codigo == codigo);
+                var inv = System.Globalization.CultureInfo.InvariantCulture;
+                if (def == null || !decimal.TryParse(corte1, System.Globalization.NumberStyles.Float, inv, out var c1)
+                    || !decimal.TryParse(corte2, System.Globalization.NumberStyles.Float, inv, out var c2)
+                    || !decimal.TryParse(corte3, System.Globalization.NumberStyles.Float, inv, out var c3))
+                    return Json(new { success = false, message = R("Ind_Umb_Invalido") });
+
+                var cortes = new[] { c1, c2, c3 };
+                string errorKey = IndicadoresUmbralesService.Validar(def, cortes);
+                if (errorKey != null) return Json(new { success = false, message = R(errorKey) });
+
+                var svc = new IndicadoresUmbralesService();
+                var antes = svc.Obtener(idEmpresa, out bool disponible);
+                if (!disponible) return Json(new { success = false, message = R("Ind_Umb_NoDisponible") });
+                antes.TryGetValue(codigo, out var previos);
+                svc.Guardar(idEmpresa, codigo, cortes, UsuarioSesionHelper.UsuarioActual.Id);
+
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Informes, AuditoriaAccion.Editar, "IndicadorUmbral", codigo,
+                    $"Umbrales del indicador '{codigo}' ajustados para la empresa.", new { cortes = previos ?? def.Cortes }, new { cortes }, idEmpresa);
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "InformeIndicadoresController.GuardarUmbral");
+                return Json(new { success = false, message = MensajeError(ex) });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult RestablecerUmbral(int idEmpresa, string codigo)
+        {
+            try
+            {
+                if (!PuedeEditarUmbrales(idEmpresa)) return Json(new { success = false, message = R("Common_SinPermisos") });
+                if (IndicadoresCatalogo.Todos.All(d => d.Codigo != codigo)) return Json(new { success = false, message = R("Ind_Umb_Invalido") });
+                new IndicadoresUmbralesService().Restablecer(idEmpresa, codigo);
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Informes, AuditoriaAccion.Editar, "IndicadorUmbral", codigo,
+                    $"Umbrales del indicador '{codigo}' restablecidos a los generales.", null, null, idEmpresa);
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "InformeIndicadoresController.RestablecerUmbral");
+                return Json(new { success = false, message = MensajeError(ex) });
+            }
         }
 
         private bool TieneAccesoEmpresa(int idEmpresa)

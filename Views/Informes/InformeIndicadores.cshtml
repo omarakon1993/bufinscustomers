@@ -34,6 +34,7 @@
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/comentarios-gestion.css")" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
 
 <div class="container-fluid px-4">
@@ -84,6 +85,19 @@
                     <option value="cierreAnterior">@T("Ind_Comparar_cierreAnterior")</option>
                     <option value="mesAnterior">@T("Ind_Comparar_mesAnterior")</option>
                     <option value="mismoMesAnioAnterior">@T("Ind_Comparar_mismoMesAnioAnterior")</option>
+                </select>
+            </div>
+            <div class="lt-field">
+                <label class="lt-field-label" for="indEscenarioComparar">@T("Ind_LabelEscenarioComparar")</label>
+                <select id="indEscenarioComparar" class="lt-field-select">
+                    <option value="">@T("Ind_EscenarioCompararNinguno")</option>
+                    @if (ViewBag.Escenarios != null)
+                    {
+                        foreach (var esc in ViewBag.Escenarios)
+                        {
+                            <option value="@esc.Id">@esc.Nombre</option>
+                        }
+                    }
                 </select>
             </div>
             <div class="lt-field">
@@ -171,6 +185,10 @@
                 </div>
                 <div class="pyg2-tools">
                     <button type="button" class="lt-tool-btn ind-btn-glosario" id="indBtnGlosario"><i class="fas fa-book-open"></i><span>@T("Ind_BtnGlosario")</span></button>
+                    @if (ViewBag.PuedeUmbrales == true)
+                    {
+                        <button type="button" class="lt-tool-btn ind-btn-glosario" id="indBtnUmbrales"><i class="fas fa-sliders"></i><span>@T("Ind_BtnUmbrales")</span></button>
+                    }
                     <span class="sep"></span>
                     @Html.Partial("_ExportMenu", new bufinscustomers.Models.ExportMenuVM
                     {
@@ -222,6 +240,8 @@
         </div>
 
         @* Insights gerenciales (IA): se ocultan si la empresa tiene la IA apagada *@
+        @Html.Partial("_ComentariosGestion", "indComentarios")
+
         @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
         {
         <div class="pyg-insights-card" style="margin-top:16px">
@@ -283,6 +303,7 @@
 <script src="~/Assets/js/html2canvas.min.js"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/empresa-logo.js")"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/comentarios-gestion.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
 <script src="~/Assets/js/doc-visor.js"></script>
 <script src="~/Assets/js/bufins-markdown.js"></script>
@@ -311,6 +332,9 @@
             insights: '@Url.Action("GenerarInsightsIA", "InformeIndicadores")',
             preguntar: '@Url.Action("PreguntarInforme", "InformeIndicadores")',
             correo: '@Url.Action("EnviarPorCorreo", "InformeIndicadores")',
+            umbrales: '@Url.Action("ObtenerUmbrales", "InformeIndicadores")',
+            guardarUmbral: '@Url.Action("GuardarUmbral", "InformeIndicadores")',
+            restablecerUmbral: '@Url.Action("RestablecerUmbral", "InformeIndicadores")',
             documentacion: '@Url.Action("Ver", "Documentacion", new { clave = "indicadores" })'
         },
         token: $('input[name="__RequestVerificationToken"]').first().val(),
@@ -360,6 +384,19 @@
             fichaMejorar: '@Html.Raw(J("Ind_Ficha_Mejorar"))',
             fichaRegla: '@Html.Raw(J("Ind_Ficha_Regla"))',
             fichaAhora: '@Html.Raw(J("Ind_Ficha_Ahora"))',
+            fichaEscenarioFmt: '@Html.Raw(J("Ind_Ficha_EscenarioFmt"))',
+            fichaPosicion: '@Html.Raw(J("Ind_Ficha_Posicion"))',
+            fichaPosicionFmt: '@Html.Raw(J("Ind_Ficha_PosicionFmt"))',
+            fichaUmbralPropio: '@Html.Raw(J("Ind_Ficha_UmbralPropio"))',
+            colEscenarioFmt: '@Html.Raw(J("Ind_ColEscenarioFmt"))',
+            umb: {
+                titulo: '@Html.Raw(J("Ind_UmbTitulo"))', ayuda: '@Html.Raw(J("Ind_UmbAyuda"))', guardar: '@Html.Raw(J("Ind_UmbGuardar"))',
+                restablecer: '@Html.Raw(J("Ind_UmbRestablecer"))', guardado: '@Html.Raw(J("Ind_UmbGuardado"))', restablecido: '@Html.Raw(J("Ind_UmbRestablecido"))',
+                propio: '@Html.Raw(J("Ind_UmbPropio"))', masEsMejor: '@Html.Raw(J("Ind_UmbMasEsMejor"))',
+                menosEsMejor: '@Html.Raw(J("Ind_UmbMenosEsMejor"))', soloLectura: '@Html.Raw(J("Ind_UmbSoloLectura"))', noDisponible: '@Html.Raw(J("Ind_Umb_NoDisponible"))',
+                sinEmpresa: '@Html.Raw(J("Ind_UmbSinEmpresa"))', generalesFmt: '@Html.Raw(J("Ind_UmbGeneralesFmt"))', cargando: '@Html.Raw(J("Ind_UmbCargando"))',
+                invalido: '@Html.Raw(J("Ind_Umb_Invalido"))'
+            },
             fichaComparado: '@Html.Raw(J("Ind_Ficha_Comparado"))',
             fichaAviso: '@Html.Raw(J("Ind_NotaReferencia"))',
             fichaTitulo: '@Html.Raw(J("Ind_Ficha_Titulo"))',
@@ -584,7 +621,8 @@
             IdEmpresa: empresaSeleccionada() || '',
             IdEscenario: escenarioSeleccionado(),
             AnioDesde: d.anio, MesDesde: d.mes, AnioHasta: h.anio, MesHasta: h.mes,
-            Comparar: $('#indComparar').val() || 'cierreAnterior'
+            Comparar: $('#indComparar').val() || 'cierreAnterior',
+            IdEscenarioComparar: $('#indEscenarioComparar').val() || ''
         };
     }
 
@@ -603,6 +641,7 @@
             var reporte = resp.reporte;
             if (!reporte || reporte.SinDatos) { $('#indEstadoInicial, #indResultado').hide(); $('#indSinDatos').show(); return; }
             pintarReporte(reporte, filtros);
+            if (window.ComentariosGestion) ComentariosGestion.cargar({ idEmpresa: Number(filtros.IdEmpresa), anio: reporte.AnioHasta, mes: reporte.MesHasta, claves: [] });
         }).fail(function (xhr) { $('#overlayConsultandoInd').hide(); mostrarError(_ind.t.errorServidor + ' (HTTP ' + xhr.status + ')'); });
     }
 
@@ -699,16 +738,17 @@
         var t = _ind.t, lista = visibles(r);
         $('#indInfoBadge').text(t.infoBadgeFmt.replace('{0}', lista.length));
         $('#indTablaHead').html('<tr><th>' + escHtml(t.colIndicador) + '</th><th class="num">' + escHtml(t.colValor) + '</th><th class="num">' + escHtml(t.colComparativo) + '</th><th class="num">' +
-            escHtml(t.colVariacion) + '</th><th>' + escHtml(t.colSemaforo) + '</th><th>' + escHtml(t.colReferencia) + '</th></tr>');
+            escHtml(t.colVariacion) + '</th>' + (r.HayEscenarioComparar ? '<th class="num">' + escHtml(t.colEscenarioFmt.replace('{0}', nombreEscenarioComp(r))) + '</th>' : '') + '<th>' + escHtml(t.colSemaforo) + '</th><th>' + escHtml(t.colReferencia) + '</th></tr>');
         var body = '', famActual = null;
         _ind.familiasOrden.forEach(function (fam) {
             lista.filter(function (i) { return i.Familia === fam; }).forEach(function (i) {
-                if (famActual !== fam) { famActual = fam; body += '<tr><td class="fam-row" colspan="6">' + escHtml(t.familias[fam] || fam) + '</td></tr>'; }
+                if (famActual !== fam) { famActual = fam; body += '<tr><td class="fam-row" colspan="' + (r.HayEscenarioComparar ? 7 : 6) + '">' + escHtml(t.familias[fam] || fam) + '</td></tr>'; }
                 var tv = i.Valor !== null && i.Valor !== undefined;
                 body += '<tr><td class="lbl"><button type="button" class="nm-btn" data-ficha="' + escHtml(i.Codigo) + '">' + escHtml(nombreInd(i)) + '</button></td>' +
                     '<td class="val">' + escHtml(tv ? fmtValor(i.Formato, i.Valor) : textoSinValor(i)) + '</td>' +
                     '<td class="num">' + escHtml(r.HayComparativo ? fmtValor(i.Formato, i.ValorComp) : CH_MDASH) + '</td>' +
                     '<td class="num ind-var ' + claseVar(i) + '">' + escHtml(fmtVariacion(i.Formato, i.Variacion)) + '</td>' +
+                    (r.HayEscenarioComparar ? '<td class="num">' + escHtml(i.ValorEsc !== null && i.ValorEsc !== undefined ? fmtValor(i.Formato, i.ValorEsc) : CH_MDASH) + '</td>' : '') +
                     '<td><span class="ind-dot ' + i.Nivel + '"></span> <span class="ind-c-' + i.Nivel + '" style="font-weight:800">' + escHtml(nombreNivel(i.Nivel)) + '</span></td>' +
                     '<td class="ref">' + escHtml(rangosTexto(i)) + '</td></tr>';
             });
@@ -735,6 +775,12 @@
                 h += '<div class="st"><div class="k">' + escHtml(t.fichaComparado) + '</div><div class="v sm">' + escHtml(fmtValor(i.Formato, i.ValorComp)) + '</div></div>' +
                     '<div class="st"><div class="k">' + escHtml(t.colVariacion) + '</div><div class="v ind-var ' + claseVar(i) + '">' + escHtml(hayVar ? fmtVariacion(i.Formato, i.Variacion) : CH_MDASH) + '</div></div>';
             }
+            if (r && r.HayEscenarioComparar) {
+                h += '<div class="st"><div class="k">' + escHtml(t.fichaEscenarioFmt.replace('{0}', nombreEscenarioComp(r))) + '</div><div class="v sm">' + escHtml(i.ValorEsc !== null && i.ValorEsc !== undefined ? fmtValor(i.Formato, i.ValorEsc) : CH_MDASH) + '</div></div>';
+            }
+            if (i.MejorQueFraccion !== null && i.MejorQueFraccion !== undefined) {
+                h += '<div class="st"><div class="k">' + escHtml(t.fichaPosicion) + '</div><div class="v sm">' + escHtml(t.fichaPosicionFmt.replace('{0}', Math.round(i.MejorQueFraccion * 100) + '%').replace('{1}', i.MesesHistoria)) + '</div></div>';
+            }
             h += '</div>';
         }
 
@@ -756,7 +802,7 @@
             '<div class="ind-fx-card"><div class="hd">' + icono('fa-calculator') + escHtml(t.fichaFormula) + '</div><div class="ind-fx-formula">' + escHtml(f.f) + '</div></div>' +
             '</div><div>' +
             '<div class="ind-fx-card"><div class="hd">' + icono('fa-traffic-light') + escHtml(t.fichaRangos) + '</div>' + (rangos || '<div class="tx">' + CH_MDASH + '</div>') +
-            (rangos ? '<div class="ind-fx-aviso">' + escHtml(t.fichaAviso) + '</div>' : '') + '</div></div></div>';
+            (rangos ? '<div class="ind-fx-aviso">' + escHtml(t.fichaAviso) + (i && i.UmbralPropio ? ' ' + escHtml(t.fichaUmbralPropio) : '') + '</div>' : '') + '</div></div></div>';
 
         h += '<div class="ind-fx-cols" style="margin-bottom:0"><div class="ind-fx-card mejora" style="margin:0"><div class="hd">' + icono('fa-lightbulb') + escHtml(t.fichaMejorar) + '</div><div class="tx">' + escHtml(f.m) + '</div></div>' +
             '<div class="ind-fx-card regla" style="margin:0"><div class="hd">' + icono('fa-bookmark') + escHtml(t.fichaRegla) + '</div><div class="tx">' + escHtml(f.r) + '</div></div></div>';
@@ -785,6 +831,63 @@
         $('#indFichaFam').text('');
         $('#indFichaBody').html(h);
         abrirPanel(true);
+    }
+    function nombreEscenarioComp(r) {
+        var e = $('#indEscenarioComparar option').filter(function () { return Number(this.value) === r.IdEscenarioComparar; }).first();
+        return e.length ? e.text() : ('#' + r.IdEscenarioComparar);
+    }
+
+    // ===== Umbrales propios del semáforo (Super Admin y Admin de Empresa) =====
+    function fmtCorteEditable(formato, v) { return formato === 'pct' ? Math.round(v * 10000) / 100 : (formato === 'dias' ? Math.round(v) : Math.round(v * 100) / 100); }
+    function sufijoCorte(formato) { return formato === 'pct' ? '%' : (formato === 'x' ? 'x' : (formato === 'dias' ? ' d' : '')); }
+    function abrirUmbrales() {
+        var idEmpresa = empresaSeleccionada();
+        var U = _ind.t.umb;
+        if (!idEmpresa) { mostrarError(U.sinEmpresa); return; }
+        $('#indFichaTitulo .tt').text(U.titulo);
+        $('#indFichaFam').text('');
+        $('#indFichaBody').html('<p class="ind-fx-pregunta">' + escHtml(U.cargando) + '</p>');
+        abrirPanel(true);
+        $.post(_ind.urls.umbrales, { idEmpresa: idEmpresa, __RequestVerificationToken: _ind.token }, function (resp) {
+            if (!resp || !resp.success) { $('#indFichaBody').html('<p class="ind-fx-pregunta">' + escHtml((resp && resp.message) || _ind.t.errorServidor) + '</p>'); return; }
+            var editar = resp.puedeEditar && resp.disponible;
+            var h = '<p class="ind-fx-pregunta">' + escHtml(resp.disponible ? U.ayuda : U.noDisponible) + (editar ? '' : ' ' + escHtml(U.soloLectura)) + '</p>';
+            _ind.familiasOrden.forEach(function (fam) {
+                var lista = resp.indicadores.filter(function (x) { return x.Familia === fam; });
+                if (!lista.length) return;
+                h += '<div class="ind-gl-fam">' + escHtml(_ind.t.familias[fam] || fam) + '</div>';
+                lista.forEach(function (x) {
+                    var f = (_ind.t.fichas[x.Codigo] || {}), suf = sufijoCorte(x.Formato);
+                    h += '<div class="ind-umb-fila" data-cod="' + escHtml(x.Codigo) + '" data-fmt="' + x.Formato + '">' +
+                        '<div class="ind-umb-nm"><b>' + escHtml(f.n || x.Codigo) + '</b> <span class="ind-umb-dir">' + escHtml(x.MasEsMejor ? U.masEsMejor : U.menosEsMejor) + '</span>' +
+                        (x.Propio ? ' <span class="ind-umb-tag">' + escHtml(U.propio) + '</span>' : '') + '</div><div class="ind-umb-ins">' +
+                        ['verde', 'amarillo', 'naranja'].map(function (n, k) {
+                            return '<label class="ind-umb-c ' + n + '"><span>' + escHtml(nombreNivel(n)) + '</span><input type="number" step="any" class="form-control" data-k="' + k + '" value="' + fmtCorteEditable(x.Formato, x.Actuales[k]) + '"' + (editar ? '' : ' disabled') + '><em>' + suf + '</em></label>';
+                        }).join('') + '</div>' +
+                        '<div class="ind-umb-gen">' + escHtml(U.generalesFmt.replace('{0}', x.Generales.map(function (c) { return fmtCorteEditable(x.Formato, c) + suf; }).join(' \u00B7 '))) + '</div>' +
+                        (editar ? '<div class="ind-umb-acc"><button type="button" class="btn btn-modern-gradient btn-sm" data-umb="guardar">' + escHtml(U.guardar) + '</button> ' +
+                            '<button type="button" class="btn btn-modern-secondary btn-sm" data-umb="restablecer"' + (x.Propio ? '' : ' disabled') + '>' + escHtml(U.restablecer) + '</button></div>' : '') +
+                        '</div>';
+                });
+            });
+            $('#indFichaBody').html(h);
+        }).fail(function (xhr) { $('#indFichaBody').html('<p class="ind-fx-pregunta">' + escHtml(_ind.t.errorServidor + ' (HTTP ' + xhr.status + ')') + '</p>'); });
+    }
+    function accionUmbral(btn) {
+        var $f = $(btn).closest('.ind-umb-fila'), cod = $f.data('cod'), fmt = $f.data('fmt'), idEmpresa = empresaSeleccionada(), U = _ind.t.umb;
+        var restablecer = $(btn).data('umb') === 'restablecer';
+        var datos = { idEmpresa: idEmpresa, codigo: cod, __RequestVerificationToken: _ind.token };
+        if (!restablecer) {
+            var v = $f.find('input').map(function () { var n = parseFloat($(this).val()); return isNaN(n) ? null : (fmt === 'pct' ? n / 100 : n); }).get();
+            if (v.length !== 3 || v.indexOf(null) >= 0) { mostrarError(U.invalido); return; }
+            datos.corte1 = String(v[0]); datos.corte2 = String(v[1]); datos.corte3 = String(v[2]);
+        }
+        $.post(restablecer ? _ind.urls.restablecerUmbral : _ind.urls.guardarUmbral, datos, function (resp) {
+            if (!resp || !resp.success) { mostrarError((resp && resp.message) || _ind.t.errorServidor); return; }
+            if (typeof Swal !== 'undefined') Swal.fire({ icon: 'success', text: restablecer ? U.restablecido : U.guardado, timer: 1400, showConfirmButton: false });
+            abrirUmbrales();
+            if (_ind.reporteActual) consultarReporte();
+        }).fail(function (xhr) { mostrarError(_ind.t.errorServidor + ' (HTTP ' + xhr.status + ')'); });
     }
     function abrirPanel(glosario) { $('#indFicha').toggleClass('glosario', !!glosario); $('#indFichaOv').addClass('open'); document.body.style.overflow = 'hidden'; $('#indFichaCerrar').trigger('focus'); }
     function cerrarPanel() { $('#indFichaOv').removeClass('open'); document.body.style.overflow = ''; }
@@ -1138,7 +1241,8 @@
     }
 
     $(document).ready(function () {
-        $('#indEmpresa, #indEscenario, #indComparar, #indDetalle')
+        ComentariosGestion.montar({ raiz: '#indComentarios', informe: 'Indicadores' });
+        $('#indEmpresa, #indEscenario, #indComparar, #indEscenarioComparar, #indDetalle')
             .select2({ width: '100%', language: s2lang, dropdownAutoWidth: false, minimumResultsForSearch: 10 });
 
         $('#indEmpresa, #indEscenario').on('change', cargarMeses);
@@ -1154,6 +1258,8 @@
         // Ficha y glosario
         $('#indResultado').on('click', '[data-ficha]', function () { abrirFicha($(this).data('ficha')); });
         $('#indBtnGlosario').on('click', abrirGlosario);
+        $('#indBtnUmbrales').on('click', abrirUmbrales);
+        $('#indFichaBody').on('click', '[data-umb]', function () { accionUmbral(this); });
         $('#indFichaBody').on('click', '[data-gl]', function () { $(this).closest('.ind-gl-item').toggleClass('open'); });
         $('#indFichaCerrar').on('click', cerrarPanel);
         $('#indFichaOv').on('click', function (e) { if (e.target === this) cerrarPanel(); });
@@ -1166,6 +1272,7 @@
         $('#btnLimpiarInd').on('click', function () {
             InformeTema.reset();
             $('#indComparar').val('cierreAnterior').trigger('change.select2');
+            $('#indEscenarioComparar').val('').trigger('change.select2');
             $('#indDetalle').val('todos').trigger('change.select2');
             if (_ind.esAdmin) elEmpresa.val('').trigger('change.select2');
             cargarMeses();

@@ -1,0 +1,47 @@
+@* Tarjeta compartida «Comentarios de gestión» de los informes. Modelo: id del contenedor (string). Se monta con
+   ComentariosGestion.montar({ raiz: '#id', informe: 'Clave' }) y se llena con ComentariosGestion.cargar({ idEmpresa, anio, mes, claves }). *@
+@model string
+@{
+    string id = string.IsNullOrWhiteSpace(Model) ? "comentariosGestion" : Model;
+    Func<string, string> J = s => System.Web.HttpUtility.JavaScriptStringEncode(s ?? "");
+}
+<div class="cg-com-card" id="@id" style="display:none;" data-url-listar="@Url.Action("Listar", "ComentariosGestion")" data-url-crear="@Url.Action("Crear", "ComentariosGestion")"
+     data-url-editar="@Url.Action("Editar", "ComentariosGestion")" data-url-eliminar="@Url.Action("Eliminar", "ComentariosGestion")">
+    <div class="cg-com-head">
+        <div>
+            <div class="cg-com-title"><i class="fas fa-comments"></i>@Resources.Strings.Com_Titulo <span class="cg-com-count" data-role="contador"></span></div>
+            <div class="cg-com-sub" data-role="periodo">@Resources.Strings.Com_Subtitulo</div>
+        </div>
+    </div>
+    <div class="cg-com-nodisp" data-role="nodisponible" style="display:none;"><i class="fas fa-circle-info"></i> @Resources.Strings.Com_NoDisponible</div>
+    <div class="cg-com-form" data-role="form">
+        <div class="cg-com-form-fila">
+            <label class="cg-com-lbl" data-role="lblClave">@Resources.Strings.Com_Sobre</label>
+            <select class="form-control cg-com-clave" data-role="clave"></select>
+        </div>
+        <textarea class="form-control" data-role="texto" rows="2" maxlength="1000" placeholder="@Resources.Strings.Com_Placeholder"></textarea>
+        <div class="cg-com-form-pie">
+            <span class="cg-com-ayuda"><span data-role="restantes">1000</span> @Resources.Strings.Com_Caracteres</span>
+            <button type="button" class="btn btn-modern-gradient btn-sm" data-role="publicar"><i class="fas fa-paper-plane mr-1"></i>@Resources.Strings.Com_Publicar</button>
+        </div>
+    </div>
+    <div class="cg-com-lista" data-role="lista"></div>
+</div>
+<script>
+    window.ComentariosGestionTextos = {
+        general: '@Html.Raw(J(Resources.Strings.Com_General))', vacio: '@Html.Raw(J(Resources.Strings.Com_Vacio))',
+        editar: '@Html.Raw(J(Resources.Strings.Com_Editar))', eliminar: '@Html.Raw(J(Resources.Strings.Com_Eliminar))',
+        guardar: '@Html.Raw(J(Resources.Strings.Com_Guardar))', cancelar: '@Html.Raw(J(Resources.Strings.Com_Cancelar))',
+        confirmarEliminar: '@Html.Raw(J(Resources.Strings.Com_ConfirmarEliminar))', si: '@Html.Raw(J(Resources.Strings.Com_SiEliminar))',
+        editadoFmt: '@Html.Raw(J(Resources.Strings.Com_EditadoFmt))', error: '@Html.Raw(J(Resources.Strings.Com_Error))',
+        periodoFmt: '@Html.Raw(J(Resources.Strings.Com_PeriodoFmt))', textoVacio: '@Html.Raw(J(Resources.Strings.Com_TextoVacio))',
+        meses: ['@Html.Raw(J(Resources.Strings.Common_Mes1))', '@Html.Raw(J(Resources.Strings.Common_Mes2))', '@Html.Raw(J(Resources.Strings.Common_Mes3))', '@Html.Raw(J(Resources.Strings.Common_Mes4))',
+                '@Html.Raw(J(Resources.Strings.Common_Mes5))', '@Html.Raw(J(Resources.Strings.Common_Mes6))', '@Html.Raw(J(Resources.Strings.Common_Mes7))', '@Html.Raw(J(Resources.Strings.Common_Mes8))',
+                '@Html.Raw(J(Resources.Strings.Common_Mes9))', '@Html.Raw(J(Resources.Strings.Common_Mes10))', '@Html.Raw(J(Resources.Strings.Common_Mes11))', '@Html.Raw(J(Resources.Strings.Common_Mes12))'],
+        informes: {
+            LineasNegocio: '@Html.Raw(J(Resources.Strings.Com_Inf_LineasNegocio))', PYG: '@Html.Raw(J(Resources.Strings.Com_Inf_PYG))', Balance: '@Html.Raw(J(Resources.Strings.Com_Inf_Balance))',
+            Tesoreria: '@Html.Raw(J(Resources.Strings.Com_Inf_Tesoreria))', FlujoCaja: '@Html.Raw(J(Resources.Strings.Com_Inf_FlujoCaja))', FlujoEfectivo: '@Html.Raw(J(Resources.Strings.Com_Inf_FlujoEfectivo))',
+            Indicadores: '@Html.Raw(J(Resources.Strings.Com_Inf_Indicadores))', GerenciaMensual: '@Html.Raw(J(Resources.Strings.Com_Inf_GerenciaMensual))'
+        }
+    };
+</script>

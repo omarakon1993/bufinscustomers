@@ -1,0 +1,747 @@
+@using System.Web
+@using System.Linq
+@using bufinscustomers.Models
+@functions {
+    static string J(string s) { return System.Web.HttpUtility.JavaScriptStringEncode(s ?? ""); }
+}
+@{
+    ViewBag.Title = Resources.Strings.GM_PageTitle;
+    var empresas = ViewBag.Empresas as List<Empresas>;
+    var esAdmin = (bool)(ViewBag.EsAdmin ?? false);
+    var culturaJs = System.Globalization.CultureInfo.CurrentUICulture.Name;
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-pyg.css")" rel="stylesheet" />
+<link href="~/Assets/css/informe-balance.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-gerencia-mensual.css")" rel="stylesheet" />
+<link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/comentarios-gestion.css")" rel="stylesheet" />
+<link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
+
+<div class="container-fluid px-4">
+<div class="lt-app">
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas fa-file-lines powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.GM_PageTitle</h1>
+            @Html.Partial("_ModeloBufinsTag")
+            <button type="button" class="header-tag-doc" id="gmDocBtn" title="@Resources.Strings.GM_DocumentacionTooltip"><i class="fas fa-book"></i>@Resources.Strings.Common_DocumentacionTag</button>
+        </div>
+    </div>
+
+    @Html.AntiForgeryToken()
+
+    <div class="filter-card">
+        <div class="lt-section-title"><span>@Resources.Strings.Common_FiltrosConsulta</span></div>
+        <div class="lt-grid-quever">
+            <div class="lt-field">
+                <label class="lt-field-label" for="gmEmpresa">@Resources.Strings.Common_LabelEmpresa</label>
+                <select id="gmEmpresa" class="lt-field-select">
+                    @if (esAdmin) { <option value="">@Resources.Strings.Common_Seleccione</option> }
+                    @if (empresas != null)
+                    {
+                        foreach (var e in empresas) { <option value="@e.Id">@e.Nombre</option> }
+                    }
+                </select>
+            </div>
+            <div class="lt-field">
+                <label class="lt-field-label" for="gmEscenario">@Resources.Strings.Common_LabelEscenario</label>
+                <select id="gmEscenario" class="lt-field-select">
+                    @if (ViewBag.Escenarios != null)
+                    {
+                        foreach (var esc in ViewBag.Escenarios) { <option value="@esc.Id">@esc.Nombre</option> }
+                    }
+                </select>
+            </div>
+            <div class="lt-field">
+                <label class="lt-field-label" for="gmMes">@Resources.Strings.GM_MesCierre</label>
+                <select id="gmMes" class="lt-field-select" disabled></select>
+            </div>
+        </div>
+        <p class="lt-help" id="gmSinMeses" style="display:none;">@Resources.Strings.GM_SinMesesDatos</p>
+
+        @Html.Partial("_TemaInformeSelector", "gmTema")
+
+        <div class="btn-group-actions">
+            <button type="button" id="btnConsultarGM" class="btn btn-modern-gradient" disabled>
+                <i class="fas fa-arrow-right mr-1"></i>@Resources.Strings.LineaTiempo_BtnGenerar
+            </button>
+            <button type="button" id="btnLimpiarGM" class="btn btn-modern-secondary">@Resources.Strings.Common_Limpiar</button>
+        </div>
+    </div>
+
+    <div id="gmEstadoInicial" class="lt-card lt-empty">
+        <div class="lt-empty-icon"><i class="fas fa-file-lines"></i></div>
+        <h4>@Resources.Strings.GM_EstadoInicialTitulo</h4>
+        <p>@Resources.Strings.GM_EstadoInicialDesc</p>
+    </div>
+
+    <div id="gmSinDatos" class="lt-card lt-empty" style="display:none;">
+        <div class="lt-empty-icon"><i class="fas fa-inbox"></i></div>
+        <h4>@Resources.Strings.GM_SinDatosTitulo</h4>
+        <p>@Resources.Strings.GM_SinDatosDesc</p>
+    </div>
+
+    <div id="gmResultado" style="display:none;">
+
+        <div class="lt-card" id="gmPanelResultado">
+            <div class="pyg2-letterhead">
+                <span class="pyg2-brand"><img class="bm-logo" src="~/Assets/img/Bufins_Wordmark_Purple.png" alt="Bufins" height="14"><span class="bm-sub">@Resources.Strings.GM_V2_Subtitulo</span></span>
+                <span class="fecha"><span>@Resources.Strings.BAL_V2_GeneradoEl</span> <span id="gmFechaGenerado">&mdash;</span></span>
+            </div>
+            <div class="pyg2-head">
+                <div class="pyg2-head-l">
+                    <span class="emp-logo-plate" id="gmLogo" hidden><img alt="@Resources.Strings.Common_LogoEmpresaAlt"></span>
+                    <div class="emp-logo-texto">
+                        <h2 id="gmTituloEmpresa">&mdash;</h2>
+                        <div class="pyg2-chips">
+                            <span class="pyg2-chip primary"><i class="fas fa-calendar"></i><span id="gmChipCierre">&mdash;</span></span>
+                            <span class="pyg2-chip" id="gmChipEscenario">&mdash;</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pyg2-tools">
+                    <button type="button" class="lt-tool-btn" id="gmBtnUnidad" aria-haspopup="menu" aria-expanded="false">
+                        <span class="lbl-muted">@Resources.Strings.BAL_V2_Unidad</span><span id="gmUnidadLbl">@Resources.Strings.LineaTiempo_UnidadMillones</span><i class="fas fa-chevron-down chev"></i>
+                    </button>
+                    <div class="lt-menu" id="gmMenuUnidad" role="menu">
+                        <button type="button" data-unidad="pesos" role="menuitemradio">@Resources.Strings.LineaTiempo_UnidadPesos<i class="fas fa-check"></i></button>
+                        <button type="button" data-unidad="miles" role="menuitemradio">@Resources.Strings.LineaTiempo_UnidadMiles<i class="fas fa-check"></i></button>
+                        <button type="button" data-unidad="millones" role="menuitemradio">@Resources.Strings.LineaTiempo_UnidadMillones<i class="fas fa-check"></i></button>
+                    </div>
+                    <span class="sep"></span>
+                    @Html.Partial("_ExportMenu", new bufinscustomers.Models.ExportMenuVM { Id = "gmExp", ExcelDesc = Resources.Strings.GM_Exp_ExcelDesc })
+                </div>
+            </div>
+        </div>
+        <form id="frmExportarExcelGM" method="post" action="@Url.Action("ExportarExcel", "InformeGerenciaMensual")">
+            @Html.AntiForgeryToken()
+            <div id="gmExpCampos"></div>
+        </form>
+
+        @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
+        {
+        <div class="pyg-insights-card">
+            <div class="pyg-insights-head">
+                <div>
+                    <span class="pyg-insights-title"><i class="fas fa-wand-magic-sparkles"></i>@Resources.Strings.GM_InsightsTitulo</span>
+                    <div class="pyg-insights-meta" id="gmInsightsMeta">@Resources.Strings.GM_InsightsSub</div>
+                </div>
+                <button type="button" id="btnGenerarInsightsGM" class="pyg2-ins-btn"><i class="fas fa-wand-magic-sparkles"></i><span>@Resources.Strings.BAL_Generar</span></button>
+            </div>
+            <div id="gmInsightsBody"></div>
+            <div id="gmInsightsLoading" style="display:none;text-align:center;padding:14px 0;">
+                @Html.Partial("_LoaderDots", "dark")
+                <p style="margin-top:8px;font-size:12.5px;color:#8B85A0;">@Resources.Strings.BAL_Analizando</p>
+            </div>
+            <div class="mt-3">
+                <label for="gmPregunta" class="mb-1" style="font-weight:700;"><i class="fas fa-comments mr-1"></i>@Resources.Strings.IAInforme_Titulo</label>
+                <div class="d-flex" style="gap:8px;flex-wrap:wrap;">
+                    <input type="text" id="gmPregunta" class="form-control" maxlength="@bufinscustomers.Helpers.IAModuloHelper.MaxCharsPregunta()" style="flex:1;min-width:240px;"
+                           placeholder="@Resources.Strings.IAInforme_Placeholder" />
+                    <button type="button" id="btnGmPreguntar" class="pyg2-ins-btn"><i class="fas fa-paper-plane"></i><span>@Resources.Strings.IAInforme_Btn</span></button>
+                </div>
+                <div id="gmRespuesta" class="mt-2"></div>
+            </div>
+        </div>
+        }
+
+        <div class="pyg2-section" id="gmSecResultados">
+            <div class="pyg2-section-title"><span class="t">@Resources.Strings.GM_SecResultados</span><span class="line"></span></div>
+            <div class="gm-grid3" id="gmResultadosGrid"></div>
+        </div>
+
+        <div class="gm-grid2">
+            <div class="pyg2-card" id="gmSecBalance">
+                <div class="pyg2-card-head"><div><div class="pyg2-card-title"><i class="fas fa-scale-balanced"></i>@Resources.Strings.GM_SecBalance</div>
+                    <div class="pyg2-card-sub" id="gmBalanceSub">&mdash;</div></div></div>
+                <div id="gmBalanceBody"></div>
+            </div>
+            <div class="pyg2-card" id="gmSecCaja">
+                <div class="pyg2-card-head"><div><div class="pyg2-card-title"><i class="fas fa-money-bill-wave"></i>@Resources.Strings.GM_SecCaja</div>
+                    <div class="pyg2-card-sub" id="gmCajaSub">&mdash;</div></div></div>
+                <div id="gmCajaBody"></div>
+            </div>
+        </div>
+
+        <div class="gm-grid2">
+            <div class="pyg2-card" id="gmSecIndicadores">
+                <div class="pyg2-card-head"><div><div class="pyg2-card-title"><i class="fas fa-traffic-light"></i>@Resources.Strings.GM_AtencionTitulo</div>
+                    <div class="pyg2-card-sub">@Resources.Strings.GM_AtencionSub</div></div></div>
+                <div class="gm-semaforo" id="gmSemaforo"></div>
+                <div id="gmAtencionBody"></div>
+            </div>
+            <div class="pyg2-card" id="gmSecLineas">
+                <div class="pyg2-card-head"><div><div class="pyg2-card-title"><i class="fas fa-sitemap"></i>@Resources.Strings.GM_LineasTitulo</div>
+                    <div class="pyg2-card-sub">@Resources.Strings.GM_LineasSub</div></div></div>
+                <div class="pyg2-table-wrap"><table class="pyg2-table" id="gmTablaLineas"><thead id="gmLineasHead"></thead><tbody id="gmLineasBody"></tbody></table></div>
+            </div>
+        </div>
+
+        @Html.Partial("_ComentariosGestion", "gmComentarios")
+    </div>
+
+</div>
+</div>
+
+<div id="overlayConsultandoGM" class="overlay-cargando" style="display:none;">
+    <div class="overlay-cargando-card">
+        @Html.Partial("_LoaderDots", "aqua")
+        <h5 class="overlay-cargando-title">@Resources.Strings.BAL_JS_Consultando</h5>
+    </div>
+</div>
+
+@Html.Partial("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+@Html.Partial("_DocumentacionVisor", Resources.Strings.GM_Doc_ModalTitulo)
+
+@section scripts {
+<script src="~/Assets/js/select2/select2.min.js"></script>
+<script src="~/Assets/js/jspdf.umd.min.js"></script>
+<script src="~/Assets/js/bufins-pdf-marca.js"></script>
+<script src="~/Assets/js/html2canvas.min.js"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/empresa-logo.js")"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/comentarios-gestion.js")"></script>
+<script src="~/Assets/js/export-menu.js"></script>
+<script src="~/Assets/js/doc-visor.js"></script>
+<script src="~/Assets/js/bufins-markdown.js"></script>
+
+<script>
+    var EXP_T = {
+        generando: '@Html.Raw(J(Resources.Strings.Common_Exp_Generando))', errorGenerar: '@Html.Raw(J(Resources.Strings.Common_Exp_ErrorGenerar))',
+        listo: '@Html.Raw(J(Resources.Strings.Common_Exp_Listo))', imagenCopiada: '@Html.Raw(J(Resources.Strings.Common_Exp_ImagenCopiada))',
+        imagenDescargada: '@Html.Raw(J(Resources.Strings.Common_Exp_ImagenDescargada))', valDestino: '@Html.Raw(J(Resources.Strings.RevisarCargue_Correo_ValDestino))',
+        valMaximo: '@Html.Raw(J(Resources.Strings.RevisarCargue_Correo_ValMaximo))', enviando: '@Html.Raw(J(Resources.Strings.RevisarCargue_Correo_Enviando))',
+        error: '@Html.Raw(J(Resources.Strings.Common_ExpCorreo_Error))', exitoTitulo: '@Html.Raw(J(Resources.Strings.Modelo_Correo_ExitoTitulo))', aceptar: '@Html.Raw(J(Resources.Strings.Common_Aceptar))'
+    };
+
+    var _gm = {
+        urls: {
+            meses: '@Url.Action("ObtenerMeses", "InformeGerenciaMensual")', reporte: '@Url.Action("ConsultarReporte", "InformeGerenciaMensual")',
+            insights: '@Url.Action("GenerarInsightsIA", "InformeGerenciaMensual")', preguntar: '@Url.Action("PreguntarInforme", "InformeGerenciaMensual")'
+        },
+        token: $('input[name="__RequestVerificationToken"]').first().val(),
+        cultura: '@Html.Raw(J(culturaJs))',
+        esAdmin: @Html.Raw(esAdmin.ToString().ToLowerInvariant()),
+        mesesNombres: [
+            '@Html.Raw(J(Resources.Strings.Common_Mes1))', '@Html.Raw(J(Resources.Strings.Common_Mes2))', '@Html.Raw(J(Resources.Strings.Common_Mes3))', '@Html.Raw(J(Resources.Strings.Common_Mes4))',
+            '@Html.Raw(J(Resources.Strings.Common_Mes5))', '@Html.Raw(J(Resources.Strings.Common_Mes6))', '@Html.Raw(J(Resources.Strings.Common_Mes7))', '@Html.Raw(J(Resources.Strings.Common_Mes8))',
+            '@Html.Raw(J(Resources.Strings.Common_Mes9))', '@Html.Raw(J(Resources.Strings.Common_Mes10))', '@Html.Raw(J(Resources.Strings.Common_Mes11))', '@Html.Raw(J(Resources.Strings.Common_Mes12))'
+        ],
+        t: {
+            errorServidor: '@Html.Raw(J(Resources.Strings.BAL_ErrorServidor))',
+            unidades: { pesos: '@Html.Raw(J(Resources.Strings.LineaTiempo_UnidadPesos))', miles: '@Html.Raw(J(Resources.Strings.LineaTiempo_UnidadMiles))', millones: '@Html.Raw(J(Resources.Strings.LineaTiempo_UnidadMillones))' },
+            unidadSufijoMiles: '@Html.Raw(J(Resources.Strings.LineaTiempo_UnidadSufijoMiles))', unidadSufijoMillones: '@Html.Raw(J(Resources.Strings.LineaTiempo_UnidadSufijoMillones))',
+            unidadBadge: { pesos: '@Html.Raw(J(Resources.Strings.BAL_UnidadPesosCop))', miles: '@Html.Raw(J(Resources.Strings.BAL_UnidadMilesCop))', millones: '@Html.Raw(J(Resources.Strings.BAL_UnidadMillones))' },
+            generar: '@Html.Raw(J(Resources.Strings.BAL_Generar))', regenerar: '@Html.Raw(J(Resources.Strings.BAL_Regenerar))',
+            insightsVacio: '@Html.Raw(J(Resources.Strings.GM_InsightsVacio))', insightsSub: '@Html.Raw(J(Resources.Strings.GM_InsightsSub))', insightsMetaFmt: '@Html.Raw(J(Resources.Strings.GM_InsightsMetaFmt))',
+            insResultado: '@Html.Raw(J(Resources.Strings.GM_InsResultado))', insCaja: '@Html.Raw(J(Resources.Strings.GM_InsCaja))', insFoco: '@Html.Raw(J(Resources.Strings.GM_InsFoco))',
+            cierreFmt: '@Html.Raw(J(Resources.Strings.GM_CierreFmt))', sinSeccion: '@Html.Raw(J(Resources.Strings.GM_SinSeccion))',
+            real: '@Html.Raw(J(Resources.Strings.GM_Col_Real))', presupuesto: '@Html.Raw(J(Resources.Strings.GM_Col_Presupuesto))', vsPpto: '@Html.Raw(J(Resources.Strings.GM_VsPpto))',
+            vsAnio: '@Html.Raw(J(Resources.Strings.GM_VsAnio))', acumulado: '@Html.Raw(J(Resources.Strings.GM_Acumulado))', vsCierre: '@Html.Raw(J(Resources.Strings.GM_VsCierre))',
+            cajaInicial: '@Html.Raw(J(Resources.Strings.GM_CajaInicial))', flujoNeto: '@Html.Raw(J(Resources.Strings.GM_FlujoNeto))', flujoNetoPpto: '@Html.Raw(J(Resources.Strings.GM_FlujoNetoPpto))',
+            fcl: '@Html.Raw(J(Resources.Strings.GM_Fcl))', cajaFinal: '@Html.Raw(J(Resources.Strings.GM_CajaFinal))',
+            cajaCuadra: '@Html.Raw(J(Resources.Strings.GM_CajaCuadra))', cajaNoCuadra: '@Html.Raw(J(Resources.Strings.GM_CajaNoCuadra))',
+            balCuadra: '@Html.Raw(J(Resources.Strings.BAL_CuadreOk))', balNoCuadra: '@Html.Raw(J(Resources.Strings.GM_BalanceNoCuadra))',
+            noAplica: '@Html.Raw(J(Resources.Strings.BAL_KpiNoAplica))', sinAtencion: '@Html.Raw(J(Resources.Strings.GM_SinAtencion))',
+            colIndicador: '@Html.Raw(J(Resources.Strings.GM_Col_Indicador))', colValor: '@Html.Raw(J(Resources.Strings.GM_Col_Valor))', colSemaforo: '@Html.Raw(J(Resources.Strings.GM_Col_Semaforo))',
+            colLinea: '@Html.Raw(J(Resources.Strings.LN_Col_Linea))', colIngresos: '@Html.Raw(J(Resources.Strings.LN_Col_Ingresos))', colPct: '@Html.Raw(J(Resources.Strings.LN_Col_PctIngresos))', colMargen: '@Html.Raw(J(Resources.Strings.LN_Col_MargenOperacional))',
+            res: { Ingresos: '@Html.Raw(J(Resources.Strings.GM_Res_Ingresos))', Ebitda: '@Html.Raw(J(Resources.Strings.GM_Res_Ebitda))', UtilidadNeta: '@Html.Raw(J(Resources.Strings.GM_Res_UtilidadNeta))' },
+            bal: { ActivoTotal: '@Html.Raw(J(Resources.Strings.BAL_KpiActivoTotal))', CapitalTrabajo: '@Html.Raw(J(Resources.Strings.BAL_KpiCapitalTrabajo))', RazonCorriente: '@Html.Raw(J(Resources.Strings.BAL_KpiRazonCorriente))', Endeudamiento: '@Html.Raw(J(Resources.Strings.BAL_KpiEndeudamiento))' },
+            nivel: { verde: '@Html.Raw(J(Resources.Strings.GM_Nivel_verde))', amarillo: '@Html.Raw(J(Resources.Strings.GM_Nivel_amarillo))', naranja: '@Html.Raw(J(Resources.Strings.GM_Nivel_naranja))', rojo: '@Html.Raw(J(Resources.Strings.GM_Nivel_rojo))', gris: '@Html.Raw(J(Resources.Strings.GM_Nivel_gris))' },
+            indNombres: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(
+                bufinscustomers.Services.IndicadoresCatalogo.Todos.ToDictionary(d => d.Codigo, d => (string)System.Web.HttpContext.GetGlobalResourceObject("Strings", "Ind_" + d.Codigo + "_Nombre")))),
+            pdf: {
+                marca: '@Html.Raw(J(Resources.Strings.LineaTiempo_BrandMark))', titulo: '@Html.Raw(J(Resources.Strings.GM_PageTitle))', subtitulo: '@Html.Raw(J(Resources.Strings.GM_V2_Subtitulo))',
+                generadoEl: '@Html.Raw(J(Resources.Strings.BAL_V2_GeneradoEl))', confidencial: '@Html.Raw(J(Resources.Strings.BAL_Pdf_Confidencial))', paginaFmt: '@Html.Raw(J(Resources.Strings.BAL_Pdf_PaginaFmt))',
+                sinInsights: '@Html.Raw(J(Resources.Strings.BAL_Pdf_SinInsights))', insights: '@Html.Raw(J(Resources.Strings.GM_InsightsTitulo))', comentarios: '@Html.Raw(J(Resources.Strings.Com_Titulo))',
+                atencion: '@Html.Raw(J(Resources.Strings.GM_AtencionTitulo))', lineas: '@Html.Raw(J(Resources.Strings.GM_LineasTitulo))', pie: '@Html.Raw(J(Resources.Strings.GM_PdfFooter))'
+            }
+        },
+        reporteActual: null, filtrosConsultados: null, insightsTexto: null, unidad: 'millones', meses: []
+    };
+
+    var elEmpresaGM = $('#gmEmpresa'), elEscenarioGM = $('#gmEscenario');
+    var CH_MDASH_GM = String.fromCharCode(0x2014), CH_MIDDOT_GM = String.fromCharCode(0xB7);
+    var s2langGM = {
+        noResults: function () { return '@Html.Raw(J(Resources.Strings.Common_Select2NoResults))'; },
+        searching: function () { return '@Html.Raw(J(Resources.Strings.Common_Select2Searching))'; }
+    };
+
+    function cargarPrefsGM() { try { var p = JSON.parse(localStorage.getItem('gm.prefs') || '{}'); if (['pesos', 'miles', 'millones'].indexOf(p.unidad) >= 0) _gm.unidad = p.unidad; } catch (e) { } }
+    function guardarPrefsGM() { try { localStorage.setItem('gm.prefs', JSON.stringify({ unidad: _gm.unidad })); } catch (e) { } }
+    function escHtmlGM(t) { return $('<span>').text(t == null ? '' : String(t)).html(); }
+    function empresaGM() { var v = elEmpresaGM.val(); return v ? parseInt(v, 10) : null; }
+    function escenarioGM() { var v = elEscenarioGM.val(); return v ? parseInt(v, 10) : 1; }
+
+    function escalarGM(v) { return _gm.unidad === 'miles' ? v / 1000 : (_gm.unidad === 'millones' ? v / 1000000 : v); }
+    function sufijoGM() { return _gm.unidad === 'miles' ? ' ' + _gm.t.unidadSufijoMiles : (_gm.unidad === 'millones' ? ' ' + _gm.t.unidadSufijoMillones : ''); }
+    function decGM() { return _gm.unidad === 'pesos' ? 0 : 1; }
+    function fmtNumGM(v) {
+        if (v === null || v === undefined) return CH_MDASH_GM;
+        try { return new Intl.NumberFormat(_gm.cultura, { minimumFractionDigits: decGM(), maximumFractionDigits: decGM() }).format(escalarGM(v)) + sufijoGM(); } catch (e) { return escalarGM(v) + sufijoGM(); }
+    }
+    function fmtPctGM(v) { if (v === null || v === undefined) return CH_MDASH_GM; try { return new Intl.NumberFormat(_gm.cultura, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v * 100) + '%'; } catch (e) { return (Math.round(v * 1000) / 10) + '%'; } }
+    function fmtPctVarGM(v) {
+        if (v === null || v === undefined) return CH_MDASH_GM;
+        try { return new Intl.NumberFormat(_gm.cultura, { minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: 'exceptZero' }).format(v * 100) + '%'; } catch (e) { var n = Math.round(v * 1000) / 10; return (n >= 0 ? '+' : '') + n + '%'; }
+    }
+    function fmtRatioGM(v) { if (v === null || v === undefined) return CH_MDASH_GM; try { return new Intl.NumberFormat(_gm.cultura, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v) + 'x'; } catch (e) { return (Math.round(v * 100) / 100) + 'x'; } }
+    function fmtIndicadorGM(a) {
+        if (a.Valor === null || a.Valor === undefined) return CH_MDASH_GM;
+        if (a.Formato === 'pct') return fmtPctGM(a.Valor);
+        if (a.Formato === 'x') return fmtRatioGM(a.Valor);
+        if (a.Formato === 'dias') return Math.round(a.Valor) + ' d';
+        return fmtNumGM(a.Valor);
+    }
+    function chipGM(valor, favorable) {
+        if (valor === null || valor === undefined || isNaN(valor)) return '<span class="pyg2-dchip">' + CH_MDASH_GM + '</span>';
+        return '<span class="pyg2-dchip ' + (favorable ? 'up' : 'down') + '"><i class="fas fa-caret-' + (valor >= 0 ? 'up' : 'down') + '"></i>' + escHtmlGM(fmtPctVarGM(valor)) + '</span>';
+    }
+    function mostrarErrorGM(m) { console.error('[InformeGerenciaMensual]', m); if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: '@Html.Raw(J(Resources.Strings.Common_Error))', text: m }); else alert(m); }
+    function etiquetaCierre(r) { return _gm.mesesNombres[r.Mes - 1] + ' ' + r.Anio; }
+
+    function actualizarBotonGM() { $('#btnConsultarGM').prop('disabled', !((!_gm.esAdmin || !!empresaGM()) && !!elEscenarioGM.val() && _gm.meses.length > 0)); }
+
+    function cargarMesesGM() {
+        _gm.meses = []; $('#gmMes').empty().prop('disabled', true); $('#gmSinMeses').hide();
+        $('#gmResultado, #gmSinDatos').hide(); $('#gmEstadoInicial').show(); actualizarBotonGM();
+        var idEmpresa = empresaGM();
+        if (_gm.esAdmin && !idEmpresa) return;
+        $.post(_gm.urls.meses, { idEmpresa: idEmpresa, idEscenario: escenarioGM(), __RequestVerificationToken: _gm.token }, function (resp) {
+            if (!resp || !resp.success) { mostrarErrorGM((resp && resp.message) || _gm.t.errorServidor); return; }
+            _gm.meses = resp.meses || [];
+            var $s = $('#gmMes').empty();
+            _gm.meses.forEach(function (m, i) { $s.append($('<option>').val(i).text(m.etiqueta)); });
+            $s.prop('disabled', !_gm.meses.length).trigger('change.select2');
+            $('#gmSinMeses').toggle(!_gm.meses.length);
+            actualizarBotonGM();
+        }).fail(function (xhr) { mostrarErrorGM(_gm.t.errorServidor + ' (HTTP ' + xhr.status + ')'); });
+    }
+
+    function filtrosGM() {
+        var m = _gm.meses[parseInt($('#gmMes').val() || 0, 10)];
+        return { IdEmpresa: empresaGM() || '', IdEscenario: escenarioGM(), Anio: m.anio, Mes: m.mes };
+    }
+    function consultarGM() {
+        if (!_gm.meses.length) return;
+        var filtros = filtrosGM();
+        InformeTema.preparar().then(function (ok) { if (ok) consultarConTemaGM(filtros); });
+    }
+    function consultarConTemaGM(filtros) {
+        $('#overlayConsultandoGM').css('display', 'flex');
+        $.post(_gm.urls.reporte, $.extend({ __RequestVerificationToken: _gm.token }, filtros), function (resp) {
+            $('#overlayConsultandoGM').hide();
+            if (!resp || !resp.success) { mostrarErrorGM((resp && resp.message) || _gm.t.errorServidor); return; }
+            var r = resp.reporte;
+            if (!r || r.SinDatos) { $('#gmEstadoInicial, #gmResultado').hide(); $('#gmSinDatos').show(); return; }
+            pintarReporteGM(r, filtros);
+        }).fail(function (xhr) { $('#overlayConsultandoGM').hide(); mostrarErrorGM(_gm.t.errorServidor + ' (HTTP ' + xhr.status + ')'); });
+    }
+
+    function pintarReporteGM(r, filtros) {
+        _gm.reporteActual = r; _gm.filtrosConsultados = filtros;
+        reiniciarInsightsGM();
+        $('#gmTituloEmpresa').text(elEmpresaGM.find(':selected').text() || '');
+        EmpresaLogo.mostrar(elEmpresaGM.val(), document.getElementById('gmLogo'));
+        $('#gmChipCierre').text(_gm.t.cierreFmt.replace('{0}', etiquetaCierre(r)));
+        $('#gmChipEscenario').text(elEscenarioGM.find(':selected').text() || '');
+        try { $('#gmFechaGenerado').text(new Date().toLocaleDateString(_gm.cultura, { day: 'numeric', month: 'long', year: 'numeric' })); } catch (e) { $('#gmFechaGenerado').text(''); }
+        $('#gmEstadoInicial, #gmSinDatos').hide();
+        InformeTema.aplicar(document.getElementById('gmResultado'));
+        $.extend(_gm.filtrosConsultados, InformeTema.parametros());
+        $('#gmResultado').show();
+        repintarGM();
+        if (window.ComentariosGestion) ComentariosGestion.cargar({ idEmpresa: filtros.IdEmpresa || empresaGM(), anio: r.Anio, mes: r.Mes, claves: [] });
+    }
+
+    function repintarGM() {
+        var r = _gm.reporteActual; if (!r) return;
+        $('#gmUnidadLbl').text(_gm.t.unidades[_gm.unidad]);
+        $('#gmMenuUnidad button').each(function () { var on = $(this).data('unidad') === _gm.unidad; $(this).toggleClass('on', on).attr('aria-checked', on ? 'true' : 'false'); });
+        pintarResultadosGM(r); pintarBalanceGM(r); pintarCajaGM(r); pintarIndicadoresGM(r); pintarLineasGM(r);
+    }
+
+    function filaDatoGM(etiqueta, valorHtml) { return '<div class="gm-fila"><span class="gm-et">' + escHtmlGM(etiqueta) + '</span><span class="gm-val">' + valorHtml + '</span></div>'; }
+    function vacioGM() { return '<div class="pyg2-hl-empty">' + escHtmlGM(_gm.t.sinSeccion) + '</div>'; }
+
+    function pintarResultadosGM(r) {
+        var T = _gm.t, $g = $('#gmResultadosGrid').empty();
+        $('#gmSecResultados').toggle(r.HayResultados);
+        if (!r.HayResultados) return;
+        r.Resultados.forEach(function (c) {
+            var icono = c.Codigo === 'Ingresos' ? 'fa-coins' : (c.Codigo === 'Ebitda' ? 'fa-gauge-high' : 'fa-sack-dollar');
+            var html = '<div class="pyg2-kpi"><div class="pyg2-kpi-head"><span class="ic"><i class="fas ' + icono + '"></i></span><span class="nm">' + escHtmlGM(T.res[c.Codigo]) + '</span></div>' +
+                '<div class="pyg2-kpi-val"><span class="v">' + escHtmlGM(fmtNumGM(c.Real)) + '</span></div><div class="pyg2-kpi-deltas">' +
+                '<div class="row"><span class="ref">' + escHtmlGM(T.vsPpto) + ' ' + escHtmlGM(fmtNumGM(c.Presupuesto)) + '</span>' + chipGM(c.VarPresupuesto, c.VarPresupuesto >= 0) + '</div>' +
+                (r.HayAnioAnterior ? '<div class="row"><span class="ref">' + escHtmlGM(T.vsAnio) + '</span>' + chipGM(c.VarAnioAnterior, c.VarAnioAnterior >= 0) + '</div>' : '') +
+                '<div class="row"><span class="ref">' + escHtmlGM(T.acumulado) + ' ' + escHtmlGM(fmtNumGM(c.AcumReal)) + '</span>' + chipGM(c.AcumVarPresupuesto, c.AcumVarPresupuesto >= 0) + '</div>' +
+                '</div></div>';
+            $g.append(html);
+        });
+    }
+
+    function pintarBalanceGM(r) {
+        var T = _gm.t, $b = $('#gmBalanceBody').empty();
+        $('#gmBalanceSub').text(T.cierreFmt.replace('{0}', etiquetaCierre(r)) + ' ' + CH_MIDDOT_GM + ' ' + T.vsCierre);
+        if (!r.HayBalance) { $b.html(vacioGM()); return; }
+        r.Balance.forEach(function (k) {
+            var favSube = k.Codigo !== 'Endeudamiento';
+            var val = k.NoAplica ? T.noAplica : (k.Codigo === 'RazonCorriente' ? fmtRatioGM(k.Valor) : (k.Codigo === 'Endeudamiento' ? fmtPctGM(k.Valor) : fmtNumGM(k.Valor)));
+            var chip = (k.NoAplica || k.Variacion === null || k.Variacion === undefined) ? '' : ' ' + chipGM(k.Variacion, (k.Variacion >= 0) === favSube);
+            $b.append(filaDatoGM(T.bal[k.Codigo] || k.Codigo, '<b>' + escHtmlGM(val) + '</b>' + chip));
+        });
+        $b.append('<div class="gm-nota ' + (r.CuadraBalance ? 'ok' : 'error') + '"><i class="fas fa-' + (r.CuadraBalance ? 'check' : 'triangle-exclamation') + '"></i> ' + escHtmlGM(r.CuadraBalance ? T.balCuadra : T.balNoCuadra) + '</div>');
+    }
+
+    function pintarCajaGM(r) {
+        var T = _gm.t, $c = $('#gmCajaBody').empty();
+        $('#gmCajaSub').text(T.cierreFmt.replace('{0}', etiquetaCierre(r)));
+        if (!r.HayCaja) { $c.html(vacioGM()); return; }
+        if (r.HayCajaInicial) $c.append(filaDatoGM(T.cajaInicial, '<b>' + escHtmlGM(fmtNumGM(r.CajaInicial)) + '</b>'));
+        var varPpto = r.FlujoNetoPresupuesto !== 0 ? (r.FlujoNeto - r.FlujoNetoPresupuesto) / Math.abs(r.FlujoNetoPresupuesto) : null;
+        $c.append(filaDatoGM(T.flujoNeto, '<b>' + escHtmlGM(fmtNumGM(r.FlujoNeto)) + '</b> ' + chipGM(varPpto, r.FlujoNeto >= r.FlujoNetoPresupuesto)));
+        $c.append(filaDatoGM(T.flujoNetoPpto, escHtmlGM(fmtNumGM(r.FlujoNetoPresupuesto))));
+        $c.append(filaDatoGM(T.fcl, '<b>' + escHtmlGM(fmtNumGM(r.FclOperativo)) + '</b>'));
+        if (r.HayCajaFinal) $c.append(filaDatoGM(T.cajaFinal, '<b>' + escHtmlGM(fmtNumGM(r.CajaFinal)) + '</b>'));
+        if (r.HayCajaInicial && r.HayCajaFinal)
+            $c.append('<div class="gm-nota ' + (r.CuadraCaja ? 'ok' : 'error') + '"><i class="fas fa-' + (r.CuadraCaja ? 'check' : 'triangle-exclamation') + '"></i> ' + escHtmlGM(r.CuadraCaja ? T.cajaCuadra : T.cajaNoCuadra) + '</div>');
+    }
+
+    function nombreIndicadorGM(c) { return _gm.t.indNombres[c] || c; }
+    function pintarIndicadoresGM(r) {
+        var T = _gm.t;
+        if (!r.HayIndicadores) { $('#gmSemaforo').empty(); $('#gmAtencionBody').html(vacioGM()); return; }
+        $('#gmSemaforo').html(['verde', 'amarillo', 'naranja', 'rojo'].map(function (n) {
+            var cant = r['Total' + n.charAt(0).toUpperCase() + n.slice(1)];
+            return '<span class="gm-sem ' + n + '"><b>' + cant + '</b> ' + escHtmlGM(T.nivel[n]) + '</span>';
+        }).join(''));
+        var $a = $('#gmAtencionBody').empty();
+        if (!r.Atencion.length) { $a.html('<div class="pyg2-hl-empty">' + escHtmlGM(T.sinAtencion) + '</div>'); return; }
+        r.Atencion.forEach(function (a) {
+            $a.append(filaDatoGM(nombreIndicadorGM(a.Codigo), '<b>' + escHtmlGM(fmtIndicadorGM(a)) + '</b> <span class="gm-sem ' + a.Nivel + '">' + escHtmlGM(T.nivel[a.Nivel] || a.Nivel) + '</span>'));
+        });
+    }
+
+    function pintarLineasGM(r) {
+        var T = _gm.t;
+        $('#gmSecLineas').toggle(r.HayLineas);
+        if (!r.HayLineas) return;
+        $('#gmLineasHead').html('<tr><th class="col-cuenta">' + escHtmlGM(T.colLinea) + '</th><th>' + escHtmlGM(T.colIngresos) + '</th><th>' + escHtmlGM(T.colPct) + '</th><th>' + escHtmlGM(T.colMargen) + '</th></tr>');
+        $('#gmLineasBody').html(r.Lineas.map(function (l) {
+            return '<tr><td class="lbl">' + escHtmlGM(l.Nombre) + '</td><td class="real">' + escHtmlGM(fmtNumGM(l.Ingresos)) + '</td><td class="mar">' + escHtmlGM(fmtPctGM(l.PctIngresos)) + '</td><td class="mar">' + escHtmlGM(fmtPctGM(l.MargenOperacional)) + '</td></tr>';
+        }).join(''));
+    }
+
+    // ===== Resumen con IA =====
+    function reiniciarInsightsGM() {
+        _gm.insightsTexto = null;
+        $('#gmRespuesta').empty(); $('#gmInsightsLoading').hide();
+        $('#gmInsightsBody').show().html('<div class="pyg2-ins-empty"><i class="fas fa-circle-info"></i><span>' + escHtmlGM(_gm.t.insightsVacio) + '</span></div>');
+        $('#gmInsightsMeta').text(_gm.t.insightsSub);
+        $('#btnGenerarInsightsGM').prop('disabled', false).html('<i class="fas fa-wand-magic-sparkles"></i><span>' + escHtmlGM(_gm.t.generar) + '</span>');
+    }
+    function separarInsightsGM(texto) {
+        var claves = { resultado: /^(resultado|result)/i, caja: /^(caja y balance|cash and balance|caja)/i, foco: /^(foco del mes|focus of the month|foco)/i };
+        var etiqueta = /^(\*\*|__)?\s*(resultado|result|caja y balance|cash and balance|caja|foco del mes|focus of the month|foco)[^:]*:\s*(\*\*|__)?\s*/i;
+        var partes = { resultado: [], caja: [], foco: [] }, actual = null;
+        (texto || '').split(/\r?\n/).forEach(function (linea) {
+            var conFormato = linea.replace(/^\s*(?:[-•>#]+|\*(?=\s)|\d+[.)])\s*/, '').trim(), plano = conFormato.replace(/\*\*|__/g, '').trim();
+            if (!plano) return;
+            var enc = null; Object.keys(claves).forEach(function (k) { if (!enc && claves[k].test(plano)) enc = k; });
+            if (enc) { actual = enc; var resto = plano.indexOf(':') >= 0 ? conFormato.replace(etiqueta, '').trim() : ''; if (resto) partes[actual].push(resto); return; }
+            if (actual) partes[actual].push(conFormato);
+        });
+        if (!partes.resultado.length || !partes.caja.length || !partes.foco.length) return null;
+        return { resultado: partes.resultado.join(' '), caja: partes.caja.join(' '), foco: partes.foco.join(' ') };
+    }
+    function negritasGM(t) { return escHtmlGM(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/__(.+?)__/g, '<strong>$1</strong>').replace(/\*\*|__/g, ''); }
+    function pintarInsightsGM(texto) {
+        var s = separarInsightsGM(texto);
+        if (!s) { var md = (typeof window.bufinsMarkdown === 'function') ? window.bufinsMarkdown(texto) : escHtmlGM(texto).replace(/\n/g, '<br>'); $('#gmInsightsBody').html('<div class="pyg-insights-body">' + md + '</div>'); return; }
+        var tiles = [
+            { cls: 'logro', icono: 'fa-chart-line', titulo: _gm.t.insResultado, texto: s.resultado },
+            { cls: 'alerta', icono: 'fa-money-bill-wave', titulo: _gm.t.insCaja, texto: s.caja },
+            { cls: 'eficiencia', icono: 'fa-bullseye', titulo: _gm.t.insFoco, texto: s.foco }
+        ];
+        $('#gmInsightsBody').html('<div class="pyg2-ins-grid">' + tiles.map(function (t) {
+            return '<div class="pyg2-ins-tile ' + t.cls + '"><div class="h"><span class="ic"><i class="fas ' + t.icono + '"></i></span><span class="t">' + escHtmlGM(t.titulo) + '</span></div><p>' + negritasGM(t.texto) + '</p></div>';
+        }).join('') + '</div>');
+    }
+    function generarInsightsGM() {
+        if (!_gm.reporteActual) return;
+        var $btn = $('#btnGenerarInsightsGM'), htmlBtn = $btn.html();
+        $btn.prop('disabled', true); $('#gmInsightsBody').hide(); $('#gmInsightsLoading').show();
+        $.post(_gm.urls.insights, $.extend({ __RequestVerificationToken: _gm.token }, _gm.filtrosConsultados), function (resp) {
+            $('#gmInsightsLoading').hide(); $('#gmInsightsBody').show(); $btn.prop('disabled', false);
+            if (!resp || !resp.Exitoso) { $btn.html(htmlBtn); $('#gmInsightsBody').html('<div class="pyg2-ins-empty"><i class="fas fa-circle-exclamation"></i><span>' + escHtmlGM((resp && resp.Error) || _gm.t.errorServidor) + '</span></div>'); return; }
+            _gm.insightsTexto = resp.Respuesta || '';
+            pintarInsightsGM(_gm.insightsTexto);
+            $btn.html('<i class="fas fa-rotate"></i><span>' + escHtmlGM(_gm.t.regenerar) + '</span>');
+            try { $('#gmInsightsMeta').text(_gm.t.insightsMetaFmt.replace('{0}', new Date().toLocaleDateString(_gm.cultura, { day: 'numeric', month: 'long', year: 'numeric' }))); } catch (e) { }
+        }).fail(function (xhr) {
+            $('#gmInsightsLoading').hide(); $('#gmInsightsBody').show(); $btn.prop('disabled', false).html(htmlBtn);
+            $('#gmInsightsBody').html('<div class="pyg2-ins-empty"><i class="fas fa-circle-exclamation"></i><span>' + escHtmlGM(_gm.t.errorServidor + ' (HTTP ' + xhr.status + ')') + '</span></div>');
+        });
+    }
+    function preguntarGM() {
+        var q = $.trim($('#gmPregunta').val());
+        if (!q || !_gm.reporteActual) return;
+        var $btn = $('#btnGmPreguntar').prop('disabled', true);
+        $('#gmRespuesta').html('<span class="text-muted"><i class="fas fa-spinner fa-spin mr-1"></i>' + escHtmlGM('@Html.Raw(J(Resources.Strings.IAInforme_Preguntando))') + '</span>');
+        $.post(_gm.urls.preguntar, $.extend({ __RequestVerificationToken: _gm.token, pregunta: q }, _gm.filtrosConsultados), function (resp) {
+            $btn.prop('disabled', false);
+            if (!resp || !resp.Exitoso) { $('#gmRespuesta').html('<span style="color:#b91c1c;">' + escHtmlGM((resp && resp.Error) || '@Html.Raw(J(Resources.Strings.IAInforme_Error))') + '</span>'); return; }
+            var md = (typeof window.bufinsMarkdown === 'function') ? window.bufinsMarkdown(resp.Respuesta || '') : escHtmlGM(resp.Respuesta || '').replace(/\n/g, '<br>');
+            $('#gmRespuesta').html('<div class="pyg-insights-body">' + md + '</div>');
+        }).fail(function () { $btn.prop('disabled', false); $('#gmRespuesta').html('<span style="color:#b91c1c;">' + escHtmlGM('@Html.Raw(J(Resources.Strings.IAInforme_Error))') + '</span>'); });
+    }
+
+    // ===== PDF (A4 horizontal, jsPDF puro, 2 páginas) =====
+    var PDF_COL_GM = {
+        marca: [99, 102, 241], morado: [88, 58, 255], texto: [22, 18, 31], texto2: [91, 85, 112], muted: [139, 133, 160],
+        linea: [228, 225, 240], suave: [244, 243, 251], suave2: [248, 247, 253], totalBg: [238, 242, 255],
+        bueno: [22, 163, 74], buenoBg: [236, 253, 243], malo: [220, 38, 38], maloBg: [254, 242, 242], blanco: [255, 255, 255]
+    };
+    function generarPdfGM() {
+        var r = _gm.reporteActual; if (!r) return Promise.resolve();
+        return new Promise(function (ok, ko) {
+            setTimeout(function () {
+                try { var doc = construirPdfGM(r); doc.save(doc.__nombre); ExportMenu.aviso('success', EXP_T.listo); ok(); }
+                catch (e) { console.error('[InformeGerenciaMensual] PDF', e); ko(e); }
+            }, 30);
+        });
+    }
+    function copiarImagenGM() {
+        var empresa = ($('#gmTituloEmpresa').text() || 'GerenciaMensual').replace(/[^A-Za-z0-9]+/g, '_');
+        return ExportMenu.copiarImagen(document.getElementById('gmResultado'), 'GerenciaMensual_' + empresa + '_' + new Date().toISOString().slice(0, 10) + '.png',
+            { imagenCopiada: EXP_T.imagenCopiada, imagenDescargada: EXP_T.imagenDescargada });
+    }
+
+    function construirPdfGM(r) {
+        var T = _gm.t, P = T.pdf, C = InformeTema.pdf(PDF_COL_GM), DEG = InformeTema.pdfDegradado();
+        var pdf = new window.jspdf.jsPDF('l', 'mm', 'a4');
+        var W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight();
+        var M = 12, ANCHO = W - M * 2, LIMITE_Y = H - 15, y = 0;
+        var empresa = $('#gmTituloEmpresa').text() || '', cierre = etiquetaCierre(r);
+
+        function rgb(fn, c) { pdf[fn](c[0], c[1], c[2]); }
+        function fuente(est, tam, c) { pdf.setFont('helvetica', est); pdf.setFontSize(tam); rgb('setTextColor', c || C.texto); }
+        function limpiar(t) { return String(t == null ? '' : t).replace(/\*\*|__/g, '').replace(/\s+/g, ' ').trim(); }
+        function ancho(t) { return pdf.getTextWidth(String(t)); }
+        function degradado(x, yy, w, h) {
+            var pasos = 90, n = DEG.length - 1;
+            for (var i = 0; i < pasos; i++) {
+                var t = i / (pasos - 1), seg = Math.min(n - 1, Math.floor(t * n)), f = t * n - seg, a = DEG[seg], b = DEG[seg + 1];
+                pdf.setFillColor(Math.round(a[0] + (b[0] - a[0]) * f), Math.round(a[1] + (b[1] - a[1]) * f), Math.round(a[2] + (b[2] - a[2]) * f));
+                pdf.rect(x + (w * i) / pasos, yy, w / pasos + 0.15, h, 'F');
+            }
+        }
+        function pildora(texto, x, yy, fg, bg, negrita, tam, der) {
+            fuente(negrita ? 'bold' : 'normal', tam || 7.5, fg);
+            var w = ancho(texto) + 5, h = (tam || 7.5) * 0.62 + 1, x0 = der ? x - w : x;
+            rgb('setFillColor', bg); pdf.roundedRect(x0, yy - h + 1.4, w, h, h / 2, h / 2, 'F'); pdf.text(texto, x0 + 2.5, yy); return w;
+        }
+        function tituloSeccion(texto, yy, x0, w) {
+            x0 = x0 === undefined ? M : x0; w = w === undefined ? ANCHO : w;
+            var t = String(texto).toUpperCase();
+            fuente('bold', 8.5, C.morado); pdf.text(t, x0, yy);
+            rgb('setDrawColor', C.linea); pdf.setLineWidth(0.3); pdf.line(x0 + ancho(t) + 3, yy - 1.1, x0 + w, yy - 1.1);
+        }
+        function tarjeta(x, yy, w, h) { rgb('setDrawColor', C.linea); rgb('setFillColor', C.blanco); pdf.setLineWidth(0.3); pdf.roundedRect(x, yy, w, h, 2.5, 2.5, 'FD'); }
+        function encabezadoPagina() {
+            degradado(0, 0, W, 2.4); fuente('bold', 10, C.texto); pdf.text(empresa, M, 11);
+            fuente('normal', 8, C.muted); pdf.text(P.titulo + '  ' + CH_MIDDOT_GM + '  ' + cierre, W - M, 11, { align: 'right' }); y = 20;
+        }
+
+        // Banda de portada
+        degradado(0, 0, W, 34);
+        fuente('bold', 10, C.blanco);
+        var wMarca = window.BufinsPdfMarca ? BufinsPdfMarca(pdf, M, 10) : 0;
+        if (!wMarca) { pdf.text(P.marca, M, 10); wMarca = ancho(P.marca); }
+        fuente('normal', 8.5, C.blanco); pdf.text(CH_MIDDOT_GM + '  ' + P.subtitulo, M + wMarca + 2.5, 10);
+        fuente('bold', 19, C.blanco); pdf.text(empresa, M, 22);
+        fuente('normal', 9.5, C.blanco); pdf.text(P.titulo, M, 29);
+        fuente('normal', 8, C.blanco); pdf.text(P.generadoEl + ' ' + ($('#gmFechaGenerado').text() || ''), W - M, 10, { align: 'right' });
+        fuente('bold', 8, C.blanco); pdf.text(P.confidencial.toUpperCase(), W - M, 29, { align: 'right' });
+        EmpresaLogo.pdf(pdf, { xDerecha: W - M, y: 12.5, alto: 14 });
+
+        y = 43;
+        var xc = M;
+        [{ t: $('#gmChipCierre').text(), fg: C.morado, bg: C.totalBg, b: true }, { t: $('#gmChipEscenario').text() }, { t: T.unidadBadge[_gm.unidad] }].forEach(function (c) {
+            if (!c.t) return; xc += pildora(c.t, xc, y, c.fg || C.texto2, c.bg || C.suave, !!c.b) + 3;
+        });
+        y += 10;
+
+        // Resumen con IA
+        tituloSeccion(P.insights, y); y += 4;
+        var sec = _gm.insightsTexto ? separarInsightsGM(_gm.insightsTexto) : null;
+        if (sec) {
+            var tiles = [{ titulo: T.insResultado, texto: sec.resultado, c: C.bueno }, { titulo: T.insCaja, texto: sec.caja, c: C.malo }, { titulo: T.insFoco, texto: sec.foco, c: C.morado }];
+            var gapT = 5, wT = (ANCHO - gapT * 2) / 3;
+            fuente('normal', 8.8, C.texto2);
+            var lin = tiles.map(function (t) { return pdf.splitTextToSize(limpiar(t.texto), wT - 9); });
+            var hT = 14 + Math.max.apply(null, lin.map(function (l) { return l.length; })) * 4.2 + 3;
+            tiles.forEach(function (t, i) {
+                var x = M + i * (wT + gapT);
+                tarjeta(x, y, wT, hT); rgb('setFillColor', t.c); pdf.rect(x + 2.5, y, wT - 5, 1.1, 'F');
+                fuente('bold', 7.5, t.c); pdf.text(t.titulo.toUpperCase(), x + 4.5, y + 8.3);
+                fuente('normal', 8.8, C.texto2); pdf.text(lin[i], x + 4.5, y + 15.5, { lineHeightFactor: 1.35 });
+            });
+            y += hT + 8;
+        } else {
+            fuente('italic', 8.5, C.texto2); pdf.text(_gm.insightsTexto ? pdf.splitTextToSize(limpiar(_gm.insightsTexto), ANCHO)[0] : P.sinInsights, M, y + 3); y += 10;
+        }
+
+        // Resultados
+        if (r.HayResultados) {
+            tituloSeccion($('#gmSecResultados .t').text(), y); y += 4;
+            var nR = r.Resultados.length, gapR = 5, wR = (ANCHO - gapR * (nR - 1)) / nR, hR = 38;
+            r.Resultados.forEach(function (c, i) {
+                var x = M + i * (wR + gapR);
+                tarjeta(x, y, wR, hR); degradado(x + 3, y, wR - 6, 1);
+                fuente('bold', 7.5, C.texto2); pdf.text((T.res[c.Codigo] || c.Codigo).toUpperCase(), x + 4.5, y + 8);
+                fuente('bold', 16, C.texto); pdf.text(fmtNumGM(c.Real), x + 4.5, y + 17);
+                fuente('normal', 7, C.muted); pdf.text(T.vsPpto + ' ' + fmtNumGM(c.Presupuesto), x + 4.5, y + 24);
+                pildora(fmtPctVarGM(c.VarPresupuesto), x + wR - 4.5, y + 24.5, c.VarPresupuesto >= 0 ? C.bueno : C.malo, c.VarPresupuesto >= 0 ? C.buenoBg : C.maloBg, true, 7, true);
+                fuente('normal', 7, C.muted); pdf.text(T.acumulado + ' ' + fmtNumGM(c.AcumReal), x + 4.5, y + 31);
+                pildora(fmtPctVarGM(c.AcumVarPresupuesto), x + wR - 4.5, y + 31.5, c.AcumVarPresupuesto >= 0 ? C.bueno : C.malo, c.AcumVarPresupuesto >= 0 ? C.buenoBg : C.maloBg, true, 7, true);
+            });
+            y += hR + 9;
+        }
+
+        // Balance y caja lado a lado
+        var mitad = (ANCHO - 6) / 2;
+        function bloque(x, titulo, filas) {
+            tituloSeccion(titulo, y, x, mitad);
+            var yy = y + 5;
+            filas.forEach(function (f) {
+                fuente('normal', 8.5, C.texto2); pdf.text(f[0], x + 1, yy);
+                fuente('bold', 8.5, C.texto); pdf.text(f[1], x + mitad - 1, yy, { align: 'right' });
+                rgb('setDrawColor', C.linea); pdf.setLineWidth(0.15); pdf.line(x, yy + 1.8, x + mitad, yy + 1.8);
+                yy += 6;
+            });
+            return yy;
+        }
+        var filasBal = r.HayBalance ? r.Balance.map(function (k) {
+            return [T.bal[k.Codigo] || k.Codigo, k.NoAplica ? T.noAplica : (k.Codigo === 'RazonCorriente' ? fmtRatioGM(k.Valor) : (k.Codigo === 'Endeudamiento' ? fmtPctGM(k.Valor) : fmtNumGM(k.Valor)))];
+        }) : [[T.sinSeccion, '']];
+        var filasCaja = [];
+        if (r.HayCaja) {
+            if (r.HayCajaInicial) filasCaja.push([T.cajaInicial, fmtNumGM(r.CajaInicial)]);
+            filasCaja.push([T.flujoNeto, fmtNumGM(r.FlujoNeto)], [T.flujoNetoPpto, fmtNumGM(r.FlujoNetoPresupuesto)], [T.fcl, fmtNumGM(r.FclOperativo)]);
+            if (r.HayCajaFinal) filasCaja.push([T.cajaFinal, fmtNumGM(r.CajaFinal)]);
+        } else filasCaja.push([T.sinSeccion, '']);
+        var y1 = bloque(M, $('#gmSecBalance .pyg2-card-title').text(), filasBal);
+        var y2 = bloque(M + mitad + 6, $('#gmSecCaja .pyg2-card-title').text(), filasCaja);
+        y = Math.max(y1, y2) + 4;
+
+        // Página 2: indicadores, líneas, comentarios
+        pdf.addPage(); encabezadoPagina();
+        tituloSeccion(P.atencion, y); y += 6;
+        if (r.HayIndicadores) {
+            var xs = M;
+            ['verde', 'amarillo', 'naranja', 'rojo'].forEach(function (n) {
+                var cant = r['Total' + n.charAt(0).toUpperCase() + n.slice(1)];
+                var col = n === 'verde' ? C.bueno : (n === 'rojo' ? C.malo : C.texto2);
+                xs += pildora(cant + ' ' + T.nivel[n], xs, y, col, n === 'verde' ? C.buenoBg : (n === 'rojo' ? C.maloBg : C.suave), true, 7.5) + 3;
+            });
+            y += 7;
+            r.Atencion.forEach(function (a) {
+                fuente('normal', 8.5, C.texto2); pdf.text(nombreIndicadorGM(a.Codigo), M + 1, y);
+                fuente('bold', 8.5, C.texto); pdf.text(fmtIndicadorGM(a) + '   ' + (T.nivel[a.Nivel] || a.Nivel), W - M - 1, y, { align: 'right' });
+                rgb('setDrawColor', C.linea); pdf.setLineWidth(0.15); pdf.line(M, y + 1.8, W - M, y + 1.8); y += 6;
+            });
+            if (!r.Atencion.length) { fuente('italic', 8.5, C.texto2); pdf.text(T.sinAtencion, M + 1, y); y += 6; }
+        } else { fuente('italic', 8.5, C.texto2); pdf.text(T.sinSeccion, M + 1, y); y += 6; }
+        y += 6;
+
+        if (r.HayLineas) {
+            tituloSeccion(P.lineas, y); y += 6;
+            fuente('bold', 7.5, C.blanco); rgb('setFillColor', C.marca); pdf.rect(M, y - 4.3, ANCHO, 6.3, 'F');
+            pdf.text(T.colLinea.toUpperCase(), M + 3, y);
+            pdf.text(T.colIngresos.toUpperCase(), M + 95, y, { align: 'right' }); pdf.text(T.colPct.toUpperCase(), M + 130, y, { align: 'right' }); pdf.text(T.colMargen.toUpperCase(), M + 170, y, { align: 'right' });
+            y += 6;
+            r.Lineas.forEach(function (l) {
+                fuente('normal', 8.3, C.texto2); pdf.text(l.Nombre, M + 3, y);
+                pdf.text(fmtNumGM(l.Ingresos), M + 95, y, { align: 'right' }); pdf.text(fmtPctGM(l.PctIngresos), M + 130, y, { align: 'right' }); pdf.text(fmtPctGM(l.MargenOperacional), M + 170, y, { align: 'right' });
+                rgb('setDrawColor', C.linea); pdf.setLineWidth(0.15); pdf.line(M, y + 1.8, W - M, y + 1.8); y += 6;
+            });
+            y += 6;
+        }
+
+        var coms = window.ComentariosGestion ? ComentariosGestion.ultimos() : [];
+        if (coms.length) {
+            tituloSeccion(P.comentarios, y); y += 5;
+            coms.slice(0, 6).forEach(function (c) {
+                fuente('normal', 8.2, C.texto2);
+                var lineas = pdf.splitTextToSize(limpiar(((c.Clave ? c.Clave + ': ' : '') + c.Texto) + '  — ' + c.NombreUsuario), ANCHO - 10).slice(0, 3);
+                var hC = lineas.length * 4 + 5;
+                if (y + hC > LIMITE_Y) { pdf.addPage(); encabezadoPagina(); }
+                tarjeta(M, y, ANCHO, hC); pdf.text(lineas, M + 5, y + 6, { lineHeightFactor: 1.3 }); y += hC + 2;
+            });
+        }
+
+        var tot = pdf.internal.getNumberOfPages();
+        for (var p = 1; p <= tot; p++) {
+            pdf.setPage(p); rgb('setDrawColor', C.linea); pdf.setLineWidth(0.3); pdf.line(M, H - 10, W - M, H - 10);
+            fuente('normal', 7, C.muted); pdf.text(P.pie + '  ' + CH_MIDDOT_GM + '  ' + empresa + '  ' + CH_MIDDOT_GM + '  ' + cierre, M, H - 6);
+            pdf.text(P.confidencial, W / 2, H - 6, { align: 'center' });
+            fuente('bold', 7, C.texto2); pdf.text(P.paginaFmt.replace('{0}', p).replace('{1}', tot), W - M, H - 6, { align: 'right' });
+        }
+        pdf.__nombre = 'GerenciaMensual_' + empresa.replace(/[^a-z0-9]+/gi, '_') + '_' + r.Anio + ('0' + r.Mes).slice(-2) + '.pdf';
+        return pdf;
+    }
+
+    $(document).ready(function () {
+        $('#gmEmpresa, #gmEscenario, #gmMes').select2({ width: '100%', language: s2langGM, dropdownAutoWidth: false, minimumResultsForSearch: 10 });
+        $('#gmEmpresa, #gmEscenario').on('change', cargarMesesGM);
+
+        $('#gmBtnUnidad').on('click', function (e) { e.stopPropagation(); $(this).attr('aria-expanded', $('#gmMenuUnidad').toggleClass('open').hasClass('open') ? 'true' : 'false'); });
+        $('#gmMenuUnidad button').on('click', function (e) {
+            e.stopPropagation(); _gm.unidad = $(this).data('unidad');
+            $('#gmMenuUnidad').removeClass('open'); $('#gmBtnUnidad').attr('aria-expanded', 'false'); guardarPrefsGM(); repintarGM();
+        });
+        $(document).on('click', function () { $('#gmMenuUnidad').removeClass('open'); $('#gmBtnUnidad').attr('aria-expanded', 'false'); });
+
+        function exportarExcelGM() {
+            if (!_gm.filtrosConsultados) return;
+            var $c = $('#gmExpCampos').empty();
+            Object.keys(_gm.filtrosConsultados).forEach(function (k) { $c.append($('<input type="hidden">').attr('name', k).val(_gm.filtrosConsultados[k] == null ? '' : _gm.filtrosConsultados[k])); });
+            $('#frmExportarExcelGM').submit();
+        }
+
+        $('#btnConsultarGM').on('click', consultarGM);
+        InformeTema.montar({ selector: '#gmTema', empresa: '#gmEmpresa' });
+        $('#btnLimpiarGM').on('click', function () { InformeTema.reset(); if (_gm.esAdmin) elEmpresaGM.val('').trigger('change.select2'); cargarMesesGM(); });
+        $('#btnGenerarInsightsGM').on('click', generarInsightsGM);
+        $('#btnGmPreguntar').on('click', preguntarGM);
+        $('#gmPregunta').on('keydown', function (e) { if (e.which === 13) { e.preventDefault(); preguntarGM(); } });
+
+        // En este informe se listan los comentarios de TODOS los informes del cierre; los nuevos quedan como «Informe mensual de gerencia».
+        ComentariosGestion.montar({ raiz: '#gmComentarios', informe: 'GerenciaMensual', todos: true });
+
+        var correoGM = ExportMenu.correo({
+            url: '@Url.Action("EnviarPorCorreo", "InformeGerenciaMensual")',
+            token: function () { return _gm.token; },
+            datos: function () { return $.extend({}, _gm.filtrosConsultados); },
+            pdf: function () { var d = construirPdfGM(_gm.reporteActual); return d ? d.output('datauristring') : ''; },
+            pills: function () { return [$('#gmTituloEmpresa').text()].concat($('#gmPanelResultado .pyg2-chip').map(function () { return $(this).text(); }).get()); },
+            textos: EXP_T
+        });
+        ExportMenu.init('gmExp', {
+            acciones: { excel: exportarExcelGM, pdf: generarPdfGM, imagen: copiarImagenGM, correo: function () { if (_gm.reporteActual) correoGM.abrir(); } },
+            textos: EXP_T
+        });
+
+        DocVisor.init({ boton: '#gmDocBtn', url: '@Url.Action("Ver", "Documentacion", new { clave = "gerencia-mensual" })' });
+        cargarPrefsGM(); cargarMesesGM();
+    });
+</script>
+}
