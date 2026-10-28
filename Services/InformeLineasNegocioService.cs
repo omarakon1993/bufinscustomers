@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
@@ -216,7 +216,8 @@ namespace bufinscustomers.Services
             foreach (var r in resumenes)
             {
                 r.PctIngresos = Razon(r.Ingresos, total.Ingresos);
-                r.PctUtilidadOperacional = Razon(r.UtilidadOperacional, total.UtilidadOperacional);
+                // Con una utilidad operacional total negativa o cero, "qué parte aporta cada línea" no tiene sentido (daría porcentajes negativos o enormes).
+                r.PctUtilidadOperacional = total.UtilidadOperacional > 0m ? Razon(r.UtilidadOperacional, total.UtilidadOperacional) : null;
                 if (res.HayAnioAnterior)
                 {
                     acumAnt.TryGetValue(r.Nombre, out var dAnt);
