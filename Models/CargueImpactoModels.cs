@@ -12,8 +12,19 @@ namespace bufinscustomers.Models
         public int Existentes { get; set; }
         public int Nuevas { get; set; }
 
-        /// <summary>Tenía datos y el archivo no trae ninguno: la tabla quedaría vacía.</summary>
-        public bool QuedaVacia => Existentes > 0 && Nuevas == 0;
+        /// <summary>
+        /// Tablas que es normal que no traigan datos de un año a otro (presupuesto y PCH): quedan fuera de la regla de
+        /// reducción/bloqueo. Siguen apareciendo en el detalle con sus conteos.
+        /// </summary>
+        private static readonly HashSet<string> TablasExentas = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Ini_PptoPYG", "Ini_PptoPYGConAjuste", "Ini_PCH", "Ini_EjecPCH"
+        };
+
+        public bool Exenta => Tabla != null && TablasExentas.Contains(Tabla);
+
+        /// <summary>Tenía datos y el archivo no trae ninguno: la tabla quedaría vacía (no aplica a las tablas exentas).</summary>
+        public bool QuedaVacia => !Exenta && Existentes > 0 && Nuevas == 0;
     }
 
     /// <summary>
@@ -36,14 +47,14 @@ namespace bufinscustomers.Models
         public bool CargaVacia => TotalNuevas == 0;
 
         public bool EsReduccionFuerte(ImpactoTabla t) =>
-            t.Existentes > 0 && (long)t.Nuevas * 100 < (long)t.Existentes * UmbralPct;
+            !t.Exenta && t.Existentes > 0 && (long)t.Nuevas * 100 < (long)t.Existentes * UmbralPct;
 
         /// <summary>Tablas que perderían mucho (o todo) frente a lo que hay hoy.</summary>
         public List<ImpactoTabla> TablasEnRiesgo => Tablas.Where(EsReduccionFuerte).ToList();
 
         /// <summary>La tabla tenía datos y quedaría con menos del umbral de bloqueo (incluye quedar vacía): no se permite.</summary>
         public bool EsBloqueada(ImpactoTabla t) =>
-            t.Existentes > 0 && (long)t.Nuevas * 100 < (long)t.Existentes * UmbralBloqueoPct;
+            !t.Exenta && t.Existentes > 0 && (long)t.Nuevas * 100 < (long)t.Existentes * UmbralBloqueoPct;
 
         public List<ImpactoTabla> TablasBloqueadas => Tablas.Where(EsBloqueada).ToList();
 
