@@ -70,13 +70,16 @@ def doc_lineas():
         ['<b>Márgenes por línea</b>', 'Margen bruto, operacional y neto de cada línea y del total.'],
         ['<b>Estado de resultados por línea</b>', 'Ingresos, costo de ventas, utilidad bruta, gastos operacionales, utilidad operacional, EBITDA, resultado no operacional, utilidad antes de impuestos, impuesto y utilidad neta, una columna por línea más el total, y los márgenes.'],
         ['<b>Resumen por línea</b>', 'Participación en ingresos y en la utilidad operacional, y variación contra el año anterior.'],
+        ['<b>Análisis por línea de venta</b>', 'Solo si la empresa maneja líneas de venta (el «Tipo» de cada producto o servicio): indicadores (cuántas líneas, la líder, concentración de las tres mayores, mayor crecimiento y mayor caída), una torta con la participación de cada línea de venta en los ingresos, la evolución mensual apilada y una tabla con ingresos, participación, año anterior, variación, aporte al cambio, promedio mensual y mejor mes.'],
         ['<b>Comentarios de gestión</b>', 'Notas del equipo sobre el cierre; se puede indicar a qué línea se refiere cada una.'],
     ]) + '</section>'))
     s.append(('datos', 'De dónde salen las cifras', '''<section id="datos"><h2>3. De dónde salen las cifras</h2>
 <p class="lead">De la tabla del modelo <code>ModeloLineasNegocio</code>, resultado del modelo de Líneas de Negocio. El informe no ejecuta el modelo: <b>solo hay datos después de ejecutarlo</b> en Ejecución de Modelos (por eso lleva la cápsula «Información modelo Bufins»).</p>
 <ul><li><b>Las líneas son propias de cada empresa.</b> El modelo guarda cada cuenta con el nombre de la línea al final (por ejemplo «Ingresos Exp» pertenece a la línea «Exp»); el informe descubre las líneas solo, sin listas fijas.</li>
 <li>Cada línea trae los mismos 16 conceptos: ingresos, otros ingresos y financieros, gastos de administración y de ventas, depreciación y amortización (de costo y de gasto), provisiones, otros gastos, gastos financieros, diferencia en cambio, impuesto de renta y costo de ventas.</li>
-<li>Solo se muestran las líneas con movimiento en el rango elegido.</li></ul></section>'''))
+<li>Solo se muestran las líneas con movimiento en el rango elegido.</li></ul>
+<p class="note"><b>Línea de negocio y línea de venta.</b> Cuando el modelo trae las columnas <code>LineaNegocio</code> y <code>LineaVenta</code>, la línea de negocio sale de la primera y la línea de venta (el «Tipo») de la segunda. Si la columna de línea de negocio viene vacía (modelos anteriores) se usa el nombre al final de la cuenta, como antes. El análisis por línea de venta solo aparece si la empresa tiene datos en <code>LineaVenta</code>.</p>
+<p class="note info"><b>Empresa con una sola línea de negocio.</b> Los costos y gastos no se reparten entre líneas: se toman del Estado de resultados (PYG) de toda la empresa, por concepto, y se asignan completos a esa única línea. Los ingresos siguen saliendo del modelo de líneas, de modo que coinciden con la suma de las líneas de venta. El informe lo avisa con una nota al pie.</p></section>'''))
     s.append(('calculo', 'Cómo se calcula', '''<section id="calculo"><h2>4. Cómo se calcula</h2>
 ''' + tabla(['Concepto', 'Cómo se obtiene'], [
         ['Costo de ventas', 'Costo de ventas (CMV) + depreciación del costo + amortización del costo.'],
@@ -88,6 +91,10 @@ def doc_lineas():
         ['Utilidad neta', 'Utilidad operacional + resultado no operacional − impuesto de renta.'],
         ['Márgenes', 'Cada utilidad dividida por los ingresos de la misma línea (sin ingresos no hay margen).'],
         ['Comparación', 'El mismo rango de meses del año anterior; si ese año no tiene datos de líneas no se muestran variaciones.'],
+        ['Líneas de venta: participación', 'Ingresos de la línea de venta dividido por los ingresos de todas las líneas de venta del rango.'],
+        ['Líneas de venta: aporte al cambio', 'Variación en pesos de la línea frente al año anterior dividida por la variación total de ingresos: cuánto del crecimiento (o de la caída) explica esa línea.'],
+        ['Líneas de venta: concentración', 'Suma de la participación de las tres líneas de venta más grandes (solo se muestra con más de tres líneas).'],
+        ['Líneas de venta: mejor mes', 'El mes del rango con mayor ingreso de esa línea; «Meses con venta» cuenta los meses con ingreso distinto de cero.'],
     ]) + '<p class="note" style="margin-top:12px"><b>Costos y gastos</b> vienen del modelo como valores positivos y el informe los resta; no se interpretan como signos negativos.</p></section>'))
     s.append(('cuadre', 'Cuadre con el PYG', '''<section id="cuadre"><h2>5. Cuadre con el Estado de resultados</h2>
 <p class="lead">Una franja verde indica que, para el mismo rango, <b>los ingresos y la utilidad neta sumados de todas las líneas coinciden con el Estado de resultados (PYG)</b> con una tolerancia de un peso. Si no coinciden, la franja se pone en rojo y muestra la diferencia: es una señal para revisar cómo se asignaron los costos entre líneas o si el modelo de Líneas de Negocio y el de PYG se ejecutaron con los mismos datos.</p></section>'''))
@@ -97,12 +104,15 @@ def doc_lineas():
 <li>Cuenta contra el presupuesto de IA de la empresa y respeta el acceso por usuario; si la IA está apagada para la empresa, el bloque no aparece.</li></ul></section>'''))
     s.append(('exportar', 'Exportar', '''<section id="exportar"><h2>7. Exportar</h2>
 <p class="lead">Botón <b>Exportar</b>, igual que en los demás informes, con el logo de la empresa y la paleta elegida:</p>
-<ul><li><b>Excel:</b> hojas «Resumen por línea», «Estado por línea» y «Mezcla mensual».</li>
-<li><b>PDF</b> horizontal: resumen con indicadores, lectura con IA y comentarios; mezcla y márgenes; y el estado de resultados por línea.</li>
+<ul><li><b>Excel:</b> hojas «Resumen por línea», «Estado por línea» y «Mezcla mensual»; si hay líneas de venta, también «Líneas de venta» y «Mezcla líneas de venta».</li>
+<li><b>PDF</b> horizontal: resumen con indicadores, lectura con IA y comentarios; mezcla y márgenes; el estado de resultados por línea; y, si hay líneas de venta, una página con la torta de participación y la tabla.</li>
 <li><b>Copiar como imagen</b> y <b>Enviar por correo</b> (con el Excel y el PDF adjuntos; el envío queda en la auditoría).</li></ul></section>'''))
     s.append(('faq', 'Preguntas frecuentes', '<section id="faq"><h2>8. Preguntas frecuentes</h2>' + faq([
         ('No veo líneas, ¿qué hago?', 'Ejecute el modelo de Líneas de Negocio de la empresa en Ejecución de Modelos y elija un rango con datos. Si la empresa no usa líneas, el informe no tiene qué mostrar.'),
         ('¿Por qué una línea no aparece?', 'Porque no tuvo movimiento (todo en cero) en el rango elegido.'),
+        ('¿Por qué no veo costos ni márgenes por línea de venta?', 'Porque el modelo solo trae ingresos por línea de venta. Los costos, gastos y márgenes se analizan por línea de negocio.'),
+        ('Mi empresa tiene una sola línea de negocio, ¿de dónde salen sus costos y gastos?', 'Del Estado de resultados (PYG) de toda la empresa: al ser una sola línea, todos los costos y gastos le corresponden y no se discriminan entre líneas.'),
+        ('¿Por qué no aparece el análisis por línea de venta?', 'Porque la empresa no tiene datos de línea de venta en el modelo de Líneas de Negocio, o el modelo se ejecutó antes de que existiera esa columna: vuelva a ejecutarlo en Ejecución de Modelos.'),
         ('¿Por qué la franja de cuadre sale en rojo?', 'Los totales de las líneas no coinciden con el PYG. Revise que ambos modelos se hayan ejecutado para el mismo escenario y la misma carga de datos.'),
         ('¿Por qué un margen aparece vacío?', 'Porque la línea no tuvo ingresos en el rango: sin ingresos no hay margen.'),
         ('¿Puedo comparar contra el presupuesto?', 'Hoy no: el modelo de líneas no trae presupuesto. Se compara contra el mismo rango del año anterior.'),

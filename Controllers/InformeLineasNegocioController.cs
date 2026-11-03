@@ -102,6 +102,8 @@ namespace bufinscustomers.Controllers
         private object DatosParaIA(LineasNegocioReporteViewModel r)
         {
             return new { resumen = r.Resumen, total = r.Total, hayAnioAnterior = r.HayAnioAnterior,
+                         costosTomadosDelPYG = r.CostosDesdePYG,
+                         lineasDeVenta = r.HayLineasVenta ? r.LineasVenta : null, concentracionTop3LineasVenta = r.ConcentracionTop3,
                          cuadraIngresosPYG = r.HayComparacionPYG ? (bool?)r.CuadraIngresosPYG : null,
                          cuadraUtilidadPYG = r.HayComparacionPYG ? (bool?)r.CuadraUtilidadPYG : null };
         }
@@ -395,6 +397,62 @@ namespace bufinscustomers.Controllers
                 }
                 ws3.Columns().AdjustToContents();
                 ws3.SheetView.Freeze(1 + o, 1);
+
+                // ---- Hojas 4 y 5: análisis por línea de venta (solo si la empresa maneja líneas de venta) ----
+                if (r.HayLineasVenta)
+                {
+                    var ws4 = wb.Worksheets.Add(R("LN_ExcelHojaVentas"));
+                    if (logo != null) ExcelLogoHelper.EscribirTitulo(ws4, R("LN_VentaTitulo") + " — " + nombreEmpresa, periodo);
+                    bool conAnt = r.LineasVenta.Any(l => l.IngresosAnterior.HasValue);
+                    var enc4 = new List<string> { R("LN_VCol_Linea"), R("LN_VCol_Negocio"), R("LN_Col_Ingresos"), R("LN_Col_PctIngresos") };
+                    if (conAnt) enc4.AddRange(new[] { R("LN_VCol_Anterior"), R("LN_VCol_VarAbs"), R("LN_Col_VarIngresos"), R("LN_VCol_Aporte") });
+                    enc4.AddRange(new[] { R("LN_VCol_Promedio"), R("LN_VCol_MejorMes"), R("LN_VCol_Meses") });
+                    for (int c = 0; c < enc4.Count; c++) ws4.Cell(1 + o, c + 1).Value = enc4[c];
+                    var cab4 = ws4.Range(1 + o, 1, 1 + o, enc4.Count);
+                    cab4.Style.Font.Bold = true; cab4.Style.Font.FontColor = XLColor.White;
+                    cab4.Style.Fill.BackgroundColor = ExcelTemaHelper.Principal(tema);
+                    int f4 = 2 + o;
+                    foreach (var l in r.LineasVenta)
+                    {
+                        int c = 1;
+                        ws4.Cell(f4, c++).Value = l.Nombre + (l.SinVentas ? " (" + R("LN_VentaSinVentas") + ")" : "");
+                        ws4.Cell(f4, c++).Value = l.LineaNegocio ?? "";
+                        ExcelCellHelper.SetValue(ws4.Cell(f4, c), l.Ingresos); ws4.Cell(f4, c++).Style.NumberFormat.Format = fmtNum;
+                        ExcelCellHelper.SetValue(ws4.Cell(f4, c), l.Pct); ws4.Cell(f4, c++).Style.NumberFormat.Format = fmtPct;
+                        if (conAnt)
+                        {
+                            ExcelCellHelper.SetValue(ws4.Cell(f4, c), l.IngresosAnterior); ws4.Cell(f4, c++).Style.NumberFormat.Format = fmtNum;
+                            ExcelCellHelper.SetValue(ws4.Cell(f4, c), l.VariacionAbs); ws4.Cell(f4, c++).Style.NumberFormat.Format = fmtNum;
+                            ExcelCellHelper.SetValue(ws4.Cell(f4, c), l.Variacion); ws4.Cell(f4, c++).Style.NumberFormat.Format = fmtPct;
+                            ExcelCellHelper.SetValue(ws4.Cell(f4, c), l.AporteCrecimiento); ws4.Cell(f4, c++).Style.NumberFormat.Format = fmtPct;
+                        }
+                        ExcelCellHelper.SetValue(ws4.Cell(f4, c), l.PromedioMensual); ws4.Cell(f4, c++).Style.NumberFormat.Format = fmtNum;
+                        ws4.Cell(f4, c++).Value = l.MejorMes ?? "";
+                        ws4.Cell(f4, c).Value = l.MesesConVenta;
+                        f4++;
+                    }
+                    ws4.Cell(f4, 1).Value = R("LN_Col_Total");
+                    ExcelCellHelper.SetValue(ws4.Cell(f4, 3), r.IngresosVentaTotal); ws4.Cell(f4, 3).Style.NumberFormat.Format = fmtNum;
+                    var tot4 = ws4.Range(f4, 1, f4, enc4.Count);
+                    tot4.Style.Font.Bold = true; tot4.Style.Fill.BackgroundColor = ExcelTemaHelper.Suave(tema);
+                    ws4.Columns().AdjustToContents();
+                    ws4.SheetView.Freeze(1 + o, 1);
+
+                    var ws5 = wb.Worksheets.Add(R("LN_ExcelHojaMezclaVentas"));
+                    if (logo != null) ExcelLogoHelper.EscribirTitulo(ws5, R("LN_VentaMezclaTitulo") + " — " + nombreEmpresa, periodo);
+                    ws5.Cell(1 + o, 1).Value = R("LN_Col_Mes");
+                    for (int i = 0; i < r.SeriesVenta.Count; i++) ws5.Cell(1 + o, 2 + i).Value = r.SeriesVenta[i].Linea;
+                    var cab5 = ws5.Range(1 + o, 1, 1 + o, 1 + r.SeriesVenta.Count);
+                    cab5.Style.Font.Bold = true; cab5.Style.Font.FontColor = XLColor.White;
+                    cab5.Style.Fill.BackgroundColor = ExcelTemaHelper.Principal(tema);
+                    for (int m = 0; m < r.Etiquetas.Count; m++)
+                    {
+                        ws5.Cell(2 + o + m, 1).Value = r.Etiquetas[m];
+                        for (int i = 0; i < r.SeriesVenta.Count; i++) { ws5.Cell(2 + o + m, 2 + i).Value = r.SeriesVenta[i].Ingresos[m]; ws5.Cell(2 + o + m, 2 + i).Style.NumberFormat.Format = fmtNum; }
+                    }
+                    ws5.Columns().AdjustToContents();
+                    ws5.SheetView.Freeze(1 + o, 1);
+                }
 
                 if (logo != null) ExcelLogoHelper.ColocarEnTodas(wb, logo);
 

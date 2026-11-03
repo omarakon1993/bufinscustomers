@@ -39,11 +39,18 @@ namespace bufinscustomers.Services
 
         public List<LnFilaModelo> ObtenerFilas(int idEmpresa, byte idEscenario, int añoDesde, int añoHasta)
         {
+            // LineaNegocio / LineaVenta son columnas nuevas del modelo: si la BD aún no las tiene (error 207) se lee como antes.
+            try { return LeerFilas(idEmpresa, idEscenario, añoDesde, añoHasta, true); }
+            catch (SqlException ex) when (ex.Number == 207) { return LeerFilas(idEmpresa, idEscenario, añoDesde, añoHasta, false); }
+        }
+
+        private List<LnFilaModelo> LeerFilas(int idEmpresa, byte idEscenario, int añoDesde, int añoHasta, bool conColumnasNuevas)
+        {
             var filas = new List<LnFilaModelo>();
             using (var cn = new SqlConnection(CadenaConexion))
             {
-                const string query = @"
-                    SELECT Año, Mes, CuentaPUC, Descripcion, Valor
+                string query = @"
+                    SELECT Año, Mes, CuentaPUC, Descripcion, Valor" + (conColumnasNuevas ? ", LineaNegocio, LineaVenta" : "") + @"
                     FROM dbo.ModeloLineasNegocio
                     WHERE IdEmpresa = @IdEmpresa AND IdEscenario = @IdEscenario AND Año BETWEEN @AñoDesde AND @AñoHasta";
                 var cmd = new SqlCommand(query, cn);
@@ -60,12 +67,16 @@ namespace bufinscustomers.Services
                         if (!ConceptoPorPuc.TryGetValue(puc, out string concepto)) continue; // concepto no reconocido: se ignora
                         int mes = Convert.ToInt32(reader["Mes"]);
                         if (mes < 1 || mes > 12) continue;
+                        // Con las columnas nuevas, la línea de negocio viene explícita; si está vacía (modelos anteriores) sale del sufijo de Descripcion.
+                        string negocio = conColumnasNuevas ? (reader["LineaNegocio"] as string ?? "").Trim() : "";
+                        string venta = conColumnasNuevas ? (reader["LineaVenta"] as string ?? "").Trim() : "";
                         filas.Add(new LnFilaModelo
                         {
                             Año = Convert.ToInt32(reader["Año"]),
                             Mes = mes,
                             CuentaPUC = puc,
-                            Linea = ExtraerLinea(reader["Descripcion"] as string, concepto),
+                            Linea = negocio.Length > 0 ? negocio : ExtraerLinea(reader["Descripcion"] as string, concepto),
+                            LineaVenta = venta,
                             Valor = reader["Valor"] == DBNull.Value ? 0m : Convert.ToDecimal(reader["Valor"])
                         });
                     }
@@ -138,6 +149,40 @@ namespace bufinscustomers.Services
             }
         }
 
+        /// <summary>Suma de ModeloPYG por CuentaPUC en el rango (costos y gastos de toda la empresa). Vacío si no hay datos.</summary>
+        private Dictionary<string, decimal> SumaPygPorPuc(int idEmpresa, byte idEscenario, int kDesde, int kHasta)
+        {
+            var r = new Dictionary<string, decimal>();
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                {
+                    var cmd = new SqlCommand(@"
+                        SELECT LTRIM(RTRIM(CuentaPUC)) AS Puc, SUM(Valor) AS Total FROM dbo.ModeloPYG
+                        WHERE IdEmpresa = @IdEmpresa AND IdEscenario = @IdEscenario
+                          AND (Año * 12 + Mes - 1) BETWEEN @KDesde AND @KHasta AND CuentaPUC IS NOT NULL
+                        GROUP BY LTRIM(RTRIM(CuentaPUC))", cn);
+                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
+                    cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
+                    cmd.Parameters.AddWithValue("@KDesde", kDesde);
+                    cmd.Parameters.AddWithValue("@KHasta", kHasta);
+                    cn.Open();
+                    using (var reader = cmd.ExecuteReader())
+                        while (reader.Read())
+                        {
+                            string puc = reader["Puc"] as string;
+                            if (puc != null && ConceptoPorPuc.ContainsKey(puc) && reader["Total"] != DBNull.Value) r[puc] = Convert.ToDecimal(reader["Total"]);
+                        }
+                }
+            }
+            catch (Exception ex)
+            {
+                bufinscustomers.Helpers.AppLogger.Error(ex, "InformeLineasNegocioService.SumaPygPorPuc");
+                r.Clear();
+            }
+            return r;
+        }
+
         // ===== Cálculo =====
 
         /// <summary>Estado de resultados de una línea a partir de los acumulados por CuentaPUC.</summary>
@@ -178,6 +223,75 @@ namespace bufinscustomers.Services
             return r;
         }
 
+        /// <summary>Reemplaza los conceptos distintos de ingresos de una línea por los totales de la empresa (ModeloPYG).</summary>
+        private static void SustituirCostos(Dictionary<string, Dictionary<string, decimal>> acum, string linea, Dictionary<string, decimal> pyg)
+        {
+            var d = acum[linea];
+            foreach (var puc in ConceptoPorPuc.Keys.Where(k => k != "410505")) d[puc] = pyg.TryGetValue(puc, out decimal v) ? v : 0m;
+        }
+
+        /// <summary>Análisis por línea de venta: solo ingresos (los costos y gastos no vienen por línea de venta).</summary>
+        private static void ArmarLineasVenta(LineasNegocioReporteViewModel res, List<LnFilaModelo> enRango, List<LnFilaModelo> anterior,
+                                             int kD, int kH, string[] mesesAbrev)
+        {
+            Func<IEnumerable<LnFilaModelo>, Dictionary<string, decimal>> ingresosPor = filas => filas
+                .Where(f => f.CuentaPUC == "410505" && !string.IsNullOrEmpty(f.LineaVenta))
+                .GroupBy(f => f.LineaVenta, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.Sum(f => f.Valor), StringComparer.OrdinalIgnoreCase);
+            var actual = ingresosPor(enRango);
+            var previo = ingresosPor(anterior);
+            decimal total = actual.Values.Sum(), totalPrevio = previo.Values.Sum();
+            if (total == 0m && totalPrevio == 0m) return;
+
+            var nombres = actual.Keys.Union(previo.Keys, StringComparer.OrdinalIgnoreCase)
+                .Where(n => (actual.ContainsKey(n) && actual[n] != 0m) || (previo.ContainsKey(n) && previo[n] != 0m)).ToList();
+            bool hayAnterior = totalPrevio != 0m;
+            decimal cambioTotal = total - totalPrevio;
+            int mesesDelRango = kH - kD + 1;
+            var lista = new List<LnVentaResumen>();
+            foreach (var n in nombres)
+            {
+                decimal ing = actual.TryGetValue(n, out decimal a) ? a : 0m;
+                var delMes = enRango.Where(f => f.CuentaPUC == "410505" && string.Equals(f.LineaVenta, n, StringComparison.OrdinalIgnoreCase))
+                    .GroupBy(f => Clave(f.Año, f.Mes)).ToDictionary(g => g.Key, g => g.Sum(f => f.Valor));
+                var mejor = delMes.Count > 0 ? delMes.OrderByDescending(kv => kv.Value).First() : default(KeyValuePair<int, decimal>);
+                var negocio = enRango.Concat(anterior).Where(f => f.CuentaPUC == "410505" && string.Equals(f.LineaVenta, n, StringComparison.OrdinalIgnoreCase))
+                    .GroupBy(f => f.Linea).OrderByDescending(g => g.Sum(f => f.Valor)).Select(g => g.Key).FirstOrDefault();
+                var it = new LnVentaResumen
+                {
+                    Nombre = n, LineaNegocio = negocio, Ingresos = ing,
+                    Pct = total != 0m ? ing / total : (decimal?)null,
+                    MesesConVenta = delMes.Count(kv => kv.Value != 0m),
+                    PromedioMensual = ing / Math.Max(1, mesesDelRango),
+                    MejorMes = delMes.Count > 0 && mejor.Value != 0m ? mesesAbrev[mejor.Key % 12] + " " + (mejor.Key / 12) : null,
+                    MejorMesIngresos = delMes.Count > 0 ? mejor.Value : 0m
+                };
+                if (hayAnterior)
+                {
+                    decimal prev = previo.TryGetValue(n, out decimal pv) ? pv : 0m;
+                    it.IngresosAnterior = prev;
+                    it.VariacionAbs = ing - prev;
+                    it.Variacion = prev != 0m ? (ing - prev) / Math.Abs(prev) : (decimal?)null;
+                    it.AporteCrecimiento = cambioTotal != 0m ? (ing - prev) / cambioTotal : (decimal?)null;
+                    it.SinVentas = ing == 0m && prev != 0m;
+                }
+                lista.Add(it);
+            }
+            res.LineasVenta = lista.OrderByDescending(x => x.Ingresos).ThenBy(x => x.Nombre, StringComparer.OrdinalIgnoreCase).ToList();
+            res.IngresosVentaTotal = total;
+            res.ConcentracionTop3 = res.LineasVenta.Count > 3 && total != 0m ? res.LineasVenta.Take(3).Sum(x => x.Ingresos) / total : (decimal?)null;
+
+            foreach (var l in res.LineasVenta.Where(x => x.Ingresos != 0m))
+            {
+                var serie = new LnSerieMensual { Linea = l.Nombre };
+                var porMes = enRango.Where(f => f.CuentaPUC == "410505" && string.Equals(f.LineaVenta, l.Nombre, StringComparison.OrdinalIgnoreCase))
+                    .GroupBy(f => Clave(f.Año, f.Mes)).ToDictionary(g => g.Key, g => g.Sum(f => f.Valor));
+                for (int k = kD; k <= kH; k++) serie.Ingresos.Add(porMes.TryGetValue(k, out decimal v) ? v : 0m);
+                res.SeriesVenta.Add(serie);
+            }
+            res.HayLineasVenta = res.SeriesVenta.Count > 0;
+        }
+
         public LineasNegocioReporteViewModel ConstruirReporte(FiltrosLineasNegocio filtros)
         {
             int mesD = Math.Min(12, Math.Max(1, filtros.MesDesde)), mesH = Math.Min(12, Math.Max(1, filtros.MesHasta));
@@ -199,6 +313,18 @@ namespace bufinscustomers.Services
             var nombres = acum.Where(p => p.Value.Values.Any(v => v != 0m)).Select(p => p.Key).ToList();
             if (nombres.Count == 0) { res.SinDatos = true; return res; }
 
+            // Una sola línea de negocio: no se discriminan costos ni gastos entre líneas; todos los de la empresa (ModeloPYG) son de esa línea.
+            // Los ingresos se conservan del modelo de líneas (así cuadran con las líneas de venta).
+            if (nombres.Count == 1)
+            {
+                var pygRango = SumaPygPorPuc(filtros.IdEmpresa, filtros.IdEscenario, kD, kH);
+                if (pygRango.Count > 0)
+                {
+                    SustituirCostos(acum, nombres[0], pygRango);
+                    res.CostosDesdePYG = true;
+                }
+            }
+
             Func<Dictionary<string, decimal>, string, decimal> leer = (d, puc) => d != null && d.TryGetValue(puc, out decimal v) ? v : 0m;
             var resumenes = nombres.Select(n => { var d = acum[n]; return Calcular(n, puc => leer(d, puc)); })
                 .OrderByDescending(x => x.Ingresos).ThenBy(x => x.Nombre, StringComparer.OrdinalIgnoreCase).ToList();
@@ -212,6 +338,15 @@ namespace bufinscustomers.Services
 
             // Comparativo: mismo rango del año anterior
             var acumAnt = Acumular(anterior);
+            if (res.CostosDesdePYG)
+            {
+                var pygAnt = SumaPygPorPuc(filtros.IdEmpresa, filtros.IdEscenario, kD - 12, kH - 12);
+                if (pygAnt.Count > 0)
+                {
+                    if (!acumAnt.ContainsKey(nombres[0])) acumAnt[nombres[0]] = new Dictionary<string, decimal>();
+                    SustituirCostos(acumAnt, nombres[0], pygAnt);
+                }
+            }
             res.HayAnioAnterior = anterior.Any(f => f.Valor != 0m);
             foreach (var r in resumenes)
             {
@@ -232,8 +367,8 @@ namespace bufinscustomers.Services
             if (res.HayAnioAnterior)
             {
                 var sumaAnt = new Dictionary<string, decimal>();
-                foreach (var kv in anterior.Where(f => res.Lineas.Contains(f.Linea, StringComparer.OrdinalIgnoreCase)).GroupBy(f => f.CuentaPUC))
-                    sumaAnt[kv.Key] = kv.Sum(f => f.Valor);
+                foreach (var d in acumAnt.Where(p => res.Lineas.Contains(p.Key, StringComparer.OrdinalIgnoreCase)).Select(p => p.Value))
+                    foreach (var kv in d) { sumaAnt.TryGetValue(kv.Key, out decimal a); sumaAnt[kv.Key] = a + kv.Value; }
                 var antTotal = Calcular("Total", puc => leer(sumaAnt, puc));
                 total.IngresosAnterior = antTotal.Ingresos;
                 total.VariacionIngresos = Variacion(total.Ingresos, antTotal.Ingresos);
@@ -274,6 +409,8 @@ namespace bufinscustomers.Services
                 foreach (int k in mesesRango) serie.Ingresos.Add(ingresosMes.TryGetValue(k, out decimal v) ? v : 0m);
                 res.Series.Add(serie);
             }
+
+            ArmarLineasVenta(res, enRango, anterior, kD, kH, MesesAbrev);
 
             // Cuadre contra el PYG del mismo rango (ingresos y utilidad neta)
             var ingPyg = SumaPyg(filtros.IdEmpresa, filtros.IdEscenario, kD, kH, "Ingresos");

@@ -221,6 +221,45 @@
                 <span><i class="dot" style="background:#DC2626"></i>@Resources.Strings.LN_Desfavorable</span>
             </div>
         </div>
+        <div id="lnVentas" style="display:none;">
+            <div class="pyg2-section" style="margin-top:22px">
+                <div class="pyg2-section-title"><span class="t">@Resources.Strings.LN_VentaTitulo</span><span class="line"></span></div>
+                <p class="lt-help" id="lnVentaSub" style="margin-top:0">&mdash;</p>
+                <div class="pyg2-kpis" id="lnVentaKpis"></div>
+            </div>
+            <div class="pyg2-analysis">
+                <div class="pyg2-card">
+                    <div class="pyg2-card-head">
+                        <div><div class="pyg2-card-title">@Resources.Strings.LN_VentaPieTitulo</div><div class="pyg2-card-sub">@Resources.Strings.LN_VentaPieSub</div></div>
+                    </div>
+                    <div class="ln-venta-pie"><canvas id="lnChartVentaPie"></canvas></div>
+                    <div class="ln-venta-leyenda" id="lnVentaLeyenda"></div>
+                </div>
+                <div class="pyg2-card">
+                    <div class="pyg2-card-head">
+                        <div><div class="pyg2-card-title">@Resources.Strings.LN_VentaMezclaTitulo</div><div class="pyg2-card-sub" id="lnVentaMezclaSub">&mdash;</div></div>
+                    </div>
+                    <div class="pyg2-waterfall-wrap"><canvas id="lnChartVentaMezcla"></canvas></div>
+                </div>
+            </div>
+            <div class="pyg2-table-card" style="margin-top:14px">
+                <div class="pyg2-card-head" style="align-items:center">
+                    <div>
+                        <div class="pyg2-card-title">@Resources.Strings.LN_VentaTablaTitulo</div>
+                        <div class="pyg2-card-sub" id="lnVentaTablaSub">&mdash;</div>
+                    </div>
+                </div>
+                <div class="pyg2-table-wrap">
+                    <table class="pyg2-table" id="lnTablaVenta"><thead id="lnVentaHead"></thead><tbody id="lnVentaBody"></tbody></table>
+                </div>
+                <div class="pyg2-table-legend">
+                    <span><i class="dot" style="background:#16A34A"></i>@Resources.Strings.LN_Favorable</span>
+                    <span><i class="dot" style="background:#DC2626"></i>@Resources.Strings.LN_Desfavorable</span>
+                </div>
+            </div>
+            <p class="lt-help">@Resources.Strings.LN_VentaNotaMetodo</p>
+        </div>
+        <p class="lt-help" id="lnNotaCostosPyg" style="display:none;"><i class="fas fa-circle-info"></i> @Resources.Strings.LN_CostosDesdePygNota</p>
         <p class="lt-help" id="lnNotaSinAnterior" style="display:none;">@Resources.Strings.LN_SinAnioAnteriorNota</p>
         <p class="lt-help">@Resources.Strings.LN_NotaMetodo</p>
 
@@ -344,6 +383,18 @@
             cuadreIngresosErrorFmt: '@Html.Raw(J(Resources.Strings.LN_CuadreIngresosErrorFmt))',
             cuadreUtilidadOk: '@Html.Raw(J(Resources.Strings.LN_CuadreUtilidadOk))',
             cuadreUtilidadErrorFmt: '@Html.Raw(J(Resources.Strings.LN_CuadreUtilidadErrorFmt))',
+            venta: {
+                kpiNumero: '@Html.Raw(J(Resources.Strings.LN_VentaKpi_Numero))', kpiLider: '@Html.Raw(J(Resources.Strings.LN_VentaKpi_Lider))',
+                kpiConcentracion: '@Html.Raw(J(Resources.Strings.LN_VentaKpi_Concentracion))', kpiCrece: '@Html.Raw(J(Resources.Strings.LN_VentaKpi_MayorCrecimiento))',
+                kpiCae: '@Html.Raw(J(Resources.Strings.LN_VentaKpi_MayorCaida))', refTop3: '@Html.Raw(J(Resources.Strings.LN_VentaRefTop3))',
+                refDeLineas: '@Html.Raw(J(Resources.Strings.LN_VentaRefDeLineas))', subFmt: '@Html.Raw(J(Resources.Strings.LN_VentaSubFmt))',
+                mezclaSubFmt: '@Html.Raw(J(Resources.Strings.LN_VentaMezclaSubFmt))', tablaSubFmt: '@Html.Raw(J(Resources.Strings.LN_VentaTablaSubFmt))',
+                sinVentas: '@Html.Raw(J(Resources.Strings.LN_VentaSinVentas))', pdfTitulo: '@Html.Raw(J(Resources.Strings.LN_VentaTitulo))',
+                colLinea: '@Html.Raw(J(Resources.Strings.LN_VCol_Linea))', colNegocio: '@Html.Raw(J(Resources.Strings.LN_VCol_Negocio))',
+                colAnterior: '@Html.Raw(J(Resources.Strings.LN_VCol_Anterior))', colVarAbs: '@Html.Raw(J(Resources.Strings.LN_VCol_VarAbs))',
+                colAporte: '@Html.Raw(J(Resources.Strings.LN_VCol_Aporte))', colMejorMes: '@Html.Raw(J(Resources.Strings.LN_VCol_MejorMes))',
+                colPromedio: '@Html.Raw(J(Resources.Strings.LN_VCol_Promedio))', colMeses: '@Html.Raw(J(Resources.Strings.LN_VCol_Meses))'
+            },
             kpi: {
                 Ingresos: '@Html.Raw(J(Resources.Strings.LN_Kpi_Ingresos))', UtilOperacional: '@Html.Raw(J(Resources.Strings.LN_Kpi_UtilOperacional))',
                 MargenOperacional: '@Html.Raw(J(Resources.Strings.LN_Kpi_MargenOperacional))', LineaLider: '@Html.Raw(J(Resources.Strings.LN_Kpi_LineaLider))'
@@ -551,6 +602,7 @@
         $('#lnMezclaSub').text(_ln.t.mezclaSubFmt.replace('{0}', etiquetaPeriodo(r)));
         $('#lnResumenSub').text(_ln.t.resumenSubFmt.replace('{0}', etiquetaPeriodo(r)));
         $('#lnNotaSinAnterior').toggle(!r.HayAnioAnterior);
+        $('#lnNotaCostosPyg').toggle(!!r.CostosDesdePYG);
         $('#lnEstadoInicial, #lnSinDatos').hide();
         InformeTema.aplicar(document.getElementById('lnResultado'));
         $.extend(_ln.filtrosConsultados, InformeTema.parametros());
@@ -564,7 +616,7 @@
         $('#lnUnidadLbl').text(_ln.t.unidades[_ln.unidad]);
         $('#lnMenuUnidad button').each(function () { var on = $(this).data('unidad') === _ln.unidad; $(this).toggleClass('on', on).attr('aria-checked', on ? 'true' : 'false'); });
         $('#lnInfoBadge').text(_ln.t.unidadBadge[_ln.unidad]);
-        pintarCuadreLN(r); pintarKpisLN(r); pintarChartsLN(r); pintarDestacadosLN(r); pintarEstadoLN(r); pintarResumenLN(r);
+        pintarCuadreLN(r); pintarKpisLN(r); pintarChartsLN(r); pintarDestacadosLN(r); pintarEstadoLN(r); pintarResumenLN(r); pintarVentasLN(r);
     }
 
     function pintarCuadreLN(r) {
@@ -688,6 +740,91 @@
                 '<td class="real">' + escHtmlLN(fmtNumLN(l.UtilidadOperacional)) + '</td><td class="mar">' + escHtmlLN(fmtPctLN(l.PctUtilidadOperacional)) + '</td>' +
                 (conAnt ? '<td class="chip">' + chipVarLN(fmtPctVarLN(l.VariacionIngresos), l.VariacionIngresos) + '</td><td class="chip">' + chipVarLN(fmtPctVarLN(l.VariacionUtilidadOperacional), l.VariacionUtilidadOperacional) + '</td>' : '') + '</tr>';
         }).join(''));
+    }
+
+    // ===== Análisis por línea de venta (solo ingresos) =====
+    function coloresVentaLN(n) {
+        var base = coloresLineasLN(), out = [];
+        for (var i = 0; i < n; i++) out.push(i < base.length ? base[i] : InformeTema.alfa(base[i % base.length], 0.55));
+        return out;
+    }
+    function pintarVentasLN(r) {
+        var V = _ln.t.venta, hay = !!r.HayLineasVenta && r.LineasVenta && r.LineasVenta.length > 0;
+        $('#lnVentas').toggle(hay);
+        if (!hay) return;
+        var T = _ln.t, lineas = r.LineasVenta, conAnt = lineas.some(function (l) { return l.IngresosAnterior !== null && l.IngresosAnterior !== undefined; });
+        var activas = lineas.filter(function (l) { return l.Ingresos !== 0; });
+        var col = coloresVentaLN(activas.length), ejeFont = { family: "'Nunito', sans-serif", size: 11, weight: '700' };
+        $('#lnVentaSub').text(V.subFmt.replace('{0}', etiquetaPeriodo(r)));
+        $('#lnVentaMezclaSub').text(V.mezclaSubFmt.replace('{0}', etiquetaPeriodo(r)));
+        $('#lnVentaTablaSub').text(V.tablaSubFmt.replace('{0}', etiquetaPeriodo(r)) + ' ' + CH_MIDDOT_LN + ' ' + T.unidadBadge[_ln.unidad]);
+
+        // KPIs
+        var lider = activas[0], conVar = lineas.filter(function (l) { return l.VariacionAbs !== null && l.VariacionAbs !== undefined; });
+        var crece = conVar.slice().sort(function (a, b) { return b.VariacionAbs - a.VariacionAbs; })[0];
+        var cae = conVar.slice().sort(function (a, b) { return a.VariacionAbs - b.VariacionAbs; })[0];
+        var kp = [
+            { icono: 'fa-layer-group', nombre: V.kpiNumero, valor: String(activas.length), ref: V.refDeLineas },
+            { icono: 'fa-crown', nombre: V.kpiLider, valor: lider.Nombre, ref: lider.Pct != null ? fmtPctLN(lider.Pct) + ' ' + T.deLosIngresos : '' }
+        ];
+        if (r.ConcentracionTop3 !== null && r.ConcentracionTop3 !== undefined) kp.push({ icono: 'fa-bullseye', nombre: V.kpiConcentracion, valor: fmtPctLN(r.ConcentracionTop3), ref: V.refTop3 });
+        if (crece && crece.VariacionAbs > 0) kp.push({ icono: 'fa-arrow-trend-up', nombre: V.kpiCrece, valor: crece.Nombre, ref: fmtNumVarLN(crece.VariacionAbs) + (crece.Variacion != null ? ' (' + fmtPctVarLN(crece.Variacion) + ')' : '') });
+        if (cae && cae.VariacionAbs < 0 && cae !== crece) kp.push({ icono: 'fa-arrow-trend-down', nombre: V.kpiCae, valor: cae.Nombre, ref: fmtNumVarLN(cae.VariacionAbs) + (cae.Variacion != null ? ' (' + fmtPctVarLN(cae.Variacion) + ')' : '') });
+        var $k = $('#lnVentaKpis').empty();
+        kp.forEach(function (k) {
+            $k.append('<div class="pyg2-kpi"><div class="pyg2-kpi-head"><span class="ic"><i class="fas ' + k.icono + '"></i></span><span class="nm">' + escHtmlLN(k.nombre) + '</span></div>' +
+                '<div class="pyg2-kpi-val"><span class="v">' + escHtmlLN(k.valor) + '</span></div><div class="pyg2-kpi-deltas"><div class="row"><span class="ref">' + escHtmlLN(k.ref || '') + '</span></div></div></div>');
+        });
+
+        // Torta de participación
+        $('#lnVentaLeyenda').html(activas.map(function (l, i) {
+            return '<span><i class="sq" style="background:' + col[i] + '"></i>' + escHtmlLN(l.Nombre) + ' <b>' + escHtmlLN(fmtPctLN(l.Pct)) + '</b></span>';
+        }).join(''));
+        _ln.charts.ventaPie = new Chart(document.getElementById('lnChartVentaPie').getContext('2d'), {
+            type: 'doughnut',
+            data: { labels: activas.map(function (l) { return l.Nombre; }), datasets: [{ data: activas.map(function (l) { return l.Ingresos; }), backgroundColor: col, borderColor: '#FFFFFF', borderWidth: 2 }] },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '48%',
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (c) { var l = activas[c.dataIndex]; return l.Nombre + ': ' + fmtNumLN(l.Ingresos) + ' (' + fmtPctLN(l.Pct) + ')'; } } } }
+            }
+        });
+
+        // Evolución mensual apilada
+        var serie = r.SeriesVenta, colS = coloresVentaLN(serie.length);
+        _ln.charts.ventaMezcla = new Chart(document.getElementById('lnChartVentaMezcla').getContext('2d'), {
+            type: 'bar',
+            data: { labels: r.Etiquetas, datasets: serie.map(function (s, i) {
+                return { label: s.Linea, data: s.Ingresos.map(escalarLN), backgroundColor: colS[i], borderRadius: 2, maxBarThickness: 46 };
+            }) },
+            options: {
+                responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + fmtNumLN(serie[c.datasetIndex].Ingresos[c.dataIndex]); } } } },
+                scales: {
+                    x: { stacked: true, grid: { display: false }, ticks: { font: ejeFont, color: '#5B5570' } },
+                    y: { stacked: true, beginAtZero: true, ticks: { display: false }, border: { display: false }, grid: { color: '#F1F0F7' } }
+                }
+            }
+        });
+
+        // Tabla
+        var multiNegocio = r.Lineas.length > 1;
+        $('#lnVentaHead').html('<tr><th class="col-cuenta">' + escHtmlLN(V.colLinea) + '</th>' + (multiNegocio ? '<th>' + escHtmlLN(V.colNegocio) + '</th>' : '') +
+            '<th>' + escHtmlLN(T.col.ingresos) + '</th><th>' + escHtmlLN(T.col.pctIngresos) + '</th>' +
+            (conAnt ? '<th>' + escHtmlLN(V.colAnterior) + '</th><th>' + escHtmlLN(V.colVarAbs) + '</th><th>' + escHtmlLN(T.col.varIngresos) + '</th><th>' + escHtmlLN(V.colAporte) + '</th>' : '') +
+            '<th>' + escHtmlLN(V.colPromedio) + '</th><th>' + escHtmlLN(V.colMejorMes) + '</th><th>' + escHtmlLN(V.colMeses) + '</th></tr>');
+        var filas = lineas.map(function (l) {
+            return '<tr><td class="lbl">' + escHtmlLN(l.Nombre) + (l.SinVentas ? ' <span class="pyg2-chip">' + escHtmlLN(V.sinVentas) + '</span>' : '') + '</td>' +
+                (multiNegocio ? '<td class="lbl">' + escHtmlLN(l.LineaNegocio || '') + '</td>' : '') +
+                '<td class="real">' + escHtmlLN(fmtNumLN(l.Ingresos)) + '</td><td class="mar">' + escHtmlLN(fmtPctLN(l.Pct)) + '</td>' +
+                (conAnt ? '<td class="real">' + escHtmlLN(l.IngresosAnterior == null ? CH_MDASH_LN : fmtNumLN(l.IngresosAnterior)) + '</td>' +
+                    '<td class="real">' + escHtmlLN(l.VariacionAbs == null ? CH_MDASH_LN : fmtNumVarLN(l.VariacionAbs)) + '</td>' +
+                    '<td class="chip">' + chipVarLN(fmtPctVarLN(l.Variacion), l.Variacion) + '</td><td class="mar">' + escHtmlLN(fmtPctLN(l.AporteCrecimiento)) + '</td>' : '') +
+                '<td class="real">' + escHtmlLN(fmtNumLN(l.PromedioMensual)) + '</td><td class="mar">' + escHtmlLN(l.MejorMes || CH_MDASH_LN) + '</td><td class="mar">' + l.MesesConVenta + '</td></tr>';
+        });
+        filas.push('<tr class="total"><td class="lbl">' + escHtmlLN(T.col.total) + '</td>' + (multiNegocio ? '<td></td>' : '') +
+            '<td class="real">' + escHtmlLN(fmtNumLN(r.IngresosVentaTotal)) + '</td><td class="mar">' + escHtmlLN(fmtPctLN(1)) + '</td>' +
+            (conAnt ? '<td></td><td></td><td></td><td></td>' : '') + '<td></td><td></td><td></td></tr>');
+        $('#lnVentaBody').html(filas.join(''));
     }
 
     // ===== Insights (IA) =====
@@ -961,6 +1098,32 @@
             rgb('setDrawColor', C.lineaSuave); pdf.setLineWidth(0.15); pdf.line(M, y + hF, M + ANCHO, y + hF);
             y += hF;
         });
+
+        // ===== Página: análisis por línea de venta (torta + tabla) =====
+        if (r.HayLineasVenta && r.LineasVenta && r.LineasVenta.length) {
+            nuevaPagina(T.venta.pdfTitulo);
+            var lv = r.LineasVenta, wPie = 92, hPie = 92;
+            tarjeta(M, y, wPie + 10, hPie + 12);
+            fuente('bold', 10, C.texto); pdf.text(T.venta.pdfTitulo, M + 5, y + 8);
+            imagenAjustada(capturarChartPdfLN(_ln.charts.ventaPie, wPie * 4, hPie * 4), M + 5, y + 12, wPie, hPie - 2);
+            var xT = M + wPie + 16, wT = W - M - xT, hF2 = 6.3, nCol = 4;
+            var enc = [T.venta.colLinea, T.col.ingresos, T.col.pctIngresos, T.col.varIngresos], wL = wT * 0.38, wC = (wT - wL) / (nCol - 1);
+            rgb('setFillColor', C.marca); pdf.rect(xT, y, wT, 7, 'F'); fuente('bold', 7.5, C.blanco);
+            enc.forEach(function (h, i) { if (i === 0) pdf.text(h.toUpperCase(), xT + 3, y + 4.8); else pdf.text(pdf.splitTextToSize(h.toUpperCase(), wC - 2)[0], xT + wL + i * wC - 1.5, y + 4.8, { align: 'right' }); });
+            var yy = y + 7;
+            lv.concat([null]).forEach(function (l, idx) {
+                if (yy + hF2 > LIMITE_Y - 8) return;
+                var esTot = l === null;
+                rgb('setFillColor', esTot ? C.totalBg : (idx % 2 ? C.zebra : C.blanco)); pdf.rect(xT, yy, wT, hF2, 'F');
+                fuente(esTot ? 'bold' : 'normal', 7.6, esTot ? C.totalTx : C.texto2);
+                pdf.text(pdf.splitTextToSize(esTot ? T.col.total : l.Nombre, wL - 5)[0], xT + 3, yy + 4.3);
+                var vals = esTot ? [fmtNumLN(r.IngresosVentaTotal), fmtPctLN(1), ''] : [fmtNumLN(l.Ingresos), fmtPctLN(l.Pct), l.Variacion == null ? '' : fmtPctVarLN(l.Variacion)];
+                vals.forEach(function (v, i) { pdf.text(String(v), xT + wL + (i + 1) * wC - 1.5, yy + 4.3, { align: 'right' }); });
+                rgb('setDrawColor', C.lineaSuave); pdf.setLineWidth(0.15); pdf.line(xT, yy + hF2, xT + wT, yy + hF2);
+                yy += hF2;
+            });
+            fuente('normal', 7, C.muted); pdf.text(pdf.splitTextToSize(_ln.t.venta.subFmt.replace('{0}', periodo), ANCHO)[0], M, Math.max(y + hPie + 18, yy + 6));
+        }
 
         var tot = pdf.internal.getNumberOfPages();
         for (var p = 1; p <= tot; p++) {

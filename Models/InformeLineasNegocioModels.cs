@@ -32,7 +32,31 @@ namespace bufinscustomers.Models
         public int Mes { get; set; }
         public string CuentaPUC { get; set; }
         public string Linea { get; set; }
+        /// <summary>Línea de venta (columna LineaVenta del modelo); vacía si la empresa no la maneja.</summary>
+        public string LineaVenta { get; set; }
         public decimal Valor { get; set; }
+    }
+
+    /// <summary>Una línea de venta (producto/tipo) dentro del rango: solo ingresos, porque los costos y gastos no vienen por línea de venta.</summary>
+    public class LnVentaResumen
+    {
+        public string Nombre { get; set; }
+        /// <summary>Línea de negocio a la que pertenece (la de mayor ingreso si aparece en varias).</summary>
+        public string LineaNegocio { get; set; }
+        public decimal Ingresos { get; set; }
+        public decimal? Pct { get; set; }
+        public decimal? IngresosAnterior { get; set; }
+        public decimal? Variacion { get; set; }
+        /// <summary>Variación en pesos frente al mismo rango del año anterior.</summary>
+        public decimal? VariacionAbs { get; set; }
+        /// <summary>Qué parte del cambio total de ingresos explica esta línea (null si el total no cambió).</summary>
+        public decimal? AporteCrecimiento { get; set; }
+        public string MejorMes { get; set; }
+        public decimal MejorMesIngresos { get; set; }
+        public decimal PromedioMensual { get; set; }
+        public int MesesConVenta { get; set; }
+        /// <summary>true si vendió el año anterior y en este rango no tiene ingresos.</summary>
+        public bool SinVentas { get; set; }
     }
 
     /// <summary>Cifras de una línea (o del total) para el rango consultado. Los gastos y costos son magnitudes positivas.</summary>
@@ -98,6 +122,17 @@ namespace bufinscustomers.Models
         public List<LnSerieMensual> Series { get; set; } = new List<LnSerieMensual>();
 
         public bool HayAnioAnterior { get; set; }
+
+        /// <summary>true si la empresa tiene UNA sola línea de negocio: sus costos y gastos salen de ModeloPYG y se asignan todos a ella.</summary>
+        public bool CostosDesdePYG { get; set; }
+
+        // Análisis por línea de venta (columna LineaVenta del modelo; solo ingresos).
+        public bool HayLineasVenta { get; set; }
+        public List<LnVentaResumen> LineasVenta { get; set; } = new List<LnVentaResumen>();
+        public List<LnSerieMensual> SeriesVenta { get; set; } = new List<LnSerieMensual>();
+        public decimal IngresosVentaTotal { get; set; }
+        /// <summary>Peso de las 3 líneas de venta más grandes sobre el total (null si hay menos de 4 líneas).</summary>
+        public decimal? ConcentracionTop3 { get; set; }
 
         // Cuadre contra dbo.ModeloPYG (mismo rango): solo se muestra si el PYG tiene datos.
         public bool HayComparacionPYG { get; set; }
