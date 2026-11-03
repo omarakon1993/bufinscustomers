@@ -1105,7 +1105,8 @@
                 ctx.textAlign = 'center';
                 meta.data.forEach(function (el, i) {
                     var b = barras[i], arriba = Math.min(el.y, el.base), abajoDe = Math.max(el.y, el.base);
-                    var negativoTotal = b.Tipo === 'total' && b.Hasta < 0;
+                    // Totales negativos y tramos que restan llevan la etiqueta DEBAJO de la barra; los que suman, encima
+                    var negativoTotal = (b.Tipo === 'total' && b.Hasta < 0) || b.Tipo === 'negativo';
                     ctx.fillStyle = b.Tipo === 'total' ? '#16121F' : (b.Etiqueta === 'SinConciliar' ? '#B45309' : (b.Tipo === 'positivo' ? '#16A34A' : '#DC2626'));
                     ctx.textBaseline = negativoTotal ? 'top' : 'bottom';
                     ctx.fillText(b.Tipo === 'total' ? fmtNum(b.Hasta) : fmtNumVar(b.Delta || 0), el.x, negativoTotal ? abajoDe + 6 : arriba - 6);
@@ -1130,7 +1131,7 @@
             plugins: [flFondo, etiquetasPlugin],
             options: {
                 responsive: true, maintainAspectRatio: false,
-                layout: { padding: { top: 22, bottom: 14 } },
+                layout: { padding: { top: 22, bottom: 26 } },
                 plugins: {
                     legend: { display: false },
                     tooltip: { callbacks: { label: function (c) { var b = barras[c.dataIndex]; return b.Tipo === 'total' ? fmtNum(b.Hasta) : (etiquetas[c.dataIndex] + ': ' + fmtNumVar(b.Delta || 0)); } } }
