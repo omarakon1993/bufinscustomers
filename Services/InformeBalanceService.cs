@@ -38,9 +38,9 @@ namespace bufinscustomers.Services
         private const string DescUtilidadNetaPYG = "Utilidad neta";
 
         // Tolerancia para el chequeo de cuadre (Activo = Pasivo + Patrimonio) y el cruce con el PYG:
-        // 1 peso, para absorber redondeos de la cadena de subtotales sin marcar como "descuadrado" un
-        // balance que en la práctica cuadra.
-        private const decimal ToleranciaCuadre = 1m;
+        // 10 pesos, para absorber redondeos de la cadena de subtotales sin marcar como "descuadrado" un
+        // balance que en la práctica cuadra (ULTRA, sep-2026: diferencia de 1,24 sobre un activo de 4.462 M).
+        private const decimal ToleranciaCuadre = 10m;
 
         private static readonly string[] MesesAbrev =
             { "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic" };
