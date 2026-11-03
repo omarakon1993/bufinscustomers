@@ -167,6 +167,14 @@
             <div class="pyg2-kpis" id="lnKpiStrip"></div>
         </div>
 
+        <nav class="ln-tabs" id="lnTabs" role="tablist" aria-label="@Resources.Strings.LN_PageTitle">
+            <button type="button" class="ln-tab is-active" role="tab" data-tab="resumen" aria-selected="true"><i class="fas fa-chart-pie"></i><span>@Resources.Strings.LN_Tab_Resumen</span></button>
+            <button type="button" class="ln-tab" role="tab" data-tab="estado" aria-selected="false"><i class="fas fa-table"></i><span>@Resources.Strings.LN_Tab_Estado</span></button>
+            <button type="button" class="ln-tab" role="tab" data-tab="ventas" id="lnTabVentas" aria-selected="false" style="display:none;"><i class="fas fa-tags"></i><span>@Resources.Strings.LN_Tab_Ventas</span></button>
+            <button type="button" class="ln-tab" role="tab" data-tab="analisis" aria-selected="false"><i class="fas fa-comments"></i><span>@Resources.Strings.LN_Tab_Analisis</span></button>
+        </nav>
+
+        <div class="ln-panel is-active" data-panel="resumen">
         <div class="pyg2-analysis">
             <div class="pyg2-card">
                 <div class="pyg2-card-head">
@@ -194,6 +202,9 @@
             <div class="pyg2-card ln-margenes-card"><div class="ln-margenes-wrap"><canvas id="lnChartMargenes"></canvas></div></div>
         </div>
 
+        </div>
+
+        <div class="ln-panel" data-panel="estado">
         <div class="pyg2-table-card">
             <div class="pyg2-card-head" style="align-items:center">
                 <div>
@@ -221,7 +232,12 @@
                 <span><i class="dot" style="background:#DC2626"></i>@Resources.Strings.LN_Desfavorable</span>
             </div>
         </div>
-        <div id="lnVentas" style="display:none;">
+        <p class="lt-help" id="lnNotaCostosPyg" style="display:none;"><i class="fas fa-circle-info"></i> @Resources.Strings.LN_CostosDesdePygNota</p>
+        <p class="lt-help" id="lnNotaSinAnterior" style="display:none;">@Resources.Strings.LN_SinAnioAnteriorNota</p>
+        <p class="lt-help">@Resources.Strings.LN_NotaMetodo</p>
+        </div>
+
+        <div class="ln-panel" data-panel="ventas" id="lnVentas">
             <div class="pyg2-section" style="margin-top:22px">
                 <div class="pyg2-section-title"><span class="t">@Resources.Strings.LN_VentaTitulo</span><span class="line"></span></div>
                 <p class="lt-help" id="lnVentaSub" style="margin-top:0">&mdash;</p>
@@ -259,10 +275,8 @@
             </div>
             <p class="lt-help">@Resources.Strings.LN_VentaNotaMetodo</p>
         </div>
-        <p class="lt-help" id="lnNotaCostosPyg" style="display:none;"><i class="fas fa-circle-info"></i> @Resources.Strings.LN_CostosDesdePygNota</p>
-        <p class="lt-help" id="lnNotaSinAnterior" style="display:none;">@Resources.Strings.LN_SinAnioAnteriorNota</p>
-        <p class="lt-help">@Resources.Strings.LN_NotaMetodo</p>
 
+        <div class="ln-panel" data-panel="analisis">
         @Html.Partial("_ComentariosGestion", "lnComentarios")
 
         @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
@@ -291,6 +305,7 @@
             </div>
         </div>
         }
+        </div>
     </div>
 
 </div>
@@ -427,7 +442,7 @@
                 comentarios: '@Html.Raw(J(Resources.Strings.Com_Titulo))', pie: '@Html.Raw(J(Resources.Strings.LN_PdfFooter))'
             }
         },
-        reporteActual: null, filtrosConsultados: null, insightsTexto: null,
+        reporteActual: null, filtrosConsultados: null, insightsTexto: null, tab: 'resumen',
         unidad: 'millones', charts: {}, rango: [], iDesde: 0, iHasta: 0,
         hoy: { anio: @DateTime.Now.Year, mes: @DateTime.Now.Month }
     };
@@ -602,13 +617,29 @@
         $('#lnMezclaSub').text(_ln.t.mezclaSubFmt.replace('{0}', etiquetaPeriodo(r)));
         $('#lnResumenSub').text(_ln.t.resumenSubFmt.replace('{0}', etiquetaPeriodo(r)));
         $('#lnNotaSinAnterior').toggle(!r.HayAnioAnterior);
+        _ln.tab = 'resumen';
         $('#lnNotaCostosPyg').toggle(!!r.CostosDesdePYG);
         $('#lnEstadoInicial, #lnSinDatos').hide();
         InformeTema.aplicar(document.getElementById('lnResultado'));
         $.extend(_ln.filtrosConsultados, InformeTema.parametros());
         $('#lnResultado').show();
         repintarLN();
+        activarTabLN('resumen');
         if (window.ComentariosGestion) ComentariosGestion.cargar({ idEmpresa: filtros.IdEmpresa || empresaSeleccionadaLN(), anio: r.AnioHasta, mes: r.MesHasta, claves: r.Lineas });
+    }
+
+    // ===== Pestañas =====
+    function activarTabLN(k) {
+        _ln.tab = k;
+        $('#lnTabs .ln-tab').each(function () { var on = $(this).data('tab') === k; $(this).toggleClass('is-active', on).attr('aria-selected', on ? 'true' : 'false'); });
+        $('#lnResultado .ln-panel').each(function () { $(this).toggleClass('is-active', $(this).data('panel') === k); });
+        // Un gráfico dibujado mientras su pestaña estaba oculta queda con tamaño cero: se reajusta al mostrarla.
+        Object.keys(_ln.charts).forEach(function (c) { if (_ln.charts[c]) _ln.charts[c].resize(); });
+    }
+    // Imagen y PDF necesitan TODAS las secciones visibles a la vez (los gráficos se capturan por su tamaño real).
+    function mostrarTodoLN(si) {
+        $('#lnResultado').toggleClass('ln-todo', si);
+        Object.keys(_ln.charts).forEach(function (c) { if (_ln.charts[c]) _ln.charts[c].resize(); });
     }
 
     function repintarLN() {
@@ -750,8 +781,8 @@
     }
     function pintarVentasLN(r) {
         var V = _ln.t.venta, hay = !!r.HayLineasVenta && r.LineasVenta && r.LineasVenta.length > 0;
-        $('#lnVentas').toggle(hay);
-        if (!hay) return;
+        $('#lnTabVentas').toggle(hay);
+        if (!hay) { if (_ln.tab === 'ventas') activarTabLN('resumen'); return; }
         var T = _ln.t, lineas = r.LineasVenta, conAnt = lineas.some(function (l) { return l.IngresosAnterior !== null && l.IngresosAnterior !== undefined; });
         var activas = lineas.filter(function (l) { return l.Ingresos !== 0; });
         var col = coloresVentaLN(activas.length), ejeFont = { family: "'Nunito', sans-serif", size: 11, weight: '700' };
@@ -911,8 +942,12 @@
     }
     function copiarImagenLN() {
         var empresa = ($('#lnTituloEmpresa').text() || 'LineasNegocio').replace(/[^A-Za-z0-9]+/g, '_');
-        return ExportMenu.copiarImagen(document.getElementById('lnResultado'), 'LineasNegocio_' + empresa + '_' + new Date().toISOString().slice(0, 10) + '.png',
+        mostrarTodoLN(true);
+        var fin = function () { mostrarTodoLN(false); };
+        var prom = ExportMenu.copiarImagen(document.getElementById('lnResultado'), 'LineasNegocio_' + empresa + '_' + new Date().toISOString().slice(0, 10) + '.png',
             { imagenCopiada: EXP_T.imagenCopiada, imagenDescargada: EXP_T.imagenDescargada });
+        if (prom && prom.then) prom.then(fin, fin); else fin();
+        return prom;
     }
     function capturarChartPdfLN(chart, anchoPx, altoPx) {
         if (!chart) return null;
@@ -930,6 +965,10 @@
     }
 
     function construirPdfLN(r) {
+        mostrarTodoLN(true);
+        try { return construirPdfInternoLN(r); } finally { mostrarTodoLN(false); }
+    }
+    function construirPdfInternoLN(r) {
         var T = _ln.t, P = T.pdf, C = InformeTema.pdf(PDF_COL_LN), DEG = InformeTema.pdfDegradado();
         var pdf = new window.jspdf.jsPDF('l', 'mm', 'a4');
         var W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight();
@@ -1141,6 +1180,7 @@
         $('#lnEmpresa, #lnEscenario').on('change', cargarMesesLN);
 
         $('#lnAtajos button').on('click', function () { aplicarPresetLN($(this).data('preset')); });
+        $('#lnTabs').on('click', '.ln-tab', function () { activarTabLN($(this).data('tab')); });
         $('#lnKnobFrom').on('pointerdown', function (e) { e.stopPropagation(); arrastreLN(e, 'from'); });
         $('#lnKnobTo').on('pointerdown', function (e) { e.stopPropagation(); arrastreLN(e, 'to'); });
         $('#lnRangoTrack').on('pointerdown', clicPistaLN);

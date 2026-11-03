@@ -63,6 +63,7 @@ def doc_lineas():
 <div class="card"><b>Para el contador o analista financiero</b><ul><li>El estado de resultados completo de cada línea, de ingresos a utilidad neta.</li><li>La validación contra el Estado de resultados (PYG).</li><li>Exportación a Excel, PDF y correo.</li></ul></div></div></section>'''))
     s.append(('pantalla', 'La pantalla', '''<section id="pantalla"><h2>2. La pantalla</h2>
 <p class="lead">Se elige la empresa, el escenario y un <b>rango de meses</b> (con los atajos de siempre: año en curso, últimos 6 meses, etc.). Las cifras del rango se suman y se comparan con el mismo rango del año anterior. También se puede elegir la <b>paleta de colores</b> del informe y de sus exportaciones.</p>
+<p class="note info">El resultado se organiza en <b>pestañas</b>: los <b>indicadores clave</b> quedan siempre arriba y cada pestaña muestra su parte — <b>Resumen</b> (mezcla de ingresos, aporte a la utilidad y márgenes), <b>Estado de resultados</b> (la matriz por línea y el resumen), <b>Líneas de venta</b> (solo si la empresa las maneja) y <b>Análisis y comentarios</b> (lectura con IA y comentarios de gestión). Al exportar a PDF o a imagen se incluyen todas las secciones.</p>
 ''' + tabla(['Bloque', 'Qué muestra'], [
         ['<b>Indicadores clave</b>', 'Ingresos y utilidad operacional (con su variación contra el año anterior), margen operacional y la línea líder con su peso en los ingresos.'],
         ['<b>Mezcla de ingresos por línea</b>', 'Barras apiladas mes a mes: cuánto aporta cada línea al ingreso y cómo cambia la mezcla.'],
