@@ -431,18 +431,33 @@ namespace bufinscustomers.Services
                     }
 
                     // Ordenar por año y mes si existen esas columnas
-                    string orderBy = "";
+                    // Orden: Año, número de mes (entero) y Ord, ascendentes. Aplica a la consulta y a las exportaciones.
+                    var criterios = new List<string>();
                     if (columnasTabla.Any(c => c.Equals("Año", StringComparison.OrdinalIgnoreCase)))
-                    {
-                        orderBy = $" ORDER BY {prefijo}[Año] DESC";
+                        criterios.Add($"{prefijo}[Año] ASC");
 
-                        if (columnasTabla.Any(c => c.Equals("Mes", StringComparison.OrdinalIgnoreCase)))
+                    if (columnasTabla.Any(c => c.Equals("Mes", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        if (EsTipoNumerico(tipoColumnaMes))
                         {
-                            orderBy += $", {prefijo}[Mes] DESC";
+                            criterios.Add($"{prefijo}[Mes] ASC");
+                        }
+                        else
+                        {
+                            // Mes en texto ('Ene'..'Dic'): se ordena por su número, no alfabéticamente
+                            criterios.Add($"CASE LTRIM(RTRIM({prefijo}[Mes])) " +
+                                "WHEN 'Ene' THEN 1 WHEN 'Feb' THEN 2 WHEN 'Mar' THEN 3 WHEN 'Abr' THEN 4 " +
+                                "WHEN 'May' THEN 5 WHEN 'Jun' THEN 6 WHEN 'Jul' THEN 7 WHEN 'Ago' THEN 8 " +
+                                "WHEN 'Sep' THEN 9 WHEN 'Oct' THEN 10 WHEN 'Nov' THEN 11 WHEN 'Dic' THEN 12 " +
+                                "ELSE 13 END ASC");
                         }
                     }
 
-                    query += orderBy;
+                    if (columnasTabla.Any(c => c.Equals("Ord", StringComparison.OrdinalIgnoreCase)))
+                        criterios.Add($"{prefijo}[Ord] ASC");
+
+                    if (criterios.Count > 0)
+                        query += " ORDER BY " + string.Join(", ", criterios);
 
                     // Ejecutar consulta
                     SqlCommand cmd = new SqlCommand(query, cn);
