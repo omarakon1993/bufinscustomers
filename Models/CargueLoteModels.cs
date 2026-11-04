@@ -66,6 +66,20 @@ namespace bufinscustomers.Models
         /// <summary>Título corto de la regla (lo escribe sp_ValidarCargueStaging); null si el hallazgo no tiene título.</summary>
         public string Titulo { get; set; }
         public string TituloEn { get; set; }
+
+        // ── Datos estructurados por caso (Sql/043; null si el script no se ha ejecutado o la regla aún no los llena) ──
+        /// <summary>Periodo del caso en formato 'AAAA-MM'.</summary>
+        public string Periodo { get; set; }
+        /// <summary>Cuenta / nivel afectado. '@N4' significa «Nivel 4 dígitos» (lo traduce la pantalla).</summary>
+        public string Referencia { get; set; }
+        public string Detalle { get; set; }
+        public string DetalleEn { get; set; }
+        public decimal? Diferencia { get; set; }
+        /// <summary>Descripción de la regla (igual en todos los casos de la misma validación).</summary>
+        public string Regla { get; set; }
+        public string ReglaEn { get; set; }
+        public string Sugerencia { get; set; }
+        public string SugerenciaEn { get; set; }
     }
 
     /// <summary>ViewModel de la pantalla "Revisar cargue" (informe de validación antes de confirmar).</summary>
@@ -74,6 +88,8 @@ namespace bufinscustomers.Models
     {
         public CargueLote Lote { get; set; }
         public List<CargueLoteHallazgo> Hallazgos { get; set; } = new List<CargueLoteHallazgo>();
+        /// <summary>Total real de casos por validación (CodigoRegla); <see cref="Hallazgos"/> trae solo los primeros N de cada una.</summary>
+        public Dictionary<string, int> TotalesPorRegla { get; set; } = new Dictionary<string, int>();
         public string NombreArchivo { get; set; }
         /// <summary>Qué le haría este cargue a los datos actuales (null si no se pudo calcular).</summary>
         public ImpactoCargue Impacto { get; set; }

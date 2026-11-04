@@ -178,16 +178,42 @@ namespace bufinscustomers.Services
             }
         }
 
-        public List<CargueLoteHallazgo> ObtenerHallazgos(long idLote)
+        /// <summary>Total real de hallazgos (casos) de cada validación del lote, por CodigoRegla.</summary>
+        public Dictionary<string, int> ObtenerTotalesPorRegla(long idLote)
+        {
+            var d = new Dictionary<string, int>();
+            using (var cn = new SqlConnection(CadenaConexion))
+            using (var cmd = new SqlCommand("SELECT CodigoRegla, COUNT(*) FROM dbo.CarguesLotesErrores WHERE IdLote = @IdLote GROUP BY CodigoRegla", cn))
+            {
+                cmd.Parameters.AddWithValue("@IdLote", idLote);
+                cn.Open();
+                using (var r = cmd.ExecuteReader())
+                    while (r.Read()) d[r.GetString(0)] = r.GetInt32(1);
+            }
+            return d;
+        }
+
+        /// <summary>
+        /// Hallazgos del lote, agrupados por validación (severidad → orden de la regla → orden de inserción).
+        /// <paramref name="maxPorRegla"/> &gt; 0 limita los casos devueltos de CADA validación (la pantalla muestra
+        /// los primeros N y el total real; el Excel de errores trae todos con 0).
+        /// </summary>
+        public List<CargueLoteHallazgo> ObtenerHallazgos(long idLote, int maxPorRegla = 0)
         {
             var list = new List<CargueLoteHallazgo>();
             using (var cn = new SqlConnection(CadenaConexion))
             using (var cmd = new SqlCommand(@"
-                SELECT * FROM dbo.CarguesLotesErrores
-                WHERE IdLote = @IdLote
-                ORDER BY CASE Severidad WHEN 'Error' THEN 0 ELSE 1 END, NombreHoja, NumeroFilaExcel", cn))
+                SELECT x.* FROM (
+                    SELECT e.*,
+                           ROW_NUMBER() OVER (PARTITION BY e.CodigoRegla ORDER BY e.Id) AS _rn,
+                           MIN(e.Id) OVER (PARTITION BY e.CodigoRegla) AS _primero
+                    FROM dbo.CarguesLotesErrores e
+                    WHERE e.IdLote = @IdLote) x
+                WHERE @Max <= 0 OR x._rn <= @Max
+                ORDER BY CASE x.Severidad WHEN 'Error' THEN 0 ELSE 1 END, x._primero, x.Id", cn))
             {
                 cmd.Parameters.AddWithValue("@IdLote", idLote);
+                cmd.Parameters.AddWithValue("@Max", maxPorRegla);
                 cn.Open();
                 using (var r = cmd.ExecuteReader())
                 {
@@ -209,6 +235,20 @@ namespace bufinscustomers.Services
                         // Titulo/TituloEn los escribe sp_ValidarCargueStaging; columnas incrementales (Sql/011).
                         try { h.Titulo = r["Titulo"] as string; } catch (IndexOutOfRangeException) { }
                         try { h.TituloEn = r["TituloEn"] as string; } catch (IndexOutOfRangeException) { }
+                        // Datos por caso (Sql/043): opcionales, el lector tolera que las columnas aún no existan.
+                        try
+                        {
+                            h.Periodo = r["Periodo"] as string;
+                            h.Referencia = r["Referencia"] as string;
+                            h.Detalle = r["Detalle"] as string;
+                            h.DetalleEn = r["DetalleEn"] as string;
+                            h.Diferencia = r["Diferencia"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(r["Diferencia"]);
+                            h.Regla = r["Regla"] as string;
+                            h.ReglaEn = r["ReglaEn"] as string;
+                            h.Sugerencia = r["Sugerencia"] as string;
+                            h.SugerenciaEn = r["SugerenciaEn"] as string;
+                        }
+                        catch (IndexOutOfRangeException) { }
                         list.Add(h);
                     }
                 }

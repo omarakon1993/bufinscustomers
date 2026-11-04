@@ -20,6 +20,8 @@ namespace bufinscustomers.Controllers
     public class DatosController : BaseController
     {
         private const string SESSION_LOG_IMPORTACION = "LogImportacion";
+        /// <summary>Casos que la pantalla «Revisar cargue» trae por cada validación (el resto va solo en el Excel de errores).</summary>
+        private const int CasosPorValidacionEnPantalla = 200;
 
         private readonly EmpresaService _empresaService = new EmpresaService();
         private readonly ConfiguracionEmpresaService _configuracionService = new ConfiguracionEmpresaService();
@@ -1343,7 +1345,9 @@ namespace bufinscustomers.Controllers
             var vm = new RevisarCargueViewModel
             {
                 Lote = lote,
-                Hallazgos = _stagingService.ObtenerHallazgos(idLote),
+                // La pantalla muestra los primeros N casos de cada validación y el total real; el Excel de errores trae todos.
+                Hallazgos = _stagingService.ObtenerHallazgos(idLote, CasosPorValidacionEnPantalla),
+                TotalesPorRegla = _stagingService.ObtenerTotalesPorRegla(idLote),
                 NombreArchivo = lote.NombreArchivo
             };
             try { vm.Impacto = _impactoService.Analizar(lote); }
@@ -1711,8 +1715,12 @@ namespace bufinscustomers.Controllers
                 string[] encabezados =
                 {
                     "#", R("RevisarCargue_Exp_ColSeveridad"), R("RevisarCargue_Exp_ColTitulo"), R("RevisarCargue_Exp_ColMensaje"),
-                    R("RevisarCargue_Exp_ColHoja"), R("RevisarCargue_Exp_ColFila"), R("RevisarCargue_Exp_ColColumna"), R("RevisarCargue_Exp_ColRegla")
+                    R("RevisarCargue_Exp_ColHoja"), R("RevisarCargue_Exp_ColFila"), R("RevisarCargue_Val_ColPeriodo"), R("RevisarCargue_Val_ColCuenta"),
+                    R("RevisarCargue_Val_ColDiferencia"), R("RevisarCargue_Exp_ColColumna"), R("RevisarCargue_Exp_ColRegla")
                 };
+                string[] mesesAbr = esIngles
+                    ? new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" }
+                    : new[] { "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic" };
                 for (int c = 0; c < encabezados.Length; c++)
                     ws.Cell(filaEnc, c + 1).Value = encabezados[c];
                 var rngEnc = ws.Range(filaEnc, 1, filaEnc, encabezados.Length);
@@ -1735,8 +1743,22 @@ namespace bufinscustomers.Controllers
                     ws.Cell(fila, 4).Value = mensaje ?? "";
                     ws.Cell(fila, 5).Value = h.NombreHoja ?? "";
                     if (h.NumeroFilaExcel.HasValue) ws.Cell(fila, 6).Value = h.NumeroFilaExcel.Value;
-                    ws.Cell(fila, 7).Value = h.Columna ?? "";
-                    ws.Cell(fila, 8).Value = h.CodigoRegla ?? "";
+
+                    // Periodo 'AAAA-MM' → «Jun 2026»; referencia '@N4' → «Nivel 4 dígitos».
+                    string periodo = h.Periodo ?? "";
+                    if (periodo.Length == 7 && periodo[4] == '-' && int.TryParse(periodo.Substring(5, 2), out int mm) && mm >= 1 && mm <= 12)
+                        periodo = mesesAbr[mm - 1] + " " + periodo.Substring(0, 4);
+                    ws.Cell(fila, 7).Value = periodo;
+                    string referencia = h.Referencia ?? "";
+                    if (referencia.StartsWith("@N")) referencia = string.Format(R("RevisarCargue_Val_Nivel"), referencia.Substring(2));
+                    ws.Cell(fila, 8).Value = referencia;
+                    if (h.Diferencia.HasValue)
+                    {
+                        ws.Cell(fila, 9).Value = (double)h.Diferencia.Value;
+                        ws.Cell(fila, 9).Style.NumberFormat.Format = "#,##0.00;[Red]-#,##0.00";
+                    }
+                    ws.Cell(fila, 10).Value = h.Columna ?? "";
+                    ws.Cell(fila, 11).Value = h.CodigoRegla ?? "";
                 }
 
                 var rngDatos = ws.Range(filaEnc, 1, fila, encabezados.Length);
@@ -1843,10 +1865,19 @@ namespace bufinscustomers.Controllers
                 if (pdfBytes != null)
                     adjuntos.Add((NombreArchivoHallazgos(lote, "pdf"), pdfBytes, "application/pdf"));
 
-                var items = hallazgos.Select(h => (
-                    esError: h.Severidad == CargueLoteSeveridad.Error,
-                    titulo: esIngles && !string.IsNullOrWhiteSpace(h.TituloEn) ? h.TituloEn : h.Titulo,
-                    mensaje: esIngles && !string.IsNullOrWhiteSpace(h.MensajeEn) ? h.MensajeEn : h.Mensaje)).ToList();
+                // Cuerpo del correo: una línea por validación (no por caso; el detalle completo va en el Excel adjunto).
+                var items = hallazgos.GroupBy(h => h.CodigoRegla ?? "").Select(g =>
+                {
+                    var h = g.First();
+                    string regla = esIngles ? (h.ReglaEn ?? h.Regla) : h.Regla;
+                    string msg = !string.IsNullOrWhiteSpace(regla) ? regla
+                        : (esIngles && !string.IsNullOrWhiteSpace(h.MensajeEn) ? h.MensajeEn : h.Mensaje);
+                    if (g.Count() > 1) msg += " (" + string.Format(R("RevisarCargue_Val_Casos"), g.Count().ToString("N0")) + ")";
+                    return (
+                        esError: h.Severidad == CargueLoteSeveridad.Error,
+                        titulo: esIngles && !string.IsNullOrWhiteSpace(h.TituloEn) ? h.TituloEn : h.Titulo,
+                        mensaje: msg);
+                }).ToList();
 
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
                 string modoTexto = lote.Modo == 0 ? R("RevisarCargue_ModoEjecucion") : R("RevisarCargue_ModoHistorico");
