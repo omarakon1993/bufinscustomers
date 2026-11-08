@@ -44,7 +44,9 @@ namespace bufinscustomers.Compat
         private static readonly JsonSerializerSettings Ajustes = new JsonSerializerSettings
         {
             DateFormatHandling = DateFormatHandling.MicrosoftDateFormat,
-            DateTimeZoneHandling = DateTimeZoneHandling.Utc
+            DateTimeZoneHandling = DateTimeZoneHandling.Utc,
+            // JavaScriptSerializer escapa < > & y ' (<, &...): imprescindible cuando el JSON se incrusta en un <script> de la pagina
+            StringEscapeHandling = StringEscapeHandling.EscapeHtml
         };
 
         public int MaxJsonLength { get; set; }

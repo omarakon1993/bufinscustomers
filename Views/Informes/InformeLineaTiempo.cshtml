@@ -89,7 +89,7 @@
 <div class="container-fluid px-4">
 <div class="lt-app">
 
-    @await Html.PartialAsync("_PageHeader", new ViewDataDictionary(ViewData) {
+    @await Html.PartialAsync("_PageHeader", new ViewDataDictionaryEx(ViewData) {
         { "Icon", "fas fa-chart-line" }, { "Title", Resources.Strings.LineaTiempo_PageTitle },
         { "Source", Resources.Strings.Common_ModeloBufinsTag } })
 

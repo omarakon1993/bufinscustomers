@@ -1241,7 +1241,7 @@
                 settings.data = (hadData ? settings.data + '&' : '') +
                     '__RequestVerificationToken=' + encodeURIComponent(token);
                 // Si la llamada no traía cuerpo (p. ej. ExtenderSesion / keepalive), jQuery no
-                // fijó el Content-Type de formulario y el servidor no poblaría Context.Request.Form,
+                // fijó el Content-Type de formulario y el servidor no poblaría Request.Form,
                 // así que el token viajaría "invisible" y ValidateAntiForgeryToken fallaría.
                 // Lo forzamos aquí, salvo que la llamada haya pedido otro contentType (JSON).
                 if (!hadData && settings.contentType !== false &&

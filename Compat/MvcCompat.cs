@@ -55,6 +55,16 @@ namespace bufinscustomers.Compat
         }
     }
 
+    /// <summary>
+    /// new ViewDataDictionary { { "clave", valor } } de MVC 5 empezaba vacio; en ASP.NET Core se hereda el ViewData de la pagina y Add falla si la clave
+    /// ya existe (p. ej. Title). Esta variante sobrescribe el valor en vez de lanzar.
+    /// </summary>
+    public class ViewDataDictionaryEx : Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary
+    {
+        public ViewDataDictionaryEx(Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary origen) : base(origen) { }
+        public new void Add(string clave, object valor) { this[clave] = valor; }
+    }
+
     /// <summary>Textos de App_GlobalResources: reemplaza a HttpContext.GetGlobalResourceObject("Strings", clave).</summary>
     public static class Recursos
     {

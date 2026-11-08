@@ -64,6 +64,7 @@ builder.Services.AddControllersWithViews(o =>
     o.SerializerSettings.ContractResolver = new DefaultContractResolver();
     o.SerializerSettings.DateFormatHandling = DateFormatHandling.MicrosoftDateFormat;
     o.SerializerSettings.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
+    o.SerializerSettings.StringEscapeHandling = StringEscapeHandling.EscapeHtml;   // como JavaScriptSerializer: escapa < > & '
 });
 
 builder.Services.AddResponseCompression(o =>

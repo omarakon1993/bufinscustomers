@@ -93,7 +93,7 @@ textarea.ia-text-input { resize:none; overflow-y:auto; max-height:130px; line-he
 <div class="container-fluid px-4">
 
     <!-- Header -->
-    @await Html.PartialAsync("_PageHeader", new ViewDataDictionary(ViewData) {
+    @await Html.PartialAsync("_PageHeader", new ViewDataDictionaryEx(ViewData) {
         { "Icon", "fas fa-robot" }, { "Title", Resources.Strings.IA_PageTitle },
         { "Model", (ViewBag.ModeloIA ?? "OpenAI").ToString() }, { "Source", Resources.Strings.Common_ModeloBufinsTag } })
 

@@ -173,7 +173,7 @@
                 <div class="modal-body">
                     @await Html.PartialAsync("~/Views/Configuracion/_CuentaCorreoFormFields.cshtml",
                         new bufinscustomers.Models.CuentaCorreo { Puerto = 465, Ssl = true, IgnorarCertificado = true },
-                        new ViewDataDictionary(ViewData) { { "esCrear", true } })
+                        new ViewDataDictionaryEx(ViewData) { { "esCrear", true } })
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">
