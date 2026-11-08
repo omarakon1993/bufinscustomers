@@ -36,7 +36,7 @@ namespace bufinscustomers.Controllers
             {
                 case 404: Response.StatusCode = 404; return View("NotFound");
                 case 403: Response.StatusCode = 403; return View("Forbidden");
-                default: Response.StatusCode = 500; return View("Index");
+                default: Response.StatusCode = (code >= 400 && code < 600) ? code : 500; return View("Index");
             }
         }
 

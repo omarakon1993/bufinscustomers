@@ -42,6 +42,12 @@ builder.Services.Configure<FormOptions>(o =>
 
 builder.Services.AddHttpContextAccessor();
 
+// Cookies: el sitio anterior marcaba todas como seguras (httpCookies requireSSL="true"). SameAsRequest las marca Secure en toda peticion
+// HTTPS (la unica que llega a produccion) y no lanza error si alguna peticion de prueba llega en claro (con Always, el antiforgery fallaria).
+var cookieSegura = CookieSecurePolicy.SameAsRequest;
+builder.Services.AddAntiforgery(o => { o.Cookie.SecurePolicy = cookieSegura; });
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.CookieTempDataProviderOptions>(o => { o.Cookie.SecurePolicy = cookieSegura; });
+
 // Las llaves de proteccion de datos (antiforgery, TempData) se guardan en disco: equivalen a la <machineKey> fija del sitio anterior
 // y evitan que un reciclaje del sitio invalide los formularios abiertos. App_Data\dpkeys NO viaja con la publicacion.
 builder.Services.AddDataProtection()

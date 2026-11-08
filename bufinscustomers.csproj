@@ -14,6 +14,10 @@
     <!-- Migracion en curso: los avisos de codigo heredado se reducen al final (fase 5) -->
     <NoWarn>$(NoWarn);CA1416;ASP0019;MVC1000;CS0618;CS0168;CS0219;CS1998;SYSLIB0021;SYSLIB0023</NoWarn>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <!-- Hosting compartido: GC de estacion de trabajo y no concurrente (el modo servidor reserva un monton por nucleo y multiplica la memoria) -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <TieredPGO>false</TieredPGO>
   </PropertyGroup>
 
   <ItemGroup>
