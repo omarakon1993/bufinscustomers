@@ -1,6 +1,5 @@
-﻿﻿@using bufinscustomers.Models
+﻿@using bufinscustomers.Models
 @using System.Linq
-@using System.Web.Script.Serialization
 @{
     ViewBag.Title = Resources.Strings.Datos_PageTitle;
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -286,7 +285,7 @@
 <!-- Overlay de procesamiento -->
 <div id="overlayProcesando" class="overlay-cargando" style="display:none;">
     <div class="overlay-cargando-card">
-        @Html.Partial("_LoaderDots", "dark")
+        @await Html.PartialAsync("_LoaderDots", "dark")
         <h5 class="overlay-cargando-title" id="overlayTitulo">@Resources.Strings.Datos_JS_Procesando</h5>
         <p class="overlay-cargando-text">@Resources.Strings.Datos_OverlayNoCierre</p>
         <div class="overlay-cargando-timer">

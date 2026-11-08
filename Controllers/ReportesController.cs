@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
-using System.Web.Mvc;
+using Microsoft.Data.SqlClient;
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
 using System.Text.RegularExpressions;
-using System.Configuration;
-
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
@@ -201,7 +198,7 @@ namespace bufinscustomers.Controllers
         public static string ObtenerNombreEmpresaPorId(int idEmpresa)
         {
             string nombreEmpresa = "";
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+            string connectionString = bufinscustomers.Compat.ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
 
             using (var conn = new SqlConnection(connectionString))
             using (var cmd = new SqlCommand("SELECT EmpNombre FROM Empresas WHERE EmpId = @Id", conn))

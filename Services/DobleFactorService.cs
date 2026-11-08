@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
-using System.Web.Security;
 using bufinscustomers.Helpers;
 
 namespace bufinscustomers.Services
@@ -72,14 +70,14 @@ namespace bufinscustomers.Services
         public static int PasskeysMaximo { get { RefrescarCache(); return _passkeysMaxCache; } }
 
         /// <summary>Dominio (RP ID) para WebAuthn: clave <c>WebAuthnRpId</c> o, si está vacía, el host de la petición.</summary>
-        public static string RpId(System.Web.HttpRequestBase request)
+        public static string RpId(Microsoft.AspNetCore.Http.HttpRequest request)
         {
             string v = LeerConfig("WebAuthnRpId");
             return string.IsNullOrWhiteSpace(v) ? request.Url.Host : v.Trim().ToLowerInvariant();
         }
 
         /// <summary>Origen esperado (esquema + host + puerto) tomado de la petición.</summary>
-        public static string Origen(System.Web.HttpRequestBase request)
+        public static string Origen(Microsoft.AspNetCore.Http.HttpRequest request)
         {
             return request.Url.GetLeftPart(UriPartial.Authority);
         }

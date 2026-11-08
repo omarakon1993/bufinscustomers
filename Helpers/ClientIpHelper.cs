@@ -1,5 +1,4 @@
 using System;
-using System.Configuration;
 using System.Linq;
 using System.Net;
 using System.Web;
@@ -36,9 +35,9 @@ namespace bufinscustomers.Helpers
         {
             try
             {
-                var ctx = HttpContext.Current;
+                var ctx = AppHttp.Current;
                 if (ctx?.Request == null) return "";
-                return ObtenerIp(new HttpRequestWrapper(ctx.Request));
+                return ObtenerIp(ctx.Request);
             }
             catch { return ""; }
         }
@@ -60,7 +59,7 @@ namespace bufinscustomers.Helpers
             // Cloudflare envía una sola IP: la del cliente.
             if (_confiarCloudflare.Value)
             {
-                string cf = (request.Headers["CF-Connecting-IP"] ?? "").Trim();
+                string cf = ((string)request.Headers["CF-Connecting-IP"] ?? "").Trim();
                 if (EsIpValida(cf)) return cf;
             }
 

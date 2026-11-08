@@ -1,15 +1,12 @@
-using System.Web.Mvc;
 using bufinscustomers.Helpers;
 
 namespace bufinscustomers.Filters
 {
     /// <summary>
-    /// Igual que <see cref="HandleErrorAttribute"/> (deja que <c>customErrors</c> muestre
-    /// <c>~/Views/Shared/Error.cshtml</c>), pero registra la excepción en <see cref="AppLogger"/>
-    /// antes de delegar. Se registra como filtro global en <c>App_Start/FilterConfig.cs</c>
-    /// en lugar del <c>HandleErrorAttribute</c> estándar.
+    /// Registra en AppLogger toda excepcion no controlada de la tuberia MVC y la deja seguir: la pagina de error de la marca
+    /// la muestra el manejador de excepciones (UseExceptionHandler("/Error")). Equivale al HandleErrorAttribute de MVC 5.
     /// </summary>
-    public class LoggingHandleErrorAttribute : HandleErrorAttribute
+    public class LoggingHandleErrorAttribute : ExceptionFilterAttribute
     {
         public override void OnException(ExceptionContext filterContext)
         {

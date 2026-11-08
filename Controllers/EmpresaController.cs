@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using System.Web.Mvc;
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
@@ -32,7 +31,7 @@ namespace bufinscustomers.Controllers
         // POST: Crear empresa (solo Super Admin)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult CrearEmpresa(Empresas empresa, System.Web.HttpPostedFileBase logo)
+        public ActionResult CrearEmpresa(Empresas empresa, Microsoft.AspNetCore.Http.IFormFile logo)
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {

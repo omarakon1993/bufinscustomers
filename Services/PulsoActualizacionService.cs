@@ -1,15 +1,12 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Web;
-using System.Web.Hosting;
-
 namespace bufinscustomers.Services
 {
     /// <summary>
@@ -212,12 +209,12 @@ namespace bufinscustomers.Services
                     }
                 }
                 res = Tuple.Create(max > 0 ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(max).ToString("yyyy-MM-dd") : null, (string)null);
-                HttpRuntime.Cache.Insert(CacheFuente, res, null, DateTime.UtcNow.AddMinutes(10), System.Web.Caching.Cache.NoSlidingExpiration);
+                HttpRuntime.Cache.Insert(CacheFuente, res, null, DateTime.UtcNow.AddMinutes(10), Cache.NoSlidingExpiration);
             }
             catch (Exception ex)
             {
                 res = Tuple.Create((string)null, ex.GetBaseException().Message);
-                HttpRuntime.Cache.Insert(CacheFuente, res, null, DateTime.UtcNow.AddMinutes(1), System.Web.Caching.Cache.NoSlidingExpiration);
+                HttpRuntime.Cache.Insert(CacheFuente, res, null, DateTime.UtcNow.AddMinutes(1), Cache.NoSlidingExpiration);
             }
             return res;
         }

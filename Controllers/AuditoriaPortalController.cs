@@ -8,8 +8,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Web.Mvc;
-
 namespace bufinscustomers.Controllers
 {
     /// <summary>
@@ -29,7 +27,7 @@ namespace bufinscustomers.Controllers
         [HttpGet]
         public ActionResult Index()
         {
-            if (!string.Equals(Request.QueryString["embed"], "1"))
+            if (!string.Equals(Request.Query["embed"], "1"))
                 return RedirectToAction("Index", "AuditoriaHub");
             ViewBag.NombrePortal = PortalPublicoConfig.Nombre();
             var textos = new Dictionary<string, string>();

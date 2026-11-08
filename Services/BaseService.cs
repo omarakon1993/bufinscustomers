@@ -1,5 +1,3 @@
-using System.Configuration;
-
 namespace bufinscustomers.Services
 {
     /// <summary>
@@ -8,7 +6,7 @@ namespace bufinscustomers.Services
     public abstract class BaseService
     {
         /// <summary>
-        /// Cadena de conexión centralizada obtenida del Web.config
+        /// Cadena de conexiÃ³n centralizada obtenida del Web.config
         /// </summary>
         protected static readonly string CadenaConexion = 
             ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;

@@ -1,4 +1,4 @@
-﻿﻿@model IEnumerable<bufinscustomers.Models.ConfiguracionSistemaItem>
+﻿@model IEnumerable<bufinscustomers.Models.ConfiguracionSistemaItem>
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -309,7 +309,7 @@
                     {
                         var itemsTipo = Model.Where(i => i.IdTipo == tp.Id).ToList();
                         if (!itemsTipo.Any()) { continue; }
-                        @RenderGrupo(tp.Icono, nombreTipo(tp), itemsTipo)
+                        RenderGrupo(tp.Icono, nombreTipo(tp), itemsTipo);
                     }
                 }
                 else
@@ -318,19 +318,20 @@
                     {
                         var items = g.Claves.Select(k => Model.FirstOrDefault(i => i.Clave == k)).Where(i => i != null).ToList();
                         if (!items.Any()) { continue; }
-                        @RenderGrupo(g.Icono, g.Titulo, items)
+                        RenderGrupo(g.Icono, g.Titulo, items);
                     }
                 }
                 @if (otrosCfg.Any())
                 {
-                    @RenderGrupo("fas fa-cog", Resources.Strings.CfgIA_G_Otros, otrosCfg)
+                    RenderGrupo("fas fa-cog", Resources.Strings.CfgIA_G_Otros, otrosCfg);
                 }
             </div>
             <div class="cfgg-vacio" id="cfggVacio"><i class="fas fa-search mr-1"></i>@Resources.Strings.CfgIA_G_SinResultados</div>
         }
     </div>
 
-    @helper RenderGrupo(string icono, string titulo, List<bufinscustomers.Models.ConfiguracionSistemaItem> items)
+    @{
+    void RenderGrupo(string icono, string titulo, List<bufinscustomers.Models.ConfiguracionSistemaItem> items)
     {
         <section class="cfgg-group">
             <header>
@@ -361,6 +362,7 @@
                 </div>
             }
         </section>
+    }
     }
 
     </div><!-- /panelGeneral -->

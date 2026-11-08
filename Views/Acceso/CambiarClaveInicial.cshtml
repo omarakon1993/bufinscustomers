@@ -1,4 +1,4 @@
-@{
+﻿@{
     Layout = "~/Views/Acceso/_Layout2FA.cshtml";
     ViewBag.ErrorEnLinea = true;
     ViewBag.PageTitle = Resources.Strings.CambioClaveInicial_PageTitle;
@@ -17,16 +17,16 @@
     };
 }
 
-@section Panel { @Html.Partial("_AccesoPanel", panel) }
+@section Panel { @await Html.PartialAsync("_AccesoPanel", panel) }
 
 <h1 class="acc-title">@Resources.Strings.CambioClaveInicial_Heading</h1>
 <p class="acc-desc">@Resources.Strings.CambioClaveInicial_Instrucciones</p>
 
 <form id="cambioForm" action="@Url.Action("CambiarClaveInicial","Acceso")" method="post">
     @Html.AntiForgeryToken()
-    @Html.Partial("_AccesoErrores")
+    @await Html.PartialAsync("_AccesoErrores")
 
-    @Html.Partial("_AccesoClaveCampos")
+    @await Html.PartialAsync("_AccesoClaveCampos")
 
     <button type="button" id="btnCambiar" class="btn btn-primary" style="margin-top:18px;" onclick="cambiarClave()">
         <span class="btn-text">@Resources.Strings.Acc_BtnCambiarClave</span>

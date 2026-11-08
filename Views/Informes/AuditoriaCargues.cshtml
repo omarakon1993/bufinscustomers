@@ -1,8 +1,7 @@
-@model IEnumerable<bufinscustomers.Models.AuditoriaCargues>
+﻿@model IEnumerable<bufinscustomers.Models.AuditoriaCargues>
 @using bufinscustomers.Helpers
 @using bufinscustomers.Models
 @using System.Linq
-@using System.Web.Mvc
 @using Newtonsoft.Json
 
 @{
@@ -74,7 +73,7 @@
 
     <div id="axKpis" class="ax-kpis" hidden></div>
 
-    @Html.Partial("_AudFiltros", vm)
+    @await Html.PartialAsync("_AudFiltros", vm)
 
     @Html.AntiForgeryToken()
 

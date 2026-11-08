@@ -1,4 +1,4 @@
-@{
+﻿@{
     Layout = null;
     var _isEnglish = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
     string _tituloPagina = (ViewBag.PageTitle as string) ?? Resources.Strings.Login2FA_PageTitle;
@@ -23,7 +23,7 @@
             @RenderSection("Panel", required: false)
 
             <div class="acc-main">
-                @Html.Partial("_AccesoHeader")
+                @await Html.PartialAsync("_AccesoHeader")
 
                 <div class="acc-body">
                     @RenderBody()

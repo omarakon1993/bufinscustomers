@@ -5,8 +5,6 @@ using ClosedXML.Excel;
 using System;
 using System.Drawing;
 using System.IO;
-using System.Web.Mvc;
-
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
@@ -89,7 +87,7 @@ namespace bufinscustomers.Controllers
                 using (var package = new XLWorkbook())
                 {
                     var ws = package.Worksheets.Add("TablaPUC");
-                    Func<string, string> R = key => HttpContext.GetGlobalResourceObject("Strings", key)?.ToString() ?? key;
+                    Func<string, string> R = key => Recursos.Obtener(key);
 
                     string[] headers = { R("PUC_ThCuenta"), R("PUC_ThNombre"), R("PUC_ThLargo"), R("PUC_ThTipo"), R("PUC_Descripcion") };
                     for (int i = 0; i < headers.Length; i++)

@@ -1,4 +1,4 @@
-@{
+﻿@{
     Layout = "~/Views/Acceso/_Layout2FA.cshtml";
     ViewBag.Heading = Resources.Strings.Pk_Oferta_Heading;
     ViewBag.PageTitle = Resources.Strings.Login2FA_PageTitle;
@@ -17,7 +17,7 @@
     };
 }
 
-@section Panel { @Html.Partial("_AccesoPanel", panel) }
+@section Panel { @await Html.PartialAsync("_AccesoPanel", panel) }
 
 <form id="tfForm" action="@Url.Action("OfrecerPasskey","Acceso")" method="post">
     @Html.AntiForgeryToken()

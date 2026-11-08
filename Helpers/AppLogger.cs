@@ -79,7 +79,7 @@ namespace bufinscustomers.Helpers
         {
             try
             {
-                var ctx = HttpContext.Current;
+                var ctx = AppHttp.Current;
                 if (ctx == null) return "req=-";
                 string ip = "-";
                 try

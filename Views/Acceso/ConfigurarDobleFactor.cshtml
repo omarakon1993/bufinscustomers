@@ -1,4 +1,4 @@
-@{
+﻿@{
     Layout = "~/Views/Acceso/_Layout2FA.cshtml";
     ViewBag.Heading = Resources.Strings.Login2FA_ConfigHeading;
     ViewBag.PageTitle = Resources.Strings.Login2FA_PageTitle;
@@ -19,7 +19,7 @@
     };
 }
 
-@section Panel { @Html.Partial("_AccesoPanel", panel) }
+@section Panel { @await Html.PartialAsync("_AccesoPanel", panel) }
 
 <h1 class="acc-title">@Resources.Strings.Login2FA_ConfigHeading</h1>
 <p class="acc-desc">@Resources.Strings.Login2FA_ConfigAviso</p>
@@ -41,7 +41,7 @@
                 <li><span>3</span>@Resources.Strings.Login2FA_ConfigPaso3</li>
             </ol>
 
-            @Html.Partial("_AccesoOtp")
+            @await Html.PartialAsync("_AccesoOtp")
 
             <button type="submit" id="btnVerificar" class="btn btn-primary acc-off">
                 <span class="btn-text">@Resources.Strings.Login2FA_BtnActivar</span>

@@ -2,7 +2,7 @@ using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Linq;
 
 namespace bufinscustomers.Services
@@ -252,7 +252,7 @@ namespace bufinscustomers.Services
             }
 
             int maxFilas = 5000;
-            if (int.TryParse(System.Configuration.ConfigurationManager.AppSettings["MaxFilasConsulta"], out int maxCfg) && maxCfg > 0)
+            if (int.TryParse(bufinscustomers.Compat.ConfigurationManager.AppSettings["MaxFilasConsulta"], out int maxCfg) && maxCfg > 0)
                 maxFilas = maxCfg;
 
             try

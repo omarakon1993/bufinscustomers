@@ -1,6 +1,5 @@
-@using bufinscustomers.Models
+﻿@using bufinscustomers.Models
 @using System.Linq
-@using System.Web.Mvc
 @{
     ViewBag.Title = Resources.Strings.Nav_PageTitle;
     if ((bool)(ViewBag.Embed ?? false)) { Layout = "~/Views/Shared/_LayoutFragment.cshtml"; }
@@ -84,7 +83,7 @@
 
     <div id="axKpis" class="ax-kpis" hidden></div>
 
-    @Html.Partial("_AudFiltros", vm)
+    @await Html.PartialAsync("_AudFiltros", vm)
 
     <div id="axInicial" class="no-data-message">
         <i class="fas fa-route"></i>
@@ -347,11 +346,9 @@ $(function () {
     });
     $('#btnImprimir').on('click', function () { AudKit.imprimir('#resultadosContainer .table-container', document.title); });
 
-    @if (esSuper)
-    {
-        <text>
+    if (@(esSuper ? "true" : "false")) {
     var _empresasLimp = [
-        @Html.Raw(string.Join(",", empresas.Select(e =>
+        @Html.Raw(!esSuper ? "" : string.Join(",", empresas.Select(e =>
             "{id:" + e.Id + ",n:'" + HttpUtility.JavaScriptStringEncode(e.Nombre ?? "") + "'}")))
     ];
     var _limp = {
@@ -505,8 +502,7 @@ $(function () {
             });
         });
     });
-        </text>
-    }
+        }
 
     estadoInicial();
 });

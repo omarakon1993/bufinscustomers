@@ -8,9 +8,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Web;
-using System.Web.Mvc;
-using System.Web.Script.Serialization;
-
 namespace bufinscustomers.Controllers
 {
     /// <summary>
@@ -156,7 +153,7 @@ namespace bufinscustomers.Controllers
                         using (var wb = new XLWorkbook(ms))
                             res = _svc.CargarDesdeExcel(idEmpresa, usuario.Id, wb);
                     }
-                    catch (Exception exLectura) when (!(exLectura is System.Data.SqlClient.SqlException))
+                    catch (Exception exLectura) when (!(exLectura is Microsoft.Data.SqlClient.SqlException))
                     {
                         AppLogger.Error(exLectura, "SupuestosBalancePpto.CargarExcel lectura");
                         return Json(new { success = false, message = R("SBP_ArchivoIlegible") });

@@ -7,10 +7,10 @@ namespace bufinscustomers.Models
     {
         public string Eyebrow { get; set; }
         public List<AccesoPasoVM> Pasos { get; set; } = new List<AccesoPasoVM>();
-        /// <summary>true = pie "Ingresando como" (hay sesiÃ³n parcial); false = pie del sitio (volver a bufins.com).</summary>
+        /// <summary>true = pie "Ingresando como" (hay sesiÃƒÂ³n parcial); false = pie del sitio (volver a bufins.com).</summary>
         public bool PieUsuario { get; set; }
         public string CorreoEnmascarado { get; set; }
-        /// <summary>Destino de «¿No eres tú? Cambiar cuenta» (Login o CerrarSesion).</summary>
+        /// <summary>Destino de Â«Â¿No eres tÃº? Cambiar cuentaÂ» (Login o CerrarSesion).</summary>
         public string UrlCambiarCuenta { get; set; }
     }
 

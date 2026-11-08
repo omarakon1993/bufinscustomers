@@ -1,8 +1,6 @@
 using bufinscustomers.Services;
 using System;
 using System.Collections.Generic;
-using System.Web;
-using System.Web.SessionState;
 
 namespace bufinscustomers.Helpers
 {
@@ -19,7 +17,7 @@ namespace bufinscustomers.Helpers
 
         public static void Registrar(long idLote)
         {
-            var session = HttpContext.Current?.Session;
+            var session = AppHttp.Current?.Session;
             if (session == null || idLote <= 0) return;
             var lista = session[SessionKey] as List<long> ?? new List<long>();
             if (!lista.Contains(idLote)) lista.Add(idLote);
@@ -28,16 +26,28 @@ namespace bufinscustomers.Helpers
 
         public static void Quitar(long idLote)
         {
-            var lista = HttpContext.Current?.Session?[SessionKey] as List<long>;
+            var lista = AppHttp.Current?.Session?[SessionKey] as List<long>;
             lista?.Remove(idLote);
         }
 
-        /// <summary>Descarta los lotes abiertos de la sesión indicada. Nunca lanza.</summary>
-        public static void DescartarAbiertos(HttpSessionState session)
+        /// <summary>Descarta los lotes abiertos de la sesion actual (logout). Nunca lanza.</summary>
+        public static void DescartarAbiertos(SesionCompat session)
+        {
+            DescartarLista(session?[SessionKey] as List<long>);
+        }
+
+        /// <summary>Descarta los lotes abiertos de una sesion que acaba de terminar (expiracion o abandono). Nunca lanza.</summary>
+        public static void DescartarAbiertos(SesionDatos session)
+        {
+            object v = null;
+            session?.Valores.TryGetValue(SessionKey, out v);
+            DescartarLista(v as List<long>);
+        }
+
+        private static void DescartarLista(List<long> lista)
         {
             try
             {
-                var lista = session?[SessionKey] as List<long>;
                 if (lista == null || lista.Count == 0) return;
                 int n = new CargueStagingService().DescartarLotes(lista);
                 lista.Clear();

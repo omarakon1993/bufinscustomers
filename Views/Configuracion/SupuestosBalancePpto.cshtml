@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewBag.Title = Resources.Strings.SBP_PageTitle;
     var empresas = (System.Collections.Generic.List<bufinscustomers.Models.Empresas>)ViewBag.Empresas;
     int idEmpresaUsuario = ViewBag.IdEmpresaUsuario;
@@ -17,9 +17,9 @@
     var textosJs = new System.Collections.Generic.Dictionary<string, string>();
     foreach (var k in clavesJs)
     {
-        textosJs[k] = (System.Web.HttpContext.GetGlobalResourceObject("Strings", "SBP_" + k) as string) ?? k;
+        textosJs[k] = (Recursos.Obtener("SBP_" + k) as string) ?? k;
     }
-    var textosJson = new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(textosJs);
+    var textosJson = new JavaScriptSerializer().Serialize(textosJs);
 }
 
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />

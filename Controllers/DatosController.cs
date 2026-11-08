@@ -5,7 +5,7 @@ using bufinscustomers.Services;
 using ClosedXML.Excel;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Data;
 using System.IO;
 using System.Linq;
@@ -13,7 +13,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
-using System.Web.Mvc;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]

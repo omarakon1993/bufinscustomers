@@ -2,7 +2,7 @@ namespace bufinscustomers.Models
 {
     /// <summary>
     /// Modelo para empresas a consolidar
-    /// Tabla detalle que almacena la lista de empresas que se consolidar·n
+    /// Tabla detalle que almacena la lista de empresas que se consolidar√°n
     /// </summary>
     public class ConfigEmpresaConsolidar
     {

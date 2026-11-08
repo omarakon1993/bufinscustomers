@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Web.Mvc;
 using bufinscustomers.Models;
 using bufinscustomers.Services;
 using BC = BCrypt.Net.BCrypt;
@@ -13,6 +11,17 @@ namespace bufinscustomers.Controllers
 {
     public abstract class BaseController : Controller
     {
+        // ---- compatibilidad con System.Web.Mvc.Controller (MVC 5): Session, Server, Json(..., AllowGet), HttpNotFound() ----
+        /// <summary>Sesion del usuario (equivale a Controller.Session de MVC 5; ver Compat/Sesion.cs).</summary>
+        protected SesionCompat Session { get { return AppHttp.Current.Session; } }
+
+        protected ServerCompat Server { get { return ServerCompat.Instancia; } }
+
+        protected JsonResult Json(object data, JsonRequestBehavior comportamiento) { return Json(data); }
+
+        protected HttpNotFoundResult HttpNotFound() { return new HttpNotFoundResult(); }
+        protected HttpNotFoundResult HttpNotFound(string descripcion) { return new HttpNotFoundResult(descripcion); }
+
         protected static readonly string CadenaConexion =
             ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
 
@@ -79,7 +88,7 @@ namespace bufinscustomers.Controllers
 
         // Accede a App_GlobalResources respetando la cultura actual del hilo.
         protected string R(string key) =>
-            System.Web.HttpContext.GetGlobalResourceObject("Strings", key)?.ToString() ?? key;
+            Recursos.Obtener(key);
 
         /// <summary>
         /// Mensaje seguro para devolver al navegador cuando una acción falla (H8). Siempre registra la excepción completa
@@ -93,14 +102,14 @@ namespace bufinscustomers.Controllers
             try { Helpers.AppLogger.Error(ex, GetType().Name + "." + accion + " ref=" + codigo); } catch { }
 
             Exception b = ex == null ? null : ex.GetBaseException();
-            var sql = (b as System.Data.SqlClient.SqlException) ?? (ex as System.Data.SqlClient.SqlException);
+            var sql = (b as Microsoft.Data.SqlClient.SqlException) ?? (ex as Microsoft.Data.SqlClient.SqlException);
             bool tecnica;
             if (sql != null)
                 tecnica = !(sql.Class <= 16 && sql.Number >= 50000); // 50000+ = THROW/RAISERROR escrito por nosotros (regla de negocio)
             else
                 tecnica = b is NullReferenceException || b is IndexOutOfRangeException || b is InvalidCastException
                     || b is KeyNotFoundException || b is FormatException || b is System.IO.IOException
-                    || b is TimeoutException || b is System.Web.HttpException || b is System.ComponentModel.Win32Exception
+                    || b is TimeoutException || b is System.ComponentModel.Win32Exception
                     || b is OutOfMemoryException || b is ArgumentOutOfRangeException || b is OverflowException
                     || b is DivideByZeroException || b is System.Net.WebException || b is System.Net.Http.HttpRequestException
                     || b is System.Threading.Tasks.TaskCanceledException || b is UnauthorizedAccessException;

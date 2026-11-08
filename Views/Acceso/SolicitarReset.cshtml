@@ -1,4 +1,4 @@
-@{
+﻿@{
     Layout = "~/Views/Acceso/_Layout2FA.cshtml";
     ViewBag.PageTitle = Resources.Strings.Reset_PageTitle;
     bool _enviado = ViewData["Enviado"] != null && (bool)ViewData["Enviado"];
@@ -15,7 +15,7 @@
     };
 }
 
-@section Panel { @Html.Partial("_AccesoPanel", panel) }
+@section Panel { @await Html.PartialAsync("_AccesoPanel", panel) }
 
 @if (_enviado)
 {

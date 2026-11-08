@@ -19,7 +19,7 @@ namespace bufinscustomers.Helpers
             if (u == null) return false;
             if (!DobleFactorService.Habilitado || !DobleFactorService.PasskeysHabilitadas || !DobleFactorService.AplicaA(u)) return false;
 
-            var session = HttpContext.Current?.Session;
+            var session = AppHttp.Current?.Session;
             if (session != null && session[CLAVE] is bool cache) return cache;
 
             bool resultado = new DobleFactorService().Obtener(u.Id).Activo && new PasskeyService().Listar(u.Id).Count == 0;
@@ -38,7 +38,7 @@ namespace bufinscustomers.Helpers
 
         public static void Invalidar()
         {
-            var session = HttpContext.Current?.Session;
+            var session = AppHttp.Current?.Session;
             if (session != null) session.Remove(CLAVE);
         }
     }

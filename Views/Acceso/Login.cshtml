@@ -40,10 +40,10 @@
 
     <div class="container">
         <div class="acc-card">
-            @Html.Partial("_AccesoPanel", panel)
+            @await Html.PartialAsync("_AccesoPanel", panel)
 
             <div class="acc-main">
-                @Html.Partial("_AccesoHeader")
+                @await Html.PartialAsync("_AccesoHeader")
 
                 <div class="acc-body">
                     <h1 class="acc-title">@Resources.Strings.Acc_Login_Titulo</h1>

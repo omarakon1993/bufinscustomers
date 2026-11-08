@@ -1,8 +1,8 @@
 namespace bufinscustomers.Models
 {
     /// <summary>
-    /// Modelo para países
-    /// Tabla detalle que almacena la lista de países
+    /// Modelo para paÃ­ses
+    /// Tabla detalle que almacena la lista de paÃ­ses
     /// </summary>
     public class ConfigPais
     {

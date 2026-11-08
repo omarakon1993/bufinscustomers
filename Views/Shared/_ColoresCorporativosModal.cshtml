@@ -1,13 +1,14 @@
-@* Modal «Colores corporativos» (hasta 2 paletas por empresa). Se usa desde el gestor de Empresas y desde Configuración de empresas.
+﻿@* Modal «Colores corporativos» (hasta 2 paletas por empresa). Se usa desde el gestor de Empresas y desde Configuración de empresas.
    Uso en la página:
      <link href="~/Assets/css/tema-informe.css" rel="stylesheet" />
-     @Html.Partial("_ColoresCorporativosModal")
+     @await Html.PartialAsync("_ColoresCorporativosModal")
      <script src="~/Assets/js/colores-corporativos.js"></script>
      ... y para abrirlo: ColoresCorp.abrir(idEmpresa, nombreEmpresa);
    Ver CLAUDE.md, «Tema de colores de los informes — ESTÁNDAR». *@
-@helper Campo(string campo, string clave, bool obligatorio)
+@{
+void Campo(string campo, string clave, bool obligatorio)
 {
-    var texto = (string)System.Web.HttpContext.GetGlobalResourceObject("Strings", clave);
+    var texto = Recursos.Obtener(clave);
     <div class="pc-item">
         <label>@texto@if (obligatorio) { <span class="required"> *</span> }</label>
         <div class="pc-color">
@@ -15,6 +16,7 @@
             <div class="bf-input"><i class="fas fa-hashtag"></i><input type="text" class="form-control pc-hex" data-campo="@campo" maxlength="7" placeholder="#583AFF" autocomplete="off" spellcheck="false" /></div>
         </div>
     </div>
+}
 }
 <div class="modal fade" id="coloresCorpModal" tabindex="-1" aria-labelledby="coloresCorpLabel" aria-hidden="true"
      data-url-obtener="@Url.Action("Obtener", "EmpresaPaleta")" data-url-guardar="@Url.Action("Guardar", "EmpresaPaleta")"
@@ -46,9 +48,9 @@
                                     <button type="button" class="bf-btn-icon-danger pc-quitar" hidden title="@Resources.Strings.PaletaCorp_Quitar" aria-label="@Resources.Strings.PaletaCorp_Quitar"><i class="fas fa-trash-alt"></i></button>
                                 </div>
                                 <div class="pc-colores">
-                                    @Campo("primario", "PaletaCorp_Principal", true)
-                                    @Campo("secundario", "PaletaCorp_Secundario", true)
-                                    @Campo("acento", "PaletaCorp_Acento", false)
+                                    @{ Campo("primario", "PaletaCorp_Principal", true); }
+                                    @{ Campo("secundario", "PaletaCorp_Secundario", true); }
+                                    @{ Campo("acento", "PaletaCorp_Acento", false); }
                                 </div>
                                 <small class="form-text">@Resources.Strings.PaletaCorp_HintPrincipal</small>
                                 <div class="pc-prev" aria-label="@Resources.Strings.PaletaCorp_Muestra">

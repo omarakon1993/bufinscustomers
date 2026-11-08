@@ -35,8 +35,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Text;
 using bufinscustomers.Models;
 

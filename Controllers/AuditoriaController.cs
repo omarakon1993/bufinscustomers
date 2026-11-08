@@ -8,8 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Web.Mvc;
-
 namespace bufinscustomers.Controllers
 {
     /// <summary>
@@ -73,7 +71,7 @@ namespace bufinscustomers.Controllers
 
             var usuario = UsuarioSesionHelper.UsuarioActual;
 
-            ViewBag.Embed = string.Equals(Request.QueryString["embed"], "1");
+            ViewBag.Embed = string.Equals(Request.Query["embed"], "1");
             ViewBag.EsSuperAdmin = esSuper;
             ViewBag.EsUsuarioNormal = esNormal;
             ViewBag.Tipos = _svc.ObtenerTiposUsados();
@@ -288,12 +286,12 @@ namespace bufinscustomers.Controllers
                 string usuario = idUsuario.HasValue ? "#" + idUsuario.Value : null;
                 var opciones = new List<string>();
 
-                using (var cn = new System.Data.SqlClient.SqlConnection(CadenaConexion))
+                using (var cn = new Microsoft.Data.SqlClient.SqlConnection(CadenaConexion))
                 {
                     cn.Open();
 
                     if (idUsuario.HasValue)
-                        using (var cmd = new System.Data.SqlClient.SqlCommand(
+                        using (var cmd = new Microsoft.Data.SqlClient.SqlCommand(
                             "SELECT LTRIM(RTRIM(ISNULL(Nombre,'') + ' ' + ISNULL(Apellidos,''))) FROM Usuarios WHERE Id = @id", cn))
                         {
                             cmd.Parameters.AddWithValue("@id", idUsuario.Value);
@@ -305,7 +303,7 @@ namespace bufinscustomers.Controllers
                     if (ids.Count > 0)
                     {
                         var slots = ids.Select((_, i) => "@p" + i).ToList();
-                        using (var cmd = new System.Data.SqlClient.SqlCommand(
+                        using (var cmd = new Microsoft.Data.SqlClient.SqlCommand(
                             "SELECT " + (en ? "ISNULL(NombreEN, Nombre)" : "Nombre") +
                             " FROM MenuOpciones WHERE Id IN (" + string.Join(",", slots) + ") ORDER BY Orden", cn))
                         {

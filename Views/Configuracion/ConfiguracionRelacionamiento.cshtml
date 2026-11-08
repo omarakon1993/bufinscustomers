@@ -1,4 +1,4 @@
-﻿﻿@model dynamic
+﻿@model dynamic
 @using bufinscustomers.Models
 
 @{
@@ -222,7 +222,7 @@
 <!-- Overlay de procesamiento -->
 <div id="overlayProcesando" class="overlay-cargando" style="display:none;">
     <div class="overlay-cargando-card">
-        @Html.Partial("_LoaderDots", "aqua")
+        @await Html.PartialAsync("_LoaderDots", "aqua")
         <h5 class="overlay-cargando-title">@Resources.Strings.Datos_JS_Procesando</h5>
         <p class="overlay-cargando-text">@Resources.Strings.Datos_OverlayNoCierre</p>
         <div class="overlay-cargando-timer">

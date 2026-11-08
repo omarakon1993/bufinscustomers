@@ -1,4 +1,4 @@
-@model System.Collections.Generic.List<bufinscustomers.Helpers.DocumentoBiblioteca>
+﻿@model System.Collections.Generic.List<bufinscustomers.Helpers.DocumentoBiblioteca>
 @{
     ViewBag.Title = Resources.Strings.DocBuf_PageTitle;
     var catList = (System.Collections.Generic.List<bufinscustomers.Controllers.CategoriaDocumentoVM>)ViewBag.Categorias;
@@ -119,7 +119,7 @@
     </div>
 </div>
 
-@Html.Partial("_DocumentacionVisor", Resources.Strings.DocBuf_PageTitle)
+@await Html.PartialAsync("_DocumentacionVisor", Resources.Strings.DocBuf_PageTitle)
 
 @section scripts {
     <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/doc-visor.js")"></script>

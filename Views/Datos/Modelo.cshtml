@@ -1,4 +1,4 @@
-@model bufinscustomers.Models.ModeloPageViewModel
+﻿@model bufinscustomers.Models.ModeloPageViewModel
 @using bufinscustomers.Helpers
 @{
     ViewBag.Title = Resources.Strings.Modelo_PageTitle;
@@ -145,7 +145,7 @@
     <!-- Overlay exportación (fetch/blob) -->
     <div id="overlayExportacion" class="overlay-cargando" style="display:none;">
         <div class="overlay-cargando-card">
-            @Html.Partial("_LoaderDots", "aqua")
+            @await Html.PartialAsync("_LoaderDots", "aqua")
             <h5 id="overlayTitulo" class="overlay-cargando-title">@Resources.Strings.Modelo_JS_ExportandoTodos</h5>
             <p class="overlay-cargando-text mb-0" id="overlayTimerTexto">0s</p>
         </div>

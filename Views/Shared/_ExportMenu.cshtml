@@ -1,7 +1,7 @@
-@model bufinscustomers.Models.ExportMenuVM
+﻿@model bufinscustomers.Models.ExportMenuVM
 @* Botón "Exportar" desplegable — ESTÁNDAR para informes (mismo diseño que Revisar cargue).
    Uso:  <link href="~/Assets/css/export-menu.css" rel="stylesheet" />  +  <script src="~/Assets/js/export-menu.js"></script>
-         @Html.Partial("_ExportMenu", new bufinscustomers.Models.ExportMenuVM { Id = "miExp", Opciones = "excel,pdf,imagen,correo" })
+         @await Html.PartialAsync("_ExportMenu", new bufinscustomers.Models.ExportMenuVM { Id = "miExp", Opciones = "excel,pdf,imagen,correo" })
          ExportMenu.init('miExp', { acciones: { excel: ..., pdf: ..., imagen: ..., correo: ... }, textos: { ... } })
    Si el menú queda recortado, la tarjeta que lo contiene debe tener overflow: visible. *@
 <div class="exp" id="@Model.Id" data-opciones="@(Model.Opciones ?? "excel,pdf,imagen,correo")">

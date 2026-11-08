@@ -2,7 +2,7 @@ using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Linq;
 
 namespace bufinscustomers.Services
@@ -214,9 +214,9 @@ namespace bufinscustomers.Services
         private bool IntentarRegistrarAviso(int idEmpresa, bool agotado)
         {
             string ck = "ia_presup_" + idEmpresa + "_" + (agotado ? "full" : "warn");
-            if (System.Web.HttpRuntime.Cache[ck] != null) return false;
-            System.Web.HttpRuntime.Cache.Insert(ck, 1, null, DateTime.Now.AddHours(24),
-                System.Web.Caching.Cache.NoSlidingExpiration);
+            if (HttpRuntime.Cache[ck] != null) return false;
+            HttpRuntime.Cache.Insert(ck, 1, null, DateTime.Now.AddHours(24),
+                Cache.NoSlidingExpiration);
             return true;
         }
 

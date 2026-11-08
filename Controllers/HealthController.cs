@@ -1,6 +1,5 @@
 using System;
-using System.Data.SqlClient;
-using System.Web.Mvc;
+using Microsoft.Data.SqlClient;
 using bufinscustomers.Controllers;
 
 namespace bufinscustomers.Controllers

@@ -1,27 +1,13 @@
-using bufinscustomers.Helpers;
 using System;
 using System.Linq;
-using System.Web.Mvc;
+using bufinscustomers.Helpers;
 
 namespace bufinscustomers.Permisos
 {
     /// <summary>
-    /// Exige que el usuario tenga al menos uno de los códigos de permiso indicados antes de
-    /// ejecutar la acción. Super Admin (Admin = 2) siempre pasa, porque
-    /// <see cref="UsuarioSesionHelper.TienePermiso(string)"/> devuelve <c>true</c> para él.
-    ///
-    /// Reemplaza al check inline repetido
-    /// <c>if (!EsSuperAdmin() &amp;&amp; !TienePermiso("CODE")) { ... }</c>: al ser un filtro,
-    /// el framework corta la petición antes de entrar a la acción y no depende de que el
-    /// desarrollador recuerde escribir el <c>if</c>.
-    ///
-    /// Uso:
-    ///   <c>[RequierePermiso("ADMIN_USUARIOS_GESTOR")]</c>            — un permiso
-    ///   <c>[RequierePermiso("ADMIN_EMPRESAS_GESTOR,ADMIN_REPORTES_GESTOR")]</c> — cualquiera de varios
-    ///
-    /// Respuesta cuando falta el permiso:
-    ///   - petición AJAX  → JSON <c>{ success = false, forbidden = true, message }</c> con HTTP 403.
-    ///   - petición normal → redirección a <c>~/Error/Forbidden</c> (HTTP 403).
+    /// Exige que el usuario tenga al menos uno de los codigos de permiso indicados (separados por coma, punto y coma o espacio):
+    /// [RequierePermiso("CODE")] o [RequierePermiso("CODE1,CODE2")]. El Super Admin siempre pasa (lo resuelve TienePermiso).
+    /// Peticion AJAX: JSON { success=false, forbidden=true } con HTTP 403; peticion normal: redirige a ~/Error/Forbidden.
     /// </summary>
     public class RequierePermisoAttribute : ActionFilterAttribute
     {
@@ -47,17 +33,12 @@ namespace bufinscustomers.Permisos
                 if (http.Request.IsAjaxRequest())
                 {
                     http.Response.StatusCode = 403;
-                    http.Response.TrySkipIisCustomErrors = true;
-                    filterContext.Result = new JsonResult
+                    filterContext.Result = new JsonResult(new
                     {
-                        Data = new
-                        {
-                            success   = false,
-                            forbidden = true,
-                            message   = R("Err_403_Json")
-                        },
-                        JsonRequestBehavior = JsonRequestBehavior.AllowGet
-                    };
+                        success = false,
+                        forbidden = true,
+                        message = Recursos.Obtener("Err_403_Json")
+                    });
                 }
                 else
                 {
@@ -67,8 +48,5 @@ namespace bufinscustomers.Permisos
 
             base.OnActionExecuting(filterContext);
         }
-
-        private static string R(string key) =>
-            System.Web.HttpContext.GetGlobalResourceObject("Strings", key)?.ToString() ?? key;
     }
 }

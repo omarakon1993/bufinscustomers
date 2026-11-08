@@ -7,8 +7,6 @@ using MailKit.Security;
 using MimeKit;
 using System;
 using System.Text;
-using System.Web.Mvc;
-
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]

@@ -1,4 +1,4 @@
-@using System.Web
+﻿@using System.Web
 @using bufinscustomers.Models
 @{
     ViewBag.Title = Resources.Strings.PYG_PageTitle;
@@ -23,7 +23,7 @@
         <div class="powerbi-header-content">
             <i class="fas fa-chart-line powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@Resources.Strings.PYG_PageTitle</h1>
-            @Html.Partial("_ModeloBufinsTag")
+            @await Html.PartialAsync("_ModeloBufinsTag")
         </div>
     </div>
 
@@ -144,7 +144,7 @@
             </div>
         </div>
 
-        @Html.Partial("_TemaInformeSelector", "pygTema")
+        @await Html.PartialAsync("_TemaInformeSelector", "pygTema")
 
         <div class="btn-group-actions">
             <button type="button" id="btnConsultarPYG" class="btn btn-modern-gradient" disabled>
@@ -197,7 +197,7 @@
                         <button type="button" data-unidad="millones" role="menuitemradio">@Resources.Strings.LineaTiempo_UnidadMillones<i class="fas fa-check"></i></button>
                     </div>
                     <span class="sep"></span>
-                    @Html.Partial("_ExportMenu", new bufinscustomers.Models.ExportMenuVM
+                    @await Html.PartialAsync("_ExportMenu", new bufinscustomers.Models.ExportMenuVM
                     {
                         Id = "pygExp",
                         ExcelDesc = Resources.Strings.PYG_Exp_ExcelDesc
@@ -330,7 +330,7 @@
         </div>
 
         @* Insights gerenciales (IA): se ocultan si la empresa tiene la IA apagada *@
-        @Html.Partial("_ComentariosGestion", "pygComentarios")
+        @await Html.PartialAsync("_ComentariosGestion", "pygComentarios")
 
         @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
         {
@@ -344,7 +344,7 @@
             </div>
             <div id="pygInsightsBody"></div>
             <div id="pygInsightsLoading" style="display:none;text-align:center;padding:14px 0;">
-                @Html.Partial("_LoaderDots", "dark")
+                @await Html.PartialAsync("_LoaderDots", "dark")
                 <p style="margin-top:8px;font-size:12.5px;color:#8B85A0;">@Resources.Strings.PYG_V2_Analizando</p>
             </div>
 
@@ -366,12 +366,12 @@
 
 <div id="overlayConsultandoPYG" class="overlay-cargando" style="display:none;">
     <div class="overlay-cargando-card">
-        @Html.Partial("_LoaderDots", "aqua")
+        @await Html.PartialAsync("_LoaderDots", "aqua")
         <h5 class="overlay-cargando-title">@Resources.Strings.PYG_JS_Consultando</h5>
     </div>
 </div>
 
-@Html.Partial("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+@await Html.PartialAsync("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
 
 @section scripts {
 <script src="~/Assets/js/select2/select2.min.js"></script>

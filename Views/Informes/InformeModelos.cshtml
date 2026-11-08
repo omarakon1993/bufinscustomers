@@ -1,4 +1,4 @@
-@model dynamic
+﻿@model dynamic
 @using bufinscustomers.Models
 @{
     ViewBag.Title = Resources.Strings.InformeModelos_PageTitle;
@@ -20,7 +20,7 @@
         <div class="powerbi-header-content">
             <i class="fas fa-table powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@Resources.Strings.InformeModelos_PageTitle</h1>
-            @Html.Partial("_ModeloBufinsTag")
+            @await Html.PartialAsync("_ModeloBufinsTag")
         </div>
     </div>
 
@@ -106,7 +106,7 @@
             </div>
         </div>
 
-        @Html.Partial("_TemaInformeSelector", "imTema")
+        @await Html.PartialAsync("_TemaInformeSelector", "imTema")
 
         <!-- Fila 2: acciones -->
         <div class="mc-toolbar-row mc-toolbar-acciones">
@@ -117,7 +117,7 @@
             </button>
 
 @* Botón Exportar estándar. Este informe es una grilla de datos: solo Excel y correo (sin PDF ni imagen). *@
-            @Html.Partial("_ExportMenu", new bufinscustomers.Models.ExportMenuVM
+            @await Html.PartialAsync("_ExportMenu", new bufinscustomers.Models.ExportMenuVM
             {
                 Id = "imExp",
                 Opciones = "excel,correo",
@@ -225,7 +225,7 @@
 
 </div>
 
-@Html.Partial("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM { SoloExcel = true })
+@await Html.PartialAsync("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM { SoloExcel = true })
 
 @section scripts {
 

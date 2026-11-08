@@ -1,5 +1,4 @@
-@using System.Web
-@using System.Web.Script.Serialization
+﻿@using System.Web
 @using bufinscustomers.Models
 @using bufinscustomers.Services
 @{
@@ -10,7 +9,7 @@
     var esAdmin = (bool)(ViewBag.EsAdmin ?? false);
     var culturaJs = System.Globalization.CultureInfo.CurrentUICulture.Name;
     // T = texto para HTML (Razor lo codifica); J = texto para JS (escapado). Ambos leen de App_GlobalResources/Strings(.en-US).resx.
-    Func<string, string> T = k => (System.Web.HttpContext.GetGlobalResourceObject("Strings", k) as string) ?? k;
+    Func<string, string> T = k => (Recursos.Obtener(k) as string) ?? k;
     Func<string, string> J = k => HttpUtility.JavaScriptStringEncode(T(k));
     ViewBag.Title = T("Ind_PageTitle");
 
@@ -44,7 +43,7 @@
         <div class="powerbi-header-content">
             <i class="fas fa-tachometer-alt powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@T("Ind_PageTitle")</h1>
-            @Html.Partial("_ModeloBufinsTag")
+            @await Html.PartialAsync("_ModeloBufinsTag")
             <button type="button" class="header-tag-doc" id="indDocBtn" title="@T("Ind_DocumentacionTooltip")"><i class="fas fa-book"></i>@T("Common_DocumentacionTag")</button>
         </div>
     </div>
@@ -141,7 +140,7 @@
             <p class="lt-help" id="indSinMeses" style="display:none;">@T("Ind_SinMesesDatos")</p>
         </div>
 
-        @Html.Partial("_TemaInformeSelector", "indTema")
+        @await Html.PartialAsync("_TemaInformeSelector", "indTema")
 
         <div class="btn-group-actions">
             <button type="button" id="btnConsultarInd" class="btn btn-modern-gradient" disabled>
@@ -190,7 +189,7 @@
                         <button type="button" class="lt-tool-btn ind-btn-glosario" id="indBtnUmbrales"><i class="fas fa-sliders"></i><span>@T("Ind_BtnUmbrales")</span></button>
                     }
                     <span class="sep"></span>
-                    @Html.Partial("_ExportMenu", new bufinscustomers.Models.ExportMenuVM
+                    @await Html.PartialAsync("_ExportMenu", new bufinscustomers.Models.ExportMenuVM
                     {
                         Id = "indExp",
                         ExcelDesc = T("Ind_Exp_ExcelDesc")
@@ -240,7 +239,7 @@
         </div>
 
         @* Insights gerenciales (IA): se ocultan si la empresa tiene la IA apagada *@
-        @Html.Partial("_ComentariosGestion", "indComentarios")
+        @await Html.PartialAsync("_ComentariosGestion", "indComentarios")
 
         @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
         {
@@ -254,7 +253,7 @@
             </div>
             <div id="indInsightsBody"></div>
             <div id="indInsightsLoading" style="display:none;text-align:center;padding:14px 0;">
-                @Html.Partial("_LoaderDots", "dark")
+                @await Html.PartialAsync("_LoaderDots", "dark")
                 <p style="margin-top:8px;font-size:12.5px;color:#8B85A0;">@T("Ind_Analizando")</p>
             </div>
 
@@ -288,13 +287,13 @@
 
 <div id="overlayConsultandoInd" class="overlay-cargando" style="display:none;">
     <div class="overlay-cargando-card">
-        @Html.Partial("_LoaderDots", "aqua")
+        @await Html.PartialAsync("_LoaderDots", "aqua")
         <h5 class="overlay-cargando-title">@T("Ind_JS_Consultando")</h5>
     </div>
 </div>
 
-@Html.Partial("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
-@Html.Partial("_DocumentacionVisor", T("Ind_Doc_ModalTitulo"))
+@await Html.PartialAsync("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+@await Html.PartialAsync("_DocumentacionVisor", T("Ind_Doc_ModalTitulo"))
 
 @section scripts {
 <script src="~/Assets/js/select2/select2.min.js"></script>

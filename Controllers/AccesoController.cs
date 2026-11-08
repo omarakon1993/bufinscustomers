@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Linq;
 using System.Web;
-using System.Web.Mvc;
 using bufinscustomers.Models;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -16,7 +15,7 @@ using Newtonsoft.Json;
 
 namespace bufinscustomers.Controllers
 {
-    public class AccesoController : BaseController
+    public class AccesoController : BaseController, IAlwaysRunResultFilter
     {
         // A11: hash BCrypt (cost 12) señuelo — vector de prueba público del algoritmo. Solo se
         // usa para gastar el mismo tiempo de CPU que una verificación real cuando el identificador
@@ -32,15 +31,13 @@ namespace bufinscustomers.Controllers
         // Si el token anti-falsificación no se puede validar (típicamente porque el formulario
         // de login quedó abierto en el navegador desde antes de que el proceso del servidor
         // reiniciara/reciclara), no mostrar el error genérico: volver a Login con un mensaje claro.
-        protected override void OnException(ExceptionContext filterContext)
+        public void OnResultExecuting(ResultExecutingContext filterContext)
         {
-            if (filterContext.Exception is HttpAntiForgeryException)
+            if (filterContext.Result is Microsoft.AspNetCore.Mvc.Core.Infrastructure.IAntiforgeryValidationFailedResult)
             {
                 System.Diagnostics.Trace.TraceWarning(
                     "[AccesoController] Token anti-falsificación inválido en {0}.",
                     filterContext.HttpContext.Request.Url);
-
-                filterContext.ExceptionHandled = true;
 
                 // Peticiones AJAX (p. ej. ExtenderSesion): nunca redirigir — el cliente
                 // recibiría el HTML del login y lo interpretaría como una respuesta válida.
@@ -48,27 +45,22 @@ namespace bufinscustomers.Controllers
                 if (filterContext.HttpContext.Request.IsAjaxRequest())
                 {
                     filterContext.HttpContext.Response.StatusCode = 200;
-                    filterContext.Result = new JsonResult
+                    filterContext.Result = new JsonResult(new
                     {
-                        Data = new
-                        {
-                            success = false,
-                            sessionExpired = true,
-                            message = "",
-                            redirectUrl = Url.Action("Login", "Acceso")
-                        },
-                        JsonRequestBehavior = JsonRequestBehavior.AllowGet
-                    };
+                        success = false,
+                        sessionExpired = true,
+                        message = "",
+                        redirectUrl = Url.Action("Login", "Acceso")
+                    });
                     return;
                 }
 
                 filterContext.Result = new RedirectResult(
                     Url.Action("Login", "Acceso") + "?tokenExpirado=true");
-                return;
             }
-
-            base.OnException(filterContext);
         }
+
+        public void OnResultExecuted(ResultExecutedContext filterContext) { }
 
         // GET: Acceso
         public ActionResult Login(bool tokenExpirado = false)
@@ -354,9 +346,9 @@ namespace bufinscustomers.Controllers
 
             // A6: Regenerar SessionID para prevenir session fixation
             string loginToken = Guid.NewGuid().ToString("N");
-            System.Web.HttpRuntime.Cache.Insert(
+            HttpRuntime.Cache.Insert(
                 "_lt_" + loginToken, usuarioCompleto.Id, null,
-                DateTime.Now.AddSeconds(60), System.Web.Caching.Cache.NoSlidingExpiration);
+                DateTime.Now.AddSeconds(60), Cache.NoSlidingExpiration);
             Session.Abandon();
             Response.Cookies.Add(new HttpCookie("_lt", loginToken)
                 { HttpOnly = true, Secure = Request.IsSecureConnection, Path = "/" });
@@ -382,9 +374,9 @@ namespace bufinscustomers.Controllers
         private ActionResult IniciarDobleFactor(Usuarios usuario, bool yaActivo, string ip)
         {
             string token = Guid.NewGuid().ToString("N");
-            System.Web.HttpRuntime.Cache.Insert(
+            HttpRuntime.Cache.Insert(
                 "_2fa_" + token, new PendienteDobleFactor { IdUsuario = usuario.Id, Enrolar = !yaActivo }, null,
-                DateTime.Now.AddMinutes(5), System.Web.Caching.Cache.NoSlidingExpiration);
+                DateTime.Now.AddMinutes(5), Cache.NoSlidingExpiration);
             Session.Abandon();
             Response.Cookies.Add(new HttpCookie(COOKIE_2FA, token)
                 { HttpOnly = true, Secure = Request.IsSecureConnection, Path = "/" });
@@ -392,11 +384,11 @@ namespace bufinscustomers.Controllers
         }
 
         // Panel izquierdo de las pantallas de acceso («Ingresando como …»): solo UI, no toca la lógica de cada acción.
-        protected override void OnActionExecuted(ActionExecutedContext filterContext)
+        public override void OnActionExecuted(ActionExecutedContext filterContext)
         {
             base.OnActionExecuted(filterContext);
-            if (!(filterContext.Result is ViewResultBase)) return;
-            string accion = filterContext.ActionDescriptor.ActionName;
+            if (!(filterContext.Result is ViewResult)) return;
+            string accion = (string)filterContext.RouteData.Values["action"];
             try
             {
                 string correo = null;
@@ -438,14 +430,14 @@ namespace bufinscustomers.Controllers
         {
             cacheKey = null;
             var c = Request.Cookies[COOKIE_2FA];
-            if (c == null || string.IsNullOrEmpty(c.Value)) return null;
-            cacheKey = "_2fa_" + c.Value;
-            return System.Web.HttpRuntime.Cache[cacheKey] as PendienteDobleFactor;
+            if (c == null || string.IsNullOrEmpty(c)) return null;
+            cacheKey = "_2fa_" + c;
+            return HttpRuntime.Cache[cacheKey] as PendienteDobleFactor;
         }
 
         private void LimpiarPendiente2FA(string cacheKey)
         {
-            if (cacheKey != null) System.Web.HttpRuntime.Cache.Remove(cacheKey);
+            if (cacheKey != null) HttpRuntime.Cache.Remove(cacheKey);
             Response.Cookies.Add(new HttpCookie(COOKIE_2FA)
                 { Expires = DateTime.Now.AddDays(-1), HttpOnly = true, Secure = Request.IsSecureConnection, Path = "/" });
         }
@@ -778,8 +770,8 @@ namespace bufinscustomers.Controllers
                 p.Enrolar = false;
                 p.SecretoNuevo = null;
                 p.Oferta = true;
-                System.Web.HttpRuntime.Cache.Insert(key, p, null, DateTime.Now.AddMinutes(10),
-                    System.Web.Caching.Cache.NoSlidingExpiration);
+                HttpRuntime.Cache.Insert(key, p, null, DateTime.Now.AddMinutes(10),
+                    Cache.NoSlidingExpiration);
                 return RedirectToAction("OfrecerPasskey");
             }
 
@@ -919,16 +911,16 @@ namespace bufinscustomers.Controllers
         public ActionResult FinalizarLogin()
         {
             var cookie = Request.Cookies["_lt"];
-            if (cookie == null || string.IsNullOrEmpty(cookie.Value))
+            if (cookie == null || string.IsNullOrEmpty(cookie))
                 return RedirectToAction("Login");
 
-            var cacheKey = "_lt_" + cookie.Value;
-            var cached   = System.Web.HttpRuntime.Cache[cacheKey];
+            var cacheKey = "_lt_" + cookie;
+            var cached   = HttpRuntime.Cache[cacheKey];
 
             // Invalidar token (uso único)
             Response.Cookies.Add(new HttpCookie("_lt")
                 { Expires = DateTime.Now.AddDays(-1), HttpOnly = true, Secure = Request.IsSecureConnection, Path = "/" });
-            System.Web.HttpRuntime.Cache.Remove(cacheKey);
+            HttpRuntime.Cache.Remove(cacheKey);
 
             if (cached == null) return RedirectToAction("Login");
 
@@ -1004,7 +996,7 @@ namespace bufinscustomers.Controllers
             try { enlace = Url.Action("Index", "Auditoria", null, Request.Url.Scheme); } catch { }
             string asunto = "[Bufins] " + titulo;
 
-            System.Web.Hosting.HostingEnvironment.QueueBackgroundWorkItem(ct =>
+            HostingEnvironment.QueueBackgroundWorkItem(ct =>
             {
                 try
                 {
@@ -1022,7 +1014,7 @@ namespace bufinscustomers.Controllers
         private System.Collections.Generic.List<string> ObtenerCorreosAlertaSeguridad()
         {
             var lista = new System.Collections.Generic.List<string>();
-            string destino = System.Configuration.ConfigurationManager.AppSettings["SeguridadAlertasDestino"];
+            string destino = bufinscustomers.Compat.ConfigurationManager.AppSettings["SeguridadAlertasDestino"];
             if (string.IsNullOrWhiteSpace(destino)) return lista;
 
             var usuarios = new System.Collections.Generic.List<string>();
@@ -1070,9 +1062,9 @@ namespace bufinscustomers.Controllers
         {
             if (string.IsNullOrEmpty(ip)) return true;
             string key = "_afa_" + ip;
-            if (System.Web.HttpRuntime.Cache[key] != null) return false;
-            System.Web.HttpRuntime.Cache.Insert(key, 1, null,
-                DateTime.Now.AddMinutes(AUDIT_THROTTLE_MIN), System.Web.Caching.Cache.NoSlidingExpiration);
+            if (HttpRuntime.Cache[key] != null) return false;
+            HttpRuntime.Cache.Insert(key, 1, null,
+                DateTime.Now.AddMinutes(AUDIT_THROTTLE_MIN), Cache.NoSlidingExpiration);
             return true;
         }
 

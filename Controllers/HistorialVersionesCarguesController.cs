@@ -3,8 +3,6 @@ using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
 using System.Linq;
-using System.Web.Mvc;
-
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
@@ -17,7 +15,7 @@ namespace bufinscustomers.Controllers
         public ActionResult Index(int? idEmpresa, int? anio, byte? modo, int? escenario)
         {
             // Sin ?embed=1 se entrega la página anfitriona (encabezado + pestañas); ella pide por AJAX el contenido de «Versiones».
-            if (!string.Equals(Request.QueryString["embed"], "1"))
+            if (!string.Equals(Request.Query["embed"], "1"))
             {
                 ViewBag.Tab = "versiones";
                 return View("~/Views/Informes/HistorialCargues.cshtml");

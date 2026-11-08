@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.Web.Mvc;
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
@@ -22,7 +21,7 @@ namespace bufinscustomers.Controllers
         [RequierePermiso("ADMIN_EMPRESAS_GESTOR,ADMIN_CONFIG_EMPRESAS")]
         public ActionResult Obtener(int idEmpresa)
         {
-            Response.Cache.SetCacheability(System.Web.HttpCacheability.NoCache);
+            Response.Cache.SetCacheability(HttpCacheability.NoCache);
             if (!EmpresaAccesoHelper.TieneAcceso(UsuarioSesionHelper.UsuarioActual, idEmpresa))
                 return Json(new { exito = false, mensaje = R("Common_SinPermisos") }, JsonRequestBehavior.AllowGet);
 

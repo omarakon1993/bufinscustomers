@@ -2,7 +2,7 @@ using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using System;
 using System.Collections.Concurrent;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Diagnostics;
 using System.Globalization;
 using System.Threading.Tasks;

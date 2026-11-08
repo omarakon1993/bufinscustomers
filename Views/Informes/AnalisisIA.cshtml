@@ -1,4 +1,4 @@
-﻿﻿@model dynamic
+﻿@model dynamic
 @using bufinscustomers.Models
 
 @{
@@ -93,14 +93,14 @@ textarea.ia-text-input { resize:none; overflow-y:auto; max-height:130px; line-he
 <div class="container-fluid px-4">
 
     <!-- Header -->
-    @Html.Partial("_PageHeader", new ViewDataDictionary {
+    @await Html.PartialAsync("_PageHeader", new ViewDataDictionary(ViewData) {
         { "Icon", "fas fa-robot" }, { "Title", Resources.Strings.IA_PageTitle },
         { "Model", (ViewBag.ModeloIA ?? "OpenAI").ToString() }, { "Source", Resources.Strings.Common_ModeloBufinsTag } })
 
     <!-- Filtros -->
     @if (esAdmin || esAdminEmpresa)
     {
-        @Html.Partial("_IAConsumoCard")
+        @await Html.PartialAsync("_IAConsumoCard")
     }
 
     <div class="filter-card">

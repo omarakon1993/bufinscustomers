@@ -48,7 +48,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Text;
 using System.Web;
 
@@ -483,7 +483,7 @@ namespace bufinscustomers.Services
         {
             try
             {
-                var ctx = HttpContext.Current;
+                var ctx = AppHttp.Current;
                 if (ctx == null) return;
 
                 if (string.IsNullOrEmpty(r.IpAddress))
@@ -543,7 +543,7 @@ namespace bufinscustomers.Services
         {
             try
             {
-                var ctx = HttpContext.Current;
+                var ctx = AppHttp.Current;
                 if (ctx != null)
                 {
                     if (ctx.Items["_auditoria_op"] is Guid g) return g;

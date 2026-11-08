@@ -3,7 +3,7 @@ using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Linq;
 
 namespace bufinscustomers.Services
@@ -495,8 +495,8 @@ namespace bufinscustomers.Services
 
             // En segundo plano: la página que la dispara no espera (la purga puede tener que aguardar a que
             // termine el cargue de otra empresa que tiene filas bloqueadas).
-            if (System.Web.Hosting.HostingEnvironment.IsHosted)
-                System.Web.Hosting.HostingEnvironment.QueueBackgroundWorkItem(ct => EjecutarPurga());
+            if (HostingEnvironment.IsHosted)
+                HostingEnvironment.QueueBackgroundWorkItem(ct => EjecutarPurga());
             else
                 EjecutarPurga();
         }

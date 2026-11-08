@@ -1,4 +1,4 @@
-@model dynamic
+﻿@model dynamic
 @using System.Web
 @using bufinscustomers.Models
 @{
@@ -89,7 +89,7 @@
 <div class="container-fluid px-4">
 <div class="lt-app">
 
-    @Html.Partial("_PageHeader", new ViewDataDictionary {
+    @await Html.PartialAsync("_PageHeader", new ViewDataDictionary(ViewData) {
         { "Icon", "fas fa-chart-line" }, { "Title", Resources.Strings.LineaTiempo_PageTitle },
         { "Source", Resources.Strings.Common_ModeloBufinsTag } })
 
@@ -213,7 +213,7 @@
             </div>
         </div>
 
-        @Html.Partial("_TemaInformeSelector", "ltTema")
+        @await Html.PartialAsync("_TemaInformeSelector", "ltTema")
 
         <div class="lt-actions-bar">
             <button type="button" class="lt-comparar-toggle" id="ltBtnToggleComparar">
@@ -293,7 +293,7 @@
                     </button>
                     <button type="button" class="lt-tool-btn square on" id="ltBtnEtiquetas" title="@Resources.Strings.LineaTiempo_Etiquetas"><i class="fas fa-tag"></i></button>
                     <button type="button" class="lt-tool-btn square" id="ltBtnFullscreen" title="@Resources.Strings.Common_PantallaCompleta"><i class="fas fa-expand"></i></button>
-                    @Html.Partial("_ExportMenu", new bufinscustomers.Models.ExportMenuVM
+                    @await Html.PartialAsync("_ExportMenu", new bufinscustomers.Models.ExportMenuVM
                     {
                         Id = "ltExp",
                         ExcelDesc = Resources.Strings.LineaTiempo_Exp_ExcelDesc,
@@ -389,7 +389,7 @@
 </div>
 </div>
 
-@Html.Partial("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+@await Html.PartialAsync("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
 
 @section scripts {
 <script src="~/Assets/js/chart.umd.min.js"></script>

@@ -7,8 +7,6 @@
 <html lang="@(_isEnglish ? "en" : "es")">
 <head>
     @using bufinscustomers.Helpers
-    @using System.Web.Optimization
-
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -93,7 +91,7 @@
                 </div>
             </div>
 
-            @{ Html.RenderPartial("_SidebarMenu", UsuarioSesionHelper.ObtenerMenuSidebar()); }
+            @{ await Html.RenderPartialAsync("_SidebarMenu", UsuarioSesionHelper.ObtenerMenuSidebar()); }
         </nav>
         <!-- Scroll restoration: runs synchronously during HTML parsing, before first paint -->
         <script>(function(){try{var s=sessionStorage.getItem('bufins_sidebar_scroll');var m=document.querySelector('.sidebar-menu');if(s&&m)m.scrollTop=parseInt(s)||0;}catch(e){}}());</script>
@@ -162,9 +160,9 @@
                             <div class="lang-switcher-wrapper">
                                 <i class="fas fa-globe lang-switcher-icon"></i>
                                 <div class="lang-switcher">
-                                    <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "es-CO", returnUrl = Request.Url.PathAndQuery })" class="lang-btn @_esActiveClass">Español</a>
+                                    <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "es-CO", returnUrl = Context.Request.Url.PathAndQuery })" class="lang-btn @_esActiveClass">Español</a>
                                     <span class="lang-sep"></span>
-                                    <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "en-US", returnUrl = Request.Url.PathAndQuery })" class="lang-btn @_enActiveClass">English</a>
+                                    <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "en-US", returnUrl = Context.Request.Url.PathAndQuery })" class="lang-btn @_enActiveClass">English</a>
                                 </div>
                             </div>
                         </li>
@@ -281,9 +279,9 @@
                                         <i class="fas fa-globe"></i>@Resources.Strings.Layout_LangSwitcher
                                     </span>
                                     <div class="lang-switcher">
-                                        <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "es-CO", returnUrl = Request.Url.PathAndQuery })" class="lang-btn @_esActiveClass">Español</a>
+                                        <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "es-CO", returnUrl = Context.Request.Url.PathAndQuery })" class="lang-btn @_esActiveClass">Español</a>
                                         <span class="lang-sep"></span>
-                                        <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "en-US", returnUrl = Request.Url.PathAndQuery })" class="lang-btn @_enActiveClass">English</a>
+                                        <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "en-US", returnUrl = Context.Request.Url.PathAndQuery })" class="lang-btn @_enActiveClass">English</a>
                                     </div>
                                 </div>
                                 <div class="dropdown-divider"></div>
@@ -1243,7 +1241,7 @@
                 settings.data = (hadData ? settings.data + '&' : '') +
                     '__RequestVerificationToken=' + encodeURIComponent(token);
                 // Si la llamada no traía cuerpo (p. ej. ExtenderSesion / keepalive), jQuery no
-                // fijó el Content-Type de formulario y el servidor no poblaría Request.Form,
+                // fijó el Content-Type de formulario y el servidor no poblaría Context.Request.Form,
                 // así que el token viajaría "invisible" y ValidateAntiForgeryToken fallaría.
                 // Lo forzamos aquí, salvo que la llamada haya pedido otro contentType (JSON).
                 if (!hadData && settings.contentType !== false &&
@@ -1258,9 +1256,9 @@
     <div class="lang-float-pill">
         <i class="fas fa-globe lang-switcher-icon"></i>
         <div class="lang-switcher">
-            <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "es-CO", returnUrl = Request.Url.PathAndQuery })" class="lang-btn @_esActiveClass">Español</a>
+            <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "es-CO", returnUrl = Context.Request.Url.PathAndQuery })" class="lang-btn @_esActiveClass">Español</a>
             <span class="lang-sep"></span>
-            <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "en-US", returnUrl = Request.Url.PathAndQuery })" class="lang-btn @_enActiveClass">English</a>
+            <a href="@Url.Action("SetLanguage", "Acceso", new { lang = "en-US", returnUrl = Context.Request.Url.PathAndQuery })" class="lang-btn @_enActiveClass">English</a>
         </div>
     </div>
     <script>

@@ -14,7 +14,7 @@ namespace bufinscustomers.Helpers
         {
             if (string.IsNullOrWhiteSpace(destinatario)) return;
             string asunto = "[Bufins] " + titulo;
-            System.Web.Hosting.HostingEnvironment.QueueBackgroundWorkItem(ct =>
+            HostingEnvironment.QueueBackgroundWorkItem(ct =>
             {
                 try { new EmailService().EnviarAlertaSeguridad(destinatario.Trim(), asunto, titulo, mensaje, enlace); }
                 catch (Exception ex) { AppLogger.Warn("No se pudo enviar el aviso de seguridad al usuario: " + ex.Message, "AlertaUsuarioCorreo"); }

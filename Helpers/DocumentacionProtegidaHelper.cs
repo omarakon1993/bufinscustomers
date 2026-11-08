@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
 using bufinscustomers.Models;
 using bufinscustomers.Services;
 
@@ -23,7 +22,7 @@ namespace bufinscustomers.Helpers
             if (string.Equals(c.Request.Headers["Sec-Fetch-Dest"], "document", StringComparison.OrdinalIgnoreCase))
                 return new HttpStatusCodeResult(403);   // abrir la URL directamente (pestaña nueva / "guardar como")
 
-            string ruta = c.Server.MapPath(rutaVirtual);
+            string ruta = AppPaths.Map(rutaVirtual);
             if (!System.IO.File.Exists(ruta)) return new HttpNotFoundResult();
 
             var usuario = UsuarioSesionHelper.UsuarioActual;
@@ -41,13 +40,13 @@ namespace bufinscustomers.Helpers
             new AuditoriaService().RegistrarCambio(AuditoriaTipo.Informes, AuditoriaAccion.Ver, entidadAuditoria,
                 (usuario?.Id ?? 0).ToString(), descripcion, null, null, usuario?.IdEmpresa, entidadNombre: nombreEntidad);
 
-            c.Response.Cache.SetCacheability(System.Web.HttpCacheability.NoCache);
+            c.Response.Cache.SetCacheability(HttpCacheability.NoCache);
             c.Response.Cache.SetNoStore();
             c.Response.AddHeader("Content-Disposition", "inline");
             c.Response.AddHeader("X-Content-Type-Options", "nosniff");
             c.Response.AddHeader("Content-Security-Policy",
                 "default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; frame-ancestors 'self'; sandbox allow-scripts");
-            return new ContentResult { Content = html, ContentType = "text/html", ContentEncoding = System.Text.Encoding.UTF8 };
+            return new ContentResult { Content = html, ContentType = "text/html; charset=utf-8" };
         }
 
         /// <summary>Marca de agua repetida (leyenda de propiedad + datos de quien consulta), aviso fijo al pie y sin

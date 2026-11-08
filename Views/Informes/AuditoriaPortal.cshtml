@@ -1,6 +1,5 @@
-@using bufinscustomers.Helpers
+﻿@using bufinscustomers.Helpers
 @using bufinscustomers.Models
-@using System.Web.Mvc
 @using System.Linq
 @* Pestaña «Portal público» del hub de Auditoría (solo Super Admin). Se inyecta por AJAX con ?embed=1; una sola pestaña vive en el DOM a la vez.
    El nombre visible del portal (hoy «Pulso Bufins») sale de la configuración (PortalPublico_Nombre), no del código. Todo es anónimo. *@
@@ -13,12 +12,12 @@
     vm.Campos.Add(new AudCampo
     {
         Id = "fDispositivo", Etiqueta = Resources.Strings.AudPortal_F_Dispositivo, Icono = "fa-mobile-alt", TextoTodos = Resources.Strings.Common_Todos,
-        Opciones = new[] { "m", "t", "d" }.Select(x => new SelectListItem { Value = x, Text = (string)System.Web.HttpContext.GetGlobalResourceObject("Strings", "AudPortal_D_" + x) }).ToList()
+        Opciones = new[] { "m", "t", "d" }.Select(x => new SelectListItem { Value = x, Text = Recursos.Obtener("AudPortal_D_" + x) }).ToList()
     });
     vm.Campos.Add(new AudCampo
     {
         Id = "fOrigen", Etiqueta = Resources.Strings.AudPortal_F_Origen, Icono = "fa-route", TextoTodos = Resources.Strings.Common_Todos,
-        Opciones = new[] { "directo", "buscador", "red-social", "correo", "otro-sitio", "interno" }.Select(x => new SelectListItem { Value = x, Text = (string)System.Web.HttpContext.GetGlobalResourceObject("Strings", "AudPortal_O_" + x) }).ToList()
+        Opciones = new[] { "directo", "buscador", "red-social", "correo", "otro-sitio", "interno" }.Select(x => new SelectListItem { Value = x, Text = Recursos.Obtener("AudPortal_O_" + x) }).ToList()
     });
     vm.Campos.Add(new AudCampo
     {
@@ -39,7 +38,7 @@
 
     <div id="axKpis" class="ax-kpis" hidden></div>
 
-    @Html.Partial("_AudFiltros", vm)
+    @await Html.PartialAsync("_AudFiltros", vm)
 
     @Html.AntiForgeryToken()
 

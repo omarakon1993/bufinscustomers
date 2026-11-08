@@ -1,4 +1,3 @@
-using System.Web.Mvc;
 using bufinscustomers.Models;
 using bufinscustomers.Services;
 using bufinscustomers.Helpers;
@@ -18,7 +17,7 @@ namespace bufinscustomers.Controllers
 
         // La auditoría de cargues (y el detalle/archivo original) es solo para Super Admin y Admin de Empresa;
         // el alcance por empresa/grupo lo aplica ObtenerSegunAlcance().
-        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        public override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
@@ -74,7 +73,7 @@ namespace bufinscustomers.Controllers
         public ActionResult AuditoriaCargues()
         {
             // Sin ?embed=1 se entrega la página anfitriona (encabezado + pestañas); ella pide por AJAX el contenido de «Registro».
-            if (!string.Equals(Request.QueryString["embed"], "1"))
+            if (!string.Equals(Request.Query["embed"], "1"))
             {
                 ViewBag.Tab = "registro";
                 return View("~/Views/Informes/HistorialCargues.cshtml");
@@ -207,7 +206,7 @@ namespace bufinscustomers.Controllers
                     var worksheet = package.Worksheets.Add("Auditoría Cargues");
 
                     // Configurar encabezados
-                    Func<string, string> R = key => HttpContext.GetGlobalResourceObject("Strings", key)?.ToString() ?? key;
+                    Func<string, string> R = key => Recursos.Obtener(key);
                     var headers = new List<string>
                     {
                         R("Audit_ExcelFecha"),

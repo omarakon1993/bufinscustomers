@@ -1,8 +1,6 @@
 using System;
 using System.IO;
 using System.Web;
-using System.Web.Caching;
-using System.Web.Mvc;
 using bufinscustomers.Helpers;
 
 namespace bufinscustomers.Controllers
@@ -29,7 +27,7 @@ namespace bufinscustomers.Controllers
                     return new HttpStatusCodeResult(204);
 
                 string cuerpo;
-                using (var sr = new StreamReader(Request.InputStream))
+                using (var sr = new StreamReader(Request.Body))
                 {
                     var buf = new char[MaxBytes + 1];
                     int n = sr.Read(buf, 0, buf.Length);

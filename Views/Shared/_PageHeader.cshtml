@@ -1,6 +1,6 @@
-@* Views/Shared/_PageHeader.cshtml
+﻿@* Views/Shared/_PageHeader.cshtml
    Uso:
-   @Html.Partial("_PageHeader", new ViewDataDictionary {
+   @await Html.PartialAsync("_PageHeader", new ViewDataDictionary(ViewData) {
        { "Icon", "fas fa-robot" }, { "Title", "Análisis IA" },
        { "Subtitle", null }, { "Model", "gpt-5.5" }, { "Source", "Información modelo Bufins" } })
 *@

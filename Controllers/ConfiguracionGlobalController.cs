@@ -9,8 +9,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using System.Web.Mvc;
-
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
@@ -49,7 +47,7 @@ namespace bufinscustomers.Controllers
 
             bool ok = _svc.Guardar(item.Clave, item.Valor ?? "", item.Descripcion ?? "");
             // Tipo (categoría): solo si el formulario lo trae (script 028 ejecutado).
-            if (ok && Request.Form.AllKeys.Contains("IdTipo"))
+            if (ok && Request.Form.Keys.Contains("IdTipo"))
                 _svc.AsignarTipo(item.Clave, item.IdTipo);
             if (ok)
                 SetSuccessMessage(R("CfgIA_MsgGuardadoOk") ?? "Configuración guardada correctamente.");

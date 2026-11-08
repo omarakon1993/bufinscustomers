@@ -1,5 +1,4 @@
-@using System.Web
-@using System.Web.Script.Serialization
+﻿@using System.Web
 @using bufinscustomers.Models
 @{
     ViewBag.Title = Resources.Strings.HP_PageTitle;
@@ -89,7 +88,7 @@
         <div class="powerbi-header-content">
             <i class="fas fa-tags powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@Resources.Strings.HP_PageTitle</h1>
-            @Html.Partial("_InformePersonalizadoTag")
+            @await Html.PartialAsync("_InformePersonalizadoTag")
             <button type="button" class="header-tag-doc" id="hpDocBtn" title="@Resources.Strings.HP_DocumentacionTooltip"><i class="fas fa-book"></i>@Resources.Strings.Common_DocumentacionTag</button>
         </div>
     </div>
@@ -179,7 +178,7 @@
             <p class="lt-help" id="hpSinAnios" style="display:none;">@Resources.Strings.HP_SinAniosDatos</p>
         </div>
 
-        @Html.Partial("_TemaInformeSelector", "hpTema")
+        @await Html.PartialAsync("_TemaInformeSelector", "hpTema")
 
         <div class="btn-group-actions">
             <button type="button" id="btnConsultarHP" class="btn btn-modern-gradient" disabled>
@@ -223,7 +222,7 @@
                     </div>
                 </div>
                 <div class="pyg2-tools">
-                    @Html.Partial("_ExportMenu", new bufinscustomers.Models.ExportMenuVM
+                    @await Html.PartialAsync("_ExportMenu", new bufinscustomers.Models.ExportMenuVM
                     {
                         Id = "hpExp",
                         BtnTooltip = Resources.Strings.HP_Exp_BtnTooltip,
@@ -323,12 +322,12 @@
 
 <div id="overlayConsultandoHP" class="overlay-cargando" style="display:none;">
     <div class="overlay-cargando-card">
-        @Html.Partial("_LoaderDots", "aqua")
+        @await Html.PartialAsync("_LoaderDots", "aqua")
         <h5 class="overlay-cargando-title">@Resources.Strings.HP_JS_Consultando</h5>
     </div>
 </div>
 
-@Html.Partial("_DocumentacionVisor", Resources.Strings.HP_Doc_ModalTitulo)
+@await Html.PartialAsync("_DocumentacionVisor", Resources.Strings.HP_Doc_ModalTitulo)
 
 @* Modal de tipos de fruta: mismo componente (.lt-modal) que "Elegir variables" de Línea de Tiempo *@
 <div class="lt-modal" id="hpTiposModal" role="dialog" aria-modal="true" aria-labelledby="hpTiposModalTitle">
@@ -360,7 +359,7 @@
     </div>
 </div>
 
-@Html.Partial("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+@await Html.PartialAsync("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
 
 @section scripts {
 <script src="~/Assets/js/select2/select2.min.js"></script>

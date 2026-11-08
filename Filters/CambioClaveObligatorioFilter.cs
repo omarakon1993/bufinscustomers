@@ -1,12 +1,11 @@
-using System.Web.Mvc;
 using bufinscustomers.Helpers;
 
 namespace bufinscustomers.Filters
 {
     /// <summary>
-    /// Global: si el usuario autenticado tiene pendiente el cambio de contraseña obligatorio
-    /// (<c>Usuarios.DebeCambiarClave</c>), solo puede usar la pantalla de cambio, cerrar sesión,
-    /// extender la sesión y cambiar el idioma. Todo lo demás lo redirige ahí.
+    /// Filtro global: si el usuario en sesion tiene pendiente el cambio de contrasena obligatorio (primer inicio de sesion),
+    /// bloquea todo salvo la pantalla de cambio, cerrar sesion, extender sesion, cambiar idioma y las paginas de error.
+    /// Peticiones AJAX: 403 con JSON y redirectUrl.
     /// </summary>
     public class CambioClaveObligatorioFilter : ActionFilterAttribute
     {
@@ -24,15 +23,12 @@ namespace bufinscustomers.Filters
                 return;
             if (controller == "error") return;
 
-            var url = new UrlHelper(filterContext.RequestContext).Action("CambiarClaveInicial", "Acceso");
+            var url = filterContext.UrlHelper().Action("CambiarClaveInicial", "Acceso");
+
             if (filterContext.HttpContext.Request.IsAjaxRequest())
             {
                 filterContext.HttpContext.Response.StatusCode = 403;
-                filterContext.Result = new JsonResult
-                {
-                    Data = new { success = false, forbidden = true, cambiarClave = true, redirectUrl = url },
-                    JsonRequestBehavior = JsonRequestBehavior.AllowGet
-                };
+                filterContext.Result = new JsonResult(new { success = false, forbidden = true, cambiarClave = true, redirectUrl = url });
             }
             else
             {

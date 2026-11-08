@@ -2,8 +2,6 @@ using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
-using System.Web.Mvc;
-
 namespace bufinscustomers.Controllers
 {
     /// <summary>
@@ -26,7 +24,7 @@ namespace bufinscustomers.Controllers
         public JsonResult Estado()
         {
             var r = Json(_svc.ObtenerEstado(), JsonRequestBehavior.AllowGet);
-            Response.Cache.SetCacheability(System.Web.HttpCacheability.NoCache);
+            Response.Cache.SetCacheability(HttpCacheability.NoCache);
             return r;
         }
 
@@ -35,7 +33,7 @@ namespace bufinscustomers.Controllers
         public JsonResult Uso()
         {
             var r = Json(_svc.ObtenerUso(30), JsonRequestBehavior.AllowGet);
-            Response.Cache.SetCacheability(System.Web.HttpCacheability.NoCache);
+            Response.Cache.SetCacheability(HttpCacheability.NoCache);
             return r;
         }
 

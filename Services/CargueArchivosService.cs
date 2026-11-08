@@ -1,7 +1,7 @@
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using System;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.IO;
 using System.IO.Compression;
 using System.Security.Cryptography;

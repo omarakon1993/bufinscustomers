@@ -1,4 +1,4 @@
-﻿﻿@using bufinscustomers.Models
+﻿@using bufinscustomers.Models
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -628,7 +628,7 @@
 </html>
 
 @section scripts {
-    @Html.Partial("_ColoresCorporativosModal")
+    @await Html.PartialAsync("_ColoresCorporativosModal")
     <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/colores-corporativos.js")"></script>
     <script>
         // Colores corporativos: el botón se habilita al elegir empresa y abre el modal de la empresa elegida.

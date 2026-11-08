@@ -1,6 +1,4 @@
 using System.Net;
-using System.Web.Mvc;
-
 namespace bufinscustomers.Controllers
 {
     /// <summary>
@@ -29,6 +27,17 @@ namespace bufinscustomers.Controllers
             Response.StatusCode = (int)HttpStatusCode.NotFound;
             Response.TrySkipIisCustomErrors = true;
             return View();
+        }
+
+        // GET ~/Error/Status?code=404 -> destino de UseStatusCodePagesWithReExecute (Program.cs): reemplaza a customErrors/httpErrors de IIS
+        public ActionResult Status(int code)
+        {
+            switch (code)
+            {
+                case 404: Response.StatusCode = 404; return View("NotFound");
+                case 403: Response.StatusCode = 403; return View("Forbidden");
+                default: Response.StatusCode = 500; return View("Index");
+            }
         }
 
         // GET ~/Error/Forbidden → 403 (sin permiso). También destino de RequierePermisoAttribute.

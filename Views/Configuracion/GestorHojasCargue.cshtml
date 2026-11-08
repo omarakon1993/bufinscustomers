@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewBag.Title = Resources.Strings.HojasCargue_PageTitle;
 
     // Textos para el JS (claves HojasCargue_*, sin el prefijo). Todos existen en ambos .resx.
@@ -27,7 +27,7 @@
     var textosJs = new System.Collections.Generic.Dictionary<string, string>();
     foreach (var k in clavesJs)
     {
-        textosJs[k] = (System.Web.HttpContext.GetGlobalResourceObject("Strings", "HojasCargue_" + k) as string) ?? k;
+        textosJs[k] = (Recursos.Obtener("HojasCargue_" + k) as string) ?? k;
     }
 }
 
@@ -271,7 +271,7 @@
 <!-- Overlay de procesamiento (DDL) — versión clara del overlay estándar -->
 <div class="overlay-cargando hc-overlay-claro" id="hcOverlay" style="display:none;">
     <div class="overlay-cargando-card">
-        @Html.Partial("_LoaderDots", "dark")
+        @await Html.PartialAsync("_LoaderDots", "dark")
         <div class="overlay-cargando-title" id="hcOverlayTxt">@Resources.Strings.HojasCargue_Creando</div>
     </div>
 </div>

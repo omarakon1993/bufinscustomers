@@ -1,11 +1,10 @@
 ﻿using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Linq;
 using System.Web;
-using System.Web.Mvc;
 using bufinscustomers.Services;
 using bufinscustomers.Helpers;
 using bufinscustomers.Permisos;

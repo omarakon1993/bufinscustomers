@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using System.Web.Mvc;
-
 namespace bufinscustomers.Models
 {
     /// <summary>

@@ -1,9 +1,9 @@
-@model bufinscustomers.Models.ExportCorreoVM
+﻿@model bufinscustomers.Models.ExportCorreoVM
 @{
     string correoUsuario = (bufinscustomers.Helpers.UsuarioSesionHelper.UsuarioActual?.Correo ?? "").Trim();
 }
 @* Modal "Enviar por correo" del botón Exportar — ESTÁNDAR para informes (formulario => look claro de Bootstrap).
-   Uso:  @Html.Partial("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+   Uso:  @await Html.PartialAsync("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
          ExportMenu.correo({ url, datos: fn, pdf: fn, pills: fn, textos: {...} }).abrir()  (ver Assets/js/export-menu.js) *@
 <div class="modal fade" id="expCorreoModal" tabindex="-1" role="dialog" aria-labelledby="expCorreoLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">

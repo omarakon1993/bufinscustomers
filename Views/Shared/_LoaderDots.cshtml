@@ -1,8 +1,8 @@
-@model string
+﻿@model string
 @*
     Loader 3 · Puntos en cascada — para modales pequeños o inline.
-    Uso: @Html.Partial("_LoaderDots", "aqua")  -> fondo oscuro (default)
-         @Html.Partial("_LoaderDots", "dark")  -> fondo claro/blanco
+    Uso: @await Html.PartialAsync("_LoaderDots", "aqua")  -> fondo oscuro (default)
+         @await Html.PartialAsync("_LoaderDots", "dark")  -> fondo claro/blanco
 *@
 @{
     var variant = Model == "dark" ? "dark" : "aqua";

@@ -1,4 +1,4 @@
-@using System.Web
+﻿@using System.Web
 @using bufinscustomers.Models
 @{
     ViewBag.Title = Resources.Strings.BAL_PageTitle;
@@ -24,7 +24,7 @@
         <div class="powerbi-header-content">
             <i class="fas fa-scale-balanced powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@Resources.Strings.BAL_PageTitle</h1>
-            @Html.Partial("_ModeloBufinsTag")
+            @await Html.PartialAsync("_ModeloBufinsTag")
         </div>
     </div>
 
@@ -146,7 +146,7 @@
             </div>
         </div>
 
-        @Html.Partial("_TemaInformeSelector", "balTema")
+        @await Html.PartialAsync("_TemaInformeSelector", "balTema")
 
         <div class="btn-group-actions">
             <button type="button" id="btnConsultarBAL" class="btn btn-modern-gradient" disabled>
@@ -198,7 +198,7 @@
                         <button type="button" data-unidad="millones" role="menuitemradio">@Resources.Strings.LineaTiempo_UnidadMillones<i class="fas fa-check"></i></button>
                     </div>
                     <span class="sep"></span>
-                    @Html.Partial("_ExportMenu", new bufinscustomers.Models.ExportMenuVM
+                    @await Html.PartialAsync("_ExportMenu", new bufinscustomers.Models.ExportMenuVM
                     {
                         Id = "balExp",
                         ExcelDesc = Resources.Strings.BAL_Exp_ExcelDesc
@@ -299,7 +299,7 @@
         <p class="lt-help" id="balNotaEscenario" style="display:none;"></p>
 
         @* Insights gerenciales (IA): se ocultan si la empresa tiene la IA apagada *@
-        @Html.Partial("_ComentariosGestion", "balComentarios")
+        @await Html.PartialAsync("_ComentariosGestion", "balComentarios")
 
         @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
         {
@@ -313,7 +313,7 @@
             </div>
             <div id="balInsightsBody"></div>
             <div id="balInsightsLoading" style="display:none;text-align:center;padding:14px 0;">
-                @Html.Partial("_LoaderDots", "dark")
+                @await Html.PartialAsync("_LoaderDots", "dark")
                 <p style="margin-top:8px;font-size:12.5px;color:#8B85A0;">@Resources.Strings.BAL_Analizando</p>
             </div>
 
@@ -335,12 +335,12 @@
 
 <div id="overlayConsultandoBAL" class="overlay-cargando" style="display:none;">
     <div class="overlay-cargando-card">
-        @Html.Partial("_LoaderDots", "aqua")
+        @await Html.PartialAsync("_LoaderDots", "aqua")
         <h5 class="overlay-cargando-title">@Resources.Strings.BAL_JS_Consultando</h5>
     </div>
 </div>
 
-@Html.Partial("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+@await Html.PartialAsync("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
 
 @section scripts {
 <script src="~/Assets/js/select2/select2.min.js"></script>

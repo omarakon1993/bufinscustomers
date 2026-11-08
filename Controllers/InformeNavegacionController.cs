@@ -5,11 +5,9 @@ using bufinscustomers.Services;
 using ClosedXML.Excel;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.IO;
 using System.Linq;
-using System.Web.Mvc;
-
 namespace bufinscustomers.Controllers
 {
     /// <summary>
@@ -58,7 +56,7 @@ namespace bufinscustomers.Controllers
             if (!PuedeAcceder(out bool esSuper))
                 return new RedirectResult("~/Error/Forbidden");
 
-            ViewBag.Embed = string.Equals(Request.QueryString["embed"], "1");
+            ViewBag.Embed = string.Equals(Request.Query["embed"], "1");
             ViewBag.EsSuperAdmin = esSuper;
 
             var empresas = new EmpresaService().ObtenerEmpresas();

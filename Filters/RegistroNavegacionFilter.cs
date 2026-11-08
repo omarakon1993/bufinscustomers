@@ -1,8 +1,4 @@
 using System;
-using System.Web;
-using System.Web.Caching;
-using System.Web.Hosting;
-using System.Web.Mvc;
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Services;
@@ -54,9 +50,7 @@ namespace bufinscustomers.Filters
                 // Dedupe: misma ruta + mismo usuario dentro de DEDUP_SEG s → no repetir.
                 string dedupeKey = "_nav_" + usuario.Id + "_" +
                                    controller.ToLowerInvariant() + "/" + action.ToLowerInvariant();
-                if (HttpRuntime.Cache[dedupeKey] != null) return;
-                HttpRuntime.Cache.Insert(dedupeKey, 1, null,
-                    DateTime.Now.AddSeconds(DEDUP_SEG), Cache.NoSlidingExpiration);
+                if (VentanaFija.Incrementar(dedupeKey, DEDUP_SEG) > 1) return;
 
                 var reg = new RegistroNavegacion
                 {
@@ -72,7 +66,7 @@ namespace bufinscustomers.Filters
                 };
 
                 // Resolver el nombre del menú y escribir, todo fuera del hilo de la petición.
-                HostingEnvironment.QueueBackgroundWorkItem(_ =>
+                System.Threading.Tasks.Task.Run(() =>
                 {
                     try
                     {

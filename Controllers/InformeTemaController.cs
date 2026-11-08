@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
@@ -24,7 +23,7 @@ namespace bufinscustomers.Controllers
         [HttpGet]
         public ActionResult Opciones(int? idEmpresa)
         {
-            Response.Cache.SetCacheability(System.Web.HttpCacheability.NoCache);
+            Response.Cache.SetCacheability(HttpCacheability.NoCache);
             var presets = TemaInforme.Presets.Select(t => t.ParaCliente(TemaInformeService.NombreVisible(t, R))).ToList();
 
             bool conAcceso = idEmpresa.HasValue && EmpresaAccesoHelper.TieneAcceso(UsuarioSesionHelper.UsuarioActual, idEmpresa.Value);
@@ -52,7 +51,7 @@ namespace bufinscustomers.Controllers
         [HttpGet]
         public ActionResult Resolver(string tema, string p, string s, string a)
         {
-            Response.Cache.SetCacheability(System.Web.HttpCacheability.NoCache);
+            Response.Cache.SetCacheability(HttpCacheability.NoCache);
             if (tema == TemaInformeService.IdPersonalizada)
             {
                 string aviso;

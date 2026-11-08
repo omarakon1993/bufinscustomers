@@ -1,4 +1,4 @@
-@{
+﻿@{
     Layout = "~/Views/Acceso/_Layout2FA.cshtml";
     ViewBag.Heading = Resources.Strings.Login2FA_VerificarHeading;
     ViewBag.PageTitle = Resources.Strings.Login2FA_PageTitle;
@@ -16,7 +16,7 @@
     };
 }
 
-@section Panel { @Html.Partial("_AccesoPanel", panel) }
+@section Panel { @await Html.PartialAsync("_AccesoPanel", panel) }
 
 <h1 class="acc-title">@Resources.Strings.Login2FA_VerificarHeading</h1>
 <p class="acc-desc">@Resources.Strings.Login2FA_VerificarInstrucciones</p>
@@ -24,7 +24,7 @@
 <form id="tfForm" action="@Url.Action("VerificarDobleFactor","Acceso")" method="post">
     @Html.AntiForgeryToken()
 
-    @Html.Partial("_AccesoOtp")
+    @await Html.PartialAsync("_AccesoOtp")
 
     <div class="acc-timer" id="accTimer" data-tpl="@Resources.Strings.Acc_TimerTexto">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2.5" style="transform:rotate(-90deg)">

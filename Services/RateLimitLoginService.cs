@@ -15,12 +15,9 @@
  */
 
 using System;
-using System.Configuration;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Web;
-using System.Web.Caching;
-
 namespace bufinscustomers.Services
 {
     /// <summary>

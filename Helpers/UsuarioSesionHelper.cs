@@ -1,11 +1,9 @@
 using bufinscustomers.Models;
 using bufinscustomers.Services;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Web;
-using System.Configuration;
-
 namespace bufinscustomers.Helpers
 {
     public static class UsuarioSesionHelper
@@ -36,7 +34,7 @@ namespace bufinscustomers.Helpers
         {
             get
             {
-                var context = HttpContext.Current;
+                var context = AppHttp.Current;
                 if (context?.Session == null) return null;
 
                 // ========== VERIFICAR EXPIRACI�N DE SESI�N ==========
@@ -77,7 +75,7 @@ namespace bufinscustomers.Helpers
         /// </summary>
         public static void EstablecerUsuarioEnSesion(Usuarios usuario)
         {
-            var context = HttpContext.Current;
+            var context = AppHttp.Current;
             if (context?.Session == null || usuario == null) return;
 
             var now = DateTime.Now;
@@ -100,7 +98,7 @@ namespace bufinscustomers.Helpers
         /// </summary>
         private static bool EsSesionExpirada()
         {
-            var context = HttpContext.Current;
+            var context = AppHttp.Current;
             if (context?.Session == null) return true;
 
             var lastActivity = context.Session[LAST_ACTIVITY_KEY] as DateTime?;
@@ -117,7 +115,7 @@ namespace bufinscustomers.Helpers
         /// </summary>
         private static void ActualizarUltimaActividad()
         {
-            var context = HttpContext.Current;
+            var context = AppHttp.Current;
             if (context?.Session != null)
             {
                 context.Session[LAST_ACTIVITY_KEY] = DateTime.Now;
@@ -129,7 +127,7 @@ namespace bufinscustomers.Helpers
         /// </summary>
         public static SessionInfo ObtenerInfoSesion()
         {
-            var context = HttpContext.Current;
+            var context = AppHttp.Current;
             if (context?.Session == null) return null;
 
             var lastActivity = context.Session[LAST_ACTIVITY_KEY] as DateTime?;
@@ -149,7 +147,7 @@ namespace bufinscustomers.Helpers
         /// </summary>
         public static bool ExtenderSesion()
         {
-            var context = HttpContext.Current;
+            var context = AppHttp.Current;
             if (context?.Session == null) return false;
 
             var usuario = context.Session[USUARIO_SESSION_KEY] as Usuarios;
@@ -164,7 +162,7 @@ namespace bufinscustomers.Helpers
         /// </summary>
         public static void LimpiarSesion()
         {
-            var context = HttpContext.Current;
+            var context = AppHttp.Current;
             if (context?.Session != null)
             {
                 // Antes del Clear (después Session_End ya no los vería): cargues en revisión de esta sesión.
@@ -280,11 +278,11 @@ namespace bufinscustomers.Helpers
             if (usuario.Admin == 2) return true;
 
             // Usar caché de permisos en sesión (una sola consulta, no 11)
-            var codigos = HttpContext.Current?.Session[PERMISOS_CACHE_KEY] as HashSet<string>;
+            var codigos = AppHttp.Current?.Session[PERMISOS_CACHE_KEY] as HashSet<string>;
             if (codigos == null)
             {
                 codigos = _menuOpcionesService.ObtenerCodigosPermisos(usuario.Id);
-                HttpContext.Current.Session[PERMISOS_CACHE_KEY] = codigos;
+                AppHttp.Current.Session[PERMISOS_CACHE_KEY] = codigos;
             }
             return codigos.Contains(codigoPermiso);
         }
@@ -294,7 +292,7 @@ namespace bufinscustomers.Helpers
         /// </summary>
         public static List<SidebarCategoriaViewModel> ObtenerMenuSidebar()
         {
-            var context = HttpContext.Current;
+            var context = AppHttp.Current;
             if (context?.Session == null) return new List<SidebarCategoriaViewModel>();
 
             var usuario = UsuarioActual;
@@ -319,7 +317,7 @@ namespace bufinscustomers.Helpers
         /// </summary>
         public static void InvalidarCachePermisos()
         {
-            var context = HttpContext.Current;
+            var context = AppHttp.Current;
             if (context?.Session == null) return;
 
             context.Session.Remove(PERMISOS_CACHE_KEY);

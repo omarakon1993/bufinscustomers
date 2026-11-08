@@ -1,4 +1,4 @@
-@model IEnumerable<bufinscustomers.Models.CuentaCorreo>
+﻿@model IEnumerable<bufinscustomers.Models.CuentaCorreo>
 @using bufinscustomers.Helpers
 
 <!DOCTYPE html>
@@ -171,9 +171,9 @@
             <form method="post" action="@Url.Action("Crear","CuentasCorreo")">
                 @Html.AntiForgeryToken()
                 <div class="modal-body">
-                    @Html.Partial("~/Views/Configuracion/_CuentaCorreoFormFields.cshtml",
+                    @await Html.PartialAsync("~/Views/Configuracion/_CuentaCorreoFormFields.cshtml",
                         new bufinscustomers.Models.CuentaCorreo { Puerto = 465, Ssl = true, IgnorarCertificado = true },
-                        new ViewDataDictionary { { "esCrear", true } })
+                        new ViewDataDictionary(ViewData) { { "esCrear", true } })
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">

@@ -5,8 +5,6 @@ using bufinscustomers.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
-
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
@@ -366,7 +364,7 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                using (var conn = new System.Data.SqlClient.SqlConnection(CadenaConexion))
+                using (var conn = new Microsoft.Data.SqlClient.SqlConnection(CadenaConexion))
                 {
                     conn.Open();
                     using (var tx = conn.BeginTransaction())
@@ -377,7 +375,7 @@ namespace bufinscustomers.Controllers
                             string nombreUsuarioCierre = $"{usuario.Nombre} {usuario.Apellidos}".Trim();
                             Func<string, string, int> contar = (tabla, condicion) =>
                             {
-                                using (var cnt = new System.Data.SqlClient.SqlCommand(
+                                using (var cnt = new Microsoft.Data.SqlClient.SqlCommand(
                                     $"IF OBJECT_ID('{tabla}') IS NOT NULL SELECT COUNT(*) FROM [dbo].[{tabla}] WHERE {condicion} ELSE SELECT 0", conn, tx))
                                 {
                                     cnt.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
@@ -399,7 +397,7 @@ namespace bufinscustomers.Controllers
                                         Nota = $"Pasaron de ejecución a histórico ({anioActual} → año de ejecución {nuevoAnio})"
                                     });
 
-                                using (var cmd = new System.Data.SqlClient.SqlCommand(
+                                using (var cmd = new Microsoft.Data.SqlClient.SqlCommand(
                                     $"IF OBJECT_ID('{tabla}') IS NOT NULL UPDATE [dbo].[{tabla}] SET Historico_Log = 1 WHERE IdEmpresa_Log = @IdEmpresa AND Historico_Log = 0",
                                     conn, tx))
                                 {
@@ -421,7 +419,7 @@ namespace bufinscustomers.Controllers
                                         Nota = "Tabla Z_ vaciada por el cierre de año (incluye filas sin empresa)"
                                     });
 
-                                using (var cmd = new System.Data.SqlClient.SqlCommand(
+                                using (var cmd = new Microsoft.Data.SqlClient.SqlCommand(
                                     $"IF OBJECT_ID('{tabla}') IS NOT NULL DELETE FROM [dbo].[{tabla}] WHERE IdEmpresa = @IdEmpresa OR IdEmpresa IS NULL",
                                     conn, tx))
                                 {
@@ -431,7 +429,7 @@ namespace bufinscustomers.Controllers
                             }
 
                             // 3. Registrar año anterior como histórico
-                            using (var cmd = new System.Data.SqlClient.SqlCommand("sp_AgregarItemConfiguracion", conn, tx))
+                            using (var cmd = new Microsoft.Data.SqlClient.SqlCommand("sp_AgregarItemConfiguracion", conn, tx))
                             {
                                 cmd.CommandType = System.Data.CommandType.StoredProcedure;
                                 cmd.Parameters.AddWithValue("@Tipo", "AnoHistorico");
@@ -444,7 +442,7 @@ namespace bufinscustomers.Controllers
                             }
 
                             // 4. Actualizar AnioEjecucion al nuevo año
-                            using (var cmd = new System.Data.SqlClient.SqlCommand("sp_GuardarConfiguracionBasica", conn, tx))
+                            using (var cmd = new Microsoft.Data.SqlClient.SqlCommand("sp_GuardarConfiguracionBasica", conn, tx))
                             {
                                 cmd.CommandType = System.Data.CommandType.StoredProcedure;
                                 cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
@@ -459,7 +457,7 @@ namespace bufinscustomers.Controllers
                             }
 
                             // 5. Registrar en auditoría
-                            using (var cmd = new System.Data.SqlClient.SqlCommand(@"
+                            using (var cmd = new Microsoft.Data.SqlClient.SqlCommand(@"
                                 INSERT INTO dbo.AuditoriaCargues (FechaCargue, IdUsuario, Usuario, IdEmpresa, NombreEmpresa, NombreArchivo)
                                 VALUES (@Fecha, @IdUsuario, @Usuario, @IdEmpresa, @NombreEmpresa, @NombreArchivo);
                                 SELECT CAST(SCOPE_IDENTITY() AS INT);",

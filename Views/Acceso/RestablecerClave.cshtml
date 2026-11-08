@@ -20,7 +20,7 @@
     };
 }
 
-@section Panel { @Html.Partial("_AccesoPanel", panel) }
+@section Panel { @await Html.PartialAsync("_AccesoPanel", panel) }
 
 @if (_exito)
 {
@@ -53,9 +53,9 @@ else
     <form id="restablecerForm" action="@Url.Action("RestablecerClave","Acceso")" method="post">
         @Html.AntiForgeryToken()
         <input type="hidden" name="token" value="@_token" />
-        @Html.Partial("_AccesoErrores")
+        @await Html.PartialAsync("_AccesoErrores")
 
-        @Html.Partial("_AccesoClaveCampos")
+        @await Html.PartialAsync("_AccesoClaveCampos")
 
         <button type="button" id="btnCambiar" class="btn btn-primary" style="margin-top:18px;" onclick="cambiarClave()">
             <span class="btn-text">@Resources.Strings.Acc_BtnCambiarClave</span>
