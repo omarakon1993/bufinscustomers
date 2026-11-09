@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -198,7 +198,6 @@ namespace bufinscustomers.Services
             try
             {
                 long max = 0;
-                System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;   // datos.gov.co exige TLS 1.2+
                 using (var http = new HttpClient { Timeout = TimeSpan.FromSeconds(8) })
                 {
                     foreach (var id in Datasets)

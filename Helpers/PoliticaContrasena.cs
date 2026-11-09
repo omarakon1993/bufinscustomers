@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -47,7 +47,7 @@ namespace bufinscustomers.Helpers
 
         private static readonly Lazy<HttpClient> _http = new Lazy<HttpClient>(() =>
         {
-            try { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12; } catch { }
+            // En .NET moderno HttpClient negocia TLS 1.2+ por si solo (ServicePointManager ya no aplica).
             var c = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
             c.DefaultRequestHeaders.Add("User-Agent", "bufinscustomers-password-policy");
             c.DefaultRequestHeaders.Add("Add-Padding", "true"); // respuesta de tamaño uniforme (HIBP)

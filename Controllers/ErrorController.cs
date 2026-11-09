@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 namespace bufinscustomers.Controllers
 {
     /// <summary>
@@ -22,7 +22,7 @@ namespace bufinscustomers.Controllers
         }
 
         // GET ~/Error/NotFound → 404
-        public ActionResult NotFound()
+        public new ActionResult NotFound()
         {
             Response.StatusCode = (int)HttpStatusCode.NotFound;
             Response.TrySkipIisCustomErrors = true;

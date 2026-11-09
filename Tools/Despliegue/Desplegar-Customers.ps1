@@ -30,7 +30,7 @@
   .\Desplegar-Customers.ps1 -Accion Restaurar -Respaldo C:\Users\omara_\bufins-despliegue\customers\respaldo-20261108-1530 -Aplicar
 #>
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('Respaldar', 'Publicar', 'SubirSecretos', 'Restaurar', 'BajarLogs')][string]$Accion,
+    [Parameter(Mandatory = $true)][ValidateSet('Respaldar', 'Publicar', 'SubirSecretos', 'Restaurar', 'BajarLogs', 'Reiniciar')][string]$Accion,
     [string]$Paquete = 'C:\Users\omara_\bufins-despliegue\customers\paquete-net10',
     [string]$Respaldo,
     [string]$Secretos,
@@ -86,6 +86,19 @@ function Ejecutar([string[]]$argumentos, [string]$descripcion) {
 }
 
 switch ($Accion) {
+
+    'Reiniciar' {
+        # Reinicia la aplicacion: sube app_offline.htm (IIS detiene la app) y lo borra (IIS la arranca de nuevo y relee secretsSettings.json).
+        $tmp = Join-Path $env:TEMP ("bufins-offline-" + $sello)
+        New-Item -ItemType Directory -Force $tmp | Out-Null
+        try {
+            Set-Content -Path (Join-Path $tmp 'app_offline.htm') -Value '<html><body>Reiniciando...</body></html>' -Encoding utf8
+            Ejecutar @('-verb:sync', "-source:contentPath=`"$tmp`"", "-dest:contentPath=`"$Sitio`",$conexion", '-allowUntrusted', '-enableRule:DoNotDeleteRule') 'Deteniendo la aplicacion (app_offline.htm)'
+        } finally { Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue }
+        Start-Sleep -Seconds 5
+        Ejecutar @('-verb:delete', "-dest:contentPath=`"$Sitio/app_offline.htm`",$conexion", '-allowUntrusted') 'Arrancando la aplicacion (se borra app_offline.htm)'
+        Write-Host 'Aplicacion reiniciada. Pruebe el login.' -ForegroundColor Green
+    }
 
     'BajarLogs' {
         # Solo lectura: copia App_Data\logs del sitio a una carpeta local para diagnosticar.

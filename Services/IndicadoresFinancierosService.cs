@@ -17,7 +17,6 @@ namespace bufinscustomers.Services
 
         static IndicadoresFinancierosService()
         {
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
             _http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
             _http.DefaultRequestHeaders.Add("Accept", "application/xml,text/xml,*/*");
             _http.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (compatible; BufinsApp/1.0)");

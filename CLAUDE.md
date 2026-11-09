@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Bufins Customers is an ASP.NET MVC 5 web application built on .NET Framework 4.8 for financial data management and reporting. The application manages multiple companies (empresas), users, and their financial configurations with Excel-based data import/export capabilities. Configured for Colombian Spanish (`es-CO`).
+Bufins Customers is an ASP.NET Core MVC web application on **.NET 10** (migrated from ASP.NET MVC 5 / .NET Framework 4.8 on 2026-11-08; it runs in production at customers.bufins.com) for financial data management and reporting. The application manages multiple companies (empresas), users, and their financial configurations with Excel-based data import/export capabilities. Configured for Colombian Spanish (`es-CO`).
 
 ## Detalle técnico fuera de este archivo (`docs-claude/`)
 
@@ -16,14 +16,28 @@ Este archivo guarda reglas, convenciones y resúmenes. El detalle fino vive en `
 ## Build and Development Commands
 
 ```bash
-# Build
-msbuild bufinscustomers.sln /p:Configuration=Debug
+# Compilar
+dotnet build bufinscustomers.csproj
 
-# Restore NuGet packages
-nuget restore bufinscustomers.sln
+# Ejecutar en local (perfil de launchSettings: https://localhost:44339 / http://localhost:5039).
+# En modo Production desde la carpeta del proyecto, para que encuentre secretsSettings.json:
+# ASPNETCORE_ENVIRONMENT=Production ASPNETCORE_URLS=http://127.0.0.1:5090 dotnet bin/Debug/net10.0/bufinscustomers.dll
+dotnet run
 
-# Run: IIS Express on port 44339 (HTTPS), launched via Visual Studio
+# Paquete de publicacion (autocontenido: el hosting no tiene .NET 10)
+dotnet publish bufinscustomers.csproj -c Release -r win-x64 --self-contained true -o C:\Users\omara_\bufins-despliegue\customers\paquete-net10
 ```
+
+### Plataforma ASP.NET Core / .NET 10 y publicación (OBLIGATORIO leer antes de tocar Program.cs, Compat/ o el despliegue)
+
+Detalle completo, decisiones y bitácora de la migración en `docs-claude/migracion-net10/PLAN.md`.
+- **Arranque**: `Program.cs` (filtros globales en el orden antiguo, Newtonsoft con nombres sin camelCase y fechas `/Date()/`, sesión propia, cultura por cookie `lang`, cabeceras de seguridad, bundles, páginas de error por `UseStatusCodePagesWithReExecute`). `web.config` solo configura el alojamiento en IIS (in-process, límites de 100 MB, sin cabeceras de versión); ya NO contiene la configuración de la aplicación.
+- **Capa de compatibilidad `Compat/` + `Infra/`**: conserva la API de System.Web que usaba el código (sesión InProc equivalente con Session_End por expulsión de caché, `AppHttp.Current`, `ConfigurationManager` sobre `IConfiguration`, `HttpRuntime.Cache`, `JsonRequestBehavior`, `MachineKey`, propiedades de extensión C# 14 como `Request.UserAgent`). Código nuevo: preferir las APIs de ASP.NET Core; no ampliar la capa salvo necesidad.
+- **Configuración**: `appsettings.json` (valores no secretos) + `secretsSettings.json` (cadena de conexión `ConnectionStrings:DefaultConnection` y claves `MachineKey:*`; gitignored, plantilla `secretsSettings.json.example`; en el servidor vive junto a la aplicación y NO viaja con el paquete). La clave de SQL y las `MachineKey` NUNCA se imprimen ni se guardan en el repositorio. `SecretosProtegidos` (`enc:v1:`) y los secretos TOTP dependen de la reimplementación de `MachineKey` (`Compat/MachineKey.cs`, verificada con datos reales): NO cambiar las claves `MachineKey` sin recifrar esos valores.
+- **Memoria**: GC de estación de trabajo y no concurrente (`ServerGarbageCollection=false`, `ConcurrentGarbageCollection=false`, `TieredPGO=false` en el `.csproj`, `System.GC.ConserveMemory=5` en `runtimeconfig.template.json`): el modo servidor llevaba el proceso a ~309 MB; así el pico es ~190 MB.
+- **Data Protection** (antiforgery/TempData): se guardan llaves en `App_Data/dpkeys` solo si la carpeta es escribible; en Conexcol la identidad del sitio NO puede crear archivos ahí, así que usa llaves en memoria (WARN en el log; un reinicio invalida formularios abiertos). La sesión es en memoria: un reinicio o un despliegue cierra todas las sesiones.
+- **Publicación** (Conexcol, Plesk/IIS, Web Deploy en el puerto 8172): perfil de Visual Studio `customers.bufins.com - OAG` (no está en git; self-contained win-x64, app_offline, no borra extras, sin respaldo MSDeploy, `AllowUntrustedCertificate`) o el script `Tools/Despliegue/Desplegar-Customers.ps1` con las acciones `Respaldar`, `SubirSecretos`, `Publicar` (sin `-Aplicar` solo simula), `Restaurar`, `BajarLogs` y `Reiniciar`. Lo lanza el usuario en su terminal: la contraseña de Web Deploy se escribe ahí y NUNCA pasa por el chat. Orden de un corte: generar el paquete → `Respaldar` → `SubirSecretos -Aplicar` (solo si cambian) → `Publicar` simulado → `Publicar -Aplicar` → pruebas de humo con sesión real. Cambiar la clave de SQL = editar `secretsSettings.json` local, `SubirSecretos -Aplicar` y `Reiniciar` (la aplicación lee la cadena solo al arrancar).
+- **Probar en local usa la BD de producción**: cualquier POST es real. Solo lecturas (GET) en pruebas automáticas; nada de cargues, modelos, correos, IA ni reinicios de 2FA sin acuerdo explícito.
 
 ## Architecture
 
@@ -48,7 +62,7 @@ nuget restore bufinscustomers.sln
 ### Base Classes
 
 **`BaseController`** (`Controllers/BaseController.cs`):
-- `CadenaConexion` - Centralized connection string from Web.config
+- `CadenaConexion` - Centralized connection string (`ConnectionStrings:DefaultConnection`, from `secretsSettings.json`)
 - `ConvertirSha256(texto)` - SHA256 hashing (lowercase hex)
 - `SetErrorMessage()`, `SetSuccessMessage()`, `SetInfoMessage()` - TempData-based messaging
 
@@ -513,7 +527,7 @@ A configurable financial model execution system. Models are records in the `Mode
 
 > **IAGateway es el punto único de ejecución (MANDATORY):** un punto de IA nuevo NO llama a `IAService` directo. Hace: (1) `ValidarAccesoIA(usuario, esAdmin, idEmpresa, IAFuncion.X)` (helper de `BaseController`; devuelve el JSON de error traducido o `null`), (2) arma el `IAConsultaRequest`, (3) `await new IAGateway().EjecutarAsync(new IASolicitud { Funcion = IAFuncion.X, Traducir = R, Idioma = IdiomaIA, ... })`. Agrega una constante a `IAFuncion` para que el consumo quede medido (`AuditoriaAnalisisIA`, `dbo.IAUsoLog`, `dbo.IAUsoMensual`).
 
-- **Proveedor**: OpenAI (`IAService`; modelo `OpenAIModel`, default `gpt-4o`; clave `OpenAIApiKey` en `ConfiguracionSistema`, que manda sobre Web.config). Cambiar de proveedor solo toca `IAService.cs`. Parámetros leídos con `ConfiguracionSistemaService`.
+- **Proveedor**: OpenAI (`IAService`; modelo `OpenAIModel`, default `gpt-4o`; clave `OpenAIApiKey` en `ConfiguracionSistema`, que manda sobre `appsettings.json`). Cambiar de proveedor solo toca `IAService.cs`. Parámetros leídos con `ConfiguracionSistemaService`.
 - **Control por empresa** (`IAUsoService`, UI en Configuraciones generales BUFINS → IA por empresa, Super Admin): interruptor `IaHabilitada`, acceso por usuario, funciones habilitadas, tope diario por usuario, presupuesto de tokens del periodo con política al agotarse (`Bloquear` / `Degradar` / `Sobreconsumo`), día de corte, pool por Grupo Empresarial y modelo fijo. Super Admin exento. No hay planes comerciales por empresa.
 - **Prompts**: `GestorPrompts` (códigos `RESUMEN_GERENCIAL`, `CONTEXTO_NEGOCIO_BUFINS` global y contexto por empresa en `ConfigIAEmpresa.ContextoNegocio`, más uno por informe gerencial). No es fine-tuning, a propósito.
 - **Scripts SQL (manuales, en orden)**: `Sql/012` → `013` → `015` → `016` → desplegar → `014`; `018` y `017` opcionales. Los servicios leen con compatibilidad hacia atrás.
@@ -540,7 +554,7 @@ A configurable financial model execution system. Models are records in the `Mode
 
 ### Error Pages
 
-`ErrorController` (`Controllers/ErrorController.cs`, no `[ValidarSesion]`) renders branded, session-independent pages: `Index` (500), `NotFound` (404), `Forbidden` (403) — each sets `Response.StatusCode` + `TrySkipIisCustomErrors`. Views in `Views/Error/` use `Views/Error/_ErrorLayout.cshtml` (`Layout = null`, self-contained dark-purple + brand-gradient card, strings from `Err_*` resx keys). `Views/Shared/Error.cshtml` (used by `LoggingHandleErrorAttribute`) shares the same layout. Routing in: `Web.config` `<customErrors defaultRedirect="~/Error" redirectMode="ResponseRewrite">` with `<error>` for 403/404, plus `<httpErrors existingResponse="Auto">` in `system.webServer` for errors that never reach MVC.
+`ErrorController` (`Controllers/ErrorController.cs`, no `[ValidarSesion]`) renders branded, session-independent pages: `Index` (500), `NotFound` (404), `Forbidden` (403) — each sets `Response.StatusCode`. Views in `Views/Error/` use `Views/Error/_ErrorLayout.cshtml` (`Layout = null`, self-contained dark-purple + brand-gradient card, strings from `Err_*` resx keys). `Views/Shared/Error.cshtml` (used by `LoggingHandleErrorAttribute`) shares the same layout. Routing in: `Program.cs` (`UseExceptionHandler("/Error")` + `UseStatusCodePagesWithReExecute("/Error/Status", "?code={0}")`; `ErrorController.Status(int code)` keeps the real status code).
 
 ### Frontend Stack
 
@@ -567,7 +581,7 @@ A configurable financial model execution system. Models are records in the `Mode
 ## Important Conventions
 
 - **SQL compatible con SQL Server 2012 o superior (OBLIGATORIO):** todo T-SQL — en strings de C#, stored procedures, scripts de migración y scripts en comentarios — debe correr en SQL Server 2012 (nivel de compatibilidad 110). La instancia actual es 2016 (compat 130), así que algo de 2016+ funcionaría hoy y fallaría en una instancia 2012: no usar la prueba "corre en el servidor". **Prohibido**: `STRING_AGG` (usar `FOR XML PATH` + `STUFF`), `STRING_SPLIT`, `CONCAT_WS`, `TRIM` (usar `LTRIM(RTRIM(...))`), `TRANSLATE`, `CREATE OR ALTER` (usar `IF OBJECT_ID(...) IS NOT NULL DROP ...` + `CREATE`, o `CREATE` + `ALTER`), `DROP ... IF EXISTS` (usar `IF OBJECT_ID('dbo.X','U') IS NOT NULL DROP TABLE dbo.X`), funciones JSON (`OPENJSON`, `JSON_VALUE`, `FOR JSON`, `ISJSON` — serializar en C#), `AT TIME ZONE`, `DATEDIFF_BIG`, `COMPRESS`/`DECOMPRESS`, `SESSION_CONTEXT`, `GREATEST`/`LEAST`, `GENERATE_SERIES`, `DATETRUNC`, tablas temporales de sistema (`FOR SYSTEM_TIME`) e in-memory. **Sí permitido** (2012): `OFFSET/FETCH`, `THROW`, `TRY_CONVERT`/`TRY_CAST`/`TRY_PARSE`, `IIF`, `CHOOSE`, `CONCAT`, `FORMAT`, `EOMONTH`, `DATEFROMPARTS`, `LAG`/`LEAD`/`FIRST_VALUE`, `SEQUENCE`, `DECLARE @x INT = 0`, `+=`. Revisión hecha el 2026-10-09: el código C# y los 36 módulos de la BD (SP/funciones/vistas) ya cumplen.
-- Passwords: Always `.Trim()` before hashing. Use `HashearContrasena()` (BCrypt, work factor 12) for new passwords. `ConvertirSha256()` is kept only for the SHA256→BCrypt migration path in login — do NOT use it for new code. `VerificarContrasena()` handles both formats transparently. **Strength policy is centralized in `Helpers/PoliticaContrasena.cs`** — `Validar(clave, usuario, out errorKey, comprobarFiltracion)` returns a resx *key* (caller does `R(errorKey)`): min 12 chars, complexity, no 3× repeats, not a common password, must not contain the username, and (unless `HibpCheckEnabled=false` in Web.config) not present in Have I Been Pwned's Pwned Passwords (k-anonymity range API, fail-open on any network error). Used by `AccesoController` (Registrar / RestablecerClave) and `UsuarioController.EsClaveSegura` (thin wrapper). The login POST never calls it.
+- Passwords: Always `.Trim()` before hashing. Use `HashearContrasena()` (BCrypt, work factor 12) for new passwords. `ConvertirSha256()` is kept only for the SHA256→BCrypt migration path in login — do NOT use it for new code. `VerificarContrasena()` handles both formats transparently. **Strength policy is centralized in `Helpers/PoliticaContrasena.cs`** — `Validar(clave, usuario, out errorKey, comprobarFiltracion)` returns a resx *key* (caller does `R(errorKey)`): min 12 chars, complexity, no 3× repeats, not a common password, must not contain the username, and (unless `HibpCheckEnabled=false` in `appsettings.json`) not present in Have I Been Pwned's Pwned Passwords (k-anonymity range API, fail-open on any network error). Used by `AccesoController` (Registrar / RestablecerClave) and `UsuarioController.EsClaveSegura` (thin wrapper). The login POST never calls it.
 - Client IP: use `Helpers/ClientIpHelper.ObtenerIp()` (or the `HttpRequestBase` overload) — not `Request.UserHostAddress` directly. It honours `X-Forwarded-For` / `CF-Connecting-IP` **only** when the direct connection comes from an IP/CIDR listed in `appSettings["TrustedProxies"]` (empty by default ⇒ identical to `UserHostAddress`); `TrustCloudflareHeader` gates the CF header. Wired into `AccesoController` rate-limiting/audit, `AuditoriaService`, `AppLogger`.
 - Login timing: the login POST always runs one BCrypt verify — against `HASH_SENUELO` when the identifier doesn't exist — so "unknown user" and "wrong password" take the same time (no user enumeration by timing).
 - Login per-IP rate limit: **`Services/RateLimitLoginService.cs`** (`Comprobar` / `RegistrarFallo` / `Limpiar`), state in `dbo.IntentosLoginIP` (create-table script in the file header) so it survives app-pool recycles and works multi-node, with an in-memory `HttpRuntime.Cache` fallback if the table is missing / DB errors. Threshold `LoginRateLimit_Umbral` (default 8) fails → IP blocked 15 min. A system-wide spike (`SUM(Intentos)` in the last 10 min ≥ `LoginRateLimit_UmbralGlobal`, default 100) flips **defensive mode**: per-IP threshold drops to 3 and Super Admins get a notification (≤1×/30 min). `AccesoController` no longer keeps its own `_rl_` cache helpers.
@@ -578,8 +592,8 @@ A configurable financial model execution system. Models are records in the `Mode
 - Use `[ValidarSesion]` at class level on all new authenticated controllers (note: some existing controllers like EmpresaController, UsuarioController, ReportesController, AuditoriaCarguesController lack it and use manual session checks instead)
 - For permission checks, prefer `[RequierePermiso("CODE")]` on the action/controller (see "Menu-Based Permissions System"); use `UsuarioSesionHelper.TienePermiso("CODE")` inline only for conditional logic or mixed gates.
 - Excel templates stored in `Assets/Plantillas/`
-- Connection string key is `"DefaultConnection"` in Web.config
-- File upload limit: `maxRequestLength="102400"` (100 MB) and `executionTimeout="3600"` (1 hour). IIS-level limit `maxAllowedContentLength="104857600"` (100 MB) in `system.webServer`.
+- Connection string key is `"DefaultConnection"` (`secretsSettings.json`, section `ConnectionStrings`)
+- File upload limit: 100 MB (Kestrel/IIS `MaxRequestBodySize` and `FormOptions` in `Program.cs`; IIS-level `maxAllowedContentLength="104857600"` in `web.config`).
 - **i18n OBLIGATORIO — SIEMPRE en ambos idiomas:** Cada string visible para el usuario (vistas, JS, controladores) debe agregarse a AMBOS archivos de recursos antes de implementar la UI: `App_GlobalResources/Strings.resx` (es-CO) y `App_GlobalResources/Strings.en-US.resx` (en-US). Nunca hardcodear texto en vistas ni JS. Ver sección "Internationalization (i18n)" para detalles completos.
 - **Estilos — SIEMPRE usar el sistema de diseño del sitio:** Toda vista nueva o modificada DEBE seguir los mismos estilos visuales del sitio. Ver sección "UI Style System — MANDATORY" para la referencia completa.
 - **Notificaciones internas — PREGUNTAR SIEMPRE:** Al implementar cualquier feature nuevo que tenga un resultado observable (cargue, exportación, ejecución, creación/eliminación de entidades, rollback, etc.), preguntar explícitamente al usuario si desea agregar notificaciones internas para esa acción antes de cerrar el task. Si el usuario dice sí, agregar las llamadas a `NotificacionesService.Crear(...)` en el controller correspondiente, las claves a ambos `.resx`, y actualizar `docs-claude/modulos/Notificaciones_activas.md`.
@@ -608,7 +622,7 @@ Both files must always stay in sync: every key present in one must exist in the 
 |-------|-------------|
 | Razor views (`.cshtml`) | `@Resources.Strings.KeyName` |
 | JS inside Razor views | Inject as a Razor variable: `var x = '@Resources.Strings.KeyName';` — never hardcode UI strings in JS |
-| C# controllers | `R("KeyName")` — protected helper in `BaseController` that calls `System.Web.HttpContext.GetGlobalResourceObject("Strings", key)` and respects the active thread culture |
+| C# controllers | `R("KeyName")` — protected helper in `BaseController` that reads the strongly typed `bufinscustomers.App_GlobalResources.Strings` resources through `Recursos.Obtener` and respects the active thread culture |
 | C# services / helpers | Do NOT read resources from services. Pass already-translated strings from the controller layer, or keep service-level messages generic (error codes, not sentences). |
 
 ### Rules
