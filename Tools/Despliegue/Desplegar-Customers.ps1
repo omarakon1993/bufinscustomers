@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Respalda, publica y restaura el sitio customers.bufins.com con Web Deploy (msdeploy), el mismo mecanismo que usa Visual Studio.
 
@@ -30,10 +30,10 @@
   .\Desplegar-Customers.ps1 -Accion Restaurar -Respaldo C:\Users\omara_\bufins-despliegue\customers\respaldo-20261108-1530 -Aplicar
 #>
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('Respaldar', 'Publicar', 'SubirSecretos', 'Restaurar')][string]$Accion,
+    [Parameter(Mandatory = $true)][ValidateSet('Respaldar', 'Publicar', 'SubirSecretos', 'Restaurar', 'BajarLogs')][string]$Accion,
     [string]$Paquete = 'C:\Users\omara_\bufins-despliegue\customers\paquete-net10',
     [string]$Respaldo,
-    [string]$Secretos = (Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) 'secretsSettings.json'),
+    [string]$Secretos,
     [string]$Servicio = 'https://customers.bufins.com:8172/msdeploy.axd?site=customers.bufins.com',
     [string]$Sitio = 'customers.bufins.com',
     [string]$Usuario = 'oglearni',
@@ -42,6 +42,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+if (-not $Secretos) {
+    $carpetaScript = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+    $Secretos = Join-Path (Split-Path (Split-Path $carpetaScript -Parent) -Parent) 'secretsSettings.json'
+}
 $carpetaBase = 'C:\Users\omara_\bufins-despliegue\customers'
 
 $msdeploy = @('C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe', 'C:\Program Files (x86)\IIS\Microsoft Web Deploy V3\msdeploy.exe') |
@@ -82,6 +86,14 @@ function Ejecutar([string[]]$argumentos, [string]$descripcion) {
 }
 
 switch ($Accion) {
+
+    'BajarLogs' {
+        # Solo lectura: copia App_Data\logs del sitio a una carpeta local para diagnosticar.
+        $destino = Join-Path $carpetaBase "logs-$sello"
+        New-Item -ItemType Directory -Force $destino | Out-Null
+        Ejecutar @('-verb:sync', "-source:contentPath=`"$Sitio\App_Data\logs`",$conexion", "-dest:contentPath=`"$destino`"", '-allowUntrusted') "Bajando App_Data\logs de $Sitio a $destino"
+        Write-Host "Logs en: $destino" -ForegroundColor Green
+    }
 
     'Respaldar' {
         $destino = Join-Path $carpetaBase "respaldo-$sello"

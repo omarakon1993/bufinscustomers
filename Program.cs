@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
@@ -50,9 +50,23 @@ builder.Services.Configure<Microsoft.AspNetCore.Mvc.CookieTempDataProviderOption
 
 // Las llaves de proteccion de datos (antiforgery, TempData) se guardan en disco: equivalen a la <machineKey> fija del sitio anterior
 // y evitan que un reciclaje del sitio invalide los formularios abiertos. App_Data\dpkeys NO viaja con la publicacion.
-builder.Services.AddDataProtection()
-    .SetApplicationName("bufinscustomers")
-    .PersistKeysToFileSystem(new DirectoryInfo(AppPaths.Map("~/App_Data/dpkeys")));
+var dp = builder.Services.AddDataProtection().SetApplicationName("bufinscustomers");
+// Solo se guardan las llaves en disco si la carpeta es realmente escribible (en el hosting de Conexcol la identidad del sitio puede no
+// tener permiso para crear archivos en App_Data\dpkeys). Si no lo es, las llaves viven en memoria: un reinicio del sitio invalida los
+// formularios abiertos (la sesion tambien se pierde), pero la aplicacion no cae.
+var carpetaLlaves = AppPaths.Map("~/App_Data/dpkeys");
+try
+{
+    Directory.CreateDirectory(carpetaLlaves);
+    var prueba = Path.Combine(carpetaLlaves, Guid.NewGuid().ToString("N") + ".prueba");
+    File.WriteAllText(prueba, "ok");
+    File.Delete(prueba);
+    dp.PersistKeysToFileSystem(new DirectoryInfo(carpetaLlaves));
+}
+catch (Exception ex)
+{
+    bufinscustomers.Helpers.AppLogger.Warn("DataProtection: la carpeta de llaves no es escribible (" + ex.GetType().Name + "); se usan llaves en memoria.");
+}
 
 builder.Services.AddControllersWithViews(o =>
 {
