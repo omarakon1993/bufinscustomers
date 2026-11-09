@@ -46,6 +46,7 @@
     {
         <script>aviso('warning', '@Html.Raw(HttpUtility.JavaScriptStringEncode(ViewData["Error"].ToString()))');</script>
     }
+    <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/inline-handlers.js")"></script>
     <script type="text/javascript" src="~/Assets/js/main.js"></script>
     <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/acceso.js")"></script>
     @RenderSection("scripts", required: false)

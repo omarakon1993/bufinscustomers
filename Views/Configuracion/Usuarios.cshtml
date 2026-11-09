@@ -571,7 +571,7 @@
                                         </label>
                                         <div class="bf-input"><i class="fas fa-phone"></i><input type="text" class="form-control" id="editTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo números, sin espacios ni guiones"
                                                placeholder="@Resources.Strings.Usr_PlaceholderTelefono"
-                                               oninput="this.value = this.value.replace(/[^0-9]/g, '');" /></div>
+                                               data-filtro="numeros" /></div>
                                         <small class="form-text text-muted">@Resources.Strings.Usr_HintTelefono</small>
                                     </div>
                                     <div class="col-md-4 mb-3">
@@ -748,7 +748,7 @@
                                         </label>
                                         <div class="bf-input"><i class="fas fa-lock"></i><input type="text" class="form-control" id="crearTelefono" name="Telefono" pattern="\d{7,15}" maxlength="15" title="Solo números, sin espacios ni guiones"
                                                placeholder="@Resources.Strings.Usr_PlaceholderTelefono"
-                                               oninput="this.value = this.value.replace(/[^0-9]/g, '');" /></div>
+                                               data-filtro="numeros" /></div>
                                         <small class="form-text text-muted">@Resources.Strings.Usr_HintTelefono</small>
                                     </div>
                                 </div>

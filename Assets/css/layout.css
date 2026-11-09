@@ -59,3 +59,9 @@ ul.navbar-nav.ml-auto{gap:.7rem}
 .btn-info:hover,.btn-info:focus{background:#00c2b8!important;border-color:#00c2b8!important;color:#160933!important}
 .btn-outline-secondary{border-color:#583AFF!important;color:#583AFF!important}
 .btn-outline-secondary:hover,.btn-outline-secondary:focus{background:#583AFF!important;border-color:#583AFF!important;color:#fff!important}
+
+/* Campana de notificaciones: efectos hover que antes eran onmouseover/onmouseout en el HTML (la CSP estricta no ejecuta atributos) */
+.notif-hbtn:hover { background: rgba(255, 255, 255, 0.2) !important; }
+.notif-hbtn.notif-hbtn-peligro:hover { background: rgba(239, 68, 68, 0.35) !important; border-color: rgba(239, 68, 68, 0.5) !important; }
+.notif-item[data-leida="0"]:hover { background: #f3f0ff !important; }
+.notif-item[data-leida="1"]:hover { background: #f9fafb !important; }

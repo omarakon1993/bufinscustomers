@@ -832,7 +832,7 @@
                                     <i class="fas fa-grip-vertical drag-handle"></i>
                                     <span class="ml-2">${item[propiedad]}</span>
                                 </div>
-                                <button class="btn btn-danger btn-sm" onclick="eliminarItem('${tipo}', ${item.Id})">
+                                <button class="btn btn-danger btn-sm" data-eliminar-tipo="${tipo}" data-eliminar-id="${item.Id}">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -963,6 +963,8 @@
                 }
             });
         }
+
+        $(document).on('click', '[data-eliminar-id]', function () { eliminarItem($(this).attr('data-eliminar-tipo'), parseInt($(this).attr('data-eliminar-id'), 10)); });
 
         function eliminarItem(tipo, id) {
             Swal.fire({

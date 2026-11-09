@@ -61,10 +61,10 @@ footer{padding:26px 0 40px;color:var(--ink2);font-size:13px}
 
 <section id="resumen">
 <h2>1. Resumen ejecutivo</h2>
-<p class="lead">Postura general: <b>buena para una aplicación de este tamaño</b>. El login, las contraseñas, la inyección SQL y el CSRF están bien resueltos. La brecha grave de la <b>imagen de perfil</b> ya está cerrada; la que queda de peso es la <b>política CSP debilitada</b> por <code>'unsafe-inline'</code> (fase 2, requiere medir antes de tocar). El doble factor <b>sí está encendido</b> (verificado en la base de datos); queda cerrar la adopción.</p>
+<p class="lead">Postura general: <b>buena para una aplicación de este tamaño</b>. El login, las contraseñas, la inyección SQL y el CSRF están bien resueltos. La brecha grave de la <b>imagen de perfil</b> ya está cerrada; la que más pesaba, la <b>política CSP debilitada</b> por <code>'unsafe-inline'</code>, <b>quedó cerrada el 2026-11-08</b>: los scripts de las pantallas solo se ejecutan con un código único por petición (nonce). El doble factor <b>sí está encendido</b> (verificado en la base de datos); queda cerrar la adopción.</p>
 <div class="g4">
-<div class="card kpi"><b style="color:var(--ok)">7</b><span>Tratados (H1, H3 fase 1, H4, H5, H6, H8, H10)</span></div>
-<div class="card kpi"><b style="color:var(--mid)">1</b><span>Alto pendiente: quitar unsafe-inline (H3 fase 2)</span></div>
+<div class="card kpi"><b style="color:var(--ok)">7</b><span>Tratados (H1, H3, H4, H5, H6, H8, H10)</span></div>
+<div class="card kpi"><b style="color:var(--ok)">0</b><span>Altos pendientes (H3 cerrado el 2026-11-08)</span></div>
 <div class="card kpi"><b style="color:var(--warn)">3</b><span>Medios pendientes (H7, H9 y adopción del 2FA)</span></div>
 <div class="card kpi"><b style="color:var(--ok)">15</b><span>Controles sólidos verificados</span></div>
 </div>
@@ -77,10 +77,10 @@ footer{padding:26px 0 40px;color:var(--ink2);font-size:13px}
 <tr><td>Sesión y cookies</td><td><span class="tag t-ok">Sólido</span></td><td>HttpOnly + Secure + regeneración de sesión + <code>SameSite=Lax</code> declarado (H6).</td></tr>
 <tr><td>Autorización y aislamiento entre empresas</td><td><span class="tag t-ok">Sólido</span></td><td>Roles, <code>RequierePermiso</code>, <code>EmpresaAccesoHelper</code>. La lectura de fotos de perfil ahora respeta empresa/grupo (H1).</td></tr>
 <tr><td>Inyección SQL</td><td><span class="tag t-ok">Sólido</span></td><td>Consultas parametrizadas; las concatenaciones halladas solo unen nombres de tabla o listas de parámetros.</td></tr>
-<tr><td>XSS</td><td><span class="tag t-media">Mejorado</span></td><td>Los <code>Html.Raw</code> con datos de usuario fueron reemplazados por codificación. Sigue pendiente la CSP sin <code>unsafe-inline</code> (H3 fase 2).</td></tr>
+<tr><td>XSS</td><td><span class="tag t-ok">Sólido</span></td><td>Los <code>Html.Raw</code> con datos de usuario fueron reemplazados por codificación y la CSP estricta (nonce, sin <code>unsafe-inline</code>) impide ejecutar scripts inyectados (H3 cerrado).</td></tr>
 <tr><td>CSRF</td><td><span class="tag t-ok">Sólido</span></td><td>Revisión automática: 0 acciones POST sin <code>ValidateAntiForgeryToken</code>.</td></tr>
 <tr><td>Cargas de archivos</td><td><span class="tag t-media">Mejorado</span></td><td>La imagen ya se valida por firma y tamaño y se sirve endurecida. Excel sigue validándose solo por extensión (H7).</td></tr>
-<tr><td>Cabeceras HTTP</td><td><span class="tag t-media">Mejorado</span></td><td>HSTS, nosniff, frame, referrer, permisos; sin cabeceras de versión de ASP.NET/MVC (H10). La CSP sigue con <code>unsafe-inline</code> (H3 fase 2).</td></tr>
+<tr><td>Cabeceras HTTP</td><td><span class="tag t-media">Mejorado</span></td><td>HSTS, nosniff, frame, referrer, permisos; sin cabeceras de versión de ASP.NET/MVC (H10). La CSP de scripts es estricta: <code>script-src 'self' 'nonce-…'</code> con un nonce nuevo por petición y sin <code>unsafe-inline</code>.</td></tr>
 <tr><td>Secretos y configuración</td><td><span class="tag t-ok">Sólido</span></td><td><code>secrets.config</code> y <code>machineKey</code> fuera de git.</td></tr>
 <tr><td>Auditoría y detección</td><td><span class="tag t-ok">Sólido</span></td><td>Auditoría central, alertas de modo defensivo, navegación y registros.</td></tr>
 <tr><td>Infraestructura y operación</td><td><span class="tag t-ver">No verificable desde el código</span></td><td>TLS, WAF, copias de seguridad, permisos de BD, parches del servidor. Ver sección 4.</td></tr>
@@ -148,7 +148,7 @@ footer{padding:26px 0 40px;color:var(--ink2);font-size:13px}
 <li>Nuevo receptor <code>CspReportController</code> (<code>/CspReport/Recibir</code>): cuerpo máximo 8 KB, tope por IP y global por hora; cada violación distinta se registra una vez por hora en <code>App_Data/logs/app-*.log</code> con la etiqueta <code>CSP-REPORT</code>.</li>
 </ul></td><td>
 <ul>
-<li><b>Fase 2 (necesaria para cerrar H3):</b> con el inventario del log, mover los scripts en línea a archivos <code>.js</code> o ponerles nonce, y los <code>onclick=""</code> a <code>addEventListener</code>; luego quitar <code>'unsafe-inline'</code> de la cabecera vigente. No se hizo ahora porque la app tiene cientos de manejadores en línea y quitarlos de golpe rompería pantallas.</li>
+<li><b>Fase 2 (hecha el 2026-11-08):</b> cada petición recibe un nonce nuevo y los 124 bloques <code>&lt;script&gt;</code> en línea de las vistas lo llevan (ayuda de etiqueta del servidor); los 113 eventos en línea (<code>onclick="…"</code>) se convierten en atributos <code>data-h-*</code> que atiende un único archivo (<code>inline-handlers.js</code>) y los 18 casos especiales se reescribieron. La política vigente es <code>script-src 'self' 'nonce-…'</code> sin <code>'unsafe-inline'</code>; se retiró el modo solo informe y las violaciones reales se reportan con <code>report-uri</code> al registro (<code>CSP-REPORT</code>). Interruptor de emergencia: el parámetro <code>CspScriptEstricto</code> en «false» devuelve la política anterior en menos de un minuto, sin republicar. Verificado en las 41 pantallas del menú.</li>
 <li><code>frame-src https:</code> se mantiene: el módulo de reportes incrusta enlaces https configurados por empresa. Se puede acotar cuando se conozcan todos los dominios.</li>
 <li>Los <code>Swal.fire</code> con <code>title</code> interpretan HTML; con mensajes del servidor es aceptable, pero texto escrito por usuarios debería ir con <code>text</code>.</li>
 </ul></td></tr>
@@ -222,7 +222,7 @@ footer{padding:26px 0 40px;color:var(--ink2);font-size:13px}
 <h3>H1 · Imagen de perfil: XSS almacenado y lectura sin control de empresa <span class="tag t-ok">Implementado</span></h3>
 <dl>
 <dt>Dónde</dt><dd><code>UsuarioController.GuardarImagenUsuario</code>, <code>CargarImagenUsuario</code> e <code>Imagen</code> (<code>Controllers/UsuarioController.cs</code>, hacia las líneas 722-800).</dd>
-<dt>Qué pasa</dt><dd>No se valida el tipo, el tamaño ni el contenido. Se guarda el <code>ContentType</code> que declara el navegador y luego <code>Imagen(id)</code> devuelve los bytes con ese mismo tipo, desde tu dominio. Un usuario puede subir <code>text/html</code> o <code>image/svg+xml</code> con un script. La CSP actual incluye <code>script-src 'unsafe-inline'</code>, así que el script se ejecuta. Basta enviar el enlace <code>/Usuario/Imagen/{id}</code> a un administrador que tenga la sesión abierta.</dd>
+<dt>Qué pasa</dt><dd>No se valida el tipo, el tamaño ni el contenido. Se guarda el <code>ContentType</code> que declara el navegador y luego <code>Imagen(id)</code> devuelve los bytes con ese mismo tipo, desde tu dominio. Un usuario puede subir <code>text/html</code> o <code>image/svg+xml</code> con un script. La CSP de entonces incluía <code>script-src 'unsafe-inline'</code>, así que el script se ejecuta. Basta enviar el enlace <code>/Usuario/Imagen/{id}</code> a un administrador que tenga la sesión abierta.</dd>
 <dt>Además</dt><dd><code>Imagen(id)</code> solo exige estar autenticado: cualquiera puede pedir la foto de cualquier <code>id</code> de usuario, incluso de otra empresa (fuga menor y enumeración de IDs).</dd>
 <dt>Cómo corregirlo</dt><dd>
 <ol class="steps">
@@ -263,7 +263,7 @@ Como el código exige alta del autenticador en el siguiente login, quienes no ti
 </div>
 
 <div class="card find alta">
-<h3>H3 · CSP con <code>'unsafe-inline'</code> en scripts <span class="tag t-media">Fase 1 hecha · fase 2 pendiente</span></h3>
+<h3>H3 · CSP con <code>'unsafe-inline'</code> en scripts <span class="tag t-ok">Cerrado el 2026-11-08</span></h3>
 <dl>
 <dt>Qué pasa</dt><dd><code>script-src 'self' 'unsafe-inline'</code> anula la mayor parte de la protección contra XSS: cualquier inyección de HTML se convierte en ejecución de código. Es lo que agrava H1 y H4.</dd>
 <dt>Qué hacer</dt><dd>Migración gradual: (1) generar un <i>nonce</i> por petición y ponerlo en cada <code>&lt;script&gt;</code> de las vistas; (2) mover los <code>onclick="..."</code> a <code>addEventListener</code> o a <code>data-*</code>; (3) publicar primero en modo <code>Content-Security-Policy-Report-Only</code> con un <code>report-uri</code> y medir; (4) quitar <code>'unsafe-inline'</code> de <code>script-src</code>. Es el cambio con mejor retorno a mediano plazo. En el mismo paso: restringir <code>frame-src https:</code> a los dominios que de verdad se incrustan (Power BI, etc.) y quitar de <code>connect-src</code> lo que el navegador ya no llama (<code>api.openai.com</code> se invoca desde el servidor).</dd>
@@ -367,7 +367,7 @@ Como el código exige alta del autenticador en el siguiente login, quienes no ti
 <li>Cifrar claves guardadas en BD (sección 4).</li>
 </ol></div>
 <div class="card"><h3>Próximos 3 meses</h3><ol class="steps">
-<li>H3 fase 2: con el inventario de <code>CSP-REPORT</code>, sacar scripts en línea y quitar <code>'unsafe-inline'</code>.</li>
+<li>H3: cerrado el 2026-11-08 (CSP estricta con nonce). Vigilar el registro <code>CSP-REPORT</code> tras cada publicación.</li>
 <li>H9: separar el usuario de BD de DDL del de uso diario.</li>
 <li>Prueba de intrusión externa (ver abajo) y corrección de lo que encuentre.</li>
 <li>WAF/CDN delante (Cloudflare o equivalente) y alertas centralizadas.</li>
@@ -397,9 +397,9 @@ Como el código exige alta del autenticador en el siguiente login, quienes no ti
 <tr><td>Fuerza bruta y relleno de credenciales</td><td><span class="tag t-ok">Alta</span></td><td>Límite por IP, bloqueo progresivo, HIBP. Falta H5 si hay proxy y H2 para cerrar el caso de claves filtradas.</td></tr>
 <tr><td>Phishing / robo de contraseña</td><td><span class="tag t-media">Media</span></td><td>El 2FA está activo, pero hay administradores sin autenticador y nadie usa passkeys aún (resistentes al phishing).</td></tr>
 <tr><td>Inyección SQL</td><td><span class="tag t-ok">Alta</span></td><td>Parámetros en todo lo revisado. Mantener la regla en revisiones de código.</td></tr>
-<tr><td>XSS</td><td><span class="tag t-alta">Media-baja</span></td><td>H1 y H4 resueltos; queda H3 fase 2.</td></tr>
+<tr><td>XSS</td><td><span class="tag t-ok">Alta</span></td><td>H1, H3 y H4 resueltos: la CSP estricta limita la ejecución de scripts inyectados.</td></tr>
 <tr><td>CSRF</td><td><span class="tag t-ok">Alta</span></td><td>Tokens en todos los POST y <code>SameSite=Lax</code> en las cookies (H6).</td></tr>
-<tr><td>Robo o fijación de sesión</td><td><span class="tag t-ok">Alta</span></td><td>HttpOnly, Secure, SameSite, regeneración. El riesgo restante es XSS (H3 fase 2).</td></tr>
+<tr><td>Robo o fijación de sesión</td><td><span class="tag t-ok">Alta</span></td><td>HttpOnly, Secure, SameSite, regeneración. El riesgo restante es bajo: la CSP estricta (H3) limita el XSS.</td></tr>
 <tr><td>Acceso a datos de otra empresa (IDOR)</td><td><span class="tag t-ok">Alta</span></td><td>Aislamiento por empresa en los informes; excepción: foto de perfil (H1).</td></tr>
 <tr><td>Subida de archivos maliciosos</td><td><span class="tag t-media">Media</span></td><td>H1 y H7.</td></tr>
 <tr><td>Denegación de servicio</td><td><span class="tag t-media">Media</span></td><td>Límite de login, pero cargues grandes y consultas pesadas sin tope por usuario; falta WAF.</td></tr>

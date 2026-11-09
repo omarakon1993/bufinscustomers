@@ -6,9 +6,9 @@ using bufinscustomers.Helpers;
 namespace bufinscustomers.Controllers
 {
     /// <summary>
-    /// Recibe los informes de violaciones de la política CSP en modo solo-reporte
-    /// (<c>Content-Security-Policy-Report-Only</c>, ver Web.config). No bloquea nada en el navegador: sirve para
-    /// inventariar qué scripts en línea quedan antes de quitar <c>'unsafe-inline'</c> de la política vigente.
+    /// Recibe los informes de violaciones de la política CSP estricta (<c>report-uri</c> de la cabecera vigente, ver
+    /// <c>Infra/CabecerasSeguridad.cs</c>). Cada violación real —un script o evento en línea sin nonce— queda en el registro con la
+    /// etiqueta <c>CSP-REPORT</c>: es la señal de que una vista nueva rompió la política.
     /// Anónimo a propósito (el navegador lo envía solo, sin token), por eso está acotado: cuerpo máximo de 8 KB,
     /// tope por IP y global por hora, y cada violación distinta se registra una sola vez por hora en AppLogger.
     /// </summary>

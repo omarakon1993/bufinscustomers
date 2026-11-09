@@ -71,7 +71,7 @@ namespace bufinscustomers.Helpers
                 Titulo = "Documentación oficial de ciberseguridad",
                 Descripcion = "Estado de la seguridad de BUFINS: qué controles están implementados, los hallazgos de la revisión con lo ya corregido y lo pendiente, y la hoja de ruta.",
                 TituloEn = "Official cybersecurity documentation", DescripcionEn = "The state of BUFINS security: which controls are in place, the findings of the review with what is already fixed and what is pending, and the roadmap.", MenuEn = "",
-                EsDeMenu = false, Menu = "", Actualizado = new DateTime(2026, 10, 16) , SoloSuperAdminPorDefecto = true },
+                EsDeMenu = false, Menu = "", Actualizado = new DateTime(2026, 11, 8) , SoloSuperAdminPorDefecto = true },
 
             new DocumentoBiblioteca { Clave = "informe-indicadores", Ruta = Informes + "Informe_Indicadores.html", Categoria = "informes",
                 Titulo = "Informe de indicadores",

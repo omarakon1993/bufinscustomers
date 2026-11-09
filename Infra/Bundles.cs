@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -45,7 +45,7 @@ namespace bufinscustomers
 
             // JS global (el orden es critico: jQuery -> Bootstrap -> plugins -> propio)
             Js("/bundles/js-global", "~/Assets/Bootstrap/jquery/jquery.min.js", "~/Assets/Bootstrap/bootstrap/js/bootstrap.bundle.min.js",
-                "~/Assets/Bootstrap/jquery-easing/jquery.easing.min.js", "~/Assets/js/sb-admin-2.min.js", "~/Assets/js/modern-sidebar.js");
+                "~/Assets/Bootstrap/jquery-easing/jquery.easing.min.js", "~/Assets/js/sb-admin-2.min.js", "~/Assets/js/modern-sidebar.js", "~/Assets/js/inline-handlers.js");
         }
 
         public static void Configurar(IHostEnvironment env) { _minificar = true; }   // el sitio anterior forzaba el bundling en cualquier modo
