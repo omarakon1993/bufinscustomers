@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,7 +9,7 @@ namespace bufinscustomers.Helpers
     {
         /// <summary>Clave pública corta que viaja en la URL (p. ej. "indicadores"). Solo se aceptan las del catálogo.</summary>
         public string Clave;
-        /// <summary>Archivo dentro de App_Data/Documentacion (nunca viene del cliente).</summary>
+        /// <summary>Archivo dentro de App_Data/Documentacion, con su subcarpeta de categoría (p. ej. "Informes/Informe_X.html"; nunca viene del cliente).</summary>
         public string Archivo;
         /// <summary>Código de permiso del informe: solo quien lo tiene (o el Super Admin) puede abrir su documentación.</summary>
         public string Permiso;
@@ -29,10 +29,10 @@ namespace bufinscustomers.Helpers
 
         public static readonly List<DocumentoInforme> Todos = new List<DocumentoInforme>
         {
-            new DocumentoInforme { Clave = "hist-precios", Archivo = "Informe_HistPrecios_vs_Excel.html", Permiso = "INFORMES_HIST_PRECIOS", Titulo = "Informe histórico de precios" },
-            new DocumentoInforme { Clave = "indicadores", Archivo = "Informe_Indicadores.html", Permiso = "INFORMES_INDICADORES", Titulo = "Informe de indicadores" },
-            new DocumentoInforme { Clave = "lineas-negocio", Archivo = "Informe_LineasNegocio.html", Permiso = "INFORMES_LINEAS_NEGOCIO", Titulo = "Rentabilidad por línea de negocio" },
-            new DocumentoInforme { Clave = "gerencia-mensual", Archivo = "Informe_GerenciaMensual.html", Permiso = "INFORMES_GERENCIA_MENSUAL", Titulo = "Informe mensual de gerencia" },
+            new DocumentoInforme { Clave = "hist-precios", Archivo = "Informes/Informe_HistPrecios_vs_Excel.html", Permiso = "INFORMES_HIST_PRECIOS", Titulo = "Informe histórico de precios" },
+            new DocumentoInforme { Clave = "indicadores", Archivo = "Informes/Informe_Indicadores.html", Permiso = "INFORMES_INDICADORES", Titulo = "Informe de indicadores" },
+            new DocumentoInforme { Clave = "lineas-negocio", Archivo = "Informes/Informe_LineasNegocio.html", Permiso = "INFORMES_LINEAS_NEGOCIO", Titulo = "Rentabilidad por línea de negocio" },
+            new DocumentoInforme { Clave = "gerencia-mensual", Archivo = "Informes/Informe_GerenciaMensual.html", Permiso = "INFORMES_GERENCIA_MENSUAL", Titulo = "Informe mensual de gerencia" },
         };
 
         public static DocumentoInforme Buscar(string clave)

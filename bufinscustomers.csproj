@@ -53,8 +53,8 @@
     <!-- NUNCA publicar credenciales: el SDK Web incluye por defecto todos los .json/.config -->
     <Content Remove="secrets.config;secrets.machineKey.config;secretsSettings.json;secretsSettings.*.json;*.example;*.config.example" />
     <None Remove="secrets.config;secrets.machineKey.config;secretsSettings.json" />
-    <Content Remove="Logs\**;App_Data\logs\**;docs\**;docs-claude\**" />
-    <None Remove="Logs\**;docs\**;docs-claude\**" />
+    <Content Remove="Logs\**;App_Data\logs\**" />
+    <None Remove="Logs\**" />
   </ItemGroup>
 
   <!-- Copias antiguas del proyecto .NET Framework que no forman parte del sitio -->

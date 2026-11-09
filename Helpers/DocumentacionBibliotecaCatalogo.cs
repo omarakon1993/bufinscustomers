@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -34,15 +34,15 @@ namespace bufinscustomers.Helpers
     /// <summary>
     /// SOLO contiene la documentación oficial: la de las opciones que ya tienen documentación y la que el responsable pida
     /// agregar explícitamente (no se agrega nada por iniciativa propia). Catálogo ÚNICO de la biblioteca «Documentación BUFINS» (Configuración → Documentación BUFINS, solo Super Admin).
-    /// Agregar un documento = guardar el HTML en <c>App_Data/Documentacion/Biblioteca/</c> (o reutilizar uno de
-    /// <c>App_Data/Documentacion/</c>), registrarlo en el .csproj como Content y agregar UNA línea aquí. Lo sirve
+    /// Agregar un documento = guardar el HTML en la subcarpeta de su categoría de <c>App_Data/Documentacion/</c> (Seguridad, Informes, Cargues…), registrarlo en el .csproj como Content y agregar UNA línea aquí. Lo sirve
     /// <c>DocumentacionBufinsController.Ver</c> con la misma protección que la documentación de los informes
     /// (marca de agua, sin caché, rechazo de apertura directa y auditoría de cada consulta).
     /// </summary>
     public static class DocumentacionBibliotecaCatalogo
     {
-        private const string Biblioteca = "~/App_Data/Documentacion/Biblioteca/";
-        private const string Informes = "~/App_Data/Documentacion/";
+        private const string Seguridad = "~/App_Data/Documentacion/Seguridad/";
+        private const string Informes = "~/App_Data/Documentacion/Informes/";
+        private const string Cargues = "~/App_Data/Documentacion/Cargues/";
 
         public static readonly List<CategoriaDocumento> Categorias = new List<CategoriaDocumento>
         {
@@ -53,12 +53,12 @@ namespace bufinscustomers.Helpers
 
         public static readonly List<DocumentoBiblioteca> Todos = new List<DocumentoBiblioteca>
         {
-            new DocumentoBiblioteca { Clave = "seguridad-blindaje", Ruta = Biblioteca + "Seguridad_Blindaje_Inicio_Sesion.html", Categoria = "seguridad",
+            new DocumentoBiblioteca { Clave = "seguridad-blindaje", Ruta = Seguridad + "Seguridad_Blindaje_Inicio_Sesion.html", Categoria = "seguridad",
                 Titulo = "Blindaje del inicio de sesión · Doble factor",
                 Descripcion = "Cómo se protege el acceso: doble factor con app autenticadora y con passkeys, recuperación por solicitud aprobada por un Super Admin, administración y decisiones de diseño.",
                 EsDeMenu = false, Menu = "", Actualizado = new DateTime(2026, 10, 15) },
 
-            new DocumentoBiblioteca { Clave = "seguridad-ciberseguridad", Ruta = Biblioteca + "Ciberseguridad_BUFINS.html", Categoria = "seguridad",
+            new DocumentoBiblioteca { Clave = "seguridad-ciberseguridad", Ruta = Seguridad + "Ciberseguridad_BUFINS.html", Categoria = "seguridad",
                 Titulo = "Documentación oficial de ciberseguridad",
                 Descripcion = "Estado de la seguridad de BUFINS: qué controles están implementados, los hallazgos de la revisión con lo ya corregido y lo pendiente, y la hoja de ruta.",
                 EsDeMenu = false, Menu = "", Actualizado = new DateTime(2026, 10, 16) },
@@ -83,7 +83,7 @@ namespace bufinscustomers.Helpers
                 Descripcion = "El cierre del mes en un solo documento: de qué informe sale cada sección, cómo se lee y cómo se exporta.",
                 EsDeMenu = true, Menu = "Informes → Informe mensual de gerencia", Actualizado = new DateTime(2026, 10, 27) },
 
-            new DocumentoBiblioteca { Clave = "cargues-auditoria", Ruta = Biblioteca + "Auditoria_Cargues_Blindaje.html", Categoria = "datos",
+            new DocumentoBiblioteca { Clave = "cargues-auditoria", Ruta = Cargues + "Auditoria_Cargues_Blindaje.html", Categoria = "datos",
                 Titulo = "Historial de cargues y protección de los datos",
                 Descripcion = "Guía de uso: cómo Bufins protege los datos al cargar un Excel, cómo leer las pestañas Versiones y Registro y cómo deshacer un cargue.",
                 EsDeMenu = true, Menu = "Datos → Historial de cargues", Actualizado = new DateTime(2026, 10, 17) },
