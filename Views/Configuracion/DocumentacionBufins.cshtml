@@ -75,7 +75,7 @@
 
     @foreach (var c in catList)
     {
-        var docs = Model.Where(d => d.Categoria == c.Id).OrderBy(d => d.Titulo).ToList();
+        var docs = Model.Where(d => d.Categoria == c.Id).OrderBy(d => (ingles && !string.IsNullOrEmpty(d.TituloEn)) ? d.TituloEn : d.Titulo).ToList();
         if (!docs.Any()) { continue; }
         <section class="dbf-cat" data-cat="@c.Id">
             <h3><span class="ic"><i class="@c.Icono"></i></span>@c.Nombre <span class="n">@docs.Count</span></h3>
@@ -84,11 +84,11 @@
                 {
                     bool ok = disponibles.Contains(d.Clave);
                     <article class="dbf-doc" data-cat="@d.Categoria" data-alcance="@(d.EsDeMenu ? "menu" : "general")"
-                             data-buscar="@((d.Titulo + " " + d.Descripcion + " " + d.Menu).ToLowerInvariant())">
+                             data-buscar="@((d.Titulo + " " + d.Descripcion + " " + d.Menu + " " + d.TituloEn + " " + d.DescripcionEn + " " + d.MenuEn).ToLowerInvariant())">
                         <div class="dbf-badges">
                             @if (d.EsDeMenu)
                             {
-                                <span class="dbf-badge menu"><i class="fas fa-bars"></i>@Resources.Strings.DocBuf_BadgeMenu: @d.Menu</span>
+                                <span class="dbf-badge menu"><i class="fas fa-bars"></i>@Resources.Strings.DocBuf_BadgeMenu: @((ingles && !string.IsNullOrEmpty(d.MenuEn)) ? d.MenuEn : d.Menu)</span>
                             }
                             else
                             {
@@ -99,11 +99,11 @@
                                 <span class="dbf-badge off"><i class="fas fa-exclamation-triangle"></i>@Resources.Strings.DocBuf_NoDisponible</span>
                             }
                         </div>
-                        <h4>@d.Titulo</h4>
-                        <p>@d.Descripcion</p>
+                        <h4>@((ingles && !string.IsNullOrEmpty(d.TituloEn)) ? d.TituloEn : d.Titulo)</h4>
+                        <p>@((ingles && !string.IsNullOrEmpty(d.DescripcionEn)) ? d.DescripcionEn : d.Descripcion)</p>
                         <div class="dbf-foot">
                             <span class="dbf-fecha"><i class="far fa-calendar mr-1"></i>@string.Format(Resources.Strings.DocBuf_Actualizado, d.Actualizado.ToString(ingles ? "MMM d, yyyy" : "dd/MM/yyyy"))</span>
-                            <button type="button" class="btn btn-sm btn-modern-gradient dbf-abrir" data-url="@Url.Action("Ver", "DocumentacionBufins", new { clave = d.Clave })" data-titulo="@d.Titulo" @(ok ? "" : "disabled")>
+                            <button type="button" class="btn btn-sm btn-modern-gradient dbf-abrir" data-url="@Url.Action("Ver", "DocumentacionBufins", new { clave = d.Clave })" data-titulo="@((ingles && !string.IsNullOrEmpty(d.TituloEn)) ? d.TituloEn : d.Titulo)" @(ok ? "" : "disabled")>
                                 <i class="fas fa-book-open mr-1"></i>@Resources.Strings.DocBuf_Abrir
                             </button>
                         </div>

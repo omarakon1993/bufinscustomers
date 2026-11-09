@@ -32,6 +32,13 @@ namespace bufinscustomers.Helpers
             new DocumentoInforme { Clave = "hist-precios", Archivo = "Informes/Informe_HistPrecios_vs_Excel.html", Permiso = "INFORMES_HIST_PRECIOS", Titulo = "Informe histórico de precios" },
             new DocumentoInforme { Clave = "indicadores", Archivo = "Informes/Informe_Indicadores.html", Permiso = "INFORMES_INDICADORES", Titulo = "Informe de indicadores" },
             new DocumentoInforme { Clave = "lineas-negocio", Archivo = "Informes/Informe_LineasNegocio.html", Permiso = "INFORMES_LINEAS_NEGOCIO", Titulo = "Rentabilidad por línea de negocio" },
+            new DocumentoInforme { Clave = "pyg", Archivo = "Informes/Informe_PYG.html", Permiso = "", Titulo = "Estado de resultados (PYG)" },
+            new DocumentoInforme { Clave = "balance", Archivo = "Informes/Informe_Balance.html", Permiso = "", Titulo = "Balance general" },
+            new DocumentoInforme { Clave = "tesoreria", Archivo = "Informes/Informe_Tesoreria.html", Permiso = "INFORMES_TESORERIA_PPTO", Titulo = "Tesorería del presupuesto" },
+            new DocumentoInforme { Clave = "flujo-caja", Archivo = "Informes/Informe_FlujoCaja.html", Permiso = "INFORMES_FLUJO_CAJA", Titulo = "Flujo de caja" },
+            new DocumentoInforme { Clave = "flujo-efectivo", Archivo = "Informes/Informe_FlujoEfectivo.html", Permiso = "INFORMES_FLUJO_EFECTIVO", Titulo = "Flujo de efectivo" },
+            new DocumentoInforme { Clave = "linea-tiempo", Archivo = "Informes/Informe_LineaTiempo.html", Permiso = "", Titulo = "Línea de tiempo dinámica" },
+            new DocumentoInforme { Clave = "modelos", Archivo = "Informes/Informe_Modelos.html", Permiso = "", Titulo = "Informe de modelos" },
             new DocumentoInforme { Clave = "gerencia-mensual", Archivo = "Informes/Informe_GerenciaMensual.html", Permiso = "INFORMES_GERENCIA_MENSUAL", Titulo = "Informe mensual de gerencia" },
         };
 

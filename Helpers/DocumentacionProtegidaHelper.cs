@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using bufinscustomers.Models;
@@ -23,6 +23,12 @@ namespace bufinscustomers.Helpers
                 return new HttpStatusCodeResult(403);   // abrir la URL directamente (pestaña nueva / "guardar como")
 
             string ruta = AppPaths.Map(rutaVirtual);
+            // Idioma: con la interfaz en inglés se sirve la variante "<nombre>.en.html" si existe; si no, el documento en español.
+            if (System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en")
+            {
+                string ruta_en = System.IO.Path.ChangeExtension(ruta, ".en.html");
+                if (System.IO.File.Exists(ruta_en)) ruta = ruta_en;
+            }
             if (!System.IO.File.Exists(ruta)) return new HttpNotFoundResult();
 
             var usuario = UsuarioSesionHelper.UsuarioActual;

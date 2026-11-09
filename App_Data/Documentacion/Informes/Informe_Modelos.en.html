@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentation: Models report</title>
+<style>
+:root{--bg:#f6f5fb;--card:#fff;--ink:#1c1738;--ink2:#5b5678;--line:#e3e0f1;--brand:#583aff;--chip:#efecff;--ok:#15803d;--warn:#a16207;--mid:#c2410c;--bad:#b91c1c;--grad:linear-gradient(90deg,#6366F1 0%,#3B82F6 35%,#06B6D4 70%,#01E1D7 100%)}
+@media (prefers-color-scheme:dark){:root{--bg:#120a2b;--card:#1a1240;--ink:#efecff;--ink2:#a9a3cc;--line:#2d2460;--brand:#8f7bff;--chip:#271d5c;--ok:#3ddc97;--warn:#fbbf24;--mid:#fb923c;--bad:#ff7a6b}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "Segoe UI",system-ui,sans-serif}
+header{background:var(--grad);color:#fff;padding:34px 18px 28px}.w{max-width:1040px;margin:0 auto;padding:0 18px}
+header h1{margin:0 0 6px;font-size:27px}header p{margin:0;opacity:.95;max-width:720px}
+nav{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}nav .w{display:flex;gap:6px;overflow-x:auto;padding-top:8px;padding-bottom:8px}
+nav a{white-space:nowrap;text-decoration:none;color:var(--ink2);font-size:13px;padding:5px 10px;border-radius:999px}nav a:hover{background:var(--chip);color:var(--ink)}
+section{margin:34px 0}h2{font-size:21px;margin:0 0 6px}h3{font-size:16px;margin:20px 0 8px;color:var(--brand)}
+.lead{color:var(--ink2);margin:0 0 12px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px}
+.g2{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:760px){.g2{grid-template-columns:1fr}}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{background:var(--grad);color:#fff;text-align:left;padding:8px 10px;white-space:nowrap}td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
+td.n{font-weight:700;white-space:nowrap}td.f{font-family:Consolas,monospace;font-size:12.5px}td.r{color:var(--ink2);font-size:12.5px}
+figure{margin:12px 0}figure img{width:100%;border:1px solid var(--line);border-radius:12px;display:block}figcaption{font-size:12.5px;color:var(--ink2);margin-top:5px}
+.note{border-left:4px solid #d97706;background:var(--card);padding:10px 14px;border-radius:8px;color:var(--ink2)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}.dot.v{background:#16a34a}.dot.a{background:#eab308}.dot.o{background:#f97316}.dot.r{background:#dc2626}.dot.gr{background:#94a3b8}
+.ficha{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 16px;margin:10px 0}.ficha h4{margin:0 0 4px;font-size:15px}.ficha .fam{font-size:11px;color:var(--brand);font-weight:700;margin-left:8px;text-transform:uppercase}
+.ficha p{margin:4px 0;color:var(--ink2);font-size:13.5px}.regla{border-left:3px solid var(--brand);padding-left:10px;color:var(--ink)!important}
+code{background:var(--chip);padding:1px 6px;border-radius:6px;font-size:12.5px}ul{padding-left:20px;color:var(--ink2)}li{margin:3px 0}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 14px;margin:8px 0}summary{cursor:pointer;font-weight:700}
+</style></head><body>
+<header><div class="w"><h1>Models report</h1><p>How to query, filter and export the tables produced by running the models.</p></div></header>
+<nav><div class="w"><a href="#para">What it is for</a><a href="#pantalla">The screen</a><a href="#datos">Where the figures come from</a><a href="#exportar">Export</a><a href="#faq">FAQ</a></div></nav>
+<main class="w">
+
+<section id="para"><h2>1. What it is for</h2>
+<p class="lead">It answers: <b>what data did the model run produce?</b> It is the direct query of the result tables (income statement, balance sheet, cash flows, business lines, treasury…): pick the company and the table, filter and download.</p><div class="g2"><div class="card"><b>For the manager or owner</b><ul><li>See the exact numbers that feed the other reports.</li><li>Quickly check that a model has already been run and what it contains.</li></ul></div><div class="card"><b>For the accountant or financial analyst</b><ul><li>Filter by any field and export the result to Excel.</li><li>Query several tables at once.</li></ul></div></div></section>
+
+<section id="pantalla"><h2>2. The screen</h2>
+<p class="lead">Choose the company, the scenario, the year (and, depending on the table, the month) and <b>one or more tables</b>. The <b>Query</b> button changes its text according to your choice (“Query 3 selected tables”, “Query all tables”).</p><ul><li><b>Several tables:</b> they are queried one after another and each one appears in its own tab.</li><li><b>Filter results:</b> on top of what was queried you can add field filters (equals, contains, starts or ends with, greater or less than…) shown as chips that can be removed one by one.</li><li>Numbers are shown with thousands and decimal separators; numeric filters compare the real value, not the formatted text.</li><li><b>Report styles:</b> lets you choose the color palette of the report (Bufins by default; also the company's corporate colors or a custom palette). The choice is applied when you press <b>Generate</b> and reaches every output (screen, PDF, image, Excel and email). The company logo is shown next to its name and does not depend on the palette.</li></ul><p class="note info"><b>Bufins model information.</b> This data only exists after the models have been run in Data → Model execution.</p></section>
+
+<section id="datos"><h2>3. Where the figures come from</h2>
+<p class="lead">Only from the <code>Model*</code> tables (results, balance sheet, budgeted balance sheet, balance sheet difference, cash flow, statement of cash flows, business lines and treasury). This is a platform rule: the information queried here, and the one used by AI, comes only from the models, never from the original uploaded data.</p><ul><li>A table without rows for the chosen company and filters shows “No data”.</li><li>Users can only query their own company or those of their business group.</li></ul></section>
+
+<section id="exportar"><h2>4. Export</h2>
+<p class="lead"><b>Export</b> button, the same as in the other reports, with the company logo and the chosen palette:</p><ul><li><b>Excel:</b> the queried table, with the filters applied.</li><li><b>Send by email:</b> to you and/or other people (up to 10), with the Excel attached; the sending is recorded in the audit log.</li></ul><p class="note">This report is a data grid, so it has no PDF or image output.</p></section>
+
+<section id="faq"><h2>5. Frequently asked questions</h2><details><summary>It says “No data”, what do I do?</summary><p>Run the corresponding model in Data → Model execution for the chosen company and scenario, or widen the filters.</p></details><details><summary>Can I query several tables at once?</summary><p>Yes: choose several in the selector or “All tables”.</p></details><details><summary>Why can’t I see another client’s company?</summary><p>Because each user only has access to their own company and those of their business group.</p></details><details><summary>Does the Excel include the filters I applied?</summary><p>Yes, it exports the queried table with its filters.</p></details><details><summary>What is the difference with the Timeline?</summary><p>The Models report shows the rows as they are; the Timeline plots a variable over the months and lets you compare it across scenarios.</p></details></section>
+
+</main>
+</body></html>

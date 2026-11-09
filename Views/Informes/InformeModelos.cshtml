@@ -10,6 +10,7 @@
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
 <link href="~/Assets/css/modelo-consola.css" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
 
@@ -21,6 +22,7 @@
             <i class="fas fa-table powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@Resources.Strings.InformeModelos_PageTitle</h1>
             @await Html.PartialAsync("_ModeloBufinsTag")
+            <button type="button" class="header-tag-doc" id="imDocBtn" title="@Resources.Strings.InformeModelos_DocumentacionTooltip"><i class="fas fa-book"></i>@Resources.Strings.Common_DocumentacionTag</button>
         </div>
     </div>
 
@@ -226,12 +228,14 @@
 </div>
 
 @await Html.PartialAsync("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM { SoloExcel = true })
+@await Html.PartialAsync("_DocumentacionVisor", Resources.Strings.InformeModelos_Doc_ModalTitulo)
 
 @section scripts {
 
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/empresa-logo.js")"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
+<script src="~/Assets/js/doc-visor.js"></script>
 <script>
     var _im = {
         urlConsultar: '@Url.Action("ConsultarDatos", "InformeModelos")',
@@ -850,6 +854,7 @@
             pills: function () { return [$('#idEmpresa option:selected').text(), _pag.nombreTabla]; },
             textos: EXP_T
         });
+        DocVisor.init({ boton: '#imDocBtn', url: '@Url.Action("Ver", "Documentacion", new { clave = "modelos" })' });
         ExportMenu.init('imExp', {
             acciones: { excel: exportarActivo, correo: function () { if (datosExportacion()) correoIM.abrir(); } },
             textos: EXP_T

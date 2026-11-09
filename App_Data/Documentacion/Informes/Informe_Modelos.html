@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentación: Informe de modelos</title>
+<style>
+:root{--bg:#f6f5fb;--card:#fff;--ink:#1c1738;--ink2:#5b5678;--line:#e3e0f1;--brand:#583aff;--chip:#efecff;--ok:#15803d;--warn:#a16207;--mid:#c2410c;--bad:#b91c1c;--grad:linear-gradient(90deg,#6366F1 0%,#3B82F6 35%,#06B6D4 70%,#01E1D7 100%)}
+@media (prefers-color-scheme:dark){:root{--bg:#120a2b;--card:#1a1240;--ink:#efecff;--ink2:#a9a3cc;--line:#2d2460;--brand:#8f7bff;--chip:#271d5c;--ok:#3ddc97;--warn:#fbbf24;--mid:#fb923c;--bad:#ff7a6b}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "Segoe UI",system-ui,sans-serif}
+header{background:var(--grad);color:#fff;padding:34px 18px 28px}.w{max-width:1040px;margin:0 auto;padding:0 18px}
+header h1{margin:0 0 6px;font-size:27px}header p{margin:0;opacity:.95;max-width:720px}
+nav{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}nav .w{display:flex;gap:6px;overflow-x:auto;padding-top:8px;padding-bottom:8px}
+nav a{white-space:nowrap;text-decoration:none;color:var(--ink2);font-size:13px;padding:5px 10px;border-radius:999px}nav a:hover{background:var(--chip);color:var(--ink)}
+section{margin:34px 0}h2{font-size:21px;margin:0 0 6px}h3{font-size:16px;margin:20px 0 8px;color:var(--brand)}
+.lead{color:var(--ink2);margin:0 0 12px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px}
+.g2{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:760px){.g2{grid-template-columns:1fr}}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{background:var(--grad);color:#fff;text-align:left;padding:8px 10px;white-space:nowrap}td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
+td.n{font-weight:700;white-space:nowrap}td.f{font-family:Consolas,monospace;font-size:12.5px}td.r{color:var(--ink2);font-size:12.5px}
+figure{margin:12px 0}figure img{width:100%;border:1px solid var(--line);border-radius:12px;display:block}figcaption{font-size:12.5px;color:var(--ink2);margin-top:5px}
+.note{border-left:4px solid #d97706;background:var(--card);padding:10px 14px;border-radius:8px;color:var(--ink2)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}.dot.v{background:#16a34a}.dot.a{background:#eab308}.dot.o{background:#f97316}.dot.r{background:#dc2626}.dot.gr{background:#94a3b8}
+.ficha{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 16px;margin:10px 0}.ficha h4{margin:0 0 4px;font-size:15px}.ficha .fam{font-size:11px;color:var(--brand);font-weight:700;margin-left:8px;text-transform:uppercase}
+.ficha p{margin:4px 0;color:var(--ink2);font-size:13.5px}.regla{border-left:3px solid var(--brand);padding-left:10px;color:var(--ink)!important}
+code{background:var(--chip);padding:1px 6px;border-radius:6px;font-size:12.5px}ul{padding-left:20px;color:var(--ink2)}li{margin:3px 0}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 14px;margin:8px 0}summary{cursor:pointer;font-weight:700}
+</style></head><body>
+<header><div class="w"><h1>Informe de modelos</h1><p>Cómo consultar, filtrar y exportar las tablas que genera la ejecución de modelos.</p></div></header>
+<nav><div class="w"><a href="#para">Para qué sirve</a><a href="#pantalla">La pantalla</a><a href="#datos">De dónde salen las cifras</a><a href="#exportar">Exportar</a><a href="#faq">Preguntas frecuentes</a></div></nav>
+<main class="w">
+
+<section id="para"><h2>1. Para qué sirve</h2>
+<p class="lead">Responde: <b>¿qué datos produjo la ejecución de modelos?</b> Es la consulta directa de las tablas de resultados (estado de resultados, balance, flujos, líneas de negocio, tesorería…): se elige la empresa y la tabla, se filtra y se descarga.</p><div class="g2"><div class="card"><b>Para el gerente o dueño</b><ul><li>Ver los números exactos que alimentan los demás informes.</li><li>Comprobar rápidamente que un modelo ya se ejecutó y qué contiene.</li></ul></div><div class="card"><b>Para el contador o analista financiero</b><ul><li>Filtrar por cualquier campo y exportar el resultado a Excel.</li><li>Consultar varias tablas a la vez.</li></ul></div></div></section>
+
+<section id="pantalla"><h2>2. La pantalla</h2>
+<p class="lead">Se elige la empresa, el escenario, el año (y, según la tabla, el mes) y <b>una o varias tablas</b>. El botón <b>Consultar</b> cambia de texto según lo elegido («Consultar 3 tablas seleccionadas», «Consultar todas las tablas»).</p><ul><li><b>Varias tablas:</b> se consultan una tras otra y cada una aparece en su pestaña.</li><li><b>Filtrar resultados:</b> sobre lo ya consultado se pueden agregar filtros por campo (igual a, contiene, empieza o termina con, mayor o menor que…) que se muestran como etiquetas y se pueden quitar una a una.</li><li>Los números se muestran con separador de miles y decimales; los filtros numéricos comparan el valor real, no el texto formateado.</li><li><b>Estilos del informe:</b> permite elegir la paleta de colores del informe (por defecto, la de Bufins; también los colores corporativos de la empresa o una paleta propia). La elección se aplica al pulsar <b>Generar</b> y llega a todas las salidas (pantalla, PDF, imagen, Excel y correo). El logo de la empresa se muestra junto a su nombre y no depende de la paleta.</li></ul><p class="note info"><b>Información modelo Bufins.</b> Estos datos solo existen después de ejecutar los modelos en Datos → Ejecución de modelos.</p></section>
+
+<section id="datos"><h2>3. De dónde salen las cifras</h2>
+<p class="lead">Únicamente de las tablas <code>Modelo*</code> (resultados, balance, balance presupuestado, diferencia del balance, flujo de caja, flujo de efectivo, líneas de negocio y tesorería). Es la regla de la plataforma: la información que se consulta aquí, y la que usa la IA, sale solo de los modelos, nunca de los datos de cargue originales.</p><ul><li>Una tabla sin filas para la empresa y los filtros elegidos muestra «Sin datos».</li><li>Los usuarios solo consultan su empresa o las de su grupo empresarial.</li></ul></section>
+
+<section id="exportar"><h2>4. Exportar</h2>
+<p class="lead">Botón <b>Exportar</b>, igual que en los demás informes, con el logo de la empresa y la paleta elegida:</p><ul><li><b>Excel:</b> la tabla consultada, con los filtros aplicados.</li><li><b>Enviar por correo:</b> a usted y/o a otras personas (hasta 10), con el Excel adjunto; el envío queda en la auditoría.</li></ul><p class="note">Este informe es una grilla de datos, por eso no tiene salida en PDF ni imagen.</p></section>
+
+<section id="faq"><h2>5. Preguntas frecuentes</h2><details><summary>Sale «Sin datos», ¿qué hago?</summary><p>Ejecute el modelo correspondiente en Datos → Ejecución de modelos para la empresa y el escenario elegidos, o amplíe los filtros.</p></details><details><summary>¿Puedo consultar varias tablas a la vez?</summary><p>Sí: elija varias en el selector o «Todas las tablas».</p></details><details><summary>¿Por qué no puedo ver la empresa de otro cliente?</summary><p>Porque cada usuario solo accede a su empresa y a las de su grupo empresarial.</p></details><details><summary>¿El Excel incluye los filtros que apliqué?</summary><p>Sí, exporta la tabla consultada con sus filtros.</p></details><details><summary>¿Qué diferencia hay con la Línea de tiempo?</summary><p>El Informe de modelos muestra las filas tal cual; la Línea de tiempo grafica una variable a lo largo de los meses y permite compararla entre escenarios.</p></details></section>
+
+</main>
+</body></html>

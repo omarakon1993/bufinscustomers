@@ -12,6 +12,7 @@
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
 <link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
 <link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
@@ -91,7 +92,8 @@
 
     @await Html.PartialAsync("_PageHeader", new ViewDataDictionaryEx(ViewData) {
         { "Icon", "fas fa-chart-line" }, { "Title", Resources.Strings.LineaTiempo_PageTitle },
-        { "Source", Resources.Strings.Common_ModeloBufinsTag } })
+        { "Source", Resources.Strings.Common_ModeloBufinsTag },
+        { "DocId", "ltDocBtn" }, { "DocTooltip", Resources.Strings.LineaTiempo_DocumentacionTooltip } })
 
     @Html.AntiForgeryToken()
 
@@ -390,6 +392,7 @@
 </div>
 
 @await Html.PartialAsync("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+@await Html.PartialAsync("_DocumentacionVisor", Resources.Strings.LineaTiempo_Doc_ModalTitulo)
 
 @section scripts {
 <script src="~/Assets/js/chart.umd.min.js"></script>
@@ -399,6 +402,7 @@
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/empresa-logo.js")"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
+<script src="~/Assets/js/doc-visor.js"></script>
 <script src="~/Assets/js/rango-atajos.js"></script>
 <script>
 (function () {
@@ -715,6 +719,7 @@
             pills: function () { return [$('#ltChartTitle').text(), $('#ltChartSubtitle').data('completo') || $('#ltChartSubtitle').text()]; },
             textos: EXP_T
         });
+        DocVisor.init({ boton: '#ltDocBtn', url: '@Url.Action("Ver", "Documentacion", new { clave = "linea-tiempo" })' });
         ExportMenu.init('ltExp', {
             acciones: {
                 excel: exportar,

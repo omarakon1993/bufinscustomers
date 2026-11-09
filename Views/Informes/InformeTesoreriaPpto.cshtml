@@ -15,6 +15,7 @@
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-pyg.css")" rel="stylesheet" />
 <link href="~/Assets/css/informe-tesoreria.css" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/comentarios-gestion.css")" rel="stylesheet" />
@@ -28,6 +29,7 @@
             <i class="fas fa-vault powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@T("TesPpto_PageTitle")</h1>
             @await Html.PartialAsync("_ModeloBufinsTag")
+            <button type="button" class="header-tag-doc" id="tesDocBtn" title="@Resources.Strings.TesPpto_DocumentacionTooltip"><i class="fas fa-book"></i>@Resources.Strings.Common_DocumentacionTag</button>
         </div>
     </div>
 
@@ -342,6 +344,7 @@
 </div>
 
 @await Html.PartialAsync("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+@await Html.PartialAsync("_DocumentacionVisor", Resources.Strings.TesPpto_Doc_ModalTitulo)
 
 @section scripts {
 <script src="~/Assets/js/select2/select2.min.js"></script>
@@ -353,6 +356,7 @@
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/comentarios-gestion.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
+<script src="~/Assets/js/doc-visor.js"></script>
 <script src="~/Assets/js/bufins-markdown.js"></script>
 <script src="~/Assets/js/rango-atajos.js"></script>
 
@@ -1642,6 +1646,7 @@
             pills: function () { return [$('#tesTituloEmpresa').text()].concat($('#tesPanelResultado .pyg2-chip').map(function () { return $(this).text(); }).get()); },
             textos: EXP_T
         });
+        DocVisor.init({ boton: '#tesDocBtn', url: '@Url.Action("Ver", "Documentacion", new { clave = "tesoreria" })' });
         ExportMenu.init('tesExp', {
             acciones: { excel: exportarExcel, pdf: generarPdf, imagen: copiarImagen, correo: function () { if (_tes.reporteActual) correo.abrir(); } },
             textos: EXP_T

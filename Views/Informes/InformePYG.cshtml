@@ -11,6 +11,7 @@
 <link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-pyg.css")" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/comentarios-gestion.css")" rel="stylesheet" />
@@ -24,6 +25,7 @@
             <i class="fas fa-chart-line powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@Resources.Strings.PYG_PageTitle</h1>
             @await Html.PartialAsync("_ModeloBufinsTag")
+            <button type="button" class="header-tag-doc" id="pygDocBtn" title="@Resources.Strings.PYG_DocumentacionTooltip"><i class="fas fa-book"></i>@Resources.Strings.Common_DocumentacionTag</button>
         </div>
     </div>
 
@@ -372,6 +374,7 @@
 </div>
 
 @await Html.PartialAsync("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+@await Html.PartialAsync("_DocumentacionVisor", Resources.Strings.PYG_Doc_ModalTitulo)
 
 @section scripts {
 <script src="~/Assets/js/select2/select2.min.js"></script>
@@ -383,6 +386,7 @@
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/comentarios-gestion.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
+<script src="~/Assets/js/doc-visor.js"></script>
 <script src="~/Assets/js/bufins-markdown.js"></script>
 <script src="~/Assets/js/rango-atajos.js"></script>
 
@@ -2212,6 +2216,7 @@
             pills: function () { return [$('#pygTituloEmpresa').text()].concat($('#pygPanelResultado .pyg2-chip').map(function () { return $(this).text(); }).get()); },
             textos: EXP_T
         });
+        DocVisor.init({ boton: '#pygDocBtn', url: '@Url.Action("Ver", "Documentacion", new { clave = "pyg" })' });
         ExportMenu.init('pygExp', {
             acciones: {
                 excel: exportarExcelPYG, pdf: generarPdf, imagen: copiarImagenPYG,

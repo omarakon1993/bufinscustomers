@@ -10,6 +10,8 @@
     var subtitle = ViewData["Subtitle"] as string;
     var modelo = ViewData["Model"] as string;
     var source = ViewData["Source"] as string;
+    var docId = ViewData["DocId"] as string;
+    var docTooltip = ViewData["DocTooltip"] as string;
 }
 <div class="page-hdr">
     <span class="page-hdr-icon"><i class="@icon"></i></span>
@@ -24,7 +26,7 @@
     {
         <h1>@title</h1>
     }
-    @if (!string.IsNullOrEmpty(modelo) || !string.IsNullOrEmpty(source))
+    @if (!string.IsNullOrEmpty(modelo) || !string.IsNullOrEmpty(source) || !string.IsNullOrEmpty(docId))
     {
         <div class="page-hdr-pills">
             @if (!string.IsNullOrEmpty(modelo))
@@ -34,6 +36,10 @@
             @if (!string.IsNullOrEmpty(source))
             {
                 <span class="hdr-pill"><i class="fas fa-database"></i>@source</span>
+            }
+            @if (!string.IsNullOrEmpty(docId))
+            {
+                <button type="button" class="header-tag-doc" id="@docId" title="@docTooltip"><i class="fas fa-book"></i>@Resources.Strings.Common_DocumentacionTag</button>
             }
         </div>
     }
