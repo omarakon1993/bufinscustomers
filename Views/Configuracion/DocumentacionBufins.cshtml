@@ -4,6 +4,9 @@
     var catList = (System.Collections.Generic.List<bufinscustomers.Controllers.CategoriaDocumentoVM>)ViewBag.Categorias;
     var disponibles = (System.Collections.Generic.List<string>)ViewBag.Disponibles;
     bool ingles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
+    bool esSuper = (bool)(ViewBag.EsSuperAdmin ?? false);
+    var restringidos = (System.Collections.Generic.List<string>)(ViewBag.Restringidos ?? new System.Collections.Generic.List<string>());
+    bool accesoDisp = (bool)(ViewBag.AccesoDisponible ?? false);
 }
 
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
@@ -23,6 +26,12 @@
     .dbf-badge.gen { background: #eeebff; color: #583AFF; }
     .dbf-badge.menu { background: #e0f7f6; color: #0b7f79; }
     .dbf-badge.off { background: #fef2f2; color: #b91c1c; }
+    .dbf-badge.sa { background: #fff4e5; color: #b45309; }
+    .dbf-acceso { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: .74rem; font-weight: 700; color: #4b5563; cursor: pointer; }
+    .dbf-acceso input { width: 15px; height: 15px; margin: 0; cursor: pointer; accent-color: #583AFF; }
+    .dbf-acceso.off { opacity: .55; cursor: not-allowed; }
+    .dbf-acceso.off input { cursor: not-allowed; }
+    .dbf-aviso { margin: 0 0 14px; padding: 10px 14px; border-radius: 10px; background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; font-size: .82rem; }
     .dbf-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid #eef0f6; padding-top: 10px; }
     .dbf-fecha { font-size: .72rem; color: #8a8fa8; }
     .dbf-vacio { display: none; }
@@ -73,6 +82,12 @@
         </div>
     </div>
 
+    @Html.AntiForgeryToken()
+    @if (esSuper && !accesoDisp)
+    {
+        <div class="dbf-aviso"><i class="fas fa-exclamation-triangle mr-1"></i>@Resources.Strings.DocBuf_AccesoSinTabla</div>
+    }
+
     @foreach (var c in catList)
     {
         var docs = Model.Where(d => d.Categoria == c.Id).OrderBy(d => (ingles && !string.IsNullOrEmpty(d.TituloEn)) ? d.TituloEn : d.Titulo).ToList();
@@ -94,6 +109,10 @@
                             {
                                 <span class="dbf-badge gen"><i class="fas fa-globe"></i>@Resources.Strings.DocBuf_BadgeGeneral</span>
                             }
+                            @if (esSuper && restringidos.Contains(d.Clave))
+                            {
+                                <span class="dbf-badge sa" data-sa-badge="@d.Clave"><i class="fas fa-user-shield"></i>@Resources.Strings.DocBuf_BadgeSoloSuperAdmin</span>
+                            }
                             @if (!ok)
                             {
                                 <span class="dbf-badge off"><i class="fas fa-exclamation-triangle"></i>@Resources.Strings.DocBuf_NoDisponible</span>
@@ -102,6 +121,13 @@
                         <h4>@((ingles && !string.IsNullOrEmpty(d.TituloEn)) ? d.TituloEn : d.Titulo)</h4>
                         <p>@((ingles && !string.IsNullOrEmpty(d.DescripcionEn)) ? d.DescripcionEn : d.Descripcion)</p>
                         <div class="dbf-foot">
+                            @if (esSuper)
+                            {
+                                <label class="dbf-acceso@(accesoDisp ? "" : " off")" title="@Resources.Strings.DocBuf_AccesoTooltip">
+                                    <input type="checkbox" class="dbf-sa" data-clave="@d.Clave" @(restringidos.Contains(d.Clave) ? "checked" : "") @(accesoDisp ? "" : "disabled") />
+                                    @Resources.Strings.DocBuf_BadgeSoloSuperAdmin
+                                </label>
+                            }
                             <span class="dbf-fecha"><i class="far fa-calendar mr-1"></i>@string.Format(Resources.Strings.DocBuf_Actualizado, d.Actualizado.ToString(ingles ? "MMM d, yyyy" : "dd/MM/yyyy"))</span>
                             <button type="button" class="btn btn-sm btn-modern-gradient dbf-abrir" data-url="@Url.Action("Ver", "DocumentacionBufins", new { clave = d.Clave })" data-titulo="@((ingles && !string.IsNullOrEmpty(d.TituloEn)) ? d.TituloEn : d.Titulo)" @(ok ? "" : "disabled")>
                                 <i class="fas fa-book-open mr-1"></i>@Resources.Strings.DocBuf_Abrir
@@ -144,6 +170,27 @@
             $('#dbfBuscar').on('input', filtrar);
             $('#dbfCategoria, #dbfAlcance').on('change', filtrar);
             $('#dbfLimpiar').on('click', function () { $('#dbfBuscar').val(''); $('#dbfCategoria').val(''); $('#dbfAlcance').val(''); filtrar(); });
+
+            // Super Admin: marcar / desmarcar un documento como «solo Super Admin»
+            $(document).on('change', '.dbf-sa', function () {
+                var $c = $(this), clave = $c.data('clave'), valor = $c.is(':checked');
+                $c.prop('disabled', true);
+                $.ajax({
+                    url: '@Url.Action("GuardarAcceso", "DocumentacionBufins")', type: 'POST',
+                    headers: { 'RequestVerificationToken': $('input[name=__RequestVerificationToken]').first().val() },
+                    data: { clave: clave, soloSuperAdmin: valor }
+                }).done(function (r) {
+                    if (!r || !r.exito) { $c.prop('checked', !valor); notificar(r && r.mensaje ? r.mensaje : '@Resources.Strings.Common_Error', false); return; }
+                    var $card = $c.closest('.dbf-doc'), $b = $card.find('[data-sa-badge]');
+                    if (valor && !$b.length) $card.find('.dbf-badges').append('<span class="dbf-badge sa" data-sa-badge="' + clave + '"><i class="fas fa-user-shield"></i> @Resources.Strings.DocBuf_BadgeSoloSuperAdmin</span>');
+                    if (!valor) $b.remove();
+                    notificar(r.mensaje, true);
+                }).fail(function () { $c.prop('checked', !valor); notificar('@Resources.Strings.Common_Error', false); })
+                  .always(function () { $c.prop('disabled', false); });
+            });
+            function notificar(msg, ok) {
+                if (window.Swal) Swal.fire({ toast: true, position: 'top-end', icon: ok ? 'success' : 'error', title: msg, showConfirmButton: false, timer: 2600 });
+            }
 
             // Mismo visor (modal) que la documentación de los informes: se abre el documento elegido.
             $(document).on('click', '.dbf-abrir', function () {

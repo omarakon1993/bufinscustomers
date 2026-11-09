@@ -93,7 +93,7 @@
     @await Html.PartialAsync("_PageHeader", new ViewDataDictionaryEx(ViewData) {
         { "Icon", "fas fa-chart-line" }, { "Title", Resources.Strings.LineaTiempo_PageTitle },
         { "Source", Resources.Strings.Common_ModeloBufinsTag },
-        { "DocId", "ltDocBtn" }, { "DocTooltip", Resources.Strings.LineaTiempo_DocumentacionTooltip } })
+        { "DocId", "ltDocBtn" }, { "DocTooltip", Resources.Strings.LineaTiempo_DocumentacionTooltip }, { "DocClave", "linea-tiempo" } })
 
     @Html.AntiForgeryToken()
 

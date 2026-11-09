@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentation: Monthly management report</title>
+<style>
+:root{--bg:#f6f5fb;--card:#fff;--ink:#1c1738;--ink2:#5b5678;--line:#e3e0f1;--brand:#583aff;--chip:#efecff;--ok:#15803d;--warn:#a16207;--mid:#c2410c;--bad:#b91c1c;--grad:linear-gradient(90deg,#6366F1 0%,#3B82F6 35%,#06B6D4 70%,#01E1D7 100%)}
+@media (prefers-color-scheme:dark){:root{--bg:#120a2b;--card:#1a1240;--ink:#efecff;--ink2:#a9a3cc;--line:#2d2460;--brand:#8f7bff;--chip:#271d5c;--ok:#3ddc97;--warn:#fbbf24;--mid:#fb923c;--bad:#ff7a6b}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "Segoe UI",system-ui,sans-serif}
+header{background:var(--grad);color:#fff;padding:34px 18px 28px}.w{max-width:1040px;margin:0 auto;padding:0 18px}
+header h1{margin:0 0 6px;font-size:27px}header p{margin:0;opacity:.95;max-width:720px}
+nav{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}nav .w{display:flex;gap:6px;overflow-x:auto;padding-top:8px;padding-bottom:8px}
+nav a{white-space:nowrap;text-decoration:none;color:var(--ink2);font-size:13px;padding:5px 10px;border-radius:999px}nav a:hover{background:var(--chip);color:var(--ink)}
+section{margin:34px 0}h2{font-size:21px;margin:0 0 6px}h3{font-size:16px;margin:20px 0 8px;color:var(--brand)}
+.lead{color:var(--ink2);margin:0 0 12px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px}
+.g2{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:760px){.g2{grid-template-columns:1fr}}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{background:var(--grad);color:#fff;text-align:left;padding:8px 10px;white-space:nowrap}td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
+td.n{font-weight:700;white-space:nowrap}td.f{font-family:Consolas,monospace;font-size:12.5px}td.r{color:var(--ink2);font-size:12.5px}
+figure{margin:12px 0}figure img{width:100%;border:1px solid var(--line);border-radius:12px;display:block}figcaption{font-size:12.5px;color:var(--ink2);margin-top:5px}
+.note{border-left:4px solid #d97706;background:var(--card);padding:10px 14px;border-radius:8px;color:var(--ink2)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}.dot.v{background:#16a34a}.dot.a{background:#eab308}.dot.o{background:#f97316}.dot.r{background:#dc2626}.dot.gr{background:#94a3b8}
+.ficha{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 16px;margin:10px 0}.ficha h4{margin:0 0 4px;font-size:15px}.ficha .fam{font-size:11px;color:var(--brand);font-weight:700;margin-left:8px;text-transform:uppercase}
+.ficha p{margin:4px 0;color:var(--ink2);font-size:13.5px}.regla{border-left:3px solid var(--brand);padding-left:10px;color:var(--ink)!important}
+code{background:var(--chip);padding:1px 6px;border-radius:6px;font-size:12.5px}ul{padding-left:20px;color:var(--ink2)}li{margin:3px 0}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 14px;margin:8px 0}summary{cursor:pointer;font-weight:700}
+</style></head><body>
+<header><div class="w"><h1>Monthly management report</h1><p>The month-end close in a single document: results, balance sheet, cash, indicators, business lines and comments.</p></div></header>
+<nav><div class="w"><a href="#para">What it is for</a><a href="#pantalla">The screen</a><a href="#datos">Where the figures come from</a><a href="#lectura">How to read it</a><a href="#comentarios">Comments</a><a href="#ia">AI</a><a href="#exportar">Export</a><a href="#faq">FAQ</a></div></nav>
+<main class="w">
+
+<section id="para"><h2>1. What it is for</h2>
+<p class="lead">It is the <b>month-end close in a single document</b>: what management needs to see every month without opening five reports. It brings together results against the budget, balance sheet, cash, indicators that need attention, business lines and the team’s comments, with an AI-written summary at the top.</p>
+<div class="g2"><div class="card"><b>For the manager or owner</b><ul><li>How the month closed against the budget and last year.</li><li>The cash position and the focus of the month.</li></ul></div>
+<div class="card"><b>For the person preparing the close</b><ul><li>A single PDF or Excel file to send to the board or the partners.</li><li>The comments from all the close reports in one place.</li></ul></div></div></section>
+
+<section id="pantalla"><h2>2. The screen</h2>
+<p class="lead">Choose the company, the scenario and the <b>closing month</b> (the list shows the months with results, the most recent first). There is no range: it is a single month. You can also choose the report’s color palette.</p>
+<div class="tw"><table><tr><th>Section</th><th>What it shows</th><th>Which report it comes from</th></tr><tr><td><b>Month summary (AI)</b></td><td>Three lines: result, cash and balance sheet, and focus of the month.</td><td>All sections</td></tr><tr><td><b>Results of the month</b></td><td>Revenue, EBITDA and net profit of the month against the budget and last year, and the year to date.</td><td>Income statement (P&amp;L)</td></tr><tr><td><b>Balance sheet at close</b></td><td>Total assets, working capital, current ratio and leverage, against last year’s close, and whether the balance sheet balances.</td><td>Balance sheet</td></tr><tr><td><b>Cash of the month</b></td><td>Opening cash, net flow of the month against the budget, operating free cash flow, closing cash and whether it reconciles with the balance sheet.</td><td>Cash flow</td></tr><tr><td><b>Indicators that need attention</b></td><td>How many indicators there are in each traffic-light color and the most serious reds and oranges.</td><td>Indicators report</td></tr><tr><td><b>Business lines</b></td><td>Revenue, share and operating margin of the month’s lines.</td><td>Business line profitability</td></tr><tr><td><b>Management comments</b></td><td>The team’s comments on this close, from all the reports.</td><td>Management comments</td></tr></table></div></section>
+
+<section id="datos"><h2>3. Where the figures come from</h2>
+<p class="lead">This report <b>does not calculate anything of its own</b>: it uses exactly the same calculations as each report, applied to a single month. That is why a figure here matches the one on the original screen. Everything comes from the model tables, so there is data only after the models have been run.</p>
+<ul><li>Each section is independent: if one has no data (for example the company does not use business lines), it appears as “no data” and the others are shown normally.</li>
+<li>Results are compared against the <b>budget</b> and <b>last year</b>; the balance sheet against <b>last year’s close</b>.</li></ul></section>
+
+<section id="lectura"><h2>4. How to read it</h2>
+<ul><li><b>Green and red</b> in the variances: green when the change is favorable (more revenue, more profit, less leverage) and red when it is unfavorable.</li>
+<li><b>Year to date</b>: what has accumulated in the year up to the closing month, against the accumulated budget.</li>
+<li><b>Closing cash matches the balance sheet</b>: the month’s flow explains the change in the balance sheet cash. If it does not match, check the January loads or the cash items of previous months.</li>
+<li><b>Indicators needing attention</b> uses the company’s thresholds; if an administrator adjusted them, the traffic light already reflects them.</li></ul></section>
+
+<section id="comentarios"><h2>5. Management comments</h2>
+<p class="lead">This card shows the comments from <b>all the reports</b> for the chosen closing month, with the source report of each one. New comments written here are saved as “Monthly management report”. All users of the company can write and read them; only the author or an administrator can edit or delete them. The comments are included in the PDF and the Excel file.</p></section>
+
+<section id="ia"><h2>6. AI reading</h2>
+<ul><li>The <b>Generate</b> button produces three lines: <b>Result</b>, <b>Cash and balance sheet</b> and <b>Focus of the month</b>. “Ask this report” answers free-form questions.</li>
+<li><b>What is sent to the AI:</b> only the already-calculated figures of the close; no detailed accounting data and nothing from other tables is sent.</li>
+<li>It counts against the company’s AI budget; if AI is turned off for the company, the block does not appear.</li></ul></section>
+
+<section id="exportar"><h2>7. Export</h2>
+<ul><li><b>Excel:</b> sheet “Summary” (results, balance sheet and cash), “Attention and lines” and “Comments”.</li>
+<li>Two-page landscape <b>PDF</b>: summary with AI, results, balance sheet and cash; and indicators needing attention, lines and comments.</li>
+<li><b>Copy as image</b> and <b>Send by email</b> (with the Excel and PDF attached; the sending is recorded in the audit log). The company logo and palette are respected in every output.</li></ul></section>
+
+<section id="faq"><h2>8. Frequently asked questions</h2><details><summary>The month I am looking for does not appear</summary><p>The list shows only months with revenue in the Income statement. Run the company’s models and choose the company again.</p></details><details><summary>A section says “no data”</summary><p>That part of the model (balance sheet, flow, indicators or lines) has no information for the month. The other sections are not affected.</p></details><details><summary>Why are there no charts in the PDF?</summary><p>It is a quick-read document: figures and tables. The charts are in each report.</p></details><details><summary>Can I choose several months?</summary><p>No: it is the close of one month. For a range use the individual reports.</p></details><details><summary>Do the figures match the other reports?</summary><p>Yes, they use the same calculations applied to the chosen month.</p></details></section>
+
+</main>
+</body></html>

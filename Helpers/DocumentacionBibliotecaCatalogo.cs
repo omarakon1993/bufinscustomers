@@ -33,6 +33,8 @@ namespace bufinscustomers.Helpers
         public string Menu;
         /// <summary>Fecha de la última actualización del contenido (informativa).</summary>
         public DateTime Actualizado;
+        /// <summary>Valor por defecto de «solo Super Admin» cuando no hay una fila en <c>dbo.DocumentacionAcceso</c> (se cambia desde la biblioteca).</summary>
+        public bool SoloSuperAdminPorDefecto;
     }
 
     /// <summary>
@@ -47,12 +49,14 @@ namespace bufinscustomers.Helpers
         private const string Seguridad = "~/App_Data/Documentacion/Seguridad/";
         private const string Informes = "~/App_Data/Documentacion/Informes/";
         private const string Cargues = "~/App_Data/Documentacion/Cargues/";
+        private const string Tecnica = "~/App_Data/Documentacion/Tecnica/";
 
         public static readonly List<CategoriaDocumento> Categorias = new List<CategoriaDocumento>
         {
             new CategoriaDocumento { Id = "seguridad",     Icono = "fas fa-shield-alt" },
             new CategoriaDocumento { Id = "informes",      Icono = "fas fa-chart-line" },
             new CategoriaDocumento { Id = "datos",         Icono = "fas fa-file-upload" },
+            new CategoriaDocumento { Id = "tecnica",       Icono = "fas fa-microchip" },
         };
 
         public static readonly List<DocumentoBiblioteca> Todos = new List<DocumentoBiblioteca>
@@ -61,13 +65,13 @@ namespace bufinscustomers.Helpers
                 Titulo = "Blindaje del inicio de sesión · Doble factor",
                 Descripcion = "Cómo se protege el acceso: doble factor con app autenticadora y con passkeys, recuperación por solicitud aprobada por un Super Admin, administración y decisiones de diseño.",
                 TituloEn = "Login hardening · Two-factor authentication", DescripcionEn = "How access is protected: two-factor with an authenticator app and passkeys, recovery through a request approved by a Super Admin, administration and design decisions.", MenuEn = "",
-                EsDeMenu = false, Menu = "", Actualizado = new DateTime(2026, 10, 15) },
+                EsDeMenu = false, Menu = "", Actualizado = new DateTime(2026, 10, 15) , SoloSuperAdminPorDefecto = true },
 
             new DocumentoBiblioteca { Clave = "seguridad-ciberseguridad", Ruta = Seguridad + "Ciberseguridad_BUFINS.html", Categoria = "seguridad",
                 Titulo = "Documentación oficial de ciberseguridad",
                 Descripcion = "Estado de la seguridad de BUFINS: qué controles están implementados, los hallazgos de la revisión con lo ya corregido y lo pendiente, y la hoja de ruta.",
                 TituloEn = "Official cybersecurity documentation", DescripcionEn = "The state of BUFINS security: which controls are in place, the findings of the review with what is already fixed and what is pending, and the roadmap.", MenuEn = "",
-                EsDeMenu = false, Menu = "", Actualizado = new DateTime(2026, 10, 16) },
+                EsDeMenu = false, Menu = "", Actualizado = new DateTime(2026, 10, 16) , SoloSuperAdminPorDefecto = true },
 
             new DocumentoBiblioteca { Clave = "informe-indicadores", Ruta = Informes + "Informe_Indicadores.html", Categoria = "informes",
                 Titulo = "Informe de indicadores",
@@ -95,7 +99,7 @@ namespace bufinscustomers.Helpers
             new DocumentoBiblioteca { Clave = "cargues-auditoria", Ruta = Cargues + "Auditoria_Cargues_Blindaje.html", Categoria = "datos",
                 Titulo = "Historial de cargues y protección de los datos",
                 Descripcion = "Guía de uso: cómo Bufins protege los datos al cargar un Excel, cómo leer las pestañas Versiones y Registro y cómo deshacer un cargue.",
-                EsDeMenu = true, Menu = "Datos → Historial de cargues", Actualizado = new DateTime(2026, 10, 17) },
+                EsDeMenu = true, Menu = "Datos → Historial de cargues", Actualizado = new DateTime(2026, 10, 17) , SoloSuperAdminPorDefecto = true },
 
 
             new DocumentoBiblioteca { Clave = "informe-pyg", Ruta = Informes + "Informe_PYG.html", Categoria = "informes",
@@ -139,6 +143,12 @@ namespace bufinscustomers.Helpers
                 Descripcion = "Cómo consultar, filtrar y exportar las tablas que genera la ejecución de modelos.",
                 DescripcionEn = "How to query, filter and export the tables produced by running the models.",
                 EsDeMenu = true, Menu = "Informes → Informe de modelos", MenuEn = "Reports → Models report", Actualizado = new DateTime(2026, 11, 8) },
+
+            new DocumentoBiblioteca { Clave = "tecnica-bufins", Ruta = Tecnica + "Documentacion_Tecnica_BUFINS.html", Categoria = "tecnica",
+                Titulo = "Documentación técnica de BUFINS", TituloEn = "BUFINS technical documentation",
+                Descripcion = "Especificaciones técnicas del sistema: plataforma y versiones, arquitectura, datos, módulos y funcionalidades, ciberseguridad, operación y publicación.",
+                DescripcionEn = "Technical specifications of the system: platform and versions, architecture, data, modules and features, cybersecurity, operations and deployment.",
+                EsDeMenu = false, Menu = "", MenuEn = "", Actualizado = new DateTime(2026, 11, 8), SoloSuperAdminPorDefecto = true },
         };
 
         public static DocumentoBiblioteca Buscar(string clave)

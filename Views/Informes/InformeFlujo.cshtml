@@ -59,7 +59,7 @@
             <i class="fas @(tipo == "Caja" ? "fa-money-bill-wave" : "fa-arrow-right-arrow-left") powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@T(P + "PageTitle")</h1>
             @await Html.PartialAsync("_ModeloBufinsTag")
-            <button type="button" class="header-tag-doc" id="flDocBtn" title="@T(P + "DocumentacionTooltip")"><i class="fas fa-book"></i>@Resources.Strings.Common_DocumentacionTag</button>
+            @await Html.PartialAsync("_DocumentacionCapsula", new bufinscustomers.Models.DocCapsulaVM { Id = "flDocBtn", Tooltip = T(P + "DocumentacionTooltip"), Clave = (tipo == "Caja" ? "flujo-caja" : "flujo-efectivo") })
         </div>
     </div>
 

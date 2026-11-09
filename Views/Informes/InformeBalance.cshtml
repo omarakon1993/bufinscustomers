@@ -26,7 +26,7 @@
             <i class="fas fa-scale-balanced powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@Resources.Strings.BAL_PageTitle</h1>
             @await Html.PartialAsync("_ModeloBufinsTag")
-            <button type="button" class="header-tag-doc" id="balDocBtn" title="@Resources.Strings.BAL_DocumentacionTooltip"><i class="fas fa-book"></i>@Resources.Strings.Common_DocumentacionTag</button>
+            @await Html.PartialAsync("_DocumentacionCapsula", new bufinscustomers.Models.DocCapsulaVM { Id = "balDocBtn", Tooltip = Resources.Strings.BAL_DocumentacionTooltip, Clave = "balance" })
         </div>
     </div>
 

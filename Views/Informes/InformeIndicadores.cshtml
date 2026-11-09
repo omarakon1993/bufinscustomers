@@ -44,7 +44,7 @@
             <i class="fas fa-tachometer-alt powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@T("Ind_PageTitle")</h1>
             @await Html.PartialAsync("_ModeloBufinsTag")
-            <button type="button" class="header-tag-doc" id="indDocBtn" title="@T("Ind_DocumentacionTooltip")"><i class="fas fa-book"></i>@T("Common_DocumentacionTag")</button>
+            @await Html.PartialAsync("_DocumentacionCapsula", new bufinscustomers.Models.DocCapsulaVM { Id = "indDocBtn", Tooltip = T("Ind_DocumentacionTooltip"), Clave = "indicadores" })
         </div>
     </div>
 

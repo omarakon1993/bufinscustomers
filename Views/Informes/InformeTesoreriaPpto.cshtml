@@ -29,7 +29,7 @@
             <i class="fas fa-vault powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@T("TesPpto_PageTitle")</h1>
             @await Html.PartialAsync("_ModeloBufinsTag")
-            <button type="button" class="header-tag-doc" id="tesDocBtn" title="@Resources.Strings.TesPpto_DocumentacionTooltip"><i class="fas fa-book"></i>@Resources.Strings.Common_DocumentacionTag</button>
+            @await Html.PartialAsync("_DocumentacionCapsula", new bufinscustomers.Models.DocCapsulaVM { Id = "tesDocBtn", Tooltip = Resources.Strings.TesPpto_DocumentacionTooltip, Clave = "tesoreria" })
         </div>
     </div>
 

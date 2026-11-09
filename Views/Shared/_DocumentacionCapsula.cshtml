@@ -1,0 +1,8 @@
+﻿@model bufinscustomers.Models.DocCapsulaVM
+@* Cápsula «Documentación» del título de un informe. Solo se pinta si el Super Admin no marcó ese documento como «solo Super Admin»
+   en la biblioteca Documentación BUFINS (el servidor lo vuelve a validar en DocumentacionController.Ver). El JS del informe liga
+   el botón con DocVisor.init; si el botón no existe, no pasa nada. *@
+@if (bufinscustomers.Helpers.DocumentacionCatalogo.PuedeVer(Model.Clave, bufinscustomers.Helpers.UsuarioSesionHelper.UsuarioActual))
+{
+    <button type="button" class="header-tag-doc" id="@Model.Id" title="@Model.Tooltip"><i class="fas fa-book"></i>@Resources.Strings.Common_DocumentacionTag</button>
+}
