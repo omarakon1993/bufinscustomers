@@ -239,10 +239,10 @@
                                     </h5>
                                 </div>
                                 <div class="categoria-acciones">
-                                    <button type="button" class="btn btn-modern-gradient" onclick="seleccionarCategoria('@categoriaId')">
+                                    <button type="button" class="btn btn-modern-gradient" onclick="seleccionarCategoria('@HttpUtility.JavaScriptStringEncode(categoriaId)')">
                                         @Resources.Strings.Perm_BtnTodas
                                     </button>
-                                    <button type="button" class="btn btn-modern-secondary" onclick="deseleccionarCategoria('@categoriaId')">
+                                    <button type="button" class="btn btn-modern-secondary" onclick="deseleccionarCategoria('@HttpUtility.JavaScriptStringEncode(categoriaId)')">
                                         @Resources.Strings.Perm_BtnNinguna
                                     </button>
                                 </div>

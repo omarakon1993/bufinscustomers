@@ -198,7 +198,7 @@
                                 <td class="col-acciones">
                                     <div class="btn-group" role="group" aria-label="@Resources.Strings.Common_ThAcciones">
                                         <button type="button" class="btn btn-sm btn-primary" title="@Resources.Strings.Emp_TitleEditar" data-toggle="modal" data-target="#editEmpresaModal"
-                                                onclick="setEditEmpresa(@empresa.Id, '@empresa.Nombre', '@empresa.Nit', '@empresa.Direccion', '@empresa.Telefono', '@empresa.Correo', '@empresa.Abreviatura', '@empresa.PaginaWeb', '@empresa.LogoVersion')">
+                                                onclick="setEditEmpresa(@empresa.Id, '@HttpUtility.JavaScriptStringEncode(empresa.Nombre)', '@HttpUtility.JavaScriptStringEncode(empresa.Nit)', '@HttpUtility.JavaScriptStringEncode(empresa.Direccion)', '@HttpUtility.JavaScriptStringEncode(empresa.Telefono)', '@HttpUtility.JavaScriptStringEncode(empresa.Correo)', '@HttpUtility.JavaScriptStringEncode(empresa.Abreviatura)', '@HttpUtility.JavaScriptStringEncode(empresa.PaginaWeb)', '@HttpUtility.JavaScriptStringEncode(empresa.LogoVersion)')">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         <button type="button" class="btn btn-sm btn-paleta" title="@Resources.Strings.PaletaCorp_BtnColores" aria-label="@Resources.Strings.PaletaCorp_BtnColores"
@@ -699,10 +699,14 @@
             }
             // el botón "editar" de esa fila conserva el estado actual para cuando se vuelva a abrir el modal
             var fila = celda && celda.parentNode;
-            var btn = fila && fila.querySelector('button[onclick^="setEditEmpresa"]');
+            // (con la CSP estricta el onclick llega como data-h-click: {"s":[{"f":"setEditEmpresa","a":[id, …, logoVersion]}]})
+            var btn = fila && fila.querySelector('button[data-h-click*="setEditEmpresa"]');
             if (btn) {
-                var oc = btn.getAttribute('onclick');
-                btn.setAttribute('onclick', oc.replace(/, '[^']*'\)$/, ", '" + (version || '') + "')"));
+                try {
+                    var h = JSON.parse(btn.getAttribute('data-h-click'));
+                    h.s[0].a[8] = version || '';
+                    btn.setAttribute('data-h-click', JSON.stringify(h));
+                } catch (e) { }
             }
         }
 
