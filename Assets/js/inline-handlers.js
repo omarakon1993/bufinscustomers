@@ -77,4 +77,18 @@
             if (limpio !== el.value) el.value = limpio;
         }
     }, false);
+
+    // Fragmentos HTML pedidos por AJAX (pestañas del hub de Auditoría, Historial de cargues…): se envía el nonce de ESTA página para
+    // que el servidor lo use en los <script> del fragmento; con otro nonce la CSP no los ejecutaría (Infra/CabecerasSeguridad.cs).
+    function nonceDePagina() {
+        var s = d.querySelector('script[nonce]');
+        return s ? (s.nonce || s.getAttribute('nonce') || '') : '';
+    }
+    if (w.jQuery) {
+        w.jQuery.ajaxPrefilter(function (opciones, original, xhr) {
+            if (opciones.crossDomain) return;
+            var n = nonceDePagina();
+            if (n) xhr.setRequestHeader('X-Csp-Nonce', n);
+        });
+    }
 })(window, document);

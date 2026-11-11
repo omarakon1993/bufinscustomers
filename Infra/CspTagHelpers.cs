@@ -25,7 +25,9 @@ namespace bufinscustomers
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {
-            if (output.Attributes.ContainsName("src") || output.Attributes.ContainsName("nonce")) return;
+            // También los <script src>: en un fragmento inyectado con jQuery, el archivo se descarga y se ejecuta como código en línea
+            // con el nonce del elemento; sin él la CSP lo bloquea.
+            if (output.Attributes.ContainsName("nonce")) return;
             var tipoAttr = output.Attributes["type"];
             if (tipoAttr != null)
             {

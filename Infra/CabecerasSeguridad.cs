@@ -74,14 +74,35 @@ namespace bufinscustomers
             }
         }
 
+        private static readonly System.Text.RegularExpressions.Regex FormatoNonce =
+            new System.Text.RegularExpressions.Regex("^[A-Za-z0-9+/]{22}==$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+        /// <summary>Nonce de la página que pide el fragmento (cabecera X-Csp-Nonce) o null si no aplica.</summary>
+        private static string NonceDePaginaAnfitriona(HttpRequest req)
+        {
+            string v = req.Headers["X-Csp-Nonce"];
+            if (string.IsNullOrEmpty(v) || !FormatoNonce.IsMatch(v)) return null;
+            string dest = req.Headers["Sec-Fetch-Dest"], sitio = req.Headers["Sec-Fetch-Site"];
+            if (!string.IsNullOrEmpty(dest) && dest != "empty") return null;
+            if (!string.IsNullOrEmpty(sitio) && sitio != "same-origin") return null;
+            return v;
+        }
+
         public Task InvokeAsync(HttpContext ctx)
         {
             bool estricta = Estricta();
             string nonce = null;
             if (estricta)
             {
-                var bytes = RandomNumberGenerator.GetBytes(16);
-                nonce = Convert.ToBase64String(bytes);
+                // Un fragmento pedido por AJAX (pestañas del hub de Auditoría, Historial de cargues…) se inyecta en una página que ya
+                // tiene SU nonce: sus <script> deben llevar ese mismo nonce o el navegador los bloquea. inline-handlers.js lo envía en
+                // X-Csp-Nonce; solo se acepta en peticiones fetch/XHR del propio sitio (un tercero no puede poner esa cabecera).
+                nonce = NonceDePaginaAnfitriona(ctx.Request);
+                if (nonce == null)
+                {
+                    var bytes = RandomNumberGenerator.GetBytes(16);
+                    nonce = Convert.ToBase64String(bytes);
+                }
                 ctx.Items[ClaveNonce] = nonce;
             }
 
