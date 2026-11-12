@@ -66,7 +66,8 @@ namespace bufinscustomers.Helpers
                     }
                 }
 
-                return null;
+                // ========== RECONSTRUCCIÓN TRAS UN REINICIO DEL SITIO ==========
+                return RestaurarSesionTrasReinicio(context);
             }
         }
 
@@ -79,18 +80,75 @@ namespace bufinscustomers.Helpers
             if (context?.Session == null || usuario == null) return;
 
             var now = DateTime.Now;
-            
+            CargarUsuarioEnSesion(context, usuario, now);
+
+            // Respaldo en BD (dbo.SesionesActivas) para sobrevivir a un reinicio del sitio. Nunca lanza.
+            new SesionPersistenteService().Registrar(context.Session.SessionID, usuario.Id, usuario.Clave, now);
+        }
+
+        private static void CargarUsuarioEnSesion(HttpContextCompat context, Usuarios usuario, DateTime loginTime)
+        {
             // Almacenar usuario completo en sesión
             context.Session[USUARIO_SESSION_KEY]    = usuario;
             context.Session[USUARIO_COMPAT_ID_KEY]  = usuario.Id;
             context.Session[USUARIO_COMPAT_OBJ_KEY] = usuario;
-            context.Session[LAST_ACTIVITY_KEY]      = now;
-            context.Session[LOGIN_TIME_KEY]         = now;
+            context.Session[LAST_ACTIVITY_KEY]      = DateTime.Now;
+            context.Session[LOGIN_TIME_KEY]         = loginTime;
 
             // Limpiar caché de permisos y sidebar de ambos idiomas
             context.Session.Remove(PERMISOS_CACHE_KEY);
             context.Session.Remove(MENU_SIDEBAR_ES_KEY);
             context.Session.Remove(MENU_SIDEBAR_EN_KEY);
+        }
+
+        // Cookies que ya se comprobaron sin éxito (huella → hasta cuándo no reintentar): evita una consulta por petición
+        // con cookies viejas (p. ej. tras cerrar sesión).
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, DateTime> _restauracionFallida =
+            new System.Collections.Concurrent.ConcurrentDictionary<string, DateTime>();
+        private const string ITEM_RESTAURACION_INTENTADA = "__bufins_restauracion_sesion";
+
+        /// <summary>
+        /// Si la cookie de sesión ya no tiene sesión en memoria (el proceso se reinició) pero existe un respaldo vigente en
+        /// dbo.SesionesActivas, recrea la sesión con el mismo identificador cargando el usuario DESDE LA BASE. No se reconstruye si
+        /// pasó la ventana de inactividad, si el usuario ya no existe o si su contraseña cambió desde el inicio de sesión. Los datos
+        /// de paso (reautenticación en curso, registro de passkey…) no se reconstruyen: se vuelven a pedir.
+        /// </summary>
+        private static Usuarios RestaurarSesionTrasReinicio(HttpContextCompat context)
+        {
+            try
+            {
+                if (context.Items.ContainsKey(ITEM_RESTAURACION_INTENTADA)) return null;   // una sola vez por petición
+                context.Items[ITEM_RESTAURACION_INTENTADA] = true;
+
+                if (!string.IsNullOrEmpty(context.Session.SessionID)) return null;          // ya hay sesión (anónima) en memoria
+                string idCookie = context.Session.IdCookie;
+                if (string.IsNullOrEmpty(idCookie) || idCookie.Length > 64) return null;
+
+                string huella = SesionPersistenteService.Huella(idCookie);
+                if (_restauracionFallida.TryGetValue(huella, out var hasta) && hasta > DateTime.Now) return null;
+
+                var svc = new SesionPersistenteService();
+                var reg = svc.ObtenerVigente(idCookie, SesionStore.TimeoutMinutos);
+                Usuarios usuario = reg == null ? null : ObtenerUsuarioPorId(reg.IdUsuario);
+                if (usuario == null || reg.HuellaClave != SesionPersistenteService.Huella(usuario.Clave))
+                {
+                    if (reg != null) svc.Eliminar(idCookie);
+                    if (_restauracionFallida.Count > 5000) _restauracionFallida.Clear();
+                    _restauracionFallida[huella] = DateTime.Now.AddMinutes(10);
+                    return null;
+                }
+
+                if (!context.Session.RestaurarDesdeCookie()) return null;
+                CargarUsuarioEnSesion(context, usuario, reg.FechaLogin);
+                svc.Tocar(idCookie);
+                AppLogger.Info("Sesión reconstruida tras reinicio del sitio para usuarioId=" + usuario.Id, "SesionPersistente");
+                return usuario;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Warn("No se pudo reconstruir la sesión: " + ex.GetType().Name + " " + ex.Message, "SesionPersistente");
+                return null;
+            }
         }
 
         /// <summary>
@@ -119,6 +177,7 @@ namespace bufinscustomers.Helpers
             if (context?.Session != null)
             {
                 context.Session[LAST_ACTIVITY_KEY] = DateTime.Now;
+                new SesionPersistenteService().Tocar(context.Session.SessionID);   // como mucho 1 escritura/min
             }
         }
 
@@ -167,6 +226,8 @@ namespace bufinscustomers.Helpers
             {
                 // Antes del Clear (después Session_End ya no los vería): cargues en revisión de esta sesión.
                 CargueLoteSesionHelper.DescartarAbiertos(context.Session);
+                // Cierre de sesión: el respaldo se borra YA (no esperar a la expulsión de memoria), para que no pueda reconstruirse.
+                new SesionPersistenteService().Eliminar(string.IsNullOrEmpty(context.Session.SessionID) ? context.Session.IdCookie : context.Session.SessionID);
                 context.Session.Clear();
                 context.Session.Abandon();
             }

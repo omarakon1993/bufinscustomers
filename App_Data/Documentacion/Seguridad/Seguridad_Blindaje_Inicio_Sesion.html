@@ -64,7 +64,8 @@ ol.steps li b{display:block}ol.steps li span{color:var(--ink2);font-size:13.5px}
 <tr><td class="n">HTTPS, cabeceras y cookies protegidas</td><td>Las cookies no son accesibles desde JavaScript y solo viajan cifradas.</td></tr>
 <tr><td class="n">Auditoría de accesos</td><td>Cada inicio de sesión (correcto, fallido o bloqueado) queda registrado con IP y fecha, sin llenar la bitácora de ruido de bots.</td></tr>
 <tr><td class="n">Recuperación de contraseña</td><td>Enlace de un solo uso que caduca en 1 hora y nunca revela si el correo existe.</td></tr>
-<tr><td class="n">Sesión</td><td>Se cierra tras 20 minutos sin actividad y su identificador se renueva al entrar.</td></tr></table></div></section>
+<tr><td class="n">Sesión</td><td>Se cierra tras 20 minutos sin actividad y su identificador se renueva al entrar.</td></tr>
+<tr><td class="n">Reinicios del sitio</td><td>Un reinicio del servidor no saca al usuario: la sesión se reconstruye desde la base (solo con la huella del identificador, dentro de los 20 minutos y si la contraseña no cambió). Un formulario de ingreso abierto desde antes del reinicio vuelve al inicio de sesión con el aviso «Tu sesión expiró», nunca a una página de error.</td></tr></table></div></section>
 
 <section id="doblefactor"><h2>3. El doble factor, explicado simple</h2>
 <p class="lead">Es pedir <b>dos pruebas distintas</b> de que eres tú: algo que <b>sabes</b> (tu contraseña) y algo que <b>tienes</b> (tu celular o tu dispositivo). Un atacante que robe tu contraseña no tiene tu celular.</p>

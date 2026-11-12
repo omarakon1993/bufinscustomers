@@ -15,7 +15,7 @@ using Newtonsoft.Json;
 
 namespace bufinscustomers.Controllers
 {
-    public class AccesoController : BaseController, IAlwaysRunResultFilter
+    public class AccesoController : BaseController
     {
         // A11: hash BCrypt (cost 12) señuelo — vector de prueba público del algoritmo. Solo se
         // usa para gastar el mismo tiempo de CPU que una verificación real cuando el identificador
@@ -28,39 +28,9 @@ namespace bufinscustomers.Controllers
         private static DateTime _ultimaPurgaAuditoria = DateTime.MinValue;
         private static readonly object _purgaAuditoriaLock = new object();
 
-        // Si el token anti-falsificación no se puede validar (típicamente porque el formulario
-        // de login quedó abierto en el navegador desde antes de que el proceso del servidor
-        // reiniciara/reciclara), no mostrar el error genérico: volver a Login con un mensaje claro.
-        public void OnResultExecuting(ResultExecutingContext filterContext)
-        {
-            if (filterContext.Result is Microsoft.AspNetCore.Mvc.Core.Infrastructure.IAntiforgeryValidationFailedResult)
-            {
-                System.Diagnostics.Trace.TraceWarning(
-                    "[AccesoController] Token anti-falsificación inválido en {0}.",
-                    filterContext.HttpContext.Request.Url);
-
-                // Peticiones AJAX (p. ej. ExtenderSesion): nunca redirigir — el cliente
-                // recibiría el HTML del login y lo interpretaría como una respuesta válida.
-                // Devolver JSON que el JS del layout ya sabe manejar.
-                if (filterContext.HttpContext.Request.IsAjaxRequest())
-                {
-                    filterContext.HttpContext.Response.StatusCode = 200;
-                    filterContext.Result = new JsonResult(new
-                    {
-                        success = false,
-                        sessionExpired = true,
-                        message = "",
-                        redirectUrl = Url.Action("Login", "Acceso")
-                    });
-                    return;
-                }
-
-                filterContext.Result = new RedirectResult(
-                    Url.Action("Login", "Acceso") + "?tokenExpirado=true");
-            }
-        }
-
-        public void OnResultExecuted(ResultExecutedContext filterContext) { }
+        // Token anti-falsificación inválido (formulario abierto desde antes de un reinicio del sitio):
+        // lo atiende el filtro global Filters/AntiforgeryFallidoFilter (vuelve a Login?tokenExpirado=true).
+        // En ASP.NET Core un filtro implementado en el controlador NO se ejecuta en ese caso.
 
         // GET: Acceso
         public ActionResult Login(bool tokenExpirado = false)
@@ -139,7 +109,21 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Login(Usuarios oUsuario)
         {
-            oUsuario.Clave = oUsuario.Clave.Trim();
+            // ASP.NET Core convierte los campos vacíos en null: sin esto, un envío sin clave o sin
+            // correo (p. ej. página restaurada con «atrás» que salta la validación JS) daba 500.
+            oUsuario ??= new Usuarios();
+            oUsuario.Correo = (oUsuario.Correo ?? "").Trim();
+            oUsuario.Clave = (oUsuario.Clave ?? "").Trim();
+            if (oUsuario.Correo.Length == 0)
+            {
+                ViewData["Mensaje"] = R("Login_ErrorEmail");
+                return View();
+            }
+            if (oUsuario.Clave.Length == 0)
+            {
+                ViewData["Mensaje"] = R("Login_ErrorPassword");
+                return View();
+            }
 
             // A7 / A14: Rate limiting por IP (persistente en BD) — rechaza IPs con demasiados
             // intentos fallidos.
@@ -1406,14 +1390,19 @@ namespace bufinscustomers.Controllers
             }
 
             var servicio = new ClaveInicialService();
-            if (!servicio.GuardarClaveYQuitarMarca(usuario.Id, HashearContrasena(nuevaClave)))
+            // Un solo hash: BCrypt da un resultado distinto en cada llamada y la sesión debe guardar el mismo que la base.
+            string nuevoHash = HashearContrasena(nuevaClave);
+            if (!servicio.GuardarClaveYQuitarMarca(usuario.Id, nuevoHash))
             {
                 ViewData["Error"] = R("CambioClaveInicial_ErrorGuardar");
                 return View("~/Views/Acceso/CambiarClaveInicial.cshtml");
             }
 
             usuario.DebeCambiarClave = false;
-            usuario.Clave = HashearContrasena(nuevaClave);
+            usuario.Clave = nuevoHash;
+            // El respaldo de la sesión (dbo.SesionesActivas) guarda la huella de la clave: se actualiza a la nueva.
+            new SesionPersistenteService().Registrar(Session.SessionID, usuario.Id, nuevoHash,
+                (UsuarioSesionHelper.ObtenerInfoSesion()?.TiempoLogin) ?? DateTime.Now);
             new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Editar,
                 "Cambio de contraseña obligatorio completado en el primer inicio de sesión",
                 usuario.Id, ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim(), usuario.IdEmpresa);

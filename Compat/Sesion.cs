@@ -40,7 +40,29 @@ namespace bufinscustomers.Compat
         {
             var bytes = new byte[24];
             using (var rng = RandomNumberGenerator.Create()) rng.GetBytes(bytes);
-            var s = new SesionDatos { Id = Convert.ToBase64String(bytes).Replace('+', '-').Replace('/', '_').TrimEnd('=') };
+            return CrearConId(Convert.ToBase64String(bytes).Replace('+', '-').Replace('/', '_').TrimEnd('='));
+        }
+
+        private static readonly object _lockRestaurar = new object();
+
+        /// <summary>
+        /// Vuelve a crear en memoria una sesión con el MISMO identificador que trae la cookie (reconstrucción tras un reinicio del
+        /// proceso; ver UsuarioSesionHelper). Si otra petición simultánea ya la creó, devuelve esa.
+        /// </summary>
+        public static SesionDatos Restaurar(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return null;
+            lock (_lockRestaurar)
+            {
+                SesionDatos existente;
+                if (Cache.TryGetValue(id, out existente)) return existente;
+                return CrearConId(id);
+            }
+        }
+
+        private static SesionDatos CrearConId(string id)
+        {
+            var s = new SesionDatos { Id = id };
             var opciones = new MemoryCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(TimeoutMinutos) };
             opciones.RegisterPostEvictionCallback((clave, valor, razon, estado) =>
             {
@@ -130,5 +152,23 @@ namespace bufinscustomers.Compat
         public int Timeout { get { return SesionStore.TimeoutMinutos; } set { SesionStore.TimeoutMinutos = value; } }
 
         public string SessionID { get { var s = Datos(false); return s == null ? "" : s.Id; } }
+
+        /// <summary>Identificador que trae la cookie, exista o no la sesión en memoria (p. ej. tras un reinicio del proceso).</summary>
+        public string IdCookie { get { return _ctx.Request.Cookies[SesionStore.NombreCookie] ?? ""; } }
+
+        /// <summary>
+        /// Recrea en memoria la sesión de la cookie actual (solo la llama UsuarioSesionHelper después de validar el respaldo en BD).
+        /// Devuelve false si ya existe una sesión en memoria para esta petición o no hay cookie.
+        /// </summary>
+        public bool RestaurarDesdeCookie()
+        {
+            if (Datos(false) != null) return false;
+            string id = IdCookie;
+            if (string.IsNullOrEmpty(id)) return false;
+            var s = SesionStore.Restaurar(id);
+            if (s == null) return false;
+            _ctx.Items[ItemKey] = s;
+            return true;
+        }
     }
 }

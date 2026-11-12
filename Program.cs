@@ -54,18 +54,32 @@ var dp = builder.Services.AddDataProtection().SetApplicationName("bufinscustomer
 // Solo se guardan las llaves en disco si la carpeta es realmente escribible (en el hosting de Conexcol la identidad del sitio puede no
 // tener permiso para crear archivos en App_Data\dpkeys). Si no lo es, las llaves viven en memoria: un reinicio del sitio invalida los
 // formularios abiertos (la sesion tambien se pierde), pero la aplicacion no cae.
-var carpetaLlaves = AppPaths.Map("~/App_Data/dpkeys");
-try
+// Orden de preferencia: 1) SQL Server (dbo.DataProtectionKeys, script Sql/045; llaves cifradas con la MachineKey), 2) disco, 3) memoria.
+var cadenaBd = bufinscustomers.Compat.ConfigurationManager.ConnectionStrings["DefaultConnection"]?.ConnectionString;
+if (!string.IsNullOrEmpty(cadenaBd) && bufinscustomers.Infra.DataProtectionSqlRepository.Disponible(cadenaBd))
 {
-    Directory.CreateDirectory(carpetaLlaves);
-    var prueba = Path.Combine(carpetaLlaves, Guid.NewGuid().ToString("N") + ".prueba");
-    File.WriteAllText(prueba, "ok");
-    File.Delete(prueba);
-    dp.PersistKeysToFileSystem(new DirectoryInfo(carpetaLlaves));
+    dp.AddKeyManagementOptions(o =>
+    {
+        o.XmlRepository = new bufinscustomers.Infra.DataProtectionSqlRepository(cadenaBd);
+        o.XmlEncryptor = new bufinscustomers.Infra.MachineKeyXmlEncryptor();
+    });
+    bufinscustomers.Helpers.AppLogger.Info("DataProtection: llaves en SQL Server (dbo.DataProtectionKeys).");
 }
-catch (Exception ex)
+else
 {
-    bufinscustomers.Helpers.AppLogger.Warn("DataProtection: la carpeta de llaves no es escribible (" + ex.GetType().Name + "); se usan llaves en memoria.");
+    var carpetaLlaves = AppPaths.Map("~/App_Data/dpkeys");
+    try
+    {
+        Directory.CreateDirectory(carpetaLlaves);
+        var prueba = Path.Combine(carpetaLlaves, Guid.NewGuid().ToString("N") + ".prueba");
+        File.WriteAllText(prueba, "ok");
+        File.Delete(prueba);
+        dp.PersistKeysToFileSystem(new DirectoryInfo(carpetaLlaves));
+    }
+    catch (Exception ex)
+    {
+        bufinscustomers.Helpers.AppLogger.Warn("DataProtection: la carpeta de llaves no es escribible (" + ex.GetType().Name + "); se usan llaves en memoria.");
+    }
 }
 
 builder.Services.AddControllersWithViews(o =>
@@ -76,6 +90,7 @@ builder.Services.AddControllersWithViews(o =>
     o.Filters.Add(new EscenariosViewBagFilter());
     o.Filters.Add(new CambioClaveObligatorioFilter());
     o.Filters.Add(new RegistroNavegacionFilter());
+    o.Filters.Add(new AntiforgeryFallidoFilter());   // token anti-falsificación inválido -> login/página de origen, no «500»
     o.MaxModelBindingCollectionSize = 100000;
 })
 .AddNewtonsoftJson(o =>
@@ -99,7 +114,12 @@ var app = builder.Build();
 AppHttp.Iniciar(app.Services.GetRequiredService<Microsoft.AspNetCore.Http.IHttpContextAccessor>());
 
 // Reemplaza a Global.asax Session_End: al expirar o abandonarse una sesion se descartan los cargues que dejo en revision.
-SesionStore.SesionTerminada = datos => bufinscustomers.Helpers.CargueLoteSesionHelper.DescartarAbiertos(datos);
+// Además se borra su respaldo en dbo.SesionesActivas (la sesión ya no debe poder reconstruirse tras un reinicio).
+SesionStore.SesionTerminada = datos =>
+{
+    bufinscustomers.Helpers.CargueLoteSesionHelper.DescartarAbiertos(datos);
+    new bufinscustomers.Services.SesionPersistenteService().Eliminar(datos.Id);
+};
 
 if (app.Environment.IsDevelopment()) app.UseDeveloperExceptionPage();
 else app.UseExceptionHandler("/Error");

@@ -102,6 +102,8 @@ footer{padding:26px 0 40px;color:var(--ink2);font-size:13px}
 <div class="card"><h3>Sesión y acceso</h3><ul>
 <li>Sesión nueva tras el login (<code>Session.Abandon</code> + token de un solo uso de 60 s): evita fijación de sesión.</li>
 <li>Cookies <code>HttpOnly</code> y <code>requireSSL</code>; sesión de 20 min con renovación silenciosa.</li>
+<li>La sesión sobrevive a un reinicio del sitio (<code>dbo.SesionesActivas</code>): se guarda solo la huella SHA-256 del identificador (nunca el identificador), se respeta la ventana de 20 min de inactividad, el usuario se recarga desde la base y no se reconstruye si cambió su contraseña. Cerrar sesión borra el respaldo al instante. Los pasos sensibles en curso (reautenticación, alta de passkey) no se reconstruyen.</li>
+<li>Llaves de protección de formularios (antifalsificación) en <code>dbo.DataProtectionKeys</code>, cifradas con la MachineKey del sitio: la base de datos sola no permite usarlas. Un formulario con token inválido devuelve al login o a la página de origen con aviso, nunca una página de error.</li>
 <li>Tres niveles de rol, permisos por menú en servidor (<code>RequierePermiso</code>, <code>SoloSuperAdmin</code>), aislamiento por empresa y por grupo empresarial.</li>
 <li>Redirecciones validadas con <code>Url.IsLocalUrl</code> (sin open redirect).</li>
 <li>Pantalla de cambio de clave bloquea todo lo demás hasta cumplirse (filtro global).</li>
@@ -418,6 +420,6 @@ Como el código exige alta del autenticador en el siguiente login, quienes no ti
 </section>
 
 </main>
-<footer><div class="w">BUFINS · Documentación oficial de ciberseguridad · actualizada el 16 de octubre de 2026 · Documento confidencial, no distribuir fuera de la organización.</div></footer>
+<footer><div class="w">BUFINS · Documentación oficial de ciberseguridad · actualizada el 12 de noviembre de 2026 · Documento confidencial, no distribuir fuera de la organización.</div></footer>
 </body>
 </html>
