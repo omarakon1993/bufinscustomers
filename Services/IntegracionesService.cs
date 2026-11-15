@@ -19,6 +19,8 @@ namespace bufinscustomers.Services
         public string Prefijo { get; set; }
         public bool Activo { get; set; }
         public bool PermiteConfirmar { get; set; }
+        /// <summary>Integración de PRUEBAS (clave bft_): hace todo el flujo, pero «confirmar» es una simulación que nunca toca datos reales.</summary>
+        public bool Sandbox { get; set; }
         public string IpPermitidas { get; set; }
         public DateTime FechaCreacion { get; set; }
         public DateTime? FechaUltimoUso { get; set; }
@@ -46,7 +48,8 @@ namespace bufinscustomers.Services
     /// </summary>
     public class IntegracionesService : BaseService
     {
-        private const string PrefijoClave = "bfk_";
+        private const string PrefijoClave = "bfk_";            // producción
+        private const string PrefijoClaveSandbox = "bft_";      // pruebas
         private static readonly byte[] HashSenuelo = SHA256.HashData(Encoding.UTF8.GetBytes("bufins-api-senuelo"));
 
         /// <summary>True si existen las tablas del script 046 (si no, la API responde 503 «no configurada»).</summary>
@@ -66,15 +69,36 @@ namespace bufinscustomers.Services
             catch { return false; }
         }
 
+        private static bool _sandboxDisponible; private static DateTime _sandboxHasta = DateTime.MinValue;
+
+        /// <summary>True si dbo.Integraciones ya tiene la columna Sandbox (script 047). Se revisa de nuevo cada minuto.</summary>
+        public static bool SandboxDisponible()
+        {
+            if (DateTime.Now < _sandboxHasta) return _sandboxDisponible;
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand("SELECT CASE WHEN COL_LENGTH('dbo.Integraciones','Sandbox') IS NOT NULL THEN 1 ELSE 0 END", cn))
+                {
+                    cn.Open();
+                    _sandboxDisponible = Convert.ToInt32(cmd.ExecuteScalar()) == 1;
+                }
+            }
+            catch { _sandboxDisponible = false; }
+            _sandboxHasta = DateTime.Now.AddSeconds(60);
+            return _sandboxDisponible;
+        }
+
         // ── Alta / baja ────────────────────────────────────────────────────────────────
 
         /// <summary>
         /// Crea una integración. <c>claveEnClaro</c> es la única vez que se conoce la clave. El usuario técnico debe pertenecer a la
-        /// empresa y no ser Super Admin (la API nunca opera fuera de su empresa). En caso de error devuelve un CÓDIGO
-        /// (<c>nombre</c>, <c>usuario</c>, <c>ip:{valor}</c>, <c>ips_largo</c>) que el controlador traduce.
+        /// empresa y no ser Super Admin (la API nunca opera fuera de su empresa). Un usuario no puede servir a la vez a una integración de
+        /// pruebas y a una de producción (las pruebas descartan los cargues pendientes de su usuario). En caso de error devuelve un CÓDIGO
+        /// (<c>nombre</c>, <c>usuario</c>, <c>usuario_en_uso</c>, <c>sandbox_no_disponible</c>, <c>ip:{valor}</c>, <c>ips_largo</c>) que el controlador traduce.
         /// </summary>
         public (bool ok, string error, int idIntegracion, string claveEnClaro) Crear(int idEmpresa, string nombre, int idUsuarioTecnico,
-            bool permiteConfirmar, string ipPermitidas, int? idUsuarioCreador)
+            bool permiteConfirmar, string ipPermitidas, int? idUsuarioCreador, bool sandbox = false)
         {
             nombre = (nombre ?? "").Trim();
             if (nombre.Length == 0 || nombre.Length > 100) return (false, "nombre", 0, null);
@@ -86,13 +110,31 @@ namespace bufinscustomers.Services
             if (!TryNormalizarIps(ipPermitidas, out string ips, out string errorIp))
                 return (false, errorIp, 0, null);
 
-            var (prefijo, clave, hash) = GenerarClave();
+            bool conSandbox = SandboxDisponible();
+            if (sandbox && !conSandbox) return (false, "sandbox_no_disponible", 0, null);
+
+            var (prefijo, clave, hash) = GenerarClave(sandbox);
             using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(@"
-                INSERT INTO dbo.Integraciones (IdEmpresa, Nombre, IdUsuarioTecnico, Prefijo, HashClave, PermiteConfirmar, IpPermitidas, IdUsuarioCreador)
-                VALUES (@IdEmpresa, @Nombre, @IdUsuarioTecnico, @Prefijo, @Hash, @PermiteConfirmar, @Ips, @Creador);
-                SELECT CAST(SCOPE_IDENTITY() AS INT);", cn))
             {
+                cn.Open();
+                if (conSandbox)
+                    using (var cmdU = new SqlCommand(
+                        "SELECT COUNT(1) FROM dbo.Integraciones WHERE IdUsuarioTecnico = @U AND FechaRevocada IS NULL AND Sandbox <> @S", cn))
+                    {
+                        cmdU.Parameters.AddWithValue("@U", idUsuarioTecnico);
+                        cmdU.Parameters.AddWithValue("@S", sandbox);
+                        if (Convert.ToInt32(cmdU.ExecuteScalar()) > 0) return (false, "usuario_en_uso", 0, null);
+                    }
+
+            using (var cmd = new SqlCommand(conSandbox
+                ? @"INSERT INTO dbo.Integraciones (IdEmpresa, Nombre, IdUsuarioTecnico, Prefijo, HashClave, PermiteConfirmar, IpPermitidas, IdUsuarioCreador, Sandbox)
+                    VALUES (@IdEmpresa, @Nombre, @IdUsuarioTecnico, @Prefijo, @Hash, @PermiteConfirmar, @Ips, @Creador, @Sandbox);
+                    SELECT CAST(SCOPE_IDENTITY() AS INT);"
+                : @"INSERT INTO dbo.Integraciones (IdEmpresa, Nombre, IdUsuarioTecnico, Prefijo, HashClave, PermiteConfirmar, IpPermitidas, IdUsuarioCreador)
+                    VALUES (@IdEmpresa, @Nombre, @IdUsuarioTecnico, @Prefijo, @Hash, @PermiteConfirmar, @Ips, @Creador);
+                    SELECT CAST(SCOPE_IDENTITY() AS INT);", cn))
+            {
+                if (conSandbox) cmd.Parameters.AddWithValue("@Sandbox", sandbox);
                 cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
                 cmd.Parameters.AddWithValue("@Nombre", nombre);
                 cmd.Parameters.AddWithValue("@IdUsuarioTecnico", idUsuarioTecnico);
@@ -101,16 +143,18 @@ namespace bufinscustomers.Services
                 cmd.Parameters.AddWithValue("@PermiteConfirmar", permiteConfirmar);
                 cmd.Parameters.AddWithValue("@Ips", (object)ips ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Creador", (object)idUsuarioCreador ?? DBNull.Value);
-                cn.Open();
                 int id = (int)cmd.ExecuteScalar();
                 return (true, null, id, clave);
+            }
             }
         }
 
         /// <summary>Genera una clave nueva (la anterior deja de servir al instante). Devuelve la nueva en claro, una sola vez.</summary>
         public (bool ok, string clave) Rotar(int idIntegracion)
         {
-            var (prefijo, clave, hash) = GenerarClave();
+            var actual = Obtener(idIntegracion);
+            if (actual == null) return (false, null);
+            var (prefijo, clave, hash) = GenerarClave(actual.Sandbox);
             using (var cn = new SqlConnection(CadenaConexion))
             using (var cmd = new SqlCommand(
                 "UPDATE dbo.Integraciones SET Prefijo = @Prefijo, HashClave = @Hash WHERE Id = @Id AND FechaRevocada IS NULL", cn))
@@ -158,10 +202,11 @@ namespace bufinscustomers.Services
 
         // ── Lectura ────────────────────────────────────────────────────────────────────
 
-        private const string SelectBase = @"
+        private static string SelectBase => @"
             SELECT i.Id, i.IdEmpresa, e.EmpNombre AS NombreEmpresa, i.Nombre, i.IdUsuarioTecnico,
                    LTRIM(RTRIM(ISNULL(u.Nombre,'') + ' ' + ISNULL(u.Apellidos,''))) AS NombreUsuarioTecnico,
-                   i.Prefijo, i.Activo, i.PermiteConfirmar, i.IpPermitidas, i.FechaCreacion, i.FechaUltimoUso, i.IpUltimoUso, i.FechaRevocada
+                   i.Prefijo, i.Activo, i.PermiteConfirmar, " + (SandboxDisponible() ? "i.Sandbox" : "CAST(0 AS BIT)") + @" AS Sandbox,
+                   i.IpPermitidas, i.FechaCreacion, i.FechaUltimoUso, i.IpUltimoUso, i.FechaRevocada
             FROM dbo.Integraciones i
             LEFT JOIN dbo.Empresas e ON e.EmpId = i.IdEmpresa
             LEFT JOIN dbo.Usuarios u ON u.Id = i.IdUsuarioTecnico";
@@ -221,6 +266,7 @@ namespace bufinscustomers.Services
             Prefijo = r["Prefijo"] as string,
             Activo = Convert.ToBoolean(r["Activo"]),
             PermiteConfirmar = Convert.ToBoolean(r["PermiteConfirmar"]),
+            Sandbox = Convert.ToBoolean(r["Sandbox"]),
             IpPermitidas = r["IpPermitidas"] as string,
             FechaCreacion = Convert.ToDateTime(r["FechaCreacion"]),
             FechaUltimoUso = r["FechaUltimoUso"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(r["FechaUltimoUso"]),
@@ -292,12 +338,16 @@ namespace bufinscustomers.Services
 
         // ── Origen del lote e idempotencia ─────────────────────────────────────────────
 
-        /// <summary>Marca un lote como creado por la API (vence a las 48 h en vez de a las 2 h).</summary>
-        public void MarcarLoteApi(long idLote, int idIntegracion)
+        /// <summary>
+        /// Marca un lote como creado por la API: 'API' (vence a las 48 h en vez de a las 2 h) o 'Sandbox' (pruebas: vence como un Excel y
+        /// nunca bloquea a otro cargue de la misma llave).
+        /// </summary>
+        public void MarcarLoteApi(long idLote, int idIntegracion, bool sandbox = false)
         {
             using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand("UPDATE dbo.CarguesLotes SET Origen = 'API', IdIntegracion = @I WHERE IdLote = @L", cn))
+            using (var cmd = new SqlCommand("UPDATE dbo.CarguesLotes SET Origen = @O, IdIntegracion = @I WHERE IdLote = @L", cn))
             {
+                cmd.Parameters.AddWithValue("@O", sandbox ? "Sandbox" : "API");
                 cmd.Parameters.AddWithValue("@I", idIntegracion);
                 cmd.Parameters.AddWithValue("@L", idLote);
                 cn.Open();
@@ -353,21 +403,22 @@ namespace bufinscustomers.Services
 
         // ── Utilidades ─────────────────────────────────────────────────────────────────
 
-        private static (string prefijo, string clave, byte[] hash) GenerarClave()
+        private static (string prefijo, string clave, byte[] hash) GenerarClave(bool sandbox = false)
         {
             const string alfabeto = "abcdefghijkmnpqrstuvwxyz23456789";
             var sb = new StringBuilder(8);
             for (int i = 0; i < 8; i++) sb.Append(alfabeto[RandomNumberGenerator.GetInt32(alfabeto.Length)]);
             string prefijo = sb.ToString();
             string secreto = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)).Replace('+', '-').Replace('/', '_').TrimEnd('=');
-            string clave = PrefijoClave + prefijo + "_" + secreto;
+            string clave = (sandbox ? PrefijoClaveSandbox : PrefijoClave) + prefijo + "_" + secreto;
             return (prefijo, clave, SHA256.HashData(Encoding.UTF8.GetBytes(clave)));
         }
 
         private static bool TryParsear(string clave, out string prefijo)
         {
             prefijo = null;
-            if (string.IsNullOrEmpty(clave) || clave.Length > 100 || !clave.StartsWith(PrefijoClave, StringComparison.Ordinal)) return false;
+            if (string.IsNullOrEmpty(clave) || clave.Length > 100
+                || !(clave.StartsWith(PrefijoClave, StringComparison.Ordinal) || clave.StartsWith(PrefijoClaveSandbox, StringComparison.Ordinal))) return false;
             var partes = clave.Substring(PrefijoClave.Length).Split('_');
             if (partes.Length < 2 || partes[0].Length != 8) return false;
             prefijo = partes[0];

@@ -60,7 +60,15 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 <li>Optional: enter the <b>allowed IPs</b> (the addresses the client will send from). With the list, the key only works from them.</li>
 <li>Leave “Allow the integration to confirm loads” <b>unchecked</b> during testing: that way every submission stays in “Review load” and a person confirms it.</li>
 <li>Click <b>Create</b>. BUFINS shows the <b>key only once</b>: copy it and store it in the client's secrets manager. If it is lost, a new one is generated.</li></ol>
-<p class="note"><b>Key format:</b> <code>bfk_xxxxxxxx_…</code>. Treat it like a password: do not send it by email or keep it in source code.</p>
+<p class="note"><b>Key format:</b> <code>bfk_xxxxxxxx_…</code> in production and <code>bft_xxxxxxxx_…</code> for testing. Treat it like a password: do not send it by email or keep it in source code.</p>
+<h3>Testing environment (sandbox)</h3>
+<p>Before connecting the real system, the client's team can develop and test with a <b>Testing</b> integration (the “Integration type” field when creating it). It uses a key that starts with <code>bft_</code> and works like a production one (same endpoints, same format, same validations, findings, impact and rules), with these differences:</p>
+<ul><li><b>Confirmation is a simulation.</b> <code>POST /cargues/{id}/confirmar</code> (or <code>confirmar=true</code>) runs all the checks, including the rule of never leaving a year empty and the strong-reduction check, and responds <code>ConfirmadoSimulado</code>. It replaces no data, saves no backup and the test load is discarded.</li>
+<li><b>Reviewers are not notified:</b> a test load creates work for nobody.</li>
+<li><b>They are short-lived and do not get in the way.</b> A test load is discarded on its own after a few hours and never prevents another person from loading the same company and year.</li>
+<li><b>It shows in every response:</b> they carry the header <code>X-Bufins-Entorno: pruebas</code> and <code>/ping</code> answers <code>"entorno": "pruebas"</code>.</li>
+<li><b>Its own technical user.</b> It cannot be the same user as a production integration.</li></ul>
+<p class="note info">Validations and impact are computed against the company's real data, <b>read-only</b>: that way tests catch the same problems the real submission would have. When everything works, the administrator creates the <b>Production</b> integration and the client only changes the key: the address is the same. If there is a real load pending review for the same year and mode, a test submission gets 409 <code>lote_activo</code>: confirm or discard that load, or test with another year.</p>
 <p>The names of the sheets and columns each company accepts are always obtained with <code>GET /api/v1/esquemas</code> (section 5): a new custom sheet appears there with no API changes.</p></section>
 
 <section id="seguridad"><h2>4. Security</h2>
@@ -72,6 +80,7 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 <tr><td class="n">Limits</td><td>120 calls per minute per integration; 20 attempts with a wrong key per IP in 10 minutes (then 429 with <code>Retry-After</code>).</td></tr>
 <tr><td class="n">Rotate and revoke</td><td>Rotating generates a new key and the old one stops working instantly. Revoking is permanent (create another integration if needed).</td></tr>
 <tr><td class="n">Human confirmation</td><td>By default a person confirms every load. Even with permission, the API <b>never</b> confirms a strong data reduction nor bypasses the rule of never leaving a year empty.</td></tr>
+<tr><td class="n">Testing environment</td><td><code>bft_</code> keys run the whole flow but their confirmation is a simulation: they never modify real data.</td></tr>
 <tr><td class="n">Audit</td><td>Every submission, confirmation, discard and change to the integration is recorded with the integration and its technical user. The key is never recorded.</td></tr></table></div>
 <p class="note bad"><b>If the key leaks:</b> go to API integrations and use <b>Generate new key</b> (or <b>Revoke</b>). The effect is immediate.</p></section>
 
@@ -79,7 +88,7 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 <p class="lead">The base address is <code>https://customers.bufins.com/api/v1</code>. Replace <code>bfk_…</code> with your key.</p>
 <h3>Check the key</h3>
 <pre><code>curl -H "Authorization: Bearer bfk_..." https://customers.bufins.com/api/v1/ping</code></pre>
-<pre><code>{ "estado": "ok", "version": "1", "integracion": "Siigo agent", "idEmpresa": 6,
+<pre><code>{ "estado": "ok", "version": "1", "entorno": "produccion", "integracion": "Siigo agent", "idEmpresa": 6,
   "empresa": "My Company Inc.", "permiteConfirmar": false }</code></pre>
 <h3>Get the sheets and columns your company accepts</h3>
 <pre><code>curl -H "Authorization: Bearer bfk_..." https://customers.bufins.com/api/v1/esquemas</code></pre>
@@ -188,6 +197,7 @@ print(res["lote"]["estado"], res["lote"]["totalErrores"], "errors")</code></pre>
 <div class="g2">
 <div class="card"><b>A person (default)</b><p>The load stays waiting. The company's administrators get a bell-icon notification with the link to “Review load”, where they can review it and confirm or discard it.</p></div>
 <div class="card"><b>The integration (if allowed)</b><p>With <code>confirmar=true</code> when uploading or validating, or with <code>POST /cargues/{id}/confirmar</code>. It only confirms loads without warnings or strong reductions; in all other cases it stays pending and notifies a person.</p></div></div>
+<p class="note info"><b>In the testing environment</b> confirmation is simulated: the response carries <code>"estado": "ConfirmadoSimulado"</code> (or <code>"confirmacion": "simulado"</code> when uploading with <code>confirmar=true</code>) and the test load is discarded without touching data.</p>
 <p class="note ok">Before replacing, BUFINS automatically saves the previous version. If a confirmed load turns out to be wrong, an administrator can undo it from the <b>Version history</b>.</p></section>
 
 <section id="referencia"><h2>9. Endpoint reference</h2>
@@ -233,7 +243,7 @@ print(res["lote"]["estado"], res["lote"]["totalErrores"], "errors")</code></pre>
 <div class="card"><b>Retries</b><p>On 429 or 5xx wait and retry with the same <code>Idempotency-Key</code>. On 4xx fix first: retrying unchanged will not solve it.</p></div>
 <div class="card"><b>How long a load lasts</b><p>A load waiting for review is kept for 48 hours; one being filled by sheets, 6 hours. After that it is discarded and must be sent again.</p></div>
 <div class="card"><b>Size</b><p>The template can weigh up to 100 MB. In Option B use batches of 20,000 rows or fewer per call (the maximum is 50,000).</p></div>
-<div class="card"><b>Testing</b><p>Start with human confirmation active and a test company. Compare the results with Excel for a few closes before asking for the integration to confirm on its own.</p></div></div></section>
+<div class="card"><b>Testing</b><p>Develop first with a <b>Testing</b> integration (<code>bft_</code> key): it runs the whole flow without touching real data. Once in production, start with human confirmation active and compare the results with Excel for a few closes before asking for the integration to confirm on its own.</p></div></div></section>
 
 <section id="faq"><h2>12. Frequently asked questions</h2>
 <details><summary>Do I have to stop using Excel?</summary><p>No. Excel keeps working at all times, through the same door and with the same validations. The API is an alternative; you can alternate them.</p></details>

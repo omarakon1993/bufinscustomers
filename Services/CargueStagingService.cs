@@ -129,9 +129,11 @@ namespace bufinscustomers.Services
                     // bloqueado por errores y no se podía confirmar. Si es un lote de OTRO usuario que sí se puede
                     // confirmar, se respeta su revisión y se avisa como antes.
                     var previo = ObtenerLote(idLoteActivo.Value);
+                    // Un lote de PRUEBAS de la API (sandbox) nunca bloquea a nadie: cualquier cargue lo reemplaza.
                     bool reemplazable = previo == null
                         || previo.IdUsuario == idUsuario
-                        || previo.Estado == CargueLoteEstado.ConErrores;
+                        || previo.Estado == CargueLoteEstado.ConErrores
+                        || EsLoteSandbox(cn, previo.IdLote);
                     if (!reemplazable)
                         return (false, idLoteActivo.Value, MensajeLoteActivoExistente);
 
@@ -166,6 +168,22 @@ namespace bufinscustomers.Services
                     return (false, idGanador, MensajeLoteActivoExistente);
                 }
             }
+        }
+
+        /// <summary>True si el lote lo creó una integración de pruebas (Origen = 'Sandbox'); false si no hay columna Origen (script 046).</summary>
+        private static bool EsLoteSandbox(SqlConnection cn, long idLote)
+        {
+            if (!OrigenLoteDisponible()) return false;
+            try
+            {
+                using (var cmd = new SqlCommand("SELECT CASE WHEN Origen = 'Sandbox' THEN 1 ELSE 0 END FROM dbo.CarguesLotes WHERE IdLote = @L", cn))
+                {
+                    cmd.Parameters.AddWithValue("@L", idLote);
+                    var r = cmd.ExecuteScalar();
+                    return r != null && r != DBNull.Value && Convert.ToInt32(r) == 1;
+                }
+            }
+            catch { return false; }
         }
 
         private static long? BuscarLoteActivo(SqlConnection cn, SqlTransaction tx, int idEmpresa, int anio, byte modo, int idEscenario)

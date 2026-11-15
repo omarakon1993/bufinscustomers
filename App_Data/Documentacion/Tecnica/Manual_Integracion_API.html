@@ -60,7 +60,15 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 <li>Opcional: escriba las <b>IP permitidas</b> (las direcciones desde las que el cliente enviará). Con la lista, la clave solo sirve desde ellas.</li>
 <li>Deje <b>sin marcar</b> «Permitir que la integración confirme cargues» mientras se hacen las pruebas: así cada envío queda en «Revisar cargue» y lo confirma una persona.</li>
 <li>Pulse <b>Crear</b>. BUFINS muestra la <b>clave una sola vez</b>: cópiela y guárdela en el gestor de secretos del cliente. Si se pierde, se genera una nueva.</li></ol>
-<p class="note"><b>Formato de la clave:</b> <code>bfk_xxxxxxxx_…</code>. Trátela como una contraseña: no la envíe por correo ni la guarde en el código fuente.</p>
+<p class="note"><b>Formato de la clave:</b> <code>bfk_xxxxxxxx_…</code> en producción y <code>bft_xxxxxxxx_…</code> en pruebas. Trátela como una contraseña: no la envíe por correo ni la guarde en el código fuente.</p>
+<h3>Entorno de pruebas (sandbox)</h3>
+<p>Antes de conectar el sistema real, el equipo del cliente puede desarrollar y probar con una integración de tipo <b>Pruebas</b> (campo «Tipo de integración» al crearla). Usa una clave que empieza por <code>bft_</code> y funciona igual que una de producción (mismos endpoints, mismo formato, mismas validaciones, hallazgos, impacto y reglas), con estas diferencias:</p>
+<ul><li><b>La confirmación es una simulación.</b> <code>POST /cargues/{id}/confirmar</code> (o <code>confirmar=true</code>) corre todas las comprobaciones, incluida la regla de nunca dejar un año vacío y la reducción fuerte, y responde <code>ConfirmadoSimulado</code>. No reemplaza ningún dato, no guarda respaldo y el cargue de prueba se descarta.</li>
+<li><b>No se avisa a los revisores:</b> un cargue de prueba no genera trabajo para nadie.</li>
+<li><b>Duran poco y no estorban.</b> Un cargue de prueba se descarta solo a las pocas horas y nunca impide que otra persona cargue la misma empresa y año.</li>
+<li><b>Se nota en cada respuesta:</b> llevan la cabecera <code>X-Bufins-Entorno: pruebas</code> y <code>/ping</code> responde <code>"entorno": "pruebas"</code>.</li>
+<li><b>Usuario técnico propio.</b> No puede ser el mismo usuario de una integración de producción.</li></ul>
+<p class="note info">Las validaciones y el impacto se calculan contra los datos reales de la empresa, <b>solo en lectura</b>: así las pruebas detectan los mismos problemas que tendría el envío real. Cuando todo funcione, el administrador crea la integración de <b>Producción</b> y el cliente solo cambia la clave: la dirección es la misma. Si hay un cargue real pendiente de revisión para el mismo año y modo, un envío de prueba recibe 409 <code>lote_activo</code>: confirme o descarte ese cargue, o pruebe con otro año.</p>
 <p>Los nombres de las hojas y de las columnas que acepta cada empresa se consultan siempre con <code>GET /api/v1/esquemas</code> (sección 5): una hoja personalizada nueva aparece ahí sin cambios en la API.</p></section>
 
 <section id="seguridad"><h2>4. Seguridad</h2>
@@ -72,6 +80,7 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 <tr><td class="n">Límites</td><td>120 llamadas por minuto por integración; 20 intentos con clave incorrecta por IP en 10 minutos (luego 429 con <code>Retry-After</code>).</td></tr>
 <tr><td class="n">Rotar y revocar</td><td>Rotar genera una clave nueva y la anterior deja de servir al instante. Revocar es definitivo (se crea otra integración si hace falta).</td></tr>
 <tr><td class="n">Confirmación humana</td><td>Por defecto una persona confirma cada cargue. Aun con permiso, la API <b>nunca</b> confirma una reducción fuerte de datos ni salta la regla de nunca dejar un año vacío.</td></tr>
+<tr><td class="n">Entorno de pruebas</td><td>Las claves <code>bft_</code> hacen todo el flujo pero su confirmación es una simulación: nunca modifican datos reales.</td></tr>
 <tr><td class="n">Auditoría</td><td>Cada envío, confirmación, descarte y cambio de la integración queda registrado con la integración y su usuario técnico. La clave nunca se registra.</td></tr></table></div>
 <p class="note bad"><b>Si la clave se filtra:</b> entre a Integraciones API y use <b>Generar clave nueva</b> (o <b>Revocar</b>). El efecto es inmediato.</p></section>
 
@@ -79,7 +88,7 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 <p class="lead">La dirección base es <code>https://customers.bufins.com/api/v1</code>. Reemplace <code>bfk_…</code> por su clave.</p>
 <h3>Comprobar la clave</h3>
 <pre><code>curl -H "Authorization: Bearer bfk_..." https://customers.bufins.com/api/v1/ping</code></pre>
-<pre><code>{ "estado": "ok", "version": "1", "integracion": "Agente Siigo", "idEmpresa": 6,
+<pre><code>{ "estado": "ok", "version": "1", "entorno": "produccion", "integracion": "Agente Siigo", "idEmpresa": 6,
   "empresa": "Mi Empresa S.A.S.", "permiteConfirmar": false }</code></pre>
 <h3>Consultar las hojas y columnas que acepta su empresa</h3>
 <pre><code>curl -H "Authorization: Bearer bfk_..." https://customers.bufins.com/api/v1/esquemas</code></pre>
@@ -188,6 +197,7 @@ print(res["lote"]["estado"], res["lote"]["totalErrores"], "errores")</code></pre
 <div class="g2">
 <div class="card"><b>Una persona (por defecto)</b><p>El cargue queda esperando. Los administradores de la empresa reciben un aviso en la campana con el enlace a «Revisar cargue», donde pueden revisarlo y confirmarlo o descartarlo.</p></div>
 <div class="card"><b>La integración (si se le permitió)</b><p>Con <code>confirmar=true</code> al subir o validar, o con <code>POST /cargues/{id}/confirmar</code>. Solo confirma cargues sin advertencias ni reducción fuerte; en los demás casos queda pendiente y avisa a una persona.</p></div></div>
+<p class="note info"><b>En el entorno de pruebas</b> la confirmación se simula: la respuesta trae <code>"estado": "ConfirmadoSimulado"</code> (o <code>"confirmacion": "simulado"</code> al subir con <code>confirmar=true</code>) y el cargue de prueba se descarta sin tocar datos.</p>
 <p class="note ok">Antes de reemplazar, BUFINS guarda automáticamente la versión anterior. Si un cargue confirmado resulta incorrecto, un administrador puede deshacerlo desde el <b>Historial de versiones</b>.</p></section>
 
 <section id="referencia"><h2>9. Referencia de endpoints</h2>
@@ -233,7 +243,7 @@ print(res["lote"]["estado"], res["lote"]["totalErrores"], "errores")</code></pre
 <div class="card"><b>Reintentos</b><p>Ante 429 o 5xx espere y reintente con la misma <code>Idempotency-Key</code>. Ante 4xx corrija primero: reintentar sin cambios no lo arreglará.</p></div>
 <div class="card"><b>Vigencia de un cargue</b><p>Un cargue esperando revisión se conserva 48 horas; uno que se está llenando por hojas, 6 horas. Pasado ese tiempo se descarta y hay que enviarlo de nuevo.</p></div>
 <div class="card"><b>Tamaño</b><p>La plantilla puede pesar hasta 100 MB. En el Envío B use tandas de 20.000 filas o menos por llamada (el máximo es 50.000).</p></div>
-<div class="card"><b>Pruebas</b><p>Empiece con la confirmación humana activa y una empresa de prueba. Compare los resultados con los del Excel durante algunos cierres antes de pedir que la integración confirme sola.</p></div></div></section>
+<div class="card"><b>Pruebas</b><p>Desarrolle primero con una integración de <b>Pruebas</b> (clave <code>bft_</code>): hace todo el flujo sin tocar datos reales. Ya en producción, empiece con la confirmación humana activa y compare los resultados con los del Excel durante algunos cierres antes de pedir que la integración confirme sola.</p></div></div></section>
 
 <section id="faq"><h2>12. Preguntas frecuentes</h2>
 <details><summary>¿Tengo que dejar de usar el Excel?</summary><p>No. El Excel sigue funcionando siempre, por la misma puerta y con las mismas validaciones. La API es una alternativa; puede alternarlas.</p></details>

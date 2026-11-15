@@ -86,7 +86,7 @@
                         @foreach (var i in Model)
                         {
                             <tr>
-                                <td><strong>@i.Nombre</strong></td>
+                                <td><strong>@i.Nombre</strong>@if (i.Sandbox) { <span class="badge badge-info ml-1">@Resources.Strings.Integ_BadgePruebas</span> }</td>
                                 <td>@i.NombreEmpresa</td>
                                 <td>@i.NombreUsuarioTecnico</td>
                                 <td><code>bfk_@(i.Prefijo)_••••</code></td>
@@ -167,6 +167,14 @@
                 <div class="modal-body">
                     <div class="bf-section">@Resources.Strings.Integ_SecIdentificacion</div>
                     <div class="row">
+                        <div class="col-12 mb-3">
+                            <label for="integTipo">@Resources.Strings.Integ_LabelTipo</label>
+                            <select id="integTipo" class="form-control">
+                                <option value="0">@Resources.Strings.Integ_TipoProduccion</option>
+                                <option value="1">@Resources.Strings.Integ_TipoPruebas</option>
+                            </select>
+                            <small class="form-text text-muted">@Resources.Strings.Integ_TipoHint</small>
+                        </div>
                         <div class="col-md-6 mb-3">
                             <label for="integEmpresa">@Resources.Strings.Integ_LabelEmpresa <span class="text-danger">*</span></label>
                             <select id="integEmpresa" class="form-control" required>
@@ -330,12 +338,15 @@
         }).fail(function () { toast('error', T.errRed); });
     });
 
+    // En pruebas la confirmación es una simulación (no toca datos), así que se deja marcada para probar el flujo completo.
+    $('#integTipo').on('change', function () { if ($(this).val() === '1') $('#integConfirma').prop('checked', true); });
+
     $('#integCrearForm').on('submit', function (e) {
         e.preventDefault();
         var $b = $('#integCrearBtn').prop('disabled', true);
         post(urls.crear, {
             idEmpresa: $('#integEmpresa').val(), nombre: $('#integNombre').val(), idUsuarioTecnico: $('#integUsuario').val(),
-            permiteConfirmar: $('#integConfirma').is(':checked'), ipPermitidas: $('#integIps').val()
+            permiteConfirmar: $('#integConfirma').is(':checked'), ipPermitidas: $('#integIps').val(), sandbox: $('#integTipo').val() === '1'
         }).done(function (r) {
             if (!r.success) { toast('error', r.message); return; }
             $('#integCrearModal').modal('hide');

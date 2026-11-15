@@ -4070,4 +4070,11 @@ Indicators management follows closely: </value></data>
   <data name="Notif_CargueApiConErroresMsg" xml:space="preserve"><value>The integration “{0}” sent data for {1} (year {2}, {3}) with {5} error(s). It cannot be confirmed until the client system sends the corrected data.</value></data>
   <data name="Integ_BtnManual" xml:space="preserve"><value>Integration manual</value></data>
   <data name="Integ_BtnContrato" xml:space="preserve"><value>OpenAPI contract</value></data>
+  <data name="Integ_LabelTipo" xml:space="preserve"><value>Integration type</value></data>
+  <data name="Integ_TipoProduccion" xml:space="preserve"><value>Production (real data)</value></data>
+  <data name="Integ_TipoPruebas" xml:space="preserve"><value>Testing (sandbox)</value></data>
+  <data name="Integ_TipoHint" xml:space="preserve"><value>A testing integration uses a separate key (bft_…) and runs the WHOLE flow just like production, with the same validations, but its confirmation is a simulation: it never changes real data nor notifies reviewers. Use it so the client's team can build and test their submission safely. It requires a technical user different from the one used by production integrations.</value></data>
+  <data name="Integ_BadgePruebas" xml:space="preserve"><value>Testing</value></data>
+  <data name="Integ_ErrUsuarioEnUso" xml:space="preserve"><value>That user is already used by an integration of the other type (production or testing). Use a different technical user for each.</value></data>
+  <data name="Integ_ErrSandboxNoDisponible" xml:space="preserve"><value>The testing environment is not enabled yet. Contact BUFINS support.</value></data>
 </root>

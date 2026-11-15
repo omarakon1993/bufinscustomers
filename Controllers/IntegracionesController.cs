@@ -47,20 +47,20 @@ namespace bufinscustomers.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Crear(int idEmpresa, string nombre, int idUsuarioTecnico, bool permiteConfirmar = false, string ipPermitidas = null)
+        public ActionResult Crear(int idEmpresa, string nombre, int idUsuarioTecnico, bool permiteConfirmar = false, string ipPermitidas = null, bool sandbox = false)
         {
             if (!PuedeAdministrar() || !EmpresaAccesoHelper.TieneAcceso(UsuarioSesionHelper.UsuarioActual, idEmpresa))
                 return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
             try
             {
                 var yo = UsuarioSesionHelper.UsuarioActual;
-                var r = _servicio.Crear(idEmpresa, nombre, idUsuarioTecnico, permiteConfirmar, ipPermitidas, yo?.Id);
+                var r = _servicio.Crear(idEmpresa, nombre, idUsuarioTecnico, permiteConfirmar, ipPermitidas, yo?.Id, sandbox);
                 if (!r.ok) return Json(new { success = false, message = TraducirError(r.error) });
 
                 var integ = _servicio.Obtener(r.idIntegracion);
                 new AuditoriaService().RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Crear, "Integracion", r.idIntegracion.ToString(),
-                    $"Creó la integración API '{integ?.Nombre}' de '{integ?.NombreEmpresa}' (usuario técnico: {integ?.NombreUsuarioTecnico}; confirmación por API: {(permiteConfirmar ? "permitida" : "no permitida")}).",
-                    null, new { integ?.Nombre, idEmpresa, idUsuarioTecnico, permiteConfirmar, ipPermitidas = integ?.IpPermitidas, prefijo = integ?.Prefijo },
+                    $"Creó la integración API '{integ?.Nombre}' ({(sandbox ? "PRUEBAS" : "producción")}) de '{integ?.NombreEmpresa}' (usuario técnico: {integ?.NombreUsuarioTecnico}; confirmación por API: {(permiteConfirmar ? "permitida" : "no permitida")}).",
+                    null, new { integ?.Nombre, idEmpresa, idUsuarioTecnico, permiteConfirmar, sandbox, ipPermitidas = integ?.IpPermitidas, prefijo = integ?.Prefijo },
                     idEmpresa, entidadNombre: integ?.Nombre);
 
                 return Json(new { success = true, message = string.Format(R("Integ_Creada"), integ?.Nombre), clave = r.claveEnClaro, nombre = integ?.Nombre });
@@ -145,6 +145,8 @@ namespace bufinscustomers.Controllers
             {
                 case "nombre": return R("Integ_ErrNombre");
                 case "usuario": return R("Integ_ErrUsuario");
+                case "usuario_en_uso": return R("Integ_ErrUsuarioEnUso");
+                case "sandbox_no_disponible": return R("Integ_ErrSandboxNoDisponible");
                 case "ips_largo": return R("Integ_ErrIpsLargo");
                 default: return R("Integ_ErrNoEditable");
             }

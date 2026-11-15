@@ -4072,4 +4072,11 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="Notif_CargueApiConErroresMsg" xml:space="preserve"><value>La integración «{0}» envió datos de {1} (año {2}, {3}) con {5} error(es). No se puede confirmar hasta que el sistema del cliente envíe los datos corregidos.</value></data>
   <data name="Integ_BtnManual" xml:space="preserve"><value>Manual de integración</value></data>
   <data name="Integ_BtnContrato" xml:space="preserve"><value>Contrato OpenAPI</value></data>
+  <data name="Integ_LabelTipo" xml:space="preserve"><value>Tipo de integración</value></data>
+  <data name="Integ_TipoProduccion" xml:space="preserve"><value>Producción (datos reales)</value></data>
+  <data name="Integ_TipoPruebas" xml:space="preserve"><value>Pruebas (sandbox)</value></data>
+  <data name="Integ_TipoHint" xml:space="preserve"><value>Una integración de pruebas usa una clave aparte (bft_…) y ejecuta TODO el flujo igual que producción, con las mismas validaciones, pero su confirmación es una simulación: nunca cambia datos reales ni avisa a los revisores. Úsela para que el equipo del cliente desarrolle y pruebe su envío con total seguridad. Requiere un usuario técnico distinto al de las integraciones de producción.</value></data>
+  <data name="Integ_BadgePruebas" xml:space="preserve"><value>Pruebas</value></data>
+  <data name="Integ_ErrUsuarioEnUso" xml:space="preserve"><value>Ese usuario ya lo usa una integración de otro tipo (producción o pruebas). Use un usuario técnico distinto para cada una.</value></data>
+  <data name="Integ_ErrSandboxNoDisponible" xml:space="preserve"><value>El entorno de pruebas aún no está habilitado. Contacte a soporte de BUFINS.</value></data>
 </root>

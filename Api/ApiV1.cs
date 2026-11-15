@@ -53,7 +53,7 @@ namespace bufinscustomers.Api
             g.MapGet("/ping", (HttpContext ctx) =>
             {
                 var i = Integ(ctx);
-                return Ok(new { estado = "ok", version = "1", integracion = i.Nombre, idEmpresa = i.IdEmpresa, empresa = i.NombreEmpresa, permiteConfirmar = i.PermiteConfirmar });
+                return Ok(new { estado = "ok", version = "1", entorno = i.Sandbox ? "pruebas" : "produccion", integracion = i.Nombre, idEmpresa = i.IdEmpresa, empresa = i.NombreEmpresa, permiteConfirmar = i.PermiteConfirmar });
             });
 
             g.MapGet("/esquemas", (HttpContext ctx) => Ok(new { hojas = ApiEsquemas.Obtener(Integ(ctx).IdEmpresa) }));
@@ -100,7 +100,7 @@ namespace bufinscustomers.Api
                     return Error(403, "confirmacion_humana", "Esta integración no puede confirmar cargues: la confirmación la hace una persona en «Revisar cargue».");
                 var lote = LotePropio(ctx, idLote, out var error);
                 if (lote == null) return error;
-                return ResultadoConfirmacion(ctx, new CargueOrquestadorService(Traducir).Confirmar(Tecnico(ctx), idLote, confirmarReemplazo: false));
+                return ResultadoConfirmacion(ctx, new CargueOrquestadorService(Traducir).Confirmar(Tecnico(ctx), idLote, confirmarReemplazo: false, simular: integ.Sandbox));
             });
 
             g.MapDelete("/cargues/{idLote:long}", (HttpContext ctx, long idLote) =>
@@ -167,7 +167,7 @@ namespace bufinscustomers.Api
 
             var proceso = orq.ProcesarArchivo(solicitud, idLote =>
             {
-                try { integraciones.MarcarLoteApi(idLote, integ.Id); }
+                try { integraciones.MarcarLoteApi(idLote, integ.Id, integ.Sandbox); }
                 catch (Exception ex) { AppLogger.Error(ex, "API.MarcarLoteApi"); }
             });
 
@@ -246,7 +246,7 @@ namespace bufinscustomers.Api
 
             var proceso = orq.IniciarLoteSinArchivo(solicitud, idLote =>
             {
-                try { integraciones.MarcarLoteApi(idLote, integ.Id); }
+                try { integraciones.MarcarLoteApi(idLote, integ.Id, integ.Sandbox); }
                 catch (Exception ex) { AppLogger.Error(ex, "API.MarcarLoteApi"); }
             });
             if (proceso.Estado == ProcesoCargueEstado.LoteActivoExistente)
@@ -341,7 +341,7 @@ namespace bufinscustomers.Api
         {
             new AuditoriaService().RegistrarCambio(
                 AuditoriaTipo.Cargues, AuditoriaAccion.Crear, "CargueLote", lote?.IdLote.ToString(),
-                $"La integración '{integ.Nombre}' envió por la API '{archivo}' a '{integ.NombreEmpresa}' — año {lote?.Anio}, {(lote?.Modo == 0 ? "ejecución" : "histórico")}, escenario {lote?.IdEscenario}: {lote?.TotalFilas:N0} fila(s), {lote?.TotalErrores} error(es), {lote?.TotalAdvertencias} advertencia(s). Queda en revisión.",
+                $"{(integ.Sandbox ? "[PRUEBAS] " : "")}La integración '{integ.Nombre}' envió por la API '{archivo}' a '{integ.NombreEmpresa}' — año {lote?.Anio}, {(lote?.Modo == 0 ? "ejecución" : "histórico")}, escenario {lote?.IdEscenario}: {lote?.TotalFilas:N0} fila(s), {lote?.TotalErrores} error(es), {lote?.TotalAdvertencias} advertencia(s). Queda en revisión.",
                 null, new { integracion = integ.Nombre, idIntegracion = integ.Id, archivo, anio = lote?.Anio, escenario = lote?.IdEscenario, estado = lote?.Estado },
                 integ.IdEmpresa, entidadNombre: integ.NombreEmpresa);
 
@@ -351,20 +351,21 @@ namespace bufinscustomers.Api
             {
                 if (lote != null && lote.Estado == CargueLoteEstado.ValidadoOk)
                 {
-                    var c = orq.Confirmar(tecnico, lote.IdLote, confirmarReemplazo: false);
-                    confirmacion = c.Confirmado ? "confirmado" : "pendiente_de_revision";
-                    if (c.Confirmado) confirmado = new { mensaje = c.Mensaje, filas = c.Lote?.TotalFilas };
-                    lote = staging.ObtenerLote(lote.IdLote) ?? lote;
+                    var c = orq.Confirmar(tecnico, lote.IdLote, confirmarReemplazo: false, simular: integ.Sandbox);
+                    confirmacion = c.Estado == ConfirmacionCargueEstado.Simulado ? "simulado" : c.Confirmado ? "confirmado" : "pendiente_de_revision";
+                    if (c.Confirmado || c.Estado == ConfirmacionCargueEstado.Simulado) confirmado = new { mensaje = c.Mensaje, filas = c.Lote?.TotalFilas };
+                    lote = staging.ObtenerLote(lote.IdLote) ?? lote;   // tras una simulación el lote de pruebas ya no existe (null → se conserva el anterior)
                 }
                 else confirmacion = "pendiente_de_revision";
             }
 
             // Si queda esperando a una persona (o con errores), se le avisa a los administradores de la empresa.
-            if (confirmacion != "confirmado") orq.NotificarRevisores(lote, integ.Nombre, tecnico.Id);
+            // En pruebas NO: nadie debe revisar un cargue de prueba.
+            if (confirmacion != "confirmado" && confirmacion != "simulado" && !integ.Sandbox) orq.NotificarRevisores(lote, integ.Nombre, tecnico.Id);
 
             return Results.Json(new
             {
-                repetido = false, confirmacion, confirmado, lote = LoteDto(lote),
+                repetido = false, sandbox = integ.Sandbox, confirmacion, confirmado, lote = LoteDto(lote),
                 urlRevision = lote == null ? null : $"/Datos/RevisarCargue?idLote={lote.IdLote}"
             }, statusCode: status);
         }
@@ -396,6 +397,12 @@ namespace bufinscustomers.Api
                     return Ok(new
                     {
                         estado = CargueLoteEstado.Confirmado, mensaje = r.Mensaje, filas = r.Lote?.TotalFilas,
+                        hojas = r.Resultado?.DetalleHojas?.Select(h => new { hoja = h.NombreHoja, tabla = h.NombreTabla, filas = h.FilasInsertadas }).ToList()
+                    });
+                case ConfirmacionCargueEstado.Simulado:
+                    return Ok(new
+                    {
+                        estado = "ConfirmadoSimulado", sandbox = true, mensaje = r.Mensaje, filas = r.Lote?.TotalFilas,
                         hojas = r.Resultado?.DetalleHojas?.Select(h => new { hoja = h.NombreHoja, tabla = h.NombreTabla, filas = h.FilasInsertadas }).ToList()
                     });
                 case ConfirmacionCargueEstado.LoteNoExiste: return Error(404, "lote_no_encontrado", "El cargue no existe.");
@@ -559,6 +566,7 @@ namespace bufinscustomers.Api
                 { ctx.Response.Headers["Retry-After"] = "60"; await Escribir(ctx, 429, "limite_de_llamadas", "Superó el límite de 120 llamadas por minuto."); return; }
                 Sumar(LlamadasPorIntegracion, res.Integracion.Id, TimeSpan.FromMinutes(1));
 
+                if (res.Integracion.Sandbox) ctx.Response.Headers["X-Bufins-Entorno"] = "pruebas";
                 ctx.Items["ApiIntegracion"] = res.Integracion;
                 ctx.Items["ApiUsuarioTecnico"] = res.UsuarioTecnico;
 

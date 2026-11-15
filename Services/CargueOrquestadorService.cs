@@ -77,7 +77,9 @@ namespace bufinscustomers.Services
         FaltaConfirmarReemplazo,
         LoteNoDisponible,
         Error,
-        Confirmado
+        Confirmado,
+        /// <summary>Entorno de pruebas (sandbox): todas las comprobaciones pasaron y se habría confirmado, pero NO se tocó ningún dato.</summary>
+        Simulado
     }
 
     public class ResultadoConfirmacionCargue
@@ -448,7 +450,9 @@ namespace bufinscustomers.Services
         // ═════════════════════════════════════════════════════════════════════════
         // 3. Confirmar un lote validado: impacto → snapshot → reemplazo real → auditoría
         // ═════════════════════════════════════════════════════════════════════════
-        public ResultadoConfirmacionCargue Confirmar(Usuarios usuario, long idLote, bool confirmarReemplazo = false)
+        /// <param name="simular">Sandbox: corre TODAS las comprobaciones (acceso, impacto, regla de oro, reducción fuerte) y, si pasan, devuelve
+        /// <see cref="ConfirmacionCargueEstado.Simulado"/> y descarta el lote de pruebas SIN tocar ninguna tabla real, respaldo ni auditoría de confirmación.</param>
+        public ResultadoConfirmacionCargue Confirmar(Usuarios usuario, long idLote, bool confirmarReemplazo = false, bool simular = false)
         {
             var lote = _stagingService.ObtenerLote(idLote);
 
@@ -494,6 +498,25 @@ namespace bufinscustomers.Services
             if (impacto.RequiereConfirmacion && !confirmarReemplazo)
                 return Sale(ConfirmacionCargueEstado.FaltaConfirmarReemplazo,
                     string.Format(T("Datos_CargueReemplazoSinConfirmar"), impacto.TotalExistentes.ToString("N0"), impacto.TotalNuevas.ToString("N0")));
+
+            if (simular)
+            {
+                var conteo = new List<(string NombreHoja, string NombreTabla, int Filas)>();
+                using (var cnSim = new SqlConnection(CadenaConexion))
+                {
+                    cnSim.Open();
+                    conteo = _stagingService.ObtenerConteoPorHoja(cnSim, null, idLote);
+                }
+                var sim = new ResultadoCargaExcel
+                {
+                    Exito = true, TotalFilasInsertadas = lote.TotalFilas, TotalHojasProcesadas = conteo.Count,
+                    DetalleHojas = conteo.Select(c => new DetalleCargaHojaExcel { NombreHoja = c.NombreHoja, NombreTabla = c.NombreTabla, FilasInsertadas = c.Filas, Estado = "Simulado" }).ToList(),
+                    Mensaje = $"Simulación (pruebas): el cargue es válido y se habría confirmado con {lote.TotalFilas:N0} fila(s). No se modificó ningún dato real."
+                };
+                try { _stagingService.DescartarLote(idLote); }
+                catch (Exception exSim) { AppLogger.Error(exSim, $"Confirmar(simulado): no se pudo descartar el lote {idLote}"); }
+                return Sale(ConfirmacionCargueEstado.Simulado, sim.Mensaje, sim);
+            }
 
             int idUsuario = usuario?.Id ?? 0;
             var resultado = new ResultadoCargaExcel { TotalHojasProcesadas = 0, TotalFilasInsertadas = lote.TotalFilas };

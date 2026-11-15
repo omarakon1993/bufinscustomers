@@ -3,7 +3,7 @@
   "info": {
     "title": "API de ingesta de BUFINS",
     "version": "1.0.0",
-    "description": "Envíe a BUFINS, desde su sistema contable, la misma información que hoy entra con la plantilla Excel. Un envío por la API pasa por exactamente las mismas validaciones, el mismo respaldo previo y la misma auditoría que un cargue de Excel.\n\n**Flujo**: (A) suba la plantilla completa con `POST /cargues/archivo`, o (B) abra un cargue con `POST /cargues`, envíe cada hoja con `POST /cargues/{idLote}/hojas/{hoja}` y ciérrelo con `POST /cargues/{idLote}/validar`. Luego revise `GET /cargues/{idLote}` y `/hallazgos`. La confirmación la hace una persona en «Revisar cargue», salvo que la integración tenga permiso para confirmar.\n\n**Reglas que nunca se saltan**: un cargue no puede dejar un año vacío ni reducir una tabla por debajo del umbral de bloqueo; una reducción fuerte siempre la confirma una persona. Un nuevo envío para el mismo año/modo/escenario reemplaza al envío pendiente de la misma integración.\n\n**Mensajes**: en español; agregue `?idioma=en` o `Accept-Language: en` para inglés."
+    "description": "Envíe a BUFINS, desde su sistema contable, la misma información que hoy entra con la plantilla Excel. Un envío por la API pasa por exactamente las mismas validaciones, el mismo respaldo previo y la misma auditoría que un cargue de Excel.\n\n**Flujo**: (A) suba la plantilla completa con `POST /cargues/archivo`, o (B) abra un cargue con `POST /cargues`, envíe cada hoja con `POST /cargues/{idLote}/hojas/{hoja}` y ciérrelo con `POST /cargues/{idLote}/validar`. Luego revise `GET /cargues/{idLote}` y `/hallazgos`. La confirmación la hace una persona en «Revisar cargue», salvo que la integración tenga permiso para confirmar.\n\n**Reglas que nunca se saltan**: un cargue no puede dejar un año vacío ni reducir una tabla por debajo del umbral de bloqueo; una reducción fuerte siempre la confirma una persona. Un nuevo envío para el mismo año/modo/escenario reemplaza al envío pendiente de la misma integración.\n\n**Entorno de pruebas (sandbox)**: una integración de tipo Pruebas (clave `bft_…`) hace todo el flujo igual que producción, pero su confirmación es una simulación (`ConfirmadoSimulado`): nunca modifica datos reales ni avisa a los revisores. Sus respuestas llevan la cabecera `X-Bufins-Entorno: pruebas`.\n\n**Mensajes**: en español; agregue `?idioma=en` o `Accept-Language: en` para inglés."
   },
   "servers": [ { "url": "/api/v1", "description": "Este servidor" } ],
   "security": [ { "claveIntegracion": [] } ],
@@ -174,7 +174,7 @@
         "description": "Solo disponible si la integración tiene permiso para confirmar; si no, responde 403 `confirmacion_humana` y la confirmación la hace una persona. Aun con permiso, nunca confirma una reducción fuerte de datos (409 `requiere_revision_humana`) ni salta la regla de nunca dejar un año vacío (409 `bloqueado_regla_de_oro`). Antes de reemplazar, BUFINS guarda una versión para poder deshacer.",
         "parameters": [ { "$ref": "#/components/parameters/IdLote" } ],
         "responses": {
-          "200": { "description": "Confirmado" },
+          "200": { "description": "Confirmado (en una integración de pruebas: estado `ConfirmadoSimulado`, sin tocar datos)" },
           "403": { "description": "La integración no puede confirmar", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
           "404": { "$ref": "#/components/responses/NoEncontrado" },
           "409": { "$ref": "#/components/responses/NoDisponible" }
@@ -206,7 +206,7 @@
       },
       "Ping": {
         "type": "object",
-        "properties": { "estado": { "type": "string", "example": "ok" }, "version": { "type": "string" }, "integracion": { "type": "string" }, "idEmpresa": { "type": "integer" }, "empresa": { "type": "string" }, "permiteConfirmar": { "type": "boolean" } }
+        "properties": { "estado": { "type": "string", "example": "ok" }, "version": { "type": "string" }, "entorno": { "type": "string", "enum": ["produccion", "pruebas"] }, "integracion": { "type": "string" }, "idEmpresa": { "type": "integer" }, "empresa": { "type": "string" }, "permiteConfirmar": { "type": "boolean" } }
       },
       "Esquemas": {
         "type": "object",
@@ -234,7 +234,8 @@
         "type": "object",
         "properties": {
           "repetido": { "type": "boolean" },
-          "confirmacion": { "type": "string", "enum": ["no_solicitada", "no_permitida", "pendiente_de_revision", "confirmado"] },
+          "sandbox": { "type": "boolean", "description": "true si la integración es de pruebas (la confirmación es una simulación)." },
+          "confirmacion": { "type": "string", "enum": ["no_solicitada", "no_permitida", "pendiente_de_revision", "confirmado", "simulado"] },
           "confirmado": { "type": "object", "nullable": true, "properties": { "mensaje": { "type": "string" }, "filas": { "type": "integer" } } },
           "lote": { "$ref": "#/components/schemas/Cargue" },
           "urlRevision": { "type": "string", "description": "Dirección (en BUFINS) de la pantalla «Revisar cargue»." }
