@@ -130,9 +130,13 @@ namespace bufinscustomers.Api
             });
         }
 
+        // IMPORTANTE: los handlers asíncronos devuelven ValueTask<IResult>, NO Task<IResult>. En este entorno (.NET 10.0.15) un endpoint mínimo que
+        // devuelve exactamente Task<IResult> responde «200 vacío» sin escribir su resultado (reproducido en un proyecto mínimo aparte);
+        // con ValueTask<IResult> sí se escribe. No volver a Task<IResult> sin repetir esa prueba.
+
         // ── POST /cargues/archivo ───────────────────────────────────────────────────────
 
-        private static async Task<IResult> SubirArchivo(HttpContext ctx)
+        private static async ValueTask<IResult> SubirArchivo(HttpContext ctx)
         {
             var integ = Integ(ctx);
             var tecnico = Tecnico(ctx);
@@ -219,7 +223,7 @@ namespace bufinscustomers.Api
 
         // ── Envío por hojas en JSON: POST /cargues → POST /cargues/{id}/hojas/{hoja} (n veces) → POST /cargues/{id}/validar ──
 
-        private static async Task<IResult> IniciarCargue(HttpContext ctx)
+        private static async ValueTask<IResult> IniciarCargue(HttpContext ctx)
         {
             var integ = Integ(ctx);
             var tecnico = Tecnico(ctx);
@@ -276,7 +280,7 @@ namespace bufinscustomers.Api
             }, statusCode: 201);
         }
 
-        private static async Task<IResult> AgregarHoja(HttpContext ctx, long idLote, string hoja)
+        private static async ValueTask<IResult> AgregarHoja(HttpContext ctx, long idLote, string hoja)
         {
             var lote = LotePropio(ctx, idLote, out var errorLote);
             if (lote == null) return errorLote;
@@ -317,7 +321,7 @@ namespace bufinscustomers.Api
             }
         }
 
-        private static async Task<IResult> ValidarCargue(HttpContext ctx, long idLote)
+        private static async ValueTask<IResult> ValidarCargue(HttpContext ctx, long idLote)
         {
             var integ = Integ(ctx);
             var tecnico = Tecnico(ctx);
@@ -438,7 +442,7 @@ namespace bufinscustomers.Api
 
         // ── POST /modelos/ejecutar (asíncrono: 202 y se consulta GET /ejecuciones/{id}) ──────────────
 
-        private static async Task<IResult> EjecutarModelos(HttpContext ctx)
+        private static async ValueTask<IResult> EjecutarModelos(HttpContext ctx)
         {
             var integ = Integ(ctx);
             var tecnico = Tecnico(ctx);
@@ -669,7 +673,21 @@ namespace bufinscustomers.Api
                 var cultura = new CultureInfo(en ? "en-US" : "es-CO");
                 CultureInfo.CurrentUICulture = cultura; CultureInfo.CurrentCulture = cultura;
 
+                var cronometro = System.Diagnostics.Stopwatch.StartNew();
                 await _next(ctx);
+                cronometro.Stop();
+
+                // Ruta o método que no existen en la API: un JSON claro en vez de una respuesta vacía (404/405 sin cuerpo).
+                if (!ctx.Response.HasStarted && (ctx.Response.StatusCode == 404 || ctx.Response.StatusCode == 405) && ctx.Response.ContentLength == null && ctx.Response.ContentType == null)
+                {
+                    bool metodo = ctx.Response.StatusCode == 405;
+                    await Escribir(ctx, ctx.Response.StatusCode, metodo ? "metodo_no_permitido" : "ruta_no_encontrada",
+                        metodo ? "Ese método HTTP no está permitido en esta ruta. Consulte /api/v1/docs."
+                               : "La ruta no existe en la API v1. Revise la dirección (¿dejó algún marcador como NN sin reemplazar?) o consulte /api/v1/docs.");
+                }
+
+                // Una línea por llamada autenticada (nunca la clave): permite seguir qué hace cada integración y diagnosticar respuestas inesperadas.
+                AppLogger.Info($"API {ctx.Request.Method} {ctx.Request.Path} → {ctx.Response.StatusCode} ({cronometro.ElapsedMilliseconds} ms) integración {res.Integracion.Id} desde {ip} · tipo={ctx.Response.ContentType ?? "-"} longitud={(ctx.Response.ContentLength?.ToString() ?? "-")} iniciada={ctx.Response.HasStarted}", "ApiV1");
             }
             catch (Exception ex)
             {
