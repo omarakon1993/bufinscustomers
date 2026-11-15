@@ -4,7 +4,7 @@
 @{
     ViewBag.Title = Resources.Strings.CfgRel_PageTitle;
     var tablasRel = ViewBag.TablasRel as List<TablaRelInfo>;
-    var resultado = TempData["ResultadoCarga"] as ResultadoCargaRelacionamiento;
+    var resultado = bufinscustomers.Helpers.TempDataObjetoHelper.ObtenerObjeto<ResultadoCargaRelacionamiento>(TempData, "ResultadoCarga");
     var nombreArchivo = TempData["NombreArchivo"] as string;
 }
 

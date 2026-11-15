@@ -1043,7 +1043,7 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("CargueExcel");
 
                 default: // PlantillaIncompleta, ErrorEnHoja, ErrorInesperado
-                    TempData["ResultadoCarga"] = proceso.Resultado;
+                    TempData.GuardarObjeto("ResultadoCarga", proceso.Resultado);
                     TempData["NombreArchivo"] = proceso.NombreArchivo;
                     SetErrorMessage(proceso.Mensaje);
                     return RedirectToAction("CargueExcel");
@@ -1102,7 +1102,7 @@ namespace bufinscustomers.Controllers
             {
                 case ConfirmacionCargueEstado.Confirmado:
                     CargueLoteSesionHelper.Quitar(idLote);
-                    TempData["ResultadoCarga"] = r.Resultado;
+                    TempData.GuardarObjeto("ResultadoCarga", r.Resultado);
                     TempData["NombreArchivo"] = r.Lote.NombreArchivo;
                     if (r.Resultado.Exito) SetSuccessMessage(r.Mensaje);
                     else SetErrorMessage(r.Mensaje);

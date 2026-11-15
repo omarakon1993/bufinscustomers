@@ -4,7 +4,7 @@
 @{
     ViewBag.Title = Resources.Strings.CfgVarPBI_PageTitle;
     var estado    = ViewBag.EstadoActual as EstadoVariablesPBI;
-    var resultado = TempData["ResultadoCarga"] as ResultadoCargaVariablesPBI;
+    var resultado = bufinscustomers.Helpers.TempDataObjetoHelper.ObtenerObjeto<ResultadoCargaVariablesPBI>(TempData, "ResultadoCarga");
 
     // Pre-calcular variables del diff para evitar declaraciones dentro de @if anidados
     var comp        = resultado != null ? resultado.Comparacion : null;

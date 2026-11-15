@@ -3,7 +3,7 @@
 @{
     ViewBag.Title = Resources.Strings.Datos_PageTitle;
     Layout = "~/Views/Shared/_Layout.cshtml";
-    var resultado = TempData["ResultadoCarga"] as ResultadoCargaExcel;
+    var resultado = bufinscustomers.Helpers.TempDataObjetoHelper.ObtenerObjeto<ResultadoCargaExcel>(TempData, "ResultadoCarga");
 
     // Resultado del cargue (éxito o error) — es la ÚNICA forma en que se muestra ahora (ya no hay
     // tabla de detalle aparte más abajo en la página): un modal con el detalle estructurado

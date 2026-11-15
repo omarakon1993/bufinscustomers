@@ -69,7 +69,7 @@ namespace bufinscustomers.Controllers
                         var resultado = _service.CargarDesdeExcel(package, usuarioNombre);
                         resultado.NombreArchivo = Path.GetFileName(archivoExcel.FileName);
 
-                        TempData["ResultadoCarga"] = resultado;
+                        TempData.GuardarObjeto("ResultadoCarga", resultado);
 
                         if (resultado.Exito)
                             TempData["SuccessMessage"] = resultado.Mensaje;
