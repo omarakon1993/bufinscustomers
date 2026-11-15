@@ -4,6 +4,8 @@
     bool disponible = ViewBag.Disponible;
     string idiomaQs = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("en") ? "?idioma=en" : "";
     var activas = Model.Where(x => !x.FechaRevocada.HasValue && x.Activo).ToList();
+    string agenteHuella = ViewBag.AgenteHuella as string;
+    double agenteMB = ViewBag.AgenteMB is double d ? d : 0;
     string baseApi = ViewBag.BaseApi as string;
     var empresas = (System.Collections.Generic.List<bufinscustomers.Models.Empresas>)ViewBag.Empresas
                    ?? new System.Collections.Generic.List<bufinscustomers.Models.Empresas>();
@@ -468,7 +470,26 @@
                                 <div id="asSandbox" class="alert alert-info small d-none mb-2"><i class="fas fa-flask mr-1"></i>@Resources.Strings.Integ_As_SandboxAviso</div>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-primary mb-3" id="asDescargar"><i class="fas fa-download mr-1"></i>@Resources.Strings.Integ_As_BtnDescargar</button>
+                        <div class="d-flex flex-wrap mb-3" style="gap:8px;">
+                            <button type="button" class="btn btn-primary" id="asDescargar"><i class="fas fa-download mr-1"></i>@Resources.Strings.Integ_As_BtnDescargar</button>
+                            @if (!string.IsNullOrEmpty(agenteHuella))
+                            {
+                                <a class="btn btn-secondary" href="@Url.Action("DescargarAgente", "Integraciones")"><i class="fas fa-file-download mr-1"></i>@Resources.Strings.Integ_As_BtnAgente</a>
+                            }
+                        </div>
+                        @if (!string.IsNullOrEmpty(agenteHuella))
+                        {
+                            <div class="small text-muted mb-3">
+                                <div>@string.Format(Resources.Strings.Integ_As_AgenteInfo, agenteMB.ToString("0.#", System.Globalization.CultureInfo.CurrentCulture))</div>
+                                <div class="mt-1">@Resources.Strings.Integ_As_AgenteHuella</div>
+                                <code style="word-break:break-all;">@agenteHuella</code>
+                                <div class="mt-1"><i class="fas fa-shield-alt mr-1"></i>@Resources.Strings.Integ_As_AgenteAviso</div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning small"><i class="fas fa-exclamation-triangle mr-1"></i>@Resources.Strings.Integ_As_AgenteNoDisp</div>
+                        }
 
                         <div class="bf-section">@Resources.Strings.Integ_As_PasosTitulo</div>
                         <ol class="small pl-3 mb-0">

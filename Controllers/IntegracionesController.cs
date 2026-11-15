@@ -52,6 +52,11 @@ namespace bufinscustomers.Controllers
                 catch (Exception ex) { AppLogger.Warn("Integraciones.Salud: " + ex.Message); }
             }
             ViewBag.Salud = salud;
+
+            // Agente de carpeta descargable (el asistente ofrece el botón y la huella para verificar la descarga)
+            string huellaAgente = HuellaAgente(out long bytesAgente);
+            ViewBag.AgenteHuella = huellaAgente;
+            ViewBag.AgenteMB = Math.Round(bytesAgente / 1048576.0, 1);
             return View("~/Views/Configuracion/Integraciones.cshtml", lista);
         }
 
@@ -278,6 +283,57 @@ namespace bufinscustomers.Controllers
             if (r.ok) return Json(new { success = true, message = string.Format(R("Integ_Wh_PruebaOk"), r.codigo) });
             string motivo = r.error == "sin_webhook" ? R("Integ_Wh_ErrSinWebhook") : (r.codigo.HasValue ? "HTTP " + r.codigo : (r.error ?? "?"));
             return Json(new { success = false, message = string.Format(R("Integ_Wh_PruebaFallo"), motivo) });
+        }
+
+        // ── Agente de carpeta (descarga) ─────────────────────────────────────────────────
+
+        private const string RutaAgente = "~/App_Data/Agente/AgenteBufins.exe";
+        private static string _agenteHash, _agenteHashDe;
+        private static readonly object _lockHash = new object();
+
+        /// <summary>SHA-256 del ejecutable (en mayúsculas), recalculado solo si el archivo cambió. Null si no está.</summary>
+        private string HuellaAgente(out long bytes)
+        {
+            bytes = 0;
+            try
+            {
+                var fi = new System.IO.FileInfo(Server.MapPath(RutaAgente));
+                if (!fi.Exists) return null;
+                bytes = fi.Length;
+                string marca = fi.LastWriteTimeUtc.Ticks + ":" + fi.Length;
+                lock (_lockHash)
+                {
+                    if (_agenteHashDe != marca)
+                    {
+                        using (var fs = fi.OpenRead())
+                            _agenteHash = BitConverter.ToString(System.Security.Cryptography.SHA256.HashData(fs)).Replace("-", "");
+                        _agenteHashDe = marca;
+                    }
+                    return _agenteHash;
+                }
+            }
+            catch (Exception ex) { AppLogger.Warn("Integraciones.HuellaAgente: " + ex.Message); return null; }
+        }
+
+        /// <summary>
+        /// Descarga el agente de carpeta (<c>App_Data/Agente/AgenteBufins.exe</c>, no público: lo deja ahí el despliegue con
+        /// <c>Publicar-Agente.ps1</c>). Solo Super Admin y Admin de Empresa; se audita cada descarga.
+        /// </summary>
+        [HttpGet]
+        public ActionResult DescargarAgente()
+        {
+            if (!PuedeAdministrar()) return RedirectToAction("Index", "Home");
+            string huella = HuellaAgente(out long bytes);
+            if (huella == null)
+            {
+                SetErrorMessage(R("Integ_As_AgenteNoDisp"));
+                return RedirectToAction("Index");
+            }
+            new AuditoriaService().RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Exportar, "AgenteBufins", huella.Substring(0, 12),
+                $"Descargó el agente de carpeta AgenteBufins.exe (SHA-256 {huella.Substring(0, 12)}…).", null, new { huella, bytes },
+                UsuarioSesionHelper.UsuarioActual?.IdEmpresa, entidadNombre: "AgenteBufins.exe");
+            Response.Headers["Cache-Control"] = "no-store";
+            return File(System.IO.File.ReadAllBytes(Server.MapPath(RutaAgente)), "application/octet-stream", "AgenteBufins.exe");
         }
 
         // ── Asistente de conexión ────────────────────────────────────────────────────────
