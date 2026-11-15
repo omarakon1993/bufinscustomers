@@ -19,12 +19,20 @@
             <i class="fas fa-plug powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@Resources.Strings.Integ_PageTitle</h1>
         </div>
-        @if (disponible)
-        {
-            <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#integCrearModal">
-                <i class="fas fa-plus mr-1"></i>@Resources.Strings.Integ_BtnNueva
-            </button>
-        }
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a class="btn-modern-secondary" href="@Url.Content("~/api/v1/manual")" target="_blank" rel="noopener">
+                <i class="fas fa-book mr-1"></i>@Resources.Strings.Integ_BtnManual
+            </a>
+            <a class="btn-modern-secondary" href="@Url.Content("~/api/v1/openapi.json")" target="_blank" rel="noopener">
+                <i class="fas fa-file-code mr-1"></i>@Resources.Strings.Integ_BtnContrato
+            </a>
+            @if (disponible)
+            {
+                <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#integCrearModal">
+                    <i class="fas fa-plus mr-1"></i>@Resources.Strings.Integ_BtnNueva
+                </button>
+            }
+        </div>
     </div>
 
     <p class="text-muted mt-3" style="font-size:0.88rem;">

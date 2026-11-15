@@ -39,6 +39,17 @@ namespace bufinscustomers.Api
                     : Error(404, "no_encontrado", "El contrato OpenAPI no está disponible.");
             });
 
+            // Manual de integración (HTML autocontenido, sin secretos): público para que el equipo técnico del cliente lo consulte y copie los ejemplos.
+            g.MapGet("/manual", (string idioma) =>
+            {
+                bool en = string.Equals(idioma, "en", StringComparison.OrdinalIgnoreCase);
+                var ruta = AppPaths.Map("~/App_Data/Documentacion/Tecnica/" + (en ? "Manual_Integracion_API.en.html" : "Manual_Integracion_API.html"));
+                if (!System.IO.File.Exists(ruta)) ruta = AppPaths.Map("~/App_Data/Documentacion/Tecnica/Manual_Integracion_API.html");
+                return System.IO.File.Exists(ruta)
+                    ? Results.Content(System.IO.File.ReadAllText(ruta, System.Text.Encoding.UTF8), "text/html; charset=utf-8")
+                    : Error(404, "no_encontrado", "El manual no está disponible.");
+            });
+
             g.MapGet("/ping", (HttpContext ctx) =>
             {
                 var i = Integ(ctx);
@@ -520,7 +531,8 @@ namespace bufinscustomers.Api
                 if (!ctx.Request.Path.StartsWithSegments("/api/v1"))
                 { await Escribir(ctx, 404, "no_encontrado", "Ruta no encontrada. La API vigente es /api/v1."); return; }
 
-                if (ctx.Request.Path.Equals("/api/v1/openapi.json", StringComparison.OrdinalIgnoreCase)) { await _next(ctx); return; }
+                if (ctx.Request.Path.Equals("/api/v1/openapi.json", StringComparison.OrdinalIgnoreCase)
+                    || ctx.Request.Path.Equals("/api/v1/manual", StringComparison.OrdinalIgnoreCase)) { await _next(ctx); return; }
 
                 if (!Disponible())
                 { await Escribir(ctx, 503, "api_no_configurada", "La API de ingesta aún no está habilitada en este entorno."); return; }
