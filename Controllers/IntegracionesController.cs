@@ -309,7 +309,7 @@ namespace bufinscustomers.Controllers
             return Json(new { success = false, message = string.Format(R("Integ_Wh_PruebaFallo"), motivo) });
         }
 
-        // ── Asistente de conexión ────────────────────────────────────────────────────────
+        // ── Ayuda para conectar ────────────────────────────────────────────────────────
 
         private static readonly Dictionary<int, DateTime> _ultimaAyuda = new Dictionary<int, DateTime>();
         private static readonly object _lockAyuda = new object();

@@ -487,12 +487,9 @@
     };
     var enlaces = {
         manual: '@Html.Raw(js(baseApi + "/manual" + idiomaQs))',
-        docs: '@Html.Raw(js(baseApi + "/docs" + idiomaQs))',
-        contrato: '@Html.Raw(js(baseApi + "/openapi.json"))'
+        docs: '@Html.Raw(js(baseApi + "/docs" + idiomaQs))'
     };
     var urls = {
-        usuarios: '@Url.Action("UsuariosDeEmpresa", "Integraciones")',
-        crear: '@Url.Action("Crear", "Integraciones")',
         editar: '@Url.Action("Editar", "Integraciones")',
         rotar: '@Url.Action("Rotar", "Integraciones")',
         revocar: '@Url.Action("Revocar", "Integraciones")',
