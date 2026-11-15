@@ -50,6 +50,9 @@ namespace bufinscustomers.Api
                     : Error(404, "no_encontrado", "El manual no está disponible.");
             });
 
+            // Probador interactivo (Swagger UI incluido en /Assets/swagger, sin cargar nada de internet): público; la llamada real sí lleva la clave que el usuario escriba en «Authorize».
+            g.MapGet("/docs", (string idioma) => Results.Content(PaginaProbador(string.Equals(idioma, "en", StringComparison.OrdinalIgnoreCase)), "text/html; charset=utf-8"));
+
             g.MapGet("/ping", (HttpContext ctx) =>
             {
                 var i = Integ(ctx);
@@ -471,6 +474,38 @@ namespace bufinscustomers.Api
             }, statusCode: 202);
         }
 
+        // ── Probador interactivo (Swagger UI) ────────────────────────────────────────────
+
+        private const string VersionSwagger = "5.17.14";
+
+        private static string PaginaProbador(bool en)
+        {
+            string titulo = en ? "Interactive API tester" : "Probador interactivo de la API";
+            string intro = en
+                ? "Try every call from your browser. Press <b>Authorize</b> and paste the integration key (only the key, without the word Bearer). The interface is in English; the descriptions follow the manual."
+                : "Pruebe cada llamada desde el navegador. Pulse <b>Authorize</b> y pegue la clave de la integración (solo la clave, sin la palabra Bearer). La interfaz está en inglés; las descripciones siguen el manual.";
+            string aviso = en
+                ? "<b>Use a TESTING key (bft_…).</b> With a production key (bfk_…), “Try it out” runs real calls. The key is only kept in this tab's memory."
+                : "<b>Use una clave de PRUEBAS (bft_…).</b> Con una clave de producción (bfk_…), «Try it out» ejecuta llamadas reales. La clave solo se guarda en la memoria de esta pestaña.";
+            string manual = en ? "/api/v1/manual?idioma=en" : "/api/v1/manual";
+            string verManual = en ? "Integration manual" : "Manual de integración";
+            string verContrato = en ? "OpenAPI contract (JSON)" : "Contrato OpenAPI (JSON)";
+
+            return ("<!doctype html><html lang=\"" + (en ? "en" : "es") + "\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+                + "<title>" + titulo + " · BUFINS</title>"
+                + "<link rel=\"icon\" href=\"/Assets/swagger/favicon-32x32.png\">"
+                + "<link rel=\"stylesheet\" href=\"/Assets/swagger/swagger-ui.css?v=" + VersionSwagger + "\">"
+                + "<link rel=\"stylesheet\" href=\"/Assets/swagger/swagger-bufins.css?v=1\">"
+                + "</head><body>"
+                + "<header class=\"bf-cab\"><div class=\"bf-w\"><h1>" + titulo + "</h1><p>" + intro + "</p>"
+                + "<nav><a href=\"" + manual + "\">" + verManual + "</a><a href=\"/api/v1/openapi.json\">" + verContrato + "</a></nav></div></header>"
+                + "<div class=\"bf-aviso\"><div>" + aviso + "</div></div>"
+                + "<main class=\"bf-swagger\"><div id=\"swagger-ui\"></div></main>"
+                + "<script src=\"/Assets/swagger/swagger-ui-bundle.js?v=" + VersionSwagger + "\"></script>"
+                + "<script src=\"/Assets/swagger/swagger-iniciar.js?v=1\"></script>"
+                + "</body></html>");
+        }
+
         // ── Utilidades ─────────────────────────────────────────────────────────────────
 
         public static Integracion Integ(HttpContext ctx) => (Integracion)ctx.Items[ItemIntegracion];
@@ -592,7 +627,8 @@ namespace bufinscustomers.Api
                 { await Escribir(ctx, 404, "no_encontrado", "Ruta no encontrada. La API vigente es /api/v1."); return; }
 
                 if (ctx.Request.Path.Equals("/api/v1/openapi.json", StringComparison.OrdinalIgnoreCase)
-                    || ctx.Request.Path.Equals("/api/v1/manual", StringComparison.OrdinalIgnoreCase)) { await _next(ctx); return; }
+                    || ctx.Request.Path.Equals("/api/v1/manual", StringComparison.OrdinalIgnoreCase)
+                    || ctx.Request.Path.Equals("/api/v1/docs", StringComparison.OrdinalIgnoreCase)) { await _next(ctx); return; }
 
                 if (!Disponible())
                 { await Escribir(ctx, 503, "api_no_configurada", "La API de ingesta aún no está habilitada en este entorno."); return; }

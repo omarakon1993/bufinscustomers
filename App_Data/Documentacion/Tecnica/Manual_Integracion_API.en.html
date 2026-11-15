@@ -100,7 +100,9 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
       { "nombre": "Año",    "tipo": "numero", "longitudMaxima": null, "admiteVacio": false } ] } ] }</code></pre>
 <p class="note info">The names in the example are illustrative: <b>the real ones always come from <code>/esquemas</code></b>. The types are <code>texto</code> (text), <code>numero</code> (number), <code>fecha</code> (date) and <code>booleano</code> (boolean). Field and property names in the API are in Spanish.</p>
 <h3>OpenAPI contract</h3>
-<p>The full contract is at <code>/api/v1/openapi.json</code> (no key). You can import it into Postman or generate a client in your language.</p></section>
+<p>The full contract is at <code>/api/v1/openapi.json</code> (no key). You can import it into Postman or generate a client in your language.</p>
+<h3>Interactive tester</h3>
+<p>At <code>/api/v1/docs</code> there is an <b>interactive tester</b> (Swagger): it lists every call, lets you fill in the fields, upload a file and see the response, without programming. Press <b>Authorize</b> and paste the key (only the key, without “Bearer”). <b>Use it with a testing key (<code>bft_…</code>)</b>: with a production one the calls are real.</p></section>
 
 <section id="archivo"><h2>6. Option A · Upload the Excel template</h2>
 <p class="lead">Equivalent to uploading the file in “Excel load”. The file must be your company's BUFINS template with <b>all</b> its sheets (it is downloaded from that same screen).</p>

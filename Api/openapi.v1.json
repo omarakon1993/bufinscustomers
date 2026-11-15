@@ -213,7 +213,7 @@
   },
   "components": {
     "securitySchemes": {
-      "claveIntegracion": { "type": "http", "scheme": "bearer", "bearerFormat": "bfk_{prefijo}_{secreto}", "description": "Clave de la integración (se genera en BUFINS → Configuración → Integraciones API). Se muestra una sola vez." }
+      "claveIntegracion": { "type": "http", "scheme": "bearer", "bearerFormat": "bfk_{prefijo}_{secreto}", "description": "Clave de la integración (se genera en BUFINS → Configuración → Integraciones API). Se muestra una sola vez. En el probador interactivo (/api/v1/docs), pegue solo la clave, sin la palabra Bearer." }
     },
     "parameters": {
       "IdLote": { "name": "idLote", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } },

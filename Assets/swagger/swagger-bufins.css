@@ -1,0 +1,18 @@
+/* Marco BUFINS del probador interactivo de la API: mismos colores que la documentación oficial. Swagger UI va en tema claro. */
+:root { --bg:#f6f5fb; --card:#fff; --ink:#1c1738; --ink2:#5b5678; --line:#e3e0f1; --brand:#583aff; --grad:linear-gradient(90deg,#6366F1 0%,#3B82F6 35%,#06B6D4 70%,#01E1D7 100%); }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.6 "Segoe UI", system-ui, sans-serif; }
+.bf-cab { background: var(--grad); color: #fff; padding: 28px 18px 22px; }
+.bf-w { max-width: 1180px; margin: 0 auto; padding: 0 18px; }
+.bf-cab h1 { margin: 0 0 6px; font-size: 26px; }
+.bf-cab p { margin: 0; opacity: .95; max-width: 760px; }
+.bf-cab nav { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+.bf-cab nav a { color: #fff; text-decoration: none; font-size: 13px; padding: 4px 12px; border-radius: 999px; background: rgba(255, 255, 255, .2); border: 1px solid rgba(255, 255, 255, .45); }
+.bf-cab nav a:hover { background: rgba(255, 255, 255, .35); }
+.bf-aviso { margin: 18px auto 0; max-width: 1180px; padding: 0 18px; }
+.bf-aviso > div { background: var(--card); border: 1px solid var(--line); border-left: 4px solid #d97706; border-radius: 10px; padding: 10px 14px; color: var(--ink2); font-size: 14px; }
+.bf-aviso b { color: var(--ink); }
+.bf-swagger { max-width: 1180px; margin: 10px auto 40px; padding: 0 10px; }
+.bf-swagger .swagger-ui .topbar { display: none; }
+.bf-swagger .swagger-ui .info { margin: 20px 0 10px; }
+.bf-swagger .swagger-ui .info .title { font-size: 24px; }
