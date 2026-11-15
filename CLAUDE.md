@@ -116,6 +116,7 @@ Atajos del rango (Línea de tiempo + PYG): una sola implementación `Assets/js/r
 
 ## Cargues (detalle en `cargues-escenarios.md` — LEERLA antes de tocar `DatosController`, `CargueStagingService`, `CargueHojasService` o `HistorialVersionesCarguesService`)
 
+- **Toda la lógica del cargue vive en `Services/CargueOrquestadorService.cs`** (sin sesión ni HTTP; la usará la API de ingesta): `DatosController` solo traduce sus resultados. No poner lógica de cargue en el controlador.
 - Flujo en dos pasos: `CargarExcel` solo escribe en `Staging_Ini_*` y valida (`sp_ValidarCargueStaging`, único SP de reglas; regla nueva = bloque nuevo en el SP); nada real cambia hasta `ConfirmarCargue` (una transacción: snapshot → borrados → `sp_ConfirmarCargueStaging` → auditoría). `IdLote` aísla todo; acceso por `EmpresaAccesoHelper`; un lote activo por llave `(IdEmpresa, Anio, Modo, IdEscenario)`; ningún lote debe quedar pegado (abandono, recarga, fin de sesión, purga).
 - Hojas Z_ → Ini_ en el catálogo `dbo.CargueHojas` (gestor Super Admin con DDL; reglas de nombres/tipos, `Año` obligatoria, cambios destructivos solo con tablas vacías y sin módulos SQL que las mencionen). API de `TablasCargueHelper` conservada.
 - Historial: snapshot GZip UTF-8 en `DatosGzip` (**nunca llenarlo desde SQL con `COMPRESS`**), atómico, 2 versiones por llave; rollback aborta si falta un snapshot; respaldo automático antes de restaurar.

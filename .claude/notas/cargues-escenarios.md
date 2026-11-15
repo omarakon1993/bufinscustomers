@@ -2,6 +2,16 @@
 
 > Detalle completo movido desde CLAUDE.md (2026-11-11). CLAUDE.md conserva las reglas obligatorias en resumen; este archivo es la referencia completa. Si cambias el módulo, actualiza este archivo.
 
+### Orquestador del cargue (`Services/CargueOrquestadorService.cs`) — fase 0 de la API (2026-11-14)
+
+**Toda la lógica del cargue vive aquí, una sola vez**; `DatosController` solo traduce sus resultados a redirecciones, `TempData` y sesión. Lo usará igual la futura API de ingesta (`/api/v1`), así que **no se puede volver a poner lógica de cargue en el controlador** ni depender de sesión/HTTP dentro del servicio.
+
+- Sin sesión ni HTTP: recibe `Usuarios` (el usuario técnico de una integración, en la API), un `Stream` y un traductor opcional `Func<string,string>` (el controlador pasa `R`; mismo patrón de `IASolicitud.Traducir`). Los servicios no leen recursos.
+- API: `ValidarSolicitud(SolicitudCargue)` (empresa, acceso, hojas personalizadas, config, año/modo, archivo) → `ProcesarArchivo(solicitud, alCrearLote)` (lote → staging → `sp_ValidarCargueStaging`; estados `ProcesoCargueEstado`) → `Confirmar(usuario, idLote, confirmarReemplazo)` (impacto, regla de oro, snapshot, reemplazo, auditoría, notificación, `SP_ValidarPlantillaInicial`; estados `ConfirmacionCargueEstado`) → `DescartarCargue` / `AbandonarCargue`.
+- `alCrearLote` existe para que la pantalla ate el lote a la sesión (`CargueLoteSesionHelper`); la API no lo usa. La bitácora de importación se devuelve en `ResultadoProcesoCargue.LogImportacion` y el controlador la guarda en `Session["LogImportacion"]`.
+- Movido tal cual desde el controlador: lectura del libro (`LeerHojaEnDataTable`), `GuardarEnIni`, `GuardarEnSQLServer` (Z_TablaPUC), borrados de `Ini_*`, `RegistrarAuditoria` (ahora recibe el usuario), `ConstruirDetalleCargue`, `EjecutarValidacionDatos`. Los `TempData["Mensaje"]`/`MostrarDescargaLog` internos pasaron a campos del servicio.
+- Pendiente para la fase 1: los mensajes de `ErrorInesperado` aún incluyen `ex.Message` (heredado de la pantalla); la API debe devolver un mensaje genérico y registrar el detalle en `AppLogger`.
+
 ### Excel Import Logging
 
 `DatosController` accumulates timestamped import log messages during an Excel upload using a private `StringBuilder _logBuilder` field. Log entries are formatted as `[yyyy-MM-dd HH:mm:ss.fff] message` via private `LogToFile(mensaje)`. The completed log is stored in `Session["LogImportacion"]` via `GuardarLogEnSession()`. Users can download it as `LogImportacion_{yyyyMMdd_HHmmss}.txt` via `GET /Datos/DescargarLog`.
