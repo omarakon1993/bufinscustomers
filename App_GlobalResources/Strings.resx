@@ -4037,8 +4037,8 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="Integ_SelUsuario" xml:space="preserve"><value>Seleccione un usuario</value></data>
   <data name="Integ_SinUsuarios" xml:space="preserve"><value>La empresa no tiene usuarios disponibles</value></data>
   <data name="Integ_UsuarioHint" xml:space="preserve"><value>A este usuario se le atribuyen las acciones de la API en la auditoría. Se recomienda crear un usuario exclusivo (por ejemplo «Integración API»). No puede ser Super Admin.</value></data>
-  <data name="Integ_LabelConfirmar" xml:space="preserve"><value>Permitir que la integración confirme cargues</value></data>
-  <data name="Integ_LabelConfirmarHint" xml:space="preserve"><value>Si no se marca (recomendado al inicio), los cargues enviados por la API quedan en «Revisar cargue» y una persona los confirma. Aun marcada, la API nunca confirma una reducción fuerte de datos ni salta la regla de nunca dejar un año vacío.</value></data>
+  <data name="Integ_LabelConfirmar" xml:space="preserve"><value>Permitir que la integración confirme cargues y ejecute los modelos</value></data>
+  <data name="Integ_LabelConfirmarHint" xml:space="preserve"><value>Si no se marca (recomendado al inicio), los cargues enviados por la API quedan en «Revisar cargue» y una persona los confirma. Aun marcada, la API nunca confirma una reducción fuerte de datos ni salta la regla de nunca dejar un año vacío. El mismo permiso le deja recalcular los modelos (informes) por la API.</value></data>
   <data name="Integ_LabelIps" xml:space="preserve"><value>IP permitidas (opcional)</value></data>
   <data name="Integ_LabelIpsHint" xml:space="preserve"><value>Separadas por coma. Si se dejan vacías, la clave sirve desde cualquier dirección.</value></data>
   <data name="Integ_LabelActiva" xml:space="preserve"><value>Integración activa</value></data>
@@ -4079,4 +4079,6 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="Integ_BadgePruebas" xml:space="preserve"><value>Pruebas</value></data>
   <data name="Integ_ErrUsuarioEnUso" xml:space="preserve"><value>Ese usuario ya lo usa una integración de otro tipo (producción o pruebas). Use un usuario técnico distinto para cada una.</value></data>
   <data name="Integ_ErrSandboxNoDisponible" xml:space="preserve"><value>El entorno de pruebas aún no está habilitado. Contacte a soporte de BUFINS.</value></data>
+  <data name="Notif_ModelosApiErrores" xml:space="preserve"><value>Modelos ejecutados por la API con errores</value></data>
+  <data name="Notif_ModelosApiErroresMsg" xml:space="preserve"><value>La integración «{0}» ejecutó los modelos de {1}: {2} completado(s) y {3} con error. Revise «Ejecución de Modelos».</value></data>
 </root>

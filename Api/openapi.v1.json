@@ -9,7 +9,8 @@
   "security": [ { "claveIntegracion": [] } ],
   "tags": [
     { "name": "Sistema", "description": "Comprobación de la conexión y contrato de datos." },
-    { "name": "Cargues", "description": "Envío, revisión y confirmación de cargues." }
+    { "name": "Cargues", "description": "Envío, revisión y confirmación de cargues." },
+    { "name": "Modelos", "description": "Recalcular los informes (ejecución de modelos en segundo plano)." }
   ],
   "paths": {
     "/openapi.json": {
@@ -168,6 +169,29 @@
         }
       }
     },
+    "/modelos/ejecutar": {
+      "post": {
+        "tags": ["Modelos"], "summary": "Ejecutar los modelos (asíncrono)",
+        "description": "Recalcula TODOS los modelos activos de la empresa, en su orden, para que los informes reflejen los datos confirmados. Responde `202` de inmediato y los modelos corren en segundo plano; consulte `GET /ejecuciones/{idEjecucion}`. Requiere el mismo permiso que confirmar cargues. Una sola ejecución a la vez por empresa y escenario. En una integración de pruebas no se ejecuta nada (estado `Simulada`).",
+        "requestBody": { "required": false, "content": { "application/json": { "schema": { "type": "object", "properties": { "idEscenario": { "type": "integer", "default": 1 } } } } } },
+        "responses": {
+          "202": { "description": "Aceptada", "headers": { "Location": { "schema": { "type": "string" } } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EjecucionIniciada" } } } },
+          "403": { "description": "La integración no puede ejecutar modelos (`permiso_modelos`)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Ya hay una ejecución en curso (`ejecucion_en_curso`, con `idEjecucion`)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "422": { "$ref": "#/components/responses/Rechazado" }
+        }
+      }
+    },
+    "/ejecuciones/{idEjecucion}": {
+      "get": {
+        "tags": ["Modelos"], "summary": "Avance de una ejecución de modelos",
+        "parameters": [ { "name": "idEjecucion", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } } ],
+        "responses": {
+          "200": { "description": "Estado y detalle por modelo", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Ejecucion" } } } },
+          "404": { "$ref": "#/components/responses/NoEncontrado" }
+        }
+      }
+    },
     "/cargues/{idLote}/confirmar": {
       "post": {
         "tags": ["Cargues"], "summary": "Confirmar el cargue",
@@ -258,6 +282,22 @@
             "requiereRevisionHumana": { "type": "boolean", "description": "Reducción fuerte: la confirma siempre una persona." },
             "bloqueado": { "type": "boolean", "description": "Regla de oro: dejaría un año vacío o una tabla bajo el umbral. No se puede confirmar." },
             "tablas": { "type": "array", "items": { "type": "object", "properties": { "tabla": { "type": "string" }, "existentes": { "type": "integer" }, "nuevas": { "type": "integer" } } } } } }
+        }
+      },
+      "EjecucionIniciada": {
+        "type": "object",
+        "properties": { "idEjecucion": { "type": "integer", "format": "int64" }, "estado": { "type": "string", "enum": ["EnCurso", "Simulada"] }, "sandbox": { "type": "boolean" }, "urlEstado": { "type": "string" }, "siguientePaso": { "type": "string" } }
+      },
+      "Ejecucion": {
+        "type": "object",
+        "properties": {
+          "idEjecucion": { "type": "integer", "format": "int64" },
+          "estado": { "type": "string", "enum": ["EnCurso", "Completada", "ConErrores", "Interrumpida", "Simulada"] },
+          "sandbox": { "type": "boolean" }, "idEscenario": { "type": "integer" },
+          "inicio": { "type": "string", "format": "date-time" }, "fin": { "type": "string", "format": "date-time", "nullable": true },
+          "modelos": { "type": "array", "items": { "type": "object", "properties": {
+            "modelo": { "type": "string" }, "estado": { "type": "string", "enum": ["Pendiente", "EnCurso", "Completado", "Error", "Simulado"] },
+            "mensaje": { "type": "string", "nullable": true }, "segundos": { "type": "number", "nullable": true } } } }
         }
       },
       "Hallazgos": {

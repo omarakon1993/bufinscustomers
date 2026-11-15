@@ -62,6 +62,18 @@ namespace bufinscustomers.Api
             g.MapPost("/cargues", IniciarCargue);
             g.MapPost("/cargues/{idLote:long}/hojas/{hoja}", AgregarHoja);
             g.MapPost("/cargues/{idLote:long}/validar", ValidarCargue);
+            g.MapPost("/modelos/ejecutar", EjecutarModelos);
+            g.MapGet("/ejecuciones/{idEjecucion:long}", (HttpContext ctx, long idEjecucion) =>
+            {
+                var integ = Integ(ctx);
+                var e = new ApiEjecucionesService().Obtener(idEjecucion, integ.Id);
+                if (e == null) return Error(404, "ejecucion_no_encontrada", "La ejecución no existe o no fue iniciada por esta integración.");
+                return Ok(new
+                {
+                    idEjecucion = e.Id, estado = e.Estado, sandbox = integ.Sandbox, idEscenario = e.IdEscenario, inicio = e.Inicio, fin = e.Fin,
+                    modelos = e.Modelos.Select(m => new { modelo = m.Modelo, estado = m.Estado, mensaje = m.Mensaje, segundos = m.Segundos }).ToList()
+                });
+            });
 
             g.MapGet("/cargues/{idLote:long}", (HttpContext ctx, long idLote) =>
             {
@@ -416,6 +428,47 @@ namespace bufinscustomers.Api
                     AppLogger.Error("API: fallo al confirmar: " + r.Mensaje, contexto: "ApiV1.Confirmar");
                     return Error(500, "error_interno", "No se pudo confirmar el cargue. Inténtelo de nuevo o contacte a soporte.");
             }
+        }
+
+        // ── POST /modelos/ejecutar (asíncrono: 202 y se consulta GET /ejecuciones/{id}) ──────────────
+
+        private static async Task<IResult> EjecutarModelos(HttpContext ctx)
+        {
+            var integ = Integ(ctx);
+            var tecnico = Tecnico(ctx);
+            if (!integ.PermiteConfirmar)
+                return Error(403, "permiso_modelos", "Esta integración no puede ejecutar modelos: el permiso es el mismo de confirmar cargues. Pídalo al administrador de la empresa.");
+
+            int idEscenario = 1;
+            if (ctx.Request.ContentLength > 0)
+            {
+                var body = await LeerJson(ctx);
+                if (body == null || body.Value.ValueKind != JsonValueKind.Object)
+                    return Error(400, "json_invalido", "El cuerpo, si se envía, debe ser un objeto JSON: { \"idEscenario\": 1 }.");
+                if (body.Value.TryGetProperty("idEscenario", out var pe) && !(pe.ValueKind == JsonValueKind.Number && pe.TryGetInt32(out idEscenario)))
+                    return Error(400, "escenario_invalido", "El campo «idEscenario» debe ser un número.");
+            }
+
+            var r = new ApiEjecucionesService().Iniciar(integ, tecnico, idEscenario);
+            if (!r.ok)
+            {
+                switch (r.codigo)
+                {
+                    case "ejecucion_en_curso":
+                        return Results.Json(new { error = new { codigo = "ejecucion_en_curso", mensaje = "Ya hay una ejecución de modelos en curso para esta empresa y escenario.", idEjecucion = r.id } }, statusCode: 409);
+                    case "escenario_invalido": return Error(422, "escenario_no_disponible", "El escenario indicado no existe o está inactivo.");
+                    case "sin_modelos": return Error(422, "sin_modelos", "No hay modelos activos para ejecutar.");
+                    default: return Error(503, "api_no_configurada", "La ejecución de modelos aún no está habilitada en este entorno.");
+                }
+            }
+
+            ctx.Response.Headers["Location"] = $"/api/v1/ejecuciones/{r.id}";
+            return Results.Json(new
+            {
+                idEjecucion = r.id, estado = integ.Sandbox ? "Simulada" : "EnCurso", sandbox = integ.Sandbox,
+                urlEstado = $"/api/v1/ejecuciones/{r.id}",
+                siguientePaso = "Consulte GET /api/v1/ejecuciones/{idEjecucion} hasta que el estado sea Completada o ConErrores."
+            }, statusCode: 202);
         }
 
         // ── Utilidades ─────────────────────────────────────────────────────────────────

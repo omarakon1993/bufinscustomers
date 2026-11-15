@@ -58,7 +58,7 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 <li>Entre a <b>Configuración → Integraciones API</b> y pulse <b>Nueva integración</b>.</li>
 <li>Elija la <b>empresa</b>, escriba un <b>nombre</b> que identifique el sistema (por ejemplo «Agente Siigo – contabilidad») y elija el <b>usuario técnico</b>. Se recomienda crear un usuario exclusivo («Integración API»): a su nombre quedan registradas las acciones de la API en la auditoría. No puede ser Super Admin.</li>
 <li>Opcional: escriba las <b>IP permitidas</b> (las direcciones desde las que el cliente enviará). Con la lista, la clave solo sirve desde ellas.</li>
-<li>Deje <b>sin marcar</b> «Permitir que la integración confirme cargues» mientras se hacen las pruebas: así cada envío queda en «Revisar cargue» y lo confirma una persona.</li>
+<li>Deje <b>sin marcar</b> «Permitir que la integración confirme cargues y ejecute los modelos» mientras se hacen las pruebas: así cada envío queda en «Revisar cargue» y lo confirma una persona.</li>
 <li>Pulse <b>Crear</b>. BUFINS muestra la <b>clave una sola vez</b>: cópiela y guárdela en el gestor de secretos del cliente. Si se pierde, se genera una nueva.</li></ol>
 <p class="note"><b>Formato de la clave:</b> <code>bfk_xxxxxxxx_…</code> en producción y <code>bft_xxxxxxxx_…</code> en pruebas. Trátela como una contraseña: no la envíe por correo ni la guarde en el código fuente.</p>
 <h3>Entorno de pruebas (sandbox)</h3>
@@ -197,6 +197,21 @@ print(res["lote"]["estado"], res["lote"]["totalErrores"], "errores")</code></pre
 <div class="g2">
 <div class="card"><b>Una persona (por defecto)</b><p>El cargue queda esperando. Los administradores de la empresa reciben un aviso en la campana con el enlace a «Revisar cargue», donde pueden revisarlo y confirmarlo o descartarlo.</p></div>
 <div class="card"><b>La integración (si se le permitió)</b><p>Con <code>confirmar=true</code> al subir o validar, o con <code>POST /cargues/{id}/confirmar</code>. Solo confirma cargues sin advertencias ni reducción fuerte; en los demás casos queda pendiente y avisa a una persona.</p></div></div>
+<h3>Actualizar los informes: ejecutar los modelos</h3>
+<p>Los informes se alimentan de los modelos. Tras confirmar un cargue, una integración con permiso puede pedir que se <b>recalculen</b>: <code>POST /modelos/ejecutar</code>. Como el cálculo puede tardar minutos, la API responde <b>202</b> enseguida con un <code>idEjecucion</code> y los modelos corren <b>en segundo plano</b>, uno tras otro; consulte el avance con <code>GET /ejecuciones/{idEjecucion}</code> hasta que el estado sea <code>Completada</code> o <code>ConErrores</code>.</p>
+<pre><code>POST /api/v1/modelos/ejecutar
+{ "idEscenario": 1 }                      (el cuerpo es opcional; por defecto escenario 1)
+
+HTTP 202
+{ "idEjecucion": 41, "estado": "EnCurso", "sandbox": false, "urlEstado": "/api/v1/ejecuciones/41" }</code></pre>
+<pre><code>GET /api/v1/ejecuciones/41
+{ "idEjecucion": 41, "estado": "EnCurso", "idEscenario": 1, "inicio": "2026-11-14T09:00:02Z", "fin": null,
+  "modelos": [ { "modelo": "PYG",     "estado": "Completado", "mensaje": "Ejecutado correctamente.", "segundos": 8.4 },
+               { "modelo": "Balance", "estado": "EnCurso",    "mensaje": null,                        "segundos": null } ] }</code></pre>
+<ul><li><b>Estados:</b> <code>EnCurso</code>, <code>Completada</code>, <code>ConErrores</code>, <code>Interrumpida</code> (el sitio se reinició durante el cálculo: vuelva a ejecutarlos) y <code>Simulada</code> (pruebas).</li>
+<li><b>Una a la vez.</b> Solo puede haber una ejecución por empresa y escenario; otra llamada recibe 409 <code>ejecucion_en_curso</code> con el <code>idEjecucion</code> que está corriendo.</li>
+<li><b>Un error no detiene a los demás.</b> Si un modelo falla, el resto se ejecuta y el detalle por modelo trae su mensaje; los administradores de la empresa reciben un aviso.</li>
+<li><b>Permiso.</b> Es el mismo de confirmar cargues; sin él, 403 <code>permiso_modelos</code>. Una integración de pruebas no ejecuta nada (responde <code>Simulada</code>).</li></ul>
 <p class="note info"><b>En el entorno de pruebas</b> la confirmación se simula: la respuesta trae <code>"estado": "ConfirmadoSimulado"</code> (o <code>"confirmacion": "simulado"</code> al subir con <code>confirmar=true</code>) y el cargue de prueba se descarta sin tocar datos.</p>
 <p class="note ok">Antes de reemplazar, BUFINS guarda automáticamente la versión anterior. Si un cargue confirmado resulta incorrecto, un administrador puede deshacerlo desde el <b>Historial de versiones</b>.</p></section>
 
@@ -213,7 +228,9 @@ print(res["lote"]["estado"], res["lote"]["totalErrores"], "errores")</code></pre
 <tr><td class="f">GET /cargues/{idLote}</td><td>Estado del cargue e impacto.</td></tr>
 <tr><td class="f">GET /cargues/{idLote}/hallazgos</td><td>Errores y advertencias de la validación.</td></tr>
 <tr><td class="f">POST /cargues/{idLote}/confirmar</td><td>Confirma (solo integraciones con permiso).</td></tr>
-<tr><td class="f">DELETE /cargues/{idLote}</td><td>Descarta un cargue pendiente.</td></tr></table></div>
+<tr><td class="f">DELETE /cargues/{idLote}</td><td>Descarta un cargue pendiente.</td></tr>
+<tr><td class="f">POST /modelos/ejecutar</td><td>Recalcula los modelos en segundo plano (202); requiere el permiso de confirmar.</td></tr>
+<tr><td class="f">GET /ejecuciones/{idEjecucion}</td><td>Avance de una ejecución de modelos, con el detalle por modelo.</td></tr></table></div>
 <p>Todas las rutas cuelgan de <code>/api/v1</code> y, salvo <code>openapi.json</code> y <code>manual</code>, requieren la cabecera <code>Authorization: Bearer</code>. Las respuestas son JSON; los errores tienen la forma <code>{ "error": { "codigo": "…", "mensaje": "…" } }</code>. Los mensajes van en español (use <code>?idioma=en</code> o <code>Accept-Language: en</code> para inglés).</p></section>
 
 <section id="errores"><h2>10. Códigos de error</h2>
@@ -234,6 +251,10 @@ print(res["lote"]["estado"], res["lote"]["totalErrores"], "errores")</code></pre
 <tr><td>422</td><td class="f">plantilla_incompleta · error_en_hoja · archivo_no_procesable</td><td>El Excel no trae todas las hojas, una hoja tiene un valor inválido, o no es una plantilla válida.</td></tr>
 <tr><td>422</td><td class="f">hoja_no_soportada · columna_desconocida · demasiadas_filas · datos_invalidos</td><td>La hoja o columna no existe para la empresa (consulte <code>/esquemas</code>), se superó el máximo por llamada o un valor es inválido.</td></tr>
 <tr><td>422</td><td class="f">hojas_faltantes · sin_filas_del_anio</td><td>Falta enviar hojas (incluso vacías) o el cargue no trae ninguna fila del año.</td></tr>
+<tr><td>403</td><td class="f">permiso_modelos</td><td>La integración no puede ejecutar modelos (mismo permiso de confirmar). Pídalo al administrador.</td></tr>
+<tr><td>404</td><td class="f">ejecucion_no_encontrada</td><td>La ejecución no existe o no fue iniciada por esta integración.</td></tr>
+<tr><td>409</td><td class="f">ejecucion_en_curso</td><td>Ya hay modelos ejecutándose para esa empresa y escenario (<code>idEjecucion</code> en la respuesta). Espere a que termine.</td></tr>
+<tr><td>422</td><td class="f">escenario_no_disponible · sin_modelos</td><td>El escenario no existe o está inactivo, o no hay modelos activos.</td></tr>
 <tr><td>500</td><td class="f">error_interno</td><td>Error del servidor. Reintente; si persiste, avise a soporte con la hora de la llamada.</td></tr></table></div></section>
 
 <section id="buenas"><h2>11. Buenas prácticas</h2>
@@ -249,7 +270,7 @@ print(res["lote"]["estado"], res["lote"]["totalErrores"], "errores")</code></pre
 <details><summary>¿Tengo que dejar de usar el Excel?</summary><p>No. El Excel sigue funcionando siempre, por la misma puerta y con las mismas validaciones. La API es una alternativa; puede alternarlas.</p></details>
 <details><summary>¿Qué pasa si envío dos veces lo mismo?</summary><p>Con la misma <code>Idempotency-Key</code> BUFINS no lo duplica. Sin ella, el segundo envío reemplaza al primero si aún estaba pendiente; si el primero ya se confirmó, el segundo se revisa y reemplaza los datos del año, como un cargue nuevo de Excel.</p></details>
 <details><summary>¿Por qué el cargue «no se puede confirmar»?</summary><p>Consulte <code>/cargues/{id}/hallazgos</code>. Si tiene errores hay que corregir los datos; si el impacto muestra <code>bloqueado</code>, el archivo dejaría un año vacío o una tabla casi vacía y BUFINS lo impide para todos.</p></details>
-<details><summary>¿La API actualiza los informes?</summary><p>Un cargue confirmado deja los datos listos; los informes leen los resultados de los modelos, que se ejecutan en «Ejecución de Modelos», como siempre.</p></details>
+<details><summary>¿La API actualiza los informes?</summary><p>Un cargue confirmado deja los datos listos; los informes leen los resultados de los modelos. Una integración con permiso los recalcula con <code>POST /modelos/ejecutar</code>; si no, se ejecutan en «Ejecución de Modelos», como siempre.</p></details>
 <details><summary>¿Puedo ver los cargues de otra integración o de las personas de la empresa?</summary><p>No. Cada integración ve únicamente los cargues que ella misma creó. Las personas los ven en «Revisar cargue».</p></details>
 <details><summary>Perdí la clave, ¿qué hago?</summary><p>Un administrador entra a Integraciones API y pulsa «Generar clave nueva». La anterior deja de funcionar al instante; configure la nueva en el sistema del cliente.</p></details>
 <details><summary>¿Mis datos están protegidos?</summary><p>Viajan cifrados (HTTPS), cada clave solo alcanza una empresa y todo lo que hace la integración queda en la auditoría. BUFINS actúa como encargado del tratamiento de los datos de la empresa; el contrato de transmisión de datos se acuerda por separado.</p></details></section>

@@ -4035,8 +4035,8 @@ Indicators management follows closely: </value></data>
   <data name="Integ_SelUsuario" xml:space="preserve"><value>Select a user</value></data>
   <data name="Integ_SinUsuarios" xml:space="preserve"><value>The company has no available users</value></data>
   <data name="Integ_UsuarioHint" xml:space="preserve"><value>The API's actions are attributed to this user in the audit log. We recommend creating a dedicated user (for example “API integration”). It cannot be a Super Admin.</value></data>
-  <data name="Integ_LabelConfirmar" xml:space="preserve"><value>Allow the integration to confirm loads</value></data>
-  <data name="Integ_LabelConfirmarHint" xml:space="preserve"><value>If unchecked (recommended at the start), loads sent through the API stay in “Review load” and a person confirms them. Even when checked, the API never confirms a strong data reduction nor bypasses the rule of never leaving a year empty.</value></data>
+  <data name="Integ_LabelConfirmar" xml:space="preserve"><value>Allow the integration to confirm loads and run the models</value></data>
+  <data name="Integ_LabelConfirmarHint" xml:space="preserve"><value>If unchecked (recommended at the start), loads sent through the API stay in “Review load” and a person confirms them. Even when checked, the API never confirms a strong data reduction nor bypasses the rule of never leaving a year empty. The same permission lets it recalculate the models (reports) through the API.</value></data>
   <data name="Integ_LabelIps" xml:space="preserve"><value>Allowed IPs (optional)</value></data>
   <data name="Integ_LabelIpsHint" xml:space="preserve"><value>Comma-separated. If left empty, the key works from any address.</value></data>
   <data name="Integ_LabelActiva" xml:space="preserve"><value>Integration active</value></data>
@@ -4077,4 +4077,6 @@ Indicators management follows closely: </value></data>
   <data name="Integ_BadgePruebas" xml:space="preserve"><value>Testing</value></data>
   <data name="Integ_ErrUsuarioEnUso" xml:space="preserve"><value>That user is already used by an integration of the other type (production or testing). Use a different technical user for each.</value></data>
   <data name="Integ_ErrSandboxNoDisponible" xml:space="preserve"><value>The testing environment is not enabled yet. Contact BUFINS support.</value></data>
+  <data name="Notif_ModelosApiErrores" xml:space="preserve"><value>Models run through the API with errors</value></data>
+  <data name="Notif_ModelosApiErroresMsg" xml:space="preserve"><value>The integration “{0}” ran the models of {1}: {2} completed and {3} with errors. Check “Model execution”.</value></data>
 </root>

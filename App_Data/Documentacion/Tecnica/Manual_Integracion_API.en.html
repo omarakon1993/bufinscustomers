@@ -58,7 +58,7 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 <li>Go to <b>Configuration → API integrations</b> and click <b>New integration</b>.</li>
 <li>Choose the <b>company</b>, type a <b>name</b> that identifies the system (for example “Siigo agent – accounting”) and choose the <b>technical user</b>. We recommend creating a dedicated user (“API integration”): the API's actions are recorded in the audit log under that name. It cannot be a Super Admin.</li>
 <li>Optional: enter the <b>allowed IPs</b> (the addresses the client will send from). With the list, the key only works from them.</li>
-<li>Leave “Allow the integration to confirm loads” <b>unchecked</b> during testing: that way every submission stays in “Review load” and a person confirms it.</li>
+<li>Leave “Allow the integration to confirm loads and run the models” <b>unchecked</b> during testing: that way every submission stays in “Review load” and a person confirms it.</li>
 <li>Click <b>Create</b>. BUFINS shows the <b>key only once</b>: copy it and store it in the client's secrets manager. If it is lost, a new one is generated.</li></ol>
 <p class="note"><b>Key format:</b> <code>bfk_xxxxxxxx_…</code> in production and <code>bft_xxxxxxxx_…</code> for testing. Treat it like a password: do not send it by email or keep it in source code.</p>
 <h3>Testing environment (sandbox)</h3>
@@ -197,6 +197,21 @@ print(res["lote"]["estado"], res["lote"]["totalErrores"], "errors")</code></pre>
 <div class="g2">
 <div class="card"><b>A person (default)</b><p>The load stays waiting. The company's administrators get a bell-icon notification with the link to “Review load”, where they can review it and confirm or discard it.</p></div>
 <div class="card"><b>The integration (if allowed)</b><p>With <code>confirmar=true</code> when uploading or validating, or with <code>POST /cargues/{id}/confirmar</code>. It only confirms loads without warnings or strong reductions; in all other cases it stays pending and notifies a person.</p></div></div>
+<h3>Updating the reports: running the models</h3>
+<p>Reports are fed by the models. After confirming a load, an integration with permission can ask for them to be <b>recalculated</b>: <code>POST /modelos/ejecutar</code>. Since the calculation can take minutes, the API answers <b>202</b> right away with an <code>idEjecucion</code> and the models run <b>in the background</b>, one after another; check progress with <code>GET /ejecuciones/{idEjecucion}</code> until the status is <code>Completada</code> or <code>ConErrores</code>.</p>
+<pre><code>POST /api/v1/modelos/ejecutar
+{ "idEscenario": 1 }                      (the body is optional; scenario 1 by default)
+
+HTTP 202
+{ "idEjecucion": 41, "estado": "EnCurso", "sandbox": false, "urlEstado": "/api/v1/ejecuciones/41" }</code></pre>
+<pre><code>GET /api/v1/ejecuciones/41
+{ "idEjecucion": 41, "estado": "EnCurso", "idEscenario": 1, "inicio": "2026-11-14T09:00:02Z", "fin": null,
+  "modelos": [ { "modelo": "PYG",     "estado": "Completado", "mensaje": "Ejecutado correctamente.", "segundos": 8.4 },
+               { "modelo": "Balance", "estado": "EnCurso",    "mensaje": null,                        "segundos": null } ] }</code></pre>
+<ul><li><b>Statuses:</b> <code>EnCurso</code> (running), <code>Completada</code> (completed), <code>ConErrores</code> (with errors), <code>Interrumpida</code> (the site restarted during the calculation: run them again) and <code>Simulada</code> (testing).</li>
+<li><b>One at a time.</b> There can only be one run per company and scenario; another call gets 409 <code>ejecucion_en_curso</code> with the <code>idEjecucion</code> that is running.</li>
+<li><b>One error does not stop the others.</b> If a model fails, the rest run and the per-model detail carries its message; the company's administrators get a notification.</li>
+<li><b>Permission.</b> It is the same one as confirming loads; without it, 403 <code>permiso_modelos</code>. A testing integration runs nothing (it answers <code>Simulada</code>).</li></ul>
 <p class="note info"><b>In the testing environment</b> confirmation is simulated: the response carries <code>"estado": "ConfirmadoSimulado"</code> (or <code>"confirmacion": "simulado"</code> when uploading with <code>confirmar=true</code>) and the test load is discarded without touching data.</p>
 <p class="note ok">Before replacing, BUFINS automatically saves the previous version. If a confirmed load turns out to be wrong, an administrator can undo it from the <b>Version history</b>.</p></section>
 
@@ -213,7 +228,9 @@ print(res["lote"]["estado"], res["lote"]["totalErrores"], "errors")</code></pre>
 <tr><td class="f">GET /cargues/{idLote}</td><td>Load status and impact.</td></tr>
 <tr><td class="f">GET /cargues/{idLote}/hallazgos</td><td>Validation errors and warnings.</td></tr>
 <tr><td class="f">POST /cargues/{idLote}/confirmar</td><td>Confirms (only integrations with permission).</td></tr>
-<tr><td class="f">DELETE /cargues/{idLote}</td><td>Discards a pending load.</td></tr></table></div>
+<tr><td class="f">DELETE /cargues/{idLote}</td><td>Discards a pending load.</td></tr>
+<tr><td class="f">POST /modelos/ejecutar</td><td>Recalculates the models in the background (202); requires the confirm permission.</td></tr>
+<tr><td class="f">GET /ejecuciones/{idEjecucion}</td><td>Progress of a model run, with per-model detail.</td></tr></table></div>
 <p>All paths hang from <code>/api/v1</code> and, except <code>openapi.json</code> and <code>manual</code>, require the <code>Authorization: Bearer</code> header. Responses are JSON; errors have the form <code>{ "error": { "codigo": "…", "mensaje": "…" } }</code>. Messages come in Spanish by default (use <code>?idioma=en</code> or <code>Accept-Language: en</code> for English).</p></section>
 
 <section id="errores"><h2>10. Error codes</h2>
@@ -234,6 +251,10 @@ print(res["lote"]["estado"], res["lote"]["totalErrores"], "errors")</code></pre>
 <tr><td>422</td><td class="f">plantilla_incompleta · error_en_hoja · archivo_no_procesable</td><td>The Excel does not have all the sheets, a sheet has an invalid value, or it is not a valid template.</td></tr>
 <tr><td>422</td><td class="f">hoja_no_soportada · columna_desconocida · demasiadas_filas · datos_invalidos</td><td>The sheet or column does not exist for the company (see <code>/esquemas</code>), the per-call maximum was exceeded or a value is invalid.</td></tr>
 <tr><td>422</td><td class="f">hojas_faltantes · sin_filas_del_anio</td><td>Sheets are missing (even empty ones must be sent) or the load has no rows for the year.</td></tr>
+<tr><td>403</td><td class="f">permiso_modelos</td><td>The integration cannot run models (same permission as confirming). Ask the administrator.</td></tr>
+<tr><td>404</td><td class="f">ejecucion_no_encontrada</td><td>The run does not exist or was not started by this integration.</td></tr>
+<tr><td>409</td><td class="f">ejecucion_en_curso</td><td>Models are already running for that company and scenario (<code>idEjecucion</code> in the response). Wait for it to finish.</td></tr>
+<tr><td>422</td><td class="f">escenario_no_disponible · sin_modelos</td><td>The scenario does not exist or is inactive, or there are no active models.</td></tr>
 <tr><td>500</td><td class="f">error_interno</td><td>Server error. Retry; if it persists, tell support the time of the call.</td></tr></table></div></section>
 
 <section id="buenas"><h2>11. Best practices</h2>
@@ -249,7 +270,7 @@ print(res["lote"]["estado"], res["lote"]["totalErrores"], "errors")</code></pre>
 <details><summary>Do I have to stop using Excel?</summary><p>No. Excel keeps working at all times, through the same door and with the same validations. The API is an alternative; you can alternate them.</p></details>
 <details><summary>What happens if I send the same thing twice?</summary><p>With the same <code>Idempotency-Key</code> BUFINS does not duplicate it. Without it, the second submission replaces the first if it was still pending; if the first was already confirmed, the second is reviewed and replaces the year's data, like a new Excel load.</p></details>
 <details><summary>Why “cannot be confirmed”?</summary><p>Check <code>/cargues/{id}/hallazgos</code>. If it has errors the data must be fixed; if the impact shows <code>bloqueado</code>, the file would leave a year empty or a table almost empty and BUFINS prevents it for everyone.</p></details>
-<details><summary>Does the API update the reports?</summary><p>A confirmed load leaves the data ready; reports read the results of the models, which are run in “Model execution”, as always.</p></details>
+<details><summary>Does the API update the reports?</summary><p>A confirmed load leaves the data ready; reports read the results of the models. An integration with permission recalculates them with <code>POST /modelos/ejecutar</code>; otherwise they are run in “Model execution”, as always.</p></details>
 <details><summary>Can I see the loads of another integration or of the company's people?</summary><p>No. Each integration only sees the loads it created itself. People see them in “Review load”.</p></details>
 <details><summary>I lost the key, what do I do?</summary><p>An administrator goes to API integrations and clicks “Generate new key”. The old one stops working instantly; set the new one in the client's system.</p></details>
 <details><summary>Is my data protected?</summary><p>It travels encrypted (HTTPS), each key reaches only one company and everything the integration does is in the audit log. BUFINS acts as a data processor for the company's data; the data transmission agreement is arranged separately.</p></details></section>
