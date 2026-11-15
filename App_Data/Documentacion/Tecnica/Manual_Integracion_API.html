@@ -138,7 +138,31 @@ Console.WriteLine(await resp.Content.ReadAsStringAsync());</code></pre></details
             "archivo": "PlantillaBUFINS.xlsx", "totalFilas": 18450, "totalErrores": 0, "totalAdvertencias": 0,
             "puedeConfirmar": true, "fechaCreacion": "2026-11-14T08:12:03Z" },
   "urlRevision": "/Datos/RevisarCargue?idLote=236" }</code></pre>
-<p>El cargue queda <b>pendiente de revisión</b>. Si ya hay un cargue pendiente de <b>otra persona</b> (que se pueda confirmar) para la misma empresa, año, modo y escenario, la API responde 409 <code>lote_activo</code> con el <code>idLote</code> existente; hay que confirmarlo o descartarlo antes.</p></section>
+<p>El cargue queda <b>pendiente de revisión</b>. Si ya hay un cargue pendiente de <b>otra persona</b> (que se pueda confirmar) para la misma empresa, año, modo y escenario, la API responde 409 <code>lote_activo</code> con el <code>idLote</code> existente; hay que confirmarlo o descartarlo antes.</p>
+<h3>Agente de carpeta: envío automático sin programar</h3>
+<p>Si el sistema contable del cliente puede dejar la plantilla Excel en una carpeta (o alguien la copia allí), no hace falta programar nada: el <b>agente de BUFINS</b> (<code>AgenteBufins.exe</code>, un solo archivo, sin instalar .NET) vigila esa carpeta y sube cada archivo por esta misma API. <b>Solo hace conexiones https salientes</b>: no se abre ningún puerto en el servidor del cliente. BUFINS entrega el agente a quien lo solicite.</p>
+<ol class="steps">
+<li>Copie <code>AgenteBufins.exe</code> y <code>agente.ejemplo.json</code> a una carpeta del servidor (por ejemplo <code>C:\BUFINS\Agente</code>), renombre el ejemplo como <code>agente.json</code> y ajústelo: la <b>carpeta</b> que se vigila (por ejemplo <code>C:\BUFINS\Entrada</code>), el año, el modo y el escenario.</li>
+<li>Guarde la clave de la integración: <code>AgenteBufins.exe --guardar-clave</code>. Queda cifrada en <code>clave.dat</code> y solo la puede leer ese equipo (también se admite la variable de entorno <code>BUFINS_CLAVE</code>). La clave no se escribe en <code>agente.json</code> ni en los registros.</li>
+<li>Compruebe la conexión: <code>AgenteBufins.exe --probar</code> muestra la integración, la empresa y si el entorno es de pruebas o de producción.</li>
+<li>Póngalo a trabajar: como <b>servicio de Windows</b> (<code>sc.exe create BufinsAgente binPath= "C:\BUFINS\Agente\AgenteBufins.exe" start= auto</code> y luego <code>sc.exe start BufinsAgente</code>) o con el <b>Programador de tareas</b> ejecutando <code>AgenteBufins.exe --una-vez</code> a la hora de cada cierre.</li></ol>
+<pre><code>{ "url": "https://customers.bufins.com/api/v1",
+  "carpeta": "C:\\BUFINS\\Entrada",
+  "anio": "actual", "modo": "ejecucion", "idEscenario": 1,
+  "confirmar": false, "ejecutarModelos": false,
+  "intervaloSegundos": 60, "estableSegundos": 30 }</code></pre>
+<div class="tw"><table><tr><th>Qué pasa con cada archivo</th><th>Resultado</th></tr>
+<tr><td>BUFINS lo acepta</td><td>Pasa a <code>procesados\</code> junto con la respuesta (<code>.resultado.json</code>). Queda pendiente de revisión, o confirmado si la integración puede y <code>"confirmar": true</code>.</td></tr>
+<tr><td>Queda con errores de validación</td><td>Pasa a <code>errores\</code> con la referencia del cargue. Se corrige el Excel y se vuelve a copiar a la carpeta.</td></tr>
+<tr><td>BUFINS lo rechaza (plantilla incompleta, año no configurado…)</td><td>Pasa a <code>errores\</code> con el motivo en un archivo <code>.error.txt</code>.</td></tr>
+<tr><td>Falla pasajera (sin red, 429, 5xx) o hay un cargue pendiente de otra persona</td><td>El archivo se deja en su sitio y se <b>reintenta</b> con espera creciente (hasta 30 minutos).</td></tr>
+<tr><td>Clave inválida o IP no permitida</td><td>El agente se pausa 10 minutos y <b>no mueve ningún archivo</b>.</td></tr></table></div>
+<ul><li><b>Año y modo en el nombre.</b> Un archivo llamado <code>2026_historico_cierre.xlsx</code> se envía como año 2026, modo histórico; si el nombre no los trae, se usan los de <code>agente.json</code>.</li>
+<li><b>No envía a medias.</b> Ignora los temporales de Excel (<code>~$…</code>) y espera a que el archivo lleve 30 segundos sin modificarse y no esté abierto por otro programa.</li>
+<li><b>Sin duplicados.</b> Usa como <code>Idempotency-Key</code> la huella del contenido: copiar de nuevo el mismo archivo no crea otro cargue.</li>
+<li><b>Modelos.</b> Con <code>"ejecutarModelos": true</code>, tras un cargue confirmado pide recalcular los informes y espera el resultado (mismo permiso de confirmar).</li>
+<li><b>Registros.</b> Quedan en la carpeta <code>logs\</code> junto al agente (30 días). Si la carpeta vigilada es de red, el servicio debe correr con una cuenta que tenga acceso a ella (la cuenta «Sistema local» no ve unidades de red). Restrinja el acceso a la carpeta del agente: quien pueda leerla puede usar su clave.</li></ul>
+</section>
 
 <section id="hojas"><h2>7. Envío B · Hojas en JSON</h2>
 <p class="lead">Tres pasos: abrir el cargue, enviar cada hoja y validar.</p>

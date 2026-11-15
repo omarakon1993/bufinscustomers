@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <!--
+    Agente de carpeta de BUFINS: vigila una carpeta del servidor del cliente y sube a la API de BUFINS las plantillas Excel que aparezcan.
+    NO forma parte del sitio web (el .csproj del sitio excluye Tools\**).
+
+    Publicar (ejecutable único, sin necesidad de instalar .NET en el servidor del cliente): ver Publicar-Agente.ps1 en esta carpeta.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>AgenteBufins</AssemblyName>
+    <RootNamespace>AgenteBufins</RootNamespace>
+    <Version>1.0.0</Version>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.0" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="agente.ejemplo.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

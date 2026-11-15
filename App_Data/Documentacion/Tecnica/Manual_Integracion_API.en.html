@@ -138,7 +138,31 @@ Console.WriteLine(await resp.Content.ReadAsStringAsync());</code></pre></details
             "archivo": "PlantillaBUFINS.xlsx", "totalFilas": 18450, "totalErrores": 0, "totalAdvertencias": 0,
             "puedeConfirmar": true, "fechaCreacion": "2026-11-14T08:12:03Z" },
   "urlRevision": "/Datos/RevisarCargue?idLote=236" }</code></pre>
-<p>The load is left <b>pending review</b>. If there is already a pending load from <b>another person</b> (one that can be confirmed) for the same company, year, mode and scenario, the API responds 409 <code>lote_activo</code> with the existing <code>idLote</code>; it must be confirmed or discarded first.</p></section>
+<p>The load is left <b>pending review</b>. If there is already a pending load from <b>another person</b> (one that can be confirmed) for the same company, year, mode and scenario, the API responds 409 <code>lote_activo</code> with the existing <code>idLote</code>; it must be confirmed or discarded first.</p>
+<h3>Folder agent: automatic submission without programming</h3>
+<p>If the client's accounting system can drop the Excel template into a folder (or someone copies it there), nothing needs to be programmed: the <b>BUFINS agent</b> (<code>AgenteBufins.exe</code>, a single file, no .NET to install) watches that folder and uploads each file through this same API. <b>It only makes outgoing https connections</b>: no port is opened on the client's server. BUFINS provides the agent on request.</p>
+<ol class="steps">
+<li>Copy <code>AgenteBufins.exe</code> and <code>agente.ejemplo.json</code> to a folder on the server (for example <code>C:\BUFINS\Agente</code>), rename the example to <code>agente.json</code> and adjust it: the <b>folder</b> to watch (for example <code>C:\BUFINS\Entrada</code>), the year, the mode and the scenario.</li>
+<li>Store the integration key: <code>AgenteBufins.exe --guardar-clave</code>. It is saved encrypted in <code>clave.dat</code> and can only be read by that machine (the <code>BUFINS_CLAVE</code> environment variable is also supported). The key is never written to <code>agente.json</code> or to the logs.</li>
+<li>Check the connection: <code>AgenteBufins.exe --probar</code> shows the integration, the company and whether the environment is testing or production.</li>
+<li>Put it to work: as a <b>Windows service</b> (<code>sc.exe create BufinsAgente binPath= "C:\BUFINS\Agente\AgenteBufins.exe" start= auto</code> and then <code>sc.exe start BufinsAgente</code>) or with the <b>Task Scheduler</b> running <code>AgenteBufins.exe --una-vez</code> at each close.</li></ol>
+<pre><code>{ "url": "https://customers.bufins.com/api/v1",
+  "carpeta": "C:\\BUFINS\\Entrada",
+  "anio": "actual", "modo": "ejecucion", "idEscenario": 1,
+  "confirmar": false, "ejecutarModelos": false,
+  "intervaloSegundos": 60, "estableSegundos": 30 }</code></pre>
+<div class="tw"><table><tr><th>What happens to each file</th><th>Result</th></tr>
+<tr><td>BUFINS accepts it</td><td>It moves to <code>procesados\</code> together with the response (<code>.resultado.json</code>). It stays pending review, or confirmed if the integration may and <code>"confirmar": true</code>.</td></tr>
+<tr><td>It has validation errors</td><td>It moves to <code>errores\</code> with the load reference. Fix the Excel and copy it into the folder again.</td></tr>
+<tr><td>BUFINS rejects it (incomplete template, year not configured…)</td><td>It moves to <code>errores\</code> with the reason in a <code>.error.txt</code> file.</td></tr>
+<tr><td>Temporary failure (no network, 429, 5xx) or there is a pending load from another person</td><td>The file is left in place and <b>retried</b> with increasing wait (up to 30 minutes).</td></tr>
+<tr><td>Invalid key or IP not allowed</td><td>The agent pauses for 10 minutes and <b>moves no file</b>.</td></tr></table></div>
+<ul><li><b>Year and mode in the name.</b> A file named <code>2026_historico_cierre.xlsx</code> is sent as year 2026, historical mode; if the name does not carry them, those in <code>agente.json</code> are used.</li>
+<li><b>It does not send half-copied files.</b> It ignores Excel temporaries (<code>~$…</code>) and waits until the file has gone 30 seconds without changes and is not open in another program.</li>
+<li><b>No duplicates.</b> It uses the content fingerprint as the <code>Idempotency-Key</code>: copying the same file again does not create another load.</li>
+<li><b>Models.</b> With <code>"ejecutarModelos": true</code>, after a confirmed load it asks for the reports to be recalculated and waits for the result (same confirm permission).</li>
+<li><b>Logs.</b> They are kept in the <code>logs\</code> folder next to the agent (30 days). If the watched folder is on the network, the service must run with an account that can access it (the “Local System” account cannot see network drives). Restrict access to the agent's folder: anyone who can read it can use its key.</li></ul>
+</section>
 
 <section id="hojas"><h2>7. Option B · Sheets as JSON</h2>
 <p class="lead">Three steps: open the load, send each sheet and validate.</p>

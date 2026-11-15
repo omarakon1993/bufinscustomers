@@ -61,6 +61,11 @@
   <!-- Copias antiguas del proyecto .NET Framework que no forman parte del sitio -->
   <ItemGroup>
     <Compile Remove="packages\**;bin\**;obj\**;Logs\**" />
+    <!-- Tools\AgenteBufins es un proyecto aparte (agente de carpeta para el servidor del cliente): no forma parte del sitio. -->
+    <Compile Remove="Tools\**" />
+    <EmbeddedResource Remove="Tools\**" />
+    <Content Remove="Tools\**" />
+    <None Remove="Tools\**" />
     <Content Remove="packages\**" />
     <EmbeddedResource Remove="packages\**" />
     <None Remove="packages\**" />
