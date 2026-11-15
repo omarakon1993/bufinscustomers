@@ -57,7 +57,7 @@ namespace bufinscustomers.Services
                 using (var cn = new SqlConnection(CadenaConexion))
                 using (var cmd = new SqlCommand(
                     "SELECT CASE WHEN OBJECT_ID('dbo.Integraciones','U') IS NOT NULL AND OBJECT_ID('dbo.IntegracionesIdempotencia','U') IS NOT NULL " +
-                    "AND COL_LENGTH('dbo.CarguesLotes','Origen') IS NOT NULL AND COL_LENGTH('dbo.CarguesLotes','IdIntegracion') IS NOT NULL THEN 1 ELSE 0 END", cn))
+                    "AND OBJECT_ID('dbo.CarguesLotesHojas','U') IS NOT NULL AND COL_LENGTH('dbo.CarguesLotes','Origen') IS NOT NULL AND COL_LENGTH('dbo.CarguesLotes','IdIntegracion') IS NOT NULL THEN 1 ELSE 0 END", cn))
                 {
                     cn.Open();
                     return Convert.ToInt32(cmd.ExecuteScalar()) == 1;
@@ -159,11 +159,11 @@ namespace bufinscustomers.Services
         // ── Lectura ────────────────────────────────────────────────────────────────────
 
         private const string SelectBase = @"
-            SELECT i.Id, i.IdEmpresa, e.Nombre AS NombreEmpresa, i.Nombre, i.IdUsuarioTecnico,
+            SELECT i.Id, i.IdEmpresa, e.EmpNombre AS NombreEmpresa, i.Nombre, i.IdUsuarioTecnico,
                    LTRIM(RTRIM(ISNULL(u.Nombre,'') + ' ' + ISNULL(u.Apellidos,''))) AS NombreUsuarioTecnico,
                    i.Prefijo, i.Activo, i.PermiteConfirmar, i.IpPermitidas, i.FechaCreacion, i.FechaUltimoUso, i.IpUltimoUso, i.FechaRevocada
             FROM dbo.Integraciones i
-            LEFT JOIN dbo.Empresas e ON e.Id = i.IdEmpresa
+            LEFT JOIN dbo.Empresas e ON e.EmpId = i.IdEmpresa
             LEFT JOIN dbo.Usuarios u ON u.Id = i.IdUsuarioTecnico";
 
         /// <summary>Integraciones (todas si <paramref name="idsEmpresa"/> es null; si no, solo las de esas empresas).</summary>

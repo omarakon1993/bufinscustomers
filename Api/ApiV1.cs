@@ -10,6 +10,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace bufinscustomers.Api
@@ -28,6 +30,15 @@ namespace bufinscustomers.Api
         {
             var g = app.MapGroup("/api/v1");
 
+            // Contrato OpenAPI: público (no lleva clave) para que el equipo del cliente pueda generar su código o importarlo en Postman.
+            g.MapGet("/openapi.json", () =>
+            {
+                var ruta = AppPaths.Map("~/Api/openapi.v1.json");
+                return System.IO.File.Exists(ruta)
+                    ? Results.Content(System.IO.File.ReadAllText(ruta, System.Text.Encoding.UTF8), "application/json; charset=utf-8")
+                    : Error(404, "no_encontrado", "El contrato OpenAPI no está disponible.");
+            });
+
             g.MapGet("/ping", (HttpContext ctx) =>
             {
                 var i = Integ(ctx);
@@ -37,6 +48,9 @@ namespace bufinscustomers.Api
             g.MapGet("/esquemas", (HttpContext ctx) => Ok(new { hojas = ApiEsquemas.Obtener(Integ(ctx).IdEmpresa) }));
 
             g.MapPost("/cargues/archivo", SubirArchivo);
+            g.MapPost("/cargues", IniciarCargue);
+            g.MapPost("/cargues/{idLote:long}/hojas/{hoja}", AgregarHoja);
+            g.MapPost("/cargues/{idLote:long}/validar", ValidarCargue);
 
             g.MapGet("/cargues/{idLote:long}", (HttpContext ctx, long idLote) =>
             {
@@ -174,30 +188,193 @@ namespace bufinscustomers.Api
             // EnRevision
             if (claveIdem.Length > 0) integraciones.GuardarIdempotencia(integ.Id, claveIdem, proceso.IdLote);
             var lote = staging.ObtenerLote(proceso.IdLote);
+            return Finalizar(integ, tecnico, orq, staging, lote, proceso.NombreArchivo, pideConfirmar, 201);
+        }
 
+        // ── Envío por hojas en JSON: POST /cargues → POST /cargues/{id}/hojas/{hoja} (n veces) → POST /cargues/{id}/validar ──
+
+        private static async Task<IResult> IniciarCargue(HttpContext ctx)
+        {
+            var integ = Integ(ctx);
+            var tecnico = Tecnico(ctx);
+
+            var body = await LeerJson(ctx);
+            if (body == null || body.Value.ValueKind != JsonValueKind.Object)
+                return Error(400, "json_invalido", "El cuerpo debe ser un objeto JSON: { \"anio\": 2026, \"modo\": \"ejecucion\" }.");
+            var b = body.Value;
+
+            if (!b.TryGetProperty("anio", out var pAnio) || pAnio.ValueKind != JsonValueKind.Number || !pAnio.TryGetInt32(out int anio))
+                return Error(400, "anio_invalido", "El campo «anio» es obligatorio y debe ser un número.");
+            string modo = b.TryGetProperty("modo", out var pModo) && pModo.ValueKind == JsonValueKind.String ? (pModo.GetString() ?? "").Trim().ToLowerInvariant() : "";
+            int idEscenario = 1;
+            if (b.TryGetProperty("idEscenario", out var pEsc) && !(pEsc.ValueKind == JsonValueKind.Number && pEsc.TryGetInt32(out idEscenario)))
+                return Error(400, "escenario_invalido", "El campo «idEscenario» debe ser un número.");
+            string referencia = b.TryGetProperty("referencia", out var pRef) && pRef.ValueKind == JsonValueKind.String ? pRef.GetString() : null;
+
+            string claveIdem = ctx.Request.Headers["Idempotency-Key"].ToString().Trim();
+            if (claveIdem.Length > 100 || claveIdem.Any(c => char.IsControl(c)))
+                return Error(400, "idempotency_key_invalida", "Idempotency-Key admite hasta 100 caracteres sin saltos de línea.");
+
+            var integraciones = new IntegracionesService();
+            var staging = new CargueStagingService();
+            if (claveIdem.Length > 0)
+            {
+                var previo = integraciones.BuscarIdempotencia(integ.Id, claveIdem);
+                var l = previo.HasValue ? staging.ObtenerLote(previo.Value) : null;
+                if (l != null) return Ok(new { repetido = true, lote = LoteDto(l) });
+            }
+
+            var orq = new CargueOrquestadorService(Traducir);
+            var solicitud = new SolicitudCargue
+            {
+                Usuario = tecnico, IdEmpresa = integ.IdEmpresa, Anio = anio, Modo = modo, IdEscenario = idEscenario,
+                NombreArchivo = string.IsNullOrWhiteSpace(referencia) ? "API · " + integ.Nombre : referencia
+            };
+            var validacion = orq.ValidarSolicitud(solicitud, exigirArchivo: false);
+            if (!validacion.Ok) return Error(422, "solicitud_invalida", validacion.Mensaje);
+
+            var proceso = orq.IniciarLoteSinArchivo(solicitud, idLote =>
+            {
+                try { integraciones.MarcarLoteApi(idLote, integ.Id); }
+                catch (Exception ex) { AppLogger.Error(ex, "API.MarcarLoteApi"); }
+            });
+            if (proceso.Estado == ProcesoCargueEstado.LoteActivoExistente)
+                return Results.Json(new { error = new { codigo = "lote_activo", mensaje = proceso.Mensaje, idLote = proceso.IdLote } }, statusCode: 409);
+
+            if (claveIdem.Length > 0) integraciones.GuardarIdempotencia(integ.Id, claveIdem, proceso.IdLote);
+            var lote = staging.ObtenerLote(proceso.IdLote);
+            return Results.Json(new
+            {
+                repetido = false, lote = LoteDto(lote),
+                siguientePaso = $"Envíe cada hoja con POST /api/v1/cargues/{proceso.IdLote}/hojas/{{hoja}} (también las que vayan sin filas) y luego POST /api/v1/cargues/{proceso.IdLote}/validar."
+            }, statusCode: 201);
+        }
+
+        private static async Task<IResult> AgregarHoja(HttpContext ctx, long idLote, string hoja)
+        {
+            var lote = LotePropio(ctx, idLote, out var errorLote);
+            if (lote == null) return errorLote;
+
+            var body = await LeerJson(ctx);
+            if (body == null || body.Value.ValueKind != JsonValueKind.Object || !body.Value.TryGetProperty("filas", out var pFilas) || pFilas.ValueKind != JsonValueKind.Array)
+                return Error(400, "json_invalido", "El cuerpo debe ser { \"filas\": [ { \"Columna\": valor, ... } ], \"reemplazar\": false }. «filas» puede ir vacía.");
+            bool reemplazar = body.Value.TryGetProperty("reemplazar", out var pRem) && pRem.ValueKind == JsonValueKind.True;
+
+            var filas = new List<IDictionary<string, object>>();
+            int n = 0;
+            foreach (var fila in pFilas.EnumerateArray())
+            {
+                n++;
+                if (fila.ValueKind != JsonValueKind.Object)
+                    return Error(400, "fila_invalida", $"La fila {n} debe ser un objeto { "{ \"Columna\": valor }" }.");
+                var d = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                foreach (var prop in fila.EnumerateObject())
+                {
+                    if (!TryValor(prop.Value, out object v))
+                        return Error(400, "valor_no_soportado", $"Fila {n}, columna «{prop.Name}»: solo se admiten número, texto, verdadero/falso o nulo.");
+                    d[prop.Name] = v;
+                }
+                filas.Add(d);
+            }
+
+            var r = new CargueOrquestadorService(Traducir).AgregarFilasHoja(Tecnico(ctx), idLote, hoja, filas, reemplazar);
+            switch (r.Estado)
+            {
+                case HojaApiEstado.Ok:
+                    return Ok(new { idLote, hoja = r.Hoja, tabla = r.Tabla, filasRecibidas = r.FilasRecibidas, filasGuardadas = r.FilasGuardadas, filasOmitidasPorAnio = r.FilasOmitidasPorAnio, filasEnHoja = r.FilasEnHoja,
+                                    aviso = r.FilasOmitidasPorAnio > 0 ? $"{r.FilasOmitidasPorAnio} fila(s) se omitieron porque su año no es {lote.Anio}." : null });
+                case HojaApiEstado.LoteNoDisponible: return Error(409, "lote_no_disponible", "El cargue ya fue confirmado o descartado.");
+                case HojaApiEstado.HojaNoSoportada: return Error(422, "hoja_no_soportada", $"La hoja «{hoja}» no existe para esta empresa. Consulte GET /api/v1/esquemas.");
+                case HojaApiEstado.ColumnaDesconocida: return Error(422, "columna_desconocida", $"La columna «{r.Mensaje}» no existe en la hoja «{r.Hoja}». Consulte GET /api/v1/esquemas.");
+                case HojaApiEstado.DemasiadasFilas: return Error(422, "demasiadas_filas", $"Máximo {r.Mensaje} filas por llamada: envíe la hoja en varias tandas.");
+                default: return Error(422, "datos_invalidos", r.Mensaje);
+            }
+        }
+
+        private static async Task<IResult> ValidarCargue(HttpContext ctx, long idLote)
+        {
+            var integ = Integ(ctx);
+            var tecnico = Tecnico(ctx);
+            var lote0 = LotePropio(ctx, idLote, out var errorLote);
+            if (lote0 == null) return errorLote;
+
+            bool pideConfirmar = false;
+            if (ctx.Request.ContentLength > 0)
+            {
+                var body = await LeerJson(ctx);
+                pideConfirmar = body != null && body.Value.ValueKind == JsonValueKind.Object && body.Value.TryGetProperty("confirmar", out var pc) && pc.ValueKind == JsonValueKind.True;
+            }
+
+            var orq = new CargueOrquestadorService(Traducir);
+            var r = orq.ValidarLoteApi(tecnico, idLote);
+            switch (r.Estado)
+            {
+                case ValidacionApiEstado.LoteNoDisponible:
+                    return Error(409, "lote_no_disponible", "El cargue ya fue confirmado o descartado.");
+                case ValidacionApiEstado.HojasFaltantes:
+                    return Results.Json(new { error = new { codigo = "hojas_faltantes", mensaje = r.Mensaje }, hojasFaltantes = r.HojasFaltantes }, statusCode: 422);
+                case ValidacionApiEstado.SinFilasDelAnio:
+                    return Error(422, "sin_filas_del_anio", r.Mensaje);
+                case ValidacionApiEstado.ErrorValidacion:
+                    return Error(500, "error_interno", "No se pudo validar el cargue. Inténtelo de nuevo o contacte a soporte.");
+            }
+            return Finalizar(integ, tecnico, orq, new CargueStagingService(), r.Lote, r.Lote?.NombreArchivo, pideConfirmar, 200);
+        }
+
+        /// <summary>
+        /// Cierre común de «archivo» y «validar»: audita, confirma solo si la integración puede, el cliente lo pidió y el cargue quedó
+        /// limpio (sin advertencias ni reducción fuerte), y avisa a los revisores si queda esperando a una persona.
+        /// </summary>
+        private static IResult Finalizar(Integracion integ, Usuarios tecnico, CargueOrquestadorService orq, CargueStagingService staging,
+            CargueLote lote, string archivo, bool pideConfirmar, int status)
+        {
             new AuditoriaService().RegistrarCambio(
-                AuditoriaTipo.Cargues, AuditoriaAccion.Crear, "CargueLote", proceso.IdLote.ToString(),
-                $"La integración '{integ.Nombre}' envió por la API el archivo '{proceso.NombreArchivo}' a '{integ.NombreEmpresa}' — año {anio}, {(modo == "ejecucion" ? "ejecución" : "histórico")}, escenario {idEscenario}: {lote?.TotalFilas:N0} fila(s), {lote?.TotalErrores} error(es), {lote?.TotalAdvertencias} advertencia(s). Queda en revisión.",
-                null, new { integracion = integ.Nombre, idIntegracion = integ.Id, archivo = proceso.NombreArchivo, anio, modo, escenario = idEscenario, estado = lote?.Estado },
+                AuditoriaTipo.Cargues, AuditoriaAccion.Crear, "CargueLote", lote?.IdLote.ToString(),
+                $"La integración '{integ.Nombre}' envió por la API '{archivo}' a '{integ.NombreEmpresa}' — año {lote?.Anio}, {(lote?.Modo == 0 ? "ejecución" : "histórico")}, escenario {lote?.IdEscenario}: {lote?.TotalFilas:N0} fila(s), {lote?.TotalErrores} error(es), {lote?.TotalAdvertencias} advertencia(s). Queda en revisión.",
+                null, new { integracion = integ.Nombre, idIntegracion = integ.Id, archivo, anio = lote?.Anio, escenario = lote?.IdEscenario, estado = lote?.Estado },
                 integ.IdEmpresa, entidadNombre: integ.NombreEmpresa);
 
-            // Confirmación automática: solo si la integración lo permite, el cliente la pidió y el cargue quedó limpio (sin advertencias).
             string confirmacion = pideConfirmar ? "no_permitida" : "no_solicitada";
             object confirmado = null;
             if (pideConfirmar && integ.PermiteConfirmar)
             {
                 if (lote != null && lote.Estado == CargueLoteEstado.ValidadoOk)
                 {
-                    var c = orq.Confirmar(tecnico, proceso.IdLote, confirmarReemplazo: false);
+                    var c = orq.Confirmar(tecnico, lote.IdLote, confirmarReemplazo: false);
                     confirmacion = c.Confirmado ? "confirmado" : "pendiente_de_revision";
                     if (c.Confirmado) confirmado = new { mensaje = c.Mensaje, filas = c.Lote?.TotalFilas };
-                    lote = staging.ObtenerLote(proceso.IdLote) ?? lote;
+                    lote = staging.ObtenerLote(lote.IdLote) ?? lote;
                 }
                 else confirmacion = "pendiente_de_revision";
             }
 
-            var cuerpo = new { repetido = false, confirmacion, confirmado, lote = LoteDto(lote), urlRevision = lote == null ? null : $"/Datos/RevisarCargue?idLote={lote.IdLote}" };
-            return Results.Json(cuerpo, statusCode: 201);
+            // Si queda esperando a una persona (o con errores), se le avisa a los administradores de la empresa.
+            if (confirmacion != "confirmado") orq.NotificarRevisores(lote, integ.Nombre, tecnico.Id);
+
+            return Results.Json(new
+            {
+                repetido = false, confirmacion, confirmado, lote = LoteDto(lote),
+                urlRevision = lote == null ? null : $"/Datos/RevisarCargue?idLote={lote.IdLote}"
+            }, statusCode: status);
+        }
+
+        private static async Task<JsonElement?> LeerJson(HttpContext ctx)
+        {
+            try { return await ctx.Request.ReadFromJsonAsync<JsonElement>(); }
+            catch (Exception) { return null; }
+        }
+
+        private static bool TryValor(JsonElement e, out object v)
+        {
+            switch (e.ValueKind)
+            {
+                case JsonValueKind.Number: v = e.GetDouble(); return true;
+                case JsonValueKind.String: v = e.GetString(); return true;
+                case JsonValueKind.True: v = true; return true;
+                case JsonValueKind.False: v = false; return true;
+                case JsonValueKind.Null: v = null; return true;
+                default: v = null; return false;
+            }
         }
 
         private static IResult ResultadoConfirmacion(HttpContext ctx, ResultadoConfirmacionCargue r)
@@ -342,6 +519,8 @@ namespace bufinscustomers.Api
             {
                 if (!ctx.Request.Path.StartsWithSegments("/api/v1"))
                 { await Escribir(ctx, 404, "no_encontrado", "Ruta no encontrada. La API vigente es /api/v1."); return; }
+
+                if (ctx.Request.Path.Equals("/api/v1/openapi.json", StringComparison.OrdinalIgnoreCase)) { await _next(ctx); return; }
 
                 if (!Disponible())
                 { await Escribir(ctx, 503, "api_no_configurada", "La API de ingesta aún no está habilitada en este entorno."); return; }

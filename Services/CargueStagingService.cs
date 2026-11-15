@@ -52,7 +52,9 @@ namespace bufinscustomers.Services
         /// </summary>
         private static string CondicionVencido =>
             "(Estado = 'Confirmado'" +
-            $" OR (Estado = 'EnValidacion' AND FechaCreacion < DATEADD(MINUTE, -{MinutosVencimientoValidacion}, GETDATE()))" +
+            (OrigenLoteDisponible()
+                ? $" OR (Estado = 'EnValidacion' AND FechaCreacion < DATEADD(MINUTE, -(CASE WHEN Origen = 'API' THEN {MinutosVencimientoValidacionApi} ELSE {MinutosVencimientoValidacion} END), GETDATE()))"
+                : $" OR (Estado = 'EnValidacion' AND FechaCreacion < DATEADD(MINUTE, -{MinutosVencimientoValidacion}, GETDATE()))") +
             // Los lotes que llegan por la API (Sql/046) esperan revisión humana más tiempo que los de la pantalla de Excel.
             (OrigenLoteDisponible()
                 ? $" OR FechaCreacion < DATEADD(HOUR, -(CASE WHEN Origen = 'API' THEN {HorasVencimientoRevisionApi} ELSE {HorasVencimientoRevision} END), GETDATE()))"
@@ -60,6 +62,9 @@ namespace bufinscustomers.Services
 
         /// <summary>Horas que un lote creado por la API puede esperar su revisión/confirmación antes de purgarse.</summary>
         private const int HorasVencimientoRevisionApi = 48;
+
+        /// <summary>Minutos que un lote de la API puede seguir «EnValidacion» (el cliente lo va llenando por tandas de hojas).</summary>
+        private const int MinutosVencimientoValidacionApi = 360;
 
         private static bool _origenLoteDisponible;
         private static DateTime _origenLoteRevisado = DateTime.MinValue;
@@ -176,6 +181,21 @@ namespace bufinscustomers.Services
                 cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
                 var r = cmd.ExecuteScalar();
                 return r == null ? (long?)null : Convert.ToInt64(r);
+            }
+        }
+
+        /// <summary>
+        /// Devuelve un lote a «EnValidacion» (la API agregó filas): hasta volver a validarlo no se puede confirmar, así nunca se
+        /// confirma una validación que ya no corresponde a lo que hay en staging. No toca lotes confirmados ni descartados.
+        /// </summary>
+        public void ReabrirParaEdicion(SqlConnection cn, SqlTransaction tx, long idLote)
+        {
+            using (var cmd = new SqlCommand(
+                "UPDATE dbo.CarguesLotes SET Estado = @E, FechaValidacion = NULL WHERE IdLote = @L AND Estado NOT IN ('Confirmado','Descartado')", cn, tx))
+            {
+                cmd.Parameters.AddWithValue("@E", CargueLoteEstado.EnValidacion);
+                cmd.Parameters.AddWithValue("@L", idLote);
+                cmd.ExecuteNonQuery();
             }
         }
 

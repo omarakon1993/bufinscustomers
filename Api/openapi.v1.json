@@ -1,0 +1,276 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API de ingesta de BUFINS",
+    "version": "1.0.0",
+    "description": "Envíe a BUFINS, desde su sistema contable, la misma información que hoy entra con la plantilla Excel. Un envío por la API pasa por exactamente las mismas validaciones, el mismo respaldo previo y la misma auditoría que un cargue de Excel.\n\n**Flujo**: (A) suba la plantilla completa con `POST /cargues/archivo`, o (B) abra un cargue con `POST /cargues`, envíe cada hoja con `POST /cargues/{idLote}/hojas/{hoja}` y ciérrelo con `POST /cargues/{idLote}/validar`. Luego revise `GET /cargues/{idLote}` y `/hallazgos`. La confirmación la hace una persona en «Revisar cargue», salvo que la integración tenga permiso para confirmar.\n\n**Reglas que nunca se saltan**: un cargue no puede dejar un año vacío ni reducir una tabla por debajo del umbral de bloqueo; una reducción fuerte siempre la confirma una persona. Un nuevo envío para el mismo año/modo/escenario reemplaza al envío pendiente de la misma integración.\n\n**Mensajes**: en español; agregue `?idioma=en` o `Accept-Language: en` para inglés."
+  },
+  "servers": [ { "url": "/api/v1", "description": "Este servidor" } ],
+  "security": [ { "claveIntegracion": [] } ],
+  "tags": [
+    { "name": "Sistema", "description": "Comprobación de la conexión y contrato de datos." },
+    { "name": "Cargues", "description": "Envío, revisión y confirmación de cargues." }
+  ],
+  "paths": {
+    "/openapi.json": {
+      "get": {
+        "tags": ["Sistema"], "summary": "Contrato OpenAPI", "security": [],
+        "description": "Este mismo documento. No requiere clave.",
+        "responses": { "200": { "description": "Documento OpenAPI 3.0" } }
+      }
+    },
+    "/ping": {
+      "get": {
+        "tags": ["Sistema"], "summary": "Probar la clave",
+        "description": "Devuelve la integración y la empresa a las que pertenece la clave. Útil para verificar la conexión.",
+        "responses": {
+          "200": { "description": "Clave válida", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Ping" } } } },
+          "401": { "$ref": "#/components/responses/NoAutorizado" },
+          "429": { "$ref": "#/components/responses/Limite" }
+        }
+      }
+    },
+    "/esquemas": {
+      "get": {
+        "tags": ["Sistema"], "summary": "Hojas y columnas aceptadas",
+        "description": "Las hojas (Z_*) y las columnas que acepta la empresa de la integración, con su tipo. Es el contrato de datos: una hoja personalizada nueva aparece aquí sin cambios en la API.",
+        "responses": {
+          "200": { "description": "Esquemas", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Esquemas" } } } },
+          "401": { "$ref": "#/components/responses/NoAutorizado" }
+        }
+      }
+    },
+    "/cargues/archivo": {
+      "post": {
+        "tags": ["Cargues"], "summary": "Subir la plantilla Excel completa",
+        "description": "Equivale a subir el archivo en «Cargue de Excel». Debe traer todas las hojas de la empresa. Queda en revisión (o confirmado, si la integración puede confirmar y se pidió `confirmar=true` y el cargue quedó limpio).",
+        "parameters": [ { "$ref": "#/components/parameters/IdempotencyKey" } ],
+        "requestBody": {
+          "required": true,
+          "content": { "multipart/form-data": { "schema": {
+            "type": "object", "required": ["archivo", "anio", "modo"],
+            "properties": {
+              "archivo": { "type": "string", "format": "binary", "description": "Plantilla BUFINS (.xlsx o .xlsm)." },
+              "anio": { "type": "integer", "example": 2026 },
+              "modo": { "type": "string", "enum": ["ejecucion", "historico"] },
+              "idEscenario": { "type": "integer", "default": 1 },
+              "confirmar": { "type": "boolean", "default": false, "description": "Solo se respeta si la integración tiene permiso para confirmar." }
+            } } } }
+        },
+        "responses": {
+          "201": { "description": "Recibido y validado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResultadoEnvio" } } } },
+          "200": { "description": "Reenvío con la misma Idempotency-Key: se devuelve el cargue ya creado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResultadoEnvio" } } } },
+          "409": { "$ref": "#/components/responses/LoteActivo" },
+          "422": { "$ref": "#/components/responses/Rechazado" },
+          "401": { "$ref": "#/components/responses/NoAutorizado" },
+          "429": { "$ref": "#/components/responses/Limite" }
+        }
+      }
+    },
+    "/cargues": {
+      "post": {
+        "tags": ["Cargues"], "summary": "Abrir un cargue vacío (envío por hojas)",
+        "parameters": [ { "$ref": "#/components/parameters/IdempotencyKey" } ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": {
+            "type": "object", "required": ["anio", "modo"],
+            "properties": {
+              "anio": { "type": "integer", "example": 2026 },
+              "modo": { "type": "string", "enum": ["ejecucion", "historico"] },
+              "idEscenario": { "type": "integer", "default": 1 },
+              "referencia": { "type": "string", "maxLength": 200, "description": "Texto libre que se muestra como «archivo» en BUFINS." }
+            } } } }
+        },
+        "responses": {
+          "201": { "description": "Cargue abierto", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CargueAbierto" } } } },
+          "409": { "$ref": "#/components/responses/LoteActivo" },
+          "422": { "$ref": "#/components/responses/Rechazado" },
+          "401": { "$ref": "#/components/responses/NoAutorizado" }
+        }
+      }
+    },
+    "/cargues/{idLote}/hojas/{hoja}": {
+      "post": {
+        "tags": ["Cargues"], "summary": "Enviar las filas de una hoja",
+        "description": "Envíe CADA hoja de la empresa (consulte `/esquemas`), aunque vaya sin filas (`\"filas\": []`): una hoja olvidada borraría sus datos al confirmar, por eso `validar` la exige. Una hoja grande puede enviarse en varias tandas (máx. 50 000 filas por llamada); con `reemplazar: true` se descarta lo enviado antes de esa hoja. Las filas de un año distinto al del cargue se omiten y se informan. Cada llamada es todo o nada. Tras enviar filas hay que volver a llamar `validar`.",
+        "parameters": [
+          { "$ref": "#/components/parameters/IdLote" },
+          { "name": "hoja", "in": "path", "required": true, "schema": { "type": "string", "example": "Z_BalancePrueba" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": {
+            "type": "object", "required": ["filas"],
+            "properties": {
+              "filas": { "type": "array", "maxItems": 50000, "items": { "type": "object", "additionalProperties": { "nullable": true, "oneOf": [ { "type": "number" }, { "type": "string" }, { "type": "boolean" } ] }, "example": { "Cuenta": "110505", "Año": 2026, "Mes": 1, "Saldo": 1250000.5 } } },
+              "reemplazar": { "type": "boolean", "default": false }
+            } } } }
+        },
+        "responses": {
+          "200": { "description": "Filas guardadas", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResultadoHoja" } } } },
+          "400": { "$ref": "#/components/responses/PeticionInvalida" },
+          "404": { "$ref": "#/components/responses/NoEncontrado" },
+          "409": { "$ref": "#/components/responses/NoDisponible" },
+          "422": { "$ref": "#/components/responses/Rechazado" }
+        }
+      }
+    },
+    "/cargues/{idLote}/validar": {
+      "post": {
+        "tags": ["Cargues"], "summary": "Cerrar el envío por hojas y validarlo",
+        "description": "Verifica que se enviaron todas las hojas y corre las mismas validaciones del Excel. Responde con el estado del cargue (`ValidadoOk`, `ConAdvertencias` o `ConErrores`).",
+        "parameters": [ { "$ref": "#/components/parameters/IdLote" } ],
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "confirmar": { "type": "boolean", "default": false } } } } }
+        },
+        "responses": {
+          "200": { "description": "Validado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResultadoEnvio" } } } },
+          "404": { "$ref": "#/components/responses/NoEncontrado" },
+          "409": { "$ref": "#/components/responses/NoDisponible" },
+          "422": { "$ref": "#/components/responses/Rechazado" }
+        }
+      }
+    },
+    "/cargues/{idLote}": {
+      "get": {
+        "tags": ["Cargues"], "summary": "Estado de un cargue",
+        "description": "Solo ve los cargues creados por esta misma integración. Incluye el impacto frente a los datos actuales.",
+        "parameters": [ { "$ref": "#/components/parameters/IdLote" } ],
+        "responses": {
+          "200": { "description": "Estado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EstadoCargue" } } } },
+          "404": { "$ref": "#/components/responses/NoEncontrado" }
+        }
+      },
+      "delete": {
+        "tags": ["Cargues"], "summary": "Descartar un cargue pendiente",
+        "description": "No toca ningún dato real. Un cargue ya confirmado no se puede descartar (un administrador puede deshacerlo desde el historial de versiones).",
+        "parameters": [ { "$ref": "#/components/parameters/IdLote" } ],
+        "responses": {
+          "200": { "description": "Descartado" },
+          "404": { "$ref": "#/components/responses/NoEncontrado" },
+          "409": { "$ref": "#/components/responses/NoDisponible" }
+        }
+      }
+    },
+    "/cargues/{idLote}/hallazgos": {
+      "get": {
+        "tags": ["Cargues"], "summary": "Errores y advertencias de la validación",
+        "description": "Cada hallazgo indica hoja, fila, columna, regla y una sugerencia. Trae los primeros `max` casos de cada validación y el total real por regla.",
+        "parameters": [
+          { "$ref": "#/components/parameters/IdLote" },
+          { "name": "max", "in": "query", "schema": { "type": "integer", "default": 200, "minimum": 1, "maximum": 1000 } }
+        ],
+        "responses": {
+          "200": { "description": "Hallazgos", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Hallazgos" } } } },
+          "404": { "$ref": "#/components/responses/NoEncontrado" }
+        }
+      }
+    },
+    "/cargues/{idLote}/confirmar": {
+      "post": {
+        "tags": ["Cargues"], "summary": "Confirmar el cargue",
+        "description": "Solo disponible si la integración tiene permiso para confirmar; si no, responde 403 `confirmacion_humana` y la confirmación la hace una persona. Aun con permiso, nunca confirma una reducción fuerte de datos (409 `requiere_revision_humana`) ni salta la regla de nunca dejar un año vacío (409 `bloqueado_regla_de_oro`). Antes de reemplazar, BUFINS guarda una versión para poder deshacer.",
+        "parameters": [ { "$ref": "#/components/parameters/IdLote" } ],
+        "responses": {
+          "200": { "description": "Confirmado" },
+          "403": { "description": "La integración no puede confirmar", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "$ref": "#/components/responses/NoEncontrado" },
+          "409": { "$ref": "#/components/responses/NoDisponible" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "claveIntegracion": { "type": "http", "scheme": "bearer", "bearerFormat": "bfk_{prefijo}_{secreto}", "description": "Clave de la integración (se genera en BUFINS → Configuración → Integraciones API). Se muestra una sola vez." }
+    },
+    "parameters": {
+      "IdLote": { "name": "idLote", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } },
+      "IdempotencyKey": { "name": "Idempotency-Key", "in": "header", "required": false, "schema": { "type": "string", "maxLength": 100 }, "description": "Identificador único del envío (p. ej. un GUID). Si la llamada se repite por una falla de red, BUFINS devuelve el cargue ya creado en lugar de duplicarlo. Se recuerda 7 días." }
+    },
+    "responses": {
+      "NoAutorizado": { "description": "Clave ausente, incorrecta o revocada (401), o IP no permitida (403)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Limite": { "description": "Demasiadas llamadas (120 por minuto por integración) o demasiados intentos con clave incorrecta. Reintente tras `Retry-After`.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "LoteActivo": { "description": "Ya hay un cargue pendiente de otra persona para la misma empresa/año/modo/escenario (`error.idLote`)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Rechazado": { "description": "La solicitud es válida en forma pero BUFINS no puede procesarla (plantilla incompleta, hoja o columna desconocida, valores inválidos, sin filas del año…). `error.codigo` indica el motivo.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "PeticionInvalida": { "description": "JSON mal formado o campos obligatorios ausentes", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "NoEncontrado": { "description": "El cargue no existe o no fue creado por esta integración", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "NoDisponible": { "description": "El cargue ya fue confirmado o descartado, o no se puede confirmar en su estado actual", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": { "error": { "type": "object", "properties": { "codigo": { "type": "string", "example": "hojas_faltantes" }, "mensaje": { "type": "string" }, "idLote": { "type": "integer", "format": "int64", "nullable": true } } } }
+      },
+      "Ping": {
+        "type": "object",
+        "properties": { "estado": { "type": "string", "example": "ok" }, "version": { "type": "string" }, "integracion": { "type": "string" }, "idEmpresa": { "type": "integer" }, "empresa": { "type": "string" }, "permiteConfirmar": { "type": "boolean" } }
+      },
+      "Esquemas": {
+        "type": "object",
+        "properties": { "hojas": { "type": "array", "items": { "type": "object", "properties": {
+          "hoja": { "type": "string", "example": "Z_BalancePrueba" }, "tabla": { "type": "string" },
+          "columnas": { "type": "array", "items": { "type": "object", "properties": {
+            "nombre": { "type": "string" }, "tipo": { "type": "string", "enum": ["texto", "numero", "fecha", "booleano"] }, "longitudMaxima": { "type": "integer", "nullable": true }, "admiteVacio": { "type": "boolean" } } } } } } } }
+      },
+      "Cargue": {
+        "type": "object",
+        "properties": {
+          "idLote": { "type": "integer", "format": "int64" },
+          "estado": { "type": "string", "enum": ["EnValidacion", "ValidadoOk", "ConAdvertencias", "ConErrores", "Confirmado", "Descartado"] },
+          "anio": { "type": "integer" }, "modo": { "type": "string", "enum": ["ejecucion", "historico"] }, "idEscenario": { "type": "integer" },
+          "archivo": { "type": "string" }, "totalFilas": { "type": "integer" }, "totalErrores": { "type": "integer" }, "totalAdvertencias": { "type": "integer" },
+          "puedeConfirmar": { "type": "boolean" },
+          "fechaCreacion": { "type": "string", "format": "date-time" }, "fechaValidacion": { "type": "string", "format": "date-time", "nullable": true }, "fechaConfirmacion": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "CargueAbierto": {
+        "type": "object",
+        "properties": { "repetido": { "type": "boolean" }, "lote": { "$ref": "#/components/schemas/Cargue" }, "siguientePaso": { "type": "string" } }
+      },
+      "ResultadoEnvio": {
+        "type": "object",
+        "properties": {
+          "repetido": { "type": "boolean" },
+          "confirmacion": { "type": "string", "enum": ["no_solicitada", "no_permitida", "pendiente_de_revision", "confirmado"] },
+          "confirmado": { "type": "object", "nullable": true, "properties": { "mensaje": { "type": "string" }, "filas": { "type": "integer" } } },
+          "lote": { "$ref": "#/components/schemas/Cargue" },
+          "urlRevision": { "type": "string", "description": "Dirección (en BUFINS) de la pantalla «Revisar cargue»." }
+        }
+      },
+      "ResultadoHoja": {
+        "type": "object",
+        "properties": {
+          "idLote": { "type": "integer", "format": "int64" }, "hoja": { "type": "string" }, "tabla": { "type": "string" },
+          "filasRecibidas": { "type": "integer" }, "filasGuardadas": { "type": "integer" }, "filasOmitidasPorAnio": { "type": "integer" },
+          "filasEnHoja": { "type": "integer", "description": "Filas que tiene la hoja en el cargue tras esta llamada." }, "aviso": { "type": "string", "nullable": true }
+        }
+      },
+      "EstadoCargue": {
+        "type": "object",
+        "properties": {
+          "lote": { "$ref": "#/components/schemas/Cargue" },
+          "impacto": { "type": "object", "nullable": true, "properties": {
+            "filasExistentes": { "type": "integer" }, "filasNuevas": { "type": "integer" },
+            "requiereRevisionHumana": { "type": "boolean", "description": "Reducción fuerte: la confirma siempre una persona." },
+            "bloqueado": { "type": "boolean", "description": "Regla de oro: dejaría un año vacío o una tabla bajo el umbral. No se puede confirmar." },
+            "tablas": { "type": "array", "items": { "type": "object", "properties": { "tabla": { "type": "string" }, "existentes": { "type": "integer" }, "nuevas": { "type": "integer" } } } } } }
+        }
+      },
+      "Hallazgos": {
+        "type": "object",
+        "properties": {
+          "idLote": { "type": "integer", "format": "int64" }, "maxPorRegla": { "type": "integer" },
+          "totalesPorRegla": { "type": "object", "additionalProperties": { "type": "integer" } },
+          "hallazgos": { "type": "array", "items": { "type": "object", "properties": {
+            "hoja": { "type": "string" }, "tabla": { "type": "string" }, "fila": { "type": "integer", "nullable": true }, "columna": { "type": "string", "nullable": true },
+            "severidad": { "type": "string", "enum": ["Error", "Advertencia"] }, "regla": { "type": "string" }, "titulo": { "type": "string", "nullable": true },
+            "mensaje": { "type": "string" }, "periodo": { "type": "string", "nullable": true }, "referencia": { "type": "string", "nullable": true },
+            "detalle": { "type": "string", "nullable": true }, "diferencia": { "type": "number", "nullable": true }, "sugerencia": { "type": "string", "nullable": true } } } }
+        }
+      }
+    }
+  }
+}

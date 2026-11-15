@@ -7,6 +7,8 @@
 --  dbo.IntegracionesIdempotencia  (IdIntegracion, Idempotency-Key) -> lote: un reenvio no duplica el cargue.
 --  dbo.CarguesLotes               + Origen ('Excel' | 'API') e IdIntegracion. Los lotes de la API esperan
 --                                 revision humana hasta 48 h (los de Excel siguen venciendo a las 2 h).
+--  dbo.CarguesLotesHojas          Hojas que el cliente declaro (con o sin filas) en un cargue enviado por JSON:
+--                                 evita que una hoja olvidada borre sus datos al confirmar.
 -- =====================================================================================
 
 IF OBJECT_ID('dbo.Integraciones', 'U') IS NULL
@@ -28,7 +30,7 @@ BEGIN
         IpUltimoUso       VARCHAR(45)   NULL,
         FechaRevocada     DATETIME      NULL,
         CONSTRAINT UQ_Integraciones_Prefijo UNIQUE (Prefijo),
-        CONSTRAINT FK_Integraciones_Empresa FOREIGN KEY (IdEmpresa) REFERENCES dbo.Empresas (Id),
+        CONSTRAINT FK_Integraciones_Empresa FOREIGN KEY (IdEmpresa) REFERENCES dbo.Empresas (EmpId),
         CONSTRAINT FK_Integraciones_Usuario FOREIGN KEY (IdUsuarioTecnico) REFERENCES dbo.Usuarios (Id)
     );
     CREATE INDEX IX_Integraciones_Empresa ON dbo.Integraciones (IdEmpresa);
@@ -45,6 +47,20 @@ BEGIN
         Fecha         DATETIME      NOT NULL CONSTRAINT DF_IntegracionesIdem_Fecha DEFAULT (GETDATE()),
         CONSTRAINT PK_IntegracionesIdempotencia PRIMARY KEY (IdIntegracion, Clave),
         CONSTRAINT FK_IntegracionesIdem_Integracion FOREIGN KEY (IdIntegracion) REFERENCES dbo.Integraciones (Id)
+    );
+END
+GO
+
+IF OBJECT_ID('dbo.CarguesLotesHojas', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.CarguesLotesHojas
+    (
+        IdLote    BIGINT      NOT NULL,
+        Hoja      VARCHAR(60) NOT NULL,                      -- nombre normalizado de la hoja Z_
+        Filas     INT         NOT NULL CONSTRAINT DF_CarguesLotesHojas_Filas DEFAULT (0),
+        Declarada DATETIME    NOT NULL CONSTRAINT DF_CarguesLotesHojas_Fecha DEFAULT (GETDATE()),
+        CONSTRAINT PK_CarguesLotesHojas PRIMARY KEY (IdLote, Hoja),
+        CONSTRAINT FK_CarguesLotesHojas_Lote FOREIGN KEY (IdLote) REFERENCES dbo.CarguesLotes (IdLote) ON DELETE CASCADE
     );
 END
 GO

@@ -14,10 +14,18 @@
 - Sin el script `Sql/046_Integraciones_API.sql` la API responde 503 `api_no_configurada` (el resto del sitio no cambia).
 
 ## Endpoints (v1)
-`GET /ping` · `GET /esquemas` · `POST /cargues/archivo` (multipart: `archivo`, `anio`, `modo`=ejecucion|historico, `idEscenario`?, `confirmar`?) · `GET /cargues/{id}` (estado + impacto) · `GET /cargues/{id}/hallazgos` · `POST /cargues/{id}/confirmar` · `DELETE /cargues/{id}`. Idioma de los mensajes: `?idioma=en` o `Accept-Language: en`.
+Contrato OpenAPI 3 (público, sin clave): `GET /api/v1/openapi.json` ← `Api/openapi.v1.json` (**actualizarlo con cada cambio de endpoint**; se copia al publicar vía `<Content Update>` del `.csproj`).
+`GET /ping` · `GET /esquemas` · **(A) plantilla completa**: `POST /cargues/archivo` (multipart: `archivo`, `anio`, `modo`=ejecucion|historico, `idEscenario`?, `confirmar`?) · **(B) por hojas en JSON**: `POST /cargues` (`{anio, modo, idEscenario?, referencia?}`) → `POST /cargues/{id}/hojas/{hoja}` (`{filas:[{Col:valor}], reemplazar?}`, todo o nada, máx. 50 000 filas/llamada) → `POST /cargues/{id}/validar` (`{confirmar?}`) · `GET /cargues/{id}` (estado + impacto) · `GET /cargues/{id}/hallazgos` · `POST /cargues/{id}/confirmar` · `DELETE /cargues/{id}`. Idioma de los mensajes: `?idioma=en` o `Accept-Language: en`.
+
+### Envío por hojas (B) — reglas
+- Lógica en `CargueOrquestadorService` (`IniciarLoteSinArchivo`, `AgregarFilasHoja`, `ValidarLoteApi`); escribe en `Staging_Ini_*` con `GuardarEnIni` (misma conversión que el Excel; `numeroFilaBase` continúa la numeración entre tandas).
+- **Toda hoja de la empresa debe declararse** (aunque vaya con `filas: []`) antes de `validar` — tabla `dbo.CarguesLotesHojas` (script 046). Motivo: confirmar borra los `Ini_*` del año; una hoja olvidada borraría sus datos. Sin filas del año en total → 422.
+- Cada llamada de hoja devuelve el lote a `EnValidacion` (`CargueStagingService.ReabrirParaEdicion`): hay que volver a validar antes de confirmar. Los lotes `Origen='API'` en `EnValidacion` vencen a las 6 h y en revisión a las 48 h.
+- Columnas: se resuelven contra el esquema real de `Staging_Ini_X` (alias `Anio`→`Año`); columna desconocida → 422. Filas de otro año se omiten e informan (como el Excel). `Z_TablaPUC` (sin tabla Ini_) no se admite por JSON.
+- **Aviso a revisores**: `NotificarRevisores` crea una notificación (campana, en español) para los Admin de Empresa (`Admin=1`) de la empresa cuando un cargue de la API queda esperando revisión o con errores (`Notif_CargueApi*`).
 
 ## Pantalla «Integraciones» (hecha)
 `IntegracionesController` → `Views/Configuracion/Integraciones.cshtml` (textos `Integ_*` en ambos `.resx`). Permiso `ADMIN_CONFIG_INTEGRACIONES` (**crear la opción en `/MenuOpciones`**: Controller `Integraciones`, Action `Index`, `SoloAdminEmpresa`, no `SoloSuperAdmin`). Super Admin y Admin de Empresa (este, solo empresa/grupo vía `EmpresaAccesoHelper`). Todo por AJAX con antiforgery; Crear/Rotar devuelven la clave una sola vez (modal sin cierre accidental; no se guarda en `TempData`, log ni auditoría). Usuario técnico: cualquier usuario de la empresa que no sea Super Admin (el servicio devuelve códigos de error, el controlador los traduce). Auditoría `AuditoriaTipo.Integraciones` (Crear / Editar [incluye rotar] / Eliminar [revocar]).
 
-## Pendiente de la fase 1
-Envío de hojas en JSON (`POST /cargues/{id}/hojas/{hoja}`), manual OpenAPI + sandbox, notificación a los revisores cuando un lote queda pendiente. Fase 2: ejecución de modelos asíncrona, agente de carpeta, webhook saliente.
+## Pendiente
+Manual de usuario HTML («Manual de integración API», estándar de documentación en `App_Data/Documentacion/Tecnica/`; incluye la pantalla Integraciones; no va a la biblioteca salvo que se pida), sandbox. Fase 2: ejecución de modelos asíncrona, agente de carpeta, webhook saliente.

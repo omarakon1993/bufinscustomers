@@ -49,6 +49,7 @@
   <ItemGroup>
     <Content Include="Assets\**\*" Exclude="Assets\**\*.json;Assets\**\*.config" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="favicon.ico" CopyToPublishDirectory="PreserveNewest" />
+    <Content Update="Api\openapi.v1.json" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="App_Data\Documentacion\**\*" Exclude="App_Data\Documentacion\**\*.json;App_Data\Documentacion\**\*.config" CopyToPublishDirectory="PreserveNewest" />
     <!-- NUNCA publicar credenciales: el SDK Web incluye por defecto todos los .json/.config -->
     <Content Remove="secrets.config;secrets.machineKey.config;secretsSettings.json;secretsSettings.*.json;*.example;*.config.example" />
