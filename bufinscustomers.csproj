@@ -51,8 +51,6 @@
     <Content Include="favicon.ico" CopyToPublishDirectory="PreserveNewest" />
     <Content Update="Api\openapi.v1.json" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="App_Data\Documentacion\**\*" Exclude="App_Data\Documentacion\**\*.json;App_Data\Documentacion\**\*.config" CopyToPublishDirectory="PreserveNewest" />
-    <!-- Agente de carpeta descargable (lo deja Tools\AgenteBufins\Publicar-Agente.ps1; fuera de git). Si no existe, el glob queda vacio. -->
-    <Content Include="App_Data\Agente\*.exe" CopyToPublishDirectory="PreserveNewest" />
     <!-- NUNCA publicar credenciales: el SDK Web incluye por defecto todos los .json/.config -->
     <Content Remove="secrets.config;secrets.machineKey.config;secretsSettings.json;secretsSettings.*.json;*.example;*.config.example" />
     <None Remove="secrets.config;secrets.machineKey.config;secretsSettings.json" />
@@ -63,7 +61,7 @@
   <!-- Copias antiguas del proyecto .NET Framework que no forman parte del sitio -->
   <ItemGroup>
     <Compile Remove="packages\**;bin\**;obj\**;Logs\**" />
-    <!-- Tools\AgenteBufins es un proyecto aparte (agente de carpeta para el servidor del cliente): no forma parte del sitio. -->
+    <!-- Tools\ son utilidades de despliegue y documentacion: no forman parte del sitio. -->
     <Compile Remove="Tools\**" />
     <EmbeddedResource Remove="Tools\**" />
     <Content Remove="Tools\**" />

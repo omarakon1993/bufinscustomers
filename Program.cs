@@ -172,6 +172,9 @@ localizacion.RequestCultureProviders.Add(new CustomRequestCultureProvider(ctx =>
 }));
 app.UseRequestLocalization(localizacion);
 
+// /api/v1/{empresa}/... se reescribe a /api/v1/... antes de enrutar (la dirección propia de cada empresa; ver Api/ApiDireccion.cs)
+app.Use((ctx, next) => { bufinscustomers.Api.ApiDireccion.Reescribir(ctx); return next(ctx); });
+
 app.UseRouting();
 
 // API de ingesta v1 (/api/v1): autenticacion por clave de integracion, limites y errores en JSON. Va antes de los endpoints.

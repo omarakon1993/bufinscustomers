@@ -3,12 +3,14 @@
     ViewBag.Title = Resources.Strings.Integ_PageTitle;
     bool disponible = ViewBag.Disponible;
     string idiomaQs = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("en") ? "?idioma=en" : "";
-    var activas = Model.Where(x => !x.FechaRevocada.HasValue && x.Activo).ToList();
-    string agenteHuella = ViewBag.AgenteHuella as string;
-    double agenteMB = ViewBag.AgenteMB is double d ? d : 0;
     string baseApi = ViewBag.BaseApi as string;
     var empresas = (System.Collections.Generic.List<bufinscustomers.Models.Empresas>)ViewBag.Empresas
                    ?? new System.Collections.Generic.List<bufinscustomers.Models.Empresas>();
+    var direcciones = ViewBag.Direcciones as System.Collections.Generic.Dictionary<int, string>
+                      ?? new System.Collections.Generic.Dictionary<int, string>();
+    var visibles = Model.Where(x => !x.FechaRevocada.HasValue).ToList();
+    var activas = visibles.Where(x => x.Activo).ToList();
+    var saludes = ViewBag.Salud as System.Collections.Generic.Dictionary<int, bufinscustomers.Controllers.SaludIntegracionVM>;
     Func<string, string> js = s => HttpUtility.JavaScriptStringEncode(s ?? "");
 }
 
@@ -18,31 +20,32 @@
 
 <div class="container-fluid px-4">
 
-    <div class="powerbi-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+    <div class="powerbi-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;overflow:visible !important;">
         <div class="powerbi-header-content">
             <i class="fas fa-plug powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@Resources.Strings.Integ_PageTitle</h1>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <a class="btn-modern-secondary" href="@Url.Content("~/api/v1/manual")@(System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("en") ? "?idioma=en" : "")" target="_blank" rel="noopener">
-                <i class="fas fa-book mr-1"></i>@Resources.Strings.Integ_BtnManual
-            </a>
-            <a class="btn-modern-secondary" href="@Url.Content("~/api/v1/docs")@(System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("en") ? "?idioma=en" : "")" target="_blank" rel="noopener">
-                <i class="fas fa-flask mr-1"></i>@Resources.Strings.Integ_BtnProbador
-            </a>
-            <a class="btn-modern-secondary" href="@Url.Content("~/api/v1/openapi.json")" target="_blank" rel="noopener">
-                <i class="fas fa-file-code mr-1"></i>@Resources.Strings.Integ_BtnContrato
-            </a>
-            @if (disponible)
-            {
-                <button type="button" class="btn-modern-gradient" data-toggle="modal" data-target="#integAsistenteModal">
-                    <i class="fas fa-magic mr-1"></i>@Resources.Strings.Integ_BtnAsistente
+        @if (disponible)
+        {
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <div class="dropdown">
+                    <button type="button" class="btn btn-outline-secondary cx-menu-toggle" style="padding:.4rem .95rem;font-size:.8125rem;" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-book mr-1"></i>@Resources.Strings.Integ_Cx_Documentacion <i class="fas fa-caret-down ml-1"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <a class="dropdown-item" href="@Url.Content("~/api/v1/manual")@idiomaQs" target="_blank" rel="noopener"><i class="fas fa-book-open fa-fw mr-1"></i>@Resources.Strings.Integ_BtnManual</a>
+                        <a class="dropdown-item" href="@Url.Content("~/api/v1/docs")@idiomaQs" target="_blank" rel="noopener"><i class="fas fa-flask fa-fw mr-1"></i>@Resources.Strings.Integ_BtnProbador</a>
+                        <a class="dropdown-item" href="@Url.Content("~/api/v1/openapi.json")" target="_blank" rel="noopener"><i class="fas fa-file-code fa-fw mr-1"></i>@Resources.Strings.Integ_BtnContrato</a>
+                    </div>
+                </div>
+                <button type="button" class="btn-modern-secondary" data-toggle="modal" data-target="#cxAyudaModal">
+                    <i class="fas fa-life-ring mr-1"></i>@Resources.Strings.Integ_Cx_Ayuda
                 </button>
-                <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#integCrearModal">
-                    <i class="fas fa-plus mr-1"></i>@Resources.Strings.Integ_BtnNueva
+                <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#integConectarModal">
+                    <i class="fas fa-plus mr-1"></i>@Resources.Strings.Integ_Cx_Conectar
                 </button>
-            }
-        </div>
+            </div>
+        }
     </div>
 
     <p class="text-muted mt-3" style="font-size:0.88rem;">
@@ -55,199 +58,76 @@
             <i class="fas fa-exclamation-triangle mr-1"></i>@Resources.Strings.Integ_NoDisponible
         </div>
     }
-    else
+    else if (!visibles.Any())
     {
-        <div class="card shadow mb-3">
-            <div class="card-body py-3">
-                <div class="font-weight-bold mb-1"><i class="fas fa-link mr-1"></i>@Resources.Strings.Integ_ConexionTitulo</div>
-                <div class="small text-muted mb-2">@Resources.Strings.Integ_ConexionTexto</div>
-                <code>@baseApi</code>
-                <pre class="mt-2 mb-0 small" style="white-space:pre-wrap;">curl -H "Authorization: Bearer bfk_..." @baseApi/ping</pre>
+        <div class="card shadow mb-4">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-plug fa-2x text-muted mb-3"></i>
+                <h5 class="font-weight-bold">@Resources.Strings.Integ_Cx_VacioTitulo</h5>
+                <p class="text-muted mb-3">@Resources.Strings.Integ_Cx_VacioTexto</p>
+                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#integConectarModal">
+                    <i class="fas fa-plus mr-1"></i>@Resources.Strings.Integ_Cx_Conectar
+                </button>
             </div>
         </div>
     }
+    else
+    {
+        <div class="row">
+            @foreach (var i in visibles)
+            {
+                bufinscustomers.Controllers.SaludIntegracionVM sv = null;
+                if (saludes != null) { saludes.TryGetValue(i.Id, out sv); }
+                string nivel = !i.Activo ? "inactiva" : (sv != null ? sv.Nivel : "ok");
+                string color = nivel == "problema" ? "#dc3545" : nivel == "atencion" ? "#f6a609" : nivel == "inactiva" ? "#adb5bd" : "#1cc88a";
+                string direccion = direcciones.TryGetValue(i.IdEmpresa, out var dir) ? dir : baseApi;
+                string iniciales = new string((i.NombreEmpresa ?? "?").Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])).ToArray());
+                <div class="col-md-6 col-xl-4 mb-3">
+                    <div class="card shadow-sm h-100" style="border-left:4px solid @color;">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center" style="gap:10px;">
+                                <div class="d-flex align-items-center justify-content-center font-weight-bold" style="width:34px;height:34px;border-radius:10px;background:#eef1ff;color:#4e5bd6;font-size:0.8rem;flex:none;">@iniciales</div>
+                                <div class="flex-fill" style="min-width:0;">
+                                    <div class="font-weight-bold text-truncate" style="line-height:1.2;">@i.NombreEmpresa</div>
+                                    <div class="small" style="color:@color;line-height:1.3;" title="@(sv != null ? string.Join(" · ", sv.Textos) : "")">
+                                        <i class="fas fa-circle mr-1" style="font-size:0.5rem;vertical-align:middle;"></i>@if (!i.Activo) { @Resources.Strings.Integ_Cx_Pausada }
+                                        else if (sv != null && sv.Textos.Count > 0) { @sv.Textos[0] }
+                                        else { @Resources.Strings.Integ_NuncaUsada }
+                                    </div>
+                                </div>
+                                <span class="badge @(i.Sandbox ? "badge-info" : "badge-secondary")" style="flex:none;">@(i.Sandbox ? Resources.Strings.Integ_BadgePruebas : Resources.Strings.Integ_Cx_Real)</span>
+                            </div>
 
-    <div class="card shadow mb-4">
-        <div class="card-body p-0">
-            <div class="table-responsive table-wrapper">
-                <table class="table table-bordered table-hover table-compact">
-                    <thead>
-                        <tr>
-                            <th>@Resources.Strings.Integ_ThNombre</th>
-                            <th>@Resources.Strings.Integ_ThEmpresa</th>
-                            <th>@Resources.Strings.Integ_ThUsuario</th>
-                            <th>@Resources.Strings.Integ_ThClave</th>
-                            <th>@Resources.Strings.Integ_ThConfirmacion</th>
-                            <th>@Resources.Strings.Integ_ThIps</th>
-                            <th>@Resources.Strings.Integ_Pn_ThConexion</th>
-                            <th class="text-center">@Resources.Strings.Common_Estado</th>
-                            <th class="text-center col-acciones">@Resources.Strings.Common_ThAcciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (!Model.Any())
-                        {
-                            <tr>
-                                <td colspan="9" class="text-center text-muted py-3">
-                                    <i class="fas fa-plug mr-2"></i>@Resources.Strings.Integ_NoRegistros
-                                </td>
-                            </tr>
-                        }
-                        @foreach (var i in Model)
-                        {
-                            <tr>
-                                <td><strong>@i.Nombre</strong>@if (i.Sandbox) { <span class="badge badge-info ml-1">@Resources.Strings.Integ_BadgePruebas</span> }</td>
-                                <td>@i.NombreEmpresa</td>
-                                <td>@i.NombreUsuarioTecnico</td>
-                                <td><code>bfk_@(i.Prefijo)_••••</code></td>
-                                <td>
-                                    @if (i.PermiteConfirmar)
-                                    {
-                                        <span class="badge badge-warning">@Resources.Strings.Integ_ConfApi</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge badge-secondary">@Resources.Strings.Integ_ConfHumana</span>
-                                    }
-                                </td>
-                                <td class="small">@(string.IsNullOrEmpty(i.IpPermitidas) ? Resources.Strings.Integ_CualquierIp : i.IpPermitidas.Replace(",", ", "))</td>
-                                <td class="small">
-                                    @{
-                                        var saludes = ViewBag.Salud as System.Collections.Generic.Dictionary<int, bufinscustomers.Controllers.SaludIntegracionVM>;
-                                        bufinscustomers.Controllers.SaludIntegracionVM sv = null;
-                                        if (saludes != null) { saludes.TryGetValue(i.Id, out sv); }
-                                    }
-                                    @if (sv != null && sv.Textos.Count > 0)
-                                    {
-                                        <div title="@string.Join(" · ", sv.Textos)">
-                                            <i class="fas fa-circle mr-1 @(sv.Nivel == "problema" ? "text-danger" : sv.Nivel == "atencion" ? "text-warning" : sv.Nivel == "inactiva" ? "text-muted" : "text-success")"></i>@sv.Textos[0]
-                                        </div>
-                                    }
-                                    @if (i.FechaUltimoUso.HasValue)
-                                    {
-                                        <span class="text-muted d-block">@Resources.Strings.Integ_ThUltimoUso: @i.FechaUltimoUso.Value.ToString("dd/MM/yyyy HH:mm") · @i.IpUltimoUso</span>
-                                    }
-                                    else if (sv == null)
-                                    {
-                                        <span class="text-muted">@Resources.Strings.Integ_NuncaUsada</span>
-                                    }
-                                </td>
-                                <td class="text-center">
-                                    @if (i.FechaRevocada.HasValue)
-                                    {
-                                        <span class="badge-inactivo">@Resources.Strings.Integ_EstadoRevocada</span>
-                                    }
-                                    else if (!i.Activo)
-                                    {
-                                        <span class="badge-inactivo">@Resources.Strings.Integ_EstadoInactiva</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge-activo">@Resources.Strings.Common_Activo</span>
-                                    }
-                                </td>
-                                <td class="col-acciones">
-                                    @if (!i.FechaRevocada.HasValue)
-                                    {
-                                        <div class="btn-group" role="group">
-                                            <button type="button" class="btn btn-sm btn-primary integ-editar" title="@Resources.Strings.Common_Editar"
-                                                    data-id="@i.Id" data-nombre="@i.Nombre" data-activo="@(i.Activo ? "1" : "0")"
-                                                    data-confirma="@(i.PermiteConfirmar ? "1" : "0")" data-ips="@i.IpPermitidas">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-primary integ-actividad" title="@Resources.Strings.Integ_Pn_TitleActividad"
-                                                    data-id="@i.Id" data-nombre="@i.Nombre">
-                                                <i class="fas fa-heartbeat"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-info integ-webhook" title="@Resources.Strings.Integ_Wh_TitleBoton"
-                                                    data-id="@i.Id" data-nombre="@i.Nombre">
-                                                <i class="fas fa-bullhorn"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-warning integ-rotar" title="@Resources.Strings.Integ_TitleRotar"
-                                                    data-id="@i.Id" data-nombre="@i.Nombre">
-                                                <i class="fas fa-sync-alt"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-danger integ-revocar" title="@Resources.Strings.Integ_TitleRevocar"
-                                                    data-id="@i.Id" data-nombre="@i.Nombre">
-                                                <i class="fas fa-ban"></i>
-                                            </button>
-                                        </div>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
+                            <div class="d-flex align-items-center mt-3 px-2 py-1" style="background:#f6f7fb;border-radius:8px;gap:8px;">
+                                <code class="flex-fill text-truncate" style="font-size:0.8rem;color:#2e3a59;" title="@direccion">@direccion</code>
+                                <button type="button" class="btn btn-sm btn-link p-0 cx-copiar-texto" data-texto="@direccion" title="@Resources.Strings.Integ_BtnCopiar"><i class="fas fa-copy"></i></button>
+                            </div>
+                            <div class="small text-muted mt-1 px-1">@Resources.Strings.Integ_Cx_Clave: <code style="color:#6b7280;">@(i.Sandbox ? "bft_" : "bfk_")@(i.Prefijo)_••••</code></div>
 
-<!-- ═══════════════════ MODAL CREAR ═══════════════════ -->
-<div class="modal fade" id="integCrearModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered bf-modal-md">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-plug"></i> @Resources.Strings.Integ_ModalCrearTitle</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            </div>
-            <form id="integCrearForm" autocomplete="off">
-                <div class="modal-body">
-                    <div class="bf-section">@Resources.Strings.Integ_SecIdentificacion</div>
-                    <div class="row">
-                        <div class="col-12 mb-3">
-                            <label for="integTipo">@Resources.Strings.Integ_LabelTipo</label>
-                            <select id="integTipo" class="form-control">
-                                <option value="0">@Resources.Strings.Integ_TipoProduccion</option>
-                                <option value="1">@Resources.Strings.Integ_TipoPruebas</option>
-                            </select>
-                            <small class="form-text text-muted">@Resources.Strings.Integ_TipoHint</small>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="integEmpresa">@Resources.Strings.Integ_LabelEmpresa <span class="text-danger">*</span></label>
-                            <select id="integEmpresa" class="form-control" required>
-                                <option value="">@Resources.Strings.Integ_SelEmpresa</option>
-                                @foreach (var e in empresas)
-                                {
-                                    <option value="@e.Id">@e.Nombre</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="integNombre">@Resources.Strings.Integ_LabelNombre <span class="text-danger">*</span></label>
-                            <div class="bf-input"><i class="fas fa-tag"></i>
-                                <input type="text" id="integNombre" class="form-control" maxlength="100" required placeholder="@Resources.Strings.Integ_NombrePlaceholder" />
+                            <div class="d-flex mt-3" style="gap:8px;">
+                                <button type="button" class="btn btn-primary btn-sm flex-fill integ-actividad" data-id="@i.Id" data-nombre="@i.NombreEmpresa">
+                                    <i class="fas fa-list-ul mr-1"></i>@Resources.Strings.Integ_Cx_VerEnvios
+                                </button>
+                                <div class="dropdown">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary cx-menu-toggle" aria-haspopup="true" aria-expanded="false" title="@Resources.Strings.Integ_Cx_Mas" aria-label="@Resources.Strings.Integ_Cx_Mas">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-right">
+                                        <button type="button" class="dropdown-item integ-editar" data-id="@i.Id" data-nombre="@i.Nombre" data-activo="@(i.Activo ? "1" : "0")"
+                                                data-confirma="@(i.PermiteConfirmar ? "1" : "0")" data-ips="@i.IpPermitidas"><i class="fas fa-edit fa-fw mr-1"></i>@Resources.Strings.Integ_Cx_OpEditar</button>
+                                        <button type="button" class="dropdown-item integ-rotar" data-id="@i.Id" data-nombre="@i.NombreEmpresa"><i class="fas fa-sync-alt fa-fw mr-1"></i>@Resources.Strings.Integ_Cx_OpClave</button>
+                                        <button type="button" class="dropdown-item integ-webhook" data-id="@i.Id" data-nombre="@i.NombreEmpresa"><i class="fas fa-bullhorn fa-fw mr-1"></i>@Resources.Strings.Integ_Cx_OpAvisos</button>
+                                        <div class="dropdown-divider"></div>
+                                        <button type="button" class="dropdown-item text-danger integ-revocar" data-id="@i.Id" data-nombre="@i.NombreEmpresa"><i class="fas fa-ban fa-fw mr-1"></i>@Resources.Strings.Integ_Cx_OpAnular</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-12 mb-3">
-                            <label for="integUsuario">@Resources.Strings.Integ_LabelUsuario <span class="text-danger">*</span></label>
-                            <select id="integUsuario" class="form-control" required disabled>
-                                <option value="">@Resources.Strings.Integ_SelUsuario</option>
-                            </select>
-                            <small class="form-text text-muted">@Resources.Strings.Integ_UsuarioHint</small>
-                        </div>
-                    </div>
-
-                    <div class="bf-section">@Resources.Strings.Integ_SecSeguridad</div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="integConfirma" />
-                        <label class="form-check-label" for="integConfirma">@Resources.Strings.Integ_LabelConfirmar</label>
-                        <small class="form-text text-muted">@Resources.Strings.Integ_LabelConfirmarHint</small>
-                    </div>
-                    <div class="mb-1">
-                        <label for="integIps">@Resources.Strings.Integ_LabelIps</label>
-                        <textarea id="integIps" class="form-control" rows="2" maxlength="500" placeholder="203.0.113.10, 203.0.113.11"></textarea>
-                        <small class="form-text text-muted">@Resources.Strings.Integ_LabelIpsHint</small>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <span class="bf-footer-note"><b>*</b> @Resources.Strings.Common_CamposObligatorios</span>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="integCrearBtn"><i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.Common_BtnCrear</button>
-                </div>
-            </form>
+            }
         </div>
-    </div>
+    }
 </div>
 
 <!-- ═══════════════════ MODAL EDITAR ═══════════════════ -->
@@ -388,171 +268,118 @@
     </div>
 </div>
 
-<!-- ═══════════════════ MODAL ASISTENTE DE CONEXIÓN ═══════════════════ -->
-<div class="modal fade" id="integAsistenteModal" tabindex="-1" aria-hidden="true">
+<!-- ═══════════════════ MODAL CONECTAR UNA EMPRESA ═══════════════════ -->
+<div class="modal fade" id="integConectarModal" tabindex="-1" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-dialog-centered bf-modal-md">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-magic"></i> @Resources.Strings.Integ_As_Titulo</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h5 class="modal-title"><i class="fas fa-plug"></i> @Resources.Strings.Integ_Cx_Conectar</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" id="cxX"><span aria-hidden="true">&times;</span></button>
             </div>
-            <div class="modal-body">
 
-                <!-- Paso 0: elegir camino -->
-                <div id="asPaso0">
-                    <p class="text-muted">@Resources.Strings.Integ_As_Intro</p>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <button type="button" class="btn btn-outline-primary btn-block text-left h-100 as-opcion" data-panel="asCarpeta">
-                                <span class="d-block w-100"><i class="fas fa-folder-open fa-lg mb-2 d-block"></i>
-                                <strong class="d-block mb-1">@Resources.Strings.Integ_As_OpcCarpetaT</strong>
-                                <span class="small text-muted d-block" style="white-space:normal;">@Resources.Strings.Integ_As_OpcCarpetaD</span></span>
-                            </button>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <button type="button" class="btn btn-outline-primary btn-block text-left h-100 as-opcion" data-panel="asTi">
-                                <span class="d-block w-100"><i class="fas fa-code fa-lg mb-2 d-block"></i>
-                                <strong class="d-block mb-1">@Resources.Strings.Integ_As_OpcTiT</strong>
-                                <span class="small text-muted d-block" style="white-space:normal;">@Resources.Strings.Integ_As_OpcTiD</span></span>
-                            </button>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <button type="button" class="btn btn-outline-primary btn-block text-left h-100 as-opcion" data-panel="asAyuda">
-                                <span class="d-block w-100"><i class="fas fa-life-ring fa-lg mb-2 d-block"></i>
-                                <strong class="d-block mb-1">@Resources.Strings.Integ_As_OpcAyudaT</strong>
-                                <span class="small text-muted d-block" style="white-space:normal;">@Resources.Strings.Integ_As_OpcAyudaD</span></span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Camino 1: agente de carpeta -->
-                <div id="asCarpeta" class="as-panel d-none">
-                    <div class="bf-section"><i class="fas fa-folder-open mr-1"></i>@Resources.Strings.Integ_As_OpcCarpetaT</div>
-                    @if (!activas.Any())
-                    {
-                        <div class="alert alert-info small"><i class="fas fa-info-circle mr-1"></i>@Resources.Strings.Integ_As_SinIntegraciones</div>
-                    }
-                    else
-                    {
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="asInteg">@Resources.Strings.Integ_As_Integracion</label>
-                                <select id="asInteg" class="form-control">
-                                    @foreach (var a in activas)
-                                    {
-                                        <option value="@a.Id" data-sandbox="@(a.Sandbox ? "1" : "0")" data-confirma="@(a.PermiteConfirmar ? "1" : "0")">@a.Nombre (@a.NombreEmpresa)</option>
-                                    }
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="asModo">@Resources.Strings.Integ_As_Modo</label>
-                                <select id="asModo" class="form-control">
-                                    <option value="ejecucion">@Resources.Strings.Integ_As_ModoEjec</option>
-                                    <option value="historico">@Resources.Strings.Integ_As_ModoHist</option>
-                                </select>
-                            </div>
-                            <div class="col-12 mb-3">
-                                <label for="asRuta">@Resources.Strings.Integ_As_Carpeta</label>
-                                <div class="bf-input"><i class="fas fa-folder"></i>
-                                    <input type="text" id="asRuta" class="form-control" maxlength="260" value="C:\BUFINS\Entrada" style="font-family:monospace;" />
-                                </div>
-                                <small class="form-text text-muted">@Resources.Strings.Integ_As_CarpetaAyuda</small>
-                            </div>
-                            <div class="col-12 mb-2">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input" id="asConf" />
-                                    <label class="custom-control-label" for="asConf">@Resources.Strings.Integ_As_ConfAuto</label>
-                                </div>
-                                <small id="asConfNo" class="form-text text-muted d-none">@Resources.Strings.Integ_As_ConfAutoNo</small>
-                            </div>
-                            <div class="col-12">
-                                <div id="asSandbox" class="alert alert-info small d-none mb-2"><i class="fas fa-flask mr-1"></i>@Resources.Strings.Integ_As_SandboxAviso</div>
-                            </div>
-                        </div>
-                        <div class="d-flex flex-wrap mb-3" style="gap:8px;">
-                            <button type="button" class="btn btn-primary" id="asDescargar"><i class="fas fa-download mr-1"></i>@Resources.Strings.Integ_As_BtnDescargar</button>
-                            @if (!string.IsNullOrEmpty(agenteHuella))
-                            {
-                                <a class="btn btn-secondary" href="@Url.Action("DescargarAgente", "Integraciones")"><i class="fas fa-file-download mr-1"></i>@Resources.Strings.Integ_As_BtnAgente</a>
-                            }
-                        </div>
-                        @if (!string.IsNullOrEmpty(agenteHuella))
-                        {
-                            <div class="small text-muted mb-3">
-                                <div>@string.Format(Resources.Strings.Integ_As_AgenteInfo, agenteMB.ToString("0.#", System.Globalization.CultureInfo.CurrentCulture))</div>
-                                <div class="mt-1">@Resources.Strings.Integ_As_AgenteHuella</div>
-                                <code style="word-break:break-all;">@agenteHuella</code>
-                                <div class="mt-1"><i class="fas fa-shield-alt mr-1"></i>@Resources.Strings.Integ_As_AgenteAviso</div>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="alert alert-warning small"><i class="fas fa-exclamation-triangle mr-1"></i>@Resources.Strings.Integ_As_AgenteNoDisp</div>
-                        }
-
-                        <div class="bf-section">@Resources.Strings.Integ_As_PasosTitulo</div>
-                        <ol class="small pl-3 mb-0">
-                            <li class="mb-2">@Resources.Strings.Integ_As_Paso1</li>
-                            <li class="mb-2">@Resources.Strings.Integ_As_Paso2<pre class="mt-1 mb-0">AgenteBufins.exe --guardar-clave</pre></li>
-                            <li class="mb-2">@Resources.Strings.Integ_As_Paso3<pre class="mt-1 mb-0">AgenteBufins.exe --probar</pre></li>
-                            <li class="mb-2">@Resources.Strings.Integ_As_Paso4</li>
-                            <li class="mb-2">@Resources.Strings.Integ_As_Paso5<pre class="mt-1 mb-0">AgenteBufins.exe
-AgenteBufins.exe --una-vez</pre></li>
-                            <li>@Resources.Strings.Integ_As_Paso6</li>
-                        </ol>
-                    }
-                </div>
-
-                <!-- Camino 2: equipo técnico -->
-                <div id="asTi" class="as-panel d-none">
-                    <div class="bf-section"><i class="fas fa-code mr-1"></i>@Resources.Strings.Integ_As_TiTitulo</div>
-                    <p class="small text-muted">@Resources.Strings.Integ_As_TiTexto</p>
+            <div id="cxPaso1">
+                <div class="modal-body">
+                    <h6 class="font-weight-bold">@Resources.Strings.Integ_Cx_Paso1Titulo</h6>
+                    <p class="small text-muted">@Resources.Strings.Integ_Cx_Paso1Texto</p>
                     <div class="mb-3">
-                        <div class="font-weight-bold small mb-1">@Resources.Strings.Integ_As_TiBase</div>
-                        <code>@baseApi</code>
-                    </div>
-                    <div class="mb-3">
-                        <div class="font-weight-bold small mb-1">@Resources.Strings.Integ_As_TiEjemplo</div>
-                        <pre class="small mb-0" style="white-space:pre-wrap;">curl -H "Authorization: Bearer bfk_..." @baseApi/ping</pre>
-                    </div>
-                    <div class="alert alert-info small"><i class="fas fa-flask mr-1"></i>@Resources.Strings.Integ_As_TiRecomienda</div>
-                    <div class="d-flex flex-wrap" style="gap:8px;">
-                        <a class="btn btn-secondary" href="@Url.Content("~/api/v1/manual")@idiomaQs" target="_blank" rel="noopener"><i class="fas fa-book mr-1"></i>@Resources.Strings.Integ_BtnManual</a>
-                        <a class="btn btn-secondary" href="@Url.Content("~/api/v1/docs")@idiomaQs" target="_blank" rel="noopener"><i class="fas fa-flask mr-1"></i>@Resources.Strings.Integ_BtnProbador</a>
-                        <a class="btn btn-secondary" href="@Url.Content("~/api/v1/openapi.json")" target="_blank" rel="noopener"><i class="fas fa-file-code mr-1"></i>@Resources.Strings.Integ_BtnContrato</a>
-                        <button type="button" class="btn btn-primary" id="asTiCopiar"><i class="fas fa-copy mr-1"></i>@Resources.Strings.Integ_As_TiBtnCopiar</button>
-                    </div>
-                </div>
-
-                <!-- Camino 3: ayuda -->
-                <div id="asAyuda" class="as-panel d-none">
-                    <div class="bf-section"><i class="fas fa-life-ring mr-1"></i>@Resources.Strings.Integ_As_AyudaTitulo</div>
-                    <div class="form-group">
-                        <label for="asAyudaInteg">@Resources.Strings.Integ_As_AyudaIntegracion</label>
-                        <select id="asAyudaInteg" class="form-control">
-                            <option value="">@Resources.Strings.Integ_As_AyudaNinguna</option>
-                            @foreach (var a in activas)
+                        <label for="cxEmpresa">@Resources.Strings.Integ_Cx_Empresa</label>
+                        <select id="cxEmpresa" class="form-control">
+                            <option value="">@Resources.Strings.Integ_SelEmpresa</option>
+                            @foreach (var e in empresas)
                             {
-                                <option value="@a.Id">@a.Nombre (@a.NombreEmpresa)</option>
+                                <option value="@e.Id">@e.Nombre</option>
                             }
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="asMensaje">@Resources.Strings.Integ_As_AyudaMensaje <span class="text-danger">*</span></label>
-                        <textarea id="asMensaje" class="form-control" rows="4" maxlength="1000"></textarea>
+                    <div class="row">
+                        <div class="col-sm-6 mb-2">
+                            <button type="button" class="btn btn-outline-primary btn-block text-left h-100 cx-tipo" data-valor="1">
+                                <span class="d-block w-100">
+                                    <strong class="d-block mb-1"><i class="fas fa-flask mr-1"></i>@Resources.Strings.Integ_Cx_TipoPruebasT</strong>
+                                    <span class="small d-block" style="white-space:normal;">@Resources.Strings.Integ_Cx_TipoPruebasD</span>
+                                </span>
+                            </button>
+                        </div>
+                        <div class="col-sm-6 mb-2">
+                            <button type="button" class="btn btn-outline-primary btn-block text-left h-100 cx-tipo" data-valor="0">
+                                <span class="d-block w-100">
+                                    <strong class="d-block mb-1"><i class="fas fa-database mr-1"></i>@Resources.Strings.Integ_Cx_TipoRealT</strong>
+                                    <span class="small d-block" style="white-space:normal;">@Resources.Strings.Integ_Cx_TipoRealD</span>
+                                </span>
+                            </button>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="asContacto">@Resources.Strings.Integ_As_AyudaContacto</label>
-                        <input type="text" id="asContacto" class="form-control" maxlength="200" />
-                    </div>
-                    <button type="button" class="btn btn-primary" id="asEnviar"><i class="fas fa-paper-plane mr-1"></i>@Resources.Strings.Integ_As_AyudaEnviar</button>
                 </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel</button>
+                    <button type="button" class="btn btn-primary" id="cxCrear"><i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.Integ_Cx_BtnCrear</button>
+                </div>
+            </div>
 
+            <div id="cxListo" class="d-none">
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <h6 class="font-weight-bold mb-1" id="cxListoTitulo"></h6>
+                        <p class="small text-muted mb-0">@Resources.Strings.Integ_Cx_ListoTexto</p>
+                    </div>
+                    <label class="small text-muted mb-1">@Resources.Strings.Integ_Cx_Direccion</label>
+                    <div class="input-group mb-3">
+                        <input type="text" id="cxDir" class="form-control" readonly style="font-family:monospace;" />
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-primary cx-copiar" data-origen="#cxDir"><i class="fas fa-copy mr-1"></i>@Resources.Strings.Integ_BtnCopiar</button>
+                        </div>
+                    </div>
+                    <label class="small text-muted mb-1">@Resources.Strings.Integ_Cx_Clave</label>
+                    <div class="input-group mb-2">
+                        <input type="text" id="cxClave" class="form-control" readonly style="font-family:monospace;" />
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-primary cx-copiar" data-origen="#cxClave"><i class="fas fa-copy mr-1"></i>@Resources.Strings.Integ_BtnCopiar</button>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning small mb-3"><i class="fas fa-exclamation-triangle mr-1"></i>@Resources.Strings.Integ_ClaveAviso</div>
+                    <button type="button" class="btn btn-secondary btn-block" id="cxInstr"><i class="fas fa-paste mr-1"></i>@Resources.Strings.Integ_Cx_CopiarInstr</button>
+                    <div class="small text-muted mt-1 text-center">@Resources.Strings.Integ_Cx_InstrAviso</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="cxCerrar"><i class="fas fa-check mr-1"></i>@Resources.Strings.Integ_Cx_YaCopie</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════ MODAL AYUDA ═══════════════════ -->
+<div class="modal fade" id="cxAyudaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered bf-modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-life-ring"></i> @Resources.Strings.Integ_As_AyudaTitulo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="asAyudaInteg">@Resources.Strings.Integ_As_AyudaIntegracion</label>
+                    <select id="asAyudaInteg" class="form-control">
+                        <option value="">@Resources.Strings.Integ_As_AyudaNinguna</option>
+                        @foreach (var a in activas)
+                        {
+                            <option value="@a.Id">@a.NombreEmpresa</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="asMensaje">@Resources.Strings.Integ_As_AyudaMensaje <span class="text-danger">*</span></label>
+                    <textarea id="asMensaje" class="form-control" rows="4" maxlength="1000"></textarea>
+                </div>
+                <div class="form-group mb-0">
+                    <label for="asContacto">@Resources.Strings.Integ_As_AyudaContacto</label>
+                    <input type="text" id="asContacto" class="form-control" maxlength="200" />
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary d-none" id="asVolver"><i class="fas fa-arrow-left mr-1"></i>@Resources.Strings.Integ_As_Volver</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times mr-1"></i>@Resources.Strings.Common_Cerrar</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel</button>
+                <button type="button" class="btn btn-primary" id="asEnviar"><i class="fas fa-paper-plane mr-1"></i>@Resources.Strings.Integ_As_AyudaEnviar</button>
             </div>
         </div>
     </div>
@@ -587,9 +414,6 @@ AgenteBufins.exe --una-vez</pre></li>
     var T = {
         errRed: '@Html.Raw(js(Resources.Strings.Integ_ErrRed))',
         copiado: '@Html.Raw(js(Resources.Strings.Integ_Copiado))',
-        selUsuario: '@Html.Raw(js(Resources.Strings.Integ_SelUsuario))',
-        sinUsuarios: '@Html.Raw(js(Resources.Strings.Integ_SinUsuarios))',
-        claveTitulo: '@Html.Raw(js(Resources.Strings.Integ_ClaveTitulo))',
         claveNuevaTitulo: '@Html.Raw(js(Resources.Strings.Integ_ClaveNuevaTitulo))',
         rotarTitulo: '@Html.Raw(js(Resources.Strings.Integ_ConfRotarTitulo))',
         rotarTexto: '@Html.Raw(js(Resources.Strings.Integ_ConfRotarTexto))',
@@ -614,12 +438,12 @@ AgenteBufins.exe --una-vez</pre></li>
         pnUltimoUso: '@Html.Raw(js(Resources.Strings.Integ_Pn_UltimoUso))',
         pnNuncaUsada: '@Html.Raw(js(Resources.Strings.Integ_NuncaUsada))',
         pnRevisar: '@Html.Raw(js(Resources.Strings.Integ_Pn_Revisar))',
-        asDescargado: '@Html.Raw(js(Resources.Strings.Integ_As_Descargado))',
-        asPlantilla: '@Html.Raw(js(Resources.Strings.Integ_As_TiPlantilla))',
-        asErrMensaje: '@Html.Raw(js(Resources.Strings.Integ_As_ErrMensaje))'
+        asErrMensaje: '@Html.Raw(js(Resources.Strings.Integ_As_ErrMensaje))',
+        cxErrEmpresa: '@Html.Raw(js(Resources.Strings.Integ_Cx_ErrEmpresa))',
+        cxListoTitulo: '@Html.Raw(js(Resources.Strings.Integ_Cx_ListoTitulo))',
+        cxMensaje: '@Html.Raw(js(Resources.Strings.Integ_Cx_Mensaje))'
     };
     var enlaces = {
-        base: '@Html.Raw(js(baseApi))',
         manual: '@Html.Raw(js(baseApi + "/manual" + idiomaQs))',
         docs: '@Html.Raw(js(baseApi + "/docs" + idiomaQs))',
         contrato: '@Html.Raw(js(baseApi + "/openapi.json"))'
@@ -635,6 +459,7 @@ AgenteBufins.exe --una-vez</pre></li>
         whRotar: '@Url.Action("WebhookRotar", "Integraciones")',
         whProbar: '@Url.Action("WebhookProbar", "Integraciones")',
         actividad: '@Url.Action("Actividad", "Integraciones")',
+        crearConexion: '@Url.Action("CrearConexion", "Integraciones")',
         ayuda: '@Url.Action("SolicitarAyuda", "Integraciones")'
     };
 
@@ -649,35 +474,6 @@ AgenteBufins.exe --una-vez</pre></li>
         $('#integClaveValor').val(clave);
         $('#integClaveModal').modal('show');
     }
-
-    // Usuarios técnicos elegibles según la empresa elegida
-    $('#integEmpresa').on('change', function () {
-        var $u = $('#integUsuario').prop('disabled', true).html('<option value="">' + T.selUsuario + '</option>');
-        var idEmpresa = $(this).val();
-        if (!idEmpresa) return;
-        $.getJSON(urls.usuarios, { idEmpresa: idEmpresa }).done(function (r) {
-            if (!r.success) { toast('error', r.message); return; }
-            if (!r.usuarios.length) { $u.html('<option value="">' + T.sinUsuarios + '</option>'); return; }
-            $.each(r.usuarios, function (_, x) { $u.append($('<option>').val(x.id).text(x.nombre + (x.usuario ? ' (' + x.usuario + ')' : ''))); });
-            $u.prop('disabled', false);
-        }).fail(function () { toast('error', T.errRed); });
-    });
-
-    // En pruebas la confirmación es una simulación (no toca datos), así que se deja marcada para probar el flujo completo.
-    $('#integTipo').on('change', function () { if ($(this).val() === '1') $('#integConfirma').prop('checked', true); });
-
-    $('#integCrearForm').on('submit', function (e) {
-        e.preventDefault();
-        var $b = $('#integCrearBtn').prop('disabled', true);
-        post(urls.crear, {
-            idEmpresa: $('#integEmpresa').val(), nombre: $('#integNombre').val(), idUsuarioTecnico: $('#integUsuario').val(),
-            permiteConfirmar: $('#integConfirma').is(':checked'), ipPermitidas: $('#integIps').val(), sandbox: $('#integTipo').val() === '1'
-        }).done(function (r) {
-            if (!r.success) { toast('error', r.message); return; }
-            $('#integCrearModal').modal('hide');
-            mostrarClave(r.clave, T.claveTitulo);
-        }).always(function () { $b.prop('disabled', false); });
-    });
 
     $(document).on('click', '.integ-editar', function () {
         var d = $(this).data();
@@ -831,52 +627,58 @@ AgenteBufins.exe --una-vez</pre></li>
     });
     $('#integWebhookModal').on('hidden.bs.modal', function () { whMostrarSecreto(''); });
 
-    // ── Asistente de conexión ──
-    function asMostrar(id) {
-        $('#asPaso0, .as-panel').addClass('d-none');
-        $('#' + (id || 'asPaso0')).removeClass('d-none');
-        $('#asVolver').toggleClass('d-none', !id);
-    }
-    function asActualizarIntegracion() {
-        var $o = $('#asInteg option:selected');
-        if (!$o.length) return;
-        var sandbox = String($o.data('sandbox')) === '1', confirma = String($o.data('confirma')) === '1';
-        $('#asSandbox').toggleClass('d-none', !sandbox);
-        $('#asConf').prop('disabled', !confirma);
-        if (!confirma) $('#asConf').prop('checked', false);
-        $('#asConfNo').toggleClass('d-none', confirma);
-    }
+    // ── Menús desplegables propios (el sitio no carga Popper, que los de Bootstrap necesitan) ──
+    function cerrarMenus() { $('.cx-menu-toggle').attr('aria-expanded', 'false').siblings('.dropdown-menu').removeClass('show'); }
+    $(document).on('click', '.cx-menu-toggle', function (e) {
+        e.stopPropagation();
+        var $m = $(this).siblings('.dropdown-menu'), abrir = !$m.hasClass('show');
+        cerrarMenus();
+        if (abrir) { $m.addClass('show'); $(this).attr('aria-expanded', 'true'); }
+    });
+    $(document).on('click', cerrarMenus);
+    $(document).on('keydown', function (e) { if (e.key === 'Escape') cerrarMenus(); });
+
+    // ── Conectar una empresa ──
     function copiarTexto(texto) {
         var ok = function () { toast('success', T.copiado); };
         if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(texto).then(ok);
         else { var $t = $('<textarea>').val(texto).appendTo('body'); $t[0].select(); document.execCommand('copy'); $t.remove(); ok(); }
     }
-    $(document).on('click', '.as-opcion', function () { asMostrar($(this).data('panel')); });
-    $('#asVolver').on('click', function () { asMostrar(null); });
-    $('#asInteg').on('change', asActualizarIntegracion);
-    $('#integAsistenteModal').on('show.bs.modal', function () { asMostrar(null); asActualizarIntegracion(); });
-    $('#integAsistenteModal').on('hidden.bs.modal', function () { $('#asMensaje, #asContacto').val(''); });
-
-    // El agente.json se arma en el navegador (sin la clave: esa nunca va en el archivo).
-    $('#asDescargar').on('click', function () {
-        var conf = $('#asConf').is(':checked');
-        var cfg = {
-            url: enlaces.base, carpeta: $.trim($('#asRuta').val()), anio: 'actual', modo: $('#asModo').val(), idEscenario: 1,
-            confirmar: conf, ejecutarModelos: conf, intervaloSegundos: 60, estableSegundos: 30
-        };
-        if (!cfg.carpeta) { $('#asRuta').trigger('focus'); return; }
-        var blob = new Blob([JSON.stringify(cfg, null, 2) + '\r\n'], { type: 'application/json' });
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(blob); a.download = 'agente.json';
-        document.body.appendChild(a); a.click();
-        setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-        toast('success', T.asDescargado);
+    var cxSandbox = '1', cxEmpresaNombre = '', cxDireccion = '';
+    function cxTipo(v) {
+        cxSandbox = v;
+        $('.cx-tipo').each(function () {
+            var on = String($(this).data('valor')) === v;
+            $(this).toggleClass('btn-primary', on).toggleClass('btn-outline-primary', !on);
+        });
+    }
+    $(document).on('click', '.cx-tipo', function () { cxTipo(String($(this).data('valor'))); });
+    $(document).on('click', '.cx-copiar', function () { copiarTexto($($(this).data('origen')).val()); });
+    $(document).on('click', '.cx-copiar-texto', function () { copiarTexto(String($(this).data('texto'))); });
+    $('#integConectarModal').on('show.bs.modal', function () {
+        $('#cxPaso1').removeClass('d-none'); $('#cxListo').addClass('d-none'); $('#cxX').removeClass('d-none');
+        $('#cxEmpresa').val(''); cxTipo('1');
     });
-
-    $('#asTiCopiar').on('click', function () {
-        copiarTexto(T.asPlantilla.replace(/\{0\}/g, enlaces.base).replace('{1}', enlaces.manual).replace('{2}', enlaces.docs).replace('{3}', enlaces.contrato));
+    $('#cxCrear').on('click', function () {
+        var idEmpresa = $('#cxEmpresa').val();
+        if (!idEmpresa) { toast('warning', T.cxErrEmpresa); return; }
+        var $b = $(this).prop('disabled', true);
+        post(urls.crearConexion, { idEmpresa: idEmpresa, sandbox: cxSandbox === '1' }).done(function (r) {
+            if (!r.success) { toast('error', r.message); return; }
+            cxEmpresaNombre = r.empresa;
+            $('#cxPaso1').addClass('d-none'); $('#cxListo').removeClass('d-none'); $('#cxX').addClass('d-none');
+            $('#cxListoTitulo').text(T.cxListoTitulo.replace('{0}', r.empresa));
+            cxDireccion = r.direccion; $('#cxDir').val(r.direccion); $('#cxClave').val(r.clave);
+        }).always(function () { $b.prop('disabled', false); });
     });
+    $('#cxInstr').on('click', function () {
+        copiarTexto(T.cxMensaje.replace('{0}', cxEmpresaNombre).replace(/\{1\}/g, cxDireccion).replace('{2}', enlaces.manual).replace('{3}', enlaces.docs));
+    });
+    // La clave se borra de la pantalla al terminar y se recarga el listado.
+    $('#cxCerrar').on('click', function () { $('#cxClave').val(''); location.reload(); });
 
+    // ── Pedir ayuda ──
+    $('#cxAyudaModal').on('hidden.bs.modal', function () { $('#asMensaje, #asContacto').val(''); });
     $('#asEnviar').on('click', function () {
         var mensaje = $.trim($('#asMensaje').val());
         if (!mensaje) { toast('warning', T.asErrMensaje); $('#asMensaje').trigger('focus'); return; }
@@ -884,7 +686,7 @@ AgenteBufins.exe --una-vez</pre></li>
         post(urls.ayuda, { idIntegracion: $('#asAyudaInteg').val(), mensaje: mensaje, contacto: $('#asContacto').val() })
             .done(function (r) {
                 toast(r.success ? 'success' : 'error', r.message);
-                if (r.success) $('#integAsistenteModal').modal('hide');
+                if (r.success) $('#cxAyudaModal').modal('hide');
             }).always(function () { $b.prop('disabled', false); });
     });
 

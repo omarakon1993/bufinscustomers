@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Manual de integración · API de ingesta de BUFINS</title>
+<title>Manual de la API de BUFINS</title>
 <style>
 :root{--bg:#f6f5fb;--card:#fff;--ink:#1c1738;--ink2:#5b5678;--line:#e3e0f1;--brand:#583aff;--chip:#efecff;--ok:#15803d;--warn:#a16207;--mid:#c2410c;--bad:#b91c1c;--code:#f1effa;--grad:linear-gradient(90deg,#6366F1 0%,#3B82F6 35%,#06B6D4 70%,#01E1D7 100%)}
 @media (prefers-color-scheme:dark){:root{--bg:#120a2b;--card:#1a1240;--ink:#efecff;--ink2:#a9a3cc;--line:#2d2460;--brand:#8f7bff;--chip:#271d5c;--ok:#3ddc97;--warn:#fbbf24;--mid:#fb923c;--bad:#ff7a6b;--code:#221852}}
@@ -28,324 +28,71 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 @media print{nav{display:none}.node,pre,.card,details{break-inside:avoid}}
 </style>
 </head><body>
-<header><div class="w"><h1>Manual de integración · API de ingesta</h1><p>Cómo enviar a BUFINS, desde el sistema contable de su empresa, la misma información que hoy entra con la plantilla Excel: pasos, ejemplos, seguridad y códigos de respuesta.</p></div></header>
-<nav><div class="w"><a href="#para">Para qué sirve</a><a href="#como">Cómo funciona</a><a href="#empezar">Antes de empezar</a><a href="#seguridad">Seguridad</a><a href="#primeros">Primeros pasos</a><a href="#archivo">Envío A: plantilla Excel</a><a href="#hojas">Envío B: hojas en JSON</a><a href="#revision">Revisión y confirmación</a><a href="#referencia">Referencia</a><a href="#errores">Códigos de error</a><a href="#buenas">Buenas prácticas</a><a href="#faq">Preguntas frecuentes</a></div></nav>
+<header><div class="w"><h1>Conecte su sistema a BUFINS</h1><p>Envíe sus datos contables a BUFINS desde su propio sistema, sin subir Excel a mano. Esta guía explica lo esencial, paso a paso.</p></div></header>
+<nav><div class="w"><a href="#que">Qué es</a><a href="#pasos">Empezar en 3 pasos</a><a href="#hace">Qué puede hacer</a><a href="#errores">Si algo falla</a><a href="#seguridad">Seguridad</a><a href="#avanzado">Avanzado</a><a href="#faq">Preguntas</a></div></nav>
 <main class="w">
+<section id="que"><h2>Qué es</h2>
+<p class="lead">Cada empresa tiene <b>su propia API</b>: una <b>dirección</b> y una <b>clave de acceso</b>. Su sistema envía los datos a esa dirección usando la clave, y BUFINS los recibe con las mismas revisiones de siempre: se validan, se guarda un respaldo antes de reemplazar y todo queda registrado. Una persona de su empresa revisa y confirma cada envío, salvo que se permita confirmar automáticamente.</p>
+<div class="flow"><div class="node">Su sistema</div><div class="node">Su API de BUFINS<br><small>dirección + clave</small></div><div class="node">Revisión automática</div><div class="node">Una persona confirma</div><div class="node">Informes actualizados</div></div>
+<div class="g2"><div class="card"><b>Si usted administra la empresa</b><p>Cree la conexión en <i>Configuración → Conexiones → Conectar una empresa</i>. Obtendrá la dirección y la clave para entregar a su equipo técnico.</p></div>
+<div class="card"><b>Si usted es del equipo técnico</b><p>Necesita la dirección y la clave que le dio el administrador. Con eso ya puede enviar datos; siga los tres pasos de abajo.</p></div></div></section>
 
-<section id="para"><h2>1. Para qué sirve</h2>
-<p class="lead">Hoy una persona saca los números de su programa contable, los pasa a la plantilla de Excel y la sube a BUFINS. La API de ingesta permite que <b>un programa haga ese envío solo</b>, sin cambiar nada de lo que BUFINS ya hace con los datos: se validan con las mismas reglas, se guarda un respaldo antes de reemplazar y todo queda auditado.</p>
-<div class="g3">
-<div class="card"><b>Para el equipo de TI del cliente</b><ul><li>Una API REST con JSON, claves por integración y un contrato OpenAPI.</li><li>Ejemplos listos en curl, PowerShell, Python y C#.</li></ul></div>
-<div class="card"><b>Para el administrador de la empresa</b><ul><li>Crea y revoca las claves en <i>Configuración → Integraciones API</i>.</li><li>Decide si la integración puede confirmar o si lo hace siempre una persona.</li></ul></div>
-<div class="card"><b>Para el contador o analista</b><ul><li>Revisa cada envío en «Revisar cargue», como con el Excel.</li><li>Recibe un aviso en la campana cuando hay un cargue esperando.</li></ul></div></div>
-<p class="note info"><b>Importante.</b> La API entrega los datos; los informes se actualizan al ejecutar los modelos, igual que hoy. Un envío por la API no se salta ninguna validación ni la regla de nunca dejar un año vacío.</p></section>
-
-<section id="como"><h2>2. Cómo funciona</h2>
-<div class="flow"><div class="node">Sistema del cliente</div><div class="node">API de BUFINS<br><small>clave + límites</small></div><div class="node">Staging y validación<br><small>mismas reglas del Excel</small></div><div class="node">Revisión<br><small>una persona</small></div><div class="node">Confirmación<br><small>respaldo previo</small></div><div class="node">Modelos e informes</div></div>
-<p class="lead">Hay dos maneras de enviar. Ambas terminan en el mismo lugar: un <b>cargue</b> pendiente de revisión.</p>
-<div class="g2">
-<div class="card"><b>Envío A · Plantilla Excel completa</b><p>El programa del cliente (o un agente que vigila una carpeta) sube la misma plantilla de BUFINS en una sola llamada. Es lo más rápido de poner en marcha.</p><span class="tag ok">Recomendado para empezar</span></div>
-<div class="card"><b>Envío B · Hojas en JSON</b><p>El programa abre un cargue, envía los datos de cada hoja como JSON (en tandas si son grandes) y lo cierra. No requiere Excel.</p><span class="tag">Para integraciones directas con el ERP</span></div></div>
-<h3>Lo que la API garantiza</h3>
-<ul><li><b>Todo o nada.</b> Un cargue solo cambia los datos reales cuando se confirma; antes vive aparte (staging).</li>
-<li><b>Respaldo y deshacer.</b> Antes de reemplazar, BUFINS guarda la versión anterior; un administrador puede deshacer desde el historial de versiones.</li>
-<li><b>Regla de oro.</b> Ningún cargue puede dejar un año vacío ni reducir una tabla por debajo del umbral de bloqueo; una reducción fuerte siempre la confirma una persona.</li>
-<li><b>Un envío nuevo reemplaza al pendiente</b> de la misma integración para la misma empresa: no se acumulan envíos sin revisar.</li></ul></section>
-
-<section id="empezar"><h2>3. Antes de empezar: crear la integración</h2>
-<p class="lead">La clave la crea un administrador de la empresa (o de BUFINS). Se hace una sola vez por sistema que va a enviar datos.</p>
+<section id="pasos"><h2>Empezar en 3 pasos</h2>
 <ol class="steps">
-<li>Entre a <b>Configuración → Integraciones API</b> y pulse <b>Nueva integración</b>.</li>
-<li>Elija la <b>empresa</b>, escriba un <b>nombre</b> que identifique el sistema (por ejemplo «Agente Siigo – contabilidad») y elija el <b>usuario técnico</b>. Se recomienda crear un usuario exclusivo («Integración API»): a su nombre quedan registradas las acciones de la API en la auditoría. No puede ser Super Admin.</li>
-<li>Opcional: escriba las <b>IP permitidas</b> (las direcciones desde las que el cliente enviará). Con la lista, la clave solo sirve desde ellas.</li>
-<li>Deje <b>sin marcar</b> «Permitir que la integración confirme cargues y ejecute los modelos» mientras se hacen las pruebas: así cada envío queda en «Revisar cargue» y lo confirma una persona.</li>
-<li>Pulse <b>Crear</b>. BUFINS muestra la <b>clave una sola vez</b>: cópiela y guárdela en el gestor de secretos del cliente. Si se pierde, se genera una nueva.</li></ol>
-<p class="note"><b>Formato de la clave:</b> <code>bfk_xxxxxxxx_…</code> en producción y <code>bft_xxxxxxxx_…</code> en pruebas. Trátela como una contraseña: no la envíe por correo ni la guarde en el código fuente.</p>
-<h3>Entorno de pruebas (sandbox)</h3>
-<p>Antes de conectar el sistema real, el equipo del cliente puede desarrollar y probar con una integración de tipo <b>Pruebas</b> (campo «Tipo de integración» al crearla). Usa una clave que empieza por <code>bft_</code> y funciona igual que una de producción (mismos endpoints, mismo formato, mismas validaciones, hallazgos, impacto y reglas), con estas diferencias:</p>
-<ul><li><b>La confirmación es una simulación.</b> <code>POST /cargues/{id}/confirmar</code> (o <code>confirmar=true</code>) corre todas las comprobaciones, incluida la regla de nunca dejar un año vacío y la reducción fuerte, y responde <code>ConfirmadoSimulado</code>. No reemplaza ningún dato, no guarda respaldo y el cargue de prueba se descarta.</li>
-<li><b>No se avisa a los revisores:</b> un cargue de prueba no genera trabajo para nadie.</li>
-<li><b>Duran poco y no estorban.</b> Un cargue de prueba se descarta solo a las pocas horas y nunca impide que otra persona cargue la misma empresa y año.</li>
-<li><b>Se nota en cada respuesta:</b> llevan la cabecera <code>X-Bufins-Entorno: pruebas</code> y <code>/ping</code> responde <code>"entorno": "pruebas"</code>.</li>
-<li><b>Usuario técnico propio.</b> No puede ser el mismo usuario de una integración de producción.</li></ul>
-<p class="note info">Las validaciones y el impacto se calculan contra los datos reales de la empresa, <b>solo en lectura</b>: así las pruebas detectan los mismos problemas que tendría el envío real. Cuando todo funcione, el administrador crea la integración de <b>Producción</b> y el cliente solo cambia la clave: la dirección es la misma. Si hay un cargue real pendiente de revisión para el mismo año y modo, un envío de prueba recibe 409 <code>lote_activo</code>: confirme o descarte ese cargue, o pruebe con otro año.</p>
-<p><b>Seguimiento.</b> En la misma pantalla, la columna <b>Conexión</b> muestra un semáforo en palabras simples (por ejemplo «Todo en orden», «2 cargue(s) esperan su revisión» o «El último envío quedó con errores») y el botón <b>Ver actividad</b> abre el detalle: última conexión, últimos envíos con su situación y un enlace a «Revisar cargue», ejecuciones de modelos y avisos al webhook. Cada administrador solo ve las integraciones de su empresa.</p>
-<p><b>Asistente de conexión.</b> El botón <b>Asistente de conexión</b> de esa pantalla guía a quien no es técnico según su caso: <i>mi sistema deja un Excel en una carpeta</i> (genera el archivo <code>agente.json</code> ya configurado para la integración elegida, sin la clave, permite descargar el programa <code>AgenteBufins.exe</code> con su huella SHA-256 para verificarlo, y explica los pasos del agente de carpeta), <i>mi equipo de TI lo programa</i> (da la dirección de la API, el manual, el probador y un texto listo para copiar y enviar al equipo técnico) o <i>necesito que me ayuden</i> (envía la solicitud al equipo de BUFINS).</p>
-<p>Los nombres de las hojas y de las columnas que acepta cada empresa se consultan siempre con <code>GET /api/v1/esquemas</code> (sección 5): una hoja personalizada nueva aparece ahí sin cambios en la API.</p></section>
+<li><b>Reciba la dirección y la clave.</b> La dirección se ve así: <code>https://customers.bufins.com/api/v1/su-empresa</code>. La clave empieza por <code>bfk_</code> (datos reales) o <code>bft_</code> (solo pruebas). Guárdela como una contraseña: se muestra una sola vez.</li>
+<li><b>Compruebe la conexión.</b> Debe responder «ok» y el nombre de su empresa.<pre><code>curl -H "Authorization: Bearer SU_CLAVE" https://customers.bufins.com/api/v1/su-empresa/ping</code></pre></li>
+<li><b>Envíe la plantilla de datos.</b> Es el mismo archivo Excel de BUFINS (año, tipo y archivo).<pre><code>curl -X POST https://customers.bufins.com/api/v1/su-empresa/cargues/archivo \
+  -H "Authorization: Bearer SU_CLAVE" \
+  -F "archivo=@plantilla.xlsx" -F "anio=2026" -F "modo=ejecucion"</code></pre></li></ol>
+<p class="note ok"><b>Recomendado.</b> Empiece con una conexión <b>Solo probar</b> (clave <code>bft_</code>): hace todo el recorrido sin cambiar ningún dato real. Cuando funcione, el administrador crea la conexión de datos reales y solo cambia la clave.</p>
+<p class="note info"><b>Sin programar.</b> Puede ensayar cada llamada en el <b>Probador interactivo</b> (<code>/api/v1/docs</code>), pegando su clave: no necesita escribir código.</p></section>
 
-<section id="seguridad"><h2>4. Seguridad</h2>
-<div class="tw"><table><tr><th>Control</th><th>Cómo funciona</th></tr>
-<tr><td class="n">Clave por integración</td><td>Cada integración tiene su propia clave, ligada a <b>una sola empresa</b>. BUFINS no guarda la clave: solo una huella irreversible (SHA-256) y un prefijo para ubicarla. Se muestra una única vez.</td></tr>
-<tr><td class="n">Aislamiento</td><td>La empresa sale de la clave, nunca de lo que envía el cliente. Cada integración solo ve y toca <b>sus propios</b> cargues; si consulta uno ajeno recibe «no encontrado».</td></tr>
-<tr><td class="n">HTTPS</td><td>Toda llamada viaja cifrada. La clave se envía en la cabecera <code>Authorization: Bearer</code>, nunca en la dirección (URL).</td></tr>
-<tr><td class="n">IP permitidas</td><td>Opcional por integración: fuera de esas direcciones la clave se rechaza (403).</td></tr>
-<tr><td class="n">Límites</td><td>120 llamadas por minuto por integración; 20 intentos con clave incorrecta por IP en 10 minutos (luego 429 con <code>Retry-After</code>).</td></tr>
-<tr><td class="n">Rotar y revocar</td><td>Rotar genera una clave nueva y la anterior deja de servir al instante. Revocar es definitivo (se crea otra integración si hace falta).</td></tr>
-<tr><td class="n">Confirmación humana</td><td>Por defecto una persona confirma cada cargue. Aun con permiso, la API <b>nunca</b> confirma una reducción fuerte de datos ni salta la regla de nunca dejar un año vacío.</td></tr>
-<tr><td class="n">Webhook firmado</td><td>Los avisos salientes van firmados (HMAC-SHA256) con un secreto que se muestra una sola vez; solo se envían por https a direcciones públicas y no siguen redirecciones.</td></tr>
-<tr><td class="n">Entorno de pruebas</td><td>Las claves <code>bft_</code> hacen todo el flujo pero su confirmación es una simulación: nunca modifican datos reales.</td></tr>
-<tr><td class="n">Auditoría</td><td>Cada envío, confirmación, descarte y cambio de la integración queda registrado con la integración y su usuario técnico. La clave nunca se registra.</td></tr></table></div>
-<p class="note bad"><b>Si la clave se filtra:</b> entre a Integraciones API y use <b>Generar clave nueva</b> (o <b>Revocar</b>). El efecto es inmediato.</p></section>
+<section id="hace"><h2>Qué puede hacer</h2>
+<div class="tw"><table><tr><th>Para qué</th><th>Llamada</th></tr>
+<tr><td>Comprobar que la conexión funciona</td><td class="f">GET /ping</td></tr>
+<tr><td>Ver qué hojas y columnas acepta su empresa</td><td class="f">GET /esquemas</td></tr>
+<tr><td>Enviar la plantilla Excel completa</td><td class="f">POST /cargues/archivo</td></tr>
+<tr><td>Ver cómo quedó un envío (estado, errores, impacto)</td><td class="f">GET /cargues/{id}</td></tr>
+<tr><td>Ver el detalle de lo que hay que corregir</td><td class="f">GET /cargues/{id}/hallazgos</td></tr>
+<tr><td>Confirmar o descartar un envío (si la conexión lo permite)</td><td class="f">POST /cargues/{id}/confirmar · DELETE /cargues/{id}</td></tr>
+<tr><td>Recalcular los modelos e informes</td><td class="f">POST /modelos/ejecutar → GET /ejecuciones/{id}</td></tr></table></div>
+<p>Cada envío devuelve un número (<code>idLote</code>). Úselo para consultar su estado. Si el envío queda <b>con errores</b>, se muestran los hallazgos para corregirlos y enviar de nuevo; el nuevo envío reemplaza al pendiente.</p>
+<p class="note"><b>Quién confirma.</b> Por defecto confirma <b>una persona</b> en «Revisar cargue» y recibe un aviso en la campana. La API nunca confirma sola un envío que dejaría un año vacío o reduciría fuertemente una tabla.</p></section>
 
-<section id="primeros"><h2>5. Primeros pasos: probar la conexión</h2>
-<p class="lead">La dirección base es <code>https://customers.bufins.com/api/v1</code>. Reemplace <code>bfk_…</code> por su clave.</p>
-<h3>Comprobar la clave</h3>
-<pre><code>curl -H "Authorization: Bearer bfk_..." https://customers.bufins.com/api/v1/ping</code></pre>
-<pre><code>{ "estado": "ok", "version": "1", "entorno": "produccion", "integracion": "Agente Siigo", "idEmpresa": 6,
-  "empresa": "Mi Empresa S.A.S.", "permiteConfirmar": false }</code></pre>
-<h3>Consultar las hojas y columnas que acepta su empresa</h3>
-<pre><code>curl -H "Authorization: Bearer bfk_..." https://customers.bufins.com/api/v1/esquemas</code></pre>
-<pre><code>{ "hojas": [
-  { "hoja": "Z_NombreDeLaHoja", "tabla": "Ini_NombreDeLaTabla",
-    "columnas": [
-      { "nombre": "Cuenta", "tipo": "texto",  "longitudMaxima": 50, "admiteVacio": false },
-      { "nombre": "Año",    "tipo": "numero", "longitudMaxima": null, "admiteVacio": false } ] } ] }</code></pre>
-<p class="note info">Los nombres del ejemplo son ilustrativos: <b>los reales salen siempre de <code>/esquemas</code></b>. Los tipos son <code>texto</code>, <code>numero</code>, <code>fecha</code> y <code>booleano</code>.</p>
-<h3>Contrato OpenAPI</h3>
-<p>El contrato completo está en <code>/api/v1/openapi.json</code> (sin clave). Puede importarlo en Postman o generar un cliente en su lenguaje.</p>
-<h3>Probador interactivo</h3>
-<p>En <code>/api/v1/docs</code> hay un <b>probador interactivo</b> (Swagger): lista cada llamada, permite llenar los campos, subir un archivo y ver la respuesta, sin programar. Pulse <b>Authorize</b> y pegue la clave (solo la clave, sin «Bearer»). <b>Úselo con una clave de pruebas (<code>bft_…</code>)</b>: con una de producción las llamadas son reales. La interfaz está en inglés.</p></section>
+<section id="errores"><h2>Si algo falla</h2>
+<p class="lead">Toda respuesta de error trae un código y un mensaje en español (o en inglés con <code>?idioma=en</code>).</p>
+<div class="tw"><table><tr><th>Código</th><th>Qué significa</th><th>Qué hacer</th></tr>
+<tr><td class="f">401 no_autorizado</td><td>La clave falta, es incorrecta o fue anulada.</td><td>Revise la clave; pida una nueva al administrador.</td></tr>
+<tr><td class="f">403 ip_no_permitida</td><td>Esa clave solo se puede usar desde ciertas direcciones IP.</td><td>Use el servidor autorizado o pida ampliar la lista.</td></tr>
+<tr><td class="f">404 direccion_no_corresponde</td><td>La dirección es de otra empresa.</td><td>Use la dirección que indica el mensaje.</td></tr>
+<tr><td class="f">404 lote_no_encontrado</td><td>Ese envío no existe o no es de su conexión.</td><td>Revise el número <code>idLote</code>.</td></tr>
+<tr><td class="f">409 lote_activo</td><td>Hay un cargue real pendiente de revisión para ese año y tipo.</td><td>Que una persona lo confirme o lo descarte.</td></tr>
+<tr><td class="f">422 solicitud_invalida</td><td>Falta un dato o el archivo no es válido.</td><td>Lea el mensaje: dice qué corregir.</td></tr>
+<tr><td class="f">429</td><td>Demasiadas llamadas (límite: 120 por minuto) o demasiados intentos con clave incorrecta.</td><td>Espere un momento y reintente.</td></tr></table></div></section>
 
-<section id="archivo"><h2>6. Envío A · Subir la plantilla Excel</h2>
-<p class="lead">Equivale a subir el archivo en «Cargue de Excel». El archivo debe ser la plantilla de BUFINS de su empresa, con <b>todas</b> sus hojas (se descarga desde esa misma pantalla).</p>
-<div class="tw"><table><tr><th>Campo</th><th>Obligatorio</th><th>Descripción</th></tr>
-<tr><td class="f">archivo</td><td>Sí</td><td>La plantilla (.xlsx o .xlsm).</td></tr>
-<tr><td class="f">anio</td><td>Sí</td><td>Año de los datos, por ejemplo 2026. Debe ser el año de ejecución configurado o un año histórico de la empresa.</td></tr>
-<tr><td class="f">modo</td><td>Sí</td><td><code>ejecucion</code> (año en curso) o <code>historico</code>.</td></tr>
-<tr><td class="f">idEscenario</td><td>No</td><td>Escenario de datos; por defecto 1.</td></tr>
-<tr><td class="f">confirmar</td><td>No</td><td><code>true</code> pide confirmar al terminar. Solo se respeta si la integración tiene permiso y el cargue quedó limpio.</td></tr></table></div>
-<p>Se recomienda enviar la cabecera <code>Idempotency-Key</code> con un identificador único del envío (sección 11).</p>
-<details open><summary>curl</summary><pre><code>curl -X POST https://customers.bufins.com/api/v1/cargues/archivo \
-  -H "Authorization: Bearer bfk_..." \
-  -H "Idempotency-Key: 2026-10-cierre-001" \
-  -F "archivo=@PlantillaBUFINS.xlsx" -F "anio=2026" -F "modo=ejecucion"</code></pre></details>
-<details><summary>PowerShell</summary><pre><code>$h = @{ Authorization = "Bearer bfk_..."; "Idempotency-Key" = "2026-10-cierre-001" }
-$form = @{ archivo = Get-Item .\PlantillaBUFINS.xlsx; anio = 2026; modo = "ejecucion" }
-Invoke-RestMethod -Method Post -Uri "https://customers.bufins.com/api/v1/cargues/archivo" -Headers $h -Form $form</code></pre></details>
-<details><summary>Python</summary><pre><code>import requests
-r = requests.post("https://customers.bufins.com/api/v1/cargues/archivo",
-    headers={"Authorization": "Bearer bfk_...", "Idempotency-Key": "2026-10-cierre-001"},
-    files={"archivo": open("PlantillaBUFINS.xlsx", "rb")},
-    data={"anio": 2026, "modo": "ejecucion"})
-print(r.status_code, r.json())</code></pre></details>
-<details><summary>C#</summary><pre><code>using var http = new HttpClient { BaseAddress = new Uri("https://customers.bufins.com/api/v1/") };
-http.DefaultRequestHeaders.Authorization = new("Bearer", "bfk_...");
-http.DefaultRequestHeaders.Add("Idempotency-Key", "2026-10-cierre-001");
-using var form = new MultipartFormDataContent {
-    { new StreamContent(File.OpenRead("PlantillaBUFINS.xlsx")), "archivo", "PlantillaBUFINS.xlsx" },
-    { new StringContent("2026"), "anio" }, { new StringContent("ejecucion"), "modo" } };
-var resp = await http.PostAsync("cargues/archivo", form);
-Console.WriteLine(await resp.Content.ReadAsStringAsync());</code></pre></details>
-<h3>Respuesta (201)</h3>
-<pre><code>{ "repetido": false, "confirmacion": "no_solicitada", "confirmado": null,
-  "lote": { "idLote": 236, "estado": "ValidadoOk", "anio": 2026, "modo": "ejecucion", "idEscenario": 1,
-            "archivo": "PlantillaBUFINS.xlsx", "totalFilas": 18450, "totalErrores": 0, "totalAdvertencias": 0,
-            "puedeConfirmar": true, "fechaCreacion": "2026-11-14T08:12:03Z" },
-  "urlRevision": "/Datos/RevisarCargue?idLote=236" }</code></pre>
-<p>El cargue queda <b>pendiente de revisión</b>. Si ya hay un cargue pendiente de <b>otra persona</b> (que se pueda confirmar) para la misma empresa, año, modo y escenario, la API responde 409 <code>lote_activo</code> con el <code>idLote</code> existente; hay que confirmarlo o descartarlo antes.</p>
-<h3>Agente de carpeta: envío automático sin programar</h3>
-<p>Si el sistema contable del cliente puede dejar la plantilla Excel en una carpeta (o alguien la copia allí), no hace falta programar nada: el <b>agente de BUFINS</b> (<code>AgenteBufins.exe</code>, un solo archivo, sin instalar .NET) vigila esa carpeta y sube cada archivo por esta misma API. <b>Solo hace conexiones https salientes</b>: no se abre ningún puerto en el servidor del cliente. BUFINS entrega el agente a quien lo solicite.</p>
-<ol class="steps">
-<li>Copie <code>AgenteBufins.exe</code> y <code>agente.ejemplo.json</code> a una carpeta del servidor (por ejemplo <code>C:\BUFINS\Agente</code>), renombre el ejemplo como <code>agente.json</code> y ajústelo: la <b>carpeta</b> que se vigila (por ejemplo <code>C:\BUFINS\Entrada</code>), el año, el modo y el escenario.</li>
-<li>Guarde la clave de la integración: <code>AgenteBufins.exe --guardar-clave</code>. Queda cifrada en <code>clave.dat</code> y solo la puede leer ese equipo (también se admite la variable de entorno <code>BUFINS_CLAVE</code>). La clave no se escribe en <code>agente.json</code> ni en los registros.</li>
-<li>Compruebe la conexión: <code>AgenteBufins.exe --probar</code> muestra la integración, la empresa y si el entorno es de pruebas o de producción.</li>
-<li>Póngalo a trabajar: como <b>servicio de Windows</b> (<code>sc.exe create BufinsAgente binPath= "C:\BUFINS\Agente\AgenteBufins.exe" start= auto</code> y luego <code>sc.exe start BufinsAgente</code>) o con el <b>Programador de tareas</b> ejecutando <code>AgenteBufins.exe --una-vez</code> a la hora de cada cierre.</li></ol>
-<pre><code>{ "url": "https://customers.bufins.com/api/v1",
-  "carpeta": "C:\\BUFINS\\Entrada",
-  "anio": "actual", "modo": "ejecucion", "idEscenario": 1,
-  "confirmar": false, "ejecutarModelos": false,
-  "intervaloSegundos": 60, "estableSegundos": 30 }</code></pre>
-<div class="tw"><table><tr><th>Qué pasa con cada archivo</th><th>Resultado</th></tr>
-<tr><td>BUFINS lo acepta</td><td>Pasa a <code>procesados\</code> junto con la respuesta (<code>.resultado.json</code>). Queda pendiente de revisión, o confirmado si la integración puede y <code>"confirmar": true</code>.</td></tr>
-<tr><td>Queda con errores de validación</td><td>Pasa a <code>errores\</code> con la referencia del cargue. Se corrige el Excel y se vuelve a copiar a la carpeta.</td></tr>
-<tr><td>BUFINS lo rechaza (plantilla incompleta, año no configurado…)</td><td>Pasa a <code>errores\</code> con el motivo en un archivo <code>.error.txt</code>.</td></tr>
-<tr><td>Falla pasajera (sin red, 429, 5xx) o hay un cargue pendiente de otra persona</td><td>El archivo se deja en su sitio y se <b>reintenta</b> con espera creciente (hasta 30 minutos).</td></tr>
-<tr><td>Clave inválida o IP no permitida</td><td>El agente se pausa 10 minutos y <b>no mueve ningún archivo</b>.</td></tr></table></div>
-<ul><li><b>Año y modo en el nombre.</b> Un archivo llamado <code>2026_historico_cierre.xlsx</code> se envía como año 2026, modo histórico; si el nombre no los trae, se usan los de <code>agente.json</code>.</li>
-<li><b>No envía a medias.</b> Ignora los temporales de Excel (<code>~$…</code>) y espera a que el archivo lleve 30 segundos sin modificarse y no esté abierto por otro programa.</li>
-<li><b>Sin duplicados.</b> Usa como <code>Idempotency-Key</code> la huella del contenido: copiar de nuevo el mismo archivo no crea otro cargue.</li>
-<li><b>Modelos.</b> Con <code>"ejecutarModelos": true</code>, tras un cargue confirmado pide recalcular los informes y espera el resultado (mismo permiso de confirmar).</li>
-<li><b>Registros.</b> Quedan en la carpeta <code>logs\</code> junto al agente (30 días). Si la carpeta vigilada es de red, el servicio debe correr con una cuenta que tenga acceso a ella (la cuenta «Sistema local» no ve unidades de red). Restrinja el acceso a la carpeta del agente: quien pueda leerla puede usar su clave.</li></ul>
-</section>
+<section id="seguridad"><h2>Seguridad</h2>
+<ul><li><b>Una clave abre solo su empresa.</b> No puede ver ni tocar datos de otra, aunque conozca su número de envío.</li>
+<li>La clave se muestra <b>una sola vez</b> y BUFINS no la guarda en claro. Si se pierde o se filtra, el administrador genera una nueva y la anterior deja de servir al instante.</li>
+<li>Guárdela en el sistema de secretos de su empresa; nunca en el código ni en correos abiertos.</li>
+<li>El administrador puede limitar la clave a ciertas direcciones IP y anular la conexión cuando quiera.</li>
+<li>Todo queda auditado: quién envió, qué, cuándo y qué resultado tuvo.</li></ul></section>
 
-<section id="hojas"><h2>7. Envío B · Hojas en JSON</h2>
-<p class="lead">Tres pasos: abrir el cargue, enviar cada hoja y validar.</p>
-<h3>Paso 1 · Abrir el cargue</h3>
-<pre><code>POST /api/v1/cargues
-{ "anio": 2026, "modo": "ejecucion", "idEscenario": 1, "referencia": "Cierre octubre" }</code></pre>
-<p>Responde 201 con el <code>idLote</code>. <code>referencia</code> es un texto libre que BUFINS muestra como «archivo».</p>
-<h3>Paso 2 · Enviar cada hoja</h3>
-<pre><code>POST /api/v1/cargues/236/hojas/Z_NombreDeLaHoja
-{ "filas": [
-    { "Cuenta": "110505", "Año": 2026, "Mes": 1, "Valor": 1250000.5 },
-    { "Cuenta": "110510", "Año": 2026, "Mes": 1, "Valor": 980000 } ],
-  "reemplazar": false }</code></pre>
-<pre><code>{ "idLote": 236, "hoja": "Z_NombreDeLaHoja", "tabla": "Ini_NombreDeLaTabla",
-  "filasRecibidas": 2, "filasGuardadas": 2, "filasOmitidasPorAnio": 0, "filasEnHoja": 2, "aviso": null }</code></pre>
-<ul><li><b>Envíe todas las hojas de su empresa</b> (las de <code>/esquemas</code>), <b>aunque una vaya sin filas</b> (<code>"filas": []</code>). Confirmar reemplaza los datos del año: una hoja olvidada borraría los suyos, por eso el cierre la exige.</li>
-<li><b>Tandas.</b> Una hoja grande se envía en varias llamadas (máximo 50.000 filas por llamada); las filas se van sumando. Con <code>"reemplazar": true</code> se descarta lo enviado antes de esa hoja y se empieza de nuevo.</li>
-<li><b>Todo o nada.</b> Si una fila de la llamada tiene un valor inválido, no se guarda ninguna fila de esa llamada y la respuesta indica la fila y la columna.</li>
-<li><b>Año.</b> Las filas cuyo año no coincide con el del cargue se omiten y se informan en <code>filasOmitidasPorAnio</code> (igual que el Excel).</li>
-<li><b>Valores.</b> Número → número JSON; texto → texto; Sí/No → <code>true</code>/<code>false</code>; fechas → texto <code>AAAA-MM-DD</code>; vacío → <code>null</code>. No se admiten objetos ni listas dentro de una fila. La columna <code>Año</code> también se acepta como <code>Anio</code>.</li></ul>
-<h3>Paso 3 · Validar</h3>
-<pre><code>POST /api/v1/cargues/236/validar</code></pre>
-<p>Verifica que se enviaron todas las hojas y corre las mismas validaciones del Excel. Responde con el estado del cargue (misma forma que el Envío A). Si falta alguna hoja: 422 <code>hojas_faltantes</code> con la lista. <b>Cada vez que se agregan filas hay que volver a validar</b> antes de poder confirmar.</p>
-<details><summary>Ejemplo completo en Python</summary><pre><code>import requests
-BASE = "https://customers.bufins.com/api/v1"
-H = {"Authorization": "Bearer bfk_..."}
+<section id="avanzado"><h2>Avanzado</h2>
+<details><summary>Enviar por hojas, en vez de un Excel</summary>
+<p>Para sistemas que no generan el archivo: abra el envío con <code>POST /cargues</code> (<code>{"anio":2026,"modo":"ejecucion"}</code>), envíe cada hoja con <code>POST /cargues/{idLote}/hojas/{hoja}</code> (<code>{"filas":[{"Columna":valor}]}</code>) y ciérrelo con <code>POST /cargues/{idLote}/validar</code>. Debe declarar <b>todas</b> las hojas de la empresa (con <code>"filas":[]</code> si no hay datos); los nombres exactos salen de <code>GET /esquemas</code>. El resultado es idéntico al del Excel.</p></details>
+<details><summary>Avisos automáticos (para que su sistema se entere solo)</summary>
+<p>El administrador puede registrar una dirección https de su sistema en <i>Más opciones → Avisos automáticos</i>. BUFINS le enviará un aviso cuando un envío se <b>confirme</b>, se <b>descarte</b> o terminen los <b>modelos</b>. Cada aviso trae la cabecera <code>X-Bufins-Signature</code> (firma HMAC-SHA256 del texto <code>tiempo.cuerpo</code> con el secreto que se muestra al activarlos) para comprobar que viene de BUFINS. Si su sistema no responde, se reintenta 3 veces. No es necesario para empezar: también puede consultar el estado cuando quiera.</p></details>
+<details><summary>Evitar envíos repetidos</summary>
+<p>Si añade la cabecera <code>Idempotency-Key</code> (un texto único por envío), reenviar el mismo archivo por un corte de red no duplica el cargue: BUFINS devuelve el envío original con <code>"repetido": true</code>.</p></details>
+<details><summary>Contrato técnico y herramientas</summary>
+<p>El contrato completo está en <code>/api/v1/openapi.json</code> (se puede importar en Postman). El probador interactivo está en <code>/api/v1/docs</code>.</p></details></section>
 
-lote = requests.post(f"{BASE}/cargues", headers={**H, "Idempotency-Key": "2026-10-cierre"},
-                     json={"anio": 2026, "modo": "ejecucion", "referencia": "Cierre octubre"}).json()
-id_lote = lote["lote"]["idLote"]
+<section id="faq"><h2>Preguntas frecuentes</h2>
+<details><summary>¿Por qué la dirección lleva el nombre de mi empresa?</summary><p>Para que sea evidente de quién es la conexión y para evitar equivocaciones: si usa la clave de una empresa con la dirección de otra, BUFINS responde con la dirección correcta.</p></details>
+<details><summary>¿Se actualizan los informes al enviar?</summary><p>El envío entrega y valida los datos; al confirmarlo quedan cargados. Los informes se actualizan al ejecutar los modelos, como hoy (también se puede pedir por la API).</p></details>
+<details><summary>¿Puedo seguir usando el Excel?</summary><p>Sí. La API y la carga manual conviven y usan exactamente las mismas reglas.</p></details>
+<details><summary>¿Dónde veo lo que ha enviado mi sistema?</summary><p>En <i>Conexiones → Ver envíos</i>: cada envío con su fecha, resultado y, si espera revisión, un enlace directo para revisarlo.</p></details></section>
 
-esquemas = requests.get(f"{BASE}/esquemas", headers=H).json()["hojas"]
-for hoja in esquemas:
-    filas = obtener_filas_del_erp(hoja["hoja"])          # su función: lista de diccionarios
-    for i in range(0, max(len(filas), 1), 20000):        # tandas de 20.000
-        r = requests.post(f"{BASE}/cargues/{id_lote}/hojas/{hoja['hoja']}", headers=H,
-                          json={"filas": filas[i:i+20000], "reemplazar": i == 0})
-        r.raise_for_status()
-
-res = requests.post(f"{BASE}/cargues/{id_lote}/validar", headers=H).json()
-print(res["lote"]["estado"], res["lote"]["totalErrores"], "errores")</code></pre></details></section>
-
-<section id="revision"><h2>8. Revisión y confirmación</h2>
-<p class="lead">Después del envío, el cargue tiene un estado. Se consulta con <code>GET /cargues/{idLote}</code>.</p>
-<div class="tw"><table><tr><th>Estado</th><th>Qué significa</th><th>Qué sigue</th></tr>
-<tr><td><span class="tag">EnValidacion</span></td><td>Se está llenando (Envío B) o todavía no se valida.</td><td>Enviar hojas y llamar <code>validar</code>.</td></tr>
-<tr><td><span class="tag ok">ValidadoOk</span></td><td>Sin errores ni advertencias.</td><td>Revisión y confirmación.</td></tr>
-<tr><td><span class="tag warn">ConAdvertencias</span></td><td>Se puede confirmar, pero hay avisos para revisar.</td><td>Una persona decide en «Revisar cargue».</td></tr>
-<tr><td><span class="tag bad">ConErrores</span></td><td>No se puede confirmar.</td><td>Corregir los datos y volver a enviar (ver hallazgos).</td></tr>
-<tr><td><span class="tag ok">Confirmado</span></td><td>Los datos ya reemplazaron a los anteriores.</td><td>Ejecutar los modelos para actualizar informes.</td></tr>
-<tr><td><span class="tag">Descartado</span></td><td>Se canceló sin tocar datos.</td><td>Enviar de nuevo si hace falta.</td></tr></table></div>
-<h3>Hallazgos</h3>
-<p><code>GET /cargues/{idLote}/hallazgos?max=200</code> devuelve, por cada problema, la hoja, la fila, la columna, la regla, un mensaje y una sugerencia, además del total real por regla. Agregue <code>?idioma=en</code> para inglés.</p>
-<h3>Impacto</h3>
-<p><code>GET /cargues/{idLote}</code> incluye cuántas filas hay hoy y cuántas traería el cargue, por tabla. <code>requiereRevisionHumana</code> indica una reducción fuerte (la confirma siempre una persona) y <code>bloqueado</code> que no se puede confirmar (regla de oro).</p>
-<h3>Quién confirma</h3>
-<div class="g2">
-<div class="card"><b>Una persona (por defecto)</b><p>El cargue queda esperando. Los administradores de la empresa reciben un aviso en la campana con el enlace a «Revisar cargue», donde pueden revisarlo y confirmarlo o descartarlo.</p></div>
-<div class="card"><b>La integración (si se le permitió)</b><p>Con <code>confirmar=true</code> al subir o validar, o con <code>POST /cargues/{id}/confirmar</code>. Solo confirma cargues sin advertencias ni reducción fuerte; en los demás casos queda pendiente y avisa a una persona.</p></div></div>
-<h3>Actualizar los informes: ejecutar los modelos</h3>
-<p>Los informes se alimentan de los modelos. Tras confirmar un cargue, una integración con permiso puede pedir que se <b>recalculen</b>: <code>POST /modelos/ejecutar</code>. Como el cálculo puede tardar minutos, la API responde <b>202</b> enseguida con un <code>idEjecucion</code> y los modelos corren <b>en segundo plano</b>, uno tras otro; consulte el avance con <code>GET /ejecuciones/{idEjecucion}</code> hasta que el estado sea <code>Completada</code> o <code>ConErrores</code>.</p>
-<pre><code>POST /api/v1/modelos/ejecutar
-{ "idEscenario": 1 }                      (el cuerpo es opcional; por defecto escenario 1)
-
-HTTP 202
-{ "idEjecucion": 41, "estado": "EnCurso", "sandbox": false, "urlEstado": "/api/v1/ejecuciones/41" }</code></pre>
-<pre><code>GET /api/v1/ejecuciones/41
-{ "idEjecucion": 41, "estado": "EnCurso", "idEscenario": 1, "inicio": "2026-11-14T09:00:02Z", "fin": null,
-  "modelos": [ { "modelo": "PYG",     "estado": "Completado", "mensaje": "Ejecutado correctamente.", "segundos": 8.4 },
-               { "modelo": "Balance", "estado": "EnCurso",    "mensaje": null,                        "segundos": null } ] }</code></pre>
-<ul><li><b>Estados:</b> <code>EnCurso</code>, <code>Completada</code>, <code>ConErrores</code>, <code>Interrumpida</code> (el sitio se reinició durante el cálculo: vuelva a ejecutarlos) y <code>Simulada</code> (pruebas).</li>
-<li><b>Una a la vez.</b> Solo puede haber una ejecución por empresa y escenario; otra llamada recibe 409 <code>ejecucion_en_curso</code> con el <code>idEjecucion</code> que está corriendo.</li>
-<li><b>Un error no detiene a los demás.</b> Si un modelo falla, el resto se ejecuta y el detalle por modelo trae su mensaje; los administradores de la empresa reciben un aviso.</li>
-<li><b>Permiso.</b> Es el mismo de confirmar cargues; sin él, 403 <code>permiso_modelos</code>. Una integración de pruebas no ejecuta nada (responde <code>Simulada</code>).</li></ul>
-<h3>Avisos automáticos (webhook)</h3>
-<p>En lugar de consultar una y otra vez, BUFINS puede <b>avisar a su sistema</b> cuando algo ocurre. El administrador entra a <i>Integraciones API</i>, pulsa el botón <b>Webhook</b> de la integración y escribe la URL (https) de su sistema; BUFINS genera un <b>secreto</b> (se muestra una sola vez) y desde entonces envía un <code>POST</code> con JSON firmado a esa URL.</p>
-<div class="tw"><table><tr><th>Evento</th><th>Cuándo se envía</th></tr>
-<tr><td class="f">cargue.confirmado</td><td>Se confirma un cargue de la integración: lo haya hecho la propia integración o <b>una persona en «Revisar cargue»</b> (lo más habitual). En pruebas llega con <code>"simulado": true</code>.</td></tr>
-<tr><td class="f">cargue.descartado</td><td>Se descarta un cargue de la integración (por una persona o por <code>DELETE /cargues/{id}</code>).</td></tr>
-<tr><td class="f">modelos.completados</td><td>Terminó una ejecución de modelos (estado <code>Completada</code> o <code>ConErrores</code>), con el detalle por modelo.</td></tr>
-<tr><td class="f">webhook.prueba</td><td>El administrador pulsó «Enviar prueba» para verificar su receptor.</td></tr></table></div>
-<pre><code>POST https://su-sistema.com/bufins/webhook
-X-Bufins-Event: cargue.confirmado
-X-Bufins-Delivery: 7c1f2b3e-5a1d-4c0e-9a77-3f1c2d4e5f60
-X-Bufins-Signature: t=1763128311,v1=5b2c...e91a
-Content-Type: application/json
-
-{ "id": "7c1f2b3e-5a1d-4c0e-9a77-3f1c2d4e5f60", "evento": "cargue.confirmado", "fecha": "2026-11-14T14:05:11Z", "sandbox": false,
-  "integracion": { "id": 3, "nombre": "Agente Siigo" },
-  "datos": { "idLote": 236, "anio": 2026, "modo": "ejecucion", "idEscenario": 1, "archivo": "PlantillaBUFINS.xlsx",
-             "filas": 18450, "simulado": false, "confirmadoPor": "persona",
-             "hojas": [ { "hoja": "Z_NombreDeLaHoja", "tabla": "Ini_NombreDeLaTabla", "filas": 1200 } ] } }</code></pre>
-<h3>Verificar la firma</h3>
-<p>Cada aviso trae la cabecera <code>X-Bufins-Signature: t={segundos unix},v1={firma}</code>, donde la firma es el <b>HMAC-SHA256</b> en hexadecimal de <code>t + "." + cuerpo</code> usando el secreto. <b>Verifíquela siempre</b> antes de confiar en el aviso, con el cuerpo exacto recibido (sin reformatear), y rechace los que tengan más de 5 minutos.</p>
-<details open><summary>Python</summary><pre><code>import hmac, hashlib, time
-
-def verificar(secreto: str, cuerpo: bytes, cabecera: str) -&gt; bool:
-    p = dict(x.split("=", 1) for x in cabecera.split(","))        # "t=...,v1=..."
-    if abs(time.time() - int(p["t"])) &gt; 300:                       # rechaza avisos viejos (anti-repetición)
-        return False
-    esperado = hmac.new(secreto.encode(), p["t"].encode() + b"." + cuerpo, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(esperado, p["v1"])</code></pre></details>
-<details><summary>C#</summary><pre><code>static bool Verificar(string secreto, string cuerpo, string cabecera)
-{
-    var p = cabecera.Split(',').Select(x =&gt; x.Split('=', 2)).ToDictionary(x =&gt; x[0], x =&gt; x[1]);
-    if (Math.Abs(DateTimeOffset.UtcNow.ToUnixTimeSeconds() - long.Parse(p["t"])) &gt; 300) return false;
-    var esperado = Convert.ToHexString(HMACSHA256.HashData(
-        Encoding.UTF8.GetBytes(secreto), Encoding.UTF8.GetBytes(p["t"] + "." + cuerpo))).ToLowerInvariant();
-    return CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(esperado), Encoding.ASCII.GetBytes(p["v1"]));
-}</code></pre></details>
-<ul><li><b>Responda con un 2xx en menos de 15 segundos</b> y procese después. Cualquier otra respuesta se considera fallida.</li>
-<li><b>Reintentos:</b> hasta 3 intentos (inmediato, a los 30 segundos y a los 5 minutos). Si todos fallan queda como <i>Fallido</i> en la pantalla de la integración; los pendientes se retoman con la siguiente actividad de la API.</li>
-<li><b>Puede llegar repetido.</b> Use <code>X-Bufins-Delivery</code> (o el campo <code>id</code>) para ignorar avisos que ya procesó.</li>
-<li><b>Destino seguro.</b> Solo https y direcciones públicas de internet: BUFINS no envía a redes internas, ni sigue redirecciones.</li>
-<li><b>Secreto perdido:</b> «Generar secreto nuevo» invalida el anterior al instante; actualice su sistema.</li></ul>
-<p class="note info"><b>En el entorno de pruebas</b> la confirmación se simula: la respuesta trae <code>"estado": "ConfirmadoSimulado"</code> (o <code>"confirmacion": "simulado"</code> al subir con <code>confirmar=true</code>) y el cargue de prueba se descarta sin tocar datos.</p>
-<p class="note ok">Antes de reemplazar, BUFINS guarda automáticamente la versión anterior. Si un cargue confirmado resulta incorrecto, un administrador puede deshacerlo desde el <b>Historial de versiones</b>.</p></section>
-
-<section id="referencia"><h2>9. Referencia de endpoints</h2>
-<div class="tw"><table><tr><th>Método y ruta</th><th>Qué hace</th></tr>
-<tr><td class="f">GET /openapi.json</td><td>Contrato OpenAPI (sin clave).</td></tr>
-<tr><td class="f">GET /manual</td><td>Este manual (sin clave).</td></tr>
-<tr><td class="f">GET /ping</td><td>Comprueba la clave y devuelve la integración y la empresa.</td></tr>
-<tr><td class="f">GET /esquemas</td><td>Hojas y columnas que acepta la empresa.</td></tr>
-<tr><td class="f">POST /cargues/archivo</td><td>Envío A: sube la plantilla Excel (multipart).</td></tr>
-<tr><td class="f">POST /cargues</td><td>Envío B, paso 1: abre un cargue vacío (JSON).</td></tr>
-<tr><td class="f">POST /cargues/{idLote}/hojas/{hoja}</td><td>Envío B, paso 2: agrega las filas de una hoja (JSON).</td></tr>
-<tr><td class="f">POST /cargues/{idLote}/validar</td><td>Envío B, paso 3: cierra y valida.</td></tr>
-<tr><td class="f">GET /cargues/{idLote}</td><td>Estado del cargue e impacto.</td></tr>
-<tr><td class="f">GET /cargues/{idLote}/hallazgos</td><td>Errores y advertencias de la validación.</td></tr>
-<tr><td class="f">POST /cargues/{idLote}/confirmar</td><td>Confirma (solo integraciones con permiso).</td></tr>
-<tr><td class="f">DELETE /cargues/{idLote}</td><td>Descarta un cargue pendiente.</td></tr>
-<tr><td class="f">POST /modelos/ejecutar</td><td>Recalcula los modelos en segundo plano (202); requiere el permiso de confirmar.</td></tr>
-<tr><td class="f">GET /ejecuciones/{idEjecucion}</td><td>Avance de una ejecución de modelos, con el detalle por modelo.</td></tr></table></div>
-<p>Todas las rutas cuelgan de <code>/api/v1</code> y, salvo <code>openapi.json</code> y <code>manual</code>, requieren la cabecera <code>Authorization: Bearer</code>. Las respuestas son JSON; los errores tienen la forma <code>{ "error": { "codigo": "…", "mensaje": "…" } }</code>. Los mensajes van en español (use <code>?idioma=en</code> o <code>Accept-Language: en</code> para inglés).</p></section>
-
-<section id="errores"><h2>10. Códigos de error</h2>
-<p class="lead">Use el <code>codigo</code> (estable) para decidir qué hacer; el <code>mensaje</code> es para personas.</p>
-<div class="tw"><table><tr><th>HTTP</th><th>codigo</th><th>Qué significa y qué hacer</th></tr>
-<tr><td>401</td><td class="f">no_autorizado</td><td>Falta la clave, es incorrecta o está revocada. Revise la integración.</td></tr>
-<tr><td>403</td><td class="f">ip_no_permitida</td><td>La clave no puede usarse desde esta IP. Pida agregarla a la integración.</td></tr>
-<tr><td>403</td><td class="f">confirmacion_humana</td><td>La integración no puede confirmar: lo hace una persona en «Revisar cargue».</td></tr>
-<tr><td>429</td><td class="f">limite_de_llamadas · demasiados_intentos</td><td>Demasiadas llamadas o intentos. Espere lo que indique <code>Retry-After</code>.</td></tr>
-<tr><td>503</td><td class="f">api_no_configurada</td><td>La API aún no está habilitada en el entorno.</td></tr>
-<tr><td>400</td><td class="f">json_invalido · formato_invalido · archivo_requerido · anio_invalido · escenario_invalido · fila_invalida · valor_no_soportado · idempotency_key_invalida</td><td>La petición está mal armada. Corrija la forma y reintente.</td></tr>
-<tr><td>404</td><td class="f">lote_no_encontrado</td><td>El cargue no existe o no fue creado por esta integración.</td></tr>
-<tr><td>409</td><td class="f">lote_activo</td><td>Hay un cargue pendiente de otra persona para la misma empresa, año, modo y escenario (<code>idLote</code> en la respuesta). Que se confirme o descarte antes.</td></tr>
-<tr><td>409</td><td class="f">lote_no_disponible · ya_confirmado · no_confirmable</td><td>El cargue ya se confirmó o descartó, o su estado no permite la operación.</td></tr>
-<tr><td>409</td><td class="f">requiere_revision_humana</td><td>Es una reducción fuerte de datos: debe confirmarla una persona.</td></tr>
-<tr><td>409</td><td class="f">bloqueado_regla_de_oro</td><td>Dejaría un año vacío o una tabla bajo el umbral de bloqueo. Nadie puede confirmarlo: revise el archivo o el año.</td></tr>
-<tr><td>422</td><td class="f">solicitud_invalida</td><td>Empresa, año, modo o archivo no válidos (el mensaje dice cuál).</td></tr>
-<tr><td>422</td><td class="f">plantilla_incompleta · error_en_hoja · archivo_no_procesable</td><td>El Excel no trae todas las hojas, una hoja tiene un valor inválido, o no es una plantilla válida.</td></tr>
-<tr><td>422</td><td class="f">hoja_no_soportada · columna_desconocida · demasiadas_filas · datos_invalidos</td><td>La hoja o columna no existe para la empresa (consulte <code>/esquemas</code>), se superó el máximo por llamada o un valor es inválido.</td></tr>
-<tr><td>422</td><td class="f">hojas_faltantes · sin_filas_del_anio</td><td>Falta enviar hojas (incluso vacías) o el cargue no trae ninguna fila del año.</td></tr>
-<tr><td>403</td><td class="f">permiso_modelos</td><td>La integración no puede ejecutar modelos (mismo permiso de confirmar). Pídalo al administrador.</td></tr>
-<tr><td>404</td><td class="f">ejecucion_no_encontrada</td><td>La ejecución no existe o no fue iniciada por esta integración.</td></tr>
-<tr><td>409</td><td class="f">ejecucion_en_curso</td><td>Ya hay modelos ejecutándose para esa empresa y escenario (<code>idEjecucion</code> en la respuesta). Espere a que termine.</td></tr>
-<tr><td>422</td><td class="f">escenario_no_disponible · sin_modelos</td><td>El escenario no existe o está inactivo, o no hay modelos activos.</td></tr>
-<tr><td>500</td><td class="f">error_interno</td><td>Error del servidor. Reintente; si persiste, avise a soporte con la hora de la llamada.</td></tr></table></div></section>
-
-<section id="buenas"><h2>11. Buenas prácticas</h2>
-<div class="g2">
-<div class="card"><b>Repetir sin duplicar</b><p>Envíe <code>Idempotency-Key</code> en <code>POST /cargues</code> y <code>/cargues/archivo</code>, con un valor único por envío lógico (por ejemplo «empresa-año-mes-consecutivo»). Si la llamada se repite por una falla de red, BUFINS devuelve el cargue ya creado (<code>"repetido": true</code>) en vez de crear otro. La clave se recuerda 7 días.</p></div>
-<div class="card"><b>Frecuencia</b><p>Basta un envío diario, semanal o mensual: la información es financiera, no transaccional. Cada envío trae el <b>año completo a la fecha</b> y reemplaza el anterior; repetirlo no duplica datos.</p></div>
-<div class="card"><b>Reintentos</b><p>Ante 429 o 5xx espere y reintente con la misma <code>Idempotency-Key</code>. Ante 4xx corrija primero: reintentar sin cambios no lo arreglará.</p></div>
-<div class="card"><b>Vigencia de un cargue</b><p>Un cargue esperando revisión se conserva 48 horas; uno que se está llenando por hojas, 6 horas. Pasado ese tiempo se descarta y hay que enviarlo de nuevo.</p></div>
-<div class="card"><b>Tamaño</b><p>La plantilla puede pesar hasta 100 MB. En el Envío B use tandas de 20.000 filas o menos por llamada (el máximo es 50.000).</p></div>
-<div class="card"><b>Pruebas</b><p>Desarrolle primero con una integración de <b>Pruebas</b> (clave <code>bft_</code>): hace todo el flujo sin tocar datos reales. Ya en producción, empiece con la confirmación humana activa y compare los resultados con los del Excel durante algunos cierres antes de pedir que la integración confirme sola.</p></div></div></section>
-
-<section id="faq"><h2>12. Preguntas frecuentes</h2>
-<details><summary>¿Tengo que dejar de usar el Excel?</summary><p>No. El Excel sigue funcionando siempre, por la misma puerta y con las mismas validaciones. La API es una alternativa; puede alternarlas.</p></details>
-<details><summary>¿Qué pasa si envío dos veces lo mismo?</summary><p>Con la misma <code>Idempotency-Key</code> BUFINS no lo duplica. Sin ella, el segundo envío reemplaza al primero si aún estaba pendiente; si el primero ya se confirmó, el segundo se revisa y reemplaza los datos del año, como un cargue nuevo de Excel.</p></details>
-<details><summary>¿Por qué el cargue «no se puede confirmar»?</summary><p>Consulte <code>/cargues/{id}/hallazgos</code>. Si tiene errores hay que corregir los datos; si el impacto muestra <code>bloqueado</code>, el archivo dejaría un año vacío o una tabla casi vacía y BUFINS lo impide para todos.</p></details>
-<details><summary>¿La API actualiza los informes?</summary><p>Un cargue confirmado deja los datos listos; los informes leen los resultados de los modelos. Una integración con permiso los recalcula con <code>POST /modelos/ejecutar</code>; si no, se ejecutan en «Ejecución de Modelos», como siempre.</p></details>
-<details><summary>¿Cómo me entero cuando una persona confirma el cargue?</summary><p>Configure un webhook: BUFINS le envía <code>cargue.confirmado</code> en cuanto alguien lo confirma en «Revisar cargue». Si no puede recibir avisos, consulte <code>GET /cargues/{id}</code> cada cierto tiempo.</p></details>
-<details><summary>¿Puedo ver los cargues de otra integración o de las personas de la empresa?</summary><p>No. Cada integración ve únicamente los cargues que ella misma creó. Las personas los ven en «Revisar cargue».</p></details>
-<details><summary>Perdí la clave, ¿qué hago?</summary><p>Un administrador entra a Integraciones API y pulsa «Generar clave nueva». La anterior deja de funcionar al instante; configure la nueva en el sistema del cliente.</p></details>
-<details><summary>¿Mis datos están protegidos?</summary><p>Viajan cifrados (HTTPS), cada clave solo alcanza una empresa y todo lo que hace la integración queda en la auditoría. BUFINS actúa como encargado del tratamiento de los datos de la empresa; el contrato de transmisión de datos se acuerda por separado.</p></details></section>
-
-<footer><div class="w">BUFINS · Manual de integración · API de ingesta v1 · Noviembre de 2026. Contrato técnico: <code>/api/v1/openapi.json</code>. English version: <code>/api/v1/manual?idioma=en</code>.</div></footer>
 </main>
+<footer class="w">BUFINS · Manual de la API · v1</footer>
 </body></html>

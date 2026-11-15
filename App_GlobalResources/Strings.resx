@@ -4003,47 +4003,20 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="DocBuf_AccesoAbierto" xml:space="preserve"><value>Ahora este documento lo pueden ver los usuarios con acceso.</value></data>
   <data name="DocBuf_Cat_tecnica" xml:space="preserve"><value>Técnica y arquitectura</value></data>
   <!-- Integraciones API (Integ_*) -->
-  <data name="Integ_PageTitle" xml:space="preserve"><value>Integraciones API</value></data>
-  <data name="Integ_PageHint" xml:space="preserve"><value>Credenciales para que el sistema de la empresa (ERP, agente o programa propio) envíe sus datos a BUFINS por la API, sin usar el Excel. Cada integración opera solo en su empresa y la clave se muestra una única vez.</value></data>
+  <data name="Integ_PageTitle" xml:space="preserve"><value>Conexiones</value></data>
+  <data name="Integ_PageHint" xml:space="preserve"><value>Cada empresa tiene su propia API: una dirección y una clave. Entregue las dos al sistema de la empresa y sus datos llegan solos a BUFINS, sin subir Excel.</value></data>
   <data name="Integ_NoDisponible" xml:space="preserve"><value>La API de ingesta aún no está habilitada en este entorno. Contacte a soporte de BUFINS.</value></data>
-  <data name="Integ_BtnNueva" xml:space="preserve"><value>Nueva integración</value></data>
-  <data name="Integ_ConexionTitulo" xml:space="preserve"><value>Cómo conectarse</value></data>
-  <data name="Integ_ConexionTexto" xml:space="preserve"><value>Dirección base de la API. Cada llamada lleva la clave de la integración en la cabecera Authorization (Bearer). El manual técnico detalla los pasos.</value></data>
-  <data name="Integ_ThNombre" xml:space="preserve"><value>Integración</value></data>
-  <data name="Integ_ThEmpresa" xml:space="preserve"><value>Empresa</value></data>
-  <data name="Integ_ThUsuario" xml:space="preserve"><value>Usuario técnico</value></data>
-  <data name="Integ_ThClave" xml:space="preserve"><value>Clave</value></data>
-  <data name="Integ_ThConfirmacion" xml:space="preserve"><value>Confirma</value></data>
-  <data name="Integ_ThIps" xml:space="preserve"><value>IP permitidas</value></data>
-  <data name="Integ_ThUltimoUso" xml:space="preserve"><value>Último uso</value></data>
-  <data name="Integ_ConfHumana" xml:space="preserve"><value>Una persona</value></data>
-  <data name="Integ_ConfApi" xml:space="preserve"><value>Por la API</value></data>
-  <data name="Integ_CualquierIp" xml:space="preserve"><value>Cualquiera</value></data>
   <data name="Integ_NuncaUsada" xml:space="preserve"><value>Sin uso</value></data>
-  <data name="Integ_EstadoInactiva" xml:space="preserve"><value>Inactiva</value></data>
-  <data name="Integ_EstadoRevocada" xml:space="preserve"><value>Revocada</value></data>
-  <data name="Integ_NoRegistros" xml:space="preserve"><value>Aún no hay integraciones creadas.</value></data>
-  <data name="Integ_TitleRotar" xml:space="preserve"><value>Generar clave nueva</value></data>
-  <data name="Integ_TitleRevocar" xml:space="preserve"><value>Revocar</value></data>
-  <data name="Integ_ModalCrearTitle" xml:space="preserve"><value>Nueva integración</value></data>
   <data name="Integ_ModalEditarTitle" xml:space="preserve"><value>Editar integración</value></data>
-  <data name="Integ_SecIdentificacion" xml:space="preserve"><value>Identificación</value></data>
-  <data name="Integ_SecSeguridad" xml:space="preserve"><value>Seguridad</value></data>
-  <data name="Integ_LabelEmpresa" xml:space="preserve"><value>Empresa</value></data>
   <data name="Integ_LabelNombre" xml:space="preserve"><value>Nombre</value></data>
-  <data name="Integ_NombrePlaceholder" xml:space="preserve"><value>Ej: Agente Siigo – contabilidad</value></data>
-  <data name="Integ_LabelUsuario" xml:space="preserve"><value>Usuario técnico</value></data>
   <data name="Integ_SelEmpresa" xml:space="preserve"><value>Seleccione una empresa</value></data>
-  <data name="Integ_SelUsuario" xml:space="preserve"><value>Seleccione un usuario</value></data>
-  <data name="Integ_SinUsuarios" xml:space="preserve"><value>La empresa no tiene usuarios disponibles</value></data>
-  <data name="Integ_UsuarioHint" xml:space="preserve"><value>A este usuario se le atribuyen las acciones de la API en la auditoría. Se recomienda crear un usuario exclusivo (por ejemplo «Integración API»). No puede ser Super Admin.</value></data>
   <data name="Integ_LabelConfirmar" xml:space="preserve"><value>Permitir que la integración confirme cargues y ejecute los modelos</value></data>
   <data name="Integ_LabelConfirmarHint" xml:space="preserve"><value>Si no se marca (recomendado al inicio), los cargues enviados por la API quedan en «Revisar cargue» y una persona los confirma. Aun marcada, la API nunca confirma una reducción fuerte de datos ni salta la regla de nunca dejar un año vacío. El mismo permiso le deja recalcular los modelos (informes) por la API.</value></data>
   <data name="Integ_LabelIps" xml:space="preserve"><value>IP permitidas (opcional)</value></data>
   <data name="Integ_LabelIpsHint" xml:space="preserve"><value>Separadas por coma. Si se dejan vacías, la clave sirve desde cualquier dirección.</value></data>
   <data name="Integ_LabelActiva" xml:space="preserve"><value>Integración activa</value></data>
-  <data name="Integ_ClaveTitulo" xml:space="preserve"><value>Clave de la integración</value></data>
   <data name="Integ_ClaveNuevaTitulo" xml:space="preserve"><value>Clave nueva</value></data>
+  <data name="Integ_ClaveTitulo" xml:space="preserve"><value>Clave de la integración</value></data>
   <data name="Integ_ClaveAviso" xml:space="preserve"><value>Copie la clave ahora y guárdela en un lugar seguro. Por seguridad no se vuelve a mostrar; si la pierde, genere una nueva.</value></data>
   <data name="Integ_BtnCopiar" xml:space="preserve"><value>Copiar</value></data>
   <data name="Integ_BtnYaCopie" xml:space="preserve"><value>Ya la copié</value></data>
@@ -4054,7 +4027,6 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="Integ_ConfRevocarTitulo" xml:space="preserve"><value>¿Revocar la integración?</value></data>
   <data name="Integ_ConfRevocarTexto" xml:space="preserve"><value>«{0}» dejará de funcionar y no se puede reactivar (habría que crear otra). Los cargues ya confirmados no se tocan.</value></data>
   <data name="Integ_BtnRevocar" xml:space="preserve"><value>Revocar</value></data>
-  <data name="Integ_Creada" xml:space="preserve"><value>Integración «{0}» creada.</value></data>
   <data name="Integ_Editada" xml:space="preserve"><value>Integración «{0}» actualizada.</value></data>
   <data name="Integ_Rotada" xml:space="preserve"><value>Nueva clave generada para «{0}».</value></data>
   <data name="Integ_Revocada" xml:space="preserve"><value>Integración «{0}» revocada.</value></data>
@@ -4072,48 +4044,40 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="Notif_CargueApiConErroresMsg" xml:space="preserve"><value>La integración «{0}» envió datos de {1} (año {2}, {3}) con {5} error(es). No se puede confirmar hasta que el sistema del cliente envíe los datos corregidos.</value></data>
   <data name="Integ_BtnManual" xml:space="preserve"><value>Manual de integración</value></data>
   <data name="Integ_BtnContrato" xml:space="preserve"><value>Contrato OpenAPI</value></data>
+  <!-- Conexiones: asistente simplificado -->
+  <data name="Integ_Cx_Conectar" xml:space="preserve"><value>Conectar una empresa</value></data>
+  <data name="Integ_Cx_Documentacion" xml:space="preserve"><value>Documentación</value></data>
+  <data name="Integ_Cx_Ayuda" xml:space="preserve"><value>Ayuda</value></data>
+  <data name="Integ_Cx_VacioTitulo" xml:space="preserve"><value>Aún no hay empresas conectadas</value></data>
+  <data name="Integ_Cx_VacioTexto" xml:space="preserve"><value>Conecte una empresa para que su sistema envíe los datos a BUFINS sin subir Excel.</value></data>
+  <data name="Integ_Cx_Real" xml:space="preserve"><value>Real</value></data>
+  <data name="Integ_Cx_Pausada" xml:space="preserve"><value>Pausada</value></data>
+  <data name="Integ_Cx_Direccion" xml:space="preserve"><value>Dirección de su API</value></data>
+  <data name="Integ_Cx_Clave" xml:space="preserve"><value>Clave de acceso</value></data>
+  <data name="Integ_Cx_VerEnvios" xml:space="preserve"><value>Ver envíos</value></data>
+  <data name="Integ_Cx_Mas" xml:space="preserve"><value>Más opciones</value></data>
+  <data name="Integ_Cx_OpEditar" xml:space="preserve"><value>Nombre y permisos</value></data>
+  <data name="Integ_Cx_OpAvisos" xml:space="preserve"><value>Avisos automáticos (avanzado)</value></data>
+  <data name="Integ_Cx_OpClave" xml:space="preserve"><value>Generar clave nueva</value></data>
+  <data name="Integ_Cx_OpAnular" xml:space="preserve"><value>Anular conexión</value></data>
+  <data name="Integ_Cx_PrefijoPruebas" xml:space="preserve"><value>Pruebas -</value></data>
+  <data name="Integ_Cx_ErrSinUsuarios" xml:space="preserve"><value>Esa empresa no tiene un usuario disponible para la conexión. Cree o libere un usuario e intente de nuevo.</value></data>
+  <data name="Integ_Cx_Paso1Titulo" xml:space="preserve"><value>¿Qué empresa quiere conectar?</value></data>
+  <data name="Integ_Cx_Paso1Texto" xml:space="preserve"><value>Elija la empresa y para qué la va a usar. Lo demás lo hacemos por usted.</value></data>
+  <data name="Integ_Cx_Empresa" xml:space="preserve"><value>Empresa</value></data>
+  <data name="Integ_Cx_TipoRealT" xml:space="preserve"><value>Datos reales</value></data>
+  <data name="Integ_Cx_TipoRealD" xml:space="preserve"><value>Cada envío lo revisa y lo confirma una persona antes de actualizar los informes.</value></data>
+  <data name="Integ_Cx_TipoPruebasT" xml:space="preserve"><value>Solo probar</value></data>
+  <data name="Integ_Cx_TipoPruebasD" xml:space="preserve"><value>Para ensayar sin cambiar ningún dato real. Ideal para empezar.</value></data>
+  <data name="Integ_Cx_BtnCrear" xml:space="preserve"><value>Crear conexión</value></data>
+  <data name="Integ_Cx_ErrEmpresa" xml:space="preserve"><value>Elija una empresa.</value></data>
+  <data name="Integ_Cx_ListoTitulo" xml:space="preserve"><value>La API de {0} está lista</value></data>
+  <data name="Integ_Cx_ListoTexto" xml:space="preserve"><value>Entregue estos dos datos al equipo técnico de la empresa. La clave solo se muestra ahora: si se pierde, se genera una nueva.</value></data>
+  <data name="Integ_Cx_CopiarInstr" xml:space="preserve"><value>Copiar instrucciones para el cliente</value></data>
+  <data name="Integ_Cx_InstrAviso" xml:space="preserve"><value>Las instrucciones no incluyen la clave: envíela por separado.</value></data>
+  <data name="Integ_Cx_YaCopie" xml:space="preserve"><value>Listo, ya la copié</value></data>
+  <data name="Integ_Cx_Mensaje" xml:space="preserve"><value>Conexión de {0} con BUFINS&#10;&#10;Dirección de la API: {1}&#10;Clave de acceso: se entrega por separado&#10;&#10;Cada envío lleva la clave en la cabecera Authorization: Bearer &lt;clave&gt;.&#10;Manual para el equipo técnico: {2}&#10;Probador para ensayar sin programar: {3}</value></data>
   <!-- Integraciones: asistente de conexión -->
-  <data name="Integ_BtnAsistente" xml:space="preserve"><value>Asistente de conexión</value></data>
-  <data name="Integ_As_Titulo" xml:space="preserve"><value>¿Cómo se va a conectar su sistema?</value></data>
-  <data name="Integ_As_Intro" xml:space="preserve"><value>Elija la opción que mejor describe su caso. Le damos los pasos y los archivos ya preparados.</value></data>
-  <data name="Integ_As_OpcCarpetaT" xml:space="preserve"><value>Mi sistema deja un Excel en una carpeta</value></data>
-  <data name="Integ_As_OpcCarpetaD" xml:space="preserve"><value>Un programa de BUFINS instalado en su equipo envía solo cada archivo nuevo. No requiere programadores.</value></data>
-  <data name="Integ_As_OpcTiT" xml:space="preserve"><value>Mi equipo de TI lo programa</value></data>
-  <data name="Integ_As_OpcTiD" xml:space="preserve"><value>Su equipo técnico envía los datos directamente a la API, con manual, ejemplos y probador.</value></data>
-  <data name="Integ_As_OpcAyudaT" xml:space="preserve"><value>Necesito que me ayuden</value></data>
-  <data name="Integ_As_OpcAyudaD" xml:space="preserve"><value>Cuéntenos su caso y el equipo de BUFINS se pondrá en contacto.</value></data>
-  <data name="Integ_As_Volver" xml:space="preserve"><value>Volver</value></data>
-  <data name="Integ_As_Integracion" xml:space="preserve"><value>Integración</value></data>
-  <data name="Integ_As_SinIntegraciones" xml:space="preserve"><value>Primero cree una integración con el botón «Nueva integración»: ahí se genera la clave, que solo se ve una vez.</value></data>
-  <data name="Integ_As_Carpeta" xml:space="preserve"><value>Carpeta que vigilará el agente</value></data>
-  <data name="Integ_As_CarpetaAyuda" xml:space="preserve"><value>Ruta del equipo donde su sistema deja los archivos Excel (plantilla BUFINS).</value></data>
-  <data name="Integ_As_Modo" xml:space="preserve"><value>Tipo de datos</value></data>
-  <data name="Integ_As_ModoEjec" xml:space="preserve"><value>Ejecución (año en curso)</value></data>
-  <data name="Integ_As_ModoHist" xml:space="preserve"><value>Histórico</value></data>
-  <data name="Integ_As_ConfAuto" xml:space="preserve"><value>Confirmar automáticamente los cargues sin advertencias</value></data>
-  <data name="Integ_As_ConfAutoNo" xml:space="preserve"><value>Esta integración no tiene permiso para confirmar: una persona confirmará cada envío en «Revisar cargue».</value></data>
-  <data name="Integ_As_SandboxAviso" xml:space="preserve"><value>Es una integración de pruebas (clave bft_): los envíos no modifican datos reales.</value></data>
-  <data name="Integ_As_BtnDescargar" xml:space="preserve"><value>Descargar agente.json</value></data>
-  <data name="Integ_As_Descargado" xml:space="preserve"><value>Archivo descargado.</value></data>
-  <data name="Integ_As_PasosTitulo" xml:space="preserve"><value>Qué hacer con el archivo</value></data>
-  <data name="Integ_As_Paso1" xml:space="preserve"><value>Descargue el agente (botón de arriba) y póngalo, junto con el agente.json, en una carpeta de un equipo que pueda ver los Excel de su sistema.</value></data>
-  <data name="Integ_As_Paso2" xml:space="preserve"><value>Cree la carpeta de entrada indicada. Abra una consola en la carpeta del agente y guarde la clave de la integración (se pide oculta y queda cifrada en ese equipo):</value></data>
-  <data name="Integ_As_Paso3" xml:space="preserve"><value>Compruebe la conexión (debe decir que todo está en orden):</value></data>
-  <data name="Integ_As_Paso4" xml:space="preserve"><value>Configure su sistema para dejar la plantilla .xlsx en la carpeta de entrada. Si el nombre incluye año y tipo (por ejemplo 2026_historico_cierre.xlsx), se usan esos datos.</value></data>
-  <data name="Integ_As_Paso5" xml:space="preserve"><value>Deje el agente corriendo, o prográmelo con el Programador de tareas de Windows:</value></data>
-  <data name="Integ_As_Paso6" xml:space="preserve"><value>Revise cada envío con el botón «Ver actividad» de la integración: allí verá si quedó bien o qué corregir.</value></data>
-  <data name="Integ_As_BtnAgente" xml:space="preserve"><value>Descargar AgenteBufins.exe</value></data>
-  <data name="Integ_As_AgenteInfo" xml:space="preserve"><value>Programa para Windows (unos {0} MB). No necesita instalar nada más.</value></data>
-  <data name="Integ_As_AgenteHuella" xml:space="preserve"><value>Huella SHA-256 para verificar la descarga:</value></data>
-  <data name="Integ_As_AgenteAviso" xml:space="preserve"><value>Si Windows avisa de un editor desconocido, compare esta huella antes de ejecutarlo.</value></data>
-  <data name="Integ_As_AgenteNoDisp" xml:space="preserve"><value>El agente aún no está disponible para descargar desde el sitio. Solicítelo al equipo de BUFINS.</value></data>
-  <data name="Integ_As_TiTitulo" xml:space="preserve"><value>Datos para el equipo técnico</value></data>
-  <data name="Integ_As_TiTexto" xml:space="preserve"><value>Comparta esto con quien programe la conexión. La clave se entrega por un canal seguro (nunca en un correo abierto) y solo se ve al crear la integración.</value></data>
-  <data name="Integ_As_TiBase" xml:space="preserve"><value>Dirección base de la API</value></data>
-  <data name="Integ_As_TiEjemplo" xml:space="preserve"><value>Primera llamada de prueba</value></data>
-  <data name="Integ_As_TiRecomienda" xml:space="preserve"><value>Recomendado: pruebe primero con una integración de pruebas (clave bft_) en el probador interactivo, antes de pasar a producción.</value></data>
-  <data name="Integ_As_TiBtnCopiar" xml:space="preserve"><value>Copiar instrucciones para mi equipo técnico</value></data>
-  <data name="Integ_As_TiPlantilla" xml:space="preserve"><value>Conexión con la API de BUFINS&#10;Dirección base: {0}&#10;Manual: {1}&#10;Probador interactivo: {2}&#10;Contrato OpenAPI: {3}&#10;Autenticación: cabecera Authorization: Bearer &lt;clave de la integración&gt; (la clave se entrega por separado).&#10;Primera prueba: curl -H "Authorization: Bearer &lt;clave&gt;" {0}/ping</value></data>
   <data name="Integ_As_AyudaTitulo" xml:space="preserve"><value>Cuéntenos su caso</value></data>
   <data name="Integ_As_AyudaIntegracion" xml:space="preserve"><value>Integración relacionada (opcional)</value></data>
   <data name="Integ_As_AyudaNinguna" xml:space="preserve"><value>Ninguna todavía</value></data>
@@ -4127,16 +4091,11 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="Integ_As_SinIntegracion" xml:space="preserve"><value>sin integración</value></data>
   <data name="Notif_AyudaIntegracion" xml:space="preserve"><value>Solicitud de ayuda con una integración</value></data>
   <data name="Notif_AyudaIntegracionMsg" xml:space="preserve"><value>{0} pidió ayuda para conectar su sistema (integración: {1}). Contacto: {2}. Mensaje: {3}</value></data>
-  <data name="Integ_LabelTipo" xml:space="preserve"><value>Tipo de integración</value></data>
-  <data name="Integ_TipoProduccion" xml:space="preserve"><value>Producción (datos reales)</value></data>
-  <data name="Integ_TipoPruebas" xml:space="preserve"><value>Pruebas (sandbox)</value></data>
-  <data name="Integ_TipoHint" xml:space="preserve"><value>Una integración de pruebas usa una clave aparte (bft_…) y ejecuta TODO el flujo igual que producción, con las mismas validaciones, pero su confirmación es una simulación: nunca cambia datos reales ni avisa a los revisores. Úsela para que el equipo del cliente desarrolle y pruebe su envío con total seguridad. Requiere un usuario técnico distinto al de las integraciones de producción.</value></data>
   <data name="Integ_BadgePruebas" xml:space="preserve"><value>Pruebas</value></data>
   <data name="Integ_ErrUsuarioEnUso" xml:space="preserve"><value>Ese usuario ya lo usa una integración de otro tipo (producción o pruebas). Use un usuario técnico distinto para cada una.</value></data>
   <data name="Integ_ErrSandboxNoDisponible" xml:space="preserve"><value>El entorno de pruebas aún no está habilitado. Contacte a soporte de BUFINS.</value></data>
   <data name="Notif_ModelosApiErrores" xml:space="preserve"><value>Modelos ejecutados por la API con errores</value></data>
   <data name="Notif_ModelosApiErroresMsg" xml:space="preserve"><value>La integración «{0}» ejecutó los modelos de {1}: {2} completado(s) y {3} con error. Revise «Ejecución de Modelos».</value></data>
-  <data name="Integ_Wh_TitleBoton" xml:space="preserve"><value>Webhook (avisos automáticos)</value></data>
   <data name="Integ_Wh_Titulo" xml:space="preserve"><value>Webhook</value></data>
   <data name="Integ_Wh_Hint" xml:space="preserve"><value>BUFINS avisa a la URL de su sistema cuando un cargue de esta integración se confirma (también si lo confirma una persona) o se descarta, y cuando terminan los modelos. Cada aviso va firmado con el secreto y se reintenta hasta 3 veces. El manual explica cómo verificar la firma.</value></data>
   <data name="Integ_Wh_NoDisponible" xml:space="preserve"><value>Los webhooks aún no están habilitados en este entorno. Contacte a soporte de BUFINS.</value></data>
@@ -4173,8 +4132,6 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="Integ_Wh_ErrNoDisponible" xml:space="preserve"><value>No se pudo guardar el webhook (aún no está habilitado o la integración está revocada).</value></data>
   <data name="Integ_BtnProbador" xml:space="preserve"><value>Probador interactivo</value></data>
   <!-- Panel de actividad de integraciones (Integ_Pn_*) -->
-  <data name="Integ_Pn_ThConexion" xml:space="preserve"><value>Conexión</value></data>
-  <data name="Integ_Pn_TitleActividad" xml:space="preserve"><value>Ver actividad</value></data>
   <data name="Integ_Pn_Titulo" xml:space="preserve"><value>Actividad</value></data>
   <data name="Integ_Pn_SecResumen" xml:space="preserve"><value>Cómo va</value></data>
   <data name="Integ_Pn_SecEnvios" xml:space="preserve"><value>Últimos envíos</value></data>

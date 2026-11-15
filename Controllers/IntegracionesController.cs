@@ -41,7 +41,8 @@ namespace bufinscustomers.Controllers
             var permitidas = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario);   // null = todas
 
             ViewBag.Disponible = disponible;
-            ViewBag.BaseApi = Request.Url.Scheme + "://" + Request.Url.Authority + "/api/v1";
+            string baseApi = Request.Url.Scheme + "://" + Request.Url.Authority + "/api/v1";
+            ViewBag.BaseApi = baseApi;
             var lista = disponible ? _servicio.Listar(permitidas) : new System.Collections.Generic.List<Integracion>();
 
             // Semáforo de cada integración (en palabras de negocio); si algo falla, la pantalla funciona igual sin él.
@@ -53,42 +54,48 @@ namespace bufinscustomers.Controllers
             }
             ViewBag.Salud = salud;
 
-            // Agente de carpeta descargable (el asistente ofrece el botón y la huella para verificar la descarga)
-            string huellaAgente = HuellaAgente(out long bytesAgente);
-            ViewBag.AgenteHuella = huellaAgente;
-            ViewBag.AgenteMB = Math.Round(bytesAgente / 1048576.0, 1);
+            // Dirección propia de cada empresa: /api/v1/{empresa}
+            var todas = new EmpresaService().ObtenerEmpresas().Select(e => (e.Id, e.Nombre)).ToList();
+            ViewBag.Direcciones = lista.Select(i => i.IdEmpresa).Distinct()
+                .ToDictionary(id => id, id => baseApi + "/" + bufinscustomers.Api.ApiDireccion.SlugDe(id, todas));
             return View("~/Views/Configuracion/Integraciones.cshtml", lista);
         }
 
-        /// <summary>Usuarios de la empresa que pueden actuar como usuario técnico (alimenta el desplegable del modal «Nueva»).</summary>
-        [HttpGet]
-        public ActionResult UsuariosDeEmpresa(int idEmpresa)
-        {
-            if (!PuedeAdministrar() || !EmpresaAccesoHelper.TieneAcceso(UsuarioSesionHelper.UsuarioActual, idEmpresa))
-                return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
-            var usuarios = _servicio.ListarUsuariosElegibles(idEmpresa).Select(u => new { id = u.Id, nombre = u.Nombre, usuario = u.Usuario });
-            return Json(new { success = true, usuarios });
-        }
-
+        /// <summary>
+        /// Crear conexión con un clic (asistente «Conectar una empresa»): el usuario técnico se elige solo (prefiere un Admin de la
+        /// empresa que no esté en uso por una conexión del otro tipo), el nombre se arma con la empresa y en pruebas la confirmación
+        /// por API queda permitida (es simulada); en real, siempre confirma una persona. Lo fino se cambia luego en «Más opciones».
+        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Crear(int idEmpresa, string nombre, int idUsuarioTecnico, bool permiteConfirmar = false, string ipPermitidas = null, bool sandbox = false)
+        public ActionResult CrearConexion(int idEmpresa, bool sandbox = false)
         {
             if (!PuedeAdministrar() || !EmpresaAccesoHelper.TieneAcceso(UsuarioSesionHelper.UsuarioActual, idEmpresa))
                 return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
             try
             {
+                string empresa = new EmpresaService().ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? ("#" + idEmpresa);
+                string nombre = (sandbox ? R("Integ_Cx_PrefijoPruebas") + " " : "") + empresa;
+                if (nombre.Length > 100) nombre = nombre.Substring(0, 100);
+
                 var yo = UsuarioSesionHelper.UsuarioActual;
-                var r = _servicio.Crear(idEmpresa, nombre, idUsuarioTecnico, permiteConfirmar, ipPermitidas, yo?.Id, sandbox);
-                if (!r.ok) return Json(new { success = false, message = TraducirError(r.error) });
+                (bool ok, string error, int idIntegracion, string claveEnClaro) r = (false, "usuario", 0, null);
+                foreach (var u in _servicio.ListarUsuariosElegibles(idEmpresa))
+                {
+                    r = _servicio.Crear(idEmpresa, nombre, u.Id, sandbox, null, yo?.Id, sandbox);
+                    if (r.ok || r.error != "usuario_en_uso") break;   // si el usuario sirve al otro tipo de conexión, se prueba con el siguiente
+                }
+                if (!r.ok)
+                    return Json(new { success = false, message = r.error == "usuario" ? R("Integ_Cx_ErrSinUsuarios") : TraducirError(r.error) });
 
                 var integ = _servicio.Obtener(r.idIntegracion);
                 new AuditoriaService().RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Crear, "Integracion", r.idIntegracion.ToString(),
-                    $"Creó la integración API '{integ?.Nombre}' ({(sandbox ? "PRUEBAS" : "producción")}) de '{integ?.NombreEmpresa}' (usuario técnico: {integ?.NombreUsuarioTecnico}; confirmación por API: {(permiteConfirmar ? "permitida" : "no permitida")}).",
-                    null, new { integ?.Nombre, idEmpresa, idUsuarioTecnico, permiteConfirmar, sandbox, ipPermitidas = integ?.IpPermitidas, prefijo = integ?.Prefijo },
-                    idEmpresa, entidadNombre: integ?.Nombre);
+                    $"Creó la conexión API '{integ?.Nombre}' ({(sandbox ? "PRUEBAS" : "producción")}) de '{integ?.NombreEmpresa}' con el asistente (usuario técnico: {integ?.NombreUsuarioTecnico}).",
+                    null, new { integ?.Nombre, idEmpresa, sandbox, prefijo = integ?.Prefijo }, idEmpresa, entidadNombre: integ?.Nombre);
 
-                return Json(new { success = true, message = string.Format(R("Integ_Creada"), integ?.Nombre), clave = r.claveEnClaro, nombre = integ?.Nombre });
+                string direccion = Request.Url.Scheme + "://" + Request.Url.Authority + "/api/v1/"
+                    + bufinscustomers.Api.ApiDireccion.SlugDe(idEmpresa, new EmpresaService().ObtenerEmpresas().Select(e => (e.Id, e.Nombre)));
+                return Json(new { success = true, clave = r.claveEnClaro, nombre = integ?.Nombre, empresa = integ?.NombreEmpresa, direccion });
             }
             catch (Exception ex) { return Json(new { success = false, message = MensajeError(ex) }); }
         }
@@ -283,57 +290,6 @@ namespace bufinscustomers.Controllers
             if (r.ok) return Json(new { success = true, message = string.Format(R("Integ_Wh_PruebaOk"), r.codigo) });
             string motivo = r.error == "sin_webhook" ? R("Integ_Wh_ErrSinWebhook") : (r.codigo.HasValue ? "HTTP " + r.codigo : (r.error ?? "?"));
             return Json(new { success = false, message = string.Format(R("Integ_Wh_PruebaFallo"), motivo) });
-        }
-
-        // ── Agente de carpeta (descarga) ─────────────────────────────────────────────────
-
-        private const string RutaAgente = "~/App_Data/Agente/AgenteBufins.exe";
-        private static string _agenteHash, _agenteHashDe;
-        private static readonly object _lockHash = new object();
-
-        /// <summary>SHA-256 del ejecutable (en mayúsculas), recalculado solo si el archivo cambió. Null si no está.</summary>
-        private string HuellaAgente(out long bytes)
-        {
-            bytes = 0;
-            try
-            {
-                var fi = new System.IO.FileInfo(Server.MapPath(RutaAgente));
-                if (!fi.Exists) return null;
-                bytes = fi.Length;
-                string marca = fi.LastWriteTimeUtc.Ticks + ":" + fi.Length;
-                lock (_lockHash)
-                {
-                    if (_agenteHashDe != marca)
-                    {
-                        using (var fs = fi.OpenRead())
-                            _agenteHash = BitConverter.ToString(System.Security.Cryptography.SHA256.HashData(fs)).Replace("-", "");
-                        _agenteHashDe = marca;
-                    }
-                    return _agenteHash;
-                }
-            }
-            catch (Exception ex) { AppLogger.Warn("Integraciones.HuellaAgente: " + ex.Message); return null; }
-        }
-
-        /// <summary>
-        /// Descarga el agente de carpeta (<c>App_Data/Agente/AgenteBufins.exe</c>, no público: lo deja ahí el despliegue con
-        /// <c>Publicar-Agente.ps1</c>). Solo Super Admin y Admin de Empresa; se audita cada descarga.
-        /// </summary>
-        [HttpGet]
-        public ActionResult DescargarAgente()
-        {
-            if (!PuedeAdministrar()) return RedirectToAction("Index", "Home");
-            string huella = HuellaAgente(out long bytes);
-            if (huella == null)
-            {
-                SetErrorMessage(R("Integ_As_AgenteNoDisp"));
-                return RedirectToAction("Index");
-            }
-            new AuditoriaService().RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Exportar, "AgenteBufins", huella.Substring(0, 12),
-                $"Descargó el agente de carpeta AgenteBufins.exe (SHA-256 {huella.Substring(0, 12)}…).", null, new { huella, bytes },
-                UsuarioSesionHelper.UsuarioActual?.IdEmpresa, entidadNombre: "AgenteBufins.exe");
-            Response.Headers["Cache-Control"] = "no-store";
-            return File(System.IO.File.ReadAllBytes(Server.MapPath(RutaAgente)), "application/octet-stream", "AgenteBufins.exe");
         }
 
         // ── Asistente de conexión ────────────────────────────────────────────────────────

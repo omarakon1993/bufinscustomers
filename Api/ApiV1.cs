@@ -662,6 +662,18 @@ namespace bufinscustomers.Api
                 { ctx.Response.Headers["Retry-After"] = "60"; await Escribir(ctx, 429, "limite_de_llamadas", "Superó el límite de 120 llamadas por minuto."); return; }
                 Sumar(LlamadasPorIntegracion, res.Integracion.Id, TimeSpan.FromMinutes(1));
 
+                // Dirección propia de la empresa (/api/v1/{empresa}/...): debe ser la de la empresa de la clave.
+                if (ctx.Items[ApiDireccion.ItemSlug] is string slugPedido)
+                {
+                    string correcto = ApiDireccion.SlugDe(res.Integracion.IdEmpresa, new EmpresaService().ObtenerEmpresas().Select(e => (e.Id, e.Nombre)));
+                    if (!string.Equals(slugPedido, correcto, StringComparison.OrdinalIgnoreCase))
+                    {
+                        await Escribir(ctx, 404, "direccion_no_corresponde",
+                            $"Esta dirección no corresponde a la empresa de su clave. La dirección correcta es {ctx.Request.Scheme}://{ctx.Request.Host}/api/v1/{correcto}");
+                        return;
+                    }
+                }
+
                 if (res.Integracion.Sandbox) ctx.Response.Headers["X-Bufins-Entorno"] = "pruebas";
                 new WebhooksService().BarrerSiToca();   // retoma avisos pendientes (no hay tareas programadas en el hosting)
                 ctx.Items["ApiIntegracion"] = res.Integracion;

@@ -234,7 +234,7 @@ namespace bufinscustomers.Services
             var lista = new List<(int, string, string)>();
             using (var cn = new SqlConnection(CadenaConexion))
             using (var cmd = new SqlCommand(
-                "SELECT Id, LTRIM(RTRIM(ISNULL(Nombre,'') + ' ' + ISNULL(Apellidos,''))) AS Nombre, Usuario FROM dbo.Usuarios WHERE IdEmpresa = @E AND ISNULL(Admin,0) <> 2 ORDER BY Nombre", cn))
+                "SELECT Id, LTRIM(RTRIM(ISNULL(Nombre,'') + ' ' + ISNULL(Apellidos,''))) AS Nombre, Usuario FROM dbo.Usuarios WHERE IdEmpresa = @E AND ISNULL(Admin,0) <> 2 ORDER BY CASE WHEN ISNULL(Admin,0) = 1 THEN 0 ELSE 1 END, Nombre", cn))
             {
                 cmd.Parameters.AddWithValue("@E", idEmpresa);
                 cn.Open();

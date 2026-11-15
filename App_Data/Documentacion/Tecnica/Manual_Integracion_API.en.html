@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Integration manual · BUFINS ingestion API</title>
+<title>BUFINS API manual</title>
 <style>
 :root{--bg:#f6f5fb;--card:#fff;--ink:#1c1738;--ink2:#5b5678;--line:#e3e0f1;--brand:#583aff;--chip:#efecff;--ok:#15803d;--warn:#a16207;--mid:#c2410c;--bad:#b91c1c;--code:#f1effa;--grad:linear-gradient(90deg,#6366F1 0%,#3B82F6 35%,#06B6D4 70%,#01E1D7 100%)}
 @media (prefers-color-scheme:dark){:root{--bg:#120a2b;--card:#1a1240;--ink:#efecff;--ink2:#a9a3cc;--line:#2d2460;--brand:#8f7bff;--chip:#271d5c;--ok:#3ddc97;--warn:#fbbf24;--mid:#fb923c;--bad:#ff7a6b;--code:#221852}}
@@ -28,324 +28,71 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 @media print{nav{display:none}.node,pre,.card,details{break-inside:avoid}}
 </style>
 </head><body>
-<header><div class="w"><h1>Integration manual · Ingestion API</h1><p>How to send BUFINS, from your company's accounting system, the same information that today comes in through the Excel template: steps, examples, security and response codes.</p></div></header>
-<nav><div class="w"><a href="#para">What it is for</a><a href="#como">How it works</a><a href="#empezar">Before you start</a><a href="#seguridad">Security</a><a href="#primeros">First steps</a><a href="#archivo">Option A: Excel template</a><a href="#hojas">Option B: JSON sheets</a><a href="#revision">Review and confirmation</a><a href="#referencia">Reference</a><a href="#errores">Error codes</a><a href="#buenas">Best practices</a><a href="#faq">FAQ</a></div></nav>
+<header><div class="w"><h1>Connect your system to BUFINS</h1><p>Send your accounting data to BUFINS from your own system, without uploading Excel by hand. This guide covers the essentials, step by step.</p></div></header>
+<nav><div class="w"><a href="#que">What it is</a><a href="#pasos">Start in 3 steps</a><a href="#hace">What it can do</a><a href="#errores">If something fails</a><a href="#seguridad">Security</a><a href="#avanzado">Advanced</a><a href="#faq">FAQ</a></div></nav>
 <main class="w">
+<section id="que"><h2>What it is</h2>
+<p class="lead">Each company has <b>its own API</b>: an <b>address</b> and an <b>access key</b>. Your system sends data to that address using the key, and BUFINS receives it with the usual checks: it is validated, a backup is saved before anything is replaced, and everything is logged. A person at your company reviews and confirms each upload, unless automatic confirmation is allowed.</p>
+<div class="flow"><div class="node">Your system</div><div class="node">Your BUFINS API<br><small>address + key</small></div><div class="node">Automatic checks</div><div class="node">A person confirms</div><div class="node">Reports updated</div></div>
+<div class="g2"><div class="card"><b>If you manage the company</b><p>Create the connection in <i>Settings → Connections → Connect a company</i>. You will get the address and the key to hand to your technical team.</p></div>
+<div class="card"><b>If you are on the technical team</b><p>You need the address and key given by the administrator. With those you can already send data; follow the three steps below.</p></div></div></section>
 
-<section id="para"><h2>1. What it is for</h2>
-<p class="lead">Today a person takes the numbers out of their accounting program, copies them into the Excel template and uploads it to BUFINS. The ingestion API lets <b>a program make that submission on its own</b>, without changing anything BUFINS already does with the data: it is validated with the same rules, a backup is kept before replacing anything and everything is audited.</p>
-<div class="g3">
-<div class="card"><b>For the client's IT team</b><ul><li>A REST API with JSON, one key per integration and an OpenAPI contract.</li><li>Ready-to-use examples in curl, PowerShell, Python and C#.</li></ul></div>
-<div class="card"><b>For the company administrator</b><ul><li>Creates and revokes keys in <i>Configuration → API integrations</i>.</li><li>Decides whether the integration can confirm, or whether a person always does.</li></ul></div>
-<div class="card"><b>For the accountant or analyst</b><ul><li>Reviews each submission in “Review load”, as with Excel.</li><li>Gets a bell-icon notification when a load is waiting.</li></ul></div></div>
-<p class="note info"><b>Important.</b> The API delivers the data; reports are updated when the models are run, just as today. A submission through the API skips no validation and never bypasses the rule of never leaving a year empty.</p></section>
-
-<section id="como"><h2>2. How it works</h2>
-<div class="flow"><div class="node">Client system</div><div class="node">BUFINS API<br><small>key + limits</small></div><div class="node">Staging and validation<br><small>same rules as Excel</small></div><div class="node">Review<br><small>a person</small></div><div class="node">Confirmation<br><small>prior backup</small></div><div class="node">Models and reports</div></div>
-<p class="lead">There are two ways to submit. Both end in the same place: a <b>load</b> waiting for review.</p>
-<div class="g2">
-<div class="card"><b>Option A · Complete Excel template</b><p>The client's program (or an agent watching a folder) uploads the same BUFINS template in a single call. It is the fastest to get running.</p><span class="tag ok">Recommended to start</span></div>
-<div class="card"><b>Option B · Sheets as JSON</b><p>The program opens a load, sends the data of each sheet as JSON (in batches if large) and closes it. No Excel needed.</p><span class="tag">For direct ERP integrations</span></div></div>
-<h3>What the API guarantees</h3>
-<ul><li><b>All or nothing.</b> A load only changes the real data when it is confirmed; until then it lives apart (staging).</li>
-<li><b>Backup and undo.</b> Before replacing, BUFINS saves the previous version; an administrator can undo from the version history.</li>
-<li><b>Golden rule.</b> No load can leave a year empty or reduce a table below the blocking threshold; a strong reduction is always confirmed by a person.</li>
-<li><b>A new submission replaces the pending one</b> from the same integration for the same company: unreviewed submissions do not pile up.</li></ul></section>
-
-<section id="empezar"><h2>3. Before you start: create the integration</h2>
-<p class="lead">The key is created by a company administrator (or a BUFINS one). It is done once for each system that will send data.</p>
+<section id="pasos"><h2>Start in 3 steps</h2>
 <ol class="steps">
-<li>Go to <b>Configuration → API integrations</b> and click <b>New integration</b>.</li>
-<li>Choose the <b>company</b>, type a <b>name</b> that identifies the system (for example “Siigo agent – accounting”) and choose the <b>technical user</b>. We recommend creating a dedicated user (“API integration”): the API's actions are recorded in the audit log under that name. It cannot be a Super Admin.</li>
-<li>Optional: enter the <b>allowed IPs</b> (the addresses the client will send from). With the list, the key only works from them.</li>
-<li>Leave “Allow the integration to confirm loads and run the models” <b>unchecked</b> during testing: that way every submission stays in “Review load” and a person confirms it.</li>
-<li>Click <b>Create</b>. BUFINS shows the <b>key only once</b>: copy it and store it in the client's secrets manager. If it is lost, a new one is generated.</li></ol>
-<p class="note"><b>Key format:</b> <code>bfk_xxxxxxxx_…</code> in production and <code>bft_xxxxxxxx_…</code> for testing. Treat it like a password: do not send it by email or keep it in source code.</p>
-<h3>Testing environment (sandbox)</h3>
-<p>Before connecting the real system, the client's team can develop and test with a <b>Testing</b> integration (the “Integration type” field when creating it). It uses a key that starts with <code>bft_</code> and works like a production one (same endpoints, same format, same validations, findings, impact and rules), with these differences:</p>
-<ul><li><b>Confirmation is a simulation.</b> <code>POST /cargues/{id}/confirmar</code> (or <code>confirmar=true</code>) runs all the checks, including the rule of never leaving a year empty and the strong-reduction check, and responds <code>ConfirmadoSimulado</code>. It replaces no data, saves no backup and the test load is discarded.</li>
-<li><b>Reviewers are not notified:</b> a test load creates work for nobody.</li>
-<li><b>They are short-lived and do not get in the way.</b> A test load is discarded on its own after a few hours and never prevents another person from loading the same company and year.</li>
-<li><b>It shows in every response:</b> they carry the header <code>X-Bufins-Entorno: pruebas</code> and <code>/ping</code> answers <code>"entorno": "pruebas"</code>.</li>
-<li><b>Its own technical user.</b> It cannot be the same user as a production integration.</li></ul>
-<p class="note info">Validations and impact are computed against the company's real data, <b>read-only</b>: that way tests catch the same problems the real submission would have. When everything works, the administrator creates the <b>Production</b> integration and the client only changes the key: the address is the same. If there is a real load pending review for the same year and mode, a test submission gets 409 <code>lote_activo</code>: confirm or discard that load, or test with another year.</p>
-<p><b>Monitoring.</b> On the same screen, the <b>Connection</b> column shows a traffic light in plain words (for example “All good”, “2 load(s) are waiting for your review” or “The last submission has errors”) and the <b>View activity</b> button opens the detail: last connection, latest submissions with their status and a link to “Review load”, model runs and webhook notifications. Each administrator only sees the integrations of their own company.</p>
-<p><b>Connection wizard.</b> The <b>Connection wizard</b> button on that screen guides non-technical users according to their case: <i>my system drops an Excel file in a folder</i> (generates the <code>agente.json</code> file already configured for the chosen integration, without the key, lets you download the <code>AgenteBufins.exe</code> program with its SHA-256 fingerprint to verify it, and explains the folder-agent steps), <i>my IT team will program it</i> (gives the API address, the manual, the tester and a ready-to-copy text to send to the technical team) or <i>I need help</i> (sends the request to the BUFINS team).</p>
-<p>The names of the sheets and columns each company accepts are always obtained with <code>GET /api/v1/esquemas</code> (section 5): a new custom sheet appears there with no API changes.</p></section>
+<li><b>Get the address and the key.</b> The address looks like this: <code>https://customers.bufins.com/api/v1/your-company</code>. The key starts with <code>bfk_</code> (live data) or <code>bft_</code> (testing only). Keep it like a password: it is shown only once.</li>
+<li><b>Check the connection.</b> It should answer “ok” and your company name.<pre><code>curl -H "Authorization: Bearer YOUR_KEY" https://customers.bufins.com/api/v1/your-company/ping</code></pre></li>
+<li><b>Send the data template.</b> It is the same BUFINS Excel file (year, type and file).<pre><code>curl -X POST https://customers.bufins.com/api/v1/your-company/cargues/archivo \
+  -H "Authorization: Bearer YOUR_KEY" \
+  -F "archivo=@template.xlsx" -F "anio=2026" -F "modo=ejecucion"</code></pre></li></ol>
+<p class="note ok"><b>Recommended.</b> Start with a <b>Just testing</b> connection (<code>bft_</code> key): it goes through the whole flow without changing any real data. When it works, the administrator creates the live-data connection and you only swap the key.</p>
+<p class="note info"><b>No coding.</b> You can try each call in the <b>Interactive tester</b> (<code>/api/v1/docs</code>) by pasting your key: no code needed.</p></section>
 
-<section id="seguridad"><h2>4. Security</h2>
-<div class="tw"><table><tr><th>Control</th><th>How it works</th></tr>
-<tr><td class="n">One key per integration</td><td>Each integration has its own key, tied to <b>a single company</b>. BUFINS does not store the key: only an irreversible fingerprint (SHA-256) and a prefix to locate it. It is shown only once.</td></tr>
-<tr><td class="n">Isolation</td><td>The company comes from the key, never from what the client sends. Each integration only sees and touches <b>its own</b> loads; if it asks for someone else's it gets “not found”.</td></tr>
-<tr><td class="n">HTTPS</td><td>Every call travels encrypted. The key is sent in the <code>Authorization: Bearer</code> header, never in the address (URL).</td></tr>
-<tr><td class="n">Allowed IPs</td><td>Optional per integration: outside those addresses the key is rejected (403).</td></tr>
-<tr><td class="n">Limits</td><td>120 calls per minute per integration; 20 attempts with a wrong key per IP in 10 minutes (then 429 with <code>Retry-After</code>).</td></tr>
-<tr><td class="n">Rotate and revoke</td><td>Rotating generates a new key and the old one stops working instantly. Revoking is permanent (create another integration if needed).</td></tr>
-<tr><td class="n">Human confirmation</td><td>By default a person confirms every load. Even with permission, the API <b>never</b> confirms a strong data reduction nor bypasses the rule of never leaving a year empty.</td></tr>
-<tr><td class="n">Signed webhook</td><td>Outgoing notifications are signed (HMAC-SHA256) with a secret shown only once; they are only sent over https to public addresses and do not follow redirects.</td></tr>
-<tr><td class="n">Testing environment</td><td><code>bft_</code> keys run the whole flow but their confirmation is a simulation: they never modify real data.</td></tr>
-<tr><td class="n">Audit</td><td>Every submission, confirmation, discard and change to the integration is recorded with the integration and its technical user. The key is never recorded.</td></tr></table></div>
-<p class="note bad"><b>If the key leaks:</b> go to API integrations and use <b>Generate new key</b> (or <b>Revoke</b>). The effect is immediate.</p></section>
+<section id="hace"><h2>What it can do</h2>
+<div class="tw"><table><tr><th>Purpose</th><th>Call</th></tr>
+<tr><td>Check the connection works</td><td class="f">GET /ping</td></tr>
+<tr><td>See which sheets and columns your company accepts</td><td class="f">GET /esquemas</td></tr>
+<tr><td>Send the complete Excel template</td><td class="f">POST /cargues/archivo</td></tr>
+<tr><td>See how an upload turned out (status, errors, impact)</td><td class="f">GET /cargues/{id}</td></tr>
+<tr><td>See the detail of what needs fixing</td><td class="f">GET /cargues/{id}/hallazgos</td></tr>
+<tr><td>Confirm or discard an upload (if the connection allows it)</td><td class="f">POST /cargues/{id}/confirmar · DELETE /cargues/{id}</td></tr>
+<tr><td>Recalculate models and reports</td><td class="f">POST /modelos/ejecutar → GET /ejecuciones/{id}</td></tr></table></div>
+<p>Each upload returns a number (<code>idLote</code>). Use it to check its status. If the upload ends <b>with errors</b>, the findings are shown so you can fix them and send again; the new upload replaces the pending one.</p>
+<p class="note"><b>Who confirms.</b> By default <b>a person</b> confirms in “Review upload” and gets a bell notification. The API never confirms on its own an upload that would leave a year empty or sharply shrink a table.</p></section>
 
-<section id="primeros"><h2>5. First steps: test the connection</h2>
-<p class="lead">The base address is <code>https://customers.bufins.com/api/v1</code>. Replace <code>bfk_…</code> with your key.</p>
-<h3>Check the key</h3>
-<pre><code>curl -H "Authorization: Bearer bfk_..." https://customers.bufins.com/api/v1/ping</code></pre>
-<pre><code>{ "estado": "ok", "version": "1", "entorno": "produccion", "integracion": "Siigo agent", "idEmpresa": 6,
-  "empresa": "My Company Inc.", "permiteConfirmar": false }</code></pre>
-<h3>Get the sheets and columns your company accepts</h3>
-<pre><code>curl -H "Authorization: Bearer bfk_..." https://customers.bufins.com/api/v1/esquemas</code></pre>
-<pre><code>{ "hojas": [
-  { "hoja": "Z_SheetName", "tabla": "Ini_TableName",
-    "columnas": [
-      { "nombre": "Cuenta", "tipo": "texto",  "longitudMaxima": 50, "admiteVacio": false },
-      { "nombre": "Año",    "tipo": "numero", "longitudMaxima": null, "admiteVacio": false } ] } ] }</code></pre>
-<p class="note info">The names in the example are illustrative: <b>the real ones always come from <code>/esquemas</code></b>. The types are <code>texto</code> (text), <code>numero</code> (number), <code>fecha</code> (date) and <code>booleano</code> (boolean). Field and property names in the API are in Spanish.</p>
-<h3>OpenAPI contract</h3>
-<p>The full contract is at <code>/api/v1/openapi.json</code> (no key). You can import it into Postman or generate a client in your language.</p>
-<h3>Interactive tester</h3>
-<p>At <code>/api/v1/docs</code> there is an <b>interactive tester</b> (Swagger): it lists every call, lets you fill in the fields, upload a file and see the response, without programming. Press <b>Authorize</b> and paste the key (only the key, without “Bearer”). <b>Use it with a testing key (<code>bft_…</code>)</b>: with a production one the calls are real.</p></section>
+<section id="errores"><h2>If something fails</h2>
+<p class="lead">Every error response carries a code and a message in Spanish (or English with <code>?idioma=en</code>).</p>
+<div class="tw"><table><tr><th>Code</th><th>What it means</th><th>What to do</th></tr>
+<tr><td class="f">401 no_autorizado</td><td>The key is missing, wrong or cancelled.</td><td>Check the key; ask the administrator for a new one.</td></tr>
+<tr><td class="f">403 ip_no_permitida</td><td>That key can only be used from certain IP addresses.</td><td>Use the authorized server or ask to extend the list.</td></tr>
+<tr><td class="f">404 direccion_no_corresponde</td><td>The address belongs to another company.</td><td>Use the address given in the message.</td></tr>
+<tr><td class="f">404 lote_no_encontrado</td><td>That upload does not exist or is not from your connection.</td><td>Check the <code>idLote</code> number.</td></tr>
+<tr><td class="f">409 lote_activo</td><td>A live upload is already waiting for review for that year and type.</td><td>Have a person confirm or discard it.</td></tr>
+<tr><td class="f">422 solicitud_invalida</td><td>A value is missing or the file is not valid.</td><td>Read the message: it says what to fix.</td></tr>
+<tr><td class="f">429</td><td>Too many calls (limit: 120 per minute) or too many attempts with a wrong key.</td><td>Wait a moment and retry.</td></tr></table></div></section>
 
-<section id="archivo"><h2>6. Option A · Upload the Excel template</h2>
-<p class="lead">Equivalent to uploading the file in “Excel load”. The file must be your company's BUFINS template with <b>all</b> its sheets (it is downloaded from that same screen).</p>
-<div class="tw"><table><tr><th>Field</th><th>Required</th><th>Description</th></tr>
-<tr><td class="f">archivo</td><td>Yes</td><td>The template (.xlsx or .xlsm).</td></tr>
-<tr><td class="f">anio</td><td>Yes</td><td>Year of the data, for example 2026. It must be the company's configured execution year or a historical year.</td></tr>
-<tr><td class="f">modo</td><td>Yes</td><td><code>ejecucion</code> (current year) or <code>historico</code> (historical).</td></tr>
-<tr><td class="f">idEscenario</td><td>No</td><td>Data scenario; 1 by default.</td></tr>
-<tr><td class="f">confirmar</td><td>No</td><td><code>true</code> asks to confirm when done. Only honored if the integration has permission and the load came out clean.</td></tr></table></div>
-<p>We recommend sending the <code>Idempotency-Key</code> header with a unique identifier for the submission (section 11).</p>
-<details open><summary>curl</summary><pre><code>curl -X POST https://customers.bufins.com/api/v1/cargues/archivo \
-  -H "Authorization: Bearer bfk_..." \
-  -H "Idempotency-Key: 2026-10-close-001" \
-  -F "archivo=@PlantillaBUFINS.xlsx" -F "anio=2026" -F "modo=ejecucion"</code></pre></details>
-<details><summary>PowerShell</summary><pre><code>$h = @{ Authorization = "Bearer bfk_..."; "Idempotency-Key" = "2026-10-close-001" }
-$form = @{ archivo = Get-Item .\PlantillaBUFINS.xlsx; anio = 2026; modo = "ejecucion" }
-Invoke-RestMethod -Method Post -Uri "https://customers.bufins.com/api/v1/cargues/archivo" -Headers $h -Form $form</code></pre></details>
-<details><summary>Python</summary><pre><code>import requests
-r = requests.post("https://customers.bufins.com/api/v1/cargues/archivo",
-    headers={"Authorization": "Bearer bfk_...", "Idempotency-Key": "2026-10-close-001"},
-    files={"archivo": open("PlantillaBUFINS.xlsx", "rb")},
-    data={"anio": 2026, "modo": "ejecucion"})
-print(r.status_code, r.json())</code></pre></details>
-<details><summary>C#</summary><pre><code>using var http = new HttpClient { BaseAddress = new Uri("https://customers.bufins.com/api/v1/") };
-http.DefaultRequestHeaders.Authorization = new("Bearer", "bfk_...");
-http.DefaultRequestHeaders.Add("Idempotency-Key", "2026-10-close-001");
-using var form = new MultipartFormDataContent {
-    { new StreamContent(File.OpenRead("PlantillaBUFINS.xlsx")), "archivo", "PlantillaBUFINS.xlsx" },
-    { new StringContent("2026"), "anio" }, { new StringContent("ejecucion"), "modo" } };
-var resp = await http.PostAsync("cargues/archivo", form);
-Console.WriteLine(await resp.Content.ReadAsStringAsync());</code></pre></details>
-<h3>Response (201)</h3>
-<pre><code>{ "repetido": false, "confirmacion": "no_solicitada", "confirmado": null,
-  "lote": { "idLote": 236, "estado": "ValidadoOk", "anio": 2026, "modo": "ejecucion", "idEscenario": 1,
-            "archivo": "PlantillaBUFINS.xlsx", "totalFilas": 18450, "totalErrores": 0, "totalAdvertencias": 0,
-            "puedeConfirmar": true, "fechaCreacion": "2026-11-14T08:12:03Z" },
-  "urlRevision": "/Datos/RevisarCargue?idLote=236" }</code></pre>
-<p>The load is left <b>pending review</b>. If there is already a pending load from <b>another person</b> (one that can be confirmed) for the same company, year, mode and scenario, the API responds 409 <code>lote_activo</code> with the existing <code>idLote</code>; it must be confirmed or discarded first.</p>
-<h3>Folder agent: automatic submission without programming</h3>
-<p>If the client's accounting system can drop the Excel template into a folder (or someone copies it there), nothing needs to be programmed: the <b>BUFINS agent</b> (<code>AgenteBufins.exe</code>, a single file, no .NET to install) watches that folder and uploads each file through this same API. <b>It only makes outgoing https connections</b>: no port is opened on the client's server. BUFINS provides the agent on request.</p>
-<ol class="steps">
-<li>Copy <code>AgenteBufins.exe</code> and <code>agente.ejemplo.json</code> to a folder on the server (for example <code>C:\BUFINS\Agente</code>), rename the example to <code>agente.json</code> and adjust it: the <b>folder</b> to watch (for example <code>C:\BUFINS\Entrada</code>), the year, the mode and the scenario.</li>
-<li>Store the integration key: <code>AgenteBufins.exe --guardar-clave</code>. It is saved encrypted in <code>clave.dat</code> and can only be read by that machine (the <code>BUFINS_CLAVE</code> environment variable is also supported). The key is never written to <code>agente.json</code> or to the logs.</li>
-<li>Check the connection: <code>AgenteBufins.exe --probar</code> shows the integration, the company and whether the environment is testing or production.</li>
-<li>Put it to work: as a <b>Windows service</b> (<code>sc.exe create BufinsAgente binPath= "C:\BUFINS\Agente\AgenteBufins.exe" start= auto</code> and then <code>sc.exe start BufinsAgente</code>) or with the <b>Task Scheduler</b> running <code>AgenteBufins.exe --una-vez</code> at each close.</li></ol>
-<pre><code>{ "url": "https://customers.bufins.com/api/v1",
-  "carpeta": "C:\\BUFINS\\Entrada",
-  "anio": "actual", "modo": "ejecucion", "idEscenario": 1,
-  "confirmar": false, "ejecutarModelos": false,
-  "intervaloSegundos": 60, "estableSegundos": 30 }</code></pre>
-<div class="tw"><table><tr><th>What happens to each file</th><th>Result</th></tr>
-<tr><td>BUFINS accepts it</td><td>It moves to <code>procesados\</code> together with the response (<code>.resultado.json</code>). It stays pending review, or confirmed if the integration may and <code>"confirmar": true</code>.</td></tr>
-<tr><td>It has validation errors</td><td>It moves to <code>errores\</code> with the load reference. Fix the Excel and copy it into the folder again.</td></tr>
-<tr><td>BUFINS rejects it (incomplete template, year not configured…)</td><td>It moves to <code>errores\</code> with the reason in a <code>.error.txt</code> file.</td></tr>
-<tr><td>Temporary failure (no network, 429, 5xx) or there is a pending load from another person</td><td>The file is left in place and <b>retried</b> with increasing wait (up to 30 minutes).</td></tr>
-<tr><td>Invalid key or IP not allowed</td><td>The agent pauses for 10 minutes and <b>moves no file</b>.</td></tr></table></div>
-<ul><li><b>Year and mode in the name.</b> A file named <code>2026_historico_cierre.xlsx</code> is sent as year 2026, historical mode; if the name does not carry them, those in <code>agente.json</code> are used.</li>
-<li><b>It does not send half-copied files.</b> It ignores Excel temporaries (<code>~$…</code>) and waits until the file has gone 30 seconds without changes and is not open in another program.</li>
-<li><b>No duplicates.</b> It uses the content fingerprint as the <code>Idempotency-Key</code>: copying the same file again does not create another load.</li>
-<li><b>Models.</b> With <code>"ejecutarModelos": true</code>, after a confirmed load it asks for the reports to be recalculated and waits for the result (same confirm permission).</li>
-<li><b>Logs.</b> They are kept in the <code>logs\</code> folder next to the agent (30 days). If the watched folder is on the network, the service must run with an account that can access it (the “Local System” account cannot see network drives). Restrict access to the agent's folder: anyone who can read it can use its key.</li></ul>
-</section>
+<section id="seguridad"><h2>Security</h2>
+<ul><li><b>A key opens only its own company.</b> It cannot see or touch another company's data, even if it knows an upload number.</li>
+<li>The key is shown <b>only once</b> and BUFINS does not store it in clear. If it is lost or leaked, the administrator generates a new one and the old one stops working instantly.</li>
+<li>Store it in your company's secrets system; never in code or open emails.</li>
+<li>The administrator can restrict the key to certain IP addresses and cancel the connection at any time.</li>
+<li>Everything is audited: who sent what, when, and the result.</li></ul></section>
 
-<section id="hojas"><h2>7. Option B · Sheets as JSON</h2>
-<p class="lead">Three steps: open the load, send each sheet and validate.</p>
-<h3>Step 1 · Open the load</h3>
-<pre><code>POST /api/v1/cargues
-{ "anio": 2026, "modo": "ejecucion", "idEscenario": 1, "referencia": "October close" }</code></pre>
-<p>Responds 201 with the <code>idLote</code>. <code>referencia</code> is free text that BUFINS shows as the “file”.</p>
-<h3>Step 2 · Send each sheet</h3>
-<pre><code>POST /api/v1/cargues/236/hojas/Z_SheetName
-{ "filas": [
-    { "Cuenta": "110505", "Año": 2026, "Mes": 1, "Valor": 1250000.5 },
-    { "Cuenta": "110510", "Año": 2026, "Mes": 1, "Valor": 980000 } ],
-  "reemplazar": false }</code></pre>
-<pre><code>{ "idLote": 236, "hoja": "Z_SheetName", "tabla": "Ini_TableName",
-  "filasRecibidas": 2, "filasGuardadas": 2, "filasOmitidasPorAnio": 0, "filasEnHoja": 2, "aviso": null }</code></pre>
-<ul><li><b>Send every sheet of your company</b> (those in <code>/esquemas</code>), <b>even if one has no rows</b> (<code>"filas": []</code>). Confirming replaces the year's data: a forgotten sheet would wipe its data, which is why closing requires it.</li>
-<li><b>Batches.</b> A large sheet is sent in several calls (maximum 50,000 rows per call); rows are added up. With <code>"reemplazar": true</code> what was sent before for that sheet is discarded and it starts over.</li>
-<li><b>All or nothing.</b> If a row in the call has an invalid value, no row of that call is saved and the response indicates the row and column.</li>
-<li><b>Year.</b> Rows whose year does not match the load's year are skipped and reported in <code>filasOmitidasPorAnio</code> (same as Excel).</li>
-<li><b>Values.</b> Number → JSON number; text → text; Yes/No → <code>true</code>/<code>false</code>; dates → text <code>YYYY-MM-DD</code>; empty → <code>null</code>. Objects and lists inside a row are not accepted. The <code>Año</code> column is also accepted as <code>Anio</code>.</li></ul>
-<h3>Step 3 · Validate</h3>
-<pre><code>POST /api/v1/cargues/236/validar</code></pre>
-<p>Checks that all sheets were sent and runs the same validations as Excel. Responds with the load status (same shape as Option A). If a sheet is missing: 422 <code>hojas_faltantes</code> with the list. <b>Every time rows are added you must validate again</b> before it can be confirmed.</p>
-<details><summary>Complete example in Python</summary><pre><code>import requests
-BASE = "https://customers.bufins.com/api/v1"
-H = {"Authorization": "Bearer bfk_..."}
+<section id="avanzado"><h2>Advanced</h2>
+<details><summary>Send by sheets instead of an Excel file</summary>
+<p>For systems that cannot produce the file: open the upload with <code>POST /cargues</code> (<code>{"anio":2026,"modo":"ejecucion"}</code>), send each sheet with <code>POST /cargues/{idLote}/hojas/{hoja}</code> (<code>{"filas":[{"Column":value}]}</code>) and close it with <code>POST /cargues/{idLote}/validar</code>. You must declare <b>all</b> of the company's sheets (with <code>"filas":[]</code> if there is no data); the exact names come from <code>GET /esquemas</code>. The result is identical to the Excel.</p></details>
+<details><summary>Automatic notices (so your system finds out by itself)</summary>
+<p>The administrator can register an https address of your system under <i>More options → Automatic notices</i>. BUFINS will notify it when an upload is <b>confirmed</b>, <b>discarded</b> or the <b>models</b> finish. Each notice carries the <code>X-Bufins-Signature</code> header (HMAC-SHA256 signature of the text <code>time.body</code> with the secret shown when they are enabled) so you can verify it comes from BUFINS. If your system does not answer, it is retried 3 times. Not needed to get started: you can also check the status whenever you like.</p></details>
+<details><summary>Avoid duplicate uploads</summary>
+<p>If you add the <code>Idempotency-Key</code> header (a unique text per upload), resending the same file after a network cut does not duplicate the upload: BUFINS returns the original one with <code>"repetido": true</code>.</p></details>
+<details><summary>Technical contract and tools</summary>
+<p>The full contract is at <code>/api/v1/openapi.json</code> (importable in Postman). The interactive tester is at <code>/api/v1/docs</code>.</p></details></section>
 
-lote = requests.post(f"{BASE}/cargues", headers={**H, "Idempotency-Key": "2026-10-close"},
-                     json={"anio": 2026, "modo": "ejecucion", "referencia": "October close"}).json()
-id_lote = lote["lote"]["idLote"]
+<section id="faq"><h2>FAQ</h2>
+<details><summary>Why does the address include my company name?</summary><p>So it is obvious whose connection it is and to prevent mix-ups: if you use one company's key with another company's address, BUFINS answers with the right address.</p></details>
+<details><summary>Do reports update when I send data?</summary><p>The upload delivers and validates the data; once confirmed it is loaded. Reports update when the models run, as today (this can also be requested through the API).</p></details>
+<details><summary>Can I keep using Excel?</summary><p>Yes. The API and manual upload coexist and use exactly the same rules.</p></details>
+<details><summary>Where do I see what my system has sent?</summary><p>In <i>Connections → View uploads</i>: each upload with its date, result and, if it is waiting for review, a direct link to review it.</p></details></section>
 
-esquemas = requests.get(f"{BASE}/esquemas", headers=H).json()["hojas"]
-for hoja in esquemas:
-    filas = get_rows_from_erp(hoja["hoja"])              # your function: list of dictionaries
-    for i in range(0, max(len(filas), 1), 20000):        # batches of 20,000
-        r = requests.post(f"{BASE}/cargues/{id_lote}/hojas/{hoja['hoja']}", headers=H,
-                          json={"filas": filas[i:i+20000], "reemplazar": i == 0})
-        r.raise_for_status()
-
-res = requests.post(f"{BASE}/cargues/{id_lote}/validar", headers=H).json()
-print(res["lote"]["estado"], res["lote"]["totalErrores"], "errors")</code></pre></details></section>
-
-<section id="revision"><h2>8. Review and confirmation</h2>
-<p class="lead">After submission, the load has a status. It is queried with <code>GET /cargues/{idLote}</code>.</p>
-<div class="tw"><table><tr><th>Status</th><th>What it means</th><th>What next</th></tr>
-<tr><td><span class="tag">EnValidacion</span></td><td>Being filled (Option B) or not yet validated.</td><td>Send sheets and call <code>validar</code>.</td></tr>
-<tr><td><span class="tag ok">ValidadoOk</span></td><td>No errors or warnings.</td><td>Review and confirmation.</td></tr>
-<tr><td><span class="tag warn">ConAdvertencias</span></td><td>Can be confirmed, but there are warnings to review.</td><td>A person decides in “Review load”.</td></tr>
-<tr><td><span class="tag bad">ConErrores</span></td><td>Cannot be confirmed.</td><td>Fix the data and send again (see findings).</td></tr>
-<tr><td><span class="tag ok">Confirmado</span></td><td>The data has replaced the previous data.</td><td>Run the models to update reports.</td></tr>
-<tr><td><span class="tag">Descartado</span></td><td>Cancelled without touching data.</td><td>Send again if needed.</td></tr></table></div>
-<h3>Findings</h3>
-<p><code>GET /cargues/{idLote}/hallazgos?max=200</code> returns, for each problem, the sheet, row, column, rule, a message and a suggestion, plus the real total per rule. Add <code>?idioma=en</code> for English.</p>
-<h3>Impact</h3>
-<p><code>GET /cargues/{idLote}</code> includes how many rows exist today and how many the load would bring, per table. <code>requiereRevisionHumana</code> indicates a strong reduction (always confirmed by a person) and <code>bloqueado</code> that it cannot be confirmed (golden rule).</p>
-<h3>Who confirms</h3>
-<div class="g2">
-<div class="card"><b>A person (default)</b><p>The load stays waiting. The company's administrators get a bell-icon notification with the link to “Review load”, where they can review it and confirm or discard it.</p></div>
-<div class="card"><b>The integration (if allowed)</b><p>With <code>confirmar=true</code> when uploading or validating, or with <code>POST /cargues/{id}/confirmar</code>. It only confirms loads without warnings or strong reductions; in all other cases it stays pending and notifies a person.</p></div></div>
-<h3>Updating the reports: running the models</h3>
-<p>Reports are fed by the models. After confirming a load, an integration with permission can ask for them to be <b>recalculated</b>: <code>POST /modelos/ejecutar</code>. Since the calculation can take minutes, the API answers <b>202</b> right away with an <code>idEjecucion</code> and the models run <b>in the background</b>, one after another; check progress with <code>GET /ejecuciones/{idEjecucion}</code> until the status is <code>Completada</code> or <code>ConErrores</code>.</p>
-<pre><code>POST /api/v1/modelos/ejecutar
-{ "idEscenario": 1 }                      (the body is optional; scenario 1 by default)
-
-HTTP 202
-{ "idEjecucion": 41, "estado": "EnCurso", "sandbox": false, "urlEstado": "/api/v1/ejecuciones/41" }</code></pre>
-<pre><code>GET /api/v1/ejecuciones/41
-{ "idEjecucion": 41, "estado": "EnCurso", "idEscenario": 1, "inicio": "2026-11-14T09:00:02Z", "fin": null,
-  "modelos": [ { "modelo": "PYG",     "estado": "Completado", "mensaje": "Ejecutado correctamente.", "segundos": 8.4 },
-               { "modelo": "Balance", "estado": "EnCurso",    "mensaje": null,                        "segundos": null } ] }</code></pre>
-<ul><li><b>Statuses:</b> <code>EnCurso</code> (running), <code>Completada</code> (completed), <code>ConErrores</code> (with errors), <code>Interrumpida</code> (the site restarted during the calculation: run them again) and <code>Simulada</code> (testing).</li>
-<li><b>One at a time.</b> There can only be one run per company and scenario; another call gets 409 <code>ejecucion_en_curso</code> with the <code>idEjecucion</code> that is running.</li>
-<li><b>One error does not stop the others.</b> If a model fails, the rest run and the per-model detail carries its message; the company's administrators get a notification.</li>
-<li><b>Permission.</b> It is the same one as confirming loads; without it, 403 <code>permiso_modelos</code>. A testing integration runs nothing (it answers <code>Simulada</code>).</li></ul>
-<h3>Automatic notifications (webhook)</h3>
-<p>Instead of polling again and again, BUFINS can <b>notify your system</b> when something happens. The administrator goes to <i>API integrations</i>, clicks the integration's <b>Webhook</b> button and enters your system's URL (https); BUFINS generates a <b>secret</b> (shown only once) and from then on sends a signed JSON <code>POST</code> to that URL.</p>
-<div class="tw"><table><tr><th>Event</th><th>When it is sent</th></tr>
-<tr><td class="f">cargue.confirmado</td><td>A load from the integration is confirmed: whether by the integration itself or by <b>a person in “Review load”</b> (the most common case). In testing it arrives with <code>"simulado": true</code>.</td></tr>
-<tr><td class="f">cargue.descartado</td><td>A load from the integration is discarded (by a person or by <code>DELETE /cargues/{id}</code>).</td></tr>
-<tr><td class="f">modelos.completados</td><td>A model run finished (status <code>Completada</code> or <code>ConErrores</code>), with the per-model detail.</td></tr>
-<tr><td class="f">webhook.prueba</td><td>The administrator clicked “Send test” to verify the receiver.</td></tr></table></div>
-<pre><code>POST https://your-system.com/bufins/webhook
-X-Bufins-Event: cargue.confirmado
-X-Bufins-Delivery: 7c1f2b3e-5a1d-4c0e-9a77-3f1c2d4e5f60
-X-Bufins-Signature: t=1763128311,v1=5b2c...e91a
-Content-Type: application/json
-
-{ "id": "7c1f2b3e-5a1d-4c0e-9a77-3f1c2d4e5f60", "evento": "cargue.confirmado", "fecha": "2026-11-14T14:05:11Z", "sandbox": false,
-  "integracion": { "id": 3, "nombre": "Agente Siigo" },
-  "datos": { "idLote": 236, "anio": 2026, "modo": "ejecucion", "idEscenario": 1, "archivo": "PlantillaBUFINS.xlsx",
-             "filas": 18450, "simulado": false, "confirmadoPor": "persona",
-             "hojas": [ { "hoja": "Z_NombreDeLaHoja", "tabla": "Ini_NombreDeLaTabla", "filas": 1200 } ] } }</code></pre>
-<h3>Verifying the signature</h3>
-<p>Every notification carries the header <code>X-Bufins-Signature: t={unix seconds},v1={signature}</code>, where the signature is the hexadecimal <b>HMAC-SHA256</b> of <code>t + "." + body</code> using the secret. <b>Always verify it</b> before trusting the notification, using the exact body received (not reformatted), and reject those older than 5 minutes.</p>
-<details open><summary>Python</summary><pre><code>import hmac, hashlib, time
-
-def verificar(secreto: str, cuerpo: bytes, cabecera: str) -&gt; bool:
-    p = dict(x.split("=", 1) for x in cabecera.split(","))        # "t=...,v1=..."
-    if abs(time.time() - int(p["t"])) &gt; 300:                       # reject old notifications (anti-replay)
-        return False
-    esperado = hmac.new(secreto.encode(), p["t"].encode() + b"." + cuerpo, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(esperado, p["v1"])</code></pre></details>
-<details><summary>C#</summary><pre><code>static bool Verificar(string secreto, string cuerpo, string cabecera)
-{
-    var p = cabecera.Split(',').Select(x =&gt; x.Split('=', 2)).ToDictionary(x =&gt; x[0], x =&gt; x[1]);
-    if (Math.Abs(DateTimeOffset.UtcNow.ToUnixTimeSeconds() - long.Parse(p["t"])) &gt; 300) return false;
-    var esperado = Convert.ToHexString(HMACSHA256.HashData(
-        Encoding.UTF8.GetBytes(secreto), Encoding.UTF8.GetBytes(p["t"] + "." + cuerpo))).ToLowerInvariant();
-    return CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(esperado), Encoding.ASCII.GetBytes(p["v1"]));
-}</code></pre></details>
-<ul><li><b>Answer with a 2xx within 15 seconds</b> and process afterwards. Any other response is considered failed.</li>
-<li><b>Retries:</b> up to 3 attempts (immediate, after 30 seconds and after 5 minutes). If all fail it is left as <i>Failed</i> on the integration screen; pending ones are resumed with the API's next activity.</li>
-<li><b>It may arrive repeated.</b> Use <code>X-Bufins-Delivery</code> (or the <code>id</code> field) to ignore notifications you already processed.</li>
-<li><b>Safe destination.</b> Only https and public internet addresses: BUFINS does not send to internal networks, nor follow redirects.</li>
-<li><b>Lost secret:</b> “Generate new secret” invalidates the old one instantly; update your system.</li></ul>
-<p class="note info"><b>In the testing environment</b> confirmation is simulated: the response carries <code>"estado": "ConfirmadoSimulado"</code> (or <code>"confirmacion": "simulado"</code> when uploading with <code>confirmar=true</code>) and the test load is discarded without touching data.</p>
-<p class="note ok">Before replacing, BUFINS automatically saves the previous version. If a confirmed load turns out to be wrong, an administrator can undo it from the <b>Version history</b>.</p></section>
-
-<section id="referencia"><h2>9. Endpoint reference</h2>
-<div class="tw"><table><tr><th>Method and path</th><th>What it does</th></tr>
-<tr><td class="f">GET /openapi.json</td><td>OpenAPI contract (no key).</td></tr>
-<tr><td class="f">GET /manual</td><td>This manual (no key).</td></tr>
-<tr><td class="f">GET /ping</td><td>Checks the key and returns the integration and company.</td></tr>
-<tr><td class="f">GET /esquemas</td><td>Sheets and columns the company accepts.</td></tr>
-<tr><td class="f">POST /cargues/archivo</td><td>Option A: uploads the Excel template (multipart).</td></tr>
-<tr><td class="f">POST /cargues</td><td>Option B, step 1: opens an empty load (JSON).</td></tr>
-<tr><td class="f">POST /cargues/{idLote}/hojas/{hoja}</td><td>Option B, step 2: adds the rows of a sheet (JSON).</td></tr>
-<tr><td class="f">POST /cargues/{idLote}/validar</td><td>Option B, step 3: closes and validates.</td></tr>
-<tr><td class="f">GET /cargues/{idLote}</td><td>Load status and impact.</td></tr>
-<tr><td class="f">GET /cargues/{idLote}/hallazgos</td><td>Validation errors and warnings.</td></tr>
-<tr><td class="f">POST /cargues/{idLote}/confirmar</td><td>Confirms (only integrations with permission).</td></tr>
-<tr><td class="f">DELETE /cargues/{idLote}</td><td>Discards a pending load.</td></tr>
-<tr><td class="f">POST /modelos/ejecutar</td><td>Recalculates the models in the background (202); requires the confirm permission.</td></tr>
-<tr><td class="f">GET /ejecuciones/{idEjecucion}</td><td>Progress of a model run, with per-model detail.</td></tr></table></div>
-<p>All paths hang from <code>/api/v1</code> and, except <code>openapi.json</code> and <code>manual</code>, require the <code>Authorization: Bearer</code> header. Responses are JSON; errors have the form <code>{ "error": { "codigo": "…", "mensaje": "…" } }</code>. Messages come in Spanish by default (use <code>?idioma=en</code> or <code>Accept-Language: en</code> for English).</p></section>
-
-<section id="errores"><h2>10. Error codes</h2>
-<p class="lead">Use the <code>codigo</code> (stable) to decide what to do; the <code>mensaje</code> is for people.</p>
-<div class="tw"><table><tr><th>HTTP</th><th>codigo</th><th>What it means and what to do</th></tr>
-<tr><td>401</td><td class="f">no_autorizado</td><td>The key is missing, wrong or revoked. Check the integration.</td></tr>
-<tr><td>403</td><td class="f">ip_no_permitida</td><td>The key cannot be used from this IP. Ask for it to be added to the integration.</td></tr>
-<tr><td>403</td><td class="f">confirmacion_humana</td><td>The integration cannot confirm: a person does it in “Review load”.</td></tr>
-<tr><td>429</td><td class="f">limite_de_llamadas · demasiados_intentos</td><td>Too many calls or attempts. Wait as indicated by <code>Retry-After</code>.</td></tr>
-<tr><td>503</td><td class="f">api_no_configurada</td><td>The API is not yet enabled in the environment.</td></tr>
-<tr><td>400</td><td class="f">json_invalido · formato_invalido · archivo_requerido · anio_invalido · escenario_invalido · fila_invalida · valor_no_soportado · idempotency_key_invalida</td><td>The request is malformed. Fix its shape and retry.</td></tr>
-<tr><td>404</td><td class="f">lote_no_encontrado</td><td>The load does not exist or was not created by this integration.</td></tr>
-<tr><td>409</td><td class="f">lote_activo</td><td>There is a pending load from another person for the same company, year, mode and scenario (<code>idLote</code> in the response). It must be confirmed or discarded first.</td></tr>
-<tr><td>409</td><td class="f">lote_no_disponible · ya_confirmado · no_confirmable</td><td>The load was already confirmed or discarded, or its status does not allow the operation.</td></tr>
-<tr><td>409</td><td class="f">requiere_revision_humana</td><td>It is a strong data reduction: a person must confirm it.</td></tr>
-<tr><td>409</td><td class="f">bloqueado_regla_de_oro</td><td>It would leave a year empty or a table under the blocking threshold. Nobody can confirm it: check the file or the year.</td></tr>
-<tr><td>422</td><td class="f">solicitud_invalida</td><td>Invalid company, year, mode or file (the message says which).</td></tr>
-<tr><td>422</td><td class="f">plantilla_incompleta · error_en_hoja · archivo_no_procesable</td><td>The Excel does not have all the sheets, a sheet has an invalid value, or it is not a valid template.</td></tr>
-<tr><td>422</td><td class="f">hoja_no_soportada · columna_desconocida · demasiadas_filas · datos_invalidos</td><td>The sheet or column does not exist for the company (see <code>/esquemas</code>), the per-call maximum was exceeded or a value is invalid.</td></tr>
-<tr><td>422</td><td class="f">hojas_faltantes · sin_filas_del_anio</td><td>Sheets are missing (even empty ones must be sent) or the load has no rows for the year.</td></tr>
-<tr><td>403</td><td class="f">permiso_modelos</td><td>The integration cannot run models (same permission as confirming). Ask the administrator.</td></tr>
-<tr><td>404</td><td class="f">ejecucion_no_encontrada</td><td>The run does not exist or was not started by this integration.</td></tr>
-<tr><td>409</td><td class="f">ejecucion_en_curso</td><td>Models are already running for that company and scenario (<code>idEjecucion</code> in the response). Wait for it to finish.</td></tr>
-<tr><td>422</td><td class="f">escenario_no_disponible · sin_modelos</td><td>The scenario does not exist or is inactive, or there are no active models.</td></tr>
-<tr><td>500</td><td class="f">error_interno</td><td>Server error. Retry; if it persists, tell support the time of the call.</td></tr></table></div></section>
-
-<section id="buenas"><h2>11. Best practices</h2>
-<div class="g2">
-<div class="card"><b>Repeat without duplicating</b><p>Send <code>Idempotency-Key</code> on <code>POST /cargues</code> and <code>/cargues/archivo</code>, with a unique value per logical submission (for example “company-year-month-sequence”). If the call is repeated because of a network failure, BUFINS returns the load already created (<code>"repetido": true</code>) instead of creating another. The key is remembered for 7 days.</p></div>
-<div class="card"><b>Frequency</b><p>One submission daily, weekly or monthly is enough: the information is financial, not transactional. Each submission carries the <b>full year to date</b> and replaces the previous one; repeating it does not duplicate data.</p></div>
-<div class="card"><b>Retries</b><p>On 429 or 5xx wait and retry with the same <code>Idempotency-Key</code>. On 4xx fix first: retrying unchanged will not solve it.</p></div>
-<div class="card"><b>How long a load lasts</b><p>A load waiting for review is kept for 48 hours; one being filled by sheets, 6 hours. After that it is discarded and must be sent again.</p></div>
-<div class="card"><b>Size</b><p>The template can weigh up to 100 MB. In Option B use batches of 20,000 rows or fewer per call (the maximum is 50,000).</p></div>
-<div class="card"><b>Testing</b><p>Develop first with a <b>Testing</b> integration (<code>bft_</code> key): it runs the whole flow without touching real data. Once in production, start with human confirmation active and compare the results with Excel for a few closes before asking for the integration to confirm on its own.</p></div></div></section>
-
-<section id="faq"><h2>12. Frequently asked questions</h2>
-<details><summary>Do I have to stop using Excel?</summary><p>No. Excel keeps working at all times, through the same door and with the same validations. The API is an alternative; you can alternate them.</p></details>
-<details><summary>What happens if I send the same thing twice?</summary><p>With the same <code>Idempotency-Key</code> BUFINS does not duplicate it. Without it, the second submission replaces the first if it was still pending; if the first was already confirmed, the second is reviewed and replaces the year's data, like a new Excel load.</p></details>
-<details><summary>Why “cannot be confirmed”?</summary><p>Check <code>/cargues/{id}/hallazgos</code>. If it has errors the data must be fixed; if the impact shows <code>bloqueado</code>, the file would leave a year empty or a table almost empty and BUFINS prevents it for everyone.</p></details>
-<details><summary>Does the API update the reports?</summary><p>A confirmed load leaves the data ready; reports read the results of the models. An integration with permission recalculates them with <code>POST /modelos/ejecutar</code>; otherwise they are run in “Model execution”, as always.</p></details>
-<details><summary>How do I find out when a person confirms the load?</summary><p>Configure a webhook: BUFINS sends you <code>cargue.confirmado</code> as soon as someone confirms it in “Review load”. If you cannot receive notifications, poll <code>GET /cargues/{id}</code> from time to time.</p></details>
-<details><summary>Can I see the loads of another integration or of the company's people?</summary><p>No. Each integration only sees the loads it created itself. People see them in “Review load”.</p></details>
-<details><summary>I lost the key, what do I do?</summary><p>An administrator goes to API integrations and clicks “Generate new key”. The old one stops working instantly; set the new one in the client's system.</p></details>
-<details><summary>Is my data protected?</summary><p>It travels encrypted (HTTPS), each key reaches only one company and everything the integration does is in the audit log. BUFINS acts as a data processor for the company's data; the data transmission agreement is arranged separately.</p></details></section>
-
-<footer><div class="w">BUFINS · Integration manual · Ingestion API v1 · November 2026. Technical contract: <code>/api/v1/openapi.json</code>. Versión en español: <code>/api/v1/manual</code>.</div></footer>
 </main>
+<footer class="w">BUFINS · API manual · v1</footer>
 </body></html>
