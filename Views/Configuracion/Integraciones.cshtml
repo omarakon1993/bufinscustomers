@@ -1,0 +1,392 @@
+@model System.Collections.Generic.List<bufinscustomers.Services.Integracion>
+@{
+    ViewBag.Title = Resources.Strings.Integ_PageTitle;
+    bool disponible = ViewBag.Disponible;
+    string baseApi = ViewBag.BaseApi as string;
+    var empresas = (System.Collections.Generic.List<bufinscustomers.Models.Empresas>)ViewBag.Empresas
+                   ?? new System.Collections.Generic.List<bufinscustomers.Models.Empresas>();
+    Func<string, string> js = s => HttpUtility.JavaScriptStringEncode(s ?? "");
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+
+@Html.AntiForgeryToken()
+
+<div class="container-fluid px-4">
+
+    <div class="powerbi-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div class="powerbi-header-content">
+            <i class="fas fa-plug powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@Resources.Strings.Integ_PageTitle</h1>
+        </div>
+        @if (disponible)
+        {
+            <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#integCrearModal">
+                <i class="fas fa-plus mr-1"></i>@Resources.Strings.Integ_BtnNueva
+            </button>
+        }
+    </div>
+
+    <p class="text-muted mt-3" style="font-size:0.88rem;">
+        <i class="fas fa-info-circle mr-1"></i>@Resources.Strings.Integ_PageHint
+    </p>
+
+    @if (!disponible)
+    {
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle mr-1"></i>@Resources.Strings.Integ_NoDisponible
+        </div>
+    }
+    else
+    {
+        <div class="card shadow mb-3">
+            <div class="card-body py-3">
+                <div class="font-weight-bold mb-1"><i class="fas fa-link mr-1"></i>@Resources.Strings.Integ_ConexionTitulo</div>
+                <div class="small text-muted mb-2">@Resources.Strings.Integ_ConexionTexto</div>
+                <code>@baseApi</code>
+                <pre class="mt-2 mb-0 small" style="white-space:pre-wrap;">curl -H "Authorization: Bearer bfk_..." @baseApi/ping</pre>
+            </div>
+        </div>
+    }
+
+    <div class="card shadow mb-4">
+        <div class="card-body p-0">
+            <div class="table-responsive table-wrapper">
+                <table class="table table-bordered table-hover table-compact">
+                    <thead>
+                        <tr>
+                            <th>@Resources.Strings.Integ_ThNombre</th>
+                            <th>@Resources.Strings.Integ_ThEmpresa</th>
+                            <th>@Resources.Strings.Integ_ThUsuario</th>
+                            <th>@Resources.Strings.Integ_ThClave</th>
+                            <th>@Resources.Strings.Integ_ThConfirmacion</th>
+                            <th>@Resources.Strings.Integ_ThIps</th>
+                            <th>@Resources.Strings.Integ_ThUltimoUso</th>
+                            <th class="text-center">@Resources.Strings.Common_Estado</th>
+                            <th class="text-center col-acciones">@Resources.Strings.Common_ThAcciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-3">
+                                    <i class="fas fa-plug mr-2"></i>@Resources.Strings.Integ_NoRegistros
+                                </td>
+                            </tr>
+                        }
+                        @foreach (var i in Model)
+                        {
+                            <tr>
+                                <td><strong>@i.Nombre</strong></td>
+                                <td>@i.NombreEmpresa</td>
+                                <td>@i.NombreUsuarioTecnico</td>
+                                <td><code>bfk_@(i.Prefijo)_••••</code></td>
+                                <td>
+                                    @if (i.PermiteConfirmar)
+                                    {
+                                        <span class="badge badge-warning">@Resources.Strings.Integ_ConfApi</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-secondary">@Resources.Strings.Integ_ConfHumana</span>
+                                    }
+                                </td>
+                                <td class="small">@(string.IsNullOrEmpty(i.IpPermitidas) ? Resources.Strings.Integ_CualquierIp : i.IpPermitidas.Replace(",", ", "))</td>
+                                <td class="small">
+                                    @if (i.FechaUltimoUso.HasValue)
+                                    {
+                                        @i.FechaUltimoUso.Value.ToString("dd/MM/yyyy HH:mm")
+                                        <span class="text-muted d-block">@i.IpUltimoUso</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">@Resources.Strings.Integ_NuncaUsada</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (i.FechaRevocada.HasValue)
+                                    {
+                                        <span class="badge-inactivo">@Resources.Strings.Integ_EstadoRevocada</span>
+                                    }
+                                    else if (!i.Activo)
+                                    {
+                                        <span class="badge-inactivo">@Resources.Strings.Integ_EstadoInactiva</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-activo">@Resources.Strings.Common_Activo</span>
+                                    }
+                                </td>
+                                <td class="col-acciones">
+                                    @if (!i.FechaRevocada.HasValue)
+                                    {
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-primary integ-editar" title="@Resources.Strings.Common_Editar"
+                                                    data-id="@i.Id" data-nombre="@i.Nombre" data-activo="@(i.Activo ? "1" : "0")"
+                                                    data-confirma="@(i.PermiteConfirmar ? "1" : "0")" data-ips="@i.IpPermitidas">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-warning integ-rotar" title="@Resources.Strings.Integ_TitleRotar"
+                                                    data-id="@i.Id" data-nombre="@i.Nombre">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-danger integ-revocar" title="@Resources.Strings.Integ_TitleRevocar"
+                                                    data-id="@i.Id" data-nombre="@i.Nombre">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════ MODAL CREAR ═══════════════════ -->
+<div class="modal fade" id="integCrearModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered bf-modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plug"></i> @Resources.Strings.Integ_ModalCrearTitle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <form id="integCrearForm" autocomplete="off">
+                <div class="modal-body">
+                    <div class="bf-section">@Resources.Strings.Integ_SecIdentificacion</div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="integEmpresa">@Resources.Strings.Integ_LabelEmpresa <span class="text-danger">*</span></label>
+                            <select id="integEmpresa" class="form-control" required>
+                                <option value="">@Resources.Strings.Integ_SelEmpresa</option>
+                                @foreach (var e in empresas)
+                                {
+                                    <option value="@e.Id">@e.Nombre</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="integNombre">@Resources.Strings.Integ_LabelNombre <span class="text-danger">*</span></label>
+                            <div class="bf-input"><i class="fas fa-tag"></i>
+                                <input type="text" id="integNombre" class="form-control" maxlength="100" required placeholder="@Resources.Strings.Integ_NombrePlaceholder" />
+                            </div>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="integUsuario">@Resources.Strings.Integ_LabelUsuario <span class="text-danger">*</span></label>
+                            <select id="integUsuario" class="form-control" required disabled>
+                                <option value="">@Resources.Strings.Integ_SelUsuario</option>
+                            </select>
+                            <small class="form-text text-muted">@Resources.Strings.Integ_UsuarioHint</small>
+                        </div>
+                    </div>
+
+                    <div class="bf-section">@Resources.Strings.Integ_SecSeguridad</div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="integConfirma" />
+                        <label class="form-check-label" for="integConfirma">@Resources.Strings.Integ_LabelConfirmar</label>
+                        <small class="form-text text-muted">@Resources.Strings.Integ_LabelConfirmarHint</small>
+                    </div>
+                    <div class="mb-1">
+                        <label for="integIps">@Resources.Strings.Integ_LabelIps</label>
+                        <textarea id="integIps" class="form-control" rows="2" maxlength="500" placeholder="203.0.113.10, 203.0.113.11"></textarea>
+                        <small class="form-text text-muted">@Resources.Strings.Integ_LabelIpsHint</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <span class="bf-footer-note"><b>*</b> @Resources.Strings.Common_CamposObligatorios</span>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="integCrearBtn"><i class="fas fa-plus-circle mr-1"></i>@Resources.Strings.Common_BtnCrear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════ MODAL EDITAR ═══════════════════ -->
+<div class="modal fade" id="integEditarModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered bf-modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit"></i> @Resources.Strings.Integ_ModalEditarTitle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <form id="integEditarForm" autocomplete="off">
+                <input type="hidden" id="editId" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editNombre">@Resources.Strings.Integ_LabelNombre <span class="text-danger">*</span></label>
+                        <div class="bf-input"><i class="fas fa-tag"></i>
+                            <input type="text" id="editNombre" class="form-control" maxlength="100" required />
+                        </div>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="editActiva" />
+                        <label class="form-check-label" for="editActiva">@Resources.Strings.Integ_LabelActiva</label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="editConfirma" />
+                        <label class="form-check-label" for="editConfirma">@Resources.Strings.Integ_LabelConfirmar</label>
+                        <small class="form-text text-muted">@Resources.Strings.Integ_LabelConfirmarHint</small>
+                    </div>
+                    <div class="mb-1">
+                        <label for="editIps">@Resources.Strings.Integ_LabelIps</label>
+                        <textarea id="editIps" class="form-control" rows="2" maxlength="500"></textarea>
+                        <small class="form-text text-muted">@Resources.Strings.Integ_LabelIpsHint</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <span class="bf-footer-note"><b>*</b> @Resources.Strings.Common_CamposObligatorios</span>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times mr-1"></i>@Resources.Strings.Layout_Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="integEditarBtn"><i class="fas fa-save mr-1"></i>@Resources.Strings.Common_GuardarCambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════ MODAL CLAVE (se muestra una sola vez) ═══════════════════ -->
+<div class="modal fade" id="integClaveModal" tabindex="-1" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered bf-modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-key"></i> <span id="integClaveTitulo">@Resources.Strings.Integ_ClaveTitulo</span></h5>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning small mb-3"><i class="fas fa-exclamation-triangle mr-1"></i>@Resources.Strings.Integ_ClaveAviso</div>
+                <div class="input-group">
+                    <input type="text" id="integClaveValor" class="form-control" readonly style="font-family:monospace;" />
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-primary" id="integCopiar"><i class="fas fa-copy mr-1"></i>@Resources.Strings.Integ_BtnCopiar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="integClaveCerrar"><i class="fas fa-check mr-1"></i>@Resources.Strings.Integ_BtnYaCopie</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+<script>
+(function () {
+    var T = {
+        errRed: '@Html.Raw(js(Resources.Strings.Integ_ErrRed))',
+        copiado: '@Html.Raw(js(Resources.Strings.Integ_Copiado))',
+        selUsuario: '@Html.Raw(js(Resources.Strings.Integ_SelUsuario))',
+        sinUsuarios: '@Html.Raw(js(Resources.Strings.Integ_SinUsuarios))',
+        claveTitulo: '@Html.Raw(js(Resources.Strings.Integ_ClaveTitulo))',
+        claveNuevaTitulo: '@Html.Raw(js(Resources.Strings.Integ_ClaveNuevaTitulo))',
+        rotarTitulo: '@Html.Raw(js(Resources.Strings.Integ_ConfRotarTitulo))',
+        rotarTexto: '@Html.Raw(js(Resources.Strings.Integ_ConfRotarTexto))',
+        revocarTitulo: '@Html.Raw(js(Resources.Strings.Integ_ConfRevocarTitulo))',
+        revocarTexto: '@Html.Raw(js(Resources.Strings.Integ_ConfRevocarTexto))',
+        btnRotar: '@Html.Raw(js(Resources.Strings.Integ_BtnRotar))',
+        btnRevocar: '@Html.Raw(js(Resources.Strings.Integ_BtnRevocar))',
+        cancelar: '@Html.Raw(js(Resources.Strings.Layout_Cancel))'
+    };
+    var urls = {
+        usuarios: '@Url.Action("UsuariosDeEmpresa", "Integraciones")',
+        crear: '@Url.Action("Crear", "Integraciones")',
+        editar: '@Url.Action("Editar", "Integraciones")',
+        rotar: '@Url.Action("Rotar", "Integraciones")',
+        revocar: '@Url.Action("Revocar", "Integraciones")'
+    };
+
+    function token() { return $('input[name="__RequestVerificationToken"]').first().val(); }
+    function toast(icon, title) { Swal.fire({ toast: true, position: 'top-end', icon: icon, title: title, showConfirmButton: false, timer: 3500, timerProgressBar: true }); }
+    function post(url, datos) {
+        datos = datos || {}; datos.__RequestVerificationToken = token();
+        return $.post(url, datos).fail(function () { toast('error', T.errRed); });
+    }
+    function mostrarClave(clave, titulo) {
+        $('#integClaveTitulo').text(titulo);
+        $('#integClaveValor').val(clave);
+        $('#integClaveModal').modal('show');
+    }
+
+    // Usuarios técnicos elegibles según la empresa elegida
+    $('#integEmpresa').on('change', function () {
+        var $u = $('#integUsuario').prop('disabled', true).html('<option value="">' + T.selUsuario + '</option>');
+        var idEmpresa = $(this).val();
+        if (!idEmpresa) return;
+        $.getJSON(urls.usuarios, { idEmpresa: idEmpresa }).done(function (r) {
+            if (!r.success) { toast('error', r.message); return; }
+            if (!r.usuarios.length) { $u.html('<option value="">' + T.sinUsuarios + '</option>'); return; }
+            $.each(r.usuarios, function (_, x) { $u.append($('<option>').val(x.id).text(x.nombre + (x.usuario ? ' (' + x.usuario + ')' : ''))); });
+            $u.prop('disabled', false);
+        }).fail(function () { toast('error', T.errRed); });
+    });
+
+    $('#integCrearForm').on('submit', function (e) {
+        e.preventDefault();
+        var $b = $('#integCrearBtn').prop('disabled', true);
+        post(urls.crear, {
+            idEmpresa: $('#integEmpresa').val(), nombre: $('#integNombre').val(), idUsuarioTecnico: $('#integUsuario').val(),
+            permiteConfirmar: $('#integConfirma').is(':checked'), ipPermitidas: $('#integIps').val()
+        }).done(function (r) {
+            if (!r.success) { toast('error', r.message); return; }
+            $('#integCrearModal').modal('hide');
+            mostrarClave(r.clave, T.claveTitulo);
+        }).always(function () { $b.prop('disabled', false); });
+    });
+
+    $(document).on('click', '.integ-editar', function () {
+        var d = $(this).data();
+        $('#editId').val(d.id); $('#editNombre').val(d.nombre); $('#editIps').val(d.ips || '');
+        $('#editActiva').prop('checked', String(d.activo) === '1'); $('#editConfirma').prop('checked', String(d.confirma) === '1');
+        $('#integEditarModal').modal('show');
+    });
+
+    $('#integEditarForm').on('submit', function (e) {
+        e.preventDefault();
+        var $b = $('#integEditarBtn').prop('disabled', true);
+        post(urls.editar, {
+            id: $('#editId').val(), nombre: $('#editNombre').val(), activo: $('#editActiva').is(':checked'),
+            permiteConfirmar: $('#editConfirma').is(':checked'), ipPermitidas: $('#editIps').val()
+        }).done(function (r) {
+            if (!r.success) { toast('error', r.message); return; }
+            location.reload();
+        }).always(function () { $b.prop('disabled', false); });
+    });
+
+    $(document).on('click', '.integ-rotar', function () {
+        var id = $(this).data('id'), nombre = $(this).data('nombre');
+        Swal.fire({ icon: 'warning', title: T.rotarTitulo, text: T.rotarTexto.replace('{0}', nombre), showCancelButton: true, confirmButtonText: T.btnRotar, cancelButtonText: T.cancelar })
+            .then(function (x) {
+                if (!x.isConfirmed) return;
+                post(urls.rotar, { id: id }).done(function (r) {
+                    if (!r.success) { toast('error', r.message); return; }
+                    mostrarClave(r.clave, T.claveNuevaTitulo);
+                });
+            });
+    });
+
+    $(document).on('click', '.integ-revocar', function () {
+        var id = $(this).data('id'), nombre = $(this).data('nombre');
+        Swal.fire({ icon: 'warning', title: T.revocarTitulo, text: T.revocarTexto.replace('{0}', nombre), showCancelButton: true, confirmButtonText: T.btnRevocar, cancelButtonText: T.cancelar })
+            .then(function (x) {
+                if (!x.isConfirmed) return;
+                post(urls.revocar, { id: id }).done(function (r) {
+                    if (!r.success) { toast('error', r.message); return; }
+                    location.reload();
+                });
+            });
+    });
+
+    $('#integCopiar').on('click', function () {
+        var $i = $('#integClaveValor'); $i.trigger('select');
+        var ok = function () { toast('success', T.copiado); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText($i.val()).then(ok);
+        else { document.execCommand('copy'); ok(); }
+    });
+
+    // La clave no se vuelve a mostrar: al cerrar se borra del formulario y se recarga el listado.
+    $('#integClaveCerrar').on('click', function () { $('#integClaveValor').val(''); location.reload(); });
+})();
+</script>
+}

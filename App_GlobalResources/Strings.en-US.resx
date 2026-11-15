@@ -4000,4 +4000,67 @@ Indicators management follows closely: </value></data>
   <data name="DocBuf_AccesoRestringido" xml:space="preserve"><value>This document is now Super Admin only.</value></data>
   <data name="DocBuf_AccesoAbierto" xml:space="preserve"><value>This document can now be seen by users with access.</value></data>
   <data name="DocBuf_Cat_tecnica" xml:space="preserve"><value>Technical and architecture</value></data>
+  <!-- Integraciones API (Integ_*) -->
+  <data name="Integ_PageTitle" xml:space="preserve"><value>API integrations</value></data>
+  <data name="Integ_PageHint" xml:space="preserve"><value>Credentials so the company's system (ERP, agent or custom program) can send its data to BUFINS through the API instead of Excel. Each integration works only on its own company and the key is shown only once.</value></data>
+  <data name="Integ_NoDisponible" xml:space="preserve"><value>The ingestion API is not enabled in this environment yet. Contact BUFINS support.</value></data>
+  <data name="Integ_BtnNueva" xml:space="preserve"><value>New integration</value></data>
+  <data name="Integ_ConexionTitulo" xml:space="preserve"><value>How to connect</value></data>
+  <data name="Integ_ConexionTexto" xml:space="preserve"><value>Base address of the API. Every call carries the integration key in the Authorization header (Bearer). The technical manual details the steps.</value></data>
+  <data name="Integ_ThNombre" xml:space="preserve"><value>Integration</value></data>
+  <data name="Integ_ThEmpresa" xml:space="preserve"><value>Company</value></data>
+  <data name="Integ_ThUsuario" xml:space="preserve"><value>Technical user</value></data>
+  <data name="Integ_ThClave" xml:space="preserve"><value>Key</value></data>
+  <data name="Integ_ThConfirmacion" xml:space="preserve"><value>Confirms</value></data>
+  <data name="Integ_ThIps" xml:space="preserve"><value>Allowed IPs</value></data>
+  <data name="Integ_ThUltimoUso" xml:space="preserve"><value>Last use</value></data>
+  <data name="Integ_ConfHumana" xml:space="preserve"><value>A person</value></data>
+  <data name="Integ_ConfApi" xml:space="preserve"><value>Via the API</value></data>
+  <data name="Integ_CualquierIp" xml:space="preserve"><value>Any</value></data>
+  <data name="Integ_NuncaUsada" xml:space="preserve"><value>Never used</value></data>
+  <data name="Integ_EstadoInactiva" xml:space="preserve"><value>Inactive</value></data>
+  <data name="Integ_EstadoRevocada" xml:space="preserve"><value>Revoked</value></data>
+  <data name="Integ_NoRegistros" xml:space="preserve"><value>There are no integrations yet.</value></data>
+  <data name="Integ_TitleRotar" xml:space="preserve"><value>Generate new key</value></data>
+  <data name="Integ_TitleRevocar" xml:space="preserve"><value>Revoke</value></data>
+  <data name="Integ_ModalCrearTitle" xml:space="preserve"><value>New integration</value></data>
+  <data name="Integ_ModalEditarTitle" xml:space="preserve"><value>Edit integration</value></data>
+  <data name="Integ_SecIdentificacion" xml:space="preserve"><value>Identification</value></data>
+  <data name="Integ_SecSeguridad" xml:space="preserve"><value>Security</value></data>
+  <data name="Integ_LabelEmpresa" xml:space="preserve"><value>Company</value></data>
+  <data name="Integ_LabelNombre" xml:space="preserve"><value>Name</value></data>
+  <data name="Integ_NombrePlaceholder" xml:space="preserve"><value>E.g. Siigo agent – accounting</value></data>
+  <data name="Integ_LabelUsuario" xml:space="preserve"><value>Technical user</value></data>
+  <data name="Integ_SelEmpresa" xml:space="preserve"><value>Select a company</value></data>
+  <data name="Integ_SelUsuario" xml:space="preserve"><value>Select a user</value></data>
+  <data name="Integ_SinUsuarios" xml:space="preserve"><value>The company has no available users</value></data>
+  <data name="Integ_UsuarioHint" xml:space="preserve"><value>The API's actions are attributed to this user in the audit log. We recommend creating a dedicated user (for example “API integration”). It cannot be a Super Admin.</value></data>
+  <data name="Integ_LabelConfirmar" xml:space="preserve"><value>Allow the integration to confirm loads</value></data>
+  <data name="Integ_LabelConfirmarHint" xml:space="preserve"><value>If unchecked (recommended at the start), loads sent through the API stay in “Review load” and a person confirms them. Even when checked, the API never confirms a strong data reduction nor bypasses the rule of never leaving a year empty.</value></data>
+  <data name="Integ_LabelIps" xml:space="preserve"><value>Allowed IPs (optional)</value></data>
+  <data name="Integ_LabelIpsHint" xml:space="preserve"><value>Comma-separated. If left empty, the key works from any address.</value></data>
+  <data name="Integ_LabelActiva" xml:space="preserve"><value>Integration active</value></data>
+  <data name="Integ_ClaveTitulo" xml:space="preserve"><value>Integration key</value></data>
+  <data name="Integ_ClaveNuevaTitulo" xml:space="preserve"><value>New key</value></data>
+  <data name="Integ_ClaveAviso" xml:space="preserve"><value>Copy the key now and store it somewhere safe. For security it is not shown again; if you lose it, generate a new one.</value></data>
+  <data name="Integ_BtnCopiar" xml:space="preserve"><value>Copy</value></data>
+  <data name="Integ_BtnYaCopie" xml:space="preserve"><value>I copied it</value></data>
+  <data name="Integ_Copiado" xml:space="preserve"><value>Key copied</value></data>
+  <data name="Integ_ConfRotarTitulo" xml:space="preserve"><value>Generate a new key?</value></data>
+  <data name="Integ_ConfRotarTexto" xml:space="preserve"><value>The current key of “{0}” will stop working immediately. You will need to set the new one in the client's system.</value></data>
+  <data name="Integ_BtnRotar" xml:space="preserve"><value>Generate new key</value></data>
+  <data name="Integ_ConfRevocarTitulo" xml:space="preserve"><value>Revoke the integration?</value></data>
+  <data name="Integ_ConfRevocarTexto" xml:space="preserve"><value>“{0}” will stop working and cannot be reactivated (a new one would have to be created). Loads already confirmed are not affected.</value></data>
+  <data name="Integ_BtnRevocar" xml:space="preserve"><value>Revoke</value></data>
+  <data name="Integ_Creada" xml:space="preserve"><value>Integration “{0}” created.</value></data>
+  <data name="Integ_Editada" xml:space="preserve"><value>Integration “{0}” updated.</value></data>
+  <data name="Integ_Rotada" xml:space="preserve"><value>New key generated for “{0}”.</value></data>
+  <data name="Integ_Revocada" xml:space="preserve"><value>Integration “{0}” revoked.</value></data>
+  <data name="Integ_ErrSinAcceso" xml:space="preserve"><value>The integration does not exist or you do not have access to it.</value></data>
+  <data name="Integ_ErrNoEditable" xml:space="preserve"><value>The operation could not be completed (the integration is already revoked or does not exist).</value></data>
+  <data name="Integ_ErrNombre" xml:space="preserve"><value>The name is required (maximum 100 characters).</value></data>
+  <data name="Integ_ErrUsuario" xml:space="preserve"><value>The technical user must belong to the company and cannot be a Super Admin.</value></data>
+  <data name="Integ_ErrIp" xml:space="preserve"><value>The IP address “{0}” is not valid.</value></data>
+  <data name="Integ_ErrIpsLargo" xml:space="preserve"><value>Too many IP addresses (maximum 500 characters).</value></data>
+  <data name="Integ_ErrRed" xml:space="preserve"><value>Could not reach the server. Please try again.</value></data>
 </root>

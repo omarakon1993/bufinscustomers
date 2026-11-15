@@ -15,6 +15,7 @@ Views are organized by **functional area**, not by controller name. Controllers 
 | MenuOpcionesController | `~/Views/Configuracion/MenuOpciones.cshtml` |
 | ModelosEjecucionController | `~/Views/Configuracion/ModelosEjecucion.cshtml` |
 | GestorEscenariosController | `~/Views/Configuracion/GestorEscenarios.cshtml` |
+| IntegracionesController | `~/Views/Configuracion/Integraciones.cshtml` |
 | GestorHojasCargueController | `~/Views/Configuracion/GestorHojasCargue.cshtml` |
 | GestorPromptsController | `~/Views/Configuracion/GestorPrompts.cshtml` |
 | GruposEmpresarialesController | `~/Views/Configuracion/GruposEmpresariales.cshtml`, `~/Views/Configuracion/GestionarGrupoEmpresas.cshtml` |

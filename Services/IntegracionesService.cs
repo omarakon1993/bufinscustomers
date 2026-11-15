@@ -69,18 +69,19 @@ namespace bufinscustomers.Services
         // ── Alta / baja ────────────────────────────────────────────────────────────────
 
         /// <summary>
-        /// Crea una integración. <paramref name="claveEnClaro"/> es la única vez que se conoce la clave.
-        /// El usuario técnico debe pertenecer a la empresa (la API nunca opera fuera de ella).
+        /// Crea una integración. <c>claveEnClaro</c> es la única vez que se conoce la clave. El usuario técnico debe pertenecer a la
+        /// empresa y no ser Super Admin (la API nunca opera fuera de su empresa). En caso de error devuelve un CÓDIGO
+        /// (<c>nombre</c>, <c>usuario</c>, <c>ip:{valor}</c>, <c>ips_largo</c>) que el controlador traduce.
         /// </summary>
-        public (bool ok, string mensaje, int idIntegracion, string claveEnClaro) Crear(int idEmpresa, string nombre, int idUsuarioTecnico,
+        public (bool ok, string error, int idIntegracion, string claveEnClaro) Crear(int idEmpresa, string nombre, int idUsuarioTecnico,
             bool permiteConfirmar, string ipPermitidas, int? idUsuarioCreador)
         {
             nombre = (nombre ?? "").Trim();
-            if (nombre.Length == 0 || nombre.Length > 100) return (false, "El nombre es obligatorio (máx. 100 caracteres).", 0, null);
+            if (nombre.Length == 0 || nombre.Length > 100) return (false, "nombre", 0, null);
 
             var usuario = new UsuarioService().ObtenerUsuarioPorId(idUsuarioTecnico);
-            if (usuario == null || usuario.IdEmpresa != idEmpresa)
-                return (false, "El usuario técnico debe pertenecer a la empresa de la integración.", 0, null);
+            if (usuario == null || usuario.IdEmpresa != idEmpresa || usuario.Admin == 2)
+                return (false, "usuario", 0, null);
 
             if (!TryNormalizarIps(ipPermitidas, out string ips, out string errorIp))
                 return (false, errorIp, 0, null);
@@ -140,7 +141,7 @@ namespace bufinscustomers.Services
             error = null;
             if (!TryNormalizarIps(ipPermitidas, out string ips, out error)) return false;
             nombre = (nombre ?? "").Trim();
-            if (nombre.Length == 0 || nombre.Length > 100) { error = "El nombre es obligatorio (máx. 100 caracteres)."; return false; }
+            if (nombre.Length == 0 || nombre.Length > 100) { error = "nombre"; return false; }
             using (var cn = new SqlConnection(CadenaConexion))
             using (var cmd = new SqlCommand(
                 "UPDATE dbo.Integraciones SET Nombre = @Nombre, Activo = @Activo, PermiteConfirmar = @Pc, IpPermitidas = @Ips WHERE Id = @Id AND FechaRevocada IS NULL", cn))
@@ -177,6 +178,22 @@ namespace bufinscustomers.Services
                 cn.Open();
                 using (var r = cmd.ExecuteReader())
                     while (r.Read()) lista.Add(Mapear(r));
+            }
+            return lista;
+        }
+
+        /// <summary>Usuarios de la empresa que pueden ser «usuario técnico» (todos menos Super Admin).</summary>
+        public List<(int Id, string Nombre, string Usuario)> ListarUsuariosElegibles(int idEmpresa)
+        {
+            var lista = new List<(int, string, string)>();
+            using (var cn = new SqlConnection(CadenaConexion))
+            using (var cmd = new SqlCommand(
+                "SELECT Id, LTRIM(RTRIM(ISNULL(Nombre,'') + ' ' + ISNULL(Apellidos,''))) AS Nombre, Usuario FROM dbo.Usuarios WHERE IdEmpresa = @E AND ISNULL(Admin,0) <> 2 ORDER BY Nombre", cn))
+            {
+                cmd.Parameters.AddWithValue("@E", idEmpresa);
+                cn.Open();
+                using (var r = cmd.ExecuteReader())
+                    while (r.Read()) lista.Add((Convert.ToInt32(r["Id"]), r["Nombre"] as string, r["Usuario"] as string));
             }
             return lista;
         }
@@ -367,11 +384,11 @@ namespace bufinscustomers.Services
             var ips = new List<string>();
             foreach (var parte in entrada.Split(new[] { ',', ';', ' ', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries))
             {
-                if (!System.Net.IPAddress.TryParse(parte.Trim(), out var ip)) { error = "IP no válida: " + parte.Trim(); return false; }
+                if (!System.Net.IPAddress.TryParse(parte.Trim(), out var ip)) { error = "ip:" + parte.Trim(); return false; }
                 ips.Add(ip.ToString());
             }
             normalizada = string.Join(",", ips);
-            if (normalizada.Length > 500) { error = "Demasiadas IPs (máx. 500 caracteres)."; normalizada = null; return false; }
+            if (normalizada.Length > 500) { error = "ips_largo"; normalizada = null; return false; }
             return true;
         }
 

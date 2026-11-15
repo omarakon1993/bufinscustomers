@@ -4002,4 +4002,67 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="DocBuf_AccesoRestringido" xml:space="preserve"><value>Ahora este documento es solo para Super Admin.</value></data>
   <data name="DocBuf_AccesoAbierto" xml:space="preserve"><value>Ahora este documento lo pueden ver los usuarios con acceso.</value></data>
   <data name="DocBuf_Cat_tecnica" xml:space="preserve"><value>Técnica y arquitectura</value></data>
+  <!-- Integraciones API (Integ_*) -->
+  <data name="Integ_PageTitle" xml:space="preserve"><value>Integraciones API</value></data>
+  <data name="Integ_PageHint" xml:space="preserve"><value>Credenciales para que el sistema de la empresa (ERP, agente o programa propio) envíe sus datos a BUFINS por la API, sin usar el Excel. Cada integración opera solo en su empresa y la clave se muestra una única vez.</value></data>
+  <data name="Integ_NoDisponible" xml:space="preserve"><value>La API de ingesta aún no está habilitada en este entorno. Contacte a soporte de BUFINS.</value></data>
+  <data name="Integ_BtnNueva" xml:space="preserve"><value>Nueva integración</value></data>
+  <data name="Integ_ConexionTitulo" xml:space="preserve"><value>Cómo conectarse</value></data>
+  <data name="Integ_ConexionTexto" xml:space="preserve"><value>Dirección base de la API. Cada llamada lleva la clave de la integración en la cabecera Authorization (Bearer). El manual técnico detalla los pasos.</value></data>
+  <data name="Integ_ThNombre" xml:space="preserve"><value>Integración</value></data>
+  <data name="Integ_ThEmpresa" xml:space="preserve"><value>Empresa</value></data>
+  <data name="Integ_ThUsuario" xml:space="preserve"><value>Usuario técnico</value></data>
+  <data name="Integ_ThClave" xml:space="preserve"><value>Clave</value></data>
+  <data name="Integ_ThConfirmacion" xml:space="preserve"><value>Confirma</value></data>
+  <data name="Integ_ThIps" xml:space="preserve"><value>IP permitidas</value></data>
+  <data name="Integ_ThUltimoUso" xml:space="preserve"><value>Último uso</value></data>
+  <data name="Integ_ConfHumana" xml:space="preserve"><value>Una persona</value></data>
+  <data name="Integ_ConfApi" xml:space="preserve"><value>Por la API</value></data>
+  <data name="Integ_CualquierIp" xml:space="preserve"><value>Cualquiera</value></data>
+  <data name="Integ_NuncaUsada" xml:space="preserve"><value>Sin uso</value></data>
+  <data name="Integ_EstadoInactiva" xml:space="preserve"><value>Inactiva</value></data>
+  <data name="Integ_EstadoRevocada" xml:space="preserve"><value>Revocada</value></data>
+  <data name="Integ_NoRegistros" xml:space="preserve"><value>Aún no hay integraciones creadas.</value></data>
+  <data name="Integ_TitleRotar" xml:space="preserve"><value>Generar clave nueva</value></data>
+  <data name="Integ_TitleRevocar" xml:space="preserve"><value>Revocar</value></data>
+  <data name="Integ_ModalCrearTitle" xml:space="preserve"><value>Nueva integración</value></data>
+  <data name="Integ_ModalEditarTitle" xml:space="preserve"><value>Editar integración</value></data>
+  <data name="Integ_SecIdentificacion" xml:space="preserve"><value>Identificación</value></data>
+  <data name="Integ_SecSeguridad" xml:space="preserve"><value>Seguridad</value></data>
+  <data name="Integ_LabelEmpresa" xml:space="preserve"><value>Empresa</value></data>
+  <data name="Integ_LabelNombre" xml:space="preserve"><value>Nombre</value></data>
+  <data name="Integ_NombrePlaceholder" xml:space="preserve"><value>Ej: Agente Siigo – contabilidad</value></data>
+  <data name="Integ_LabelUsuario" xml:space="preserve"><value>Usuario técnico</value></data>
+  <data name="Integ_SelEmpresa" xml:space="preserve"><value>Seleccione una empresa</value></data>
+  <data name="Integ_SelUsuario" xml:space="preserve"><value>Seleccione un usuario</value></data>
+  <data name="Integ_SinUsuarios" xml:space="preserve"><value>La empresa no tiene usuarios disponibles</value></data>
+  <data name="Integ_UsuarioHint" xml:space="preserve"><value>A este usuario se le atribuyen las acciones de la API en la auditoría. Se recomienda crear un usuario exclusivo (por ejemplo «Integración API»). No puede ser Super Admin.</value></data>
+  <data name="Integ_LabelConfirmar" xml:space="preserve"><value>Permitir que la integración confirme cargues</value></data>
+  <data name="Integ_LabelConfirmarHint" xml:space="preserve"><value>Si no se marca (recomendado al inicio), los cargues enviados por la API quedan en «Revisar cargue» y una persona los confirma. Aun marcada, la API nunca confirma una reducción fuerte de datos ni salta la regla de nunca dejar un año vacío.</value></data>
+  <data name="Integ_LabelIps" xml:space="preserve"><value>IP permitidas (opcional)</value></data>
+  <data name="Integ_LabelIpsHint" xml:space="preserve"><value>Separadas por coma. Si se dejan vacías, la clave sirve desde cualquier dirección.</value></data>
+  <data name="Integ_LabelActiva" xml:space="preserve"><value>Integración activa</value></data>
+  <data name="Integ_ClaveTitulo" xml:space="preserve"><value>Clave de la integración</value></data>
+  <data name="Integ_ClaveNuevaTitulo" xml:space="preserve"><value>Clave nueva</value></data>
+  <data name="Integ_ClaveAviso" xml:space="preserve"><value>Copie la clave ahora y guárdela en un lugar seguro. Por seguridad no se vuelve a mostrar; si la pierde, genere una nueva.</value></data>
+  <data name="Integ_BtnCopiar" xml:space="preserve"><value>Copiar</value></data>
+  <data name="Integ_BtnYaCopie" xml:space="preserve"><value>Ya la copié</value></data>
+  <data name="Integ_Copiado" xml:space="preserve"><value>Clave copiada</value></data>
+  <data name="Integ_ConfRotarTitulo" xml:space="preserve"><value>¿Generar una clave nueva?</value></data>
+  <data name="Integ_ConfRotarTexto" xml:space="preserve"><value>La clave actual de «{0}» dejará de funcionar de inmediato. Tendrá que configurar la nueva en el sistema del cliente.</value></data>
+  <data name="Integ_BtnRotar" xml:space="preserve"><value>Generar clave nueva</value></data>
+  <data name="Integ_ConfRevocarTitulo" xml:space="preserve"><value>¿Revocar la integración?</value></data>
+  <data name="Integ_ConfRevocarTexto" xml:space="preserve"><value>«{0}» dejará de funcionar y no se puede reactivar (habría que crear otra). Los cargues ya confirmados no se tocan.</value></data>
+  <data name="Integ_BtnRevocar" xml:space="preserve"><value>Revocar</value></data>
+  <data name="Integ_Creada" xml:space="preserve"><value>Integración «{0}» creada.</value></data>
+  <data name="Integ_Editada" xml:space="preserve"><value>Integración «{0}» actualizada.</value></data>
+  <data name="Integ_Rotada" xml:space="preserve"><value>Nueva clave generada para «{0}».</value></data>
+  <data name="Integ_Revocada" xml:space="preserve"><value>Integración «{0}» revocada.</value></data>
+  <data name="Integ_ErrSinAcceso" xml:space="preserve"><value>La integración no existe o no tiene acceso a ella.</value></data>
+  <data name="Integ_ErrNoEditable" xml:space="preserve"><value>No se pudo completar la operación (la integración ya está revocada o no existe).</value></data>
+  <data name="Integ_ErrNombre" xml:space="preserve"><value>El nombre es obligatorio (máximo 100 caracteres).</value></data>
+  <data name="Integ_ErrUsuario" xml:space="preserve"><value>El usuario técnico debe ser un usuario de la empresa y no puede ser Super Admin.</value></data>
+  <data name="Integ_ErrIp" xml:space="preserve"><value>La dirección IP «{0}» no es válida.</value></data>
+  <data name="Integ_ErrIpsLargo" xml:space="preserve"><value>Hay demasiadas direcciones IP (máximo 500 caracteres).</value></data>
+  <data name="Integ_ErrRed" xml:space="preserve"><value>No se pudo conectar con el servidor. Inténtelo de nuevo.</value></data>
 </root>

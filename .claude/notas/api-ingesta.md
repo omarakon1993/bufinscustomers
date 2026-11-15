@@ -16,5 +16,8 @@
 ## Endpoints (v1)
 `GET /ping` · `GET /esquemas` · `POST /cargues/archivo` (multipart: `archivo`, `anio`, `modo`=ejecucion|historico, `idEscenario`?, `confirmar`?) · `GET /cargues/{id}` (estado + impacto) · `GET /cargues/{id}/hallazgos` · `POST /cargues/{id}/confirmar` · `DELETE /cargues/{id}`. Idioma de los mensajes: `?idioma=en` o `Accept-Language: en`.
 
+## Pantalla «Integraciones» (hecha)
+`IntegracionesController` → `Views/Configuracion/Integraciones.cshtml` (textos `Integ_*` en ambos `.resx`). Permiso `ADMIN_CONFIG_INTEGRACIONES` (**crear la opción en `/MenuOpciones`**: Controller `Integraciones`, Action `Index`, `SoloAdminEmpresa`, no `SoloSuperAdmin`). Super Admin y Admin de Empresa (este, solo empresa/grupo vía `EmpresaAccesoHelper`). Todo por AJAX con antiforgery; Crear/Rotar devuelven la clave una sola vez (modal sin cierre accidental; no se guarda en `TempData`, log ni auditoría). Usuario técnico: cualquier usuario de la empresa que no sea Super Admin (el servicio devuelve códigos de error, el controlador los traduce). Auditoría `AuditoriaTipo.Integraciones` (Crear / Editar [incluye rotar] / Eliminar [revocar]).
+
 ## Pendiente de la fase 1
-Pantalla «Integraciones» (crear/rotar/revocar; Super Admin y Admin de Empresa; opción de menú + i18n + auditoría `AuditoriaTipo.Integraciones`), envío de hojas en JSON (`POST /cargues/{id}/hojas/{hoja}`), manual OpenAPI + sandbox, notificación a los revisores cuando un lote queda pendiente. Fase 2: ejecución de modelos asíncrona, agente de carpeta, webhook saliente.
+Envío de hojas en JSON (`POST /cargues/{id}/hojas/{hoja}`), manual OpenAPI + sandbox, notificación a los revisores cuando un lote queda pendiente. Fase 2: ejecución de modelos asíncrona, agente de carpeta, webhook saliente.
