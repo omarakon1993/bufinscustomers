@@ -18,6 +18,7 @@ namespace bufinscustomers.Controllers
     public class IntegracionesController : BaseController
     {
         private readonly IntegracionesService _servicio = new IntegracionesService();
+        private readonly WebhooksService _webhooks = new WebhooksService();
 
         private static bool PuedeAdministrar() => UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.EsAdminEmpresa();
 
@@ -126,6 +127,93 @@ namespace bufinscustomers.Controllers
                 return Json(new { success = true, message = string.Format(R("Integ_Revocada"), integ.Nombre) });
             }
             catch (Exception ex) { return Json(new { success = false, message = MensajeError(ex) }); }
+        }
+
+        // ── Webhook saliente ─────────────────────────────────────────────────────────────
+
+        [HttpGet]
+        public ActionResult WebhookEstado(int id)
+        {
+            var integ = Propia(id);
+            if (integ == null) return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
+            if (!WebhooksService.Disponible()) return Json(new { success = true, disponible = false });
+            var cfg = _webhooks.ObtenerConfig(id);
+            return Json(new
+            {
+                success = true, disponible = true, nombre = integ.Nombre, url = cfg.Url, tieneSecreto = cfg.TieneSecreto,
+                entregas = _webhooks.UltimasEntregas(id).Select(e => new
+                {
+                    fecha = e.Fecha.ToString("dd/MM HH:mm:ss"), evento = e.Evento, estado = e.Estado, intentos = e.Intentos, codigo = e.Codigo, error = e.Error
+                })
+            });
+        }
+
+        /// <summary>Guarda la URL (vacía = desactivar). La primera vez genera el secreto y lo devuelve (única vez que se ve).</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult WebhookGuardar(int id, string url)
+        {
+            var integ = Propia(id);
+            if (integ == null) return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
+            try
+            {
+                var r = _webhooks.Guardar(id, url);
+                if (!r.ok) return Json(new { success = false, message = TraducirErrorWebhook(r.error) });
+
+                bool quitado = string.IsNullOrWhiteSpace(url);
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Editar, "Integracion", id.ToString(),
+                    quitado ? $"Desactivó el webhook de la integración API '{integ.Nombre}' de '{integ.NombreEmpresa}'."
+                            : $"Configuró el webhook de la integración API '{integ.Nombre}' de '{integ.NombreEmpresa}' (destino: {HostDe(url)}){(r.secretoNuevo != null ? "; se generó su secreto" : "")}.",
+                    null, new { host = quitado ? null : HostDe(url) }, integ.IdEmpresa, entidadNombre: integ.Nombre);
+
+                return Json(new { success = true, message = R(quitado ? "Integ_Wh_Quitado" : "Integ_Wh_Guardado"), secreto = r.secretoNuevo });
+            }
+            catch (Exception ex) { return Json(new { success = false, message = MensajeError(ex) }); }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult WebhookRotar(int id)
+        {
+            var integ = Propia(id);
+            if (integ == null) return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
+            try
+            {
+                var r = _webhooks.RotarSecreto(id);
+                if (!r.ok) return Json(new { success = false, message = TraducirErrorWebhook(r.error) });
+                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Editar, "Integracion", id.ToString(),
+                    $"Rotó el secreto del webhook de la integración API '{integ.Nombre}' de '{integ.NombreEmpresa}'.",
+                    null, null, integ.IdEmpresa, entidadNombre: integ.Nombre, severidad: AuditoriaSeveridad.Advertencia);
+                return Json(new { success = true, message = R("Integ_Wh_SecretoRotado"), secreto = r.secreto });
+            }
+            catch (Exception ex) { return Json(new { success = false, message = MensajeError(ex) }); }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult WebhookProbar(int id)
+        {
+            var integ = Propia(id);
+            if (integ == null) return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
+            var r = _webhooks.EnviarPrueba(id);
+            if (r.ok) return Json(new { success = true, message = string.Format(R("Integ_Wh_PruebaOk"), r.codigo) });
+            string motivo = r.error == "sin_webhook" ? R("Integ_Wh_ErrSinWebhook") : (r.codigo.HasValue ? "HTTP " + r.codigo : (r.error ?? "?"));
+            return Json(new { success = false, message = string.Format(R("Integ_Wh_PruebaFallo"), motivo) });
+        }
+
+        private static string HostDe(string url) => Uri.TryCreate((url ?? "").Trim(), UriKind.Absolute, out var u) ? u.Host : "?";
+
+        private string TraducirErrorWebhook(string codigo)
+        {
+            switch (codigo)
+            {
+                case "url_invalida": return R("Integ_Wh_ErrUrl");
+                case "solo_https": return R("Integ_Wh_ErrSoloHttps");
+                case "destino_privado": return R("Integ_Wh_ErrDestinoPrivado");
+                case "host_no_resuelve": return R("Integ_Wh_ErrHostNoResuelve");
+                case "cifrado": return R("Integ_Wh_ErrCifrado");
+                default: return R("Integ_Wh_ErrNoDisponible");
+            }
         }
 
         /// <summary>La integración, solo si el usuario puede administrar y tiene acceso a su empresa (si no, null).</summary>

@@ -620,6 +620,7 @@ namespace bufinscustomers.Api
                 Sumar(LlamadasPorIntegracion, res.Integracion.Id, TimeSpan.FromMinutes(1));
 
                 if (res.Integracion.Sandbox) ctx.Response.Headers["X-Bufins-Entorno"] = "pruebas";
+                new WebhooksService().BarrerSiToca();   // retoma avisos pendientes (no hay tareas programadas en el hosting)
                 ctx.Items["ApiIntegracion"] = res.Integracion;
                 ctx.Items["ApiUsuarioTecnico"] = res.UsuarioTecnico;
 

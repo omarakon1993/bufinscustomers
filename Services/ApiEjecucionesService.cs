@@ -109,6 +109,8 @@ namespace bufinscustomers.Services
                     id = (long)cmdI.ExecuteScalar();
                 }
 
+                if (integ.Sandbox) new WebhooksService().NotificarModelosCompletados(integ, id, "Simulada", idEscenario, items);
+
                 if (!integ.Sandbox)
                 {
                     // Segundo plano: la llamada responde ya (202) y el cliente consulta GET /ejecuciones/{id}.
@@ -188,6 +190,7 @@ namespace bufinscustomers.Services
             }
 
             Guardar(id, estadoFinal, items, finalizada: true);
+            new WebhooksService().NotificarModelosCompletados(integ, id, estadoFinal, idEscenario, items);
 
             // Auditoría y aviso: sin contexto HTTP, así que el actor va explícito (el usuario técnico de la integración).
             try

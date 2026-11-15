@@ -4079,4 +4079,39 @@ Indicators management follows closely: </value></data>
   <data name="Integ_ErrSandboxNoDisponible" xml:space="preserve"><value>The testing environment is not enabled yet. Contact BUFINS support.</value></data>
   <data name="Notif_ModelosApiErrores" xml:space="preserve"><value>Models run through the API with errors</value></data>
   <data name="Notif_ModelosApiErroresMsg" xml:space="preserve"><value>The integration “{0}” ran the models of {1}: {2} completed and {3} with errors. Check “Model execution”.</value></data>
+  <data name="Integ_Wh_TitleBoton" xml:space="preserve"><value>Webhook (automatic notifications)</value></data>
+  <data name="Integ_Wh_Titulo" xml:space="preserve"><value>Webhook</value></data>
+  <data name="Integ_Wh_Hint" xml:space="preserve"><value>BUFINS notifies your system's URL when a load from this integration is confirmed (also when a person confirms it) or discarded, and when the models finish. Each notification is signed with the secret and retried up to 3 times. The manual explains how to verify the signature.</value></data>
+  <data name="Integ_Wh_NoDisponible" xml:space="preserve"><value>Webhooks are not enabled in this environment yet. Contact BUFINS support.</value></data>
+  <data name="Integ_Wh_SecConfig" xml:space="preserve"><value>Configuration</value></data>
+  <data name="Integ_Wh_LabelUrl" xml:space="preserve"><value>Destination URL</value></data>
+  <data name="Integ_Wh_UrlHint" xml:space="preserve"><value>It must be https and a public internet address (internal addresses and redirects are not allowed). Leave it empty to disable the webhook.</value></data>
+  <data name="Integ_Wh_SecretoAviso" xml:space="preserve"><value>Copy the secret now and store it somewhere safe: it is not shown again. Your system uses it to verify that notifications come from BUFINS.</value></data>
+  <data name="Integ_Wh_SecretoSi" xml:space="preserve"><value>Secret configured</value></data>
+  <data name="Integ_Wh_SecretoNo" xml:space="preserve"><value>No secret (generated when the URL is saved)</value></data>
+  <data name="Integ_Wh_BtnProbar" xml:space="preserve"><value>Send test</value></data>
+  <data name="Integ_Wh_BtnRotar" xml:space="preserve"><value>Generate new secret</value></data>
+  <data name="Integ_Wh_SecEntregas" xml:space="preserve"><value>Latest notifications</value></data>
+  <data name="Integ_Wh_ThFecha" xml:space="preserve"><value>Date</value></data>
+  <data name="Integ_Wh_ThEvento" xml:space="preserve"><value>Event</value></data>
+  <data name="Integ_Wh_ThIntentos" xml:space="preserve"><value>Attempts</value></data>
+  <data name="Integ_Wh_ThDetalle" xml:space="preserve"><value>Detail</value></data>
+  <data name="Integ_Wh_SinEntregas" xml:space="preserve"><value>No notification has been sent yet.</value></data>
+  <data name="Integ_Wh_EstadoPendiente" xml:space="preserve"><value>Pending</value></data>
+  <data name="Integ_Wh_EstadoEntregado" xml:space="preserve"><value>Delivered</value></data>
+  <data name="Integ_Wh_EstadoFallido" xml:space="preserve"><value>Failed</value></data>
+  <data name="Integ_Wh_ConfRotarTitulo" xml:space="preserve"><value>Generate a new secret?</value></data>
+  <data name="Integ_Wh_ConfRotarTexto" xml:space="preserve"><value>The current secret will stop working immediately: notifications will be signed with the new one and your system must be updated.</value></data>
+  <data name="Integ_Wh_Guardado" xml:space="preserve"><value>Webhook saved.</value></data>
+  <data name="Integ_Wh_Quitado" xml:space="preserve"><value>Webhook disabled.</value></data>
+  <data name="Integ_Wh_SecretoRotado" xml:space="preserve"><value>New secret generated.</value></data>
+  <data name="Integ_Wh_PruebaOk" xml:space="preserve"><value>Test notification delivered (HTTP response {0}).</value></data>
+  <data name="Integ_Wh_PruebaFallo" xml:space="preserve"><value>The test notification could not be delivered: {0}.</value></data>
+  <data name="Integ_Wh_ErrSinWebhook" xml:space="preserve"><value>save a URL first</value></data>
+  <data name="Integ_Wh_ErrUrl" xml:space="preserve"><value>The URL is not valid.</value></data>
+  <data name="Integ_Wh_ErrSoloHttps" xml:space="preserve"><value>The URL must start with https://.</value></data>
+  <data name="Integ_Wh_ErrDestinoPrivado" xml:space="preserve"><value>The address is internal or not public: only internet destinations are allowed.</value></data>
+  <data name="Integ_Wh_ErrHostNoResuelve" xml:space="preserve"><value>The URL's server name could not be resolved.</value></data>
+  <data name="Integ_Wh_ErrCifrado" xml:space="preserve"><value>The secret could not be protected. Try again or contact support.</value></data>
+  <data name="Integ_Wh_ErrNoDisponible" xml:space="preserve"><value>The webhook could not be saved (it is not enabled yet or the integration is revoked).</value></data>
 </root>

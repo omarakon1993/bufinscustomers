@@ -4081,4 +4081,39 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="Integ_ErrSandboxNoDisponible" xml:space="preserve"><value>El entorno de pruebas aún no está habilitado. Contacte a soporte de BUFINS.</value></data>
   <data name="Notif_ModelosApiErrores" xml:space="preserve"><value>Modelos ejecutados por la API con errores</value></data>
   <data name="Notif_ModelosApiErroresMsg" xml:space="preserve"><value>La integración «{0}» ejecutó los modelos de {1}: {2} completado(s) y {3} con error. Revise «Ejecución de Modelos».</value></data>
+  <data name="Integ_Wh_TitleBoton" xml:space="preserve"><value>Webhook (avisos automáticos)</value></data>
+  <data name="Integ_Wh_Titulo" xml:space="preserve"><value>Webhook</value></data>
+  <data name="Integ_Wh_Hint" xml:space="preserve"><value>BUFINS avisa a la URL de su sistema cuando un cargue de esta integración se confirma (también si lo confirma una persona) o se descarta, y cuando terminan los modelos. Cada aviso va firmado con el secreto y se reintenta hasta 3 veces. El manual explica cómo verificar la firma.</value></data>
+  <data name="Integ_Wh_NoDisponible" xml:space="preserve"><value>Los webhooks aún no están habilitados en este entorno. Contacte a soporte de BUFINS.</value></data>
+  <data name="Integ_Wh_SecConfig" xml:space="preserve"><value>Configuración</value></data>
+  <data name="Integ_Wh_LabelUrl" xml:space="preserve"><value>URL de destino</value></data>
+  <data name="Integ_Wh_UrlHint" xml:space="preserve"><value>Debe ser https y una dirección pública de internet (no se admiten direcciones internas ni redirecciones). Déjela vacía para desactivar el webhook.</value></data>
+  <data name="Integ_Wh_SecretoAviso" xml:space="preserve"><value>Copie el secreto ahora y guárdelo en un lugar seguro: no se vuelve a mostrar. Con él su sistema verifica que los avisos vienen de BUFINS.</value></data>
+  <data name="Integ_Wh_SecretoSi" xml:space="preserve"><value>Secreto configurado</value></data>
+  <data name="Integ_Wh_SecretoNo" xml:space="preserve"><value>Sin secreto (se genera al guardar la URL)</value></data>
+  <data name="Integ_Wh_BtnProbar" xml:space="preserve"><value>Enviar prueba</value></data>
+  <data name="Integ_Wh_BtnRotar" xml:space="preserve"><value>Generar secreto nuevo</value></data>
+  <data name="Integ_Wh_SecEntregas" xml:space="preserve"><value>Últimos avisos</value></data>
+  <data name="Integ_Wh_ThFecha" xml:space="preserve"><value>Fecha</value></data>
+  <data name="Integ_Wh_ThEvento" xml:space="preserve"><value>Evento</value></data>
+  <data name="Integ_Wh_ThIntentos" xml:space="preserve"><value>Intentos</value></data>
+  <data name="Integ_Wh_ThDetalle" xml:space="preserve"><value>Detalle</value></data>
+  <data name="Integ_Wh_SinEntregas" xml:space="preserve"><value>Aún no se ha enviado ningún aviso.</value></data>
+  <data name="Integ_Wh_EstadoPendiente" xml:space="preserve"><value>Pendiente</value></data>
+  <data name="Integ_Wh_EstadoEntregado" xml:space="preserve"><value>Entregado</value></data>
+  <data name="Integ_Wh_EstadoFallido" xml:space="preserve"><value>Fallido</value></data>
+  <data name="Integ_Wh_ConfRotarTitulo" xml:space="preserve"><value>¿Generar un secreto nuevo?</value></data>
+  <data name="Integ_Wh_ConfRotarTexto" xml:space="preserve"><value>El secreto actual dejará de servir de inmediato: los avisos se firmarán con el nuevo y su sistema debe actualizarlo.</value></data>
+  <data name="Integ_Wh_Guardado" xml:space="preserve"><value>Webhook guardado.</value></data>
+  <data name="Integ_Wh_Quitado" xml:space="preserve"><value>Webhook desactivado.</value></data>
+  <data name="Integ_Wh_SecretoRotado" xml:space="preserve"><value>Nuevo secreto generado.</value></data>
+  <data name="Integ_Wh_PruebaOk" xml:space="preserve"><value>Aviso de prueba entregado (respuesta HTTP {0}).</value></data>
+  <data name="Integ_Wh_PruebaFallo" xml:space="preserve"><value>El aviso de prueba no se pudo entregar: {0}.</value></data>
+  <data name="Integ_Wh_ErrSinWebhook" xml:space="preserve"><value>primero guarde una URL</value></data>
+  <data name="Integ_Wh_ErrUrl" xml:space="preserve"><value>La URL no es válida.</value></data>
+  <data name="Integ_Wh_ErrSoloHttps" xml:space="preserve"><value>La URL debe empezar por https://.</value></data>
+  <data name="Integ_Wh_ErrDestinoPrivado" xml:space="preserve"><value>La dirección es interna o no es pública: solo se admiten destinos en internet.</value></data>
+  <data name="Integ_Wh_ErrHostNoResuelve" xml:space="preserve"><value>No se pudo resolver el nombre del servidor de la URL.</value></data>
+  <data name="Integ_Wh_ErrCifrado" xml:space="preserve"><value>No se pudo proteger el secreto. Inténtelo de nuevo o contacte a soporte.</value></data>
+  <data name="Integ_Wh_ErrNoDisponible" xml:space="preserve"><value>No se pudo guardar el webhook (aún no está habilitado o la integración está revocada).</value></data>
 </root>

@@ -513,8 +513,11 @@ namespace bufinscustomers.Services
                     DetalleHojas = conteo.Select(c => new DetalleCargaHojaExcel { NombreHoja = c.NombreHoja, NombreTabla = c.NombreTabla, FilasInsertadas = c.Filas, Estado = "Simulado" }).ToList(),
                     Mensaje = $"Simulación (pruebas): el cargue es válido y se habría confirmado con {lote.TotalFilas:N0} fila(s). No se modificó ningún dato real."
                 };
+                var webhooks = new WebhooksService();
+                int? idIntegSim = webhooks.IdIntegracionDeLote(idLote);   // antes de descartar: el lote desaparece
                 try { _stagingService.DescartarLote(idLote); }
                 catch (Exception exSim) { AppLogger.Error(exSim, $"Confirmar(simulado): no se pudo descartar el lote {idLote}"); }
+                webhooks.NotificarCargueConfirmado(idIntegSim, lote, sim, usuario?.Id ?? 0, simulado: true);
                 return Sale(ConfirmacionCargueEstado.Simulado, sim.Mensaje, sim);
             }
 
@@ -627,6 +630,10 @@ namespace bufinscustomers.Services
             // Deja solo los últimos N archivos confirmados de la empresa (parámetro Cargue_ArchivosConservados).
             _archivosService.Purgar(lote.IdEmpresa);
 
+            // Webhook: si el cargue lo creó una integración, se le avisa (también cuando lo confirma una persona en «Revisar cargue»).
+            var whConf = new WebhooksService();
+            whConf.NotificarCargueConfirmado(whConf.IdIntegracionDeLote(idLote), lote, resultado, idUsuario, simulado: false);
+
             resultado.Exito = true;
             resultado.TotalFilasInsertadas = lote.TotalFilas;
 
@@ -679,12 +686,15 @@ namespace bufinscustomers.Services
 
             if (lote != null && EmpresaAccesoHelper.TieneAcceso(usuario, lote.IdEmpresa))
             {
+                var whDesc = new WebhooksService();
+                int? idIntegDesc = whDesc.IdIntegracionDeLote(idLote);   // antes de descartar: el lote desaparece
                 try { _stagingService.DescartarLote(idLote); }
                 catch (Exception ex)
                 {
                     AppLogger.Error(ex, $"DescartarCargue: lote {idLote}");
                     return false;
                 }
+                whDesc.NotificarCargueDescartado(idIntegDesc, lote, usuario?.Id ?? 0);
 
                 new AuditoriaService().RegistrarCambio(
                     AuditoriaTipo.Cargues, AuditoriaAccion.Descartar, "CargueLote", idLote.ToString(),

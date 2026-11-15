@@ -80,6 +80,7 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 <tr><td class="n">Límites</td><td>120 llamadas por minuto por integración; 20 intentos con clave incorrecta por IP en 10 minutos (luego 429 con <code>Retry-After</code>).</td></tr>
 <tr><td class="n">Rotar y revocar</td><td>Rotar genera una clave nueva y la anterior deja de servir al instante. Revocar es definitivo (se crea otra integración si hace falta).</td></tr>
 <tr><td class="n">Confirmación humana</td><td>Por defecto una persona confirma cada cargue. Aun con permiso, la API <b>nunca</b> confirma una reducción fuerte de datos ni salta la regla de nunca dejar un año vacío.</td></tr>
+<tr><td class="n">Webhook firmado</td><td>Los avisos salientes van firmados (HMAC-SHA256) con un secreto que se muestra una sola vez; solo se envían por https a direcciones públicas y no siguen redirecciones.</td></tr>
 <tr><td class="n">Entorno de pruebas</td><td>Las claves <code>bft_</code> hacen todo el flujo pero su confirmación es una simulación: nunca modifican datos reales.</td></tr>
 <tr><td class="n">Auditoría</td><td>Cada envío, confirmación, descarte y cambio de la integración queda registrado con la integración y su usuario técnico. La clave nunca se registra.</td></tr></table></div>
 <p class="note bad"><b>Si la clave se filtra:</b> entre a Integraciones API y use <b>Generar clave nueva</b> (o <b>Revocar</b>). El efecto es inmediato.</p></section>
@@ -212,6 +213,47 @@ HTTP 202
 <li><b>Una a la vez.</b> Solo puede haber una ejecución por empresa y escenario; otra llamada recibe 409 <code>ejecucion_en_curso</code> con el <code>idEjecucion</code> que está corriendo.</li>
 <li><b>Un error no detiene a los demás.</b> Si un modelo falla, el resto se ejecuta y el detalle por modelo trae su mensaje; los administradores de la empresa reciben un aviso.</li>
 <li><b>Permiso.</b> Es el mismo de confirmar cargues; sin él, 403 <code>permiso_modelos</code>. Una integración de pruebas no ejecuta nada (responde <code>Simulada</code>).</li></ul>
+<h3>Avisos automáticos (webhook)</h3>
+<p>En lugar de consultar una y otra vez, BUFINS puede <b>avisar a su sistema</b> cuando algo ocurre. El administrador entra a <i>Integraciones API</i>, pulsa el botón <b>Webhook</b> de la integración y escribe la URL (https) de su sistema; BUFINS genera un <b>secreto</b> (se muestra una sola vez) y desde entonces envía un <code>POST</code> con JSON firmado a esa URL.</p>
+<div class="tw"><table><tr><th>Evento</th><th>Cuándo se envía</th></tr>
+<tr><td class="f">cargue.confirmado</td><td>Se confirma un cargue de la integración: lo haya hecho la propia integración o <b>una persona en «Revisar cargue»</b> (lo más habitual). En pruebas llega con <code>"simulado": true</code>.</td></tr>
+<tr><td class="f">cargue.descartado</td><td>Se descarta un cargue de la integración (por una persona o por <code>DELETE /cargues/{id}</code>).</td></tr>
+<tr><td class="f">modelos.completados</td><td>Terminó una ejecución de modelos (estado <code>Completada</code> o <code>ConErrores</code>), con el detalle por modelo.</td></tr>
+<tr><td class="f">webhook.prueba</td><td>El administrador pulsó «Enviar prueba» para verificar su receptor.</td></tr></table></div>
+<pre><code>POST https://su-sistema.com/bufins/webhook
+X-Bufins-Event: cargue.confirmado
+X-Bufins-Delivery: 7c1f2b3e-5a1d-4c0e-9a77-3f1c2d4e5f60
+X-Bufins-Signature: t=1763128311,v1=5b2c...e91a
+Content-Type: application/json
+
+{ "id": "7c1f2b3e-5a1d-4c0e-9a77-3f1c2d4e5f60", "evento": "cargue.confirmado", "fecha": "2026-11-14T14:05:11Z", "sandbox": false,
+  "integracion": { "id": 3, "nombre": "Agente Siigo" },
+  "datos": { "idLote": 236, "anio": 2026, "modo": "ejecucion", "idEscenario": 1, "archivo": "PlantillaBUFINS.xlsx",
+             "filas": 18450, "simulado": false, "confirmadoPor": "persona",
+             "hojas": [ { "hoja": "Z_NombreDeLaHoja", "tabla": "Ini_NombreDeLaTabla", "filas": 1200 } ] } }</code></pre>
+<h3>Verificar la firma</h3>
+<p>Cada aviso trae la cabecera <code>X-Bufins-Signature: t={segundos unix},v1={firma}</code>, donde la firma es el <b>HMAC-SHA256</b> en hexadecimal de <code>t + "." + cuerpo</code> usando el secreto. <b>Verifíquela siempre</b> antes de confiar en el aviso, con el cuerpo exacto recibido (sin reformatear), y rechace los que tengan más de 5 minutos.</p>
+<details open><summary>Python</summary><pre><code>import hmac, hashlib, time
+
+def verificar(secreto: str, cuerpo: bytes, cabecera: str) -&gt; bool:
+    p = dict(x.split("=", 1) for x in cabecera.split(","))        # "t=...,v1=..."
+    if abs(time.time() - int(p["t"])) &gt; 300:                       # rechaza avisos viejos (anti-repetición)
+        return False
+    esperado = hmac.new(secreto.encode(), p["t"].encode() + b"." + cuerpo, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(esperado, p["v1"])</code></pre></details>
+<details><summary>C#</summary><pre><code>static bool Verificar(string secreto, string cuerpo, string cabecera)
+{
+    var p = cabecera.Split(',').Select(x =&gt; x.Split('=', 2)).ToDictionary(x =&gt; x[0], x =&gt; x[1]);
+    if (Math.Abs(DateTimeOffset.UtcNow.ToUnixTimeSeconds() - long.Parse(p["t"])) &gt; 300) return false;
+    var esperado = Convert.ToHexString(HMACSHA256.HashData(
+        Encoding.UTF8.GetBytes(secreto), Encoding.UTF8.GetBytes(p["t"] + "." + cuerpo))).ToLowerInvariant();
+    return CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(esperado), Encoding.ASCII.GetBytes(p["v1"]));
+}</code></pre></details>
+<ul><li><b>Responda con un 2xx en menos de 15 segundos</b> y procese después. Cualquier otra respuesta se considera fallida.</li>
+<li><b>Reintentos:</b> hasta 3 intentos (inmediato, a los 30 segundos y a los 5 minutos). Si todos fallan queda como <i>Fallido</i> en la pantalla de la integración; los pendientes se retoman con la siguiente actividad de la API.</li>
+<li><b>Puede llegar repetido.</b> Use <code>X-Bufins-Delivery</code> (o el campo <code>id</code>) para ignorar avisos que ya procesó.</li>
+<li><b>Destino seguro.</b> Solo https y direcciones públicas de internet: BUFINS no envía a redes internas, ni sigue redirecciones.</li>
+<li><b>Secreto perdido:</b> «Generar secreto nuevo» invalida el anterior al instante; actualice su sistema.</li></ul>
 <p class="note info"><b>En el entorno de pruebas</b> la confirmación se simula: la respuesta trae <code>"estado": "ConfirmadoSimulado"</code> (o <code>"confirmacion": "simulado"</code> al subir con <code>confirmar=true</code>) y el cargue de prueba se descarta sin tocar datos.</p>
 <p class="note ok">Antes de reemplazar, BUFINS guarda automáticamente la versión anterior. Si un cargue confirmado resulta incorrecto, un administrador puede deshacerlo desde el <b>Historial de versiones</b>.</p></section>
 
@@ -271,6 +313,7 @@ HTTP 202
 <details><summary>¿Qué pasa si envío dos veces lo mismo?</summary><p>Con la misma <code>Idempotency-Key</code> BUFINS no lo duplica. Sin ella, el segundo envío reemplaza al primero si aún estaba pendiente; si el primero ya se confirmó, el segundo se revisa y reemplaza los datos del año, como un cargue nuevo de Excel.</p></details>
 <details><summary>¿Por qué el cargue «no se puede confirmar»?</summary><p>Consulte <code>/cargues/{id}/hallazgos</code>. Si tiene errores hay que corregir los datos; si el impacto muestra <code>bloqueado</code>, el archivo dejaría un año vacío o una tabla casi vacía y BUFINS lo impide para todos.</p></details>
 <details><summary>¿La API actualiza los informes?</summary><p>Un cargue confirmado deja los datos listos; los informes leen los resultados de los modelos. Una integración con permiso los recalcula con <code>POST /modelos/ejecutar</code>; si no, se ejecutan en «Ejecución de Modelos», como siempre.</p></details>
+<details><summary>¿Cómo me entero cuando una persona confirma el cargue?</summary><p>Configure un webhook: BUFINS le envía <code>cargue.confirmado</code> en cuanto alguien lo confirma en «Revisar cargue». Si no puede recibir avisos, consulte <code>GET /cargues/{id}</code> cada cierto tiempo.</p></details>
 <details><summary>¿Puedo ver los cargues de otra integración o de las personas de la empresa?</summary><p>No. Cada integración ve únicamente los cargues que ella misma creó. Las personas los ven en «Revisar cargue».</p></details>
 <details><summary>Perdí la clave, ¿qué hago?</summary><p>Un administrador entra a Integraciones API y pulsa «Generar clave nueva». La anterior deja de funcionar al instante; configure la nueva en el sistema del cliente.</p></details>
 <details><summary>¿Mis datos están protegidos?</summary><p>Viajan cifrados (HTTPS), cada clave solo alcanza una empresa y todo lo que hace la integración queda en la auditoría. BUFINS actúa como encargado del tratamiento de los datos de la empresa; el contrato de transmisión de datos se acuerda por separado.</p></details></section>

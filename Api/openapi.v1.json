@@ -3,7 +3,7 @@
   "info": {
     "title": "API de ingesta de BUFINS",
     "version": "1.0.0",
-    "description": "Envíe a BUFINS, desde su sistema contable, la misma información que hoy entra con la plantilla Excel. Un envío por la API pasa por exactamente las mismas validaciones, el mismo respaldo previo y la misma auditoría que un cargue de Excel.\n\n**Flujo**: (A) suba la plantilla completa con `POST /cargues/archivo`, o (B) abra un cargue con `POST /cargues`, envíe cada hoja con `POST /cargues/{idLote}/hojas/{hoja}` y ciérrelo con `POST /cargues/{idLote}/validar`. Luego revise `GET /cargues/{idLote}` y `/hallazgos`. La confirmación la hace una persona en «Revisar cargue», salvo que la integración tenga permiso para confirmar.\n\n**Reglas que nunca se saltan**: un cargue no puede dejar un año vacío ni reducir una tabla por debajo del umbral de bloqueo; una reducción fuerte siempre la confirma una persona. Un nuevo envío para el mismo año/modo/escenario reemplaza al envío pendiente de la misma integración.\n\n**Entorno de pruebas (sandbox)**: una integración de tipo Pruebas (clave `bft_…`) hace todo el flujo igual que producción, pero su confirmación es una simulación (`ConfirmadoSimulado`): nunca modifica datos reales ni avisa a los revisores. Sus respuestas llevan la cabecera `X-Bufins-Entorno: pruebas`.\n\n**Mensajes**: en español; agregue `?idioma=en` o `Accept-Language: en` para inglés."
+    "description": "Envíe a BUFINS, desde su sistema contable, la misma información que hoy entra con la plantilla Excel. Un envío por la API pasa por exactamente las mismas validaciones, el mismo respaldo previo y la misma auditoría que un cargue de Excel.\n\n**Flujo**: (A) suba la plantilla completa con `POST /cargues/archivo`, o (B) abra un cargue con `POST /cargues`, envíe cada hoja con `POST /cargues/{idLote}/hojas/{hoja}` y ciérrelo con `POST /cargues/{idLote}/validar`. Luego revise `GET /cargues/{idLote}` y `/hallazgos`. La confirmación la hace una persona en «Revisar cargue», salvo que la integración tenga permiso para confirmar.\n\n**Reglas que nunca se saltan**: un cargue no puede dejar un año vacío ni reducir una tabla por debajo del umbral de bloqueo; una reducción fuerte siempre la confirma una persona. Un nuevo envío para el mismo año/modo/escenario reemplaza al envío pendiente de la misma integración.\n\n**Webhook**: la integración puede tener una URL https a la que BUFINS avisa `cargue.confirmado`, `cargue.descartado` y `modelos.completados`, con cabecera `X-Bufins-Signature` (HMAC-SHA256). Ver `x-webhooks` y el manual.\n\n**Entorno de pruebas (sandbox)**: una integración de tipo Pruebas (clave `bft_…`) hace todo el flujo igual que producción, pero su confirmación es una simulación (`ConfirmadoSimulado`): nunca modifica datos reales ni avisa a los revisores. Sus respuestas llevan la cabecera `X-Bufins-Entorno: pruebas`.\n\n**Mensajes**: en español; agregue `?idioma=en` o `Accept-Language: en` para inglés."
   },
   "servers": [ { "url": "/api/v1", "description": "Este servidor" } ],
   "security": [ { "claveIntegracion": [] } ],
@@ -206,6 +206,11 @@
       }
     }
   },
+  "x-webhooks": {
+    "cargue.confirmado": { "post": { "summary": "Un cargue de la integración se confirmó (por la integración o por una persona)", "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvisoWebhook" } } } }, "responses": { "2XX": { "description": "Responda 2xx en menos de 15 s; otra respuesta se reintenta (3 intentos)" } } } },
+    "cargue.descartado": { "post": { "summary": "Un cargue de la integración se descartó", "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvisoWebhook" } } } }, "responses": { "2XX": { "description": "OK" } } } },
+    "modelos.completados": { "post": { "summary": "Terminó una ejecución de modelos", "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvisoWebhook" } } } }, "responses": { "2XX": { "description": "OK" } } } }
+  },
   "components": {
     "securitySchemes": {
       "claveIntegracion": { "type": "http", "scheme": "bearer", "bearerFormat": "bfk_{prefijo}_{secreto}", "description": "Clave de la integración (se genera en BUFINS → Configuración → Integraciones API). Se muestra una sola vez." }
@@ -282,6 +287,16 @@
             "requiereRevisionHumana": { "type": "boolean", "description": "Reducción fuerte: la confirma siempre una persona." },
             "bloqueado": { "type": "boolean", "description": "Regla de oro: dejaría un año vacío o una tabla bajo el umbral. No se puede confirmar." },
             "tablas": { "type": "array", "items": { "type": "object", "properties": { "tabla": { "type": "string" }, "existentes": { "type": "integer" }, "nuevas": { "type": "integer" } } } } } }
+        }
+      },
+      "AvisoWebhook": {
+        "type": "object",
+        "description": "Cabeceras: `X-Bufins-Event`, `X-Bufins-Delivery` (id único del aviso) y `X-Bufins-Signature: t={unix},v1={hex(HMAC-SHA256(secreto, t + \".\" + cuerpo))}`.",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" }, "evento": { "type": "string", "enum": ["cargue.confirmado", "cargue.descartado", "modelos.completados", "webhook.prueba"] },
+          "fecha": { "type": "string", "format": "date-time" }, "sandbox": { "type": "boolean" },
+          "integracion": { "type": "object", "properties": { "id": { "type": "integer" }, "nombre": { "type": "string" } } },
+          "datos": { "type": "object", "description": "Depende del evento (ver el manual)." }
         }
       },
       "EjecucionIniciada": {

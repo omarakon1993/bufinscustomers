@@ -135,6 +135,10 @@
                                                     data-confirma="@(i.PermiteConfirmar ? "1" : "0")" data-ips="@i.IpPermitidas">
                                                 <i class="fas fa-edit"></i>
                                             </button>
+                                            <button type="button" class="btn btn-sm btn-info integ-webhook" title="@Resources.Strings.Integ_Wh_TitleBoton"
+                                                    data-id="@i.Id" data-nombre="@i.Nombre">
+                                                <i class="fas fa-bullhorn"></i>
+                                            </button>
                                             <button type="button" class="btn btn-sm btn-warning integ-rotar" title="@Resources.Strings.Integ_TitleRotar"
                                                     data-id="@i.Id" data-nombre="@i.Nombre">
                                                 <i class="fas fa-sync-alt"></i>
@@ -264,6 +268,63 @@
     </div>
 </div>
 
+<!-- ═══════════════════ MODAL WEBHOOK ═══════════════════ -->
+<div class="modal fade" id="integWebhookModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered bf-modal-wide">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-bullhorn"></i> @Resources.Strings.Integ_Wh_Titulo · <span id="whNombre"></span></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted">@Resources.Strings.Integ_Wh_Hint</p>
+                <div id="whNoDisp" class="alert alert-warning d-none"><i class="fas fa-exclamation-triangle mr-1"></i>@Resources.Strings.Integ_Wh_NoDisponible</div>
+                <div id="whCuerpo">
+                    <div class="bf-section">@Resources.Strings.Integ_Wh_SecConfig</div>
+                    <div class="mb-2">
+                        <label for="whUrl">@Resources.Strings.Integ_Wh_LabelUrl</label>
+                        <div class="bf-input"><i class="fas fa-link"></i>
+                            <input type="url" id="whUrl" class="form-control" maxlength="500" placeholder="https://su-sistema.com/bufins/webhook" autocomplete="off" />
+                        </div>
+                        <small class="form-text text-muted">@Resources.Strings.Integ_Wh_UrlHint</small>
+                    </div>
+                    <div id="whSecretoBloque" class="d-none mb-3">
+                        <div class="alert alert-warning small mb-2"><i class="fas fa-exclamation-triangle mr-1"></i>@Resources.Strings.Integ_Wh_SecretoAviso</div>
+                        <div class="input-group">
+                            <input type="text" id="whSecretoValor" class="form-control" readonly style="font-family:monospace;" />
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-primary" id="whCopiar"><i class="fas fa-copy mr-1"></i>@Resources.Strings.Integ_BtnCopiar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <span id="whSecretoEstado" class="badge badge-secondary"></span>
+                    </div>
+                    <div class="d-flex flex-wrap" style="gap:8px;">
+                        <button type="button" class="btn btn-primary" id="whGuardar"><i class="fas fa-save mr-1"></i>@Resources.Strings.Common_GuardarCambios</button>
+                        <button type="button" class="btn btn-secondary" id="whProbar"><i class="fas fa-paper-plane mr-1"></i>@Resources.Strings.Integ_Wh_BtnProbar</button>
+                        <button type="button" class="btn btn-warning" id="whRotar"><i class="fas fa-sync-alt mr-1"></i>@Resources.Strings.Integ_Wh_BtnRotar</button>
+                    </div>
+
+                    <div class="bf-section mt-4">@Resources.Strings.Integ_Wh_SecEntregas</div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead><tr>
+                                <th>@Resources.Strings.Integ_Wh_ThFecha</th><th>@Resources.Strings.Integ_Wh_ThEvento</th><th class="text-center">@Resources.Strings.Common_Estado</th>
+                                <th class="text-center">@Resources.Strings.Integ_Wh_ThIntentos</th><th>@Resources.Strings.Integ_Wh_ThDetalle</th>
+                            </tr></thead>
+                            <tbody id="whEntregas"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times mr-1"></i>@Resources.Strings.Common_Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ═══════════════════ MODAL CLAVE (se muestra una sola vez) ═══════════════════ -->
 <div class="modal fade" id="integClaveModal" tabindex="-1" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-dialog-centered bf-modal-md">
@@ -303,14 +364,27 @@
         revocarTexto: '@Html.Raw(js(Resources.Strings.Integ_ConfRevocarTexto))',
         btnRotar: '@Html.Raw(js(Resources.Strings.Integ_BtnRotar))',
         btnRevocar: '@Html.Raw(js(Resources.Strings.Integ_BtnRevocar))',
-        cancelar: '@Html.Raw(js(Resources.Strings.Layout_Cancel))'
+        cancelar: '@Html.Raw(js(Resources.Strings.Layout_Cancel))',
+        whSinEntregas: '@Html.Raw(js(Resources.Strings.Integ_Wh_SinEntregas))',
+        whSecretoSi: '@Html.Raw(js(Resources.Strings.Integ_Wh_SecretoSi))',
+        whSecretoNo: '@Html.Raw(js(Resources.Strings.Integ_Wh_SecretoNo))',
+        whRotarTitulo: '@Html.Raw(js(Resources.Strings.Integ_Wh_ConfRotarTitulo))',
+        whRotarTexto: '@Html.Raw(js(Resources.Strings.Integ_Wh_ConfRotarTexto))',
+        whRotarBtn: '@Html.Raw(js(Resources.Strings.Integ_Wh_BtnRotar))',
+        whPendiente: '@Html.Raw(js(Resources.Strings.Integ_Wh_EstadoPendiente))',
+        whEntregado: '@Html.Raw(js(Resources.Strings.Integ_Wh_EstadoEntregado))',
+        whFallido: '@Html.Raw(js(Resources.Strings.Integ_Wh_EstadoFallido))'
     };
     var urls = {
         usuarios: '@Url.Action("UsuariosDeEmpresa", "Integraciones")',
         crear: '@Url.Action("Crear", "Integraciones")',
         editar: '@Url.Action("Editar", "Integraciones")',
         rotar: '@Url.Action("Rotar", "Integraciones")',
-        revocar: '@Url.Action("Revocar", "Integraciones")'
+        revocar: '@Url.Action("Revocar", "Integraciones")',
+        whEstado: '@Url.Action("WebhookEstado", "Integraciones")',
+        whGuardar: '@Url.Action("WebhookGuardar", "Integraciones")',
+        whRotar: '@Url.Action("WebhookRotar", "Integraciones")',
+        whProbar: '@Url.Action("WebhookProbar", "Integraciones")'
     };
 
     function token() { return $('input[name="__RequestVerificationToken"]').first().val(); }
@@ -403,6 +477,64 @@
         if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText($i.val()).then(ok);
         else { document.execCommand('copy'); ok(); }
     });
+
+    // ── Webhook ──
+    var whId = 0;
+    function whMostrarSecreto(s) { $('#whSecretoValor').val(s); $('#whSecretoBloque').toggleClass('d-none', !s); }
+    function whCargar() {
+        $.getJSON(urls.whEstado, { id: whId }).done(function (r) {
+            if (!r.success) { toast('error', r.message); return; }
+            $('#whNoDisp').toggleClass('d-none', !!r.disponible); $('#whCuerpo').toggleClass('d-none', !r.disponible);
+            if (!r.disponible) return;
+            $('#whUrl').val(r.url || '');
+            $('#whSecretoEstado').text(r.tieneSecreto ? T.whSecretoSi : T.whSecretoNo).toggleClass('badge-success', r.tieneSecreto).toggleClass('badge-secondary', !r.tieneSecreto);
+            $('#whRotar').prop('disabled', !r.tieneSecreto);
+            var $b = $('#whEntregas').empty();
+            if (!r.entregas.length) { $b.append($('<tr>').append($('<td colspan="5" class="text-center text-muted">').text(T.whSinEntregas))); return; }
+            $.each(r.entregas, function (_, e) {
+                var etq = e.estado === 'Entregado' ? T.whEntregado : (e.estado === 'Fallido' ? T.whFallido : T.whPendiente);
+                var cls = e.estado === 'Entregado' ? 'badge-success' : (e.estado === 'Fallido' ? 'badge-danger' : 'badge-warning');
+                $b.append($('<tr>')
+                    .append($('<td class="small">').text(e.fecha)).append($('<td class="small">').append($('<code>').text(e.evento)))
+                    .append($('<td class="text-center">').append($('<span class="badge">').addClass(cls).text(etq)))
+                    .append($('<td class="text-center">').text(e.intentos))
+                    .append($('<td class="small">').text(e.error || (e.codigo ? 'HTTP ' + e.codigo : ''))));
+            });
+        }).fail(function () { toast('error', T.errRed); });
+    }
+    $(document).on('click', '.integ-webhook', function () {
+        whId = $(this).data('id'); $('#whNombre').text($(this).data('nombre')); whMostrarSecreto(''); $('#whUrl').val('');
+        $('#integWebhookModal').modal('show'); whCargar();
+    });
+    $('#whGuardar').on('click', function () {
+        var $b = $(this).prop('disabled', true);
+        post(urls.whGuardar, { id: whId, url: $('#whUrl').val() }).done(function (r) {
+            if (!r.success) { toast('error', r.message); return; }
+            toast('success', r.message); whMostrarSecreto(r.secreto || ''); whCargar();
+        }).always(function () { $b.prop('disabled', false); });
+    });
+    $('#whProbar').on('click', function () {
+        var $b = $(this).prop('disabled', true);
+        post(urls.whProbar, { id: whId }).done(function (r) { toast(r.success ? 'success' : 'error', r.message); whCargar(); })
+            .always(function () { $b.prop('disabled', false); });
+    });
+    $('#whRotar').on('click', function () {
+        Swal.fire({ icon: 'warning', title: T.whRotarTitulo, text: T.whRotarTexto, showCancelButton: true, confirmButtonText: T.whRotarBtn, cancelButtonText: T.cancelar })
+            .then(function (x) {
+                if (!x.isConfirmed) return;
+                post(urls.whRotar, { id: whId }).done(function (r) {
+                    if (!r.success) { toast('error', r.message); return; }
+                    toast('success', r.message); whMostrarSecreto(r.secreto); whCargar();
+                });
+            });
+    });
+    $('#whCopiar').on('click', function () {
+        var $i = $('#whSecretoValor'); $i.trigger('select');
+        var ok = function () { toast('success', T.copiado); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText($i.val()).then(ok);
+        else { document.execCommand('copy'); ok(); }
+    });
+    $('#integWebhookModal').on('hidden.bs.modal', function () { whMostrarSecreto(''); });
 
     // La clave no se vuelve a mostrar: al cerrar se borra del formulario y se recarga el listado.
     $('#integClaveCerrar').on('click', function () { $('#integClaveValor').val(''); location.reload(); });
