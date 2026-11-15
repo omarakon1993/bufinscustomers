@@ -10,6 +10,7 @@ Guía para Claude Code en este repositorio. **Este archivo guarda reglas y resú
 | Cualquier informe; documentación de informes y biblioteca; logo de empresa; tema de colores; comentarios de gestión; atajos de rango | `.claude/notas/informes.md` |
 | Cargue de Excel, staging/validación, gestor de hojas, historial/rollback/respaldos, protección de cargues, escenarios | `.claude/notas/cargues-escenarios.md` |
 | Excel (ClosedXML/gráficos), configuración financiera, ModelosEjecucion, IA, filtros globales, AppLogger, auditoría, páginas de error, frontend | `.claude/notas/excel-modelos-ia-auditoria.md` |
+| API de ingesta (`/api/v1`, `Api/`, integraciones y claves) | `.claude/notas/api-ingesta.md` |
 | Texto íntegro de convenciones, deuda técnica e i18n | `.claude/notas/convenciones.md` |
 | Notificaciones internas | `.claude/notas/notificaciones.md` |
 | Estilos, modales, botón Exportar, loader, formularios | `.claude/notas/ui-estilos.md` |

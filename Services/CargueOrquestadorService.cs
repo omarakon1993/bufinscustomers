@@ -393,6 +393,7 @@ namespace bufinscustomers.Services
             }
             catch (Exception ex)
             {
+                AppLogger.Error(ex, "CargueOrquestador.ProcesarArchivo");
                 resultado.Exito = false;
                 resultado.Mensaje = $"Error al procesar el archivo: {ex.Message}";
                 if (idLote > 0)

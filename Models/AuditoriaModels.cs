@@ -73,6 +73,7 @@ namespace bufinscustomers.Models
         public const string Escenarios    = "ESCENARIOS";
         public const string HojasCargue   = "HOJAS_CARGUE";
         public const string Informes      = "INFORMES";
+        public const string Integraciones = "INTEGRACIONES";
     }
 
     public static class AuditoriaAccion

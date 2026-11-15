@@ -494,7 +494,8 @@ namespace bufinscustomers.Services
 
                 if (!r.IdUsuario.HasValue || string.IsNullOrEmpty(r.NombreUsuario))
                 {
-                    var u = ctx.Session?["UsuarioCompleto"] as Usuarios;
+                    // Llamadas de la API de ingesta: no hay sesión; el middleware deja aquí al usuario técnico de la integración.
+                    var u = (ctx.Items["ApiUsuarioTecnico"] as Usuarios) ?? (ctx.Session?["UsuarioCompleto"] as Usuarios);
                     if (u != null)
                     {
                         if (!r.IdUsuario.HasValue) r.IdUsuario = u.Id;

@@ -131,8 +131,8 @@ app.Use(async (ctx, next) =>
     catch (Exception ex) { bufinscustomers.Helpers.AppLogger.Error(ex, "Application_Error"); throw; }
 });
 
-// Paginas de error de la marca para 403 y 404 (antes customErrors + httpErrors)
-app.UseStatusCodePagesWithReExecute("/Error/Status", "?code={0}");
+// Paginas de error de la marca para 403 y 404 (antes customErrors + httpErrors). La API (/api) responde siempre JSON propio.
+app.UseWhen(ctx => !ctx.Request.Path.StartsWithSegments("/api"), rama => rama.UseStatusCodePagesWithReExecute("/Error/Status", "?code={0}"));
 
 app.UseResponseCompression();
 app.UseMiddleware<CabecerasSeguridad>();
@@ -173,6 +173,10 @@ localizacion.RequestCultureProviders.Add(new CustomRequestCultureProvider(ctx =>
 app.UseRequestLocalization(localizacion);
 
 app.UseRouting();
+
+// API de ingesta v1 (/api/v1): autenticacion por clave de integracion, limites y errores en JSON. Va antes de los endpoints.
+app.UseMiddleware<bufinscustomers.Api.ApiV1Middleware>();
+bufinscustomers.Api.ApiV1.Mapear(app);
 
 app.MapControllerRoute("Default", "{controller=Home}/{action=Index}/{id?}");
 

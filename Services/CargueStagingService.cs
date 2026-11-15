@@ -50,10 +50,38 @@ namespace bufinscustomers.Services
         /// mitad, o confirmado cuya limpieza no se completó (su staging ya no sirve para nada). Fechas con
         /// GETDATE() del servidor SQL, no del web server, para no depender de relojes distintos.
         /// </summary>
-        private static readonly string CondicionVencido =
+        private static string CondicionVencido =>
             "(Estado = 'Confirmado'" +
             $" OR (Estado = 'EnValidacion' AND FechaCreacion < DATEADD(MINUTE, -{MinutosVencimientoValidacion}, GETDATE()))" +
-            $" OR FechaCreacion < DATEADD(HOUR, -{HorasVencimientoRevision}, GETDATE()))";
+            // Los lotes que llegan por la API (Sql/046) esperan revisión humana más tiempo que los de la pantalla de Excel.
+            (OrigenLoteDisponible()
+                ? $" OR FechaCreacion < DATEADD(HOUR, -(CASE WHEN Origen = 'API' THEN {HorasVencimientoRevisionApi} ELSE {HorasVencimientoRevision} END), GETDATE()))"
+                : $" OR FechaCreacion < DATEADD(HOUR, -{HorasVencimientoRevision}, GETDATE()))");
+
+        /// <summary>Horas que un lote creado por la API puede esperar su revisión/confirmación antes de purgarse.</summary>
+        private const int HorasVencimientoRevisionApi = 48;
+
+        private static bool _origenLoteDisponible;
+        private static DateTime _origenLoteRevisado = DateTime.MinValue;
+
+        /// <summary>True si CarguesLotes ya tiene la columna Origen (script 046). Si no, se revisa de nuevo cada 5 minutos.</summary>
+        private static bool OrigenLoteDisponible()
+        {
+            if (_origenLoteDisponible) return true;
+            if ((DateTime.Now - _origenLoteRevisado).TotalMinutes < 5) return false;
+            _origenLoteRevisado = DateTime.Now;
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand("SELECT CASE WHEN COL_LENGTH('dbo.CarguesLotes','Origen') IS NOT NULL THEN 1 ELSE 0 END", cn))
+                {
+                    cn.Open();
+                    _origenLoteDisponible = Convert.ToInt32(cmd.ExecuteScalar()) == 1;
+                }
+            }
+            catch { _origenLoteDisponible = false; }
+            return _origenLoteDisponible;
+        }
 
         // ── Cabecera de lote ────────────────────────────────────────────────────────────
 
