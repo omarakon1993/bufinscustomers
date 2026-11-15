@@ -360,6 +360,9 @@ namespace bufinscustomers.Api
                 null, new { integracion = integ.Nombre, idIntegracion = integ.Id, archivo, anio = lote?.Anio, escenario = lote?.IdEscenario, estado = lote?.Estado },
                 integ.IdEmpresa, entidadNombre: integ.NombreEmpresa);
 
+            // Historial para el panel «Actividad» de la pantalla Integraciones (lo que llegó; cómo termina lo registran confirmar/descartar).
+            new IntegracionesActividadService().RegistrarRecibido(integ.Id, lote, archivo);
+
             string confirmacion = pideConfirmar ? "no_permitida" : "no_solicitada";
             object confirmado = null;
             if (pideConfirmar && integ.PermiteConfirmar)

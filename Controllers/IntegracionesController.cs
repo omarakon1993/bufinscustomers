@@ -3,10 +3,19 @@ using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace bufinscustomers.Controllers
 {
+    /// <summary>Semáforo de una integración ya traducido (lo pinta la pantalla Integraciones).</summary>
+    public class SaludIntegracionVM
+    {
+        /// <summary>problema | atencion | ok | inactiva</summary>
+        public string Nivel { get; set; }
+        public List<string> Textos { get; set; } = new List<string>();
+    }
+
     /// <summary>
     /// Administración de las integraciones de la API de ingesta (credenciales por empresa). Super Admin y Admin de Empresa:
     /// el Admin de Empresa solo ve y modifica las de su empresa o grupo (<see cref="EmpresaAccesoHelper"/>). La clave en claro
@@ -19,6 +28,7 @@ namespace bufinscustomers.Controllers
     {
         private readonly IntegracionesService _servicio = new IntegracionesService();
         private readonly WebhooksService _webhooks = new WebhooksService();
+        private readonly IntegracionesActividadService _actividad = new IntegracionesActividadService();
 
         private static bool PuedeAdministrar() => UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.EsAdminEmpresa();
 
@@ -33,6 +43,15 @@ namespace bufinscustomers.Controllers
             ViewBag.Disponible = disponible;
             ViewBag.BaseApi = Request.Url.Scheme + "://" + Request.Url.Authority + "/api/v1";
             var lista = disponible ? _servicio.Listar(permitidas) : new System.Collections.Generic.List<Integracion>();
+
+            // Semáforo de cada integración (en palabras de negocio); si algo falla, la pantalla funciona igual sin él.
+            var salud = new Dictionary<int, SaludIntegracionVM>();
+            foreach (var i in lista)
+            {
+                try { salud[i.Id] = TraducirSalud(_actividad.Salud(i)); }
+                catch (Exception ex) { AppLogger.Warn("Integraciones.Salud: " + ex.Message); }
+            }
+            ViewBag.Salud = salud;
             return View("~/Views/Configuracion/Integraciones.cshtml", lista);
         }
 
@@ -127,6 +146,66 @@ namespace bufinscustomers.Controllers
                 return Json(new { success = true, message = string.Format(R("Integ_Revocada"), integ.Nombre) });
             }
             catch (Exception ex) { return Json(new { success = false, message = MensajeError(ex) }); }
+        }
+
+        // ── Panel de actividad ───────────────────────────────────────────────────────────
+
+        /// <summary>Todo lo que hace la integración, en lenguaje de negocio: semáforo, conexión, últimos envíos, modelos y avisos. Solo si el usuario tiene acceso a su empresa.</summary>
+        [HttpGet]
+        public ActionResult Actividad(int id)
+        {
+            var integ = Propia(id);
+            if (integ == null) return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
+            try
+            {
+                var salud = TraducirSalud(_actividad.Salud(integ));
+                string ModoTexto(string m) => m == "ejecucion" ? R("RevisarCargue_ModoEjecucion") : R("RevisarCargue_ModoHistorico");
+
+                var cargues = _actividad.UltimosCargues(id, 10).Select(c =>
+                {
+                    string sit = R("Integ_Pn_Sit_" + c.Situacion);
+                    if (!string.IsNullOrEmpty(c.ResueltoPor) && (c.Resolucion == "Confirmado" || c.Resolucion == "Descartado"))
+                        sit += " · " + R(c.ResueltoPor == "integracion" ? "Integ_Pn_PorIntegracion" : "Integ_Pn_PorPersona");
+                    bool revisable = c.Situacion == "PendienteRevision" || c.Situacion == "ConErrores";
+                    return new
+                    {
+                        idLote = c.IdLote, fecha = c.Recibido.ToString("dd/MM HH:mm"), archivo = c.Archivo, periodo = c.Anio + " · " + ModoTexto(c.Modo),
+                        filas = c.Filas, errores = c.Errores, advertencias = c.Advertencias, situacion = c.Situacion, situacionTexto = sit,
+                        url = revisable ? Url.Action("RevisarCargue", "Datos", new { idLote = c.IdLote }) : null
+                    };
+                }).ToList();
+
+                var modelos = _actividad.UltimasEjecuciones(id, 5).Select(e => new
+                {
+                    id = e.Id, estado = e.Estado, estadoTexto = R("Integ_Pn_Ej_" + e.Estado), inicio = e.Inicio.ToString("dd/MM HH:mm"),
+                    fin = e.Fin?.ToString("HH:mm:ss")
+                }).ToList();
+
+                var webhookCfg = WebhooksService.Disponible() ? _webhooks.ObtenerConfig(id) : null;
+                var entregas = webhookCfg != null && !string.IsNullOrEmpty(webhookCfg.Url)
+                    ? _webhooks.UltimasEntregas(id, 5).Select(e => new { fecha = e.Fecha.ToString("dd/MM HH:mm:ss"), evento = e.Evento, estado = e.Estado, intentos = e.Intentos }).ToList()
+                    : null;
+
+                return Json(new
+                {
+                    success = true, nombre = integ.Nombre, nivel = salud.Nivel, mensajes = salud.Textos,
+                    ultimoUso = integ.FechaUltimoUso?.ToString("dd/MM/yyyy HH:mm"), ipUltimoUso = integ.IpUltimoUso,
+                    seguimientoDisponible = IntegracionesActividadService.Disponible(),
+                    cargues, modelos, entregas
+                });
+            }
+            catch (Exception ex) { return Json(new { success = false, message = MensajeError(ex) }); }
+        }
+
+        private SaludIntegracionVM TraducirSalud(SaludIntegracion s)
+        {
+            var vm = new SaludIntegracionVM { Nivel = s.Nivel };
+            foreach (var m in s.Mensajes)
+            {
+                string plantilla = R("Integ_Pn_S_" + m.Codigo);
+                vm.Textos.Add(m.Args != null && m.Args.Length > 0 ? string.Format(plantilla, m.Args.Cast<object>().ToArray()) : plantilla);
+            }
+            return vm;
         }
 
         // ── Webhook saliente ─────────────────────────────────────────────────────────────

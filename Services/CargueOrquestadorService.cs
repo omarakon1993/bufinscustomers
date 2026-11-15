@@ -518,6 +518,7 @@ namespace bufinscustomers.Services
                 try { _stagingService.DescartarLote(idLote); }
                 catch (Exception exSim) { AppLogger.Error(exSim, $"Confirmar(simulado): no se pudo descartar el lote {idLote}"); }
                 webhooks.NotificarCargueConfirmado(idIntegSim, lote, sim, usuario?.Id ?? 0, simulado: true);
+                new IntegracionesActividadService().Resolver(idIntegSim, idLote, "Simulado", usuario?.Id ?? 0);
                 return Sale(ConfirmacionCargueEstado.Simulado, sim.Mensaje, sim);
             }
 
@@ -632,7 +633,9 @@ namespace bufinscustomers.Services
 
             // Webhook: si el cargue lo creó una integración, se le avisa (también cuando lo confirma una persona en «Revisar cargue»).
             var whConf = new WebhooksService();
-            whConf.NotificarCargueConfirmado(whConf.IdIntegracionDeLote(idLote), lote, resultado, idUsuario, simulado: false);
+            int? idIntegConf = whConf.IdIntegracionDeLote(idLote);
+            whConf.NotificarCargueConfirmado(idIntegConf, lote, resultado, idUsuario, simulado: false);
+            new IntegracionesActividadService().Resolver(idIntegConf, idLote, "Confirmado", idUsuario);
 
             resultado.Exito = true;
             resultado.TotalFilasInsertadas = lote.TotalFilas;
@@ -695,6 +698,7 @@ namespace bufinscustomers.Services
                     return false;
                 }
                 whDesc.NotificarCargueDescartado(idIntegDesc, lote, usuario?.Id ?? 0);
+                new IntegracionesActividadService().Resolver(idIntegDesc, idLote, "Descartado", usuario?.Id ?? 0);
 
                 new AuditoriaService().RegistrarCambio(
                     AuditoriaTipo.Cargues, AuditoriaAccion.Descartar, "CargueLote", idLote.ToString(),

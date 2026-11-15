@@ -69,6 +69,7 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 <li><b>It shows in every response:</b> they carry the header <code>X-Bufins-Entorno: pruebas</code> and <code>/ping</code> answers <code>"entorno": "pruebas"</code>.</li>
 <li><b>Its own technical user.</b> It cannot be the same user as a production integration.</li></ul>
 <p class="note info">Validations and impact are computed against the company's real data, <b>read-only</b>: that way tests catch the same problems the real submission would have. When everything works, the administrator creates the <b>Production</b> integration and the client only changes the key: the address is the same. If there is a real load pending review for the same year and mode, a test submission gets 409 <code>lote_activo</code>: confirm or discard that load, or test with another year.</p>
+<p><b>Monitoring.</b> On the same screen, the <b>Connection</b> column shows a traffic light in plain words (for example “All good”, “2 load(s) are waiting for your review” or “The last submission has errors”) and the <b>View activity</b> button opens the detail: last connection, latest submissions with their status and a link to “Review load”, model runs and webhook notifications. Each administrator only sees the integrations of their own company.</p>
 <p>The names of the sheets and columns each company accepts are always obtained with <code>GET /api/v1/esquemas</code> (section 5): a new custom sheet appears there with no API changes.</p></section>
 
 <section id="seguridad"><h2>4. Security</h2>
