@@ -2,6 +2,8 @@
 @{
     ViewBag.Title = Resources.Strings.Integ_PageTitle;
     bool disponible = ViewBag.Disponible;
+    string idiomaQs = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("en") ? "?idioma=en" : "";
+    var activas = Model.Where(x => !x.FechaRevocada.HasValue && x.Activo).ToList();
     string baseApi = ViewBag.BaseApi as string;
     var empresas = (System.Collections.Generic.List<bufinscustomers.Models.Empresas>)ViewBag.Empresas
                    ?? new System.Collections.Generic.List<bufinscustomers.Models.Empresas>();
@@ -31,6 +33,9 @@
             </a>
             @if (disponible)
             {
+                <button type="button" class="btn-modern-gradient" data-toggle="modal" data-target="#integAsistenteModal">
+                    <i class="fas fa-magic mr-1"></i>@Resources.Strings.Integ_BtnAsistente
+                </button>
                 <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#integCrearModal">
                     <i class="fas fa-plus mr-1"></i>@Resources.Strings.Integ_BtnNueva
                 </button>
@@ -381,6 +386,157 @@
     </div>
 </div>
 
+<!-- ═══════════════════ MODAL ASISTENTE DE CONEXIÓN ═══════════════════ -->
+<div class="modal fade" id="integAsistenteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered bf-modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-magic"></i> @Resources.Strings.Integ_As_Titulo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+
+                <!-- Paso 0: elegir camino -->
+                <div id="asPaso0">
+                    <p class="text-muted">@Resources.Strings.Integ_As_Intro</p>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <button type="button" class="btn btn-outline-primary btn-block text-left h-100 as-opcion" data-panel="asCarpeta">
+                                <span class="d-block w-100"><i class="fas fa-folder-open fa-lg mb-2 d-block"></i>
+                                <strong class="d-block mb-1">@Resources.Strings.Integ_As_OpcCarpetaT</strong>
+                                <span class="small text-muted d-block" style="white-space:normal;">@Resources.Strings.Integ_As_OpcCarpetaD</span></span>
+                            </button>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <button type="button" class="btn btn-outline-primary btn-block text-left h-100 as-opcion" data-panel="asTi">
+                                <span class="d-block w-100"><i class="fas fa-code fa-lg mb-2 d-block"></i>
+                                <strong class="d-block mb-1">@Resources.Strings.Integ_As_OpcTiT</strong>
+                                <span class="small text-muted d-block" style="white-space:normal;">@Resources.Strings.Integ_As_OpcTiD</span></span>
+                            </button>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <button type="button" class="btn btn-outline-primary btn-block text-left h-100 as-opcion" data-panel="asAyuda">
+                                <span class="d-block w-100"><i class="fas fa-life-ring fa-lg mb-2 d-block"></i>
+                                <strong class="d-block mb-1">@Resources.Strings.Integ_As_OpcAyudaT</strong>
+                                <span class="small text-muted d-block" style="white-space:normal;">@Resources.Strings.Integ_As_OpcAyudaD</span></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Camino 1: agente de carpeta -->
+                <div id="asCarpeta" class="as-panel d-none">
+                    <div class="bf-section"><i class="fas fa-folder-open mr-1"></i>@Resources.Strings.Integ_As_OpcCarpetaT</div>
+                    @if (!activas.Any())
+                    {
+                        <div class="alert alert-info small"><i class="fas fa-info-circle mr-1"></i>@Resources.Strings.Integ_As_SinIntegraciones</div>
+                    }
+                    else
+                    {
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="asInteg">@Resources.Strings.Integ_As_Integracion</label>
+                                <select id="asInteg" class="form-control">
+                                    @foreach (var a in activas)
+                                    {
+                                        <option value="@a.Id" data-sandbox="@(a.Sandbox ? "1" : "0")" data-confirma="@(a.PermiteConfirmar ? "1" : "0")">@a.Nombre (@a.NombreEmpresa)</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="asModo">@Resources.Strings.Integ_As_Modo</label>
+                                <select id="asModo" class="form-control">
+                                    <option value="ejecucion">@Resources.Strings.Integ_As_ModoEjec</option>
+                                    <option value="historico">@Resources.Strings.Integ_As_ModoHist</option>
+                                </select>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label for="asRuta">@Resources.Strings.Integ_As_Carpeta</label>
+                                <div class="bf-input"><i class="fas fa-folder"></i>
+                                    <input type="text" id="asRuta" class="form-control" maxlength="260" value="C:\BUFINS\Entrada" style="font-family:monospace;" />
+                                </div>
+                                <small class="form-text text-muted">@Resources.Strings.Integ_As_CarpetaAyuda</small>
+                            </div>
+                            <div class="col-12 mb-2">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="asConf" />
+                                    <label class="custom-control-label" for="asConf">@Resources.Strings.Integ_As_ConfAuto</label>
+                                </div>
+                                <small id="asConfNo" class="form-text text-muted d-none">@Resources.Strings.Integ_As_ConfAutoNo</small>
+                            </div>
+                            <div class="col-12">
+                                <div id="asSandbox" class="alert alert-info small d-none mb-2"><i class="fas fa-flask mr-1"></i>@Resources.Strings.Integ_As_SandboxAviso</div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary mb-3" id="asDescargar"><i class="fas fa-download mr-1"></i>@Resources.Strings.Integ_As_BtnDescargar</button>
+
+                        <div class="bf-section">@Resources.Strings.Integ_As_PasosTitulo</div>
+                        <ol class="small pl-3 mb-0">
+                            <li class="mb-2">@Resources.Strings.Integ_As_Paso1</li>
+                            <li class="mb-2">@Resources.Strings.Integ_As_Paso2<pre class="mt-1 mb-0">AgenteBufins.exe --guardar-clave</pre></li>
+                            <li class="mb-2">@Resources.Strings.Integ_As_Paso3<pre class="mt-1 mb-0">AgenteBufins.exe --probar</pre></li>
+                            <li class="mb-2">@Resources.Strings.Integ_As_Paso4</li>
+                            <li class="mb-2">@Resources.Strings.Integ_As_Paso5<pre class="mt-1 mb-0">AgenteBufins.exe
+AgenteBufins.exe --una-vez</pre></li>
+                            <li>@Resources.Strings.Integ_As_Paso6</li>
+                        </ol>
+                    }
+                </div>
+
+                <!-- Camino 2: equipo técnico -->
+                <div id="asTi" class="as-panel d-none">
+                    <div class="bf-section"><i class="fas fa-code mr-1"></i>@Resources.Strings.Integ_As_TiTitulo</div>
+                    <p class="small text-muted">@Resources.Strings.Integ_As_TiTexto</p>
+                    <div class="mb-3">
+                        <div class="font-weight-bold small mb-1">@Resources.Strings.Integ_As_TiBase</div>
+                        <code>@baseApi</code>
+                    </div>
+                    <div class="mb-3">
+                        <div class="font-weight-bold small mb-1">@Resources.Strings.Integ_As_TiEjemplo</div>
+                        <pre class="small mb-0" style="white-space:pre-wrap;">curl -H "Authorization: Bearer bfk_..." @baseApi/ping</pre>
+                    </div>
+                    <div class="alert alert-info small"><i class="fas fa-flask mr-1"></i>@Resources.Strings.Integ_As_TiRecomienda</div>
+                    <div class="d-flex flex-wrap" style="gap:8px;">
+                        <a class="btn btn-secondary" href="@Url.Content("~/api/v1/manual")@idiomaQs" target="_blank" rel="noopener"><i class="fas fa-book mr-1"></i>@Resources.Strings.Integ_BtnManual</a>
+                        <a class="btn btn-secondary" href="@Url.Content("~/api/v1/docs")@idiomaQs" target="_blank" rel="noopener"><i class="fas fa-flask mr-1"></i>@Resources.Strings.Integ_BtnProbador</a>
+                        <a class="btn btn-secondary" href="@Url.Content("~/api/v1/openapi.json")" target="_blank" rel="noopener"><i class="fas fa-file-code mr-1"></i>@Resources.Strings.Integ_BtnContrato</a>
+                        <button type="button" class="btn btn-primary" id="asTiCopiar"><i class="fas fa-copy mr-1"></i>@Resources.Strings.Integ_As_TiBtnCopiar</button>
+                    </div>
+                </div>
+
+                <!-- Camino 3: ayuda -->
+                <div id="asAyuda" class="as-panel d-none">
+                    <div class="bf-section"><i class="fas fa-life-ring mr-1"></i>@Resources.Strings.Integ_As_AyudaTitulo</div>
+                    <div class="form-group">
+                        <label for="asAyudaInteg">@Resources.Strings.Integ_As_AyudaIntegracion</label>
+                        <select id="asAyudaInteg" class="form-control">
+                            <option value="">@Resources.Strings.Integ_As_AyudaNinguna</option>
+                            @foreach (var a in activas)
+                            {
+                                <option value="@a.Id">@a.Nombre (@a.NombreEmpresa)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="asMensaje">@Resources.Strings.Integ_As_AyudaMensaje <span class="text-danger">*</span></label>
+                        <textarea id="asMensaje" class="form-control" rows="4" maxlength="1000"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="asContacto">@Resources.Strings.Integ_As_AyudaContacto</label>
+                        <input type="text" id="asContacto" class="form-control" maxlength="200" />
+                    </div>
+                    <button type="button" class="btn btn-primary" id="asEnviar"><i class="fas fa-paper-plane mr-1"></i>@Resources.Strings.Integ_As_AyudaEnviar</button>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary d-none" id="asVolver"><i class="fas fa-arrow-left mr-1"></i>@Resources.Strings.Integ_As_Volver</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times mr-1"></i>@Resources.Strings.Common_Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ═══════════════════ MODAL CLAVE (se muestra una sola vez) ═══════════════════ -->
 <div class="modal fade" id="integClaveModal" tabindex="-1" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-dialog-centered bf-modal-md">
@@ -436,7 +592,16 @@
         pnSinWebhook: '@Html.Raw(js(Resources.Strings.Integ_Pn_SinWebhook))',
         pnUltimoUso: '@Html.Raw(js(Resources.Strings.Integ_Pn_UltimoUso))',
         pnNuncaUsada: '@Html.Raw(js(Resources.Strings.Integ_NuncaUsada))',
-        pnRevisar: '@Html.Raw(js(Resources.Strings.Integ_Pn_Revisar))'
+        pnRevisar: '@Html.Raw(js(Resources.Strings.Integ_Pn_Revisar))',
+        asDescargado: '@Html.Raw(js(Resources.Strings.Integ_As_Descargado))',
+        asPlantilla: '@Html.Raw(js(Resources.Strings.Integ_As_TiPlantilla))',
+        asErrMensaje: '@Html.Raw(js(Resources.Strings.Integ_As_ErrMensaje))'
+    };
+    var enlaces = {
+        base: '@Html.Raw(js(baseApi))',
+        manual: '@Html.Raw(js(baseApi + "/manual" + idiomaQs))',
+        docs: '@Html.Raw(js(baseApi + "/docs" + idiomaQs))',
+        contrato: '@Html.Raw(js(baseApi + "/openapi.json"))'
     };
     var urls = {
         usuarios: '@Url.Action("UsuariosDeEmpresa", "Integraciones")',
@@ -448,7 +613,8 @@
         whGuardar: '@Url.Action("WebhookGuardar", "Integraciones")',
         whRotar: '@Url.Action("WebhookRotar", "Integraciones")',
         whProbar: '@Url.Action("WebhookProbar", "Integraciones")',
-        actividad: '@Url.Action("Actividad", "Integraciones")'
+        actividad: '@Url.Action("Actividad", "Integraciones")',
+        ayuda: '@Url.Action("SolicitarAyuda", "Integraciones")'
     };
 
     function token() { return $('input[name="__RequestVerificationToken"]').first().val(); }
@@ -643,6 +809,63 @@
         else { document.execCommand('copy'); ok(); }
     });
     $('#integWebhookModal').on('hidden.bs.modal', function () { whMostrarSecreto(''); });
+
+    // ── Asistente de conexión ──
+    function asMostrar(id) {
+        $('#asPaso0, .as-panel').addClass('d-none');
+        $('#' + (id || 'asPaso0')).removeClass('d-none');
+        $('#asVolver').toggleClass('d-none', !id);
+    }
+    function asActualizarIntegracion() {
+        var $o = $('#asInteg option:selected');
+        if (!$o.length) return;
+        var sandbox = String($o.data('sandbox')) === '1', confirma = String($o.data('confirma')) === '1';
+        $('#asSandbox').toggleClass('d-none', !sandbox);
+        $('#asConf').prop('disabled', !confirma);
+        if (!confirma) $('#asConf').prop('checked', false);
+        $('#asConfNo').toggleClass('d-none', confirma);
+    }
+    function copiarTexto(texto) {
+        var ok = function () { toast('success', T.copiado); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(texto).then(ok);
+        else { var $t = $('<textarea>').val(texto).appendTo('body'); $t[0].select(); document.execCommand('copy'); $t.remove(); ok(); }
+    }
+    $(document).on('click', '.as-opcion', function () { asMostrar($(this).data('panel')); });
+    $('#asVolver').on('click', function () { asMostrar(null); });
+    $('#asInteg').on('change', asActualizarIntegracion);
+    $('#integAsistenteModal').on('show.bs.modal', function () { asMostrar(null); asActualizarIntegracion(); });
+    $('#integAsistenteModal').on('hidden.bs.modal', function () { $('#asMensaje, #asContacto').val(''); });
+
+    // El agente.json se arma en el navegador (sin la clave: esa nunca va en el archivo).
+    $('#asDescargar').on('click', function () {
+        var conf = $('#asConf').is(':checked');
+        var cfg = {
+            url: enlaces.base, carpeta: $.trim($('#asRuta').val()), anio: 'actual', modo: $('#asModo').val(), idEscenario: 1,
+            confirmar: conf, ejecutarModelos: conf, intervaloSegundos: 60, estableSegundos: 30
+        };
+        if (!cfg.carpeta) { $('#asRuta').trigger('focus'); return; }
+        var blob = new Blob([JSON.stringify(cfg, null, 2) + '\r\n'], { type: 'application/json' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = 'agente.json';
+        document.body.appendChild(a); a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+        toast('success', T.asDescargado);
+    });
+
+    $('#asTiCopiar').on('click', function () {
+        copiarTexto(T.asPlantilla.replace(/\{0\}/g, enlaces.base).replace('{1}', enlaces.manual).replace('{2}', enlaces.docs).replace('{3}', enlaces.contrato));
+    });
+
+    $('#asEnviar').on('click', function () {
+        var mensaje = $.trim($('#asMensaje').val());
+        if (!mensaje) { toast('warning', T.asErrMensaje); $('#asMensaje').trigger('focus'); return; }
+        var $b = $(this).prop('disabled', true);
+        post(urls.ayuda, { idIntegracion: $('#asAyudaInteg').val(), mensaje: mensaje, contacto: $('#asContacto').val() })
+            .done(function (r) {
+                toast(r.success ? 'success' : 'error', r.message);
+                if (r.success) $('#integAsistenteModal').modal('hide');
+            }).always(function () { $b.prop('disabled', false); });
+    });
 
     // La clave no se vuelve a mostrar: al cerrar se borra del formulario y se recarga el listado.
     $('#integClaveCerrar').on('click', function () { $('#integClaveValor').val(''); location.reload(); });

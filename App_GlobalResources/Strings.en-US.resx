@@ -4070,6 +4070,56 @@ Indicators management follows closely: </value></data>
   <data name="Notif_CargueApiConErroresMsg" xml:space="preserve"><value>The integration “{0}” sent data for {1} (year {2}, {3}) with {5} error(s). It cannot be confirmed until the client system sends the corrected data.</value></data>
   <data name="Integ_BtnManual" xml:space="preserve"><value>Integration manual</value></data>
   <data name="Integ_BtnContrato" xml:space="preserve"><value>OpenAPI contract</value></data>
+  <!-- Integraciones: asistente de conexión -->
+  <data name="Integ_BtnAsistente" xml:space="preserve"><value>Connection wizard</value></data>
+  <data name="Integ_As_Titulo" xml:space="preserve"><value>How will your system connect?</value></data>
+  <data name="Integ_As_Intro" xml:space="preserve"><value>Choose the option that best describes your case. We give you the steps and ready-made files.</value></data>
+  <data name="Integ_As_OpcCarpetaT" xml:space="preserve"><value>My system drops an Excel file in a folder</value></data>
+  <data name="Integ_As_OpcCarpetaD" xml:space="preserve"><value>A BUFINS program installed on your computer sends each new file on its own. No programmers needed.</value></data>
+  <data name="Integ_As_OpcTiT" xml:space="preserve"><value>My IT team will program it</value></data>
+  <data name="Integ_As_OpcTiD" xml:space="preserve"><value>Your technical team sends the data straight to the API, with a manual, examples and a tester.</value></data>
+  <data name="Integ_As_OpcAyudaT" xml:space="preserve"><value>I need help</value></data>
+  <data name="Integ_As_OpcAyudaD" xml:space="preserve"><value>Tell us about your case and the BUFINS team will get in touch.</value></data>
+  <data name="Integ_As_Volver" xml:space="preserve"><value>Back</value></data>
+  <data name="Integ_As_Integracion" xml:space="preserve"><value>Integration</value></data>
+  <data name="Integ_As_SinIntegraciones" xml:space="preserve"><value>First create an integration with the «New integration» button: that is where the key is generated, and it is shown only once.</value></data>
+  <data name="Integ_As_Carpeta" xml:space="preserve"><value>Folder the agent will watch</value></data>
+  <data name="Integ_As_CarpetaAyuda" xml:space="preserve"><value>Path on the computer where your system drops the Excel files (BUFINS template).</value></data>
+  <data name="Integ_As_Modo" xml:space="preserve"><value>Data type</value></data>
+  <data name="Integ_As_ModoEjec" xml:space="preserve"><value>Execution (current year)</value></data>
+  <data name="Integ_As_ModoHist" xml:space="preserve"><value>Historical</value></data>
+  <data name="Integ_As_ConfAuto" xml:space="preserve"><value>Confirm uploads without warnings automatically</value></data>
+  <data name="Integ_As_ConfAutoNo" xml:space="preserve"><value>This integration is not allowed to confirm: a person will confirm each upload in «Review upload».</value></data>
+  <data name="Integ_As_SandboxAviso" xml:space="preserve"><value>This is a test integration (bft_ key): uploads do not change real data.</value></data>
+  <data name="Integ_As_BtnDescargar" xml:space="preserve"><value>Download agente.json</value></data>
+  <data name="Integ_As_Descargado" xml:space="preserve"><value>File downloaded.</value></data>
+  <data name="Integ_As_PasosTitulo" xml:space="preserve"><value>What to do with the file</value></data>
+  <data name="Integ_As_Paso1" xml:space="preserve"><value>Ask BUFINS for the AgenteBufins.exe program and place it, together with the downloaded agente.json, in a folder on a computer that can see your system's Excel files.</value></data>
+  <data name="Integ_As_Paso2" xml:space="preserve"><value>Create the input folder shown. Open a console in the agent folder and save the integration key (it is requested hidden and stays encrypted on that computer):</value></data>
+  <data name="Integ_As_Paso3" xml:space="preserve"><value>Check the connection (it should say everything is fine):</value></data>
+  <data name="Integ_As_Paso4" xml:space="preserve"><value>Set your system to drop the .xlsx template in the input folder. If the name includes year and type (for example 2026_historico_cierre.xlsx), those are used.</value></data>
+  <data name="Integ_As_Paso5" xml:space="preserve"><value>Leave the agent running, or schedule it with the Windows Task Scheduler:</value></data>
+  <data name="Integ_As_Paso6" xml:space="preserve"><value>Check each upload with the integration's «View activity» button: you will see whether it went well or what to fix.</value></data>
+  <data name="Integ_As_TiTitulo" xml:space="preserve"><value>Data for the technical team</value></data>
+  <data name="Integ_As_TiTexto" xml:space="preserve"><value>Share this with whoever programs the connection. The key is handed over through a secure channel (never in an open email) and is only visible when the integration is created.</value></data>
+  <data name="Integ_As_TiBase" xml:space="preserve"><value>API base address</value></data>
+  <data name="Integ_As_TiEjemplo" xml:space="preserve"><value>First test call</value></data>
+  <data name="Integ_As_TiRecomienda" xml:space="preserve"><value>Recommended: test first with a test integration (bft_ key) in the interactive tester before going to production.</value></data>
+  <data name="Integ_As_TiBtnCopiar" xml:space="preserve"><value>Copy instructions for my technical team</value></data>
+  <data name="Integ_As_TiPlantilla" xml:space="preserve"><value>Connecting to the BUFINS API&#10;Base address: {0}&#10;Manual: {1}&#10;Interactive tester: {2}&#10;OpenAPI contract: {3}&#10;Authentication: Authorization header: Bearer &lt;integration key&gt; (the key is delivered separately).&#10;First test: curl -H "Authorization: Bearer &lt;key&gt;" {0}/ping</value></data>
+  <data name="Integ_As_AyudaTitulo" xml:space="preserve"><value>Tell us about your case</value></data>
+  <data name="Integ_As_AyudaIntegracion" xml:space="preserve"><value>Related integration (optional)</value></data>
+  <data name="Integ_As_AyudaNinguna" xml:space="preserve"><value>None yet</value></data>
+  <data name="Integ_As_AyudaMensaje" xml:space="preserve"><value>Which system do you use and what do you need to send to BUFINS?</value></data>
+  <data name="Integ_As_AyudaContacto" xml:space="preserve"><value>How to reach you (phone or email)</value></data>
+  <data name="Integ_As_AyudaEnviar" xml:space="preserve"><value>Send request</value></data>
+  <data name="Integ_As_AyudaEnviada" xml:space="preserve"><value>Request sent. The BUFINS team will get in touch.</value></data>
+  <data name="Integ_As_ErrMensaje" xml:space="preserve"><value>Please tell us briefly what you need.</value></data>
+  <data name="Integ_As_ErrLargo" xml:space="preserve"><value>The message or the contact is too long.</value></data>
+  <data name="Integ_As_ErrEspere" xml:space="preserve"><value>You already sent a request a moment ago. Please wait a couple of minutes.</value></data>
+  <data name="Integ_As_SinIntegracion" xml:space="preserve"><value>no integration</value></data>
+  <data name="Notif_AyudaIntegracion" xml:space="preserve"><value>Help request about an integration</value></data>
+  <data name="Notif_AyudaIntegracionMsg" xml:space="preserve"><value>{0} asked for help connecting their system (integration: {1}). Contact: {2}. Message: {3}</value></data>
   <data name="Integ_LabelTipo" xml:space="preserve"><value>Integration type</value></data>
   <data name="Integ_TipoProduccion" xml:space="preserve"><value>Production (real data)</value></data>
   <data name="Integ_TipoPruebas" xml:space="preserve"><value>Testing (sandbox)</value></data>

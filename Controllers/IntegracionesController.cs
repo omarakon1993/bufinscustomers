@@ -280,6 +280,54 @@ namespace bufinscustomers.Controllers
             return Json(new { success = false, message = string.Format(R("Integ_Wh_PruebaFallo"), motivo) });
         }
 
+        // ── Asistente de conexión ────────────────────────────────────────────────────────
+
+        private static readonly Dictionary<int, DateTime> _ultimaAyuda = new Dictionary<int, DateTime>();
+        private static readonly object _lockAyuda = new object();
+
+        /// <summary>
+        /// Opción «Necesito que me ayuden» del asistente: avisa (campana) a los Super Admin con el caso y el contacto.
+        /// No guarda nada más; límite de 1 solicitud por usuario cada 2 minutos. La integración es opcional.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult SolicitarAyuda(int? idIntegracion, string mensaje, string contacto)
+        {
+            if (!PuedeAdministrar()) return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
+            mensaje = (mensaje ?? "").Trim();
+            contacto = (contacto ?? "").Trim();
+            if (mensaje.Length == 0) return Json(new { success = false, message = R("Integ_As_ErrMensaje") });
+            if (mensaje.Length > 1000 || contacto.Length > 200) return Json(new { success = false, message = R("Integ_As_ErrLargo") });
+
+            Integracion integ = null;
+            if (idIntegracion.HasValue)
+            {
+                integ = Propia(idIntegracion.Value);
+                if (integ == null) return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
+            }
+
+            var yo = UsuarioSesionHelper.UsuarioActual;
+            lock (_lockAyuda)
+            {
+                if (_ultimaAyuda.TryGetValue(yo.Id, out var ultima) && (DateTime.UtcNow - ultima).TotalMinutes < 2)
+                    return Json(new { success = false, message = R("Integ_As_ErrEspere") });
+                _ultimaAyuda[yo.Id] = DateTime.UtcNow;
+            }
+
+            try
+            {
+                string quien = $"{yo.Nombre} {yo.Apellidos}".Trim();
+                string cual = integ != null ? $"{integ.Nombre} ({integ.NombreEmpresa})" : R("Integ_As_SinIntegracion");
+                string texto = string.Format(R("Notif_AyudaIntegracionMsg"), quien, cual, string.IsNullOrEmpty(contacto) ? "-" : contacto, mensaje);
+                string url = Url.Action("Index", "Integraciones");
+                var notif = new NotificacionesService();
+                foreach (var idSuper in _servicio.ObtenerIdsSuperAdmin())
+                    notif.Crear(idSuper, R("Notif_AyudaIntegracion"), texto, "info", url);
+                return Json(new { success = true, message = R("Integ_As_AyudaEnviada") });
+            }
+            catch (Exception ex) { return Json(new { success = false, message = MensajeError(ex) }); }
+        }
+
         private static string HostDe(string url) => Uri.TryCreate((url ?? "").Trim(), UriKind.Absolute, out var u) ? u.Host : "?";
 
         private string TraducirErrorWebhook(string codigo)

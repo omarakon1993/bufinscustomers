@@ -1,3 +1,4 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using Microsoft.Data.SqlClient;
 using System;
@@ -241,6 +242,24 @@ namespace bufinscustomers.Services
                     while (r.Read()) lista.Add((Convert.ToInt32(r["Id"]), r["Nombre"] as string, r["Usuario"] as string));
             }
             return lista;
+        }
+
+        /// <summary>Ids de los Super Admin (destinatarios de las solicitudes de ayuda del asistente de conexión).</summary>
+        public List<int> ObtenerIdsSuperAdmin()
+        {
+            var ids = new List<int>();
+            try
+            {
+                using (var cn = new SqlConnection(CadenaConexion))
+                using (var cmd = new SqlCommand("SELECT Id FROM dbo.Usuarios WHERE Admin = 2", cn))
+                {
+                    cn.Open();
+                    using (var r = cmd.ExecuteReader())
+                        while (r.Read()) ids.Add(Convert.ToInt32(r["Id"]));
+                }
+            }
+            catch (Exception ex) { AppLogger.Error(ex, "IntegracionesService.ObtenerIdsSuperAdmin"); }
+            return ids;
         }
 
         public Integracion Obtener(int id)

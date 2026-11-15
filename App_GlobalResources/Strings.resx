@@ -4072,6 +4072,56 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="Notif_CargueApiConErroresMsg" xml:space="preserve"><value>La integración «{0}» envió datos de {1} (año {2}, {3}) con {5} error(es). No se puede confirmar hasta que el sistema del cliente envíe los datos corregidos.</value></data>
   <data name="Integ_BtnManual" xml:space="preserve"><value>Manual de integración</value></data>
   <data name="Integ_BtnContrato" xml:space="preserve"><value>Contrato OpenAPI</value></data>
+  <!-- Integraciones: asistente de conexión -->
+  <data name="Integ_BtnAsistente" xml:space="preserve"><value>Asistente de conexión</value></data>
+  <data name="Integ_As_Titulo" xml:space="preserve"><value>¿Cómo se va a conectar su sistema?</value></data>
+  <data name="Integ_As_Intro" xml:space="preserve"><value>Elija la opción que mejor describe su caso. Le damos los pasos y los archivos ya preparados.</value></data>
+  <data name="Integ_As_OpcCarpetaT" xml:space="preserve"><value>Mi sistema deja un Excel en una carpeta</value></data>
+  <data name="Integ_As_OpcCarpetaD" xml:space="preserve"><value>Un programa de BUFINS instalado en su equipo envía solo cada archivo nuevo. No requiere programadores.</value></data>
+  <data name="Integ_As_OpcTiT" xml:space="preserve"><value>Mi equipo de TI lo programa</value></data>
+  <data name="Integ_As_OpcTiD" xml:space="preserve"><value>Su equipo técnico envía los datos directamente a la API, con manual, ejemplos y probador.</value></data>
+  <data name="Integ_As_OpcAyudaT" xml:space="preserve"><value>Necesito que me ayuden</value></data>
+  <data name="Integ_As_OpcAyudaD" xml:space="preserve"><value>Cuéntenos su caso y el equipo de BUFINS se pondrá en contacto.</value></data>
+  <data name="Integ_As_Volver" xml:space="preserve"><value>Volver</value></data>
+  <data name="Integ_As_Integracion" xml:space="preserve"><value>Integración</value></data>
+  <data name="Integ_As_SinIntegraciones" xml:space="preserve"><value>Primero cree una integración con el botón «Nueva integración»: ahí se genera la clave, que solo se ve una vez.</value></data>
+  <data name="Integ_As_Carpeta" xml:space="preserve"><value>Carpeta que vigilará el agente</value></data>
+  <data name="Integ_As_CarpetaAyuda" xml:space="preserve"><value>Ruta del equipo donde su sistema deja los archivos Excel (plantilla BUFINS).</value></data>
+  <data name="Integ_As_Modo" xml:space="preserve"><value>Tipo de datos</value></data>
+  <data name="Integ_As_ModoEjec" xml:space="preserve"><value>Ejecución (año en curso)</value></data>
+  <data name="Integ_As_ModoHist" xml:space="preserve"><value>Histórico</value></data>
+  <data name="Integ_As_ConfAuto" xml:space="preserve"><value>Confirmar automáticamente los cargues sin advertencias</value></data>
+  <data name="Integ_As_ConfAutoNo" xml:space="preserve"><value>Esta integración no tiene permiso para confirmar: una persona confirmará cada envío en «Revisar cargue».</value></data>
+  <data name="Integ_As_SandboxAviso" xml:space="preserve"><value>Es una integración de pruebas (clave bft_): los envíos no modifican datos reales.</value></data>
+  <data name="Integ_As_BtnDescargar" xml:space="preserve"><value>Descargar agente.json</value></data>
+  <data name="Integ_As_Descargado" xml:space="preserve"><value>Archivo descargado.</value></data>
+  <data name="Integ_As_PasosTitulo" xml:space="preserve"><value>Qué hacer con el archivo</value></data>
+  <data name="Integ_As_Paso1" xml:space="preserve"><value>Pida a BUFINS el programa AgenteBufins.exe y póngalo, junto con el agente.json descargado, en una carpeta de un equipo que pueda ver los Excel de su sistema.</value></data>
+  <data name="Integ_As_Paso2" xml:space="preserve"><value>Cree la carpeta de entrada indicada. Abra una consola en la carpeta del agente y guarde la clave de la integración (se pide oculta y queda cifrada en ese equipo):</value></data>
+  <data name="Integ_As_Paso3" xml:space="preserve"><value>Compruebe la conexión (debe decir que todo está en orden):</value></data>
+  <data name="Integ_As_Paso4" xml:space="preserve"><value>Configure su sistema para dejar la plantilla .xlsx en la carpeta de entrada. Si el nombre incluye año y tipo (por ejemplo 2026_historico_cierre.xlsx), se usan esos datos.</value></data>
+  <data name="Integ_As_Paso5" xml:space="preserve"><value>Deje el agente corriendo, o prográmelo con el Programador de tareas de Windows:</value></data>
+  <data name="Integ_As_Paso6" xml:space="preserve"><value>Revise cada envío con el botón «Ver actividad» de la integración: allí verá si quedó bien o qué corregir.</value></data>
+  <data name="Integ_As_TiTitulo" xml:space="preserve"><value>Datos para el equipo técnico</value></data>
+  <data name="Integ_As_TiTexto" xml:space="preserve"><value>Comparta esto con quien programe la conexión. La clave se entrega por un canal seguro (nunca en un correo abierto) y solo se ve al crear la integración.</value></data>
+  <data name="Integ_As_TiBase" xml:space="preserve"><value>Dirección base de la API</value></data>
+  <data name="Integ_As_TiEjemplo" xml:space="preserve"><value>Primera llamada de prueba</value></data>
+  <data name="Integ_As_TiRecomienda" xml:space="preserve"><value>Recomendado: pruebe primero con una integración de pruebas (clave bft_) en el probador interactivo, antes de pasar a producción.</value></data>
+  <data name="Integ_As_TiBtnCopiar" xml:space="preserve"><value>Copiar instrucciones para mi equipo técnico</value></data>
+  <data name="Integ_As_TiPlantilla" xml:space="preserve"><value>Conexión con la API de BUFINS&#10;Dirección base: {0}&#10;Manual: {1}&#10;Probador interactivo: {2}&#10;Contrato OpenAPI: {3}&#10;Autenticación: cabecera Authorization: Bearer &lt;clave de la integración&gt; (la clave se entrega por separado).&#10;Primera prueba: curl -H "Authorization: Bearer &lt;clave&gt;" {0}/ping</value></data>
+  <data name="Integ_As_AyudaTitulo" xml:space="preserve"><value>Cuéntenos su caso</value></data>
+  <data name="Integ_As_AyudaIntegracion" xml:space="preserve"><value>Integración relacionada (opcional)</value></data>
+  <data name="Integ_As_AyudaNinguna" xml:space="preserve"><value>Ninguna todavía</value></data>
+  <data name="Integ_As_AyudaMensaje" xml:space="preserve"><value>¿Qué sistema usan y qué necesitan enviar a BUFINS?</value></data>
+  <data name="Integ_As_AyudaContacto" xml:space="preserve"><value>Cómo contactarle (teléfono o correo)</value></data>
+  <data name="Integ_As_AyudaEnviar" xml:space="preserve"><value>Enviar solicitud</value></data>
+  <data name="Integ_As_AyudaEnviada" xml:space="preserve"><value>Solicitud enviada. El equipo de BUFINS se pondrá en contacto.</value></data>
+  <data name="Integ_As_ErrMensaje" xml:space="preserve"><value>Cuéntenos brevemente qué necesita.</value></data>
+  <data name="Integ_As_ErrLargo" xml:space="preserve"><value>El mensaje o el contacto son demasiado largos.</value></data>
+  <data name="Integ_As_ErrEspere" xml:space="preserve"><value>Ya envió una solicitud hace poco. Espere un par de minutos.</value></data>
+  <data name="Integ_As_SinIntegracion" xml:space="preserve"><value>sin integración</value></data>
+  <data name="Notif_AyudaIntegracion" xml:space="preserve"><value>Solicitud de ayuda con una integración</value></data>
+  <data name="Notif_AyudaIntegracionMsg" xml:space="preserve"><value>{0} pidió ayuda para conectar su sistema (integración: {1}). Contacto: {2}. Mensaje: {3}</value></data>
   <data name="Integ_LabelTipo" xml:space="preserve"><value>Tipo de integración</value></data>
   <data name="Integ_TipoProduccion" xml:space="preserve"><value>Producción (datos reales)</value></data>
   <data name="Integ_TipoPruebas" xml:space="preserve"><value>Pruebas (sandbox)</value></data>
