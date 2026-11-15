@@ -9,12 +9,22 @@
     var direcciones = ViewBag.Direcciones as System.Collections.Generic.Dictionary<int, string>
                       ?? new System.Collections.Generic.Dictionary<int, string>();
     var visibles = Model.Where(x => !x.FechaRevocada.HasValue).ToList();
+    var pendientes = ViewBag.Pendientes as System.Collections.Generic.Dictionary<int, int> ?? new System.Collections.Generic.Dictionary<int, int>();
+    var pendientesUrl = ViewBag.PendientesUrl as System.Collections.Generic.Dictionary<int, string> ?? new System.Collections.Generic.Dictionary<int, string>();
+    int totalPend = pendientes.Values.Sum();
     var activas = visibles.Where(x => x.Activo).ToList();
     var saludes = ViewBag.Salud as System.Collections.Generic.Dictionary<int, bufinscustomers.Controllers.SaludIntegracionVM>;
     Func<string, string> js = s => HttpUtility.JavaScriptStringEncode(s ?? "");
 }
 
 <link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+
+<style>
+    /* Cápsulas del encabezado: al pasar el mouse (o con el menú abierto) toman un cristal oscuro en vez del blanco del sitio. */
+    .powerbi-header .cx-cap:hover, .powerbi-header .cx-cap:focus, .powerbi-header .cx-cap[aria-expanded="true"] {
+        background: rgba(22, 9, 51, .42) !important; border-color: rgba(255, 255, 255, .6) !important; color: #fff !important; transform: none;
+    }
+</style>
 
 @Html.AntiForgeryToken()
 
@@ -29,7 +39,7 @@
         {
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                 <div class="dropdown">
-                    <button type="button" class="btn btn-outline-secondary cx-menu-toggle" style="padding:.4rem .95rem;font-size:.8125rem;" aria-haspopup="true" aria-expanded="false">
+                    <button type="button" class="btn-modern-secondary cx-cap cx-menu-toggle" aria-haspopup="true" aria-expanded="false">
                         <i class="fas fa-book mr-1"></i>@Resources.Strings.Integ_Cx_Documentacion <i class="fas fa-caret-down ml-1"></i>
                     </button>
                     <div class="dropdown-menu dropdown-menu-right">
@@ -38,7 +48,7 @@
                         <a class="dropdown-item" href="@Url.Content("~/api/v1/openapi.json")" target="_blank" rel="noopener"><i class="fas fa-file-code fa-fw mr-1"></i>@Resources.Strings.Integ_BtnContrato</a>
                     </div>
                 </div>
-                <button type="button" class="btn-modern-secondary" data-toggle="modal" data-target="#cxAyudaModal">
+                <button type="button" class="btn-modern-secondary cx-cap" data-toggle="modal" data-target="#cxAyudaModal">
                     <i class="fas fa-life-ring mr-1"></i>@Resources.Strings.Integ_Cx_Ayuda
                 </button>
                 <button type="button" class="btn-modern-success" data-toggle="modal" data-target="#integConectarModal">
@@ -51,6 +61,14 @@
     <p class="text-muted mt-3" style="font-size:0.88rem;">
         <i class="fas fa-info-circle mr-1"></i>@Resources.Strings.Integ_PageHint
     </p>
+
+    @if (disponible && totalPend > 0)
+    {
+        <div class="d-flex align-items-center mb-3 px-3 py-2" style="background:#fff6df;border:1px solid #f6d58a;border-radius:10px;gap:10px;color:#7a5200;">
+            <i class="fas fa-bell"></i>
+            <span class="flex-fill">@string.Format(Resources.Strings.Integ_Cx_AvisoPendientes, totalPend)</span>
+        </div>
+    }
 
     @if (!disponible)
     {
@@ -82,14 +100,16 @@
                 string color = nivel == "problema" ? "#dc3545" : nivel == "atencion" ? "#f6a609" : nivel == "inactiva" ? "#adb5bd" : "#1cc88a";
                 string direccion = direcciones.TryGetValue(i.IdEmpresa, out var dir) ? dir : baseApi;
                 string iniciales = new string((i.NombreEmpresa ?? "?").Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])).ToArray());
+                int nPend = pendientes.TryGetValue(i.Id, out var np) ? np : 0;
+                if (nPend > 0) { color = "#f59e0b"; }
                 <div class="col-md-6 col-xl-4 mb-3">
-                    <div class="card shadow-sm h-100" style="border-left:4px solid @color;">
+                    <div class="card @(nPend > 0 ? "shadow" : "shadow-sm") h-100" style="border-left:4px solid @color;@(nPend > 0 ? "background:#fffdf6;" : "")">
                         <div class="card-body p-3">
                             <div class="d-flex align-items-center" style="gap:10px;">
                                 <div class="d-flex align-items-center justify-content-center font-weight-bold" style="width:34px;height:34px;border-radius:10px;background:#eef1ff;color:#4e5bd6;font-size:0.8rem;flex:none;">@iniciales</div>
                                 <div class="flex-fill" style="min-width:0;">
                                     <div class="font-weight-bold text-truncate" style="line-height:1.2;">@i.NombreEmpresa</div>
-                                    <div class="small" style="color:@color;line-height:1.3;" title="@(sv != null ? string.Join(" · ", sv.Textos) : "")">
+                                    <div class="small" style="color:@(nPend > 0 ? "#b45f06" : color);line-height:1.3;" title="@(sv != null ? string.Join(" · ", sv.Textos) : "")">
                                         <i class="fas fa-circle mr-1" style="font-size:0.5rem;vertical-align:middle;"></i>@if (!i.Activo) { @Resources.Strings.Integ_Cx_Pausada }
                                         else if (sv != null && sv.Textos.Count > 0) { @sv.Textos[0] }
                                         else { @Resources.Strings.Integ_NuncaUsada }
@@ -98,18 +118,33 @@
                                 <span class="badge @(i.Sandbox ? "badge-info" : "badge-secondary")" style="flex:none;">@(i.Sandbox ? Resources.Strings.Integ_BadgePruebas : Resources.Strings.Integ_Cx_Real)</span>
                             </div>
 
-                            <div class="d-flex align-items-center mt-3 px-2 py-1" style="background:#f6f7fb;border-radius:8px;gap:8px;">
+                            <div class="d-flex align-items-center mt-3 px-2 py-1" style="background:#f3f4f9;border-radius:8px;gap:8px;">
                                 <code class="flex-fill text-truncate" style="font-size:0.8rem;color:#2e3a59;" title="@direccion">@direccion</code>
                                 <button type="button" class="btn btn-sm btn-link p-0 cx-copiar-texto" data-texto="@direccion" title="@Resources.Strings.Integ_BtnCopiar"><i class="fas fa-copy"></i></button>
                             </div>
                             <div class="small text-muted mt-1 px-1">@Resources.Strings.Integ_Cx_Clave: <code style="color:#6b7280;">@(i.Sandbox ? "bft_" : "bfk_")@(i.Prefijo)_••••</code></div>
 
                             <div class="d-flex mt-3" style="gap:8px;">
-                                <button type="button" class="btn btn-primary btn-sm flex-fill integ-actividad" data-id="@i.Id" data-nombre="@i.NombreEmpresa">
-                                    <i class="fas fa-list-ul mr-1"></i>@Resources.Strings.Integ_Cx_VerEnvios
-                                </button>
+                                @if (nPend == 1 && pendientesUrl.TryGetValue(i.Id, out var urlRev))
+                                {
+                                    <a href="@urlRev" class="btn btn-sm flex-fill font-weight-bold" style="background:#f59e0b;border:0;color:#fff;"><i class="fas fa-clipboard-check mr-1"></i>@Resources.Strings.Integ_Cx_RevisarUno</a>
+                                }
+                                else if (nPend > 1)
+                                {
+                                    <button type="button" class="btn btn-sm flex-fill font-weight-bold integ-actividad" style="background:#f59e0b;border:0;color:#fff;" data-id="@i.Id" data-nombre="@i.NombreEmpresa"><i class="fas fa-clipboard-check mr-1"></i>@string.Format(Resources.Strings.Integ_Cx_RevisarN, nPend)</button>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-primary btn-sm flex-fill integ-actividad" data-id="@i.Id" data-nombre="@i.NombreEmpresa">
+                                        <i class="fas fa-list-ul mr-1"></i>@Resources.Strings.Integ_Cx_VerEnvios
+                                    </button>
+                                }
+                                @if (nPend == 1)
+                                {
+                                    <button type="button" class="btn btn-sm integ-actividad" style="background:#eef1ff;color:#4e5bd6;border:0;" data-id="@i.Id" data-nombre="@i.NombreEmpresa" title="@Resources.Strings.Integ_Cx_VerEnvios" aria-label="@Resources.Strings.Integ_Cx_VerEnvios"><i class="fas fa-list-ul"></i></button>
+                                }
                                 <div class="dropdown">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary cx-menu-toggle" aria-haspopup="true" aria-expanded="false" title="@Resources.Strings.Integ_Cx_Mas" aria-label="@Resources.Strings.Integ_Cx_Mas">
+                                    <button type="button" class="btn btn-sm cx-menu-toggle" style="background:#eef1ff;color:#4e5bd6;border:0;" aria-haspopup="true" aria-expanded="false" title="@Resources.Strings.Integ_Cx_Mas" aria-label="@Resources.Strings.Integ_Cx_Mas">
                                         <i class="fas fa-ellipsis-h"></i>
                                     </button>
                                     <div class="dropdown-menu dropdown-menu-right">
@@ -172,37 +207,42 @@
     </div>
 </div>
 
-<!-- ═══════════════════ MODAL ACTIVIDAD ═══════════════════ -->
+<!-- ═══════════════════ MODAL ENVÍOS ═══════════════════ -->
 <div class="modal fade" id="integActividadModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered bf-modal-wide">
+    <div class="modal-dialog modal-dialog-centered bf-modal-md">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-heartbeat"></i> @Resources.Strings.Integ_Pn_Titulo · <span id="actNombre"></span></h5>
+                <h5 class="modal-title"><i class="fas fa-list-ul"></i> <span id="actNombre"></span></h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
-            <div class="modal-body">
-                <div class="bf-section">@Resources.Strings.Integ_Pn_SecResumen</div>
-                <ul id="actMensajes" class="list-unstyled mb-1"></ul>
-                <div id="actConexion" class="small text-muted mb-3"></div>
-
-                <div class="bf-section">@Resources.Strings.Integ_Pn_SecEnvios</div>
+            <div class="modal-body" style="background:#fff;">
+                <div class="d-flex align-items-start p-3 mb-3" style="background:#f3f4f9;border-radius:12px;gap:12px;">
+                    <i id="actPunto" class="fas fa-circle mt-1" style="font-size:0.7rem;"></i>
+                    <div class="flex-fill" style="min-width:0;">
+                        <div id="actMensaje" class="font-weight-bold"></div>
+                        <ul id="actMensajes" class="list-unstyled small text-muted mb-0"></ul>
+                    </div>
+                    <div id="actConexion" class="small text-muted text-right" style="max-width:40%;"></div>
+                </div>
                 <div id="actSinSeguimiento" class="alert alert-warning small d-none">@Resources.Strings.Integ_Pn_SinSeguimiento</div>
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-3">
-                        <thead><tr>
-                            <th>@Resources.Strings.Integ_Wh_ThFecha</th><th>@Resources.Strings.Integ_Pn_ThArchivo</th><th>@Resources.Strings.Integ_Pn_ThPeriodo</th>
-                            <th class="text-right">@Resources.Strings.Integ_Pn_ThFilas</th><th class="text-center">@Resources.Strings.Integ_Pn_ThErrores</th>
-                            <th>@Resources.Strings.Integ_Pn_ThSituacion</th><th></th>
-                        </tr></thead>
-                        <tbody id="actCargues"></tbody>
-                    </table>
+
+                <div id="actPendientesBloque" class="mb-3 d-none">
+                    <div class="font-weight-bold mb-2" style="color:#9a5b00;"><i class="fas fa-bell mr-1"></i>@Resources.Strings.Integ_Cx_EsperanRevision</div>
+                    <div id="actPendientes"></div>
                 </div>
 
-                <div class="bf-section">@Resources.Strings.Integ_Pn_SecModelos</div>
-                <ul id="actModelos" class="list-unstyled small mb-3"></ul>
+                <div class="font-weight-bold mb-1">@Resources.Strings.Integ_Cx_UltimosEnvios</div>
+                <div id="actCargues"></div>
 
-                <div class="bf-section">@Resources.Strings.Integ_Pn_SecAvisos</div>
-                <ul id="actAvisos" class="list-unstyled small mb-0"></ul>
+                <details class="mt-3">
+                    <summary class="font-weight-bold" style="cursor:pointer;">@Resources.Strings.Integ_Cx_MasDetalle</summary>
+                    <div class="mt-2">
+                        <div class="small font-weight-bold">@Resources.Strings.Integ_Pn_SecModelos</div>
+                        <ul id="actModelos" class="list-unstyled small mb-2"></ul>
+                        <div class="small font-weight-bold">@Resources.Strings.Integ_Pn_SecAvisos</div>
+                        <ul id="actAvisos" class="list-unstyled small mb-0"></ul>
+                    </div>
+                </details>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times mr-1"></i>@Resources.Strings.Common_Cerrar</button>
@@ -438,6 +478,8 @@
         pnUltimoUso: '@Html.Raw(js(Resources.Strings.Integ_Pn_UltimoUso))',
         pnNuncaUsada: '@Html.Raw(js(Resources.Strings.Integ_NuncaUsada))',
         pnRevisar: '@Html.Raw(js(Resources.Strings.Integ_Pn_Revisar))',
+        pnFilas: '@Html.Raw(js(Resources.Strings.Integ_Pn_ThFilas))',
+        pnErrores: '@Html.Raw(js(Resources.Strings.Integ_Pn_ThErrores))',
         asErrMensaje: '@Html.Raw(js(Resources.Strings.Integ_As_ErrMensaje))',
         cxErrEmpresa: '@Html.Raw(js(Resources.Strings.Integ_Cx_ErrEmpresa))',
         cxListoTitulo: '@Html.Raw(js(Resources.Strings.Integ_Cx_ListoTitulo))',
@@ -525,35 +567,52 @@
         else { document.execCommand('copy'); ok(); }
     });
 
-    // ── Panel de actividad ──
+    // ── Envíos de una conexión ──
     function claseNivel(n) { return n === 'problema' ? 'text-danger' : (n === 'atencion' ? 'text-warning' : (n === 'inactiva' ? 'text-muted' : 'text-success')); }
-    function claseSituacion(s) {
-        return s === 'Confirmado' ? 'badge-success' : (s === 'ConErrores' ? 'badge-danger' : (s === 'PendienteRevision' ? 'badge-warning'
-            : (s === 'Simulado' ? 'badge-info' : 'badge-secondary')));
+    var CHIPS = {
+        Confirmado: ['#e3f8ee', '#0f7a52'], ConErrores: ['#fde8ea', '#b4232f'], PendienteRevision: ['#fff1cc', '#8a5a00'],
+        Simulado: ['#e4efff', '#1f55b8'], EnProceso: ['#e4efff', '#1f55b8'], Descartado: ['#eceef3', '#5b6275'], SinResolver: ['#eceef3', '#5b6275']
+    };
+    function chip(situacion, texto) {
+        var c = CHIPS[situacion] || CHIPS.SinResolver;
+        return $('<span class="px-2 py-1 font-weight-bold" style="border-radius:20px;font-size:0.72rem;white-space:nowrap;flex:none;">').css({ background: c[0], color: c[1] }).text(texto);
+    }
+    function filaEnvio(c, destacar) {
+        var detalle = c.periodo + ' · ' + Number(c.filas).toLocaleString() + ' ' + T.pnFilas + ' · ' + c.fecha + (c.errores > 0 ? ' · ' + c.errores + ' ' + T.pnErrores : '');
+        var $f = $('<div class="d-flex align-items-center py-2 px-2" style="gap:10px;">').css(destacar
+            ? { background: '#fff8e6', border: '1px solid #f6d58a', borderRadius: '10px', marginBottom: '8px' }
+            : { borderBottom: '1px solid #eceef5' });
+        $f.append(chip(c.situacion, c.situacionTexto));
+        $f.append($('<div class="flex-fill" style="min-width:0;">')
+            .append($('<div class="small font-weight-bold text-truncate">').text(c.archivo || ('#' + c.idLote)))
+            .append($('<div class="small text-muted">').text(detalle)));
+        if (c.url) $f.append($('<a class="btn btn-sm font-weight-bold" target="_blank" rel="noopener">').attr('href', c.url)
+            .css(destacar ? { background: '#f59e0b', color: '#fff', border: 0 } : { background: '#eef1ff', color: '#4e5bd6', border: 0 }).text(T.pnRevisar));
+        return $f;
     }
     $(document).on('click', '.integ-actividad', function () {
         $('#actNombre').text($(this).data('nombre'));
-        $('#actMensajes, #actCargues, #actModelos, #actAvisos').empty(); $('#actConexion').text('');
+        $('#actMensaje').text(''); $('#actMensajes, #actCargues, #actPendientes, #actModelos, #actAvisos').empty(); $('#actConexion').text('');
+        $('#actPendientesBloque').addClass('d-none');
         $('#integActividadModal').modal('show');
         $.getJSON(urls.actividad, { id: $(this).data('id') }).done(function (r) {
             if (!r.success) { toast('error', r.message); return; }
+            $('#actPunto').attr('class', 'fas fa-circle mt-1 ' + claseNivel(r.nivel));
+            $('#actMensaje').text(r.mensajes.length ? r.mensajes[0] : '');
             var $m = $('#actMensajes').empty();
-            $.each(r.mensajes, function (_, t) { $m.append($('<li class="mb-1">').append($('<i class="fas fa-circle mr-2">').addClass(claseNivel(r.nivel))).append(document.createTextNode(t))); });
+            $.each(r.mensajes.slice(1), function (_, t) { $m.append($('<li>').text(t)); });
             $('#actConexion').text(r.ultimoUso ? T.pnUltimoUso.replace('{0}', r.ultimoUso).replace('{1}', r.ipUltimoUso || '') : T.pnNuncaUsada);
-
             $('#actSinSeguimiento').toggleClass('d-none', !!r.seguimientoDisponible);
+
+            var pend = $.grep(r.cargues, function (c) { return c.situacion === 'PendienteRevision'; });
+            var resto = $.grep(r.cargues, function (c) { return c.situacion !== 'PendienteRevision'; });
+            var $p = $('#actPendientes').empty();
+            $.each(pend, function (_, c) { $p.append(filaEnvio(c, true)); });
+            $('#actPendientesBloque').toggleClass('d-none', !pend.length);
+
             var $c = $('#actCargues').empty();
-            if (!r.cargues.length) $c.append($('<tr>').append($('<td colspan="7" class="text-center text-muted">').text(T.pnSinEnvios)));
-            $.each(r.cargues, function (_, c) {
-                var $fila = $('<tr>')
-                    .append($('<td class="small">').text(c.fecha)).append($('<td class="small">').text(c.archivo || ('#' + c.idLote)))
-                    .append($('<td class="small">').text(c.periodo)).append($('<td class="small text-right">').text(Number(c.filas).toLocaleString()))
-                    .append($('<td class="small text-center">').text(c.errores))
-                    .append($('<td class="small">').append($('<span class="badge">').addClass(claseSituacion(c.situacion)).text(c.situacionTexto)));
-                var $a = $('<td class="small text-right">');
-                if (c.url) $a.append($('<a target="_blank" rel="noopener">').attr('href', c.url).text(T.pnRevisar));
-                $c.append($fila.append($a));
-            });
+            if (!resto.length) $c.append($('<div class="small text-muted py-2">').text(T.pnSinEnvios));
+            $.each(resto, function (_, c) { $c.append(filaEnvio(c, false)); });
 
             var $mo = $('#actModelos').empty();
             if (!r.modelos.length) $mo.append($('<li class="text-muted">').text(T.pnSinModelos));

@@ -54,6 +54,23 @@ namespace bufinscustomers.Controllers
             }
             ViewBag.Salud = salud;
 
+            // Envíos que esperan revisión de una persona (la tarjeta lo resalta y lleva directo a «Revisar cargue»)
+            var pendientes = new Dictionary<int, int>();
+            var pendientesUrl = new Dictionary<int, string>();
+            foreach (var i in lista.Where(x => !x.FechaRevocada.HasValue))
+            {
+                try
+                {
+                    var p = _actividad.UltimosCargues(i.Id, 10).Where(c => c.Situacion == "PendienteRevision").OrderByDescending(c => c.Recibido).ToList();
+                    if (p.Count == 0) continue;
+                    pendientes[i.Id] = p.Count;
+                    pendientesUrl[i.Id] = Url.Action("RevisarCargue", "Datos", new { idLote = p[0].IdLote });
+                }
+                catch (Exception ex) { AppLogger.Warn("Integraciones.Pendientes: " + ex.Message); }
+            }
+            ViewBag.Pendientes = pendientes;
+            ViewBag.PendientesUrl = pendientesUrl;
+
             // Dirección propia de cada empresa: /api/v1/{empresa}
             var todas = new EmpresaService().ObtenerEmpresas().Select(e => (e.Id, e.Nombre)).ToList();
             ViewBag.Direcciones = lista.Select(i => i.IdEmpresa).Distinct()

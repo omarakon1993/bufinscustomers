@@ -34,7 +34,7 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 <section id="que"><h2>What it is</h2>
 <p class="lead">Each company has <b>its own API</b>: an <b>address</b> and an <b>access key</b>. Your system sends data to that address using the key, and BUFINS receives it with the usual checks: it is validated, a backup is saved before anything is replaced, and everything is logged. A person at your company reviews and confirms each upload, unless automatic confirmation is allowed.</p>
 <div class="flow"><div class="node">Your system</div><div class="node">Your BUFINS API<br><small>address + key</small></div><div class="node">Automatic checks</div><div class="node">A person confirms</div><div class="node">Reports updated</div></div>
-<div class="g2"><div class="card"><b>If you manage the company</b><p>Create the connection in <i>Settings → Connections → Connect a company</i>. You will get the address and the key to hand to your technical team.</p></div>
+<div class="g2"><div class="card"><b>If you manage the company</b><p>Create the connection in <i>Settings → API connections → Connect a company</i>. You will get the address and the key to hand to your technical team.</p></div>
 <div class="card"><b>If you are on the technical team</b><p>You need the address and key given by the administrator. With those you can already send data; follow the three steps below.</p></div></div></section>
 
 <section id="pasos"><h2>Start in 3 steps</h2>
@@ -79,7 +79,7 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 
 <section id="avanzado"><h2>Advanced</h2>
 <details><summary>Send by sheets instead of an Excel file</summary>
-<p>For systems that cannot produce the file: open the upload with <code>POST /cargues</code> (<code>{"anio":2026,"modo":"ejecucion"}</code>), send each sheet with <code>POST /cargues/{idLote}/hojas/{hoja}</code> (<code>{"filas":[{"Column":value}]}</code>) and close it with <code>POST /cargues/{idLote}/validar</code>. You must declare <b>all</b> of the company's sheets (with <code>"filas":[]</code> if there is no data); the exact names come from <code>GET /esquemas</code>. The result is identical to the Excel.</p></details>
+<p>For systems that cannot produce the file: open the upload with <code>POST /cargues</code> (<code>{"anio":2026,"modo":"ejecucion"}</code>), send each sheet with <code>POST /cargues/{idLote}/hojas/{hoja}</code> (<code>{"filas":[{"Column":value}]}</code>) and close it with <code>POST /cargues/{idLote}/validar</code>. You must declare <b>all</b> of the company's sheets (with <code>"filas":[]</code> if there is no data); the exact names come from <code>GET /esquemas</code>. The result is identical to the Excel. Two important points: each upload must carry the <b>whole year</b> of every sheet (not just what is new), because confirming it replaces what was there; and the chart-of-accounts (PUC) sheet is not sent by JSON: it is loaded once with the Excel.</p></details>
 <details><summary>Automatic notices (so your system finds out by itself)</summary>
 <p>The administrator can register an https address of your system under <i>More options → Automatic notices</i>. BUFINS will notify it when an upload is <b>confirmed</b>, <b>discarded</b> or the <b>models</b> finish. Each notice carries the <code>X-Bufins-Signature</code> header (HMAC-SHA256 signature of the text <code>time.body</code> with the secret shown when they are enabled) so you can verify it comes from BUFINS. If your system does not answer, it is retried 3 times. Not needed to get started: you can also check the status whenever you like.</p></details>
 <details><summary>Avoid duplicate uploads</summary>
@@ -91,7 +91,7 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 <details><summary>Why does the address include my company name?</summary><p>So it is obvious whose connection it is and to prevent mix-ups: if you use one company's key with another company's address, BUFINS answers with the right address.</p></details>
 <details><summary>Do reports update when I send data?</summary><p>The upload delivers and validates the data; once confirmed it is loaded. Reports update when the models run, as today (this can also be requested through the API).</p></details>
 <details><summary>Can I keep using Excel?</summary><p>Yes. The API and manual upload coexist and use exactly the same rules.</p></details>
-<details><summary>Where do I see what my system has sent?</summary><p>In <i>Connections → View uploads</i>: each upload with its date, result and, if it is waiting for review, a direct link to review it.</p></details></section>
+<details><summary>Where do I see what my system has sent?</summary><p>In <i>API connections → View uploads</i>: each upload with its date, result and, if it is waiting for review, a direct link to review it.</p></details></section>
 
 </main>
 <footer class="w">BUFINS · API manual · v1</footer>

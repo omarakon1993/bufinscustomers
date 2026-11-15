@@ -34,7 +34,7 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 <section id="que"><h2>Qué es</h2>
 <p class="lead">Cada empresa tiene <b>su propia API</b>: una <b>dirección</b> y una <b>clave de acceso</b>. Su sistema envía los datos a esa dirección usando la clave, y BUFINS los recibe con las mismas revisiones de siempre: se validan, se guarda un respaldo antes de reemplazar y todo queda registrado. Una persona de su empresa revisa y confirma cada envío, salvo que se permita confirmar automáticamente.</p>
 <div class="flow"><div class="node">Su sistema</div><div class="node">Su API de BUFINS<br><small>dirección + clave</small></div><div class="node">Revisión automática</div><div class="node">Una persona confirma</div><div class="node">Informes actualizados</div></div>
-<div class="g2"><div class="card"><b>Si usted administra la empresa</b><p>Cree la conexión en <i>Configuración → Conexiones → Conectar una empresa</i>. Obtendrá la dirección y la clave para entregar a su equipo técnico.</p></div>
+<div class="g2"><div class="card"><b>Si usted administra la empresa</b><p>Cree la conexión en <i>Configuración → Conexiones API → Conectar una empresa</i>. Obtendrá la dirección y la clave para entregar a su equipo técnico.</p></div>
 <div class="card"><b>Si usted es del equipo técnico</b><p>Necesita la dirección y la clave que le dio el administrador. Con eso ya puede enviar datos; siga los tres pasos de abajo.</p></div></div></section>
 
 <section id="pasos"><h2>Empezar en 3 pasos</h2>
@@ -79,7 +79,7 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 
 <section id="avanzado"><h2>Avanzado</h2>
 <details><summary>Enviar por hojas, en vez de un Excel</summary>
-<p>Para sistemas que no generan el archivo: abra el envío con <code>POST /cargues</code> (<code>{"anio":2026,"modo":"ejecucion"}</code>), envíe cada hoja con <code>POST /cargues/{idLote}/hojas/{hoja}</code> (<code>{"filas":[{"Columna":valor}]}</code>) y ciérrelo con <code>POST /cargues/{idLote}/validar</code>. Debe declarar <b>todas</b> las hojas de la empresa (con <code>"filas":[]</code> si no hay datos); los nombres exactos salen de <code>GET /esquemas</code>. El resultado es idéntico al del Excel.</p></details>
+<p>Para sistemas que no generan el archivo: abra el envío con <code>POST /cargues</code> (<code>{"anio":2026,"modo":"ejecucion"}</code>), envíe cada hoja con <code>POST /cargues/{idLote}/hojas/{hoja}</code> (<code>{"filas":[{"Columna":valor}]}</code>) y ciérrelo con <code>POST /cargues/{idLote}/validar</code>. Debe declarar <b>todas</b> las hojas de la empresa (con <code>"filas":[]</code> si no hay datos); los nombres exactos salen de <code>GET /esquemas</code>. El resultado es idéntico al del Excel. Dos cosas importantes: cada envío debe traer <b>todo el año</b> de cada hoja (no solo lo nuevo), porque al confirmarlo reemplaza lo anterior; y la hoja del plan de cuentas (PUC) no se envía por JSON: se carga una vez con el Excel.</p></details>
 <details><summary>Avisos automáticos (para que su sistema se entere solo)</summary>
 <p>El administrador puede registrar una dirección https de su sistema en <i>Más opciones → Avisos automáticos</i>. BUFINS le enviará un aviso cuando un envío se <b>confirme</b>, se <b>descarte</b> o terminen los <b>modelos</b>. Cada aviso trae la cabecera <code>X-Bufins-Signature</code> (firma HMAC-SHA256 del texto <code>tiempo.cuerpo</code> con el secreto que se muestra al activarlos) para comprobar que viene de BUFINS. Si su sistema no responde, se reintenta 3 veces. No es necesario para empezar: también puede consultar el estado cuando quiera.</p></details>
 <details><summary>Evitar envíos repetidos</summary>
@@ -91,7 +91,7 @@ footer{color:var(--ink2);font-size:12.5px;border-top:1px solid var(--line);paddi
 <details><summary>¿Por qué la dirección lleva el nombre de mi empresa?</summary><p>Para que sea evidente de quién es la conexión y para evitar equivocaciones: si usa la clave de una empresa con la dirección de otra, BUFINS responde con la dirección correcta.</p></details>
 <details><summary>¿Se actualizan los informes al enviar?</summary><p>El envío entrega y valida los datos; al confirmarlo quedan cargados. Los informes se actualizan al ejecutar los modelos, como hoy (también se puede pedir por la API).</p></details>
 <details><summary>¿Puedo seguir usando el Excel?</summary><p>Sí. La API y la carga manual conviven y usan exactamente las mismas reglas.</p></details>
-<details><summary>¿Dónde veo lo que ha enviado mi sistema?</summary><p>En <i>Conexiones → Ver envíos</i>: cada envío con su fecha, resultado y, si espera revisión, un enlace directo para revisarlo.</p></details></section>
+<details><summary>¿Dónde veo lo que ha enviado mi sistema?</summary><p>En <i>Conexiones API → Ver envíos</i>: cada envío con su fecha, resultado y, si espera revisión, un enlace directo para revisarlo.</p></details></section>
 
 </main>
 <footer class="w">BUFINS · Manual de la API · v1</footer>
