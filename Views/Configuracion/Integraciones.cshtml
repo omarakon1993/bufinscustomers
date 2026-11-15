@@ -20,7 +20,7 @@
             <h1 class="powerbi-header-title">@Resources.Strings.Integ_PageTitle</h1>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <a class="btn-modern-secondary" href="@Url.Content("~/api/v1/manual")" target="_blank" rel="noopener">
+            <a class="btn-modern-secondary" href="@Url.Content("~/api/v1/manual")@(System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("en") ? "?idioma=en" : "")" target="_blank" rel="noopener">
                 <i class="fas fa-book mr-1"></i>@Resources.Strings.Integ_BtnManual
             </a>
             <a class="btn-modern-secondary" href="@Url.Content("~/api/v1/openapi.json")" target="_blank" rel="noopener">
