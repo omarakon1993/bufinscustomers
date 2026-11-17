@@ -193,7 +193,7 @@ namespace bufinscustomers.Controllers
                         {
                             errores = erroresModelos.Select(e => new { nombre = e.Nombre, nombreSP = e.NombreSP, mensaje = e.Mensaje }),
                             exitosos = exitosos
-                        }, JsonRequestBehavior.AllowGet);
+                        });
                     }
 
                     byte[] fileBytes;
@@ -443,7 +443,7 @@ namespace bufinscustomers.Controllers
                         {
                             errores = new[] { new { nombre = modelo.Nombre, nombreSP = modelo.NombreSP, mensaje = exModelo.Message } },
                             exitosos = Array.Empty<string>()
-                        }, JsonRequestBehavior.AllowGet);
+                        });
                     }
 
                     byte[] fileBytes;
@@ -546,7 +546,7 @@ namespace bufinscustomers.Controllers
                         {
                             errores = erroresModelos.Select(e => new { nombre = e.Nombre, nombreSP = e.NombreSP, mensaje = e.Mensaje }),
                             exitosos = exitosos
-                        }, JsonRequestBehavior.AllowGet);
+                        });
                     }
 
                     byte[] fileBytes;

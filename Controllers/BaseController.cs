@@ -11,16 +11,11 @@ namespace bufinscustomers.Controllers
 {
     public abstract class BaseController : Controller
     {
-        // ---- compatibilidad con System.Web.Mvc.Controller (MVC 5): Session, Server, Json(..., AllowGet), HttpNotFound() ----
+        // ---- compatibilidad con System.Web.Mvc.Controller (MVC 5): Session y Server (pendiente de retirar, ver .claude/notas/refactor-plan.md) ----
         /// <summary>Sesion del usuario (equivale a Controller.Session de MVC 5; ver Compat/Sesion.cs).</summary>
         protected SesionCompat Session { get { return AppHttp.Current.Session; } }
 
         protected ServerCompat Server { get { return ServerCompat.Instancia; } }
-
-        protected JsonResult Json(object data, JsonRequestBehavior comportamiento) { return Json(data); }
-
-        protected HttpNotFoundResult HttpNotFound() { return new HttpNotFoundResult(); }
-        protected HttpNotFoundResult HttpNotFound(string descripcion) { return new HttpNotFoundResult(descripcion); }
 
         /// <summary>Nombre del mes (1-12) en el idioma actual; fuera de rango devuelve el número tal cual.</summary>
         protected string NombreMes(int mes)

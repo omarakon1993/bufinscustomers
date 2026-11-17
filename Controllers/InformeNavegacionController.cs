@@ -42,8 +42,7 @@ namespace bufinscustomers.Controllers
         }
 
         private JsonResult Prohibido() =>
-            Json(new { success = false, forbidden = true, message = R("Err_403_Json") },
-                 JsonRequestBehavior.AllowGet);
+            Json(new { success = false, forbidden = true, message = R("Err_403_Json") });
 
         private List<int> EmpresasPermitidasOTodas()
         {
@@ -103,7 +102,7 @@ namespace bufinscustomers.Controllers
                     n.IpAddress,
                     Navegador = ResumirUserAgent(n.UserAgent)
                 })
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         /// <summary>Totales del conjunto filtrado para las tarjetas de resumen (independiente del modo de la grilla).</summary>
@@ -125,7 +124,7 @@ namespace bufinscustomers.Controllers
                 paginasDistintas = r.PaginasDistintas,
                 paginaTop        = r.PaginaTop,
                 ultima           = r.Ultima?.ToString("dd/MM/yyyy HH:mm")
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         [HttpGet]
@@ -150,7 +149,7 @@ namespace bufinscustomers.Controllers
                     Primera = u.Primera.ToString("dd/MM/yyyy HH:mm"),
                     Ultima  = u.Ultima.ToString("dd/MM/yyyy HH:mm")
                 })
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         [HttpGet]
@@ -174,7 +173,7 @@ namespace bufinscustomers.Controllers
                     p.UsuariosDistintos,
                     Ultima = p.Ultima.ToString("dd/MM/yyyy HH:mm")
                 })
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         [HttpGet]
@@ -200,7 +199,7 @@ namespace bufinscustomers.Controllers
                     Primera = x.Primera.ToString("dd/MM/yyyy HH:mm"),
                     Ultima  = x.Ultima.ToString("dd/MM/yyyy HH:mm")
                 })
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         [HttpGet]

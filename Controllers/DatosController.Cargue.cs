@@ -46,7 +46,7 @@ namespace bufinscustomers.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult CargarExcel(HttpPostedFileBase archivoExcel, int idEmpresaSeleccionada, int anioSeleccionado, string modoSeleccionado, int idEscenarioSeleccionado = 1)
+        public ActionResult CargarExcel(IFormFile archivoExcel, int idEmpresaSeleccionada, int anioSeleccionado, string modoSeleccionado, int idEscenarioSeleccionado = 1)
         {
             // ── Validación en dos pasos ──────────────────────────────────────────────────
             // Esta acción YA NO escribe en las tablas Ini_* reales: el orquestador
@@ -218,7 +218,7 @@ namespace bufinscustomers.Controllers
                 SetInfoMessage(R("RevisarCargue_DescartadoPorRecarga"));
                 return RedirectToAction("CargueExcel");
             }
-            return new HttpStatusCodeResult(204);
+            return new StatusCodeResult(204);
         }
 
         private string ObtenerUltimoUsuarioCargue(int idEmpresa)

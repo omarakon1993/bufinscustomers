@@ -26,14 +26,14 @@ namespace bufinscustomers.Controllers
             try
             {
                 if (!VerificarAcceso())
-                    return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Acceso denegado" });
 
                 var nodos = service.ObtenerHijos(cuenta);
-                return Json(new { success = true, nodos }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = true, nodos });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = MensajeError(ex) }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = MensajeError(ex) });
             }
         }
 
@@ -43,14 +43,14 @@ namespace bufinscustomers.Controllers
             try
             {
                 if (!VerificarAcceso())
-                    return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Acceso denegado" });
 
                 var ruta = service.ObtenerRuta(cuenta);
-                return Json(new { success = true, ruta }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = true, ruta });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = MensajeError(ex) }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = MensajeError(ex) });
             }
         }
 
@@ -60,14 +60,14 @@ namespace bufinscustomers.Controllers
             try
             {
                 if (!VerificarAcceso())
-                    return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Acceso denegado" });
 
                 var resultados = service.Buscar(texto);
-                return Json(new { success = true, resultados }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = true, resultados });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = MensajeError(ex) }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = MensajeError(ex) });
             }
         }
 

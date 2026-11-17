@@ -21,7 +21,7 @@ namespace bufinscustomers.Controllers
         {
             Response.Cache.SetCacheability(HttpCacheability.NoCache);
             if (!EmpresaAccesoHelper.TieneAcceso(UsuarioSesionHelper.UsuarioActual, idEmpresa))
-                return Json(new { exito = false, mensaje = R("Common_SinPermisos") }, JsonRequestBehavior.AllowGet);
+                return Json(new { exito = false, mensaje = R("Common_SinPermisos") });
 
             var emp = EmpresaCacheHelper.ObtenerEmpresasCacheadas().FirstOrDefault(e => e.Id == idEmpresa);
             return Json(new
@@ -30,7 +30,7 @@ namespace bufinscustomers.Controllers
                 disponible = servicio.Disponible(),
                 empresa = emp != null ? emp.Nombre : "",
                 paletas = servicio.Obtener(idEmpresa).Select(p => new { slot = p.Slot, primario = p.Primario, secundario = p.Secundario, acento = p.Acento })
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         [HttpPost]

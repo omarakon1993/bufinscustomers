@@ -205,7 +205,7 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
-        public ActionResult EditarUsuario(Usuarios oUsuario, HttpPostedFileBase ImagenUsuario)
+        public ActionResult EditarUsuario(Usuarios oUsuario, IFormFile ImagenUsuario)
         {
             // Solo Admin 2 puede asignar Admin 2
             if (oUsuario.Admin == 2 && !UsuarioSesionHelper.EsSuperAdmin())
@@ -309,7 +309,7 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
-        public ActionResult Registrar(Usuarios oUsuario, HttpPostedFileBase ImagenUsuario, bool ExigirCambioClave = false)
+        public ActionResult Registrar(Usuarios oUsuario, IFormFile ImagenUsuario, bool ExigirCambioClave = false)
         {
             bool registrado;
             string mensaje;
@@ -714,7 +714,7 @@ namespace bufinscustomers.Controllers
         }
 
         /// <summary>Guarda la foto de perfil. Devuelve false (sin guardar nada) si el archivo no es una imagen válida.</summary>
-        private bool GuardarImagenUsuario(int usuarioId, HttpPostedFileBase imagenArchivo)
+        private bool GuardarImagenUsuario(int usuarioId, IFormFile imagenArchivo)
         {
             if (imagenArchivo == null || imagenArchivo.ContentLength <= 0) return false;
             if (imagenArchivo.ContentLength > MaxBytesImagenUsuario) return false;
@@ -744,7 +744,7 @@ namespace bufinscustomers.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult CargarImagenUsuario(HttpPostedFileBase ImagenUsuario)
+        public ActionResult CargarImagenUsuario(IFormFile ImagenUsuario)
         {
             if (ImagenUsuario != null && ImagenUsuario.ContentLength > 0)
             {
@@ -761,7 +761,7 @@ namespace bufinscustomers.Controllers
         {
             var actual = UsuarioSesionHelper.UsuarioActual;
             if (actual == null)
-                return new HttpStatusCodeResult(System.Net.HttpStatusCode.Unauthorized);
+                return new StatusCodeResult(401);
 
             string base64 = null;
             int? empresaDelDueno = null;
@@ -777,23 +777,23 @@ namespace bufinscustomers.Controllers
                 });
 
             if (string.IsNullOrEmpty(base64))
-                return HttpNotFound();
+                return NotFound();
 
             // Solo la propia foto, o la de usuarios de una empresa a la que se tiene acceso (empresa propia o su grupo).
             bool permitido = actual.Id == id
                 || actual.Admin == 2
                 || (empresaDelDueno.HasValue && EmpresaAccesoHelper.TieneAcceso(actual, empresaDelDueno.Value));
             if (!permitido)
-                return HttpNotFound();
+                return NotFound();
 
             byte[] bytes;
             try { bytes = Convert.FromBase64String(base64); }
-            catch (FormatException) { return HttpNotFound(); }
+            catch (FormatException) { return NotFound(); }
 
             // El tipo sale de la firma de los bytes, no de lo que se guardó: una fila antigua con HTML/SVG no se sirve.
             string tipo = TipoImagenPorFirma(bytes);
             if (tipo == null)
-                return HttpNotFound();
+                return NotFound();
 
             Response.Cache.SetCacheability(HttpCacheability.Private);
             Response.Cache.SetMaxAge(TimeSpan.FromHours(1));

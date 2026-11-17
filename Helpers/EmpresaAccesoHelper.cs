@@ -1,3 +1,4 @@
+#nullable enable
 using System.Collections.Generic;
 using System.Linq;
 using bufinscustomers.Models;
@@ -39,7 +40,7 @@ namespace bufinscustomers.Helpers
         /// Ids de empresas visibles/administrables para el usuario actual. Null significa
         /// "sin filtro" (Super Admin, ve y administra todas).
         /// </summary>
-        public static List<int> ObtenerIdsEmpresasPermitidas(Usuarios usuario)
+        public static List<int>? ObtenerIdsEmpresasPermitidas(Usuarios usuario)
         {
             if (usuario == null)
                 return new List<int>();

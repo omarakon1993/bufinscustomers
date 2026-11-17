@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -57,7 +58,7 @@ namespace bufinscustomers.Helpers
         /// Valida <paramref name="clave"/>. <paramref name="errorKey"/> queda con la clave de
         /// recurso del primer incumplimiento, o <c>null</c> si la clave cumple la política.
         /// </summary>
-        public static bool Validar(string clave, string usuario, out string errorKey, bool comprobarFiltracion = true)
+        public static bool Validar(string? clave, string? usuario, out string? errorKey, bool comprobarFiltracion = true)
         {
             if (string.IsNullOrEmpty(clave) || clave.Length < LongitudMinima) { errorKey = "Pwd_ErrorLongitud"; return false; }
             if (!_minuscula.IsMatch(clave)) { errorKey = "Pwd_ErrorMinuscula"; return false; }

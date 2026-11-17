@@ -146,7 +146,7 @@ namespace bufinscustomers.Controllers
         {
             var lote = ObtenerLoteParaExportarHallazgos(idLote);
             if (lote == null)
-                return new HttpStatusCodeResult(403);
+                return new StatusCodeResult(403);
 
             try
             {
@@ -157,7 +157,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 AppLogger.Error(ex, $"ExportarHallazgosExcel: lote {idLote}");
-                return new HttpStatusCodeResult(500);
+                return new StatusCodeResult(500);
             }
         }
 

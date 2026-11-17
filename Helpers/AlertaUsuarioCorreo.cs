@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using bufinscustomers.Services;
 
@@ -10,7 +11,7 @@ namespace bufinscustomers.Helpers
     /// </summary>
     public static class AlertaUsuarioCorreo
     {
-        public static void Enviar(string destinatario, string titulo, string mensaje, string enlace = null)
+        public static void Enviar(string destinatario, string titulo, string mensaje, string? enlace = null)
         {
             if (string.IsNullOrWhiteSpace(destinatario)) return;
             string asunto = "[Bufins] " + titulo;

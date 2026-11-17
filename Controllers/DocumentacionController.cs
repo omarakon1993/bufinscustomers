@@ -14,15 +14,15 @@ namespace bufinscustomers.Controllers
         public ActionResult Ver(string clave)
         {
             var doc = DocumentacionCatalogo.Buscar(clave);
-            if (doc == null) return HttpNotFound();
+            if (doc == null) return NotFound();
 
             // Super Admin pasa (TienePermiso); además aplica la restricción por empresa de los menús personalizados.
             if (!string.IsNullOrEmpty(doc.Permiso) && !UsuarioSesionHelper.TienePermiso(doc.Permiso))
-                return new HttpStatusCodeResult(403);
+                return new StatusCodeResult(403);
 
             // Documentos que el Super Admin marcó como «solo Super Admin» en la biblioteca Documentación BUFINS.
             if (!DocumentacionCatalogo.PuedeVer(doc.Clave, UsuarioSesionHelper.UsuarioActual))
-                return new HttpStatusCodeResult(403);
+                return new StatusCodeResult(403);
 
             return DocumentacionProtegidaHelper.Servir(this, DocumentacionCatalogo.Carpeta + doc.Archivo,
                 R("Doc_MarcaLeyenda"), R("Doc_Aviso"), "Documentacion." + doc.Clave,

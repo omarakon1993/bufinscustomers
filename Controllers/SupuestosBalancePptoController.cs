@@ -57,9 +57,9 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                if (!Acceso(idEmpresa)) return Json(new { success = false, message = R("SBP_SinAcceso") }, JsonRequestBehavior.AllowGet);
+                if (!Acceso(idEmpresa)) return Json(new { success = false, message = R("SBP_SinAcceso") });
                 var resumen = svc.ObtenerResumen(idEmpresa);
-                if (!resumen.Disponible) return Json(new { success = true, disponible = false }, JsonRequestBehavior.AllowGet);
+                if (!resumen.Disponible) return Json(new { success = true, disponible = false });
 
                 var filas = svc.Obtener(idEmpresa).Select(f => new
                 {
@@ -71,9 +71,9 @@ namespace bufinscustomers.Controllers
                 {
                     success = true, disponible = true, filas,
                     resumen = ResumenJson(resumen)
-                }, JsonRequestBehavior.AllowGet);
+                });
             }
-            catch (Exception ex) { return Json(new { success = false, message = MensajeError(ex) }, JsonRequestBehavior.AllowGet); }
+            catch (Exception ex) { return Json(new { success = false, message = MensajeError(ex) }); }
         }
 
         private object ResumenJson(ResumenSupuestos r) => new
@@ -134,7 +134,7 @@ namespace bufinscustomers.Controllers
 
         [HttpPost, ValidateAntiForgeryToken]
         [RequierePermiso(SupuestosBalancePptoService.CodigoMenu)]
-        public JsonResult CargarExcel(int idEmpresa, HttpPostedFileBase archivoExcel)
+        public JsonResult CargarExcel(int idEmpresa, IFormFile archivoExcel)
         {
             try
             {
@@ -233,15 +233,15 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                if (!Acceso(idEmpresa)) return Json(new { mostrar = false }, JsonRequestBehavior.AllowGet);
+                if (!Acceso(idEmpresa)) return Json(new { mostrar = false });
                 int pend = svc.ContarPendientes(idEmpresa);
                 if (pend == -1)
                 {
                     // Sin filas: también es un "no completo" (solo si el módulo está instalado)
                     bool instalado = svc.Disponible();
-                    if (!instalado) return Json(new { mostrar = false }, JsonRequestBehavior.AllowGet);
+                    if (!instalado) return Json(new { mostrar = false });
                 }
-                if (pend == 0) return Json(new { mostrar = false }, JsonRequestBehavior.AllowGet);
+                if (pend == 0) return Json(new { mostrar = false });
 
                 bool ingles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
                 svc.ObtenerMenu(ingles, out string nombre, out string controller, out string action);
@@ -253,9 +253,9 @@ namespace bufinscustomers.Controllers
                     pendientes = pend < 0 ? 0 : pend,
                     menuNombre = nombre ?? R("SBP_MenuNombreDefecto"),
                     url = puede ? Url.Action(action, controller, new { idEmpresa }) : null
-                }, JsonRequestBehavior.AllowGet);
+                });
             }
-            catch { return Json(new { mostrar = false }, JsonRequestBehavior.AllowGet); }
+            catch { return Json(new { mostrar = false }); }
         }
     }
 }

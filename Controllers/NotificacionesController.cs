@@ -11,10 +11,10 @@ namespace bufinscustomers.Controllers
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null)
-                return Json(new { noLeidas = 0, items = System.Array.Empty<object>() }, JsonRequestBehavior.AllowGet);
+                return Json(new { noLeidas = 0, items = System.Array.Empty<object>() });
 
             var (items, noLeidas) = svc.ObtenerRecientes(usuario.Id);
-            return Json(new { noLeidas, items }, JsonRequestBehavior.AllowGet);
+            return Json(new { noLeidas, items });
         }
 
         [HttpPost]

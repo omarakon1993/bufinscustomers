@@ -72,7 +72,7 @@ namespace bufinscustomers.Controllers
         public JsonResult MiConsumo(int? idEmpresa)
         {
             if (!PuedeVerConsumo(idEmpresa, out int empresaId))
-                return Json(new { ok = false, mensaje = R("Common_SinPermisos") }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false, mensaje = R("Common_SinPermisos") });
 
             try
             {
@@ -109,12 +109,12 @@ namespace bufinscustomers.Controllers
                     porUsuario = reporte.PorUsuario(empresaId, inicio, hoy),
                     porFuncion = reporte.PorFuncion(empresaId, inicio, hoy)
                         .Select(f => new { funcion = NombreFuncion(f.Funcion), f.Consultas, f.Tokens })
-                }, JsonRequestBehavior.AllowGet);
+                });
             }
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "AnalisisIAController.MiConsumo");
-                return Json(new { ok = false, mensaje = R("IAConsumo_Error") }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false, mensaje = R("IAConsumo_Error") });
             }
         }
 

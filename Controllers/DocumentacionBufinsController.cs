@@ -47,8 +47,8 @@ namespace bufinscustomers.Controllers
         public ActionResult Ver(string clave)
         {
             var doc = DocumentacionBibliotecaCatalogo.Buscar(clave);
-            if (doc == null) return HttpNotFound();
-            if (!DocumentacionAccesoService.PuedeVer(doc.Clave, UsuarioSesionHelper.UsuarioActual)) return new HttpStatusCodeResult(403);
+            if (doc == null) return NotFound();
+            if (!DocumentacionAccesoService.PuedeVer(doc.Clave, UsuarioSesionHelper.UsuarioActual)) return new StatusCodeResult(403);
 
             return DocumentacionProtegidaHelper.Servir(this, doc.Ruta,
                 R("Doc_MarcaLeyenda"), R("Doc_Aviso"), "DocumentacionBufins." + doc.Clave,
@@ -60,7 +60,7 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult GuardarAcceso(string clave, bool soloSuperAdmin)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin()) return new HttpStatusCodeResult(403);
+            if (!UsuarioSesionHelper.EsSuperAdmin()) return new StatusCodeResult(403);
             var doc = DocumentacionBibliotecaCatalogo.Buscar(clave);
             if (doc == null) return Json(new { exito = false, mensaje = R("DocBuf_AccesoDocInvalido") });
 

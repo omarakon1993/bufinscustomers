@@ -60,12 +60,12 @@ namespace bufinscustomers.Controllers
                         empresas = h.Empresas.Keys.ToList(),
                         modificada = h.FechaModificacion?.ToString("yyyy-MM-dd HH:mm")
                     })
-                }, JsonRequestBehavior.AllowGet);
+                });
             }
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "GestorHojasCargue.Listar");
-                return Json(new { success = false, message = R("HojasCargue_Err_Cargar") }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = R("HojasCargue_Err_Cargar") });
             }
         }
 
@@ -91,7 +91,7 @@ namespace bufinscustomers.Controllers
                     columnas = d.Columnas.Select(ColumnaJson),
                     columnasSistema = d.ColumnasSistema.Select(ColumnaJson),
                     diagnostico = d.Diagnostico.Select(x => new { nivel = x.Nivel, codigo = x.Codigo, detalle = x.Detalle })
-                }, JsonRequestBehavior.AllowGet);
+                });
             }
             catch (Exception ex)
             {
@@ -106,14 +106,14 @@ namespace bufinscustomers.Controllers
         {
             tabla = (tabla ?? "").Trim();
             if (!CargueHojasService.NombreTablaValido(tabla))
-                return Json(new { success = true, valida = false }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = true, valida = false });
             try
             {
                 bool existe = servicio.ExisteTabla(tabla);
                 bool existeStaging = servicio.ExisteTabla(TablasCargueHelper.NombreStaging(tabla));
                 var columnas = existe ? servicio.ObtenerColumnas(tabla).Where(c => !c.EsSistema).Select(ColumnaJson).ToList() : null;
                 bool tieneAnio = !existe || servicio.ObtenerColumnas(tabla).Any(c => c.Nombre.Equals(CargueHojasService.ColumnaAnio, StringComparison.OrdinalIgnoreCase));
-                return Json(new { success = true, valida = true, existe, existeStaging, tieneAnio, columnas }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = true, valida = true, existe, existeStaging, tieneAnio, columnas });
             }
             catch (Exception ex)
             {
@@ -469,7 +469,7 @@ namespace bufinscustomers.Controllers
         };
 
         private JsonResult JsonError(string clave) =>
-            Json(new { success = false, message = R(clave) }, JsonRequestBehavior.AllowGet);
+            Json(new { success = false, message = R(clave) });
 
         private JsonResult JsonError(CargueHojasService.GestorHojasException gex)
         {

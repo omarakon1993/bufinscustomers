@@ -63,12 +63,12 @@ namespace bufinscustomers.Controllers
                 
                 if (usuario == null)
                 {
-                    return Json(new { success = false, message = "Sesi�n no v�lida" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Sesi�n no v�lida" });
                 }
 
                 if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
                 {
-                    return Json(new { success = false, message = "No tiene permisos para ver esta configuraci�n" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "No tiene permisos para ver esta configuraci�n" });
                 }
 
                 var configuracion = _configuracionService.ObtenerConfiguracionPorEmpresa(idEmpresa);
@@ -106,11 +106,11 @@ namespace bufinscustomers.Controllers
                         Ajuste2 = configuracion.Ajuste2.Select(a => new { a.Id, a.NombreAjuste, a.Orden }),
                         AnosHistoricos = configuracion.AnosHistoricos.Select(a => new { a.Id, a.NombreAno, a.Orden })
                     }
-                }, JsonRequestBehavior.AllowGet);
+                });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error: {MensajeError(ex)}" }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = $"Error: {MensajeError(ex)}" });
             }
         }
 
@@ -521,7 +521,7 @@ namespace bufinscustomers.Controllers
                 
                 if (usuario == null)
                 {
-                    return Json(new { success = false, message = "Sesi�n no v�lida" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Sesi�n no v�lida" });
                 }
 
                 var empresas = _configuracionService.ObtenerEmpresas();
@@ -536,11 +536,11 @@ namespace bufinscustomers.Controllers
                 {
                     success = true,
                     empresas = empresas.Select(e => new { e.Id, e.Nombre })
-                }, JsonRequestBehavior.AllowGet);
+                });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error: {MensajeError(ex)}" }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = $"Error: {MensajeError(ex)}" });
             }
         }
 

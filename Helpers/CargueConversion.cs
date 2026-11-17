@@ -1,4 +1,5 @@
-﻿using ClosedXML.Excel;
+﻿#nullable enable
+using ClosedXML.Excel;
 using System;
 using System.Data;
 using System.Linq;
@@ -15,7 +16,7 @@ namespace bufinscustomers.Helpers
         /// Vacía → DBNull; número → fecha serial de Excel; texto → cultura actual o AAAA-MM-DD.
         /// Devuelve <c>null</c> si el valor no es una fecha.
         /// </summary>
-        public static object ConvertirCeldaFecha(object cellValue)
+        public static object? ConvertirCeldaFecha(object? cellValue)
         {
             if (cellValue == null || cellValue == DBNull.Value) return DBNull.Value;
             if (cellValue is DateTime dtv) return dtv;
@@ -23,7 +24,7 @@ namespace bufinscustomers.Helpers
             {
                 try { return DateTime.FromOADate(d); } catch { return null; }
             }
-            string s = cellValue.ToString().Trim();
+            string s = cellValue.ToString()!.Trim();
             if (s.Length == 0) return DBNull.Value;
             if (DateTime.TryParseExact(s, new[] { "yyyy-MM-dd", "yyyy-MM-dd HH:mm", "yyyy-MM-dd HH:mm:ss", "yyyy/MM/dd" },
                     System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime iso))
@@ -37,11 +38,11 @@ namespace bufinscustomers.Helpers
         /// Celda → Sí/No para una columna BIT (hojas del Gestor de hojas de cargue).
         /// Vacía → DBNull; acepta 1/0, Sí/No, Si, Verdadero/Falso, True/False, X. Devuelve <c>null</c> si no es válido.
         /// </summary>
-        public static object ConvertirCeldaBit(object cellValue)
+        public static object? ConvertirCeldaBit(object? cellValue)
         {
             if (cellValue == null || cellValue == DBNull.Value) return DBNull.Value;
             if (cellValue is double d) return d != 0;
-            string s = cellValue.ToString().Trim().ToLowerInvariant();
+            string s = cellValue.ToString()!.Trim().ToLowerInvariant();
             if (s.Length == 0) return DBNull.Value;
             switch (s)
             {
@@ -59,7 +60,7 @@ namespace bufinscustomers.Helpers
         /// Para double nativo usa round-trip via string; para texto usa SanitizarValorNumerico.
         /// Nunca lanza excepción: retorna 0 ante cualquier caso inválido.
         /// </summary>
-        public static decimal ExtraerDecimal(object cellValue)
+        public static decimal ExtraerDecimal(object? cellValue)
         {
             if (cellValue == null) return 0m;
 
@@ -84,7 +85,7 @@ namespace bufinscustomers.Helpers
                 ? r : 0m;
         }
 
-        public static string SanitizarValorNumerico(string valor)
+        public static string SanitizarValorNumerico(string? valor)
         {
             if (string.IsNullOrWhiteSpace(valor)) return "0";
             var v = valor.Trim().Replace(" ", "").Replace("$", "");
@@ -143,7 +144,7 @@ namespace bufinscustomers.Helpers
                 @"^-?\d+[\.,]?\d*[Ee][+\-]?\d+$",
                 System.Text.RegularExpressions.RegexOptions.None);
 
-        public static string DetectarErrorNumerico(string valor)
+        public static string? DetectarErrorNumerico(string valor)
         {
             string v = valor.Trim();
             // Notación científica (ej: "1,489E-05"): rechazar, el usuario debe ajustar el formato en Excel

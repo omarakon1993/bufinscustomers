@@ -21,7 +21,7 @@ namespace bufinscustomers.Controllers
         [HttpGet]
         public JsonResult Estado()
         {
-            var r = Json(svc.ObtenerEstado(), JsonRequestBehavior.AllowGet);
+            var r = Json(svc.ObtenerEstado());
             Response.Cache.SetCacheability(HttpCacheability.NoCache);
             return r;
         }
@@ -30,7 +30,7 @@ namespace bufinscustomers.Controllers
         [HttpGet]
         public JsonResult Uso()
         {
-            var r = Json(svc.ObtenerUso(30), JsonRequestBehavior.AllowGet);
+            var r = Json(svc.ObtenerUso(30));
             Response.Cache.SetCacheability(HttpCacheability.NoCache);
             return r;
         }

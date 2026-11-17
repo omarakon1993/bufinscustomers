@@ -41,7 +41,7 @@ namespace bufinscustomers.Controllers
                     tema = tema == null ? null : tema.ParaCliente(nombre)
                 });
             }
-            return Json(new { presets, corporativas }, JsonRequestBehavior.AllowGet);
+            return Json(new { presets, corporativas });
         }
 
         /// <summary>Tokens de un tema (se usa para «Personalizada» con los tres colores). Valor inválido → <c>exito=false</c> con el motivo.</summary>
@@ -53,12 +53,12 @@ namespace bufinscustomers.Controllers
             {
                 string aviso;
                 string error = TemaInforme.Validar(p, s, a, out aviso);
-                if (error != null) return Json(new { exito = false, mensaje = R(error) }, JsonRequestBehavior.AllowGet);
+                if (error != null) return Json(new { exito = false, mensaje = R(error) });
                 var t = servicio.Resolver(UsuarioSesionHelper.UsuarioActual, tema, p, s, a);
-                return Json(new { exito = true, aviso = aviso == null ? null : R(aviso), tema = t.ParaCliente(TemaInformeService.NombreVisible(t, R)) }, JsonRequestBehavior.AllowGet);
+                return Json(new { exito = true, aviso = aviso == null ? null : R(aviso), tema = t.ParaCliente(TemaInformeService.NombreVisible(t, R)) });
             }
             var r = servicio.Resolver(UsuarioSesionHelper.UsuarioActual, tema, p, s, a);
-            return Json(new { exito = true, tema = r.ParaCliente(TemaInformeService.NombreVisible(r, R)) }, JsonRequestBehavior.AllowGet);
+            return Json(new { exito = true, tema = r.ParaCliente(TemaInformeService.NombreVisible(r, R)) });
         }
     }
 }

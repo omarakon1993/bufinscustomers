@@ -49,13 +49,13 @@ namespace bufinscustomers.Controllers
             try
             {
                 var r = servicio.Consultar(Filtro(desde, hasta, dispositivo, origen, idioma, texto));
-                var json = Json(r, JsonRequestBehavior.AllowGet);
+                var json = Json(r);
                 json.MaxJsonLength = int.MaxValue;
                 return json;
             }
             catch (Exception ex)
             {
-                return Json(new { error = MensajeError(ex) }, JsonRequestBehavior.AllowGet);
+                return Json(new { error = MensajeError(ex) });
             }
         }
 

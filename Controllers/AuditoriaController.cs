@@ -60,8 +60,7 @@ namespace bufinscustomers.Controllers
         }
 
         private JsonResult Prohibido() =>
-            Json(new { success = false, forbidden = true, message = R("Err_403_Json") },
-                 JsonRequestBehavior.AllowGet);
+            Json(new { success = false, forbidden = true, message = R("Err_403_Json") });
 
         // ── Vistas / endpoints ─────────────────────────────────────────────
 
@@ -149,7 +148,7 @@ namespace bufinscustomers.Controllers
                     a.IpAddress,
                     TieneDetalle  = !string.IsNullOrEmpty(a.ValorAnterior) || !string.IsNullOrEmpty(a.ValorNuevo)
                 })
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         [HttpGet]
@@ -221,7 +220,7 @@ namespace bufinscustomers.Controllers
             if (!PuedeAcceder(out bool esSuper, out bool esNormal)) return Prohibido();
 
             var a = svc.ObtenerPorId(id);
-            if (a == null) return Json(new { success = false }, JsonRequestBehavior.AllowGet);
+            if (a == null) return Json(new { success = false });
 
             if (!esSuper)
             {
@@ -261,7 +260,7 @@ namespace bufinscustomers.Controllers
                 valorAnterior = Embellecer(a.ValorAnterior),
                 valorNuevo    = Embellecer(a.ValorNuevo),
                 permisosDetalle = ResolverPermisos(a)
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         /// <summary>

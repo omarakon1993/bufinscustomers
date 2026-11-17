@@ -143,8 +143,7 @@ namespace bufinscustomers.Controllers
             {
                 string apiKey = (svc.ObtenerValor("OpenAIApiKey") ?? "").Trim();
                 if (string.IsNullOrEmpty(apiKey))
-                    return Json(new { ok = false, mensaje = R("CfgIA_JS_ApiKeyVacia") ?? "Primero guarda una API Key válida." },
-                        JsonRequestBehavior.AllowGet);
+                    return Json(new { ok = false, mensaje = R("CfgIA_JS_ApiKeyVacia") ?? "Primero guarda una API Key válida." });
 
                 using (var http = new HttpClient())
                 {
@@ -154,8 +153,7 @@ namespace bufinscustomers.Controllers
 
                     var resp = await http.GetAsync("https://api.openai.com/v1/models");
                     if (!resp.IsSuccessStatusCode)
-                        return Json(new { ok = false, mensaje = "OpenAI respondió: " + (int)resp.StatusCode },
-                            JsonRequestBehavior.AllowGet);
+                        return Json(new { ok = false, mensaje = "OpenAI respondió: " + (int)resp.StatusCode });
 
                     var body = await resp.Content.ReadAsStringAsync();
                     dynamic json = JsonConvert.DeserializeObject(body);
@@ -169,12 +167,12 @@ namespace bufinscustomers.Controllers
                     }
                     modelos.Sort();
 
-                    return Json(new { ok = true, modelos }, JsonRequestBehavior.AllowGet);
+                    return Json(new { ok = true, modelos });
                 }
             }
             catch (Exception ex)
             {
-                return Json(new { ok = false, mensaje = "Error: " + MensajeError(ex) }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false, mensaje = "Error: " + MensajeError(ex) });
             }
         }
 
@@ -222,12 +220,12 @@ namespace bufinscustomers.Controllers
                     o.PorModelo,
                     o.PorEmpresa,
                     Errores = errores
-                }, JsonRequestBehavior.AllowGet);
+                });
             }
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "ConfiguracionGlobalController.ObtenerObservabilidadIA");
-                return Json(new { ok = false, mensaje = R("CfgIA_Uso_Error") }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false, mensaje = R("CfgIA_Uso_Error") });
             }
         }
 
@@ -289,7 +287,7 @@ namespace bufinscustomers.Controllers
             {
                 var empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
                 if (empresa == null)
-                    return Json(new { ok = false, mensaje = R("Common_SinPermisos") }, JsonRequestBehavior.AllowGet);
+                    return Json(new { ok = false, mensaje = R("Common_SinPermisos") });
 
                 var iaUso = iAUsoService;
                 var cfgEmpresa = configuracionIAEmpresaService;
@@ -318,12 +316,12 @@ namespace bufinscustomers.Controllers
                     Usuarios = cfgEmpresa.ObtenerUsuariosDeEmpresa(idEmpresa)
                 };
 
-                return Json(new { ok = true, resumen }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = true, resumen });
             }
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "ConfiguracionGlobalController.ObtenerResumenEmpresaIA");
-                return Json(new { ok = false, mensaje = R("CfgIA_Emp_MsgErrorCargar") }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false, mensaje = R("CfgIA_Emp_MsgErrorCargar") });
             }
         }
 

@@ -5,5 +5,3 @@ global using Microsoft.AspNetCore.Http;
 global using Microsoft.Data.SqlClient;
 global using bufinscustomers.Compat;
 global using Microsoft.AspNetCore.Mvc.Rendering;
-global using HttpRequestBase = Microsoft.AspNetCore.Http.HttpRequest;
-global using HttpPostedFileBase = Microsoft.AspNetCore.Http.IFormFile;

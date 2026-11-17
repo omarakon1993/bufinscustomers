@@ -20,7 +20,7 @@ namespace bufinscustomers.Helpers
             string entidadAuditoria, string nombreEntidad, string descripcion)
         {
             if (string.Equals(c.Request.Headers["Sec-Fetch-Dest"], "document", StringComparison.OrdinalIgnoreCase))
-                return new HttpStatusCodeResult(403);   // abrir la URL directamente (pestaña nueva / "guardar como")
+                return new StatusCodeResult(403);   // abrir la URL directamente (pestaña nueva / "guardar como")
 
             string ruta = AppPaths.Map(rutaVirtual);
             // Idioma: con la interfaz en inglés se sirve la variante "<nombre>.en.html" si existe; si no, el documento en español.
@@ -29,7 +29,7 @@ namespace bufinscustomers.Helpers
                 string ruta_en = System.IO.Path.ChangeExtension(ruta, ".en.html");
                 if (System.IO.File.Exists(ruta_en)) ruta = ruta_en;
             }
-            if (!System.IO.File.Exists(ruta)) return new HttpNotFoundResult();
+            if (!System.IO.File.Exists(ruta)) return new NotFoundResult();
 
             var usuario = UsuarioSesionHelper.UsuarioActual;
             string quien = ((usuario?.Nombre ?? "") + " " + (usuario?.Apellidos ?? "")).Trim();

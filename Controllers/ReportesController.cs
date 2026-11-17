@@ -260,7 +260,7 @@ namespace bufinscustomers.Controllers
                 }
             }
 
-            return Json(empresas, JsonRequestBehavior.AllowGet);
+            return Json(empresas);
         }
 
         [HttpGet]
@@ -288,7 +288,7 @@ namespace bufinscustomers.Controllers
             {
                 iniciales = inicialesOrdenados,
                 finales = finalesOrdenados
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         [HttpGet]
@@ -339,7 +339,7 @@ namespace bufinscustomers.Controllers
                 }
             }
 
-            return Json(reportes, JsonRequestBehavior.AllowGet);
+            return Json(reportes);
         }
 
         [HttpGet]
@@ -437,7 +437,7 @@ namespace bufinscustomers.Controllers
                 }
             }
 
-            return Json(reportes, JsonRequestBehavior.AllowGet);
+            return Json(reportes);
         }
 
         [HttpGet]
@@ -459,17 +459,17 @@ namespace bufinscustomers.Controllers
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresaReporte))
                 {
-                    return Json(new { enlace = "", error = "No tiene permisos para ver este reporte" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { enlace = "", error = "No tiene permisos para ver este reporte" });
                 }
             }
 
             // Validar que el enlace sea válido antes de retornarlo
             if (!string.IsNullOrWhiteSpace(enlace) && !EsURLValida(enlace))
             {
-                return Json(new { enlace = "", error = "El enlace almacenado no tiene un formato válido" }, JsonRequestBehavior.AllowGet);
+                return Json(new { enlace = "", error = "El enlace almacenado no tiene un formato válido" });
             }
 
-            return Json(new { enlace }, JsonRequestBehavior.AllowGet);
+            return Json(new { enlace });
         }
 
     }

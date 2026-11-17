@@ -28,13 +28,11 @@ namespace bufinscustomers.Controllers
             {
                 var svc = indicadoresFinancierosService;
                 var vm  = await svc.ObtenerSoloNoticiasAsync(refresh).ConfigureAwait(false);
-                return Json(new { rssConfigurado = vm.RSSConfigurado, feeds = vm.Feeds },
-                            JsonRequestBehavior.AllowGet);
+                return Json(new { rssConfigurado = vm.RSSConfigurado, feeds = vm.Feeds });
             }
             catch
             {
-                return Json(new { rssConfigurado = false, noticias = Array.Empty<object>() },
-                            JsonRequestBehavior.AllowGet);
+                return Json(new { rssConfigurado = false, noticias = Array.Empty<object>() });
             }
         }
 
@@ -50,15 +48,15 @@ namespace bufinscustomers.Controllers
         public JsonResult ObtenerSolicitudesSeguridad()
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
-                return Json(new { ok = false }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false });
             try
             {
-                return Json(new { ok = true, pendientes = solicitudReinicioAuthService.ContarPendientes() }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = true, pendientes = solicitudReinicioAuthService.ContarPendientes() });
             }
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "HomeController.ObtenerSolicitudesSeguridad");
-                return Json(new { ok = false }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false });
             }
         }
 
@@ -68,12 +66,12 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                return Json(new { ok = true, mostrar = PasskeyAvisoHelper.MostrarAvisoHome(UsuarioSesionHelper.UsuarioActual) }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = true, mostrar = PasskeyAvisoHelper.MostrarAvisoHome(UsuarioSesionHelper.UsuarioActual) });
             }
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "HomeController.ObtenerAvisoPasskey");
-                return Json(new { ok = false, mostrar = false }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false, mostrar = false });
             }
         }
 
@@ -103,12 +101,12 @@ namespace bufinscustomers.Controllers
                         titulo = (ingles && !string.IsNullOrWhiteSpace(a.TituloEn)) ? a.TituloEn : a.Titulo,
                         mensaje = (ingles && !string.IsNullOrWhiteSpace(a.MensajeEn)) ? a.MensajeEn : a.Mensaje
                     })
-                }, JsonRequestBehavior.AllowGet);
+                });
             }
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "HomeController.ObtenerAlertas");
-                return Json(new { ok = false }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false });
             }
         }
 
@@ -176,12 +174,12 @@ namespace bufinscustomers.Controllers
                         icono = i.Icono,
                         url = Url.Action(i.Action, i.Controller)
                     })
-                }, JsonRequestBehavior.AllowGet);
+                });
             }
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "HomeController.ObtenerAccesosRapidos");
-                return Json(new { ok = false }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false });
             }
         }
     }

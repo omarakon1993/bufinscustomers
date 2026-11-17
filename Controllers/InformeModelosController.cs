@@ -135,7 +135,7 @@ namespace bufinscustomers.Controllers
                     columnas = columnasAmigables,
                     totalRegistros = resultado.TotalRegistros,
                     resultadosTruncados = resultado.ResultadosTruncados
-                }, JsonRequestBehavior.AllowGet);
+                });
 
                 jsonResult.MaxJsonLength = int.MaxValue;
                 return jsonResult;

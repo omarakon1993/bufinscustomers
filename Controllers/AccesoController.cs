@@ -464,7 +464,7 @@ namespace bufinscustomers.Controllers
                 estaAutenticado  = UsuarioSesionHelper.EstaAutenticado(),
                 minutosRestantes = sessionInfo?.MinutosRestantes ?? 0,
                 estaPorExpirar   = sessionInfo?.EstaPorExpirar ?? false
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         // A6: Completa el login en una nueva sesión (session ID regenerado)

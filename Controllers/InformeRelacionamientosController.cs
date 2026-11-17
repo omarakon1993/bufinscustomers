@@ -46,15 +46,15 @@ namespace bufinscustomers.Controllers
             {
                 if (!VerificarAdmin())
                 {
-                    return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Acceso denegado" });
                 }
 
                 var tipos = service.ObtenerTiposDisponibles(nombreTabla);
-                return Json(new { success = true, tipos }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = true, tipos });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error al obtener tipos: {MensajeError(ex)}" }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = $"Error al obtener tipos: {MensajeError(ex)}" });
             }
         }
 
@@ -68,15 +68,15 @@ namespace bufinscustomers.Controllers
             {
                 if (!VerificarAdmin())
                 {
-                    return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Acceso denegado" });
                 }
 
                 var descripciones = service.ObtenerDescripcionesDisponibles(nombreTabla, tipo);
-                return Json(new { success = true, descripciones }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = true, descripciones });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error al obtener descripciones: {MensajeError(ex)}" }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = $"Error al obtener descripciones: {MensajeError(ex)}" });
             }
         }
 
@@ -143,7 +143,7 @@ namespace bufinscustomers.Controllers
                     datos = datosFormateados,
                     columnas = columnasAmigables,
                     totalRegistros = resultado.TotalRegistros
-                }, JsonRequestBehavior.AllowGet);
+                });
 
                 jsonResult.MaxJsonLength = int.MaxValue;
                 return jsonResult;

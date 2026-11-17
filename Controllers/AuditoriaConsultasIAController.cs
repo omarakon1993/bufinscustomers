@@ -105,7 +105,7 @@ namespace bufinscustomers.Controllers
                 r.FilasAnalizadas,
                 r.TokensTotal,
                 r.Valoracion
-            }), JsonRequestBehavior.AllowGet);
+            }));
         }
 
         /// <summary>
@@ -240,7 +240,7 @@ namespace bufinscustomers.Controllers
             var usuarios = auditoriaAnalisisIAService
                 .ObtenerUsuariosDeEmpresa(filtroIdsEmpresa);
 
-            return Json(usuarios, JsonRequestBehavior.AllowGet);
+            return Json(usuarios);
         }
     }
 }

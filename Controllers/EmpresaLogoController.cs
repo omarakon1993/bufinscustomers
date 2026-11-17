@@ -20,10 +20,10 @@ namespace bufinscustomers.Controllers
         public ActionResult Ver(int id)
         {
             if (!EmpresaAccesoHelper.TieneAcceso(UsuarioSesionHelper.UsuarioActual, id))
-                return new HttpStatusCodeResult(403);
+                return new StatusCodeResult(403);
 
             var logo = servicio.Obtener(id);
-            if (logo == null) return new HttpStatusCodeResult(404);
+            if (logo == null) return new StatusCodeResult(404);
 
             Response.Cache.SetCacheability(HttpCacheability.Private);
             Response.Cache.SetMaxAge(TimeSpan.FromHours(12));
@@ -40,10 +40,10 @@ namespace bufinscustomers.Controllers
         {
             Response.Cache.SetCacheability(HttpCacheability.NoCache);
             if (!EmpresaAccesoHelper.TieneAcceso(UsuarioSesionHelper.UsuarioActual, id))
-                return Json(new { tiene = false }, JsonRequestBehavior.AllowGet);
+                return Json(new { tiene = false });
 
             var logo = servicio.Obtener(id);
-            if (logo == null) return Json(new { tiene = false }, JsonRequestBehavior.AllowGet);
+            if (logo == null) return Json(new { tiene = false });
 
             return Json(new
             {
@@ -52,14 +52,14 @@ namespace bufinscustomers.Controllers
                 ancho = logo.Ancho,
                 alto = logo.Alto,
                 version = logo.Version
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         /// <summary>Sube (o reemplaza) el logo. Se valida el contenido real del archivo y se guarda normalizado (ver <see cref="EmpresaLogoHelper"/>).</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequierePermiso("ADMIN_EMPRESAS_GESTOR")]
-        public ActionResult Subir(int idEmpresa, HttpPostedFileBase archivo)
+        public ActionResult Subir(int idEmpresa, IFormFile archivo)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))

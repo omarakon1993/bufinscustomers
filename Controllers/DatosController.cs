@@ -54,19 +54,19 @@ namespace bufinscustomers.Controllers
             {
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 if (usuario == null)
-                    return Json(new { success = false, message = "Sesión no válida." }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Sesión no válida." });
 
                 if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
-                    return Json(new { success = false, message = "No tiene permisos para consultar esta empresa." }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "No tiene permisos para consultar esta empresa." });
 
                 var config = configuracionService.ObtenerConfiguracionPorEmpresa(idEmpresa);
                 int anio = config != null ? config.AnioEjecucion : DateTime.Now.Year;
 
-                return Json(new { success = true, anioEjecucion = anio }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = true, anioEjecucion = anio });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Error al obtener el año: " + MensajeError(ex) }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = "Error al obtener el año: " + MensajeError(ex) });
             }
         }
 
@@ -77,14 +77,14 @@ namespace bufinscustomers.Controllers
             {
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 if (usuario == null)
-                    return Json(new { success = false, message = "Sesión no válida." }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Sesión no válida." });
 
                 if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
-                    return Json(new { success = false, message = "No tiene permisos para consultar esta empresa." }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "No tiene permisos para consultar esta empresa." });
 
                 var config = configuracionService.ObtenerConfiguracionPorEmpresa(idEmpresa);
                 if (config == null)
-                    return Json(new { success = false, message = "La empresa no tiene configuración creada." }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "La empresa no tiene configuración creada." });
 
                 var anosHistoricos = config.AnosHistoricos?
                     .Select(a => a.NombreAno)
@@ -102,11 +102,11 @@ namespace bufinscustomers.Controllers
                     anosHistoricos = anosHistoricos,
                     // Hojas adicionales visibles para el usuario (vacío = plantilla estándar).
                     hojasPersonalizadas = visibles.Select(h => h.NombreHoja).ToArray()
-                }, JsonRequestBehavior.AllowGet);
+                });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Error: " + MensajeError(ex) }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = "Error: " + MensajeError(ex) });
             }
         }
 
@@ -157,20 +157,20 @@ namespace bufinscustomers.Controllers
             {
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 if (usuario == null)
-                    return Json(new { success = false, message = "Sesión no válida." }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Sesión no válida." });
 
                 if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
-                    return Json(new { success = false, message = "No tiene permisos para consultar esta empresa." }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "No tiene permisos para consultar esta empresa." });
 
                 var anios = plantillaConDatosService.ObtenerAniosConDatos(idEmpresa, idEscenario, HojasParaDescarga(idEmpresa))
                     .Select(a => new { anio = a.Anio, registros = a.Registros });
 
-                return Json(new { success = true, anios }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = true, anios });
             }
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "ObtenerAniosConDatos");
-                return Json(new { success = false, message = "Error: " + MensajeError(ex) }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = "Error: " + MensajeError(ex) });
             }
         }
 
@@ -179,7 +179,7 @@ namespace bufinscustomers.Controllers
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null || !EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
-                return Json(new { error = R("Datos_PlantillaConDatosError") }, JsonRequestBehavior.AllowGet);
+                return Json(new { error = R("Datos_PlantillaConDatosError") });
 
             var listaAnios = (anios ?? "")
                 .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
@@ -189,7 +189,7 @@ namespace bufinscustomers.Controllers
                 .ToList();
 
             if (listaAnios.Count == 0)
-                return Json(new { error = R("Datos_PlantillaConDatosSinSeleccion") }, JsonRequestBehavior.AllowGet);
+                return Json(new { error = R("Datos_PlantillaConDatosSinSeleccion") });
 
             byte[] bytes;
             int totalFilas;
@@ -200,11 +200,11 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "DescargarPlantillaConDatos");
-                return Json(new { error = R("Datos_PlantillaConDatosError") }, JsonRequestBehavior.AllowGet);
+                return Json(new { error = R("Datos_PlantillaConDatosError") });
             }
 
             if (totalFilas == 0)
-                return Json(new { error = R("Datos_PlantillaConDatosSinDatos") }, JsonRequestBehavior.AllowGet);
+                return Json(new { error = R("Datos_PlantillaConDatosSinDatos") });
 
             var empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
             string empresaNombre = empresa?.Nombre ?? "Empresa";

@@ -24,7 +24,7 @@ namespace bufinscustomers.Controllers
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
             if (!UsuarioSesionHelper.EsSuperAdmin() && !UsuarioSesionHelper.EsAdminEmpresa())
-                filterContext.Result = new HttpStatusCodeResult(403);
+                filterContext.Result = new StatusCodeResult(403);
         }
 
         /// <summary>
@@ -112,7 +112,7 @@ namespace bufinscustomers.Controllers
                         ? (nombresEscenario.TryGetValue(a.IdEscenario.Value, out var n) ? n : "#" + a.IdEscenario.Value)
                         : ""
                 })
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         /// <summary>
@@ -124,7 +124,7 @@ namespace bufinscustomers.Controllers
         {
             var fila = ObtenerSegunAlcance().FirstOrDefault(a => a.Id == id);
             if (fila == null)
-                return Json(new { success = false, message = R("Audit_Det_NoEncontrado") }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = R("Audit_Det_NoEncontrado") });
 
             var detalle = cargueAuditoriaDetalleService.ObtenerPorAuditoria(id);
             var archivo = cargueArchivosService.ObtenerInfoPorAuditoria(id);
@@ -157,7 +157,7 @@ namespace bufinscustomers.Controllers
                     sha256 = archivo.Sha256
                 },
                 puedeDescargar = UsuarioSesionHelper.EsSuperAdmin()
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         /// <summary>
@@ -168,7 +168,7 @@ namespace bufinscustomers.Controllers
         public ActionResult DescargarArchivo(long id)
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
-                return new HttpStatusCodeResult(403);
+                return new StatusCodeResult(403);
 
             var r = cargueArchivosService.Obtener(id);
             if (r == null)

@@ -33,7 +33,7 @@ namespace bufinscustomers.Controllers
                 status    = healthy ? "ok" : "degraded",
                 db        = dbStatus,
                 timestamp = DateTime.UtcNow.ToString("o")
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
     }
 }

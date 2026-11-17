@@ -50,7 +50,7 @@ namespace bufinscustomers.Controllers
                 s.ResueltaPor,
                 nota = s.NotaResolucion
             });
-            return Json(new { ok = true, items, pendientes = svc.ContarPendientes() }, JsonRequestBehavior.AllowGet);
+            return Json(new { ok = true, items, pendientes = svc.ContarPendientes() });
         }
 
         [HttpPost]

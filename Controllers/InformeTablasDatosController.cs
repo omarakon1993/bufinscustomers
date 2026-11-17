@@ -43,7 +43,7 @@ namespace bufinscustomers.Controllers
             try
             {
                 if (!EsTablaDeModelo(nombreTabla))
-                    return Json(new { success = false, message = R("Common_TablaNoValida") }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = R("Common_TablaNoValida") });
 
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
@@ -58,11 +58,11 @@ namespace bufinscustomers.Controllers
 
                 var anios = service.ObtenerAñosDisponibles(nombreTabla, idEmpresa, idEscenario);
 
-                return Json(new { success = true, anios }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = true, anios });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error al obtener años: {MensajeError(ex)}" }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = $"Error al obtener años: {MensajeError(ex)}" });
             }
         }
 
@@ -75,7 +75,7 @@ namespace bufinscustomers.Controllers
             try
             {
                 if (!EsTablaDeModelo(nombreTabla))
-                    return Json(new { success = false, message = R("Common_TablaNoValida") }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = R("Common_TablaNoValida") });
 
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
@@ -90,11 +90,11 @@ namespace bufinscustomers.Controllers
 
                 var variables = service.ObtenerVariablesDisponibles(nombreTabla, idEmpresa, idEscenario);
 
-                return Json(new { success = true, variables }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = true, variables });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error al obtener variables: {MensajeError(ex)}" }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = $"Error al obtener variables: {MensajeError(ex)}" });
             }
         }
 

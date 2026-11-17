@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.IO;
 
@@ -10,7 +11,7 @@ namespace bufinscustomers.Helpers
     /// </summary>
     public static class AssetVersion
     {
-        public static string Url(string rutaVirtual)
+        public static string Url(string? rutaVirtual)
         {
             string url = "/" + (rutaVirtual ?? "").TrimStart('~', '/');
             try

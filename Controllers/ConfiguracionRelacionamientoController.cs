@@ -34,7 +34,7 @@ namespace bufinscustomers.Controllers
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult CargarExcel(HttpPostedFileBase archivoExcel)
+        public ActionResult CargarExcel(IFormFile archivoExcel)
         {
             if (!VerificarAdmin())
             {

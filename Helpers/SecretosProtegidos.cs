@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Text;
 namespace bufinscustomers.Helpers
@@ -35,7 +36,7 @@ namespace bufinscustomers.Helpers
 
         /// <summary>Descifra un valor almacenado. Si no lleva el prefijo <c>enc:v1:</c> se asume
         /// texto en claro heredado y se devuelve tal cual. Devuelve <c>null</c> si el descifrado falla.</summary>
-        public static string Descifrar(string valorAlmacenado)
+        public static string? Descifrar(string? valorAlmacenado)
         {
             if (string.IsNullOrEmpty(valorAlmacenado) || !EstaCifrado(valorAlmacenado))
                 return valorAlmacenado;
