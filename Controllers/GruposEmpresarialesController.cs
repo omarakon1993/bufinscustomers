@@ -83,7 +83,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage(R("Grupo_ErrorCrear") + ": " + ex.Message);
+                SetErrorMessage(R("Grupo_ErrorCrear") + ": " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");
@@ -120,7 +120,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage(R("Grupo_ErrorEditar") + ": " + ex.Message);
+                SetErrorMessage(R("Grupo_ErrorEditar") + ": " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");
@@ -149,7 +149,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage(R("Grupo_ErrorEliminar") + ": " + ex.Message);
+                SetErrorMessage(R("Grupo_ErrorEliminar") + ": " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");

@@ -48,7 +48,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al crear la opción: " + ex.Message);
+                SetErrorMessage("Error al crear la opción: " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");
@@ -77,7 +77,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al actualizar la opción: " + ex.Message);
+                SetErrorMessage("Error al actualizar la opción: " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");
@@ -205,7 +205,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al eliminar la opción: " + ex.Message);
+                SetErrorMessage("Error al eliminar la opción: " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");

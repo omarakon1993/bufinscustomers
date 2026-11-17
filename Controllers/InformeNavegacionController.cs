@@ -423,7 +423,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Trace.TraceWarning("[InformeNavegacion.ObtenerUsuariosParaFiltro] {0}", ex.Message);
+                System.Diagnostics.Trace.TraceWarning("[InformeNavegacion.ObtenerUsuariosParaFiltro] {0}", MensajeError(ex));
             }
             return lista;
         }
@@ -444,7 +444,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Trace.TraceWarning("[InformeNavegacion.ObtenerOpcionesMenu] {0}", ex.Message);
+                System.Diagnostics.Trace.TraceWarning("[InformeNavegacion.ObtenerOpcionesMenu] {0}", MensajeError(ex));
             }
             return lista;
         }

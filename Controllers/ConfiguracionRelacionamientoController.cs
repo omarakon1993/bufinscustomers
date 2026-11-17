@@ -81,7 +81,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = $"Error al procesar el archivo: {ex.Message}";
+                TempData["ErrorMessage"] = $"Error al procesar el archivo: {MensajeError(ex)}";
             }
 
             return RedirectToAction("ConfiguracionRelacionamiento");
@@ -103,7 +103,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = $"Error al exportar relacionamientos: {ex.Message}";
+                TempData["ErrorMessage"] = $"Error al exportar relacionamientos: {MensajeError(ex)}";
                 return RedirectToAction("ConfiguracionRelacionamiento");
             }
         }
@@ -126,7 +126,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = $"Error al generar plantilla: {ex.Message}";
+                TempData["ErrorMessage"] = $"Error al generar plantilla: {MensajeError(ex)}";
                 return RedirectToAction("ConfiguracionRelacionamiento");
             }
         }

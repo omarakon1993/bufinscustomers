@@ -28,7 +28,7 @@ namespace bufinscustomers.Controllers
                 if (ok) SetSuccessMessage("Categoría '" + model.Nombre + "' creada correctamente.");
                 else    SetErrorMessage("No se pudo crear la categoría.");
             }
-            catch (Exception ex) { SetErrorMessage("Error: " + ex.Message); }
+            catch (Exception ex) { SetErrorMessage("Error: " + MensajeError(ex)); }
 
             return RedirectToAction("Index");
         }
@@ -48,7 +48,7 @@ namespace bufinscustomers.Controllers
                 if (ok) SetSuccessMessage("Categoría '" + model.Nombre + "' actualizada correctamente.");
                 else    SetErrorMessage("No se pudo actualizar la categoría.");
             }
-            catch (Exception ex) { SetErrorMessage("Error: " + ex.Message); }
+            catch (Exception ex) { SetErrorMessage("Error: " + MensajeError(ex)); }
 
             return RedirectToAction("Index");
         }
@@ -63,7 +63,7 @@ namespace bufinscustomers.Controllers
                 if (ok) SetSuccessMessage("Categoría eliminada correctamente.");
                 else    SetErrorMessage("No se pudo eliminar la categoría.");
             }
-            catch (Exception ex) { SetErrorMessage("Error: " + ex.Message); }
+            catch (Exception ex) { SetErrorMessage("Error: " + MensajeError(ex)); }
 
             return RedirectToAction("Index");
         }

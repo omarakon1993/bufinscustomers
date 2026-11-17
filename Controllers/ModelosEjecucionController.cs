@@ -38,7 +38,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al crear el modelo: " + ex.Message);
+                SetErrorMessage("Error al crear el modelo: " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");
@@ -68,7 +68,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al actualizar el modelo: " + ex.Message);
+                SetErrorMessage("Error al actualizar el modelo: " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");
@@ -96,7 +96,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al eliminar el modelo: " + ex.Message);
+                SetErrorMessage("Error al eliminar el modelo: " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");

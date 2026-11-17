@@ -218,7 +218,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al exportar los modelos: " + ex.Message);
+                SetErrorMessage("Error al exportar los modelos: " + MensajeError(ex));
                 return RedirectToAction("Modelo");
             }
         }
@@ -468,7 +468,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al exportar el modelo: " + ex.Message);
+                SetErrorMessage("Error al exportar el modelo: " + MensajeError(ex));
                 return RedirectToAction("Modelo");
             }
         }
@@ -573,7 +573,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al exportar los modelos: " + ex.Message);
+                SetErrorMessage("Error al exportar los modelos: " + MensajeError(ex));
                 return RedirectToAction("Modelo");
             }
         }
@@ -729,7 +729,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "EnviarModelosPorCorreo");
-                notificacionesService.Crear(usuario.Id, R("Notif_ErrorEnvioCorreoModelos"), ex.Message, "error", "/Datos/Modelo");
+                notificacionesService.Crear(usuario.Id, R("Notif_ErrorEnvioCorreoModelos"), MensajeError(ex), "error", "/Datos/Modelo");
                 return Json(new { exito = false, mensaje = "No se pudo enviar el correo: " + MensajeError(ex) });
             }
         }

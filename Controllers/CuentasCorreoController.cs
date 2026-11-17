@@ -39,7 +39,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage(R("Correo_ErrorCrear") + ": " + ex.Message);
+                SetErrorMessage(R("Correo_ErrorCrear") + ": " + MensajeError(ex));
             }
             return RedirectToAction("Index");
         }
@@ -62,7 +62,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage(R("Correo_ErrorEditar") + ": " + ex.Message);
+                SetErrorMessage(R("Correo_ErrorEditar") + ": " + MensajeError(ex));
             }
             return RedirectToAction("Index");
         }
@@ -80,7 +80,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage(R("Correo_ErrorEliminar") + ": " + ex.Message);
+                SetErrorMessage(R("Correo_ErrorEliminar") + ": " + MensajeError(ex));
             }
             return RedirectToAction("Index");
         }
@@ -98,7 +98,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage(R("Correo_ErrorPredeterminada") + ": " + ex.Message);
+                SetErrorMessage(R("Correo_ErrorPredeterminada") + ": " + MensajeError(ex));
             }
             return RedirectToAction("Index");
         }
@@ -116,7 +116,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = MensajeError(ex) });
             }
         }
 

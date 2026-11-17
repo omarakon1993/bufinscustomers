@@ -196,7 +196,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al eliminar el usuario: " + ex.Message);
+                SetErrorMessage("Error al eliminar el usuario: " + MensajeError(ex));
             }
 
             return RedirectToAction("Usuarios");
@@ -300,7 +300,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al actualizar el usuario: " + ex.Message);
+                SetErrorMessage("Error al actualizar el usuario: " + MensajeError(ex));
             }
 
             return RedirectToAction("Usuarios");
@@ -438,7 +438,7 @@ namespace bufinscustomers.Controllers
                     }
                     catch (Exception ex)
                     {
-                        SetErrorMessage("Usuario creado pero error al guardar imagen: " + ex.Message);
+                        SetErrorMessage("Usuario creado pero error al guardar imagen: " + MensajeError(ex));
                         return RedirectToAction("Usuarios");
                     }
                 }
@@ -510,7 +510,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al cambiar la clave: " + ex.Message);
+                SetErrorMessage("Error al cambiar la clave: " + MensajeError(ex));
             }
 
             return RedirectToAction("Usuarios");
@@ -663,7 +663,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Trace.TraceError("[UsuarioController] Error al enviar correo de bienvenida: {0}", ex.Message);
+                System.Diagnostics.Trace.TraceError("[UsuarioController] Error al enviar correo de bienvenida: {0}", MensajeError(ex));
                 return false;
             }
         }
@@ -691,7 +691,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Trace.TraceError("[UsuarioController] Error al enviar correo de usuario actualizado: {0}", ex.Message);
+                System.Diagnostics.Trace.TraceError("[UsuarioController] Error al enviar correo de usuario actualizado: {0}", MensajeError(ex));
                 return false;
             }
         }

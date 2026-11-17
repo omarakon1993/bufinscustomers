@@ -149,7 +149,7 @@ namespace bufinscustomers.Controllers
                 }
                 catch (Exception ex)
                 {
-                    AppLogger.Warn("HomeController.ObtenerAccesosRapidos (sin historial): " + ex.Message);
+                    AppLogger.Warn("HomeController.ObtenerAccesosRapidos (sin historial): " + MensajeError(ex));
                 }
 
                 bool haySugeridos = false;

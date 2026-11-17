@@ -111,7 +111,16 @@ Pendientes con decisión tomada: Compat nivel 2 (sesión, cookies, caché, confi
 - Generador `Tools/Documentacion/gen_doc_arquitectura.py` + `doc_arquitectura.py`. Registrada en la biblioteca «Documentación BUFINS» (`tecnica-arquitectura`, solo Super Admin por defecto) a petición del usuario.
 - Se actualizó también la **Documentación técnica** existente (`doc_tecnica.py`, FECHA 2026-11-16, es/en): ClosedXML 0.105.1, Newtonsoft.Json 13.0.4, tamaños, inyección de dependencias, `Bd` y las 71 pruebas (antes decía «no hay pruebas automáticas»).
 - Verificación: los 33 archivos citados con ruta existen; el HTML renderiza (17 secciones, 3 flujos, 31 bloques de código).
-- Hallazgo anotado en la guía como deuda: ≈39 puntos de controladores aún envían `ex.Message` al navegador (regla: `MensajeError(ex)`).
+- Hallazgo anotado en la guía como deuda: ≈39 puntos de controladores aún envían `ex.Message` al navegador (regla: `MensajeError(ex)`). **Cerrado el mismo día (ver «Seguridad: ex.Message»).**
+
+## Seguridad: cierre de los `ex.Message` hacia el navegador (HECHO 2026-11-16)
+- **Antes:** 73 puntos de controladores y ≈13 de servicios entregaban `ex.Message` al usuario (texto de SQL, rutas, tablas). La regla de `CLAUDE.md` ya lo prohibía.
+- **Ahora:** nuevo `Helpers/MensajeErrorHelper` (una sola implementación de la clasificación técnica/negocio, antes dentro de `BaseController`); `BaseController.MensajeError` delega en él. 34 controladores pasan de `ex.Message` a `MensajeError(ex)` (incluida la variante `sex` de `GestorHojasCargue`). Servicios con helper: `CargueOrquestador` (procesar y confirmar), `ConfiguracionRelacionamiento`, `ConfiguracionVariablesPBI`, `IAService` (2). Excepciones envolventes (`InformeTablasDatos`, `InformeRelacionamientos`, `VariablesPBI`, `HistorialVersionesCargues`) ya no copian `ex.Message` (el detalle va en `InnerException`, que se registra).
+- Si el traductor recibido no trae el marcador `{0}` (la API sin idioma) el helper cae al recurso del idioma actual.
+- **Se conservan a propósito:** diagnóstico SMTP del correo de prueba (Super Admin), `UltimoMensajeHoja`/`AnalizarErrorBulkCopy` del cargue (ayudan a corregir el Excel del cliente; además se registran), mensaje de reglas de negocio de `ApiEjecuciones` (THROW/RAISERROR propios), errores de entrega de webhooks (el administrador necesita ver por qué falla su endpoint) y los `ex.Message` usados solo como condición (`when (ex.Message.IndexOf(...))`).
+- Pruebas: `MensajeErrorHelperTests` (6): una falla técnica no filtra su texto y devuelve «ref»; una regla de negocio conserva su mensaje; cada falla recibe un código distinto. Total 77 pruebas.
+- Efecto visible: donde antes el usuario veía p. ej. «Error al crear el modelo: Cannot insert duplicate key…», ahora ve «… Ocurrió un error inesperado (ref XXXX)». Si el error era una regla de negocio escrita por la aplicación, el texto no cambia.
+- Documentación actualizada: `Ciberseguridad_BUFINS.html` (H8 cerrado), `CLAUDE.md`, `cargues-escenarios.md`.
 
 ## Orden
 F2 limpieza sin riesgo → F3 datos → F4 DI → F5 dividir/base informes → F6 plataforma (nulabilidad, async, Compat) → F7 frontend → **F9 resumen del refactor (qué se redujo y cómo se hizo; se entrega ANTES de la F8; métricas contra la etiqueta `base-pre-refactor-2026-11-16`)** → F8 documentación técnica (se mantiene intacta tal como se definió) (`App_Data/Documentacion/Tecnica/`, con glosario de C#/.NET con ejemplos del propio código). Comentarios de una línea (español, solo el «porqué») se agregan módulo a módulo en cada fase.

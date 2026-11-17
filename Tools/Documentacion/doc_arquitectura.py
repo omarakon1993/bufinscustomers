@@ -76,7 +76,7 @@ def doc_arquitectura():
             ['<code>Assets/</code>', 'CSS, JavaScript, fuentes, plantillas de Excel. Se sirve en la ruta <code>/Assets</code> (no en wwwroot).', '25 JS, 39 CSS', '<code>Assets/css/bufins-components.css</code>'],
             ['<code>App_GlobalResources/</code>', 'Textos de la interfaz en español e inglés (<code>Strings.resx</code>, <code>Strings.en-US.resx</code>).', '3.800 textos por idioma', '<code>Strings.resx</code>'],
             ['<code>App_Data/Documentacion/</code>', 'La documentación oficial (HTML de solo lectura).', '—', 'Esta guía'],
-            ['<code>Tests/</code>', 'Pruebas automáticas (xUnit), 71 en total.', '6 archivos', '<code>TotpHelperTests.cs</code>'],
+            ['<code>Tests/</code>', 'Pruebas automáticas (xUnit), 77 en total.', '7 archivos', '<code>TotpHelperTests.cs</code>'],
             ['<code>Tools/</code>', 'Utilidades de despliegue y generadores de documentación (no forman parte del sitio).', '—', '<code>Tools/Despliegue/</code>'],
             ['<code>.claude/notas/</code>', 'Notas internas por módulo para quien mantiene el código con Claude.', '—', '<code>arquitectura-acceso.md</code>']])
         + '<p>Las vistas se agrupan por <b>área funcional</b> y no por controlador: un controlador devuelve su vista con una ruta explícita, por ejemplo '
@@ -303,17 +303,18 @@ public JsonResult ConsultarReporte(FiltrosPYG filtros)
 
     # 12 ---------------------------------------------------------------------------------------------------------------
     s.append(('pruebas', 'Pruebas', seccion('pruebas', 12, 'Pruebas y cómo verificar un cambio',
-        '<p class="lead">Hay 71 pruebas automáticas en <code>Tests/Bufins.Pruebas</code> (xUnit). Prueban lógica pura y <b>nunca tocan la base de datos</b>.</p>'
+        '<p class="lead">Hay 77 pruebas automáticas en <code>Tests/Bufins.Pruebas</code> (xUnit). Prueban lógica pura y <b>nunca tocan la base de datos</b>.</p>'
         + tabla(['Qué se prueba', 'Archivo'], [
             ['Códigos TOTP (doble factor) con los vectores oficiales del estándar RFC 6238', '<code>TotpHelperTests.cs</code>'],
             ['Política de contraseñas', '<code>PoliticaContrasenaTests.cs</code>'],
             ['Validación y cálculo de colores del tema de informes', '<code>TemaInformeTests.cs</code>'],
             ['Conversión de cifras, fechas y sí/no del cargue de Excel', '<code>CargueConversionTests.cs</code>'],
             ['Conversión de parámetros de <code>Bd</code>', '<code>BdTests.cs</code>'],
+            ['Que un error técnico nunca filtre su texto al usuario y una regla de negocio sí conserve el suyo', '<code>MensajeErrorHelperTests.cs</code>'],
             ['Que todo controlador se pueda construir con el contenedor de dependencias', '<code>InyeccionDependenciasTests.cs</code>']])
         + codigo('''
 dotnet build bufinscustomers.csproj --no-incremental     # compila y muestra TODOS los avisos
-dotnet test Tests/Bufins.Pruebas/Bufins.Pruebas.csproj   # corre las 71 pruebas
+dotnet test Tests/Bufins.Pruebas/Bufins.Pruebas.csproj   # corre las 77 pruebas
 dotnet run                                               # https://localhost:44339''', 'Comandos del día a día (desde la carpeta del proyecto).')
         + '<p class="note"><b>Cuidado:</b> el entorno local usa la base de datos de <b>producción</b>. Cualquier POST (guardar, cargar, ejecutar modelos, enviar correos) es real. Para probar a mano se hacen solo lecturas, o se acuerda explícitamente cada prueba que escribe.</p>'
         + '<p>Una buena prueba de caracterización: ejemplo del estilo usado.</p>'
@@ -420,9 +421,9 @@ public void Codigo_CoincideConVectorRfc6238()
             ['Aperturas manuales de conexión SQL', '365', '206'],
             ['Servicios creados con <code>new</code> en controladores', '305', '9'],
             ['CSS (por retirar bootstrap-icons)', '23.550 líneas', '15.210 líneas'],
-            ['Pruebas automáticas', '0', '71']])
+            ['Pruebas automáticas', '0', '77']])
         + '<h3>Deuda conocida y decisiones</h3>'
-        + '<ul><li><b>Mensajes de error con detalle técnico:</b> unos 39 puntos de los controladores todavía envían <code>ex.Message</code> al navegador. La regla es usar <code>MensajeError(ex)</code>, que registra el detalle y muestra un código de referencia. Es una mejora de seguridad pendiente.</li>'
+        + '<ul><li><b>Mensajes de error:</b> ningún error técnico llega al navegador con su texto original. Los controladores usan <code>MensajeError(ex)</code> y los servicios <code>MensajeErrorHelper.Crear(...)</code>: registran el detalle y muestran un código de referencia (se busca en <code>App_Data/logs</code>). Se conservan a propósito el diagnóstico SMTP del correo de prueba y los diagnósticos del archivo de cargue del cliente.</li>'
           '<li><b>Capa Compat (sesión, cookies, caché, configuración):</b> se conserva a propósito; reemplazarla toca el inicio de sesión y requiere pruebas de integración antes.</li>'
           '<li><b>JavaScript en las vistas de informes:</b> unas 12.000 líneas en línea; el PDF y el slider de rango están copiados con variaciones. Unificarlos requiere probar en navegador informe por informe.</li>'
           '<li><b>Nulabilidad:</b> activada por archivo en 8 ayudantes; el resto del proyecto la tiene desactivada (activarla en todo da unos 2.000 avisos, sobre todo en los modelos).</li>'

@@ -512,7 +512,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = $"Error al exportar: {ex.Message}";
+                TempData["ErrorMessage"] = $"Error al exportar: {MensajeError(ex)}";
                 return RedirectToAction("Index", "AnalisisIA");
             }
         }

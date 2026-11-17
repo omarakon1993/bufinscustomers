@@ -30,7 +30,7 @@ namespace bufinscustomers.Controllers
                 if (ok) SetSuccessMessage("Grupo '" + model.Nombre + "' creado correctamente.");
                 else    SetErrorMessage("No se pudo crear el grupo.");
             }
-            catch (Exception ex) { SetErrorMessage("Error: " + ex.Message); }
+            catch (Exception ex) { SetErrorMessage("Error: " + MensajeError(ex)); }
 
             return RedirectToAction("Index");
         }
@@ -50,7 +50,7 @@ namespace bufinscustomers.Controllers
                 if (ok) { UsuarioSesionHelper.InvalidarCachePermisos(); SetSuccessMessage("Grupo '" + model.Nombre + "' actualizado correctamente."); }
                 else    SetErrorMessage("No se pudo actualizar el grupo.");
             }
-            catch (Exception ex) { SetErrorMessage("Error: " + ex.Message); }
+            catch (Exception ex) { SetErrorMessage("Error: " + MensajeError(ex)); }
 
             return RedirectToAction("Index");
         }
@@ -65,7 +65,7 @@ namespace bufinscustomers.Controllers
                 if (ok) SetSuccessMessage("Grupo eliminado correctamente.");
                 else    SetErrorMessage("No se pudo eliminar el grupo.");
             }
-            catch (Exception ex) { SetErrorMessage("Error: " + ex.Message); }
+            catch (Exception ex) { SetErrorMessage("Error: " + MensajeError(ex)); }
 
             return RedirectToAction("Index");
         }

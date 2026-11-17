@@ -505,7 +505,7 @@ namespace bufinscustomers.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error al consultar datos: {ex.Message}");
-                throw new Exception($"Error al consultar datos de la tabla {filtros.NombreTabla}: {ex.Message}", ex);
+                throw new Exception($"Error al consultar datos de la tabla {filtros.NombreTabla}", ex);
             }
 
             return resultado;

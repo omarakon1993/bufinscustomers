@@ -362,7 +362,7 @@ namespace bufinscustomers.Controllers
                 }
                 ViewBag.CorreoEnmascarado = EnmascararCorreo(correo);
             }
-            catch (Exception ex) { AppLogger.Warn("Acceso: correo enmascarado del panel: " + ex.Message); }
+            catch (Exception ex) { AppLogger.Warn("Acceso: correo enmascarado del panel: " + MensajeError(ex)); }
         }
 
         /// <summary>Primeros 2 caracteres + "•••@" + dominio (ej.: om•••@empresa.com).</summary>
@@ -437,7 +437,7 @@ namespace bufinscustomers.Controllers
             {
                 return Json(new { 
                     success = false, 
-                    message = "Error al extender la sesión: " + ex.Message 
+                    message = "Error al extender la sesión: " + MensajeError(ex) 
                 });
             }
         }

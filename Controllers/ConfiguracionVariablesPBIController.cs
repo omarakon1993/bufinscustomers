@@ -77,7 +77,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = $"Error al procesar el archivo: {ex.Message}";
+                TempData["ErrorMessage"] = $"Error al procesar el archivo: {MensajeError(ex)}";
             }
 
             return RedirectToAction("Index");
@@ -99,7 +99,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = $"Error al generar plantilla: {ex.Message}";
+                TempData["ErrorMessage"] = $"Error al generar plantilla: {MensajeError(ex)}";
                 return RedirectToAction("Index");
             }
         }

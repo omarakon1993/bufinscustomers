@@ -45,7 +45,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage($"Error al cargar la vista: {ex.Message}");
+                SetErrorMessage($"Error al cargar la vista: {MensajeError(ex)}");
                 return RedirectToAction("Index", "Home");
             }
         }

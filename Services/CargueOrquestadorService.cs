@@ -339,7 +339,7 @@ namespace bufinscustomers.Services
             {
                 AppLogger.Error(ex, "CargueOrquestador.ProcesarArchivo");
                 resultado.Exito = false;
-                resultado.Mensaje = $"Error al procesar el archivo: {ex.Message}";
+                resultado.Mensaje = $"Error al procesar el archivo: {Helpers.MensajeErrorHelper.Crear(ex, "CargueOrquestador.ProcesarArchivo", _traducir)}";
                 if (idLote > 0)
                 {
                     try { _stagingService.DescartarLote(idLote); }
@@ -505,7 +505,7 @@ namespace bufinscustomers.Services
                         Helpers.TransaccionHelper.RollbackSeguro(tx);
                         LogToFile($"Error inesperado confirmando el lote {idLote}: {txEx.Message}");
                         errorEnConfirmacion = true;
-                        mensajeError = txEx.Message;
+                        mensajeError = Helpers.MensajeErrorHelper.Crear(txEx, "CargueOrquestador.Confirmar", _traducir);
                     }
                 }
             }

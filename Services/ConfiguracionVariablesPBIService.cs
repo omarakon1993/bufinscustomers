@@ -104,7 +104,7 @@ namespace bufinscustomers.Services
                         {
                             Helpers.TransaccionHelper.RollbackSeguro(tx);
                             resultado.Exito = false;
-                            resultado.Mensaje = $"Error durante la carga. Se revirtieron los cambios: {ex.Message}";
+                            resultado.Mensaje = $"Error durante la carga. Se revirtieron los cambios: {Helpers.MensajeErrorHelper.Crear(ex, "ConfiguracionVariablesPBIService.Cargar")}";
                         }
                     }
                 }
@@ -112,7 +112,7 @@ namespace bufinscustomers.Services
             catch (Exception ex)
             {
                 resultado.Exito = false;
-                resultado.Mensaje = $"Error de conexión: {ex.Message}";
+                resultado.Mensaje = $"Error de conexión: {Helpers.MensajeErrorHelper.Crear(ex, "ConfiguracionVariablesPBIService.Cargar")}";
             }
 
             return resultado;

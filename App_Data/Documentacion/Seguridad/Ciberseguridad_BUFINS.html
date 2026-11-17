@@ -187,7 +187,7 @@ footer{padding:26px 0 40px;color:var(--ink2);font-size:13px}
 <li>Se dejaron sin cambio, a propósito, dos herramientas de diagnóstico solo para Super Admin: la prueba de conexión de cuentas de correo y el gestor de hojas de cargue (muestran el detalle SQL/SMTP porque ahí es lo que se necesita).</li>
 </ul></td><td>
 <ul>
-<li>Los <code>catch</code> que muestran el mensaje con <code>SetErrorMessage(ex.Message)</code> (redirecciones con TempData) no se tocaron en esta tanda; pasarlos a <code>MensajeError</code> es el mismo cambio mecánico.</li>
+<li><b>Cerrado el 2026-11-16:</b> los 73 puntos restantes de los controladores que mostraban <code>ex.Message</code> (mensajes con <code>SetErrorMessage</code> y <code>TempData</code>, exportaciones y gestores) ahora usan <code>MensajeError(ex)</code>; y 13 puntos de los servicios (cargue, carga de relacionamientos y de variables, IA) usan el nuevo <code>MensajeErrorHelper</code>, la misma lógica compartida. Las excepciones envolventes ya no copian el texto del error de base de datos en su mensaje. Una prueba automática verifica que una falla técnica nunca filtra su texto.</li><li><b>Se conservan a propósito</b> el diagnóstico SMTP del «correo de prueba» (herramienta solo de Super Admin) y los textos de diagnóstico del archivo de cargue del propio cliente (<code>UltimoMensajeHoja</code>), que ayudan a corregir el Excel y quedan además en el registro.</li>
 <li>Una página de error por código de referencia para soporte (buscar el código en <code>App_Data/logs</code>).</li>
 </ul></td></tr>
 <tr><td><b>H10</b> Cabeceras y detalles</td><td><span class="tag t-media">Parcial</span></td><td>

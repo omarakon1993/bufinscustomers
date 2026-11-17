@@ -137,7 +137,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage($"Error al exportar: {ex.Message}");
+                SetErrorMessage($"Error al exportar: {MensajeError(ex)}");
                 return RedirectToAction("TablaPUC");
             }
         }

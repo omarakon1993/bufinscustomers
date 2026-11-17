@@ -270,7 +270,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "InformeTesoreriaPptoController.ExportarExcel");
-                TempData["ErrorMessage"] = "Error al exportar a Excel: " + ex.Message;
+                TempData["ErrorMessage"] = "Error al exportar a Excel: " + MensajeError(ex);
                 return RedirectToAction("Index");
             }
         }

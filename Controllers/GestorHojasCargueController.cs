@@ -481,7 +481,7 @@ namespace bufinscustomers.Controllers
         private JsonResult JsonErrorSql(SqlException sex, string contexto)
         {
             AppLogger.Error(sex, "GestorHojasCargue." + contexto);
-            return Json(new { success = false, message = R("HojasCargue_Err_Sql") + " " + sex.Message });
+            return Json(new { success = false, message = R("HojasCargue_Err_Sql") + " " + MensajeError(sex) });
         }
     }
 }

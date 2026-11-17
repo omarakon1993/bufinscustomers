@@ -38,7 +38,7 @@ namespace bufinscustomers.Controllers
 
                 EnviarAlertaSeguridadPorCorreo(titulo, msg);
             }
-            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[NotificarModoDefensivo] {0}", ex.Message); }
+            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[NotificarModoDefensivo] {0}", MensajeError(ex)); }
         }
 
         /// <summary>
@@ -64,10 +64,10 @@ namespace bufinscustomers.Controllers
                     foreach (var c in correos)
                     {
                         try { email.EnviarAlertaSeguridad(c, asunto, titulo, mensaje, enlace); }
-                        catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[EnviarAlertaSeguridad] {0}: {1}", c, ex.Message); }
+                        catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[EnviarAlertaSeguridad] {0}: {1}", c, MensajeError(ex)); }
                     }
                 }
-                catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[EnviarAlertaSeguridad] {0}", ex.Message); }
+                catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[EnviarAlertaSeguridad] {0}", MensajeError(ex)); }
             });
         }
 
@@ -106,7 +106,7 @@ namespace bufinscustomers.Controllers
                             }
                     }
                 }
-                catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[ObtenerCorreosAlertaSeguridad] {0}", ex.Message); }
+                catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[ObtenerCorreosAlertaSeguridad] {0}", MensajeError(ex)); }
             }
             return lista;
         }
@@ -138,7 +138,7 @@ namespace bufinscustomers.Controllers
                 _ultimaPurgaAuditoria = DateTime.Now;
             }
             try { auditoriaService.PurgarSeguridadAnonimaAntigua(AUDIT_SEGURIDAD_RETENCION_DIAS); }
-            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[PurgarAuditoriaSeguridad] {0}", ex.Message); }
+            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[PurgarAuditoriaSeguridad] {0}", MensajeError(ex)); }
         }
 
         /// <summary>
@@ -161,7 +161,7 @@ namespace bufinscustomers.Controllers
                     if (idAdmin != usuarioId)
                         notif.Crear(idAdmin, R("Notif_CuentaBloqueadaAdminTitulo"), msgAdmin, "error", "/Auditoria");
             }
-            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[NotificarBloqueoCuenta] {0}", ex.Message); }
+            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[NotificarBloqueoCuenta] {0}", MensajeError(ex)); }
         }
 
         private System.Collections.Generic.List<int> ObtenerIdsSuperAdmin()
@@ -171,7 +171,7 @@ namespace bufinscustomers.Controllers
             {
                 Bd.Leer(CadenaConexion, "SELECT Id FROM Usuarios WHERE Admin = 2", r => ids.Add(Convert.ToInt32(r["Id"])));
             }
-            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[ObtenerIdsSuperAdmin] {0}", ex.Message); }
+            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[ObtenerIdsSuperAdmin] {0}", MensajeError(ex)); }
             return ids;
         }
     }

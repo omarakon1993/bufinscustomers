@@ -52,7 +52,7 @@ namespace bufinscustomers.Controllers
             foreach (var i in lista)
             {
                 try { salud[i.Id] = TraducirSalud(actividad.Salud(i)); }
-                catch (Exception ex) { AppLogger.Warn("Integraciones.Salud: " + ex.Message); }
+                catch (Exception ex) { AppLogger.Warn("Integraciones.Salud: " + MensajeError(ex)); }
             }
             ViewBag.Salud = salud;
 
@@ -68,7 +68,7 @@ namespace bufinscustomers.Controllers
                     pendientes[i.Id] = p.Count;
                     pendientesUrl[i.Id] = Url.Action("RevisarCargue", "Datos", new { idLote = p[0].IdLote });
                 }
-                catch (Exception ex) { AppLogger.Warn("Integraciones.Pendientes: " + ex.Message); }
+                catch (Exception ex) { AppLogger.Warn("Integraciones.Pendientes: " + MensajeError(ex)); }
             }
             ViewBag.Pendientes = pendientes;
             ViewBag.PendientesUrl = pendientesUrl;

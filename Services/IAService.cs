@@ -345,7 +345,7 @@ namespace bufinscustomers.Services
             }
             catch (Exception ex)
             {
-                return new IAConsultaResponse { Exitoso = false, Error = $"Error al consultar IA: {ex.Message}" };
+                return new IAConsultaResponse { Exitoso = false, Error = $"Error al consultar IA: {Helpers.MensajeErrorHelper.Crear(ex, "IAService.Consultar")}" };
             }
         }
 
@@ -633,7 +633,7 @@ namespace bufinscustomers.Services
             }
             catch (Exception ex)
             {
-                return $"Error al procesar la respuesta de OpenAI: {ex.Message}";
+                return $"Error al procesar la respuesta de OpenAI: {Helpers.MensajeErrorHelper.Crear(ex, "IAService.ProcesarRespuesta")}";
             }
         }
 

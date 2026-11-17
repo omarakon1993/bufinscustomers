@@ -34,7 +34,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al crear el prompt: " + ex.Message);
+                SetErrorMessage("Error al crear el prompt: " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");
@@ -60,7 +60,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al actualizar el prompt: " + ex.Message);
+                SetErrorMessage("Error al actualizar el prompt: " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");
@@ -80,7 +80,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al eliminar el prompt: " + ex.Message);
+                SetErrorMessage("Error al eliminar el prompt: " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");

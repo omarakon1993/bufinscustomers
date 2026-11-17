@@ -62,7 +62,7 @@ dotnet publish bufinscustomers.csproj -c Release -r win-x64 --self-contained tru
 - **Contraseñas**: `.Trim()` antes de hashear; `HashearContrasena()` (BCrypt 12) para nuevas; `VerificarContrasena()` acepta ambos formatos; política única en `Helpers/PoliticaContrasena.Validar(...)` (devuelve clave resx; el POST de login nunca la llama).
 - **IP del cliente**: siempre `ClientIpHelper.ObtenerIp()`, nunca `Request.UserHostAddress` (proxies solo vía `TrustedProxies`).
 - Login: siempre un BCrypt (contra `HASH_SENUELO` si el usuario no existe); rate-limit por IP en `RateLimitLoginService` (`dbo.IntentosLoginIP`, modo defensivo global); throttling de auditoría de intentos anónimos. No reintroducir caché propia en `AccesoController`.
-- **Errores al navegador**: `MensajeError(ex)`, nunca `ex.Message`. Nunca datos de usuario en `Html.Raw`; cadenas a JS con `HttpUtility.JavaScriptStringEncode`. Imágenes validadas por firma de bytes.
+- **Errores al navegador**: `MensajeError(ex)` en controladores y `Helpers/MensajeErrorHelper.Crear(ex, contexto, traducir)` en servicios, nunca `ex.Message` (una falla técnica sale como «ref XXXX» y el detalle va a `AppLogger`; las reglas de negocio conservan su texto). No copiar `ex.Message` en el mensaje de una excepción envolvente: va en la `InnerException`. Nunca datos de usuario en `Html.Raw`; cadenas a JS con `HttpUtility.JavaScriptStringEncode`. Imágenes validadas por firma de bytes.
 
 ### Roles y aislamiento por empresa
 

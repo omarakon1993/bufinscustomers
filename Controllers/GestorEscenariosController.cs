@@ -47,7 +47,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage(R("GestorEscenarios_ErrorGuardar") + " " + ex.Message);
+                SetErrorMessage(R("GestorEscenarios_ErrorGuardar") + " " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");
@@ -79,7 +79,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage(R("GestorEscenarios_ErrorGuardar") + " " + ex.Message);
+                SetErrorMessage(R("GestorEscenarios_ErrorGuardar") + " " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");
@@ -104,7 +104,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage(R("GestorEscenarios_ErrorGuardar") + " " + ex.Message);
+                SetErrorMessage(R("GestorEscenarios_ErrorGuardar") + " " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");

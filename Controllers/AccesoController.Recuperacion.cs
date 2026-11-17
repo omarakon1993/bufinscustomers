@@ -142,7 +142,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 // Log error internamente sin exponerlo al cliente (anti-enumeración)
-                System.Diagnostics.Trace.TraceError("[SolicitarReset] {0}", ex.Message);
+                System.Diagnostics.Trace.TraceError("[SolicitarReset] {0}", MensajeError(ex));
             }
 
             // Siempre mostrar pantalla de éxito independientemente del resultado (anti-enumeración)

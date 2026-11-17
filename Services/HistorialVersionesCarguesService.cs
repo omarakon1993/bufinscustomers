@@ -176,7 +176,7 @@ namespace bufinscustomers.Services
                 {
                     // No enmascarar como tabla vacía: abortar el snapshot completo.
                     throw new InvalidOperationException(
-                        $"No se pudo capturar el snapshot de la tabla '{tabla}': {ex.Message}", ex);
+                        $"No se pudo capturar el snapshot de la tabla '{tabla}'", ex);
                 }
 
                 // El JSON se guarda comprimido (GZip) en DatosGzip; DatosJson queda vacío.
