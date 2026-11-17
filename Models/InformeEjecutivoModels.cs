@@ -10,6 +10,9 @@ namespace bufinscustomers.Models
         public int Anio { get; set; }
         public int Mes { get; set; }
 
+        /// <summary>Secciones visibles en pantalla que se incluyen en Excel y correo (ids separados por coma; vacío = todas). Ver SeccionesInforme.</summary>
+        public string Secciones { get; set; }
+
         // Tema de colores (ver TemaInforme): el servidor lo re-resuelve para Excel y correo.
         public string Tema { get; set; }
         public string TemaP { get; set; }

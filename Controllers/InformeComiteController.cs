@@ -11,13 +11,13 @@ using System.Linq;
 namespace bufinscustomers.Controllers
 {
     /// <summary>
-    /// «Versión para comité» del Informe mensual de gerencia (se abre desde su selector «Vista»): el cierre de un mes armado como documento para
-    /// presentar, decidir y firmar — resultados, balance y caja del mes, caja disponible, PYG en una hoja, indicadores en atención, líneas de negocio,
-    /// comentarios del cierre, recuadro de decisiones y firmas. Reutiliza los servicios de Gerencia mensual, PYG y Flujo de caja
-    /// (InformeEjecutivoService) y su permiso (INFORMES_GERENCIA_MENSUAL). Acceso por empresa/grupo.
+    /// «Informe para comité»: el cierre de un mes armado como documento para presentar, decidir y firmar — resultados, balance y caja del mes,
+    /// caja disponible, PYG en una hoja, indicadores en atención, líneas de negocio, comentarios del cierre, recuadro de decisiones y firmas — en
+    /// secciones que se colapsan (lo expandido es lo que se exporta). Opción de menú y permiso propios (INFORMES_COMITE, Sql/053); reutiliza los servicios
+    /// de Gerencia mensual, PYG y Flujo de caja (InformeEjecutivoService). Acceso por empresa/grupo.
     /// </summary>
     [ValidarSesion]
-    [RequierePermiso("INFORMES_GERENCIA_MENSUAL")]
+    [RequierePermiso("INFORMES_COMITE")]
     public class InformeComiteController(
         InformeEjecutivoService service,
         InformeTablasDatosService empresaService,
@@ -180,10 +180,17 @@ namespace bufinscustomers.Controllers
 
             using (var wb = new XLWorkbook())
             {
-                HojaResumen(wb, r, ctx);
-                if (r.Pyg != null && !r.Pyg.SinDatos) EjecutivoExcel.HojaPyg(wb, r.Pyg, ctx);
-                if (r.Caja != null && !r.Caja.SinDatos) EjecutivoExcel.HojaCaja(wb, r.Caja, ctx);
-                HojaComentarios(wb, r.Comentarios, f, ctx);
+                // Solo las secciones que el usuario tiene expandidas (sin filtro = todas). La hoja «Resumen» reúne las de resultados, balance y caja del mes,
+                // indicadores en atención, líneas, decisiones y firmas; PYG y caja disponible tienen su propia hoja. Si no quedara ninguna hoja, se conserva el resumen.
+                bool Inc(string id) { return SeccionesInforme.Incluye(f.Secciones, id); }
+                bool conPyg = Inc("pyg") && r.Pyg != null && !r.Pyg.SinDatos;
+                bool conCaja = Inc("caja") && r.Caja != null && !r.Caja.SinDatos;
+                bool conCom = Inc("comentarios") && r.Comentarios != null && r.Comentarios.Count > 0;
+                bool conResumen = new[] { "resumen", "balance", "atencion", "lineas", "decisiones", "firmas" }.Any(Inc) || !(conPyg || conCaja || conCom);
+                if (conResumen) HojaResumen(wb, r, ctx, f.Secciones);
+                if (conPyg) EjecutivoExcel.HojaPyg(wb, r.Pyg, ctx);
+                if (conCaja) EjecutivoExcel.HojaCaja(wb, r.Caja, ctx);
+                if (conCom) HojaComentarios(wb, r.Comentarios, f, ctx);
 
                 if (logo != null) ExcelLogoHelper.ColocarEnTodas(wb, logo);
                 nombreArchivo = $"Comite_{nombreEmpresa}_{f.Anio}{f.Mes:00}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
@@ -192,12 +199,13 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        private void HojaResumen(XLWorkbook wb, ComiteReporte k, EjecutivoExcel.Contexto x)
+        private void HojaResumen(XLWorkbook wb, ComiteReporte k, EjecutivoExcel.Contexto x, string secciones)
         {
             var g = k.Gerencia;
+            bool Inc(string id) { return SeccionesInforme.Incluye(secciones, id); }
             var ws = wb.Worksheets.Add(R("CO_ExcelHojaResumen"));
             int fila = x.Nueva(ws, NombreMes(k.Mes) + " " + k.Anio);
-            if (g != null && g.HayResultados)
+            if (Inc("resumen") && g != null && g.HayResultados)
             {
                 x.Cab(ws, fila, new[] { R("GM_SecResultados"), R("GM_Col_Real"), R("GM_Col_Presupuesto"), R("GM_Col_VarPpto"), R("GM_Col_VarAnio"), R("GM_Col_AcumReal"), R("GM_Col_AcumPpto"), R("GM_Col_AcumVarPpto") }); fila++;
                 foreach (var c in g.Resultados)
@@ -212,7 +220,7 @@ namespace bufinscustomers.Controllers
                 }
                 fila++;
             }
-            if (g != null && g.HayBalance)
+            if (Inc("balance") && g != null && g.HayBalance)
             {
                 x.Cab(ws, fila, new[] { R("GM_SecBalance"), R("GM_Col_Valor"), R("GM_Col_VarCierre") }); fila++;
                 foreach (var b in g.Balance)
@@ -225,7 +233,7 @@ namespace bufinscustomers.Controllers
                 }
                 fila++;
             }
-            if (g != null && g.HayCaja)
+            if (Inc("balance") && g != null && g.HayCaja)
             {
                 x.Cab(ws, fila, new[] { R("GM_SecCaja"), R("GM_Col_Valor") }); fila++;
                 var cm = new List<KeyValuePair<string, decimal?>>
@@ -239,7 +247,7 @@ namespace bufinscustomers.Controllers
                 foreach (var it in cm) { ws.Cell(fila, 1).Value = it.Key; ExcelCellHelper.SetValue(ws.Cell(fila, 2), it.Value); ws.Cell(fila, 2).Style.NumberFormat.Format = "#,##0"; fila++; }
                 fila++;
             }
-            if (g != null && g.HayIndicadores)
+            if (Inc("atencion") && g != null && g.HayIndicadores)
             {
                 x.Cab(ws, fila, new[] { R("GM_AtencionTitulo"), R("GM_Col_Valor"), R("GM_Col_Semaforo") }); fila++;
                 foreach (var a in g.Atencion)
@@ -250,7 +258,7 @@ namespace bufinscustomers.Controllers
                 }
                 fila++;
             }
-            if (g != null && g.HayLineas)
+            if (Inc("lineas") && g != null && g.HayLineas)
             {
                 x.Cab(ws, fila, new[] { R("LN_Col_Linea"), R("LN_Col_Ingresos"), R("LN_Col_PctIngresos"), R("LN_Col_MargenOperacional") }); fila++;
                 foreach (var l in g.Lineas)
@@ -264,10 +272,16 @@ namespace bufinscustomers.Controllers
                 fila++;
             }
             // Decisiones y firmas: espacio para completar en el documento impreso (igual que en el PDF).
-            x.Cab(ws, fila, new[] { R("CO_Decisiones") }); fila++;
-            ws.Cell(fila, 1).Value = R("CO_DecisionesAyuda"); ws.Cell(fila, 1).Style.Font.Italic = true; fila += 4;
-            x.Cab(ws, fila, new[] { R("CO_Firmas"), R("CO_Nombre"), R("CO_Cargo"), R("CO_Fecha") }); fila++;
-            foreach (var rol in new[] { "CO_Elaboro", "CO_Reviso", "CO_Aprobo" }) { ws.Cell(fila, 1).Value = R(rol); ws.Row(fila).Height = 28; fila++; }
+            if (Inc("decisiones"))
+            {
+                x.Cab(ws, fila, new[] { R("CO_Decisiones") }); fila++;
+                ws.Cell(fila, 1).Value = R("CO_DecisionesAyuda"); ws.Cell(fila, 1).Style.Font.Italic = true; fila += 4;
+            }
+            if (Inc("firmas"))
+            {
+                x.Cab(ws, fila, new[] { R("CO_Firmas"), R("CO_Nombre"), R("CO_Cargo"), R("CO_Fecha") }); fila++;
+                foreach (var rol in new[] { "CO_Elaboro", "CO_Reviso", "CO_Aprobo" }) { ws.Cell(fila, 1).Value = R(rol); ws.Row(fila).Height = 28; fila++; }
+            }
             ws.Columns().AdjustToContents();
         }
 

@@ -104,7 +104,7 @@
         var r = S.reporte; if (!r) return;
         $('#ejUnidadLbl').text(T.unidades[S.unidad]);
         $('#ejMenuUnidad button').each(function () { var on = $(this).data('unidad') === S.unidad; $(this).toggleClass('on', on).attr('aria-checked', on ? 'true' : 'false'); });
-        $('#ejCuerpo').html(htmlComite(r));
+        pintarSecciones(r);
     }
 
     // ---------- Secciones compartidas (PYG en una hoja, caja) ----------
@@ -146,43 +146,59 @@
         return h + '</div>';
     }
 
-    function htmlComite(r) {
-        var P = T.co, g = r.Gerencia, h = '';
-        if (g && g.HayResultados) {
-            var c3 = '<div class="gm-grid3">';
+    var _secc = null;
+    function seccionVisible(id) { return !_secc || _secc.visible(id); }
+    function seccionesParaServidor() { return _secc ? (_secc.visibles().join(',') || '-') : ''; }
+
+    // Cada sección llena su propio cuerpo (los encabezados y la barra están en la vista) y avisa si tiene datos.
+    function pintarSecciones(r) {
+        var P = T.co, g = r.Gerencia;
+        function poner(id, hay, html) { if (_secc) _secc.disponible(id, !!hay); $('#coSec' + id.charAt(0).toUpperCase() + id.slice(1)).html(hay ? html : ''); }
+
+        var hayRes = !!(g && g.HayResultados), c3 = '';
+        if (hayRes) {
+            c3 = '<div class="gm-grid3">';
             g.Resultados.forEach(function (c) {
                 c3 += '<div class="ej-hero-card"><div class="ej-hero-et">' + esc(P.res[c.Codigo] || c.Codigo) + '</div><div class="ej-hero-val">' + esc(fmt(c.Real, true)) + '</div>' +
                     '<div class="ej-hero-sub">' + esc(T.vsPpto) + ' ' + esc(fmt(c.Presupuesto, true)) + ' &middot; ' + esc(fmtVar(c.VarPresupuesto)) + '</div>' +
                     '<div class="ej-hero-sub">' + esc(P.acumulado) + ' ' + esc(fmt(c.AcumReal, true)) + ' &middot; ' + esc(fmtVar(c.AcumVarPresupuesto)) + '</div></div>';
             });
-            h += seccion(P.secResumen, c3 + '</div>');
+            c3 += '</div>';
         }
-        if (g && (g.HayBalance || g.HayCaja)) {
-            var bc = '<div class="gm-grid2">';
+        poner('resumen', hayRes, c3);
+
+        var hayBal = !!(g && (g.HayBalance || g.HayCaja)), bc = '';
+        if (hayBal) {
+            bc = '<div class="gm-grid2">';
             if (g.HayBalance) bc += tarjetaFilas(P.secBalance, filasBalance(g));
             if (g.HayCaja) bc += tarjetaFilas(P.secCajaMes, filasCajaMes(g));
-            h += seccion(P.secBalanceCaja, bc + '</div>');
+            bc += '</div>';
         }
-        if (r.Pyg && !r.Pyg.SinDatos) h += seccion(P.secPyg, '<div class="pyg2-card">' + htmlPyg(r.Pyg) + '</div>');
-        if (r.Caja && !r.Caja.SinDatos) h += seccion(P.secCaja, htmlHero(r.Caja) + htmlPuente(r.Caja) + htmlEstadoCaja(r.Caja));
-        if (g && g.HayIndicadores) {
-            var a = '<div class="pyg2-card"><div class="gm-semaforo">';
+        poner('balance', hayBal, bc);
+
+        var hayCaja = !!(r.Caja && !r.Caja.SinDatos);
+        poner('caja', hayCaja, hayCaja ? htmlHero(r.Caja) + htmlPuente(r.Caja) + htmlEstadoCaja(r.Caja) : '');
+        var hayPyg = !!(r.Pyg && !r.Pyg.SinDatos);
+        poner('pyg', hayPyg, hayPyg ? '<div class="pyg2-card">' + htmlPyg(r.Pyg) + '</div>' : '');
+
+        var hayAt = !!(g && g.HayIndicadores), a = '';
+        if (hayAt) {
+            a = '<div class="pyg2-card"><div class="gm-semaforo">';
             [['verde', g.TotalVerde], ['amarillo', g.TotalAmarillo], ['naranja', g.TotalNaranja], ['rojo', g.TotalRojo]].forEach(function (x) { a += '<span class="gm-sem ' + x[0] + '">' + x[1] + ' ' + esc(P.nivel[x[0]]) + '</span>'; });
             a += '</div>';
             if (!g.Atencion.length) a += '<div class="pyg2-hl-empty">' + esc(P.sinAtencion) + '</div>';
             g.Atencion.forEach(function (x) { a += '<div class="gm-fila"><span class="gm-et">' + esc(nombreIndicador(x.Codigo)) + '</span><span class="gm-val">' + esc(fmtIndicador(x)) + ' <span class="gm-sem ' + esc(x.Nivel) + '">' + esc(P.nivel[x.Nivel] || x.Nivel) + '</span></span></div>'; });
-            h += seccion(P.secAtencion, a + '</div>');
+            a += '</div>';
         }
-        if (g && g.HayLineas) {
-            var l = '<div class="pyg2-card"><div class="pyg2-table-wrap"><table class="pyg2-table"><thead><tr><th>' + esc(P.colLinea) + '</th><th>' + esc(P.colIngresos) + '</th><th>' + esc(P.colPct) + '</th><th>' + esc(P.colMargen) + '</th></tr></thead><tbody>';
+        poner('atencion', hayAt, a);
+
+        var hayLn = !!(g && g.HayLineas), l = '';
+        if (hayLn) {
+            l = '<div class="pyg2-card"><div class="pyg2-table-wrap"><table class="pyg2-table"><thead><tr><th>' + esc(P.colLinea) + '</th><th>' + esc(P.colIngresos) + '</th><th>' + esc(P.colPct) + '</th><th>' + esc(P.colMargen) + '</th></tr></thead><tbody>';
             g.Lineas.forEach(function (x) { l += '<tr><td>' + esc(x.Nombre) + '</td><td>' + esc(fmt(x.Ingresos, true)) + '</td><td>' + esc(fmtPct(x.PctIngresos)) + '</td><td>' + esc(fmtPct(x.MargenOperacional)) + '</td></tr>'; });
-            h += seccion(P.secLineas, l + '</tbody></table></div></div>');
+            l += '</tbody></table></div></div>';
         }
-        h += seccion(P.decisiones, '<div class="ej-decisiones">' + esc(P.decisionesAyuda) + '</div>');
-        h += seccion(P.firmas, '<div class="ej-firmas">' + [P.elaboro, P.reviso, P.aprobo].map(function (t) {
-            return '<div class="ej-firma"><div class="linea">' + esc(t) + '</div><div class="campo">' + esc(P.nombre) + '</div><div class="campo">' + esc(P.cargo) + '</div><div class="campo">' + esc(P.fecha) + '</div></div>';
-        }).join('') + '</div>');
-        return h;
+        poner('lineas', hayLn, l);
     }
 
     // ---------- PDF (A4 horizontal, jsPDF puro) ----------
@@ -254,7 +270,7 @@
         function pdfCaja(c) { y = InformeVistas.pdfCaja(pdf, kv(), c, y); }
 
         function pdfComentarios() {
-            var Q = T.co, coms = window.ComentariosGestion ? ComentariosGestion.ultimos() : [];
+            var Q = T.co, coms = (seccionVisible('comentarios') && window.ComentariosGestion) ? ComentariosGestion.ultimos() : [];
             if (!coms.length) return;
             asegurar(20); tituloSeccion(Q.comentarios, y); y += 5;
             coms.slice(0, 6).forEach(function (c) {
@@ -283,7 +299,12 @@
         // ----- contenido por tipo -----
         {
             var Q = T.co, g = r.Gerencia;
-            if (g && g.HayResultados) {
+            // Secciones expandidas (barra «Secciones»): el PDF lleva lo mismo que está en pantalla.
+            var paginaUsada = false;   // la primera página ya tiene contenido (más allá de la portada)
+            function hojaNueva() { if (!paginaUsada) { paginaUsada = true; return; } pdf.addPage(); encabezadoPagina(); }
+
+            if (seccionVisible('resumen') && g && g.HayResultados) {
+                paginaUsada = true;
                 tituloSeccion(Q.secResumen, y); y += 4;
                 var n = g.Resultados.length, gp = 5, wc = (ANCHO - gp * (n - 1)) / n, hc = 36;
                 g.Resultados.forEach(function (c, i) {
@@ -297,7 +318,8 @@
                 });
                 y += hc + 9;
             }
-            if (g && (g.HayBalance || g.HayCaja)) {
+            if (seccionVisible('balance') && g && (g.HayBalance || g.HayCaja)) {
+                paginaUsada = true;
                 asegurar(50);
                 var mit = (ANCHO - 6) / 2, yIni = y, y1 = y, y2 = y;
                 if (g.HayBalance) y1 = pdfBloqueFilas(M, mit, Q.secBalance, filasBalance(g));
@@ -305,10 +327,10 @@
                 if (g.HayCaja) y2 = pdfBloqueFilas(M + mit + 6, mit, Q.secCajaMes, filasCajaMes(g));
                 y = Math.max(y1, y2) + 4;
             }
-            if (r.Caja && !r.Caja.SinDatos) { asegurar(60); tituloSeccion(Q.secCaja, y); y += 6; pdfCaja(r.Caja); y += 4; }
-            if (r.Pyg && !r.Pyg.SinDatos) { pdf.addPage(); encabezadoPagina(); tituloSeccion(Q.secPyg, y); y += 6; pdfPyg(r.Pyg); }
-            pdf.addPage(); encabezadoPagina();
-            if (g && g.HayIndicadores) {
+            if (seccionVisible('caja') && r.Caja && !r.Caja.SinDatos) { paginaUsada = true; asegurar(60); tituloSeccion(Q.secCaja, y); y += 6; pdfCaja(r.Caja); y += 4; }
+            if (seccionVisible('pyg') && r.Pyg && !r.Pyg.SinDatos) { hojaNueva(); tituloSeccion(Q.secPyg, y); y += 6; pdfPyg(r.Pyg); }
+            if (['atencion', 'lineas', 'comentarios', 'decisiones', 'firmas'].some(seccionVisible)) hojaNueva();
+            if (seccionVisible('atencion') && g && g.HayIndicadores) {
                 tituloSeccion(Q.secAtencion, y); y += 6;
                 var xs = M;
                 ['verde', 'amarillo', 'naranja', 'rojo'].forEach(function (nv) {
@@ -325,7 +347,7 @@
                 });
                 y += 4;
             }
-            if (g && g.HayLineas) {
+            if (seccionVisible('lineas') && g && g.HayLineas) {
                 asegurar(24); tituloSeccion(Q.secLineas, y); y += 6;
                 fuente('bold', 7.5, Co.blanco); rgb('setFillColor', Co.marca); pdf.rect(M, y - 4.3, ANCHO, 6.3, 'F');
                 pdf.text(Q.colLinea.toUpperCase(), M + 3, y);
@@ -341,18 +363,23 @@
             }
             pdfComentarios();
             // Decisiones y firmas (espacio para escribir y firmar)
-            asegurar(70);
-            tituloSeccion(Q.decisiones, y); y += 3;
-            rgb('setDrawColor', Co.linea); pdf.setLineWidth(0.3); pdf.roundedRect(M, y, ANCHO, 26, 2.5, 2.5, 'S');
-            fuente('italic', 7.5, Co.muted); pdf.text(limpiar(Q.decisionesAyuda), M + 4, y + 6); y += 34;
-            tituloSeccion(Q.firmas, y); y += 22;
-            var wf = (ANCHO - 20) / 3;
-            [Q.elaboro, Q.reviso, Q.aprobo].forEach(function (t, i) {
-                var x = M + i * (wf + 10);
-                rgb('setDrawColor', Co.texto); pdf.setLineWidth(0.4); pdf.line(x, y, x + wf, y);
-                fuente('bold', 8.3, Co.texto); pdf.text(t, x, y + 5);
-                fuente('normal', 7.3, Co.muted); pdf.text(Q.nombre + ':', x, y + 11); pdf.text(Q.cargo + ':', x, y + 17); pdf.text(Q.fecha + ':', x, y + 23);
-            });
+            if (seccionVisible('decisiones')) {
+                asegurar(45);
+                tituloSeccion(Q.decisiones, y); y += 3;
+                rgb('setDrawColor', Co.linea); pdf.setLineWidth(0.3); pdf.roundedRect(M, y, ANCHO, 26, 2.5, 2.5, 'S');
+                fuente('italic', 7.5, Co.muted); pdf.text(limpiar(Q.decisionesAyuda), M + 4, y + 6); y += 34;
+            }
+            if (seccionVisible('firmas')) {
+                asegurar(45);
+                tituloSeccion(Q.firmas, y); y += 22;
+                var wf = (ANCHO - 20) / 3;
+                [Q.elaboro, Q.reviso, Q.aprobo].forEach(function (t, i) {
+                    var x = M + i * (wf + 10);
+                    rgb('setDrawColor', Co.texto); pdf.setLineWidth(0.4); pdf.line(x, y, x + wf, y);
+                    fuente('bold', 8.3, Co.texto); pdf.text(t, x, y + 5);
+                    fuente('normal', 7.3, Co.muted); pdf.text(Q.nombre + ':', x, y + 11); pdf.text(Q.cargo + ':', x, y + 17); pdf.text(Q.fecha + ':', x, y + 23);
+                });
+            }
         }
 
         var tot = pdf.internal.getNumberOfPages();
@@ -383,7 +410,8 @@
     function exportarExcel() {
         if (!S.filtros) return;
         var $c = $('#ejExpCampos').empty();
-        Object.keys(S.filtros).forEach(function (k) { $c.append($('<input type="hidden">').attr('name', k).val(S.filtros[k] == null ? '' : S.filtros[k])); });
+        var campos = $.extend({}, S.filtros, { Secciones: seccionesParaServidor() });
+        Object.keys(campos).forEach(function (k) { $c.append($('<input type="hidden">').attr('name', k).val(campos[k] == null ? '' : campos[k])); });
         $('#frmExportarExcelEJ').submit();
     }
 
@@ -408,11 +436,25 @@
         $('#btnLimpiarEJ').on('click', function () { InformeTema.reset(); if (C.esAdmin) $emp.val('').trigger('change.select2'); cargarMeses(); });
 
         ComentariosGestion.montar({ raiz: '#ejComentarios', informe: 'Comite', todos: true });
+        _secc = InformeSecciones.montar({
+            barra: '#coSecBarra', clave: 'comite', textos: SEC_CFG.barra,
+            secciones: [
+                { id: 'resumen', icono: 'fa-gauge-high', cab: '#coSecResumenCab .pyg2-section-title', cuerpo: ['#coSecResumen'] },
+                { id: 'balance', icono: 'fa-scale-balanced', cab: '#coSecBalanceCab .pyg2-section-title', cuerpo: ['#coSecBalance'] },
+                { id: 'caja', icono: 'fa-wallet', cab: '#coSecCajaCab .pyg2-section-title', cuerpo: ['#coSecCaja'] },
+                { id: 'pyg', icono: 'fa-table-cells', cab: '#coSecPygCab .pyg2-section-title', cuerpo: ['#coSecPyg'] },
+                { id: 'atencion', icono: 'fa-traffic-light', cab: '#coSecAtencionCab .pyg2-section-title', cuerpo: ['#coSecAtencion'] },
+                { id: 'lineas', icono: 'fa-sitemap', cab: '#coSecLineasCab .pyg2-section-title', cuerpo: ['#coSecLineas'] },
+                { id: 'comentarios', icono: 'fa-comments', cab: '#coSecComCab .pyg2-section-title', cuerpo: ['#ejComentarios'] },
+                { id: 'decisiones', icono: 'fa-pen-to-square', cab: '#coSecDecisionesCab .pyg2-section-title', cuerpo: ['#coSecDecisiones'] },
+                { id: 'firmas', icono: 'fa-file-signature', cab: '#coSecFirmasCab .pyg2-section-title', cuerpo: ['#coSecFirmas'] }
+            ]
+        });
 
         var correo = ExportMenu.correo({
             url: C.urls.correo,
             token: function () { return C.token; },
-            datos: function () { return $.extend({}, S.filtros); },
+            datos: function () { return $.extend({}, S.filtros, { Secciones: seccionesParaServidor() }); },
             pdf: function () { var d = construirPdf(S.reporte); return d ? d.output('datauristring') : ''; },
             pills: function () { return [$('#ejTituloEmpresa').text()].concat($('#ejPanelResultado .pyg2-chip').map(function () { return $(this).text(); }).get()); },
             textos: C.exp

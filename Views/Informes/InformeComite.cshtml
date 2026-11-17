@@ -24,6 +24,7 @@
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-gerencia-mensual.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-ejecutivo.css")" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-secciones.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/comentarios-gestion.css")" rel="stylesheet" />
@@ -39,8 +40,6 @@
             @await Html.PartialAsync("_ModeloBufinsTag")
         </div>
     </div>
-
-    @await Html.PartialAsync("_VistasInforme", new bufinscustomers.Models.VistasInformeVM { Familia = "gerencia", Actual = "comite", EmpresaSel = "#ejEmpresa", EscenarioSel = "#ejEscenario" })
 
     @Html.AntiForgeryToken()
 
@@ -97,6 +96,9 @@
 
     <div id="ejResultado" style="display:none;">
 
+        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta). Va arriba de la tarjeta de la empresa. *@
+        <div id="coSecBarra"></div>
+
         <div class="lt-card" id="ejPanelResultado">
             <div class="pyg2-letterhead">
                 <span class="pyg2-brand"><img class="bm-logo" src="~/Assets/img/Bufins_Wordmark_Purple.png" alt="Bufins" height="14"><span class="bm-sub">@Resources.Strings.CO_Subtitulo</span></span>
@@ -132,9 +134,26 @@
             <div id="ejExpCampos"></div>
         </form>
 
-        <div id="ejCuerpo"></div>
-
+        @* Secciones del informe para comité: el JS llena cada cuerpo con las cifras del cierre *@
+        <div class="pyg2-section sec-bloque-cab" id="coSecResumenCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.CO_SecResumen</span><span class="line"></span></div></div>
+        <div id="coSecResumen"></div>
+        <div class="pyg2-section sec-bloque-cab" id="coSecBalanceCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.CO_SecBalanceCaja</span><span class="line"></span></div></div>
+        <div id="coSecBalance"></div>
+        <div class="pyg2-section sec-bloque-cab" id="coSecCajaCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.CO_SecCaja</span><span class="line"></span></div></div>
+        <div id="coSecCaja"></div>
+        <div class="pyg2-section sec-bloque-cab" id="coSecPygCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.CO_SecPyg</span><span class="line"></span></div></div>
+        <div id="coSecPyg"></div>
+        <div class="pyg2-section sec-bloque-cab" id="coSecAtencionCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.GM_AtencionTitulo</span><span class="line"></span></div></div>
+        <div id="coSecAtencion"></div>
+        <div class="pyg2-section sec-bloque-cab" id="coSecLineasCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.GM_LineasTitulo</span><span class="line"></span></div></div>
+        <div id="coSecLineas"></div>
+        <div class="pyg2-section sec-bloque-cab" id="coSecComCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Com_Titulo</span><span class="line"></span></div></div>
         @await Html.PartialAsync("_ComentariosGestion", "ejComentarios")
+
+        <div class="pyg2-section sec-bloque-cab" id="coSecDecisionesCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.CO_Decisiones</span><span class="line"></span></div></div>
+        <div id="coSecDecisiones"><div class="ej-decisiones">@Resources.Strings.CO_DecisionesAyuda</div></div>
+        <div class="pyg2-section sec-bloque-cab" id="coSecFirmasCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.CO_Firmas</span><span class="line"></span></div></div>
+        <div id="coSecFirmas"><div class="ej-firmas"><div class="ej-firma"><div class="linea">@Resources.Strings.CO_Elaboro</div><div class="campo">@Resources.Strings.CO_Nombre</div><div class="campo">@Resources.Strings.CO_Cargo</div><div class="campo">@Resources.Strings.CO_Fecha</div></div><div class="ej-firma"><div class="linea">@Resources.Strings.CO_Reviso</div><div class="campo">@Resources.Strings.CO_Nombre</div><div class="campo">@Resources.Strings.CO_Cargo</div><div class="campo">@Resources.Strings.CO_Fecha</div></div><div class="ej-firma"><div class="linea">@Resources.Strings.CO_Aprobo</div><div class="campo">@Resources.Strings.CO_Nombre</div><div class="campo">@Resources.Strings.CO_Cargo</div><div class="campo">@Resources.Strings.CO_Fecha</div></div></div></div>
     </div>
 
 </div>
@@ -150,6 +169,7 @@
 @await Html.PartialAsync("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
 
 @section scripts {
+@await Html.PartialAsync("_SeccionesConfig")
 <script src="~/Assets/js/select2/select2.min.js"></script>
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
 <script src="~/Assets/js/bufins-pdf-marca.js"></script>
@@ -238,5 +258,6 @@
     };
 </script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-vistas.js")"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-secciones.js")"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-comite.js")"></script>
 }
