@@ -2,7 +2,7 @@
 """Documentación técnica de BUFINS (especificaciones, versiones, contenido, funcionalidades y ciberseguridad). Bilingüe con L.t(es, en)."""
 from doc_lib import *
 
-FECHA = '2026-11-08'
+FECHA = '2026-11-16'
 
 
 def doc_tecnica(L):
@@ -16,7 +16,7 @@ def doc_tecnica(L):
         + tabla([t('Dato', 'Item'), t('Valor', 'Value')], [
             [t('Aplicación', 'Application'), t('<b>Portal de clientes</b> (customers.bufins.com), proyecto <code>bufinscustomers</code>. Aparte existe el sitio público <b>bufins.com</b> (proyecto <code>bufinsweb</code>), con su propio código y despliegue.', '<b>Customer portal</b> (customers.bufins.com), project <code>bufinscustomers</code>. Separately there is the public site <b>bufins.com</b> (project <code>bufinsweb</code>), with its own code and deployment.')],
             [t('Plataforma', 'Platform'), t('ASP.NET Core MVC sobre <b>.NET 10</b> (LTS). Migrada desde ASP.NET MVC 5 / .NET Framework 4.8 el 2026-11-08; la versión anterior se conserva en la etiqueta de git <code>backup-net48-pre-migracion</code>.', 'ASP.NET Core MVC on <b>.NET 10</b> (LTS). Migrated from ASP.NET MVC 5 / .NET Framework 4.8 on 2026-11-08; the previous version is kept in the git tag <code>backup-net48-pre-migracion</code>.')],
-            [t('Tamaño', 'Size'), t('Unas 47.000 líneas de C#, 59 controladores, 64 servicios, 31 ayudantes, 58 modelos y 87 vistas; unas 3.800 cadenas de texto por idioma.', 'About 47,000 lines of C#, 59 controllers, 64 services, 31 helpers, 58 models and 87 views; about 3,800 text strings per language.')],
+            [t('Tamaño', 'Size'), t('Unas 50.500 líneas de C#, 60 controladores, 70 servicios, 35 ayudantes, 59 modelos y 89 vistas; unas 3.800 cadenas de texto por idioma. Guía completa del código: «Guía de arquitectura y código de BUFINS».', 'About 50,500 lines of C#, 60 controllers, 70 services, 35 helpers, 59 models and 89 views; about 3,800 text strings per language. Full code guide: “BUFINS architecture and code guide”.')],
             [t('Idiomas', 'Languages'), t('Español de Colombia (es-CO, por defecto) e inglés (en-US), con la elección guardada en una cookie.', 'Colombian Spanish (es-CO, default) and English (en-US), with the choice stored in a cookie.')],
             [t('Usuarios', 'Users'), t('Tres niveles: Usuario, Admin de Empresa y Super Admin, con datos aislados por empresa y acceso ampliado por grupo empresarial.', 'Three levels: User, Company Admin and Super Admin, with data isolated per company and access extended by business group.')],
             [t('Estado de este documento', 'Status of this document'), t('Fecha de actualización: <b>%s</b>. Los números de versión salen de los archivos del proyecto en esa fecha.' % FECHA, 'Update date: <b>%s</b>. Version numbers come from the project files on that date.' % FECHA)],
@@ -26,7 +26,7 @@ def doc_tecnica(L):
     s.append(('plataforma', t('Plataforma y versiones', 'Platform and versions'), seccion('plataforma', 2, t('Plataforma y versiones', 'Platform and versions'),
         '<h3>' + t('Servidor y base de datos', 'Server and database') + '</h3>'
         + tabla([t('Componente', 'Component'), t('Versión / especificación', 'Version / specification')], [
-            [t('Runtime y lenguaje', 'Runtime and language'), t('.NET 10, C# (última versión del lenguaje), nulabilidad desactivada.', '.NET 10, C# (latest language version), nullability disabled.')],
+            [t('Runtime y lenguaje', 'Runtime and language'), t('.NET 10, C# (última versión del lenguaje). Nulabilidad desactivada en el proyecto y activada archivo por archivo en los ayudantes nuevos.', '.NET 10, C# (latest language version). Nullability disabled project-wide and enabled file by file in the newer helpers.')],
             [t('Alojamiento', 'Hosting'), t('IIS con alojamiento <i>in-process</i> (ASP.NET Core Module). Paquete <b>autocontenido</b> para Windows x64 (incluye su propio .NET 10, unos 160 MB) porque el hosting compartido de Conexcol no lo trae. Panel Plesk.', 'IIS with <i>in-process</i> hosting (ASP.NET Core Module). <b>Self-contained</b> package for Windows x64 (it carries its own .NET 10, about 160 MB) because Conexcol’s shared hosting does not provide it. Plesk panel.')],
             [t('Base de datos', 'Database'), t('<b>SQL Server</b> (instancia actual 2016, nivel de compatibilidad 130). Todo el T-SQL se escribe para ser compatible con <b>SQL Server 2012 o superior</b>. Base <code>bufinscustomers</code>.', '<b>SQL Server</b> (current instance 2016, compatibility level 130). All T-SQL is written to be compatible with <b>SQL Server 2012 or later</b>. Database <code>bufinscustomers</code>.')],
             [t('Acceso a datos', 'Data access'), t('ADO.NET con <b>procedimientos almacenados</b> y consultas parametrizadas (Microsoft.Data.SqlClient 6.1.2). No se usa un ORM.', 'ADO.NET with <b>stored procedures</b> and parameterized queries (Microsoft.Data.SqlClient 6.1.2). No ORM is used.')],
@@ -37,10 +37,10 @@ def doc_tecnica(L):
         + '<h3>' + t('Paquetes (NuGet)', 'Packages (NuGet)') + '</h3>'
         + tabla([t('Paquete', 'Package'), t('Versión', 'Version'), t('Para qué se usa', 'What it is used for')], [
             ['Microsoft.Data.SqlClient', '6.1.2', t('Conexión a SQL Server', 'SQL Server connection')],
-            ['ClosedXML', '0.105.0', t('Lectura y escritura de Excel (licencia MIT)', 'Excel reading and writing (MIT license)')],
+            ['ClosedXML', '0.105.1', t('Lectura y escritura de Excel (licencia MIT)', 'Excel reading and writing (MIT license)')],
             ['MailKit', '4.16.0', t('Envío de correo SMTP', 'SMTP email sending')],
             ['BCrypt.Net-Next', '4.0.3', t('Cifrado de contraseñas', 'Password hashing')],
-            ['Newtonsoft.Json / Mvc.NewtonsoftJson', '13.0.3 / 10.0.0', t('Serialización JSON compatible con el formato histórico', 'JSON serialization compatible with the historical format')],
+            ['Newtonsoft.Json / Mvc.NewtonsoftJson', '13.0.4 / 10.0.0', t('Serialización JSON compatible con el formato histórico', 'JSON serialization compatible with the historical format')],
             ['NUglify', '1.21.15', t('Minificación de los paquetes de CSS y JS', 'Minification of the CSS and JS bundles')],
             ['System.Drawing.Common', '10.0.0', t('Procesamiento de imágenes (logos)', 'Image processing (logos)')],
             ['System.Runtime.Caching', '10.0.0', t('Cachés en memoria', 'In-memory caches')],
@@ -63,8 +63,8 @@ def doc_tecnica(L):
         t('<p class="lead">Aplicación en capas, de una sola solución, sin servicios externos propios: el navegador habla con la aplicación y esta con SQL Server; las únicas salidas son el correo y la API de IA.</p>',
           '<p class="lead">A layered, single-solution application with no external services of its own: the browser talks to the application and the application to SQL Server; the only outbound calls are email and the AI API.</p>')
         + tabla([t('Capa', 'Layer'), t('Qué contiene', 'What it contains')], [
-            ['Controllers', t('Reciben la petición, validan acceso y llaman a servicios. Todos heredan de <code>BaseController</code> (mensajes, traducción de textos, validación de acceso a IA).', 'Receive the request, validate access and call services. All inherit from <code>BaseController</code> (messages, text translation, AI access validation).')],
-            ['Services', t('Lógica de negocio y acceso a SQL Server; heredan de <code>BaseService</code> (cadena de conexión).', 'Business logic and SQL Server access; inherit from <code>BaseService</code> (connection string).')],
+            ['Controllers', t('Reciben la petición, validan acceso y llaman a servicios. Todos heredan de <code>BaseController</code> (mensajes, traducción de textos, validación de acceso a IA) y reciben sus servicios por inyección de dependencias (constructor primario).', 'Receive the request, validate access and call services. All inherit from <code>BaseController</code> (messages, text translation, AI access validation) and receive their services through dependency injection (primary constructor).')],
+            ['Services', t('Lógica de negocio y acceso a SQL Server (con el ayudante <code>Bd</code>); heredan de <code>BaseService</code> (cadena de conexión) y se registran solos en el contenedor de dependencias.', 'Business logic and SQL Server access (through the <code>Bd</code> helper); inherit from <code>BaseService</code> (connection string) and register themselves in the dependency container.')],
             ['Models', t('Modelos de datos y de vista.', 'Data and view models.')],
             ['Views', t('Vistas Razor organizadas por área funcional (Configuración, Datos, Informes…), con layout, parciales compartidos y menú dinámico.', 'Razor views organized by functional area (Settings, Data, Reports…), with layout, shared partials and a dynamic menu.')],
             ['Helpers / Filters / Permisos', t('Ayudantes (sesión, empresas, tema, Excel, correo…), filtros globales y atributos de autorización (<code>ValidarSesion</code>, <code>RequierePermiso</code>, <code>SoloSuperAdmin</code>).', 'Helpers (session, companies, theme, Excel, email…), global filters and authorization attributes (<code>ValidarSesion</code>, <code>RequierePermiso</code>, <code>SoloSuperAdmin</code>).')],
@@ -148,7 +148,7 @@ def doc_tecnica(L):
         + t('<li><b>Llaves de protección de datos:</b> en el hosting actual la identidad del sitio no puede crear archivos en su carpeta, así que viven en memoria (un reinicio invalida formularios abiertos). Se pidió el permiso al proveedor.</li>', '<li><b>Data-protection keys:</b> on the current hosting the site identity cannot create files in its folder, so they live in memory (a restart invalidates open forms). Permission was requested from the provider.</li>')
         + t('<li><b>Publicación:</b> el certificado de Web Deploy del proveedor es autofirmado y se acepta de forma explícita en el perfil de publicación.</li>', '<li><b>Deployment:</b> the provider’s Web Deploy certificate is self-signed and is explicitly accepted in the publish profile.</li>')
         + t('<li><b>Credenciales:</b> rotar periódicamente la contraseña de SQL y actualizarla en <code>secretsSettings.json</code> del servidor (el cambio exige reiniciar el sitio).</li>', '<li><b>Credentials:</b> rotate the SQL password periodically and update it in the server’s <code>secretsSettings.json</code> (the change requires restarting the site).</li>')
-        + t('<li><b>Pruebas:</b> no hay pruebas automáticas; la verificación se hace comparando pantallas y respuestas contra el sistema anterior y con sesiones reales.</li></ul>', '<li><b>Testing:</b> there are no automated tests; verification is done by comparing screens and responses against the previous system and with real sessions.</li></ul>'))))
+        + t('<li><b>Pruebas:</b> 71 pruebas automáticas (xUnit, proyecto <code>Tests/Bufins.Pruebas</code>) sobre lógica pura —doble factor, contraseñas, tema de informes, conversiones del cargue, acceso a datos e inyección de dependencias—; no tocan la base de datos. El resto se verifica comparando pantallas y respuestas con sesiones reales.</li></ul>', '<li><b>Testing:</b> 71 automated tests (xUnit, <code>Tests/Bufins.Pruebas</code> project) on pure logic —two-factor, passwords, report theme, upload conversions, data access and dependency injection—; they never touch the database. The rest is verified by comparing screens and responses with real sessions.</li></ul>'))))
 
     # 7 ----------------------------------------------------------------------------------------------------------------
     s.append(('operacion', t('Operación', 'Operations'), seccion('operacion', 7, t('Operación y publicación', 'Operations and deployment'),
