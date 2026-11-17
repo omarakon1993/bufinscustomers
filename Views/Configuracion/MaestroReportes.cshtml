@@ -63,13 +63,13 @@
 
         /* Anchos de columna */
         .col-id          { width: 4%;  text-align: center; }
-        .col-empresa     { width: 14%; }
-        .col-nombre      { width: 16%; }
+        .col-empresa     { width: 16%; }
+        .col-nombre      { width: 20%; }
         .col-anio-ini    { width: 8%;  text-align: center; }
         .col-anio-fin    { width: 8%;  text-align: center; }
-        .col-desc        { width: 22%; }
+        .col-desc        { width: 28%; }
         .col-ver         { width: 7%;  text-align: center; }
-        .col-acciones    { width: 21%; text-align: center; white-space: nowrap; }
+        .col-acciones    { width: 11%; text-align: center; white-space: nowrap; }
 
         /* === BOTONES DE ACCIONES === */
         .btn-group { gap: 0.25rem; }
@@ -175,7 +175,7 @@
                                 </td>
                                 <td class="col-acciones">
                                     <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-primary btn-sm"
+                                        <button type="button" class="btn btn-primary btn-sm" title="@Resources.Strings.Rep_BtnEditar" aria-label="@Resources.Strings.Rep_BtnEditar"
                                                 data-toggle="modal" data-target="#editReporteModal"
                                                 data-id="@reporte.Id"
                                                 data-idempresa="@reporte.IdEmpresa"
@@ -185,12 +185,12 @@
                                                 data-descripcion="@(reporte.Descripcion ?? "")"
                                                 data-enlacehtml="@(reporte.EnlaceHTML ?? "")"
                                                 onclick="setEditReporteFromData(this)">
-                                            <i class="fas fa-edit mr-1"></i>@Resources.Strings.Rep_BtnEditar
+                                            <i class="fas fa-edit"></i>
                                         </button>
-                                        <button type="button" class="btn btn-danger btn-sm"
+                                        <button type="button" class="btn btn-danger btn-sm" title="@Resources.Strings.Common_BtnEliminar" aria-label="@Resources.Strings.Common_BtnEliminar"
                                                 data-toggle="modal" data-target="#confirmDeleteModal"
                                                 onclick="setIdReporte(@reporte.Id)">
-                                            <i class="fas fa-trash-alt mr-1"></i>@Resources.Strings.Common_BtnEliminar
+                                            <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </div>
                                 </td>
