@@ -186,6 +186,11 @@ namespace bufinscustomers.Services
             if (config == null)
                 return ResultadoCargueSimple.Error("La empresa seleccionada no tiene configuración creada.");
 
+            // El escenario debe existir y estar activo. El Excel solo lo ofrece en un selector y la API recibe un número libre:
+            // la validación vive aquí para que valga igual en las dos entradas (paridad Excel ↔ API, ver CLAUDE.md).
+            if (!EscenarioValido(s.IdEscenario))
+                return ResultadoCargueSimple.Error(T("Datos_EscenarioInvalido"));
+
             bool modoEjecucion = string.Equals(s.Modo, "ejecucion", StringComparison.OrdinalIgnoreCase);
             bool modoHistorico = string.Equals(s.Modo, "historico", StringComparison.OrdinalIgnoreCase);
 
@@ -214,6 +219,21 @@ namespace bufinscustomers.Services
             }
 
             return ResultadoCargueSimple.Correcto();
+        }
+
+        /// <summary>Escenario existente y activo. Si el catálogo no se puede leer, solo se admite el escenario base (1).</summary>
+        private static bool EscenarioValido(int idEscenario)
+        {
+            try
+            {
+                var todos = new EscenarioService().ObtenerTodos();
+                return todos.Count == 0 ? idEscenario == 1 : todos.Any(e => e.Id == idEscenario && e.Activo);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Warn("CargueOrquestador.EscenarioValido: " + ex.Message);
+                return idEscenario == 1;
+            }
         }
 
         // ═════════════════════════════════════════════════════════════════════════

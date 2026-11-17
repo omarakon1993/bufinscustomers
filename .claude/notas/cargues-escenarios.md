@@ -4,6 +4,8 @@
 
 ### Orquestador del cargue (`Services/CargueOrquestadorService.cs`) — fase 0 de la API (2026-11-14)
 
+> **Paridad Excel ↔ API (OBLIGATORIO):** esta lógica la comparte la API de ingesta (`Api/ApiV1.cs`). Toda validación nueva va aquí o en el SP para que valga en las dos entradas; lo que viva en la capa HTTP se cambia en `DatosController` y en `ApiV1`. Tabla de paridad y checklist en `api-ingesta.md` («Paridad con el cargue de Excel»).
+
 **Toda la lógica del cargue vive aquí, una sola vez**; `DatosController` solo traduce sus resultados a redirecciones, `TempData` y sesión. Lo usará igual la futura API de ingesta (`/api/v1`), así que **no se puede volver a poner lógica de cargue en el controlador** ni depender de sesión/HTTP dentro del servicio.
 
 - Sin sesión ni HTTP: recibe `Usuarios` (el usuario técnico de una integración, en la API), un `Stream` y un traductor opcional `Func<string,string>` (el controlador pasa `R`; mismo patrón de `IASolicitud.Traducir`). Los servicios no leen recursos.

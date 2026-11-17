@@ -24,6 +24,28 @@ Contrato OpenAPI 3 (público, sin clave): `GET /api/v1/openapi.json` ← `Api/op
 - Columnas: se resuelven contra el esquema real de `Staging_Ini_X` (alias `Anio`→`Año`); columna desconocida → 422. Filas de otro año se omiten e informan (como el Excel). `Z_TablaPUC` (sin tabla Ini_) no se admite por JSON.
 - **Aviso a revisores**: `NotificarRevisores` crea una notificación (campana, en español) para los Admin de Empresa (`Admin=1`) de la empresa cuando un cargue de la API queda esperando revisión o con errores (`Notif_CargueApi*`).
 
+## Paridad con el cargue de Excel (OBLIGATORIO mantenerla)
+Las dos entradas (`DatosController.CargarExcel` y `ApiV1.SubirArchivo` / `IniciarCargue`) llaman a `CargueOrquestadorService`: **toda regla de negocio del cargue se escribe ahí (o en `sp_ValidarCargueStaging`) y vale para ambas**. Revisión del 2026-11-16:
+
+| Validación | Dónde vive | Excel | API |
+|---|---|---|---|
+| Empresa elegida y acceso (`EmpresaAccesoHelper`) | `ValidarSolicitud` | empresa del selector | empresa de la clave (`integ.IdEmpresa`), nunca del cuerpo; usuario técnico |
+| Plantilla personalizada de la empresa | `ValidarSolicitud` (`PuedeOperarCargue`) | sí | sí (con el usuario técnico) |
+| Empresa con configuración creada | `ValidarSolicitud` | sí | sí |
+| Modo `ejecucion`/`historico` | `ValidarSolicitud` | sí | sí |
+| Año = año de ejecución, o año histórico configurado | `ValidarSolicitud` | sí | sí (422 `solicitud_invalida`) |
+| **Escenario existente y activo** | `ValidarSolicitud` (`EscenarioValido`, añadido 2026-11-16: antes ni el Excel ni la API lo validaban en el servidor) | sí | sí |
+| Extensión `.xlsx`/`.xlsm` y archivo no vacío | `ValidarSolicitud` | sí | sí (solo en el envío de archivo) |
+| Hojas exigidas (estándar + personalizadas de la empresa), columnas, filas de otro año omitidas | `ProcesarArchivo` / `AgregarFilasHoja` | sí | sí (el envío por hojas declara todas) |
+| Reglas de datos (ecuación contable, etc.) | `sp_ValidarCargueStaging` | sí | sí |
+| Un lote activo por llave | `CargueStagingService.CrearLote` | redirige a revisar el lote | 409 `lote_activo` (sandbox no bloquea) |
+| Regla de oro / reducción fuerte / respaldo previo / auditoría | `Confirmar` | sí | sí; la API además nunca confirma `requiere_revision_humana` |
+| Tamaño máximo (100 MB) | `Program.cs` (Kestrel/IIS/Form) | sí | sí |
+| **Solo en la capa HTTP de cada una** | | sesión, antiforgery, lote atado a la sesión | clave, IP permitidas, límites, idempotencia, lotes de 48 h, `PermiteConfirmar`, sandbox |
+
+Diferencia conocida y aceptada: el Excel no exige un permiso de menú en el servidor (solo `[ValidarSesion]`; el menú oculta la opción); la API se apoya en la conexión (la crea un Super Admin o Admin de Empresa) y en que el usuario técnico sea de la empresa.
+**Al agregar o cambiar una validación:** (1) ponla en el orquestador o en el SP; (2) si por fuerza va en la capa HTTP, hazla en `DatosController` Y en `ApiV1`; (3) actualiza esta tabla, `cargues-escenarios.md` y el manual si cambia un error de la API; (4) di «Paridad Excel↔API: sí/no» en la respuesta final.
+
 ## Pantalla «Conexiones API» — acceso y reglas (el diseño actual está en la sección de abajo)
 `IntegracionesController` → `Views/Configuracion/Integraciones.cshtml` (textos `Integ_*` en ambos `.resx`). Permiso `ADMIN_CONFIG_INTEGRACIONES` (opción de menú creada con `Sql/048`, renombrada a «Conexiones API» con `Sql/052`: Controller `Integraciones`, Action `Index`, `SoloAdminEmpresa`, no `SoloSuperAdmin`). Super Admin y Admin de Empresa (este, solo empresa/grupo vía `EmpresaAccesoHelper`; un Usuario Normal no la ve). Todo por AJAX con antiforgery; `CrearConexion`/`Rotar` devuelven la clave una sola vez (modal sin cierre accidental; no se guarda en `TempData`, log ni auditoría). Usuario técnico: cualquier usuario de la empresa que no sea Super Admin (el servicio devuelve códigos de error, el controlador los traduce). Auditoría `AuditoriaTipo.Integraciones` (Crear / Editar [incluye rotar] / Eliminar [revocar]).
 
