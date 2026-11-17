@@ -13,10 +13,8 @@ namespace bufinscustomers.Controllers
     /// las de su grupo; Super Admin todas). Ver CLAUDE.md, «Tema de colores de los informes».
     /// </summary>
     [ValidarSesion]
-    public class EmpresaPaletaController : BaseController
+    public class EmpresaPaletaController(EmpresaPaletaService servicio, AuditoriaService auditoriaService) : BaseController
     {
-        private readonly EmpresaPaletaService _servicio = new EmpresaPaletaService();
-
         [HttpGet]
         [RequierePermiso("ADMIN_EMPRESAS_GESTOR,ADMIN_CONFIG_EMPRESAS")]
         public ActionResult Obtener(int idEmpresa)
@@ -29,9 +27,9 @@ namespace bufinscustomers.Controllers
             return Json(new
             {
                 exito = true,
-                disponible = _servicio.Disponible(),
+                disponible = servicio.Disponible(),
                 empresa = emp != null ? emp.Nombre : "",
-                paletas = _servicio.Obtener(idEmpresa).Select(p => new { slot = p.Slot, primario = p.Primario, secundario = p.Secundario, acento = p.Acento })
+                paletas = servicio.Obtener(idEmpresa).Select(p => new { slot = p.Slot, primario = p.Primario, secundario = p.Secundario, acento = p.Acento })
             }, JsonRequestBehavior.AllowGet);
         }
 
@@ -53,7 +51,7 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                if (!_servicio.Disponible())
+                if (!servicio.Disponible())
                     return Json(new { exito = false, mensaje = R("PaletaCorp_SinTabla") });
 
                 string p, s, a = null;
@@ -61,10 +59,10 @@ namespace bufinscustomers.Controllers
                 TemaInforme.TryHex(secundario, out s);
                 if (!string.IsNullOrWhiteSpace(acento)) TemaInforme.TryHex(acento, out a);
 
-                var anterior = _servicio.Obtener(idEmpresa, slot);
-                _servicio.Guardar(new EmpresaPaleta { IdEmpresa = idEmpresa, Slot = slot, Nombre = null, Primario = p, Secundario = s, Acento = a }, usuario?.Id);
+                var anterior = servicio.Obtener(idEmpresa, slot);
+                servicio.Guardar(new EmpresaPaleta { IdEmpresa = idEmpresa, Slot = slot, Nombre = null, Primario = p, Secundario = s, Acento = a }, usuario?.Id);
 
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Editar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Editar,
                     "EmpresaPaletas", idEmpresa + ":" + slot,
                     (anterior == null ? "Colores corporativos agregados" : "Colores corporativos modificados") + $" (empresa {idEmpresa}, paleta {slot})",
                     anterior == null ? null : new { anterior.Primario, anterior.Secundario, anterior.Acento },
@@ -87,11 +85,11 @@ namespace bufinscustomers.Controllers
                 return Json(new { exito = false, mensaje = R("Common_SinPermisos") });
             try
             {
-                var anterior = _servicio.Obtener(idEmpresa, slot);
-                if (!_servicio.Eliminar(idEmpresa, slot))
+                var anterior = servicio.Obtener(idEmpresa, slot);
+                if (!servicio.Eliminar(idEmpresa, slot))
                     return Json(new { exito = false, mensaje = R("PaletaCorp_NoHay") });
 
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Editar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Editar,
                     "EmpresaPaletas", idEmpresa + ":" + slot, $"Colores corporativos eliminados (empresa {idEmpresa}, paleta {slot})",
                     anterior == null ? null : new { anterior.Primario, anterior.Secundario, anterior.Acento }, null, idEmpresa: idEmpresa);
 

@@ -8,10 +8,8 @@ using System.IO;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class TablaPUCController : BaseController
+    public class TablaPUCController(TablaPUCService service) : BaseController
     {
-        private readonly TablaPUCService _service = new TablaPUCService();
-
         private bool VerificarAcceso() => UsuarioSesionHelper.UsuarioActual?.Admin >= 1;
 
         public ActionResult TablaPUC()
@@ -30,7 +28,7 @@ namespace bufinscustomers.Controllers
                 if (!VerificarAcceso())
                     return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
 
-                var nodos = _service.ObtenerHijos(cuenta);
+                var nodos = service.ObtenerHijos(cuenta);
                 return Json(new { success = true, nodos }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
@@ -47,7 +45,7 @@ namespace bufinscustomers.Controllers
                 if (!VerificarAcceso())
                     return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
 
-                var ruta = _service.ObtenerRuta(cuenta);
+                var ruta = service.ObtenerRuta(cuenta);
                 return Json(new { success = true, ruta }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
@@ -64,7 +62,7 @@ namespace bufinscustomers.Controllers
                 if (!VerificarAcceso())
                     return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
 
-                var resultados = _service.Buscar(texto);
+                var resultados = service.Buscar(texto);
                 return Json(new { success = true, resultados }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
@@ -82,7 +80,7 @@ namespace bufinscustomers.Controllers
                 if (!VerificarAcceso())
                     return RedirectToAction("TablaPUC");
 
-                var filas = _service.ObtenerSubarbol(cuenta);
+                var filas = service.ObtenerSubarbol(cuenta);
 
                 using (var package = new XLWorkbook())
                 {

@@ -14,18 +14,22 @@ using System.Web;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class DatosController : BaseController
+    public class DatosController(
+        EmpresaService empresaService,
+        ConfiguracionEmpresaService configuracionService,
+        ModeloService modeloService,
+        PlantillaConDatosService plantillaConDatosService,
+        CargueStagingService stagingService,
+        CargueImpactoService impactoService,
+        PlantillaCargueService plantillaCargueService,
+        AuditoriaService auditoriaService,
+        NotificacionesService notificacionesService,
+        EmailService emailService) : BaseController
     {
         private const string SESSION_LOG_IMPORTACION = "LogImportacion";
         /// <summary>Casos que la pantalla «Revisar cargue» trae por cada validación (el resto va solo en el Excel de errores).</summary>
         private const int CasosPorValidacionEnPantalla = 200;
 
-        private readonly EmpresaService _empresaService = new EmpresaService();
-        private readonly ConfiguracionEmpresaService _configuracionService = new ConfiguracionEmpresaService();
-        private readonly ModeloService _modeloService = new ModeloService();
-        private readonly PlantillaConDatosService _plantillaConDatosService = new PlantillaConDatosService();
-        private readonly CargueStagingService _stagingService = new CargueStagingService();
-        private readonly CargueImpactoService _impactoService = new CargueImpactoService();
         private CargueOrquestadorService _orq;
         /// <summary>Orquestador unico del cargue (lo comparten la pantalla de Excel y la API). Recibe R para traducir mensajes.</summary>
         private CargueOrquestadorService Orq => _orq ?? (_orq = new CargueOrquestadorService(R));
@@ -50,7 +54,7 @@ namespace bufinscustomers.Controllers
         public ActionResult Modelo()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            var empresas = _empresaService.ObtenerEmpresas();
+            var empresas = empresaService.ObtenerEmpresas();
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
                 var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
@@ -60,7 +64,7 @@ namespace bufinscustomers.Controllers
             var vm = new Models.ModeloPageViewModel
             {
                 Empresas = empresas,
-                Modelos = _modeloService.ObtenerModelosActivos()
+                Modelos = modeloService.ObtenerModelosActivos()
             };
             return View("~/Views/Datos/Modelo.cshtml", vm);
         }
@@ -77,7 +81,7 @@ namespace bufinscustomers.Controllers
                 if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
                     return Json(new { success = false, message = "No tiene permisos para consultar esta empresa." }, JsonRequestBehavior.AllowGet);
 
-                var config = _configuracionService.ObtenerConfiguracionPorEmpresa(idEmpresa);
+                var config = configuracionService.ObtenerConfiguracionPorEmpresa(idEmpresa);
                 int anio = config != null ? config.AnioEjecucion : DateTime.Now.Year;
 
                 return Json(new { success = true, anioEjecucion = anio }, JsonRequestBehavior.AllowGet);
@@ -100,7 +104,7 @@ namespace bufinscustomers.Controllers
                 if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
                     return Json(new { success = false, message = "No tiene permisos para consultar esta empresa." }, JsonRequestBehavior.AllowGet);
 
-                var config = _configuracionService.ObtenerConfiguracionPorEmpresa(idEmpresa);
+                var config = configuracionService.ObtenerConfiguracionPorEmpresa(idEmpresa);
                 if (config == null)
                     return Json(new { success = false, message = "La empresa no tiene configuración creada." }, JsonRequestBehavior.AllowGet);
 
@@ -153,8 +157,8 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                byte[] bytes = new PlantillaCargueService().GenerarBytes(HojasParaDescarga(id));
-                var empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == id);
+                byte[] bytes = plantillaCargueService.GenerarBytes(HojasParaDescarga(id));
+                var empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == id);
                 string sufijo = Regex.Replace(!string.IsNullOrWhiteSpace(empresa?.Abreviatura) ? empresa.Abreviatura : (empresa?.Nombre ?? "Empresa"), "[^A-Za-z0-9]", "_");
                 return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"PlantillaBUFINS_{sufijo}.xlsx");
             }
@@ -180,7 +184,7 @@ namespace bufinscustomers.Controllers
                 if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
                     return Json(new { success = false, message = "No tiene permisos para consultar esta empresa." }, JsonRequestBehavior.AllowGet);
 
-                var anios = _plantillaConDatosService.ObtenerAniosConDatos(idEmpresa, idEscenario, HojasParaDescarga(idEmpresa))
+                var anios = plantillaConDatosService.ObtenerAniosConDatos(idEmpresa, idEscenario, HojasParaDescarga(idEmpresa))
                     .Select(a => new { anio = a.Anio, registros = a.Registros });
 
                 return Json(new { success = true, anios }, JsonRequestBehavior.AllowGet);
@@ -213,7 +217,7 @@ namespace bufinscustomers.Controllers
             int totalFilas;
             try
             {
-                bytes = _plantillaConDatosService.GenerarExcel(idEmpresa, listaAnios, idEscenario, HojasParaDescarga(idEmpresa), out totalFilas);
+                bytes = plantillaConDatosService.GenerarExcel(idEmpresa, listaAnios, idEscenario, HojasParaDescarga(idEmpresa), out totalFilas);
             }
             catch (Exception ex)
             {
@@ -224,7 +228,7 @@ namespace bufinscustomers.Controllers
             if (totalFilas == 0)
                 return Json(new { error = R("Datos_PlantillaConDatosSinDatos") }, JsonRequestBehavior.AllowGet);
 
-            var empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+            var empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
             string empresaNombre = empresa?.Nombre ?? "Empresa";
             string empresaSanit = Regex.Replace(
                 !string.IsNullOrWhiteSpace(empresa?.Abreviatura) ? empresa.Abreviatura : empresaNombre,
@@ -235,14 +239,14 @@ namespace bufinscustomers.Controllers
                 : $"{ordenados.First()}-{ordenados.Last()}";
             string fileName = $"PlantillaConDatos_{empresaSanit}_Esc{idEscenario}_{sufijoAnios}.xlsx";
 
-            new AuditoriaService().RegistrarCambio(
+            auditoriaService.RegistrarCambio(
                 AuditoriaTipo.Cargues, AuditoriaAccion.Exportar, "PlantillaConDatos", idEmpresa.ToString(),
                 $"Descargó la plantilla con datos de '{empresaNombre}' (Escenario {idEscenario}) — año(s) {string.Join(", ", ordenados)}, {totalFilas} fila(s).",
                 null,
                 new { empresa = empresaNombre, anios = ordenados, totalFilas, archivo = fileName, escenario = idEscenario },
                 idEmpresa, entidadNombre: empresaNombre, severidad: AuditoriaSeveridad.Advertencia);
 
-            new NotificacionesService().Crear(
+            notificacionesService.Crear(
                 usuario.Id, R("Notif_PlantillaConDatosDescargada"),
                 $"{empresaNombre} — {string.Join(", ", ordenados)}", "success", "/Datos/CargueExcel");
 
@@ -260,7 +264,7 @@ namespace bufinscustomers.Controllers
             if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa))
                 return Json(new { exito = false, mensaje = "No tiene permisos para ejecutar el modelo en esta empresa.", columnas = new List<string>(), filas = new List<List<string>>() });
 
-            var modelo = _modeloService.ObtenerModeloPorId(idModelo);
+            var modelo = modeloService.ObtenerModeloPorId(idModelo);
             if (modelo == null)
                 return Json(new { exito = false, mensaje = "El modelo seleccionado no existe o no está activo.", columnas = new List<string>(), filas = new List<List<string>>() });
 
@@ -331,10 +335,10 @@ namespace bufinscustomers.Controllers
 
                         if (codMessage == 1)
                         {
-                            new NotificacionesService().Crear(usuario.Id, R("Notif_ModeloEjecutado"), mensajeResp, "success", "/Datos/Modelo");
+                            notificacionesService.Crear(usuario.Id, R("Notif_ModeloEjecutado"), mensajeResp, "success", "/Datos/Modelo");
 
-                            var empresaEjecutada = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
-                            new AuditoriaService().RegistrarCambio(
+                            var empresaEjecutada = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+                            auditoriaService.RegistrarCambio(
                                 AuditoriaTipo.Modelos, AuditoriaAccion.Ejecutar, "ModelosEjecucion", idModelo.ToString(),
                                 $"Modelo '{modelo.Nombre}' ejecutado para '{empresaEjecutada?.Nombre ?? "Empresa"}' (Escenario {idEscenario}).", null,
                                 new { empresa = empresaEjecutada?.Nombre, modelo = modelo.Nombre, filas = lastFilas.Count, escenario = idEscenario },
@@ -342,7 +346,7 @@ namespace bufinscustomers.Controllers
                         }
                         else
                         {
-                            new NotificacionesService().Crear(usuario.Id, R("Notif_ErrorModelo"), mensajeResp, "error", "/Datos/Modelo");
+                            notificacionesService.Crear(usuario.Id, R("Notif_ErrorModelo"), mensajeResp, "error", "/Datos/Modelo");
                         }
 
                         return Json(new { exito = codMessage == 1, mensaje = mensajeResp, columnas = lastCols, filas = lastFilas, numericas = lastNumericas });
@@ -369,8 +373,8 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                var empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
-                var modelos = _modeloService.ObtenerModelosActivos();
+                var empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+                var modelos = modeloService.ObtenerModelosActivos();
 
                 using (var package = new XLWorkbook())
                 {
@@ -424,7 +428,7 @@ namespace bufinscustomers.Controllers
                         : (empresa?.Nombre ?? "Empresa").Replace(" ", "_");
                     string fileName = $"Modelos_{empId}_Esc{idEscenario}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx";
 
-                    new AuditoriaService().RegistrarCambio(
+                    auditoriaService.RegistrarCambio(
                         AuditoriaTipo.Modelos, AuditoriaAccion.Exportar, "ModelosEjecucion", idEmpresa.ToString(),
                         $"{modelos.Count} modelo(s) exportados de '{empresa?.Nombre ?? "Empresa"}' (Escenario {idEscenario}).", null,
                         new { empresa = empresa?.Nombre, modelos = modelos.Select(m => m.Nombre).ToList(), archivo = fileName, escenario = idEscenario },
@@ -624,7 +628,7 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Modelo");
             }
 
-            var modelo = _modeloService.ObtenerModeloPorId(idModelo);
+            var modelo = modeloService.ObtenerModeloPorId(idModelo);
             if (modelo == null)
             {
                 SetErrorMessage("El modelo seleccionado no existe o no está activo.");
@@ -633,7 +637,7 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                var empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+                var empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
 
                 using (var package = new XLWorkbook())
                 {
@@ -674,7 +678,7 @@ namespace bufinscustomers.Controllers
                         : (empresa?.Nombre ?? "Empresa").Replace(" ", "_");
                     string fileName = $"{sheetName}_{empId}_Esc{idEscenario}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx";
 
-                    new AuditoriaService().RegistrarCambio(
+                    auditoriaService.RegistrarCambio(
                         AuditoriaTipo.Modelos, AuditoriaAccion.Exportar, "ModelosEjecucion", idEmpresa.ToString(),
                         $"1 modelo(s) exportados de '{empresa?.Nombre ?? "Empresa"}' (Escenario {idEscenario}).", null,
                         new { empresa = empresa?.Nombre, modelos = new List<string> { modelo.Nombre }, archivo = fileName, escenario = idEscenario },
@@ -712,7 +716,7 @@ namespace bufinscustomers.Controllers
                 .Select(s => int.TryParse(s.Trim(), out var n) ? n : 0)
                 .Where(n => n > 0));
 
-            var modelos = _modeloService.ObtenerModelosActivos().Where(m => ids.Contains(m.Id)).ToList();
+            var modelos = modeloService.ObtenerModelosActivos().Where(m => ids.Contains(m.Id)).ToList();
             if (modelos.Count == 0)
             {
                 SetErrorMessage("Debe seleccionar al menos un modelo para exportar.");
@@ -721,7 +725,7 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                var empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+                var empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
 
                 using (var package = new XLWorkbook())
                 {
@@ -779,7 +783,7 @@ namespace bufinscustomers.Controllers
                         ? $"{ultimaHoja}_{empId}_Esc{idEscenario}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx"
                         : $"Modelos_{empId}_Esc{idEscenario}_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx";
 
-                    new AuditoriaService().RegistrarCambio(
+                    auditoriaService.RegistrarCambio(
                         AuditoriaTipo.Modelos, AuditoriaAccion.Exportar, "ModelosEjecucion", idEmpresa.ToString(),
                         $"{modelos.Count} modelo(s) exportados de '{empresa?.Nombre ?? "Empresa"}' (Escenario {idEscenario}).", null,
                         new { empresa = empresa?.Nombre, modelos = modelos.Select(m => m.Nombre).ToList(), archivo = fileName, escenario = idEscenario },
@@ -834,7 +838,7 @@ namespace bufinscustomers.Controllers
                 return Json(new { exito = false, mensaje = "Máximo 10 destinatarios por envío." });
 
             // ── Modelos a incluir ────────────────────────────────────────────
-            var todos = _modeloService.ObtenerModelosActivos();
+            var todos = modeloService.ObtenerModelosActivos();
             bool esTodos = string.IsNullOrWhiteSpace(idsModelos)
                 || string.Equals(idsModelos.Trim(), "todos", StringComparison.OrdinalIgnoreCase);
 
@@ -857,7 +861,7 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                var empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+                var empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
                 var erroresModelos = new List<(string Nombre, string NombreSP, string Mensaje)>();
                 string ultimaHoja = null;
                 byte[] fileBytes;
@@ -916,7 +920,7 @@ namespace bufinscustomers.Controllers
                 bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
 
-                new EmailService().EnviarModelosExportados(
+                emailService.EnviarModelosExportados(
                     string.Join(", ", listaCorreos),
                     empresa?.Nombre ?? "Empresa",
                     modelos.Select(m => m.Nombre),
@@ -929,9 +933,9 @@ namespace bufinscustomers.Controllers
                 string resumen = $"{modelos.Count} modelo(s) de '{empresa?.Nombre ?? "Empresa"}' (Escenario {idEscenario}) enviados a {string.Join(", ", listaCorreos)}.";
                 string descripcionAuditoria = $"Enviado por correo electrónico: {resumen}";
 
-                new NotificacionesService().Crear(usuario.Id, R("Notif_ModelosEnviadosCorreo"), resumen, "success", "/Datos/Modelo");
+                notificacionesService.Crear(usuario.Id, R("Notif_ModelosEnviadosCorreo"), resumen, "success", "/Datos/Modelo");
 
-                new AuditoriaService().RegistrarCambio(
+                auditoriaService.RegistrarCambio(
                     AuditoriaTipo.Modelos, AuditoriaAccion.Enviar, "ModelosEjecucion", idEmpresa.ToString(),
                     descripcionAuditoria, null,
                     new
@@ -949,7 +953,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "EnviarModelosPorCorreo");
-                new NotificacionesService().Crear(usuario.Id, R("Notif_ErrorEnvioCorreoModelos"), ex.Message, "error", "/Datos/Modelo");
+                notificacionesService.Crear(usuario.Id, R("Notif_ErrorEnvioCorreoModelos"), ex.Message, "error", "/Datos/Modelo");
                 return Json(new { exito = false, mensaje = "No se pudo enviar el correo: " + MensajeError(ex) });
             }
         }
@@ -961,7 +965,7 @@ namespace bufinscustomers.Controllers
             ViewBag.PrefillEmpresa = idEmpresa;
             ViewBag.PrefillAnio = anio;
             ViewBag.PrefillEscenario = idEscenario;
-            _stagingService.PurgarLotesVencidosSiToca();
+            stagingService.PurgarLotesVencidosSiToca();
             return CargueExcelView();
         }
 
@@ -973,12 +977,12 @@ namespace bufinscustomers.Controllers
             List<Empresas> empresasDisponibles;
             if (UsuarioSesionHelper.EsSuperAdmin())
             {
-                empresasDisponibles = _empresaService.ObtenerEmpresas();
+                empresasDisponibles = empresaService.ObtenerEmpresas();
             }
             else
             {
                 var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
-                empresasDisponibles = _empresaService.ObtenerEmpresas()
+                empresasDisponibles = empresaService.ObtenerEmpresas()
                     .Where(e => idsPermitidos.Contains(e.Id)).ToList();
             }
             ViewBag.Empresas = empresasDisponibles;
@@ -1053,7 +1057,7 @@ namespace bufinscustomers.Controllers
         public ActionResult RevisarCargue(long idLote)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            var lote = _stagingService.ObtenerLote(idLote);
+            var lote = stagingService.ObtenerLote(idLote);
 
             if (lote == null || !EmpresaAccesoHelper.TieneAcceso(usuario, lote.IdEmpresa))
             {
@@ -1070,17 +1074,17 @@ namespace bufinscustomers.Controllers
             // Si esta sesión es la dueña, el lote queda atado a ella: al cerrar/expirar la sesión se descarta.
             if (usuario != null && lote.IdUsuario == usuario.Id)
                 CargueLoteSesionHelper.Registrar(idLote);
-            _stagingService.PurgarLotesVencidosSiToca();
+            stagingService.PurgarLotesVencidosSiToca();
 
             var vm = new RevisarCargueViewModel
             {
                 Lote = lote,
                 // La pantalla muestra los primeros N casos de cada validación y el total real; el Excel de errores trae todos.
-                Hallazgos = _stagingService.ObtenerHallazgos(idLote, CasosPorValidacionEnPantalla),
-                TotalesPorRegla = _stagingService.ObtenerTotalesPorRegla(idLote),
+                Hallazgos = stagingService.ObtenerHallazgos(idLote, CasosPorValidacionEnPantalla),
+                TotalesPorRegla = stagingService.ObtenerTotalesPorRegla(idLote),
                 NombreArchivo = lote.NombreArchivo
             };
-            try { vm.Impacto = _impactoService.Analizar(lote); }
+            try { vm.Impacto = impactoService.Analizar(lote); }
             catch (Exception exImp) { AppLogger.Error(exImp, "RevisarCargue.Impacto"); }
             return View("~/Views/Datos/RevisarCargue.cshtml", vm);
         }
@@ -1170,7 +1174,7 @@ namespace bufinscustomers.Controllers
         private CargueLote ObtenerLoteParaExportarHallazgos(long idLote)
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            var lote = _stagingService.ObtenerLote(idLote);
+            var lote = stagingService.ObtenerLote(idLote);
             if (usuario == null || lote == null || !EmpresaAccesoHelper.TieneAcceso(usuario, lote.IdEmpresa))
                 return null;
             if (!PersonalizacionesEmpresaHelper.PuedeOperarCargue(usuario, lote.IdEmpresa))
@@ -1303,7 +1307,7 @@ namespace bufinscustomers.Controllers
             try
             {
                 bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
-                var bytes = GenerarExcelHallazgos(lote, _stagingService.ObtenerHallazgos(idLote), esIngles);
+                var bytes = GenerarExcelHallazgos(lote, stagingService.ObtenerHallazgos(idLote), esIngles);
                 return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", NombreArchivoHallazgos(lote, "xlsx"));
             }
             catch (Exception ex)
@@ -1362,7 +1366,7 @@ namespace bufinscustomers.Controllers
             try
             {
                 bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
-                var hallazgos = _stagingService.ObtenerHallazgos(idLote)
+                var hallazgos = stagingService.ObtenerHallazgos(idLote)
                     .OrderBy(x => x.Severidad == CargueLoteSeveridad.Error ? 0 : 1).ToList();
 
                 var adjuntos = new List<(string nombre, byte[] datos, string mime)>
@@ -1390,12 +1394,12 @@ namespace bufinscustomers.Controllers
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
                 string modoTexto = lote.Modo == 0 ? R("RevisarCargue_ModoEjecucion") : R("RevisarCargue_ModoHistorico");
 
-                new EmailService().EnviarHallazgosCargue(
+                emailService.EnviarHallazgosCargue(
                     string.Join(", ", listaCorreos), lote.NombreEmpresa, lote.Anio, modoTexto, lote.IdEscenario,
                     lote.NombreArchivo, lote.TotalErrores, lote.TotalAdvertencias, items,
                     mensaje, quienEnvia, adjuntos, esIngles);
 
-                new AuditoriaService().RegistrarCambio(
+                auditoriaService.RegistrarCambio(
                     AuditoriaTipo.Cargues, AuditoriaAccion.Enviar, "CargueLote", idLote.ToString(),
                     $"Informe de validación del cargue enviado por correo a {string.Join(", ", listaCorreos)}: '{lote.NombreEmpresa}' — año {lote.Anio}, escenario {lote.IdEscenario}, archivo '{lote.NombreArchivo}' ({lote.TotalErrores} errores, {lote.TotalAdvertencias} advertencias).",
                     null,

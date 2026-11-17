@@ -22,10 +22,11 @@ namespace bufinscustomers.Controllers
     ///    por permiso/menú, no aquí); solo puede ver su propia auditoría (<c>IdUsuario</c>).
     /// </summary>
     [ValidarSesion]
-    public class AuditoriaController : BaseController
+    public class AuditoriaController(
+        AuditoriaService svc,
+        EmpresaService empresaService,
+        NotificacionesService notificacionesService) : BaseController
     {
-        private readonly AuditoriaService _svc = new AuditoriaService();
-
         // ── Gate + alcance ──────────────────────────────────────────────────
 
         /// <summary>
@@ -74,9 +75,9 @@ namespace bufinscustomers.Controllers
             ViewBag.Embed = string.Equals(Request.Query["embed"], "1");
             ViewBag.EsSuperAdmin = esSuper;
             ViewBag.EsUsuarioNormal = esNormal;
-            ViewBag.Tipos = _svc.ObtenerTiposUsados();
+            ViewBag.Tipos = svc.ObtenerTiposUsados();
 
-            var empresas = new EmpresaService().ObtenerEmpresas();
+            var empresas = empresaService.ObtenerEmpresas();
             List<int> permitidasEmp = null;
             if (esNormal)
             {
@@ -90,7 +91,7 @@ namespace bufinscustomers.Controllers
             ViewBag.Empresas = empresas;
             ViewBag.Usuarios = esNormal
                 ? new List<KeyValuePair<int, string>>()
-                : _svc.ObtenerUsuariosParaFiltro(permitidasEmp);
+                : svc.ObtenerUsuariosParaFiltro(permitidasEmp);
 
             return View("~/Views/Informes/Auditoria.cshtml");
         }
@@ -115,8 +116,8 @@ namespace bufinscustomers.Controllers
             };
             AplicarAlcance(filtro, esSuper, esNormal);
 
-            var res = _svc.Consultar(filtro);
-            var resumen = _svc.Resumen(filtro);
+            var res = svc.Consultar(filtro);
+            var resumen = svc.Resumen(filtro);
 
             return Json(new
             {
@@ -172,7 +173,7 @@ namespace bufinscustomers.Controllers
             };
             AplicarAlcance(filtro, esSuper, esNormal);
 
-            var filas = _svc.ConsultarParaExport(filtro);
+            var filas = svc.ConsultarParaExport(filtro);
 
             using (var wb = new XLWorkbook())
             {
@@ -219,7 +220,7 @@ namespace bufinscustomers.Controllers
         {
             if (!PuedeAcceder(out bool esSuper, out bool esNormal)) return Prohibido();
 
-            var a = _svc.ObtenerPorId(id);
+            var a = svc.ObtenerPorId(id);
             if (a == null) return Json(new { success = false }, JsonRequestBehavior.AllowGet);
 
             if (!esSuper)
@@ -334,7 +335,7 @@ namespace bufinscustomers.Controllers
                 if (!completo && (!mesesConservar.HasValue || mesesConservar.Value < 1 || mesesConservar.Value > 120))
                     return Json(new { success = false, message = R("Audit_LimpiarMesesInvalido") });
 
-                int eliminados = _svc.Limpiar(mesesConservar, idEmpresa);
+                int eliminados = svc.Limpiar(mesesConservar, idEmpresa);
 
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 if (usuario != null)
@@ -342,7 +343,7 @@ namespace bufinscustomers.Controllers
                     string mensaje = completo
                         ? string.Format(R("Audit_NotifMsgTodo"), eliminados)
                         : string.Format(R("Audit_NotifMsgConservar"), eliminados, mesesConservar.Value);
-                    new NotificacionesService().Crear(usuario.Id, R("Notif_AuditoriaLimpiada"), mensaje, "warning", "/Auditoria");
+                    notificacionesService.Crear(usuario.Id, R("Notif_AuditoriaLimpiada"), mensaje, "warning", "/Auditoria");
                 }
 
                 return Json(new { success = true, eliminados });

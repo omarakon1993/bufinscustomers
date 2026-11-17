@@ -11,15 +11,22 @@ using System.IO;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class UsuarioController : BaseController
+    public class UsuarioController(
+        EmpresaService empresaService,
+        UsuarioService usuarioService2,
+        NotificacionesService notificacionesService,
+        AuditoriaService auditoriaService,
+        ClaveInicialService claveInicialService,
+        PasskeyService passkeyService,
+        DobleFactorService dobleFactorService,
+        MenuOpcionesService menuOpcionesService,
+        EmailService emailService2) : BaseController
     {
-        private EmpresaService _empresaService = new EmpresaService();
-
         // GET: Usuario
         [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
         public ActionResult Usuarios()
         {
-            var empresas = _empresaService.ObtenerEmpresas();
+            var empresas = empresaService.ObtenerEmpresas();
             var usuarioActual = UsuarioSesionHelper.UsuarioActual;
 
             // Admin 0/1 ve su propia empresa y las de su mismo grupo empresarial en los dropdowns
@@ -158,7 +165,7 @@ namespace bufinscustomers.Controllers
                 // Si no es Admin 2, verificar que el usuario a eliminar sea de su empresa
                 if (!UsuarioSesionHelper.EsSuperAdmin())
                 {
-                    var usuarioService = new UsuarioService();
+                    var usuarioService = usuarioService2;
                     var usuarioAEliminar = usuarioService.ObtenerUsuarioPorId(idUsuario);
 
                     if (usuarioAEliminar != null)
@@ -183,8 +190,8 @@ namespace bufinscustomers.Controllers
                 Bd.Ejecutar(CadenaConexion, "sp_EliminarUsuario", new { Id = idUsuario }, esSp: true);
 
                 SetSuccessMessage("Usuario eliminado correctamente.");
-                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_UsuarioEliminado"), null, "warning", "/Usuario/Usuarios");
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Eliminar,
+                notificacionesService.Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_UsuarioEliminado"), null, "warning", "/Usuario/Usuarios");
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Eliminar,
                     "Usuarios", idUsuario.ToString(), $"Usuario eliminado (Id {idUsuario})");
             }
             catch (Exception ex)
@@ -222,7 +229,7 @@ namespace bufinscustomers.Controllers
             oUsuario.Telefono = oUsuario.Telefono == null ? "" : oUsuario.Telefono;
 
             // Capturar el rol actual antes de actualizar, para detectar si cambia
-            var usuarioService = new UsuarioService();
+            var usuarioService = usuarioService2;
             var usuarioAntesDeEditar = usuarioService.ObtenerUsuarioPorId(oUsuario.Id);
             byte? adminAnterior = usuarioAntesDeEditar?.Admin ?? 0;
 
@@ -246,7 +253,7 @@ namespace bufinscustomers.Controllers
                         // Super Admin → empresa principal (Bufins) por defecto si no se indicó otra.
                         if (oUsuario.Admin == 2 && (oUsuario.IdEmpresa ?? 0) == 0)
                         {
-                            var idPrincipal = new EmpresaService().ObtenerIdEmpresaPrincipal();
+                            var idPrincipal = empresaService.ObtenerIdEmpresaPrincipal();
                             if (idPrincipal.HasValue) oUsuario.IdEmpresa = idPrincipal.Value;
                         }
 
@@ -268,7 +275,7 @@ namespace bufinscustomers.Controllers
                     if (oUsuario.Admin != adminAnterior)
                     {
                         AsignarPermisosPorDefecto(oUsuario.Id, oUsuario.Admin);
-                        new NotificacionesService().Crear(
+                        notificacionesService.Crear(
                             UsuarioSesionHelper.UsuarioActual?.Id ?? 0,
                             R("Notif_PermisosReiniciados"),
                             $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim(),
@@ -284,7 +291,7 @@ namespace bufinscustomers.Controllers
                 }
 
                 SetSuccessMessage("Usuario actualizado correctamente.");
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Editar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Editar,
                     "Usuarios", oUsuario.Id.ToString(),
                     $"Usuario editado: {oUsuario.Correo} (rol {oUsuario.Admin})", null,
                     new { oUsuario.Id, oUsuario.Nombre, oUsuario.Apellidos, oUsuario.Correo, oUsuario.Usuario, oUsuario.Admin, oUsuario.IdEmpresa },
@@ -374,7 +381,7 @@ namespace bufinscustomers.Controllers
             // cuando no se indicó otra.
             if (oUsuario.Admin == 2 && (oUsuario.IdEmpresa ?? 0) == 0)
             {
-                var idPrincipal = new EmpresaService().ObtenerIdEmpresaPrincipal();
+                var idPrincipal = empresaService.ObtenerIdEmpresaPrincipal();
                 if (idPrincipal.HasValue) oUsuario.IdEmpresa = idPrincipal.Value;
             }
 
@@ -419,7 +426,7 @@ namespace bufinscustomers.Controllers
                 }
 
                 // Cambio de clave obligatorio en el primer inicio de sesión (opcional)
-                if (ExigirCambioClave && usuarioId > 0 && !new ClaveInicialService().Marcar(usuarioId, true))
+                if (ExigirCambioClave && usuarioId > 0 && !claveInicialService.Marcar(usuarioId, true))
                     SetInfoMessage(R("Usr_ExigirCambioClaveNoAplicado"));
 
                 // Procesar imagen si se cargó una y el usuario se registró correctamente
@@ -436,8 +443,8 @@ namespace bufinscustomers.Controllers
                     }
                 }
                 SetSuccessMessage(mensaje);
-                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_UsuarioCreado"), $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim(), "success", "/Usuario/Usuarios");
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Crear,
+                notificacionesService.Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_UsuarioCreado"), $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim(), "success", "/Usuario/Usuarios");
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Crear,
                     "Usuarios", usuarioId.ToString(),
                     $"Usuario creado: {oUsuario.Correo} (rol {oUsuario.Admin}){(ExigirCambioClave ? ", cambio de clave obligatorio al primer ingreso" : "")}", null,
                     new { Id = usuarioId, oUsuario.Nombre, oUsuario.Apellidos, oUsuario.Correo, oUsuario.Usuario, oUsuario.Admin, oUsuario.IdEmpresa },
@@ -457,7 +464,7 @@ namespace bufinscustomers.Controllers
         [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
         public ActionResult CambiarClave(int idUsuario, string nuevaClave, string confirmarNuevaClave)
         {
-            var usuarioService = new UsuarioService();
+            var usuarioService = usuarioService2;
             var usuarioDestino = usuarioService.ObtenerUsuarioPorId(idUsuario);
 
             // Si no es SuperAdmin, solo puede cambiar claves de usuarios de su empresa o de su mismo grupo empresarial
@@ -516,7 +523,7 @@ namespace bufinscustomers.Controllers
         [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
         public JsonResult EnviarInfoCorreo(int idUsuario)
         {
-            var usuarioService = new UsuarioService();
+            var usuarioService = usuarioService2;
             var usuarioDestino = usuarioService.ObtenerUsuarioPorId(idUsuario);
 
             if (usuarioDestino == null)
@@ -558,19 +565,19 @@ namespace bufinscustomers.Controllers
             if (!UsuarioSesionHelper.EsSuperAdmin())
                 return Json(new { success = false, message = R("Usr_ErrorSinPermiso") });
 
-            var usuarioDestino = new UsuarioService().ObtenerUsuarioPorId(idUsuario);
+            var usuarioDestino = usuarioService2.ObtenerUsuarioPorId(idUsuario);
             if (usuarioDestino == null)
                 return Json(new { success = false, message = R("Usr_ErrorNoEncontrado") });
 
-            int passkeys = new PasskeyService().Listar(idUsuario).Count;
-            if (!new DobleFactorService().Reiniciar(idUsuario))
+            int passkeys = passkeyService.Listar(idUsuario).Count;
+            if (!dobleFactorService.Reiniciar(idUsuario))
                 return Json(new { success = false, message = R("Usr_2FA_ErrorReiniciar") });
 
             var actual = UsuarioSesionHelper.UsuarioActual;
-            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Editar,
+            auditoriaService.RegistrarSeguridad(AuditoriaAccion.Editar,
                 $"Métodos de autenticación reiniciados por el Super Admin {actual?.Usuario} para el usuario {usuarioDestino.Usuario} (Id {idUsuario}): app autenticadora y {passkeys} passkey(s)",
                 idUsuario, ((usuarioDestino.Nombre ?? "") + " " + (usuarioDestino.Apellidos ?? "")).Trim(), usuarioDestino.IdEmpresa);
-            new NotificacionesService().Crear(idUsuario, R("Notif_2FA_ReiniciadoTitulo"), R("Notif_2FA_ReiniciadoMsg"), "warning");
+            notificacionesService.Crear(idUsuario, R("Notif_2FA_ReiniciadoTitulo"), R("Notif_2FA_ReiniciadoMsg"), "warning");
             AlertaUsuarioCorreo.Enviar(usuarioDestino.Correo, R("Notif_2FA_ReiniciadoTitulo"), R("Notif_2FA_ReiniciadoMsg"));
 
             return Json(new { success = true, message = R("Usr_2FA_Reiniciado") });
@@ -585,7 +592,7 @@ namespace bufinscustomers.Controllers
         {
             if (nivelAdmin == 2) return;
 
-            var menuService = new MenuOpcionesService();
+            var menuService = menuOpcionesService;
             // Menús personalizados por empresa: solo las que aplican a la empresa de este usuario.
             var noAplican = menuService.ObtenerIdsOpcionesNoAplicables(idUsuario);
             var todasLasOpciones = menuService.ObtenerTodas().Where(o => !noAplican.Contains(o.Id)).ToList();
@@ -635,13 +642,13 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                string nombreEmpresa = _empresaService.ObtenerEmpresas()
+                string nombreEmpresa = empresaService.ObtenerEmpresas()
                     .FirstOrDefault(e => e.Id == oUsuario.IdEmpresa)?.Nombre;
                 string nombreCompleto = $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim();
                 bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
                 string enlaceLogin = Url.Action("Login", "Acceso", null, Request.Url.Scheme);
 
-                var emailService = new EmailService();
+                var emailService = emailService2;
                 if (esReenvio)
                 {
                     emailService.EnviarReenvioInfoUsuario(
@@ -672,13 +679,13 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                string nombreEmpresa = _empresaService.ObtenerEmpresas()
+                string nombreEmpresa = empresaService.ObtenerEmpresas()
                     .FirstOrDefault(e => e.Id == oUsuario.IdEmpresa)?.Nombre;
                 string nombreCompleto = $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim();
                 bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
                 string enlaceLogin = Url.Action("Login", "Acceso", null, Request.Url.Scheme);
 
-                new EmailService().EnviarNotificacionUsuarioActualizado(
+                emailService2.EnviarNotificacionUsuarioActualizado(
                     oUsuario.Correo, nombreCompleto, oUsuario.Usuario, nombreEmpresa, oUsuario.Telefono, enlaceLogin, esIngles);
                 return true;
             }

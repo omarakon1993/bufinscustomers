@@ -7,10 +7,13 @@ using System.Linq;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class AnalisisIAController : BaseController
+    public class AnalisisIAController(
+        InformeTablasDatosService service,
+        ConfiguracionSistemaService configuracionSistemaService,
+        IAUsoService iAUsoService,
+        ConfiguracionIAEmpresaService configuracionIAEmpresaService,
+        IAUsoReporteService iAUsoReporteService) : BaseController
     {
-        private readonly InformeTablasDatosService _service = new InformeTablasDatosService();
-
         public ActionResult Index()
         {
             var usuario        = UsuarioSesionHelper.UsuarioActual;
@@ -27,21 +30,21 @@ namespace bufinscustomers.Controllers
 
             // Solo las tablas de resultados de Ejecución de Modelos — con el mismo nombre que
             // tienen configurado en Gestor de Modelos (ver InformeTablasDatosService.ObtenerTablasModelos()).
-            ViewBag.Tablas           = _service.ObtenerTablasModelos();
+            ViewBag.Tablas           = service.ObtenerTablasModelos();
             ViewBag.EsAdmin          = esSuperAdmin;
             ViewBag.EsAdminEmpresa   = esAdminEmpresa;
             ViewBag.IdEmpresaUsuario = idEmpresa;
 
             if (esSuperAdmin)
-                ViewBag.Empresas = _service.ObtenerEmpresas();
+                ViewBag.Empresas = service.ObtenerEmpresas();
             else
             {
                 var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new System.Collections.Generic.List<int>();
-                ViewBag.Empresas = _service.ObtenerEmpresas().Where(e => idsPermitidos.Contains(e.Id)).ToList();
+                ViewBag.Empresas = service.ObtenerEmpresas().Where(e => idsPermitidos.Contains(e.Id)).ToList();
             }
 
             // Modelo IA activo desde BD (mostrado en el badge del header)
-            var cfgSvc = new ConfiguracionSistemaService();
+            var cfgSvc = configuracionSistemaService;
             string modeloBD = cfgSvc.ObtenerValor("OpenAIModel");
             ViewBag.ModeloIA = !string.IsNullOrWhiteSpace(modeloBD) ? modeloBD : "gpt-4o";
 
@@ -73,8 +76,8 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                var iaUso = new IAUsoService();
-                var cfg = new ConfiguracionIAEmpresaService().ObtenerConfig(empresaId);
+                var iaUso = iAUsoService;
+                var cfg = configuracionIAEmpresaService.ObtenerConfig(empresaId);
                 var estado = iaUso.ObtenerEstadoConsumo(empresaId, cfg);
 
                 var hoy = DateTime.Now.Date;
@@ -84,8 +87,8 @@ namespace bufinscustomers.Controllers
                 int diasTranscurridos = Math.Max(1, (hoy - inicio).Days + 1);
                 long proyeccion = (long)Math.Round(estado.Consumido / (double)diasTranscurridos * diasPeriodo);
 
-                var reporte = new IAUsoReporteService();
-                string nombreEmpresa = _service.ObtenerEmpresas().FirstOrDefault(e => e.Id == empresaId)?.Nombre ?? ("#" + empresaId);
+                var reporte = iAUsoReporteService;
+                string nombreEmpresa = service.ObtenerEmpresas().FirstOrDefault(e => e.Id == empresaId)?.Nombre ?? ("#" + empresaId);
 
                 return Json(new
                 {
@@ -137,11 +140,11 @@ namespace bufinscustomers.Controllers
             DateTime fDesde = DateTime.TryParse(desde, out var d) ? d.Date : fHasta.AddDays(-30);
             if (fDesde > fHasta) { var tmp = fDesde; fDesde = fHasta; fHasta = tmp; }
 
-            var reporte = new IAUsoReporteService();
+            var reporte = iAUsoReporteService;
             var porFuncion = reporte.PorFuncion(empresaId, fDesde, fHasta);
             var porUsuario = reporte.PorUsuario(empresaId, fDesde, fHasta);
             var detalle = reporte.Detalle(empresaId, fDesde, fHasta);
-            string nombreEmpresa = _service.ObtenerEmpresas().FirstOrDefault(e => e.Id == empresaId)?.Nombre ?? ("#" + empresaId);
+            string nombreEmpresa = service.ObtenerEmpresas().FirstOrDefault(e => e.Id == empresaId)?.Nombre ?? ("#" + empresaId);
 
             using (var wb = new XLWorkbook())
             {

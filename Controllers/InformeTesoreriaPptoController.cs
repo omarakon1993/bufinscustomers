@@ -19,11 +19,12 @@ namespace bufinscustomers.Controllers
     /// acotado por empresa/grupo.
     /// </summary>
     [ValidarSesion]
-    public class InformeTesoreriaPptoController : BaseController
+    public class InformeTesoreriaPptoController(
+        InformeTesoreriaPptoService service,
+        InformeTablasDatosService empresaService,
+        EmailService emailService,
+        AuditoriaService auditoriaService) : BaseController
     {
-        private readonly InformeTesoreriaPptoService _service = new InformeTesoreriaPptoService();
-        private readonly InformeTablasDatosService _empresaService = new InformeTablasDatosService();
-
         /// <summary>Prompt por defecto de los insights (cuando no existe RESUMEN_TESORERIA_PPTO en GestorPrompts). La
         /// vista corta la respuesta por las etiquetas "Posición de caja:", "Financiación:" y "Acción recomendada:" para
         /// pintar 3 tarjetas — cualquier prompt personalizado debe conservar esas 3 etiquetas.</summary>
@@ -50,7 +51,7 @@ namespace bufinscustomers.Controllers
             var usuario = UsuarioSesionHelper.UsuarioActual;
             var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
-            var empresas = _empresaService.ObtenerEmpresas();
+            var empresas = empresaService.ObtenerEmpresas();
             if (!esAdmin)
             {
                 var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
@@ -74,9 +75,9 @@ namespace bufinscustomers.Controllers
                 if (!TieneAccesoEmpresa(idEmpresa))
                     return Json(new { success = false, message = R("Common_SinPermisos") });
 
-                var meses = _service.ObtenerMesesDisponibles(idEmpresa, idEscenario)
+                var meses = service.ObtenerMesesDisponibles(idEmpresa, idEscenario)
                     .Select(m => new { anio = m.Anio, mes = m.Mes, etiqueta = m.Etiqueta });
-                var escenariosConDatos = _service.ObtenerEscenariosConDatos(idEmpresa);
+                var escenariosConDatos = service.ObtenerEscenariosConDatos(idEmpresa);
                 return Json(new { success = true, meses, escenariosConDatos });
             }
             catch (Exception ex)
@@ -95,7 +96,7 @@ namespace bufinscustomers.Controllers
                 if (filtros == null || !TieneAccesoEmpresa(filtros.IdEmpresa))
                     return Json(new { success = false, message = R("Common_SinPermisos") });
 
-                var reporte = _service.ConstruirReporte(filtros);
+                var reporte = service.ConstruirReporte(filtros);
                 var jsonResult = Json(new { success = true, reporte });
                 jsonResult.MaxJsonLength = int.MaxValue;
                 return jsonResult;
@@ -146,11 +147,11 @@ namespace bufinscustomers.Controllers
                 var denegado = ValidarAccesoIA(usuario, esAdmin, idEmpresa, IAFuncion.InsightsTesoreria);
                 if (denegado != null) return denegado;
 
-                var reporte = _service.ConstruirReporte(filtros);
+                var reporte = service.ConstruirReporte(filtros);
                 if (reporte.SinDatos)
                     return Json(new IAConsultaResponse { Exitoso = false, Error = R("TesPpto_SinDatosDesc") });
 
-                string nombreEmpresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? "—";
+                string nombreEmpresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? "—";
                 string filtrosDescripcion = DescripcionFiltros(reporte, nombreEmpresa);
 
                 var response = await new IAGateway().EjecutarAsync(new IASolicitud
@@ -209,11 +210,11 @@ namespace bufinscustomers.Controllers
                 var denegado = ValidarAccesoIA(usuario, esAdmin, idEmpresa, IAFuncion.InsightsTesoreria);
                 if (denegado != null) return denegado;
 
-                var reporte = _service.ConstruirReporte(filtros);
+                var reporte = service.ConstruirReporte(filtros);
                 if (reporte.SinDatos)
                     return Json(new IAConsultaResponse { Exitoso = false, Error = R("TesPpto_SinDatosDesc") });
 
-                string nombreEmpresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? "—";
+                string nombreEmpresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? "—";
                 string filtrosDescripcion = DescripcionFiltros(reporte, nombreEmpresa);
 
                 var response = await new IAGateway().EjecutarAsync(new IASolicitud
@@ -255,7 +256,7 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                var reporte = _service.ConstruirReporte(filtros);
+                var reporte = service.ConstruirReporte(filtros);
                 if (reporte.SinDatos || reporte.Filas.Count == 0)
                 {
                     TempData["InfoMessage"] = R("TesPpto_SinDatosDesc");
@@ -292,12 +293,12 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                var reporte = _service.ConstruirReporte(filtros);
+                var reporte = service.ConstruirReporte(filtros);
                 if (reporte.SinDatos || reporte.Filas.Count == 0)
                     return Json(new { exito = false, mensaje = R("TesPpto_SinDatosDesc") });
 
                 bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
-                string empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
+                string empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
                 string escenario = EscenarioCacheHelper.ObtenerEscenariosCacheados()
                     .FirstOrDefault(e => e.Id == filtros.IdEscenario)?.Nombre ?? ("#" + filtros.IdEscenario);
 
@@ -325,10 +326,10 @@ namespace bufinscustomers.Controllers
                 }
 
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
-                new EmailService().EnviarInforme(string.Join(", ", lista), R("TesPpto_PageTitle"), empresa, false, contexto, kpis,
+                emailService.EnviarInforme(string.Join(", ", lista), R("TesPpto_PageTitle"), empresa, false, contexto, kpis,
                     null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(filtros.IdEmpresa), _tema);
 
-                new AuditoriaService().RegistrarCambio(
+                auditoriaService.RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeTesoreriaPpto", filtros.IdEmpresa.ToString(),
                     $"Informe de tesorería del presupuesto enviado por correo a {string.Join(", ", lista)}: '{empresa}' — {periodo}, escenario {filtros.IdEscenario}.",
                     null,
@@ -354,7 +355,7 @@ namespace bufinscustomers.Controllers
         /// (con gráfico nativo), Detalle por mes y Puente de caja.</summary>
         private byte[] GenerarExcel(TesoreriaReporteViewModel r, bool soloSubtotales, out string nombreArchivo)
         {
-            string empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == r.IdEmpresa)?.Nombre ?? "Empresa";
+            string empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == r.IdEmpresa)?.Nombre ?? "Empresa";
             string periodo = NombrePeriodo(r);
             string medida = R("TesPpto_Medida_" + r.Medida), medidaOtra = R("TesPpto_Medida_" + TesoreriaMedida.Otra(r.Medida));
             string nombreEsc = r.HayEscenarioComparar

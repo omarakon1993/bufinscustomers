@@ -9,10 +9,8 @@ using System.IO;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class VariablesPBIController : BaseController
+    public class VariablesPBIController(VariablesPBIService service) : BaseController
     {
-        private readonly VariablesPBIService _service = new VariablesPBIService();
-
         private bool VerificarSuperAdmin()
         {
             return UsuarioSesionHelper.EsSuperAdmin();
@@ -26,8 +24,8 @@ namespace bufinscustomers.Controllers
             if (!VerificarSuperAdmin())
                 return RedirectToAction("Index", "Home");
 
-            ViewBag.Tablas = _service.ObtenerTablasDisponibles();
-            ViewBag.EstadoActual = _service.ObtenerEstadoActual();
+            ViewBag.Tablas = service.ObtenerTablasDisponibles();
+            ViewBag.EstadoActual = service.ObtenerEstadoActual();
             return View("~/Views/Informes/VariablesPBI.cshtml");
         }
 
@@ -43,7 +41,7 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                var resultado = _service.ConsultarDatos(filtros);
+                var resultado = service.ConsultarDatos(filtros);
 
                 var jsonResult = Json(new
                 {
@@ -76,7 +74,7 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                var resultado = _service.ConsultarDatos(filtros);
+                var resultado = service.ConsultarDatos(filtros);
 
                 if (resultado.TotalRegistros == 0)
                 {

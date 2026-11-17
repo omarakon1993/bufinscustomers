@@ -6,11 +6,12 @@ using System.Linq;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class HistorialVersionesCarguesController : BaseController
+    public class HistorialVersionesCarguesController(
+        HistorialVersionesCarguesService service,
+        EmpresaService empresaService,
+        NotificacionesService notificacionesService,
+        AuditoriaService auditoriaService) : BaseController
     {
-        private readonly HistorialVersionesCarguesService _service = new HistorialVersionesCarguesService();
-        private readonly EmpresaService _empresaService = new EmpresaService();
-
         [RequierePermiso("DATOS_HISTORIAL_CARGUES")]
         public ActionResult Index(int? idEmpresa, int? anio, byte? modo, int? escenario)
         {
@@ -32,8 +33,8 @@ namespace bufinscustomers.Controllers
                     : usuario.IdEmpresa;
             }
 
-            var versiones = _service.ObtenerHistorial(idEmpresa, anio, modo, escenario);
-            var todasEmpresas = _empresaService.ObtenerEmpresas();
+            var versiones = service.ObtenerHistorial(idEmpresa, anio, modo, escenario);
+            var todasEmpresas = empresaService.ObtenerEmpresas();
             var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario);
 
             var vm = new HistorialVersionesPageViewModel
@@ -52,7 +53,7 @@ namespace bufinscustomers.Controllers
             // Respaldos automáticos previos a restaurar (solo quien puede restaurar y solo de sus empresas/grupo).
             if (esSuperAdmin || usuario.Admin >= 1)
             {
-                vm.Respaldos = _service.ObtenerRespaldos(idsPermitidos)
+                vm.Respaldos = service.ObtenerRespaldos(idsPermitidos)
                     .Where(r => !idEmpresa.HasValue || r.IdEmpresa == idEmpresa.Value)
                     .ToList();
             }
@@ -78,7 +79,7 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Index", new { idEmpresa = idEmpresaFiltro, anio = anioFiltro, modo = modoFiltro, escenario = escenarioFiltro });
             }
 
-            var version = _service.ObtenerPorId(idHistorial);
+            var version = service.ObtenerPorId(idHistorial);
             if (version == null)
             {
                 SetErrorMessage(R("Hist_ErrorVersionNoEncontrada"));
@@ -95,16 +96,16 @@ namespace bufinscustomers.Controllers
             // «Actual» (la del último cargue) es válido y es justo la forma de deshacer ese último cargue.
 
             string nombreUsuario = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
-            bool exito = _service.EjecutarRollback(idHistorial, usuario.Id, nombreUsuario, out int? idRespaldo, out ImpactoCargue bloqueo);
+            bool exito = service.EjecutarRollback(idHistorial, usuario.Id, nombreUsuario, out int? idRespaldo, out ImpactoCargue bloqueo);
 
             if (exito)
             {
                 string msg = string.Format(R("Hist_RollbackExitoso"), version.Anio, version.NombreEmpresa);
                 SetSuccessMessage(idRespaldo.HasValue ? msg + " " + R("Hist_RollbackRespaldo") : msg);
-                new NotificacionesService().Crear(usuario.Id, R("Notif_RollbackEjecutado"), msg, "success", "/HistorialVersionesCargues");
+                notificacionesService.Crear(usuario.Id, R("Notif_RollbackEjecutado"), msg, "success", "/HistorialVersionesCargues");
 
                 // El rollback reemplaza los datos del año por los de una versión anterior: queda en la auditoría central.
-                new AuditoriaService().RegistrarCambio(
+                auditoriaService.RegistrarCambio(
                     AuditoriaTipo.Cargues, AuditoriaAccion.Restaurar, "HistorialVersionCargue", idHistorial.ToString(),
                     $"Restauró el estado previo al cargue #{idHistorial} de '{version.NombreEmpresa}' — año {version.Anio}, {(version.Modo == 0 ? "ejecución" : "histórico")}, escenario {version.IdEscenario} (cargue del {version.FechaCargue:dd/MM/yyyy HH:mm} por {version.NombreUsuario}, archivo '{version.NombreArchivo}'). Los datos actuales de ese año fueron reemplazados por la copia de seguridad de {version.TotalFilas:N0} fila(s) tomada justo antes de ese cargue." + (idRespaldo.HasValue ? $" Antes de reemplazar, se guardó un respaldo de los datos que había (respaldo #{idRespaldo})." : " No se guardó respaldo de los datos reemplazados (falta el script 034)."),
                     null,
@@ -116,7 +117,7 @@ namespace bufinscustomers.Controllers
                 // Regla de oro: nunca se deja un año vacío ni una tabla bajo el umbral de bloqueo. No se cambió nada.
                 string msgBloq = MensajeBloqueo(bloqueo, version.Anio);
                 SetErrorMessage(msgBloq);
-                new AuditoriaService().RegistrarCambio(
+                auditoriaService.RegistrarCambio(
                     AuditoriaTipo.Cargues, AuditoriaAccion.Bloqueo, "HistorialVersionCargue", idHistorial.ToString(),
                     $"Deshacer BLOQUEADO en '{version.NombreEmpresa}' — año {version.Anio}, {(version.Modo == 0 ? "ejecución" : "histórico")}, escenario {version.IdEscenario}: la copia dejaría {bloqueo.TotalExistentes:N0} fila(s) en solo {bloqueo.TotalNuevas:N0}. No se cambió ningún dato.",
                     null, new { idHistorial, existentes = bloqueo.TotalExistentes, copia = bloqueo.TotalNuevas },
@@ -126,7 +127,7 @@ namespace bufinscustomers.Controllers
             {
                 string msg = R("Hist_ErrorRollback");
                 SetErrorMessage(msg);
-                new NotificacionesService().Crear(usuario.Id, R("Notif_ErrorRollback"), msg, "error", "/HistorialVersionesCargues");
+                notificacionesService.Crear(usuario.Id, R("Notif_ErrorRollback"), msg, "error", "/HistorialVersionesCargues");
             }
 
             return RedirectToAction("Index", new { idEmpresa = idEmpresaFiltro, anio = anioFiltro, modo = modoFiltro, escenario = escenarioFiltro });
@@ -149,7 +150,7 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Index", volver);
             }
 
-            var resp = _service.ObtenerRespaldoPorId(idRespaldo);
+            var resp = service.ObtenerRespaldoPorId(idRespaldo);
             if (resp == null || !EmpresaAccesoHelper.TieneAcceso(usuario, resp.IdEmpresa))
             {
                 SetErrorMessage(R("Hist_Resp_NoEncontrado"));
@@ -157,13 +158,13 @@ namespace bufinscustomers.Controllers
             }
 
             string nombreUsuario = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
-            if (_service.RecuperarRespaldo(idRespaldo, usuario.Id, nombreUsuario, out int? idRespaldoNuevo, out ImpactoCargue bloqueoRec))
+            if (service.RecuperarRespaldo(idRespaldo, usuario.Id, nombreUsuario, out int? idRespaldoNuevo, out ImpactoCargue bloqueoRec))
             {
                 string msg = string.Format(R("Hist_Resp_Ok"), resp.Anio, resp.NombreEmpresa);
                 SetSuccessMessage(idRespaldoNuevo.HasValue ? msg + " " + R("Hist_RollbackRespaldo") : msg);
-                new NotificacionesService().Crear(usuario.Id, R("Notif_RollbackEjecutado"), msg, "success", "/HistorialVersionesCargues");
+                notificacionesService.Crear(usuario.Id, R("Notif_RollbackEjecutado"), msg, "success", "/HistorialVersionesCargues");
 
-                new AuditoriaService().RegistrarCambio(
+                auditoriaService.RegistrarCambio(
                     AuditoriaTipo.Cargues, AuditoriaAccion.Restaurar, "RespaldoRestauracion", idRespaldo.ToString(),
                     $"Recuperó el respaldo #{idRespaldo} de '{resp.NombreEmpresa}' — año {resp.Anio}, {(resp.Modo == 0 ? "ejecución" : "histórico")}, escenario {resp.IdEscenario} (tomado el {resp.Fecha:dd/MM/yyyy HH:mm} al restaurar la versión #{resp.IdHistorialRestaurado}). Los datos actuales de ese año fueron reemplazados por esos {resp.TotalFilas:N0} fila(s)." +
                     (idRespaldoNuevo.HasValue ? $" Se guardó antes un respaldo de lo reemplazado (respaldo #{idRespaldoNuevo})." : ""),
@@ -174,7 +175,7 @@ namespace bufinscustomers.Controllers
             else if (bloqueoRec != null)
             {
                 SetErrorMessage(MensajeBloqueo(bloqueoRec, resp.Anio));
-                new AuditoriaService().RegistrarCambio(
+                auditoriaService.RegistrarCambio(
                     AuditoriaTipo.Cargues, AuditoriaAccion.Bloqueo, "RespaldoRestauracion", idRespaldo.ToString(),
                     $"Recuperar respaldo BLOQUEADO en '{resp.NombreEmpresa}' — año {resp.Anio}: el respaldo dejaría {bloqueoRec.TotalExistentes:N0} fila(s) en solo {bloqueoRec.TotalNuevas:N0}. No se cambió ningún dato.",
                     null, new { idRespaldo }, resp.IdEmpresa, entidadNombre: resp.NombreEmpresa);
@@ -182,7 +183,7 @@ namespace bufinscustomers.Controllers
             else
             {
                 SetErrorMessage(R("Hist_Resp_Error"));
-                new NotificacionesService().Crear(usuario.Id, R("Notif_ErrorRollback"), R("Hist_Resp_Error"), "error", "/HistorialVersionesCargues");
+                notificacionesService.Crear(usuario.Id, R("Notif_ErrorRollback"), R("Hist_Resp_Error"), "error", "/HistorialVersionesCargues");
             }
 
             return RedirectToAction("Index", volver);

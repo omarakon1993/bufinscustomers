@@ -10,10 +10,8 @@ namespace bufinscustomers.Controllers
     /// </summary>
     [ValidarSesion]
     [SoloSuperAdmin]
-    public class PulsoDatosController : BaseController
+    public class PulsoDatosController(PulsoActualizacionService svc, AuditoriaService auditoriaService) : BaseController
     {
-        private readonly PulsoActualizacionService _svc = new PulsoActualizacionService();
-
         public ActionResult Index()
         {
             return View("~/Views/Configuracion/PulsoDatos.cshtml");
@@ -23,7 +21,7 @@ namespace bufinscustomers.Controllers
         [HttpGet]
         public JsonResult Estado()
         {
-            var r = Json(_svc.ObtenerEstado(), JsonRequestBehavior.AllowGet);
+            var r = Json(svc.ObtenerEstado(), JsonRequestBehavior.AllowGet);
             Response.Cache.SetCacheability(HttpCacheability.NoCache);
             return r;
         }
@@ -32,7 +30,7 @@ namespace bufinscustomers.Controllers
         [HttpGet]
         public JsonResult Uso()
         {
-            var r = Json(_svc.ObtenerUso(30), JsonRequestBehavior.AllowGet);
+            var r = Json(svc.ObtenerUso(30), JsonRequestBehavior.AllowGet);
             Response.Cache.SetCacheability(HttpCacheability.NoCache);
             return r;
         }
@@ -42,10 +40,10 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public JsonResult GuardarRutas(string exe, string datos)
         {
-            var err = _svc.GuardarRutas(exe, datos);
+            var err = svc.GuardarRutas(exe, datos);
             if (err == null)
             {
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Editar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Editar,
                     "PulsoDatos", "rutas", "Rutas de actualización de Pulso Bufins",
                     null, new { exe, datos }, UsuarioSesionHelper.UsuarioActual?.IdEmpresa);
                 return Json(new { ok = true, mensaje = R("ObsDatos_MsgRutasOk") });
@@ -58,10 +56,10 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public JsonResult Actualizar(bool forzar = false)
         {
-            var res = _svc.Iniciar(forzar);
+            var res = svc.Iniciar(forzar);
             if (res.Ok)
             {
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Ejecutar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Ejecutar,
                     "PulsoDatos", "etl", "Actualización de datos de Pulso Bufins (bufins.com)" + (forzar ? " [forzada]" : ""),
                     null, new { forzar }, UsuarioSesionHelper.UsuarioActual?.IdEmpresa);
                 return Json(new { ok = true, mensaje = R("ObsDatos_MsgIniciado") });

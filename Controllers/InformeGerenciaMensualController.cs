@@ -18,11 +18,13 @@ namespace bufinscustomers.Controllers
     /// </summary>
     [ValidarSesion]
     [RequierePermiso("INFORMES_GERENCIA_MENSUAL")]
-    public class InformeGerenciaMensualController : BaseController
+    public class InformeGerenciaMensualController(
+        InformeGerenciaMensualService service,
+        InformeTablasDatosService empresaService,
+        EmailService emailService,
+        AuditoriaService auditoriaService,
+        ComentariosGestionService comentariosGestionService) : BaseController
     {
-        private readonly InformeGerenciaMensualService _service = new InformeGerenciaMensualService();
-        private readonly InformeTablasDatosService _empresaService = new InformeTablasDatosService();
-
         /// <summary>Prompt por defecto del resumen (si no existe RESUMEN_GERENCIA_MENSUAL en GestorPrompts). La vista corta por las
         /// etiquetas "Resultado:", "Caja y balance:" y "Foco del mes:".</summary>
         private const string PromptResumenPorDefecto =
@@ -44,7 +46,7 @@ namespace bufinscustomers.Controllers
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
-            var empresas = _empresaService.ObtenerEmpresas();
+            var empresas = empresaService.ObtenerEmpresas();
             if (!esAdmin)
             {
                 var ids = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
@@ -63,7 +65,7 @@ namespace bufinscustomers.Controllers
             try
             {
                 if (!TieneAccesoEmpresa(idEmpresa)) return Json(new { success = false, message = R("Common_SinPermisos") });
-                var meses = _service.ObtenerMesesDisponibles(idEmpresa, idEscenario)
+                var meses = service.ObtenerMesesDisponibles(idEmpresa, idEscenario)
                     .OrderByDescending(m => m.Anio).ThenByDescending(m => m.Mes)
                     .Select(m => new { anio = m.Anio, mes = m.Mes, etiqueta = m.Etiqueta });
                 return Json(new { success = true, meses });
@@ -83,7 +85,7 @@ namespace bufinscustomers.Controllers
             {
                 if (filtros == null || !TieneAccesoEmpresa(filtros.IdEmpresa) || filtros.Mes < 1 || filtros.Mes > 12)
                     return Json(new { success = false, message = R("Common_SinPermisos") });
-                var json = Json(new { success = true, reporte = _service.Construir(filtros) });
+                var json = Json(new { success = true, reporte = service.Construir(filtros) });
                 json.MaxJsonLength = int.MaxValue;
                 return json;
             }
@@ -121,10 +123,10 @@ namespace bufinscustomers.Controllers
                 var denegado = ValidarAccesoIA(usuario, esAdmin, idEmpresa, IAFuncion.InsightsGerenciaMensual);
                 if (denegado != null) return denegado;
 
-                var reporte = _service.Construir(filtros);
+                var reporte = service.Construir(filtros);
                 if (reporte.SinDatos) return Json(new IAConsultaResponse { Exitoso = false, Error = R("GM_SinDatosDesc") });
 
-                string nombreEmpresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? "—";
+                string nombreEmpresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? "—";
                 string desc = Descripcion(nombreEmpresa, reporte);
                 var response = await new IAGateway().EjecutarAsync(new IASolicitud
                 {
@@ -160,9 +162,9 @@ namespace bufinscustomers.Controllers
                 var denegado = ValidarAccesoIA(usuario, esAdmin, idEmpresa, IAFuncion.InsightsGerenciaMensual);
                 if (denegado != null) return denegado;
 
-                var reporte = _service.Construir(filtros);
+                var reporte = service.Construir(filtros);
                 if (reporte.SinDatos) return Json(new IAConsultaResponse { Exitoso = false, Error = R("GM_SinDatosDesc") });
-                string nombreEmpresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? "—";
+                string nombreEmpresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? "—";
                 string desc = Descripcion(nombreEmpresa, reporte);
                 var response = await new IAGateway().EjecutarAsync(new IASolicitud
                 {
@@ -188,7 +190,7 @@ namespace bufinscustomers.Controllers
                     TempData["ErrorMessage"] = R("Common_SinPermisos");
                     return RedirectToAction("Index");
                 }
-                var reporte = _service.Construir(filtros);
+                var reporte = service.Construir(filtros);
                 if (reporte.SinDatos)
                 {
                     TempData["InfoMessage"] = R("GM_SinDatosDesc");
@@ -215,11 +217,11 @@ namespace bufinscustomers.Controllers
                 return Json(new { exito = false, mensaje = error });
             try
             {
-                var r = _service.Construir(filtros);
+                var r = service.Construir(filtros);
                 if (r.SinDatos) return Json(new { exito = false, mensaje = R("GM_SinDatosDesc") });
 
                 bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
-                string empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
+                string empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
                 string escenario = EscenarioCacheHelper.ObtenerEscenariosCacheados().FirstOrDefault(e => e.Id == filtros.IdEscenario)?.Nombre ?? ("#" + filtros.IdEscenario);
                 var bytes = GenerarExcel(filtros, r, out string nombreArchivo);
                 var adjuntos = InformeCorreoHelper.Adjuntos(nombreArchivo, bytes, InformeCorreoHelper.PdfDesdeBase64(pdfBase64));
@@ -240,11 +242,11 @@ namespace bufinscustomers.Controllers
                 }
 
                 string quien = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
-                new EmailService().EnviarInforme(string.Join(", ", lista), R("GM_PageTitle"), empresa, false, contexto, kpis, tablaTitulo, columnas, filas,
+                emailService.EnviarInforme(string.Join(", ", lista), R("GM_PageTitle"), empresa, false, contexto, kpis, tablaTitulo, columnas, filas,
                     mensaje, quien, adjuntos, esIngles, ExcelLogoHelper.Png(filtros.IdEmpresa),
                     ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA));
 
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeGerenciaMensual", filtros.IdEmpresa.ToString(),
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeGerenciaMensual", filtros.IdEmpresa.ToString(),
                     $"Informe mensual de gerencia enviado por correo a {string.Join(", ", lista)}: '{empresa}' — cierre {cierre}, escenario {filtros.IdEscenario}.",
                     null, new { empresa, cierre, escenario = filtros.IdEscenario, destinatarios = lista, conPdf = adjuntos.Count > 1 },
                     filtros.IdEmpresa, entidadNombre: empresa, severidad: AuditoriaSeveridad.Advertencia);
@@ -277,7 +279,7 @@ namespace bufinscustomers.Controllers
 
         private byte[] GenerarExcel(FiltrosGerenciaMensual filtros, GerenciaMensualReporteViewModel r, out string nombreArchivo)
         {
-            string nombreEmpresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
+            string nombreEmpresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
             string cierre = NombreMes(r.Mes) + " " + r.Anio;
             var tema = ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA);
             var logo = ExcelLogoHelper.Obtener(filtros.IdEmpresa);
@@ -379,7 +381,7 @@ namespace bufinscustomers.Controllers
                 }
 
                 // Comentarios de gestión del cierre (de todos los informes)
-                var coms = new ComentariosGestionService().Listar(filtros.IdEmpresa, r.Anio, r.Mes, null, out bool disponible);
+                var coms = comentariosGestionService.Listar(filtros.IdEmpresa, r.Anio, r.Mes, null, out bool disponible);
                 if (disponible && coms.Count > 0)
                 {
                     var ws3 = wb.Worksheets.Add(R("GM_ExcelHojaComentarios"));

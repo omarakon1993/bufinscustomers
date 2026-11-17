@@ -11,10 +11,8 @@ using System.Linq;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class InformeRelacionamientosController : BaseController
+    public class InformeRelacionamientosController(InformeRelacionamientosService service) : BaseController
     {
-        private InformeRelacionamientosService _service = new InformeRelacionamientosService();
-
         /// <summary>
         /// Verifica si el usuario actual es administrador
         /// </summary>
@@ -34,7 +32,7 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            ViewBag.Tablas = _service.ObtenerTablasDisponibles();
+            ViewBag.Tablas = service.ObtenerTablasDisponibles();
             return View("~/Views/Informes/InformeRelacionamientos.cshtml");
         }
 
@@ -51,7 +49,7 @@ namespace bufinscustomers.Controllers
                     return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
                 }
 
-                var tipos = _service.ObtenerTiposDisponibles(nombreTabla);
+                var tipos = service.ObtenerTiposDisponibles(nombreTabla);
                 return Json(new { success = true, tipos }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
@@ -73,7 +71,7 @@ namespace bufinscustomers.Controllers
                     return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
                 }
 
-                var descripciones = _service.ObtenerDescripcionesDisponibles(nombreTabla, tipo);
+                var descripciones = service.ObtenerDescripcionesDisponibles(nombreTabla, tipo);
                 return Json(new { success = true, descripciones }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
@@ -97,13 +95,13 @@ namespace bufinscustomers.Controllers
                     return Json(new { success = false, message = "Acceso denegado" });
                 }
 
-                var resultado = _service.ConsultarDatos(filtros);
+                var resultado = service.ConsultarDatos(filtros);
 
                 // Mapear nombres de columnas a nombres amigables
                 var columnasAmigables = resultado.Columnas.Select(c => new
                 {
                     nombreTecnico = c,
-                    nombreAmigable = _service.ObtenerNombreAmigableColumna(c)
+                    nombreAmigable = service.ObtenerNombreAmigableColumna(c)
                 }).ToList();
 
                 // Formatear los datos para la vista
@@ -170,7 +168,7 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("InformeRelacionamientos");
                 }
 
-                var resultado = _service.ConsultarDatos(filtros);
+                var resultado = service.ConsultarDatos(filtros);
 
                 if (resultado.TotalRegistros == 0)
                 {
@@ -180,7 +178,7 @@ namespace bufinscustomers.Controllers
 
                 using (var package = new XLWorkbook())
                 {
-                    var tablas = _service.ObtenerTablasDisponibles();
+                    var tablas = service.ObtenerTablasDisponibles();
                     var tablaSeleccionada = tablas.FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla);
                     string nombreHoja = tablaSeleccionada?.NombreAmigable ?? filtros.NombreTabla;
 
@@ -194,7 +192,7 @@ namespace bufinscustomers.Controllers
                     foreach (var nombreColumna in resultado.Columnas)
                     {
                         var cell = worksheet.Cell(1, col);
-                        cell.Value = _service.ObtenerNombreAmigableColumna(nombreColumna);
+                        cell.Value = service.ObtenerNombreAmigableColumna(nombreColumna);
 
                         cell.Style.Font.Bold = true;
                         cell.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);

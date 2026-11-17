@@ -13,14 +13,18 @@ namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
     [SoloSuperAdmin]
-    public class ConfiguracionGlobalController : BaseController
+    public class ConfiguracionGlobalController(
+        ConfiguracionSistemaService svc,
+        AuditoriaService auditoriaService,
+        IAUsoReporteService iAUsoReporteService,
+        EmpresaService empresaService,
+        IAUsoService iAUsoService,
+        ConfiguracionIAEmpresaService configuracionIAEmpresaService) : BaseController
     {
-        private readonly ConfiguracionSistemaService _svc = new ConfiguracionSistemaService();
-
         public ActionResult Index()
         {
-            var items = _svc.ObtenerTodos();
-            ViewBag.Tipos = _svc.ObtenerTipos(out bool tiposDisponibles);
+            var items = svc.ObtenerTodos();
+            ViewBag.Tipos = svc.ObtenerTipos(out bool tiposDisponibles);
             ViewBag.TiposDisponibles = tiposDisponibles;
             return View("~/Views/Configuracion/ConfiguracionGlobal.cshtml", items);
         }
@@ -45,10 +49,10 @@ namespace bufinscustomers.Controllers
                 }
             }
 
-            bool ok = _svc.Guardar(item.Clave, item.Valor ?? "", item.Descripcion ?? "");
+            bool ok = svc.Guardar(item.Clave, item.Valor ?? "", item.Descripcion ?? "");
             // Tipo (categoría): solo si el formulario lo trae (script 028 ejecutado).
             if (ok && Request.Form.Keys.Contains("IdTipo"))
-                _svc.AsignarTipo(item.Clave, item.IdTipo);
+                svc.AsignarTipo(item.Clave, item.IdTipo);
             if (ok)
                 SetSuccessMessage(R("CfgIA_MsgGuardadoOk") ?? "Configuración guardada correctamente.");
             else
@@ -66,15 +70,15 @@ namespace bufinscustomers.Controllers
             if (nombre.Length == 0 || nombre.Length > 100)
                 return Json(new { ok = false, mensaje = R("CfgIA_Tipo_ErrorNombre") });
 
-            _svc.ObtenerTipos(out bool disponible);
+            svc.ObtenerTipos(out bool disponible);
             if (!disponible)
                 return Json(new { ok = false, mensaje = R("CfgIA_Tipo_SinScript") });
 
-            int nuevoId = _svc.GuardarTipo(id, nombre, nombreEN, icono, orden);
+            int nuevoId = svc.GuardarTipo(id, nombre, nombreEN, icono, orden);
             if (nuevoId <= 0)
                 return Json(new { ok = false, mensaje = R("CfgIA_Tipo_ErrorGuardar") });
 
-            new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion,
+            auditoriaService.RegistrarCambio(AuditoriaTipo.Configuracion,
                 id > 0 ? AuditoriaAccion.Editar : AuditoriaAccion.Crear,
                 "ConfiguracionSistemaTipos", nuevoId.ToString(),
                 (id > 0 ? "Tipo de configuración editado: " : "Tipo de configuración creado: ") + nombre,
@@ -87,10 +91,10 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public JsonResult EliminarTipo(int id)
         {
-            if (!_svc.EliminarTipo(id))
+            if (!svc.EliminarTipo(id))
                 return Json(new { ok = false, mensaje = R("CfgIA_Tipo_ErrorEliminar") });
 
-            new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Eliminar,
+            auditoriaService.RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Eliminar,
                 "ConfiguracionSistemaTipos", id.ToString(), "Tipo de configuración eliminado (Id " + id + ")",
                 null, null, UsuarioSesionHelper.UsuarioActual?.IdEmpresa);
             return Json(new { ok = true, mensaje = R("CfgIA_Tipo_Eliminado") });
@@ -100,7 +104,7 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Eliminar(string clave)
         {
-            bool ok = _svc.Eliminar(clave ?? "");
+            bool ok = svc.Eliminar(clave ?? "");
             if (ok)
                 SetSuccessMessage("Configuración eliminada.");
             else
@@ -120,10 +124,10 @@ namespace bufinscustomers.Controllers
             if (!ConfiguracionSistemaService.EsClaveSecreta(clave))
                 return Json(new { ok = false, mensaje = R("CfgIA_JS_ClaveNoRevelable") ?? "Esta clave no admite revelado." });
 
-            string valor = _svc.ObtenerValor(clave);
+            string valor = svc.ObtenerValor(clave);
             var u = UsuarioSesionHelper.UsuarioActual;
 
-            new AuditoriaService().RegistrarCambio(
+            auditoriaService.RegistrarCambio(
                 AuditoriaTipo.Configuracion, "Revelar", "ConfiguracionSistema", clave,
                 $"Secreto '{clave}' revelado en Configuración Global IA",
                 null, null, u?.IdEmpresa, severidad: AuditoriaSeveridad.Advertencia);
@@ -137,7 +141,7 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                string apiKey = (_svc.ObtenerValor("OpenAIApiKey") ?? "").Trim();
+                string apiKey = (svc.ObtenerValor("OpenAIApiKey") ?? "").Trim();
                 if (string.IsNullOrEmpty(apiKey))
                     return Json(new { ok = false, mensaje = R("CfgIA_JS_ApiKeyVacia") ?? "Primero guarda una API Key válida." },
                         JsonRequestBehavior.AllowGet);
@@ -187,7 +191,7 @@ namespace bufinscustomers.Controllers
                 DateTime fDesde = DateTime.TryParse(desde, out var d) ? d.Date : fHasta.AddDays(-29);
                 if (fDesde > fHasta) { var tmp = fDesde; fDesde = fHasta; fHasta = tmp; }
 
-                var o = new IAUsoReporteService().Observabilidad(fDesde, fHasta);
+                var o = iAUsoReporteService.Observabilidad(fDesde, fHasta);
 
                 // Nombres de empresa (la consulta devuelve el Id) y etiquetas de función traducidas.
                 var nombres = EmpresaCacheHelper.ObtenerEmpresasCacheadas().ToDictionary(e => e.Id.ToString(), e => e.Nombre);
@@ -235,12 +239,12 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                int borradas = new IAUsoReporteService().LimpiarRegistroUso();
+                int borradas = iAUsoReporteService.LimpiarRegistroUso();
                 if (borradas < 0)
                     return Json(new { ok = false, mensaje = R("CfgIA_Uso_NoDisponible") });
 
                 var u = UsuarioSesionHelper.UsuarioActual;
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Eliminar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Eliminar,
                     "IAUsoLog", null, $"Estadísticas de uso de IA eliminadas ({borradas} registros)",
                     new { registros = borradas }, null, u?.IdEmpresa);
 
@@ -283,12 +287,12 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                var empresa = new EmpresaService().ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+                var empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
                 if (empresa == null)
                     return Json(new { ok = false, mensaje = R("Common_SinPermisos") }, JsonRequestBehavior.AllowGet);
 
-                var iaUso = new IAUsoService();
-                var cfgEmpresa = new ConfiguracionIAEmpresaService();
+                var iaUso = iAUsoService;
+                var cfgEmpresa = configuracionIAEmpresaService;
 
                 var cfg = cfgEmpresa.ObtenerConfig(idEmpresa);
                 long global = iaUso.ObtenerPresupuestoGlobalDefault();
@@ -344,7 +348,7 @@ namespace bufinscustomers.Controllers
                 .Distinct()
                 .ToList();
 
-            var empresa = new EmpresaService().ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+            var empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
             if (empresa == null)
                 return Json(new { ok = false, mensaje = R("Common_SinPermisos") });
 
@@ -363,14 +367,14 @@ namespace bufinscustomers.Controllers
                 ContextoNegocio = string.IsNullOrWhiteSpace(contextoNegocio) ? null : contextoNegocio.Trim()
             };
 
-            var servicio = new ConfiguracionIAEmpresaService();
+            var servicio = configuracionIAEmpresaService;
             var anterior = servicio.ObtenerConfig(idEmpresa);
             var usuarioActual = UsuarioSesionHelper.UsuarioActual;
             bool ok = servicio.GuardarConfig(nueva, usuarioActual?.Id);
             if (ok)
             {
                 IAModuloHelper.Invalidar(idEmpresa);
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Editar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Editar,
                     "ConfiguracionIAEmpresa", idEmpresa.ToString(),
                     $"Control de IA actualizado para {empresa.Nombre}",
                     anterior, nueva, idEmpresa);
@@ -385,10 +389,10 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public JsonResult GuardarAccesoUsuarioIA(int idUsuario, bool? acceso)
         {
-            bool ok = new ConfiguracionIAEmpresaService().GuardarAccesoUsuario(idUsuario, acceso);
+            bool ok = configuracionIAEmpresaService.GuardarAccesoUsuario(idUsuario, acceso);
             if (ok)
             {
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Editar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Editar,
                     "Usuarios", idUsuario.ToString(),
                     $"Acceso a consultas de IA actualizado (Id {idUsuario})",
                     null, new { idUsuario, acceso });

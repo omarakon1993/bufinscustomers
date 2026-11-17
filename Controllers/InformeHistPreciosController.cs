@@ -19,12 +19,13 @@ namespace bufinscustomers.Controllers
     /// </summary>
     [ValidarSesion]
     [RequierePermiso(InformeHistPreciosService.CodigoMenu)]
-    public class InformeHistPreciosController : BaseController
+    public class InformeHistPreciosController(
+        InformeHistPreciosService service,
+        InformeTablasDatosService empresaService,
+        MenuOpcionesService menuService,
+        EmailService emailService,
+        AuditoriaService auditoriaService) : BaseController
     {
-        private readonly InformeHistPreciosService _service = new InformeHistPreciosService();
-        private readonly InformeTablasDatosService _empresaService = new InformeTablasDatosService();
-        private readonly MenuOpcionesService _menuService = new MenuOpcionesService();
-
         private static readonly string[] PaletaSeries =
             { "6366F1", "0EA5E9", "16A34A", "F59E0B", "EC4899", "8B5CF6", "14B8A6", "EF4444", "64748B" };
 
@@ -47,7 +48,7 @@ namespace bufinscustomers.Controllers
                 if (!PuedeVerEmpresa(idEmpresa))
                     return Json(new { success = false, message = R("Common_SinPermisos") });
 
-                var o = _service.ObtenerOpciones(idEmpresa, idEscenario);
+                var o = service.ObtenerOpciones(idEmpresa, idEscenario);
                 return Json(new { success = true, semestres = o.Semestres.Select(m => new { anio = m.Anio, sem = m.Sem }), tipos = o.Tipos, hayDatos = o.HayDatos });
             }
             catch (Exception ex)
@@ -66,7 +67,7 @@ namespace bufinscustomers.Controllers
                 if (filtros == null || !PuedeVerEmpresa(filtros.IdEmpresa))
                     return Json(new { success = false, message = R("Common_SinPermisos") });
 
-                var reporte = _service.Construir(filtros);
+                var reporte = service.Construir(filtros);
                 var json = Json(new { success = true, reporte });
                 json.MaxJsonLength = int.MaxValue;
                 return json;
@@ -91,14 +92,14 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                var reporte = _service.Construir(filtros);
+                var reporte = service.Construir(filtros);
                 if (reporte.SinDatos)
                 {
                     TempData["InfoMessage"] = R("HP_SinDatosDesc");
                     return RedirectToAction("Index");
                 }
 
-                string empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
+                string empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
                 byte[] bytes = GenerarExcel(reporte, empresa, filtros.IdEmpresa, ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA));
 
                 return File(bytes, MimeExcel, NombreArchivo(empresa, "xlsx"));
@@ -131,12 +132,12 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                var reporte = _service.Construir(filtros);
+                var reporte = service.Construir(filtros);
                 if (reporte.SinDatos)
                     return Json(new { exito = false, mensaje = R("HP_SinDatosDesc") });
 
                 bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
-                string empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
+                string empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
                 string escenario = EscenarioCacheHelper.ObtenerEscenariosCacheados()
                     .FirstOrDefault(e => e.Id == filtros.IdEscenario)?.Nombre ?? ("#" + filtros.IdEscenario);
 
@@ -152,14 +153,14 @@ namespace bufinscustomers.Controllers
                     (R("HP_Correo_Periodo"), rango), (R("HP_Correo_Vista"), R("HP_Agrupar_" + reporte.Agrupar)), (R("Common_LabelEscenario"), escenario)
                 };
 
-                new EmailService().EnviarInforme(
+                emailService.EnviarInforme(
                     string.Join(", ", lista), R("HP_PageTitle"), empresa, true, contexto, kpis,
                     string.Format(R("HP_Correo_TablaTitulo"), periodoUltimo),
                     new[] { R("HP_ColTipo"), R("HP_Correo_ColPrecio"), R("HP_Correo_ColVsAnterior") }, filas,
                     mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(filtros.IdEmpresa),
                     ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA));
 
-                new AuditoriaService().RegistrarCambio(
+                auditoriaService.RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeHistPrecios", filtros.IdEmpresa.ToString(),
                     $"Informe histórico de precios enviado por correo a {string.Join(", ", lista)}: '{empresa}' — {rango}, escenario {filtros.IdEscenario}.",
                     null,
@@ -222,8 +223,8 @@ namespace bufinscustomers.Controllers
         /// <summary>Empresas para las que existe el informe Y a las que el usuario tiene acceso.</summary>
         private List<Empresas> EmpresasDelInforme()
         {
-            var todas = _empresaService.ObtenerEmpresas();
-            var delMenu = _menuService.ObtenerIdsEmpresasDeOpcion(InformeHistPreciosService.CodigoMenu);
+            var todas = empresaService.ObtenerEmpresas();
+            var delMenu = menuService.ObtenerIdsEmpresasDeOpcion(InformeHistPreciosService.CodigoMenu);
             if (delMenu.Count > 0)
                 todas = todas.Where(e => delMenu.Contains(e.Id)).ToList();
 

@@ -19,25 +19,26 @@ namespace bufinscustomers.Controllers
     /// empresa/grupo vía EmpresaAccesoHelper, no por rol.
     /// </summary>
     [ValidarSesion]
-    public class InformeLineaTiempoController : BaseController
+    public class InformeLineaTiempoController(
+        InformeTablasDatosService catalogo,
+        InformeLineaTiempoService service,
+        EmailService emailService,
+        AuditoriaService auditoriaService) : BaseController
     {
-        private readonly InformeTablasDatosService _catalogo = new InformeTablasDatosService();
-        private readonly InformeLineaTiempoService _service = new InformeLineaTiempoService();
-
         public ActionResult Index()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
             var idEmpresa = usuario?.IdEmpresa ?? 0;
 
-            var empresas = _catalogo.ObtenerEmpresas();
+            var empresas = catalogo.ObtenerEmpresas();
             if (!esAdmin)
             {
                 var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
                 empresas = empresas.Where(e => idsPermitidos.Contains(e.Id)).ToList();
             }
 
-            ViewBag.Tablas = _catalogo.ObtenerTablasModelos();
+            ViewBag.Tablas = catalogo.ObtenerTablasModelos();
             ViewBag.Empresas = empresas;
             ViewBag.EsAdmin = esAdmin;
             ViewBag.IdEmpresaUsuario = idEmpresa;
@@ -60,7 +61,7 @@ namespace bufinscustomers.Controllers
         private bool EsTablaDeModelo(string nombreTabla)
         {
             return !string.IsNullOrWhiteSpace(nombreTabla)
-                && _catalogo.ObtenerTablasModelos().Any(t => t.NombreTabla == nombreTabla);
+                && catalogo.ObtenerTablasModelos().Any(t => t.NombreTabla == nombreTabla);
         }
 
         /// <summary>Resuelve y valida la empresa a consultar para el usuario actual; null = sin acceso.</summary>
@@ -89,7 +90,7 @@ namespace bufinscustomers.Controllers
             if (!idEmpresaConsulta.HasValue)
                 return Json(new { success = false, message = R("Common_SinPermisos") });
 
-            var indicadores = _service.ObtenerIndicadoresDisponibles(nombreTabla, idEmpresaConsulta, idEscenario);
+            var indicadores = service.ObtenerIndicadoresDisponibles(nombreTabla, idEmpresaConsulta, idEscenario);
             return Json(new { success = true, indicadores });
         }
 
@@ -100,7 +101,7 @@ namespace bufinscustomers.Controllers
             if (!EsTablaDeModelo(nombreTabla))
                 return Json(new { success = false, message = R("Common_TablaNoValida") });
 
-            var campos = _service.ObtenerCamposNumericos(nombreTabla)
+            var campos = service.ObtenerCamposNumericos(nombreTabla)
                 .Select(c => new { nombreTecnico = c.NombreTecnico, nombreAmigable = c.NombreAmigable });
             return Json(new { success = true, campos });
         }
@@ -121,7 +122,7 @@ namespace bufinscustomers.Controllers
             // Se proyecta a camelCase explícito: ASP.NET MVC 5 serializa JSON respetando el
             // PascalCase de C# tal cual (no hay auto-camelCase como en ASP.NET Core), y el JS
             // de la vista lee minúscula inicial en todas sus propiedades.
-            var meses = _service.ObtenerMesesDisponibles(nombreTabla, idEmpresaConsulta, idEscenario)
+            var meses = service.ObtenerMesesDisponibles(nombreTabla, idEmpresaConsulta, idEscenario)
                 .Select(m => new { anio = m.Anio, mes = m.Mes, etiqueta = m.Etiqueta });
             return Json(new { success = true, meses });
         }
@@ -141,7 +142,7 @@ namespace bufinscustomers.Controllers
                 if (!idEmpresaConsulta.HasValue)
                     return Json(new { success = false, message = R("Common_SinPermisos") });
 
-                var resultado = _service.ObtenerSerieTiempo(filtros, idEmpresaConsulta);
+                var resultado = service.ObtenerSerieTiempo(filtros, idEmpresaConsulta);
 
                 return Json(new
                 {
@@ -184,7 +185,7 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                var resultado = _service.ObtenerSerieTiempo(filtros, idEmpresaConsulta);
+                var resultado = service.ObtenerSerieTiempo(filtros, idEmpresaConsulta);
                 if (resultado.Series.Count == 0 || resultado.Series.All(s => s.Puntos.Count == 0))
                 {
                     TempData["InfoMessage"] = R("LineaTiempo_SinDatosExportar");
@@ -223,13 +224,13 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                var resultado = _service.ObtenerSerieTiempo(filtros, idEmpresaConsulta);
+                var resultado = service.ObtenerSerieTiempo(filtros, idEmpresaConsulta);
                 if (resultado.Series.Count == 0 || resultado.Series.All(s => s.Puntos.Count == 0))
                     return Json(new { exito = false, mensaje = R("LineaTiempo_SinDatosExportar") });
 
                 opciones = opciones ?? new OpcionesExportLineaTiempo();
                 bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
-                string empresa = _catalogo.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresaConsulta.Value)?.Nombre ?? "";
+                string empresa = catalogo.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresaConsulta.Value)?.Nombre ?? "";
 
                 var bytes = GenerarExcel(filtros, resultado, opciones, out string nombreArchivo);
                 var adjuntos = InformeCorreoHelper.Adjuntos(nombreArchivo, bytes, InformeCorreoHelper.PdfDesdeBase64(pdfBase64));
@@ -252,11 +253,11 @@ namespace bufinscustomers.Controllers
                 }
 
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
-                new EmailService().EnviarInforme(string.Join(", ", lista), R("LineaTiempo_PageTitle"), empresa, false, contexto, kpis,
+                emailService.EnviarInforme(string.Join(", ", lista), R("LineaTiempo_PageTitle"), empresa, false, contexto, kpis,
                     null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(idEmpresaConsulta),
                     ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA));
 
-                new AuditoriaService().RegistrarCambio(
+                auditoriaService.RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeLineaTiempo", idEmpresaConsulta.Value.ToString(),
                     $"Informe dinámico de líneas de tiempo enviado por correo a {string.Join(", ", lista)}: '{empresa}' — {Recortar(opciones.Titulo, 120)}.",
                     null,

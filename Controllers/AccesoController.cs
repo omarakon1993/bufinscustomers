@@ -10,7 +10,16 @@ using bufinscustomers.Services;
 
 namespace bufinscustomers.Controllers
 {
-    public class AccesoController : BaseController
+    public class AccesoController(
+        RateLimitLoginService rateLimitLoginService,
+        AuditoriaService auditoriaService,
+        DobleFactorService dobleFactorService,
+        PasskeyService passkeyService,
+        SolicitudReinicioAuthService solicitudReinicioAuthService,
+        NotificacionesService notificacionesService,
+        EmailService emailService,
+        bufinscustomers.Services.ClaveInicialService claveInicialService,
+        SesionPersistenteService sesionPersistenteService) : BaseController
     {
         // A11: hash BCrypt (cost 12) señuelo — vector de prueba público del algoritmo. Solo se
         // usa para gastar el mismo tiempo de CPU que una verificación real cuando el identificador
@@ -123,7 +132,7 @@ namespace bufinscustomers.Controllers
             // A7 / A14: Rate limiting por IP (persistente en BD) — rechaza IPs con demasiados
             // intentos fallidos.
             string clientIp = GetClientIp();
-            var estadoIp = new RateLimitLoginService().Comprobar(clientIp);
+            var estadoIp = rateLimitLoginService.Comprobar(clientIp);
             if (estadoIp.Bloqueada)
             {
                 ViewData["Mensaje"] = string.Format(R("Login_ErrorRateLimitIP"),
@@ -183,7 +192,7 @@ namespace bufinscustomers.Controllers
             if (usuarioId > 0 && bloqueadoHasta.HasValue && bloqueadoHasta.Value > DateTime.Now)
             {
                 int minutosRestantes = (int)Math.Ceiling((bloqueadoHasta.Value - DateTime.Now).TotalMinutes);
-                new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Bloqueo,
+                auditoriaService.RegistrarSeguridad(AuditoriaAccion.Bloqueo,
                     $"Intento de inicio de sesión con cuenta bloqueada ({oUsuario.Correo})", usuarioId, null, idEmpresaLogin);
                 ViewData["Mensaje"] = string.Format(R("Login_ErrorCuentaBloqueada"), minutosRestantes);
                 return View();
@@ -200,7 +209,7 @@ namespace bufinscustomers.Controllers
             if (credencialesValidas)
             {
                 ResetearIntentosFallidos(usuarioId);
-                new RateLimitLoginService().Limpiar(clientIp); // A7/A14: resetear rate limit IP en login exitoso
+                rateLimitLoginService.Limpiar(clientIp); // A7/A14: resetear rate limit IP en login exitoso
 
                 // Migrate SHA256 → BCrypt on first successful login
                 if (!EsHashBCrypt(hashAlmacenado))
@@ -226,10 +235,10 @@ namespace bufinscustomers.Controllers
             {
                 RegistrarIntentoFallido(usuarioId, intentosFallidos,
                     out int nuevosIntentos, out DateTime? nuevoBloqueadoHasta);
-                var rlReal = new RateLimitLoginService().RegistrarFallo(clientIp); // A7/A14
+                var rlReal = rateLimitLoginService.RegistrarFallo(clientIp); // A7/A14
                 if (rlReal.ModoDefensivoActivado) NotificarModoDefensivo();
 
-                new AuditoriaService().RegistrarSeguridad(
+                auditoriaService.RegistrarSeguridad(
                     nuevoBloqueadoHasta.HasValue ? AuditoriaAccion.Bloqueo : AuditoriaAccion.LoginFallido,
                     nuevoBloqueadoHasta.HasValue
                         ? $"Cuenta bloqueada tras {nuevosIntentos} intentos fallidos ({oUsuario.Correo})"
@@ -261,7 +270,7 @@ namespace bufinscustomers.Controllers
                     // 2FA: con credenciales correctas todavía NO se abre sesión; se exige el segundo factor.
                     if (DobleFactorService.Habilitado && DobleFactorService.AplicaA(usuarioCompleto))
                     {
-                        var df = new DobleFactorService().Obtener(usuarioCompleto.Id);
+                        var df = dobleFactorService.Obtener(usuarioCompleto.Id);
                         if (df.Disponible)
                         {
                             if (df.Activo && df.Secreto == null)
@@ -286,7 +295,7 @@ namespace bufinscustomers.Controllers
             }
             else
             {
-                var rlAnon = new RateLimitLoginService().RegistrarFallo(clientIp); // A7/A14: usuario no encontrado también cuenta
+                var rlAnon = rateLimitLoginService.RegistrarFallo(clientIp); // A7/A14: usuario no encontrado también cuenta
                 if (rlAnon.ModoDefensivoActivado) NotificarModoDefensivo();
 
                 // A12: los intentos contra identificadores inexistentes son ruido de bots. Se
@@ -298,7 +307,7 @@ namespace bufinscustomers.Controllers
 
                 if (DebeAuditarFalloAnonimo(clientIp))
                 {
-                    new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.LoginFallido,
+                    auditoriaService.RegistrarSeguridad(AuditoriaAccion.LoginFallido,
                         $"Intento de inicio de sesión con identificador inexistente ({oUsuario.Correo}) " +
                         $"[se omiten repeticiones de la misma IP durante {AUDIT_THROTTLE_MIN} min]",
                         null, null);
@@ -317,7 +326,7 @@ namespace bufinscustomers.Controllers
         /// </summary>
         private ActionResult CompletarInicioDeSesion(Usuarios usuarioCompleto)
         {
-            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Login,
+            auditoriaService.RegistrarSeguridad(AuditoriaAccion.Login,
                 "Inicio de sesión exitoso",
                 usuarioCompleto.Id,
                 ((usuarioCompleto.Nombre ?? "") + " " + (usuarioCompleto.Apellidos ?? "")).Trim(),
@@ -444,7 +453,7 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Login", new { tokenExpirado = true });
 
             string ip = GetClientIp();
-            var estadoIp = new RateLimitLoginService().Comprobar(ip);
+            var estadoIp = rateLimitLoginService.Comprobar(ip);
             if (estadoIp.Bloqueada)
             {
                 LimpiarPendiente2FA(key);
@@ -452,7 +461,7 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Login");
             }
 
-            var servicio = new DobleFactorService();
+            var servicio = dobleFactorService;
             var estado = servicio.Obtener(p.IdUsuario);
             var usuario = ObtenerUsuarioCompletoPorId(p.IdUsuario);
             if (!estado.Disponible || !estado.Activo || estado.Secreto == null || usuario == null)
@@ -481,9 +490,9 @@ namespace bufinscustomers.Controllers
 
             // Código incorrecto
             p.Intentos++;
-            var rl = new RateLimitLoginService().RegistrarFallo(ip);
+            var rl = rateLimitLoginService.RegistrarFallo(ip);
             if (rl.ModoDefensivoActivado) NotificarModoDefensivo();
-            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.LoginFallido,
+            auditoriaService.RegistrarSeguridad(AuditoriaAccion.LoginFallido,
                 $"Código de doble factor incorrecto ({usuario.Correo}), intento {p.Intentos} de {MAX_INTENTOS_2FA}",
                 usuario.Id, NombreCompleto(usuario), usuario.IdEmpresa);
 
@@ -501,7 +510,7 @@ namespace bufinscustomers.Controllers
 
         private bool TienePasskeyDisponible(int idUsuario)
         {
-            return DobleFactorService.PasskeysHabilitadas && new PasskeyService().Listar(idUsuario).Count > 0;
+            return DobleFactorService.PasskeysHabilitadas && passkeyService.Listar(idUsuario).Count > 0;
         }
 
         // ── Passkey (WebAuthn) como alternativa en el segundo paso. La app autenticadora sigue siendo la principal. ──
@@ -514,7 +523,7 @@ namespace bufinscustomers.Controllers
             if (p == null || p.Enrolar || !DobleFactorService.PasskeysHabilitadas)
                 return Json(new { ok = false, expirado = true });
 
-            var creds = new PasskeyService().Listar(p.IdUsuario);
+            var creds = passkeyService.Listar(p.IdUsuario);
             if (creds.Count == 0) return Json(new { ok = false });
 
             p.ChallengePasskey = WebAuthnHelper.NuevoReto();
@@ -538,7 +547,7 @@ namespace bufinscustomers.Controllers
                 return Json(new { ok = false, expirado = true, redirect = Url.Action("Login", "Acceso") });
 
             string ip = GetClientIp();
-            var estadoIp = new RateLimitLoginService().Comprobar(ip);
+            var estadoIp = rateLimitLoginService.Comprobar(ip);
             if (estadoIp.Bloqueada)
             {
                 LimpiarPendiente2FA(key);
@@ -558,7 +567,7 @@ namespace bufinscustomers.Controllers
                 try
                 {
                     byte[] id = WebAuthnHelper.DeBase64Url(credentialId);
-                    cred = new PasskeyService().Listar(p.IdUsuario).FirstOrDefault(c => c.CredentialId.SequenceEqual(id));
+                    cred = passkeyService.Listar(p.IdUsuario).FirstOrDefault(c => c.CredentialId.SequenceEqual(id));
                     if (cred != null)
                     {
                         res = WebAuthnHelper.VerificarAutenticacion(
@@ -576,18 +585,18 @@ namespace bufinscustomers.Controllers
                 // El contador debería crecer; algunas passkeys sincronizadas siempre envían 0. Solo se avisa, no se bloquea.
                 if ((cred.Contador > 0 || res.Contador > 0) && res.Contador <= cred.Contador)
                     Helpers.AppLogger.Warn($"Passkey con contador no creciente (usuarioId={usuario.Id}, guardado={cred.Contador}, recibido={res.Contador}).", "Acceso.Passkey");
-                new PasskeyService().RegistrarUso(cred.Id, Math.Max(res.Contador, cred.Contador));
+                passkeyService.RegistrarUso(cred.Id, Math.Max(res.Contador, cred.Contador));
                 LimpiarPendiente2FA(key);
-                new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Login,
+                auditoriaService.RegistrarSeguridad(AuditoriaAccion.Login,
                     $"Segundo factor validado con passkey ({cred.Nombre})", usuario.Id, NombreCompleto(usuario), usuario.IdEmpresa);
                 CompletarInicioDeSesion(usuario);   // deja listo el token _lt; el navegador sigue a FinalizarLogin
                 return Json(new { ok = true, redirect = Url.Action("FinalizarLogin", "Acceso") });
             }
 
             p.Intentos++;
-            var rl = new RateLimitLoginService().RegistrarFallo(ip);
+            var rl = rateLimitLoginService.RegistrarFallo(ip);
             if (rl.ModoDefensivoActivado) NotificarModoDefensivo();
-            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.LoginFallido,
+            auditoriaService.RegistrarSeguridad(AuditoriaAccion.LoginFallido,
                 $"Passkey rechazada ({usuario?.Correo}), intento {p.Intentos} de {MAX_INTENTOS_2FA}",
                 usuario?.Id, usuario == null ? null : NombreCompleto(usuario), usuario?.IdEmpresa);
 
@@ -619,7 +628,7 @@ namespace bufinscustomers.Controllers
             if (p == null || p.Enrolar) return RedirectToAction("Login", new { tokenExpirado = true });
 
             string ip = GetClientIp();
-            var estadoIp = new RateLimitLoginService().Comprobar(ip);
+            var estadoIp = rateLimitLoginService.Comprobar(ip);
             if (estadoIp.Bloqueada)
             {
                 LimpiarPendiente2FA(key);
@@ -639,7 +648,7 @@ namespace bufinscustomers.Controllers
                 return View("~/Views/Acceso/SolicitarReinicio.cshtml");
             }
 
-            var resultado = new SolicitudReinicioAuthService().Crear(usuario.Id, mensaje, telefono, ip, Request.UserAgent);
+            var resultado = solicitudReinicioAuthService.Crear(usuario.Id, mensaje, telefono, ip, Request.UserAgent);
             if (!resultado.Disponible)
             {
                 ViewData["Error"] = R("SolSeg_NoDisponible");
@@ -649,7 +658,7 @@ namespace bufinscustomers.Controllers
             if (resultado.Creada)
             {
                 string nombre = NombreCompleto(usuario);
-                new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Crear,
+                auditoriaService.RegistrarSeguridad(AuditoriaAccion.Crear,
                     "Solicitud de reinicio de métodos de autenticación enviada por el usuario",
                     usuario.Id, nombre, usuario.IdEmpresa);
 
@@ -658,8 +667,8 @@ namespace bufinscustomers.Controllers
                 string msg = string.Format(R("Notif_SolSeg_NuevaMsg"), string.IsNullOrWhiteSpace(nombre) ? usuario.Usuario : nombre, usuario.Correo);
                 string enlace = null;
                 try { enlace = Url.Action("Index", "SolicitudesSeguridad", null, Request.Url.Scheme); } catch { }
-                var notif = new NotificacionesService();
-                foreach (var admin in new SolicitudReinicioAuthService().ObtenerSuperAdminsConCorreo())
+                var notif = notificacionesService;
+                foreach (var admin in solicitudReinicioAuthService.ObtenerSuperAdminsConCorreo())
                 {
                     notif.Crear(admin.Key, titulo, msg, "warning", "/SolicitudesSeguridad");
                     AlertaUsuarioCorreo.Enviar(admin.Value, titulo, msg, enlace);
@@ -699,7 +708,7 @@ namespace bufinscustomers.Controllers
             if (usuario == null) { LimpiarPendiente2FA(key); return RedirectToAction("Login"); }
 
             string ip = GetClientIp();
-            var estadoIp = new RateLimitLoginService().Comprobar(ip);
+            var estadoIp = rateLimitLoginService.Comprobar(ip);
             if (estadoIp.Bloqueada)
             {
                 LimpiarPendiente2FA(key);
@@ -711,7 +720,7 @@ namespace bufinscustomers.Controllers
             if (paso < 0)
             {
                 p.Intentos++;
-                var rl = new RateLimitLoginService().RegistrarFallo(ip);
+                var rl = rateLimitLoginService.RegistrarFallo(ip);
                 if (rl.ModoDefensivoActivado) NotificarModoDefensivo();
                 if (p.Intentos >= MAX_INTENTOS_2FA)
                 {
@@ -726,7 +735,7 @@ namespace bufinscustomers.Controllers
                 return View("~/Views/Acceso/ConfigurarDobleFactor.cshtml");
             }
 
-            var servicio = new DobleFactorService();
+            var servicio = dobleFactorService;
             if (!servicio.Activar(p.IdUsuario, p.SecretoNuevo, paso))
             {
                 ViewData["Error"] = R("Login2FA_ErrorGuardar");
@@ -736,15 +745,15 @@ namespace bufinscustomers.Controllers
                 return View("~/Views/Acceso/ConfigurarDobleFactor.cshtml");
             }
 
-            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Editar,
+            auditoriaService.RegistrarSeguridad(AuditoriaAccion.Editar,
                 "Doble factor de autenticación activado",
                 usuario.Id, NombreCompleto(usuario), usuario.IdEmpresa);
             string tituloAct = R("Notif_2FA_ActivadoTitulo"), msgAct = R("Notif_2FA_ActivadoMsg");
-            new NotificacionesService().Crear(usuario.Id, tituloAct, msgAct, "success");
+            notificacionesService.Crear(usuario.Id, tituloAct, msgAct, "success");
             AlertaUsuarioCorreo.Enviar(usuario.Correo, tituloAct, msgAct);
 
             // Con passkeys habilitadas se le ofrece agregar una (momento ideal: ya está configurando su seguridad).
-            if (DobleFactorService.PasskeysHabilitadas && new PasskeyService().TablaDisponible())
+            if (DobleFactorService.PasskeysHabilitadas && passkeyService.TablaDisponible())
             {
                 p.Enrolar = false;
                 p.SecretoNuevo = null;
@@ -780,7 +789,7 @@ namespace bufinscustomers.Controllers
                 Response.Cookies.Add(new HttpCookie("_pkoferta", "1")
                     { HttpOnly = true, Secure = Request.IsSecureConnection, Path = "/", Expires = DateTime.Now.AddMinutes(2) });
             else
-                new PasskeyService().PosponerAviso(usuario.Id, 7);   // "Ahora no": la franja del Home espera una semana
+                passkeyService.PosponerAviso(usuario.Id, 7);   // "Ahora no": la franja del Home espera una semana
 
             return CompletarInicioDeSesion(usuario);
         }
@@ -935,7 +944,7 @@ namespace bufinscustomers.Controllers
                     "Rate-limit de login en MODO DEFENSIVO: pico global de intentos fallidos, umbral por IP endurecido.",
                     "Acceso.Login");
 
-                var notif = new NotificacionesService();
+                var notif = notificacionesService;
                 string titulo = R("Notif_ModoDefensivoTitulo");
                 string msg = R("Notif_ModoDefensivoMsg");
                 foreach (int idAdmin in ObtenerIdsSuperAdmin())
@@ -965,7 +974,7 @@ namespace bufinscustomers.Controllers
             {
                 try
                 {
-                    var email = new EmailService();
+                    var email = emailService;
                     foreach (var c in correos)
                     {
                         try { email.EnviarAlertaSeguridad(c, asunto, titulo, mensaje, enlace); }
@@ -1042,7 +1051,7 @@ namespace bufinscustomers.Controllers
                 if ((DateTime.Now - _ultimaPurgaAuditoria).TotalHours < 24) return;
                 _ultimaPurgaAuditoria = DateTime.Now;
             }
-            try { new AuditoriaService().PurgarSeguridadAnonimaAntigua(AUDIT_SEGURIDAD_RETENCION_DIAS); }
+            try { auditoriaService.PurgarSeguridadAnonimaAntigua(AUDIT_SEGURIDAD_RETENCION_DIAS); }
             catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[PurgarAuditoriaSeguridad] {0}", ex.Message); }
         }
 
@@ -1058,7 +1067,7 @@ namespace bufinscustomers.Controllers
                     $"Cuenta bloqueada por {intentos} intentos fallidos: usuarioId={usuarioId} ({identificador})",
                     "Acceso.Login");
 
-                var notif = new NotificacionesService();
+                var notif = notificacionesService;
                 notif.Crear(usuarioId, R("Notif_CuentaBloqueadaTitulo"), R("Notif_CuentaBloqueadaMsg"), "warning");
 
                 string msgAdmin = string.Format(R("Notif_CuentaBloqueadaAdminMsg"), identificador, intentos);
@@ -1143,7 +1152,7 @@ namespace bufinscustomers.Controllers
                 }
             }
 
-            if (usuario != null) usuario.DebeCambiarClave = new bufinscustomers.Services.ClaveInicialService().DebeCambiar(usuario.Id);
+            if (usuario != null) usuario.DebeCambiarClave = claveInicialService.DebeCambiar(usuario.Id);
             return usuario;
         }
 
@@ -1202,7 +1211,7 @@ namespace bufinscustomers.Controllers
                         new { token = token }, Request.Url.Scheme);
                     bool esIngles   = System.Threading.Thread.CurrentThread.CurrentUICulture
                                           .TwoLetterISOLanguageName == "en";
-                    new Services.EmailService().EnviarRecuperacionClave(
+                    emailService.EnviarRecuperacionClave(
                         correoReal, nombreUsuario, enlace, esIngles);
                 }
             }
@@ -1335,7 +1344,7 @@ namespace bufinscustomers.Controllers
                 return View("~/Views/Acceso/CambiarClaveInicial.cshtml");
             }
 
-            var servicio = new ClaveInicialService();
+            var servicio = claveInicialService;
             // Un solo hash: BCrypt da un resultado distinto en cada llamada y la sesión debe guardar el mismo que la base.
             string nuevoHash = HashearContrasena(nuevaClave);
             if (!servicio.GuardarClaveYQuitarMarca(usuario.Id, nuevoHash))
@@ -1347,9 +1356,9 @@ namespace bufinscustomers.Controllers
             usuario.DebeCambiarClave = false;
             usuario.Clave = nuevoHash;
             // El respaldo de la sesión (dbo.SesionesActivas) guarda la huella de la clave: se actualiza a la nueva.
-            new SesionPersistenteService().Registrar(Session.SessionID, usuario.Id, nuevoHash,
+            sesionPersistenteService.Registrar(Session.SessionID, usuario.Id, nuevoHash,
                 (UsuarioSesionHelper.ObtenerInfoSesion()?.TiempoLogin) ?? DateTime.Now);
-            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Editar,
+            auditoriaService.RegistrarSeguridad(AuditoriaAccion.Editar,
                 "Cambio de contraseña obligatorio completado en el primer inicio de sesión",
                 usuario.Id, ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim(), usuario.IdEmpresa);
 

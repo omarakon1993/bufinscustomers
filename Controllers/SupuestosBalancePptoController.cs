@@ -15,10 +15,12 @@ namespace bufinscustomers.Controllers
     /// Solo Valor es editable; las filas CALCULO son informativas.
     /// </summary>
     [ValidarSesion]
-    public class SupuestosBalancePptoController : BaseController
+    public class SupuestosBalancePptoController(
+        SupuestosBalancePptoService svc,
+        EmpresaService empresaService,
+        AuditoriaService auditoriaService) : BaseController
     {
         private const string XlsxMime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-        private readonly SupuestosBalancePptoService _svc = new SupuestosBalancePptoService();
 
         // Acceso por empresa/grupo (nunca comparar usuario.IdEmpresa directo)
         private bool Acceso(int idEmpresa) => EmpresaAccesoHelper.TieneAcceso(UsuarioSesionHelper.UsuarioActual, idEmpresa);
@@ -35,7 +37,7 @@ namespace bufinscustomers.Controllers
         public ActionResult Index()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            var empresas = new EmpresaService().ObtenerEmpresas();
+            var empresas = empresaService.ObtenerEmpresas();
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
                 var ids = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
@@ -43,7 +45,7 @@ namespace bufinscustomers.Controllers
             }
             ViewBag.Empresas = empresas;
             ViewBag.IdEmpresaUsuario = usuario?.IdEmpresa ?? 0;
-            ViewBag.Disponible = _svc.Disponible();
+            ViewBag.Disponible = svc.Disponible();
             return View("~/Views/Configuracion/SupuestosBalancePpto.cshtml");
         }
 
@@ -56,10 +58,10 @@ namespace bufinscustomers.Controllers
             try
             {
                 if (!Acceso(idEmpresa)) return Json(new { success = false, message = R("SBP_SinAcceso") }, JsonRequestBehavior.AllowGet);
-                var resumen = _svc.ObtenerResumen(idEmpresa);
+                var resumen = svc.ObtenerResumen(idEmpresa);
                 if (!resumen.Disponible) return Json(new { success = true, disponible = false }, JsonRequestBehavior.AllowGet);
 
-                var filas = _svc.Obtener(idEmpresa).Select(f => new
+                var filas = svc.Obtener(idEmpresa).Select(f => new
                 {
                     id = f.Id, mes = f.Mes, descripcion = f.Descripcion, descripcionBase = f.DescripcionBase,
                     formula = f.Formula, mesBase = f.MesBase, tipoUnidad = f.TipoUnidad, calculo = f.EsCalculo, valor = f.Valor,
@@ -99,12 +101,12 @@ namespace bufinscustomers.Controllers
                 if (cambios == null || cambios.Count == 0) return Json(new { success = false, message = R("SBP_SinCambios") });
                 if (cambios.Any(c => c.Mes < 1 || c.Mes > 12)) return Json(new { success = false, message = R("SBP_Hall_MesInvalido") });
 
-                int n = _svc.GuardarValores(idEmpresa, usuario.Id, cambios);
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Editar,
+                int n = svc.GuardarValores(idEmpresa, usuario.Id, cambios);
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Editar,
                     "SupuestosBalancePpto", idEmpresa.ToString(),
                     $"Supuestos del balance del ppto de {NombreEmpresa(idEmpresa)}: {n} valor(es) editado(s) manualmente",
                     null, cambios, idEmpresa: idEmpresa);
-                return Json(new { success = true, actualizadas = n, resumen = ResumenJson(_svc.ObtenerResumen(idEmpresa)) });
+                return Json(new { success = true, actualizadas = n, resumen = ResumenJson(svc.ObtenerResumen(idEmpresa)) });
             }
             catch (Exception ex) { return Json(new { success = false, message = MensajeError(ex) }); }
         }
@@ -117,9 +119,9 @@ namespace bufinscustomers.Controllers
             {
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 if (!Acceso(idEmpresa)) return Json(new { success = false, message = R("SBP_SinAcceso") });
-                int n = _svc.Inicializar(idEmpresa, usuario.Id);
+                int n = svc.Inicializar(idEmpresa, usuario.Id);
                 if (n == 0) return Json(new { success = false, message = R("SBP_YaInicializada") });
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Crear,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Crear,
                     "SupuestosBalancePpto", idEmpresa.ToString(),
                     $"Supuestos del balance del ppto inicializados (valores vacíos) para {NombreEmpresa(idEmpresa)}: {n} fila(s)",
                     null, new { filas = n }, idEmpresa: idEmpresa);
@@ -150,7 +152,7 @@ namespace bufinscustomers.Controllers
                     try
                     {
                         using (var wb = new XLWorkbook(ms))
-                            res = _svc.CargarDesdeExcel(idEmpresa, usuario.Id, wb);
+                            res = svc.CargarDesdeExcel(idEmpresa, usuario.Id, wb);
                     }
                     catch (Exception exLectura) when (!(exLectura is Microsoft.Data.SqlClient.SqlException))
                     {
@@ -164,14 +166,14 @@ namespace bufinscustomers.Controllers
 
                 if (res.Exito)
                 {
-                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Cargues, AuditoriaAccion.Crear,
+                    auditoriaService.RegistrarCambio(AuditoriaTipo.Cargues, AuditoriaAccion.Crear,
                         "SupuestosBalancePpto", idEmpresa.ToString(),
                         $"Carga Excel de supuestos del balance del ppto de {NombreEmpresa(idEmpresa)}: {res.FilasActualizadas} valor(es) actualizado(s) de {res.FilasLeidas} fila(s) leídas ({archivoExcel.FileName})",
                         null, new { archivo = archivoExcel.FileName, res.FilasLeidas, res.FilasActualizadas, advertencias = res.Hallazgos.Count }, idEmpresa: idEmpresa);
                 }
                 else if (res.Hallazgos.Count > 0)
                 {
-                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Cargues, AuditoriaAccion.Crear,
+                    auditoriaService.RegistrarCambio(AuditoriaTipo.Cargues, AuditoriaAccion.Crear,
                         "SupuestosBalancePpto", idEmpresa.ToString(),
                         $"Carga Excel de supuestos RECHAZADA para {NombreEmpresa(idEmpresa)}: {res.Hallazgos.Count(x => x.Severidad == "Error")} error(es)",
                         null, new { archivo = archivoExcel.FileName }, idEmpresa: idEmpresa);
@@ -184,7 +186,7 @@ namespace bufinscustomers.Controllers
                     actualizadas = res.FilasActualizadas,
                     leidas = res.FilasLeidas,
                     hallazgos = res.Hallazgos.Select(h => new { fila = h.Fila, columna = h.Columna, severidad = h.Severidad, mensaje = h.Mensaje }),
-                    resumen = res.Exito ? ResumenJson(_svc.ObtenerResumen(idEmpresa)) : null
+                    resumen = res.Exito ? ResumenJson(svc.ObtenerResumen(idEmpresa)) : null
                 });
             }
             catch (Exception ex) { return Json(new { success = false, message = MensajeError(ex) }); }
@@ -196,8 +198,8 @@ namespace bufinscustomers.Controllers
             if (!Acceso(idEmpresa)) return RedirectToAction("Index");
             try
             {
-                var bytes = _svc.GenerarExcel(idEmpresa, soloEstructura: false);
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Exportar,
+                var bytes = svc.GenerarExcel(idEmpresa, soloEstructura: false);
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Exportar,
                     "SupuestosBalancePpto", idEmpresa.ToString(), $"Descarga Excel de supuestos del balance del ppto de {NombreEmpresa(idEmpresa)}",
                     null, null, idEmpresa: idEmpresa);
                 return File(bytes, XlsxMime, $"Supuestos_Balance_Ppto_{Limpio(NombreEmpresa(idEmpresa))}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
@@ -211,7 +213,7 @@ namespace bufinscustomers.Controllers
             if (!Acceso(idEmpresa)) return RedirectToAction("Index");
             try
             {
-                var bytes = _svc.GenerarExcel(idEmpresa, soloEstructura: true);
+                var bytes = svc.GenerarExcel(idEmpresa, soloEstructura: true);
                 return File(bytes, XlsxMime, $"Plantilla_Supuestos_Balance_Ppto_{Limpio(NombreEmpresa(idEmpresa))}.xlsx");
             }
             catch (Exception ex) { SetErrorMessage(MensajeError(ex)); return RedirectToAction("Index"); }
@@ -232,17 +234,17 @@ namespace bufinscustomers.Controllers
             try
             {
                 if (!Acceso(idEmpresa)) return Json(new { mostrar = false }, JsonRequestBehavior.AllowGet);
-                int pend = _svc.ContarPendientes(idEmpresa);
+                int pend = svc.ContarPendientes(idEmpresa);
                 if (pend == -1)
                 {
                     // Sin filas: también es un "no completo" (solo si el módulo está instalado)
-                    bool instalado = _svc.Disponible();
+                    bool instalado = svc.Disponible();
                     if (!instalado) return Json(new { mostrar = false }, JsonRequestBehavior.AllowGet);
                 }
                 if (pend == 0) return Json(new { mostrar = false }, JsonRequestBehavior.AllowGet);
 
                 bool ingles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
-                _svc.ObtenerMenu(ingles, out string nombre, out string controller, out string action);
+                svc.ObtenerMenu(ingles, out string nombre, out string controller, out string action);
                 bool puede = UsuarioSesionHelper.TienePermiso(SupuestosBalancePptoService.CodigoMenu);
                 return Json(new
                 {

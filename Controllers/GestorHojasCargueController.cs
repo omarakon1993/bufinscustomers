@@ -18,11 +18,13 @@ namespace bufinscustomers.Controllers
     /// </summary>
     [ValidarSesion]
     [SoloSuperAdmin]
-    public class GestorHojasCargueController : BaseController
+    public class GestorHojasCargueController(
+        CargueHojasService servicio,
+        EmpresaService empresaService,
+        AuditoriaService auditoriaService,
+        PlantillaCargueService plantillaCargueService,
+        NotificacionesService notificacionesService) : BaseController
     {
-        private readonly CargueHojasService _servicio = new CargueHojasService();
-        private readonly EmpresaService _empresaService = new EmpresaService();
-
         public ActionResult Index()
         {
             return View("~/Views/Configuracion/GestorHojasCargue.cshtml");
@@ -35,10 +37,10 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                var catalogo = _servicio.ObtenerCatalogo();
+                var catalogo = servicio.ObtenerCatalogo();
                 bool desdeBD = catalogo != null;
                 var hojas = catalogo ?? CargueHojasCacheHelper.Todas().ToList();
-                var empresas = _empresaService.ObtenerEmpresas().OrderBy(e => e.Nombre).Select(e => new { id = e.Id, nombre = e.Nombre }).ToList();
+                var empresas = empresaService.ObtenerEmpresas().OrderBy(e => e.Nombre).Select(e => new { id = e.Id, nombre = e.Nombre }).ToList();
 
                 return Json(new
                 {
@@ -75,7 +77,7 @@ namespace bufinscustomers.Controllers
                 var hoja = BuscarHoja(id, exigirBD: false);
                 if (hoja == null) return JsonError("HojasCargue_Err_NoExiste");
 
-                var d = _servicio.ObtenerDetalle(hoja);
+                var d = servicio.ObtenerDetalle(hoja);
                 return Json(new
                 {
                     success = true,
@@ -107,10 +109,10 @@ namespace bufinscustomers.Controllers
                 return Json(new { success = true, valida = false }, JsonRequestBehavior.AllowGet);
             try
             {
-                bool existe = _servicio.ExisteTabla(tabla);
-                bool existeStaging = _servicio.ExisteTabla(TablasCargueHelper.NombreStaging(tabla));
-                var columnas = existe ? _servicio.ObtenerColumnas(tabla).Where(c => !c.EsSistema).Select(ColumnaJson).ToList() : null;
-                bool tieneAnio = !existe || _servicio.ObtenerColumnas(tabla).Any(c => c.Nombre.Equals(CargueHojasService.ColumnaAnio, StringComparison.OrdinalIgnoreCase));
+                bool existe = servicio.ExisteTabla(tabla);
+                bool existeStaging = servicio.ExisteTabla(TablasCargueHelper.NombreStaging(tabla));
+                var columnas = existe ? servicio.ObtenerColumnas(tabla).Where(c => !c.EsSistema).Select(ColumnaJson).ToList() : null;
+                bool tieneAnio = !existe || servicio.ObtenerColumnas(tabla).Any(c => c.Nombre.Equals(CargueHojasService.ColumnaAnio, StringComparison.OrdinalIgnoreCase));
                 return Json(new { success = true, valida = true, existe, existeStaging, tieneAnio, columnas }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
@@ -128,8 +130,8 @@ namespace bufinscustomers.Controllers
             try
             {
                 var nueva = JsonConvert.DeserializeObject<HojaCargueNueva>(datos ?? "{}") ?? new HojaCargueNueva();
-                var catalogo = _servicio.ObtenerCatalogo() ?? new List<HojaCargue>();
-                bool existe = CargueHojasService.NombreTablaValido((nueva.TablaIni ?? "").Trim()) && _servicio.ExisteTabla(nueva.TablaIni.Trim());
+                var catalogo = servicio.ObtenerCatalogo() ?? new List<HojaCargue>();
+                bool existe = CargueHojasService.NombreTablaValido((nueva.TablaIni ?? "").Trim()) && servicio.ExisteTabla(nueva.TablaIni.Trim());
                 CargueHojasService.ValidarNueva(nueva, catalogo, existe);
 
                 // Tabla existente: se registra con su estructura (sin script; si faltara su staging, se crea igual que la Ini).
@@ -155,10 +157,10 @@ namespace bufinscustomers.Controllers
             {
                 var catalogo = ExigirCatalogo();
                 var nueva = JsonConvert.DeserializeObject<HojaCargueNueva>(datos ?? "{}") ?? new HojaCargueNueva();
-                var (idHoja, sql) = _servicio.Crear(nueva, catalogo, UsuarioActualId());
+                var (idHoja, sql) = servicio.Crear(nueva, catalogo, UsuarioActualId());
                 CargueHojasCacheHelper.Invalidar();
 
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.HojasCargue, AuditoriaAccion.Crear,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.HojasCargue, AuditoriaAccion.Crear,
                     "CargueHojas", idHoja.ToString(),
                     $"Hoja de cargue creada: {nueva.NombreHoja} → {nueva.TablaIni} ({nueva.Alcance})" + (sql.Count > 0 ? " — tablas creadas en la BD." : " — tabla existente registrada."),
                     null,
@@ -193,10 +195,10 @@ namespace bufinscustomers.Controllers
                 if (hoja == null) return JsonError("HojasCargue_Err_NoExiste");
 
                 var antes = new { hoja = hoja.NombreHoja, descripcion = hoja.Descripcion, orden = hoja.Orden, activo = hoja.Activo };
-                _servicio.GuardarGeneral(hoja, nombreHoja, descripcion, orden, activo, catalogo, UsuarioActualId());
+                servicio.GuardarGeneral(hoja, nombreHoja, descripcion, orden, activo, catalogo, UsuarioActualId());
                 CargueHojasCacheHelper.Invalidar();
 
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.HojasCargue, AuditoriaAccion.Editar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.HojasCargue, AuditoriaAccion.Editar,
                     "CargueHojas", id.ToString(), $"Hoja de cargue editada: {nombreHoja?.Trim()} ({hoja.TablaIni})",
                     antes, new { hoja = nombreHoja?.Trim(), descripcion, orden, activo },
                     entidadNombre: nombreHoja?.Trim(),
@@ -228,12 +230,12 @@ namespace bufinscustomers.Controllers
                     return JsonError("HojasCargue_Err_Orden");
 
                 var antes = catalogo.OrderBy(h => h.Orden).Select(h => h.NombreHoja + "=" + h.Orden).ToList();
-                _servicio.ActualizarOrden(ids, ordenes, UsuarioActualId());
+                servicio.ActualizarOrden(ids, ordenes, UsuarioActualId());
                 CargueHojasCacheHelper.Invalidar();
 
                 var porId = catalogo.ToDictionary(h => h.IdHoja, h => h.NombreHoja);
                 var despues = ids.Select((id, i) => (porId.TryGetValue(id, out var n) ? n : "#" + id) + "=" + ordenes[i]).ToList();
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.HojasCargue, AuditoriaAccion.Editar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.HojasCargue, AuditoriaAccion.Editar,
                     "CargueHojas", null, "Orden de las hojas de cargue actualizado", new { orden = antes }, new { orden = despues },
                     entidadNombre: "Orden de hojas");
 
@@ -262,10 +264,10 @@ namespace bufinscustomers.Controllers
                     .Select(s => int.TryParse(s.Trim(), out int n) ? n : 0).Where(n => n > 0).Distinct().ToList();
 
                 var antes = new { alcance = hoja.Alcance, empresas = hoja.Empresas.Keys.OrderBy(x => x).ToList() };
-                _servicio.GuardarAlcance(hoja, alcance, ids, UsuarioActualId());
+                servicio.GuardarAlcance(hoja, alcance, ids, UsuarioActualId());
                 CargueHojasCacheHelper.Invalidar();
 
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.HojasCargue, AuditoriaAccion.Asignar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.HojasCargue, AuditoriaAccion.Asignar,
                     "CargueHojas", id.ToString(), $"Alcance de la hoja {hoja.NombreHoja}: {alcance}",
                     antes, new { alcance, empresas = ids.OrderBy(x => x).ToList() },
                     entidadNombre: hoja.NombreHoja);
@@ -288,7 +290,7 @@ namespace bufinscustomers.Controllers
             return OperacionColumna(id, "AgregarColumna", hoja =>
             {
                 var col = JsonConvert.DeserializeObject<ColumnaHoja>(columna ?? "{}") ?? new ColumnaHoja();
-                var sql = _servicio.AgregarColumna(hoja, col);
+                var sql = servicio.AgregarColumna(hoja, col);
                 return ($"Columna agregada a {hoja.NombreHoja}: {col.Nombre} {col.TipoCompleto}", null, new { columna = col.Nombre, tipo = col.TipoCompleto, nulos = col.PermiteNulos, defecto = col.ValorDefecto, sql }, AuditoriaAccion.Crear, "HojasCargue_ColumnaAgregada");
             });
         }
@@ -300,7 +302,7 @@ namespace bufinscustomers.Controllers
             return OperacionColumna(id, "ModificarColumna", hoja =>
             {
                 var col = JsonConvert.DeserializeObject<ColumnaHoja>(columna ?? "{}") ?? new ColumnaHoja();
-                var sql = _servicio.ModificarColumna(hoja, nombreOriginal, col);
+                var sql = servicio.ModificarColumna(hoja, nombreOriginal, col);
                 return ($"Columna modificada en {hoja.NombreHoja}: {nombreOriginal} → {col.Nombre} {col.TipoCompleto}", new { columna = nombreOriginal }, new { columna = col.Nombre, tipo = col.TipoCompleto, nulos = col.PermiteNulos, defecto = col.ValorDefecto, sql }, AuditoriaAccion.Editar, "HojasCargue_ColumnaModificada");
             });
         }
@@ -311,7 +313,7 @@ namespace bufinscustomers.Controllers
         {
             return OperacionColumna(id, "EliminarColumna", hoja =>
             {
-                var sql = _servicio.EliminarColumna(hoja, nombre);
+                var sql = servicio.EliminarColumna(hoja, nombre);
                 return ($"Columna eliminada de {hoja.NombreHoja}: {nombre}", new { columna = nombre }, new { sql }, AuditoriaAccion.Eliminar, "HojasCargue_ColumnaEliminada");
             });
         }
@@ -327,10 +329,10 @@ namespace bufinscustomers.Controllers
                 if (hoja == null) return JsonError("HojasCargue_Err_NoExiste");
 
                 var r = operacion(hoja);
-                _servicio.TocarHoja(id, UsuarioActualId());
+                servicio.TocarHoja(id, UsuarioActualId());
                 CargueHojasCacheHelper.Invalidar();
 
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.HojasCargue, r.accion,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.HojasCargue, r.accion,
                     "CargueHojas", id.ToString(), r.descripcion, r.antes, r.despues,
                     entidadNombre: hoja.NombreHoja,
                     severidad: r.accion == AuditoriaAccion.Eliminar ? AuditoriaSeveridad.Critico : AuditoriaSeveridad.Advertencia);
@@ -361,10 +363,10 @@ namespace bufinscustomers.Controllers
                 var hoja = catalogo.FirstOrDefault(h => h.IdHoja == id);
                 if (hoja == null) return JsonError("HojasCargue_Err_NoExiste");
 
-                var sql = _servicio.Eliminar(hoja, borrarTablas);
+                var sql = servicio.Eliminar(hoja, borrarTablas);
                 CargueHojasCacheHelper.Invalidar();
 
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.HojasCargue, AuditoriaAccion.Eliminar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.HojasCargue, AuditoriaAccion.Eliminar,
                     "CargueHojas", id.ToString(),
                     $"Hoja de cargue eliminada: {hoja.NombreHoja} → {hoja.TablaIni}" + (sql.Count > 0 ? " (tablas borradas de la BD)" : " (tablas conservadas)"),
                     new { hoja = hoja.NombreHoja, tabla = hoja.TablaIni, alcance = hoja.Alcance, empresas = hoja.Empresas.Keys.ToList() },
@@ -393,8 +395,8 @@ namespace bufinscustomers.Controllers
             try
             {
                 var hojas = idEmpresa > 0 ? TablasCargueHelper.HojasParaEmpresa(idEmpresa) : CargueHojasCacheHelper.Estandar();
-                byte[] bytes = new PlantillaCargueService().GenerarBytes(hojas);
-                var empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+                byte[] bytes = plantillaCargueService.GenerarBytes(hojas);
+                var empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
                 string sufijo = Regex.Replace(!string.IsNullOrWhiteSpace(empresa?.Abreviatura) ? empresa.Abreviatura : (empresa?.Nombre ?? "Estandar"), "[^A-Za-z0-9]", "_");
                 return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"PlantillaBUFINS_{sufijo}.xlsx");
             }
@@ -411,14 +413,14 @@ namespace bufinscustomers.Controllers
         /// <summary>Catálogo leído de la BD (no del cache). Lanza si el script Sql/021 no se ha ejecutado.</summary>
         private List<HojaCargue> ExigirCatalogo()
         {
-            var catalogo = _servicio.ObtenerCatalogo();
+            var catalogo = servicio.ObtenerCatalogo();
             if (catalogo == null) throw new CargueHojasService.GestorHojasException("HojasCargue_Err_SinScript");
             return catalogo;
         }
 
         private HojaCargue BuscarHoja(int id, bool exigirBD)
         {
-            var catalogo = exigirBD ? ExigirCatalogo() : (_servicio.ObtenerCatalogo() ?? CargueHojasCacheHelper.Todas().ToList());
+            var catalogo = exigirBD ? ExigirCatalogo() : (servicio.ObtenerCatalogo() ?? CargueHojasCacheHelper.Todas().ToList());
             return catalogo.FirstOrDefault(h => h.IdHoja == id);
         }
 
@@ -439,7 +441,7 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                var notif = new NotificacionesService();
+                var notif = notificacionesService;
                 using (var cn = new SqlConnection(CadenaConexion))
                 using (var cmd = new SqlCommand("SELECT Id FROM Usuarios WHERE Admin = 2", cn))
                 {

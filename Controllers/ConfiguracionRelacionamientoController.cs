@@ -7,10 +7,8 @@ using System.IO;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class ConfiguracionRelacionamientoController : BaseController
+    public class ConfiguracionRelacionamientoController(ConfiguracionRelacionamientoService service) : BaseController
     {
-        private ConfiguracionRelacionamientoService _service = new ConfiguracionRelacionamientoService();
-
         private bool VerificarAdmin()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
@@ -27,7 +25,7 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            ViewBag.TablasRel = _service.ObtenerTablasRelDisponibles();
+            ViewBag.TablasRel = service.ObtenerTablasRelDisponibles();
             return View("~/Views/Configuracion/ConfiguracionRelacionamiento.cshtml");
         }
 
@@ -65,7 +63,7 @@ namespace bufinscustomers.Controllers
 
                     using (var package = new XLWorkbook(stream))
                     {
-                        var resultado = _service.CargarDatosDesdeExcel(package);
+                        var resultado = service.CargarDatosDesdeExcel(package);
 
                         TempData.GuardarObjeto("ResultadoCarga", resultado);
                         TempData["NombreArchivo"] = Path.GetFileName(archivoExcel.FileName);
@@ -99,7 +97,7 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                byte[] fileBytes = _service.ExportarRelacionamientosExcel();
+                byte[] fileBytes = service.ExportarRelacionamientosExcel();
                 string fileName = $"Relacionamientos_BUFINS_SQL_{DateTime.Now:ddMMyyyy}_{DateTime.Now:fff}.xlsx";
                 return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
@@ -122,7 +120,7 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                byte[] fileBytes = _service.GenerarPlantillaExcel();
+                byte[] fileBytes = service.GenerarPlantillaExcel();
                 string fileName = $"Plantilla_Relacionamientos_{DateTime.Now:yyyyMMdd}.xlsx";
                 return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }

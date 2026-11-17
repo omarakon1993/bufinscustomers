@@ -48,5 +48,13 @@ Tamaño: Controllers 17,8k / Services 23,8k / Helpers 3,4k / Models 3,6k / Views
 - Lo que sigue a mano (por diseño): transacciones (`SqlTransaction`), parámetros OUTPUT, varios result sets, `SqlBulkCopy`, bloques con lógica intercalada, `Parameters.Add(tipo)`.
 - Regla para código NUEVO: usar `Bd.*` en lugar de abrir `SqlConnection` a mano (salvo los casos anteriores).
 
+## Fase 4 — inyección de dependencias (HECHA 2026-11-16, sin comitear)
+- `Infra/ServiciosExtensions.AddServiciosBufins()` (llamado en `Program.cs`): registra por reflexión como transitorios todos los `*Service` públicos, no estáticos/abstractos, de `bufinscustomers.Services` con constructor público sin parámetros (se crean siempre con ese constructor).
+- 50 controladores pasan a constructor primario (C# 12): 68 campos `= new XService()` eliminados y 230 `new XService()` sueltos reemplazados por la dependencia inyectada. `new XService()` en `Controllers/`: 305 → 9. Los servicios con estado mutable de instancia solo se inyectaron donde ya eran un campo (no se comparten entre llamadas).
+- Omitidos a propósito (3): clases base de otros controladores y las que ya tenían constructor explícito (AccesoController, ConfiguracionEmpresaController…); quedan para una pasada manual.
+- Los servicios, helpers y filtros NO cambian (siguen `new`), así no se rompen sus ~400 puntos de uso.
+- Prueba nueva `Tests/Bufins.Pruebas/InyeccionDependenciasTests.cs`: todo parámetro de constructor de todo controlador debe ser resoluble.
+- Balance de líneas: ≈ +30 netas (un constructor primario cuesta casi lo mismo que los campos que reemplaza); el beneficio es arquitectónico (dependencias explícitas y comprobables).
+
 ## Orden
 F2 limpieza sin riesgo → F3 datos → F4 DI → F5 dividir/base informes → F6 plataforma (nulabilidad, async, Compat) → F7 frontend → **F9 resumen del refactor (qué se redujo y cómo se hizo; se entrega ANTES de la F8; métricas contra la etiqueta `base-pre-refactor-2026-11-16`)** → F8 documentación técnica (se mantiene intacta tal como se definió) (`App_Data/Documentacion/Tecnica/`, con glosario de C#/.NET con ejemplos del propio código). Comentarios de una línea (español, solo el «porqué») se agregan módulo a módulo en cada fase.

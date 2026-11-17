@@ -8,10 +8,8 @@ using System.Text.RegularExpressions;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class ReportesController : BaseController
+    public class ReportesController(ReportesService reportesService, NotificacionesService notificacionesService) : BaseController
     {
-        private ReportesService _reportesService = new ReportesService();
-
         private bool EsURLValida(string url)
         {
             if (string.IsNullOrWhiteSpace(url))
@@ -74,17 +72,17 @@ namespace bufinscustomers.Controllers
         public ActionResult MaestroReportes()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            var reportes = _reportesService.ObtenerReportes();
+            var reportes = reportesService.ObtenerReportes();
 
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
                 var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
                 reportes = reportes.FindAll(r => idsPermitidos.Contains(r.IdEmpresa));
-                ViewBag.Empresas = _reportesService.ObtenerEmpresas().FindAll(e => idsPermitidos.Contains(e.Id));
+                ViewBag.Empresas = reportesService.ObtenerEmpresas().FindAll(e => idsPermitidos.Contains(e.Id));
             }
             else
             {
-                ViewBag.Empresas = _reportesService.ObtenerEmpresas();
+                ViewBag.Empresas = reportesService.ObtenerEmpresas();
             }
 
             return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
@@ -104,25 +102,25 @@ namespace bufinscustomers.Controllers
             if (!string.IsNullOrWhiteSpace(reporte.EnlaceHTML) && !EsURLValida(reporte.EnlaceHTML))
             {
                 TempData["ErrorMessage"] = "El enlace HTML no tiene un formato válido. Formato esperado: https://ejemplo.com";
-                ViewBag.Empresas = _reportesService.ObtenerEmpresas();
-                var reportes = _reportesService.ObtenerReportes();
+                ViewBag.Empresas = reportesService.ObtenerEmpresas();
+                var reportes = reportesService.ObtenerReportes();
                 return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
             }
 
             string mensaje;
-            bool registrado = _reportesService.CrearReporte(reporte, out mensaje);
+            bool registrado = reportesService.CrearReporte(reporte, out mensaje);
 
             if (registrado)
             {
                 TempData["SuccessMessage"] = "Reporte creado correctamente.";
-                new NotificacionesService().Crear(usuario?.Id ?? 0, R("Notif_ReporteCreado"), reporte.Nombre, "success", "/Reportes/MaestroReportes");
+                notificacionesService.Crear(usuario?.Id ?? 0, R("Notif_ReporteCreado"), reporte.Nombre, "success", "/Reportes/MaestroReportes");
                 return RedirectToAction("MaestroReportes");
             }
             else
             {
                 TempData["ErrorMessage"] = mensaje;
-                ViewBag.Empresas = _reportesService.ObtenerEmpresas();
-                var reportes = _reportesService.ObtenerReportes();
+                ViewBag.Empresas = reportesService.ObtenerEmpresas();
+                var reportes = reportesService.ObtenerReportes();
                 return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
             }
         }
@@ -142,12 +140,12 @@ namespace bufinscustomers.Controllers
             if (!string.IsNullOrWhiteSpace(reporte.EnlaceHTML) && !EsURLValida(reporte.EnlaceHTML))
             {
                 TempData["ErrorMessage"] = "El enlace HTML no tiene un formato válido. Formato esperado: https://ejemplo.com";
-                ViewBag.Empresas = _reportesService.ObtenerEmpresas();
-                var reportes = _reportesService.ObtenerReportes();
+                ViewBag.Empresas = reportesService.ObtenerEmpresas();
+                var reportes = reportesService.ObtenerReportes();
                 return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
             }
 
-            bool actualizado = _reportesService.EditarReporte(reporte);
+            bool actualizado = reportesService.EditarReporte(reporte);
 
             if (actualizado)
             {
@@ -157,8 +155,8 @@ namespace bufinscustomers.Controllers
             else
             {
                 TempData["ErrorMessage"] = "Error al actualizar el reporte.";
-                ViewBag.Empresas = _reportesService.ObtenerEmpresas();
-                var reportes = _reportesService.ObtenerReportes();
+                ViewBag.Empresas = reportesService.ObtenerEmpresas();
+                var reportes = reportesService.ObtenerReportes();
                 return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
             }
         }
@@ -171,7 +169,7 @@ namespace bufinscustomers.Controllers
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
                 var usuario = UsuarioSesionHelper.UsuarioActual;
-                var reporte = _reportesService.ObtenerReportes().Find(r => r.Id == idReporte);
+                var reporte = reportesService.ObtenerReportes().Find(r => r.Id == idReporte);
                 if (reporte != null && !EmpresaAccesoHelper.TieneAcceso(usuario, reporte.IdEmpresa))
                 {
                     TempData["ErrorMessage"] = "No tiene permisos para eliminar reportes de otra empresa.";
@@ -179,12 +177,12 @@ namespace bufinscustomers.Controllers
                 }
             }
 
-            bool eliminado = _reportesService.EliminarReporte(idReporte);
+            bool eliminado = reportesService.EliminarReporte(idReporte);
 
             if (eliminado)
             {
                 TempData["SuccessMessage"] = "Reporte eliminado correctamente.";
-                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_ReporteEliminado"), null, "warning", "/Reportes/MaestroReportes");
+                notificacionesService.Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_ReporteEliminado"), null, "warning", "/Reportes/MaestroReportes");
             }
             else
                 TempData["ErrorMessage"] = "Error al eliminar el reporte.";

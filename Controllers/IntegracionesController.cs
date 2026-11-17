@@ -24,12 +24,14 @@ namespace bufinscustomers.Controllers
     /// </summary>
     [ValidarSesion]
     [RequierePermiso("ADMIN_CONFIG_INTEGRACIONES")]
-    public class IntegracionesController : BaseController
+    public class IntegracionesController(
+        IntegracionesService servicio,
+        WebhooksService webhooks,
+        IntegracionesActividadService actividad,
+        EmpresaService empresaService,
+        AuditoriaService auditoriaService,
+        NotificacionesService notificacionesService) : BaseController
     {
-        private readonly IntegracionesService _servicio = new IntegracionesService();
-        private readonly WebhooksService _webhooks = new WebhooksService();
-        private readonly IntegracionesActividadService _actividad = new IntegracionesActividadService();
-
         private static bool PuedeAdministrar() => UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.EsAdminEmpresa();
 
         public ActionResult Index()
@@ -43,13 +45,13 @@ namespace bufinscustomers.Controllers
             ViewBag.Disponible = disponible;
             string baseApi = Request.Url.Scheme + "://" + Request.Url.Authority + "/api/v1";
             ViewBag.BaseApi = baseApi;
-            var lista = disponible ? _servicio.Listar(permitidas) : new System.Collections.Generic.List<Integracion>();
+            var lista = disponible ? servicio.Listar(permitidas) : new System.Collections.Generic.List<Integracion>();
 
             // Semáforo de cada integración (en palabras de negocio); si algo falla, la pantalla funciona igual sin él.
             var salud = new Dictionary<int, SaludIntegracionVM>();
             foreach (var i in lista)
             {
-                try { salud[i.Id] = TraducirSalud(_actividad.Salud(i)); }
+                try { salud[i.Id] = TraducirSalud(actividad.Salud(i)); }
                 catch (Exception ex) { AppLogger.Warn("Integraciones.Salud: " + ex.Message); }
             }
             ViewBag.Salud = salud;
@@ -61,7 +63,7 @@ namespace bufinscustomers.Controllers
             {
                 try
                 {
-                    var p = _actividad.UltimosCargues(i.Id, 10).Where(c => c.Situacion == "PendienteRevision").OrderByDescending(c => c.Recibido).ToList();
+                    var p = actividad.UltimosCargues(i.Id, 10).Where(c => c.Situacion == "PendienteRevision").OrderByDescending(c => c.Recibido).ToList();
                     if (p.Count == 0) continue;
                     pendientes[i.Id] = p.Count;
                     pendientesUrl[i.Id] = Url.Action("RevisarCargue", "Datos", new { idLote = p[0].IdLote });
@@ -72,7 +74,7 @@ namespace bufinscustomers.Controllers
             ViewBag.PendientesUrl = pendientesUrl;
 
             // Dirección propia de cada empresa: /api/v1/{empresa}
-            var todas = new EmpresaService().ObtenerEmpresas().Select(e => (e.Id, e.Nombre)).ToList();
+            var todas = empresaService.ObtenerEmpresas().Select(e => (e.Id, e.Nombre)).ToList();
             ViewBag.Direcciones = lista.Select(i => i.IdEmpresa).Distinct()
                 .ToDictionary(id => id, id => baseApi + "/" + bufinscustomers.Api.ApiDireccion.SlugDe(id, todas));
             return View("~/Views/Configuracion/Integraciones.cshtml", lista);
@@ -91,27 +93,27 @@ namespace bufinscustomers.Controllers
                 return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
             try
             {
-                string empresa = new EmpresaService().ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? ("#" + idEmpresa);
+                string empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? ("#" + idEmpresa);
                 string nombre = (sandbox ? R("Integ_Cx_PrefijoPruebas") + " " : "") + empresa;
                 if (nombre.Length > 100) nombre = nombre.Substring(0, 100);
 
                 var yo = UsuarioSesionHelper.UsuarioActual;
                 (bool ok, string error, int idIntegracion, string claveEnClaro) r = (false, "usuario", 0, null);
-                foreach (var u in _servicio.ListarUsuariosElegibles(idEmpresa))
+                foreach (var u in servicio.ListarUsuariosElegibles(idEmpresa))
                 {
-                    r = _servicio.Crear(idEmpresa, nombre, u.Id, sandbox, null, yo?.Id, sandbox);
+                    r = servicio.Crear(idEmpresa, nombre, u.Id, sandbox, null, yo?.Id, sandbox);
                     if (r.ok || r.error != "usuario_en_uso") break;   // si el usuario sirve al otro tipo de conexión, se prueba con el siguiente
                 }
                 if (!r.ok)
                     return Json(new { success = false, message = r.error == "usuario" ? R("Integ_Cx_ErrSinUsuarios") : TraducirError(r.error) });
 
-                var integ = _servicio.Obtener(r.idIntegracion);
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Crear, "Integracion", r.idIntegracion.ToString(),
+                var integ = servicio.Obtener(r.idIntegracion);
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Crear, "Integracion", r.idIntegracion.ToString(),
                     $"Creó la conexión API '{integ?.Nombre}' ({(sandbox ? "PRUEBAS" : "producción")}) de '{integ?.NombreEmpresa}' con el asistente (usuario técnico: {integ?.NombreUsuarioTecnico}).",
                     null, new { integ?.Nombre, idEmpresa, sandbox, prefijo = integ?.Prefijo }, idEmpresa, entidadNombre: integ?.Nombre);
 
                 string direccion = Request.Url.Scheme + "://" + Request.Url.Authority + "/api/v1/"
-                    + bufinscustomers.Api.ApiDireccion.SlugDe(idEmpresa, new EmpresaService().ObtenerEmpresas().Select(e => (e.Id, e.Nombre)));
+                    + bufinscustomers.Api.ApiDireccion.SlugDe(idEmpresa, empresaService.ObtenerEmpresas().Select(e => (e.Id, e.Nombre)));
                 return Json(new { success = true, clave = r.claveEnClaro, nombre = integ?.Nombre, empresa = integ?.NombreEmpresa, direccion });
             }
             catch (Exception ex) { return Json(new { success = false, message = MensajeError(ex) }); }
@@ -125,10 +127,10 @@ namespace bufinscustomers.Controllers
             if (integ == null) return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
             try
             {
-                if (!_servicio.Actualizar(id, nombre, activo, permiteConfirmar, ipPermitidas, out string error))
+                if (!servicio.Actualizar(id, nombre, activo, permiteConfirmar, ipPermitidas, out string error))
                     return Json(new { success = false, message = error == null ? R("Integ_ErrNoEditable") : TraducirError(error) });
 
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Editar, "Integracion", id.ToString(),
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Editar, "Integracion", id.ToString(),
                     $"Editó la integración API '{integ.Nombre}' de '{integ.NombreEmpresa}'.",
                     new { integ.Nombre, integ.Activo, integ.PermiteConfirmar, integ.IpPermitidas },
                     new { Nombre = nombre?.Trim(), activo, permiteConfirmar, ipPermitidas },
@@ -147,10 +149,10 @@ namespace bufinscustomers.Controllers
             if (integ == null) return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
             try
             {
-                var r = _servicio.Rotar(id);
+                var r = servicio.Rotar(id);
                 if (!r.ok) return Json(new { success = false, message = R("Integ_ErrNoEditable") });
 
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Editar, "Integracion", id.ToString(),
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Editar, "Integracion", id.ToString(),
                     $"Rotó la clave de la integración API '{integ.Nombre}' de '{integ.NombreEmpresa}' (la anterior quedó inválida).",
                     new { prefijoAnterior = integ.Prefijo }, null, integ.IdEmpresa, entidadNombre: integ.Nombre, severidad: AuditoriaSeveridad.Advertencia);
                 return Json(new { success = true, message = string.Format(R("Integ_Rotada"), integ.Nombre), clave = r.clave, nombre = integ.Nombre });
@@ -167,9 +169,9 @@ namespace bufinscustomers.Controllers
             if (integ == null) return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
             try
             {
-                if (!_servicio.Revocar(id)) return Json(new { success = false, message = R("Integ_ErrNoEditable") });
+                if (!servicio.Revocar(id)) return Json(new { success = false, message = R("Integ_ErrNoEditable") });
 
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Eliminar, "Integracion", id.ToString(),
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Eliminar, "Integracion", id.ToString(),
                     $"Revocó la integración API '{integ.Nombre}' de '{integ.NombreEmpresa}'.",
                     new { integ.Nombre, integ.Prefijo }, null, integ.IdEmpresa, entidadNombre: integ.Nombre, severidad: AuditoriaSeveridad.Advertencia);
                 return Json(new { success = true, message = string.Format(R("Integ_Revocada"), integ.Nombre) });
@@ -187,10 +189,10 @@ namespace bufinscustomers.Controllers
             if (integ == null) return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
             try
             {
-                var salud = TraducirSalud(_actividad.Salud(integ));
+                var salud = TraducirSalud(actividad.Salud(integ));
                 string ModoTexto(string m) => m == "ejecucion" ? R("RevisarCargue_ModoEjecucion") : R("RevisarCargue_ModoHistorico");
 
-                var cargues = _actividad.UltimosCargues(id, 10).Select(c =>
+                var cargues = actividad.UltimosCargues(id, 10).Select(c =>
                 {
                     string sit = R("Integ_Pn_Sit_" + c.Situacion);
                     if (!string.IsNullOrEmpty(c.ResueltoPor) && (c.Resolucion == "Confirmado" || c.Resolucion == "Descartado"))
@@ -204,15 +206,15 @@ namespace bufinscustomers.Controllers
                     };
                 }).ToList();
 
-                var modelos = _actividad.UltimasEjecuciones(id, 5).Select(e => new
+                var modelos = actividad.UltimasEjecuciones(id, 5).Select(e => new
                 {
                     id = e.Id, estado = e.Estado, estadoTexto = R("Integ_Pn_Ej_" + e.Estado), inicio = e.Inicio.ToString("dd/MM HH:mm"),
                     fin = e.Fin?.ToString("HH:mm:ss")
                 }).ToList();
 
-                var webhookCfg = WebhooksService.Disponible() ? _webhooks.ObtenerConfig(id) : null;
+                var webhookCfg = WebhooksService.Disponible() ? webhooks.ObtenerConfig(id) : null;
                 var entregas = webhookCfg != null && !string.IsNullOrEmpty(webhookCfg.Url)
-                    ? _webhooks.UltimasEntregas(id, 5).Select(e => new { fecha = e.Fecha.ToString("dd/MM HH:mm:ss"), evento = e.Evento, estado = e.Estado, intentos = e.Intentos }).ToList()
+                    ? webhooks.UltimasEntregas(id, 5).Select(e => new { fecha = e.Fecha.ToString("dd/MM HH:mm:ss"), evento = e.Evento, estado = e.Estado, intentos = e.Intentos }).ToList()
                     : null;
 
                 return Json(new
@@ -245,11 +247,11 @@ namespace bufinscustomers.Controllers
             var integ = Propia(id);
             if (integ == null) return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
             if (!WebhooksService.Disponible()) return Json(new { success = true, disponible = false });
-            var cfg = _webhooks.ObtenerConfig(id);
+            var cfg = webhooks.ObtenerConfig(id);
             return Json(new
             {
                 success = true, disponible = true, nombre = integ.Nombre, url = cfg.Url, tieneSecreto = cfg.TieneSecreto,
-                entregas = _webhooks.UltimasEntregas(id).Select(e => new
+                entregas = webhooks.UltimasEntregas(id).Select(e => new
                 {
                     fecha = e.Fecha.ToString("dd/MM HH:mm:ss"), evento = e.Evento, estado = e.Estado, intentos = e.Intentos, codigo = e.Codigo, error = e.Error
                 })
@@ -265,11 +267,11 @@ namespace bufinscustomers.Controllers
             if (integ == null) return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
             try
             {
-                var r = _webhooks.Guardar(id, url);
+                var r = webhooks.Guardar(id, url);
                 if (!r.ok) return Json(new { success = false, message = TraducirErrorWebhook(r.error) });
 
                 bool quitado = string.IsNullOrWhiteSpace(url);
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Editar, "Integracion", id.ToString(),
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Editar, "Integracion", id.ToString(),
                     quitado ? $"Desactivó el webhook de la integración API '{integ.Nombre}' de '{integ.NombreEmpresa}'."
                             : $"Configuró el webhook de la integración API '{integ.Nombre}' de '{integ.NombreEmpresa}' (destino: {HostDe(url)}){(r.secretoNuevo != null ? "; se generó su secreto" : "")}.",
                     null, new { host = quitado ? null : HostDe(url) }, integ.IdEmpresa, entidadNombre: integ.Nombre);
@@ -287,9 +289,9 @@ namespace bufinscustomers.Controllers
             if (integ == null) return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
             try
             {
-                var r = _webhooks.RotarSecreto(id);
+                var r = webhooks.RotarSecreto(id);
                 if (!r.ok) return Json(new { success = false, message = TraducirErrorWebhook(r.error) });
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Editar, "Integracion", id.ToString(),
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Integraciones, AuditoriaAccion.Editar, "Integracion", id.ToString(),
                     $"Rotó el secreto del webhook de la integración API '{integ.Nombre}' de '{integ.NombreEmpresa}'.",
                     null, null, integ.IdEmpresa, entidadNombre: integ.Nombre, severidad: AuditoriaSeveridad.Advertencia);
                 return Json(new { success = true, message = R("Integ_Wh_SecretoRotado"), secreto = r.secreto });
@@ -303,7 +305,7 @@ namespace bufinscustomers.Controllers
         {
             var integ = Propia(id);
             if (integ == null) return Json(new { success = false, message = R("Integ_ErrSinAcceso") });
-            var r = _webhooks.EnviarPrueba(id);
+            var r = webhooks.EnviarPrueba(id);
             if (r.ok) return Json(new { success = true, message = string.Format(R("Integ_Wh_PruebaOk"), r.codigo) });
             string motivo = r.error == "sin_webhook" ? R("Integ_Wh_ErrSinWebhook") : (r.codigo.HasValue ? "HTTP " + r.codigo : (r.error ?? "?"));
             return Json(new { success = false, message = string.Format(R("Integ_Wh_PruebaFallo"), motivo) });
@@ -349,8 +351,8 @@ namespace bufinscustomers.Controllers
                 string cual = integ != null ? $"{integ.Nombre} ({integ.NombreEmpresa})" : R("Integ_As_SinIntegracion");
                 string texto = string.Format(R("Notif_AyudaIntegracionMsg"), quien, cual, string.IsNullOrEmpty(contacto) ? "-" : contacto, mensaje);
                 string url = Url.Action("Index", "Integraciones");
-                var notif = new NotificacionesService();
-                foreach (var idSuper in _servicio.ObtenerIdsSuperAdmin())
+                var notif = notificacionesService;
+                foreach (var idSuper in servicio.ObtenerIdsSuperAdmin())
                     notif.Crear(idSuper, R("Notif_AyudaIntegracion"), texto, "info", url);
                 return Json(new { success = true, message = R("Integ_As_AyudaEnviada") });
             }
@@ -376,7 +378,7 @@ namespace bufinscustomers.Controllers
         private Integracion Propia(int id)
         {
             if (!PuedeAdministrar()) return null;
-            var integ = _servicio.Obtener(id);
+            var integ = servicio.Obtener(id);
             return integ != null && EmpresaAccesoHelper.TieneAcceso(UsuarioSesionHelper.UsuarioActual, integ.IdEmpresa) ? integ : null;
         }
 

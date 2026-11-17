@@ -10,7 +10,11 @@ using bufinscustomers.Services;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class HomeController : BaseController
+    public class HomeController(
+        IndicadoresFinancierosService indicadoresFinancierosService,
+        SolicitudReinicioAuthService solicitudReinicioAuthService,
+        AlertasHomeService alertasHomeService,
+        AuditoriaNavegacionService auditoriaNavegacionService) : BaseController
     {
         public ActionResult Index()
         {
@@ -22,7 +26,7 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                var svc = new IndicadoresFinancierosService();
+                var svc = indicadoresFinancierosService;
                 var vm  = await svc.ObtenerSoloNoticiasAsync(refresh).ConfigureAwait(false);
                 return Json(new { rssConfigurado = vm.RSSConfigurado, feeds = vm.Feeds },
                             JsonRequestBehavior.AllowGet);
@@ -49,7 +53,7 @@ namespace bufinscustomers.Controllers
                 return Json(new { ok = false }, JsonRequestBehavior.AllowGet);
             try
             {
-                return Json(new { ok = true, pendientes = new SolicitudReinicioAuthService().ContarPendientes() }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = true, pendientes = solicitudReinicioAuthService.ContarPendientes() }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
@@ -83,7 +87,7 @@ namespace bufinscustomers.Controllers
                     ? null
                     : (EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>());
 
-                var alertas = new AlertasHomeService().Obtener(idsPermitidos);
+                var alertas = alertasHomeService.Obtener(idsPermitidos);
                 bool ingles = System.Threading.Thread.CurrentThread.CurrentUICulture.Name
                                     .Equals("en-US", StringComparison.OrdinalIgnoreCase);
 
@@ -135,7 +139,7 @@ namespace bufinscustomers.Controllers
 
                 try
                 {
-                    var visitas = new AuditoriaNavegacionService().ResumenPorPagina(
+                    var visitas = auditoriaNavegacionService.ResumenPorPagina(
                         new NavegacionFiltro { IdUsuario = usuario.Id, Desde = DateTime.Today.AddDays(-60) }, 40);
                     foreach (var v in visitas)
                     {

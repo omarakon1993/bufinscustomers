@@ -13,10 +13,10 @@ using System.Threading.Tasks;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class InformeTablasDatosController : BaseController
+    public class InformeTablasDatosController(
+        InformeTablasDatosService service,
+        AuditoriaAnalisisIAService auditoriaAnalisisIAService) : BaseController
     {
-        private InformeTablasDatosService _service = new InformeTablasDatosService();
-
         // ── Límites del historial de conversación que envía el cliente (S04) ──
         private const int MaxCharsHistorialJson    = 2_000_000; // ~2 MB de JSON crudo antes de parsear
         private const int MaxMensajesHistorial     = 7;         // 1 mensaje de contexto + 3 pares Q&A
@@ -31,7 +31,7 @@ namespace bufinscustomers.Controllers
         private bool EsTablaDeModelo(string nombreTabla)
         {
             return !string.IsNullOrWhiteSpace(nombreTabla)
-                && _service.ObtenerTablasModelos().Any(t => t.NombreTabla == nombreTabla);
+                && service.ObtenerTablasModelos().Any(t => t.NombreTabla == nombreTabla);
         }
 
         /// <summary>
@@ -56,7 +56,7 @@ namespace bufinscustomers.Controllers
                         : usuario?.IdEmpresa;
                 }
 
-                var anios = _service.ObtenerAñosDisponibles(nombreTabla, idEmpresa, idEscenario);
+                var anios = service.ObtenerAñosDisponibles(nombreTabla, idEmpresa, idEscenario);
 
                 return Json(new { success = true, anios }, JsonRequestBehavior.AllowGet);
             }
@@ -88,7 +88,7 @@ namespace bufinscustomers.Controllers
                         : usuario?.IdEmpresa;
                 }
 
-                var variables = _service.ObtenerVariablesDisponibles(nombreTabla, idEmpresa, idEscenario);
+                var variables = service.ObtenerVariablesDisponibles(nombreTabla, idEmpresa, idEscenario);
 
                 return Json(new { success = true, variables }, JsonRequestBehavior.AllowGet);
             }
@@ -147,7 +147,7 @@ namespace bufinscustomers.Controllers
                 // grupo empresarial). Cada análisis es de UNA empresa: se filtra por la empresa
                 // seleccionada, no por la del usuario, para que el filtro de empresa funcione en grupos.
                 var idEmpresaConsulta = filtros.IdEmpresa ?? idEmpresaUsuario;
-                var resultado = await _service.ConsultarDatosAsync(filtros, esAdmin, idEmpresaConsulta);
+                var resultado = await service.ConsultarDatosAsync(filtros, esAdmin, idEmpresaConsulta);
 
                 if (resultado.TotalRegistros == 0)
                 {
@@ -173,7 +173,7 @@ namespace bufinscustomers.Controllers
                 var denegado = ValidarAccesoIA(usuario, esAdmin, idEmpresaConsulta.GetValueOrDefault(), IAFuncion.Chat);
                 if (denegado != null) return denegado;
 
-                var tablaAmigable = _service.ObtenerTablasModelos()
+                var tablaAmigable = service.ObtenerTablasModelos()
                     .FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla)?.NombreAmigable ?? filtros.NombreTabla;
 
                 // Modo de análisis (N06): elige el prompt y el tope de tokens del resumen inicial.
@@ -201,7 +201,7 @@ namespace bufinscustomers.Controllers
                     Historial = historial
                 };
 
-                var empresa = _service.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa.GetValueOrDefault());
+                var empresa = service.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa.GetValueOrDefault());
 
                 var response = await new IAGateway().EjecutarAsync(new IASolicitud
                 {
@@ -240,7 +240,7 @@ namespace bufinscustomers.Controllers
             int? v = null;
             if (valor.HasValue && (valor.Value == 0 || valor.Value == 1)) v = valor.Value;
 
-            bool ok = new AuditoriaAnalisisIAService().Valorar(id, usuario.Id, v);
+            bool ok = auditoriaAnalisisIAService.Valorar(id, usuario.Id, v);
             return Json(new { ok });
         }
 
@@ -310,7 +310,7 @@ namespace bufinscustomers.Controllers
 
                     if (!constante) { columnasUsadas.Add(c); continue; }
 
-                    string nombre = _service.ObtenerNombreAmigableColumna(c);
+                    string nombre = service.ObtenerNombreAmigableColumna(c);
                     if (primero.Length == 0) columnasOmitidas.Add(nombre);
                     else constantes.Add(nombre + "=" + primero);
                 }
@@ -325,7 +325,7 @@ namespace bufinscustomers.Controllers
             notaDatos = partesNota.Count > 0 ? string.Join(" ", partesNota) : null;
 
             var sb = new System.Text.StringBuilder();
-            sb.Append(string.Join(";", columnasUsadas.Select(c => CsvCampo(_service.ObtenerNombreAmigableColumna(c))))).Append('\n');
+            sb.Append(string.Join(";", columnasUsadas.Select(c => CsvCampo(service.ObtenerNombreAmigableColumna(c))))).Append('\n');
 
             int n = 0;
             foreach (var fila in filas)
@@ -415,8 +415,8 @@ namespace bufinscustomers.Controllers
 
                 // Cada exportación es de UNA empresa: la seleccionada (ya validada arriba), no la del usuario.
                 var idEmpresaConsulta = filtros.IdEmpresa ?? idEmpresaUsuario;
-                var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaConsulta);
-                var tablas    = _service.ObtenerTablasModelos();
+                var resultado = service.ConsultarDatos(filtros, esAdmin, idEmpresaConsulta);
+                var tablas    = service.ObtenerTablasModelos();
                 string nombreTabla = tablas.FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla)?.NombreAmigable ?? filtros.NombreTabla;
                 string hojaNombre  = nombreTabla.Length > 31 ? nombreTabla.Substring(0, 31) : nombreTabla;
 
@@ -428,7 +428,7 @@ namespace bufinscustomers.Controllers
                     foreach (var c in resultado.Columnas)
                     {
                         var cell = wsData.Cell(1, col);
-                        cell.Value = _service.ObtenerNombreAmigableColumna(c);
+                        cell.Value = service.ObtenerNombreAmigableColumna(c);
                         cell.Style.Font.Bold = true;
                         cell.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
                         cell.Style.Font.FontColor = XLColor.White;

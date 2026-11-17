@@ -9,19 +9,19 @@ namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
     [SoloSuperAdmin]
-    public class MenuOpcionesController : BaseController
+    public class MenuOpcionesController(
+        MenuOpcionesService menuOpcionesService,
+        MenuEstructuraService menuEstructuraService,
+        AuditoriaService auditoriaService) : BaseController
     {
-        private readonly MenuOpcionesService _menuOpcionesService = new MenuOpcionesService();
-        private readonly MenuEstructuraService _menuEstructuraService = new MenuEstructuraService();
-
         public ActionResult Index()
         {
-            var opciones = _menuOpcionesService.ObtenerTodas();
-            var empresasPorOpcion = _menuOpcionesService.ObtenerEmpresasPorOpcion();
+            var opciones = menuOpcionesService.ObtenerTodas();
+            var empresasPorOpcion = menuOpcionesService.ObtenerEmpresasPorOpcion();
             foreach (var o in opciones)
                 o.IdsEmpresas = empresasPorOpcion.TryGetValue(o.Id, out var ids) ? ids : new List<int>();
-            ViewBag.Grupos = _menuEstructuraService.ObtenerGrupos();
-            ViewBag.Categorias = _menuEstructuraService.ObtenerCategorias();
+            ViewBag.Grupos = menuEstructuraService.ObtenerGrupos();
+            ViewBag.Categorias = menuEstructuraService.ObtenerCategorias();
             return View("~/Views/Configuracion/MenuOpciones.cshtml", opciones);
         }
 
@@ -31,14 +31,14 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                bool creado = _menuOpcionesService.CrearMenuOpcion(opcion);
+                bool creado = menuOpcionesService.CrearMenuOpcion(opcion);
 
                 if (creado)
                 {
                     UsuarioSesionHelper.InvalidarCachePermisos();
                     MenuRutaCacheHelper.Invalidar();
                     SetSuccessMessage("Opción de menú creada correctamente.");
-                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Menu, AuditoriaAccion.Crear,
+                    auditoriaService.RegistrarCambio(AuditoriaTipo.Menu, AuditoriaAccion.Crear,
                         "MenuOpciones", opcion.Id.ToString(), $"Opción de menú creada: {opcion.Nombre} ({opcion.Codigo})" + DescripcionEmpresas(opcion), null, opcion);
                 }
                 else
@@ -60,14 +60,14 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                bool editado = _menuOpcionesService.EditarMenuOpcion(opcion);
+                bool editado = menuOpcionesService.EditarMenuOpcion(opcion);
 
                 if (editado)
                 {
                     UsuarioSesionHelper.InvalidarCachePermisos();
                     MenuRutaCacheHelper.Invalidar();
                     SetSuccessMessage("Opción de menú actualizada correctamente.");
-                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Menu, AuditoriaAccion.Editar,
+                    auditoriaService.RegistrarCambio(AuditoriaTipo.Menu, AuditoriaAccion.Editar,
                         "MenuOpciones", opcion.Id.ToString(), $"Opción de menú editada: {opcion.Nombre} ({opcion.Codigo})" + DescripcionEmpresas(opcion), null, opcion);
                 }
                 else
@@ -103,7 +103,7 @@ namespace bufinscustomers.Controllers
             try
             {
                 var pares = ids.Zip(ordenes, (id, orden) => (Id: id, Orden: orden)).ToList();
-                bool actualizado = _menuOpcionesService.ActualizarOrden(pares);
+                bool actualizado = menuOpcionesService.ActualizarOrden(pares);
 
                 if (actualizado)
                 {
@@ -132,10 +132,10 @@ namespace bufinscustomers.Controllers
             try
             {
                 int usuarioAsigno = UsuarioSesionHelper.UsuarioActual?.Id ?? 0;
-                _menuOpcionesService.HabilitarTodasLasOpcionesParaTodosLosUsuarios(usuarioAsigno, out int opciones, out int permisosNuevos);
+                menuOpcionesService.HabilitarTodasLasOpcionesParaTodosLosUsuarios(usuarioAsigno, out int opciones, out int permisosNuevos);
 
                 UsuarioSesionHelper.InvalidarCachePermisos();
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Permisos, AuditoriaAccion.Asignar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Permisos, AuditoriaAccion.Asignar,
                     "UsuarioMenuPermisos", "TODAS",
                     $"Todas las opciones de menú habilitadas para todos los usuarios ({opciones} opción(es) procesada(s), {permisosNuevos} permiso(s) nuevo(s))",
                     null, new { Opciones = opciones, PermisosNuevos = permisosNuevos });
@@ -158,7 +158,7 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                var opcion = _menuOpcionesService.ObtenerTodas().FirstOrDefault(o => o.Id == id);
+                var opcion = menuOpcionesService.ObtenerTodas().FirstOrDefault(o => o.Id == id);
                 if (opcion == null)
                     return Json(new { success = false, message = R("Menu_ErrorHabilitarTodos") });
 
@@ -166,10 +166,10 @@ namespace bufinscustomers.Controllers
                     return Json(new { success = false, message = R("Menu_ErrorHabilitarTodosSuperAdmin") });
 
                 int usuarioAsigno = UsuarioSesionHelper.UsuarioActual?.Id ?? 0;
-                int cantidad = _menuOpcionesService.HabilitarOpcionParaTodosLosUsuarios(opcion.Id, opcion.SoloAdminEmpresa, usuarioAsigno);
+                int cantidad = menuOpcionesService.HabilitarOpcionParaTodosLosUsuarios(opcion.Id, opcion.SoloAdminEmpresa, usuarioAsigno);
 
                 UsuarioSesionHelper.InvalidarCachePermisos();
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Permisos, AuditoriaAccion.Asignar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Permisos, AuditoriaAccion.Asignar,
                     "UsuarioMenuPermisos", opcion.Id.ToString(),
                     $"Opción de menú '{opcion.Nombre}' ({opcion.Codigo}) habilitada para todos los usuarios ({cantidad} usuario(s) nuevo(s))",
                     null, new { IdMenuOpcion = opcion.Id, opcion.Codigo, CantidadAfectados = cantidad });
@@ -188,14 +188,14 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                bool eliminado = _menuOpcionesService.EliminarMenuOpcion(id);
+                bool eliminado = menuOpcionesService.EliminarMenuOpcion(id);
 
                 if (eliminado)
                 {
                     UsuarioSesionHelper.InvalidarCachePermisos();
                     MenuRutaCacheHelper.Invalidar();
                     SetSuccessMessage("Opción de menú eliminada correctamente.");
-                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Menu, AuditoriaAccion.Eliminar,
+                    auditoriaService.RegistrarCambio(AuditoriaTipo.Menu, AuditoriaAccion.Eliminar,
                         "MenuOpciones", id.ToString(), $"Opción de menú eliminada (Id {id})");
                 }
                 else

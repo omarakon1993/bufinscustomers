@@ -16,13 +16,16 @@ namespace bufinscustomers.Controllers
     /// No hay códigos de recuperación: si el usuario pierde sus métodos, un Super Admin reinicia su 2FA.
     /// </summary>
     [ValidarSesion]
-    public class SeguridadController : BaseController
+    public class SeguridadController(
+        DobleFactorService df,
+        PasskeyService pk,
+        RateLimitLoginService rateLimitLoginService,
+        AuditoriaService auditoriaService,
+        NotificacionesService notificacionesService) : BaseController
     {
         private const string SESION_RETO_REGISTRO = "PasskeyRegistroReto";
         private const string SESION_REAUTH_HASTA = "SegReauthHasta";
         private const string SESION_REAUTH_PASO = "SegReauthPaso";
-        private readonly DobleFactorService _df = new DobleFactorService();
-        private readonly PasskeyService _pk = new PasskeyService();
 
         private bool Aplica(Usuarios u) { return DobleFactorService.Habilitado && DobleFactorService.AplicaA(u); }
 
@@ -39,13 +42,13 @@ namespace bufinscustomers.Controllers
             if (Session[SESION_REAUTH_HASTA] is DateTime hasta && hasta > DateTime.Now) return null;
 
             string ip = ClientIpHelper.ObtenerIp(Request);
-            var rl = new RateLimitLoginService();
+            var rl = rateLimitLoginService;
             var estadoIp = rl.Comprobar(ip);
             if (estadoIp.Bloqueada)
                 return string.Format(R("Login_ErrorRateLimitIP"), Math.Max(1, estadoIp.MinutosRestantes));
 
             // La app autenticadora debe estar configurada: sin ella no hay código que reconfirmar.
-            var estado = _df.Obtener(u.Id);
+            var estado = df.Obtener(u.Id);
             if (!estado.Disponible || !estado.Activo || estado.Secreto == null)
             {
                 AppLogger.Warn($"Reconfirmación sin app autenticadora utilizable (usuarioId={u.Id}, disponible={estado.Disponible}, activo={estado.Activo}).", "Seguridad.Reconfirmar");
@@ -59,11 +62,11 @@ namespace bufinscustomers.Controllers
                 return R("Login2FA_ErrorVacio");
             }
             long? ultimoPasoSesion = Session[SESION_REAUTH_PASO] as long?;
-            long paso = _df.ValidarCodigoReconfirmacion(u.Id, limpio, ultimoPasoSesion);
+            long paso = df.ValidarCodigoReconfirmacion(u.Id, limpio, ultimoPasoSesion);
             if (paso < 0)
             {
                 rl.RegistrarFallo(ip);
-                new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.LoginFallido,
+                auditoriaService.RegistrarSeguridad(AuditoriaAccion.LoginFallido,
                     "Código de doble factor incorrecto al reconfirmar un cambio de seguridad",
                     u.Id, Nombre(u), u.IdEmpresa);
                 return R("Login2FA_ErrorCodigo");
@@ -79,12 +82,12 @@ namespace bufinscustomers.Controllers
             var u = UsuarioSesionHelper.UsuarioActual;
             if (u == null || !Aplica(u)) return RedirectToAction("Index", "Home");
 
-            var estado = _df.Obtener(u.Id);
+            var estado = df.Obtener(u.Id);
             ViewBag.TotpActivo = estado.Disponible && estado.Activo;
             ViewBag.PasskeysHabilitadas = DobleFactorService.PasskeysHabilitadas;
             ViewBag.PasskeysMax = DobleFactorService.PasskeysMaximo;
             ViewBag.AutoAgregar = agregar && DobleFactorService.PasskeysHabilitadas;
-            return View("~/Views/Seguridad/Index.cshtml", _pk.Listar(u.Id));
+            return View("~/Views/Seguridad/Index.cshtml", pk.Listar(u.Id));
         }
 
         // ───────── Invitación a configurar una passkey (franja del Home) ─────────
@@ -94,7 +97,7 @@ namespace bufinscustomers.Controllers
         {
             var u = UsuarioSesionHelper.UsuarioActual;
             if (u == null) return Json(new { ok = false });
-            bool ok = _pk.PosponerAviso(u.Id, definitivo ? 0 : 7);
+            bool ok = pk.PosponerAviso(u.Id, definitivo ? 0 : 7);
             return Json(new { ok });
         }
 
@@ -110,7 +113,7 @@ namespace bufinscustomers.Controllers
             string error = ValidarReconfirmacion(u, codigo);
             if (error != null) return Json(new { ok = false, mensaje = error });
 
-            var existentes = _pk.Listar(u.Id);
+            var existentes = pk.Listar(u.Id);
             if (existentes.Count >= DobleFactorService.PasskeysMaximo)
                 return Json(new { ok = false, mensaje = string.Format(R("Seg_Pk_Maximo"), DobleFactorService.PasskeysMaximo) });
 
@@ -162,14 +165,14 @@ namespace bufinscustomers.Controllers
                 return Json(new { ok = false, mensaje = R("Seg_Pk_ErrorRegistro") });
             }
 
-            if (!_pk.Agregar(u.Id, res.CredentialId, res.ClavePublicaCose, res.Algoritmo, res.Contador, nombre))
+            if (!pk.Agregar(u.Id, res.CredentialId, res.ClavePublicaCose, res.Algoritmo, res.Contador, nombre))
                 return Json(new { ok = false, mensaje = R("Seg_Pk_ErrorGuardar") });
 
             PasskeyAvisoHelper.Invalidar();
-            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Crear,
+            auditoriaService.RegistrarSeguridad(AuditoriaAccion.Crear,
                 $"Passkey agregada ({nombre})", u.Id, Nombre(u), u.IdEmpresa);
             string titulo = R("Notif_Pk_AgregadaTitulo"), msg = string.Format(R("Notif_Pk_AgregadaMsg"), nombre);
-            new NotificacionesService().Crear(u.Id, titulo, msg, "success", "/Seguridad");
+            notificacionesService.Crear(u.Id, titulo, msg, "success", "/Seguridad");
             AlertaUsuarioCorreo.Enviar(u.Correo, titulo, msg);
             return Json(new { ok = true, mensaje = R("Seg_Pk_Agregada") });
         }
@@ -184,15 +187,15 @@ namespace bufinscustomers.Controllers
             string error = ValidarReconfirmacion(u, codigo);
             if (error != null) return Json(new { ok = false, mensaje = error });
 
-            var cred = _pk.Listar(u.Id).FirstOrDefault(c => c.Id == id);
-            if (cred == null || !_pk.Eliminar(u.Id, id))
+            var cred = pk.Listar(u.Id).FirstOrDefault(c => c.Id == id);
+            if (cred == null || !pk.Eliminar(u.Id, id))
                 return Json(new { ok = false, mensaje = R("Seg_Pk_ErrorEliminar") });
 
             PasskeyAvisoHelper.Invalidar();
-            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Eliminar,
+            auditoriaService.RegistrarSeguridad(AuditoriaAccion.Eliminar,
                 $"Passkey eliminada ({cred.Nombre})", u.Id, Nombre(u), u.IdEmpresa);
             string titulo = R("Notif_Pk_EliminadaTitulo"), msg = string.Format(R("Notif_Pk_EliminadaMsg"), cred.Nombre);
-            new NotificacionesService().Crear(u.Id, titulo, msg, "warning", "/Seguridad");
+            notificacionesService.Crear(u.Id, titulo, msg, "warning", "/Seguridad");
             AlertaUsuarioCorreo.Enviar(u.Correo, titulo, msg);
             return Json(new { ok = true, mensaje = R("Seg_Pk_Eliminada") });
         }

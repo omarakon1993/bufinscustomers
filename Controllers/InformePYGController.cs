@@ -18,10 +18,12 @@ namespace bufinscustomers.Controllers
     /// InformePYGService); habilitado para todos los roles, acceso real acotado por empresa/grupo.
     /// </summary>
     [ValidarSesion]
-    public class InformePYGController : BaseController
+    public class InformePYGController(
+        InformePYGService service,
+        InformeTablasDatosService empresaService,
+        EmailService emailService,
+        AuditoriaService auditoriaService) : BaseController
     {
-        private readonly InformePYGService _service = new InformePYGService();
-
         /// <summary>Prompt por defecto de los insights del PYG (cuando no existe RESUMEN_PYG_GERENCIAL en
         /// GestorPrompts). La vista corta la respuesta por las etiquetas "Logro:", "Alerta:" y "Eficiencia:"
         /// para pintar 3 tarjetas — cualquier prompt personalizado debe conservar esas 3 etiquetas.</summary>
@@ -39,14 +41,13 @@ namespace bufinscustomers.Controllers
             "Reglas: cada línea tiene 1 o 2 frases y máximo 45 palabras; menciona la cuenta o el indicador y su variación " +
             "en % y/o en millones de pesos con formato colombiano (por ejemplo 170,0 M); pon en **negrita** la cifra " +
             "principal de cada línea; usa solo cifras presentes en los datos y nunca inventes valores.";
-        private readonly InformeTablasDatosService _empresaService = new InformeTablasDatosService();
 
         public ActionResult Index()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
-            var empresas = _empresaService.ObtenerEmpresas();
+            var empresas = empresaService.ObtenerEmpresas();
             if (!esAdmin)
             {
                 var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
@@ -72,9 +73,9 @@ namespace bufinscustomers.Controllers
 
                 // camelCase explícito: MVC 5 serializa el PascalCase de C# tal cual (mismo criterio que
                 // InformeLineaTiempoController.ObtenerRangoMeses, cuyo slider se reutiliza aquí).
-                var meses = _service.ObtenerMesesDisponibles(idEmpresa, idEscenario)
+                var meses = service.ObtenerMesesDisponibles(idEmpresa, idEscenario)
                     .Select(m => new { anio = m.Anio, mes = m.Mes, etiqueta = m.Etiqueta });
-                var escenariosConDatos = _service.ObtenerEscenariosConDatos(idEmpresa);
+                var escenariosConDatos = service.ObtenerEscenariosConDatos(idEmpresa);
                 return Json(new { success = true, meses, escenariosConDatos });
             }
             catch (Exception ex)
@@ -93,7 +94,7 @@ namespace bufinscustomers.Controllers
                 if (filtros == null || !TieneAccesoEmpresa(filtros.IdEmpresa))
                     return Json(new { success = false, message = R("Common_SinPermisos") });
 
-                var reporte = _service.ConstruirReporte(filtros);
+                var reporte = service.ConstruirReporte(filtros);
                 var jsonResult = Json(new { success = true, reporte });
                 jsonResult.MaxJsonLength = int.MaxValue;
                 return jsonResult;
@@ -123,11 +124,11 @@ namespace bufinscustomers.Controllers
                 var denegado = ValidarAccesoIA(usuario, esAdmin, idEmpresa, IAFuncion.InsightsPYG);
                 if (denegado != null) return denegado;
 
-                var reporte = _service.ConstruirReporte(filtros);
+                var reporte = service.ConstruirReporte(filtros);
                 if (reporte.SinDatos)
                     return Json(new IAConsultaResponse { Exitoso = false, Error = R("PYG_SinDatosDesc") });
 
-                var empresaInfo = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+                var empresaInfo = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
                 string nombreEmpresa = empresaInfo?.Nombre ?? "—";
                 // Descripción en texto fijo (va al prompt y a AuditoriaAnalisisIA, no a la UI).
                 string filtrosDescripcion = $"Empresa {nombreEmpresa}, periodo {reporte.MesDesde:00}/{reporte.AnioDesde} a {reporte.MesHasta:00}/{reporte.AnioHasta}, " +
@@ -192,11 +193,11 @@ namespace bufinscustomers.Controllers
                 var denegado = ValidarAccesoIA(usuario, esAdmin, idEmpresa, IAFuncion.InsightsPYG);
                 if (denegado != null) return denegado;
 
-                var reporte = _service.ConstruirReporte(filtros);
+                var reporte = service.ConstruirReporte(filtros);
                 if (reporte.SinDatos)
                     return Json(new IAConsultaResponse { Exitoso = false, Error = R("PYG_SinDatosDesc") });
 
-                var empresaInfo = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+                var empresaInfo = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
                 string nombreEmpresa = empresaInfo?.Nombre ?? "—";
                 string filtrosDescripcion = $"Empresa {nombreEmpresa}, periodo {reporte.MesDesde:00}/{reporte.AnioDesde} a {reporte.MesHasta:00}/{reporte.AnioHasta}, " +
                     $"escenario {reporte.IdEscenario}, comparado contra {reporte.Comparar}" +
@@ -243,7 +244,7 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                var reporte = _service.ConstruirReporte(filtros);
+                var reporte = service.ConstruirReporte(filtros);
                 if (reporte.SinDatos || reporte.Filas.Count == 0)
                 {
                     TempData["InfoMessage"] = R("PYG_SinDatosDesc");
@@ -279,12 +280,12 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                var reporte = _service.ConstruirReporte(filtros);
+                var reporte = service.ConstruirReporte(filtros);
                 if (reporte.SinDatos || reporte.Filas.Count == 0)
                     return Json(new { exito = false, mensaje = R("PYG_SinDatosDesc") });
 
                 bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
-                string empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
+                string empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
                 string escenario = EscenarioCacheHelper.ObtenerEscenariosCacheados()
                     .FirstOrDefault(e => e.Id == filtros.IdEscenario)?.Nombre ?? ("#" + filtros.IdEscenario);
 
@@ -310,11 +311,11 @@ namespace bufinscustomers.Controllers
                 }
 
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
-                new EmailService().EnviarInforme(string.Join(", ", lista), R("PYG_PageTitle"), empresa, false, contexto, kpis,
+                emailService.EnviarInforme(string.Join(", ", lista), R("PYG_PageTitle"), empresa, false, contexto, kpis,
                     null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(filtros.IdEmpresa),
                     ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA));
 
-                new AuditoriaService().RegistrarCambio(
+                auditoriaService.RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformePYG", filtros.IdEmpresa.ToString(),
                     $"Informe PYG enviado por correo a {string.Join(", ", lista)}: '{empresa}' — {periodo}, escenario {filtros.IdEscenario}.",
                     null,
@@ -342,7 +343,7 @@ namespace bufinscustomers.Controllers
         /// <summary>Libro de Excel del informe (lo usan la descarga y el envío por correo del botón Exportar).</summary>
         private byte[] GenerarExcel(FiltrosPYG filtros, PygReporteViewModel reporte, bool soloSubtotales, out string nombreArchivo)
         {
-        var empresaInfo = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa);
+        var empresaInfo = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa);
         string nombreEmpresa = empresaInfo?.Nombre ?? "Empresa";
         string nombrePeriodo = (reporte.AnioDesde == reporte.AnioHasta && reporte.MesDesde == reporte.MesHasta)
             ? NombreMes(reporte.MesDesde) + " " + reporte.AnioDesde

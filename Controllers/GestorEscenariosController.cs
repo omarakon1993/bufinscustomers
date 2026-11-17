@@ -12,13 +12,13 @@ namespace bufinscustomers.Controllers
     /// </summary>
     [ValidarSesion]
     [SoloSuperAdmin]
-    public class GestorEscenariosController : BaseController
+    public class GestorEscenariosController(
+        EscenarioService escenarioService,
+        AuditoriaService auditoriaService) : BaseController
     {
-        private readonly EscenarioService _escenarioService = new EscenarioService();
-
         public ActionResult Index()
         {
-            var escenarios = _escenarioService.ObtenerTodos();
+            var escenarios = escenarioService.ObtenerTodos();
             return View("~/Views/Configuracion/GestorEscenarios.cshtml", escenarios);
         }
 
@@ -34,12 +34,12 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                bool ok = _escenarioService.Crear(nombre);
+                bool ok = escenarioService.Crear(nombre);
                 if (ok)
                 {
                     EscenariosViewBagFilter.Invalidar();
                     SetSuccessMessage(string.Format(R("GestorEscenarios_Creado"), nombre.Trim()));
-                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Escenarios, AuditoriaAccion.Crear,
+                    auditoriaService.RegistrarCambio(AuditoriaTipo.Escenarios, AuditoriaAccion.Crear,
                         "Escenarios", null, $"Escenario creado: {nombre.Trim()}", null, new { nombre = nombre.Trim() });
                 }
                 else
@@ -65,12 +65,12 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                bool ok = _escenarioService.Editar(id, nombre, orden, activo);
+                bool ok = escenarioService.Editar(id, nombre, orden, activo);
                 if (ok)
                 {
                     EscenariosViewBagFilter.Invalidar();
                     SetSuccessMessage(string.Format(R("GestorEscenarios_Editado"), nombre.Trim()));
-                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Escenarios, AuditoriaAccion.Editar,
+                    auditoriaService.RegistrarCambio(AuditoriaTipo.Escenarios, AuditoriaAccion.Editar,
                         "Escenarios", id.ToString(), $"Escenario editado: {nombre.Trim()}", null,
                         new { nombre = nombre.Trim(), orden, activo });
                 }
@@ -91,12 +91,12 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                bool ok = _escenarioService.Desactivar(id);
+                bool ok = escenarioService.Desactivar(id);
                 if (ok)
                 {
                     EscenariosViewBagFilter.Invalidar();
                     SetSuccessMessage(R("GestorEscenarios_Desactivado"));
-                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Escenarios, AuditoriaAccion.Eliminar,
+                    auditoriaService.RegistrarCambio(AuditoriaTipo.Escenarios, AuditoriaAccion.Eliminar,
                         "Escenarios", id.ToString(), $"Escenario desactivado (Id {id})");
                 }
                 else

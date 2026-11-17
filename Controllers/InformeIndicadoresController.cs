@@ -20,11 +20,13 @@ namespace bufinscustomers.Controllers
     /// todos los roles; el acceso real se acota por empresa/grupo. La IA solo recibe el reporte ya calculado (tablas Modelo*).
     /// </summary>
     [ValidarSesion]
-    public class InformeIndicadoresController : BaseController
+    public class InformeIndicadoresController(
+        InformeIndicadoresService servicio,
+        InformeTablasDatosService empresaService,
+        EmailService emailService,
+        AuditoriaService auditoriaService,
+        IndicadoresUmbralesService indicadoresUmbralesService) : BaseController
     {
-        private readonly InformeIndicadoresService _servicio = new InformeIndicadoresService();
-        private readonly InformeTablasDatosService _empresaService = new InformeTablasDatosService();
-
         private const string NombreControlador = "InformeIndicadores";
         private const string NombreModelo = "Indicadores";
 
@@ -44,7 +46,7 @@ namespace bufinscustomers.Controllers
             var usuario = UsuarioSesionHelper.UsuarioActual;
             var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
-            var empresas = _empresaService.ObtenerEmpresas();
+            var empresas = empresaService.ObtenerEmpresas();
             if (!esAdmin)
             {
                 var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
@@ -68,7 +70,7 @@ namespace bufinscustomers.Controllers
                 if (!TieneAccesoEmpresa(idEmpresa))
                     return Json(new { success = false, message = R("Common_SinPermisos") });
 
-                var meses = _servicio.ObtenerMesesDisponibles(idEmpresa, idEscenario)
+                var meses = servicio.ObtenerMesesDisponibles(idEmpresa, idEscenario)
                     .Select(m => new { anio = m.Anio, mes = m.Mes, etiqueta = m.Etiqueta });
                 return Json(new { success = true, meses });
             }
@@ -88,7 +90,7 @@ namespace bufinscustomers.Controllers
                 if (filtros == null || !TieneAccesoEmpresa(filtros.IdEmpresa))
                     return Json(new { success = false, message = R("Common_SinPermisos") });
 
-                var reporte = _servicio.ConstruirReporte(filtros);
+                var reporte = servicio.ConstruirReporte(filtros);
                 var jsonResult = Json(new { success = true, reporte });
                 jsonResult.MaxJsonLength = int.MaxValue;
                 return jsonResult;
@@ -150,11 +152,11 @@ namespace bufinscustomers.Controllers
                 var denegado = ValidarAccesoIA(usuario, esAdmin, idEmpresa, IAFuncion.InsightsIndicadores);
                 if (denegado != null) return denegado;
 
-                var reporte = _servicio.ConstruirReporte(filtros);
+                var reporte = servicio.ConstruirReporte(filtros);
                 if (reporte.SinDatos)
                     return Json(new IAConsultaResponse { Exitoso = false, Error = R("Ind_SinDatosDesc") });
 
-                string nombreEmpresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? "—";
+                string nombreEmpresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? "—";
                 string filtrosDescripcion = DescripcionFiltros(reporte, nombreEmpresa);
 
                 var response = await new IAGateway().EjecutarAsync(new IASolicitud
@@ -213,11 +215,11 @@ namespace bufinscustomers.Controllers
                 var denegado = ValidarAccesoIA(usuario, esAdmin, idEmpresa, IAFuncion.InsightsIndicadores);
                 if (denegado != null) return denegado;
 
-                var reporte = _servicio.ConstruirReporte(filtros);
+                var reporte = servicio.ConstruirReporte(filtros);
                 if (reporte.SinDatos)
                     return Json(new IAConsultaResponse { Exitoso = false, Error = R("Ind_SinDatosDesc") });
 
-                string nombreEmpresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? "—";
+                string nombreEmpresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa)?.Nombre ?? "—";
                 string filtrosDescripcion = DescripcionFiltros(reporte, nombreEmpresa);
 
                 var response = await new IAGateway().EjecutarAsync(new IASolicitud
@@ -261,7 +263,7 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                var reporte = _servicio.ConstruirReporte(filtros);
+                var reporte = servicio.ConstruirReporte(filtros);
                 if (reporte.SinDatos || reporte.Indicadores.Count == 0)
                 {
                     TempData["InfoMessage"] = R("Ind_SinDatosDesc");
@@ -296,12 +298,12 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                var reporte = _servicio.ConstruirReporte(filtros);
+                var reporte = servicio.ConstruirReporte(filtros);
                 if (reporte.SinDatos || reporte.Indicadores.Count == 0)
                     return Json(new { exito = false, mensaje = R("Ind_SinDatosDesc") });
 
                 bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
-                string empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
+                string empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
                 string escenario = EscenarioCacheHelper.ObtenerEscenariosCacheados()
                     .FirstOrDefault(e => e.Id == filtros.IdEscenario)?.Nombre ?? ("#" + filtros.IdEscenario);
 
@@ -338,10 +340,10 @@ namespace bufinscustomers.Controllers
                 }, i.Nivel == IndicadorNivel.Rojo ? -1 : 0)).ToList();
 
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
-                new EmailService().EnviarInforme(string.Join(", ", lista), R("Ind_PageTitle"), empresa, false, contexto, kpis,
+                emailService.EnviarInforme(string.Join(", ", lista), R("Ind_PageTitle"), empresa, false, contexto, kpis,
                     tablaTitulo, atencion.Count > 0 ? columnas : null, atencion.Count > 0 ? filas : null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(filtros.IdEmpresa), _tema);
 
-                new AuditoriaService().RegistrarCambio(
+                auditoriaService.RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeIndicadores", filtros.IdEmpresa.ToString(),
                     $"Informe de indicadores enviado por correo a {string.Join(", ", lista)}: '{empresa}' — corte {corte}, escenario {filtros.IdEscenario}.",
                     null,
@@ -405,7 +407,7 @@ namespace bufinscustomers.Controllers
         /// (con gráfico nativo de los márgenes) y Fichas (qué mide cada indicador y cómo se lee el semáforo).</summary>
         private byte[] GenerarExcel(IndicadoresReporteViewModel r, out string nombreArchivo)
         {
-            string empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == r.IdEmpresa)?.Nombre ?? "Empresa";
+            string empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == r.IdEmpresa)?.Nombre ?? "Empresa";
             string corte = NombreMes(r.MesHasta) + " " + r.AnioHasta;
             string titulo = R("Ind_PageTitle");
             string hojaResumen = R("Ind_ExcelHojaResumen"), hojaTend = R("Ind_ExcelHojaTendencia"), hojaFichas = R("Ind_ExcelHojaFichas");
@@ -578,7 +580,7 @@ namespace bufinscustomers.Controllers
             try
             {
                 if (!TieneAccesoEmpresa(idEmpresa)) return Json(new { success = false, message = R("Common_SinPermisos") });
-                var propios = new IndicadoresUmbralesService().Obtener(idEmpresa, out bool disponible);
+                var propios = indicadoresUmbralesService.Obtener(idEmpresa, out bool disponible);
                 var lista = IndicadoresCatalogo.Todos.Where(IndicadoresUmbralesService.EsEditable).Select(d =>
                 {
                     propios.TryGetValue(d.Codigo, out var p);
@@ -618,13 +620,13 @@ namespace bufinscustomers.Controllers
                 string errorKey = IndicadoresUmbralesService.Validar(def, cortes);
                 if (errorKey != null) return Json(new { success = false, message = R(errorKey) });
 
-                var svc = new IndicadoresUmbralesService();
+                var svc = indicadoresUmbralesService;
                 var antes = svc.Obtener(idEmpresa, out bool disponible);
                 if (!disponible) return Json(new { success = false, message = R("Ind_Umb_NoDisponible") });
                 antes.TryGetValue(codigo, out var previos);
                 svc.Guardar(idEmpresa, codigo, cortes, UsuarioSesionHelper.UsuarioActual.Id);
 
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Informes, AuditoriaAccion.Editar, "IndicadorUmbral", codigo,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Informes, AuditoriaAccion.Editar, "IndicadorUmbral", codigo,
                     $"Umbrales del indicador '{codigo}' ajustados para la empresa.", new { cortes = previos ?? def.Cortes }, new { cortes }, idEmpresa);
                 return Json(new { success = true });
             }
@@ -643,8 +645,8 @@ namespace bufinscustomers.Controllers
             {
                 if (!PuedeEditarUmbrales(idEmpresa)) return Json(new { success = false, message = R("Common_SinPermisos") });
                 if (IndicadoresCatalogo.Todos.All(d => d.Codigo != codigo)) return Json(new { success = false, message = R("Ind_Umb_Invalido") });
-                new IndicadoresUmbralesService().Restablecer(idEmpresa, codigo);
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Informes, AuditoriaAccion.Editar, "IndicadorUmbral", codigo,
+                indicadoresUmbralesService.Restablecer(idEmpresa, codigo);
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Informes, AuditoriaAccion.Editar, "IndicadorUmbral", codigo,
                     $"Umbrales del indicador '{codigo}' restablecidos a los generales.", null, null, idEmpresa);
                 return Json(new { success = true });
             }

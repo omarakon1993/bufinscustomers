@@ -11,10 +11,12 @@ using System;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class AuditoriaCarguesController : BaseController
+    public class AuditoriaCarguesController(
+        AuditoriaCarguesService auditoriaCarguesService,
+        CargueAuditoriaDetalleService cargueAuditoriaDetalleService,
+        CargueArchivosService cargueArchivosService,
+        AuditoriaService auditoriaService) : BaseController
     {
-        private AuditoriaCarguesService _auditoriaCarguesService = new AuditoriaCarguesService();
-
         // La auditoría de cargues (y el detalle/archivo original) es solo para Super Admin y Admin de Empresa;
         // el alcance por empresa/grupo lo aplica ObtenerSegunAlcance().
         public override void OnActionExecuting(ActionExecutingContext filterContext)
@@ -31,7 +33,7 @@ namespace bufinscustomers.Controllers
         private List<AuditoriaCargues> ObtenerSegunAlcance()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            var todas = _auditoriaCarguesService.ObtenerAuditoriaCargues();
+            var todas = auditoriaCarguesService.ObtenerAuditoriaCargues();
             if (UsuarioSesionHelper.EsSuperAdmin()) return todas;
 
             var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
@@ -124,8 +126,8 @@ namespace bufinscustomers.Controllers
             if (fila == null)
                 return Json(new { success = false, message = R("Audit_Det_NoEncontrado") }, JsonRequestBehavior.AllowGet);
 
-            var detalle = new CargueAuditoriaDetalleService().ObtenerPorAuditoria(id);
-            var archivo = new CargueArchivosService().ObtenerInfoPorAuditoria(id);
+            var detalle = cargueAuditoriaDetalleService.ObtenerPorAuditoria(id);
+            var archivo = cargueArchivosService.ObtenerInfoPorAuditoria(id);
 
             return Json(new
             {
@@ -168,7 +170,7 @@ namespace bufinscustomers.Controllers
             if (!UsuarioSesionHelper.EsSuperAdmin())
                 return new HttpStatusCodeResult(403);
 
-            var r = new CargueArchivosService().Obtener(id);
+            var r = cargueArchivosService.Obtener(id);
             if (r == null)
             {
                 SetErrorMessage(R("Audit_Det_ArchivoNoDisponible"));
@@ -176,7 +178,7 @@ namespace bufinscustomers.Controllers
             }
 
             var (info, contenido) = r.Value;
-            new AuditoriaService().RegistrarCambio(
+            auditoriaService.RegistrarCambio(
                 AuditoriaTipo.Cargues, AuditoriaAccion.Exportar, "CargueArchivo", info.Id.ToString(),
                 $"Descargó el archivo original '{info.NombreArchivo}' del cargue del {info.FechaCarga:dd/MM/yyyy HH:mm}.",
                 null, new { info.Id, info.NombreArchivo, info.Sha256, info.TamanoBytes },

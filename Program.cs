@@ -42,6 +42,9 @@ builder.Services.Configure<FormOptions>(o =>
 
 builder.Services.AddHttpContextAccessor();
 
+// Servicios de negocio (carpeta Services) para inyección en los controladores; ver Infra/ServiciosExtensions.cs.
+bufinscustomers.Infra.ServiciosExtensions.AddServiciosBufins(builder.Services);
+
 // Cookies: el sitio anterior marcaba todas como seguras (httpCookies requireSSL="true"). SameAsRequest las marca Secure en toda peticion
 // HTTPS (la unica que llega a produccion) y no lanza error si alguna peticion de prueba llega en claro (con Always, el antiforgery fallaria).
 var cookieSegura = CookieSecurePolicy.SameAsRequest;

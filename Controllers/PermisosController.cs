@@ -13,11 +13,11 @@ namespace bufinscustomers.Controllers
     /// Accesible por Super Administradores (Admin = 2) y Admin de Empresa (Admin = 1) para usuarios de su empresa
     /// </summary>
     [ValidarSesion]
-    public class PermisosController : BaseController
+    public class PermisosController(
+        MenuOpcionesService menuOpcionesService,
+        UsuarioService usuarioService,
+        AuditoriaService auditoriaService) : BaseController
     {
-        private readonly MenuOpcionesService _menuOpcionesService = new MenuOpcionesService();
-        private readonly UsuarioService _usuarioService = new UsuarioService();
-
         /// <summary>
         /// Vista para gestionar permisos de un usuario específico
         /// </summary>
@@ -33,7 +33,7 @@ namespace bufinscustomers.Controllers
             }
 
             // Obtener usuario target
-            var usuario = _usuarioService.ObtenerUsuarioPorId(id);
+            var usuario = usuarioService.ObtenerUsuarioPorId(id);
             if (usuario == null)
             {
                 SetErrorMessage("Usuario no encontrado.");
@@ -60,7 +60,7 @@ namespace bufinscustomers.Controllers
             }
 
             // Obtener opciones de menú con estado (asignado/no asignado)
-            var opciones = _menuOpcionesService.ObtenerOpcionesConEstado(id);
+            var opciones = menuOpcionesService.ObtenerOpcionesConEstado(id);
 
             // Filtrar opciones según quién gestiona y a quién se le asignan
             byte nivelAdmin = usuarioActual.Admin ?? 0;
@@ -120,7 +120,7 @@ namespace bufinscustomers.Controllers
             try
             {
                 // Verificar que el usuario target existe
-                var usuarioTarget = _usuarioService.ObtenerUsuarioPorId(idUsuario);
+                var usuarioTarget = usuarioService.ObtenerUsuarioPorId(idUsuario);
                 if (usuarioTarget == null)
                 {
                     return Json(new { success = false, message = "Usuario no encontrado." });
@@ -151,12 +151,12 @@ namespace bufinscustomers.Controllers
                     permisos = new List<int>();
                 }
 
-                _menuOpcionesService.GuardarOpcionesUsuario(idUsuario, permisos, usuarioAsigno);
+                menuOpcionesService.GuardarOpcionesUsuario(idUsuario, permisos, usuarioAsigno);
 
                 // Invalidar caché de permisos del admin que está guardando
                 UsuarioSesionHelper.InvalidarCachePermisos();
 
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Permisos, AuditoriaAccion.Asignar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Permisos, AuditoriaAccion.Asignar,
                     "UsuarioMenuPermisos", idUsuario.ToString(),
                     $"Permisos de menú actualizados para {usuarioTarget.Correo} ({permisos.Count} opción/es)",
                     null, new { idUsuario, permisos }, idEmpresa: usuarioTarget.IdEmpresa);

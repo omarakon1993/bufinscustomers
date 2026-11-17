@@ -13,10 +13,8 @@ namespace bufinscustomers.Controllers
     /// (empresa propia + las de su grupo empresarial; Super Admin todas).
     /// </summary>
     [ValidarSesion]
-    public class EmpresaLogoController : BaseController
+    public class EmpresaLogoController(EmpresaLogoService servicio, AuditoriaService auditoriaService) : BaseController
     {
-        private readonly EmpresaLogoService _servicio = new EmpresaLogoService();
-
         /// <summary>Imagen del logo (PNG). Se usa en el gestor de Empresas; el parámetro <c>v</c> solo rompe el caché del navegador.</summary>
         [HttpGet]
         public ActionResult Ver(int id)
@@ -24,7 +22,7 @@ namespace bufinscustomers.Controllers
             if (!EmpresaAccesoHelper.TieneAcceso(UsuarioSesionHelper.UsuarioActual, id))
                 return new HttpStatusCodeResult(403);
 
-            var logo = _servicio.Obtener(id);
+            var logo = servicio.Obtener(id);
             if (logo == null) return new HttpStatusCodeResult(404);
 
             Response.Cache.SetCacheability(HttpCacheability.Private);
@@ -44,7 +42,7 @@ namespace bufinscustomers.Controllers
             if (!EmpresaAccesoHelper.TieneAcceso(UsuarioSesionHelper.UsuarioActual, id))
                 return Json(new { tiene = false }, JsonRequestBehavior.AllowGet);
 
-            var logo = _servicio.Obtener(id);
+            var logo = servicio.Obtener(id);
             if (logo == null) return Json(new { tiene = false }, JsonRequestBehavior.AllowGet);
 
             return Json(new
@@ -74,7 +72,7 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                if (!_servicio.Disponible())
+                if (!servicio.Disponible())
                     return Json(new { exito = false, mensaje = R("EmpLogo_SinTabla") });
 
                 byte[] datos;
@@ -88,11 +86,11 @@ namespace bufinscustomers.Controllers
                 if (!r.Ok)
                     return Json(new { exito = false, mensaje = string.Format(R(r.ErrorKey), r.ErrorArgs ?? Array.Empty<object>()) });
 
-                bool habiaLogo = _servicio.Obtener(idEmpresa) != null;
-                _servicio.Guardar(idEmpresa, r.Png, r.Ancho, r.Alto, r.Version, Path.GetFileName(archivo.FileName), usuario?.Id);
+                bool habiaLogo = servicio.Obtener(idEmpresa) != null;
+                servicio.Guardar(idEmpresa, r.Png, r.Ancho, r.Alto, r.Version, Path.GetFileName(archivo.FileName), usuario?.Id);
                 EmpresasViewBagFilter.Invalidar();
 
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Editar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Editar,
                     "Empresas", idEmpresa.ToString(),
                     (habiaLogo ? "Logo de la empresa reemplazado" : "Logo de la empresa agregado") + $" (Id {idEmpresa})",
                     null, new { r.Ancho, r.Alto, Bytes = r.Png.Length, r.Version }, idEmpresa: idEmpresa);
@@ -124,11 +122,11 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                if (!_servicio.Eliminar(idEmpresa))
+                if (!servicio.Eliminar(idEmpresa))
                     return Json(new { exito = false, mensaje = R("EmpLogo_NoHay") });
 
                 EmpresasViewBagFilter.Invalidar();
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Editar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Editar,
                     "Empresas", idEmpresa.ToString(), $"Logo de la empresa eliminado (Id {idEmpresa})", null, null, idEmpresa: idEmpresa);
 
                 return Json(new { exito = true, mensaje = R("EmpLogo_Eliminado") });

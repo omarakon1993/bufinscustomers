@@ -7,10 +7,8 @@ using System.IO;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class ConfiguracionVariablesPBIController : BaseController
+    public class ConfiguracionVariablesPBIController(ConfiguracionVariablesPBIService service) : BaseController
     {
-        private readonly ConfiguracionVariablesPBIService _service = new ConfiguracionVariablesPBIService();
-
         private bool VerificarSuperAdmin()
         {
             return UsuarioSesionHelper.EsSuperAdmin();
@@ -24,7 +22,7 @@ namespace bufinscustomers.Controllers
             if (!VerificarSuperAdmin())
                 return RedirectToAction("Index", "Home");
 
-            ViewBag.EstadoActual = _service.ObtenerEstadoActual();
+            ViewBag.EstadoActual = service.ObtenerEstadoActual();
             return View("~/Views/Configuracion/ConfiguracionVariablesPBI.cshtml");
         }
 
@@ -65,7 +63,7 @@ namespace bufinscustomers.Controllers
 
                     using (var package = new XLWorkbook(stream))
                     {
-                        var resultado = _service.CargarDesdeExcel(package, usuarioNombre);
+                        var resultado = service.CargarDesdeExcel(package, usuarioNombre);
                         resultado.NombreArchivo = Path.GetFileName(archivoExcel.FileName);
 
                         TempData.GuardarObjeto("ResultadoCarga", resultado);
@@ -95,7 +93,7 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                byte[] fileBytes = _service.GenerarPlantillaExcel();
+                byte[] fileBytes = service.GenerarPlantillaExcel();
                 string fileName = $"Plantilla_VariablesPBI_{DateTime.Now:yyyyMMdd}.xlsx";
                 return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
