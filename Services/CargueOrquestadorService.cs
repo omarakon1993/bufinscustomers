@@ -819,19 +819,13 @@ namespace bufinscustomers.Services
 
             // Columnas de negocio de la hoja (esquema real de la tabla de staging); los nombres que llegan se resuelven contra él.
             var columnas = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            using (var cn0 = new SqlConnection(CadenaConexion))
-            using (var cmd0 = new SqlCommand(
-                "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @t AND COLUMNPROPERTY(OBJECT_ID(QUOTENAME(TABLE_SCHEMA) + '.' + QUOTENAME(TABLE_NAME)), COLUMN_NAME, 'IsIdentity') = 0", cn0))
-            {
-                cmd0.Parameters.AddWithValue("@t", nombreStaging);
-                cn0.Open();
-                using (var r = cmd0.ExecuteReader())
-                    while (r.Read())
-                    {
-                        string nombre = r.GetString(0);
-                        if (!ColumnasDeSistemaApi.Contains(nombre)) columnas[nombre] = nombre;
-                    }
-            }
+            Bd.Leer(CadenaConexion, "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @t AND COLUMNPROPERTY(OBJECT_ID(QUOTENAME(TABLE_SCHEMA) + '.' + QUOTENAME(TABLE_NAME)), COLUMN_NAME, 'IsIdentity') = 0",
+                new { t = nombreStaging },
+                r =>
+                {
+                    string nombre = r.GetString(0);
+                    if (!ColumnasDeSistemaApi.Contains(nombre)) columnas[nombre] = nombre;
+                });
             if (columnas.Count == 0)
             { res.Estado = HojaApiEstado.DatosInvalidos; res.Mensaje = "La hoja no tiene una tabla de destino disponible."; return res; }
             if (columnas.ContainsKey("Año")) columnas["Anio"] = "Año";   // alias sin tilde
@@ -957,14 +951,9 @@ namespace bufinscustomers.Services
                 return new ResultadoValidacionApi { Estado = ValidacionApiEstado.LoteNoDisponible };
 
             var declaradas = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand("SELECT Hoja, Filas FROM dbo.CarguesLotesHojas WHERE IdLote = @L", cn))
-            {
-                cmd.Parameters.AddWithValue("@L", idLote);
-                cn.Open();
-                using (var r = cmd.ExecuteReader())
-                    while (r.Read()) declaradas[r.GetString(0)] = r.GetInt32(1);
-            }
+            Bd.Leer(CadenaConexion, "SELECT Hoja, Filas FROM dbo.CarguesLotesHojas WHERE IdLote = @L",
+                new { L = idLote },
+                r => declaradas[r.GetString(0)] = r.GetInt32(1));
 
             var faltantes = TablasCargueHelper.MapeoParaEmpresa(lote.IdEmpresa).Keys
                 .Where(k => !declaradas.ContainsKey(NormalizarNombre(k))).ToList();
@@ -1017,15 +1006,9 @@ namespace bufinscustomers.Services
                 string url = "/Datos/RevisarCargue?idLote=" + lote.IdLote;
 
                 var destinatarios = new List<int>();
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("SELECT Id FROM dbo.Usuarios WHERE IdEmpresa = @E AND Admin = 1 AND Id <> @T", cn))
-                {
-                    cmd.Parameters.AddWithValue("@E", lote.IdEmpresa);
-                    cmd.Parameters.AddWithValue("@T", idUsuarioTecnico);
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read()) destinatarios.Add(r.GetInt32(0));
-                }
+                Bd.Leer(CadenaConexion, "SELECT Id FROM dbo.Usuarios WHERE IdEmpresa = @E AND Admin = 1 AND Id <> @T",
+                    new { E = lote.IdEmpresa, T = idUsuarioTecnico },
+                    r => destinatarios.Add(r.GetInt32(0)));
                 var notif = new NotificacionesService();
                 foreach (var id in destinatarios)
                     notif.Crear(id, titulo, mensaje, conErrores ? "warning" : "info", url);

@@ -271,22 +271,15 @@ namespace bufinscustomers.Controllers
             var iniciales = new HashSet<int>();
             var finales = new HashSet<int>();
 
-            using (var conn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand("SELECT añoinicial, añofinal FROM dbo.Reportes", conn))
-            {
-                conn.Open();
-                using (var reader = cmd.ExecuteReader())
+            Bd.Leer(CadenaConexion, "SELECT añoinicial, añofinal FROM dbo.Reportes",
+                reader =>
                 {
-                    while (reader.Read())
-                    {
-                        if (int.TryParse(reader["añoinicial"].ToString(), out int ai))
-                            iniciales.Add(ai);
+                    if (int.TryParse(reader["añoinicial"].ToString(), out int ai))
+                        iniciales.Add(ai);
 
-                        if (int.TryParse(reader["añofinal"].ToString(), out int af))
-                            finales.Add(af);
-                    }
-                }
-            }
+                    if (int.TryParse(reader["añofinal"].ToString(), out int af))
+                        finales.Add(af);
+                });
 
             var inicialesOrdenados = new List<int>(iniciales);
             var finalesOrdenados = new List<int>(finales);
@@ -455,21 +448,13 @@ namespace bufinscustomers.Controllers
             string enlace = "";
             int idEmpresaReporte = 0;
 
-            using (var conn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand("SELECT EnlaceHTML, IdEmpresa FROM dbo.Reportes WHERE Id = @Id", conn))
-            {
-                cmd.Parameters.AddWithValue("@Id", id);
-                conn.Open();
-
-                using (var reader = cmd.ExecuteReader())
+            Bd.LeerPrimera(CadenaConexion, "SELECT EnlaceHTML, IdEmpresa FROM dbo.Reportes WHERE Id = @Id",
+                new { Id = id },
+                reader =>
                 {
-                    if (reader.Read())
-                    {
-                        enlace = reader["EnlaceHTML"]?.ToString() ?? "";
-                        idEmpresaReporte = Convert.ToInt32(reader["IdEmpresa"]);
-                    }
-                }
-            }
+                    enlace = reader["EnlaceHTML"]?.ToString() ?? "";
+                    idEmpresaReporte = Convert.ToInt32(reader["IdEmpresa"]);
+                });
 
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {

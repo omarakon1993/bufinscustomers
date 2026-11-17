@@ -47,12 +47,7 @@ namespace bufinscustomers.Services
             if (DateTime.Now < _dispHasta) return _disp;
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("SELECT CASE WHEN OBJECT_ID('dbo.ApiEjecuciones','U') IS NOT NULL THEN 1 ELSE 0 END", cn))
-                {
-                    cn.Open();
-                    _disp = Convert.ToInt32(cmd.ExecuteScalar()) == 1;
-                }
+                _disp = Bd.Escalar<int>(CadenaConexion, "SELECT CASE WHEN OBJECT_ID('dbo.ApiEjecuciones','U') IS NOT NULL THEN 1 ELSE 0 END") == 1;
             }
             catch { _disp = false; }
             _dispHasta = DateTime.Now.AddSeconds(_disp ? 60 : 15);
@@ -260,16 +255,8 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    "UPDATE dbo.ApiEjecuciones SET Estado = @Est, Detalle = @D" + (finalizada ? ", FechaFin = GETDATE()" : "") + " WHERE Id = @Id", cn))
-                {
-                    cmd.Parameters.AddWithValue("@Est", estado);
-                    cmd.Parameters.AddWithValue("@D", JsonSerializer.Serialize(items));
-                    cmd.Parameters.AddWithValue("@Id", id);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                Bd.Ejecutar(CadenaConexion, "UPDATE dbo.ApiEjecuciones SET Estado = @Est, Detalle = @D" + (finalizada ? ", FechaFin = GETDATE()" : "") + " WHERE Id = @Id",
+                    new { Est = estado, D = JsonSerializer.Serialize(items), Id = id });
             }
             catch (Exception ex) { AppLogger.Error(ex, "ApiEjecuciones.Guardar"); }
         }
@@ -283,15 +270,9 @@ namespace bufinscustomers.Services
             string mensaje = string.Format(Txt("Notif_ModelosApiErroresMsg"), integ.Nombre, empresa, ok, err);
 
             var destinatarios = new List<int>();
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand("SELECT Id FROM dbo.Usuarios WHERE IdEmpresa = @E AND Admin = 1 AND Id <> @T", cn))
-            {
-                cmd.Parameters.AddWithValue("@E", integ.IdEmpresa);
-                cmd.Parameters.AddWithValue("@T", integ.IdUsuarioTecnico);
-                cn.Open();
-                using (var r = cmd.ExecuteReader())
-                    while (r.Read()) destinatarios.Add(r.GetInt32(0));
-            }
+            Bd.Leer(CadenaConexion, "SELECT Id FROM dbo.Usuarios WHERE IdEmpresa = @E AND Admin = 1 AND Id <> @T",
+                new { E = integ.IdEmpresa, T = integ.IdUsuarioTecnico },
+                r => destinatarios.Add(r.GetInt32(0)));
             var notif = new NotificacionesService();
             foreach (var id in destinatarios) notif.Crear(id, titulo, mensaje, "warning", "/Datos/Modelo");
         }

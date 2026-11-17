@@ -1415,29 +1415,21 @@ namespace bufinscustomers.Controllers
         {
             string ultimoCargue = "";
 
-            using (var conn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(@"
+            Bd.LeerPrimera(CadenaConexion, @"
             SELECT  TOP 1 AuditoriaCargues.Usuario, FechaCargue, NombreEmpresa AS EmpNombre
             FROM  AuditoriaCargues
             WHERE AuditoriaCargues.IdEmpresa = @IdEmpresa
             ORDER BY FechaCargue DESC
-        ", conn))
-            {
-                cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-
-                conn.Open();
-                using (var reader = cmd.ExecuteReader())
+        ",
+                new { IdEmpresa = idEmpresa },
+                reader =>
                 {
-                    if (reader.Read())
-                    {
-                        string usuario = reader["Usuario"].ToString();
-                        DateTime fecha = Convert.ToDateTime(reader["FechaCargue"]);
-                        string empresa = reader["EmpNombre"].ToString();
+                    string usuario = reader["Usuario"].ToString();
+                    DateTime fecha = Convert.ToDateTime(reader["FechaCargue"]);
+                    string empresa = reader["EmpNombre"].ToString();
 
-                        ultimoCargue = $"Última carga de {empresa}: {fecha:dd/MM/yyyy HH:mm:ss} por {usuario}";
-                    }
-                }
-            }
+                    ultimoCargue = $"Última carga de {empresa}: {fecha:dd/MM/yyyy HH:mm:ss} por {usuario}";
+                });
 
             return ultimoCargue;
         }

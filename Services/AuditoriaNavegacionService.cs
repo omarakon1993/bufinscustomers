@@ -33,6 +33,7 @@
  *        0, 0, 0);
  */
 
+using bufinscustomers.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -61,29 +62,27 @@ namespace bufinscustomers.Services
             if (r == null) return;
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(@"
+                Bd.Ejecutar(CadenaConexion, @"
                     INSERT INTO dbo.AuditoriaNavegacion
                         (Fecha, IdUsuario, NombreUsuario, IdEmpresa, RolUsuario,
                          Controller, [Action], CodigoMenu, TituloPagina, IpAddress, UserAgent)
                     VALUES
                         (@Fecha, @IdUsuario, @NombreUsuario, @IdEmpresa, @RolUsuario,
-                         @Controller, @Action, @CodigoMenu, @TituloPagina, @IpAddress, @UserAgent)", cn))
-                {
-                    cmd.Parameters.AddWithValue("@Fecha",         r.Fecha == default(DateTime) ? DateTime.Now : r.Fecha);
-                    cmd.Parameters.AddWithValue("@IdUsuario",      (object)r.IdUsuario ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@NombreUsuario",  (object)Rec(r.NombreUsuario, 150) ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@IdEmpresa",      (object)r.IdEmpresa ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@RolUsuario",     (object)r.RolUsuario ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Controller",     (object)Rec(r.Controller, 80) ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Action",         (object)Rec(r.Action, 80) ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@CodigoMenu",     (object)Rec(r.CodigoMenu, 60) ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@TituloPagina",   (object)Rec(r.TituloPagina, 150) ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@IpAddress",      (object)Rec(r.IpAddress, 45) ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@UserAgent",      (object)Rec(r.UserAgent, 300) ?? DBNull.Value);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                         @Controller, @Action, @CodigoMenu, @TituloPagina, @IpAddress, @UserAgent)",
+                    new
+                    {
+                        Fecha = r.Fecha == default(DateTime) ? DateTime.Now : r.Fecha,
+                        IdUsuario = r.IdUsuario,
+                        NombreUsuario = (object)Rec(r.NombreUsuario, 150) ?? DBNull.Value,
+                        IdEmpresa = r.IdEmpresa,
+                        RolUsuario = r.RolUsuario,
+                        Controller = (object)Rec(r.Controller, 80) ?? DBNull.Value,
+                        Action = (object)Rec(r.Action, 80) ?? DBNull.Value,
+                        CodigoMenu = (object)Rec(r.CodigoMenu, 60) ?? DBNull.Value,
+                        TituloPagina = (object)Rec(r.TituloPagina, 150) ?? DBNull.Value,
+                        IpAddress = (object)Rec(r.IpAddress, 45) ?? DBNull.Value,
+                        UserAgent = (object)Rec(r.UserAgent, 300) ?? DBNull.Value
+                    });
             }
             catch (Exception ex)
             {
@@ -105,8 +104,7 @@ namespace bufinscustomers.Services
 
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(@"
+                Bd.Ejecutar(CadenaConexion, @"
                     SET NOCOUNT ON;
                     DECLARE @b INT = 1, @i INT = 0;
                     WHILE @b > 0 AND @i < @MaxIter
@@ -115,15 +113,9 @@ namespace bufinscustomers.Services
                         WHERE Fecha < DATEADD(DAY, -@Dias, GETDATE());
                         SET @b = @@ROWCOUNT;
                         SET @i += 1;
-                    END", cn))
-                {
-                    cmd.CommandTimeout = 120;
-                    cmd.Parameters.AddWithValue("@Dias", RETENCION_DIAS);
-                    cmd.Parameters.AddWithValue("@Batch", PURGA_BATCH);
-                    cmd.Parameters.AddWithValue("@MaxIter", PURGA_MAX_ITER);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                    END",
+                    new { Dias = RETENCION_DIAS, Batch = PURGA_BATCH, MaxIter = PURGA_MAX_ITER },
+                    timeoutSeg: 120);
             }
             catch (Exception ex)
             {

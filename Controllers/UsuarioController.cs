@@ -112,47 +112,38 @@ namespace bufinscustomers.Controllers
         {
             List<Usuarios> usuarios = new List<Usuarios>();
 
-            using (SqlConnection connection = new SqlConnection(CadenaConexion))
-            {
-                using (SqlCommand command = new SqlCommand("sp_ObtenerUsuarios", connection))
+            Bd.Leer(CadenaConexion, "sp_ObtenerUsuarios",
+                null,
+                reader =>
                 {
-                    command.CommandType = CommandType.StoredProcedure;
-                    connection.Open();
+                    Usuarios usuario = new Usuarios();
+                    usuario.Id = (int)reader["Id"];
+                    usuario.Usuario = (string)reader["Usuario"];
+                    usuario.Clave = (string)reader["Clave"];
+                    usuario.Nombre = (string)reader["Nombre"];
+                    usuario.Apellidos = (string)reader["Apellidos"];
+                    usuario.Correo = (string)reader["Correo"];
+                    usuario.Telefono = (string)reader["Telefono"];
+                    usuario.Admin = reader["Admin"] != DBNull.Value ? (byte?)reader["Admin"] : null;
+                    usuario.IdEmpresa = reader["IdEmpresa"] != DBNull.Value ? (int?)reader["IdEmpresa"] : null;
 
-                    using (SqlDataReader reader = command.ExecuteReader())
+                    // Detectar si el usuario tiene imagen (sin cargar el Base64 en memoria)
+                    try
                     {
-                        while (reader.Read())
+                        reader.GetOrdinal("ImagenBase64"); // valida que la columna existe
+                        if (reader["ImagenBase64"] != DBNull.Value)
                         {
-                            Usuarios usuario = new Usuarios();
-                            usuario.Id = (int)reader["Id"];
-                            usuario.Usuario = (string)reader["Usuario"];
-                            usuario.Clave = (string)reader["Clave"];
-                            usuario.Nombre = (string)reader["Nombre"];
-                            usuario.Apellidos = (string)reader["Apellidos"];
-                            usuario.Correo = (string)reader["Correo"];
-                            usuario.Telefono = (string)reader["Telefono"];
-                            usuario.Admin = reader["Admin"] != DBNull.Value ? (byte?)reader["Admin"] : null;
-                            usuario.IdEmpresa = reader["IdEmpresa"] != DBNull.Value ? (int?)reader["IdEmpresa"] : null;
-
-                            // Detectar si el usuario tiene imagen (sin cargar el Base64 en memoria)
-                            try
-                            {
-                                reader.GetOrdinal("ImagenBase64"); // valida que la columna existe
-                                if (reader["ImagenBase64"] != DBNull.Value)
-                                {
-                                    usuario.Imagen = new ImagenUsuario { UsuarioId = usuario.Id };
-                                }
-                            }
-                            catch (IndexOutOfRangeException)
-                            {
-                                usuario.Imagen = null;
-                            }
-
-                            usuarios.Add(usuario);
+                            usuario.Imagen = new ImagenUsuario { UsuarioId = usuario.Id };
                         }
                     }
-                }
-            }
+                    catch (IndexOutOfRangeException)
+                    {
+                        usuario.Imagen = null;
+                    }
+
+                    usuarios.Add(usuario);
+                },
+                esSp: true);
 
             return usuarios.OrderBy(u => u.Id).ToList();
         }
@@ -189,17 +180,7 @@ namespace bufinscustomers.Controllers
                     }
                 }
 
-                using (SqlConnection connection = new SqlConnection(CadenaConexion))
-                {
-                    using (SqlCommand command = new SqlCommand("sp_EliminarUsuario", connection))
-                    {
-                        command.CommandType = CommandType.StoredProcedure;
-                        command.Parameters.AddWithValue("@Id", idUsuario);
-
-                        connection.Open();
-                        command.ExecuteNonQuery();
-                    }
-                }
+                Bd.Ejecutar(CadenaConexion, "sp_EliminarUsuario", new { Id = idUsuario }, esSp: true);
 
                 SetSuccessMessage("Usuario eliminado correctamente.");
                 new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_UsuarioEliminado"), null, "warning", "/Usuario/Usuarios");
@@ -514,18 +495,9 @@ namespace bufinscustomers.Controllers
             {
                 string claveEncriptada = HashearContrasena(nuevaClave.Trim());
 
-                using (SqlConnection connection = new SqlConnection(CadenaConexion))
-                {
-                    using (SqlCommand command = new SqlCommand("sp_CambiarClaveUsuario", connection))
-                    {
-                        command.CommandType = CommandType.StoredProcedure;
-                        command.Parameters.AddWithValue("@IdUsuario", idUsuario);
-                        command.Parameters.AddWithValue("@NuevaClave", claveEncriptada);
-
-                        connection.Open();
-                        command.ExecuteNonQuery();
-                    }
-                }
+                Bd.Ejecutar(CadenaConexion, "sp_CambiarClaveUsuario",
+                    new { IdUsuario = idUsuario, NuevaClave = claveEncriptada },
+                    esSp: true);
 
                 SetSuccessMessage("Clave actualizada correctamente.");
             }
@@ -757,18 +729,9 @@ namespace bufinscustomers.Controllers
             var base64 = Convert.ToBase64String(bytes);
             var nombreImagen = Path.GetFileName(imagenArchivo.FileName);
 
-            using (SqlConnection connection = new SqlConnection(CadenaConexion))
-            using (SqlCommand command = new SqlCommand("sp_GuardarImagenUsuario", connection))
-            {
-                command.CommandType = CommandType.StoredProcedure;
-                command.Parameters.AddWithValue("@UsuarioId", usuarioId);
-                command.Parameters.AddWithValue("@NombreImagen", nombreImagen);
-                command.Parameters.AddWithValue("@TipoImagen", tipoImagen);
-                command.Parameters.AddWithValue("@ImagenBase64", base64);
-
-                connection.Open();
-                command.ExecuteNonQuery();
-            }
+            Bd.Ejecutar(CadenaConexion, "sp_GuardarImagenUsuario",
+                new { UsuarioId = usuarioId, NombreImagen = nombreImagen, TipoImagen = tipoImagen, ImagenBase64 = base64 },
+                esSp: true);
             return true;
         }
 
@@ -796,24 +759,15 @@ namespace bufinscustomers.Controllers
             string base64 = null;
             int? empresaDelDueno = null;
 
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand(
-                    @"SELECT TOP 1 i.ImagenBase64, u.IdEmpresa
+            Bd.LeerPrimera(CadenaConexion, @"SELECT TOP 1 i.ImagenBase64, u.IdEmpresa
                       FROM UsuarioImagenes i INNER JOIN Usuarios u ON u.Id = i.UsuarioId
                       WHERE i.UsuarioId = @Id ORDER BY i.Id DESC",
-                    cn);
-                cmd.Parameters.AddWithValue("@Id", id);
-                cn.Open();
-                using (var reader = cmd.ExecuteReader())
+                new { Id = id },
+                reader =>
                 {
-                    if (reader.Read())
-                    {
-                        base64 = reader["ImagenBase64"] != DBNull.Value ? reader["ImagenBase64"].ToString() : null;
-                        if (reader["IdEmpresa"] != DBNull.Value) empresaDelDueno = Convert.ToInt32(reader["IdEmpresa"]);
-                    }
-                }
-            }
+                    base64 = reader["ImagenBase64"] != DBNull.Value ? reader["ImagenBase64"].ToString() : null;
+                    if (reader["IdEmpresa"] != DBNull.Value) empresaDelDueno = Convert.ToInt32(reader["IdEmpresa"]);
+                });
 
             if (string.IsNullOrEmpty(base64))
                 return HttpNotFound();

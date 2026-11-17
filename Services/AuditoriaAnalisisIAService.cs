@@ -1,3 +1,4 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
@@ -71,16 +72,8 @@ namespace bufinscustomers.Services
             if (!TieneColumna("Valoracion")) return false;
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    "UPDATE AuditoriaAnalisisIA SET Valoracion = @v WHERE Id = @id AND IdUsuario = @u", cn))
-                {
-                    cmd.Parameters.AddWithValue("@v", (object)valoracion ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@id", id);
-                    cmd.Parameters.AddWithValue("@u", idUsuario);
-                    cn.Open();
-                    return cmd.ExecuteNonQuery() > 0;
-                }
+                return Bd.Ejecutar(CadenaConexion, "UPDATE AuditoriaAnalisisIA SET Valoracion = @v WHERE Id = @id AND IdUsuario = @u",
+                    new { v = valoracion, id = id, u = idUsuario }) > 0;
             }
             catch (Exception ex)
             {

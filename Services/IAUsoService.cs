@@ -244,14 +244,9 @@ namespace bufinscustomers.Services
             var ids = new List<int>();
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("SELECT Id FROM Usuarios WHERE Admin = 1 AND IdEmpresa = @IdEmpresa", cn))
-                {
-                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read()) ids.Add(Convert.ToInt32(r["Id"]));
-                }
+                Bd.Leer(CadenaConexion, "SELECT Id FROM Usuarios WHERE Admin = 1 AND IdEmpresa = @IdEmpresa",
+                    new { IdEmpresa = idEmpresa },
+                    r => ids.Add(Convert.ToInt32(r["Id"])));
             }
             catch (Exception ex) { AppLogger.Error(ex, "IAUsoService.ObtenerIdsAdminEmpresa"); }
             return ids;
@@ -262,13 +257,7 @@ namespace bufinscustomers.Services
             var ids = new List<int>();
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("SELECT Id FROM Usuarios WHERE Admin = 2", cn))
-                {
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read()) ids.Add(Convert.ToInt32(r["Id"]));
-                }
+                Bd.Leer(CadenaConexion, "SELECT Id FROM Usuarios WHERE Admin = 2", r => ids.Add(Convert.ToInt32(r["Id"])));
             }
             catch (Exception ex) { AppLogger.Error(ex, "IAUsoService.ObtenerIdsSuperAdmin"); }
             return ids;

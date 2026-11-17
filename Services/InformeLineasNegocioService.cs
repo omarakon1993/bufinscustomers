@@ -1,4 +1,5 @@
-﻿using System;
+﻿using bufinscustomers.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using bufinscustomers.Models;
@@ -154,25 +155,17 @@ namespace bufinscustomers.Services
             var r = new Dictionary<string, decimal>();
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                {
-                    var cmd = new SqlCommand(@"
+                Bd.Leer(CadenaConexion, @"
                         SELECT LTRIM(RTRIM(CuentaPUC)) AS Puc, SUM(Valor) AS Total FROM dbo.ModeloPYG
                         WHERE IdEmpresa = @IdEmpresa AND IdEscenario = @IdEscenario
                           AND (Año * 12 + Mes - 1) BETWEEN @KDesde AND @KHasta AND CuentaPUC IS NOT NULL
-                        GROUP BY LTRIM(RTRIM(CuentaPUC))", cn);
-                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                    cmd.Parameters.AddWithValue("@IdEscenario", idEscenario);
-                    cmd.Parameters.AddWithValue("@KDesde", kDesde);
-                    cmd.Parameters.AddWithValue("@KHasta", kHasta);
-                    cn.Open();
-                    using (var reader = cmd.ExecuteReader())
-                        while (reader.Read())
-                        {
-                            string puc = reader["Puc"] as string;
-                            if (puc != null && ConceptoPorPuc.ContainsKey(puc) && reader["Total"] != DBNull.Value) r[puc] = Convert.ToDecimal(reader["Total"]);
-                        }
-                }
+                        GROUP BY LTRIM(RTRIM(CuentaPUC))",
+                    new { IdEmpresa = idEmpresa, IdEscenario = idEscenario, KDesde = kDesde, KHasta = kHasta },
+                    reader =>
+                    {
+                        string puc = reader["Puc"] as string;
+                        if (puc != null && ConceptoPorPuc.ContainsKey(puc) && reader["Total"] != DBNull.Value) r[puc] = Convert.ToDecimal(reader["Total"]);
+                    });
             }
             catch (Exception ex)
             {

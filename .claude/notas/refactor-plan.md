@@ -40,5 +40,13 @@ Tamaño: Controllers 17,8k / Services 23,8k / Helpers 3,4k / Models 3,6k / Views
 - Verificación: build 0/0, 23 pruebas verdes, sitio arrancado en local (GET `/`→302, `/Acceso/Login`→200, estático 200, `/Error/Status?code=404`→404, `/api/v1/ping`→401).
 - Pendiente de F2 por riesgo/valor: CA1822 (métodos estáticos) y CA1861/CA1825 en lote → se hacen archivo a archivo junto a las fases 3-5.
 
+## Fase 3 — acceso a datos reutilizable (HECHA 2026-11-16, sin comitear)
+- Nuevo `Helpers/Bd.cs`: `Ejecutar` (INSERT/UPDATE/DELETE/SP → filas), `Escalar<T>`, `Lista<T>`, `Primero<T>`, `Leer` (recorre filas con lambda), `LeerPrimera` (solo la primera fila). Parámetros como objeto anónimo (`new { Id = id }` → `@Id`; null → DBNull). Opcionales `esSp: true` y `timeoutSeg:`. Cada llamada abre/cierra su conexión (pool). Probado sin BD en `Tests/Bufins.Pruebas/BdTests.cs`.
+- Migración automática con una herramienta Roslyn (no versionada, vivió en el scratchpad de la sesión): solo reescribe bloques `using (var cn = new SqlConnection(...))` cuya forma coincide EXACTAMENTE (comando estándar, `AddWithValue` con nombre literal, `cn.Open()`, y un único `ExecuteNonQuery`/`ExecuteScalar` con `Convert.ToInt32/64` o `while/if (r.Read())` sin return/break/await/ref-out). El resto queda a mano a propósito.
+- Resultado: 157 bloques migrados (70 Ejecutar, 64 Leer, 17 Escalar, 6 LeerPrimera) en 47 archivos; `new SqlConnection` 365 → 203; ≈1.040 líneas menos. Build 0/0, pruebas verdes, GET de humo OK.
+- Cambio de matiz documentado: `Escalar<T>` devuelve `default` si la celda es NULL (antes `Convert.ToInt32(DBNull)` lanzaba excepción); un parámetro `null` ahora viaja como DBNull (antes `AddWithValue(…, null)` fallaba).
+- Lo que sigue a mano (por diseño): transacciones (`SqlTransaction`), parámetros OUTPUT, varios result sets, `SqlBulkCopy`, bloques con lógica intercalada, `Parameters.Add(tipo)`.
+- Regla para código NUEVO: usar `Bd.*` en lugar de abrir `SqlConnection` a mano (salvo los casos anteriores).
+
 ## Orden
-F2 limpieza sin riesgo → F3 datos → F4 DI → F5 dividir/base informes → F6 plataforma (nulabilidad, async, Compat) → F7 frontend → F8 documentación técnica (`App_Data/Documentacion/Tecnica/`, con glosario de C#/.NET con ejemplos del propio código). Comentarios de una línea (español, solo el «porqué») se agregan módulo a módulo en cada fase.
+F2 limpieza sin riesgo → F3 datos → F4 DI → F5 dividir/base informes → F6 plataforma (nulabilidad, async, Compat) → F7 frontend → **F9 resumen del refactor (qué se redujo y cómo se hizo; se entrega ANTES de la F8; métricas contra la etiqueta `base-pre-refactor-2026-11-16`)** → F8 documentación técnica (se mantiene intacta tal como se definió) (`App_Data/Documentacion/Tecnica/`, con glosario de C#/.NET con ejemplos del propio código). Comentarios de una línea (español, solo el «porqué») se agregan módulo a módulo en cada fase.

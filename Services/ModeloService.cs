@@ -1,3 +1,4 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
@@ -30,15 +31,7 @@ namespace bufinscustomers.Services
         public List<ModeloEjecucion> ObtenerModelosActivos()
         {
             var lista = new List<ModeloEjecucion>();
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                SqlCommand cmd = new SqlCommand("sp_ObtenerModelosEjecucion", cn);
-                cmd.CommandType = CommandType.StoredProcedure;
-                cn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                    while (reader.Read())
-                        lista.Add(MapModelo(reader));
-            }
+            Bd.Leer(CadenaConexion, "sp_ObtenerModelosEjecucion", null, reader => lista.Add(MapModelo(reader)), esSp: true);
             return lista;
         }
 
@@ -61,66 +54,46 @@ namespace bufinscustomers.Services
         public List<ModeloEjecucion> ObtenerTodos()
         {
             var lista = new List<ModeloEjecucion>();
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    "SELECT Id, Nombre, NombreSP, Descripcion, Icono, Orden, Activo FROM ModelosEjecucion ORDER BY Orden ASC, Nombre ASC", cn);
-                cn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                    while (reader.Read())
-                        lista.Add(MapModelo(reader, incluirActivo: true));
-            }
+            Bd.Leer(CadenaConexion, "SELECT Id, Nombre, NombreSP, Descripcion, Icono, Orden, Activo FROM ModelosEjecucion ORDER BY Orden ASC, Nombre ASC",
+                reader => lista.Add(MapModelo(reader, incluirActivo: true)));
             return lista;
         }
 
         public bool Crear(ModeloEjecucion modelo)
         {
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    @"INSERT INTO ModelosEjecucion (Nombre, NombreSP, Descripcion, Icono, Orden, Activo)
-                      VALUES (@Nombre, @NombreSP, @Descripcion, @Icono, @Orden, 1)", cn);
-                cmd.Parameters.AddWithValue("@Nombre",      modelo.Nombre?.Trim() ?? "");
-                cmd.Parameters.AddWithValue("@NombreSP",    modelo.NombreSP?.Trim() ?? "");
-                cmd.Parameters.AddWithValue("@Descripcion", string.IsNullOrWhiteSpace(modelo.Descripcion) ? (object)DBNull.Value : modelo.Descripcion.Trim());
-                cmd.Parameters.AddWithValue("@Icono",       string.IsNullOrWhiteSpace(modelo.Icono) ? (object)DBNull.Value : modelo.Icono.Trim());
-                cmd.Parameters.AddWithValue("@Orden",       modelo.Orden);
-                cn.Open();
-                return cmd.ExecuteNonQuery() > 0;
-            }
+            return Bd.Ejecutar(CadenaConexion, @"INSERT INTO ModelosEjecucion (Nombre, NombreSP, Descripcion, Icono, Orden, Activo)
+                      VALUES (@Nombre, @NombreSP, @Descripcion, @Icono, @Orden, 1)",
+                new
+                {
+                    Nombre = modelo.Nombre?.Trim() ?? "",
+                    NombreSP = modelo.NombreSP?.Trim() ?? "",
+                    Descripcion = string.IsNullOrWhiteSpace(modelo.Descripcion) ? (object)DBNull.Value : modelo.Descripcion.Trim(),
+                    Icono = string.IsNullOrWhiteSpace(modelo.Icono) ? (object)DBNull.Value : modelo.Icono.Trim(),
+                    Orden = modelo.Orden
+                }) > 0;
         }
 
         public bool Editar(ModeloEjecucion modelo)
         {
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    @"UPDATE ModelosEjecucion
+            return Bd.Ejecutar(CadenaConexion, @"UPDATE ModelosEjecucion
                       SET Nombre = @Nombre, NombreSP = @NombreSP, Descripcion = @Descripcion,
                           Icono = @Icono, Orden = @Orden, Activo = @Activo
-                      WHERE Id = @Id", cn);
-                cmd.Parameters.AddWithValue("@Id",          modelo.Id);
-                cmd.Parameters.AddWithValue("@Nombre",      modelo.Nombre?.Trim() ?? "");
-                cmd.Parameters.AddWithValue("@NombreSP",    modelo.NombreSP?.Trim() ?? "");
-                cmd.Parameters.AddWithValue("@Descripcion", string.IsNullOrWhiteSpace(modelo.Descripcion) ? (object)DBNull.Value : modelo.Descripcion.Trim());
-                cmd.Parameters.AddWithValue("@Icono",       string.IsNullOrWhiteSpace(modelo.Icono) ? (object)DBNull.Value : modelo.Icono.Trim());
-                cmd.Parameters.AddWithValue("@Orden",       modelo.Orden);
-                cmd.Parameters.AddWithValue("@Activo",      modelo.Activo);
-                cn.Open();
-                return cmd.ExecuteNonQuery() > 0;
-            }
+                      WHERE Id = @Id",
+                new
+                {
+                    Id = modelo.Id,
+                    Nombre = modelo.Nombre?.Trim() ?? "",
+                    NombreSP = modelo.NombreSP?.Trim() ?? "",
+                    Descripcion = string.IsNullOrWhiteSpace(modelo.Descripcion) ? (object)DBNull.Value : modelo.Descripcion.Trim(),
+                    Icono = string.IsNullOrWhiteSpace(modelo.Icono) ? (object)DBNull.Value : modelo.Icono.Trim(),
+                    Orden = modelo.Orden,
+                    Activo = modelo.Activo
+                }) > 0;
         }
 
         public bool Eliminar(int id)
         {
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    "DELETE FROM ModelosEjecucion WHERE Id = @Id", cn);
-                cmd.Parameters.AddWithValue("@Id", id);
-                cn.Open();
-                return cmd.ExecuteNonQuery() > 0;
-            }
+            return Bd.Ejecutar(CadenaConexion, "DELETE FROM ModelosEjecucion WHERE Id = @Id", new { Id = id }) > 0;
         }
     }
 }

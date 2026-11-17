@@ -1,3 +1,4 @@
+using bufinscustomers.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -137,18 +138,9 @@ namespace bufinscustomers.Services
         {
             var ids = new List<byte>();
 
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand("SELECT DISTINCT IdEscenario FROM dbo.ModeloBalance WHERE IdEmpresa = @IdEmpresa AND IdEscenario IS NOT NULL", cn);
-                cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                cn.Open();
-
-                using (var reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                        ids.Add(Convert.ToByte(reader[0]));
-                }
-            }
+            Bd.Leer(CadenaConexion, "SELECT DISTINCT IdEscenario FROM dbo.ModeloBalance WHERE IdEmpresa = @IdEmpresa AND IdEscenario IS NOT NULL",
+                new { IdEmpresa = idEmpresa },
+                reader => ids.Add(Convert.ToByte(reader[0])));
 
             return ids;
         }

@@ -210,18 +210,9 @@ namespace bufinscustomers.Services
                   AND (@IdEscenario IS NULL OR ISNULL(IdEscenario,1) = @IdEscenario)
                 ORDER BY IdEmpresa, Anio, Modo, FechaCargue DESC";
 
-            using (var conn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(sql, conn))
-            {
-                cmd.Parameters.AddWithValue("@IdEmpresa", (object)idEmpresa ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@Anio",      (object)anio     ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@Modo",      (object)modo     ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@IdEscenario", (object)idEscenario ?? DBNull.Value);
-                conn.Open();
-                using (var r = cmd.ExecuteReader())
-                    while (r.Read())
-                        list.Add(MapHistorial(r));
-            }
+            Bd.Leer(CadenaConexion, sql,
+                new { IdEmpresa = idEmpresa, Anio = anio, Modo = modo, IdEscenario = idEscenario },
+                r => list.Add(MapHistorial(r)));
 
             foreach (var v in list)
             {

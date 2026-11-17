@@ -165,35 +165,28 @@ namespace bufinscustomers.Services
             var lista = new List<UsuarioAccesoIAViewModel>();
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(@"
+                Bd.Leer(CadenaConexion, @"
                     SELECT Id, Nombre, Apellidos, Correo, Admin, AccesoConsultasIA
                     FROM Usuarios
                     WHERE IdEmpresa = @IdEmpresa AND (Admin IS NULL OR Admin <> 2)
-                    ORDER BY Nombre, Apellidos", cn))
-                {
-                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
+                    ORDER BY Nombre, Apellidos",
+                    new { IdEmpresa = idEmpresa },
+                    r =>
                     {
-                        while (r.Read())
-                        {
-                            bool? acceso = r["AccesoConsultasIA"] == DBNull.Value
-                                ? (bool?)null
-                                : Convert.ToBoolean(r["AccesoConsultasIA"]);
+                        bool? acceso = r["AccesoConsultasIA"] == DBNull.Value
+                            ? (bool?)null
+                            : Convert.ToBoolean(r["AccesoConsultasIA"]);
 
-                            lista.Add(new UsuarioAccesoIAViewModel
-                            {
-                                Id             = Convert.ToInt32(r["Id"]),
-                                NombreCompleto = $"{r["Nombre"]} {r["Apellidos"]}".Trim(),
-                                Correo         = r["Correo"].ToString(),
-                                Admin          = r["Admin"] == DBNull.Value ? (byte?)null : Convert.ToByte(r["Admin"]),
-                                AccesoExplicito = acceso,
-                                AccesoEfectivo  = acceso ?? true
-                            });
-                        }
-                    }
-                }
+                        lista.Add(new UsuarioAccesoIAViewModel
+                        {
+                            Id             = Convert.ToInt32(r["Id"]),
+                            NombreCompleto = $"{r["Nombre"]} {r["Apellidos"]}".Trim(),
+                            Correo         = r["Correo"].ToString(),
+                            Admin          = r["Admin"] == DBNull.Value ? (byte?)null : Convert.ToByte(r["Admin"]),
+                            AccesoExplicito = acceso,
+                            AccesoEfectivo  = acceso ?? true
+                        });
+                    });
             }
             catch (Exception ex)
             {
@@ -207,15 +200,8 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    "UPDATE Usuarios SET AccesoConsultasIA = @Acceso WHERE Id = @Id", cn))
-                {
-                    cmd.Parameters.AddWithValue("@Acceso", (object)acceso ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Id", idUsuario);
-                    cn.Open();
-                    return cmd.ExecuteNonQuery() > 0;
-                }
+                return Bd.Ejecutar(CadenaConexion, "UPDATE Usuarios SET AccesoConsultasIA = @Acceso WHERE Id = @Id",
+                    new { Acceso = acceso, Id = idUsuario }) > 0;
             }
             catch (Exception ex)
             {

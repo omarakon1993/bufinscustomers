@@ -47,8 +47,7 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(@"
+                return new ResultadoCrearSolicitud { Disponible = true, Creada = Bd.Escalar<int>(CadenaConexion, @"
                     IF EXISTS (SELECT 1 FROM SolicitudesReinicioAuth WHERE IdUsuario = @U AND Estado = 'Pendiente')
                         SELECT 0;
                     ELSE
@@ -56,16 +55,15 @@ namespace bufinscustomers.Services
                         INSERT INTO SolicitudesReinicioAuth (IdUsuario, Mensaje, Telefono, IP, UserAgent)
                         VALUES (@U, @M, @T, @IP, @UA);
                         SELECT 1;
-                    END", cn))
-                {
-                    cmd.Parameters.AddWithValue("@U", idUsuario);
-                    cmd.Parameters.AddWithValue("@M", string.IsNullOrWhiteSpace(mensaje) ? (object)DBNull.Value : mensaje);
-                    cmd.Parameters.AddWithValue("@T", string.IsNullOrWhiteSpace(telefono) ? (object)DBNull.Value : telefono);
-                    cmd.Parameters.AddWithValue("@IP", string.IsNullOrWhiteSpace(ip) ? (object)DBNull.Value : ip);
-                    cmd.Parameters.AddWithValue("@UA", string.IsNullOrWhiteSpace(userAgent) ? (object)DBNull.Value : Corto(userAgent, 300));
-                    cn.Open();
-                    return new ResultadoCrearSolicitud { Disponible = true, Creada = Convert.ToInt32(cmd.ExecuteScalar()) == 1 };
-                }
+                    END",
+                    new
+                    {
+                        U = idUsuario,
+                        M = string.IsNullOrWhiteSpace(mensaje) ? (object)DBNull.Value : mensaje,
+                        T = string.IsNullOrWhiteSpace(telefono) ? (object)DBNull.Value : telefono,
+                        IP = string.IsNullOrWhiteSpace(ip) ? (object)DBNull.Value : ip,
+                        UA = string.IsNullOrWhiteSpace(userAgent) ? (object)DBNull.Value : Corto(userAgent, 300)
+                    }) == 1 };
             }
             catch (SqlException ex)
             {
@@ -89,15 +87,10 @@ namespace bufinscustomers.Services
             var lista = new List<SolicitudReinicioAuth>();
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(SelectBase +
-                    " WHERE (@E IS NULL OR s.Estado = @E) ORDER BY CASE WHEN s.Estado = 'Pendiente' THEN 0 ELSE 1 END, s.Fecha DESC", cn))
-                {
-                    cmd.Parameters.AddWithValue("@E", string.IsNullOrWhiteSpace(estado) ? (object)DBNull.Value : estado);
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read()) lista.Add(Leer(r));
-                }
+                Bd.Leer(CadenaConexion, SelectBase +
+                    " WHERE (@E IS NULL OR s.Estado = @E) ORDER BY CASE WHEN s.Estado = 'Pendiente' THEN 0 ELSE 1 END, s.Fecha DESC",
+                    new { E = string.IsNullOrWhiteSpace(estado) ? (object)DBNull.Value : estado },
+                    r => lista.Add(Leer(r)));
             }
             catch (SqlException ex)
             {
@@ -130,12 +123,7 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("SELECT COUNT(*) FROM SolicitudesReinicioAuth WHERE Estado = 'Pendiente'", cn))
-                {
-                    cn.Open();
-                    return Convert.ToInt32(cmd.ExecuteScalar());
-                }
+                return Bd.Escalar<int>(CadenaConexion, "SELECT COUNT(*) FROM SolicitudesReinicioAuth WHERE Estado = 'Pendiente'");
             }
             catch (SqlException) { return 0; }
         }
@@ -145,18 +133,15 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    "UPDATE SolicitudesReinicioAuth SET Estado = @E, IdResuelve = @R, FechaResolucion = GETDATE(), NotaResolucion = @N " +
-                    "WHERE Id = @Id AND Estado = 'Pendiente'", cn))
-                {
-                    cmd.Parameters.AddWithValue("@E", estado);
-                    cmd.Parameters.AddWithValue("@R", idResuelve);
-                    cmd.Parameters.AddWithValue("@N", string.IsNullOrWhiteSpace(nota) ? (object)DBNull.Value : Corto(nota, 500));
-                    cmd.Parameters.AddWithValue("@Id", id);
-                    cn.Open();
-                    return cmd.ExecuteNonQuery() == 1;
-                }
+                return Bd.Ejecutar(CadenaConexion, "UPDATE SolicitudesReinicioAuth SET Estado = @E, IdResuelve = @R, FechaResolucion = GETDATE(), NotaResolucion = @N " +
+                    "WHERE Id = @Id AND Estado = 'Pendiente'",
+                    new
+                    {
+                        E = estado,
+                        R = idResuelve,
+                        N = string.IsNullOrWhiteSpace(nota) ? (object)DBNull.Value : Corto(nota, 500),
+                        Id = id
+                    }) == 1;
             }
             catch (SqlException ex)
             {
@@ -171,14 +156,8 @@ namespace bufinscustomers.Services
             var lista = new List<KeyValuePair<int, string>>();
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("SELECT Id, Correo FROM Usuarios WHERE Admin = 2", cn))
-                {
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read())
-                            lista.Add(new KeyValuePair<int, string>(Convert.ToInt32(r["Id"]), r["Correo"] == DBNull.Value ? null : r["Correo"].ToString()));
-                }
+                Bd.Leer(CadenaConexion, "SELECT Id, Correo FROM Usuarios WHERE Admin = 2",
+                    r => lista.Add(new KeyValuePair<int, string>(Convert.ToInt32(r["Id"]), r["Correo"] == DBNull.Value ? null : r["Correo"].ToString())));
             }
             catch (SqlException ex) { AppLogger.Error(ex, "SolicitudReinicioAuthService.ObtenerSuperAdminsConCorreo"); }
             return lista;

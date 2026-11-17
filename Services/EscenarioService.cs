@@ -1,3 +1,4 @@
+using bufinscustomers.Helpers;
 using System;
 using System.Collections.Generic;
 
@@ -26,15 +27,8 @@ namespace bufinscustomers.Services
         public List<Models.Escenario> ObtenerActivos()
         {
             var lista = new List<Models.Escenario>();
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand(
-                    "SELECT Id, Nombre, Orden, Activo FROM dbo.Escenarios WHERE Activo = 1 ORDER BY Orden ASC, Id ASC", cn);
-                cn.Open();
-                using (var reader = cmd.ExecuteReader())
-                    while (reader.Read())
-                        lista.Add(Map(reader));
-            }
+            Bd.Leer(CadenaConexion, "SELECT Id, Nombre, Orden, Activo FROM dbo.Escenarios WHERE Activo = 1 ORDER BY Orden ASC, Id ASC",
+                reader => lista.Add(Map(reader)));
             return lista;
         }
 
@@ -42,58 +36,31 @@ namespace bufinscustomers.Services
         public List<Models.Escenario> ObtenerTodos()
         {
             var lista = new List<Models.Escenario>();
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand(
-                    "SELECT Id, Nombre, Orden, Activo FROM dbo.Escenarios ORDER BY Orden ASC, Id ASC", cn);
-                cn.Open();
-                using (var reader = cmd.ExecuteReader())
-                    while (reader.Read())
-                        lista.Add(Map(reader));
-            }
+            Bd.Leer(CadenaConexion, "SELECT Id, Nombre, Orden, Activo FROM dbo.Escenarios ORDER BY Orden ASC, Id ASC",
+                reader => lista.Add(Map(reader)));
             return lista;
         }
 
         public bool Crear(string nombre)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand(@"
+            return Bd.Ejecutar(CadenaConexion, @"
                     DECLARE @NuevoId TINYINT = (SELECT ISNULL(MAX(Id), 0) + 1 FROM dbo.Escenarios);
                     DECLARE @NuevoOrden INT = (SELECT ISNULL(MAX(Orden), 0) + 1 FROM dbo.Escenarios);
                     INSERT INTO dbo.Escenarios (Id, Nombre, Orden, Activo)
-                    VALUES (@NuevoId, @Nombre, @NuevoOrden, 1);", cn);
-                cmd.Parameters.AddWithValue("@Nombre", nombre?.Trim() ?? "");
-                cn.Open();
-                return cmd.ExecuteNonQuery() > 0;
-            }
+                    VALUES (@NuevoId, @Nombre, @NuevoOrden, 1);",
+                new { Nombre = nombre?.Trim() ?? "" }) > 0;
         }
 
         public bool Editar(int id, string nombre, int orden, bool activo)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand(
-                    "UPDATE dbo.Escenarios SET Nombre = @Nombre, Orden = @Orden, Activo = @Activo WHERE Id = @Id", cn);
-                cmd.Parameters.AddWithValue("@Id", id);
-                cmd.Parameters.AddWithValue("@Nombre", nombre?.Trim() ?? "");
-                cmd.Parameters.AddWithValue("@Orden", orden);
-                cmd.Parameters.AddWithValue("@Activo", activo);
-                cn.Open();
-                return cmd.ExecuteNonQuery() > 0;
-            }
+            return Bd.Ejecutar(CadenaConexion, "UPDATE dbo.Escenarios SET Nombre = @Nombre, Orden = @Orden, Activo = @Activo WHERE Id = @Id",
+                new { Id = id, Nombre = nombre?.Trim() ?? "", Orden = orden, Activo = activo }) > 0;
         }
 
         /// <summary>Soft-delete: nunca se borra físicamente (referenciado por FK desde varias tablas).</summary>
         public bool Desactivar(int id)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand("UPDATE dbo.Escenarios SET Activo = 0 WHERE Id = @Id", cn);
-                cmd.Parameters.AddWithValue("@Id", id);
-                cn.Open();
-                return cmd.ExecuteNonQuery() > 0;
-            }
+            return Bd.Ejecutar(CadenaConexion, "UPDATE dbo.Escenarios SET Activo = 0 WHERE Id = @Id", new { Id = id }) > 0;
         }
     }
 }

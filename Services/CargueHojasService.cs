@@ -1,3 +1,4 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
@@ -132,17 +133,11 @@ namespace bufinscustomers.Services
         public Dictionary<int, DateTime> ObtenerAsignacionesLegadoChurido()
         {
             var resultado = new Dictionary<int, DateTime>();
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(@"
+            Bd.Leer(CadenaConexion, @"
                 IF OBJECT_ID('dbo.EmpresaPersonalizaciones', 'U') IS NOT NULL
                     SELECT IdEmpresa, FechaCreacion FROM dbo.EmpresaPersonalizaciones
-                    WHERE Activo = 1 AND Codigo = 'CHURIDO_HIST_PRECIOS';", cn))
-            {
-                cn.Open();
-                using (var r = cmd.ExecuteReader())
-                    while (r.Read())
-                        resultado[Convert.ToInt32(r["IdEmpresa"])] = Convert.ToDateTime(r["FechaCreacion"]);
-            }
+                    WHERE Activo = 1 AND Codigo = 'CHURIDO_HIST_PRECIOS';",
+                r => resultado[Convert.ToInt32(r["IdEmpresa"])] = Convert.ToDateTime(r["FechaCreacion"]));
             return resultado;
         }
 
@@ -621,23 +616,13 @@ $@"CREATE NONCLUSTERED INDEX {Q("IX_" + stg + "_Lote")} ON dbo.{Q(stg)} ([IdLote
                     throw new GestorHojasException("HojasCargue_Err_DiagnosticoConErrores");
             }
 
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(@"
+            Bd.Ejecutar(CadenaConexion, @"
                 UPDATE dbo.CargueHojas
                 SET NombreHoja = @Hoja, Descripcion = @Desc, Orden = @Orden, Activo = @Activo,
                     VigenteDesde = CASE WHEN @Activo = 1 AND Activo = 0 THEN GETDATE() ELSE VigenteDesde END,
                     FechaModificacion = GETDATE(), IdUsuarioModificacion = @Usr
-                WHERE IdHoja = @Id", cn))
-            {
-                cmd.Parameters.AddWithValue("@Hoja", nombreHoja);
-                cmd.Parameters.AddWithValue("@Desc", (object)descripcion ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@Orden", orden);
-                cmd.Parameters.AddWithValue("@Activo", activo);
-                cmd.Parameters.AddWithValue("@Usr", idUsuario);
-                cmd.Parameters.AddWithValue("@Id", actual.IdHoja);
-                cn.Open();
-                cmd.ExecuteNonQuery();
-            }
+                WHERE IdHoja = @Id",
+                new { Hoja = nombreHoja, Desc = descripcion, Orden = orden, Activo = activo, Usr = idUsuario, Id = actual.IdHoja });
         }
 
         /// <summary>
@@ -908,15 +893,8 @@ IF @df IS NOT NULL EXEC (N'ALTER TABLE dbo.{Q(tabla).Replace("'", "''")} DROP CO
         /// <summary>Marca de modificación de la hoja (tras un cambio de columnas).</summary>
         public void TocarHoja(int idHoja, int idUsuario)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(
-                "UPDATE dbo.CargueHojas SET FechaModificacion = GETDATE(), IdUsuarioModificacion = @Usr WHERE IdHoja = @Id", cn))
-            {
-                cmd.Parameters.AddWithValue("@Usr", idUsuario);
-                cmd.Parameters.AddWithValue("@Id", idHoja);
-                cn.Open();
-                cmd.ExecuteNonQuery();
-            }
+            Bd.Ejecutar(CadenaConexion, "UPDATE dbo.CargueHojas SET FechaModificacion = GETDATE(), IdUsuarioModificacion = @Usr WHERE IdHoja = @Id",
+                new { Usr = idUsuario, Id = idHoja });
         }
     }
 }

@@ -74,12 +74,7 @@ namespace bufinscustomers.Services
             if (DateTime.Now < _dispHasta) return _disp;
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("SELECT CASE WHEN OBJECT_ID('dbo.IntegracionesCargues','U') IS NOT NULL THEN 1 ELSE 0 END", cn))
-                {
-                    cn.Open();
-                    _disp = Convert.ToInt32(cmd.ExecuteScalar()) == 1;
-                }
+                _disp = Bd.Escalar<int>(CadenaConexion, "SELECT CASE WHEN OBJECT_ID('dbo.IntegracionesCargues','U') IS NOT NULL THEN 1 ELSE 0 END") == 1;
             }
             catch { _disp = false; }
             _dispHasta = DateTime.Now.AddSeconds(_disp ? 60 : 15);
@@ -94,29 +89,27 @@ namespace bufinscustomers.Services
             if (lote == null || !Disponible()) return;
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(@"
+                Bd.Ejecutar(CadenaConexion, @"
                     DELETE FROM dbo.IntegracionesCargues WHERE Recibido < DATEADD(DAY, -90, GETDATE());
                     UPDATE dbo.IntegracionesCargues
                        SET Filas = @F, Errores = @E, Advertencias = @A, EstadoRecibido = @S, Archivo = @Ar
                      WHERE IdLote = @L AND IdIntegracion = @I;
                     IF @@ROWCOUNT = 0
                         INSERT INTO dbo.IntegracionesCargues (IdLote, IdIntegracion, Anio, Modo, IdEscenario, Archivo, Filas, Errores, Advertencias, EstadoRecibido)
-                        VALUES (@L, @I, @An, @M, @Es, @Ar, @F, @E, @A, @S);", cn))
-                {
-                    cmd.Parameters.AddWithValue("@L", lote.IdLote);
-                    cmd.Parameters.AddWithValue("@I", idIntegracion);
-                    cmd.Parameters.AddWithValue("@An", lote.Anio);
-                    cmd.Parameters.AddWithValue("@M", lote.Modo == 0 ? "ejecucion" : "historico");
-                    cmd.Parameters.AddWithValue("@Es", lote.IdEscenario);
-                    cmd.Parameters.AddWithValue("@Ar", (object)Recorte(archivo, 260) ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@F", lote.TotalFilas);
-                    cmd.Parameters.AddWithValue("@E", lote.TotalErrores);
-                    cmd.Parameters.AddWithValue("@A", lote.TotalAdvertencias);
-                    cmd.Parameters.AddWithValue("@S", lote.Estado ?? "");
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                        VALUES (@L, @I, @An, @M, @Es, @Ar, @F, @E, @A, @S);",
+                    new
+                    {
+                        L = lote.IdLote,
+                        I = idIntegracion,
+                        An = lote.Anio,
+                        M = lote.Modo == 0 ? "ejecucion" : "historico",
+                        Es = lote.IdEscenario,
+                        Ar = (object)Recorte(archivo, 260) ?? DBNull.Value,
+                        F = lote.TotalFilas,
+                        E = lote.TotalErrores,
+                        A = lote.TotalAdvertencias,
+                        S = lote.Estado ?? ""
+                    });
             }
             catch (Exception ex) { AppLogger.Warn("IntegracionesActividad.RegistrarRecibido: " + ex.Message); }
         }
@@ -132,18 +125,10 @@ namespace bufinscustomers.Services
             {
                 var integ = new IntegracionesService().Obtener(idIntegracion.Value);
                 string por = integ != null && integ.IdUsuarioTecnico == idUsuario ? "integracion" : "persona";
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(@"
+                Bd.Ejecutar(CadenaConexion, @"
                     UPDATE dbo.IntegracionesCargues SET Resolucion = @R, FechaResolucion = GETDATE(), ResueltoPor = @P
-                     WHERE IdLote = @L AND IdIntegracion = @I AND Resolucion IS NULL", cn))
-                {
-                    cmd.Parameters.AddWithValue("@R", resolucion);
-                    cmd.Parameters.AddWithValue("@P", por);
-                    cmd.Parameters.AddWithValue("@L", idLote);
-                    cmd.Parameters.AddWithValue("@I", idIntegracion.Value);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                     WHERE IdLote = @L AND IdIntegracion = @I AND Resolucion IS NULL",
+                    new { R = resolucion, P = por, L = idLote, I = idIntegracion.Value });
             }
             catch (Exception ex) { AppLogger.Warn("IntegracionesActividad.Resolver: " + ex.Message); }
         }
@@ -154,32 +139,25 @@ namespace bufinscustomers.Services
         {
             var lista = new List<CargueIntegracion>();
             if (!Disponible()) return lista;
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(@"
+            Bd.Leer(CadenaConexion, @"
                 SELECT TOP (@N) c.IdLote, c.Anio, c.Modo, c.IdEscenario, c.Archivo, c.Filas, c.Errores, c.Advertencias, c.EstadoRecibido, c.Recibido,
                        c.Resolucion, c.FechaResolucion, c.ResueltoPor, l.IdLote AS LoteId, l.Estado AS EstadoActual
                   FROM dbo.IntegracionesCargues c
                   LEFT JOIN dbo.CarguesLotes l ON l.IdLote = c.IdLote
                  WHERE c.IdIntegracion = @I
-                 ORDER BY c.Recibido DESC, c.IdLote DESC", cn))
-            {
-                cmd.Parameters.AddWithValue("@N", n);
-                cmd.Parameters.AddWithValue("@I", idIntegracion);
-                cn.Open();
-                using (var r = cmd.ExecuteReader())
-                    while (r.Read())
-                        lista.Add(new CargueIntegracion
-                        {
-                            IdLote = Convert.ToInt64(r["IdLote"]), Anio = Convert.ToInt32(r["Anio"]), Modo = r["Modo"].ToString(),
-                            IdEscenario = Convert.ToInt32(r["IdEscenario"]), Archivo = r["Archivo"] as string,
-                            Filas = Convert.ToInt32(r["Filas"]), Errores = Convert.ToInt32(r["Errores"]), Advertencias = Convert.ToInt32(r["Advertencias"]),
-                            EstadoRecibido = r["EstadoRecibido"].ToString(), Recibido = Convert.ToDateTime(r["Recibido"]),
-                            Resolucion = r["Resolucion"] as string,
-                            FechaResolucion = r["FechaResolucion"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(r["FechaResolucion"]),
-                            ResueltoPor = r["ResueltoPor"] as string,
-                            LoteExiste = r["LoteId"] != DBNull.Value, EstadoActual = r["EstadoActual"] as string
-                        });
-            }
+                 ORDER BY c.Recibido DESC, c.IdLote DESC",
+                new { N = n, I = idIntegracion },
+                r => lista.Add(new CargueIntegracion
+                    {
+                        IdLote = Convert.ToInt64(r["IdLote"]), Anio = Convert.ToInt32(r["Anio"]), Modo = r["Modo"].ToString(),
+                        IdEscenario = Convert.ToInt32(r["IdEscenario"]), Archivo = r["Archivo"] as string,
+                        Filas = Convert.ToInt32(r["Filas"]), Errores = Convert.ToInt32(r["Errores"]), Advertencias = Convert.ToInt32(r["Advertencias"]),
+                        EstadoRecibido = r["EstadoRecibido"].ToString(), Recibido = Convert.ToDateTime(r["Recibido"]),
+                        Resolucion = r["Resolucion"] as string,
+                        FechaResolucion = r["FechaResolucion"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(r["FechaResolucion"]),
+                        ResueltoPor = r["ResueltoPor"] as string,
+                        LoteExiste = r["LoteId"] != DBNull.Value, EstadoActual = r["EstadoActual"] as string
+                    }));
             return lista;
         }
 
@@ -272,18 +250,10 @@ namespace bufinscustomers.Services
         {
             var lista = new List<(long, string, int, DateTime, DateTime?)>();
             if (!ApiEjecucionesService.Disponible()) return lista;
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(
-                "SELECT TOP (@N) Id, Estado, IdEscenario, FechaInicio, FechaFin FROM dbo.ApiEjecuciones WHERE IdIntegracion = @I ORDER BY Id DESC", cn))
-            {
-                cmd.Parameters.AddWithValue("@N", n);
-                cmd.Parameters.AddWithValue("@I", idIntegracion);
-                cn.Open();
-                using (var r = cmd.ExecuteReader())
-                    while (r.Read())
-                        lista.Add((Convert.ToInt64(r["Id"]), r["Estado"].ToString(), Convert.ToInt32(r["IdEscenario"]), Convert.ToDateTime(r["FechaInicio"]),
-                                   r["FechaFin"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(r["FechaFin"])));
-            }
+            Bd.Leer(CadenaConexion, "SELECT TOP (@N) Id, Estado, IdEscenario, FechaInicio, FechaFin FROM dbo.ApiEjecuciones WHERE IdIntegracion = @I ORDER BY Id DESC",
+                new { N = n, I = idIntegracion },
+                r => lista.Add((Convert.ToInt64(r["Id"]), r["Estado"].ToString(), Convert.ToInt32(r["IdEscenario"]), Convert.ToDateTime(r["FechaInicio"]),
+                               r["FechaFin"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(r["FechaFin"]))));
             return lista;
         }
 

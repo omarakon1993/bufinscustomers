@@ -1,3 +1,4 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
@@ -344,26 +345,14 @@ namespace bufinscustomers.Services
         {
             List<Empresas> empresas = new List<Empresas>();
 
-            using (SqlConnection connection = new SqlConnection(CadenaConexion))
-            {
-                using (SqlCommand command = new SqlCommand("sp_ObtenerEmpresas", connection))
-                {
-                    command.CommandType = CommandType.StoredProcedure;
-                    connection.Open();
-
-                    using (SqlDataReader reader = command.ExecuteReader())
+            Bd.Leer(CadenaConexion, "sp_ObtenerEmpresas",
+                null,
+                reader => empresas.Add(new Empresas
                     {
-                        while (reader.Read())
-                        {
-                            empresas.Add(new Empresas
-                            {
-                                Id = Convert.ToInt32(reader["EmpId"]),
-                                Nombre = reader["EmpNombre"]?.ToString()
-                            });
-                        }
-                    }
-                }
-            }
+                        Id = Convert.ToInt32(reader["EmpId"]),
+                        Nombre = reader["EmpNombre"]?.ToString()
+                    }),
+                esSp: true);
 
             return empresas;
         }

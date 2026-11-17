@@ -1,3 +1,4 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
@@ -11,31 +12,22 @@ namespace bufinscustomers.Services
         {
             List<Reportes> reportes = new List<Reportes>();
 
-            using (SqlConnection connection = new SqlConnection(CadenaConexion))
-            {
-                using (SqlCommand command = new SqlCommand("sp_ObtenerReportes", connection))
+            Bd.Leer(CadenaConexion, "sp_ObtenerReportes",
+                null,
+                reader =>
                 {
-                    command.CommandType = CommandType.StoredProcedure;
-                    connection.Open();
-
-                    using (SqlDataReader reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            Reportes reporte = new Reportes();
-                            reporte.Id = (int)reader["Id"];
-                            reporte.IdEmpresa = (int)reader["IdEmpresa"];
-                            reporte.Nombre = reader["Nombre"].ToString();
-                            reporte.AnioInicial = reader["AñoInicial"]?.ToString();
-                            reporte.AnioFinal = reader["AñoFinal"]?.ToString();
-                            reporte.Descripcion = reader["Descripcion"]?.ToString();
-                            reporte.EnlaceHTML = reader["EnlaceHTML"].ToString();
-                            reporte.NombreEmpresa = reader["NombreEmpresa"]?.ToString();
-                            reportes.Add(reporte);
-                        }
-                    }
-                }
-            }
+                    Reportes reporte = new Reportes();
+                    reporte.Id = (int)reader["Id"];
+                    reporte.IdEmpresa = (int)reader["IdEmpresa"];
+                    reporte.Nombre = reader["Nombre"].ToString();
+                    reporte.AnioInicial = reader["AñoInicial"]?.ToString();
+                    reporte.AnioFinal = reader["AñoFinal"]?.ToString();
+                    reporte.Descripcion = reader["Descripcion"]?.ToString();
+                    reporte.EnlaceHTML = reader["EnlaceHTML"].ToString();
+                    reporte.NombreEmpresa = reader["NombreEmpresa"]?.ToString();
+                    reportes.Add(reporte);
+                },
+                esSp: true);
 
             return reportes;
         }
@@ -114,25 +106,16 @@ namespace bufinscustomers.Services
         {
             List<Empresas> empresas = new List<Empresas>();
 
-            using (SqlConnection connection = new SqlConnection(CadenaConexion))
-            {
-                using (SqlCommand command = new SqlCommand("sp_ObtenerEmpresas", connection))
+            Bd.Leer(CadenaConexion, "sp_ObtenerEmpresas",
+                null,
+                reader =>
                 {
-                    command.CommandType = CommandType.StoredProcedure;
-                    connection.Open();
-
-                    using (SqlDataReader reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            Empresas empresa = new Empresas();
-                            empresa.Id = (int)reader["EmpId"];
-                            empresa.Nombre = (string)reader["EmpNombre"];
-                            empresas.Add(empresa);
-                        }
-                    }
-                }
-            }
+                    Empresas empresa = new Empresas();
+                    empresa.Id = (int)reader["EmpId"];
+                    empresa.Nombre = (string)reader["EmpNombre"];
+                    empresas.Add(empresa);
+                },
+                esSp: true);
 
             return empresas;
         }

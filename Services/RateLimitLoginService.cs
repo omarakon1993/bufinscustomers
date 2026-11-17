@@ -14,6 +14,7 @@
  * equivalente al comportamiento histórico: nunca deja el login sin protección.
  */
 
+using bufinscustomers.Helpers;
 using System;
 using Microsoft.Data.SqlClient;
 using System.Web;
@@ -114,28 +115,18 @@ namespace bufinscustomers.Services
 
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(SqlRegistrarFallo, cn))
-                {
-                    cmd.Parameters.AddWithValue("@Ip", ip);
-                    cmd.Parameters.AddWithValue("@Ventana", VENTANA_MIN);
-                    cmd.Parameters.AddWithValue("@Bloqueo", BLOQUEO_MIN);
-                    cmd.Parameters.AddWithValue("@Umbral", umbral);
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
+                Bd.LeerPrimera(CadenaConexion, SqlRegistrarFallo,
+                    new { Ip = ip, Ventana = VENTANA_MIN, Bloqueo = BLOQUEO_MIN, Umbral = umbral },
+                    r =>
                     {
-                        if (r.Read())
+                        DateTime? hasta = r["BloqueadoHasta"] == DBNull.Value
+                            ? (DateTime?)null : Convert.ToDateTime(r["BloqueadoHasta"]);
+                        if (hasta.HasValue && hasta.Value > DateTime.Now)
                         {
-                            DateTime? hasta = r["BloqueadoHasta"] == DBNull.Value
-                                ? (DateTime?)null : Convert.ToDateTime(r["BloqueadoHasta"]);
-                            if (hasta.HasValue && hasta.Value > DateTime.Now)
-                            {
-                                res.Bloqueada = true;
-                                res.MinutosRestantes = (int)Math.Ceiling((hasta.Value - DateTime.Now).TotalMinutes);
-                            }
+                            res.Bloqueada = true;
+                            res.MinutosRestantes = (int)Math.Ceiling((hasta.Value - DateTime.Now).TotalMinutes);
                         }
-                    }
-                }
+                    });
             }
             catch (Exception ex)
             {
@@ -159,13 +150,7 @@ namespace bufinscustomers.Services
             try { HttpRuntime.Cache.Remove("_rl_" + ip); } catch { }
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("DELETE FROM dbo.IntentosLoginIP WHERE Ip = @Ip", cn))
-                {
-                    cmd.Parameters.AddWithValue("@Ip", ip);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                Bd.Ejecutar(CadenaConexion, "DELETE FROM dbo.IntentosLoginIP WHERE Ip = @Ip", new { Ip = ip });
             }
             catch (Exception ex)
             {
@@ -187,15 +172,9 @@ namespace bufinscustomers.Services
                 bool nuevo = false;
                 try
                 {
-                    using (var cn = new SqlConnection(CadenaConexion))
-                    using (var cmd = new SqlCommand(
-                        @"SELECT ISNULL(SUM(Intentos), 0) FROM dbo.IntentosLoginIP
-                          WHERE UltimoIntento > DATEADD(MINUTE, -@V, GETDATE())", cn))
-                    {
-                        cmd.Parameters.AddWithValue("@V", VENTANA_GLOBAL_MIN);
-                        cn.Open();
-                        nuevo = Convert.ToInt64(cmd.ExecuteScalar()) >= UMBRAL_GLOBAL;
-                    }
+                    nuevo = Bd.Escalar<long>(CadenaConexion, @"SELECT ISNULL(SUM(Intentos), 0) FROM dbo.IntentosLoginIP
+                          WHERE UltimoIntento > DATEADD(MINUTE, -@V, GETDATE())",
+                        new { V = VENTANA_GLOBAL_MIN }) >= UMBRAL_GLOBAL;
                 }
                 catch (Exception ex)
                 {
@@ -234,16 +213,10 @@ namespace bufinscustomers.Services
             }
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    @"DELETE FROM dbo.IntentosLoginIP
+                Bd.Ejecutar(CadenaConexion, @"DELETE FROM dbo.IntentosLoginIP
                       WHERE UltimoIntento < DATEADD(DAY, -@D, GETDATE())
-                        AND (BloqueadoHasta IS NULL OR BloqueadoHasta < GETDATE())", cn))
-                {
-                    cmd.Parameters.AddWithValue("@D", RETENCION_DIAS);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                        AND (BloqueadoHasta IS NULL OR BloqueadoHasta < GETDATE())",
+                    new { D = RETENCION_DIAS });
             }
             catch (Exception ex)
             {

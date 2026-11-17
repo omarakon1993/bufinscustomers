@@ -35,14 +35,8 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("UPDATE Usuarios SET DebeCambiarClave = @V WHERE Id = @Id", cn))
-                {
-                    cmd.Parameters.AddWithValue("@V", debeCambiar);
-                    cmd.Parameters.AddWithValue("@Id", idUsuario);
-                    cn.Open();
-                    return cmd.ExecuteNonQuery() == 1;
-                }
+                return Bd.Ejecutar(CadenaConexion, "UPDATE Usuarios SET DebeCambiarClave = @V WHERE Id = @Id",
+                    new { V = debeCambiar, Id = idUsuario }) == 1;
             }
             catch (SqlException ex)
             {
@@ -54,15 +48,8 @@ namespace bufinscustomers.Services
         /// <summary>Guarda la nueva clave (ya hasheada) y apaga la marca en una sola sentencia.</summary>
         public bool GuardarClaveYQuitarMarca(int idUsuario, string hash)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(
-                "UPDATE Usuarios SET Clave = @Clave, DebeCambiarClave = 0 WHERE Id = @Id", cn))
-            {
-                cmd.Parameters.AddWithValue("@Clave", hash);
-                cmd.Parameters.AddWithValue("@Id", idUsuario);
-                cn.Open();
-                return cmd.ExecuteNonQuery() == 1;
-            }
+            return Bd.Ejecutar(CadenaConexion, "UPDATE Usuarios SET Clave = @Clave, DebeCambiarClave = 0 WHERE Id = @Id",
+                new { Clave = hash, Id = idUsuario }) == 1;
         }
     }
 }

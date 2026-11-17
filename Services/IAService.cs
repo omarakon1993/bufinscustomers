@@ -1,3 +1,4 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -453,22 +454,20 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(@"
+                Bd.Ejecutar(CadenaConexion, @"
                     MERGE dbo.CacheRespuestasIA AS t
                     USING (SELECT @k AS ClaveHash) AS s ON t.ClaveHash = s.ClaveHash
                     WHEN MATCHED THEN
                         UPDATE SET Respuesta = @r, PromptContexto = @p, FechaCreacion = GETDATE(), FechaExpira = @e
                     WHEN NOT MATCHED THEN
-                        INSERT (ClaveHash, Respuesta, PromptContexto, FechaExpira) VALUES (@k, @r, @p, @e);", cn))
-                {
-                    cmd.Parameters.AddWithValue("@k", clave);
-                    cmd.Parameters.AddWithValue("@r", (object)resp.Respuesta ?? string.Empty);
-                    cmd.Parameters.AddWithValue("@p", (object)resp.PromptContextoInicial ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@e", DateTime.Now.AddHours(ttlHoras));
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                        INSERT (ClaveHash, Respuesta, PromptContexto, FechaExpira) VALUES (@k, @r, @p, @e);",
+                    new
+                    {
+                        k = clave,
+                        r = (object)resp.Respuesta ?? string.Empty,
+                        p = resp.PromptContextoInicial,
+                        e = DateTime.Now.AddHours(ttlHoras)
+                    });
             }
             catch (Exception ex)
             {
@@ -490,14 +489,7 @@ namespace bufinscustomers.Services
 
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    "DELETE FROM dbo.CacheRespuestasIA WHERE FechaExpira < GETDATE()", cn))
-                {
-                    cmd.CommandTimeout = 30;
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                Bd.Ejecutar(CadenaConexion, "DELETE FROM dbo.CacheRespuestasIA WHERE FechaExpira < GETDATE()", timeoutSeg: 30);
             }
             catch (Exception ex)
             {

@@ -24,18 +24,11 @@ namespace bufinscustomers.Services
         public List<GrupoEmpresarial> ObtenerTodos()
         {
             var lista = new List<GrupoEmpresarial>();
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    @"SELECT g.Id, g.Nombre, g.Descripcion, g.Activo, g.FechaCreacion,
+            Bd.Leer(CadenaConexion, @"SELECT g.Id, g.Nombre, g.Descripcion, g.Activo, g.FechaCreacion,
                              (SELECT COUNT(*) FROM Empresas e WHERE e.IdGrupoEmpresarial = g.Id) AS TotalEmpresas
                       FROM GruposEmpresariales g
-                      ORDER BY g.Nombre ASC", cn);
-                cn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                    while (reader.Read())
-                        lista.Add(MapGrupo(reader));
-            }
+                      ORDER BY g.Nombre ASC",
+                reader => lista.Add(MapGrupo(reader)));
             return lista;
         }
 

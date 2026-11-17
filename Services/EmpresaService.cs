@@ -1,3 +1,4 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
@@ -43,31 +44,22 @@ namespace bufinscustomers.Services
         {
             List<Empresas> empresas = new List<Empresas>();
 
-            using (SqlConnection connection = new SqlConnection(CadenaConexion))
-            {
-                using (SqlCommand command = new SqlCommand("sp_ObtenerEmpresas", connection))
+            Bd.Leer(CadenaConexion, "sp_ObtenerEmpresas",
+                null,
+                reader =>
                 {
-                    command.CommandType = CommandType.StoredProcedure;
-                    connection.Open();
-
-                    using ( SqlDataReader reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            Empresas empresa = new Empresas();
-                            empresa.Id = (int)reader["EmpId"];
-                            empresa.Nombre = (string)reader["EmpNombre"];
-                            empresa.Nit = (string)reader["EmpNit"];
-                            empresa.Direccion = (string)reader["EmpDireccion"];
-                            empresa.Telefono = reader["EmpTelefono"] != DBNull.Value ? (string)reader["EmpTelefono"] : string.Empty;
-                            empresa.Correo = reader["EmpCorreo"] != DBNull.Value ? (string)reader["EmpCorreo"] : string.Empty;
-                            try { empresa.Abreviatura = reader["EmpAbreviatura"] != DBNull.Value ? (string)reader["EmpAbreviatura"] : string.Empty; }
-                            catch (IndexOutOfRangeException) { }
-                            empresas.Add(empresa);
-                        }
-                    }
-                }
-            }
+                    Empresas empresa = new Empresas();
+                    empresa.Id = (int)reader["EmpId"];
+                    empresa.Nombre = (string)reader["EmpNombre"];
+                    empresa.Nit = (string)reader["EmpNit"];
+                    empresa.Direccion = (string)reader["EmpDireccion"];
+                    empresa.Telefono = reader["EmpTelefono"] != DBNull.Value ? (string)reader["EmpTelefono"] : string.Empty;
+                    empresa.Correo = reader["EmpCorreo"] != DBNull.Value ? (string)reader["EmpCorreo"] : string.Empty;
+                    try { empresa.Abreviatura = reader["EmpAbreviatura"] != DBNull.Value ? (string)reader["EmpAbreviatura"] : string.Empty; }
+                    catch (IndexOutOfRangeException) { }
+                    empresas.Add(empresa);
+                },
+                esSp: true);
 
             AsignarGrupoEmpresarial(empresas);
             AsignarPaginaWeb(empresas);
@@ -86,14 +78,8 @@ namespace bufinscustomers.Services
             try
             {
                 var webs = new Dictionary<int, string>();
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("SELECT EmpId, EmpPaginaWeb FROM dbo.Empresas WHERE EmpPaginaWeb IS NOT NULL", cn))
-                {
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read())
-                            webs[(int)r["EmpId"]] = (string)r["EmpPaginaWeb"];
-                }
+                Bd.Leer(CadenaConexion, "SELECT EmpId, EmpPaginaWeb FROM dbo.Empresas WHERE EmpPaginaWeb IS NOT NULL",
+                    r => webs[(int)r["EmpId"]] = (string)r["EmpPaginaWeb"]);
                 foreach (var e in empresas)
                     if (webs.TryGetValue(e.Id, out var w)) e.PaginaWeb = w;
             }
@@ -117,14 +103,8 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("UPDATE dbo.Empresas SET EmpPaginaWeb = @w WHERE EmpId = @id", cn))
-                {
-                    cmd.Parameters.AddWithValue("@w", string.IsNullOrWhiteSpace(paginaWeb) ? (object)DBNull.Value : paginaWeb);
-                    cmd.Parameters.AddWithValue("@id", idEmpresa);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                Bd.Ejecutar(CadenaConexion, "UPDATE dbo.Empresas SET EmpPaginaWeb = @w WHERE EmpId = @id",
+                    new { w = string.IsNullOrWhiteSpace(paginaWeb) ? (object)DBNull.Value : paginaWeb, id = idEmpresa });
                 return true;
             }
             catch (SqlException ex) when (ex.Number == 207) { return false; }
@@ -155,24 +135,16 @@ namespace bufinscustomers.Services
 
             var grupos = new Dictionary<int, (int? IdGrupo, string NombreGrupo)>();
 
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    @"SELECT e.EmpId AS Id, e.IdGrupoEmpresarial, g.Nombre AS NombreGrupo
+            Bd.Leer(CadenaConexion, @"SELECT e.EmpId AS Id, e.IdGrupoEmpresarial, g.Nombre AS NombreGrupo
                       FROM Empresas e
-                      LEFT JOIN GruposEmpresariales g ON g.Id = e.IdGrupoEmpresarial", cn);
-                cn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                      LEFT JOIN GruposEmpresariales g ON g.Id = e.IdGrupoEmpresarial",
+                reader =>
                 {
-                    while (reader.Read())
-                    {
-                        int id = (int)reader["Id"];
-                        int? idGrupo = reader["IdGrupoEmpresarial"] == DBNull.Value ? (int?)null : (int)reader["IdGrupoEmpresarial"];
-                        string nombreGrupo = reader["NombreGrupo"] == DBNull.Value ? null : (string)reader["NombreGrupo"];
-                        grupos[id] = (idGrupo, nombreGrupo);
-                    }
-                }
-            }
+                    int id = (int)reader["Id"];
+                    int? idGrupo = reader["IdGrupoEmpresarial"] == DBNull.Value ? (int?)null : (int)reader["IdGrupoEmpresarial"];
+                    string nombreGrupo = reader["NombreGrupo"] == DBNull.Value ? null : (string)reader["NombreGrupo"];
+                    grupos[id] = (idGrupo, nombreGrupo);
+                });
 
             foreach (var empresa in empresas)
             {

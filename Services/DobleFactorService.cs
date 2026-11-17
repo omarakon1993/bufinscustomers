@@ -140,15 +140,8 @@ namespace bufinscustomers.Services
         /// <summary>Atómico: solo acepta el paso si es mayor al último guardado (no se reutiliza un código).</summary>
         public bool RegistrarPaso(int idUsuario, long paso)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(
-                "UPDATE Usuarios SET TotpUltimoPaso = @P WHERE Id = @Id AND (TotpUltimoPaso IS NULL OR TotpUltimoPaso < @P)", cn))
-            {
-                cmd.Parameters.AddWithValue("@P", paso);
-                cmd.Parameters.AddWithValue("@Id", idUsuario);
-                cn.Open();
-                return cmd.ExecuteNonQuery() == 1;
-            }
+            return Bd.Ejecutar(CadenaConexion, "UPDATE Usuarios SET TotpUltimoPaso = @P WHERE Id = @Id AND (TotpUltimoPaso IS NULL OR TotpUltimoPaso < @P)",
+                new { P = paso, Id = idUsuario }) == 1;
         }
 
         /// <summary>Activa el segundo factor (guarda el secreto protegido y el primer paso aceptado).</summary>
@@ -156,16 +149,8 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    "UPDATE Usuarios SET TotpActivo = 1, TotpSecretoCifrado = @S, TotpActivadoEn = GETDATE(), TotpUltimoPaso = @P WHERE Id = @Id", cn))
-                {
-                    cmd.Parameters.AddWithValue("@S", Proteger(secreto));
-                    cmd.Parameters.AddWithValue("@P", paso);
-                    cmd.Parameters.AddWithValue("@Id", idUsuario);
-                    cn.Open();
-                    return cmd.ExecuteNonQuery() == 1;
-                }
+                return Bd.Ejecutar(CadenaConexion, "UPDATE Usuarios SET TotpActivo = 1, TotpSecretoCifrado = @S, TotpActivadoEn = GETDATE(), TotpUltimoPaso = @P WHERE Id = @Id",
+                    new { S = Proteger(secreto), P = paso, Id = idUsuario }) == 1;
             }
             catch (Exception ex)
             {
@@ -183,14 +168,8 @@ namespace bufinscustomers.Services
             try
             {
                 int filas;
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    "UPDATE Usuarios SET TotpActivo = 0, TotpSecretoCifrado = NULL, TotpActivadoEn = NULL, TotpUltimoPaso = NULL WHERE Id = @Id", cn))
-                {
-                    cmd.Parameters.AddWithValue("@Id", idUsuario);
-                    cn.Open();
-                    filas = cmd.ExecuteNonQuery();
-                }
+                filas = Bd.Ejecutar(CadenaConexion, "UPDATE Usuarios SET TotpActivo = 0, TotpSecretoCifrado = NULL, TotpActivadoEn = NULL, TotpUltimoPaso = NULL WHERE Id = @Id",
+                    new { Id = idUsuario });
                 new PasskeyService().EliminarTodas(idUsuario);   // tolerante si no existe el script 029
                 return filas == 1;
             }

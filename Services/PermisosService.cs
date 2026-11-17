@@ -1,3 +1,4 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
@@ -19,47 +20,37 @@ namespace bufinscustomers.Services
         {
             var opciones = new List<OpcionMenuUsuarioViewModel>();
 
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                using (SqlCommand cmd = new SqlCommand("sp_ObtenerOpcionesMenuUsuarioConEstado", cn))
+            Bd.Leer(CadenaConexion, "sp_ObtenerOpcionesMenuUsuarioConEstado",
+                new { IdUsuario = idUsuario },
+                reader =>
                 {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
-                    cn.Open();
-
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    var vm = new OpcionMenuUsuarioViewModel
                     {
-                        while (reader.Read())
-                        {
-                            var vm = new OpcionMenuUsuarioViewModel
-                            {
-                                IdMenuOpcion = Convert.ToInt32(reader["Id"]),
-                                Codigo = reader["Codigo"].ToString(),
-                                Nombre = reader["Nombre"].ToString(),
-                                Descripcion = reader["Descripcion"] != DBNull.Value ? reader["Descripcion"].ToString() : null,
-                                Categoria = reader["Categoria"].ToString(),
-                                Icono = reader["Icono"] != DBNull.Value ? reader["Icono"].ToString() : null,
-                                Controller = reader["Controller"] != DBNull.Value ? reader["Controller"].ToString() : null,
-                                Action = reader["Action"] != DBNull.Value ? reader["Action"].ToString() : null,
-                                Asignado = Convert.ToBoolean(reader["Asignado"])
-                            };
+                        IdMenuOpcion = Convert.ToInt32(reader["Id"]),
+                        Codigo = reader["Codigo"].ToString(),
+                        Nombre = reader["Nombre"].ToString(),
+                        Descripcion = reader["Descripcion"] != DBNull.Value ? reader["Descripcion"].ToString() : null,
+                        Categoria = reader["Categoria"].ToString(),
+                        Icono = reader["Icono"] != DBNull.Value ? reader["Icono"].ToString() : null,
+                        Controller = reader["Controller"] != DBNull.Value ? reader["Controller"].ToString() : null,
+                        Action = reader["Action"] != DBNull.Value ? reader["Action"].ToString() : null,
+                        Asignado = Convert.ToBoolean(reader["Asignado"])
+                    };
 
-                            try
-                            {
-                                vm.NombreGrupo = reader["NombreGrupo"] != DBNull.Value ? reader["NombreGrupo"].ToString() : null;
-                                vm.IconoGrupo = reader["IconoGrupo"] != DBNull.Value ? reader["IconoGrupo"].ToString() : null;
-                                vm.IconoCategoria = reader["IconoCategoria"] != DBNull.Value ? reader["IconoCategoria"].ToString() : null;
-                                vm.OrdenCategoria = reader["OrdenCategoria"] != DBNull.Value ? Convert.ToInt32(reader["OrdenCategoria"]) : 0;
-                                vm.SoloSuperAdmin = reader["SoloSuperAdmin"] != DBNull.Value && Convert.ToBoolean(reader["SoloSuperAdmin"]);
-                                vm.SoloAdminEmpresa = reader["SoloAdminEmpresa"] != DBNull.Value && Convert.ToBoolean(reader["SoloAdminEmpresa"]);
-                            }
-                            catch (IndexOutOfRangeException) { }
-
-                            opciones.Add(vm);
-                        }
+                    try
+                    {
+                        vm.NombreGrupo = reader["NombreGrupo"] != DBNull.Value ? reader["NombreGrupo"].ToString() : null;
+                        vm.IconoGrupo = reader["IconoGrupo"] != DBNull.Value ? reader["IconoGrupo"].ToString() : null;
+                        vm.IconoCategoria = reader["IconoCategoria"] != DBNull.Value ? reader["IconoCategoria"].ToString() : null;
+                        vm.OrdenCategoria = reader["OrdenCategoria"] != DBNull.Value ? Convert.ToInt32(reader["OrdenCategoria"]) : 0;
+                        vm.SoloSuperAdmin = reader["SoloSuperAdmin"] != DBNull.Value && Convert.ToBoolean(reader["SoloSuperAdmin"]);
+                        vm.SoloAdminEmpresa = reader["SoloAdminEmpresa"] != DBNull.Value && Convert.ToBoolean(reader["SoloAdminEmpresa"]);
                     }
-                }
-            }
+                    catch (IndexOutOfRangeException) { }
+
+                    opciones.Add(vm);
+                },
+                esSp: true);
 
             // Menús personalizados por empresa: no ofrecer al usuario opciones de otra empresa.
             var noAplican = ObtenerIdsOpcionesNoAplicables(idUsuario);
@@ -121,24 +112,10 @@ namespace bufinscustomers.Services
         {
             var opciones = new List<MenuOpciones>();
 
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                using (SqlCommand cmd = new SqlCommand("sp_ObtenerMenuUsuario", cn))
-                {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
-                    cmd.Parameters.AddWithValue("@NivelAdmin", nivelAdmin);
-                    cn.Open();
-
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            opciones.Add(LeerMenuOpcion(reader));
-                        }
-                    }
-                }
-            }
+            Bd.Leer(CadenaConexion, "sp_ObtenerMenuUsuario",
+                new { IdUsuario = idUsuario, NivelAdmin = nivelAdmin },
+                reader => opciones.Add(LeerMenuOpcion(reader)),
+                esSp: true);
 
             // Menús personalizados por empresa (Super Admin ve todo).
             if (nivelAdmin != 2)
@@ -158,23 +135,10 @@ namespace bufinscustomers.Services
         {
             var codigos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                using (SqlCommand cmd = new SqlCommand("sp_ObtenerCodigosPermisosUsuario", cn))
-                {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
-                    cn.Open();
-
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            codigos.Add(reader["Codigo"].ToString());
-                        }
-                    }
-                }
-            }
+            Bd.Leer(CadenaConexion, "sp_ObtenerCodigosPermisosUsuario",
+                new { IdUsuario = idUsuario },
+                reader => codigos.Add(reader["Codigo"].ToString()),
+                esSp: true);
 
             // Un permiso asignado de una opción personalizada de OTRA empresa no cuenta (p. ej. el usuario
             // cambió de empresa): el código también se descarta para TienePermiso().
@@ -199,21 +163,14 @@ namespace bufinscustomers.Services
             var lista = new List<(int Id, string Codigo)>();
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    @"SELECT m.Id, m.Codigo
+                Bd.Leer(CadenaConexion, @"SELECT m.Id, m.Codigo
                       FROM MenuOpciones m
                       WHERE EXISTS (SELECT 1 FROM MenuOpcionesEmpresas e WHERE e.IdMenuOpcion = m.Id)
                         AND NOT EXISTS (SELECT 1 FROM MenuOpcionesEmpresas e
                                         INNER JOIN Usuarios u ON u.IdEmpresa = e.IdEmpresa
-                                        WHERE e.IdMenuOpcion = m.Id AND u.Id = @IdUsuario)", cn))
-                {
-                    cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read())
-                            lista.Add((Convert.ToInt32(r["Id"]), r["Codigo"].ToString()));
-                }
+                                        WHERE e.IdMenuOpcion = m.Id AND u.Id = @IdUsuario)",
+                    new { IdUsuario = idUsuario },
+                    r => lista.Add((Convert.ToInt32(r["Id"]), r["Codigo"].ToString())));
             }
             catch (SqlException ex) when (EsTablaInexistente(ex)) { }
             return lista;
@@ -231,18 +188,13 @@ namespace bufinscustomers.Services
             var dic = new Dictionary<int, List<int>>();
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("SELECT IdMenuOpcion, IdEmpresa FROM MenuOpcionesEmpresas ORDER BY IdMenuOpcion, IdEmpresa", cn))
-                {
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read())
-                        {
-                            int idOp = Convert.ToInt32(r["IdMenuOpcion"]);
-                            if (!dic.TryGetValue(idOp, out var l)) dic[idOp] = l = new List<int>();
-                            l.Add(Convert.ToInt32(r["IdEmpresa"]));
-                        }
-                }
+                Bd.Leer(CadenaConexion, "SELECT IdMenuOpcion, IdEmpresa FROM MenuOpcionesEmpresas ORDER BY IdMenuOpcion, IdEmpresa",
+                    r =>
+                    {
+                        int idOp = Convert.ToInt32(r["IdMenuOpcion"]);
+                        if (!dic.TryGetValue(idOp, out var l)) dic[idOp] = l = new List<int>();
+                        l.Add(Convert.ToInt32(r["IdEmpresa"]));
+                    });
             }
             catch (SqlException ex) when (EsTablaInexistente(ex)) { }
             return dic;
@@ -254,17 +206,11 @@ namespace bufinscustomers.Services
             var ids = new List<int>();
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    @"SELECT e.IdEmpresa FROM MenuOpcionesEmpresas e
+                Bd.Leer(CadenaConexion, @"SELECT e.IdEmpresa FROM MenuOpcionesEmpresas e
                       INNER JOIN MenuOpciones m ON m.Id = e.IdMenuOpcion
-                      WHERE m.Codigo = @Codigo", cn))
-                {
-                    cmd.Parameters.AddWithValue("@Codigo", codigo ?? "");
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read()) ids.Add(Convert.ToInt32(r["IdEmpresa"]));
-                }
+                      WHERE m.Codigo = @Codigo",
+                    new { Codigo = codigo ?? "" },
+                    r => ids.Add(Convert.ToInt32(r["IdEmpresa"])));
             }
             catch (SqlException ex) when (EsTablaInexistente(ex)) { }
             return ids;
@@ -371,10 +317,7 @@ namespace bufinscustomers.Services
         {
             var opciones = new List<MenuOpciones>();
 
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                using (SqlCommand cmd = new SqlCommand(
-                    @"SELECT m.Id, m.Codigo, m.Nombre, m.NombreEN, m.Descripcion, m.Icono, m.Orden,
+            Bd.Leer(CadenaConexion, @"SELECT m.Id, m.Codigo, m.Nombre, m.NombreEN, m.Descripcion, m.Icono, m.Orden,
                              m.Controller, m.[Action], m.IdGrupo, m.IdCategoria, m.SoloSuperAdmin, m.SoloAdminEmpresa, m.EsDestacado,
                              g.Nombre  AS NombreGrupo,
                              g.NombreEN AS NombreGrupoEN,
@@ -387,18 +330,8 @@ namespace bufinscustomers.Services
                       LEFT JOIN GruposMenu    g ON m.IdGrupo    = g.Id
                       LEFT JOIN CategoriasMenu c ON COALESCE(g.IdCategoria, m.IdCategoria) = c.Id
                       WHERE  m.Activo = 1
-                      ORDER BY c.Orden, m.Orden", cn))
-                {
-                    cn.Open();
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            opciones.Add(LeerMenuOpcion(reader));
-                        }
-                    }
-                }
-            }
+                      ORDER BY c.Orden, m.Orden",
+                reader => opciones.Add(LeerMenuOpcion(reader)));
 
             return opciones;
         }
@@ -550,16 +483,7 @@ namespace bufinscustomers.Services
         /// </summary>
         public bool EliminarMenuOpcion(int id)
         {
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                using (SqlCommand cmd = new SqlCommand(
-                    "UPDATE MenuOpciones SET Activo = 0 WHERE Id = @Id", cn))
-                {
-                    cmd.Parameters.AddWithValue("@Id", id);
-                    cn.Open();
-                    return cmd.ExecuteNonQuery() > 0;
-                }
-            }
+            return Bd.Ejecutar(CadenaConexion, "UPDATE MenuOpciones SET Activo = 0 WHERE Id = @Id", new { Id = id }) > 0;
         }
 
         /// <summary>

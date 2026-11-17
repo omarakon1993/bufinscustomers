@@ -50,6 +50,7 @@ dotnet publish bufinscustomers.csproj -c Release -r win-x64 --self-contained tru
 
 - Capas: `Controllers/` (heredan `BaseController`), `Services/` (heredan `BaseService`), `Models/`, `Views/` por área funcional, `Helpers/`, `Filters/`, `Permisos/`. **Controladores nuevos heredan `BaseController`; servicios nuevos `BaseService`.**
 - `BaseController`: `CadenaConexion`, `R("Clave")`, `SetErrorMessage/SetSuccessMessage/SetInfoMessage` (TempData `ErrorMessage/SuccessMessage/InfoMessage`), `MensajeError(ex)`, `ValidarAccesoIA(...)`. `ConvertirSha256` solo para migración de login.
+- **Acceso a datos nuevo: usar `Helpers/Bd.cs`** (`Bd.Ejecutar/Escalar<T>/Lista/Leer/LeerPrimera/Primero`, parámetros como objeto anónimo, `esSp: true` para SP) en vez de abrir `SqlConnection` a mano; el ADO.NET manual queda solo para transacciones, OUTPUT, varios result sets y bulk copy. Detalle: `.claude/notas/refactor-plan.md`.
 - **BD**: ADO.NET + SP en SQL Server (`bufinscustomers`): `using SqlConnection` → `SqlCommand("sp_X", cn)` + `CommandType.StoredProcedure` + `AddWithValue`. Nombres `sp_` + verbo (`Obtener`, `Registrar`, `Editar`, `Eliminar`, `Guardar`, `Agregar`, `Actualizar`, `Validar`) + entidad; muchos usan `OUTPUT` para mensajes.
 - **Columnas nuevas incrementales**: leer con `try { … reader["Col"] … } catch (IndexOutOfRangeException) { }`; escrituras: intentar con la columna y caer al INSERT sin ella. Los servicios toleran tablas/scripts ausentes.
 - **Scripts `Sql/*.sql` son manuales**: no asumir que corrieron en cada entorno.

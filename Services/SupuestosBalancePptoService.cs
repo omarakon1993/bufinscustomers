@@ -1,3 +1,4 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using ClosedXML.Excel;
 using System;
@@ -30,12 +31,7 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("SELECT CASE WHEN COL_LENGTH('dbo.Rel_BalancePpto','IdEmpresa') IS NULL THEN 0 ELSE 1 END", cn))
-                {
-                    cn.Open();
-                    return Convert.ToInt32(cmd.ExecuteScalar()) == 1;
-                }
+                return Bd.Escalar<int>(CadenaConexion, "SELECT CASE WHEN COL_LENGTH('dbo.Rel_BalancePpto','IdEmpresa') IS NULL THEN 0 ELSE 1 END") == 1;
             }
             catch { return false; }
         }

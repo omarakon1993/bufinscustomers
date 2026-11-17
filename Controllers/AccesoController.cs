@@ -798,28 +798,14 @@ namespace bufinscustomers.Controllers
             else if (nuevosIntentos >= 5)
                 nuevoBloqueadoHasta = DateTime.Now.AddMinutes(15);
 
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    "UPDATE Usuarios SET IntentosFallidos = @Intentos, BloqueadoHasta = @BloqueadoHasta WHERE Id = @Id", cn);
-                cmd.Parameters.AddWithValue("@Intentos", nuevosIntentos);
-                cmd.Parameters.AddWithValue("@BloqueadoHasta", (object)nuevoBloqueadoHasta ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@Id", usuarioId);
-                cn.Open();
-                cmd.ExecuteNonQuery();
-            }
+            Bd.Ejecutar(CadenaConexion, "UPDATE Usuarios SET IntentosFallidos = @Intentos, BloqueadoHasta = @BloqueadoHasta WHERE Id = @Id",
+                new { Intentos = nuevosIntentos, BloqueadoHasta = nuevoBloqueadoHasta, Id = usuarioId });
         }
 
         private void ResetearIntentosFallidos(int usuarioId)
         {
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    "UPDATE Usuarios SET IntentosFallidos = 0, BloqueadoHasta = NULL WHERE Id = @Id", cn);
-                cmd.Parameters.AddWithValue("@Id", usuarioId);
-                cn.Open();
-                cmd.ExecuteNonQuery();
-            }
+            Bd.Ejecutar(CadenaConexion, "UPDATE Usuarios SET IntentosFallidos = 0, BloqueadoHasta = NULL WHERE Id = @Id",
+                new { Id = usuarioId });
         }
 
         /// <summary>
@@ -1088,13 +1074,7 @@ namespace bufinscustomers.Controllers
             var ids = new System.Collections.Generic.List<int>();
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                {
-                    var cmd = new SqlCommand("SELECT Id FROM Usuarios WHERE Admin = 2", cn);
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read()) ids.Add(Convert.ToInt32(r["Id"]));
-                }
+                Bd.Leer(CadenaConexion, "SELECT Id FROM Usuarios WHERE Admin = 2", r => ids.Add(Convert.ToInt32(r["Id"])));
             }
             catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[ObtenerIdsSuperAdmin] {0}", ex.Message); }
             return ids;
@@ -1194,22 +1174,14 @@ namespace bufinscustomers.Controllers
                 string nombreUsuario = null;
                 string correoReal = null;
 
-                using (var cn = new SqlConnection(CadenaConexion))
-                {
-                    var cmd = new SqlCommand(
-                        "SELECT TOP 1 Id, Nombre, Correo FROM Usuarios WHERE LOWER(Correo) = @Correo", cn);
-                    cmd.Parameters.AddWithValue("@Correo", correo);
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
+                Bd.LeerPrimera(CadenaConexion, "SELECT TOP 1 Id, Nombre, Correo FROM Usuarios WHERE LOWER(Correo) = @Correo",
+                    new { Correo = correo },
+                    r =>
                     {
-                        if (r.Read())
-                        {
-                            usuarioId    = Convert.ToInt32(r["Id"]);
-                            nombreUsuario = r["Nombre"].ToString();
-                            correoReal   = r["Correo"].ToString();
-                        }
-                    }
-                }
+                        usuarioId    = Convert.ToInt32(r["Id"]);
+                        nombreUsuario = r["Nombre"].ToString();
+                        correoReal   = r["Correo"].ToString();
+                    });
 
                 if (usuarioId > 0)
                 {
@@ -1222,16 +1194,8 @@ namespace bufinscustomers.Controllers
                     DateTime expiry = DateTime.Now.AddHours(1);
 
                     // Guardar token y expiración en BD
-                    using (var cn = new SqlConnection(CadenaConexion))
-                    {
-                        var cmd = new SqlCommand(
-                            "UPDATE Usuarios SET ResetToken = @Token, ResetTokenExpiry = @Expiry WHERE Id = @Id", cn);
-                        cmd.Parameters.AddWithValue("@Token",  token);
-                        cmd.Parameters.AddWithValue("@Expiry", expiry);
-                        cmd.Parameters.AddWithValue("@Id",     usuarioId);
-                        cn.Open();
-                        cmd.ExecuteNonQuery();
-                    }
+                    Bd.Ejecutar(CadenaConexion, "UPDATE Usuarios SET ResetToken = @Token, ResetTokenExpiry = @Expiry WHERE Id = @Id",
+                        new { Token = token, Expiry = expiry, Id = usuarioId });
 
                     // Construir enlace y enviar correo
                     string enlace   = Url.Action("RestablecerClave", "Acceso",
@@ -1261,15 +1225,9 @@ namespace bufinscustomers.Controllers
 
             // Verificar que el token existe y no expiró
             bool valido = false;
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand(
-                    @"SELECT COUNT(1) FROM Usuarios
-                      WHERE ResetToken = @Token AND ResetTokenExpiry > GETDATE()", cn);
-                cmd.Parameters.AddWithValue("@Token", token);
-                cn.Open();
-                valido = Convert.ToInt32(cmd.ExecuteScalar()) > 0;
-            }
+            valido = Bd.Escalar<int>(CadenaConexion, @"SELECT COUNT(1) FROM Usuarios
+                      WHERE ResetToken = @Token AND ResetTokenExpiry > GETDATE()",
+                new { Token = token }) > 0;
 
             if (!valido)
             {
@@ -1332,18 +1290,11 @@ namespace bufinscustomers.Controllers
 
             // Actualizar contraseña y limpiar token
             string hash = HashearContrasena(nuevaClave.Trim());
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand(
-                    @"UPDATE Usuarios
+            Bd.Ejecutar(CadenaConexion, @"UPDATE Usuarios
                       SET Clave = @Clave, ResetToken = NULL, ResetTokenExpiry = NULL,
                           IntentosFallidos = 0, BloqueadoHasta = NULL
-                      WHERE Id = @Id", cn);
-                cmd.Parameters.AddWithValue("@Clave", hash);
-                cmd.Parameters.AddWithValue("@Id",    usuarioId);
-                cn.Open();
-                cmd.ExecuteNonQuery();
-            }
+                      WHERE Id = @Id",
+                new { Clave = hash, Id = usuarioId });
 
             ViewData["Exito"] = true;
             return View("~/Views/Acceso/RestablecerClave.cshtml");

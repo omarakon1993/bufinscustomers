@@ -1,3 +1,4 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
@@ -23,15 +24,8 @@ namespace bufinscustomers.Services
         public List<PromptIA> ObtenerTodos()
         {
             var lista = new List<PromptIA>();
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    "SELECT Id, Codigo, Nombre, Descripcion, TextoPrompt, Activo FROM GestorPrompts ORDER BY Nombre ASC", cn);
-                cn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                    while (reader.Read())
-                        lista.Add(MapPrompt(reader));
-            }
+            Bd.Leer(CadenaConexion, "SELECT Id, Codigo, Nombre, Descripcion, TextoPrompt, Activo FROM GestorPrompts ORDER BY Nombre ASC",
+                reader => lista.Add(MapPrompt(reader)));
             return lista;
         }
 
@@ -51,50 +45,37 @@ namespace bufinscustomers.Services
 
         public bool Crear(PromptIA prompt)
         {
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    @"INSERT INTO GestorPrompts (Codigo, Nombre, Descripcion, TextoPrompt, Activo)
-                      VALUES (@Codigo, @Nombre, @Descripcion, @TextoPrompt, 1)", cn);
-                cmd.Parameters.AddWithValue("@Codigo",      prompt.Codigo?.Trim().ToUpper() ?? "");
-                cmd.Parameters.AddWithValue("@Nombre",      prompt.Nombre?.Trim() ?? "");
-                cmd.Parameters.AddWithValue("@Descripcion", string.IsNullOrWhiteSpace(prompt.Descripcion) ? (object)DBNull.Value : prompt.Descripcion.Trim());
-                cmd.Parameters.AddWithValue("@TextoPrompt", prompt.TextoPrompt?.Trim() ?? "");
-                cn.Open();
-                return cmd.ExecuteNonQuery() > 0;
-            }
+            return Bd.Ejecutar(CadenaConexion, @"INSERT INTO GestorPrompts (Codigo, Nombre, Descripcion, TextoPrompt, Activo)
+                      VALUES (@Codigo, @Nombre, @Descripcion, @TextoPrompt, 1)",
+                new
+                {
+                    Codigo = prompt.Codigo?.Trim().ToUpper() ?? "",
+                    Nombre = prompt.Nombre?.Trim() ?? "",
+                    Descripcion = string.IsNullOrWhiteSpace(prompt.Descripcion) ? (object)DBNull.Value : prompt.Descripcion.Trim(),
+                    TextoPrompt = prompt.TextoPrompt?.Trim() ?? ""
+                }) > 0;
         }
 
         public bool Editar(PromptIA prompt)
         {
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    @"UPDATE GestorPrompts
+            return Bd.Ejecutar(CadenaConexion, @"UPDATE GestorPrompts
                       SET Codigo = @Codigo, Nombre = @Nombre, Descripcion = @Descripcion,
                           TextoPrompt = @TextoPrompt, Activo = @Activo
-                      WHERE Id = @Id", cn);
-                cmd.Parameters.AddWithValue("@Id",          prompt.Id);
-                cmd.Parameters.AddWithValue("@Codigo",      prompt.Codigo?.Trim().ToUpper() ?? "");
-                cmd.Parameters.AddWithValue("@Nombre",      prompt.Nombre?.Trim() ?? "");
-                cmd.Parameters.AddWithValue("@Descripcion", string.IsNullOrWhiteSpace(prompt.Descripcion) ? (object)DBNull.Value : prompt.Descripcion.Trim());
-                cmd.Parameters.AddWithValue("@TextoPrompt", prompt.TextoPrompt?.Trim() ?? "");
-                cmd.Parameters.AddWithValue("@Activo",      prompt.Activo);
-                cn.Open();
-                return cmd.ExecuteNonQuery() > 0;
-            }
+                      WHERE Id = @Id",
+                new
+                {
+                    Id = prompt.Id,
+                    Codigo = prompt.Codigo?.Trim().ToUpper() ?? "",
+                    Nombre = prompt.Nombre?.Trim() ?? "",
+                    Descripcion = string.IsNullOrWhiteSpace(prompt.Descripcion) ? (object)DBNull.Value : prompt.Descripcion.Trim(),
+                    TextoPrompt = prompt.TextoPrompt?.Trim() ?? "",
+                    Activo = prompt.Activo
+                }) > 0;
         }
 
         public bool Eliminar(int id)
         {
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    "UPDATE GestorPrompts SET Activo = 0 WHERE Id = @Id", cn);
-                cmd.Parameters.AddWithValue("@Id", id);
-                cn.Open();
-                return cmd.ExecuteNonQuery() > 0;
-            }
+            return Bd.Ejecutar(CadenaConexion, "UPDATE GestorPrompts SET Activo = 0 WHERE Id = @Id", new { Id = id }) > 0;
         }
     }
 }
