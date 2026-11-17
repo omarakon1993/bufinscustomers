@@ -627,6 +627,18 @@ namespace bufinscustomers.Controllers
             return false;
         }
 
+        // Validación en vivo desde el gestor: aplica la MISMA política que al guardar (incluye claves
+        // comunes y filtradas en Have I Been Pwned) para habilitar el botón solo si el servidor la aceptará.
+        // La clave no se registra ni se guarda; solo viaja por HTTPS igual que al crear el usuario.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
+        public JsonResult ValidarClave(string clave, string usuario)
+        {
+            bool ok = EsClaveSegura(clave, usuario, out string mensaje);
+            return Json(new { success = ok, message = mensaje });
+        }
+
         /// <summary>
         /// Envía al correo del usuario sus datos de cuenta (sin la contraseña — nunca se envía
         /// en texto plano) más la leyenda de cómo recuperar/cambiar la clave. Usado tanto al

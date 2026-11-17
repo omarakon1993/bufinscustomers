@@ -718,7 +718,7 @@
                                         </label>
                                         <div class="pwd-input-wrapper">
                                             <input type="password" class="form-control" id="crearClave" name="Clave" required
-                                                   minlength="10" title="@Resources.Strings.Usr_PwdPatternTitle" />
+                                                   minlength="12" title="@Resources.Strings.Usr_PwdPatternTitle" />
                                             <button type="button" class="pwd-toggle-btn" onclick="togglePwd('crearClave', this)" tabindex="-1" title="@Resources.Strings.Usr_PwdMostrar" aria-label="@Resources.Strings.Usr_PwdMostrar">
                                                 <i class="fas fa-eye"></i>
                                             </button>
@@ -731,6 +731,7 @@
                                             <div class="pwd-check-item" data-check="special"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqSpecial</div>
                                             <div class="pwd-check-item" data-check="noRepeat"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqNoRepeat</div>
                                         </div>
+                                        <small class="form-text" id="crearClaveServerMsg"></small>
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <label for="crearConfirmarClave" class="form-label">@Resources.Strings.Usr_LabelConfirmarClave <span class="required">*</span>
@@ -824,7 +825,7 @@
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             <i class="fas fa-times mr-2"></i>@Resources.Strings.Layout_Cancel
                         </button>
-                        <button type="button" class="btn btn-primary" id="btnCrearUsuario">
+                        <button type="button" class="btn btn-primary" id="btnCrearUsuario" disabled>
                             <i class="fas fa-plus-circle mr-2"></i>@Resources.Strings.Common_BtnCrear
                         </button>
                     </div>
@@ -851,7 +852,7 @@
                             <label for="nuevaClave" class="form-label">@Resources.Strings.Usr_LabelNuevaClave</label>
                             <div class="pwd-input-wrapper">
                                 <input type="password" class="form-control" id="nuevaClave" name="nuevaClave" required
-                                       minlength="10" title="@Resources.Strings.Usr_PwdPatternTitle" />
+                                       minlength="12" title="@Resources.Strings.Usr_PwdPatternTitle" />
                                 <button type="button" class="pwd-toggle-btn" onclick="togglePwd('nuevaClave', this)" tabindex="-1" title="@Resources.Strings.Usr_PwdMostrar" aria-label="@Resources.Strings.Usr_PwdMostrar">
                                     <i class="fas fa-eye"></i>
                                 </button>
@@ -864,6 +865,7 @@
                                 <div class="pwd-check-item" data-check="special"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqSpecial</div>
                                 <div class="pwd-check-item" data-check="noRepeat"><i class="fas fa-circle"></i> @Resources.Strings.Usr_PwdReqNoRepeat</div>
                             </div>
+                            <small class="form-text" id="nuevaClaveServerMsg"></small>
                         </div>
                         <div class="mb-3 mt-3">
                             <label for="confirmarNuevaClave" class="form-label">@Resources.Strings.Usr_LabelConfNuevaClave</label>
@@ -880,7 +882,7 @@
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             <i class="fas fa-times mr-2"></i>@Resources.Strings.Layout_Cancel
                         </button>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="btnCambiarClave" disabled>
                             <i class="fas fa-save mr-2"></i>@Resources.Strings.Common_GuardarCambios
                         </button>
                     </div>
@@ -1214,7 +1216,7 @@
 
             function evaluarRequisitosClave(clave) {
                 return {
-                    len: clave.length >= 10,
+                    len: clave.length >= 12, // igual que PoliticaContrasena.LongitudMinima (servidor)
                     upper: /[A-Z]/.test(clave),
                     lower: /[a-z]/.test(clave),
                     num: /[0-9]/.test(clave),
@@ -1268,21 +1270,103 @@
                 }
             }
 
-            document.getElementById('crearClave').addEventListener('input', function () {
-                actualizarChecklistClave('crearClave', 'crearClaveChecklist');
-                actualizarCoincidenciaClave('crearClave', 'crearConfirmarClave', 'crearClaveMatchFeedback');
-            });
-            document.getElementById('crearConfirmarClave').addEventListener('input', function () {
-                actualizarCoincidenciaClave('crearClave', 'crearConfirmarClave', 'crearClaveMatchFeedback');
-            });
+            // Habilita el botón solo si la clave cumple TODOS los requisitos, no contiene el usuario
+            // (regla del servidor) y coincide con la confirmación. Así no se pierde lo digitado.
+            function claveValida(claveId, confirmarId, usuarioId) {
+                var clave = document.getElementById(claveId).value;
+                var confirmar = document.getElementById(confirmarId).value;
+                var req = evaluarRequisitosClave(clave);
+                var cumple = Object.keys(req).every(function (k) { return req[k]; });
+                var usuario = (document.getElementById(usuarioId).value || '').trim().toLowerCase();
+                var sinUsuario = !usuario || clave.toLowerCase().indexOf(usuario) < 0;
+                return cumple && sinUsuario && clave === confirmar;
+            }
 
-            document.getElementById('nuevaClave').addEventListener('input', function () {
-                actualizarChecklistClave('nuevaClave', 'nuevaClaveChecklist');
-                actualizarCoincidenciaClave('nuevaClave', 'confirmarNuevaClave', 'nuevaClaveMatchFeedback');
-            });
-            document.getElementById('confirmarNuevaClave').addEventListener('input', function () {
-                actualizarCoincidenciaClave('nuevaClave', 'confirmarNuevaClave', 'nuevaClaveMatchFeedback');
-            });
+            // Segunda capa: el servidor aplica claves comunes y filtradas (HIBP), que no se pueden
+            // evaluar en el navegador. Se consulta con pausa al teclear y se recuerda el último resultado.
+            var _srv = {}; // por botón: { clave, usuario, estado: 'ok'|'mal'|'consultando', msg, timer }
+
+            function consultarClaveServidor(botonId, claveId, usuarioId, msgId, alTerminar) {
+                var st = _srv[botonId] || (_srv[botonId] = {});
+                var clave = document.getElementById(claveId).value;
+                var usuario = document.getElementById(usuarioId).value || '';
+                if (st.clave === clave && st.usuario === usuario && st.estado) return;
+                st.clave = clave; st.usuario = usuario; st.estado = 'consultando'; st.msg = '';
+                clearTimeout(st.timer);
+                st.timer = setTimeout(function () {
+                    $.ajax({
+                        url: '/Usuario/ValidarClave', type: 'POST', dataType: 'json',
+                        data: {
+                            clave: clave, usuario: usuario,
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val()
+                        }
+                    }).done(function (r) {
+                        if (st.clave !== clave || st.usuario !== usuario) return; // ya cambió
+                        st.estado = r && r.success ? 'ok' : 'mal';
+                        st.msg = (r && r.message) || '';
+                    }).fail(function () {
+                        if (st.clave !== clave || st.usuario !== usuario) return;
+                        st.estado = 'ok'; st.msg = ''; // si falla la red no se bloquea; el servidor valida al guardar
+                    }).always(function () { alTerminar(); });
+                }, 400);
+            }
+
+            function actualizarBotonClave(botonId, claveId, confirmarId, usuarioId, msgId) {
+                var boton = document.getElementById(botonId);
+                if (!boton) return;
+                var msg = document.getElementById(msgId);
+                var okLocal = claveValida(claveId, confirmarId, usuarioId);
+                var st = _srv[botonId];
+                var okServidor = false;
+                if (!okLocal) {
+                    if (st) { clearTimeout(st.timer); st.clave = undefined; st.estado = undefined; }
+                    if (msg) { msg.textContent = ''; msg.className = 'form-text'; }
+                    boton.title = _pwdMsg.incompleta;
+                } else {
+                    st = _srv[botonId];
+                    var vigente = st && st.clave === document.getElementById(claveId).value
+                        && st.usuario === (document.getElementById(usuarioId).value || '');
+                    if (vigente && st.estado === 'ok') {
+                        okServidor = true;
+                        if (msg) { msg.textContent = ''; msg.className = 'form-text'; }
+                        boton.title = '';
+                    } else if (vigente && st.estado === 'mal') {
+                        if (msg) { msg.textContent = '✗ ' + st.msg; msg.className = 'form-text text-danger'; }
+                        boton.title = st.msg;
+                    } else {
+                        if (msg) { msg.textContent = '…'; msg.className = 'form-text text-muted'; }
+                        boton.title = _pwdMsg.incompleta;
+                        consultarClaveServidor(botonId, claveId, usuarioId, msgId, function () {
+                            actualizarBotonClave(botonId, claveId, confirmarId, usuarioId, msgId);
+                        });
+                    }
+                }
+                boton.disabled = !(okLocal && okServidor);
+            }
+
+            function enlazarClave(claveId, confirmarId, checklistId, feedbackId, botonId, usuarioId, usuarioEditable, msgId) {
+                var refrescar = function () {
+                    actualizarChecklistClave(claveId, checklistId);
+                    actualizarCoincidenciaClave(claveId, confirmarId, feedbackId);
+                    actualizarBotonClave(botonId, claveId, confirmarId, usuarioId, msgId);
+                };
+                document.getElementById(claveId).addEventListener('input', refrescar);
+                document.getElementById(confirmarId).addEventListener('input', refrescar);
+                if (usuarioEditable) {
+                    ['crearNombre', 'crearApellidos'].forEach(function (id) {
+                        document.getElementById(id).addEventListener('input', refrescar);
+                    });
+                }
+                refrescar();
+                return refrescar;
+            }
+
+            var refrescarClaveCrear = enlazarClave('crearClave', 'crearConfirmarClave', 'crearClaveChecklist',
+                'crearClaveMatchFeedback', 'btnCrearUsuario', 'crearUsuario', true, 'crearClaveServerMsg');
+            var refrescarClaveCambio = enlazarClave('nuevaClave', 'confirmarNuevaClave', 'nuevaClaveChecklist',
+                'nuevaClaveMatchFeedback', 'btnCambiarClave', 'editUsuario', false, 'nuevaClaveServerMsg');
+            $('#crearUsuarioModal').on('shown.bs.modal', refrescarClaveCrear);
+            $('#cambiarClaveModal').on('shown.bs.modal', refrescarClaveCambio);
 
             function setEditUser(id, nombre, apellidos, telefono, Correo, admin, idEmpresa, usuario, clave, imagenUrl) {
 
@@ -1589,6 +1673,7 @@
                 document.getElementById('crearConfirmarClave').setCustomValidity('');
                 document.getElementById('crearClaveMatchFeedback').textContent = '';
                 actualizarChecklistClave('crearClave', 'crearClaveChecklist');
+                refrescarClaveCrear();
             });
 
             $('#editUserModal').on('hidden.bs.modal', function () {
@@ -1601,6 +1686,7 @@
                 document.getElementById('confirmarNuevaClave').setCustomValidity('');
                 document.getElementById('nuevaClaveMatchFeedback').textContent = '';
                 actualizarChecklistClave('nuevaClave', 'nuevaClaveChecklist');
+                refrescarClaveCambio();
             });
 
         </script>
