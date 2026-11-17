@@ -29,6 +29,7 @@
         </div>
     </div>
 
+    @await Html.PartialAsync("_VistasInforme", new bufinscustomers.Models.VistasInformeVM { Familia = "pyg", Actual = "analisis", EmpresaSel = "#pygEmpresa", EscenarioSel = "#pygEscenario" })
     @Html.AntiForgeryToken()
 
     <div class="filter-card">

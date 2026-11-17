@@ -4171,4 +4171,87 @@ Indicators management follows closely: </value></data>
   <data name="Integ_Pn_S_ModelosConProblemas" xml:space="preserve"><value>The last model run finished with errors or was interrupted.</value></data>
   <data name="Integ_Pn_S_WebhookFallo" xml:space="preserve"><value>The last webhook notification could not be delivered.</value></data>
   <data name="Integ_Pn_S_TodoBien" xml:space="preserve"><value>All good.</value></data>
+  <!-- Informes ejecutivos: PYG en una hoja, Caja disponible, Informe para comité -->
+  <data name="EJ_MesCorte" xml:space="preserve"><value>Cutoff month</value></data>
+  <data name="EJ_SinMesesDatos" xml:space="preserve"><value>There are no months with data for this company and scenario.</value></data>
+  <data name="EJ_SinDatosTitulo" xml:space="preserve"><value>No data for the chosen cutoff</value></data>
+  <data name="EJ_SinDatosDesc" xml:space="preserve"><value>The model has no figures for this month. Run the models or pick another month.</value></data>
+  <data name="EJ_CorteFmt" xml:space="preserve"><value>Cutoff: {0}</value></data>
+  <data name="EJ_VsPptoCorto" xml:space="preserve"><value>vs budget</value></data>
+  <data name="EJ_Valor" xml:space="preserve"><value>Value</value></data>
+  <data name="EJ_Tipo" xml:space="preserve"><value>Type</value></data>
+  <data name="PH_PageTitle" xml:space="preserve"><value>One-page P&amp;L</value></data>
+  <data name="PH_Subtitulo" xml:space="preserve"><value>Year income statement</value></data>
+  <data name="PH_EstadoInicialDesc" xml:space="preserve"><value>Pick a company, scenario and cutoff month to see the year's income statement, month by month, on one page, with vertical share (AV %) and year-to-date.</value></data>
+  <data name="PH_ExcelDesc" xml:space="preserve"><value>One sheet with the 12 months, year-to-date, AV %, budget and prior year</value></data>
+  <data name="PH_ExcelHoja" xml:space="preserve"><value>P&amp;L</value></data>
+  <data name="PH_ColConcepto" xml:space="preserve"><value>Item</value></data>
+  <data name="PH_ColAcum" xml:space="preserve"><value>YTD</value></data>
+  <data name="PH_ColAv" xml:space="preserve"><value>AV %</value></data>
+  <data name="PH_ColPpto" xml:space="preserve"><value>Budget YTD</value></data>
+  <data name="PH_ColVarPpto" xml:space="preserve"><value>Var. budget</value></data>
+  <data name="PH_ColAnioAnt" xml:space="preserve"><value>Prior yr</value></data>
+  <data name="PH_ColVarAnio" xml:space="preserve"><value>Var. yr</value></data>
+  <data name="PH_Nota" xml:space="preserve"><value>Figures in {0}. AV % = share of each line over year-to-date revenue. Months after the cutoff have no actual figures.</value></data>
+  <data name="CD_PageTitle" xml:space="preserve"><value>How much money do I have left?</value></data>
+  <data name="CD_Subtitulo" xml:space="preserve"><value>Available cash</value></data>
+  <data name="CD_EstadoInicialDesc" xml:space="preserve"><value>Pick a company, scenario and cutoff month to see how much cash you have today, where the money came from and went, and how the year will end.</value></data>
+  <data name="CD_ExcelDesc" xml:space="preserve"><value>Available cash, inflows and outflows, and month-by-month cash</value></data>
+  <data name="CD_ExcelHoja" xml:space="preserve"><value>Available cash</value></data>
+  <data name="CD_Inicio" xml:space="preserve"><value>Cash at start of year</value></data>
+  <data name="CD_InicioSub" xml:space="preserve"><value>Prior year-end (balance sheet)</value></data>
+  <data name="CD_HoyFmt" xml:space="preserve"><value>Cash available at {0}</value></data>
+  <data name="CD_HoySub" xml:space="preserve"><value>What you hold in cash and banks at month-end</value></data>
+  <data name="CD_Hoy" xml:space="preserve"><value>Available cash</value></data>
+  <data name="CD_Proy" xml:space="preserve"><value>Projected cash at December</value></data>
+  <data name="CD_ProySub" xml:space="preserve"><value>Current cash plus the projected flow for the rest of the year</value></data>
+  <data name="CD_SinProyeccion" xml:space="preserve"><value>The model has no projected months after the cutoff</value></data>
+  <data name="CD_Entradas" xml:space="preserve"><value>Money in (collections and other sources)</value></data>
+  <data name="CD_Salidas" xml:space="preserve"><value>Money out (payments and other uses)</value></data>
+  <data name="CD_EstadoOk" xml:space="preserve"><value>Projected cash stays positive every month.</value></data>
+  <data name="CD_EstadoDeficitFmt" xml:space="preserve"><value>Warning: projected cash turns negative in {0} month(s). The lowest point is {1} in {2}.</value></data>
+  <data name="CD_MinimoFmt" xml:space="preserve"><value>Lowest point: {0} in {1}.</value></data>
+  <data name="CD_Minimo" xml:space="preserve"><value>Lowest projected point</value></data>
+  <data name="CD_SinBalance" xml:space="preserve"><value>There is no balance sheet for the prior year-end: available cash cannot be computed, only the flow.</value></data>
+  <data name="CD_NoCuadra" xml:space="preserve"><value>Cash computed from the flow does not match the balance sheet; the balance sheet figure is shown.</value></data>
+  <data name="CD_TramosTitulo" xml:space="preserve"><value>Where it came from and where it went</value></data>
+  <data name="CD_MesesTitulo" xml:space="preserve"><value>Cash month by month</value></data>
+  <data name="CD_ColMes" xml:space="preserve"><value>Month</value></data>
+  <data name="CD_ColFlujo" xml:space="preserve"><value>Month flow</value></data>
+  <data name="CD_ColCaja" xml:space="preserve"><value>Ending cash</value></data>
+  <data name="CD_ColTipo" xml:space="preserve"><value>Type</value></data>
+  <data name="CD_Real" xml:space="preserve"><value>Actual</value></data>
+  <data name="CD_Proyectado" xml:space="preserve"><value>Projected</value></data>
+  <data name="CD_Entrada" xml:space="preserve"><value>Inflow</value></data>
+  <data name="CD_Salida" xml:space="preserve"><value>Outflow</value></data>
+  <data name="CO_PageTitle" xml:space="preserve"><value>Committee report</value></data>
+  <data name="CO_Subtitulo" xml:space="preserve"><value>Committee close</value></data>
+  <data name="CO_EstadoInicialDesc" xml:space="preserve"><value>Pick a company, scenario and cutoff month to build the committee document: results, one-page P&amp;L, cash, indicators, business lines, comments and signatures.</value></data>
+  <data name="CO_ExcelDesc" xml:space="preserve"><value>Summary, P&amp;L, cash and close comments</value></data>
+  <data name="CO_ExcelHojaResumen" xml:space="preserve"><value>Summary</value></data>
+  <data name="CO_ExcelHojaComentarios" xml:space="preserve"><value>Comments</value></data>
+  <data name="CO_SecResumen" xml:space="preserve"><value>Close summary</value></data>
+  <data name="CO_SecPyg" xml:space="preserve"><value>One-page income statement</value></data>
+  <data name="CO_SecCaja" xml:space="preserve"><value>How much money is left?</value></data>
+  <data name="CO_Firmas" xml:space="preserve"><value>Signatures and approval</value></data>
+  <data name="CO_Elaboro" xml:space="preserve"><value>Prepared by</value></data>
+  <data name="CO_Reviso" xml:space="preserve"><value>Reviewed by</value></data>
+  <data name="CO_Aprobo" xml:space="preserve"><value>Approved by</value></data>
+  <data name="CO_Nombre" xml:space="preserve"><value>Name</value></data>
+  <data name="CO_Cargo" xml:space="preserve"><value>Position</value></data>
+  <data name="CO_Fecha" xml:space="preserve"><value>Date</value></data>
+  <data name="CO_Decisiones" xml:space="preserve"><value>Committee decisions and commitments</value></data>
+  <data name="CO_DecisionesAyuda" xml:space="preserve"><value>Space to note the decisions, owners and dates agreed (filled in by hand on the printed document).</value></data>
+  <data name="Com_Inf_PygHoja" xml:space="preserve"><value>One-page P&amp;L</value></data>
+  <data name="Com_Inf_CajaDisponible" xml:space="preserve"><value>How much money do I have left?</value></data>
+  <data name="Com_Inf_Comite" xml:space="preserve"><value>Committee report</value></data>
+  <!-- Selector de vistas de los informes (PYG, Flujo de caja, Gerencia mensual) -->
+  <data name="Vistas_Etiqueta" xml:space="preserve"><value>View</value></data>
+  <data name="Vistas_PygAnalisis" xml:space="preserve"><value>Full analysis</value></data>
+  <data name="Vistas_PygHoja" xml:space="preserve"><value>One-page P&amp;L</value></data>
+  <data name="Vistas_CajaFlujo" xml:space="preserve"><value>Cash flow</value></data>
+  <data name="Vistas_CajaSimple" xml:space="preserve"><value>How much money do I have left?</value></data>
+  <data name="Vistas_GerResumen" xml:space="preserve"><value>Monthly summary</value></data>
+  <data name="Vistas_GerComite" xml:space="preserve"><value>Committee version</value></data>
+  <data name="CO_SecBalanceCaja" xml:space="preserve"><value>Balance sheet and cash of the month</value></data>
 </root>

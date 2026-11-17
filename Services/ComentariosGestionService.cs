@@ -29,7 +29,7 @@ namespace bufinscustomers.Services
     {
         /// <summary>Informes que pueden llevar comentarios (clave corta que viaja en la petición; nunca texto libre).</summary>
         public static readonly string[] InformesValidos =
-            { "LineasNegocio", "PYG", "Balance", "Tesoreria", "FlujoCaja", "FlujoEfectivo", "Indicadores", "GerenciaMensual" };
+            { "LineasNegocio", "PYG", "Balance", "Tesoreria", "FlujoCaja", "FlujoEfectivo", "Indicadores", "GerenciaMensual", "PygHoja", "CajaDisponible", "Comite" };
 
         public const int MaxTexto = 1000;
         public const int MaxClave = 150;

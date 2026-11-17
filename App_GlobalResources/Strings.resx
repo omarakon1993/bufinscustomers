@@ -4173,4 +4173,87 @@ Indicadores que la gerencia sigue de cerca: </value></data>
   <data name="Integ_Pn_S_ModelosConProblemas" xml:space="preserve"><value>La última ejecución de modelos terminó con errores o se interrumpió.</value></data>
   <data name="Integ_Pn_S_WebhookFallo" xml:space="preserve"><value>El último aviso al webhook no se pudo entregar.</value></data>
   <data name="Integ_Pn_S_TodoBien" xml:space="preserve"><value>Todo en orden.</value></data>
+  <!-- Informes ejecutivos: PYG en una hoja, Caja disponible, Informe para comité -->
+  <data name="EJ_MesCorte" xml:space="preserve"><value>Mes de corte</value></data>
+  <data name="EJ_SinMesesDatos" xml:space="preserve"><value>No hay meses con datos para esta empresa y escenario.</value></data>
+  <data name="EJ_SinDatosTitulo" xml:space="preserve"><value>Sin datos para el corte elegido</value></data>
+  <data name="EJ_SinDatosDesc" xml:space="preserve"><value>El modelo no tiene cifras para este mes. Ejecuta los modelos o elige otro mes.</value></data>
+  <data name="EJ_CorteFmt" xml:space="preserve"><value>Corte: {0}</value></data>
+  <data name="EJ_VsPptoCorto" xml:space="preserve"><value>vs ppto</value></data>
+  <data name="EJ_Valor" xml:space="preserve"><value>Valor</value></data>
+  <data name="EJ_Tipo" xml:space="preserve"><value>Tipo</value></data>
+  <data name="PH_PageTitle" xml:space="preserve"><value>PYG en una hoja</value></data>
+  <data name="PH_Subtitulo" xml:space="preserve"><value>Estado de resultados del año</value></data>
+  <data name="PH_EstadoInicialDesc" xml:space="preserve"><value>Elige empresa, escenario y mes de corte para ver el estado de resultados del año, mes a mes, en una sola hoja, con participación (AV %) y acumulado.</value></data>
+  <data name="PH_ExcelDesc" xml:space="preserve"><value>Una hoja con los 12 meses, acumulado, AV %, presupuesto y año anterior</value></data>
+  <data name="PH_ExcelHoja" xml:space="preserve"><value>PYG</value></data>
+  <data name="PH_ColConcepto" xml:space="preserve"><value>Concepto</value></data>
+  <data name="PH_ColAcum" xml:space="preserve"><value>Acumulado</value></data>
+  <data name="PH_ColAv" xml:space="preserve"><value>AV %</value></data>
+  <data name="PH_ColPpto" xml:space="preserve"><value>Ppto acum.</value></data>
+  <data name="PH_ColVarPpto" xml:space="preserve"><value>Var. ppto</value></data>
+  <data name="PH_ColAnioAnt" xml:space="preserve"><value>Año ant.</value></data>
+  <data name="PH_ColVarAnio" xml:space="preserve"><value>Var. año</value></data>
+  <data name="PH_Nota" xml:space="preserve"><value>Cifras en {0}. AV % = participación de cada línea sobre los ingresos acumulados. Los meses posteriores al corte no tienen cifras reales.</value></data>
+  <data name="CD_PageTitle" xml:space="preserve"><value>¿Cuánta plata me queda?</value></data>
+  <data name="CD_Subtitulo" xml:space="preserve"><value>Caja disponible</value></data>
+  <data name="CD_EstadoInicialDesc" xml:space="preserve"><value>Elige empresa, escenario y mes de corte para ver cuánta caja tienes hoy, de dónde vino y a dónde se fue la plata, y cómo terminará el año.</value></data>
+  <data name="CD_ExcelDesc" xml:space="preserve"><value>Caja disponible, entradas y salidas, y caja mes a mes</value></data>
+  <data name="CD_ExcelHoja" xml:space="preserve"><value>Caja disponible</value></data>
+  <data name="CD_Inicio" xml:space="preserve"><value>Caja al iniciar el año</value></data>
+  <data name="CD_InicioSub" xml:space="preserve"><value>Cierre del año anterior (balance)</value></data>
+  <data name="CD_HoyFmt" xml:space="preserve"><value>Caja disponible a {0}</value></data>
+  <data name="CD_HoySub" xml:space="preserve"><value>Lo que tienes en caja y bancos al cierre del mes</value></data>
+  <data name="CD_Hoy" xml:space="preserve"><value>Caja disponible</value></data>
+  <data name="CD_Proy" xml:space="preserve"><value>Caja proyectada a diciembre</value></data>
+  <data name="CD_ProySub" xml:space="preserve"><value>Caja actual más el flujo proyectado del resto del año</value></data>
+  <data name="CD_SinProyeccion" xml:space="preserve"><value>El modelo no tiene meses proyectados después del corte</value></data>
+  <data name="CD_Entradas" xml:space="preserve"><value>Lo que entró (cobros y otras fuentes)</value></data>
+  <data name="CD_Salidas" xml:space="preserve"><value>Lo que salió (pagos y otros usos)</value></data>
+  <data name="CD_EstadoOk" xml:space="preserve"><value>La caja proyectada se mantiene positiva todos los meses.</value></data>
+  <data name="CD_EstadoDeficitFmt" xml:space="preserve"><value>Ojo: la caja proyectada queda negativa en {0} mes(es). El punto más bajo es {1} en {2}.</value></data>
+  <data name="CD_MinimoFmt" xml:space="preserve"><value>Punto más bajo: {0} en {1}.</value></data>
+  <data name="CD_Minimo" xml:space="preserve"><value>Punto más bajo proyectado</value></data>
+  <data name="CD_SinBalance" xml:space="preserve"><value>No hay balance del cierre del año anterior: no se puede calcular la caja disponible, solo el flujo.</value></data>
+  <data name="CD_NoCuadra" xml:space="preserve"><value>La caja calculada con el flujo no coincide con la del balance; se muestra la del balance.</value></data>
+  <data name="CD_TramosTitulo" xml:space="preserve"><value>De dónde vino y a dónde se fue</value></data>
+  <data name="CD_MesesTitulo" xml:space="preserve"><value>Caja mes a mes</value></data>
+  <data name="CD_ColMes" xml:space="preserve"><value>Mes</value></data>
+  <data name="CD_ColFlujo" xml:space="preserve"><value>Flujo del mes</value></data>
+  <data name="CD_ColCaja" xml:space="preserve"><value>Caja al final</value></data>
+  <data name="CD_ColTipo" xml:space="preserve"><value>Tipo</value></data>
+  <data name="CD_Real" xml:space="preserve"><value>Real</value></data>
+  <data name="CD_Proyectado" xml:space="preserve"><value>Proyectado</value></data>
+  <data name="CD_Entrada" xml:space="preserve"><value>Entrada</value></data>
+  <data name="CD_Salida" xml:space="preserve"><value>Salida</value></data>
+  <data name="CO_PageTitle" xml:space="preserve"><value>Informe para comité</value></data>
+  <data name="CO_Subtitulo" xml:space="preserve"><value>Cierre para comité</value></data>
+  <data name="CO_EstadoInicialDesc" xml:space="preserve"><value>Elige empresa, escenario y mes de corte para armar el documento del comité: resultados, PYG en una hoja, caja, indicadores, líneas de negocio, comentarios y firmas.</value></data>
+  <data name="CO_ExcelDesc" xml:space="preserve"><value>Resumen, PYG, caja y comentarios del cierre</value></data>
+  <data name="CO_ExcelHojaResumen" xml:space="preserve"><value>Resumen</value></data>
+  <data name="CO_ExcelHojaComentarios" xml:space="preserve"><value>Comentarios</value></data>
+  <data name="CO_SecResumen" xml:space="preserve"><value>Resumen del cierre</value></data>
+  <data name="CO_SecPyg" xml:space="preserve"><value>Estado de resultados en una hoja</value></data>
+  <data name="CO_SecCaja" xml:space="preserve"><value>¿Cuánta plata queda?</value></data>
+  <data name="CO_Firmas" xml:space="preserve"><value>Firmas y aprobación</value></data>
+  <data name="CO_Elaboro" xml:space="preserve"><value>Elaboró</value></data>
+  <data name="CO_Reviso" xml:space="preserve"><value>Revisó</value></data>
+  <data name="CO_Aprobo" xml:space="preserve"><value>Aprobó</value></data>
+  <data name="CO_Nombre" xml:space="preserve"><value>Nombre</value></data>
+  <data name="CO_Cargo" xml:space="preserve"><value>Cargo</value></data>
+  <data name="CO_Fecha" xml:space="preserve"><value>Fecha</value></data>
+  <data name="CO_Decisiones" xml:space="preserve"><value>Decisiones y compromisos del comité</value></data>
+  <data name="CO_DecisionesAyuda" xml:space="preserve"><value>Espacio para anotar las decisiones, responsables y fechas acordadas (se completa a mano en el documento impreso).</value></data>
+  <data name="Com_Inf_PygHoja" xml:space="preserve"><value>PYG en una hoja</value></data>
+  <data name="Com_Inf_CajaDisponible" xml:space="preserve"><value>¿Cuánta plata me queda?</value></data>
+  <data name="Com_Inf_Comite" xml:space="preserve"><value>Informe para comité</value></data>
+  <!-- Selector de vistas de los informes (PYG, Flujo de caja, Gerencia mensual) -->
+  <data name="Vistas_Etiqueta" xml:space="preserve"><value>Vista</value></data>
+  <data name="Vistas_PygAnalisis" xml:space="preserve"><value>Análisis completo</value></data>
+  <data name="Vistas_PygHoja" xml:space="preserve"><value>PYG en una hoja</value></data>
+  <data name="Vistas_CajaFlujo" xml:space="preserve"><value>Flujo de caja</value></data>
+  <data name="Vistas_CajaSimple" xml:space="preserve"><value>¿Cuánta plata me queda?</value></data>
+  <data name="Vistas_GerResumen" xml:space="preserve"><value>Resumen mensual</value></data>
+  <data name="Vistas_GerComite" xml:space="preserve"><value>Versión para comité</value></data>
+  <data name="CO_SecBalanceCaja" xml:space="preserve"><value>Balance y caja del mes</value></data>
 </root>

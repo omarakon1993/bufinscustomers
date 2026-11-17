@@ -53,6 +53,13 @@ namespace bufinscustomers.Services
         private static readonly string[] MesesAbrev =
             { "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic" };
 
+        /// <summary>¿La línea es costo/gasto/impuesto? (magnitud positiva que resta). Misma regla que usa el PYG para pintar variaciones;
+        /// la reutiliza «PYG en una hoja».</summary>
+        public static bool EsLineaGastoOCosto(string descripcion)
+        {
+            return descripcion != null && DescripcionesGastoOCosto.Contains(descripcion.Trim());
+        }
+
         /// <summary>Lee todas las filas (todos los meses) de dbo.ModeloPYG para una empresa/escenario y un
         /// rango de años (ambos inclusive), con el flag de subtotal ya resuelto vía JOIN a dbo.Rel_PYG
         /// (Tipo &lt;&gt; 'Cuentas').</summary>

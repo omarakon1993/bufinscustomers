@@ -24,7 +24,7 @@ code{background:var(--chip);padding:1px 6px;border-radius:6px;font-size:12.5px}u
 details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 14px;margin:8px 0}summary{cursor:pointer;font-weight:700}
 </style></head><body>
 <header><div class="w"><h1>Monthly management report</h1><p>The month-end close in a single document: results, balance sheet, cash, indicators, business lines and comments.</p></div></header>
-<nav><div class="w"><a href="#para">What it is for</a><a href="#pantalla">The screen</a><a href="#datos">Where the figures come from</a><a href="#lectura">How to read it</a><a href="#comentarios">Comments</a><a href="#ia">AI</a><a href="#exportar">Export</a><a href="#faq">FAQ</a></div></nav>
+<nav><div class="w"><a href="#para">What it is for</a><a href="#pantalla">The screen</a><a href="#datos">Where the figures come from</a><a href="#lectura">How to read it</a><a href="#comentarios">Comments</a><a href="#ia">AI</a><a href="#exportar">Export</a><a href="#comite">Committee version</a><a href="#faq">FAQ</a></div></nav>
 <main class="w">
 
 <section id="para"><h2>1. What it is for</h2>
@@ -60,7 +60,24 @@ details{background:var(--card);border:1px solid var(--line);border-radius:10px;p
 <li>Two-page landscape <b>PDF</b>: summary with AI, results, balance sheet and cash; and indicators needing attention, lines and comments.</li>
 <li><b>Copy as image</b> and <b>Send by email</b> (with the Excel and PDF attached; the sending is recorded in the audit log). The company logo and palette are respected in every output.</li></ul></section>
 
-<section id="faq"><h2>8. Frequently asked questions</h2><details><summary>The month I am looking for does not appear</summary><p>The list shows only months with revenue in the Income statement. Run the company’s models and choose the company again.</p></details><details><summary>A section says “no data”</summary><p>That part of the model (balance sheet, flow, indicators or lines) has no information for the month. The other sections are not affected.</p></details><details><summary>Why are there no charts in the PDF?</summary><p>It is a quick-read document: figures and tables. The charts are in each report.</p></details><details><summary>Can I choose several months?</summary><p>No: it is the close of one month. For a range use the individual reports.</p></details><details><summary>Do the figures match the other reports?</summary><p>Yes, they use the same calculations applied to the chosen month.</p></details></section>
+<section id="comite"><h2>8. Committee version</h2>
+<p class="lead">With the <b>View</b> selector (under the title) you switch from <b>“Monthly summary”</b> to <b>“Committee version”</b>: the same month-end close laid out as a document to present, decide on and sign. When you switch views, the chosen company and scenario are kept. It uses the same permission as the Monthly management report.</p>
+<div class="tw"><table><tr><th>Section</th><th>What it contains</th></tr>
+<tr><td>Close summary</td><td>The month’s revenue, EBITDA and net profit against the budget and the year to date.</td></tr>
+<tr><td>Balance sheet and cash of the month</td><td>The balance sheet indicators at the close and the month’s cash (opening cash, net flow, flow against budget, operating free cash flow and closing cash), as in the monthly summary.</td></tr>
+<tr><td>How much money is left?</td><td>Cash at the start of the year, cash available at the cutoff month and projected cash at December, with the bridge of money in and out and warnings if any month turns negative (the same reading as the “How much money do I have left?” view of the Cash flow).</td></tr>
+<tr><td>One-page income statement</td><td>The year’s P&L month by month with year-to-date, AV %, budget and prior year (the same table as the “One-page P&L” view).</td></tr>
+<tr><td>Indicators needing attention and business lines</td><td>The month’s traffic light with the indicators that most need attention, and the business lines with their share and margin.</td></tr>
+<tr><td>Management comments</td><td>The comments from all the reports of the close; new ones are saved as “Committee report”.</td></tr>
+<tr><td>Decisions and commitments</td><td>A blank box to write down decisions, owners and dates by hand on the printed document.</td></tr>
+<tr><td>Signatures and approval</td><td>Three spaces: Prepared by, Reviewed by and Approved by, each with name, position and date.</td></tr></table></div>
+<h3>Export</h3>
+<ul><li><b>Excel:</b> “Summary” sheet (results, balance sheet, the month’s cash, indicators needing attention, business lines, decisions and signatures), “P&L” and “Available cash” sheets, and a “Comments” sheet.</li>
+<li>Multi-page landscape <b>PDF</b>: cover with the summary, balance sheet, cash and cash status; the P&L on its own page; and at the end the indicators, the lines, the comments, the decisions box and the signatures.</li>
+<li><b>Copy as image</b> and <b>Send by email</b> (with the Excel and PDF attached; the sending is recorded in the audit log).</li></ul>
+<p class="note info">This version calculates nothing new: it reuses the figures from the monthly summary, the P&L and the Cash flow. It does not include the AI summary or the ask-the-report question.</p></section>
+
+<section id="faq"><h2>9. Frequently asked questions</h2><details><summary>The month I am looking for does not appear</summary><p>The list shows only months with revenue in the Income statement. Run the company’s models and choose the company again.</p></details><details><summary>A section says “no data”</summary><p>That part of the model (balance sheet, flow, indicators or lines) has no information for the month. The other sections are not affected.</p></details><details><summary>Why are there no charts in the PDF?</summary><p>It is a quick-read document: figures and tables. The charts are in each report.</p></details><details><summary>Can I choose several months?</summary><p>No: it is the close of one month. For a range use the individual reports.</p></details><details><summary>Do the figures match the other reports?</summary><p>Yes, they use the same calculations applied to the chosen month.</p></details></section>
 
 </main>
 </body></html>

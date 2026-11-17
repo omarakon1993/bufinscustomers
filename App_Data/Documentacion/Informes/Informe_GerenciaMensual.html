@@ -24,7 +24,7 @@ code{background:var(--chip);padding:1px 6px;border-radius:6px;font-size:12.5px}u
 details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 14px;margin:8px 0}summary{cursor:pointer;font-weight:700}
 </style></head><body>
 <header><div class="w"><h1>Informe mensual de gerencia</h1><p>El cierre del mes en un solo documento: resultados, balance, caja, indicadores, líneas de negocio y comentarios.</p></div></header>
-<nav><div class="w"><a href="#para">Para qué sirve</a><a href="#pantalla">La pantalla</a><a href="#datos">De dónde salen las cifras</a><a href="#lectura">Cómo se lee</a><a href="#comentarios">Comentarios</a><a href="#ia">IA</a><a href="#exportar">Exportar</a><a href="#faq">Preguntas frecuentes</a></div></nav>
+<nav><div class="w"><a href="#para">Para qué sirve</a><a href="#pantalla">La pantalla</a><a href="#datos">De dónde salen las cifras</a><a href="#lectura">Cómo se lee</a><a href="#comentarios">Comentarios</a><a href="#ia">IA</a><a href="#exportar">Exportar</a><a href="#comite">Versión para comité</a><a href="#faq">Preguntas frecuentes</a></div></nav>
 <main class="w">
 
 <section id="para"><h2>1. Para qué sirve</h2>
@@ -60,7 +60,24 @@ details{background:var(--card);border:1px solid var(--line);border-radius:10px;p
 <li><b>PDF</b> horizontal de dos páginas: resumen con IA, resultados, balance y caja; e indicadores en atención, líneas y comentarios.</li>
 <li><b>Copiar como imagen</b> y <b>Enviar por correo</b> (con el Excel y el PDF adjuntos; el envío queda en la auditoría). El logo y la paleta de la empresa se respetan en todas las salidas.</li></ul></section>
 
-<section id="faq"><h2>8. Preguntas frecuentes</h2><details><summary>El mes que busco no aparece</summary><p>La lista trae solo meses con ingresos en el Estado de resultados. Ejecute los modelos de la empresa y vuelva a elegir la empresa.</p></details><details><summary>Una sección dice «sin datos»</summary><p>Esa parte del modelo (balance, flujo, indicadores o líneas) no tiene información para el mes. Las demás secciones no se afectan.</p></details><details><summary>¿Por qué no hay gráficos en el PDF?</summary><p>Es un documento de lectura rápida: cifras y tablas. Los gráficos están en cada informe.</p></details><details><summary>¿Puedo elegir varios meses?</summary><p>No: es el cierre de un mes. Para un rango use los informes individuales.</p></details><details><summary>¿Las cifras coinciden con los otros informes?</summary><p>Sí, usan los mismos cálculos aplicados al mes elegido.</p></details></section>
+<section id="comite"><h2>8. Versión para comité</h2>
+<p class="lead">Con el selector <b>Vista</b> (bajo el título) se pasa de <b>«Resumen mensual»</b> a <b>«Versión para comité»</b>: el mismo cierre del mes armado como documento para presentar, decidir y firmar. Al cambiar de vista se conservan la empresa y el escenario elegidos. Usa el mismo permiso del Informe mensual de gerencia.</p>
+<div class="tw"><table><tr><th>Sección</th><th>Qué contiene</th></tr>
+<tr><td>Resumen del cierre</td><td>Ingresos, EBITDA y utilidad neta del mes contra el presupuesto y el acumulado del año.</td></tr>
+<tr><td>Balance y caja del mes</td><td>Los indicadores del balance al cierre y la caja del mes (caja inicial, flujo neto, flujo contra presupuesto, flujo de caja libre operativo y caja final), tal como en el resumen mensual.</td></tr>
+<tr><td>¿Cuánta plata queda?</td><td>Caja al iniciar el año, caja disponible al mes de corte y caja proyectada a diciembre, con el puente de entradas y salidas y los avisos si algún mes queda en negativo (la misma lectura de la vista «¿Cuánta plata me queda?» del Flujo de caja).</td></tr>
+<tr><td>Estado de resultados en una hoja</td><td>El PYG del año mes a mes con acumulado, AV %, presupuesto y año anterior (la misma tabla de la vista «PYG en una hoja»).</td></tr>
+<tr><td>Indicadores en atención y líneas de negocio</td><td>El semáforo del mes con los indicadores que más requieren atención, y las líneas de negocio con su participación y margen.</td></tr>
+<tr><td>Comentarios de gestión</td><td>Los comentarios de todos los informes del cierre; los nuevos quedan como «Informe para comité».</td></tr>
+<tr><td>Decisiones y compromisos</td><td>Un recuadro en blanco para anotar decisiones, responsables y fechas a mano en el documento impreso.</td></tr>
+<tr><td>Firmas y aprobación</td><td>Tres espacios: Elaboró, Revisó y Aprobó, cada uno con nombre, cargo y fecha.</td></tr></table></div>
+<h3>Exportar</h3>
+<ul><li><b>Excel:</b> hoja «Resumen» (resultados, balance, caja del mes, indicadores en atención, líneas de negocio, decisiones y firmas), hojas «PYG» y «Caja disponible», y hoja «Comentarios».</li>
+<li><b>PDF</b> horizontal de varias páginas: portada con el resumen, balance, caja y estado de la caja; el PYG en una página aparte; y al final los indicadores, las líneas, los comentarios, el recuadro de decisiones y las firmas.</li>
+<li><b>Copiar como imagen</b> y <b>Enviar por correo</b> (con el Excel y el PDF adjuntos; el envío queda en la auditoría).</li></ul>
+<p class="note info">Esta versión no calcula nada nuevo: reutiliza las cifras del resumen mensual, del PYG y del Flujo de caja. No incluye el resumen con IA ni la pregunta al informe.</p></section>
+
+<section id="faq"><h2>9. Preguntas frecuentes</h2><details><summary>El mes que busco no aparece</summary><p>La lista trae solo meses con ingresos en el Estado de resultados. Ejecute los modelos de la empresa y vuelva a elegir la empresa.</p></details><details><summary>Una sección dice «sin datos»</summary><p>Esa parte del modelo (balance, flujo, indicadores o líneas) no tiene información para el mes. Las demás secciones no se afectan.</p></details><details><summary>¿Por qué no hay gráficos en el PDF?</summary><p>Es un documento de lectura rápida: cifras y tablas. Los gráficos están en cada informe.</p></details><details><summary>¿Puedo elegir varios meses?</summary><p>No: es el cierre de un mes. Para un rango use los informes individuales.</p></details><details><summary>¿Las cifras coinciden con los otros informes?</summary><p>Sí, usan los mismos cálculos aplicados al mes elegido.</p></details></section>
 
 </main>
 </body></html>

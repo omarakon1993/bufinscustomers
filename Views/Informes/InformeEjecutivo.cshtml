@@ -1,0 +1,248 @@
+@using System.Web
+@using System.Linq
+@using bufinscustomers.Models
+@functions {
+    static string J(string s) { return System.Web.HttpUtility.JavaScriptStringEncode(s ?? ""); }
+}
+@{
+    // Una sola vista para los tres informes ejecutivos (ver InformeEjecutivoBaseController): ViewBag.Tipo = hoja | caja | comite.
+    string tipo = (ViewBag.Tipo as string) ?? "hoja";
+    string pref = (ViewBag.Pref as string) ?? "PH_";
+    string ctrl = (ViewBag.Controlador as string) ?? "InformePygHoja";
+    string titulo = Recursos.Obtener(pref + "PageTitle");
+    ViewBag.Title = titulo;
+    var empresas = ViewBag.Empresas as List<Empresas>;
+    var esAdmin = (bool)(ViewBag.EsAdmin ?? false);
+    var culturaJs = System.Globalization.CultureInfo.CurrentUICulture.Name;
+    string icono = tipo == "caja" ? "fa-wallet" : (tipo == "comite" ? "fa-file-signature" : "fa-table-cells");
+    string familiaVistas = tipo == "caja" ? "caja" : (tipo == "comite" ? "gerencia" : "pyg");
+    string vistaActual = tipo == "caja" ? "simple" : (tipo == "comite" ? "comite" : "hoja");
+    int preEmpresa = (int)(ViewBag.PreEmpresa ?? 0);
+    int preEscenario = (int)(ViewBag.PreEscenario ?? 0);
+    string claveComentario = tipo == "caja" ? "CajaDisponible" : (tipo == "comite" ? "Comite" : "PygHoja");
+}
+
+<link href="~/Assets/css/bufins-components.css" rel="stylesheet" />
+<link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-pyg.css")" rel="stylesheet" />
+<link href="~/Assets/css/informe-balance.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-gerencia-mensual.css")" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-ejecutivo.css")" rel="stylesheet" />
+<link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/comentarios-gestion.css")" rel="stylesheet" />
+<link href="~/Assets/css/select2/select2.min.css" rel="stylesheet" />
+
+<div class="container-fluid px-4">
+<div class="lt-app">
+
+    <div class="powerbi-header">
+        <div class="powerbi-header-content">
+            <i class="fas @icono powerbi-header-icon"></i>
+            <h1 class="powerbi-header-title">@titulo</h1>
+            @await Html.PartialAsync("_ModeloBufinsTag")
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_VistasInforme", new bufinscustomers.Models.VistasInformeVM { Familia = familiaVistas, Actual = vistaActual, EmpresaSel = "#ejEmpresa", EscenarioSel = "#ejEscenario" })
+
+    @Html.AntiForgeryToken()
+
+    <div class="filter-card">
+        <div class="lt-section-title"><span>@Resources.Strings.Common_FiltrosConsulta</span></div>
+        <div class="lt-grid-quever">
+            <div class="lt-field">
+                <label class="lt-field-label" for="ejEmpresa">@Resources.Strings.Common_LabelEmpresa</label>
+                <select id="ejEmpresa" class="lt-field-select">
+                    @if (esAdmin) { <option value="">@Resources.Strings.Common_Seleccione</option> }
+                    @if (empresas != null)
+                    {
+                        foreach (var e in empresas) { <option value="@e.Id" selected="@(e.Id == preEmpresa ? "selected" : null)">@e.Nombre</option> }
+                    }
+                </select>
+            </div>
+            <div class="lt-field">
+                <label class="lt-field-label" for="ejEscenario">@Resources.Strings.Common_LabelEscenario</label>
+                <select id="ejEscenario" class="lt-field-select">
+                    @if (ViewBag.Escenarios != null)
+                    {
+                        foreach (var esc in ViewBag.Escenarios) { <option value="@esc.Id" selected="@(esc.Id == preEscenario ? "selected" : null)">@esc.Nombre</option> }
+                    }
+                </select>
+            </div>
+            <div class="lt-field">
+                <label class="lt-field-label" for="ejMes">@Resources.Strings.EJ_MesCorte</label>
+                <select id="ejMes" class="lt-field-select" disabled></select>
+            </div>
+        </div>
+        <p class="lt-help" id="ejSinMeses" style="display:none;">@Resources.Strings.EJ_SinMesesDatos</p>
+
+        @await Html.PartialAsync("_TemaInformeSelector", "ejTema")
+
+        <div class="btn-group-actions">
+            <button type="button" id="btnConsultarEJ" class="btn btn-modern-gradient" disabled>
+                <i class="fas fa-arrow-right mr-1"></i>@Resources.Strings.LineaTiempo_BtnGenerar
+            </button>
+            <button type="button" id="btnLimpiarEJ" class="btn btn-modern-secondary">@Resources.Strings.Common_Limpiar</button>
+        </div>
+    </div>
+
+    <div id="ejEstadoInicial" class="lt-card lt-empty">
+        <div class="lt-empty-icon"><i class="fas @icono"></i></div>
+        <h4>@titulo</h4>
+        <p>@Recursos.Obtener(pref + "EstadoInicialDesc")</p>
+    </div>
+
+    <div id="ejSinDatos" class="lt-card lt-empty" style="display:none;">
+        <div class="lt-empty-icon"><i class="fas fa-inbox"></i></div>
+        <h4>@Resources.Strings.EJ_SinDatosTitulo</h4>
+        <p>@Resources.Strings.EJ_SinDatosDesc</p>
+    </div>
+
+    <div id="ejResultado" style="display:none;">
+
+        <div class="lt-card" id="ejPanelResultado">
+            <div class="pyg2-letterhead">
+                <span class="pyg2-brand"><img class="bm-logo" src="~/Assets/img/Bufins_Wordmark_Purple.png" alt="Bufins" height="14"><span class="bm-sub">@Recursos.Obtener(pref + "Subtitulo")</span></span>
+                <span class="fecha"><span>@Resources.Strings.BAL_V2_GeneradoEl</span> <span id="ejFechaGenerado">&mdash;</span></span>
+            </div>
+            <div class="pyg2-head">
+                <div class="pyg2-head-l">
+                    <span class="emp-logo-plate" id="ejLogo" hidden><img alt="@Resources.Strings.Common_LogoEmpresaAlt"></span>
+                    <div class="emp-logo-texto">
+                        <h2 id="ejTituloEmpresa">&mdash;</h2>
+                        <div class="pyg2-chips">
+                            <span class="pyg2-chip primary"><i class="fas fa-calendar"></i><span id="ejChipCorte">&mdash;</span></span>
+                            <span class="pyg2-chip" id="ejChipEscenario">&mdash;</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pyg2-tools">
+                    <button type="button" class="lt-tool-btn" id="ejBtnUnidad" aria-haspopup="menu" aria-expanded="false">
+                        <span class="lbl-muted">@Resources.Strings.BAL_V2_Unidad</span><span id="ejUnidadLbl">@Resources.Strings.LineaTiempo_UnidadMillones</span><i class="fas fa-chevron-down chev"></i>
+                    </button>
+                    <div class="lt-menu" id="ejMenuUnidad" role="menu">
+                        <button type="button" data-unidad="pesos" role="menuitemradio">@Resources.Strings.LineaTiempo_UnidadPesos<i class="fas fa-check"></i></button>
+                        <button type="button" data-unidad="miles" role="menuitemradio">@Resources.Strings.LineaTiempo_UnidadMiles<i class="fas fa-check"></i></button>
+                        <button type="button" data-unidad="millones" role="menuitemradio">@Resources.Strings.LineaTiempo_UnidadMillones<i class="fas fa-check"></i></button>
+                    </div>
+                    <span class="sep"></span>
+                    @await Html.PartialAsync("_ExportMenu", new bufinscustomers.Models.ExportMenuVM { Id = "ejExp", ExcelDesc = Recursos.Obtener(pref + "ExcelDesc") })
+                </div>
+            </div>
+        </div>
+        <form id="frmExportarExcelEJ" method="post" action="@Url.Action("ExportarExcel", ctrl)">
+            @Html.AntiForgeryToken()
+            <div id="ejExpCampos"></div>
+        </form>
+
+        <div id="ejCuerpo"></div>
+
+        @await Html.PartialAsync("_ComentariosGestion", "ejComentarios")
+    </div>
+
+</div>
+</div>
+
+<div id="overlayConsultandoEJ" class="overlay-cargando" style="display:none;">
+    <div class="overlay-cargando-card">
+        @await Html.PartialAsync("_LoaderDots", "aqua")
+        <h5 class="overlay-cargando-title">@Resources.Strings.BAL_JS_Consultando</h5>
+    </div>
+</div>
+
+@await Html.PartialAsync("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+
+@section scripts {
+<script src="~/Assets/js/select2/select2.min.js"></script>
+<script src="~/Assets/js/jspdf.umd.min.js"></script>
+<script src="~/Assets/js/bufins-pdf-marca.js"></script>
+<script src="~/Assets/js/html2canvas.min.js"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/empresa-logo.js")"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/comentarios-gestion.js")"></script>
+<script src="~/Assets/js/export-menu.js"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-ejecutivo.js")"></script>
+
+<script>
+    window.EJ_CFG = {
+        tipo: '@Html.Raw(J(tipo))',
+        controlador: '@Html.Raw(J(ctrl))',
+        claveComentario: '@Html.Raw(J(claveComentario))',
+        urls: {
+            meses: '@Url.Action("ObtenerMeses", ctrl)', reporte: '@Url.Action("ConsultarReporte", ctrl)', correo: '@Url.Action("EnviarPorCorreo", ctrl)'
+        },
+        token: $('input[name="__RequestVerificationToken"]').first().val(),
+        cultura: '@Html.Raw(J(culturaJs))',
+        esAdmin: @Html.Raw(esAdmin.ToString().ToLowerInvariant()),
+        exp: {
+            generando: '@Html.Raw(J(Resources.Strings.Common_Exp_Generando))', errorGenerar: '@Html.Raw(J(Resources.Strings.Common_Exp_ErrorGenerar))',
+            listo: '@Html.Raw(J(Resources.Strings.Common_Exp_Listo))', imagenCopiada: '@Html.Raw(J(Resources.Strings.Common_Exp_ImagenCopiada))',
+            imagenDescargada: '@Html.Raw(J(Resources.Strings.Common_Exp_ImagenDescargada))', valDestino: '@Html.Raw(J(Resources.Strings.RevisarCargue_Correo_ValDestino))',
+            valMaximo: '@Html.Raw(J(Resources.Strings.RevisarCargue_Correo_ValMaximo))', enviando: '@Html.Raw(J(Resources.Strings.RevisarCargue_Correo_Enviando))',
+            error: '@Html.Raw(J(Resources.Strings.Common_ExpCorreo_Error))', exitoTitulo: '@Html.Raw(J(Resources.Strings.Modelo_Correo_ExitoTitulo))', aceptar: '@Html.Raw(J(Resources.Strings.Common_Aceptar))'
+        },
+        meses: [
+            '@Html.Raw(J(Resources.Strings.Common_Mes1))', '@Html.Raw(J(Resources.Strings.Common_Mes2))', '@Html.Raw(J(Resources.Strings.Common_Mes3))', '@Html.Raw(J(Resources.Strings.Common_Mes4))',
+            '@Html.Raw(J(Resources.Strings.Common_Mes5))', '@Html.Raw(J(Resources.Strings.Common_Mes6))', '@Html.Raw(J(Resources.Strings.Common_Mes7))', '@Html.Raw(J(Resources.Strings.Common_Mes8))',
+            '@Html.Raw(J(Resources.Strings.Common_Mes9))', '@Html.Raw(J(Resources.Strings.Common_Mes10))', '@Html.Raw(J(Resources.Strings.Common_Mes11))', '@Html.Raw(J(Resources.Strings.Common_Mes12))'
+        ],
+        t: {
+            titulo: '@Html.Raw(J(titulo))', subtitulo: '@Html.Raw(J(Recursos.Obtener(pref + "Subtitulo")))',
+            errorServidor: '@Html.Raw(J(Resources.Strings.BAL_ErrorServidor))', error: '@Html.Raw(J(Resources.Strings.Common_Error))',
+            select2NoResults: '@Html.Raw(J(Resources.Strings.Common_Select2NoResults))', select2Searching: '@Html.Raw(J(Resources.Strings.Common_Select2Searching))',
+            unidades: { pesos: '@Html.Raw(J(Resources.Strings.LineaTiempo_UnidadPesos))', miles: '@Html.Raw(J(Resources.Strings.LineaTiempo_UnidadMiles))', millones: '@Html.Raw(J(Resources.Strings.LineaTiempo_UnidadMillones))' },
+            unidadSufijoMiles: '@Html.Raw(J(Resources.Strings.LineaTiempo_UnidadSufijoMiles))', unidadSufijoMillones: '@Html.Raw(J(Resources.Strings.LineaTiempo_UnidadSufijoMillones))',
+            unidadBadge: { pesos: '@Html.Raw(J(Resources.Strings.BAL_UnidadPesosCop))', miles: '@Html.Raw(J(Resources.Strings.BAL_UnidadMilesCop))', millones: '@Html.Raw(J(Resources.Strings.BAL_UnidadMillones))' },
+            corteFmt: '@Html.Raw(J(Resources.Strings.EJ_CorteFmt))', vsPpto: '@Html.Raw(J(Resources.Strings.EJ_VsPptoCorto))', sinSeccion: '@Html.Raw(J(Resources.Strings.GM_SinSeccion))',
+            // PYG en una hoja
+            ph: {
+                concepto: '@Html.Raw(J(Resources.Strings.PH_ColConcepto))', acum: '@Html.Raw(J(Resources.Strings.PH_ColAcum))', av: '@Html.Raw(J(Resources.Strings.PH_ColAv))',
+                ppto: '@Html.Raw(J(Resources.Strings.PH_ColPpto))', varPpto: '@Html.Raw(J(Resources.Strings.PH_ColVarPpto))', anioAnt: '@Html.Raw(J(Resources.Strings.PH_ColAnioAnt))',
+                varAnio: '@Html.Raw(J(Resources.Strings.PH_ColVarAnio))', nota: '@Html.Raw(J(Resources.Strings.PH_Nota))'
+            },
+            // Caja disponible
+            cd: {
+                inicio: '@Html.Raw(J(Resources.Strings.CD_Inicio))', inicioSub: '@Html.Raw(J(Resources.Strings.CD_InicioSub))',
+                hoyFmt: '@Html.Raw(J(Resources.Strings.CD_HoyFmt))', hoySub: '@Html.Raw(J(Resources.Strings.CD_HoySub))',
+                proy: '@Html.Raw(J(Resources.Strings.CD_Proy))', proySub: '@Html.Raw(J(Resources.Strings.CD_ProySub))', sinProy: '@Html.Raw(J(Resources.Strings.CD_SinProyeccion))',
+                entradas: '@Html.Raw(J(Resources.Strings.CD_Entradas))', salidas: '@Html.Raw(J(Resources.Strings.CD_Salidas))',
+                estadoOk: '@Html.Raw(J(Resources.Strings.CD_EstadoOk))', estadoDeficitFmt: '@Html.Raw(J(Resources.Strings.CD_EstadoDeficitFmt))', minimoFmt: '@Html.Raw(J(Resources.Strings.CD_MinimoFmt))',
+                sinBalance: '@Html.Raw(J(Resources.Strings.CD_SinBalance))', noCuadra: '@Html.Raw(J(Resources.Strings.CD_NoCuadra))',
+                tramosTitulo: '@Html.Raw(J(Resources.Strings.CD_TramosTitulo))', mesesTitulo: '@Html.Raw(J(Resources.Strings.CD_MesesTitulo))',
+                colMes: '@Html.Raw(J(Resources.Strings.CD_ColMes))', colFlujo: '@Html.Raw(J(Resources.Strings.CD_ColFlujo))', colCaja: '@Html.Raw(J(Resources.Strings.CD_ColCaja))', colTipo: '@Html.Raw(J(Resources.Strings.CD_ColTipo))',
+                real: '@Html.Raw(J(Resources.Strings.CD_Real))', proyectado: '@Html.Raw(J(Resources.Strings.CD_Proyectado))',
+                tramos: {
+                    GeneracionOperativa: '@Html.Raw(J(Resources.Strings.FlujoCaja_FU_GeneracionOperativa))', Otros: '@Html.Raw(J(Resources.Strings.Flujo_CajaCascada_Otros))',
+                    CapitalTrabajo: '@Html.Raw(J(Resources.Strings.FlujoCaja_Casc_CapitalTrabajo))', Inversion: '@Html.Raw(J(Resources.Strings.FlujoCaja_Casc_Inversion))',
+                    Financiero: '@Html.Raw(J(Resources.Strings.FlujoCaja_Casc_Financiero))', NoOperacional: '@Html.Raw(J(Resources.Strings.FlujoCaja_Casc_NoOperacional))'
+                }
+            },
+            // Informe para comité
+            co: {
+                secResumen: '@Html.Raw(J(Resources.Strings.CO_SecResumen))', secPyg: '@Html.Raw(J(Resources.Strings.CO_SecPyg))', secCaja: '@Html.Raw(J(Resources.Strings.CO_SecCaja))',
+                secAtencion: '@Html.Raw(J(Resources.Strings.GM_AtencionTitulo))', secLineas: '@Html.Raw(J(Resources.Strings.GM_LineasTitulo))', comentarios: '@Html.Raw(J(Resources.Strings.Com_Titulo))',
+                firmas: '@Html.Raw(J(Resources.Strings.CO_Firmas))', elaboro: '@Html.Raw(J(Resources.Strings.CO_Elaboro))', reviso: '@Html.Raw(J(Resources.Strings.CO_Reviso))', aprobo: '@Html.Raw(J(Resources.Strings.CO_Aprobo))',
+                nombre: '@Html.Raw(J(Resources.Strings.CO_Nombre))', cargo: '@Html.Raw(J(Resources.Strings.CO_Cargo))', fecha: '@Html.Raw(J(Resources.Strings.CO_Fecha))',
+                decisiones: '@Html.Raw(J(Resources.Strings.CO_Decisiones))', decisionesAyuda: '@Html.Raw(J(Resources.Strings.CO_DecisionesAyuda))',
+                real: '@Html.Raw(J(Resources.Strings.GM_Col_Real))', presupuesto: '@Html.Raw(J(Resources.Strings.GM_Col_Presupuesto))', acumulado: '@Html.Raw(J(Resources.Strings.GM_Acumulado))',
+                sinAtencion: '@Html.Raw(J(Resources.Strings.GM_SinAtencion))',
+                secBalance: '@Html.Raw(J(Resources.Strings.GM_SecBalance))', secCajaMes: '@Html.Raw(J(Resources.Strings.GM_SecCaja))', secBalanceCaja: '@Html.Raw(J(Resources.Strings.CO_SecBalanceCaja))',
+                noAplica: '@Html.Raw(J(Resources.Strings.BAL_KpiNoAplica))', vsCierre: '@Html.Raw(J(Resources.Strings.GM_VsCierre))',
+                cajaInicial: '@Html.Raw(J(Resources.Strings.GM_CajaInicial))', flujoNeto: '@Html.Raw(J(Resources.Strings.GM_FlujoNeto))', flujoNetoPpto: '@Html.Raw(J(Resources.Strings.GM_FlujoNetoPpto))',
+                fcl: '@Html.Raw(J(Resources.Strings.GM_Fcl))', cajaFinal: '@Html.Raw(J(Resources.Strings.GM_CajaFinal))',
+                bal: { ActivoTotal: '@Html.Raw(J(Resources.Strings.BAL_KpiActivoTotal))', CapitalTrabajo: '@Html.Raw(J(Resources.Strings.BAL_KpiCapitalTrabajo))', RazonCorriente: '@Html.Raw(J(Resources.Strings.BAL_KpiRazonCorriente))', Endeudamiento: '@Html.Raw(J(Resources.Strings.BAL_KpiEndeudamiento))' },
+                colLinea: '@Html.Raw(J(Resources.Strings.LN_Col_Linea))', colIngresos: '@Html.Raw(J(Resources.Strings.LN_Col_Ingresos))', colPct: '@Html.Raw(J(Resources.Strings.LN_Col_PctIngresos))', colMargen: '@Html.Raw(J(Resources.Strings.LN_Col_MargenOperacional))',
+                res: { Ingresos: '@Html.Raw(J(Resources.Strings.GM_Res_Ingresos))', Ebitda: '@Html.Raw(J(Resources.Strings.GM_Res_Ebitda))', UtilidadNeta: '@Html.Raw(J(Resources.Strings.GM_Res_UtilidadNeta))' },
+                nivel: { verde: '@Html.Raw(J(Resources.Strings.GM_Nivel_verde))', amarillo: '@Html.Raw(J(Resources.Strings.GM_Nivel_amarillo))', naranja: '@Html.Raw(J(Resources.Strings.GM_Nivel_naranja))', rojo: '@Html.Raw(J(Resources.Strings.GM_Nivel_rojo))', gris: '@Html.Raw(J(Resources.Strings.GM_Nivel_gris))' },
+                indNombres: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(
+                    bufinscustomers.Services.IndicadoresCatalogo.Todos.ToDictionary(d => d.Codigo, d => Recursos.Obtener("Ind_" + d.Codigo + "_Nombre"))))
+            },
+            pdf: {
+                generadoEl: '@Html.Raw(J(Resources.Strings.BAL_V2_GeneradoEl))', confidencial: '@Html.Raw(J(Resources.Strings.BAL_Pdf_Confidencial))', paginaFmt: '@Html.Raw(J(Resources.Strings.BAL_Pdf_PaginaFmt))'
+            }
+        }
+    };
+</script>
+}

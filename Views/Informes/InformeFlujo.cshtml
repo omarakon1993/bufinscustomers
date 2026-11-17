@@ -63,6 +63,7 @@
         </div>
     </div>
 
+    @if (tipo == "Caja") { @await Html.PartialAsync("_VistasInforme", new bufinscustomers.Models.VistasInformeVM { Familia = "caja", Actual = "flujo", EmpresaSel = "#flEmpresa", EscenarioSel = "#flEscenario" }) }
     @Html.AntiForgeryToken()
 
     <div class="filter-card">
