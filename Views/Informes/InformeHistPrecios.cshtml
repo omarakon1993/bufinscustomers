@@ -75,6 +75,7 @@
 <link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-pyg.css")" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-secciones.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
 <link href="~/Assets/css/informe-histprecios.css" rel="stylesheet" />
@@ -236,14 +237,18 @@
             <div id="hpExpCampos"></div>@* lo llena el botón Excel con los filtros del reporte consultado *@
         </form>
 
+        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta) *@
+        <div id="hpSecBarra"></div>
+
         @* 2. KPIs *@
-        <div class="pyg2-section">
+        <div class="pyg2-section" id="hpSecKpis">
             <div class="pyg2-section-title"><span class="t">@Resources.Strings.HP_IndicadoresClave</span><span class="line"></span></div>
             <div class="pyg2-kpis" id="hpKpiStrip"></div>
         </div>
 
         @* 3. Evolución por tipo + variación por tipo *@
-        <div class="pyg2-analysis">
+        <div class="pyg2-section sec-bloque-cab" id="hpSecEvolucionCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Sec_HpEvolucion</span><span class="line"></span></div></div>
+        <div class="pyg2-analysis" id="hpSecEvolucion">
             <div class="pyg2-card">
                 <div class="pyg2-card-head">
                     <div>
@@ -264,7 +269,8 @@
         </div>
 
         @* 4. Promedio general + variación del promedio general *@
-        <div class="hp-two">
+        <div class="pyg2-section sec-bloque-cab" id="hpSecPromedioCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Sec_HpPromedio</span><span class="line"></span></div></div>
+        <div class="hp-two" id="hpSecPromedio">
             <div class="pyg2-card">
                 <div class="pyg2-card-head"><div>
                     <div class="pyg2-card-title">@Resources.Strings.HP_PromedioTitulo</div>
@@ -284,10 +290,11 @@
         </div>
 
         @* 5. Tabla de precios *@
-        <div class="pyg2-table-card">
+        <div class="pyg2-section sec-bloque-cab" id="hpSecPreciosCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.HP_TablaPreciosTitulo</span><span class="line"></span></div></div>
+        <div class="pyg2-table-card" id="hpSecPrecios">
             <div class="pyg2-card-head" style="align-items:center">
                 <div>
-                    <div class="pyg2-card-title">@Resources.Strings.HP_TablaPreciosTitulo</div>
+                    <div class="pyg2-card-title sec-dup">@Resources.Strings.HP_TablaPreciosTitulo</div>
                     <div class="pyg2-card-sub">@Resources.Strings.HP_UnidadPrecio</div>
                 </div>
             </div>
@@ -297,10 +304,11 @@
         </div>
 
         @* 6. Tabla de variación *@
-        <div class="pyg2-table-card">
+        <div class="pyg2-section sec-bloque-cab" id="hpSecVariacionCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.HP_TablaVariacionTitulo</span><span class="line"></span></div></div>
+        <div class="pyg2-table-card" id="hpSecVariacion">
             <div class="pyg2-card-head" style="align-items:center">
                 <div>
-                    <div class="pyg2-card-title">@Resources.Strings.HP_TablaVariacionTitulo</div>
+                    <div class="pyg2-card-title sec-dup">@Resources.Strings.HP_TablaVariacionTitulo</div>
                     <div class="pyg2-card-sub" id="hpTablaVariacionSub">&mdash;</div>
                 </div>
             </div>
@@ -362,6 +370,7 @@
 @await Html.PartialAsync("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
 
 @section scripts {
+@await Html.PartialAsync("_SeccionesConfig")
 <script src="~/Assets/js/select2/select2.min.js"></script>
 <script src="~/Assets/js/chart.umd.min.js"></script>
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
@@ -369,9 +378,15 @@
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/empresa-logo.js")"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-secciones.js")"></script>
 <script src="~/Assets/js/doc-visor.js"></script>
 
 <script>
+    // ---- Secciones del informe (títulos colapsables + barra; lo expandido es lo que se exporta) ----
+    var _hpSecc = null;
+    function seccionVisible(id) { return !_hpSecc || _hpSecc.visible(id); }
+    function seccionesParaServidor() { return _hpSecc ? (_hpSecc.visibles().join(',') || '-') : ''; }
+
     var _hp = {
         urls: {
             opciones: '@Url.Action("ObtenerOpciones", "InformeHistPrecios")',
@@ -1058,6 +1073,10 @@
 
             // Página 1: resumen
             banda(); y = 30;
+            var pagLibre = true;   // la primera página (con la banda) aún no tiene contenido
+            function abrirPagina() { if (pagLibre) { pagLibre = false; } else { nuevaPagina(true); } y = 30; }
+            if (seccionVisible('kpis')) {
+            pagLibre = false;
             var kpis = datosKpis(r), cw = (W - 2 * M - 3 * 6) / 4;
             kpis.forEach(function (k, i) {
                 var x = M + i * (cw + 6);
@@ -1069,14 +1088,19 @@
                 doc.text(sub, x + 4, y + 22);
             });
             y += 32;
+            }
+            if (seccionVisible('evolucion')) {
+            pagLibre = false;
             doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(88, 58, 255); doc.text(_hp.t.graficoEvolucionTitulo, M, y); y += 3;
             var c1 = _hp.charts.evolucion, anchoMax = W - 2 * M, altoMax = H - y - 14;
             var prop = c1.height / c1.width, w1 = anchoMax, h1 = w1 * prop;
             if (h1 > altoMax) { h1 = altoMax; w1 = h1 / prop; }
             doc.addImage(imagenChart(c1), 'JPEG', M, y, w1, h1);
+            }
 
             // Página 2: promedio + variación
-            nuevaPagina(true); y = 30;
+            if (seccionVisible('promedio')) {
+            abrirPagina();
             var half = (W - 2 * M - 8) / 2;
             [['promedio', _hp.t.promedioTitulo], ['variacion', _hp.t.variacionChartTitulo]].forEach(function (par, i) {
                 var ch = _hp.charts[par[0]], x = M + i * (half + 8);
@@ -1084,13 +1108,14 @@
                 var hh = half * (ch.height / ch.width);
                 doc.addImage(imagenChart(ch), 'JPEG', x, y + 3, half, hh);
             });
+            }
 
             // Tablas (se parten en bloques de columnas para que quepan)
             function tablaPdf(titulo, filas, conPromedio, formateador, colorear) {
                 var porPagina = 10, totalCols = et.length;
                 for (var ini = 0; ini < totalCols; ini += porPagina) {
                     var fin = Math.min(totalCols, ini + porPagina);
-                    nuevaPagina(true); y = 30;
+                    abrirPagina();
                     doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(88, 58, 255); doc.text(titulo, M, y); y += 5;
                     var nCols = (fin - ini) + (conPromedio && fin === totalCols ? 1 : 0);
                     var wTipo = 52, wCol = Math.min(24, (W - 2 * M - wTipo) / Math.max(nCols, 1)), rh = 7;
@@ -1121,10 +1146,10 @@
             }
             var filasPrecios = r.Series.map(function (s) { return { nombre: s.Tipo, valores: s.Valores, promedio: s.Promedio }; })
                 .concat([{ nombre: _hp.t.totalGeneral, valores: r.Total.Valores, promedio: r.Total.Promedio, total: true }]);
-            tablaPdf(_hp.t.tablaPreciosTitulo, filasPrecios, true, fmtPrecio, false);
+            if (seccionVisible('precios')) tablaPdf(_hp.t.tablaPreciosTitulo, filasPrecios, true, fmtPrecio, false);
             var filasVar = r.Series.map(function (s) { return { nombre: s.Tipo, valores: s.Variaciones }; })
                 .concat([{ nombre: _hp.t.totalGeneral, valores: r.Total.Variaciones, total: true }]);
-            tablaPdf(_hp.t.tablaVariacionTitulo, filasVar, false, fmtPctVar, true);
+            if (seccionVisible('variacion')) tablaPdf(_hp.t.tablaVariacionTitulo, filasVar, false, fmtPctVar, true);
 
             // Pie en todas las páginas
             var n = doc.getNumberOfPages();
@@ -1178,6 +1203,16 @@
     }
 
     $(function () {
+        _hpSecc = InformeSecciones.montar({
+            barra: '#hpSecBarra', clave: 'histPrecios', textos: SEC_CFG.barra,
+            secciones: [
+                { id: 'kpis', icono: 'fa-gauge-high', cab: '#hpSecKpis .pyg2-section-title', cuerpo: ['#hpKpiStrip'] },
+                { id: 'evolucion', icono: 'fa-chart-line', cab: '#hpSecEvolucionCab .pyg2-section-title', cuerpo: ['#hpSecEvolucion'] },
+                { id: 'promedio', icono: 'fa-chart-column', cab: '#hpSecPromedioCab .pyg2-section-title', cuerpo: ['#hpSecPromedio'] },
+                { id: 'precios', icono: 'fa-table', cab: '#hpSecPreciosCab .pyg2-section-title', cuerpo: ['#hpSecPrecios'] },
+                { id: 'variacion', icono: 'fa-percent', cab: '#hpSecVariacionCab .pyg2-section-title', cuerpo: ['#hpSecVariacion', '#hpNotaSinComparable', '#hpNotaAnioParcial'] }
+            ]
+        });
         InformeTema.montar({ selector: '#hpTema', empresa: '#hpEmpresa' });
         elEmpresa.select2({ width: '100%', language: s2lang, minimumResultsForSearch: 10 });
         elEscenario.select2({ width: '100%', language: s2lang, minimumResultsForSearch: 10 });
@@ -1222,7 +1257,7 @@
             url: _hp.urls.correo,
             token: function () { return _hp.token; },
             // Filtros del informe consultado: el servidor reconstruye el reporte (no confía en cifras del navegador).
-            datos: function () { return _hp.filtros; },
+            datos: function () { return $.extend({}, _hp.filtros, { Secciones: seccionesParaServidor() }); },
             pdf: function () { var doc = construirPdf(); return doc ? doc.output('datauristring') : ''; },
             pills: function () {
                 var r = _hp.reporte;

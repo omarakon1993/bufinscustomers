@@ -7,6 +7,9 @@ namespace bufinscustomers.Models
     /// dbo.ModeloTesoreriaPpto solo guarda el año de ejecución de cada empresa.</summary>
     public class FiltrosTesoreria
     {
+        /// <summary>Secciones visibles en pantalla que se incluyen en Excel y correo (ids separados por coma; vacío = todas). Ver SeccionesInforme.</summary>
+        public string Secciones { get; set; }
+
         // Paleta del informe (ver TemaInforme): el servidor re-resuelve y valida; vacío = Bufins.
         public string Tema { get; set; }
         public string TemaP { get; set; }

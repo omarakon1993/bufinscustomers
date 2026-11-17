@@ -24,7 +24,7 @@ code{background:var(--chip);padding:1px 6px;border-radius:6px;font-size:12.5px}u
 details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 14px;margin:8px 0}summary{cursor:pointer;font-weight:700}
 </style></head><body>
 <header><div class="w"><h1>Monthly management report</h1><p>The month-end close in a single document: results, balance sheet, cash, indicators, business lines and comments.</p></div></header>
-<nav><div class="w"><a href="#para">What it is for</a><a href="#pantalla">The screen</a><a href="#datos">Where the figures come from</a><a href="#lectura">How to read it</a><a href="#comentarios">Comments</a><a href="#ia">AI</a><a href="#exportar">Export</a><a href="#comite">Committee version</a><a href="#faq">FAQ</a></div></nav>
+<nav><div class="w"><a href="#para">What it is for</a><a href="#pantalla">The screen</a><a href="#datos">Where the figures come from</a><a href="#lectura">How to read it</a><a href="#comentarios">Comments</a><a href="#ia">AI</a><a href="#exportar">Export</a><a href="#comite">Committee version</a><a href="#secciones">Sections</a><a href="#faq">FAQ</a></div></nav>
 <main class="w">
 
 <section id="para"><h2>1. What it is for</h2>
@@ -77,7 +77,12 @@ details{background:var(--card);border:1px solid var(--line);border-radius:10px;p
 <li><b>Copy as image</b> and <b>Send by email</b> (with the Excel and PDF attached; the sending is recorded in the audit log).</li></ul>
 <p class="note info">This version calculates nothing new: it reuses the figures from the monthly summary, the P&L and the Cash flow. It does not include the AI summary or the ask-the-report question.</p></section>
 
-<section id="faq"><h2>9. Frequently asked questions</h2><details><summary>The month I am looking for does not appear</summary><p>The list shows only months with revenue in the Income statement. Run the company’s models and choose the company again.</p></details><details><summary>A section says “no data”</summary><p>That part of the model (balance sheet, flow, indicators or lines) has no information for the month. The other sections are not affected.</p></details><details><summary>Why are there no charts in the PDF?</summary><p>It is a quick-read document: figures and tables. The charts are in each report.</p></details><details><summary>Can I choose several months?</summary><p>No: it is the close of one month. For a range use the individual reports.</p></details><details><summary>Do the figures match the other reports?</summary><p>Yes, they use the same calculations applied to the chosen month.</p></details></section>
+<section id="secciones"><h2>9. Report sections</h2>
+<p class="lead">Each part of the report is a <b>section</b> with its own title (such as “Key indicators”). Click a section title —or its button in the “Sections” bar above the results— to <b>collapse or expand</b> it; “Show all” and “Hide all” change all of them at once. Your choice is remembered in this browser. <b>What is expanded is what gets exported</b>: the PDF, the image and the Excel file include only those sections, and the email attaches that same Excel and PDF.</p>
+<p>The sections, in order: <b>Month summary (AI)</b>, <b>Results</b>, <b>Balance sheet and cash of the month</b>, <b>Indicators needing attention and business lines</b> and <b>Management comments</b>.</p>
+<p>The Excel file includes only the sheets of the expanded sections: “Summary” (results and balance sheet and cash), “Attention and lines” and “Comments”. The committee version keeps its full-document format.</p></section>
+
+<section id="faq"><h2>10. Frequently asked questions</h2><details><summary>The month I am looking for does not appear</summary><p>The list shows only months with revenue in the Income statement. Run the company’s models and choose the company again.</p></details><details><summary>A section says “no data”</summary><p>That part of the model (balance sheet, flow, indicators or lines) has no information for the month. The other sections are not affected.</p></details><details><summary>Why are there no charts in the PDF?</summary><p>It is a quick-read document: figures and tables. The charts are in each report.</p></details><details><summary>Can I choose several months?</summary><p>No: it is the close of one month. For a range use the individual reports.</p></details><details><summary>Do the figures match the other reports?</summary><p>Yes, they use the same calculations applied to the chosen month.</p></details></section>
 
 </main>
 </body></html>

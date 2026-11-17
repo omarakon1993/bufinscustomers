@@ -271,7 +271,7 @@ namespace bufinscustomers.Controllers
                 }
 
                 _tema = ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA);
-                var bytes = GenerarExcel(reporte, out string nombreArchivo);
+                var bytes = GenerarExcel(reporte, filtros.Secciones, out string nombreArchivo);
                 return File(bytes, InformeCorreoHelper.MimeExcel, nombreArchivo);
             }
             catch (Exception ex)
@@ -308,7 +308,7 @@ namespace bufinscustomers.Controllers
                     .FirstOrDefault(e => e.Id == filtros.IdEscenario)?.Nombre ?? ("#" + filtros.IdEscenario);
 
                 _tema = ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA);
-                var bytes = GenerarExcel(reporte, out string nombreArchivo);
+                var bytes = GenerarExcel(reporte, filtros.Secciones, out string nombreArchivo);
                 var adjuntos = InformeCorreoHelper.Adjuntos(nombreArchivo, bytes, InformeCorreoHelper.PdfDesdeBase64(pdfBase64));
 
                 string corte = NombreMes(reporte.MesHasta) + " " + reporte.AnioHasta;
@@ -405,7 +405,7 @@ namespace bufinscustomers.Controllers
 
         /// <summary>Libro de Excel del informe (lo usan la descarga y el correo): Resumen (todos los indicadores), Tendencia mensual
         /// (con gráfico nativo de los márgenes) y Fichas (qué mide cada indicador y cómo se lee el semáforo).</summary>
-        private byte[] GenerarExcel(IndicadoresReporteViewModel r, out string nombreArchivo)
+        private byte[] GenerarExcel(IndicadoresReporteViewModel r, string secciones, out string nombreArchivo)
         {
             string empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == r.IdEmpresa)?.Nombre ?? "Empresa";
             string corte = NombreMes(r.MesHasta) + " " + r.AnioHasta;
@@ -413,6 +413,7 @@ namespace bufinscustomers.Controllers
             string hojaResumen = R("Ind_ExcelHojaResumen"), hojaTend = R("Ind_ExcelHojaTendencia"), hojaFichas = R("Ind_ExcelHojaFichas");
             string subtitulo = R("Ind_CorreoCorte") + ": " + corte + (r.HayComparativo ? " · " + R("Ind_CorreoComparado") + ": " + NombreMes(r.MesComp) + " " + r.AnioComp : "");
             byte[] bytes;
+            bool conHojaTend = true;
             var etiquetasMes = new List<string>();
             const int filaEnc = 4;
 
@@ -485,12 +486,24 @@ namespace bufinscustomers.Controllers
                 foreach (int col in new[] { 3, 4, 5, 6, 7 }) { wsF.Column(col).Width = 48; wsF.Column(col).Style.Alignment.WrapText = true; }
                 wsF.Range(filaEnc + 1, 1, ff - 1, colsF.Length).Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
 
+                // Solo las hojas de las secciones que el usuario tiene expandidas (sin filtro = todas):
+                // Resumen ← semáforo y atención o tabla · Tendencia mensual ← indicadores por familia · Fichas ← familia o tabla. Si no quedara ninguna, se conserva el resumen.
+                bool Inc(string id) { return SeccionesInforme.Incluye(secciones, id); }
+                var quitar = new List<string>();
+                if (!(Inc("semaforo") || Inc("tabla"))) quitar.Add(hojaResumen);
+                if (!Inc("familias")) quitar.Add(hojaTend);
+                if (!(Inc("familias") || Inc("tabla"))) quitar.Add(hojaFichas);
+                if (quitar.Count >= wb.Worksheets.Count) quitar.Remove(hojaResumen);
+                foreach (var nombre in quitar) { IXLWorksheet ws; if (wb.Worksheets.TryGetWorksheet(nombre, out ws)) wb.Worksheets.Delete(nombre); }
+                conHojaTend = !quitar.Contains(hojaTend);
+
                 // Logo de la empresa (si tiene) junto al título de cada hoja; sin logo el libro queda igual que siempre.
                 ExcelLogoHelper.ColocarEnTodas(wb, ExcelLogoHelper.Obtener(r.IdEmpresa));
                 using (var ms = new MemoryStream()) { wb.SaveAs(ms); bytes = ms.ToArray(); }
             }
 
             // Gráfico nativo en "Tendencia mensual": líneas de los márgenes bruto, EBITDA y neto.
+            if (conHojaTend)
             try
             {
                 int Col(string cod) { return r.Indicadores.FindIndex(x => x.Codigo == cod) + 2; }

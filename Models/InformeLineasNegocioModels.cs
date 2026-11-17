@@ -5,6 +5,9 @@ namespace bufinscustomers.Models
     /// <summary>Filtros del informe de rentabilidad por línea de negocio (dbo.ModeloLineasNegocio).</summary>
     public class FiltrosLineasNegocio
     {
+        /// <summary>Secciones visibles en pantalla que se incluyen en Excel y correo (ids separados por coma; vacío = todas). Ver SeccionesInforme.</summary>
+        public string Secciones { get; set; }
+
         public int IdEmpresa { get; set; }
         public byte IdEscenario { get; set; } = 1;
         public int AnioDesde { get; set; }

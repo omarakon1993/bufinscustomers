@@ -398,6 +398,16 @@ namespace bufinscustomers.Controllers
                     ws3.Column(3).Width = 70; ws3.Column(3).Style.Alignment.WrapText = true;
                 }
 
+                // Solo las hojas de las secciones que el usuario tiene expandidas (sin filtro = todas):
+                // Resumen ← resultados o balance y caja · Atención y líneas ← foco · Comentarios ← comentarios. Si no quedara ninguna, se conserva el resumen.
+                bool Inc(string id) { return SeccionesInforme.Incluye(filtros.Secciones, id); }
+                var quitar = new List<string>();
+                if (!(Inc("resultados") || Inc("balance"))) quitar.Add(R("GM_ExcelHojaResumen"));
+                if (!Inc("foco")) quitar.Add(R("GM_ExcelHojaFoco"));
+                if (!Inc("comentarios")) quitar.Add(R("GM_ExcelHojaComentarios"));
+                if (quitar.Count(n => wb.Worksheets.Contains(n)) >= wb.Worksheets.Count) quitar.Remove(R("GM_ExcelHojaResumen"));
+                foreach (var nombre in quitar) { IXLWorksheet hojaQuitar; if (wb.Worksheets.TryGetWorksheet(nombre, out hojaQuitar)) wb.Worksheets.Delete(nombre); }
+
                 if (logo != null) ExcelLogoHelper.ColocarEnTodas(wb, logo);
                 nombreArchivo = $"GerenciaMensual_{nombreEmpresa}_{r.Anio}{r.Mes:00}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
                 nombreArchivo = string.Join("_", nombreArchivo.Split(Path.GetInvalidFileNameChars()));

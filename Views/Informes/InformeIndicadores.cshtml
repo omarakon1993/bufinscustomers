@@ -31,6 +31,7 @@
 <link href="~/Assets/css/informe-indicadores.css" rel="stylesheet" />
 <link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-secciones.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/comentarios-gestion.css")" rel="stylesheet" />
@@ -202,8 +203,12 @@
             <div id="indExpCampos"></div>@* los llena el botón Excel con los filtros del reporte consultado *@
         </form>
 
+        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta) *@
+        <div id="indSecBarra"></div>
+
         @* 2. Resumen del semáforo + los que requieren atención *@
-        <div class="ind-sem">
+        <div class="pyg2-section sec-bloque-cab" id="indSecSemCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Sec_IndSemaforo</span><span class="line"></span></div></div>
+        <div class="ind-sem" id="indSecSem">
             <div class="ind-sem-card">
                 <div class="ind-sem-title"><span>@T("Ind_ResumenTitulo")</span><span class="line"></span></div>
                 <div class="ind-counts" id="indCounts"></div>
@@ -218,13 +223,15 @@
         <p class="lt-help" id="indNotaSinBalance" style="display:none;"></p>
 
         @* 3. Tarjetas por familia *@
+        <div class="pyg2-section sec-bloque-cab" id="indSecFamCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Sec_IndFamilias</span><span class="line"></span></div></div>
         <div id="indFamilias"></div>
 
         @* 4. Tabla completa *@
-        <div class="pyg2-table-card">
+        <div class="pyg2-section sec-bloque-cab" id="indSecTablaCab"><div class="pyg2-section-title"><span class="t">@T("Ind_TablaTitulo")</span><span class="line"></span></div></div>
+        <div class="pyg2-table-card" id="indSecTabla">
             <div class="pyg2-card-head" style="align-items:center">
                 <div>
-                    <div class="pyg2-card-title">@T("Ind_TablaTitulo")</div>
+                    <div class="pyg2-card-title sec-dup">@T("Ind_TablaTitulo")</div>
                     <div class="pyg2-card-sub" id="indInfoBadge">&mdash;</div>
                 </div>
             </div>
@@ -239,14 +246,16 @@
         </div>
 
         @* Insights gerenciales (IA): se ocultan si la empresa tiene la IA apagada *@
+        <div class="pyg2-section sec-bloque-cab" id="indSecComCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Com_Titulo</span><span class="line"></span></div></div>
         @await Html.PartialAsync("_ComentariosGestion", "indComentarios")
 
         @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
         {
-        <div class="pyg-insights-card" style="margin-top:16px">
+        <div class="pyg2-section sec-bloque-cab" id="indSecIaCab"><div class="pyg2-section-title"><span class="t">@T("Ind_InsightsTitulo")</span><span class="line"></span></div></div>
+        <div class="pyg-insights-card" id="indSecIa" style="margin-top:16px">
             <div class="pyg-insights-head">
                 <div>
-                    <span class="pyg-insights-title"><i class="fas fa-wand-magic-sparkles"></i>@T("Ind_InsightsTitulo")</span>
+                    <span class="pyg-insights-title sec-dup"><i class="fas fa-wand-magic-sparkles"></i>@T("Ind_InsightsTitulo")</span>
                     <div class="pyg-insights-meta" id="indInsightsMeta">@T("Ind_InsightsSub")</div>
                 </div>
                 <button type="button" id="btnGenerarInsightsInd" class="pyg2-ins-btn"><i class="fas fa-wand-magic-sparkles"></i><span>@T("Ind_Generar")</span></button>
@@ -296,6 +305,7 @@
 @await Html.PartialAsync("_DocumentacionVisor", T("Ind_Doc_ModalTitulo"))
 
 @section scripts {
+@await Html.PartialAsync("_SeccionesConfig")
 <script src="~/Assets/js/select2/select2.min.js"></script>
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
 <script src="~/Assets/js/bufins-pdf-marca.js"></script>
@@ -304,6 +314,7 @@
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/comentarios-gestion.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-secciones.js")"></script>
 <script src="~/Assets/js/doc-visor.js"></script>
 <script src="~/Assets/js/bufins-markdown.js"></script>
 <script src="~/Assets/js/rango-atajos.js"></script>
@@ -998,7 +1009,12 @@
     }
 
     // ===== Exportar: Excel / PDF / imagen / correo =====
-    function datosExportacion() { return $.extend({}, _ind.filtrosConsultados); }
+    // ---- Secciones del informe (títulos colapsables + barra; lo expandido es lo que se exporta) ----
+    var _indSecc = null;
+    function seccionVisible(id) { return !_indSecc || _indSecc.visible(id); }
+    function seccionesParaServidor() { return _indSecc ? (_indSecc.visibles().join(',') || '-') : ''; }
+
+    function datosExportacion() { return $.extend({}, _ind.filtrosConsultados, { Secciones: seccionesParaServidor() }); }
     function exportarExcel() {
         if (!_ind.filtrosConsultados) return;
         var campos = datosExportacion(), $c = $('#indExpCampos').empty();
@@ -1100,8 +1116,14 @@
             xc += pildora(c.t, xc, y, c.fg || C.texto2, c.bg || C.suave, !!c.b) + 3;
         });
 
-        // Semáforo: cinco contadores
+        // Secciones expandidas (barra «Secciones»): el PDF lleva lo mismo que está en pantalla.
+        var paginaUsada = false;   // la primera página ya tiene contenido (más allá de la portada)
+        function paginaNueva(seccion) { if (!paginaUsada) { paginaUsada = true; return; } nuevaPagina(seccion); }
+
+        // Semáforo y atención
         y += 10;
+        if (seccionVisible('semaforo')) {
+        paginaUsada = true;
         tituloSeccion(P.resumen, y);
         y += 4;
         var cnt = [['verde', r.TotalVerde], ['amarillo', r.TotalAmarillo], ['naranja', r.TotalNaranja], ['rojo', r.TotalRojo], ['gris', r.TotalGris]];
@@ -1136,7 +1158,11 @@
             fuente('italic', 8.5, C.texto2); pdf.text(T.atencionVacio, M, y + 4); y += 12;
         }
 
+        }
+
         // Insights (IA)
+        if (seccionVisible('ia')) {
+        paginaUsada = true;
         tituloSeccion(P.insightsTitulo, y, _ind.insightsTexto ? $('#indInsightsMeta').text() : '');
         y += 4;
         var secciones = _ind.insightsTexto ? separarInsights(_ind.insightsTexto) : null;
@@ -1172,9 +1198,11 @@
             fuente('italic', 8.5, C.texto2); pdf.text(pdf.splitTextToSize(P.sinInsights, ANCHO - 10), M + 5, y + 7.5);
             y += 12;
         }
+        }
 
-        // ===== Página 2+: tabla de indicadores =====
-        nuevaPagina(P.tablaTitulo);
+        // ===== Página 2+: tabla de indicadores (también cuando solo están a la vista las tarjetas por familia: son los mismos indicadores) =====
+        if (seccionVisible('tabla') || seccionVisible('familias')) {
+        paginaNueva(P.tablaTitulo);
         var cols = [
             { t: T.colIndicador, w: 62, a: 'left' }, { t: T.colValor, w: 26, a: 'right' }, { t: T.colComparativo, w: 26, a: 'right' },
             { t: T.colVariacion, w: 24, a: 'right' }, { t: T.colSemaforo, w: 24, a: 'left' }, { t: T.colReferencia, w: ANCHO - 162, a: 'left' }
@@ -1222,6 +1250,19 @@
             });
         });
         y += 5; fuente('italic', 7, C.muted); pdf.text(T.fichaAviso, M, y);
+        }
+
+        // Comentarios de gestión (si la sección está expandida)
+        var comsPdf = (seccionVisible('comentarios') && window.ComentariosGestion) ? ComentariosGestion.ultimos() : [];
+        if (comsPdf.length) {
+            paginaNueva($('#indSecComCab .t').text());
+            comsPdf.slice(0, 8).forEach(function (c) {
+                fuente('normal', 8.2, C.texto2);
+                var lins = pdf.splitTextToSize(limpiar(((c.Clave ? c.Clave + ': ' : '') + c.Texto) + '  - ' + c.NombreUsuario), ANCHO - 10).slice(0, 3), hC2 = lins.length * 4 + 5;
+                if (y + hC2 > LIMITE_Y) nuevaPagina('');
+                tarjeta(M, y, ANCHO, hC2); pdf.text(lins, M + 5, y + 6, { lineHeightFactor: 1.3 }); y += hC2 + 2;
+            });
+        }
 
         // Pie de página en todas las páginas
         var totalPags = pdf.internal.getNumberOfPages();
@@ -1241,6 +1282,17 @@
 
     $(document).ready(function () {
         ComentariosGestion.montar({ raiz: '#indComentarios', informe: 'Indicadores' });
+        _indSecc = InformeSecciones.montar({
+            barra: '#indSecBarra', clave: 'indicadores', textos: SEC_CFG.barra,
+            secciones: [
+                { id: 'semaforo', icono: 'fa-traffic-light', cab: '#indSecSemCab .pyg2-section-title', cuerpo: ['#indSecSem', '#indNotaParcial', '#indNotaSinComp', '#indNotaSinBalance'] },
+                { id: 'familias', icono: 'fa-layer-group', cab: '#indSecFamCab .pyg2-section-title', cuerpo: ['#indFamilias'] },
+                { id: 'tabla', icono: 'fa-table', cab: '#indSecTablaCab .pyg2-section-title', cuerpo: ['#indSecTabla'] },
+                { id: 'comentarios', icono: 'fa-comments', cab: '#indSecComCab .pyg2-section-title', cuerpo: ['#indComentarios'] },
+                { id: 'ia', icono: 'fa-wand-magic-sparkles', cab: '#indSecIaCab .pyg2-section-title', cuerpo: ['#indSecIa'] }
+            ]
+        });
+        _indSecc.disponible('ia', $('#indSecIa').length > 0);
         $('#indEmpresa, #indEscenario, #indComparar, #indEscenarioComparar, #indDetalle')
             .select2({ width: '100%', language: s2lang, dropdownAutoWidth: false, minimumResultsForSearch: 10 });
 

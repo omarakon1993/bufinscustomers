@@ -264,7 +264,7 @@ namespace bufinscustomers.Controllers
                 }
 
                 _tema = ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA);
-                var bytes = GenerarExcel(reporte, soloSubtotales, out string nombreArchivo);
+                var bytes = GenerarExcel(reporte, soloSubtotales, filtros.Secciones, out string nombreArchivo);
                 return File(bytes, InformeCorreoHelper.MimeExcel, nombreArchivo);
             }
             catch (Exception ex)
@@ -303,7 +303,7 @@ namespace bufinscustomers.Controllers
                     .FirstOrDefault(e => e.Id == filtros.IdEscenario)?.Nombre ?? ("#" + filtros.IdEscenario);
 
                 _tema = ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA);
-                var bytes = GenerarExcel(reporte, soloSubtotales, out string nombreArchivo);
+                var bytes = GenerarExcel(reporte, soloSubtotales, filtros.Secciones, out string nombreArchivo);
                 var adjuntos = InformeCorreoHelper.Adjuntos(nombreArchivo, bytes, InformeCorreoHelper.PdfDesdeBase64(pdfBase64));
 
                 string periodo = NombrePeriodo(reporte);
@@ -353,7 +353,7 @@ namespace bufinscustomers.Controllers
 
         /// <summary>Libro de Excel del informe (lo usan la descarga y el envío por correo): Resumen (KPIs), Caja mensual
         /// (con gráfico nativo), Detalle por mes y Puente de caja.</summary>
-        private byte[] GenerarExcel(TesoreriaReporteViewModel r, bool soloSubtotales, out string nombreArchivo)
+        private byte[] GenerarExcel(TesoreriaReporteViewModel r, bool soloSubtotales, string secciones, out string nombreArchivo)
         {
             string empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == r.IdEmpresa)?.Nombre ?? "Empresa";
             string periodo = NombrePeriodo(r);
@@ -366,6 +366,7 @@ namespace bufinscustomers.Controllers
                    hojaDetalle = R("TesPpto_ExcelHojaDetalle"), hojaPuente = R("TesPpto_ExcelHojaPuente");
             const string fmtNum = "#,##0;[Red]-#,##0", fmtPct = "0.0%";
             byte[] bytes;
+            bool conHojaCaja = true;
             int filaEncCaja = 4, colCajaFin = 3;
             var etiquetasMes = r.Meses.Select(m => NombreMes(m.Mes).Substring(0, Math.Min(3, NombreMes(m.Mes).Length)) + " " + m.Anio).ToList();
 
@@ -486,12 +487,20 @@ namespace bufinscustomers.Controllers
                 }
                 EstiloTabla(wsP, 4, fp - 1, 3);
 
+                // Solo las hojas de las secciones que el usuario tiene expandidas (sin filtro = todas). Si no quedara ninguna, se conserva el detalle.
+                var hojasPorSeccion = new[] { Tuple.Create("kpis", hojaResumen), Tuple.Create("mensual", hojaCaja), Tuple.Create("tabla", hojaDetalle), Tuple.Create("puente", hojaPuente) };
+                var quitar = hojasPorSeccion.Where(h => !SeccionesInforme.Incluye(secciones, h.Item1)).Select(h => h.Item2).ToList();
+                if (quitar.Count >= wb.Worksheets.Count) quitar.Remove(hojaDetalle);
+                foreach (var nombre in quitar) { IXLWorksheet ws; if (wb.Worksheets.TryGetWorksheet(nombre, out ws)) wb.Worksheets.Delete(nombre); }
+                conHojaCaja = !quitar.Contains(hojaCaja);
+
                 // Logo de la empresa (si tiene) junto al título de cada hoja; sin logo el libro queda igual que siempre.
                 ExcelLogoHelper.ColocarEnTodas(wb, ExcelLogoHelper.Obtener(r.IdEmpresa));
                 using (var ms = new MemoryStream()) { wb.SaveAs(ms); bytes = ms.ToArray(); }
             }
 
             // Gráfico nativo en "Caja mensual": barras de caja neta (principal y, si aplica, la otra medida).
+            if (conHojaCaja)
             try
             {
                 var series = new List<SerieGraficoExcel>

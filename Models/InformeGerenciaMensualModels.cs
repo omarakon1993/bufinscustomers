@@ -5,6 +5,9 @@ namespace bufinscustomers.Models
     /// <summary>Filtros del Informe mensual de gerencia: un solo mes de cierre (Anio/Mes).</summary>
     public class FiltrosGerenciaMensual
     {
+        /// <summary>Secciones visibles en pantalla que se incluyen en Excel y correo (ids separados por coma; vacío = todas). Ver SeccionesInforme.</summary>
+        public string Secciones { get; set; }
+
         public int IdEmpresa { get; set; }
         public byte IdEscenario { get; set; } = 1;
         public int Anio { get; set; }

@@ -16,6 +16,7 @@
 <link href="~/Assets/css/informe-balance.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-lineas-negocio.css")" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-secciones.css")" rel="stylesheet" />
 <link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
@@ -122,7 +123,7 @@
         <p>@Resources.Strings.LN_SinDatosDesc</p>
     </div>
 
-    <div id="lnResultado" style="display:none;">
+    <div id="lnResultado" class="ln-todo" style="display:none;">
 
         <div class="lt-card" id="lnPanelResultado">
             <div class="pyg2-letterhead">
@@ -160,25 +161,18 @@
             <div id="lnExpCampos"></div>
         </form>
 
-        <div class="bal-cuadre-strip" id="lnCuadreStrip"></div>
+        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta) *@
+        <div id="lnSecBarra"></div>
 
-        <div class="pyg2-section">
+        <div class="pyg2-section" id="lnSecKpis">
             <div class="pyg2-section-title"><span class="t">@Resources.Strings.LN_IndicadoresClave</span><span class="line"></span></div>
+            <div class="bal-cuadre-strip" id="lnCuadreStrip"></div>
             <div class="pyg2-kpis" id="lnKpiStrip"></div>
         </div>
 
-        <div class="ln-tabs-wrap">
-            <p class="ln-tabs-ayuda"><i class="fas fa-hand-pointer"></i>@Resources.Strings.LN_Tab_Ayuda</p>
-        <nav class="ln-tabs" id="lnTabs" role="tablist" aria-label="@Resources.Strings.LN_PageTitle">
-            <button type="button" class="ln-tab is-active" role="tab" data-tab="resumen" aria-selected="true"><i class="fas fa-chart-pie"></i><span>@Resources.Strings.LN_Tab_Resumen</span></button>
-            <button type="button" class="ln-tab" role="tab" data-tab="estado" aria-selected="false"><i class="fas fa-table"></i><span>@Resources.Strings.LN_Tab_Estado</span></button>
-            <button type="button" class="ln-tab" role="tab" data-tab="ventas" id="lnTabVentas" aria-selected="false" style="display:none;"><i class="fas fa-tags"></i><span>@Resources.Strings.LN_Tab_Ventas</span></button>
-            <button type="button" class="ln-tab" role="tab" data-tab="analisis" aria-selected="false"><i class="fas fa-comments"></i><span>@Resources.Strings.LN_Tab_Analisis</span></button>
-        </nav>
-        </div>
-
         <div class="ln-panel is-active" data-panel="resumen">
-        <div class="pyg2-analysis">
+        <div class="pyg2-section sec-bloque-cab" id="lnSecMezclaCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Sec_LnMezcla</span><span class="line"></span></div></div>
+        <div class="pyg2-analysis" id="lnSecMezcla">
             <div class="pyg2-card">
                 <div class="pyg2-card-head">
                     <div>
@@ -198,7 +192,7 @@
             </div>
         </div>
 
-        <div class="pyg2-section">
+        <div class="pyg2-section" id="lnSecMargenes">
             <div class="pyg2-section-title"><span class="t">@Resources.Strings.LN_MargenesTitulo</span><span class="line"></span>
                 <span class="pyg2-legend" id="lnMargenesLeyenda"></span>
             </div>
@@ -208,10 +202,11 @@
         </div>
 
         <div class="ln-panel" data-panel="estado">
-        <div class="pyg2-table-card">
+        <div class="pyg2-section sec-bloque-cab" id="lnSecEstadoCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.LN_EstadoTitulo</span><span class="line"></span></div></div>
+        <div class="pyg2-table-card" id="lnSecEstado">
             <div class="pyg2-card-head" style="align-items:center">
                 <div>
-                    <div class="pyg2-card-title">@Resources.Strings.LN_EstadoTitulo</div>
+                    <div class="pyg2-card-title sec-dup">@Resources.Strings.LN_EstadoTitulo</div>
                     <div class="pyg2-card-sub" id="lnInfoBadge">&mdash;</div>
                 </div>
             </div>
@@ -220,10 +215,11 @@
             </div>
         </div>
 
-        <div class="pyg2-table-card" style="margin-top:14px">
+        <div class="pyg2-section sec-bloque-cab" id="lnSecResumenCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.LN_ResumenTitulo</span><span class="line"></span></div></div>
+        <div class="pyg2-table-card" id="lnSecResumen" style="margin-top:14px">
             <div class="pyg2-card-head" style="align-items:center">
                 <div>
-                    <div class="pyg2-card-title">@Resources.Strings.LN_ResumenTitulo</div>
+                    <div class="pyg2-card-title sec-dup">@Resources.Strings.LN_ResumenTitulo</div>
                     <div class="pyg2-card-sub" id="lnResumenSub">&mdash;</div>
                 </div>
             </div>
@@ -237,7 +233,7 @@
         </div>
         <p class="lt-help" id="lnNotaCostosPyg" style="display:none;"><i class="fas fa-circle-info"></i> @Resources.Strings.LN_CostosDesdePygNota</p>
         <p class="lt-help" id="lnNotaSinAnterior" style="display:none;">@Resources.Strings.LN_SinAnioAnteriorNota</p>
-        <p class="lt-help">@Resources.Strings.LN_NotaMetodo</p>
+        <p class="lt-help" id="lnNotaMetodo">@Resources.Strings.LN_NotaMetodo</p>
         </div>
 
         <div class="ln-panel" data-panel="ventas" id="lnVentas">
@@ -280,14 +276,16 @@
         </div>
 
         <div class="ln-panel" data-panel="analisis">
+        <div class="pyg2-section sec-bloque-cab" id="lnSecComCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Com_Titulo</span><span class="line"></span></div></div>
         @await Html.PartialAsync("_ComentariosGestion", "lnComentarios")
 
         @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
         {
-        <div class="pyg-insights-card">
+        <div class="pyg2-section sec-bloque-cab" id="lnSecIaCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.LN_InsightsTitulo</span><span class="line"></span></div></div>
+        <div class="pyg-insights-card" id="lnSecIa">
             <div class="pyg-insights-head">
                 <div>
-                    <span class="pyg-insights-title"><i class="fas fa-wand-magic-sparkles"></i>@Resources.Strings.LN_InsightsTitulo</span>
+                    <span class="pyg-insights-title sec-dup"><i class="fas fa-wand-magic-sparkles"></i>@Resources.Strings.LN_InsightsTitulo</span>
                     <div class="pyg-insights-meta" id="lnInsightsMeta">@Resources.Strings.LN_InsightsSub</div>
                 </div>
                 <button type="button" id="btnGenerarInsightsLN" class="pyg2-ins-btn"><i class="fas fa-wand-magic-sparkles"></i><span>@Resources.Strings.BAL_Generar</span></button>
@@ -325,6 +323,7 @@
 @await Html.PartialAsync("_DocumentacionVisor", Resources.Strings.LN_Doc_ModalTitulo)
 
 @section scripts {
+@await Html.PartialAsync("_SeccionesConfig")
 <script src="~/Assets/js/select2/select2.min.js"></script>
 <script src="~/Assets/js/chart.umd.min.js"></script>
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
@@ -334,6 +333,7 @@
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/comentarios-gestion.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-secciones.js")"></script>
 <script src="~/Assets/js/doc-visor.js"></script>
 <script src="~/Assets/js/bufins-markdown.js"></script>
 <script src="~/Assets/js/rango-atajos.js"></script>
@@ -631,7 +631,12 @@
         if (window.ComentariosGestion) ComentariosGestion.cargar({ idEmpresa: filtros.IdEmpresa || empresaSeleccionadaLN(), anio: r.AnioHasta, mes: r.MesHasta, claves: r.Lineas });
     }
 
-    // ===== Pestañas =====
+    // ---- Secciones del informe (títulos colapsables + barra; lo expandido es lo que se exporta) ----
+    var _lnSecc = null;
+    function seccionVisible(id) { return !_lnSecc || _lnSecc.visible(id); }
+    function seccionesParaServidor() { return _lnSecc ? (_lnSecc.visibles().join(',') || '-') : ''; }
+
+    // ===== Pestañas (ya no se muestran: las partes del informe son secciones apiladas) =====
     function activarTabLN(k) {
         _ln.tab = k;
         $('#lnTabs .ln-tab').each(function () { var on = $(this).data('tab') === k; $(this).toggleClass('is-active', on).attr('aria-selected', on ? 'true' : 'false'); });
@@ -641,7 +646,7 @@
     }
     // Imagen y PDF necesitan TODAS las secciones visibles a la vez (los gráficos se capturan por su tamaño real).
     function mostrarTodoLN(si) {
-        $('#lnResultado').toggleClass('ln-todo', si);
+        $('#lnResultado').addClass('ln-todo');   // las secciones siempre van apiladas (ya no hay pestañas)
         Object.keys(_ln.charts).forEach(function (c) { if (_ln.charts[c]) _ln.charts[c].resize(); });
     }
 
@@ -785,6 +790,8 @@
     function pintarVentasLN(r) {
         var V = _ln.t.venta, hay = !!r.HayLineasVenta && r.LineasVenta && r.LineasVenta.length > 0;
         $('#lnTabVentas').toggle(hay);
+        $('#lnVentas').toggleClass('sec-oculta', !hay);
+        if (_lnSecc) _lnSecc.disponible('ventas', hay);
         if (!hay) { if (_ln.tab === 'ventas') activarTabLN('resumen'); return; }
         var T = _ln.t, lineas = r.LineasVenta, conAnt = lineas.some(function (l) { return l.IngresosAnterior !== null && l.IngresosAnterior !== undefined; });
         var activas = lineas.filter(function (l) { return l.Ingresos !== 0; });
@@ -1038,7 +1045,13 @@
             xc += pildora(c.t, xc, y, c.fg || C.texto2, c.bg || C.suave, !!c.b) + 3;
         });
 
+        // Secciones expandidas (barra «Secciones»): el PDF lleva lo mismo que está en pantalla.
+        var paginaUsada = false;   // la primera página ya tiene contenido (más allá de la portada)
+        function paginaNueva(seccion) { if (!paginaUsada) { paginaUsada = true; return; } nuevaPagina(seccion); }
+
         y += 11;
+        if (seccionVisible('kpis')) {
+        paginaUsada = true;
         if (r.HayComparacionPYG) {
             var xb = M;
             [{ ok: r.CuadraIngresosPYG, txt: r.CuadraIngresosPYG ? T.cuadreIngresosOk : T.cuadreIngresosErrorFmt.replace('{0}', fmtNumVarLN(r.DiferenciaIngresosPYG)) },
@@ -1061,7 +1074,10 @@
             } else if (k.ref) { fuente('normal', 7, C.muted); pdf.text(k.ref, x + 4.5, y + 24); }
         });
         y += hK + 11;
+        }
 
+        if (seccionVisible('ia')) {
+        paginaUsada = true;
         tituloSeccion(P.insights, y, _ln.insightsTexto ? $('#lnInsightsMeta').text() : ''); y += 4;
         var sec = _ln.insightsTexto ? separarInsightsLN(_ln.insightsTexto) : null;
         if (sec) {
@@ -1083,9 +1099,10 @@
             fuente('italic', 8.5, C.texto2); pdf.text(pdf.splitTextToSize(_ln.insightsTexto ? limpiar(_ln.insightsTexto) : P.sinInsights, ANCHO - 10)[0], M + 5, y + 7.5);
             y += 12;
         }
+        }
 
         // Comentarios de gestión del período (si hay)
-        var coms = window.ComentariosGestion ? ComentariosGestion.ultimos() : [];
+        var coms = (seccionVisible('comentarios') && window.ComentariosGestion) ? ComentariosGestion.ultimos() : [];
         if (coms.length) {
             y += 9;
             if (y + 30 > LIMITE_Y) nuevaPagina(P.resumen);
@@ -1101,9 +1118,10 @@
         }
 
         // ===== Página 2: mezcla y márgenes =====
-        nuevaPagina(P.analisis);
-        var hA = (LIMITE_Y - y - 8) / 2, MMPX = 4;
-        [['mezcla', P.mezcla, $('#lnMezclaSub').text()], ['margenes', P.margenes, '']].forEach(function (g) {
+        var graficosPdf = [['mezcla', P.mezcla, $('#lnMezclaSub').text()], ['margenes', P.margenes, '']].filter(function (g) { return seccionVisible(g[0]); });
+        if (graficosPdf.length) paginaNueva(P.analisis);
+        var hA = Math.min(95, (LIMITE_Y - y - 8) / Math.max(1, graficosPdf.length)), MMPX = 4;
+        graficosPdf.forEach(function (g) {
             tarjeta(M, y, ANCHO, hA);
             fuente('bold', 10, C.texto); pdf.text(g[1], M + 5, y + 8);
             if (g[2]) { fuente('normal', 7.5, C.muted); pdf.text(g[2], M + 5, y + 12.5); }
@@ -1113,8 +1131,9 @@
         });
 
         // ===== Página 3+: estado de resultados por línea =====
-        nuevaPagina(P.estado);
-        fuente('normal', 7.5, C.muted); pdf.text(T.unidadBadge[_ln.unidad], W - M, 21, { align: 'right' });
+        if (seccionVisible('estado')) {
+        paginaNueva(P.estado);
+        fuente('normal', 7.5, C.muted); pdf.text(T.unidadBadge[_ln.unidad], W - M, pdf.internal.getCurrentPageInfo().pageNumber === 1 ? y - 3 : 21, { align: 'right' });
         var nombres = r.Lineas.concat([T.col.total]);
         var wLbl = 58, wCol = (ANCHO - wLbl) / nombres.length, tam = nombres.length > 7 ? 7 : 7.8, hF = 6.3, hG = 7;
         function cab() {
@@ -1140,10 +1159,11 @@
             rgb('setDrawColor', C.lineaSuave); pdf.setLineWidth(0.15); pdf.line(M, y + hF, M + ANCHO, y + hF);
             y += hF;
         });
+        }
 
         // ===== Página: análisis por línea de venta (torta + tabla) =====
-        if (r.HayLineasVenta && r.LineasVenta && r.LineasVenta.length) {
-            nuevaPagina(T.venta.pdfTitulo);
+        if (seccionVisible('ventas') && r.HayLineasVenta && r.LineasVenta && r.LineasVenta.length) {
+            paginaNueva(T.venta.pdfTitulo);
             var lv = r.LineasVenta, wPie = 92, hPie = 92;
             tarjeta(M, y, wPie + 10, hPie + 12);
             fuente('bold', 10, C.texto); pdf.text(T.venta.pdfTitulo, M + 5, y + 8);
@@ -1220,11 +1240,25 @@
         $('#lnPregunta').on('keydown', function (e) { if (e.which === 13) { e.preventDefault(); preguntarLN(); } });
 
         ComentariosGestion.montar({ raiz: '#lnComentarios', informe: 'LineasNegocio' });
+        _lnSecc = InformeSecciones.montar({
+            barra: '#lnSecBarra', clave: 'lineasNegocio', textos: SEC_CFG.barra,
+            secciones: [
+                { id: 'kpis', icono: 'fa-gauge-high', cab: '#lnSecKpis .pyg2-section-title', cuerpo: ['#lnCuadreStrip', '#lnKpiStrip'] },
+                { id: 'mezcla', icono: 'fa-chart-pie', cab: '#lnSecMezclaCab .pyg2-section-title', cuerpo: ['#lnSecMezcla'] },
+                { id: 'margenes', icono: 'fa-percent', cab: '#lnSecMargenes .pyg2-section-title', cuerpo: ['#lnSecMargenes .ln-margenes-card'] },
+                { id: 'estado', icono: 'fa-table', cab: '#lnSecEstadoCab .pyg2-section-title', cuerpo: ['#lnSecEstado', '#lnNotaCostosPyg', '#lnNotaSinAnterior'] },
+                { id: 'resumen', icono: 'fa-list', cab: '#lnSecResumenCab .pyg2-section-title', cuerpo: ['#lnSecResumen', '#lnNotaMetodo'] },
+                { id: 'ventas', icono: 'fa-tags', cab: '#lnVentas > .pyg2-section .pyg2-section-title', cuerpo: ['#lnVentaSub', '#lnVentaKpis', '#lnVentas > :not(.pyg2-section)'] },
+                { id: 'comentarios', icono: 'fa-comments', cab: '#lnSecComCab .pyg2-section-title', cuerpo: ['#lnComentarios'] },
+                { id: 'ia', icono: 'fa-wand-magic-sparkles', cab: '#lnSecIaCab .pyg2-section-title', cuerpo: ['#lnSecIa'] }
+            ]
+        });
+        _lnSecc.disponible('ia', $('#lnSecIa').length > 0);
 
         var correoLN = ExportMenu.correo({
             url: '@Url.Action("EnviarPorCorreo", "InformeLineasNegocio")',
             token: function () { return _ln.token; },
-            datos: function () { return $.extend({}, _ln.filtrosConsultados); },
+            datos: function () { return $.extend({}, _ln.filtrosConsultados, { Secciones: seccionesParaServidor() }); },
             pdf: function () { var d = construirPdfLN(_ln.reporteActual); return d ? d.output('datauristring') : ''; },
             pills: function () { return [$('#lnTituloEmpresa').text()].concat($('#lnPanelResultado .pyg2-chip').map(function () { return $(this).text(); }).get()); },
             textos: EXP_T

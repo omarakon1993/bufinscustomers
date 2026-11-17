@@ -452,6 +452,17 @@ namespace bufinscustomers.Controllers
                     ws5.SheetView.Freeze(1 + o, 1);
                 }
 
+                // Solo las hojas de las secciones que el usuario tiene expandidas (sin filtro = todas):
+                // Resumen ← indicadores o resumen por línea · Estado ← estado de resultados por línea · Mezcla ← mezcla o márgenes · Ventas ← línea de venta.
+                bool Inc(string id) { return SeccionesInforme.Incluye(filtros.Secciones, id); }
+                var quitar = new List<string>();
+                if (!(Inc("kpis") || Inc("resumen"))) quitar.Add(R("LN_ExcelHojaResumen"));
+                if (!Inc("estado")) quitar.Add(R("LN_ExcelHojaEstado"));
+                if (!(Inc("mezcla") || Inc("margenes"))) quitar.Add(R("LN_ExcelHojaMezcla"));
+                if (!Inc("ventas")) { quitar.Add(R("LN_ExcelHojaVentas")); quitar.Add(R("LN_ExcelHojaMezclaVentas")); }
+                if (quitar.Count(n => wb.Worksheets.Contains(n)) >= wb.Worksheets.Count) quitar.Remove(R("LN_ExcelHojaResumen"));
+                foreach (var nombre in quitar) { IXLWorksheet hojaQuitar; if (wb.Worksheets.TryGetWorksheet(nombre, out hojaQuitar)) wb.Worksheets.Delete(nombre); }
+
                 if (logo != null) ExcelLogoHelper.ColocarEnTodas(wb, logo);
 
                 nombreArchivo = $"LineasNegocio_{nombreEmpresa}_{r.AnioHasta}{r.MesHasta:00}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";

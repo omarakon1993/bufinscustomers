@@ -17,6 +17,7 @@
 <link href="~/Assets/css/informe-balance.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-gerencia-mensual.css")" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-secciones.css")" rel="stylesheet" />
 <link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
@@ -126,12 +127,16 @@
             <div id="gmExpCampos"></div>
         </form>
 
+        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta) *@
+        <div id="gmSecBarra"></div>
+
         @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
         {
-        <div class="pyg-insights-card">
+        <div class="pyg2-section sec-bloque-cab" id="gmSecIaCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.GM_InsightsTitulo</span><span class="line"></span></div></div>
+        <div class="pyg-insights-card" id="gmSecIa">
             <div class="pyg-insights-head">
                 <div>
-                    <span class="pyg-insights-title"><i class="fas fa-wand-magic-sparkles"></i>@Resources.Strings.GM_InsightsTitulo</span>
+                    <span class="pyg-insights-title sec-dup"><i class="fas fa-wand-magic-sparkles"></i>@Resources.Strings.GM_InsightsTitulo</span>
                     <div class="pyg-insights-meta" id="gmInsightsMeta">@Resources.Strings.GM_InsightsSub</div>
                 </div>
                 <button type="button" id="btnGenerarInsightsGM" class="pyg2-ins-btn"><i class="fas fa-wand-magic-sparkles"></i><span>@Resources.Strings.BAL_Generar</span></button>
@@ -158,7 +163,8 @@
             <div class="gm-grid3" id="gmResultadosGrid"></div>
         </div>
 
-        <div class="gm-grid2">
+        <div class="pyg2-section sec-bloque-cab" id="gmSecBalanceCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.CO_SecBalanceCaja</span><span class="line"></span></div></div>
+        <div class="gm-grid2" id="gmSecBalanceCaja">
             <div class="pyg2-card" id="gmSecBalance">
                 <div class="pyg2-card-head"><div><div class="pyg2-card-title"><i class="fas fa-scale-balanced"></i>@Resources.Strings.GM_SecBalance</div>
                     <div class="pyg2-card-sub" id="gmBalanceSub">&mdash;</div></div></div>
@@ -171,7 +177,8 @@
             </div>
         </div>
 
-        <div class="gm-grid2">
+        <div class="pyg2-section sec-bloque-cab" id="gmSecFocoCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Sec_GmFoco</span><span class="line"></span></div></div>
+        <div class="gm-grid2" id="gmSecFoco">
             <div class="pyg2-card" id="gmSecIndicadores">
                 <div class="pyg2-card-head"><div><div class="pyg2-card-title"><i class="fas fa-traffic-light"></i>@Resources.Strings.GM_AtencionTitulo</div>
                     <div class="pyg2-card-sub">@Resources.Strings.GM_AtencionSub</div></div></div>
@@ -185,6 +192,7 @@
             </div>
         </div>
 
+        <div class="pyg2-section sec-bloque-cab" id="gmSecComCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Com_Titulo</span><span class="line"></span></div></div>
         @await Html.PartialAsync("_ComentariosGestion", "gmComentarios")
     </div>
 
@@ -202,6 +210,7 @@
 @await Html.PartialAsync("_DocumentacionVisor", Resources.Strings.GM_Doc_ModalTitulo)
 
 @section scripts {
+@await Html.PartialAsync("_SeccionesConfig")
 <script src="~/Assets/js/select2/select2.min.js"></script>
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
 <script src="~/Assets/js/bufins-pdf-marca.js"></script>
@@ -210,6 +219,7 @@
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/comentarios-gestion.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-secciones.js")"></script>
 <script src="~/Assets/js/doc-visor.js"></script>
 <script src="~/Assets/js/bufins-markdown.js"></script>
 
@@ -221,6 +231,11 @@
         valMaximo: '@Html.Raw(J(Resources.Strings.RevisarCargue_Correo_ValMaximo))', enviando: '@Html.Raw(J(Resources.Strings.RevisarCargue_Correo_Enviando))',
         error: '@Html.Raw(J(Resources.Strings.Common_ExpCorreo_Error))', exitoTitulo: '@Html.Raw(J(Resources.Strings.Modelo_Correo_ExitoTitulo))', aceptar: '@Html.Raw(J(Resources.Strings.Common_Aceptar))'
     };
+
+    // ---- Secciones del informe (títulos colapsables + barra; lo expandido es lo que se exporta) ----
+    var _gmSecc = null;
+    function seccionVisible(id) { return !_gmSecc || _gmSecc.visible(id); }
+    function seccionesParaServidor() { return _gmSecc ? (_gmSecc.visibles().join(',') || '-') : ''; }
 
     var _gm = {
         urls: {
@@ -580,7 +595,12 @@
         });
         y += 10;
 
+        // Secciones expandidas (barra «Secciones»): el PDF lleva lo mismo que está en pantalla.
+        var paginaUsada = false;   // la primera página ya tiene contenido (más allá de la portada)
+
         // Resumen con IA
+        if (seccionVisible('ia')) {
+        paginaUsada = true;
         tituloSeccion(P.insights, y); y += 4;
         var sec = _gm.insightsTexto ? separarInsightsGM(_gm.insightsTexto) : null;
         if (sec) {
@@ -600,8 +620,11 @@
             fuente('italic', 8.5, C.texto2); pdf.text(_gm.insightsTexto ? pdf.splitTextToSize(limpiar(_gm.insightsTexto), ANCHO)[0] : P.sinInsights, M, y + 3); y += 10;
         }
 
+        }
+
         // Resultados
-        if (r.HayResultados) {
+        if (seccionVisible('resultados') && r.HayResultados) {
+            paginaUsada = true;
             tituloSeccion($('#gmSecResultados .t').text(), y); y += 4;
             var nR = r.Resultados.length, gapR = 5, wR = (ANCHO - gapR * (nR - 1)) / nR, hR = 38;
             r.Resultados.forEach(function (c, i) {
@@ -618,6 +641,8 @@
         }
 
         // Balance y caja lado a lado
+        if (seccionVisible('balance')) {
+        paginaUsada = true;
         var mitad = (ANCHO - 6) / 2;
         function bloque(x, titulo, filas) {
             tituloSeccion(titulo, y, x, mitad);
@@ -642,9 +667,11 @@
         var y1 = bloque(M, $('#gmSecBalance .pyg2-card-title').text(), filasBal);
         var y2 = bloque(M + mitad + 6, $('#gmSecCaja .pyg2-card-title').text(), filasCaja);
         y = Math.max(y1, y2) + 4;
+        }
 
         // Página 2: indicadores, líneas, comentarios
-        pdf.addPage(); encabezadoPagina();
+        if (seccionVisible('foco') || seccionVisible('comentarios')) { if (paginaUsada) { pdf.addPage(); encabezadoPagina(); } paginaUsada = true; }
+        if (seccionVisible('foco')) {
         tituloSeccion(P.atencion, y); y += 6;
         if (r.HayIndicadores) {
             var xs = M;
@@ -677,7 +704,9 @@
             y += 6;
         }
 
-        var coms = window.ComentariosGestion ? ComentariosGestion.ultimos() : [];
+        }
+
+        var coms = (seccionVisible('comentarios') && window.ComentariosGestion) ? ComentariosGestion.ultimos() : [];
         if (coms.length) {
             tituloSeccion(P.comentarios, y); y += 5;
             coms.slice(0, 6).forEach(function (c) {
@@ -714,7 +743,8 @@
         function exportarExcelGM() {
             if (!_gm.filtrosConsultados) return;
             var $c = $('#gmExpCampos').empty();
-            Object.keys(_gm.filtrosConsultados).forEach(function (k) { $c.append($('<input type="hidden">').attr('name', k).val(_gm.filtrosConsultados[k] == null ? '' : _gm.filtrosConsultados[k])); });
+            var campos = $.extend({}, _gm.filtrosConsultados, { Secciones: seccionesParaServidor() });
+            Object.keys(campos).forEach(function (k) { $c.append($('<input type="hidden">').attr('name', k).val(campos[k] == null ? '' : campos[k])); });
             $('#frmExportarExcelGM').submit();
         }
 
@@ -727,11 +757,22 @@
 
         // En este informe se listan los comentarios de TODOS los informes del cierre; los nuevos quedan como «Informe mensual de gerencia».
         ComentariosGestion.montar({ raiz: '#gmComentarios', informe: 'GerenciaMensual', todos: true });
+        _gmSecc = InformeSecciones.montar({
+            barra: '#gmSecBarra', clave: 'gerenciaMensual', textos: SEC_CFG.barra,
+            secciones: [
+                { id: 'ia', icono: 'fa-wand-magic-sparkles', cab: '#gmSecIaCab .pyg2-section-title', cuerpo: ['#gmSecIa'] },
+                { id: 'resultados', icono: 'fa-gauge-high', cab: '#gmSecResultados .pyg2-section-title', cuerpo: ['#gmResultadosGrid'] },
+                { id: 'balance', icono: 'fa-scale-balanced', cab: '#gmSecBalanceCab .pyg2-section-title', cuerpo: ['#gmSecBalanceCaja'] },
+                { id: 'foco', icono: 'fa-traffic-light', cab: '#gmSecFocoCab .pyg2-section-title', cuerpo: ['#gmSecFoco'] },
+                { id: 'comentarios', icono: 'fa-comments', cab: '#gmSecComCab .pyg2-section-title', cuerpo: ['#gmComentarios'] }
+            ]
+        });
+        _gmSecc.disponible('ia', $('#gmSecIa').length > 0);
 
         var correoGM = ExportMenu.correo({
             url: '@Url.Action("EnviarPorCorreo", "InformeGerenciaMensual")',
             token: function () { return _gm.token; },
-            datos: function () { return $.extend({}, _gm.filtrosConsultados); },
+            datos: function () { return $.extend({}, _gm.filtrosConsultados, { Secciones: seccionesParaServidor() }); },
             pdf: function () { var d = construirPdfGM(_gm.reporteActual); return d ? d.output('datauristring') : ''; },
             pills: function () { return [$('#gmTituloEmpresa').text()].concat($('#gmPanelResultado .pyg2-chip').map(function () { return $(this).text(); }).get()); },
             textos: EXP_T

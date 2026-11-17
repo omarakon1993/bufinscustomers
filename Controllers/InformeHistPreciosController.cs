@@ -100,7 +100,7 @@ namespace bufinscustomers.Controllers
                 }
 
                 string empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
-                byte[] bytes = GenerarExcel(reporte, empresa, filtros.IdEmpresa, ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA));
+                byte[] bytes = GenerarExcel(reporte, empresa, filtros.IdEmpresa, ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA), filtros.Secciones);
 
                 return File(bytes, MimeExcel, NombreArchivo(empresa, "xlsx"));
             }
@@ -141,7 +141,7 @@ namespace bufinscustomers.Controllers
                 string escenario = EscenarioCacheHelper.ObtenerEscenariosCacheados()
                     .FirstOrDefault(e => e.Id == filtros.IdEscenario)?.Nombre ?? ("#" + filtros.IdEscenario);
 
-                var adjuntos = InformeCorreoHelper.Adjuntos(NombreArchivo(empresa, "xlsx"), GenerarExcel(reporte, empresa, filtros.IdEmpresa, ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA)),
+                var adjuntos = InformeCorreoHelper.Adjuntos(NombreArchivo(empresa, "xlsx"), GenerarExcel(reporte, empresa, filtros.IdEmpresa, ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA), filtros.Secciones),
                     InformeCorreoHelper.PdfDesdeBase64(pdfBase64));
 
                 ResumenParaCorreo(reporte, out string periodoUltimo, out var kpis, out var filas);
@@ -244,7 +244,7 @@ namespace bufinscustomers.Controllers
         // ---------- Excel ----------
 
         /// <summary>Libro de Excel del informe (3 hojas, cada una con su gráfico nativo): lo usan la descarga y el correo.</summary>
-        private byte[] GenerarExcel(HpReporte reporte, string empresa, int idEmpresa, TemaInforme tema)
+        private byte[] GenerarExcel(HpReporte reporte, string empresa, int idEmpresa, TemaInforme tema, string secciones)
         {
             var etiquetas = reporte.Periodos.Select(p => EtiquetaPeriodo(p, reporte.Agrupar)).ToList();
             string hojaPrecios = R("HP_XlsHojaPrecios"), hojaVar = R("HP_XlsHojaVariacion"), hojaProm = R("HP_XlsHojaPromedio");
@@ -304,6 +304,14 @@ namespace bufinscustomers.Controllers
                 EstiloTabla(wp, filaEnc, filaEnc + etiquetas.Count, 3, tema);
 
                 // Logo de la empresa (si tiene) junto al título de cada hoja; sin logo el libro queda igual que siempre.
+                // Solo las hojas de las secciones que el usuario tiene expandidas (sin filtro = todas). Si no quedara ninguna, se conservan los precios.
+                var quitar = new List<string>();
+                if (!SeccionesInforme.Incluye(secciones, "precios")) quitar.Add(hojaPrecios);
+                if (!SeccionesInforme.Incluye(secciones, "variacion")) quitar.Add(hojaVar);
+                if (!(SeccionesInforme.Incluye(secciones, "promedio") || SeccionesInforme.Incluye(secciones, "evolucion"))) quitar.Add(hojaProm);
+                if (quitar.Count >= wb.Worksheets.Count) quitar.Remove(hojaPrecios);
+                foreach (var nombre in quitar) { IXLWorksheet hojaQuitar; if (wb.Worksheets.TryGetWorksheet(nombre, out hojaQuitar)) wb.Worksheets.Delete(nombre); }
+
                 ExcelLogoHelper.ColocarEnTodas(wb, ExcelLogoHelper.Obtener(idEmpresa));
                 using (var ms = new MemoryStream()) { wb.SaveAs(ms); bytes = ms.ToArray(); }
 

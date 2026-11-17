@@ -12,6 +12,7 @@
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-pyg.css")" rel="stylesheet" />
 <link href="~/Assets/css/informe-balance.css" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-secciones.css")" rel="stylesheet" />
 <link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
@@ -213,19 +214,21 @@
             <div id="balExpCampos"></div>@* los llena el botón Excel con los filtros del reporte consultado *@
         </form>
 
-        @* 2. Chequeo de cuadre *@
-        <div class="bal-cuadre-strip" id="balCuadreStrip"></div>
+        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta) *@
+        <div id="balSecBarra"></div>
 
-        @* 3. KPIs *@
-        <div class="pyg2-section">
+        @* 2-3. Indicadores clave (con el chequeo de cuadre) *@
+        <div class="pyg2-section" id="balSecKpis">
             <div class="pyg2-section-title">
                 <span class="t">@Resources.Strings.BAL_V2_IndicadoresClave</span><span class="line"></span>
             </div>
+            <div class="bal-cuadre-strip" id="balCuadreStrip"></div>
             <div class="pyg2-kpis" id="balKpiStrip"></div>
         </div>
 
         @* 4. Estructura + Lo más relevante *@
-        <div class="pyg2-analysis">
+        <div class="pyg2-section sec-bloque-cab" id="balSecEstructuraCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Sec_BalEstructura</span><span class="line"></span></div></div>
+        <div class="pyg2-analysis" id="balSecEstructura">
             <div class="pyg2-card">
                 <div class="pyg2-card-head">
                     <div>
@@ -246,7 +249,7 @@
         </div>
 
         @* 5. Tendencias *@
-        <div class="pyg2-section">
+        <div class="pyg2-section" id="balSecTend">
             <div class="pyg2-section-title">
                 <span class="t"><span id="balTendTitulo">@Resources.Strings.BAL_TendenciaTitulo</span> <span id="balTendAnio"></span></span><span class="line"></span>
                 <span class="pyg2-legend">
@@ -281,10 +284,11 @@
         </div>
 
         @* 6. Tabla detallada *@
-        <div class="pyg2-table-card">
+        <div class="pyg2-section sec-bloque-cab" id="balSecTablaCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.BAL_TablaTitulo</span><span class="line"></span></div></div>
+        <div class="pyg2-table-card" id="balSecTabla">
             <div class="pyg2-card-head" style="align-items:center">
                 <div>
-                    <div class="pyg2-card-title">@Resources.Strings.BAL_TablaTitulo</div>
+                    <div class="pyg2-card-title sec-dup">@Resources.Strings.BAL_TablaTitulo</div>
                     <div class="pyg2-card-sub" id="balInfoBadge">@Resources.Strings.BAL_UnidadMillones</div>
                 </div>
             </div>
@@ -301,14 +305,16 @@
         <p class="lt-help" id="balNotaEscenario" style="display:none;"></p>
 
         @* Insights gerenciales (IA): se ocultan si la empresa tiene la IA apagada *@
+        <div class="pyg2-section sec-bloque-cab" id="balSecComCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Com_Titulo</span><span class="line"></span></div></div>
         @await Html.PartialAsync("_ComentariosGestion", "balComentarios")
 
         @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
         {
-        <div class="pyg-insights-card">
+        <div class="pyg2-section sec-bloque-cab" id="balSecIaCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.BAL_InsightsTitulo</span><span class="line"></span></div></div>
+        <div class="pyg-insights-card" id="balSecIa">
             <div class="pyg-insights-head">
                 <div>
-                    <span class="pyg-insights-title"><i class="fas fa-wand-magic-sparkles"></i>@Resources.Strings.BAL_InsightsTitulo</span>
+                    <span class="pyg-insights-title sec-dup"><i class="fas fa-wand-magic-sparkles"></i>@Resources.Strings.BAL_InsightsTitulo</span>
                     <div class="pyg-insights-meta" id="balInsightsMeta">@Resources.Strings.BAL_InsightsSub</div>
                 </div>
                 <button type="button" id="btnGenerarInsightsBAL" class="pyg2-ins-btn"><i class="fas fa-wand-magic-sparkles"></i><span>@Resources.Strings.BAL_Generar</span></button>
@@ -346,6 +352,7 @@
 @await Html.PartialAsync("_DocumentacionVisor", Resources.Strings.BAL_Doc_ModalTitulo)
 
 @section scripts {
+@await Html.PartialAsync("_SeccionesConfig")
 <script src="~/Assets/js/select2/select2.min.js"></script>
 <script src="~/Assets/js/chart.umd.min.js"></script>
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
@@ -355,6 +362,7 @@
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/comentarios-gestion.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-secciones.js")"></script>
 <script src="~/Assets/js/doc-visor.js"></script>
 <script src="~/Assets/js/bufins-markdown.js"></script>
 <script src="~/Assets/js/rango-atajos.js"></script>
@@ -856,6 +864,10 @@
         });
     }
 
+    // ---- Secciones del informe (títulos colapsables + barra; lo expandido es lo que se exporta) ----
+    var _balSecc = null;
+    function seccionVisible(id) { return !_balSecc || _balSecc.visible(id); }
+
     function pintarReporteBAL(reporte, filtros) {
         _bal.reporteActual = reporte;
         _bal.filtrosConsultados = filtros;
@@ -876,6 +888,7 @@
         var variosAnios = reporte.AnioDesde !== reporte.AnioHasta;
         $('#balTendAnio').text(variosAnios ? (reporte.AnioDesde + ' ' + CH_NDASH_BAL + ' ' + reporte.AnioHasta) : reporte.AnioHasta);
         $('#balTendTitulo').text(_bal.textos.tendenciaTitulos[reporte.Agrupar] || _bal.textos.tendenciaTitulos.Mes);
+        if (_balSecc) _balSecc.refrescarTitulos();
         $('#balEstructuraSub').text(v2.estructuraSubFmt.replace('{0}', etiquetaCorte(reporte)));
         $('#balRelevanteSub').text(v2.relevanteSubFmt.replace('{0}', compNombreFrase(reporte)));
         $('#balLeyendaEscNombre').text(escenarioCompNombre(reporte));
@@ -1496,8 +1509,14 @@
             xc += pildora(c.t, xc, y, c.fg || C.texto2, c.bg || C.suave, !!c.b) + 3;
         });
 
-        // Cuadre
+        // Secciones expandidas (barra «Secciones»): el PDF lleva lo mismo que está en pantalla.
+        var paginaUsada = false;   // la primera página ya tiene contenido (más allá de la portada)
+        function paginaNueva(seccion) { if (!paginaUsada) { paginaUsada = true; return; } nuevaPagina(seccion); }
+
+        // Cuadre + indicadores clave
         y += 11;
+        if (seccionVisible('kpis')) {
+        paginaUsada = true;
         tituloSeccion(T.cuadre.titulo, y);
         y += 4;
         var badgesCuadre = [{ ok: r.CuadraBalance, txt: r.CuadraBalance ? T.cuadre.ok : T.cuadre.errorFmt.replace('{0}', fmtNumVarBAL(r.DiferenciaCuadre)) }];
@@ -1529,8 +1548,11 @@
             }
         });
         y += hK + 11;
+        }
 
         // Insights
+        if (seccionVisible('ia')) {
+        paginaUsada = true;
         var metaInsights = _bal.insightsTexto ? $('#balInsightsMeta').text() : '';
         tituloSeccion(P.insightsTitulo, y, metaInsights);
         y += 4;
@@ -1580,10 +1602,12 @@
             pdf.text(pdf.splitTextToSize(P.sinInsights, ANCHO - 10), M + 5, y + 7.5);
             y += 12;
         }
+        }
 
         // Lo más relevante
-        var top = datosDestacadosBAL(r);
+        var top = seccionVisible('estructura') ? datosDestacadosBAL(r) : [];
         if (top.length) {
+            paginaUsada = true;
             var v2b = T.v2;
             var hRel = 27;
             if (y + 15 + hRel > LIMITE_Y) nuevaPagina(P.resumen); else y += 11;
@@ -1612,9 +1636,10 @@
         }
 
         // ===== PÁGINA 2 — Análisis: estructura + tendencias =====
-        nuevaPagina(P.analisis);
+        if (seccionVisible('estructura') || seccionVisible('tendencia')) paginaNueva(P.analisis);
         var hA = 80, MM_A_PX = 4;
 
+        if (seccionVisible('estructura')) {
         tarjeta(M, y, ANCHO, hA);
         fuente('bold', 10, C.texto);
         pdf.text(P.estructuraTitulo, M + 5, y + 8);
@@ -1623,7 +1648,9 @@
         var wImgC = ANCHO - 10, hImgC = hA - 21;
         imagenAjustada(capturarChartPdfBAL(_bal.charts['balChartEstructura'], wImgC * MM_A_PX, hImgC * MM_A_PX), M + 5, y + 17, wImgC, hImgC);
         y += hA + 11;
+        }
 
+        if (seccionVisible('tendencia')) {
         tituloSeccion($('#balTendTitulo').text() + ' ' + $('#balTendAnio').text(), y);
         y += 4;
         var gapTd = 5, wTd = (ANCHO - gapTd * 2) / 3, wImgT = wTd - 6;
@@ -1642,11 +1669,13 @@
             }
             imagenAjustada(capturarChartPdfBAL(_bal.charts['balChart' + codigo], wImgT * MM_A_PX, hImgT * MM_A_PX), x + 3, y + 17, wImgT, hImgT);
         });
+        }
 
         // ===== PÁGINA 3+ — Balance detallado =====
-        nuevaPagina(P.tablaTitulo);
+        if (seccionVisible('tabla')) {
+        paginaNueva(P.tablaTitulo);
         fuente('normal', 7.5, C.muted);
-        pdf.text(T.unidadBadge[_bal.unidad], W - M, 21, { align: 'right' });
+        pdf.text(T.unidadBadge[_bal.unidad], W - M, pdf.internal.getCurrentPageInfo().pageNumber === 1 ? y - 3 : 21, { align: 'right' });
 
         var conEsc = !!r.HayEscenarioComparar;
         var cols = [
@@ -1733,6 +1762,19 @@
             pdf.text(l.t, xLey + 3, y);
             xLey += ancho(l.t) + 9;
         });
+        }
+
+        // Comentarios de gestión (si la sección está expandida)
+        var comsPdf = (seccionVisible('comentarios') && window.ComentariosGestion) ? ComentariosGestion.ultimos() : [];
+        if (comsPdf.length) {
+            paginaNueva($('#balSecComCab .t').text());
+            comsPdf.slice(0, 8).forEach(function (c) {
+                fuente('normal', 8.2, C.texto2);
+                var lins = pdf.splitTextToSize(limpiar(((c.Clave ? c.Clave + ': ' : '') + c.Texto) + '  - ' + c.NombreUsuario), ANCHO - 10).slice(0, 3), hC2 = lins.length * 4 + 5;
+                if (y + hC2 > LIMITE_Y) nuevaPagina('');
+                tarjeta(M, y, ANCHO, hC2); pdf.text(lins, M + 5, y + 6, { lineHeightFactor: 1.3 }); y += hC2 + 2;
+            });
+        }
 
         var totalPags = pdf.internal.getNumberOfPages();
         for (var p = 1; p <= totalPags; p++) {
@@ -1754,6 +1796,18 @@
 
     $(document).ready(function () {
         ComentariosGestion.montar({ raiz: '#balComentarios', informe: 'Balance' });
+        _balSecc = InformeSecciones.montar({
+            barra: '#balSecBarra', clave: 'balance', textos: SEC_CFG.barra,
+            secciones: [
+                { id: 'kpis', icono: 'fa-gauge-high', cab: '#balSecKpis .pyg2-section-title', cuerpo: ['#balCuadreStrip', '#balKpiStrip'] },
+                { id: 'estructura', icono: 'fa-bolt', cab: '#balSecEstructuraCab .pyg2-section-title', cuerpo: ['#balSecEstructura'] },
+                { id: 'tendencia', icono: 'fa-chart-line', cab: '#balSecTend .pyg2-section-title', cuerpo: ['#balSecTend .pyg2-trends'] },
+                { id: 'tabla', icono: 'fa-table', cab: '#balSecTablaCab .pyg2-section-title', cuerpo: ['#balSecTabla', '#balNotaSinComparativo', '#balNotaEscenario'] },
+                { id: 'comentarios', icono: 'fa-comments', cab: '#balSecComCab .pyg2-section-title', cuerpo: ['#balComentarios'] },
+                { id: 'ia', icono: 'fa-wand-magic-sparkles', cab: '#balSecIaCab .pyg2-section-title', cuerpo: ['#balSecIa'] }
+            ]
+        });
+        _balSecc.disponible('ia', $('#balSecIa').length > 0);
         _bal.escenarios = $('#balEscenario option').map(function () {
             return { id: Number(this.value), nombre: $(this).text() };
         }).get().filter(function (e) { return e.id > 0; });

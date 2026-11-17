@@ -15,6 +15,7 @@
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-pyg.css")" rel="stylesheet" />
 <link href="~/Assets/css/informe-tesoreria.css" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-secciones.css")" rel="stylesheet" />
 <link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
@@ -201,21 +202,24 @@
             <div id="tesExpCampos"></div>@* los llena el botón Excel con los filtros del reporte consultado *@
         </form>
 
-        @* 2. Estado de la caja + KPIs *@
-        <div class="tes-estado" id="tesEstado">
-            <span class="ic"><i class="fas fa-circle-check"></i></span>
-            <div class="tx"><span class="t" id="tesEstadoTitulo">&mdash;</span><span class="s" id="tesEstadoDesc">&mdash;</span></div>
-        </div>
+        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta) *@
+        <div id="tesSecBarra"></div>
 
-        <div class="pyg2-section">
+        @* 2. Indicadores clave (con el estado de la caja) *@
+        <div class="pyg2-section" id="tesSecKpis">
             <div class="pyg2-section-title">
                 <span class="t">@T("TesPpto_IndicadoresClave")</span><span class="line"></span>
+            </div>
+            <div class="tes-estado" id="tesEstado">
+                <span class="ic"><i class="fas fa-circle-check"></i></span>
+                <div class="tx"><span class="t" id="tesEstadoTitulo">&mdash;</span><span class="s" id="tesEstadoDesc">&mdash;</span></div>
             </div>
             <div class="tes-kpis" id="tesKpiStrip"></div>
         </div>
 
         @* 3. Caja mensual (barras + acumulada) + Lo más relevante *@
-        <div class="pyg2-analysis">
+        <div class="pyg2-section sec-bloque-cab" id="tesSecMensualCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Sec_TesMensual</span><span class="line"></span></div></div>
+        <div class="pyg2-analysis" id="tesSecMensual">
             <div class="pyg2-card">
                 <div class="pyg2-card-head">
                     <div>
@@ -243,10 +247,11 @@
         </div>
 
         @* 4. Puente de caja *@
-        <div class="pyg2-card" style="margin-bottom:16px">
+        <div class="pyg2-section sec-bloque-cab" id="tesSecPuenteCab"><div class="pyg2-section-title"><span class="t">@T("TesPpto_CascadaTitulo")</span><span class="line"></span></div></div>
+        <div class="pyg2-card" style="margin-bottom:16px" id="tesSecPuente">
             <div class="pyg2-card-head">
                 <div>
-                    <div class="pyg2-card-title">@T("TesPpto_CascadaTitulo")</div>
+                    <div class="pyg2-card-title sec-dup">@T("TesPpto_CascadaTitulo")</div>
                     <div class="pyg2-card-sub" id="tesCascadaSub">&mdash;</div>
                 </div>
                 <span class="pyg2-legend">
@@ -260,10 +265,11 @@
         </div>
 
         @* 5. Mapa de caja mensual *@
-        <div class="pyg2-card" style="margin-bottom:16px">
+        <div class="pyg2-section sec-bloque-cab" id="tesSecMapaCab"><div class="pyg2-section-title"><span class="t">@T("TesPpto_HeatTitulo")</span><span class="line"></span></div></div>
+        <div class="pyg2-card" style="margin-bottom:16px" id="tesSecMapa">
             <div class="pyg2-card-head">
                 <div>
-                    <div class="pyg2-card-title">@T("TesPpto_HeatTitulo")</div>
+                    <div class="pyg2-card-title sec-dup">@T("TesPpto_HeatTitulo")</div>
                     <div class="pyg2-card-sub" id="tesHeatSub">&mdash;</div>
                 </div>
             </div>
@@ -276,10 +282,11 @@
         </div>
 
         @* 6. Tabla por mes *@
-        <div class="pyg2-table-card">
+        <div class="pyg2-section sec-bloque-cab" id="tesSecTablaCab"><div class="pyg2-section-title"><span class="t">@T("TesPpto_TablaTitulo")</span><span class="line"></span></div></div>
+        <div class="pyg2-table-card" id="tesSecTabla">
             <div class="pyg2-card-head" style="align-items:center">
                 <div>
-                    <div class="pyg2-card-title">@T("TesPpto_TablaTitulo")</div>
+                    <div class="pyg2-card-title sec-dup">@T("TesPpto_TablaTitulo")</div>
                     <div class="pyg2-card-sub" id="tesInfoBadge">&mdash;</div>
                 </div>
                 <div class="pyg2-table-tools">
@@ -302,14 +309,16 @@
         <p class="lt-help" id="tesNotaEscenario" style="display:none;"></p>
 
         @* Insights gerenciales (IA): se ocultan si la empresa tiene la IA apagada *@
+        <div class="pyg2-section sec-bloque-cab" id="tesSecComCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Com_Titulo</span><span class="line"></span></div></div>
         @await Html.PartialAsync("_ComentariosGestion", "tesComentarios")
 
         @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
         {
-        <div class="pyg-insights-card">
+        <div class="pyg2-section sec-bloque-cab" id="tesSecIaCab"><div class="pyg2-section-title"><span class="t">@T("TesPpto_InsightsTitulo")</span><span class="line"></span></div></div>
+        <div class="pyg-insights-card" id="tesSecIa">
             <div class="pyg-insights-head">
                 <div>
-                    <span class="pyg-insights-title"><i class="fas fa-wand-magic-sparkles"></i>@T("TesPpto_InsightsTitulo")</span>
+                    <span class="pyg-insights-title sec-dup"><i class="fas fa-wand-magic-sparkles"></i>@T("TesPpto_InsightsTitulo")</span>
                     <div class="pyg-insights-meta" id="tesInsightsMeta">@T("TesPpto_InsightsSub")</div>
                 </div>
                 <button type="button" id="btnGenerarInsightsTes" class="pyg2-ins-btn"><i class="fas fa-wand-magic-sparkles"></i><span>@T("TesPpto_Generar")</span></button>
@@ -347,6 +356,7 @@
 @await Html.PartialAsync("_DocumentacionVisor", Resources.Strings.TesPpto_Doc_ModalTitulo)
 
 @section scripts {
+@await Html.PartialAsync("_SeccionesConfig")
 <script src="~/Assets/js/select2/select2.min.js"></script>
 <script src="~/Assets/js/chart.umd.min.js"></script>
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
@@ -356,6 +366,7 @@
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/comentarios-gestion.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-secciones.js")"></script>
 <script src="~/Assets/js/doc-visor.js"></script>
 <script src="~/Assets/js/bufins-markdown.js"></script>
 <script src="~/Assets/js/rango-atajos.js"></script>
@@ -1262,8 +1273,13 @@
     }
 
     // ===== Exportar: Excel / PDF / imagen / correo =====
+    // ---- Secciones del informe (títulos colapsables + barra; lo expandido es lo que se exporta) ----
+    var _tesSecc = null;
+    function seccionVisible(id) { return !_tesSecc || _tesSecc.visible(id); }
+    function seccionesParaServidor() { return _tesSecc ? (_tesSecc.visibles().join(',') || '-') : ''; }
+
     function datosExportacion() {
-        return $.extend({}, _tes.filtrosConsultados, { soloSubtotales: $('#tesNivelDetalle').val() === 'subtotales' });
+        return $.extend({}, _tes.filtrosConsultados, { soloSubtotales: $('#tesNivelDetalle').val() === 'subtotales', Secciones: seccionesParaServidor() });
     }
     function exportarExcel() {
         if (!_tes.filtrosConsultados) return;
@@ -1393,9 +1409,14 @@
             xc += pildora(c.t, xc, y, c.fg || C.texto2, c.bg || C.suave, !!c.b) + 3;
         });
 
+        // Secciones expandidas (barra «Secciones»): el PDF lleva lo mismo que está en pantalla.
+        var paginaUsada = false;   // la primera página ya tiene contenido (más allá de la portada)
+        function paginaNueva(seccion) { if (!paginaUsada) { paginaUsada = true; return; } nuevaPagina(seccion); }
+
         // Estado de la caja
-        var est = datosEstado(r);
+        var est = seccionVisible('kpis') ? datosEstado(r) : null;
         if (est) {
+            paginaUsada = true;
             y += 8;
             var col = est.cls === 'mal' ? C.malo : (est.cls === 'aviso' ? C.ambar : C.bueno), bg = est.cls === 'mal' ? C.maloBg : (est.cls === 'aviso' ? [255, 251, 235] : C.buenoBg);
             fuente('normal', 8.5, C.texto2);
@@ -1409,6 +1430,8 @@
         }
 
         // KPIs
+        if (seccionVisible('kpis')) {
+        paginaUsada = true;
         y += 10;
         tituloSeccion(P.indicadores, y);
         y += 4;
@@ -1435,8 +1458,11 @@
             });
         });
         y += hK + 3 + maxRefs * 2.2 + 8;
+        }
 
         // Insights (IA)
+        if (seccionVisible('ia')) {
+        paginaUsada = true;
         tituloSeccion(P.insightsTitulo, y, _tes.insightsTexto ? $('#tesInsightsMeta').text() : '');
         y += 4;
         var secciones = _tes.insightsTexto ? separarInsights(_tes.insightsTexto) : null;
@@ -1472,10 +1498,12 @@
             fuente('italic', 8.5, C.texto2); pdf.text(pdf.splitTextToSize(P.sinInsights, ANCHO - 10), M + 5, y + 7.5);
             y += 12;
         }
+        }
 
         // Lo más relevante
-        var top = datosDestacados(r);
+        var top = seccionVisible('mensual') ? datosDestacados(r) : [];
         if (top.length) {
+            paginaUsada = true;
             var hRel = 24;
             if (y + 15 + hRel > LIMITE_Y) nuevaPagina(P.resumen); else y += 10;
             tituloSeccion(P.relevanteTitulo, y, $('#tesRelevanteSub').text());
@@ -1496,10 +1524,12 @@
         }
 
         // ===== Página 2: gráficos (caja mensual + puente) =====
-        nuevaPagina(P.analisis);
         var hA = 80, MM_A_PX = 4;
-        [{ chart: 'principal', titulo: $('#tesChartPrincipal').closest('.pyg2-card').find('.pyg2-card-title').first().text(), sub: $('#tesGraficoSub').text() },
-         { chart: 'cascada', titulo: $('#tesChartCascada').closest('.pyg2-card').find('.pyg2-card-title').first().text(), sub: $('#tesCascadaSub').text() }].forEach(function (g, i) {
+        var graficosPdf = [{ id: 'mensual', chart: 'principal', titulo: $('#tesChartPrincipal').closest('.pyg2-card').find('.pyg2-card-title').first().text(), sub: $('#tesGraficoSub').text() },
+         { id: 'puente', chart: 'cascada', titulo: $('#tesChartCascada').closest('.pyg2-card').find('.pyg2-card-title').first().text(), sub: $('#tesCascadaSub').text() }]
+            .filter(function (g) { return seccionVisible(g.id); });
+        if (graficosPdf.length) paginaNueva(P.analisis);
+        graficosPdf.forEach(function (g, i) {
             tarjeta(M, y, ANCHO, hA);
             fuente('bold', 10, C.texto); pdf.text(g.titulo, M + 5, y + 8);
             fuente('normal', 7.5, C.muted); pdf.text(g.sub, M + 5, y + 12.5);
@@ -1509,8 +1539,9 @@
         });
 
         // ===== Página 3+: tabla por mes =====
-        nuevaPagina(P.tablaTitulo);
-        fuente('normal', 7.5, C.muted); pdf.text(T.unidadBadge[_tes.unidad], W - M, 21, { align: 'right' });
+        if (seccionVisible('tabla')) {
+        paginaNueva(P.tablaTitulo);
+        fuente('normal', 7.5, C.muted); pdf.text(T.unidadBadge[_tes.unidad], W - M, pdf.internal.getCurrentPageInfo().pageNumber === 1 ? y - 3 : 21, { align: 'right' });
         var cols = encabezadosTabla(r), nMes = r.MesesRango.length, nCols = cols.length;
         var wLbl = nCols > 16 ? 44 : 56, wCol = (ANCHO - wLbl) / nCols, tam = nCols > 16 ? 6.2 : (nCols > 12 ? 6.8 : 7.6), hF = 6.2, hG = 7.5;
 
@@ -1555,6 +1586,19 @@
             pdf.line(M, y + hF, M + ANCHO, y + hF);
             y += hF;
         });
+        }
+
+        // Comentarios de gestión (si la sección está expandida)
+        var comsPdf = (seccionVisible('comentarios') && window.ComentariosGestion) ? ComentariosGestion.ultimos() : [];
+        if (comsPdf.length) {
+            paginaNueva($('#tesSecComCab .t').text());
+            comsPdf.slice(0, 8).forEach(function (c) {
+                fuente('normal', 8.2, C.texto2);
+                var lins = pdf.splitTextToSize(limpiar(((c.Clave ? c.Clave + ': ' : '') + c.Texto) + '  - ' + c.NombreUsuario), ANCHO - 10).slice(0, 3), hC2 = lins.length * 4 + 5;
+                if (y + hC2 > LIMITE_Y) nuevaPagina('');
+                tarjeta(M, y, ANCHO, hC2); pdf.text(lins, M + 5, y + 6, { lineHeightFactor: 1.3 }); y += hC2 + 2;
+            });
+        }
 
         // Pie de página en todas las páginas
         var totalPags = pdf.internal.getNumberOfPages();
@@ -1575,6 +1619,19 @@
 
     $(document).ready(function () {
         ComentariosGestion.montar({ raiz: '#tesComentarios', informe: 'Tesoreria' });
+        _tesSecc = InformeSecciones.montar({
+            barra: '#tesSecBarra', clave: 'tesoreria', textos: SEC_CFG.barra,
+            secciones: [
+                { id: 'kpis', icono: 'fa-gauge-high', cab: '#tesSecKpis .pyg2-section-title', cuerpo: ['#tesEstado', '#tesKpiStrip'] },
+                { id: 'mensual', icono: 'fa-chart-column', cab: '#tesSecMensualCab .pyg2-section-title', cuerpo: ['#tesSecMensual'] },
+                { id: 'puente', icono: 'fa-bridge', cab: '#tesSecPuenteCab .pyg2-section-title', cuerpo: ['#tesSecPuente'] },
+                { id: 'mapa', icono: 'fa-border-all', cab: '#tesSecMapaCab .pyg2-section-title', cuerpo: ['#tesSecMapa'] },
+                { id: 'tabla', icono: 'fa-table', cab: '#tesSecTablaCab .pyg2-section-title', cuerpo: ['#tesSecTabla', '#tesNotaProyeccion', '#tesNotaEscenario'] },
+                { id: 'comentarios', icono: 'fa-comments', cab: '#tesSecComCab .pyg2-section-title', cuerpo: ['#tesComentarios'] },
+                { id: 'ia', icono: 'fa-wand-magic-sparkles', cab: '#tesSecIaCab .pyg2-section-title', cuerpo: ['#tesSecIa'] }
+            ]
+        });
+        _tesSecc.disponible('ia', $('#tesSecIa').length > 0);
         _tes.escenarios = $('#tesEscenario option').map(function () { return { id: Number(this.value), nombre: $(this).text() }; }).get().filter(function (e) { return e.id > 0; });
 
         $('#tesEmpresa, #tesEscenario, #tesMedida, #tesNivelDetalle, #tesComparar, #tesEscenarioComparar')

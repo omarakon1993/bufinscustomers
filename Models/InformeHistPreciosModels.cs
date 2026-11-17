@@ -8,6 +8,9 @@ namespace bufinscustomers.Models
     /// </summary>
     public class FiltrosHistPrecios
     {
+        /// <summary>Secciones visibles en pantalla que se incluyen en Excel y correo (ids separados por coma; vacío = todas). Ver SeccionesInforme.</summary>
+        public string Secciones { get; set; }
+
         public int IdEmpresa { get; set; }
         public byte IdEscenario { get; set; } = 1;
         /// <summary>Rango continuo de SEMESTRES (S1 = ene-jun, S2 = jul-dic): desde AnioDesde/SemDesde hasta AnioHasta/SemHasta, ambos inclusive.</summary>
