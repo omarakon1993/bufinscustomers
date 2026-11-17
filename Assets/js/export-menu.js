@@ -39,7 +39,8 @@ window.ExportMenu = (function () {
         var blobP = html2canvas(elemento, {
             backgroundColor: '#ffffff', scale: escala, logging: false, useCORS: true,
             scrollX: -window.scrollX, scrollY: -window.scrollY,
-            ignoreElements: function (n) { return n.classList && n.classList.contains('exp'); },
+            // la barra de secciones, los títulos de secciones colapsadas y sus chevrones no van en la imagen: sale solo lo que se está mostrando
+            ignoreElements: function (n) { return n.classList && (n.classList.contains('exp') || n.classList.contains('secciones-bar') || n.classList.contains('sec-colapsada') || n.classList.contains('sec-chev')); },
             onclone: function (doc, clon) {
                 // html2canvas no soporta texto con degradado (background-clip:text): saldría un rectángulo de color.
                 Array.prototype.forEach.call(clon.querySelectorAll('.bm-text'), function (n) {

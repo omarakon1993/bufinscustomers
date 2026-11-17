@@ -230,6 +230,7 @@
         </div>
 
         @* 3. Cascada + Lo más relevante *@
+        <div class="pyg2-section sec-bloque-cab" id="pygSecCascadaCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Sec_PygCascada</span><span class="line"></span></div></div>
         <div class="pyg2-analysis" id="pygSecCascada">
             <div class="pyg2-card">
                 <div class="pyg2-card-head">
@@ -292,10 +293,11 @@
         </div>
 
         @* 5. Tabla detallada *@
+        <div class="pyg2-section sec-bloque-cab" id="pygSecTablaCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.PYG_V2_TablaTitulo</span><span class="line"></span></div></div>
         <div class="pyg2-table-card" id="pygSecTabla">
             <div class="pyg2-card-head" style="align-items:center">
                 <div>
-                    <div class="pyg2-card-title">@Resources.Strings.PYG_V2_TablaTitulo</div>
+                    <div class="pyg2-card-title sec-dup">@Resources.Strings.PYG_V2_TablaTitulo</div>
                     <div class="pyg2-card-sub" id="pygInfoBadge">@Resources.Strings.PYG_UnidadMillones</div>
                 </div>
                 <div class="pyg2-table-tools">
@@ -320,21 +322,15 @@
         <p class="lt-help" id="pygNotaEscenario" style="display:none;"></p>
 
         @* Sección «PYG en una hoja»: el año mes a mes (hasta el fin del rango), con acumulado y AV % *@
-        <div class="pyg2-table-card" id="pygSecHoja" style="margin-top:14px">
-            <div class="pyg2-card-head" style="align-items:center">
-                <div>
-                    <div class="pyg2-card-title"><i class="fas fa-table-cells"></i>@Resources.Strings.PH_PageTitle</div>
-                    <div class="pyg2-card-sub">@Resources.Strings.PH_Subtitulo</div>
-                </div>
-            </div>
-            <div id="pygHojaCuerpo"></div>
-        </div>
+        <div class="pyg2-section sec-bloque-cab" id="pygSecHojaCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.PH_PageTitle</span><span class="line"></span></div></div>
+        <div class="pyg2-card" id="pygSecHoja" style="margin-bottom:16px"><div id="pygHojaCuerpo"></div></div>
 
         @* Desglose por línea de negocio del mismo rango (solo si la empresa tiene líneas en dbo.ModeloLineasNegocio) *@
+        <div class="pyg2-section sec-bloque-cab" id="pygSecLineasCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.PYG_LN_Titulo</span><span class="line"></span></div></div>
         <div class="pyg2-table-card" id="pygLineasCard" style="display:none;margin-top:14px">
             <div class="pyg2-card-head" style="align-items:center">
                 <div>
-                    <div class="pyg2-card-title"><i class="fas fa-sitemap"></i>@Resources.Strings.PYG_LN_Titulo</div>
+                    <div class="pyg2-card-title sec-dup"><i class="fas fa-sitemap"></i>@Resources.Strings.PYG_LN_Titulo</div>
                     <div class="pyg2-card-sub">@Resources.Strings.PYG_LN_Sub</div>
                 </div>
                 @if (bufinscustomers.Helpers.UsuarioSesionHelper.TienePermiso("INFORMES_LINEAS_NEGOCIO"))
@@ -348,14 +344,16 @@
         </div>
 
         @* Insights gerenciales (IA): se ocultan si la empresa tiene la IA apagada *@
+        <div class="pyg2-section sec-bloque-cab" id="pygSecComCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Com_Titulo</span><span class="line"></span></div></div>
         @await Html.PartialAsync("_ComentariosGestion", "pygComentarios")
 
         @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
         {
+        <div class="pyg2-section sec-bloque-cab" id="pygSecIaCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.PYG_InsightsTitulo</span><span class="line"></span></div></div>
         <div class="pyg-insights-card" id="pygSecIa">
             <div class="pyg-insights-head">
                 <div>
-                    <span class="pyg-insights-title"><i class="fas fa-wand-magic-sparkles"></i>@Resources.Strings.PYG_InsightsTitulo</span>
+                    <span class="pyg-insights-title sec-dup"><i class="fas fa-wand-magic-sparkles"></i>@Resources.Strings.PYG_InsightsTitulo</span>
                     <div class="pyg-insights-meta" id="pygInsightsMeta">@Resources.Strings.PYG_V2_InsightsSub</div>
                 </div>
                 <button type="button" id="btnGenerarInsightsPYG" class="pyg2-ins-btn"><i class="fas fa-wand-magic-sparkles"></i><span>@Resources.Strings.PYG_V2_Generar</span></button>
@@ -1000,6 +998,7 @@
         } catch (e) { $('#pygFechaGenerado').text(''); }
         $('#pygTendAnio').text(variosAnios ? (reporte.AnioDesde + ' ' + CH_NDASH + ' ' + reporte.AnioHasta) : reporte.AnioHasta);
         $('#pygTendTitulo').text(_pyg.textos.tendenciaTitulos[reporte.Agrupar] || _pyg.textos.tendenciaTitulos.Mes);
+        if (_pygSecc) _pygSecc.refrescarTitulos();
         $('#pygCascadaSub').text(v2.cascadaSubFmt.replace('{0}', etiquetaPeriodo(reporte)));
 
         // Etiquetas que dependen de "Comparar contra" / escenario de comparación
@@ -2222,14 +2221,14 @@
         _pygSecc = InformeSecciones.montar({
             barra: '#pygSecBarra', clave: 'pyg', textos: SEC_CFG.barra,
             secciones: [
-                { id: 'kpis', titulo: SC.kpis, icono: 'fa-gauge-high', el: ['#pygSecKpis'] },
-                { id: 'cascada', titulo: SC.pygCascada, icono: 'fa-bolt', el: ['#pygSecCascada'] },
-                { id: 'tendencia', titulo: SC.pygTendencia, icono: 'fa-chart-line', el: ['#pygSecTend'] },
-                { id: 'tabla', titulo: SC.tabla, icono: 'fa-table', el: ['#pygSecTabla', '#pygNotaSinAnterior', '#pygNotaEscenario'] },
-                { id: 'hoja', titulo: SC.pygHoja, icono: 'fa-table-cells', el: ['#pygSecHoja'] },
-                { id: 'lineas', titulo: SC.pygLineas, icono: 'fa-sitemap', el: ['#pygLineasCard'] },
-                { id: 'comentarios', titulo: SC.comentarios, icono: 'fa-comments', el: ['#pygComentarios'] },
-                { id: 'ia', titulo: SC.ia, icono: 'fa-wand-magic-sparkles', el: ['#pygSecIa'] }
+                { id: 'kpis', titulo: SC.kpis, icono: 'fa-gauge-high', cab: '#pygSecKpis .pyg2-section-title', cuerpo: ['#pygKpiStrip'] },
+                { id: 'cascada', titulo: SC.pygCascada, icono: 'fa-bolt', cab: '#pygSecCascadaCab .pyg2-section-title', cuerpo: ['#pygSecCascada'] },
+                { id: 'tendencia', titulo: SC.pygTendencia, icono: 'fa-chart-line', cab: '#pygSecTend .pyg2-section-title', cuerpo: ['#pygSecTend .pyg2-trends'] },
+                { id: 'tabla', titulo: SC.tabla, icono: 'fa-table', cab: '#pygSecTablaCab .pyg2-section-title', cuerpo: ['#pygSecTabla', '#pygNotaSinAnterior', '#pygNotaEscenario'] },
+                { id: 'hoja', titulo: SC.pygHoja, icono: 'fa-table-cells', cab: '#pygSecHojaCab .pyg2-section-title', cuerpo: ['#pygSecHoja'] },
+                { id: 'lineas', titulo: SC.pygLineas, icono: 'fa-sitemap', cab: '#pygSecLineasCab .pyg2-section-title', cuerpo: ['#pygLineasCard'] },
+                { id: 'comentarios', titulo: SC.comentarios, icono: 'fa-comments', cab: '#pygSecComCab .pyg2-section-title', cuerpo: ['#pygComentarios'] },
+                { id: 'ia', titulo: SC.ia, icono: 'fa-wand-magic-sparkles', cab: '#pygSecIaCab .pyg2-section-title', cuerpo: ['#pygSecIa'] }
             ]
         });
         _pygSecc.disponible('ia', $('#pygSecIa').length > 0);

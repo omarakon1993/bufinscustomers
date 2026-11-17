@@ -234,34 +234,23 @@
 
         @* 2. Estado + KPIs *@
         <div id="flSecKpis">
+        <div class="pyg2-section"><div class="pyg2-section-title"><span class="t">@T("Flujo_IndicadoresClave")</span><span class="line"></span></div></div>
         <div class="tes-estado" id="flEstado">
             <span class="ic"><i class="fas fa-circle-check"></i></span>
             <div class="tx"><span class="t" id="flEstadoTitulo">&mdash;</span><span class="s" id="flEstadoDesc">&mdash;</span></div>
         </div>
-
-        <div class="pyg2-section">
-            <div class="pyg2-section-title">
-                <span class="t">@T("Flujo_IndicadoresClave")</span><span class="line"></span>
-            </div>
-            <div class="tes-kpis" id="flKpiStrip"></div>
-        </div>
+        <div class="tes-kpis" id="flKpiStrip"></div>
         </div>
 
         @if (tipo == "Caja")
         {
         @* Sección «¿Cuánta plata me queda?»: caja disponible al corte, proyectada a diciembre, de dónde vino y a dónde se fue *@
-        <div class="pyg2-table-card" id="flSecSimple" style="margin-bottom:16px">
-            <div class="pyg2-card-head" style="align-items:center">
-                <div>
-                    <div class="pyg2-card-title"><i class="fas fa-wallet"></i>@Resources.Strings.CD_PageTitle</div>
-                    <div class="pyg2-card-sub">@Resources.Strings.CD_Subtitulo</div>
-                </div>
-            </div>
-            <div id="flSimpleCuerpo"></div>
-        </div>
+        <div class="pyg2-section sec-bloque-cab" id="flSecSimpleCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.CD_PageTitle</span><span class="line"></span></div></div>
+        <div class="pyg2-card" id="flSecSimple" style="margin-bottom:16px"><div id="flSimpleCuerpo"></div></div>
         }
 
         @* 3. Flujo mensual (barras + acumulado) + Lo más relevante *@
+        <div class="pyg2-section sec-bloque-cab" id="flSecMensualCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Sec_FlujoMensual</span><span class="line"></span></div></div>
         <div class="pyg2-analysis" id="flSecMensual">
             <div class="pyg2-card">
                 <div class="pyg2-card-head">
@@ -330,10 +319,11 @@
         </div>
 
         @* 4. Puente *@
+        <div class="pyg2-section sec-bloque-cab" id="flSecPuenteCab"><div class="pyg2-section-title"><span class="t">@T(P + "CascadaTitulo")</span><span class="line"></span></div></div>
         <div class="pyg2-card" style="margin-bottom:16px" id="flSecPuente">
             <div class="pyg2-card-head">
                 <div>
-                    <div class="pyg2-card-title">@T(P + "CascadaTitulo")</div>
+                    <div class="pyg2-card-title sec-dup">@T(P + "CascadaTitulo")</div>
                     <div class="pyg2-card-sub" id="flCascadaSub">&mdash;</div>
                 </div>
                 <span class="pyg2-legend">
@@ -347,10 +337,11 @@
         </div>
 
         @* 5. Tabla por mes *@
+        <div class="pyg2-section sec-bloque-cab" id="flSecTablaCab"><div class="pyg2-section-title"><span class="t">@T(P + "TablaTitulo")</span><span class="line"></span></div></div>
         <div class="pyg2-table-card" id="flSecTabla">
             <div class="pyg2-card-head" style="align-items:center">
                 <div>
-                    <div class="pyg2-card-title">@T(P + "TablaTitulo")</div>
+                    <div class="pyg2-card-title sec-dup">@T(P + "TablaTitulo")</div>
                     <div class="pyg2-card-sub" id="flInfoBadge">&mdash;</div>
                 </div>
                 <div class="pyg2-table-tools">
@@ -374,14 +365,16 @@
         <p class="lt-help" id="flNotaEscenario" style="display:none;"></p>
 
         @* Insights gerenciales (IA): se ocultan si la empresa tiene la IA apagada *@
+        <div class="pyg2-section sec-bloque-cab" id="flSecComCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Com_Titulo</span><span class="line"></span></div></div>
         @await Html.PartialAsync("_ComentariosGestion", "flComentarios")
 
         @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
         {
+        <div class="pyg2-section sec-bloque-cab" id="flSecIaCab"><div class="pyg2-section-title"><span class="t">@T("Flujo_InsightsTitulo")</span><span class="line"></span></div></div>
         <div class="pyg-insights-card" id="flSecIa">
             <div class="pyg-insights-head">
                 <div>
-                    <span class="pyg-insights-title"><i class="fas fa-wand-magic-sparkles"></i>@T("Flujo_InsightsTitulo")</span>
+                    <span class="pyg-insights-title sec-dup"><i class="fas fa-wand-magic-sparkles"></i>@T("Flujo_InsightsTitulo")</span>
                     <div class="pyg-insights-meta" id="flInsightsMeta">@T("Flujo_InsightsSub")</div>
                 </div>
                 <button type="button" id="btnGenerarInsightsFl" class="pyg2-ins-btn"><i class="fas fa-wand-magic-sparkles"></i><span>@T("Flujo_Generar")</span></button>
@@ -1849,16 +1842,16 @@
     $(document).ready(function () {
         ComentariosGestion.montar({ raiz: '#flComentarios', informe: '@(ViewBag.Tipo == "Efectivo" ? "FlujoEfectivo" : "FlujoCaja")' });
         var SC = SEC_CFG.titulos, seccsFl = [
-            { id: 'kpis', titulo: SC.kpis, icono: 'fa-gauge-high', el: ['#flSecKpis'] }
+            { id: 'kpis', titulo: SC.kpis, icono: 'fa-gauge-high', cab: '#flSecKpis .pyg2-section-title', cuerpo: ['#flEstado', '#flKpiStrip'] }
         ];
-        if (_fl.tipo === 'Caja') seccsFl.push({ id: 'simple', titulo: SC.cajaDisponible, icono: 'fa-wallet', el: ['#flSecSimple'] });
+        if (_fl.tipo === 'Caja') seccsFl.push({ id: 'simple', titulo: SC.cajaDisponible, icono: 'fa-wallet', cab: '#flSecSimpleCab .pyg2-section-title', cuerpo: ['#flSecSimple'] });
         seccsFl.push(
-            { id: 'mensual', titulo: SC.flujoMensual, icono: 'fa-chart-column', el: ['#flSecMensual'] },
-            { id: 'caja', titulo: SC.flujoCaja, icono: 'fa-scale-balanced', el: ['#flSecCaja'] },
-            { id: 'puente', titulo: SC.flujoPuente, icono: 'fa-bridge', el: ['#flSecPuente'] },
-            { id: 'tabla', titulo: SC.tabla, icono: 'fa-table', el: ['#flSecTabla', '#flNotaProyectado', '#flNotaEscenario'] },
-            { id: 'comentarios', titulo: SC.comentarios, icono: 'fa-comments', el: ['#flComentarios'] },
-            { id: 'ia', titulo: SC.ia, icono: 'fa-wand-magic-sparkles', el: ['#flSecIa'] });
+            { id: 'mensual', titulo: SC.flujoMensual, icono: 'fa-chart-column', cab: '#flSecMensualCab .pyg2-section-title', cuerpo: ['#flSecMensual'] },
+            { id: 'caja', titulo: SC.flujoCaja, icono: 'fa-scale-balanced', cab: '#flSecCaja .pyg2-section-title', cuerpo: ['#flConc', '#flSecCaja > .pyg2-analysis'] },
+            { id: 'puente', titulo: SC.flujoPuente, icono: 'fa-bridge', cab: '#flSecPuenteCab .pyg2-section-title', cuerpo: ['#flSecPuente'] },
+            { id: 'tabla', titulo: SC.tabla, icono: 'fa-table', cab: '#flSecTablaCab .pyg2-section-title', cuerpo: ['#flSecTabla', '#flNotaProyectado', '#flNotaEscenario'] },
+            { id: 'comentarios', titulo: SC.comentarios, icono: 'fa-comments', cab: '#flSecComCab .pyg2-section-title', cuerpo: ['#flComentarios'] },
+            { id: 'ia', titulo: SC.ia, icono: 'fa-wand-magic-sparkles', cab: '#flSecIaCab .pyg2-section-title', cuerpo: ['#flSecIa'] });
         _flSecc = InformeSecciones.montar({ barra: '#flSecBarra', clave: 'flujo' + _fl.tipo, textos: SEC_CFG.barra, secciones: seccsFl });
         _flSecc.disponible('ia', $('#flSecIa').length > 0);
         _fl.escenarios = $('#flEscenario option').map(function () { return { id: Number(this.value), nombre: $(this).text() }; }).get().filter(function (e) { return e.id > 0; });
