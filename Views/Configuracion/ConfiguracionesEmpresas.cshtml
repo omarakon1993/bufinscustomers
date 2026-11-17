@@ -9,7 +9,6 @@
     <title>@Resources.Strings.CfgEmp_PageTitle</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link rel="stylesheet" href="~/Assets/css/bootstrap-icons.min.css">
     <link rel="stylesheet" href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")">
     <!-- ✅ jQuery UI CSS - Cargar primero -->
     <link rel="stylesheet" href="~/Assets/css/jquery-ui.min.css">
@@ -196,7 +195,7 @@
 <body>
     <div class="powerbi-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
         <div class="powerbi-header-content">
-            <i class="bi bi-building-gear powerbi-header-icon"></i>
+            <i class="fas fa-building powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@Resources.Strings.CfgEmp_PageTitle</h1>
         </div>
         <button type="button" class="btn-modern-secondary" data-toggle="modal" data-target="#modalInstructivo">
@@ -239,7 +238,7 @@
         <!-- Configuración Básica -->
         <div class="card shadow mb-4 mt-4">
             <div class="card-header">
-                <i class="bi bi-gear-fill"></i> @Resources.Strings.CfgEmp_TitleBasica
+                <i class="fas fa-cog"></i> @Resources.Strings.CfgEmp_TitleBasica
             </div>
             <div class="card-body">
                 <form id="formConfigBasica">
@@ -318,7 +317,7 @@
         <!-- Pestañas de Configuración Detallada -->
         <div class="card shadow mb-4 mt-4">
             <div class="card-header">
-                <i class="bi bi-list-ul"></i> @Resources.Strings.CfgEmp_TitleListas
+                <i class="fas fa-list-ul"></i> @Resources.Strings.CfgEmp_TitleListas
             </div>
             <div class="card-body">
                 <div class="row mb-3">

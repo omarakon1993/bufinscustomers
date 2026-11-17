@@ -59,7 +59,7 @@ namespace bufinscustomers.Helpers
             // Cloudflare envía una sola IP: la del cliente.
             if (_confiarCloudflare.Value)
             {
-                string cf = ((string)request.Headers["CF-Connecting-IP"] ?? "").Trim();
+                string cf = ((string?)request.Headers["CF-Connecting-IP"] ?? "").Trim();
                 if (EsIpValida(cf)) return cf;
             }
 
@@ -117,7 +117,7 @@ namespace bufinscustomers.Helpers
                       .Select(s => s.Trim())
                       .Where(s => s.Length > 0)
                       .Select(IpRango.Parsear)
-                      .Where(r => r != null)
+                      .OfType<IpRango>()
                       .ToArray();
         }
 

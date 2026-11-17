@@ -93,7 +93,7 @@ namespace bufinscustomers.Helpers
                 string prefijo = sha1.Substring(0, 5);
                 string sufijo  = sha1.Substring(5);
 
-                string cuerpo = Task.Run(async () =>
+                string? cuerpo = Task.Run(async () =>
                 {
                     using (var resp = await _http.Value
                         .GetAsync("https://api.pwnedpasswords.com/range/" + prefijo)
