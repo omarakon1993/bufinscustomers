@@ -79,5 +79,32 @@ Orden por riesgo; ninguna ruta, permiso ni lógica cambió (la herramienta verif
 - **Propuesta (no ejecutada, requiere tu verificación en navegador):** migrar UN informe (el de PYG) a los módulos compartidos, que lo pruebes (generar, PDF, imagen, correo, tema) y, si todo coincide, repetir informe por informe. Para comparar sin riesgo se grabaría la secuencia de llamadas a `pdf.*` antes y después con un `pdf` simulado en Node.
 - Pendiente de nulabilidad detectado en esta fase: un build INCREMENTAL puede ocultar avisos; verificar siempre con `dotnet build --no-incremental`. Se corrigieron 3 avisos nuevos en `ClientIpHelper` y `PoliticaContrasena` (anotaciones, sin cambio de comportamiento).
 
+## Fase 9 — resumen del refactor (ENTREGADO 2026-11-16; se hizo antes de la Fase 8 a petición del usuario)
+Cifras contra la etiqueta `base-pre-refactor-2026-11-16` (script de medición en el scratchpad de la sesión; reproducible con `git ls-tree`/`git show`).
+
+| Métrica | Antes | Ahora | Dif |
+|---|---|---|---|
+| C# del sitio (líneas) | 51.476 | 50.524 | −952 |
+| · Services / Controllers | 23.774 / 17.842 | 22.625 / 17.744 | −1.149 / −98 |
+| · Helpers (nuevos `Bd`, `CargueConversion`, `TransaccionHelper`) | 3.365 | 3.680 | +315 |
+| Archivo C# más grande | 2.199 | 900 | −1.299 |
+| `new SqlConnection` / `AddWithValue` | 365 / 903 | 206 / 594 | −159 / −309 |
+| `new XService()` en controladores | 305 | 9 | −296 |
+| `catch {}` vacíos | 57 | 40 | −17 |
+| `JsonRequestBehavior` | 131 | 0 | −131 |
+| Copias de `NombreMes`/`TieneAccesoEmpresa` | 13 | 0 (1 en BaseController) | −13 |
+| `NoWarn` del proyecto | 9 códigos | 1 (`CA1416`) | −8 |
+| CSS (líneas) | 23.550 | 15.210 | −8.340 (bootstrap-icons + 2 fuentes ≈ 430 KB) |
+| Pruebas automáticas | 0 | 71 (6 archivos, 363 líneas) | +71 |
+| Clases `partial` por responsabilidad | 0 | 10 archivos | |
+| `#nullable enable` | 0 | 8 helpers | |
+| Build | 0 avisos | 0 avisos | = |
+
+Lo que NO se redujo: los Helpers crecieron (+315: código nuevo reutilizable) y la DI no ahorra líneas (≈ +30). El ahorro real de C# está en acceso a datos (−1.040) y duplicados; el mayor ahorro de bytes es el frontend (−8.340 líneas de CSS). Total del repo contra la base: 186 archivos, +6.132 / −14.949 líneas (incluye las 8.340 de CSS y ≈ 360 de pruebas).
+
+Cómo fue cada fase: F0 rama + etiqueta + pruebas; F1 diagnóstico (con un error de estimación del JS duplicado corregido en la F7); F2 limpieza (121 `using`, parámetros sin uso, `NoWarn`, `TransaccionHelper`, log en segundo plano); F3 `Bd` + codemod Roslyn (157 bloques); F4 DI con constructor primario (50 controladores); F5 partial por responsabilidad + `CargueConversion` con 42 pruebas; F6 atajos MVC 5 fuera de Compat + nulabilidad por archivo; F7 bootstrap-icons fuera; F9 este resumen.
+
+Pendientes con decisión tomada: Compat nivel 2 (sesión, cookies, caché, config) se conserva; async masivo no; piloto de módulos JS compartidos (PDF, slider) solo con verificación del usuario en navegador; nulabilidad global no (≈2.080 avisos, sobre todo `Models`). Antes de publicar: probar a mano en un entorno de pruebas las pantallas que cambiaron de acceso a datos (Configuración, Escenarios, Integraciones, Permisos, Auditoría) y el flujo de cargue por Excel y por API, porque los POST no se pueden probar contra la BD de producción.
+
 ## Orden
 F2 limpieza sin riesgo → F3 datos → F4 DI → F5 dividir/base informes → F6 plataforma (nulabilidad, async, Compat) → F7 frontend → **F9 resumen del refactor (qué se redujo y cómo se hizo; se entrega ANTES de la F8; métricas contra la etiqueta `base-pre-refactor-2026-11-16`)** → F8 documentación técnica (se mantiene intacta tal como se definió) (`App_Data/Documentacion/Tecnica/`, con glosario de C#/.NET con ejemplos del propio código). Comentarios de una línea (español, solo el «porqué») se agregan módulo a módulo en cada fase.
