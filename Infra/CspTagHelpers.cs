@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Text;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Html;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Newtonsoft.Json;
 using bufinscustomers.Helpers;
+using System;
 
 namespace bufinscustomers
 {
@@ -66,7 +65,7 @@ namespace bufinscustomers
                 }
                 else
                 {
-                    AppLogger.Warn("Evento en línea no traducible (" + nombre + "): " + (codigo.Length > 160 ? codigo.Substring(0, 160) + "…" : codigo));
+                    AppLogger.Warn("Evento en línea no traducible (" + nombre + "): " + (codigo.Length > 160 ? string.Concat(codigo.AsSpan(0, 160), "…") : codigo));
                 }
             }
         }
@@ -231,7 +230,7 @@ namespace bufinscustomers
                     int ini = _i; _i++;
                     while (_i < _t.Length && (char.IsDigit(_t[_i]) || _t[_i] == '.')) _i++;
                     string num = _t.Substring(ini, _i - ini);
-                    if (num.Contains(".")) { double d; if (!double.TryParse(num, NumberStyles.Float, CultureInfo.InvariantCulture, out d)) return false; valor = d; }
+                    if (num.Contains('.')) { double d; if (!double.TryParse(num, NumberStyles.Float, CultureInfo.InvariantCulture, out d)) return false; valor = d; }
                     else { long l; if (!long.TryParse(num, NumberStyles.Integer, CultureInfo.InvariantCulture, out l)) return false; valor = l; }
                     return true;
                 }
@@ -279,11 +278,11 @@ namespace bufinscustomers
                         case '0': sb.Append('\0'); break;
                         case 'u':
                             if (_i + 4 > _t.Length) return false;
-                            int u; if (!int.TryParse(_t.Substring(_i, 4), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out u)) return false;
+                            int u; if (!int.TryParse(_t.AsSpan(_i, 4), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out u)) return false;
                             sb.Append((char)u); _i += 4; break;
                         case 'x':
                             if (_i + 2 > _t.Length) return false;
-                            int x; if (!int.TryParse(_t.Substring(_i, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out x)) return false;
+                            int x; if (!int.TryParse(_t.AsSpan(_i, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out x)) return false;
                             sb.Append((char)x); _i += 2; break;
                         default: sb.Append(e); break;   // \\ \' \" \/ y cualquier otro carácter escapado
                     }

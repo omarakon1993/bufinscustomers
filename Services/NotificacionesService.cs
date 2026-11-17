@@ -16,10 +16,9 @@
  *       ON Notificaciones (IdUsuario, Leida, FechaCreacion DESC);
  */
 
+using bufinscustomers.Helpers;
 using System;
 using System.Collections.Generic;
-using System.Data;
-using Microsoft.Data.SqlClient;
 using bufinscustomers.Models;
 
 namespace bufinscustomers.Services
@@ -30,22 +29,13 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                {
-                    var cmd = new SqlCommand(@"
+                Bd.Ejecutar(CadenaConexion, @"
                         INSERT INTO Notificaciones (IdUsuario, Titulo, Mensaje, Tipo, Url)
                         VALUES (@IdUsuario, @Titulo, @Mensaje, @Tipo, @Url);
                         DELETE FROM Notificaciones
                         WHERE IdUsuario = @IdUsuario
-                          AND FechaCreacion < DATEADD(DAY, -15, GETDATE())", cn);
-                    cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
-                    cmd.Parameters.AddWithValue("@Titulo",    titulo);
-                    cmd.Parameters.AddWithValue("@Mensaje",   (object)mensaje ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Tipo",      tipo);
-                    cmd.Parameters.AddWithValue("@Url",       (object)url ?? DBNull.Value);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                          AND FechaCreacion < DATEADD(DAY, -15, GETDATE())",
+                    new { IdUsuario = idUsuario, Titulo = titulo, Mensaje = mensaje, Tipo = tipo, Url = url });
             }
             catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[Notificaciones.Crear] {0}", ex.Message); }
         }
@@ -84,15 +74,8 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                {
-                    var cmd = new SqlCommand(
-                        "UPDATE Notificaciones SET Leida=1 WHERE Id=@Id AND IdUsuario=@IdUsuario", cn);
-                    cmd.Parameters.AddWithValue("@Id",        id);
-                    cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                Bd.Ejecutar(CadenaConexion, "UPDATE Notificaciones SET Leida=1 WHERE Id=@Id AND IdUsuario=@IdUsuario",
+                    new { Id = id, IdUsuario = idUsuario });
             }
             catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[Notificaciones.MarcarLeida] {0}", ex.Message); }
         }
@@ -101,14 +84,8 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                {
-                    var cmd = new SqlCommand(
-                        "UPDATE Notificaciones SET Leida=1 WHERE IdUsuario=@IdUsuario AND Leida=0", cn);
-                    cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                Bd.Ejecutar(CadenaConexion, "UPDATE Notificaciones SET Leida=1 WHERE IdUsuario=@IdUsuario AND Leida=0",
+                    new { IdUsuario = idUsuario });
             }
             catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[Notificaciones.MarcarTodasLeidas] {0}", ex.Message); }
         }
@@ -117,14 +94,7 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                {
-                    var cmd = new SqlCommand(
-                        "DELETE FROM Notificaciones WHERE IdUsuario = @IdUsuario", cn);
-                    cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                Bd.Ejecutar(CadenaConexion, "DELETE FROM Notificaciones WHERE IdUsuario = @IdUsuario", new { IdUsuario = idUsuario });
             }
             catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[Notificaciones.LimpiarTodas] {0}", ex.Message); }
         }
@@ -133,15 +103,8 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                {
-                    var cmd = new SqlCommand(
-                        "DELETE FROM Notificaciones WHERE Id=@Id AND IdUsuario=@IdUsuario", cn);
-                    cmd.Parameters.AddWithValue("@Id",        id);
-                    cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                Bd.Ejecutar(CadenaConexion, "DELETE FROM Notificaciones WHERE Id=@Id AND IdUsuario=@IdUsuario",
+                    new { Id = id, IdUsuario = idUsuario });
             }
             catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[Notificaciones.Eliminar] {0}", ex.Message); }
         }

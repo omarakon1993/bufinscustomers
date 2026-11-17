@@ -1,7 +1,6 @@
 using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 
 namespace bufinscustomers.Services
 {
@@ -133,7 +132,7 @@ namespace bufinscustomers.Services
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error al consultar OrdenVariables: {ex.Message}", ex);
+                throw new Exception("Error al consultar OrdenVariables", ex);
             }
             return resultado;
         }

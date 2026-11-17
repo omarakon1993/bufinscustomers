@@ -1,7 +1,7 @@
+using bufinscustomers.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
 
 namespace bufinscustomers.Services
 {
@@ -31,12 +31,7 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("SELECT CASE WHEN OBJECT_ID('dbo.EmpresaLogos','U') IS NULL THEN 0 ELSE 1 END", cn))
-                {
-                    cn.Open();
-                    return Convert.ToInt32(cmd.ExecuteScalar()) == 1;
-                }
+                return Bd.Escalar<int>(CadenaConexion, "SELECT CASE WHEN OBJECT_ID('dbo.EmpresaLogos','U') IS NULL THEN 0 ELSE 1 END") == 1;
             }
             catch (SqlException) { return false; }
         }
@@ -78,13 +73,8 @@ namespace bufinscustomers.Services
             var d = new Dictionary<int, string>();
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("SELECT IdEmpresa, Version FROM dbo.EmpresaLogos", cn))
-                {
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read()) d[(int)r["IdEmpresa"]] = (string)r["Version"];
-                }
+                Bd.Leer(CadenaConexion, "SELECT IdEmpresa, Version FROM dbo.EmpresaLogos",
+                    r => d[(int)r["IdEmpresa"]] = (string)r["Version"]);
             }
             catch (SqlException ex) when (ex.Number == TablaInexistente) { /* sin script 036: sin logos */ }
             return d;
@@ -121,13 +111,7 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("DELETE FROM dbo.EmpresaLogos WHERE IdEmpresa = @id", cn))
-                {
-                    cmd.Parameters.AddWithValue("@id", idEmpresa);
-                    cn.Open();
-                    return cmd.ExecuteNonQuery() > 0;
-                }
+                return Bd.Ejecutar(CadenaConexion, "DELETE FROM dbo.EmpresaLogos WHERE IdEmpresa = @id", new { id = idEmpresa }) > 0;
             }
             catch (SqlException ex) when (ex.Number == TablaInexistente) { return false; }
         }

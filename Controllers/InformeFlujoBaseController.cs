@@ -267,7 +267,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 AppLogger.Error(ex, NombreControlador + ".ExportarExcel");
-                TempData["ErrorMessage"] = "Error al exportar a Excel: " + ex.Message;
+                TempData["ErrorMessage"] = "Error al exportar a Excel: " + MensajeError(ex);
                 return RedirectToAction("Index");
             }
         }
@@ -617,15 +617,6 @@ namespace bufinscustomers.Controllers
             return a == b ? a : a + " – " + b;
         }
 
-        private string NombreMes(int mes)
-        {
-            return mes >= 1 && mes <= 12 ? R("Common_Mes" + mes) : mes.ToString();
-        }
 
-        private bool TieneAccesoEmpresa(int idEmpresa)
-        {
-            var usuario = UsuarioSesionHelper.UsuarioActual;
-            return UsuarioSesionHelper.EsSuperAdmin() || EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa);
-        }
     }
 }

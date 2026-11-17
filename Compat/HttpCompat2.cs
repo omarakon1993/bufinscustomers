@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace bufinscustomers.Compat
@@ -36,12 +33,12 @@ namespace bufinscustomers.Compat
         /// <summary>Equivale a HostingEnvironment.QueueBackgroundWorkItem: ejecuta el trabajo en segundo plano; nunca lanza hacia el llamador.</summary>
         public static void QueueBackgroundWorkItem(Action<System.Threading.CancellationToken> trabajo)
         {
-            System.Threading.Tasks.Task.Run(() => { try { trabajo(System.Threading.CancellationToken.None); } catch (Exception) { } });
+            System.Threading.Tasks.Task.Run(() => { try { trabajo(System.Threading.CancellationToken.None); } catch (Exception ex) { bufinscustomers.Helpers.AppLogger.Error(ex, "QueueBackgroundWorkItem"); } });
         }
 
         public static void QueueBackgroundWorkItem(Func<System.Threading.CancellationToken, System.Threading.Tasks.Task> trabajo)
         {
-            System.Threading.Tasks.Task.Run(async () => { try { await trabajo(System.Threading.CancellationToken.None); } catch (Exception) { } });
+            System.Threading.Tasks.Task.Run(async () => { try { await trabajo(System.Threading.CancellationToken.None); } catch (Exception ex) { bufinscustomers.Helpers.AppLogger.Error(ex, "QueueBackgroundWorkItem"); } });
         }
     }
 

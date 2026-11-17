@@ -43,14 +43,12 @@
  *        0, 0, 0);
  */
 
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Data;
-using Microsoft.Data.SqlClient;
 using System.Text;
-using System.Web;
 
 namespace bufinscustomers.Services
 {
@@ -286,15 +284,9 @@ namespace bufinscustomers.Services
             if (_colsFase23.HasValue) return _colsFase23.Value;
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    @"SELECT COUNT(*) FROM sys.columns
+                _colsFase23 = Bd.Escalar<int>(CadenaConexion, @"SELECT COUNT(*) FROM sys.columns
                       WHERE object_id = OBJECT_ID('dbo.Auditoria')
-                        AND name IN ('EntidadNombre','Severidad','OperacionId')", cn))
-                {
-                    cn.Open();
-                    _colsFase23 = Convert.ToInt32(cmd.ExecuteScalar()) == 3;
-                }
+                        AND name IN ('EntidadNombre','Severidad','OperacionId')") == 3;
             }
             catch { _colsFase23 = false; }
             return _colsFase23.Value;
@@ -403,21 +395,19 @@ namespace bufinscustomers.Services
             if (diasConservar < 1) diasConservar = 90;
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(@"
+                return Bd.Ejecutar(CadenaConexion, @"
                     DELETE FROM dbo.Auditoria
                     WHERE Tipo = @Tipo
                       AND IdUsuario IS NULL
                       AND Accion IN (@A1, @A2)
-                      AND Fecha < DATEADD(DAY, -@Dias, GETDATE())", cn))
-                {
-                    cmd.Parameters.AddWithValue("@Tipo", AuditoriaTipo.Seguridad);
-                    cmd.Parameters.AddWithValue("@A1", AuditoriaAccion.LoginFallido);
-                    cmd.Parameters.AddWithValue("@A2", AuditoriaAccion.Bloqueo);
-                    cmd.Parameters.AddWithValue("@Dias", diasConservar);
-                    cn.Open();
-                    return cmd.ExecuteNonQuery();
-                }
+                      AND Fecha < DATEADD(DAY, -@Dias, GETDATE())",
+                    new
+                    {
+                        Tipo = AuditoriaTipo.Seguridad,
+                        A1 = AuditoriaAccion.LoginFallido,
+                        A2 = AuditoriaAccion.Bloqueo,
+                        Dias = diasConservar
+                    });
             }
             catch (Exception ex)
             {
@@ -432,13 +422,7 @@ namespace bufinscustomers.Services
             var lista = new List<string>();
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("SELECT DISTINCT Tipo FROM Auditoria ORDER BY Tipo", cn))
-                {
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read()) lista.Add(r.GetString(0));
-                }
+                Bd.Leer(CadenaConexion, "SELECT DISTINCT Tipo FROM Auditoria ORDER BY Tipo", r => lista.Add(r.GetString(0)));
             }
             catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[AuditoriaService.ObtenerTiposUsados] {0}", ex.Message); }
             return lista;
@@ -460,18 +444,11 @@ namespace bufinscustomers.Services
 
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    "SELECT IdUsuario, MAX(NombreUsuario) AS NombreUsuario FROM Auditoria " +
+                Bd.Leer(CadenaConexion, "SELECT IdUsuario, MAX(NombreUsuario) AS NombreUsuario FROM Auditoria " +
                     "WHERE IdUsuario IS NOT NULL AND NombreUsuario IS NOT NULL AND LTRIM(RTRIM(NombreUsuario)) <> ''" +
                     filtroEmp +
-                    " GROUP BY IdUsuario ORDER BY NombreUsuario", cn))
-                {
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read())
-                            lista.Add(new KeyValuePair<int, string>(Convert.ToInt32(r["IdUsuario"]), r["NombreUsuario"].ToString()));
-                }
+                    " GROUP BY IdUsuario ORDER BY NombreUsuario",
+                    r => lista.Add(new KeyValuePair<int, string>(Convert.ToInt32(r["IdUsuario"]), r["NombreUsuario"].ToString())));
             }
             catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[AuditoriaService.ObtenerUsuariosParaFiltro] {0}", ex.Message); }
             return lista;

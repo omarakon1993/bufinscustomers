@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Web;
 using bufinscustomers.Helpers;
 
 namespace bufinscustomers.Controllers
@@ -24,20 +23,20 @@ namespace bufinscustomers.Controllers
             try
             {
                 if (Request.ContentLength > MaxBytes || !PermitirPeticion())
-                    return new HttpStatusCodeResult(204);
+                    return new StatusCodeResult(204);
 
                 string cuerpo;
                 using (var sr = new StreamReader(Request.Body))
                 {
                     var buf = new char[MaxBytes + 1];
                     int n = sr.Read(buf, 0, buf.Length);
-                    if (n > MaxBytes) return new HttpStatusCodeResult(204);
+                    if (n > MaxBytes) return new StatusCodeResult(204);
                     cuerpo = new string(buf, 0, n);
                 }
 
                 dynamic datos = Newtonsoft.Json.JsonConvert.DeserializeObject(cuerpo);
                 dynamic r = datos?["csp-report"];
-                if (r == null) return new HttpStatusCodeResult(204);
+                if (r == null) return new StatusCodeResult(204);
 
                 string directiva = Limpiar((string)r["effective-directive"] ?? (string)r["violated-directive"], 60);
                 string bloqueado = Limpiar((string)r["blocked-uri"], 120);
@@ -46,7 +45,7 @@ namespace bufinscustomers.Controllers
                 string linea = Limpiar(Convert.ToString((object)r["line-number"]), 10);
 
                 string clave = "csp_" + (directiva + "|" + bloqueado + "|" + pagina + "|" + origen + "|" + linea).GetHashCode();
-                if (HttpRuntime.Cache[clave] != null) return new HttpStatusCodeResult(204);
+                if (HttpRuntime.Cache[clave] != null) return new StatusCodeResult(204);
                 HttpRuntime.Cache.Insert(clave, 1, null, DateTime.Now.AddHours(1), Cache.NoSlidingExpiration);
 
                 AppLogger.Info("directiva=" + directiva + " bloqueado=" + bloqueado + " pagina=" + pagina +
@@ -56,7 +55,7 @@ namespace bufinscustomers.Controllers
             {
                 // Un informe mal formado nunca debe generar errores ni ruido.
             }
-            return new HttpStatusCodeResult(204);
+            return new StatusCodeResult(204);
         }
 
         private bool PermitirPeticion()

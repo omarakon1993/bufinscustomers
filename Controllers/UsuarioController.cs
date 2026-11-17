@@ -1,10 +1,8 @@
 ﻿using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Linq;
-using System.Web;
 using bufinscustomers.Services;
 using bufinscustomers.Helpers;
 using bufinscustomers.Permisos;
@@ -13,15 +11,22 @@ using System.IO;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class UsuarioController : BaseController
+    public class UsuarioController(
+        EmpresaService empresaService,
+        UsuarioService usuarioService2,
+        NotificacionesService notificacionesService,
+        AuditoriaService auditoriaService,
+        ClaveInicialService claveInicialService,
+        PasskeyService passkeyService,
+        DobleFactorService dobleFactorService,
+        MenuOpcionesService menuOpcionesService,
+        EmailService emailService2) : BaseController
     {
-        private EmpresaService _empresaService = new EmpresaService();
-
         // GET: Usuario
         [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
         public ActionResult Usuarios()
         {
-            var empresas = _empresaService.ObtenerEmpresas();
+            var empresas = empresaService.ObtenerEmpresas();
             var usuarioActual = UsuarioSesionHelper.UsuarioActual;
 
             // Admin 0/1 ve su propia empresa y las de su mismo grupo empresarial en los dropdowns
@@ -114,47 +119,38 @@ namespace bufinscustomers.Controllers
         {
             List<Usuarios> usuarios = new List<Usuarios>();
 
-            using (SqlConnection connection = new SqlConnection(CadenaConexion))
-            {
-                using (SqlCommand command = new SqlCommand("sp_ObtenerUsuarios", connection))
+            Bd.Leer(CadenaConexion, "sp_ObtenerUsuarios",
+                null,
+                reader =>
                 {
-                    command.CommandType = CommandType.StoredProcedure;
-                    connection.Open();
+                    Usuarios usuario = new Usuarios();
+                    usuario.Id = (int)reader["Id"];
+                    usuario.Usuario = (string)reader["Usuario"];
+                    usuario.Clave = (string)reader["Clave"];
+                    usuario.Nombre = (string)reader["Nombre"];
+                    usuario.Apellidos = (string)reader["Apellidos"];
+                    usuario.Correo = (string)reader["Correo"];
+                    usuario.Telefono = (string)reader["Telefono"];
+                    usuario.Admin = reader["Admin"] != DBNull.Value ? (byte?)reader["Admin"] : null;
+                    usuario.IdEmpresa = reader["IdEmpresa"] != DBNull.Value ? (int?)reader["IdEmpresa"] : null;
 
-                    using (SqlDataReader reader = command.ExecuteReader())
+                    // Detectar si el usuario tiene imagen (sin cargar el Base64 en memoria)
+                    try
                     {
-                        while (reader.Read())
+                        reader.GetOrdinal("ImagenBase64"); // valida que la columna existe
+                        if (reader["ImagenBase64"] != DBNull.Value)
                         {
-                            Usuarios usuario = new Usuarios();
-                            usuario.Id = (int)reader["Id"];
-                            usuario.Usuario = (string)reader["Usuario"];
-                            usuario.Clave = (string)reader["Clave"];
-                            usuario.Nombre = (string)reader["Nombre"];
-                            usuario.Apellidos = (string)reader["Apellidos"];
-                            usuario.Correo = (string)reader["Correo"];
-                            usuario.Telefono = (string)reader["Telefono"];
-                            usuario.Admin = reader["Admin"] != DBNull.Value ? (byte?)reader["Admin"] : null;
-                            usuario.IdEmpresa = reader["IdEmpresa"] != DBNull.Value ? (int?)reader["IdEmpresa"] : null;
-
-                            // Detectar si el usuario tiene imagen (sin cargar el Base64 en memoria)
-                            try
-                            {
-                                reader.GetOrdinal("ImagenBase64"); // valida que la columna existe
-                                if (reader["ImagenBase64"] != DBNull.Value)
-                                {
-                                    usuario.Imagen = new ImagenUsuario { UsuarioId = usuario.Id };
-                                }
-                            }
-                            catch (IndexOutOfRangeException)
-                            {
-                                usuario.Imagen = null;
-                            }
-
-                            usuarios.Add(usuario);
+                            usuario.Imagen = new ImagenUsuario { UsuarioId = usuario.Id };
                         }
                     }
-                }
-            }
+                    catch (IndexOutOfRangeException)
+                    {
+                        usuario.Imagen = null;
+                    }
+
+                    usuarios.Add(usuario);
+                },
+                esSp: true);
 
             return usuarios.OrderBy(u => u.Id).ToList();
         }
@@ -169,7 +165,7 @@ namespace bufinscustomers.Controllers
                 // Si no es Admin 2, verificar que el usuario a eliminar sea de su empresa
                 if (!UsuarioSesionHelper.EsSuperAdmin())
                 {
-                    var usuarioService = new UsuarioService();
+                    var usuarioService = usuarioService2;
                     var usuarioAEliminar = usuarioService.ObtenerUsuarioPorId(idUsuario);
 
                     if (usuarioAEliminar != null)
@@ -191,26 +187,16 @@ namespace bufinscustomers.Controllers
                     }
                 }
 
-                using (SqlConnection connection = new SqlConnection(CadenaConexion))
-                {
-                    using (SqlCommand command = new SqlCommand("sp_EliminarUsuario", connection))
-                    {
-                        command.CommandType = CommandType.StoredProcedure;
-                        command.Parameters.AddWithValue("@Id", idUsuario);
-
-                        connection.Open();
-                        command.ExecuteNonQuery();
-                    }
-                }
+                Bd.Ejecutar(CadenaConexion, "sp_EliminarUsuario", new { Id = idUsuario }, esSp: true);
 
                 SetSuccessMessage("Usuario eliminado correctamente.");
-                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_UsuarioEliminado"), null, "warning", "/Usuario/Usuarios");
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Eliminar,
+                notificacionesService.Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_UsuarioEliminado"), null, "warning", "/Usuario/Usuarios");
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Eliminar,
                     "Usuarios", idUsuario.ToString(), $"Usuario eliminado (Id {idUsuario})");
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al eliminar el usuario: " + ex.Message);
+                SetErrorMessage("Error al eliminar el usuario: " + MensajeError(ex));
             }
 
             return RedirectToAction("Usuarios");
@@ -219,7 +205,7 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
-        public ActionResult EditarUsuario(Usuarios oUsuario, HttpPostedFileBase ImagenUsuario)
+        public ActionResult EditarUsuario(Usuarios oUsuario, IFormFile ImagenUsuario)
         {
             // Solo Admin 2 puede asignar Admin 2
             if (oUsuario.Admin == 2 && !UsuarioSesionHelper.EsSuperAdmin())
@@ -243,7 +229,7 @@ namespace bufinscustomers.Controllers
             oUsuario.Telefono = oUsuario.Telefono == null ? "" : oUsuario.Telefono;
 
             // Capturar el rol actual antes de actualizar, para detectar si cambia
-            var usuarioService = new UsuarioService();
+            var usuarioService = usuarioService2;
             var usuarioAntesDeEditar = usuarioService.ObtenerUsuarioPorId(oUsuario.Id);
             byte? adminAnterior = usuarioAntesDeEditar?.Admin ?? 0;
 
@@ -267,7 +253,7 @@ namespace bufinscustomers.Controllers
                         // Super Admin → empresa principal (Bufins) por defecto si no se indicó otra.
                         if (oUsuario.Admin == 2 && (oUsuario.IdEmpresa ?? 0) == 0)
                         {
-                            var idPrincipal = new EmpresaService().ObtenerIdEmpresaPrincipal();
+                            var idPrincipal = empresaService.ObtenerIdEmpresaPrincipal();
                             if (idPrincipal.HasValue) oUsuario.IdEmpresa = idPrincipal.Value;
                         }
 
@@ -289,7 +275,7 @@ namespace bufinscustomers.Controllers
                     if (oUsuario.Admin != adminAnterior)
                     {
                         AsignarPermisosPorDefecto(oUsuario.Id, oUsuario.Admin);
-                        new NotificacionesService().Crear(
+                        notificacionesService.Crear(
                             UsuarioSesionHelper.UsuarioActual?.Id ?? 0,
                             R("Notif_PermisosReiniciados"),
                             $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim(),
@@ -305,7 +291,7 @@ namespace bufinscustomers.Controllers
                 }
 
                 SetSuccessMessage("Usuario actualizado correctamente.");
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Editar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Editar,
                     "Usuarios", oUsuario.Id.ToString(),
                     $"Usuario editado: {oUsuario.Correo} (rol {oUsuario.Admin})", null,
                     new { oUsuario.Id, oUsuario.Nombre, oUsuario.Apellidos, oUsuario.Correo, oUsuario.Usuario, oUsuario.Admin, oUsuario.IdEmpresa },
@@ -314,7 +300,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al actualizar el usuario: " + ex.Message);
+                SetErrorMessage("Error al actualizar el usuario: " + MensajeError(ex));
             }
 
             return RedirectToAction("Usuarios");
@@ -323,7 +309,7 @@ namespace bufinscustomers.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
-        public ActionResult Registrar(Usuarios oUsuario, HttpPostedFileBase ImagenUsuario, bool ExigirCambioClave = false)
+        public ActionResult Registrar(Usuarios oUsuario, IFormFile ImagenUsuario, bool ExigirCambioClave = false)
         {
             bool registrado;
             string mensaje;
@@ -395,7 +381,7 @@ namespace bufinscustomers.Controllers
             // cuando no se indicó otra.
             if (oUsuario.Admin == 2 && (oUsuario.IdEmpresa ?? 0) == 0)
             {
-                var idPrincipal = new EmpresaService().ObtenerIdEmpresaPrincipal();
+                var idPrincipal = empresaService.ObtenerIdEmpresaPrincipal();
                 if (idPrincipal.HasValue) oUsuario.IdEmpresa = idPrincipal.Value;
             }
 
@@ -440,7 +426,7 @@ namespace bufinscustomers.Controllers
                 }
 
                 // Cambio de clave obligatorio en el primer inicio de sesión (opcional)
-                if (ExigirCambioClave && usuarioId > 0 && !new ClaveInicialService().Marcar(usuarioId, true))
+                if (ExigirCambioClave && usuarioId > 0 && !claveInicialService.Marcar(usuarioId, true))
                     SetInfoMessage(R("Usr_ExigirCambioClaveNoAplicado"));
 
                 // Procesar imagen si se cargó una y el usuario se registró correctamente
@@ -452,13 +438,13 @@ namespace bufinscustomers.Controllers
                     }
                     catch (Exception ex)
                     {
-                        SetErrorMessage("Usuario creado pero error al guardar imagen: " + ex.Message);
+                        SetErrorMessage("Usuario creado pero error al guardar imagen: " + MensajeError(ex));
                         return RedirectToAction("Usuarios");
                     }
                 }
                 SetSuccessMessage(mensaje);
-                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_UsuarioCreado"), $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim(), "success", "/Usuario/Usuarios");
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Crear,
+                notificacionesService.Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_UsuarioCreado"), $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim(), "success", "/Usuario/Usuarios");
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Usuarios, AuditoriaAccion.Crear,
                     "Usuarios", usuarioId.ToString(),
                     $"Usuario creado: {oUsuario.Correo} (rol {oUsuario.Admin}){(ExigirCambioClave ? ", cambio de clave obligatorio al primer ingreso" : "")}", null,
                     new { Id = usuarioId, oUsuario.Nombre, oUsuario.Apellidos, oUsuario.Correo, oUsuario.Usuario, oUsuario.Admin, oUsuario.IdEmpresa },
@@ -478,7 +464,7 @@ namespace bufinscustomers.Controllers
         [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
         public ActionResult CambiarClave(int idUsuario, string nuevaClave, string confirmarNuevaClave)
         {
-            var usuarioService = new UsuarioService();
+            var usuarioService = usuarioService2;
             var usuarioDestino = usuarioService.ObtenerUsuarioPorId(idUsuario);
 
             // Si no es SuperAdmin, solo puede cambiar claves de usuarios de su empresa o de su mismo grupo empresarial
@@ -516,24 +502,15 @@ namespace bufinscustomers.Controllers
             {
                 string claveEncriptada = HashearContrasena(nuevaClave.Trim());
 
-                using (SqlConnection connection = new SqlConnection(CadenaConexion))
-                {
-                    using (SqlCommand command = new SqlCommand("sp_CambiarClaveUsuario", connection))
-                    {
-                        command.CommandType = CommandType.StoredProcedure;
-                        command.Parameters.AddWithValue("@IdUsuario", idUsuario);
-                        command.Parameters.AddWithValue("@NuevaClave", claveEncriptada);
-
-                        connection.Open();
-                        command.ExecuteNonQuery();
-                    }
-                }
+                Bd.Ejecutar(CadenaConexion, "sp_CambiarClaveUsuario",
+                    new { IdUsuario = idUsuario, NuevaClave = claveEncriptada },
+                    esSp: true);
 
                 SetSuccessMessage("Clave actualizada correctamente.");
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al cambiar la clave: " + ex.Message);
+                SetErrorMessage("Error al cambiar la clave: " + MensajeError(ex));
             }
 
             return RedirectToAction("Usuarios");
@@ -546,7 +523,7 @@ namespace bufinscustomers.Controllers
         [RequierePermiso("ADMIN_USUARIOS_GESTOR")]
         public JsonResult EnviarInfoCorreo(int idUsuario)
         {
-            var usuarioService = new UsuarioService();
+            var usuarioService = usuarioService2;
             var usuarioDestino = usuarioService.ObtenerUsuarioPorId(idUsuario);
 
             if (usuarioDestino == null)
@@ -588,19 +565,19 @@ namespace bufinscustomers.Controllers
             if (!UsuarioSesionHelper.EsSuperAdmin())
                 return Json(new { success = false, message = R("Usr_ErrorSinPermiso") });
 
-            var usuarioDestino = new UsuarioService().ObtenerUsuarioPorId(idUsuario);
+            var usuarioDestino = usuarioService2.ObtenerUsuarioPorId(idUsuario);
             if (usuarioDestino == null)
                 return Json(new { success = false, message = R("Usr_ErrorNoEncontrado") });
 
-            int passkeys = new PasskeyService().Listar(idUsuario).Count;
-            if (!new DobleFactorService().Reiniciar(idUsuario))
+            int passkeys = passkeyService.Listar(idUsuario).Count;
+            if (!dobleFactorService.Reiniciar(idUsuario))
                 return Json(new { success = false, message = R("Usr_2FA_ErrorReiniciar") });
 
             var actual = UsuarioSesionHelper.UsuarioActual;
-            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Editar,
+            auditoriaService.RegistrarSeguridad(AuditoriaAccion.Editar,
                 $"Métodos de autenticación reiniciados por el Super Admin {actual?.Usuario} para el usuario {usuarioDestino.Usuario} (Id {idUsuario}): app autenticadora y {passkeys} passkey(s)",
                 idUsuario, ((usuarioDestino.Nombre ?? "") + " " + (usuarioDestino.Apellidos ?? "")).Trim(), usuarioDestino.IdEmpresa);
-            new NotificacionesService().Crear(idUsuario, R("Notif_2FA_ReiniciadoTitulo"), R("Notif_2FA_ReiniciadoMsg"), "warning");
+            notificacionesService.Crear(idUsuario, R("Notif_2FA_ReiniciadoTitulo"), R("Notif_2FA_ReiniciadoMsg"), "warning");
             AlertaUsuarioCorreo.Enviar(usuarioDestino.Correo, R("Notif_2FA_ReiniciadoTitulo"), R("Notif_2FA_ReiniciadoMsg"));
 
             return Json(new { success = true, message = R("Usr_2FA_Reiniciado") });
@@ -615,7 +592,7 @@ namespace bufinscustomers.Controllers
         {
             if (nivelAdmin == 2) return;
 
-            var menuService = new MenuOpcionesService();
+            var menuService = menuOpcionesService;
             // Menús personalizados por empresa: solo las que aplican a la empresa de este usuario.
             var noAplican = menuService.ObtenerIdsOpcionesNoAplicables(idUsuario);
             var todasLasOpciones = menuService.ObtenerTodas().Where(o => !noAplican.Contains(o.Id)).ToList();
@@ -665,13 +642,13 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                string nombreEmpresa = _empresaService.ObtenerEmpresas()
+                string nombreEmpresa = empresaService.ObtenerEmpresas()
                     .FirstOrDefault(e => e.Id == oUsuario.IdEmpresa)?.Nombre;
                 string nombreCompleto = $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim();
                 bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
                 string enlaceLogin = Url.Action("Login", "Acceso", null, Request.Url.Scheme);
 
-                var emailService = new EmailService();
+                var emailService = emailService2;
                 if (esReenvio)
                 {
                     emailService.EnviarReenvioInfoUsuario(
@@ -686,7 +663,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Trace.TraceError("[UsuarioController] Error al enviar correo de bienvenida: {0}", ex.Message);
+                System.Diagnostics.Trace.TraceError("[UsuarioController] Error al enviar correo de bienvenida: {0}", MensajeError(ex));
                 return false;
             }
         }
@@ -702,19 +679,19 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                string nombreEmpresa = _empresaService.ObtenerEmpresas()
+                string nombreEmpresa = empresaService.ObtenerEmpresas()
                     .FirstOrDefault(e => e.Id == oUsuario.IdEmpresa)?.Nombre;
                 string nombreCompleto = $"{oUsuario.Nombre} {oUsuario.Apellidos}".Trim();
                 bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
                 string enlaceLogin = Url.Action("Login", "Acceso", null, Request.Url.Scheme);
 
-                new EmailService().EnviarNotificacionUsuarioActualizado(
+                emailService2.EnviarNotificacionUsuarioActualizado(
                     oUsuario.Correo, nombreCompleto, oUsuario.Usuario, nombreEmpresa, oUsuario.Telefono, enlaceLogin, esIngles);
                 return true;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Trace.TraceError("[UsuarioController] Error al enviar correo de usuario actualizado: {0}", ex.Message);
+                System.Diagnostics.Trace.TraceError("[UsuarioController] Error al enviar correo de usuario actualizado: {0}", MensajeError(ex));
                 return false;
             }
         }
@@ -737,7 +714,7 @@ namespace bufinscustomers.Controllers
         }
 
         /// <summary>Guarda la foto de perfil. Devuelve false (sin guardar nada) si el archivo no es una imagen válida.</summary>
-        private bool GuardarImagenUsuario(int usuarioId, HttpPostedFileBase imagenArchivo)
+        private bool GuardarImagenUsuario(int usuarioId, IFormFile imagenArchivo)
         {
             if (imagenArchivo == null || imagenArchivo.ContentLength <= 0) return false;
             if (imagenArchivo.ContentLength > MaxBytesImagenUsuario) return false;
@@ -759,24 +736,15 @@ namespace bufinscustomers.Controllers
             var base64 = Convert.ToBase64String(bytes);
             var nombreImagen = Path.GetFileName(imagenArchivo.FileName);
 
-            using (SqlConnection connection = new SqlConnection(CadenaConexion))
-            using (SqlCommand command = new SqlCommand("sp_GuardarImagenUsuario", connection))
-            {
-                command.CommandType = CommandType.StoredProcedure;
-                command.Parameters.AddWithValue("@UsuarioId", usuarioId);
-                command.Parameters.AddWithValue("@NombreImagen", nombreImagen);
-                command.Parameters.AddWithValue("@TipoImagen", tipoImagen);
-                command.Parameters.AddWithValue("@ImagenBase64", base64);
-
-                connection.Open();
-                command.ExecuteNonQuery();
-            }
+            Bd.Ejecutar(CadenaConexion, "sp_GuardarImagenUsuario",
+                new { UsuarioId = usuarioId, NombreImagen = nombreImagen, TipoImagen = tipoImagen, ImagenBase64 = base64 },
+                esSp: true);
             return true;
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult CargarImagenUsuario(HttpPostedFileBase ImagenUsuario)
+        public ActionResult CargarImagenUsuario(IFormFile ImagenUsuario)
         {
             if (ImagenUsuario != null && ImagenUsuario.ContentLength > 0)
             {
@@ -793,48 +761,39 @@ namespace bufinscustomers.Controllers
         {
             var actual = UsuarioSesionHelper.UsuarioActual;
             if (actual == null)
-                return new HttpStatusCodeResult(System.Net.HttpStatusCode.Unauthorized);
+                return new StatusCodeResult(401);
 
             string base64 = null;
             int? empresaDelDueno = null;
 
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand(
-                    @"SELECT TOP 1 i.ImagenBase64, u.IdEmpresa
+            Bd.LeerPrimera(CadenaConexion, @"SELECT TOP 1 i.ImagenBase64, u.IdEmpresa
                       FROM UsuarioImagenes i INNER JOIN Usuarios u ON u.Id = i.UsuarioId
                       WHERE i.UsuarioId = @Id ORDER BY i.Id DESC",
-                    cn);
-                cmd.Parameters.AddWithValue("@Id", id);
-                cn.Open();
-                using (var reader = cmd.ExecuteReader())
+                new { Id = id },
+                reader =>
                 {
-                    if (reader.Read())
-                    {
-                        base64 = reader["ImagenBase64"] != DBNull.Value ? reader["ImagenBase64"].ToString() : null;
-                        if (reader["IdEmpresa"] != DBNull.Value) empresaDelDueno = Convert.ToInt32(reader["IdEmpresa"]);
-                    }
-                }
-            }
+                    base64 = reader["ImagenBase64"] != DBNull.Value ? reader["ImagenBase64"].ToString() : null;
+                    if (reader["IdEmpresa"] != DBNull.Value) empresaDelDueno = Convert.ToInt32(reader["IdEmpresa"]);
+                });
 
             if (string.IsNullOrEmpty(base64))
-                return HttpNotFound();
+                return NotFound();
 
             // Solo la propia foto, o la de usuarios de una empresa a la que se tiene acceso (empresa propia o su grupo).
             bool permitido = actual.Id == id
                 || actual.Admin == 2
                 || (empresaDelDueno.HasValue && EmpresaAccesoHelper.TieneAcceso(actual, empresaDelDueno.Value));
             if (!permitido)
-                return HttpNotFound();
+                return NotFound();
 
             byte[] bytes;
             try { bytes = Convert.FromBase64String(base64); }
-            catch (FormatException) { return HttpNotFound(); }
+            catch (FormatException) { return NotFound(); }
 
             // El tipo sale de la firma de los bytes, no de lo que se guardó: una fila antigua con HTML/SVG no se sirve.
             string tipo = TipoImagenPorFirma(bytes);
             if (tipo == null)
-                return HttpNotFound();
+                return NotFound();
 
             Response.Cache.SetCacheability(HttpCacheability.Private);
             Response.Cache.SetMaxAge(TimeSpan.FromHours(1));

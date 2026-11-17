@@ -7,7 +7,6 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -20,11 +19,12 @@ namespace bufinscustomers.Controllers
     /// habilitado para todos los roles, acceso real acotado por empresa/grupo.
     /// </summary>
     [ValidarSesion]
-    public class InformeBalanceController : BaseController
+    public class InformeBalanceController(
+        InformeBalanceService service,
+        InformeTablasDatosService empresaService,
+        EmailService emailService,
+        AuditoriaService auditoriaService) : BaseController
     {
-        private readonly InformeBalanceService _service = new InformeBalanceService();
-        private readonly InformeTablasDatosService _empresaService = new InformeTablasDatosService();
-
         /// <summary>Prompt por defecto de los insights del Balance (cuando no existe
         /// RESUMEN_BALANCE_GERENCIAL en GestorPrompts). La vista corta la respuesta por las etiquetas
         /// "Liquidez:", "Solvencia:" y "Capital de trabajo:" para pintar 3 tarjetas — cualquier prompt
@@ -51,7 +51,7 @@ namespace bufinscustomers.Controllers
             var usuario = UsuarioSesionHelper.UsuarioActual;
             var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
 
-            var empresas = _empresaService.ObtenerEmpresas();
+            var empresas = empresaService.ObtenerEmpresas();
             if (!esAdmin)
             {
                 var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
@@ -75,9 +75,9 @@ namespace bufinscustomers.Controllers
                 if (!TieneAccesoEmpresa(idEmpresa))
                     return Json(new { success = false, message = R("Common_SinPermisos") });
 
-                var meses = _service.ObtenerMesesDisponibles(idEmpresa, idEscenario)
+                var meses = service.ObtenerMesesDisponibles(idEmpresa, idEscenario)
                     .Select(m => new { anio = m.Anio, mes = m.Mes, etiqueta = m.Etiqueta });
-                var escenariosConDatos = _service.ObtenerEscenariosConDatos(idEmpresa);
+                var escenariosConDatos = service.ObtenerEscenariosConDatos(idEmpresa);
                 return Json(new { success = true, meses, escenariosConDatos });
             }
             catch (Exception ex)
@@ -96,7 +96,7 @@ namespace bufinscustomers.Controllers
                 if (filtros == null || !TieneAccesoEmpresa(filtros.IdEmpresa))
                     return Json(new { success = false, message = R("Common_SinPermisos") });
 
-                var reporte = _service.ConstruirReporte(filtros);
+                var reporte = service.ConstruirReporte(filtros);
                 var jsonResult = Json(new { success = true, reporte });
                 jsonResult.MaxJsonLength = int.MaxValue;
                 return jsonResult;
@@ -126,11 +126,11 @@ namespace bufinscustomers.Controllers
                 var denegado = ValidarAccesoIA(usuario, esAdmin, idEmpresa, IAFuncion.InsightsBalance);
                 if (denegado != null) return denegado;
 
-                var reporte = _service.ConstruirReporte(filtros);
+                var reporte = service.ConstruirReporte(filtros);
                 if (reporte.SinDatos)
                     return Json(new IAConsultaResponse { Exitoso = false, Error = R("BAL_SinDatosDesc") });
 
-                var empresaInfo = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+                var empresaInfo = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
                 string nombreEmpresa = empresaInfo?.Nombre ?? "—";
                 string filtrosDescripcion = $"Empresa {nombreEmpresa}, corte {reporte.MesHasta:00}/{reporte.AnioHasta}, " +
                     $"escenario {reporte.IdEscenario}, comparado contra {reporte.Comparar}" +
@@ -200,11 +200,11 @@ namespace bufinscustomers.Controllers
                 var denegado = ValidarAccesoIA(usuario, esAdmin, idEmpresa, IAFuncion.InsightsBalance);
                 if (denegado != null) return denegado;
 
-                var reporte = _service.ConstruirReporte(filtros);
+                var reporte = service.ConstruirReporte(filtros);
                 if (reporte.SinDatos)
                     return Json(new IAConsultaResponse { Exitoso = false, Error = R("BAL_SinDatosDesc") });
 
-                var empresaInfo = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
+                var empresaInfo = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresa);
                 string nombreEmpresa = empresaInfo?.Nombre ?? "—";
                 string filtrosDescripcion = $"Empresa {nombreEmpresa}, corte {reporte.MesHasta:00}/{reporte.AnioHasta}, " +
                     $"escenario {reporte.IdEscenario}, comparado contra {reporte.Comparar}" +
@@ -257,7 +257,7 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                var reporte = _service.ConstruirReporte(filtros);
+                var reporte = service.ConstruirReporte(filtros);
                 if (reporte.SinDatos || reporte.Filas.Count == 0)
                 {
                     TempData["InfoMessage"] = R("BAL_SinDatosDesc");
@@ -270,7 +270,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "InformeBalanceController.ExportarExcel");
-                TempData["ErrorMessage"] = "Error al exportar a Excel: " + ex.Message;
+                TempData["ErrorMessage"] = "Error al exportar a Excel: " + MensajeError(ex);
                 return RedirectToAction("Index");
             }
         }
@@ -293,12 +293,12 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                var reporte = _service.ConstruirReporte(filtros);
+                var reporte = service.ConstruirReporte(filtros);
                 if (reporte.SinDatos || reporte.Filas.Count == 0)
                     return Json(new { exito = false, mensaje = R("BAL_SinDatosDesc") });
 
                 bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
-                string empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
+                string empresa = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa)?.Nombre ?? "Empresa";
                 string escenario = EscenarioCacheHelper.ObtenerEscenariosCacheados()
                     .FirstOrDefault(e => e.Id == filtros.IdEscenario)?.Nombre ?? ("#" + filtros.IdEscenario);
 
@@ -329,11 +329,11 @@ namespace bufinscustomers.Controllers
                 }
 
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
-                new EmailService().EnviarInforme(string.Join(", ", lista), R("BAL_PageTitle"), empresa, false, contexto, kpis,
+                emailService.EnviarInforme(string.Join(", ", lista), R("BAL_PageTitle"), empresa, false, contexto, kpis,
                     null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(filtros.IdEmpresa),
                     ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA));
 
-                new AuditoriaService().RegistrarCambio(
+                auditoriaService.RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeBalance", filtros.IdEmpresa.ToString(),
                     $"Informe de balance general enviado por correo a {string.Join(", ", lista)}: '{empresa}' — corte {corte}, escenario {filtros.IdEscenario}.",
                     null,
@@ -352,7 +352,7 @@ namespace bufinscustomers.Controllers
         /// <summary>Libro de Excel del informe (lo usan la descarga y el envío por correo del botón Exportar).</summary>
         private byte[] GenerarExcel(FiltrosBalance filtros, BalanceReporteViewModel reporte, bool soloSubtotales, out string nombreArchivo)
         {
-        var empresaInfo = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa);
+        var empresaInfo = empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa);
         string nombreEmpresa = empresaInfo?.Nombre ?? "Empresa";
         string nombreCorte = NombreMes(reporte.MesHasta) + " " + reporte.AnioHasta;
 
@@ -449,15 +449,6 @@ namespace bufinscustomers.Controllers
         }
         }
 
-        private string NombreMes(int mes)
-        {
-            return mes >= 1 && mes <= 12 ? R("Common_Mes" + mes) : mes.ToString();
-        }
 
-        private bool TieneAccesoEmpresa(int idEmpresa)
-        {
-            var usuario = UsuarioSesionHelper.UsuarioActual;
-            return UsuarioSesionHelper.EsSuperAdmin() || EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa);
-        }
     }
 }

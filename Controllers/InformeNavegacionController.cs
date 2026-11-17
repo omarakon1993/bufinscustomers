@@ -5,7 +5,6 @@ using bufinscustomers.Services;
 using ClosedXML.Excel;
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 using System.IO;
 using System.Linq;
 namespace bufinscustomers.Controllers
@@ -21,10 +20,12 @@ namespace bufinscustomers.Controllers
     /// No autocarga: la grilla solo se llena al pulsar «Consultar».
     /// </summary>
     [ValidarSesion]
-    public class InformeNavegacionController : BaseController
+    public class InformeNavegacionController(
+        AuditoriaNavegacionService svc,
+        EmpresaService empresaService,
+        NotificacionesService notificacionesService,
+        MenuOpcionesService menuOpcionesService) : BaseController
     {
-        private readonly AuditoriaNavegacionService _svc = new AuditoriaNavegacionService();
-
         // ── Gate + alcance ──────────────────────────────────────────────────
 
         private bool PuedeAcceder(out bool esSuperAdmin)
@@ -41,8 +42,7 @@ namespace bufinscustomers.Controllers
         }
 
         private JsonResult Prohibido() =>
-            Json(new { success = false, forbidden = true, message = R("Err_403_Json") },
-                 JsonRequestBehavior.AllowGet);
+            Json(new { success = false, forbidden = true, message = R("Err_403_Json") });
 
         private List<int> EmpresasPermitidasOTodas()
         {
@@ -59,7 +59,7 @@ namespace bufinscustomers.Controllers
             ViewBag.Embed = string.Equals(Request.Query["embed"], "1");
             ViewBag.EsSuperAdmin = esSuper;
 
-            var empresas = new EmpresaService().ObtenerEmpresas();
+            var empresas = empresaService.ObtenerEmpresas();
             var permitidas = EmpresasPermitidasOTodas();
             if (!esSuper && permitidas != null)
                 empresas = empresas.Where(e => permitidas.Contains(e.Id)).ToList();
@@ -83,7 +83,7 @@ namespace bufinscustomers.Controllers
             f.Pagina = pagina; f.TamanoPagina = tam;
             AplicarAlcance(f, esSuper);
 
-            var res = _svc.Consultar(f);
+            var res = svc.Consultar(f);
 
             return Json(new
             {
@@ -102,7 +102,7 @@ namespace bufinscustomers.Controllers
                     n.IpAddress,
                     Navegador = ResumirUserAgent(n.UserAgent)
                 })
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         /// <summary>Totales del conjunto filtrado para las tarjetas de resumen (independiente del modo de la grilla).</summary>
@@ -115,7 +115,7 @@ namespace bufinscustomers.Controllers
             var f = ConstruirFiltro(idUsuario, idEmpresa, codigoMenu, rol, desde, hasta, texto);
             AplicarAlcance(f, esSuper);
 
-            var r = _svc.ResumenGeneral(f);
+            var r = svc.ResumenGeneral(f);
             return Json(new
             {
                 success = true,
@@ -124,7 +124,7 @@ namespace bufinscustomers.Controllers
                 paginasDistintas = r.PaginasDistintas,
                 paginaTop        = r.PaginaTop,
                 ultima           = r.Ultima?.ToString("dd/MM/yyyy HH:mm")
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         [HttpGet]
@@ -136,7 +136,7 @@ namespace bufinscustomers.Controllers
             var f = ConstruirFiltro(idUsuario, idEmpresa, codigoMenu, rol, desde, hasta, texto);
             AplicarAlcance(f, esSuper);
 
-            var filas = _svc.ResumenPorUsuario(f);
+            var filas = svc.ResumenPorUsuario(f);
             return Json(new
             {
                 success = true,
@@ -149,7 +149,7 @@ namespace bufinscustomers.Controllers
                     Primera = u.Primera.ToString("dd/MM/yyyy HH:mm"),
                     Ultima  = u.Ultima.ToString("dd/MM/yyyy HH:mm")
                 })
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         [HttpGet]
@@ -161,7 +161,7 @@ namespace bufinscustomers.Controllers
             var f = ConstruirFiltro(idUsuario, idEmpresa, codigoMenu, rol, desde, hasta, texto);
             AplicarAlcance(f, esSuper);
 
-            var filas = _svc.ResumenPorPagina(f);
+            var filas = svc.ResumenPorPagina(f);
             return Json(new
             {
                 success = true,
@@ -173,7 +173,7 @@ namespace bufinscustomers.Controllers
                     p.UsuariosDistintos,
                     Ultima = p.Ultima.ToString("dd/MM/yyyy HH:mm")
                 })
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         [HttpGet]
@@ -185,7 +185,7 @@ namespace bufinscustomers.Controllers
             var f = ConstruirFiltro(idUsuario, idEmpresa, codigoMenu, rol, desde, hasta, texto);
             AplicarAlcance(f, esSuper);
 
-            var filas = _svc.ResumenPorUsuarioPagina(f);
+            var filas = svc.ResumenPorUsuarioPagina(f);
             return Json(new
             {
                 success = true,
@@ -199,7 +199,7 @@ namespace bufinscustomers.Controllers
                     Primera = x.Primera.ToString("dd/MM/yyyy HH:mm"),
                     Ultima  = x.Ultima.ToString("dd/MM/yyyy HH:mm")
                 })
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         [HttpGet]
@@ -221,7 +221,7 @@ namespace bufinscustomers.Controllers
                     for (int i = 0; i < cab.Length; i++) ws.Cell(1, i + 1).Value = cab[i];
                     ws.Row(1).Style.Font.Bold = true;
                     int fila = 2;
-                    foreach (var u in _svc.ResumenPorUsuario(f))
+                    foreach (var u in svc.ResumenPorUsuario(f))
                     {
                         ws.Cell(fila, 1).Value = u.NombreUsuario ?? "";
                         ws.Cell(fila, 2).Value = u.NombreEmpresa ?? "";
@@ -241,7 +241,7 @@ namespace bufinscustomers.Controllers
                     for (int i = 0; i < cab.Length; i++) ws.Cell(1, i + 1).Value = cab[i];
                     ws.Row(1).Style.Font.Bold = true;
                     int fila = 2;
-                    foreach (var x in _svc.ResumenPorUsuarioPagina(f))
+                    foreach (var x in svc.ResumenPorUsuarioPagina(f))
                     {
                         ws.Cell(fila, 1).Value = x.NombreUsuario ?? "";
                         ws.Cell(fila, 2).Value = x.NombreEmpresa ?? "";
@@ -262,7 +262,7 @@ namespace bufinscustomers.Controllers
                     for (int i = 0; i < cab.Length; i++) ws.Cell(1, i + 1).Value = cab[i];
                     ws.Row(1).Style.Font.Bold = true;
                     int fila = 2;
-                    foreach (var p in _svc.ResumenPorPagina(f))
+                    foreach (var p in svc.ResumenPorPagina(f))
                     {
                         ws.Cell(fila, 1).Value = p.Titulo ?? p.Clave ?? "";
                         ws.Cell(fila, 2).Value = (p.Controller ?? "") + "/" + (p.Action ?? "");
@@ -281,7 +281,7 @@ namespace bufinscustomers.Controllers
                     for (int i = 0; i < cab.Length; i++) ws.Cell(1, i + 1).Value = cab[i];
                     ws.Row(1).Style.Font.Bold = true;
                     int fila = 2;
-                    foreach (var n in _svc.ConsultarParaExport(f))
+                    foreach (var n in svc.ConsultarParaExport(f))
                     {
                         ws.Cell(fila, 1).Value = n.Fecha; ws.Cell(fila, 1).Style.DateFormat.Format = "yyyy-mm-dd hh:mm:ss";
                         ws.Cell(fila, 2).Value = n.NombreUsuario ?? "";
@@ -322,7 +322,7 @@ namespace bufinscustomers.Controllers
                 if (!completo && (!mesesConservar.HasValue || mesesConservar.Value < 1 || mesesConservar.Value > 120))
                     return Json(new { success = false, message = R("Audit_LimpiarMesesInvalido") });
 
-                int eliminados = _svc.Limpiar(mesesConservar, idEmpresa);
+                int eliminados = svc.Limpiar(mesesConservar, idEmpresa);
 
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 if (usuario != null)
@@ -330,7 +330,7 @@ namespace bufinscustomers.Controllers
                     string mensaje = completo
                         ? string.Format(R("Nav_NotifMsgTodo"), eliminados)
                         : string.Format(R("Nav_NotifMsgConservar"), eliminados, mesesConservar.Value);
-                    new NotificacionesService().Crear(usuario.Id, R("Notif_NavegacionLimpiada"), mensaje, "warning", "/AuditoriaHub");
+                    notificacionesService.Crear(usuario.Id, R("Notif_NavegacionLimpiada"), mensaje, "warning", "/AuditoriaHub");
                 }
 
                 return Json(new { success = true, eliminados });
@@ -423,7 +423,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Trace.TraceWarning("[InformeNavegacion.ObtenerUsuariosParaFiltro] {0}", ex.Message);
+                System.Diagnostics.Trace.TraceWarning("[InformeNavegacion.ObtenerUsuariosParaFiltro] {0}", MensajeError(ex));
             }
             return lista;
         }
@@ -434,7 +434,7 @@ namespace bufinscustomers.Controllers
             try
             {
                 bool en = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
-                foreach (var op in new MenuOpcionesService().ObtenerTodas()
+                foreach (var op in menuOpcionesService.ObtenerTodas()
                              .Where(o => !string.IsNullOrWhiteSpace(o.Codigo))
                              .GroupBy(o => o.Codigo).Select(g => g.First())
                              .OrderBy(o => en ? (o.NombreEN ?? o.Nombre) : o.Nombre))
@@ -444,7 +444,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Trace.TraceWarning("[InformeNavegacion.ObtenerOpcionesMenu] {0}", ex.Message);
+                System.Diagnostics.Trace.TraceWarning("[InformeNavegacion.ObtenerOpcionesMenu] {0}", MensajeError(ex));
             }
             return lista;
         }

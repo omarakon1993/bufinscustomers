@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
-using System.Web;
 namespace bufinscustomers.Services
 {
     /// <summary>
@@ -128,7 +127,7 @@ namespace bufinscustomers.Services
             var fuente = ConsultarFuente();
             var fechaFuente = fuente.Item1;
             string fechaPublicada = null;
-            if (publicado != null && publicado.ContainsKey("fuenteActualizado")) fechaPublicada = Convert.ToString(publicado["fuenteActualizado"]);
+            if (publicado != null && publicado.TryGetValue("fuenteActualizado", out object value)) fechaPublicada = Convert.ToString(value);
 
             return new
             {

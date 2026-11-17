@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace bufinscustomers.Compat

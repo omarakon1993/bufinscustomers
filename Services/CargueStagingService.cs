@@ -3,7 +3,6 @@ using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
 using System.Linq;
 
 namespace bufinscustomers.Services
@@ -77,12 +76,7 @@ namespace bufinscustomers.Services
             _origenLoteRevisado = DateTime.Now;
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("SELECT CASE WHEN COL_LENGTH('dbo.CarguesLotes','Origen') IS NOT NULL THEN 1 ELSE 0 END", cn))
-                {
-                    cn.Open();
-                    _origenLoteDisponible = Convert.ToInt32(cmd.ExecuteScalar()) == 1;
-                }
+                _origenLoteDisponible = Bd.Escalar<int>(CadenaConexion, "SELECT CASE WHEN COL_LENGTH('dbo.CarguesLotes','Origen') IS NOT NULL THEN 1 ELSE 0 END") == 1;
             }
             catch { _origenLoteDisponible = false; }
             return _origenLoteDisponible;
@@ -219,14 +213,8 @@ namespace bufinscustomers.Services
 
         public void ActualizarTotalFilas(long idLote, int totalFilas)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand("UPDATE dbo.CarguesLotes SET TotalFilas = @TotalFilas WHERE IdLote = @IdLote", cn))
-            {
-                cmd.Parameters.AddWithValue("@TotalFilas", totalFilas);
-                cmd.Parameters.AddWithValue("@IdLote", idLote);
-                cn.Open();
-                cmd.ExecuteNonQuery();
-            }
+            Bd.Ejecutar(CadenaConexion, "UPDATE dbo.CarguesLotes SET TotalFilas = @TotalFilas WHERE IdLote = @IdLote",
+                new { TotalFilas = totalFilas, IdLote = idLote });
         }
 
         public CargueLote ObtenerLote(long idLote)
@@ -248,14 +236,9 @@ namespace bufinscustomers.Services
         public Dictionary<string, int> ObtenerTotalesPorRegla(long idLote)
         {
             var d = new Dictionary<string, int>();
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand("SELECT CodigoRegla, COUNT(*) FROM dbo.CarguesLotesErrores WHERE IdLote = @IdLote GROUP BY CodigoRegla", cn))
-            {
-                cmd.Parameters.AddWithValue("@IdLote", idLote);
-                cn.Open();
-                using (var r = cmd.ExecuteReader())
-                    while (r.Read()) d[r.GetString(0)] = r.GetInt32(1);
-            }
+            Bd.Leer(CadenaConexion, "SELECT CodigoRegla, COUNT(*) FROM dbo.CarguesLotesErrores WHERE IdLote = @IdLote GROUP BY CodigoRegla",
+                new { IdLote = idLote },
+                r => d[r.GetString(0)] = r.GetInt32(1));
             return d;
         }
 
@@ -267,8 +250,7 @@ namespace bufinscustomers.Services
         public List<CargueLoteHallazgo> ObtenerHallazgos(long idLote, int maxPorRegla = 0)
         {
             var list = new List<CargueLoteHallazgo>();
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(@"
+            Bd.Leer(CadenaConexion, @"
                 SELECT x.* FROM (
                     SELECT e.*,
                            ROW_NUMBER() OVER (PARTITION BY e.CodigoRegla ORDER BY e.Id) AS _rn,
@@ -276,49 +258,42 @@ namespace bufinscustomers.Services
                     FROM dbo.CarguesLotesErrores e
                     WHERE e.IdLote = @IdLote) x
                 WHERE @Max <= 0 OR x._rn <= @Max
-                ORDER BY CASE x.Severidad WHEN 'Error' THEN 0 ELSE 1 END, x._primero, x.Id", cn))
-            {
-                cmd.Parameters.AddWithValue("@IdLote", idLote);
-                cmd.Parameters.AddWithValue("@Max", maxPorRegla);
-                cn.Open();
-                using (var r = cmd.ExecuteReader())
+                ORDER BY CASE x.Severidad WHEN 'Error' THEN 0 ELSE 1 END, x._primero, x.Id",
+                new { IdLote = idLote, Max = maxPorRegla },
+                r =>
                 {
-                    while (r.Read())
+                    var h = new CargueLoteHallazgo
                     {
-                        var h = new CargueLoteHallazgo
-                        {
-                            Id = Convert.ToInt64(r["Id"]),
-                            IdLote = Convert.ToInt64(r["IdLote"]),
-                            NombreHoja = r["NombreHoja"] as string,
-                            NombreTabla = r["NombreTabla"] as string,
-                            NumeroFilaExcel = r["NumeroFilaExcel"] == DBNull.Value ? (int?)null : Convert.ToInt32(r["NumeroFilaExcel"]),
-                            Columna = r["Columna"] as string,
-                            Severidad = r["Severidad"] as string,
-                            CodigoRegla = r["CodigoRegla"] as string,
-                            Mensaje = r["Mensaje"] as string,
-                            MensajeEn = r["MensajeEn"] as string
-                        };
-                        // Titulo/TituloEn los escribe sp_ValidarCargueStaging; columnas incrementales (Sql/011).
-                        try { h.Titulo = r["Titulo"] as string; } catch (IndexOutOfRangeException) { }
-                        try { h.TituloEn = r["TituloEn"] as string; } catch (IndexOutOfRangeException) { }
-                        // Datos por caso (Sql/043): opcionales, el lector tolera que las columnas aún no existan.
-                        try
-                        {
-                            h.Periodo = r["Periodo"] as string;
-                            h.Referencia = r["Referencia"] as string;
-                            h.Detalle = r["Detalle"] as string;
-                            h.DetalleEn = r["DetalleEn"] as string;
-                            h.Diferencia = r["Diferencia"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(r["Diferencia"]);
-                            h.Regla = r["Regla"] as string;
-                            h.ReglaEn = r["ReglaEn"] as string;
-                            h.Sugerencia = r["Sugerencia"] as string;
-                            h.SugerenciaEn = r["SugerenciaEn"] as string;
-                        }
-                        catch (IndexOutOfRangeException) { }
-                        list.Add(h);
+                        Id = Convert.ToInt64(r["Id"]),
+                        IdLote = Convert.ToInt64(r["IdLote"]),
+                        NombreHoja = r["NombreHoja"] as string,
+                        NombreTabla = r["NombreTabla"] as string,
+                        NumeroFilaExcel = r["NumeroFilaExcel"] == DBNull.Value ? (int?)null : Convert.ToInt32(r["NumeroFilaExcel"]),
+                        Columna = r["Columna"] as string,
+                        Severidad = r["Severidad"] as string,
+                        CodigoRegla = r["CodigoRegla"] as string,
+                        Mensaje = r["Mensaje"] as string,
+                        MensajeEn = r["MensajeEn"] as string
+                    };
+                    // Titulo/TituloEn los escribe sp_ValidarCargueStaging; columnas incrementales (Sql/011).
+                    try { h.Titulo = r["Titulo"] as string; } catch (IndexOutOfRangeException) { }
+                    try { h.TituloEn = r["TituloEn"] as string; } catch (IndexOutOfRangeException) { }
+                    // Datos por caso (Sql/043): opcionales, el lector tolera que las columnas aún no existan.
+                    try
+                    {
+                        h.Periodo = r["Periodo"] as string;
+                        h.Referencia = r["Referencia"] as string;
+                        h.Detalle = r["Detalle"] as string;
+                        h.DetalleEn = r["DetalleEn"] as string;
+                        h.Diferencia = r["Diferencia"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(r["Diferencia"]);
+                        h.Regla = r["Regla"] as string;
+                        h.ReglaEn = r["ReglaEn"] as string;
+                        h.Sugerencia = r["Sugerencia"] as string;
+                        h.SugerenciaEn = r["SugerenciaEn"] as string;
                     }
-                }
-            }
+                    catch (IndexOutOfRangeException) { }
+                    list.Add(h);
+                });
             return list;
         }
 
@@ -536,7 +511,7 @@ namespace bufinscustomers.Services
         /// </summary>
         public int DescartarLotes(IEnumerable<long> idsLote)
         {
-            var ids = new List<long>(idsLote ?? new long[0]);
+            var ids = new List<long>(idsLote ?? Array.Empty<long>());
             if (ids.Count == 0) return 0;
             // Lista de BIGINT generada aquí (no viene del usuario): sin riesgo de inyección.
             return EjecutarBorradoDeLotes(

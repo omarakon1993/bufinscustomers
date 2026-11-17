@@ -1,6 +1,4 @@
 using System;
-using Microsoft.Data.SqlClient;
-using bufinscustomers.Controllers;
 
 namespace bufinscustomers.Controllers
 {
@@ -35,7 +33,7 @@ namespace bufinscustomers.Controllers
                 status    = healthy ? "ok" : "degraded",
                 db        = dbStatus,
                 timestamp = DateTime.UtcNow.ToString("o")
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
     }
 }

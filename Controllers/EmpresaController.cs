@@ -7,15 +7,18 @@ using bufinscustomers.Services;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class EmpresaController : BaseController
+    public class EmpresaController(
+        EmpresaService empresaService,
+        NotificacionesService notificacionesService,
+        AuditoriaService auditoriaService,
+        SupuestosBalancePptoService supuestosBalancePptoService,
+        EmpresaLogoService empresaLogoService) : BaseController
     {
-        private EmpresaService _empresaService = new EmpresaService();
-
         // Listar empresas
         public ActionResult Empresas()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            var empresas = _empresaService.ObtenerEmpresas();
+            var empresas = empresaService.ObtenerEmpresas();
 
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
@@ -65,13 +68,13 @@ namespace bufinscustomers.Controllers
                 logoProcesado = EmpresaLogoHelper.Procesar(datosLogo);
                 if (!logoProcesado.Ok)
                 {
-                    SetErrorMessage(string.Format(R(logoProcesado.ErrorKey), logoProcesado.ErrorArgs ?? new object[0]));
+                    SetErrorMessage(string.Format(R(logoProcesado.ErrorKey), logoProcesado.ErrorArgs ?? System.Array.Empty<object>()));
                     return RedirectToAction("Empresas");
                 }
             }
 
             string mensaje, advertencia;
-            bool registrado = _empresaService.CrearEmpresa(empresa, out mensaje, out advertencia);
+            bool registrado = empresaService.CrearEmpresa(empresa, out mensaje, out advertencia);
 
             if (registrado)
             {
@@ -80,8 +83,8 @@ namespace bufinscustomers.Controllers
                 InicializarSupuestosBalancePpto(empresa);
                 if (advertencia == "WEB_SIN_COLUMNA") SetInfoMessage(R("Emp_PaginaWebSinColumna"));
                 SetSuccessMessage(R("Emp_Creada"));
-                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_EmpresaCreada"), empresa.Nombre, "success", "/Empresa/Empresas");
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Crear,
+                notificacionesService.Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_EmpresaCreada"), empresa.Nombre, "success", "/Empresa/Empresas");
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Crear,
                     "Empresas", empresa.Id.ToString(), $"Empresa creada: {empresa.Nombre}", null, empresa, idEmpresa: empresa.Id);
             }
             else
@@ -99,11 +102,11 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                var svc = new SupuestosBalancePptoService();
+                var svc = supuestosBalancePptoService;
                 if (empresa.Id <= 0 || !svc.Disponible()) return;
                 int filas = svc.Inicializar(empresa.Id, UsuarioSesionHelper.UsuarioActual?.Id);
                 if (filas <= 0) return;
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Crear,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Configuracion, AuditoriaAccion.Crear,
                     "SupuestosBalancePpto", empresa.Id.ToString(),
                     $"Supuestos del balance del ppto creados (valores vacíos) al crear la empresa {empresa.Nombre}: {filas} fila(s)",
                     null, new { filas }, idEmpresa: empresa.Id);
@@ -120,14 +123,14 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                var servicio = new EmpresaLogoService();
+                var servicio = empresaLogoService;
                 if (empresa.Id <= 0 || !servicio.Disponible())
                 {
                     SetInfoMessage(R("EmpLogo_SinTabla"));
                     return;
                 }
                 servicio.Guardar(empresa.Id, r.Png, r.Ancho, r.Alto, r.Version, System.IO.Path.GetFileName(nombreArchivo), UsuarioSesionHelper.UsuarioActual?.Id);
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Editar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Editar,
                     "Empresas", empresa.Id.ToString(), $"Logo de la empresa agregado al crearla (Id {empresa.Id})",
                     null, new { r.Ancho, r.Alto, Bytes = r.Png.Length, r.Version }, idEmpresa: empresa.Id);
                 if (r.AvisoKey != null) SetInfoMessage(R(r.AvisoKey));
@@ -159,14 +162,14 @@ namespace bufinscustomers.Controllers
             empresa.PaginaWeb = webNormalizada;
 
             string mensaje, advertencia;
-            bool actualizado = _empresaService.EditarEmpresa(empresa, out mensaje, out advertencia);
+            bool actualizado = empresaService.EditarEmpresa(empresa, out mensaje, out advertencia);
 
             if (actualizado)
             {
                 EmpresasViewBagFilter.Invalidar();
                 if (advertencia == "WEB_SIN_COLUMNA") SetInfoMessage(R("Emp_PaginaWebSinColumna"));
                 SetSuccessMessage(mensaje);
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Editar,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Editar,
                     "Empresas", empresa.Id.ToString(), $"Empresa editada: {empresa.Nombre}", null, empresa, idEmpresa: empresa.Id);
             }
             else
@@ -186,14 +189,14 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Empresas");
             }
 
-            bool eliminado = _empresaService.EliminarEmpresa(idEmpresa);
+            bool eliminado = empresaService.EliminarEmpresa(idEmpresa);
 
             if (eliminado)
             {
                 EmpresasViewBagFilter.Invalidar();
                 SetSuccessMessage(R("Emp_Eliminada"));
-                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_EmpresaEliminada"), null, "warning", "/Empresa/Empresas");
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Eliminar,
+                notificacionesService.Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_EmpresaEliminada"), null, "warning", "/Empresa/Empresas");
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Empresas, AuditoriaAccion.Eliminar,
                     "Empresas", idEmpresa.ToString(), $"Empresa eliminada (Id {idEmpresa})", idEmpresa: idEmpresa);
             }
             else

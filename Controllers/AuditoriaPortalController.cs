@@ -16,10 +16,8 @@ namespace bufinscustomers.Controllers
     /// </summary>
     [ValidarSesion]
     [SoloSuperAdmin]
-    public class AuditoriaPortalController : BaseController
+    public class AuditoriaPortalController(PortalUsoService servicio, AuditoriaService auditoriaService) : BaseController
     {
-        private readonly PortalUsoService _servicio = new PortalUsoService();
-
         /// <summary>Textos (recursos AudPortal_*) que se envían al navegador; la pestaña los usa por su clave sin prefijo.</summary>
         private static readonly string[] ClavesTextos = { "X_Titulo", "BuscarPlaceholder", "F_Dispositivo", "F_Origen", "F_Idioma", "Nota", "SinDatos", "SinCarpeta", "SinEventos", "Ahora", "Desde", "K_Visitantes", "K_VisitantesDia", "K_Visitas", "K_Vistas", "K_PagVisita", "K_Duracion", "K_Rebote", "K_Descargas", "K_Contactos", "K_Busquedas", "KH_Visitantes", "KH_Visitas", "KH_Rebote", "S_Tendencia", "S_Mapa", "S_Consultan", "S_Llegan", "S_Quienes", "S_Hacen", "S_Recorridos", "S_Salud", "S_Empresas", "S_Sectores", "S_Paginas", "S_Rankings", "S_RankSeg", "S_Busquedas", "S_Comparaciones", "S_FiltrosSector", "S_Origen", "S_Sitios", "S_Campanas", "S_Dispositivos", "S_Navegadores", "S_Sistemas", "S_Idiomas", "S_Zonas", "S_Cta", "S_Descargas", "S_Otras", "S_Salidas", "S_Entradas", "S_SalidasPag", "S_Pasos", "S_Profundidad", "S_Embudo", "S_Lectura", "S_Bots", "S_404", "S_Limites", "S_Acciones", "S_Audiencia", "X_Resumen", "X_Diario", "X_Dia", "X_Dias", "X_Empresa", "X_Empresas", "X_Sector", "X_Clave", "X_Pagina", "X_Veces", "X_Tipo", "X_Descarga", "X_Otra", "X_Salida", "X_Categoria", "X_Sitio", "X_Dispositivo", "X_Navegador", "X_Sistema", "X_Idioma", "X_Zona", "X_Entrada", "X_Paso", "X_Profundidad", "X_Etapa", "X_PermSeg", "X_ScrollPct", "X_Informes", "X_Familia", "E_visitantes", "E_consulta", "E_cta", "E_contacto", "E_enviado", "P_inicio", "P_home", "P_empresa", "P_sector", "P_ranking", "P_comparar", "P_comparador", "P_sectores", "P_contacto", "P_informe", "O_directo", "O_buscador", "O_red-social", "O_correo", "O_otro-sitio", "O_interno", "D_m", "D_t", "D_d", "B_google", "B_bing", "B_ia-openai", "B_ia-anthropic", "B_ia-perplexity", "B_ia-otro", "B_buscador-otro", "B_facebook", "B_linkedin", "B_x-twitter", "B_mensajeria", "B_seo", "B_monitoreo", "B_otro", "A_export_xlsx", "A_export_csv", "A_informe_pdf", "A_imprimir", "A_copiar_enlace", "A_unidad", "Dias", "Serie_Vistas", "Serie_Visitantes", "Serie_Visitas", "Ver_Mas", "N_Nada", "Hdr_Empresa", "Hdr_Vistas", "Hdr_Visitantes", "Hdr_Informes" };
 
@@ -50,14 +48,14 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                var r = _servicio.Consultar(Filtro(desde, hasta, dispositivo, origen, idioma, texto));
-                var json = Json(r, JsonRequestBehavior.AllowGet);
+                var r = servicio.Consultar(Filtro(desde, hasta, dispositivo, origen, idioma, texto));
+                var json = Json(r);
                 json.MaxJsonLength = int.MaxValue;
                 return json;
             }
             catch (Exception ex)
             {
-                return Json(new { error = MensajeError(ex) }, JsonRequestBehavior.AllowGet);
+                return Json(new { error = MensajeError(ex) });
             }
         }
 
@@ -68,7 +66,7 @@ namespace bufinscustomers.Controllers
             try
             {
                 var f = Filtro(desde, hasta, dispositivo, origen, idioma, texto);
-                var r = _servicio.Consultar(f);
+                var r = servicio.Consultar(f);
                 if (!r.Disponible)
                 {
                     SetErrorMessage(R("AudPortal_SinDatos"));
@@ -77,7 +75,7 @@ namespace bufinscustomers.Controllers
 
                 byte[] bytes = ConstruirExcel(r);
                 string nombrePortal = PortalPublicoConfig.Nombre();
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Informes, AuditoriaAccion.Exportar, "AuditoriaPortal", "excel",
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Informes, AuditoriaAccion.Exportar, "AuditoriaPortal", "excel",
                     $"Exportó a Excel la auditoría del portal público ({nombrePortal}), del {r.Desde} al {r.Hasta}.",
                     null, new { r.Desde, r.Hasta, f.Dispositivo, f.Origen, f.Idioma, f.Texto });
                 string archivo = $"Auditoria_Portal_{r.Desde}_{r.Hasta}.xlsx";
@@ -98,11 +96,11 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                var r = _servicio.LimpiarTodo();
+                var r = servicio.LimpiarTodo();
                 if (!r.Item1) return Json(new { success = false, message = R("AudPortal_SinCarpeta") });
 
                 string nombrePortal = PortalPublicoConfig.Nombre();
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Informes, AuditoriaAccion.Eliminar, "AuditoriaPortal", "limpiar",
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Informes, AuditoriaAccion.Eliminar, "AuditoriaPortal", "limpiar",
                     $"Limpió la auditoría del portal público ({nombrePortal}): {r.Item2} archivo(s) borrado(s), {r.Item3} sin poder borrar.",
                     null, new { borrados = r.Item2, fallidos = r.Item3 });
 

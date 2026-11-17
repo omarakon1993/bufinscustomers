@@ -25,13 +25,8 @@ namespace bufinscustomers.Services
             bool existe = true;
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("SELECT Clave, SoloSuperAdmin FROM dbo.DocumentacionAcceso", cn))
-                {
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read()) d[r.GetString(0)] = r.GetBoolean(1);
-                }
+                Bd.Leer(CadenaConexion, "SELECT Clave, SoloSuperAdmin FROM dbo.DocumentacionAcceso",
+                    r => d[r.GetString(0)] = r.GetBoolean(1));
             }
             catch (SqlException ex)
             {
@@ -49,8 +44,7 @@ namespace bufinscustomers.Services
         public static bool EsSoloSuperAdmin(string claveBiblioteca)
         {
             if (string.IsNullOrEmpty(claveBiblioteca)) return false;
-            bool t;
-            var g = Guardados(out t);
+            var g = Guardados(out _);
             bool v;
             if (g.TryGetValue(claveBiblioteca, out v)) return v;
             var doc = DocumentacionBibliotecaCatalogo.Buscar(claveBiblioteca);
@@ -77,18 +71,11 @@ namespace bufinscustomers.Services
             if (DocumentacionBibliotecaCatalogo.Buscar(claveBiblioteca) == null) { errorKey = "DocBuf_AccesoDocInvalido"; return false; }
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(@"
+                Bd.Ejecutar(CadenaConexion, @"
                     UPDATE dbo.DocumentacionAcceso SET SoloSuperAdmin = @S, FechaActualizacion = GETDATE(), IdUsuario = @U WHERE Clave = @C;
                     IF @@ROWCOUNT = 0
-                        INSERT INTO dbo.DocumentacionAcceso (Clave, SoloSuperAdmin, IdUsuario) VALUES (@C, @S, @U);", cn))
-                {
-                    cmd.Parameters.AddWithValue("@C", claveBiblioteca);
-                    cmd.Parameters.AddWithValue("@S", soloSuperAdmin);
-                    cmd.Parameters.AddWithValue("@U", idUsuario);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                        INSERT INTO dbo.DocumentacionAcceso (Clave, SoloSuperAdmin, IdUsuario) VALUES (@C, @S, @U);",
+                    new { C = claveBiblioteca, S = soloSuperAdmin, U = idUsuario });
                 MemoryCache.Default.Remove(CACHE_KEY);
                 return true;
             }

@@ -1,12 +1,12 @@
+#nullable enable
 using System;
 using System.Linq;
 using System.Net;
-using System.Web;
 
 namespace bufinscustomers.Helpers
 {
     /// <summary>
-    /// Resuelve la IP real del cliente. Por defecto devuelve <see cref="HttpRequestBase.UserHostAddress"/>
+    /// Resuelve la IP real del cliente. Por defecto devuelve <see cref="HttpRequest.UserHostAddress"/>
     /// (la conexión TCP directa). Si la petición llega a través de un proxy inverso / balanceador /
     /// Cloudflare, ese valor es la IP del proxy, no la del visitante — para recuperar la IP real hay
     /// que leer una cabecera (<c>X-Forwarded-For</c> o <c>CF-Connecting-IP</c>), pero SOLO se puede
@@ -42,14 +42,14 @@ namespace bufinscustomers.Helpers
             catch { return ""; }
         }
 
-        public static string ObtenerIp(HttpRequestBase request)
+        public static string ObtenerIp(HttpRequest request)
         {
             if (request == null) return "";
             string directa = (request.UserHostAddress ?? "").Trim();
 
             IpRango[] proxies;
             try { proxies = _proxiesConfianza.Value; }
-            catch { proxies = new IpRango[0]; }
+            catch { proxies = Array.Empty<IpRango>(); }
 
             // Sin proxies de confianza, o la conexión directa no es uno de ellos: no se
             // confía en ninguna cabecera reenviada.
@@ -59,13 +59,13 @@ namespace bufinscustomers.Helpers
             // Cloudflare envía una sola IP: la del cliente.
             if (_confiarCloudflare.Value)
             {
-                string cf = ((string)request.Headers["CF-Connecting-IP"] ?? "").Trim();
+                string cf = ((string?)request.Headers["CF-Connecting-IP"] ?? "").Trim();
                 if (EsIpValida(cf)) return cf;
             }
 
             // X-Forwarded-For: "cliente, proxy1, proxy2". Se recorre de derecha a izquierda
             // saltando los proxies de confianza; el primer valor que no lo sea es el cliente.
-            string xff = request.Headers["X-Forwarded-For"];
+            string? xff = request.Headers["X-Forwarded-For"];
             if (!string.IsNullOrWhiteSpace(xff))
             {
                 var partes = xff.Split(',')
@@ -112,12 +112,12 @@ namespace bufinscustomers.Helpers
 
         private static IpRango[] ParsearRangos(string csv)
         {
-            if (string.IsNullOrWhiteSpace(csv)) return new IpRango[0];
+            if (string.IsNullOrWhiteSpace(csv)) return Array.Empty<IpRango>();
             return csv.Split(',')
                       .Select(s => s.Trim())
                       .Where(s => s.Length > 0)
                       .Select(IpRango.Parsear)
-                      .Where(r => r != null)
+                      .OfType<IpRango>()
                       .ToArray();
         }
 
@@ -129,7 +129,7 @@ namespace bufinscustomers.Helpers
 
             private IpRango(byte[] red, int bits) { _red = red; _bits = bits; }
 
-            public static IpRango Parsear(string texto)
+            public static IpRango? Parsear(string texto)
             {
                 try
                 {

@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.AspNetCore.Server.IIS;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
@@ -20,6 +19,7 @@ using Newtonsoft.Json.Serialization;
 
 const long LimiteSubida = 104857600;   // 100 MB: igual que maxRequestLength / maxAllowedContentLength del sitio anterior
 
+// ===== Arranque del sitio (ASP.NET Core / .NET 10): 1) configuración y servicios, 2) construir la app, 3) pipeline de middlewares en orden, 4) rutas. =====
 var builder = WebApplication.CreateBuilder(args);
 
 // Credenciales locales (cadena de conexion, clave de maquina): secretsSettings.json esta en .gitignore. En produccion se usan variables de entorno o este mismo archivo en el servidor.
@@ -41,6 +41,9 @@ builder.Services.Configure<FormOptions>(o =>
 });
 
 builder.Services.AddHttpContextAccessor();
+
+// Servicios de negocio (carpeta Services) para inyección en los controladores; ver Infra/ServiciosExtensions.cs.
+bufinscustomers.Infra.ServiciosExtensions.AddServiciosBufins(builder.Services);
 
 // Cookies: el sitio anterior marcaba todas como seguras (httpCookies requireSSL="true"). SameAsRequest las marca Secure en toda peticion
 // HTTPS (la unica que llega a produccion) y no lanza error si alguna peticion de prueba llega en claro (con Always, el antiforgery fallaria).
@@ -109,6 +112,7 @@ builder.Services.AddResponseCompression(o =>
     o.Providers.Add<GzipCompressionProvider>();
 });
 
+// ----- A partir de aquí: pipeline HTTP (el orden de los middlewares importa: errores → seguridad → estáticos → idioma → rutas) -----
 var app = builder.Build();
 
 AppHttp.Iniciar(app.Services.GetRequiredService<Microsoft.AspNetCore.Http.IHttpContextAccessor>());
@@ -181,6 +185,7 @@ app.UseRouting();
 app.UseMiddleware<bufinscustomers.Api.ApiV1Middleware>();
 bufinscustomers.Api.ApiV1.Mapear(app);
 
+// Ruta MVC por convención: /Controlador/Accion/id (por defecto Home/Index).
 app.MapControllerRoute("Default", "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();

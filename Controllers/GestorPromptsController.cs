@@ -1,4 +1,3 @@
-using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
@@ -7,13 +6,11 @@ namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
     [SoloSuperAdmin]
-    public class GestorPromptsController : BaseController
+    public class GestorPromptsController(GestorPromptsService service) : BaseController
     {
-        private readonly GestorPromptsService _service = new GestorPromptsService();
-
         public ActionResult Index()
         {
-            var prompts = _service.ObtenerTodos();
+            var prompts = service.ObtenerTodos();
             return View("~/Views/Configuracion/GestorPrompts.cshtml", prompts);
         }
 
@@ -29,7 +26,7 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                bool ok = _service.Crear(prompt);
+                bool ok = service.Crear(prompt);
                 if (ok)
                     SetSuccessMessage("Prompt '" + prompt.Nombre + "' creado correctamente.");
                 else
@@ -37,7 +34,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al crear el prompt: " + ex.Message);
+                SetErrorMessage("Error al crear el prompt: " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");
@@ -55,7 +52,7 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                bool ok = _service.Editar(prompt);
+                bool ok = service.Editar(prompt);
                 if (ok)
                     SetSuccessMessage("Prompt '" + prompt.Nombre + "' actualizado correctamente.");
                 else
@@ -63,7 +60,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al actualizar el prompt: " + ex.Message);
+                SetErrorMessage("Error al actualizar el prompt: " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");
@@ -75,7 +72,7 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                bool ok = _service.Eliminar(id);
+                bool ok = service.Eliminar(id);
                 if (ok)
                     SetSuccessMessage("Prompt eliminado correctamente.");
                 else
@@ -83,7 +80,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al eliminar el prompt: " + ex.Message);
+                SetErrorMessage("Error al eliminar el prompt: " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");

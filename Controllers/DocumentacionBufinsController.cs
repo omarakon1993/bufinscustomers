@@ -24,7 +24,9 @@ namespace bufinscustomers.Controllers
     /// </summary>
     [ValidarSesion]
     [RequierePermiso("ADMIN_DOCUMENTACION_BUFINS")]
-    public class DocumentacionBufinsController : BaseController
+    public class DocumentacionBufinsController(
+        DocumentacionAccesoService documentacionAccesoService,
+        AuditoriaService auditoriaService) : BaseController
     {
         public ActionResult Index()
         {
@@ -45,8 +47,8 @@ namespace bufinscustomers.Controllers
         public ActionResult Ver(string clave)
         {
             var doc = DocumentacionBibliotecaCatalogo.Buscar(clave);
-            if (doc == null) return HttpNotFound();
-            if (!DocumentacionAccesoService.PuedeVer(doc.Clave, UsuarioSesionHelper.UsuarioActual)) return new HttpStatusCodeResult(403);
+            if (doc == null) return NotFound();
+            if (!DocumentacionAccesoService.PuedeVer(doc.Clave, UsuarioSesionHelper.UsuarioActual)) return new StatusCodeResult(403);
 
             return DocumentacionProtegidaHelper.Servir(this, doc.Ruta,
                 R("Doc_MarcaLeyenda"), R("Doc_Aviso"), "DocumentacionBufins." + doc.Clave,
@@ -58,18 +60,18 @@ namespace bufinscustomers.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult GuardarAcceso(string clave, bool soloSuperAdmin)
         {
-            if (!UsuarioSesionHelper.EsSuperAdmin()) return new HttpStatusCodeResult(403);
+            if (!UsuarioSesionHelper.EsSuperAdmin()) return new StatusCodeResult(403);
             var doc = DocumentacionBibliotecaCatalogo.Buscar(clave);
             if (doc == null) return Json(new { exito = false, mensaje = R("DocBuf_AccesoDocInvalido") });
 
             bool antes = DocumentacionAccesoService.EsSoloSuperAdmin(clave);
             var usuario = UsuarioSesionHelper.UsuarioActual;
             string errorKey;
-            if (!new DocumentacionAccesoService().Guardar(clave, soloSuperAdmin, usuario?.Id ?? 0, out errorKey))
+            if (!documentacionAccesoService.Guardar(clave, soloSuperAdmin, usuario?.Id ?? 0, out errorKey))
                 return Json(new { exito = false, mensaje = R(errorKey) });
 
             if (antes != soloSuperAdmin)
-                new AuditoriaService().RegistrarCambio(AuditoriaTipo.Permisos, AuditoriaAccion.Editar, "Documentacion." + clave, clave,
+                auditoriaService.RegistrarCambio(AuditoriaTipo.Permisos, AuditoriaAccion.Editar, "Documentacion." + clave, clave,
                     (soloSuperAdmin ? "Restringió a solo Super Admin" : "Abrió a los usuarios con acceso") + " la documentación: " + doc.Titulo + ".",
                     antes ? "Solo Super Admin" : "Con acceso", soloSuperAdmin ? "Solo Super Admin" : "Con acceso", usuario?.IdEmpresa, entidadNombre: doc.Titulo);
 

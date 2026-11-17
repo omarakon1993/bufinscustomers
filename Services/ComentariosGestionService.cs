@@ -1,6 +1,6 @@
+using bufinscustomers.Helpers;
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 
 namespace bufinscustomers.Services
 {
@@ -49,34 +49,21 @@ namespace bufinscustomers.Services
             var lista = new List<ComentarioGestion>();
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                {
-                    var cmd = new SqlCommand(@"
+                Bd.Leer(CadenaConexion, @"
                         SELECT Id, IdEmpresa, Informe, Anio, Mes, Clave, Texto, IdUsuario, NombreUsuario, FechaCreacion, FechaEdicion
                         FROM dbo.ComentariosGestion
                         WHERE IdEmpresa = @IdEmpresa AND Anio = @Anio AND Mes = @Mes AND Activo = 1
                           AND (@Informe IS NULL OR Informe = @Informe)
-                        ORDER BY FechaCreacion DESC", cn);
-                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                    cmd.Parameters.AddWithValue("@Anio", anio);
-                    cmd.Parameters.AddWithValue("@Mes", mes);
-                    cmd.Parameters.AddWithValue("@Informe", (object)informe ?? DBNull.Value);
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                    {
-                        while (r.Read())
+                        ORDER BY FechaCreacion DESC",
+                    new { IdEmpresa = idEmpresa, Anio = anio, Mes = mes, Informe = informe },
+                    r => lista.Add(new ComentarioGestion
                         {
-                            lista.Add(new ComentarioGestion
-                            {
-                                Id = Convert.ToInt64(r["Id"]), IdEmpresa = Convert.ToInt32(r["IdEmpresa"]), Informe = r["Informe"] as string,
-                                Anio = Convert.ToInt32(r["Anio"]), Mes = Convert.ToInt32(r["Mes"]), Clave = r["Clave"] as string,
-                                Texto = r["Texto"] as string, IdUsuario = Convert.ToInt32(r["IdUsuario"]), NombreUsuario = r["NombreUsuario"] as string,
-                                Fecha = Convert.ToDateTime(r["FechaCreacion"]).ToString("yyyy-MM-dd HH:mm"),
-                                FechaEdicion = r["FechaEdicion"] == DBNull.Value ? null : Convert.ToDateTime(r["FechaEdicion"]).ToString("yyyy-MM-dd HH:mm")
-                            });
-                        }
-                    }
-                }
+                            Id = Convert.ToInt64(r["Id"]), IdEmpresa = Convert.ToInt32(r["IdEmpresa"]), Informe = r["Informe"] as string,
+                            Anio = Convert.ToInt32(r["Anio"]), Mes = Convert.ToInt32(r["Mes"]), Clave = r["Clave"] as string,
+                            Texto = r["Texto"] as string, IdUsuario = Convert.ToInt32(r["IdUsuario"]), NombreUsuario = r["NombreUsuario"] as string,
+                            Fecha = Convert.ToDateTime(r["FechaCreacion"]).ToString("yyyy-MM-dd HH:mm"),
+                            FechaEdicion = r["FechaEdicion"] == DBNull.Value ? null : Convert.ToDateTime(r["FechaEdicion"]).ToString("yyyy-MM-dd HH:mm")
+                        }));
             }
             catch (SqlException ex) when (ex.Number == ErrorTablaNoExiste)
             {
@@ -108,46 +95,33 @@ namespace bufinscustomers.Services
 
         public long Crear(int idEmpresa, string informe, int anio, int mes, string clave, string texto, int idUsuario, string nombreUsuario)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand(@"
+            return Bd.Escalar<long>(CadenaConexion, @"
                     INSERT INTO dbo.ComentariosGestion (IdEmpresa, Informe, Anio, Mes, Clave, Texto, IdUsuario, NombreUsuario)
                     VALUES (@IdEmpresa, @Informe, @Anio, @Mes, @Clave, @Texto, @IdUsuario, @NombreUsuario);
-                    SELECT CAST(SCOPE_IDENTITY() AS BIGINT);", cn);
-                cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                cmd.Parameters.AddWithValue("@Informe", informe);
-                cmd.Parameters.AddWithValue("@Anio", anio);
-                cmd.Parameters.AddWithValue("@Mes", mes);
-                cmd.Parameters.AddWithValue("@Clave", string.IsNullOrWhiteSpace(clave) ? (object)DBNull.Value : clave);
-                cmd.Parameters.AddWithValue("@Texto", texto);
-                cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
-                cmd.Parameters.AddWithValue("@NombreUsuario", nombreUsuario ?? "");
-                cn.Open();
-                return Convert.ToInt64(cmd.ExecuteScalar());
-            }
+                    SELECT CAST(SCOPE_IDENTITY() AS BIGINT);",
+                new
+                {
+                    IdEmpresa = idEmpresa,
+                    Informe = informe,
+                    Anio = anio,
+                    Mes = mes,
+                    Clave = string.IsNullOrWhiteSpace(clave) ? (object)DBNull.Value : clave,
+                    Texto = texto,
+                    IdUsuario = idUsuario,
+                    NombreUsuario = nombreUsuario ?? ""
+                });
         }
 
         public void Editar(long id, string texto)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand("UPDATE dbo.ComentariosGestion SET Texto = @Texto, FechaEdicion = GETDATE() WHERE Id = @Id AND Activo = 1", cn);
-                cmd.Parameters.AddWithValue("@Id", id);
-                cmd.Parameters.AddWithValue("@Texto", texto);
-                cn.Open();
-                cmd.ExecuteNonQuery();
-            }
+            Bd.Ejecutar(CadenaConexion, "UPDATE dbo.ComentariosGestion SET Texto = @Texto, FechaEdicion = GETDATE() WHERE Id = @Id AND Activo = 1",
+                new { Id = id, Texto = texto });
         }
 
         public void Eliminar(long id)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand("UPDATE dbo.ComentariosGestion SET Activo = 0, FechaEdicion = GETDATE() WHERE Id = @Id", cn);
-                cmd.Parameters.AddWithValue("@Id", id);
-                cn.Open();
-                cmd.ExecuteNonQuery();
-            }
+            Bd.Ejecutar(CadenaConexion, "UPDATE dbo.ComentariosGestion SET Activo = 0, FechaEdicion = GETDATE() WHERE Id = @Id",
+                new { Id = id });
         }
     }
 }

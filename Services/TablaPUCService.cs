@@ -1,6 +1,6 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 
 namespace bufinscustomers.Services
 {
@@ -39,27 +39,17 @@ WHERE @LargoHijos IS NOT NULL
   AND (@Cuenta IS NULL OR @Cuenta = '' OR h.Cuenta LIKE @Cuenta + '%')
 ORDER BY h.Cuenta;";
 
-            using (var conn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(sql, conn))
-            {
-                cmd.Parameters.AddWithValue("@Cuenta", (object)cuenta ?? System.DBNull.Value);
-                conn.Open();
-                using (var r = cmd.ExecuteReader())
-                {
-                    while (r.Read())
+            Bd.Leer(CadenaConexion, sql,
+                new { Cuenta = (object)cuenta ?? System.DBNull.Value },
+                r => lista.Add(new TablaPUC
                     {
-                        lista.Add(new TablaPUC
-                        {
-                            Cuenta = r["Cuenta"]?.ToString(),
-                            Nombre = r["Nombre"]?.ToString(),
-                            Largo = r["Largo"]?.ToString(),
-                            Tipo = r["Tipo"]?.ToString(),
-                            Descripcion = r["Descripcion"] == System.DBNull.Value ? null : r["Descripcion"].ToString(),
-                            TieneHijos = r["TieneHijos"] != System.DBNull.Value && (bool)r["TieneHijos"]
-                        });
-                    }
-                }
-            }
+                        Cuenta = r["Cuenta"]?.ToString(),
+                        Nombre = r["Nombre"]?.ToString(),
+                        Largo = r["Largo"]?.ToString(),
+                        Tipo = r["Tipo"]?.ToString(),
+                        Descripcion = r["Descripcion"] == System.DBNull.Value ? null : r["Descripcion"].ToString(),
+                        TieneHijos = r["TieneHijos"] != System.DBNull.Value && (bool)r["TieneHijos"]
+                    }));
             return lista;
         }
 
@@ -78,26 +68,16 @@ FROM dbo.TablaPUC
 WHERE Cuenta = @Cuenta OR (@Cuenta LIKE Cuenta + '%' AND Cuenta <> @Cuenta)
 ORDER BY TRY_CAST(Largo AS INT);";
 
-            using (var conn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(sql, conn))
-            {
-                cmd.Parameters.AddWithValue("@Cuenta", cuenta);
-                conn.Open();
-                using (var r = cmd.ExecuteReader())
-                {
-                    while (r.Read())
+            Bd.Leer(CadenaConexion, sql,
+                new { Cuenta = cuenta },
+                r => lista.Add(new TablaPUC
                     {
-                        lista.Add(new TablaPUC
-                        {
-                            Cuenta = r["Cuenta"]?.ToString(),
-                            Nombre = r["Nombre"]?.ToString(),
-                            Largo = r["Largo"]?.ToString(),
-                            Tipo = r["Tipo"]?.ToString(),
-                            Descripcion = r["Descripcion"] == System.DBNull.Value ? null : r["Descripcion"].ToString()
-                        });
-                    }
-                }
-            }
+                        Cuenta = r["Cuenta"]?.ToString(),
+                        Nombre = r["Nombre"]?.ToString(),
+                        Largo = r["Largo"]?.ToString(),
+                        Tipo = r["Tipo"]?.ToString(),
+                        Descripcion = r["Descripcion"] == System.DBNull.Value ? null : r["Descripcion"].ToString()
+                    }));
             return lista;
         }
 
@@ -123,26 +103,15 @@ ORDER BY
     CASE WHEN Cuenta = @Texto THEN 0 WHEN Cuenta LIKE @Texto + '%' THEN 1 ELSE 2 END,
     TRY_CAST(Largo AS INT), Cuenta;";
 
-            using (var conn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(sql, conn))
-            {
-                cmd.Parameters.AddWithValue("@Texto", texto);
-                cmd.Parameters.AddWithValue("@EsNumerico", esNumerico ? 1 : 0);
-                conn.Open();
-                using (var r = cmd.ExecuteReader())
-                {
-                    while (r.Read())
+            Bd.Leer(CadenaConexion, sql,
+                new { Texto = texto, EsNumerico = esNumerico ? 1 : 0 },
+                r => lista.Add(new TablaPUC
                     {
-                        lista.Add(new TablaPUC
-                        {
-                            Cuenta = r["Cuenta"]?.ToString(),
-                            Nombre = r["Nombre"]?.ToString(),
-                            Largo = r["Largo"]?.ToString(),
-                            Tipo = r["Tipo"]?.ToString()
-                        });
-                    }
-                }
-            }
+                        Cuenta = r["Cuenta"]?.ToString(),
+                        Nombre = r["Nombre"]?.ToString(),
+                        Largo = r["Largo"]?.ToString(),
+                        Tipo = r["Tipo"]?.ToString()
+                    }));
             return lista;
         }
 
@@ -159,26 +128,16 @@ FROM dbo.TablaPUC
 WHERE @Cuenta IS NULL OR @Cuenta = '' OR Cuenta LIKE @Cuenta + '%'
 ORDER BY Cuenta;";
 
-            using (var conn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(sql, conn))
-            {
-                cmd.Parameters.AddWithValue("@Cuenta", (object)cuenta ?? System.DBNull.Value);
-                conn.Open();
-                using (var r = cmd.ExecuteReader())
-                {
-                    while (r.Read())
+            Bd.Leer(CadenaConexion, sql,
+                new { Cuenta = (object)cuenta ?? System.DBNull.Value },
+                r => lista.Add(new TablaPUC
                     {
-                        lista.Add(new TablaPUC
-                        {
-                            Cuenta = r["Cuenta"]?.ToString(),
-                            Nombre = r["Nombre"]?.ToString(),
-                            Largo = r["Largo"]?.ToString(),
-                            Tipo = r["Tipo"]?.ToString(),
-                            Descripcion = r["Descripcion"] == System.DBNull.Value ? null : r["Descripcion"].ToString()
-                        });
-                    }
-                }
-            }
+                        Cuenta = r["Cuenta"]?.ToString(),
+                        Nombre = r["Nombre"]?.ToString(),
+                        Largo = r["Largo"]?.ToString(),
+                        Tipo = r["Tipo"]?.ToString(),
+                        Descripcion = r["Descripcion"] == System.DBNull.Value ? null : r["Descripcion"].ToString()
+                    }));
             return lista;
         }
     }

@@ -4,19 +4,17 @@ using bufinscustomers.Services;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class NotificacionesController : BaseController
+    public class NotificacionesController(NotificacionesService svc) : BaseController
     {
-        private readonly NotificacionesService _svc = new NotificacionesService();
-
         [HttpGet]
         public JsonResult Recientes()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null)
-                return Json(new { noLeidas = 0, items = new object[0] }, JsonRequestBehavior.AllowGet);
+                return Json(new { noLeidas = 0, items = System.Array.Empty<object>() });
 
-            var (items, noLeidas) = _svc.ObtenerRecientes(usuario.Id);
-            return Json(new { noLeidas, items }, JsonRequestBehavior.AllowGet);
+            var (items, noLeidas) = svc.ObtenerRecientes(usuario.Id);
+            return Json(new { noLeidas, items });
         }
 
         [HttpPost]
@@ -25,7 +23,7 @@ namespace bufinscustomers.Controllers
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null) return Json(new { success = false });
-            _svc.MarcarLeida(id, usuario.Id);
+            svc.MarcarLeida(id, usuario.Id);
             return Json(new { success = true });
         }
 
@@ -35,7 +33,7 @@ namespace bufinscustomers.Controllers
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null) return Json(new { success = false });
-            _svc.MarcarTodasLeidas(usuario.Id);
+            svc.MarcarTodasLeidas(usuario.Id);
             return Json(new { success = true });
         }
 
@@ -45,7 +43,7 @@ namespace bufinscustomers.Controllers
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null) return Json(new { success = false });
-            _svc.LimpiarTodas(usuario.Id);
+            svc.LimpiarTodas(usuario.Id);
             return Json(new { success = true });
         }
 
@@ -55,7 +53,7 @@ namespace bufinscustomers.Controllers
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             if (usuario == null) return Json(new { success = false });
-            _svc.Eliminar(id, usuario.Id);
+            svc.Eliminar(id, usuario.Id);
             return Json(new { success = true });
         }
     }

@@ -10,7 +10,11 @@ using bufinscustomers.Services;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class HomeController : BaseController
+    public class HomeController(
+        IndicadoresFinancierosService indicadoresFinancierosService,
+        SolicitudReinicioAuthService solicitudReinicioAuthService,
+        AlertasHomeService alertasHomeService,
+        AuditoriaNavegacionService auditoriaNavegacionService) : BaseController
     {
         public ActionResult Index()
         {
@@ -22,15 +26,13 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                var svc = new IndicadoresFinancierosService();
+                var svc = indicadoresFinancierosService;
                 var vm  = await svc.ObtenerSoloNoticiasAsync(refresh).ConfigureAwait(false);
-                return Json(new { rssConfigurado = vm.RSSConfigurado, feeds = vm.Feeds },
-                            JsonRequestBehavior.AllowGet);
+                return Json(new { rssConfigurado = vm.RSSConfigurado, feeds = vm.Feeds });
             }
             catch
             {
-                return Json(new { rssConfigurado = false, noticias = new object[0] },
-                            JsonRequestBehavior.AllowGet);
+                return Json(new { rssConfigurado = false, noticias = Array.Empty<object>() });
             }
         }
 
@@ -46,15 +48,15 @@ namespace bufinscustomers.Controllers
         public JsonResult ObtenerSolicitudesSeguridad()
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
-                return Json(new { ok = false }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false });
             try
             {
-                return Json(new { ok = true, pendientes = new SolicitudReinicioAuthService().ContarPendientes() }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = true, pendientes = solicitudReinicioAuthService.ContarPendientes() });
             }
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "HomeController.ObtenerSolicitudesSeguridad");
-                return Json(new { ok = false }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false });
             }
         }
 
@@ -64,12 +66,12 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                return Json(new { ok = true, mostrar = PasskeyAvisoHelper.MostrarAvisoHome(UsuarioSesionHelper.UsuarioActual) }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = true, mostrar = PasskeyAvisoHelper.MostrarAvisoHome(UsuarioSesionHelper.UsuarioActual) });
             }
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "HomeController.ObtenerAvisoPasskey");
-                return Json(new { ok = false, mostrar = false }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false, mostrar = false });
             }
         }
 
@@ -83,7 +85,7 @@ namespace bufinscustomers.Controllers
                     ? null
                     : (EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>());
 
-                var alertas = new AlertasHomeService().Obtener(idsPermitidos);
+                var alertas = alertasHomeService.Obtener(idsPermitidos);
                 bool ingles = System.Threading.Thread.CurrentThread.CurrentUICulture.Name
                                     .Equals("en-US", StringComparison.OrdinalIgnoreCase);
 
@@ -99,12 +101,12 @@ namespace bufinscustomers.Controllers
                         titulo = (ingles && !string.IsNullOrWhiteSpace(a.TituloEn)) ? a.TituloEn : a.Titulo,
                         mensaje = (ingles && !string.IsNullOrWhiteSpace(a.MensajeEn)) ? a.MensajeEn : a.Mensaje
                     })
-                }, JsonRequestBehavior.AllowGet);
+                });
             }
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "HomeController.ObtenerAlertas");
-                return Json(new { ok = false }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false });
             }
         }
 
@@ -135,7 +137,7 @@ namespace bufinscustomers.Controllers
 
                 try
                 {
-                    var visitas = new AuditoriaNavegacionService().ResumenPorPagina(
+                    var visitas = auditoriaNavegacionService.ResumenPorPagina(
                         new NavegacionFiltro { IdUsuario = usuario.Id, Desde = DateTime.Today.AddDays(-60) }, 40);
                     foreach (var v in visitas)
                     {
@@ -147,7 +149,7 @@ namespace bufinscustomers.Controllers
                 }
                 catch (Exception ex)
                 {
-                    AppLogger.Warn("HomeController.ObtenerAccesosRapidos (sin historial): " + ex.Message);
+                    AppLogger.Warn("HomeController.ObtenerAccesosRapidos (sin historial): " + MensajeError(ex));
                 }
 
                 bool haySugeridos = false;
@@ -172,12 +174,12 @@ namespace bufinscustomers.Controllers
                         icono = i.Icono,
                         url = Url.Action(i.Action, i.Controller)
                     })
-                }, JsonRequestBehavior.AllowGet);
+                });
             }
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "HomeController.ObtenerAccesosRapidos");
-                return Json(new { ok = false }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false });
             }
         }
     }

@@ -10,16 +10,14 @@ using System.Text;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class CuentasCorreoController : BaseController
+    public class CuentasCorreoController(CuentasCorreoService svc) : BaseController
     {
-        private readonly CuentasCorreoService _svc = new CuentasCorreoService();
-
         public ActionResult Index()
         {
             if (!UsuarioSesionHelper.EsSuperAdmin())
                 return RedirectToAction("Index", "Home");
 
-            return View("~/Views/Configuracion/CuentasCorreo.cshtml", _svc.ObtenerTodas());
+            return View("~/Views/Configuracion/CuentasCorreo.cshtml", svc.ObtenerTodas());
         }
 
         [HttpPost]
@@ -36,12 +34,12 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
                 cuenta.Activa = true;
-                _svc.Crear(cuenta);
+                svc.Crear(cuenta);
                 SetSuccessMessage(R("Correo_CreadaOk"));
             }
             catch (Exception ex)
             {
-                SetErrorMessage(R("Correo_ErrorCrear") + ": " + ex.Message);
+                SetErrorMessage(R("Correo_ErrorCrear") + ": " + MensajeError(ex));
             }
             return RedirectToAction("Index");
         }
@@ -59,12 +57,12 @@ namespace bufinscustomers.Controllers
                     SetErrorMessage(R("Correo_ErrorCamposReq"));
                     return RedirectToAction("Index");
                 }
-                _svc.Editar(cuenta);
+                svc.Editar(cuenta);
                 SetSuccessMessage(R("Correo_EditadaOk"));
             }
             catch (Exception ex)
             {
-                SetErrorMessage(R("Correo_ErrorEditar") + ": " + ex.Message);
+                SetErrorMessage(R("Correo_ErrorEditar") + ": " + MensajeError(ex));
             }
             return RedirectToAction("Index");
         }
@@ -77,12 +75,12 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Index", "Home");
             try
             {
-                _svc.Eliminar(id);
+                svc.Eliminar(id);
                 SetSuccessMessage(R("Correo_EliminadaOk"));
             }
             catch (Exception ex)
             {
-                SetErrorMessage(R("Correo_ErrorEliminar") + ": " + ex.Message);
+                SetErrorMessage(R("Correo_ErrorEliminar") + ": " + MensajeError(ex));
             }
             return RedirectToAction("Index");
         }
@@ -95,12 +93,12 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Index", "Home");
             try
             {
-                _svc.EstablecerPredeterminada(id);
+                svc.EstablecerPredeterminada(id);
                 SetSuccessMessage(R("Correo_PredeterminadaOk"));
             }
             catch (Exception ex)
             {
-                SetErrorMessage(R("Correo_ErrorPredeterminada") + ": " + ex.Message);
+                SetErrorMessage(R("Correo_ErrorPredeterminada") + ": " + MensajeError(ex));
             }
             return RedirectToAction("Index");
         }
@@ -113,12 +111,12 @@ namespace bufinscustomers.Controllers
                 return Json(new { success = false, message = "Sin permisos" });
             try
             {
-                _svc.ToggleActiva(id, out bool nuevaActiva);
+                svc.ToggleActiva(id, out bool nuevaActiva);
                 return Json(new { success = true, activa = nuevaActiva });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = MensajeError(ex) });
             }
         }
 
@@ -140,7 +138,7 @@ namespace bufinscustomers.Controllers
                 // Si viene un id, usar los datos de BD (la contraseña no viaja por el form)
                 if (id.HasValue && id.Value > 0)
                 {
-                    var cuenta = _svc.ObtenerPorId(id.Value);
+                    var cuenta = svc.ObtenerPorId(id.Value);
                     if (cuenta == null) return Json(new { success = false, message = "Cuenta no encontrada" });
                     host            = cuenta.Host;
                     puerto          = cuenta.Puerto;

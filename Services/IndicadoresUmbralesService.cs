@@ -1,7 +1,6 @@
+using bufinscustomers.Helpers;
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
-using System.Linq;
 
 namespace bufinscustomers.Services
 {
@@ -26,15 +25,9 @@ namespace bufinscustomers.Services
             var r = new Dictionary<string, decimal[]>(StringComparer.OrdinalIgnoreCase);
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                {
-                    var cmd = new SqlCommand("SELECT Codigo, Corte1, Corte2, Corte3 FROM dbo.IndicadoresUmbrales WHERE IdEmpresa = @IdEmpresa", cn);
-                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                    cn.Open();
-                    using (var rd = cmd.ExecuteReader())
-                        while (rd.Read())
-                            r[(string)rd["Codigo"]] = new[] { Convert.ToDecimal(rd["Corte1"]), Convert.ToDecimal(rd["Corte2"]), Convert.ToDecimal(rd["Corte3"]) };
-                }
+                Bd.Leer(CadenaConexion, "SELECT Codigo, Corte1, Corte2, Corte3 FROM dbo.IndicadoresUmbrales WHERE IdEmpresa = @IdEmpresa",
+                    new { IdEmpresa = idEmpresa },
+                    rd => r[(string)rd["Codigo"]] = new[] { Convert.ToDecimal(rd["Corte1"]), Convert.ToDecimal(rd["Corte2"]), Convert.ToDecimal(rd["Corte3"]) });
             }
             catch (SqlException ex) when (ex.Number == ErrorTablaNoExiste) { disponible = false; }
             return r;
@@ -51,32 +44,18 @@ namespace bufinscustomers.Services
 
         public void Guardar(int idEmpresa, string codigo, decimal[] c, int idUsuario)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand(@"
+            Bd.Ejecutar(CadenaConexion, @"
                     UPDATE dbo.IndicadoresUmbrales SET Corte1 = @C1, Corte2 = @C2, Corte3 = @C3, IdUsuario = @U, Fecha = GETDATE()
                     WHERE IdEmpresa = @E AND Codigo = @K;
                     IF @@ROWCOUNT = 0
-                        INSERT INTO dbo.IndicadoresUmbrales (IdEmpresa, Codigo, Corte1, Corte2, Corte3, IdUsuario) VALUES (@E, @K, @C1, @C2, @C3, @U);", cn);
-                cmd.Parameters.AddWithValue("@E", idEmpresa);
-                cmd.Parameters.AddWithValue("@K", codigo);
-                cmd.Parameters.AddWithValue("@C1", c[0]); cmd.Parameters.AddWithValue("@C2", c[1]); cmd.Parameters.AddWithValue("@C3", c[2]);
-                cmd.Parameters.AddWithValue("@U", idUsuario);
-                cn.Open();
-                cmd.ExecuteNonQuery();
-            }
+                        INSERT INTO dbo.IndicadoresUmbrales (IdEmpresa, Codigo, Corte1, Corte2, Corte3, IdUsuario) VALUES (@E, @K, @C1, @C2, @C3, @U);",
+                new { E = idEmpresa, K = codigo, C1 = c[0], C2 = c[1], C3 = c[2], U = idUsuario });
         }
 
         public void Restablecer(int idEmpresa, string codigo)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand("DELETE FROM dbo.IndicadoresUmbrales WHERE IdEmpresa = @E AND Codigo = @K", cn);
-                cmd.Parameters.AddWithValue("@E", idEmpresa);
-                cmd.Parameters.AddWithValue("@K", codigo);
-                cn.Open();
-                cmd.ExecuteNonQuery();
-            }
+            Bd.Ejecutar(CadenaConexion, "DELETE FROM dbo.IndicadoresUmbrales WHERE IdEmpresa = @E AND Codigo = @K",
+                new { E = idEmpresa, K = codigo });
         }
 
         /// <summary>Copia de la definición con otros cortes (el catálogo es estático y compartido: nunca se modifica).</summary>

@@ -1,9 +1,9 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Net.Http;
 using System.Runtime.Caching;
@@ -345,7 +345,7 @@ namespace bufinscustomers.Services
             }
             catch (Exception ex)
             {
-                return new IAConsultaResponse { Exitoso = false, Error = $"Error al consultar IA: {ex.Message}" };
+                return new IAConsultaResponse { Exitoso = false, Error = $"Error al consultar IA: {Helpers.MensajeErrorHelper.Crear(ex, "IAService.Consultar")}" };
             }
         }
 
@@ -358,7 +358,7 @@ namespace bufinscustomers.Services
                 using (var md5d = MD5.Create())
                 {
                     byte[] h = md5d.ComputeHash(Encoding.UTF8.GetBytes(request.DatosJson));
-                    dataHash = BitConverter.ToString(h).Replace("-", "").Substring(0, 12).ToLowerInvariant();
+                    dataHash = Convert.ToHexString(h).Substring(0, 12).ToLowerInvariant();
                 }
             }
 
@@ -372,7 +372,7 @@ namespace bufinscustomers.Services
                 using (var md5h = MD5.Create())
                 {
                     byte[] h = md5h.ComputeHash(Encoding.UTF8.GetBytes(sbH.ToString()));
-                    historialHash = BitConverter.ToString(h).Replace("-", "").Substring(0, 8).ToLowerInvariant();
+                    historialHash = Convert.ToHexString(h).Substring(0, 8).ToLowerInvariant();
                 }
             }
 
@@ -380,7 +380,7 @@ namespace bufinscustomers.Services
             using (var md5 = MD5.Create())
             {
                 byte[] hash = md5.ComputeHash(Encoding.UTF8.GetBytes(raw));
-                return "ia_" + BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                return "ia_" + Convert.ToHexStringLower(hash);
             }
         }
 
@@ -454,22 +454,20 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(@"
+                Bd.Ejecutar(CadenaConexion, @"
                     MERGE dbo.CacheRespuestasIA AS t
                     USING (SELECT @k AS ClaveHash) AS s ON t.ClaveHash = s.ClaveHash
                     WHEN MATCHED THEN
                         UPDATE SET Respuesta = @r, PromptContexto = @p, FechaCreacion = GETDATE(), FechaExpira = @e
                     WHEN NOT MATCHED THEN
-                        INSERT (ClaveHash, Respuesta, PromptContexto, FechaExpira) VALUES (@k, @r, @p, @e);", cn))
-                {
-                    cmd.Parameters.AddWithValue("@k", clave);
-                    cmd.Parameters.AddWithValue("@r", (object)resp.Respuesta ?? string.Empty);
-                    cmd.Parameters.AddWithValue("@p", (object)resp.PromptContextoInicial ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@e", DateTime.Now.AddHours(ttlHoras));
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                        INSERT (ClaveHash, Respuesta, PromptContexto, FechaExpira) VALUES (@k, @r, @p, @e);",
+                    new
+                    {
+                        k = clave,
+                        r = (object)resp.Respuesta ?? string.Empty,
+                        p = resp.PromptContextoInicial,
+                        e = DateTime.Now.AddHours(ttlHoras)
+                    });
             }
             catch (Exception ex)
             {
@@ -491,14 +489,7 @@ namespace bufinscustomers.Services
 
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    "DELETE FROM dbo.CacheRespuestasIA WHERE FechaExpira < GETDATE()", cn))
-                {
-                    cmd.CommandTimeout = 30;
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                Bd.Ejecutar(CadenaConexion, "DELETE FROM dbo.CacheRespuestasIA WHERE FechaExpira < GETDATE()", timeoutSeg: 30);
             }
             catch (Exception ex)
             {
@@ -631,7 +622,7 @@ namespace bufinscustomers.Services
                 // para identificar qué campo usa gpt-5.x cuando content es null.
                 string finishReason = choice?["finish_reason"]?.ToString() ?? "desconocido";
                 string preview      = jsonResponse.Length > 800
-                    ? jsonResponse.Substring(0, 800) + "…"
+                    ? string.Concat(jsonResponse.AsSpan(0, 800), "…")
                     : jsonResponse;
 
                 System.Diagnostics.Trace.TraceWarning(
@@ -642,7 +633,7 @@ namespace bufinscustomers.Services
             }
             catch (Exception ex)
             {
-                return $"Error al procesar la respuesta de OpenAI: {ex.Message}";
+                return $"Error al procesar la respuesta de OpenAI: {Helpers.MensajeErrorHelper.Crear(ex, "IAService.ProcesarRespuesta")}";
             }
         }
 

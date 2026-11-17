@@ -4,7 +4,6 @@ using ClosedXML.Excel;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
 using System.IO;
 using System.Linq;
 namespace bufinscustomers.Services

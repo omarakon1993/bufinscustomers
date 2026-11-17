@@ -8,10 +8,8 @@ using System.IO;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class TablaPUCController : BaseController
+    public class TablaPUCController(TablaPUCService service) : BaseController
     {
-        private readonly TablaPUCService _service = new TablaPUCService();
-
         private bool VerificarAcceso() => UsuarioSesionHelper.UsuarioActual?.Admin >= 1;
 
         public ActionResult TablaPUC()
@@ -28,14 +26,14 @@ namespace bufinscustomers.Controllers
             try
             {
                 if (!VerificarAcceso())
-                    return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Acceso denegado" });
 
-                var nodos = _service.ObtenerHijos(cuenta);
-                return Json(new { success = true, nodos }, JsonRequestBehavior.AllowGet);
+                var nodos = service.ObtenerHijos(cuenta);
+                return Json(new { success = true, nodos });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = MensajeError(ex) }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = MensajeError(ex) });
             }
         }
 
@@ -45,14 +43,14 @@ namespace bufinscustomers.Controllers
             try
             {
                 if (!VerificarAcceso())
-                    return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Acceso denegado" });
 
-                var ruta = _service.ObtenerRuta(cuenta);
-                return Json(new { success = true, ruta }, JsonRequestBehavior.AllowGet);
+                var ruta = service.ObtenerRuta(cuenta);
+                return Json(new { success = true, ruta });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = MensajeError(ex) }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = MensajeError(ex) });
             }
         }
 
@@ -62,14 +60,14 @@ namespace bufinscustomers.Controllers
             try
             {
                 if (!VerificarAcceso())
-                    return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Acceso denegado" });
 
-                var resultados = _service.Buscar(texto);
-                return Json(new { success = true, resultados }, JsonRequestBehavior.AllowGet);
+                var resultados = service.Buscar(texto);
+                return Json(new { success = true, resultados });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = MensajeError(ex) }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = MensajeError(ex) });
             }
         }
 
@@ -82,7 +80,7 @@ namespace bufinscustomers.Controllers
                 if (!VerificarAcceso())
                     return RedirectToAction("TablaPUC");
 
-                var filas = _service.ObtenerSubarbol(cuenta);
+                var filas = service.ObtenerSubarbol(cuenta);
 
                 using (var package = new XLWorkbook())
                 {
@@ -139,7 +137,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage($"Error al exportar: {ex.Message}");
+                SetErrorMessage($"Error al exportar: {MensajeError(ex)}");
                 return RedirectToAction("TablaPUC");
             }
         }

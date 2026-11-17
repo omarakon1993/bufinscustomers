@@ -1,4 +1,3 @@
-using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
@@ -7,13 +6,11 @@ namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
     [SoloSuperAdmin]
-    public class ModelosEjecucionController : BaseController
+    public class ModelosEjecucionController(ModeloService modeloService, AuditoriaService auditoriaService) : BaseController
     {
-        private readonly ModeloService _modeloService = new ModeloService();
-
         public ActionResult Index()
         {
-            var modelos = _modeloService.ObtenerTodos();
+            var modelos = modeloService.ObtenerTodos();
             return View("~/Views/Configuracion/ModelosEjecucion.cshtml", modelos);
         }
 
@@ -29,11 +26,11 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                bool ok = _modeloService.Crear(modelo);
+                bool ok = modeloService.Crear(modelo);
                 if (ok)
                 {
                     SetSuccessMessage("Modelo '" + modelo.Nombre + "' creado correctamente.");
-                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Modelos, AuditoriaAccion.Crear,
+                    auditoriaService.RegistrarCambio(AuditoriaTipo.Modelos, AuditoriaAccion.Crear,
                         "ModelosEjecucion", modelo.Id.ToString(), $"Modelo de ejecución creado: {modelo.Nombre} (SP {modelo.NombreSP})", null, modelo);
                 }
                 else
@@ -41,7 +38,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al crear el modelo: " + ex.Message);
+                SetErrorMessage("Error al crear el modelo: " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");
@@ -59,11 +56,11 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                bool ok = _modeloService.Editar(modelo);
+                bool ok = modeloService.Editar(modelo);
                 if (ok)
                 {
                     SetSuccessMessage("Modelo '" + modelo.Nombre + "' actualizado correctamente.");
-                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Modelos, AuditoriaAccion.Editar,
+                    auditoriaService.RegistrarCambio(AuditoriaTipo.Modelos, AuditoriaAccion.Editar,
                         "ModelosEjecucion", modelo.Id.ToString(), $"Modelo de ejecución editado: {modelo.Nombre} (SP {modelo.NombreSP})", null, modelo);
                 }
                 else
@@ -71,7 +68,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al actualizar el modelo: " + ex.Message);
+                SetErrorMessage("Error al actualizar el modelo: " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");
@@ -83,11 +80,11 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                bool ok = _modeloService.Eliminar(id);
+                bool ok = modeloService.Eliminar(id);
                 if (ok)
                 {
                     SetSuccessMessage("Modelo eliminado correctamente.");
-                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Modelos, AuditoriaAccion.Eliminar,
+                    auditoriaService.RegistrarCambio(AuditoriaTipo.Modelos, AuditoriaAccion.Eliminar,
                         "ModelosEjecucion", id.ToString(), $"Modelo de ejecución eliminado/inactivado (Id {id})");
                 }
                 else
@@ -99,7 +96,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Error al eliminar el modelo: " + ex.Message);
+                SetErrorMessage("Error al eliminar el modelo: " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");

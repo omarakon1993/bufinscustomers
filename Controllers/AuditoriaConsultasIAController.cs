@@ -10,7 +10,10 @@ using System.IO;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class AuditoriaConsultasIAController : BaseController
+    public class AuditoriaConsultasIAController(
+        InformeTablasDatosService informeTablasDatosService,
+        AuditoriaAnalisisIAService auditoriaAnalisisIAService,
+        NotificacionesService notificacionesService) : BaseController
     {
         public ActionResult Index()
         {
@@ -29,7 +32,7 @@ namespace bufinscustomers.Controllers
 
             if (esSuperAdmin)
             {
-                ViewBag.EmpresasFiltro = new InformeTablasDatosService().ObtenerEmpresas();
+                ViewBag.EmpresasFiltro = informeTablasDatosService.ObtenerEmpresas();
             }
             else if (esAdminEmpresa)
             {
@@ -38,7 +41,7 @@ namespace bufinscustomers.Controllers
                 var permitidas = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(UsuarioSesionHelper.UsuarioActual)
                                  ?? new List<int>();
                 if (permitidas.Count > 1)
-                    ViewBag.EmpresasFiltro = new InformeTablasDatosService().ObtenerEmpresas()
+                    ViewBag.EmpresasFiltro = informeTablasDatosService.ObtenerEmpresas()
                         .Where(e => permitidas.Contains(e.Id)).ToList();
             }
 
@@ -78,7 +81,7 @@ namespace bufinscustomers.Controllers
             if (!string.IsNullOrWhiteSpace(desde) && DateTime.TryParse(desde, out var d)) fechaDesde = d;
             if (!string.IsNullOrWhiteSpace(hasta) && DateTime.TryParse(hasta, out var h)) fechaHasta = h;
 
-            return new AuditoriaAnalisisIAService()
+            return auditoriaAnalisisIAService
                 .ObtenerRegistros(filtroIdUsuario, filtroIdsEmpresa, fechaDesde, fechaHasta);
         }
 
@@ -102,7 +105,7 @@ namespace bufinscustomers.Controllers
                 r.FilasAnalizadas,
                 r.TokensTotal,
                 r.Valoracion
-            }), JsonRequestBehavior.AllowGet);
+            }));
         }
 
         /// <summary>
@@ -197,7 +200,7 @@ namespace bufinscustomers.Controllers
                 if (!completo && (!mesesConservar.HasValue || mesesConservar.Value < 1 || mesesConservar.Value > 120))
                     return Json(new { success = false, message = R("AudIA_LimpiarMesesInvalido") });
 
-                int eliminados = new AuditoriaAnalisisIAService().LimpiarAuditoria(mesesConservar);
+                int eliminados = auditoriaAnalisisIAService.LimpiarAuditoria(mesesConservar);
 
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 if (usuario != null)
@@ -205,7 +208,7 @@ namespace bufinscustomers.Controllers
                     string mensaje = completo
                         ? string.Format(R("AudIA_NotifMsgTodo"), eliminados)
                         : string.Format(R("AudIA_NotifMsgConservar"), eliminados, mesesConservar.Value);
-                    new NotificacionesService().Crear(usuario.Id, R("Notif_AuditoriaLimpiada"), mensaje, "warning", "/AuditoriaConsultasIA");
+                    notificacionesService.Crear(usuario.Id, R("Notif_AuditoriaLimpiada"), mensaje, "warning", "/AuditoriaConsultasIA");
                 }
 
                 return Json(new { success = true, eliminados });
@@ -234,10 +237,10 @@ namespace bufinscustomers.Controllers
                     filtroIdsEmpresa = new List<int> { idEmpresa.Value };
             }
 
-            var usuarios = new AuditoriaAnalisisIAService()
+            var usuarios = auditoriaAnalisisIAService
                 .ObtenerUsuariosDeEmpresa(filtroIdsEmpresa);
 
-            return Json(usuarios, JsonRequestBehavior.AllowGet);
+            return Json(usuarios);
         }
     }
 }

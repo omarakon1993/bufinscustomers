@@ -1,8 +1,7 @@
+using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
-using System.Data;
-using Microsoft.Data.SqlClient;
 
 namespace bufinscustomers.Services
 {
@@ -11,18 +10,12 @@ namespace bufinscustomers.Services
         public List<CuentaCorreo> ObtenerTodas()
         {
             var lista = new List<CuentaCorreo>();
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand(
-                    @"SELECT Id, Nombre, Host, Puerto, Ssl, IgnorarCertificado,
+            Bd.Leer(CadenaConexion, @"SELECT Id, Nombre, Host, Puerto, Ssl, IgnorarCertificado,
                              Usuario, Contrasena, Remitente, NombreRemitente,
                              Predeterminada, Activa, FechaCreacion, FechaModificacion
                         FROM ConfiguracionCuentasCorreo
-                       ORDER BY Predeterminada DESC, Activa DESC, Nombre", cn);
-                cn.Open();
-                using (var r = cmd.ExecuteReader())
-                    while (r.Read()) lista.Add(Map(r));
-            }
+                       ORDER BY Predeterminada DESC, Activa DESC, Nombre",
+                r => lista.Add(Map(r)));
             return lista;
         }
 
@@ -132,14 +125,7 @@ namespace bufinscustomers.Services
 
         public bool Eliminar(int id)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand(
-                    "DELETE FROM ConfiguracionCuentasCorreo WHERE Id = @Id", cn);
-                cmd.Parameters.AddWithValue("@Id", id);
-                cn.Open();
-                return cmd.ExecuteNonQuery() > 0;
-            }
+            return Bd.Ejecutar(CadenaConexion, "DELETE FROM ConfiguracionCuentasCorreo WHERE Id = @Id", new { Id = id }) > 0;
         }
 
         public bool EstablecerPredeterminada(int id)

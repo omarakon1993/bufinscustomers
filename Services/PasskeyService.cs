@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 using bufinscustomers.Helpers;
 
 namespace bufinscustomers.Services
@@ -34,28 +33,21 @@ namespace bufinscustomers.Services
             var lista = new List<PasskeyInfo>();
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    "SELECT Id, IdUsuario, CredentialId, ClavePublica, Algoritmo, ContadorFirmas, Nombre, FechaCreacion, UltimoUso " +
-                    "FROM UsuarioPasskeys WHERE IdUsuario = @U ORDER BY FechaCreacion", cn))
-                {
-                    cmd.Parameters.AddWithValue("@U", idUsuario);
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read())
-                            lista.Add(new PasskeyInfo
-                            {
-                                Id = Convert.ToInt32(r["Id"]),
-                                IdUsuario = Convert.ToInt32(r["IdUsuario"]),
-                                CredentialId = (byte[])r["CredentialId"],
-                                ClavePublica = (byte[])r["ClavePublica"],
-                                Algoritmo = Convert.ToInt32(r["Algoritmo"]),
-                                Contador = Convert.ToInt64(r["ContadorFirmas"]),
-                                Nombre = r["Nombre"].ToString(),
-                                FechaCreacion = Convert.ToDateTime(r["FechaCreacion"]),
-                                UltimoUso = r["UltimoUso"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(r["UltimoUso"])
-                            });
-                }
+                Bd.Leer(CadenaConexion, "SELECT Id, IdUsuario, CredentialId, ClavePublica, Algoritmo, ContadorFirmas, Nombre, FechaCreacion, UltimoUso " +
+                    "FROM UsuarioPasskeys WHERE IdUsuario = @U ORDER BY FechaCreacion",
+                    new { U = idUsuario },
+                    r => lista.Add(new PasskeyInfo
+                        {
+                            Id = Convert.ToInt32(r["Id"]),
+                            IdUsuario = Convert.ToInt32(r["IdUsuario"]),
+                            CredentialId = (byte[])r["CredentialId"],
+                            ClavePublica = (byte[])r["ClavePublica"],
+                            Algoritmo = Convert.ToInt32(r["Algoritmo"]),
+                            Contador = Convert.ToInt64(r["ContadorFirmas"]),
+                            Nombre = r["Nombre"].ToString(),
+                            FechaCreacion = Convert.ToDateTime(r["FechaCreacion"]),
+                            UltimoUso = r["UltimoUso"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(r["UltimoUso"])
+                        }));
             }
             catch (SqlException ex)
             {
@@ -95,14 +87,8 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("UPDATE Usuarios SET PasskeyAvisoHasta = @H WHERE Id = @U", cn))
-                {
-                    cmd.Parameters.AddWithValue("@H", dias > 0 ? DateTime.Now.AddDays(dias) : new DateTime(9999, 12, 31));
-                    cmd.Parameters.AddWithValue("@U", idUsuario);
-                    cn.Open();
-                    return cmd.ExecuteNonQuery() == 1;
-                }
+                return Bd.Ejecutar(CadenaConexion, "UPDATE Usuarios SET PasskeyAvisoHasta = @H WHERE Id = @U",
+                    new { H = dias > 0 ? DateTime.Now.AddDays(dias) : new DateTime(9999, 12, 31), U = idUsuario }) == 1;
             }
             catch (SqlException ex)
             {
@@ -159,15 +145,8 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    "UPDATE UsuarioPasskeys SET ContadorFirmas = @N, UltimoUso = GETDATE() WHERE Id = @Id", cn))
-                {
-                    cmd.Parameters.AddWithValue("@N", contador);
-                    cmd.Parameters.AddWithValue("@Id", idPasskey);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                Bd.Ejecutar(CadenaConexion, "UPDATE UsuarioPasskeys SET ContadorFirmas = @N, UltimoUso = GETDATE() WHERE Id = @Id",
+                    new { N = contador, Id = idPasskey });
             }
             catch (SqlException ex) { AppLogger.Error(ex, "PasskeyService.RegistrarUso"); }
         }
@@ -177,14 +156,8 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("DELETE FROM UsuarioPasskeys WHERE Id = @Id AND IdUsuario = @U", cn))
-                {
-                    cmd.Parameters.AddWithValue("@Id", idPasskey);
-                    cmd.Parameters.AddWithValue("@U", idUsuario);
-                    cn.Open();
-                    return cmd.ExecuteNonQuery() == 1;
-                }
+                return Bd.Ejecutar(CadenaConexion, "DELETE FROM UsuarioPasskeys WHERE Id = @Id AND IdUsuario = @U",
+                    new { Id = idPasskey, U = idUsuario }) == 1;
             }
             catch (SqlException ex)
             {
@@ -198,13 +171,7 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("DELETE FROM UsuarioPasskeys WHERE IdUsuario = @U", cn))
-                {
-                    cmd.Parameters.AddWithValue("@U", idUsuario);
-                    cn.Open();
-                    return cmd.ExecuteNonQuery();
-                }
+                return Bd.Ejecutar(CadenaConexion, "DELETE FROM UsuarioPasskeys WHERE IdUsuario = @U", new { U = idUsuario });
             }
             catch (SqlException ex)
             {

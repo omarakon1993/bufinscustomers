@@ -11,8 +11,8 @@
          los secretos locales (dotnet user-secrets) siguen siendo los mismos en desarrollo. -->
     <UserSecretsId>9ecd421a-36d1-4a37-be36-7f6fe86a7f2f</UserSecretsId>
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
-    <!-- Migracion en curso: los avisos de codigo heredado se reducen al final (fase 5) -->
-    <NoWarn>$(NoWarn);CA1416;ASP0019;MVC1000;CS0618;CS0168;CS0219;CS1998;SYSLIB0021;SYSLIB0023</NoWarn>
+    <!-- CA1416: el sitio solo corre en Windows (IIS), las APIs de plataforma son validas. -->
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <!-- Hosting compartido: GC de estacion de trabajo y no concurrente (el modo servidor reserva un monton por nucleo y multiplica la memoria) -->
     <ServerGarbageCollection>false</ServerGarbageCollection>
@@ -22,11 +22,11 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-    <PackageReference Include="ClosedXML" Version="0.105.0" />
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
     <PackageReference Include="MailKit" Version="4.16.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="10.0.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.2" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="NUglify" Version="1.21.15" />
     <PackageReference Include="System.Drawing.Common" Version="10.0.0" />
     <PackageReference Include="System.Runtime.Caching" Version="10.0.0" />
@@ -63,6 +63,11 @@
     <Compile Remove="packages\**;bin\**;obj\**;Logs\**" />
     <!-- Tools\ son utilidades de despliegue y documentacion: no forman parte del sitio. -->
     <Compile Remove="Tools\**" />
+    <!-- Tests\ es el proyecto de pruebas (xUnit): no forma parte del sitio. -->
+    <Compile Remove="Tests\**" />
+    <EmbeddedResource Remove="Tests\**" />
+    <Content Remove="Tests\**" />
+    <None Remove="Tests\**" />
     <EmbeddedResource Remove="Tools\**" />
     <Content Remove="Tools\**" />
     <None Remove="Tools\**" />

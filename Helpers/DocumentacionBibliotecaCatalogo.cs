@@ -149,6 +149,12 @@ namespace bufinscustomers.Helpers
                 Descripcion = "Especificaciones técnicas del sistema: plataforma y versiones, arquitectura, datos, módulos y funcionalidades, ciberseguridad, operación y publicación.",
                 DescripcionEn = "Technical specifications of the system: platform and versions, architecture, data, modules and features, cybersecurity, operations and deployment.",
                 EsDeMenu = false, Menu = "", MenuEn = "", Actualizado = new DateTime(2026, 11, 8), SoloSuperAdminPorDefecto = true },
+
+            new DocumentoBiblioteca { Clave = "tecnica-arquitectura", Ruta = Tecnica + "Guia_Arquitectura_y_Codigo_BUFINS.html", Categoria = "tecnica",
+                Titulo = "Guía de arquitectura y código de BUFINS", TituloEn = "BUFINS architecture and code guide",
+                Descripcion = "Cómo está construido el sitio: carpetas, capas, recorrido de una petición, datos, seguridad, cargue e informes, con un glosario de C# y .NET con ejemplos del propio código para aprender.",
+                DescripcionEn = "How the site is built: folders, layers, request flow, data, security, uploads and reports, with a C# and .NET glossary using the project's own code to learn from (Spanish only).",
+                EsDeMenu = false, Menu = "", MenuEn = "", Actualizado = new DateTime(2026, 11, 16), SoloSuperAdminPorDefecto = true },
         };
 
         public static DocumentoBiblioteca Buscar(string clave)

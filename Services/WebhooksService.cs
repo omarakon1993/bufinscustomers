@@ -1,6 +1,5 @@
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
-using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -119,14 +118,8 @@ namespace bufinscustomers.Services
             if (DateTime.Now < _dispHasta) return _disp;
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    "SELECT CASE WHEN COL_LENGTH('dbo.Integraciones','WebhookUrl') IS NOT NULL AND COL_LENGTH('dbo.Integraciones','WebhookSecreto') IS NOT NULL " +
-                    "AND OBJECT_ID('dbo.IntegracionesWebhookEntregas','U') IS NOT NULL THEN 1 ELSE 0 END", cn))
-                {
-                    cn.Open();
-                    _disp = Convert.ToInt32(cmd.ExecuteScalar()) == 1;
-                }
+                _disp = Bd.Escalar<int>(CadenaConexion, "SELECT CASE WHEN COL_LENGTH('dbo.Integraciones','WebhookUrl') IS NOT NULL AND COL_LENGTH('dbo.Integraciones','WebhookSecreto') IS NOT NULL " +
+                    "AND OBJECT_ID('dbo.IntegracionesWebhookEntregas','U') IS NOT NULL THEN 1 ELSE 0 END") == 1;
             }
             catch { _disp = false; }
             _dispHasta = DateTime.Now.AddSeconds(_disp ? 60 : 15);
@@ -191,37 +184,24 @@ namespace bufinscustomers.Services
             string nuevo = GenerarSecreto();
             string cifrado = SecretosProtegidos.Cifrar(nuevo);
             if (!SecretosProtegidos.EstaCifrado(cifrado)) return (false, null, "cifrado");
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand("UPDATE dbo.Integraciones SET WebhookSecreto = @S WHERE Id = @I AND FechaRevocada IS NULL", cn))
-            {
-                cmd.Parameters.AddWithValue("@S", cifrado);
-                cmd.Parameters.AddWithValue("@I", idIntegracion);
-                cn.Open();
-                return cmd.ExecuteNonQuery() == 1 ? (true, nuevo, null) : (false, null, "no_disponible");
-            }
+            return Bd.Ejecutar(CadenaConexion, "UPDATE dbo.Integraciones SET WebhookSecreto = @S WHERE Id = @I AND FechaRevocada IS NULL",
+                new { S = cifrado, I = idIntegracion }) == 1 ? (true, nuevo, null) : (false, null, "no_disponible");
         }
 
         public List<WebhookEntrega> UltimasEntregas(int idIntegracion, int n = 10)
         {
             var lista = new List<WebhookEntrega>();
             if (!Disponible()) return lista;
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(@"
+            Bd.Leer(CadenaConexion, @"
                 SELECT TOP (@N) Id, Evento, Estado, Intentos, UltimoCodigo, UltimoError, Fecha, FechaEntrega
-                FROM dbo.IntegracionesWebhookEntregas WHERE IdIntegracion = @I ORDER BY Id DESC", cn))
-            {
-                cmd.Parameters.AddWithValue("@N", n);
-                cmd.Parameters.AddWithValue("@I", idIntegracion);
-                cn.Open();
-                using (var r = cmd.ExecuteReader())
-                    while (r.Read())
-                        lista.Add(new WebhookEntrega
-                        {
-                            Id = Convert.ToInt64(r["Id"]), Evento = r["Evento"].ToString(), Estado = r["Estado"].ToString(), Intentos = Convert.ToInt32(r["Intentos"]),
-                            Codigo = r["UltimoCodigo"] == DBNull.Value ? (int?)null : Convert.ToInt32(r["UltimoCodigo"]), Error = r["UltimoError"] as string,
-                            Fecha = Convert.ToDateTime(r["Fecha"]), FechaEntrega = r["FechaEntrega"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(r["FechaEntrega"])
-                        });
-            }
+                FROM dbo.IntegracionesWebhookEntregas WHERE IdIntegracion = @I ORDER BY Id DESC",
+                new { N = n, I = idIntegracion },
+                r => lista.Add(new WebhookEntrega
+                    {
+                        Id = Convert.ToInt64(r["Id"]), Evento = r["Evento"].ToString(), Estado = r["Estado"].ToString(), Intentos = Convert.ToInt32(r["Intentos"]),
+                        Codigo = r["UltimoCodigo"] == DBNull.Value ? (int?)null : Convert.ToInt32(r["UltimoCodigo"]), Error = r["UltimoError"] as string,
+                        Fecha = Convert.ToDateTime(r["Fecha"]), FechaEntrega = r["FechaEntrega"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(r["FechaEntrega"])
+                    }));
             return lista;
         }
 
@@ -335,20 +315,11 @@ namespace bufinscustomers.Services
 
         private long InsertarEntrega(int idIntegracion, Guid idEvento, string evento, string cuerpo, DateTime? siguienteIntento)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(@"
+            return Bd.Escalar<long>(CadenaConexion, @"
                 INSERT INTO dbo.IntegracionesWebhookEntregas (IdIntegracion, IdEvento, Evento, Payload, Estado, FechaProximoIntento)
                 VALUES (@I, @G, @E, @P, 'Pendiente', @F);
-                SELECT CAST(SCOPE_IDENTITY() AS BIGINT);", cn))
-            {
-                cmd.Parameters.AddWithValue("@I", idIntegracion);
-                cmd.Parameters.AddWithValue("@G", idEvento);
-                cmd.Parameters.AddWithValue("@E", evento);
-                cmd.Parameters.AddWithValue("@P", cuerpo);
-                cmd.Parameters.AddWithValue("@F", (object)siguienteIntento ?? DBNull.Value);
-                cn.Open();
-                return (long)cmd.ExecuteScalar();
-            }
+                SELECT CAST(SCOPE_IDENTITY() AS BIGINT);",
+                new { I = idIntegracion, G = idEvento, E = evento, P = cuerpo, F = siguienteIntento });
         }
 
         private async Task Entregar(long idEntrega)
@@ -418,22 +389,20 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(@"
+                Bd.Ejecutar(CadenaConexion, @"
                     UPDATE dbo.IntegracionesWebhookEntregas
                        SET Estado = @E, Intentos = @N, UltimoCodigo = @C, UltimoError = @Er, FechaProximoIntento = @P,
                            FechaEntrega = CASE WHEN @E = 'Entregado' THEN GETDATE() ELSE FechaEntrega END
-                     WHERE Id = @Id", cn))
-                {
-                    cmd.Parameters.AddWithValue("@E", estado);
-                    cmd.Parameters.AddWithValue("@N", intentos);
-                    cmd.Parameters.AddWithValue("@C", (object)codigo ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Er", (object)Recorte(error, 300) ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@P", (object)proximo ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Id", id);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                     WHERE Id = @Id",
+                    new
+                    {
+                        E = estado,
+                        N = intentos,
+                        C = codigo,
+                        Er = (object)Recorte(error, 300) ?? DBNull.Value,
+                        P = proximo,
+                        Id = id
+                    });
             }
             catch (Exception ex) { AppLogger.Error(ex, "WebhooksService.Marcar"); }
         }

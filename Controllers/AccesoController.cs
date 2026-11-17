@@ -1,32 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 using System.Data;
-using System.Linq;
-using System.Web;
 using bufinscustomers.Models;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
-using System.IO;
-using System.ComponentModel;
 using bufinscustomers.Helpers;
 using bufinscustomers.Services;
-using Newtonsoft.Json;
 
 namespace bufinscustomers.Controllers
 {
-    public class AccesoController : BaseController
+    public partial class AccesoController(
+        RateLimitLoginService rateLimitLoginService,
+        AuditoriaService auditoriaService,
+        DobleFactorService dobleFactorService,
+        PasskeyService passkeyService,
+        SolicitudReinicioAuthService solicitudReinicioAuthService,
+        NotificacionesService notificacionesService,
+        EmailService emailService,
+        bufinscustomers.Services.ClaveInicialService claveInicialService,
+        SesionPersistenteService sesionPersistenteService) : BaseController
     {
         // A11: hash BCrypt (cost 12) señuelo — vector de prueba público del algoritmo. Solo se
         // usa para gastar el mismo tiempo de CPU que una verificación real cuando el identificador
         // no existe, de modo que "usuario inexistente" y "clave incorrecta" tarden lo mismo.
         private const string HASH_SENUELO = "$2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW";
-
-        // A12: control de ruido en la auditoría de seguridad.
-        private const int AUDIT_THROTTLE_MIN = 10;              // 1 fila por IP cada N min (identificador inexistente)
-        private const int AUDIT_SEGURIDAD_RETENCION_DIAS = 90;  // se purgan los intentos anónimos más antiguos
-        private static DateTime _ultimaPurgaAuditoria = DateTime.MinValue;
-        private static readonly object _purgaAuditoriaLock = new object();
 
         // Token anti-falsificación inválido (formulario abierto desde antes de un reinicio del sitio):
         // lo atiende el filtro global Filters/AntiforgeryFallidoFilter (vuelve a Login?tokenExpirado=true).
@@ -128,7 +123,7 @@ namespace bufinscustomers.Controllers
             // A7 / A14: Rate limiting por IP (persistente en BD) — rechaza IPs con demasiados
             // intentos fallidos.
             string clientIp = GetClientIp();
-            var estadoIp = new RateLimitLoginService().Comprobar(clientIp);
+            var estadoIp = rateLimitLoginService.Comprobar(clientIp);
             if (estadoIp.Bloqueada)
             {
                 ViewData["Mensaje"] = string.Format(R("Login_ErrorRateLimitIP"),
@@ -188,7 +183,7 @@ namespace bufinscustomers.Controllers
             if (usuarioId > 0 && bloqueadoHasta.HasValue && bloqueadoHasta.Value > DateTime.Now)
             {
                 int minutosRestantes = (int)Math.Ceiling((bloqueadoHasta.Value - DateTime.Now).TotalMinutes);
-                new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Bloqueo,
+                auditoriaService.RegistrarSeguridad(AuditoriaAccion.Bloqueo,
                     $"Intento de inicio de sesión con cuenta bloqueada ({oUsuario.Correo})", usuarioId, null, idEmpresaLogin);
                 ViewData["Mensaje"] = string.Format(R("Login_ErrorCuentaBloqueada"), minutosRestantes);
                 return View();
@@ -205,7 +200,7 @@ namespace bufinscustomers.Controllers
             if (credencialesValidas)
             {
                 ResetearIntentosFallidos(usuarioId);
-                new RateLimitLoginService().Limpiar(clientIp); // A7/A14: resetear rate limit IP en login exitoso
+                rateLimitLoginService.Limpiar(clientIp); // A7/A14: resetear rate limit IP en login exitoso
 
                 // Migrate SHA256 → BCrypt on first successful login
                 if (!EsHashBCrypt(hashAlmacenado))
@@ -231,10 +226,10 @@ namespace bufinscustomers.Controllers
             {
                 RegistrarIntentoFallido(usuarioId, intentosFallidos,
                     out int nuevosIntentos, out DateTime? nuevoBloqueadoHasta);
-                var rlReal = new RateLimitLoginService().RegistrarFallo(clientIp); // A7/A14
+                var rlReal = rateLimitLoginService.RegistrarFallo(clientIp); // A7/A14
                 if (rlReal.ModoDefensivoActivado) NotificarModoDefensivo();
 
-                new AuditoriaService().RegistrarSeguridad(
+                auditoriaService.RegistrarSeguridad(
                     nuevoBloqueadoHasta.HasValue ? AuditoriaAccion.Bloqueo : AuditoriaAccion.LoginFallido,
                     nuevoBloqueadoHasta.HasValue
                         ? $"Cuenta bloqueada tras {nuevosIntentos} intentos fallidos ({oUsuario.Correo})"
@@ -266,7 +261,7 @@ namespace bufinscustomers.Controllers
                     // 2FA: con credenciales correctas todavía NO se abre sesión; se exige el segundo factor.
                     if (DobleFactorService.Habilitado && DobleFactorService.AplicaA(usuarioCompleto))
                     {
-                        var df = new DobleFactorService().Obtener(usuarioCompleto.Id);
+                        var df = dobleFactorService.Obtener(usuarioCompleto.Id);
                         if (df.Disponible)
                         {
                             if (df.Activo && df.Secreto == null)
@@ -291,7 +286,7 @@ namespace bufinscustomers.Controllers
             }
             else
             {
-                var rlAnon = new RateLimitLoginService().RegistrarFallo(clientIp); // A7/A14: usuario no encontrado también cuenta
+                var rlAnon = rateLimitLoginService.RegistrarFallo(clientIp); // A7/A14: usuario no encontrado también cuenta
                 if (rlAnon.ModoDefensivoActivado) NotificarModoDefensivo();
 
                 // A12: los intentos contra identificadores inexistentes son ruido de bots. Se
@@ -303,7 +298,7 @@ namespace bufinscustomers.Controllers
 
                 if (DebeAuditarFalloAnonimo(clientIp))
                 {
-                    new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.LoginFallido,
+                    auditoriaService.RegistrarSeguridad(AuditoriaAccion.LoginFallido,
                         $"Intento de inicio de sesión con identificador inexistente ({oUsuario.Correo}) " +
                         $"[se omiten repeticiones de la misma IP durante {AUDIT_THROTTLE_MIN} min]",
                         null, null);
@@ -315,14 +310,13 @@ namespace bufinscustomers.Controllers
             }
         }
 
-
         /// <summary>
         /// Último paso del login (credenciales y, si aplica, segundo factor ya validados): audita el
         /// acceso y entrega el token de un solo uso que abre la sesión nueva en FinalizarLogin.
         /// </summary>
         private ActionResult CompletarInicioDeSesion(Usuarios usuarioCompleto)
         {
-            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Login,
+            auditoriaService.RegistrarSeguridad(AuditoriaAccion.Login,
                 "Inicio de sesión exitoso",
                 usuarioCompleto.Id,
                 ((usuarioCompleto.Nombre ?? "") + " " + (usuarioCompleto.Apellidos ?? "")).Trim(),
@@ -337,34 +331,6 @@ namespace bufinscustomers.Controllers
             Response.Cookies.Add(new HttpCookie("_lt", loginToken)
                 { HttpOnly = true, Secure = Request.IsSecureConnection, Path = "/" });
             return RedirectToAction("FinalizarLogin");
-        }
-
-        // ====== Doble factor (TOTP) ======
-        // Tras validar usuario+clave se guarda un "pendiente 2FA" en caché (5 min, cookie _2fa HttpOnly)
-        // y NO existe sesión hasta que el código es correcto. Mismo patrón que el token _lt.
-        private const string COOKIE_2FA = "_2fa";
-        private const int MAX_INTENTOS_2FA = 5;
-
-        private class PendienteDobleFactor
-        {
-            public int IdUsuario;
-            public bool Enrolar;                 // true = aún no tiene autenticador (alta obligatoria)
-            public int Intentos;
-            public byte[] SecretoNuevo;          // solo durante el alta; se guarda en BD al confirmar
-            public string ChallengePasskey;      // reto WebAuthn vigente (un solo uso)
-            public bool Oferta;                  // recién activó la app: se le ofrece agregar una passkey
-        }
-
-        private ActionResult IniciarDobleFactor(Usuarios usuario, bool yaActivo, string ip)
-        {
-            string token = Guid.NewGuid().ToString("N");
-            HttpRuntime.Cache.Insert(
-                "_2fa_" + token, new PendienteDobleFactor { IdUsuario = usuario.Id, Enrolar = !yaActivo }, null,
-                DateTime.Now.AddMinutes(5), Cache.NoSlidingExpiration);
-            Session.Abandon();
-            Response.Cookies.Add(new HttpCookie(COOKIE_2FA, token)
-                { HttpOnly = true, Secure = Request.IsSecureConnection, Path = "/" });
-            return RedirectToAction(yaActivo ? "VerificarDobleFactor" : "ConfigurarDobleFactor");
         }
 
         // Panel izquierdo de las pantallas de acceso («Ingresando como …»): solo UI, no toca la lógica de cada acción.
@@ -396,7 +362,7 @@ namespace bufinscustomers.Controllers
                 }
                 ViewBag.CorreoEnmascarado = EnmascararCorreo(correo);
             }
-            catch (Exception ex) { AppLogger.Warn("Acceso: correo enmascarado del panel: " + ex.Message); }
+            catch (Exception ex) { AppLogger.Warn("Acceso: correo enmascarado del panel: " + MensajeError(ex)); }
         }
 
         /// <summary>Primeros 2 caracteres + "•••@" + dominio (ej.: om•••@empresa.com).</summary>
@@ -405,389 +371,14 @@ namespace bufinscustomers.Controllers
             if (string.IsNullOrWhiteSpace(correo)) return "";
             correo = correo.Trim();
             int arroba = correo.IndexOf('@');
-            if (arroba <= 0) return correo.Length <= 2 ? correo : correo.Substring(0, 2) + "•••";
+            if (arroba <= 0) return correo.Length <= 2 ? correo : string.Concat(correo.AsSpan(0, 2), "•••");
             string local = correo.Substring(0, arroba);
-            return (local.Length <= 2 ? local : local.Substring(0, 2)) + "•••" + correo.Substring(arroba);
-        }
-
-        private PendienteDobleFactor ObtenerPendiente2FA(out string cacheKey)
-        {
-            cacheKey = null;
-            var c = Request.Cookies[COOKIE_2FA];
-            if (c == null || string.IsNullOrEmpty(c)) return null;
-            cacheKey = "_2fa_" + c;
-            return HttpRuntime.Cache[cacheKey] as PendienteDobleFactor;
-        }
-
-        private void LimpiarPendiente2FA(string cacheKey)
-        {
-            if (cacheKey != null) HttpRuntime.Cache.Remove(cacheKey);
-            Response.Cookies.Add(new HttpCookie(COOKIE_2FA)
-                { Expires = DateTime.Now.AddDays(-1), HttpOnly = true, Secure = Request.IsSecureConnection, Path = "/" });
+            return string.Concat(local.Length <= 2 ? local : local.Substring(0, 2), "•••", correo.AsSpan(arroba));
         }
 
         private string NombreCompleto(Usuarios u)
         {
             return ((u.Nombre ?? "") + " " + (u.Apellidos ?? "")).Trim();
-        }
-
-        [HttpGet]
-        public ActionResult VerificarDobleFactor()
-        {
-            var p = ObtenerPendiente2FA(out _);
-            if (p == null || p.Enrolar) return RedirectToAction("Login");
-            ViewBag.TienePasskey = TienePasskeyDisponible(p.IdUsuario);
-            return View("~/Views/Acceso/VerificarDobleFactor.cshtml");
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult VerificarDobleFactor(string codigo, bool agregarPasskey = false)
-        {
-            var p = ObtenerPendiente2FA(out string key);
-            if (p == null || p.Enrolar)
-                return RedirectToAction("Login", new { tokenExpirado = true });
-
-            string ip = GetClientIp();
-            var estadoIp = new RateLimitLoginService().Comprobar(ip);
-            if (estadoIp.Bloqueada)
-            {
-                LimpiarPendiente2FA(key);
-                TempData["ErrorMessage"] = string.Format(R("Login_ErrorRateLimitIP"), Math.Max(1, estadoIp.MinutosRestantes));
-                return RedirectToAction("Login");
-            }
-
-            var servicio = new DobleFactorService();
-            var estado = servicio.Obtener(p.IdUsuario);
-            var usuario = ObtenerUsuarioCompletoPorId(p.IdUsuario);
-            if (!estado.Disponible || !estado.Activo || estado.Secreto == null || usuario == null)
-            {
-                LimpiarPendiente2FA(key);
-                return RedirectToAction("Login");
-            }
-
-            string limpio = (codigo ?? "").Replace(" ", "").Trim();
-            bool ok = false;
-            if (limpio.Length == TotpHelper.Digitos && limpio.All(char.IsDigit))
-            {
-                long paso = TotpHelper.Validar(estado.Secreto, limpio, estado.UltimoPaso);
-                ok = paso >= 0 && servicio.RegistrarPaso(p.IdUsuario, paso);
-            }
-
-            if (ok)
-            {
-                LimpiarPendiente2FA(key);
-                // «Agregar una passkey después de verificar»: igual que en OfrecerPasskey, abre Seguridad al entrar.
-                if (agregarPasskey && DobleFactorService.PasskeysHabilitadas)
-                    Response.Cookies.Add(new HttpCookie("_pkoferta", "1")
-                        { HttpOnly = true, Secure = Request.IsSecureConnection, Path = "/", Expires = DateTime.Now.AddMinutes(2) });
-                return CompletarInicioDeSesion(usuario);
-            }
-
-            // Código incorrecto
-            p.Intentos++;
-            var rl = new RateLimitLoginService().RegistrarFallo(ip);
-            if (rl.ModoDefensivoActivado) NotificarModoDefensivo();
-            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.LoginFallido,
-                $"Código de doble factor incorrecto ({usuario.Correo}), intento {p.Intentos} de {MAX_INTENTOS_2FA}",
-                usuario.Id, NombreCompleto(usuario), usuario.IdEmpresa);
-
-            if (p.Intentos >= MAX_INTENTOS_2FA)
-            {
-                LimpiarPendiente2FA(key);
-                TempData["ErrorMessage"] = R("Login2FA_ErrorDemasiadosIntentos");
-                return RedirectToAction("Login");
-            }
-
-            ViewData["Error"] = R("Login2FA_ErrorCodigo");
-            ViewBag.TienePasskey = TienePasskeyDisponible(p.IdUsuario);
-            return View("~/Views/Acceso/VerificarDobleFactor.cshtml");
-        }
-
-        private bool TienePasskeyDisponible(int idUsuario)
-        {
-            return DobleFactorService.PasskeysHabilitadas && new PasskeyService().Listar(idUsuario).Count > 0;
-        }
-
-        // ── Passkey (WebAuthn) como alternativa en el segundo paso. La app autenticadora sigue siendo la principal. ──
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public JsonResult PasskeyOpciones()
-        {
-            var p = ObtenerPendiente2FA(out _);
-            if (p == null || p.Enrolar || !DobleFactorService.PasskeysHabilitadas)
-                return Json(new { ok = false, expirado = true });
-
-            var creds = new PasskeyService().Listar(p.IdUsuario);
-            if (creds.Count == 0) return Json(new { ok = false });
-
-            p.ChallengePasskey = WebAuthnHelper.NuevoReto();
-            return Json(new
-            {
-                ok = true,
-                challenge = p.ChallengePasskey,
-                rpId = DobleFactorService.RpId(Request),
-                timeout = 60000,
-                userVerification = "required",
-                allowCredentials = creds.Select(c => new { type = "public-key", id = WebAuthnHelper.ABase64Url(c.CredentialId) })
-            });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public JsonResult PasskeyVerificar(string credentialId, string clientDataJSON, string authenticatorData, string signature)
-        {
-            var p = ObtenerPendiente2FA(out string key);
-            if (p == null || p.Enrolar || !DobleFactorService.PasskeysHabilitadas)
-                return Json(new { ok = false, expirado = true, redirect = Url.Action("Login", "Acceso") });
-
-            string ip = GetClientIp();
-            var estadoIp = new RateLimitLoginService().Comprobar(ip);
-            if (estadoIp.Bloqueada)
-            {
-                LimpiarPendiente2FA(key);
-                TempData["ErrorMessage"] = string.Format(R("Login_ErrorRateLimitIP"), Math.Max(1, estadoIp.MinutosRestantes));
-                return Json(new { ok = false, expirado = true, redirect = Url.Action("Login", "Acceso") });
-            }
-
-            var usuario = ObtenerUsuarioCompletoPorId(p.IdUsuario);
-            string reto = p.ChallengePasskey;
-            p.ChallengePasskey = null;   // un solo uso
-
-            bool ok = false;
-            PasskeyInfo cred = null;
-            WebAuthnHelper.ResultadoAutenticacion res = null;
-            if (usuario != null && !string.IsNullOrEmpty(reto))
-            {
-                try
-                {
-                    byte[] id = WebAuthnHelper.DeBase64Url(credentialId);
-                    cred = new PasskeyService().Listar(p.IdUsuario).FirstOrDefault(c => c.CredentialId.SequenceEqual(id));
-                    if (cred != null)
-                    {
-                        res = WebAuthnHelper.VerificarAutenticacion(
-                            WebAuthnHelper.DeBase64Url(clientDataJSON), WebAuthnHelper.DeBase64Url(authenticatorData),
-                            WebAuthnHelper.DeBase64Url(signature), reto, DobleFactorService.Origen(Request),
-                            DobleFactorService.RpId(Request), cred.ClavePublica, cred.Algoritmo);
-                        ok = res.Ok;
-                    }
-                }
-                catch (FormatException) { ok = false; }
-            }
-
-            if (ok)
-            {
-                // El contador debería crecer; algunas passkeys sincronizadas siempre envían 0. Solo se avisa, no se bloquea.
-                if ((cred.Contador > 0 || res.Contador > 0) && res.Contador <= cred.Contador)
-                    Helpers.AppLogger.Warn($"Passkey con contador no creciente (usuarioId={usuario.Id}, guardado={cred.Contador}, recibido={res.Contador}).", "Acceso.Passkey");
-                new PasskeyService().RegistrarUso(cred.Id, Math.Max(res.Contador, cred.Contador));
-                LimpiarPendiente2FA(key);
-                new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Login,
-                    $"Segundo factor validado con passkey ({cred.Nombre})", usuario.Id, NombreCompleto(usuario), usuario.IdEmpresa);
-                CompletarInicioDeSesion(usuario);   // deja listo el token _lt; el navegador sigue a FinalizarLogin
-                return Json(new { ok = true, redirect = Url.Action("FinalizarLogin", "Acceso") });
-            }
-
-            p.Intentos++;
-            var rl = new RateLimitLoginService().RegistrarFallo(ip);
-            if (rl.ModoDefensivoActivado) NotificarModoDefensivo();
-            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.LoginFallido,
-                $"Passkey rechazada ({usuario?.Correo}), intento {p.Intentos} de {MAX_INTENTOS_2FA}",
-                usuario?.Id, usuario == null ? null : NombreCompleto(usuario), usuario?.IdEmpresa);
-
-            if (p.Intentos >= MAX_INTENTOS_2FA)
-            {
-                LimpiarPendiente2FA(key);
-                TempData["ErrorMessage"] = R("Login2FA_ErrorDemasiadosIntentos");
-                return Json(new { ok = false, redirect = Url.Action("Login", "Acceso") });
-            }
-            return Json(new { ok = false, mensaje = R("Login2FA_ErrorPasskey") });
-        }
-
-        // ── Solicitud de reinicio de métodos de autenticación (el usuario perdió su app y sus passkeys) ──
-        // Solo se ofrece desde la pantalla de verificación del 2FA: quien llega ahí ya validó su contraseña,
-        // así que no sirve para enumerar usuarios ni para enviar spam sin credenciales.
-        [HttpGet]
-        public ActionResult SolicitarReinicio()
-        {
-            var p = ObtenerPendiente2FA(out _);
-            if (p == null || p.Enrolar) return RedirectToAction("Login");
-            return View("~/Views/Acceso/SolicitarReinicio.cshtml");
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult SolicitarReinicio(string mensaje, string telefono)
-        {
-            var p = ObtenerPendiente2FA(out string key);
-            if (p == null || p.Enrolar) return RedirectToAction("Login", new { tokenExpirado = true });
-
-            string ip = GetClientIp();
-            var estadoIp = new RateLimitLoginService().Comprobar(ip);
-            if (estadoIp.Bloqueada)
-            {
-                LimpiarPendiente2FA(key);
-                TempData["ErrorMessage"] = string.Format(R("Login_ErrorRateLimitIP"), Math.Max(1, estadoIp.MinutosRestantes));
-                return RedirectToAction("Login");
-            }
-
-            var usuario = ObtenerUsuarioCompletoPorId(p.IdUsuario);
-            if (usuario == null) { LimpiarPendiente2FA(key); return RedirectToAction("Login"); }
-
-            mensaje = (mensaje ?? "").Trim();
-            telefono = (telefono ?? "").Trim();
-            if (mensaje.Length > 500) mensaje = mensaje.Substring(0, 500);
-            if (telefono.Length > 40 || !Regex.IsMatch(telefono, @"^[0-9+()\-\s.]*$"))
-            {
-                ViewData["Error"] = R("SolSeg_ErrorTelefono");
-                return View("~/Views/Acceso/SolicitarReinicio.cshtml");
-            }
-
-            var resultado = new SolicitudReinicioAuthService().Crear(usuario.Id, mensaje, telefono, ip, Request.UserAgent);
-            if (!resultado.Disponible)
-            {
-                ViewData["Error"] = R("SolSeg_NoDisponible");
-                return View("~/Views/Acceso/SolicitarReinicio.cshtml");
-            }
-
-            if (resultado.Creada)
-            {
-                string nombre = NombreCompleto(usuario);
-                new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Crear,
-                    "Solicitud de reinicio de métodos de autenticación enviada por el usuario",
-                    usuario.Id, nombre, usuario.IdEmpresa);
-
-                // Aviso a TODOS los Super Admin: notificación interna + correo a su correo registrado.
-                string titulo = R("Notif_SolSeg_NuevaTitulo");
-                string msg = string.Format(R("Notif_SolSeg_NuevaMsg"), string.IsNullOrWhiteSpace(nombre) ? usuario.Usuario : nombre, usuario.Correo);
-                string enlace = null;
-                try { enlace = Url.Action("Index", "SolicitudesSeguridad", null, Request.Url.Scheme); } catch { }
-                var notif = new NotificacionesService();
-                foreach (var admin in new SolicitudReinicioAuthService().ObtenerSuperAdminsConCorreo())
-                {
-                    notif.Crear(admin.Key, titulo, msg, "warning", "/SolicitudesSeguridad");
-                    AlertaUsuarioCorreo.Enviar(admin.Value, titulo, msg, enlace);
-                }
-            }
-
-            LimpiarPendiente2FA(key);   // sin métodos no puede continuar; vuelve a entrar cuando se los reinicien
-            ViewBag.Enviada = true;
-            ViewBag.Existente = !resultado.Creada;
-            return View("~/Views/Acceso/SolicitarReinicio.cshtml");
-        }
-
-        [HttpGet]
-        public ActionResult ConfigurarDobleFactor()
-        {
-            var p = ObtenerPendiente2FA(out _);
-            if (p == null || !p.Enrolar) return RedirectToAction("Login");
-            var usuario = ObtenerUsuarioCompletoPorId(p.IdUsuario);
-            if (usuario == null) return RedirectToAction("Login");
-
-            if (p.SecretoNuevo == null) p.SecretoNuevo = TotpHelper.GenerarSecreto();
-            string secreto = TotpHelper.ABase32(p.SecretoNuevo);
-            ViewBag.SecretoBase32 = secreto;
-            ViewBag.UriOtp = TotpHelper.UriOtpAuth("Bufins", usuario.Correo ?? usuario.Usuario, secreto);
-            return View("~/Views/Acceso/ConfigurarDobleFactor.cshtml");
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult ConfigurarDobleFactor(string codigo)
-        {
-            var p = ObtenerPendiente2FA(out string key);
-            if (p == null || !p.Enrolar || p.SecretoNuevo == null)
-                return RedirectToAction("Login", new { tokenExpirado = true });
-
-            var usuario = ObtenerUsuarioCompletoPorId(p.IdUsuario);
-            if (usuario == null) { LimpiarPendiente2FA(key); return RedirectToAction("Login"); }
-
-            string ip = GetClientIp();
-            var estadoIp = new RateLimitLoginService().Comprobar(ip);
-            if (estadoIp.Bloqueada)
-            {
-                LimpiarPendiente2FA(key);
-                TempData["ErrorMessage"] = string.Format(R("Login_ErrorRateLimitIP"), Math.Max(1, estadoIp.MinutosRestantes));
-                return RedirectToAction("Login");
-            }
-
-            long paso = TotpHelper.Validar(p.SecretoNuevo, codigo);
-            if (paso < 0)
-            {
-                p.Intentos++;
-                var rl = new RateLimitLoginService().RegistrarFallo(ip);
-                if (rl.ModoDefensivoActivado) NotificarModoDefensivo();
-                if (p.Intentos >= MAX_INTENTOS_2FA)
-                {
-                    LimpiarPendiente2FA(key);
-                    TempData["ErrorMessage"] = R("Login2FA_ErrorDemasiadosIntentos");
-                    return RedirectToAction("Login");
-                }
-                ViewData["Error"] = R("Login2FA_ErrorCodigo");
-                string secreto = TotpHelper.ABase32(p.SecretoNuevo);
-                ViewBag.SecretoBase32 = secreto;
-                ViewBag.UriOtp = TotpHelper.UriOtpAuth("Bufins", usuario.Correo ?? usuario.Usuario, secreto);
-                return View("~/Views/Acceso/ConfigurarDobleFactor.cshtml");
-            }
-
-            var servicio = new DobleFactorService();
-            if (!servicio.Activar(p.IdUsuario, p.SecretoNuevo, paso))
-            {
-                ViewData["Error"] = R("Login2FA_ErrorGuardar");
-                string secreto = TotpHelper.ABase32(p.SecretoNuevo);
-                ViewBag.SecretoBase32 = secreto;
-                ViewBag.UriOtp = TotpHelper.UriOtpAuth("Bufins", usuario.Correo ?? usuario.Usuario, secreto);
-                return View("~/Views/Acceso/ConfigurarDobleFactor.cshtml");
-            }
-
-            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Editar,
-                "Doble factor de autenticación activado",
-                usuario.Id, NombreCompleto(usuario), usuario.IdEmpresa);
-            string tituloAct = R("Notif_2FA_ActivadoTitulo"), msgAct = R("Notif_2FA_ActivadoMsg");
-            new NotificacionesService().Crear(usuario.Id, tituloAct, msgAct, "success");
-            AlertaUsuarioCorreo.Enviar(usuario.Correo, tituloAct, msgAct);
-
-            // Con passkeys habilitadas se le ofrece agregar una (momento ideal: ya está configurando su seguridad).
-            if (DobleFactorService.PasskeysHabilitadas && new PasskeyService().TablaDisponible())
-            {
-                p.Enrolar = false;
-                p.SecretoNuevo = null;
-                p.Oferta = true;
-                HttpRuntime.Cache.Insert(key, p, null, DateTime.Now.AddMinutes(10),
-                    Cache.NoSlidingExpiration);
-                return RedirectToAction("OfrecerPasskey");
-            }
-
-            LimpiarPendiente2FA(key);
-            return CompletarInicioDeSesion(usuario);
-        }
-
-        [HttpGet]
-        public ActionResult OfrecerPasskey()
-        {
-            var p = ObtenerPendiente2FA(out _);
-            if (p == null || !p.Oferta) return RedirectToAction("Login");
-            return View("~/Views/Acceso/OfrecerPasskey.cshtml");
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult OfrecerPasskey(string accion)
-        {
-            var p = ObtenerPendiente2FA(out string key);
-            if (p == null || !p.Oferta) return RedirectToAction("Login");
-            var usuario = ObtenerUsuarioCompletoPorId(p.IdUsuario);
-            LimpiarPendiente2FA(key);
-            if (usuario == null) return RedirectToAction("Login");
-
-            if (accion == "agregar")
-                Response.Cookies.Add(new HttpCookie("_pkoferta", "1")
-                    { HttpOnly = true, Secure = Request.IsSecureConnection, Path = "/", Expires = DateTime.Now.AddMinutes(2) });
-            else
-                new PasskeyService().PosponerAviso(usuario.Id, 7);   // "Ahora no": la franja del Home espera una semana
-
-            return CompletarInicioDeSesion(usuario);
         }
 
         private void RegistrarIntentoFallido(int usuarioId, int intentosActuales,
@@ -803,28 +394,14 @@ namespace bufinscustomers.Controllers
             else if (nuevosIntentos >= 5)
                 nuevoBloqueadoHasta = DateTime.Now.AddMinutes(15);
 
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    "UPDATE Usuarios SET IntentosFallidos = @Intentos, BloqueadoHasta = @BloqueadoHasta WHERE Id = @Id", cn);
-                cmd.Parameters.AddWithValue("@Intentos", nuevosIntentos);
-                cmd.Parameters.AddWithValue("@BloqueadoHasta", (object)nuevoBloqueadoHasta ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@Id", usuarioId);
-                cn.Open();
-                cmd.ExecuteNonQuery();
-            }
+            Bd.Ejecutar(CadenaConexion, "UPDATE Usuarios SET IntentosFallidos = @Intentos, BloqueadoHasta = @BloqueadoHasta WHERE Id = @Id",
+                new { Intentos = nuevosIntentos, BloqueadoHasta = nuevoBloqueadoHasta, Id = usuarioId });
         }
 
         private void ResetearIntentosFallidos(int usuarioId)
         {
-            using (SqlConnection cn = new SqlConnection(CadenaConexion))
-            {
-                SqlCommand cmd = new SqlCommand(
-                    "UPDATE Usuarios SET IntentosFallidos = 0, BloqueadoHasta = NULL WHERE Id = @Id", cn);
-                cmd.Parameters.AddWithValue("@Id", usuarioId);
-                cn.Open();
-                cmd.ExecuteNonQuery();
-            }
+            Bd.Ejecutar(CadenaConexion, "UPDATE Usuarios SET IntentosFallidos = 0, BloqueadoHasta = NULL WHERE Id = @Id",
+                new { Id = usuarioId });
         }
 
         /// <summary>
@@ -860,7 +437,7 @@ namespace bufinscustomers.Controllers
             {
                 return Json(new { 
                     success = false, 
-                    message = "Error al extender la sesión: " + ex.Message 
+                    message = "Error al extender la sesión: " + MensajeError(ex) 
                 });
             }
         }
@@ -887,7 +464,7 @@ namespace bufinscustomers.Controllers
                 estaAutenticado  = UsuarioSesionHelper.EstaAutenticado(),
                 minutosRestantes = sessionInfo?.MinutosRestantes ?? 0,
                 estaPorExpirar   = sessionInfo?.EstaPorExpirar ?? false
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         // A6: Completa el login en una nueva sesión (session ID regenerado)
@@ -939,170 +516,6 @@ namespace bufinscustomers.Controllers
             // declara los proxies de confianza (TrustedProxies). Sin esa config, equivale
             // a Request.UserHostAddress.
             return Helpers.ClientIpHelper.ObtenerIp(Request);
-        }
-
-        /// <summary>
-        /// A14: avisa a los Super Admin de que el rate-limit de login entró en MODO DEFENSIVO
-        /// (pico global de intentos fallidos). Se llama como mucho una vez cada 30 min — el
-        /// servicio ya lo controla con la bandera <c>ModoDefensivoActivado</c>. Nunca lanza.
-        /// </summary>
-        private void NotificarModoDefensivo()
-        {
-            try
-            {
-                Helpers.AppLogger.Warn(
-                    "Rate-limit de login en MODO DEFENSIVO: pico global de intentos fallidos, umbral por IP endurecido.",
-                    "Acceso.Login");
-
-                var notif = new NotificacionesService();
-                string titulo = R("Notif_ModoDefensivoTitulo");
-                string msg = R("Notif_ModoDefensivoMsg");
-                foreach (int idAdmin in ObtenerIdsSuperAdmin())
-                    notif.Crear(idAdmin, titulo, msg, "error", "/Auditoria");
-
-                EnviarAlertaSeguridadPorCorreo(titulo, msg);
-            }
-            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[NotificarModoDefensivo] {0}", ex.Message); }
-        }
-
-        /// <summary>
-        /// Envía por correo (en segundo plano) una alerta de seguridad a los destinatarios de
-        /// <c>appSettings["SeguridadAlertasDestino"]</c> — cada token separado por comas es un
-        /// correo (si contiene "@") o un nombre de usuario que se resuelve a su correo. Vacío =
-        /// no se envía correo (solo la notificación interna). Fire-and-forget: nunca bloquea el login.
-        /// </summary>
-        private void EnviarAlertaSeguridadPorCorreo(string titulo, string mensaje)
-        {
-            var correos = ObtenerCorreosAlertaSeguridad();
-            if (correos.Count == 0) return;
-
-            string enlace = null;
-            try { enlace = Url.Action("Index", "Auditoria", null, Request.Url.Scheme); } catch { }
-            string asunto = "[Bufins] " + titulo;
-
-            HostingEnvironment.QueueBackgroundWorkItem(ct =>
-            {
-                try
-                {
-                    var email = new EmailService();
-                    foreach (var c in correos)
-                    {
-                        try { email.EnviarAlertaSeguridad(c, asunto, titulo, mensaje, enlace); }
-                        catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[EnviarAlertaSeguridad] {0}: {1}", c, ex.Message); }
-                    }
-                }
-                catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[EnviarAlertaSeguridad] {0}", ex.Message); }
-            });
-        }
-
-        private System.Collections.Generic.List<string> ObtenerCorreosAlertaSeguridad()
-        {
-            var lista = new System.Collections.Generic.List<string>();
-            string destino = bufinscustomers.Compat.ConfigurationManager.AppSettings["SeguridadAlertasDestino"];
-            if (string.IsNullOrWhiteSpace(destino)) return lista;
-
-            var usuarios = new System.Collections.Generic.List<string>();
-            foreach (var raw in destino.Split(','))
-            {
-                var t = raw.Trim();
-                if (t.Length == 0) continue;
-                if (t.Contains("@")) { if (!lista.Contains(t)) lista.Add(t); }
-                else if (!usuarios.Contains(t)) usuarios.Add(t);
-            }
-
-            if (usuarios.Count > 0)
-            {
-                try
-                {
-                    var pars = usuarios.Select((u, i) => "@u" + i).ToArray();
-                    using (var cn = new SqlConnection(CadenaConexion))
-                    {
-                        var cmd = new SqlCommand(
-                            "SELECT Correo FROM Usuarios WHERE Usuario IN (" + string.Join(",", pars) +
-                            ") AND Correo IS NOT NULL AND LTRIM(RTRIM(Correo)) <> ''", cn);
-                        for (int i = 0; i < usuarios.Count; i++) cmd.Parameters.AddWithValue(pars[i], usuarios[i]);
-                        cn.Open();
-                        using (var r = cmd.ExecuteReader())
-                            while (r.Read())
-                            {
-                                var c = r["Correo"].ToString().Trim();
-                                if (c.Length > 0 && !lista.Contains(c)) lista.Add(c);
-                            }
-                    }
-                }
-                catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[ObtenerCorreosAlertaSeguridad] {0}", ex.Message); }
-            }
-            return lista;
-        }
-
-        // ====== A12: ruido / alertas de la auditoría de seguridad ======
-
-        /// <summary>
-        /// True si se debe escribir una fila en <c>Auditoria</c> por un intento con identificador
-        /// inexistente desde <paramref name="ip"/>. Limita a 1 fila por IP cada
-        /// <see cref="AUDIT_THROTTLE_MIN"/> minutos (los repetidos solo van al log de aplicación).
-        /// </summary>
-        private static bool DebeAuditarFalloAnonimo(string ip)
-        {
-            if (string.IsNullOrEmpty(ip)) return true;
-            string key = "_afa_" + ip;
-            if (HttpRuntime.Cache[key] != null) return false;
-            HttpRuntime.Cache.Insert(key, 1, null,
-                DateTime.Now.AddMinutes(AUDIT_THROTTLE_MIN), Cache.NoSlidingExpiration);
-            return true;
-        }
-
-        /// <summary>Purga los intentos de seguridad anónimos antiguos, como mucho una vez al día.</summary>
-        private void PurgarAuditoriaSeguridadOportunista()
-        {
-            if ((DateTime.Now - _ultimaPurgaAuditoria).TotalHours < 24) return;
-            lock (_purgaAuditoriaLock)
-            {
-                if ((DateTime.Now - _ultimaPurgaAuditoria).TotalHours < 24) return;
-                _ultimaPurgaAuditoria = DateTime.Now;
-            }
-            try { new AuditoriaService().PurgarSeguridadAnonimaAntigua(AUDIT_SEGURIDAD_RETENCION_DIAS); }
-            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[PurgarAuditoriaSeguridad] {0}", ex.Message); }
-        }
-
-        /// <summary>
-        /// Avisa de que una cuenta REAL acaba de bloquearse por intentos fallidos: log de
-        /// aplicación + notificación interna al propio usuario y a cada Super Admin. Nunca lanza.
-        /// </summary>
-        private void NotificarBloqueoCuenta(int usuarioId, string identificador, int intentos)
-        {
-            try
-            {
-                Helpers.AppLogger.Warn(
-                    $"Cuenta bloqueada por {intentos} intentos fallidos: usuarioId={usuarioId} ({identificador})",
-                    "Acceso.Login");
-
-                var notif = new NotificacionesService();
-                notif.Crear(usuarioId, R("Notif_CuentaBloqueadaTitulo"), R("Notif_CuentaBloqueadaMsg"), "warning");
-
-                string msgAdmin = string.Format(R("Notif_CuentaBloqueadaAdminMsg"), identificador, intentos);
-                foreach (int idAdmin in ObtenerIdsSuperAdmin())
-                    if (idAdmin != usuarioId)
-                        notif.Crear(idAdmin, R("Notif_CuentaBloqueadaAdminTitulo"), msgAdmin, "error", "/Auditoria");
-            }
-            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[NotificarBloqueoCuenta] {0}", ex.Message); }
-        }
-
-        private System.Collections.Generic.List<int> ObtenerIdsSuperAdmin()
-        {
-            var ids = new System.Collections.Generic.List<int>();
-            try
-            {
-                using (var cn = new SqlConnection(CadenaConexion))
-                {
-                    var cmd = new SqlCommand("SELECT Id FROM Usuarios WHERE Admin = 2", cn);
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read()) ids.Add(Convert.ToInt32(r["Id"]));
-                }
-            }
-            catch (Exception ex) { System.Diagnostics.Trace.TraceWarning("[ObtenerIdsSuperAdmin] {0}", ex.Message); }
-            return ids;
         }
 
         private bool EsCorreoValido(string correo)
@@ -1168,247 +581,8 @@ namespace bufinscustomers.Controllers
                 }
             }
 
-            if (usuario != null) usuario.DebeCambiarClave = new bufinscustomers.Services.ClaveInicialService().DebeCambiar(usuario.Id);
+            if (usuario != null) usuario.DebeCambiarClave = claveInicialService.DebeCambiar(usuario.Id);
             return usuario;
-        }
-
-        // ====== RECUPERACIÓN DE CONTRASEÑA ======
-
-        [HttpGet]
-        public ActionResult SolicitarReset()
-        {
-            return View("~/Views/Acceso/SolicitarReset.cshtml");
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult SolicitarReset(string correo)
-        {
-            if (string.IsNullOrWhiteSpace(correo) || !EsCorreoValido(correo.Trim()))
-            {
-                ViewData["Error"] = R("Reset_ErrorEmail");
-                return View("~/Views/Acceso/SolicitarReset.cshtml");
-            }
-
-            correo = correo.Trim().ToLower();
-
-            try
-            {
-                // Buscar usuario — siempre mostrar mensaje de éxito (anti-enumeración)
-                int usuarioId = 0;
-                string nombreUsuario = null;
-                string correoReal = null;
-
-                using (var cn = new SqlConnection(CadenaConexion))
-                {
-                    var cmd = new SqlCommand(
-                        "SELECT TOP 1 Id, Nombre, Correo FROM Usuarios WHERE LOWER(Correo) = @Correo", cn);
-                    cmd.Parameters.AddWithValue("@Correo", correo);
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                    {
-                        if (r.Read())
-                        {
-                            usuarioId    = Convert.ToInt32(r["Id"]);
-                            nombreUsuario = r["Nombre"].ToString();
-                            correoReal   = r["Correo"].ToString();
-                        }
-                    }
-                }
-
-                if (usuarioId > 0)
-                {
-                    // Generar token seguro (32 bytes aleatorios, base64url)
-                    var bytes = new byte[32];
-                    using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
-                        rng.GetBytes(bytes);
-                    string token = Convert.ToBase64String(bytes)
-                        .Replace('+', '-').Replace('/', '_').TrimEnd('=');
-                    DateTime expiry = DateTime.Now.AddHours(1);
-
-                    // Guardar token y expiración en BD
-                    using (var cn = new SqlConnection(CadenaConexion))
-                    {
-                        var cmd = new SqlCommand(
-                            "UPDATE Usuarios SET ResetToken = @Token, ResetTokenExpiry = @Expiry WHERE Id = @Id", cn);
-                        cmd.Parameters.AddWithValue("@Token",  token);
-                        cmd.Parameters.AddWithValue("@Expiry", expiry);
-                        cmd.Parameters.AddWithValue("@Id",     usuarioId);
-                        cn.Open();
-                        cmd.ExecuteNonQuery();
-                    }
-
-                    // Construir enlace y enviar correo
-                    string enlace   = Url.Action("RestablecerClave", "Acceso",
-                        new { token = token }, Request.Url.Scheme);
-                    bool esIngles   = System.Threading.Thread.CurrentThread.CurrentUICulture
-                                          .TwoLetterISOLanguageName == "en";
-                    new Services.EmailService().EnviarRecuperacionClave(
-                        correoReal, nombreUsuario, enlace, esIngles);
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log error internamente sin exponerlo al cliente (anti-enumeración)
-                System.Diagnostics.Trace.TraceError("[SolicitarReset] {0}", ex.Message);
-            }
-
-            // Siempre mostrar pantalla de éxito independientemente del resultado (anti-enumeración)
-            ViewData["Enviado"] = true;
-            return View("~/Views/Acceso/SolicitarReset.cshtml");
-        }
-
-        [HttpGet]
-        public ActionResult RestablecerClave(string token)
-        {
-            if (string.IsNullOrEmpty(token))
-                return RedirectToAction("Login");
-
-            // Verificar que el token existe y no expiró
-            bool valido = false;
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand(
-                    @"SELECT COUNT(1) FROM Usuarios
-                      WHERE ResetToken = @Token AND ResetTokenExpiry > GETDATE()", cn);
-                cmd.Parameters.AddWithValue("@Token", token);
-                cn.Open();
-                valido = Convert.ToInt32(cmd.ExecuteScalar()) > 0;
-            }
-
-            if (!valido)
-            {
-                ViewData["TokenInvalido"] = true;
-                return View("~/Views/Acceso/RestablecerClave.cshtml");
-            }
-
-            ViewData["Token"] = token;
-            return View("~/Views/Acceso/RestablecerClave.cshtml");
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult RestablecerClave(string token, string nuevaClave, string confirmarClave)
-        {
-            if (string.IsNullOrEmpty(token))
-                return RedirectToAction("Login");
-
-            // Validaciones cliente se repiten en servidor
-            if (string.IsNullOrWhiteSpace(nuevaClave))
-            {
-                ViewData["Token"] = token;
-                ViewData["Error"] = R("Reset_NewPwd_ErrorEmpty");
-                return View("~/Views/Acceso/RestablecerClave.cshtml");
-            }
-            // A13: política de contraseñas centralizada (longitud mínima 12, complejidad,
-            // claves comunes y comprobación contra filtraciones — Have I Been Pwned).
-            if (!Helpers.PoliticaContrasena.Validar(nuevaClave.Trim(), null, out string errClave))
-            {
-                ViewData["Token"] = token;
-                ViewData["Error"] = R(errClave);
-                return View("~/Views/Acceso/RestablecerClave.cshtml");
-            }
-            if (nuevaClave != confirmarClave)
-            {
-                ViewData["Token"] = token;
-                ViewData["Error"] = R("Reset_NewPwd_ErrorMatch");
-                return View("~/Views/Acceso/RestablecerClave.cshtml");
-            }
-
-            // Buscar usuario por token válido
-            int usuarioId = 0;
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand(
-                    @"SELECT TOP 1 Id FROM Usuarios
-                      WHERE ResetToken = @Token AND ResetTokenExpiry > GETDATE()", cn);
-                cmd.Parameters.AddWithValue("@Token", token);
-                cn.Open();
-                var result = cmd.ExecuteScalar();
-                if (result != null && result != DBNull.Value)
-                    usuarioId = Convert.ToInt32(result);
-            }
-
-            if (usuarioId == 0)
-            {
-                ViewData["TokenInvalido"] = true;
-                return View("~/Views/Acceso/RestablecerClave.cshtml");
-            }
-
-            // Actualizar contraseña y limpiar token
-            string hash = HashearContrasena(nuevaClave.Trim());
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand(
-                    @"UPDATE Usuarios
-                      SET Clave = @Clave, ResetToken = NULL, ResetTokenExpiry = NULL,
-                          IntentosFallidos = 0, BloqueadoHasta = NULL
-                      WHERE Id = @Id", cn);
-                cmd.Parameters.AddWithValue("@Clave", hash);
-                cmd.Parameters.AddWithValue("@Id",    usuarioId);
-                cn.Open();
-                cmd.ExecuteNonQuery();
-            }
-
-            ViewData["Exito"] = true;
-            return View("~/Views/Acceso/RestablecerClave.cshtml");
-        }
-
-        // ====== Cambio de contraseña obligatorio (primer inicio de sesión) ======
-        [HttpGet]
-        [bufinscustomers.Permisos.ValidarSesion]
-        public ActionResult CambiarClaveInicial()
-        {
-            var usuario = UsuarioSesionHelper.UsuarioActual;
-            if (usuario == null || !usuario.DebeCambiarClave)
-                return RedirectToAction("Index", "Home");
-            return View("~/Views/Acceso/CambiarClaveInicial.cshtml");
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [bufinscustomers.Permisos.ValidarSesion]
-        public ActionResult CambiarClaveInicial(string nuevaClave, string confirmarClave)
-        {
-            var usuario = UsuarioSesionHelper.UsuarioActual;
-            if (usuario == null || !usuario.DebeCambiarClave)
-                return RedirectToAction("Index", "Home");
-
-            nuevaClave = (nuevaClave ?? "").Trim();
-            confirmarClave = (confirmarClave ?? "").Trim();
-
-            string error = null;
-            if (nuevaClave.Length == 0) error = R("Reset_NewPwd_ErrorEmpty");
-            else if (nuevaClave != confirmarClave) error = R("Reset_NewPwd_ErrorMatch");
-            else if (!Helpers.PoliticaContrasena.Validar(nuevaClave, usuario.Usuario, out string errClave)) error = R(errClave);
-            else if (VerificarContrasena(nuevaClave, usuario.Clave)) error = R("CambioClaveInicial_ErrorIgual");
-
-            if (error != null)
-            {
-                ViewData["Error"] = error;
-                return View("~/Views/Acceso/CambiarClaveInicial.cshtml");
-            }
-
-            var servicio = new ClaveInicialService();
-            // Un solo hash: BCrypt da un resultado distinto en cada llamada y la sesión debe guardar el mismo que la base.
-            string nuevoHash = HashearContrasena(nuevaClave);
-            if (!servicio.GuardarClaveYQuitarMarca(usuario.Id, nuevoHash))
-            {
-                ViewData["Error"] = R("CambioClaveInicial_ErrorGuardar");
-                return View("~/Views/Acceso/CambiarClaveInicial.cshtml");
-            }
-
-            usuario.DebeCambiarClave = false;
-            usuario.Clave = nuevoHash;
-            // El respaldo de la sesión (dbo.SesionesActivas) guarda la huella de la clave: se actualiza a la nueva.
-            new SesionPersistenteService().Registrar(Session.SessionID, usuario.Id, nuevoHash,
-                (UsuarioSesionHelper.ObtenerInfoSesion()?.TiempoLogin) ?? DateTime.Now);
-            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Editar,
-                "Cambio de contraseña obligatorio completado en el primer inicio de sesión",
-                usuario.Id, ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim(), usuario.IdEmpresa);
-
-            SetSuccessMessage(R("CambioClaveInicial_Exito"));
-            return RedirectToAction("Index", "Home");
         }
 
         [HttpGet]

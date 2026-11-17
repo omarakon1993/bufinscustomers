@@ -4,7 +4,6 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -177,7 +176,7 @@ namespace bufinscustomers.Services
                 {
                     // No enmascarar como tabla vacía: abortar el snapshot completo.
                     throw new InvalidOperationException(
-                        $"No se pudo capturar el snapshot de la tabla '{tabla}': {ex.Message}", ex);
+                        $"No se pudo capturar el snapshot de la tabla '{tabla}'", ex);
                 }
 
                 // El JSON se guarda comprimido (GZip) en DatosGzip; DatosJson queda vacío.
@@ -211,18 +210,9 @@ namespace bufinscustomers.Services
                   AND (@IdEscenario IS NULL OR ISNULL(IdEscenario,1) = @IdEscenario)
                 ORDER BY IdEmpresa, Anio, Modo, FechaCargue DESC";
 
-            using (var conn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(sql, conn))
-            {
-                cmd.Parameters.AddWithValue("@IdEmpresa", (object)idEmpresa ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@Anio",      (object)anio     ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@Modo",      (object)modo     ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@IdEscenario", (object)idEscenario ?? DBNull.Value);
-                conn.Open();
-                using (var r = cmd.ExecuteReader())
-                    while (r.Read())
-                        list.Add(MapHistorial(r));
-            }
+            Bd.Leer(CadenaConexion, sql,
+                new { IdEmpresa = idEmpresa, Anio = anio, Modo = modo, IdEscenario = idEscenario },
+                r => list.Add(MapHistorial(r)));
 
             foreach (var v in list)
             {
@@ -305,7 +295,7 @@ namespace bufinscustomers.Services
                             .ToList();
                         if (tablasFaltantes.Count > 0)
                         {
-                            try { tx.Rollback(); } catch { }
+                            Helpers.TransaccionHelper.RollbackSeguro(tx);
                             return false;
                         }
 
@@ -324,7 +314,7 @@ namespace bufinscustomers.Services
                         if (evaluacion.Bloqueado)
                         {
                             bloqueo = evaluacion;
-                            try { tx.Rollback(); } catch { }
+                            Helpers.TransaccionHelper.RollbackSeguro(tx);
                             return false;
                         }
 
@@ -365,7 +355,7 @@ namespace bufinscustomers.Services
                     {
                         AppLogger.Error(ex, "HistorialVersionesCarguesService.EjecutarRollback");
                         idRespaldo = null;
-                        try { tx.Rollback(); } catch { }
+                        Helpers.TransaccionHelper.RollbackSeguro(tx);
                         return false;
                     }
                 }
@@ -578,7 +568,7 @@ namespace bufinscustomers.Services
                             gz = (byte[])cmd.ExecuteScalar();
                         }
                         var datos = JsonConvert.DeserializeObject<Dictionary<string, string>>(Descomprimir(gz));
-                        if (datos == null) { try { tx.Rollback(); } catch { } return false; }
+                        if (datos == null) { Helpers.TransaccionHelper.RollbackSeguro(tx); return false; }
 
                         var catalogo = new HashSet<string>(TablasCargueHelper.MapeoCompleto.Values, StringComparer.OrdinalIgnoreCase);
                         var tablas = datos.Keys.Where(catalogo.Contains).ToList();
@@ -588,7 +578,7 @@ namespace bufinscustomers.Services
                         if (evaluacion.Bloqueado)
                         {
                             bloqueo = evaluacion;
-                            try { tx.Rollback(); } catch { }
+                            Helpers.TransaccionHelper.RollbackSeguro(tx);
                             return false;
                         }
 
@@ -604,7 +594,7 @@ namespace bufinscustomers.Services
                     {
                         AppLogger.Error(ex, "HistorialVersionesCarguesService.RecuperarRespaldo");
                         idRespaldoNuevo = null;
-                        try { tx.Rollback(); } catch { }
+                        Helpers.TransaccionHelper.RollbackSeguro(tx);
                         return false;
                     }
                 }

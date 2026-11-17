@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
@@ -9,10 +8,8 @@ using System.Text.RegularExpressions;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class ReportesController : BaseController
+    public class ReportesController(ReportesService reportesService, NotificacionesService notificacionesService) : BaseController
     {
-        private ReportesService _reportesService = new ReportesService();
-
         private bool EsURLValida(string url)
         {
             if (string.IsNullOrWhiteSpace(url))
@@ -75,17 +72,17 @@ namespace bufinscustomers.Controllers
         public ActionResult MaestroReportes()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
-            var reportes = _reportesService.ObtenerReportes();
+            var reportes = reportesService.ObtenerReportes();
 
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
                 var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
                 reportes = reportes.FindAll(r => idsPermitidos.Contains(r.IdEmpresa));
-                ViewBag.Empresas = _reportesService.ObtenerEmpresas().FindAll(e => idsPermitidos.Contains(e.Id));
+                ViewBag.Empresas = reportesService.ObtenerEmpresas().FindAll(e => idsPermitidos.Contains(e.Id));
             }
             else
             {
-                ViewBag.Empresas = _reportesService.ObtenerEmpresas();
+                ViewBag.Empresas = reportesService.ObtenerEmpresas();
             }
 
             return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
@@ -105,25 +102,25 @@ namespace bufinscustomers.Controllers
             if (!string.IsNullOrWhiteSpace(reporte.EnlaceHTML) && !EsURLValida(reporte.EnlaceHTML))
             {
                 TempData["ErrorMessage"] = "El enlace HTML no tiene un formato válido. Formato esperado: https://ejemplo.com";
-                ViewBag.Empresas = _reportesService.ObtenerEmpresas();
-                var reportes = _reportesService.ObtenerReportes();
+                ViewBag.Empresas = reportesService.ObtenerEmpresas();
+                var reportes = reportesService.ObtenerReportes();
                 return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
             }
 
             string mensaje;
-            bool registrado = _reportesService.CrearReporte(reporte, out mensaje);
+            bool registrado = reportesService.CrearReporte(reporte, out mensaje);
 
             if (registrado)
             {
                 TempData["SuccessMessage"] = "Reporte creado correctamente.";
-                new NotificacionesService().Crear(usuario?.Id ?? 0, R("Notif_ReporteCreado"), reporte.Nombre, "success", "/Reportes/MaestroReportes");
+                notificacionesService.Crear(usuario?.Id ?? 0, R("Notif_ReporteCreado"), reporte.Nombre, "success", "/Reportes/MaestroReportes");
                 return RedirectToAction("MaestroReportes");
             }
             else
             {
                 TempData["ErrorMessage"] = mensaje;
-                ViewBag.Empresas = _reportesService.ObtenerEmpresas();
-                var reportes = _reportesService.ObtenerReportes();
+                ViewBag.Empresas = reportesService.ObtenerEmpresas();
+                var reportes = reportesService.ObtenerReportes();
                 return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
             }
         }
@@ -143,12 +140,12 @@ namespace bufinscustomers.Controllers
             if (!string.IsNullOrWhiteSpace(reporte.EnlaceHTML) && !EsURLValida(reporte.EnlaceHTML))
             {
                 TempData["ErrorMessage"] = "El enlace HTML no tiene un formato válido. Formato esperado: https://ejemplo.com";
-                ViewBag.Empresas = _reportesService.ObtenerEmpresas();
-                var reportes = _reportesService.ObtenerReportes();
+                ViewBag.Empresas = reportesService.ObtenerEmpresas();
+                var reportes = reportesService.ObtenerReportes();
                 return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
             }
 
-            bool actualizado = _reportesService.EditarReporte(reporte);
+            bool actualizado = reportesService.EditarReporte(reporte);
 
             if (actualizado)
             {
@@ -158,8 +155,8 @@ namespace bufinscustomers.Controllers
             else
             {
                 TempData["ErrorMessage"] = "Error al actualizar el reporte.";
-                ViewBag.Empresas = _reportesService.ObtenerEmpresas();
-                var reportes = _reportesService.ObtenerReportes();
+                ViewBag.Empresas = reportesService.ObtenerEmpresas();
+                var reportes = reportesService.ObtenerReportes();
                 return View("~/Views/Configuracion/MaestroReportes.cshtml", reportes);
             }
         }
@@ -172,7 +169,7 @@ namespace bufinscustomers.Controllers
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
                 var usuario = UsuarioSesionHelper.UsuarioActual;
-                var reporte = _reportesService.ObtenerReportes().Find(r => r.Id == idReporte);
+                var reporte = reportesService.ObtenerReportes().Find(r => r.Id == idReporte);
                 if (reporte != null && !EmpresaAccesoHelper.TieneAcceso(usuario, reporte.IdEmpresa))
                 {
                     TempData["ErrorMessage"] = "No tiene permisos para eliminar reportes de otra empresa.";
@@ -180,12 +177,12 @@ namespace bufinscustomers.Controllers
                 }
             }
 
-            bool eliminado = _reportesService.EliminarReporte(idReporte);
+            bool eliminado = reportesService.EliminarReporte(idReporte);
 
             if (eliminado)
             {
                 TempData["SuccessMessage"] = "Reporte eliminado correctamente.";
-                new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_ReporteEliminado"), null, "warning", "/Reportes/MaestroReportes");
+                notificacionesService.Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_ReporteEliminado"), null, "warning", "/Reportes/MaestroReportes");
             }
             else
                 TempData["ErrorMessage"] = "Error al eliminar el reporte.";
@@ -263,7 +260,7 @@ namespace bufinscustomers.Controllers
                 }
             }
 
-            return Json(empresas, JsonRequestBehavior.AllowGet);
+            return Json(empresas);
         }
 
         [HttpGet]
@@ -272,22 +269,15 @@ namespace bufinscustomers.Controllers
             var iniciales = new HashSet<int>();
             var finales = new HashSet<int>();
 
-            using (var conn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand("SELECT añoinicial, añofinal FROM dbo.Reportes", conn))
-            {
-                conn.Open();
-                using (var reader = cmd.ExecuteReader())
+            Bd.Leer(CadenaConexion, "SELECT añoinicial, añofinal FROM dbo.Reportes",
+                reader =>
                 {
-                    while (reader.Read())
-                    {
-                        if (int.TryParse(reader["añoinicial"].ToString(), out int ai))
-                            iniciales.Add(ai);
+                    if (int.TryParse(reader["añoinicial"].ToString(), out int ai))
+                        iniciales.Add(ai);
 
-                        if (int.TryParse(reader["añofinal"].ToString(), out int af))
-                            finales.Add(af);
-                    }
-                }
-            }
+                    if (int.TryParse(reader["añofinal"].ToString(), out int af))
+                        finales.Add(af);
+                });
 
             var inicialesOrdenados = new List<int>(iniciales);
             var finalesOrdenados = new List<int>(finales);
@@ -298,7 +288,7 @@ namespace bufinscustomers.Controllers
             {
                 iniciales = inicialesOrdenados,
                 finales = finalesOrdenados
-            }, JsonRequestBehavior.AllowGet);
+            });
         }
 
         [HttpGet]
@@ -306,7 +296,6 @@ namespace bufinscustomers.Controllers
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
-            var idEmpresa = usuario?.IdEmpresa ?? 0;
 
             var reportes = new List<object>();
 
@@ -350,7 +339,7 @@ namespace bufinscustomers.Controllers
                 }
             }
 
-            return Json(reportes, JsonRequestBehavior.AllowGet);
+            return Json(reportes);
         }
 
         [HttpGet]
@@ -358,7 +347,6 @@ namespace bufinscustomers.Controllers
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
-            var idEmpresa = usuario?.IdEmpresa ?? 0;
 
             var reportes = new List<object>();
 
@@ -449,7 +437,7 @@ namespace bufinscustomers.Controllers
                 }
             }
 
-            return Json(reportes, JsonRequestBehavior.AllowGet);
+            return Json(reportes);
         }
 
         [HttpGet]
@@ -458,38 +446,30 @@ namespace bufinscustomers.Controllers
             string enlace = "";
             int idEmpresaReporte = 0;
 
-            using (var conn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand("SELECT EnlaceHTML, IdEmpresa FROM dbo.Reportes WHERE Id = @Id", conn))
-            {
-                cmd.Parameters.AddWithValue("@Id", id);
-                conn.Open();
-
-                using (var reader = cmd.ExecuteReader())
+            Bd.LeerPrimera(CadenaConexion, "SELECT EnlaceHTML, IdEmpresa FROM dbo.Reportes WHERE Id = @Id",
+                new { Id = id },
+                reader =>
                 {
-                    if (reader.Read())
-                    {
-                        enlace = reader["EnlaceHTML"]?.ToString() ?? "";
-                        idEmpresaReporte = Convert.ToInt32(reader["IdEmpresa"]);
-                    }
-                }
-            }
+                    enlace = reader["EnlaceHTML"]?.ToString() ?? "";
+                    idEmpresaReporte = Convert.ToInt32(reader["IdEmpresa"]);
+                });
 
             if (!UsuarioSesionHelper.EsSuperAdmin())
             {
                 var usuario = UsuarioSesionHelper.UsuarioActual;
                 if (!EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresaReporte))
                 {
-                    return Json(new { enlace = "", error = "No tiene permisos para ver este reporte" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { enlace = "", error = "No tiene permisos para ver este reporte" });
                 }
             }
 
             // Validar que el enlace sea válido antes de retornarlo
             if (!string.IsNullOrWhiteSpace(enlace) && !EsURLValida(enlace))
             {
-                return Json(new { enlace = "", error = "El enlace almacenado no tiene un formato válido" }, JsonRequestBehavior.AllowGet);
+                return Json(new { enlace = "", error = "El enlace almacenado no tiene un formato válido" });
             }
 
-            return Json(new { enlace }, JsonRequestBehavior.AllowGet);
+            return Json(new { enlace });
         }
 
     }

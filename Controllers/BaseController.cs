@@ -11,16 +11,24 @@ namespace bufinscustomers.Controllers
 {
     public abstract class BaseController : Controller
     {
-        // ---- compatibilidad con System.Web.Mvc.Controller (MVC 5): Session, Server, Json(..., AllowGet), HttpNotFound() ----
+        // ---- compatibilidad con System.Web.Mvc.Controller (MVC 5): Session y Server (pendiente de retirar, ver .claude/notas/refactor-plan.md) ----
         /// <summary>Sesion del usuario (equivale a Controller.Session de MVC 5; ver Compat/Sesion.cs).</summary>
         protected SesionCompat Session { get { return AppHttp.Current.Session; } }
 
         protected ServerCompat Server { get { return ServerCompat.Instancia; } }
 
-        protected JsonResult Json(object data, JsonRequestBehavior comportamiento) { return Json(data); }
+        /// <summary>Nombre del mes (1-12) en el idioma actual; fuera de rango devuelve el número tal cual.</summary>
+        protected string NombreMes(int mes)
+        {
+            return mes >= 1 && mes <= 12 ? R("Common_Mes" + mes) : mes.ToString();
+        }
 
-        protected HttpNotFoundResult HttpNotFound() { return new HttpNotFoundResult(); }
-        protected HttpNotFoundResult HttpNotFound(string descripcion) { return new HttpNotFoundResult(descripcion); }
+        /// <summary>¿El usuario actual puede ver/modificar esta empresa? (Super Admin, su empresa o una de su grupo.)</summary>
+        protected bool TieneAccesoEmpresa(int idEmpresa)
+        {
+            var usuario = Helpers.UsuarioSesionHelper.UsuarioActual;
+            return Helpers.UsuarioSesionHelper.EsSuperAdmin() || Helpers.EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa);
+        }
 
         protected static readonly string CadenaConexion =
             ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
@@ -98,24 +106,7 @@ namespace bufinscustomers.Controllers
         /// </summary>
         protected string MensajeError(Exception ex, [System.Runtime.CompilerServices.CallerMemberName] string accion = null)
         {
-            string codigo = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpperInvariant();
-            try { Helpers.AppLogger.Error(ex, GetType().Name + "." + accion + " ref=" + codigo); } catch { }
-
-            Exception b = ex == null ? null : ex.GetBaseException();
-            var sql = (b as Microsoft.Data.SqlClient.SqlException) ?? (ex as Microsoft.Data.SqlClient.SqlException);
-            bool tecnica;
-            if (sql != null)
-                tecnica = !(sql.Class <= 16 && sql.Number >= 50000); // 50000+ = THROW/RAISERROR escrito por nosotros (regla de negocio)
-            else
-                tecnica = b is NullReferenceException || b is IndexOutOfRangeException || b is InvalidCastException
-                    || b is KeyNotFoundException || b is FormatException || b is System.IO.IOException
-                    || b is TimeoutException || b is System.ComponentModel.Win32Exception
-                    || b is OutOfMemoryException || b is ArgumentOutOfRangeException || b is OverflowException
-                    || b is DivideByZeroException || b is System.Net.WebException || b is System.Net.Http.HttpRequestException
-                    || b is System.Threading.Tasks.TaskCanceledException || b is UnauthorizedAccessException;
-
-            if (!tecnica && ex != null && !string.IsNullOrWhiteSpace(ex.Message)) return ex.Message;
-            return string.Format(R("Err_InternoRef"), codigo);
+            return Helpers.MensajeErrorHelper.Crear(ex, GetType().Name + "." + accion, R);
         }
 
         /// <summary>Idioma de la sesión ("es" | "en") para indicarle al modelo en qué idioma responder.</summary>

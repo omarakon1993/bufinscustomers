@@ -37,7 +37,7 @@ namespace bufinscustomers.Helpers
 
         public static byte[] DeBase64Url(string s)
         {
-            if (string.IsNullOrEmpty(s)) return new byte[0];
+            if (string.IsNullOrEmpty(s)) return Array.Empty<byte>();
             s = s.Replace('-', '+').Replace('_', '/');
             switch (s.Length % 4) { case 2: s += "=="; break; case 3: s += "="; break; }
             return Convert.FromBase64String(s);

@@ -2,7 +2,6 @@ using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
 
 namespace bufinscustomers.Services
@@ -75,38 +74,24 @@ namespace bufinscustomers.Services
                 // almacenado y solo se actualiza la descripción — nunca se sobrescribe con vacío.
                 if (secreta && (valorLimpio.Length == 0 || valorLimpio.IndexOf('•') >= 0))
                 {
-                    using (var cn = new SqlConnection(CadenaConexion))
-                    {
-                        var cmdD = new SqlCommand(
-                            "UPDATE ConfiguracionSistema SET Descripcion = @Descripcion WHERE Clave = @Clave", cn);
-                        cmdD.Parameters.AddWithValue("@Clave", clave);
-                        cmdD.Parameters.AddWithValue("@Descripcion",
-                            string.IsNullOrWhiteSpace(descripcion) ? (object)DBNull.Value : descripcion.Trim());
-                        cn.Open();
-                        return cmdD.ExecuteNonQuery() > 0;
-                    }
+                    return Bd.Ejecutar(CadenaConexion,
+                        "UPDATE ConfiguracionSistema SET Descripcion = @Descripcion WHERE Clave = @Clave",
+                        new { Clave = clave, Descripcion = string.IsNullOrWhiteSpace(descripcion) ? null : descripcion.Trim() }) > 0;
                 }
 
                 // Un secreto se guarda cifrado en reposo.
                 string valorGuardar = secreta ? SecretosProtegidos.Cifrar(valorLimpio) : valorLimpio;
 
-                using (var cn = new SqlConnection(CadenaConexion))
-                {
-                    var cmd = new SqlCommand(@"
+                // Upsert: actualiza si la clave existe, si no la inserta.
+                return Bd.Ejecutar(CadenaConexion, @"
                         IF EXISTS (SELECT 1 FROM ConfiguracionSistema WHERE Clave = @Clave)
                             UPDATE ConfiguracionSistema
                                SET Valor = @Valor, Descripcion = @Descripcion
                              WHERE Clave = @Clave
                         ELSE
                             INSERT INTO ConfiguracionSistema (Clave, Valor, Descripcion)
-                            VALUES (@Clave, @Valor, @Descripcion)", cn);
-                    cmd.Parameters.AddWithValue("@Clave",       clave);
-                    cmd.Parameters.AddWithValue("@Valor",        valorGuardar);
-                    cmd.Parameters.AddWithValue("@Descripcion",
-                        string.IsNullOrWhiteSpace(descripcion) ? (object)DBNull.Value : descripcion.Trim());
-                    cn.Open();
-                    return cmd.ExecuteNonQuery() > 0;
-                }
+                            VALUES (@Clave, @Valor, @Descripcion)",
+                    new { Clave = clave, Valor = valorGuardar, Descripcion = string.IsNullOrWhiteSpace(descripcion) ? null : descripcion.Trim() }) > 0;
             }
             catch (Exception ex)
             {
@@ -119,14 +104,7 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                {
-                    var cmd = new SqlCommand(
-                        "DELETE FROM ConfiguracionSistema WHERE Clave = @Clave", cn);
-                    cmd.Parameters.AddWithValue("@Clave", clave.Trim());
-                    cn.Open();
-                    return cmd.ExecuteNonQuery() > 0;
-                }
+                return Bd.Ejecutar(CadenaConexion, "DELETE FROM ConfiguracionSistema WHERE Clave = @Clave", new { Clave = clave.Trim() }) > 0;
             }
             catch { return false; }
         }
@@ -141,28 +119,22 @@ namespace bufinscustomers.Services
             disponible = true;
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(@"
+                lista = Bd.Lista(CadenaConexion, @"
                     SELECT t.Id, t.Nombre, t.NombreEN, t.Icono, t.Orden, t.Activo, COUNT(c.Clave) AS Cantidad
                       FROM ConfiguracionSistemaTipos t
                       LEFT JOIN ConfiguracionSistema c ON c.IdTipo = t.Id
                      GROUP BY t.Id, t.Nombre, t.NombreEN, t.Icono, t.Orden, t.Activo
-                     ORDER BY t.Orden, t.Nombre", cn))
-                {
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read())
-                            lista.Add(new ConfiguracionSistemaTipo
-                            {
-                                Id       = Convert.ToInt32(r["Id"]),
-                                Nombre   = r["Nombre"].ToString(),
-                                NombreEN = r["NombreEN"] == DBNull.Value ? null : r["NombreEN"].ToString(),
-                                Icono    = r["Icono"].ToString(),
-                                Orden    = Convert.ToInt32(r["Orden"]),
-                                Activo   = Convert.ToBoolean(r["Activo"]),
-                                Cantidad = Convert.ToInt32(r["Cantidad"])
-                            });
-                }
+                     ORDER BY t.Orden, t.Nombre",
+                    r => new ConfiguracionSistemaTipo
+                    {
+                        Id       = Convert.ToInt32(r["Id"]),
+                        Nombre   = r["Nombre"].ToString(),
+                        NombreEN = r["NombreEN"] == DBNull.Value ? null : r["NombreEN"].ToString(),
+                        Icono    = r["Icono"].ToString(),
+                        Orden    = Convert.ToInt32(r["Orden"]),
+                        Activo   = Convert.ToBoolean(r["Activo"]),
+                        Cantidad = Convert.ToInt32(r["Cantidad"])
+                    });
             }
             catch (SqlException ex)
             {
@@ -177,19 +149,17 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(id > 0
+                return Bd.Escalar<int>(CadenaConexion, id > 0
                     ? "UPDATE ConfiguracionSistemaTipos SET Nombre=@N, NombreEN=@E, Icono=@I, Orden=@O WHERE Id=@Id; SELECT @Id;"
-                    : "INSERT INTO ConfiguracionSistemaTipos (Nombre, NombreEN, Icono, Orden) VALUES (@N, @E, @I, @O); SELECT CAST(SCOPE_IDENTITY() AS INT);", cn))
-                {
-                    cmd.Parameters.AddWithValue("@Id", id);
-                    cmd.Parameters.AddWithValue("@N", nombre.Trim());
-                    cmd.Parameters.AddWithValue("@E", string.IsNullOrWhiteSpace(nombreEN) ? (object)DBNull.Value : nombreEN.Trim());
-                    cmd.Parameters.AddWithValue("@I", string.IsNullOrWhiteSpace(icono) ? "fas fa-cog" : icono.Trim());
-                    cmd.Parameters.AddWithValue("@O", orden);
-                    cn.Open();
-                    return Convert.ToInt32(cmd.ExecuteScalar());
-                }
+                    : "INSERT INTO ConfiguracionSistemaTipos (Nombre, NombreEN, Icono, Orden) VALUES (@N, @E, @I, @O); SELECT CAST(SCOPE_IDENTITY() AS INT);",
+                    new
+                    {
+                        Id = id,
+                        N = nombre.Trim(),
+                        E = string.IsNullOrWhiteSpace(nombreEN) ? null : nombreEN.Trim(),
+                        I = string.IsNullOrWhiteSpace(icono) ? "fas fa-cog" : icono.Trim(),
+                        O = orden
+                    });
             }
             catch (SqlException ex)
             {
@@ -230,14 +200,8 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("UPDATE ConfiguracionSistema SET IdTipo = @T WHERE Clave = @C", cn))
-                {
-                    cmd.Parameters.AddWithValue("@T", (object)idTipo ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@C", clave.Trim());
-                    cn.Open();
-                    return cmd.ExecuteNonQuery() > 0;
-                }
+                return Bd.Ejecutar(CadenaConexion, "UPDATE ConfiguracionSistema SET IdTipo = @T WHERE Clave = @C",
+                    new { T = idTipo, C = clave.Trim() }) > 0;
             }
             catch (SqlException ex)
             {
@@ -250,18 +214,9 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                {
-                    var cmd = new SqlCommand(
-                        "SELECT Valor FROM ConfiguracionSistema WHERE Clave = @Clave", cn);
-                    cmd.Parameters.AddWithValue("@Clave", clave);
-                    cn.Open();
-                    object result = cmd.ExecuteScalar();
-                    // Descifrar es no-op si el valor no lleva el prefijo enc:v1: (valores en claro heredados).
-                    return result != null && result != DBNull.Value
-                        ? SecretosProtegidos.Descifrar(result.ToString().Trim())
-                        : null;
-                }
+                var valor = Bd.Escalar<string>(CadenaConexion, "SELECT Valor FROM ConfiguracionSistema WHERE Clave = @Clave", new { Clave = clave });
+                // Descifrar es no-op si el valor no lleva el prefijo enc:v1: (valores en claro heredados).
+                return valor != null ? SecretosProtegidos.Descifrar(valor.Trim()) : null;
             }
             catch (Exception ex)
             {

@@ -1,38 +1,9 @@
-using System;
 using System.Globalization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace bufinscustomers.Compat
 {
-    /// <summary>Equivale a System.Web.Mvc.JsonRequestBehavior: se conserva para no editar las ~130 llamadas existentes; hoy no cambia nada.</summary>
-    public enum JsonRequestBehavior { AllowGet, DenyGet }
-
-    /// <summary>System.Web.Mvc.HttpStatusCodeResult (con descripcion opcional).</summary>
-    public class HttpStatusCodeResult : StatusCodeResult
-    {
-        public string StatusDescription { get; private set; }
-        public HttpStatusCodeResult(int statusCode) : base(statusCode) { }
-        public HttpStatusCodeResult(int statusCode, string statusDescription) : base(statusCode) { StatusDescription = statusDescription; }
-        public HttpStatusCodeResult(System.Net.HttpStatusCode statusCode) : base((int)statusCode) { }
-        public HttpStatusCodeResult(System.Net.HttpStatusCode statusCode, string statusDescription) : base((int)statusCode) { StatusDescription = statusDescription; }
-    }
-
-    public class HttpNotFoundResult : HttpStatusCodeResult
-    {
-        public HttpNotFoundResult() : base(404) { }
-        public HttpNotFoundResult(string descripcion) : base(404, descripcion) { }
-    }
-
-    public class HttpUnauthorizedResult : HttpStatusCodeResult
-    {
-        public HttpUnauthorizedResult() : base(401) { }
-        public HttpUnauthorizedResult(string descripcion) : base(401, descripcion) { }
-    }
-
     public static class MvcCompatExtensions
     {
         /// <summary>HttpRequestBase.IsAjaxRequest() de MVC 5.</summary>

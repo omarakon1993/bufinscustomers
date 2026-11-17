@@ -2,7 +2,7 @@
 
 > Detalle completo movido desde CLAUDE.md (2026-11-11). CLAUDE.md conserva las reglas obligatorias en resumen; este archivo es la referencia completa. Si cambias el módulo, actualiza este archivo.
 
-### Orquestador del cargue (`Services/CargueOrquestadorService.cs`) — fase 0 de la API (2026-11-14)
+### Orquestador del cargue (`Services/CargueOrquestadorService*.cs`: clase `partial` en 5 archivos — flujo, `.Api`, `.LecturaExcel`, `.EscrituraSql`, `.Auditoria` — + `CargueOrquestadorModelos.cs` y `Helpers/CargueConversion.cs` con pruebas en `Tests/`) — fase 0 de la API (2026-11-14)
 
 > **Paridad Excel ↔ API (OBLIGATORIO):** esta lógica la comparte la API de ingesta (`Api/ApiV1.cs`). Toda validación nueva va aquí o en el SP para que valga en las dos entradas; lo que viva en la capa HTTP se cambia en `DatosController` y en `ApiV1`. Tabla de paridad y checklist en `api-ingesta.md` («Paridad con el cargue de Excel»).
 
@@ -12,7 +12,7 @@
 - API: `ValidarSolicitud(SolicitudCargue)` (empresa, acceso, hojas personalizadas, config, año/modo, archivo) → `ProcesarArchivo(solicitud, alCrearLote)` (lote → staging → `sp_ValidarCargueStaging`; estados `ProcesoCargueEstado`) → `Confirmar(usuario, idLote, confirmarReemplazo)` (impacto, regla de oro, snapshot, reemplazo, auditoría, notificación, `SP_ValidarPlantillaInicial`; estados `ConfirmacionCargueEstado`) → `DescartarCargue` / `AbandonarCargue`.
 - `alCrearLote` existe para que la pantalla ate el lote a la sesión (`CargueLoteSesionHelper`); la API no lo usa. La bitácora de importación se devuelve en `ResultadoProcesoCargue.LogImportacion` y el controlador la guarda en `Session["LogImportacion"]`.
 - Movido tal cual desde el controlador: lectura del libro (`LeerHojaEnDataTable`), `GuardarEnIni`, `GuardarEnSQLServer` (Z_TablaPUC), borrados de `Ini_*`, `RegistrarAuditoria` (ahora recibe el usuario), `ConstruirDetalleCargue`, `EjecutarValidacionDatos`. Los `TempData["Mensaje"]`/`MostrarDescargaLog` internos pasaron a campos del servicio.
-- Pendiente para la fase 1: los mensajes de `ErrorInesperado` aún incluyen `ex.Message` (heredado de la pantalla); la API debe devolver un mensaje genérico y registrar el detalle en `AppLogger`.
+- Resuelto 2026-11-16: `ProcesarArchivo` y `Confirmar` ya no devuelven `ex.Message`; usan `MensajeErrorHelper.Crear(ex, contexto, _traducir)` (código de referencia + detalle en `AppLogger`). Siguen visibles los diagnósticos de `UltimoMensajeHoja` (EscrituraSql) porque ayudan a corregir el Excel del cliente.
 
 ### Excel Import Logging
 

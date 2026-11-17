@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
@@ -54,8 +53,7 @@ namespace bufinscustomers.Services
         /// <summary>Convierte una paleta corporativa guardada en tema (si los colores guardados no fueran válidos, Bufins).</summary>
         public TemaInforme DesdePaleta(EmpresaPaleta pal)
         {
-            string aviso;
-            if (TemaInforme.Validar(pal.Primario, pal.Secundario, pal.Acento, out aviso) != null) return TemaInforme.Bufins;
+            if (TemaInforme.Validar(pal.Primario, pal.Secundario, pal.Acento, out _) != null) return TemaInforme.Bufins;
             return TemaInforme.Derivar("corp:" + pal.IdEmpresa + ":" + pal.Slot, NombreCorporativa(pal), pal.Primario, pal.Secundario, pal.Acento);
         }
 

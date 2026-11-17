@@ -1,10 +1,8 @@
-using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using ClosedXML.Excel;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -304,17 +302,18 @@ namespace bufinscustomers.Services
                         catch (Exception ex)
                         {
                             // Error: ROLLBACK de todo
-                            try { transaction.Rollback(); } catch { }
+                            Helpers.TransaccionHelper.RollbackSeguro(transaction);
 
                             resultado.Exito = false;
                             string prefijo = tablaConError != null ? $" [Tabla: {tablaConError}]" : "";
-                            resultado.Mensaje = $"Error durante la carga. Se revirtieron todos los cambios:{prefijo} {ex.Message}";
+                            string motivo = Helpers.MensajeErrorHelper.Crear(ex, "ConfiguracionRelacionamientoService.Cargar");
+                            resultado.Mensaje = $"Error durante la carga. Se revirtieron todos los cambios:{prefijo} {motivo}";
 
                             // Registrar el detalle de la tabla que falló (si aún no estaba en la lista)
                             if (detalleConError != null && !resultado.DetalleHojas.Contains(detalleConError))
                             {
                                 detalleConError.Estado = "Error";
-                                detalleConError.MensajeError = ex.Message;
+                                detalleConError.MensajeError = motivo;
                                 resultado.DetalleHojas.Add(detalleConError);
                             }
 
@@ -331,7 +330,7 @@ namespace bufinscustomers.Services
             catch (Exception ex)
             {
                 resultado.Exito = false;
-                resultado.Mensaje = $"Error de conexión: {ex.Message}";
+                resultado.Mensaje = $"Error de conexión: {Helpers.MensajeErrorHelper.Crear(ex, "ConfiguracionRelacionamientoService.Cargar")}";
             }
 
             return resultado;

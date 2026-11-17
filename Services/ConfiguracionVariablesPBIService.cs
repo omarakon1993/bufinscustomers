@@ -3,8 +3,6 @@ using ClosedXML.Excel;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
-using System.Drawing;
 using System.IO;
 
 namespace bufinscustomers.Services
@@ -32,11 +30,6 @@ namespace bufinscustomers.Services
             { "Variable padre real Orden",  "VariablePadreRealOrden" },
         };
 
-        // Columnas numéricas (para conversión)
-        private static readonly HashSet<string> ColumnasNumericas = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "OrdenVariable", "SubtotalVariable", "AgrupacionKEYOrden", "VariablePadreRealOrden"
-        };
 
         private readonly VariablesPBIService _lecturaService = new VariablesPBIService();
 
@@ -109,9 +102,9 @@ namespace bufinscustomers.Services
                         }
                         catch (Exception ex)
                         {
-                            try { tx.Rollback(); } catch { }
+                            Helpers.TransaccionHelper.RollbackSeguro(tx);
                             resultado.Exito = false;
-                            resultado.Mensaje = $"Error durante la carga. Se revirtieron los cambios: {ex.Message}";
+                            resultado.Mensaje = $"Error durante la carga. Se revirtieron los cambios: {Helpers.MensajeErrorHelper.Crear(ex, "ConfiguracionVariablesPBIService.Cargar")}";
                         }
                     }
                 }
@@ -119,7 +112,7 @@ namespace bufinscustomers.Services
             catch (Exception ex)
             {
                 resultado.Exito = false;
-                resultado.Mensaje = $"Error de conexión: {ex.Message}";
+                resultado.Mensaje = $"Error de conexión: {Helpers.MensajeErrorHelper.Crear(ex, "ConfiguracionVariablesPBIService.Cargar")}";
             }
 
             return resultado;
@@ -321,7 +314,7 @@ namespace bufinscustomers.Services
             // Detectar Agregados (en nuevos pero no en actuales)
             foreach (var kv in dictNuevos)
             {
-                if (!dictActuales.ContainsKey(kv.Key))
+                if (!dictActuales.TryGetValue(kv.Key, out OrdenVariable anterior))
                 {
                     comp.Agregados.Add(new RegistroOrdenVariableResumen
                     {
@@ -334,8 +327,6 @@ namespace bufinscustomers.Services
                 }
                 else
                 {
-                    // Detectar Modificados
-                    var anterior = dictActuales[kv.Key];
                     var nuevo = kv.Value;
                     string cambios = GenerarResumenCambios(anterior, nuevo);
                     if (!string.IsNullOrEmpty(cambios))
@@ -430,8 +421,8 @@ namespace bufinscustomers.Services
             string n = (valNuevo ?? "").Trim();
             if (!string.Equals(a, n, StringComparison.Ordinal))
             {
-                string aDisplay = string.IsNullOrEmpty(a) ? "(vacío)" : (a.Length > 25 ? a.Substring(0, 22) + "..." : a);
-                string nDisplay = string.IsNullOrEmpty(n) ? "(vacío)" : (n.Length > 25 ? n.Substring(0, 22) + "..." : n);
+                string aDisplay = string.IsNullOrEmpty(a) ? "(vacío)" : (a.Length > 25 ? string.Concat(a.AsSpan(0, 22), "...") : a);
+                string nDisplay = string.IsNullOrEmpty(n) ? "(vacío)" : (n.Length > 25 ? string.Concat(n.AsSpan(0, 22), "...") : n);
                 cambios.Add($"{nombre}: {aDisplay}→{nDisplay}");
             }
         }

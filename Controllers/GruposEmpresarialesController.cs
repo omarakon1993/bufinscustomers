@@ -13,12 +13,14 @@ namespace bufinscustomers.Controllers
     // puede ver y editar (solo Nombre/Descripción/Activo) el único grupo al que pertenece su empresa.
     // El acceso de lectura que ese grupo habilita entre empresas hermanas se resuelve en EmpresaAccesoHelper.
     [ValidarSesion]
-    public class GruposEmpresarialesController : BaseController
+    public class GruposEmpresarialesController(
+        GrupoEmpresarialService service,
+        EmpresaService empresaService,
+        NotificacionesService notificacionesService,
+        AuditoriaService auditoriaService) : BaseController
     {
         private const string PERMISO = "ADMIN_CONFIG_GRUPOS_EMPRESARIALES";
 
-        private readonly GrupoEmpresarialService _service = new GrupoEmpresarialService();
-        private readonly EmpresaService _empresaService = new EmpresaService();
 
         private static int? ObtenerIdGrupoDelUsuario(Usuarios usuario)
         {
@@ -41,12 +43,12 @@ namespace bufinscustomers.Controllers
             List<GrupoEmpresarial> grupos;
             if (esSuperAdmin)
             {
-                grupos = _service.ObtenerTodos();
+                grupos = service.ObtenerTodos();
             }
             else
             {
                 var idGrupo = ObtenerIdGrupoDelUsuario(UsuarioSesionHelper.UsuarioActual);
-                var grupo = idGrupo.HasValue ? _service.ObtenerPorId(idGrupo.Value) : null;
+                var grupo = idGrupo.HasValue ? service.ObtenerPorId(idGrupo.Value) : null;
                 grupos = grupo != null ? new List<GrupoEmpresarial> { grupo } : new List<GrupoEmpresarial>();
             }
 
@@ -68,12 +70,12 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                bool ok = _service.Crear(grupo);
+                bool ok = service.Crear(grupo);
                 if (ok)
                 {
                     SetSuccessMessage(R("Grupo_MensajeCreado"));
-                    new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_GrupoCreado"), grupo.Nombre, "success", "/GruposEmpresariales");
-                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Grupos, AuditoriaAccion.Crear,
+                    notificacionesService.Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_GrupoCreado"), grupo.Nombre, "success", "/GruposEmpresariales");
+                    auditoriaService.RegistrarCambio(AuditoriaTipo.Grupos, AuditoriaAccion.Crear,
                         "GruposEmpresariales", grupo.Id.ToString(), $"Grupo empresarial creado: {grupo.Nombre}", null, grupo);
                 }
                 else
@@ -81,7 +83,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage(R("Grupo_ErrorCrear") + ": " + ex.Message);
+                SetErrorMessage(R("Grupo_ErrorCrear") + ": " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");
@@ -106,11 +108,11 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("Index");
                 }
 
-                bool ok = _service.Editar(grupo);
+                bool ok = service.Editar(grupo);
                 if (ok)
                 {
                     SetSuccessMessage(R("Grupo_MensajeEditado"));
-                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Grupos, AuditoriaAccion.Editar,
+                    auditoriaService.RegistrarCambio(AuditoriaTipo.Grupos, AuditoriaAccion.Editar,
                         "GruposEmpresariales", grupo.Id.ToString(), $"Grupo empresarial editado: {grupo.Nombre}", null, grupo);
                 }
                 else
@@ -118,7 +120,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage(R("Grupo_ErrorEditar") + ": " + ex.Message);
+                SetErrorMessage(R("Grupo_ErrorEditar") + ": " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");
@@ -133,13 +135,13 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                var grupo = _service.ObtenerPorId(id);
-                bool ok = _service.Eliminar(id);
+                var grupo = service.ObtenerPorId(id);
+                bool ok = service.Eliminar(id);
                 if (ok)
                 {
                     SetSuccessMessage(R("Grupo_MensajeEliminado"));
-                    new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_GrupoEliminado"), grupo?.Nombre, "warning", "/GruposEmpresariales");
-                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Grupos, AuditoriaAccion.Eliminar,
+                    notificacionesService.Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_GrupoEliminado"), grupo?.Nombre, "warning", "/GruposEmpresariales");
+                    auditoriaService.RegistrarCambio(AuditoriaTipo.Grupos, AuditoriaAccion.Eliminar,
                         "GruposEmpresariales", id.ToString(), $"Grupo empresarial eliminado: {grupo?.Nombre} (Id {id})", grupo, null);
                 }
                 else
@@ -147,7 +149,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                SetErrorMessage(R("Grupo_ErrorEliminar") + ": " + ex.Message);
+                SetErrorMessage(R("Grupo_ErrorEliminar") + ": " + MensajeError(ex));
             }
 
             return RedirectToAction("Index");
@@ -159,14 +161,14 @@ namespace bufinscustomers.Controllers
             if (!UsuarioSesionHelper.EsSuperAdmin())
                 return RedirectToAction("Index", "Home");
 
-            var grupo = _service.ObtenerPorId(id);
+            var grupo = service.ObtenerPorId(id);
             if (grupo == null)
             {
                 SetErrorMessage(R("Grupo_ErrorNoEncontrado"));
                 return RedirectToAction("Index");
             }
 
-            var todasLasEmpresas = _empresaService.ObtenerEmpresas();
+            var todasLasEmpresas = empresaService.ObtenerEmpresas();
             var empresasSeleccionables = todasLasEmpresas.Select(e => new EmpresaSeleccionableViewModel
             {
                 Id = e.Id,
@@ -194,17 +196,17 @@ namespace bufinscustomers.Controllers
 
             try
             {
-                var grupo = _service.ObtenerPorId(idGrupo);
+                var grupo = service.ObtenerPorId(idGrupo);
                 if (grupo == null)
                     return Json(new { success = false, message = R("Grupo_ErrorNoEncontrado") });
 
                 idsEmpresas = idsEmpresas ?? new List<int>();
 
-                bool ok = _service.AsignarEmpresas(idGrupo, idsEmpresas);
+                bool ok = service.AsignarEmpresas(idGrupo, idsEmpresas);
                 if (ok)
                 {
-                    new NotificacionesService().Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_GrupoEmpresasActualizadas"), grupo.Nombre, "success", "/GruposEmpresariales");
-                    new AuditoriaService().RegistrarCambio(AuditoriaTipo.Grupos, AuditoriaAccion.Asignar,
+                    notificacionesService.Crear(UsuarioSesionHelper.UsuarioActual?.Id ?? 0, R("Notif_GrupoEmpresasActualizadas"), grupo.Nombre, "success", "/GruposEmpresariales");
+                    auditoriaService.RegistrarCambio(AuditoriaTipo.Grupos, AuditoriaAccion.Asignar,
                         "GruposEmpresariales", idGrupo.ToString(),
                         $"Empresas del grupo '{grupo.Nombre}' actualizadas ({idsEmpresas.Count})", null, new { idsEmpresas });
                     return Json(new { success = true, message = R("Grupo_MensajeEmpresasAsignadas") });

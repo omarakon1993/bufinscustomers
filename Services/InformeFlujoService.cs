@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
 using System.Linq;
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
@@ -167,18 +166,9 @@ namespace bufinscustomers.Services
         {
             var ids = new List<byte>();
 
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                var cmd = new SqlCommand("SELECT DISTINCT IdEscenario FROM " + Tabla + " WHERE IdEmpresa = @IdEmpresa AND IdEscenario IS NOT NULL", cn);
-                cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                cn.Open();
-
-                using (var reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                        ids.Add(Convert.ToByte(reader[0]));
-                }
-            }
+            Bd.Leer(CadenaConexion, "SELECT DISTINCT IdEscenario FROM " + Tabla + " WHERE IdEmpresa = @IdEmpresa AND IdEscenario IS NOT NULL",
+                new { IdEmpresa = idEmpresa },
+                reader => ids.Add(Convert.ToByte(reader[0])));
 
             return ids;
         }
@@ -425,7 +415,7 @@ namespace bufinscustomers.Services
             {
                 decimal v = f(principal), p = f(ppto), a = 0m, e = esc != null ? f(esc) : 0m;
                 // El año anterior es el mismo rango desplazado 12 meses.
-                a = FuncionAnterior(principal, claves, f);
+                a = FuncionAnterior(principal, f);
                 bool pct = formato == "pct";
                 var k = new FlujoKpi { Codigo = codigo, Formato = formato, Neutral = neutral, Valor = v, ValorPpto = p, ValorAnt = a, ValorEsc = e };
                 // En porcentajes la variación es la diferencia en puntos (fracción); en moneda, relativa al comparativo.
@@ -458,7 +448,7 @@ namespace bufinscustomers.Services
         }
 
         /// <summary>Evalúa un KPI sobre el mismo rango un año antes: se desplaza cada clave 12 meses.</summary>
-        private static decimal FuncionAnterior(Serie principal, List<int> claves, Func<Serie, decimal> f)
+        private static decimal FuncionAnterior(Serie principal, Func<Serie, decimal> f)
         {
             var corrida = new Serie();
             foreach (var kv in principal.PorOrd)
@@ -570,9 +560,9 @@ namespace bufinscustomers.Services
             c.AnioInicial = kIni / 12; c.MesInicial = kIni % 12 + 1;
 
             var caja = ObtenerCajaBalance(reporte.IdEmpresa, reporte.IdEscenario, kIni / 12, claves.Max() / 12);
-            if (caja == null || !caja.ContainsKey(kIni)) return;   // sin balance del mes anterior al rango: no hay desde dónde arrancar
+            if (caja == null || !caja.TryGetValue(kIni, out decimal value)) return;   // sin balance del mes anterior al rango: no hay desde dónde arrancar
             c.HayCajaInicial = true;
-            c.CajaInicial = caja[kIni];
+            c.CajaInicial = value;
 
             decimal netoTotal = NetoTotal(s, claves);
             c.FlujoNetoReal = NetoTotal(s, clavesReales);

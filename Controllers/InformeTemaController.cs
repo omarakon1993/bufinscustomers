@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using bufinscustomers.Helpers;
-using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
 
@@ -12,10 +11,8 @@ namespace bufinscustomers.Controllers
     /// Devuelve siempre los tokens ya derivados por <see cref="TemaInforme"/>: el navegador no reimplementa el algoritmo.
     /// </summary>
     [ValidarSesion]
-    public class InformeTemaController : BaseController
+    public class InformeTemaController(TemaInformeService servicio, EmpresaPaletaService empresaPaletaService) : BaseController
     {
-        private readonly TemaInformeService _servicio = new TemaInformeService();
-
         /// <summary>
         /// Bufins + las DOS paletas corporativas de la empresa indicada (siempre las dos entradas: <c>registrada=false</c> si aún no
         /// existen, para que el selector lo indique). Sin empresa o sin acceso a ella: ambas sin registrar.
@@ -27,13 +24,13 @@ namespace bufinscustomers.Controllers
             var presets = TemaInforme.Presets.Select(t => t.ParaCliente(TemaInformeService.NombreVisible(t, R))).ToList();
 
             bool conAcceso = idEmpresa.HasValue && EmpresaAccesoHelper.TieneAcceso(UsuarioSesionHelper.UsuarioActual, idEmpresa.Value);
-            var guardadas = conAcceso ? new EmpresaPaletaService().Obtener(idEmpresa.Value) : new List<EmpresaPaleta>();
+            var guardadas = conAcceso ? empresaPaletaService.Obtener(idEmpresa.Value) : new List<EmpresaPaleta>();
 
             var corporativas = new List<object>();
             for (byte slot = 1; slot <= 2; slot++)
             {
                 var pal = guardadas.FirstOrDefault(x => x.Slot == slot);
-                var tema = pal == null ? null : _servicio.DesdePaleta(pal);
+                var tema = pal == null ? null : servicio.DesdePaleta(pal);
                 if (tema != null && tema.Id == TemaInforme.IdBufins) tema = null;     // colores guardados inválidos: cuenta como sin registrar
                 string nombre = conAcceso ? TemaInformeService.NombreCorporativa(idEmpresa.Value, slot) : string.Format(R("Tema_Corp_Generica"), slot);
                 corporativas.Add(new
@@ -44,7 +41,7 @@ namespace bufinscustomers.Controllers
                     tema = tema == null ? null : tema.ParaCliente(nombre)
                 });
             }
-            return Json(new { presets, corporativas }, JsonRequestBehavior.AllowGet);
+            return Json(new { presets, corporativas });
         }
 
         /// <summary>Tokens de un tema (se usa para «Personalizada» con los tres colores). Valor inválido → <c>exito=false</c> con el motivo.</summary>
@@ -56,12 +53,12 @@ namespace bufinscustomers.Controllers
             {
                 string aviso;
                 string error = TemaInforme.Validar(p, s, a, out aviso);
-                if (error != null) return Json(new { exito = false, mensaje = R(error) }, JsonRequestBehavior.AllowGet);
-                var t = _servicio.Resolver(UsuarioSesionHelper.UsuarioActual, tema, p, s, a);
-                return Json(new { exito = true, aviso = aviso == null ? null : R(aviso), tema = t.ParaCliente(TemaInformeService.NombreVisible(t, R)) }, JsonRequestBehavior.AllowGet);
+                if (error != null) return Json(new { exito = false, mensaje = R(error) });
+                var t = servicio.Resolver(UsuarioSesionHelper.UsuarioActual, tema, p, s, a);
+                return Json(new { exito = true, aviso = aviso == null ? null : R(aviso), tema = t.ParaCliente(TemaInformeService.NombreVisible(t, R)) });
             }
-            var r = _servicio.Resolver(UsuarioSesionHelper.UsuarioActual, tema, p, s, a);
-            return Json(new { exito = true, tema = r.ParaCliente(TemaInformeService.NombreVisible(r, R)) }, JsonRequestBehavior.AllowGet);
+            var r = servicio.Resolver(UsuarioSesionHelper.UsuarioActual, tema, p, s, a);
+            return Json(new { exito = true, tema = r.ParaCliente(TemaInformeService.NombreVisible(r, R)) });
         }
     }
 }

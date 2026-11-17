@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
@@ -15,13 +14,16 @@ namespace bufinscustomers.Controllers
     /// </summary>
     [ValidarSesion]
     [SoloSuperAdmin]
-    public class SolicitudesSeguridadController : BaseController
+    public class SolicitudesSeguridadController(
+        SolicitudReinicioAuthService svc,
+        DobleFactorService dobleFactorService,
+        UsuarioService usuarioService,
+        AuditoriaService auditoriaService,
+        NotificacionesService notificacionesService) : BaseController
     {
-        private readonly SolicitudReinicioAuthService _svc = new SolicitudReinicioAuthService();
-
         public ActionResult Index()
         {
-            ViewBag.Pendientes = _svc.ContarPendientes();
+            ViewBag.Pendientes = svc.ContarPendientes();
             return View("~/Views/SolicitudesSeguridad/Index.cshtml");
         }
 
@@ -31,7 +33,7 @@ namespace bufinscustomers.Controllers
             if (estado != SolicitudReinicioAuthService.Pendiente && estado != SolicitudReinicioAuthService.Aprobada &&
                 estado != SolicitudReinicioAuthService.Rechazada) estado = null;
 
-            var items = _svc.Listar(estado).Select(s => new
+            var items = svc.Listar(estado).Select(s => new
             {
                 s.Id,
                 fecha = s.Fecha.ToString("dd/MM/yyyy HH:mm"),
@@ -48,7 +50,7 @@ namespace bufinscustomers.Controllers
                 s.ResueltaPor,
                 nota = s.NotaResolucion
             });
-            return Json(new { ok = true, items, pendientes = _svc.ContarPendientes() }, JsonRequestBehavior.AllowGet);
+            return Json(new { ok = true, items, pendientes = svc.ContarPendientes() });
         }
 
         [HttpPost]
@@ -58,23 +60,23 @@ namespace bufinscustomers.Controllers
             if (!verificado) return Json(new { ok = false, mensaje = R("SolSeg_Adm_ErrorVerificar") });
 
             var actual = UsuarioSesionHelper.UsuarioActual;
-            var sol = _svc.Obtener(id);
+            var sol = svc.Obtener(id);
             if (sol == null || sol.Estado != SolicitudReinicioAuthService.Pendiente)
                 return Json(new { ok = false, mensaje = R("SolSeg_Adm_YaResuelta") });
             if (actual != null && sol.IdUsuario == actual.Id)
                 return Json(new { ok = false, mensaje = R("SolSeg_Adm_Propia") });
 
-            if (!new DobleFactorService().Reiniciar(sol.IdUsuario))
+            if (!dobleFactorService.Reiniciar(sol.IdUsuario))
                 return Json(new { ok = false, mensaje = R("Usr_2FA_ErrorReiniciar") });
-            _svc.Resolver(id, SolicitudReinicioAuthService.Aprobada, actual.Id, nota);
+            svc.Resolver(id, SolicitudReinicioAuthService.Aprobada, actual.Id, nota);
 
-            var destino = new UsuarioService().ObtenerUsuarioPorId(sol.IdUsuario);
-            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Editar,
+            var destino = usuarioService.ObtenerUsuarioPorId(sol.IdUsuario);
+            auditoriaService.RegistrarSeguridad(AuditoriaAccion.Editar,
                 $"Solicitud #{id} aprobada: métodos de autenticación reiniciados para {sol.Usuario} por el Super Admin {actual.Usuario}",
                 sol.IdUsuario, sol.NombreCompleto, destino?.IdEmpresa);
 
             string titulo = R("Notif_SolSeg_AprobadaTitulo"), msg = R("Notif_SolSeg_AprobadaMsg");
-            new NotificacionesService().Crear(sol.IdUsuario, titulo, msg, "success");
+            notificacionesService.Crear(sol.IdUsuario, titulo, msg, "success");
             AlertaUsuarioCorreo.Enviar(sol.Correo, titulo, msg);
             return Json(new { ok = true, mensaje = R("SolSeg_Adm_Aprobada") });
         }
@@ -84,22 +86,22 @@ namespace bufinscustomers.Controllers
         public JsonResult Rechazar(int id, string nota)
         {
             var actual = UsuarioSesionHelper.UsuarioActual;
-            var sol = _svc.Obtener(id);
+            var sol = svc.Obtener(id);
             if (sol == null || sol.Estado != SolicitudReinicioAuthService.Pendiente)
                 return Json(new { ok = false, mensaje = R("SolSeg_Adm_YaResuelta") });
             if (actual != null && sol.IdUsuario == actual.Id)
                 return Json(new { ok = false, mensaje = R("SolSeg_Adm_Propia") });
 
-            if (!_svc.Resolver(id, SolicitudReinicioAuthService.Rechazada, actual.Id, nota))
+            if (!svc.Resolver(id, SolicitudReinicioAuthService.Rechazada, actual.Id, nota))
                 return Json(new { ok = false, mensaje = R("SolSeg_Adm_YaResuelta") });
 
-            var destino = new UsuarioService().ObtenerUsuarioPorId(sol.IdUsuario);
-            new AuditoriaService().RegistrarSeguridad(AuditoriaAccion.Editar,
+            var destino = usuarioService.ObtenerUsuarioPorId(sol.IdUsuario);
+            auditoriaService.RegistrarSeguridad(AuditoriaAccion.Editar,
                 $"Solicitud #{id} rechazada para {sol.Usuario} por el Super Admin {actual.Usuario}",
                 sol.IdUsuario, sol.NombreCompleto, destino?.IdEmpresa);
 
             string titulo = R("Notif_SolSeg_RechazadaTitulo"), msg = R("Notif_SolSeg_RechazadaMsg");
-            new NotificacionesService().Crear(sol.IdUsuario, titulo, msg, "warning");
+            notificacionesService.Crear(sol.IdUsuario, titulo, msg, "warning");
             AlertaUsuarioCorreo.Enviar(sol.Correo, titulo, msg);
             return Json(new { ok = true, mensaje = R("SolSeg_Adm_Rechazada") });
         }

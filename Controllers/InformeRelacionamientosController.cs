@@ -11,10 +11,8 @@ using System.Linq;
 namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
-    public class InformeRelacionamientosController : BaseController
+    public class InformeRelacionamientosController(InformeRelacionamientosService service) : BaseController
     {
-        private InformeRelacionamientosService _service = new InformeRelacionamientosService();
-
         /// <summary>
         /// Verifica si el usuario actual es administrador
         /// </summary>
@@ -34,7 +32,7 @@ namespace bufinscustomers.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            ViewBag.Tablas = _service.ObtenerTablasDisponibles();
+            ViewBag.Tablas = service.ObtenerTablasDisponibles();
             return View("~/Views/Informes/InformeRelacionamientos.cshtml");
         }
 
@@ -48,15 +46,15 @@ namespace bufinscustomers.Controllers
             {
                 if (!VerificarAdmin())
                 {
-                    return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Acceso denegado" });
                 }
 
-                var tipos = _service.ObtenerTiposDisponibles(nombreTabla);
-                return Json(new { success = true, tipos }, JsonRequestBehavior.AllowGet);
+                var tipos = service.ObtenerTiposDisponibles(nombreTabla);
+                return Json(new { success = true, tipos });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error al obtener tipos: {MensajeError(ex)}" }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = $"Error al obtener tipos: {MensajeError(ex)}" });
             }
         }
 
@@ -70,15 +68,15 @@ namespace bufinscustomers.Controllers
             {
                 if (!VerificarAdmin())
                 {
-                    return Json(new { success = false, message = "Acceso denegado" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Acceso denegado" });
                 }
 
-                var descripciones = _service.ObtenerDescripcionesDisponibles(nombreTabla, tipo);
-                return Json(new { success = true, descripciones }, JsonRequestBehavior.AllowGet);
+                var descripciones = service.ObtenerDescripcionesDisponibles(nombreTabla, tipo);
+                return Json(new { success = true, descripciones });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error al obtener descripciones: {MensajeError(ex)}" }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = $"Error al obtener descripciones: {MensajeError(ex)}" });
             }
         }
 
@@ -97,13 +95,13 @@ namespace bufinscustomers.Controllers
                     return Json(new { success = false, message = "Acceso denegado" });
                 }
 
-                var resultado = _service.ConsultarDatos(filtros);
+                var resultado = service.ConsultarDatos(filtros);
 
                 // Mapear nombres de columnas a nombres amigables
                 var columnasAmigables = resultado.Columnas.Select(c => new
                 {
                     nombreTecnico = c,
-                    nombreAmigable = _service.ObtenerNombreAmigableColumna(c)
+                    nombreAmigable = service.ObtenerNombreAmigableColumna(c)
                 }).ToList();
 
                 // Formatear los datos para la vista
@@ -145,7 +143,7 @@ namespace bufinscustomers.Controllers
                     datos = datosFormateados,
                     columnas = columnasAmigables,
                     totalRegistros = resultado.TotalRegistros
-                }, JsonRequestBehavior.AllowGet);
+                });
 
                 jsonResult.MaxJsonLength = int.MaxValue;
                 return jsonResult;
@@ -170,7 +168,7 @@ namespace bufinscustomers.Controllers
                     return RedirectToAction("InformeRelacionamientos");
                 }
 
-                var resultado = _service.ConsultarDatos(filtros);
+                var resultado = service.ConsultarDatos(filtros);
 
                 if (resultado.TotalRegistros == 0)
                 {
@@ -180,7 +178,7 @@ namespace bufinscustomers.Controllers
 
                 using (var package = new XLWorkbook())
                 {
-                    var tablas = _service.ObtenerTablasDisponibles();
+                    var tablas = service.ObtenerTablasDisponibles();
                     var tablaSeleccionada = tablas.FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla);
                     string nombreHoja = tablaSeleccionada?.NombreAmigable ?? filtros.NombreTabla;
 
@@ -194,7 +192,7 @@ namespace bufinscustomers.Controllers
                     foreach (var nombreColumna in resultado.Columnas)
                     {
                         var cell = worksheet.Cell(1, col);
-                        cell.Value = _service.ObtenerNombreAmigableColumna(nombreColumna);
+                        cell.Value = service.ObtenerNombreAmigableColumna(nombreColumna);
 
                         cell.Style.Font.Bold = true;
                         cell.Style.Fill.BackgroundColor = XLColor.FromArgb(99, 102, 241);
@@ -230,7 +228,7 @@ namespace bufinscustomers.Controllers
                         if (idxDescripcion >= 0)
                         {
                             var colDesc = resultado.Columnas[idxDescripcion];
-                            descripcionActual = registro.ContainsKey(colDesc) ? registro[colDesc]?.ToString() : null;
+                            descripcionActual = registro.TryGetValue(colDesc, out object value) ? value?.ToString() : null;
                         }
 
                         if (descripcionActual != descripcionAnterior)
@@ -245,7 +243,7 @@ namespace bufinscustomers.Controllers
                         foreach (var nombreColumna in resultado.Columnas)
                         {
                             var cell = worksheet.Cell(fila, col);
-                            var valor = registro.ContainsKey(nombreColumna) ? registro[nombreColumna] : null;
+                            var valor = registro.TryGetValue(nombreColumna, out object value1) ? value1 : null;
 
                             if (valor != null)
                             {
@@ -296,7 +294,7 @@ namespace bufinscustomers.Controllers
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = $"Error al exportar a Excel: {ex.Message}";
+                TempData["ErrorMessage"] = $"Error al exportar a Excel: {MensajeError(ex)}";
                 return RedirectToAction("InformeRelacionamientos");
             }
         }

@@ -19,24 +19,25 @@ namespace bufinscustomers.Controllers
     /// Habilitado para todos los roles (ver Sql/006_MenuOpcion_InformeModelos.sql).
     /// </summary>
     [ValidarSesion]
-    public class InformeModelosController : BaseController
+    public class InformeModelosController(
+        InformeTablasDatosService service,
+        EmailService emailService,
+        AuditoriaService auditoriaService) : BaseController
     {
-        private readonly InformeTablasDatosService _service = new InformeTablasDatosService();
-
         public ActionResult Index()
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
             var idEmpresa = usuario?.IdEmpresa ?? 0;
 
-            var empresas = _service.ObtenerEmpresas();
+            var empresas = service.ObtenerEmpresas();
             if (!esAdmin)
             {
                 var idsPermitidos = EmpresaAccesoHelper.ObtenerIdsEmpresasPermitidas(usuario) ?? new List<int>();
                 empresas = empresas.Where(e => idsPermitidos.Contains(e.Id)).ToList();
             }
 
-            ViewBag.Tablas = _service.ObtenerTablasModelos();
+            ViewBag.Tablas = service.ObtenerTablasModelos();
             ViewBag.Empresas = empresas;
             ViewBag.EsAdmin = esAdmin;
             ViewBag.IdEmpresaUsuario = idEmpresa;
@@ -48,7 +49,7 @@ namespace bufinscustomers.Controllers
         private bool EsTablaDeModelo(string nombreTabla)
         {
             return !string.IsNullOrWhiteSpace(nombreTabla)
-                && _service.ObtenerTablasModelos().Any(t => t.NombreTabla == nombreTabla);
+                && service.ObtenerTablasModelos().Any(t => t.NombreTabla == nombreTabla);
         }
 
         /// <summary>
@@ -82,16 +83,16 @@ namespace bufinscustomers.Controllers
                 }
 
                 var idEmpresaConsulta = filtros.IdEmpresa ?? idEmpresaUsuario;
-                var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaConsulta);
+                var resultado = service.ConsultarDatos(filtros, esAdmin, idEmpresaConsulta);
 
                 // numerica = la columna trae decimal/money/float (el primer valor no nulo manda):
                 // la vista la pinta como 1.236.285.416,35 aunque su nombre no esté en su lista.
                 var columnasAmigables = resultado.Columnas.Select(c => new
                 {
                     nombreTecnico = c,
-                    nombreAmigable = _service.ObtenerNombreAmigableColumna(c),
+                    nombreAmigable = service.ObtenerNombreAmigableColumna(c),
                     numerica = resultado.Filas
-                        .Select(f => f.ContainsKey(c) ? f[c] : null)
+                        .Select(f => f.TryGetValue(c, out object value) ? value : null)
                         .Where(v => v != null && v != DBNull.Value)
                         .Select(v => v is decimal || v is double || v is float)
                         .FirstOrDefault()
@@ -134,7 +135,7 @@ namespace bufinscustomers.Controllers
                     columnas = columnasAmigables,
                     totalRegistros = resultado.TotalRegistros,
                     resultadosTruncados = resultado.ResultadosTruncados
-                }, JsonRequestBehavior.AllowGet);
+                });
 
                 jsonResult.MaxJsonLength = int.MaxValue;
                 return jsonResult;
@@ -182,7 +183,7 @@ namespace bufinscustomers.Controllers
                 }
 
                 var idEmpresaConsulta = filtros.IdEmpresa ?? idEmpresaUsuario;
-                var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaConsulta);
+                var resultado = service.ConsultarDatos(filtros, esAdmin, idEmpresaConsulta);
 
                 if (resultado.TotalRegistros == 0)
                 {
@@ -196,7 +197,7 @@ namespace bufinscustomers.Controllers
             catch (Exception ex)
             {
                 AppLogger.Error(ex, "InformeModelosController.ExportarExcel");
-                TempData["ErrorMessage"] = $"Error al exportar a Excel: {ex.Message}";
+                TempData["ErrorMessage"] = $"Error al exportar a Excel: {MensajeError(ex)}";
                 return RedirectToAction("Index");
             }
         }
@@ -233,7 +234,7 @@ namespace bufinscustomers.Controllers
                 }
 
                 var idEmpresaConsulta = filtros.IdEmpresa ?? usuario.IdEmpresa;
-                var resultado = _service.ConsultarDatos(filtros, esAdmin, idEmpresaConsulta);
+                var resultado = service.ConsultarDatos(filtros, esAdmin, idEmpresaConsulta);
                 if (resultado.TotalRegistros == 0)
                     return Json(new { exito = false, mensaje = R("InformeModelos_Correo_SinDatos") });
 
@@ -243,10 +244,10 @@ namespace bufinscustomers.Controllers
                 var adjuntos = InformeCorreoHelper.Adjuntos(nombreArchivo, bytes, null);
 
                 bool esIngles = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "en";
-                var tabla = _service.ObtenerTablasModelos().FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla);
+                var tabla = service.ObtenerTablasModelos().FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla);
                 string nombreTabla = tabla?.NombreAmigable ?? filtros.NombreTabla;
                 string empresa = idEmpresaConsulta.HasValue
-                    ? (_service.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresaConsulta.Value)?.Nombre ?? "")
+                    ? (service.ObtenerEmpresas().FirstOrDefault(e => e.Id == idEmpresaConsulta.Value)?.Nombre ?? "")
                     : R("Common_ExpCorreo_TodasEmpresas");
 
                 var contexto = new List<(string etiqueta, string valor)>
@@ -258,11 +259,11 @@ namespace bufinscustomers.Controllers
                 if (!string.IsNullOrWhiteSpace(filtros.Variable)) contexto.Add((R("Common_ExpCorreo_Variable"), filtros.Variable));
 
                 string quienEnvia = ((usuario.Nombre ?? "") + " " + (usuario.Apellidos ?? "")).Trim();
-                new EmailService().EnviarInforme(string.Join(", ", lista), R("InformeModelos_PageTitle"), empresa, false, contexto, null,
+                emailService.EnviarInforme(string.Join(", ", lista), R("InformeModelos_PageTitle"), empresa, false, contexto, null,
                     null, null, null, mensaje, quienEnvia, adjuntos, esIngles, ExcelLogoHelper.Png(idEmpresaConsulta),
                     ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA));
 
-                new AuditoriaService().RegistrarCambio(
+                auditoriaService.RegistrarCambio(
                     AuditoriaTipo.Informes, AuditoriaAccion.Enviar, "InformeModelos", (idEmpresaConsulta ?? 0).ToString(),
                     $"Informe de modelos enviado por correo a {string.Join(", ", lista)}: '{empresa}' — {nombreTabla} ({resultado.TotalRegistros} registros).",
                     null,
@@ -283,7 +284,7 @@ namespace bufinscustomers.Controllers
         {
         using (var package = new XLWorkbook())
         {
-            var tablas = _service.ObtenerTablasModelos();
+            var tablas = service.ObtenerTablasModelos();
             var tablaSeleccionada = tablas.FirstOrDefault(t => t.NombreTabla == filtros.NombreTabla);
             string nombreHoja = tablaSeleccionada?.NombreAmigable ?? filtros.NombreTabla;
 
@@ -298,7 +299,7 @@ namespace bufinscustomers.Controllers
             int o = logo != null ? ExcelLogoHelper.FilasBloque : 0;
             if (logo != null)
             {
-                string nombreEmpresaXls = _service.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa.Value)?.Nombre ?? "";
+                string nombreEmpresaXls = service.ObtenerEmpresas().FirstOrDefault(e => e.Id == filtros.IdEmpresa.Value)?.Nombre ?? "";
                 ExcelLogoHelper.EscribirTitulo(worksheet, R("InformeModelos_PageTitle") + " — " + nombreEmpresaXls,
                     nombreHoja + " · " + DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
             }
@@ -308,7 +309,7 @@ namespace bufinscustomers.Controllers
             foreach (var nombreColumna in resultado.Columnas)
             {
                 var cell = worksheet.Cell(1 + o, col);
-                cell.Value = _service.ObtenerNombreAmigableColumna(nombreColumna);
+                cell.Value = service.ObtenerNombreAmigableColumna(nombreColumna);
 
                 cell.Style.Font.Bold = true;
                 cell.Style.Fill.BackgroundColor = ExcelTemaHelper.Principal(tema);
@@ -327,7 +328,7 @@ namespace bufinscustomers.Controllers
                 foreach (var nombreColumna in resultado.Columnas)
                 {
                     var cell = worksheet.Cell(fila, col);
-                    var valor = registro.ContainsKey(nombreColumna) ? registro[nombreColumna] : null;
+                    var valor = registro.TryGetValue(nombreColumna, out object value) ? value : null;
 
                     if (valor != null)
                     {

@@ -1,5 +1,4 @@
-﻿using bufinscustomers.Helpers;
-using bufinscustomers.Models;
+﻿using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
 using System;
@@ -7,13 +6,11 @@ namespace bufinscustomers.Controllers
 {
     [ValidarSesion]
     [SoloSuperAdmin]
-    public class GestorCategoriasController : BaseController
+    public class GestorCategoriasController(MenuEstructuraService svc) : BaseController
     {
-        private readonly MenuEstructuraService _svc = new MenuEstructuraService();
-
         public ActionResult Index()
         {
-            return View("~/Views/Configuracion/GestorCategorias.cshtml", _svc.ObtenerCategorias());
+            return View("~/Views/Configuracion/GestorCategorias.cshtml", svc.ObtenerCategorias());
         }
 
         [HttpPost]
@@ -27,11 +24,11 @@ namespace bufinscustomers.Controllers
                     SetErrorMessage("El nombre de la categoría es obligatorio.");
                     return RedirectToAction("Index");
                 }
-                bool ok = _svc.CrearCategoria(model);
+                bool ok = svc.CrearCategoria(model);
                 if (ok) SetSuccessMessage("Categoría '" + model.Nombre + "' creada correctamente.");
                 else    SetErrorMessage("No se pudo crear la categoría.");
             }
-            catch (Exception ex) { SetErrorMessage("Error: " + ex.Message); }
+            catch (Exception ex) { SetErrorMessage("Error: " + MensajeError(ex)); }
 
             return RedirectToAction("Index");
         }
@@ -47,11 +44,11 @@ namespace bufinscustomers.Controllers
                     SetErrorMessage("El nombre de la categoría es obligatorio.");
                     return RedirectToAction("Index");
                 }
-                bool ok = _svc.EditarCategoria(model);
+                bool ok = svc.EditarCategoria(model);
                 if (ok) SetSuccessMessage("Categoría '" + model.Nombre + "' actualizada correctamente.");
                 else    SetErrorMessage("No se pudo actualizar la categoría.");
             }
-            catch (Exception ex) { SetErrorMessage("Error: " + ex.Message); }
+            catch (Exception ex) { SetErrorMessage("Error: " + MensajeError(ex)); }
 
             return RedirectToAction("Index");
         }
@@ -62,11 +59,11 @@ namespace bufinscustomers.Controllers
         {
             try
             {
-                bool ok = _svc.EliminarCategoria(id);
+                bool ok = svc.EliminarCategoria(id);
                 if (ok) SetSuccessMessage("Categoría eliminada correctamente.");
                 else    SetErrorMessage("No se pudo eliminar la categoría.");
             }
-            catch (Exception ex) { SetErrorMessage("Error: " + ex.Message); }
+            catch (Exception ex) { SetErrorMessage("Error: " + MensajeError(ex)); }
 
             return RedirectToAction("Index");
         }

@@ -2,7 +2,6 @@ using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
 using System.Linq;
 
 namespace bufinscustomers.Services
@@ -506,7 +505,7 @@ namespace bufinscustomers.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error al consultar datos: {ex.Message}");
-                throw new Exception($"Error al consultar datos de la tabla {filtros.NombreTabla}: {ex.Message}", ex);
+                throw new Exception($"Error al consultar datos de la tabla {filtros.NombreTabla}", ex);
             }
 
             return resultado;
@@ -590,9 +589,9 @@ namespace bufinscustomers.Services
             };
 
             // Si encuentra el nombre en el diccionario, retornarlo
-            if (mapeoColumnas.ContainsKey(nombreColumna))
+            if (mapeoColumnas.TryGetValue(nombreColumna, out string value))
             {
-                return mapeoColumnas[nombreColumna];
+                return value;
             }
 
             // Si no está en el diccionario, convertir PascalCase a nombre con espacios

@@ -1,7 +1,6 @@
 using bufinscustomers.Helpers;
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 
 namespace bufinscustomers.Services
 {
@@ -50,27 +49,19 @@ namespace bufinscustomers.Services
             var lista = new List<UsoUsuarioFila>();
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(@"
+                Bd.Leer(CadenaConexion, @"
                     SELECT NombreUsuario, COUNT(*) AS Consultas, SUM(CAST(ISNULL(TokensTotal, 0) AS BIGINT)) AS Tokens
                     FROM AuditoriaAnalisisIA
                     WHERE IdEmpresa = @IdEmpresa AND FechaPregunta >= @Desde AND FechaPregunta < @Hasta
                     GROUP BY IdUsuario, NombreUsuario
-                    ORDER BY Tokens DESC", cn))
-                {
-                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                    cmd.Parameters.AddWithValue("@Desde", desde.Date);
-                    cmd.Parameters.AddWithValue("@Hasta", hasta.Date.AddDays(1));
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read())
-                            lista.Add(new UsoUsuarioFila
-                            {
-                                Usuario = r["NombreUsuario"] as string,
-                                Consultas = Convert.ToInt32(r["Consultas"]),
-                                Tokens = Convert.ToInt64(r["Tokens"])
-                            });
-                }
+                    ORDER BY Tokens DESC",
+                    new { IdEmpresa = idEmpresa, Desde = desde.Date, Hasta = hasta.Date.AddDays(1) },
+                    r => lista.Add(new UsoUsuarioFila
+                        {
+                            Usuario = r["NombreUsuario"] as string,
+                            Consultas = Convert.ToInt32(r["Consultas"]),
+                            Tokens = Convert.ToInt64(r["Tokens"])
+                        }));
             }
             catch (Exception ex) { AppLogger.Error(ex, "IAUsoReporteService.PorUsuario"); }
             return lista;
@@ -82,30 +73,22 @@ namespace bufinscustomers.Services
             var lista = new List<UsoFuncionFila>();
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(@"
+                Bd.Leer(CadenaConexion, @"
                     SELECT Funcion, COUNT(*) AS Consultas,
                            SUM(CAST(TokensPrompt + TokensRespuesta AS BIGINT)) AS Tokens,
                            SUM(ISNULL(CostoUSD, 0)) AS Costo
                     FROM dbo.IAUsoLog
                     WHERE IdEmpresa = @IdEmpresa AND Exitoso = 1 AND Fecha >= @Desde AND Fecha < @Hasta
                     GROUP BY Funcion
-                    ORDER BY Tokens DESC", cn))
-                {
-                    cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                    cmd.Parameters.AddWithValue("@Desde", desde.Date);
-                    cmd.Parameters.AddWithValue("@Hasta", hasta.Date.AddDays(1));
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read())
-                            lista.Add(new UsoFuncionFila
-                            {
-                                Funcion = r["Funcion"] as string,
-                                Consultas = Convert.ToInt32(r["Consultas"]),
-                                Tokens = Convert.ToInt64(r["Tokens"]),
-                                Costo = Convert.ToDecimal(r["Costo"])
-                            });
-                }
+                    ORDER BY Tokens DESC",
+                    new { IdEmpresa = idEmpresa, Desde = desde.Date, Hasta = hasta.Date.AddDays(1) },
+                    r => lista.Add(new UsoFuncionFila
+                        {
+                            Funcion = r["Funcion"] as string,
+                            Consultas = Convert.ToInt32(r["Consultas"]),
+                            Tokens = Convert.ToInt64(r["Tokens"]),
+                            Costo = Convert.ToDecimal(r["Costo"])
+                        }));
             }
             catch (SqlException ex) when (ex.Number == 208) { /* IAUsoLog aún no existe (Sql/013) */ }
             catch (Exception ex) { AppLogger.Error(ex, "IAUsoReporteService.PorFuncion"); }
@@ -129,38 +112,30 @@ namespace bufinscustomers.Services
         private List<UsoDetalleFila> LeerDetalle(int idEmpresa, DateTime desde, DateTime hasta, bool conFase2)
         {
             var lista = new List<UsoDetalleFila>();
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand($@"
+            Bd.Leer(CadenaConexion, $@"
                 SELECT TOP (20000) l.Fecha, LTRIM(RTRIM(ISNULL(u.Nombre, '') + ' ' + ISNULL(u.Apellidos, ''))) AS Usuario,
                        l.Funcion, l.Modelo, l.TokensPrompt, l.TokensRespuesta, l.CostoUSD, l.DesdeCache, l.Exitoso, l.Error
                        {(conFase2 ? ", l.Sobreconsumo, l.Degradado" : "")}
                 FROM dbo.IAUsoLog l
                 LEFT JOIN Usuarios u ON u.Id = l.IdUsuario
                 WHERE l.IdEmpresa = @IdEmpresa AND l.Fecha >= @Desde AND l.Fecha < @Hasta
-                ORDER BY l.Fecha DESC", cn))
-            {
-                cmd.Parameters.AddWithValue("@IdEmpresa", idEmpresa);
-                cmd.Parameters.AddWithValue("@Desde", desde.Date);
-                cmd.Parameters.AddWithValue("@Hasta", hasta.Date.AddDays(1));
-                cn.Open();
-                using (var r = cmd.ExecuteReader())
-                    while (r.Read())
-                        lista.Add(new UsoDetalleFila
-                        {
-                            Fecha = Convert.ToDateTime(r["Fecha"]),
-                            Usuario = r["Usuario"] as string,
-                            Funcion = r["Funcion"] as string,
-                            Modelo = r["Modelo"] as string,
-                            TokensPrompt = Convert.ToInt32(r["TokensPrompt"]),
-                            TokensRespuesta = Convert.ToInt32(r["TokensRespuesta"]),
-                            Costo = r["CostoUSD"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(r["CostoUSD"]),
-                            DesdeCache = Convert.ToBoolean(r["DesdeCache"]),
-                            Exitoso = Convert.ToBoolean(r["Exitoso"]),
-                            Error = r["Error"] as string,
-                            Sobreconsumo = conFase2 && Convert.ToBoolean(r["Sobreconsumo"]),
-                            Degradado = conFase2 && Convert.ToBoolean(r["Degradado"])
-                        });
-            }
+                ORDER BY l.Fecha DESC",
+                new { IdEmpresa = idEmpresa, Desde = desde.Date, Hasta = hasta.Date.AddDays(1) },
+                r => lista.Add(new UsoDetalleFila
+                    {
+                        Fecha = Convert.ToDateTime(r["Fecha"]),
+                        Usuario = r["Usuario"] as string,
+                        Funcion = r["Funcion"] as string,
+                        Modelo = r["Modelo"] as string,
+                        TokensPrompt = Convert.ToInt32(r["TokensPrompt"]),
+                        TokensRespuesta = Convert.ToInt32(r["TokensRespuesta"]),
+                        Costo = r["CostoUSD"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(r["CostoUSD"]),
+                        DesdeCache = Convert.ToBoolean(r["DesdeCache"]),
+                        Exitoso = Convert.ToBoolean(r["Exitoso"]),
+                        Error = r["Error"] as string,
+                        Sobreconsumo = conFase2 && Convert.ToBoolean(r["Sobreconsumo"]),
+                        Degradado = conFase2 && Convert.ToBoolean(r["Degradado"])
+                    }));
             return lista;
         }
 

@@ -1,6 +1,6 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
@@ -58,7 +58,7 @@ namespace bufinscustomers.Helpers
         /// Valida <paramref name="clave"/>. <paramref name="errorKey"/> queda con la clave de
         /// recurso del primer incumplimiento, o <c>null</c> si la clave cumple la política.
         /// </summary>
-        public static bool Validar(string clave, string usuario, out string errorKey, bool comprobarFiltracion = true)
+        public static bool Validar(string? clave, string? usuario, out string? errorKey, bool comprobarFiltracion = true)
         {
             if (string.IsNullOrEmpty(clave) || clave.Length < LongitudMinima) { errorKey = "Pwd_ErrorLongitud"; return false; }
             if (!_minuscula.IsMatch(clave)) { errorKey = "Pwd_ErrorMinuscula"; return false; }
@@ -93,7 +93,7 @@ namespace bufinscustomers.Helpers
                 string prefijo = sha1.Substring(0, 5);
                 string sufijo  = sha1.Substring(5);
 
-                string cuerpo = Task.Run(async () =>
+                string? cuerpo = Task.Run(async () =>
                 {
                     using (var resp = await _http.Value
                         .GetAsync("https://api.pwnedpasswords.com/range/" + prefijo)

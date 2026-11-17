@@ -1,9 +1,7 @@
 using bufinscustomers.Models;
 using bufinscustomers.Services;
-using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
-using System.Web;
 namespace bufinscustomers.Helpers
 {
     public static class UsuarioSesionHelper

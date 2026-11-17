@@ -1,6 +1,5 @@
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
-using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -58,14 +57,8 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(
-                    "SELECT CASE WHEN OBJECT_ID('dbo.Integraciones','U') IS NOT NULL AND OBJECT_ID('dbo.IntegracionesIdempotencia','U') IS NOT NULL " +
-                    "AND OBJECT_ID('dbo.CarguesLotesHojas','U') IS NOT NULL AND COL_LENGTH('dbo.CarguesLotes','Origen') IS NOT NULL AND COL_LENGTH('dbo.CarguesLotes','IdIntegracion') IS NOT NULL THEN 1 ELSE 0 END", cn))
-                {
-                    cn.Open();
-                    return Convert.ToInt32(cmd.ExecuteScalar()) == 1;
-                }
+                return Bd.Escalar<int>(CadenaConexion, "SELECT CASE WHEN OBJECT_ID('dbo.Integraciones','U') IS NOT NULL AND OBJECT_ID('dbo.IntegracionesIdempotencia','U') IS NOT NULL " +
+                    "AND OBJECT_ID('dbo.CarguesLotesHojas','U') IS NOT NULL AND COL_LENGTH('dbo.CarguesLotes','Origen') IS NOT NULL AND COL_LENGTH('dbo.CarguesLotes','IdIntegracion') IS NOT NULL THEN 1 ELSE 0 END") == 1;
             }
             catch { return false; }
         }
@@ -78,12 +71,7 @@ namespace bufinscustomers.Services
             if (DateTime.Now < _sandboxHasta) return _sandboxDisponible;
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("SELECT CASE WHEN COL_LENGTH('dbo.Integraciones','Sandbox') IS NOT NULL THEN 1 ELSE 0 END", cn))
-                {
-                    cn.Open();
-                    _sandboxDisponible = Convert.ToInt32(cmd.ExecuteScalar()) == 1;
-                }
+                _sandboxDisponible = Bd.Escalar<int>(CadenaConexion, "SELECT CASE WHEN COL_LENGTH('dbo.Integraciones','Sandbox') IS NOT NULL THEN 1 ELSE 0 END") == 1;
             }
             catch { _sandboxDisponible = false; }
             _sandboxHasta = DateTime.Now.AddSeconds(60);
@@ -171,14 +159,8 @@ namespace bufinscustomers.Services
         /// <summary>Revoca la credencial de forma definitiva (no se reactiva: se crea otra).</summary>
         public bool Revocar(int idIntegracion)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(
-                "UPDATE dbo.Integraciones SET Activo = 0, FechaRevocada = GETDATE() WHERE Id = @Id AND FechaRevocada IS NULL", cn))
-            {
-                cmd.Parameters.AddWithValue("@Id", idIntegracion);
-                cn.Open();
-                return cmd.ExecuteNonQuery() == 1;
-            }
+            return Bd.Ejecutar(CadenaConexion, "UPDATE dbo.Integraciones SET Activo = 0, FechaRevocada = GETDATE() WHERE Id = @Id AND FechaRevocada IS NULL",
+                new { Id = idIntegracion }) == 1;
         }
 
         public bool Actualizar(int idIntegracion, string nombre, bool activo, bool permiteConfirmar, string ipPermitidas, out string error)
@@ -187,18 +169,8 @@ namespace bufinscustomers.Services
             if (!TryNormalizarIps(ipPermitidas, out string ips, out error)) return false;
             nombre = (nombre ?? "").Trim();
             if (nombre.Length == 0 || nombre.Length > 100) { error = "nombre"; return false; }
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(
-                "UPDATE dbo.Integraciones SET Nombre = @Nombre, Activo = @Activo, PermiteConfirmar = @Pc, IpPermitidas = @Ips WHERE Id = @Id AND FechaRevocada IS NULL", cn))
-            {
-                cmd.Parameters.AddWithValue("@Nombre", nombre);
-                cmd.Parameters.AddWithValue("@Activo", activo);
-                cmd.Parameters.AddWithValue("@Pc", permiteConfirmar);
-                cmd.Parameters.AddWithValue("@Ips", (object)ips ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@Id", idIntegracion);
-                cn.Open();
-                return cmd.ExecuteNonQuery() == 1;
-            }
+            return Bd.Ejecutar(CadenaConexion, "UPDATE dbo.Integraciones SET Nombre = @Nombre, Activo = @Activo, PermiteConfirmar = @Pc, IpPermitidas = @Ips WHERE Id = @Id AND FechaRevocada IS NULL",
+                new { Nombre = nombre, Activo = activo, Pc = permiteConfirmar, Ips = ips, Id = idIntegracion }) == 1;
         }
 
         // ── Lectura ────────────────────────────────────────────────────────────────────
@@ -218,13 +190,7 @@ namespace bufinscustomers.Services
             var lista = new List<Integracion>();
             var filtro = idsEmpresa == null ? "" : " WHERE i.IdEmpresa IN (" + string.Join(",", System.Linq.Enumerable.Select(idsEmpresa, x => x.ToString())) + ")";
             if (idsEmpresa != null && filtro.EndsWith("()")) return lista;
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(SelectBase + filtro + " ORDER BY i.FechaCreacion DESC", cn))
-            {
-                cn.Open();
-                using (var r = cmd.ExecuteReader())
-                    while (r.Read()) lista.Add(Mapear(r));
-            }
+            Bd.Leer(CadenaConexion, SelectBase + filtro + " ORDER BY i.FechaCreacion DESC", r => lista.Add(Mapear(r)));
             return lista;
         }
 
@@ -232,15 +198,9 @@ namespace bufinscustomers.Services
         public List<(int Id, string Nombre, string Usuario)> ListarUsuariosElegibles(int idEmpresa)
         {
             var lista = new List<(int, string, string)>();
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand(
-                "SELECT Id, LTRIM(RTRIM(ISNULL(Nombre,'') + ' ' + ISNULL(Apellidos,''))) AS Nombre, Usuario FROM dbo.Usuarios WHERE IdEmpresa = @E AND ISNULL(Admin,0) <> 2 ORDER BY CASE WHEN ISNULL(Admin,0) = 1 THEN 0 ELSE 1 END, Nombre", cn))
-            {
-                cmd.Parameters.AddWithValue("@E", idEmpresa);
-                cn.Open();
-                using (var r = cmd.ExecuteReader())
-                    while (r.Read()) lista.Add((Convert.ToInt32(r["Id"]), r["Nombre"] as string, r["Usuario"] as string));
-            }
+            Bd.Leer(CadenaConexion, "SELECT Id, LTRIM(RTRIM(ISNULL(Nombre,'') + ' ' + ISNULL(Apellidos,''))) AS Nombre, Usuario FROM dbo.Usuarios WHERE IdEmpresa = @E AND ISNULL(Admin,0) <> 2 ORDER BY CASE WHEN ISNULL(Admin,0) = 1 THEN 0 ELSE 1 END, Nombre",
+                new { E = idEmpresa },
+                r => lista.Add((Convert.ToInt32(r["Id"]), r["Nombre"] as string, r["Usuario"] as string)));
             return lista;
         }
 
@@ -250,13 +210,7 @@ namespace bufinscustomers.Services
             var ids = new List<int>();
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("SELECT Id FROM dbo.Usuarios WHERE Admin = 2", cn))
-                {
-                    cn.Open();
-                    using (var r = cmd.ExecuteReader())
-                        while (r.Read()) ids.Add(Convert.ToInt32(r["Id"]));
-                }
+                Bd.Leer(CadenaConexion, "SELECT Id FROM dbo.Usuarios WHERE Admin = 2", r => ids.Add(Convert.ToInt32(r["Id"])));
             }
             catch (Exception ex) { AppLogger.Error(ex, "IntegracionesService.ObtenerIdsSuperAdmin"); }
             return ids;
@@ -311,16 +265,10 @@ namespace bufinscustomers.Services
 
             byte[] hashGuardado = null;
             Integracion integ = null;
-            using (var cn = new SqlConnection(CadenaConexion))
-            {
-                cn.Open();
-                using (var cmd = new SqlCommand("SELECT Id, HashClave FROM dbo.Integraciones WHERE Prefijo = @P", cn))
-                {
-                    cmd.Parameters.AddWithValue("@P", prefijo);
-                    using (var r = cmd.ExecuteReader())
-                        if (r.Read()) { integ = new Integracion { Id = Convert.ToInt32(r["Id"]) }; hashGuardado = (byte[])r["HashClave"]; }
-                }
-            }
+            Bd.LeerPrimera(CadenaConexion, "SELECT Id, HashClave FROM dbo.Integraciones WHERE Prefijo = @P",
+                new { P = prefijo },
+                r =>
+                { integ = new Integracion { Id = Convert.ToInt32(r["Id"]) }; hashGuardado = (byte[])r["HashClave"]; });
 
             var hashPresentado = SHA256.HashData(Encoding.UTF8.GetBytes(claveCompleta));
             bool coincide = FixedTimeEquals(hashGuardado ?? HashSenuelo, hashPresentado) && hashGuardado != null;
@@ -343,14 +291,8 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand("UPDATE dbo.Integraciones SET FechaUltimoUso = GETDATE(), IpUltimoUso = @Ip WHERE Id = @Id", cn))
-                {
-                    cmd.Parameters.AddWithValue("@Ip", (object)Recorte(ip, 45) ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Id", idIntegracion);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                Bd.Ejecutar(CadenaConexion, "UPDATE dbo.Integraciones SET FechaUltimoUso = GETDATE(), IpUltimoUso = @Ip WHERE Id = @Id",
+                    new { Ip = (object)Recorte(ip, 45) ?? DBNull.Value, Id = idIntegracion });
             }
             catch (Exception ex) { Helpers.AppLogger.Warn("IntegracionesService.RegistrarUso: " + ex.Message); }
         }
@@ -363,28 +305,15 @@ namespace bufinscustomers.Services
         /// </summary>
         public void MarcarLoteApi(long idLote, int idIntegracion, bool sandbox = false)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand("UPDATE dbo.CarguesLotes SET Origen = @O, IdIntegracion = @I WHERE IdLote = @L", cn))
-            {
-                cmd.Parameters.AddWithValue("@O", sandbox ? "Sandbox" : "API");
-                cmd.Parameters.AddWithValue("@I", idIntegracion);
-                cmd.Parameters.AddWithValue("@L", idLote);
-                cn.Open();
-                cmd.ExecuteNonQuery();
-            }
+            Bd.Ejecutar(CadenaConexion, "UPDATE dbo.CarguesLotes SET Origen = @O, IdIntegracion = @I WHERE IdLote = @L",
+                new { O = sandbox ? "Sandbox" : "API", I = idIntegracion, L = idLote });
         }
 
         /// <summary>True si el lote lo creó esta integración (la API solo ve y toca sus propios lotes).</summary>
         public bool LoteEsDeIntegracion(long idLote, int idIntegracion)
         {
-            using (var cn = new SqlConnection(CadenaConexion))
-            using (var cmd = new SqlCommand("SELECT COUNT(1) FROM dbo.CarguesLotes WHERE IdLote = @L AND IdIntegracion = @I", cn))
-            {
-                cmd.Parameters.AddWithValue("@L", idLote);
-                cmd.Parameters.AddWithValue("@I", idIntegracion);
-                cn.Open();
-                return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
-            }
+            return Bd.Escalar<int>(CadenaConexion, "SELECT COUNT(1) FROM dbo.CarguesLotes WHERE IdLote = @L AND IdIntegracion = @I",
+                new { L = idLote, I = idIntegracion }) > 0;
         }
 
         public long? BuscarIdempotencia(int idIntegracion, string clave)
@@ -404,18 +333,11 @@ namespace bufinscustomers.Services
         {
             try
             {
-                using (var cn = new SqlConnection(CadenaConexion))
-                using (var cmd = new SqlCommand(@"
+                Bd.Ejecutar(CadenaConexion, @"
                     DELETE FROM dbo.IntegracionesIdempotencia WHERE Fecha < DATEADD(DAY, -7, GETDATE());
                     IF NOT EXISTS (SELECT 1 FROM dbo.IntegracionesIdempotencia WHERE IdIntegracion = @I AND Clave = @C)
-                        INSERT INTO dbo.IntegracionesIdempotencia (IdIntegracion, Clave, IdLote) VALUES (@I, @C, @L);", cn))
-                {
-                    cmd.Parameters.AddWithValue("@I", idIntegracion);
-                    cmd.Parameters.AddWithValue("@C", clave);
-                    cmd.Parameters.AddWithValue("@L", idLote);
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                        INSERT INTO dbo.IntegracionesIdempotencia (IdIntegracion, Clave, IdLote) VALUES (@I, @C, @L);",
+                    new { I = idIntegracion, C = clave, L = idLote });
             }
             catch (Exception ex) { Helpers.AppLogger.Warn("IntegracionesService.GuardarIdempotencia: " + ex.Message); }
         }
