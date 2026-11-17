@@ -91,6 +91,9 @@
     </div>
 
     <div id="gmResultado" style="display:none;">
+        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta). Va arriba de la tarjeta de la empresa. *@
+        <div id="gmSecBarra"></div>
+
 
         <div class="lt-card" id="gmPanelResultado">
             <div class="pyg2-letterhead">
@@ -126,9 +129,6 @@
             @Html.AntiForgeryToken()
             <div id="gmExpCampos"></div>
         </form>
-
-        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta) *@
-        <div id="gmSecBarra"></div>
 
         @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
         {

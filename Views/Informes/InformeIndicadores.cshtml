@@ -164,6 +164,9 @@
     </div>
 
     <div id="indResultado" style="display:none;">
+        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta). Va arriba de la tarjeta de la empresa. *@
+        <div id="indSecBarra"></div>
+
 
         @* 1. Encabezado: marca + empresa + chips de contexto + exportaciones *@
         <div class="lt-card" id="indPanelResultado">
@@ -202,9 +205,6 @@
             @Html.AntiForgeryToken()
             <div id="indExpCampos"></div>@* los llena el botón Excel con los filtros del reporte consultado *@
         </form>
-
-        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta) *@
-        <div id="indSecBarra"></div>
 
         @* 2. Resumen del semáforo + los que requieren atención *@
         <div class="pyg2-section sec-bloque-cab" id="indSecSemCab"><div class="pyg2-section-title"><span class="t">@Resources.Strings.Sec_IndSemaforo</span><span class="line"></span></div></div>

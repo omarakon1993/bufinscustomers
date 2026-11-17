@@ -202,6 +202,9 @@
     </div>
 
     <div id="hpResultado" style="display:none;">
+        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta). Va arriba de la tarjeta de la empresa. *@
+        <div id="hpSecBarra"></div>
+
 
         @* 1. Encabezado *@
         <div class="lt-card" id="hpPanelResultado">
@@ -236,9 +239,6 @@
             @Html.AntiForgeryToken()
             <div id="hpExpCampos"></div>@* lo llena el botón Excel con los filtros del reporte consultado *@
         </form>
-
-        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta) *@
-        <div id="hpSecBarra"></div>
 
         @* 2. KPIs *@
         <div class="pyg2-section" id="hpSecKpis">

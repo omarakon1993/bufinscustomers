@@ -171,6 +171,9 @@
     </div>
 
     <div id="pygResultado" style="display:none;">
+        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta). Va arriba de la tarjeta de la empresa. *@
+        <div id="pygSecBarra"></div>
+
 
         @* 1. Encabezado: marca + empresa + chips de contexto + unidad/exportaciones *@
         <div class="lt-card" id="pygPanelResultado">
@@ -213,9 +216,6 @@
             @Html.AntiForgeryToken()
             <div id="pygExpCampos"></div>@* los llena el botón Excel con los filtros del reporte consultado *@
         </form>
-
-        @* Barra de secciones: el usuario elige qué partes del informe ver (y qué se exporta) *@
-        <div id="pygSecBarra"></div>
 
         @* 2. KPIs *@
         <div class="pyg2-section" id="pygSecKpis">

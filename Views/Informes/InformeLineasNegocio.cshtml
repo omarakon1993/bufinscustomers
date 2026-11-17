@@ -124,6 +124,9 @@
     </div>
 
     <div id="lnResultado" class="ln-todo" style="display:none;">
+        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta). Va arriba de la tarjeta de la empresa. *@
+        <div id="lnSecBarra"></div>
+
 
         <div class="lt-card" id="lnPanelResultado">
             <div class="pyg2-letterhead">
@@ -160,9 +163,6 @@
             @Html.AntiForgeryToken()
             <div id="lnExpCampos"></div>
         </form>
-
-        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta) *@
-        <div id="lnSecBarra"></div>
 
         <div class="pyg2-section" id="lnSecKpis">
             <div class="pyg2-section-title"><span class="t">@Resources.Strings.LN_IndicadoresClave</span><span class="line"></span></div>

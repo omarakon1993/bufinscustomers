@@ -159,6 +159,9 @@
     </div>
 
     <div id="tesResultado" style="display:none;">
+        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta). Va arriba de la tarjeta de la empresa. *@
+        <div id="tesSecBarra"></div>
+
 
         @* 1. Encabezado: marca + empresa + chips de contexto + unidad/exportaciones *@
         <div class="lt-card" id="tesPanelResultado">
@@ -201,9 +204,6 @@
             @Html.AntiForgeryToken()
             <div id="tesExpCampos"></div>@* los llena el botón Excel con los filtros del reporte consultado *@
         </form>
-
-        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta) *@
-        <div id="tesSecBarra"></div>
 
         @* 2. Indicadores clave (con el estado de la caja) *@
         <div class="pyg2-section" id="tesSecKpis">

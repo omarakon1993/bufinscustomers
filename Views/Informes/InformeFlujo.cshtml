@@ -186,6 +186,9 @@
     </div>
 
     <div id="flResultado" style="display:none;">
+        @* Barra de secciones: cada parte del informe se colapsa/expande (y lo expandido es lo que se exporta). Va arriba de la tarjeta de la empresa. *@
+        <div id="flSecBarra"></div>
+
 
         @* 1. Encabezado: marca + empresa + chips de contexto + unidad/exportaciones *@
         <div class="lt-card" id="flPanelResultado">
@@ -228,9 +231,6 @@
             @Html.AntiForgeryToken()
             <div id="flExpCampos"></div>@* los llena el botón Excel con los filtros del reporte consultado *@
         </form>
-
-        @* Barra de secciones: el usuario elige qué partes del informe ver (y qué se exporta) *@
-        <div id="flSecBarra"></div>
 
         @* 2. Estado + KPIs *@
         <div id="flSecKpis">
