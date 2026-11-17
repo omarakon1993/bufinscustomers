@@ -96,6 +96,12 @@ namespace bufinscustomers.Helpers
                 Descripcion = "El cierre del mes en un solo documento: de qué informe sale cada sección, cómo se lee y cómo se exporta.",
                 EsDeMenu = true, Menu = "Informes → Informe mensual de gerencia", Actualizado = new DateTime(2026, 10, 27) },
 
+            new DocumentoBiblioteca { Clave = "informe-comite", Ruta = Informes + "Informe_Comite.html", Categoria = "informes",
+                Titulo = "Informe para comité",
+                Descripcion = "El cierre del mes como documento para presentar, decidir y firmar: secciones, de dónde salen las cifras, cómo se lee y cómo se exporta.",
+                TituloEn = "Committee report", DescripcionEn = "The month-end close as a document to present, decide on and sign: sections, where the figures come from, how to read it and how to export it.", MenuEn = "Reports → Committee report",
+                EsDeMenu = true, Menu = "Informes → Informe para comité", Actualizado = new DateTime(2026, 11, 17) },
+
             new DocumentoBiblioteca { Clave = "cargues-auditoria", Ruta = Cargues + "Auditoria_Cargues_Blindaje.html", Categoria = "datos",
                 Titulo = "Historial de cargues y protección de los datos",
                 Descripcion = "Guía de uso: cómo Bufins protege los datos al cargar un Excel, cómo leer las pestañas Versiones y Registro y cómo deshacer un cargue.",

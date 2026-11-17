@@ -42,6 +42,7 @@ namespace bufinscustomers.Helpers
             new DocumentoInforme { Clave = "linea-tiempo", BibliotecaClave = "informe-linea-tiempo", Archivo = "Informes/Informe_LineaTiempo.html", Permiso = "", Titulo = "Línea de tiempo dinámica" },
             new DocumentoInforme { Clave = "modelos", BibliotecaClave = "informe-modelos", Archivo = "Informes/Informe_Modelos.html", Permiso = "", Titulo = "Informe de modelos" },
             new DocumentoInforme { Clave = "gerencia-mensual", BibliotecaClave = "informe-gerencia-mensual", Archivo = "Informes/Informe_GerenciaMensual.html", Permiso = "INFORMES_GERENCIA_MENSUAL", Titulo = "Informe mensual de gerencia" },
+            new DocumentoInforme { Clave = "comite", BibliotecaClave = "informe-comite", Archivo = "Informes/Informe_Comite.html", Permiso = "INFORMES_COMITE", Titulo = "Informe para comité" },
         };
 
         /// <summary>true si el usuario puede ver la documentación del informe: no está marcada como solo Super Admin en la biblioteca (o es Super Admin).</summary>

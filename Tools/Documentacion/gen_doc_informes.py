@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Genera la documentación de cliente (HTML de solo lectura, bilingüe) de los informes:
-PYG, Balance, Tesorería, Flujo de caja, Flujo de efectivo, Línea de tiempo e Informe de modelos.
+PYG, Balance, Tesorería, Flujo de caja, Flujo de efectivo, Línea de tiempo, Informe de modelos e Informe para comité.
 
 Uso:    python Tools/Documentacion/gen_doc_informes.py
 Salida: App_Data/Documentacion/Informes/Informe_<Nombre>.html     (español)
@@ -15,6 +15,7 @@ from doc_lib import *
 from doc_pyg_balance import doc_pyg, doc_balance
 from doc_tesoreria_flujos import doc_tesoreria, doc_flujo
 from doc_lt_modelos import doc_linea_tiempo, doc_modelos
+from doc_comite import doc_comite
 
 DOCUMENTOS = [
     ('Informe_PYG', doc_pyg),
@@ -24,6 +25,7 @@ DOCUMENTOS = [
     ('Informe_FlujoEfectivo', lambda L: doc_flujo(L, 'Efectivo')),
     ('Informe_LineaTiempo', doc_linea_tiempo),
     ('Informe_Modelos', doc_modelos),
+    ('Informe_Comite', doc_comite),
 ]
 
 for nombre, fn in DOCUMENTOS:

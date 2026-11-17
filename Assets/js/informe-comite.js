@@ -459,6 +459,7 @@
             pills: function () { return [$('#ejTituloEmpresa').text()].concat($('#ejPanelResultado .pyg2-chip').map(function () { return $(this).text(); }).get()); },
             textos: C.exp
         });
+        DocVisor.init({ boton: '#coDocBtn', url: C.docUrl });
         ExportMenu.init('ejExp', {
             acciones: { excel: exportarExcel, pdf: generarPdf, imagen: copiarImagen, correo: function () { if (S.reporte) correo.abrir(); } },
             textos: C.exp

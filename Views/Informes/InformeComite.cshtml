@@ -24,6 +24,7 @@
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-gerencia-mensual.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-ejecutivo.css")" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-secciones.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
@@ -38,6 +39,7 @@
             <i class="fas @icono powerbi-header-icon"></i>
             <h1 class="powerbi-header-title">@titulo</h1>
             @await Html.PartialAsync("_ModeloBufinsTag")
+            @await Html.PartialAsync("_DocumentacionCapsula", new bufinscustomers.Models.DocCapsulaVM { Id = "coDocBtn", Tooltip = Resources.Strings.CO_DocumentacionTooltip, Clave = "comite" })
         </div>
     </div>
 
@@ -167,6 +169,7 @@
 </div>
 
 @await Html.PartialAsync("_ExportCorreoModal", new bufinscustomers.Models.ExportCorreoVM())
+@await Html.PartialAsync("_DocumentacionVisor", Resources.Strings.CO_Doc_ModalTitulo)
 
 @section scripts {
 @await Html.PartialAsync("_SeccionesConfig")
@@ -178,10 +181,12 @@
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/comentarios-gestion.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
+<script src="~/Assets/js/doc-visor.js"></script>
 
 <script>
     window.EJ_CFG = {
         controlador: '@Html.Raw(J(ctrl))',
+        docUrl: '@Url.Action("Ver", "Documentacion", new { clave = "comite" })',
         urls: {
             meses: '@Url.Action("ObtenerMeses", ctrl)', reporte: '@Url.Action("ConsultarReporte", ctrl)', correo: '@Url.Action("EnviarPorCorreo", ctrl)'
         },
