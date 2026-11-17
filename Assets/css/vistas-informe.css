@@ -1,11 +1,21 @@
-/* Selector de vistas de una familia de informes (parcial _VistasInforme): franja destacada para que se note que el informe tiene varias vistas. */
-.vistas-informe { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 16px; padding: 10px 14px; background: var(--tm-soft, #F4F3FB); border: 1px solid #E4E1F0; border-left: 4px solid var(--tm-p, #6366F1); border-radius: 12px; }
-.vistas-informe-et { display: inline-flex; align-items: baseline; gap: 6px; margin-right: 6px; color: #16121F; }
-.vistas-informe-et i { margin-right: 2px; color: var(--tm-p, #6366F1); align-self: center; }
-.vistas-informe-et b { font-size: 12.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
-.vistas-informe-et small { font-size: 12px; font-weight: 600; color: #5B5570; }
-.vistas-informe-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid #D5D1E8; background: #fff; color: #3B3552; font-size: 13.5px; font-weight: 700; text-decoration: none; box-shadow: 0 1px 2px rgba(22, 18, 31, .06); transition: border-color .15s, color .15s, box-shadow .15s; }
-.vistas-informe-btn i { font-size: 13px; opacity: .8; }
-.vistas-informe-btn:hover { border-color: #6366F1; color: #583AFF; text-decoration: none; box-shadow: 0 2px 8px rgba(99, 102, 241, .18); }
-.vistas-informe-btn.on { background: linear-gradient(90deg, #6366F1 0%, #3B82F6 35%, #06B6D4 70%, #01E1D7 100%); border-color: transparent; color: #fff; cursor: default; box-shadow: 0 3px 10px rgba(99, 102, 241, .3); }
+/* Selector de vistas de una familia de informes (parcial _VistasInforme): franja compacta pero visible, con transicion suave al cambiar de vista. */
+.vistas-informe { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; padding: 6px 12px; background: var(--tm-soft, #F4F3FB); border: 1px solid #E4E1F0; border-left: 3px solid var(--tm-p, #6366F1); border-radius: 10px; }
+.vistas-informe-et { display: inline-flex; align-items: baseline; gap: 5px; margin-right: 4px; color: #16121F; }
+.vistas-informe-et i { margin-right: 1px; font-size: 12px; color: var(--tm-p, #6366F1); align-self: center; }
+.vistas-informe-et b { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.vistas-informe-et small { font-size: 11px; font-weight: 600; color: #5B5570; }
+.vistas-informe-btn { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; border: 1.5px solid #D5D1E8; background: #fff; color: #3B3552; font-size: 12.5px; font-weight: 700; text-decoration: none; box-shadow: 0 1px 2px rgba(22, 18, 31, .05); transition: background-color .35s ease, border-color .3s ease, color .3s ease, box-shadow .3s ease; }
+.vistas-informe-btn i { font-size: 11.5px; opacity: .8; transition: opacity .3s ease; }
+.vistas-informe-btn:hover { border-color: #6366F1; color: #583AFF; text-decoration: none; box-shadow: 0 2px 8px rgba(99, 102, 241, .16); }
+.vistas-informe-btn.on { background: linear-gradient(90deg, #6366F1 0%, #3B82F6 35%, #06B6D4 70%, #01E1D7 100%); border-color: transparent; color: #fff; cursor: default; box-shadow: 0 2px 8px rgba(99, 102, 241, .25); }
 .vistas-informe-btn.on i { opacity: 1; }
+
+/* Transicion entre vistas: el contenido se desvanece al salir y aparece suavemente al entrar (solo opacidad, sin mover nada). */
+@keyframes vista-entra { from { opacity: 0; } to { opacity: 1; } }
+.lt-app { animation: vista-entra .4s ease-out backwards; }
+html.vista-saliendo .lt-app { opacity: 0; transition: opacity .2s ease-in; }
+@media (prefers-reduced-motion: reduce) {
+    .lt-app { animation: none; }
+    html.vista-saliendo .lt-app { transition: none; }
+    .vistas-informe-btn, .vistas-informe-btn i { transition: none; }
+}
