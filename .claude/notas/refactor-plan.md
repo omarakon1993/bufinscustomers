@@ -56,5 +56,13 @@ Tamaño: Controllers 17,8k / Services 23,8k / Helpers 3,4k / Models 3,6k / Views
 - Prueba nueva `Tests/Bufins.Pruebas/InyeccionDependenciasTests.cs`: todo parámetro de constructor de todo controlador debe ser resoluble.
 - Balance de líneas: ≈ +30 netas (un constructor primario cuesta casi lo mismo que los campos que reemplaza); el beneficio es arquitectónico (dependencias explícitas y comprobables).
 
+## Fase 5 — dividir lo grande (HECHA 2026-11-16, sin comitear)
+Orden por riesgo; ninguna ruta, permiso ni lógica cambió (la herramienta verificó que el contenido de cada miembro movido es idéntico).
+1. `NombreMes` y `TieneAccesoEmpresa` (copias idénticas en 13 controladores) subieron a `BaseController` (`protected`).
+2. `DatosController` (1.448 líneas) → `partial`: `.cs` (plantillas y descargas, 241) + `.Modelos` (741) + `.Cargue` (253) + `.Hallazgos` (267). `AccesoController` (1.433) → `.cs` (login y sesión, 609) + `.DobleFactor` (348) + `.Recuperacion` (298) + `.AlertasSeguridad` (183). Mismo número de acciones públicas antes y después (20 y 26). Los controladores NO se separaron en clases nuevas para no cambiar URLs (`/Datos/...`, `/Acceso/...`) ni `MenuOpciones`.
+3. `CargueOrquestadorService` (2.199) → `partial` en 5 archivos + modelos a `CargueOrquestadorModelos.cs`; las 5 conversiones puras (`ConvertirCeldaFecha/Bit`, `ExtraerDecimal`, `SanitizarValorNumerico`, `DetectarErrorNumerico`) se extrajeron a `Helpers/CargueConversion.cs` con 42 pruebas de caracterización (pasaron a la primera: confirman que la heurística colombiana de cifras se lee como se pensaba). Paridad Excel↔API: sin cambios (misma lógica, mismos métodos públicos).
+- Pasada de `using` sobrantes tras mover código (-91 en total en la fase). Pruebas: 71 verdes. Build 0/0. Humo GET OK.
+- No se creó una clase base para todos los informes (13 controladores demasiado distintos). Pendiente opcional: pasar `AccesoController`/`ConfiguracionEmpresaController` (constructor explícito) a constructor primario.
+
 ## Orden
 F2 limpieza sin riesgo → F3 datos → F4 DI → F5 dividir/base informes → F6 plataforma (nulabilidad, async, Compat) → F7 frontend → **F9 resumen del refactor (qué se redujo y cómo se hizo; se entrega ANTES de la F8; métricas contra la etiqueta `base-pre-refactor-2026-11-16`)** → F8 documentación técnica (se mantiene intacta tal como se definió) (`App_Data/Documentacion/Tecnica/`, con glosario de C#/.NET con ejemplos del propio código). Comentarios de una línea (español, solo el «porqué») se agregan módulo a módulo en cada fase.

@@ -13,11 +13,6 @@ namespace bufinscustomers.Controllers
     [ValidarSesion]
     public class ComentariosGestionController(ComentariosGestionService service, AuditoriaService auditoriaService) : BaseController
     {
-        private bool TieneAccesoEmpresa(int idEmpresa)
-        {
-            var usuario = UsuarioSesionHelper.UsuarioActual;
-            return UsuarioSesionHelper.EsSuperAdmin() || EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa);
-        }
 
         private static bool EsAdministrador() => UsuarioSesionHelper.EsSuperAdmin() || UsuarioSesionHelper.EsAdminEmpresa();
 

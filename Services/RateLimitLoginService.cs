@@ -16,8 +16,6 @@
 
 using bufinscustomers.Helpers;
 using System;
-using Microsoft.Data.SqlClient;
-using System.Web;
 namespace bufinscustomers.Services
 {
     /// <summary>

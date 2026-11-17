@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using bufinscustomers.Helpers;
+﻿using bufinscustomers.Helpers;
 
 namespace bufinscustomers.Permisos
 {

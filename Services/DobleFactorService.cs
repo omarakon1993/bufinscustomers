@@ -1,7 +1,4 @@
 using System;
-using Microsoft.Data.SqlClient;
-using System.Security.Cryptography;
-using System.Text;
 using bufinscustomers.Helpers;
 
 namespace bufinscustomers.Services

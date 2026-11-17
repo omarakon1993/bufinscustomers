@@ -301,7 +301,6 @@ namespace bufinscustomers.Controllers
             return desde == hasta ? desde : desde + " – " + hasta;
         }
 
-        private string NombreMes(int mes) => mes >= 1 && mes <= 12 ? R("Common_Mes" + mes) : mes.ToString();
 
         /// <summary>Libro de Excel (lo usan la descarga y el correo): Resumen por línea, Estado de resultados por línea y Mezcla mensual.</summary>
         private byte[] GenerarExcel(FiltrosLineasNegocio filtros, LineasNegocioReporteViewModel r, out string nombreArchivo)
@@ -465,10 +464,5 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        private bool TieneAccesoEmpresa(int idEmpresa)
-        {
-            var usuario = UsuarioSesionHelper.UsuarioActual;
-            return UsuarioSesionHelper.EsSuperAdmin() || EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa);
-        }
     }
 }

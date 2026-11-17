@@ -2,7 +2,7 @@
 
 > Detalle completo movido desde CLAUDE.md (2026-11-11). CLAUDE.md conserva las reglas obligatorias en resumen; este archivo es la referencia completa. Si cambias el módulo, actualiza este archivo.
 
-### Orquestador del cargue (`Services/CargueOrquestadorService.cs`) — fase 0 de la API (2026-11-14)
+### Orquestador del cargue (`Services/CargueOrquestadorService*.cs`: clase `partial` en 5 archivos — flujo, `.Api`, `.LecturaExcel`, `.EscrituraSql`, `.Auditoria` — + `CargueOrquestadorModelos.cs` y `Helpers/CargueConversion.cs` con pruebas en `Tests/`) — fase 0 de la API (2026-11-14)
 
 > **Paridad Excel ↔ API (OBLIGATORIO):** esta lógica la comparte la API de ingesta (`Api/ApiV1.cs`). Toda validación nueva va aquí o en el SP para que valga en las dos entradas; lo que viva en la capa HTTP se cambia en `DatosController` y en `ApiV1`. Tabla de paridad y checklist en `api-ingesta.md` («Paridad con el cargue de Excel»).
 

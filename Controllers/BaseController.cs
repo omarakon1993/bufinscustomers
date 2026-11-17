@@ -22,6 +22,19 @@ namespace bufinscustomers.Controllers
         protected HttpNotFoundResult HttpNotFound() { return new HttpNotFoundResult(); }
         protected HttpNotFoundResult HttpNotFound(string descripcion) { return new HttpNotFoundResult(descripcion); }
 
+        /// <summary>Nombre del mes (1-12) en el idioma actual; fuera de rango devuelve el número tal cual.</summary>
+        protected string NombreMes(int mes)
+        {
+            return mes >= 1 && mes <= 12 ? R("Common_Mes" + mes) : mes.ToString();
+        }
+
+        /// <summary>¿El usuario actual puede ver/modificar esta empresa? (Super Admin, su empresa o una de su grupo.)</summary>
+        protected bool TieneAccesoEmpresa(int idEmpresa)
+        {
+            var usuario = Helpers.UsuarioSesionHelper.UsuarioActual;
+            return Helpers.UsuarioSesionHelper.EsSuperAdmin() || Helpers.EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa);
+        }
+
         protected static readonly string CadenaConexion =
             ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
 

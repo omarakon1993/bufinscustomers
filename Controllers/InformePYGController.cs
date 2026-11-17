@@ -456,15 +456,6 @@ namespace bufinscustomers.Controllers
         }
         }
 
-        private string NombreMes(int mes)
-        {
-            return mes >= 1 && mes <= 12 ? R("Common_Mes" + mes) : mes.ToString();
-        }
 
-        private bool TieneAccesoEmpresa(int idEmpresa)
-        {
-            var usuario = UsuarioSesionHelper.UsuarioActual;
-            return UsuarioSesionHelper.EsSuperAdmin() || EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa);
-        }
     }
 }

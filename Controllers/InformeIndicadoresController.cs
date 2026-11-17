@@ -559,10 +559,6 @@ namespace bufinscustomers.Controllers
             ws.SheetView.Freeze(filaEnc, 1);
         }
 
-        private string NombreMes(int mes)
-        {
-            return mes >= 1 && mes <= 12 ? R("Common_Mes" + mes) : mes.ToString();
-        }
 
         // ===== Umbrales propios del semáforo (Super Admin y Admin de Empresa) =====
 
@@ -657,10 +653,5 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        private bool TieneAccesoEmpresa(int idEmpresa)
-        {
-            var usuario = UsuarioSesionHelper.UsuarioActual;
-            return UsuarioSesionHelper.EsSuperAdmin() || EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa);
-        }
     }
 }

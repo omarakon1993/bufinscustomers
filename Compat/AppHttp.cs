@@ -1,5 +1,3 @@
-using System.IO;
-using Microsoft.AspNetCore.Http;
 
 namespace bufinscustomers.Compat
 {

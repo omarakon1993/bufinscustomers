@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-
+﻿
 namespace bufinscustomers.Models
 {
     public class Reportes

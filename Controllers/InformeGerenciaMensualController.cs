@@ -263,7 +263,6 @@ namespace bufinscustomers.Controllers
         private static string Millones(decimal v) => (v / 1000000m).ToString("N1") + " M";
         private static string Pct(decimal? v) => v.HasValue ? (v.Value * 100m).ToString("+0.0;-0.0;0.0") + " %" : "—";
         private static int Signo(decimal? v) => v.HasValue && v.Value != 0m ? (v.Value > 0m ? 1 : -1) : 0;
-        private string NombreMes(int mes) => mes >= 1 && mes <= 12 ? R("Common_Mes" + mes) : mes.ToString();
 
         private static string FormatoIndicador(GmIndicadorAtencion a)
         {
@@ -406,10 +405,5 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        private bool TieneAccesoEmpresa(int idEmpresa)
-        {
-            var usuario = UsuarioSesionHelper.UsuarioActual;
-            return UsuarioSesionHelper.EsSuperAdmin() || EmpresaAccesoHelper.TieneAcceso(usuario, idEmpresa);
-        }
     }
 }
