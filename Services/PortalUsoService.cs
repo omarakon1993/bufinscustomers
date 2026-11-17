@@ -1,4 +1,3 @@
-using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using Newtonsoft.Json.Linq;
 using System;
@@ -308,7 +307,7 @@ namespace bufinscustomers.Services
             res.Paginas = Top(vistas, TipoPagina, 10);
             res.Busquedas = lista.Where(e => e.T == "busqueda_sel" && e.K.Length > 0).GroupBy(e => e.K)
                 .Select(g => new PortalItem { Clave = g.Key, Nombre = nombreNit(g.Key), N = g.Count() }).OrderByDescending(x => x.N).Take(10).ToList();
-            res.Comparaciones = lista.Where(e => e.T == "comparar" && e.X.Contains(","))
+            res.Comparaciones = lista.Where(e => e.T == "comparar" && e.X.Contains(','))
                 .GroupBy(e => string.Join(",", e.X.Split(',').OrderBy(x => x)))
                 .Select(g => new PortalItem
                 {

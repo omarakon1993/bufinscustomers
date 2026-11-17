@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Web;
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
@@ -87,7 +86,7 @@ namespace bufinscustomers.Controllers
 
                 var r = EmpresaLogoHelper.Procesar(datos);
                 if (!r.Ok)
-                    return Json(new { exito = false, mensaje = string.Format(R(r.ErrorKey), r.ErrorArgs ?? new object[0]) });
+                    return Json(new { exito = false, mensaje = string.Format(R(r.ErrorKey), r.ErrorArgs ?? Array.Empty<object>()) });
 
                 bool habiaLogo = _servicio.Obtener(idEmpresa) != null;
                 _servicio.Guardar(idEmpresa, r.Png, r.Ancho, r.Alto, r.Version, Path.GetFileName(archivo.FileName), usuario?.Id);

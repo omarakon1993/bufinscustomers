@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 
 namespace bufinscustomers.Compat

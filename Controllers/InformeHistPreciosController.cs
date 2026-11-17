@@ -254,7 +254,7 @@ namespace bufinscustomers.Controllers
             {
                 // --- Hoja 1: precio promedio por tipo (periodos en filas, tipos en columnas: lo que pide el gráfico nativo)
                 var ws = wb.Worksheets.Add(hojaPrecios);
-                EscribirEncabezadoHoja(ws, R("HP_PageTitle") + " — " + empresa, reporte, etiquetas.Count);
+                EscribirEncabezadoHoja(ws, R("HP_PageTitle") + " — " + empresa, reporte);
                 int filaEnc = 4;
                 ws.Cell(filaEnc, 1).Value = R("HP_XlsColPeriodo");
                 for (int s = 0; s < reporte.Series.Count; s++) ws.Cell(filaEnc, 2 + s).Value = reporte.Series[s].Tipo;
@@ -275,7 +275,7 @@ namespace bufinscustomers.Controllers
 
                 // --- Hoja 2: variación %
                 var wv = wb.Worksheets.Add(hojaVar);
-                EscribirEncabezadoHoja(wv, R("HP_TablaVariacionTitulo") + " — " + empresa, reporte, etiquetas.Count);
+                EscribirEncabezadoHoja(wv, R("HP_TablaVariacionTitulo") + " — " + empresa, reporte);
                 wv.Cell(filaEnc, 1).Value = R("HP_XlsColPeriodo");
                 for (int s = 0; s < reporte.Series.Count; s++) wv.Cell(filaEnc, 2 + s).Value = reporte.Series[s].Tipo;
                 wv.Cell(filaEnc, colTotal).Value = totalGeneral;
@@ -290,7 +290,7 @@ namespace bufinscustomers.Controllers
 
                 // --- Hoja 3: promedio general + variación
                 var wp = wb.Worksheets.Add(hojaProm);
-                EscribirEncabezadoHoja(wp, R("HP_PromedioTitulo") + " — " + empresa, reporte, etiquetas.Count);
+                EscribirEncabezadoHoja(wp, R("HP_PromedioTitulo") + " — " + empresa, reporte);
                 wp.Cell(filaEnc, 1).Value = R("HP_XlsColPeriodo");
                 wp.Cell(filaEnc, 2).Value = R("HP_PromedioGeneral");
                 wp.Cell(filaEnc, 3).Value = R("HP_ColVariacion");
@@ -345,7 +345,7 @@ namespace bufinscustomers.Controllers
             }
         }
 
-        private void EscribirEncabezadoHoja(IXLWorksheet ws, string titulo, HpReporte r, int nPeriodos)
+        private void EscribirEncabezadoHoja(IXLWorksheet ws, string titulo, HpReporte r)
         {
             ws.Cell(1, 1).Value = titulo;
             ws.Cell(1, 1).Style.Font.Bold = true;

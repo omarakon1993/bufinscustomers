@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
 using System.Linq;
 using bufinscustomers.Models;
 
@@ -193,11 +192,11 @@ namespace bufinscustomers.Services
                 m[k] = m.TryGetValue(k, out previo) ? previo + v : v;
             }
 
-            if (ordCajaNeta >= 0 && s.PorOrd.ContainsKey(ordCajaNeta))
+            if (ordCajaNeta >= 0 && s.PorOrd.TryGetValue(ordCajaNeta, out Dictionary<int, decimal> value))
             {
                 int añoActual = -1;
                 decimal acum = 0m;
-                foreach (var kv in s.PorOrd[ordCajaNeta].OrderBy(x => x.Key))
+                foreach (var kv in value.OrderBy(x => x.Key))
                 {
                     int año = kv.Key / 12;
                     if (año != añoActual) { añoActual = año; acum = 0m; }   // el saldo corrido reinicia cada año
@@ -347,12 +346,12 @@ namespace bufinscustomers.Services
                 reporte.Filas.Add(fila);
             }
 
-            reporte.Kpis = ArmarKpis(reporte, principal, otra, esc, clavesRango);
-            reporte.Cascada = ArmarCascada(reporte, principal, ordDe, clavesRango, desc);
+            reporte.Kpis = ArmarKpis(principal, otra, esc, clavesRango);
+            reporte.Cascada = ArmarCascada(principal, ordDe, clavesRango, desc);
             return reporte;
         }
 
-        private static List<TesoreriaKpi> ArmarKpis(TesoreriaReporteViewModel r, Serie principal, Serie otra, Serie esc, List<int> clavesRango)
+        private static List<TesoreriaKpi> ArmarKpis(Serie principal, Serie otra, Serie esc, List<int> clavesRango)
         {
             Func<Serie, Func<int, decimal>> netaDe = s => k => { decimal v; return s.CajaNeta.TryGetValue(k, out v) ? v : 0m; };
             Func<Serie, Func<int, decimal>> acumDe = s => k => { decimal v; return s.CajaNetaAcum.TryGetValue(k, out v) ? v : 0m; };
@@ -392,7 +391,7 @@ namespace bufinscustomers.Services
         /// inversiones → capital de trabajo → otros movimientos → Caja neta. Cada tramo sale de diferencias entre
         /// subtotales que ya calcula el modelo y el último tramo ("otros") absorbe el resto, así que SIEMPRE cuadra
         /// con la caja neta real del rango.</summary>
-        private static List<TesoreriaCascadaBarra> ArmarCascada(TesoreriaReporteViewModel r, Serie s, Func<string, int> ordDe,
+        private static List<TesoreriaCascadaBarra> ArmarCascada(Serie s, Func<string, int> ordDe,
             List<int> clavesRango, Dictionary<int, string> desc)
         {
             Func<int, decimal> total = ord => ord < 0 ? 0m : clavesRango.Sum(k => s.Linea(ord, k));

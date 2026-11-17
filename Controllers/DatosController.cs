@@ -5,13 +5,11 @@ using bufinscustomers.Services;
 using ClosedXML.Excel;
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Web;
 namespace bufinscustomers.Controllers
 {
@@ -661,7 +659,7 @@ namespace bufinscustomers.Controllers
                         return Json(new
                         {
                             errores = new[] { new { nombre = modelo.Nombre, nombreSP = modelo.NombreSP, mensaje = exModelo.Message } },
-                            exitosos = new string[0]
+                            exitosos = Array.Empty<string>()
                         }, JsonRequestBehavior.AllowGet);
                     }
 
@@ -829,7 +827,7 @@ namespace bufinscustomers.Controllers
                 return Json(new { exito = false, mensaje = R("Modelo_Correo_ValCorreo") });
 
             var invalidos = listaCorreos.Where(c => !_rxCorreo.IsMatch(c)).ToList();
-            if (invalidos.Any())
+            if (invalidos.Count != 0)
                 return Json(new { exito = false, mensaje = R("Modelo_Correo_ValCorreo") + " (" + string.Join(", ", invalidos) + ")" });
 
             if (listaCorreos.Count > 10)
@@ -1256,8 +1254,8 @@ namespace bufinscustomers.Controllers
 
                     // Periodo 'AAAA-MM' → «Jun 2026»; referencia '@N4' → «Nivel 4 dígitos».
                     string periodo = h.Periodo ?? "";
-                    if (periodo.Length == 7 && periodo[4] == '-' && int.TryParse(periodo.Substring(5, 2), out int mm) && mm >= 1 && mm <= 12)
-                        periodo = mesesAbr[mm - 1] + " " + periodo.Substring(0, 4);
+                    if (periodo.Length == 7 && periodo[4] == '-' && int.TryParse(periodo.AsSpan(5, 2), out int mm) && mm >= 1 && mm <= 12)
+                        periodo = string.Concat(mesesAbr[mm - 1], " ", periodo.AsSpan(0, 4));
                     ws.Cell(fila, 7).Value = periodo;
                     string referencia = h.Referencia ?? "";
                     if (referencia.StartsWith("@N")) referencia = string.Format(R("RevisarCargue_Val_Nivel"), referencia.Substring(2));
@@ -1341,7 +1339,7 @@ namespace bufinscustomers.Controllers
             if (listaCorreos.Count == 0)
                 return Json(new { exito = false, mensaje = R("RevisarCargue_Correo_ValDestino") });
             var invalidos = listaCorreos.Where(c => !_rxCorreo.IsMatch(c)).ToList();
-            if (invalidos.Any())
+            if (invalidos.Count != 0)
                 return Json(new { exito = false, mensaje = R("RevisarCargue_Correo_ValDestino") + " (" + string.Join(", ", invalidos) + ")" });
             if (listaCorreos.Count > 10)
                 return Json(new { exito = false, mensaje = R("RevisarCargue_Correo_ValMaximo") });
@@ -1352,7 +1350,7 @@ namespace bufinscustomers.Controllers
             {
                 try
                 {
-                    string b64 = pdfBase64.Contains(",") ? pdfBase64.Substring(pdfBase64.IndexOf(',') + 1) : pdfBase64;
+                    string b64 = pdfBase64.Contains(',') ? pdfBase64.Substring(pdfBase64.IndexOf(',') + 1) : pdfBase64;
                     var bytes = Convert.FromBase64String(b64);
                     if (bytes.Length <= 8 * 1024 * 1024 && bytes.Length > 4
                         && bytes[0] == '%' && bytes[1] == 'P' && bytes[2] == 'D' && bytes[3] == 'F')

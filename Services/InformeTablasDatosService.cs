@@ -2,7 +2,6 @@ using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
 using System.Linq;
 
 namespace bufinscustomers.Services
@@ -590,9 +589,9 @@ namespace bufinscustomers.Services
             };
 
             // Si encuentra el nombre en el diccionario, retornarlo
-            if (mapeoColumnas.ContainsKey(nombreColumna))
+            if (mapeoColumnas.TryGetValue(nombreColumna, out string value))
             {
-                return mapeoColumnas[nombreColumna];
+                return value;
             }
 
             // Si no está en el diccionario, convertir PascalCase a nombre con espacios

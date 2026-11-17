@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Net;
-using System.Web;
 
 namespace bufinscustomers.Helpers
 {
@@ -49,7 +48,7 @@ namespace bufinscustomers.Helpers
 
             IpRango[] proxies;
             try { proxies = _proxiesConfianza.Value; }
-            catch { proxies = new IpRango[0]; }
+            catch { proxies = Array.Empty<IpRango>(); }
 
             // Sin proxies de confianza, o la conexión directa no es uno de ellos: no se
             // confía en ninguna cabecera reenviada.
@@ -112,7 +111,7 @@ namespace bufinscustomers.Helpers
 
         private static IpRango[] ParsearRangos(string csv)
         {
-            if (string.IsNullOrWhiteSpace(csv)) return new IpRango[0];
+            if (string.IsNullOrWhiteSpace(csv)) return Array.Empty<IpRango>();
             return csv.Split(',')
                       .Select(s => s.Trim())
                       .Where(s => s.Length > 0)

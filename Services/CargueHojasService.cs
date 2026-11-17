@@ -1,7 +1,6 @@
 using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -595,7 +594,7 @@ $@"CREATE NONCLUSTERED INDEX {Q("IX_" + stg + "_Lote")} ON dbo.{Q(stg)} ([IdLote
                     }
                     catch
                     {
-                        try { tx.Rollback(); } catch { }
+                        Helpers.TransaccionHelper.RollbackSeguro(tx);
                         throw;
                     }
                 }
@@ -676,7 +675,7 @@ $@"CREATE NONCLUSTERED INDEX {Q("IX_" + stg + "_Lote")} ON dbo.{Q(stg)} ([IdLote
                     }
                     catch
                     {
-                        try { tx.Rollback(); } catch { }
+                        Helpers.TransaccionHelper.RollbackSeguro(tx);
                         throw;
                     }
                 }
@@ -860,7 +859,7 @@ IF @df IS NOT NULL EXEC (N'ALTER TABLE dbo.{Q(tabla).Replace("'", "''")} DROP CO
                 }
                 catch
                 {
-                    try { tx.Rollback(); } catch { }
+                    Helpers.TransaccionHelper.RollbackSeguro(tx);
                     throw;
                 }
             }
@@ -899,7 +898,7 @@ IF @df IS NOT NULL EXEC (N'ALTER TABLE dbo.{Q(tabla).Replace("'", "''")} DROP CO
                     }
                     catch
                     {
-                        try { tx.Rollback(); } catch { }
+                        Helpers.TransaccionHelper.RollbackSeguro(tx);
                         throw;
                     }
                 }

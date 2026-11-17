@@ -1,6 +1,5 @@
 using bufinscustomers.Models;
 using System;
-using System.Data;
 using Microsoft.Data.SqlClient;
 
 namespace bufinscustomers.Services

@@ -3,7 +3,6 @@ using bufinscustomers.Models;
 using bufinscustomers.Permisos;
 using bufinscustomers.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 namespace bufinscustomers.Controllers
 {

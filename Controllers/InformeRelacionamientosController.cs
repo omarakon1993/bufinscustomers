@@ -230,7 +230,7 @@ namespace bufinscustomers.Controllers
                         if (idxDescripcion >= 0)
                         {
                             var colDesc = resultado.Columnas[idxDescripcion];
-                            descripcionActual = registro.ContainsKey(colDesc) ? registro[colDesc]?.ToString() : null;
+                            descripcionActual = registro.TryGetValue(colDesc, out object value) ? value?.ToString() : null;
                         }
 
                         if (descripcionActual != descripcionAnterior)
@@ -245,7 +245,7 @@ namespace bufinscustomers.Controllers
                         foreach (var nombreColumna in resultado.Columnas)
                         {
                             var cell = worksheet.Cell(fila, col);
-                            var valor = registro.ContainsKey(nombreColumna) ? registro[nombreColumna] : null;
+                            var valor = registro.TryGetValue(nombreColumna, out object value1) ? value1 : null;
 
                             if (valor != null)
                             {

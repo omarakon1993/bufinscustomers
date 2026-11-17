@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Permisos;
@@ -306,7 +305,6 @@ namespace bufinscustomers.Controllers
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
-            var idEmpresa = usuario?.IdEmpresa ?? 0;
 
             var reportes = new List<object>();
 
@@ -358,7 +356,6 @@ namespace bufinscustomers.Controllers
         {
             var usuario = UsuarioSesionHelper.UsuarioActual;
             var esAdmin = UsuarioSesionHelper.EsSuperAdmin();
-            var idEmpresa = usuario?.IdEmpresa ?? 0;
 
             var reportes = new List<object>();
 

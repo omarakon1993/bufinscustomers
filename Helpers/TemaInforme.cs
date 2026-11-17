@@ -114,9 +114,9 @@ namespace bufinscustomers.Helpers
         public static string Validar(string principal, string secundario, string acento, out string avisoKey)
         {
             avisoKey = null;
-            string p, s, a;
+            string p, s;
             if (!TryHex(principal, out p) || !TryHex(secundario, out s)) return "Tema_Err_Hex";
-            if (!string.IsNullOrWhiteSpace(acento) && !TryHex(acento, out a)) return "Tema_Err_Hex";
+            if (!string.IsNullOrWhiteSpace(acento) && !TryHex(acento, out _)) return "Tema_Err_Hex";
 
             double c = Contraste(p, "#FFFFFF");
             if (c < 3.0) return "Tema_Err_Contraste";

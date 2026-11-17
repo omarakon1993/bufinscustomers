@@ -6,7 +6,7 @@ namespace bufinscustomers.Services
     public abstract class BaseService
     {
         /// <summary>
-        /// Cadena de conexión centralizada obtenida del Web.config
+        /// Cadena de conexión centralizada (se lee de ConnectionStrings:DefaultConnection en secretsSettings.json / appsettings.json)
         /// </summary>
         protected static readonly string CadenaConexion = 
             ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;

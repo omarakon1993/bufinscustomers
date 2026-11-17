@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-
+﻿
 namespace bufinscustomers
 {
     /// <summary>Atajos que las vistas y controladores usaban de HttpRequest (Request.Url.*) en .NET Framework.</summary>

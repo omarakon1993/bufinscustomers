@@ -66,7 +66,7 @@ namespace bufinscustomers.Controllers
             byte nivelAdmin = usuarioActual.Admin ?? 0;
             byte nivelTarget = usuario.Admin ?? 0;
 
-            opciones = FiltrarOpcionesParaAsignacion(opciones, nivelAdmin, nivelTarget);
+            opciones = FiltrarOpcionesParaAsignacion(opciones, nivelTarget);
 
             var opcionesPorCategoria = opciones.GroupBy(o => o.Categoria).ToList();
 
@@ -84,7 +84,7 @@ namespace bufinscustomers.Controllers
         /// Admin 2 nunca se edita (tiene todo), así que SoloSuperAdmin nunca aparece.
         /// </summary>
         private List<OpcionMenuUsuarioViewModel> FiltrarOpcionesParaAsignacion(
-            List<OpcionMenuUsuarioViewModel> opciones, byte nivelAdmin, byte nivelTarget)
+            List<OpcionMenuUsuarioViewModel> opciones, byte nivelTarget)
         {
             return opciones.Where(o =>
             {

@@ -249,7 +249,7 @@ namespace bufinscustomers.Controllers
                     }
 
                     // Agregar total de registros al final
-                    if (auditorias.Any())
+                    if (auditorias.Count != 0)
                     {
                         row += 1; // Espacio
                         worksheet.Cell(row, 1).Value = "Total de registros:";

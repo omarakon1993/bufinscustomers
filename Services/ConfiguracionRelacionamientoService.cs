@@ -1,10 +1,8 @@
-using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using ClosedXML.Excel;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -304,7 +302,7 @@ namespace bufinscustomers.Services
                         catch (Exception ex)
                         {
                             // Error: ROLLBACK de todo
-                            try { transaction.Rollback(); } catch { }
+                            Helpers.TransaccionHelper.RollbackSeguro(transaction);
 
                             resultado.Exito = false;
                             string prefijo = tablaConError != null ? $" [Tabla: {tablaConError}]" : "";

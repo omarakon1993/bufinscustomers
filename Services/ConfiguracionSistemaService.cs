@@ -2,7 +2,6 @@ using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
 
 namespace bufinscustomers.Services

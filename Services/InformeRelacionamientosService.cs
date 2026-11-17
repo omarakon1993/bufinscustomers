@@ -1,7 +1,6 @@
 using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using Microsoft.Data.SqlClient;
 using System.Linq;
 
@@ -306,9 +305,9 @@ namespace bufinscustomers.Services
                 { "FechaModificacion", "Fecha Modificación" }
             };
 
-            if (mapeoColumnas.ContainsKey(nombreColumna))
+            if (mapeoColumnas.TryGetValue(nombreColumna, out string value))
             {
-                return mapeoColumnas[nombreColumna];
+                return value;
             }
 
             // Convertir PascalCase a espacios

@@ -1,5 +1,4 @@
 using System;
-using Microsoft.Data.SqlClient;
 using bufinscustomers.Helpers;
 
 namespace bufinscustomers.Services

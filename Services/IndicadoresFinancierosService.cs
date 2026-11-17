@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Runtime.Caching;
 using System.Threading;
@@ -79,7 +78,7 @@ namespace bufinscustomers.Services
                     .Select(r => r.VM)
                     .ToList();
 
-                if (!items.Any()) continue;
+                if (items.Count == 0) continue;
 
                 string fuente;
                 try { fuente = new Uri(urls[i]).Host.Replace("www.", ""); }
@@ -136,7 +135,7 @@ namespace bufinscustomers.Services
 
                 // --- RSS 2.0 ---
                 var items = doc.Descendants("item").ToList();
-                if (items.Any())
+                if (items.Count != 0)
                 {
                     foreach (var item in items.Take(12))
                     {

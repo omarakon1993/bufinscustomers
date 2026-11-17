@@ -1,7 +1,6 @@
 ﻿using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using ClosedXML.Excel;
-using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -292,7 +291,7 @@ namespace bufinscustomers.Services
                         .Where(z => !hojasLibro.Contains(NormalizarNombre(z)))
                         .ToList();
 
-                    if (hojasFaltantes.Any())
+                    if (hojasFaltantes.Count != 0)
                     {
                         resultado.Exito = false;
                         resultado.Mensaje = $"La plantilla no contiene todas las hojas requeridas. Faltan: {string.Join(", ", hojasFaltantes)}.";
@@ -412,7 +411,7 @@ namespace bufinscustomers.Services
                             }
                             catch (Exception txEx)
                             {
-                                try { tx.Rollback(); } catch { }
+                                Helpers.TransaccionHelper.RollbackSeguro(tx);
                                 LogToFile($"Error inesperado escribiendo en staging: {txEx.Message}");
                                 throw;
                             }
@@ -618,7 +617,7 @@ namespace bufinscustomers.Services
                     }
                     catch (Exception txEx)
                     {
-                        try { tx.Rollback(); } catch { }
+                        Helpers.TransaccionHelper.RollbackSeguro(tx);
                         LogToFile($"Error inesperado confirmando el lote {idLote}: {txEx.Message}");
                         errorEnConfirmacion = true;
                         mensajeError = txEx.Message;
@@ -936,7 +935,7 @@ namespace bufinscustomers.Services
                     }
                     catch (Exception ex)
                     {
-                        try { tx.Rollback(); } catch { }
+                        Helpers.TransaccionHelper.RollbackSeguro(tx);
                         AppLogger.Error(ex, "CargueOrquestador.AgregarFilasHoja");
                         res.Estado = HojaApiEstado.DatosInvalidos;
                         res.Mensaje = "No se pudo guardar la hoja. Inténtelo de nuevo o contacte a soporte.";
@@ -1580,11 +1579,11 @@ namespace bufinscustomers.Services
                     int filaExcelActual = numeroFilaBase + indiceFila++;
 
                     // Valores de referencia para la Llave
-                    string cuenta  = colsExcel.ContainsKey("Cuenta")  ? srcRow[colsExcel["Cuenta"]].ToString()  : "";
-                    string empresa = colsExcel.ContainsKey("Empresa") ? srcRow[colsExcel["Empresa"]].ToString() : "";
-                    string ano     = colsExcel.ContainsKey("Año")     ? srcRow[colsExcel["Año"]].ToString() :
-                                     colsExcel.ContainsKey("Anio")    ? srcRow[colsExcel["Anio"]].ToString() : "";
-                    string mes     = colsExcel.ContainsKey("Mes")     ? srcRow[colsExcel["Mes"]].ToString()     : "";
+                    string cuenta  = colsExcel.TryGetValue("Cuenta", out int value)  ? srcRow[value].ToString()  : "";
+                    string empresa = colsExcel.TryGetValue("Empresa", out int value1) ? srcRow[value1].ToString() : "";
+                    string ano     = colsExcel.TryGetValue("Año", out int value2)     ? srcRow[value2].ToString() :
+                                     colsExcel.TryGetValue("Anio", out int value3)    ? srcRow[value3].ToString() : "";
+                    string mes     = colsExcel.TryGetValue("Mes", out int value4)     ? srcRow[value4].ToString()     : "";
 
                     foreach (var colIni in columnasIni)
                     {
@@ -1620,9 +1619,9 @@ namespace bufinscustomers.Services
                                 destRow[colIni] = DBNull.Value;
                                 break;
                             default:
-                                if (colsExcel.ContainsKey(colIni))
+                                if (colsExcel.TryGetValue(colIni, out int value5))
                                 {
-                                    var cellValue = srcRow[colsExcel[colIni]];
+                                    var cellValue = srcRow[value5];
                                     if (columnasNumericas.Contains(colIni))
                                     {
                                         if (cellValue is string sValIni && !string.IsNullOrWhiteSpace(sValIni))

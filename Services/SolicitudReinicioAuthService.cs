@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 using bufinscustomers.Helpers;
 
 namespace bufinscustomers.Services

@@ -38,7 +38,7 @@ namespace bufinscustomers.Helpers
 
             if (lista.Count == 0) { error = R("RevisarCargue_Correo_ValDestino"); return false; }
             var invalidos = lista.Where(c => !_rxCorreo.IsMatch(c)).ToList();
-            if (invalidos.Any()) { error = R("RevisarCargue_Correo_ValDestino") + " (" + string.Join(", ", invalidos) + ")"; return false; }
+            if (invalidos.Count != 0) { error = R("RevisarCargue_Correo_ValDestino") + " (" + string.Join(", ", invalidos) + ")"; return false; }
             if (lista.Count > MaxDestinatarios) { error = R("RevisarCargue_Correo_ValMaximo"); return false; }
             return true;
         }
@@ -49,7 +49,7 @@ namespace bufinscustomers.Helpers
             if (string.IsNullOrWhiteSpace(pdfBase64)) return null;
             try
             {
-                string b64 = pdfBase64.Contains(",") ? pdfBase64.Substring(pdfBase64.IndexOf(',') + 1) : pdfBase64;
+                string b64 = pdfBase64.Contains(',') ? pdfBase64.Substring(pdfBase64.IndexOf(',') + 1) : pdfBase64;
                 var bytes = Convert.FromBase64String(b64);
                 return bytes.Length > 4 && bytes.Length <= MaxBytesPdf
                        && bytes[0] == '%' && bytes[1] == 'P' && bytes[2] == 'D' && bytes[3] == 'F' ? bytes : null;

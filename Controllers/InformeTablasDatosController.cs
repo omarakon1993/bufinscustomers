@@ -443,7 +443,7 @@ namespace bufinscustomers.Controllers
                         foreach (var c in resultado.Columnas)
                         {
                             var cell  = wsData.Cell(fila, col);
-                            var valor = registro.ContainsKey(c) ? registro[c] : null;
+                            var valor = registro.TryGetValue(c, out object value) ? value : null;
                             if (valor != null)
                             {
                                 if (valor is decimal || valor is double || valor is float)
@@ -493,7 +493,7 @@ namespace bufinscustomers.Controllers
                             if (string.IsNullOrWhiteSpace(linea)) continue;
                             wsIA.Cell(filaIA, 1).Value      = linea;
                             wsIA.Cell(filaIA, 1).Style.Alignment.WrapText = true;
-                            if (linea.StartsWith("•") == false && linea.Length < 100 && !linea.Contains(".") && !linea.Contains(","))
+                            if (linea.StartsWith("•") == false && linea.Length < 100 && !linea.Contains('.') && !linea.Contains(','))
                                 wsIA.Cell(filaIA, 1).Style.Font.Bold = true;
                             filaIA++;
                         }
@@ -558,7 +558,7 @@ namespace bufinscustomers.Controllers
             {
                 if (i == ultimaAsistente || limpio[i].Rol != "assistant") continue;
                 if (limpio[i].Contenido.Length > MaxCharsRespuestaPrevia)
-                    limpio[i].Contenido = limpio[i].Contenido.Substring(0, MaxCharsRespuestaPrevia) + " […]";
+                    limpio[i].Contenido = string.Concat(limpio[i].Contenido.AsSpan(0, MaxCharsRespuestaPrevia), " […]");
             }
 
             while (limpio.Count > 2 && limpio.Sum(m => (long)m.Contenido.Length) > MaxCharsHistorialTotal)

@@ -49,8 +49,7 @@ namespace bufinscustomers.Services
         public static bool EsSoloSuperAdmin(string claveBiblioteca)
         {
             if (string.IsNullOrEmpty(claveBiblioteca)) return false;
-            bool t;
-            var g = Guardados(out t);
+            var g = Guardados(out _);
             bool v;
             if (g.TryGetValue(claveBiblioteca, out v)) return v;
             var doc = DocumentacionBibliotecaCatalogo.Buscar(claveBiblioteca);

@@ -12,6 +12,7 @@ namespace bufinscustomers.Helpers
     /// </summary>
     public static class EmpresaAccesoHelper
     {
+        // ¿Puede este usuario ver/modificar la empresa? Super Admin sí; los demás: la suya o una de su mismo grupo empresarial.
         public static bool TieneAcceso(Usuarios usuario, int idEmpresa)
         {
             if (usuario == null)
@@ -23,6 +24,7 @@ namespace bufinscustomers.Helpers
             if (usuario.IdEmpresa == idEmpresa)
                 return true;
 
+            // Sin grupo, solo cuenta la empresa propia (ya descartada arriba).
             var idGrupo = ObtenerIdGrupoDeEmpresa(usuario.IdEmpresa);
             if (idGrupo == null)
                 return false;
@@ -54,6 +56,7 @@ namespace bufinscustomers.Helpers
             return todas.Where(e => e.IdGrupoEmpresarial == idGrupo).Select(e => e.Id).ToList();
         }
 
+        // Id del grupo empresarial de una empresa (null si no pertenece a ninguno), leído de la caché de empresas.
         private static int? ObtenerIdGrupoDeEmpresa(int? idEmpresa)
         {
             return ObtenerIdGrupoDeEmpresa(idEmpresa, EmpresaCacheHelper.ObtenerEmpresasCacheadas());

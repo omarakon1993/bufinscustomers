@@ -1,4 +1,3 @@
-using bufinscustomers.Models;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
@@ -273,7 +272,7 @@ namespace bufinscustomers.Services
             contexto = contexto ?? new List<(string etiqueta, string valor)>();
             kpis = kpis ?? new List<(string etiqueta, string valor, string detalle, int signo)>();
             filas = filas ?? new List<(string[] celdas, int signo)>();
-            columnas = columnas ?? new string[0];
+            columnas = columnas ?? Array.Empty<string>();
 
             string intro = esIngles
                 ? $"Here is the <strong>{HttpUtility.HtmlEncode(tituloInforme)}</strong> report for <strong>{HttpUtility.HtmlEncode(empresa)}</strong>. " +

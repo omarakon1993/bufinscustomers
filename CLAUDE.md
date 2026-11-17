@@ -13,6 +13,7 @@ Guía para Claude Code en este repositorio. **Este archivo guarda reglas y resú
 | API de ingesta (`/api/v1`, `Api/`, integraciones y claves) | `.claude/notas/api-ingesta.md` |
 | Texto íntegro de convenciones, deuda técnica e i18n | `.claude/notas/convenciones.md` |
 | Notificaciones internas | `.claude/notas/notificaciones.md` |
+| Refactor/limpieza post-.NET 10 (rama `refactor/net10-limpieza`, pruebas en `Tests/`) | `.claude/notas/refactor-plan.md` |
 | Estilos, modales, botón Exportar, loader, formularios | `.claude/notas/ui-estilos.md` |
 
 ## Proyecto

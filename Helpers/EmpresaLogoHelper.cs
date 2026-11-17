@@ -125,7 +125,7 @@ namespace bufinscustomers.Helpers
 
                             string version;
                             using (var sha = SHA256.Create())
-                                version = BitConverter.ToString(sha.ComputeHash(png), 0, 8).Replace("-", "").ToLowerInvariant();
+                                version = Convert.ToHexStringLower(sha.ComputeHash(png), 0, 8);
 
                             return new ResultadoLogo
                             {

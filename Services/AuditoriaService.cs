@@ -47,10 +47,8 @@ using bufinscustomers.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using Microsoft.Data.SqlClient;
 using System.Text;
-using System.Web;
 
 namespace bufinscustomers.Services
 {

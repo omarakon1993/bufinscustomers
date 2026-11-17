@@ -97,7 +97,7 @@ namespace bufinscustomers.Compat
             using (var ms = new MemoryStream())
             {
                 using (var w = new BinaryWriter(ms, new UTF8Encoding(false, true), true))
-                    foreach (var p in propositos ?? new string[0]) w.Write(p);   // cadena con prefijo de longitud, como BinaryWriter.Write(string)
+                    foreach (var p in propositos ?? Array.Empty<string>()) w.Write(p);   // cadena con prefijo de longitud, como BinaryWriter.Write(string)
                 contexto = ms.ToArray();
             }
             return new ClavesDerivadas

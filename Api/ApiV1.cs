@@ -2,9 +2,7 @@ using bufinscustomers.Helpers;
 using bufinscustomers.Models;
 using bufinscustomers.Services;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -115,7 +113,7 @@ namespace bufinscustomers.Api
                     return Error(403, "confirmacion_humana", "Esta integración no puede confirmar cargues: la confirmación la hace una persona en «Revisar cargue».");
                 var lote = LotePropio(ctx, idLote, out var error);
                 if (lote == null) return error;
-                return ResultadoConfirmacion(ctx, new CargueOrquestadorService(Traducir).Confirmar(Tecnico(ctx), idLote, confirmarReemplazo: false, simular: integ.Sandbox));
+                return ResultadoConfirmacion(new CargueOrquestadorService(Traducir).Confirmar(Tecnico(ctx), idLote, confirmarReemplazo: false, simular: integ.Sandbox));
             });
 
             g.MapDelete("/cargues/{idLote:long}", (HttpContext ctx, long idLote) =>
@@ -411,7 +409,7 @@ namespace bufinscustomers.Api
             }
         }
 
-        private static IResult ResultadoConfirmacion(HttpContext ctx, ResultadoConfirmacionCargue r)
+        private static IResult ResultadoConfirmacion(ResultadoConfirmacionCargue r)
         {
             switch (r.Estado)
             {

@@ -5,7 +5,6 @@ using bufinscustomers.Services;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Text.RegularExpressions;
 namespace bufinscustomers.Controllers

@@ -1,17 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Linq;
-using System.Web;
 using bufinscustomers.Models;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
-using System.IO;
 using System.ComponentModel;
 using bufinscustomers.Helpers;
 using bufinscustomers.Services;
-using Newtonsoft.Json;
 
 namespace bufinscustomers.Controllers
 {
@@ -405,9 +400,9 @@ namespace bufinscustomers.Controllers
             if (string.IsNullOrWhiteSpace(correo)) return "";
             correo = correo.Trim();
             int arroba = correo.IndexOf('@');
-            if (arroba <= 0) return correo.Length <= 2 ? correo : correo.Substring(0, 2) + "•••";
+            if (arroba <= 0) return correo.Length <= 2 ? correo : string.Concat(correo.AsSpan(0, 2), "•••");
             string local = correo.Substring(0, arroba);
-            return (local.Length <= 2 ? local : local.Substring(0, 2)) + "•••" + correo.Substring(arroba);
+            return string.Concat(local.Length <= 2 ? local : local.Substring(0, 2), "•••", correo.AsSpan(arroba));
         }
 
         private PendienteDobleFactor ObtenerPendiente2FA(out string cacheKey)
@@ -1006,7 +1001,7 @@ namespace bufinscustomers.Controllers
             {
                 var t = raw.Trim();
                 if (t.Length == 0) continue;
-                if (t.Contains("@")) { if (!lista.Contains(t)) lista.Add(t); }
+                if (t.Contains('@')) { if (!lista.Contains(t)) lista.Add(t); }
                 else if (!usuarios.Contains(t)) usuarios.Add(t);
             }
 

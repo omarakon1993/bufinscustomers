@@ -91,7 +91,7 @@ namespace bufinscustomers.Controllers
                     nombreTecnico = c,
                     nombreAmigable = _service.ObtenerNombreAmigableColumna(c),
                     numerica = resultado.Filas
-                        .Select(f => f.ContainsKey(c) ? f[c] : null)
+                        .Select(f => f.TryGetValue(c, out object value) ? value : null)
                         .Where(v => v != null && v != DBNull.Value)
                         .Select(v => v is decimal || v is double || v is float)
                         .FirstOrDefault()
@@ -327,7 +327,7 @@ namespace bufinscustomers.Controllers
                 foreach (var nombreColumna in resultado.Columnas)
                 {
                     var cell = worksheet.Cell(fila, col);
-                    var valor = registro.ContainsKey(nombreColumna) ? registro[nombreColumna] : null;
+                    var valor = registro.TryGetValue(nombreColumna, out object value) ? value : null;
 
                     if (valor != null)
                     {

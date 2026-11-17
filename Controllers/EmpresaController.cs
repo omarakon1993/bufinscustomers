@@ -65,7 +65,7 @@ namespace bufinscustomers.Controllers
                 logoProcesado = EmpresaLogoHelper.Procesar(datosLogo);
                 if (!logoProcesado.Ok)
                 {
-                    SetErrorMessage(string.Format(R(logoProcesado.ErrorKey), logoProcesado.ErrorArgs ?? new object[0]));
+                    SetErrorMessage(string.Format(R(logoProcesado.ErrorKey), logoProcesado.ErrorArgs ?? System.Array.Empty<object>()));
                     return RedirectToAction("Empresas");
                 }
             }

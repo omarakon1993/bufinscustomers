@@ -4,7 +4,6 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -305,7 +304,7 @@ namespace bufinscustomers.Services
                             .ToList();
                         if (tablasFaltantes.Count > 0)
                         {
-                            try { tx.Rollback(); } catch { }
+                            Helpers.TransaccionHelper.RollbackSeguro(tx);
                             return false;
                         }
 
@@ -324,7 +323,7 @@ namespace bufinscustomers.Services
                         if (evaluacion.Bloqueado)
                         {
                             bloqueo = evaluacion;
-                            try { tx.Rollback(); } catch { }
+                            Helpers.TransaccionHelper.RollbackSeguro(tx);
                             return false;
                         }
 
@@ -365,7 +364,7 @@ namespace bufinscustomers.Services
                     {
                         AppLogger.Error(ex, "HistorialVersionesCarguesService.EjecutarRollback");
                         idRespaldo = null;
-                        try { tx.Rollback(); } catch { }
+                        Helpers.TransaccionHelper.RollbackSeguro(tx);
                         return false;
                     }
                 }
@@ -578,7 +577,7 @@ namespace bufinscustomers.Services
                             gz = (byte[])cmd.ExecuteScalar();
                         }
                         var datos = JsonConvert.DeserializeObject<Dictionary<string, string>>(Descomprimir(gz));
-                        if (datos == null) { try { tx.Rollback(); } catch { } return false; }
+                        if (datos == null) { Helpers.TransaccionHelper.RollbackSeguro(tx); return false; }
 
                         var catalogo = new HashSet<string>(TablasCargueHelper.MapeoCompleto.Values, StringComparer.OrdinalIgnoreCase);
                         var tablas = datos.Keys.Where(catalogo.Contains).ToList();
@@ -588,7 +587,7 @@ namespace bufinscustomers.Services
                         if (evaluacion.Bloqueado)
                         {
                             bloqueo = evaluacion;
-                            try { tx.Rollback(); } catch { }
+                            Helpers.TransaccionHelper.RollbackSeguro(tx);
                             return false;
                         }
 
@@ -604,7 +603,7 @@ namespace bufinscustomers.Services
                     {
                         AppLogger.Error(ex, "HistorialVersionesCarguesService.RecuperarRespaldo");
                         idRespaldoNuevo = null;
-                        try { tx.Rollback(); } catch { }
+                        Helpers.TransaccionHelper.RollbackSeguro(tx);
                         return false;
                     }
                 }

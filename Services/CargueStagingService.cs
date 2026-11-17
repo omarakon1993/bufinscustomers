@@ -3,7 +3,6 @@ using bufinscustomers.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
 using System.Linq;
 
 namespace bufinscustomers.Services
@@ -536,7 +535,7 @@ namespace bufinscustomers.Services
         /// </summary>
         public int DescartarLotes(IEnumerable<long> idsLote)
         {
-            var ids = new List<long>(idsLote ?? new long[0]);
+            var ids = new List<long>(idsLote ?? Array.Empty<long>());
             if (ids.Count == 0) return 0;
             // Lista de BIGINT generada aquí (no viene del usuario): sin riesgo de inyección.
             return EjecutarBorradoDeLotes(

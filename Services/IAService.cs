@@ -3,7 +3,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Net.Http;
 using System.Runtime.Caching;
@@ -358,7 +357,7 @@ namespace bufinscustomers.Services
                 using (var md5d = MD5.Create())
                 {
                     byte[] h = md5d.ComputeHash(Encoding.UTF8.GetBytes(request.DatosJson));
-                    dataHash = BitConverter.ToString(h).Replace("-", "").Substring(0, 12).ToLowerInvariant();
+                    dataHash = Convert.ToHexString(h).Substring(0, 12).ToLowerInvariant();
                 }
             }
 
@@ -372,7 +371,7 @@ namespace bufinscustomers.Services
                 using (var md5h = MD5.Create())
                 {
                     byte[] h = md5h.ComputeHash(Encoding.UTF8.GetBytes(sbH.ToString()));
-                    historialHash = BitConverter.ToString(h).Replace("-", "").Substring(0, 8).ToLowerInvariant();
+                    historialHash = Convert.ToHexString(h).Substring(0, 8).ToLowerInvariant();
                 }
             }
 
@@ -380,7 +379,7 @@ namespace bufinscustomers.Services
             using (var md5 = MD5.Create())
             {
                 byte[] hash = md5.ComputeHash(Encoding.UTF8.GetBytes(raw));
-                return "ia_" + BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                return "ia_" + Convert.ToHexStringLower(hash);
             }
         }
 
@@ -631,7 +630,7 @@ namespace bufinscustomers.Services
                 // para identificar qué campo usa gpt-5.x cuando content es null.
                 string finishReason = choice?["finish_reason"]?.ToString() ?? "desconocido";
                 string preview      = jsonResponse.Length > 800
-                    ? jsonResponse.Substring(0, 800) + "…"
+                    ? string.Concat(jsonResponse.AsSpan(0, 800), "…")
                     : jsonResponse;
 
                 System.Diagnostics.Trace.TraceWarning(

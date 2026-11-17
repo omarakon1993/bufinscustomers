@@ -29,7 +29,7 @@ namespace bufinscustomers.Controllers
             }
             catch
             {
-                return Json(new { rssConfigurado = false, noticias = new object[0] },
+                return Json(new { rssConfigurado = false, noticias = Array.Empty<object>() },
                             JsonRequestBehavior.AllowGet);
             }
         }

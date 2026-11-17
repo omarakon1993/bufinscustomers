@@ -1,6 +1,5 @@
 using bufinscustomers.Helpers;
 using bufinscustomers.Models;
-using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,7 +49,7 @@ namespace bufinscustomers.Services
         /// <summary>problema | atencion | info | ok</summary>
         public string Nivel { get; set; }
         public string Codigo { get; set; }
-        public string[] Args { get; set; } = new string[0];
+        public string[] Args { get; set; } = Array.Empty<string>();
     }
 
     public class SaludIntegracion
