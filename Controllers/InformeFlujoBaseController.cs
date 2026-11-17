@@ -84,6 +84,7 @@ namespace bufinscustomers.Controllers
                     return Json(new { success = false, message = R("Common_SinPermisos") });
 
                 var reporte = Servicio.ConstruirReporte(filtros);
+                reporte.CajaDisponible = ConstruirCajaDisponible(filtros, reporte);
                 var jsonResult = Json(new { success = true, reporte });
                 jsonResult.MaxJsonLength = int.MaxValue;
                 return jsonResult;
@@ -92,6 +93,24 @@ namespace bufinscustomers.Controllers
             {
                 AppLogger.Error(ex, NombreControlador + ".ConsultarReporte");
                 return Json(new { success = false, message = "Error al consultar el reporte: " + MensajeError(ex) });
+            }
+        }
+
+        /// <summary>Sección «¿Cuánta plata me queda?» (solo Flujo de caja): con corte en el último mes del rango (limitado al último mes real). Si falla, el informe sigue sin ella.</summary>
+        private CajaDisponibleReporte ConstruirCajaDisponible(FiltrosFlujo filtros, FlujoReporteViewModel reporte)
+        {
+            if (TipoFlujo != FlujoTipo.Caja || reporte.SinDatos) return null;
+            try
+            {
+                return new InformeEjecutivoService().ConstruirCaja(new FiltrosEjecutivo
+                {
+                    IdEmpresa = filtros.IdEmpresa, IdEscenario = filtros.IdEscenario, Anio = reporte.AnioHasta, Mes = reporte.MesHasta
+                });
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, NombreControlador + ".ConstruirCajaDisponible");
+                return null;
             }
         }
 
@@ -261,7 +280,7 @@ namespace bufinscustomers.Controllers
                 }
 
                 _tema = ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA);
-                var bytes = GenerarExcel(reporte, soloSubtotales, out string nombreArchivo);
+                var bytes = GenerarExcel(reporte, soloSubtotales, filtros.Secciones, out string nombreArchivo);
                 return File(bytes, InformeCorreoHelper.MimeExcel, nombreArchivo);
             }
             catch (Exception ex)
@@ -298,7 +317,7 @@ namespace bufinscustomers.Controllers
                     .FirstOrDefault(e => e.Id == filtros.IdEscenario)?.Nombre ?? ("#" + filtros.IdEscenario);
 
                 _tema = ExcelTemaHelper.Resolver(filtros.Tema, filtros.TemaP, filtros.TemaS, filtros.TemaA);
-                var bytes = GenerarExcel(reporte, soloSubtotales, out string nombreArchivo);
+                var bytes = GenerarExcel(reporte, soloSubtotales, filtros.Secciones, out string nombreArchivo);
                 var adjuntos = InformeCorreoHelper.Adjuntos(nombreArchivo, bytes, InformeCorreoHelper.PdfDesdeBase64(pdfBase64));
 
                 string periodo = NombrePeriodo(reporte);
@@ -350,7 +369,7 @@ namespace bufinscustomers.Controllers
 
         /// <summary>Libro de Excel del informe (lo usan la descarga y el correo): Resumen (indicadores), Flujo mensual (con gráfico
         /// nativo), Detalle por mes y Puente de caja.</summary>
-        private byte[] GenerarExcel(FlujoReporteViewModel r, bool soloSubtotales, out string nombreArchivo)
+        private byte[] GenerarExcel(FlujoReporteViewModel r, bool soloSubtotales, string secciones, out string nombreArchivo)
         {
             string empresa = _empresaService.ObtenerEmpresas().FirstOrDefault(e => e.Id == r.IdEmpresa)?.Nombre ?? "Empresa";
             string periodo = NombrePeriodo(r);
@@ -364,6 +383,7 @@ namespace bufinscustomers.Controllers
                    hojaDetalle = R("Flujo_ExcelHojaDetalle"), hojaPuente = R("Flujo_ExcelHojaPuente");
             const string fmtNum = "#,##0;[Red]-#,##0", fmtPct = "0.0%";
             byte[] bytes;
+            bool conHojaMensual = true;
             int filaEnc = 4, colFin = 3, colPpto = 0;
             var etiquetasMes = r.Meses.Select(m => NombreMes(m.Mes).Substring(0, Math.Min(3, NombreMes(m.Mes).Length)) + " " + m.Anio + (m.Proyectado ? "*" : "")).ToList();
 
@@ -531,12 +551,34 @@ namespace bufinscustomers.Controllers
                 }
                 wsC.Column(1).Width = 44; wsC.Columns(2, 4).Width = 18;
 
+                // Sección «¿Cuánta plata me queda?» (solo Flujo de caja), si está a la vista.
+                if (TipoFlujo == FlujoTipo.Caja && SeccionesInforme.Incluye(secciones, "simple"))
+                {
+                    try
+                    {
+                        var caja = new InformeEjecutivoService().ConstruirCaja(new FiltrosEjecutivo { IdEmpresa = r.IdEmpresa, IdEscenario = r.IdEscenario, Anio = r.AnioHasta, Mes = r.MesHasta });
+                        if (caja != null && !caja.SinDatos)
+                            EjecutivoExcel.HojaCaja(wb, caja, EjecutivoExcel.Crear(R, NombreMes, titulo, empresa, ExcelLogoHelper.Obtener(r.IdEmpresa), _tema));
+                    }
+                    catch (Exception ex) { AppLogger.Error(ex, NombreControlador + ".GenerarExcel (caja disponible)"); }
+                }
+
+                // Solo las hojas de las secciones que el usuario tiene a la vista (sin filtro = todas). Si no quedara ninguna, se conserva el detalle.
+                var hojasPorSeccion = new[] { Tuple.Create("kpis", hojaResumen), Tuple.Create("mensual", hojaFlujo), Tuple.Create("tabla", hojaDetalle),
+                                              Tuple.Create("puente", hojaPuente), Tuple.Create("caja", R("Flujo_ExcelHojaCaja")) };
+                var quitar = hojasPorSeccion.Where(h => !SeccionesInforme.Incluye(secciones, h.Item1)).Select(h => h.Item2).ToList();
+                if (TipoFlujo == FlujoTipo.Caja && !SeccionesInforme.Incluye(secciones, "simple")) quitar.Add(R("CD_ExcelHoja"));
+                if (quitar.Count >= wb.Worksheets.Count) quitar.Remove(hojaDetalle);
+                foreach (var nombre in quitar) { IXLWorksheet ws; if (wb.Worksheets.TryGetWorksheet(nombre, out ws)) wb.Worksheets.Delete(nombre); }
+                conHojaMensual = !quitar.Contains(hojaFlujo);
+
                 // Logo de la empresa (si tiene) junto al título de cada hoja; sin logo el libro queda igual que siempre.
                 ExcelLogoHelper.ColocarEnTodas(wb, ExcelLogoHelper.Obtener(r.IdEmpresa));
                 using (var ms = new MemoryStream()) { wb.SaveAs(ms); bytes = ms.ToArray(); }
             }
 
             // Gráfico nativo en "Flujo mensual": barras del flujo neto (principal y, si hay, presupuesto).
+            if (conHojaMensual)
             try
             {
                 var series = new List<SerieGraficoExcel>

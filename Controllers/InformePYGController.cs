@@ -95,6 +95,7 @@ namespace bufinscustomers.Controllers
                     return Json(new { success = false, message = R("Common_SinPermisos") });
 
                 var reporte = service.ConstruirReporte(filtros);
+                reporte.Hoja = ConstruirHoja(filtros, reporte);
                 var jsonResult = Json(new { success = true, reporte });
                 jsonResult.MaxJsonLength = int.MaxValue;
                 return jsonResult;
@@ -103,6 +104,24 @@ namespace bufinscustomers.Controllers
             {
                 AppLogger.Error(ex, "InformePYGController.ConsultarReporte");
                 return Json(new { success = false, message = "Error al consultar el reporte: " + MensajeError(ex) });
+            }
+        }
+
+        /// <summary>Sección «PYG en una hoja»: el año del fin del rango, mes a mes, con corte en el último mes del rango. Si falla, el informe sigue sin ella.</summary>
+        private PygHojaReporte ConstruirHoja(FiltrosPYG filtros, PygReporteViewModel reporte)
+        {
+            try
+            {
+                if (reporte.SinDatos) return null;
+                return new InformeEjecutivoService().ConstruirPygHoja(new FiltrosEjecutivo
+                {
+                    IdEmpresa = filtros.IdEmpresa, IdEscenario = filtros.IdEscenario, Anio = reporte.AnioHasta, Mes = reporte.MesHasta
+                });
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(ex, "InformePYGController.ConstruirHoja");
+                return null;
             }
         }
 
@@ -375,6 +394,22 @@ namespace bufinscustomers.Controllers
         if (reporte.HayEscenarioComparar)
             columnas.Add(Tuple.Create<string, Func<PygFilaReporte, bool, decimal?>, string>(string.Format(R("PYG_ColVsEscenarioFmt"), nombreEscenarioComp), (f, p) => p ? f.PeriodoVariacionEscenarioPorcentual : f.AcumVariacionEscenarioPorcentual, fmtPct));
 
+        // Secciones visibles en pantalla (barra «Secciones»): sin filtro = todas. La tabla es la base del libro: si no se eligió nada más, se incluye.
+        PygHojaReporte hoja = null;
+        if (SeccionesInforme.Incluye(filtros.Secciones, "hoja"))
+        {
+            try
+            {
+                hoja = new InformeEjecutivoService().ConstruirPygHoja(new FiltrosEjecutivo
+                {
+                    IdEmpresa = filtros.IdEmpresa, IdEscenario = filtros.IdEscenario, Anio = reporte.AnioHasta, Mes = reporte.MesHasta
+                });
+                if (hoja != null && hoja.SinDatos) hoja = null;
+            }
+            catch (Exception ex) { AppLogger.Error(ex, "InformePYGController.GenerarExcel.Hoja"); }
+        }
+        bool conTabla = SeccionesInforme.Incluye(filtros.Secciones, "tabla") || hoja == null;
+
         int n = columnas.Count, totalCols = 1 + n * 2;
         var filas = reporte.Filas.Where((f, i) => !soloSubtotales || f.EsSubtotal || i == reporte.Filas.Count - 1).ToList();
 
@@ -442,6 +477,14 @@ namespace bufinscustomers.Controllers
             if (logo != null) ExcelLogoHelper.Colocar(ws, logo);
             ws.Range(2 + o, 1, fila - 1, totalCols).SetAutoFilter();
             ws.SheetView.Freeze(2 + o, 1);
+
+            if (hoja != null)
+            {
+                var ctx = EjecutivoExcel.Crear(R, NombreMes, R("PYG_PageTitle"), nombreEmpresa, logo, tema);
+                EjecutivoExcel.HojaPyg(package, hoja, ctx);
+                if (logo != null) ExcelLogoHelper.Colocar(package.Worksheet(R("PH_ExcelHoja")), logo);
+            }
+            if (!conTabla) package.Worksheets.Delete("PYG");
 
             nombreArchivo = $"PYG_{nombreEmpresa}_{reporte.AnioDesde}{reporte.MesDesde:00}-{reporte.AnioHasta}{reporte.MesHasta:00}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
             nombreArchivo = string.Join("_", nombreArchivo.Split(Path.GetInvalidFileNameChars()));

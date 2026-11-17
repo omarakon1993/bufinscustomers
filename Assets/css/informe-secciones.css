@@ -1,0 +1,17 @@
+/* Barra de secciones de un informe (Assets/js/informe-secciones.js): chips para mostrar u ocultar cada parte. */
+.secciones-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 14px; padding: 8px 12px; background: #fff; border: 1px solid #E4E1F0; border-radius: 12px; }
+.secciones-bar .sec-et { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: #16121F; white-space: nowrap; }
+.secciones-bar .sec-et i { margin-right: 6px; color: var(--tm-p, #6366F1); }
+.secciones-bar .sec-chips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1 1 auto; }
+.secciones-bar .sec-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; border: 1.5px solid #D5D1E8; background: #fff; color: #8B85A0; font-size: 12.5px; font-weight: 700; cursor: pointer; transition: background-color .25s ease, border-color .25s ease, color .25s ease, box-shadow .25s ease; }
+.secciones-bar .sec-chip .sec-chk { font-size: 10px; width: 0; opacity: 0; overflow: hidden; transition: width .2s ease, opacity .2s ease; }
+.secciones-bar .sec-chip .sec-ico { font-size: 11.5px; opacity: .7; }
+.secciones-bar .sec-chip:hover { border-color: #6366F1; color: #583AFF; }
+.secciones-bar .sec-chip.on { background: var(--tm-soft, #EEF2FF); border-color: var(--tm-p, #6366F1); color: var(--tm-strong, #583AFF); }
+.secciones-bar .sec-chip.on .sec-chk { width: 11px; opacity: 1; }
+.secciones-bar .sec-chip:focus-visible, .secciones-bar .sec-link:focus-visible { outline: 2px solid #6366F1; outline-offset: 2px; }
+.secciones-bar .sec-acc { display: flex; gap: 10px; margin-left: auto; }
+.secciones-bar .sec-link { background: none; border: 0; padding: 0; font-size: 12px; font-weight: 700; color: #583AFF; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.secciones-bar .sec-vacio { flex-basis: 100%; font-size: 12.5px; color: #8B85A0; }
+.sec-oculta { display: none !important; }
+@media (prefers-reduced-motion: reduce) { .secciones-bar .sec-chip, .secciones-bar .sec-chip .sec-chk { transition: none; } }

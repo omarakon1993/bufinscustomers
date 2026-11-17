@@ -120,8 +120,12 @@ namespace bufinscustomers.Services
         public CajaDisponibleReporte ConstruirCaja(FiltrosEjecutivo f)
         {
             int corte = Math.Min(12, Math.Max(1, f.Mes));
-            var r = new CajaDisponibleReporte { IdEmpresa = f.IdEmpresa, IdEscenario = f.IdEscenario, Anio = f.Anio, MesCorte = corte };
             var svc = new InformeFlujoService(FlujoTipo.Caja);
+            // La caja disponible solo tiene sentido con lo ejecutado: si el corte pedido es posterior al último mes real, se usa ese último mes.
+            var ult = svc.ObtenerUltimoMesReal(f.IdEmpresa, f.IdEscenario);
+            if (ult == null) return new CajaDisponibleReporte { IdEmpresa = f.IdEmpresa, IdEscenario = f.IdEscenario, Anio = f.Anio, MesCorte = corte, SinDatos = true };
+            if (f.Anio * 12 + corte > ult.Anio * 12 + ult.Mes) { f = new FiltrosEjecutivo { IdEmpresa = f.IdEmpresa, IdEscenario = f.IdEscenario, Anio = ult.Anio, Mes = ult.Mes }; corte = ult.Mes; }
+            var r = new CajaDisponibleReporte { IdEmpresa = f.IdEmpresa, IdEscenario = f.IdEscenario, Anio = f.Anio, MesCorte = corte };
 
             // 1) Lo real del año hasta el corte: de dónde vino y a dónde se fue la plata, y la caja con la que se llega.
             var real = svc.ConstruirReporte(new FiltrosFlujo

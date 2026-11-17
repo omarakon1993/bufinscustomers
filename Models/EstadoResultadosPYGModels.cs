@@ -23,6 +23,9 @@ namespace bufinscustomers.Models
         public string Agrupar { get; set; } = "Mes";
 
         // Paleta del informe (ver TemaInforme): el servidor re-resuelve y valida; vacío = Bufins.
+        /// <summary>Secciones visibles en pantalla que se incluyen en Excel y correo (ids separados por coma; vacío = todas). Ver SeccionesInforme.</summary>
+        public string Secciones { get; set; }
+
         public string Tema { get; set; }
         public string TemaP { get; set; }
         public string TemaS { get; set; }
@@ -206,6 +209,9 @@ namespace bufinscustomers.Models
         /// controla si la comparación interanual (YoY) se puede mostrar.</summary>
         public bool HayAnioAnterior { get; set; }
         public int AnioAnterior { get; set; }
+
+        /// <summary>Sección «PYG en una hoja» (mismo corte que el fin del rango). La llena el controlador al consultar; null si no se pudo armar.</summary>
+        public PygHojaReporte Hoja { get; set; }
 
         public bool SinDatos { get; set; }
         public string Mensaje { get; set; }

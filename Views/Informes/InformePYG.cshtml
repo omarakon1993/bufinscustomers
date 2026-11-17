@@ -11,6 +11,8 @@
 <link href="~/Assets/css/informe-linea-tiempo.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-pyg.css")" rel="stylesheet" />
 <link href="~/Assets/css/export-menu.css" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-secciones.css")" rel="stylesheet" />
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/informe-ejecutivo.css")" rel="stylesheet" />
 <link href="~/Assets/css/doc-visor.css" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/empresa-logo.css")" rel="stylesheet" />
 <link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/tema-informe.css")" rel="stylesheet" />
@@ -29,7 +31,6 @@
         </div>
     </div>
 
-    @await Html.PartialAsync("_VistasInforme", new bufinscustomers.Models.VistasInformeVM { Familia = "pyg", Actual = "analisis", EmpresaSel = "#pygEmpresa", EscenarioSel = "#pygEscenario" })
     @Html.AntiForgeryToken()
 
     <div class="filter-card">
@@ -213,8 +214,11 @@
             <div id="pygExpCampos"></div>@* los llena el botón Excel con los filtros del reporte consultado *@
         </form>
 
+        @* Barra de secciones: el usuario elige qué partes del informe ver (y qué se exporta) *@
+        <div id="pygSecBarra"></div>
+
         @* 2. KPIs *@
-        <div class="pyg2-section">
+        <div class="pyg2-section" id="pygSecKpis">
             <div class="pyg2-section-title">
                 <span class="t">@Resources.Strings.PYG_V2_IndicadoresClave</span><span class="line"></span>
                 <div class="pyg2-seg" id="pygSegKpi">
@@ -226,7 +230,7 @@
         </div>
 
         @* 3. Cascada + Lo más relevante *@
-        <div class="pyg2-analysis">
+        <div class="pyg2-analysis" id="pygSecCascada">
             <div class="pyg2-card">
                 <div class="pyg2-card-head">
                     <div>
@@ -252,7 +256,7 @@
         </div>
 
         @* 4. Tendencias *@
-        <div class="pyg2-section">
+        <div class="pyg2-section" id="pygSecTend">
             <div class="pyg2-section-title">
                 <span class="t"><span id="pygTendTitulo">@Resources.Strings.PYG_V2_TendenciaTitulo</span> <span id="pygTendAnio"></span></span><span class="line"></span>
                 <span class="pyg2-legend">
@@ -288,7 +292,7 @@
         </div>
 
         @* 5. Tabla detallada *@
-        <div class="pyg2-table-card">
+        <div class="pyg2-table-card" id="pygSecTabla">
             <div class="pyg2-card-head" style="align-items:center">
                 <div>
                     <div class="pyg2-card-title">@Resources.Strings.PYG_V2_TablaTitulo</div>
@@ -315,6 +319,17 @@
         <p class="lt-help" id="pygNotaSinAnterior" style="display:none;"></p>
         <p class="lt-help" id="pygNotaEscenario" style="display:none;"></p>
 
+        @* Sección «PYG en una hoja»: el año mes a mes (hasta el fin del rango), con acumulado y AV % *@
+        <div class="pyg2-table-card" id="pygSecHoja" style="margin-top:14px">
+            <div class="pyg2-card-head" style="align-items:center">
+                <div>
+                    <div class="pyg2-card-title"><i class="fas fa-table-cells"></i>@Resources.Strings.PH_PageTitle</div>
+                    <div class="pyg2-card-sub">@Resources.Strings.PH_Subtitulo</div>
+                </div>
+            </div>
+            <div id="pygHojaCuerpo"></div>
+        </div>
+
         @* Desglose por línea de negocio del mismo rango (solo si la empresa tiene líneas en dbo.ModeloLineasNegocio) *@
         <div class="pyg2-table-card" id="pygLineasCard" style="display:none;margin-top:14px">
             <div class="pyg2-card-head" style="align-items:center">
@@ -337,7 +352,7 @@
 
         @if (bufinscustomers.Helpers.IAModuloHelper.Visible())
         {
-        <div class="pyg-insights-card">
+        <div class="pyg-insights-card" id="pygSecIa">
             <div class="pyg-insights-head">
                 <div>
                     <span class="pyg-insights-title"><i class="fas fa-wand-magic-sparkles"></i>@Resources.Strings.PYG_InsightsTitulo</span>
@@ -378,6 +393,7 @@
 @await Html.PartialAsync("_DocumentacionVisor", Resources.Strings.PYG_Doc_ModalTitulo)
 
 @section scripts {
+@await Html.PartialAsync("_SeccionesConfig")
 <script src="~/Assets/js/select2/select2.min.js"></script>
 <script src="~/Assets/js/chart.umd.min.js"></script>
 <script src="~/Assets/js/jspdf.umd.min.js"></script>
@@ -387,6 +403,8 @@
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-tema.js")"></script>
 <script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/comentarios-gestion.js")"></script>
 <script src="~/Assets/js/export-menu.js"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-secciones.js")"></script>
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/informe-vistas.js")"></script>
 <script src="~/Assets/js/doc-visor.js"></script>
 <script src="~/Assets/js/bufins-markdown.js"></script>
 <script src="~/Assets/js/rango-atajos.js"></script>
@@ -1010,6 +1028,7 @@
     function pintarLineasNegocioPYG(r) {
         var $card = $('#pygLineasCard');
         $card.toggle(!!r.HayLineasNegocio);
+        if (_pygSecc) _pygSecc.disponible('lineas', !!r.HayLineasNegocio);
         if (!r.HayLineasNegocio) return;
         var X = _pyg.textos.ln;
         $('#pygLineasHead').html('<tr><th class="col-cuenta">' + escHtml(X.linea) + '</th><th>' + escHtml(X.ingresos) + '</th><th>' + escHtml(X.pctIngresos) + '</th><th>' +
@@ -1023,10 +1042,40 @@
         }).join(''));
     }
 
+    // ---- Secciones del informe (barra para mostrar/ocultar; lo visible es lo que se exporta) ----
+    var _pygSecc = null;
+
+    function fmtSecNum(v, conSufijo) {
+        if (v === null || v === undefined) return CH_MDASH;
+        var escalado = escalarValor(v), d = _pyg.unidad === 'pesos' ? 0 : 1;
+        try { return new Intl.NumberFormat(_pyg.cultura, { minimumFractionDigits: d, maximumFractionDigits: d }).format(escalado) + (conSufijo ? sufijoUnidad() : ''); }
+        catch (e) { return escalado + (conSufijo ? sufijoUnidad() : ''); }
+    }
+    // Contexto que usan las secciones compartidas (Assets/js/informe-vistas.js).
+    function contextoSecciones(extra) {
+        return $.extend({
+            fmt: fmtSecNum, fmtPct: fmtPct, fmtVar: fmtPctVar,
+            nombreMes: function (m) { return (_pyg.mesesCache[m - 1] || {}).nombre || String(m); },
+            abrevMes: function (m) { return (_pyg.mesesCache[m - 1] || {}).abrev || String(m); },
+            unidadBadge: function () { return _pyg.textos.unidadBadge[_pyg.unidad]; },
+            nombreTramo: function (c) { return SEC_CFG.tramos[c] || c; },
+            T: { ph: SEC_CFG.ph, cd: SEC_CFG.cd, sinSeccion: SEC_CFG.sinSeccion }
+        }, extra || {});
+    }
+    function seccionVisible(id) { return !_pygSecc || _pygSecc.visible(id); }
+    function seccionesParaServidor() { return _pygSecc ? (_pygSecc.visibles().join(',') || '-') : ''; }
+
+    function pintarSeccionHoja(r) {
+        var hay = !!(r.Hoja && !r.Hoja.SinDatos && r.Hoja.Filas && r.Hoja.Filas.length);
+        if (_pygSecc) _pygSecc.disponible('hoja', hay);
+        $('#pygHojaCuerpo').html(hay ? InformeVistas.htmlPyg(r.Hoja, contextoSecciones()) : '');
+    }
+
     // Repinta todo lo que depende de la unidad / de las vistas elegidas, sin volver a consultar.
     function repintarConUnidadActual() {
         var r = _pyg.reporteActual;
         if (!r) return;
+        pintarSeccionHoja(r);
         $('#pygUnidadLbl').text(_pyg.textos.unidades[_pyg.unidad]);
         $('#pygMenuUnidad button').each(function () {
             var on = $(this).data('unidad') === _pyg.unidad;
@@ -1794,8 +1843,14 @@
             xc += pildora(c.t, xc, y, c.fg || C.texto2, c.bg || C.suave, !!c.b) + 3;
         });
 
+        // Secciones visibles (barra «Secciones»): el PDF lleva lo mismo que está en pantalla.
+        var paginaUsada = false;   // la primera página ya tiene contenido (más allá de la portada)
+        function paginaNueva(seccion) { if (!paginaUsada) { paginaUsada = true; return; } nuevaPagina(seccion); }
+
         // KPIs
         y += 12;
+        if (seccionVisible('kpis')) {
+        paginaUsada = true;
         var vistaKpi = _pyg.kpiVista === 'acum' ? P.acumulado : P.periodo;
         tituloSeccion(P.indicadores + '  ' + CH_MIDDOT + '  ' + vistaKpi, y);
         y += 4;
@@ -1834,8 +1889,11 @@
             });
         });
         y += hK + 11;
+        }
 
         // Insights gerenciales (IA)
+        if (seccionVisible('ia')) {
+        paginaUsada = true;
         var metaInsights = _pyg.insightsTexto ? $('#pygInsightsMeta').text() : '';
         tituloSeccion(P.insightsTitulo, y, metaInsights);
         y += 4;
@@ -1885,10 +1943,12 @@
             pdf.text(pdf.splitTextToSize(P.sinInsights, ANCHO - 10), M + 5, y + 7.5);
             y += 12;
         }
+        }
 
         // Lo más relevante (en la página 1 para completar el resumen ejecutivo): 4 tarjetas en una fila.
-        var top = datosDestacadosPYG(r);
+        var top = seccionVisible('cascada') ? datosDestacadosPYG(r) : [];
         if (top.length) {
+            paginaUsada = true;
             var hRel = 27;
             if (y + 15 + hRel > LIMITE_Y) nuevaPagina(P.resumen); else y += 11;
             tituloSeccion(P.relevanteTitulo, y, $('#pygRelevanteSub').text());
@@ -1918,9 +1978,10 @@
         // =====================================================================
         // PÁGINA 2 — Análisis del período: cascada (ancho completo) + tendencias
         // =====================================================================
-        nuevaPagina(P.analisis);
+        if (seccionVisible('cascada') || seccionVisible('tendencia')) paginaNueva(P.analisis);
         var hA = 94, MM_A_PX = 4;   // las gráficas se re-renderizan a la proporción exacta de su caja
 
+        if (seccionVisible('cascada')) {
         tarjeta(M, y, ANCHO, hA);
         fuente('bold', 10, C.texto);
         pdf.text(P.cascadaTitulo, M + 5, y + 8);
@@ -1944,8 +2005,10 @@
         var wImgC = ANCHO - 10, hImgC = hA - 21;
         imagenAjustada(capturarChartPdf(_pyg.charts['pygChartCascada'], wImgC * MM_A_PX, hImgC * MM_A_PX), M + 5, y + 17, wImgC, hImgC);
         y += hA + 11;
+        }
 
         // Tendencias (leyenda con muestras de línea de color)
+        if (seccionVisible('tendencia')) {
         var leyTend = [{ t: v2.real, c: C.marca }, { t: $('#pygLeyendaComp').text(), c: C.ambar, punteada: true }];
         if (r.HayEscenarioComparar) leyTend.push({ t: $('#pygLeyendaEscNombre').text(), c: C.cian });
         tituloSeccion($('#pygTendTitulo').text() + ' ' + $('#pygTendAnio').text(), y, leyTend);
@@ -1966,13 +2029,15 @@
             }
             imagenAjustada(capturarChartPdf(_pyg.charts['pygChart' + clave], wImgT * MM_A_PX, hImgT * MM_A_PX), x + 3, y + 17, wImgT, hImgT);
         });
+        }
 
         // =====================================================================
         // PÁGINA 3+ — Estado de resultados detallado (misma vista que en pantalla)
         // =====================================================================
-        nuevaPagina(P.tablaTitulo);
+        if (seccionVisible('tabla')) {
+        paginaNueva(P.tablaTitulo);
         fuente('normal', 7.5, C.muted);
-        pdf.text(T.unidadBadge[_pyg.unidad], W - M, 21, { align: 'right' });
+        pdf.text(T.unidadBadge[_pyg.unidad], W - M, pdf.internal.getCurrentPageInfo().pageNumber === 1 ? y - 3 : 21, { align: 'right' });
 
         var yoy = yoyVisible(), conEsc = !!r.HayEscenarioComparar;
         var bloques = _pyg.vistaTabla === 'ambos' ? ['Periodo', 'Acum'] : [_pyg.vistaTabla === 'acum' ? 'Acum' : 'Periodo'];
@@ -2091,6 +2156,45 @@
             pdf.text(l.t, xLey + 3, y);
             xLey += ancho(l.t) + 9;
         });
+        }
+
+        // Secciones adicionales (las mismas que se ven en pantalla): PYG en una hoja, líneas de negocio y comentarios de gestión.
+        var kv = contextoSecciones({
+            Co: C, M: M, ANCHO: ANCHO, LIMITE_Y: LIMITE_Y, degradado: degradado,
+            nuevaPagina: function () { nuevaPagina(''); return y; }
+        });
+        if (seccionVisible('hoja') && r.Hoja && !r.Hoja.SinDatos) {
+            paginaNueva(SEC_CFG.titulos.pygHoja);
+            y = InformeVistas.pdfPyg(pdf, kv, r.Hoja, y);
+        }
+        if (seccionVisible('lineas') && r.HayLineasNegocio) {
+            paginaNueva(SEC_CFG.titulos.pygLineas);
+            var X = _pyg.textos.ln, todasLn = r.LineasNegocio.concat([r.LineasNegocioTotal]);
+            var colsLn = [{ t: X.linea, x: M + 3, izq: true }, { t: X.ingresos, x: M + 95 }, { t: X.pctIngresos, x: M + 125 }, { t: X.margenBruto, x: M + 155 }, { t: X.margenOperacional, x: M + 190 }, { t: X.utilNeta, x: M + ANCHO - 3 }];
+            rgb('setFillColor', C.marca); pdf.rect(M, y - 4.3, ANCHO, 6.3, 'F'); fuente('bold', 7.5, C.blanco);
+            colsLn.forEach(function (c) { pdf.text(c.t.toUpperCase(), c.x, y, c.izq ? undefined : { align: 'right' }); });
+            y += 6;
+            todasLn.forEach(function (l, i) {
+                if (y > LIMITE_Y) { nuevaPagina(''); }
+                var total = i === todasLn.length - 1;
+                fuente(total ? 'bold' : 'normal', 8.3, total ? C.texto : C.texto2);
+                pdf.text(total ? X.total : l.Nombre, M + 3, y);
+                pdf.text(fmtNum(l.Ingresos), M + 95, y, { align: 'right' }); pdf.text(fmtPct(l.PctIngresos), M + 125, y, { align: 'right' });
+                pdf.text(fmtPct(l.MargenBruto), M + 155, y, { align: 'right' }); pdf.text(fmtPct(l.MargenOperacional), M + 190, y, { align: 'right' });
+                pdf.text(fmtNum(l.UtilidadNeta), M + ANCHO - 3, y, { align: 'right' });
+                rgb('setDrawColor', C.linea); pdf.setLineWidth(0.15); pdf.line(M, y + 1.8, M + ANCHO, y + 1.8); y += 6;
+            });
+        }
+        var comsPdf = (seccionVisible('comentarios') && window.ComentariosGestion) ? ComentariosGestion.ultimos() : [];
+        if (comsPdf.length) {
+            paginaNueva(SEC_CFG.titulos.comentarios);
+            comsPdf.slice(0, 8).forEach(function (c) {
+                fuente('normal', 8.2, C.texto2);
+                var lins = pdf.splitTextToSize(limpiar(((c.Clave ? c.Clave + ': ' : '') + c.Texto) + '  - ' + c.NombreUsuario), ANCHO - 10).slice(0, 3), hC = lins.length * 4 + 5;
+                if (y + hC > LIMITE_Y) nuevaPagina('');
+                tarjeta(M, y, ANCHO, hC); pdf.text(lins, M + 5, y + 6, { lineHeightFactor: 1.3 }); y += hC + 2;
+            });
+        }
 
         // Pie de página en todas las páginas (se agrega al final para conocer el total)
         var totalPags = pdf.internal.getNumberOfPages();
@@ -2114,6 +2218,21 @@
 
     $(document).ready(function () {
         ComentariosGestion.montar({ raiz: '#pygComentarios', informe: 'PYG' });
+        var SC = SEC_CFG.titulos;
+        _pygSecc = InformeSecciones.montar({
+            barra: '#pygSecBarra', clave: 'pyg', textos: SEC_CFG.barra,
+            secciones: [
+                { id: 'kpis', titulo: SC.kpis, icono: 'fa-gauge-high', el: ['#pygSecKpis'] },
+                { id: 'cascada', titulo: SC.pygCascada, icono: 'fa-bolt', el: ['#pygSecCascada'] },
+                { id: 'tendencia', titulo: SC.pygTendencia, icono: 'fa-chart-line', el: ['#pygSecTend'] },
+                { id: 'tabla', titulo: SC.tabla, icono: 'fa-table', el: ['#pygSecTabla', '#pygNotaSinAnterior', '#pygNotaEscenario'] },
+                { id: 'hoja', titulo: SC.pygHoja, icono: 'fa-table-cells', el: ['#pygSecHoja'] },
+                { id: 'lineas', titulo: SC.pygLineas, icono: 'fa-sitemap', el: ['#pygLineasCard'] },
+                { id: 'comentarios', titulo: SC.comentarios, icono: 'fa-comments', el: ['#pygComentarios'] },
+                { id: 'ia', titulo: SC.ia, icono: 'fa-wand-magic-sparkles', el: ['#pygSecIa'] }
+            ]
+        });
+        _pygSecc.disponible('ia', $('#pygSecIa').length > 0);
         _pyg.escenarios = $('#pygEscenario option').map(function () {
             return { id: Number(this.value), nombre: $(this).text() };
         }).get().filter(function (e) { return e.id > 0; });
@@ -2184,7 +2303,7 @@
         // Excel con los mismos filtros del reporte en pantalla (no los del panel, que pudieron cambiar).
         function exportarExcelPYG() {
             if (!_pyg.filtrosConsultados) return;
-            var campos = $.extend({}, _pyg.filtrosConsultados, { soloSubtotales: $('#pygNivelDetalle').val() === 'subtotales' });
+            var campos = $.extend({}, _pyg.filtrosConsultados, { soloSubtotales: $('#pygNivelDetalle').val() === 'subtotales', Secciones: seccionesParaServidor() });
             var $c = $('#pygExpCampos').empty();
             Object.keys(campos).forEach(function (k) {
                 $c.append($('<input type="hidden">').attr('name', k).val(campos[k] == null ? '' : campos[k]));
@@ -2212,7 +2331,7 @@
             url: '@Url.Action("EnviarPorCorreo", "InformePYG")',
             token: function () { return _pyg.token; },
             // Mismos filtros que el Excel: el servidor reconstruye el informe (no confía en cifras del navegador).
-            datos: function () { return $.extend({}, _pyg.filtrosConsultados, { soloSubtotales: $('#pygNivelDetalle').val() === 'subtotales' }); },
+            datos: function () { return $.extend({}, _pyg.filtrosConsultados, { soloSubtotales: $('#pygNivelDetalle').val() === 'subtotales', Secciones: seccionesParaServidor() }); },
             pdf: function () { var d = construirPdfPYG(_pyg.reporteActual); return d ? d.output('datauristring') : ''; },
             pills: function () { return [$('#pygTituloEmpresa').text()].concat($('#pygPanelResultado .pyg2-chip').map(function () { return $(this).text(); }).get()); },
             textos: EXP_T

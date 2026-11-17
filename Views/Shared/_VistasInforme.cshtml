@@ -1,18 +1,10 @@
 @model bufinscustomers.Models.VistasInformeVM
 @{
-    // Vistas de cada familia de informes: (clave, texto, controlador). Las vistas «una hoja», «vista simple» y «versión para comité» son
-    // modos de PYG, Flujo de caja y Gerencia mensual (comparten empresa, escenario, tema, logo y exportaciones).
+    // Vistas de una familia de informes: (clave, texto, controlador, icono). Hoy solo Gerencia mensual (Resumen mensual | Versión para comité); PYG y Flujo de caja
+    // integran sus vistas como secciones de la misma pantalla (barra «Secciones»).
     var items = new List<(string clave, string texto, string controlador, string icono)>();
     switch (Model.Familia)
     {
-        case "pyg":
-            items.Add(("analisis", Resources.Strings.Vistas_PygAnalisis, "InformePYG", "fa-chart-line"));
-            items.Add(("hoja", Resources.Strings.Vistas_PygHoja, "InformePygHoja", "fa-table-cells"));
-            break;
-        case "caja":
-            items.Add(("flujo", Resources.Strings.Vistas_CajaFlujo, "InformeFlujoCaja", "fa-money-bill-wave"));
-            items.Add(("simple", Resources.Strings.Vistas_CajaSimple, "InformeCajaDisponible", "fa-wallet"));
-            break;
         case "gerencia":
             items.Add(("resumen", Resources.Strings.Vistas_GerResumen, "InformeGerenciaMensual", "fa-file-lines"));
             items.Add(("comite", Resources.Strings.Vistas_GerComite, "InformeComite", "fa-file-signature"));

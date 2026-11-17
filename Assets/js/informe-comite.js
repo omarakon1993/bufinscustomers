@@ -1,8 +1,8 @@
 /*
- * Informes ejecutivos de un mes de corte — comportamiento compartido (PYG en una hoja · ¿Cuánta plata me queda? · Informe para comité).
- * Lo configura la vista Views/Informes/InformeEjecutivo.cshtml con window.EJ_CFG (tipo = hoja | caja | comite, urls, textos ya traducidos).
- * Las cifras llegan listas del servidor (InformeEjecutivoService): aquí solo se pintan, se exportan a PDF/imagen y se envían por correo.
- * Excel y correo se reconstruyen en el servidor (nunca se confía en cifras del navegador).
+ * Versión para comité del Informe mensual de gerencia: el cierre de un mes armado como documento para presentar, decidir y firmar.
+ * Lo configura la vista Views/Informes/InformeComite.cshtml con window.EJ_CFG (urls, textos ya traducidos).
+ * Las secciones «PYG en una hoja» y «¿Cuánta plata me queda?» se pintan con Assets/js/informe-vistas.js (las mismas del informe de PYG y del Flujo de caja).
+ * Las cifras llegan listas del servidor (InformeEjecutivoService); Excel y correo se reconstruyen en el servidor (nunca se confía en cifras del navegador).
  */
 (function () {
     'use strict';
@@ -104,97 +104,21 @@
         var r = S.reporte; if (!r) return;
         $('#ejUnidadLbl').text(T.unidades[S.unidad]);
         $('#ejMenuUnidad button').each(function () { var on = $(this).data('unidad') === S.unidad; $(this).toggleClass('on', on).attr('aria-checked', on ? 'true' : 'false'); });
-        var html;
-        if (C.tipo === 'caja') html = htmlCaja(r);
-        else if (C.tipo === 'comite') html = htmlComite(r);
-        else html = '<div class="pyg2-card"><div class="pyg2-card-head"><div><div class="pyg2-card-title"><i class="fas fa-table-cells"></i>' + esc(T.titulo) + '</div></div></div>' + htmlPyg(r) + '</div>';
-        $('#ejCuerpo').html(html);
+        $('#ejCuerpo').html(htmlComite(r));
     }
 
-    // ---------- PYG en una hoja ----------
-    function claseVar(fila, v) {
-        if (v === null || v === undefined || v === 0) return '';
-        var favorable = fila.EsGastoOCosto ? v < 0 : v > 0;
-        return favorable ? 'pos' : 'neg';
+    // ---------- Secciones compartidas (PYG en una hoja, caja) ----------
+    function ctxVistas(extra) {
+        return $.extend({
+            fmt: fmt, fmtPct: fmtPct, fmtVar: fmtVar, nombreMes: nombreMes, abrevMes: abrevMes, nombreTramo: nombreTramo,
+            unidadBadge: function () { return T.unidadBadge[S.unidad]; },
+            T: { ph: T.ph, cd: T.cd, sinSeccion: T.sinSeccion }
+        }, extra || {});
     }
-
-    function htmlPyg(r) {
-        var P = T.ph, h = '<div class="ej-hoja-wrap"><table class="ej-hoja"><thead><tr><th>' + esc(P.concepto) + '</th>';
-        for (var m = 1; m <= 12; m++) h += '<th>' + esc(abrevMes(m)) + '</th>';
-        h += '<th class="sep">' + esc(P.acum) + '</th><th>' + esc(P.av) + '</th>';
-        if (r.HayPresupuesto) h += '<th class="sep">' + esc(P.ppto) + '</th><th>' + esc(P.varPpto) + '</th>';
-        if (r.HayAnioAnterior) h += '<th class="sep">' + esc(P.anioAnt) + '</th><th>' + esc(P.varAnio) + '</th>';
-        h += '</tr></thead><tbody>';
-        r.Filas.forEach(function (f) {
-            h += '<tr' + (f.EsSubtotal ? ' class="sub"' : '') + '><td>' + esc(f.Descripcion) + '</td>';
-            f.Meses.forEach(function (v) { h += v === null ? '<td class="vacio">' + MDASH + '</td>' : '<td>' + esc(fmt(v)) + '</td>'; });
-            h += '<td class="sep">' + esc(fmt(f.Acumulado)) + '</td><td>' + esc(fmtPct(f.Av)) + '</td>';
-            if (r.HayPresupuesto) h += '<td class="sep">' + esc(fmt(f.AcumPresupuesto)) + '</td><td class="' + claseVar(f, f.VarPresupuesto) + '">' + esc(fmtVar(f.VarPresupuesto)) + '</td>';
-            if (r.HayAnioAnterior) h += '<td class="sep">' + esc(f.AcumAnioAnterior === null ? MDASH : fmt(f.AcumAnioAnterior)) + '</td><td class="' + claseVar(f, f.VarAnioAnterior) + '">' + esc(fmtVar(f.VarAnioAnterior)) + '</td>';
-            h += '</tr>';
-        });
-        h += '</tbody></table></div><div class="ej-nota">' + esc(P.nota.replace('{0}', T.unidadBadge[S.unidad])) + '</div>';
-        return h;
-    }
-
-    // ---------- ¿Cuánta plata me queda? ----------
-    function htmlHero(r) {
-        var P = T.cd, h = '<div class="ej-hero">';
-        h += '<div class="ej-hero-card"><div class="ej-hero-et">' + esc(P.inicio) + '</div><div class="ej-hero-val">' + esc(r.HayCajaInicial ? fmt(r.CajaInicial, true) : MDASH) + '</div><div class="ej-hero-sub">' + esc(P.inicioSub) + '</div></div>';
-        h += '<div class="ej-hero-card principal"><div class="ej-hero-et">' + esc(P.hoyFmt.replace('{0}', nombreMes(r.MesCorte))) + '</div><div class="ej-hero-val' + (r.HayCajaCorte && r.CajaCorte < 0 ? ' neg' : '') + '">' + esc(r.HayCajaCorte ? fmt(r.CajaCorte, true) : MDASH) + '</div><div class="ej-hero-sub">' + esc(P.hoySub) + '</div></div>';
-        h += '<div class="ej-hero-card"><div class="ej-hero-et">' + esc(P.proy) + '</div><div class="ej-hero-val' + (r.HayProyeccion && r.CajaProyectada < 0 ? ' neg' : '') + '">' + esc(r.HayProyeccion ? fmt(r.CajaProyectada, true) : MDASH) + '</div><div class="ej-hero-sub">' + esc(r.HayProyeccion ? P.proySub : P.sinProy) + '</div></div>';
-        return h + '</div>';
-    }
-
-    function htmlEstadoCaja(r) {
-        var P = T.cd, h = '';
-        if (!r.HayCajaInicial) return '<div class="ej-estado aviso">' + esc(P.sinBalance) + '</div>';
-        if (r.HayProyeccion) {
-            if (r.MesesEnDeficit > 0) h += '<div class="ej-estado mal">' + esc(P.estadoDeficitFmt.replace('{0}', r.MesesEnDeficit).replace('{1}', fmt(r.CajaMinima, true)).replace('{2}', nombreMes(r.MesMinimo))) + '</div>';
-            else h += '<div class="ej-estado ok">' + esc(P.estadoOk) + ' ' + esc(P.minimoFmt.replace('{0}', fmt(r.CajaMinima, true)).replace('{1}', nombreMes(r.MesMinimo))) + '</div>';
-        }
-        if (!r.Cuadra) h += '<div class="ej-estado aviso">' + esc(P.noCuadra) + '</div>';
-        return h;
-    }
-
-    function htmlPuente(r) {
-        var P = T.cd;
-        function it(et, v) { return '<span class="it"><small>' + esc(et) + '</small>' + esc(fmt(v, true)) + '</span>'; }
-        return '<div class="ej-puente">' + (r.HayCajaInicial ? it(P.inicio, r.CajaInicial) : '') + '<span class="op">+</span>' + it(P.entradas, r.TotalFuentes) +
-            '<span class="op">&minus;</span>' + it(P.salidas, Math.abs(r.TotalUsos)) + (r.HayCajaCorte ? '<span class="op">=</span>' + it(P.hoyFmt.replace('{0}', nombreMes(r.MesCorte)), r.CajaCorte) : '') + '</div>';
-    }
-
-    function htmlTramos(r) {
-        var P = T.cd, max = 1;
-        r.Tramos.forEach(function (t) { max = Math.max(max, Math.abs(t.Valor)); });
-        function col(tipo, titulo) {
-            var h = '<div class="pyg2-card"><div class="pyg2-card-head"><div><div class="pyg2-card-title"><i class="fas fa-' + (tipo === 'fuente' ? 'arrow-down' : 'arrow-up') + '"></i>' + esc(titulo) + '</div></div></div>';
-            var n = 0;
-            r.Tramos.filter(function (t) { return t.Tipo === tipo; }).forEach(function (t) {
-                n++;
-                h += '<div class="ej-barra-fila"><div class="ej-barra-top"><span>' + esc(nombreTramo(t.Codigo)) + '</span><b>' + esc(fmt(Math.abs(t.Valor), true)) + '</b></div>' +
-                    '<div class="ej-barra ' + tipo + '"><i style="width:' + Math.max(2, Math.round(Math.abs(t.Valor) / max * 100)) + '%"></i></div></div>';
-            });
-            if (!n) h += '<div class="pyg2-hl-empty">' + esc(T.sinSeccion) + '</div>';
-            return h + '</div>';
-        }
-        return '<div class="ej-tramos">' + col('fuente', P.entradas) + col('uso', P.salidas) + '</div>';
-    }
-
-    function htmlMeses(r) {
-        var P = T.cd;
-        if (!r.Meses.length) return '';
-        var h = '<div class="pyg2-card ej-bloque"><div class="pyg2-card-head"><div><div class="pyg2-card-title"><i class="fas fa-calendar-days"></i>' + esc(P.mesesTitulo) + '</div></div></div>' +
-            '<table class="ej-meses"><thead><tr><th>' + esc(P.colMes) + '</th><th>' + esc(P.colFlujo) + '</th><th>' + esc(P.colCaja) + '</th><th>' + esc(P.colTipo) + '</th></tr></thead><tbody>';
-        r.Meses.forEach(function (m) {
-            h += '<tr' + (m.Proyectado ? ' class="proy"' : '') + '><td>' + esc(nombreMes(m.Mes)) + '</td><td>' + esc(fmt(m.Flujo)) + '</td><td' + (m.CajaFin < 0 ? ' class="neg"' : '') + '>' + esc(fmt(m.CajaFin)) + '</td><td>' + esc(m.Proyectado ? P.proyectado : P.real) + '</td></tr>';
-        });
-        return h + '</tbody></table></div>';
-    }
-
-    function htmlCaja(r) {
-        return htmlHero(r) + htmlPuente(r) + htmlEstadoCaja(r) + htmlTramos(r) + htmlMeses(r);
-    }
+    function htmlPyg(r) { return InformeVistas.htmlPyg(r, ctxVistas()); }
+    function htmlHero(r) { return InformeVistas.htmlHero(r, ctxVistas()); }
+    function htmlPuente(r) { return InformeVistas.htmlPuente(r, ctxVistas()); }
+    function htmlEstadoCaja(r) { return InformeVistas.htmlEstadoCaja(r, ctxVistas()); }
 
     // ---------- Informe para comité ----------
     function nombreIndicador(c) { return T.co.indNombres[c] || c; }
@@ -322,113 +246,12 @@
         });
         y += 10;
 
-        // ----- bloques reutilizables -----
-        function pdfPyg(p) {
-            var Q = T.ph, cols = [], x = M;
-            var wConc = 44, wMes = 11.5, wAcum = 17, wAv = 11, wPp = 17, wVar = 11;
-            var enc = [{ t: Q.concepto, w: wConc, izq: true }];
-            for (var m = 1; m <= 12; m++) enc.push({ t: abrevMes(m), w: wMes });
-            enc.push({ t: Q.acum, w: wAcum }, { t: Q.av, w: wAv });
-            if (p.HayPresupuesto) enc.push({ t: Q.ppto, w: wPp }, { t: Q.varPpto, w: wVar });
-            if (p.HayAnioAnterior) enc.push({ t: Q.anioAnt, w: wPp }, { t: Q.varAnio, w: wVar });
-            var total = enc.reduce(function (a, c) { return a + c.w; }, 0), k = Math.min(1, ANCHO / total);
-            enc.forEach(function (c) { c.w *= k; });
-            asegurar(14);
-            rgb('setFillColor', Co.morado); pdf.rect(M, y - 4.2, ANCHO, 6, 'F');
-            fuente('bold', 6.6, Co.blanco); x = M;
-            enc.forEach(function (c) { if (c.izq) pdf.text(c.t.toUpperCase(), x + 1.5, y); else pdf.text(c.t.toUpperCase(), x + c.w - 1, y, { align: 'right' }); x += c.w; });
-            y += 5.6;
-            p.Filas.forEach(function (f) {
-                asegurar(5.2);
-                if (f.EsSubtotal) { rgb('setFillColor', Co.suave); pdf.rect(M, y - 3.6, ANCHO, 4.8, 'F'); }
-                fuente(f.EsSubtotal ? 'bold' : 'normal', 6.8, f.EsSubtotal ? Co.texto : Co.texto2);
-                var vals = [{ t: f.Descripcion, izq: true }];
-                f.Meses.forEach(function (v) { vals.push({ t: v === null ? MDASH : fmt(v) }); });
-                vals.push({ t: fmt(f.Acumulado) }, { t: fmtPct(f.Av) });
-                if (p.HayPresupuesto) vals.push({ t: fmt(f.AcumPresupuesto) }, { t: fmtVar(f.VarPresupuesto), v: f.VarPresupuesto, f: f });
-                if (p.HayAnioAnterior) vals.push({ t: f.AcumAnioAnterior === null ? MDASH : fmt(f.AcumAnioAnterior) }, { t: fmtVar(f.VarAnioAnterior), v: f.VarAnioAnterior, f: f });
-                x = M;
-                vals.forEach(function (c, i) {
-                    var col = null;
-                    if (c.f && c.v !== null && c.v !== undefined && c.v !== 0) col = (c.f.EsGastoOCosto ? c.v < 0 : c.v > 0) ? Co.bueno : Co.malo;
-                    if (col) rgb('setTextColor', col);
-                    if (c.izq) pdf.text(c.t, x + 1.5, y); else pdf.text(c.t, x + enc[i].w - 1, y, { align: 'right' });
-                    if (col) rgb('setTextColor', f.EsSubtotal ? Co.texto : Co.texto2);
-                    x += enc[i].w;
-                });
-                rgb('setDrawColor', Co.linea); pdf.setLineWidth(0.1); pdf.line(M, y + 1.3, M + ANCHO, y + 1.3);
-                y += 4.8;
-            });
-            fuente('italic', 7, Co.muted); pdf.text(limpiar(Q.nota.replace('{0}', T.unidadBadge[S.unidad])), M, y + 2); y += 6;
+        // ----- secciones compartidas (Assets/js/informe-vistas.js) -----
+        function kv() {
+            return ctxVistas({ Co: Co, M: M, ANCHO: ANCHO, LIMITE_Y: LIMITE_Y, degradado: degradado, nuevaPagina: function () { pdf.addPage(); encabezadoPagina(); return y; } });
         }
-
-        function pdfCaja(c) {
-            var Q = T.cd;
-            asegurar(40);
-            var gap = 5, w3 = (ANCHO - gap * 2) / 3, h3 = 27;
-            var tarjetas = [
-                { et: Q.inicio, v: c.HayCajaInicial ? fmt(c.CajaInicial, true) : MDASH, sub: Q.inicioSub, neg: false },
-                { et: Q.hoyFmt.replace('{0}', nombreMes(c.MesCorte)), v: c.HayCajaCorte ? fmt(c.CajaCorte, true) : MDASH, sub: Q.hoySub, neg: c.HayCajaCorte && c.CajaCorte < 0, principal: true },
-                { et: Q.proy, v: c.HayProyeccion ? fmt(c.CajaProyectada, true) : MDASH, sub: c.HayProyeccion ? Q.proySub : Q.sinProy, neg: c.HayProyeccion && c.CajaProyectada < 0 }
-            ];
-            tarjetas.forEach(function (t, i) {
-                var x = M + i * (w3 + gap);
-                tarjeta(x, y, w3, h3); if (t.principal) degradado(x + 3, y, w3 - 6, 1.2);
-                fuente('bold', 7.2, Co.texto2); pdf.text(t.et.toUpperCase(), x + 4.5, y + 7.5);
-                fuente('bold', 17, t.neg ? Co.malo : Co.texto); pdf.text(t.v, x + 4.5, y + 17);
-                fuente('normal', 7, Co.muted); pdf.text(pdf.splitTextToSize(t.sub, w3 - 9)[0] || '', x + 4.5, y + 23);
-            });
-            y += h3 + 6;
-            fuente('bold', 8.3, Co.texto2);
-            var puente = (c.HayCajaInicial ? Q.inicio + ' ' + fmt(c.CajaInicial, true) + '  +  ' : '') + Q.entradas + ' ' + fmt(c.TotalFuentes, true) + '  -  ' + Q.salidas + ' ' + fmt(Math.abs(c.TotalUsos), true) + (c.HayCajaCorte ? '  =  ' + fmt(c.CajaCorte, true) : '');
-            pdf.text(limpiar(puente), M, y); y += 6;
-            // estado
-            var msg = null, colorMsg = Co.bueno, bgMsg = Co.buenoBg;
-            if (!c.HayCajaInicial) { msg = Q.sinBalance; colorMsg = Co.aviso; bgMsg = Co.suave; }
-            else if (c.HayProyeccion && c.MesesEnDeficit > 0) { msg = Q.estadoDeficitFmt.replace('{0}', c.MesesEnDeficit).replace('{1}', fmt(c.CajaMinima, true)).replace('{2}', nombreMes(c.MesMinimo)); colorMsg = Co.malo; bgMsg = Co.maloBg; }
-            else if (c.HayProyeccion) msg = Q.estadoOk + ' ' + Q.minimoFmt.replace('{0}', fmt(c.CajaMinima, true)).replace('{1}', nombreMes(c.MesMinimo));
-            if (msg) {
-                var lin = pdf.splitTextToSize(limpiar(msg), ANCHO - 8); asegurar(lin.length * 4.4 + 6);
-                rgb('setFillColor', bgMsg); pdf.roundedRect(M, y - 3.5, ANCHO, lin.length * 4.4 + 3, 2, 2, 'F');
-                fuente('bold', 8.3, colorMsg); pdf.text(lin, M + 4, y + 0.5); y += lin.length * 4.4 + 5;
-            }
-            if (!c.Cuadra) { fuente('italic', 7.5, Co.aviso); pdf.text(limpiar(Q.noCuadra), M, y); y += 5; }
-            // entradas y salidas con barras
-            var mitad = (ANCHO - 8) / 2, yTop = y, max = 1;
-            c.Tramos.forEach(function (t) { max = Math.max(max, Math.abs(t.Valor)); });
-            var yFin = y;
-            [['fuente', Q.entradas], ['uso', Q.salidas]].forEach(function (par, idx) {
-                var x = M + idx * (mitad + 8), yy = yTop;
-                fuente('bold', 8, Co.morado); pdf.text(par[1].toUpperCase(), x, yy); yy += 5;
-                c.Tramos.filter(function (t) { return t.Tipo === par[0]; }).forEach(function (t) {
-                    fuente('normal', 7.6, Co.texto2); pdf.text(nombreTramo(t.Codigo), x, yy);
-                    fuente('bold', 7.6, Co.texto); pdf.text(fmt(Math.abs(t.Valor), true), x + mitad, yy, { align: 'right' });
-                    rgb('setFillColor', Co.suave); pdf.roundedRect(x, yy + 1, mitad, 1.8, 0.9, 0.9, 'F');
-                    rgb('setFillColor', par[0] === 'fuente' ? Co.morado : [245, 158, 11]); pdf.roundedRect(x, yy + 1, Math.max(1.5, mitad * Math.abs(t.Valor) / max), 1.8, 0.9, 0.9, 'F');
-                    yy += 7.2;
-                });
-                yFin = Math.max(yFin, yy);
-            });
-            y = yFin + 3;
-            // meses
-            if (c.Meses.length) {
-                asegurar(18 + c.Meses.length * 4.8);
-                tituloSeccion(Q.mesesTitulo, y); y += 5;
-                var cw = [60, 55, 55, 40];
-                rgb('setFillColor', Co.morado); pdf.rect(M, y - 4.2, ANCHO, 6, 'F'); fuente('bold', 7, Co.blanco);
-                pdf.text(Q.colMes.toUpperCase(), M + 2, y); pdf.text(Q.colFlujo.toUpperCase(), M + cw[0] + cw[1] - 2, y, { align: 'right' });
-                pdf.text(Q.colCaja.toUpperCase(), M + cw[0] + cw[1] + cw[2] - 2, y, { align: 'right' }); pdf.text(Q.colTipo.toUpperCase(), M + cw[0] + cw[1] + cw[2] + cw[3] - 2, y, { align: 'right' });
-                y += 5.6;
-                c.Meses.forEach(function (m) {
-                    fuente(m.Proyectado ? 'italic' : 'normal', 7.8, Co.texto2); pdf.text(nombreMes(m.Mes), M + 2, y);
-                    pdf.text(fmt(m.Flujo), M + cw[0] + cw[1] - 2, y, { align: 'right' });
-                    if (m.CajaFin < 0) rgb('setTextColor', Co.malo);
-                    pdf.text(fmt(m.CajaFin), M + cw[0] + cw[1] + cw[2] - 2, y, { align: 'right' });
-                    rgb('setTextColor', Co.texto2); pdf.text(m.Proyectado ? Q.proyectado : Q.real, M + cw[0] + cw[1] + cw[2] + cw[3] - 2, y, { align: 'right' });
-                    rgb('setDrawColor', Co.linea); pdf.setLineWidth(0.1); pdf.line(M, y + 1.3, M + ANCHO, y + 1.3); y += 4.8;
-                });
-            }
-        }
+        function pdfPyg(p) { y = InformeVistas.pdfPyg(pdf, kv(), p, y); }
+        function pdfCaja(c) { y = InformeVistas.pdfCaja(pdf, kv(), c, y); }
 
         function pdfComentarios() {
             var Q = T.co, coms = window.ComentariosGestion ? ComentariosGestion.ultimos() : [];
@@ -458,9 +281,7 @@
         }
 
         // ----- contenido por tipo -----
-        if (C.tipo === 'hoja') { tituloSeccion(T.titulo, y); y += 6; pdfPyg(r); pdfComentarios(); }
-        else if (C.tipo === 'caja') { pdfCaja(r); pdfComentarios(); }
-        else {
+        {
             var Q = T.co, g = r.Gerencia;
             if (g && g.HayResultados) {
                 tituloSeccion(Q.secResumen, y); y += 4;
@@ -586,7 +407,7 @@
         InformeTema.montar({ selector: '#ejTema', empresa: '#ejEmpresa' });
         $('#btnLimpiarEJ').on('click', function () { InformeTema.reset(); if (C.esAdmin) $emp.val('').trigger('change.select2'); cargarMeses(); });
 
-        ComentariosGestion.montar({ raiz: '#ejComentarios', informe: C.claveComentario, todos: C.tipo === 'comite' });
+        ComentariosGestion.montar({ raiz: '#ejComentarios', informe: 'Comite', todos: true });
 
         var correo = ExportMenu.correo({
             url: C.urls.correo,

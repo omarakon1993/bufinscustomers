@@ -11,6 +11,9 @@ namespace bufinscustomers.Models
     public class FiltrosFlujo
     {
         // Paleta del informe (ver TemaInforme): el servidor re-resuelve y valida; vacío = Bufins.
+        /// <summary>Secciones visibles en pantalla que se incluyen en Excel y correo (ids separados por coma; vacío = todas). Ver SeccionesInforme.</summary>
+        public string Secciones { get; set; }
+
         public string Tema { get; set; }
         public string TemaP { get; set; }
         public string TemaS { get; set; }
@@ -196,6 +199,9 @@ namespace bufinscustomers.Models
         public int MesHasta { get; set; }
         public string Medida { get; set; }
         public byte? IdEscenarioComparar { get; set; }
+
+        /// <summary>Sección «¿Cuánta plata me queda?» (solo Flujo de caja; mismo corte que el fin del rango). La llena el controlador al consultar.</summary>
+        public CajaDisponibleReporte CajaDisponible { get; set; }
 
         public bool SinDatos { get; set; }
         public bool HayPresupuesto { get; set; }        // el presupuesto tiene cifras en el rango

@@ -1,0 +1,37 @@
+@functions {
+    static string J(string s) { return System.Web.HttpUtility.JavaScriptStringEncode(s ?? ""); }
+}
+@* Textos (ya traducidos) de la barra de secciones y de las secciones «PYG en una hoja» y «¿Cuánta plata me queda?». Los usan los informes de PYG y de
+   Flujo de caja con Assets/js/informe-secciones.js e informe-vistas.js. Debe ir ANTES del script del informe. *@
+<script>
+    window.SEC_CFG = {
+        barra: { etiqueta: '@Html.Raw(J(Resources.Strings.Sec_Etiqueta))', todas: '@Html.Raw(J(Resources.Strings.Sec_Todas))', ninguna: '@Html.Raw(J(Resources.Strings.Sec_Ninguna))', sinSeleccion: '@Html.Raw(J(Resources.Strings.Sec_SinSeleccion))' },
+        titulos: {
+            kpis: '@Html.Raw(J(Resources.Strings.Sec_Kpis))', tabla: '@Html.Raw(J(Resources.Strings.Sec_Tabla))', ia: '@Html.Raw(J(Resources.Strings.Sec_Ia))', comentarios: '@Html.Raw(J(Resources.Strings.Com_Titulo))',
+            pygCascada: '@Html.Raw(J(Resources.Strings.Sec_PygCascada))', pygTendencia: '@Html.Raw(J(Resources.Strings.Sec_PygTendencia))', pygHoja: '@Html.Raw(J(Resources.Strings.PH_PageTitle))', pygLineas: '@Html.Raw(J(Resources.Strings.PYG_LN_Titulo))',
+            flujoMensual: '@Html.Raw(J(Resources.Strings.Sec_FlujoMensual))', flujoCaja: '@Html.Raw(J(Resources.Strings.Sec_FlujoCaja))', flujoPuente: '@Html.Raw(J(Resources.Strings.Sec_FlujoPuente))', cajaDisponible: '@Html.Raw(J(Resources.Strings.CD_PageTitle))'
+        },
+        sinSeccion: '@Html.Raw(J(Resources.Strings.GM_SinSeccion))',
+        ph: {
+            concepto: '@Html.Raw(J(Resources.Strings.PH_ColConcepto))', acum: '@Html.Raw(J(Resources.Strings.PH_ColAcum))', av: '@Html.Raw(J(Resources.Strings.PH_ColAv))',
+            ppto: '@Html.Raw(J(Resources.Strings.PH_ColPpto))', varPpto: '@Html.Raw(J(Resources.Strings.PH_ColVarPpto))', anioAnt: '@Html.Raw(J(Resources.Strings.PH_ColAnioAnt))',
+            varAnio: '@Html.Raw(J(Resources.Strings.PH_ColVarAnio))', nota: '@Html.Raw(J(Resources.Strings.PH_Nota))'
+        },
+        cd: {
+            inicio: '@Html.Raw(J(Resources.Strings.CD_Inicio))', inicioSub: '@Html.Raw(J(Resources.Strings.CD_InicioSub))',
+            hoyFmt: '@Html.Raw(J(Resources.Strings.CD_HoyFmt))', hoySub: '@Html.Raw(J(Resources.Strings.CD_HoySub))',
+            proy: '@Html.Raw(J(Resources.Strings.CD_Proy))', proySub: '@Html.Raw(J(Resources.Strings.CD_ProySub))', sinProy: '@Html.Raw(J(Resources.Strings.CD_SinProyeccion))',
+            entradas: '@Html.Raw(J(Resources.Strings.CD_Entradas))', salidas: '@Html.Raw(J(Resources.Strings.CD_Salidas))',
+            estadoOk: '@Html.Raw(J(Resources.Strings.CD_EstadoOk))', estadoDeficitFmt: '@Html.Raw(J(Resources.Strings.CD_EstadoDeficitFmt))', minimoFmt: '@Html.Raw(J(Resources.Strings.CD_MinimoFmt))',
+            sinBalance: '@Html.Raw(J(Resources.Strings.CD_SinBalance))', noCuadra: '@Html.Raw(J(Resources.Strings.CD_NoCuadra))',
+            tramosTitulo: '@Html.Raw(J(Resources.Strings.CD_TramosTitulo))', mesesTitulo: '@Html.Raw(J(Resources.Strings.CD_MesesTitulo))',
+            colMes: '@Html.Raw(J(Resources.Strings.CD_ColMes))', colFlujo: '@Html.Raw(J(Resources.Strings.CD_ColFlujo))', colCaja: '@Html.Raw(J(Resources.Strings.CD_ColCaja))', colTipo: '@Html.Raw(J(Resources.Strings.CD_ColTipo))',
+            real: '@Html.Raw(J(Resources.Strings.CD_Real))', proyectado: '@Html.Raw(J(Resources.Strings.CD_Proyectado))'
+        },
+        tramos: {
+            GeneracionOperativa: '@Html.Raw(J(Resources.Strings.FlujoCaja_FU_GeneracionOperativa))', Otros: '@Html.Raw(J(Resources.Strings.Flujo_CajaCascada_Otros))',
+            CapitalTrabajo: '@Html.Raw(J(Resources.Strings.FlujoCaja_Casc_CapitalTrabajo))', Inversion: '@Html.Raw(J(Resources.Strings.FlujoCaja_Casc_Inversion))',
+            Financiero: '@Html.Raw(J(Resources.Strings.FlujoCaja_Casc_Financiero))', NoOperacional: '@Html.Raw(J(Resources.Strings.FlujoCaja_Casc_NoOperacional))'
+        }
+    };
+</script>
