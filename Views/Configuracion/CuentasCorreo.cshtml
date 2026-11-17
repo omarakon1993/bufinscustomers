@@ -39,7 +39,8 @@
     </button>
 </div>
 
-<div class="card shadow mb-4 mt-4">
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/gestor-lista.css")" rel="stylesheet" />
+<div class="card shadow mb-4 mt-4 gl-lista" data-gl-cuenta="@Resources.Strings.Gl_RegistrosFmt">
     <div class="card-body p-0">
         <div class="table-responsive table-wrapper">
             <table class="table table-bordered table-hover table-compact">
@@ -47,8 +48,8 @@
                     <tr>
                         <th>@Resources.Strings.Correo_ThNombre</th>
                         <th>@Resources.Strings.Correo_ThServidor</th>
-                        <th class="text-center" style="width:70px;">@Resources.Strings.Correo_ThPuerto</th>
-                        <th class="text-center" style="width:55px;">@Resources.Strings.Correo_ThSsl</th>
+                        <th class="gl-ter text-center" style="width:70px;">@Resources.Strings.Correo_ThPuerto</th>
+                        <th class="gl-ter text-center" style="width:55px;">@Resources.Strings.Correo_ThSsl</th>
                         <th>@Resources.Strings.Correo_ThUsuario</th>
                         <th>@Resources.Strings.Correo_ThRemitente</th>
                         <th class="text-center" style="width:90px;">@Resources.Strings.Correo_ThEstado</th>
@@ -407,5 +408,12 @@
     }
 </script>
 
+@await Html.PartialAsync("_GestorListaConfig")
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/gestor-lista.js")"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        GestorLista.iniciar({});
+    });
+</script>
 </body>
 </html>

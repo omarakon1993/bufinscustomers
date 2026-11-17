@@ -124,7 +124,8 @@
         </div>
     </div>
 
-    <div class="card shadow mb-4 mt-4">
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/gestor-lista.css")" rel="stylesheet" />
+    <div class="card shadow mb-4 mt-4 gl-lista">
         <div class="card-body p-0">
             <div class="gestor-search-bar">
                 <div class="gestor-search-wrapper">
@@ -137,15 +138,15 @@
                 <table id="tablaEmpresas" class="table table-bordered table-hover table-compact">
                     <thead>
                         <tr>
-                            <th class="col-id">Id</th>
+                            <th class="gl-ter col-id">Id</th>
                             <th class="col-abreviatura">@Resources.Strings.Emp_ThAbreviatura</th>
                             <th class="col-logo">@Resources.Strings.EmpLogo_ThLogo</th>
                             <th class="col-nombre">@Resources.Strings.Emp_ThNombre</th>
                             <th class="col-nit">@Resources.Strings.Emp_ThNit</th>
-                            <th class="col-direccion">@Resources.Strings.Emp_ThDireccion</th>
-                            <th class="col-telefono">@Resources.Strings.Emp_ThTelefono</th>
-                            <th class="col-correo">@Resources.Strings.Emp_ThCorreo</th>
-                            <th class="col-web">@Resources.Strings.Emp_ThPaginaWeb</th>
+                            <th class="gl-sec col-direccion">@Resources.Strings.Emp_ThDireccion</th>
+                            <th class="gl-sec col-telefono">@Resources.Strings.Emp_ThTelefono</th>
+                            <th class="gl-ter col-correo">@Resources.Strings.Emp_ThCorreo</th>
+                            <th class="gl-sec col-web">@Resources.Strings.Emp_ThPaginaWeb</th>
                             <th class="col-grupo">@Resources.Strings.Emp_ThGrupo</th>
                             <th class="col-acciones">@Resources.Strings.Common_ThAcciones</th>
                         </tr>
@@ -231,11 +232,14 @@
                 </div>
             </div>
         </div>
-        <script>
+        @await Html.PartialAsync("_GestorListaConfig")
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/gestor-lista.js")"></script>
+<script>
         (function () {
             var POR_PAGINA = 15;
             var paginaActual = 1;
             var filasFiltradas = [];
+            var gl = null;   // filtros por columna (Assets/js/gestor-lista.js)
 
             function todasLasFilas() {
                 return Array.from(document.querySelectorAll('#tablaEmpresas tbody tr'));
@@ -244,7 +248,7 @@
             function aplicarFiltro() {
                 var q = (document.getElementById('buscarEmpresa').value || '').toLowerCase().trim();
                 filasFiltradas = todasLasFilas().filter(function (r) {
-                    return !q || r.textContent.toLowerCase().indexOf(q) !== -1;
+                    return (!q || r.textContent.toLowerCase().indexOf(q) !== -1) && (!gl || gl.pasa(r));
                 });
                 paginaActual = 1;
                 renderizar();
@@ -270,6 +274,8 @@
                 renderizar();
             };
 
+            gl = GestorLista.iniciar({ tabla: '#tablaEmpresas', externo: true, alCambiar: aplicarFiltro, selects: [
+                { col: 9, placeholder: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Gl_TodosGrupos))' }] });
             document.getElementById('buscarEmpresa').addEventListener('input', aplicarFiltro);
             aplicarFiltro();
         })();

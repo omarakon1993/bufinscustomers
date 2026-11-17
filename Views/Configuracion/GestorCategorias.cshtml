@@ -38,7 +38,8 @@
     </div>
 </div>
 
-<div class="card shadow mb-4 mt-4">
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/gestor-lista.css")" rel="stylesheet" />
+<div class="card shadow mb-4 mt-4 gl-lista" data-gl-cuenta="@Resources.Strings.Gl_RegistrosFmt">
     <div class="card-body p-0">
         <div class="table-responsive table-wrapper">
             <table class="table table-bordered table-hover table-compact">
@@ -225,6 +226,13 @@
             }
         });
     }
+</script>
+@await Html.PartialAsync("_GestorListaConfig")
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/gestor-lista.js")"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        GestorLista.iniciar({});
+    });
 </script>
 </body>
 </html>

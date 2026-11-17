@@ -125,7 +125,8 @@
         </div>
     </div>
 
-    <div class="card shadow mb-4 mt-4">
+<link href="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/css/gestor-lista.css")" rel="stylesheet" />
+    <div class="card shadow mb-4 mt-4 gl-lista" data-gl-cuenta="@Resources.Strings.Gl_RegistrosFmt">
         <div class="card-body p-0">
             <div class="table-responsive table-wrapper">
                 <table class="table table-bordered table-hover table-compact" id="dataTable">
@@ -134,9 +135,9 @@
                             <th class="col-id">Id</th>
                             <th class="col-empresa">@Resources.Strings.Rep_ThEmpresa</th>
                             <th class="col-nombre">@Resources.Strings.Rep_LabelNombre</th>
-                            <th class="col-anio-ini">@Resources.Strings.Rep_ThAnioIni</th>
-                            <th class="col-anio-fin">@Resources.Strings.Rep_ThAnioFin</th>
-                            <th class="col-desc">@Resources.Strings.Common_LabelDescripcion</th>
+                            <th class="gl-ter col-anio-ini">@Resources.Strings.Rep_ThAnioIni</th>
+                            <th class="gl-ter col-anio-fin">@Resources.Strings.Rep_ThAnioFin</th>
+                            <th class="gl-sec col-desc">@Resources.Strings.Common_LabelDescripcion</th>
                             <th class="col-ver">@Resources.Strings.Rep_ThVer</th>
                             <th class="col-acciones">@Resources.Strings.Common_ThAcciones</th>
                         </tr>
@@ -622,5 +623,12 @@
             validarURL('editEnlaceHTML', 'editUrlFeedback');
         }
     </script>
+@await Html.PartialAsync("_GestorListaConfig")
+<script src="@bufinscustomers.Helpers.AssetVersion.Url("~/Assets/js/gestor-lista.js")"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        GestorLista.iniciar({ buscar: true, placeholderBuscar: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Gl_BuscarReporte))', selects: [{ col: 1, placeholder: '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.Gl_TodasEmpresas))' }] });
+    });
+</script>
 </body>
 </html>

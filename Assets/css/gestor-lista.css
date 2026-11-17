@@ -1,0 +1,83 @@
+/*
+ * Estilo de las listas de los gestores (Usuarios, Empresas, Categorías, Escenarios, Grupos, Prompts, Grupos empresariales, Cuentas de correo,
+ * Modelos de ejecución, Maestro de reportes). Se activa con la clase `gl-lista` en la tarjeta (`<div class="card shadow … gl-lista">`) y reutiliza las
+ * clases de siempre de la tabla (`.table-compact`, `.btn-group`, `.badge-*`). Mismo diseño del Gestor de menús: tabla limpia, acciones con iconos,
+ * columnas secundarias que se ocultan en pantallas medianas (`gl-sec` ≤ 1279 px, `gl-ter` ≤ 991 px) y tarjetas por fila en pantallas pequeñas
+ * (≤ 767 px; las etiquetas salen del encabezado: Assets/js/gestor-lista.js).
+ */
+
+/* ---- Contenedor ---- */
+.gl-lista.card { border: 1px solid #e3e6f0; border-radius: .75rem; box-shadow: 0 2px 8px rgba(0, 0, 0, .06) !important; overflow: hidden; }
+.gl-lista .card-body { background: #fff; }
+.gl-lista .gl-cab { display: flex; align-items: center; justify-content: flex-end; padding: .6rem .8rem 0; }
+.gl-lista .table-wrapper { margin: .6rem .8rem; max-height: 64vh; overflow: auto; border-radius: .6rem; box-shadow: 0 0 0 1px #e8eaf3; }
+
+/* ---- Barra de búsqueda y filtros ---- */
+.gl-lista .gestor-search-bar, .gl-lista .gl-barra { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .6rem .8rem; background: #fff; border-bottom: 1px solid #eef0f6; }
+.gl-lista .gestor-search-wrapper { position: relative; flex: 1 1 220px; max-width: 320px; }
+.gl-lista .gl-buscar { position: relative; flex: 1 1 220px; max-width: 320px; }
+.gl-lista .gl-buscar i { position: absolute; left: .65rem; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: .72rem; pointer-events: none; }
+.gl-lista .gl-buscar input { width: 100%; padding: .36rem .75rem .36rem 2rem; font-size: .8rem; border: 1px solid #dee2e6; border-radius: 6px; outline: none; transition: border-color .15s, box-shadow .15s; background: #fff; }
+.gl-lista .gl-buscar input:focus { border-color: #583AFF; box-shadow: 0 0 0 3px rgba(88, 58, 255, .12); }
+.gl-lista .gl-sel { flex: 0 1 190px; min-width: 130px; padding: .34rem .6rem; font-size: .8rem; border: 1px solid #dee2e6; border-radius: 6px; background: #fff; color: #374151; }
+.gl-lista .gl-sel:focus { border-color: #583AFF; box-shadow: 0 0 0 3px rgba(88, 58, 255, .12); outline: none; }
+.gl-lista .gl-limpiar { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .7rem; border-radius: 999px; border: 1.5px solid #d9dce6; background: #fff; color: #583AFF; font-size: .76rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.gl-lista .gl-limpiar:hover { border-color: #583AFF; background: #f5f3ff; }
+.gl-lista .gl-limpiar[hidden] { display: none; }
+.gl-oculta { display: none !important; }
+.gl-lista .gl-vacio { text-align: center; padding: 2rem 1rem; color: #6c757d; }
+.gl-lista .gl-vacio[hidden] { display: none; }
+
+/* ---- Tabla ---- */
+.gl-lista .table-compact { table-layout: fixed; border-collapse: separate; border-spacing: 0; margin-bottom: 0; width: 100%; }
+.gl-lista .table-compact thead th { border: 0; padding: .55rem .6rem; font-size: .72rem; font-weight: 600; text-transform: none; letter-spacing: .02em; white-space: nowrap; }
+.gl-lista .table-compact tbody td { border: 0; border-bottom: 1px solid #eef0f6; padding: .5rem .6rem; font-size: .8rem; vertical-align: middle; }
+.gl-lista .table-compact tbody tr:last-child td { border-bottom: 0; }
+.gl-lista .table-compact tbody tr:hover td { background-color: #f6f4ff; }
+
+/* ---- Acciones con iconos ---- */
+.gl-lista .btn-group { display: inline-flex; gap: .3rem; }
+.gl-lista .btn-group .btn { width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: #fff; border: 1px solid #e1e4ee; font-size: .78rem; box-shadow: none; }
+.gl-lista .btn-group .btn.btn-primary { color: #583AFF; }
+.gl-lista .btn-group .btn.btn-success { color: #059669; }
+.gl-lista .btn-group .btn.btn-danger { color: #dc2626; }
+.gl-lista .btn-group .btn.btn-warning { color: #d97706; }
+.gl-lista .btn-group .btn.btn-info, .gl-lista .btn-group .btn.btn-secondary { color: #0e7490; }
+.gl-lista .btn-group .btn.btn-primary:hover { background: #583AFF; border-color: #583AFF; color: #fff; }
+.gl-lista .btn-group .btn.btn-success:hover { background: #059669; border-color: #059669; color: #fff; }
+.gl-lista .btn-group .btn.btn-danger:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
+.gl-lista .btn-group .btn.btn-warning:hover { background: #d97706; border-color: #d97706; color: #fff; }
+.gl-lista .btn-group .btn:focus-visible { outline: 2px solid #583AFF; outline-offset: 2px; }
+
+/* ---- Pie con el botón de crear ---- */
+.gl-lista .card-footer { background: #fff; border-top: 1px solid #eef0f6; padding: .7rem .8rem; display: flex; flex-wrap: wrap; gap: .6rem; }
+.gl-lista .gestor-pagination { background: #fff; }
+
+/* ---- Portátiles de 14" y pantallas medianas: se ocultan las columnas secundarias ---- */
+@media (max-width: 1279px) {
+    .gl-lista .gl-sec { display: none; }
+}
+@media (max-width: 991px) {
+    .gl-lista .gl-ter { display: none; }
+    .gl-lista .gl-sel { flex: 1 1 160px; }
+}
+
+/* ---- Teléfono y tablet vertical: cada fila es una tarjeta ---- */
+@media (max-width: 767px) {
+    .gl-lista .table-wrapper { max-height: none; overflow: visible; box-shadow: none; margin: .5rem; }
+    .gl-lista .gestor-search-wrapper, .gl-lista .gl-buscar { max-width: none; flex-basis: 100%; }
+    .gl-lista .gl-sel { flex-basis: 100%; }
+    .gl-lista .table-compact, .gl-lista .table-compact tbody, .gl-lista .table-compact tr, .gl-lista .table-compact td { display: block; width: 100%; }
+    .gl-lista .table-compact thead { display: none; }
+    .gl-lista .table-compact tbody tr { margin: 0 0 .6rem; padding: .5rem .7rem; background: #fff; border: 1px solid #e8eaf3; border-left: 5px solid #583AFF; border-radius: 10px; box-shadow: 0 1px 3px rgba(0, 0, 0, .05); }
+    .gl-lista .table-compact tbody tr:hover td { background: transparent; }
+    .gl-lista .table-compact tbody td { display: flex; align-items: center; justify-content: space-between; gap: .7rem; text-align: right; padding: .3rem 0; border: 0; border-bottom: 1px dashed #f0f1f6; white-space: normal; overflow: visible; background: transparent; }
+    .gl-lista .table-compact tbody td:last-child { border-bottom: 0; }
+    .gl-lista .table-compact tbody td::before { content: attr(data-label); flex: 0 0 38%; text-align: left; font-weight: 600; font-size: .74rem; color: #6b7280; }
+    .gl-lista .table-compact tbody td:not([data-label])::before, .gl-lista .table-compact tbody td[data-label=""]::before { content: none; }
+    .gl-lista .table-compact tbody td[colspan] { display: block; text-align: center; }
+    .gl-lista .table-compact tbody td[colspan]::before { content: none; }
+    .gl-lista .gl-sec, .gl-lista .gl-ter { display: flex !important; }
+    .gl-lista .table-compact tbody td.col-acciones { justify-content: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) { .gl-lista .gl-buscar input, .gl-lista .gl-sel { transition: none; } }

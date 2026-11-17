@@ -1,0 +1,13 @@
+@functions {
+    static string J(string s) { return System.Web.HttpUtility.JavaScriptStringEncode(s ?? ""); }
+}
+@* Textos (ya traducidos) de las listas de los gestores (Assets/js/gestor-lista.js). Va ANTES del script que inicia la lista. *@
+<script>
+    window.GL_TXT = {
+        buscarPH: '@Html.Raw(J(Resources.Strings.Layout_SearchPlaceholder))',
+        limpiar: '@Html.Raw(J(Resources.Strings.Menu_LimpiarFiltros))',
+        cuentaFiltradaFmt: '@Html.Raw(J(Resources.Strings.Gl_RegistrosFiltradosFmt))',
+        sinResultados: '@Html.Raw(J(Resources.Strings.Gl_SinResultadosTitulo))',
+        sinResultadosAyuda: '@Html.Raw(J(Resources.Strings.Menu_SinResultadosAyuda))'
+    };
+</script>
