@@ -57,7 +57,11 @@
 </div>
 
 <script>
-(function () {
+// jQuery se carga al final del layout (después de esta tarjeta): se espera a que el documento termine de leerse.
+// Si jQuery ya existe (tarjeta inyectada en un fragmento), se ejecuta de inmediato.
+(function (iniciar) {
+    if (window.jQuery) iniciar(); else document.addEventListener('DOMContentLoaded', iniciar);
+})(function () {
     var msg = {
         periodo:    '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Periodo))',
         tokens:     '@Html.Raw(HttpUtility.JavaScriptStringEncode(Resources.Strings.IAConsumo_Tokens))',
@@ -113,5 +117,5 @@
         cargar();
         $('#selectEmpresa').on('change', cargar);
     });
-})();
+});
 </script>
